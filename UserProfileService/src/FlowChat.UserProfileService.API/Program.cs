@@ -1,6 +1,11 @@
-var builder = WebApplication.CreateBuilder(args);
-var app = builder.Build();
+using FlowChat.UserProfileService.Api;
 
-app.MapGet("/", () => "Hello World!");
+var builder = WebApplication.CreateBuilder(args);
+
+var app = builder
+    .ConfigureServices()
+    .ConfigurePipeline();
+
+await app.ResetDatabaseAsync();
 
 app.Run();

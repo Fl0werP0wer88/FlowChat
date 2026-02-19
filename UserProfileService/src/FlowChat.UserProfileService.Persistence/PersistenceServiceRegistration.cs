@@ -10,7 +10,7 @@ public static class PersistenceServiceRegistration
                             this IServiceCollection services, IConfiguration configuration)
     {
         services.AddDbContext<AppDbContext>(options =>
-           options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
+           options.UseNpgsql(configuration.GetConnectionString("UserProfileDb")));
 
 
         return services;

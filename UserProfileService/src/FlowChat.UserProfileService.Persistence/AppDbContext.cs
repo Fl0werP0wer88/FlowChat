@@ -11,12 +11,14 @@ public class AppDbContext : DbContext
     {
     }
 
-    public DbSet<Product> Products { get; set; }
+    public DbSet<UserProfile> UserProfiles { get; set; }
+    public DbSet<Contact> Contacts { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         //Setting default schema for tables creation.
-        modelBuilder.HasDefaultSchema("FlowChat");
+        // modelBuilder.HasDefaultSchema("FlowChat");
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
         base.OnModelCreating(modelBuilder);
     }
 	

@@ -30,7 +30,7 @@ param(
 
   # Databases
   [string]$AuthDb = "flowchat_auth_db",
-  [string]$SettingsDb = "flowchat_settings_db",
+  [string]$UserProfileDb = "flowchat_userprofile_db",
 
   [int]$TimeoutSeconds = 180
 )
@@ -174,13 +174,13 @@ Wait-ForPostgresReady -containerId $containerId -timeoutSeconds $TimeoutSeconds
 
 Ensure-Role -containerId $containerId -role $AppUser -password $AppPassword
 Ensure-Database -containerId $containerId -dbName $AuthDb -owner $AppUser
-Ensure-Database -containerId $containerId -dbName $SettingsDb -owner $AppUser
+Ensure-Database -containerId $containerId -dbName $UserProfileDb -owner $AppUser
 
 Write-Step "Done. PostgreSQL is fully initialized ✅"
 Write-Host ""
 Write-Host "Admin user : $AdminUser"
 Write-Host "App user   : $AppUser"
 Write-Host "Auth DB    : $AuthDb"
-Write-Host "Settings DB: $SettingsDb"
+Write-Host "Settings DB: $UserProfileDb"
 Write-Host "Host       : localhost"
 Write-Host "Port       : 5432"
