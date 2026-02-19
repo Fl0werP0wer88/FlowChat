@@ -1,0 +1,38 @@
+<Solution>
+  <Folder Name="/AuthService/" />
+  <Folder Name="/AuthService/src/">
+    <Project Path="AuthService/src/FlowChat.AuthService.API/FlowChat.AuthService.API.csproj" />
+    <Project Path="AuthService/src/FlowChat.AuthService.Application/FlowChat.AuthService.Application.csproj" />
+    <Project Path="AuthService/src/FlowChat.AuthService.Domain/FlowChat.AuthService.Domain.csproj" />
+    <Project Path="AuthService/src/FlowChat.AuthService.Infrastructure/FlowChat.AuthService.Infrastructure.csproj" />
+    <Project Path="AuthService/src/FlowChat.AuthService.Persistence/FlowChat.AuthService.Persistence.csproj" />
+  </Folder>
+  <Folder Name="/AuthService/tests/">
+    <Project Path="AuthService/tests/FlowChat.AuthService.AATs/FlowChat.AuthService.AATs.csproj" />
+    <Project Path="AuthService/tests/FlowChat.AuthService.UnitTests/FlowChat.AuthService.UnitTests.csproj" />
+  </Folder>
+  <Folder Name="/ChatService/" />
+  <Folder Name="/ChatService/src/">
+    <Project Path="ChatService/src/FlowChat.ChatService.API/FlowChat.ChatService.API.csproj" />
+    <Project Path="ChatService/src/FlowChat.ChatService.Application/FlowChat.ChatService.Application.csproj" />
+    <Project Path="ChatService/src/FlowChat.ChatService.Domain/FlowChat.ChatService.Domain.csproj" />
+    <Project Path="ChatService/src/FlowChat.ChatService.Infrastructure/FlowChat.ChatService.Infrastructure.csproj" />
+    <Project Path="ChatService/src/FlowChat.ChatService.Persistence/FlowChat.ChatService.Persistence.csproj" />
+  </Folder>
+  <Folder Name="/ChatService/tests/">
+    <Project Path="ChatService/tests/FlowChat.ChatService.AATs/FlowChat.ChatService.AATs.csproj" />
+    <Project Path="ChatService/tests/FlowChat.ChatService.UnitTests/FlowChat.ChatService.UnitTests.csproj" />
+  </Folder>
+  <Folder Name="/UserProfileService/" />
+  <Folder Name="/UserProfileService/src/">
+    <Project Path="UserProfileService/src/FlowChat.UserProfileService.API/FlowChat.UserProfileService.API.csproj" />
+    <Project Path="UserProfileService/src/FlowChat.UserProfileService.Application/FlowChat.UserProfileService.Application.csproj" />
+    <Project Path="UserProfileService/src/FlowChat.UserProfileService.Domain/FlowChat.UserProfileService.Domain.csproj" />
+    <Project Path="UserProfileService/src/FlowChat.UserProfileService.Infrastructure/FlowChat.UserProfileService.Infrastructure.csproj" />
+    <Project Path="UserProfileService/src/FlowChat.UserProfileService.Persistence/FlowChat.UserProfileService.Persistence.csproj" />
+  </Folder>
+  <Folder Name="/UserProfileService/tests/">
+    <Project Path="UserProfileService/tests/FlowChat.UserProfileService.AATs/FlowChat.UserProfileService.AATs.csproj" />
+    <Project Path="UserProfileService/tests/FlowChat.UserProfileService.UnitTests/FlowChat.UserProfileService.UnitTests.csproj" />
+  </Folder>
+</Solution>

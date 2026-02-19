@@ -1,0 +1,44 @@
+﻿# Build outputs
+[Bb]in/
+[Oo]bj/
+out/
+artifacts/
+
+# Visual Studio / VS Code / Rider
+.vs/
+.vscode/
+.idea/
+*.sln.iml
+
+# User-specific files
+*.user
+*.rsuser
+*.suo
+*.userosscache
+*.sln.docstates
+
+# .NET and NuGet artifacts
+*.nupkg
+*.snupkg
+*.cache
+project.lock.json
+project.fragment.lock.json
+
+# Test artifacts
+TestResults/
+*.trx
+*.coverage
+*.coveragexml
+
+# Logs
+*.log
+
+# Local-only config
+**/appsettings.Local.json
+**/appsettings.*.local.json
+secrets.json
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini

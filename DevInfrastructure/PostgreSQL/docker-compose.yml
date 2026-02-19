@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: flowchat-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: flowchat
+      POSTGRES_PASSWORD: flowchat_pw
+      POSTGRES_DB: flowchat_auth_db
+    volumes:
+      - flowchat_pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  flowchat_pgdata:

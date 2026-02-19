@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/FlowChat.AuthService.API/FlowChat.AuthService.API.csproj" />
+    <Project Path="src/FlowChat.AuthService.Application/FlowChat.AuthService.Application.csproj" />
+    <Project Path="src/FlowChat.AuthService.Domain/FlowChat.AuthService.Domain.csproj" />
+    <Project Path="src/FlowChat.AuthService.Infrastructure/FlowChat.AuthService.Infrastructure.csproj" />
+    <Project Path="src/FlowChat.AuthService.Persistence/FlowChat.AuthService.Persistence.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/FlowChat.AuthService.AATs/FlowChat.AuthService.AATs.csproj" />
+    <Project Path="tests/FlowChat.AuthService.UnitTests/FlowChat.AuthService.UnitTests.csproj" />
+  </Folder>
+</Solution>
