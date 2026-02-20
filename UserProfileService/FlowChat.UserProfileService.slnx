@@ -5,6 +5,7 @@
     <Project Path="src/FlowChat.UserProfileService.Domain/FlowChat.UserProfileService.Domain.csproj" />
     <Project Path="src/FlowChat.UserProfileService.Infrastructure/FlowChat.UserProfileService.Infrastructure.csproj" />
     <Project Path="src/FlowChat.UserProfileService.Persistence/FlowChat.UserProfileService.Persistence.csproj" />
+    <Project Path="src/FlowChat.UserProfileService.Worker/FlowChat.UserProfileService.Worker.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/FlowChat.UserProfileService.AATs/FlowChat.UserProfileService.AATs.csproj" />
