@@ -22,7 +22,7 @@ public static class StartupExtensions
                 policy => policy.WithOrigins([builder.Configuration["ApiUrl"] ?? "https://localhost:5000",
                     builder.Configuration["BlazorUrl"] ?? "https://localhost:5010"])
         .AllowAnyMethod()
-        .SetIsOriginAllowed(pol => true)
+        .SetIsOriginAllowed(pol => true) // DevNote To be removed whe UI address established
         .AllowAnyHeader()
         .AllowCredentials()));
 

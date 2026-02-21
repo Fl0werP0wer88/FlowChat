@@ -1,0 +1,14 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/FlowChat.SocialGraphService.API/FlowChat.SocialGraphService.API.csproj" />
+    <Project Path="src/FlowChat.SocialGraphService.Application/FlowChat.SocialGraphService.Application.csproj" />
+    <Project Path="src/FlowChat.SocialGraphService.Domain/FlowChat.SocialGraphService.Domain.csproj" />
+    <Project Path="src/FlowChat.SocialGraphService.Infrastructure/FlowChat.SocialGraphService.Infrastructure.csproj" />
+    <Project Path="src/FlowChat.SocialGraphService.Persistence/FlowChat.SocialGraphService.Persistence.csproj" />
+    <Project Path="src/FlowChat.SocialGraphService.Worker/FlowChat.SocialGraphService.Worker.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/FlowChat.SocialGraphService.AATs/FlowChat.SocialGraphService.AATs.csproj" />
+    <Project Path="tests/FlowChat.SocialGraphService.UnitTests/FlowChat.SocialGraphService.UnitTests.csproj" />
+  </Folder>
+</Solution>

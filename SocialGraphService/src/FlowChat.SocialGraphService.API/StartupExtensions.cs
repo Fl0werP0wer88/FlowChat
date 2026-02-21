@@ -1,10 +1,10 @@
-﻿using FlowChat.UserProfileService.Application;
-using FlowChat.UserProfileService.Infrastructure;
-using FlowChat.UserProfileService.Persistence;
+using FlowChat.SocialGraphService.Application;
+using FlowChat.SocialGraphService.Infrastructure;
+using FlowChat.SocialGraphService.Persistence;
 using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
 
-namespace FlowChat.UserProfileService.Api;
+namespace FlowChat.SocialGraphService.Api;
 
 public static class StartupExtensions
 {

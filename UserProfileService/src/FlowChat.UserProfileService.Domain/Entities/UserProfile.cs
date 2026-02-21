@@ -11,7 +11,4 @@ public class UserProfile : AuditableEntity
     public string? Bio { get; set; }
     public bool IsActive { get; set; } = true;
     public DateTime? LastSeenAtUtc { get; set; }
-
-    public ICollection<Contact> SentContacts { get; set; } = [];
-    public ICollection<Contact> ReceivedContacts { get; set; } = [];
 }

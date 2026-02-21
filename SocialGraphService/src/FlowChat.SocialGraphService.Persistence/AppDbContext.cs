@@ -1,8 +1,8 @@
-﻿using FlowChat.UserProfileService.Domain.Entities;
-using FlowChat.UserProfileService.Domain.Common;
+using FlowChat.SocialGraphService.Domain.Entities;
+using FlowChat.SocialGraphService.Domain.Common;
 using Microsoft.EntityFrameworkCore;
 
-namespace FlowChat.UserProfileService.Persistence;
+namespace FlowChat.SocialGraphService.Persistence;
 
 public class AppDbContext : DbContext
 {
@@ -11,7 +11,7 @@ public class AppDbContext : DbContext
     {
     }
 
-    public DbSet<UserProfile> UserProfiles { get; set; }
+    public DbSet<Contact> Contacts { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

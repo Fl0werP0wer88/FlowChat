@@ -1,10 +1,10 @@
-using FlowChat.UserProfileService.Application.Contracts.Persistence;
-using FlowChat.UserProfileService.Persistence.Repositories;
+using FlowChat.SocialGraphService.Application.Contracts.Persistence;
+using FlowChat.SocialGraphService.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace FlowChat.UserProfileService.Persistence;
+namespace FlowChat.SocialGraphService.Persistence;
 
 public static class PersistenceServiceRegistration
 {
@@ -13,10 +13,10 @@ public static class PersistenceServiceRegistration
         IConfiguration configuration)
     {
         services.AddDbContext<AppDbContext>(options =>
-            options.UseNpgsql(configuration.GetConnectionString("UserProfileDb")));
+            options.UseNpgsql(configuration.GetConnectionString("SocialGraphDb")));
 
         services.AddScoped(typeof(IAsyncRepository<>), typeof(RepositoryBase<>));
-        services.AddScoped<IUserProfileRepository, UserProfileRepository>();
+        services.AddScoped<IContactRepository, ContactRepository>();
 
         return services;
     }

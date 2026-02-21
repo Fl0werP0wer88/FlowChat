@@ -35,4 +35,16 @@
     <Project Path="UserProfileService/tests/FlowChat.UserProfileService.AATs/FlowChat.UserProfileService.AATs.csproj" />
     <Project Path="UserProfileService/tests/FlowChat.UserProfileService.UnitTests/FlowChat.UserProfileService.UnitTests.csproj" />
   </Folder>
+  <Folder Name="/SocialGraphService/" />
+  <Folder Name="/SocialGraphService/src/">
+    <Project Path="SocialGraphService/src/FlowChat.SocialGraphService.API/FlowChat.SocialGraphService.API.csproj" />
+    <Project Path="SocialGraphService/src/FlowChat.SocialGraphService.Application/FlowChat.SocialGraphService.Application.csproj" />
+    <Project Path="SocialGraphService/src/FlowChat.SocialGraphService.Domain/FlowChat.SocialGraphService.Domain.csproj" />
+    <Project Path="SocialGraphService/src/FlowChat.SocialGraphService.Infrastructure/FlowChat.SocialGraphService.Infrastructure.csproj" />
+    <Project Path="SocialGraphService/src/FlowChat.SocialGraphService.Persistence/FlowChat.SocialGraphService.Persistence.csproj" />
+  </Folder>
+  <Folder Name="/SocialGraphService/tests/">
+    <Project Path="SocialGraphService/tests/FlowChat.SocialGraphService.AATs/FlowChat.SocialGraphService.AATs.csproj" />
+    <Project Path="SocialGraphService/tests/FlowChat.SocialGraphService.UnitTests/FlowChat.SocialGraphService.UnitTests.csproj" />
+  </Folder>
 </Solution>

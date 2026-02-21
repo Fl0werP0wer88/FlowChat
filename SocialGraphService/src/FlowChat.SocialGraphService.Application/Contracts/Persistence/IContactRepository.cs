@@ -1,17 +1,14 @@
-using FlowChat.UserProfileService.Domain.Entities;
-using FlowChat.UserProfileService.Domain.Enums;
+using FlowChat.SocialGraphService.Domain.Entities;
+using FlowChat.SocialGraphService.Domain.Enums;
 
-namespace FlowChat.UserProfileService.Application.Contracts.Persistence;
+namespace FlowChat.SocialGraphService.Application.Contracts.Persistence;
 
 public interface IContactRepository : IAsyncRepository<Contact>
 {
     Task<Contact?> GetWithUsersAsync(Guid id, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<Contact>> GetForUserAsync(
         Guid userId,
-        ContactStatus? status = null,
-        CancellationToken cancellationToken = default);
-    Task<IReadOnlyList<Contact>> GetIncomingPendingAsync(
-        Guid userId,
+        InvitationStatus? status = null,
         CancellationToken cancellationToken = default);
     Task<bool> RelationshipExistsAsync(
         Guid userAId,
