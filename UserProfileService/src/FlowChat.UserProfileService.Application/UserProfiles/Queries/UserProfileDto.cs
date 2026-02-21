@@ -1,0 +1,10 @@
+namespace FlowChat.UserProfileService.Application.UserProfiles.Queries;
+
+public sealed record UserProfileDto(
+    Guid Id,
+    string UserName,
+    string DisplayName,
+    string? AvatarUrl,
+    string? Bio,
+    bool IsActive,
+    DateTime? LastSeenAtUtc);

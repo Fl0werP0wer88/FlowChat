@@ -9,7 +9,6 @@ public static class ApplicationServiceRegistration
     {
         var applicationAssembly = typeof(ApplicationServiceRegistration).Assembly;
 
-        services.AddAutoMapper((Action<AutoMapper.IMapperConfigurationExpression>?)null, applicationAssembly);
         services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(applicationAssembly));
 
         return services;
@@ -19,7 +18,6 @@ public static class ApplicationServiceRegistration
     {
         var consumerAssembly = typeof(CreateInitialUserProfileCommandHandler).Assembly;
 
-        services.AddAutoMapper((Action<AutoMapper.IMapperConfigurationExpression>?)null, consumerAssembly);
         services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(consumerAssembly));
 
         return services;
