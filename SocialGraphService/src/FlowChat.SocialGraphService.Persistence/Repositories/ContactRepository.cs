@@ -32,8 +32,8 @@ public class ContactRepository : RepositoryBase<Contact>, IContactRepository
             query = status.Value switch
             {
                 InvitationStatus.Accepted => query.Where(x => !x.IsBlocked),
-                InvitationStatus.Blocked => query.Where(x => x.IsBlocked),
-                _ => query.Where(_ => false)
+                // InvitationStatus.Canceled => query.Where(x => x.IsBlocked),
+                _ => query
             };
         }
 
