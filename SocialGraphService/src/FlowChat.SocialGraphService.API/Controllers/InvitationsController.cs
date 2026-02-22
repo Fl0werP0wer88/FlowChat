@@ -1,6 +1,7 @@
 using FlowChat.SocialGraphService.Application.Invitations;
 using FlowChat.SocialGraphService.Application.Invitations.Commands;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FlowChat.SocialGraphService.Api.Controllers;
@@ -17,9 +18,11 @@ public sealed class InvitationsController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize]
     [ProducesResponseType(typeof(InvitationDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Send(
         [FromBody] SendInvitationRequest request,
         CancellationToken cancellationToken)
