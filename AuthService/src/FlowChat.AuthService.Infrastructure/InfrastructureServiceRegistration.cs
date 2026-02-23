@@ -1,4 +1,5 @@
 using FlowChat.AuthService.Application.Contracts.Infrastructure;
+using FlowChat.AuthService.Application.Models;
 using FlowChat.AuthService.Infrastructure.Kafka;
 using FlowChat.AuthService.Infrastructure.Services;
 using Microsoft.Extensions.Configuration;
@@ -22,7 +23,9 @@ public static class InfrastructureServiceRegistration
         services.AddScoped<ITokenEncoder, Base64UrlTokenEncoder>();
         services.AddScoped<IConfirmationLinkBuilder, ConfirmationLinkBuilder>();
         services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
-        services.AddSingleton<IUserCreatedEventPublisher, KafkaUserCreatedEventPublisher>();
+        services.AddSingleton<
+            IKafkaEventPublisher<UserCreatedEvent>,
+            KafkaEventPublisher<UserCreatedEvent, UserCreatedProducerOptions>>();
 
         return services;
     }
