@@ -11,7 +11,7 @@ public static class StartupExtensions
         builder.Services
         .AddApplicationServices()
         .AddInfrastructureServices(builder.Configuration)
-        .AddPersistenceServices(builder.Configuration)
+        .AddAPIPersistenceServices(builder.Configuration)
         .AddAPIServices(builder.Configuration);
 
 

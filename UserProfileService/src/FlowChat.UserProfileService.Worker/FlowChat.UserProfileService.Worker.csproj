@@ -4,6 +4,7 @@
     <ProjectReference Include="..\FlowChat.UserProfileService.Application\FlowChat.UserProfileService.Application.csproj" />
     <ProjectReference Include="..\FlowChat.UserProfileService.Infrastructure\FlowChat.UserProfileService.Infrastructure.csproj" />
     <ProjectReference Include="..\FlowChat.UserProfileService.Persistence\FlowChat.UserProfileService.Persistence.csproj" />
+    <ProjectReference Include="..\..\..\Common\src\FlowChat.Messaging.Contracts\FlowChat.Messaging.Contracts.csproj" />
   </ItemGroup>
 
   <PropertyGroup>

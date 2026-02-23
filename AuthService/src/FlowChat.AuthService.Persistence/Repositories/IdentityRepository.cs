@@ -21,10 +21,13 @@ public class IdentityRepository : IIdentityRepository
 
         var user = new AppUser
         {
+            Id = Guid.NewGuid(),
             UserName = command.UserName,
             Email = command.Email,
             EmailConfirmed = false,
         };
+
+        user.AddUserCreatedDomainEvent();
 
         var result = await _userManager.CreateAsync(user, command.Password);
         if (!result.Succeeded)

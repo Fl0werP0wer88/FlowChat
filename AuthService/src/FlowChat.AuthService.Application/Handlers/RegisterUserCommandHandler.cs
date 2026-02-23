@@ -1,8 +1,8 @@
 using FlowChat.AuthService.Application.Commands;
 using FlowChat.AuthService.Application.Contracts.Infrastructure;
 using FlowChat.AuthService.Application.Contracts.Persistence;
-using FlowChat.AuthService.Application.Models;
 using FlowChat.AuthService.Application.Responses;
+using FlowChat.Messaging.Contracts.AuthService.Events;
 using MediatR;
 
 namespace FlowChat.AuthService.Application.Handlers;
@@ -38,8 +38,10 @@ public class RegisterUserCommandHandler : IRequestHandler<RegisterUserCommand, R
         await _userCreatedEventPublisher.PublishAsync(new UserCreatedEvent
         {
             UserId = guid,
+            Email = request.Email,
             UserName = request.UserName,
-            DisplayName = request.UserName
+            DisplayName = request.UserName,
+
         }, cancellationToken);
 
         var confirmationToken = await _identityRepository.GenerateEmailConfirmationTokenAsync(guid, cancellationToken);

@@ -1,4 +1,4 @@
-using FlowChat.AuthService.Application.Models;
+using FlowChat.Messaging.Contracts.AuthService.Events;
 
 namespace FlowChat.AuthService.Application.Contracts.Infrastructure;
 

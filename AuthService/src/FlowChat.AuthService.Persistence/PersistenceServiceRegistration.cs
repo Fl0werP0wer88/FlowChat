@@ -1,21 +1,42 @@
-﻿using Microsoft.EntityFrameworkCore;
+using FlowChat.AuthService.Application.Contracts.Infrastructure;
+using FlowChat.AuthService.Application.Contracts.Persistence;
+using FlowChat.AuthService.Persistence.Outbox;
+using FlowChat.AuthService.Persistence.Repositories;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using FlowChat.AuthService.Application.Contracts.Persistence;
-using FlowChat.AuthService.Persistence.Repositories;
 
 namespace FlowChat.AuthService.Persistence;
 
 public static class PersistenceServiceRegistration
 {
-    public static IServiceCollection AddPersistenceServices(
+    public static IServiceCollection AddAPIPersistenceServices(
                             this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddDbContext<AppDbContext>(options =>
-            options.UseNpgsql(configuration.GetConnectionString("AuthDb")));
+        services.AddOptions<UserCreatedProducerOptions>();
+        services.AddScoped<InsertOutboxMessagesInterceptor>();
+
+        services.AddDbContext<AppDbContext>((serviceProvider, options) =>
+        {
+            options.UseNpgsql(configuration.GetConnectionString("AuthDb"));
+            options.AddInterceptors(serviceProvider.GetRequiredService<InsertOutboxMessagesInterceptor>());
+        });
+
         services.AddScoped<IIdentityRepository, IdentityRepository>();
 
         return services;
     }
-}
 
+    public static IServiceCollection AddWorkerPersistenceServices(
+                            this IServiceCollection services, IConfiguration configuration)
+    {
+        services.AddScoped<InsertOutboxMessagesInterceptor>();
+        services.AddDbContext<AppDbContext>((serviceProvider, options) =>
+        {
+            options.UseNpgsql(configuration.GetConnectionString("AuthDb"));
+            options.AddInterceptors(serviceProvider.GetRequiredService<InsertOutboxMessagesInterceptor>());
+        });
+
+        return services;
+    }
+}

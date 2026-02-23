@@ -1,10 +1,8 @@
 using System.Text.Json;
 using Confluent.Kafka;
+using FlowChat.Messaging.Contracts.AuthService.Events;
 using FlowChat.UserProfileService.Application.UserProfiles.Commands;
 using MediatR;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace FlowChat.UserProfileService.Worker.Kafka;
@@ -74,7 +72,6 @@ public sealed class UserCreatedKafkaConsumerService : BackgroundService
         ConsumeResult<string, string> consumeResult,
         CancellationToken cancellationToken)
     {
-        var key = consumeResult.Message.Key;
         var messageValue = consumeResult.Message.Value;
 
         UserCreatedEvent? message;
@@ -140,8 +137,8 @@ public sealed class UserCreatedKafkaConsumerService : BackgroundService
                 new CreateInitialUserProfileCommand(
                     userName,
                     displayName,
-                    message.AvatarUrl,
-                    message.Bio,
+                    null,
+                    null,
                     userId.Value),
                 cancellationToken);
         }
@@ -162,11 +159,11 @@ public sealed class UserCreatedKafkaConsumerService : BackgroundService
             : AutoOffsetReset.Earliest;
     }
 
-    private static Guid? ResolveUserId(Guid? payloadUserId, string? key)
+    private static Guid? ResolveUserId(Guid payloadUserId, string? key)
     {
-        if (payloadUserId.HasValue && payloadUserId != Guid.Empty)
+        if (payloadUserId != Guid.Empty)
         {
-            return payloadUserId.Value;
+            return payloadUserId;
         }
 
         return Guid.TryParse(key, out var keyAsGuid)
@@ -189,15 +186,5 @@ public sealed class UserCreatedKafkaConsumerService : BackgroundService
             ? userName
             : fullName;
     }
-
-    private sealed class UserCreatedEvent
-    {
-        public Guid? UserId { get; init; }
-        public string? UserName { get; init; }
-        public string? DisplayName { get; init; }
-        public string? FirstName { get; init; }
-        public string? LastName { get; init; }
-        public string? AvatarUrl { get; init; }
-        public string? Bio { get; init; }
-    }
 }
+
