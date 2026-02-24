@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk.Worker">
   <ItemGroup>
     <ProjectReference Include="..\FlowChat.AuthService.Persistence\FlowChat.AuthService.Persistence.csproj" />
+    <ProjectReference Include="..\..\..\Common\src\FlowChat.Messaging.Runtime\FlowChat.Messaging.Runtime.csproj" />
   </ItemGroup>
 
   <ItemGroup>

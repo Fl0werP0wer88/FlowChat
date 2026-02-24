@@ -1,6 +1,6 @@
-namespace FlowChat.AuthService.Worker.Outbox;
+namespace FlowChat.Messaging.Runtime.Kafka.GenericProducer;
 
-public sealed class OutboxPublisherOptions
+public sealed class OutboxPublisherRuntimeOptions
 {
     public const string SectionName = "OutboxPublisher";
 

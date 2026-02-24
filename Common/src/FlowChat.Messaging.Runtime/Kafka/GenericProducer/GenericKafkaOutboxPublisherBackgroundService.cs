@@ -1,35 +1,50 @@
 using System.Text;
 using System.Text.Json;
 using Confluent.Kafka;
-using FlowChat.AuthService.Persistence;
-using FlowChat.AuthService.Persistence.Outbox;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace FlowChat.AuthService.Worker.Outbox;
+namespace FlowChat.Messaging.Runtime.Kafka.GenericProducer;
 
-public sealed class OutboxPublisherWorker : BackgroundService
+public sealed class GenericKafkaOutboxPublisherBackgroundService<TDbContext, TOutboxMessage> : BackgroundService
+    where TDbContext : DbContext
+    where TOutboxMessage : class, IOutboxMessage
 {
-    private readonly IServiceScopeFactory _serviceScopeFactory;
+    private readonly IServiceScopeFactory _scopeFactory;
     private readonly IProducer<string, string> _producer;
-    private readonly IOptions<OutboxPublisherOptions> _options;
-    private readonly ILogger<OutboxPublisherWorker> _logger;
+    private readonly OutboxPublisherRuntimeOptions _options;
+    private readonly HashSet<string> _allowedTopics;
+    private readonly ILogger<GenericKafkaOutboxPublisherBackgroundService<TDbContext, TOutboxMessage>> _logger;
 
-    public OutboxPublisherWorker(
-        IServiceScopeFactory serviceScopeFactory,
+    public GenericKafkaOutboxPublisherBackgroundService(
+        IServiceScopeFactory scopeFactory,
         IProducer<string, string> producer,
-        IOptions<OutboxPublisherOptions> options,
-        ILogger<OutboxPublisherWorker> logger)
+        IOptions<OutboxPublisherRuntimeOptions> options,
+        IEnumerable<OutboxTopicRegistration> topicRegistrations,
+        ILogger<GenericKafkaOutboxPublisherBackgroundService<TDbContext, TOutboxMessage>> logger)
     {
-        _serviceScopeFactory = serviceScopeFactory;
+        _scopeFactory = scopeFactory;
         _producer = producer;
-        _options = options;
+        _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
         _logger = logger;
+
+        _allowedTopics = topicRegistrations
+            .Select(t => t.Topic)
+            .Where(t => !string.IsNullOrWhiteSpace(t))
+            .ToHashSet(StringComparer.Ordinal);
+
+        if (_allowedTopics.Count == 0)
+        {
+            throw new InvalidOperationException("No outbox topics have been registered.");
+        }
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        _logger.LogInformation("Outbox publisher worker started.");
+        _logger.LogInformation("Generic outbox publisher worker started.");
 
         while (!stoppingToken.IsCancellationRequested)
         {
@@ -38,7 +53,7 @@ public sealed class OutboxPublisherWorker : BackgroundService
                 var processed = await ProcessBatchAsync(stoppingToken);
                 if (processed == 0)
                 {
-                    await Task.Delay(TimeSpan.FromSeconds(_options.Value.PollIntervalSeconds), stoppingToken);
+                    await Task.Delay(TimeSpan.FromSeconds(_options.PollIntervalSeconds), stoppingToken);
                 }
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
@@ -48,7 +63,7 @@ public sealed class OutboxPublisherWorker : BackgroundService
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Unexpected error while processing outbox messages.");
-                await Task.Delay(TimeSpan.FromSeconds(_options.Value.PollIntervalSeconds), stoppingToken);
+                await Task.Delay(TimeSpan.FromSeconds(_options.PollIntervalSeconds), stoppingToken);
             }
         }
     }
@@ -61,15 +76,16 @@ public sealed class OutboxPublisherWorker : BackgroundService
 
     private async Task<int> ProcessBatchAsync(CancellationToken cancellationToken)
     {
-        using var scope = _serviceScopeFactory.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        await using var scope = _scopeFactory.CreateAsyncScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<TDbContext>();
 
         var now = DateTime.UtcNow;
-        var batchSize = Math.Max(1, _options.Value.BatchSize);
+        var batchSize = Math.Max(1, _options.BatchSize);
 
-        var messages = await dbContext.OutboxMessages
+        var messages = await dbContext.Set<TOutboxMessage>()
             .Where(message => message.ProcessedOnUtc == null)
             .Where(message => message.NextRetryOnUtc == null || message.NextRetryOnUtc <= now)
+            .Where(message => _allowedTopics.Contains(message.Topic))
             .OrderBy(message => message.OccurredOnUtc)
             .Take(batchSize)
             .ToListAsync(cancellationToken);
@@ -88,7 +104,7 @@ public sealed class OutboxPublisherWorker : BackgroundService
         return messages.Count;
     }
 
-    private async Task PublishMessageAsync(OutboxMessage message, CancellationToken cancellationToken)
+    private async Task PublishMessageAsync(TOutboxMessage message, CancellationToken cancellationToken)
     {
         try
         {
@@ -158,8 +174,8 @@ public sealed class OutboxPublisherWorker : BackgroundService
 
     private int CalculateRetryDelaySeconds(int retryCount)
     {
-        var baseDelay = Math.Max(1, _options.Value.RetryBaseDelaySeconds);
-        var maxDelay = Math.Max(baseDelay, _options.Value.MaxRetryDelaySeconds);
+        var baseDelay = Math.Max(1, _options.RetryBaseDelaySeconds);
+        var maxDelay = Math.Max(baseDelay, _options.MaxRetryDelaySeconds);
 
         var exponentialDelay = baseDelay * Math.Pow(2, Math.Min(retryCount, 8));
         return (int)Math.Min(maxDelay, exponentialDelay);
