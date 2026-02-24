@@ -1,4 +1,3 @@
-using FlowChat.AuthService.Domain.Common;
 using FlowChat.AuthService.Persistence.Identity;
 using FlowChat.AuthService.Persistence.Outbox;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -53,23 +52,5 @@ public class AppDbContext : IdentityDbContext<AppUser, AppRole, Guid>
             builder.HasIndex(message => message.OccurredOnUtc);
             builder.HasIndex(message => message.Topic);
         });
-    }
-
-    public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = new CancellationToken())
-    {
-        foreach (var entry in ChangeTracker.Entries<AuditableEntity>())
-        {
-            switch (entry.State)
-            {
-                case EntityState.Added:
-                    entry.Entity.CreatedDate = DateTime.UtcNow;
-                    break;
-                case EntityState.Modified:
-                    entry.Entity.LastModifiedDate = DateTime.UtcNow;
-                    break;
-            }
-        }
-
-        return base.SaveChangesAsync(cancellationToken);
     }
 }
