@@ -138,13 +138,13 @@ Wait-ForKafkaReady -containerId $containerId -timeoutSeconds 120
 
 $topics = @(
   @{
-    name = "flowchat.identity.user.created.v1"
+    name = "dev.flowchat.identity.user.v1"
     partitions = 3
     rf = 1
     config = @{ "cleanup.policy" = "compact" }
   },
   @{
-    name = "flowchat.identity.user.created.v1.retry"
+    name = "dev.flowchat.identity.user.v1.retry"
     partitions = 3
     rf = 1
     config = @{
@@ -153,7 +153,7 @@ $topics = @(
     }
   },
   @{
-    name = "flowchat.identity.user.created.v1.dlq"
+    name = "dev.flowchat.identity.user.v1.dlq"
     partitions = 3
     rf = 1
     config = @{

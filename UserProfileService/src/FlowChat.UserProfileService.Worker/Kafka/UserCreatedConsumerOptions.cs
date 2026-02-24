@@ -6,9 +6,9 @@ public sealed class UserCreatedConsumerOptions
 
     public string BootstrapServers { get; set; } = "localhost:9092";
     public string GroupId { get; set; } = "userprofile-service";
-    public string Topic { get; set; } = "flowchat.identity.user.created.v1";
-    public string RetryTopic { get; set; } = "flowchat.identity.user.created.v1.retry";
-    public string DeadLetterTopic { get; set; } = "flowchat.identity.user.created.v1.dlt";
+    public string Topic { get; set; } = "dev.flowchat.identity.user.v1";
+    public string RetryTopic { get; set; } = "dev.flowchat.identity.user.v1.retry";
+    public string DeadLetterTopic { get; set; } = "dev.flowchat.identity.user.v1.dlt";
     public int MaxRetryCount { get; set; } = 5;
     public string AutoOffsetReset { get; set; } = "Earliest";
 }
