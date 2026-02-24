@@ -13,7 +13,7 @@ public class RegisterUserCommandHandler : IRequestHandler<RegisterUserCommand, R
     private readonly ITokenEncoder _tokenEncoder;
     private readonly IConfirmationLinkBuilder _confirmationLinkBuilder;
     private readonly IEmailService _emailService;
-    private readonly IKafkaEventPublisher<UserCreatedIntegrationEvent> _userCreatedEventPublisher;
+
     private const string EMAIL_TOPIC = "Potwierdzenie rejestracji na FlowChat";
     private const string EMAIL_BODY = "Aby potwierdzić rejestracjie klikniji w link: ";
     private const string EMAIL_FOOTER = "Pozdrawiam Piotr Kwiatkowski";
@@ -22,28 +22,17 @@ public class RegisterUserCommandHandler : IRequestHandler<RegisterUserCommand, R
         IIdentityRepository identityRepository,
         ITokenEncoder tokenEncoder,
         IConfirmationLinkBuilder confirmationLinkBuilder,
-        IEmailService emailService,
-        IKafkaEventPublisher<UserCreatedIntegrationEvent> userCreatedEventPublisher)
+        IEmailService emailService)
     {
         _identityRepository = identityRepository;
         _tokenEncoder = tokenEncoder;
         _confirmationLinkBuilder = confirmationLinkBuilder;
         _emailService = emailService;
-        _userCreatedEventPublisher = userCreatedEventPublisher;
     }
 
     public async Task<RegisterUserCommandResponse> Handle(RegisterUserCommand request, CancellationToken cancellationToken)
     {
         var guid = await _identityRepository.CreateUserAsync(request, cancellationToken);
-        await _userCreatedEventPublisher.PublishAsync(new UserCreatedIntegrationEvent
-        {
-            UserId = guid,
-            Email = request.Email,
-            UserName = request.UserName,
-            DisplayName = request.UserName,
-
-        }, cancellationToken);
-
         var confirmationToken = await _identityRepository.GenerateEmailConfirmationTokenAsync(guid, cancellationToken);
         var encodedToken = _tokenEncoder.EncodeForUrl(confirmationToken);
         var confirmationLink = _confirmationLinkBuilder.BuildEmailConfirmationLink(guid, encodedToken);

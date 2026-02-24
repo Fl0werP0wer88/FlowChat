@@ -21,7 +21,7 @@ public class AppUser : IdentityUser<Guid>, IHasDomainEvents
     public void AddUserCreatedDomainEvent()
     {
         var userName = UserName ?? string.Empty;
-        AddDomainEvent(new UserCreatedDomainEvent(Id, userName, userName, NormalizedEmail ?? string.Empty));
+        AddDomainEvent(new UserCreatedDomainEvent(Id, userName, userName, Email ?? string.Empty));
     }
 
     public void ClearDomainEvents()
