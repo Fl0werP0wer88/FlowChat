@@ -1,5 +1,6 @@
 using FlowChat.AuthService.Application.Contracts.Infrastructure;
 using FlowChat.AuthService.Application.Contracts.Persistence;
+using FlowChat.AuthService.Persistence.Auditing;
 using FlowChat.AuthService.Persistence.Outbox;
 using FlowChat.AuthService.Persistence.UnitOfWork;
 using FlowChat.Messaging.Contracts.AuthService.Events;
@@ -17,6 +18,7 @@ public static class PersistenceServiceRegistration
     {
         services.AddOptions<UserCreatedProducerOptions>();
         services.AddOptions<UserEmailVerificationRequestedOutboxOptions>();
+        services.AddScoped<AuditableEntitySaveChangesInterceptor>();
         services.AddScoped<InsertOutboxMessagesInterceptor>();
         services.AddScoped<IUnitOfWork, AppDbContextUnitOfWork>();
         services.AddScoped<
@@ -26,7 +28,9 @@ public static class PersistenceServiceRegistration
         services.AddDbContext<AppDbContext>((serviceProvider, options) =>
         {
             options.UseNpgsql(configuration.GetConnectionString("AuthDb"));
-            options.AddInterceptors(serviceProvider.GetRequiredService<InsertOutboxMessagesInterceptor>());
+            options.AddInterceptors(
+                serviceProvider.GetRequiredService<AuditableEntitySaveChangesInterceptor>(),
+                serviceProvider.GetRequiredService<InsertOutboxMessagesInterceptor>());
         });
 
         services.AddScoped<IIdentityRepository, IdentityRepository>();
@@ -37,11 +41,14 @@ public static class PersistenceServiceRegistration
     public static IServiceCollection AddWorkerPersistenceServices(
                             this IServiceCollection services, IConfiguration configuration)
     {
+        services.AddScoped<AuditableEntitySaveChangesInterceptor>();
         services.AddScoped<InsertOutboxMessagesInterceptor>();
         services.AddDbContext<AppDbContext>((serviceProvider, options) =>
         {
             options.UseNpgsql(configuration.GetConnectionString("AuthDb"));
-            options.AddInterceptors(serviceProvider.GetRequiredService<InsertOutboxMessagesInterceptor>());
+            options.AddInterceptors(
+                serviceProvider.GetRequiredService<AuditableEntitySaveChangesInterceptor>(),
+                serviceProvider.GetRequiredService<InsertOutboxMessagesInterceptor>());
         });
 
         return services;
