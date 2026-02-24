@@ -13,7 +13,7 @@ public class RegisterUserCommandHandler : IRequestHandler<RegisterUserCommand, R
     private readonly ITokenEncoder _tokenEncoder;
     private readonly IConfirmationLinkBuilder _confirmationLinkBuilder;
     private readonly IEmailService _emailService;
-    private readonly IKafkaEventPublisher<UserCreatedEvent> _userCreatedEventPublisher;
+    private readonly IKafkaEventPublisher<UserCreatedIntegrationEvent> _userCreatedEventPublisher;
     private const string EMAIL_TOPIC = "Potwierdzenie rejestracji na FlowChat";
     private const string EMAIL_BODY = "Aby potwierdzić rejestracjie klikniji w link: ";
     private const string EMAIL_FOOTER = "Pozdrawiam Piotr Kwiatkowski";
@@ -23,7 +23,7 @@ public class RegisterUserCommandHandler : IRequestHandler<RegisterUserCommand, R
         ITokenEncoder tokenEncoder,
         IConfirmationLinkBuilder confirmationLinkBuilder,
         IEmailService emailService,
-        IKafkaEventPublisher<UserCreatedEvent> userCreatedEventPublisher)
+        IKafkaEventPublisher<UserCreatedIntegrationEvent> userCreatedEventPublisher)
     {
         _identityRepository = identityRepository;
         _tokenEncoder = tokenEncoder;
@@ -35,7 +35,7 @@ public class RegisterUserCommandHandler : IRequestHandler<RegisterUserCommand, R
     public async Task<RegisterUserCommandResponse> Handle(RegisterUserCommand request, CancellationToken cancellationToken)
     {
         var guid = await _identityRepository.CreateUserAsync(request, cancellationToken);
-        await _userCreatedEventPublisher.PublishAsync(new UserCreatedEvent
+        await _userCreatedEventPublisher.PublishAsync(new UserCreatedIntegrationEvent
         {
             UserId = guid,
             Email = request.Email,

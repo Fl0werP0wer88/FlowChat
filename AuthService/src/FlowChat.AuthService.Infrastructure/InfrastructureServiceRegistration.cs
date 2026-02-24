@@ -24,8 +24,8 @@ public static class InfrastructureServiceRegistration
         services.AddScoped<IConfirmationLinkBuilder, ConfirmationLinkBuilder>();
         services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
         services.AddSingleton<
-            IKafkaEventPublisher<UserCreatedEvent>,
-            KafkaEventPublisher<UserCreatedEvent, UserCreatedProducerOptions>>();
+            IKafkaEventPublisher<UserCreatedIntegrationEvent>,
+            KafkaEventPublisher<UserCreatedIntegrationEvent, UserCreatedProducerOptions>>();
 
         return services;
     }

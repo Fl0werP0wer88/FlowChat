@@ -81,7 +81,7 @@ public sealed class InsertOutboxMessagesInterceptor : SaveChangesInterceptor
 
     private OutboxMessage CreateUserCreatedMessage(UserCreatedDomainEvent domainEvent)
     {
-        var integrationEvent = new UserCreatedEvent
+        var integrationEvent = new UserCreatedIntegrationEvent
         {
             UserId = domainEvent.UserId,
             UserName = domainEvent.UserName,
@@ -92,7 +92,7 @@ public sealed class InsertOutboxMessagesInterceptor : SaveChangesInterceptor
         return new OutboxMessage
         {
             Id = Guid.NewGuid(),
-            Type = typeof(UserCreatedEvent).FullName ?? nameof(UserCreatedEvent),
+            Type = typeof(UserCreatedIntegrationEvent).FullName ?? nameof(UserCreatedIntegrationEvent),
             Topic = _userCreatedProducerOptions.Topic,
             Key = domainEvent.UserId.ToString(),
             Content = JsonSerializer.Serialize(integrationEvent, JsonSerializerOptions),
