@@ -2,6 +2,7 @@ using FlowChat.AuthService.Application.Commands;
 using FlowChat.AuthService.Application.Contracts.Infrastructure;
 using FlowChat.AuthService.Application.Contracts.Persistence;
 using FlowChat.AuthService.Application.Responses;
+using FlowChat.AuthService.Domain.Entities;
 using FlowChat.Messaging.Contracts.AuthService.Events;
 using MediatR;
 
@@ -33,7 +34,12 @@ public class RegisterUserCommandHandler : IRequestHandler<RegisterUserCommand, R
     {
         return await _unitOfWork.ExecuteInTransactionAsync(async ct =>
         {
-            var guid = await _identityRepository.CreateUserAsync(request, ct);
+            var domainUser = UserEntity.Create(
+                Guid.NewGuid(),
+                request.UserName,
+                request.Email);
+
+            var guid = await _identityRepository.CreateUserAsync(domainUser, request.Password, ct);
             var confirmationToken = await _identityRepository.GenerateEmailConfirmationTokenAsync(guid, ct);
             var encodedToken = _tokenEncoder.EncodeForUrl(confirmationToken);
             var confirmationLink = _confirmationLinkBuilder.BuildEmailConfirmationLink(guid, encodedToken);

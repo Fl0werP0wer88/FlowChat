@@ -1,6 +1,5 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using FlowChat.AuthService.Domain.Common;
-using FlowChat.AuthService.Domain.Events;
 using Microsoft.AspNetCore.Identity;
 
 namespace FlowChat.AuthService.Persistence.Identity;
@@ -18,10 +17,14 @@ public class AppUser : IdentityUser<Guid>, IHasDomainEvents
         _domainEvents.Add(domainEvent);
     }
 
-    public void AddUserCreatedDomainEvent()
+    public void AddDomainEvents(IEnumerable<IDomainEvent> domainEvents)
     {
-        var userName = UserName ?? string.Empty;
-        AddDomainEvent(new UserCreatedDomainEvent(Id, userName, userName, Email ?? string.Empty));
+        ArgumentNullException.ThrowIfNull(domainEvents);
+
+        foreach (var domainEvent in domainEvents)
+        {
+            AddDomainEvent(domainEvent);
+        }
     }
 
     public void ClearDomainEvents()

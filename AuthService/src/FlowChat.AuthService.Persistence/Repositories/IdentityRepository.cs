@@ -1,6 +1,6 @@
-using FlowChat.AuthService.Application.Commands;
 using FlowChat.AuthService.Application.Models;
 using FlowChat.AuthService.Application.Contracts.Persistence;
+using FlowChat.AuthService.Domain.Entities;
 using FlowChat.AuthService.Persistence.Identity;
 using Microsoft.AspNetCore.Identity;
 
@@ -15,21 +15,15 @@ public class IdentityRepository : IIdentityRepository
         _userManager = userManager;
     }
 
-    public async Task<Guid> CreateUserAsync(RegisterUserCommand command, CancellationToken cancellationToken)
+    public async Task<Guid> CreateUserAsync(UserEntity domainUser, string password, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        var user = new AppUser
-        {
-            Id = Guid.NewGuid(),
-            UserName = command.UserName,
-            Email = command.Email,
-            EmailConfirmed = false,
-        };
+        ArgumentNullException.ThrowIfNull(domainUser);
 
-        user.AddUserCreatedDomainEvent();
+        var user = MapToIdentityUser(domainUser);
 
-        var result = await _userManager.CreateAsync(user, command.Password);
+        var result = await _userManager.CreateAsync(user, password);
         if (!result.Succeeded)
         {
             var errors = string.Join("; ", result.Errors.Select(e => $"{e.Code}: {e.Description}"));
@@ -37,6 +31,20 @@ public class IdentityRepository : IIdentityRepository
         }
 
         return user.Id;
+    }
+
+    private static AppUser MapToIdentityUser(UserEntity domainUser)
+    {
+        var user = new AppUser
+        {
+            Id = domainUser.Id,
+            UserName = domainUser.UserName,
+            Email = domainUser.Email,
+            EmailConfirmed = false
+        };
+
+        user.AddDomainEvents(domainUser.DomainEvents);
+        return user;
     }
 
     public async Task<string> GenerateEmailConfirmationTokenAsync(Guid userId, CancellationToken cancellationToken)
