@@ -17,7 +17,14 @@ public static class InfrastructureServiceRegistration
             kafkaProducerSection = configuration.GetSection(UserCreatedProducerOptions.FallbackSectionName);
         }
 
+        var userEmailVerificationRequestedOutboxSection = configuration.GetSection(UserEmailVerificationRequestedOutboxOptions.SectionName);
+        if (!userEmailVerificationRequestedOutboxSection.Exists())
+        {
+            userEmailVerificationRequestedOutboxSection = configuration.GetSection(UserEmailVerificationRequestedOutboxOptions.FallbackSectionName);
+        }
+
         services.Configure<UserCreatedProducerOptions>(kafkaProducerSection);
+        services.Configure<UserEmailVerificationRequestedOutboxOptions>(userEmailVerificationRequestedOutboxSection);
 
         services.AddScoped<IEmailService, EmailService>();
         services.AddScoped<ITokenEncoder, Base64UrlTokenEncoder>();
