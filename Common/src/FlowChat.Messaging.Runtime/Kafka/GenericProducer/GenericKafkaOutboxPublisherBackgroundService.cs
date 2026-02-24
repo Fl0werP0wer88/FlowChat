@@ -23,7 +23,6 @@ public sealed class GenericKafkaOutboxPublisherBackgroundService<TDbContext, TOu
         IServiceScopeFactory scopeFactory,
         IProducer<string, string> producer,
         IOptions<OutboxPublisherRuntimeOptions> options,
-        IEnumerable<OutboxTopicRegistration> topicRegistrations,
         ILogger<GenericKafkaOutboxPublisherBackgroundService<TDbContext, TOutboxMessage>> logger)
     {
         _scopeFactory = scopeFactory;
@@ -31,14 +30,14 @@ public sealed class GenericKafkaOutboxPublisherBackgroundService<TDbContext, TOu
         _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
         _logger = logger;
 
-        _allowedTopics = topicRegistrations
-            .Select(t => t.Topic)
+        _allowedTopics = _options.AllowedTopics
             .Where(t => !string.IsNullOrWhiteSpace(t))
+            .Distinct(StringComparer.Ordinal)
             .ToHashSet(StringComparer.Ordinal);
 
         if (_allowedTopics.Count == 0)
         {
-            throw new InvalidOperationException("No outbox topics have been registered.");
+            throw new InvalidOperationException("No outbox topics configured in OutboxPublisher:AllowedTopics.");
         }
     }
 

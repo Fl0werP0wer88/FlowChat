@@ -11,8 +11,6 @@ builder.Services.Configure<OutboxPublisherRuntimeOptions>(
 
 builder.Services.AddWorkerPersistenceServices(builder.Configuration);
 
-builder.Services.AddOutboxTopic("flowchat.identity.user.created.v1");
-
 builder.Services.AddSingleton<IProducer<string, string>>(serviceProvider =>
 {
     var options = serviceProvider.GetRequiredService<IOptions<OutboxPublisherRuntimeOptions>>().Value;
