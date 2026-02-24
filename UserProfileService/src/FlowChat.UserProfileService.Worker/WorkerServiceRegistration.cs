@@ -1,6 +1,6 @@
 using FlowChat.UserProfileService.Worker.Kafka;
 using FlowChat.Messaging.Contracts.AuthService.Events;
-using FlowChat.Messaging.Runtime.Kafka;
+using FlowChat.Messaging.Runtime.Kafka.GenericConsumer;
 using FlowChat.UserProfileService.Application.UserProfiles.Commands;
 using MediatR;
 using Microsoft.Extensions.Configuration;
@@ -123,4 +123,5 @@ public static class WorkerServiceRegistration
             : fullName;
     }
 }
+
 

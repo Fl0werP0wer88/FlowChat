@@ -1,4 +1,4 @@
-namespace FlowChat.Messaging.Runtime.Kafka;
+namespace FlowChat.Messaging.Runtime.Kafka.GenericConsumer;
 
 public sealed record MessageContext(
     string Topic,
@@ -8,3 +8,4 @@ public sealed record MessageContext(
     int RetryCount,
     string? OriginalTopic,
     IReadOnlyDictionary<string, string> Headers);
+

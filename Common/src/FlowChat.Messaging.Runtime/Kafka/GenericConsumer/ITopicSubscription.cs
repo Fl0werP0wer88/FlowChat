@@ -1,6 +1,6 @@
 using Confluent.Kafka;
 
-namespace FlowChat.Messaging.Runtime.Kafka;
+namespace FlowChat.Messaging.Runtime.Kafka.GenericConsumer;
 
 public interface ITopicSubscription
 {
@@ -15,3 +15,4 @@ public interface ITopicSubscription
         IServiceProvider scopedServiceProvider,
         CancellationToken cancellationToken);
 }
+

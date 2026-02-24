@@ -1,4 +1,4 @@
-namespace FlowChat.Messaging.Runtime.Kafka;
+namespace FlowChat.Messaging.Runtime.Kafka.GenericConsumer;
 
 public sealed class KafkaConsumerRuntimeOptions
 {
@@ -6,3 +6,4 @@ public sealed class KafkaConsumerRuntimeOptions
     public string GroupId { get; set; } = string.Empty;
     public string AutoOffsetReset { get; set; } = "Earliest";
 }
+

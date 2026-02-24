@@ -3,7 +3,7 @@ using System.Text;
 using System.Text.Json;
 using Confluent.Kafka;
 
-namespace FlowChat.Messaging.Runtime.Kafka;
+namespace FlowChat.Messaging.Runtime.Kafka.GenericConsumer;
 
 public sealed class TopicSubscription<TEvent> : ITopicSubscription
 {
@@ -124,3 +124,4 @@ public sealed class TopicSubscription<TEvent> : ITopicSubscription
             : 0;
     }
 }
+

@@ -1,4 +1,4 @@
-namespace FlowChat.Messaging.Runtime.Kafka;
+namespace FlowChat.Messaging.Runtime.Kafka.GenericConsumer;
 
 public enum MessageHandlingAction
 {
@@ -15,3 +15,4 @@ public readonly record struct MessageHandlingResult(MessageHandlingAction Action
     public static MessageHandlingResult Retry(string? error = null) => new(MessageHandlingAction.Retry, error);
     public static MessageHandlingResult DeadLetter(string? error = null) => new(MessageHandlingAction.DeadLetter, error);
 }
+
