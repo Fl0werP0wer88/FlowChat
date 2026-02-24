@@ -22,8 +22,8 @@ public static class PersistenceServiceRegistration
         services.AddScoped<InsertOutboxMessagesInterceptor>();
         services.AddScoped<IUnitOfWork, AppDbContextUnitOfWork>();
         services.AddScoped<
-            IOutboxRepository<UserEmailVerificationRequested>,
-            OutboxRepository<UserEmailVerificationRequested, UserEmailVerificationRequestedOutboxOptions>>();
+            IOutboxRepository<UserEmailVerificationRequestedIntegrationEvent>,
+            OutboxRepository<UserEmailVerificationRequestedIntegrationEvent, UserEmailVerificationRequestedOutboxOptions>>();
 
         services.AddDbContext<AppDbContext>((serviceProvider, options) =>
         {

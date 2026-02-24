@@ -13,14 +13,14 @@ public class RegisterUserCommandHandler : IRequestHandler<RegisterUserCommand, R
     private readonly IIdentityRepository _identityRepository;
     private readonly ITokenEncoder _tokenEncoder;
     private readonly IConfirmationLinkBuilder _confirmationLinkBuilder;
-    private readonly IOutboxRepository<UserEmailVerificationRequested> _outboxRepository;
+    private readonly IOutboxRepository<UserEmailVerificationRequestedIntegrationEvent> _outboxRepository;
     private readonly IUnitOfWork _unitOfWork;
 
     public RegisterUserCommandHandler(
         IIdentityRepository identityRepository,
         ITokenEncoder tokenEncoder,
         IConfirmationLinkBuilder confirmationLinkBuilder,
-        IOutboxRepository<UserEmailVerificationRequested> outboxRepository,
+        IOutboxRepository<UserEmailVerificationRequestedIntegrationEvent> outboxRepository,
         IUnitOfWork unitOfWork)
     {
         _identityRepository = identityRepository;
@@ -44,7 +44,7 @@ public class RegisterUserCommandHandler : IRequestHandler<RegisterUserCommand, R
             var encodedToken = _tokenEncoder.EncodeForUrl(confirmationToken);
             var confirmationLink = _confirmationLinkBuilder.BuildEmailConfirmationLink(guid, encodedToken);
 
-            await _outboxRepository.EnqueueAsync(new UserEmailVerificationRequested
+            await _outboxRepository.EnqueueAsync(new UserEmailVerificationRequestedIntegrationEvent
             {
                 UserId = guid,
                 UserEmail = request.Email,
