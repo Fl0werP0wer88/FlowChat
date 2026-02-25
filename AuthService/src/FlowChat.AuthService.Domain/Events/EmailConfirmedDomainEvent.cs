@@ -2,11 +2,9 @@ using FlowChat.AuthService.Domain.Common;
 
 namespace FlowChat.AuthService.Domain.Events;
 
-public sealed record UserCreatedDomainEvent(
+public sealed record EmailConfirmedDomainEvent(
     Guid UserId,
-    string UserName,
-    string DisplayName,
-    string Email) : IOutboxDomainEvent
+    string Email) : IDomainEvent
 {
     public DateTime OccurredOnUtc { get; init; } = DateTime.UtcNow;
 }

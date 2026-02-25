@@ -59,9 +59,9 @@ public sealed class InsertOutboxMessagesInterceptor : SaveChangesInterceptor
 
         foreach (var aggregate in aggregatesWithDomainEvents)
         {
-            foreach (var domainEvent in aggregate.DomainEvents)
+            foreach (var outboxEvent in aggregate.DomainEvents.OfType<IOutboxDomainEvent>())
             {
-                outboxMessages.Add(MapToOutboxMessage(domainEvent));
+                outboxMessages.Add(MapToOutboxMessage(outboxEvent));
             }
 
             aggregate.ClearDomainEvents();
@@ -70,12 +70,15 @@ public sealed class InsertOutboxMessagesInterceptor : SaveChangesInterceptor
         dbContext.Set<OutboxMessage>().AddRange(outboxMessages);
     }
 
-    private OutboxMessage MapToOutboxMessage(IDomainEvent domainEvent)
+    private OutboxMessage MapToOutboxMessage(IOutboxDomainEvent outboxEvent)
     {
-        return domainEvent switch
+        return outboxEvent switch
         {
             UserCreatedDomainEvent userCreatedDomainEvent => CreateUserCreatedMessage(userCreatedDomainEvent),
-            _ => throw new InvalidOperationException($"No outbox mapping found for domain event type '{domainEvent.GetType().Name}'.")
+            AccountConfirmedDomainEvent accountConfirmedDomainEvent => CreateUserConfirmedMessage(
+                accountConfirmedDomainEvent.UserId,
+                accountConfirmedDomainEvent.OccurredOnUtc),
+            _ => throw new InvalidOperationException($"No outbox mapping found for outbox event type '{outboxEvent.GetType().Name}'.")
         };
     }
 
@@ -97,6 +100,25 @@ public sealed class InsertOutboxMessagesInterceptor : SaveChangesInterceptor
             Key = domainEvent.UserId.ToString(),
             Content = JsonSerializer.Serialize(integrationEvent, JsonSerializerOptions),
             OccurredOnUtc = domainEvent.OccurredOnUtc,
+            RetryCount = 0
+        };
+    }
+
+    private OutboxMessage CreateUserConfirmedMessage(Guid userId, DateTime occurredOnUtc)
+    {
+        var integrationEvent = new UserConfirmedIntegrationEvent
+        {
+            UserId = userId
+        };
+
+        return new OutboxMessage
+        {
+            Id = Guid.NewGuid(),
+            Type = typeof(UserConfirmedIntegrationEvent).FullName ?? nameof(UserConfirmedIntegrationEvent),
+            Topic = _userCreatedProducerOptions.Topic,
+            Key = userId.ToString(),
+            Content = JsonSerializer.Serialize(integrationEvent, JsonSerializerOptions),
+            OccurredOnUtc = occurredOnUtc,
             RetryCount = 0
         };
     }

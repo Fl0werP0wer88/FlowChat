@@ -9,6 +9,8 @@ public sealed class UserEntity : DomainEntity
     public string UserName { get; }
     public string Email { get; }
     public string DisplayName { get; }
+    public bool EmailConfirmed { get; private set; }
+    public bool AccountConfirmed { get; private set; }
 
     private UserEntity(Guid id, string userName, string email, string displayName)
     {
@@ -16,6 +18,8 @@ public sealed class UserEntity : DomainEntity
         UserName = userName;
         Email = email;
         DisplayName = displayName;
+        EmailConfirmed = false;
+        AccountConfirmed = false;
     }
 
     public static UserEntity Create(Guid id, string userName, string email)
@@ -51,5 +55,20 @@ public sealed class UserEntity : DomainEntity
             user.Email));
 
         return user;
+    }
+
+    public void ConfirmEmail()
+    {
+        if (!EmailConfirmed)
+        {
+            EmailConfirmed = true;
+            AddDomainEvent(new EmailConfirmedDomainEvent(Id, Email));
+        }
+
+        if (!AccountConfirmed)
+        {
+            AccountConfirmed = true;
+            AddDomainEvent(new AccountConfirmedDomainEvent(Id));
+        }
     }
 }

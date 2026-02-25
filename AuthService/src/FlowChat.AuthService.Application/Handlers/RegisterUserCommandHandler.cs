@@ -34,11 +34,7 @@ public class RegisterUserCommandHandler : IRequestHandler<RegisterUserCommand, R
     {
         return await _unitOfWork.ExecuteInTransactionAsync(async ct =>
         {
-            var domainUser = UserEntity.Create(
-                Guid.NewGuid(),
-                request.UserName,
-                request.Email);
-
+            var domainUser =  UserEntity.Create(Guid.NewGuid(), request.UserName, request.Email);
             var guid = await _identityRepository.CreateUserAsync(domainUser, request.Password, ct);
             var confirmationToken = await _identityRepository.GenerateEmailConfirmationTokenAsync(guid, ct);
             var encodedToken = _tokenEncoder.EncodeForUrl(confirmationToken);
