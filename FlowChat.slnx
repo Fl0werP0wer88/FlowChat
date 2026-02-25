@@ -50,6 +50,14 @@
     <Project Path="NotificationService/tests/FlowChat.NotificationService.AATs/FlowChat.NotificationService.AATs.csproj" />
     <Project Path="NotificationService/tests/FlowChat.NotificationService.UnitTests/FlowChat.NotificationService.UnitTests.csproj" />
   </Folder>
+  <Folder Name="/GatewayService/" />
+  <Folder Name="/GatewayService/src/">
+    <Project Path="GatewayService/src/FlowChat.GatewayService.API/FlowChat.GatewayService.API.csproj" />
+  </Folder>
+  <Folder Name="/GatewayService/tests/">
+    <Project Path="GatewayService/tests/FlowChat.GatewayService.AATs/FlowChat.GatewayService.AATs.csproj" />
+    <Project Path="GatewayService/tests/FlowChat.GatewayService.UnitTests/FlowChat.GatewayService.UnitTests.csproj" />
+  </Folder>
   <Folder Name="/Common/" />
   <Folder Name="/Common/src/">
     <Project Path="Common/src/FlowChat.Messaging.Contracts/FlowChat.Messaging.Contracts.csproj" />
