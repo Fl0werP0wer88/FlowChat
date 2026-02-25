@@ -5,7 +5,7 @@ namespace FlowChat.AuthService.Application.Contracts.Persistence;
 
 public interface IIdentityRepository
 {
-    Task<Guid> CreateUserAsync(UserEntity user, string password, CancellationToken cancellationToken);
+    Task<Guid> CreateUserAsync(IdentityEntity user, string password, CancellationToken cancellationToken);
     Task<string> GenerateEmailConfirmationTokenAsync(Guid userId, CancellationToken cancellationToken);
     Task<bool> ConfirmEmailAsync(Guid userId, string token, CancellationToken cancellationToken);
     Task<AuthenticatedUser?> AuthenticateUserAsync(string login, string password, CancellationToken cancellationToken);

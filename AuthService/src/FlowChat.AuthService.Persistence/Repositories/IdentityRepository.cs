@@ -15,7 +15,7 @@ public class IdentityRepository : IIdentityRepository
         _userManager = userManager;
     }
 
-    public async Task<Guid> CreateUserAsync(UserEntity domainUser, string password, CancellationToken cancellationToken)
+    public async Task<Guid> CreateUserAsync(IdentityEntity domainUser, string password, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
@@ -33,7 +33,7 @@ public class IdentityRepository : IIdentityRepository
         return user.Id;
     }
 
-    private static AppUser MapToIdentityUser(UserEntity domainUser)
+    private static AppUser MapToIdentityUser(IdentityEntity domainUser)
     {
         var user = new AppUser
         {

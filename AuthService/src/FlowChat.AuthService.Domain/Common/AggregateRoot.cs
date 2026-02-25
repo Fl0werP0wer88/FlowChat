@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace FlowChat.AuthService.Domain.Common;
 
-public abstract class DomainEntity : AuditableEntity, IHasDomainEvents
+public abstract class AggregateRoot : AuditableEntity, IHasDomainEvents
 {
     private readonly List<IDomainEvent> _domainEvents = [];
 

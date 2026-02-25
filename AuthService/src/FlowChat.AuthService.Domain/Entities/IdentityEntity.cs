@@ -3,7 +3,7 @@ using FlowChat.AuthService.Domain.Events;
 
 namespace FlowChat.AuthService.Domain.Entities;
 
-public sealed class UserEntity : DomainEntity
+public sealed class IdentityEntity : AggregateRoot
 {
     public Guid Id { get; }
     public string UserName { get; }
@@ -12,7 +12,7 @@ public sealed class UserEntity : DomainEntity
     public bool EmailConfirmed { get; private set; }
     public bool AccountConfirmed { get; private set; }
 
-    private UserEntity(Guid id, string userName, string email, string displayName)
+    private IdentityEntity(Guid id, string userName, string email, string displayName)
     {
         Id = id;
         UserName = userName;
@@ -22,7 +22,7 @@ public sealed class UserEntity : DomainEntity
         AccountConfirmed = false;
     }
 
-    public static UserEntity Create(Guid id, string userName, string email)
+    public static IdentityEntity Create(Guid id, string userName, string email)
     {
         if (id == Guid.Empty)
         {
@@ -42,7 +42,7 @@ public sealed class UserEntity : DomainEntity
         var normalizedUserName = userName.Trim();
         var normalizedEmail = email.Trim();
 
-        var user = new UserEntity(
+        var user = new IdentityEntity(
             id,
             normalizedUserName,
             normalizedEmail,
