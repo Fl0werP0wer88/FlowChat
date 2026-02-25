@@ -1,6 +1,6 @@
 using FlowChat.NotificationService.Domain.Enums;
 
-namespace FlowChat.NotificationService.Application.Notifications.Queries;
+namespace FlowChat.NotificationService.Application.Notifications.Queries.GetNotifications;
 
 public sealed record NotificationDto(
     Guid Id,

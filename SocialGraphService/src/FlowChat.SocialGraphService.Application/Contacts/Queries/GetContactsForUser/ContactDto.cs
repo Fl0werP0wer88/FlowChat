@@ -1,4 +1,4 @@
-namespace FlowChat.SocialGraphService.Application.Contacts.Queries;
+namespace FlowChat.SocialGraphService.Application.Contacts.Queries.GetContactsForUser;
 
 public sealed record ContactDto(
     Guid Id,

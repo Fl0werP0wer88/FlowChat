@@ -1,6 +1,6 @@
 using FlowChat.NotificationService.Application.Contracts.Infrastructure;
 using FlowChat.NotificationService.Application.Contracts.Persistence;
-using FlowChat.NotificationService.Application.Notifications.Commands;
+using FlowChat.NotificationService.Application.Notifications.Commands.UserEmailVerificationRequested;
 using FlowChat.NotificationService.Domain.Entities;
 using FlowChat.NotificationService.Domain.Enums;
 

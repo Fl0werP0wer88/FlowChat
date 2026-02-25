@@ -3,7 +3,7 @@ using FlowChat.SocialGraphService.Domain.Entities;
 using FlowChat.SocialGraphService.Domain.Enums;
 using MediatR;
 
-namespace FlowChat.SocialGraphService.Application.Invitations.Commands;
+namespace FlowChat.SocialGraphService.Application.Invitations.Commands.SendInvitation;
 
 public sealed class SendInvitationCommandHandler : IRequestHandler<SendInvitationCommand, InvitationDto>
 {

@@ -1,8 +1,8 @@
-using FlowChat.NotificationService.Application.Notifications.Queries;
+using FlowChat.NotificationService.Application.Notifications.Queries.GetNotifications;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
-namespace FlowChat.NotificationService.Api.Controllers;
+namespace FlowChat.NotificationService.Api.Features.Notifications.GetNotifications;
 
 [ApiController]
 [Route("api/[controller]")]

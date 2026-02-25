@@ -1,7 +1,7 @@
 using FlowChat.SocialGraphService.Application.Contracts.Persistence;
 using MediatR;
 
-namespace FlowChat.SocialGraphService.Application.Contacts.Queries;
+namespace FlowChat.SocialGraphService.Application.Contacts.Queries.GetContactsForUser;
 
 public sealed class GetContactsForUserQueryHandler
     : IRequestHandler<GetContactsForUserQuery, IReadOnlyList<ContactDto>>

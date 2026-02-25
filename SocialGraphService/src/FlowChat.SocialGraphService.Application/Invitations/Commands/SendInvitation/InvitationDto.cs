@@ -1,6 +1,6 @@
 using FlowChat.SocialGraphService.Domain.Enums;
 
-namespace FlowChat.SocialGraphService.Application.Invitations;
+namespace FlowChat.SocialGraphService.Application.Invitations.Commands.SendInvitation;
 
 public sealed record InvitationDto(
     Guid Id,

@@ -1,7 +1,7 @@
 using FlowChat.NotificationService.Application.Contracts.Persistence;
 using MediatR;
 
-namespace FlowChat.NotificationService.Application.Notifications.Queries;
+namespace FlowChat.NotificationService.Application.Notifications.Queries.GetNotifications;
 
 public sealed class GetNotificationsQueryHandler : IRequestHandler<GetNotificationsQuery, IReadOnlyList<NotificationDto>>
 {

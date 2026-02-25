@@ -1,6 +1,6 @@
 using FlowChat.Messaging.Contracts.AuthService.Events;
 using FlowChat.Messaging.Runtime.Kafka.GenericConsumer;
-using FlowChat.NotificationService.Application.Notifications.Commands;
+using FlowChat.NotificationService.Application.Notifications.Commands.UserEmailVerificationRequested;
 using FlowChat.NotificationService.Worker.Kafka;
 using MediatR;
 using Microsoft.Extensions.Configuration;

@@ -5,7 +5,7 @@ using FlowChat.NotificationService.Domain.Entities;
 using FlowChat.NotificationService.Domain.Enums;
 using MediatR;
 
-namespace FlowChat.NotificationService.Application.Notifications.Commands;
+namespace FlowChat.NotificationService.Application.Notifications.Commands.UserEmailVerificationRequested;
 
 public sealed class UserEmailVerificationRequestedCommandHandler : IRequestHandler<UserEmailVerificationRequestedCommand>
 {

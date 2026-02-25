@@ -1,9 +1,9 @@
-using FlowChat.SocialGraphService.Application.Contacts.Queries;
+using FlowChat.SocialGraphService.Application.Contacts.Queries.GetContactsForUser;
 using FlowChat.SocialGraphService.Domain.Enums;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
-namespace FlowChat.SocialGraphService.Api.Controllers;
+namespace FlowChat.SocialGraphService.Api.Features.Contacts.GetContactsForUser;
 
 [ApiController]
 [Route("api/[controller]")]

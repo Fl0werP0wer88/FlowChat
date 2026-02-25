@@ -1,6 +1,6 @@
 using MediatR;
 
-namespace FlowChat.NotificationService.Application.Notifications.Commands;
+namespace FlowChat.NotificationService.Application.Notifications.Commands.UserEmailVerificationRequested;
 
 public sealed record UserEmailVerificationRequestedCommand(
     Guid UserId,
