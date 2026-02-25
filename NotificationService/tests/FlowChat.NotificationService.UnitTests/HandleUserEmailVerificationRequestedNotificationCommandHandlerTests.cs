@@ -6,7 +6,7 @@ using FlowChat.NotificationService.Domain.Enums;
 
 namespace FlowChat.NotificationService.UnitTests;
 
-public class HandleUserCreatedNotificationCommandHandlerTests
+public class HandleUserEmailVerificationRequestedNotificationCommandHandlerTests
 {
     [Fact]
     public async Task Handle_Should_CreateSentNotification_WhenSenderReturnsSuccess()
@@ -14,13 +14,14 @@ public class HandleUserCreatedNotificationCommandHandlerTests
         var repository = new InMemoryNotificationRepository();
         var sender = new StubNotificationSender(
             new NotificationSendResult(true, "provider-123", null));
-        var sut = new HandleUserCreatedNotificationCommandHandler(repository, sender);
+        var sut = new UserEmailVerificationRequestedCommandHandler(repository, sender);
 
-        var command = new HandleUserCreatedNotificationCommand(
+        var command = new UserEmailVerificationRequestedCommand(
             Guid.NewGuid(),
             "john@flowchat.local",
             "john",
             "John",
+            "https://flowchat.local/confirm?userId=1&token=abc",
             "message-key-1");
 
         await sut.Handle(command, CancellationToken.None);
@@ -31,6 +32,8 @@ public class HandleUserCreatedNotificationCommandHandlerTests
         Assert.Equal(NotificationType.Welcome, saved.Type);
         Assert.Equal("provider-123", saved.ProviderMessageId);
         Assert.Null(saved.FailureReason);
+        Assert.NotNull(sender.LastRequest);
+        Assert.Contains(command.ConfirmationLink, sender.LastRequest!.Body);
     }
 
     [Fact]
@@ -47,13 +50,14 @@ public class HandleUserCreatedNotificationCommandHandlerTests
 
         var sender = new StubNotificationSender(
             new NotificationSendResult(true, "provider-new", null));
-        var sut = new HandleUserCreatedNotificationCommandHandler(repository, sender);
+        var sut = new UserEmailVerificationRequestedCommandHandler(repository, sender);
 
-        var command = new HandleUserCreatedNotificationCommand(
+        var command = new UserEmailVerificationRequestedCommand(
             existing.UserId,
             "existing@flowchat.local",
             "existing-user",
             "Existing",
+            "https://flowchat.local/confirm?userId=2&token=def",
             "message-key-2");
 
         await sut.Handle(command, CancellationToken.None);
@@ -68,13 +72,14 @@ public class HandleUserCreatedNotificationCommandHandlerTests
         var repository = new InMemoryNotificationRepository();
         var sender = new StubNotificationSender(
             new NotificationSendResult(true, "provider-123", null));
-        var sut = new HandleUserCreatedNotificationCommandHandler(repository, sender);
+        var sut = new UserEmailVerificationRequestedCommandHandler(repository, sender);
 
-        var command = new HandleUserCreatedNotificationCommand(
+        var command = new UserEmailVerificationRequestedCommand(
             Guid.Empty,
             "john@flowchat.local",
             "john",
             "John",
+            "https://flowchat.local/confirm?userId=3&token=ghi",
             "message-key-3");
 
         await Assert.ThrowsAsync<InvalidOperationException>(() => sut.Handle(command, CancellationToken.None));
@@ -91,12 +96,14 @@ public class HandleUserCreatedNotificationCommandHandlerTests
         }
 
         public int CallsCount { get; private set; }
+        public NotificationSendRequest? LastRequest { get; private set; }
 
         public Task<NotificationSendResult> SendAsync(
             NotificationSendRequest request,
             CancellationToken cancellationToken = default)
         {
             CallsCount++;
+            LastRequest = request;
             return Task.FromResult(_result);
         }
     }

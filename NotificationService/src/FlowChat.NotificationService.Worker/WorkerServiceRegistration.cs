@@ -33,23 +33,24 @@ public static class WorkerServiceRegistration
         {
             var options = serviceProvider.GetRequiredService<IOptions<UserCreatedConsumerOptions>>().Value;
             var logger = serviceProvider.GetRequiredService<ILoggerFactory>()
-                .CreateLogger("NotificationUserCreatedTopicSubscription");
+                .CreateLogger("NotificationUserEmailVerificationRequestedTopicSubscription");
 
-            return new TopicSubscription<UserCreatedIntegrationEvent>(
+            return new TopicSubscription<UserEmailVerificationRequestedIntegrationEvent>(
                 topic: options.Topic,
                 retryTopic: options.RetryTopic,
                 deadLetterTopic: options.DeadLetterTopic,
                 maxRetryCount: options.MaxRetryCount,
                 handler: async (message, context, scopedProvider, cancellationToken) =>
                 {
-                    if (string.IsNullOrWhiteSpace(message.Email))
+                    if (string.IsNullOrWhiteSpace(message.UserEmail))
                     {
-                        return MessageHandlingResult.Skip("Payload does not contain Email.");
+                        return MessageHandlingResult.Skip("Payload does not contain UserEmail.");
                     }
 
-                    if (string.IsNullOrWhiteSpace(message.UserName))
+                    var userName = ResolveUserName(message.UserEmail);
+                    if (string.IsNullOrWhiteSpace(userName))
                     {
-                        return MessageHandlingResult.Skip("Payload does not contain UserName.");
+                        return MessageHandlingResult.Skip("Payload does not contain valid UserEmail local-part.");
                     }
 
                     var userId = ResolveUserId(message.UserId, context.Key);
@@ -58,20 +59,17 @@ public static class WorkerServiceRegistration
                         return MessageHandlingResult.Skip("Payload does not contain valid UserId.");
                     }
 
-                    var displayName = string.IsNullOrWhiteSpace(message.DisplayName)
-                        ? message.UserName.Trim()
-                        : message.DisplayName.Trim();
-
                     var mediator = scopedProvider.GetRequiredService<IMediator>();
 
                     try
                     {
                         await mediator.Send(
-                            new HandleUserCreatedNotificationCommand(
+                            new UserEmailVerificationRequestedCommand(
                                 userId.Value,
-                                message.Email,
-                                message.UserName,
-                                displayName,
+                                message.UserEmail.Trim(),
+                                userName,
+                                userName,
+                                message.ConfirmationLink,
                                 context.Key),
                             cancellationToken);
 
@@ -114,5 +112,22 @@ public static class WorkerServiceRegistration
         return Guid.TryParse(key, out var keyAsGuid)
             ? keyAsGuid
             : null;
+    }
+
+    private static string? ResolveUserName(string? email)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            return null;
+        }
+
+        var value = email.Trim();
+        var atIndex = value.IndexOf('@');
+        if (atIndex <= 0)
+        {
+            return null;
+        }
+
+        return value[..atIndex].Trim();
     }
 }

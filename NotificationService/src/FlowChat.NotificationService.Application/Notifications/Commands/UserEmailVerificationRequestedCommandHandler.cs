@@ -6,12 +6,12 @@ using MediatR;
 
 namespace FlowChat.NotificationService.Application.Notifications.Commands;
 
-public sealed class HandleUserCreatedNotificationCommandHandler : IRequestHandler<HandleUserCreatedNotificationCommand>
+public sealed class UserEmailVerificationRequestedCommandHandler : IRequestHandler<UserEmailVerificationRequestedCommand>
 {
     private readonly INotificationRepository _notificationRepository;
     private readonly INotificationSender _notificationSender;
 
-    public HandleUserCreatedNotificationCommandHandler(
+    public UserEmailVerificationRequestedCommandHandler(
         INotificationRepository notificationRepository,
         INotificationSender notificationSender)
     {
@@ -19,7 +19,7 @@ public sealed class HandleUserCreatedNotificationCommandHandler : IRequestHandle
         _notificationSender = notificationSender;
     }
 
-    public async Task Handle(HandleUserCreatedNotificationCommand request, CancellationToken cancellationToken)
+    public async Task Handle(UserEmailVerificationRequestedCommand request, CancellationToken cancellationToken)
     {
         if (request.UserId == Guid.Empty)
         {
@@ -34,6 +34,11 @@ public sealed class HandleUserCreatedNotificationCommandHandler : IRequestHandle
         if (string.IsNullOrWhiteSpace(request.UserName))
         {
             throw new InvalidOperationException("UserName is required.");
+        }
+
+        if (string.IsNullOrWhiteSpace(request.ConfirmationLink))
+        {
+            throw new InvalidOperationException("ConfirmationLink is required.");
         }
 
         var displayName = string.IsNullOrWhiteSpace(request.DisplayName)
@@ -59,8 +64,8 @@ public sealed class HandleUserCreatedNotificationCommandHandler : IRequestHandle
         var sendRequest = new NotificationSendRequest(
             request.UserId,
             request.Email,
-            "Welcome to FlowChat",
-            $"Hello {displayName}, welcome to FlowChat.");
+            "Confirm your email in FlowChat",
+            $"Hello {displayName}, please confirm your email by clicking the link: {request.ConfirmationLink.Trim()}");
 
         var sendResult = await _notificationSender.SendAsync(sendRequest, cancellationToken);
 
