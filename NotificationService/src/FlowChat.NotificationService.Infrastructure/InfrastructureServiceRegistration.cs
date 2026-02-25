@@ -11,7 +11,7 @@ public static class InfrastructureServiceRegistration
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        services.AddScoped<INotificationSender, MockNotificationSender>();
+        services.AddScoped<INotificationSender, NotificationSender>();
         return services;
     }
 }

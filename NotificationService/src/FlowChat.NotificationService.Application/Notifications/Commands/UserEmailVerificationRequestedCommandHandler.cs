@@ -1,3 +1,4 @@
+using System.Data.SqlTypes;
 using FlowChat.NotificationService.Application.Contracts.Infrastructure;
 using FlowChat.NotificationService.Application.Contracts.Persistence;
 using FlowChat.NotificationService.Domain.Entities;
@@ -69,15 +70,13 @@ public sealed class UserEmailVerificationRequestedCommandHandler : IRequestHandl
 
         var sendResult = await _notificationSender.SendAsync(sendRequest, cancellationToken);
 
-        if (sendResult.IsSuccess)
+        if (!sendResult.IsSuccess)
         {
-            notification.MarkSent(sendResult.ProviderMessageId);
-        }
-        else
-        {
-            notification.MarkFailed(sendResult.Error);
+            throw new Exception(
+                $"Email delivery failed for user '{request.UserId}': {sendResult.Error ?? "unknown error"}");
         }
 
+        notification.MarkSent(sendResult.ProviderMessageId);
         await _notificationRepository.AddAsync(notification, cancellationToken);
     }
 }

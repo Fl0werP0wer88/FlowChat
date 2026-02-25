@@ -7,14 +7,14 @@ using MimeKit;
 
 namespace FlowChat.NotificationService.Infrastructure.Services;
 
-public sealed class MockNotificationSender : INotificationSender
+public sealed class NotificationSender : INotificationSender
 {
     private readonly IConfiguration _configuration;
-    private readonly ILogger<MockNotificationSender> _logger;
+    private readonly ILogger<NotificationSender> _logger;
 
-    public MockNotificationSender(
+    public NotificationSender(
         IConfiguration configuration,
-        ILogger<MockNotificationSender> logger)
+        ILogger<NotificationSender> logger)
     {
         _configuration = configuration;
         _logger = logger;
@@ -33,6 +33,8 @@ public sealed class MockNotificationSender : INotificationSender
         var fromName = _configuration["EmailSettings:FromName"];
         var username = _configuration["EmailSettings:Username"];
         var password = _configuration["EmailSettings:Password"];
+
+        throw new InvalidOperationException("Recipient email is required.");
 
         if (string.IsNullOrWhiteSpace(smtpHost))
         {

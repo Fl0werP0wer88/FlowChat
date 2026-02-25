@@ -67,6 +67,28 @@ public class HandleUserEmailVerificationRequestedNotificationCommandHandlerTests
     }
 
     [Fact]
+    public async Task Handle_Should_ThrowAndNotPersist_WhenSenderReturnsFailureResult()
+    {
+        var repository = new InMemoryNotificationRepository();
+        var sender = new StubNotificationSender(
+            new NotificationSendResult(false, null, "smtp timeout"));
+        var sut = new UserEmailVerificationRequestedCommandHandler(repository, sender);
+
+        var command = new UserEmailVerificationRequestedCommand(
+            Guid.NewGuid(),
+            "retry@flowchat.local",
+            "retry",
+            "Retry",
+            "https://flowchat.local/confirm?userId=4&token=jkl",
+            "message-key-4");
+
+        await Assert.ThrowsAsync<Exception>(() => sut.Handle(command, CancellationToken.None));
+
+        Assert.Empty(repository.Notifications);
+        Assert.Equal(1, sender.CallsCount);
+    }
+
+    [Fact]
     public async Task Handle_Should_Throw_WhenUserIdIsEmpty()
     {
         var repository = new InMemoryNotificationRepository();

@@ -83,7 +83,7 @@ public static class WorkerServiceRegistration
                             context.Key,
                             ex.Message);
 
-                        return MessageHandlingResult.Skip(ex.Message);
+                        return MessageHandlingResult.DeadLetter(ex.Message);
                     }
                     catch (Exception ex)
                     {
