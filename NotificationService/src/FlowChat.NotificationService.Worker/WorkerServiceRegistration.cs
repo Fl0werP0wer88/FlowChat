@@ -25,6 +25,8 @@ public static class WorkerServiceRegistration
                 runtime.BootstrapServers = source.Value.BootstrapServers;
                 runtime.GroupId = source.Value.GroupId;
                 runtime.AutoOffsetReset = source.Value.AutoOffsetReset;
+                runtime.RetryBaseDelaySeconds = source.Value.RetryBaseDelaySeconds;
+                runtime.RetryMaxDelaySeconds = source.Value.RetryMaxDelaySeconds;
             });
 
         services.AddSingleton<ITopicSubscription>(serviceProvider =>

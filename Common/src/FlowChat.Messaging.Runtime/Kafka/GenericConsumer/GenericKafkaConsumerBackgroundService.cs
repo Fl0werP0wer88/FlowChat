@@ -13,11 +13,18 @@ public sealed class GenericKafkaConsumerBackgroundService : BackgroundService
     public const string RetryCountHeader = "x-retry-count";
     public const string OriginalTopicHeader = "x-original-topic";
     public const string LastErrorHeader = "x-last-error";
+    public const string RetryAtUtcHeader = "x-retry-at-utc";
+
+    private static readonly TimeSpan ConsumeTimeout = TimeSpan.FromMilliseconds(250);
 
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly IReadOnlyDictionary<string, ITopicSubscription> _subscriptionsByTopic;
     private readonly KafkaConsumerRuntimeOptions _options;
     private readonly ILogger<GenericKafkaConsumerBackgroundService> _logger;
+
+    private sealed record DeferredRetryMessage(
+        ConsumeResult<string, string> ConsumeResult,
+        DateTime RetryAtUtc);
 
     public GenericKafkaConsumerBackgroundService(
         IServiceScopeFactory scopeFactory,
@@ -77,15 +84,41 @@ public sealed class GenericKafkaConsumerBackgroundService : BackgroundService
             string.Join(",", topics),
             _options.GroupId);
 
+        var deferredRetryMessages = new Dictionary<TopicPartition, DeferredRetryMessage>();
+
         while (!stoppingToken.IsCancellationRequested)
         {
             ConsumeResult<string, string>? consumeResult = null;
 
             try
             {
-                consumeResult = consumer.Consume(stoppingToken);
-                if (consumeResult.Message?.Value is null)
+                await ProcessReadyDeferredRetriesAsync(
+                    consumer,
+                    producer,
+                    deferredRetryMessages,
+                    stoppingToken);
+
+                RemoveDeferredMessagesForRevokedPartitions(consumer, deferredRetryMessages);
+
+                consumeResult = consumer.Consume(ConsumeTimeout);
+                if (consumeResult is null || consumeResult.Message?.Value is null)
                 {
+                    continue;
+                }
+
+                if (!_subscriptionsByTopic.TryGetValue(consumeResult.Topic, out var subscription))
+                {
+                    _logger.LogWarning(
+                        "No subscription found for topic {Topic}. Message with key {Key} will be skipped.",
+                        consumeResult.Topic,
+                        consumeResult.Message.Key);
+                    consumer.Commit(consumeResult);
+                    continue;
+                }
+
+                if (ShouldDeferRetryMessage(consumeResult, subscription, out var retryAtUtc))
+                {
+                    DeferRetryMessage(consumer, deferredRetryMessages, consumeResult, retryAtUtc);
                     continue;
                 }
 
@@ -95,14 +128,13 @@ public sealed class GenericKafkaConsumerBackgroundService : BackgroundService
                     consumer.Commit(consumeResult);
                 }
             }
-            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
-            {
-                _logger.LogInformation("Kafka consumer stopping.");
-                break;
-            }
             catch (ConsumeException ex)
             {
                 _logger.LogError(ex, "Kafka consume error: {Reason}", ex.Error.Reason);
+            }
+            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+            {
+                break;
             }
             catch (KafkaException ex)
             {
@@ -114,7 +146,126 @@ public sealed class GenericKafkaConsumerBackgroundService : BackgroundService
             }
         }
 
+        if (deferredRetryMessages.Count > 0)
+        {
+            consumer.Resume(deferredRetryMessages.Keys);
+            deferredRetryMessages.Clear();
+        }
+
+        _logger.LogInformation("Kafka consumer stopping.");
         consumer.Close();
+    }
+
+    private bool ShouldDeferRetryMessage(
+        ConsumeResult<string, string> consumeResult,
+        ITopicSubscription subscription,
+        out DateTime retryAtUtc)
+    {
+        retryAtUtc = default;
+
+        if (string.IsNullOrWhiteSpace(subscription.RetryTopic) ||
+            !string.Equals(consumeResult.Topic, subscription.RetryTopic, StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        if (!TryGetRetryAtUtc(consumeResult.Message.Headers, out retryAtUtc))
+        {
+            return false;
+        }
+
+        return retryAtUtc > DateTime.UtcNow;
+    }
+
+    private void DeferRetryMessage(
+        IConsumer<string, string> consumer,
+        Dictionary<TopicPartition, DeferredRetryMessage> deferredRetryMessages,
+        ConsumeResult<string, string> consumeResult,
+        DateTime retryAtUtc)
+    {
+        var topicPartition = consumeResult.TopicPartition;
+
+        consumer.Pause([topicPartition]);
+
+        deferredRetryMessages[topicPartition] = new DeferredRetryMessage(consumeResult, retryAtUtc);
+
+        _logger.LogInformation(
+            "Deferred retry message for key {Key} on {TopicPartition} until {RetryAtUtc}.",
+            consumeResult.Message.Key,
+            topicPartition,
+            retryAtUtc);
+    }
+
+    private async Task ProcessReadyDeferredRetriesAsync(
+        IConsumer<string, string> consumer,
+        IProducer<string, string> producer,
+        Dictionary<TopicPartition, DeferredRetryMessage> deferredRetryMessages,
+        CancellationToken cancellationToken)
+    {
+        if (deferredRetryMessages.Count == 0)
+        {
+            return;
+        }
+
+        var now = DateTime.UtcNow;
+        var readyTopicPartitions = deferredRetryMessages
+            .Where(entry => entry.Value.RetryAtUtc <= now)
+            .Select(entry => entry.Key)
+            .ToArray();
+
+        foreach (var topicPartition in readyTopicPartitions)
+        {
+            if (!deferredRetryMessages.TryGetValue(topicPartition, out var deferredMessage))
+            {
+                continue;
+            }
+
+            try
+            {
+                var shouldCommit = await ProcessMessageAsync(
+                    deferredMessage.ConsumeResult,
+                    producer,
+                    cancellationToken);
+
+                if (shouldCommit)
+                {
+                    consumer.Commit(deferredMessage.ConsumeResult);
+                }
+            }
+            finally
+            {
+                deferredRetryMessages.Remove(topicPartition);
+                consumer.Resume([topicPartition]);
+            }
+        }
+    }
+
+    private void RemoveDeferredMessagesForRevokedPartitions(
+        IConsumer<string, string> consumer,
+        Dictionary<TopicPartition, DeferredRetryMessage> deferredRetryMessages)
+    {
+        if (deferredRetryMessages.Count == 0)
+        {
+            return;
+        }
+
+        var assignedPartitions = consumer.Assignment.ToHashSet();
+        var revokedPartitions = deferredRetryMessages.Keys
+            .Where(topicPartition => !assignedPartitions.Contains(topicPartition))
+            .ToArray();
+
+        foreach (var revokedPartition in revokedPartitions)
+        {
+            if (!deferredRetryMessages.Remove(revokedPartition, out var deferredMessage))
+            {
+                continue;
+            }
+
+            _logger.LogWarning(
+                "Dropped deferred retry message for revoked partition {TopicPartition}. Message key: {Key}",
+                revokedPartition,
+                deferredMessage.ConsumeResult.Message.Key);
+        }
     }
 
     private async Task<bool> ProcessMessageAsync(
@@ -185,21 +336,25 @@ public sealed class GenericKafkaConsumerBackgroundService : BackgroundService
 
         if (nextRetryCount <= subscription.MaxRetryCount && !string.IsNullOrWhiteSpace(subscription.RetryTopic))
         {
+            var retryDelay = ComputeRetryDelay(nextRetryCount);
+            var retryAtUtc = DateTime.UtcNow.Add(retryDelay);
+
             var retryMessage = new Message<string, string>
             {
                 Key = consumeResult.Message.Key,
                 Value = consumeResult.Message.Value,
-                Headers = BuildHeaders(consumeResult, nextRetryCount, error)
+                Headers = BuildHeaders(consumeResult, nextRetryCount, error, retryAtUtc)
             };
 
             await producer.ProduceAsync(subscription.RetryTopic, retryMessage, cancellationToken);
 
             _logger.LogWarning(
-                "Routed message with key {Key} from {Topic} to retry topic {RetryTopic}. Retry count: {RetryCount}",
+                "Routed message with key {Key} from {Topic} to retry topic {RetryTopic}. Retry count: {RetryCount}. Retry at: {RetryAtUtc}",
                 consumeResult.Message.Key,
                 consumeResult.Topic,
                 subscription.RetryTopic,
-                nextRetryCount);
+                nextRetryCount,
+                retryAtUtc);
 
             return true;
         }
@@ -245,7 +400,11 @@ public sealed class GenericKafkaConsumerBackgroundService : BackgroundService
         return true;
     }
 
-    private static Headers BuildHeaders(ConsumeResult<string, string> consumeResult, int retryCount, string? error)
+    private static Headers BuildHeaders(
+        ConsumeResult<string, string> consumeResult,
+        int retryCount,
+        string? error,
+        DateTime? retryAtUtc = null)
     {
         var headers = new Headers();
         var sourceHeaders = consumeResult.Message.Headers;
@@ -254,7 +413,7 @@ public sealed class GenericKafkaConsumerBackgroundService : BackgroundService
         {
             foreach (var header in sourceHeaders)
             {
-                if (header.Key is RetryCountHeader or OriginalTopicHeader or LastErrorHeader)
+                if (header.Key is RetryCountHeader or OriginalTopicHeader or LastErrorHeader or RetryAtUtcHeader)
                 {
                     continue;
                 }
@@ -267,6 +426,10 @@ public sealed class GenericKafkaConsumerBackgroundService : BackgroundService
 
         headers.Add(RetryCountHeader, Encoding.UTF8.GetBytes(retryCount.ToString(CultureInfo.InvariantCulture)));
         headers.Add(OriginalTopicHeader, Encoding.UTF8.GetBytes(originalTopic));
+        if (retryAtUtc.HasValue)
+        {
+            headers.Add(RetryAtUtcHeader, Encoding.UTF8.GetBytes(retryAtUtc.Value.ToString("O", CultureInfo.InvariantCulture)));
+        }
 
         if (!string.IsNullOrWhiteSpace(error))
         {
@@ -282,6 +445,23 @@ public sealed class GenericKafkaConsumerBackgroundService : BackgroundService
         return int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsed)
             ? parsed
             : 0;
+    }
+
+    private static bool TryGetRetryAtUtc(Headers? headers, out DateTime retryAtUtc)
+    {
+        retryAtUtc = default;
+
+        var value = ReadHeader(headers, RetryAtUtcHeader);
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return false;
+        }
+
+        return DateTime.TryParse(
+            value,
+            CultureInfo.InvariantCulture,
+            DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal,
+            out retryAtUtc);
     }
 
     private static string? ReadHeader(Headers? headers, string key)
@@ -311,6 +491,18 @@ public sealed class GenericKafkaConsumerBackgroundService : BackgroundService
         return value[..maxLength];
     }
 
+    private TimeSpan ComputeRetryDelay(int retryCount)
+    {
+        var baseDelaySeconds = _options.RetryBaseDelaySeconds;
+        var maxDelaySeconds = _options.RetryMaxDelaySeconds;
+
+        var exponent = Math.Clamp(retryCount - 1, 0, 30);
+        var delaySeconds = baseDelaySeconds * Math.Pow(2, exponent);
+        var boundedDelaySeconds = Math.Min(delaySeconds, maxDelaySeconds);
+
+        return TimeSpan.FromSeconds(boundedDelaySeconds);
+    }
+
     private static AutoOffsetReset ParseAutoOffsetReset(string value)
     {
         return Enum.TryParse<AutoOffsetReset>(value, true, out var parsed)
@@ -328,6 +520,16 @@ public sealed class GenericKafkaConsumerBackgroundService : BackgroundService
         if (string.IsNullOrWhiteSpace(options.GroupId))
         {
             throw new InvalidOperationException("Kafka group id is not configured.");
+        }
+
+        if (options.RetryBaseDelaySeconds <= 0)
+        {
+            throw new InvalidOperationException("Kafka retry base delay must be greater than zero.");
+        }
+
+        if (options.RetryMaxDelaySeconds < options.RetryBaseDelaySeconds)
+        {
+            throw new InvalidOperationException("Kafka retry max delay must be greater than or equal to base delay.");
         }
     }
 }
