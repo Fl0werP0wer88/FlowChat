@@ -65,11 +65,15 @@ public sealed class ReverseProxyRoutesDocumentFilter : IDocumentFilter
     {
         var routeId = route.Key;
         var clusterId = route.GetValue<string>("ClusterId") ?? "unknown-cluster";
+        var authPolicy = route.GetValue<string>("AuthorizationPolicy");
+        var authInfo = string.IsNullOrWhiteSpace(authPolicy)
+            ? "Authentication: not required."
+            : $"Authentication policy: {authPolicy}.";
 
         return new OpenApiOperation
         {
             Summary = $"Proxy route: {method.ToUpperInvariant()} {rawPath}",
-            Description = $"Forwarded by gateway route '{routeId}' to cluster '{clusterId}'.",
+            Description = $"Forwarded by gateway route '{routeId}' to cluster '{clusterId}'. {authInfo}",
             Responses = new OpenApiResponses
             {
                 ["200"] = new OpenApiResponse { Description = "Success" },

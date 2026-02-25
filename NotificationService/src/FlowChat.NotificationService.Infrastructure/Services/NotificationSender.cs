@@ -34,8 +34,6 @@ public sealed class NotificationSender : INotificationSender
         var username = _configuration["EmailSettings:Username"];
         var password = _configuration["EmailSettings:Password"];
 
-        throw new InvalidOperationException("Recipient email is required.");
-
         if (string.IsNullOrWhiteSpace(smtpHost))
         {
             throw new InvalidOperationException("Missing configuration value: EmailSettings:SmtpHost.");

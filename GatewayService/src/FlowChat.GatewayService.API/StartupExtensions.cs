@@ -1,5 +1,8 @@
 using FlowChat.GatewayService.Api.OpenApi;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
+using System.Text;
 
 namespace FlowChat.GatewayService.Api;
 
@@ -7,6 +10,13 @@ public static class StartupExtensions
 {
     public static WebApplication ConfigureServices(this WebApplicationBuilder builder)
     {
+        var jwtKey = builder.Configuration["JwtSettings:Key"]
+            ?? throw new InvalidOperationException("Missing configuration value: JwtSettings:Key.");
+        var jwtIssuer = builder.Configuration["JwtSettings:Issuer"]
+            ?? throw new InvalidOperationException("Missing configuration value: JwtSettings:Issuer.");
+        var jwtAudience = builder.Configuration["JwtSettings:Audience"]
+            ?? throw new InvalidOperationException("Missing configuration value: JwtSettings:Audience.");
+
         builder.Services.Configure<SwaggerAggregationOptions>(
             builder.Configuration.GetSection(SwaggerAggregationOptions.SectionName));
         builder.Services.AddHttpClient<DownstreamSwaggerAggregator>();
@@ -29,6 +39,31 @@ public static class StartupExtensions
 
         builder.Services.AddReverseProxy()
             .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
+
+        builder.Services.AddAuthentication(options =>
+        {
+            options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+            options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+        })
+        .AddJwtBearer(options =>
+        {
+            options.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true,
+                ValidIssuer = jwtIssuer,
+                ValidAudience = jwtAudience,
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
+                ClockSkew = TimeSpan.Zero
+            };
+        });
+
+        builder.Services.AddAuthorization(options =>
+        {
+            options.AddPolicy("gateway-authenticated", policy => policy.RequireAuthenticatedUser());
+        });
 
         builder.Services.AddSwaggerGen(options =>
         {
@@ -68,6 +103,8 @@ public static class StartupExtensions
         }
 
         app.UseHttpsRedirection();
+        app.UseAuthentication();
+        app.UseAuthorization();
 
         app.MapGet("/health", () => Results.Ok(new { status = "ok", service = "GatewayService" }));
         app.MapControllers();
