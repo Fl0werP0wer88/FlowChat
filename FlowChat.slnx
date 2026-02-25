@@ -37,6 +37,19 @@
     <Project Path="UserProfileService/tests/FlowChat.UserProfileService.AATs/FlowChat.UserProfileService.AATs.csproj" />
     <Project Path="UserProfileService/tests/FlowChat.UserProfileService.UnitTests/FlowChat.UserProfileService.UnitTests.csproj" />
   </Folder>
+  <Folder Name="/NotificationService/" />
+  <Folder Name="/NotificationService/src/">
+    <Project Path="NotificationService/src/FlowChat.NotificationService.API/FlowChat.NotificationService.API.csproj" />
+    <Project Path="NotificationService/src/FlowChat.NotificationService.Application/FlowChat.NotificationService.Application.csproj" />
+    <Project Path="NotificationService/src/FlowChat.NotificationService.Domain/FlowChat.NotificationService.Domain.csproj" />
+    <Project Path="NotificationService/src/FlowChat.NotificationService.Infrastructure/FlowChat.NotificationService.Infrastructure.csproj" />
+    <Project Path="NotificationService/src/FlowChat.NotificationService.Persistence/FlowChat.NotificationService.Persistence.csproj" />
+    <Project Path="NotificationService/src/FlowChat.NotificationService.Worker/FlowChat.NotificationService.Worker.csproj" />
+  </Folder>
+  <Folder Name="/NotificationService/tests/">
+    <Project Path="NotificationService/tests/FlowChat.NotificationService.AATs/FlowChat.NotificationService.AATs.csproj" />
+    <Project Path="NotificationService/tests/FlowChat.NotificationService.UnitTests/FlowChat.NotificationService.UnitTests.csproj" />
+  </Folder>
   <Folder Name="/Common/" />
   <Folder Name="/Common/src/">
     <Project Path="Common/src/FlowChat.Messaging.Contracts/FlowChat.Messaging.Contracts.csproj" />
