@@ -75,4 +75,5 @@
     <Project Path="SocialGraphService/tests/FlowChat.SocialGraphService.AATs/FlowChat.SocialGraphService.AATs.csproj" />
     <Project Path="SocialGraphService/tests/FlowChat.SocialGraphService.UnitTests/FlowChat.SocialGraphService.UnitTests.csproj" />
   </Folder>
+  <Folder Name="/ReactClient/" />
 </Solution>

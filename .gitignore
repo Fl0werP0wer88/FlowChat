@@ -33,6 +33,10 @@ TestResults/
 # Logs
 *.log
 
+# Frontend artifacts
+node_modules/
+dist/
+
 # Local-only config
 **/appsettings.Local.json
 **/appsettings.*.local.json
