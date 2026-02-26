@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace FlowChat.SocialGraphService.Domain.Common;
+namespace FlowChat.SocialGraphService.Domain.Common.Contracts;
 
 public abstract class AggregateRootBase : EntityBase, IHasDomainEvents
 {

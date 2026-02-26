@@ -1,4 +1,4 @@
-namespace FlowChat.SocialGraphService.Domain.Common;
+namespace FlowChat.SocialGraphService.Domain.Common.Contracts;
 
 public abstract class EntityBase
 {
