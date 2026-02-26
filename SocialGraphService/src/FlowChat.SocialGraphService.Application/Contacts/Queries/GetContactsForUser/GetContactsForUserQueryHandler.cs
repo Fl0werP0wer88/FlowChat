@@ -29,8 +29,8 @@ public sealed class GetContactsForUserQueryHandler
                 x.UserId2,
                 x.IsBlocked,
                 x.BlockedBy,
-                x.CreatedDate,
-                x.LastModifiedDate))
+                x.CreatedAtUtc.UtcDateTime,
+                x.LastModifiedAtUtc.UtcDateTime))
             .ToList();
     }
 }

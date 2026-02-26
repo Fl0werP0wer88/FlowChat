@@ -38,7 +38,7 @@ public class ContactRepository : RepositoryBase<Contact>, IContactRepository
         }
 
         return await query
-            .OrderByDescending(x => x.CreatedDate)
+            .OrderByDescending(x => x.CreatedAtUtc)
             .ToListAsync(cancellationToken);
     }
 

@@ -1,6 +1,5 @@
 using FlowChat.SocialGraphService.Application.Contracts.Persistence;
 using FlowChat.SocialGraphService.Domain.Entities;
-using FlowChat.SocialGraphService.Domain.Enums;
 using MediatR;
 
 namespace FlowChat.SocialGraphService.Application.Invitations.Commands.SendInvitation;
@@ -57,15 +56,10 @@ public sealed class SendInvitationCommandHandler : IRequestHandler<SendInvitatio
             throw new InvalidOperationException("Pending invitation already exists.");
         }
 
-        var invitation = new Invitation
-        {
-            Id = Guid.NewGuid(),
-            RequesterId = request.RequesterId,
-            AddresseeId = request.AddresseeId,
-            Status = InvitationStatus.Pending,
-            RespondedAtUtc = null,
-            CreatedBy = "application"
-        };
+        var invitation = new Invitation(
+            Guid.NewGuid(),
+            request.RequesterId,
+            request.AddresseeId);
 
         await _invitationRepository.AddAsync(invitation, cancellationToken);
 
@@ -75,7 +69,7 @@ public sealed class SendInvitationCommandHandler : IRequestHandler<SendInvitatio
             invitation.AddresseeId,
             invitation.Status,
             invitation.RespondedAtUtc,
-            invitation.CreatedDate,
-            invitation.LastModifiedDate);
+            invitation.CreatedAtUtc.UtcDateTime,
+            invitation.LastModifiedAtUtc.UtcDateTime);
     }
 }
