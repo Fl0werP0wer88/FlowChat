@@ -10,11 +10,9 @@ export default function App() {
 
   return (
     <AppBackgroundLayout>
-      {screen === "auth" ? (
-        <AuthFeature onLoginSuccess={signIn} />
-      ) : (
-        <ChatFeature userLogin={session.login ?? "Uzytkownik"} onLogout={signOut} />
-      )}
+      {screen === "auth"
+        ? <AuthFeature onLoginSuccess={signIn} />
+        : <ChatFeature userLogin={session.login ?? "Uzytkownik"} onLogout={signOut} />}
     </AppBackgroundLayout>
   );
 }

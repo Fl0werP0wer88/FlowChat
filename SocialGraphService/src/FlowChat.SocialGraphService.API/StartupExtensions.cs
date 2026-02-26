@@ -95,7 +95,7 @@ public static class StartupExtensions
         app.UseAuthentication();
         app.UseAuthorization();
         app.MapControllers();
-        return app; 
+        return app;
     }
 
     public static async Task ResetDatabaseAsync(this WebApplication app)

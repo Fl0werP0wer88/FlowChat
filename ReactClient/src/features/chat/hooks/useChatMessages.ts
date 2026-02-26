@@ -7,13 +7,13 @@ function createMessage(sender: MessageSender, text: string): ChatMessage {
     id: crypto.randomUUID(),
     sender,
     text,
-    createdAt: new Date().toISOString()
+    createdAt: new Date().toISOString(),
   };
 }
 
 export function useChatMessages() {
   const [messages, setMessages] = useState<ChatMessage[]>([
-    createMessage("system", "Witaj w FlowChat. Po uruchomieniu backendu tutaj pojawi sie historia rozmow.")
+    createMessage("system", "Witaj w FlowChat. Po uruchomieniu backendu tutaj pojawi sie historia rozmow."),
   ]);
   const [draft, setDraft] = useState("");
 
@@ -47,6 +47,6 @@ export function useChatMessages() {
     draft,
     setDraft,
     sendDraft,
-    handleDraftKeyDown
+    handleDraftKeyDown,
   };
 }

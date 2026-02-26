@@ -9,7 +9,7 @@ interface UseAuthFlowOptions {
 
 const emptyLoginFormValues: LoginFormValues = {
   login: "",
-  password: ""
+  password: "",
 };
 
 const emptyRegisterFormValues: RegisterFormValues = {
@@ -17,7 +17,7 @@ const emptyRegisterFormValues: RegisterFormValues = {
   userName: "",
   firstName: "",
   lastName: "",
-  password: ""
+  password: "",
 };
 
 export function useAuthFlow({ onLoginSuccess }: UseAuthFlowOptions) {
@@ -44,14 +44,14 @@ export function useAuthFlow({ onLoginSuccess }: UseAuthFlowOptions) {
   const updateLoginValue = (field: keyof LoginFormValues, value: string) => {
     setLoginValues((current) => ({
       ...current,
-      [field]: value
+      [field]: value,
     }));
   };
 
   const updateRegisterValue = (field: keyof RegisterFormValues, value: string) => {
     setRegisterValues((current) => ({
       ...current,
-      [field]: value
+      [field]: value,
     }));
   };
 
@@ -65,7 +65,7 @@ export function useAuthFlow({ onLoginSuccess }: UseAuthFlowOptions) {
       onLoginSuccess(session);
       setLoginValues((current) => ({
         ...current,
-        password: ""
+        password: "",
       }));
       setNotice({ kind: "info", message: "Zalogowano poprawnie." });
     } catch (error) {
@@ -86,7 +86,7 @@ export function useAuthFlow({ onLoginSuccess }: UseAuthFlowOptions) {
       setLoginValues((current) => ({
         ...current,
         login: registerValues.email.trim(),
-        password: ""
+        password: "",
       }));
       setRegisterValues(emptyRegisterFormValues);
       setMode("login");
@@ -110,6 +110,6 @@ export function useAuthFlow({ onLoginSuccess }: UseAuthFlowOptions) {
     switchToLogin,
     switchToRegister,
     submitLogin,
-    submitRegister
+    submitRegister,
   };
 }

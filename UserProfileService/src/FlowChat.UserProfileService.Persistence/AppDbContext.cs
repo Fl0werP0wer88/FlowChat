@@ -1,4 +1,4 @@
-﻿using FlowChat.UserProfileService.Domain.Entities;
+using FlowChat.UserProfileService.Domain.Entities;
 using FlowChat.UserProfileService.Domain.Common;
 using Microsoft.EntityFrameworkCore;
 
@@ -20,8 +20,8 @@ public class AppDbContext : DbContext
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
         base.OnModelCreating(modelBuilder);
     }
-	
-	public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = new CancellationToken())
+
+    public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = new CancellationToken())
     {
         foreach (var entry in ChangeTracker.Entries<AuditableEntity>())
         {

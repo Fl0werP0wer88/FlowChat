@@ -17,13 +17,16 @@ export function ConversationPanel({
   draft,
   onDraftChange,
   onDraftKeyDown,
-  onSendDraft
+  onSendDraft,
 }: ConversationPanelProps) {
   return (
     <div className="conversation-panel">
       <div className="history">
         {messages.map((message) => (
-          <article key={message.id} className={message.sender === "me" ? "message message-me" : "message message-system"}>
+          <article
+            key={message.id}
+            className={message.sender === "me" ? "message message-me" : "message message-system"}
+          >
             <p>{message.text}</p>
             <time>{formatLocalTime(message.createdAt)}</time>
           </article>

@@ -1,4 +1,4 @@
-﻿namespace FlowChat.AuthService.UnitTests;
+namespace FlowChat.AuthService.UnitTests;
 
 public class UnitTest1
 {

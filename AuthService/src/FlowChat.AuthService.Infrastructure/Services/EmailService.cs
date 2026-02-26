@@ -29,7 +29,7 @@ public class EmailService : IEmailService
 
         var smtpHost = _configuration["EmailSettings:SmtpHost"];
         var smtpPortValue = _configuration["EmailSettings:SmtpPort"];
-        
+
         var enableSslValue = _configuration["EmailSettings:EnableSsl"];
         var fromEmail = _configuration["EmailSettings:FromEmail"];
         var fromName = _configuration["EmailSettings:FromName"];

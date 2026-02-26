@@ -17,7 +17,7 @@ interface RegisterPayload {
 export async function loginWithGateway(values: LoginFormValues): Promise<AuthSession> {
   const response = await postJson<LoginResponseDto, LoginPayload>("/auth/api/users/login", {
     login: values.login.trim(),
-    password: values.password
+    password: values.password,
   });
 
   const accessToken = response.accessToken ?? response.AccessToken;
@@ -28,7 +28,7 @@ export async function loginWithGateway(values: LoginFormValues): Promise<AuthSes
   return {
     accessToken,
     login: values.login.trim(),
-    expiresAtUtc: response.expiresAtUtc ?? response.ExpiresAtUtc ?? null
+    expiresAtUtc: response.expiresAtUtc ?? response.ExpiresAtUtc ?? null,
   };
 }
 
@@ -36,7 +36,7 @@ export async function registerWithGateway(values: RegisterFormValues): Promise<v
   const payload: RegisterPayload = {
     email: values.email.trim(),
     userName: values.userName.trim(),
-    password: values.password
+    password: values.password,
   };
 
   if (values.firstName.trim().length > 0) {

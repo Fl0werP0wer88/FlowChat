@@ -13,7 +13,7 @@ export interface StoredSession {
 const emptySession: StoredSession = {
   accessToken: null,
   login: null,
-  expiresAtUtc: null
+  expiresAtUtc: null,
 };
 
 function canUseStorage(): boolean {
@@ -28,7 +28,7 @@ export function loadStoredSession(): StoredSession {
   return {
     accessToken: localStorage.getItem(accessTokenStorageKey),
     login: localStorage.getItem(loginStorageKey),
-    expiresAtUtc: localStorage.getItem(expirationStorageKey)
+    expiresAtUtc: localStorage.getItem(expirationStorageKey),
   };
 }
 

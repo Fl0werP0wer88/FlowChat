@@ -9,10 +9,10 @@ public class Base64UrlTokenEncoder : ITokenEncoder
     public string EncodeForUrl(string token)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(token);
-        var encoded = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token)); 
+        var encoded = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
         var decoded = this.DecodeFromUrl(encoded);
 
-        return WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token)); 
+        return WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
     }
 
     public string DecodeFromUrl(string encodedToken)

@@ -1,11 +1,11 @@
 import { useMemo, useState } from "react";
-import { clearStoredSession, loadStoredSession, storeSession, type StoredSession } from "../services/sessionStorage";
+import { clearStoredSession, loadStoredSession, type StoredSession, storeSession } from "../services/sessionStorage";
 import type { AuthSession } from "../types/auth";
 
 const emptySession: StoredSession = {
   accessToken: null,
   login: null,
-  expiresAtUtc: null
+  expiresAtUtc: null,
 };
 
 export function useSessionState() {
@@ -17,7 +17,7 @@ export function useSessionState() {
     setSession({
       accessToken: nextSession.accessToken,
       login: nextSession.login,
-      expiresAtUtc: nextSession.expiresAtUtc
+      expiresAtUtc: nextSession.expiresAtUtc,
     });
   };
 
@@ -30,6 +30,6 @@ export function useSessionState() {
     session,
     signIn,
     signOut,
-    isAuthenticated: Boolean(session.accessToken)
+    isAuthenticated: Boolean(session.accessToken),
   };
 }

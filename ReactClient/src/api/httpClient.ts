@@ -36,14 +36,14 @@ function resolveErrorMessage(payload: unknown, statusCode: number): string {
 
 export async function postJson<TResponse, TRequest extends object>(
   path: string,
-  payload: TRequest
+  payload: TRequest,
 ): Promise<TResponse> {
   const response = await fetch(`${gatewayBaseUrl}${path}`, {
     method: "POST",
     headers: {
-      "Content-Type": "application/json"
+      "Content-Type": "application/json",
     },
-    body: JSON.stringify(payload)
+    body: JSON.stringify(payload),
   });
 
   const rawText = await response.text();

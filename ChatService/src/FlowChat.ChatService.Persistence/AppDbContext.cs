@@ -1,4 +1,4 @@
-﻿using FlowChat.ChatService.Domain.Entities;
+using FlowChat.ChatService.Domain.Entities;
 using FlowChat.ChatService.Domain.Common;
 using Microsoft.EntityFrameworkCore;
 
@@ -19,8 +19,8 @@ public class AppDbContext : DbContext
         modelBuilder.HasDefaultSchema("FlowChat");
         base.OnModelCreating(modelBuilder);
     }
-	
-	public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = new CancellationToken())
+
+    public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = new CancellationToken())
     {
         foreach (var entry in ChangeTracker.Entries<AuditableEntity>())
         {

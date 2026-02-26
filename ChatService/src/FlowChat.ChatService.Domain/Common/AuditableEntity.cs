@@ -1,4 +1,4 @@
-﻿namespace FlowChat.ChatService.Domain.Common;
+namespace FlowChat.ChatService.Domain.Common;
 
 public class AuditableEntity
 {

@@ -1,4 +1,4 @@
-﻿namespace FlowChat.ChatService.Domain.Entities
+namespace FlowChat.ChatService.Domain.Entities
 {
     public class Product
     {

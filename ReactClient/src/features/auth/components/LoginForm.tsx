@@ -20,7 +20,7 @@ export function LoginForm({
   notice,
   onSubmit,
   onFieldChange,
-  onSwitchToRegister
+  onSwitchToRegister,
 }: LoginFormProps) {
   return (
     <form className="auth-form" onSubmit={onSubmit}>

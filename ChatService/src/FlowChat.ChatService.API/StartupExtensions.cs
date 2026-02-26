@@ -1,4 +1,4 @@
-﻿using FlowChat.ChatService.Application;
+using FlowChat.ChatService.Application;
 using FlowChat.ChatService.Infrastructure;
 using FlowChat.ChatService.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -42,7 +42,7 @@ public static class StartupExtensions
 
         app.UseHttpsRedirection();
         app.MapControllers();
-        return app; 
+        return app;
     }
 
     public static async Task ResetDatabaseAsync(this WebApplication app)

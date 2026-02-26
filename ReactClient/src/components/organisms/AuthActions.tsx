@@ -13,7 +13,7 @@ export function AuthActions({
   submitLabel,
   pendingSubmitLabel,
   secondaryLabel,
-  onSecondaryClick
+  onSecondaryClick,
 }: AuthActionsProps) {
   return (
     <div className="actions">

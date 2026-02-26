@@ -1,4 +1,4 @@
-﻿namespace FlowChat.ChatService.UnitTests;
+namespace FlowChat.ChatService.UnitTests;
 
 public class UnitTest1
 {
