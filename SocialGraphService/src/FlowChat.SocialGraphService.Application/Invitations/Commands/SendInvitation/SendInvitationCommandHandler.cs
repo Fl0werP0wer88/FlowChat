@@ -7,15 +7,18 @@ namespace FlowChat.SocialGraphService.Application.Invitations.Commands.SendInvit
 
 public sealed class SendInvitationCommandHandler : IRequestHandler<SendInvitationCommand, InvitationDto>
 {
-    private readonly IInvitationRepository _invitationRepository;
-    private readonly IContactRepository _contactRepository;
+    private readonly IUserSocialGraphRepository _userSocialGraphRepository;
+    private readonly IInvitationReadRepository _invitationReadRepository;
+    private readonly IContactReadRepository _contactReadRepository;
 
     public SendInvitationCommandHandler(
-        IInvitationRepository invitationRepository,
-        IContactRepository contactRepository)
+        IUserSocialGraphRepository userSocialGraphRepository,
+        IInvitationReadRepository invitationReadRepository,
+        IContactReadRepository contactReadRepository)
     {
-        _invitationRepository = invitationRepository;
-        _contactRepository = contactRepository;
+        _userSocialGraphRepository = userSocialGraphRepository;
+        _invitationReadRepository = invitationReadRepository;
+        _contactReadRepository = contactReadRepository;
     }
 
     public async Task<InvitationDto> Handle(
@@ -37,7 +40,7 @@ public sealed class SendInvitationCommandHandler : IRequestHandler<SendInvitatio
             throw new ArgumentException("RequesterId and AddresseeId must be different.");
         }
 
-        var contactExists = await _contactRepository.RelationshipExistsAsync(
+        var contactExists = await _contactReadRepository.RelationshipExistsAsync(
             request.RequesterId,
             request.AddresseeId,
             cancellationToken);
@@ -47,7 +50,7 @@ public sealed class SendInvitationCommandHandler : IRequestHandler<SendInvitatio
             throw new InvalidOperationException("Contact relationship already exists.");
         }
 
-        var pendingExists = await _invitationRepository.PendingBetweenUsersExistsAsync(
+        var pendingExists = await _invitationReadRepository.PendingBetweenUsersExistsAsync(
             request.RequesterId,
             request.AddresseeId,
             cancellationToken);
@@ -62,7 +65,7 @@ public sealed class SendInvitationCommandHandler : IRequestHandler<SendInvitatio
             request.RequesterId,
             request.AddresseeId);
 
-        await _invitationRepository.AddAsync(invitation, cancellationToken);
+        await _userSocialGraphRepository.AddInvitationAsync(invitation, cancellationToken);
 
         return new InvitationDto(
             invitation.Id.Value,

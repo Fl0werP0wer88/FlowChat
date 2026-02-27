@@ -6,18 +6,18 @@ namespace FlowChat.SocialGraphService.Application.Contacts.Queries.GetContactsFo
 
 public sealed class GetContactsForUserQueryHandler : IQueryHandler<GetContactsForUserQuery, IReadOnlyList<ContactDto>>
 {
-    private readonly IContactRepository _contactRepository;
+    private readonly IContactReadRepository _contactReadRepository;
 
-    public GetContactsForUserQueryHandler(IContactRepository contactRepository)
+    public GetContactsForUserQueryHandler(IContactReadRepository contactReadRepository)
     {
-        _contactRepository = contactRepository;
+        _contactReadRepository = contactReadRepository;
     }
 
     public async Task<Result<IReadOnlyList<ContactDto>, IDomainError>> Handle(
         GetContactsForUserQuery request,
         CancellationToken cancellationToken)
     {
-        var contacts = await _contactRepository.GetForUserAsync(
+        var contacts = await _contactReadRepository.GetForUserAsync(
             request.UserId,
             request.Status,
             cancellationToken);

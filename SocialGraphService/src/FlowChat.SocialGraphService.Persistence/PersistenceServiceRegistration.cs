@@ -1,5 +1,4 @@
 using FlowChat.SocialGraphService.Application.Contracts.Persistence;
-using FlowChat.SocialGraphService.Domain.Entities;
 using FlowChat.SocialGraphService.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -13,13 +12,15 @@ public static class PersistenceServiceRegistration
         this IServiceCollection services,
         IConfiguration configuration)
     {
+        var persistenceAssembly = typeof(PersistenceServiceRegistration).Assembly;
+
         services.AddDbContext<AppDbContext>(options =>
             options.UseNpgsql(configuration.GetConnectionString("SocialGraphDb")));
+        services.AddAutoMapper((Action<AutoMapper.IMapperConfigurationExpression>?)null, persistenceAssembly);
 
-        services.AddScoped<IAsyncRepository<Contact>, ContactRepository>();
-        services.AddScoped<IAsyncRepository<Invitation>, InvitationRepository>();
-        services.AddScoped<IContactRepository, ContactRepository>();
-        services.AddScoped<IInvitationRepository, InvitationRepository>();
+        services.AddScoped<IUserSocialGraphRepository, UserSocialGraphRepository>();
+        services.AddScoped<IContactReadRepository, ContactReadRepository>();
+        services.AddScoped<IInvitationReadRepository, InvitationReadRepository>();
 
         return services;
     }
