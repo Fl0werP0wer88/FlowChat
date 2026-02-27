@@ -37,7 +37,7 @@ public class Contact : EntityBase
     }
 
 
-    public static Contact Create(        
+    public static Contact Create(
         Guid id,
         Guid userId1,
         Guid userId2,

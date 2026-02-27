@@ -6,7 +6,7 @@ namespace FlowChat.SocialGraphService.Domain.Entities
     {
         public UserSocialGraph(Guid id) : base(id)
         {
-            
+
         }
     }
 }

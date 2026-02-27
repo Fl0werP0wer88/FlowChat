@@ -3,7 +3,7 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace FlowChat.SocialGraphService.Api.Features.Invitations.SendInvitation;
+namespace FlowChat.SocialGraphService.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]

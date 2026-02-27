@@ -3,7 +3,7 @@ using FlowChat.SocialGraphService.Domain.Enums;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
-namespace FlowChat.SocialGraphService.Api.Features.Contacts.GetContactsForUser;
+namespace FlowChat.SocialGraphService.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
