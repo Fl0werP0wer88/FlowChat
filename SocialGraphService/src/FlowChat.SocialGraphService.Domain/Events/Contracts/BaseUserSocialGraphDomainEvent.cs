@@ -1,4 +1,3 @@
-using System;
 using FlowChat.SocialGraphService.Domain.Common;
 using FlowChat.SocialGraphService.Domain.Common.Constants;
 using FlowChat.SocialGraphService.Domain.Entities;

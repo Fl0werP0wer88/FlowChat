@@ -1,10 +1,10 @@
+using FlowChat.SocialGraphService.Application.Contracts;
 using FlowChat.SocialGraphService.Application.Contracts.Persistence;
-using MediatR;
+using FlowChat.SocialGraphService.Domain.Errors;
 
 namespace FlowChat.SocialGraphService.Application.Contacts.Queries.GetContactsForUser;
 
-public sealed class GetContactsForUserQueryHandler
-    : IRequestHandler<GetContactsForUserQuery, IReadOnlyList<ContactDto>>
+public sealed class GetContactsForUserQueryHandler : IQueryHandler<GetContactsForUserQuery, IReadOnlyList<ContactDto>>
 {
     private readonly IContactRepository _contactRepository;
 
@@ -13,7 +13,7 @@ public sealed class GetContactsForUserQueryHandler
         _contactRepository = contactRepository;
     }
 
-    public async Task<IReadOnlyList<ContactDto>> Handle(
+    public async Task<Result<IReadOnlyList<ContactDto>, IDomainError>> Handle(
         GetContactsForUserQuery request,
         CancellationToken cancellationToken)
     {
@@ -22,7 +22,7 @@ public sealed class GetContactsForUserQueryHandler
             request.Status,
             cancellationToken);
 
-        return contacts
+        var contactDtos = contacts
             .Select(x => new ContactDto(
                 x.Id,
                 x.UserId1,
@@ -32,5 +32,7 @@ public sealed class GetContactsForUserQueryHandler
                 x.CreatedAtUtc.UtcDateTime,
                 x.LastModifiedAtUtc.UtcDateTime))
             .ToList();
+
+        return Result.Success<IReadOnlyList<ContactDto>, IDomainError>(contactDtos);
     }
 }
