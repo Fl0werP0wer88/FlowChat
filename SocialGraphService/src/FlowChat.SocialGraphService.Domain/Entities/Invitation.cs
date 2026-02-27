@@ -46,4 +46,15 @@ public class Invitation : EntityBase<Invitation>
         : this(Id<Invitation>.FromGuid(id), requesterId, addresseeId, status, respondedAtUtc)
     {
     }
+
+    public void Accept(DateTime? respondedAtUtc = null)
+    {
+        if (Status != InvitationStatus.Pending)
+        {
+            throw new InvalidOperationException("Only pending invitations can be accepted.");
+        }
+
+        Status = InvitationStatus.Accepted;
+        RespondedAtUtc = respondedAtUtc ?? DateTime.UtcNow;
+    }
 }
