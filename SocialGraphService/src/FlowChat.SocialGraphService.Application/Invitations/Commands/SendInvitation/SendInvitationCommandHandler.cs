@@ -1,4 +1,5 @@
 using FlowChat.SocialGraphService.Application.Contracts.Persistence;
+using FlowChat.SocialGraphService.Domain.Common;
 using FlowChat.SocialGraphService.Domain.Entities;
 using MediatR;
 
@@ -57,14 +58,14 @@ public sealed class SendInvitationCommandHandler : IRequestHandler<SendInvitatio
         }
 
         var invitation = new Invitation(
-            Guid.NewGuid(),
+            Id<Invitation>.New(),
             request.RequesterId,
             request.AddresseeId);
 
         await _invitationRepository.AddAsync(invitation, cancellationToken);
 
         return new InvitationDto(
-            invitation.Id,
+            invitation.Id.Value,
             invitation.RequesterId,
             invitation.AddresseeId,
             invitation.Status,

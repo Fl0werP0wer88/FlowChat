@@ -24,7 +24,7 @@ public sealed class GetContactsForUserQueryHandler : IQueryHandler<GetContactsFo
 
         var contactDtos = contacts
             .Select(x => new ContactDto(
-                x.Id,
+                x.Id.Value,
                 x.UserId1,
                 x.UserId2,
                 x.IsBlocked,

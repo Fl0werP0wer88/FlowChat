@@ -1,4 +1,5 @@
 using FlowChat.SocialGraphService.Application.Contracts.Persistence;
+using FlowChat.SocialGraphService.Domain.Common;
 using FlowChat.SocialGraphService.Domain.Entities;
 using FlowChat.SocialGraphService.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
@@ -76,7 +77,7 @@ public sealed class InvitationRepository : IInvitationRepository
         }
 
         return new Invitation(
-            entity.Id,
+            Id<Invitation>.FromGuid(entity.Id),
             entity.RequesterId,
             entity.AddresseeId,
             status,
@@ -87,7 +88,7 @@ public sealed class InvitationRepository : IInvitationRepository
     {
         return new InvitationEntity
         {
-            Id = entity.Id,
+            Id = entity.Id.Value,
             RequesterId = entity.RequesterId,
             AddresseeId = entity.AddresseeId,
             Status = entity.Status.ToString(),

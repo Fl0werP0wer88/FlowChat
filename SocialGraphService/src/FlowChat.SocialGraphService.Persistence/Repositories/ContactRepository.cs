@@ -1,4 +1,5 @@
 using FlowChat.SocialGraphService.Application.Contracts.Persistence;
+using FlowChat.SocialGraphService.Domain.Common;
 using FlowChat.SocialGraphService.Domain.Entities;
 using FlowChat.SocialGraphService.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
@@ -110,7 +111,7 @@ public class ContactRepository : IContactRepository
     private static Contact ToDomain(ContactEntity entity)
     {
         return Contact.Create(
-            entity.Id,
+            Id<Contact>.FromGuid(entity.Id),
             entity.UserId1,
             entity.UserId2,
             entity.IsBlocked,
@@ -120,7 +121,7 @@ public class ContactRepository : IContactRepository
     private static ContactEntity ToEntity(Contact entity)
     {
         return ContactEntity.Create(
-            entity.Id,
+            entity.Id.Value,
             entity.UserId1,
             entity.UserId2,
             entity.IsBlocked,

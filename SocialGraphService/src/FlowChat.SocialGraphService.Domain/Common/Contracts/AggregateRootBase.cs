@@ -1,16 +1,18 @@
 using System.ComponentModel.DataAnnotations.Schema;
+using FlowChat.SocialGraphService.Domain.Common;
 using FlowChat.SocialGraphService.Domain.Events.Contracts;
 
 namespace FlowChat.SocialGraphService.Domain.Common.Contracts;
 
-public abstract class AggregateRootBase : EntityBase, IAggregateRoot
+public abstract class AggregateRootBase<TDomainEntity> : EntityBase<TDomainEntity>, IAggregateRoot
+    where TDomainEntity : AggregateRootBase<TDomainEntity>
 {
     private readonly List<IDomainEvent> _domainEvents = [];
 
     [NotMapped]
     public IReadOnlyCollection<IDomainEvent> DomainEvents => _domainEvents.AsReadOnly();
 
-    protected AggregateRootBase(Guid id) : base(id) { }
+    protected AggregateRootBase(Id<TDomainEntity> id) : base(id) { }
 
     public IReadOnlyCollection<IDomainEvent> PopDomainEvents()
     {

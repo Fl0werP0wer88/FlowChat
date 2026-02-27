@@ -1,9 +1,10 @@
+using FlowChat.SocialGraphService.Domain.Common;
 using FlowChat.SocialGraphService.Domain.Common.Contracts;
 using FlowChat.SocialGraphService.Domain.Enums;
 
 namespace FlowChat.SocialGraphService.Domain.Entities;
 
-public class Invitation : EntityBase
+public class Invitation : EntityBase<Invitation>
 {
     public Guid RequesterId { get; private set; }
     public Guid AddresseeId { get; private set; }
@@ -11,13 +12,12 @@ public class Invitation : EntityBase
     public DateTime? RespondedAtUtc { get; private set; }
 
     public Invitation(
-        Guid id,
+        Id<Invitation> id,
         Guid requesterId,
         Guid addresseeId,
         InvitationStatus status = InvitationStatus.Pending,
         DateTime? respondedAtUtc = null) : base(id)
     {
-        ArgumentOutOfRangeException.ThrowIfEqual(id, Guid.Empty);
         ArgumentOutOfRangeException.ThrowIfEqual(requesterId, Guid.Empty);
         ArgumentOutOfRangeException.ThrowIfEqual(addresseeId, Guid.Empty);
 
@@ -35,5 +35,15 @@ public class Invitation : EntityBase
         AddresseeId = addresseeId;
         Status = status;
         RespondedAtUtc = respondedAtUtc;
+    }
+
+    public Invitation(
+        Guid id,
+        Guid requesterId,
+        Guid addresseeId,
+        InvitationStatus status = InvitationStatus.Pending,
+        DateTime? respondedAtUtc = null)
+        : this(Id<Invitation>.FromGuid(id), requesterId, addresseeId, status, respondedAtUtc)
+    {
     }
 }

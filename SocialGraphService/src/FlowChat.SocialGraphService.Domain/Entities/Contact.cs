@@ -1,8 +1,9 @@
+using FlowChat.SocialGraphService.Domain.Common;
 using FlowChat.SocialGraphService.Domain.Common.Contracts;
 
 namespace FlowChat.SocialGraphService.Domain.Entities;
 
-public class Contact : EntityBase
+public class Contact : EntityBase<Contact>
 {
     public Guid UserId1 { get; }
     public Guid UserId2 { get; }
@@ -10,13 +11,12 @@ public class Contact : EntityBase
     public Guid? BlockedBy { get; }
 
     private Contact(
-        Guid id,
+        Id<Contact> id,
         Guid userId1,
         Guid userId2,
         bool isBlocked = false,
         Guid? blockedBy = null) : base(id)
     {
-        ArgumentOutOfRangeException.ThrowIfEqual(id, Guid.Empty);
         ArgumentOutOfRangeException.ThrowIfEqual(userId1, Guid.Empty);
         ArgumentOutOfRangeException.ThrowIfEqual(userId2, Guid.Empty);
 
@@ -38,12 +38,22 @@ public class Contact : EntityBase
 
 
     public static Contact Create(
-        Guid id,
+        Id<Contact> id,
         Guid userId1,
         Guid userId2,
         bool isBlocked = false,
         Guid? blockedBy = null)
     {
         return new Contact(id, userId1, userId2, isBlocked, blockedBy);
+    }
+
+    public static Contact Create(
+        Guid id,
+        Guid userId1,
+        Guid userId2,
+        bool isBlocked = false,
+        Guid? blockedBy = null)
+    {
+        return Create(Id<Contact>.FromGuid(id), userId1, userId2, isBlocked, blockedBy);
     }
 }
