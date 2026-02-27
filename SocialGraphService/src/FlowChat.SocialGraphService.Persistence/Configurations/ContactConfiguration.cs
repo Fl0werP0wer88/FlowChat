@@ -1,12 +1,12 @@
-using FlowChat.SocialGraphService.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using FlowChat.SocialGraphService.Persistence.Entities;
 
 namespace FlowChat.SocialGraphService.Persistence.Configurations;
 
-public class ContactConfiguration : IEntityTypeConfiguration<Contact>
+public class ContactConfiguration : IEntityTypeConfiguration<ContactEntity>
 {
-    public void Configure(EntityTypeBuilder<Contact> builder)
+    public void Configure(EntityTypeBuilder<ContactEntity> builder)
     {
         builder.ToTable("Contacts", t =>
         {

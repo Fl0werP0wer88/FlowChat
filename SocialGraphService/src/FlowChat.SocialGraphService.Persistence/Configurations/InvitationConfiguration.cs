@@ -1,12 +1,12 @@
-using FlowChat.SocialGraphService.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using FlowChat.SocialGraphService.Persistence.Entities;
 
 namespace FlowChat.SocialGraphService.Persistence.Configurations;
 
-public sealed class InvitationConfiguration : IEntityTypeConfiguration<Invitation>
+public sealed class InvitationConfiguration : IEntityTypeConfiguration<InvitationEntity>
 {
-    public void Configure(EntityTypeBuilder<Invitation> builder)
+    public void Configure(EntityTypeBuilder<InvitationEntity> builder)
     {
         builder.ToTable("Invitations", t =>
             t.HasCheckConstraint("chk_invitation_different_users", "\"RequesterId\" <> \"AddresseeId\""));
@@ -14,7 +14,6 @@ public sealed class InvitationConfiguration : IEntityTypeConfiguration<Invitatio
         builder.HasKey(x => x.Id);
 
         builder.Property(x => x.Status)
-            .HasConversion<string>()
             .HasMaxLength(20)
             .IsRequired();
 

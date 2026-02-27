@@ -2,20 +2,26 @@ using FlowChat.SocialGraphService.Application.Contracts.Persistence;
 using FlowChat.SocialGraphService.Domain.Entities;
 using FlowChat.SocialGraphService.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
+using FlowChat.SocialGraphService.Persistence.Entities;
 
 namespace FlowChat.SocialGraphService.Persistence.Repositories;
 
-public class ContactRepository : RepositoryBase<Contact>, IContactRepository
+public class ContactRepository : IContactRepository
 {
-    public ContactRepository(AppDbContext dbContext) : base(dbContext)
+    private readonly AppDbContext _dbContext;
+
+    public ContactRepository(AppDbContext dbContext)
     {
+        _dbContext = dbContext;
     }
 
     public async Task<Contact?> GetWithUsersAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        return await DbContext.Contacts
+        var entity = await _dbContext.Contacts
             .AsNoTracking()
             .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+
+        return entity is null ? null : ToDomain(entity);
     }
 
     public async Task<IReadOnlyList<Contact>> GetForUserAsync(
@@ -23,7 +29,7 @@ public class ContactRepository : RepositoryBase<Contact>, IContactRepository
         InvitationStatus? status = null,
         CancellationToken cancellationToken = default)
     {
-        var query = DbContext.Contacts
+        var query = _dbContext.Contacts
             .AsNoTracking()
             .Where(x => x.UserId1 == userId || x.UserId2 == userId);
 
@@ -37,9 +43,11 @@ public class ContactRepository : RepositoryBase<Contact>, IContactRepository
             };
         }
 
-        return await query
+        var entities = await query
             .OrderByDescending(x => x.CreatedAtUtc)
             .ToListAsync(cancellationToken);
+
+        return entities.Select(ToDomain).ToList();
     }
 
     public async Task<bool> RelationshipExistsAsync(
@@ -49,14 +57,47 @@ public class ContactRepository : RepositoryBase<Contact>, IContactRepository
     {
         var (userId1, userId2) = NormalizePair(userAId, userBId);
 
-        return await DbContext.Contacts
+        return await _dbContext.Contacts
             .AnyAsync(x => x.UserId1 == userId1 && x.UserId2 == userId2, cancellationToken);
     }
 
-    public override async Task<Contact?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    public async Task<Contact?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        return await DbContext.Contacts
+        var entity = await _dbContext.Contacts
             .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+
+        return entity is null ? null : ToDomain(entity);
+    }
+
+    public async Task<IReadOnlyList<Contact>> GetAllAsync(CancellationToken cancellationToken = default)
+    {
+        var entities = await _dbContext.Contacts
+            .AsNoTracking()
+            .ToListAsync(cancellationToken);
+
+        return entities.Select(ToDomain).ToList();
+    }
+
+    public async Task<Contact> AddAsync(Contact entity, CancellationToken cancellationToken = default)
+    {
+        var persistenceEntity = ToEntity(entity);
+
+        await _dbContext.Contacts.AddAsync(persistenceEntity, cancellationToken);
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        return ToDomain(persistenceEntity);
+    }
+
+    public async Task UpdateAsync(Contact entity, CancellationToken cancellationToken = default)
+    {
+        _dbContext.Contacts.Update(ToEntity(entity));
+        await _dbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task DeleteAsync(Contact entity, CancellationToken cancellationToken = default)
+    {
+        _dbContext.Contacts.Remove(ToEntity(entity));
+        await _dbContext.SaveChangesAsync(cancellationToken);
     }
 
     private static (Guid UserId1, Guid UserId2) NormalizePair(Guid userAId, Guid userBId)
@@ -64,5 +105,30 @@ public class ContactRepository : RepositoryBase<Contact>, IContactRepository
         return userAId.CompareTo(userBId) <= 0
             ? (userAId, userBId)
             : (userBId, userAId);
+    }
+
+    private static Contact ToDomain(ContactEntity entity)
+    {
+        return Contact.Create(
+            entity.Id,
+            entity.UserId1,
+            entity.UserId2,
+            entity.IsBlocked,
+            entity.BlockedBy);
+    }
+
+    private static ContactEntity ToEntity(Contact entity)
+    {
+        return ContactEntity.Create(
+            entity.Id,
+            entity.UserId1,
+            entity.UserId2,
+            entity.IsBlocked,
+            entity.BlockedBy,
+            null,
+            entity.CreatedBy,
+            entity.CreatedAtUtc,
+            entity.LastModifiedBy,
+            entity.LastModifiedAtUtc);
     }
 }

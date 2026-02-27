@@ -1,4 +1,5 @@
 using FlowChat.SocialGraphService.Application.Contracts.Persistence;
+using FlowChat.SocialGraphService.Domain.Entities;
 using FlowChat.SocialGraphService.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -15,7 +16,8 @@ public static class PersistenceServiceRegistration
         services.AddDbContext<AppDbContext>(options =>
             options.UseNpgsql(configuration.GetConnectionString("SocialGraphDb")));
 
-        services.AddScoped(typeof(IAsyncRepository<>), typeof(RepositoryBase<>));
+        services.AddScoped<IAsyncRepository<Contact>, ContactRepository>();
+        services.AddScoped<IAsyncRepository<Invitation>, InvitationRepository>();
         services.AddScoped<IContactRepository, ContactRepository>();
         services.AddScoped<IInvitationRepository, InvitationRepository>();
 
