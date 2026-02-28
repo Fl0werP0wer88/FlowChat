@@ -10,8 +10,7 @@ public class ContactConfiguration : IEntityTypeConfiguration<ContactEntity>
     {
         builder.ToTable("Contacts", t =>
         {
-            t.HasCheckConstraint("chk_different_users", "\"UserId1\" <> \"UserId2\"");
-            t.HasCheckConstraint("chk_user_order", "\"UserId1\" < \"UserId2\"");
+            t.HasCheckConstraint("chk_different_users", "\"OwnerUserId\" <> \"ContactUserId\"");
         });
         builder.HasKey(x => x.Id);
 
@@ -19,8 +18,24 @@ public class ContactConfiguration : IEntityTypeConfiguration<ContactEntity>
             .HasDefaultValue(false)
             .IsRequired();
 
-        builder.HasIndex(x => new { x.UserId1, x.UserId2 })
+        builder.Property(x => x.FirstName)
+            .HasMaxLength(100);
+
+        builder.Property(x => x.LastName)
+            .HasMaxLength(100);
+
+        builder.Property(x => x.Login)
+            .HasMaxLength(100)
+            .IsRequired();
+
+        builder.Property(x => x.PhoneNumber)
+            .HasMaxLength(32);
+
+        builder.Property(x => x.Email)
+            .HasMaxLength(256);
+
+        builder.HasIndex(x => new { x.OwnerUserId, x.ContactUserId })
             .IsUnique()
-            .HasDatabaseName("uq_contact_pair");
+            .HasDatabaseName("uq_contact_owner_contact");
     }
 }

@@ -2,9 +2,13 @@ namespace FlowChat.SocialGraphService.Application.Contacts.Queries.GetContactsFo
 
 public sealed record ContactDto(
     Guid Id,
-    Guid UserId1,
-    Guid UserId2,
+    Guid OwnerUserId,
+    Guid ContactUserId,
+    string Login,
+    string? FirstName,
+    string? LastName,
+    string? PhoneNumber,
+    string? Email,
     bool IsBlocked,
-    Guid? BlockedBy,
     DateTime CreatedDate,
     DateTime LastModifiedDate);

@@ -15,6 +15,30 @@ public sealed class UserSocialGraphConfiguration : IEntityTypeConfiguration<User
         builder.Property(x => x.UserId)
             .IsRequired();
 
+        builder.Property(x => x.FirstName)
+            .HasMaxLength(100);
+
+        builder.Property(x => x.LastName)
+            .HasMaxLength(100);
+
+        builder.Property(x => x.Login)
+            .HasMaxLength(100)
+            .IsRequired();
+
+        builder.Property(x => x.PhoneNumber)
+            .HasMaxLength(32);
+
+        builder.Property(x => x.Email)
+            .HasMaxLength(256);
+
+        builder.Property(x => x.IsPhoneVisible)
+            .HasDefaultValue(false)
+            .IsRequired();
+
+        builder.Property(x => x.IsEmailVisible)
+            .HasDefaultValue(false)
+            .IsRequired();
+
         builder.HasIndex(x => x.UserId)
             .IsUnique()
             .HasDatabaseName("uq_user_social_graph_user_id");

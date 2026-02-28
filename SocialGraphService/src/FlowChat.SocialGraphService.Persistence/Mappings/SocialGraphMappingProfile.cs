@@ -12,23 +12,61 @@ public sealed class SocialGraphMappingProfile : Profile
         CreateMap<ContactEntity, Contact>()
             .ConstructUsing(src => Contact.Create(
                 Id<Contact>.FromGuid(src.Id),
-                src.UserId1,
-                src.UserId2,
-                src.IsBlocked,
-                src.BlockedBy));
+                src.OwnerUserId,
+                src.ContactUserId,
+                src.Login,
+                src.FirstName,
+                src.LastName,
+                src.PhoneNumber,
+                src.Email,
+                src.IsBlocked));
 
         CreateMap<Contact, ContactEntity>()
             .ConstructUsing(src => ContactEntity.Create(
                 src.Id.Value,
-                src.UserId1,
-                src.UserId2,
+                src.OwnerUserId,
+                src.ContactUserId,
+                src.Login,
+                src.FirstName,
+                src.LastName,
+                src.PhoneNumber,
+                src.Email,
                 src.IsBlocked,
-                src.BlockedBy,
                 null,
                 src.CreatedBy,
                 src.CreatedAtUtc,
                 src.LastModifiedBy,
                 src.LastModifiedAtUtc));
+
+        CreateMap<UserSocialGraphEntity, UserSocialGraph>()
+            .ConstructUsing(src => new UserSocialGraph(
+                Id<UserSocialGraph>.FromGuid(src.Id),
+                src.Login,
+                Id<UserSocialGraph>.FromGuid(src.UserId),
+                src.FirstName,
+                src.LastName,
+                src.PhoneNumber,
+                src.Email,
+                src.IsPhoneVisible,
+                src.IsEmailVisible));
+
+        CreateMap<UserSocialGraph, UserSocialGraphEntity>()
+            .ConstructUsing(src => new UserSocialGraphEntity
+            {
+                Id = src.Id.Value,
+                UserId = src.UserId.Value,
+                FirstName = src.FirstName,
+                LastName = src.LastName,
+                Login = src.Login,
+                PhoneNumber = src.PhoneNumber,
+                Email = src.Email,
+                IsPhoneVisible = src.IsPhoneVisible,
+                IsEmailVisible = src.IsEmailVisible,
+                CreatedBy = src.CreatedBy,
+                CreatedAtUtc = src.CreatedAtUtc,
+                LastModifiedBy = src.LastModifiedBy,
+                LastModifiedAtUtc = src.LastModifiedAtUtc
+            });
 
         CreateMap<InvitationEntity, Invitation>()
             .ConstructUsing(src => new Invitation(

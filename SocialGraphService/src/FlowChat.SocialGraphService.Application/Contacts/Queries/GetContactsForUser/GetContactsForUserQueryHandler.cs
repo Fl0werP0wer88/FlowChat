@@ -25,10 +25,14 @@ public sealed class GetContactsForUserQueryHandler : IQueryHandler<GetContactsFo
         var contactDtos = contacts
             .Select(x => new ContactDto(
                 x.Id.Value,
-                x.UserId1,
-                x.UserId2,
+                x.OwnerUserId,
+                x.ContactUserId,
+                x.Login,
+                x.FirstName,
+                x.LastName,
+                x.PhoneNumber,
+                x.Email,
                 x.IsBlocked,
-                x.BlockedBy,
                 x.CreatedAtUtc.UtcDateTime,
                 x.LastModifiedAtUtc.UtcDateTime))
             .ToList();

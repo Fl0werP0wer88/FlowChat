@@ -4,10 +4,14 @@ public class ContactEntity
 {
     public Guid Id { get; set; }
     public Guid? UserSocialGraphId { get; set; }
-    public Guid UserId1 { get; set; }
-    public Guid UserId2 { get; set; }
+    public Guid OwnerUserId { get; set; }
+    public Guid ContactUserId { get; set; }
+    public string? FirstName { get; set; }
+    public string? LastName { get; set; }
+    public string Login { get; set; } = string.Empty;
+    public string? PhoneNumber { get; set; }
+    public string? Email { get; set; }
     public bool IsBlocked { get; set; }
-    public Guid? BlockedBy { get; set; }
     public string CreatedBy { get; set; } = string.Empty;
     public DateTimeOffset CreatedAtUtc { get; set; }
     public string LastModifiedBy { get; set; } = string.Empty;
@@ -16,10 +20,14 @@ public class ContactEntity
 
     public static ContactEntity Create(
         Guid id,
-        Guid userId1,
-        Guid userId2,
+        Guid ownerUserId,
+        Guid contactUserId,
+        string login,
+        string? firstName = null,
+        string? lastName = null,
+        string? phoneNumber = null,
+        string? email = null,
         bool isBlocked = false,
-        Guid? blockedBy = null,
         Guid? userSocialGraphId = null,
         string createdBy = "",
         DateTimeOffset? createdAtUtc = null,
@@ -30,10 +38,14 @@ public class ContactEntity
         {
             Id = id,
             UserSocialGraphId = userSocialGraphId,
-            UserId1 = userId1,
-            UserId2 = userId2,
+            OwnerUserId = ownerUserId,
+            ContactUserId = contactUserId,
+            Login = login,
+            FirstName = firstName,
+            LastName = lastName,
+            PhoneNumber = phoneNumber,
+            Email = email,
             IsBlocked = isBlocked,
-            BlockedBy = blockedBy,
             CreatedBy = createdBy,
             CreatedAtUtc = createdAtUtc ?? DateTimeOffset.UtcNow,
             LastModifiedBy = lastModifiedBy,

@@ -5,55 +5,72 @@ namespace FlowChat.SocialGraphService.Domain.Entities;
 
 public class Contact : EntityBase<Contact>
 {
-    public Guid UserId1 { get; }
-    public Guid UserId2 { get; }
+    public Guid OwnerUserId { get; }
+    public Guid ContactUserId { get; }
+    public string? FirstName { get; }
+    public string? LastName { get; }
+    public string Login { get; }
+    public string? PhoneNumber { get; }
+    public string? Email { get; }
     public bool IsBlocked { get; }
-    public Guid? BlockedBy { get; }
 
     private Contact(
         Id<Contact> id,
-        Guid userId1,
-        Guid userId2,
-        bool isBlocked = false,
-        Guid? blockedBy = null) : base(id)
+        Guid ownerUserId,
+        Guid contactUserId,
+        string login,
+        string? firstName = null,
+        string? lastName = null,
+        string? phoneNumber = null,
+        string? email = null,
+        bool isBlocked = false) : base(id)
     {
-        ArgumentOutOfRangeException.ThrowIfEqual(userId1, Guid.Empty);
-        ArgumentOutOfRangeException.ThrowIfEqual(userId2, Guid.Empty);
+        ArgumentOutOfRangeException.ThrowIfEqual(ownerUserId, Guid.Empty);
+        ArgumentOutOfRangeException.ThrowIfEqual(contactUserId, Guid.Empty);
 
-        if (userId1 == userId2)
+        if (ownerUserId == contactUserId)
         {
-            throw new ArgumentException("UserId1 and UserId2 must be different.");
+            throw new ArgumentException("OwnerUserId and ContactUserId must be different.");
         }
 
-        if (isBlocked && blockedBy is null)
-        {
-            throw new ArgumentException("BlockedBy is required when contact is blocked.", nameof(blockedBy));
-        }
+        ArgumentException.ThrowIfNullOrWhiteSpace(login);
 
-        UserId1 = userId1;
-        UserId2 = userId2;
+        OwnerUserId = ownerUserId;
+        ContactUserId = contactUserId;
+        FirstName = firstName;
+        LastName = lastName;
+        Login = login;
+        PhoneNumber = phoneNumber;
+        Email = email;
         IsBlocked = isBlocked;
-        BlockedBy = blockedBy;
     }
 
 
     public static Contact Create(
         Id<Contact> id,
-        Guid userId1,
-        Guid userId2,
-        bool isBlocked = false,
-        Guid? blockedBy = null)
+        Guid ownerUserId,
+        Guid contactUserId,
+        string login,
+        string? firstName = null,
+        string? lastName = null,
+        string? phoneNumber = null,
+        string? email = null,
+        bool isBlocked = false)
     {
-        return new Contact(id, userId1, userId2, isBlocked, blockedBy);
+        return new Contact(id, ownerUserId, contactUserId, login, firstName, lastName, phoneNumber, email, isBlocked);
     }
 
     public static Contact Create(
         Guid id,
-        Guid userId1,
-        Guid userId2,
-        bool isBlocked = false,
-        Guid? blockedBy = null)
+        Guid ownerUserId,
+        Guid contactUserId,
+        string login,
+        string? firstName = null,
+        string? lastName = null,
+        string? phoneNumber = null,
+        string? email = null,
+        bool isBlocked = false)
     {
-        return Create(Id<Contact>.FromGuid(id), userId1, userId2, isBlocked, blockedBy);
+        return Create(Id<Contact>.FromGuid(id), ownerUserId, contactUserId, login, firstName, lastName, phoneNumber, email, isBlocked);
     }
 }

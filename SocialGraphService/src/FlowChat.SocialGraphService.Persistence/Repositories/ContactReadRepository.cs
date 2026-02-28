@@ -33,7 +33,7 @@ public sealed class ContactReadRepository : IContactReadRepository
     {
         var query = _dbContext.Contacts
             .AsNoTracking()
-            .Where(x => x.UserId1 == userId || x.UserId2 == userId);
+            .Where(x => x.OwnerUserId == userId);
 
         if (status.HasValue)
         {
@@ -57,10 +57,11 @@ public sealed class ContactReadRepository : IContactReadRepository
         Guid userBId,
         CancellationToken cancellationToken = default)
     {
-        var (userId1, userId2) = NormalizePair(userAId, userBId);
-
         return await _dbContext.Contacts
-            .AnyAsync(x => x.UserId1 == userId1 && x.UserId2 == userId2, cancellationToken);
+            .AnyAsync(
+                x => (x.OwnerUserId == userAId && x.ContactUserId == userBId)
+                     || (x.OwnerUserId == userBId && x.ContactUserId == userAId),
+                cancellationToken);
     }
 
     public async Task<Contact?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
@@ -79,12 +80,4 @@ public sealed class ContactReadRepository : IContactReadRepository
 
         return entities.Select(_mapper.Map<Contact>).ToList();
     }
-
-    private static (Guid UserId1, Guid UserId2) NormalizePair(Guid userAId, Guid userBId)
-    {
-        return userAId.CompareTo(userBId) <= 0
-            ? (userAId, userBId)
-            : (userBId, userAId);
-    }
-
 }
