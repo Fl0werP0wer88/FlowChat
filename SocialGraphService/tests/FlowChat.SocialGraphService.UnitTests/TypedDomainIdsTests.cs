@@ -120,7 +120,7 @@ public class TypedDomainIdsTests
             false);
 
         Assert.Equal(graphId, socialGraph.Id.Value);
-        Assert.Equal(userId, socialGraph.UserId.Value);
+        Assert.Equal(userId, socialGraph.UserId);
         Assert.Equal("Jan", socialGraph.FirstName);
         Assert.Equal("Kowalski", socialGraph.LastName);
         Assert.Equal("jkowalski", socialGraph.Login);

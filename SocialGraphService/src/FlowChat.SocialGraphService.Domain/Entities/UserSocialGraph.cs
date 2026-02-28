@@ -11,7 +11,7 @@ namespace FlowChat.SocialGraphService.Domain.Entities
 
         public IReadOnlyList<Contact> Contacts => _contacts.AsReadOnly();
         public IReadOnlyList<Invitation> Invitations => _invitations.AsReadOnly();
-        public Id<UserSocialGraph> UserId { get; }
+        public Guid UserId { get; }
         public string? FirstName { get; }
         public string? LastName { get; }
         public string Login { get; }
@@ -23,7 +23,7 @@ namespace FlowChat.SocialGraphService.Domain.Entities
         public UserSocialGraph(
             Id<UserSocialGraph> id,
             string login,
-            Id<UserSocialGraph>? userId = null,
+            Guid? userId = null,
             string? firstName = null,
             string? lastName = null,
             string? phoneNumber = null,
@@ -33,7 +33,7 @@ namespace FlowChat.SocialGraphService.Domain.Entities
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(login);
 
-            UserId = userId ?? id;
+            UserId = userId ?? id.Value;
             FirstName = firstName;
             LastName = lastName;
             Login = login;
@@ -56,7 +56,7 @@ namespace FlowChat.SocialGraphService.Domain.Entities
             : this(
                 Id<UserSocialGraph>.FromGuid(id),
                 login,
-                userId.HasValue ? Id<UserSocialGraph>.FromGuid(userId.Value) : null,
+                userId,
                 firstName,
                 lastName,
                 phoneNumber,
@@ -99,7 +99,7 @@ namespace FlowChat.SocialGraphService.Domain.Entities
 
             invitation.Accept();
 
-            var ownerUserId = UserId.Value;
+            var ownerUserId = UserId;
             var contactUserId = invitation.RequesterId == ownerUserId
                 ? invitation.AddresseeId
                 : invitation.RequesterId;

@@ -42,7 +42,7 @@ public sealed class SocialGraphMappingProfile : Profile
             .ConstructUsing(src => new UserSocialGraph(
                 Id<UserSocialGraph>.FromGuid(src.Id),
                 src.Login,
-                Id<UserSocialGraph>.FromGuid(src.UserId),
+                src.UserId,
                 src.FirstName,
                 src.LastName,
                 src.PhoneNumber,
@@ -54,7 +54,7 @@ public sealed class SocialGraphMappingProfile : Profile
             .ConstructUsing(src => new UserSocialGraphEntity
             {
                 Id = src.Id.Value,
-                UserId = src.UserId.Value,
+                UserId = src.UserId,
                 FirstName = src.FirstName,
                 LastName = src.LastName,
                 Login = src.Login,
