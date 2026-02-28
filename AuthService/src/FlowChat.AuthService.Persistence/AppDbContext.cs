@@ -45,10 +45,14 @@ public class AppDbContext : IdentityDbContext<AppUser, AppRole, Guid>
             builder.Property(message => message.OccurredOnUtc)
                 .IsRequired();
 
+            builder.Property(message => message.LockId);
+
+            builder.Property(message => message.LockedUntilUtc);
+
             builder.Property(message => message.Error)
                 .HasColumnType("text");
 
-            builder.HasIndex(message => new { message.ProcessedOnUtc, message.NextRetryOnUtc });
+            builder.HasIndex(message => new { message.ProcessedOnUtc, message.NextRetryOnUtc, message.LockedUntilUtc });
             builder.HasIndex(message => message.OccurredOnUtc);
             builder.HasIndex(message => message.Topic);
         });

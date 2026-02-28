@@ -41,6 +41,7 @@ public static class PersistenceServiceRegistration
     public static IServiceCollection AddWorkerPersistenceServices(
                             this IServiceCollection services, IConfiguration configuration)
     {
+        services.AddOptions<UserCreatedProducerOptions>();
         services.AddScoped<AuditableEntitySaveChangesInterceptor>();
         services.AddScoped<InsertOutboxMessagesInterceptor>();
         services.AddDbContext<AppDbContext>((serviceProvider, options) =>

@@ -14,3 +14,9 @@ public interface IOutboxMessage
     DateTime? NextRetryOnUtc { get; set; }
     string? Error { get; set; }
 }
+
+public interface ILeaseableOutboxMessage : IOutboxMessage
+{
+    Guid? LockId { get; set; }
+    DateTime? LockedUntilUtc { get; set; }
+}

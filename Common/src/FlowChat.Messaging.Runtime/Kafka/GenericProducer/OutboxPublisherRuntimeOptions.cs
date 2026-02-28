@@ -8,6 +8,7 @@ public sealed class OutboxPublisherRuntimeOptions
     public List<string> AllowedTopics { get; set; } = [];
     public int BatchSize { get; set; } = 50;
     public int PollIntervalSeconds { get; set; } = 5;
+    public int LeaseDurationSeconds { get; set; } = 60;
     public int RetryBaseDelaySeconds { get; set; } = 5;
     public int MaxRetryDelaySeconds { get; set; } = 300;
 }

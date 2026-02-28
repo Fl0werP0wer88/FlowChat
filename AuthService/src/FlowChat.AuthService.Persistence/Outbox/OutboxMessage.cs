@@ -2,7 +2,7 @@ using FlowChat.Messaging.Runtime.Kafka.GenericProducer;
 
 namespace FlowChat.AuthService.Persistence.Outbox;
 
-public sealed class OutboxMessage : IOutboxMessage
+public sealed class OutboxMessage : ILeaseableOutboxMessage
 {
     public Guid Id { get; set; }
     public string Type { get; set; } = string.Empty;
@@ -14,5 +14,7 @@ public sealed class OutboxMessage : IOutboxMessage
     public DateTime? ProcessedOnUtc { get; set; }
     public int RetryCount { get; set; }
     public DateTime? NextRetryOnUtc { get; set; }
+    public Guid? LockId { get; set; }
+    public DateTime? LockedUntilUtc { get; set; }
     public string? Error { get; set; }
 }
