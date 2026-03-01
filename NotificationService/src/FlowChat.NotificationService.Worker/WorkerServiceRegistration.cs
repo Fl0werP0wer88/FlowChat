@@ -37,8 +37,10 @@ public static class WorkerServiceRegistration
                     .AddConsumer(consumer => consumer
                         .WithGroupId(consumerOptions.GroupId)
                         .WithAutoOffsetReset(ParseAutoOffsetReset(consumerOptions.AutoOffsetReset))
-                        .Consume<UserEmailVerificationRequestedIntegrationEvent>(endpoint => endpoint
+                        .Consume(endpoint => endpoint
                             .ConsumeFrom(consumerOptions.Topic)
+                            .DeserializeJson(deserializer => deserializer.WithOptionalMessageTypeHeader())
+                            .IgnoreUnhandledMessages()
                             .OnError(policy =>
                             {
                                 policy.MoveTo(consumerOptions.DeadLetterTopic, move => move

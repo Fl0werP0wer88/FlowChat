@@ -32,7 +32,7 @@ public static class InfrastructureServiceRegistration
         services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
         services.AddSingleton<
             IKafkaEventPublisher<UserCreatedIntegrationEvent>,
-            KafkaEventPublisher<UserCreatedIntegrationEvent, UserCreatedProducerOptions>>();
+            SilverbackEventPublisher<UserCreatedIntegrationEvent, UserCreatedProducerOptions>>();
 
         return services;
     }

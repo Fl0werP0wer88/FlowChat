@@ -12,6 +12,7 @@ public static class StartupExtensions
         .AddApplicationServices()
         .AddInfrastructureServices(builder.Configuration)
         .AddAPIPersistenceServices(builder.Configuration)
+        .AddApiSilverbackMessaging(builder.Configuration)
         .AddAPIServices(builder.Configuration);
 
 

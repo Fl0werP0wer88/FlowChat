@@ -14,6 +14,9 @@
     </PackageReference>
     <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.3" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.0" />
+    <PackageReference Include="Silverback.Integration.Kafka" Version="5.0.0" />
+    <PackageReference Include="Silverback.Storage.EntityFramework" Version="5.0.0" />
+    <PackageReference Include="Silverback.Storage.PostgreSql" Version="5.0.0" />
   </ItemGroup>
 
   <PropertyGroup>

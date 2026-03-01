@@ -1,28 +1,30 @@
-using System.Text.Json;
 using FlowChat.AuthService.Application.Contracts.Infrastructure;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Silverback.Messaging.Messages;
+using Silverback.Messaging.Publishing;
 
 namespace FlowChat.AuthService.Persistence.Outbox;
 
 public sealed class OutboxRepository<TEvent, TOptions> : IOutboxRepository<TEvent>
+    where TEvent : class
     where TOptions : class, IOutboxRepositoryOptions<TEvent>
 {
-    private readonly AppDbContext _dbContext;
+    private readonly IPublisher _publisher;
     private readonly TOptions _options;
     private readonly ILogger<OutboxRepository<TEvent, TOptions>> _logger;
 
     public OutboxRepository(
-        AppDbContext dbContext,
+        IPublisher publisher,
         IOptions<TOptions> options,
         ILogger<OutboxRepository<TEvent, TOptions>> logger)
     {
-        _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
+        _publisher = publisher ?? throw new ArgumentNullException(nameof(publisher));
         _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public Task EnqueueAsync(TEvent message, CancellationToken cancellationToken)
+    public async Task EnqueueAsync(TEvent message, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
@@ -42,25 +44,14 @@ public sealed class OutboxRepository<TEvent, TOptions> : IOutboxRepository<TEven
             throw new InvalidOperationException("Outbox message key cannot be null or empty.");
         }
 
-        var outboxMessage = new OutboxMessage
-        {
-            Id = Guid.NewGuid(),
-            Type = typeof(TEvent).FullName ?? typeof(TEvent).Name,
-            Topic = _options.Topic,
-            Key = key,
-            Content = JsonSerializer.Serialize(message),
-            OccurredOnUtc = DateTime.UtcNow,
-            RetryCount = 0
-        };
-
-        _dbContext.OutboxMessages.Add(outboxMessage);
+        await _publisher.WrapAndPublishAsync(
+            message,
+            envelope => envelope.SetKafkaKey(key),
+            cancellationToken);
 
         _logger.LogInformation(
-            "Outbox message {OutboxMessageId} of type {Type} queued for topic {Topic}.",
-            outboxMessage.Id,
-            outboxMessage.Type,
-            outboxMessage.Topic);
-
-        return Task.CompletedTask;
+            "Silverback outbox message of type {Type} queued for topic {Topic}.",
+            typeof(TEvent).FullName ?? typeof(TEvent).Name,
+            _options.Topic);
     }
 }

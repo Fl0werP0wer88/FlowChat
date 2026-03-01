@@ -6,25 +6,30 @@ using FlowChat.Messaging.Contracts.AuthService.Events;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Options;
+using Silverback.Messaging.Messages;
+using Silverback.Messaging.Publishing;
 
 namespace FlowChat.AuthService.Persistence.Outbox;
 
 public sealed class InsertOutboxMessagesInterceptor : SaveChangesInterceptor
 {
-    private static readonly JsonSerializerOptions JsonSerializerOptions = new(JsonSerializerDefaults.Web);
     private readonly UserCreatedProducerOptions _userCreatedProducerOptions;
+    private readonly IPublisher _publisher;
 
-    public InsertOutboxMessagesInterceptor(IOptions<UserCreatedProducerOptions> userCreatedProducerOptions)
+    public InsertOutboxMessagesInterceptor(
+        IOptions<UserCreatedProducerOptions> userCreatedProducerOptions,
+        IPublisher publisher)
     {
         _userCreatedProducerOptions = userCreatedProducerOptions?.Value
             ?? throw new ArgumentNullException(nameof(userCreatedProducerOptions));
+        _publisher = publisher ?? throw new ArgumentNullException(nameof(publisher));
     }
 
     public override InterceptionResult<int> SavingChanges(
         DbContextEventData eventData,
         InterceptionResult<int> result)
     {
-        AddOutboxMessages(eventData.Context);
+        AddOutboxMessagesAsync(eventData.Context, CancellationToken.None).GetAwaiter().GetResult();
         return base.SavingChanges(eventData, result);
     }
 
@@ -33,11 +38,19 @@ public sealed class InsertOutboxMessagesInterceptor : SaveChangesInterceptor
         InterceptionResult<int> result,
         CancellationToken cancellationToken = default)
     {
-        AddOutboxMessages(eventData.Context);
-        return base.SavingChangesAsync(eventData, result, cancellationToken);
+        return SaveChangesAsyncInternal(eventData, result, cancellationToken);
     }
 
-    private void AddOutboxMessages(DbContext? dbContext)
+    private async ValueTask<InterceptionResult<int>> SaveChangesAsyncInternal(
+        DbContextEventData eventData,
+        InterceptionResult<int> result,
+        CancellationToken cancellationToken)
+    {
+        await AddOutboxMessagesAsync(eventData.Context, cancellationToken);
+        return await base.SavingChangesAsync(eventData, result, cancellationToken);
+    }
+
+    private async Task AddOutboxMessagesAsync(DbContext? dbContext, CancellationToken cancellationToken)
     {
         if (dbContext is null)
         {
@@ -55,71 +68,51 @@ public sealed class InsertOutboxMessagesInterceptor : SaveChangesInterceptor
             return;
         }
 
-        var outboxMessages = new List<OutboxMessage>();
-
         foreach (var aggregate in aggregatesWithDomainEvents)
         {
             foreach (var outboxEvent in aggregate.DomainEvents.OfType<IOutboxDomainEvent>())
             {
-                outboxMessages.Add(MapToOutboxMessage(outboxEvent));
+                await PublishIntegrationEventAsync(outboxEvent, cancellationToken);
             }
 
             aggregate.ClearDomainEvents();
         }
-
-        dbContext.Set<OutboxMessage>().AddRange(outboxMessages);
     }
 
-    private OutboxMessage MapToOutboxMessage(IOutboxDomainEvent outboxEvent)
-    {
-        return outboxEvent switch
+    private Task PublishIntegrationEventAsync(IOutboxDomainEvent outboxEvent, CancellationToken cancellationToken) =>
+        outboxEvent switch
         {
-            UserCreatedDomainEvent userCreatedDomainEvent => CreateUserCreatedMessage(userCreatedDomainEvent),
-            AccountConfirmedDomainEvent accountConfirmedDomainEvent => CreateUserConfirmedMessage(
-                accountConfirmedDomainEvent.UserId,
-                accountConfirmedDomainEvent.OccurredOnUtc),
+            UserCreatedDomainEvent userCreatedDomainEvent => PublishAsync(
+                new UserCreatedIntegrationEvent
+                {
+                    UserId = userCreatedDomainEvent.UserId,
+                    UserName = userCreatedDomainEvent.UserName,
+                    DisplayName = userCreatedDomainEvent.DisplayName,
+                    Email = userCreatedDomainEvent.Email
+                },
+                userCreatedDomainEvent.UserId.ToString(),
+                cancellationToken),
+            AccountConfirmedDomainEvent accountConfirmedDomainEvent => PublishAsync(
+                new UserConfirmedIntegrationEvent
+                {
+                    UserId = accountConfirmedDomainEvent.UserId
+                },
+                accountConfirmedDomainEvent.UserId.ToString(),
+                cancellationToken),
             _ => throw new InvalidOperationException($"No outbox mapping found for outbox event type '{outboxEvent.GetType().Name}'.")
         };
-    }
 
-    private OutboxMessage CreateUserCreatedMessage(UserCreatedDomainEvent domainEvent)
+    private async Task PublishAsync<TMessage>(TMessage message, string key, CancellationToken cancellationToken)
+        where TMessage : class
     {
-        var integrationEvent = new UserCreatedIntegrationEvent
+        if (string.IsNullOrWhiteSpace(_userCreatedProducerOptions.Topic))
         {
-            UserId = domainEvent.UserId,
-            UserName = domainEvent.UserName,
-            DisplayName = domainEvent.DisplayName,
-            Email = domainEvent.Email
-        };
+            throw new InvalidOperationException("Kafka topic is not configured for AuthService integration events.");
+        }
 
-        return new OutboxMessage
-        {
-            Id = Guid.NewGuid(),
-            Type = typeof(UserCreatedIntegrationEvent).FullName ?? nameof(UserCreatedIntegrationEvent),
-            Topic = _userCreatedProducerOptions.Topic,
-            Key = domainEvent.UserId.ToString(),
-            Content = JsonSerializer.Serialize(integrationEvent, JsonSerializerOptions),
-            OccurredOnUtc = domainEvent.OccurredOnUtc,
-            RetryCount = 0
-        };
-    }
-
-    private OutboxMessage CreateUserConfirmedMessage(Guid userId, DateTime occurredOnUtc)
-    {
-        var integrationEvent = new UserConfirmedIntegrationEvent
-        {
-            UserId = userId
-        };
-
-        return new OutboxMessage
-        {
-            Id = Guid.NewGuid(),
-            Type = typeof(UserConfirmedIntegrationEvent).FullName ?? nameof(UserConfirmedIntegrationEvent),
-            Topic = _userCreatedProducerOptions.Topic,
-            Key = userId.ToString(),
-            Content = JsonSerializer.Serialize(integrationEvent, JsonSerializerOptions),
-            OccurredOnUtc = occurredOnUtc,
-            RetryCount = 0
-        };
+        await _publisher.WrapAndPublishAsync(
+            message,
+            envelope => envelope.SetKafkaKey(key),
+            cancellationToken);
     }
 }

@@ -2,6 +2,8 @@ using FlowChat.AuthService.Persistence.Identity;
 using FlowChat.AuthService.Persistence.Outbox;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Silverback.Messaging.Producing.TransactionalOutbox;
+using AuthOutboxMessage = FlowChat.AuthService.Persistence.Outbox.OutboxMessage;
 
 namespace FlowChat.AuthService.Persistence;
 
@@ -12,13 +14,14 @@ public class AppDbContext : IdentityDbContext<AppUser, AppRole, Guid>
     {
     }
 
-    public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
+    public DbSet<AuthOutboxMessage> OutboxMessages => Set<AuthOutboxMessage>();
+    public DbSet<SilverbackOutboxMessage> SilverbackOutboxMessages => Set<SilverbackOutboxMessage>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
 
-        modelBuilder.Entity<OutboxMessage>(builder =>
+        modelBuilder.Entity<AuthOutboxMessage>(builder =>
         {
             builder.ToTable("OutboxMessages");
 
