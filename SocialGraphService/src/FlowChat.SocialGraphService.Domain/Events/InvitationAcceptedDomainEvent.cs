@@ -1,4 +1,4 @@
-using FlowChat.SocialGraphService.Domain.Common;
+using FlowChat.Domain.Abstractions;
 using FlowChat.SocialGraphService.Domain.Entities;
 using FlowChat.SocialGraphService.Domain.Events.Contracts;
 

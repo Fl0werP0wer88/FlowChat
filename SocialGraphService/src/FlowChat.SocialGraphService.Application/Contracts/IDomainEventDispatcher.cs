@@ -1,4 +1,4 @@
-using FlowChat.SocialGraphService.Domain.Events.Contracts;
+using FlowChat.Domain.Abstractions;
 
 namespace FlowChat.SocialGraphService.Application.Contracts;
 

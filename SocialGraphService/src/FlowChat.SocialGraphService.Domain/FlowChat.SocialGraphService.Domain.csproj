@@ -7,8 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Common\Constants\" />
-    <Folder Include="Common\Extensions\" />
+    <ProjectReference Include="..\..\..\Common\src\FlowChat.Domain.Abstractions\FlowChat.Domain.Abstractions.csproj" />
   </ItemGroup>
 
   <ItemGroup>

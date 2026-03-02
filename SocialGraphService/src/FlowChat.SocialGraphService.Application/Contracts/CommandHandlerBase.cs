@@ -1,7 +1,6 @@
 using FlowChat.SocialGraphService.Application.Contracts.Persistence;
-using FlowChat.SocialGraphService.Domain.Common.Contracts;
+using FlowChat.Domain.Abstractions;
 using FlowChat.SocialGraphService.Domain.Errors;
-using FlowChat.SocialGraphService.Domain.Events.Contracts;
 using MediatR;
 
 namespace FlowChat.SocialGraphService.Application.Contracts;

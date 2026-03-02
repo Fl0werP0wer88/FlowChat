@@ -1,6 +1,5 @@
 using FlowChat.SocialGraphService.Application.Contracts;
-using FlowChat.SocialGraphService.Domain.Common.Contracts;
-using FlowChat.SocialGraphService.Domain.Events.Contracts;
+using FlowChat.Domain.Abstractions;
 using MediatR;
 
 namespace FlowChat.SocialGraphService.Application.Events;

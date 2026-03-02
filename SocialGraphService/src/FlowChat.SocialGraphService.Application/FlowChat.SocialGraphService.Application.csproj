@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <ProjectReference Include="..\..\..\Common\src\FlowChat.Domain.Abstractions\FlowChat.Domain.Abstractions.csproj" />
     <ProjectReference Include="..\FlowChat.SocialGraphService.Domain\FlowChat.SocialGraphService.Domain.csproj" />
   </ItemGroup>
 

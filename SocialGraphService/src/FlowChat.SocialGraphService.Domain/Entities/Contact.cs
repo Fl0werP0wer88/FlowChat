@@ -1,5 +1,4 @@
-using FlowChat.SocialGraphService.Domain.Common;
-using FlowChat.SocialGraphService.Domain.Common.Contracts;
+using FlowChat.Domain.Abstractions;
 
 namespace FlowChat.SocialGraphService.Domain.Entities;
 

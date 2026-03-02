@@ -1,6 +1,4 @@
-using FlowChat.SocialGraphService.Domain.Common;
-
-namespace FlowChat.SocialGraphService.Domain.Common.Contracts;
+namespace FlowChat.Domain.Abstractions;
 
 public abstract class EntityBase<TDomainEntity>
     where TDomainEntity : EntityBase<TDomainEntity>
@@ -24,4 +22,3 @@ public abstract class EntityBase<TDomainEntity>
         LastModifiedAtUtc = DateTimeOffset.UtcNow;
     }
 }
-

@@ -1,6 +1,6 @@
 using MediatR;
 
-namespace FlowChat.SocialGraphService.Domain.Events.Contracts;
+namespace FlowChat.Domain.Abstractions;
 
 public interface IDomainEvent : INotification
 {

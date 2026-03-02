@@ -1,4 +1,4 @@
-namespace FlowChat.SocialGraphService.Domain.Common.Contracts;
+namespace FlowChat.Domain.Abstractions;
 
 public interface IId : IComparable, IComparable<IId>, IComparable<Guid>, IEquatable<IId>
 {

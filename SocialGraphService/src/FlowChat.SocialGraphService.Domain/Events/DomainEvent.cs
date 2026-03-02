@@ -1,5 +1,5 @@
 using System.Reflection;
-using FlowChat.SocialGraphService.Domain.Events.Contracts;
+using FlowChat.Domain.Abstractions;
 using FlowChat.SocialGraphService.Domain.Events.Decorators;
 
 namespace FlowChat.SocialGraphService.Domain.Events;
@@ -14,9 +14,9 @@ public class DomainEvent : IDomainEvent
 
     public DateTimeOffset OccurredOnUtc { get; set; }
 
-    public string EventType { get; set; }
+    public string EventType { get; set; } = string.Empty;
 
-    public string AggregateType { get; set; }
+    public string AggregateType { get; set; } = string.Empty;
 
     public string? TraceInfo { get; set; }
 
