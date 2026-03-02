@@ -1,6 +1,6 @@
 using FlowChat.AuthService.Application.Contracts.Infrastructure;
 using FlowChat.Messaging.Contracts.AuthService.Events;
-using FlowChat.Messaging.Runtime.Kafka.GenericProducer;
+
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;

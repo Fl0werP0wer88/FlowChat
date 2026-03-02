@@ -1,9 +1,7 @@
 using FlowChat.AuthService.Persistence.Identity;
-using FlowChat.AuthService.Persistence.Outbox;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Silverback.Messaging.Producing.TransactionalOutbox;
-using AuthOutboxMessage = FlowChat.AuthService.Persistence.Outbox.OutboxMessage;
 
 namespace FlowChat.AuthService.Persistence;
 
@@ -14,50 +12,10 @@ public class AppDbContext : IdentityDbContext<AppUser, AppRole, Guid>
     {
     }
 
-    public DbSet<AuthOutboxMessage> OutboxMessages => Set<AuthOutboxMessage>();
     public DbSet<SilverbackOutboxMessage> SilverbackOutboxMessages => Set<SilverbackOutboxMessage>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-
-        modelBuilder.Entity<AuthOutboxMessage>(builder =>
-        {
-            builder.ToTable("OutboxMessages");
-
-            builder.HasKey(message => message.Id);
-
-            builder.Property(message => message.Type)
-                .IsRequired()
-                .HasMaxLength(256);
-
-            builder.Property(message => message.Topic)
-                .IsRequired()
-                .HasMaxLength(200);
-
-            builder.Property(message => message.Key)
-                .HasMaxLength(200);
-
-            builder.Property(message => message.Content)
-                .IsRequired()
-                .HasColumnType("jsonb");
-
-            builder.Property(message => message.Headers)
-                .HasColumnType("jsonb");
-
-            builder.Property(message => message.OccurredOnUtc)
-                .IsRequired();
-
-            builder.Property(message => message.LockId);
-
-            builder.Property(message => message.LockedUntilUtc);
-
-            builder.Property(message => message.Error)
-                .HasColumnType("text");
-
-            builder.HasIndex(message => new { message.ProcessedOnUtc, message.NextRetryOnUtc, message.LockedUntilUtc });
-            builder.HasIndex(message => message.OccurredOnUtc);
-            builder.HasIndex(message => message.Topic);
-        });
     }
 }
