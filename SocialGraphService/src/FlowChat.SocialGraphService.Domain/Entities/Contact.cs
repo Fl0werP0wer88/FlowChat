@@ -14,7 +14,7 @@ public class Contact : EntityBase<Contact>
     public bool IsBlocked { get; }
 
     private Contact(
-        Id<Contact> id,
+        Id<Contact>? id,
         Guid ownerUserId,
         Guid contactUserId,
         string login,
@@ -46,7 +46,7 @@ public class Contact : EntityBase<Contact>
 
 
     public static Contact Create(
-        Id<Contact> id,
+        Id<Contact>? id,
         Guid ownerUserId,
         Guid contactUserId,
         string login,
@@ -57,19 +57,5 @@ public class Contact : EntityBase<Contact>
         bool isBlocked = false)
     {
         return new Contact(id, ownerUserId, contactUserId, login, firstName, lastName, phoneNumber, email, isBlocked);
-    }
-
-    public static Contact Create(
-        Guid id,
-        Guid ownerUserId,
-        Guid contactUserId,
-        string login,
-        string? firstName = null,
-        string? lastName = null,
-        string? phoneNumber = null,
-        string? email = null,
-        bool isBlocked = false)
-    {
-        return Create(Id<Contact>.FromGuid(id), ownerUserId, contactUserId, login, firstName, lastName, phoneNumber, email, isBlocked);
     }
 }

@@ -78,19 +78,6 @@ public class TypedDomainIdsTests
         Assert.Equal(id.Value, invitation.Id.Value);
     }
 
-    [Fact]
-    public void Invitation_Ctor_WithGuid_UsesSameGuidInsideTypedId()
-    {
-        var id = Guid.NewGuid();
-
-        var invitation = Invitation.Create(
-            id,
-            Guid.NewGuid(),
-            Guid.NewGuid(),
-            InvitationStatus.Pending);
-
-        Assert.Equal(id, invitation.Id.Value);
-    }
 
     [Fact]
     public void UserSocialGraph_Ctor_WithGuid_UsesSameGuidInsideTypedId()

@@ -20,7 +20,7 @@ namespace FlowChat.SocialGraphService.Domain.Entities
         public bool IsEmailVisible { get; }
 
         private UserSocialGraph(
-            Id<UserSocialGraph> id,
+            Id<UserSocialGraph>? id,
             string login,
             Guid? userId = null,
             string? firstName = null,
@@ -28,13 +28,11 @@ namespace FlowChat.SocialGraphService.Domain.Entities
             string? phoneNumber = null,
             string? email = null,
             bool isPhoneVisible = false,
-            bool isEmailVisible = false,
-            IEnumerable<Contact>? contacts = null,
-            IEnumerable<Invitation>? invitations = null) : base(id)
+            bool isEmailVisible = false) : base(id)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(login);
 
-            UserId = userId ?? id.Value;
+            UserId = userId ?? Id.Value;
             FirstName = firstName;
             LastName = lastName;
             Login = login;
@@ -42,12 +40,10 @@ namespace FlowChat.SocialGraphService.Domain.Entities
             Email = email;
             IsPhoneVisible = isPhoneVisible;
             IsEmailVisible = isEmailVisible;
-            _contacts.AddRange(contacts ?? []);
-            _invitations.AddRange(invitations ?? []);
         }
 
         public static UserSocialGraph Create(
-            Id<UserSocialGraph> id,
+            Id<UserSocialGraph>? id,
             string login,
             Guid? userId = null,
             string? firstName = null,
@@ -55,9 +51,7 @@ namespace FlowChat.SocialGraphService.Domain.Entities
             string? phoneNumber = null,
             string? email = null,
             bool isPhoneVisible = false,
-            bool isEmailVisible = false,
-            IEnumerable<Contact>? contacts = null,
-            IEnumerable<Invitation>? invitations = null)
+            bool isEmailVisible = false)
         {
             return new UserSocialGraph(
                 id,
@@ -68,36 +62,7 @@ namespace FlowChat.SocialGraphService.Domain.Entities
                 phoneNumber,
                 email,
                 isPhoneVisible,
-                isEmailVisible,
-                contacts,
-                invitations);
-        }
-
-        public static UserSocialGraph Create(
-            Guid id,
-            string login,
-            Guid? userId = null,
-            string? firstName = null,
-            string? lastName = null,
-            string? phoneNumber = null,
-            string? email = null,
-            bool isPhoneVisible = false,
-            bool isEmailVisible = false,
-            IEnumerable<Contact>? contacts = null,
-            IEnumerable<Invitation>? invitations = null)
-        {
-            return Create(
-                Id<UserSocialGraph>.FromGuid(id),
-                login,
-                userId,
-                firstName,
-                lastName,
-                phoneNumber,
-                email,
-                isPhoneVisible,
-                isEmailVisible,
-                contacts,
-                invitations);
+                isEmailVisible);
         }
 
         public Invitation SendInvitation(Invitation invitation)

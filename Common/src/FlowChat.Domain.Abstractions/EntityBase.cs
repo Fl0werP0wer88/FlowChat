@@ -9,9 +9,10 @@ public abstract class EntityBase<TDomainEntity>
     public string LastModifiedBy { get; private set; } = string.Empty;
     public DateTimeOffset LastModifiedAtUtc { get; private set; }
 
-    protected EntityBase(Id<TDomainEntity> id)
+    protected EntityBase() : this(Id<TDomainEntity>.New()) { }
+    protected EntityBase(Id<TDomainEntity>? id)
     {
-        Id = id;
+        Id = id ?? Id<TDomainEntity>.New();
         CreatedAtUtc = DateTimeOffset.UtcNow;
         LastModifiedAtUtc = DateTimeOffset.UtcNow;
     }
