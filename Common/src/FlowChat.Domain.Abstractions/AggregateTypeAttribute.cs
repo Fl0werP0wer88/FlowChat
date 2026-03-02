@@ -1,4 +1,4 @@
-namespace FlowChat.SocialGraphService.Domain.Events.Decorators;
+namespace FlowChat.Domain.Abstractions;
 
 [AttributeUsage(AttributeTargets.Class)]
 public class AggregateTypeAttribute(string aggregateType) : Attribute

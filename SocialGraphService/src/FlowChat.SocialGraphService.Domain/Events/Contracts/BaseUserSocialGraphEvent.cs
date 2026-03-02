@@ -1,7 +1,6 @@
 using FlowChat.Domain.Abstractions;
 using FlowChat.SocialGraphService.Domain.Common.Constants;
 using FlowChat.SocialGraphService.Domain.Entities;
-using FlowChat.SocialGraphService.Domain.Events.Decorators;
 
 namespace FlowChat.SocialGraphService.Domain.Events.Contracts;
 
