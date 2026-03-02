@@ -1,4 +1,4 @@
-using FlowChat.SocialGraphService.Domain.Errors;
+using FlowChat.Domain.Abstractions;
 using MediatR;
 
 namespace FlowChat.SocialGraphService.Application.Contracts;

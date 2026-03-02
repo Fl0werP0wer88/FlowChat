@@ -1,4 +1,5 @@
 using FlowChat.SocialGraphService.Application.Invitations.Commands.SendInvitation;
+using FlowChat.Domain.Abstractions;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -26,22 +27,22 @@ public sealed class InvitationsController : ControllerBase
         [FromBody] SendInvitationRequest request,
         CancellationToken cancellationToken)
     {
-        try
-        {
-            var invitation = await _mediator.Send(
-                new SendInvitationCommand(request.RequesterId, request.AddresseeId),
-                cancellationToken);
+        var result = await _mediator.Send(
+            new SendInvitationCommand(request.RequesterId, request.AddresseeId),
+            cancellationToken);
 
-            return StatusCode(StatusCodes.Status201Created, invitation);
-        }
-        catch (ArgumentException ex)
+        if (result.IsSuccess)
         {
-            return BadRequest(new { message = ex.Message });
+            return StatusCode(StatusCodes.Status201Created, result.Value);
         }
-        catch (InvalidOperationException ex)
+
+        return result.Error.ErrorType.Name switch
         {
-            return Conflict(new { message = ex.Message });
-        }
+            "BadRequest" or "Validation" => BadRequest(new { message = result.Error.ErrorMessage, errors = result.Error.Errors }),
+            "Conflict" => Conflict(new { message = result.Error.ErrorMessage }),
+            "NotFound" => NotFound(new { message = result.Error.ErrorMessage }),
+            _ => StatusCode(StatusCodes.Status500InternalServerError, new { message = result.Error.ErrorMessage })
+        };
     }
 
     public sealed record SendInvitationRequest(Guid RequesterId, Guid AddresseeId);

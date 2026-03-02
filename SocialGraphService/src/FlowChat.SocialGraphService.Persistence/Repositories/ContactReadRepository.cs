@@ -53,14 +53,13 @@ public sealed class ContactReadRepository : IContactReadRepository
     }
 
     public async Task<bool> RelationshipExistsAsync(
-        Guid userAId,
-        Guid userBId,
+        Guid ownerUserId,
+        Guid contactUserId,
         CancellationToken cancellationToken = default)
     {
         return await _dbContext.Contacts
             .AnyAsync(
-                x => (x.OwnerUserId == userAId && x.ContactUserId == userBId)
-                     || (x.OwnerUserId == userBId && x.ContactUserId == userAId),
+                x => x.OwnerUserId == ownerUserId && x.ContactUserId == contactUserId,
                 cancellationToken);
     }
 

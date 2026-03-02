@@ -13,7 +13,7 @@ public interface IContactReadRepository
         InvitationStatus? status = null,
         CancellationToken cancellationToken = default);
     Task<bool> RelationshipExistsAsync(
-        Guid userAId,
-        Guid userBId,
+        Guid ownerUserId,
+        Guid contactUserId,
         CancellationToken cancellationToken = default);
 }

@@ -1,6 +1,6 @@
 using FlowChat.SocialGraphService.Application.Contracts;
 using FlowChat.SocialGraphService.Application.Contracts.Persistence;
-using FlowChat.SocialGraphService.Domain.Errors;
+using FlowChat.Domain.Abstractions;
 
 namespace FlowChat.SocialGraphService.Application.Contacts.Queries.GetContactsForUser;
 

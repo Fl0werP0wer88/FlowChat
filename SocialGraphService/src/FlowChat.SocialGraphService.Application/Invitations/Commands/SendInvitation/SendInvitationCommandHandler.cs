@@ -1,43 +1,52 @@
+using FlowChat.SocialGraphService.Application.Contracts;
 using FlowChat.SocialGraphService.Application.Contracts.Persistence;
 using FlowChat.Domain.Abstractions;
 using FlowChat.SocialGraphService.Domain.Entities;
-using MediatR;
 
 namespace FlowChat.SocialGraphService.Application.Invitations.Commands.SendInvitation;
 
-public sealed class SendInvitationCommandHandler : IRequestHandler<SendInvitationCommand, InvitationDto>
+public sealed class SendInvitationCommandHandler : CommandHandlerBase<SendInvitationCommand, InvitationDto>
 {
     private readonly IUserSocialGraphRepository _userSocialGraphRepository;
     private readonly IInvitationReadRepository _invitationReadRepository;
     private readonly IContactReadRepository _contactReadRepository;
+    private UserSocialGraph? _aggregateRoot;
 
     public SendInvitationCommandHandler(
+        IDomainEventDispatcher domainEventDispatcher,
+        IUnitOfWork unitOfWork,
         IUserSocialGraphRepository userSocialGraphRepository,
         IInvitationReadRepository invitationReadRepository,
         IContactReadRepository contactReadRepository)
+        : base(domainEventDispatcher, unitOfWork)
     {
         _userSocialGraphRepository = userSocialGraphRepository;
         _invitationReadRepository = invitationReadRepository;
         _contactReadRepository = contactReadRepository;
     }
 
-    public async Task<InvitationDto> Handle(
+    protected override async Task<Result<InvitationDto, IDomainError>> ExecuteAsync(
         SendInvitationCommand request,
         CancellationToken cancellationToken)
     {
+        _aggregateRoot = null;
+
         if (request.RequesterId == Guid.Empty)
         {
-            throw new ArgumentException("RequesterId is required.", nameof(request.RequesterId));
+            return Result.Failure<InvitationDto, IDomainError>(
+                DomainError.BadRequest("RequesterId is required."));
         }
 
         if (request.AddresseeId == Guid.Empty)
         {
-            throw new ArgumentException("AddresseeId is required.", nameof(request.AddresseeId));
+            return Result.Failure<InvitationDto, IDomainError>(
+                DomainError.BadRequest("AddresseeId is required."));
         }
 
         if (request.RequesterId == request.AddresseeId)
         {
-            throw new ArgumentException("RequesterId and AddresseeId must be different.");
+            return Result.Failure<InvitationDto, IDomainError>(
+                DomainError.BadRequest("RequesterId and AddresseeId must be different."));
         }
 
         var contactExists = await _contactReadRepository.RelationshipExistsAsync(
@@ -47,7 +56,8 @@ public sealed class SendInvitationCommandHandler : IRequestHandler<SendInvitatio
 
         if (contactExists)
         {
-            throw new InvalidOperationException("Contact relationship already exists.");
+            return Result.Failure<InvitationDto, IDomainError>(
+                DomainError.Conflict("Contact relationship already exists."));
         }
 
         var pendingExists = await _invitationReadRepository.PendingBetweenUsersExistsAsync(
@@ -57,17 +67,33 @@ public sealed class SendInvitationCommandHandler : IRequestHandler<SendInvitatio
 
         if (pendingExists)
         {
-            throw new InvalidOperationException("Pending invitation already exists.");
+            return Result.Failure<InvitationDto, IDomainError>(
+                DomainError.Conflict("Pending invitation already exists."));
         }
 
-        var invitation = new Invitation(
+        var socialGraph = await _userSocialGraphRepository.GetByUserIdAsync(
+            request.RequesterId,
+            cancellationToken);
+
+        if (socialGraph is null)
+        {
+            return Result.Failure<InvitationDto, IDomainError>(
+                DomainError.NotFound($"User social graph for requester '{request.RequesterId}' was not found."));
+        }
+
+        var invitation = socialGraph.SendInvitation(new Invitation(
             Id<Invitation>.New(),
             request.RequesterId,
-            request.AddresseeId);
+            request.AddresseeId));
 
-        await _userSocialGraphRepository.AddInvitationAsync(invitation, cancellationToken);
+        _aggregateRoot = socialGraph;
 
-        return new InvitationDto(
+        await _userSocialGraphRepository.AddInvitationAsync(
+            socialGraph.Id.Value,
+            invitation,
+            cancellationToken);
+
+        var response = new InvitationDto(
             invitation.Id.Value,
             invitation.RequesterId,
             invitation.AddresseeId,
@@ -75,5 +101,12 @@ public sealed class SendInvitationCommandHandler : IRequestHandler<SendInvitatio
             invitation.RespondedAtUtc,
             invitation.CreatedAtUtc.UtcDateTime,
             invitation.LastModifiedAtUtc.UtcDateTime);
+
+        return Result.Success<InvitationDto, IDomainError>(response);
+    }
+
+    protected override IAggregateRoot? GetAggregateRoot(Result<InvitationDto, IDomainError> result)
+    {
+        return result.IsSuccess ? _aggregateRoot : null;
     }
 }

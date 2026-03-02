@@ -1,3 +1,5 @@
+using FlowChat.SocialGraphService.Application.Contracts;
+using FlowChat.SocialGraphService.Application.Events;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace FlowChat.SocialGraphService.Application;
@@ -9,6 +11,7 @@ public static class ApplicationServiceRegistration
         var applicationAssembly = typeof(ApplicationServiceRegistration).Assembly;
 
         services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(applicationAssembly));
+        services.AddScoped<IDomainEventDispatcher, DomainEventDispatcher>();
 
         return services;
     }
@@ -18,6 +21,7 @@ public static class ApplicationServiceRegistration
         var applicationAssembly = typeof(ApplicationServiceRegistration).Assembly;
 
         services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(applicationAssembly));
+        services.AddScoped<IDomainEventDispatcher, DomainEventDispatcher>();
 
         return services;
     }

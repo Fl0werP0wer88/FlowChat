@@ -7,7 +7,7 @@ public interface IInvitationReadRepository
     Task<Invitation?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<Invitation>> GetAllAsync(CancellationToken cancellationToken = default);
     Task<bool> PendingBetweenUsersExistsAsync(
-        Guid userAId,
-        Guid userBId,
+        Guid requesterId,
+        Guid addresseeId,
         CancellationToken cancellationToken = default);
 }

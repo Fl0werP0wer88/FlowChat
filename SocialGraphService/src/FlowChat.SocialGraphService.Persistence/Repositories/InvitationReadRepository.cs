@@ -19,14 +19,14 @@ public sealed class InvitationReadRepository : IInvitationReadRepository
     }
 
     public async Task<bool> PendingBetweenUsersExistsAsync(
-        Guid userAId,
-        Guid userBId,
+        Guid requesterId,
+        Guid addresseeId,
         CancellationToken cancellationToken = default)
     {
         return await _dbContext.Invitations.AnyAsync(
             x => x.Status == PendingStatus
-                 && ((x.RequesterId == userAId && x.AddresseeId == userBId)
-                     || (x.RequesterId == userBId && x.AddresseeId == userAId)),
+                 && x.RequesterId == requesterId
+                 && x.AddresseeId == addresseeId,
             cancellationToken);
     }
 
