@@ -19,8 +19,8 @@ public static class SilverbackServiceRegistration
     {
         var userCreatedOptions = configuration.GetSection(UserCreatedProducerOptions.SectionName)
             .Get<UserCreatedProducerOptions>() ?? new UserCreatedProducerOptions();
-        var emailVerificationOptions = configuration.GetSection(UserEmailVerificationRequestedOutboxOptions.SectionName)
-            .Get<UserEmailVerificationRequestedOutboxOptions>() ?? new UserEmailVerificationRequestedOutboxOptions();
+        var emailVerificationOptions = configuration.GetSection(UserEmailVerificationRequestedProducerOptions.SectionName)
+            .Get<UserEmailVerificationRequestedProducerOptions>() ?? new UserEmailVerificationRequestedProducerOptions();
 
         services.AddSilverback()
             .WithConnectionToMessageBroker(options =>
@@ -65,11 +65,11 @@ public static class SilverbackServiceRegistration
             ?? configuration.GetSection(UserCreatedProducerOptions.FallbackSectionName)
                 .Get<UserCreatedProducerOptions>()
             ?? new UserCreatedProducerOptions();
-        var emailVerificationOptions = configuration.GetSection(UserEmailVerificationRequestedOutboxOptions.SectionName)
-            .Get<UserEmailVerificationRequestedOutboxOptions>()
-            ?? configuration.GetSection(UserEmailVerificationRequestedOutboxOptions.FallbackSectionName)
-                .Get<UserEmailVerificationRequestedOutboxOptions>()
-            ?? new UserEmailVerificationRequestedOutboxOptions();
+        var emailVerificationOptions = configuration.GetSection(UserEmailVerificationRequestedProducerOptions.SectionName)
+            .Get<UserEmailVerificationRequestedProducerOptions>()
+            ?? configuration.GetSection(UserEmailVerificationRequestedProducerOptions.FallbackSectionName)
+                .Get<UserEmailVerificationRequestedProducerOptions>()
+            ?? new UserEmailVerificationRequestedProducerOptions();
 
         services.Configure<OutboxPublisherRuntimeOptions>(
             configuration.GetSection(OutboxPublisherRuntimeOptions.SectionName));

@@ -17,22 +17,25 @@ public static class InfrastructureServiceRegistration
             kafkaProducerSection = configuration.GetSection(UserCreatedProducerOptions.FallbackSectionName);
         }
 
-        var userEmailVerificationRequestedOutboxSection = configuration.GetSection(UserEmailVerificationRequestedOutboxOptions.SectionName);
+        var userEmailVerificationRequestedOutboxSection = configuration.GetSection(UserEmailVerificationRequestedProducerOptions.SectionName);
         if (!userEmailVerificationRequestedOutboxSection.Exists())
         {
-            userEmailVerificationRequestedOutboxSection = configuration.GetSection(UserEmailVerificationRequestedOutboxOptions.FallbackSectionName);
+            userEmailVerificationRequestedOutboxSection = configuration.GetSection(UserEmailVerificationRequestedProducerOptions.FallbackSectionName);
         }
 
         services.Configure<UserCreatedProducerOptions>(kafkaProducerSection);
-        services.Configure<UserEmailVerificationRequestedOutboxOptions>(userEmailVerificationRequestedOutboxSection);
+        services.Configure<UserEmailVerificationRequestedProducerOptions>(userEmailVerificationRequestedOutboxSection);
 
         services.AddScoped<IEmailService, EmailService>();
         services.AddScoped<ITokenEncoder, Base64UrlTokenEncoder>();
         services.AddScoped<IConfirmationLinkBuilder, ConfirmationLinkBuilder>();
         services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
-        services.AddSingleton<
+        services.AddScoped<
             IKafkaEventPublisher<UserCreatedIntegrationEvent>,
             SilverbackEventPublisher<UserCreatedIntegrationEvent, UserCreatedProducerOptions>>();
+        services.AddScoped<
+            IKafkaEventPublisher<UserEmailVerificationRequestedIntegrationEvent>,
+            SilverbackEventPublisher<UserEmailVerificationRequestedIntegrationEvent, UserEmailVerificationRequestedProducerOptions>>();
 
         return services;
     }

@@ -13,20 +13,20 @@ public class RegisterUserCommandHandler : IRequestHandler<RegisterUserCommand, R
     private readonly IIdentityRepository _identityRepository;
     private readonly ITokenEncoder _tokenEncoder;
     private readonly IConfirmationLinkBuilder _confirmationLinkBuilder;
-    private readonly IOutboxRepository<UserEmailVerificationRequestedIntegrationEvent> _outboxRepository;
+    private readonly IKafkaEventPublisher<UserEmailVerificationRequestedIntegrationEvent> _eventPublisher;
     private readonly IUnitOfWork _unitOfWork;
 
     public RegisterUserCommandHandler(
         IIdentityRepository identityRepository,
         ITokenEncoder tokenEncoder,
         IConfirmationLinkBuilder confirmationLinkBuilder,
-        IOutboxRepository<UserEmailVerificationRequestedIntegrationEvent> outboxRepository,
+        IKafkaEventPublisher<UserEmailVerificationRequestedIntegrationEvent> eventPublisher,
         IUnitOfWork unitOfWork)
     {
         _identityRepository = identityRepository;
         _tokenEncoder = tokenEncoder;
         _confirmationLinkBuilder = confirmationLinkBuilder;
-        _outboxRepository = outboxRepository;
+        _eventPublisher = eventPublisher;
         _unitOfWork = unitOfWork;
     }
 
@@ -40,7 +40,7 @@ public class RegisterUserCommandHandler : IRequestHandler<RegisterUserCommand, R
             var encodedToken = _tokenEncoder.EncodeForUrl(confirmationToken);
             var confirmationLink = _confirmationLinkBuilder.BuildEmailConfirmationLink(guid, encodedToken);
 
-            await _outboxRepository.EnqueueAsync(new UserEmailVerificationRequestedIntegrationEvent
+            await _eventPublisher.PublishAsync(new UserEmailVerificationRequestedIntegrationEvent
             {
                 UserId = guid,
                 UserEmail = request.Email,

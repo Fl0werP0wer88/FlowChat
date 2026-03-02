@@ -3,7 +3,6 @@ using FlowChat.AuthService.Application.Contracts.Persistence;
 using FlowChat.AuthService.Persistence.Auditing;
 using FlowChat.AuthService.Persistence.Outbox;
 using FlowChat.AuthService.Persistence.UnitOfWork;
-using FlowChat.Messaging.Contracts.AuthService.Events;
 using FlowChat.AuthService.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -17,13 +16,10 @@ public static class PersistenceServiceRegistration
                             this IServiceCollection services, IConfiguration configuration)
     {
         services.AddOptions<UserCreatedProducerOptions>();
-        services.AddOptions<UserEmailVerificationRequestedOutboxOptions>();
+        services.AddOptions<UserEmailVerificationRequestedProducerOptions>();
         services.AddScoped<AuditableEntitySaveChangesInterceptor>();
         services.AddScoped<InsertOutboxMessagesInterceptor>();
         services.AddScoped<IUnitOfWork, AppDbContextUnitOfWork>();
-        services.AddScoped<
-            IOutboxRepository<UserEmailVerificationRequestedIntegrationEvent>,
-            OutboxRepository<UserEmailVerificationRequestedIntegrationEvent, UserEmailVerificationRequestedOutboxOptions>>();
 
         services.AddDbContext<AppDbContext>((serviceProvider, options) =>
         {
