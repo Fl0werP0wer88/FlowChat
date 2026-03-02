@@ -1,6 +1,7 @@
 using FlowChat.UserProfileService.Domain.Entities;
 using FlowChat.UserProfileService.Domain.Common;
 using Microsoft.EntityFrameworkCore;
+using Silverback.Messaging.Consuming.KafkaOffsetStore;
 
 namespace FlowChat.UserProfileService.Persistence;
 
@@ -12,6 +13,7 @@ public class AppDbContext : DbContext
     }
 
     public DbSet<UserProfile> UserProfiles { get; set; }
+    public DbSet<SilverbackStoredOffset> SilverbackStoredOffsets => Set<SilverbackStoredOffset>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
