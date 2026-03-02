@@ -61,7 +61,6 @@
   <Folder Name="/Common/" />
   <Folder Name="/Common/src/">
     <Project Path="Common/src/FlowChat.Messaging.Contracts/FlowChat.Messaging.Contracts.csproj" />
-    <Project Path="Common/src/FlowChat.Messaging.Runtime/FlowChat.Messaging.Runtime.csproj" />
   </Folder>
   <Folder Name="/SocialGraphService/" />
   <Folder Name="/SocialGraphService/src/">
