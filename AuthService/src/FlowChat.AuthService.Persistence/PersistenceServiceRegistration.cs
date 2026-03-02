@@ -32,6 +32,9 @@ public static class PersistenceServiceRegistration
                 serviceProvider.GetRequiredService<AuditableEntitySaveChangesInterceptor>(),
                 serviceProvider.GetRequiredService<InsertOutboxMessagesInterceptor>());
         });
+        services.AddDbContextFactory<AppDbContext>(
+            options => options.UseNpgsql(configuration.GetConnectionString("AuthDb")),
+            ServiceLifetime.Scoped);
 
         services.AddScoped<IIdentityRepository, IdentityRepository>();
 
@@ -51,6 +54,9 @@ public static class PersistenceServiceRegistration
                 serviceProvider.GetRequiredService<AuditableEntitySaveChangesInterceptor>(),
                 serviceProvider.GetRequiredService<InsertOutboxMessagesInterceptor>());
         });
+        services.AddDbContextFactory<AppDbContext>(
+            options => options.UseNpgsql(configuration.GetConnectionString("AuthDb")),
+            ServiceLifetime.Scoped);
 
         return services;
     }
