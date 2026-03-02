@@ -10,7 +10,7 @@ public class Invitation : EntityBase<Invitation>
     public InvitationStatus Status { get; private set; }
     public DateTime? RespondedAtUtc { get; private set; }
 
-    public Invitation(
+    private Invitation(
         Id<Invitation> id,
         Guid requesterId,
         Guid addresseeId,
@@ -36,14 +36,24 @@ public class Invitation : EntityBase<Invitation>
         RespondedAtUtc = respondedAtUtc;
     }
 
-    public Invitation(
+    public static Invitation Create(
+        Id<Invitation> id,
+        Guid requesterId,
+        Guid addresseeId,
+        InvitationStatus status = InvitationStatus.Pending,
+        DateTime? respondedAtUtc = null)
+    {
+        return new Invitation(id, requesterId, addresseeId, status, respondedAtUtc);
+    }
+
+    public static Invitation Create(
         Guid id,
         Guid requesterId,
         Guid addresseeId,
         InvitationStatus status = InvitationStatus.Pending,
         DateTime? respondedAtUtc = null)
-        : this(Id<Invitation>.FromGuid(id), requesterId, addresseeId, status, respondedAtUtc)
     {
+        return Create(Id<Invitation>.FromGuid(id), requesterId, addresseeId, status, respondedAtUtc);
     }
 
     public void Accept(DateTime? respondedAtUtc = null)

@@ -81,7 +81,7 @@ public sealed class SendInvitationCommandHandler : CommandHandlerBase<SendInvita
                 DomainError.NotFound($"User social graph for requester '{request.RequesterId}' was not found."));
         }
 
-        var invitation = socialGraph.SendInvitation(new Invitation(
+        var invitation = socialGraph.SendInvitation(Invitation.Create(
             Id<Invitation>.New(),
             request.RequesterId,
             request.AddresseeId));

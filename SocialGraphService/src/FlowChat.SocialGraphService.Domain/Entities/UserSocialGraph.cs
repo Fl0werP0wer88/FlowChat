@@ -19,7 +19,7 @@ namespace FlowChat.SocialGraphService.Domain.Entities
         public bool IsPhoneVisible { get; }
         public bool IsEmailVisible { get; }
 
-        public UserSocialGraph(
+        private UserSocialGraph(
             Id<UserSocialGraph> id,
             string login,
             Guid? userId = null,
@@ -46,7 +46,34 @@ namespace FlowChat.SocialGraphService.Domain.Entities
             _invitations.AddRange(invitations ?? []);
         }
 
-        public UserSocialGraph(
+        public static UserSocialGraph Create(
+            Id<UserSocialGraph> id,
+            string login,
+            Guid? userId = null,
+            string? firstName = null,
+            string? lastName = null,
+            string? phoneNumber = null,
+            string? email = null,
+            bool isPhoneVisible = false,
+            bool isEmailVisible = false,
+            IEnumerable<Contact>? contacts = null,
+            IEnumerable<Invitation>? invitations = null)
+        {
+            return new UserSocialGraph(
+                id,
+                login,
+                userId,
+                firstName,
+                lastName,
+                phoneNumber,
+                email,
+                isPhoneVisible,
+                isEmailVisible,
+                contacts,
+                invitations);
+        }
+
+        public static UserSocialGraph Create(
             Guid id,
             string login,
             Guid? userId = null,
@@ -55,8 +82,11 @@ namespace FlowChat.SocialGraphService.Domain.Entities
             string? phoneNumber = null,
             string? email = null,
             bool isPhoneVisible = false,
-            bool isEmailVisible = false)
-            : this(
+            bool isEmailVisible = false,
+            IEnumerable<Contact>? contacts = null,
+            IEnumerable<Invitation>? invitations = null)
+        {
+            return Create(
                 Id<UserSocialGraph>.FromGuid(id),
                 login,
                 userId,
@@ -66,10 +96,8 @@ namespace FlowChat.SocialGraphService.Domain.Entities
                 email,
                 isPhoneVisible,
                 isEmailVisible,
-                null,
-                null)
-        {
-
+                contacts,
+                invitations);
         }
 
         public Invitation SendInvitation(Invitation invitation)

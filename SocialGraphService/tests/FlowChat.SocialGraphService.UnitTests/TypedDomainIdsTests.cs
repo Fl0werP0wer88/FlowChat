@@ -68,7 +68,7 @@ public class TypedDomainIdsTests
     {
         var id = Id<Invitation>.New();
 
-        var invitation = new Invitation(
+        var invitation = Invitation.Create(
             id,
             Guid.NewGuid(),
             Guid.NewGuid(),
@@ -83,7 +83,7 @@ public class TypedDomainIdsTests
     {
         var id = Guid.NewGuid();
 
-        var invitation = new Invitation(
+        var invitation = Invitation.Create(
             id,
             Guid.NewGuid(),
             Guid.NewGuid(),
@@ -97,7 +97,7 @@ public class TypedDomainIdsTests
     {
         var id = Guid.NewGuid();
 
-        var socialGraph = new UserSocialGraph(id, "user-login");
+        var socialGraph = UserSocialGraph.Create(id, "user-login");
 
         Assert.Equal(id, socialGraph.Id.Value);
     }
@@ -108,7 +108,7 @@ public class TypedDomainIdsTests
         var graphId = Guid.NewGuid();
         var userId = Guid.NewGuid();
 
-        var socialGraph = new UserSocialGraph(
+        var socialGraph = UserSocialGraph.Create(
             graphId,
             "jkowalski",
             userId,
@@ -133,7 +133,7 @@ public class TypedDomainIdsTests
     [Fact]
     public void UserSocialGraph_Ctor_AllowsMissingOptionalProfileData()
     {
-        var socialGraph = new UserSocialGraph(Guid.NewGuid(), "user-login");
+        var socialGraph = UserSocialGraph.Create(Guid.NewGuid(), "user-login");
 
         Assert.Null(socialGraph.FirstName);
         Assert.Null(socialGraph.LastName);
@@ -154,14 +154,14 @@ public class TypedDomainIdsTests
     [Fact]
     public void UserSocialGraph_Ctor_WithoutLogin_Throws()
     {
-        Assert.Throws<ArgumentException>(() => new UserSocialGraph(Guid.NewGuid(), ""));
+        Assert.Throws<ArgumentException>(() => UserSocialGraph.Create(Guid.NewGuid(), ""));
     }
 
     [Fact]
     public void UserSocialGraph_SendInvitation_AddsInvitation_And_EmitsEvent()
     {
-        var socialGraph = new UserSocialGraph(Guid.NewGuid(), "owner-login");
-        var invitation = new Invitation(Id<Invitation>.New(), Guid.NewGuid(), Guid.NewGuid());
+        var socialGraph = UserSocialGraph.Create(Guid.NewGuid(), "owner-login");
+        var invitation = Invitation.Create(Id<Invitation>.New(), Guid.NewGuid(), Guid.NewGuid());
 
         socialGraph.SendInvitation(invitation);
 
@@ -174,8 +174,8 @@ public class TypedDomainIdsTests
     [Fact]
     public void UserSocialGraph_AcceptInvitation_UpdatesInvitation_AddsContact_And_EmitsEvent()
     {
-        var socialGraph = new UserSocialGraph(Guid.NewGuid(), "owner-login");
-        var invitation = new Invitation(Id<Invitation>.New(), Guid.NewGuid(), Guid.NewGuid());
+        var socialGraph = UserSocialGraph.Create(Guid.NewGuid(), "owner-login");
+        var invitation = Invitation.Create(Id<Invitation>.New(), Guid.NewGuid(), Guid.NewGuid());
         socialGraph.SendInvitation(invitation);
         socialGraph.PopDomainEvents();
 

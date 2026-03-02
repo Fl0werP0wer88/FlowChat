@@ -39,7 +39,7 @@ public sealed class SocialGraphMappingProfile : Profile
                 src.LastModifiedAtUtc));
 
         CreateMap<UserSocialGraphEntity, UserSocialGraph>()
-            .ConstructUsing((src, ctx) => new UserSocialGraph(
+            .ConstructUsing((src, ctx) => UserSocialGraph.Create(
                 Id<UserSocialGraph>.FromGuid(src.Id),
                 src.Login,
                 src.UserId,
@@ -71,7 +71,7 @@ public sealed class SocialGraphMappingProfile : Profile
             });
 
         CreateMap<InvitationEntity, Invitation>()
-            .ConstructUsing(src => new Invitation(
+            .ConstructUsing(src => Invitation.Create(
                 Id<Invitation>.FromGuid(src.Id),
                 src.RequesterId,
                 src.AddresseeId,
