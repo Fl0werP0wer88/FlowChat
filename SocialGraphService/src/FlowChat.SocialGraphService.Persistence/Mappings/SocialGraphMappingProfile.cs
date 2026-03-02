@@ -11,7 +11,6 @@ public sealed class SocialGraphMappingProfile : Profile
     {
         CreateMap<ContactEntity, Contact>()
             .ConstructUsing(src => Contact.Create(
-                Id<Contact>.FromGuid(src.Id),
                 src.OwnerUserId,
                 src.ContactUserId,
                 src.Login,
@@ -19,7 +18,8 @@ public sealed class SocialGraphMappingProfile : Profile
                 src.LastName,
                 src.PhoneNumber,
                 src.Email,
-                src.IsBlocked));
+                src.IsBlocked,
+                id: Id<Contact>.FromGuid(src.Id)));
 
         CreateMap<Contact, ContactEntity>()
             .ConstructUsing(src => ContactEntity.Create(
@@ -40,7 +40,6 @@ public sealed class SocialGraphMappingProfile : Profile
 
         CreateMap<UserSocialGraphEntity, UserSocialGraph>()
             .ConstructUsing((src, ctx) => UserSocialGraph.Create(
-                Id<UserSocialGraph>.FromGuid(src.Id),
                 src.Login,
                 src.UserId,
                 src.FirstName,
@@ -49,8 +48,7 @@ public sealed class SocialGraphMappingProfile : Profile
                 src.Email,
                 src.IsPhoneVisible,
                 src.IsEmailVisible,
-                src.Contacts.Select(ctx.Mapper.Map<Contact>),
-                src.Invitations.Select(ctx.Mapper.Map<Invitation>)));
+                id: Id<UserSocialGraph>.FromGuid(src.Id)));
 
         CreateMap<UserSocialGraph, UserSocialGraphEntity>()
             .ConstructUsing(src => new UserSocialGraphEntity
@@ -72,11 +70,11 @@ public sealed class SocialGraphMappingProfile : Profile
 
         CreateMap<InvitationEntity, Invitation>()
             .ConstructUsing(src => Invitation.Create(
-                Id<Invitation>.FromGuid(src.Id),
                 src.RequesterId,
                 src.AddresseeId,
                 ParseInvitationStatus(src.Status),
-                src.RespondedAtUtc));
+                src.RespondedAtUtc,
+                id: Id<Invitation>.FromGuid(src.Id)));
 
         CreateMap<Invitation, InvitationEntity>()
             .ConstructUsing(src => new InvitationEntity

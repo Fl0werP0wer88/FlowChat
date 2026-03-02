@@ -1,5 +1,6 @@
 using FlowChat.SocialGraphService.Application.Contracts;
 using FlowChat.SocialGraphService.Application.Contracts.Persistence;
+using FlowChat.SocialGraphService.Application.Invitations;
 using FlowChat.Domain.Abstractions;
 using FlowChat.SocialGraphService.Domain.Entities;
 
@@ -82,9 +83,9 @@ public sealed class SendInvitationCommandHandler : CommandHandlerBase<SendInvita
         }
 
         var invitation = socialGraph.SendInvitation(Invitation.Create(
-            Id<Invitation>.New(),
             request.RequesterId,
-            request.AddresseeId));
+            request.AddresseeId,
+            id: Id<Invitation>.New()));
 
         _aggregateRoot = socialGraph;
 

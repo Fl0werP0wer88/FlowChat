@@ -46,7 +46,6 @@ public class Contact : EntityBase<Contact>
 
 
     public static Contact Create(
-        Id<Contact>? id,
         Guid ownerUserId,
         Guid contactUserId,
         string login,
@@ -54,7 +53,8 @@ public class Contact : EntityBase<Contact>
         string? lastName = null,
         string? phoneNumber = null,
         string? email = null,
-        bool isBlocked = false)
+        bool isBlocked = false,
+        Id<Contact>? id = null)
     {
         return new Contact(id, ownerUserId, contactUserId, login, firstName, lastName, phoneNumber, email, isBlocked);
     }

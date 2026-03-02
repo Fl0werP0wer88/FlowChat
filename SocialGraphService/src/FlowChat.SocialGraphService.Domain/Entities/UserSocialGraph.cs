@@ -28,7 +28,9 @@ namespace FlowChat.SocialGraphService.Domain.Entities
             string? phoneNumber = null,
             string? email = null,
             bool isPhoneVisible = false,
-            bool isEmailVisible = false) : base(id)
+            bool isEmailVisible = false,
+            IEnumerable<Contact>? contacts = null,
+            IEnumerable<Invitation>? invitations = null) : base(id)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(login);
 
@@ -40,10 +42,11 @@ namespace FlowChat.SocialGraphService.Domain.Entities
             Email = email;
             IsPhoneVisible = isPhoneVisible;
             IsEmailVisible = isEmailVisible;
+            _contacts.AddRange(contacts ?? []);
+            _invitations.AddRange(invitations ?? []);
         }
 
         public static UserSocialGraph Create(
-            Id<UserSocialGraph>? id,
             string login,
             Guid? userId = null,
             string? firstName = null,
@@ -51,7 +54,8 @@ namespace FlowChat.SocialGraphService.Domain.Entities
             string? phoneNumber = null,
             string? email = null,
             bool isPhoneVisible = false,
-            bool isEmailVisible = false)
+            bool isEmailVisible = false,
+            Id<UserSocialGraph>? id = null)
         {
             return new UserSocialGraph(
                 id,
@@ -108,14 +112,14 @@ namespace FlowChat.SocialGraphService.Domain.Entities
             }
 
             var contact = Contact.Create(
-                Id<Contact>.New(),
                 ownerUserId,
                 contactUserId,
                 login,
                 firstName,
                 lastName,
                 phoneNumber,
-                email);
+                email,
+                id: Id<Contact>.New());
             _contacts.Add(contact);
 
             AddDomainEvent(new InvitationAcceptedDomainEvent(

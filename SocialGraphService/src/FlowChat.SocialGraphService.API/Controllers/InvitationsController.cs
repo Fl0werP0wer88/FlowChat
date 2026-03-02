@@ -1,5 +1,6 @@
-using FlowChat.SocialGraphService.Application.Invitations.Commands.SendInvitation;
 using FlowChat.Domain.Abstractions;
+using FlowChat.SocialGraphService.Application.Invitations;
+using FlowChat.SocialGraphService.Application.Invitations.Commands.SendInvitation;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

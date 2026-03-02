@@ -37,12 +37,11 @@ public class Invitation : EntityBase<Invitation>
     }
 
     public static Invitation Create(
-        Id<Invitation>? id,
         Guid requesterId,
         Guid addresseeId,
         InvitationStatus status = InvitationStatus.Pending,
-        DateTime? respondedAtUtc = null
-        )
+        DateTime? respondedAtUtc = null,
+        Id<Invitation>? id = null)
     {
         return new Invitation(id, requesterId, addresseeId, status, respondedAtUtc);
     }

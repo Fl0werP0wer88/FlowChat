@@ -12,7 +12,7 @@ public class TypedDomainIdsTests
     {
         var id = Id<Contact>.New();
 
-        var contact = Contact.Create(id, Guid.NewGuid(), Guid.NewGuid(), "user-login");
+        var contact = Contact.Create(Guid.NewGuid(), Guid.NewGuid(), "user-login", id: id);
 
         Assert.Equal(id, contact.Id);
         Assert.Equal(id.Value, contact.Id.Value);
@@ -23,7 +23,7 @@ public class TypedDomainIdsTests
     {
         var id = Guid.NewGuid();
 
-        var contact = Contact.Create(id, Guid.NewGuid(), Guid.NewGuid(), "user-login");
+        var contact = Contact.Create(Guid.NewGuid(), Guid.NewGuid(), "user-login", id: id);
 
         Assert.Equal(id, contact.Id.Value);
     }
@@ -32,14 +32,14 @@ public class TypedDomainIdsTests
     public void Contact_Create_AssignsProfileData()
     {
         var contact = Contact.Create(
-            Id<Contact>.New(),
             Guid.NewGuid(),
             Guid.NewGuid(),
             "jkowalski",
             "Jan",
             "Kowalski",
             "+48123456789",
-            "jan@example.com");
+            "jan@example.com",
+            id: Id<Contact>.New());
 
         Assert.Equal("Jan", contact.FirstName);
         Assert.Equal("Kowalski", contact.LastName);
@@ -52,10 +52,10 @@ public class TypedDomainIdsTests
     public void Contact_Create_AllowsMissingOptionalProfileData()
     {
         var contact = Contact.Create(
-            Id<Contact>.New(),
             Guid.NewGuid(),
             Guid.NewGuid(),
-            "user-login");
+            "user-login",
+            id: Id<Contact>.New());
 
         Assert.Null(contact.FirstName);
         Assert.Null(contact.LastName);
@@ -64,18 +64,39 @@ public class TypedDomainIdsTests
     }
 
     [Fact]
+    public void Contact_Create_WithoutId_GeneratesTypedId()
+    {
+        var contact = Contact.Create(
+            ownerUserId: Guid.NewGuid(),
+            contactUserId: Guid.NewGuid(),
+            login: "user-login");
+
+        Assert.NotEqual(Guid.Empty, contact.Id.Value);
+    }
+
+    [Fact]
     public void Invitation_Ctor_WithTypedId_AssignsTypedIdValue()
     {
         var id = Id<Invitation>.New();
 
         var invitation = Invitation.Create(
-            id,
             Guid.NewGuid(),
             Guid.NewGuid(),
-            InvitationStatus.Pending);
+            InvitationStatus.Pending,
+            id: id);
 
         Assert.Equal(id, invitation.Id);
         Assert.Equal(id.Value, invitation.Id.Value);
+    }
+
+    [Fact]
+    public void Invitation_Create_WithoutId_GeneratesTypedId()
+    {
+        var invitation = Invitation.Create(
+            requesterId: Guid.NewGuid(),
+            addresseeId: Guid.NewGuid());
+
+        Assert.NotEqual(Guid.Empty, invitation.Id.Value);
     }
 
 
@@ -84,9 +105,17 @@ public class TypedDomainIdsTests
     {
         var id = Guid.NewGuid();
 
-        var socialGraph = UserSocialGraph.Create(id, "user-login");
+        var socialGraph = UserSocialGraph.Create("user-login", id: id);
 
         Assert.Equal(id, socialGraph.Id.Value);
+    }
+
+    [Fact]
+    public void UserSocialGraph_Create_WithoutId_GeneratesTypedId()
+    {
+        var socialGraph = UserSocialGraph.Create(login: "user-login");
+
+        Assert.NotEqual(Guid.Empty, socialGraph.Id.Value);
     }
 
     [Fact]
@@ -96,7 +125,6 @@ public class TypedDomainIdsTests
         var userId = Guid.NewGuid();
 
         var socialGraph = UserSocialGraph.Create(
-            graphId,
             "jkowalski",
             userId,
             "Jan",
@@ -104,7 +132,8 @@ public class TypedDomainIdsTests
             "+48123456789",
             "jan@example.com",
             true,
-            false);
+            false,
+            id: graphId);
 
         Assert.Equal(graphId, socialGraph.Id.Value);
         Assert.Equal(userId, socialGraph.UserId);
@@ -120,7 +149,7 @@ public class TypedDomainIdsTests
     [Fact]
     public void UserSocialGraph_Ctor_AllowsMissingOptionalProfileData()
     {
-        var socialGraph = UserSocialGraph.Create(Guid.NewGuid(), "user-login");
+        var socialGraph = UserSocialGraph.Create("user-login", id: Guid.NewGuid());
 
         Assert.Null(socialGraph.FirstName);
         Assert.Null(socialGraph.LastName);
@@ -132,23 +161,23 @@ public class TypedDomainIdsTests
     public void Contact_Create_WithoutLogin_Throws()
     {
         Assert.Throws<ArgumentException>(() => Contact.Create(
-            Id<Contact>.New(),
             Guid.NewGuid(),
             Guid.NewGuid(),
-            ""));
+            "",
+            id: Id<Contact>.New()));
     }
 
     [Fact]
     public void UserSocialGraph_Ctor_WithoutLogin_Throws()
     {
-        Assert.Throws<ArgumentException>(() => UserSocialGraph.Create(Guid.NewGuid(), ""));
+        Assert.Throws<ArgumentException>(() => UserSocialGraph.Create("", id: Guid.NewGuid()));
     }
 
     [Fact]
     public void UserSocialGraph_SendInvitation_AddsInvitation_And_EmitsEvent()
     {
-        var socialGraph = UserSocialGraph.Create(Guid.NewGuid(), "owner-login");
-        var invitation = Invitation.Create(Id<Invitation>.New(), Guid.NewGuid(), Guid.NewGuid());
+        var socialGraph = UserSocialGraph.Create("owner-login", id: Guid.NewGuid());
+        var invitation = Invitation.Create(Guid.NewGuid(), Guid.NewGuid(), id: Id<Invitation>.New());
 
         socialGraph.SendInvitation(invitation);
 
@@ -161,8 +190,8 @@ public class TypedDomainIdsTests
     [Fact]
     public void UserSocialGraph_AcceptInvitation_UpdatesInvitation_AddsContact_And_EmitsEvent()
     {
-        var socialGraph = UserSocialGraph.Create(Guid.NewGuid(), "owner-login");
-        var invitation = Invitation.Create(Id<Invitation>.New(), Guid.NewGuid(), Guid.NewGuid());
+        var socialGraph = UserSocialGraph.Create("owner-login", id: Guid.NewGuid());
+        var invitation = Invitation.Create(Guid.NewGuid(), Guid.NewGuid(), id: Id<Invitation>.New());
         socialGraph.SendInvitation(invitation);
         socialGraph.PopDomainEvents();
 
