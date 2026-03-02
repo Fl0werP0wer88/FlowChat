@@ -60,6 +60,7 @@
   </Folder>
   <Folder Name="/Common/" />
   <Folder Name="/Common/src/">
+    <Project Path="Common/src/FlowChat.Domain.SharedKernel/FlowChat.Domain.SharedKernel.csproj" />
     <Project Path="Common/src/FlowChat.Messaging.Contracts/FlowChat.Messaging.Contracts.csproj" />
   </Folder>
   <Folder Name="/SocialGraphService/" />
