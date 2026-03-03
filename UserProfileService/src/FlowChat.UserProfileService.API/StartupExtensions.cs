@@ -47,17 +47,16 @@ public static class StartupExtensions
 
     public static async Task ResetDatabaseAsync(this WebApplication app)
     {
-        using var scope = app.Services.CreateScope();
+        if (!app.Environment.IsDevelopment())
+        {
+            return;
+        }
 
         try
         {
-            var context = scope.ServiceProvider.GetService<AppDbContext>();
-
-            if (context != null)
-            {
-                await context.Database.EnsureDeletedAsync();
-                await context.Database.MigrateAsync();
-            }
+            await using var context = new AppDbContextFactory().CreateDbContext([]);
+            await context.Database.EnsureDeletedAsync();
+            await context.Database.MigrateAsync();
         }
         catch (Exception)
         {

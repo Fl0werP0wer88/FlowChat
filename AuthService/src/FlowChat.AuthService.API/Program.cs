@@ -4,6 +4,9 @@ var builder = WebApplication.CreateBuilder(args);
 
 var app = builder.ConfigureServices().ConfigurePipeline();
 
-await app.ResetDatabaseAsync();
+if (app.Environment.IsDevelopment())
+{
+    await app.ResetDatabaseAsync();
+}
 
 app.Run();
