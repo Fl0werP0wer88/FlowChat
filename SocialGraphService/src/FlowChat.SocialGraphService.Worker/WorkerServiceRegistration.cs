@@ -19,7 +19,7 @@ public static class WorkerServiceRegistration
 
         services.Configure<UserCreatedConsumerOptions>(
             configuration.GetSection(UserCreatedConsumerOptions.SectionName));
-
+        var autoOffsetReset = ParseAutoOffsetReset(consumerOptions.AutoOffsetReset);
         services.AddSilverback()
             .WithConnectionToMessageBroker(options => options.AddKafka())
             .AddKafkaClients(clients =>
@@ -28,7 +28,7 @@ public static class WorkerServiceRegistration
                     .WithBootstrapServers(consumerOptions.BootstrapServers)
                     .AddConsumer(consumer => consumer
                         .WithGroupId(consumerOptions.GroupId)
-                        .WithAutoOffsetReset(ParseAutoOffsetReset(consumerOptions.AutoOffsetReset))
+                        .WithAutoOffsetReset(autoOffsetReset)
                         .Consume(endpoint => endpoint
                             .ConsumeFrom(consumerOptions.Topic)
                             .DeserializeJson(deserializer => deserializer.WithOptionalMessageTypeHeader())

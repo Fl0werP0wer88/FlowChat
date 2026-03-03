@@ -6,7 +6,8 @@ Creates if missing:
 - role: flowchat_app
 - databases:
     - flowchat_auth_db
-    - flowchat_settings_db
+    - flowchat_userprofile_db
+    - flowchat_socialgraph_db
 
 Additionally:
 - fixes schema public ownership
@@ -31,6 +32,7 @@ param(
   # Databases
   [string]$AuthDb = "flowchat_auth_db",
   [string]$UserProfileDb = "flowchat_userprofile_db",
+  [string]$SocialGraphDb = "flowchat_socialgraph_db",
 
   [int]$TimeoutSeconds = 180
 )
@@ -175,12 +177,14 @@ Wait-ForPostgresReady -containerId $containerId -timeoutSeconds $TimeoutSeconds
 Ensure-Role -containerId $containerId -role $AppUser -password $AppPassword
 Ensure-Database -containerId $containerId -dbName $AuthDb -owner $AppUser
 Ensure-Database -containerId $containerId -dbName $UserProfileDb -owner $AppUser
+Ensure-Database -containerId $containerId -dbName $SocialGraphDb -owner $AppUser
 
 Write-Step "Done. PostgreSQL is fully initialized ✅"
 Write-Host ""
 Write-Host "Admin user : $AdminUser"
 Write-Host "App user   : $AppUser"
 Write-Host "Auth DB    : $AuthDb"
-Write-Host "Settings DB: $UserProfileDb"
+Write-Host "UserProfile DB: $UserProfileDb"
+Write-Host "SocialGraph DB: $SocialGraphDb"
 Write-Host "Host       : localhost"
 Write-Host "Port       : 5432"
