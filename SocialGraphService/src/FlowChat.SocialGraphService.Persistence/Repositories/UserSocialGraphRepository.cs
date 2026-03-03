@@ -28,6 +28,15 @@ public sealed class UserSocialGraphRepository : IUserSocialGraphRepository
         return entity is null ? null : _mapper.Map<UserSocialGraph>(entity);
     }
 
+    public async Task<UserSocialGraph> AddAsync(UserSocialGraph entity, CancellationToken cancellationToken = default)
+    {
+        var persistenceEntity = _mapper.Map<UserSocialGraphEntity>(entity);
+
+        await _dbContext.UserSocialGraphs.AddAsync(persistenceEntity, cancellationToken);
+
+        return entity;
+    }
+
     public async Task<Contact> AddContactAsync(Contact entity, CancellationToken cancellationToken = default)
     {
         var persistenceEntity = _mapper.Map<ContactEntity>(entity);
