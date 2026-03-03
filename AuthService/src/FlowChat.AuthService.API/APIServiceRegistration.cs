@@ -2,6 +2,7 @@ using System.Text;
 using FlowChat.AuthService.Persistence.Identity;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
 namespace FlowChat.AuthService.Persistence;
@@ -34,6 +35,19 @@ public static class APIServiceRegistration
             .AddRoles<AppRole>()
             .AddEntityFrameworkStores<AppDbContext>()
             .AddDefaultTokenProviders();
+
+        services.AddScoped<IUserStore<AppUser>>(sp =>
+        {
+            var context = sp.GetRequiredService<AppDbContext>();
+            var describer = sp.GetRequiredService<IdentityErrorDescriber>();
+
+            return new UserStore<AppUser, AppRole, AppDbContext, Guid>(
+                context,
+                describer)
+            {
+                AutoSaveChanges = false
+            };
+        });
 
         services.AddAuthentication(options =>
         {

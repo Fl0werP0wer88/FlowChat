@@ -11,6 +11,11 @@ public sealed class AppDbContextUnitOfWork : IUnitOfWork
     {
         _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
     }
+ 
+    public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        return await _dbContext.SaveChangesAsync(cancellationToken);
+    }
 
     public async Task<T> ExecuteInTransactionAsync<T>(Func<CancellationToken, Task<T>> operation, CancellationToken cancellationToken)
     {
@@ -37,4 +42,6 @@ public sealed class AppDbContextUnitOfWork : IUnitOfWork
             }
         });
     }
+
+    public void Dispose() => _dbContext.Dispose();
 }
