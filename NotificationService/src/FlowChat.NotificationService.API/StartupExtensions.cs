@@ -58,7 +58,11 @@ public static class StartupExtensions
         try
         {
             await using var context = new AppDbContextFactory().CreateDbContext([]);
-            await context.Database.EnsureDeletedAsync();
+            if (app.Configuration.GetValue<bool>("FlowChat:DropDatabaseOnStartup"))
+            {
+                await context.Database.EnsureDeletedAsync();
+            }
+
             await context.Database.MigrateAsync();
         }
         catch (Exception)
