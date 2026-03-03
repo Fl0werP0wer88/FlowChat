@@ -3,16 +3,18 @@
 Idempotent PostgreSQL bootstrap for FlowChat (Windows PowerShell)
 
 Creates if missing:
+- role: flowchat_migrator
 - role: flowchat_app
 - databases:
     - flowchat_auth_db
     - flowchat_userprofile_db
     - flowchat_socialgraph_db
+    - flowchat_notification_db
 
 Additionally:
-- fixes schema public ownership
-- grants CREATE/USAGE on schema
-- sets default privileges for EF Core
+- assigns database and schema ownership to flowchat_migrator
+- grants CRUD-only access to flowchat_app
+- sets default privileges for future EF Core migrations
 
 Safe to run multiple times.
 #>
@@ -25,7 +27,9 @@ param(
   [string]$AdminUser = "flowchat",
   [string]$AdminPassword = "flowchat_pw",
 
-  # App role
+  # Roles
+  [string]$MigratorUser = "flowchat_migrator",
+  [string]$MigratorPassword = "flowchat_migrator_pw",
   [string]$AppUser = "flowchat_app",
   [string]$AppPassword = "flowchat_app_pw",
 
@@ -33,6 +37,7 @@ param(
   [string]$AuthDb = "flowchat_auth_db",
   [string]$UserProfileDb = "flowchat_userprofile_db",
   [string]$SocialGraphDb = "flowchat_socialgraph_db",
+  [string]$NotificationDb = "flowchat_notification_db",
 
   [int]$TimeoutSeconds = 180
 )
@@ -106,28 +111,37 @@ function Exec-PSQL([string]$containerId, [string]$database, [string]$sql, [switc
   }
 }
 
-function Ensure-Role([string]$containerId, [string]$role, [string]$password) {
+function Ensure-Role([string]$containerId, [string]$role, [string]$password, [switch]$CreateDb) {
   Write-Step "Ensuring role exists: $role"
 
+  $createDbClause = if ($CreateDb) { "CREATEDB" } else { "NOCREATEDB" }
   $sqlTemplate = @'
 DO $$
 BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = '{ROLE}') THEN
-    CREATE ROLE {ROLE} LOGIN PASSWORD '{PASSWORD}';
+    CREATE ROLE {ROLE} LOGIN PASSWORD '{PASSWORD}' {CREATEDB};
+  ELSE
+    ALTER ROLE {ROLE} WITH LOGIN PASSWORD '{PASSWORD}' {CREATEDB};
   END IF;
 END
 $$;
 '@
 
-  $sql = $sqlTemplate.Replace('{ROLE}', $role).Replace('{PASSWORD}', $password)
+  $sql = $sqlTemplate.Replace('{ROLE}', $role).Replace('{PASSWORD}', $password).Replace('{CREATEDB}', $createDbClause)
   $res = Exec-PSQL -containerId $containerId -database "postgres" -sql $sql
   if ($res.Code -ne 0) { throw "Failed ensuring role '$role'." }
+}
+
+function Grant-Role([string]$containerId, [string]$grantee, [string]$roleName) {
+  Write-Step "Granting role $roleName to $grantee"
+
+  $res = Exec-PSQL -containerId $containerId -database "postgres" -sql "GRANT $roleName TO $grantee;"
+  if ($res.Code -ne 0) { throw "Failed granting role '$roleName' to '$grantee'." }
 }
 
 function Ensure-Database([string]$containerId, [string]$dbName, [string]$owner) {
   Write-Step "Ensuring database exists: $dbName"
 
-  # check existence
   $check = Exec-PSQL -containerId $containerId -database "postgres" `
     -sql "SELECT 1 FROM pg_database WHERE datname = '$dbName' LIMIT 1;" `
     -CaptureOutput
@@ -144,20 +158,75 @@ function Ensure-Database([string]$containerId, [string]$dbName, [string]$owner) 
     Write-Host "Created database: $dbName"
   }
 
-  # ----- FIX SCHEMA PERMISSIONS (KEY FOR EF) -----
-  Write-Step "Fixing schema permissions in $dbName"
+  Write-Step "Configuring ownership in $dbName"
+
+  Exec-PSQL -containerId $containerId -database "postgres" `
+    -sql "ALTER DATABASE $dbName OWNER TO $owner;"
 
   Exec-PSQL -containerId $containerId -database $dbName `
     -sql "ALTER SCHEMA public OWNER TO $owner;"
 
   Exec-PSQL -containerId $containerId -database $dbName `
-    -sql "GRANT USAGE, CREATE ON SCHEMA public TO $owner;"
+    -sql "REVOKE CREATE ON SCHEMA public FROM PUBLIC;"
+
+  $ownershipSql = @"
+DO $$
+DECLARE
+  item record;
+BEGIN
+  FOR item IN
+    SELECT tablename
+    FROM pg_tables
+    WHERE schemaname = 'public'
+  LOOP
+    EXECUTE format('ALTER TABLE public.%I OWNER TO $owner;', item.tablename);
+  END LOOP;
+
+  FOR item IN
+    SELECT sequence_name
+    FROM information_schema.sequences
+    WHERE sequence_schema = 'public'
+  LOOP
+    EXECUTE format('ALTER SEQUENCE public.%I OWNER TO $owner;', item.sequence_name);
+  END LOOP;
+
+  FOR item IN
+    SELECT table_name
+    FROM information_schema.views
+    WHERE table_schema = 'public'
+  LOOP
+    EXECUTE format('ALTER VIEW public.%I OWNER TO $owner;', item.table_name);
+  END LOOP;
+END
+$$;
+"@
+
+  Exec-PSQL -containerId $containerId -database $dbName -sql $ownershipSql | Out-Null
+}
+
+function Ensure-AppCrudAccess([string]$containerId, [string]$dbName, [string]$owner, [string]$appRole) {
+  Write-Step "Granting CRUD access to $appRole in $dbName"
+
+  Exec-PSQL -containerId $containerId -database "postgres" `
+    -sql "GRANT CONNECT ON DATABASE $dbName TO $appRole;"
 
   Exec-PSQL -containerId $containerId -database $dbName `
-    -sql "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO $owner;"
+    -sql "GRANT USAGE ON SCHEMA public TO $appRole;"
 
   Exec-PSQL -containerId $containerId -database $dbName `
-    -sql "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO $owner;"
+    -sql "REVOKE CREATE ON SCHEMA public FROM $appRole;"
+
+  Exec-PSQL -containerId $containerId -database $dbName `
+    -sql "GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO $appRole;"
+
+  Exec-PSQL -containerId $containerId -database $dbName `
+    -sql "GRANT USAGE, SELECT, UPDATE ON ALL SEQUENCES IN SCHEMA public TO $appRole;"
+
+  Exec-PSQL -containerId $containerId -database $dbName `
+    -sql "ALTER DEFAULT PRIVILEGES FOR ROLE $owner IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO $appRole;"
+
+  Exec-PSQL -containerId $containerId -database $dbName `
+    -sql "ALTER DEFAULT PRIVILEGES FOR ROLE $owner IN SCHEMA public GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO $appRole;"
 }
 
 # -------------------- MAIN --------------------
@@ -174,17 +243,30 @@ if ([string]::IsNullOrWhiteSpace($containerId)) {
 Write-Step "Using container id: $containerId"
 Wait-ForPostgresReady -containerId $containerId -timeoutSeconds $TimeoutSeconds
 
+Ensure-Role -containerId $containerId -role $MigratorUser -password $MigratorPassword -CreateDb
+Grant-Role -containerId $containerId -grantee $MigratorUser -roleName "pg_signal_backend"
 Ensure-Role -containerId $containerId -role $AppUser -password $AppPassword
-Ensure-Database -containerId $containerId -dbName $AuthDb -owner $AppUser
-Ensure-Database -containerId $containerId -dbName $UserProfileDb -owner $AppUser
-Ensure-Database -containerId $containerId -dbName $SocialGraphDb -owner $AppUser
+
+Ensure-Database -containerId $containerId -dbName $AuthDb -owner $MigratorUser
+Ensure-AppCrudAccess -containerId $containerId -dbName $AuthDb -owner $MigratorUser -appRole $AppUser
+
+Ensure-Database -containerId $containerId -dbName $UserProfileDb -owner $MigratorUser
+Ensure-AppCrudAccess -containerId $containerId -dbName $UserProfileDb -owner $MigratorUser -appRole $AppUser
+
+Ensure-Database -containerId $containerId -dbName $SocialGraphDb -owner $MigratorUser
+Ensure-AppCrudAccess -containerId $containerId -dbName $SocialGraphDb -owner $MigratorUser -appRole $AppUser
+
+Ensure-Database -containerId $containerId -dbName $NotificationDb -owner $MigratorUser
+Ensure-AppCrudAccess -containerId $containerId -dbName $NotificationDb -owner $MigratorUser -appRole $AppUser
 
 Write-Step "Done. PostgreSQL is fully initialized ✅"
 Write-Host ""
-Write-Host "Admin user : $AdminUser"
-Write-Host "App user   : $AppUser"
-Write-Host "Auth DB    : $AuthDb"
-Write-Host "UserProfile DB: $UserProfileDb"
-Write-Host "SocialGraph DB: $SocialGraphDb"
-Write-Host "Host       : localhost"
-Write-Host "Port       : 5432"
+Write-Host "Admin user      : $AdminUser"
+Write-Host "Migrator user   : $MigratorUser"
+Write-Host "App user        : $AppUser"
+Write-Host "Auth DB         : $AuthDb"
+Write-Host "UserProfile DB  : $UserProfileDb"
+Write-Host "SocialGraph DB  : $SocialGraphDb"
+Write-Host "Notification DB : $NotificationDb"
+Write-Host "Host            : localhost"
+Write-Host "Port            : 5432"
