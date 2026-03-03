@@ -1,4 +1,5 @@
 using FlowChat.AuthService.Application.Commands;
+using FlowChat.Application.Abstractions;
 using FlowChat.AuthService.Application.Contracts.Infrastructure;
 using FlowChat.AuthService.Application.Contracts.Persistence;
 using FlowChat.AuthService.Application.Responses;

@@ -1,3 +1,4 @@
+using FlowChat.Application.Abstractions;
 using FlowChat.SocialGraphService.Application.Contracts.Persistence;
 using FlowChat.SocialGraphService.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;

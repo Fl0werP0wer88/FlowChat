@@ -1,4 +1,4 @@
-using FlowChat.SocialGraphService.Application.Contracts;
+using FlowChat.Application.Abstractions;
 using FlowChat.SocialGraphService.Domain.Enums;
 namespace FlowChat.SocialGraphService.Application.Contacts.Queries.GetContactsForUser;
 

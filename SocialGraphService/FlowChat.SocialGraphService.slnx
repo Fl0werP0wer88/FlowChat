@@ -11,4 +11,5 @@
     <Project Path="tests/FlowChat.SocialGraphService.AATs/FlowChat.SocialGraphService.AATs.csproj" />
     <Project Path="tests/FlowChat.SocialGraphService.UnitTests/FlowChat.SocialGraphService.UnitTests.csproj" />
   </Folder>
+  <Project Path="../Common/src/FlowChat.Application.Abstractions/FlowChat.Application.Abstractions.csproj" />
 </Solution>

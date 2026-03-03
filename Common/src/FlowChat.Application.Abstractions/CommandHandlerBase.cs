@@ -1,12 +1,11 @@
-using FlowChat.SocialGraphService.Application.Contracts.Persistence;
 using FlowChat.Domain.Abstractions;
 using MediatR;
 
-namespace FlowChat.SocialGraphService.Application.Contracts;
+namespace FlowChat.Application.Abstractions;
 
 public abstract class CommandHandlerBase<TCommand, TResponse> : ICommandHandler<TCommand, TResponse>
-     where TCommand : ICommand<TResponse>, IRequest<Result<TResponse, IDomainError>>
-     where TResponse : notnull
+    where TCommand : ICommand<TResponse>, IRequest<Result<TResponse, IDomainError>>
+    where TResponse : notnull
 {
     private readonly IDomainEventDispatcher _domainEventDispatcher;
     private readonly IUnitOfWork _unitOfWork;
@@ -21,47 +20,35 @@ public abstract class CommandHandlerBase<TCommand, TResponse> : ICommandHandler<
 
     public async Task<Result<TResponse, IDomainError>> Handle(TCommand request, CancellationToken cancellationToken)
     {
-
-        // Step 1: Execute core operation
         var operationResult = await ExecuteAsync(request, cancellationToken);
         if (!operationResult.IsSuccess)
         {
-            return operationResult; // Return failure result
+            return operationResult;
         }
 
-        // Step 2: Commit Unit of Work
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        // Step 3: Dispatch Domain Events
         var aggregateRoot = GetAggregateRoot(operationResult);
-        if (aggregateRoot != null)
+        if (aggregateRoot is not null)
         {
             var domainEvents = aggregateRoot.PopDomainEvents();
             await DispatchDomainEventsAsync(domainEvents, cancellationToken);
         }
 
-        // Step 4: Return Result
         return operationResult;
-
-
     }
 
-    /// <summary>
-    /// Executes the core operation logic for the command.
-    /// </summary>
     protected abstract Task<Result<TResponse, IDomainError>> ExecuteAsync(TCommand request, CancellationToken cancellationToken);
 
-    /// <summary>
-    /// Extracts the aggregate root for dispatching domain events.
-    /// </summary>
     protected abstract IAggregateRoot? GetAggregateRoot(Result<TResponse, IDomainError> result);
 
-    /// <summary>
-    /// Manually dispatches a collection of domain events.
-    /// </summary>
-    protected async Task DispatchDomainEventsAsync(IEnumerable<IDomainEvent> domainEvents, CancellationToken cancellationToken)
+    protected Task DispatchDomainEventsAsync(IEnumerable<IDomainEvent> domainEvents, CancellationToken cancellationToken)
     {
-        if (domainEvents == null) return;
-        await _domainEventDispatcher.DispatchAsync(domainEvents, cancellationToken);
+        if (domainEvents is null)
+        {
+            return Task.CompletedTask;
+        }
+
+        return _domainEventDispatcher.DispatchAsync(domainEvents, cancellationToken);
     }
 }

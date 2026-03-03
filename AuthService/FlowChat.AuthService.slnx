@@ -11,5 +11,6 @@
     <Project Path="tests/FlowChat.AuthService.AATs/FlowChat.AuthService.AATs.csproj" />
     <Project Path="tests/FlowChat.AuthService.UnitTests/FlowChat.AuthService.UnitTests.csproj" />
   </Folder>
+  <Project Path="../Common/src/FlowChat.Application.Abstractions/FlowChat.Application.Abstractions.csproj" />
   <Project Path="../Common/src/FlowChat.Messaging.Contracts/FlowChat.Messaging.Contracts.csproj" />
 </Solution>

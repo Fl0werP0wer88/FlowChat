@@ -1,4 +1,4 @@
-using FlowChat.AuthService.Application.Contracts.Infrastructure;
+using FlowChat.Application.Abstractions;
 using Microsoft.EntityFrameworkCore;
 
 namespace FlowChat.AuthService.Persistence.UnitOfWork;

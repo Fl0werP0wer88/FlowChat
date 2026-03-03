@@ -1,4 +1,4 @@
-using FlowChat.SocialGraphService.Application.Contracts;
+using FlowChat.Application.Abstractions;
 using FlowChat.SocialGraphService.Application.Contracts.Persistence;
 using FlowChat.SocialGraphService.Application.Invitations;
 using FlowChat.Domain.Abstractions;

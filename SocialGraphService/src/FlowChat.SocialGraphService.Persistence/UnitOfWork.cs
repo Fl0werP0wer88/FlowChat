@@ -1,5 +1,4 @@
-
-using FlowChat.SocialGraphService.Application.Contracts.Persistence;
+using FlowChat.Application.Abstractions;
 using FlowChat.SocialGraphService.Persistence;
 using Microsoft.EntityFrameworkCore;
 

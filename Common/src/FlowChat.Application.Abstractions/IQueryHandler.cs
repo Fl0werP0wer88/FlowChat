@@ -1,9 +1,10 @@
 using FlowChat.Domain.Abstractions;
 using MediatR;
 
-namespace FlowChat.SocialGraphService.Application.Contracts;
+namespace FlowChat.Application.Abstractions;
 
 public interface IQueryHandler<TRequest, TResponse> : IRequestHandler<TRequest, Result<TResponse, IDomainError>>
-   where TRequest : IQuery<TResponse>
-   where TResponse : notnull
-{ }
+    where TRequest : IQuery<TResponse>
+    where TResponse : notnull
+{
+}

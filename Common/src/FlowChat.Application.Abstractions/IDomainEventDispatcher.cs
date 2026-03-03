@@ -1,6 +1,6 @@
 using FlowChat.Domain.Abstractions;
 
-namespace FlowChat.SocialGraphService.Application.Contracts;
+namespace FlowChat.Application.Abstractions;
 
 public interface IDomainEventDispatcher
 {
