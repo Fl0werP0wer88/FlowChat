@@ -108,6 +108,13 @@ public sealed class CreateDefaultSocialGraphCommandHandlerTests
             SaveChangesCallCount++;
             return Task.FromResult(1);
         }
+
+        public Task<T> ExecuteInTransactionAsync<T>(
+            Func<CancellationToken, Task<T>> operation,
+            CancellationToken cancellationToken)
+        {
+            return operation(cancellationToken);
+        }
     }
 
     private sealed class FakeDomainEventDispatcher : IDomainEventDispatcher
