@@ -55,6 +55,8 @@ namespace FlowChat.SocialGraphService.Domain.Entities
             string? email = null,
             bool isPhoneVisible = false,
             bool isEmailVisible = false,
+            IEnumerable<Contact>? contacts = null,
+            IEnumerable<Invitation>? invitations = null,
             Id<UserSocialGraph>? id = null)
         {
             return new UserSocialGraph(
@@ -66,7 +68,9 @@ namespace FlowChat.SocialGraphService.Domain.Entities
                 phoneNumber,
                 email,
                 isPhoneVisible,
-                isEmailVisible);
+                isEmailVisible,
+                contacts,
+                invitations);
         }
 
         public Invitation SendInvitation(Invitation invitation)

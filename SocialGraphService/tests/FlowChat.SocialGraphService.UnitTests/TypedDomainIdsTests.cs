@@ -158,6 +158,24 @@ public class TypedDomainIdsTests
     }
 
     [Fact]
+    public void UserSocialGraph_Create_RehydratesContactsAndInvitations()
+    {
+        var contact = Contact.Create(Guid.NewGuid(), Guid.NewGuid(), "contact-login", id: Id<Contact>.New());
+        var invitation = Invitation.Create(Guid.NewGuid(), Guid.NewGuid(), id: Id<Invitation>.New());
+
+        var socialGraph = UserSocialGraph.Create(
+            login: "user-login",
+            contacts: [contact],
+            invitations: [invitation],
+            id: Guid.NewGuid());
+
+        Assert.Single(socialGraph.Contacts);
+        Assert.Single(socialGraph.Invitations);
+        Assert.Equal(contact.Id, socialGraph.Contacts[0].Id);
+        Assert.Equal(invitation.Id, socialGraph.Invitations[0].Id);
+    }
+
+    [Fact]
     public void Contact_Create_WithoutLogin_Throws()
     {
         Assert.Throws<ArgumentException>(() => Contact.Create(

@@ -48,7 +48,11 @@ public sealed class SocialGraphMappingProfile : Profile
                 src.Email,
                 src.IsPhoneVisible,
                 src.IsEmailVisible,
-                id: Id<UserSocialGraph>.FromGuid(src.Id)));
+                ctx.Mapper.Map<IEnumerable<Contact>>(src.Contacts),
+                ctx.Mapper.Map<IEnumerable<Invitation>>(src.Invitations),
+                id: Id<UserSocialGraph>.FromGuid(src.Id)))
+            .ForMember(dest => dest.Contacts, opt => opt.Ignore())
+            .ForMember(dest => dest.Invitations, opt => opt.Ignore());
 
         CreateMap<UserSocialGraph, UserSocialGraphEntity>()
             .ConstructUsing(src => new UserSocialGraphEntity
