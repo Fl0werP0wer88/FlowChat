@@ -21,7 +21,7 @@ public static class APIServiceRegistration
 
         services.AddDataProtection();
 
-        services.AddIdentityCore<AppUser>(options =>
+        services.AddIdentityCore<UserEntity>(options =>
         {
             options.User.RequireUniqueEmail = true;
             options.SignIn.RequireConfirmedEmail = true;
@@ -32,16 +32,16 @@ public static class APIServiceRegistration
             options.Password.RequireNonAlphanumeric = true;
             options.Password.RequiredUniqueChars = 3;
         })
-            .AddRoles<AppRole>()
+            .AddRoles<RoleEntity>()
             .AddEntityFrameworkStores<AppDbContext>()
             .AddDefaultTokenProviders();
 
-        services.AddScoped<IUserStore<AppUser>>(sp =>
+        services.AddScoped<IUserStore<UserEntity>>(sp =>
         {
             var context = sp.GetRequiredService<AppDbContext>();
             var describer = sp.GetRequiredService<IdentityErrorDescriber>();
 
-            return new UserStore<AppUser, AppRole, AppDbContext, Guid>(
+            return new UserStore<UserEntity, RoleEntity, AppDbContext, Guid>(
                 context,
                 describer)
             {

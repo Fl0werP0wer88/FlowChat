@@ -1,20 +1,19 @@
 using FlowChat.AuthService.Domain.Common;
 using FlowChat.AuthService.Domain.Events;
+using FlowChat.Domain.Abstractions;
 
 namespace FlowChat.AuthService.Domain.Entities;
 
-public sealed class IdentityEntity : AggregateRoot
+public sealed class Identity : AggregateRootBase<Identity>
 {
-    public Guid Id { get; }
     public string UserName { get; }
     public string Email { get; }
     public string DisplayName { get; }
     public bool EmailConfirmed { get; private set; }
     public bool AccountConfirmed { get; private set; }
 
-    private IdentityEntity(Guid id, string userName, string email, string displayName)
+    private Identity(Guid id, string userName, string email, string displayName) : base (id)
     {
-        Id = id;
         UserName = userName;
         Email = email;
         DisplayName = displayName;
@@ -22,7 +21,7 @@ public sealed class IdentityEntity : AggregateRoot
         AccountConfirmed = false;
     }
 
-    public static IdentityEntity Create(Guid id, string userName, string email)
+    public static Identity Create(Guid id, string userName, string email)
     {
         if (id == Guid.Empty)
         {
@@ -42,7 +41,7 @@ public sealed class IdentityEntity : AggregateRoot
         var normalizedUserName = userName.Trim();
         var normalizedEmail = email.Trim();
 
-        var user = new IdentityEntity(
+        var user = new Identity(
             id,
             normalizedUserName,
             normalizedEmail,

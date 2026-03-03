@@ -6,10 +6,12 @@ using FlowChat.AuthService.Application.Responses;
 using FlowChat.AuthService.Domain.Entities;
 using FlowChat.Messaging.Contracts.AuthService.Events;
 using MediatR;
+using CSharpFunctionalExtensions;
+using FlowChat.Domain.Abstractions;
 
 namespace FlowChat.AuthService.Application.Handlers;
 
-public class RegisterUserCommandHandler : IRequestHandler<RegisterUserCommand, RegisterUserCommandResponse>
+public class RegisterUserCommandHandler : CommandHandlerBase<RegisterUserCommand, RegisterUserCommandResponse>
 {
     private readonly IIdentityRepository _identityRepository;
     private readonly ITokenEncoder _tokenEncoder;
@@ -22,7 +24,8 @@ public class RegisterUserCommandHandler : IRequestHandler<RegisterUserCommand, R
         ITokenEncoder tokenEncoder,
         IConfirmationLinkBuilder confirmationLinkBuilder,
         IKafkaEventPublisher<UserEmailVerificationRequestedIntegrationEvent> eventPublisher,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        IDomainEventDispatcher domainEventDispatcher) : base(domainEventDispatcher, unitOfWork)
     {
         _identityRepository = identityRepository;
         _tokenEncoder = tokenEncoder;
@@ -31,11 +34,11 @@ public class RegisterUserCommandHandler : IRequestHandler<RegisterUserCommand, R
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<RegisterUserCommandResponse> Handle(RegisterUserCommand request, CancellationToken cancellationToken)
+    protected override async Task<Result<RegisterUserCommandResponse, IDomainError>> ExecuteAsync(RegisterUserCommand request, CancellationToken cancellationToken)
     {
         return await _unitOfWork.ExecuteInTransactionAsync(async ct =>
         {
-            var domainUser = IdentityEntity.Create(Guid.NewGuid(), request.UserName, request.Email);
+            var domainUser = Identity.Create(Guid.NewGuid(), request.UserName, request.Email);
             var guid = await _identityRepository.CreateUserAsync(domainUser, request.Password, ct);
             var confirmationToken = await _identityRepository.GenerateEmailConfirmationTokenAsync(guid, ct);
             var encodedToken = _tokenEncoder.EncodeForUrl(confirmationToken);
@@ -53,5 +56,10 @@ public class RegisterUserCommandHandler : IRequestHandler<RegisterUserCommand, R
                 Id = guid
             };
         }, cancellationToken);
+    }
+
+    protected override IAggregateRoot? GetAggregateRoot(Result<RegisterUserCommandResponse, IDomainError> result)
+    {
+        return null;
     }
 }

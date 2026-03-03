@@ -2,7 +2,6 @@ using FlowChat.Application.Abstractions;
 using FlowChat.AuthService.Application.Contracts.Infrastructure;
 using FlowChat.AuthService.Application.Contracts.Persistence;
 using FlowChat.AuthService.Persistence.Auditing;
-using FlowChat.AuthService.Persistence.Outbox;
 using FlowChat.AuthService.Persistence.UnitOfWork;
 using FlowChat.AuthService.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -19,15 +18,13 @@ public static class PersistenceServiceRegistration
         services.AddOptions<UserCreatedProducerOptions>();
         services.AddOptions<UserEmailVerificationRequestedProducerOptions>();
         services.AddScoped<AuditableEntitySaveChangesInterceptor>();
-        services.AddScoped<InsertOutboxMessagesInterceptor>();
         services.AddScoped<IUnitOfWork, AppDbContextUnitOfWork>();
 
         services.AddDbContext<AppDbContext>((serviceProvider, options) =>
         {
             options.UseNpgsql(configuration.GetConnectionString("AuthDb"));
             options.AddInterceptors(
-                serviceProvider.GetRequiredService<AuditableEntitySaveChangesInterceptor>(),
-                serviceProvider.GetRequiredService<InsertOutboxMessagesInterceptor>());
+                serviceProvider.GetRequiredService<AuditableEntitySaveChangesInterceptor>());
         });
         services.AddDbContextFactory<AppDbContext>(
             options => options.UseNpgsql(configuration.GetConnectionString("AuthDb")),
@@ -43,13 +40,11 @@ public static class PersistenceServiceRegistration
     {
         services.AddOptions<UserCreatedProducerOptions>();
         services.AddScoped<AuditableEntitySaveChangesInterceptor>();
-        services.AddScoped<InsertOutboxMessagesInterceptor>();
         services.AddDbContext<AppDbContext>((serviceProvider, options) =>
         {
             options.UseNpgsql(configuration.GetConnectionString("AuthDb"));
             options.AddInterceptors(
-                serviceProvider.GetRequiredService<AuditableEntitySaveChangesInterceptor>(),
-                serviceProvider.GetRequiredService<InsertOutboxMessagesInterceptor>());
+                serviceProvider.GetRequiredService<AuditableEntitySaveChangesInterceptor>());
         });
         services.AddDbContextFactory<AppDbContext>(
             options => options.UseNpgsql(configuration.GetConnectionString("AuthDb")),

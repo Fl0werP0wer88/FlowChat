@@ -5,7 +5,7 @@ using Silverback.Messaging.Producing.TransactionalOutbox;
 
 namespace FlowChat.AuthService.Persistence;
 
-public class AppDbContext : IdentityDbContext<AppUser, AppRole, Guid>
+public class AppDbContext : IdentityDbContext<UserEntity, RoleEntity, Guid>
 {
     public AppDbContext(DbContextOptions<AppDbContext> options)
         : base(options)

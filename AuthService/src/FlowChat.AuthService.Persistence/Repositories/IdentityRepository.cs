@@ -8,14 +8,14 @@ namespace FlowChat.AuthService.Persistence.Repositories;
 
 public class IdentityRepository : IIdentityRepository
 {
-    private readonly UserManager<AppUser> _userManager;
+    private readonly UserManager<UserEntity> _userManager;
 
-    public IdentityRepository(UserManager<AppUser> userManager)
+    public IdentityRepository(UserManager<UserEntity> userManager)
     {
         _userManager = userManager;
     }
 
-    public async Task<Guid> CreateUserAsync(IdentityEntity domainUser, string password, CancellationToken cancellationToken)
+    public async Task<Guid> CreateUserAsync(Domain.Entities.Identity domainUser, string password, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
@@ -33,17 +33,16 @@ public class IdentityRepository : IIdentityRepository
         return user.Id;
     }
 
-    private static AppUser MapToIdentityUser(IdentityEntity domainUser)
+    private static UserEntity MapToIdentityUser(Domain.Entities.Identity domainUser)
     {
-        var user = new AppUser
+        var user = new UserEntity
         {
             Id = domainUser.Id,
             UserName = domainUser.UserName,
             Email = domainUser.Email,
             EmailConfirmed = false
         };
-
-        user.AddDomainEvents(domainUser.DomainEvents);
+        
         return user;
     }
 

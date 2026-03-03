@@ -1,9 +1,15 @@
-using FlowChat.AuthService.Domain.Common;
+using FlowChat.AuthService.Domain.Entities;
+using FlowChat.Domain.Abstractions;
 
 namespace FlowChat.AuthService.Domain.Events;
 
-public sealed record AccountConfirmedDomainEvent(
-    Guid UserId) : IOutboxDomainEvent
+public sealed class AccountConfirmedDomainEvent : BaseIdentityDomainEvent
 {
-    public DateTime OccurredOnUtc { get; init; } = DateTime.UtcNow;
+    public Id<Identity> UserId { get; }
+
+    public AccountConfirmedDomainEvent(Id<Identity> userId)
+        : base(userId)
+    {
+        UserId = userId;
+    }
 }

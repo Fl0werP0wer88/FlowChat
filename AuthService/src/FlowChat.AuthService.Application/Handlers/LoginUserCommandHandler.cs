@@ -1,23 +1,29 @@
+using CSharpFunctionalExtensions;
+using FlowChat.Application.Abstractions;
 using FlowChat.AuthService.Application.Commands;
 using FlowChat.AuthService.Application.Contracts.Infrastructure;
 using FlowChat.AuthService.Application.Contracts.Persistence;
 using FlowChat.AuthService.Application.Responses;
-using MediatR;
+using FlowChat.Domain.Abstractions;
 
 namespace FlowChat.AuthService.Application.Handlers;
 
-public class LoginUserCommandHandler : IRequestHandler<LoginUserCommand, LoginUserCommandResponse>
+public class LoginUserCommandHandler :  CommandHandlerBase<LoginUserCommand, LoginUserCommandResponse>
 {
     private readonly IIdentityRepository _identityRepository;
     private readonly IJwtTokenGenerator _jwtTokenGenerator;
 
-    public LoginUserCommandHandler(IIdentityRepository identityRepository, IJwtTokenGenerator jwtTokenGenerator)
+    public LoginUserCommandHandler(
+        IIdentityRepository identityRepository, 
+        IJwtTokenGenerator jwtTokenGenerator,
+        IDomainEventDispatcher domainEventDispatcher, 
+        IUnitOfWork unitOfWork) : base(domainEventDispatcher, unitOfWork)
     {
         _identityRepository = identityRepository;
         _jwtTokenGenerator = jwtTokenGenerator;
     }
 
-    public async Task<LoginUserCommandResponse> Handle(LoginUserCommand request, CancellationToken cancellationToken)
+    protected override async Task<Result<LoginUserCommandResponse, IDomainError>> ExecuteAsync(LoginUserCommand request, CancellationToken cancellationToken)
     {
         var user = await _identityRepository.AuthenticateUserAsync(request.Login, request.Password, cancellationToken);
         if (user is null)
@@ -34,4 +40,9 @@ public class LoginUserCommandHandler : IRequestHandler<LoginUserCommand, LoginUs
             ExpiresAtUtc = token.ExpiresAtUtc
         };
     }
+
+    protected override IAggregateRoot? GetAggregateRoot(Result<LoginUserCommandResponse, IDomainError> result)
+    {
+        return null;
+    }   
 }

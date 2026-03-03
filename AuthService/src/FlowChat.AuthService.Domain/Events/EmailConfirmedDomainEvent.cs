@@ -1,10 +1,19 @@
-using FlowChat.AuthService.Domain.Common;
+using FlowChat.AuthService.Domain.Entities;
+using FlowChat.Domain.Abstractions;
 
 namespace FlowChat.AuthService.Domain.Events;
 
-public sealed record EmailConfirmedDomainEvent(
-    Guid UserId,
-    string Email) : IDomainEvent
+public sealed class EmailConfirmedDomainEvent : BaseIdentityDomainEvent
 {
-    public DateTime OccurredOnUtc { get; init; } = DateTime.UtcNow;
+    public Id<Identity> UserId { get; }
+    public string Email { get; }
+
+    public EmailConfirmedDomainEvent(
+        Id<Identity> userId,
+        string email)
+        : base(userId)
+    {
+        UserId = userId;
+        Email = email;
+    }
 }

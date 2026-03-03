@@ -1,23 +1,30 @@
+using CSharpFunctionalExtensions;
+using FlowChat.Application.Abstractions;
 using FlowChat.AuthService.Application.Commands;
 using FlowChat.AuthService.Application.Contracts.Infrastructure;
 using FlowChat.AuthService.Application.Contracts.Persistence;
 using FlowChat.AuthService.Application.Responses;
+using FlowChat.Domain.Abstractions;
 using MediatR;
 
 namespace FlowChat.AuthService.Application.Handlers;
 
-public class ConfirmUserEmailCommandHandler : IRequestHandler<ConfirmUserEmailCommand, ConfirmUserEmailCommandResponse>
+public class ConfirmUserEmailCommandHandler :  CommandHandlerBase<ConfirmUserEmailCommand, ConfirmUserEmailCommandResponse>
 {
     private readonly IIdentityRepository _identityRepository;
     private readonly ITokenEncoder _tokenEncoder;
 
-    public ConfirmUserEmailCommandHandler(IIdentityRepository identityRepository, ITokenEncoder tokenEncoder)
+    public ConfirmUserEmailCommandHandler(
+        IIdentityRepository identityRepository, 
+        ITokenEncoder tokenEncoder, 
+        IDomainEventDispatcher domainEventDispatcher, 
+        IUnitOfWork unitOfWork) : base(domainEventDispatcher, unitOfWork)
     {
         _identityRepository = identityRepository;
         _tokenEncoder = tokenEncoder;
-    }
+    } 
 
-    public async Task<ConfirmUserEmailCommandResponse> Handle(ConfirmUserEmailCommand request, CancellationToken cancellationToken)
+    protected override async Task<Result<ConfirmUserEmailCommandResponse, IDomainError>> ExecuteAsync(ConfirmUserEmailCommand request, CancellationToken cancellationToken)
     {
         string decodedToken;
         try
@@ -39,5 +46,10 @@ public class ConfirmUserEmailCommandHandler : IRequestHandler<ConfirmUserEmailCo
         {
             IsSuccess = isConfirmed
         };
+    }
+
+    protected override IAggregateRoot? GetAggregateRoot(Result<ConfirmUserEmailCommandResponse, IDomainError> result)
+    {
+        return null;
     }
 }
