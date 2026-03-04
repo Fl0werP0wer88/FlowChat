@@ -34,8 +34,8 @@ public static class InfrastructureServiceRegistration
             IKafkaEventPublisher<UserCreatedIntegrationEvent>,
             SilverbackEventPublisher<UserCreatedIntegrationEvent, UserCreatedProducerOptions>>();
         services.AddScoped<
-            IKafkaEventPublisher<UserEmailVerificationRequestedIntegrationEvent>,
-            SilverbackEventPublisher<UserEmailVerificationRequestedIntegrationEvent, UserEmailVerificationRequestedProducerOptions>>();
+            IKafkaEventPublisher<EmailVerificationRequestIntegrationEvent>,
+            SilverbackEventPublisher<EmailVerificationRequestIntegrationEvent, UserEmailVerificationRequestedProducerOptions>>();
 
         return services;
     }

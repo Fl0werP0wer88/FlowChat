@@ -5,7 +5,6 @@ using FlowChat.AuthService.Application.Contracts.Persistence;
 using FlowChat.AuthService.Application.Responses;
 using FlowChat.AuthService.Domain.Entities;
 using FlowChat.Messaging.Contracts.AuthService.Events;
-using MediatR;
 using CSharpFunctionalExtensions;
 using FlowChat.Domain.Abstractions;
 
@@ -16,14 +15,13 @@ public class RegisterUserCommandHandler : CommandHandlerBase<RegisterUserCommand
     private readonly IIdentityRepository _identityRepository;
     private readonly ITokenEncoder _tokenEncoder;
     private readonly IConfirmationLinkBuilder _confirmationLinkBuilder;
-    private readonly IKafkaEventPublisher<UserEmailVerificationRequestedIntegrationEvent> _eventPublisher;
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IKafkaEventPublisher<EmailVerificationRequestIntegrationEvent> _eventPublisher;
 
     public RegisterUserCommandHandler(
         IIdentityRepository identityRepository,
         ITokenEncoder tokenEncoder,
         IConfirmationLinkBuilder confirmationLinkBuilder,
-        IKafkaEventPublisher<UserEmailVerificationRequestedIntegrationEvent> eventPublisher,
+        IKafkaEventPublisher<EmailVerificationRequestIntegrationEvent> eventPublisher,
         IUnitOfWork unitOfWork,
         IDomainEventDispatcher domainEventDispatcher) : base(domainEventDispatcher, unitOfWork)
     {
@@ -31,31 +29,27 @@ public class RegisterUserCommandHandler : CommandHandlerBase<RegisterUserCommand
         _tokenEncoder = tokenEncoder;
         _confirmationLinkBuilder = confirmationLinkBuilder;
         _eventPublisher = eventPublisher;
-        _unitOfWork = unitOfWork;
     }
 
     protected override async Task<Result<RegisterUserCommandResponse, IDomainError>> ExecuteAsync(RegisterUserCommand request, CancellationToken cancellationToken)
     {
-        return await _unitOfWork.ExecuteInTransactionAsync(async ct =>
+        var domainUser = Identity.Create(Guid.NewGuid(), request.UserName, request.Email, request.PhoneNumber);
+        var guid = await _identityRepository.CreateUserAsync(domainUser, request.Password, cancellationToken);
+        var confirmationToken = await _identityRepository.GenerateEmailConfirmationTokenAsync(guid, cancellationToken);
+        var encodedToken = _tokenEncoder.EncodeForUrl(confirmationToken);
+        var confirmationLink = _confirmationLinkBuilder.BuildEmailConfirmationLink(guid, encodedToken);
+
+        await _eventPublisher.PublishAsync(new EmailVerificationRequestIntegrationEvent
         {
-            var domainUser = Identity.Create(Guid.NewGuid(), request.UserName, request.Email);
-            var guid = await _identityRepository.CreateUserAsync(domainUser, request.Password, ct);
-            var confirmationToken = await _identityRepository.GenerateEmailConfirmationTokenAsync(guid, ct);
-            var encodedToken = _tokenEncoder.EncodeForUrl(confirmationToken);
-            var confirmationLink = _confirmationLinkBuilder.BuildEmailConfirmationLink(guid, encodedToken);
-
-            await _eventPublisher.PublishAsync(new UserEmailVerificationRequestedIntegrationEvent
-            {
-                UserId = guid,
-                UserEmail = request.Email,
-                ConfirmationLink = confirmationLink
-            }, ct);
-
-            return new RegisterUserCommandResponse
-            {
-                Id = guid
-            };
+            UserId = guid,
+            UserEmail = request.Email,
+            ConfirmationLink = confirmationLink
         }, cancellationToken);
+
+        return new RegisterUserCommandResponse
+        {
+            Id = guid
+        };
     }
 
     protected override IAggregateRoot? GetAggregateRoot(Result<RegisterUserCommandResponse, IDomainError> result)

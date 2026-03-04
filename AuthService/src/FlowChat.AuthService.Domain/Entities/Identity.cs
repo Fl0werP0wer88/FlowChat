@@ -59,7 +59,9 @@ public sealed class Identity : AggregateRootBase<Identity>
             user.Id,
             user.UserName,
             user.Email,
-            user.PhoneNumber));
+            user.PhoneNumber,
+            user.FirstName,
+            user.LastName));
 
         return user;
     }

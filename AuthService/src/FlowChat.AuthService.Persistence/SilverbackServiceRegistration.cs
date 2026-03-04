@@ -44,7 +44,7 @@ public static class SilverbackServiceRegistration
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())
                             .StoreToOutbox(outbox => outbox.UseEntityFramework<AppDbContext>())))
                     .AddProducer(producer => producer
-                        .Produce<UserEmailVerificationRequestedIntegrationEvent>("auth-user-email-verification-requested", endpoint => endpoint
+                        .Produce<EmailVerificationRequestIntegrationEvent>("auth-user-email-verification-requested", endpoint => endpoint
                             .ProduceTo(emailVerificationOptions.Topic)
                             .SetKafkaKey(message => emailVerificationOptions.KeySelector(message!))
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())
@@ -103,7 +103,7 @@ public static class SilverbackServiceRegistration
                             .SetKafkaKey(message => message!.UserId.ToString())
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())))
                     .AddProducer(producer => producer
-                        .Produce<UserEmailVerificationRequestedIntegrationEvent>("auth-user-email-verification-requested", endpoint => endpoint
+                        .Produce<EmailVerificationRequestIntegrationEvent>("auth-user-email-verification-requested", endpoint => endpoint
                             .ProduceTo(emailVerificationOptions.Topic)
                             .SetKafkaKey(message => emailVerificationOptions.KeySelector(message!))
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())));

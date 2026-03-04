@@ -37,7 +37,7 @@ public sealed class UserEmailVerificationRequestedSubscriber(
 
     [Subscribe]
     public async Task HandleAsync(
-        UserEmailVerificationRequestedIntegrationEvent message,
+        EmailVerificationRequestIntegrationEvent message,
         CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(message.UserEmail))
