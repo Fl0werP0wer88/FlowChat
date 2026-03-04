@@ -1,3 +1,4 @@
+using FlowChat.Application.Abstractions;
 using FlowChat.AuthService.Application.Contracts.Infrastructure;
 using FlowChat.Messaging.Contracts;
 using Microsoft.Extensions.DependencyInjection;

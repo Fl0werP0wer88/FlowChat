@@ -1,6 +1,6 @@
 using FlowChat.Messaging.Contracts;
 
-namespace FlowChat.AuthService.Application.Contracts.Infrastructure;
+namespace FlowChat.Application.Abstractions;
 
 public interface IIntegrationEventPublisher
 {
