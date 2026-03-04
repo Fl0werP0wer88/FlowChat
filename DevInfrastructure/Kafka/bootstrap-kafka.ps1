@@ -139,13 +139,16 @@ Wait-ForKafkaReady -containerId $containerId -timeoutSeconds 120
 $topics = @(
   @{
     name = "dev.flowchat.identity.user.v1"
-    partitions = 3
+    partitions = 1
     rf = 1
-    config = @{ "cleanup.policy" = "compact" }
+    config = @{
+      "cleanup.policy" = "delete"
+      "retention.ms"  = "2419200000" # 28 days
+    }
   },
   @{
     name = "dev.flowchat.identity.user.v1.retry"
-    partitions = 3
+    partitions = 1
     rf = 1
     config = @{
       "cleanup.policy" = "delete"
@@ -154,7 +157,34 @@ $topics = @(
   },
   @{
     name = "dev.flowchat.identity.user.v1.dlq"
-    partitions = 3
+    partitions = 1
+    rf = 1
+    config = @{
+      "cleanup.policy" = "delete"
+      "retention.ms"  = "1209600000" # 14 days
+    }
+  },
+  @{
+    name = "dev.flowchat.notification.email.v1"
+    partitions = 1
+    rf = 1
+    config = @{
+      "cleanup.policy" = "delete"
+      "retention.ms"  = "2419200000" # 28 days
+    }
+  },
+  @{
+    name = "dev.flowchat.notification.email.v1.retry"
+    partitions = 1
+    rf = 1
+    config = @{
+      "cleanup.policy" = "delete"
+      "retention.ms"  = "3600000"   # 1 hour
+    }
+  },
+  @{
+    name = "dev.flowchat.notification.email.v1.dlq"
+    partitions = 1
     rf = 1
     config = @{
       "cleanup.policy" = "delete"
