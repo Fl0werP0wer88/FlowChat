@@ -4,6 +4,7 @@ using FlowChat.AuthService.Application.Contracts.Infrastructure;
 using FlowChat.AuthService.Application.Contracts.Persistence;
 using FlowChat.AuthService.Application.Responses;
 using FlowChat.AuthService.Domain.Entities;
+using FlowChat.Messaging.Contracts;
 using FlowChat.Messaging.Contracts.AuthService.Events;
 using CSharpFunctionalExtensions;
 using FlowChat.Domain.Abstractions;
@@ -39,12 +40,15 @@ public class RegisterUserCommandHandler : CommandHandlerBase<RegisterUserCommand
         var encodedToken = _tokenEncoder.EncodeForUrl(confirmationToken);
         var confirmationLink = _confirmationLinkBuilder.BuildEmailConfirmationLink(guid, encodedToken);
 
-        await _eventPublisher.PublishAsync(new EmailVerificationRequestIntegrationEvent
-        {
-            UserId = guid,
-            UserEmail = request.Email,
-            ConfirmationLink = confirmationLink
-        }, cancellationToken);
+        await _eventPublisher.PublishAsync(
+            new IntegrationEventEnvelope<EmailVerificationRequestIntegrationEvent>(
+                new EmailVerificationRequestIntegrationEvent
+                {
+                    UserId = guid,
+                    UserEmail = request.Email,
+                    ConfirmationLink = confirmationLink
+                }),
+            cancellationToken);
 
         return new RegisterUserCommandResponse
         {

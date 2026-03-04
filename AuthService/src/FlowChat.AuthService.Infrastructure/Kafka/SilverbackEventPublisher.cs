@@ -1,7 +1,5 @@
 using FlowChat.AuthService.Application.Contracts.Infrastructure;
 using FlowChat.Messaging.Contracts;
-using System.Diagnostics;
-using System.Text;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Silverback.Messaging.Messages;
@@ -25,7 +23,7 @@ public sealed class SilverbackEventPublisher : IIntegrationEventPublisher
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public async Task PublishAsync<TEvent>(TEvent message, CancellationToken cancellationToken)
+    public async Task PublishAsync<TEvent>(IntegrationEventEnvelope<TEvent> message, CancellationToken cancellationToken)
         where TEvent : IntegrationEvent
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -41,15 +39,17 @@ public sealed class SilverbackEventPublisher : IIntegrationEventPublisher
             throw new InvalidOperationException($"Kafka producer options for event '{typeof(TEvent).FullName}' are not registered.");
         }
 
-        var key = options.KeySelector(message);
+        var key = message.KafkaKey ?? options.KeySelector(message.Payload);
         if (string.IsNullOrWhiteSpace(key))
         {
             throw new InvalidOperationException("Kafka message key cannot be null or empty.");
         }
 
+        message.SetKafkaKey(key);
+
         await _publisher.WrapAndPublishAsync(
-            message,
-            envelope => EnrichEnvelope<TEvent>(envelope, key),
+            message.Payload,
+            envelope => EnrichEnvelope(envelope, message),
             cancellationToken);
 
         _logger.LogInformation(
@@ -59,61 +59,15 @@ public sealed class SilverbackEventPublisher : IIntegrationEventPublisher
             key);
     }
 
-    private static void EnrichEnvelope<TEvent>(IOutboundEnvelope envelope, string key)
+    private static void EnrichEnvelope<TEvent>(
+        IOutboundEnvelope envelope,
+        IntegrationEventEnvelope<TEvent> message)
         where TEvent : IntegrationEvent
     {
-        var messageId = Guid.NewGuid();
-        var occurredOnUtc = DateTimeOffset.UtcNow;
-        var messageType = typeof(TEvent);
-        var activity = Activity.Current;
-
-        envelope.SetKafkaKey(key);
-        envelope.AddHeader(IntegrationMessageHeaders.EventId, messageId.ToString("D"));
-        envelope.AddHeader(IntegrationMessageHeaders.OccurredOnUtc, occurredOnUtc.ToString("O"));
-        envelope.AddHeader(IntegrationMessageHeaders.EventVersion, "1");
-        envelope.AddHeader(IntegrationMessageHeaders.EventType, messageType.Name);
-        envelope.AddHeader(IntegrationMessageHeaders.Source, ResolveSource(messageType));
-        envelope.AddHeader(IntegrationMessageHeaders.CorrelationId, activity?.RootId ?? messageId.ToString("D"));
-        envelope.AddHeader(IntegrationMessageHeaders.CausationId, activity?.ParentId ?? string.Empty);
-        envelope.AddHeader(IntegrationMessageHeaders.TraceParent, activity?.Id ?? string.Empty);
-    }
-
-    private static string ResolveSource(Type eventType)
-    {
-        var namespaceParts = eventType.Namespace?.Split('.', StringSplitOptions.RemoveEmptyEntries);
-        if (namespaceParts is null || namespaceParts.Length == 0)
+        envelope.SetKafkaKey(message.KafkaKey!);
+        foreach (var header in message.Headers)
         {
-            return "unknown";
+            envelope.AddHeader(header.Key, header.Value);
         }
-
-        var contractsIndex = Array.IndexOf(namespaceParts, "Contracts");
-        if (contractsIndex >= 0 && contractsIndex + 1 < namespaceParts.Length)
-        {
-            return ToKebabCase(namespaceParts[contractsIndex + 1]);
-        }
-
-        return ToKebabCase(namespaceParts[^1]);
-    }
-
-    private static string ToKebabCase(string value)
-    {
-        if (string.IsNullOrWhiteSpace(value))
-        {
-            return "unknown";
-        }
-
-        var builder = new StringBuilder(value.Length + 4);
-        for (var index = 0; index < value.Length; index++)
-        {
-            var character = value[index];
-            if (char.IsUpper(character) && index > 0)
-            {
-                builder.Append('-');
-            }
-
-            builder.Append(char.ToLowerInvariant(character));
-        }
-
-        return builder.ToString();
     }
 }
