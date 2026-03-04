@@ -1,4 +1,5 @@
 using FlowChat.AuthService.Application.Contracts.Infrastructure;
+using FlowChat.Messaging.Contracts;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Silverback.Messaging.Messages;
@@ -6,8 +7,8 @@ using Silverback.Messaging.Publishing;
 
 namespace FlowChat.AuthService.Infrastructure.Kafka;
 
-public sealed class SilverbackEventPublisher<TEvent, TOptions> : IKafkaEventPublisher<TEvent>
-    where TEvent : class
+public sealed class SilverbackEventPublisher<TEvent, TOptions> : IIntegrationEventPublisher<TEvent>
+    where TEvent : IntegrationEvent
     where TOptions : class, IKafkaProducerOptions<TEvent>
 {
     private readonly TOptions _options;

@@ -15,13 +15,13 @@ public class RegisterUserCommandHandler : CommandHandlerBase<RegisterUserCommand
     private readonly IIdentityRepository _identityRepository;
     private readonly ITokenEncoder _tokenEncoder;
     private readonly IConfirmationLinkBuilder _confirmationLinkBuilder;
-    private readonly IKafkaEventPublisher<EmailVerificationRequestIntegrationEvent> _eventPublisher;
+    private readonly IIntegrationEventPublisher<EmailVerificationRequestIntegrationEvent> _eventPublisher;
 
     public RegisterUserCommandHandler(
         IIdentityRepository identityRepository,
         ITokenEncoder tokenEncoder,
         IConfirmationLinkBuilder confirmationLinkBuilder,
-        IKafkaEventPublisher<EmailVerificationRequestIntegrationEvent> eventPublisher,
+        IIntegrationEventPublisher<EmailVerificationRequestIntegrationEvent> eventPublisher,
         IUnitOfWork unitOfWork,
         IDomainEventDispatcher domainEventDispatcher) : base(domainEventDispatcher, unitOfWork)
     {

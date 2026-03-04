@@ -31,10 +31,10 @@ public static class InfrastructureServiceRegistration
         services.AddScoped<IConfirmationLinkBuilder, ConfirmationLinkBuilder>();
         services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
         services.AddScoped<
-            IKafkaEventPublisher<UserCreatedIntegrationEvent>,
+            IIntegrationEventPublisher<UserCreatedIntegrationEvent>,
             SilverbackEventPublisher<UserCreatedIntegrationEvent, UserCreatedProducerOptions>>();
         services.AddScoped<
-            IKafkaEventPublisher<EmailVerificationRequestIntegrationEvent>,
+            IIntegrationEventPublisher<EmailVerificationRequestIntegrationEvent>,
             SilverbackEventPublisher<EmailVerificationRequestIntegrationEvent, UserEmailVerificationRequestedProducerOptions>>();
 
         return services;
