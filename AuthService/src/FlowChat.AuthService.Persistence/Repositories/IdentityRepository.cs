@@ -40,6 +40,7 @@ public class IdentityRepository : IIdentityRepository
             Id = domainUser.Id,
             UserName = domainUser.UserName,
             Email = domainUser.Email,
+            PhoneNumber = domainUser.PhoneNumber,
             EmailConfirmed = false
         };
         

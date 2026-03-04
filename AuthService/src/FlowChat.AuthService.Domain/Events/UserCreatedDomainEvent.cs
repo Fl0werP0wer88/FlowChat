@@ -6,21 +6,21 @@ namespace FlowChat.AuthService.Domain.Events;
 
 public sealed class UserCreatedDomainEvent: BaseIdentityDomainEvent
 {
-    public Id<Identity> UserId { get; } 
-    string UserName { get; } 
-    string DisplayName { get; } 
-    string Email { get; } 
+    public Id<Identity> UserId { get; }
+    public string UserName { get; }
+    public string? Email { get; }
+    public string? PhoneNumber { get; }
 
     public UserCreatedDomainEvent
     (
-        Id<Identity> userId, 
+        Id<Identity> userId,
         string userName,
-        string displayName,
-        string email): base (userId)
+        string? email,
+        string? phoneNumber) : base(userId)
     {
         UserId = userId;
         UserName = userName;
-        DisplayName = displayName;
         Email = email;
+        PhoneNumber = phoneNumber;
     }
 }
