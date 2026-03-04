@@ -2,32 +2,31 @@ using FlowChat.AuthService.Application.Contracts.Infrastructure;
 using FlowChat.Messaging.Contracts;
 using System.Diagnostics;
 using System.Text;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Silverback.Messaging.Messages;
 using Silverback.Messaging.Publishing;
 
 namespace FlowChat.AuthService.Infrastructure.Kafka;
 
-public sealed class SilverbackEventPublisher<TEvent, TOptions> : IIntegrationEventPublisher<TEvent>
-    where TEvent : class
-    where TOptions : class, IKafkaProducerOptions<TEvent>
+public sealed class SilverbackEventPublisher : IIntegrationEventPublisher
 {
-    private readonly TOptions _options;
+    private readonly IServiceProvider _serviceProvider;
     private readonly IPublisher _publisher;
-    private readonly ILogger<SilverbackEventPublisher<TEvent, TOptions>> _logger;
+    private readonly ILogger<SilverbackEventPublisher> _logger;
 
     public SilverbackEventPublisher(
-        IOptions<TOptions> options,
+        IServiceProvider serviceProvider,
         IPublisher publisher,
-        ILogger<SilverbackEventPublisher<TEvent, TOptions>> logger)
+        ILogger<SilverbackEventPublisher> logger)
     {
-        _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
+        _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
         _publisher = publisher ?? throw new ArgumentNullException(nameof(publisher));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public async Task PublishAsync(TEvent message, CancellationToken cancellationToken)
+    public async Task PublishAsync<TEvent>(TEvent message, CancellationToken cancellationToken)
+        where TEvent : IntegrationEvent
     {
         cancellationToken.ThrowIfCancellationRequested();
 
@@ -36,7 +35,13 @@ public sealed class SilverbackEventPublisher<TEvent, TOptions> : IIntegrationEve
             throw new ArgumentNullException(nameof(message));
         }
 
-        var key = _options.KeySelector(message);
+        var options = _serviceProvider.GetService<IKafkaProducerOptions<TEvent>>();
+        if (options is null)
+        {
+            throw new InvalidOperationException($"Kafka producer options for event '{typeof(TEvent).FullName}' are not registered.");
+        }
+
+        var key = options.KeySelector(message);
         if (string.IsNullOrWhiteSpace(key))
         {
             throw new InvalidOperationException("Kafka message key cannot be null or empty.");
@@ -44,17 +49,18 @@ public sealed class SilverbackEventPublisher<TEvent, TOptions> : IIntegrationEve
 
         await _publisher.WrapAndPublishAsync(
             message,
-            envelope => EnrichEnvelope(envelope, key),
+            envelope => EnrichEnvelope<TEvent>(envelope, key),
             cancellationToken);
 
         _logger.LogInformation(
             "Queued {EventType} event to Silverback producer for topic {Topic} with key {Key}.",
             typeof(TEvent).Name,
-            _options.Topic,
+            options.Topic,
             key);
     }
 
-    private static void EnrichEnvelope(IOutboundEnvelope envelope, string key)
+    private static void EnrichEnvelope<TEvent>(IOutboundEnvelope envelope, string key)
+        where TEvent : IntegrationEvent
     {
         var messageId = Guid.NewGuid();
         var occurredOnUtc = DateTimeOffset.UtcNow;
