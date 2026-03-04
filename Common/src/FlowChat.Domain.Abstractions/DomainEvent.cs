@@ -2,7 +2,7 @@ using System.Reflection;
 
 namespace FlowChat.Domain.Abstractions;
 
-public class DomainEvent : IDomainEvent
+public abstract class DomainEventBase : IDomainEvent
 {
     public int Version { get; set; } = 1;
 
@@ -18,11 +18,11 @@ public class DomainEvent : IDomainEvent
 
     public string? TraceInfo { get; set; }
 
-    public DomainEvent()
+    public DomainEventBase()
     {
     }
 
-    protected DomainEvent(Guid aggregateId, DateTimeOffset occurredOnUtc)
+    protected DomainEventBase(Guid aggregateId, DateTimeOffset occurredOnUtc)
     {
         AggregateId = aggregateId != Guid.Empty
             ? aggregateId

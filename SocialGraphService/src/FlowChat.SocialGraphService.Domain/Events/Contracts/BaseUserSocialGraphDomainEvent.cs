@@ -6,5 +6,5 @@ namespace FlowChat.SocialGraphService.Domain.Events.Contracts;
 
 [AggregateType(UserSocialGraphConstants.SocialGraphAggregateTypeName)]
 public abstract class BaseCouponDomainEvent(Id<UserSocialGraph> aggregateId, DateTimeOffset? occurredOnUtc = null)
-    : DomainEvent(aggregateId, occurredOnUtc ?? DateTimeOffset.UtcNow)
+    : DomainEventBase(aggregateId, occurredOnUtc ?? DateTimeOffset.UtcNow)
 { }
