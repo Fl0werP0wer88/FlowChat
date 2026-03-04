@@ -1,6 +1,6 @@
 namespace FlowChat.Messaging.Contracts.AuthService.Events
 {
-    public sealed class EmailVerificationRequestIntegrationEvent : IntegrationEvent
+    public sealed class EmailVerificationRequestIntegrationEvent
     {
         public Guid UserId { get; set; }
         public required string UserEmail { get; set; }
