@@ -8,5 +8,4 @@ public sealed class UserEmailVerificationRequestedProducerOptions : IKafkaProduc
     public const string FallbackSectionName = "Kafka:UserCreatedProducer";
     public string BootstrapServers { get; set; } = "localhost:9092";
     public string Topic { get; set; } = "dev.flowchat.identity.user.v1";
-    public Func<EmailVerificationRequestIntegrationEvent, string> KeySelector { get; private set; } = (message) => message.UserId.ToString();
 }

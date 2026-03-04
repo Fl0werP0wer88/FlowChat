@@ -5,20 +5,25 @@ namespace FlowChat.Messaging.Contracts;
 
 public class IntegrationEventEnvelope<TEvent> where TEvent : IntegrationEvent
 {
-    public string? KafkaKey { get; private set; }
+    public string KafkaKey { get; }
     public TEvent Payload { get; }
     public Dictionary<string, string> Headers { get; } = new Dictionary<string, string>();
 
 
-    public IntegrationEventEnvelope(TEvent payload)
+    public IntegrationEventEnvelope(TEvent payload, string kafkaKey)
     {
         ArgumentNullException.ThrowIfNull(payload);
+        if (string.IsNullOrWhiteSpace(kafkaKey))
+        {
+            throw new ArgumentException("Kafka key cannot be null or empty.", nameof(kafkaKey));
+        }
 
         var messageId = Guid.NewGuid();
         var occurredOnUtc = DateTimeOffset.UtcNow;
         var messageType = typeof(TEvent);
         var activity = Activity.Current;
 
+        KafkaKey = kafkaKey;
         Payload = payload;
         Headers.Add(IntegrationMessageHeaders.EventId, messageId.ToString("D"));
         Headers.Add(IntegrationMessageHeaders.OccurredOnUtc, occurredOnUtc.ToString("O"));
@@ -28,16 +33,6 @@ public class IntegrationEventEnvelope<TEvent> where TEvent : IntegrationEvent
         Headers.Add(IntegrationMessageHeaders.CorrelationId, activity?.RootId ?? messageId.ToString("D"));
         Headers.Add(IntegrationMessageHeaders.CausationId, activity?.ParentId ?? string.Empty);
         Headers.Add(IntegrationMessageHeaders.TraceParent, activity?.Id ?? string.Empty);
-    }
-
-    public void SetKafkaKey(string kafkaKey)
-    {
-        if (string.IsNullOrWhiteSpace(kafkaKey))
-        {
-            throw new ArgumentException("Kafka key cannot be null or empty.", nameof(kafkaKey));
-        }
-
-        KafkaKey = kafkaKey;
     }
 
     private static string ResolveSource(Type eventType)

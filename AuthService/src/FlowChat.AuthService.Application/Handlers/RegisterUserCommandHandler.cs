@@ -47,7 +47,8 @@ public class RegisterUserCommandHandler : CommandHandlerBase<RegisterUserCommand
                     UserId = guid,
                     UserEmail = request.Email,
                     ConfirmationLink = confirmationLink
-                }),
+                },
+                guid.ToString()),
             cancellationToken);
 
         return new RegisterUserCommandResponse

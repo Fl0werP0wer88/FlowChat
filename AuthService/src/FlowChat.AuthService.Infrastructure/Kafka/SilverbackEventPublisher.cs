@@ -39,13 +39,11 @@ public sealed class SilverbackEventPublisher : IIntegrationEventPublisher
             throw new InvalidOperationException($"Kafka producer options for event '{typeof(TEvent).FullName}' are not registered.");
         }
 
-        var key = message.KafkaKey ?? options.KeySelector(message.Payload);
+        var key = message.KafkaKey;
         if (string.IsNullOrWhiteSpace(key))
         {
             throw new InvalidOperationException("Kafka message key cannot be null or empty.");
         }
-
-        message.SetKafkaKey(key);
 
         await _publisher.WrapAndPublishAsync(
             message.Payload,
@@ -64,7 +62,7 @@ public sealed class SilverbackEventPublisher : IIntegrationEventPublisher
         IntegrationEventEnvelope<TEvent> message)
         where TEvent : IntegrationEvent
     {
-        envelope.SetKafkaKey(message.KafkaKey!);
+        envelope.SetKafkaKey(message.KafkaKey);
         foreach (var header in message.Headers)
         {
             envelope.AddHeader(header.Key, header.Value);

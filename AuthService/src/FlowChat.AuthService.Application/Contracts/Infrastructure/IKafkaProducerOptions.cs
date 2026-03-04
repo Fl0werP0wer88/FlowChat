@@ -7,6 +7,4 @@ public interface IKafkaProducerOptions
 }
 
 public interface IKafkaProducerOptions<TEvent> : IKafkaProducerOptions
-{
-    Func<TEvent, string> KeySelector { get; }
-}
+{ }

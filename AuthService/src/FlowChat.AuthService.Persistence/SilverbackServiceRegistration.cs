@@ -34,19 +34,19 @@ public static class SilverbackServiceRegistration
                     .AddProducer(producer => producer
                         .Produce<UserCreatedIntegrationEvent>("auth-user-created", endpoint => endpoint
                             .ProduceTo(userCreatedOptions.Topic)
-                            .SetKafkaKey(message => userCreatedOptions.KeySelector(message!))
+                            .SetKafkaKey(message => message?.UserId)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())
                             .StoreToOutbox(outbox => outbox.UseEntityFramework<AppDbContext>())))
                     .AddProducer(producer => producer
                         .Produce<UserConfirmedIntegrationEvent>("auth-user-confirmed", endpoint => endpoint
                             .ProduceTo(userCreatedOptions.Topic)
-                            .SetKafkaKey(message => message!.UserId.ToString())
+                            .SetKafkaKey(message => message?.UserId)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())
                             .StoreToOutbox(outbox => outbox.UseEntityFramework<AppDbContext>())))
                     .AddProducer(producer => producer
                         .Produce<EmailVerificationRequestIntegrationEvent>("auth-user-email-verification-requested", endpoint => endpoint
                             .ProduceTo(emailVerificationOptions.Topic)
-                            .SetKafkaKey(message => emailVerificationOptions.KeySelector(message!))
+                            .SetKafkaKey(message => message?.UserId)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())
                             .StoreToOutbox(outbox => outbox.UseEntityFramework<AppDbContext>())));
             });
@@ -95,17 +95,17 @@ public static class SilverbackServiceRegistration
                     .AddProducer(producer => producer
                         .Produce<UserCreatedIntegrationEvent>("auth-user-created", endpoint => endpoint
                             .ProduceTo(userCreatedOptions.Topic)
-                            .SetKafkaKey(message => userCreatedOptions.KeySelector(message!))
+                            .SetKafkaKey(message => message?.UserId)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())))
                     .AddProducer(producer => producer
                         .Produce<UserConfirmedIntegrationEvent>("auth-user-confirmed", endpoint => endpoint
                             .ProduceTo(userCreatedOptions.Topic)
-                            .SetKafkaKey(message => message!.UserId.ToString())
+                            .SetKafkaKey(message => message?.UserId)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())))
                     .AddProducer(producer => producer
                         .Produce<EmailVerificationRequestIntegrationEvent>("auth-user-email-verification-requested", endpoint => endpoint
                             .ProduceTo(emailVerificationOptions.Topic)
-                            .SetKafkaKey(message => emailVerificationOptions.KeySelector(message!))
+                            .SetKafkaKey(message => message?.UserId)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())));
             });
 
