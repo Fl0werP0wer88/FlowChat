@@ -26,14 +26,14 @@ public abstract class CommandHandlerBase<TCommand, TResponse> : ICommandHandler<
             return operationResult;
         }
 
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
-
         var aggregateRoot = GetAggregateRoot(operationResult);
         if (aggregateRoot is not null)
         {
             var domainEvents = aggregateRoot.PopDomainEvents();
             await DispatchDomainEventsAsync(domainEvents, cancellationToken);
         }
+
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         return operationResult;
     }
