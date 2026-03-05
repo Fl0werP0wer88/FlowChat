@@ -13,16 +13,6 @@ public static class MassTransitServiceRegistration
         IConfiguration configuration)
     {
         var userCreatedOptions = ResolveUserCreatedProducerOptions(configuration);
-        var emailVerificationOptions = ResolveEmailVerificationProducerOptions(configuration);
-
-        if (!string.Equals(
-                userCreatedOptions.BootstrapServers,
-                emailVerificationOptions.BootstrapServers,
-                StringComparison.OrdinalIgnoreCase))
-        {
-            throw new InvalidOperationException(
-                "MassTransit Kafka rider requires a single BootstrapServers value for all producers in this registration.");
-        }
 
         var outboxSection = configuration.GetSection("MassTransit:Outbox");
         var queryDelaySeconds = outboxSection.GetValue<int?>("QueryDelaySeconds");
@@ -90,9 +80,7 @@ public static class MassTransitServiceRegistration
 
             configurator.AddRider(rider =>
             {
-                rider.AddProducer<string, UserCreatedIntegrationEvent>(userCreatedOptions.Topic);
-                rider.AddProducer<string, UserConfirmedIntegrationEvent>(userCreatedOptions.Topic);
-                rider.AddProducer<string, EmailVerificationRequestIntegrationEvent>(emailVerificationOptions.Topic);
+                rider.AddProducer<string, AuthIdentityEventEnvelopeV1>(userCreatedOptions.Topic);
 
                 rider.UsingKafka((_, kafka) =>
                 {
@@ -108,22 +96,6 @@ public static class MassTransitServiceRegistration
     {
         var producerSection = configuration.GetSection(UserCreatedProducerOptions.SectionName);
         var fallbackSection = configuration.GetSection(UserCreatedProducerOptions.FallbackSectionName);
-
-        return new KafkaProducerSettings
-        {
-            BootstrapServers = producerSection["BootstrapServers"]
-                ?? fallbackSection["BootstrapServers"]
-                ?? "localhost:9092",
-            Topic = producerSection["Topic"]
-                ?? fallbackSection["Topic"]
-                ?? "dev.flowchat.identity.user.v1"
-        };
-    }
-
-    private static KafkaProducerSettings ResolveEmailVerificationProducerOptions(IConfiguration configuration)
-    {
-        var producerSection = configuration.GetSection(UserEmailVerificationRequestedProducerOptions.SectionName);
-        var fallbackSection = configuration.GetSection(UserEmailVerificationRequestedProducerOptions.FallbackSectionName);
 
         return new KafkaProducerSettings
         {
