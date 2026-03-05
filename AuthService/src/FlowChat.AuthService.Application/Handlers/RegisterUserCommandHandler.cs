@@ -16,7 +16,7 @@ public class RegisterUserCommandHandler : CommandHandlerBase<RegisterUserCommand
     private readonly ITokenEncoder _tokenEncoder;
     private readonly IConfirmationLinkBuilder _confirmationLinkBuilder;
     private readonly IIntegrationEventPublisher _eventPublisher;
-
+    private Identity? _domainUser;
     public RegisterUserCommandHandler(
         IIdentityRepository identityRepository,
         ITokenEncoder tokenEncoder,
@@ -33,8 +33,8 @@ public class RegisterUserCommandHandler : CommandHandlerBase<RegisterUserCommand
 
     protected override async Task<Result<RegisterUserCommandResponse, IDomainError>> ExecuteAsync(RegisterUserCommand request, CancellationToken cancellationToken)
     {
-        var domainUser = Identity.Create(Guid.NewGuid(), request.UserName, request.Email, request.PhoneNumber);
-        var guid = await _identityRepository.CreateUserAsync(domainUser, request.Password, cancellationToken);
+        _domainUser = Identity.Create(Guid.NewGuid(), request.UserName, request.Email, request.PhoneNumber);
+        var guid = await _identityRepository.CreateUserAsync(_domainUser, request.Password, cancellationToken);
         var confirmationToken = await _identityRepository.GenerateEmailConfirmationTokenAsync(guid, cancellationToken);
         var encodedToken = _tokenEncoder.EncodeForUrl(confirmationToken);
         var confirmationLink = _confirmationLinkBuilder.BuildEmailConfirmationLink(guid, encodedToken);
@@ -54,6 +54,6 @@ public class RegisterUserCommandHandler : CommandHandlerBase<RegisterUserCommand
 
     protected override IAggregateRoot? GetAggregateRoot(Result<RegisterUserCommandResponse, IDomainError> result)
     {
-        return null;
+        return _domainUser;
     }
 }
