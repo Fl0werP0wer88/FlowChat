@@ -1,5 +1,4 @@
 using FlowChat.Application.Abstractions;
-using FlowChat.AuthService.Application.Contracts.Infrastructure;
 using FlowChat.AuthService.Domain.Events;
 using FlowChat.Domain.Abstractions;
 using FlowChat.Messaging.Contracts;

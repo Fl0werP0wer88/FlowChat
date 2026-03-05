@@ -1,4 +1,4 @@
-namespace FlowChat.AuthService.Application.Contracts.Infrastructure;
+namespace FlowChat.AuthService.Persistence.Configuration;
 
 public sealed class OutboxPublisherRuntimeOptions
 {

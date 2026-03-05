@@ -1,4 +1,5 @@
-using FlowChat.AuthService.Application.Contracts.Infrastructure;
+using FlowChat.AuthService.Infrastructure.Kafka;
+using FlowChat.AuthService.Persistence.Configuration;
 using FlowChat.Messaging.Contracts.AuthService.Events;
 
 using Microsoft.Extensions.Configuration;
@@ -17,10 +18,8 @@ public static class SilverbackServiceRegistration
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        var userCreatedOptions = configuration.GetSection(UserCreatedProducerOptions.SectionName)
-            .Get<UserCreatedProducerOptions>() ?? new UserCreatedProducerOptions();
-        var emailVerificationOptions = configuration.GetSection(UserEmailVerificationRequestedProducerOptions.SectionName)
-            .Get<UserEmailVerificationRequestedProducerOptions>() ?? new UserEmailVerificationRequestedProducerOptions();
+        var userCreatedOptions = ResolveUserCreatedProducerOptions(configuration);
+        var emailVerificationOptions = ResolveEmailVerificationProducerOptions(configuration);
 
         services.AddSilverback()
             .WithConnectionToMessageBroker(options =>
@@ -60,16 +59,8 @@ public static class SilverbackServiceRegistration
     {
         var outboxOptions = configuration.GetSection(OutboxPublisherRuntimeOptions.SectionName)
             .Get<OutboxPublisherRuntimeOptions>() ?? new OutboxPublisherRuntimeOptions();
-        var userCreatedOptions = configuration.GetSection(UserCreatedProducerOptions.SectionName)
-            .Get<UserCreatedProducerOptions>()
-            ?? configuration.GetSection(UserCreatedProducerOptions.FallbackSectionName)
-                .Get<UserCreatedProducerOptions>()
-            ?? new UserCreatedProducerOptions();
-        var emailVerificationOptions = configuration.GetSection(UserEmailVerificationRequestedProducerOptions.SectionName)
-            .Get<UserEmailVerificationRequestedProducerOptions>()
-            ?? configuration.GetSection(UserEmailVerificationRequestedProducerOptions.FallbackSectionName)
-                .Get<UserEmailVerificationRequestedProducerOptions>()
-            ?? new UserEmailVerificationRequestedProducerOptions();
+        var userCreatedOptions = ResolveUserCreatedProducerOptions(configuration);
+        var emailVerificationOptions = ResolveEmailVerificationProducerOptions(configuration);
 
         services.Configure<OutboxPublisherRuntimeOptions>(
             configuration.GetSection(OutboxPublisherRuntimeOptions.SectionName));
@@ -110,5 +101,43 @@ public static class SilverbackServiceRegistration
             });
 
         return services;
+    }
+
+    private static KafkaProducerSettings ResolveUserCreatedProducerOptions(IConfiguration configuration)
+    {
+        var producerSection = configuration.GetSection(UserCreatedProducerOptions.SectionName);
+        var fallbackSection = configuration.GetSection(UserCreatedProducerOptions.FallbackSectionName);
+
+        return new KafkaProducerSettings
+        {
+            BootstrapServers = producerSection["BootstrapServers"]
+                ?? fallbackSection["BootstrapServers"]
+                ?? "localhost:9092",
+            Topic = producerSection["Topic"]
+                ?? fallbackSection["Topic"]
+                ?? "dev.flowchat.identity.user.v1"
+        };
+    }
+
+    private static KafkaProducerSettings ResolveEmailVerificationProducerOptions(IConfiguration configuration)
+    {
+        var producerSection = configuration.GetSection(UserEmailVerificationRequestedProducerOptions.SectionName);
+        var fallbackSection = configuration.GetSection(UserEmailVerificationRequestedProducerOptions.FallbackSectionName);
+
+        return new KafkaProducerSettings
+        {
+            BootstrapServers = producerSection["BootstrapServers"]
+                ?? fallbackSection["BootstrapServers"]
+                ?? "localhost:9092",
+            Topic = producerSection["Topic"]
+                ?? fallbackSection["Topic"]
+                ?? "dev.flowchat.identity.user.v1"
+        };
+    }
+
+    private sealed class KafkaProducerSettings
+    {
+        public string BootstrapServers { get; init; } = "localhost:9092";
+        public string Topic { get; init; } = "dev.flowchat.identity.user.v1";
     }
 }

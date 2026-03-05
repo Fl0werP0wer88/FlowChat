@@ -1,3 +1,5 @@
+using FlowChat.Application.Abstractions;
+using FlowChat.AuthService.Application.Events;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace FlowChat.AuthService.Application;
@@ -8,6 +10,7 @@ public static class ApplicationServiceRegistration
     {
         services.AddAutoMapper((Action<AutoMapper.IMapperConfigurationExpression>?)null, AppDomain.CurrentDomain.GetAssemblies());
         services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(AppDomain.CurrentDomain.GetAssemblies()));
+        services.AddScoped<IDomainEventDispatcher, DomainEventDispatcher>();
 
         return services;
     }

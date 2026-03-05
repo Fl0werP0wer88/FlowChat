@@ -1,5 +1,4 @@
 using FlowChat.Application.Abstractions;
-using FlowChat.AuthService.Application.Contracts.Infrastructure;
 using FlowChat.AuthService.Application.Contracts.Persistence;
 using FlowChat.AuthService.Persistence.Auditing;
 using FlowChat.AuthService.Persistence.UnitOfWork;
@@ -15,8 +14,6 @@ public static class PersistenceServiceRegistration
     public static IServiceCollection AddAPIPersistenceServices(
                             this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddOptions<UserCreatedProducerOptions>();
-        services.AddOptions<UserEmailVerificationRequestedProducerOptions>();
         services.AddScoped<AuditableEntitySaveChangesInterceptor>();
         services.AddScoped<IUnitOfWork, AppDbContextUnitOfWork>();
 
@@ -38,7 +35,6 @@ public static class PersistenceServiceRegistration
     public static IServiceCollection AddWorkerPersistenceServices(
                             this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddOptions<UserCreatedProducerOptions>();
         services.AddScoped<AuditableEntitySaveChangesInterceptor>();
         services.AddDbContext<AppDbContext>((serviceProvider, options) =>
         {

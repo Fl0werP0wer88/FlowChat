@@ -1,6 +1,6 @@
 using FlowChat.Messaging.Contracts.AuthService.Events;
 
-namespace FlowChat.AuthService.Application.Contracts.Infrastructure;
+namespace FlowChat.AuthService.Infrastructure.Kafka;
 
 public sealed class UserEmailVerificationRequestedProducerOptions : IKafkaProducerOptions<EmailVerificationRequestIntegrationEvent>
 {
