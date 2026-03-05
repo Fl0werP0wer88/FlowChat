@@ -76,7 +76,7 @@ public sealed class MassTransitEventPublisher : IIntegrationEventPublisher
     private async Task PublishAsync<TEvent>(
         IntegrationEventEnvelope<TEvent> message,
         CancellationToken cancellationToken)
-        where TEvent : IntegrationEvent
+        where TEvent : IntegrationEventBase
     {
         cancellationToken.ThrowIfCancellationRequested();
         ArgumentNullException.ThrowIfNull(message);

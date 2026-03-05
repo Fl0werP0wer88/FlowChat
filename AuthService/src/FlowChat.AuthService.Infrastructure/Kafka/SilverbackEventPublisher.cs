@@ -75,7 +75,7 @@ public sealed class SilverbackEventPublisher : IIntegrationEventPublisher
     }
 
     private async Task PublishAsync<TEvent>(IntegrationEventEnvelope<TEvent> message, CancellationToken cancellationToken)
-        where TEvent : IntegrationEvent
+        where TEvent : IntegrationEventBase
     {
         cancellationToken.ThrowIfCancellationRequested();
 
@@ -111,7 +111,7 @@ public sealed class SilverbackEventPublisher : IIntegrationEventPublisher
     private static void EnrichEnvelope<TEvent>(
         IOutboundEnvelope envelope,
         IntegrationEventEnvelope<TEvent> message)
-        where TEvent : IntegrationEvent
+        where TEvent : IntegrationEventBase
     {
         envelope.SetKafkaKey(message.KafkaKey);
         foreach (var header in message.Headers)

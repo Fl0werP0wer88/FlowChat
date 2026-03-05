@@ -1,6 +1,6 @@
 namespace FlowChat.Messaging.Contracts.AuthService.Events;
 
-public sealed class UserCreatedIntegrationEvent : IntegrationEvent
+public sealed class UserCreatedIntegrationEvent : AuthIdentityTopicEventBase
 {
     public Guid UserId { get; init; }
     public string? Email { get; init; }

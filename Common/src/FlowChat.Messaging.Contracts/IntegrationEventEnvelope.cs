@@ -3,7 +3,7 @@ using System.Text;
 
 namespace FlowChat.Messaging.Contracts;
 
-public class IntegrationEventEnvelope<TEvent> where TEvent : IntegrationEvent
+public class IntegrationEventEnvelope<TEvent> where TEvent : IntegrationEventBase
 {
     public string KafkaKey { get; }
     public TEvent Payload { get; }
