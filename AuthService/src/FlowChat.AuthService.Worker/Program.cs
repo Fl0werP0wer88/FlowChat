@@ -1,3 +1,4 @@
+using FlowChat.AuthService.Infrastructure.Kafka;
 using FlowChat.AuthService.Persistence;
 
 var builder = Host.CreateApplicationBuilder(args);

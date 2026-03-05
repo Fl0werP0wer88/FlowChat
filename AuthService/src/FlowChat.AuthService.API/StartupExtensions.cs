@@ -1,5 +1,6 @@
 using FlowChat.AuthService.Application;
 using FlowChat.AuthService.Infrastructure;
+using FlowChat.AuthService.Infrastructure.Kafka;
 using FlowChat.AuthService.Persistence;
 using Microsoft.EntityFrameworkCore;
 namespace FlowChat.AuthService.Api;

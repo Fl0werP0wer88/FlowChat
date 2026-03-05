@@ -1,16 +1,13 @@
-using FlowChat.AuthService.Infrastructure.Kafka;
+using FlowChat.AuthService.Persistence;
 using FlowChat.AuthService.Persistence.Configuration;
 using FlowChat.Messaging.Contracts.AuthService.Events;
-
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
 using Silverback.Configuration;
 using Silverback.Messaging.Configuration;
 using Silverback.Messaging.Configuration.Kafka;
-using Silverback.Messaging.Messages;
 
-namespace FlowChat.AuthService.Persistence;
+namespace FlowChat.AuthService.Infrastructure.Kafka;
 
 public static class SilverbackServiceRegistration
 {
