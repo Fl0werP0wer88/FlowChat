@@ -54,4 +54,6 @@ public sealed record Id<TModel> : IId, IComparable, IComparable<IId>, IComparabl
     public int CompareTo(Guid other) => Value.CompareTo(other);
 
     public bool Equals(IId? other) => other?.Value == Value;
+
+    public override string ToString() => Value.ToString();
 }

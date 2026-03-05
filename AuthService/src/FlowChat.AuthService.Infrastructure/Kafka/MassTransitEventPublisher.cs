@@ -5,18 +5,17 @@ using FlowChat.Messaging.Contracts;
 using FlowChat.Messaging.Contracts.AuthService.Events;
 using MassTransit;
 using Microsoft.Extensions.Logging;
-using System.Text.Json;
 
 namespace FlowChat.AuthService.Infrastructure.Kafka;
 
 public sealed class MassTransitEventPublisher : IIntegrationEventPublisher
 {
-    private readonly ITopicProducer<string, AuthIdentityEventEnvelopeV1> _identityEventsProducer;
+    private readonly ITopicProducer<string, AuthIdentityTopicEventBase> _identityEventsProducer;
     private readonly IKafkaProducerOptions<UserCreatedIntegrationEvent> _userCreatedOptions;
     private readonly ILogger<MassTransitEventPublisher> _logger;
 
     public MassTransitEventPublisher(
-        ITopicProducer<string, AuthIdentityEventEnvelopeV1> identityEventsProducer,
+        ITopicProducer<string, AuthIdentityTopicEventBase> identityEventsProducer,
         IKafkaProducerOptions<UserCreatedIntegrationEvent> userCreatedOptions,
         ILogger<MassTransitEventPublisher> logger)
     {
@@ -76,7 +75,7 @@ public sealed class MassTransitEventPublisher : IIntegrationEventPublisher
     private async Task PublishAsync<TEvent>(
         IntegrationEventEnvelope<TEvent> message,
         CancellationToken cancellationToken)
-        where TEvent : IntegrationEventBase
+        where TEvent : AuthIdentityTopicEventBase
     {
         cancellationToken.ThrowIfCancellationRequested();
         ArgumentNullException.ThrowIfNull(message);
@@ -86,30 +85,23 @@ public sealed class MassTransitEventPublisher : IIntegrationEventPublisher
             throw new InvalidOperationException("Kafka message key cannot be null or empty.");
         }
 
-        var envelopeMessage = new AuthIdentityEventEnvelopeV1
-        {
-            EventType = typeof(TEvent).Name,
-            EventVersion = 1,
-            Payload = JsonSerializer.SerializeToElement(message.Payload)
-        };
-
         await _identityEventsProducer.Produce(
             message.KafkaKey,
-            envelopeMessage,
-            Pipe.Execute<KafkaSendContext<string, AuthIdentityEventEnvelopeV1>>(context =>
+            message.Payload,
+            Pipe.Execute<KafkaSendContext<string, AuthIdentityTopicEventBase>>(context =>
             {
                 foreach (var header in message.Headers)
                 {
                     context.Headers.Set(header.Key, header.Value);
                 }
 
-                context.Headers.Set(IntegrationMessageHeaders.EventType, envelopeMessage.EventType);
+                context.Headers.Set(IntegrationMessageHeaders.EventType, typeof(TEvent).Name);
             }),
             cancellationToken);
 
         _logger.LogInformation(
             "Queued {EventType} event to MassTransit outbox for topic {Topic} with key {Key}.",
-            envelopeMessage.EventType,
+            typeof(TEvent).Name,
             _userCreatedOptions.Topic,
             message.KafkaKey);
     }

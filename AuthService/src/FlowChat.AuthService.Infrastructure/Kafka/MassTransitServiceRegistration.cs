@@ -80,7 +80,7 @@ public static class MassTransitServiceRegistration
 
             configurator.AddRider(rider =>
             {
-                rider.AddProducer<string, AuthIdentityEventEnvelopeV1>(userCreatedOptions.Topic);
+                rider.AddProducer<string, AuthIdentityTopicEventBase>(userCreatedOptions.Topic);
 
                 rider.UsingKafka((_, kafka) =>
                 {
