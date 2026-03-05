@@ -25,8 +25,15 @@ public static class InfrastructureServiceRegistration
             userEmailVerificationRequestedOutboxSection = configuration.GetSection(UserEmailVerificationRequestedProducerOptions.FallbackSectionName);
         }
 
+        var userConfirmedOutboxSection = configuration.GetSection(UserConfirmedProducerOptions.SectionName);
+        if (!userConfirmedOutboxSection.Exists())
+        {
+            userConfirmedOutboxSection = configuration.GetSection(UserConfirmedProducerOptions.FallbackSectionName);
+        }
+
         services.Configure<UserCreatedProducerOptions>(kafkaProducerSection);
         services.Configure<UserEmailVerificationRequestedProducerOptions>(userEmailVerificationRequestedOutboxSection);
+        services.Configure<UserConfirmedProducerOptions>(userConfirmedOutboxSection);
 
         services.AddScoped<IEmailService, EmailService>();
         services.AddScoped<ITokenEncoder, Base64UrlTokenEncoder>();
@@ -34,6 +41,8 @@ public static class InfrastructureServiceRegistration
         services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
         services.AddScoped<IKafkaProducerOptions<UserCreatedIntegrationEvent>>(sp =>
             sp.GetRequiredService<IOptions<UserCreatedProducerOptions>>().Value);
+        services.AddScoped<IKafkaProducerOptions<UserConfirmedIntegrationEvent>>(sp =>
+            sp.GetRequiredService<IOptions<UserConfirmedProducerOptions>>().Value);
         services.AddScoped<IKafkaProducerOptions<EmailVerificationRequestIntegrationEvent>>(sp =>
             sp.GetRequiredService<IOptions<UserEmailVerificationRequestedProducerOptions>>().Value);
         services.AddScoped<IIntegrationEventPublisher, MassTransitEventPublisher>();
