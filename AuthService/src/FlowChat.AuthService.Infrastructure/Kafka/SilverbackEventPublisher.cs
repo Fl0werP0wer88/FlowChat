@@ -1,6 +1,9 @@
 using FlowChat.Application.Abstractions;
 using FlowChat.AuthService.Application.Contracts.Infrastructure;
+using FlowChat.AuthService.Domain.Events;
+using FlowChat.Domain.Abstractions;
 using FlowChat.Messaging.Contracts;
+using FlowChat.Messaging.Contracts.AuthService.Events;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Silverback.Messaging.Messages;
@@ -24,7 +27,55 @@ public sealed class SilverbackEventPublisher : IIntegrationEventPublisher
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public async Task PublishAsync<TEvent>(IntegrationEventEnvelope<TEvent> message, CancellationToken cancellationToken)
+    public Task PublishToOutboxAsync<TEvent>(TEvent message, CancellationToken cancellationToken)
+        where TEvent : DomainEventBase
+    {
+        ArgumentNullException.ThrowIfNull(message);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        return message switch
+        {
+            UserCreatedDomainEvent userCreated => PublishAsync(
+                new IntegrationEventEnvelope<UserCreatedIntegrationEvent>(
+                    new UserCreatedIntegrationEvent
+                    {
+                        UserId = userCreated.UserId,
+                        Email = userCreated.Email,
+                        PhoneNumber = userCreated.PhoneNumber,
+                        UserName = userCreated.UserName,
+                        DisplayName = userCreated.UserName,
+                        FirstName = userCreated.FirstName,
+                        LastName = userCreated.LastName
+                    },
+                    userCreated.UserId.ToString()),
+                cancellationToken),
+
+            AccountConfirmedDomainEvent accountConfirmed => PublishAsync(
+                new IntegrationEventEnvelope<UserConfirmedIntegrationEvent>(
+                    new UserConfirmedIntegrationEvent
+                    {
+                        UserId = accountConfirmed.UserId
+                    },
+                    accountConfirmed.UserId.ToString()),
+                cancellationToken),
+
+            EmailVerificationRequestedDomainEvent emailVerificationRequested => PublishAsync(
+                new IntegrationEventEnvelope<EmailVerificationRequestIntegrationEvent>(
+                    new EmailVerificationRequestIntegrationEvent
+                    {
+                        UserId = emailVerificationRequested.UserId,
+                        UserEmail = emailVerificationRequested.UserEmail,
+                        ConfirmationLink = emailVerificationRequested.ConfirmationLink
+                    },
+                    emailVerificationRequested.UserId.ToString()),
+                cancellationToken),
+
+            _ => throw new NotSupportedException(
+                $"Integration event mapping for domain event '{message.GetType().FullName}' is not configured.")
+        };
+    }
+
+    private async Task PublishAsync<TEvent>(IntegrationEventEnvelope<TEvent> message, CancellationToken cancellationToken)
         where TEvent : IntegrationEvent
     {
         cancellationToken.ThrowIfCancellationRequested();

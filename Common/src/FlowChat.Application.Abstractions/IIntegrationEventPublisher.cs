@@ -1,9 +1,9 @@
-using FlowChat.Messaging.Contracts;
+using FlowChat.Domain.Abstractions;
 
 namespace FlowChat.Application.Abstractions;
 
 public interface IIntegrationEventPublisher
 {
-    Task PublishAsync<TEvent>(IntegrationEventEnvelope<TEvent> message, CancellationToken cancellationToken)
-        where TEvent : IntegrationEvent;
+    Task PublishToOutboxAsync<TEvent>(TEvent message, CancellationToken cancellationToken)
+        where TEvent : DomainEventBase;
 }
