@@ -90,11 +90,14 @@ public sealed class MassTransitEventPublisher : IIntegrationEventPublisher
             message.Payload,
             Pipe.Execute<KafkaSendContext<string, AuthIdentityTopicEventBase>>(context =>
             {
+                context.Key = message.KafkaKey;
+
                 foreach (var header in message.Headers)
                 {
                     context.Headers.Set(header.Key, header.Value);
                 }
 
+                context.Headers.Set("kafka-message-key", message.KafkaKey);
                 context.Headers.Set(IntegrationMessageHeaders.EventType, typeof(TEvent).Name);
             }),
             cancellationToken);

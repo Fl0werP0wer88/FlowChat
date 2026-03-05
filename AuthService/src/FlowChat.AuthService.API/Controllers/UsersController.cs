@@ -1,4 +1,5 @@
 using FlowChat.AuthService.Application.Commands;
+using FlowChat.Domain.Abstractions;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -21,8 +22,12 @@ public class UsersController : ControllerBase
     {
         var response = await _mediator.Send(command, cancellationToken);
 
+        if (response.IsFailure)
+        {
+            return MapError(response.Error);
+        }
 
-        return Ok(response);
+        return Ok(response.Value.Id);
     }
 
     [HttpPost("login")]
@@ -32,12 +37,17 @@ public class UsersController : ControllerBase
     {
         var response = await _mediator.Send(command, cancellationToken);
 
-        if (!response.IsSuccess)
+        if (response.IsFailure)
+        {
+            return MapError(response.Error);
+        }
+
+        if (!response.Value.IsSuccess)
         {
             return Unauthorized("Invalid credentials or account is not confirmed.");
         }
 
-        return Ok(response);
+        return Ok(response.Value);
     }
 
     [HttpGet("confirm-email")]
@@ -53,11 +63,41 @@ public class UsersController : ControllerBase
             },
             cancellationToken);
 
-        if (!response.IsSuccess)
+        if (response.IsFailure)
+        {
+            return MapError(response.Error);
+        }
+
+        if (!response.Value.IsSuccess)
         {
             return BadRequest("Email confirmation failed.");
         }
 
         return Ok("Email confirmed.");
+    }
+
+    private ActionResult MapError(IDomainError error)
+    {
+        if (error.ErrorType == ErrorType.Validation)
+        {
+            return BadRequest(new { error.ErrorMessage, error.Errors });
+        }
+
+        if (error.ErrorType == ErrorType.BadRequest)
+        {
+            return BadRequest(error.ErrorMessage);
+        }
+
+        if (error.ErrorType == ErrorType.NotFound)
+        {
+            return NotFound(error.ErrorMessage);
+        }
+
+        if (error.ErrorType == ErrorType.Conflict)
+        {
+            return Conflict(error.ErrorMessage);
+        }
+
+        return StatusCode(StatusCodes.Status500InternalServerError, error.ErrorMessage);
     }
 }
