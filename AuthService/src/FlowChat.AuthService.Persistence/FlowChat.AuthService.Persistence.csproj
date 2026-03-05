@@ -18,6 +18,7 @@
     <PackageReference Include="Silverback.Integration.Kafka" Version="5.0.0" />
     <PackageReference Include="Silverback.Storage.EntityFramework" Version="5.0.0" />
     <PackageReference Include="Silverback.Storage.PostgreSql" Version="5.0.0" />
+    <PackageReference Include="WolverineFx.EntityFrameworkCore" Version="5.17.0" />
   </ItemGroup>
 
   <PropertyGroup>
