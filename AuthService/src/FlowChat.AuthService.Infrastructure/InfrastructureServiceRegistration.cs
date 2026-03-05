@@ -36,7 +36,7 @@ public static class InfrastructureServiceRegistration
             sp.GetRequiredService<IOptions<UserCreatedProducerOptions>>().Value);
         services.AddScoped<IKafkaProducerOptions<EmailVerificationRequestIntegrationEvent>>(sp =>
             sp.GetRequiredService<IOptions<UserEmailVerificationRequestedProducerOptions>>().Value);
-        services.AddScoped<IIntegrationEventPublisher, SilverbackEventPublisher>();
+        services.AddScoped<IIntegrationEventPublisher, MassTransitEventPublisher>();
 
         return services;
     }
