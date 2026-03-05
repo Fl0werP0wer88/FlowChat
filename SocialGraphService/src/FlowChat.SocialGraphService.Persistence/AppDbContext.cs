@@ -21,22 +21,5 @@ public class AppDbContext : DbContext
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
         base.OnModelCreating(modelBuilder);
     }
-
-    // public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = new CancellationToken())
-    // {
-    //     foreach (var entry in ChangeTracker.Entries<EntityBase>())
-    //     {
-    //         switch (entry.State)
-    //         {
-    //             case EntityState.Added:
-    //                 break;
-    //             case EntityState.Modified:
-    //                 entry.Property(nameof(EntityBase.LastModifiedAtUtc)).CurrentValue = DateTimeOffset.UtcNow;
-    //                 break;
-    //         }
-    //     }
-
-    //     return base.SaveChangesAsync(cancellationToken);
-    // }
 }
 

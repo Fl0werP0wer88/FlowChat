@@ -2,6 +2,8 @@ using FlowChat.AuthService.Persistence.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Silverback.Messaging.Producing.TransactionalOutbox;
+using MassTransit;
+
 
 namespace FlowChat.AuthService.Persistence;
 
@@ -17,5 +19,9 @@ public class AppDbContext : IdentityDbContext<UserEntity, RoleEntity, Guid>
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+        modelBuilder.AddInboxStateEntity();
+        modelBuilder.AddOutboxMessageEntity();
+        modelBuilder.AddOutboxStateEntity();
+        
     }
 }

@@ -21,21 +21,21 @@ public class AppDbContext : DbContext
         base.OnModelCreating(modelBuilder);
     }
 
-    public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = new CancellationToken())
-    {
-        foreach (var entry in ChangeTracker.Entries<AuditableEntity>())
-        {
-            switch (entry.State)
-            {
-                case EntityState.Added:
-                    entry.Entity.CreatedDate = DateTime.UtcNow;
-                    break;
-                case EntityState.Modified:
-                    entry.Entity.LastModifiedDate = DateTime.UtcNow;
-                    break;
-            }
-        }
+    // public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = new CancellationToken())
+    // {
+    //     foreach (var entry in ChangeTracker.Entries<AuditableEntity>())
+    //     {
+    //         switch (entry.State)
+    //         {
+    //             case EntityState.Added:
+    //                 entry.Entity.CreatedDate = DateTime.UtcNow;
+    //                 break;
+    //             case EntityState.Modified:
+    //                 entry.Entity.LastModifiedDate = DateTime.UtcNow;
+    //                 break;
+    //         }
+    //     }
 
-        return base.SaveChangesAsync(cancellationToken);
-    }
+    //     return base.SaveChangesAsync(cancellationToken);
+    // }
 }
