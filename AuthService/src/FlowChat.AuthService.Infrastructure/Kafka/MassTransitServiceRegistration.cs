@@ -12,84 +12,124 @@ public static class MassTransitServiceRegistration
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        var userCreatedOptions = ResolveUserCreatedProducerOptions(configuration);
-
-        var outboxSection = configuration.GetSection("MassTransit:Outbox");
-        var queryDelaySeconds = outboxSection.GetValue<int?>("QueryDelaySeconds");
-        var queryMessageLimit = outboxSection.GetValue<int?>("QueryMessageLimit");
-        var queryTimeoutSeconds = outboxSection.GetValue<int?>("QueryTimeoutSeconds");
-        var duplicateDetectionWindowSeconds = outboxSection.GetValue<int?>("DuplicateDetectionWindowSeconds");
-        var messageDeliveryLimit = outboxSection.GetValue<int?>("MessageDeliveryLimit");
-        var concurrentDeliveryLimit = outboxSection.GetValue<int?>("ConcurrentDeliveryLimit");
-        var messageDeliveryTimeoutSeconds = outboxSection.GetValue<int?>("MessageDeliveryTimeoutSeconds");
-        var disableDeliveryService = outboxSection.GetValue("DisableDeliveryService", false);
+        var settings = ResolveSettings(configuration);
 
         services.AddMassTransit(configurator =>
         {
             configurator.AddEntityFrameworkOutbox<AppDbContext>(outbox =>
             {
-                outbox.UsePostgres();
-
-                if (queryDelaySeconds.HasValue)
-                {
-                    outbox.QueryDelay = TimeSpan.FromSeconds(Math.Max(1, queryDelaySeconds.Value));
-                }
-
-                if (queryMessageLimit.HasValue)
-                {
-                    outbox.QueryMessageLimit = Math.Max(1, queryMessageLimit.Value);
-                }
-
-                if (queryTimeoutSeconds.HasValue)
-                {
-                    outbox.QueryTimeout = TimeSpan.FromSeconds(Math.Max(1, queryTimeoutSeconds.Value));
-                }
-
-                if (duplicateDetectionWindowSeconds.HasValue)
-                {
-                    outbox.DuplicateDetectionWindow = TimeSpan.FromSeconds(
-                        Math.Max(1, duplicateDetectionWindowSeconds.Value));
-                }
-
-                outbox.UseBusOutbox(busOutbox =>
-                {
-                    if (messageDeliveryLimit.HasValue)
-                    {
-                        busOutbox.MessageDeliveryLimit = Math.Max(1, messageDeliveryLimit.Value);
-                    }
-
-                    if (concurrentDeliveryLimit.HasValue)
-                    {
-                        busOutbox.ConcurrentDeliveryLimit = Math.Max(1, concurrentDeliveryLimit.Value);
-                    }
-
-                    if (messageDeliveryTimeoutSeconds.HasValue)
-                    {
-                        busOutbox.MessageDeliveryTimeout = TimeSpan.FromSeconds(
-                            Math.Max(1, messageDeliveryTimeoutSeconds.Value));
-                    }
-
-                    if (disableDeliveryService)
-                    {
-                        busOutbox.DisableDeliveryService();
-                    }
-                });
+                ConfigureOutbox(outbox, settings, disableDeliveryService: true);
             });
 
-            configurator.UsingInMemory((context, bus) => bus.ConfigureEndpoints(context));
-
-            configurator.AddRider(rider =>
-            {
-                rider.AddProducer<string, AuthIdentityTopicEventBase>(userCreatedOptions.Topic);
-
-                rider.UsingKafka((_, kafka) =>
-                {
-                    kafka.Host(userCreatedOptions.BootstrapServers);
-                });
-            });
+            ConfigureBusAndKafka(configurator, settings);
         });
 
         return services;
+    }
+
+    public static IServiceCollection AddWorkerMassTransit(
+        this IServiceCollection services,
+        IConfiguration configuration)
+    {
+        var settings = ResolveSettings(configuration);
+
+        services.AddMassTransit(configurator =>
+        {
+            configurator.AddEntityFrameworkOutbox<AppDbContext>(outbox =>
+            {
+                ConfigureOutbox(outbox, settings, disableDeliveryService: false);
+            });
+
+            ConfigureBusAndKafka(configurator, settings);
+        });
+
+        return services;
+    }
+
+    private static void ConfigureBusAndKafka(IBusRegistrationConfigurator configurator, MassTransitSettings settings)
+    {
+        configurator.UsingInMemory((context, bus) => bus.ConfigureEndpoints(context));
+
+        configurator.AddRider(rider =>
+        {
+            rider.AddProducer<string, AuthIdentityTopicEventBase>(settings.UserCreatedOptions.Topic);
+
+            rider.UsingKafka((_, kafka) =>
+            {
+                kafka.Host(settings.UserCreatedOptions.BootstrapServers);
+            });
+        });
+    }
+
+    private static void ConfigureOutbox(
+        IEntityFrameworkOutboxConfigurator outbox,
+        MassTransitSettings settings,
+        bool disableDeliveryService)
+    {
+        outbox.UsePostgres();
+
+        if (settings.QueryDelaySeconds.HasValue)
+        {
+            outbox.QueryDelay = TimeSpan.FromSeconds(Math.Max(1, settings.QueryDelaySeconds.Value));
+        }
+
+        if (settings.QueryMessageLimit.HasValue)
+        {
+            outbox.QueryMessageLimit = Math.Max(1, settings.QueryMessageLimit.Value);
+        }
+
+        if (settings.QueryTimeoutSeconds.HasValue)
+        {
+            outbox.QueryTimeout = TimeSpan.FromSeconds(Math.Max(1, settings.QueryTimeoutSeconds.Value));
+        }
+
+        if (settings.DuplicateDetectionWindowSeconds.HasValue)
+        {
+            outbox.DuplicateDetectionWindow = TimeSpan.FromSeconds(
+                Math.Max(1, settings.DuplicateDetectionWindowSeconds.Value));
+        }
+
+        outbox.UseBusOutbox(busOutbox =>
+        {
+            if (settings.MessageDeliveryLimit.HasValue)
+            {
+                busOutbox.MessageDeliveryLimit = Math.Max(1, settings.MessageDeliveryLimit.Value);
+            }
+
+            if (settings.ConcurrentDeliveryLimit.HasValue)
+            {
+                busOutbox.ConcurrentDeliveryLimit = Math.Max(1, settings.ConcurrentDeliveryLimit.Value);
+            }
+
+            if (settings.MessageDeliveryTimeoutSeconds.HasValue)
+            {
+                busOutbox.MessageDeliveryTimeout = TimeSpan.FromSeconds(
+                    Math.Max(1, settings.MessageDeliveryTimeoutSeconds.Value));
+            }
+
+            if (disableDeliveryService)
+            {
+                busOutbox.DisableDeliveryService();
+            }
+        });
+    }
+
+    private static MassTransitSettings ResolveSettings(IConfiguration configuration)
+    {
+        var userCreatedOptions = ResolveUserCreatedProducerOptions(configuration);
+
+        var outboxSection = configuration.GetSection("MassTransit:Outbox");
+        return new MassTransitSettings
+        {
+            UserCreatedOptions = userCreatedOptions,
+            QueryDelaySeconds = outboxSection.GetValue<int?>("QueryDelaySeconds"),
+            QueryMessageLimit = outboxSection.GetValue<int?>("QueryMessageLimit"),
+            QueryTimeoutSeconds = outboxSection.GetValue<int?>("QueryTimeoutSeconds"),
+            DuplicateDetectionWindowSeconds = outboxSection.GetValue<int?>("DuplicateDetectionWindowSeconds"),
+            MessageDeliveryLimit = outboxSection.GetValue<int?>("MessageDeliveryLimit"),
+            ConcurrentDeliveryLimit = outboxSection.GetValue<int?>("ConcurrentDeliveryLimit"),
+            MessageDeliveryTimeoutSeconds = outboxSection.GetValue<int?>("MessageDeliveryTimeoutSeconds")
+        };
     }
 
     private static KafkaProducerSettings ResolveUserCreatedProducerOptions(IConfiguration configuration)
@@ -112,5 +152,17 @@ public static class MassTransitServiceRegistration
     {
         public string BootstrapServers { get; init; } = "localhost:9092";
         public string Topic { get; init; } = "dev.flowchat.identity.user.v1";
+    }
+
+    private sealed class MassTransitSettings
+    {
+        public KafkaProducerSettings UserCreatedOptions { get; init; } = new();
+        public int? QueryDelaySeconds { get; init; }
+        public int? QueryMessageLimit { get; init; }
+        public int? QueryTimeoutSeconds { get; init; }
+        public int? DuplicateDetectionWindowSeconds { get; init; }
+        public int? MessageDeliveryLimit { get; init; }
+        public int? ConcurrentDeliveryLimit { get; init; }
+        public int? MessageDeliveryTimeoutSeconds { get; init; }
     }
 }

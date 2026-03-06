@@ -97,23 +97,6 @@ namespace FlowChat.AuthService.Persistence.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "SilverbackOutboxMessages",
-                columns: table => new
-                {
-                    Id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Content = table.Column<byte[]>(type: "bytea", nullable: false),
-                    Headers = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
-                    EndpointName = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
-                    DynamicEndpoint = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
-                    Created = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_SilverbackOutboxMessages", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "AspNetRoleClaims",
                 columns: table => new
                 {
@@ -367,9 +350,6 @@ namespace FlowChat.AuthService.Persistence.Migrations
             migrationBuilder.DropTable(
                 name: "OutboxMessage",
                 schema: "mtransit");
-
-            migrationBuilder.DropTable(
-                name: "SilverbackOutboxMessages");
 
             migrationBuilder.DropTable(
                 name: "AspNetRoles");
