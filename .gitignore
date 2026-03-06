@@ -18,6 +18,7 @@ artifacts/
 *.sln.docstates
 
 # .NET and NuGet artifacts
+.dotnet/
 *.nupkg
 *.snupkg
 *.cache
