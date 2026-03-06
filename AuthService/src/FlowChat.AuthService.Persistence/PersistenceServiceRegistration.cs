@@ -15,14 +15,11 @@ public static class PersistenceServiceRegistration
     public static IServiceCollection AddAPIPersistenceServices(
                             this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddScoped<AuditableEntitySaveChangesInterceptor>();
+        services.AddSingleton<AuditableEntitySaveChangesInterceptor>();
         services.AddScoped<IUnitOfWork, AppDbContextUnitOfWork>();
 
         services.AddDbContextWithWolverineIntegration<AppDbContext>((serviceProvider, options) =>
             ConfigureDbContext(serviceProvider, options, configuration));
-        services.AddDbContextFactory<AppDbContext>(
-            options => options.UseNpgsql(configuration.GetConnectionString("AuthDb")),
-            ServiceLifetime.Scoped);
 
         services.AddScoped<IIdentityRepository, IdentityRepository>();
 
@@ -32,12 +29,9 @@ public static class PersistenceServiceRegistration
     public static IServiceCollection AddWorkerPersistenceServices(
                             this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddScoped<AuditableEntitySaveChangesInterceptor>();
+        services.AddSingleton<AuditableEntitySaveChangesInterceptor>();
         services.AddDbContextWithWolverineIntegration<AppDbContext>((serviceProvider, options) =>
             ConfigureDbContext(serviceProvider, options, configuration));
-        services.AddDbContextFactory<AppDbContext>(
-            options => options.UseNpgsql(configuration.GetConnectionString("AuthDb")),
-            ServiceLifetime.Scoped);
 
         return services;
     }

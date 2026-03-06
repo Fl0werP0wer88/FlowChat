@@ -58,20 +58,23 @@ public static class StartupExtensions
             return;
         }
 
-        try
-        {
-            await using var context = new AppDbContextFactory().CreateDbContext([]);
-            if (app.Configuration.GetValue<bool>("FlowChat:DropDatabaseOnStartup"))
-            {
-                await context.Database.EnsureDeletedAsync();
-            }
+        await using var scope = app.Services.CreateAsyncScope();
+        var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        context.Database.SetConnectionString(ResolveMigrationConnectionString(app.Configuration));
 
-            await context.Database.MigrateAsync();
-        }
-        catch (Exception)
+        if (app.Configuration.GetValue<bool>("FlowChat:DropDatabaseOnStartup"))
         {
-            throw;
+            await context.Database.EnsureDeletedAsync();
         }
+
+        await context.Database.MigrateAsync();
+    }
+
+    private static string ResolveMigrationConnectionString(IConfiguration configuration)
+    {
+        return Environment.GetEnvironmentVariable("AUTH_DB_MIGRATION_CONNECTION_STRING")
+            ?? configuration.GetConnectionString("AuthDbMigration")
+            ?? "Host=localhost;Port=5432;Database=flowchat_auth_db;Username=flowchat_migrator;Password=flowchat_migrator_pw;";
     }
 }
 
