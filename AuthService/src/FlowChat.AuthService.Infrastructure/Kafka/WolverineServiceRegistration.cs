@@ -18,7 +18,7 @@ public static class WolverineServiceRegistration
         ArgumentNullException.ThrowIfNull(builder);
 
         builder.UseWolverine(options => ConfigureWolverine(options, builder.Configuration));
-
+        
         return builder;
     }
 
@@ -38,7 +38,8 @@ public static class WolverineServiceRegistration
             .Enroll<AppDbContext>();
         options.UseEntityFrameworkCoreTransactions(TransactionMiddlewareMode.Lightweight);
         options.Policies.UseDurableOutboxOnAllSendingEndpoints();
-
+        options.UseEntityFrameworkCoreWolverineManagedMigrations();
+        
         options.PublishMessage<UserCreatedIntegrationEvent>()
             .ToKafkaTopic(userCreatedOptions.Topic);
         options.PublishMessage<UserConfirmedIntegrationEvent>()

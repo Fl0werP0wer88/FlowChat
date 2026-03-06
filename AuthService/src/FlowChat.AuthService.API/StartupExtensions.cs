@@ -2,6 +2,7 @@ using FlowChat.AuthService.Application;
 using FlowChat.AuthService.Infrastructure;
 using FlowChat.AuthService.Infrastructure.Kafka;
 using FlowChat.AuthService.Persistence;
+using JasperFx.Resources;
 using Microsoft.EntityFrameworkCore;
 namespace FlowChat.AuthService.Api;
 
@@ -10,7 +11,7 @@ public static class StartupExtensions
     public static WebApplication ConfigureServices(this WebApplicationBuilder builder)
     {
         builder.AddWolverineMessaging();
-
+        builder.Host.UseResourceSetupOnStartup();
         builder.Services
         .AddApplicationServices()
         .AddInfrastructureServices(builder.Configuration)
