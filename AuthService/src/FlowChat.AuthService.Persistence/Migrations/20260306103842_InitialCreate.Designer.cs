@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FlowChat.AuthService.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260306003725_InitialCreate")]
+    [Migration("20260306103842_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -21,8 +21,7 @@ namespace FlowChat.AuthService.Persistence.Migrations
 #pragma warning disable 612, 618
             modelBuilder
                 .HasAnnotation("ProductVersion", "10.0.3")
-                .HasAnnotation("Relational:MaxIdentifierLength", 63)
-                .HasAnnotation("WolverineEnabled", "true");
+                .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
@@ -219,92 +218,6 @@ namespace FlowChat.AuthService.Persistence.Migrations
                     b.HasKey("UserId", "LoginProvider", "Name");
 
                     b.ToTable("AspNetUserTokens", (string)null);
-                });
-
-            modelBuilder.Entity("Wolverine.EntityFrameworkCore.Internals.IncomingMessage", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<int>("Attempts")
-                        .HasColumnType("integer")
-                        .HasColumnName("attempts");
-
-                    b.Property<byte[]>("Body")
-                        .IsRequired()
-                        .HasColumnType("bytea")
-                        .HasColumnName("body");
-
-                    b.Property<DateTimeOffset?>("ExecutionTime")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("execution_time");
-
-                    b.Property<DateTimeOffset?>("KeepUntil")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("keep_until");
-
-                    b.Property<string>("MessageType")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("message_type");
-
-                    b.Property<int>("OwnerId")
-                        .HasColumnType("integer")
-                        .HasColumnName("owner_id");
-
-                    b.Property<string>("ReceivedAt")
-                        .HasColumnType("text")
-                        .HasColumnName("received_at");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("status");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("wolverine_incoming_envelopes", (string)null);
-                });
-
-            modelBuilder.Entity("Wolverine.EntityFrameworkCore.Internals.OutgoingMessage", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<int>("Attempts")
-                        .HasColumnType("integer")
-                        .HasColumnName("attempts");
-
-                    b.Property<byte[]>("Body")
-                        .IsRequired()
-                        .HasColumnType("bytea")
-                        .HasColumnName("body");
-
-                    b.Property<DateTimeOffset?>("DeliverBy")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("deliver_by");
-
-                    b.Property<string>("Destination")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("destination");
-
-                    b.Property<string>("MessageType")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("message_type");
-
-                    b.Property<int>("OwnerId")
-                        .HasColumnType("integer")
-                        .HasColumnName("owner_id");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("wolverine_outgoing_envelopes", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
