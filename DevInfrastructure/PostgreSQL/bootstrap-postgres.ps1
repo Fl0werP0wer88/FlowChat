@@ -15,6 +15,7 @@ Additionally:
 - assigns database and schema ownership to flowchat_migrator
 - grants CRUD-only access to flowchat_app
 - sets default privileges for future EF Core migrations
+- ensures the mtransit schema exists and is configured like public
 
 Safe to run multiple times.
 #>
@@ -38,6 +39,7 @@ param(
   [string]$UserProfileDb = "flowchat_userprofile_db",
   [string]$SocialGraphDb = "flowchat_socialgraph_db",
   [string]$NotificationDb = "flowchat_notification_db",
+  [string]$MassTransitSchema = "mtransit",
 
   [int]$TimeoutSeconds = 180
 )
@@ -139,6 +141,75 @@ function Grant-Role([string]$containerId, [string]$grantee, [string]$roleName) {
   if ($res.Code -ne 0) { throw "Failed granting role '$roleName' to '$grantee'." }
 }
 
+function Ensure-Schema(
+  [string]$containerId,
+  [string]$dbName,
+  [string]$schemaName,
+  [string]$owner,
+  [switch]$CreateIfMissing
+) {
+  Write-Step "Configuring schema $schemaName in $dbName"
+
+  if ($CreateIfMissing) {
+    $createSchemaSqlTemplate = @'
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM information_schema.schemata WHERE schema_name = '{SCHEMA}') THEN
+    EXECUTE 'CREATE SCHEMA {SCHEMA} AUTHORIZATION {OWNER}';
+  END IF;
+END
+$$;
+'@
+
+    $createSchemaSql = $createSchemaSqlTemplate.Replace('{SCHEMA}', $schemaName).Replace('{OWNER}', $owner)
+
+    $res = Exec-PSQL -containerId $containerId -database $dbName -sql $createSchemaSql
+    if ($res.Code -ne 0) { throw "Failed ensuring schema '$schemaName' in '$dbName'." }
+  }
+
+  Exec-PSQL -containerId $containerId -database $dbName `
+    -sql "ALTER SCHEMA $schemaName OWNER TO $owner;"
+
+  Exec-PSQL -containerId $containerId -database $dbName `
+    -sql "REVOKE CREATE ON SCHEMA $schemaName FROM PUBLIC;"
+
+  $ownershipSqlTemplate = @'
+DO $$
+DECLARE
+  item record;
+BEGIN
+  FOR item IN
+    SELECT tablename
+    FROM pg_tables
+    WHERE schemaname = '{SCHEMA}'
+  LOOP
+    EXECUTE format('ALTER TABLE {SCHEMA}.%I OWNER TO {OWNER};', item.tablename);
+  END LOOP;
+
+  FOR item IN
+    SELECT sequence_name
+    FROM information_schema.sequences
+    WHERE sequence_schema = '{SCHEMA}'
+  LOOP
+    EXECUTE format('ALTER SEQUENCE {SCHEMA}.%I OWNER TO {OWNER};', item.sequence_name);
+  END LOOP;
+
+  FOR item IN
+    SELECT table_name
+    FROM information_schema.views
+    WHERE table_schema = '{SCHEMA}'
+  LOOP
+    EXECUTE format('ALTER VIEW {SCHEMA}.%I OWNER TO {OWNER};', item.table_name);
+  END LOOP;
+END
+$$;
+'@
+
+  $ownershipSql = $ownershipSqlTemplate.Replace('{SCHEMA}', $schemaName).Replace('{OWNER}', $owner)
+
+  Exec-PSQL -containerId $containerId -database $dbName -sql $ownershipSql | Out-Null
+}
+
 function Ensure-Database([string]$containerId, [string]$dbName, [string]$owner) {
   Write-Step "Ensuring database exists: $dbName"
 
@@ -162,71 +233,38 @@ function Ensure-Database([string]$containerId, [string]$dbName, [string]$owner) 
 
   Exec-PSQL -containerId $containerId -database "postgres" `
     -sql "ALTER DATABASE $dbName OWNER TO $owner;"
-
-  Exec-PSQL -containerId $containerId -database $dbName `
-    -sql "ALTER SCHEMA public OWNER TO $owner;"
-
-  Exec-PSQL -containerId $containerId -database $dbName `
-    -sql "REVOKE CREATE ON SCHEMA public FROM PUBLIC;"
-
-  $ownershipSql = @"
-DO $$
-DECLARE
-  item record;
-BEGIN
-  FOR item IN
-    SELECT tablename
-    FROM pg_tables
-    WHERE schemaname = 'public'
-  LOOP
-    EXECUTE format('ALTER TABLE public.%I OWNER TO $owner;', item.tablename);
-  END LOOP;
-
-  FOR item IN
-    SELECT sequence_name
-    FROM information_schema.sequences
-    WHERE sequence_schema = 'public'
-  LOOP
-    EXECUTE format('ALTER SEQUENCE public.%I OWNER TO $owner;', item.sequence_name);
-  END LOOP;
-
-  FOR item IN
-    SELECT table_name
-    FROM information_schema.views
-    WHERE table_schema = 'public'
-  LOOP
-    EXECUTE format('ALTER VIEW public.%I OWNER TO $owner;', item.table_name);
-  END LOOP;
-END
-$$;
-"@
-
-  Exec-PSQL -containerId $containerId -database $dbName -sql $ownershipSql | Out-Null
+  Ensure-Schema -containerId $containerId -dbName $dbName -schemaName "public" -owner $owner
 }
 
-function Ensure-AppCrudAccess([string]$containerId, [string]$dbName, [string]$owner, [string]$appRole) {
-  Write-Step "Granting CRUD access to $appRole in $dbName"
+function Ensure-AppCrudAccess(
+  [string]$containerId,
+  [string]$dbName,
+  [string]$schemaName,
+  [string]$owner,
+  [string]$appRole
+) {
+  Write-Step "Granting CRUD access to $appRole in $dbName.$schemaName"
 
   Exec-PSQL -containerId $containerId -database "postgres" `
     -sql "GRANT CONNECT ON DATABASE $dbName TO $appRole;"
 
   Exec-PSQL -containerId $containerId -database $dbName `
-    -sql "GRANT USAGE ON SCHEMA public TO $appRole;"
+    -sql "GRANT USAGE ON SCHEMA $schemaName TO $appRole;"
 
   Exec-PSQL -containerId $containerId -database $dbName `
-    -sql "REVOKE CREATE ON SCHEMA public FROM $appRole;"
+    -sql "REVOKE CREATE ON SCHEMA $schemaName FROM $appRole;"
 
   Exec-PSQL -containerId $containerId -database $dbName `
-    -sql "GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO $appRole;"
+    -sql "GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA $schemaName TO $appRole;"
 
   Exec-PSQL -containerId $containerId -database $dbName `
-    -sql "GRANT USAGE, SELECT, UPDATE ON ALL SEQUENCES IN SCHEMA public TO $appRole;"
+    -sql "GRANT USAGE, SELECT, UPDATE ON ALL SEQUENCES IN SCHEMA $schemaName TO $appRole;"
 
   Exec-PSQL -containerId $containerId -database $dbName `
-    -sql "ALTER DEFAULT PRIVILEGES FOR ROLE $owner IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO $appRole;"
+    -sql "ALTER DEFAULT PRIVILEGES FOR ROLE $owner IN SCHEMA $schemaName GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO $appRole;"
 
   Exec-PSQL -containerId $containerId -database $dbName `
-    -sql "ALTER DEFAULT PRIVILEGES FOR ROLE $owner IN SCHEMA public GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO $appRole;"
+    -sql "ALTER DEFAULT PRIVILEGES FOR ROLE $owner IN SCHEMA $schemaName GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO $appRole;"
 }
 
 # -------------------- MAIN --------------------
@@ -248,16 +286,24 @@ Grant-Role -containerId $containerId -grantee $MigratorUser -roleName "pg_signal
 Ensure-Role -containerId $containerId -role $AppUser -password $AppPassword
 
 Ensure-Database -containerId $containerId -dbName $AuthDb -owner $MigratorUser
-Ensure-AppCrudAccess -containerId $containerId -dbName $AuthDb -owner $MigratorUser -appRole $AppUser
+Ensure-Schema -containerId $containerId -dbName $AuthDb -schemaName $MassTransitSchema -owner $MigratorUser -CreateIfMissing
+Ensure-AppCrudAccess -containerId $containerId -dbName $AuthDb -schemaName "public" -owner $MigratorUser -appRole $AppUser
+Ensure-AppCrudAccess -containerId $containerId -dbName $AuthDb -schemaName $MassTransitSchema -owner $MigratorUser -appRole $AppUser
 
 Ensure-Database -containerId $containerId -dbName $UserProfileDb -owner $MigratorUser
-Ensure-AppCrudAccess -containerId $containerId -dbName $UserProfileDb -owner $MigratorUser -appRole $AppUser
+Ensure-Schema -containerId $containerId -dbName $UserProfileDb -schemaName $MassTransitSchema -owner $MigratorUser -CreateIfMissing
+Ensure-AppCrudAccess -containerId $containerId -dbName $UserProfileDb -schemaName "public" -owner $MigratorUser -appRole $AppUser
+Ensure-AppCrudAccess -containerId $containerId -dbName $UserProfileDb -schemaName $MassTransitSchema -owner $MigratorUser -appRole $AppUser
 
 Ensure-Database -containerId $containerId -dbName $SocialGraphDb -owner $MigratorUser
-Ensure-AppCrudAccess -containerId $containerId -dbName $SocialGraphDb -owner $MigratorUser -appRole $AppUser
+Ensure-Schema -containerId $containerId -dbName $SocialGraphDb -schemaName $MassTransitSchema -owner $MigratorUser -CreateIfMissing
+Ensure-AppCrudAccess -containerId $containerId -dbName $SocialGraphDb -schemaName "public" -owner $MigratorUser -appRole $AppUser
+Ensure-AppCrudAccess -containerId $containerId -dbName $SocialGraphDb -schemaName $MassTransitSchema -owner $MigratorUser -appRole $AppUser
 
 Ensure-Database -containerId $containerId -dbName $NotificationDb -owner $MigratorUser
-Ensure-AppCrudAccess -containerId $containerId -dbName $NotificationDb -owner $MigratorUser -appRole $AppUser
+Ensure-Schema -containerId $containerId -dbName $NotificationDb -schemaName $MassTransitSchema -owner $MigratorUser -CreateIfMissing
+Ensure-AppCrudAccess -containerId $containerId -dbName $NotificationDb -schemaName "public" -owner $MigratorUser -appRole $AppUser
+Ensure-AppCrudAccess -containerId $containerId -dbName $NotificationDb -schemaName $MassTransitSchema -owner $MigratorUser -appRole $AppUser
 
 Write-Step "Done. PostgreSQL is fully initialized ✅"
 Write-Host ""
@@ -268,5 +314,6 @@ Write-Host "Auth DB         : $AuthDb"
 Write-Host "UserProfile DB  : $UserProfileDb"
 Write-Host "SocialGraph DB  : $SocialGraphDb"
 Write-Host "Notification DB : $NotificationDb"
+Write-Host "MassTransit schema : $MassTransitSchema"
 Write-Host "Host            : localhost"
 Write-Host "Port            : 5432"

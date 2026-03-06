@@ -19,9 +19,8 @@ public class AppDbContext : IdentityDbContext<UserEntity, RoleEntity, Guid>
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-        modelBuilder.AddInboxStateEntity();
-        modelBuilder.AddOutboxMessageEntity();
-        modelBuilder.AddOutboxStateEntity();
-        
+        modelBuilder.AddInboxStateEntity(x => x.ToTable("InboxState", "mtransit"));
+        modelBuilder.AddOutboxMessageEntity(x => x.ToTable("OutboxMessage", "mtransit"));
+        modelBuilder.AddOutboxStateEntity(x => x.ToTable("OutboxState", "mtransit"));
     }
 }
