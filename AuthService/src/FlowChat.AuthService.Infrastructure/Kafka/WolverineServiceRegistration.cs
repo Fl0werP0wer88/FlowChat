@@ -38,7 +38,6 @@ public static class WolverineServiceRegistration
             .Enroll<AppDbContext>();
         options.UseEntityFrameworkCoreTransactions(TransactionMiddlewareMode.Lightweight);
         options.Policies.UseDurableOutboxOnAllSendingEndpoints();
-        options.UseEntityFrameworkCoreWolverineManagedMigrations();
         
         options.PublishMessage<UserCreatedIntegrationEvent>()
             .ToKafkaTopic(userCreatedOptions.Topic);

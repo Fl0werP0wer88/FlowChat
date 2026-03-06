@@ -2,7 +2,6 @@ using FlowChat.AuthService.Application;
 using FlowChat.AuthService.Infrastructure;
 using FlowChat.AuthService.Infrastructure.Kafka;
 using FlowChat.AuthService.Persistence;
-using JasperFx.Resources;
 using Microsoft.EntityFrameworkCore;
 namespace FlowChat.AuthService.Api;
 
@@ -11,7 +10,6 @@ public static class StartupExtensions
     public static WebApplication ConfigureServices(this WebApplicationBuilder builder)
     {
         builder.AddWolverineMessaging();
-        builder.Host.UseResourceSetupOnStartup();
         builder.Services
         .AddApplicationServices()
         .AddInfrastructureServices(builder.Configuration)
@@ -52,18 +50,14 @@ public static class StartupExtensions
         return app;
     }
 
-    public static async Task ResetDatabaseAsync(this WebApplication app)
+    public static async Task MigrateDatabaseAsync(this WebApplication app)
     {
-        if (!app.Environment.IsDevelopment())
-        {
-            return;
-        }
-
         await using var scope = app.Services.CreateAsyncScope();
         var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         context.Database.SetConnectionString(ResolveMigrationConnectionString(app.Configuration));
 
-        if (app.Configuration.GetValue<bool>("FlowChat:DropDatabaseOnStartup"))
+        if (app.Environment.IsDevelopment()
+            && app.Configuration.GetValue<bool>("FlowChat:DropDatabaseOnStartup"))
         {
             await context.Database.EnsureDeletedAsync();
         }
