@@ -16,9 +16,9 @@ public class AppDbContext : IdentityDbContext<UserEntity, RoleEntity, Guid>
     {
         base.OnModelCreating(modelBuilder);
         modelBuilder.MapWolverineEnvelopeStorage();
-        modelBuilder.Entity("Wolverine.EntityFrameworkCore.Internals.IncomingMessage")
-            .ToTable("wolverine_incoming_envelopes", null, table => table.ExcludeFromMigrations(false));
-        modelBuilder.Entity("Wolverine.EntityFrameworkCore.Internals.OutgoingMessage")
-            .ToTable("wolverine_outgoing_envelopes", null, table => table.ExcludeFromMigrations(false));
+        // modelBuilder.Entity("Wolverine.EntityFrameworkCore.Internals.IncomingMessage")
+        //     .ToTable("wolverine_incoming_envelopes", null, table => table.ExcludeFromMigrations(false));
+        // modelBuilder.Entity("Wolverine.EntityFrameworkCore.Internals.OutgoingMessage")
+        //     .ToTable("wolverine_outgoing_envelopes", null, table => table.ExcludeFromMigrations(false));
     }
 }
