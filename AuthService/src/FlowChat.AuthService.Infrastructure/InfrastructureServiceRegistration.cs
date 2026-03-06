@@ -2,10 +2,8 @@ using FlowChat.Application.Abstractions;
 using FlowChat.AuthService.Application.Contracts.Infrastructure;
 using FlowChat.AuthService.Infrastructure.Kafka;
 using FlowChat.AuthService.Infrastructure.Services;
-using FlowChat.Messaging.Contracts.AuthService.Events;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
 
 namespace FlowChat.AuthService.Infrastructure;
 
@@ -32,11 +30,7 @@ public static class InfrastructureServiceRegistration
         services.AddScoped<ITokenEncoder, Base64UrlTokenEncoder>();
         services.AddScoped<IConfirmationLinkBuilder, ConfirmationLinkBuilder>();
         services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
-        services.AddScoped<IKafkaProducerOptions<UserCreatedIntegrationEvent>>(sp =>
-            sp.GetRequiredService<IOptions<UserCreatedProducerOptions>>().Value);
-        services.AddScoped<IKafkaProducerOptions<EmailVerificationRequestIntegrationEvent>>(sp =>
-            sp.GetRequiredService<IOptions<UserEmailVerificationRequestedProducerOptions>>().Value);
-        services.AddScoped<IIntegrationEventPublisher, SilverbackEventPublisher>();
+        services.AddScoped<IIntegrationEventPublisher, WolverineEventPublisher>();
 
         return services;
     }

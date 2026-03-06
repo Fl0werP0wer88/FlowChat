@@ -1,20 +1,27 @@
 using FlowChat.Application.Abstractions;
 using Microsoft.EntityFrameworkCore;
+using Wolverine.EntityFrameworkCore;
 
 namespace FlowChat.AuthService.Persistence.UnitOfWork;
 
 public sealed class AppDbContextUnitOfWork : IUnitOfWork
 {
     private readonly AppDbContext _dbContext;
+    private readonly IDbContextOutbox<AppDbContext> _outbox;
 
-    public AppDbContextUnitOfWork(AppDbContext dbContext)
+    public AppDbContextUnitOfWork(
+        AppDbContext dbContext,
+        IDbContextOutbox<AppDbContext> outbox)
     {
         _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
+        _outbox = outbox ?? throw new ArgumentNullException(nameof(outbox));
     }
  
     public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
-        return await _dbContext.SaveChangesAsync(cancellationToken);
+        var changes = await _dbContext.SaveChangesAsync(cancellationToken);
+        await _outbox.FlushOutgoingMessagesAsync();
+        return changes;
     }
 
     public async Task<T> ExecuteInTransactionAsync<T>(Func<CancellationToken, Task<T>> operation, CancellationToken cancellationToken)
@@ -33,6 +40,7 @@ public sealed class AppDbContextUnitOfWork : IUnitOfWork
                 var result = await operation(cancellationToken);
                 await _dbContext.SaveChangesAsync(cancellationToken);
                 await transaction.CommitAsync(cancellationToken);
+                await _outbox.FlushOutgoingMessagesAsync();
                 return result;
             }
             catch

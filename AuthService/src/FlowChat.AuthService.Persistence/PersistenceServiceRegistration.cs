@@ -6,6 +6,7 @@ using FlowChat.AuthService.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Wolverine.EntityFrameworkCore;
 
 namespace FlowChat.AuthService.Persistence;
 
@@ -17,12 +18,8 @@ public static class PersistenceServiceRegistration
         services.AddScoped<AuditableEntitySaveChangesInterceptor>();
         services.AddScoped<IUnitOfWork, AppDbContextUnitOfWork>();
 
-        services.AddDbContext<AppDbContext>((serviceProvider, options) =>
-        {
-            options.UseNpgsql(configuration.GetConnectionString("AuthDb"));
-            options.AddInterceptors(
-                serviceProvider.GetRequiredService<AuditableEntitySaveChangesInterceptor>());
-        });
+        services.AddDbContextWithWolverineIntegration<AppDbContext>((serviceProvider, options) =>
+            ConfigureDbContext(serviceProvider, options, configuration));
         services.AddDbContextFactory<AppDbContext>(
             options => options.UseNpgsql(configuration.GetConnectionString("AuthDb")),
             ServiceLifetime.Scoped);
@@ -36,16 +33,22 @@ public static class PersistenceServiceRegistration
                             this IServiceCollection services, IConfiguration configuration)
     {
         services.AddScoped<AuditableEntitySaveChangesInterceptor>();
-        services.AddDbContext<AppDbContext>((serviceProvider, options) =>
-        {
-            options.UseNpgsql(configuration.GetConnectionString("AuthDb"));
-            options.AddInterceptors(
-                serviceProvider.GetRequiredService<AuditableEntitySaveChangesInterceptor>());
-        });
+        services.AddDbContextWithWolverineIntegration<AppDbContext>((serviceProvider, options) =>
+            ConfigureDbContext(serviceProvider, options, configuration));
         services.AddDbContextFactory<AppDbContext>(
             options => options.UseNpgsql(configuration.GetConnectionString("AuthDb")),
             ServiceLifetime.Scoped);
 
         return services;
+    }
+
+    private static void ConfigureDbContext(
+        IServiceProvider serviceProvider,
+        DbContextOptionsBuilder options,
+        IConfiguration configuration)
+    {
+        options.UseNpgsql(configuration.GetConnectionString("AuthDb"));
+        options.AddInterceptors(
+            serviceProvider.GetRequiredService<AuditableEntitySaveChangesInterceptor>());
     }
 }

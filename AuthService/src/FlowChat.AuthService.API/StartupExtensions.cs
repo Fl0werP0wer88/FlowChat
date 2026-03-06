@@ -9,11 +9,12 @@ public static class StartupExtensions
 {
     public static WebApplication ConfigureServices(this WebApplicationBuilder builder)
     {
+        builder.AddWolverineMessaging();
+
         builder.Services
         .AddApplicationServices()
         .AddInfrastructureServices(builder.Configuration)
         .AddAPIPersistenceServices(builder.Configuration)
-        .AddApiSilverbackMessaging(builder.Configuration)
         .AddAPIServices(builder.Configuration);
 
 
