@@ -10,13 +10,21 @@ Creates if missing:
     - flowchat_userprofile_db
     - flowchat_socialgraph_db
     - flowchat_notification_db
+- schema in each database:
+    - wolverine
 
 Additionally:
 - assigns database and schema ownership to flowchat_migrator
-- grants CRUD-only access to flowchat_app
+- makes flowchat_migrator the owner of existing tables, sequences, and views
+- grants CRUD-only access to flowchat_app in public and wolverine
 - sets default privileges for future EF Core migrations
 
 Safe to run multiple times.
+
+Notes:
+- flowchat_migrator gets DDL/DML rights through ownership, not through GRANT
+- future objects created by EF Core migrations run as flowchat_migrator will also be owned by flowchat_migrator
+- ALTER DEFAULT PRIVILEGES is only needed here for flowchat_app
 #>
 
 param(
@@ -111,6 +119,13 @@ function Exec-PSQL([string]$containerId, [string]$database, [string]$sql, [switc
   }
 }
 
+function Invoke-PSQLChecked([string]$containerId, [string]$database, [string]$sql) {
+  $res = Exec-PSQL -containerId $containerId -database $database -sql $sql -CaptureOutput
+  if ($res.Code -ne 0) {
+    throw "Failed executing SQL against '$database': $($res.Output.Trim())"
+  }
+}
+
 function Ensure-Role([string]$containerId, [string]$role, [string]$password, [switch]$CreateDb) {
   Write-Step "Ensuring role exists: $role"
 
@@ -128,15 +143,13 @@ $$;
 '@
 
   $sql = $sqlTemplate.Replace('{ROLE}', $role).Replace('{PASSWORD}', $password).Replace('{CREATEDB}', $createDbClause)
-  $res = Exec-PSQL -containerId $containerId -database "postgres" -sql $sql
-  if ($res.Code -ne 0) { throw "Failed ensuring role '$role'." }
+  Invoke-PSQLChecked -containerId $containerId -database "postgres" -sql $sql
 }
 
 function Grant-Role([string]$containerId, [string]$grantee, [string]$roleName) {
   Write-Step "Granting role $roleName to $grantee"
 
-  $res = Exec-PSQL -containerId $containerId -database "postgres" -sql "GRANT $roleName TO $grantee;"
-  if ($res.Code -ne 0) { throw "Failed granting role '$roleName' to '$grantee'." }
+  Invoke-PSQLChecked -containerId $containerId -database "postgres" -sql "GRANT $roleName TO $grantee;"
 }
 
 function Ensure-Database([string]$containerId, [string]$dbName, [string]$owner) {
@@ -150,83 +163,110 @@ function Ensure-Database([string]$containerId, [string]$dbName, [string]$owner) 
     Write-Host "Database exists: $dbName"
   }
   else {
-    $create = Exec-PSQL -containerId $containerId -database "postgres" `
+    Invoke-PSQLChecked -containerId $containerId -database "postgres" `
       -sql "CREATE DATABASE $dbName OWNER $owner;"
-    if ($create.Code -ne 0) {
-      throw "Failed creating database '$dbName'"
-    }
     Write-Host "Created database: $dbName"
   }
 
   Write-Step "Configuring ownership in $dbName"
 
-  Exec-PSQL -containerId $containerId -database "postgres" `
+  Invoke-PSQLChecked -containerId $containerId -database "postgres" `
     -sql "ALTER DATABASE $dbName OWNER TO $owner;"
 
-  Exec-PSQL -containerId $containerId -database $dbName `
+  Invoke-PSQLChecked -containerId $containerId -database $dbName `
+    -sql "CREATE SCHEMA IF NOT EXISTS wolverine AUTHORIZATION $owner;"
+
+  Invoke-PSQLChecked -containerId $containerId -database $dbName `
     -sql "ALTER SCHEMA public OWNER TO $owner;"
 
-  Exec-PSQL -containerId $containerId -database $dbName `
+  Invoke-PSQLChecked -containerId $containerId -database $dbName `
+    -sql "ALTER SCHEMA wolverine OWNER TO $owner;"
+
+  Invoke-PSQLChecked -containerId $containerId -database $dbName `
     -sql "REVOKE CREATE ON SCHEMA public FROM PUBLIC;"
 
-  $ownershipSql = @"
+  Invoke-PSQLChecked -containerId $containerId -database $dbName `
+    -sql "REVOKE CREATE ON SCHEMA wolverine FROM PUBLIC;"
+
+  $ownershipSqlTemplate = @'
 DO $$
 DECLARE
   item record;
 BEGIN
   FOR item IN
-    SELECT tablename
+    SELECT schemaname, tablename
     FROM pg_tables
-    WHERE schemaname = 'public'
+    WHERE schemaname IN ('public', 'wolverine')
   LOOP
-    EXECUTE format('ALTER TABLE public.%I OWNER TO $owner;', item.tablename);
+    EXECUTE format('ALTER TABLE %I.%I OWNER TO {OWNER};', item.schemaname, item.tablename);
   END LOOP;
 
   FOR item IN
-    SELECT sequence_name
+    SELECT sequence_schema, sequence_name
     FROM information_schema.sequences
-    WHERE sequence_schema = 'public'
+    WHERE sequence_schema IN ('public', 'wolverine')
   LOOP
-    EXECUTE format('ALTER SEQUENCE public.%I OWNER TO $owner;', item.sequence_name);
+    EXECUTE format('ALTER SEQUENCE %I.%I OWNER TO {OWNER};', item.sequence_schema, item.sequence_name);
   END LOOP;
 
   FOR item IN
-    SELECT table_name
+    SELECT table_schema, table_name
     FROM information_schema.views
-    WHERE table_schema = 'public'
+    WHERE table_schema IN ('public', 'wolverine')
   LOOP
-    EXECUTE format('ALTER VIEW public.%I OWNER TO $owner;', item.table_name);
+    EXECUTE format('ALTER VIEW %I.%I OWNER TO {OWNER};', item.table_schema, item.table_name);
   END LOOP;
 END
 $$;
-"@
+'@
 
-  Exec-PSQL -containerId $containerId -database $dbName -sql $ownershipSql | Out-Null
+  $ownershipSql = $ownershipSqlTemplate.Replace('{OWNER}', $owner)
+  Invoke-PSQLChecked -containerId $containerId -database $dbName -sql $ownershipSql
 }
 
 function Ensure-AppCrudAccess([string]$containerId, [string]$dbName, [string]$owner, [string]$appRole) {
   Write-Step "Granting CRUD access to $appRole in $dbName"
 
-  Exec-PSQL -containerId $containerId -database "postgres" `
+  Invoke-PSQLChecked -containerId $containerId -database "postgres" `
     -sql "GRANT CONNECT ON DATABASE $dbName TO $appRole;"
 
-  Exec-PSQL -containerId $containerId -database $dbName `
+  Invoke-PSQLChecked -containerId $containerId -database $dbName `
     -sql "GRANT USAGE ON SCHEMA public TO $appRole;"
 
-  Exec-PSQL -containerId $containerId -database $dbName `
+  Invoke-PSQLChecked -containerId $containerId -database $dbName `
     -sql "REVOKE CREATE ON SCHEMA public FROM $appRole;"
 
-  Exec-PSQL -containerId $containerId -database $dbName `
+  Invoke-PSQLChecked -containerId $containerId -database $dbName `
     -sql "GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO $appRole;"
 
-  Exec-PSQL -containerId $containerId -database $dbName `
+  Invoke-PSQLChecked -containerId $containerId -database $dbName `
     -sql "GRANT USAGE, SELECT, UPDATE ON ALL SEQUENCES IN SCHEMA public TO $appRole;"
 
-  Exec-PSQL -containerId $containerId -database $dbName `
+  Invoke-PSQLChecked -containerId $containerId -database $dbName `
+    -sql "GRANT USAGE ON SCHEMA wolverine TO $appRole;"
+
+  Invoke-PSQLChecked -containerId $containerId -database $dbName `
+    -sql "REVOKE CREATE ON SCHEMA wolverine FROM $appRole;"
+
+  Invoke-PSQLChecked -containerId $containerId -database $dbName `
+    -sql "GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA wolverine TO $appRole;"
+
+  Invoke-PSQLChecked -containerId $containerId -database $dbName `
+    -sql "GRANT USAGE, SELECT, UPDATE ON ALL SEQUENCES IN SCHEMA wolverine TO $appRole;"
+
+  # flowchat_migrator already keeps full DDL/DML rights as the owner of objects
+  # created by EF Core migrations. Default privileges are needed only for flowchat_app.
+  Invoke-PSQLChecked -containerId $containerId -database $dbName `
     -sql "ALTER DEFAULT PRIVILEGES FOR ROLE $owner IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO $appRole;"
 
-  Exec-PSQL -containerId $containerId -database $dbName `
+  Invoke-PSQLChecked -containerId $containerId -database $dbName `
     -sql "ALTER DEFAULT PRIVILEGES FOR ROLE $owner IN SCHEMA public GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO $appRole;"
+
+  Invoke-PSQLChecked -containerId $containerId -database $dbName `
+    -sql "ALTER DEFAULT PRIVILEGES FOR ROLE $owner IN SCHEMA wolverine GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO $appRole;"
+
+  Invoke-PSQLChecked -containerId $containerId -database $dbName `
+    -sql "ALTER DEFAULT PRIVILEGES FOR ROLE $owner IN SCHEMA wolverine GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO $appRole;"
 }
 
 # -------------------- MAIN --------------------
