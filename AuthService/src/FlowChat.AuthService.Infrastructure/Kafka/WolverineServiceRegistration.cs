@@ -3,7 +3,9 @@ using FlowChat.Messaging.Contracts.AuthService.Events;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Wolverine;
+using Wolverine.EntityFrameworkCore;
 using Wolverine.Kafka;
+using Wolverine.Persistence;
 using Wolverine.Postgresql;
 
 namespace FlowChat.AuthService.Infrastructure.Kafka;
@@ -34,6 +36,7 @@ public static class WolverineServiceRegistration
         options.UseKafka(bootstrapServers);
         options.PersistMessagesWithPostgresql(connectionString)
             .Enroll<AppDbContext>();
+        options.UseEntityFrameworkCoreTransactions(TransactionMiddlewareMode.Lightweight);
         options.Policies.UseDurableOutboxOnAllSendingEndpoints();
 
         options.PublishMessage<UserCreatedIntegrationEvent>()
