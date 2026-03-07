@@ -63,8 +63,8 @@ public static class StartupExtensions
         }
 
         var dropDatabaseOnStartup = app.Configuration.GetValue<bool>("FlowChat:DropDatabaseOnStartup");
-
         await using var context = new AppDbContextFactory().CreateDbContext([]);
+
         if (dropDatabaseOnStartup)
         {
             app.Logger.LogWarning(
@@ -76,6 +76,7 @@ public static class StartupExtensions
         try
         {
             await context.Database.MigrateAsync();
+            await EnsureAppRoleCrudAccessAsync(app, context);
         }
         catch (PostgresException exception) when (!dropDatabaseOnStartup && IsSchemaDrift(exception))
         {
@@ -94,5 +95,39 @@ public static class StartupExtensions
 
     private static bool IsSchemaDrift(PostgresException exception) =>
         exception.SqlState is DuplicateTableSqlState or DuplicateObjectSqlState;
+
+    private static async Task EnsureAppRoleCrudAccessAsync(WebApplication app, AppDbContext context)
+    {
+        var appConnectionString = app.Configuration.GetConnectionString("AuthDb")
+            ?? throw new InvalidOperationException("Missing connection string: AuthDb.");
+        var appConnectionStringBuilder = new NpgsqlConnectionStringBuilder(appConnectionString);
+        var migratorConnectionString = context.Database.GetConnectionString()
+            ?? throw new InvalidOperationException("Missing migrator connection string for AuthService database reset.");
+        var migratorConnectionStringBuilder = new NpgsqlConnectionStringBuilder(migratorConnectionString);
+
+        var databaseName = QuoteIdentifier(migratorConnectionStringBuilder.Database);
+        var appRoleName = QuoteIdentifier(appConnectionStringBuilder.Username);
+        var migratorRoleName = QuoteIdentifier(migratorConnectionStringBuilder.Username);
+
+        await context.Database.ExecuteSqlRawAsync($"GRANT CONNECT ON DATABASE {databaseName} TO {appRoleName};");
+        await context.Database.ExecuteSqlRawAsync($"GRANT USAGE ON SCHEMA public TO {appRoleName};");
+        await context.Database.ExecuteSqlRawAsync($"REVOKE CREATE ON SCHEMA public FROM {appRoleName};");
+        await context.Database.ExecuteSqlRawAsync(
+            $"GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO {appRoleName};");
+        await context.Database.ExecuteSqlRawAsync(
+            $"GRANT USAGE, SELECT, UPDATE ON ALL SEQUENCES IN SCHEMA public TO {appRoleName};");
+        await context.Database.ExecuteSqlRawAsync(
+            $"ALTER DEFAULT PRIVILEGES FOR ROLE {migratorRoleName} IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO {appRoleName};");
+        await context.Database.ExecuteSqlRawAsync(
+            $"ALTER DEFAULT PRIVILEGES FOR ROLE {migratorRoleName} IN SCHEMA public GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO {appRoleName};");
+
+        app.Logger.LogInformation(
+            "Ensured CRUD grants for AuthService app role {AppRole} on database {DatabaseName}.",
+            appConnectionStringBuilder.Username,
+            migratorConnectionStringBuilder.Database);
+    }
+
+    private static string QuoteIdentifier(string identifier) =>
+        $"\"{identifier.Replace("\"", "\"\"")}\"";
 }
 
