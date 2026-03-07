@@ -79,7 +79,7 @@ public static class SilverbackServiceRegistration
             })
             .AddKafkaClients(clients =>
             {
-                clients.WithBootstrapServers(outboxOptions.BootstrapServers)
+                clients.WithBootstrapServers(userCreatedOptions.BootstrapServers)
                     .AddProducer(producer => producer
                         .Produce<UserCreatedIntegrationEvent>("auth-user-created", endpoint => endpoint
                             .ProduceTo(userCreatedOptions.Topic)
@@ -102,33 +102,31 @@ public static class SilverbackServiceRegistration
 
     private static KafkaProducerSettings ResolveUserCreatedProducerOptions(IConfiguration configuration)
     {
-        var producerSection = configuration.GetSection(UserCreatedProducerOptions.SectionName);
-        var fallbackSection = configuration.GetSection(UserCreatedProducerOptions.FallbackSectionName);
-
-        return new KafkaProducerSettings
-        {
-            BootstrapServers = producerSection["BootstrapServers"]
-                ?? fallbackSection["BootstrapServers"]
-                ?? "localhost:9092",
-            Topic = producerSection["Topic"]
-                ?? fallbackSection["Topic"]
-                ?? "dev.flowchat.identity.user.v1"
-        };
+        return ResolveProducerOptions(
+            configuration,
+            UserCreatedProducerOptions.SectionName,
+            "dev.flowchat.identity.user.v1");
     }
 
     private static KafkaProducerSettings ResolveEmailVerificationProducerOptions(IConfiguration configuration)
     {
-        var producerSection = configuration.GetSection(UserEmailVerificationRequestedProducerOptions.SectionName);
-        var fallbackSection = configuration.GetSection(UserEmailVerificationRequestedProducerOptions.FallbackSectionName);
+        return ResolveProducerOptions(
+            configuration,
+            UserEmailVerificationRequestedProducerOptions.SectionName,
+            "dev.flowchat.notification.email.v1");
+    }
+
+    private static KafkaProducerSettings ResolveProducerOptions(
+        IConfiguration configuration,
+        string sectionName,
+        string defaultTopic)
+    {
+        var producerSection = configuration.GetSection(sectionName);
 
         return new KafkaProducerSettings
         {
-            BootstrapServers = producerSection["BootstrapServers"]
-                ?? fallbackSection["BootstrapServers"]
-                ?? "localhost:9092",
-            Topic = producerSection["Topic"]
-                ?? fallbackSection["Topic"]
-                ?? "dev.flowchat.identity.user.v1"
+            BootstrapServers = producerSection["BootstrapServers"] ?? "localhost:9092",
+            Topic = producerSection["Topic"] ?? defaultTopic
         };
     }
 
