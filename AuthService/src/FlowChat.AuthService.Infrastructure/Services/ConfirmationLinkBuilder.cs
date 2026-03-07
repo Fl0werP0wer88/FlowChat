@@ -16,10 +16,10 @@ public class ConfirmationLinkBuilder : IConfirmationLinkBuilder
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(encodedToken);
 
-        var baseUrl = _configuration["EmailSettings:ConfirmationBaseUrl"];
+        var baseUrl = _configuration["ConfirmationLinks:EmailConfirmationBaseUrl"];
         if (string.IsNullOrWhiteSpace(baseUrl))
         {
-            throw new InvalidOperationException("Missing configuration value: EmailSettings:ConfirmationBaseUrl.");
+            throw new InvalidOperationException("Missing configuration value: ConfirmationLinks:EmailConfirmationBaseUrl.");
         }
 
         var separator = baseUrl.Contains('?') ? "&" : "?";

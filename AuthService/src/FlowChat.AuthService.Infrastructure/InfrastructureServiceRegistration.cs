@@ -1,5 +1,4 @@
 using FlowChat.Application.Abstractions;
-using FlowChat.AuthService.Application.Contracts.Infrastructure;
 using FlowChat.AuthService.Infrastructure.Kafka;
 using FlowChat.AuthService.Infrastructure.Services;
 using FlowChat.Messaging.Contracts.AuthService.Events;
@@ -28,7 +27,6 @@ public static class InfrastructureServiceRegistration
         services.Configure<UserCreatedProducerOptions>(kafkaProducerSection);
         services.Configure<UserEmailVerificationRequestedProducerOptions>(userEmailVerificationRequestedOutboxSection);
 
-        services.AddScoped<IEmailService, EmailService>();
         services.AddScoped<ITokenEncoder, Base64UrlTokenEncoder>();
         services.AddScoped<IConfirmationLinkBuilder, ConfirmationLinkBuilder>();
         services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();

@@ -8,7 +8,6 @@
 
   <ItemGroup>
     <PackageReference Include="Confluent.Kafka" Version="2.13.1" />
-    <PackageReference Include="MailKit" Version="4.12.1" />
     <PackageReference Include="Microsoft.AspNetCore.WebUtilities" Version="10.0.3" />
     <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.3" />
     <PackageReference Include="Silverback.Integration.Kafka" Version="5.0.0" />
