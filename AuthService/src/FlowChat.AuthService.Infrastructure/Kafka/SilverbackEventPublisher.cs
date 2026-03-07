@@ -1,6 +1,5 @@
 using FlowChat.Application.Abstractions;
 using FlowChat.Messaging.Contracts;
-using FlowChat.Messaging.Contracts.AuthService.Events;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Silverback.Messaging.Messages;
@@ -30,27 +29,13 @@ public sealed class SilverbackEventPublisher : IIntegrationEventPublisher
         ArgumentNullException.ThrowIfNull(message);
         cancellationToken.ThrowIfCancellationRequested();
 
-        return message switch
+        if (string.IsNullOrWhiteSpace(message.Key))
         {
-            UserCreatedIntegrationEvent userCreated => PublishAsync(
-                new IntegrationEventEnvelope<UserCreatedIntegrationEvent>(userCreated, userCreated.UserId.ToString()),
-                cancellationToken),
+            throw new InvalidOperationException(
+                $"Integration event '{typeof(TEvent).FullName}' does not contain a Kafka key.");
+        }
 
-            UserConfirmedIntegrationEvent accountConfirmed => PublishAsync(
-                new IntegrationEventEnvelope<UserConfirmedIntegrationEvent>(
-                    accountConfirmed,
-                    accountConfirmed.UserId.ToString()),
-                cancellationToken),
-
-            EmailVerificationRequestIntegrationEvent emailVerificationRequested => PublishAsync(
-                new IntegrationEventEnvelope<EmailVerificationRequestIntegrationEvent>(
-                    emailVerificationRequested,
-                    emailVerificationRequested.UserId.ToString()),
-                cancellationToken),
-
-            _ => throw new NotSupportedException(
-                $"Kafka publishing for integration event '{message.GetType().FullName}' is not configured.")
-        };
+        return PublishAsync(new IntegrationEventEnvelope<TEvent>(message, message.Key), cancellationToken);
     }
 
     private async Task PublishAsync<TEvent>(IntegrationEventEnvelope<TEvent> message, CancellationToken cancellationToken)

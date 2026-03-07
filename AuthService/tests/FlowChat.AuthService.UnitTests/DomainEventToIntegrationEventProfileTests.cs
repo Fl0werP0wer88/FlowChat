@@ -35,6 +35,7 @@ public sealed class DomainEventToIntegrationEventProfileTests
 
         var integrationEvent = _mapper.Map<UserCreatedIntegrationEvent>(domainEvent);
 
+        Assert.Equal(userId.Value.ToString(), integrationEvent.Key);
         Assert.Equal(userId.Value, integrationEvent.UserId);
         Assert.Equal("flower@example.com", integrationEvent.Email);
         Assert.Equal("+48123123123", integrationEvent.PhoneNumber);
@@ -52,6 +53,7 @@ public sealed class DomainEventToIntegrationEventProfileTests
 
         var integrationEvent = _mapper.Map<UserConfirmedIntegrationEvent>(domainEvent);
 
+        Assert.Equal(userId.Value.ToString(), integrationEvent.Key);
         Assert.Equal(userId.Value, integrationEvent.UserId);
     }
 
@@ -66,6 +68,7 @@ public sealed class DomainEventToIntegrationEventProfileTests
 
         var integrationEvent = _mapper.Map<EmailVerificationRequestIntegrationEvent>(domainEvent);
 
+        Assert.Equal(userId.Value.ToString(), integrationEvent.Key);
         Assert.Equal(userId.Value, integrationEvent.UserId);
         Assert.Equal("flower@example.com", integrationEvent.UserEmail);
         Assert.Equal("https://localhost/confirm", integrationEvent.ConfirmationLink);
