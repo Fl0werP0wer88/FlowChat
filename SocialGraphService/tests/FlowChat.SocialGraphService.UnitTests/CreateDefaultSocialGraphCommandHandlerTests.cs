@@ -97,6 +97,7 @@ public sealed class CreateDefaultSocialGraphCommandHandlerTests
 
     private sealed class FakeUnitOfWork : IUnitOfWork
     {
+        public int ExecuteInTransactionCallCount { get; private set; }
         public int SaveChangesCallCount { get; private set; }
 
         public void Dispose()
@@ -111,9 +112,18 @@ public sealed class CreateDefaultSocialGraphCommandHandlerTests
 
         public Task<T> ExecuteInTransactionAsync<T>(
             Func<CancellationToken, Task<T>> operation,
+            CancellationToken cancellationToken) =>
+            ExecuteAsync(operation, cancellationToken);
+
+        private async Task<T> ExecuteAsync<T>(
+            Func<CancellationToken, Task<T>> operation,
             CancellationToken cancellationToken)
         {
-            return operation(cancellationToken);
+            ExecuteInTransactionCallCount++;
+
+            var result = await operation(cancellationToken);
+            SaveChangesCallCount++;
+            return result;
         }
     }
 

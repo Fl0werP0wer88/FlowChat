@@ -20,22 +20,30 @@ public abstract class CommandHandlerBase<TCommand, TResponse> : ICommandHandler<
 
     public async Task<Result<TResponse, IDomainError>> Handle(TCommand request, CancellationToken cancellationToken)
     {
-        var operationResult = await ExecuteAsync(request, cancellationToken);
-        if (!operationResult.IsSuccess)
+        try
         {
-            return operationResult;
-        }
+            return await _unitOfWork.ExecuteInTransactionAsync(async token =>
+            {
+                var operationResult = await ExecuteAsync(request, token);
+                if (!operationResult.IsSuccess)
+                {
+                    throw new CommandFailedException(operationResult);
+                }
 
-        var aggregateRoot = GetAggregateRoot(operationResult);
-        if (aggregateRoot is not null)
+                var aggregateRoot = GetAggregateRoot(operationResult);
+                if (aggregateRoot is not null)
+                {
+                    var domainEvents = aggregateRoot.PopDomainEvents();
+                    await DispatchDomainEventsAsync(domainEvents, token);
+                }
+
+                return operationResult;
+            }, cancellationToken);
+        }
+        catch (CommandFailedException exception)
         {
-            var domainEvents = aggregateRoot.PopDomainEvents();
-            await DispatchDomainEventsAsync(domainEvents, cancellationToken);
+            return exception.Result;
         }
-
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-        return operationResult;
     }
 
     protected abstract Task<Result<TResponse, IDomainError>> ExecuteAsync(TCommand request, CancellationToken cancellationToken);
@@ -50,5 +58,10 @@ public abstract class CommandHandlerBase<TCommand, TResponse> : ICommandHandler<
         }
 
         return _domainEventDispatcher.DispatchAsync(domainEvents, cancellationToken);
+    }
+
+    private sealed class CommandFailedException(Result<TResponse, IDomainError> result) : Exception
+    {
+        public Result<TResponse, IDomainError> Result { get; } = result;
     }
 }
