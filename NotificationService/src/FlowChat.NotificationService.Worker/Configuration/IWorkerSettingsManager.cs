@@ -4,5 +4,5 @@ namespace FlowChat.NotificationService.Worker.Configuration;
 
 public interface IWorkerSettingsManager
 {
-    UserCreatedConsumerOptions GetUserCreatedConsumerOptions();
+    UserEmailVerificationRequestedConsumerOptions GetUserEmailVerificationRequestedConsumerOptions();
 }

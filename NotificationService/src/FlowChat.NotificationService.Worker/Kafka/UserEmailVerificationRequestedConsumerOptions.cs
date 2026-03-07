@@ -1,14 +1,14 @@
 namespace FlowChat.NotificationService.Worker.Kafka;
 
-public sealed class UserCreatedConsumerOptions
+public sealed class UserEmailVerificationRequestedConsumerOptions
 {
-    public const string SectionName = "Kafka:UserCreatedConsumer";
+    public const string SectionName = "Kafka:UserEmailVerificationRequestedConsumer";
 
     public string BootstrapServers { get; set; } = "localhost:9092";
     public string GroupId { get; set; } = "notification-service";
-    public string Topic { get; set; } = "dev.flowchat.identity.user.v1";
-    public string RetryTopic { get; set; } = "dev.flowchat.identity.user.v1.retry";
-    public string DeadLetterTopic { get; set; } = "dev.flowchat.identity.user.v1.dlq";
+    public string Topic { get; set; } = "dev.flowchat.notification.email.v1";
+    public string RetryTopic { get; set; } = "dev.flowchat.notification.email.v1.retry";
+    public string DeadLetterTopic { get; set; } = "dev.flowchat.notification.email.v1.dlq";
     public int MaxRetryCount { get; set; } = 5;
     public int RetryBaseDelaySeconds { get; set; } = 5;
     public int RetryMaxDelaySeconds { get; set; } = 300;

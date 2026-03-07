@@ -10,32 +10,6 @@ public sealed class UserEmailVerificationRequestedSubscriber(
     ILogger<UserEmailVerificationRequestedSubscriber> logger)
 {
     [Subscribe]
-    public Task HandleAsync(
-        UserCreatedIntegrationEvent message,
-        CancellationToken cancellationToken)
-    {
-        logger.LogDebug(
-            "Ignoring {EventType} for user {UserId} in NotificationService.",
-            nameof(UserCreatedIntegrationEvent),
-            message.UserId);
-
-        return Task.CompletedTask;
-    }
-
-    [Subscribe]
-    public Task HandleAsync(
-        UserConfirmedIntegrationEvent message,
-        CancellationToken cancellationToken)
-    {
-        logger.LogDebug(
-            "Ignoring {EventType} for user {UserId} in NotificationService.",
-            nameof(UserConfirmedIntegrationEvent),
-            message.UserId);
-
-        return Task.CompletedTask;
-    }
-
-    [Subscribe]
     public async Task HandleAsync(
         EmailVerificationRequestIntegrationEvent message,
         CancellationToken cancellationToken)

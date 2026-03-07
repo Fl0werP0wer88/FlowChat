@@ -21,7 +21,7 @@ public static class WorkerServiceRegistration
     {
         var settingsManager = new WorkerSettingsManager(configuration);
         services.TryAddSingleton<IWorkerSettingsManager>(settingsManager);
-        var consumerOptions = settingsManager.GetUserCreatedConsumerOptions();
+        var consumerOptions = settingsManager.GetUserEmailVerificationRequestedConsumerOptions();
 
         services.AddSilverback()
             .WithConnectionToMessageBroker(options =>

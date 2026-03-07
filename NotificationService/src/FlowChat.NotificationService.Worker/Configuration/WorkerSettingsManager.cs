@@ -12,7 +12,8 @@ public sealed class WorkerSettingsManager : IWorkerSettingsManager
         _configuration = configuration;
     }
 
-    public UserCreatedConsumerOptions GetUserCreatedConsumerOptions() =>
-        _configuration.GetSection(UserCreatedConsumerOptions.SectionName).Get<UserCreatedConsumerOptions>()
-        ?? new UserCreatedConsumerOptions();
+    public UserEmailVerificationRequestedConsumerOptions GetUserEmailVerificationRequestedConsumerOptions() =>
+        _configuration.GetSection(UserEmailVerificationRequestedConsumerOptions.SectionName)
+            .Get<UserEmailVerificationRequestedConsumerOptions>()
+        ?? new UserEmailVerificationRequestedConsumerOptions();
 }
