@@ -1,15 +1,20 @@
 using FlowChat.Application.Abstractions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
+using Silverback;
+using Silverback.Storage;
 
 namespace FlowChat.AuthService.Persistence.UnitOfWork;
 
 public sealed class AppDbContextUnitOfWork : IUnitOfWork
 {
     private readonly AppDbContext _dbContext;
+    private readonly ISilverbackContext _silverbackContext;
 
-    public AppDbContextUnitOfWork(AppDbContext dbContext)
+    public AppDbContextUnitOfWork(AppDbContext dbContext, ISilverbackContext silverbackContext)
     {
         _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
+        _silverbackContext = silverbackContext ?? throw new ArgumentNullException(nameof(silverbackContext));
     }
  
     public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
@@ -27,6 +32,7 @@ public sealed class AppDbContextUnitOfWork : IUnitOfWork
         return await strategy.ExecuteAsync(async () =>
         {
             await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+            _silverbackContext.EnlistDbTransaction(transaction.GetDbTransaction(), ownTransaction: false);
 
             try
             {
@@ -39,6 +45,10 @@ public sealed class AppDbContextUnitOfWork : IUnitOfWork
             {
                 await transaction.RollbackAsync(cancellationToken);
                 throw;
+            }
+            finally
+            {
+                _silverbackContext.ClearStorageTransaction();
             }
         });
     }
