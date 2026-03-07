@@ -16,14 +16,13 @@ public sealed class WorkerStartupDiagnosticsTests
     public void AddWorkerSilverbackMessaging_RegistersOutboxWorkerHostedService()
     {
         var configuration = BuildWorkerConfiguration();
-        var services = new ServiceCollection();
+        var builder = Host.CreateApplicationBuilder();
+        builder.Configuration.AddConfiguration(configuration);
+        builder.Services.AddWorkerPersistenceServices(builder.Configuration);
+        builder.Services.AddWorkerSilverbackMessaging(builder.Configuration);
 
-        services.AddLogging();
-        services.AddWorkerPersistenceServices(configuration);
-        services.AddWorkerSilverbackMessaging(configuration);
-
-        using var serviceProvider = services.BuildServiceProvider();
-        var hostedServices = serviceProvider.GetServices<IHostedService>().ToList();
+        using var host = builder.Build();
+        var hostedServices = host.Services.GetServices<IHostedService>().ToList();
 
         Assert.Contains(
             hostedServices,

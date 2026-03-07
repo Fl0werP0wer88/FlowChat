@@ -1,4 +1,5 @@
 using System.Text;
+using FlowChat.AuthService.Infrastructure.Configuration;
 using FlowChat.AuthService.Persistence.Identity;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
@@ -10,14 +11,29 @@ namespace FlowChat.AuthService.Persistence;
 public static class APIServiceRegistration
 {
     public static IServiceCollection AddAPIServices(
-                            this IServiceCollection services, IConfiguration configuration)
+                            this IServiceCollection services,
+                            IConfiguration configuration)
     {
-        var jwtKey = configuration["JwtSettings:Key"]
-            ?? throw new InvalidOperationException("Missing configuration value: JwtSettings:Key.");
-        var jwtIssuer = configuration["JwtSettings:Issuer"]
-            ?? throw new InvalidOperationException("Missing configuration value: JwtSettings:Issuer.");
-        var jwtAudience = configuration["JwtSettings:Audience"]
-            ?? throw new InvalidOperationException("Missing configuration value: JwtSettings:Audience.");
+        var apiSettingsManager = new ApiSettingsManager(configuration);
+        var jwtSettings = apiSettingsManager.GetJwtSettings();
+        var jwtKey = jwtSettings.Key;
+        var jwtIssuer = jwtSettings.Issuer;
+        var jwtAudience = jwtSettings.Audience;
+
+        if (string.IsNullOrWhiteSpace(jwtKey))
+        {
+            throw new InvalidOperationException("Missing configuration value: JwtSettings:Key.");
+        }
+
+        if (string.IsNullOrWhiteSpace(jwtIssuer))
+        {
+            throw new InvalidOperationException("Missing configuration value: JwtSettings:Issuer.");
+        }
+
+        if (string.IsNullOrWhiteSpace(jwtAudience))
+        {
+            throw new InvalidOperationException("Missing configuration value: JwtSettings:Audience.");
+        }
 
         services.AddDataProtection();
 

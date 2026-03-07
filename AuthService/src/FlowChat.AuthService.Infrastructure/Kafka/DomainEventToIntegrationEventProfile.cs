@@ -22,16 +22,19 @@ public sealed class DomainEventToIntegrationEventProfile : Profile
         CreateMap<UserCreatedDomainEvent, IntegrationEventEnvelope<UserCreatedIntegrationEvent>>()
             .ConstructUsing((source, context) => new IntegrationEventEnvelope<UserCreatedIntegrationEvent>(
                 context.Mapper.Map<UserCreatedIntegrationEvent>(source),
-                source.UserId.Value.ToString()));
+                source.UserId.Value.ToString()))
+            .ForMember(destination => destination.Headers, options => options.Ignore());
 
         CreateMap<AccountConfirmedDomainEvent, IntegrationEventEnvelope<UserConfirmedIntegrationEvent>>()
             .ConstructUsing((source, context) => new IntegrationEventEnvelope<UserConfirmedIntegrationEvent>(
                 context.Mapper.Map<UserConfirmedIntegrationEvent>(source),
-                source.UserId.Value.ToString()));
+                source.UserId.Value.ToString()))
+            .ForMember(destination => destination.Headers, options => options.Ignore());
 
         CreateMap<EmailVerificationRequestedDomainEvent, IntegrationEventEnvelope<EmailVerificationRequestIntegrationEvent>>()
             .ConstructUsing((source, context) => new IntegrationEventEnvelope<EmailVerificationRequestIntegrationEvent>(
                 context.Mapper.Map<EmailVerificationRequestIntegrationEvent>(source),
-                source.UserId.Value.ToString()));
+                source.UserId.Value.ToString()))
+            .ForMember(destination => destination.Headers, options => options.Ignore());
     }
 }

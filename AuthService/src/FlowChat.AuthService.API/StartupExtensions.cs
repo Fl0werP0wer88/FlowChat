@@ -1,4 +1,5 @@
 using FlowChat.AuthService.Application;
+using FlowChat.AuthService.Infrastructure.Configuration;
 using FlowChat.AuthService.Infrastructure;
 using FlowChat.AuthService.Infrastructure.Kafka;
 using FlowChat.AuthService.Persistence;
@@ -14,6 +15,9 @@ public static class StartupExtensions
 
     public static WebApplication ConfigureServices(this WebApplicationBuilder builder)
     {
+        var apiSettingsManager = new ApiSettingsManager(builder.Configuration);
+        var apiRuntimeSettings = apiSettingsManager.GetApiRuntimeSettings();
+
         builder.Services
         .AddApplicationServices()
         .AddInfrastructureServices(builder.Configuration)
@@ -27,8 +31,7 @@ public static class StartupExtensions
         builder.Services.AddCors(
             options => options.AddPolicy(
                 "open",
-                policy => policy.WithOrigins([builder.Configuration["ApiUrl"] ?? "https://localhost:5000",
-                    builder.Configuration["BlazorUrl"] ?? "https://localhost:5010"])
+                policy => policy.WithOrigins([apiRuntimeSettings.ApiUrl, apiRuntimeSettings.BlazorUrl])
         .AllowAnyMethod()
         .SetIsOriginAllowed(pol => true) // DevNote To be removed whe UI address established
         .AllowAnyHeader()
@@ -62,7 +65,8 @@ public static class StartupExtensions
             return;
         }
 
-        var dropDatabaseOnStartup = app.Configuration.GetValue<bool>("FlowChat:DropDatabaseOnStartup");
+        var apiRuntimeSettings = app.Services.GetRequiredService<IApiSettingsManager>().GetApiRuntimeSettings();
+        var dropDatabaseOnStartup = apiRuntimeSettings.DropDatabaseOnStartup;
         await using var context = new AppDbContextFactory().CreateDbContext([]);
 
         if (dropDatabaseOnStartup)
@@ -98,8 +102,14 @@ public static class StartupExtensions
 
     private static async Task EnsureAppRoleCrudAccessAsync(WebApplication app, AppDbContext context)
     {
-        var appConnectionString = app.Configuration.GetConnectionString("AuthDb")
-            ?? throw new InvalidOperationException("Missing connection string: AuthDb.");
+        var appConnectionString = app.Services
+            .GetRequiredService<IApiSettingsManager>()
+            .GetApiRuntimeSettings()
+            .AuthDbConnectionString;
+        if (string.IsNullOrWhiteSpace(appConnectionString))
+        {
+            throw new InvalidOperationException("Missing connection string: AuthDb.");
+        }
         var appConnectionStringBuilder = new NpgsqlConnectionStringBuilder(appConnectionString);
         var migratorConnectionString = context.Database.GetConnectionString()
             ?? throw new InvalidOperationException("Missing migrator connection string for AuthService database reset.");

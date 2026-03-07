@@ -5,6 +5,7 @@ using FlowChat.AuthService.Infrastructure.Kafka;
 using FlowChat.Domain.Abstractions;
 using FlowChat.Messaging.Contracts;
 using FlowChat.Messaging.Contracts.AuthService.Events;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace FlowChat.AuthService.UnitTests;
 
@@ -14,7 +15,9 @@ public sealed class DomainEventToIntegrationEventProfileTests
 
     public DomainEventToIntegrationEventProfileTests()
     {
-        var configuration = new MapperConfiguration(cfg => cfg.AddProfile<DomainEventToIntegrationEventProfile>());
+        var configuration = new MapperConfiguration(
+            cfg => cfg.AddProfile<DomainEventToIntegrationEventProfile>(),
+            NullLoggerFactory.Instance);
         configuration.AssertConfigurationIsValid();
         _mapper = configuration.CreateMapper();
     }

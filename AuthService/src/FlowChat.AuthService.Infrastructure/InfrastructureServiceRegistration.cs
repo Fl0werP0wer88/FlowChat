@@ -1,5 +1,6 @@
 using FlowChat.Application.Abstractions;
 using FlowChat.AuthService.Application.Contracts.Infrastructure;
+using FlowChat.AuthService.Infrastructure.Configuration;
 using FlowChat.AuthService.Infrastructure.Kafka;
 using AutoMapper;
 using FlowChat.AuthService.Infrastructure.Services;
@@ -14,6 +15,7 @@ public static class InfrastructureServiceRegistration
 {
     public static IServiceCollection AddInfrastructureServices(this IServiceCollection services, IConfiguration configuration)
     {
+        services.TryAddSingleton<IApiSettingsManager>(new ApiSettingsManager(configuration));
         services.TryAddSingleton<IWorkerSettingsManager>(new WorkerSettingsManager(configuration));
         services.AddAutoMapper(
             (Action<AutoMapper.IMapperConfigurationExpression>?)null,

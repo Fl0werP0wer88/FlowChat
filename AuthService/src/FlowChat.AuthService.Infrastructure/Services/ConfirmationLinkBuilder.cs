@@ -1,22 +1,22 @@
 using FlowChat.AuthService.Application.Contracts.Infrastructure;
-using Microsoft.Extensions.Configuration;
+using FlowChat.AuthService.Infrastructure.Configuration;
 
 namespace FlowChat.AuthService.Infrastructure.Services;
 
 public class ConfirmationLinkBuilder : IConfirmationLinkBuilder
 {
-    private readonly IConfiguration _configuration;
+    private readonly IApiSettingsManager _apiSettingsManager;
 
-    public ConfirmationLinkBuilder(IConfiguration configuration)
+    public ConfirmationLinkBuilder(IApiSettingsManager apiSettingsManager)
     {
-        _configuration = configuration;
+        _apiSettingsManager = apiSettingsManager;
     }
 
     public string BuildEmailConfirmationLink(Guid userId, string encodedToken)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(encodedToken);
 
-        var baseUrl = _configuration["ConfirmationLinks:EmailConfirmationBaseUrl"];
+        var baseUrl = _apiSettingsManager.GetConfirmationLinksSettings().EmailConfirmationBaseUrl;
         if (string.IsNullOrWhiteSpace(baseUrl))
         {
             throw new InvalidOperationException("Missing configuration value: ConfirmationLinks:EmailConfirmationBaseUrl.");
