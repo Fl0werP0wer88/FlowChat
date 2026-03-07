@@ -3,10 +3,15 @@ using FlowChat.AuthService.Infrastructure;
 using FlowChat.AuthService.Infrastructure.Kafka;
 using FlowChat.AuthService.Persistence;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
+
 namespace FlowChat.AuthService.Api;
 
 public static class StartupExtensions
 {
+    private const string DuplicateTableSqlState = "42P07";
+    private const string DuplicateObjectSqlState = "42710";
+
     public static WebApplication ConfigureServices(this WebApplicationBuilder builder)
     {
         builder.Services
@@ -57,20 +62,37 @@ public static class StartupExtensions
             return;
         }
 
+        var dropDatabaseOnStartup = app.Configuration.GetValue<bool>("FlowChat:DropDatabaseOnStartup");
+
+        await using var context = new AppDbContextFactory().CreateDbContext([]);
+        if (dropDatabaseOnStartup)
+        {
+            app.Logger.LogWarning(
+                "FlowChat:DropDatabaseOnStartup is enabled for AuthService. Resetting local dev database. Disable this flag again after the next successful startup.");
+
+            await context.Database.EnsureDeletedAsync();
+        }
+
         try
         {
-            await using var context = new AppDbContextFactory().CreateDbContext([]);
-            if (app.Configuration.GetValue<bool>("FlowChat:DropDatabaseOnStartup"))
-            {
-                await context.Database.EnsureDeletedAsync();
-            }
-
             await context.Database.MigrateAsync();
         }
-        catch (Exception)
+        catch (PostgresException exception) when (!dropDatabaseOnStartup && IsSchemaDrift(exception))
         {
-            throw;
+            app.Logger.LogError(
+                exception,
+                "AuthService detected local database schema drift. Set FlowChat:DropDatabaseOnStartup=true, start once to recreate flowchat_auth_db, then set it back to false.");
+
+            throw new InvalidOperationException(
+                "Local AuthService database schema does not match migrations on this branch. " +
+                "This usually means flowchat_auth_db was created from a different branch. " +
+                "Set FlowChat:DropDatabaseOnStartup=true, start AuthService once so flowchat_migrator recreates the database, then set the flag back to false. " +
+                "Alternatively, delete flowchat_auth_db manually and start the service again.",
+                exception);
         }
     }
+
+    private static bool IsSchemaDrift(PostgresException exception) =>
+        exception.SqlState is DuplicateTableSqlState or DuplicateObjectSqlState;
 }
 
