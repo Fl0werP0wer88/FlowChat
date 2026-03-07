@@ -23,6 +23,8 @@ artifacts/
 *.cache
 project.lock.json
 project.fragment.lock.json
+.dotnet/
+.dotnet-home/
 
 # Test artifacts
 TestResults/
