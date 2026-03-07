@@ -1,5 +1,6 @@
 using FlowChat.Application.Abstractions;
 using FlowChat.AuthService.Domain.Events;
+using AutoMapper;
 using FlowChat.Domain.Abstractions;
 using FlowChat.Messaging.Contracts;
 using FlowChat.Messaging.Contracts.AuthService.Events;
@@ -12,15 +13,18 @@ namespace FlowChat.AuthService.Infrastructure.Kafka;
 
 public sealed class SilverbackEventPublisher : IIntegrationEventPublisher
 {
+    private readonly IMapper _mapper;
     private readonly IServiceProvider _serviceProvider;
     private readonly IPublisher _publisher;
     private readonly ILogger<SilverbackEventPublisher> _logger;
 
     public SilverbackEventPublisher(
+        IMapper mapper,
         IServiceProvider serviceProvider,
         IPublisher publisher,
         ILogger<SilverbackEventPublisher> logger)
     {
+        _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
         _publisher = publisher ?? throw new ArgumentNullException(nameof(publisher));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -35,38 +39,15 @@ public sealed class SilverbackEventPublisher : IIntegrationEventPublisher
         return message switch
         {
             UserCreatedDomainEvent userCreated => PublishAsync(
-                new IntegrationEventEnvelope<UserCreatedIntegrationEvent>(
-                    new UserCreatedIntegrationEvent
-                    {
-                        UserId = userCreated.UserId,
-                        Email = userCreated.Email,
-                        PhoneNumber = userCreated.PhoneNumber,
-                        UserName = userCreated.UserName,
-                        DisplayName = userCreated.UserName,
-                        FirstName = userCreated.FirstName,
-                        LastName = userCreated.LastName
-                    },
-                    userCreated.UserId.ToString()),
+                _mapper.Map<IntegrationEventEnvelope<UserCreatedIntegrationEvent>>(userCreated),
                 cancellationToken),
 
             AccountConfirmedDomainEvent accountConfirmed => PublishAsync(
-                new IntegrationEventEnvelope<UserConfirmedIntegrationEvent>(
-                    new UserConfirmedIntegrationEvent
-                    {
-                        UserId = accountConfirmed.UserId
-                    },
-                    accountConfirmed.UserId.ToString()),
+                _mapper.Map<IntegrationEventEnvelope<UserConfirmedIntegrationEvent>>(accountConfirmed),
                 cancellationToken),
 
             EmailVerificationRequestedDomainEvent emailVerificationRequested => PublishAsync(
-                new IntegrationEventEnvelope<EmailVerificationRequestIntegrationEvent>(
-                    new EmailVerificationRequestIntegrationEvent
-                    {
-                        UserId = emailVerificationRequested.UserId,
-                        UserEmail = emailVerificationRequested.UserEmail,
-                        ConfirmationLink = emailVerificationRequested.ConfirmationLink
-                    },
-                    emailVerificationRequested.UserId.ToString()),
+                _mapper.Map<IntegrationEventEnvelope<EmailVerificationRequestIntegrationEvent>>(emailVerificationRequested),
                 cancellationToken),
 
             _ => throw new NotSupportedException(

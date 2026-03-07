@@ -1,6 +1,7 @@
 using FlowChat.Application.Abstractions;
 using FlowChat.AuthService.Application.Contracts.Infrastructure;
 using FlowChat.AuthService.Infrastructure.Kafka;
+using AutoMapper;
 using FlowChat.AuthService.Infrastructure.Services;
 using FlowChat.Messaging.Contracts.AuthService.Events;
 using Microsoft.Extensions.Configuration;
@@ -13,6 +14,9 @@ public static class InfrastructureServiceRegistration
 {
     public static IServiceCollection AddInfrastructureServices(this IServiceCollection services, IConfiguration configuration)
     {
+        services.AddAutoMapper(
+            (Action<AutoMapper.IMapperConfigurationExpression>?)null,
+            typeof(DomainEventToIntegrationEventProfile).Assembly);
         services.Configure<UserCreatedProducerOptions>(
             configuration.GetSection(UserCreatedProducerOptions.SectionName));
         services.Configure<UserEmailVerificationRequestedProducerOptions>(
