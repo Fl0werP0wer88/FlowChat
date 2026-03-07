@@ -1,8 +1,8 @@
 using FlowChat.Application.Abstractions;
 using FlowChat.AuthService.Application.Contracts.Infrastructure;
+using FlowChat.AuthService.Application.Mappings;
 using FlowChat.AuthService.Infrastructure.Configuration;
 using FlowChat.AuthService.Infrastructure.Kafka;
-using AutoMapper;
 using FlowChat.AuthService.Infrastructure.Services;
 using FlowChat.Messaging.Contracts.AuthService.Events;
 using Microsoft.Extensions.Configuration;
@@ -17,9 +17,6 @@ public static class InfrastructureServiceRegistration
     {
         services.TryAddSingleton<IApiSettingsManager>(new ApiSettingsManager(configuration));
         services.TryAddSingleton<IWorkerSettingsManager>(new WorkerSettingsManager(configuration));
-        services.AddAutoMapper(
-            (Action<AutoMapper.IMapperConfigurationExpression>?)null,
-            typeof(DomainEventToIntegrationEventProfile).Assembly);
 
         services.AddScoped<ITokenEncoder, Base64UrlTokenEncoder>();
         services.AddScoped<IConfirmationLinkBuilder, ConfirmationLinkBuilder>();

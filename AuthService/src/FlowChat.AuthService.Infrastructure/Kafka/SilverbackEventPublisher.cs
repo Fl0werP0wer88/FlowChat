@@ -1,7 +1,4 @@
 using FlowChat.Application.Abstractions;
-using FlowChat.AuthService.Domain.Events;
-using AutoMapper;
-using FlowChat.Domain.Abstractions;
 using FlowChat.Messaging.Contracts;
 using FlowChat.Messaging.Contracts.AuthService.Events;
 using Microsoft.Extensions.DependencyInjection;
@@ -13,45 +10,46 @@ namespace FlowChat.AuthService.Infrastructure.Kafka;
 
 public sealed class SilverbackEventPublisher : IIntegrationEventPublisher
 {
-    private readonly IMapper _mapper;
     private readonly IServiceProvider _serviceProvider;
     private readonly IPublisher _publisher;
     private readonly ILogger<SilverbackEventPublisher> _logger;
 
     public SilverbackEventPublisher(
-        IMapper mapper,
         IServiceProvider serviceProvider,
         IPublisher publisher,
         ILogger<SilverbackEventPublisher> logger)
     {
-        _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
         _publisher = publisher ?? throw new ArgumentNullException(nameof(publisher));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     public Task PublishToOutboxAsync<TEvent>(TEvent message, CancellationToken cancellationToken)
-        where TEvent : DomainEventBase
+        where TEvent : IntegrationEvent
     {
         ArgumentNullException.ThrowIfNull(message);
         cancellationToken.ThrowIfCancellationRequested();
 
         return message switch
         {
-            UserCreatedDomainEvent userCreated => PublishAsync(
-                _mapper.Map<IntegrationEventEnvelope<UserCreatedIntegrationEvent>>(userCreated),
+            UserCreatedIntegrationEvent userCreated => PublishAsync(
+                new IntegrationEventEnvelope<UserCreatedIntegrationEvent>(userCreated, userCreated.UserId.ToString()),
                 cancellationToken),
 
-            AccountConfirmedDomainEvent accountConfirmed => PublishAsync(
-                _mapper.Map<IntegrationEventEnvelope<UserConfirmedIntegrationEvent>>(accountConfirmed),
+            UserConfirmedIntegrationEvent accountConfirmed => PublishAsync(
+                new IntegrationEventEnvelope<UserConfirmedIntegrationEvent>(
+                    accountConfirmed,
+                    accountConfirmed.UserId.ToString()),
                 cancellationToken),
 
-            EmailVerificationRequestedDomainEvent emailVerificationRequested => PublishAsync(
-                _mapper.Map<IntegrationEventEnvelope<EmailVerificationRequestIntegrationEvent>>(emailVerificationRequested),
+            EmailVerificationRequestIntegrationEvent emailVerificationRequested => PublishAsync(
+                new IntegrationEventEnvelope<EmailVerificationRequestIntegrationEvent>(
+                    emailVerificationRequested,
+                    emailVerificationRequested.UserId.ToString()),
                 cancellationToken),
 
             _ => throw new NotSupportedException(
-                $"Integration event mapping for domain event '{message.GetType().FullName}' is not configured.")
+                $"Kafka publishing for integration event '{message.GetType().FullName}' is not configured.")
         };
     }
 

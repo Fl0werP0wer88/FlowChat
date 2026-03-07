@@ -1,9 +1,8 @@
 using AutoMapper;
 using FlowChat.AuthService.Domain.Entities;
 using FlowChat.AuthService.Domain.Events;
-using FlowChat.AuthService.Infrastructure.Kafka;
+using FlowChat.AuthService.Application.Mappings;
 using FlowChat.Domain.Abstractions;
-using FlowChat.Messaging.Contracts;
 using FlowChat.Messaging.Contracts.AuthService.Events;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -23,7 +22,7 @@ public sealed class DomainEventToIntegrationEventProfileTests
     }
 
     [Fact]
-    public void UserCreatedDomainEvent_IsMappedToEnvelope()
+    public void UserCreatedDomainEvent_IsMappedToIntegrationEvent()
     {
         var userId = Id<Identity>.FromGuid(Guid.NewGuid());
         var domainEvent = new UserCreatedDomainEvent(
@@ -34,32 +33,30 @@ public sealed class DomainEventToIntegrationEventProfileTests
             "Flow",
             "Er");
 
-        var envelope = _mapper.Map<IntegrationEventEnvelope<UserCreatedIntegrationEvent>>(domainEvent);
+        var integrationEvent = _mapper.Map<UserCreatedIntegrationEvent>(domainEvent);
 
-        Assert.Equal(userId.Value.ToString(), envelope.KafkaKey);
-        Assert.Equal(userId.Value, envelope.Payload.UserId);
-        Assert.Equal("flower@example.com", envelope.Payload.Email);
-        Assert.Equal("+48123123123", envelope.Payload.PhoneNumber);
-        Assert.Equal("flower", envelope.Payload.UserName);
-        Assert.Equal("flower", envelope.Payload.DisplayName);
-        Assert.Equal("Flow", envelope.Payload.FirstName);
-        Assert.Equal("Er", envelope.Payload.LastName);
+        Assert.Equal(userId.Value, integrationEvent.UserId);
+        Assert.Equal("flower@example.com", integrationEvent.Email);
+        Assert.Equal("+48123123123", integrationEvent.PhoneNumber);
+        Assert.Equal("flower", integrationEvent.UserName);
+        Assert.Equal("flower", integrationEvent.DisplayName);
+        Assert.Equal("Flow", integrationEvent.FirstName);
+        Assert.Equal("Er", integrationEvent.LastName);
     }
 
     [Fact]
-    public void AccountConfirmedDomainEvent_IsMappedToEnvelope()
+    public void AccountConfirmedDomainEvent_IsMappedToIntegrationEvent()
     {
         var userId = Id<Identity>.FromGuid(Guid.NewGuid());
         var domainEvent = new AccountConfirmedDomainEvent(userId);
 
-        var envelope = _mapper.Map<IntegrationEventEnvelope<UserConfirmedIntegrationEvent>>(domainEvent);
+        var integrationEvent = _mapper.Map<UserConfirmedIntegrationEvent>(domainEvent);
 
-        Assert.Equal(userId.Value.ToString(), envelope.KafkaKey);
-        Assert.Equal(userId.Value, envelope.Payload.UserId);
+        Assert.Equal(userId.Value, integrationEvent.UserId);
     }
 
     [Fact]
-    public void EmailVerificationRequestedDomainEvent_IsMappedToEnvelope()
+    public void EmailVerificationRequestedDomainEvent_IsMappedToIntegrationEvent()
     {
         var userId = Id<Identity>.FromGuid(Guid.NewGuid());
         var domainEvent = new EmailVerificationRequestedDomainEvent(
@@ -67,11 +64,10 @@ public sealed class DomainEventToIntegrationEventProfileTests
             "flower@example.com",
             "https://localhost/confirm");
 
-        var envelope = _mapper.Map<IntegrationEventEnvelope<EmailVerificationRequestIntegrationEvent>>(domainEvent);
+        var integrationEvent = _mapper.Map<EmailVerificationRequestIntegrationEvent>(domainEvent);
 
-        Assert.Equal(userId.Value.ToString(), envelope.KafkaKey);
-        Assert.Equal(userId.Value, envelope.Payload.UserId);
-        Assert.Equal("flower@example.com", envelope.Payload.UserEmail);
-        Assert.Equal("https://localhost/confirm", envelope.Payload.ConfirmationLink);
+        Assert.Equal(userId.Value, integrationEvent.UserId);
+        Assert.Equal("flower@example.com", integrationEvent.UserEmail);
+        Assert.Equal("https://localhost/confirm", integrationEvent.ConfirmationLink);
     }
 }

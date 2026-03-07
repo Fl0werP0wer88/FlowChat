@@ -1,0 +1,21 @@
+using AutoMapper;
+using FlowChat.AuthService.Domain.Events;
+using FlowChat.Messaging.Contracts.AuthService.Events;
+
+namespace FlowChat.AuthService.Application.Mappings;
+
+public sealed class DomainEventToIntegrationEventProfile : Profile
+{
+    public DomainEventToIntegrationEventProfile()
+    {
+        CreateMap<UserCreatedDomainEvent, UserCreatedIntegrationEvent>()
+            .ForMember(destination => destination.UserId, options => options.MapFrom(source => source.UserId.Value))
+            .ForMember(destination => destination.DisplayName, options => options.MapFrom(source => source.UserName));
+
+        CreateMap<AccountConfirmedDomainEvent, UserConfirmedIntegrationEvent>()
+            .ForMember(destination => destination.UserId, options => options.MapFrom(source => source.UserId.Value));
+
+        CreateMap<EmailVerificationRequestedDomainEvent, EmailVerificationRequestIntegrationEvent>()
+            .ForMember(destination => destination.UserId, options => options.MapFrom(source => source.UserId.Value));
+    }
+}
