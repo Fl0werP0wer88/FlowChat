@@ -59,6 +59,10 @@ public static class SilverbackServiceRegistration
         var userCreatedOptions = ResolveUserCreatedProducerOptions(configuration);
         var emailVerificationOptions = ResolveEmailVerificationProducerOptions(configuration);
 
+        services.Configure<UserCreatedProducerOptions>(
+            configuration.GetSection(UserCreatedProducerOptions.SectionName));
+        services.Configure<UserEmailVerificationRequestedProducerOptions>(
+            configuration.GetSection(UserEmailVerificationRequestedProducerOptions.SectionName));
         services.Configure<OutboxPublisherRuntimeOptions>(
             configuration.GetSection(OutboxPublisherRuntimeOptions.SectionName));
 

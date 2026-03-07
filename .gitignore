@@ -8,6 +8,7 @@ artifacts/
 .vs/
 .vscode/
 .idea/
+.codex-temp/
 *.sln.iml
 
 # User-specific files
