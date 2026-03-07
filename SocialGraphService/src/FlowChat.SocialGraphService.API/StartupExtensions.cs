@@ -1,4 +1,5 @@
 using FlowChat.SocialGraphService.Application;
+using FlowChat.SocialGraphService.Infrastructure.Configuration;
 using FlowChat.SocialGraphService.Infrastructure;
 using FlowChat.SocialGraphService.Persistence;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -14,12 +15,27 @@ public static class StartupExtensions
 {
     public static WebApplication ConfigureServices(this WebApplicationBuilder builder)
     {
-        var jwtKey = builder.Configuration["JwtSettings:Key"]
-            ?? throw new InvalidOperationException("Missing configuration value: JwtSettings:Key.");
-        var jwtIssuer = builder.Configuration["JwtSettings:Issuer"]
-            ?? throw new InvalidOperationException("Missing configuration value: JwtSettings:Issuer.");
-        var jwtAudience = builder.Configuration["JwtSettings:Audience"]
-            ?? throw new InvalidOperationException("Missing configuration value: JwtSettings:Audience.");
+        var apiSettingsManager = new ApiSettingsManager(builder.Configuration);
+        var jwtSettings = apiSettingsManager.GetJwtSettings();
+        var apiRuntimeSettings = apiSettingsManager.GetApiRuntimeSettings();
+        var jwtKey = jwtSettings.Key;
+        var jwtIssuer = jwtSettings.Issuer;
+        var jwtAudience = jwtSettings.Audience;
+
+        if (string.IsNullOrWhiteSpace(jwtKey))
+        {
+            throw new InvalidOperationException("Missing configuration value: JwtSettings:Key.");
+        }
+
+        if (string.IsNullOrWhiteSpace(jwtIssuer))
+        {
+            throw new InvalidOperationException("Missing configuration value: JwtSettings:Issuer.");
+        }
+
+        if (string.IsNullOrWhiteSpace(jwtAudience))
+        {
+            throw new InvalidOperationException("Missing configuration value: JwtSettings:Audience.");
+        }
 
         builder.Services.AddApiApplicationServices();
         builder.Services.AddInfrastructureServices(builder.Configuration);
@@ -51,8 +67,7 @@ public static class StartupExtensions
         builder.Services.AddCors(
             options => options.AddPolicy(
                 "open",
-                policy => policy.WithOrigins([builder.Configuration["ApiUrl"] ?? "https://localhost:5000",
-                    builder.Configuration["BlazorUrl"] ?? "https://localhost:5010"])
+                policy => policy.WithOrigins([apiRuntimeSettings.ApiUrl, apiRuntimeSettings.BlazorUrl])
         .AllowAnyMethod()
         .SetIsOriginAllowed(pol => true) // DevNote To be removed whe UI address established
         .AllowAnyHeader()
@@ -108,7 +123,7 @@ public static class StartupExtensions
         try
         {
             await using var context = new AppDbContextFactory().CreateDbContext([]);
-            if (app.Configuration.GetValue<bool>("FlowChat:DropDatabaseOnStartup"))
+            if (app.Services.GetRequiredService<IApiSettingsManager>().GetApiRuntimeSettings().DropDatabaseOnStartup)
             {
                 await context.Database.EnsureDeletedAsync();
             }

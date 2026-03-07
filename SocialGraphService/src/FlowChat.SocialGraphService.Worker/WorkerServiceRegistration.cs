@@ -1,7 +1,9 @@
 using Confluent.Kafka;
+using FlowChat.SocialGraphService.Worker.Configuration;
 using FlowChat.SocialGraphService.Worker.Kafka;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Silverback.Configuration;
 using Silverback.Messaging.Configuration;
 using Silverback.Messaging.Configuration.Kafka;
@@ -14,11 +16,9 @@ public static class WorkerServiceRegistration
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        var consumerOptions = configuration.GetSection(UserCreatedConsumerOptions.SectionName)
-            .Get<UserCreatedConsumerOptions>() ?? new UserCreatedConsumerOptions();
-
-        services.Configure<UserCreatedConsumerOptions>(
-            configuration.GetSection(UserCreatedConsumerOptions.SectionName));
+        var settingsManager = new WorkerSettingsManager(configuration);
+        services.TryAddSingleton<IWorkerSettingsManager>(settingsManager);
+        var consumerOptions = settingsManager.GetUserCreatedConsumerOptions();
         var autoOffsetReset = ParseAutoOffsetReset(consumerOptions.AutoOffsetReset);
         services.AddSilverback()
             .WithConnectionToMessageBroker(options => options.AddKafka())

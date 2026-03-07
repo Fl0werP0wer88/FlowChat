@@ -1,6 +1,6 @@
 using System.Text.RegularExpressions;
 using System.Net.Http;
-using Microsoft.Extensions.Configuration;
+using FlowChat.GatewayService.Api.Configuration;
 using Microsoft.OpenApi;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
@@ -10,20 +10,20 @@ public sealed class ReverseProxyRoutesDocumentFilter : IDocumentFilter
 {
     private static readonly Regex CatchAllPattern = new(@"\{\*\*([^}]+)\}", RegexOptions.Compiled);
 
-    private readonly IConfiguration _configuration;
+    private readonly IApiSettingsManager _apiSettingsManager;
 
-    public ReverseProxyRoutesDocumentFilter(IConfiguration configuration)
+    public ReverseProxyRoutesDocumentFilter(IApiSettingsManager apiSettingsManager)
     {
-        _configuration = configuration;
+        _apiSettingsManager = apiSettingsManager;
     }
 
     public void Apply(OpenApiDocument swaggerDoc, DocumentFilterContext context)
     {
-        var routes = _configuration.GetSection("ReverseProxy:Routes").GetChildren();
+        var routes = _apiSettingsManager.GetReverseProxyRouteSettings();
 
         foreach (var route in routes)
         {
-            var rawPath = route.GetValue<string>("Match:Path");
+            var rawPath = route.RawPath;
             if (string.IsNullOrWhiteSpace(rawPath))
             {
                 continue;
@@ -37,13 +37,7 @@ public sealed class ReverseProxyRoutesDocumentFilter : IDocumentFilter
                 swaggerDoc.Paths[path] = pathItem;
             }
 
-            var methods = route.GetSection("Match:Methods").Get<string[]>();
-            if (methods is null || methods.Length == 0)
-            {
-                methods = ["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"];
-            }
-
-            foreach (var method in methods)
+            foreach (var method in route.Methods)
             {
                 var httpMethod = ToHttpMethod(method);
                 if (httpMethod is null)
@@ -61,11 +55,14 @@ public sealed class ReverseProxyRoutesDocumentFilter : IDocumentFilter
         }
     }
 
-    private static OpenApiOperation BuildOperation(IConfigurationSection route, string method, string rawPath)
+    private static OpenApiOperation BuildOperation(
+        ReverseProxyRouteSettings route,
+        string method,
+        string rawPath)
     {
-        var routeId = route.Key;
-        var clusterId = route.GetValue<string>("ClusterId") ?? "unknown-cluster";
-        var authPolicy = route.GetValue<string>("AuthorizationPolicy");
+        var routeId = route.RouteId;
+        var clusterId = route.ClusterId;
+        var authPolicy = route.AuthorizationPolicy;
         var authInfo = string.IsNullOrWhiteSpace(authPolicy)
             ? "Authentication: not required."
             : $"Authentication policy: {authPolicy}.";

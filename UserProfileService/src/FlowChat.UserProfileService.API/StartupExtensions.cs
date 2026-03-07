@@ -1,4 +1,5 @@
 using FlowChat.UserProfileService.Application;
+using FlowChat.UserProfileService.Infrastructure.Configuration;
 using FlowChat.UserProfileService.Infrastructure;
 using FlowChat.UserProfileService.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -10,6 +11,9 @@ public static class StartupExtensions
 {
     public static WebApplication ConfigureServices(this WebApplicationBuilder builder)
     {
+        var apiSettingsManager = new ApiSettingsManager(builder.Configuration);
+        var apiRuntimeSettings = apiSettingsManager.GetApiRuntimeSettings();
+
         builder.Services.AddApiApplicationServices();
         builder.Services.AddInfrastructureServices(builder.Configuration);
         builder.Services.AddPersistenceServices(builder.Configuration);
@@ -19,8 +23,7 @@ public static class StartupExtensions
         builder.Services.AddCors(
             options => options.AddPolicy(
                 "open",
-                policy => policy.WithOrigins([builder.Configuration["ApiUrl"] ?? "https://localhost:5000",
-                    builder.Configuration["BlazorUrl"] ?? "https://localhost:5010"])
+                policy => policy.WithOrigins([apiRuntimeSettings.ApiUrl, apiRuntimeSettings.BlazorUrl])
         .AllowAnyMethod()
         .SetIsOriginAllowed(pol => true) // DevNote To be removed whe UI address established
         .AllowAnyHeader()
@@ -55,7 +58,7 @@ public static class StartupExtensions
         try
         {
             await using var context = new AppDbContextFactory().CreateDbContext([]);
-            if (app.Configuration.GetValue<bool>("FlowChat:DropDatabaseOnStartup"))
+            if (app.Services.GetRequiredService<IApiSettingsManager>().GetApiRuntimeSettings().DropDatabaseOnStartup)
             {
                 await context.Database.EnsureDeletedAsync();
             }

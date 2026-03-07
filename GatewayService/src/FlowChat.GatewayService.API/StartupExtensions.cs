@@ -1,5 +1,7 @@
+using FlowChat.GatewayService.Api.Configuration;
 using FlowChat.GatewayService.Api.OpenApi;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using System.Text;
@@ -10,13 +12,29 @@ public static class StartupExtensions
 {
     public static WebApplication ConfigureServices(this WebApplicationBuilder builder)
     {
-        var jwtKey = builder.Configuration["JwtSettings:Key"]
-            ?? throw new InvalidOperationException("Missing configuration value: JwtSettings:Key.");
-        var jwtIssuer = builder.Configuration["JwtSettings:Issuer"]
-            ?? throw new InvalidOperationException("Missing configuration value: JwtSettings:Issuer.");
-        var jwtAudience = builder.Configuration["JwtSettings:Audience"]
-            ?? throw new InvalidOperationException("Missing configuration value: JwtSettings:Audience.");
+        var apiSettingsManager = new ApiSettingsManager(builder.Configuration);
+        var apiRuntimeSettings = apiSettingsManager.GetApiRuntimeSettings();
+        var jwtSettings = apiSettingsManager.GetJwtSettings();
+        var jwtKey = jwtSettings.Key;
+        var jwtIssuer = jwtSettings.Issuer;
+        var jwtAudience = jwtSettings.Audience;
 
+        if (string.IsNullOrWhiteSpace(jwtKey))
+        {
+            throw new InvalidOperationException("Missing configuration value: JwtSettings:Key.");
+        }
+
+        if (string.IsNullOrWhiteSpace(jwtIssuer))
+        {
+            throw new InvalidOperationException("Missing configuration value: JwtSettings:Issuer.");
+        }
+
+        if (string.IsNullOrWhiteSpace(jwtAudience))
+        {
+            throw new InvalidOperationException("Missing configuration value: JwtSettings:Audience.");
+        }
+
+        builder.Services.TryAddSingleton<IApiSettingsManager>(apiSettingsManager);
         builder.Services.Configure<SwaggerAggregationOptions>(
             builder.Configuration.GetSection(SwaggerAggregationOptions.SectionName));
         builder.Services.AddHttpClient<DownstreamSwaggerAggregator>();
@@ -29,8 +47,8 @@ public static class StartupExtensions
                 "open",
                 policy => policy.WithOrigins(
                         [
-                            builder.Configuration["ApiUrl"] ?? "https://localhost:5000",
-                            builder.Configuration["BlazorUrl"] ?? "https://localhost:5010"
+                            apiRuntimeSettings.ApiUrl,
+                            apiRuntimeSettings.BlazorUrl
                         ])
                     .AllowAnyMethod()
                     .SetIsOriginAllowed(_ => true)

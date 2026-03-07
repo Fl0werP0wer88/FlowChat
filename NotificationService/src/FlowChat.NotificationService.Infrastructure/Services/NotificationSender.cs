@@ -1,7 +1,7 @@
 using FlowChat.NotificationService.Application.Contracts.Infrastructure;
+using FlowChat.NotificationService.Infrastructure.Configuration;
 using MailKit.Net.Smtp;
 using MailKit.Security;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using MimeKit;
 
@@ -9,14 +9,14 @@ namespace FlowChat.NotificationService.Infrastructure.Services;
 
 public sealed class NotificationSender : INotificationSender
 {
-    private readonly IConfiguration _configuration;
+    private readonly IApiSettingsManager _apiSettingsManager;
     private readonly ILogger<NotificationSender> _logger;
 
     public NotificationSender(
-        IConfiguration configuration,
+        IApiSettingsManager apiSettingsManager,
         ILogger<NotificationSender> logger)
     {
-        _configuration = configuration;
+        _apiSettingsManager = apiSettingsManager;
         _logger = logger;
     }
 
@@ -26,13 +26,13 @@ public sealed class NotificationSender : INotificationSender
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        var smtpHost = _configuration["EmailSettings:SmtpHost"];
-        var smtpPortValue = _configuration["EmailSettings:SmtpPort"];
-        var enableSslValue = _configuration["EmailSettings:EnableSsl"];
-        var fromEmail = _configuration["EmailSettings:FromEmail"];
-        var fromName = _configuration["EmailSettings:FromName"];
-        var username = _configuration["EmailSettings:Username"];
-        var password = _configuration["EmailSettings:Password"];
+        var emailSettings = _apiSettingsManager.GetEmailSettings();
+        var smtpHost = emailSettings.SmtpHost;
+        var smtpPort = emailSettings.SmtpPort;
+        var fromEmail = emailSettings.FromEmail;
+        var fromName = emailSettings.FromName;
+        var username = emailSettings.Username;
+        var password = emailSettings.Password;
 
         if (string.IsNullOrWhiteSpace(smtpHost))
         {
@@ -44,7 +44,7 @@ public sealed class NotificationSender : INotificationSender
             throw new InvalidOperationException("Missing configuration value: EmailSettings:FromEmail.");
         }
 
-        if (string.IsNullOrWhiteSpace(smtpPortValue) || !int.TryParse(smtpPortValue, out var smtpPort))
+        if (smtpPort <= 0)
         {
             throw new InvalidOperationException("Invalid configuration value: EmailSettings:SmtpPort.");
         }
@@ -59,7 +59,7 @@ public sealed class NotificationSender : INotificationSender
             throw new InvalidOperationException("Email subject is required.");
         }
 
-        var enableSsl = bool.TryParse(enableSslValue, out var parsedEnableSsl) && parsedEnableSsl;
+        var enableSsl = emailSettings.EnableSsl;
         var secureSocketOptions = enableSsl
             ? (smtpPort == 465 ? SecureSocketOptions.SslOnConnect : SecureSocketOptions.StartTls)
             : SecureSocketOptions.None;

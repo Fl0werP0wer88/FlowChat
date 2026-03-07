@@ -1,11 +1,12 @@
 using FlowChat.Messaging.Contracts.AuthService.Events;
 using FlowChat.NotificationService.Application.Notifications.Commands.UserEmailVerificationRequested;
 using FlowChat.NotificationService.Persistence;
+using FlowChat.NotificationService.Worker.Configuration;
 using FlowChat.NotificationService.Worker.Kafka;
 using Confluent.Kafka;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Silverback.Configuration;
 using Silverback.Messaging.Configuration;
 using Silverback.Messaging.Configuration.Kafka;
@@ -18,11 +19,9 @@ public static class WorkerServiceRegistration
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        var consumerOptions = configuration.GetSection(UserCreatedConsumerOptions.SectionName)
-            .Get<UserCreatedConsumerOptions>() ?? new UserCreatedConsumerOptions();
-
-        services.Configure<UserCreatedConsumerOptions>(
-            configuration.GetSection(UserCreatedConsumerOptions.SectionName));
+        var settingsManager = new WorkerSettingsManager(configuration);
+        services.TryAddSingleton<IWorkerSettingsManager>(settingsManager);
+        var consumerOptions = settingsManager.GetUserCreatedConsumerOptions();
 
         services.AddSilverback()
             .WithConnectionToMessageBroker(options =>

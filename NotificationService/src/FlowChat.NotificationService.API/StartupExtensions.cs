@@ -1,4 +1,5 @@
 using FlowChat.NotificationService.Application;
+using FlowChat.NotificationService.Infrastructure.Configuration;
 using FlowChat.NotificationService.Infrastructure;
 using FlowChat.NotificationService.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -9,6 +10,9 @@ public static class StartupExtensions
 {
     public static WebApplication ConfigureServices(this WebApplicationBuilder builder)
     {
+        var apiSettingsManager = new ApiSettingsManager(builder.Configuration);
+        var apiRuntimeSettings = apiSettingsManager.GetApiRuntimeSettings();
+
         builder.Services.AddApiApplicationServices();
         builder.Services.AddInfrastructureServices(builder.Configuration);
         builder.Services.AddPersistenceServices(builder.Configuration);
@@ -20,8 +24,8 @@ public static class StartupExtensions
                 "open",
                 policy => policy.WithOrigins(
                         [
-                            builder.Configuration["ApiUrl"] ?? "https://localhost:5000",
-                            builder.Configuration["BlazorUrl"] ?? "https://localhost:5010"
+                            apiRuntimeSettings.ApiUrl,
+                            apiRuntimeSettings.BlazorUrl
                         ])
                     .AllowAnyMethod()
                     .SetIsOriginAllowed(_ => true)
@@ -58,7 +62,7 @@ public static class StartupExtensions
         try
         {
             await using var context = new AppDbContextFactory().CreateDbContext([]);
-            if (app.Configuration.GetValue<bool>("FlowChat:DropDatabaseOnStartup"))
+            if (app.Services.GetRequiredService<IApiSettingsManager>().GetApiRuntimeSettings().DropDatabaseOnStartup)
             {
                 await context.Database.EnsureDeletedAsync();
             }
