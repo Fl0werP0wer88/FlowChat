@@ -1,9 +1,7 @@
 using System.Data.Common;
 using FlowChat.AuthService.Infrastructure.Kafka;
 using FlowChat.AuthService.Persistence;
-using FlowChat.AuthService.Persistence.Configuration;
 using FlowChat.AuthService.Worker.Diagnostics;
-using Microsoft.Extensions.Options;
 
 var builder = Host.CreateApplicationBuilder(args);
 
@@ -26,11 +24,10 @@ static void LogStartupDiagnostics(IHost host)
         .CreateLogger("FlowChat.AuthService.Worker.Startup");
     var environment = host.Services.GetRequiredService<IHostEnvironment>();
     var configuration = host.Services.GetRequiredService<IConfiguration>();
-    var userCreatedOptions = host.Services.GetRequiredService<IOptions<UserCreatedProducerOptions>>().Value;
-    var emailVerificationOptions = host.Services
-        .GetRequiredService<IOptions<UserEmailVerificationRequestedProducerOptions>>()
-        .Value;
-    var outboxOptions = host.Services.GetRequiredService<IOptions<OutboxPublisherRuntimeOptions>>().Value;
+    var settingsManager = host.Services.GetRequiredService<IWorkerSettingsManager>();
+    var userCreatedOptions = settingsManager.GetUserCreatedProducerOptions();
+    var emailVerificationOptions = settingsManager.GetUserEmailVerificationRequestedProducerOptions();
+    var outboxOptions = settingsManager.GetOutboxPublisherRuntimeOptions();
     var authDbTarget = GetAuthDbTarget(configuration.GetConnectionString("AuthDb"));
 
     logger.LogInformation(

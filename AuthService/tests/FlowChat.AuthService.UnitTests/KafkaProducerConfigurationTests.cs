@@ -1,15 +1,15 @@
 using FlowChat.AuthService.Infrastructure;
 using FlowChat.AuthService.Infrastructure.Kafka;
+using FlowChat.Messaging.Contracts.AuthService.Events;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
 
 namespace FlowChat.AuthService.UnitTests;
 
 public sealed class KafkaProducerConfigurationTests
 {
     [Fact]
-    public void AddInfrastructureServices_BindsKafkaProducerOptions_WithoutFallbackToLegacySections()
+    public void AddInfrastructureServices_ResolvesKafkaProducerOptions_WithoutFallbackToLegacySections()
     {
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
@@ -30,17 +30,20 @@ public sealed class KafkaProducerConfigurationTests
 
         using var serviceProvider = services.BuildServiceProvider();
 
-        var userCreatedOptions = serviceProvider
-            .GetRequiredService<IOptions<UserCreatedProducerOptions>>()
-            .Value;
-        var emailVerificationOptions = serviceProvider
-            .GetRequiredService<IOptions<UserEmailVerificationRequestedProducerOptions>>()
-            .Value;
+        var settingsManager = serviceProvider.GetRequiredService<IWorkerSettingsManager>();
+        var userCreatedOptions = settingsManager.GetUserCreatedProducerOptions();
+        var emailVerificationOptions = settingsManager.GetUserEmailVerificationRequestedProducerOptions();
+        var typedUserCreatedOptions = serviceProvider
+            .GetRequiredService<IKafkaProducerOptions<UserCreatedIntegrationEvent>>();
+        var typedEmailVerificationOptions = serviceProvider
+            .GetRequiredService<IKafkaProducerOptions<EmailVerificationRequestIntegrationEvent>>();
 
         Assert.Equal("broker:9092", userCreatedOptions.BootstrapServers);
         Assert.Equal("user-created-topic", userCreatedOptions.Topic);
         Assert.Equal("broker:9092", emailVerificationOptions.BootstrapServers);
         Assert.Equal("email-verification-topic", emailVerificationOptions.Topic);
+        Assert.Equal("user-created-topic", typedUserCreatedOptions.Topic);
+        Assert.Equal("email-verification-topic", typedEmailVerificationOptions.Topic);
     }
 
     [Theory]

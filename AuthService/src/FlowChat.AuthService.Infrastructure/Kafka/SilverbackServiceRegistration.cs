@@ -3,6 +3,7 @@ using FlowChat.AuthService.Persistence.Configuration;
 using FlowChat.Messaging.Contracts.AuthService.Events;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Silverback.Configuration;
 using Silverback.Messaging.Configuration;
 using Silverback.Messaging.Configuration.Kafka;
@@ -15,8 +16,11 @@ public static class SilverbackServiceRegistration
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        var userCreatedOptions = ResolveUserCreatedProducerOptions(configuration);
-        var emailVerificationOptions = ResolveEmailVerificationProducerOptions(configuration);
+        var settingsManager = new WorkerSettingsManager(configuration);
+        services.TryAddSingleton<IWorkerSettingsManager>(settingsManager);
+
+        var userCreatedOptions = settingsManager.GetUserCreatedProducerOptions();
+        var emailVerificationOptions = settingsManager.GetUserEmailVerificationRequestedProducerOptions();
 
         services.AddSilverback()
             .WithConnectionToMessageBroker(options =>
@@ -54,17 +58,12 @@ public static class SilverbackServiceRegistration
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        var outboxOptions = configuration.GetSection(OutboxPublisherRuntimeOptions.SectionName)
-            .Get<OutboxPublisherRuntimeOptions>() ?? new OutboxPublisherRuntimeOptions();
-        var userCreatedOptions = ResolveUserCreatedProducerOptions(configuration);
-        var emailVerificationOptions = ResolveEmailVerificationProducerOptions(configuration);
+        var settingsManager = new WorkerSettingsManager(configuration);
+        services.TryAddSingleton<IWorkerSettingsManager>(settingsManager);
 
-        services.Configure<UserCreatedProducerOptions>(
-            configuration.GetSection(UserCreatedProducerOptions.SectionName));
-        services.Configure<UserEmailVerificationRequestedProducerOptions>(
-            configuration.GetSection(UserEmailVerificationRequestedProducerOptions.SectionName));
-        services.Configure<OutboxPublisherRuntimeOptions>(
-            configuration.GetSection(OutboxPublisherRuntimeOptions.SectionName));
+        var outboxOptions = settingsManager.GetOutboxPublisherRuntimeOptions();
+        var userCreatedOptions = settingsManager.GetUserCreatedProducerOptions();
+        var emailVerificationOptions = settingsManager.GetUserEmailVerificationRequestedProducerOptions();
 
         services.AddSilverback()
             .WithConnectionToMessageBroker(options =>
@@ -102,41 +101,5 @@ public static class SilverbackServiceRegistration
             });
 
         return services;
-    }
-
-    private static KafkaProducerSettings ResolveUserCreatedProducerOptions(IConfiguration configuration)
-    {
-        return ResolveProducerOptions(
-            configuration,
-            UserCreatedProducerOptions.SectionName,
-            "dev.flowchat.identity.user.v1");
-    }
-
-    private static KafkaProducerSettings ResolveEmailVerificationProducerOptions(IConfiguration configuration)
-    {
-        return ResolveProducerOptions(
-            configuration,
-            UserEmailVerificationRequestedProducerOptions.SectionName,
-            "dev.flowchat.notification.email.v1");
-    }
-
-    private static KafkaProducerSettings ResolveProducerOptions(
-        IConfiguration configuration,
-        string sectionName,
-        string defaultTopic)
-    {
-        var producerSection = configuration.GetSection(sectionName);
-
-        return new KafkaProducerSettings
-        {
-            BootstrapServers = producerSection["BootstrapServers"] ?? "localhost:9092",
-            Topic = producerSection["Topic"] ?? defaultTopic
-        };
-    }
-
-    private sealed class KafkaProducerSettings
-    {
-        public string BootstrapServers { get; init; } = "localhost:9092";
-        public string Topic { get; init; } = "dev.flowchat.identity.user.v1";
     }
 }

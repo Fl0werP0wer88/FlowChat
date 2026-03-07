@@ -6,7 +6,7 @@ using FlowChat.AuthService.Infrastructure.Services;
 using FlowChat.Messaging.Contracts.AuthService.Events;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace FlowChat.AuthService.Infrastructure;
 
@@ -14,21 +14,18 @@ public static class InfrastructureServiceRegistration
 {
     public static IServiceCollection AddInfrastructureServices(this IServiceCollection services, IConfiguration configuration)
     {
+        services.TryAddSingleton<IWorkerSettingsManager>(new WorkerSettingsManager(configuration));
         services.AddAutoMapper(
             (Action<AutoMapper.IMapperConfigurationExpression>?)null,
             typeof(DomainEventToIntegrationEventProfile).Assembly);
-        services.Configure<UserCreatedProducerOptions>(
-            configuration.GetSection(UserCreatedProducerOptions.SectionName));
-        services.Configure<UserEmailVerificationRequestedProducerOptions>(
-            configuration.GetSection(UserEmailVerificationRequestedProducerOptions.SectionName));
 
         services.AddScoped<ITokenEncoder, Base64UrlTokenEncoder>();
         services.AddScoped<IConfirmationLinkBuilder, ConfirmationLinkBuilder>();
         services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
         services.AddScoped<IKafkaProducerOptions<UserCreatedIntegrationEvent>>(sp =>
-            sp.GetRequiredService<IOptions<UserCreatedProducerOptions>>().Value);
+            sp.GetRequiredService<IWorkerSettingsManager>().GetUserCreatedProducerOptions());
         services.AddScoped<IKafkaProducerOptions<EmailVerificationRequestIntegrationEvent>>(sp =>
-            sp.GetRequiredService<IOptions<UserEmailVerificationRequestedProducerOptions>>().Value);
+            sp.GetRequiredService<IWorkerSettingsManager>().GetUserEmailVerificationRequestedProducerOptions());
         services.AddScoped<IIntegrationEventPublisher, SilverbackEventPublisher>();
 
         return services;

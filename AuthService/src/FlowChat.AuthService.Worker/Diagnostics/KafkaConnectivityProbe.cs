@@ -1,29 +1,26 @@
 using Confluent.Kafka;
 using FlowChat.AuthService.Infrastructure.Kafka;
-using Microsoft.Extensions.Options;
 
 namespace FlowChat.AuthService.Worker.Diagnostics;
 
 public sealed class KafkaConnectivityProbe : IKafkaConnectivityProbe
 {
     private static readonly TimeSpan MetadataTimeout = TimeSpan.FromSeconds(5);
-    private readonly UserCreatedProducerOptions _userCreatedOptions;
-    private readonly UserEmailVerificationRequestedProducerOptions _emailVerificationOptions;
+    private readonly IWorkerSettingsManager _workerSettingsManager;
 
-    public KafkaConnectivityProbe(
-        IOptions<UserCreatedProducerOptions> userCreatedOptions,
-        IOptions<UserEmailVerificationRequestedProducerOptions> emailVerificationOptions)
+    public KafkaConnectivityProbe(IWorkerSettingsManager workerSettingsManager)
     {
-        _userCreatedOptions = userCreatedOptions.Value;
-        _emailVerificationOptions = emailVerificationOptions.Value;
+        _workerSettingsManager = workerSettingsManager;
     }
 
     public Task ProbeAsync(CancellationToken cancellationToken)
     {
+        var userCreatedOptions = _workerSettingsManager.GetUserCreatedProducerOptions();
+        var emailVerificationOptions = _workerSettingsManager.GetUserEmailVerificationRequestedProducerOptions();
         var bootstrapServers = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-        AddBootstrapServers(bootstrapServers, _userCreatedOptions.BootstrapServers);
-        AddBootstrapServers(bootstrapServers, _emailVerificationOptions.BootstrapServers);
+        AddBootstrapServers(bootstrapServers, userCreatedOptions.BootstrapServers);
+        AddBootstrapServers(bootstrapServers, emailVerificationOptions.BootstrapServers);
 
         foreach (var bootstrapServer in bootstrapServers)
         {
