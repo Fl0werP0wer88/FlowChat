@@ -3,12 +3,12 @@ using FlowChat.Application.Abstractions;
 using FlowChat.AuthService.Domain.Events;
 using FlowChat.Messaging.Contracts.AuthService.Events;
 
-namespace FlowChat.AuthService.Application.Common.Eventing;
+namespace FlowChat.AuthService.Application.Common.Eventing.Handlers;
 
-public sealed class UserCreatedDomainEventHandler
-    : MappedDomainEventHandlerBase<UserCreatedDomainEvent, UserCreatedIntegrationEvent>
+public sealed class AccountConfirmedDomainEventHandler
+    : MappedDomainEventHandlerBase<AccountConfirmedDomainEvent, UserConfirmedIntegrationEvent>
 {
-    public UserCreatedDomainEventHandler(
+    public AccountConfirmedDomainEventHandler(
         IIntegrationEventPublisher integrationEventPublisher,
         IMapper mapper)
         : base(integrationEventPublisher, mapper)

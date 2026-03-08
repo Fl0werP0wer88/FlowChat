@@ -3,7 +3,7 @@ using FlowChat.Application.Abstractions;
 using FlowChat.Domain.Abstractions;
 using FlowChat.Messaging.Contracts;
 
-namespace FlowChat.AuthService.Application.Common.Eventing;
+namespace FlowChat.AuthService.Application.Common.Eventing.Handlers;
 
 public abstract class MappedDomainEventHandlerBase<TDomainEvent, TIntegrationEvent>
     : DomainEventHandlerBase<TDomainEvent, TIntegrationEvent>
