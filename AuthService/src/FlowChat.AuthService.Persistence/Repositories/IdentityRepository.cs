@@ -9,7 +9,7 @@ namespace FlowChat.AuthService.Persistence.Repositories;
 public class IdentityRepository : IIdentityRepository
 {
     private readonly UserManager<UserEntity> _userManager;
-    private const string EmailConfirmationTokenPurpose = "Confirmation";
+    private const string EmailConfirmationTokenPurpose = "EmailConfirmation";
 
     public IdentityRepository(UserManager<UserEntity> userManager)
     {
