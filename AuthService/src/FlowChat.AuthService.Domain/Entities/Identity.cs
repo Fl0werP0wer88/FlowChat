@@ -15,14 +15,24 @@ public sealed class Identity : AggregateRootBase<Identity>
     public string? LastName { get; }
 
 
-    private Identity(Guid id, string userName, string? email, string? phoneNumber) : base(id)
+    private Identity(
+        Guid id,
+        string userName,
+        string? email,
+        string? phoneNumber,
+        bool emailConfirmed,
+        bool phoneNumberConfirmed,
+        string? firstName,
+        string? lastName) : base(id)
     {
         UserName = userName;
         Email = email;
         PhoneNumber = phoneNumber;
-        EmailConfirmed = false;
-        PhoneNumberConfirmed = false;
-        AccountConfirmed = false;
+        EmailConfirmed = emailConfirmed;
+        PhoneNumberConfirmed = phoneNumberConfirmed;
+        AccountConfirmed = emailConfirmed || phoneNumberConfirmed;
+        FirstName = firstName;
+        LastName = lastName;
     }
 
     public static Identity Create(Guid id, string userName, string email)
@@ -53,7 +63,11 @@ public sealed class Identity : AggregateRootBase<Identity>
             id,
             normalizedUserName,
             normalizedEmail,
-            normalizedPhoneNumber);
+            normalizedPhoneNumber,
+            emailConfirmed: false,
+            phoneNumberConfirmed: false,
+            firstName: null,
+            lastName: null);
 
         user.AddDomainEvent(new UserCreatedDomainEvent(
             user.Id,
@@ -64,6 +78,46 @@ public sealed class Identity : AggregateRootBase<Identity>
             user.LastName));
 
         return user;
+    }
+
+    public static Identity Restore(
+        Guid id,
+        string userName,
+        string? email,
+        string? phoneNumber,
+        bool emailConfirmed,
+        bool phoneNumberConfirmed,
+        string? firstName = null,
+        string? lastName = null)
+    {
+        if (id == Guid.Empty)
+        {
+            throw new ArgumentException("User id is required.", nameof(id));
+        }
+
+        if (string.IsNullOrWhiteSpace(userName))
+        {
+            throw new ArgumentException("UserName is required.", nameof(userName));
+        }
+
+        var normalizedUserName = userName.Trim();
+        var normalizedEmail = NormalizeOptional(email);
+        var normalizedPhoneNumber = NormalizeOptional(phoneNumber);
+
+        if (normalizedEmail is null && normalizedPhoneNumber is null)
+        {
+            throw new ArgumentException("Either email or phone number is required.");
+        }
+
+        return new Identity(
+            id,
+            normalizedUserName,
+            normalizedEmail,
+            normalizedPhoneNumber,
+            emailConfirmed,
+            phoneNumberConfirmed,
+            NormalizeOptional(firstName),
+            NormalizeOptional(lastName));
     }
 
     public void ConfirmEmail()

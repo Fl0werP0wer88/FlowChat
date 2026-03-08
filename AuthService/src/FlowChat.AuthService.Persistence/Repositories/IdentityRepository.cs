@@ -9,6 +9,7 @@ namespace FlowChat.AuthService.Persistence.Repositories;
 public class IdentityRepository : IIdentityRepository
 {
     private readonly UserManager<UserEntity> _userManager;
+    private const string EmailConfirmationTokenPurpose = "Confirmation";
 
     public IdentityRepository(UserManager<UserEntity> userManager)
     {
@@ -33,6 +34,16 @@ public class IdentityRepository : IIdentityRepository
         return user.Id;
     }
 
+    public async Task<Domain.Entities.Identity?> GetByIdAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var user = await _userManager.FindByIdAsync(userId.ToString());
+        return user is null
+            ? null
+            : MapToDomainIdentity(user);
+    }
+
     private static UserEntity MapToIdentityUser(Domain.Entities.Identity domainUser)
     {
         var user = new UserEntity
@@ -45,6 +56,17 @@ public class IdentityRepository : IIdentityRepository
         };
         
         return user;
+    }
+
+    private static Domain.Entities.Identity MapToDomainIdentity(UserEntity user)
+    {
+        return Domain.Entities.Identity.Restore(
+            user.Id,
+            user.UserName ?? string.Empty,
+            user.Email,
+            user.PhoneNumber,
+            user.EmailConfirmed,
+            user.PhoneNumberConfirmed);
     }
 
     public async Task<string> GenerateEmailConfirmationTokenAsync(Guid userId, CancellationToken cancellationToken)
@@ -60,7 +82,7 @@ public class IdentityRepository : IIdentityRepository
         return await _userManager.GenerateEmailConfirmationTokenAsync(user);
     }
 
-    public async Task<bool> ConfirmEmailAsync(Guid userId, string token, CancellationToken cancellationToken)
+    public async Task<bool> IsEmailConfirmationTokenValidAsync(Guid userId, string token, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
@@ -75,8 +97,37 @@ public class IdentityRepository : IIdentityRepository
             return false;
         }
 
-        var result = await _userManager.ConfirmEmailAsync(user, token);
-        return result.Succeeded;
+        return await _userManager.VerifyUserTokenAsync(
+            user,
+            _userManager.Options.Tokens.EmailConfirmationTokenProvider,
+            EmailConfirmationTokenPurpose,
+            token);
+    }
+
+    public async Task UpdateAsync(Domain.Entities.Identity domainUser, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        ArgumentNullException.ThrowIfNull(domainUser);
+
+        var user = await _userManager.FindByIdAsync(domainUser.Id.Value.ToString());
+        if (user is null)
+        {
+            throw new InvalidOperationException($"User with id '{domainUser.Id.Value}' was not found.");
+        }
+
+        user.UserName = domainUser.UserName;
+        user.Email = domainUser.Email;
+        user.PhoneNumber = domainUser.PhoneNumber;
+        user.EmailConfirmed = domainUser.EmailConfirmed;
+        user.PhoneNumberConfirmed = domainUser.PhoneNumberConfirmed;
+
+        var result = await _userManager.UpdateAsync(user);
+        if (!result.Succeeded)
+        {
+            var errors = string.Join("; ", result.Errors.Select(e => $"{e.Code}: {e.Description}"));
+            throw new InvalidOperationException($"User update failed: {errors}");
+        }
     }
 
     public async Task<AuthenticatedUser?> AuthenticateUserAsync(string login, string password, CancellationToken cancellationToken)

@@ -13,6 +13,7 @@ public class ConfirmUserEmailCommandHandler :  CommandHandlerBase<ConfirmUserEma
 {
     private readonly IIdentityRepository _identityRepository;
     private readonly ITokenEncoder _tokenEncoder;
+    private Domain.Entities.Identity? _domainUser;
 
     public ConfirmUserEmailCommandHandler(
         IIdentityRepository identityRepository, 
@@ -42,12 +43,22 @@ public class ConfirmUserEmailCommandHandler :  CommandHandlerBase<ConfirmUserEma
                 DomainError.BadRequest("Email confirmation token is invalid."));
         }
 
-        var isConfirmed = await _identityRepository.ConfirmEmailAsync(request.UserId, decodedToken, cancellationToken);
-        if (!isConfirmed)
+        _domainUser = await _identityRepository.GetByIdAsync(request.UserId, cancellationToken);
+        if (_domainUser is null)
+        {
+            return Result.Failure<ConfirmUserEmailCommandResponse, IDomainError>(
+                DomainError.NotFound("User was not found."));
+        }
+
+        var isTokenValid = await _identityRepository.IsEmailConfirmationTokenValidAsync(request.UserId, decodedToken, cancellationToken);
+        if (!isTokenValid)
         {
             return Result.Failure<ConfirmUserEmailCommandResponse, IDomainError>(
                 DomainError.BadRequest("Email confirmation failed."));
         }
+
+        _domainUser.ConfirmEmail();
+        await _identityRepository.UpdateAsync(_domainUser, cancellationToken);
 
         return new ConfirmUserEmailCommandResponse
         {
@@ -57,6 +68,6 @@ public class ConfirmUserEmailCommandHandler :  CommandHandlerBase<ConfirmUserEma
 
     protected override IAggregateRoot? GetAggregateRoot(Result<ConfirmUserEmailCommandResponse, IDomainError> result)
     {
-        return null;
+        return _domainUser;
     }
 }

@@ -84,7 +84,13 @@ public sealed class RegisterUserCommandHandlerTests
             return Task.FromResult(_confirmationToken);
         }
 
-        public Task<bool> ConfirmEmailAsync(Guid userId, string token, CancellationToken cancellationToken)
+        public Task<Identity?> GetByIdAsync(Guid userId, CancellationToken cancellationToken)
+            => throw new NotSupportedException();
+
+        public Task<bool> IsEmailConfirmationTokenValidAsync(Guid userId, string token, CancellationToken cancellationToken)
+            => throw new NotSupportedException();
+
+        public Task UpdateAsync(Identity user, CancellationToken cancellationToken)
             => throw new NotSupportedException();
 
         public Task<AuthenticatedUser?> AuthenticateUserAsync(string login, string password, CancellationToken cancellationToken)
