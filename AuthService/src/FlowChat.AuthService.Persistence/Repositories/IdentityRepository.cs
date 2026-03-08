@@ -1,5 +1,5 @@
-using FlowChat.AuthService.Application.Models;
 using FlowChat.AuthService.Application.Contracts.Persistence;
+using FlowChat.AuthService.Application.Users.Models;
 using FlowChat.AuthService.Domain.Entities;
 using FlowChat.AuthService.Persistence.Identity;
 using Microsoft.AspNetCore.Identity;

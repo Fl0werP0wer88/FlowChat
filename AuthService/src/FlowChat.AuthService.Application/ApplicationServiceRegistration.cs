@@ -1,5 +1,5 @@
 using FlowChat.Application.Abstractions;
-using FlowChat.AuthService.Application.Events;
+using FlowChat.AuthService.Application.Common.Eventing;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace FlowChat.AuthService.Application;

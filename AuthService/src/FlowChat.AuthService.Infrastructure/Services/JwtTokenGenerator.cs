@@ -2,8 +2,8 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using FlowChat.AuthService.Application.Contracts.Infrastructure;
+using FlowChat.AuthService.Application.Users.Models;
 using FlowChat.AuthService.Infrastructure.Configuration;
-using FlowChat.AuthService.Application.Models;
 using Microsoft.IdentityModel.Tokens;
 
 namespace FlowChat.AuthService.Infrastructure.Services;
