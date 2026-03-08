@@ -1,4 +1,5 @@
 using FlowChat.AuthService.Application.Commands;
+using FlowChat.AuthService.Application.Responses;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -17,16 +18,20 @@ public class UsersController : ControllerBase
 
     [HttpPost]
     [ProducesResponseType(typeof(Guid), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(string), StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<Guid>> Create([FromBody] RegisterUserCommand command, CancellationToken cancellationToken)
     {
         var response = await _mediator.Send(command, cancellationToken);
+        if (!response.IsSuccess)
+        {
+            return BadRequest(response.Error.ErrorMessage ?? "User registration failed.");
+        }
 
-
-        return Ok(response);
+        return Ok(response.Value.Id);
     }
 
     [HttpPost("login")]
-    [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(LoginUserCommandResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(string), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Login([FromBody] LoginUserCommand command, CancellationToken cancellationToken)
     {
@@ -34,14 +39,14 @@ public class UsersController : ControllerBase
 
         if (!response.IsSuccess)
         {
-            return Unauthorized("Invalid credentials or account is not confirmed.");
+            return Unauthorized(response.Error.ErrorMessage ?? "Invalid credentials or account is not confirmed.");
         }
 
-        return Ok(response);
+        return Ok(response.Value);
     }
 
     [HttpGet("confirm-email")]
-    [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ConfirmUserEmailCommandResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(string), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> ConfirmEmail([FromQuery] Guid userId, [FromQuery] string token, CancellationToken cancellationToken)
     {
@@ -55,9 +60,9 @@ public class UsersController : ControllerBase
 
         if (!response.IsSuccess)
         {
-            return BadRequest("Email confirmation failed.");
+            return BadRequest(response.Error.ErrorMessage ?? "Email confirmation failed.");
         }
 
-        return Ok("Email confirmed.");
+        return Ok(response.Value);
     }
 }

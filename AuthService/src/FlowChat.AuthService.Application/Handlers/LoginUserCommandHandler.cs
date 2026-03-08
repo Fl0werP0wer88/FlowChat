@@ -28,7 +28,8 @@ public class LoginUserCommandHandler :  CommandHandlerBase<LoginUserCommand, Log
         var user = await _identityRepository.AuthenticateUserAsync(request.Login, request.Password, cancellationToken);
         if (user is null)
         {
-            return new LoginUserCommandResponse { IsSuccess = false };
+            return Result.Failure<LoginUserCommandResponse, IDomainError>(
+                DomainError.BadRequest("Invalid credentials or account is not confirmed."));
         }
 
         var token = _jwtTokenGenerator.GenerateToken(user);

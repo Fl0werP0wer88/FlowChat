@@ -33,18 +33,25 @@ public class ConfirmUserEmailCommandHandler :  CommandHandlerBase<ConfirmUserEma
         }
         catch (FormatException)
         {
-            return new ConfirmUserEmailCommandResponse { IsSuccess = false };
+            return Result.Failure<ConfirmUserEmailCommandResponse, IDomainError>(
+                DomainError.BadRequest("Email confirmation token is invalid."));
         }
         catch (ArgumentException)
         {
-            return new ConfirmUserEmailCommandResponse { IsSuccess = false };
+            return Result.Failure<ConfirmUserEmailCommandResponse, IDomainError>(
+                DomainError.BadRequest("Email confirmation token is invalid."));
         }
 
         var isConfirmed = await _identityRepository.ConfirmEmailAsync(request.UserId, decodedToken, cancellationToken);
+        if (!isConfirmed)
+        {
+            return Result.Failure<ConfirmUserEmailCommandResponse, IDomainError>(
+                DomainError.BadRequest("Email confirmation failed."));
+        }
 
         return new ConfirmUserEmailCommandResponse
         {
-            IsSuccess = isConfirmed
+            IsSuccess = true
         };
     }
 
