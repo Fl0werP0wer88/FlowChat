@@ -1,5 +1,5 @@
 using AutoMapper;
-using FlowChat.UserProfileService.Application.UserProfiles.Queries;
+using FlowChat.UserProfileService.Application.UserProfiles.Queries.GetUserProfile;
 using FlowChat.UserProfileService.Domain.Entities;
 
 namespace FlowChat.UserProfileService.Infrastructure.Mapping;

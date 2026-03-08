@@ -1,8 +1,8 @@
-using FlowChat.UserProfileService.Application.UserProfiles.Queries;
+using FlowChat.UserProfileService.Application.UserProfiles.Queries.GetUserProfile;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
-namespace FlowChat.UserProfileService.Api.Controllers;
+namespace FlowChat.UserProfileService.Api.Features.UserProfiles.GetUserProfile;
 
 [ApiController]
 [Route("api/[controller]")]

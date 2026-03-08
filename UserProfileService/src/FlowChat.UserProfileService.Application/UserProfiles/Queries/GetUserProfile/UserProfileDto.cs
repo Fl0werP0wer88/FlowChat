@@ -1,4 +1,4 @@
-namespace FlowChat.UserProfileService.Application.UserProfiles.Queries;
+namespace FlowChat.UserProfileService.Application.UserProfiles.Queries.GetUserProfile;
 
 public sealed record UserProfileDto(
     Guid Id,

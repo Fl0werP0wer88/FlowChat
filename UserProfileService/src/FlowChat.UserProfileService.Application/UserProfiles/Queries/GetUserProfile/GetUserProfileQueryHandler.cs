@@ -2,7 +2,7 @@ using FlowChat.UserProfileService.Application.Contracts.Mapping;
 using FlowChat.UserProfileService.Application.Contracts.Persistence;
 using MediatR;
 
-namespace FlowChat.UserProfileService.Application.UserProfiles.Queries;
+namespace FlowChat.UserProfileService.Application.UserProfiles.Queries.GetUserProfile;
 
 public sealed class GetUserProfileQueryHandler : IRequestHandler<GetUserProfileQuery, UserProfileDto?>
 {

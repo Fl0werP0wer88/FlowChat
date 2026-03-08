@@ -1,6 +1,6 @@
 using MediatR;
 
-namespace FlowChat.UserProfileService.Application.UserProfiles.Commands;
+namespace FlowChat.UserProfileService.Application.UserProfiles.Commands.CreateInitialUserProfile;
 
 public sealed record CreateInitialUserProfileCommand(
     string UserName,

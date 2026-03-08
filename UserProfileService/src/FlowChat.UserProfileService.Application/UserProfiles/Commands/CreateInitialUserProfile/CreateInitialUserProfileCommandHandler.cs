@@ -2,7 +2,7 @@ using FlowChat.UserProfileService.Application.Contracts.Persistence;
 using FlowChat.UserProfileService.Domain.Entities;
 using MediatR;
 
-namespace FlowChat.UserProfileService.Application.UserProfiles.Commands;
+namespace FlowChat.UserProfileService.Application.UserProfiles.Commands.CreateInitialUserProfile;
 
 public sealed class CreateInitialUserProfileCommandHandler
     : IRequestHandler<CreateInitialUserProfileCommand, Guid>

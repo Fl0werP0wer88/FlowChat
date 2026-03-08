@@ -1,4 +1,4 @@
-namespace FlowChat.SocialGraphService.Application.SocialGraphs;
+namespace FlowChat.SocialGraphService.Application.SocialGraphs.Commands.CreateDefaultSocialGraph;
 
 public sealed record SocialGraphDto(
     Guid Id,

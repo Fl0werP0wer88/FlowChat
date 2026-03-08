@@ -1,5 +1,5 @@
 using FlowChat.Application.Abstractions;
-using FlowChat.SocialGraphService.Application.Events;
+using FlowChat.SocialGraphService.Application.Common.Eventing;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace FlowChat.SocialGraphService.Application;

@@ -1,5 +1,4 @@
 using FlowChat.Application.Abstractions;
-using FlowChat.SocialGraphService.Application.SocialGraphs;
 
 namespace FlowChat.SocialGraphService.Application.SocialGraphs.Commands.CreateDefaultSocialGraph;
 

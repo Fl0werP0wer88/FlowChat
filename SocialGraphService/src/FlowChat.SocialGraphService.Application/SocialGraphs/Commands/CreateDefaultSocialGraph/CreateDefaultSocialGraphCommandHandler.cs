@@ -1,7 +1,6 @@
 using FlowChat.Domain.Abstractions;
 using FlowChat.Application.Abstractions;
 using FlowChat.SocialGraphService.Application.Contracts.Persistence;
-using FlowChat.SocialGraphService.Application.SocialGraphs;
 using FlowChat.SocialGraphService.Domain.Entities;
 
 namespace FlowChat.SocialGraphService.Application.SocialGraphs.Commands.CreateDefaultSocialGraph;

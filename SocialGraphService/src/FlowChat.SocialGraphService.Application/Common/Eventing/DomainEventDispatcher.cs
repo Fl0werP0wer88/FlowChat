@@ -2,7 +2,7 @@ using FlowChat.Application.Abstractions;
 using FlowChat.Domain.Abstractions;
 using MediatR;
 
-namespace FlowChat.SocialGraphService.Application.Events;
+namespace FlowChat.SocialGraphService.Application.Common.Eventing;
 
 public class DomainEventDispatcher : IDomainEventDispatcher
 {

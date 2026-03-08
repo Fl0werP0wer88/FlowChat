@@ -1,7 +1,7 @@
 using FlowChat.UserProfileService.Worker.Kafka;
 using FlowChat.UserProfileService.Worker.Configuration;
 using FlowChat.Messaging.Contracts.AuthService.Events;
-using FlowChat.UserProfileService.Application.UserProfiles.Commands;
+using FlowChat.UserProfileService.Application.UserProfiles.Commands.CreateInitialUserProfile;
 using FlowChat.UserProfileService.Persistence;
 using Confluent.Kafka;
 using Microsoft.Extensions.Configuration;

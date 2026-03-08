@@ -1,4 +1,4 @@
-using FlowChat.UserProfileService.Application.UserProfiles.Commands;
+using FlowChat.UserProfileService.Application.UserProfiles.Commands.CreateInitialUserProfile;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace FlowChat.UserProfileService.Application;
