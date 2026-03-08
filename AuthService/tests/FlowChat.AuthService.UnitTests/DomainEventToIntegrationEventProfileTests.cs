@@ -1,7 +1,7 @@
 using AutoMapper;
 using FlowChat.AuthService.Domain.Entities;
-using FlowChat.AuthService.Domain.Events;
 using FlowChat.AuthService.Application.Mappings;
+using FlowChat.AuthService.Domain.Events;
 using FlowChat.Domain.Abstractions;
 using FlowChat.Messaging.Contracts.AuthService.Events;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -55,23 +55,6 @@ public sealed class DomainEventToIntegrationEventProfileTests
 
         Assert.Equal(userId.Value.ToString(), integrationEvent.Key);
         Assert.Equal(userId.Value, integrationEvent.UserId);
-    }
-
-    [Fact]
-    public void EmailVerificationRequestedDomainEvent_IsMappedToIntegrationEvent()
-    {
-        var userId = Id<Identity>.FromGuid(Guid.NewGuid());
-        var domainEvent = new EmailVerificationRequestedDomainEvent(
-            userId,
-            "flower@example.com",
-            "https://localhost/confirm");
-
-        var integrationEvent = _mapper.Map<EmailVerificationRequestIntegrationEvent>(domainEvent);
-
-        Assert.Equal(userId.Value.ToString(), integrationEvent.Key);
-        Assert.Equal(userId.Value, integrationEvent.UserId);
-        Assert.Equal("flower@example.com", integrationEvent.UserEmail);
-        Assert.Equal("https://localhost/confirm", integrationEvent.ConfirmationLink);
     }
 
     [Fact]

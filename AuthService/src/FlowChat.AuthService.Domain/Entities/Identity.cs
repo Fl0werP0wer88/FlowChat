@@ -87,22 +87,6 @@ public sealed class Identity : AggregateRootBase<Identity>
         }
     }
 
-    public void RequestEmailVerification(string confirmationLink)
-    {
-        var email = Email;
-        if (string.IsNullOrWhiteSpace(email))
-        {
-            throw new InvalidOperationException("Email verification requires an email address.");
-        }
-
-        if (string.IsNullOrWhiteSpace(confirmationLink))
-        {
-            throw new ArgumentException("Confirmation link is required.", nameof(confirmationLink));
-        }
-
-        AddDomainEvent(new EmailVerificationRequestedDomainEvent(Id, email, confirmationLink));
-    }
-
     public void ConfirmPhone()
     {
         var phoneNumber = PhoneNumber;
