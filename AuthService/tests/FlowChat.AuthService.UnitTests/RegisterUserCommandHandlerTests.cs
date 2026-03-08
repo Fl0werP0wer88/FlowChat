@@ -17,13 +17,13 @@ public sealed class RegisterUserCommandHandlerTests
     [Fact]
     public async Task Handle_PublishesEmailVerificationIntegrationEvent_InsideTransaction()
     {
-        var repository = new FakeIdentityRepository("raw-confirmation-token");
+        var repository = new FakeIdentityRepository(confirmationToken: "raw-confirmation-token");
         var tokenEncoder = new FakeTokenEncoder("encoded-confirmation-token");
         var confirmationLinkBuilder = new FakeConfirmationLinkBuilder("https://localhost/confirm?token=encoded-confirmation-token");
         var integrationEventPublisher = new CapturingIntegrationEventPublisher();
         var unitOfWork = new TrackingUnitOfWork(integrationEventPublisher);
         var domainEventDispatcher = new CapturingDomainEventDispatcher();
-        var handler = new RegisterUserCommandHandler(
+        var handler = CreateHandler(
             repository,
             tokenEncoder,
             confirmationLinkBuilder,
@@ -31,15 +31,7 @@ public sealed class RegisterUserCommandHandlerTests
             unitOfWork,
             domainEventDispatcher);
 
-        var result = await handler.Handle(
-            new RegisterUserCommand
-            {
-                UserName = "flower",
-                Email = "flower@example.com",
-                PhoneNumber = "+48123123123",
-                Password = "P@ssw0rd!"
-            },
-            CancellationToken.None);
+        var result = await handler.Handle(CreateCommand(), CancellationToken.None);
         var createdUser = repository.CreatedUser;
         Assert.NotNull(createdUser);
         var createdUserId = createdUser.Id.Value;
@@ -53,31 +45,197 @@ public sealed class RegisterUserCommandHandlerTests
         Assert.Equal("flower@example.com", publishedEvent.UserEmail);
         Assert.Equal("https://localhost/confirm?token=encoded-confirmation-token", publishedEvent.ConfirmationLink);
         Assert.True(integrationEventPublisher.PublishedInsideTransaction);
+        Assert.Equal(1, repository.GenerateEmailConfirmationTokenCallCount);
+        Assert.Equal(1, tokenEncoder.EncodeCallCount);
+        Assert.Equal(1, confirmationLinkBuilder.BuildCallCount);
 
         var dispatchedEvents = Assert.Single(domainEventDispatcher.DispatchedBatches);
         var userCreatedDomainEvent = Assert.IsType<UserCreatedDomainEvent>(Assert.Single(dispatchedEvents));
         Assert.Equal(createdUserId, userCreatedDomainEvent.UserId.Value);
     }
 
+    [Fact]
+    public async Task Handle_ReturnsConflict_WhenDuplicateUserNameIsReportedByRepository()
+    {
+        var repository = new FakeIdentityRepository(
+            createUserException: new InvalidOperationException(
+                "User creation failed: DuplicateUserName: Username 'flower' is already taken."));
+        var tokenEncoder = new FakeTokenEncoder("encoded-confirmation-token");
+        var confirmationLinkBuilder = new FakeConfirmationLinkBuilder("https://localhost/confirm?token=encoded-confirmation-token");
+        var integrationEventPublisher = new CapturingIntegrationEventPublisher();
+        var unitOfWork = new TrackingUnitOfWork(integrationEventPublisher);
+        var domainEventDispatcher = new CapturingDomainEventDispatcher();
+        var handler = CreateHandler(
+            repository,
+            tokenEncoder,
+            confirmationLinkBuilder,
+            integrationEventPublisher,
+            unitOfWork,
+            domainEventDispatcher);
+
+        var result = await handler.Handle(CreateCommand(), CancellationToken.None);
+
+        Assert.False(result.IsSuccess);
+        Assert.Equal(ErrorType.Conflict, result.Error.ErrorType);
+        Assert.Equal("User with the provided username or email already exists.", result.Error.ErrorMessage);
+        Assert.Contains("Username 'flower' is already taken.", result.Error.Errors ?? []);
+        Assert.Equal(0, repository.GenerateEmailConfirmationTokenCallCount);
+        Assert.Equal(0, tokenEncoder.EncodeCallCount);
+        Assert.Equal(0, confirmationLinkBuilder.BuildCallCount);
+        Assert.Null(integrationEventPublisher.PublishedEvent);
+        Assert.Empty(domainEventDispatcher.DispatchedBatches);
+    }
+
+    [Fact]
+    public async Task Handle_ReturnsConflict_WhenDuplicateEmailIsReportedByRepository()
+    {
+        var repository = new FakeIdentityRepository(
+            createUserException: new InvalidOperationException(
+                "User creation failed: DuplicateEmail: Email 'flower@example.com' is already taken."));
+        var tokenEncoder = new FakeTokenEncoder("encoded-confirmation-token");
+        var confirmationLinkBuilder = new FakeConfirmationLinkBuilder("https://localhost/confirm?token=encoded-confirmation-token");
+        var integrationEventPublisher = new CapturingIntegrationEventPublisher();
+        var unitOfWork = new TrackingUnitOfWork(integrationEventPublisher);
+        var domainEventDispatcher = new CapturingDomainEventDispatcher();
+        var handler = CreateHandler(
+            repository,
+            tokenEncoder,
+            confirmationLinkBuilder,
+            integrationEventPublisher,
+            unitOfWork,
+            domainEventDispatcher);
+
+        var result = await handler.Handle(CreateCommand(), CancellationToken.None);
+
+        Assert.False(result.IsSuccess);
+        Assert.Equal(ErrorType.Conflict, result.Error.ErrorType);
+        Assert.Equal("User with the provided username or email already exists.", result.Error.ErrorMessage);
+        Assert.Contains("Email 'flower@example.com' is already taken.", result.Error.Errors ?? []);
+        Assert.Equal(0, repository.GenerateEmailConfirmationTokenCallCount);
+        Assert.Equal(0, tokenEncoder.EncodeCallCount);
+        Assert.Equal(0, confirmationLinkBuilder.BuildCallCount);
+        Assert.Null(integrationEventPublisher.PublishedEvent);
+        Assert.Empty(domainEventDispatcher.DispatchedBatches);
+    }
+
+    [Fact]
+    public async Task Handle_ReturnsValidation_WhenRepositoryReportsValidationErrors()
+    {
+        var repository = new FakeIdentityRepository(
+            createUserException: new InvalidOperationException(
+                "User creation failed: PasswordTooShort: Password must be at least 8 characters.; PasswordRequiresUpper: Password must contain an uppercase letter."));
+        var tokenEncoder = new FakeTokenEncoder("encoded-confirmation-token");
+        var confirmationLinkBuilder = new FakeConfirmationLinkBuilder("https://localhost/confirm?token=encoded-confirmation-token");
+        var integrationEventPublisher = new CapturingIntegrationEventPublisher();
+        var unitOfWork = new TrackingUnitOfWork(integrationEventPublisher);
+        var domainEventDispatcher = new CapturingDomainEventDispatcher();
+        var handler = CreateHandler(
+            repository,
+            tokenEncoder,
+            confirmationLinkBuilder,
+            integrationEventPublisher,
+            unitOfWork,
+            domainEventDispatcher);
+
+        var result = await handler.Handle(CreateCommand(), CancellationToken.None);
+
+        Assert.False(result.IsSuccess);
+        Assert.Equal(ErrorType.Validation, result.Error.ErrorType);
+        Assert.Equal("User registration validation failed.", result.Error.ErrorMessage);
+        Assert.Contains("Password must be at least 8 characters.", result.Error.Errors ?? []);
+        Assert.Contains("Password must contain an uppercase letter.", result.Error.Errors ?? []);
+        Assert.Equal(0, repository.GenerateEmailConfirmationTokenCallCount);
+        Assert.Equal(0, tokenEncoder.EncodeCallCount);
+        Assert.Equal(0, confirmationLinkBuilder.BuildCallCount);
+        Assert.Null(integrationEventPublisher.PublishedEvent);
+        Assert.Empty(domainEventDispatcher.DispatchedBatches);
+    }
+
+    [Fact]
+    public async Task Handle_RethrowsUnexpectedInvalidOperationException()
+    {
+        var repository = new FakeIdentityRepository(
+            createUserException: new InvalidOperationException("Database connection failed."));
+        var tokenEncoder = new FakeTokenEncoder("encoded-confirmation-token");
+        var confirmationLinkBuilder = new FakeConfirmationLinkBuilder("https://localhost/confirm?token=encoded-confirmation-token");
+        var integrationEventPublisher = new CapturingIntegrationEventPublisher();
+        var unitOfWork = new TrackingUnitOfWork(integrationEventPublisher);
+        var domainEventDispatcher = new CapturingDomainEventDispatcher();
+        var handler = CreateHandler(
+            repository,
+            tokenEncoder,
+            confirmationLinkBuilder,
+            integrationEventPublisher,
+            unitOfWork,
+            domainEventDispatcher);
+
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => handler.Handle(CreateCommand(), CancellationToken.None));
+
+        Assert.Equal("Database connection failed.", exception.Message);
+        Assert.Equal(0, repository.GenerateEmailConfirmationTokenCallCount);
+        Assert.Equal(0, tokenEncoder.EncodeCallCount);
+        Assert.Equal(0, confirmationLinkBuilder.BuildCallCount);
+        Assert.Null(integrationEventPublisher.PublishedEvent);
+        Assert.Empty(domainEventDispatcher.DispatchedBatches);
+    }
+
+    private static RegisterUserCommandHandler CreateHandler(
+        FakeIdentityRepository repository,
+        FakeTokenEncoder tokenEncoder,
+        FakeConfirmationLinkBuilder confirmationLinkBuilder,
+        CapturingIntegrationEventPublisher integrationEventPublisher,
+        TrackingUnitOfWork unitOfWork,
+        CapturingDomainEventDispatcher domainEventDispatcher)
+    {
+        return new RegisterUserCommandHandler(
+            repository,
+            tokenEncoder,
+            confirmationLinkBuilder,
+            integrationEventPublisher,
+            unitOfWork,
+            domainEventDispatcher);
+    }
+
+    private static RegisterUserCommand CreateCommand()
+    {
+        return new RegisterUserCommand
+        {
+            UserName = "flower",
+            Email = "flower@example.com",
+            PhoneNumber = "+48123123123",
+            Password = "P@ssw0rd!"
+        };
+    }
+
     private sealed class FakeIdentityRepository : IIdentityRepository
     {
         private readonly string _confirmationToken;
+        private readonly Exception? _createUserException;
 
-        public FakeIdentityRepository(string confirmationToken)
+        public FakeIdentityRepository(string confirmationToken = "", Exception? createUserException = null)
         {
             _confirmationToken = confirmationToken;
+            _createUserException = createUserException;
         }
 
         public Identity? CreatedUser { get; private set; }
 
+        public int GenerateEmailConfirmationTokenCallCount { get; private set; }
+
         public Task<Guid> CreateUserAsync(Identity user, string password, CancellationToken cancellationToken)
         {
+            if (_createUserException is not null)
+            {
+                throw _createUserException;
+            }
+
             CreatedUser = user;
             return Task.FromResult(user.Id.Value);
         }
 
         public Task<string> GenerateEmailConfirmationTokenAsync(Guid userId, CancellationToken cancellationToken)
         {
+            GenerateEmailConfirmationTokenCallCount++;
             var createdUser = CreatedUser;
             Assert.NotNull(createdUser);
             Assert.Equal(createdUser.Id.Value, userId);
@@ -106,7 +264,13 @@ public sealed class RegisterUserCommandHandlerTests
             _encodedToken = encodedToken;
         }
 
-        public string EncodeForUrl(string token) => _encodedToken;
+        public int EncodeCallCount { get; private set; }
+
+        public string EncodeForUrl(string token)
+        {
+            EncodeCallCount++;
+            return _encodedToken;
+        }
 
         public string DecodeFromUrl(string encodedToken) => throw new NotSupportedException();
     }
@@ -120,7 +284,13 @@ public sealed class RegisterUserCommandHandlerTests
             _confirmationLink = confirmationLink;
         }
 
-        public string BuildEmailConfirmationLink(Guid userId, string encodedToken) => _confirmationLink;
+        public int BuildCallCount { get; private set; }
+
+        public string BuildEmailConfirmationLink(Guid userId, string encodedToken)
+        {
+            BuildCallCount++;
+            return _confirmationLink;
+        }
     }
 
     private sealed class CapturingIntegrationEventPublisher : IIntegrationEventPublisher
