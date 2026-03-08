@@ -8,19 +8,22 @@ namespace FlowChat.SocialGraphService.Application.Invitations.Commands.SendInvit
 public sealed class SendInvitationCommandHandler : CommandHandlerBase<SendInvitationCommand, InvitationDto>
 {
     private readonly IUserSocialGraphRepository _userSocialGraphRepository;
+    private readonly IInvitationRepository _invitationRepository;
     private readonly IInvitationReadRepository _invitationReadRepository;
     private readonly IContactReadRepository _contactReadRepository;
-    private UserSocialGraph? _aggregateRoot;
+    private Invitation? _aggregateRoot;
 
     public SendInvitationCommandHandler(
         IDomainEventDispatcher domainEventDispatcher,
         IUnitOfWork unitOfWork,
         IUserSocialGraphRepository userSocialGraphRepository,
+        IInvitationRepository invitationRepository,
         IInvitationReadRepository invitationReadRepository,
         IContactReadRepository contactReadRepository)
         : base(domainEventDispatcher, unitOfWork)
     {
         _userSocialGraphRepository = userSocialGraphRepository;
+        _invitationRepository = invitationRepository;
         _invitationReadRepository = invitationReadRepository;
         _contactReadRepository = contactReadRepository;
     }
@@ -81,15 +84,14 @@ public sealed class SendInvitationCommandHandler : CommandHandlerBase<SendInvita
                 DomainError.NotFound($"User social graph for requester '{request.RequesterId}' was not found."));
         }
 
-        var invitation = socialGraph.SendInvitation(Invitation.Create(
+        var invitation = Invitation.Create(
             request.RequesterId,
             request.AddresseeId,
-            id: Id<Invitation>.New()));
+            id: Id<Invitation>.New());
 
-        _aggregateRoot = socialGraph;
+        _aggregateRoot = invitation;
 
-        await _userSocialGraphRepository.AddInvitationAsync(
-            socialGraph.Id.Value,
+        await _invitationRepository.AddAsync(
             invitation,
             cancellationToken);
 

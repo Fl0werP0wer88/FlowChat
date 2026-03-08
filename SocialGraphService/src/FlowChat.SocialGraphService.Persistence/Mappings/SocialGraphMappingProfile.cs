@@ -49,10 +49,8 @@ public sealed class SocialGraphMappingProfile : Profile
                 src.IsPhoneVisible,
                 src.IsEmailVisible,
                 ctx.Mapper.Map<IEnumerable<Contact>>(src.Contacts),
-                ctx.Mapper.Map<IEnumerable<Invitation>>(src.Invitations),
                 id: Id<UserSocialGraph>.FromGuid(src.Id)))
-            .ForMember(dest => dest.Contacts, opt => opt.Ignore())
-            .ForMember(dest => dest.Invitations, opt => opt.Ignore());
+            .ForMember(dest => dest.Contacts, opt => opt.Ignore());
 
         CreateMap<UserSocialGraph, UserSocialGraphEntity>()
             .ConstructUsing(src => new UserSocialGraphEntity
@@ -73,7 +71,7 @@ public sealed class SocialGraphMappingProfile : Profile
             });
 
         CreateMap<InvitationEntity, Invitation>()
-            .ConstructUsing(src => Invitation.Create(
+            .ConstructUsing(src => Invitation.Rehydrate(
                 src.RequesterId,
                 src.AddresseeId,
                 ParseInvitationStatus(src.Status),

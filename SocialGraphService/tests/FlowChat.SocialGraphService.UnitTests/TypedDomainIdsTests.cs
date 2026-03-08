@@ -90,6 +90,17 @@ public class TypedDomainIdsTests
     }
 
     [Fact]
+    public void Invitation_Rehydrate_DoesNotEmitDomainEvents()
+    {
+        var invitation = Invitation.Rehydrate(
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            id: Id<Invitation>.New());
+
+        Assert.Empty(invitation.DomainEvents);
+    }
+
+    [Fact]
     public void Invitation_Create_WithoutId_GeneratesTypedId()
     {
         var invitation = Invitation.Create(
@@ -97,6 +108,18 @@ public class TypedDomainIdsTests
             addresseeId: Guid.NewGuid());
 
         Assert.NotEqual(Guid.Empty, invitation.Id.Value);
+    }
+
+    [Fact]
+    public void Invitation_Create_EmitsInvitationSentDomainEvent()
+    {
+        var invitation = Invitation.Create(
+            requesterId: Guid.NewGuid(),
+            addresseeId: Guid.NewGuid(),
+            id: Id<Invitation>.New());
+
+        var sentEvent = Assert.Single(invitation.DomainEvents);
+        Assert.IsType<InvitationSentDomainEvent>(sentEvent);
     }
 
 
@@ -158,21 +181,17 @@ public class TypedDomainIdsTests
     }
 
     [Fact]
-    public void UserSocialGraph_Create_RehydratesContactsAndInvitations()
+    public void UserSocialGraph_Create_RehydratesContacts()
     {
         var contact = Contact.Create(Guid.NewGuid(), Guid.NewGuid(), "contact-login", id: Id<Contact>.New());
-        var invitation = Invitation.Create(Guid.NewGuid(), Guid.NewGuid(), id: Id<Invitation>.New());
 
         var socialGraph = UserSocialGraph.Create(
             login: "user-login",
             contacts: [contact],
-            invitations: [invitation],
             id: Guid.NewGuid());
 
         Assert.Single(socialGraph.Contacts);
-        Assert.Single(socialGraph.Invitations);
         Assert.Equal(contact.Id, socialGraph.Contacts[0].Id);
-        Assert.Equal(invitation.Id, socialGraph.Invitations[0].Id);
     }
 
     [Fact]
@@ -192,33 +211,30 @@ public class TypedDomainIdsTests
     }
 
     [Fact]
-    public void UserSocialGraph_SendInvitation_AddsInvitation_And_EmitsEvent()
+    public void Invitation_Accept_UpdatesStatus_And_EmitsEvent()
     {
-        var socialGraph = UserSocialGraph.Create("owner-login", id: Guid.NewGuid());
         var invitation = Invitation.Create(Guid.NewGuid(), Guid.NewGuid(), id: Id<Invitation>.New());
+        invitation.PopDomainEvents();
 
-        socialGraph.SendInvitation(invitation);
+        invitation.Accept();
 
-        var sentEvent = Assert.Single(socialGraph.DomainEvents);
-        Assert.IsType<InvitationSentDomainEvent>(sentEvent);
-        Assert.Single(socialGraph.Invitations);
-        Assert.Equal(invitation.Id, socialGraph.Invitations[0].Id);
-    }
-
-    [Fact]
-    public void UserSocialGraph_AcceptInvitation_UpdatesInvitation_AddsContact_And_EmitsEvent()
-    {
-        var socialGraph = UserSocialGraph.Create("owner-login", id: Guid.NewGuid());
-        var invitation = Invitation.Create(Guid.NewGuid(), Guid.NewGuid(), id: Id<Invitation>.New());
-        socialGraph.SendInvitation(invitation);
-        socialGraph.PopDomainEvents();
-
-        var contact = socialGraph.AcceptInvitation(invitation.Id, "contact-login");
-
-        var acceptedEvent = Assert.Single(socialGraph.DomainEvents);
+        var acceptedEvent = Assert.Single(invitation.DomainEvents);
         Assert.IsType<InvitationAcceptedDomainEvent>(acceptedEvent);
         Assert.Equal(InvitationStatus.Accepted, invitation.Status);
         Assert.NotNull(invitation.RespondedAtUtc);
+    }
+
+    [Fact]
+    public void UserSocialGraph_CreateContactFromInvitation_AddsContact()
+    {
+        var socialGraph = UserSocialGraph.Create("owner-login", id: Guid.NewGuid());
+        var invitation = Invitation.Create(socialGraph.UserId, Guid.NewGuid(), id: Id<Invitation>.New());
+        invitation.PopDomainEvents();
+        invitation.Accept();
+        invitation.PopDomainEvents();
+
+        var contact = socialGraph.CreateContactFromInvitation(invitation, "contact-login");
+
         Assert.Single(socialGraph.Contacts);
         Assert.Equal(contact.Id, socialGraph.Contacts[0].Id);
     }

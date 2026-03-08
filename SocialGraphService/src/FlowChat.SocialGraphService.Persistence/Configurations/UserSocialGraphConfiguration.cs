@@ -47,10 +47,5 @@ public sealed class UserSocialGraphConfiguration : IEntityTypeConfiguration<User
             .WithOne(x => x.UserSocialGraph)
             .HasForeignKey(x => x.UserSocialGraphId)
             .OnDelete(DeleteBehavior.Cascade);
-
-        builder.HasMany(x => x.Invitations)
-            .WithOne(x => x.UserSocialGraph)
-            .HasForeignKey(x => x.UserSocialGraphId)
-            .OnDelete(DeleteBehavior.Cascade);
     }
 }

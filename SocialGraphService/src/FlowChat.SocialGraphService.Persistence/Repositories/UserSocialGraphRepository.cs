@@ -22,7 +22,6 @@ public sealed class UserSocialGraphRepository : IUserSocialGraphRepository
         var entity = await _dbContext.UserSocialGraphs
             .AsNoTracking()
             .Include(x => x.Contacts)
-            .Include(x => x.Invitations)
             .FirstOrDefaultAsync(x => x.UserId == userId, cancellationToken);
 
         return entity is null ? null : _mapper.Map<UserSocialGraph>(entity);
@@ -55,28 +54,6 @@ public sealed class UserSocialGraphRepository : IUserSocialGraphRepository
     public async Task DeleteContactAsync(Contact entity, CancellationToken cancellationToken = default)
     {
         _dbContext.Contacts.Remove(_mapper.Map<ContactEntity>(entity));
-        await Task.CompletedTask;
-    }
-
-    public async Task<Invitation> AddInvitationAsync(Guid userSocialGraphId, Invitation entity, CancellationToken cancellationToken = default)
-    {
-        var persistenceEntity = _mapper.Map<InvitationEntity>(entity);
-        persistenceEntity.UserSocialGraphId = userSocialGraphId;
-
-        await _dbContext.Invitations.AddAsync(persistenceEntity, cancellationToken);
-
-        return entity;
-    }
-
-    public async Task UpdateInvitationAsync(Invitation entity, CancellationToken cancellationToken = default)
-    {
-        _dbContext.Invitations.Update(_mapper.Map<InvitationEntity>(entity));
-        await Task.CompletedTask;
-    }
-
-    public async Task DeleteInvitationAsync(Invitation entity, CancellationToken cancellationToken = default)
-    {
-        _dbContext.Invitations.Remove(_mapper.Map<InvitationEntity>(entity));
         await Task.CompletedTask;
     }
 }

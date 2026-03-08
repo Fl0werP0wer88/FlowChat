@@ -1,9 +1,10 @@
 using FlowChat.Domain.Abstractions;
 using FlowChat.SocialGraphService.Domain.Enums;
+using FlowChat.SocialGraphService.Domain.Events;
 
 namespace FlowChat.SocialGraphService.Domain.Entities;
 
-public class Invitation : EntityBase<Invitation>
+public class Invitation : AggregateRootBase<Invitation>
 {
     public Guid RequesterId { get; private set; }
     public Guid AddresseeId { get; private set; }
@@ -43,6 +44,23 @@ public class Invitation : EntityBase<Invitation>
         DateTime? respondedAtUtc = null,
         Id<Invitation>? id = null)
     {
+        var invitation = new Invitation(id, requesterId, addresseeId, status, respondedAtUtc);
+        invitation.AddDomainEvent(new InvitationSentDomainEvent(
+            invitation.Id,
+            invitation.Id,
+            invitation.RequesterId,
+            invitation.AddresseeId));
+
+        return invitation;
+    }
+
+    public static Invitation Rehydrate(
+        Guid requesterId,
+        Guid addresseeId,
+        InvitationStatus status = InvitationStatus.Pending,
+        DateTime? respondedAtUtc = null,
+        Id<Invitation>? id = null)
+    {
         return new Invitation(id, requesterId, addresseeId, status, respondedAtUtc);
     }
 
@@ -55,5 +73,10 @@ public class Invitation : EntityBase<Invitation>
 
         Status = InvitationStatus.Accepted;
         RespondedAtUtc = respondedAtUtc ?? DateTime.UtcNow;
+        AddDomainEvent(new InvitationAcceptedDomainEvent(
+            Id,
+            Id,
+            RequesterId,
+            AddresseeId));
     }
 }

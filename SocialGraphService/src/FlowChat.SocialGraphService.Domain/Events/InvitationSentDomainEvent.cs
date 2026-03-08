@@ -4,14 +4,14 @@ using FlowChat.SocialGraphService.Domain.Events.Contracts;
 
 namespace FlowChat.SocialGraphService.Domain.Events;
 
-public sealed class InvitationSentDomainEvent : BaseUserSocialGraphDomainEvent
+public sealed class InvitationSentDomainEvent : BaseInvitationDomainEvent
 {
     public Id<Invitation> InvitationId { get; }
     public Guid RequesterId { get; }
     public Guid AddresseeId { get; }
 
     public InvitationSentDomainEvent(
-        Id<UserSocialGraph> aggregateId,
+        Id<Invitation> aggregateId,
         Id<Invitation> invitationId,
         Guid requesterId,
         Guid addresseeId)
