@@ -73,4 +73,30 @@ public sealed class DomainEventToIntegrationEventProfileTests
         Assert.Equal("flower@example.com", integrationEvent.UserEmail);
         Assert.Equal("https://localhost/confirm", integrationEvent.ConfirmationLink);
     }
+
+    [Fact]
+    public void EmailConfirmedDomainEvent_IsMappedToIntegrationEvent()
+    {
+        var userId = Id<Identity>.FromGuid(Guid.NewGuid());
+        var domainEvent = new EmailConfirmedDomainEvent(userId, "flower@example.com");
+
+        var integrationEvent = _mapper.Map<EmailConfirmedIntegrationEvent>(domainEvent);
+
+        Assert.Equal(userId.Value.ToString(), integrationEvent.Key);
+        Assert.Equal(userId.Value, integrationEvent.UserId);
+        Assert.Equal("flower@example.com", integrationEvent.Email);
+    }
+
+    [Fact]
+    public void PhoneNumberConfirmedDomainEvent_IsMappedToIntegrationEvent()
+    {
+        var userId = Id<Identity>.FromGuid(Guid.NewGuid());
+        var domainEvent = new PhoneNumberConfirmedDomainEvent(userId, "+48123123123");
+
+        var integrationEvent = _mapper.Map<PhoneNumberConfirmedIntegrationEvent>(domainEvent);
+
+        Assert.Equal(userId.Value.ToString(), integrationEvent.Key);
+        Assert.Equal(userId.Value, integrationEvent.UserId);
+        Assert.Equal("+48123123123", integrationEvent.PhoneNumber);
+    }
 }

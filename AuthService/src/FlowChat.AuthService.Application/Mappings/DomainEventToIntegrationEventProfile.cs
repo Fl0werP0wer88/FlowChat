@@ -20,5 +20,13 @@ public sealed class DomainEventToIntegrationEventProfile : Profile
         CreateMap<EmailVerificationRequestedDomainEvent, EmailVerificationRequestIntegrationEvent>()
             .ForMember(destination => destination.Key, options => options.MapFrom(source => source.UserId.Value.ToString()))
             .ForMember(destination => destination.UserId, options => options.MapFrom(source => source.UserId.Value));
+
+        CreateMap<EmailConfirmedDomainEvent, EmailConfirmedIntegrationEvent>()
+            .ForMember(destination => destination.Key, options => options.MapFrom(source => source.UserId.Value.ToString()))
+            .ForMember(destination => destination.UserId, options => options.MapFrom(source => source.UserId.Value));
+
+        CreateMap<PhoneNumberConfirmedDomainEvent, PhoneNumberConfirmedIntegrationEvent>()
+            .ForMember(destination => destination.Key, options => options.MapFrom(source => source.UserId.Value.ToString()))
+            .ForMember(destination => destination.UserId, options => options.MapFrom(source => source.UserId.Value));
     }
 }
