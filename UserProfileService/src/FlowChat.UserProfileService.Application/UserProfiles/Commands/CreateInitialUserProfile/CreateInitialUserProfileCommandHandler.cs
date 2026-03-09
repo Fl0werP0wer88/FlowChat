@@ -1,3 +1,4 @@
+using FlowChat.Domain.Abstractions;
 using FlowChat.UserProfileService.Application.Contracts.Persistence;
 using FlowChat.UserProfileService.Domain.Entities;
 using MediatR;
@@ -39,19 +40,15 @@ public sealed class CreateInitialUserProfileCommandHandler
             throw new InvalidOperationException($"UserName '{userName}' already exists.");
         }
 
-        var entity = new UserProfile
-        {
-            Id = request.UserId,
-            UserName = userName,
-            DisplayName = displayName,
-            AvatarUrl = request.AvatarUrl?.Trim(),
-            Bio = request.Bio?.Trim(),
-            IsActive = true,
-            CreatedBy = "application"
-        };
+        var entity = UserProfile.Create(
+            userName,
+            displayName,
+            request.AvatarUrl,
+            request.Bio,
+            id: Id<UserProfile>.FromGuid(request.UserId));
 
         await _userProfileRepository.AddAsync(entity, cancellationToken);
 
-        return entity.Id;
+        return entity.Id.Value;
     }
 }

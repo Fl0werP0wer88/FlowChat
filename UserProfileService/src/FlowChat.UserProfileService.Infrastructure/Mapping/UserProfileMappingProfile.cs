@@ -8,6 +8,15 @@ public sealed class UserProfileMappingProfile : Profile
 {
     public UserProfileMappingProfile()
     {
-        CreateMap<UserProfile, UserProfileDto>();
+        CreateMap<Email, EmailDto>()
+            .ForCtorParam(nameof(EmailDto.Id), opt => opt.MapFrom(src => src.Id.Value));
+
+        CreateMap<Phone, PhoneDto>()
+            .ForCtorParam(nameof(PhoneDto.Id), opt => opt.MapFrom(src => src.Id.Value));
+
+        CreateMap<UserProfile, UserProfileDto>()
+            .ForCtorParam(nameof(UserProfileDto.Id), opt => opt.MapFrom(src => src.Id.Value))
+            .ForCtorParam(nameof(UserProfileDto.Emails), opt => opt.MapFrom(src => src.Emails))
+            .ForCtorParam(nameof(UserProfileDto.Phones), opt => opt.MapFrom(src => src.Phones));
     }
 }

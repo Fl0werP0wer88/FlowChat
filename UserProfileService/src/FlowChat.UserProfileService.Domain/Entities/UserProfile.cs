@@ -1,14 +1,179 @@
-using FlowChat.UserProfileService.Domain.Common;
+using FlowChat.Domain.Abstractions;
+using FlowChat.UserProfileService.Domain.Events;
 
 namespace FlowChat.UserProfileService.Domain.Entities;
 
-public class UserProfile : AuditableEntity
+public class UserProfile : AggregateRootBase<UserProfile>
 {
-    public Guid Id { get; set; }
-    public string UserName { get; set; } = string.Empty;
-    public string DisplayName { get; set; } = string.Empty;
-    public string? AvatarUrl { get; set; }
-    public string? Bio { get; set; }
-    public bool IsActive { get; set; } = true;
-    public DateTime? LastSeenAtUtc { get; set; }
+    private readonly List<Email> _emails = [];
+    private readonly List<Phone> _phones = [];
+
+    public string UserName { get; private set; }
+    public string DisplayName { get; private set; }
+    public string? AvatarUrl { get; private set; }
+    public string? Bio { get; private set; }
+    public bool IsActive { get; private set; }
+    public DateTime? LastSeenAtUtc { get; private set; }
+    public bool IsEmailVisible { get; private set; }
+    public bool IsPhoneVisible { get; private set; }
+    public IReadOnlyList<Email> Emails => _emails.AsReadOnly();
+    public IReadOnlyList<Phone> Phones => _phones.AsReadOnly();
+
+    private UserProfile(
+        Id<UserProfile>? id,
+        string userName,
+        string displayName,
+        string? avatarUrl = null,
+        string? bio = null,
+        bool isActive = true,
+        DateTime? lastSeenAtUtc = null,
+        bool isEmailVisible = true,
+        bool isPhoneVisible = true,
+        IEnumerable<Email>? emails = null,
+        IEnumerable<Phone>? phones = null) : base(id)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(userName);
+        ArgumentException.ThrowIfNullOrWhiteSpace(displayName);
+
+        UserName = userName.Trim();
+        DisplayName = displayName.Trim();
+        AvatarUrl = string.IsNullOrWhiteSpace(avatarUrl) ? null : avatarUrl.Trim();
+        Bio = string.IsNullOrWhiteSpace(bio) ? null : bio.Trim();
+        IsActive = isActive;
+        LastSeenAtUtc = lastSeenAtUtc;
+        IsEmailVisible = isEmailVisible;
+        IsPhoneVisible = isPhoneVisible;
+        _emails.AddRange(emails ?? []);
+        _phones.AddRange(phones ?? []);
+    }
+
+    public static UserProfile Create(
+        string userName,
+        string displayName,
+        string? avatarUrl = null,
+        string? bio = null,
+        bool isActive = true,
+        DateTime? lastSeenAtUtc = null,
+        bool isEmailVisible = true,
+        bool isPhoneVisible = true,
+        IEnumerable<Email>? emails = null,
+        IEnumerable<Phone>? phones = null,
+        Id<UserProfile>? id = null)
+    {
+        return new UserProfile(
+            id,
+            userName,
+            displayName,
+            avatarUrl,
+            bio,
+            isActive,
+            lastSeenAtUtc,
+            isEmailVisible,
+            isPhoneVisible,
+            emails,
+            phones);
+    }
+
+    public static UserProfile Rehydrate(
+        string userName,
+        string displayName,
+        string? avatarUrl = null,
+        string? bio = null,
+        bool isActive = true,
+        DateTime? lastSeenAtUtc = null,
+        bool isEmailVisible = true,
+        bool isPhoneVisible = true,
+        IEnumerable<Email>? emails = null,
+        IEnumerable<Phone>? phones = null,
+        Id<UserProfile>? id = null)
+    {
+        return new UserProfile(
+            id,
+            userName,
+            displayName,
+            avatarUrl,
+            bio,
+            isActive,
+            lastSeenAtUtc,
+            isEmailVisible,
+            isPhoneVisible,
+            emails,
+            phones);
+    }
+
+    public Email AddEmail(string address, Id<Email>? id = null)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(address);
+
+        var normalizedAddress = address.Trim();
+        if (_emails.Any(x => string.Equals(x.Address, normalizedAddress, StringComparison.OrdinalIgnoreCase)))
+        {
+            throw new InvalidOperationException($"Email '{normalizedAddress}' already exists.");
+        }
+
+        var email = Email.Create(Id.Value, normalizedAddress, !_emails.Any(), id);
+        _emails.Add(email);
+        return email;
+    }
+
+    public void SetMainEmail(Guid emailId)
+    {
+        ArgumentOutOfRangeException.ThrowIfEqual(emailId, Guid.Empty);
+
+        var targetEmail = _emails.FirstOrDefault(x => x.Id == Id<Email>.FromGuid(emailId));
+        if (targetEmail is null)
+        {
+            throw new InvalidOperationException($"Email '{emailId}' was not found.");
+        }
+
+        if (targetEmail.IsMain)
+        {
+            return;
+        }
+
+        foreach (var email in _emails)
+        {
+            email.SetMain(email == targetEmail);
+        }
+
+        AddDomainEvent(new MainEmailChangedDomainEvent(Id, targetEmail.Id, targetEmail.Address));
+    }
+
+    public Phone AddPhone(string number, Id<Phone>? id = null)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(number);
+
+        var normalizedNumber = number.Trim();
+        if (_phones.Any(x => string.Equals(x.Number, normalizedNumber, StringComparison.OrdinalIgnoreCase)))
+        {
+            throw new InvalidOperationException($"Phone '{normalizedNumber}' already exists.");
+        }
+
+        var phone = Phone.Create(Id.Value, normalizedNumber, !_phones.Any(), id);
+        _phones.Add(phone);
+        return phone;
+    }
+
+    public void SetMainPhone(Guid phoneId)
+    {
+        ArgumentOutOfRangeException.ThrowIfEqual(phoneId, Guid.Empty);
+
+        var targetPhone = _phones.FirstOrDefault(x => x.Id == Id<Phone>.FromGuid(phoneId));
+        if (targetPhone is null)
+        {
+            throw new InvalidOperationException($"Phone '{phoneId}' was not found.");
+        }
+
+        if (targetPhone.IsMain)
+        {
+            return;
+        }
+
+        foreach (var phone in _phones)
+        {
+            phone.SetMain(phone == targetPhone);
+        }
+
+        AddDomainEvent(new MainPhoneChangedDomainEvent(Id, targetPhone.Id, targetPhone.Number));
+    }
 }

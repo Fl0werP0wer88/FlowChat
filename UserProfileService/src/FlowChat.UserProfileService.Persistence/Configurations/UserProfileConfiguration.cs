@@ -1,3 +1,4 @@
+using FlowChat.Domain.Abstractions;
 using FlowChat.UserProfileService.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -10,6 +11,9 @@ public class UserProfileConfiguration : IEntityTypeConfiguration<UserProfile>
     {
         builder.ToTable("UserProfiles");
         builder.HasKey(x => x.Id);
+
+        builder.Property(x => x.Id)
+            .HasConversion(x => x.Value, x => Id<UserProfile>.FromGuid(x));
 
         builder.Property(x => x.UserName)
             .HasMaxLength(100)
@@ -25,7 +29,31 @@ public class UserProfileConfiguration : IEntityTypeConfiguration<UserProfile>
         builder.Property(x => x.Bio)
             .HasMaxLength(500);
 
+        builder.Property(x => x.CreatedBy)
+            .HasMaxLength(256)
+            .IsRequired();
+
+        builder.Property(x => x.LastModifiedBy)
+            .HasMaxLength(256)
+            .IsRequired();
+
         builder.HasIndex(x => x.UserName)
             .IsUnique();
+
+        builder.HasMany(x => x.Emails)
+            .WithOne()
+            .HasForeignKey(x => x.UserProfileId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasMany(x => x.Phones)
+            .WithOne()
+            .HasForeignKey(x => x.UserProfileId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Navigation(x => x.Emails)
+            .UsePropertyAccessMode(PropertyAccessMode.Field);
+
+        builder.Navigation(x => x.Phones)
+            .UsePropertyAccessMode(PropertyAccessMode.Field);
     }
 }

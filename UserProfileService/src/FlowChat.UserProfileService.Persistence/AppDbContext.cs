@@ -1,5 +1,4 @@
 using FlowChat.UserProfileService.Domain.Entities;
-using FlowChat.UserProfileService.Domain.Common;
 using Microsoft.EntityFrameworkCore;
 using Silverback.Messaging.Consuming.KafkaOffsetStore;
 
@@ -13,6 +12,8 @@ public class AppDbContext : DbContext
     }
 
     public DbSet<UserProfile> UserProfiles { get; set; }
+    public DbSet<Email> Emails { get; set; }
+    public DbSet<Phone> Phones { get; set; }
     public DbSet<SilverbackStoredOffset> SilverbackStoredOffsets => Set<SilverbackStoredOffset>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -21,24 +22,6 @@ public class AppDbContext : DbContext
         // modelBuilder.HasDefaultSchema("FlowChat");
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
         base.OnModelCreating(modelBuilder);
-    }
-
-    public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = new CancellationToken())
-    {
-        foreach (var entry in ChangeTracker.Entries<AuditableEntity>())
-        {
-            switch (entry.State)
-            {
-                case EntityState.Added:
-                    entry.Entity.CreatedDate = DateTime.UtcNow;
-                    break;
-                case EntityState.Modified:
-                    entry.Entity.LastModifiedDate = DateTime.UtcNow;
-                    break;
-            }
-        }
-
-        return base.SaveChangesAsync(cancellationToken);
     }
 }
 

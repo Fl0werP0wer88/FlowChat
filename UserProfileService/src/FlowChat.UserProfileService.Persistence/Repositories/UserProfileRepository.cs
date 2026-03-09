@@ -1,3 +1,4 @@
+using FlowChat.Domain.Abstractions;
 using FlowChat.UserProfileService.Application.Contracts.Persistence;
 using FlowChat.UserProfileService.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -10,10 +11,23 @@ public class UserProfileRepository : RepositoryBase<UserProfile>, IUserProfileRe
     {
     }
 
+    public override async Task<UserProfile?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var typedId = Id<UserProfile>.FromGuid(id);
+
+        return await DbContext.UserProfiles
+            .AsNoTracking()
+            .Include(x => x.Emails)
+            .Include(x => x.Phones)
+            .FirstOrDefaultAsync(x => x.Id == typedId, cancellationToken);
+    }
+
     public async Task<IReadOnlyList<UserProfile>> GetActiveAsync(CancellationToken cancellationToken = default)
     {
         return await DbContext.UserProfiles
             .AsNoTracking()
+            .Include(x => x.Emails)
+            .Include(x => x.Phones)
             .Where(x => x.IsActive)
             .OrderBy(x => x.DisplayName)
             .ThenBy(x => x.UserName)
@@ -26,6 +40,8 @@ public class UserProfileRepository : RepositoryBase<UserProfile>, IUserProfileRe
 
         return await DbContext.UserProfiles
             .AsNoTracking()
+            .Include(x => x.Emails)
+            .Include(x => x.Phones)
             .FirstOrDefaultAsync(x => x.UserName.ToLower() == normalizedUserName, cancellationToken);
     }
 
@@ -38,7 +54,7 @@ public class UserProfileRepository : RepositoryBase<UserProfile>, IUserProfileRe
 
         return await DbContext.UserProfiles
             .AnyAsync(
-                x => (!excludedUserId.HasValue || x.Id != excludedUserId.Value)
+                x => (!excludedUserId.HasValue || x.Id != Id<UserProfile>.FromGuid(excludedUserId.Value))
                      && x.UserName.ToLower() == normalizedUserName,
                 cancellationToken);
     }
