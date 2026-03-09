@@ -1,4 +1,4 @@
-using MediatR;
+using FlowChat.Application.Abstractions;
 
 namespace FlowChat.UserProfileService.Application.UserProfiles.Commands.CreateInitialUserProfile;
 
@@ -7,4 +7,4 @@ public sealed record CreateInitialUserProfileCommand(
     string DisplayName,
     string? AvatarUrl,
     string? Bio,
-    Guid UserId) : IRequest<Guid>;
+    Guid UserId) : ICommand<Guid>;

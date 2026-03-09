@@ -1,3 +1,5 @@
+using FlowChat.Application.Abstractions;
+using FlowChat.UserProfileService.Application.Common.Eventing;
 using FlowChat.UserProfileService.Application.UserProfiles.Commands.CreateInitialUserProfile;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -10,6 +12,7 @@ public static class ApplicationServiceRegistration
         var applicationAssembly = typeof(ApplicationServiceRegistration).Assembly;
 
         services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(applicationAssembly));
+        services.AddScoped<IDomainEventDispatcher, DomainEventDispatcher>();
 
         return services;
     }
@@ -19,6 +22,7 @@ public static class ApplicationServiceRegistration
         var consumerAssembly = typeof(CreateInitialUserProfileCommandHandler).Assembly;
 
         services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(consumerAssembly));
+        services.AddScoped<IDomainEventDispatcher, DomainEventDispatcher>();
 
         return services;
     }

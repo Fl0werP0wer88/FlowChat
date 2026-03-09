@@ -1,3 +1,4 @@
+using FlowChat.Domain.Abstractions;
 using FlowChat.Messaging.Contracts.AuthService.Events;
 using FlowChat.UserProfileService.Application.UserProfiles.Commands.CreateInitialUserProfile;
 using MediatR;
@@ -31,7 +32,7 @@ public sealed class UserCreatedSubscriber(
 
         try
         {
-            await mediator.Send(
+            var result = await mediator.Send(
                 new CreateInitialUserProfileCommand(
                     userName,
                     displayName,
@@ -39,6 +40,25 @@ public sealed class UserCreatedSubscriber(
                     null,
                     userId.Value),
                 cancellationToken);
+
+            if (result.IsSuccess)
+            {
+                return;
+            }
+
+            if (result.Error.ErrorType == ErrorType.Conflict
+                || result.Error.ErrorType == ErrorType.Validation
+                || result.Error.ErrorType == ErrorType.BadRequest)
+            {
+                logger.LogInformation(
+                    "Skipping user profile creation for user {UserId}. Reason: {Reason}",
+                    userId.Value,
+                    result.Error.ErrorMessage);
+
+                throw new InvalidOperationException(result.Error.ErrorMessage);
+            }
+
+            throw new InvalidOperationException(result.Error.ErrorMessage);
         }
         catch (InvalidOperationException ex)
         {
