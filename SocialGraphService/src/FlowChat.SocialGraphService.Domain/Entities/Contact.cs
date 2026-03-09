@@ -2,7 +2,7 @@ using FlowChat.Domain.Abstractions;
 
 namespace FlowChat.SocialGraphService.Domain.Entities;
 
-public class Contact : EntityBase<Contact>
+public class Contact : AggregateRootBase<Contact>
 {
     public Guid OwnerUserId { get; }
     public Guid ContactUserId { get; }
@@ -46,6 +46,20 @@ public class Contact : EntityBase<Contact>
 
 
     public static Contact Create(
+        Guid ownerUserId,
+        Guid contactUserId,
+        string login,
+        string? firstName = null,
+        string? lastName = null,
+        string? phoneNumber = null,
+        string? email = null,
+        bool isBlocked = false,
+        Id<Contact>? id = null)
+    {
+        return new Contact(id, ownerUserId, contactUserId, login, firstName, lastName, phoneNumber, email, isBlocked);
+    }
+
+    public static Contact Rehydrate(
         Guid ownerUserId,
         Guid contactUserId,
         string login,

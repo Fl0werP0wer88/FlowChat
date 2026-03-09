@@ -42,10 +42,5 @@ public sealed class UserSocialGraphConfiguration : IEntityTypeConfiguration<User
         builder.HasIndex(x => x.UserId)
             .IsUnique()
             .HasDatabaseName("uq_user_social_graph_user_id");
-
-        builder.HasMany(x => x.Contacts)
-            .WithOne(x => x.UserSocialGraph)
-            .HasForeignKey(x => x.UserSocialGraphId)
-            .OnDelete(DeleteBehavior.Cascade);
     }
 }

@@ -3,7 +3,6 @@ namespace FlowChat.SocialGraphService.Persistence.Entities;
 public class ContactEntity
 {
     public Guid Id { get; set; }
-    public Guid? UserSocialGraphId { get; set; }
     public Guid OwnerUserId { get; set; }
     public Guid ContactUserId { get; set; }
     public string? FirstName { get; set; }
@@ -16,7 +15,6 @@ public class ContactEntity
     public DateTimeOffset CreatedAtUtc { get; set; }
     public string LastModifiedBy { get; set; } = string.Empty;
     public DateTimeOffset LastModifiedAtUtc { get; set; }
-    public UserSocialGraphEntity? UserSocialGraph { get; set; }
 
     public static ContactEntity Create(
         Guid id,
@@ -28,7 +26,6 @@ public class ContactEntity
         string? phoneNumber = null,
         string? email = null,
         bool isBlocked = false,
-        Guid? userSocialGraphId = null,
         string createdBy = "",
         DateTimeOffset? createdAtUtc = null,
         string lastModifiedBy = "",
@@ -37,7 +34,6 @@ public class ContactEntity
         return new ContactEntity
         {
             Id = id,
-            UserSocialGraphId = userSocialGraphId,
             OwnerUserId = ownerUserId,
             ContactUserId = contactUserId,
             Login = login,

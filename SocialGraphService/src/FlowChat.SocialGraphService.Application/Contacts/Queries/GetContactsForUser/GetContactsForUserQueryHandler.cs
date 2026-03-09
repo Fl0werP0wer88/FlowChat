@@ -19,7 +19,6 @@ public sealed class GetContactsForUserQueryHandler : IQueryHandler<GetContactsFo
     {
         var contacts = await _contactReadRepository.GetForUserAsync(
             request.UserId,
-            request.Status,
             cancellationToken);
 
         var contactDtos = contacts

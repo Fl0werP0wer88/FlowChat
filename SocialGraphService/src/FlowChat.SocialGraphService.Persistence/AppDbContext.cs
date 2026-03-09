@@ -11,7 +11,6 @@ public class AppDbContext : DbContext
     }
 
     public DbSet<ContactEntity> Contacts { get; set; }
-    public DbSet<InvitationEntity> Invitations { get; set; }
     public DbSet<UserSocialGraphEntity> UserSocialGraphs { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

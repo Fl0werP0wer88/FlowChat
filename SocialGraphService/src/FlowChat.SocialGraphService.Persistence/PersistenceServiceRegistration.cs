@@ -20,9 +20,8 @@ public static class PersistenceServiceRegistration
         services.AddAutoMapper((Action<AutoMapper.IMapperConfigurationExpression>?)null, persistenceAssembly);
 
         services.AddScoped<IUserSocialGraphRepository, UserSocialGraphRepository>();
-        services.AddScoped<IInvitationRepository, InvitationRepository>();
+        services.AddScoped<IContactRepository, ContactRepository>();
         services.AddScoped<IContactReadRepository, ContactReadRepository>();
-        services.AddScoped<IInvitationReadRepository, InvitationReadRepository>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
 
         return services;

@@ -6,7 +6,4 @@ public interface IUserSocialGraphRepository
 {
     Task<UserSocialGraph?> GetByUserIdAsync(Guid userId, CancellationToken cancellationToken = default);
     Task<UserSocialGraph> AddAsync(UserSocialGraph entity, CancellationToken cancellationToken = default);
-    Task<Contact> AddContactAsync(Contact entity, CancellationToken cancellationToken = default);
-    Task UpdateContactAsync(Contact entity, CancellationToken cancellationToken = default);
-    Task DeleteContactAsync(Contact entity, CancellationToken cancellationToken = default);
 }

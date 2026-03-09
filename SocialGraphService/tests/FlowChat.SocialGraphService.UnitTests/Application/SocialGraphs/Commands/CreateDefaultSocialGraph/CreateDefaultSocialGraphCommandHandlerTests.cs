@@ -76,14 +76,6 @@ public sealed class CreateDefaultSocialGraphCommandHandlerTests
             return Task.FromResult(entity);
         }
 
-        public Task<Contact> AddContactAsync(Contact entity, CancellationToken cancellationToken = default) =>
-            throw new NotSupportedException();
-
-        public Task UpdateContactAsync(Contact entity, CancellationToken cancellationToken = default) =>
-            throw new NotSupportedException();
-
-        public Task DeleteContactAsync(Contact entity, CancellationToken cancellationToken = default) =>
-            throw new NotSupportedException();
     }
 
     private sealed class FakeUnitOfWork : IUnitOfWork

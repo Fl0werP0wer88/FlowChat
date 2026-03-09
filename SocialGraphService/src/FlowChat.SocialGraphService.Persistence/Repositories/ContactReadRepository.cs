@@ -1,7 +1,6 @@
 using AutoMapper;
 using FlowChat.SocialGraphService.Application.Contracts.Persistence;
 using FlowChat.SocialGraphService.Domain.Entities;
-using FlowChat.SocialGraphService.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace FlowChat.SocialGraphService.Persistence.Repositories;
@@ -28,22 +27,11 @@ public sealed class ContactReadRepository : IContactReadRepository
 
     public async Task<IReadOnlyList<Contact>> GetForUserAsync(
         Guid userId,
-        InvitationStatus? status = null,
         CancellationToken cancellationToken = default)
     {
         var query = _dbContext.Contacts
             .AsNoTracking()
             .Where(x => x.OwnerUserId == userId);
-
-        if (status.HasValue)
-        {
-            query = status.Value switch
-            {
-                InvitationStatus.Accepted => query.Where(x => !x.IsBlocked),
-                // InvitationStatus.Canceled => query.Where(x => x.IsBlocked),
-                _ => query
-            };
-        }
 
         var entities = await query
             .OrderByDescending(x => x.CreatedAtUtc)

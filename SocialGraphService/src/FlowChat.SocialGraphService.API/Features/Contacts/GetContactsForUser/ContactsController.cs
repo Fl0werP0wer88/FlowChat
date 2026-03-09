@@ -1,5 +1,4 @@
 using FlowChat.SocialGraphService.Application.Contacts.Queries.GetContactsForUser;
-using FlowChat.SocialGraphService.Domain.Enums;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -20,11 +19,10 @@ public sealed class ContactsController : ControllerBase
     [ProducesResponseType(typeof(IReadOnlyList<ContactDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetForUser(
         [FromRoute] Guid userId,
-        [FromQuery] InvitationStatus? status,
         CancellationToken cancellationToken)
     {
         var contacts = await _mediator.Send(
-            new GetContactsForUserQuery(userId, status),
+            new GetContactsForUserQuery(userId),
             cancellationToken);
 
         return Ok(contacts);

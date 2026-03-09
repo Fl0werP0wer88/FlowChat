@@ -10,7 +10,7 @@ public sealed class SocialGraphMappingProfile : Profile
     public SocialGraphMappingProfile()
     {
         CreateMap<ContactEntity, Contact>()
-            .ConstructUsing(src => Contact.Create(
+            .ConstructUsing(src => Contact.Rehydrate(
                 src.OwnerUserId,
                 src.ContactUserId,
                 src.Login,
@@ -32,14 +32,13 @@ public sealed class SocialGraphMappingProfile : Profile
                 src.PhoneNumber,
                 src.Email,
                 src.IsBlocked,
-                null,
                 src.CreatedBy,
                 src.CreatedAtUtc,
                 src.LastModifiedBy,
                 src.LastModifiedAtUtc));
 
         CreateMap<UserSocialGraphEntity, UserSocialGraph>()
-            .ConstructUsing((src, ctx) => UserSocialGraph.Create(
+            .ConstructUsing(src => UserSocialGraph.Create(
                 src.Login,
                 src.UserId,
                 src.FirstName,
@@ -48,9 +47,7 @@ public sealed class SocialGraphMappingProfile : Profile
                 src.Email,
                 src.IsPhoneVisible,
                 src.IsEmailVisible,
-                ctx.Mapper.Map<IEnumerable<Contact>>(src.Contacts),
-                id: Id<UserSocialGraph>.FromGuid(src.Id)))
-            .ForMember(dest => dest.Contacts, opt => opt.Ignore());
+                id: Id<UserSocialGraph>.FromGuid(src.Id)));
 
         CreateMap<UserSocialGraph, UserSocialGraphEntity>()
             .ConstructUsing(src => new UserSocialGraphEntity
@@ -69,37 +66,5 @@ public sealed class SocialGraphMappingProfile : Profile
                 LastModifiedBy = src.LastModifiedBy,
                 LastModifiedAtUtc = src.LastModifiedAtUtc
             });
-
-        CreateMap<InvitationEntity, Invitation>()
-            .ConstructUsing(src => Invitation.Rehydrate(
-                src.RequesterId,
-                src.AddresseeId,
-                ParseInvitationStatus(src.Status),
-                src.RespondedAtUtc,
-                id: Id<Invitation>.FromGuid(src.Id)));
-
-        CreateMap<Invitation, InvitationEntity>()
-            .ConstructUsing(src => new InvitationEntity
-            {
-                Id = src.Id.Value,
-                RequesterId = src.RequesterId,
-                AddresseeId = src.AddresseeId,
-                Status = src.Status.ToString(),
-                RespondedAtUtc = src.RespondedAtUtc,
-                CreatedBy = src.CreatedBy,
-                CreatedAtUtc = src.CreatedAtUtc,
-                LastModifiedBy = src.LastModifiedBy,
-                LastModifiedAtUtc = src.LastModifiedAtUtc
-            });
-    }
-
-    private static Domain.Enums.InvitationStatus ParseInvitationStatus(string status)
-    {
-        if (!Enum.TryParse<Domain.Enums.InvitationStatus>(status, true, out var parsedStatus))
-        {
-            throw new InvalidOperationException($"Unsupported invitation status '{status}'.");
-        }
-
-        return parsedStatus;
     }
 }

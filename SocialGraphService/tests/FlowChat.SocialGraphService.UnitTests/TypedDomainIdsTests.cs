@@ -1,7 +1,5 @@
 using FlowChat.Domain.Abstractions;
 using FlowChat.SocialGraphService.Domain.Entities;
-using FlowChat.SocialGraphService.Domain.Enums;
-using FlowChat.SocialGraphService.Domain.Events;
 
 namespace FlowChat.SocialGraphService.UnitTests;
 
@@ -75,53 +73,16 @@ public class TypedDomainIdsTests
     }
 
     [Fact]
-    public void Invitation_Ctor_WithTypedId_AssignsTypedIdValue()
+    public void Contact_Rehydrate_DoesNotEmitDomainEvents()
     {
-        var id = Id<Invitation>.New();
-
-        var invitation = Invitation.Create(
+        var contact = Contact.Rehydrate(
             Guid.NewGuid(),
             Guid.NewGuid(),
-            InvitationStatus.Pending,
-            id: id);
+            "user-login",
+            id: Id<Contact>.New());
 
-        Assert.Equal(id, invitation.Id);
-        Assert.Equal(id.Value, invitation.Id.Value);
+        Assert.Empty(contact.DomainEvents);
     }
-
-    [Fact]
-    public void Invitation_Rehydrate_DoesNotEmitDomainEvents()
-    {
-        var invitation = Invitation.Rehydrate(
-            Guid.NewGuid(),
-            Guid.NewGuid(),
-            id: Id<Invitation>.New());
-
-        Assert.Empty(invitation.DomainEvents);
-    }
-
-    [Fact]
-    public void Invitation_Create_WithoutId_GeneratesTypedId()
-    {
-        var invitation = Invitation.Create(
-            requesterId: Guid.NewGuid(),
-            addresseeId: Guid.NewGuid());
-
-        Assert.NotEqual(Guid.Empty, invitation.Id.Value);
-    }
-
-    [Fact]
-    public void Invitation_Create_EmitsInvitationSentDomainEvent()
-    {
-        var invitation = Invitation.Create(
-            requesterId: Guid.NewGuid(),
-            addresseeId: Guid.NewGuid(),
-            id: Id<Invitation>.New());
-
-        var sentEvent = Assert.Single(invitation.DomainEvents);
-        Assert.IsType<InvitationSentDomainEvent>(sentEvent);
-    }
-
 
     [Fact]
     public void UserSocialGraph_Ctor_WithGuid_UsesSameGuidInsideTypedId()
@@ -181,20 +142,6 @@ public class TypedDomainIdsTests
     }
 
     [Fact]
-    public void UserSocialGraph_Create_RehydratesContacts()
-    {
-        var contact = Contact.Create(Guid.NewGuid(), Guid.NewGuid(), "contact-login", id: Id<Contact>.New());
-
-        var socialGraph = UserSocialGraph.Create(
-            login: "user-login",
-            contacts: [contact],
-            id: Guid.NewGuid());
-
-        Assert.Single(socialGraph.Contacts);
-        Assert.Equal(contact.Id, socialGraph.Contacts[0].Id);
-    }
-
-    [Fact]
     public void Contact_Create_WithoutLogin_Throws()
     {
         Assert.Throws<ArgumentException>(() => Contact.Create(
@@ -210,32 +157,4 @@ public class TypedDomainIdsTests
         Assert.Throws<ArgumentException>(() => UserSocialGraph.Create("", id: Guid.NewGuid()));
     }
 
-    [Fact]
-    public void Invitation_Accept_UpdatesStatus_And_EmitsEvent()
-    {
-        var invitation = Invitation.Create(Guid.NewGuid(), Guid.NewGuid(), id: Id<Invitation>.New());
-        invitation.PopDomainEvents();
-
-        invitation.Accept();
-
-        var acceptedEvent = Assert.Single(invitation.DomainEvents);
-        Assert.IsType<InvitationAcceptedDomainEvent>(acceptedEvent);
-        Assert.Equal(InvitationStatus.Accepted, invitation.Status);
-        Assert.NotNull(invitation.RespondedAtUtc);
-    }
-
-    [Fact]
-    public void UserSocialGraph_CreateContactFromInvitation_AddsContact()
-    {
-        var socialGraph = UserSocialGraph.Create("owner-login", id: Guid.NewGuid());
-        var invitation = Invitation.Create(socialGraph.UserId, Guid.NewGuid(), id: Id<Invitation>.New());
-        invitation.PopDomainEvents();
-        invitation.Accept();
-        invitation.PopDomainEvents();
-
-        var contact = socialGraph.CreateContactFromInvitation(invitation, "contact-login");
-
-        Assert.Single(socialGraph.Contacts);
-        Assert.Equal(contact.Id, socialGraph.Contacts[0].Id);
-    }
 }
