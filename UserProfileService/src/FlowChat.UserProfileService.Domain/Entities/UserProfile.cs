@@ -60,8 +60,14 @@ public class UserProfile : AggregateRootBase<UserProfile>
         IEnumerable<Phone>? phones = null,
         Id<UserProfile>? id = null)
     {
+        var typedId = id ?? Id<UserProfile>.New();
+        var emailList = (emails ?? []).ToList();
+        var phoneList = (phones ?? []).ToList();
+
+        EnsureInitialContactInvariant(emailList, phoneList);
+
         return new UserProfile(
-            id,
+            typedId,
             userName,
             displayName,
             avatarUrl,
@@ -70,8 +76,8 @@ public class UserProfile : AggregateRootBase<UserProfile>
             lastSeenAtUtc,
             isEmailVisible,
             isPhoneVisible,
-            emails,
-            phones);
+            emailList,
+            phoneList);
     }
 
     public static UserProfile Rehydrate(
@@ -175,5 +181,28 @@ public class UserProfile : AggregateRootBase<UserProfile>
         }
 
         AddDomainEvent(new MainPhoneChangedDomainEvent(Id, targetPhone.Id, targetPhone.Number));
+    }
+
+    private static void EnsureInitialContactInvariant(
+        IReadOnlyCollection<Email> emails,
+        IReadOnlyCollection<Phone> phones)
+    {
+        var mainEmailCount = emails.Count(x => x.IsMain);
+        var mainPhoneCount = phones.Count(x => x.IsMain);
+
+        if (mainEmailCount > 1)
+        {
+            throw new InvalidOperationException("User profile cannot have more than one main email.");
+        }
+
+        if (mainPhoneCount > 1)
+        {
+            throw new InvalidOperationException("User profile cannot have more than one main phone.");
+        }
+
+        if (mainEmailCount == 0 && mainPhoneCount == 0)
+        {
+            throw new InvalidOperationException("User profile must have at least one main email or main phone.");
+        }
     }
 }

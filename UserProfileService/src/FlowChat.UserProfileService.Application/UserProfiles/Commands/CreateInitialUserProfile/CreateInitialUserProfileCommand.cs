@@ -7,4 +7,6 @@ public sealed record CreateInitialUserProfileCommand(
     string DisplayName,
     string? AvatarUrl,
     string? Bio,
+    string? Email,
+    string? Phone,
     Guid UserId) : ICommand<Guid>;

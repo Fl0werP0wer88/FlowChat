@@ -36,6 +36,14 @@ public sealed class CreateInitialUserProfileCommandHandler
 
         var userName = request.UserName.Trim();
         var displayName = request.DisplayName.Trim();
+        var email = string.IsNullOrWhiteSpace(request.Email) ? null : request.Email.Trim();
+        var phone = string.IsNullOrWhiteSpace(request.Phone) ? null : request.Phone.Trim();
+
+        if (email is null && phone is null)
+        {
+            return Result.Failure<Guid, IDomainError>(
+                DomainError.Validation("At least one email or phone is required to create a user profile."));
+        }
 
         var exists = await _userProfileRepository
             .UserNameExistsAsync(userName, cancellationToken: cancellationToken);
@@ -45,12 +53,22 @@ public sealed class CreateInitialUserProfileCommandHandler
             return Result.Failure<Guid, IDomainError>(DomainError.Conflict($"UserName '{userName}' already exists."));
         }
 
+        var userProfileId = Id<UserProfile>.FromGuid(request.UserId);
+        List<Email> emails = email is null
+            ? []
+            : [Email.Create(userProfileId.Value, email, isMain: true)];
+        List<Phone> phones = phone is null
+            ? []
+            : [Phone.Create(userProfileId.Value, phone, isMain: true)];
+
         _userProfile = UserProfile.Create(
             userName,
             displayName,
             request.AvatarUrl,
             request.Bio,
-            id: Id<UserProfile>.FromGuid(request.UserId));
+            emails: emails,
+            phones: phones,
+            id: userProfileId);
 
         await _userProfileRepository.AddAsync(_userProfile, cancellationToken);
 

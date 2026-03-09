@@ -2,7 +2,6 @@ using FlowChat.Domain.Abstractions;
 using FlowChat.Messaging.Contracts.AuthService.Events;
 using FlowChat.UserProfileService.Application.UserProfiles.Commands.CreateInitialUserProfile;
 using MediatR;
-using Microsoft.Extensions.Logging;
 using Silverback.Messaging.Subscribers;
 
 namespace FlowChat.UserProfileService.Worker.Kafka;
@@ -38,6 +37,8 @@ public sealed class UserCreatedSubscriber(
                     displayName,
                     null,
                     null,
+                    message.Email,
+                    message.PhoneNumber,
                     userId.Value),
                 cancellationToken);
 
