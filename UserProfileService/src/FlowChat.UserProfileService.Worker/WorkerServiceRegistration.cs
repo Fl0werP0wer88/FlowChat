@@ -25,17 +25,23 @@ public static class WorkerServiceRegistration
         var settingsManager = new WorkerSettingsManager(configuration);
         services.TryAddSingleton<IWorkerSettingsManager>(settingsManager);
         var consumerOptions = settingsManager.GetUserCreatedConsumerOptions();
-        var producerOptions = configuration
+        var createdProducerOptions = configuration
             .GetSection(UserProfileCreatedProducerOptions.SectionName)
             .Get<UserProfileCreatedProducerOptions>()
             ?? new UserProfileCreatedProducerOptions();
+        var stateChangedProducerOptions = configuration
+            .GetSection(UserProfileStateChangedProducerOptions.SectionName)
+            .Get<UserProfileStateChangedProducerOptions>()
+            ?? new UserProfileStateChangedProducerOptions();
         var outboxOptions = configuration
             .GetSection(OutboxPublisherRuntimeOptions.SectionName)
             .Get<OutboxPublisherRuntimeOptions>()
             ?? new OutboxPublisherRuntimeOptions();
-        var bootstrapServers = string.IsNullOrWhiteSpace(producerOptions.BootstrapServers)
-            ? consumerOptions.BootstrapServers
-            : producerOptions.BootstrapServers;
+        var bootstrapServers = !string.IsNullOrWhiteSpace(createdProducerOptions.BootstrapServers)
+            ? createdProducerOptions.BootstrapServers
+            : !string.IsNullOrWhiteSpace(stateChangedProducerOptions.BootstrapServers)
+                ? stateChangedProducerOptions.BootstrapServers
+                : consumerOptions.BootstrapServers;
 
         services.AddSilverback()
             .WithConnectionToMessageBroker(options =>
@@ -59,7 +65,13 @@ public static class WorkerServiceRegistration
                     .WithBootstrapServers(bootstrapServers)
                     .AddProducer(producer => producer
                         .Produce<UserProfileCreatedIntegrationEvent>("user-profile-created", endpoint => endpoint
-                            .ProduceTo(producerOptions.Topic)
+                            .ProduceTo(createdProducerOptions.Topic)
+                            .SetKafkaKey(message => message?.UserProfileId)
+                            .SerializeAsJson(serializer => serializer.SetTypeHeader())
+                            .StoreToOutbox(outbox => outbox.UseEntityFramework<AppDbContext>())))
+                    .AddProducer(producer => producer
+                        .Produce<UserProfileStateChangedIntegrationEvent>("user-profile-state-changed", endpoint => endpoint
+                            .ProduceTo(stateChangedProducerOptions.Topic)
                             .SetKafkaKey(message => message?.UserProfileId)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())
                             .StoreToOutbox(outbox => outbox.UseEntityFramework<AppDbContext>())))

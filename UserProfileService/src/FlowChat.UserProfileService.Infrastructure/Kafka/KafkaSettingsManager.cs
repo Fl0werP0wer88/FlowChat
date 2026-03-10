@@ -9,4 +9,8 @@ public sealed class KafkaSettingsManager(IConfiguration configuration) : IKafkaS
     public UserProfileCreatedProducerOptions GetUserProfileCreatedProducerOptions() =>
         _configuration.GetSection(UserProfileCreatedProducerOptions.SectionName).Get<UserProfileCreatedProducerOptions>()
         ?? new UserProfileCreatedProducerOptions();
+
+    public UserProfileStateChangedProducerOptions GetUserProfileStateChangedProducerOptions() =>
+        _configuration.GetSection(UserProfileStateChangedProducerOptions.SectionName).Get<UserProfileStateChangedProducerOptions>()
+        ?? new UserProfileStateChangedProducerOptions();
 }

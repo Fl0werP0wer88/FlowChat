@@ -185,6 +185,34 @@ function Get-TopicDefinitions {
       }
     },
     @{
+      name = "dev.flowchat.user-profile.user-profile.v1"
+      partitions = 1
+      rf = 1
+      config = @{
+        "min.insync.replicas" = "1"
+        "cleanup.policy" = "delete"
+        "retention.ms" = "2419200000"
+      }
+    },
+    @{
+      name = "dev.flowchat.user-profile.user-profile.v1.retry"
+      partitions = 1
+      rf = 1
+      config = @{
+        "cleanup.policy" = "delete"
+        "retention.ms" = "3600000"
+      }
+    },
+    @{
+      name = "dev.flowchat.user-profile.user-profile.v1.dlq"
+      partitions = 1
+      rf = 1
+      config = @{
+        "cleanup.policy" = "delete"
+        "retention.ms" = "1209600000"
+      }
+    },
+    @{
       name = "dev.flowchat.notification.email.v1"
       partitions = 1
       rf = 1

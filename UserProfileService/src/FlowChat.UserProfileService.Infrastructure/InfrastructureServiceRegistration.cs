@@ -24,6 +24,8 @@ public static class InfrastructureServiceRegistration
         services.AddScoped<IObjectMapper, AutoMapperObjectMapper>();
         services.AddScoped<IKafkaProducerOptions<UserProfileCreatedIntegrationEvent>>(sp =>
             sp.GetRequiredService<IKafkaSettingsManager>().GetUserProfileCreatedProducerOptions());
+        services.AddScoped<IKafkaProducerOptions<UserProfileStateChangedIntegrationEvent>>(sp =>
+            sp.GetRequiredService<IKafkaSettingsManager>().GetUserProfileStateChangedProducerOptions());
         services.AddScoped<IIntegrationEventPublisher, SilverbackEventPublisher>();
 
         return services;

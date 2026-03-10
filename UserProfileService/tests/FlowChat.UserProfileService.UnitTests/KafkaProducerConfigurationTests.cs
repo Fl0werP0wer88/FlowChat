@@ -17,7 +17,9 @@ public sealed class KafkaProducerConfigurationTests
                 ["Kafka:UserCreatedConsumer:BootstrapServers"] = "legacy-broker:9092",
                 ["Kafka:UserCreatedConsumer:Topic"] = "legacy-topic",
                 ["Kafka:UserProfileCreatedProducer:BootstrapServers"] = "broker:9092",
-                ["Kafka:UserProfileCreatedProducer:Topic"] = "user-profile-created-topic"
+                ["Kafka:UserProfileCreatedProducer:Topic"] = "user-profile-created-topic",
+                ["Kafka:UserProfileStateChangedProducer:BootstrapServers"] = "broker:9092",
+                ["Kafka:UserProfileStateChangedProducer:Topic"] = "user-profile-state-topic"
             })
             .Build();
 
@@ -29,13 +31,19 @@ public sealed class KafkaProducerConfigurationTests
         using var serviceProvider = services.BuildServiceProvider();
 
         var settingsManager = serviceProvider.GetRequiredService<IKafkaSettingsManager>();
-        var producerOptions = settingsManager.GetUserProfileCreatedProducerOptions();
-        var typedProducerOptions = serviceProvider
+        var createdProducerOptions = settingsManager.GetUserProfileCreatedProducerOptions();
+        var stateChangedProducerOptions = settingsManager.GetUserProfileStateChangedProducerOptions();
+        var typedCreatedProducerOptions = serviceProvider
             .GetRequiredService<IKafkaProducerOptions<UserProfileCreatedIntegrationEvent>>();
+        var typedStateChangedProducerOptions = serviceProvider
+            .GetRequiredService<IKafkaProducerOptions<UserProfileStateChangedIntegrationEvent>>();
 
-        Assert.Equal("broker:9092", producerOptions.BootstrapServers);
-        Assert.Equal("user-profile-created-topic", producerOptions.Topic);
-        Assert.Equal("user-profile-created-topic", typedProducerOptions.Topic);
+        Assert.Equal("broker:9092", createdProducerOptions.BootstrapServers);
+        Assert.Equal("user-profile-created-topic", createdProducerOptions.Topic);
+        Assert.Equal("broker:9092", stateChangedProducerOptions.BootstrapServers);
+        Assert.Equal("user-profile-state-topic", stateChangedProducerOptions.Topic);
+        Assert.Equal("user-profile-created-topic", typedCreatedProducerOptions.Topic);
+        Assert.Equal("user-profile-state-topic", typedStateChangedProducerOptions.Topic);
     }
 
     [Theory]
@@ -52,9 +60,14 @@ public sealed class KafkaProducerConfigurationTests
         var producerOptions = configuration
             .GetSection(UserProfileCreatedProducerOptions.SectionName)
             .Get<UserProfileCreatedProducerOptions>();
+        var stateChangedProducerOptions = configuration
+            .GetSection(UserProfileStateChangedProducerOptions.SectionName)
+            .Get<UserProfileStateChangedProducerOptions>();
 
         Assert.NotNull(producerOptions);
-        Assert.Equal("dev.flowchat.user-profile.user.v1", producerOptions!.Topic);
+        Assert.NotNull(stateChangedProducerOptions);
+        Assert.Equal("dev.flowchat.user-profile.user-profile.v1", producerOptions!.Topic);
+        Assert.Equal("dev.flowchat.user-profile.user-profile.v1", stateChangedProducerOptions!.Topic);
     }
 
     private static string GetRepositoryPath(string relativePath)
