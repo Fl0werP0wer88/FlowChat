@@ -1,3 +1,4 @@
+using FlowChat.AuthService.Domain.Common.Constants;
 using FlowChat.AuthService.Domain.Events;
 using FlowChat.Domain.Abstractions;
 

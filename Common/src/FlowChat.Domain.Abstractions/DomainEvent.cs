@@ -32,6 +32,18 @@ public abstract class DomainEventBase : IDomainEvent
         EventType = GetEventType(this);
     }
 
+    protected DomainEventBase(Guid aggregateId, string aggregateType, DateTimeOffset occurredOnUtc)
+    {
+        AggregateId = aggregateId != Guid.Empty
+            ? aggregateId
+            : throw new ArgumentNullException(nameof(aggregateId));
+        AggregateType = string.IsNullOrWhiteSpace(aggregateType)
+            ? throw new ArgumentException("Aggregate type cannot be null or empty.", nameof(aggregateType))
+            : aggregateType;
+        OccurredOnUtc = occurredOnUtc;
+        EventType = GetEventType(GetType(), AggregateType);
+    }
+
     public static string GetAggregateType<TEvent>() where TEvent : IDomainEvent =>
         GetAggregateType(typeof(TEvent));
 

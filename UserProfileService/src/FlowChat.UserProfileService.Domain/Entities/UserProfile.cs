@@ -1,4 +1,5 @@
 using FlowChat.Domain.Abstractions;
+using FlowChat.UserProfileService.Domain.Common.Constants;
 using FlowChat.UserProfileService.Domain.Events;
 
 namespace FlowChat.UserProfileService.Domain.Entities;

@@ -1,4 +1,5 @@
 using FlowChat.Domain.Abstractions;
+using FlowChat.SocialGraphService.Domain.Common.Constants;
 
 namespace FlowChat.SocialGraphService.Domain.Entities;
 
