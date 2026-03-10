@@ -83,19 +83,6 @@ public class UserProfile : AggregateRootBase<UserProfile>
         var mainEmail = userProfile.Emails.FirstOrDefault(x => x.IsMain)?.Address;
         var mainPhone = userProfile.Phones.FirstOrDefault(x => x.IsMain)?.Number;
 
-        userProfile.AddDomainEvent(new UserProfileCreatedDomainEvent(
-            userProfile.Id,
-            userProfile.UserName,
-            userProfile.DisplayName,
-            mainEmail,
-            mainPhone,
-            userProfile.AvatarUrl,
-            userProfile.Bio,
-            userProfile.IsActive,
-            userProfile.LastSeenAtUtc,
-            userProfile.IsEmailVisible,
-            userProfile.IsPhoneVisible));
-
         return userProfile;
     }
 
@@ -138,6 +125,7 @@ public class UserProfile : AggregateRootBase<UserProfile>
 
         var email = Email.Create(Id.Value, normalizedAddress, !_emails.Any(), id);
         _emails.Add(email);
+        MarkAggregateStateChanged(UserProfileConstants.UserProfileAggregateTypeName, CreateSnapshot);
         return email;
     }
 
@@ -162,6 +150,7 @@ public class UserProfile : AggregateRootBase<UserProfile>
         }
 
         AddDomainEvent(new MainEmailChangedDomainEvent(Id, targetEmail.Id, targetEmail.Address));
+        MarkAggregateStateChanged(UserProfileConstants.UserProfileAggregateTypeName, CreateSnapshot);
     }
 
     public Phone AddPhone(string number, Id<Phone>? id = null)
@@ -176,6 +165,7 @@ public class UserProfile : AggregateRootBase<UserProfile>
 
         var phone = Phone.Create(Id.Value, normalizedNumber, !_phones.Any(), id);
         _phones.Add(phone);
+        MarkAggregateStateChanged(UserProfileConstants.UserProfileAggregateTypeName, CreateSnapshot);
         return phone;
     }
 
@@ -200,6 +190,26 @@ public class UserProfile : AggregateRootBase<UserProfile>
         }
 
         AddDomainEvent(new MainPhoneChangedDomainEvent(Id, targetPhone.Id, targetPhone.Number));
+        MarkAggregateStateChanged(UserProfileConstants.UserProfileAggregateTypeName, CreateSnapshot);
+    }
+
+    private UserProfileSnapshot CreateSnapshot()
+    {
+        var mainEmail = _emails.FirstOrDefault(x => x.IsMain)?.Address;
+        var mainPhone = _phones.FirstOrDefault(x => x.IsMain)?.Number;
+
+        return new UserProfileSnapshot(
+            Id.Value,
+            UserName,
+            DisplayName,
+            mainEmail,
+            mainPhone,
+            AvatarUrl,
+            Bio,
+            IsActive,
+            LastSeenAtUtc,
+            IsEmailVisible,
+            IsPhoneVisible);
     }
 
     private static void EnsureInitialContactInvariant(

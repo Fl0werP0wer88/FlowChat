@@ -168,11 +168,14 @@ public sealed class CreateInitialUserProfileCommandHandlerTests
             CancellationToken.None);
 
         Assert.True(result.IsSuccess);
-        var addedEvent = Assert.IsType<UserProfileCreatedDomainEvent>(Assert.Single(repository.DomainEventsAtAdd));
-        var dispatchedEvent = Assert.IsType<UserProfileCreatedDomainEvent>(Assert.Single(dispatcher.DispatchedEvents));
+        var addedEvent = Assert.Single(repository.DomainEventsAtAdd.OfType<UserProfileCreatedDomainEvent>());
+        var dispatchedEvent = Assert.Single(dispatcher.DispatchedEvents.OfType<UserProfileCreatedDomainEvent>());
         Assert.Equal(addedEvent.UserProfileId, dispatchedEvent.UserProfileId);
         Assert.Equal("john@example.com", addedEvent.MainEmail);
         Assert.Null(addedEvent.MainPhone);
+        var stateChangedEvent = Assert.Single(repository.DomainEventsAtAdd.OfType<AggregateStateChangedDomainEvent<UserProfile, UserProfileSnapshot>>());
+        Assert.Equal("john@example.com", stateChangedEvent.AggregateState.MainEmail);
+        Assert.Null(stateChangedEvent.AggregateState.MainPhone);
     }
 
     private sealed class TestUserProfileRepository : IUserProfileRepository
