@@ -12,6 +12,7 @@ public static class ApplicationServiceRegistration
         var applicationAssembly = typeof(ApplicationServiceRegistration).Assembly;
 
         services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(applicationAssembly));
+        services.AddAutoMapper((Action<AutoMapper.IMapperConfigurationExpression>?)null, applicationAssembly);
         services.AddScoped<IDomainEventDispatcher, DomainEventDispatcher>();
 
         return services;
@@ -22,6 +23,7 @@ public static class ApplicationServiceRegistration
         var consumerAssembly = typeof(CreateInitialUserProfileCommandHandler).Assembly;
 
         services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(consumerAssembly));
+        services.AddAutoMapper((Action<AutoMapper.IMapperConfigurationExpression>?)null, consumerAssembly);
         services.AddScoped<IDomainEventDispatcher, DomainEventDispatcher>();
 
         return services;

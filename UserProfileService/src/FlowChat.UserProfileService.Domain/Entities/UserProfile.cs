@@ -66,7 +66,7 @@ public class UserProfile : AggregateRootBase<UserProfile>
 
         EnsureInitialContactInvariant(emailList, phoneList);
 
-        return new UserProfile(
+        var userProfile = new UserProfile(
             typedId,
             userName,
             displayName,
@@ -78,6 +78,24 @@ public class UserProfile : AggregateRootBase<UserProfile>
             isPhoneVisible,
             emailList,
             phoneList);
+
+        var mainEmail = userProfile.Emails.FirstOrDefault(x => x.IsMain)?.Address;
+        var mainPhone = userProfile.Phones.FirstOrDefault(x => x.IsMain)?.Number;
+
+        userProfile.AddDomainEvent(new UserProfileCreatedDomainEvent(
+            userProfile.Id,
+            userProfile.UserName,
+            userProfile.DisplayName,
+            mainEmail,
+            mainPhone,
+            userProfile.AvatarUrl,
+            userProfile.Bio,
+            userProfile.IsActive,
+            userProfile.LastSeenAtUtc,
+            userProfile.IsEmailVisible,
+            userProfile.IsPhoneVisible));
+
+        return userProfile;
     }
 
     public static UserProfile Rehydrate(

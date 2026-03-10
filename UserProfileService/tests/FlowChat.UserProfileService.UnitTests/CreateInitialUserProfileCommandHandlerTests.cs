@@ -4,6 +4,7 @@ using FlowChat.Domain.Abstractions;
 using FlowChat.UserProfileService.Application.Contracts.Persistence;
 using FlowChat.UserProfileService.Application.UserProfiles.Commands.CreateInitialUserProfile;
 using FlowChat.UserProfileService.Domain.Entities;
+using FlowChat.UserProfileService.Domain.Events;
 
 namespace FlowChat.UserProfileService.UnitTests;
 
@@ -145,9 +146,39 @@ public sealed class CreateInitialUserProfileCommandHandlerTests
         Assert.True(phone.IsMain);
     }
 
+    [Fact]
+    public async Task Handle_AddsUserProfileCreatedDomainEventBeforeDispatchAndDispatchesIt()
+    {
+        var repository = new TestUserProfileRepository();
+        var dispatcher = new TestDomainEventDispatcher();
+        var handler = new CreateInitialUserProfileCommandHandler(
+            repository,
+            new TestUnitOfWork(),
+            dispatcher);
+
+        var result = await handler.Handle(
+            new CreateInitialUserProfileCommand(
+                "jdoe",
+                "John Doe",
+                null,
+                null,
+                "john@example.com",
+                null,
+                Guid.NewGuid()),
+            CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        var addedEvent = Assert.IsType<UserProfileCreatedDomainEvent>(Assert.Single(repository.DomainEventsAtAdd));
+        var dispatchedEvent = Assert.IsType<UserProfileCreatedDomainEvent>(Assert.Single(dispatcher.DispatchedEvents));
+        Assert.Equal(addedEvent.UserProfileId, dispatchedEvent.UserProfileId);
+        Assert.Equal("john@example.com", addedEvent.MainEmail);
+        Assert.Null(addedEvent.MainPhone);
+    }
+
     private sealed class TestUserProfileRepository : IUserProfileRepository
     {
         public UserProfile? AddedEntity { get; private set; }
+        public IReadOnlyList<IDomainEvent> DomainEventsAtAdd { get; private set; } = [];
 
         public Task<UserProfile?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
             Task.FromResult<UserProfile?>(null);
@@ -158,6 +189,7 @@ public sealed class CreateInitialUserProfileCommandHandlerTests
         public Task<UserProfile> AddAsync(UserProfile entity, CancellationToken cancellationToken = default)
         {
             AddedEntity = entity;
+            DomainEventsAtAdd = entity.DomainEvents.ToList();
             return Task.FromResult(entity);
         }
 
@@ -195,7 +227,12 @@ public sealed class CreateInitialUserProfileCommandHandlerTests
 
     private sealed class TestDomainEventDispatcher : IDomainEventDispatcher
     {
-        public Task DispatchAsync(IEnumerable<IDomainEvent> domainEvents, CancellationToken cancellationToken = default) =>
-            Task.CompletedTask;
+        public List<IDomainEvent> DispatchedEvents { get; } = [];
+
+        public Task DispatchAsync(IEnumerable<IDomainEvent> domainEvents, CancellationToken cancellationToken = default)
+        {
+            DispatchedEvents.AddRange(domainEvents);
+            return Task.CompletedTask;
+        }
     }
 }

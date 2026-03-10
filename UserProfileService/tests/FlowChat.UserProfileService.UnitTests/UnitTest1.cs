@@ -16,6 +16,7 @@ public class UnitTest1
 
         Assert.Equal(id, profile.Id);
         Assert.Equal(id.Value, profile.Id.Value);
+        Assert.IsType<UserProfileCreatedDomainEvent>(Assert.Single(profile.DomainEvents));
     }
 
     [Fact]
@@ -187,5 +188,66 @@ public class UnitTest1
         Assert.Single(profile.Phones);
         Assert.True(profile.Phones[0].IsMain);
         Assert.Empty(profile.Emails);
+    }
+
+    [Fact]
+    public void UserProfile_Create_WithEmailAndPhone_EmitsUserProfileCreatedDomainEvent()
+    {
+        var id = Id<UserProfile>.New();
+        var email = Email.Create(id.Value, "john@example.com", isMain: true);
+        var phone = Phone.Create(id.Value, "+48123123123", isMain: true);
+
+        var profile = UserProfile.Create(
+            " jdoe ",
+            " John Doe ",
+            " https://cdn.example/avatar.png ",
+            " about me ",
+            isActive: false,
+            lastSeenAtUtc: new DateTime(2026, 3, 10, 8, 30, 0, DateTimeKind.Utc),
+            isEmailVisible: false,
+            isPhoneVisible: true,
+            emails: [email],
+            phones: [phone],
+            id: id);
+
+        var @event = Assert.IsType<UserProfileCreatedDomainEvent>(Assert.Single(profile.DomainEvents));
+        Assert.Equal(id.Value, @event.AggregateId);
+        Assert.Equal(id.Value, @event.UserProfileId);
+        Assert.Equal("jdoe", @event.UserName);
+        Assert.Equal("John Doe", @event.DisplayName);
+        Assert.Equal("john@example.com", @event.MainEmail);
+        Assert.Equal("+48123123123", @event.MainPhone);
+        Assert.Equal("https://cdn.example/avatar.png", @event.AvatarUrl);
+        Assert.Equal("about me", @event.Bio);
+        Assert.False(@event.IsActive);
+        Assert.Equal(new DateTime(2026, 3, 10, 8, 30, 0, DateTimeKind.Utc), @event.LastSeenAtUtc);
+        Assert.False(@event.IsEmailVisible);
+        Assert.True(@event.IsPhoneVisible);
+    }
+
+    [Fact]
+    public void UserProfile_Create_WithEmailOnly_EmitsUserProfileCreatedDomainEvent()
+    {
+        var id = Id<UserProfile>.New();
+        var email = Email.Create(id.Value, "john@example.com", isMain: true);
+
+        var profile = UserProfile.Create("jdoe", "John Doe", emails: [email], id: id);
+
+        var @event = Assert.IsType<UserProfileCreatedDomainEvent>(Assert.Single(profile.DomainEvents));
+        Assert.Equal("john@example.com", @event.MainEmail);
+        Assert.Null(@event.MainPhone);
+    }
+
+    [Fact]
+    public void UserProfile_Create_WithPhoneOnly_EmitsUserProfileCreatedDomainEvent()
+    {
+        var id = Id<UserProfile>.New();
+        var phone = Phone.Create(id.Value, "+48123123123", isMain: true);
+
+        var profile = UserProfile.Create("jdoe", "John Doe", phones: [phone], id: id);
+
+        var @event = Assert.IsType<UserProfileCreatedDomainEvent>(Assert.Single(profile.DomainEvents));
+        Assert.Null(@event.MainEmail);
+        Assert.Equal("+48123123123", @event.MainPhone);
     }
 }

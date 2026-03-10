@@ -15,6 +15,9 @@ public static class PersistenceServiceRegistration
     {
         services.AddDbContext<AppDbContext>(options =>
             options.UseNpgsql(configuration.GetConnectionString("UserProfileDb")));
+        services.AddDbContextFactory<AppDbContext>(
+            options => options.UseNpgsql(configuration.GetConnectionString("UserProfileDb")),
+            ServiceLifetime.Scoped);
 
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped(typeof(IAsyncRepository<>), typeof(RepositoryBase<>));
