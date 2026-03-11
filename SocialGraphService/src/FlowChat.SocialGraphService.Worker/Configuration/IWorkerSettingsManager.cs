@@ -5,4 +5,5 @@ namespace FlowChat.SocialGraphService.Worker.Configuration;
 public interface IWorkerSettingsManager
 {
     UserCreatedConsumerOptions GetUserCreatedConsumerOptions();
+    UserProfileConsumerOptions GetUserProfileConsumerOptions();
 }

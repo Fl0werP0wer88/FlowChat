@@ -15,4 +15,8 @@ public sealed class WorkerSettingsManager : IWorkerSettingsManager
     public UserCreatedConsumerOptions GetUserCreatedConsumerOptions() =>
         _configuration.GetSection(UserCreatedConsumerOptions.SectionName).Get<UserCreatedConsumerOptions>()
         ?? new UserCreatedConsumerOptions();
+
+    public UserProfileConsumerOptions GetUserProfileConsumerOptions() =>
+        _configuration.GetSection(UserProfileConsumerOptions.SectionName).Get<UserProfileConsumerOptions>()
+        ?? new UserProfileConsumerOptions();
 }

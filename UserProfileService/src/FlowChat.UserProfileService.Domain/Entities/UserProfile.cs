@@ -20,6 +20,7 @@ public class UserProfile : AggregateRootBase<UserProfile>
     public IReadOnlyList<Email> Emails => _emails.AsReadOnly();
     public IReadOnlyList<Phone> Phones => _phones.AsReadOnly();
 
+
     private UserProfile(
         Id<UserProfile>? id,
         string userName,

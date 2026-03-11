@@ -7,6 +7,7 @@ using FlowChat.UserProfileService.Application.Common.Eventing;
 using FlowChat.UserProfileService.Application.Common.Eventing.Handlers;
 using FlowChat.UserProfileService.Domain.Entities;
 using FlowChat.UserProfileService.Domain.Events;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace FlowChat.UserProfileService.UnitTests;
 
@@ -15,8 +16,9 @@ public sealed class UserProfileCreatedDomainEventHandlerTests
     [Fact]
     public async Task Handle_PublishesMappedUserProfileCreatedIntegrationEvent()
     {
-        var mapper = new MapperConfiguration(configuration =>
-                configuration.AddProfile<DomainEventToIntegrationEventProfile>())
+        var mapper = new MapperConfiguration(
+                configuration => configuration.AddProfile<DomainEventToIntegrationEventProfile>(),
+                NullLoggerFactory.Instance)
             .CreateMapper();
         var publisher = new CapturingIntegrationEventPublisher();
         var handler = new UserProfileCreatedDomainEventHandler(publisher, mapper);

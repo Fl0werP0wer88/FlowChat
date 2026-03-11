@@ -58,11 +58,31 @@ public sealed class UserCreatedSubscriberTests
             return Task.FromResult((TResponse)response);
         }
 
+        public IAsyncEnumerable<object?> CreateStream(object request, CancellationToken cancellationToken = default)
+        {
+            SentRequest = request;
+            return EmptyAsyncEnumerable<object?>();
+        }
+
+        public IAsyncEnumerable<TResponse> CreateStream<TResponse>(
+            IStreamRequest<TResponse> request,
+            CancellationToken cancellationToken = default)
+        {
+            SentRequest = request;
+            return EmptyAsyncEnumerable<TResponse>();
+        }
+
         public Task Send<TRequest>(TRequest request, CancellationToken cancellationToken = default)
             where TRequest : IRequest
         {
             SentRequest = request;
             return Task.CompletedTask;
+        }
+
+        private static async IAsyncEnumerable<T> EmptyAsyncEnumerable<T>()
+        {
+            await Task.CompletedTask;
+            yield break;
         }
     }
 }

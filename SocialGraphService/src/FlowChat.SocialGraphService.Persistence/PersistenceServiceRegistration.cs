@@ -22,6 +22,7 @@ public static class PersistenceServiceRegistration
         services.AddScoped<IUserSocialGraphRepository, UserSocialGraphRepository>();
         services.AddScoped<IContactRepository, ContactRepository>();
         services.AddScoped<IContactReadRepository, ContactReadRepository>();
+        services.AddScoped<IUserProfileReadModelRepository, UserProfileReadModelRepository>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
 
         return services;

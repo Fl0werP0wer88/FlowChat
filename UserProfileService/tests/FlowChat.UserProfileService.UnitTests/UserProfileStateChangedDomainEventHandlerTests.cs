@@ -6,6 +6,7 @@ using FlowChat.Messaging.Contracts.UserProfileService.Events;
 using FlowChat.UserProfileService.Application.Common.Eventing;
 using FlowChat.UserProfileService.Application.Common.Eventing.Handlers;
 using FlowChat.UserProfileService.Domain.Entities;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace FlowChat.UserProfileService.UnitTests;
 
@@ -14,8 +15,9 @@ public sealed class UserProfileStateChangedDomainEventHandlerTests
     [Fact]
     public async Task Handle_PublishesMappedUserProfileStateChangedIntegrationEvent()
     {
-        var mapper = new MapperConfiguration(configuration =>
-                configuration.AddProfile<DomainEventToIntegrationEventProfile>())
+        var mapper = new MapperConfiguration(
+                configuration => configuration.AddProfile<DomainEventToIntegrationEventProfile>(),
+                NullLoggerFactory.Instance)
             .CreateMapper();
         var publisher = new CapturingIntegrationEventPublisher();
         var handler = new UserProfileStateChangedDomainEventHandler(publisher, mapper);

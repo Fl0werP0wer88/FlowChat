@@ -18,41 +18,71 @@ public static class WorkerServiceRegistration
     {
         var settingsManager = new WorkerSettingsManager(configuration);
         services.TryAddSingleton<IWorkerSettingsManager>(settingsManager);
-        var consumerOptions = settingsManager.GetUserCreatedConsumerOptions();
-        var autoOffsetReset = ParseAutoOffsetReset(consumerOptions.AutoOffsetReset);
+        var userCreatedConsumerOptions = settingsManager.GetUserCreatedConsumerOptions();
+        var userProfileConsumerOptions = settingsManager.GetUserProfileConsumerOptions();
         services.AddSilverback()
             .WithConnectionToMessageBroker(options => options.AddKafka())
             .AddKafkaClients(clients =>
             {
                 clients
-                    .WithBootstrapServers(consumerOptions.BootstrapServers)
+                    .WithBootstrapServers(ResolveBootstrapServers(userCreatedConsumerOptions, userProfileConsumerOptions))
                     .AddConsumer(consumer => consumer
-                        .WithGroupId(consumerOptions.GroupId)
-                        .WithAutoOffsetReset(autoOffsetReset)
+                        .WithGroupId(userCreatedConsumerOptions.GroupId)
+                        .WithAutoOffsetReset(ParseAutoOffsetReset(userCreatedConsumerOptions.AutoOffsetReset))
                         .Consume(endpoint => endpoint
-                            .ConsumeFrom(consumerOptions.Topic)
+                            .ConsumeFrom(userCreatedConsumerOptions.Topic)
                             .DeserializeJson(deserializer => deserializer.WithOptionalMessageTypeHeader())
                             .IgnoreUnhandledMessages()
                             .OnError(policy =>
                             {
-                                policy.MoveTo(consumerOptions.DeadLetterTopic, move => move
+                                policy.MoveTo(userCreatedConsumerOptions.DeadLetterTopic, move => move
                                     .ApplyTo<InvalidOperationException>());
 
                                 policy.Retry(retry => retry
-                                        .WithMaxRetries(consumerOptions.MaxRetryCount)
+                                        .WithMaxRetries(userCreatedConsumerOptions.MaxRetryCount)
                                         .Exclude<InvalidOperationException>()
                                         .WithExponentialDelay(
-                                            TimeSpan.FromSeconds(consumerOptions.RetryBaseDelaySeconds),
+                                            TimeSpan.FromSeconds(userCreatedConsumerOptions.RetryBaseDelaySeconds),
                                             2,
-                                            TimeSpan.FromSeconds(consumerOptions.RetryMaxDelaySeconds)))
-                                    .ThenMoveTo(consumerOptions.DeadLetterTopic, move => move
+                                            TimeSpan.FromSeconds(userCreatedConsumerOptions.RetryMaxDelaySeconds)))
+                                    .ThenMoveTo(userCreatedConsumerOptions.DeadLetterTopic, move => move
+                                        .Exclude<InvalidOperationException>());
+                            })))
+                    .AddConsumer(consumer => consumer
+                        .WithGroupId(userProfileConsumerOptions.GroupId)
+                        .WithAutoOffsetReset(ParseAutoOffsetReset(userProfileConsumerOptions.AutoOffsetReset))
+                        .Consume(endpoint => endpoint
+                            .ConsumeFrom(userProfileConsumerOptions.Topic)
+                            .DeserializeJson(deserializer => deserializer.WithOptionalMessageTypeHeader())
+                            .IgnoreUnhandledMessages()
+                            .OnError(policy =>
+                            {
+                                policy.MoveTo(userProfileConsumerOptions.DeadLetterTopic, move => move
+                                    .ApplyTo<InvalidOperationException>());
+
+                                policy.Retry(retry => retry
+                                        .WithMaxRetries(userProfileConsumerOptions.MaxRetryCount)
+                                        .Exclude<InvalidOperationException>()
+                                        .WithExponentialDelay(
+                                            TimeSpan.FromSeconds(userProfileConsumerOptions.RetryBaseDelaySeconds),
+                                            2,
+                                            TimeSpan.FromSeconds(userProfileConsumerOptions.RetryMaxDelaySeconds)))
+                                    .ThenMoveTo(userProfileConsumerOptions.DeadLetterTopic, move => move
                                         .Exclude<InvalidOperationException>());
                             })));
             })
-            .AddScopedSubscriber<UserCreatedSubscriber>();
+            .AddScopedSubscriber<UserCreatedSubscriber>()
+            .AddScopedSubscriber<UserProfileSubscriber>();
 
         return services;
     }
+
+    private static string ResolveBootstrapServers(
+        UserCreatedConsumerOptions userCreatedConsumerOptions,
+        UserProfileConsumerOptions userProfileConsumerOptions) =>
+        !string.IsNullOrWhiteSpace(userCreatedConsumerOptions.BootstrapServers)
+            ? userCreatedConsumerOptions.BootstrapServers
+            : userProfileConsumerOptions.BootstrapServers;
 
     private static AutoOffsetReset ParseAutoOffsetReset(string value) =>
         Enum.TryParse<AutoOffsetReset>(value, true, out var parsed)
