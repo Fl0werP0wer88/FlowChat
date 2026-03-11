@@ -81,6 +81,19 @@ public class UserProfile : AggregateRootBase<UserProfile>
         var mainEmail = userProfile.Emails.FirstOrDefault(x => x.IsMain)?.Address;
         var mainPhone = userProfile.Phones.FirstOrDefault(x => x.IsMain)?.Number;
 
+        userProfile.AddDomainEvent(new UserProfileCreatedDomainEvent(
+            userProfile.Id,
+            userProfile.UserName,
+            userProfile.DisplayName,
+            mainEmail,
+            mainPhone,
+            userProfile.AvatarUrl,
+            userProfile.Bio,
+            userProfile.IsActive,
+            userProfile.LastSeenAtUtc,
+            userProfile.IsEmailVisible,
+            userProfile.IsPhoneVisible));
+
         return userProfile;
     }
 
