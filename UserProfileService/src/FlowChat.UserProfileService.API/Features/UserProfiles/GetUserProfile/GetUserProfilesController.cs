@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace FlowChat.UserProfileService.Api.Features.UserProfiles.GetUserProfile;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/userprofiles")]
 public class UserProfilesController : ControllerBase
 {
     private readonly IMediator _mediator;

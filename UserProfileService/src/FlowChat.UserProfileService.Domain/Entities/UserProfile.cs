@@ -139,7 +139,7 @@ public class UserProfile : AggregateRootBase<UserProfile>
 
         var email = Email.Create(Id, normalizedAddress, !_emails.Any(), id);
         _emails.Add(email);
-        MarkAggregateStateChanged(UserProfileConstants.UserProfileAggregateTypeName, CreateSnapshot);
+
         return email;
     }
 
@@ -179,7 +179,7 @@ public class UserProfile : AggregateRootBase<UserProfile>
 
         var phone = Phone.Create(Id, normalizedNumber, !_phones.Any(), id);
         _phones.Add(phone);
-        MarkAggregateStateChanged(UserProfileConstants.UserProfileAggregateTypeName, CreateSnapshot);
+
         return phone;
     }
 

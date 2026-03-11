@@ -22,6 +22,16 @@ public class UserProfileRepository : RepositoryBase<UserProfile>, IUserProfileRe
             .FirstOrDefaultAsync(x => x.Id == typedId, cancellationToken);
     }
 
+    public async Task<UserProfile?> GetByIdForUpdateAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var typedId = Id<UserProfile>.FromGuid(id);
+
+        return await DbContext.UserProfiles
+            .Include(x => x.Emails)
+            .Include(x => x.Phones)
+            .FirstOrDefaultAsync(x => x.Id == typedId, cancellationToken);
+    }
+
     public async Task<IReadOnlyList<UserProfile>> GetActiveAsync(CancellationToken cancellationToken = default)
     {
         return await DbContext.UserProfiles
