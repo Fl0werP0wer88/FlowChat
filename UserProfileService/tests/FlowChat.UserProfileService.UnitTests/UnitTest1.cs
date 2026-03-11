@@ -10,7 +10,7 @@ public class UnitTest1
     public void UserProfile_Create_WithTypedId_AssignsTypedAggregateId()
     {
         var id = Id<UserProfile>.New();
-        var email = Email.Create(id.Value, "john@example.com", isMain: true);
+        var email = Email.Create(id, "john@example.com", isMain: true);
 
         var profile = UserProfile.Create("jdoe", "John Doe", emails: [email], id: id);
 
@@ -38,7 +38,7 @@ public class UnitTest1
         Assert.Single(profile.Emails);
         Assert.Equal(email.Id, profile.Emails[0].Id);
         Assert.Equal("john@example.com", profile.Emails[0].Address);
-        Assert.Equal(profile.Id.Value, profile.Emails[0].UserProfileId);
+        Assert.Equal(profile.Id, profile.Emails[0].UserProfileId);
         Assert.True(profile.Emails[0].IsMain);
         var @event = Assert.IsType<AggregateStateChangedDomainEvent<UserProfile, UserProfileSnapshot>>(
             Assert.Single(profile.DomainEvents));
@@ -118,7 +118,7 @@ public class UnitTest1
         Assert.Single(profile.Phones);
         Assert.Equal(phone.Id, profile.Phones[0].Id);
         Assert.Equal("+48123123123", profile.Phones[0].Number);
-        Assert.Equal(profile.Id.Value, profile.Phones[0].UserProfileId);
+        Assert.Equal(profile.Id, profile.Phones[0].UserProfileId);
         Assert.True(profile.Phones[0].IsMain);
         var @event = Assert.IsType<AggregateStateChangedDomainEvent<UserProfile, UserProfileSnapshot>>(
             Assert.Single(profile.DomainEvents));
@@ -198,7 +198,7 @@ public class UnitTest1
     public void UserProfile_Create_WithMainPhone_Succeeds()
     {
         var id = Id<UserProfile>.New();
-        var phone = Phone.Create(id.Value, "+48123123123", isMain: true);
+        var phone = Phone.Create(id, "+48123123123", isMain: true);
 
         var profile = UserProfile.Create("jdoe", "John Doe", phones: [phone], id: id);
 
@@ -211,8 +211,8 @@ public class UnitTest1
     public void UserProfile_Create_WithEmailAndPhone_EmitsUserProfileCreatedDomainEvent()
     {
         var id = Id<UserProfile>.New();
-        var email = Email.Create(id.Value, "john@example.com", isMain: true);
-        var phone = Phone.Create(id.Value, "+48123123123", isMain: true);
+        var email = Email.Create(id, "john@example.com", isMain: true);
+        var phone = Phone.Create(id, "+48123123123", isMain: true);
 
         var profile = UserProfile.Create(
             " jdoe ",
@@ -249,7 +249,7 @@ public class UnitTest1
     public void UserProfile_Create_WithEmailOnly_EmitsUserProfileCreatedDomainEvent()
     {
         var id = Id<UserProfile>.New();
-        var email = Email.Create(id.Value, "john@example.com", isMain: true);
+        var email = Email.Create(id, "john@example.com", isMain: true);
 
         var profile = UserProfile.Create("jdoe", "John Doe", emails: [email], id: id);
 
@@ -265,7 +265,7 @@ public class UnitTest1
     public void UserProfile_Create_WithPhoneOnly_EmitsUserProfileCreatedDomainEvent()
     {
         var id = Id<UserProfile>.New();
-        var phone = Phone.Create(id.Value, "+48123123123", isMain: true);
+        var phone = Phone.Create(id, "+48123123123", isMain: true);
 
         var profile = UserProfile.Create("jdoe", "John Doe", phones: [phone], id: id);
 

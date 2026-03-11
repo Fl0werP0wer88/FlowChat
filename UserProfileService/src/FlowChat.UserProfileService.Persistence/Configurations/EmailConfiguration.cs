@@ -16,6 +16,7 @@ public class EmailConfiguration : IEntityTypeConfiguration<Email>
             .HasConversion(x => x.Value, x => Id<Email>.FromGuid(x));
 
         builder.Property(x => x.UserProfileId)
+            .HasConversion(x => x.Value, x => Id<UserProfile>.FromGuid(x))
             .IsRequired();
 
         builder.Property(x => x.Address)

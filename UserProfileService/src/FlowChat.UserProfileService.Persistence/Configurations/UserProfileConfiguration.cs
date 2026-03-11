@@ -29,13 +29,27 @@ public class UserProfileConfiguration : IEntityTypeConfiguration<UserProfile>
         builder.Property(x => x.Bio)
             .HasMaxLength(500);
 
+        builder.Property(x => x.IsEmailVisible)
+            .HasDefaultValue(true)
+            .IsRequired();
+
+        builder.Property(x => x.IsPhoneVisible)
+            .HasDefaultValue(true)
+            .IsRequired();
+
         builder.Property(x => x.CreatedBy)
             .HasMaxLength(256)
             .IsRequired();
 
+        builder.Property(x => x.CreatedAtUtc)
+            .HasColumnName("CreatedDate");
+
         builder.Property(x => x.LastModifiedBy)
             .HasMaxLength(256)
             .IsRequired();
+
+        builder.Property(x => x.LastModifiedAtUtc)
+            .HasColumnName("LastModifiedDate");
 
         builder.HasIndex(x => x.UserName)
             .IsUnique();

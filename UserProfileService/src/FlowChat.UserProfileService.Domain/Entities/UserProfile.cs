@@ -30,9 +30,7 @@ public class UserProfile : AggregateRootBase<UserProfile>
         bool isActive = true,
         DateTime? lastSeenAtUtc = null,
         bool isEmailVisible = true,
-        bool isPhoneVisible = true,
-        IEnumerable<Email>? emails = null,
-        IEnumerable<Phone>? phones = null) : base(id)
+        bool isPhoneVisible = true) : base(id)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(userName);
         ArgumentException.ThrowIfNullOrWhiteSpace(displayName);
@@ -45,8 +43,6 @@ public class UserProfile : AggregateRootBase<UserProfile>
         LastSeenAtUtc = lastSeenAtUtc;
         IsEmailVisible = isEmailVisible;
         IsPhoneVisible = isPhoneVisible;
-        _emails.AddRange(emails ?? []);
-        _phones.AddRange(phones ?? []);
     }
 
     public static UserProfile Create(
@@ -77,9 +73,10 @@ public class UserProfile : AggregateRootBase<UserProfile>
             isActive,
             lastSeenAtUtc,
             isEmailVisible,
-            isPhoneVisible,
-            emailList,
-            phoneList);
+            isPhoneVisible);
+
+        userProfile._emails.AddRange(emailList);
+        userProfile._phones.AddRange(phoneList);
 
         var mainEmail = userProfile.Emails.FirstOrDefault(x => x.IsMain)?.Address;
         var mainPhone = userProfile.Phones.FirstOrDefault(x => x.IsMain)?.Number;
@@ -100,7 +97,7 @@ public class UserProfile : AggregateRootBase<UserProfile>
         IEnumerable<Phone>? phones = null,
         Id<UserProfile>? id = null)
     {
-        return new UserProfile(
+        var userProfile = new UserProfile(
             id,
             userName,
             displayName,
@@ -109,9 +106,12 @@ public class UserProfile : AggregateRootBase<UserProfile>
             isActive,
             lastSeenAtUtc,
             isEmailVisible,
-            isPhoneVisible,
-            emails,
-            phones);
+            isPhoneVisible);
+
+        userProfile._emails.AddRange(emails ?? []);
+        userProfile._phones.AddRange(phones ?? []);
+
+        return userProfile;
     }
 
     public Email AddEmail(string address, Id<Email>? id = null)
@@ -124,7 +124,7 @@ public class UserProfile : AggregateRootBase<UserProfile>
             throw new InvalidOperationException($"Email '{normalizedAddress}' already exists.");
         }
 
-        var email = Email.Create(Id.Value, normalizedAddress, !_emails.Any(), id);
+        var email = Email.Create(Id, normalizedAddress, !_emails.Any(), id);
         _emails.Add(email);
         MarkAggregateStateChanged(UserProfileConstants.UserProfileAggregateTypeName, CreateSnapshot);
         return email;
@@ -164,7 +164,7 @@ public class UserProfile : AggregateRootBase<UserProfile>
             throw new InvalidOperationException($"Phone '{normalizedNumber}' already exists.");
         }
 
-        var phone = Phone.Create(Id.Value, normalizedNumber, !_phones.Any(), id);
+        var phone = Phone.Create(Id, normalizedNumber, !_phones.Any(), id);
         _phones.Add(phone);
         MarkAggregateStateChanged(UserProfileConstants.UserProfileAggregateTypeName, CreateSnapshot);
         return phone;

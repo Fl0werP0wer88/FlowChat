@@ -56,10 +56,10 @@ public sealed class CreateInitialUserProfileCommandHandler
         var userProfileId = Id<UserProfile>.FromGuid(request.UserId);
         List<Email> emails = email is null
             ? []
-            : [Email.Create(userProfileId.Value, email, isMain: true)];
+            : [Email.Create(userProfileId, email, isMain: true)];
         List<Phone> phones = phone is null
             ? []
-            : [Phone.Create(userProfileId.Value, phone, isMain: true)];
+            : [Phone.Create(userProfileId, phone, isMain: true)];
 
         _userProfile = UserProfile.Create(
             userName,

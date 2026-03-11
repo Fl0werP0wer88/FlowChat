@@ -4,17 +4,17 @@ namespace FlowChat.UserProfileService.Domain.Entities;
 
 public class Email : EntityBase<Email>
 {
-    public Guid UserProfileId { get; private set; }
+    public Id<UserProfile> UserProfileId { get; private set; }
     public string Address { get; private set; }
     public bool IsMain { get; private set; }
 
     private Email(
         Id<Email>? id,
-        Guid userProfileId,
+        Id<UserProfile> userProfileId,
         string address,
         bool isMain = false) : base(id)
     {
-        ArgumentOutOfRangeException.ThrowIfEqual(userProfileId, Guid.Empty);
+        ArgumentNullException.ThrowIfNull(userProfileId);
         ArgumentException.ThrowIfNullOrWhiteSpace(address);
 
         UserProfileId = userProfileId;
@@ -23,7 +23,7 @@ public class Email : EntityBase<Email>
     }
 
     public static Email Create(
-        Guid userProfileId,
+        Id<UserProfile> userProfileId,
         string address,
         bool isMain = false,
         Id<Email>? id = null)
@@ -32,7 +32,7 @@ public class Email : EntityBase<Email>
     }
 
     public static Email Rehydrate(
-        Guid userProfileId,
+        Id<UserProfile> userProfileId,
         string address,
         bool isMain = false,
         Id<Email>? id = null)

@@ -25,6 +25,7 @@ artifacts/
 project.lock.json
 project.fragment.lock.json
 .dotnet/
+.dotnet-cli/
 .dotnet-home/
 
 # Test artifacts
