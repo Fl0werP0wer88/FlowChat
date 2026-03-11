@@ -74,7 +74,7 @@ public class UnitTest1
         var secondEmail = profile.AddEmail("john.secondary@example.com");
         profile.ClearEvents();
 
-        profile.SetMainEmail(secondEmail.Id.Value);
+        profile.SetMainEmail(secondEmail.Id);
 
         Assert.False(firstEmail.IsMain);
         Assert.True(secondEmail.IsMain);
@@ -93,7 +93,7 @@ public class UnitTest1
         var profile = UserProfile.Rehydrate("jdoe", "John Doe", id: Id<UserProfile>.New());
         profile.AddEmail("john@example.com");
 
-        Assert.Throws<InvalidOperationException>(() => profile.SetMainEmail(Guid.NewGuid()));
+        Assert.Throws<InvalidOperationException>(() => profile.SetMainEmail(Id<Email>.New()));
     }
 
     [Fact]
@@ -103,7 +103,7 @@ public class UnitTest1
         var email = profile.AddEmail("john@example.com");
         profile.ClearEvents();
 
-        profile.SetMainEmail(email.Id.Value);
+        profile.SetMainEmail(email.Id);
 
         Assert.Empty(profile.DomainEvents);
     }
@@ -154,7 +154,7 @@ public class UnitTest1
         var secondPhone = profile.AddPhone("+48987654321");
         profile.ClearEvents();
 
-        profile.SetMainPhone(secondPhone.Id.Value);
+        profile.SetMainPhone(secondPhone.Id);
 
         Assert.False(firstPhone.IsMain);
         Assert.True(secondPhone.IsMain);
@@ -173,7 +173,7 @@ public class UnitTest1
         var profile = UserProfile.Rehydrate("jdoe", "John Doe", id: Id<UserProfile>.New());
         profile.AddPhone("+48123123123");
 
-        Assert.Throws<InvalidOperationException>(() => profile.SetMainPhone(Guid.NewGuid()));
+        Assert.Throws<InvalidOperationException>(() => profile.SetMainPhone(Id<Phone>.New()));
     }
 
     [Fact]
@@ -183,7 +183,7 @@ public class UnitTest1
         var phone = profile.AddPhone("+48123123123");
         profile.ClearEvents();
 
-        profile.SetMainPhone(phone.Id.Value);
+        profile.SetMainPhone(phone.Id);
 
         Assert.Empty(profile.DomainEvents);
     }

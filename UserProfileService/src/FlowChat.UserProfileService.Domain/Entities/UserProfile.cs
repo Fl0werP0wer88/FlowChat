@@ -143,11 +143,11 @@ public class UserProfile : AggregateRootBase<UserProfile>
         return email;
     }
 
-    public void SetMainEmail(Guid emailId)
+    public void SetMainEmail(Id<Email> emailId)
     {
-        ArgumentOutOfRangeException.ThrowIfEqual(emailId, Guid.Empty);
+        ArgumentNullException.ThrowIfNull(emailId);
 
-        var targetEmail = _emails.FirstOrDefault(x => x.Id == Id<Email>.FromGuid(emailId));
+        var targetEmail = _emails.FirstOrDefault(x => x.Id == emailId);
         if (targetEmail is null)
         {
             throw new InvalidOperationException($"Email '{emailId}' was not found.");
@@ -183,11 +183,11 @@ public class UserProfile : AggregateRootBase<UserProfile>
         return phone;
     }
 
-    public void SetMainPhone(Guid phoneId)
+    public void SetMainPhone(Id<Phone> phoneId)
     {
-        ArgumentOutOfRangeException.ThrowIfEqual(phoneId, Guid.Empty);
+        ArgumentNullException.ThrowIfNull(phoneId);
 
-        var targetPhone = _phones.FirstOrDefault(x => x.Id == Id<Phone>.FromGuid(phoneId));
+        var targetPhone = _phones.FirstOrDefault(x => x.Id == phoneId);
         if (targetPhone is null)
         {
             throw new InvalidOperationException($"Phone '{phoneId}' was not found.");
