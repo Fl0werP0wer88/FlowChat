@@ -22,10 +22,12 @@ public sealed class ContactsController : ApiControllerBase
         [FromRoute] Guid userId,
         CancellationToken cancellationToken)
     {
-        var contacts = await _mediator.Send(
+        var result = await _mediator.Send(
             new GetContactsForUserQuery(userId),
             cancellationToken);
 
-        return Ok(contacts);
+        return result.IsSuccess
+            ? Ok(result.Value)
+            : HandleError(result.Error);
     }
 }
