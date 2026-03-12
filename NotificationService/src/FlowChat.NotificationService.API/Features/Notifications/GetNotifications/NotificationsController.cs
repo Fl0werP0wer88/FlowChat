@@ -17,10 +17,13 @@ public sealed class NotificationsController : ApiControllerBase
     }
 
     [HttpGet]
-    [ProducesResponseType(typeof(IReadOnlyList<NotificationDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(GetNotificationsResponse), StatusCodes.Status200OK)]
     public async Task<IActionResult> Get([FromQuery] Guid? userId, CancellationToken cancellationToken)
     {
-        var notifications = await _mediator.Send(new GetNotificationsQuery(userId), cancellationToken);
-        return Ok(notifications);
+        var result = await _mediator.Send(new GetNotificationsQuery(userId), cancellationToken);
+
+        return result.IsSuccess
+            ? Ok(new GetNotificationsResponse(result.Value))
+            : HandleError(result.Error);
     }
 }

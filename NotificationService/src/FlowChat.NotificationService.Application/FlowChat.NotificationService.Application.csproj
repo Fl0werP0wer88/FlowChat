@@ -1,6 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <ProjectReference Include="..\..\..\Common\src\FlowChat.Application.Abstractions\FlowChat.Application.Abstractions.csproj" />
+    <ProjectReference Include="..\..\..\Common\src\FlowChat.Domain.Abstractions\FlowChat.Domain.Abstractions.csproj" />
     <ProjectReference Include="..\FlowChat.NotificationService.Domain\FlowChat.NotificationService.Domain.csproj" />
   </ItemGroup>
 

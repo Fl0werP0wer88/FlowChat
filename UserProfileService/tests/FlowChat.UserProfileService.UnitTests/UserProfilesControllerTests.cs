@@ -61,7 +61,8 @@ public sealed class UserProfilesControllerTests
         var mediator = new TestMediator(request =>
             request switch
             {
-                GetUserProfileQuery => null,
+                GetUserProfileQuery => Result.Failure<UserProfileDto, IDomainError>(
+                    DomainError.NotFound($"User profile '{userId}' was not found.")),
                 _ => throw new InvalidOperationException("Unexpected request.")
             });
         var controller = CreateController(new UserProfilesController(mediator));

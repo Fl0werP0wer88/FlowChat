@@ -1,9 +1,11 @@
+using CSharpFunctionalExtensions;
+using FlowChat.Application.Abstractions;
+using FlowChat.Domain.Abstractions;
 using FlowChat.NotificationService.Application.Contracts.Persistence;
-using MediatR;
 
 namespace FlowChat.NotificationService.Application.Notifications.Queries.GetNotifications;
 
-public sealed class GetNotificationsQueryHandler : IRequestHandler<GetNotificationsQuery, IReadOnlyList<NotificationDto>>
+public sealed class GetNotificationsQueryHandler : IQueryHandler<GetNotificationsQuery, IReadOnlyList<NotificationDto>>
 {
     private readonly INotificationRepository _notificationRepository;
 
@@ -12,13 +14,15 @@ public sealed class GetNotificationsQueryHandler : IRequestHandler<GetNotificati
         _notificationRepository = notificationRepository;
     }
 
-    public async Task<IReadOnlyList<NotificationDto>> Handle(GetNotificationsQuery request, CancellationToken cancellationToken)
+    public async Task<Result<IReadOnlyList<NotificationDto>, IDomainError>> Handle(
+        GetNotificationsQuery request,
+        CancellationToken cancellationToken)
     {
         var entities = request.UserId.HasValue
             ? await _notificationRepository.GetByUserIdAsync(request.UserId.Value, cancellationToken)
             : await _notificationRepository.GetRecentAsync(cancellationToken);
 
-        return entities
+        var notifications = entities
             .Select(notification => new NotificationDto(
                 notification.Id,
                 notification.UserId,
@@ -32,5 +36,7 @@ public sealed class GetNotificationsQueryHandler : IRequestHandler<GetNotificati
                 notification.SentAtUtc,
                 notification.CreatedDate))
             .ToArray();
+
+        return Result.Success<IReadOnlyList<NotificationDto>, IDomainError>(notifications);
     }
 }

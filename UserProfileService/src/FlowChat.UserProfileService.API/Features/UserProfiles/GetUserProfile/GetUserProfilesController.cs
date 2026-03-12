@@ -17,17 +17,14 @@ public sealed class UserProfilesController : ApiControllerBase
     }
 
     [HttpGet("{userId:guid}")]
-    [ProducesResponseType(typeof(UserProfileDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(GetUserProfileResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetById([FromRoute] Guid userId, CancellationToken cancellationToken)
     {
-        var profile = await _mediator.Send(new GetUserProfileQuery(userId), cancellationToken);
+        var result = await _mediator.Send(new GetUserProfileQuery(userId), cancellationToken);
 
-        if (profile is null)
-        {
-            return NotFoundResponse($"User profile '{userId}' was not found.");
-        }
-
-        return Ok(profile);
+        return result.IsSuccess
+            ? Ok(new GetUserProfileResponse(result.Value))
+            : HandleError(result.Error);
     }
 }
