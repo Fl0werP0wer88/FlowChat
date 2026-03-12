@@ -67,14 +67,12 @@ public static class WorkerServiceRegistration
                         .Produce<UserProfileCreatedIntegrationEvent>("user-profile-created", endpoint => endpoint
                             .ProduceTo(createdProducerOptions.Topic)
                             .SetKafkaKey(message => message?.UserProfileId)
-                            .SerializeAsJson(serializer => serializer.SetTypeHeader())
-                            .StoreToOutbox(outbox => outbox.UseEntityFramework<AppDbContext>())))
+                            .SerializeAsJson(serializer => serializer.SetTypeHeader())))
                     .AddProducer(producer => producer
                         .Produce<UserProfileStateChangedIntegrationEvent>("user-profile-state-changed", endpoint => endpoint
                             .ProduceTo(stateChangedProducerOptions.Topic)
                             .SetKafkaKey(message => message?.UserProfileId)
-                            .SerializeAsJson(serializer => serializer.SetTypeHeader())
-                            .StoreToOutbox(outbox => outbox.UseEntityFramework<AppDbContext>())))
+                            .SerializeAsJson(serializer => serializer.SetTypeHeader())))
                     .AddConsumer(consumer => consumer
                         .WithGroupId(consumerOptions.GroupId)
                         .WithAutoOffsetReset(ParseAutoOffsetReset(consumerOptions.AutoOffsetReset))

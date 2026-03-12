@@ -1,6 +1,7 @@
 using FlowChat.UserProfileService.Application;
 using FlowChat.UserProfileService.Infrastructure.Configuration;
 using FlowChat.UserProfileService.Infrastructure;
+using FlowChat.UserProfileService.Infrastructure.Kafka;
 using FlowChat.UserProfileService.Persistence;
 using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
@@ -17,6 +18,7 @@ public static class StartupExtensions
         builder.Services.AddApiApplicationServices();
         builder.Services.AddInfrastructureServices(builder.Configuration);
         builder.Services.AddPersistenceServices(builder.Configuration);
+        builder.Services.AddApiSilverbackMessaging(builder.Configuration);
 
         builder.Services.AddControllers();
 
