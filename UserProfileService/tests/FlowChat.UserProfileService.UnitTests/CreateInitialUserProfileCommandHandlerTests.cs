@@ -206,6 +206,9 @@ public sealed class CreateInitialUserProfileCommandHandlerTests
         public Task<UserProfile?> GetByUserNameAsync(string userName, CancellationToken cancellationToken = default) =>
             Task.FromResult<UserProfile?>(null);
 
+        public Task<UserProfile?> GetByIdForUpdateAsync(Guid id, CancellationToken cancellationToken = default) =>
+            Task.FromResult<UserProfile?>(null);
+
         public Task<bool> UserNameExistsAsync(
             string userName,
             Guid? excludedUserId = null,

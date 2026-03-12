@@ -28,7 +28,15 @@ public sealed class AuthControllersTests
             });
         var controller = CreateController(new RegisterUserController(mediator));
 
-        var result = await controller.Create(new RegisterUserCommand(), CancellationToken.None);
+        var result = await controller.Create(
+            new RegisterUserCommand
+            {
+                UserName = "jdoe",
+                Email = "john@example.com",
+                PhoneNumber = null,
+                Password = "Password123!"
+            },
+            CancellationToken.None);
 
         var conflict = Assert.IsType<ConflictObjectResult>(result);
         var problemDetails = Assert.IsType<ProblemDetails>(conflict.Value);
@@ -68,7 +76,13 @@ public sealed class AuthControllersTests
             });
         var controller = CreateController(new LoginUserController(mediator));
 
-        var result = await controller.Login(new LoginUserCommand(), CancellationToken.None);
+        var result = await controller.Login(
+            new LoginUserCommand
+            {
+                Login = "jdoe",
+                Password = "Password123!"
+            },
+            CancellationToken.None);
 
         var unauthorized = Assert.IsType<UnauthorizedObjectResult>(result);
         var problemDetails = Assert.IsType<ProblemDetails>(unauthorized.Value);
