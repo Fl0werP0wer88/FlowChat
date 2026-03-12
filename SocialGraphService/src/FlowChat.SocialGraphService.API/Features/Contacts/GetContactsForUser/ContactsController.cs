@@ -17,7 +17,7 @@ public sealed class ContactsController : ApiControllerBase
     }
 
     [HttpGet("{userId:guid}")]
-    [ProducesResponseType(typeof(IReadOnlyList<ContactDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(GetContactsForUserResponse), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetForUser(
         [FromRoute] Guid userId,
         CancellationToken cancellationToken)
@@ -27,7 +27,7 @@ public sealed class ContactsController : ApiControllerBase
             cancellationToken);
 
         return result.IsSuccess
-            ? Ok(result.Value)
+            ? Ok(new GetContactsForUserResponse(result.Value))
             : HandleError(result.Error);
     }
 }
