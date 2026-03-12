@@ -1,3 +1,4 @@
+using FlowChat.API.Abstractions;
 using FlowChat.SocialGraphService.Application.Contacts.Queries.GetContactsForUser;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -6,7 +7,7 @@ namespace FlowChat.SocialGraphService.Api.Features.Contacts.GetContactsForUser;
 
 [ApiController]
 [Route("api/[controller]")]
-public sealed class ContactsController : ControllerBase
+public sealed class ContactsController : ApiControllerBase
 {
     private readonly IMediator _mediator;
 

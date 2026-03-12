@@ -1,3 +1,4 @@
+using FlowChat.API.Abstractions;
 using FlowChat.AuthService.Application.Users.Commands.ConfirmUserEmail;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -6,7 +7,7 @@ namespace FlowChat.AuthService.API.Features.Users.ConfirmUserEmail;
 
 [ApiController]
 [Route("api/users")]
-public sealed class ConfirmUserEmailController : ControllerBase
+public sealed class ConfirmUserEmailController : ApiControllerBase
 {
     private readonly IMediator _mediator;
 
@@ -17,7 +18,9 @@ public sealed class ConfirmUserEmailController : ControllerBase
 
     [HttpGet("confirm-email")]
     [ProducesResponseType(typeof(ConfirmUserEmailCommandResponse), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(string), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> ConfirmEmail([FromQuery] Guid userId, [FromQuery] string token, CancellationToken cancellationToken)
     {
         var response = await _mediator.Send(
@@ -28,11 +31,8 @@ public sealed class ConfirmUserEmailController : ControllerBase
             },
             cancellationToken);
 
-        if (!response.IsSuccess)
-        {
-            return BadRequest(response.Error.ErrorMessage ?? "Email confirmation failed.");
-        }
-
-        return Ok(response.Value);
+        return response.IsSuccess
+            ? Ok(response.Value)
+            : HandleError(response.Error);
     }
 }

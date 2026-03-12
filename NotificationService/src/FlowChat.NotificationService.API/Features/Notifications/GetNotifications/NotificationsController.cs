@@ -1,3 +1,4 @@
+using FlowChat.API.Abstractions;
 using FlowChat.NotificationService.Application.Notifications.Queries.GetNotifications;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -6,7 +7,7 @@ namespace FlowChat.NotificationService.Api.Features.Notifications.GetNotificatio
 
 [ApiController]
 [Route("api/[controller]")]
-public sealed class NotificationsController : ControllerBase
+public sealed class NotificationsController : ApiControllerBase
 {
     private readonly IMediator _mediator;
 

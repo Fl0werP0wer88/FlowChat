@@ -1,3 +1,4 @@
+using FlowChat.API.Abstractions;
 using FlowChat.UserProfileService.Application.UserProfiles.Queries.GetUserProfile;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -6,7 +7,7 @@ namespace FlowChat.UserProfileService.Api.Features.UserProfiles.GetUserProfile;
 
 [ApiController]
 [Route("api/userprofiles")]
-public class UserProfilesController : ControllerBase
+public sealed class UserProfilesController : ApiControllerBase
 {
     private readonly IMediator _mediator;
 
@@ -17,14 +18,14 @@ public class UserProfilesController : ControllerBase
 
     [HttpGet("{userId:guid}")]
     [ProducesResponseType(typeof(UserProfileDto), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetById([FromRoute] Guid userId, CancellationToken cancellationToken)
     {
         var profile = await _mediator.Send(new GetUserProfileQuery(userId), cancellationToken);
 
         if (profile is null)
         {
-            return NotFound();
+            return NotFoundResponse($"User profile '{userId}' was not found.");
         }
 
         return Ok(profile);

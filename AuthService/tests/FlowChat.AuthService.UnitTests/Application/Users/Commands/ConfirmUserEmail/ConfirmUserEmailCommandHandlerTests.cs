@@ -50,6 +50,34 @@ public sealed class ConfirmUserEmailCommandHandlerTests
             domainEvent => Assert.IsType<AccountConfirmedDomainEvent>(domainEvent));
     }
 
+    [Fact]
+    public async Task Handle_ReturnsNotFound_WhenUserDoesNotExist()
+    {
+        var repository = new ConfirmUserIdentityRepository(null, isTokenValid: true);
+        var tokenEncoder = new ConfirmUserTokenEncoder("decoded-token");
+        var domainEventDispatcher = new CapturingDomainEventDispatcher();
+        var unitOfWork = new PassThroughUnitOfWork();
+        var handler = new ConfirmUserEmailCommandHandler(
+            repository,
+            tokenEncoder,
+            domainEventDispatcher,
+            unitOfWork);
+
+        var result = await handler.Handle(
+            new ConfirmUserEmailCommand
+            {
+                UserId = Guid.NewGuid(),
+                Token = "encoded-token"
+            },
+            CancellationToken.None);
+
+        Assert.False(result.IsSuccess);
+        Assert.Equal(ErrorType.NotFound, result.Error.ErrorType);
+        Assert.Equal("User was not found.", result.Error.ErrorMessage);
+        Assert.Null(repository.UpdatedUser);
+        Assert.Empty(domainEventDispatcher.DispatchedBatches);
+    }
+
     private sealed class ConfirmUserIdentityRepository : IIdentityRepository
     {
         private readonly Identity? _loadedUser;

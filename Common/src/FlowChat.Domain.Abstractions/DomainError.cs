@@ -17,6 +17,9 @@ public record DomainError : IDomainError
     public static DomainError UnExpected(string? message = "Unexpected error happened.") =>
         new(message ?? "Something when wrong.", ErrorType.Unexpected);
 
+    public static DomainError Unauthorized(string? message = "Unauthorized.") =>
+        new(message ?? "Unauthorized.", ErrorType.Unauthorized);
+
     private DomainError(string? message, ErrorType errorType, List<string>? errors = null)
     {
         ErrorMessage = message;

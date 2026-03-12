@@ -27,7 +27,7 @@ public class LoginUserCommandHandler :  CommandHandlerBase<LoginUserCommand, Log
         if (user is null)
         {
             return Result.Failure<LoginUserCommandResponse, IDomainError>(
-                DomainError.BadRequest("Invalid credentials or account is not confirmed."));
+                DomainError.Unauthorized("Invalid credentials or account is not confirmed."));
         }
 
         var token = _jwtTokenGenerator.GenerateToken(user);

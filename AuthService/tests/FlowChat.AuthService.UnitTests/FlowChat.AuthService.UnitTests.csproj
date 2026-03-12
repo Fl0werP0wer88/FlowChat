@@ -21,11 +21,16 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\FlowChat.AuthService.API\FlowChat.AuthService.API.csproj" />
     <ProjectReference Include="..\..\src\FlowChat.AuthService.Domain\FlowChat.AuthService.Domain.csproj" />
     <ProjectReference Include="..\..\src\FlowChat.AuthService.Application\FlowChat.AuthService.Application.csproj" />
     <ProjectReference Include="..\..\src\FlowChat.AuthService.Infrastructure\FlowChat.AuthService.Infrastructure.csproj" />
     <ProjectReference Include="..\..\src\FlowChat.AuthService.Persistence\FlowChat.AuthService.Persistence.csproj" />
     <ProjectReference Include="..\..\src\FlowChat.AuthService.Worker\FlowChat.AuthService.Worker.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 
 </Project>

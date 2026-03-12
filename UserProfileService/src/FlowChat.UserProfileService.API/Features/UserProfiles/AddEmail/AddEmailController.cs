@@ -1,4 +1,4 @@
-using FlowChat.UserProfileService.Api.Features.UserProfiles;
+using FlowChat.API.Abstractions;
 using FlowChat.UserProfileService.Application.UserProfiles.Commands.AddEmail;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -7,7 +7,7 @@ namespace FlowChat.UserProfileService.Api.Features.UserProfiles.AddEmail;
 
 [ApiController]
 [Route("api/userprofiles")]
-public sealed class AddEmailController : UserProfilesControllerBase
+public sealed class AddEmailController : ApiControllerBase
 {
     private readonly IMediator _mediator;
 
@@ -18,9 +18,10 @@ public sealed class AddEmailController : UserProfilesControllerBase
 
     [HttpPost("{userId:guid}/emails")]
     [ProducesResponseType(typeof(AddEmailResponse), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> AddEmail(
         [FromRoute] Guid userId,
         [FromBody] AddEmailRequest request,
@@ -30,6 +31,6 @@ public sealed class AddEmailController : UserProfilesControllerBase
 
         return result.IsSuccess
             ? Ok(new AddEmailResponse(result.Value))
-            : CreateErrorResponse(result.Error);
+            : HandleError(result.Error);
     }
 }

@@ -51,7 +51,7 @@ public sealed class LoginUserCommandHandlerTests
     }
 
     [Fact]
-    public async Task Handle_ReturnsBadRequest_WhenCredentialsAreInvalid()
+    public async Task Handle_ReturnsUnauthorized_WhenCredentialsAreInvalid()
     {
         var repository = new LoginUserIdentityRepository(null);
         var jwtTokenGenerator = new FakeJwtTokenGenerator(
@@ -77,7 +77,7 @@ public sealed class LoginUserCommandHandlerTests
             CancellationToken.None);
 
         Assert.False(result.IsSuccess);
-        Assert.Equal(ErrorType.BadRequest, result.Error.ErrorType);
+        Assert.Equal(ErrorType.Unauthorized, result.Error.ErrorType);
         Assert.Equal("Invalid credentials or account is not confirmed.", result.Error.ErrorMessage);
         Assert.False(jwtTokenGenerator.WasCalled);
         Assert.Empty(domainEventDispatcher.DispatchedBatches);

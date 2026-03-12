@@ -25,12 +25,17 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\FlowChat.UserProfileService.API\FlowChat.UserProfileService.API.csproj" />
     <ProjectReference Include="..\..\src\FlowChat.UserProfileService.Domain\FlowChat.UserProfileService.Domain.csproj" />
     <ProjectReference Include="..\..\src\FlowChat.UserProfileService.Application\FlowChat.UserProfileService.Application.csproj" />
     <ProjectReference Include="..\..\src\FlowChat.UserProfileService.Infrastructure\FlowChat.UserProfileService.Infrastructure.csproj" />
     <ProjectReference Include="..\..\src\FlowChat.UserProfileService.Persistence\FlowChat.UserProfileService.Persistence.csproj" />
     <ProjectReference Include="..\..\src\FlowChat.UserProfileService.Worker\FlowChat.UserProfileService.Worker.csproj" />
     <ProjectReference Include="..\..\..\Common\src\FlowChat.Messaging.Contracts\FlowChat.Messaging.Contracts.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 
 </Project>

@@ -1,14 +1,14 @@
 using FlowChat.Domain.Abstractions;
-using FlowChat.UserProfileService.Api.Extensions;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace FlowChat.UserProfileService.Api.Features.UserProfiles;
+namespace FlowChat.API.Abstractions;
 
-public abstract class UserProfilesControllerBase : ControllerBase
+public abstract class ApiControllerBase : ControllerBase
 {
     private readonly Dictionary<ErrorType, Func<string?, IEnumerable<string>?, ObjectResult>> _errorHandlers;
 
-    protected UserProfilesControllerBase()
+    protected ApiControllerBase()
     {
         _errorHandlers = new Dictionary<ErrorType, Func<string?, IEnumerable<string>?, ObjectResult>>
         {
@@ -16,13 +16,9 @@ public abstract class UserProfilesControllerBase : ControllerBase
             { ErrorType.NotFound, NotFoundResponse },
             { ErrorType.BadRequest, BadRequestResponse },
             { ErrorType.Validation, ValidationResponse },
+            { ErrorType.Unauthorized, UnauthorizedResponse },
             { ErrorType.Unexpected, UnexpectedResponse }
         };
-    }
-
-    protected ObjectResult CreateErrorResponse(IDomainError error)
-    {
-        return HandleError(error);
     }
 
     protected ObjectResult HandleError(IDomainError error)
@@ -47,8 +43,11 @@ public abstract class UserProfilesControllerBase : ControllerBase
     protected ObjectResult ValidationResponse(string? details = null, IEnumerable<string>? errors = null) =>
         BadRequest(ProblemDetailsFactory.CreateValidation(HttpContext, details, errors));
 
+    protected ObjectResult UnauthorizedResponse(string? details = null, IEnumerable<string>? errors = null) =>
+        Unauthorized(ProblemDetailsFactory.CreateUnauthorized(HttpContext, details, errors));
+
     protected ObjectResult UnexpectedResponse(string? details = null, IEnumerable<string>? errors = null) =>
         StatusCode(
             StatusCodes.Status500InternalServerError,
-            ProblemDetailsFactory.CreateUnexpectedResponse(HttpContext, details, errors));
+            ProblemDetailsFactory.CreateUnexpected(HttpContext, details, errors));
 }

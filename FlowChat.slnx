@@ -60,9 +60,13 @@
   </Folder>
   <Folder Name="/Common/" />
   <Folder Name="/Common/src/">
+    <Project Path="Common/src/FlowChat.API.Abstractions/FlowChat.API.Abstractions.csproj" />
     <Project Path="Common/src/FlowChat.Application.Abstractions/FlowChat.Application.Abstractions.csproj" />
     <Project Path="Common/src/FlowChat.Domain.Abstractions/FlowChat.Domain.Abstractions.csproj" />
     <Project Path="Common/src/FlowChat.Messaging.Contracts/FlowChat.Messaging.Contracts.csproj" />
+  </Folder>
+  <Folder Name="/Common/tests/">
+    <Project Path="Common/tests/FlowChat.API.Abstractions.UnitTests/FlowChat.API.Abstractions.UnitTests.csproj" />
   </Folder>
   <Folder Name="/SocialGraphService/" />
   <Folder Name="/SocialGraphService/src/">

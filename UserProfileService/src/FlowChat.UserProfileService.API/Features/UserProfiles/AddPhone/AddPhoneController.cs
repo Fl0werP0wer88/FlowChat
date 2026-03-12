@@ -1,4 +1,4 @@
-using FlowChat.UserProfileService.Api.Features.UserProfiles;
+using FlowChat.API.Abstractions;
 using FlowChat.UserProfileService.Application.UserProfiles.Commands.AddPhone;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -7,7 +7,7 @@ namespace FlowChat.UserProfileService.Api.Features.UserProfiles.AddPhone;
 
 [ApiController]
 [Route("api/userprofiles")]
-public sealed class AddPhoneController : UserProfilesControllerBase
+public sealed class AddPhoneController : ApiControllerBase
 {
     private readonly IMediator _mediator;
 
@@ -18,9 +18,10 @@ public sealed class AddPhoneController : UserProfilesControllerBase
 
     [HttpPost("{userId:guid}/phones")]
     [ProducesResponseType(typeof(AddPhoneResponse), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> AddPhone(
         [FromRoute] Guid userId,
         [FromBody] AddPhoneRequest request,
@@ -30,6 +31,6 @@ public sealed class AddPhoneController : UserProfilesControllerBase
 
         return result.IsSuccess
             ? Ok(new AddPhoneResponse(result.Value))
-            : CreateErrorResponse(result.Error);
+            : HandleError(result.Error);
     }
 }

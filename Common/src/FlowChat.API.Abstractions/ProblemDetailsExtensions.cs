@@ -1,8 +1,9 @@
 using System.Text;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 
-namespace FlowChat.UserProfileService.Api.Extensions;
+namespace FlowChat.API.Abstractions;
 
 public static class ProblemDetailsExtensions
 {
@@ -34,7 +35,14 @@ public static class ProblemDetailsExtensions
         IEnumerable<string>? errors = null) =>
         CreateProblemDetailsWith(detailsFactory, StatusCodes.Status400BadRequest, context, details, errors);
 
-    public static ProblemDetails CreateUnexpectedResponse(
+    public static ProblemDetails CreateUnauthorized(
+        this ProblemDetailsFactory detailsFactory,
+        HttpContext context,
+        string? details = null,
+        IEnumerable<string>? errors = null) =>
+        CreateProblemDetailsWith(detailsFactory, StatusCodes.Status401Unauthorized, context, details, errors);
+
+    public static ProblemDetails CreateUnexpected(
         this ProblemDetailsFactory detailsFactory,
         HttpContext context,
         string? details = null,
