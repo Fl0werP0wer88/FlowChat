@@ -17,7 +17,7 @@ public sealed class AddEmailController : UserProfilesControllerBase
     }
 
     [HttpPost("{userId:guid}/emails")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(AddEmailResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
@@ -29,7 +29,7 @@ public sealed class AddEmailController : UserProfilesControllerBase
         var result = await _mediator.Send(new AddEmailCommand(userId, request.Address), cancellationToken);
 
         return result.IsSuccess
-            ? NoContent()
+            ? Ok(new AddEmailResponse(result.Value))
             : CreateErrorResponse(result.Error);
     }
 }

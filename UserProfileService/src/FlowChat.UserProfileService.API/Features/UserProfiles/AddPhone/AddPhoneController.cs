@@ -17,7 +17,7 @@ public sealed class AddPhoneController : UserProfilesControllerBase
     }
 
     [HttpPost("{userId:guid}/phones")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(AddPhoneResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
@@ -29,7 +29,7 @@ public sealed class AddPhoneController : UserProfilesControllerBase
         var result = await _mediator.Send(new AddPhoneCommand(userId, request.Number), cancellationToken);
 
         return result.IsSuccess
-            ? NoContent()
+            ? Ok(new AddPhoneResponse(result.Value))
             : CreateErrorResponse(result.Error);
     }
 }
