@@ -25,14 +25,13 @@ public sealed class SetMainPhoneCommandHandler
         SetMainPhoneCommand request,
         CancellationToken cancellationToken)
     {
-        if (request.UserId == Guid.Empty)
-        {
-            return Result.Failure<Guid, IDomainError>(DomainError.Validation("UserId is required."));
-        }
+        var validationErrors = new ValidationErrorCollector()
+            .AddIf(request.UserId == Guid.Empty, "UserId is required.")
+            .AddIf(request.PhoneId == Guid.Empty, "PhoneId is required.");
 
-        if (request.PhoneId == Guid.Empty)
+        if (validationErrors.HasErrors)
         {
-            return Result.Failure<Guid, IDomainError>(DomainError.Validation("PhoneId is required."));
+            return validationErrors.ToFailure<Guid>();
         }
 
         _userProfile = await _userProfileRepository.GetByIdForUpdateAsync(request.UserId, cancellationToken);

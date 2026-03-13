@@ -62,6 +62,23 @@ public sealed class SetMainContactCommandHandlerTests
 
         Assert.True(result.IsFailure);
         Assert.Equal(ErrorType.Validation, result.Error.ErrorType);
+        Assert.Equal(["EmailId is required."], result.Error.Errors);
+    }
+
+    [Fact]
+    public async Task SetMainEmail_WhenUserIdAndEmailIdAreEmpty_ReturnsValidationFailureWithBothErrors()
+    {
+        var handler = new SetMainEmailCommandHandler(
+            new TestUserProfileRepository(),
+            new TestUnitOfWork(),
+            new TestDomainEventDispatcher());
+
+        var result = await handler.Handle(new SetMainEmailCommand(Guid.Empty, Guid.Empty), CancellationToken.None);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(ErrorType.Validation, result.Error.ErrorType);
+        Assert.Equal("Validation Failed.", result.Error.ErrorMessage);
+        Assert.Equal(["UserId is required.", "EmailId is required."], result.Error.Errors);
     }
 
     [Fact]
@@ -116,6 +133,23 @@ public sealed class SetMainContactCommandHandlerTests
 
         Assert.True(result.IsFailure);
         Assert.Equal(ErrorType.Validation, result.Error.ErrorType);
+        Assert.Equal(["PhoneId is required."], result.Error.Errors);
+    }
+
+    [Fact]
+    public async Task SetMainPhone_WhenUserIdAndPhoneIdAreEmpty_ReturnsValidationFailureWithBothErrors()
+    {
+        var handler = new SetMainPhoneCommandHandler(
+            new TestUserProfileRepository(),
+            new TestUnitOfWork(),
+            new TestDomainEventDispatcher());
+
+        var result = await handler.Handle(new SetMainPhoneCommand(Guid.Empty, Guid.Empty), CancellationToken.None);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(ErrorType.Validation, result.Error.ErrorType);
+        Assert.Equal("Validation Failed.", result.Error.ErrorMessage);
+        Assert.Equal(["UserId is required.", "PhoneId is required."], result.Error.Errors);
     }
 
     private sealed class TestUserProfileRepository(UserProfile? userProfile = null) : IUserProfileRepository

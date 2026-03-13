@@ -24,29 +24,24 @@ public sealed class CreateInitialUserProfileCommandHandler
         CreateInitialUserProfileCommand request,
         CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(request.UserName))
-        {
-            return Result.Failure<Guid, IDomainError>(DomainError.Validation("UserName is required."));
-        }
+        var validationErrors = new ValidationErrorCollector()
+            .AddIf(string.IsNullOrWhiteSpace(request.UserName), "UserName is required.")
+            .AddIf(string.IsNullOrWhiteSpace(request.DisplayName), "DisplayName is required.");
 
-        if (string.IsNullOrWhiteSpace(request.DisplayName))
-        {
-            return Result.Failure<Guid, IDomainError>(DomainError.Validation("DisplayName is required."));
-        }
-
-        var userName = request.UserName.Trim();
-        var displayName = request.DisplayName.Trim();
+        var userName = string.IsNullOrWhiteSpace(request.UserName) ? null : request.UserName.Trim();
+        var displayName = string.IsNullOrWhiteSpace(request.DisplayName) ? null : request.DisplayName.Trim();
         var email = string.IsNullOrWhiteSpace(request.Email) ? null : request.Email.Trim();
         var phone = string.IsNullOrWhiteSpace(request.Phone) ? null : request.Phone.Trim();
 
-        if (email is null && phone is null)
+        validationErrors.AddIf(email is null && phone is null, "At least one email or phone is required to create a user profile.");
+
+        if (validationErrors.HasErrors)
         {
-            return Result.Failure<Guid, IDomainError>(
-                DomainError.Validation("At least one email or phone is required to create a user profile."));
+            return validationErrors.ToFailure<Guid>();
         }
 
         var exists = await _userProfileRepository
-            .UserNameExistsAsync(userName, cancellationToken: cancellationToken);
+            .UserNameExistsAsync(userName!, cancellationToken: cancellationToken);
 
         if (exists)
         {
@@ -62,8 +57,8 @@ public sealed class CreateInitialUserProfileCommandHandler
             : [Phone.Create(userProfileId, phone, isMain: true)];
 
         _userProfile = UserProfile.Create(
-            userName,
-            displayName,
+            userName!,
+            displayName!,
             request.AvatarUrl,
             request.Bio,
             emails: emails,

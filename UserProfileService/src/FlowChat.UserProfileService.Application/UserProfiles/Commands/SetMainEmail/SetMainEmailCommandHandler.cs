@@ -25,14 +25,13 @@ public sealed class SetMainEmailCommandHandler
         SetMainEmailCommand request,
         CancellationToken cancellationToken)
     {
-        if (request.UserId == Guid.Empty)
-        {
-            return Result.Failure<Guid, IDomainError>(DomainError.Validation("UserId is required."));
-        }
+        var validationErrors = new ValidationErrorCollector()
+            .AddIf(request.UserId == Guid.Empty, "UserId is required.")
+            .AddIf(request.EmailId == Guid.Empty, "EmailId is required.");
 
-        if (request.EmailId == Guid.Empty)
+        if (validationErrors.HasErrors)
         {
-            return Result.Failure<Guid, IDomainError>(DomainError.Validation("EmailId is required."));
+            return validationErrors.ToFailure<Guid>();
         }
 
         _userProfile = await _userProfileRepository.GetByIdForUpdateAsync(request.UserId, cancellationToken);

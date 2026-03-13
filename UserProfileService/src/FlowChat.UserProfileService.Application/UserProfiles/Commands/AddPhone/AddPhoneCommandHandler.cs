@@ -24,14 +24,13 @@ public sealed class AddPhoneCommandHandler
         AddPhoneCommand request,
         CancellationToken cancellationToken)
     {
-        if (request.UserId == Guid.Empty)
-        {
-            return Result.Failure<Guid, IDomainError>(DomainError.Validation("UserId is required."));
-        }
+        var validationErrors = new ValidationErrorCollector()
+            .AddIf(request.UserId == Guid.Empty, "UserId is required.")
+            .AddIf(string.IsNullOrWhiteSpace(request.Number), "Phone number is required.");
 
-        if (string.IsNullOrWhiteSpace(request.Number))
+        if (validationErrors.HasErrors)
         {
-            return Result.Failure<Guid, IDomainError>(DomainError.Validation("Phone number is required."));
+            return validationErrors.ToFailure<Guid>();
         }
 
         _userProfile = await _userProfileRepository.GetByIdForUpdateAsync(request.UserId, cancellationToken);

@@ -64,6 +64,7 @@ public sealed class CreateInitialUserProfileCommandHandlerTests
 
         Assert.True(result.IsFailure);
         Assert.Equal(ErrorType.Validation, result.Error.ErrorType);
+        Assert.Equal(["At least one email or phone is required to create a user profile."], result.Error.Errors);
         Assert.Null(repository.AddedEntity);
     }
 
@@ -89,6 +90,40 @@ public sealed class CreateInitialUserProfileCommandHandlerTests
 
         Assert.True(result.IsFailure);
         Assert.Equal(ErrorType.Validation, result.Error.ErrorType);
+        Assert.Equal(["At least one email or phone is required to create a user profile."], result.Error.Errors);
+        Assert.Null(repository.AddedEntity);
+    }
+
+    [Fact]
+    public async Task Handle_WithMissingRequiredFields_ReturnsValidationFailureWithAllErrorsInOrder()
+    {
+        var repository = new TestUserProfileRepository();
+        var handler = new CreateInitialUserProfileCommandHandler(
+            repository,
+            new TestUnitOfWork(),
+            new TestDomainEventDispatcher());
+
+        var result = await handler.Handle(
+            new CreateInitialUserProfileCommand(
+                "   ",
+                "   ",
+                null,
+                null,
+                null,
+                null,
+                Guid.NewGuid()),
+            CancellationToken.None);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(ErrorType.Validation, result.Error.ErrorType);
+        Assert.Equal("Validation Failed.", result.Error.ErrorMessage);
+        Assert.Equal(
+            [
+                "UserName is required.",
+                "DisplayName is required.",
+                "At least one email or phone is required to create a user profile."
+            ],
+            result.Error.Errors);
         Assert.Null(repository.AddedEntity);
     }
 
