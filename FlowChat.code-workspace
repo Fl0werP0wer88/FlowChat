@@ -1,0 +1,256 @@
+{
+  "folders": [
+    {
+      "name": "FlowChat",
+      "path": "."
+    },
+    {
+      "name": "AuthService",
+      "path": "AuthService"
+    },
+    {
+      "name": "ChatService",
+      "path": "ChatService"
+    },
+    {
+      "name": "Common",
+      "path": "Common"
+    },
+    {
+      "name": "GatewayService",
+      "path": "GatewayService"
+    },
+    {
+      "name": "NotificationService",
+      "path": "NotificationService"
+    },
+    {
+      "name": "SocialGraphService",
+      "path": "SocialGraphService"
+    },
+    {
+      "name": "UserProfileService",
+      "path": "UserProfileService"
+    }
+  ],
+  "settings": {
+    "workbench.iconTheme": "material-icon-theme",
+    "explorer.autoReveal": true,
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "dprint.dprint",
+    "dprint.configPath": "${workspaceFolder:FlowChat}/dprint.json",
+    "[csharp]": {
+      "editor.defaultFormatter": "dprint.dprint"
+    },
+    "[javascript]": {
+      "editor.defaultFormatter": "dprint.dprint"
+    },
+    "[javascriptreact]": {
+      "editor.defaultFormatter": "dprint.dprint"
+    },
+    "[typescript]": {
+      "editor.defaultFormatter": "dprint.dprint"
+    },
+    "[typescriptreact]": {
+      "editor.defaultFormatter": "dprint.dprint"
+    },
+    "statusbar_command.commands": [
+      {
+        "text": "$(target)",
+        "tooltip": "Sync z aktywnym plikiem (.NET)",
+        "id": "sbc_sync_dotnet",
+        "name": "Sync Active",
+        "alignment": "right",
+        "priority": 1000,
+        "command": "runCommands",
+        "arguments": [
+          {
+            "commands": [
+              "workbench.actions.treeView.solutionExplorer.collapseAll",
+              "csdevkit.syncWithActiveItem"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "launch": {
+    "version": "0.2.0",
+    "compounds": [
+      {
+        "name": "AuthService",
+        "configurations": [
+          {
+            "folder": "AuthService",
+            "name": "AuthService API"
+          },
+          {
+            "folder": "AuthService",
+            "name": "AuthService Worker"
+          }
+        ],
+        "stopAll": true
+      },
+      {
+        "name": "ChatService",
+        "configurations": [
+          {
+            "folder": "ChatService",
+            "name": "ChatService API"
+          }
+        ],
+        "stopAll": true
+      },
+      {
+        "name": "GatewayService",
+        "configurations": [
+          {
+            "folder": "GatewayService",
+            "name": "GatewayService API"
+          }
+        ],
+        "stopAll": true
+      },
+      {
+        "name": "NotificationService",
+        "configurations": [
+          {
+            "folder": "NotificationService",
+            "name": "NotificationService API"
+          },
+          {
+            "folder": "NotificationService",
+            "name": "NotificationService Worker"
+          }
+        ],
+        "stopAll": true
+      },
+      {
+        "name": "SocialGraphService",
+        "configurations": [
+          {
+            "folder": "SocialGraphService",
+            "name": "SocialGraphService API"
+          },
+          {
+            "folder": "SocialGraphService",
+            "name": "SocialGraphService Worker"
+          }
+        ],
+        "stopAll": true
+      },
+      {
+        "name": "UserProfileService",
+        "configurations": [
+          {
+            "folder": "UserProfileService",
+            "name": "UserProfileService API"
+          },
+          {
+            "folder": "UserProfileService",
+            "name": "UserProfileService Worker"
+          }
+        ],
+        "stopAll": true
+      },
+      {
+        "name": "All APIs",
+        "configurations": [
+          {
+            "folder": "AuthService",
+            "name": "AuthService API"
+          },
+          {
+            "folder": "ChatService",
+            "name": "ChatService API"
+          },
+          {
+            "folder": "UserProfileService",
+            "name": "UserProfileService API"
+          },
+          {
+            "folder": "SocialGraphService",
+            "name": "SocialGraphService API"
+          },
+          {
+            "folder": "NotificationService",
+            "name": "NotificationService API"
+          },
+          {
+            "folder": "GatewayService",
+            "name": "GatewayService API"
+          }
+        ],
+        "stopAll": true
+      },
+      {
+        "name": "All Workers",
+        "configurations": [
+          {
+            "folder": "AuthService",
+            "name": "AuthService Worker"
+          },
+          {
+            "folder": "UserProfileService",
+            "name": "UserProfileService Worker"
+          },
+          {
+            "folder": "NotificationService",
+            "name": "NotificationService Worker"
+          },
+          {
+            "folder": "SocialGraphService",
+            "name": "SocialGraphService Worker"
+          }
+        ],
+        "stopAll": true
+      },
+      {
+        "name": "All Services",
+        "configurations": [
+          {
+            "folder": "AuthService",
+            "name": "AuthService API"
+          },
+          {
+            "folder": "ChatService",
+            "name": "ChatService API"
+          },
+          {
+            "folder": "UserProfileService",
+            "name": "UserProfileService API"
+          },
+          {
+            "folder": "SocialGraphService",
+            "name": "SocialGraphService API"
+          },
+          {
+            "folder": "GatewayService",
+            "name": "GatewayService API"
+          },
+          {
+            "folder": "AuthService",
+            "name": "AuthService Worker"
+          },
+          {
+            "folder": "UserProfileService",
+            "name": "UserProfileService Worker"
+          },
+          {
+            "folder": "NotificationService",
+            "name": "NotificationService API"
+          },
+          {
+            "folder": "NotificationService",
+            "name": "NotificationService Worker"
+          },
+          {
+            "folder": "SocialGraphService",
+            "name": "SocialGraphService Worker"
+          }
+        ],
+        "stopAll": true
+      }
+    ]
+  }
+}
