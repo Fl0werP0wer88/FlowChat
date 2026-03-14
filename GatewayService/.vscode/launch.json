@@ -1,0 +1,23 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "GatewayService API",
+      "type": "coreclr",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/FlowChat.GatewayService.API/bin/Debug/net10.0/FlowChat.GatewayService.API.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/src/FlowChat.GatewayService.API",
+      "stopAtEntry": false,
+      "console": "internalConsole",
+      "serverReadyAction": {
+        "action": "openExternally",
+        "pattern": "\\bNow listening on:\\s+(https?://\\S+)",
+        "uriFormat": "%s/swagger"
+      },
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    }
+  ]
+}
