@@ -1,3 +1,4 @@
+using FlowChat.API.Abstractions;
 using FlowChat.UserProfileService.Application;
 using FlowChat.UserProfileService.Infrastructure.Configuration;
 using FlowChat.UserProfileService.Infrastructure;
@@ -39,7 +40,7 @@ public static class StartupExtensions
     public static WebApplication ConfigurePipeline(this WebApplication app)
     {
         app.UseCors("open");
-        app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
+        app.UseFlowChatGlobalExceptionHandling();
         if (app.Environment.IsDevelopment())
         {
             app.UseSwagger();

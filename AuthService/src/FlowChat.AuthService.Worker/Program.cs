@@ -2,20 +2,43 @@ using System.Data.Common;
 using FlowChat.AuthService.Infrastructure.Kafka;
 using FlowChat.AuthService.Persistence;
 using FlowChat.AuthService.Worker.Diagnostics;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
-var builder = Host.CreateApplicationBuilder(args);
+IHost? host = null;
 
-builder.Services.AddWorkerPersistenceServices(builder.Configuration);
-builder.Services.AddSingleton<IAuthDbConnectivityProbe, AuthDbConnectivityProbe>();
-builder.Services.AddSingleton<IKafkaConnectivityProbe, KafkaConnectivityProbe>();
-builder.Services.AddHostedService<OutboxWorkerStartupProbe>();
-builder.Services.AddWorkerSilverbackMessaging(builder.Configuration);
+try
+{
+    var builder = Host.CreateApplicationBuilder(args);
 
-var host = builder.Build();
+    builder.Services.AddWorkerPersistenceServices(builder.Configuration);
+    builder.Services.AddSingleton<IAuthDbConnectivityProbe, AuthDbConnectivityProbe>();
+    builder.Services.AddSingleton<IKafkaConnectivityProbe, KafkaConnectivityProbe>();
+    builder.Services.AddHostedService<OutboxWorkerStartupProbe>();
+    builder.Services.AddWorkerSilverbackMessaging(builder.Configuration);
 
-LogStartupDiagnostics(host);
+    host = builder.Build();
 
-await host.RunAsync();
+    LogStartupDiagnostics(host);
+
+    await host.RunAsync();
+}
+catch (Exception exception)
+{
+    if (host is not null)
+    {
+        host.Services
+            .GetRequiredService<ILoggerFactory>()
+            .CreateLogger("Program")
+            .LogCritical(exception, "AuthService Worker terminated unexpectedly.");
+    }
+    else
+    {
+        Console.Error.WriteLine($"Fatal startup error in AuthService Worker: {exception}");
+    }
+
+    throw;
+}
 
 static void LogStartupDiagnostics(IHost host)
 {

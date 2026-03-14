@@ -1,7 +1,6 @@
-using FlowChat.API.Abstractions;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 
-namespace FlowChat.UserProfileService.Api;
+namespace FlowChat.API.Abstractions;
 
 public sealed class GlobalExceptionHandlingMiddleware(
     RequestDelegate next,

@@ -1,3 +1,4 @@
+using FlowChat.API.Abstractions;
 using FlowChat.GatewayService.Api.Configuration;
 using FlowChat.GatewayService.Api.OpenApi;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -100,6 +101,7 @@ public static class StartupExtensions
     public static WebApplication ConfigurePipeline(this WebApplication app)
     {
         app.UseCors("open");
+        app.UseFlowChatGlobalExceptionHandling();
 
         if (app.Environment.IsDevelopment())
         {

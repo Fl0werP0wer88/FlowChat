@@ -1,3 +1,4 @@
+using FlowChat.API.Abstractions;
 using FlowChat.SocialGraphService.Application;
 using FlowChat.SocialGraphService.Infrastructure.Configuration;
 using FlowChat.SocialGraphService.Infrastructure;
@@ -100,6 +101,7 @@ public static class StartupExtensions
     public static WebApplication ConfigurePipeline(this WebApplication app)
     {
         app.UseCors("open");
+        app.UseFlowChatGlobalExceptionHandling();
         if (app.Environment.IsDevelopment())
         {
             app.UseSwagger();
@@ -130,9 +132,13 @@ public static class StartupExtensions
 
             await context.Database.MigrateAsync();
         }
-        catch (Exception)
+        catch (Exception exception)
         {
-            // logowanie dodamy pozniej
+            app.Logger.LogError(
+                exception,
+                "Failed to reset or migrate the SocialGraphService database during startup.");
+
+            throw;
         }
     }
 }

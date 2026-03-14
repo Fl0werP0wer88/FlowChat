@@ -1,3 +1,4 @@
+using FlowChat.API.Abstractions;
 using FlowChat.NotificationService.Application;
 using FlowChat.NotificationService.Infrastructure.Configuration;
 using FlowChat.NotificationService.Infrastructure;
@@ -40,6 +41,7 @@ public static class StartupExtensions
     public static WebApplication ConfigurePipeline(this WebApplication app)
     {
         app.UseCors("open");
+        app.UseFlowChatGlobalExceptionHandling();
 
         if (app.Environment.IsDevelopment())
         {
@@ -69,9 +71,13 @@ public static class StartupExtensions
 
             await context.Database.MigrateAsync();
         }
-        catch (Exception)
+        catch (Exception exception)
         {
-            // TODO: add proper logging.
+            app.Logger.LogError(
+                exception,
+                "Failed to reset or migrate the NotificationService database during startup.");
+
+            throw;
         }
     }
 }
