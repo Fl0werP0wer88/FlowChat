@@ -39,6 +39,7 @@ public static class StartupExtensions
     public static WebApplication ConfigurePipeline(this WebApplication app)
     {
         app.UseCors("open");
+        app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
         if (app.Environment.IsDevelopment())
         {
             app.UseSwagger();
@@ -67,9 +68,13 @@ public static class StartupExtensions
 
             await context.Database.MigrateAsync();
         }
-        catch (Exception)
+        catch (Exception exception)
         {
-            // logowanie dodamy pozniej
+            app.Logger.LogError(
+                exception,
+                "Failed to reset or migrate the UserProfileService database during startup.");
+
+            throw;
         }
     }
 }
