@@ -1,0 +1,41 @@
+{
+  "workbench.iconTheme": "material-icon-theme",
+  "explorer.autoReveal": true,
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "dprint.dprint",
+  "dprint.configPath": "${workspaceFolder}/dprint.json",
+  "[csharp]": {
+    "editor.defaultFormatter": "dprint.dprint"
+  },
+  "[javascript]": {
+    "editor.defaultFormatter": "dprint.dprint"
+  },
+  "[javascriptreact]": {
+    "editor.defaultFormatter": "dprint.dprint"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "dprint.dprint"
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "dprint.dprint"
+  },
+  "statusbar_command.commands": [
+  {
+    "text": "$(target)",
+    "tooltip": "Sync z aktywnym plikiem (.NET)",
+    "id": "sbc_sync_dotnet",
+    "name": "Sync Active",
+    "alignment": "right",
+    "priority": 1000,
+    "command": "runCommands",
+    "arguments": [
+      {
+        "commands": [
+          "workbench.actions.treeView.solutionExplorer.collapseAll",
+          "csdevkit.syncWithActiveItem"
+        ]
+      }
+    ]
+  }
+]
+}
