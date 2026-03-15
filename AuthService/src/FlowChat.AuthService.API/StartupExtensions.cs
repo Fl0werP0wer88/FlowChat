@@ -1,4 +1,5 @@
 using FlowChat.API.Abstractions;
+using FlowChat.Application.Abstractions.Observability;
 using FlowChat.AuthService.Application;
 using FlowChat.AuthService.Infrastructure.Configuration;
 using FlowChat.AuthService.Infrastructure;
@@ -6,6 +7,9 @@ using FlowChat.AuthService.Infrastructure.Kafka;
 using FlowChat.AuthService.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
+using OpenTelemetry.Exporter;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 
 namespace FlowChat.AuthService.Api;
 
@@ -25,6 +29,7 @@ public static class StartupExtensions
         .AddAPIPersistenceServices(builder.Configuration)
         .AddApiSilverbackMessaging(builder.Configuration)
         .AddAPIServices(builder.Configuration);
+        builder.AddOpenTelemetryServices();
 
 
         builder.Services.AddControllers();
@@ -141,5 +146,63 @@ public static class StartupExtensions
 
     private static string QuoteIdentifier(string identifier) =>
         $"\"{identifier.Replace("\"", "\"\"")}\"";
+
+    private static void AddOpenTelemetryServices(this WebApplicationBuilder builder)
+    {
+        var applicationSourceName = ApplicationActivitySource.For(typeof(ApplicationServiceRegistration).Assembly).Name;
+        var serviceName = builder.Configuration["OpenTelemetry:ServiceName"];
+        if (string.IsNullOrWhiteSpace(serviceName))
+        {
+            serviceName = builder.Environment.ApplicationName;
+        }
+
+        builder.Services
+            .AddOpenTelemetry()
+            .ConfigureResource(resource => resource.AddService(
+                serviceName: serviceName,
+                serviceVersion: typeof(StartupExtensions).Assembly.GetName().Version?.ToString()))
+            .WithTracing(tracing =>
+            {
+                tracing
+                    .AddSource(applicationSourceName)
+                    .AddAspNetCoreInstrumentation(options => options.RecordException = true)
+                    .AddHttpClientInstrumentation();
+
+                AddOtlpTracingExporterIfConfigured(tracing, builder.Configuration);
+            });
+    }
+
+    private static void AddOtlpTracingExporterIfConfigured(
+        TracerProviderBuilder tracing,
+        IConfiguration configuration)
+    {
+        var endpoint = configuration["OpenTelemetry:Otlp:Endpoint"];
+        if (string.IsNullOrWhiteSpace(endpoint))
+        {
+            return;
+        }
+
+        tracing.AddOtlpExporter(options => ConfigureOtlpExporter(options, configuration, endpoint));
+    }
+
+    private static void ConfigureOtlpExporter(
+        OtlpExporterOptions options,
+        IConfiguration configuration,
+        string endpoint)
+    {
+        options.Endpoint = new Uri(endpoint, UriKind.Absolute);
+
+        var protocol = configuration["OpenTelemetry:Otlp:Protocol"];
+        if (Enum.TryParse<OtlpExportProtocol>(protocol, ignoreCase: true, out var parsedProtocol))
+        {
+            options.Protocol = parsedProtocol;
+        }
+
+        var headers = configuration["OpenTelemetry:Otlp:Headers"];
+        if (!string.IsNullOrWhiteSpace(headers))
+        {
+            options.Headers = headers;
+        }
+    }
 }
 
