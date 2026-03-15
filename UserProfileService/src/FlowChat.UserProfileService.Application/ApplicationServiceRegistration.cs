@@ -11,7 +11,11 @@ public static class ApplicationServiceRegistration
     {
         var applicationAssembly = typeof(ApplicationServiceRegistration).Assembly;
 
-        services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(applicationAssembly));
+        services.AddMediatR(cfg =>
+        {
+            cfg.RegisterServicesFromAssemblies(applicationAssembly);
+            cfg.AddFlowChatBehaviors();
+        });
         services.AddAutoMapper((Action<AutoMapper.IMapperConfigurationExpression>?)null, applicationAssembly);
         services.AddScoped<IDomainEventDispatcher, DomainEventDispatcher>();
 
@@ -22,7 +26,11 @@ public static class ApplicationServiceRegistration
     {
         var consumerAssembly = typeof(CreateInitialUserProfileCommandHandler).Assembly;
 
-        services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(consumerAssembly));
+        services.AddMediatR(cfg =>
+        {
+            cfg.RegisterServicesFromAssemblies(consumerAssembly);
+            cfg.AddFlowChatBehaviors();
+        });
         services.AddAutoMapper((Action<AutoMapper.IMapperConfigurationExpression>?)null, consumerAssembly);
         services.AddScoped<IDomainEventDispatcher, DomainEventDispatcher>();
 

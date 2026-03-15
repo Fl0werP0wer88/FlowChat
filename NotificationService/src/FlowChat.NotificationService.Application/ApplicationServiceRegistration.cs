@@ -1,3 +1,4 @@
+using FlowChat.Application.Abstractions;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace FlowChat.NotificationService.Application;
@@ -8,7 +9,11 @@ public static class ApplicationServiceRegistration
     {
         var applicationAssembly = typeof(ApplicationServiceRegistration).Assembly;
 
-        services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(applicationAssembly));
+        services.AddMediatR(cfg =>
+        {
+            cfg.RegisterServicesFromAssemblies(applicationAssembly);
+            cfg.AddFlowChatBehaviors();
+        });
 
         return services;
     }
@@ -17,7 +22,11 @@ public static class ApplicationServiceRegistration
     {
         var applicationAssembly = typeof(ApplicationServiceRegistration).Assembly;
 
-        services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(applicationAssembly));
+        services.AddMediatR(cfg =>
+        {
+            cfg.RegisterServicesFromAssemblies(applicationAssembly);
+            cfg.AddFlowChatBehaviors();
+        });
 
         return services;
     }

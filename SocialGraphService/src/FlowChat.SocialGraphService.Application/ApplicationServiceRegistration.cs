@@ -10,7 +10,11 @@ public static class ApplicationServiceRegistration
     {
         var applicationAssembly = typeof(ApplicationServiceRegistration).Assembly;
 
-        services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(applicationAssembly));
+        services.AddMediatR(cfg =>
+        {
+            cfg.RegisterServicesFromAssemblies(applicationAssembly);
+            cfg.AddFlowChatBehaviors();
+        });
         services.AddScoped<IDomainEventDispatcher, DomainEventDispatcher>();
 
         return services;
@@ -20,7 +24,11 @@ public static class ApplicationServiceRegistration
     {
         var applicationAssembly = typeof(ApplicationServiceRegistration).Assembly;
 
-        services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(applicationAssembly));
+        services.AddMediatR(cfg =>
+        {
+            cfg.RegisterServicesFromAssemblies(applicationAssembly);
+            cfg.AddFlowChatBehaviors();
+        });
         services.AddScoped<IDomainEventDispatcher, DomainEventDispatcher>();
 
         return services;
