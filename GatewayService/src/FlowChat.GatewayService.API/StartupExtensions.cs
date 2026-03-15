@@ -39,6 +39,7 @@ public static class StartupExtensions
         builder.Services.Configure<SwaggerAggregationOptions>(
             builder.Configuration.GetSection(SwaggerAggregationOptions.SectionName));
         builder.Services.AddHttpClient<DownstreamSwaggerAggregator>();
+        builder.AddFlowChatOpenTelemetry();
 
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddControllers();

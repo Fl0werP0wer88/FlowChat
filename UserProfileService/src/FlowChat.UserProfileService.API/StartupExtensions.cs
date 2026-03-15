@@ -20,6 +20,7 @@ public static class StartupExtensions
         builder.Services.AddInfrastructureServices(builder.Configuration);
         builder.Services.AddPersistenceServices(builder.Configuration);
         builder.Services.AddApiSilverbackMessaging(builder.Configuration);
+        builder.AddFlowChatOpenTelemetry(typeof(ApplicationServiceRegistration).Assembly);
 
         builder.Services.AddControllers();
 

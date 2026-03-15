@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk.Worker">
 
   <ItemGroup>
+    <ProjectReference Include="..\..\..\Common\src\FlowChat.API.Abstractions\FlowChat.API.Abstractions.csproj" />
     <ProjectReference Include="..\FlowChat.NotificationService.Application\FlowChat.NotificationService.Application.csproj" />
     <ProjectReference Include="..\FlowChat.NotificationService.Infrastructure\FlowChat.NotificationService.Infrastructure.csproj" />
     <ProjectReference Include="..\FlowChat.NotificationService.Persistence\FlowChat.NotificationService.Persistence.csproj" />

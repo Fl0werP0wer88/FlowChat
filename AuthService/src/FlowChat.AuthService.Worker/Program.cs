@@ -1,4 +1,5 @@
 using System.Data.Common;
+using FlowChat.API.Abstractions;
 using FlowChat.AuthService.Infrastructure.Kafka;
 using FlowChat.AuthService.Persistence;
 using FlowChat.AuthService.Worker.Diagnostics;
@@ -11,6 +12,7 @@ try
 {
     var builder = Host.CreateApplicationBuilder(args);
 
+    builder.AddFlowChatOpenTelemetry();
     builder.Services.AddWorkerPersistenceServices(builder.Configuration);
     builder.Services.AddSingleton<IAuthDbConnectivityProbe, AuthDbConnectivityProbe>();
     builder.Services.AddSingleton<IKafkaConnectivityProbe, KafkaConnectivityProbe>();

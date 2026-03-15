@@ -1,3 +1,4 @@
+using FlowChat.API.Abstractions;
 using FlowChat.UserProfileService.Application;
 using FlowChat.UserProfileService.Infrastructure;
 using FlowChat.UserProfileService.Persistence;
@@ -11,6 +12,7 @@ IHost? host = null;
 try
 {
     var builder = Host.CreateApplicationBuilder(args);
+    builder.AddFlowChatOpenTelemetry(typeof(ApplicationServiceRegistration).Assembly);
     builder.Services.AddWorkerApplicationServices();
     builder.Services.AddInfrastructureServices(builder.Configuration);
     builder.Services.AddWorkerKafkaConsumer(builder.Configuration);

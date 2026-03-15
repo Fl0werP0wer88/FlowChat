@@ -1,3 +1,4 @@
+using FlowChat.API.Abstractions;
 using FlowChat.ChatService.Application;
 using FlowChat.ChatService.Infrastructure.Configuration;
 using FlowChat.ChatService.Infrastructure;
@@ -17,6 +18,7 @@ public static class StartupExtensions
         builder.Services.AddApplicationServices();
         builder.Services.AddInfrastructureServices(builder.Configuration);
         builder.Services.AddPersistenceServices(builder.Configuration);
+        builder.AddFlowChatOpenTelemetry(typeof(ApplicationServiceRegistration).Assembly);
 
         builder.Services.AddControllers();
 
