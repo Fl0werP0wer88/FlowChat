@@ -5,6 +5,7 @@
       "name": "ChatService API",
       "type": "coreclr",
       "request": "launch",
+      "preLaunchTask": "build: ChatService API",
       "program": "${workspaceFolder}/src/FlowChat.ChatService.API/bin/Debug/net10.0/FlowChat.ChatService.API.dll",
       "args": [],
       "cwd": "${workspaceFolder}/src/FlowChat.ChatService.API",
