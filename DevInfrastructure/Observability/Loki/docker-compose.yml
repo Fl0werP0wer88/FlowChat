@@ -7,7 +7,7 @@ services:
     ports:
       - "3100:3100"
     volumes:
-      - ./loki-config.yml:/etc/loki/loki-config.yml:ro
+      - ./Loki/loki-config.yml:/etc/loki/loki-config.yml:ro
       - flowchat_loki_data:/loki
     networks:
       flowchat-observability:

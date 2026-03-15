@@ -61,8 +61,17 @@ function Ensure-Network([string]$networkName) {
   }
 }
 
+function Get-ProjectDirectory() {
+  return Split-Path $PSScriptRoot -Parent
+}
+
+function Get-ComposeArgs([string]$composeFile) {
+  return @("--project-directory", (Get-ProjectDirectory), "-f", $composeFile)
+}
+
 function Get-ContainerIdForService([string]$composeFile, [string]$service) {
-  (docker compose -f $composeFile ps -q $service 2>$null).Trim()
+  $composeArgs = Get-ComposeArgs -composeFile $composeFile
+  (docker compose @composeArgs ps -q $service 2>$null).Trim()
 }
 
 function Wait-ForHttpOk([string]$url, [int]$timeoutSeconds, [string]$displayName) {
@@ -95,7 +104,8 @@ Assert-PathExists $ConfigFile "Alloy config"
 Ensure-Network -networkName $NetworkName
 
 Write-Step "Starting Grafana Alloy via docker compose"
-docker compose -f $ComposeFile up -d --remove-orphans | Out-Null
+$composeArgs = Get-ComposeArgs -composeFile $ComposeFile
+docker compose @composeArgs up -d --remove-orphans | Out-Null
 
 $containerId = Get-ContainerIdForService -composeFile $ComposeFile -service $ServiceName
 if ([string]::IsNullOrWhiteSpace($containerId)) {

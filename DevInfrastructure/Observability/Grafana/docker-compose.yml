@@ -11,7 +11,7 @@ services:
       GF_AUTH_ANONYMOUS_ENABLED: "false"
       GF_METRICS_ENABLED: "true"
     volumes:
-      - ./provisioning:/etc/grafana/provisioning:ro
+      - ./Grafana/provisioning:/etc/grafana/provisioning:ro
       - flowchat_grafana_data:/var/lib/grafana
     networks:
       flowchat-observability:
