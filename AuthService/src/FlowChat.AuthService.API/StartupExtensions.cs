@@ -8,6 +8,7 @@ using FlowChat.AuthService.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using OpenTelemetry.Exporter;
+using OpenTelemetry.Logs;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
@@ -150,17 +151,36 @@ public static class StartupExtensions
     private static void AddOpenTelemetryServices(this WebApplicationBuilder builder)
     {
         var applicationSourceName = ApplicationActivitySource.For(typeof(ApplicationServiceRegistration).Assembly).Name;
-        var serviceName = builder.Configuration["OpenTelemetry:ServiceName"];
-        if (string.IsNullOrWhiteSpace(serviceName))
+        var serviceName = ResolveOpenTelemetryServiceName(builder.Configuration, builder.Environment);
+        var serviceVersion = typeof(StartupExtensions).Assembly.GetName().Version?.ToString();
+        var environmentName = builder.Environment.EnvironmentName;
+        var otlpEndpoint = GetOtlpEndpoint(builder.Configuration);
+
+        builder.Logging.AddOpenTelemetry(logging =>
         {
-            serviceName = builder.Environment.ApplicationName;
-        }
+            logging.IncludeFormattedMessage = true;
+            logging.IncludeScopes = true;
+            logging.ParseStateValues = true;
+            logging.SetResourceBuilder(CreateOpenTelemetryResourceBuilder(serviceName, serviceVersion, environmentName));
+
+            if (string.IsNullOrWhiteSpace(otlpEndpoint))
+            {
+                return;
+            }
+
+            logging.AddOtlpExporter(options => ConfigureOtlpExporter(options, builder.Configuration, otlpEndpoint));
+        });
 
         builder.Services
             .AddOpenTelemetry()
-            .ConfigureResource(resource => resource.AddService(
-                serviceName: serviceName,
-                serviceVersion: typeof(StartupExtensions).Assembly.GetName().Version?.ToString()))
+            .ConfigureResource(resource =>
+            {
+                resource.AddService(serviceName: serviceName, serviceVersion: serviceVersion);
+                resource.AddAttributes(
+                [
+                    new KeyValuePair<string, object>("deployment.environment", environmentName)
+                ]);
+            })
             .WithTracing(tracing =>
             {
                 tracing
@@ -168,15 +188,15 @@ public static class StartupExtensions
                     .AddAspNetCoreInstrumentation(options => options.RecordException = true)
                     .AddHttpClientInstrumentation();
 
-                AddOtlpTracingExporterIfConfigured(tracing, builder.Configuration);
+                AddOtlpTracingExporterIfConfigured(tracing, builder.Configuration, otlpEndpoint);
             });
     }
 
     private static void AddOtlpTracingExporterIfConfigured(
         TracerProviderBuilder tracing,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        string? endpoint)
     {
-        var endpoint = configuration["OpenTelemetry:Otlp:Endpoint"];
         if (string.IsNullOrWhiteSpace(endpoint))
         {
             return;
@@ -204,5 +224,30 @@ public static class StartupExtensions
             options.Headers = headers;
         }
     }
+
+    private static string ResolveOpenTelemetryServiceName(IConfiguration configuration, IHostEnvironment environment)
+    {
+        var serviceName = configuration["OpenTelemetry:ServiceName"];
+        if (!string.IsNullOrWhiteSpace(serviceName))
+        {
+            return serviceName;
+        }
+
+        return environment.ApplicationName;
+    }
+
+    private static string? GetOtlpEndpoint(IConfiguration configuration) =>
+        configuration["OpenTelemetry:Otlp:Endpoint"];
+
+    private static ResourceBuilder CreateOpenTelemetryResourceBuilder(
+        string serviceName,
+        string? serviceVersion,
+        string environmentName) =>
+        ResourceBuilder.CreateDefault()
+            .AddService(serviceName: serviceName, serviceVersion: serviceVersion)
+            .AddAttributes(
+            [
+                new KeyValuePair<string, object>("deployment.environment", environmentName)
+            ]);
 }
 
