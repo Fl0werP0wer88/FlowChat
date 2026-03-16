@@ -10,5 +10,5 @@ public static class IntegrationMessageHeaders
     public const string CorrelationId = "correlation-id";
     public const string CausationId = "causation-id";
     public const string TraceId = "trace-id";
-    public const string TraceParent = "traceparent";
+    public const string TraceParent = "trace-parent";
 }
