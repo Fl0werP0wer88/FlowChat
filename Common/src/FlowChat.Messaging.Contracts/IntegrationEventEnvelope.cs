@@ -32,6 +32,7 @@ public class IntegrationEventEnvelope<TEvent> where TEvent : IntegrationEvent
         Headers.Add(IntegrationMessageHeaders.Source, ResolveSource(messageType));
         Headers.Add(IntegrationMessageHeaders.CorrelationId, activity?.RootId ?? messageId.ToString("D"));
         Headers.Add(IntegrationMessageHeaders.CausationId, activity?.ParentId ?? string.Empty);
+        Headers.Add(IntegrationMessageHeaders.TraceId, activity?.TraceId.ToString() ?? string.Empty);
         Headers.Add(IntegrationMessageHeaders.TraceParent, activity?.Id ?? string.Empty);
     }
 

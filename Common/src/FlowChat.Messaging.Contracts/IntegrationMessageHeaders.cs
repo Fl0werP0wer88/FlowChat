@@ -9,5 +9,6 @@ public static class IntegrationMessageHeaders
     public const string Source = "source";
     public const string CorrelationId = "correlation-id";
     public const string CausationId = "causation-id";
+    public const string TraceId = "traceid";
     public const string TraceParent = "traceparent";
 }
