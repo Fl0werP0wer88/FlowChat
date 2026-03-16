@@ -74,179 +74,212 @@
       }
     ]
   },
+  "tasks": {
+    "version": "2.0.0",
+    "tasks": [
+      {
+        "label": "build-flowchat",
+        "type": "process",
+        "command": "dotnet",
+        "args": [
+          "build",
+          "${workspaceFolder:FlowChat}/FlowChat.slnx"
+        ],
+        "group": {
+          "kind": "build",
+          "isDefault": true
+        },
+        "problemMatcher": "$msCompile",
+        "presentation": {
+          "reveal": "always",
+          "panel": "shared",
+          "clear": true
+        }
+      }
+    ]
+  },
   "launch": {
     "version": "0.2.0",
     "compounds": [
       {
         "name": "AuthService",
+        "preLaunchTask": "build-flowchat",
         "configurations": [
           {
             "folder": "AuthService",
-            "name": "AuthService API"
+            "name": "AuthService API (No Build)"
           },
           {
             "folder": "AuthService",
-            "name": "AuthService Worker"
+            "name": "AuthService Worker (No Build)"
           }
         ],
         "stopAll": true
       },
       {
         "name": "ChatService",
+        "preLaunchTask": "build-flowchat",
         "configurations": [
           {
             "folder": "ChatService",
-            "name": "ChatService API"
+            "name": "ChatService API (No Build)"
           }
         ],
         "stopAll": true
       },
       {
         "name": "GatewayService",
+        "preLaunchTask": "build-flowchat",
         "configurations": [
           {
             "folder": "GatewayService",
-            "name": "GatewayService API"
+            "name": "GatewayService API (No Build)"
           }
         ],
         "stopAll": true
       },
       {
         "name": "NotificationService",
+        "preLaunchTask": "build-flowchat",
         "configurations": [
           {
             "folder": "NotificationService",
-            "name": "NotificationService API"
+            "name": "NotificationService API (No Build)"
           },
           {
             "folder": "NotificationService",
-            "name": "NotificationService Worker"
+            "name": "NotificationService Worker (No Build)"
           }
         ],
         "stopAll": true
       },
       {
         "name": "SocialGraphService",
+        "preLaunchTask": "build-flowchat",
         "configurations": [
           {
             "folder": "SocialGraphService",
-            "name": "SocialGraphService API"
+            "name": "SocialGraphService API (No Build)"
           },
           {
             "folder": "SocialGraphService",
-            "name": "SocialGraphService Worker"
+            "name": "SocialGraphService Worker (No Build)"
           }
         ],
         "stopAll": true
       },
       {
         "name": "UserProfileService",
+        "preLaunchTask": "build-flowchat",
         "configurations": [
           {
             "folder": "UserProfileService",
-            "name": "UserProfileService API"
+            "name": "UserProfileService API (No Build)"
           },
           {
             "folder": "UserProfileService",
-            "name": "UserProfileService Worker"
+            "name": "UserProfileService Worker (No Build)"
           }
         ],
         "stopAll": true
       },
       {
         "name": "All APIs",
+        "preLaunchTask": "build-flowchat",
         "configurations": [
           {
             "folder": "AuthService",
-            "name": "AuthService API"
+            "name": "AuthService API (No Build)"
           },
           {
             "folder": "ChatService",
-            "name": "ChatService API"
+            "name": "ChatService API (No Build)"
           },
           {
             "folder": "UserProfileService",
-            "name": "UserProfileService API"
+            "name": "UserProfileService API (No Build)"
           },
           {
             "folder": "SocialGraphService",
-            "name": "SocialGraphService API"
+            "name": "SocialGraphService API (No Build)"
           },
           {
             "folder": "NotificationService",
-            "name": "NotificationService API"
+            "name": "NotificationService API (No Build)"
           },
           {
             "folder": "GatewayService",
-            "name": "GatewayService API"
+            "name": "GatewayService API (No Build)"
           }
         ],
         "stopAll": true
       },
       {
         "name": "All Workers",
+        "preLaunchTask": "build-flowchat",
         "configurations": [
           {
             "folder": "AuthService",
-            "name": "AuthService Worker"
+            "name": "AuthService Worker (No Build)"
           },
           {
             "folder": "UserProfileService",
-            "name": "UserProfileService Worker"
+            "name": "UserProfileService Worker (No Build)"
           },
           {
             "folder": "NotificationService",
-            "name": "NotificationService Worker"
+            "name": "NotificationService Worker (No Build)"
           },
           {
             "folder": "SocialGraphService",
-            "name": "SocialGraphService Worker"
+            "name": "SocialGraphService Worker (No Build)"
           }
         ],
         "stopAll": true
       },
       {
         "name": "All Services",
+        "preLaunchTask": "build-flowchat",
         "configurations": [
           {
             "folder": "AuthService",
-            "name": "AuthService API"
+            "name": "AuthService API (No Build)"
           },
           {
             "folder": "ChatService",
-            "name": "ChatService API"
+            "name": "ChatService API (No Build)"
           },
           {
             "folder": "UserProfileService",
-            "name": "UserProfileService API"
+            "name": "UserProfileService API (No Build)"
           },
           {
             "folder": "SocialGraphService",
-            "name": "SocialGraphService API"
+            "name": "SocialGraphService API (No Build)"
           },
           {
             "folder": "GatewayService",
-            "name": "GatewayService API"
+            "name": "GatewayService API (No Build)"
           },
           {
             "folder": "AuthService",
-            "name": "AuthService Worker"
+            "name": "AuthService Worker (No Build)"
           },
           {
             "folder": "UserProfileService",
-            "name": "UserProfileService Worker"
+            "name": "UserProfileService Worker (No Build)"
           },
           {
             "folder": "NotificationService",
-            "name": "NotificationService API"
+            "name": "NotificationService API (No Build)"
           },
           {
             "folder": "NotificationService",
-            "name": "NotificationService Worker"
+            "name": "NotificationService Worker (No Build)"
           },
           {
             "folder": "SocialGraphService",
-            "name": "SocialGraphService Worker"
+            "name": "SocialGraphService Worker (No Build)"
           }
         ],
         "stopAll": true

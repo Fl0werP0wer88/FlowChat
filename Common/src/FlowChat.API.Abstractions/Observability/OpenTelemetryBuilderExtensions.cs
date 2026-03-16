@@ -13,6 +13,12 @@ namespace FlowChat.API.Abstractions;
 
 public static class OpenTelemetryBuilderExtensions
 {
+    private static readonly string[] BuiltInActivitySourceNames =
+    [
+        "Silverback.Integration.Produce",
+        "Silverback.Integration.Consume"
+    ];
+
     public static WebApplicationBuilder AddFlowChatOpenTelemetry(
         this WebApplicationBuilder builder,
         params Assembly[] activitySourceAssemblies)
@@ -120,8 +126,9 @@ public static class OpenTelemetryBuilderExtensions
         configuration["OpenTelemetry:Otlp:Endpoint"];
 
     private static string[] ResolveActivitySourceNames(Assembly[] assemblies) =>
-        assemblies
-            .Select(assembly => assembly.GetName().Name)
+        BuiltInActivitySourceNames
+            .Concat(
+                assemblies.Select(assembly => assembly.GetName().Name))
             .Where(name => !string.IsNullOrWhiteSpace(name))
             .Distinct(StringComparer.Ordinal)
             .Cast<string>()

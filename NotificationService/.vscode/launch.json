@@ -21,10 +21,41 @@
       }
     },
     {
+      "name": "NotificationService API (No Build)",
+      "type": "coreclr",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/FlowChat.NotificationService.API/bin/Debug/net10.0/FlowChat.NotificationService.API.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/src/FlowChat.NotificationService.API",
+      "stopAtEntry": false,
+      "console": "internalConsole",
+      "serverReadyAction": {
+        "action": "openExternally",
+        "pattern": "\\bNow listening on:\\s+(https?://\\S+)",
+        "uriFormat": "%s/swagger"
+      },
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    },
+    {
       "name": "NotificationService Worker",
       "type": "coreclr",
       "request": "launch",
       "preLaunchTask": "build: NotificationService Worker",
+      "program": "${workspaceFolder}/src/FlowChat.NotificationService.Worker/bin/Debug/net10.0/FlowChat.NotificationService.Worker.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/src/FlowChat.NotificationService.Worker",
+      "stopAtEntry": false,
+      "console": "integratedTerminal",
+      "env": {
+        "DOTNET_ENVIRONMENT": "Development"
+      }
+    },
+    {
+      "name": "NotificationService Worker (No Build)",
+      "type": "coreclr",
+      "request": "launch",
       "program": "${workspaceFolder}/src/FlowChat.NotificationService.Worker/bin/Debug/net10.0/FlowChat.NotificationService.Worker.dll",
       "args": [],
       "cwd": "${workspaceFolder}/src/FlowChat.NotificationService.Worker",

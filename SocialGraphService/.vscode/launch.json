@@ -21,10 +21,41 @@
       }
     },
     {
+      "name": "SocialGraphService API (No Build)",
+      "type": "coreclr",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/FlowChat.SocialGraphService.API/bin/Debug/net10.0/FlowChat.SocialGraphService.API.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/src/FlowChat.SocialGraphService.API",
+      "stopAtEntry": false,
+      "console": "internalConsole",
+      "serverReadyAction": {
+        "action": "openExternally",
+        "pattern": "\\bNow listening on:\\s+(https?://\\S+)",
+        "uriFormat": "%s/swagger"
+      },
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    },
+    {
       "name": "SocialGraphService Worker",
       "type": "coreclr",
       "request": "launch",
       "preLaunchTask": "build: SocialGraphService Worker",
+      "program": "${workspaceFolder}/src/FlowChat.SocialGraphService.Worker/bin/Debug/net10.0/FlowChat.SocialGraphService.Worker.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/src/FlowChat.SocialGraphService.Worker",
+      "stopAtEntry": false,
+      "console": "integratedTerminal",
+      "env": {
+        "DOTNET_ENVIRONMENT": "Development"
+      }
+    },
+    {
+      "name": "SocialGraphService Worker (No Build)",
+      "type": "coreclr",
+      "request": "launch",
       "program": "${workspaceFolder}/src/FlowChat.SocialGraphService.Worker/bin/Debug/net10.0/FlowChat.SocialGraphService.Worker.dll",
       "args": [],
       "cwd": "${workspaceFolder}/src/FlowChat.SocialGraphService.Worker",
