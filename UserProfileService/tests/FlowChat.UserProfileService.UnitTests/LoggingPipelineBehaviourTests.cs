@@ -20,7 +20,7 @@ public sealed class LoggingPipelineBehaviourTests
 
         var response = await behaviour.Handle(
             new TestCommand(),
-            () => Task.FromResult(Result.Success<Guid, IDomainError>(expectedId)),
+            _ => Task.FromResult(Result.Success<Guid, IDomainError>(expectedId)),
             CancellationToken.None);
 
         Assert.True(response.IsSuccess);
@@ -58,7 +58,7 @@ public sealed class LoggingPipelineBehaviourTests
 
         var thrown = await Assert.ThrowsAsync<InvalidOperationException>(() => behaviour.Handle(
             new TestCommand(),
-            () => Task.FromException<Result<Guid, IDomainError>>(exception),
+            _ => Task.FromException<Result<Guid, IDomainError>>(exception),
             CancellationToken.None));
 
         Assert.Same(exception, thrown);

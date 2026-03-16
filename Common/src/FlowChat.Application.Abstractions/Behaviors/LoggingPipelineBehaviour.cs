@@ -38,7 +38,7 @@ public sealed class LoggingPipelineBehaviour<TRequest, TResponse>(
 
         try
         {
-            var response = await next();
+            var response = await next(cancellationToken);
             var elapsed = Stopwatch.GetElapsedTime(startTimestamp);
 
             if (elapsed > SlowRequestThreshold)
