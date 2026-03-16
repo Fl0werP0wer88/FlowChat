@@ -47,6 +47,12 @@ public class ConfirmUserEmailCommandHandler :  CommandHandlerBase<ConfirmUserEma
                 DomainError.NotFound("User was not found."));
         }
 
+        if (_domainUser.EmailConfirmed)
+        {
+            return Result.Failure<ConfirmUserEmailCommandResponse, IDomainError>(
+                DomainError.Conflict("Email has already been confirmed."));
+        }
+
         var isTokenValid = await _identityRepository.IsEmailConfirmationTokenValidAsync(request.UserId, decodedToken, cancellationToken);
         if (!isTokenValid)
         {
