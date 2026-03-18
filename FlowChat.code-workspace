@@ -25,6 +25,10 @@
       "path": "NotificationService"
     },
     {
+      "name": "RealtimeService",
+      "path": "RealtimeService"
+    },
+    {
       "name": "SocialGraphService",
       "path": "SocialGraphService"
     },
@@ -154,6 +158,21 @@
         "stopAll": true
       },
       {
+        "name": "RealtimeService",
+        "preLaunchTask": "build-flowchat",
+        "configurations": [
+          {
+            "folder": "RealtimeService",
+            "name": "RealtimeService API (No Build)"
+          },
+          {
+            "folder": "RealtimeService",
+            "name": "RealtimeService Worker (No Build)"
+          }
+        ],
+        "stopAll": true
+      },
+      {
         "name": "SocialGraphService",
         "preLaunchTask": "build-flowchat",
         "configurations": [
@@ -208,6 +227,10 @@
             "name": "NotificationService API (No Build)"
           },
           {
+            "folder": "RealtimeService",
+            "name": "RealtimeService API (No Build)"
+          },
+          {
             "folder": "GatewayService",
             "name": "GatewayService API (No Build)"
           }
@@ -229,6 +252,10 @@
           {
             "folder": "NotificationService",
             "name": "NotificationService Worker (No Build)"
+          },
+          {
+            "folder": "RealtimeService",
+            "name": "RealtimeService Worker (No Build)"
           },
           {
             "folder": "SocialGraphService",
@@ -276,6 +303,14 @@
           {
             "folder": "NotificationService",
             "name": "NotificationService Worker (No Build)"
+          },
+          {
+            "folder": "RealtimeService",
+            "name": "RealtimeService API (No Build)"
+          },
+          {
+            "folder": "RealtimeService",
+            "name": "RealtimeService Worker (No Build)"
           },
           {
             "folder": "SocialGraphService",

@@ -1,0 +1,59 @@
+using FlowChat.Messaging.Contracts.ChatService.Events;
+using FlowChat.RealtimeService.Worker.Kafka;
+using Microsoft.Extensions.Logging.Abstractions;
+
+namespace FlowChat.RealtimeService.UnitTests;
+
+public sealed class ChatMessageSentSubscriberTests
+{
+    [Fact]
+    public async Task HandleAsync_ForwardsMappedRequestToInternalApi()
+    {
+        var internalApiClient = new CapturingRealtimeInternalApiClient();
+        var subscriber = new ChatMessageSentSubscriber(
+            internalApiClient,
+            NullLogger<ChatMessageSentSubscriber>.Instance);
+        var recipientUserId = Guid.NewGuid();
+
+        await subscriber.HandleAsync(
+            new ChatMessageSentIntegrationEvent
+            {
+                MessageId = Guid.NewGuid(),
+                ConversationId = Guid.NewGuid(),
+                SenderUserId = Guid.NewGuid(),
+                SenderDisplayName = " Jane Doe ",
+                Text = " Hi there ",
+                SentAtUtc = new DateTime(2026, 3, 17, 10, 0, 0, DateTimeKind.Utc),
+                RecipientUserIds = [recipientUserId, recipientUserId]
+            },
+            CancellationToken.None);
+
+        Assert.NotNull(internalApiClient.LastReceiveMessageRequest);
+        Assert.Equal("Jane Doe", internalApiClient.LastReceiveMessageRequest!.SenderDisplayName);
+        Assert.Equal("Hi there", internalApiClient.LastReceiveMessageRequest.Text);
+        Assert.Single(internalApiClient.LastReceiveMessageRequest.RecipientUserIds);
+    }
+
+    [Fact]
+    public async Task HandleAsync_WhenMessageIdMissing_ThrowsInvalidOperationException()
+    {
+        var internalApiClient = new CapturingRealtimeInternalApiClient();
+        var subscriber = new ChatMessageSentSubscriber(
+            internalApiClient,
+            NullLogger<ChatMessageSentSubscriber>.Instance);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => subscriber.HandleAsync(
+            new ChatMessageSentIntegrationEvent
+            {
+                MessageId = Guid.Empty,
+                ConversationId = Guid.NewGuid(),
+                SenderUserId = Guid.NewGuid(),
+                SenderDisplayName = "Jane Doe",
+                Text = "Hi there",
+                RecipientUserIds = [Guid.NewGuid()]
+            },
+            CancellationToken.None));
+
+        Assert.Null(internalApiClient.LastReceiveMessageRequest);
+    }
+}

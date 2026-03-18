@@ -81,5 +81,16 @@
     <Project Path="SocialGraphService/tests/FlowChat.SocialGraphService.AATs/FlowChat.SocialGraphService.AATs.csproj" />
     <Project Path="SocialGraphService/tests/FlowChat.SocialGraphService.UnitTests/FlowChat.SocialGraphService.UnitTests.csproj" />
   </Folder>
+  <Folder Name="/RealtimeService/" />
+  <Folder Name="/RealtimeService/src/">
+    <Project Path="RealtimeService/src/FlowChat.RealtimeService.API/FlowChat.RealtimeService.API.csproj" />
+    <Project Path="RealtimeService/src/FlowChat.RealtimeService.Application/FlowChat.RealtimeService.Application.csproj" />
+    <Project Path="RealtimeService/src/FlowChat.RealtimeService.Domain/FlowChat.RealtimeService.Domain.csproj" />
+    <Project Path="RealtimeService/src/FlowChat.RealtimeService.Infrastructure/FlowChat.RealtimeService.Infrastructure.csproj" />
+    <Project Path="RealtimeService/src/FlowChat.RealtimeService.Worker/FlowChat.RealtimeService.Worker.csproj" />
+  </Folder>
+  <Folder Name="/RealtimeService/tests/">
+    <Project Path="RealtimeService/tests/FlowChat.RealtimeService.UnitTests/FlowChat.RealtimeService.UnitTests.csproj" />
+  </Folder>
   <Folder Name="/ReactClient/" />
 </Solution>

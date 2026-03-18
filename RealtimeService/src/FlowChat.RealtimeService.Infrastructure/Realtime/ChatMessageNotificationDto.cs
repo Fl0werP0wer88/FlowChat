@@ -1,0 +1,11 @@
+namespace FlowChat.RealtimeService.Infrastructure.Realtime;
+
+public sealed class ChatMessageNotificationDto
+{
+    public Guid MessageId { get; init; }
+    public Guid ConversationId { get; init; }
+    public Guid SenderUserId { get; init; }
+    public required string SenderDisplayName { get; init; }
+    public required string Text { get; init; }
+    public DateTime SentAtUtc { get; init; }
+}
