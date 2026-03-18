@@ -9,10 +9,6 @@
       "path": "AuthService"
     },
     {
-      "name": "ChatService",
-      "path": "ChatService"
-    },
-    {
       "name": "Common",
       "path": "Common"
     },
@@ -121,17 +117,6 @@
         "stopAll": true
       },
       {
-        "name": "ChatService",
-        "preLaunchTask": "build-flowchat",
-        "configurations": [
-          {
-            "folder": "ChatService",
-            "name": "ChatService API (No Build)"
-          }
-        ],
-        "stopAll": true
-      },
-      {
         "name": "GatewayService",
         "preLaunchTask": "build-flowchat",
         "configurations": [
@@ -211,10 +196,6 @@
             "name": "AuthService API (No Build)"
           },
           {
-            "folder": "ChatService",
-            "name": "ChatService API (No Build)"
-          },
-          {
             "folder": "UserProfileService",
             "name": "UserProfileService API (No Build)"
           },
@@ -271,10 +252,6 @@
           {
             "folder": "AuthService",
             "name": "AuthService API (No Build)"
-          },
-          {
-            "folder": "ChatService",
-            "name": "ChatService API (No Build)"
           },
           {
             "folder": "UserProfileService",
