@@ -19,8 +19,8 @@ public sealed class UserPresenceChangedSubscriber(
 
         try
         {
-            await realtimeInternalApiClient.ForwardPresenceChangedAsync(
-                new PresenceChangedRequest
+            await realtimeInternalApiClient.PublishPresenceChangeAsync(
+                new PublishPresenceChangeRequest
                 {
                     UserId = message.UserId,
                     Status = normalizedStatus,

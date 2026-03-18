@@ -1,18 +1,18 @@
-using FlowChat.RealtimeService.Application.Messages.Commands.ReceiveMessage;
+using FlowChat.RealtimeService.Application.Messages.Commands.PublishMessage;
 
 namespace FlowChat.RealtimeService.UnitTests;
 
-public sealed class ReceiveMessageCommandHandlerTests
+public sealed class PublishMessageCommandHandlerTests
 {
     [Fact]
     public async Task Handle_MapsNotificationAndDispatchesToRecipients()
     {
         var dispatcher = new CapturingRealtimeClientDispatcher();
-        var handler = new ReceiveMessageCommandHandler(dispatcher);
+        var handler = new PublishMessageCommandHandler(dispatcher);
         var recipientUserId = Guid.NewGuid();
 
         await handler.Handle(
-            new ReceiveMessageCommand(
+            new PublishMessageCommand(
                 Guid.NewGuid(),
                 Guid.NewGuid(),
                 Guid.NewGuid(),
@@ -33,10 +33,10 @@ public sealed class ReceiveMessageCommandHandlerTests
     public async Task Handle_WhenRecipientsMissing_ThrowsInvalidOperationException()
     {
         var dispatcher = new CapturingRealtimeClientDispatcher();
-        var handler = new ReceiveMessageCommandHandler(dispatcher);
+        var handler = new PublishMessageCommandHandler(dispatcher);
 
         await Assert.ThrowsAsync<InvalidOperationException>(() => handler.Handle(
-            new ReceiveMessageCommand(
+            new PublishMessageCommand(
                 Guid.NewGuid(),
                 Guid.NewGuid(),
                 Guid.NewGuid(),

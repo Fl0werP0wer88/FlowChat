@@ -4,7 +4,7 @@ namespace FlowChat.RealtimeService.Infrastructure.Services;
 
 public interface IRealtimeInternalApiClient
 {
-    Task ForwardReceiveMessageAsync(ReceiveMessageRequest request, CancellationToken cancellationToken);
+    Task PublishMessageAsync(PublishMessageRequest request, CancellationToken cancellationToken);
 
-    Task ForwardPresenceChangedAsync(PresenceChangedRequest request, CancellationToken cancellationToken);
+    Task PublishPresenceChangeAsync(PublishPresenceChangeRequest request, CancellationToken cancellationToken);
 }

@@ -15,10 +15,10 @@ public sealed class RealtimeInternalApiClient(HttpClient httpClient, IApiSetting
     private readonly RealtimeApiSettings _settings = apiSettingsManager?.GetRealtimeApiSettings()
         ?? throw new ArgumentNullException(nameof(apiSettingsManager));
 
-    public Task ForwardReceiveMessageAsync(ReceiveMessageRequest request, CancellationToken cancellationToken) =>
+    public Task PublishMessageAsync(PublishMessageRequest request, CancellationToken cancellationToken) =>
         PostAsync(ReceiveMessagePath, request, cancellationToken);
 
-    public Task ForwardPresenceChangedAsync(PresenceChangedRequest request, CancellationToken cancellationToken) =>
+    public Task PublishPresenceChangeAsync(PublishPresenceChangeRequest request, CancellationToken cancellationToken) =>
         PostAsync(PresenceChangedPath, request, cancellationToken);
 
     private async Task PostAsync<TRequest>(string path, TRequest request, CancellationToken cancellationToken)

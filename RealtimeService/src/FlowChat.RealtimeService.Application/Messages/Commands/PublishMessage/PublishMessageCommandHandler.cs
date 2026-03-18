@@ -2,15 +2,15 @@ using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
 using FlowChat.RealtimeService.Domain.Notifications;
 using MediatR;
 
-namespace FlowChat.RealtimeService.Application.Messages.Commands.ReceiveMessage;
+namespace FlowChat.RealtimeService.Application.Messages.Commands.PublishMessage;
 
-public sealed class ReceiveMessageCommandHandler(IRealtimeClientDispatcher realtimeClientDispatcher)
-    : IRequestHandler<ReceiveMessageCommand>
+public sealed class PublishMessageCommandHandler(IRealtimeClientDispatcher realtimeClientDispatcher)
+    : IRequestHandler<PublishMessageCommand>
 {
     private readonly IRealtimeClientDispatcher _realtimeClientDispatcher = realtimeClientDispatcher
         ?? throw new ArgumentNullException(nameof(realtimeClientDispatcher));
 
-    public Task Handle(ReceiveMessageCommand request, CancellationToken cancellationToken)
+    public Task Handle(PublishMessageCommand request, CancellationToken cancellationToken)
     {
         if (request.MessageId == Guid.Empty)
         {

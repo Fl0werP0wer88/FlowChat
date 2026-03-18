@@ -1,8 +1,8 @@
 using MediatR;
 
-namespace FlowChat.RealtimeService.Application.Presence.Commands.PresenceChanged;
+namespace FlowChat.RealtimeService.Application.Presence.Commands.PublishPresenceChange;
 
-public sealed record PresenceChangedCommand(
+public sealed record PublishPresenceChangeCommand(
     Guid UserId,
     string? Status,
     DateTime ChangedAtUtc,

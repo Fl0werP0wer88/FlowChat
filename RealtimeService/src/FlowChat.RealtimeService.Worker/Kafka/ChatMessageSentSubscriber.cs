@@ -16,8 +16,8 @@ public sealed class ChatMessageSentSubscriber(
 
         try
         {
-            await realtimeInternalApiClient.ForwardReceiveMessageAsync(
-                new ReceiveMessageRequest
+            await realtimeInternalApiClient.PublishMessageAsync(
+                new PublishMessageRequest
                 {
                     MessageId = message.MessageId,
                     ConversationId = message.ConversationId,

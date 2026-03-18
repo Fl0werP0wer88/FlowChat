@@ -1,8 +1,8 @@
 using MediatR;
 
-namespace FlowChat.RealtimeService.Application.Messages.Commands.ReceiveMessage;
+namespace FlowChat.RealtimeService.Application.Messages.Commands.PublishMessage;
 
-public sealed record ReceiveMessageCommand(
+public sealed record PublishMessageCommand(
     Guid MessageId,
     Guid ConversationId,
     Guid SenderUserId,

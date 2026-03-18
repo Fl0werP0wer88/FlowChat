@@ -1,5 +1,5 @@
-using FlowChat.RealtimeService.Application.Messages.Commands.ReceiveMessage;
-using FlowChat.RealtimeService.Application.Presence.Commands.PresenceChanged;
+using FlowChat.RealtimeService.Application.Messages.Commands.PublishMessage;
+using FlowChat.RealtimeService.Application.Presence.Commands.PublishPresenceChange;
 using FlowChat.RealtimeService.Application.Realtime.Contracts;
 using FlowChat.RealtimeService.Infrastructure.Configuration;
 using FlowChat.RealtimeService.Infrastructure.Services;
@@ -18,7 +18,7 @@ public sealed class InternalRealtimeController(IMediator mediator, IApiSettingsM
         ?? throw new ArgumentNullException(nameof(apiSettingsManager));
 
     [HttpPost("messages")]
-    public async Task<IActionResult> ReceiveMessage([FromBody] ReceiveMessageRequest request, CancellationToken cancellationToken)
+    public async Task<IActionResult> PublishMessage([FromBody] PublishMessageRequest request, CancellationToken cancellationToken)
     {
         if (!HasValidInternalApiKey())
         {
@@ -26,7 +26,7 @@ public sealed class InternalRealtimeController(IMediator mediator, IApiSettingsM
         }
 
         await _mediator.Send(
-            new ReceiveMessageCommand(
+            new PublishMessageCommand(
                 request.MessageId,
                 request.ConversationId,
                 request.SenderUserId,
@@ -40,7 +40,7 @@ public sealed class InternalRealtimeController(IMediator mediator, IApiSettingsM
     }
 
     [HttpPost("presence")]
-    public async Task<IActionResult> PresenceChanged([FromBody] PresenceChangedRequest request, CancellationToken cancellationToken)
+    public async Task<IActionResult> PublishPresenceChange([FromBody] PublishPresenceChangeRequest request, CancellationToken cancellationToken)
     {
         if (!HasValidInternalApiKey())
         {
@@ -48,7 +48,7 @@ public sealed class InternalRealtimeController(IMediator mediator, IApiSettingsM
         }
 
         await _mediator.Send(
-            new PresenceChangedCommand(
+            new PublishPresenceChangeCommand(
                 request.UserId,
                 request.Status,
                 request.ChangedAtUtc,

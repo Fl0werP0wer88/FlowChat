@@ -28,10 +28,10 @@ public sealed class ChatMessageSentSubscriberTests
             },
             CancellationToken.None);
 
-        Assert.NotNull(internalApiClient.LastReceiveMessageRequest);
-        Assert.Equal("Jane Doe", internalApiClient.LastReceiveMessageRequest!.SenderDisplayName);
-        Assert.Equal("Hi there", internalApiClient.LastReceiveMessageRequest.Text);
-        Assert.Single(internalApiClient.LastReceiveMessageRequest.RecipientUserIds);
+        Assert.NotNull(internalApiClient.LastPublishMessageRequest);
+        Assert.Equal("Jane Doe", internalApiClient.LastPublishMessageRequest!.SenderDisplayName);
+        Assert.Equal("Hi there", internalApiClient.LastPublishMessageRequest.Text);
+        Assert.Single(internalApiClient.LastPublishMessageRequest.RecipientUserIds);
     }
 
     [Fact]
@@ -54,6 +54,6 @@ public sealed class ChatMessageSentSubscriberTests
             },
             CancellationToken.None));
 
-        Assert.Null(internalApiClient.LastReceiveMessageRequest);
+        Assert.Null(internalApiClient.LastPublishMessageRequest);
     }
 }

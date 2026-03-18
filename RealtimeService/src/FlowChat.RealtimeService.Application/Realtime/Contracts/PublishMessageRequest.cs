@@ -1,6 +1,6 @@
 namespace FlowChat.RealtimeService.Application.Realtime.Contracts;
 
-public sealed class ReceiveMessageRequest
+public sealed class PublishMessageRequest
 {
     public Guid MessageId { get; init; }
     public Guid ConversationId { get; init; }

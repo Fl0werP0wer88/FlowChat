@@ -2,10 +2,10 @@ using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
 using FlowChat.RealtimeService.Domain.Notifications;
 using MediatR;
 
-namespace FlowChat.RealtimeService.Application.Presence.Commands.PresenceChanged;
+namespace FlowChat.RealtimeService.Application.Presence.Commands.PublishPresenceChange;
 
-public sealed class PresenceChangedCommandHandler(IRealtimeClientDispatcher realtimeClientDispatcher)
-    : IRequestHandler<PresenceChangedCommand>
+public sealed class PublishPresenceChangeCommandHandler(IRealtimeClientDispatcher realtimeClientDispatcher)
+    : IRequestHandler<PublishPresenceChangeCommand>
 {
     private static readonly HashSet<string> AllowedStatuses =
         ["online", "away", "offline"];
@@ -13,7 +13,7 @@ public sealed class PresenceChangedCommandHandler(IRealtimeClientDispatcher real
     private readonly IRealtimeClientDispatcher _realtimeClientDispatcher = realtimeClientDispatcher
         ?? throw new ArgumentNullException(nameof(realtimeClientDispatcher));
 
-    public Task Handle(PresenceChangedCommand request, CancellationToken cancellationToken)
+    public Task Handle(PublishPresenceChangeCommand request, CancellationToken cancellationToken)
     {
         if (request.UserId == Guid.Empty)
         {

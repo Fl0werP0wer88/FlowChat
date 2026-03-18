@@ -1,6 +1,6 @@
 using FlowChat.RealtimeService.Api.Controllers;
-using FlowChat.RealtimeService.Application.Messages.Commands.ReceiveMessage;
-using FlowChat.RealtimeService.Application.Presence.Commands.PresenceChanged;
+using FlowChat.RealtimeService.Application.Messages.Commands.PublishMessage;
+using FlowChat.RealtimeService.Application.Presence.Commands.PublishPresenceChange;
 using FlowChat.RealtimeService.Application.Realtime.Contracts;
 using FlowChat.RealtimeService.Infrastructure.Configuration;
 using Microsoft.AspNetCore.Http;
@@ -12,7 +12,7 @@ namespace FlowChat.RealtimeService.UnitTests;
 public sealed class InternalRealtimeControllerTests
 {
     [Fact]
-    public async Task ReceiveMessage_WhenApiKeyMissing_ReturnsUnauthorized()
+    public async Task PublishMessage_WhenApiKeyMissing_ReturnsUnauthorized()
     {
         var controller = CreateController("expected-key", out _);
         controller.ControllerContext = new ControllerContext
@@ -20,8 +20,8 @@ public sealed class InternalRealtimeControllerTests
             HttpContext = new DefaultHttpContext()
         };
 
-        var result = await controller.ReceiveMessage(
-            new ReceiveMessageRequest
+        var result = await controller.PublishMessage(
+            new PublishMessageRequest
             {
                 MessageId = Guid.NewGuid(),
                 ConversationId = Guid.NewGuid(),
@@ -36,7 +36,7 @@ public sealed class InternalRealtimeControllerTests
     }
 
     [Fact]
-    public async Task PresenceChanged_WhenApiKeyMatches_DispatchesCommand()
+    public async Task PublishPresenceChange_WhenApiKeyMatches_DispatchesCommand()
     {
         var controller = CreateController("expected-key", out var mediator);
         var httpContext = new DefaultHttpContext();
@@ -46,8 +46,8 @@ public sealed class InternalRealtimeControllerTests
             HttpContext = httpContext
         };
 
-        var result = await controller.PresenceChanged(
-            new PresenceChangedRequest
+        var result = await controller.PublishPresenceChange(
+            new PublishPresenceChangeRequest
             {
                 UserId = Guid.NewGuid(),
                 Status = "online",
@@ -57,7 +57,7 @@ public sealed class InternalRealtimeControllerTests
             CancellationToken.None);
 
         Assert.IsType<AcceptedResult>(result);
-        Assert.IsType<PresenceChangedCommand>(mediator.LastSentRequest);
+        Assert.IsType<PublishPresenceChangeCommand>(mediator.LastSentRequest);
     }
 
     private static InternalRealtimeController CreateController(string apiKey, out CapturingMediator mediator)

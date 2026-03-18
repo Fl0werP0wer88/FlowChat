@@ -24,8 +24,8 @@ public sealed class UserPresenceChangedSubscriberTests
             },
             CancellationToken.None);
 
-        Assert.NotNull(internalApiClient.LastPresenceChangedRequest);
-        Assert.Equal("away", internalApiClient.LastPresenceChangedRequest!.Status);
+        Assert.NotNull(internalApiClient.LastPublishPresenceChangeRequest);
+        Assert.Equal("away", internalApiClient.LastPublishPresenceChangeRequest!.Status);
     }
 
     [Fact]
@@ -45,6 +45,6 @@ public sealed class UserPresenceChangedSubscriberTests
             },
             CancellationToken.None));
 
-        Assert.Null(internalApiClient.LastPresenceChangedRequest);
+        Assert.Null(internalApiClient.LastPublishPresenceChangeRequest);
     }
 }

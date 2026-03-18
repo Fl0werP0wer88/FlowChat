@@ -10,7 +10,7 @@ namespace FlowChat.RealtimeService.UnitTests;
 public sealed class RealtimeInternalApiClientTests
 {
     [Fact]
-    public async Task ForwardReceiveMessageAsync_PostsToExpectedEndpointWithApiKey()
+    public async Task PublishMessageAsync_PostsToExpectedEndpointWithApiKey()
     {
         string? requestBody = null;
         var handler = new CapturingHttpMessageHandler(async (request, _) =>
@@ -28,8 +28,8 @@ public sealed class RealtimeInternalApiClientTests
             .Build();
         var client = new RealtimeInternalApiClient(httpClient, new ApiSettingsManager(configuration));
 
-        await client.ForwardReceiveMessageAsync(
-            new ReceiveMessageRequest
+        await client.PublishMessageAsync(
+            new PublishMessageRequest
             {
                 MessageId = Guid.NewGuid(),
                 ConversationId = Guid.NewGuid(),
@@ -45,7 +45,7 @@ public sealed class RealtimeInternalApiClientTests
         Assert.Equal("http://localhost:5215/internal/realtime/messages", handler.LastRequest!.RequestUri!.ToString());
         Assert.Equal("internal-key", handler.LastRequest.Headers.GetValues(RealtimeInternalApiClient.ApiKeyHeaderName).Single());
 
-        var payload = JsonSerializer.Deserialize<ReceiveMessageRequest>(
+        var payload = JsonSerializer.Deserialize<PublishMessageRequest>(
             requestBody!,
             new JsonSerializerOptions(JsonSerializerDefaults.Web));
         Assert.NotNull(payload);

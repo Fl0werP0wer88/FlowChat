@@ -28,18 +28,18 @@ internal sealed class CapturingRealtimeClientDispatcher : IRealtimeClientDispatc
 
 internal sealed class CapturingRealtimeInternalApiClient : IRealtimeInternalApiClient
 {
-    public ReceiveMessageRequest? LastReceiveMessageRequest { get; private set; }
-    public PresenceChangedRequest? LastPresenceChangedRequest { get; private set; }
+    public PublishMessageRequest? LastPublishMessageRequest { get; private set; }
+    public PublishPresenceChangeRequest? LastPublishPresenceChangeRequest { get; private set; }
 
-    public Task ForwardReceiveMessageAsync(ReceiveMessageRequest request, CancellationToken cancellationToken)
+    public Task PublishMessageAsync(PublishMessageRequest request, CancellationToken cancellationToken)
     {
-        LastReceiveMessageRequest = request;
+        LastPublishMessageRequest = request;
         return Task.CompletedTask;
     }
 
-    public Task ForwardPresenceChangedAsync(PresenceChangedRequest request, CancellationToken cancellationToken)
+    public Task PublishPresenceChangeAsync(PublishPresenceChangeRequest request, CancellationToken cancellationToken)
     {
-        LastPresenceChangedRequest = request;
+        LastPublishPresenceChangeRequest = request;
         return Task.CompletedTask;
     }
 }
