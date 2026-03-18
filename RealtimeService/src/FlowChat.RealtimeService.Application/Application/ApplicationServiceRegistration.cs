@@ -20,14 +20,8 @@ public static class ApplicationServiceRegistration
 
     public static IServiceCollection AddWorkerApplicationServices(this IServiceCollection services)
     {
-        var applicationAssembly = typeof(ApplicationServiceRegistration).Assembly;
-
-        services.AddMediatR(cfg =>
-        {
-            cfg.RegisterServicesFromAssemblies(applicationAssembly);
-            cfg.AddFlowChatBehaviors();
-        });
-
+        // The worker forwards Kafka events to the internal realtime API and does not
+        // execute SignalR dispatch handlers locally.
         return services;
     }
 }
