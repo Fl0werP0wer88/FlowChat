@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
 
-namespace FlowChat.RealtimeService.Infrastructure.Realtime;
+namespace FlowChat.RealtimeService.Api.Realtime;
 
 [Authorize]
 public sealed class ChatHub(ILogger<ChatHub> logger) : Hub<IRealtimeClient>

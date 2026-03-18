@@ -1,6 +1,4 @@
-using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
 using FlowChat.RealtimeService.Infrastructure.Configuration;
-using FlowChat.RealtimeService.Infrastructure.Realtime;
 using FlowChat.RealtimeService.Infrastructure.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -15,7 +13,6 @@ public static class InfrastructureServiceRegistration
         IConfiguration configuration)
     {
         services.TryAddSingleton<IApiSettingsManager>(new ApiSettingsManager(configuration));
-        services.AddScoped<IRealtimeClientDispatcher, SignalRRealtimeClientDispatcher>();
         services.AddHttpClient<IRealtimeInternalApiClient, RealtimeInternalApiClient>();
 
         return services;

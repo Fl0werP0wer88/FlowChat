@@ -1,4 +1,4 @@
-namespace FlowChat.RealtimeService.Infrastructure.Realtime;
+namespace FlowChat.RealtimeService.Api.Realtime;
 
 public sealed class PresenceChangedNotificationDto
 {

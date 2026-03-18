@@ -2,7 +2,7 @@ using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
 using FlowChat.RealtimeService.Domain.Notifications;
 using Microsoft.AspNetCore.SignalR;
 
-namespace FlowChat.RealtimeService.Infrastructure.Realtime;
+namespace FlowChat.RealtimeService.Api.Realtime;
 
 public sealed class SignalRRealtimeClientDispatcher(IHubContext<ChatHub, IRealtimeClient> hubContext)
     : IRealtimeClientDispatcher

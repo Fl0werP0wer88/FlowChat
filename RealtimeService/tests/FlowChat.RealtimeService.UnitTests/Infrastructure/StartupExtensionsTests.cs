@@ -1,5 +1,5 @@
 using FlowChat.RealtimeService.Api;
-using FlowChat.RealtimeService.Infrastructure.Realtime;
+using FlowChat.RealtimeService.Api.Realtime;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
