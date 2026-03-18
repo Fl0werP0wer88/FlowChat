@@ -1,7 +1,9 @@
 using System.Net;
 using System.Net.Http;
+using CSharpFunctionalExtensions;
 using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
 using FlowChat.RealtimeService.Application.Realtime.Contracts;
+using FlowChat.Domain.Abstractions;
 using FlowChat.RealtimeService.Domain.Notifications;
 using FlowChat.RealtimeService.Infrastructure.Services;
 using MediatR;
@@ -64,6 +66,12 @@ internal sealed class CapturingMediator : IMediator
     public Task<TResponse> Send<TResponse>(IRequest<TResponse> request, CancellationToken cancellationToken = default)
     {
         LastSentRequest = request;
+        if (typeof(TResponse) == typeof(Result<Unit, IDomainError>))
+        {
+            var success = Result.Success<Unit, IDomainError>(Unit.Value);
+            return Task.FromResult((TResponse)(object)success);
+        }
+
         return Task.FromResult(default(TResponse)!);
     }
 

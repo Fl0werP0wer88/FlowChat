@@ -1,43 +1,52 @@
+using CSharpFunctionalExtensions;
+using FlowChat.Application.Abstractions;
 using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
+using FlowChat.Domain.Abstractions;
 using FlowChat.RealtimeService.Domain.Notifications;
 using MediatR;
 
 namespace FlowChat.RealtimeService.Application.Messages.Commands.PublishMessage;
 
 public sealed class PublishMessageCommandHandler(IRealtimeClientDispatcher realtimeClientDispatcher)
-    : IRequestHandler<PublishMessageCommand>
+    : ICommandHandler<PublishMessageCommand, Unit>
 {
     private readonly IRealtimeClientDispatcher _realtimeClientDispatcher = realtimeClientDispatcher
         ?? throw new ArgumentNullException(nameof(realtimeClientDispatcher));
 
-    public Task Handle(PublishMessageCommand request, CancellationToken cancellationToken)
+    public async Task<Result<Unit, IDomainError>> Handle(PublishMessageCommand request, CancellationToken cancellationToken)
     {
         if (request.MessageId == Guid.Empty)
         {
-            throw new InvalidOperationException("MessageId is required.");
+            return Result.Failure<Unit, IDomainError>(DomainError.BadRequest("MessageId is required."));
         }
 
         if (request.ConversationId == Guid.Empty)
         {
-            throw new InvalidOperationException("ConversationId is required.");
+            return Result.Failure<Unit, IDomainError>(DomainError.BadRequest("ConversationId is required."));
         }
 
         if (request.SenderUserId == Guid.Empty)
         {
-            throw new InvalidOperationException("SenderUserId is required.");
+            return Result.Failure<Unit, IDomainError>(DomainError.BadRequest("SenderUserId is required."));
         }
 
         if (string.IsNullOrWhiteSpace(request.SenderDisplayName))
         {
-            throw new InvalidOperationException("SenderDisplayName is required.");
+            return Result.Failure<Unit, IDomainError>(DomainError.BadRequest("SenderDisplayName is required."));
         }
 
         if (string.IsNullOrWhiteSpace(request.Text))
         {
-            throw new InvalidOperationException("Text is required.");
+            return Result.Failure<Unit, IDomainError>(DomainError.BadRequest("Text is required."));
         }
 
         var recipientUserIds = NormalizeRecipientUserIds(request.RecipientUserIds);
+        if (recipientUserIds.Length == 0)
+        {
+            return Result.Failure<Unit, IDomainError>(
+                DomainError.BadRequest("RecipientUserIds must contain at least one valid user id."));
+        }
+
         var notification = new ChatMessageNotification(
             request.MessageId,
             request.ConversationId,
@@ -47,21 +56,14 @@ public sealed class PublishMessageCommandHandler(IRealtimeClientDispatcher realt
             request.SentAtUtc,
             recipientUserIds);
 
-        return _realtimeClientDispatcher.ReceiveMessageAsync(notification, cancellationToken);
+        await _realtimeClientDispatcher.ReceiveMessageAsync(notification, cancellationToken);
+
+        return Result.Success<Unit, IDomainError>(Unit.Value);
     }
 
-    private static Guid[] NormalizeRecipientUserIds(IReadOnlyCollection<Guid> recipientUserIds)
-    {
-        var normalized = recipientUserIds
+    private static Guid[] NormalizeRecipientUserIds(IReadOnlyCollection<Guid> recipientUserIds) =>
+        recipientUserIds
             .Where(userId => userId != Guid.Empty)
             .Distinct()
             .ToArray();
-
-        if (normalized.Length == 0)
-        {
-            throw new InvalidOperationException("RecipientUserIds must contain at least one valid user id.");
-        }
-
-        return normalized;
-    }
 }

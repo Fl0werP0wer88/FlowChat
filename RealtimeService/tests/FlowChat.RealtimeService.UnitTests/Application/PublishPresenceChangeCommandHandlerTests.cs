@@ -1,3 +1,4 @@
+using FlowChat.Domain.Abstractions;
 using FlowChat.RealtimeService.Application.Presence.Commands.PublishPresenceChange;
 
 namespace FlowChat.RealtimeService.UnitTests;
@@ -11,7 +12,7 @@ public sealed class PublishPresenceChangeCommandHandlerTests
         var handler = new PublishPresenceChangeCommandHandler(dispatcher);
         var recipientUserId = Guid.NewGuid();
 
-        await handler.Handle(
+        var result = await handler.Handle(
             new PublishPresenceChangeCommand(
                 Guid.NewGuid(),
                 " Online ",
@@ -19,21 +20,24 @@ public sealed class PublishPresenceChangeCommandHandlerTests
                 [recipientUserId]),
             CancellationToken.None);
 
+        Assert.True(result.IsSuccess);
         Assert.NotNull(dispatcher.LastPresenceNotification);
         Assert.Equal("online", dispatcher.LastPresenceNotification!.Status);
         Assert.Equal(recipientUserId, dispatcher.LastPresenceNotification.RecipientUserIds.Single());
     }
 
     [Fact]
-    public async Task Handle_WhenStatusIsInvalid_ThrowsInvalidOperationException()
+    public async Task Handle_WhenStatusIsInvalid_ReturnsBadRequestFailure()
     {
         var dispatcher = new CapturingRealtimeClientDispatcher();
         var handler = new PublishPresenceChangeCommandHandler(dispatcher);
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() => handler.Handle(
+        var result = await handler.Handle(
             new PublishPresenceChangeCommand(Guid.NewGuid(), "busy", DateTime.UtcNow, [Guid.NewGuid()]),
-            CancellationToken.None));
+            CancellationToken.None);
 
+        Assert.True(result.IsFailure);
+        Assert.Equal(ErrorType.BadRequest, result.Error.ErrorType);
         Assert.Null(dispatcher.LastPresenceNotification);
     }
 }

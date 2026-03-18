@@ -1,3 +1,4 @@
+using FlowChat.Domain.Abstractions;
 using FlowChat.RealtimeService.Application.Messages.Commands.PublishMessage;
 
 namespace FlowChat.RealtimeService.UnitTests;
@@ -11,7 +12,7 @@ public sealed class PublishMessageCommandHandlerTests
         var handler = new PublishMessageCommandHandler(dispatcher);
         var recipientUserId = Guid.NewGuid();
 
-        await handler.Handle(
+        var result = await handler.Handle(
             new PublishMessageCommand(
                 Guid.NewGuid(),
                 Guid.NewGuid(),
@@ -22,6 +23,7 @@ public sealed class PublishMessageCommandHandlerTests
                 [recipientUserId, recipientUserId, Guid.Empty]),
             CancellationToken.None);
 
+        Assert.True(result.IsSuccess);
         Assert.NotNull(dispatcher.LastMessageNotification);
         Assert.Equal("John Doe", dispatcher.LastMessageNotification!.SenderDisplayName);
         Assert.Equal("Hello there", dispatcher.LastMessageNotification.Text);
@@ -30,12 +32,12 @@ public sealed class PublishMessageCommandHandlerTests
     }
 
     [Fact]
-    public async Task Handle_WhenRecipientsMissing_ThrowsInvalidOperationException()
+    public async Task Handle_WhenRecipientsMissing_ReturnsBadRequestFailure()
     {
         var dispatcher = new CapturingRealtimeClientDispatcher();
         var handler = new PublishMessageCommandHandler(dispatcher);
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() => handler.Handle(
+        var result = await handler.Handle(
             new PublishMessageCommand(
                 Guid.NewGuid(),
                 Guid.NewGuid(),
@@ -44,8 +46,10 @@ public sealed class PublishMessageCommandHandlerTests
                 "Hello",
                 DateTime.UtcNow,
                 [Guid.Empty]),
-            CancellationToken.None));
+            CancellationToken.None);
 
+        Assert.True(result.IsFailure);
+        Assert.Equal(ErrorType.BadRequest, result.Error.ErrorType);
         Assert.Null(dispatcher.LastMessageNotification);
     }
 }

@@ -1,3 +1,4 @@
+using FlowChat.API.Abstractions;
 using FlowChat.RealtimeService.Application.Messages.Commands.PublishMessage;
 using FlowChat.RealtimeService.Application.Presence.Commands.PublishPresenceChange;
 using FlowChat.RealtimeService.Application.Realtime.Contracts;
@@ -11,7 +12,7 @@ namespace FlowChat.RealtimeService.Api.Controllers;
 [ApiController]
 [ApiExplorerSettings(IgnoreApi = true)]
 [Route("internal/realtime")]
-public sealed class InternalRealtimeController(IMediator mediator, IApiSettingsManager apiSettingsManager) : ControllerBase
+public sealed class InternalRealtimeController(IMediator mediator, IApiSettingsManager apiSettingsManager) : ApiControllerBase
 {
     private readonly IMediator _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
     private readonly IApiSettingsManager _apiSettingsManager = apiSettingsManager
@@ -25,7 +26,7 @@ public sealed class InternalRealtimeController(IMediator mediator, IApiSettingsM
             return Unauthorized();
         }
 
-        await _mediator.Send(
+        var result = await _mediator.Send(
             new PublishMessageCommand(
                 request.MessageId,
                 request.ConversationId,
@@ -36,7 +37,9 @@ public sealed class InternalRealtimeController(IMediator mediator, IApiSettingsM
                 request.RecipientUserIds),
             cancellationToken);
 
-        return Accepted();
+        return result.IsSuccess
+            ? Accepted()
+            : HandleError(result.Error);
     }
 
     [HttpPost("presence")]
@@ -47,7 +50,7 @@ public sealed class InternalRealtimeController(IMediator mediator, IApiSettingsM
             return Unauthorized();
         }
 
-        await _mediator.Send(
+        var result = await _mediator.Send(
             new PublishPresenceChangeCommand(
                 request.UserId,
                 request.Status,
@@ -55,7 +58,9 @@ public sealed class InternalRealtimeController(IMediator mediator, IApiSettingsM
                 request.RecipientUserIds),
             cancellationToken);
 
-        return Accepted();
+        return result.IsSuccess
+            ? Accepted()
+            : HandleError(result.Error);
     }
 
     private bool HasValidInternalApiKey()
