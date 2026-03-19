@@ -7,6 +7,7 @@ Creates if missing:
 - role: flowchat_app
 - databases:
     - flowchat_auth_db
+    - flowchat_chat_db
     - flowchat_userprofile_db
     - flowchat_socialgraph_db
     - flowchat_notification_db
@@ -35,6 +36,7 @@ param(
 
   # Databases
   [string]$AuthDb = "flowchat_auth_db",
+  [string]$ChatDb = "flowchat_chat_db",
   [string]$UserProfileDb = "flowchat_userprofile_db",
   [string]$SocialGraphDb = "flowchat_socialgraph_db",
   [string]$NotificationDb = "flowchat_notification_db",
@@ -250,6 +252,9 @@ Ensure-Role -containerId $containerId -role $AppUser -password $AppPassword
 Ensure-Database -containerId $containerId -dbName $AuthDb -owner $MigratorUser
 Ensure-AppCrudAccess -containerId $containerId -dbName $AuthDb -owner $MigratorUser -appRole $AppUser
 
+Ensure-Database -containerId $containerId -dbName $ChatDb -owner $MigratorUser
+Ensure-AppCrudAccess -containerId $containerId -dbName $ChatDb -owner $MigratorUser -appRole $AppUser
+
 Ensure-Database -containerId $containerId -dbName $UserProfileDb -owner $MigratorUser
 Ensure-AppCrudAccess -containerId $containerId -dbName $UserProfileDb -owner $MigratorUser -appRole $AppUser
 
@@ -265,6 +270,7 @@ Write-Host "Admin user      : $AdminUser"
 Write-Host "Migrator user   : $MigratorUser"
 Write-Host "App user        : $AppUser"
 Write-Host "Auth DB         : $AuthDb"
+Write-Host "Chat DB         : $ChatDb"
 Write-Host "UserProfile DB  : $UserProfileDb"
 Write-Host "SocialGraph DB  : $SocialGraphDb"
 Write-Host "Notification DB : $NotificationDb"
