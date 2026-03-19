@@ -16,7 +16,7 @@ public sealed class AppDbContextUnitOfWork : IUnitOfWork
         _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
         _silverbackContext = silverbackContext ?? throw new ArgumentNullException(nameof(silverbackContext));
     }
- 
+
     public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         return await _dbContext.SaveChangesAsync(cancellationToken);

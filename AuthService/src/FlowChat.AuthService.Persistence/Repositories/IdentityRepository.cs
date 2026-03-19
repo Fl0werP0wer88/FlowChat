@@ -54,7 +54,7 @@ public class IdentityRepository : IIdentityRepository
             PhoneNumber = domainUser.PhoneNumber,
             EmailConfirmed = false
         };
-        
+
         return user;
     }
 

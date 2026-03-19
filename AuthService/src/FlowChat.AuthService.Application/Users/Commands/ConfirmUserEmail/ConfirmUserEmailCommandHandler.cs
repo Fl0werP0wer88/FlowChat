@@ -6,21 +6,21 @@ using FlowChat.Domain.Abstractions;
 
 namespace FlowChat.AuthService.Application.Users.Commands.ConfirmUserEmail;
 
-public class ConfirmUserEmailCommandHandler :  CommandHandlerBase<ConfirmUserEmailCommand, ConfirmUserEmailCommandResponse>
+public class ConfirmUserEmailCommandHandler : CommandHandlerBase<ConfirmUserEmailCommand, ConfirmUserEmailCommandResponse>
 {
     private readonly IIdentityRepository _identityRepository;
     private readonly ITokenEncoder _tokenEncoder;
     private Domain.Entities.Identity? _domainUser;
 
     public ConfirmUserEmailCommandHandler(
-        IIdentityRepository identityRepository, 
-        ITokenEncoder tokenEncoder, 
-        IDomainEventDispatcher domainEventDispatcher, 
+        IIdentityRepository identityRepository,
+        ITokenEncoder tokenEncoder,
+        IDomainEventDispatcher domainEventDispatcher,
         IUnitOfWork unitOfWork) : base(domainEventDispatcher, unitOfWork)
     {
         _identityRepository = identityRepository;
         _tokenEncoder = tokenEncoder;
-    } 
+    }
 
     protected override async Task<Result<ConfirmUserEmailCommandResponse, IDomainError>> ExecuteAsync(ConfirmUserEmailCommand request, CancellationToken cancellationToken)
     {

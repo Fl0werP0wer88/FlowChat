@@ -6,15 +6,15 @@ using FlowChat.Domain.Abstractions;
 
 namespace FlowChat.AuthService.Application.Users.Commands.LoginUser;
 
-public class LoginUserCommandHandler :  CommandHandlerBase<LoginUserCommand, LoginUserCommandResponse>
+public class LoginUserCommandHandler : CommandHandlerBase<LoginUserCommand, LoginUserCommandResponse>
 {
     private readonly IIdentityRepository _identityRepository;
     private readonly IJwtTokenGenerator _jwtTokenGenerator;
 
     public LoginUserCommandHandler(
-        IIdentityRepository identityRepository, 
+        IIdentityRepository identityRepository,
         IJwtTokenGenerator jwtTokenGenerator,
-        IDomainEventDispatcher domainEventDispatcher, 
+        IDomainEventDispatcher domainEventDispatcher,
         IUnitOfWork unitOfWork) : base(domainEventDispatcher, unitOfWork)
     {
         _identityRepository = identityRepository;
@@ -43,5 +43,5 @@ public class LoginUserCommandHandler :  CommandHandlerBase<LoginUserCommand, Log
     protected override IAggregateRoot? GetAggregateRoot(Result<LoginUserCommandResponse, IDomainError> result)
     {
         return null;
-    }   
+    }
 }

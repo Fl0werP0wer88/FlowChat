@@ -4,7 +4,7 @@ using FlowChat.Domain.Abstractions;
 
 namespace FlowChat.AuthService.Domain.Events;
 
-public sealed class UserCreatedDomainEvent: BaseIdentityDomainEvent
+public sealed class UserCreatedDomainEvent : BaseIdentityDomainEvent
 {
     public Id<Identity> UserId { get; }
     public string UserName { get; }
