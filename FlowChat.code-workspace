@@ -25,6 +25,10 @@
       "path": "NotificationService"
     },
     {
+      "name": "ReactClient",
+      "path": "ReactClient"
+    },
+    {
       "name": "RealtimeService",
       "path": "RealtimeService"
     },
@@ -82,18 +86,50 @@
     "version": "2.0.0",
     "tasks": [
       {
-        "label": "build-flowchat",
+        "label": "build-flowchat-backend",
         "type": "process",
         "command": "dotnet",
         "args": [
           "build",
           "${workspaceFolder:FlowChat}/FlowChat.slnx"
         ],
+        "group": "build",
+        "problemMatcher": "$msCompile",
+        "presentation": {
+          "reveal": "always",
+          "panel": "shared",
+          "clear": true
+        }
+      },
+      {
+        "label": "build-reactclient",
+        "type": "process",
+        "command": "npm",
+        "args": [
+          "run",
+          "build"
+        ],
+        "options": {
+          "cwd": "${workspaceFolder:ReactClient}"
+        },
+        "problemMatcher": [],
+        "presentation": {
+          "reveal": "always",
+          "panel": "shared",
+          "clear": true
+        }
+      },
+      {
+        "label": "build-flowchat",
+        "dependsOn": [
+          "build-flowchat-backend",
+          "build-reactclient"
+        ],
+        "dependsOrder": "sequence",
         "group": {
           "kind": "build",
           "isDefault": true
         },
-        "problemMatcher": "$msCompile",
         "presentation": {
           "reveal": "always",
           "panel": "shared",
@@ -207,6 +243,16 @@
         "stopAll": true
       },
       {
+        "name": "ReactClient",
+        "configurations": [
+          {
+            "folder": "ReactClient",
+            "name": "ReactClient"
+          }
+        ],
+        "stopAll": true
+      },
+      {
         "name": "All APIs",
         "preLaunchTask": "build-flowchat",
         "configurations": [
@@ -311,6 +357,10 @@
           {
             "folder": "NotificationService",
             "name": "NotificationService Worker (No Build)"
+          },
+          {
+            "folder": "ReactClient",
+            "name": "ReactClient"
           },
           {
             "folder": "RealtimeService",
