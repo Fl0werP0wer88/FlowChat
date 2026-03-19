@@ -238,6 +238,33 @@ function Get-TopicDefinitions {
         "cleanup.policy" = "delete"
         "retention.ms" = "1209600000"
       }
+    },
+    @{
+      name = "dev.flowchat.chat.message.v1"
+      partitions = 1
+      rf = 1
+      config = @{
+        "cleanup.policy" = "delete"
+        "retention.ms" = "2419200000"
+      }
+    },
+    @{
+      name = "dev.flowchat.chat.message.v1.retry"
+      partitions = 1
+      rf = 1
+      config = @{
+        "cleanup.policy" = "delete"
+        "retention.ms" = "3600000"
+      }
+    },
+    @{
+      name = "dev.flowchat.chat.message.v1.dlq"
+      partitions = 1
+      rf = 1
+      config = @{
+        "cleanup.policy" = "delete"
+        "retention.ms" = "1209600000"
+      }
     }
   )
 }
