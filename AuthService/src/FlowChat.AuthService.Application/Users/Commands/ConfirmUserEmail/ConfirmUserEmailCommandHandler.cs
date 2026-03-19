@@ -3,10 +3,11 @@ using FlowChat.Application.Abstractions;
 using FlowChat.AuthService.Application.Contracts.Infrastructure;
 using FlowChat.AuthService.Application.Contracts.Persistence;
 using FlowChat.Domain.Abstractions;
+using MediatR;
 
 namespace FlowChat.AuthService.Application.Users.Commands.ConfirmUserEmail;
 
-public class ConfirmUserEmailCommandHandler : CommandHandlerBase<ConfirmUserEmailCommand, ConfirmUserEmailCommandResponse>
+public class ConfirmUserEmailCommandHandler : CommandHandlerBase<ConfirmUserEmailCommand, Unit>
 {
     private readonly IIdentityRepository _identityRepository;
     private readonly ITokenEncoder _tokenEncoder;
@@ -22,7 +23,7 @@ public class ConfirmUserEmailCommandHandler : CommandHandlerBase<ConfirmUserEmai
         _tokenEncoder = tokenEncoder;
     }
 
-    protected override async Task<Result<ConfirmUserEmailCommandResponse, IDomainError>> ExecuteAsync(ConfirmUserEmailCommand request, CancellationToken cancellationToken)
+    protected override async Task<Result<Unit, IDomainError>> ExecuteAsync(ConfirmUserEmailCommand request, CancellationToken cancellationToken)
     {
         string decodedToken;
         try
@@ -31,45 +32,42 @@ public class ConfirmUserEmailCommandHandler : CommandHandlerBase<ConfirmUserEmai
         }
         catch (FormatException)
         {
-            return Result.Failure<ConfirmUserEmailCommandResponse, IDomainError>(
+            return Result.Failure<Unit, IDomainError>(
                 DomainError.BadRequest("Email confirmation token is invalid."));
         }
         catch (ArgumentException)
         {
-            return Result.Failure<ConfirmUserEmailCommandResponse, IDomainError>(
+            return Result.Failure<Unit, IDomainError>(
                 DomainError.BadRequest("Email confirmation token is invalid."));
         }
 
         _domainUser = await _identityRepository.GetByIdAsync(request.UserId, cancellationToken);
         if (_domainUser is null)
         {
-            return Result.Failure<ConfirmUserEmailCommandResponse, IDomainError>(
+            return Result.Failure<Unit, IDomainError>(
                 DomainError.NotFound("User was not found."));
         }
 
         if (_domainUser.EmailConfirmed)
         {
-            return Result.Failure<ConfirmUserEmailCommandResponse, IDomainError>(
+            return Result.Failure<Unit, IDomainError>(
                 DomainError.Conflict("Email has already been confirmed."));
         }
 
         var isTokenValid = await _identityRepository.IsEmailConfirmationTokenValidAsync(request.UserId, decodedToken, cancellationToken);
         if (!isTokenValid)
         {
-            return Result.Failure<ConfirmUserEmailCommandResponse, IDomainError>(
+            return Result.Failure<Unit, IDomainError>(
                 DomainError.BadRequest("Email confirmation failed."));
         }
 
         _domainUser.ConfirmEmail();
         await _identityRepository.UpdateAsync(_domainUser, cancellationToken);
 
-        return new ConfirmUserEmailCommandResponse
-        {
-            IsSuccess = true
-        };
+        return Unit.Value;
     }
 
-    protected override IAggregateRoot? GetAggregateRoot(Result<ConfirmUserEmailCommandResponse, IDomainError> result)
+    protected override IAggregateRoot? GetAggregateRoot(Result<Unit, IDomainError> result)
     {
         return _domainUser;
     }

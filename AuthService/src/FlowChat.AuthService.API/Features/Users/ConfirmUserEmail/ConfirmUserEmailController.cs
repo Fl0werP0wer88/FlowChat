@@ -17,9 +17,10 @@ public sealed class ConfirmUserEmailController : ApiControllerBase
     }
 
     [HttpGet("confirm-email")]
-    [ProducesResponseType(typeof(ConfirmUserEmailCommandResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> ConfirmEmail([FromQuery] Guid userId, [FromQuery] string token, CancellationToken cancellationToken)
     {
@@ -32,7 +33,7 @@ public sealed class ConfirmUserEmailController : ApiControllerBase
             cancellationToken);
 
         return response.IsSuccess
-            ? Ok(response.Value)
+            ? NoContent()
             : HandleError(response.Error);
     }
 }
