@@ -7,5 +7,5 @@ public sealed class ChatMessageSentProducerOptions : IKafkaProducerOptions<ChatM
     public const string SectionName = "Kafka:ChatMessageSentProducer";
 
     public string BootstrapServers { get; set; } = "localhost:9092";
-    public string Topic { get; set; } = "dev.flowchat.chat.message-sent.v1";
+    public string Topic { get; set; } = "dev.flowchat.chat.message.v1";
 }

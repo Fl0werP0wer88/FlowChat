@@ -44,7 +44,7 @@ public sealed class WorkerSettingsManagerTests
 
         Assert.NotNull(chatMessageOptions);
         Assert.NotNull(presenceOptions);
-        Assert.Equal("dev.flowchat.chat.message-sent.v1", chatMessageOptions!.Topic);
+        Assert.Equal("dev.flowchat.chat.message.v1", chatMessageOptions!.Topic);
         Assert.Equal("dev.flowchat.user-profile.presence-changed.v1", presenceOptions!.Topic);
     }
 }

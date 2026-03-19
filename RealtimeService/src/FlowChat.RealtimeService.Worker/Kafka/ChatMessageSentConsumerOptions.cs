@@ -6,9 +6,9 @@ public sealed class ChatMessageSentConsumerOptions
 
     public string BootstrapServers { get; set; } = "localhost:9092";
     public string GroupId { get; set; } = "realtime-service";
-    public string Topic { get; set; } = "dev.flowchat.chat.message-sent.v1";
-    public string RetryTopic { get; set; } = "dev.flowchat.chat.message-sent.v1.retry";
-    public string DeadLetterTopic { get; set; } = "dev.flowchat.chat.message-sent.v1.dlq";
+    public string Topic { get; set; } = "dev.flowchat.chat.message.v1";
+    public string RetryTopic { get; set; } = "dev.flowchat.chat.message.v1.retry";
+    public string DeadLetterTopic { get; set; } = "dev.flowchat.chat.message.v1.dlq";
     public int MaxRetryCount { get; set; } = 5;
     public int RetryBaseDelaySeconds { get; set; } = 5;
     public int RetryMaxDelaySeconds { get; set; } = 300;
