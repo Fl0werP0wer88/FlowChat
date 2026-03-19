@@ -15,7 +15,9 @@ public sealed class WorkerSettingsManagerTests
                 ["Kafka:ChatMessageSentConsumer:BootstrapServers"] = "broker:9092",
                 ["Kafka:ChatMessageSentConsumer:Topic"] = "chat-topic",
                 ["Kafka:UserPresenceChangedConsumer:BootstrapServers"] = "broker:9092",
-                ["Kafka:UserPresenceChangedConsumer:Topic"] = "presence-topic"
+                ["Kafka:UserPresenceChangedConsumer:Topic"] = "presence-topic",
+                ["RealtimeApi:BaseUrl"] = "http://localhost:5215",
+                ["RealtimeApi:ApiKey"] = "worker-key"
             })
             .Build();
 
@@ -24,6 +26,8 @@ public sealed class WorkerSettingsManagerTests
         Assert.Equal("broker:9092", settingsManager.GetChatMessageSentConsumerOptions().BootstrapServers);
         Assert.Equal("chat-topic", settingsManager.GetChatMessageSentConsumerOptions().Topic);
         Assert.Equal("presence-topic", settingsManager.GetUserPresenceChangedConsumerOptions().Topic);
+        Assert.Equal("http://localhost:5215", settingsManager.GetRealtimeApiSettings().BaseUrl);
+        Assert.Equal("worker-key", settingsManager.GetRealtimeApiSettings().ApiKey);
     }
 
     [Theory]
@@ -41,10 +45,15 @@ public sealed class WorkerSettingsManagerTests
         var presenceOptions = configuration
             .GetSection(UserPresenceChangedConsumerOptions.SectionName)
             .Get<UserPresenceChangedConsumerOptions>();
+        var realtimeApiSettings = configuration
+            .GetSection(RealtimeApiSettings.SectionName)
+            .Get<RealtimeApiSettings>();
 
         Assert.NotNull(chatMessageOptions);
         Assert.NotNull(presenceOptions);
+        Assert.NotNull(realtimeApiSettings);
         Assert.Equal("dev.flowchat.chat.message.v1", chatMessageOptions!.Topic);
         Assert.Equal("dev.flowchat.user-profile.presence-changed.v1", presenceOptions!.Topic);
+        Assert.Equal("http://localhost:5215", realtimeApiSettings!.BaseUrl);
     }
 }

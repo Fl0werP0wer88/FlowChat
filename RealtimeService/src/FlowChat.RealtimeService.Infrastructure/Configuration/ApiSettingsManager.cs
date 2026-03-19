@@ -22,7 +22,4 @@ public sealed class ApiSettingsManager(IConfiguration configuration) : IApiSetti
 
     public InternalApiSettings GetInternalApiSettings() =>
         _configuration.GetSection(InternalApiSettings.SectionName).Get<InternalApiSettings>() ?? new InternalApiSettings();
-
-    public RealtimeApiSettings GetRealtimeApiSettings() =>
-        _configuration.GetSection(RealtimeApiSettings.SectionName).Get<RealtimeApiSettings>() ?? new RealtimeApiSettings();
 }

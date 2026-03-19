@@ -14,4 +14,8 @@ public sealed class WorkerSettingsManager(IConfiguration configuration) : IWorke
     public UserPresenceChangedConsumerOptions GetUserPresenceChangedConsumerOptions() =>
         _configuration.GetSection(UserPresenceChangedConsumerOptions.SectionName).Get<UserPresenceChangedConsumerOptions>()
         ?? new UserPresenceChangedConsumerOptions();
+
+    public RealtimeApiSettings GetRealtimeApiSettings() =>
+        _configuration.GetSection(RealtimeApiSettings.SectionName).Get<RealtimeApiSettings>()
+        ?? new RealtimeApiSettings();
 }

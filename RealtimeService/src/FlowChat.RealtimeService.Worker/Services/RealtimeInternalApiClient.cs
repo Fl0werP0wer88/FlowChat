@@ -1,10 +1,10 @@
 using System.Net.Http.Json;
-using FlowChat.RealtimeService.Application.Realtime.Contracts;
-using FlowChat.RealtimeService.Infrastructure.Configuration;
+using FlowChat.RealtimeService.Worker.Configuration;
+using FlowChat.RealtimeService.Worker.Realtime.Contracts;
 
-namespace FlowChat.RealtimeService.Infrastructure.Services;
+namespace FlowChat.RealtimeService.Worker.Services;
 
-public sealed class RealtimeInternalApiClient(HttpClient httpClient, IApiSettingsManager apiSettingsManager)
+public sealed class RealtimeInternalApiClient(HttpClient httpClient, IWorkerSettingsManager settingsManager)
     : IRealtimeInternalApiClient
 {
     public const string ApiKeyHeaderName = "X-Internal-Api-Key";
@@ -12,8 +12,8 @@ public sealed class RealtimeInternalApiClient(HttpClient httpClient, IApiSetting
     private const string PresenceChangedPath = "/internal/realtime/presence";
 
     private readonly HttpClient _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
-    private readonly RealtimeApiSettings _settings = apiSettingsManager?.GetRealtimeApiSettings()
-        ?? throw new ArgumentNullException(nameof(apiSettingsManager));
+    private readonly RealtimeApiSettings _settings = settingsManager?.GetRealtimeApiSettings()
+        ?? throw new ArgumentNullException(nameof(settingsManager));
 
     public Task PublishMessageAsync(PublishMessageRequest request, CancellationToken cancellationToken) =>
         PostAsync(ReceiveMessagePath, request, cancellationToken);

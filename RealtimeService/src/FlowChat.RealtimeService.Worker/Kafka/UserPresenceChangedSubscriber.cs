@@ -1,6 +1,6 @@
 using FlowChat.Messaging.Contracts.UserProfileService.Events;
-using FlowChat.RealtimeService.Application.Realtime.Contracts;
-using FlowChat.RealtimeService.Infrastructure.Services;
+using FlowChat.RealtimeService.Worker.Realtime.Contracts;
+using FlowChat.RealtimeService.Worker.Services;
 using Silverback.Messaging.Subscribers;
 
 namespace FlowChat.RealtimeService.Worker.Kafka;
@@ -19,18 +19,18 @@ public sealed class UserPresenceChangedSubscriber(
 
         try
         {
-            await realtimeInternalApiClient.PublishPresenceChangeAsync(
-                new PublishPresenceChangeRequest
-                {
-                    UserId = message.UserId,
-                    Status = normalizedStatus,
-                    ChangedAtUtc = message.ChangedAtUtc,
-                    RecipientUserIds = message.RecipientUserIds
-                        .Where(userId => userId != Guid.Empty)
-                        .Distinct()
-                        .ToArray()
-                },
-                cancellationToken);
+            var request = new PublishPresenceChangeRequest
+            {
+                UserId = message.UserId,
+                Status = normalizedStatus,
+                ChangedAtUtc = message.ChangedAtUtc,
+                RecipientUserIds = message.RecipientUserIds
+                    .Where(userId => userId != Guid.Empty)
+                    .Distinct()
+                    .ToArray()
+            };
+
+            await realtimeInternalApiClient.PublishPresenceChangeAsync(request, cancellationToken);
         }
         catch (Exception exception)
         {

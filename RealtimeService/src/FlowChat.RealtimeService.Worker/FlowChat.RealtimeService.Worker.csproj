@@ -2,8 +2,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\Common\src\FlowChat.API.Abstractions\FlowChat.API.Abstractions.csproj" />
-    <ProjectReference Include="..\FlowChat.RealtimeService.Application\FlowChat.RealtimeService.Application.csproj" />
-    <ProjectReference Include="..\FlowChat.RealtimeService.Infrastructure\FlowChat.RealtimeService.Infrastructure.csproj" />
     <ProjectReference Include="..\..\..\Common\src\FlowChat.Messaging.Contracts\FlowChat.Messaging.Contracts.csproj" />
   </ItemGroup>
 

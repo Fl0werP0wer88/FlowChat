@@ -1,6 +1,7 @@
 using Confluent.Kafka;
 using FlowChat.RealtimeService.Worker.Configuration;
 using FlowChat.RealtimeService.Worker.Kafka;
+using FlowChat.RealtimeService.Worker.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -12,6 +13,16 @@ namespace FlowChat.RealtimeService.Worker;
 
 public static class WorkerServiceRegistration
 {
+    public static IServiceCollection AddWorkerServices(
+        this IServiceCollection services,
+        IConfiguration configuration)
+    {
+        services.TryAddSingleton<IWorkerSettingsManager>(new WorkerSettingsManager(configuration));
+        services.AddHttpClient<IRealtimeInternalApiClient, RealtimeInternalApiClient>();
+
+        return services;
+    }
+
     public static IServiceCollection AddWorkerKafkaConsumer(
         this IServiceCollection services,
         IConfiguration configuration)

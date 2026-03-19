@@ -7,4 +7,6 @@ public interface IWorkerSettingsManager
     ChatMessageSentConsumerOptions GetChatMessageSentConsumerOptions();
 
     UserPresenceChangedConsumerOptions GetUserPresenceChangedConsumerOptions();
+
+    RealtimeApiSettings GetRealtimeApiSettings();
 }

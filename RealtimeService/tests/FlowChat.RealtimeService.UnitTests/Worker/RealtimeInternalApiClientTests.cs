@@ -1,8 +1,8 @@
 using System.Net;
 using System.Text.Json;
-using FlowChat.RealtimeService.Application.Realtime.Contracts;
-using FlowChat.RealtimeService.Infrastructure.Configuration;
-using FlowChat.RealtimeService.Infrastructure.Services;
+using FlowChat.RealtimeService.Worker.Configuration;
+using FlowChat.RealtimeService.Worker.Realtime.Contracts;
+using FlowChat.RealtimeService.Worker.Services;
 using Microsoft.Extensions.Configuration;
 
 namespace FlowChat.RealtimeService.UnitTests;
@@ -26,7 +26,7 @@ public sealed class RealtimeInternalApiClientTests
                 ["RealtimeApi:ApiKey"] = "internal-key"
             })
             .Build();
-        var client = new RealtimeInternalApiClient(httpClient, new ApiSettingsManager(configuration));
+        var client = new RealtimeInternalApiClient(httpClient, new WorkerSettingsManager(configuration));
 
         await client.PublishMessageAsync(
             new PublishMessageRequest

@@ -1,6 +1,6 @@
 using FlowChat.Messaging.Contracts.ChatService.Events;
-using FlowChat.RealtimeService.Application.Realtime.Contracts;
-using FlowChat.RealtimeService.Infrastructure.Services;
+using FlowChat.RealtimeService.Worker.Realtime.Contracts;
+using FlowChat.RealtimeService.Worker.Services;
 using Silverback.Messaging.Subscribers;
 
 namespace FlowChat.RealtimeService.Worker.Kafka;
@@ -16,21 +16,21 @@ public sealed class ChatMessageSentSubscriber(
 
         try
         {
-            await realtimeInternalApiClient.PublishMessageAsync(
-                new PublishMessageRequest
-                {
-                    MessageId = message.MessageId,
-                    ConversationId = message.ConversationId,
-                    SenderUserId = message.SenderUserId,
-                    SenderDisplayName = message.SenderDisplayName.Trim(),
-                    Text = message.Text.Trim(),
-                    SentAtUtc = message.SentAtUtc,
-                    RecipientUserIds = message.RecipientUserIds
-                        .Where(userId => userId != Guid.Empty)
-                        .Distinct()
-                        .ToArray()
-                },
-                cancellationToken);
+            var request = new PublishMessageRequest
+            {
+                MessageId = message.MessageId,
+                ConversationId = message.ConversationId,
+                SenderUserId = message.SenderUserId,
+                SenderDisplayName = message.SenderDisplayName.Trim(),
+                Text = message.Text.Trim(),
+                SentAtUtc = message.SentAtUtc,
+                RecipientUserIds = message.RecipientUserIds
+                    .Where(userId => userId != Guid.Empty)
+                    .Distinct()
+                    .ToArray()
+            };
+
+            await realtimeInternalApiClient.PublishMessageAsync(request, cancellationToken);
         }
         catch (Exception exception)
         {

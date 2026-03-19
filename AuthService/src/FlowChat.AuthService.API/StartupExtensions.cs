@@ -26,7 +26,9 @@ public static class StartupExtensions
         .AddAPIPersistenceServices(builder.Configuration)
         .AddApiSilverbackMessaging(builder.Configuration)
         .AddAPIServices(builder.Configuration);
-        builder.Services.AddAutoMapper(typeof(StartupExtensions).Assembly);
+        builder.Services.AddAutoMapper(
+            (Action<AutoMapper.IMapperConfigurationExpression>?)null,
+            typeof(StartupExtensions).Assembly);
         builder.AddFlowChatOpenTelemetry(typeof(ApplicationServiceRegistration).Assembly);
 
 

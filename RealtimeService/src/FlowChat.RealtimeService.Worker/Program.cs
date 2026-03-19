@@ -1,6 +1,4 @@
 using FlowChat.API.Abstractions;
-using FlowChat.RealtimeService.Application;
-using FlowChat.RealtimeService.Infrastructure;
 using FlowChat.RealtimeService.Worker;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -11,9 +9,8 @@ IHost? host = null;
 try
 {
     var builder = Host.CreateApplicationBuilder(args);
-    builder.AddFlowChatOpenTelemetry(typeof(ApplicationServiceRegistration).Assembly);
-    builder.Services.AddWorkerApplicationServices();
-    builder.Services.AddInfrastructureServices(builder.Configuration);
+    builder.AddFlowChatOpenTelemetry(typeof(WorkerServiceRegistration).Assembly);
+    builder.Services.AddWorkerServices(builder.Configuration);
     builder.Services.AddWorkerKafkaConsumer(builder.Configuration);
 
     host = builder.Build();

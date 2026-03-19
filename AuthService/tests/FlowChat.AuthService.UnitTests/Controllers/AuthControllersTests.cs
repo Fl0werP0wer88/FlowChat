@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace FlowChat.AuthService.UnitTests.Controllers;
 
@@ -51,7 +52,7 @@ public sealed class AuthControllersTests
         var mediator = new TestMediator(request =>
             request switch
             {
-                ConfirmUserEmailCommand => Result.Failure<ConfirmUserEmailCommandResponse, IDomainError>(
+                ConfirmUserEmailCommand => Result.Failure<Unit, IDomainError>(
                     DomainError.NotFound("User was not found.")),
                 _ => throw new InvalidOperationException("Unexpected request.")
             });
@@ -113,7 +114,9 @@ public sealed class AuthControllersTests
 
     private static IMapper CreateMapper()
     {
-        var configuration = new MapperConfiguration(cfg => cfg.AddMaps(typeof(RegisterUserController).Assembly));
+        var configuration = new MapperConfiguration(
+            cfg => cfg.AddMaps(typeof(RegisterUserController).Assembly),
+            NullLoggerFactory.Instance);
 
         return configuration.CreateMapper();
     }

@@ -1,9 +1,7 @@
 using FlowChat.API.Abstractions;
 using FlowChat.RealtimeService.Application.Messages.Commands.PublishMessage;
 using FlowChat.RealtimeService.Application.Presence.Commands.PublishPresenceChange;
-using FlowChat.RealtimeService.Application.Realtime.Contracts;
 using FlowChat.RealtimeService.Infrastructure.Configuration;
-using FlowChat.RealtimeService.Infrastructure.Services;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -14,6 +12,7 @@ namespace FlowChat.RealtimeService.Api.Controllers;
 [Route("internal/realtime")]
 public sealed class InternalRealtimeController(IMediator mediator, IApiSettingsManager apiSettingsManager) : ApiControllerBase
 {
+    private const string InternalApiKeyHeaderName = "X-Internal-Api-Key";
     private readonly IMediator _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
     private readonly IApiSettingsManager _apiSettingsManager = apiSettingsManager
         ?? throw new ArgumentNullException(nameof(apiSettingsManager));
@@ -71,7 +70,7 @@ public sealed class InternalRealtimeController(IMediator mediator, IApiSettingsM
             return false;
         }
 
-        if (!Request.Headers.TryGetValue(RealtimeInternalApiClient.ApiKeyHeaderName, out var providedApiKey))
+        if (!Request.Headers.TryGetValue(InternalApiKeyHeaderName, out var providedApiKey))
         {
             return false;
         }

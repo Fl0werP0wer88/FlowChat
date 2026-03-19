@@ -2,10 +2,10 @@ using System.Net;
 using System.Net.Http;
 using CSharpFunctionalExtensions;
 using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
-using FlowChat.RealtimeService.Application.Realtime.Contracts;
 using FlowChat.Domain.Abstractions;
 using FlowChat.RealtimeService.Domain.Notifications;
-using FlowChat.RealtimeService.Infrastructure.Services;
+using FlowChat.RealtimeService.Worker.Realtime.Contracts;
+using FlowChat.RealtimeService.Worker.Services;
 using MediatR;
 
 namespace FlowChat.RealtimeService.UnitTests;

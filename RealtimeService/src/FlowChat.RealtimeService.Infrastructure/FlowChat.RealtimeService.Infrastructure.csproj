@@ -1,7 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
-    <ProjectReference Include="..\FlowChat.RealtimeService.Application\FlowChat.RealtimeService.Application.csproj" />
     <ProjectReference Include="..\FlowChat.RealtimeService.Domain\FlowChat.RealtimeService.Domain.csproj" />
   </ItemGroup>
 

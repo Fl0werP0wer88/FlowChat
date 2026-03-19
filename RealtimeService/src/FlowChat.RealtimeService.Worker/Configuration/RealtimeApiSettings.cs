@@ -1,4 +1,4 @@
-namespace FlowChat.RealtimeService.Infrastructure.Configuration;
+namespace FlowChat.RealtimeService.Worker.Configuration;
 
 public sealed class RealtimeApiSettings
 {

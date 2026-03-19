@@ -1,4 +1,4 @@
-namespace FlowChat.RealtimeService.Application.Realtime.Contracts;
+namespace FlowChat.RealtimeService.Api.Controllers;
 
 public sealed class PublishMessageRequest
 {

@@ -1,7 +1,6 @@
 using FlowChat.RealtimeService.Api.Controllers;
 using FlowChat.RealtimeService.Application.Messages.Commands.PublishMessage;
 using FlowChat.RealtimeService.Application.Presence.Commands.PublishPresenceChange;
-using FlowChat.RealtimeService.Application.Realtime.Contracts;
 using FlowChat.RealtimeService.Infrastructure.Configuration;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -40,7 +39,7 @@ public sealed class InternalRealtimeControllerTests
     {
         var controller = CreateController("expected-key", out var mediator);
         var httpContext = new DefaultHttpContext();
-        httpContext.Request.Headers[Infrastructure.Services.RealtimeInternalApiClient.ApiKeyHeaderName] = "expected-key";
+        httpContext.Request.Headers["X-Internal-Api-Key"] = "expected-key";
         controller.ControllerContext = new ControllerContext
         {
             HttpContext = httpContext
