@@ -104,7 +104,7 @@
       {
         "label": "build-reactclient",
         "type": "process",
-        "command": "npm",
+        "command": "npm.cmd",
         "args": [
           "run",
           "build"

@@ -3,8 +3,12 @@
   "tasks": [
     {
       "label": "dev: ReactClient",
-      "type": "npm",
-      "script": "dev",
+      "type": "process",
+      "command": "npm.cmd",
+      "args": [
+        "run",
+        "dev"
+      ],
       "isBackground": true,
       "options": {
         "cwd": "${workspaceFolder}"
@@ -17,13 +21,13 @@
       "problemMatcher": {
         "owner": "custom",
         "pattern": {
-          "regexp": "^(.*)$",
-          "message": 1
+          "regexp": "a^",
+          "message": 0
         },
         "background": {
           "activeOnStart": true,
           "beginsPattern": ".",
-          "endsPattern": "Local:\\s+http://localhost:5173/?"
+          "endsPattern": "http://localhost:5173/?"
         }
       }
     }
