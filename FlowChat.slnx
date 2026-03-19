@@ -81,5 +81,9 @@
   <Folder Name="/RealtimeService/tests/">
     <Project Path="RealtimeService/tests/FlowChat.RealtimeService.UnitTests/FlowChat.RealtimeService.UnitTests.csproj" />
   </Folder>
+  <Folder Name="/GatewayService/" />
+  <Folder Name="/GatewayService/src/">
+    <Project Path="GatewayService/src/FlowChat.GatewayService.API/FlowChat.GatewayService.API.csproj" />
+  </Folder>
   <Folder Name="/ReactClient/" />
 </Solution>

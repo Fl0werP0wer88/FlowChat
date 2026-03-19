@@ -17,6 +17,10 @@
       "path": "Common"
     },
     {
+      "name": "GatewayService",
+      "path": "GatewayService"
+    },
+    {
       "name": "NotificationService",
       "path": "NotificationService"
     },
@@ -147,6 +151,17 @@
         "stopAll": true
       },
       {
+        "name": "GatewayService",
+        "preLaunchTask": "build-flowchat",
+        "configurations": [
+          {
+            "folder": "GatewayService",
+            "name": "GatewayService API (No Build)"
+          }
+        ],
+        "stopAll": true
+      },
+      {
         "name": "RealtimeService",
         "preLaunchTask": "build-flowchat",
         "configurations": [
@@ -214,6 +229,10 @@
           {
             "folder": "NotificationService",
             "name": "NotificationService API (No Build)"
+          },
+          {
+            "folder": "GatewayService",
+            "name": "GatewayService API (No Build)"
           },
           {
             "folder": "RealtimeService",
@@ -304,6 +323,10 @@
           {
             "folder": "SocialGraphService",
             "name": "SocialGraphService Worker (No Build)"
+          },
+          {
+            "folder": "GatewayService",
+            "name": "GatewayService API (No Build)"
           }
         ],
         "stopAll": true
