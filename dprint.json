@@ -15,7 +15,9 @@
     "**/obj/**",
     "**/node_modules/**",
     "**/dist/**",
-    "**/.git/**"
+    "**/.git/**",
+    "**/Migrations/*.Designer.cs",
+    "**/Migrations/*ModelSnapshot.cs"
   ],
   "typescript": {
     "semiColons": "always",
