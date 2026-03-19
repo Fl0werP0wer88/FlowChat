@@ -1,7 +1,7 @@
 import type { FormEvent } from "react";
 import { useState } from "react";
 import type { AuthMode, AuthNotice, AuthSession, LoginFormValues, RegisterFormValues } from "../../../types/auth";
-import { loginWithGateway, registerWithGateway } from "../api";
+import { loginUser, registerUser } from "../api";
 
 interface UseAuthFlowOptions {
   onLoginSuccess: (session: AuthSession) => void;
@@ -61,7 +61,7 @@ export function useAuthFlow({ onLoginSuccess }: UseAuthFlowOptions) {
     setPending(true);
 
     try {
-      const session = await loginWithGateway(loginValues);
+      const session = await loginUser(loginValues);
       onLoginSuccess(session);
       setLoginValues((current) => ({
         ...current,
@@ -82,7 +82,7 @@ export function useAuthFlow({ onLoginSuccess }: UseAuthFlowOptions) {
     setPending(true);
 
     try {
-      await registerWithGateway(registerValues);
+      await registerUser(registerValues);
       setLoginValues((current) => ({
         ...current,
         login: registerValues.email.trim(),

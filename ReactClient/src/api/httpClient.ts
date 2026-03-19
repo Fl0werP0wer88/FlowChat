@@ -1,4 +1,4 @@
-const gatewayBaseUrl = (import.meta.env.VITE_GATEWAY_API_URL ?? "https://localhost:7305").replace(/\/+$/, "");
+const authApiBaseUrl = (import.meta.env.VITE_AUTH_API_URL ?? "https://localhost:7236").replace(/\/+$/, "");
 
 type JsonRecord = Record<string, unknown>;
 
@@ -38,7 +38,7 @@ export async function postJson<TResponse, TRequest extends object>(
   path: string,
   payload: TRequest,
 ): Promise<TResponse> {
-  const response = await fetch(`${gatewayBaseUrl}${path}`, {
+  const response = await fetch(`${authApiBaseUrl}${path}`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

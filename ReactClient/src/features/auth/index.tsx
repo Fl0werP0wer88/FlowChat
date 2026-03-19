@@ -13,7 +13,7 @@ export function AuthFeature({ onLoginSuccess }: AuthFeatureProps) {
 
   if (auth.mode === "login") {
     return (
-      <AuthTemplate title="FlowChat" subtitle="Zaloguj sie przez Gateway API.">
+      <AuthTemplate title="FlowChat" subtitle="Zaloguj sie do FlowChat.">
         <LoginForm
           values={auth.loginValues}
           pending={auth.pending}

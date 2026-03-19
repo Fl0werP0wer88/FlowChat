@@ -5,14 +5,14 @@ FlowChat Web UI (React + TypeScript + Vite).
 ## Requirements
 
 - Node.js 20+
-- GatewayService running (default: `https://localhost:7305`)
+- AuthService running (default: `https://localhost:7236`)
 
 ## Configure
 
 Copy `.env.example` to `.env` and adjust if needed:
 
 ```bash
-VITE_GATEWAY_API_URL=https://localhost:7305
+VITE_AUTH_API_URL=https://localhost:7236
 ```
 
 ## Run

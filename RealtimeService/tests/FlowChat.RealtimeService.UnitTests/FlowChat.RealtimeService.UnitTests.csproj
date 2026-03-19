@@ -26,7 +26,6 @@
     <ProjectReference Include="..\..\src\FlowChat.RealtimeService.Domain\FlowChat.RealtimeService.Domain.csproj" />
     <ProjectReference Include="..\..\src\FlowChat.RealtimeService.Infrastructure\FlowChat.RealtimeService.Infrastructure.csproj" />
     <ProjectReference Include="..\..\src\FlowChat.RealtimeService.Worker\FlowChat.RealtimeService.Worker.csproj" />
-    <ProjectReference Include="..\..\..\GatewayService\src\FlowChat.GatewayService.API\FlowChat.GatewayService.API.csproj" />
   </ItemGroup>
 
 </Project>
