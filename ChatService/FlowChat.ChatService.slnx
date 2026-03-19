@@ -1,0 +1,14 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/FlowChat.ChatService.API/FlowChat.ChatService.API.csproj" />
+    <Project Path="src/FlowChat.ChatService.Application/FlowChat.ChatService.Application.csproj" />
+    <Project Path="src/FlowChat.ChatService.Domain/FlowChat.ChatService.Domain.csproj" />
+    <Project Path="src/FlowChat.ChatService.Infrastructure/FlowChat.ChatService.Infrastructure.csproj" />
+    <Project Path="src/FlowChat.ChatService.Persistence/FlowChat.ChatService.Persistence.csproj" />
+    <Project Path="src/FlowChat.ChatService.Worker/FlowChat.ChatService.Worker.csproj" />
+  </Folder>
+  <Project Path="../Common/src/FlowChat.API.Abstractions/FlowChat.API.Abstractions.csproj" />
+  <Project Path="../Common/src/FlowChat.Application.Abstractions/FlowChat.Application.Abstractions.csproj" />
+  <Project Path="../Common/src/FlowChat.Domain.Abstractions/FlowChat.Domain.Abstractions.csproj" />
+  <Project Path="../Common/src/FlowChat.Messaging.Contracts/FlowChat.Messaging.Contracts.csproj" />
+</Solution>
