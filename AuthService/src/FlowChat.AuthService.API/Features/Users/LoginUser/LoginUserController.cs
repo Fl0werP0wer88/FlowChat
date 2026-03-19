@@ -1,3 +1,4 @@
+using AutoMapper;
 using FlowChat.API.Abstractions;
 using FlowChat.AuthService.Application.Users.Commands.LoginUser;
 using MediatR;
@@ -10,22 +11,25 @@ namespace FlowChat.AuthService.API.Features.Users.LoginUser;
 public sealed class LoginUserController : ApiControllerBase
 {
     private readonly IMediator _mediator;
+    private readonly IMapper _mapper;
 
-    public LoginUserController(IMediator mediator)
+    public LoginUserController(IMediator mediator, IMapper mapper)
     {
         _mediator = mediator;
+        _mapper = mapper;
     }
 
     [HttpPost("login")]
-    [ProducesResponseType(typeof(LoginUserCommandResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(LoginUserResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> Login([FromBody] LoginUserCommand command, CancellationToken cancellationToken)
+    public async Task<IActionResult> Login([FromBody] LoginUserRequest request, CancellationToken cancellationToken)
     {
+        var command = _mapper.Map<LoginUserCommand>(request);
         var response = await _mediator.Send(command, cancellationToken);
 
         return response.IsSuccess
-            ? Ok(response.Value)
+            ? Ok(_mapper.Map<LoginUserResponse>(response.Value))
             : HandleError(response.Error);
     }
 }

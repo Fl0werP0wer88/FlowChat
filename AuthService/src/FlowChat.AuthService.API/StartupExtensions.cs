@@ -4,6 +4,7 @@ using FlowChat.AuthService.Infrastructure.Configuration;
 using FlowChat.AuthService.Infrastructure;
 using FlowChat.AuthService.Infrastructure.Kafka;
 using FlowChat.AuthService.Persistence;
+using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 
@@ -25,6 +26,7 @@ public static class StartupExtensions
         .AddAPIPersistenceServices(builder.Configuration)
         .AddApiSilverbackMessaging(builder.Configuration)
         .AddAPIServices(builder.Configuration);
+        builder.Services.AddAutoMapper(typeof(StartupExtensions).Assembly);
         builder.AddFlowChatOpenTelemetry(typeof(ApplicationServiceRegistration).Assembly);
 
 

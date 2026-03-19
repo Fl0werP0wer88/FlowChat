@@ -10,6 +10,7 @@ public static class ApplicationServiceRegistration
     {
         var applicationAssembly = typeof(ApplicationServiceRegistration).Assembly;
 
+        services.AddAutoMapper((Action<AutoMapper.IMapperConfigurationExpression>?)null, applicationAssembly);
         services.AddMediatR(cfg =>
         {
             cfg.RegisterServicesFromAssemblies(applicationAssembly);
@@ -24,6 +25,7 @@ public static class ApplicationServiceRegistration
     {
         var applicationAssembly = typeof(ApplicationServiceRegistration).Assembly;
 
+        services.AddAutoMapper((Action<AutoMapper.IMapperConfigurationExpression>?)null, applicationAssembly);
         services.AddMediatR(cfg =>
         {
             cfg.RegisterServicesFromAssemblies(applicationAssembly);

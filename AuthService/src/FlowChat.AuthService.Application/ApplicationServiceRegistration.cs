@@ -8,10 +8,12 @@ public static class ApplicationServiceRegistration
 {
     public static IServiceCollection AddApplicationServices(this IServiceCollection services)
     {
-        services.AddAutoMapper((Action<AutoMapper.IMapperConfigurationExpression>?)null, AppDomain.CurrentDomain.GetAssemblies());
+        var applicationAssembly = typeof(ApplicationServiceRegistration).Assembly;
+
+        services.AddAutoMapper((Action<AutoMapper.IMapperConfigurationExpression>?)null, applicationAssembly);
         services.AddMediatR(cfg =>
         {
-            cfg.RegisterServicesFromAssemblies(AppDomain.CurrentDomain.GetAssemblies());
+            cfg.RegisterServicesFromAssemblies(applicationAssembly);
             cfg.AddFlowChatBehaviors();
         });
         services.AddScoped<IDomainEventDispatcher, DomainEventDispatcher>();

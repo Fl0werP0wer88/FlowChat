@@ -1,3 +1,4 @@
+using AutoMapper;
 using FlowChat.API.Abstractions;
 using FlowChat.AuthService.Application.Users.Commands.ConfirmUserEmail;
 using MediatR;
@@ -10,10 +11,12 @@ namespace FlowChat.AuthService.API.Features.Users.ConfirmUserEmail;
 public sealed class ConfirmUserEmailController : ApiControllerBase
 {
     private readonly IMediator _mediator;
+    private readonly IMapper _mapper;
 
-    public ConfirmUserEmailController(IMediator mediator)
+    public ConfirmUserEmailController(IMediator mediator, IMapper mapper)
     {
         _mediator = mediator;
+        _mapper = mapper;
     }
 
     [HttpGet("confirm-email")]
@@ -22,15 +25,10 @@ public sealed class ConfirmUserEmailController : ApiControllerBase
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> ConfirmEmail([FromQuery] Guid userId, [FromQuery] string token, CancellationToken cancellationToken)
+    public async Task<IActionResult> ConfirmEmail([FromQuery] ConfirmUserEmailRequest request, CancellationToken cancellationToken)
     {
-        var response = await _mediator.Send(
-            new ConfirmUserEmailCommand
-            {
-                UserId = userId,
-                Token = token
-            },
-            cancellationToken);
+        var command = _mapper.Map<ConfirmUserEmailCommand>(request);
+        var response = await _mediator.Send(command, cancellationToken);
 
         return response.IsSuccess
             ? NoContent()

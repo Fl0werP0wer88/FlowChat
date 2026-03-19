@@ -1,4 +1,5 @@
 using CSharpFunctionalExtensions;
+using AutoMapper;
 using FlowChat.AuthService.API.Features.Users.ConfirmUserEmail;
 using FlowChat.AuthService.API.Features.Users.LoginUser;
 using FlowChat.AuthService.API.Features.Users.RegisterUser;
@@ -26,10 +27,10 @@ public sealed class AuthControllersTests
                     DomainError.Conflict("User with the provided username or email already exists.")),
                 _ => throw new InvalidOperationException("Unexpected request.")
             });
-        var controller = CreateController(new RegisterUserController(mediator));
+        var controller = CreateController(new RegisterUserController(mediator, CreateMapper()));
 
         var result = await controller.Create(
-            new RegisterUserCommand
+            new RegisterUserRequest
             {
                 UserName = "jdoe",
                 Email = "john@example.com",
@@ -54,9 +55,15 @@ public sealed class AuthControllersTests
                     DomainError.NotFound("User was not found.")),
                 _ => throw new InvalidOperationException("Unexpected request.")
             });
-        var controller = CreateController(new ConfirmUserEmailController(mediator));
+        var controller = CreateController(new ConfirmUserEmailController(mediator, CreateMapper()));
 
-        var result = await controller.ConfirmEmail(Guid.NewGuid(), "token", CancellationToken.None);
+        var result = await controller.ConfirmEmail(
+            new ConfirmUserEmailRequest
+            {
+                UserId = Guid.NewGuid(),
+                Token = "token"
+            },
+            CancellationToken.None);
 
         var notFound = Assert.IsType<NotFoundObjectResult>(result);
         var problemDetails = Assert.IsType<ProblemDetails>(notFound.Value);
@@ -74,10 +81,10 @@ public sealed class AuthControllersTests
                     DomainError.Unauthorized("Invalid credentials or account is not confirmed.")),
                 _ => throw new InvalidOperationException("Unexpected request.")
             });
-        var controller = CreateController(new LoginUserController(mediator));
+        var controller = CreateController(new LoginUserController(mediator, CreateMapper()));
 
         var result = await controller.Login(
-            new LoginUserCommand
+            new LoginUserRequest
             {
                 Login = "jdoe",
                 Password = "Password123!"
@@ -102,6 +109,13 @@ public sealed class AuthControllersTests
         };
 
         return controller;
+    }
+
+    private static IMapper CreateMapper()
+    {
+        var configuration = new MapperConfiguration(cfg => cfg.AddMaps(typeof(RegisterUserController).Assembly));
+
+        return configuration.CreateMapper();
     }
 
     private sealed class TestMediator(Func<object, object?> handler) : IMediator

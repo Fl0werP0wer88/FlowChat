@@ -1,3 +1,4 @@
+using AutoMapper;
 using FlowChat.API.Abstractions;
 using FlowChat.AuthService.Application.Users.Commands.RegisterUser;
 using MediatR;
@@ -10,23 +11,26 @@ namespace FlowChat.AuthService.API.Features.Users.RegisterUser;
 public sealed class RegisterUserController : ApiControllerBase
 {
     private readonly IMediator _mediator;
+    private readonly IMapper _mapper;
 
-    public RegisterUserController(IMediator mediator)
+    public RegisterUserController(IMediator mediator, IMapper mapper)
     {
         _mediator = mediator;
+        _mapper = mapper;
     }
 
     [HttpPost]
-    [ProducesResponseType(typeof(Guid), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(RegisterUserResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> Create([FromBody] RegisterUserCommand command, CancellationToken cancellationToken)
+    public async Task<IActionResult> Create([FromBody] RegisterUserRequest request, CancellationToken cancellationToken)
     {
+        var command = _mapper.Map<RegisterUserCommand>(request);
         var response = await _mediator.Send(command, cancellationToken);
 
         return response.IsSuccess
-            ? Ok(response.Value.Id)
+            ? Ok(_mapper.Map<RegisterUserResponse>(response.Value))
             : HandleError(response.Error);
     }
 }
