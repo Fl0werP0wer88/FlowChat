@@ -44,6 +44,20 @@ public sealed class UserProfileReadModelConfiguration : IEntityTypeConfiguration
             .HasDefaultValue(false)
             .IsRequired();
 
+        builder.Property(x => x.CreatedBy)
+            .HasMaxLength(256)
+            .IsRequired();
+
+        builder.Property(x => x.CreatedAtUtc)
+            .HasColumnName("CreatedDate");
+
+        builder.Property(x => x.LastModifiedBy)
+            .HasMaxLength(256)
+            .IsRequired();
+
+        builder.Property(x => x.LastModifiedAtUtc)
+            .HasColumnName("LastModifiedDate");
+
         builder.HasIndex(x => x.UserName)
             .HasDatabaseName("ix_user_profile_read_model_user_name");
     }

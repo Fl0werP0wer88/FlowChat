@@ -13,13 +13,9 @@ public static class PersistenceServiceRegistration
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        var persistenceAssembly = typeof(PersistenceServiceRegistration).Assembly;
-
         services.AddDbContext<AppDbContext>(options =>
             options.UseNpgsql(configuration.GetConnectionString("SocialGraphDb")));
-        services.AddAutoMapper((Action<AutoMapper.IMapperConfigurationExpression>?)null, persistenceAssembly);
 
-        services.AddScoped<IUserSocialGraphRepository, UserSocialGraphRepository>();
         services.AddScoped<IContactRepository, ContactRepository>();
         services.AddScoped<IContactReadRepository, ContactReadRepository>();
         services.AddScoped<IUserProfileReadModelRepository, UserProfileReadModelRepository>();

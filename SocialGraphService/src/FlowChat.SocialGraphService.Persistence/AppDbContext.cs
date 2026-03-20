@@ -1,5 +1,6 @@
-using Microsoft.EntityFrameworkCore;
+using FlowChat.SocialGraphService.Domain.Entities;
 using FlowChat.SocialGraphService.Persistence.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace FlowChat.SocialGraphService.Persistence;
 
@@ -10,9 +11,8 @@ public class AppDbContext : DbContext
     {
     }
 
-    public DbSet<ContactEntity> Contacts { get; set; }
+    public DbSet<Contact> Contacts { get; set; }
     public DbSet<UserProfileReadModelEntity> UserProfileReadModels { get; set; }
-    public DbSet<UserSocialGraphEntity> UserSocialGraphs { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

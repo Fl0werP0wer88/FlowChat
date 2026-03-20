@@ -1,28 +1,18 @@
-using AutoMapper;
 using FlowChat.SocialGraphService.Application.Contracts.Persistence;
 using FlowChat.SocialGraphService.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace FlowChat.SocialGraphService.Persistence.Repositories;
 
-public sealed class ContactReadRepository : IContactReadRepository
+public sealed class ContactReadRepository(AppDbContext dbContext) : IContactReadRepository
 {
-    private readonly AppDbContext _dbContext;
-    private readonly IMapper _mapper;
-
-    public ContactReadRepository(AppDbContext dbContext, IMapper mapper)
-    {
-        _dbContext = dbContext;
-        _mapper = mapper;
-    }
+    private readonly AppDbContext _dbContext = dbContext;
 
     public async Task<Contact?> GetWithUsersAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        var entity = await _dbContext.Contacts
+        return await _dbContext.Contacts
             .AsNoTracking()
-            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
-
-        return entity is null ? null : _mapper.Map<Contact>(entity);
+            .FirstOrDefaultAsync(x => x.Id.Value == id, cancellationToken);
     }
 
     public async Task<IReadOnlyList<Contact>> GetForUserAsync(
@@ -33,11 +23,9 @@ public sealed class ContactReadRepository : IContactReadRepository
             .AsNoTracking()
             .Where(x => x.OwnerUserId == userId);
 
-        var entities = await query
+        return await query
             .OrderByDescending(x => x.CreatedAtUtc)
             .ToListAsync(cancellationToken);
-
-        return entities.Select(_mapper.Map<Contact>).ToList();
     }
 
     public async Task<bool> RelationshipExistsAsync(
@@ -53,18 +41,14 @@ public sealed class ContactReadRepository : IContactReadRepository
 
     public async Task<Contact?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        var entity = await _dbContext.Contacts
-            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
-
-        return entity is null ? null : _mapper.Map<Contact>(entity);
+        return await _dbContext.Contacts
+            .FirstOrDefaultAsync(x => x.Id.Value == id, cancellationToken);
     }
 
     public async Task<IReadOnlyList<Contact>> GetAllAsync(CancellationToken cancellationToken = default)
     {
-        var entities = await _dbContext.Contacts
+        return await _dbContext.Contacts
             .AsNoTracking()
             .ToListAsync(cancellationToken);
-
-        return entities.Select(_mapper.Map<Contact>).ToList();
     }
 }

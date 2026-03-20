@@ -46,13 +46,13 @@ public class UserProfileRepository : RepositoryBase<UserProfile>, IUserProfileRe
 
     public async Task<UserProfile?> GetByUserNameAsync(string userName, CancellationToken cancellationToken = default)
     {
-        var normalizedUserName = userName.Trim().ToLower();
+        var normalizedUserName = NormalizeUserName(userName);
 
         return await DbContext.UserProfiles
             .AsNoTracking()
             .Include(x => x.Emails)
             .Include(x => x.Phones)
-            .FirstOrDefaultAsync(x => x.UserName.ToLower() == normalizedUserName, cancellationToken);
+            .FirstOrDefaultAsync(x => x.NormalizedUserName == normalizedUserName, cancellationToken);
     }
 
     public async Task<bool> UserNameExistsAsync(
@@ -60,12 +60,14 @@ public class UserProfileRepository : RepositoryBase<UserProfile>, IUserProfileRe
         Guid? excludedUserId = null,
         CancellationToken cancellationToken = default)
     {
-        var normalizedUserName = userName.Trim().ToLower();
+        var normalizedUserName = NormalizeUserName(userName);
 
         return await DbContext.UserProfiles
             .AnyAsync(
                 x => (!excludedUserId.HasValue || x.Id != Id<UserProfile>.FromGuid(excludedUserId.Value))
-                     && x.UserName.ToLower() == normalizedUserName,
+                     && x.NormalizedUserName == normalizedUserName,
                 cancellationToken);
     }
+
+    private static string NormalizeUserName(string userName) => userName.Trim().ToUpper();
 }

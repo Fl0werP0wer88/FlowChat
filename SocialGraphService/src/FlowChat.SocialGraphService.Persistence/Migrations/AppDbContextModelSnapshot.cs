@@ -22,7 +22,7 @@ namespace FlowChat.SocialGraphService.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("FlowChat.SocialGraphService.Persistence.Entities.ContactEntity", b =>
+            modelBuilder.Entity("FlowChat.SocialGraphService.Domain.Entities.Contact", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -32,6 +32,7 @@ namespace FlowChat.SocialGraphService.Persistence.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnName("CreatedDate")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("CreatedBy")
@@ -52,6 +53,7 @@ namespace FlowChat.SocialGraphService.Persistence.Migrations
                         .HasDefaultValue(false);
 
                     b.Property<DateTimeOffset>("LastModifiedAtUtc")
+                        .HasColumnName("LastModifiedDate")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("LastModifiedBy")
@@ -101,6 +103,7 @@ namespace FlowChat.SocialGraphService.Persistence.Migrations
                         .HasColumnType("character varying(2000)");
 
                     b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnName("CreatedDate")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("CreatedBy")
@@ -128,6 +131,7 @@ namespace FlowChat.SocialGraphService.Persistence.Migrations
                         .HasDefaultValue(false);
 
                     b.Property<DateTimeOffset>("LastModifiedAtUtc")
+                        .HasColumnName("LastModifiedDate")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("LastModifiedBy")
@@ -158,68 +162,6 @@ namespace FlowChat.SocialGraphService.Persistence.Migrations
                     b.ToTable("UserProfileReadModel", (string)null);
                 });
 
-            modelBuilder.Entity("FlowChat.SocialGraphService.Persistence.Entities.UserSocialGraphEntity", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTimeOffset>("CreatedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("CreatedBy")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("Email")
-                        .HasMaxLength(256)
-                        .HasColumnType("character varying(256)");
-
-                    b.Property<string>("FirstName")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<bool>("IsEmailVisible")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false);
-
-                    b.Property<bool>("IsPhoneVisible")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false);
-
-                    b.Property<DateTimeOffset>("LastModifiedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("LastModifiedBy")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("LastName")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<string>("Login")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<string>("PhoneNumber")
-                        .HasMaxLength(32)
-                        .HasColumnType("character varying(32)");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId")
-                        .IsUnique()
-                        .HasDatabaseName("uq_user_social_graph_user_id");
-
-                    b.ToTable("UserSocialGraphs", (string)null);
-                });
 #pragma warning restore 612, 618
         }
     }

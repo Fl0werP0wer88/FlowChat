@@ -1,18 +1,22 @@
+using FlowChat.Domain.Abstractions;
+using FlowChat.SocialGraphService.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using FlowChat.SocialGraphService.Persistence.Entities;
 
 namespace FlowChat.SocialGraphService.Persistence.Configurations;
 
-public class ContactConfiguration : IEntityTypeConfiguration<ContactEntity>
+public class ContactConfiguration : IEntityTypeConfiguration<Contact>
 {
-    public void Configure(EntityTypeBuilder<ContactEntity> builder)
+    public void Configure(EntityTypeBuilder<Contact> builder)
     {
         builder.ToTable("Contacts", t =>
         {
             t.HasCheckConstraint("chk_different_users", "\"OwnerUserId\" <> \"ContactUserId\"");
         });
         builder.HasKey(x => x.Id);
+
+        builder.Property(x => x.Id)
+            .HasConversion(x => x.Value, x => Id<Contact>.FromGuid(x));
 
         builder.Property(x => x.IsBlocked)
             .HasDefaultValue(false)
@@ -33,6 +37,20 @@ public class ContactConfiguration : IEntityTypeConfiguration<ContactEntity>
 
         builder.Property(x => x.Email)
             .HasMaxLength(256);
+
+        builder.Property(x => x.CreatedBy)
+            .HasMaxLength(256)
+            .IsRequired();
+
+        builder.Property(x => x.CreatedAtUtc)
+            .HasColumnName("CreatedDate");
+
+        builder.Property(x => x.LastModifiedBy)
+            .HasMaxLength(256)
+            .IsRequired();
+
+        builder.Property(x => x.LastModifiedAtUtc)
+            .HasColumnName("LastModifiedDate");
 
         builder.HasIndex(x => new { x.OwnerUserId, x.ContactUserId })
             .IsUnique()

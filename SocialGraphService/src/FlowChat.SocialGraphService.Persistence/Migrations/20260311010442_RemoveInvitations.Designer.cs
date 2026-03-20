@@ -25,7 +25,7 @@ namespace FlowChat.SocialGraphService.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("FlowChat.SocialGraphService.Persistence.Entities.ContactEntity", b =>
+            modelBuilder.Entity("FlowChat.SocialGraphService.Domain.Entities.Contact", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -35,6 +35,7 @@ namespace FlowChat.SocialGraphService.Persistence.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnName("CreatedDate")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("CreatedBy")
@@ -55,6 +56,7 @@ namespace FlowChat.SocialGraphService.Persistence.Migrations
                         .HasDefaultValue(false);
 
                     b.Property<DateTimeOffset>("LastModifiedAtUtc")
+                        .HasColumnName("LastModifiedDate")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("LastModifiedBy")
@@ -104,6 +106,7 @@ namespace FlowChat.SocialGraphService.Persistence.Migrations
                         .HasColumnType("character varying(2000)");
 
                     b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnName("CreatedDate")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("CreatedBy")
@@ -131,6 +134,7 @@ namespace FlowChat.SocialGraphService.Persistence.Migrations
                         .HasDefaultValue(false);
 
                     b.Property<DateTimeOffset>("LastModifiedAtUtc")
+                        .HasColumnName("LastModifiedDate")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("LastModifiedBy")
@@ -161,13 +165,14 @@ namespace FlowChat.SocialGraphService.Persistence.Migrations
                     b.ToTable("UserProfileReadModel", (string)null);
                 });
 
-            modelBuilder.Entity("FlowChat.SocialGraphService.Persistence.Entities.UserSocialGraphEntity", b =>
+            modelBuilder.Entity("FlowChat.SocialGraphService.Domain.Entities.UserSocialGraph", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnName("CreatedDate")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("CreatedBy")
@@ -193,6 +198,7 @@ namespace FlowChat.SocialGraphService.Persistence.Migrations
                         .HasDefaultValue(false);
 
                     b.Property<DateTimeOffset>("LastModifiedAtUtc")
+                        .HasColumnName("LastModifiedDate")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("LastModifiedBy")
