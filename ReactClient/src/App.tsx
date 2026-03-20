@@ -12,7 +12,7 @@ export default function App() {
     <AppBackgroundLayout>
       {screen === "auth"
         ? <AuthFeature onLoginSuccess={signIn} />
-        : <ChatFeature userLogin={session.login ?? "Uzytkownik"} onLogout={signOut} />}
+        : <ChatFeature accessToken={session.accessToken ?? ""} userLogin={session.login ?? "Uzytkownik"} onLogout={signOut} />}
     </AppBackgroundLayout>
   );
 }

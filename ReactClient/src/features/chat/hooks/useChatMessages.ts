@@ -1,13 +1,19 @@
 import type { KeyboardEvent } from "react";
 import { useState } from "react";
 import type { ChatMessage, MessageSender } from "../../../types/chat";
+import type { PresenceChangedEvent, RealtimeChatMessage } from "../../../types/realtime";
 
-function createMessage(sender: MessageSender, text: string): ChatMessage {
+function createMessage(
+  sender: MessageSender,
+  text: string,
+  createdAt = new Date().toISOString(),
+  id: string = crypto.randomUUID(),
+): ChatMessage {
   return {
-    id: crypto.randomUUID(),
+    id,
     sender,
     text,
-    createdAt: new Date().toISOString(),
+    createdAt,
   };
 }
 
@@ -19,6 +25,28 @@ export function useChatMessages() {
 
   const appendMessage = (sender: MessageSender, text: string) => {
     setMessages((current) => [...current, createMessage(sender, text)]);
+  };
+
+  const receiveRealtimeMessage = (payload: RealtimeChatMessage) => {
+    setMessages((current) => {
+      if (current.some((message) => message.id === payload.messageId)) {
+        return current;
+      }
+
+      return [
+        ...current,
+        createMessage(
+          "other",
+          `${payload.senderDisplayName}: ${payload.text}`,
+          payload.sentAtUtc,
+          payload.messageId,
+        ),
+      ];
+    });
+  };
+
+  const receivePresenceChanged = (payload: PresenceChangedEvent) => {
+    appendMessage("system", `Obecnosc uzytkownika ${payload.userId} zmienila sie na ${payload.status}.`);
   };
 
   const sendDraft = () => {
@@ -48,5 +76,7 @@ export function useChatMessages() {
     setDraft,
     sendDraft,
     handleDraftKeyDown,
+    receiveRealtimeMessage,
+    receivePresenceChanged,
   };
 }

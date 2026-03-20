@@ -257,6 +257,36 @@ body {
   gap: 0.8rem;
 }
 
+.realtime-badge {
+  border-radius: 999px;
+  padding: 0.35rem 0.7rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.realtime-badge-connected {
+  background: #e7f8ef;
+  color: #1f6a42;
+}
+
+.realtime-badge-connecting,
+.realtime-badge-reconnecting {
+  background: #fff3db;
+  color: #8c5c00;
+}
+
+.realtime-badge-disconnected,
+.realtime-badge-idle {
+  background: #eef3f9;
+  color: #526274;
+}
+
+.realtime-badge-error {
+  background: #ffe7ec;
+  color: #9d2346;
+}
+
 .logged-user {
   font-weight: 700;
   color: #2b4157;
@@ -306,6 +336,10 @@ body {
 .message-me {
   margin-left: auto;
   background: #dfe9ff;
+}
+
+.message-other {
+  background: #fff4da;
 }
 
 .message-system {

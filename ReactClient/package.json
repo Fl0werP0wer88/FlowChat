@@ -9,6 +9,7 @@
     "preview": "vite preview --host --port 4173"
   },
   "dependencies": {
+    "@microsoft/signalr": "^9.0.3",
     "react": "^19.1.1",
     "react-dom": "^19.1.1"
   },

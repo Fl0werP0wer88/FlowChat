@@ -13,6 +13,7 @@ Copy `.env.example` to `.env` and adjust if needed:
 
 ```bash
 VITE_GATEWAY_API_URL=https://localhost:7270
+VITE_REALTIME_API_URL=https://localhost:7215
 ```
 
 ## Run

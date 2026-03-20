@@ -25,7 +25,13 @@ export function ConversationPanel({
         {messages.map((message) => (
           <article
             key={message.id}
-            className={message.sender === "me" ? "message message-me" : "message message-system"}
+            className={
+              message.sender === "me"
+                ? "message message-me"
+                : message.sender === "other"
+                  ? "message message-other"
+                  : "message message-system"
+            }
           >
             <p>{message.text}</p>
             <time>{formatLocalTime(message.createdAt)}</time>

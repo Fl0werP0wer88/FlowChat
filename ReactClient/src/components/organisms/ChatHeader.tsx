@@ -1,11 +1,28 @@
 import { Button } from "../atoms/Button";
+import type { RealtimeConnectionStatus } from "../../types/realtime";
 
 interface ChatHeaderProps {
   userLogin: string;
+  realtimeStatus: RealtimeConnectionStatus;
   onLogout: () => void;
 }
 
-export function ChatHeader({ userLogin, onLogout }: ChatHeaderProps) {
+function getRealtimeStatusLabel(status: RealtimeConnectionStatus): string {
+  switch (status) {
+    case "connected":
+      return "Realtime online";
+    case "connecting":
+      return "Realtime laczenie";
+    case "reconnecting":
+      return "Realtime ponowne laczenie";
+    case "error":
+      return "Realtime blad";
+    default:
+      return "Realtime offline";
+  }
+}
+
+export function ChatHeader({ userLogin, realtimeStatus, onLogout }: ChatHeaderProps) {
   return (
     <header className="chat-header">
       <div className="chat-title-block">
@@ -13,6 +30,9 @@ export function ChatHeader({ userLogin, onLogout }: ChatHeaderProps) {
         <h1>Wiadomosci</h1>
       </div>
       <div className="header-actions">
+        <span className={`realtime-badge realtime-badge-${realtimeStatus}`}>
+          {getRealtimeStatusLabel(realtimeStatus)}
+        </span>
         <span className="logged-user">{userLogin}</span>
         <Button variant="secondary" type="button" onClick={onLogout}>
           Wyloguj
