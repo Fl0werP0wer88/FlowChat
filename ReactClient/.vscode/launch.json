@@ -8,6 +8,11 @@
       "preLaunchTask": "dev: ReactClient",
       "url": "http://localhost:5173",
       "webRoot": "${workspaceFolder}",
+      "skipFiles": [
+        "${workspaceFolder}/node_modules/**/*.js",
+        "${workspaceFolder}/node_modules/**/*.ts",
+        "<node_internals>/**"
+      ],
       "presentation": {
         "hidden": false,
         "group": "react-client"
@@ -19,6 +24,11 @@
       "request": "launch",
       "url": "http://localhost:5173",
       "webRoot": "${workspaceFolder}",
+      "skipFiles": [
+        "${workspaceFolder}/node_modules/**/*.js",
+        "${workspaceFolder}/node_modules/**/*.ts",
+        "<node_internals>/**"
+      ],
       "presentation": {
         "hidden": false,
         "group": "react-client"
