@@ -29,6 +29,14 @@ public class UnitTest1
     }
 
     [Fact]
+    public void Email_Create_WithInvalidAddress_Throws()
+    {
+        var userProfileId = Id<UserProfile>.New();
+
+        Assert.Throws<ArgumentException>(() => Email.Create(userProfileId, "not-an-email"));
+    }
+
+    [Fact]
     public void UserProfile_AddEmail_AddsEmailToAggregate()
     {
         var profile = UserProfile.Rehydrate("jdoe", "John Doe", id: Id<UserProfile>.New());

@@ -1,3 +1,4 @@
+using System.Net.Mail;
 using FlowChat.Domain.Abstractions;
 
 namespace FlowChat.UserProfileService.Domain.Entities;
@@ -6,6 +7,7 @@ public class Email : EntityBase<Email>
 {
     public Id<UserProfile> UserProfileId { get; private set; }
     public string Address { get; private set; }
+    public string NormalizedAddress { get; private set; }
     public bool IsMain { get; private set; }
 
     private Email(
@@ -17,8 +19,12 @@ public class Email : EntityBase<Email>
         ArgumentNullException.ThrowIfNull(userProfileId);
         ArgumentException.ThrowIfNullOrWhiteSpace(address);
 
+        var trimmedAddress = address.Trim();
+        ValidateEmail(trimmedAddress);
+
         UserProfileId = userProfileId;
-        Address = address.Trim();
+        Address = trimmedAddress;
+        NormalizedAddress = trimmedAddress.ToUpper();
         IsMain = isMain;
     }
 
@@ -43,5 +49,14 @@ public class Email : EntityBase<Email>
     internal void SetMain(bool isMain)
     {
         IsMain = isMain;
+    }
+
+    private static void ValidateEmail(string address)
+    {
+        if (!MailAddress.TryCreate(address, out var parsedAddress) ||
+            !string.Equals(parsedAddress.Address, address, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new ArgumentException("Address must be a valid email address.", nameof(address));
+        }
     }
 }

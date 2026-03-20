@@ -10,6 +10,7 @@ public class UserProfile : AggregateRootBase<UserProfile>
     private readonly List<Phone> _phones = [];
 
     public string UserName { get; private set; }
+    public string NormalizedUserName { get; private set; }
     public string DisplayName { get; private set; }
     public string? AvatarUrl { get; private set; }
     public string? Bio { get; private set; }
@@ -36,6 +37,7 @@ public class UserProfile : AggregateRootBase<UserProfile>
         ArgumentException.ThrowIfNullOrWhiteSpace(displayName);
 
         UserName = userName.Trim();
+        NormalizedUserName = userName.Trim().ToUpper();
         DisplayName = displayName.Trim();
         AvatarUrl = string.IsNullOrWhiteSpace(avatarUrl) ? null : avatarUrl.Trim();
         Bio = string.IsNullOrWhiteSpace(bio) ? null : bio.Trim();
