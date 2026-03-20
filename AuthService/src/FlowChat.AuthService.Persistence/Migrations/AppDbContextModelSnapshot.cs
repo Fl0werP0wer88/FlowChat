@@ -22,7 +22,7 @@ namespace FlowChat.AuthService.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("FlowChat.AuthService.Persistence.Identity.AppRole", b =>
+            modelBuilder.Entity("FlowChat.AuthService.Persistence.Identity.RoleEntity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -49,7 +49,7 @@ namespace FlowChat.AuthService.Persistence.Migrations
                     b.ToTable("AspNetRoles", (string)null);
                 });
 
-            modelBuilder.Entity("FlowChat.AuthService.Persistence.Identity.AppUser", b =>
+            modelBuilder.Entity("FlowChat.AuthService.Persistence.Identity.UserEntity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -252,7 +252,7 @@ namespace FlowChat.AuthService.Persistence.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
                 {
-                    b.HasOne("FlowChat.AuthService.Persistence.Identity.AppRole", null)
+                    b.HasOne("FlowChat.AuthService.Persistence.Identity.RoleEntity", null)
                         .WithMany()
                         .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -261,7 +261,7 @@ namespace FlowChat.AuthService.Persistence.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<System.Guid>", b =>
                 {
-                    b.HasOne("FlowChat.AuthService.Persistence.Identity.AppUser", null)
+                    b.HasOne("FlowChat.AuthService.Persistence.Identity.UserEntity", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -270,7 +270,7 @@ namespace FlowChat.AuthService.Persistence.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<System.Guid>", b =>
                 {
-                    b.HasOne("FlowChat.AuthService.Persistence.Identity.AppUser", null)
+                    b.HasOne("FlowChat.AuthService.Persistence.Identity.UserEntity", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -279,13 +279,13 @@ namespace FlowChat.AuthService.Persistence.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<System.Guid>", b =>
                 {
-                    b.HasOne("FlowChat.AuthService.Persistence.Identity.AppRole", null)
+                    b.HasOne("FlowChat.AuthService.Persistence.Identity.RoleEntity", null)
                         .WithMany()
                         .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("FlowChat.AuthService.Persistence.Identity.AppUser", null)
+                    b.HasOne("FlowChat.AuthService.Persistence.Identity.UserEntity", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -294,7 +294,7 @@ namespace FlowChat.AuthService.Persistence.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<System.Guid>", b =>
                 {
-                    b.HasOne("FlowChat.AuthService.Persistence.Identity.AppUser", null)
+                    b.HasOne("FlowChat.AuthService.Persistence.Identity.UserEntity", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)

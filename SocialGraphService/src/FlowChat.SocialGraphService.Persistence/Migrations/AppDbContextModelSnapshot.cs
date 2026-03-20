@@ -25,19 +25,19 @@ namespace FlowChat.SocialGraphService.Persistence.Migrations
             modelBuilder.Entity("FlowChat.SocialGraphService.Domain.Entities.Contact", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<Guid>("ContactUserId")
                         .HasColumnType("uuid");
 
                     b.Property<DateTimeOffset>("CreatedAtUtc")
-                        .HasColumnName("CreatedDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("CreatedDate");
 
                     b.Property<string>("CreatedBy")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
 
                     b.Property<string>("Email")
                         .HasMaxLength(256)
@@ -53,12 +53,13 @@ namespace FlowChat.SocialGraphService.Persistence.Migrations
                         .HasDefaultValue(false);
 
                     b.Property<DateTimeOffset>("LastModifiedAtUtc")
-                        .HasColumnName("LastModifiedDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("LastModifiedDate");
 
                     b.Property<string>("LastModifiedBy")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
 
                     b.Property<string>("LastName")
                         .HasMaxLength(100)
@@ -103,12 +104,13 @@ namespace FlowChat.SocialGraphService.Persistence.Migrations
                         .HasColumnType("character varying(2000)");
 
                     b.Property<DateTimeOffset>("CreatedAtUtc")
-                        .HasColumnName("CreatedDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("CreatedDate");
 
                     b.Property<string>("CreatedBy")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
 
                     b.Property<string>("DisplayName")
                         .IsRequired()
@@ -131,12 +133,13 @@ namespace FlowChat.SocialGraphService.Persistence.Migrations
                         .HasDefaultValue(false);
 
                     b.Property<DateTimeOffset>("LastModifiedAtUtc")
-                        .HasColumnName("LastModifiedDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("LastModifiedDate");
 
                     b.Property<string>("LastModifiedBy")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
 
                     b.Property<DateTime?>("LastSeenAtUtc")
                         .HasColumnType("timestamp with time zone");
@@ -161,7 +164,6 @@ namespace FlowChat.SocialGraphService.Persistence.Migrations
 
                     b.ToTable("UserProfileReadModel", (string)null);
                 });
-
 #pragma warning restore 612, 618
         }
     }

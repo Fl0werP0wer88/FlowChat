@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -49,6 +49,23 @@ namespace FlowChat.AuthService.Persistence.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_AspNetUsers", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "SilverbackOutboxMessages",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Content = table.Column<byte[]>(type: "bytea", nullable: false),
+                    Headers = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
+                    EndpointName = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
+                    DynamicEndpoint = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
+                    Created = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_SilverbackOutboxMessages", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -212,6 +229,9 @@ namespace FlowChat.AuthService.Persistence.Migrations
 
             migrationBuilder.DropTable(
                 name: "AspNetUserTokens");
+
+            migrationBuilder.DropTable(
+                name: "SilverbackOutboxMessages");
 
             migrationBuilder.DropTable(
                 name: "AspNetRoles");

@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FlowChat.UserProfileService.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260311213318_SyncCurrentUserProfileModel")]
-    partial class SyncCurrentUserProfileModel
+    [Migration("20260320232148_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -44,6 +44,10 @@ namespace FlowChat.UserProfileService.Persistence.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("LastModifiedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("NormalizedAddress")
                         .IsRequired()
                         .HasColumnType("text");
 
@@ -144,6 +148,11 @@ namespace FlowChat.UserProfileService.Persistence.Migrations
 
                     b.Property<DateTime?>("LastSeenAtUtc")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("NormalizedUserName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.Property<string>("UserName")
                         .IsRequired()
