@@ -120,7 +120,7 @@ export function useRealtimeConnection({
       connection.off("PresenceChanged");
       void startPromise.finally(() => connection.stop().catch(() => undefined));
     };
-  }, [accessToken, handlePresenceChanged, handleReceiveMessage]);
+  }, [accessToken]);
 
   return {
     status,
