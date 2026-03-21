@@ -22,7 +22,7 @@
       "command": "dotnet",
       "args": [
         "build",
-        "${workspaceFolder}/src/FlowChat.UserProfileService.Consumers/FlowChat.UserProfileService.Consumers.csproj",
+        "${workspaceFolder}/src/Workers/FlowChat.UserProfileService.Consumers/FlowChat.UserProfileService.Consumers.csproj",
         "-c",
         "Debug"
       ],
@@ -37,7 +37,7 @@
       "command": "dotnet",
       "args": [
         "build",
-        "${workspaceFolder}/src/FlowChat.UserProfileService.OutboxPublisher/FlowChat.UserProfileService.OutboxPublisher.csproj",
+        "${workspaceFolder}/src/Workers/FlowChat.UserProfileService.OutboxPublisher/FlowChat.UserProfileService.OutboxPublisher.csproj",
         "-c",
         "Debug"
       ],

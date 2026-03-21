@@ -2,11 +2,13 @@
   <Folder Name="/src/">
     <Project Path="src/FlowChat.UserProfileService.API/FlowChat.UserProfileService.API.csproj" />
     <Project Path="src/FlowChat.UserProfileService.Application/FlowChat.UserProfileService.Application.csproj" />
-    <Project Path="src/FlowChat.UserProfileService.Consumers/FlowChat.UserProfileService.Consumers.csproj" />
     <Project Path="src/FlowChat.UserProfileService.Domain/FlowChat.UserProfileService.Domain.csproj" />
     <Project Path="src/FlowChat.UserProfileService.Infrastructure/FlowChat.UserProfileService.Infrastructure.csproj" />
-    <Project Path="src/FlowChat.UserProfileService.OutboxPublisher/FlowChat.UserProfileService.OutboxPublisher.csproj" />
     <Project Path="src/FlowChat.UserProfileService.Persistence/FlowChat.UserProfileService.Persistence.csproj" />
+  </Folder>
+  <Folder Name="/src/Workers/">
+    <Project Path="src/Workers/FlowChat.UserProfileService.Consumers/FlowChat.UserProfileService.Consumers.csproj" />
+    <Project Path="src/Workers/FlowChat.UserProfileService.OutboxPublisher/FlowChat.UserProfileService.OutboxPublisher.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/FlowChat.UserProfileService.AATs/FlowChat.UserProfileService.AATs.csproj" />

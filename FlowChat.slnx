@@ -25,11 +25,13 @@
   <Folder Name="/UserProfileService/src/">
     <Project Path="UserProfileService/src/FlowChat.UserProfileService.API/FlowChat.UserProfileService.API.csproj" />
     <Project Path="UserProfileService/src/FlowChat.UserProfileService.Application/FlowChat.UserProfileService.Application.csproj" />
-    <Project Path="UserProfileService/src/FlowChat.UserProfileService.Consumers/FlowChat.UserProfileService.Consumers.csproj" />
     <Project Path="UserProfileService/src/FlowChat.UserProfileService.Domain/FlowChat.UserProfileService.Domain.csproj" />
     <Project Path="UserProfileService/src/FlowChat.UserProfileService.Infrastructure/FlowChat.UserProfileService.Infrastructure.csproj" />
-    <Project Path="UserProfileService/src/FlowChat.UserProfileService.OutboxPublisher/FlowChat.UserProfileService.OutboxPublisher.csproj" />
     <Project Path="UserProfileService/src/FlowChat.UserProfileService.Persistence/FlowChat.UserProfileService.Persistence.csproj" />
+  </Folder>
+  <Folder Name="/UserProfileService/src/Workers/">
+    <Project Path="UserProfileService/src/Workers/FlowChat.UserProfileService.Consumers/FlowChat.UserProfileService.Consumers.csproj" />
+    <Project Path="UserProfileService/src/Workers/FlowChat.UserProfileService.OutboxPublisher/FlowChat.UserProfileService.OutboxPublisher.csproj" />
   </Folder>
   <Folder Name="/UserProfileService/tests/">
     <Project Path="UserProfileService/tests/FlowChat.UserProfileService.AATs/FlowChat.UserProfileService.AATs.csproj" />
