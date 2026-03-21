@@ -18,6 +18,9 @@ Additionally:
 - sets default privileges for future EF Core migrations
 
 Safe to run multiple times.
+
+Optional flags:
+- --dropDb : drops all FlowChat databases with FORCE before recreating them
 #>
 
 param(
@@ -41,12 +44,24 @@ param(
   [string]$SocialGraphDb = "flowchat_socialgraph_db",
   [string]$NotificationDb = "flowchat_notification_db",
 
-  [int]$TimeoutSeconds = 180
+  [int]$TimeoutSeconds = 180,
+
+  [switch]$DropDb,
+
+  [Parameter(ValueFromRemainingArguments = $true)]
+  [string[]]$RemainingArgs
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+
+foreach ($arg in @($RemainingArgs | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })) {
+  switch ($arg) {
+    "--dropDb" { $DropDb = $true }
+    default { throw "Unknown argument: $arg" }
+  }
+}
 
 function Write-Step([string]$msg) { Write-Host "`n==> $msg" }
 
@@ -206,6 +221,19 @@ $$;
   Exec-PSQL -containerId $containerId -database $dbName -sql $ownershipSql | Out-Null
 }
 
+function Drop-DatabaseIfExists([string]$containerId, [string]$dbName) {
+  Write-Step "Dropping database if it exists: $dbName"
+
+  $drop = Exec-PSQL -containerId $containerId -database "postgres" `
+    -sql "DROP DATABASE IF EXISTS $dbName WITH (FORCE);"
+
+  if ($drop.Code -ne 0) {
+    throw "Failed dropping database '$dbName'"
+  }
+
+  Write-Host "Dropped database if it existed: $dbName"
+}
+
 function Ensure-AppCrudAccess([string]$containerId, [string]$dbName, [string]$owner, [string]$appRole) {
   Write-Step "Granting CRUD access to $appRole in $dbName"
 
@@ -244,6 +272,21 @@ if ([string]::IsNullOrWhiteSpace($containerId)) {
 
 Write-Step "Using container id: $containerId"
 Wait-ForPostgresReady -containerId $containerId -timeoutSeconds $TimeoutSeconds
+
+$targetDatabases = @(
+  $AuthDb,
+  $ChatDb,
+  $UserProfileDb,
+  $SocialGraphDb,
+  $NotificationDb
+)
+
+if ($DropDb) {
+  Write-Step "DropDb enabled; dropping FlowChat databases with FORCE"
+  foreach ($dbName in $targetDatabases) {
+    Drop-DatabaseIfExists -containerId $containerId -dbName $dbName
+  }
+}
 
 Ensure-Role -containerId $containerId -role $MigratorUser -password $MigratorPassword -CreateDb
 Grant-Role -containerId $containerId -grantee $MigratorUser -roleName "pg_signal_backend"
