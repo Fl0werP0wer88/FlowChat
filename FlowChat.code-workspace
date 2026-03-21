@@ -237,7 +237,11 @@
           },
           {
             "folder": "UserProfileService",
-            "name": "UserProfileService Worker (No Build)"
+            "name": "UserProfileService Consumers (No Build)"
+          },
+          {
+            "folder": "UserProfileService",
+            "name": "UserProfileService OutboxPublisher (No Build)"
           }
         ],
         "stopAll": true
@@ -301,7 +305,11 @@
           },
           {
             "folder": "UserProfileService",
-            "name": "UserProfileService Worker (No Build)"
+            "name": "UserProfileService Consumers (No Build)"
+          },
+          {
+            "folder": "UserProfileService",
+            "name": "UserProfileService OutboxPublisher (No Build)"
           },
           {
             "folder": "NotificationService",
@@ -348,7 +356,11 @@
           },
           {
             "folder": "UserProfileService",
-            "name": "UserProfileService Worker (No Build)"
+            "name": "UserProfileService Consumers (No Build)"
+          },
+          {
+            "folder": "UserProfileService",
+            "name": "UserProfileService OutboxPublisher (No Build)"
           },
           {
             "folder": "NotificationService",

@@ -1,4 +1,4 @@
-namespace FlowChat.UserProfileService.Worker.Kafka;
+namespace FlowChat.UserProfileService.Consumers.Kafka;
 
 public sealed class UserCreatedConsumerOptions
 {

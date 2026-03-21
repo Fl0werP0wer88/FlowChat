@@ -17,12 +17,27 @@
       "problemMatcher": "$msCompile"
     },
     {
-      "label": "build: UserProfileService Worker",
+      "label": "build: UserProfileService Consumers",
       "type": "process",
       "command": "dotnet",
       "args": [
         "build",
-        "${workspaceFolder}/src/FlowChat.UserProfileService.Worker/FlowChat.UserProfileService.Worker.csproj",
+        "${workspaceFolder}/src/FlowChat.UserProfileService.Consumers/FlowChat.UserProfileService.Consumers.csproj",
+        "-c",
+        "Debug"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "build: UserProfileService OutboxPublisher",
+      "type": "process",
+      "command": "dotnet",
+      "args": [
+        "build",
+        "${workspaceFolder}/src/FlowChat.UserProfileService.OutboxPublisher/FlowChat.UserProfileService.OutboxPublisher.csproj",
         "-c",
         "Debug"
       ],

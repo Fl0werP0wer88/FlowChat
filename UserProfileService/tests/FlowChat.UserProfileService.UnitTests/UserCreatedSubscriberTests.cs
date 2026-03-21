@@ -2,7 +2,7 @@ using CSharpFunctionalExtensions;
 using FlowChat.Domain.Abstractions;
 using FlowChat.Messaging.Contracts.AuthService.Events;
 using FlowChat.UserProfileService.Application.UserProfiles.Commands.CreateInitialUserProfile;
-using FlowChat.UserProfileService.Worker.Kafka;
+using FlowChat.UserProfileService.Consumers.Kafka;
 using MediatR;
 using Microsoft.Extensions.Logging.Abstractions;
 

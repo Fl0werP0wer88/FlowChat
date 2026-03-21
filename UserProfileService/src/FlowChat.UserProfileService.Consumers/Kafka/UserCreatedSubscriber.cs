@@ -4,7 +4,7 @@ using FlowChat.UserProfileService.Application.UserProfiles.Commands.CreateInitia
 using MediatR;
 using Silverback.Messaging.Subscribers;
 
-namespace FlowChat.UserProfileService.Worker.Kafka;
+namespace FlowChat.UserProfileService.Consumers.Kafka;
 
 public sealed class UserCreatedSubscriber(
     IMediator mediator,
