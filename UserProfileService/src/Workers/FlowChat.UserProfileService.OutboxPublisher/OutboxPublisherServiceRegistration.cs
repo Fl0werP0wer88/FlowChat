@@ -1,7 +1,7 @@
 using FlowChat.Messaging.Contracts.UserProfileService.Events;
-using FlowChat.UserProfileService.Infrastructure.Kafka;
+using FlowChat.UserProfileService.OutboxPublisher.Configuration;
+using FlowChat.UserProfileService.OutboxPublisher.Kafka;
 using FlowChat.UserProfileService.Persistence;
-using FlowChat.UserProfileService.Persistence.Configuration;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Silverback.Configuration;

@@ -1,4 +1,4 @@
-namespace FlowChat.UserProfileService.Persistence.Configuration;
+namespace FlowChat.UserProfileService.OutboxPublisher.Configuration;
 
 public sealed class OutboxPublisherRuntimeOptions
 {
