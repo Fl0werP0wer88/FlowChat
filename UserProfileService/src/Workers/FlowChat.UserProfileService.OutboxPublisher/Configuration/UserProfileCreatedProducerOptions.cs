@@ -1,4 +1,4 @@
-namespace FlowChat.UserProfileService.OutboxPublisher.Kafka;
+namespace FlowChat.UserProfileService.OutboxPublisher.Configuration;
 
 public sealed class UserProfileCreatedProducerOptions
 {
