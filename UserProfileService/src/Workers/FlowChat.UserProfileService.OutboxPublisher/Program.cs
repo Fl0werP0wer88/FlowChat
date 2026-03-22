@@ -15,6 +15,9 @@ try
     builder.Services.AddOutboxPublisher(builder.Configuration);
     builder.Services.AddDbContext<AppDbContext>(options =>
         options.UseNpgsql(builder.Configuration.GetConnectionString("UserProfileDb")));
+    builder.Services.AddDbContextFactory<AppDbContext>(
+        options => options.UseNpgsql(builder.Configuration.GetConnectionString("UserProfileDb")),
+        ServiceLifetime.Scoped);
 
     host = builder.Build();
     await host.RunAsync();
