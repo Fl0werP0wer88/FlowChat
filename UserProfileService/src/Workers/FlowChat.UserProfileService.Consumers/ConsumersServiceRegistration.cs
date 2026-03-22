@@ -40,7 +40,6 @@ public static class ConsumersServiceRegistration
             .WithConnectionToMessageBroker(options =>
             {
                 options.AddKafka();
-                options.AddEntityFrameworkKafkaOffsetStore();
                 options.AddEntityFrameworkOutbox();
             })
             .AddKafkaClients(clients =>

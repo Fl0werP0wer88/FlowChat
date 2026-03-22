@@ -1,6 +1,5 @@
 using FlowChat.UserProfileService.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
-using Silverback.Messaging.Consuming.KafkaOffsetStore;
 using Silverback.Messaging.Producing.TransactionalOutbox;
 
 namespace FlowChat.UserProfileService.Persistence;
@@ -15,7 +14,6 @@ public class AppDbContext : DbContext
     public DbSet<UserProfile> UserProfiles { get; set; }
     public DbSet<Email> Emails { get; set; }
     public DbSet<Phone> Phones { get; set; }
-    public DbSet<SilverbackStoredOffset> SilverbackStoredOffsets => Set<SilverbackStoredOffset>();
     public DbSet<SilverbackOutboxMessage> SilverbackOutboxMessages => Set<SilverbackOutboxMessage>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

@@ -164,27 +164,6 @@ namespace FlowChat.UserProfileService.Persistence.Migrations
                     b.ToTable("UserProfiles", (string)null);
                 });
 
-            modelBuilder.Entity("Silverback.Messaging.Consuming.KafkaOffsetStore.SilverbackStoredOffset", b =>
-                {
-                    b.Property<string>("GroupId")
-                        .HasMaxLength(300)
-                        .HasColumnType("character varying(300)");
-
-                    b.Property<string>("Topic")
-                        .HasMaxLength(300)
-                        .HasColumnType("character varying(300)");
-
-                    b.Property<int>("Partition")
-                        .HasColumnType("integer");
-
-                    b.Property<long>("Offset")
-                        .HasColumnType("bigint");
-
-                    b.HasKey("GroupId", "Topic", "Partition");
-
-                    b.ToTable("SilverbackStoredOffsets");
-                });
-
             modelBuilder.Entity("Silverback.Messaging.Producing.TransactionalOutbox.SilverbackOutboxMessage", b =>
                 {
                     b.Property<long>("Id")
