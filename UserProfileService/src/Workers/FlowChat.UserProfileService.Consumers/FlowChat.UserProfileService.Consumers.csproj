@@ -3,9 +3,6 @@
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\Common\src\FlowChat.API.Abstractions\FlowChat.API.Abstractions.csproj" />
     <ProjectReference Include="..\..\..\..\Common\src\FlowChat.Messaging.Contracts\FlowChat.Messaging.Contracts.csproj" />
-    <ProjectReference Include="..\..\FlowChat.UserProfileService.Application\FlowChat.UserProfileService.Application.csproj" />
-    <ProjectReference Include="..\..\FlowChat.UserProfileService.Infrastructure\FlowChat.UserProfileService.Infrastructure.csproj" />
-    <ProjectReference Include="..\..\FlowChat.UserProfileService.Persistence\FlowChat.UserProfileService.Persistence.csproj" />
   </ItemGroup>
 
   <PropertyGroup>
@@ -17,6 +14,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="10.0.3" />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.3" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.3" />
     <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.3" />
     <PackageReference Include="Silverback.Integration.Kafka" Version="5.0.0" />

@@ -1,9 +1,8 @@
 using Confluent.Kafka;
 using FlowChat.Messaging.Contracts.AuthService.Events;
-using FlowChat.Messaging.Contracts.UserProfileService.Events;
+using FlowChat.UserProfileService.Consumers.Configuration;
 using FlowChat.UserProfileService.Consumers.Kafka;
-using FlowChat.UserProfileService.Infrastructure.Kafka;
-using FlowChat.UserProfileService.Persistence;
+using FlowChat.UserProfileService.Consumers.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Silverback.Configuration;
@@ -22,42 +21,17 @@ public static class ConsumersServiceRegistration
             .GetSection(UserCreatedConsumerOptions.SectionName)
             .Get<UserCreatedConsumerOptions>()
             ?? new UserCreatedConsumerOptions();
-        var createdProducerOptions = configuration
-            .GetSection(UserProfileCreatedProducerOptions.SectionName)
-            .Get<UserProfileCreatedProducerOptions>()
-            ?? new UserProfileCreatedProducerOptions();
-        var stateChangedProducerOptions = configuration
-            .GetSection(UserProfileStateChangedProducerOptions.SectionName)
-            .Get<UserProfileStateChangedProducerOptions>()
-            ?? new UserProfileStateChangedProducerOptions();
-        var bootstrapServers = !string.IsNullOrWhiteSpace(createdProducerOptions.BootstrapServers)
-            ? createdProducerOptions.BootstrapServers
-            : !string.IsNullOrWhiteSpace(stateChangedProducerOptions.BootstrapServers)
-                ? stateChangedProducerOptions.BootstrapServers
-                : consumerOptions.BootstrapServers;
+
+        services.AddOptions<UserProfileApiSettings>()
+            .BindConfiguration(UserProfileApiSettings.SectionName);
+        services.AddHttpClient<IUserProfileInternalApiClient, UserProfileInternalApiClient>();
 
         services.AddSilverback()
-            .WithConnectionToMessageBroker(options =>
-            {
-                options.AddKafka();
-                options.AddEntityFrameworkOutbox();
-            })
+            .WithConnectionToMessageBroker(options => options.AddKafka())
             .AddKafkaClients(clients =>
             {
                 clients
-                    .WithBootstrapServers(bootstrapServers)
-                    .AddProducer(producer => producer
-                        .Produce<UserProfileCreatedIntegrationEvent>("user-profile-created", endpoint => endpoint
-                            .ProduceTo(createdProducerOptions.Topic)
-                            .SetKafkaKey(message => message?.UserProfileId)
-                            .SerializeAsJson(serializer => serializer.SetTypeHeader())
-                            .StoreToOutbox(outbox => outbox.UseEntityFramework<AppDbContext>())))
-                    .AddProducer(producer => producer
-                        .Produce<UserProfileStateChangedIntegrationEvent>("user-profile-state-changed", endpoint => endpoint
-                            .ProduceTo(stateChangedProducerOptions.Topic)
-                            .SetKafkaKey(message => message?.UserProfileId)
-                            .SerializeAsJson(serializer => serializer.SetTypeHeader())
-                            .StoreToOutbox(outbox => outbox.UseEntityFramework<AppDbContext>())))
+                    .WithBootstrapServers(consumerOptions.BootstrapServers)
                     .AddConsumer(consumer => consumer
                         .WithGroupId(consumerOptions.GroupId)
                         .WithAutoOffsetReset(ParseAutoOffsetReset(consumerOptions.AutoOffsetReset))

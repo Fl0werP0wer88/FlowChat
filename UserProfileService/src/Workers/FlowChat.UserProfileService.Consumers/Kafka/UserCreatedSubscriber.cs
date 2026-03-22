@@ -1,13 +1,12 @@
-using FlowChat.Domain.Abstractions;
 using FlowChat.Messaging.Contracts.AuthService.Events;
-using FlowChat.UserProfileService.Application.UserProfiles.Commands.CreateInitialUserProfile;
-using MediatR;
+using FlowChat.UserProfileService.Consumers.Services;
+using FlowChat.UserProfileService.Consumers.UserProfileApi.Contracts;
 using Silverback.Messaging.Subscribers;
 
 namespace FlowChat.UserProfileService.Consumers.Kafka;
 
 public sealed class UserCreatedSubscriber(
-    IMediator mediator,
+    IUserProfileInternalApiClient userProfileInternalApiClient,
     ILogger<UserCreatedSubscriber> logger)
 {
     [Subscribe]
@@ -31,35 +30,18 @@ public sealed class UserCreatedSubscriber(
 
         try
         {
-            var result = await mediator.Send(
-                new CreateInitialUserProfileCommand(
-                    userName,
-                    displayName,
-                    null,
-                    null,
-                    message.Email,
-                    message.PhoneNumber,
-                    userId.Value),
+            await userProfileInternalApiClient.CreateInitialUserProfileAsync(
+                new CreateInitialUserProfileRequest
+                {
+                    UserName = userName,
+                    DisplayName = displayName,
+                    AvatarUrl = null,
+                    Bio = null,
+                    Email = message.Email,
+                    Phone = message.PhoneNumber,
+                    UserId = userId.Value
+                },
                 cancellationToken);
-
-            if (result.IsSuccess)
-            {
-                return;
-            }
-
-            if (result.Error.ErrorType == ErrorType.Conflict
-                || result.Error.ErrorType == ErrorType.Validation
-                || result.Error.ErrorType == ErrorType.BadRequest)
-            {
-                logger.LogInformation(
-                    "Skipping user profile creation for user {UserId}. Reason: {Reason}",
-                    userId.Value,
-                    result.Error.ErrorMessage);
-
-                throw new InvalidOperationException(result.Error.ErrorMessage);
-            }
-
-            throw new InvalidOperationException(result.Error.ErrorMessage);
         }
         catch (InvalidOperationException ex)
         {
