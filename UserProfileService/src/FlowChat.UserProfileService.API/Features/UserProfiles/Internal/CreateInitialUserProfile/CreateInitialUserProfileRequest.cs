@@ -1,4 +1,4 @@
-namespace FlowChat.UserProfileService.Api.Features.Internal.CreateInitialUserProfile;
+namespace FlowChat.UserProfileService.Api.Features.UserProfiles.Internal.CreateInitialUserProfile;
 
 public sealed class CreateInitialUserProfileRequest
 {

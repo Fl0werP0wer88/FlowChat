@@ -3,7 +3,7 @@ using FlowChat.UserProfileService.Application.UserProfiles.Commands.AddPhone;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
-namespace FlowChat.UserProfileService.Api.Features.UserProfiles.AddPhone;
+namespace FlowChat.UserProfileService.Api.Features.UserProfiles.Public.AddPhone;
 
 [ApiController]
 [Route("api/userprofiles")]

@@ -3,7 +3,7 @@ using FlowChat.UserProfileService.Application.UserProfiles.Commands.SetMainPhone
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
-namespace FlowChat.UserProfileService.Api.Features.UserProfiles.SetMainPhone;
+namespace FlowChat.UserProfileService.Api.Features.UserProfiles.Public.SetMainPhone;
 
 [ApiController]
 [Route("api/userprofiles")]

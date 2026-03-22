@@ -4,12 +4,12 @@ using FlowChat.UserProfileService.Infrastructure.Configuration;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
-namespace FlowChat.UserProfileService.Api.Features.Internal.CreateInitialUserProfile;
+namespace FlowChat.UserProfileService.Api.Features.UserProfiles.Internal.CreateInitialUserProfile;
 
 [ApiController]
 [ApiExplorerSettings(IgnoreApi = true)]
 [Route("internal/userprofiles")]
-public sealed class InternalUserProfilesController(
+public sealed class CreateInitialUserProfileController(
     IMediator mediator,
     IApiSettingsManager apiSettingsManager) : ApiControllerBase
 {

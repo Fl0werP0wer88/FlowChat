@@ -1,6 +1,6 @@
 using CSharpFunctionalExtensions;
 using FlowChat.Domain.Abstractions;
-using FlowChat.UserProfileService.Api.Features.Internal.CreateInitialUserProfile;
+using FlowChat.UserProfileService.Api.Features.UserProfiles.Internal.CreateInitialUserProfile;
 using FlowChat.UserProfileService.Application.UserProfiles.Commands.CreateInitialUserProfile;
 using FlowChat.UserProfileService.Infrastructure.Configuration;
 using MediatR;
@@ -12,7 +12,7 @@ using Microsoft.Extensions.Configuration;
 
 namespace FlowChat.UserProfileService.UnitTests;
 
-public sealed class InternalUserProfilesControllerTests
+public sealed class CreateInitialUserProfileControllerTests
 {
     [Fact]
     public async Task CreateInitialUserProfile_WhenApiKeyMissing_ReturnsUnauthorized()
@@ -69,7 +69,7 @@ public sealed class InternalUserProfilesControllerTests
         Assert.Equal("john@example.com", command.Email);
     }
 
-    private static InternalUserProfilesController CreateController(string apiKey, out CapturingMediator mediator)
+    private static CreateInitialUserProfileController CreateController(string apiKey, out CapturingMediator mediator)
     {
         mediator = new CapturingMediator();
         var configuration = new ConfigurationBuilder()
@@ -79,7 +79,7 @@ public sealed class InternalUserProfilesControllerTests
             })
             .Build();
 
-        return new InternalUserProfilesController(mediator, new ApiSettingsManager(configuration));
+        return new CreateInitialUserProfileController(mediator, new ApiSettingsManager(configuration));
     }
 
     private sealed class CapturingMediator : IMediator

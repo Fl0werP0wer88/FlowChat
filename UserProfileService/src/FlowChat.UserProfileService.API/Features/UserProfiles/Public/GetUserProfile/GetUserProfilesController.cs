@@ -3,7 +3,7 @@ using FlowChat.UserProfileService.Application.UserProfiles.Queries.GetUserProfil
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
-namespace FlowChat.UserProfileService.Api.Features.UserProfiles.GetUserProfile;
+namespace FlowChat.UserProfileService.Api.Features.UserProfiles.Public.GetUserProfile;
 
 [ApiController]
 [Route("api/userprofiles")]

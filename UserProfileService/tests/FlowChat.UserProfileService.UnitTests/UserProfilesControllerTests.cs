@@ -1,8 +1,8 @@
 using CSharpFunctionalExtensions;
 using FlowChat.Domain.Abstractions;
-using FlowChat.UserProfileService.Api.Features.UserProfiles.AddEmail;
-using FlowChat.UserProfileService.Api.Features.UserProfiles.AddPhone;
-using FlowChat.UserProfileService.Api.Features.UserProfiles.GetUserProfile;
+using FlowChat.UserProfileService.Api.Features.UserProfiles.Public.AddEmail;
+using FlowChat.UserProfileService.Api.Features.UserProfiles.Public.AddPhone;
+using FlowChat.UserProfileService.Api.Features.UserProfiles.Public.GetUserProfile;
 using FlowChat.UserProfileService.Application.UserProfiles.Commands.AddEmail;
 using FlowChat.UserProfileService.Application.UserProfiles.Commands.AddPhone;
 using FlowChat.UserProfileService.Application.UserProfiles.Queries.GetUserProfile;

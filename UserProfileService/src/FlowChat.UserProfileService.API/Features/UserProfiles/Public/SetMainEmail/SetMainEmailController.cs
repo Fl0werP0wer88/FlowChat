@@ -3,7 +3,7 @@ using FlowChat.UserProfileService.Application.UserProfiles.Commands.SetMainEmail
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
-namespace FlowChat.UserProfileService.Api.Features.UserProfiles.SetMainEmail;
+namespace FlowChat.UserProfileService.Api.Features.UserProfiles.Public.SetMainEmail;
 
 [ApiController]
 [Route("api/userprofiles")]
