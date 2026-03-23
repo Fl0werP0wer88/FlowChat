@@ -39,13 +39,13 @@
       }
     },
     {
-      "name": "SocialGraphService Worker",
+      "name": "SocialGraphService Consumers",
       "type": "coreclr",
       "request": "launch",
-      "preLaunchTask": "build: SocialGraphService Worker",
-      "program": "${workspaceFolder}/src/FlowChat.SocialGraphService.Worker/bin/Debug/net10.0/FlowChat.SocialGraphService.Worker.dll",
+      "preLaunchTask": "build: SocialGraphService Consumers",
+      "program": "${workspaceFolder}/src/Workers/FlowChat.SocialGraphService.Consumers/bin/Debug/net10.0/FlowChat.SocialGraphService.Consumers.dll",
       "args": [],
-      "cwd": "${workspaceFolder}/src/FlowChat.SocialGraphService.Worker",
+      "cwd": "${workspaceFolder}/src/Workers/FlowChat.SocialGraphService.Consumers",
       "stopAtEntry": false,
       "console": "integratedTerminal",
       "env": {
@@ -53,12 +53,12 @@
       }
     },
     {
-      "name": "SocialGraphService Worker (No Build)",
+      "name": "SocialGraphService Consumers (No Build)",
       "type": "coreclr",
       "request": "launch",
-      "program": "${workspaceFolder}/src/FlowChat.SocialGraphService.Worker/bin/Debug/net10.0/FlowChat.SocialGraphService.Worker.dll",
+      "program": "${workspaceFolder}/src/Workers/FlowChat.SocialGraphService.Consumers/bin/Debug/net10.0/FlowChat.SocialGraphService.Consumers.dll",
       "args": [],
-      "cwd": "${workspaceFolder}/src/FlowChat.SocialGraphService.Worker",
+      "cwd": "${workspaceFolder}/src/Workers/FlowChat.SocialGraphService.Consumers",
       "stopAtEntry": false,
       "console": "integratedTerminal",
       "env": {
@@ -69,9 +69,9 @@
   "compounds": [
     {
       "name": "SocialGraphService",
-      "configurations": [
+        "configurations": [
         "SocialGraphService API",
-        "SocialGraphService Worker"
+        "SocialGraphService Consumers"
       ],
       "stopAll": true
     }

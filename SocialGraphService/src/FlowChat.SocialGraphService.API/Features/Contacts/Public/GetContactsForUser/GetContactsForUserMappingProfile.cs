@@ -1,6 +1,6 @@
 using FlowChat.SocialGraphService.Application.Contacts.Queries.GetContactsForUser;
 
-namespace FlowChat.SocialGraphService.Api.Features.Contacts.GetContactsForUser;
+namespace FlowChat.SocialGraphService.Api.Features.Contacts.Public.GetContactsForUser;
 
 public sealed class GetContactsForUserMappingProfile : Profile
 {

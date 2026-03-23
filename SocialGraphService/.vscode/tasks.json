@@ -17,12 +17,12 @@
       "problemMatcher": "$msCompile"
     },
     {
-      "label": "build: SocialGraphService Worker",
+      "label": "build: SocialGraphService Consumers",
       "type": "process",
       "command": "dotnet",
       "args": [
         "build",
-        "${workspaceFolder}/src/FlowChat.SocialGraphService.Worker/FlowChat.SocialGraphService.Worker.csproj",
+        "${workspaceFolder}/src/Workers/FlowChat.SocialGraphService.Consumers/FlowChat.SocialGraphService.Consumers.csproj",
         "-c",
         "Debug"
       ],

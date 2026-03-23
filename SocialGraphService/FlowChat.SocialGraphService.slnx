@@ -5,7 +5,9 @@
     <Project Path="src/FlowChat.SocialGraphService.Domain/FlowChat.SocialGraphService.Domain.csproj" />
     <Project Path="src/FlowChat.SocialGraphService.Infrastructure/FlowChat.SocialGraphService.Infrastructure.csproj" />
     <Project Path="src/FlowChat.SocialGraphService.Persistence/FlowChat.SocialGraphService.Persistence.csproj" />
-    <Project Path="src/FlowChat.SocialGraphService.Worker/FlowChat.SocialGraphService.Worker.csproj" />
+  </Folder>
+  <Folder Name="/src/Workers/">
+    <Project Path="src/Workers/FlowChat.SocialGraphService.Consumers/FlowChat.SocialGraphService.Consumers.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/FlowChat.SocialGraphService.AATs/FlowChat.SocialGraphService.AATs.csproj" />

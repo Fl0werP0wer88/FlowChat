@@ -1,4 +1,4 @@
-namespace FlowChat.SocialGraphService.Worker.Kafka;
+namespace FlowChat.SocialGraphService.Consumers.Kafka;
 
 public sealed class UserProfileConsumerOptions
 {

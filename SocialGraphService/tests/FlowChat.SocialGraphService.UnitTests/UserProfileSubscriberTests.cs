@@ -1,8 +1,7 @@
-using FlowChat.Application.Abstractions;
 using FlowChat.Messaging.Contracts.UserProfileService.Events;
-using FlowChat.SocialGraphService.Application.Contracts.Persistence;
-using FlowChat.SocialGraphService.Application.UserProfiles;
-using FlowChat.SocialGraphService.Worker.Kafka;
+using FlowChat.SocialGraphService.Consumers.Kafka;
+using FlowChat.SocialGraphService.Consumers.Services;
+using FlowChat.SocialGraphService.Consumers.SocialGraph.Contracts;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace FlowChat.SocialGraphService.UnitTests;
@@ -10,13 +9,11 @@ namespace FlowChat.SocialGraphService.UnitTests;
 public sealed class UserProfileSubscriberTests
 {
     [Fact]
-    public async Task HandleAsync_WhenProfileCreatedEventArrives_CreatesReadModel()
+    public async Task HandleAsync_WhenProfileCreatedEventArrives_PostsNormalizedReadModel()
     {
-        var repository = new FakeUserProfileReadModelRepository(upsertResult: true);
-        var unitOfWork = new FakeUnitOfWork();
+        var apiClient = new FakeSocialGraphInternalApiClient();
         var subscriber = new UserProfileSubscriber(
-            repository,
-            unitOfWork,
+            apiClient,
             NullLogger<UserProfileSubscriber>.Instance);
 
         var userProfileId = Guid.NewGuid();
@@ -37,25 +34,22 @@ public sealed class UserProfileSubscriberTests
             },
             CancellationToken.None);
 
-        Assert.NotNull(repository.LastUpsertedReadModel);
-        Assert.Equal(userProfileId, repository.LastUpsertedReadModel.UserProfileId);
-        Assert.Equal("john.doe", repository.LastUpsertedReadModel.UserName);
-        Assert.Equal("John Doe", repository.LastUpsertedReadModel.DisplayName);
-        Assert.Equal("john@flowchat.local", repository.LastUpsertedReadModel.MainEmail);
-        Assert.Equal("+48123123123", repository.LastUpsertedReadModel.MainPhone);
-        Assert.Equal("https://cdn.example/avatar.png", repository.LastUpsertedReadModel.AvatarUrl);
-        Assert.Equal("hello", repository.LastUpsertedReadModel.Bio);
-        Assert.Equal(1, unitOfWork.SaveChangesCallCount);
+        Assert.NotNull(apiClient.LastRequest);
+        Assert.Equal(userProfileId, apiClient.LastRequest!.UserProfileId);
+        Assert.Equal("john.doe", apiClient.LastRequest.UserName);
+        Assert.Equal("John Doe", apiClient.LastRequest.DisplayName);
+        Assert.Equal("john@flowchat.local", apiClient.LastRequest.MainEmail);
+        Assert.Equal("+48123123123", apiClient.LastRequest.MainPhone);
+        Assert.Equal("https://cdn.example/avatar.png", apiClient.LastRequest.AvatarUrl);
+        Assert.Equal("hello", apiClient.LastRequest.Bio);
     }
 
     [Fact]
-    public async Task HandleAsync_WhenStateChangedEventArrives_UpdatesReadModel()
+    public async Task HandleAsync_WhenStateChangedEventArrives_PostsReadModel()
     {
-        var repository = new FakeUserProfileReadModelRepository(upsertResult: false);
-        var unitOfWork = new FakeUnitOfWork();
+        var apiClient = new FakeSocialGraphInternalApiClient();
         var subscriber = new UserProfileSubscriber(
-            repository,
-            unitOfWork,
+            apiClient,
             NullLogger<UserProfileSubscriber>.Instance);
 
         var userProfileId = Guid.NewGuid();
@@ -76,22 +70,19 @@ public sealed class UserProfileSubscriberTests
             },
             CancellationToken.None);
 
-        Assert.NotNull(repository.LastUpsertedReadModel);
-        Assert.Equal("jane.doe", repository.LastUpsertedReadModel.UserName);
-        Assert.Equal("Jane Doe", repository.LastUpsertedReadModel.DisplayName);
-        Assert.False(repository.LastUpsertedReadModel.IsActive);
-        Assert.True(repository.LastUpsertedReadModel.IsPhoneVisible);
-        Assert.Equal(1, unitOfWork.SaveChangesCallCount);
+        Assert.NotNull(apiClient.LastRequest);
+        Assert.Equal("jane.doe", apiClient.LastRequest!.UserName);
+        Assert.Equal("Jane Doe", apiClient.LastRequest.DisplayName);
+        Assert.False(apiClient.LastRequest.IsActive);
+        Assert.True(apiClient.LastRequest.IsPhoneVisible);
     }
 
     [Fact]
     public async Task HandleAsync_WhenUserProfileIdIsMissing_ThrowsInvalidOperationException()
     {
-        var repository = new FakeUserProfileReadModelRepository(upsertResult: true);
-        var unitOfWork = new FakeUnitOfWork();
+        var apiClient = new FakeSocialGraphInternalApiClient();
         var subscriber = new UserProfileSubscriber(
-            repository,
-            unitOfWork,
+            apiClient,
             NullLogger<UserProfileSubscriber>.Instance);
 
         await Assert.ThrowsAsync<InvalidOperationException>(() => subscriber.HandleAsync(
@@ -103,42 +94,19 @@ public sealed class UserProfileSubscriberTests
             },
             CancellationToken.None));
 
-        Assert.Null(repository.LastUpsertedReadModel);
-        Assert.Equal(0, unitOfWork.SaveChangesCallCount);
+        Assert.Null(apiClient.LastRequest);
     }
 
-    private sealed class FakeUserProfileReadModelRepository(bool upsertResult) : IUserProfileReadModelRepository
+    private sealed class FakeSocialGraphInternalApiClient : ISocialGraphInternalApiClient
     {
-        public UserProfileReadModel? LastUpsertedReadModel { get; private set; }
+        public UpsertUserProfileReadModelRequest? LastRequest { get; private set; }
 
-        public Task<bool> UpsertAsync(UserProfileReadModel readModel, CancellationToken cancellationToken = default)
-        {
-            LastUpsertedReadModel = readModel;
-            return Task.FromResult(upsertResult);
-        }
-    }
-
-    private sealed class FakeUnitOfWork : IUnitOfWork
-    {
-        public int SaveChangesCallCount { get; private set; }
-
-        public void Dispose()
-        {
-        }
-
-        public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
-        {
-            SaveChangesCallCount++;
-            return Task.FromResult(1);
-        }
-
-        public async Task<T> ExecuteInTransactionAsync<T>(
-            Func<CancellationToken, Task<T>> operation,
+        public Task UpsertUserProfileReadModelAsync(
+            UpsertUserProfileReadModelRequest request,
             CancellationToken cancellationToken)
         {
-            var result = await operation(cancellationToken);
-            SaveChangesCallCount++;
-            return result;
+            LastRequest = request;
+            return Task.CompletedTask;
         }
     }
 }

@@ -4,7 +4,7 @@ using FlowChat.SocialGraphService.Application.Contacts.Queries.GetContactsForUse
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
-namespace FlowChat.SocialGraphService.Api.Features.Contacts.GetContactsForUser;
+namespace FlowChat.SocialGraphService.Api.Features.Contacts.Public.GetContactsForUser;
 
 [ApiController]
 [Route("api/[controller]")]

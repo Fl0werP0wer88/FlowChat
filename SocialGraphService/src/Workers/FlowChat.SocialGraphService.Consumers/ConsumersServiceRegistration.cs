@@ -1,50 +1,56 @@
 using Confluent.Kafka;
-using FlowChat.SocialGraphService.Worker.Configuration;
-using FlowChat.SocialGraphService.Worker.Kafka;
+using FlowChat.SocialGraphService.Consumers.Configuration;
+using FlowChat.SocialGraphService.Consumers.Kafka;
+using FlowChat.SocialGraphService.Consumers.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using Silverback.Configuration;
 using Silverback.Messaging.Configuration;
 using Silverback.Messaging.Configuration.Kafka;
 
-namespace FlowChat.SocialGraphService.Worker;
+namespace FlowChat.SocialGraphService.Consumers;
 
-public static class WorkerServiceRegistration
+public static class ConsumersServiceRegistration
 {
-    public static IServiceCollection AddWorkerKafkaConsumer(
+    public static IServiceCollection AddConsumers(
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        var settingsManager = new WorkerSettingsManager(configuration);
-        services.TryAddSingleton<IWorkerSettingsManager>(settingsManager);
-        var userProfileConsumerOptions = settingsManager.GetUserProfileConsumerOptions();
+        var consumerOptions = configuration
+            .GetSection(UserProfileConsumerOptions.SectionName)
+            .Get<UserProfileConsumerOptions>()
+            ?? new UserProfileConsumerOptions();
+
+        services.AddOptions<SocialGraphApiSettings>()
+            .BindConfiguration(SocialGraphApiSettings.SectionName);
+        services.AddHttpClient<ISocialGraphInternalApiClient, SocialGraphInternalApiClient>();
+
         services.AddSilverback()
             .WithConnectionToMessageBroker(options => options.AddKafka())
             .AddKafkaClients(clients =>
             {
                 clients
-                    .WithBootstrapServers(userProfileConsumerOptions.BootstrapServers)
+                    .WithBootstrapServers(consumerOptions.BootstrapServers)
                     .AddConsumer(consumer => consumer
-                        .WithGroupId(userProfileConsumerOptions.GroupId)
-                        .WithAutoOffsetReset(ParseAutoOffsetReset(userProfileConsumerOptions.AutoOffsetReset))
+                        .WithGroupId(consumerOptions.GroupId)
+                        .WithAutoOffsetReset(ParseAutoOffsetReset(consumerOptions.AutoOffsetReset))
                         .Consume(endpoint => endpoint
-                            .ConsumeFrom(userProfileConsumerOptions.Topic)
+                            .ConsumeFrom(consumerOptions.Topic)
                             .DeserializeJson(deserializer => deserializer.WithOptionalMessageTypeHeader())
                             .IgnoreUnhandledMessages()
                             .OnError(policy =>
                             {
-                                policy.MoveTo(userProfileConsumerOptions.DeadLetterTopic, move => move
+                                policy.MoveTo(consumerOptions.DeadLetterTopic, move => move
                                     .ApplyTo<InvalidOperationException>());
 
                                 policy.Retry(retry => retry
-                                        .WithMaxRetries(userProfileConsumerOptions.MaxRetryCount)
+                                        .WithMaxRetries(consumerOptions.MaxRetryCount)
                                         .Exclude<InvalidOperationException>()
                                         .WithExponentialDelay(
-                                            TimeSpan.FromSeconds(userProfileConsumerOptions.RetryBaseDelaySeconds),
+                                            TimeSpan.FromSeconds(consumerOptions.RetryBaseDelaySeconds),
                                             2,
-                                            TimeSpan.FromSeconds(userProfileConsumerOptions.RetryMaxDelaySeconds)))
-                                    .ThenMoveTo(userProfileConsumerOptions.DeadLetterTopic, move => move
+                                            TimeSpan.FromSeconds(consumerOptions.RetryMaxDelaySeconds)))
+                                    .ThenMoveTo(consumerOptions.DeadLetterTopic, move => move
                                         .Exclude<InvalidOperationException>());
                             })));
             })

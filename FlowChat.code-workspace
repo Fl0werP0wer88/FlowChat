@@ -223,7 +223,7 @@
           },
           {
             "folder": "SocialGraphService",
-            "name": "SocialGraphService Worker (No Build)"
+            "name": "SocialGraphService Consumers (No Build)"
           }
         ],
         "stopAll": true
@@ -322,7 +322,7 @@
           },
           {
             "folder": "SocialGraphService",
-            "name": "SocialGraphService Worker (No Build)"
+            "name": "SocialGraphService Consumers (No Build)"
           }
         ],
         "stopAll": true
@@ -385,7 +385,7 @@
           },
           {
             "folder": "SocialGraphService",
-            "name": "SocialGraphService Worker (No Build)"
+            "name": "SocialGraphService Consumers (No Build)"
           },
           {
             "folder": "GatewayService",

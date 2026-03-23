@@ -24,4 +24,8 @@ public sealed class ApiSettingsManager : IApiSettingsManager
 
         return settings;
     }
+
+    public InternalApiSettings GetInternalApiSettings() =>
+        _configuration.GetSection(InternalApiSettings.SectionName).Get<InternalApiSettings>()
+        ?? new InternalApiSettings();
 }
