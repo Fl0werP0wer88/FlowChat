@@ -1,5 +1,5 @@
 using FlowChat.Messaging.Contracts.ChatService.Events;
-using FlowChat.RealtimeService.Worker.Kafka;
+using FlowChat.RealtimeService.Consumers.Kafka;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace FlowChat.RealtimeService.UnitTests;

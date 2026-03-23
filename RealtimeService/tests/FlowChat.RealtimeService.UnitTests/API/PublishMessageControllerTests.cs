@@ -1,6 +1,5 @@
-using FlowChat.RealtimeService.Api.Controllers;
+using FlowChat.RealtimeService.Api.Features.Realtime.Internal.PublishMessage;
 using FlowChat.RealtimeService.Application.Messages.Commands.PublishMessage;
-using FlowChat.RealtimeService.Application.Presence.Commands.PublishPresenceChange;
 using FlowChat.RealtimeService.Infrastructure.Configuration;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -8,10 +7,10 @@ using Microsoft.Extensions.Configuration;
 
 namespace FlowChat.RealtimeService.UnitTests;
 
-public sealed class InternalRealtimeControllerTests
+public sealed class PublishMessageControllerTests
 {
     [Fact]
-    public async Task PublishMessage_WhenApiKeyMissing_ReturnsUnauthorized()
+    public async Task Publish_WhenApiKeyMissing_ReturnsUnauthorized()
     {
         var controller = CreateController("expected-key", out _);
         controller.ControllerContext = new ControllerContext
@@ -19,7 +18,7 @@ public sealed class InternalRealtimeControllerTests
             HttpContext = new DefaultHttpContext()
         };
 
-        var result = await controller.PublishMessage(
+        var result = await controller.Publish(
             new PublishMessageRequest
             {
                 MessageId = Guid.NewGuid(),
@@ -35,7 +34,7 @@ public sealed class InternalRealtimeControllerTests
     }
 
     [Fact]
-    public async Task PublishPresenceChange_WhenApiKeyMatches_DispatchesCommand()
+    public async Task Publish_WhenApiKeyMatches_DispatchesCommand()
     {
         var controller = CreateController("expected-key", out var mediator);
         var httpContext = new DefaultHttpContext();
@@ -45,21 +44,23 @@ public sealed class InternalRealtimeControllerTests
             HttpContext = httpContext
         };
 
-        var result = await controller.PublishPresenceChange(
-            new PublishPresenceChangeRequest
+        var result = await controller.Publish(
+            new PublishMessageRequest
             {
-                UserId = Guid.NewGuid(),
-                Status = "online",
-                ChangedAtUtc = new DateTime(2026, 3, 17, 11, 0, 0, DateTimeKind.Utc),
+                MessageId = Guid.NewGuid(),
+                ConversationId = Guid.NewGuid(),
+                SenderUserId = Guid.NewGuid(),
+                SenderDisplayName = "John Doe",
+                Text = "Hello",
                 RecipientUserIds = [Guid.NewGuid()]
             },
             CancellationToken.None);
 
         Assert.IsType<AcceptedResult>(result);
-        Assert.IsType<PublishPresenceChangeCommand>(mediator.LastSentRequest);
+        Assert.IsType<PublishMessageCommand>(mediator.LastSentRequest);
     }
 
-    private static InternalRealtimeController CreateController(string apiKey, out CapturingMediator mediator)
+    private static PublishMessageController CreateController(string apiKey, out CapturingMediator mediator)
     {
         mediator = new CapturingMediator();
         var configuration = new ConfigurationBuilder()
@@ -69,6 +70,6 @@ public sealed class InternalRealtimeControllerTests
             })
             .Build();
 
-        return new InternalRealtimeController(mediator, new ApiSettingsManager(configuration));
+        return new PublishMessageController(mediator, new ApiSettingsManager(configuration));
     }
 }

@@ -1,9 +1,9 @@
-using FlowChat.RealtimeService.Worker.Kafka;
+using FlowChat.RealtimeService.Consumers.Kafka;
 using Microsoft.Extensions.Configuration;
 
-namespace FlowChat.RealtimeService.Worker.Configuration;
+namespace FlowChat.RealtimeService.Consumers.Configuration;
 
-public sealed class WorkerSettingsManager(IConfiguration configuration) : IWorkerSettingsManager
+public sealed class ConsumersSettingsManager(IConfiguration configuration) : IConsumersSettingsManager
 {
     private readonly IConfiguration _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
 

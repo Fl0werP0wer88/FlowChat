@@ -208,7 +208,7 @@
           },
           {
             "folder": "RealtimeService",
-            "name": "RealtimeService Worker (No Build)"
+            "name": "RealtimeService Consumers (No Build)"
           }
         ],
         "stopAll": true
@@ -318,7 +318,7 @@
           },
           {
             "folder": "RealtimeService",
-            "name": "RealtimeService Worker (No Build)"
+            "name": "RealtimeService Consumers (No Build)"
           },
           {
             "folder": "SocialGraphService",
@@ -381,7 +381,7 @@
           },
           {
             "folder": "RealtimeService",
-            "name": "RealtimeService Worker (No Build)"
+            "name": "RealtimeService Consumers (No Build)"
           },
           {
             "folder": "SocialGraphService",

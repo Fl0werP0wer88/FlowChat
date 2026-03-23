@@ -1,9 +1,9 @@
 using FlowChat.Messaging.Contracts.UserProfileService.Events;
-using FlowChat.RealtimeService.Worker.Realtime.Contracts;
-using FlowChat.RealtimeService.Worker.Services;
+using FlowChat.RealtimeService.Consumers.Realtime.Contracts;
+using FlowChat.RealtimeService.Consumers.Services;
 using Silverback.Messaging.Subscribers;
 
-namespace FlowChat.RealtimeService.Worker.Kafka;
+namespace FlowChat.RealtimeService.Consumers.Kafka;
 
 public sealed class UserPresenceChangedSubscriber(
     IRealtimeInternalApiClient realtimeInternalApiClient,

@@ -1,5 +1,5 @@
-using FlowChat.RealtimeService.Worker.Configuration;
-using FlowChat.RealtimeService.Worker.Kafka;
+using FlowChat.RealtimeService.Consumers.Configuration;
+using FlowChat.RealtimeService.Consumers.Kafka;
 using Microsoft.Extensions.Configuration;
 
 namespace FlowChat.RealtimeService.UnitTests;
@@ -7,7 +7,7 @@ namespace FlowChat.RealtimeService.UnitTests;
 public sealed class WorkerSettingsManagerTests
 {
     [Fact]
-    public void WorkerSettingsManager_ResolvesConsumerSections()
+    public void ConsumersSettingsManager_ResolvesConsumerSections()
     {
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
@@ -21,7 +21,7 @@ public sealed class WorkerSettingsManagerTests
             })
             .Build();
 
-        var settingsManager = new WorkerSettingsManager(configuration);
+        var settingsManager = new ConsumersSettingsManager(configuration);
 
         Assert.Equal("broker:9092", settingsManager.GetChatMessageSentConsumerOptions().BootstrapServers);
         Assert.Equal("chat-topic", settingsManager.GetChatMessageSentConsumerOptions().Topic);
@@ -31,8 +31,8 @@ public sealed class WorkerSettingsManagerTests
     }
 
     [Theory]
-    [InlineData("RealtimeService/src/FlowChat.RealtimeService.Worker/appsettings.json")]
-    [InlineData("RealtimeService/src/FlowChat.RealtimeService.Worker/appsettings.Development.json")]
+    [InlineData("RealtimeService/src/Workers/FlowChat.RealtimeService.Consumers/appsettings.json")]
+    [InlineData("RealtimeService/src/Workers/FlowChat.RealtimeService.Consumers/appsettings.Development.json")]
     public void AppSettingsFiles_ExposeRequiredConsumerSections(string relativePath)
     {
         var configuration = new ConfigurationBuilder()

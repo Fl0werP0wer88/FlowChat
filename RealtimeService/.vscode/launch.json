@@ -39,13 +39,13 @@
       }
     },
     {
-      "name": "RealtimeService Worker",
+      "name": "RealtimeService Consumers",
       "type": "coreclr",
       "request": "launch",
-      "preLaunchTask": "build: RealtimeService Worker",
-      "program": "${workspaceFolder}/src/FlowChat.RealtimeService.Worker/bin/Debug/net10.0/FlowChat.RealtimeService.Worker.dll",
+      "preLaunchTask": "build: RealtimeService Consumers",
+      "program": "${workspaceFolder}/src/Workers/FlowChat.RealtimeService.Consumers/bin/Debug/net10.0/FlowChat.RealtimeService.Consumers.dll",
       "args": [],
-      "cwd": "${workspaceFolder}/src/FlowChat.RealtimeService.Worker",
+      "cwd": "${workspaceFolder}/src/Workers/FlowChat.RealtimeService.Consumers",
       "stopAtEntry": false,
       "console": "integratedTerminal",
       "env": {
@@ -53,12 +53,12 @@
       }
     },
     {
-      "name": "RealtimeService Worker (No Build)",
+      "name": "RealtimeService Consumers (No Build)",
       "type": "coreclr",
       "request": "launch",
-      "program": "${workspaceFolder}/src/FlowChat.RealtimeService.Worker/bin/Debug/net10.0/FlowChat.RealtimeService.Worker.dll",
+      "program": "${workspaceFolder}/src/Workers/FlowChat.RealtimeService.Consumers/bin/Debug/net10.0/FlowChat.RealtimeService.Consumers.dll",
       "args": [],
-      "cwd": "${workspaceFolder}/src/FlowChat.RealtimeService.Worker",
+      "cwd": "${workspaceFolder}/src/Workers/FlowChat.RealtimeService.Consumers",
       "stopAtEntry": false,
       "console": "integratedTerminal",
       "env": {
@@ -71,7 +71,7 @@
       "name": "RealtimeService",
       "configurations": [
         "RealtimeService API",
-        "RealtimeService Worker"
+        "RealtimeService Consumers"
       ],
       "stopAll": true
     }

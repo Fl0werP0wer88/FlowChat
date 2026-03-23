@@ -17,12 +17,12 @@
       "problemMatcher": "$msCompile"
     },
     {
-      "label": "build: RealtimeService Worker",
+      "label": "build: RealtimeService Consumers",
       "type": "process",
       "command": "dotnet",
       "args": [
         "build",
-        "${workspaceFolder}/src/FlowChat.RealtimeService.Worker/FlowChat.RealtimeService.Worker.csproj",
+        "${workspaceFolder}/src/Workers/FlowChat.RealtimeService.Consumers/FlowChat.RealtimeService.Consumers.csproj",
         "-c",
         "Debug"
       ],

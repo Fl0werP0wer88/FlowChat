@@ -1,7 +1,7 @@
 using Confluent.Kafka;
-using FlowChat.RealtimeService.Worker.Configuration;
-using FlowChat.RealtimeService.Worker.Kafka;
-using FlowChat.RealtimeService.Worker.Services;
+using FlowChat.RealtimeService.Consumers.Configuration;
+using FlowChat.RealtimeService.Consumers.Kafka;
+using FlowChat.RealtimeService.Consumers.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -9,28 +9,21 @@ using Silverback.Configuration;
 using Silverback.Messaging.Configuration;
 using Silverback.Messaging.Configuration.Kafka;
 
-namespace FlowChat.RealtimeService.Worker;
+namespace FlowChat.RealtimeService.Consumers;
 
-public static class WorkerServiceRegistration
+public static class ConsumersServiceRegistration
 {
-    public static IServiceCollection AddWorkerServices(
+    public static IServiceCollection AddConsumers(
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        services.TryAddSingleton<IWorkerSettingsManager>(new WorkerSettingsManager(configuration));
-        services.AddHttpClient<IRealtimeInternalApiClient, RealtimeInternalApiClient>();
+        var settingsManager = new ConsumersSettingsManager(configuration);
+        services.TryAddSingleton<IConsumersSettingsManager>(settingsManager);
 
-        return services;
-    }
-
-    public static IServiceCollection AddWorkerKafkaConsumer(
-        this IServiceCollection services,
-        IConfiguration configuration)
-    {
-        var settingsManager = new WorkerSettingsManager(configuration);
-        services.TryAddSingleton<IWorkerSettingsManager>(settingsManager);
         var chatMessageSentConsumerOptions = settingsManager.GetChatMessageSentConsumerOptions();
         var userPresenceChangedConsumerOptions = settingsManager.GetUserPresenceChangedConsumerOptions();
+
+        services.AddHttpClient<IRealtimeInternalApiClient, RealtimeInternalApiClient>();
 
         services.AddSilverback()
             .WithConnectionToMessageBroker(options => options.AddKafka())

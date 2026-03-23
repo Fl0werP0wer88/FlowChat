@@ -1,10 +1,10 @@
 using System.Net.Http.Json;
-using FlowChat.RealtimeService.Worker.Configuration;
-using FlowChat.RealtimeService.Worker.Realtime.Contracts;
+using FlowChat.RealtimeService.Consumers.Configuration;
+using FlowChat.RealtimeService.Consumers.Realtime.Contracts;
 
-namespace FlowChat.RealtimeService.Worker.Services;
+namespace FlowChat.RealtimeService.Consumers.Services;
 
-public sealed class RealtimeInternalApiClient(HttpClient httpClient, IWorkerSettingsManager settingsManager)
+public sealed class RealtimeInternalApiClient(HttpClient httpClient, IConsumersSettingsManager settingsManager)
     : IRealtimeInternalApiClient
 {
     public const string ApiKeyHeaderName = "X-Internal-Api-Key";

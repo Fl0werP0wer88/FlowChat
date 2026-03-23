@@ -1,4 +1,4 @@
-namespace FlowChat.RealtimeService.Worker.Realtime.Contracts;
+namespace FlowChat.RealtimeService.Consumers.Realtime.Contracts;
 
 public sealed class PublishPresenceChangeRequest
 {

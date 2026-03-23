@@ -1,4 +1,4 @@
-namespace FlowChat.RealtimeService.Worker.Kafka;
+namespace FlowChat.RealtimeService.Consumers.Kafka;
 
 public sealed class UserPresenceChangedConsumerOptions
 {

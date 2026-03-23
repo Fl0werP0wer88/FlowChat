@@ -4,8 +4,8 @@ using CSharpFunctionalExtensions;
 using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
 using FlowChat.Domain.Abstractions;
 using FlowChat.RealtimeService.Domain.Notifications;
-using FlowChat.RealtimeService.Worker.Realtime.Contracts;
-using FlowChat.RealtimeService.Worker.Services;
+using FlowChat.RealtimeService.Consumers.Realtime.Contracts;
+using FlowChat.RealtimeService.Consumers.Services;
 using MediatR;
 
 namespace FlowChat.RealtimeService.UnitTests;

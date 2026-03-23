@@ -1,8 +1,8 @@
-using FlowChat.RealtimeService.Worker.Kafka;
+using FlowChat.RealtimeService.Consumers.Kafka;
 
-namespace FlowChat.RealtimeService.Worker.Configuration;
+namespace FlowChat.RealtimeService.Consumers.Configuration;
 
-public interface IWorkerSettingsManager
+public interface IConsumersSettingsManager
 {
     ChatMessageSentConsumerOptions GetChatMessageSentConsumerOptions();
 

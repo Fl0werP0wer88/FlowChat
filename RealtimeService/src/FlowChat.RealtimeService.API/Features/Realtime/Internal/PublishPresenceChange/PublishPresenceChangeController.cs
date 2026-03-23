@@ -1,48 +1,23 @@
 using FlowChat.API.Abstractions;
-using FlowChat.RealtimeService.Application.Messages.Commands.PublishMessage;
 using FlowChat.RealtimeService.Application.Presence.Commands.PublishPresenceChange;
 using FlowChat.RealtimeService.Infrastructure.Configuration;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
-namespace FlowChat.RealtimeService.Api.Controllers;
+namespace FlowChat.RealtimeService.Api.Features.Realtime.Internal.PublishPresenceChange;
 
 [ApiController]
 [ApiExplorerSettings(IgnoreApi = true)]
 [Route("internal/realtime")]
-public sealed class InternalRealtimeController(IMediator mediator, IApiSettingsManager apiSettingsManager) : ApiControllerBase
+public sealed class PublishPresenceChangeController(IMediator mediator, IApiSettingsManager apiSettingsManager) : ApiControllerBase
 {
     private const string InternalApiKeyHeaderName = "X-Internal-Api-Key";
     private readonly IMediator _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
     private readonly IApiSettingsManager _apiSettingsManager = apiSettingsManager
         ?? throw new ArgumentNullException(nameof(apiSettingsManager));
 
-    [HttpPost("messages")]
-    public async Task<IActionResult> PublishMessage([FromBody] PublishMessageRequest request, CancellationToken cancellationToken)
-    {
-        if (!HasValidInternalApiKey())
-        {
-            return Unauthorized();
-        }
-
-        var result = await _mediator.Send(
-            new PublishMessageCommand(
-                request.MessageId,
-                request.ConversationId,
-                request.SenderUserId,
-                request.SenderDisplayName,
-                request.Text,
-                request.SentAtUtc,
-                request.RecipientUserIds),
-            cancellationToken);
-
-        return result.IsSuccess
-            ? Accepted()
-            : HandleError(result.Error);
-    }
-
     [HttpPost("presence")]
-    public async Task<IActionResult> PublishPresenceChange([FromBody] PublishPresenceChangeRequest request, CancellationToken cancellationToken)
+    public async Task<IActionResult> Publish([FromBody] PublishPresenceChangeRequest request, CancellationToken cancellationToken)
     {
         if (!HasValidInternalApiKey())
         {
