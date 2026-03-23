@@ -182,7 +182,7 @@
           },
           {
             "folder": "NotificationService",
-            "name": "NotificationService Worker (No Build)"
+            "name": "NotificationService Consumers (No Build)"
           }
         ],
         "stopAll": true
@@ -314,7 +314,7 @@
           },
           {
             "folder": "NotificationService",
-            "name": "NotificationService Worker (No Build)"
+            "name": "NotificationService Consumers (No Build)"
           },
           {
             "folder": "RealtimeService",
@@ -369,7 +369,7 @@
           },
           {
             "folder": "NotificationService",
-            "name": "NotificationService Worker (No Build)"
+            "name": "NotificationService Consumers (No Build)"
           },
           {
             "folder": "ReactClient",

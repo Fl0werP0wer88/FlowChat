@@ -17,12 +17,12 @@
       "problemMatcher": "$msCompile"
     },
     {
-      "label": "build: NotificationService Worker",
+      "label": "build: NotificationService Consumers",
       "type": "process",
       "command": "dotnet",
       "args": [
         "build",
-        "${workspaceFolder}/src/FlowChat.NotificationService.Worker/FlowChat.NotificationService.Worker.csproj",
+        "${workspaceFolder}/src/Workers/FlowChat.NotificationService.Consumers/FlowChat.NotificationService.Consumers.csproj",
         "-c",
         "Debug"
       ],

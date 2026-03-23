@@ -1,4 +1,4 @@
-namespace FlowChat.NotificationService.Worker.Kafka;
+namespace FlowChat.NotificationService.Consumers.Kafka;
 
 public sealed class UserEmailVerificationRequestedConsumerOptions
 {

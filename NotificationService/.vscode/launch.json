@@ -39,13 +39,13 @@
       }
     },
     {
-      "name": "NotificationService Worker",
+      "name": "NotificationService Consumers",
       "type": "coreclr",
       "request": "launch",
-      "preLaunchTask": "build: NotificationService Worker",
-      "program": "${workspaceFolder}/src/FlowChat.NotificationService.Worker/bin/Debug/net10.0/FlowChat.NotificationService.Worker.dll",
+      "preLaunchTask": "build: NotificationService Consumers",
+      "program": "${workspaceFolder}/src/Workers/FlowChat.NotificationService.Consumers/bin/Debug/net10.0/FlowChat.NotificationService.Consumers.dll",
       "args": [],
-      "cwd": "${workspaceFolder}/src/FlowChat.NotificationService.Worker",
+      "cwd": "${workspaceFolder}/src/Workers/FlowChat.NotificationService.Consumers",
       "stopAtEntry": false,
       "console": "integratedTerminal",
       "env": {
@@ -53,12 +53,12 @@
       }
     },
     {
-      "name": "NotificationService Worker (No Build)",
+      "name": "NotificationService Consumers (No Build)",
       "type": "coreclr",
       "request": "launch",
-      "program": "${workspaceFolder}/src/FlowChat.NotificationService.Worker/bin/Debug/net10.0/FlowChat.NotificationService.Worker.dll",
+      "program": "${workspaceFolder}/src/Workers/FlowChat.NotificationService.Consumers/bin/Debug/net10.0/FlowChat.NotificationService.Consumers.dll",
       "args": [],
-      "cwd": "${workspaceFolder}/src/FlowChat.NotificationService.Worker",
+      "cwd": "${workspaceFolder}/src/Workers/FlowChat.NotificationService.Consumers",
       "stopAtEntry": false,
       "console": "integratedTerminal",
       "env": {
@@ -71,7 +71,7 @@
       "name": "NotificationService",
       "configurations": [
         "NotificationService API",
-        "NotificationService Worker"
+        "NotificationService Consumers"
       ],
       "stopAll": true
     }

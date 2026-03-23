@@ -3,7 +3,7 @@ using FlowChat.NotificationService.Application.Notifications.Queries.GetNotifica
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
-namespace FlowChat.NotificationService.Api.Features.Notifications.GetNotifications;
+namespace FlowChat.NotificationService.Api.Features.Notifications.Public.GetNotifications;
 
 [ApiController]
 [Route("api/[controller]")]

@@ -1,14 +1,20 @@
 using FlowChat.Messaging.Contracts.AuthService.Events;
-using FlowChat.NotificationService.Application.Notifications.Commands.UserEmailVerificationRequested;
-using MediatR;
+using FlowChat.NotificationService.Consumers.NotificationApi.Contracts;
+using FlowChat.NotificationService.Consumers.Services;
+using Microsoft.Extensions.Logging;
 using Silverback.Messaging.Subscribers;
 
-namespace FlowChat.NotificationService.Worker.Kafka;
+namespace FlowChat.NotificationService.Consumers.Kafka;
 
 public sealed class UserEmailVerificationRequestedSubscriber(
-    IMediator mediator,
+    INotificationInternalApiClient notificationInternalApiClient,
     ILogger<UserEmailVerificationRequestedSubscriber> logger)
 {
+    private readonly INotificationInternalApiClient _notificationInternalApiClient = notificationInternalApiClient
+        ?? throw new ArgumentNullException(nameof(notificationInternalApiClient));
+    private readonly ILogger<UserEmailVerificationRequestedSubscriber> _logger = logger
+        ?? throw new ArgumentNullException(nameof(logger));
+
     [Subscribe]
     public async Task HandleAsync(
         EmailVerificationRequestIntegrationEvent message,
@@ -30,21 +36,28 @@ public sealed class UserEmailVerificationRequestedSubscriber(
             throw new InvalidOperationException("Payload does not contain valid UserId.");
         }
 
+        if (string.IsNullOrWhiteSpace(message.ConfirmationLink))
+        {
+            throw new InvalidOperationException("Payload does not contain ConfirmationLink.");
+        }
+
         try
         {
-            await mediator.Send(
-                new UserEmailVerificationRequestedCommand(
-                    message.UserId,
-                    message.UserEmail.Trim(),
-                    userName,
-                    userName,
-                    message.ConfirmationLink,
-                    message.UserId.ToString()),
+            await _notificationInternalApiClient.ProcessUserEmailVerificationRequestedAsync(
+                new ProcessUserEmailVerificationRequestedRequest
+                {
+                    UserId = message.UserId,
+                    Email = message.UserEmail.Trim(),
+                    UserName = userName,
+                    DisplayName = userName,
+                    ConfirmationLink = message.ConfirmationLink.Trim(),
+                    SourceMessageKey = message.UserId.ToString()
+                },
                 cancellationToken);
         }
         catch (InvalidOperationException ex)
         {
-            logger.LogInformation(
+            _logger.LogInformation(
                 ex,
                 "Skipping notification handling for user {UserId}. Reason: {Reason}",
                 message.UserId,
@@ -54,7 +67,7 @@ public sealed class UserEmailVerificationRequestedSubscriber(
         }
         catch (Exception ex)
         {
-            logger.LogWarning(
+            _logger.LogWarning(
                 ex,
                 "Transient failure while handling notification for user {UserId}.",
                 message.UserId);

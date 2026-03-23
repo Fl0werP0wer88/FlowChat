@@ -24,4 +24,8 @@ public sealed class ApiSettingsManager : IApiSettingsManager
 
     public EmailSettings GetEmailSettings() =>
         _configuration.GetSection(EmailSettings.SectionName).Get<EmailSettings>() ?? new EmailSettings();
+
+    public InternalApiSettings GetInternalApiSettings() =>
+        _configuration.GetSection(InternalApiSettings.SectionName).Get<InternalApiSettings>()
+        ?? new InternalApiSettings();
 }

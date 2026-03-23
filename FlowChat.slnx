@@ -46,7 +46,9 @@
     <Project Path="NotificationService/src/FlowChat.NotificationService.Domain/FlowChat.NotificationService.Domain.csproj" />
     <Project Path="NotificationService/src/FlowChat.NotificationService.Infrastructure/FlowChat.NotificationService.Infrastructure.csproj" />
     <Project Path="NotificationService/src/FlowChat.NotificationService.Persistence/FlowChat.NotificationService.Persistence.csproj" />
-    <Project Path="NotificationService/src/FlowChat.NotificationService.Worker/FlowChat.NotificationService.Worker.csproj" />
+  </Folder>
+  <Folder Name="/NotificationService/src/Workers/">
+    <Project Path="NotificationService/src/Workers/FlowChat.NotificationService.Consumers/FlowChat.NotificationService.Consumers.csproj" />
   </Folder>
   <Folder Name="/NotificationService/tests/">
     <Project Path="NotificationService/tests/FlowChat.NotificationService.AATs/FlowChat.NotificationService.AATs.csproj" />

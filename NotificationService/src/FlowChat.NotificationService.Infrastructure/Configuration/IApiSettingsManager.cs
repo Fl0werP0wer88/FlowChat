@@ -5,4 +5,6 @@ public interface IApiSettingsManager
     ApiRuntimeSettings GetApiRuntimeSettings();
 
     EmailSettings GetEmailSettings();
+
+    InternalApiSettings GetInternalApiSettings();
 }

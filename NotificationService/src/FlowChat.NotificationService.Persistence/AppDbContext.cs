@@ -1,7 +1,6 @@
 using FlowChat.NotificationService.Domain.Common;
 using FlowChat.NotificationService.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
-using Silverback.Messaging.Consuming.KafkaOffsetStore;
 
 namespace FlowChat.NotificationService.Persistence;
 
@@ -13,7 +12,6 @@ public class AppDbContext : DbContext
     }
 
     public DbSet<Notification> Notifications => Set<Notification>();
-    public DbSet<SilverbackStoredOffset> SilverbackStoredOffsets => Set<SilverbackStoredOffset>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

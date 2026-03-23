@@ -1,34 +1,32 @@
-using FlowChat.Messaging.Contracts.AuthService.Events;
-using FlowChat.NotificationService.Application.Notifications.Commands.UserEmailVerificationRequested;
-using FlowChat.NotificationService.Persistence;
-using FlowChat.NotificationService.Worker.Configuration;
-using FlowChat.NotificationService.Worker.Kafka;
 using Confluent.Kafka;
+using FlowChat.NotificationService.Consumers.Configuration;
+using FlowChat.NotificationService.Consumers.Kafka;
+using FlowChat.NotificationService.Consumers.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using Silverback.Configuration;
 using Silverback.Messaging.Configuration;
 using Silverback.Messaging.Configuration.Kafka;
 
-namespace FlowChat.NotificationService.Worker;
+namespace FlowChat.NotificationService.Consumers;
 
-public static class WorkerServiceRegistration
+public static class ConsumersServiceRegistration
 {
-    public static IServiceCollection AddWorkerKafkaConsumer(
+    public static IServiceCollection AddConsumers(
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        var settingsManager = new WorkerSettingsManager(configuration);
-        services.TryAddSingleton<IWorkerSettingsManager>(settingsManager);
-        var consumerOptions = settingsManager.GetUserEmailVerificationRequestedConsumerOptions();
+        var consumerOptions = configuration
+            .GetSection(UserEmailVerificationRequestedConsumerOptions.SectionName)
+            .Get<UserEmailVerificationRequestedConsumerOptions>()
+            ?? new UserEmailVerificationRequestedConsumerOptions();
+
+        services.AddOptions<NotificationApiSettings>()
+            .BindConfiguration(NotificationApiSettings.SectionName);
+        services.AddHttpClient<INotificationInternalApiClient, NotificationInternalApiClient>();
 
         services.AddSilverback()
-            .WithConnectionToMessageBroker(options =>
-            {
-                options.AddKafka();
-                options.AddEntityFrameworkKafkaOffsetStore();
-            })
+            .WithConnectionToMessageBroker(options => options.AddKafka())
             .AddKafkaClients(clients =>
             {
                 clients

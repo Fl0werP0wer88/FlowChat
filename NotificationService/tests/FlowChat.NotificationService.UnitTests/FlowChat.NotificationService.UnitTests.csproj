@@ -19,8 +19,17 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\FlowChat.NotificationService.API\FlowChat.NotificationService.API.csproj" />
     <ProjectReference Include="..\..\src\FlowChat.NotificationService.Domain\FlowChat.NotificationService.Domain.csproj" />
     <ProjectReference Include="..\..\src\FlowChat.NotificationService.Application\FlowChat.NotificationService.Application.csproj" />
+    <ProjectReference Include="..\..\src\Workers\FlowChat.NotificationService.Consumers\FlowChat.NotificationService.Consumers.csproj" />
+    <ProjectReference Include="..\..\src\FlowChat.NotificationService.Infrastructure\FlowChat.NotificationService.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\FlowChat.NotificationService.Persistence\FlowChat.NotificationService.Persistence.csproj" />
+    <ProjectReference Include="..\..\..\Common\src\FlowChat.Messaging.Contracts\FlowChat.Messaging.Contracts.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 
 </Project>

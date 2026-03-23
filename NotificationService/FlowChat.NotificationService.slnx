@@ -5,7 +5,9 @@
     <Project Path="src/FlowChat.NotificationService.Domain/FlowChat.NotificationService.Domain.csproj" />
     <Project Path="src/FlowChat.NotificationService.Infrastructure/FlowChat.NotificationService.Infrastructure.csproj" />
     <Project Path="src/FlowChat.NotificationService.Persistence/FlowChat.NotificationService.Persistence.csproj" />
-    <Project Path="src/FlowChat.NotificationService.Worker/FlowChat.NotificationService.Worker.csproj" />
+  </Folder>
+  <Folder Name="/src/Workers/">
+    <Project Path="src/Workers/FlowChat.NotificationService.Consumers/FlowChat.NotificationService.Consumers.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/FlowChat.NotificationService.AATs/FlowChat.NotificationService.AATs.csproj" />
@@ -13,5 +15,4 @@
   </Folder>
   <Project Path="../Common/src/FlowChat.API.Abstractions/FlowChat.API.Abstractions.csproj" />
   <Project Path="../Common/src/FlowChat.Messaging.Contracts/FlowChat.Messaging.Contracts.csproj" />
-  <Project Path="../Common/src/FlowChat.Messaging.Runtime/FlowChat.Messaging.Runtime.csproj" />
 </Solution>
