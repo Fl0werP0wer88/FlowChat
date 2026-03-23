@@ -37,7 +37,7 @@ public class UserProfile : AggregateRootBase<UserProfile>
         ArgumentException.ThrowIfNullOrWhiteSpace(displayName);
 
         UserName = userName.Trim();
-        NormalizedUserName = userName.Trim().ToUpper();
+        NormalizedUserName = userName.Trim().ToLowerInvariant();
         DisplayName = displayName.Trim();
         AvatarUrl = string.IsNullOrWhiteSpace(avatarUrl) ? null : avatarUrl.Trim();
         Bio = string.IsNullOrWhiteSpace(bio) ? null : bio.Trim();
