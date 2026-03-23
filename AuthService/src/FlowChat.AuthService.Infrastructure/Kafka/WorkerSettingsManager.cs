@@ -1,4 +1,3 @@
-using FlowChat.AuthService.Persistence.Configuration;
 using Microsoft.Extensions.Configuration;
 
 namespace FlowChat.AuthService.Infrastructure.Kafka;
@@ -18,9 +17,6 @@ public sealed class WorkerSettingsManager : IWorkerSettingsManager
     public UserEmailVerificationRequestedProducerOptions GetUserEmailVerificationRequestedProducerOptions() =>
         ResolveSection<UserEmailVerificationRequestedProducerOptions>(
             UserEmailVerificationRequestedProducerOptions.SectionName);
-
-    public OutboxPublisherRuntimeOptions GetOutboxPublisherRuntimeOptions() =>
-        ResolveSection<OutboxPublisherRuntimeOptions>(OutboxPublisherRuntimeOptions.SectionName);
 
     private TOptions ResolveSection<TOptions>(string sectionName)
         where TOptions : new()

@@ -6,7 +6,9 @@
     <Project Path="AuthService/src/FlowChat.AuthService.Domain/FlowChat.AuthService.Domain.csproj" />
     <Project Path="AuthService/src/FlowChat.AuthService.Infrastructure/FlowChat.AuthService.Infrastructure.csproj" />
     <Project Path="AuthService/src/FlowChat.AuthService.Persistence/FlowChat.AuthService.Persistence.csproj" />
-    <Project Path="AuthService/src/FlowChat.AuthService.Worker/FlowChat.AuthService.Worker.csproj" />
+  </Folder>
+  <Folder Name="/AuthService/src/Workers/">
+    <Project Path="AuthService/src/Workers/FlowChat.AuthService.OutboxPublisher/FlowChat.AuthService.OutboxPublisher.csproj" />
   </Folder>
   <Folder Name="/AuthService/tests/">
     <Project Path="AuthService/tests/FlowChat.AuthService.AATs/FlowChat.AuthService.AATs.csproj" />

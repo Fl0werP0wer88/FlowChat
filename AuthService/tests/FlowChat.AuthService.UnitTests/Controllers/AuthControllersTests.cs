@@ -1,8 +1,8 @@
 using CSharpFunctionalExtensions;
 using AutoMapper;
-using FlowChat.AuthService.API.Features.Users.ConfirmUserEmail;
-using FlowChat.AuthService.API.Features.Users.LoginUser;
-using FlowChat.AuthService.API.Features.Users.RegisterUser;
+using FlowChat.AuthService.API.Features.Users.Public.ConfirmUserEmail;
+using FlowChat.AuthService.API.Features.Users.Public.LoginUser;
+using FlowChat.AuthService.API.Features.Users.Public.RegisterUser;
 using FlowChat.AuthService.Application.Users.Commands.ConfirmUserEmail;
 using FlowChat.AuthService.Application.Users.Commands.LoginUser;
 using FlowChat.AuthService.Application.Users.Commands.RegisterUser;

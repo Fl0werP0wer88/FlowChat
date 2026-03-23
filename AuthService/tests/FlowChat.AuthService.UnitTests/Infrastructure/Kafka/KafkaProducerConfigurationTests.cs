@@ -49,8 +49,8 @@ public sealed class KafkaProducerConfigurationTests
     [Theory]
     [InlineData("AuthService/src/FlowChat.AuthService.API/appsettings.json")]
     [InlineData("AuthService/src/FlowChat.AuthService.API/appsettings.Development.json")]
-    [InlineData("AuthService/src/FlowChat.AuthService.Worker/appsettings.json")]
-    [InlineData("AuthService/src/FlowChat.AuthService.Worker/appsettings.Development.json")]
+    [InlineData("AuthService/src/Workers/FlowChat.AuthService.OutboxPublisher/appsettings.json")]
+    [InlineData("AuthService/src/Workers/FlowChat.AuthService.OutboxPublisher/appsettings.Development.json")]
     public void AppSettingsFiles_ExposeRequiredKafkaProducerSections(string relativePath)
     {
         var configuration = new ConfigurationBuilder()

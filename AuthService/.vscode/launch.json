@@ -39,13 +39,13 @@
       }
     },
     {
-      "name": "AuthService Worker",
+      "name": "AuthService OutboxPublisher",
       "type": "coreclr",
       "request": "launch",
-      "preLaunchTask": "build: AuthService Worker",
-      "program": "${workspaceFolder}/src/FlowChat.AuthService.Worker/bin/Debug/net10.0/FlowChat.AuthService.Worker.dll",
+      "preLaunchTask": "build: AuthService OutboxPublisher",
+      "program": "${workspaceFolder}/src/Workers/FlowChat.AuthService.OutboxPublisher/bin/Debug/net10.0/FlowChat.AuthService.OutboxPublisher.dll",
       "args": [],
-      "cwd": "${workspaceFolder}/src/FlowChat.AuthService.Worker",
+      "cwd": "${workspaceFolder}/src/Workers/FlowChat.AuthService.OutboxPublisher",
       "stopAtEntry": false,
       "console": "integratedTerminal",
       "env": {
@@ -53,12 +53,12 @@
       }
     },
     {
-      "name": "AuthService Worker (No Build)",
+      "name": "AuthService OutboxPublisher (No Build)",
       "type": "coreclr",
       "request": "launch",
-      "program": "${workspaceFolder}/src/FlowChat.AuthService.Worker/bin/Debug/net10.0/FlowChat.AuthService.Worker.dll",
+      "program": "${workspaceFolder}/src/Workers/FlowChat.AuthService.OutboxPublisher/bin/Debug/net10.0/FlowChat.AuthService.OutboxPublisher.dll",
       "args": [],
-      "cwd": "${workspaceFolder}/src/FlowChat.AuthService.Worker",
+      "cwd": "${workspaceFolder}/src/Workers/FlowChat.AuthService.OutboxPublisher",
       "stopAtEntry": false,
       "console": "integratedTerminal",
       "env": {
@@ -69,9 +69,9 @@
   "compounds": [
     {
       "name": "AuthService",
-      "configurations": [
+        "configurations": [
         "AuthService API",
-        "AuthService Worker"
+        "AuthService OutboxPublisher"
       ],
       "stopAll": true
     }

@@ -152,7 +152,7 @@
           },
           {
             "folder": "AuthService",
-            "name": "AuthService Worker (No Build)"
+            "name": "AuthService OutboxPublisher (No Build)"
           }
         ],
         "stopAll": true
@@ -298,7 +298,7 @@
         "configurations": [
           {
             "folder": "AuthService",
-            "name": "AuthService Worker (No Build)"
+            "name": "AuthService OutboxPublisher (No Build)"
           },
           {
             "folder": "ChatService",
@@ -349,7 +349,7 @@
           },
           {
             "folder": "AuthService",
-            "name": "AuthService Worker (No Build)"
+            "name": "AuthService OutboxPublisher (No Build)"
           },
           {
             "folder": "ChatService",

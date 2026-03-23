@@ -17,12 +17,12 @@
       "problemMatcher": "$msCompile"
     },
     {
-      "label": "build: AuthService Worker",
+      "label": "build: AuthService OutboxPublisher",
       "type": "process",
       "command": "dotnet",
       "args": [
         "build",
-        "${workspaceFolder}/src/FlowChat.AuthService.Worker/FlowChat.AuthService.Worker.csproj",
+        "${workspaceFolder}/src/Workers/FlowChat.AuthService.OutboxPublisher/FlowChat.AuthService.OutboxPublisher.csproj",
         "-c",
         "Debug"
       ],
