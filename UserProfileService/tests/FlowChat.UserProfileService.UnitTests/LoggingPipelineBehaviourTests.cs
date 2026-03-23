@@ -82,7 +82,7 @@ public sealed class LoggingPipelineBehaviourTests
         Assert.Equal(ActivityStatusCode.Error, activity.Status);
         Assert.Equal("boom", activity.StatusDescription);
         var exceptionEvent = Assert.Single(activity.Events, x => x.Name == "exception");
-        Assert.Contains(exceptionEvent.Tags, x => x.Key == "exception.message" && x.Value == "boom");
+        Assert.Contains(exceptionEvent.Tags, x => x.Key == "exception.message" && Equals(x.Value, "boom"));
     }
 
     private sealed record TestCommand : ICommand<Guid>;

@@ -5,7 +5,7 @@
     <ProjectReference Include="..\FlowChat.AuthService.Domain\FlowChat.AuthService.Domain.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="AutoMapper" Version="16.0.0" />
+    <PackageReference Include="AutoMapper" Version="16.1.1" />
     <PackageReference Include="MediatR" Version="14.0.0" />
   </ItemGroup>
   <PropertyGroup>

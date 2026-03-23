@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Silverback;
@@ -106,7 +107,7 @@ public sealed class AppDbContextUnitOfWorkTests
             return value;
         }
 
-        public bool TryGetObject<T>(Guid objectTypeId, out T? obj)
+        public bool TryGetObject<T>(Guid objectTypeId, [NotNullWhen(true)] out T? obj)
         {
             if (TryGetObject(objectTypeId, out object? value))
             {
@@ -123,7 +124,7 @@ public sealed class AppDbContextUnitOfWorkTests
             return false;
         }
 
-        public bool TryGetObject(Guid objectTypeId, out object? obj) => _objects.TryGetValue(objectTypeId, out obj);
+        public bool TryGetObject(Guid objectTypeId, [NotNullWhen(true)] out object? obj) => _objects.TryGetValue(objectTypeId, out obj);
 
         public T GetOrAddObject<T>(Guid objectTypeId, Func<T> factory)
         {

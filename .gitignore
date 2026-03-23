@@ -27,6 +27,7 @@ project.fragment.lock.json
 .dotnet/
 .dotnet-cli/
 .dotnet-home/
+.nuget/
 
 # Test artifacts
 TestResults/

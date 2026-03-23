@@ -122,26 +122,36 @@ public static class StartupExtensions
             ?? throw new InvalidOperationException("Missing migrator connection string for AuthService database reset.");
         var migratorConnectionStringBuilder = new NpgsqlConnectionStringBuilder(migratorConnectionString);
 
-        var databaseName = QuoteIdentifier(migratorConnectionStringBuilder.Database);
-        var appRoleName = QuoteIdentifier(appConnectionStringBuilder.Username);
-        var migratorRoleName = QuoteIdentifier(migratorConnectionStringBuilder.Username);
+        var databaseName = QuoteRequiredIdentifier(migratorConnectionStringBuilder.Database, "database name");
+        var appRoleName = QuoteRequiredIdentifier(appConnectionStringBuilder.Username, "application role");
+        var migratorRoleName = QuoteRequiredIdentifier(migratorConnectionStringBuilder.Username, "migrator role");
 
-        await context.Database.ExecuteSqlRawAsync($"GRANT CONNECT ON DATABASE {databaseName} TO {appRoleName};");
-        await context.Database.ExecuteSqlRawAsync($"GRANT USAGE ON SCHEMA public TO {appRoleName};");
-        await context.Database.ExecuteSqlRawAsync($"REVOKE CREATE ON SCHEMA public FROM {appRoleName};");
+        await context.Database.ExecuteSqlRawAsync($"GRANT CONNECT ON DATABASE {databaseName} TO {appRoleName};".ToString());
+        await context.Database.ExecuteSqlRawAsync($"GRANT USAGE ON SCHEMA public TO {appRoleName};".ToString());
+        await context.Database.ExecuteSqlRawAsync($"REVOKE CREATE ON SCHEMA public FROM {appRoleName};".ToString());
         await context.Database.ExecuteSqlRawAsync(
-            $"GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO {appRoleName};");
+            $"GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO {appRoleName};".ToString());
         await context.Database.ExecuteSqlRawAsync(
-            $"GRANT USAGE, SELECT, UPDATE ON ALL SEQUENCES IN SCHEMA public TO {appRoleName};");
+            $"GRANT USAGE, SELECT, UPDATE ON ALL SEQUENCES IN SCHEMA public TO {appRoleName};".ToString());
         await context.Database.ExecuteSqlRawAsync(
-            $"ALTER DEFAULT PRIVILEGES FOR ROLE {migratorRoleName} IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO {appRoleName};");
+            $"ALTER DEFAULT PRIVILEGES FOR ROLE {migratorRoleName} IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO {appRoleName};".ToString());
         await context.Database.ExecuteSqlRawAsync(
-            $"ALTER DEFAULT PRIVILEGES FOR ROLE {migratorRoleName} IN SCHEMA public GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO {appRoleName};");
+            $"ALTER DEFAULT PRIVILEGES FOR ROLE {migratorRoleName} IN SCHEMA public GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO {appRoleName};".ToString());
 
         app.Logger.LogInformation(
             "Ensured CRUD grants for AuthService app role {AppRole} on database {DatabaseName}.",
             appConnectionStringBuilder.Username,
             migratorConnectionStringBuilder.Database);
+    }
+
+    private static string QuoteRequiredIdentifier(string? identifier, string parameterName)
+    {
+        if (string.IsNullOrWhiteSpace(identifier))
+        {
+            throw new InvalidOperationException($"Missing {parameterName} for AuthService database grants.");
+        }
+
+        return QuoteIdentifier(identifier);
     }
 
     private static string QuoteIdentifier(string identifier) =>
