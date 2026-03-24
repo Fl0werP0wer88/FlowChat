@@ -26,7 +26,7 @@ public sealed class GetContactsForUserQueryHandler : IQueryHandler<GetContactsFo
                 x.Id.Value,
                 x.OwnerUserId,
                 x.ContactUserId,
-                x.Login,
+                x.DisplayedName,
                 x.FirstName,
                 x.LastName,
                 x.PhoneNumber,

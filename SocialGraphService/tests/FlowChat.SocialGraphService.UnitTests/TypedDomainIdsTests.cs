@@ -41,7 +41,7 @@ public class TypedDomainIdsTests
 
         Assert.Equal("Jan", contact.FirstName);
         Assert.Equal("Kowalski", contact.LastName);
-        Assert.Equal("jkowalski", contact.Login);
+        Assert.Equal("jkowalski", contact.DisplayedName);
         Assert.Equal("+48123456789", contact.PhoneNumber);
         Assert.Equal("jan@example.com", contact.Email);
     }
@@ -67,7 +67,7 @@ public class TypedDomainIdsTests
         var contact = Contact.Create(
             ownerUserId: Guid.NewGuid(),
             contactUserId: Guid.NewGuid(),
-            login: "user-login");
+            displayedName: "user-login");
 
         Assert.NotEqual(Guid.Empty, contact.Id.Value);
     }
@@ -85,7 +85,7 @@ public class TypedDomainIdsTests
     }
 
     [Fact]
-    public void Contact_Create_WithoutLogin_Throws()
+    public void Contact_Create_WithoutDisplayedName_Throws()
     {
         Assert.Throws<ArgumentException>(() => Contact.Create(
             Guid.NewGuid(),

@@ -28,7 +28,7 @@ public class ContactConfiguration : IEntityTypeConfiguration<Contact>
         builder.Property(x => x.LastName)
             .HasMaxLength(100);
 
-        builder.Property(x => x.Login)
+        builder.Property(x => x.DisplayedName)
             .HasMaxLength(100)
             .IsRequired();
 
