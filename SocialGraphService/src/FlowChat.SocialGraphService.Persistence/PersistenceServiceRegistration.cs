@@ -16,7 +16,7 @@ public static class PersistenceServiceRegistration
         services.AddDbContext<AppDbContext>(options =>
             options.UseNpgsql(configuration.GetConnectionString("SocialGraphDb")));
 
-        services.AddScoped<IContactRepository, ContactWriteRepository>();
+        services.AddScoped<IContactWriteRepository, ContactWriteRepository>();
         services.AddScoped<IContactReadRepository, ContactReadRepository>();
         services.AddScoped<IUserProfileReadModelRepository, UserProfileReadModelRepository>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
