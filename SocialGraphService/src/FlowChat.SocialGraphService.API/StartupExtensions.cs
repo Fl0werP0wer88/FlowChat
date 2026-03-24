@@ -120,30 +120,14 @@ public static class StartupExtensions
         return app;
     }
 
-    public static async Task ResetDatabaseAsync(this WebApplication app)
+    public static async Task MigrateDatabaseAsync(this WebApplication app)
     {
         if (!app.Environment.IsDevelopment())
         {
             return;
         }
 
-        try
-        {
-            await using var context = new AppDbContextFactory().CreateDbContext([]);
-            if (app.Services.GetRequiredService<IApiSettingsManager>().GetApiRuntimeSettings().DropDatabaseOnStartup)
-            {
-                await context.Database.EnsureDeletedAsync();
-            }
-
-            await context.Database.MigrateAsync();
-        }
-        catch (Exception exception)
-        {
-            app.Logger.LogError(
-                exception,
-                "Failed to reset or migrate the SocialGraphService database during startup.");
-
-            throw;
-        }
+        await using var context = new AppDbContextFactory().CreateDbContext([]);
+        await context.Database.MigrateAsync();
     }
 }

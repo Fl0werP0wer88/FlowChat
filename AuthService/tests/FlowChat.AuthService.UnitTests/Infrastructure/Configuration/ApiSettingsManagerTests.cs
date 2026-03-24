@@ -19,10 +19,7 @@ public sealed class ApiSettingsManagerTests
                 ["JwtSettings:ExpiresMinutes"] = "90",
                 ["ConfirmationLinks:EmailConfirmationBaseUrl"] = "https://localhost:7236/api/users/confirm-email",
                 ["ApiUrl"] = "https://localhost:5000",
-                ["BlazorUrl"] = "https://localhost:5010",
-                ["FlowChat:DropDatabaseOnStartup"] = "true",
-                ["ConnectionStrings:AuthDb"] =
-                    "Host=localhost;Port=5432;Database=flowchat_auth_db;Username=flowchat_app;Password=flowchat_app_pw;"
+                ["BlazorUrl"] = "https://localhost:5010"
             })
             .Build();
 
@@ -40,8 +37,6 @@ public sealed class ApiSettingsManagerTests
             confirmationLinksSettings.EmailConfirmationBaseUrl);
         Assert.Equal("https://localhost:5000", apiRuntimeSettings.ApiUrl);
         Assert.Equal("https://localhost:5010", apiRuntimeSettings.BlazorUrl);
-        Assert.True(apiRuntimeSettings.DropDatabaseOnStartup);
-        Assert.Contains("Host=localhost", apiRuntimeSettings.AuthDbConnectionString, StringComparison.Ordinal);
     }
 
     [Fact]

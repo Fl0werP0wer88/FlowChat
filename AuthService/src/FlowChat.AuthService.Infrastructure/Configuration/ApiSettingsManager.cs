@@ -23,7 +23,6 @@ public sealed class ApiSettingsManager : IApiSettingsManager
         _configuration.GetSection(ApiRuntimeSettings.FlowChatSectionName).Bind(settings);
         settings.ApiUrl = _configuration["ApiUrl"] ?? settings.ApiUrl;
         settings.BlazorUrl = _configuration["BlazorUrl"] ?? settings.BlazorUrl;
-        settings.AuthDbConnectionString = _configuration.GetConnectionString("AuthDb") ?? string.Empty;
 
         return settings;
     }

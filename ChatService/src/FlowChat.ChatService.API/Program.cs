@@ -10,7 +10,7 @@ try
 
     if (app.Environment.IsDevelopment())
     {
-        await app.ResetDatabaseAsync();
+        await app.MigrateDatabaseAsync();
     }
 
     await app.RunAsync();
