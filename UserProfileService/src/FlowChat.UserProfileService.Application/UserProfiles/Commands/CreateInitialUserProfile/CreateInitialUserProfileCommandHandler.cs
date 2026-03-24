@@ -3,6 +3,7 @@ using FlowChat.Application.Abstractions;
 using FlowChat.Domain.Abstractions;
 using FlowChat.UserProfileService.Application.Contracts.Persistence;
 using FlowChat.UserProfileService.Domain.Entities;
+using FlowChat.UserProfileService.Domain.ValueObjects;
 
 namespace FlowChat.UserProfileService.Application.UserProfiles.Commands.CreateInitialUserProfile;
 
@@ -32,8 +33,20 @@ public sealed class CreateInitialUserProfileCommandHandler
         var displayName = string.IsNullOrWhiteSpace(request.DisplayName) ? null : request.DisplayName.Trim();
         var email = string.IsNullOrWhiteSpace(request.Email) ? null : request.Email.Trim();
         var phone = string.IsNullOrWhiteSpace(request.Phone) ? null : request.Phone.Trim();
+        EmailAddress? emailAddress = null;
+        PhoneNumber? phoneNumber = null;
 
         validationErrors.AddIf(email is null && phone is null, "At least one email or phone is required to create a user profile.");
+
+        if (email is not null && !EmailAddress.TryCreate(email, out emailAddress))
+        {
+            validationErrors.AddIf(true, EmailAddress.InvalidEmailAddressMessage);
+        }
+
+        if (phone is not null && !PhoneNumber.TryCreate(phone, out phoneNumber))
+        {
+            validationErrors.AddIf(true, PhoneNumber.InvalidPhoneNumberMessage);
+        }
 
         if (validationErrors.HasErrors)
         {
@@ -51,10 +64,10 @@ public sealed class CreateInitialUserProfileCommandHandler
         var userProfileId = Id<UserProfile>.FromGuid(request.UserId);
         List<Email> emails = email is null
             ? []
-            : [Email.Create(userProfileId, email, isMain: true)];
+            : [Email.Create(userProfileId, emailAddress!, isMain: true)];
         List<Phone> phones = phone is null
             ? []
-            : [Phone.Create(userProfileId, phone, isMain: true)];
+            : [Phone.Create(userProfileId, phoneNumber!, isMain: true)];
 
         _userProfile = UserProfile.Create(
             userName!,

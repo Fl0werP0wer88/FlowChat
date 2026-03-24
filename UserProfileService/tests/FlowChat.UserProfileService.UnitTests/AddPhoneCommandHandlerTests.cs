@@ -3,6 +3,7 @@ using FlowChat.Domain.Abstractions;
 using FlowChat.UserProfileService.Application.Contracts.Persistence;
 using FlowChat.UserProfileService.Application.UserProfiles.Commands.AddPhone;
 using FlowChat.UserProfileService.Domain.Entities;
+using FlowChat.UserProfileService.Domain.ValueObjects;
 
 namespace FlowChat.UserProfileService.UnitTests;
 
@@ -22,6 +23,40 @@ public sealed class AddPhoneCommandHandlerTests
         Assert.Equal(ErrorType.Validation, result.Error.ErrorType);
         Assert.Equal("Validation Failed.", result.Error.ErrorMessage);
         Assert.Equal(["UserId is required.", "Phone number is required."], result.Error.Errors);
+    }
+
+    [Fact]
+    public async Task Handle_WithInvalidNumber_ReturnsValidationFailure()
+    {
+        var profile = UserProfile.Rehydrate("jdoe", "John Doe", id: Id<UserProfile>.New());
+        var handler = new AddPhoneCommandHandler(
+            new TestUserProfileRepository(profile),
+            new TestUnitOfWork(),
+            new TestDomainEventDispatcher());
+
+        var result = await handler.Handle(new AddPhoneCommand(profile.Id.Value, "123123123"), CancellationToken.None);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(ErrorType.Validation, result.Error.ErrorType);
+        Assert.Equal([PhoneNumber.InvalidPhoneNumberMessage], result.Error.Errors);
+    }
+
+    [Fact]
+    public async Task Handle_WithFormattedDuplicateNumber_ReturnsConflict()
+    {
+        var profile = UserProfile.Rehydrate("jdoe", "John Doe", id: Id<UserProfile>.New());
+        profile.AddPhone("+48123123123");
+        profile.ClearEvents();
+        var handler = new AddPhoneCommandHandler(
+            new TestUserProfileRepository(profile),
+            new TestUnitOfWork(),
+            new TestDomainEventDispatcher());
+
+        var result = await handler.Handle(new AddPhoneCommand(profile.Id.Value, "+48 123 123 123"), CancellationToken.None);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(ErrorType.Conflict, result.Error.ErrorType);
+        Assert.Equal("Phone '+48123123123' already exists.", result.Error.ErrorMessage);
     }
 
     private sealed class TestUserProfileRepository(UserProfile? userProfile = null) : IUserProfileRepository

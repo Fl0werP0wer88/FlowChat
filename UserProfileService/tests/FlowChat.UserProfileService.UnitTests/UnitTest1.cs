@@ -1,6 +1,7 @@
 using FlowChat.Domain.Abstractions;
 using FlowChat.UserProfileService.Domain.Entities;
 using FlowChat.UserProfileService.Domain.Events;
+using FlowChat.UserProfileService.Domain.ValueObjects;
 
 namespace FlowChat.UserProfileService.UnitTests;
 
@@ -33,7 +34,19 @@ public class UnitTest1
     {
         var userProfileId = Id<UserProfile>.New();
 
-        Assert.Throws<ArgumentException>(() => Email.Create(userProfileId, "not-an-email"));
+        var exception = Assert.Throws<ArgumentException>(() => Email.Create(userProfileId, "not-an-email"));
+
+        Assert.StartsWith(EmailAddress.InvalidEmailAddressMessage, exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Email_Create_NormalizesTrimmedAddress()
+    {
+        var userProfileId = Id<UserProfile>.New();
+
+        var email = Email.Create(userProfileId, " john@example.com ");
+
+        Assert.Equal("john@example.com", email.Address.Value);
     }
 
     [Fact]
@@ -45,7 +58,7 @@ public class UnitTest1
 
         Assert.Single(profile.Emails);
         Assert.Equal(email.Id, profile.Emails[0].Id);
-        Assert.Equal("john@example.com", profile.Emails[0].Address);
+        Assert.Equal("john@example.com", profile.Emails[0].Address.Value);
         Assert.Equal(profile.Id, profile.Emails[0].UserProfileId);
         Assert.True(profile.Emails[0].IsMain);
         var @event = Assert.IsType<AggregateStateChangedDomainEvent<UserProfile, UserProfileSnapshot>>(
@@ -90,9 +103,9 @@ public class UnitTest1
         var emailChangedEvent = Assert.Single(profile.DomainEvents.OfType<MainEmailChangedDomainEvent>());
         Assert.Equal(profile.Id.Value, emailChangedEvent.AggregateId);
         Assert.Equal(secondEmail.Id.Value, emailChangedEvent.EmailId);
-        Assert.Equal(secondEmail.Address, emailChangedEvent.Address);
+        Assert.Equal(secondEmail.Address.Value, emailChangedEvent.Address);
         var stateChangedEvent = Assert.Single(profile.DomainEvents.OfType<AggregateStateChangedDomainEvent<UserProfile, UserProfileSnapshot>>());
-        Assert.Equal(secondEmail.Address, stateChangedEvent.AggregateState.MainEmail);
+        Assert.Equal(secondEmail.Address.Value, stateChangedEvent.AggregateState.MainEmail);
     }
 
     [Fact]
@@ -125,7 +138,7 @@ public class UnitTest1
 
         Assert.Single(profile.Phones);
         Assert.Equal(phone.Id, profile.Phones[0].Id);
-        Assert.Equal("+48123123123", profile.Phones[0].Number);
+        Assert.Equal("+48123123123", profile.Phones[0].Number.Value);
         Assert.Equal(profile.Id, profile.Phones[0].UserProfileId);
         Assert.True(profile.Phones[0].IsMain);
         var @event = Assert.IsType<AggregateStateChangedDomainEvent<UserProfile, UserProfileSnapshot>>(
@@ -139,6 +152,15 @@ public class UnitTest1
     {
         var profile = UserProfile.Rehydrate("jdoe", "John Doe", id: Id<UserProfile>.New());
         profile.AddPhone("+48123123123");
+
+        Assert.Throws<InvalidOperationException>(() => profile.AddPhone("+48123123123"));
+    }
+
+    [Fact]
+    public void UserProfile_AddPhone_WithSameNumberInDifferentFormat_Throws()
+    {
+        var profile = UserProfile.Rehydrate("jdoe", "John Doe", id: Id<UserProfile>.New());
+        profile.AddPhone("+48 123 123 123");
 
         Assert.Throws<InvalidOperationException>(() => profile.AddPhone("+48123123123"));
     }
@@ -170,9 +192,9 @@ public class UnitTest1
         var phoneChangedEvent = Assert.Single(profile.DomainEvents.OfType<MainPhoneChangedDomainEvent>());
         Assert.Equal(profile.Id.Value, phoneChangedEvent.AggregateId);
         Assert.Equal(secondPhone.Id.Value, phoneChangedEvent.PhoneId);
-        Assert.Equal(secondPhone.Number, phoneChangedEvent.Number);
+        Assert.Equal(secondPhone.Number.Value, phoneChangedEvent.Number);
         var stateChangedEvent = Assert.Single(profile.DomainEvents.OfType<AggregateStateChangedDomainEvent<UserProfile, UserProfileSnapshot>>());
-        Assert.Equal(secondPhone.Number, stateChangedEvent.AggregateState.MainPhone);
+        Assert.Equal(secondPhone.Number.Value, stateChangedEvent.AggregateState.MainPhone);
     }
 
     [Fact]
@@ -194,6 +216,26 @@ public class UnitTest1
         profile.SetMainPhone(phone.Id);
 
         Assert.Empty(profile.DomainEvents);
+    }
+
+    [Fact]
+    public void Phone_Create_WithInvalidNumber_Throws()
+    {
+        var userProfileId = Id<UserProfile>.New();
+
+        var exception = Assert.Throws<ArgumentException>(() => Phone.Create(userProfileId, "123123123"));
+
+        Assert.StartsWith(PhoneNumber.InvalidPhoneNumberMessage, exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Phone_Create_NormalizesNumberToE164()
+    {
+        var userProfileId = Id<UserProfile>.New();
+
+        var phone = Phone.Create(userProfileId, "+48 123 123 123");
+
+        Assert.Equal("+48123123123", phone.Number.Value);
     }
 
     [Fact]

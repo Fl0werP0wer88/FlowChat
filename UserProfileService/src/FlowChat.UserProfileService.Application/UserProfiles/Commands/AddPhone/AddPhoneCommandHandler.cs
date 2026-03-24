@@ -3,6 +3,7 @@ using FlowChat.Application.Abstractions;
 using FlowChat.Domain.Abstractions;
 using FlowChat.UserProfileService.Application.Contracts.Persistence;
 using FlowChat.UserProfileService.Domain.Entities;
+using FlowChat.UserProfileService.Domain.ValueObjects;
 
 namespace FlowChat.UserProfileService.Application.UserProfiles.Commands.AddPhone;
 
@@ -24,9 +25,16 @@ public sealed class AddPhoneCommandHandler
         AddPhoneCommand request,
         CancellationToken cancellationToken)
     {
+        PhoneNumber? normalizedPhoneNumber = null;
         var validationErrors = new ValidationErrorCollector()
             .AddIf(request.UserId == Guid.Empty, "UserId is required.")
             .AddIf(string.IsNullOrWhiteSpace(request.Number), "Phone number is required.");
+
+        if (!string.IsNullOrWhiteSpace(request.Number) &&
+            !PhoneNumber.TryCreate(request.Number, out normalizedPhoneNumber))
+        {
+            validationErrors.AddIf(true, PhoneNumber.InvalidPhoneNumberMessage);
+        }
 
         if (validationErrors.HasErrors)
         {
@@ -39,13 +47,12 @@ public sealed class AddPhoneCommandHandler
             return Result.Failure<Guid, IDomainError>(DomainError.NotFound($"User profile '{request.UserId}' was not found."));
         }
 
-        var normalizedNumber = request.Number!.Trim();
-        if (_userProfile.Phones.Any(x => string.Equals(x.Number, normalizedNumber, StringComparison.OrdinalIgnoreCase)))
+        if (_userProfile.Phones.Any(x => x.Number == normalizedPhoneNumber))
         {
-            return Result.Failure<Guid, IDomainError>(DomainError.Conflict($"Phone '{normalizedNumber}' already exists."));
+            return Result.Failure<Guid, IDomainError>(DomainError.Conflict($"Phone '{normalizedPhoneNumber!.Value}' already exists."));
         }
 
-        var phone = _userProfile.AddPhone(normalizedNumber);
+        var phone = _userProfile.AddPhone(normalizedPhoneNumber!.Value);
 
         return phone.Id.Value;
     }

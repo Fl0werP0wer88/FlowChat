@@ -5,6 +5,7 @@ using FlowChat.UserProfileService.Application.Contracts.Persistence;
 using FlowChat.UserProfileService.Application.UserProfiles.Commands.CreateInitialUserProfile;
 using FlowChat.UserProfileService.Domain.Entities;
 using FlowChat.UserProfileService.Domain.Events;
+using FlowChat.UserProfileService.Domain.ValueObjects;
 
 namespace FlowChat.UserProfileService.UnitTests;
 
@@ -36,9 +37,9 @@ public sealed class CreateInitialUserProfileCommandHandlerTests
         var profile = Assert.IsType<UserProfile>(repository.AddedEntity);
         var email = Assert.Single(profile.Emails);
         var phone = Assert.Single(profile.Phones);
-        Assert.Equal("john@example.com", email.Address);
+        Assert.Equal("john@example.com", email.Address.Value);
         Assert.True(email.IsMain);
-        Assert.Equal("+48123123123", phone.Number);
+        Assert.Equal("+48123123123", phone.Number.Value);
         Assert.True(phone.IsMain);
     }
 
@@ -150,8 +151,35 @@ public sealed class CreateInitialUserProfileCommandHandlerTests
         Assert.True(result.IsSuccess);
         var profile = Assert.IsType<UserProfile>(repository.AddedEntity);
         var email = Assert.Single(profile.Emails);
+        Assert.Equal("john@example.com", email.Address.Value);
         Assert.True(email.IsMain);
         Assert.Empty(profile.Phones);
+    }
+
+    [Fact]
+    public async Task Handle_WithInvalidEmail_ReturnsValidationFailure()
+    {
+        var repository = new TestUserProfileRepository();
+        var handler = new CreateInitialUserProfileCommandHandler(
+            repository,
+            new TestUnitOfWork(),
+            new TestDomainEventDispatcher());
+
+        var result = await handler.Handle(
+            new CreateInitialUserProfileCommand(
+                "jdoe",
+                "John Doe",
+                null,
+                null,
+                "not-an-email",
+                null,
+                Guid.NewGuid()),
+            CancellationToken.None);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(ErrorType.Validation, result.Error.ErrorType);
+        Assert.Equal([EmailAddress.InvalidEmailAddressMessage], result.Error.Errors);
+        Assert.Null(repository.AddedEntity);
     }
 
     [Fact]
@@ -178,7 +206,60 @@ public sealed class CreateInitialUserProfileCommandHandlerTests
         var profile = Assert.IsType<UserProfile>(repository.AddedEntity);
         Assert.Empty(profile.Emails);
         var phone = Assert.Single(profile.Phones);
+        Assert.Equal("+48123123123", phone.Number.Value);
         Assert.True(phone.IsMain);
+    }
+
+    [Fact]
+    public async Task Handle_WithFormattedPhone_NormalizesPhoneToE164()
+    {
+        var repository = new TestUserProfileRepository();
+        var handler = new CreateInitialUserProfileCommandHandler(
+            repository,
+            new TestUnitOfWork(),
+            new TestDomainEventDispatcher());
+
+        var result = await handler.Handle(
+            new CreateInitialUserProfileCommand(
+                "jdoe",
+                "John Doe",
+                null,
+                null,
+                null,
+                "+48 123 123 123",
+                Guid.NewGuid()),
+            CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        var profile = Assert.IsType<UserProfile>(repository.AddedEntity);
+        var phone = Assert.Single(profile.Phones);
+        Assert.Equal("+48123123123", phone.Number.Value);
+    }
+
+    [Fact]
+    public async Task Handle_WithInvalidPhone_ReturnsValidationFailure()
+    {
+        var repository = new TestUserProfileRepository();
+        var handler = new CreateInitialUserProfileCommandHandler(
+            repository,
+            new TestUnitOfWork(),
+            new TestDomainEventDispatcher());
+
+        var result = await handler.Handle(
+            new CreateInitialUserProfileCommand(
+                "jdoe",
+                "John Doe",
+                null,
+                null,
+                null,
+                "123123123",
+                Guid.NewGuid()),
+            CancellationToken.None);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(ErrorType.Validation, result.Error.ErrorType);
+        Assert.Equal([PhoneNumber.InvalidPhoneNumberMessage], result.Error.Errors);
+        Assert.Null(repository.AddedEntity);
     }
 
     [Fact]

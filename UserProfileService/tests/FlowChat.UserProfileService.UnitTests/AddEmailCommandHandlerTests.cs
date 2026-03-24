@@ -3,6 +3,7 @@ using FlowChat.Domain.Abstractions;
 using FlowChat.UserProfileService.Application.Contracts.Persistence;
 using FlowChat.UserProfileService.Application.UserProfiles.Commands.AddEmail;
 using FlowChat.UserProfileService.Domain.Entities;
+using FlowChat.UserProfileService.Domain.ValueObjects;
 
 namespace FlowChat.UserProfileService.UnitTests;
 
@@ -22,6 +23,40 @@ public sealed class AddEmailCommandHandlerTests
         Assert.Equal(ErrorType.Validation, result.Error.ErrorType);
         Assert.Equal("Validation Failed.", result.Error.ErrorMessage);
         Assert.Equal(["UserId is required.", "Email address is required."], result.Error.Errors);
+    }
+
+    [Fact]
+    public async Task Handle_WithInvalidAddress_ReturnsValidationFailure()
+    {
+        var profile = UserProfile.Rehydrate("jdoe", "John Doe", id: Id<UserProfile>.New());
+        var handler = new AddEmailCommandHandler(
+            new TestUserProfileRepository(profile),
+            new TestUnitOfWork(),
+            new TestDomainEventDispatcher());
+
+        var result = await handler.Handle(new AddEmailCommand(profile.Id.Value, "not-an-email"), CancellationToken.None);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(ErrorType.Validation, result.Error.ErrorType);
+        Assert.Equal([EmailAddress.InvalidEmailAddressMessage], result.Error.Errors);
+    }
+
+    [Fact]
+    public async Task Handle_WithDuplicateAddressIgnoringCase_ReturnsConflict()
+    {
+        var profile = UserProfile.Rehydrate("jdoe", "John Doe", id: Id<UserProfile>.New());
+        profile.AddEmail("john@example.com");
+        profile.ClearEvents();
+        var handler = new AddEmailCommandHandler(
+            new TestUserProfileRepository(profile),
+            new TestUnitOfWork(),
+            new TestDomainEventDispatcher());
+
+        var result = await handler.Handle(new AddEmailCommand(profile.Id.Value, "JOHN@example.com"), CancellationToken.None);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(ErrorType.Conflict, result.Error.ErrorType);
+        Assert.Equal("Email 'JOHN@example.com' already exists.", result.Error.ErrorMessage);
     }
 
     private sealed class TestUserProfileRepository(UserProfile? userProfile = null) : IUserProfileRepository

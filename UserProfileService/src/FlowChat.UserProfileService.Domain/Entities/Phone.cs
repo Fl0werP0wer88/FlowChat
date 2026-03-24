@@ -1,24 +1,25 @@
 using FlowChat.Domain.Abstractions;
+using FlowChat.UserProfileService.Domain.ValueObjects;
 
 namespace FlowChat.UserProfileService.Domain.Entities;
 
 public class Phone : EntityBase<Phone>
 {
     public Id<UserProfile> UserProfileId { get; private set; }
-    public string Number { get; private set; }
+    public PhoneNumber Number { get; private set; }
     public bool IsMain { get; private set; }
 
     private Phone(
         Id<Phone>? id,
         Id<UserProfile> userProfileId,
-        string number,
+        PhoneNumber number,
         bool isMain = false) : base(id)
     {
         ArgumentNullException.ThrowIfNull(userProfileId);
-        ArgumentException.ThrowIfNullOrWhiteSpace(number);
+        ArgumentNullException.ThrowIfNull(number);
 
         UserProfileId = userProfileId;
-        Number = number.Trim();
+        Number = number;
         IsMain = isMain;
     }
 
@@ -28,12 +29,30 @@ public class Phone : EntityBase<Phone>
         bool isMain = false,
         Id<Phone>? id = null)
     {
+        return new Phone(id, userProfileId, PhoneNumber.Create(number), isMain);
+    }
+
+    public static Phone Create(
+        Id<UserProfile> userProfileId,
+        PhoneNumber number,
+        bool isMain = false,
+        Id<Phone>? id = null)
+    {
         return new Phone(id, userProfileId, number, isMain);
     }
 
     public static Phone Rehydrate(
         Id<UserProfile> userProfileId,
         string number,
+        bool isMain = false,
+        Id<Phone>? id = null)
+    {
+        return new Phone(id, userProfileId, PhoneNumber.Create(number), isMain);
+    }
+
+    public static Phone Rehydrate(
+        Id<UserProfile> userProfileId,
+        PhoneNumber number,
         bool isMain = false,
         Id<Phone>? id = null)
     {

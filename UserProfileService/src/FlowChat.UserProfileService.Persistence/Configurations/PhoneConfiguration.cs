@@ -1,5 +1,6 @@
 using FlowChat.Domain.Abstractions;
 using FlowChat.UserProfileService.Domain.Entities;
+using FlowChat.UserProfileService.Domain.ValueObjects;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -20,6 +21,7 @@ public class PhoneConfiguration : IEntityTypeConfiguration<Phone>
             .IsRequired();
 
         builder.Property(x => x.Number)
+            .HasConversion(x => x.Value, x => PhoneNumber.Create(x))
             .HasMaxLength(32)
             .IsRequired();
 

@@ -3,6 +3,7 @@ using FlowChat.Application.Abstractions;
 using FlowChat.Domain.Abstractions;
 using FlowChat.UserProfileService.Application.Contracts.Persistence;
 using FlowChat.UserProfileService.Domain.Entities;
+using FlowChat.UserProfileService.Domain.ValueObjects;
 
 namespace FlowChat.UserProfileService.Application.UserProfiles.Commands.AddEmail;
 
@@ -24,9 +25,16 @@ public sealed class AddEmailCommandHandler
         AddEmailCommand request,
         CancellationToken cancellationToken)
     {
+        EmailAddress? normalizedEmailAddress = null;
         var validationErrors = new ValidationErrorCollector()
             .AddIf(request.UserId == Guid.Empty, "UserId is required.")
             .AddIf(string.IsNullOrWhiteSpace(request.Address), "Email address is required.");
+
+        if (!string.IsNullOrWhiteSpace(request.Address) &&
+            !EmailAddress.TryCreate(request.Address, out normalizedEmailAddress))
+        {
+            validationErrors.AddIf(true, EmailAddress.InvalidEmailAddressMessage);
+        }
 
         if (validationErrors.HasErrors)
         {
@@ -39,13 +47,12 @@ public sealed class AddEmailCommandHandler
             return Result.Failure<Guid, IDomainError>(DomainError.NotFound($"User profile '{request.UserId}' was not found."));
         }
 
-        var normalizedAddress = request.Address!.Trim();
-        if (_userProfile.Emails.Any(x => string.Equals(x.Address, normalizedAddress, StringComparison.OrdinalIgnoreCase)))
+        if (_userProfile.Emails.Any(x => x.Address == normalizedEmailAddress))
         {
-            return Result.Failure<Guid, IDomainError>(DomainError.Conflict($"Email '{normalizedAddress}' already exists."));
+            return Result.Failure<Guid, IDomainError>(DomainError.Conflict($"Email '{normalizedEmailAddress!.Value}' already exists."));
         }
 
-        var email = _userProfile.AddEmail(normalizedAddress);
+        var email = _userProfile.AddEmail(normalizedEmailAddress!.Value);
 
         return email.Id.Value;
     }

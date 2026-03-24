@@ -1,5 +1,6 @@
 using FlowChat.Domain.Abstractions;
 using FlowChat.UserProfileService.Domain.Entities;
+using FlowChat.UserProfileService.Domain.ValueObjects;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -20,6 +21,7 @@ public class EmailConfiguration : IEntityTypeConfiguration<Email>
             .IsRequired();
 
         builder.Property(x => x.Address)
+            .HasConversion(x => x.Value, x => EmailAddress.Create(x))
             .HasMaxLength(256)
             .IsRequired();
 

@@ -1,6 +1,7 @@
 using FlowChat.Domain.Abstractions;
 using FlowChat.UserProfileService.Domain.Common.Constants;
 using FlowChat.UserProfileService.Domain.Events;
+using FlowChat.UserProfileService.Domain.ValueObjects;
 
 namespace FlowChat.UserProfileService.Domain.Entities;
 
@@ -80,8 +81,8 @@ public class UserProfile : AggregateRootBase<UserProfile>
         userProfile._emails.AddRange(emailList);
         userProfile._phones.AddRange(phoneList);
 
-        var mainEmail = userProfile.Emails.FirstOrDefault(x => x.IsMain)?.Address;
-        var mainPhone = userProfile.Phones.FirstOrDefault(x => x.IsMain)?.Number;
+        var mainEmail = userProfile.Emails.FirstOrDefault(x => x.IsMain)?.Address.Value;
+        var mainPhone = userProfile.Phones.FirstOrDefault(x => x.IsMain)?.Number.Value;
 
         userProfile.AddDomainEvent(new UserProfileCreatedDomainEvent(
             userProfile.Id,
@@ -95,6 +96,7 @@ public class UserProfile : AggregateRootBase<UserProfile>
             userProfile.LastSeenAtUtc,
             userProfile.IsEmailVisible,
             userProfile.IsPhoneVisible));
+        userProfile.MarkAggregateStateChanged(UserProfileConstants.UserProfileAggregateTypeName, userProfile.CreateSnapshot);
 
         return userProfile;
     }
@@ -133,14 +135,15 @@ public class UserProfile : AggregateRootBase<UserProfile>
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(address);
 
-        var normalizedAddress = address.Trim();
-        if (_emails.Any(x => string.Equals(x.Address, normalizedAddress, StringComparison.OrdinalIgnoreCase)))
+        var normalizedAddress = EmailAddress.Create(address);
+        if (_emails.Any(x => x.Address == normalizedAddress))
         {
-            throw new InvalidOperationException($"Email '{normalizedAddress}' already exists.");
+            throw new InvalidOperationException($"Email '{normalizedAddress.Value}' already exists.");
         }
 
         var email = Email.Create(Id, normalizedAddress, !_emails.Any(), id);
         _emails.Add(email);
+        MarkAggregateStateChanged(UserProfileConstants.UserProfileAggregateTypeName, CreateSnapshot);
 
         return email;
     }
@@ -165,7 +168,7 @@ public class UserProfile : AggregateRootBase<UserProfile>
             email.SetMain(email == targetEmail);
         }
 
-        AddDomainEvent(new MainEmailChangedDomainEvent(Id, targetEmail.Id, targetEmail.Address));
+        AddDomainEvent(new MainEmailChangedDomainEvent(Id, targetEmail.Id, targetEmail.Address.Value));
         MarkAggregateStateChanged(UserProfileConstants.UserProfileAggregateTypeName, CreateSnapshot);
     }
 
@@ -173,14 +176,15 @@ public class UserProfile : AggregateRootBase<UserProfile>
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(number);
 
-        var normalizedNumber = number.Trim();
-        if (_phones.Any(x => string.Equals(x.Number, normalizedNumber, StringComparison.OrdinalIgnoreCase)))
+        var normalizedNumber = PhoneNumber.Create(number);
+        if (_phones.Any(x => x.Number == normalizedNumber))
         {
-            throw new InvalidOperationException($"Phone '{normalizedNumber}' already exists.");
+            throw new InvalidOperationException($"Phone '{normalizedNumber.Value}' already exists.");
         }
 
         var phone = Phone.Create(Id, normalizedNumber, !_phones.Any(), id);
         _phones.Add(phone);
+        MarkAggregateStateChanged(UserProfileConstants.UserProfileAggregateTypeName, CreateSnapshot);
 
         return phone;
     }
@@ -205,14 +209,14 @@ public class UserProfile : AggregateRootBase<UserProfile>
             phone.SetMain(phone == targetPhone);
         }
 
-        AddDomainEvent(new MainPhoneChangedDomainEvent(Id, targetPhone.Id, targetPhone.Number));
+        AddDomainEvent(new MainPhoneChangedDomainEvent(Id, targetPhone.Id, targetPhone.Number.Value));
         MarkAggregateStateChanged(UserProfileConstants.UserProfileAggregateTypeName, CreateSnapshot);
     }
 
     private UserProfileSnapshot CreateSnapshot()
     {
-        var mainEmail = _emails.FirstOrDefault(x => x.IsMain)?.Address;
-        var mainPhone = _phones.FirstOrDefault(x => x.IsMain)?.Number;
+        var mainEmail = _emails.FirstOrDefault(x => x.IsMain)?.Address.Value;
+        var mainPhone = _phones.FirstOrDefault(x => x.IsMain)?.Number.Value;
 
         return new UserProfileSnapshot(
             Id.Value,
