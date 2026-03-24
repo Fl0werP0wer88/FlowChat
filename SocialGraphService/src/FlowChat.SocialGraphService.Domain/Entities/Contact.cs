@@ -11,7 +11,7 @@ public class Contact : AggregateRootBase<Contact>
     public string? LastName { get; }
     public string DisplayedName { get; }
     public PhoneNumber? PhoneNumber { get; }
-    public EmailAddress? Email { get; }
+    public EmailAddress? EmailAddress { get; }
     public bool IsBlocked { get; }
 
     private Contact(
@@ -22,7 +22,7 @@ public class Contact : AggregateRootBase<Contact>
         string? firstName = null,
         string? lastName = null,
         PhoneNumber? phoneNumber = null,
-        EmailAddress? email = null,
+        EmailAddress? emailAddress = null,
         bool isBlocked = false) : base(id)
     {
         ArgumentOutOfRangeException.ThrowIfEqual(ownerUserId, Guid.Empty);
@@ -41,7 +41,7 @@ public class Contact : AggregateRootBase<Contact>
         LastName = lastName;
         DisplayedName = displayedName;
         PhoneNumber = phoneNumber;
-        Email = email;
+        EmailAddress = emailAddress;
         IsBlocked = isBlocked;
     }
 
@@ -53,11 +53,11 @@ public class Contact : AggregateRootBase<Contact>
         string? firstName = null,
         string? lastName = null,
         PhoneNumber? phoneNumber = null,
-        EmailAddress? email = null,
+        EmailAddress? emailAddress = null,
         bool isBlocked = false,
         Id<Contact>? id = null)
     {
-        return new Contact(id, ownerUserId, contactUserId, displayedName, firstName, lastName, phoneNumber, email, isBlocked);
+        return new Contact(id, ownerUserId, contactUserId, displayedName, firstName, lastName, phoneNumber, emailAddress, isBlocked);
     }
 
     public static Contact Rehydrate(
@@ -67,10 +67,10 @@ public class Contact : AggregateRootBase<Contact>
         string? firstName = null,
         string? lastName = null,
         PhoneNumber? phoneNumber = null,
-        EmailAddress? email = null,
+        EmailAddress? emailAddress = null,
         bool isBlocked = false,
         Id<Contact>? id = null)
     {
-        return new Contact(id, ownerUserId, contactUserId, displayedName, firstName, lastName, phoneNumber, email, isBlocked);
+        return new Contact(id, ownerUserId, contactUserId, displayedName, firstName, lastName, phoneNumber, emailAddress, isBlocked);
     }
 }

@@ -39,7 +39,7 @@ public class ContactConfiguration : IEntityTypeConfiguration<Contact>
                 x => x == null ? null : PhoneNumber.Create(x))
             .HasMaxLength(32);
 
-        builder.Property(x => x.Email)
+        builder.Property(x => x.EmailAddress)
             .HasConversion(
                 x => x == null ? null : x.Value,
                 x => x == null ? null : EmailAddress.Create(x))

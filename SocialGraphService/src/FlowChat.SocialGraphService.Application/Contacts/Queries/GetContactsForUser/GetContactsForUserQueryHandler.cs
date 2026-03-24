@@ -30,7 +30,7 @@ public sealed class GetContactsForUserQueryHandler : IQueryHandler<GetContactsFo
                 x.FirstName,
                 x.LastName,
                 x.PhoneNumber?.Value,
-                x.Email?.Value,
+                x.EmailAddress?.Value,
                 x.IsBlocked,
                 x.CreatedAtUtc.UtcDateTime,
                 x.LastModifiedAtUtc.UtcDateTime))

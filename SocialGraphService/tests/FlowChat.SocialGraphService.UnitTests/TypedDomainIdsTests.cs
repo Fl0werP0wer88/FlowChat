@@ -44,7 +44,7 @@ public class TypedDomainIdsTests
         Assert.Equal("Kowalski", contact.LastName);
         Assert.Equal("jkowalski", contact.DisplayedName);
         Assert.Equal("+48123456789", contact.PhoneNumber!.Value);
-        Assert.Equal("jan@example.com", contact.Email!.Value);
+        Assert.Equal("jan@example.com", contact.EmailAddress!.Value);
     }
 
     [Fact]
@@ -59,7 +59,7 @@ public class TypedDomainIdsTests
         Assert.Null(contact.FirstName);
         Assert.Null(contact.LastName);
         Assert.Null(contact.PhoneNumber);
-        Assert.Null(contact.Email);
+        Assert.Null(contact.EmailAddress);
     }
 
     [Fact]
