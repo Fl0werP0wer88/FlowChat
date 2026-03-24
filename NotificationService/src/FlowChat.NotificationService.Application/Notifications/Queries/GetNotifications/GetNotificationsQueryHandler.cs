@@ -7,9 +7,9 @@ namespace FlowChat.NotificationService.Application.Notifications.Queries.GetNoti
 
 public sealed class GetNotificationsQueryHandler : IQueryHandler<GetNotificationsQuery, IReadOnlyList<NotificationDto>>
 {
-    private readonly INotificationRepository _notificationRepository;
+    private readonly INotificationReadRepository _notificationRepository;
 
-    public GetNotificationsQueryHandler(INotificationRepository notificationRepository)
+    public GetNotificationsQueryHandler(INotificationReadRepository notificationRepository)
     {
         _notificationRepository = notificationRepository;
     }
@@ -18,24 +18,9 @@ public sealed class GetNotificationsQueryHandler : IQueryHandler<GetNotification
         GetNotificationsQuery request,
         CancellationToken cancellationToken)
     {
-        var entities = request.UserId.HasValue
+        var notifications = request.UserId.HasValue
             ? await _notificationRepository.GetByUserIdAsync(request.UserId.Value, cancellationToken)
             : await _notificationRepository.GetRecentAsync(cancellationToken);
-
-        var notifications = entities
-            .Select(notification => new NotificationDto(
-                notification.Id,
-                notification.UserId,
-                notification.Email,
-                notification.DisplayName,
-                notification.Type,
-                notification.Status,
-                notification.ProviderMessageId,
-                notification.FailureReason,
-                notification.SourceMessageKey,
-                notification.SentAtUtc,
-                notification.CreatedDate))
-            .ToArray();
 
         return Result.Success<IReadOnlyList<NotificationDto>, IDomainError>(notifications);
     }

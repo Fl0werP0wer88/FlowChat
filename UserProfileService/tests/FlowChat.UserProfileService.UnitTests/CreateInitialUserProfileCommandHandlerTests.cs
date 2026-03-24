@@ -3,6 +3,7 @@ using FlowChat.Application.Abstractions;
 using FlowChat.Domain.Abstractions;
 using FlowChat.UserProfileService.Application.Contracts.Persistence;
 using FlowChat.UserProfileService.Application.UserProfiles.Commands.CreateInitialUserProfile;
+using FlowChat.UserProfileService.Application.UserProfiles.Queries.GetUserProfile;
 using FlowChat.UserProfileService.Domain.Entities;
 using FlowChat.UserProfileService.Domain.Events;
 using FlowChat.Domain.Abstractions.ValueObjects;
@@ -16,6 +17,7 @@ public sealed class CreateInitialUserProfileCommandHandlerTests
     {
         var repository = new TestUserProfileRepository();
         var handler = new CreateInitialUserProfileCommandHandler(
+            repository,
             repository,
             new TestUnitOfWork(),
             new TestDomainEventDispatcher());
@@ -49,6 +51,7 @@ public sealed class CreateInitialUserProfileCommandHandlerTests
         var repository = new TestUserProfileRepository();
         var handler = new CreateInitialUserProfileCommandHandler(
             repository,
+            repository,
             new TestUnitOfWork(),
             new TestDomainEventDispatcher());
 
@@ -75,6 +78,7 @@ public sealed class CreateInitialUserProfileCommandHandlerTests
         var repository = new TestUserProfileRepository();
         var handler = new CreateInitialUserProfileCommandHandler(
             repository,
+            repository,
             new TestUnitOfWork(),
             new TestDomainEventDispatcher());
 
@@ -100,6 +104,7 @@ public sealed class CreateInitialUserProfileCommandHandlerTests
     {
         var repository = new TestUserProfileRepository();
         var handler = new CreateInitialUserProfileCommandHandler(
+            repository,
             repository,
             new TestUnitOfWork(),
             new TestDomainEventDispatcher());
@@ -134,6 +139,7 @@ public sealed class CreateInitialUserProfileCommandHandlerTests
         var repository = new TestUserProfileRepository();
         var handler = new CreateInitialUserProfileCommandHandler(
             repository,
+            repository,
             new TestUnitOfWork(),
             new TestDomainEventDispatcher());
 
@@ -162,6 +168,7 @@ public sealed class CreateInitialUserProfileCommandHandlerTests
         var repository = new TestUserProfileRepository();
         var handler = new CreateInitialUserProfileCommandHandler(
             repository,
+            repository,
             new TestUnitOfWork(),
             new TestDomainEventDispatcher());
 
@@ -187,6 +194,7 @@ public sealed class CreateInitialUserProfileCommandHandlerTests
     {
         var repository = new TestUserProfileRepository();
         var handler = new CreateInitialUserProfileCommandHandler(
+            repository,
             repository,
             new TestUnitOfWork(),
             new TestDomainEventDispatcher());
@@ -216,6 +224,7 @@ public sealed class CreateInitialUserProfileCommandHandlerTests
         var repository = new TestUserProfileRepository();
         var handler = new CreateInitialUserProfileCommandHandler(
             repository,
+            repository,
             new TestUnitOfWork(),
             new TestDomainEventDispatcher());
 
@@ -241,6 +250,7 @@ public sealed class CreateInitialUserProfileCommandHandlerTests
     {
         var repository = new TestUserProfileRepository();
         var handler = new CreateInitialUserProfileCommandHandler(
+            repository,
             repository,
             new TestUnitOfWork(),
             new TestDomainEventDispatcher());
@@ -269,6 +279,7 @@ public sealed class CreateInitialUserProfileCommandHandlerTests
         var dispatcher = new TestDomainEventDispatcher();
         var handler = new CreateInitialUserProfileCommandHandler(
             repository,
+            repository,
             new TestUnitOfWork(),
             dispatcher);
 
@@ -294,7 +305,7 @@ public sealed class CreateInitialUserProfileCommandHandlerTests
         Assert.Null(stateChangedEvent.AggregateState.MainPhone);
     }
 
-    private sealed class TestUserProfileRepository : IUserProfileRepository
+    private sealed class TestUserProfileRepository : IUserProfileReadRepository, IUserProfileWriteRepository
     {
         public UserProfile? AddedEntity { get; private set; }
         public IReadOnlyList<IDomainEvent> DomainEventsAtAdd { get; private set; } = [];
@@ -302,8 +313,11 @@ public sealed class CreateInitialUserProfileCommandHandlerTests
         public Task<UserProfile?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
             Task.FromResult<UserProfile?>(null);
 
-        public Task<IReadOnlyList<UserProfile>> GetAllAsync(CancellationToken cancellationToken = default) =>
-            Task.FromResult<IReadOnlyList<UserProfile>>([]);
+        Task<UserProfileDto?> IReadRepository<UserProfileDto>.GetByIdAsync(Guid id, CancellationToken cancellationToken) =>
+            Task.FromResult<UserProfileDto?>(null);
+
+        Task<IReadOnlyList<UserProfileDto>> IReadRepository<UserProfileDto>.GetAllAsync(CancellationToken cancellationToken) =>
+            Task.FromResult<IReadOnlyList<UserProfileDto>>([]);
 
         public Task<UserProfile> AddAsync(UserProfile entity, CancellationToken cancellationToken = default)
         {
@@ -316,14 +330,11 @@ public sealed class CreateInitialUserProfileCommandHandlerTests
 
         public Task DeleteAsync(UserProfile entity, CancellationToken cancellationToken = default) => Task.CompletedTask;
 
-        public Task<IReadOnlyList<UserProfile>> GetActiveAsync(CancellationToken cancellationToken = default) =>
-            Task.FromResult<IReadOnlyList<UserProfile>>([]);
+        public Task<IReadOnlyList<UserProfileDto>> GetActiveAsync(CancellationToken cancellationToken = default) =>
+            Task.FromResult<IReadOnlyList<UserProfileDto>>([]);
 
-        public Task<UserProfile?> GetByUserNameAsync(string userName, CancellationToken cancellationToken = default) =>
-            Task.FromResult<UserProfile?>(null);
-
-        public Task<UserProfile?> GetByIdForUpdateAsync(Guid id, CancellationToken cancellationToken = default) =>
-            Task.FromResult<UserProfile?>(null);
+        public Task<UserProfileDto?> GetByUserNameAsync(string userName, CancellationToken cancellationToken = default) =>
+            Task.FromResult<UserProfileDto?>(null);
 
         public Task<bool> UserNameExistsAsync(
             string userName,

@@ -9,14 +9,17 @@ namespace FlowChat.NotificationService.Application.Notifications.Commands.UserEm
 
 public sealed class UserEmailVerificationRequestedCommandHandler : IRequestHandler<UserEmailVerificationRequestedCommand>
 {
-    private readonly INotificationRepository _notificationRepository;
+    private readonly INotificationReadRepository _notificationReadRepository;
+    private readonly INotificationWriteRepository _notificationWriteRepository;
     private readonly INotificationSender _notificationSender;
 
     public UserEmailVerificationRequestedCommandHandler(
-        INotificationRepository notificationRepository,
+        INotificationReadRepository notificationReadRepository,
+        INotificationWriteRepository notificationWriteRepository,
         INotificationSender notificationSender)
     {
-        _notificationRepository = notificationRepository;
+        _notificationReadRepository = notificationReadRepository;
+        _notificationWriteRepository = notificationWriteRepository;
         _notificationSender = notificationSender;
     }
 
@@ -46,7 +49,7 @@ public sealed class UserEmailVerificationRequestedCommandHandler : IRequestHandl
             ? request.UserName.Trim()
             : request.DisplayName.Trim();
 
-        var alreadyExists = await _notificationRepository.ExistsByUserIdAndTypeAsync(
+        var alreadyExists = await _notificationReadRepository.ExistsByUserIdAndTypeAsync(
             request.UserId,
             NotificationType.Welcome,
             cancellationToken);
@@ -77,6 +80,6 @@ public sealed class UserEmailVerificationRequestedCommandHandler : IRequestHandl
         }
 
         notification.MarkSent(sendResult.ProviderMessageId);
-        await _notificationRepository.AddAsync(notification, cancellationToken);
+        await _notificationWriteRepository.AddAsync(notification, cancellationToken);
     }
 }

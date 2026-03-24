@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <ProjectReference Include="..\..\..\Common\src\FlowChat.Persistence.EntityFrameworkCore\FlowChat.Persistence.EntityFrameworkCore.csproj" />
     <ProjectReference Include="..\..\..\Common\src\FlowChat.Domain.Abstractions\FlowChat.Domain.Abstractions.csproj" />
     <ProjectReference Include="..\FlowChat.SocialGraphService.Application\FlowChat.SocialGraphService.Application.csproj" />
   </ItemGroup>

@@ -15,8 +15,8 @@ public static class PersistenceServiceRegistration
         services.AddDbContext<AppDbContext>(options =>
             options.UseNpgsql(configuration.GetConnectionString("NotificationDb")));
 
-        services.AddScoped(typeof(IAsyncRepository<>), typeof(RepositoryBase<>));
-        services.AddScoped<INotificationRepository, NotificationRepository>();
+        services.AddScoped<INotificationReadRepository, NotificationReadRepository>();
+        services.AddScoped<INotificationWriteRepository, NotificationWriteRepository>();
 
         return services;
     }

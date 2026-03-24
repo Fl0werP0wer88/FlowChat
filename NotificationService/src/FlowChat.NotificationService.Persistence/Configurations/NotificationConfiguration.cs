@@ -1,3 +1,4 @@
+using FlowChat.Domain.Abstractions;
 using FlowChat.NotificationService.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -10,6 +11,9 @@ public sealed class NotificationConfiguration : IEntityTypeConfiguration<Notific
     {
         builder.ToTable("Notifications");
         builder.HasKey(x => x.Id);
+
+        builder.Property(x => x.Id)
+            .HasConversion(x => x.Value, x => Id<Notification>.FromGuid(x));
 
         builder.Property(x => x.Email)
             .HasMaxLength(320)
@@ -37,6 +41,18 @@ public sealed class NotificationConfiguration : IEntityTypeConfiguration<Notific
 
         builder.Property(x => x.SourceMessageKey)
             .HasMaxLength(200);
+
+        builder.Property(x => x.CreatedAtUtc)
+            .HasConversion(
+                x => x.UtcDateTime,
+                x => new DateTimeOffset(DateTime.SpecifyKind(x, DateTimeKind.Utc)))
+            .HasColumnName("CreatedDate");
+
+        builder.Property(x => x.LastModifiedAtUtc)
+            .HasConversion(
+                x => x.UtcDateTime,
+                x => new DateTimeOffset(DateTime.SpecifyKind(x, DateTimeKind.Utc)))
+            .HasColumnName("LastModifiedDate");
 
         builder.HasIndex(x => x.UserId);
         builder.HasIndex(x => new { x.UserId, x.Type }).IsUnique();

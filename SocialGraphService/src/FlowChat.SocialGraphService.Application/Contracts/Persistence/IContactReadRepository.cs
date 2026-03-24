@@ -1,3 +1,4 @@
+using FlowChat.Application.Abstractions;
 using FlowChat.SocialGraphService.Application.Contacts.Queries.GetContactsForUser;
 
 namespace FlowChat.SocialGraphService.Application.Contracts.Persistence;

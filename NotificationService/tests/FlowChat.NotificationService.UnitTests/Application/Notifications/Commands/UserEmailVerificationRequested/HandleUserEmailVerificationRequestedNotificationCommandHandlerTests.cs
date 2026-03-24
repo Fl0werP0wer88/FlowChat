@@ -1,6 +1,7 @@
 using FlowChat.NotificationService.Application.Contracts.Infrastructure;
 using FlowChat.NotificationService.Application.Contracts.Persistence;
 using FlowChat.NotificationService.Application.Notifications.Commands.UserEmailVerificationRequested;
+using FlowChat.NotificationService.Application.Notifications.Queries.GetNotifications;
 using FlowChat.NotificationService.Domain.Entities;
 using FlowChat.NotificationService.Domain.Enums;
 
@@ -14,7 +15,7 @@ public class HandleUserEmailVerificationRequestedNotificationCommandHandlerTests
         var repository = new InMemoryNotificationRepository();
         var sender = new StubNotificationSender(
             new NotificationSendResult(true, "provider-123", null));
-        var sut = new UserEmailVerificationRequestedCommandHandler(repository, sender);
+        var sut = new UserEmailVerificationRequestedCommandHandler(repository, repository, sender);
 
         var command = new UserEmailVerificationRequestedCommand(
             Guid.NewGuid(),
@@ -50,7 +51,7 @@ public class HandleUserEmailVerificationRequestedNotificationCommandHandlerTests
 
         var sender = new StubNotificationSender(
             new NotificationSendResult(true, "provider-new", null));
-        var sut = new UserEmailVerificationRequestedCommandHandler(repository, sender);
+        var sut = new UserEmailVerificationRequestedCommandHandler(repository, repository, sender);
 
         var command = new UserEmailVerificationRequestedCommand(
             existing.UserId,
@@ -72,7 +73,7 @@ public class HandleUserEmailVerificationRequestedNotificationCommandHandlerTests
         var repository = new InMemoryNotificationRepository();
         var sender = new StubNotificationSender(
             new NotificationSendResult(false, null, "smtp timeout"));
-        var sut = new UserEmailVerificationRequestedCommandHandler(repository, sender);
+        var sut = new UserEmailVerificationRequestedCommandHandler(repository, repository, sender);
 
         var command = new UserEmailVerificationRequestedCommand(
             Guid.NewGuid(),
@@ -94,7 +95,7 @@ public class HandleUserEmailVerificationRequestedNotificationCommandHandlerTests
         var repository = new InMemoryNotificationRepository();
         var sender = new StubNotificationSender(
             new NotificationSendResult(true, "provider-123", null));
-        var sut = new UserEmailVerificationRequestedCommandHandler(repository, sender);
+        var sut = new UserEmailVerificationRequestedCommandHandler(repository, repository, sender);
 
         var command = new UserEmailVerificationRequestedCommand(
             Guid.Empty,
@@ -130,19 +131,14 @@ public class HandleUserEmailVerificationRequestedNotificationCommandHandlerTests
         }
     }
 
-    private sealed class InMemoryNotificationRepository : INotificationRepository
+    private sealed class InMemoryNotificationRepository : INotificationReadRepository, INotificationWriteRepository
     {
         public List<Notification> Notifications { get; } = [];
 
-        public Task<Notification?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
-        {
-            return Task.FromResult(Notifications.FirstOrDefault(x => x.Id == id));
-        }
-
-        public Task<IReadOnlyList<Notification>> GetAllAsync(CancellationToken cancellationToken = default)
-        {
-            return Task.FromResult((IReadOnlyList<Notification>)Notifications.ToArray());
-        }
+        Task<Notification?> FlowChat.Application.Abstractions.IWriteRepository<Notification>.GetByIdAsync(
+            Guid id,
+            CancellationToken cancellationToken) =>
+            Task.FromResult(Notifications.FirstOrDefault(x => x.Id.Value == id));
 
         public Task<Notification> AddAsync(Notification entity, CancellationToken cancellationToken = default)
         {
@@ -170,18 +166,45 @@ public class HandleUserEmailVerificationRequestedNotificationCommandHandlerTests
             return Task.FromResult(exists);
         }
 
-        public Task<IReadOnlyList<Notification>> GetByUserIdAsync(
+        public Task<NotificationDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult(Notifications
+                .Where(x => x.Id.Value == id)
+                .Select(ToDto)
+                .FirstOrDefault());
+        }
+
+        public Task<IReadOnlyList<NotificationDto>> GetAllAsync(CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult((IReadOnlyList<NotificationDto>)Notifications.Select(ToDto).ToArray());
+        }
+
+        public Task<IReadOnlyList<NotificationDto>> GetByUserIdAsync(
             Guid userId,
             CancellationToken cancellationToken = default)
         {
-            return Task.FromResult((IReadOnlyList<Notification>)Notifications
+            return Task.FromResult((IReadOnlyList<NotificationDto>)Notifications
                 .Where(x => x.UserId == userId)
+                .Select(ToDto)
                 .ToArray());
         }
 
-        public Task<IReadOnlyList<Notification>> GetRecentAsync(CancellationToken cancellationToken = default)
+        public Task<IReadOnlyList<NotificationDto>> GetRecentAsync(CancellationToken cancellationToken = default)
         {
-            return Task.FromResult((IReadOnlyList<Notification>)Notifications.ToArray());
+            return Task.FromResult((IReadOnlyList<NotificationDto>)Notifications.Select(ToDto).ToArray());
         }
+
+        private static NotificationDto ToDto(Notification notification) => new(
+            notification.Id.Value,
+            notification.UserId,
+            notification.Email,
+            notification.DisplayName,
+            notification.Type,
+            notification.Status,
+            notification.ProviderMessageId,
+            notification.FailureReason,
+            notification.SourceMessageKey,
+            notification.SentAtUtc,
+            notification.CreatedAtUtc.UtcDateTime);
     }
 }

@@ -1,23 +1,22 @@
-using FlowChat.NotificationService.Domain.Common;
+using FlowChat.Domain.Abstractions;
 using FlowChat.NotificationService.Domain.Enums;
 
 namespace FlowChat.NotificationService.Domain.Entities;
 
-public sealed class Notification : AuditableEntity
+public sealed class Notification : AggregateRootBase<Notification>
 {
-    private Notification()
+    private Notification() : base(null)
     {
     }
 
     private Notification(
-        Guid id,
+        Id<Notification>? id,
         Guid userId,
         string email,
         string displayName,
         NotificationType type,
-        string? sourceMessageKey)
+        string? sourceMessageKey) : base(id)
     {
-        Id = id;
         UserId = userId;
         Email = email;
         DisplayName = displayName;
@@ -26,7 +25,6 @@ public sealed class Notification : AuditableEntity
         SourceMessageKey = sourceMessageKey;
     }
 
-    public Guid Id { get; private set; }
     public Guid UserId { get; private set; }
     public string Email { get; private set; } = string.Empty;
     public string DisplayName { get; private set; } = string.Empty;
@@ -59,7 +57,7 @@ public sealed class Notification : AuditableEntity
         }
 
         return new Notification(
-            Guid.NewGuid(),
+            null,
             userId,
             email.Trim(),
             displayName.Trim(),
@@ -73,6 +71,7 @@ public sealed class Notification : AuditableEntity
         ProviderMessageId = string.IsNullOrWhiteSpace(providerMessageId) ? null : providerMessageId.Trim();
         FailureReason = null;
         SentAtUtc = DateTime.UtcNow;
+        Modified(string.Empty);
     }
 
     public void MarkFailed(string? failureReason)
@@ -81,5 +80,6 @@ public sealed class Notification : AuditableEntity
         FailureReason = string.IsNullOrWhiteSpace(failureReason) ? "Unknown notification error." : failureReason.Trim();
         ProviderMessageId = null;
         SentAtUtc = null;
+        Modified(string.Empty);
     }
 }

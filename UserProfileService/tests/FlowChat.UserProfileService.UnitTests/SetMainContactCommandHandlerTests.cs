@@ -152,13 +152,10 @@ public sealed class SetMainContactCommandHandlerTests
         Assert.Equal(["UserId is required.", "PhoneId is required."], result.Error.Errors);
     }
 
-    private sealed class TestUserProfileRepository(UserProfile? userProfile = null) : IUserProfileRepository
+    private sealed class TestUserProfileRepository(UserProfile? userProfile = null) : IUserProfileWriteRepository
     {
         public Task<UserProfile?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
-            Task.FromResult<UserProfile?>(userProfile);
-
-        public Task<IReadOnlyList<UserProfile>> GetAllAsync(CancellationToken cancellationToken = default) =>
-            Task.FromResult<IReadOnlyList<UserProfile>>([]);
+            Task.FromResult(userProfile?.Id.Value == id ? userProfile : null);
 
         public Task<UserProfile> AddAsync(UserProfile entity, CancellationToken cancellationToken = default) =>
             Task.FromResult(entity);
@@ -168,21 +165,6 @@ public sealed class SetMainContactCommandHandlerTests
 
         public Task DeleteAsync(UserProfile entity, CancellationToken cancellationToken = default) =>
             Task.CompletedTask;
-
-        public Task<IReadOnlyList<UserProfile>> GetActiveAsync(CancellationToken cancellationToken = default) =>
-            Task.FromResult<IReadOnlyList<UserProfile>>([]);
-
-        public Task<UserProfile?> GetByUserNameAsync(string userName, CancellationToken cancellationToken = default) =>
-            Task.FromResult<UserProfile?>(null);
-
-        public Task<UserProfile?> GetByIdForUpdateAsync(Guid id, CancellationToken cancellationToken = default) =>
-            Task.FromResult(userProfile?.Id.Value == id ? userProfile : null);
-
-        public Task<bool> UserNameExistsAsync(
-            string userName,
-            Guid? excludedUserId = null,
-            CancellationToken cancellationToken = default) =>
-            Task.FromResult(false);
     }
 
     private sealed class TestUnitOfWork : IUnitOfWork

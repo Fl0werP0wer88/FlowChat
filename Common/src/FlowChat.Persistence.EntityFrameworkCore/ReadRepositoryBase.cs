@@ -1,15 +1,15 @@
+using FlowChat.Application.Abstractions;
 using FlowChat.Domain.Abstractions;
-using FlowChat.SocialGraphService.Application.Contracts.Persistence;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 
-namespace FlowChat.SocialGraphService.Persistence.Repositories;
+namespace FlowChat.Persistence.EntityFrameworkCore;
 
-public abstract class ReadRepositoryBase<TEntity, TDto>(AppDbContext dbContext) : IReadRepository<TDto>
+public abstract class ReadRepositoryBase<TEntity, TDto>(DbContext dbContext) : IReadRepository<TDto>
     where TEntity : class, IEntity<TEntity>
     where TDto : class
 {
-    protected readonly AppDbContext DbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
+    protected readonly DbContext DbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
     protected virtual IQueryable<TEntity> Query => DbContext.Set<TEntity>().AsNoTracking();
     protected abstract Expression<Func<TEntity, TDto>> MapToDto { get; }
 

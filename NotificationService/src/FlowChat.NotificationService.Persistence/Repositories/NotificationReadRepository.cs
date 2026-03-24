@@ -1,0 +1,59 @@
+using FlowChat.NotificationService.Application.Contracts.Persistence;
+using FlowChat.NotificationService.Application.Notifications.Queries.GetNotifications;
+using FlowChat.NotificationService.Domain.Entities;
+using FlowChat.NotificationService.Domain.Enums;
+using FlowChat.Persistence.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
+
+namespace FlowChat.NotificationService.Persistence.Repositories;
+
+public sealed class NotificationReadRepository(AppDbContext dbContext)
+    : ReadRepositoryBase<Notification, NotificationDto>(dbContext), INotificationReadRepository
+{
+    private static readonly Expression<Func<Notification, NotificationDto>> NotificationDtoProjection = x => new(
+        x.Id.Value,
+        x.UserId,
+        x.Email,
+        x.DisplayName,
+        x.Type,
+        x.Status,
+        x.ProviderMessageId,
+        x.FailureReason,
+        x.SourceMessageKey,
+        x.SentAtUtc,
+        x.CreatedAtUtc.UtcDateTime);
+
+    protected override Expression<Func<Notification, NotificationDto>> MapToDto => NotificationDtoProjection;
+
+    public async Task<bool> ExistsByUserIdAndTypeAsync(
+        Guid userId,
+        NotificationType type,
+        CancellationToken cancellationToken = default)
+    {
+        return await DbContext.Set<Notification>().AnyAsync(
+            x => x.UserId == userId && x.Type == type,
+            cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<NotificationDto>> GetByUserIdAsync(
+        Guid userId,
+        CancellationToken cancellationToken = default)
+    {
+        return await Query
+            .Where(x => x.UserId == userId)
+            .OrderByDescending(x => x.CreatedAtUtc)
+            .ThenByDescending(x => x.SentAtUtc)
+            .Select(MapToDto)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<NotificationDto>> GetRecentAsync(CancellationToken cancellationToken = default)
+    {
+        return await Query
+            .OrderByDescending(x => x.CreatedAtUtc)
+            .ThenByDescending(x => x.SentAtUtc)
+            .Select(MapToDto)
+            .ToListAsync(cancellationToken);
+    }
+}

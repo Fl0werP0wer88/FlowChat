@@ -20,8 +20,8 @@ public static class PersistenceServiceRegistration
             ServiceLifetime.Scoped);
 
         services.AddScoped<IUnitOfWork, UnitOfWork>();
-        services.AddScoped(typeof(IAsyncRepository<>), typeof(RepositoryBase<>));
-        services.AddScoped<IUserProfileRepository, UserProfileRepository>();
+        services.AddScoped<IUserProfileReadRepository, UserProfileReadRepository>();
+        services.AddScoped<IUserProfileWriteRepository, UserProfileWriteRepository>();
 
         return services;
     }

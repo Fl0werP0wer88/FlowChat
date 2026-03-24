@@ -1,4 +1,3 @@
-using FlowChat.NotificationService.Domain.Common;
 using FlowChat.NotificationService.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
@@ -21,15 +20,17 @@ public class AppDbContext : DbContext
 
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = new CancellationToken())
     {
-        foreach (var entry in ChangeTracker.Entries<AuditableEntity>())
+        foreach (var entry in ChangeTracker.Entries<Notification>())
         {
             switch (entry.State)
             {
                 case EntityState.Added:
-                    entry.Entity.CreatedDate = DateTime.UtcNow;
+                    var now = DateTimeOffset.UtcNow;
+                    entry.Property(nameof(Notification.CreatedAtUtc)).CurrentValue = now;
+                    entry.Property(nameof(Notification.LastModifiedAtUtc)).CurrentValue = now;
                     break;
                 case EntityState.Modified:
-                    entry.Entity.LastModifiedDate = DateTime.UtcNow;
+                    entry.Property(nameof(Notification.LastModifiedAtUtc)).CurrentValue = DateTimeOffset.UtcNow;
                     break;
             }
         }

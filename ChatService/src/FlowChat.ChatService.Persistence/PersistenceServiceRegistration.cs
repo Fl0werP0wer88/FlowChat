@@ -17,7 +17,7 @@ public static class PersistenceServiceRegistration
         services.AddDbContextFactory<AppDbContext>(
             options => options.UseNpgsql(configuration.GetConnectionString("ChatDb")),
             ServiceLifetime.Scoped);
-        services.AddScoped<IChatMessageRepository, ChatMessageRepository>();
+        services.AddScoped<IChatMessageWriteRepository, ChatMessageWriteRepository>();
 
         return services;
     }

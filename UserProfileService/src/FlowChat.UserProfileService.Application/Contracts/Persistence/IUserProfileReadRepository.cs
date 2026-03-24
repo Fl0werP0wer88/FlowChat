@@ -1,0 +1,14 @@
+using FlowChat.Application.Abstractions;
+using FlowChat.UserProfileService.Application.UserProfiles.Queries.GetUserProfile;
+
+namespace FlowChat.UserProfileService.Application.Contracts.Persistence;
+
+public interface IUserProfileReadRepository : IReadRepository<UserProfileDto>
+{
+    Task<IReadOnlyList<UserProfileDto>> GetActiveAsync(CancellationToken cancellationToken = default);
+    Task<UserProfileDto?> GetByUserNameAsync(string userName, CancellationToken cancellationToken = default);
+    Task<bool> UserNameExistsAsync(
+        string userName,
+        Guid? excludedUserId = null,
+        CancellationToken cancellationToken = default);
+}

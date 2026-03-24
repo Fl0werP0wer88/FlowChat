@@ -10,11 +10,11 @@ namespace FlowChat.UserProfileService.Application.UserProfiles.Commands.AddEmail
 public sealed class AddEmailCommandHandler
     : CommandHandlerBase<AddEmailCommand, Guid>
 {
-    private readonly IUserProfileRepository _userProfileRepository;
+    private readonly IUserProfileWriteRepository _userProfileRepository;
     private UserProfile? _userProfile;
 
     public AddEmailCommandHandler(
-        IUserProfileRepository userProfileRepository,
+        IUserProfileWriteRepository userProfileRepository,
         IUnitOfWork unitOfWork,
         IDomainEventDispatcher domainEventDispatcher) : base(domainEventDispatcher, unitOfWork)
     {
@@ -41,7 +41,7 @@ public sealed class AddEmailCommandHandler
             return validationErrors.ToFailure<Guid>();
         }
 
-        _userProfile = await _userProfileRepository.GetByIdForUpdateAsync(request.UserId, cancellationToken);
+        _userProfile = await _userProfileRepository.GetByIdAsync(request.UserId, cancellationToken);
         if (_userProfile is null)
         {
             return Result.Failure<Guid, IDomainError>(DomainError.NotFound($"User profile '{request.UserId}' was not found."));

@@ -1,3 +1,4 @@
+using FlowChat.Persistence.EntityFrameworkCore;
 using FlowChat.SocialGraphService.Application.Contracts.Persistence;
 using FlowChat.SocialGraphService.Domain.Entities;
 

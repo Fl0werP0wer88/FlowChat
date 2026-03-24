@@ -10,15 +10,18 @@ namespace FlowChat.UserProfileService.Application.UserProfiles.Commands.CreateIn
 public sealed class CreateInitialUserProfileCommandHandler
     : CommandHandlerBase<CreateInitialUserProfileCommand, Guid>
 {
-    private readonly IUserProfileRepository _userProfileRepository;
+    private readonly IUserProfileReadRepository _userProfileReadRepository;
+    private readonly IUserProfileWriteRepository _userProfileWriteRepository;
     private UserProfile? _userProfile;
 
     public CreateInitialUserProfileCommandHandler(
-        IUserProfileRepository userProfileRepository,
+        IUserProfileReadRepository userProfileReadRepository,
+        IUserProfileWriteRepository userProfileWriteRepository,
         IUnitOfWork unitOfWork,
         IDomainEventDispatcher domainEventDispatcher) : base(domainEventDispatcher, unitOfWork)
     {
-        _userProfileRepository = userProfileRepository;
+        _userProfileReadRepository = userProfileReadRepository;
+        _userProfileWriteRepository = userProfileWriteRepository;
     }
 
     protected override async Task<Result<Guid, IDomainError>> ExecuteAsync(
@@ -53,7 +56,7 @@ public sealed class CreateInitialUserProfileCommandHandler
             return validationErrors.ToFailure<Guid>();
         }
 
-        var exists = await _userProfileRepository
+        var exists = await _userProfileReadRepository
             .UserNameExistsAsync(userName!, cancellationToken: cancellationToken);
 
         if (exists)
@@ -78,7 +81,7 @@ public sealed class CreateInitialUserProfileCommandHandler
             phones: phones,
             id: userProfileId);
 
-        await _userProfileRepository.AddAsync(_userProfile, cancellationToken);
+        await _userProfileWriteRepository.AddAsync(_userProfile, cancellationToken);
 
         return _userProfile.Id.Value;
     }

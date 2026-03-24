@@ -9,11 +9,11 @@ namespace FlowChat.ChatService.Application.ChatMessages.Commands.SendChatMessage
 public sealed class SendChatMessageCommandHandler
     : CommandHandlerBase<SendChatMessageCommand, Guid>
 {
-    private readonly IChatMessageRepository _chatMessageRepository;
+    private readonly IChatMessageWriteRepository _chatMessageRepository;
     private ChatMessage? _chatMessage;
 
     public SendChatMessageCommandHandler(
-        IChatMessageRepository chatMessageRepository,
+        IChatMessageWriteRepository chatMessageRepository,
         IUnitOfWork unitOfWork,
         IDomainEventDispatcher domainEventDispatcher)
         : base(domainEventDispatcher, unitOfWork)

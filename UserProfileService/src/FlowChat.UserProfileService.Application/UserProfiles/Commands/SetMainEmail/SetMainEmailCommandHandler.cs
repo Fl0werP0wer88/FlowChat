@@ -10,11 +10,11 @@ namespace FlowChat.UserProfileService.Application.UserProfiles.Commands.SetMainE
 public sealed class SetMainEmailCommandHandler
     : CommandHandlerBase<SetMainEmailCommand, Guid>
 {
-    private readonly IUserProfileRepository _userProfileRepository;
+    private readonly IUserProfileWriteRepository _userProfileRepository;
     private UserProfile? _userProfile;
 
     public SetMainEmailCommandHandler(
-        IUserProfileRepository userProfileRepository,
+        IUserProfileWriteRepository userProfileRepository,
         IUnitOfWork unitOfWork,
         IDomainEventDispatcher domainEventDispatcher) : base(domainEventDispatcher, unitOfWork)
     {
@@ -34,7 +34,7 @@ public sealed class SetMainEmailCommandHandler
             return validationErrors.ToFailure<Guid>();
         }
 
-        _userProfile = await _userProfileRepository.GetByIdForUpdateAsync(request.UserId, cancellationToken);
+        _userProfile = await _userProfileRepository.GetByIdAsync(request.UserId, cancellationToken);
         if (_userProfile is null)
         {
             return Result.Failure<Guid, IDomainError>(DomainError.NotFound($"User profile '{request.UserId}' was not found."));
