@@ -3,5 +3,5 @@ using FlowChat.SocialGraphService.Domain.Entities;
 
 namespace FlowChat.SocialGraphService.Persistence.Repositories;
 
-public sealed class ContactRepository(AppDbContext dbContext)
+public sealed class ContactWriteRepository(AppDbContext dbContext)
     : WriteRepositoryBase<Contact>(dbContext), IContactRepository;
