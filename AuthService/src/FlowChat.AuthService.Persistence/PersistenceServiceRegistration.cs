@@ -1,6 +1,5 @@
 using FlowChat.Application.Abstractions;
 using FlowChat.AuthService.Application.Contracts.Persistence;
-using FlowChat.AuthService.Persistence.Auditing;
 using FlowChat.AuthService.Persistence.UnitOfWork;
 using FlowChat.AuthService.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -14,14 +13,11 @@ public static class PersistenceServiceRegistration
     public static IServiceCollection AddAPIPersistenceServices(
                             this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddScoped<AuditableEntitySaveChangesInterceptor>();
         services.AddScoped<IUnitOfWork, AppDbContextUnitOfWork>();
 
-        services.AddDbContext<AppDbContext>((serviceProvider, options) =>
+        services.AddDbContext<AppDbContext>(options =>
         {
             options.UseNpgsql(configuration.GetConnectionString("AuthDb"));
-            options.AddInterceptors(
-                serviceProvider.GetRequiredService<AuditableEntitySaveChangesInterceptor>());
         });
         services.AddDbContextFactory<AppDbContext>(
             options => options.UseNpgsql(configuration.GetConnectionString("AuthDb")),
@@ -35,12 +31,9 @@ public static class PersistenceServiceRegistration
     public static IServiceCollection AddWorkerPersistenceServices(
                             this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddScoped<AuditableEntitySaveChangesInterceptor>();
-        services.AddDbContext<AppDbContext>((serviceProvider, options) =>
+        services.AddDbContext<AppDbContext>(options =>
         {
             options.UseNpgsql(configuration.GetConnectionString("AuthDb"));
-            options.AddInterceptors(
-                serviceProvider.GetRequiredService<AuditableEntitySaveChangesInterceptor>());
         });
         services.AddDbContextFactory<AppDbContext>(
             options => options.UseNpgsql(configuration.GetConnectionString("AuthDb")),

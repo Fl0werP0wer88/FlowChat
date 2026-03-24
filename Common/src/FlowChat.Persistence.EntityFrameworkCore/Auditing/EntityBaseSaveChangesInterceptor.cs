@@ -32,7 +32,7 @@ public sealed class EntityBaseSaveChangesInterceptor : SaveChangesInterceptor
             return;
         }
 
-        foreach (var entry in dbContext.ChangeTracker.Entries<AuditableEntityBase>())
+        foreach (var entry in dbContext.ChangeTracker.Entries<IAuditableEntity>())
         {
             switch (entry.State)
             {
