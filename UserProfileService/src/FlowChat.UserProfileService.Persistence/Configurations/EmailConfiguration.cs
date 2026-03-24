@@ -1,6 +1,6 @@
 using FlowChat.Domain.Abstractions;
 using FlowChat.UserProfileService.Domain.Entities;
-using FlowChat.UserProfileService.Domain.ValueObjects;
+using FlowChat.Domain.Abstractions.ValueObjects;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 

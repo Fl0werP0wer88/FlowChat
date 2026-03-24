@@ -3,7 +3,7 @@ using FlowChat.Application.Abstractions;
 using FlowChat.Domain.Abstractions;
 using FlowChat.UserProfileService.Application.Contracts.Persistence;
 using FlowChat.UserProfileService.Domain.Entities;
-using FlowChat.UserProfileService.Domain.ValueObjects;
+using FlowChat.Domain.Abstractions.ValueObjects;
 
 namespace FlowChat.UserProfileService.Application.UserProfiles.Commands.AddPhone;
 

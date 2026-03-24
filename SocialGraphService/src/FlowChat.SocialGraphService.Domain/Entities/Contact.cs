@@ -1,4 +1,5 @@
 using FlowChat.Domain.Abstractions;
+using FlowChat.Domain.Abstractions.ValueObjects;
 
 namespace FlowChat.SocialGraphService.Domain.Entities;
 
@@ -9,8 +10,8 @@ public class Contact : AggregateRootBase<Contact>
     public string? FirstName { get; }
     public string? LastName { get; }
     public string DisplayedName { get; }
-    public string? PhoneNumber { get; }
-    public string? Email { get; }
+    public PhoneNumber? PhoneNumber { get; }
+    public EmailAddress? Email { get; }
     public bool IsBlocked { get; }
 
     private Contact(
@@ -20,8 +21,8 @@ public class Contact : AggregateRootBase<Contact>
         string displayedName,
         string? firstName = null,
         string? lastName = null,
-        string? phoneNumber = null,
-        string? email = null,
+        PhoneNumber? phoneNumber = null,
+        EmailAddress? email = null,
         bool isBlocked = false) : base(id)
     {
         ArgumentOutOfRangeException.ThrowIfEqual(ownerUserId, Guid.Empty);
@@ -51,8 +52,8 @@ public class Contact : AggregateRootBase<Contact>
         string displayedName,
         string? firstName = null,
         string? lastName = null,
-        string? phoneNumber = null,
-        string? email = null,
+        PhoneNumber? phoneNumber = null,
+        EmailAddress? email = null,
         bool isBlocked = false,
         Id<Contact>? id = null)
     {
@@ -65,8 +66,8 @@ public class Contact : AggregateRootBase<Contact>
         string displayedName,
         string? firstName = null,
         string? lastName = null,
-        string? phoneNumber = null,
-        string? email = null,
+        PhoneNumber? phoneNumber = null,
+        EmailAddress? email = null,
         bool isBlocked = false,
         Id<Contact>? id = null)
     {

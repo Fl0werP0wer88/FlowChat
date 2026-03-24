@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <PackageReference Include="Ardalis.SmartEnum" Version="8.2.0" />
+    <PackageReference Include="libphonenumber-csharp" Version="9.0.26" />
     <PackageReference Include="MediatR" Version="14.0.0" />
   </ItemGroup>
 

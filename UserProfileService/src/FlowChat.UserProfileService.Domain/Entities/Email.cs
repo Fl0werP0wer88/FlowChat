@@ -1,5 +1,5 @@
 using FlowChat.Domain.Abstractions;
-using FlowChat.UserProfileService.Domain.ValueObjects;
+using FlowChat.Domain.Abstractions.ValueObjects;
 
 namespace FlowChat.UserProfileService.Domain.Entities;
 

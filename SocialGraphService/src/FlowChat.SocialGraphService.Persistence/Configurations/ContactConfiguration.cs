@@ -1,4 +1,5 @@
 using FlowChat.Domain.Abstractions;
+using FlowChat.Domain.Abstractions.ValueObjects;
 using FlowChat.SocialGraphService.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -33,9 +34,15 @@ public class ContactConfiguration : IEntityTypeConfiguration<Contact>
             .IsRequired();
 
         builder.Property(x => x.PhoneNumber)
+            .HasConversion(
+                x => x == null ? null : x.Value,
+                x => x == null ? null : PhoneNumber.Create(x))
             .HasMaxLength(32);
 
         builder.Property(x => x.Email)
+            .HasConversion(
+                x => x == null ? null : x.Value,
+                x => x == null ? null : EmailAddress.Create(x))
             .HasMaxLength(256);
 
         builder.Property(x => x.CreatedBy)

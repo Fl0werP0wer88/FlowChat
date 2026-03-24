@@ -1,7 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Net.Mail;
 
-namespace FlowChat.UserProfileService.Domain.ValueObjects;
+namespace FlowChat.Domain.Abstractions.ValueObjects;
 
 public sealed class EmailAddress : IEquatable<EmailAddress>
 {
@@ -9,6 +9,7 @@ public sealed class EmailAddress : IEquatable<EmailAddress>
         "Email address must be a valid email address.";
 
     public string Value { get; }
+
     private EmailAddress(string value)
     {
         Value = value.ToLowerInvariant();

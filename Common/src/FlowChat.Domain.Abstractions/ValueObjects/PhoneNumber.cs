@@ -1,7 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 using PhoneNumbers;
 
-namespace FlowChat.UserProfileService.Domain.ValueObjects;
+namespace FlowChat.Domain.Abstractions.ValueObjects;
 
 public sealed record PhoneNumber
 {

@@ -3,7 +3,7 @@ using FlowChat.Domain.Abstractions;
 using FlowChat.UserProfileService.Application.Contracts.Persistence;
 using FlowChat.UserProfileService.Application.UserProfiles.Commands.AddEmail;
 using FlowChat.UserProfileService.Domain.Entities;
-using FlowChat.UserProfileService.Domain.ValueObjects;
+using FlowChat.Domain.Abstractions.ValueObjects;
 
 namespace FlowChat.UserProfileService.UnitTests;
 
@@ -56,7 +56,7 @@ public sealed class AddEmailCommandHandlerTests
 
         Assert.True(result.IsFailure);
         Assert.Equal(ErrorType.Conflict, result.Error.ErrorType);
-        Assert.Equal("Email 'JOHN@example.com' already exists.", result.Error.ErrorMessage);
+        Assert.Equal("Email 'john@example.com' already exists.", result.Error.ErrorMessage);
     }
 
     private sealed class TestUserProfileRepository(UserProfile? userProfile = null) : IUserProfileRepository

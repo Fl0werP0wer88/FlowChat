@@ -5,7 +5,7 @@ using FlowChat.UserProfileService.Application.Contracts.Persistence;
 using FlowChat.UserProfileService.Application.UserProfiles.Commands.CreateInitialUserProfile;
 using FlowChat.UserProfileService.Domain.Entities;
 using FlowChat.UserProfileService.Domain.Events;
-using FlowChat.UserProfileService.Domain.ValueObjects;
+using FlowChat.Domain.Abstractions.ValueObjects;
 
 namespace FlowChat.UserProfileService.UnitTests;
 

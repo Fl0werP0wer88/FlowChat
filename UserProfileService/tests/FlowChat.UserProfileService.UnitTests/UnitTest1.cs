@@ -1,7 +1,7 @@
 using FlowChat.Domain.Abstractions;
 using FlowChat.UserProfileService.Domain.Entities;
 using FlowChat.UserProfileService.Domain.Events;
-using FlowChat.UserProfileService.Domain.ValueObjects;
+using FlowChat.Domain.Abstractions.ValueObjects;
 
 namespace FlowChat.UserProfileService.UnitTests;
 

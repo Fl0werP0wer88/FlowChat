@@ -1,4 +1,5 @@
 using FlowChat.Domain.Abstractions;
+using FlowChat.Domain.Abstractions.ValueObjects;
 using FlowChat.SocialGraphService.Domain.Entities;
 
 namespace FlowChat.SocialGraphService.UnitTests;
@@ -35,15 +36,15 @@ public class TypedDomainIdsTests
             "jkowalski",
             "Jan",
             "Kowalski",
-            "+48123456789",
-            "jan@example.com",
+            PhoneNumber.Create("+48123456789"),
+            EmailAddress.Create("jan@example.com"),
             id: Id<Contact>.New());
 
         Assert.Equal("Jan", contact.FirstName);
         Assert.Equal("Kowalski", contact.LastName);
         Assert.Equal("jkowalski", contact.DisplayedName);
-        Assert.Equal("+48123456789", contact.PhoneNumber);
-        Assert.Equal("jan@example.com", contact.Email);
+        Assert.Equal("+48123456789", contact.PhoneNumber!.Value);
+        Assert.Equal("jan@example.com", contact.Email!.Value);
     }
 
     [Fact]
