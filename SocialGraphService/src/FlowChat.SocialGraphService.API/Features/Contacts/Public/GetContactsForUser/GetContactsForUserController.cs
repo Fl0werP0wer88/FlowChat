@@ -7,13 +7,13 @@ using Microsoft.AspNetCore.Mvc;
 namespace FlowChat.SocialGraphService.Api.Features.Contacts.Public.GetContactsForUser;
 
 [ApiController]
-[Route("api/[controller]")]
-public sealed class ContactsController : ApiControllerBase
+[Route("api/contacts")]
+public sealed class GetContactsForUserController : ApiControllerBase
 {
     private readonly IMediator _mediator;
     private readonly IMapper _mapper;
 
-    public ContactsController(IMediator mediator, IMapper mapper)
+    public GetContactsForUserController(IMediator mediator, IMapper mapper)
     {
         _mediator = mediator;
         _mapper = mapper;
@@ -29,7 +29,7 @@ public sealed class ContactsController : ApiControllerBase
         var result = await _mediator.Send(query, cancellationToken);
 
         return result.IsSuccess
-            ? Ok(new GetContactsForUserResponse(_mapper.Map<IReadOnlyList<ContactResponse>>(result.Value)))
+            ? Ok(new GetContactsForUserResponse(_mapper.Map<IReadOnlyList<ContactDto>>(result.Value)))
             : HandleError(result.Error);
     }
 }

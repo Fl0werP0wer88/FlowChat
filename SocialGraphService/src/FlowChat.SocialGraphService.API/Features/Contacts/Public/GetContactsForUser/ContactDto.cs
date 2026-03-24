@@ -1,6 +1,6 @@
 namespace FlowChat.SocialGraphService.Api.Features.Contacts.Public.GetContactsForUser;
 
-public sealed record ContactResponse(
+public sealed record ContactDto(
     Guid Id,
     Guid OwnerUserId,
     Guid ContactUserId,
