@@ -1,4 +1,5 @@
 using FlowChat.Application.Abstractions;
+using FlowChat.NotificationService.Application.Common.Eventing;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace FlowChat.NotificationService.Application;
@@ -14,6 +15,7 @@ public static class ApplicationServiceRegistration
             cfg.RegisterServicesFromAssemblies(applicationAssembly);
             cfg.AddFlowChatBehaviors();
         });
+        services.AddScoped<IDomainEventDispatcher, DomainEventDispatcher>();
 
         return services;
     }
@@ -27,6 +29,7 @@ public static class ApplicationServiceRegistration
             cfg.RegisterServicesFromAssemblies(applicationAssembly);
             cfg.AddFlowChatBehaviors();
         });
+        services.AddScoped<IDomainEventDispatcher, DomainEventDispatcher>();
 
         return services;
     }

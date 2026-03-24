@@ -60,6 +60,7 @@
     <Project Path="Common/src/FlowChat.Application.Abstractions/FlowChat.Application.Abstractions.csproj" />
     <Project Path="Common/src/FlowChat.Domain.Abstractions/FlowChat.Domain.Abstractions.csproj" />
     <Project Path="Common/src/FlowChat.Messaging.Contracts/FlowChat.Messaging.Contracts.csproj" />
+    <Project Path="Common/src/FlowChat.Persistence.EntityFrameworkCore/FlowChat.Persistence.EntityFrameworkCore.csproj" />
   </Folder>
   <Folder Name="/Common/tests/">
     <Project Path="Common/tests/FlowChat.API.Abstractions.UnitTests/FlowChat.API.Abstractions.UnitTests.csproj" />

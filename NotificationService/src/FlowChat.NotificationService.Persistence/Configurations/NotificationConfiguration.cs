@@ -43,15 +43,9 @@ public sealed class NotificationConfiguration : IEntityTypeConfiguration<Notific
             .HasMaxLength(200);
 
         builder.Property(x => x.CreatedAtUtc)
-            .HasConversion(
-                x => x.UtcDateTime,
-                x => new DateTimeOffset(DateTime.SpecifyKind(x, DateTimeKind.Utc)))
             .HasColumnName("CreatedDate");
 
         builder.Property(x => x.LastModifiedAtUtc)
-            .HasConversion(
-                x => x.UtcDateTime,
-                x => new DateTimeOffset(DateTime.SpecifyKind(x, DateTimeKind.Utc)))
             .HasColumnName("LastModifiedDate");
 
         builder.HasIndex(x => x.UserId);

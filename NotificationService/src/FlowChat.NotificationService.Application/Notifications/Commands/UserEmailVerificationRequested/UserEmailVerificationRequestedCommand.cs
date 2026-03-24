@@ -1,3 +1,4 @@
+using FlowChat.Application.Abstractions;
 using MediatR;
 
 namespace FlowChat.NotificationService.Application.Notifications.Commands.UserEmailVerificationRequested;
@@ -8,4 +9,4 @@ public sealed record UserEmailVerificationRequestedCommand(
     string UserName,
     string DisplayName,
     string ConfirmationLink,
-    string? SourceMessageKey) : IRequest;
+    string? SourceMessageKey) : ICommand<Unit>;

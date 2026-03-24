@@ -48,24 +48,19 @@ public sealed class ProcessUserEmailVerificationRequestedController(
             return BadRequestResponse("Payload does not contain valid ConfirmationLink.");
         }
 
-        try
-        {
-            await _mediator.Send(
-                new UserEmailVerificationRequestedCommand(
-                    request.UserId,
-                    request.Email.Trim(),
-                    request.UserName.Trim(),
-                    NormalizeDisplayName(request.DisplayName, request.UserName),
-                    request.ConfirmationLink.Trim(),
-                    NormalizeOptional(request.SourceMessageKey)),
-                cancellationToken);
-        }
-        catch (InvalidOperationException exception)
-        {
-            return BadRequestResponse(exception.Message);
-        }
+        var result = await _mediator.Send(
+            new UserEmailVerificationRequestedCommand(
+                request.UserId,
+                request.Email.Trim(),
+                request.UserName.Trim(),
+                NormalizeDisplayName(request.DisplayName, request.UserName),
+                request.ConfirmationLink.Trim(),
+                NormalizeOptional(request.SourceMessageKey)),
+            cancellationToken);
 
-        return Accepted();
+        return result.IsSuccess
+            ? Accepted()
+            : HandleError(result.Error);
     }
 
     private bool HasValidInternalApiKey()

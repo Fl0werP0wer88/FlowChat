@@ -1,48 +1,47 @@
-using System.Data.SqlTypes;
+using CSharpFunctionalExtensions;
+using FlowChat.Application.Abstractions;
 using FlowChat.NotificationService.Application.Contracts.Infrastructure;
 using FlowChat.NotificationService.Application.Contracts.Persistence;
 using FlowChat.NotificationService.Domain.Entities;
 using FlowChat.NotificationService.Domain.Enums;
+using FlowChat.Domain.Abstractions;
 using MediatR;
 
 namespace FlowChat.NotificationService.Application.Notifications.Commands.UserEmailVerificationRequested;
 
-public sealed class UserEmailVerificationRequestedCommandHandler : IRequestHandler<UserEmailVerificationRequestedCommand>
+public sealed class UserEmailVerificationRequestedCommandHandler
+    : CommandHandlerBase<UserEmailVerificationRequestedCommand, Unit>
 {
     private readonly INotificationReadRepository _notificationReadRepository;
     private readonly INotificationWriteRepository _notificationWriteRepository;
     private readonly INotificationSender _notificationSender;
+    private Notification? _notification;
 
     public UserEmailVerificationRequestedCommandHandler(
         INotificationReadRepository notificationReadRepository,
         INotificationWriteRepository notificationWriteRepository,
-        INotificationSender notificationSender)
+        INotificationSender notificationSender,
+        IUnitOfWork unitOfWork,
+        IDomainEventDispatcher domainEventDispatcher) : base(domainEventDispatcher, unitOfWork)
     {
         _notificationReadRepository = notificationReadRepository;
         _notificationWriteRepository = notificationWriteRepository;
         _notificationSender = notificationSender;
     }
 
-    public async Task Handle(UserEmailVerificationRequestedCommand request, CancellationToken cancellationToken)
+    protected override async Task<Result<Unit, IDomainError>> ExecuteAsync(
+        UserEmailVerificationRequestedCommand request,
+        CancellationToken cancellationToken)
     {
-        if (request.UserId == Guid.Empty)
-        {
-            throw new InvalidOperationException("UserId is required.");
-        }
+        var validationErrors = new ValidationErrorCollector()
+            .AddIf(request.UserId == Guid.Empty, "UserId is required.")
+            .AddIf(string.IsNullOrWhiteSpace(request.Email), "Email is required.")
+            .AddIf(string.IsNullOrWhiteSpace(request.UserName), "UserName is required.")
+            .AddIf(string.IsNullOrWhiteSpace(request.ConfirmationLink), "ConfirmationLink is required.");
 
-        if (string.IsNullOrWhiteSpace(request.Email))
+        if (validationErrors.HasErrors)
         {
-            throw new InvalidOperationException("Email is required.");
-        }
-
-        if (string.IsNullOrWhiteSpace(request.UserName))
-        {
-            throw new InvalidOperationException("UserName is required.");
-        }
-
-        if (string.IsNullOrWhiteSpace(request.ConfirmationLink))
-        {
-            throw new InvalidOperationException("ConfirmationLink is required.");
+            return validationErrors.ToFailure<Unit>();
         }
 
         var displayName = string.IsNullOrWhiteSpace(request.DisplayName)
@@ -56,10 +55,10 @@ public sealed class UserEmailVerificationRequestedCommandHandler : IRequestHandl
 
         if (alreadyExists)
         {
-            return;
+            return Unit.Value;
         }
 
-        var notification = Notification.CreateWelcome(
+        _notification = Notification.CreateWelcome(
             request.UserId,
             request.Email,
             displayName,
@@ -75,11 +74,19 @@ public sealed class UserEmailVerificationRequestedCommandHandler : IRequestHandl
 
         if (!sendResult.IsSuccess)
         {
-            throw new Exception(
-                $"Email delivery failed for user '{request.UserId}': {sendResult.Error ?? "unknown error"}");
+            return Result.Failure<Unit, IDomainError>(
+                DomainError.UnExpected(
+                    $"Email delivery failed for user '{request.UserId}': {sendResult.Error ?? "unknown error"}"));
         }
 
-        notification.MarkSent(sendResult.ProviderMessageId);
-        await _notificationWriteRepository.AddAsync(notification, cancellationToken);
+        _notification.MarkSent(sendResult.ProviderMessageId);
+        await _notificationWriteRepository.AddAsync(_notification, cancellationToken);
+
+        return Unit.Value;
+    }
+
+    protected override IAggregateRoot? GetAggregateRoot(Result<Unit, IDomainError> result)
+    {
+        return result.IsSuccess ? _notification : null;
     }
 }

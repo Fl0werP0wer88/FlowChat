@@ -1,9 +1,12 @@
+using FlowChat.Application.Abstractions;
+using FlowChat.Domain.Abstractions;
 using FlowChat.NotificationService.Application.Contracts.Infrastructure;
 using FlowChat.NotificationService.Application.Contracts.Persistence;
 using FlowChat.NotificationService.Application.Notifications.Commands.UserEmailVerificationRequested;
 using FlowChat.NotificationService.Application.Notifications.Queries.GetNotifications;
 using FlowChat.NotificationService.Domain.Entities;
 using FlowChat.NotificationService.Domain.Enums;
+using MediatR;
 
 namespace FlowChat.NotificationService.UnitTests;
 
@@ -15,7 +18,12 @@ public class HandleUserEmailVerificationRequestedNotificationCommandHandlerTests
         var repository = new InMemoryNotificationRepository();
         var sender = new StubNotificationSender(
             new NotificationSendResult(true, "provider-123", null));
-        var sut = new UserEmailVerificationRequestedCommandHandler(repository, repository, sender);
+        var sut = new UserEmailVerificationRequestedCommandHandler(
+            repository,
+            repository,
+            sender,
+            new TestUnitOfWork(),
+            new TestDomainEventDispatcher());
 
         var command = new UserEmailVerificationRequestedCommand(
             Guid.NewGuid(),
@@ -25,8 +33,9 @@ public class HandleUserEmailVerificationRequestedNotificationCommandHandlerTests
             "https://flowchat.local/confirm?userId=1&token=abc",
             "message-key-1");
 
-        await sut.Handle(command, CancellationToken.None);
+        var result = await sut.Handle(command, CancellationToken.None);
 
+        Assert.True(result.IsSuccess);
         Assert.Single(repository.Notifications);
         var saved = repository.Notifications.Single();
         Assert.Equal(NotificationStatus.Sent, saved.Status);
@@ -51,7 +60,12 @@ public class HandleUserEmailVerificationRequestedNotificationCommandHandlerTests
 
         var sender = new StubNotificationSender(
             new NotificationSendResult(true, "provider-new", null));
-        var sut = new UserEmailVerificationRequestedCommandHandler(repository, repository, sender);
+        var sut = new UserEmailVerificationRequestedCommandHandler(
+            repository,
+            repository,
+            sender,
+            new TestUnitOfWork(),
+            new TestDomainEventDispatcher());
 
         var command = new UserEmailVerificationRequestedCommand(
             existing.UserId,
@@ -61,19 +75,25 @@ public class HandleUserEmailVerificationRequestedNotificationCommandHandlerTests
             "https://flowchat.local/confirm?userId=2&token=def",
             "message-key-2");
 
-        await sut.Handle(command, CancellationToken.None);
+        var result = await sut.Handle(command, CancellationToken.None);
 
+        Assert.True(result.IsSuccess);
         Assert.Single(repository.Notifications);
         Assert.Equal(0, sender.CallsCount);
     }
 
     [Fact]
-    public async Task Handle_Should_ThrowAndNotPersist_WhenSenderReturnsFailureResult()
+    public async Task Handle_Should_ReturnFailureAndNotPersist_WhenSenderReturnsFailureResult()
     {
         var repository = new InMemoryNotificationRepository();
         var sender = new StubNotificationSender(
             new NotificationSendResult(false, null, "smtp timeout"));
-        var sut = new UserEmailVerificationRequestedCommandHandler(repository, repository, sender);
+        var sut = new UserEmailVerificationRequestedCommandHandler(
+            repository,
+            repository,
+            sender,
+            new TestUnitOfWork(),
+            new TestDomainEventDispatcher());
 
         var command = new UserEmailVerificationRequestedCommand(
             Guid.NewGuid(),
@@ -83,19 +103,26 @@ public class HandleUserEmailVerificationRequestedNotificationCommandHandlerTests
             "https://flowchat.local/confirm?userId=4&token=jkl",
             "message-key-4");
 
-        await Assert.ThrowsAsync<Exception>(() => sut.Handle(command, CancellationToken.None));
+        var result = await sut.Handle(command, CancellationToken.None);
 
+        Assert.True(result.IsFailure);
+        Assert.Equal(ErrorType.Unexpected, result.Error.ErrorType);
         Assert.Empty(repository.Notifications);
         Assert.Equal(1, sender.CallsCount);
     }
 
     [Fact]
-    public async Task Handle_Should_Throw_WhenUserIdIsEmpty()
+    public async Task Handle_Should_ReturnValidationFailure_WhenUserIdIsEmpty()
     {
         var repository = new InMemoryNotificationRepository();
         var sender = new StubNotificationSender(
             new NotificationSendResult(true, "provider-123", null));
-        var sut = new UserEmailVerificationRequestedCommandHandler(repository, repository, sender);
+        var sut = new UserEmailVerificationRequestedCommandHandler(
+            repository,
+            repository,
+            sender,
+            new TestUnitOfWork(),
+            new TestDomainEventDispatcher());
 
         var command = new UserEmailVerificationRequestedCommand(
             Guid.Empty,
@@ -105,7 +132,10 @@ public class HandleUserEmailVerificationRequestedNotificationCommandHandlerTests
             "https://flowchat.local/confirm?userId=3&token=ghi",
             "message-key-3");
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() => sut.Handle(command, CancellationToken.None));
+        var result = await sut.Handle(command, CancellationToken.None);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(ErrorType.Validation, result.Error.ErrorType);
         Assert.Empty(repository.Notifications);
     }
 
@@ -206,5 +236,23 @@ public class HandleUserEmailVerificationRequestedNotificationCommandHandlerTests
             notification.SourceMessageKey,
             notification.SentAtUtc,
             notification.CreatedAtUtc.UtcDateTime);
+    }
+
+    private sealed class TestUnitOfWork : IUnitOfWork
+    {
+        public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default) => Task.FromResult(0);
+
+        public Task<T> ExecuteInTransactionAsync<T>(Func<CancellationToken, Task<T>> operation, CancellationToken cancellationToken)
+            => operation(cancellationToken);
+
+        public void Dispose()
+        {
+        }
+    }
+
+    private sealed class TestDomainEventDispatcher : IDomainEventDispatcher
+    {
+        public Task DispatchAsync(IEnumerable<IDomainEvent> initialEvents, CancellationToken cancellationToken = default)
+            => Task.CompletedTask;
     }
 }

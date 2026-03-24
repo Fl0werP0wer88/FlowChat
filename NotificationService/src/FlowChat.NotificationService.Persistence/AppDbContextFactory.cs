@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Design;
 
 namespace FlowChat.NotificationService.Persistence;
@@ -12,7 +13,9 @@ public sealed class AppDbContextFactory : IDesignTimeDbContextFactory<AppDbConte
             ?? "Host=localhost;Port=5432;Database=flowchat_notification_db;Username=flowchat_migrator;Password=flowchat_migrator_pw";
 
         var optionsBuilder = new DbContextOptionsBuilder<AppDbContext>();
-        optionsBuilder.UseNpgsql(connectionString);
+        optionsBuilder
+            .UseNpgsql(connectionString)
+            .ConfigureWarnings(warnings => warnings.Ignore(RelationalEventId.PendingModelChangesWarning));
 
         return new AppDbContext(optionsBuilder.Options);
     }

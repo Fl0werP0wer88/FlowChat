@@ -1,4 +1,6 @@
+using CSharpFunctionalExtensions;
 using FlowChat.API.Abstractions;
+using FlowChat.Domain.Abstractions;
 using FlowChat.NotificationService.Api.Features.Notifications.Internal.ProcessUserEmailVerificationRequested;
 using FlowChat.NotificationService.Application.Notifications.Commands.UserEmailVerificationRequested;
 using FlowChat.NotificationService.Infrastructure.Configuration;
@@ -126,13 +128,22 @@ public sealed class ProcessUserEmailVerificationRequestedControllerTests
         public Task Publish<TNotification>(TNotification notification, CancellationToken cancellationToken = default)
             where TNotification : INotification => Task.CompletedTask;
 
-        public Task<TResponse> Send<TResponse>(IRequest<TResponse> request, CancellationToken cancellationToken = default) =>
+        public Task<TResponse> Send<TResponse>(IRequest<TResponse> request, CancellationToken cancellationToken = default)
+        {
+            LastCommand = request as UserEmailVerificationRequestedCommand;
+
+            if (typeof(TResponse) == typeof(Result<Unit, IDomainError>))
+            {
+                return Task.FromResult((TResponse)(object)Result.Success<Unit, IDomainError>(Unit.Value));
+            }
+
             throw new NotSupportedException();
+        }
 
         public Task<object?> Send(object request, CancellationToken cancellationToken = default)
         {
             LastCommand = request as UserEmailVerificationRequestedCommand;
-            return Task.FromResult<object?>(null);
+            return Task.FromResult<object?>(Result.Success<Unit, IDomainError>(Unit.Value));
         }
 
         public Task Send<TRequest>(TRequest request, CancellationToken cancellationToken = default)
