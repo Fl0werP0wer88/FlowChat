@@ -1,9 +1,9 @@
+using FlowChat.Domain.Abstractions;
+
 namespace FlowChat.SocialGraphService.Application.Contracts.Persistence;
 
-public interface IAsyncRepository<T> where T : class
+public interface IWriteRepository<T> where T : class, IAggregateRoot
 {
-    Task<T?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
-    Task<IReadOnlyList<T>> GetAllAsync(CancellationToken cancellationToken = default);
     Task<T> AddAsync(T entity, CancellationToken cancellationToken = default);
     Task UpdateAsync(T entity, CancellationToken cancellationToken = default);
     Task DeleteAsync(T entity, CancellationToken cancellationToken = default);
