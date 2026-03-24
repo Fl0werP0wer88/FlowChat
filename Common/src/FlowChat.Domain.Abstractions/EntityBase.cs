@@ -1,6 +1,7 @@
 namespace FlowChat.Domain.Abstractions;
 
 public abstract class EntityBase<TDomainEntity>
+    : IEntity<TDomainEntity>
     where TDomainEntity : EntityBase<TDomainEntity>
 {
     public Id<TDomainEntity> Id { get; }
