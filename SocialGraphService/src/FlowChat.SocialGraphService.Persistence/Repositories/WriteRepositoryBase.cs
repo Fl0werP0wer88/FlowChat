@@ -3,7 +3,7 @@ using FlowChat.SocialGraphService.Application.Contracts.Persistence;
 
 namespace FlowChat.SocialGraphService.Persistence.Repositories;
 
-public class WriteRepositoryBase<T>(AppDbContext dbContext) : IWriteRepository<T> where T : class, IAggregateRoot
+public class WriteRepositoryBase<T>(AppDbContext dbContext) : IWriteRepository<T> where T : class, IEntity<T>, IAggregateRoot
 {
     protected readonly AppDbContext DbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
 

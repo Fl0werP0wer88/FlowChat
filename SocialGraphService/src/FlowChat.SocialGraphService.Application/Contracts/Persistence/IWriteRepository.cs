@@ -2,7 +2,7 @@ using FlowChat.Domain.Abstractions;
 
 namespace FlowChat.SocialGraphService.Application.Contracts.Persistence;
 
-public interface IWriteRepository<T> where T : class, IAggregateRoot
+public interface IWriteRepository<T> where T : class, IEntity<T>, IAggregateRoot
 {
     Task<T> AddAsync(T entity, CancellationToken cancellationToken = default);
     Task UpdateAsync(T entity, CancellationToken cancellationToken = default);
