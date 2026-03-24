@@ -64,6 +64,7 @@
   </Folder>
   <Folder Name="/Common/tests/">
     <Project Path="Common/tests/FlowChat.API.Abstractions.UnitTests/FlowChat.API.Abstractions.UnitTests.csproj" />
+    <Project Path="Common/tests/FlowChat.Persistence.EntityFrameworkCore.UnitTests/FlowChat.Persistence.EntityFrameworkCore.UnitTests.csproj" />
   </Folder>
   <Folder Name="/SocialGraphService/" />
   <Folder Name="/SocialGraphService/src/">

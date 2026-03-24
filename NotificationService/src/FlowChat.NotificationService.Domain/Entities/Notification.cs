@@ -71,7 +71,6 @@ public sealed class Notification : AggregateRootBase<Notification>
         ProviderMessageId = string.IsNullOrWhiteSpace(providerMessageId) ? null : providerMessageId.Trim();
         FailureReason = null;
         SentAtUtc = DateTime.UtcNow;
-        Modified(string.Empty);
     }
 
     public void MarkFailed(string? failureReason)
@@ -80,6 +79,5 @@ public sealed class Notification : AggregateRootBase<Notification>
         FailureReason = string.IsNullOrWhiteSpace(failureReason) ? "Unknown notification error." : failureReason.Trim();
         ProviderMessageId = null;
         SentAtUtc = null;
-        Modified(string.Empty);
     }
 }

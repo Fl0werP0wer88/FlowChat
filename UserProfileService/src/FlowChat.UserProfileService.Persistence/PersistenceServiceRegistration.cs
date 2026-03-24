@@ -4,6 +4,7 @@ using FlowChat.UserProfileService.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using FlowChat.Persistence.EntityFrameworkCore.Auditing;
 
 namespace FlowChat.UserProfileService.Persistence;
 
@@ -13,10 +14,13 @@ public static class PersistenceServiceRegistration
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        services.AddDbContext<AppDbContext>(options =>
-            options.UseNpgsql(configuration.GetConnectionString("UserProfileDb")));
+        services.AddScoped<EntityBaseSaveChangesInterceptor>();
+        services.AddDbContext<AppDbContext>((serviceProvider, options) =>
+            options.UseNpgsql(configuration.GetConnectionString("UserProfileDb"))
+                .AddInterceptors(serviceProvider.GetRequiredService<EntityBaseSaveChangesInterceptor>()));
         services.AddDbContextFactory<AppDbContext>(
-            options => options.UseNpgsql(configuration.GetConnectionString("UserProfileDb")),
+            (serviceProvider, options) => options.UseNpgsql(configuration.GetConnectionString("UserProfileDb"))
+                .AddInterceptors(serviceProvider.GetRequiredService<EntityBaseSaveChangesInterceptor>()),
             ServiceLifetime.Scoped);
 
         services.AddScoped<IUnitOfWork, UnitOfWork>();

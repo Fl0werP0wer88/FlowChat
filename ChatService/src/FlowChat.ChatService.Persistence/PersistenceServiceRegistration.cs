@@ -4,6 +4,7 @@ using FlowChat.ChatService.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using FlowChat.Persistence.EntityFrameworkCore.Auditing;
 
 namespace FlowChat.ChatService.Persistence;
 
@@ -11,11 +12,14 @@ public static class PersistenceServiceRegistration
 {
     public static IServiceCollection AddApiPersistenceServices(this IServiceCollection services, IConfiguration configuration)
     {
+        services.AddScoped<EntityBaseSaveChangesInterceptor>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
-        services.AddDbContext<AppDbContext>(options =>
-            options.UseNpgsql(configuration.GetConnectionString("ChatDb")));
+        services.AddDbContext<AppDbContext>((serviceProvider, options) =>
+            options.UseNpgsql(configuration.GetConnectionString("ChatDb"))
+                .AddInterceptors(serviceProvider.GetRequiredService<EntityBaseSaveChangesInterceptor>()));
         services.AddDbContextFactory<AppDbContext>(
-            options => options.UseNpgsql(configuration.GetConnectionString("ChatDb")),
+            (serviceProvider, options) => options.UseNpgsql(configuration.GetConnectionString("ChatDb"))
+                .AddInterceptors(serviceProvider.GetRequiredService<EntityBaseSaveChangesInterceptor>()),
             ServiceLifetime.Scoped);
         services.AddScoped<IChatMessageWriteRepository, ChatMessageWriteRepository>();
 
@@ -24,10 +28,13 @@ public static class PersistenceServiceRegistration
 
     public static IServiceCollection AddWorkerPersistenceServices(this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddDbContext<AppDbContext>(options =>
-            options.UseNpgsql(configuration.GetConnectionString("ChatDb")));
+        services.AddScoped<EntityBaseSaveChangesInterceptor>();
+        services.AddDbContext<AppDbContext>((serviceProvider, options) =>
+            options.UseNpgsql(configuration.GetConnectionString("ChatDb"))
+                .AddInterceptors(serviceProvider.GetRequiredService<EntityBaseSaveChangesInterceptor>()));
         services.AddDbContextFactory<AppDbContext>(
-            options => options.UseNpgsql(configuration.GetConnectionString("ChatDb")),
+            (serviceProvider, options) => options.UseNpgsql(configuration.GetConnectionString("ChatDb"))
+                .AddInterceptors(serviceProvider.GetRequiredService<EntityBaseSaveChangesInterceptor>()),
             ServiceLifetime.Scoped);
 
         return services;

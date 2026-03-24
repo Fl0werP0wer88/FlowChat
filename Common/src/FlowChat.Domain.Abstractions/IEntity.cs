@@ -1,10 +1,6 @@
 namespace FlowChat.Domain.Abstractions;
 
-public interface IEntity<TDomainEntity>
+public interface IEntity<TDomainEntity> : IAuditableEntity
 {
     Id<TDomainEntity> Id { get; }
-    string CreatedBy { get; }
-    DateTimeOffset CreatedAtUtc { get; }
-    string LastModifiedBy { get; }
-    DateTimeOffset LastModifiedAtUtc { get; }
 }
