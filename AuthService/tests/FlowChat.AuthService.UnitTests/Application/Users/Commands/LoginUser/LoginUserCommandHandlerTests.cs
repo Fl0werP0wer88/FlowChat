@@ -1,8 +1,8 @@
 using FlowChat.Application.Abstractions;
 using FlowChat.AuthService.Application.Contracts.Infrastructure;
 using FlowChat.AuthService.Application.Contracts.Persistence;
-using FlowChat.AuthService.Application.Users.Commands.LoginUser;
-using FlowChat.AuthService.Application.Users.Models;
+using FlowChat.AuthService.Application.Features.Users.Commands.LoginUser;
+using FlowChat.AuthService.Application.Features.Users.Models;
 using FlowChat.AuthService.Domain.Entities;
 using FlowChat.Domain.Abstractions;
 

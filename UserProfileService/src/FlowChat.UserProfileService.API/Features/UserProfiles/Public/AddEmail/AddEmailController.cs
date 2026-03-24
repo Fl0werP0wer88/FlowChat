@@ -1,5 +1,5 @@
 using FlowChat.API.Abstractions;
-using FlowChat.UserProfileService.Application.UserProfiles.Commands.AddEmail;
+using FlowChat.UserProfileService.Application.Features.UserProfiles.Commands.AddEmail;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 

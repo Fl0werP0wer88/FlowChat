@@ -1,6 +1,6 @@
 using AutoMapper;
 using FlowChat.API.Abstractions;
-using FlowChat.SocialGraphService.Application.Contacts.Queries.GetContactsForUser;
+using FlowChat.SocialGraphService.Application.Features.Contacts.Queries.GetContactsForUser;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 

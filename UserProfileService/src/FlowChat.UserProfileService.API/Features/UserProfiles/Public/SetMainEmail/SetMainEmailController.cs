@@ -1,5 +1,5 @@
 using FlowChat.API.Abstractions;
-using FlowChat.UserProfileService.Application.UserProfiles.Commands.SetMainEmail;
+using FlowChat.UserProfileService.Application.Features.UserProfiles.Commands.SetMainEmail;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 

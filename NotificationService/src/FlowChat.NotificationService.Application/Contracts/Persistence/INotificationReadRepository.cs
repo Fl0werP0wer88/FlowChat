@@ -1,5 +1,5 @@
 using FlowChat.Application.Abstractions;
-using FlowChat.NotificationService.Application.Notifications.Queries.GetNotifications;
+using FlowChat.NotificationService.Application.Features.Notifications.Queries.GetNotifications;
 using FlowChat.NotificationService.Domain.Enums;
 
 namespace FlowChat.NotificationService.Application.Contracts.Persistence;

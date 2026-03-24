@@ -1,5 +1,5 @@
 using FlowChat.Domain.Abstractions;
-using FlowChat.RealtimeService.Application.Presence.Commands.PublishPresenceChange;
+using FlowChat.RealtimeService.Application.Features.Presence.Commands.PublishPresenceChange;
 
 namespace FlowChat.RealtimeService.UnitTests;
 

@@ -1,5 +1,5 @@
 using FlowChat.API.Abstractions;
-using FlowChat.UserProfileService.Application.UserProfiles.Commands.AddPhone;
+using FlowChat.UserProfileService.Application.Features.UserProfiles.Commands.AddPhone;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 

@@ -1,5 +1,5 @@
 using FlowChat.Domain.Abstractions;
-using FlowChat.RealtimeService.Application.Messages.Commands.PublishMessage;
+using FlowChat.RealtimeService.Application.Features.Messages.Commands.PublishMessage;
 
 namespace FlowChat.RealtimeService.UnitTests;
 

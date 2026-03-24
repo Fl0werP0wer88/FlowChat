@@ -1,4 +1,4 @@
-using FlowChat.SocialGraphService.Application.Contacts.Queries.GetContactsForUser;
+using FlowChat.SocialGraphService.Application.Features.Contacts.Queries.GetContactsForUser;
 
 namespace FlowChat.SocialGraphService.Api.Features.Contacts.Public.GetContactsForUser;
 

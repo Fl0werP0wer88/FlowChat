@@ -1,6 +1,6 @@
 using FlowChat.Application.Abstractions;
 using FlowChat.UserProfileService.Application.Common.Eventing;
-using FlowChat.UserProfileService.Application.UserProfiles.Commands.CreateInitialUserProfile;
+using FlowChat.UserProfileService.Application.Features.UserProfiles.Commands.CreateInitialUserProfile;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace FlowChat.UserProfileService.Application;

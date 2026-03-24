@@ -1,5 +1,5 @@
 using FlowChat.API.Abstractions;
-using FlowChat.UserProfileService.Application.UserProfiles.Queries.GetUserProfile;
+using FlowChat.UserProfileService.Application.Features.UserProfiles.Queries.GetUserProfile;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 

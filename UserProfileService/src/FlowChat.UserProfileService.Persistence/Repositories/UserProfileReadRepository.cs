@@ -1,7 +1,7 @@
 using FlowChat.Domain.Abstractions;
 using FlowChat.Persistence.EntityFrameworkCore;
 using FlowChat.UserProfileService.Application.Contracts.Persistence;
-using FlowChat.UserProfileService.Application.UserProfiles.Queries.GetUserProfile;
+using FlowChat.UserProfileService.Application.Features.UserProfiles.Queries.GetUserProfile;
 using FlowChat.UserProfileService.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;

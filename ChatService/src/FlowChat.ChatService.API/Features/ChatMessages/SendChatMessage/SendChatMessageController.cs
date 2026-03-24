@@ -1,5 +1,5 @@
 using FlowChat.API.Abstractions;
-using FlowChat.ChatService.Application.ChatMessages.Commands.SendChatMessage;
+using FlowChat.ChatService.Application.Features.ChatMessages.Commands.SendChatMessage;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 

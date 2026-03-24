@@ -1,4 +1,4 @@
-using FlowChat.AuthService.Application.Users.Commands.RegisterUser;
+using FlowChat.AuthService.Application.Features.Users.Commands.RegisterUser;
 
 namespace FlowChat.AuthService.API.Features.Users.Public.RegisterUser;
 

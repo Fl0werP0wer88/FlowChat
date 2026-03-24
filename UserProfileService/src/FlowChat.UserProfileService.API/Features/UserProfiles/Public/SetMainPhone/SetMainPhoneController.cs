@@ -1,5 +1,5 @@
 using FlowChat.API.Abstractions;
-using FlowChat.UserProfileService.Application.UserProfiles.Commands.SetMainPhone;
+using FlowChat.UserProfileService.Application.Features.UserProfiles.Commands.SetMainPhone;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 

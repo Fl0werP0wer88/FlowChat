@@ -1,5 +1,5 @@
 using FlowChat.API.Abstractions;
-using FlowChat.NotificationService.Application.Notifications.Queries.GetNotifications;
+using FlowChat.NotificationService.Application.Features.Notifications.Queries.GetNotifications;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 

@@ -1,5 +1,5 @@
 using FlowChat.API.Abstractions;
-using FlowChat.NotificationService.Application.Notifications.Commands.UserEmailVerificationRequested;
+using FlowChat.NotificationService.Application.Features.Notifications.Commands.UserEmailVerificationRequested;
 using FlowChat.NotificationService.Infrastructure.Configuration;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;

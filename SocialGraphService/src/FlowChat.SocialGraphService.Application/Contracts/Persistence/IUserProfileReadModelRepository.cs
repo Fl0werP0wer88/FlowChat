@@ -1,4 +1,4 @@
-using FlowChat.SocialGraphService.Application.UserProfiles;
+using FlowChat.SocialGraphService.Application.Features.UserProfiles;
 
 namespace FlowChat.SocialGraphService.Application.Contracts.Persistence;
 

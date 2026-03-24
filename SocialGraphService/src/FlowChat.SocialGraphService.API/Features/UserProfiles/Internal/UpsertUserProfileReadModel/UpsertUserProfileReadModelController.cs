@@ -1,7 +1,7 @@
 using FlowChat.API.Abstractions;
 using FlowChat.Application.Abstractions;
 using FlowChat.SocialGraphService.Application.Contracts.Persistence;
-using FlowChat.SocialGraphService.Application.UserProfiles;
+using FlowChat.SocialGraphService.Application.Features.UserProfiles;
 using FlowChat.SocialGraphService.Infrastructure.Configuration;
 using Microsoft.AspNetCore.Mvc;
 

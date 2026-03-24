@@ -1,7 +1,7 @@
 using CSharpFunctionalExtensions;
 using FlowChat.Domain.Abstractions;
 using FlowChat.UserProfileService.Api.Features.UserProfiles.Internal.CreateInitialUserProfile;
-using FlowChat.UserProfileService.Application.UserProfiles.Commands.CreateInitialUserProfile;
+using FlowChat.UserProfileService.Application.Features.UserProfiles.Commands.CreateInitialUserProfile;
 using FlowChat.UserProfileService.Infrastructure.Configuration;
 using MediatR;
 using Microsoft.AspNetCore.Http;

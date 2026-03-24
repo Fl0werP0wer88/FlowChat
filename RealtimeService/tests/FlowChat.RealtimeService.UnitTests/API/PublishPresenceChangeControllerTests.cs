@@ -1,5 +1,5 @@
 using FlowChat.RealtimeService.Api.Features.Realtime.Internal.PublishPresenceChange;
-using FlowChat.RealtimeService.Application.Presence.Commands.PublishPresenceChange;
+using FlowChat.RealtimeService.Application.Features.Presence.Commands.PublishPresenceChange;
 using FlowChat.RealtimeService.Infrastructure.Configuration;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;

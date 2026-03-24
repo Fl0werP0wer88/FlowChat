@@ -1,5 +1,5 @@
 using FlowChat.API.Abstractions;
-using FlowChat.RealtimeService.Application.Presence.Commands.PublishPresenceChange;
+using FlowChat.RealtimeService.Application.Features.Presence.Commands.PublishPresenceChange;
 using FlowChat.RealtimeService.Infrastructure.Configuration;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;

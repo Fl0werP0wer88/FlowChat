@@ -1,4 +1,4 @@
-using FlowChat.AuthService.Application.Users.Commands.ConfirmUserEmail;
+using FlowChat.AuthService.Application.Features.Users.Commands.ConfirmUserEmail;
 
 namespace FlowChat.AuthService.API.Features.Users.Public.ConfirmUserEmail;
 

@@ -1,7 +1,7 @@
 using FlowChat.Application.Abstractions;
 using FlowChat.Domain.Abstractions;
 using FlowChat.UserProfileService.Application.Contracts.Persistence;
-using FlowChat.UserProfileService.Application.UserProfiles.Commands.AddEmail;
+using FlowChat.UserProfileService.Application.Features.UserProfiles.Commands.AddEmail;
 using FlowChat.UserProfileService.Domain.Entities;
 using FlowChat.Domain.Abstractions.ValueObjects;
 

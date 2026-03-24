@@ -1,8 +1,8 @@
 using FlowChat.Application.Abstractions;
 using FlowChat.Domain.Abstractions;
 using FlowChat.UserProfileService.Application.Contracts.Persistence;
-using FlowChat.UserProfileService.Application.UserProfiles.Commands.SetMainEmail;
-using FlowChat.UserProfileService.Application.UserProfiles.Commands.SetMainPhone;
+using FlowChat.UserProfileService.Application.Features.UserProfiles.Commands.SetMainEmail;
+using FlowChat.UserProfileService.Application.Features.UserProfiles.Commands.SetMainPhone;
 using FlowChat.UserProfileService.Domain.Entities;
 using FlowChat.UserProfileService.Domain.Events;
 

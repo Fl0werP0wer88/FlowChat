@@ -1,4 +1,4 @@
-using FlowChat.AuthService.Application.Users.Commands.LoginUser;
+using FlowChat.AuthService.Application.Features.Users.Commands.LoginUser;
 
 namespace FlowChat.AuthService.API.Features.Users.Public.LoginUser;
 

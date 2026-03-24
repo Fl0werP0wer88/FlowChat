@@ -1,5 +1,5 @@
 using FlowChat.RealtimeService.Api.Features.Realtime.Internal.PublishMessage;
-using FlowChat.RealtimeService.Application.Messages.Commands.PublishMessage;
+using FlowChat.RealtimeService.Application.Features.Messages.Commands.PublishMessage;
 using FlowChat.RealtimeService.Infrastructure.Configuration;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;

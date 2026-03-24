@@ -1,6 +1,6 @@
 using AutoMapper;
 using FlowChat.API.Abstractions;
-using FlowChat.AuthService.Application.Users.Commands.LoginUser;
+using FlowChat.AuthService.Application.Features.Users.Commands.LoginUser;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 

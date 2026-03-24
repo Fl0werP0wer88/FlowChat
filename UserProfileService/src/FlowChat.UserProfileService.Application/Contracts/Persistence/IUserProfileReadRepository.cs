@@ -1,5 +1,5 @@
 using FlowChat.Application.Abstractions;
-using FlowChat.UserProfileService.Application.UserProfiles.Queries.GetUserProfile;
+using FlowChat.UserProfileService.Application.Features.UserProfiles.Queries.GetUserProfile;
 
 namespace FlowChat.UserProfileService.Application.Contracts.Persistence;
 
