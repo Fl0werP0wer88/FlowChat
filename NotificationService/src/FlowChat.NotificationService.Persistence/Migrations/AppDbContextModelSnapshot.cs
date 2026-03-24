@@ -31,10 +31,6 @@ namespace FlowChat.NotificationService.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("CreatedDate");
 
-                    b.Property<string>("CreatedBy")
-                        .IsRequired()
-                        .HasColumnType("text");
-
                     b.Property<string>("DisplayName")
                         .IsRequired()
                         .HasMaxLength(120)
@@ -90,7 +86,6 @@ namespace FlowChat.NotificationService.Persistence.Migrations
 
                     b.ToTable("Notifications", (string)null);
                 });
-
 #pragma warning restore 612, 618
         }
     }

@@ -25,10 +25,9 @@ namespace FlowChat.NotificationService.Persistence.Migrations
                     FailureReason = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
                     SourceMessageKey = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
                     SentAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    CreatedBy = table.Column<string>(type: "text", nullable: false),
-                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    CreatedDate = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     LastModifiedBy = table.Column<string>(type: "text", nullable: false),
-                    LastModifiedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    LastModifiedDate = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {

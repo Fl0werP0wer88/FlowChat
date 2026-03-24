@@ -60,7 +60,6 @@ namespace FlowChat.UserProfileService.Persistence.Migrations
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     UserProfileId = table.Column<Guid>(type: "uuid", nullable: false),
                     Address = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
-                    NormalizedAddress = table.Column<string>(type: "text", nullable: false),
                     IsMain = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
                     LastModifiedBy = table.Column<string>(type: "text", nullable: false),
                     LastModifiedAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
