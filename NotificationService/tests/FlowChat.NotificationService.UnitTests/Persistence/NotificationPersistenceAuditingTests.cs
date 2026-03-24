@@ -1,6 +1,7 @@
 using FlowChat.NotificationService.Persistence;
 using FlowChat.Persistence.EntityFrameworkCore.Auditing;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -26,7 +27,9 @@ public sealed class NotificationPersistenceAuditingTests
         var options = serviceProvider.GetRequiredService<DbContextOptions<AppDbContext>>();
         var coreOptionsExtension = options.Extensions.OfType<CoreOptionsExtension>().Single();
 
-        Assert.Contains(coreOptionsExtension.Interceptors, interceptor => interceptor is EntityBaseSaveChangesInterceptor);
+        var interceptors = Assert.IsAssignableFrom<IEnumerable<IInterceptor>>(coreOptionsExtension.Interceptors);
+
+        Assert.Contains(interceptors, interceptor => interceptor is EntityBaseSaveChangesInterceptor);
     }
 
     [Fact]
