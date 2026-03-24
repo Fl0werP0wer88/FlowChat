@@ -45,15 +45,13 @@ public class UserProfileConfiguration : IEntityTypeConfiguration<UserProfile>
             .HasMaxLength(256)
             .IsRequired();
 
-        builder.Property(x => x.CreatedAtUtc)
-            .HasColumnName("CreatedDate");
+        builder.Property(x => x.CreatedAtUtc);
 
         builder.Property(x => x.LastModifiedBy)
             .HasMaxLength(256)
             .IsRequired();
 
-        builder.Property(x => x.LastModifiedAtUtc)
-            .HasColumnName("LastModifiedDate");
+        builder.Property(x => x.LastModifiedAtUtc);
 
         builder.HasIndex(x => x.UserName)
             .IsUnique();

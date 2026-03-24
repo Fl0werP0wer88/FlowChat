@@ -42,11 +42,9 @@ public sealed class NotificationConfiguration : IEntityTypeConfiguration<Notific
         builder.Property(x => x.SourceMessageKey)
             .HasMaxLength(200);
 
-        builder.Property(x => x.CreatedAtUtc)
-            .HasColumnName("CreatedDate");
+        builder.Property(x => x.CreatedAtUtc);
 
-        builder.Property(x => x.LastModifiedAtUtc)
-            .HasColumnName("LastModifiedDate");
+        builder.Property(x => x.LastModifiedAtUtc);
 
         builder.HasIndex(x => x.UserId);
         builder.HasIndex(x => new { x.UserId, x.Type }).IsUnique();
