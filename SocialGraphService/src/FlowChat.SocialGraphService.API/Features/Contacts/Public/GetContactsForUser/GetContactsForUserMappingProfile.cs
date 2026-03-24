@@ -8,7 +8,5 @@ public sealed class GetContactsForUserMappingProfile : Profile
     {
         CreateMap<GetContactsForUserRequest, GetContactsForUserQuery>()
             .ConstructUsing(source => new GetContactsForUserQuery(source.UserId));
-
-        CreateMap<ContactDto, ContactDto>();
     }
 }

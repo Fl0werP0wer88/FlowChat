@@ -29,7 +29,7 @@ public sealed class GetContactsForUserController : ApiControllerBase
         var result = await _mediator.Send(query, cancellationToken);
 
         return result.IsSuccess
-            ? Ok(new GetContactsForUserResponse(_mapper.Map<IReadOnlyList<ContactDto>>(result.Value)))
+            ? Ok(new GetContactsForUserResponse(result.Value))
             : HandleError(result.Error);
     }
 }

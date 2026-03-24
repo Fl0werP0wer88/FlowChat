@@ -1,46 +1,37 @@
 using FlowChat.SocialGraphService.Application.Contracts.Persistence;
+using FlowChat.SocialGraphService.Application.Contacts.Queries.GetContactsForUser;
 using FlowChat.SocialGraphService.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
 
 namespace FlowChat.SocialGraphService.Persistence.Repositories;
 
 public sealed class ContactReadRepository(AppDbContext dbContext)
-    : ReadRepositoryBase<Contact>(dbContext), IContactReadRepository
+    : ReadRepositoryBase<Contact, ContactDto>(dbContext), IContactReadRepository
 {
-    public async Task<Contact?> GetWithUsersAsync(Guid id, CancellationToken cancellationToken = default)
-    {
-        return await DbContext.Contacts
-            .AsNoTracking()
-            .FirstOrDefaultAsync(x => x.Id.Value == id, cancellationToken);
-    }
+    private static readonly Expression<Func<Contact, ContactDto>> ContactDtoProjection = x => new(
+        x.Id.Value,
+        x.OwnerUserId,
+        x.ContactUserId,
+        x.DisplayedName,
+        x.FirstName,
+        x.LastName,
+        x.PhoneNumber == null ? null : x.PhoneNumber.Value,
+        x.EmailAddress == null ? null : x.EmailAddress.Value,
+        x.IsBlocked);
 
-    public async Task<IReadOnlyList<Contact>> GetForUserAsync(
+    protected override Expression<Func<Contact, ContactDto>> MapToDto => ContactDtoProjection;
+
+    public async Task<IReadOnlyList<ContactDto>> GetForUserAsync(
         Guid userId,
         CancellationToken cancellationToken = default)
     {
-        var query = DbContext.Contacts
-            .AsNoTracking()
+        var query = Query
             .Where(x => x.OwnerUserId == userId);
 
         return await query
             .OrderByDescending(x => x.CreatedAtUtc)
+            .Select(MapToDto)
             .ToListAsync(cancellationToken);
-    }
-
-    public async Task<bool> RelationshipExistsAsync(
-        Guid ownerUserId,
-        Guid contactUserId,
-        CancellationToken cancellationToken = default)
-    {
-        return await DbContext.Contacts
-            .AnyAsync(
-                x => x.OwnerUserId == ownerUserId && x.ContactUserId == contactUserId,
-                cancellationToken);
-    }
-
-    public override async Task<Contact?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
-    {
-        return await DbContext.Contacts
-            .FirstOrDefaultAsync(x => x.Id.Value == id, cancellationToken);
     }
 }

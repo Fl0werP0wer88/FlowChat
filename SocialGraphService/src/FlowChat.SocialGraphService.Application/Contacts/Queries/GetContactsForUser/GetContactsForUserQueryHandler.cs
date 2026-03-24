@@ -21,21 +21,6 @@ public sealed class GetContactsForUserQueryHandler : IQueryHandler<GetContactsFo
             request.UserId,
             cancellationToken);
 
-        var contactDtos = contacts
-            .Select(x => new ContactDto(
-                x.Id.Value,
-                x.OwnerUserId,
-                x.ContactUserId,
-                x.DisplayedName,
-                x.FirstName,
-                x.LastName,
-                x.PhoneNumber?.Value,
-                x.EmailAddress?.Value,
-                x.IsBlocked,
-                x.CreatedAtUtc.UtcDateTime,
-                x.LastModifiedAtUtc.UtcDateTime))
-            .ToList();
-
-        return Result.Success<IReadOnlyList<ContactDto>, IDomainError>(contactDtos);
+        return Result.Success<IReadOnlyList<ContactDto>, IDomainError>(contacts);
     }
 }

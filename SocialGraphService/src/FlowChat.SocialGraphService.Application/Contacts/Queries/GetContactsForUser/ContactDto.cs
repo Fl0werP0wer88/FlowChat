@@ -9,6 +9,4 @@ public sealed record ContactDto(
     string? LastName,
     string? PhoneNumber,
     string? Email,
-    bool IsBlocked,
-    DateTime CreatedDate,
-    DateTime LastModifiedDate);
+    bool IsBlocked);
