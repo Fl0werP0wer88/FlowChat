@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using System.Reflection;
 using FluentValidation;
 using FlowChat.Core.Exceptions;
 using FlowChat.Domain.Abstractions;
@@ -9,21 +8,13 @@ using DomainValidationException = FlowChat.Domain.Abstractions.Exceptions.Valida
 namespace FlowChat.Application.Abstractions.Behaviors;
 
 public sealed class ExceptionHandlingPipelineBehavior<TRequest, TResponse>
-    : IPipelineBehavior<TRequest, TResponse>
-    where TRequest : notnull, IRequest<TResponse>
+    : IPipelineBehavior<TRequest, Result<TResponse, IDomainError>>
+    where TRequest : notnull, IRequest<Result<TResponse, IDomainError>>
     where TResponse : notnull
 {
-    private static readonly MethodInfo FailureWithDomainErrorMethod = typeof(Result)
-        .GetMethods(BindingFlags.Public | BindingFlags.Static)
-        .Single(method =>
-            method.Name == nameof(Result.Failure)
-            && method.IsGenericMethodDefinition
-            && method.GetGenericArguments().Length == 2
-            && method.GetParameters().Length == 1);
-
-    public async Task<TResponse> Handle(
+    public async Task<Result<TResponse, IDomainError>> Handle(
         TRequest request,
-        RequestHandlerDelegate<TResponse> next,
+        RequestHandlerDelegate<Result<TResponse, IDomainError>> next,
         CancellationToken cancellationToken)
     {
         try
@@ -38,7 +29,7 @@ public sealed class ExceptionHandlingPipelineBehavior<TRequest, TResponse>
             Activity.Current?.SetTag("validation.error_count", exception.Errors.Count);
 
             var domainError = DomainError.Validation(exception.Message, exception.Errors.ToList());
-            return CastOrThrow(domainError, exception);
+            return Result.Failure<TResponse, IDomainError>(domainError);
         }
         catch (ValidationException exception)
         {
@@ -53,7 +44,7 @@ public sealed class ExceptionHandlingPipelineBehavior<TRequest, TResponse>
             Activity.Current?.SetTag("validation.error_count", errors.Count);
 
             var domainError = DomainError.Validation(exception.Message, errors);
-            return CastOrThrow(domainError, exception);
+            return Result.Failure<TResponse, IDomainError>(domainError);
         }
         catch (FlowChatException exception)
         {
@@ -62,7 +53,7 @@ public sealed class ExceptionHandlingPipelineBehavior<TRequest, TResponse>
             Activity.Current?.SetTag("error.type", "bad_request");
 
             var domainError = DomainError.BadRequest(exception.Message);
-            return CastOrThrow(domainError, exception);
+            return Result.Failure<TResponse, IDomainError>(domainError);
         }
         catch (Exception exception)
         {
@@ -71,33 +62,7 @@ public sealed class ExceptionHandlingPipelineBehavior<TRequest, TResponse>
             Activity.Current?.SetTag("error.type", "unexpected");
 
             var domainError = DomainError.UnExpected("An unexpected error occurred.");
-            return CastOrThrow(domainError, exception);
+            return Result.Failure<TResponse, IDomainError>(domainError);
         }
-    }
-
-    private static TResponse CastOrThrow(IDomainError domainError, Exception exception)
-    {
-        var responseType = typeof(TResponse);
-
-        if (responseType.IsGenericType
-            && responseType.GetGenericTypeDefinition() == typeof(Result<,>))
-        {
-            var genericArguments = responseType.GetGenericArguments();
-            if (genericArguments[1] == typeof(IDomainError))
-            {
-                var failureResult = FailureWithDomainErrorMethod
-                    .MakeGenericMethod(genericArguments[0], typeof(IDomainError))
-                    .Invoke(null, [domainError]);
-
-                if (failureResult is TResponse response)
-                {
-                    return response;
-                }
-            }
-        }
-
-        throw new InvalidCastException(
-            $"Failed to cast failure result to {responseType.Name} for request {typeof(TRequest).Name}.",
-            exception);
     }
 }

@@ -9,7 +9,7 @@ public interface ICommandHandler<TRequest, TResponse> : IRequestHandler<TRequest
 {
 }
 
-public interface ICommandHandler<TRequest> : IRequestHandler<TRequest, Result<Unit>>
+public interface ICommandHandler<TRequest> : IRequestHandler<TRequest, Result<Unit, IDomainError>>
     where TRequest : ICommand
 {
 }
