@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using FlowChat.Application.Abstractions.Observability;
+using FlowChat.Domain.Abstractions;
 using MediatR;
 using Microsoft.Extensions.Logging;
 
@@ -50,6 +51,40 @@ public sealed class LoggingPipelineBehaviour<TRequest, TResponse>(
                     elapsed.TotalMilliseconds);
             }
 
+            if (TryGetDomainError(response, out var domainError))
+            {
+                activity?.SetStatus(ActivityStatusCode.Error, domainError.ErrorMessage);
+                activity?.SetTag("error.type", domainError.ErrorType.Name.ToLowerInvariant());
+
+                if (domainError.Errors?.Count > 0)
+                {
+                    activity?.SetTag("error.count", domainError.Errors.Count);
+                }
+
+                if (domainError.ErrorType == ErrorType.Unexpected)
+                {
+                    logger.LogError(
+                        "{RequestKind} failed: {RequestName}. Duration: {DurationMs} ms. ErrorType: {ErrorType}. Message: {ErrorMessage}",
+                        RequestKind,
+                        requestName,
+                        elapsed.TotalMilliseconds,
+                        domainError.ErrorType.Name,
+                        domainError.ErrorMessage);
+                }
+                else
+                {
+                    logger.LogWarning(
+                        "{RequestKind} failed: {RequestName}. Duration: {DurationMs} ms. ErrorType: {ErrorType}. Message: {ErrorMessage}",
+                        RequestKind,
+                        requestName,
+                        elapsed.TotalMilliseconds,
+                        domainError.ErrorType.Name,
+                        domainError.ErrorMessage);
+                }
+
+                return response;
+            }
+
             activity?.SetStatus(ActivityStatusCode.Ok);
 
             logger.LogInformation(
@@ -76,6 +111,38 @@ public sealed class LoggingPipelineBehaviour<TRequest, TResponse>(
 
             throw;
         }
+    }
+
+    private static bool TryGetDomainError(TResponse response, out IDomainError domainError)
+    {
+        domainError = null!;
+
+        if (response is null)
+        {
+            return false;
+        }
+
+        var responseType = response.GetType();
+        if (!responseType.IsGenericType
+            || responseType.GetGenericTypeDefinition() != typeof(Result<,>))
+        {
+            return false;
+        }
+
+        var genericArguments = responseType.GetGenericArguments();
+        if (genericArguments[1] != typeof(IDomainError))
+        {
+            return false;
+        }
+
+        var isFailure = responseType.GetProperty(nameof(Result.IsFailure))?.GetValue(response) as bool?;
+        if (isFailure != true)
+        {
+            return false;
+        }
+
+        domainError = responseType.GetProperty("Error")?.GetValue(response) as IDomainError ?? null!;
+        return domainError is not null;
     }
 
     private static string ResolveRequestKind()

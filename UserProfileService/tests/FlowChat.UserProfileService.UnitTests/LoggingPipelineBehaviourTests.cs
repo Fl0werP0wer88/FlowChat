@@ -2,7 +2,6 @@ using System.Diagnostics;
 using CSharpFunctionalExtensions;
 using FlowChat.Application.Abstractions;
 using FlowChat.Application.Abstractions.Behaviors;
-using FlowChat.Application.Abstractions.Observability;
 using FlowChat.Domain.Abstractions;
 using Microsoft.Extensions.Logging;
 
@@ -85,17 +84,54 @@ public sealed class LoggingPipelineBehaviourTests
         Assert.Contains(exceptionEvent.Tags, x => x.Key == "exception.message" && Equals(x.Value, "boom"));
     }
 
+    [Fact]
+    public async Task Handle_LogsFailureAndMarksActivityAsError_WhenHandlerReturnsFailureResult()
+    {
+        var logger = new TestLogger<LoggingPipelineBehaviour<TestCommand, Result<Guid, IDomainError>>>();
+        var behaviour = new LoggingPipelineBehaviour<TestCommand, Result<Guid, IDomainError>>(logger);
+        using var collector = new ActivityCollector();
+
+        var response = await behaviour.Handle(
+            new TestCommand(),
+            _ => Task.FromResult(Result.Failure<Guid, IDomainError>(DomainError.Validation("validation failed", ["Email is required."]))),
+            CancellationToken.None);
+
+        Assert.True(response.IsFailure);
+        Assert.Equal(ErrorType.Validation, response.Error.ErrorType);
+
+        Assert.Collection(
+            logger.Entries,
+            entry =>
+            {
+                Assert.Equal(LogLevel.Information, entry.LogLevel);
+                Assert.Contains("command started: TestCommand", entry.Message);
+            },
+            entry =>
+            {
+                Assert.Equal(LogLevel.Warning, entry.LogLevel);
+                Assert.Contains("command failed: TestCommand", entry.Message);
+                Assert.Contains("ErrorType: Validation", entry.Message);
+            });
+
+        var activity = Assert.Single(collector.Activities);
+        Assert.Equal(ActivityStatusCode.Error, activity.Status);
+        Assert.Equal("validation failed", activity.StatusDescription);
+        Assert.Equal("validation", activity.Tags.Single(x => x.Key == "error.type").Value);
+        Assert.Equal(1, activity.TagObjects.Single(x => x.Key == "error.count").Value);
+    }
+
     private sealed record TestCommand : ICommand<Guid>;
 
     private sealed class ActivityCollector : IDisposable
     {
         private readonly ActivityListener _listener;
+        private readonly string _activitySourceName = typeof(TestCommand).Assembly.GetName().Name ?? "FlowChat.Application";
 
         public ActivityCollector()
         {
             _listener = new ActivityListener
             {
-                ShouldListenTo = source => source.Name == ApplicationActivitySource.For<TestCommand>().Name,
+                ShouldListenTo = source => source.Name == _activitySourceName,
                 Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllDataAndRecorded,
                 ActivityStopped = activity => Activities.Add(activity)
             };
