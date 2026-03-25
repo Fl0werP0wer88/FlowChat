@@ -21,7 +21,9 @@
     <Project Path="ChatService/src/FlowChat.ChatService.Domain/FlowChat.ChatService.Domain.csproj" />
     <Project Path="ChatService/src/FlowChat.ChatService.Infrastructure/FlowChat.ChatService.Infrastructure.csproj" />
     <Project Path="ChatService/src/FlowChat.ChatService.Persistence/FlowChat.ChatService.Persistence.csproj" />
-    <Project Path="ChatService/src/FlowChat.ChatService.Worker/FlowChat.ChatService.Worker.csproj" />
+  </Folder>
+  <Folder Name="/ChatService/src/Workers/">
+    <Project Path="ChatService/src/Workers/FlowChat.ChatService.OutboxPublisher/FlowChat.ChatService.OutboxPublisher.csproj" />
   </Folder>
   <Folder Name="/UserProfileService/" />
   <Folder Name="/UserProfileService/src/">

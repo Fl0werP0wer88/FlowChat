@@ -1,9 +1,12 @@
 using System.Data.Common;
 using FlowChat.API.Abstractions;
+using FlowChat.ChatService.OutboxPublisher;
+using FlowChat.ChatService.OutboxPublisher.Configuration;
 using FlowChat.ChatService.Persistence;
-using FlowChat.ChatService.Worker.Kafka;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 IHost? host = null;
 
@@ -11,9 +14,13 @@ try
 {
     var builder = Host.CreateApplicationBuilder(args);
 
-    builder.AddFlowChatOpenTelemetry();
-    builder.Services.AddWorkerPersistenceServices(builder.Configuration);
-    builder.Services.AddWorkerSilverbackMessaging(builder.Configuration);
+    builder.AddFlowChatOpenTelemetry(typeof(OutboxPublisherServiceRegistration).Assembly);
+    builder.Services.AddDbContext<AppDbContext>(options =>
+        options.UseNpgsql(builder.Configuration.GetConnectionString("ChatDb")));
+    builder.Services.AddDbContextFactory<AppDbContext>(
+        options => options.UseNpgsql(builder.Configuration.GetConnectionString("ChatDb")),
+        ServiceLifetime.Scoped);
+    builder.Services.AddOutboxPublisher(builder.Configuration);
 
     host = builder.Build();
 
@@ -28,11 +35,11 @@ catch (Exception exception)
         host.Services
             .GetRequiredService<ILoggerFactory>()
             .CreateLogger("Program")
-            .LogCritical(exception, "ChatService Worker terminated unexpectedly.");
+            .LogCritical(exception, "ChatService OutboxPublisher terminated unexpectedly.");
     }
     else
     {
-        Console.Error.WriteLine($"Fatal startup error in ChatService Worker: {exception}");
+        Console.Error.WriteLine($"Fatal startup error in ChatService OutboxPublisher: {exception}");
     }
 
     throw;
@@ -42,16 +49,15 @@ static void LogStartupDiagnostics(IHost host)
 {
     var logger = host.Services
         .GetRequiredService<ILoggerFactory>()
-        .CreateLogger("FlowChat.ChatService.Worker.Startup");
+        .CreateLogger("FlowChat.ChatService.OutboxPublisher.Startup");
     var environment = host.Services.GetRequiredService<IHostEnvironment>();
     var configuration = host.Services.GetRequiredService<IConfiguration>();
-    var settingsManager = host.Services.GetRequiredService<IWorkerSettingsManager>();
-    var producerOptions = settingsManager.GetChatMessageSentProducerOptions();
-    var outboxOptions = settingsManager.GetOutboxPublisherRuntimeOptions();
+    var producerOptions = host.Services.GetRequiredService<IOptions<ChatMessageSentProducerOptions>>().Value;
+    var outboxOptions = host.Services.GetRequiredService<IOptions<OutboxPublisherRuntimeOptions>>().Value;
     var chatDbTarget = GetChatDbTarget(configuration.GetConnectionString("ChatDb"));
 
     logger.LogInformation(
-        "Starting ChatService worker in {Environment}. ChatDb target: {Host}:{Port}/{Database}. " +
+        "Starting ChatService outbox publisher in {Environment}. ChatDb target: {Host}:{Port}/{Database}. " +
         "ChatMessageSent Kafka: {BootstrapServers} -> {Topic}. " +
         "Outbox worker settings: BatchSize={BatchSize}, PollIntervalSeconds={PollIntervalSeconds}, " +
         "RetryBaseDelaySeconds={RetryBaseDelaySeconds}, MaxRetryDelaySeconds={MaxRetryDelaySeconds}.",

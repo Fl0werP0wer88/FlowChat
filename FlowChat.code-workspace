@@ -167,7 +167,7 @@
           },
           {
             "folder": "ChatService",
-            "name": "ChatService Worker (No Build)"
+            "name": "ChatService OutboxPublisher (No Build)"
           }
         ],
         "stopAll": true
@@ -302,7 +302,7 @@
           },
           {
             "folder": "ChatService",
-            "name": "ChatService Worker (No Build)"
+            "name": "ChatService OutboxPublisher (No Build)"
           },
           {
             "folder": "UserProfileService",
@@ -353,7 +353,7 @@
           },
           {
             "folder": "ChatService",
-            "name": "ChatService Worker (No Build)"
+            "name": "ChatService OutboxPublisher (No Build)"
           },
           {
             "folder": "UserProfileService",

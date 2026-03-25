@@ -1,25 +1,33 @@
+using FlowChat.ChatService.OutboxPublisher.Configuration;
 using FlowChat.ChatService.Persistence;
 using FlowChat.Messaging.Contracts.ChatService.Events;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using Silverback.Configuration;
 using Silverback.Messaging.Configuration;
 using Silverback.Messaging.Configuration.Kafka;
 
-namespace FlowChat.ChatService.Worker.Kafka;
+namespace FlowChat.ChatService.OutboxPublisher;
 
-public static class SilverbackServiceRegistration
+public static class OutboxPublisherServiceRegistration
 {
-    public static IServiceCollection AddWorkerSilverbackMessaging(
+    public static IServiceCollection AddOutboxPublisher(
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        var settingsManager = new WorkerSettingsManager(configuration);
-        services.TryAddSingleton<IWorkerSettingsManager>(settingsManager);
+        var outboxOptions = configuration
+            .GetSection(OutboxPublisherRuntimeOptions.SectionName)
+            .Get<OutboxPublisherRuntimeOptions>()
+            ?? new OutboxPublisherRuntimeOptions();
+        var producerOptions = configuration
+            .GetSection(ChatMessageSentProducerOptions.SectionName)
+            .Get<ChatMessageSentProducerOptions>()
+            ?? new ChatMessageSentProducerOptions();
 
-        var outboxOptions = settingsManager.GetOutboxPublisherRuntimeOptions();
-        var producerOptions = settingsManager.GetChatMessageSentProducerOptions();
+        services.AddOptions<OutboxPublisherRuntimeOptions>()
+            .BindConfiguration(OutboxPublisherRuntimeOptions.SectionName);
+        services.AddOptions<ChatMessageSentProducerOptions>()
+            .BindConfiguration(ChatMessageSentProducerOptions.SectionName);
 
         services.AddSilverback()
             .WithConnectionToMessageBroker(options =>

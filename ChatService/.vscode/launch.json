@@ -39,13 +39,13 @@
       }
     },
     {
-      "name": "ChatService Worker",
+      "name": "ChatService OutboxPublisher",
       "type": "coreclr",
       "request": "launch",
-      "preLaunchTask": "build: ChatService Worker",
-      "program": "${workspaceFolder}/src/FlowChat.ChatService.Worker/bin/Debug/net10.0/FlowChat.ChatService.Worker.dll",
+      "preLaunchTask": "build: ChatService OutboxPublisher",
+      "program": "${workspaceFolder}/src/Workers/FlowChat.ChatService.OutboxPublisher/bin/Debug/net10.0/FlowChat.ChatService.OutboxPublisher.dll",
       "args": [],
-      "cwd": "${workspaceFolder}/src/FlowChat.ChatService.Worker",
+      "cwd": "${workspaceFolder}/src/Workers/FlowChat.ChatService.OutboxPublisher",
       "stopAtEntry": false,
       "console": "integratedTerminal",
       "env": {
@@ -53,12 +53,12 @@
       }
     },
     {
-      "name": "ChatService Worker (No Build)",
+      "name": "ChatService OutboxPublisher (No Build)",
       "type": "coreclr",
       "request": "launch",
-      "program": "${workspaceFolder}/src/FlowChat.ChatService.Worker/bin/Debug/net10.0/FlowChat.ChatService.Worker.dll",
+      "program": "${workspaceFolder}/src/Workers/FlowChat.ChatService.OutboxPublisher/bin/Debug/net10.0/FlowChat.ChatService.OutboxPublisher.dll",
       "args": [],
-      "cwd": "${workspaceFolder}/src/FlowChat.ChatService.Worker",
+      "cwd": "${workspaceFolder}/src/Workers/FlowChat.ChatService.OutboxPublisher",
       "stopAtEntry": false,
       "console": "integratedTerminal",
       "env": {
@@ -71,7 +71,7 @@
       "name": "ChatService",
       "configurations": [
         "ChatService API",
-        "ChatService Worker"
+        "ChatService OutboxPublisher"
       ],
       "stopAll": true
     }
