@@ -1,7 +1,7 @@
 using System.Data.Common;
 using FlowChat.API.Abstractions;
-using FlowChat.ChatService.Infrastructure.Kafka;
 using FlowChat.ChatService.Persistence;
+using FlowChat.ChatService.Worker.Kafka;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 

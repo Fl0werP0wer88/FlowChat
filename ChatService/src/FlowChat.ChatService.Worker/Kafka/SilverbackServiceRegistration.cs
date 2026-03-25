@@ -7,17 +7,18 @@ using Silverback.Configuration;
 using Silverback.Messaging.Configuration;
 using Silverback.Messaging.Configuration.Kafka;
 
-namespace FlowChat.ChatService.Infrastructure.Kafka;
+namespace FlowChat.ChatService.Worker.Kafka;
 
 public static class SilverbackServiceRegistration
 {
-    public static IServiceCollection AddApiSilverbackMessaging(
+    public static IServiceCollection AddWorkerSilverbackMessaging(
         this IServiceCollection services,
         IConfiguration configuration)
     {
         var settingsManager = new WorkerSettingsManager(configuration);
         services.TryAddSingleton<IWorkerSettingsManager>(settingsManager);
 
+        var outboxOptions = settingsManager.GetOutboxPublisherRuntimeOptions();
         var producerOptions = settingsManager.GetChatMessageSentProducerOptions();
 
         services.AddSilverback()
@@ -25,6 +26,15 @@ public static class SilverbackServiceRegistration
             {
                 options.AddKafka();
                 options.AddEntityFrameworkOutbox();
+                options.AddOutboxWorker(worker => worker
+                    .ProcessOutbox(outbox => outbox.UseEntityFramework<AppDbContext>())
+                    .WithBatchSize(outboxOptions.BatchSize)
+                    .WithInterval(TimeSpan.FromSeconds(outboxOptions.PollIntervalSeconds))
+                    .WithExponentialRetryDelay(
+                        TimeSpan.FromSeconds(outboxOptions.RetryBaseDelaySeconds),
+                        2,
+                        TimeSpan.FromSeconds(outboxOptions.MaxRetryDelaySeconds))
+                    .WithoutDistributedLock());
             })
             .AddKafkaClients(clients =>
             {
@@ -33,8 +43,7 @@ public static class SilverbackServiceRegistration
                         .Produce<ChatMessageSentIntegrationEvent>("chat-message-sent", endpoint => endpoint
                             .ProduceTo(producerOptions.Topic)
                             .SetKafkaKey(message => message?.ConversationId)
-                            .SerializeAsJson(serializer => serializer.SetTypeHeader())
-                            .StoreToOutbox(outbox => outbox.UseEntityFramework<AppDbContext>())));
+                            .SerializeAsJson(serializer => serializer.SetTypeHeader())));
             });
 
         return services;
