@@ -1,3 +1,4 @@
+using FlowChat.Core.Exceptions;
 using FlowChat.Messaging.Contracts.AuthService.Events;
 using FlowChat.UserProfileService.Consumers.Services;
 using FlowChat.UserProfileService.Consumers.UserProfileApi.Contracts;
@@ -17,13 +18,13 @@ public sealed class UserCreatedSubscriber(
         var userName = message.UserName?.Trim();
         if (string.IsNullOrWhiteSpace(userName))
         {
-            throw new InvalidOperationException("Payload does not contain UserName.");
+            throw new NonTransientException("Payload does not contain UserName.");
         }
 
         var userId = ResolveUserId(message.UserId);
         if (!userId.HasValue)
         {
-            throw new InvalidOperationException("Payload does not contain valid UserId.");
+            throw new NonTransientException("Payload does not contain valid UserId.");
         }
 
         var displayName = ResolveDisplayName(message, userName);
@@ -43,7 +44,7 @@ public sealed class UserCreatedSubscriber(
                 },
                 cancellationToken);
         }
-        catch (InvalidOperationException ex)
+        catch (NonTransientException ex)
         {
             logger.LogInformation(
                 ex,

@@ -1,4 +1,5 @@
 using Confluent.Kafka;
+using FlowChat.Core.Exceptions;
 using FlowChat.Messaging.Contracts.AuthService.Events;
 using FlowChat.UserProfileService.Consumers.Configuration;
 using FlowChat.UserProfileService.Consumers.Kafka;
@@ -53,10 +54,10 @@ public static class ConsumersServiceRegistration
             .OnError(policy =>
             {
                 policy.MoveTo(consumerOptions.DeadLetterTopic, move => move
-                    .ApplyTo<InvalidOperationException>());
+                    .ApplyTo<NonTransientException>());
 
                 policy.MoveTo(consumerOptions.RetryTopic, move => move
-                    .Exclude<InvalidOperationException>());
+                    .Exclude<NonTransientException>());
             });
 
     private static KafkaConsumerEndpointConfigurationBuilder<object> ConfigureRetryEndpoint(
@@ -66,17 +67,17 @@ public static class ConsumersServiceRegistration
             .OnError(policy =>
             {
                 policy.MoveTo(consumerOptions.DeadLetterTopic, move => move
-                    .ApplyTo<InvalidOperationException>());
+                    .ApplyTo<NonTransientException>());
 
                 policy.Retry(retry => retry
                         .WithMaxRetries(consumerOptions.MaxRetryCount)
-                        .Exclude<InvalidOperationException>()
+                        .Exclude<NonTransientException>()
                         .WithExponentialDelay(
                             TimeSpan.FromSeconds(consumerOptions.RetryBaseDelaySeconds),
                             2,
                             TimeSpan.FromSeconds(consumerOptions.RetryMaxDelaySeconds)))
                     .ThenMoveTo(consumerOptions.DeadLetterTopic, move => move
-                        .Exclude<InvalidOperationException>());
+                        .Exclude<NonTransientException>());
             });
 
     private static KafkaConsumerEndpointConfigurationBuilder<object> ConfigureEndpointDefaults(

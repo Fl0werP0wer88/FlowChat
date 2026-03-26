@@ -1,3 +1,4 @@
+using FlowChat.Core.Exceptions;
 using FlowChat.Messaging.Contracts.AuthService.Events;
 using FlowChat.UserProfileService.Consumers.Kafka;
 using FlowChat.UserProfileService.Consumers.Services;
@@ -31,6 +32,28 @@ public sealed class UserCreatedSubscriberTests
         Assert.Equal("john@example.com", request.Email);
         Assert.Equal("+48123123123", request.Phone);
         Assert.Equal(userId, request.UserId);
+    }
+
+    [Fact]
+    public async Task HandleAsync_WhenUserNameIsMissing_ThrowsNonTransientException()
+    {
+        var subscriber = new UserCreatedSubscriber(
+            new CapturingUserProfileInternalApiClient(),
+            NullLogger<UserCreatedSubscriber>.Instance);
+
+        var exception = await Assert.ThrowsAsync<NonTransientException>(() =>
+            subscriber.HandleAsync(
+                new UserCreatedIntegrationEvent
+                {
+                    UserId = Guid.NewGuid(),
+                    UserName = "   ",
+                    DisplayName = "John Doe",
+                    Email = "test@example.com",
+                    PhoneNumber = "+48123123123"
+                },
+                CancellationToken.None));
+
+        Assert.Contains("UserName", exception.Message);
     }
 
     private sealed class CapturingUserProfileInternalApiClient : IUserProfileInternalApiClient

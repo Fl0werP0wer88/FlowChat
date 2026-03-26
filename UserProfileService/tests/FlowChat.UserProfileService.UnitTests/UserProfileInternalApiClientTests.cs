@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text.Json;
+using FlowChat.Core.Exceptions;
 using FlowChat.UserProfileService.Consumers.Configuration;
 using FlowChat.UserProfileService.Consumers.Services;
 using FlowChat.UserProfileService.Consumers.UserProfileApi.Contracts;
@@ -50,7 +51,7 @@ public sealed class UserProfileInternalApiClientTests
     }
 
     [Fact]
-    public async Task CreateInitialUserProfileAsync_WhenApiReturnsConflict_ThrowsInvalidOperationException()
+    public async Task CreateInitialUserProfileAsync_WhenApiReturnsConflict_ThrowsNonTransientException()
     {
         var handler = new CapturingHttpMessageHandler((_, _) =>
             Task.FromResult(new HttpResponseMessage(HttpStatusCode.Conflict)
@@ -64,7 +65,7 @@ public sealed class UserProfileInternalApiClientTests
                 BaseUrl = "https://localhost:7148"
             }));
 
-        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+        var exception = await Assert.ThrowsAsync<NonTransientException>(() =>
             client.CreateInitialUserProfileAsync(new CreateInitialUserProfileRequest(), CancellationToken.None));
 
         Assert.Contains("409", exception.Message);
