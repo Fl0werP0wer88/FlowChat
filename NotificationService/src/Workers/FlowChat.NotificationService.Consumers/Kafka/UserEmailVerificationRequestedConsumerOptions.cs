@@ -1,6 +1,8 @@
+using FlowChat.Workers.Abstractions.Kafka;
+
 namespace FlowChat.NotificationService.Consumers.Kafka;
 
-public sealed class UserEmailVerificationRequestedConsumerOptions
+public sealed class UserEmailVerificationRequestedConsumerOptions : IRetryableKafkaConsumerOptions
 {
     public const string SectionName = "Kafka:UserEmailVerificationRequestedConsumer";
 

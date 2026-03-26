@@ -1,6 +1,8 @@
+using FlowChat.Workers.Abstractions.Kafka;
+
 namespace FlowChat.RealtimeService.Consumers.Kafka;
 
-public sealed class ChatMessageSentConsumerOptions
+public sealed class ChatMessageSentConsumerOptions : IRetryableKafkaConsumerOptions
 {
     public const string SectionName = "Kafka:ChatMessageSentConsumer";
 

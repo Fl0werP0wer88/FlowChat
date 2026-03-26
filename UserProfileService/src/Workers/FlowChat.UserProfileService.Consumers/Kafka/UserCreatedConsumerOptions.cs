@@ -1,6 +1,8 @@
+using FlowChat.Workers.Abstractions.Kafka;
+
 namespace FlowChat.UserProfileService.Consumers.Kafka;
 
-public sealed class UserCreatedConsumerOptions
+public sealed class UserCreatedConsumerOptions : IRetryableKafkaConsumerOptions
 {
     public const string SectionName = "Kafka:UserCreatedConsumer";
 

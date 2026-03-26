@@ -1,14 +1,13 @@
 using Confluent.Kafka;
-using FlowChat.Core.Exceptions;
 using FlowChat.Messaging.Contracts.AuthService.Events;
 using FlowChat.UserProfileService.Consumers.Configuration;
 using FlowChat.UserProfileService.Consumers.Kafka;
 using FlowChat.UserProfileService.Consumers.Services;
+using FlowChat.Workers.Abstractions.Kafka;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Silverback.Configuration;
 using Silverback.Messaging.Configuration;
-using Silverback.Messaging.Configuration.Kafka;
 
 namespace FlowChat.UserProfileService.Consumers;
 
@@ -36,11 +35,11 @@ public static class ConsumersServiceRegistration
                     .AddConsumer(consumer => consumer
                         .WithGroupId(consumerOptions.GroupId)
                         .WithAutoOffsetReset(ParseAutoOffsetReset(consumerOptions.AutoOffsetReset))
-                        .Consume(endpoint => ConfigureMainEndpoint(endpoint, consumerOptions)))
+                        .Consume(endpoint => endpoint.ConfigureFlowChatMainEndpoint(consumerOptions)))
                     .AddConsumer(consumer => consumer
                         .WithGroupId(consumerOptions.RetryGroupId)
                         .WithAutoOffsetReset(ParseAutoOffsetReset(consumerOptions.AutoOffsetReset))
-                        .Consume(endpoint => ConfigureRetryEndpoint(endpoint, consumerOptions)))
+                        .Consume(endpoint => endpoint.ConfigureFlowChatRetryEndpoint(consumerOptions)))
                     .AddProducer(producer => producer
                         .Produce(endpoint => endpoint
                             .ProduceTo(consumerOptions.RetryTopic)
@@ -54,47 +53,6 @@ public static class ConsumersServiceRegistration
 
         return services;
     }
-
-    private static KafkaConsumerEndpointConfigurationBuilder<object> ConfigureMainEndpoint(
-        KafkaConsumerEndpointConfigurationBuilder<object> endpoint,
-        UserCreatedConsumerOptions consumerOptions) =>
-        ConfigureEndpointDefaults(endpoint, consumerOptions.Topic)
-            .OnError(policy =>
-            {
-                policy.MoveTo(consumerOptions.DeadLetterTopic, move => move
-                    .ApplyTo<NonTransientException>());
-
-                policy.MoveTo(consumerOptions.RetryTopic, move => move
-                    .Exclude<NonTransientException>());
-            });
-
-    private static KafkaConsumerEndpointConfigurationBuilder<object> ConfigureRetryEndpoint(
-        KafkaConsumerEndpointConfigurationBuilder<object> endpoint,
-        UserCreatedConsumerOptions consumerOptions) =>
-        ConfigureEndpointDefaults(endpoint, consumerOptions.RetryTopic)
-            .OnError(policy =>
-            {
-                policy.MoveTo(consumerOptions.DeadLetterTopic, move => move
-                    .ApplyTo<NonTransientException>());
-
-                policy.Retry(retry => retry
-                        .WithMaxRetries(consumerOptions.MaxRetryCount)
-                        .Exclude<NonTransientException>()
-                        .WithExponentialDelay(
-                            TimeSpan.FromSeconds(consumerOptions.RetryBaseDelaySeconds),
-                            2,
-                            TimeSpan.FromSeconds(consumerOptions.RetryMaxDelaySeconds)))
-                    .ThenMoveTo(consumerOptions.DeadLetterTopic, move => move
-                        .Exclude<NonTransientException>());
-            });
-
-    private static KafkaConsumerEndpointConfigurationBuilder<object> ConfigureEndpointDefaults(
-        KafkaConsumerEndpointConfigurationBuilder<object> endpoint,
-        string topic) =>
-        endpoint
-            .ConsumeFrom(topic)
-            .DeserializeJson(deserializer => deserializer.WithOptionalMessageTypeHeader())
-            .IgnoreUnhandledMessages();
 
     private static AutoOffsetReset ParseAutoOffsetReset(string value) =>
         Enum.TryParse<AutoOffsetReset>(value, true, out var parsed)

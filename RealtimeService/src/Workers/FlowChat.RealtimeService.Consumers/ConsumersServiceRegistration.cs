@@ -1,14 +1,13 @@
 using Confluent.Kafka;
-using FlowChat.Core.Exceptions;
 using FlowChat.RealtimeService.Consumers.Configuration;
 using FlowChat.RealtimeService.Consumers.Kafka;
 using FlowChat.RealtimeService.Consumers.Services;
+using FlowChat.Workers.Abstractions.Kafka;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Silverback.Configuration;
 using Silverback.Messaging.Configuration;
-using Silverback.Messaging.Configuration.Kafka;
 
 namespace FlowChat.RealtimeService.Consumers;
 
@@ -35,39 +34,19 @@ public static class ConsumersServiceRegistration
                     .AddConsumer(consumer => consumer
                         .WithGroupId(chatMessageSentConsumerOptions.GroupId)
                         .WithAutoOffsetReset(ParseAutoOffsetReset(chatMessageSentConsumerOptions.AutoOffsetReset))
-                        .Consume(endpoint => ConfigureMainEndpoint(
-                            endpoint,
-                            chatMessageSentConsumerOptions.Topic,
-                            chatMessageSentConsumerOptions.RetryTopic,
-                            chatMessageSentConsumerOptions.DeadLetterTopic)))
+                        .Consume(endpoint => endpoint.ConfigureFlowChatMainEndpoint(chatMessageSentConsumerOptions)))
                     .AddConsumer(consumer => consumer
                         .WithGroupId(chatMessageSentConsumerOptions.RetryGroupId)
                         .WithAutoOffsetReset(ParseAutoOffsetReset(chatMessageSentConsumerOptions.AutoOffsetReset))
-                        .Consume(endpoint => ConfigureRetryEndpoint(
-                            endpoint,
-                            chatMessageSentConsumerOptions.RetryTopic,
-                            chatMessageSentConsumerOptions.DeadLetterTopic,
-                            chatMessageSentConsumerOptions.MaxRetryCount,
-                            chatMessageSentConsumerOptions.RetryBaseDelaySeconds,
-                            chatMessageSentConsumerOptions.RetryMaxDelaySeconds)))
+                        .Consume(endpoint => endpoint.ConfigureFlowChatRetryEndpoint(chatMessageSentConsumerOptions)))
                     .AddConsumer(consumer => consumer
                         .WithGroupId(userPresenceChangedConsumerOptions.GroupId)
                         .WithAutoOffsetReset(ParseAutoOffsetReset(userPresenceChangedConsumerOptions.AutoOffsetReset))
-                        .Consume(endpoint => ConfigureMainEndpoint(
-                            endpoint,
-                            userPresenceChangedConsumerOptions.Topic,
-                            userPresenceChangedConsumerOptions.RetryTopic,
-                            userPresenceChangedConsumerOptions.DeadLetterTopic)))
+                        .Consume(endpoint => endpoint.ConfigureFlowChatMainEndpoint(userPresenceChangedConsumerOptions)))
                     .AddConsumer(consumer => consumer
                         .WithGroupId(userPresenceChangedConsumerOptions.RetryGroupId)
                         .WithAutoOffsetReset(ParseAutoOffsetReset(userPresenceChangedConsumerOptions.AutoOffsetReset))
-                        .Consume(endpoint => ConfigureRetryEndpoint(
-                            endpoint,
-                            userPresenceChangedConsumerOptions.RetryTopic,
-                            userPresenceChangedConsumerOptions.DeadLetterTopic,
-                            userPresenceChangedConsumerOptions.MaxRetryCount,
-                            userPresenceChangedConsumerOptions.RetryBaseDelaySeconds,
-                            userPresenceChangedConsumerOptions.RetryMaxDelaySeconds)))
+                        .Consume(endpoint => endpoint.ConfigureFlowChatRetryEndpoint(userPresenceChangedConsumerOptions)))
                     .AddProducer(producer => producer
                         .Produce(endpoint => endpoint
                             .ProduceTo(chatMessageSentConsumerOptions.RetryTopic)
@@ -102,51 +81,4 @@ public static class ConsumersServiceRegistration
         Enum.TryParse<AutoOffsetReset>(value, true, out var parsed)
             ? parsed
             : AutoOffsetReset.Earliest;
-
-    private static KafkaConsumerEndpointConfigurationBuilder<object> ConfigureMainEndpoint(
-        KafkaConsumerEndpointConfigurationBuilder<object> endpoint,
-        string topic,
-        string retryTopic,
-        string deadLetterTopic) =>
-        ConfigureEndpointDefaults(endpoint, topic)
-            .OnError(policy =>
-            {
-                policy.MoveTo(deadLetterTopic, move => move
-                    .ApplyTo<NonTransientException>());
-
-                policy.MoveTo(retryTopic, move => move
-                    .Exclude<NonTransientException>());
-            });
-
-    private static KafkaConsumerEndpointConfigurationBuilder<object> ConfigureRetryEndpoint(
-        KafkaConsumerEndpointConfigurationBuilder<object> endpoint,
-        string retryTopic,
-        string deadLetterTopic,
-        int maxRetryCount,
-        int retryBaseDelaySeconds,
-        int retryMaxDelaySeconds) =>
-        ConfigureEndpointDefaults(endpoint, retryTopic)
-            .OnError(policy =>
-            {
-                policy.MoveTo(deadLetterTopic, move => move
-                    .ApplyTo<NonTransientException>());
-
-                policy.Retry(retry => retry
-                        .WithMaxRetries(maxRetryCount)
-                        .Exclude<NonTransientException>()
-                        .WithExponentialDelay(
-                            TimeSpan.FromSeconds(retryBaseDelaySeconds),
-                            2,
-                            TimeSpan.FromSeconds(retryMaxDelaySeconds)))
-                    .ThenMoveTo(deadLetterTopic, move => move
-                        .Exclude<NonTransientException>());
-            });
-
-    private static KafkaConsumerEndpointConfigurationBuilder<object> ConfigureEndpointDefaults(
-        KafkaConsumerEndpointConfigurationBuilder<object> endpoint,
-        string topic) =>
-        endpoint
-            .ConsumeFrom(topic)
-            .DeserializeJson(deserializer => deserializer.WithOptionalMessageTypeHeader())
-            .IgnoreUnhandledMessages();
 }

@@ -3,6 +3,12 @@
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\Common\src\FlowChat.API.Abstractions\FlowChat.API.Abstractions.csproj" />
     <ProjectReference Include="..\..\..\..\Common\src\FlowChat.Messaging.Contracts\FlowChat.Messaging.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\..\Common\src\FlowChat.Workers.Abstractions\FlowChat.Workers.Abstractions.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\..\..\Common\src\FlowChat.Workers.Abstractions\Kafka\KafkaConsumerEndpointConfigurationBuilderExtensions.cs"
+             Link="Kafka\KafkaConsumerEndpointConfigurationBuilderExtensions.cs" />
   </ItemGroup>
 
   <PropertyGroup>

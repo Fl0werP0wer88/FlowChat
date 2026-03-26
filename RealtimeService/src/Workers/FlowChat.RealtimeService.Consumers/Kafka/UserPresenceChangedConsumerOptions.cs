@@ -1,6 +1,8 @@
+using FlowChat.Workers.Abstractions.Kafka;
+
 namespace FlowChat.RealtimeService.Consumers.Kafka;
 
-public sealed class UserPresenceChangedConsumerOptions
+public sealed class UserPresenceChangedConsumerOptions : IRetryableKafkaConsumerOptions
 {
     public const string SectionName = "Kafka:UserPresenceChangedConsumer";
 
