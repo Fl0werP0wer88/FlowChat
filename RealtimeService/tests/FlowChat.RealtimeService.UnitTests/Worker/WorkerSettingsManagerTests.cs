@@ -13,8 +13,10 @@ public sealed class WorkerSettingsManagerTests
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
                 ["Kafka:ChatMessageSentConsumer:BootstrapServers"] = "broker:9092",
+                ["Kafka:ChatMessageSentConsumer:RetryGroupId"] = "realtime-service-retry",
                 ["Kafka:ChatMessageSentConsumer:Topic"] = "chat-topic",
                 ["Kafka:UserPresenceChangedConsumer:BootstrapServers"] = "broker:9092",
+                ["Kafka:UserPresenceChangedConsumer:RetryGroupId"] = "realtime-service-retry",
                 ["Kafka:UserPresenceChangedConsumer:Topic"] = "presence-topic",
                 ["RealtimeApi:BaseUrl"] = "http://localhost:5215",
                 ["RealtimeApi:ApiKey"] = "worker-key"
@@ -25,7 +27,9 @@ public sealed class WorkerSettingsManagerTests
 
         Assert.Equal("broker:9092", settingsManager.GetChatMessageSentConsumerOptions().BootstrapServers);
         Assert.Equal("chat-topic", settingsManager.GetChatMessageSentConsumerOptions().Topic);
+        Assert.Equal("realtime-service-retry", settingsManager.GetChatMessageSentConsumerOptions().RetryGroupId);
         Assert.Equal("presence-topic", settingsManager.GetUserPresenceChangedConsumerOptions().Topic);
+        Assert.Equal("realtime-service-retry", settingsManager.GetUserPresenceChangedConsumerOptions().RetryGroupId);
         Assert.Equal("http://localhost:5215", settingsManager.GetRealtimeApiSettings().BaseUrl);
         Assert.Equal("worker-key", settingsManager.GetRealtimeApiSettings().ApiKey);
     }
@@ -53,7 +57,9 @@ public sealed class WorkerSettingsManagerTests
         Assert.NotNull(presenceOptions);
         Assert.NotNull(realtimeApiSettings);
         Assert.Equal("dev.flowchat.chat.message.v1", chatMessageOptions!.Topic);
+        Assert.Equal("realtime-service-retry", chatMessageOptions.RetryGroupId);
         Assert.Equal("dev.flowchat.user-profile.presence-changed.v1", presenceOptions!.Topic);
+        Assert.Equal("realtime-service-retry", presenceOptions.RetryGroupId);
         Assert.Equal("http://localhost:5215", realtimeApiSettings!.BaseUrl);
     }
 }

@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using FlowChat.Core.Exceptions;
 using FlowChat.NotificationService.Consumers.Configuration;
 using FlowChat.NotificationService.Consumers.NotificationApi.Contracts;
 using Microsoft.Extensions.Options;
@@ -47,7 +48,7 @@ public sealed class NotificationInternalApiClient(
 
         if (response.StatusCode is HttpStatusCode.BadRequest or HttpStatusCode.Conflict or HttpStatusCode.Unauthorized)
         {
-            throw new InvalidOperationException(await BuildFailureMessageAsync(response, cancellationToken));
+            throw new NonTransientException(await BuildFailureMessageAsync(response, cancellationToken));
         }
 
         response.EnsureSuccessStatusCode();

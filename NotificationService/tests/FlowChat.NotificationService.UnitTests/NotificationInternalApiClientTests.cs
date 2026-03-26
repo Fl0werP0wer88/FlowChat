@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text.Json;
+using FlowChat.Core.Exceptions;
 using FlowChat.NotificationService.Consumers.Configuration;
 using FlowChat.NotificationService.Consumers.NotificationApi.Contracts;
 using FlowChat.NotificationService.Consumers.Services;
@@ -54,7 +55,7 @@ public sealed class NotificationInternalApiClientTests
     }
 
     [Fact]
-    public async Task ProcessUserEmailVerificationRequestedAsync_WhenApiReturnsBadRequest_ThrowsInvalidOperationException()
+    public async Task ProcessUserEmailVerificationRequestedAsync_WhenApiReturnsBadRequest_ThrowsNonTransientException()
     {
         var handler = new CapturingHttpMessageHandler((_, _) =>
             Task.FromResult(new HttpResponseMessage(HttpStatusCode.BadRequest)
@@ -68,7 +69,7 @@ public sealed class NotificationInternalApiClientTests
                 BaseUrl = "https://localhost:7206"
             }));
 
-        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+        var exception = await Assert.ThrowsAsync<NonTransientException>(() =>
             client.ProcessUserEmailVerificationRequestedAsync(
                 new ProcessUserEmailVerificationRequestedRequest(),
                 CancellationToken.None));

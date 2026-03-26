@@ -1,3 +1,4 @@
+using FlowChat.Core.Exceptions;
 using FlowChat.Messaging.Contracts.UserProfileService.Events;
 using FlowChat.RealtimeService.Consumers.Realtime.Contracts;
 using FlowChat.RealtimeService.Consumers.Services;
@@ -32,6 +33,17 @@ public sealed class UserPresenceChangedSubscriber(
 
             await realtimeInternalApiClient.PublishPresenceChangeAsync(request, cancellationToken);
         }
+        catch (NonTransientException exception)
+        {
+            logger.LogInformation(
+                exception,
+                "Skipping forwarding {EventType} event for user {UserId}. Reason: {Reason}",
+                nameof(UserPresenceChangedIntegrationEvent),
+                message.UserId,
+                exception.Message);
+
+            throw;
+        }
         catch (Exception exception)
         {
             logger.LogWarning(
@@ -48,23 +60,23 @@ public sealed class UserPresenceChangedSubscriber(
     {
         if (message.UserId == Guid.Empty)
         {
-            throw new InvalidOperationException("Payload does not contain valid UserId.");
+            throw new NonTransientException("Payload does not contain valid UserId.");
         }
 
         if (string.IsNullOrWhiteSpace(message.Status))
         {
-            throw new InvalidOperationException("Payload does not contain valid Status.");
+            throw new NonTransientException("Payload does not contain valid Status.");
         }
 
         if (message.RecipientUserIds is null || !message.RecipientUserIds.Any(userId => userId != Guid.Empty))
         {
-            throw new InvalidOperationException("Payload does not contain valid RecipientUserIds.");
+            throw new NonTransientException("Payload does not contain valid RecipientUserIds.");
         }
 
         var normalizedStatus = message.Status.Trim().ToLowerInvariant();
         if (!AllowedStatuses.Contains(normalizedStatus))
         {
-            throw new InvalidOperationException("Payload contains unsupported Status.");
+            throw new NonTransientException("Payload contains unsupported Status.");
         }
 
         return normalizedStatus;

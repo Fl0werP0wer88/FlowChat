@@ -1,3 +1,4 @@
+using FlowChat.Core.Exceptions;
 using FlowChat.Messaging.Contracts.AuthService.Events;
 using FlowChat.NotificationService.Consumers.Kafka;
 using FlowChat.NotificationService.Consumers.NotificationApi.Contracts;
@@ -36,14 +37,14 @@ public sealed class UserEmailVerificationRequestedSubscriberTests
     }
 
     [Fact]
-    public async Task HandleAsync_WhenUserEmailMissing_ThrowsInvalidOperationException()
+    public async Task HandleAsync_WhenUserEmailMissing_ThrowsNonTransientException()
     {
         var apiClient = new FakeNotificationInternalApiClient();
         var subscriber = new UserEmailVerificationRequestedSubscriber(
             apiClient,
             NullLogger<UserEmailVerificationRequestedSubscriber>.Instance);
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() => subscriber.HandleAsync(
+        await Assert.ThrowsAsync<NonTransientException>(() => subscriber.HandleAsync(
             new EmailVerificationRequestIntegrationEvent
             {
                 UserId = Guid.NewGuid(),
@@ -56,14 +57,14 @@ public sealed class UserEmailVerificationRequestedSubscriberTests
     }
 
     [Fact]
-    public async Task HandleAsync_WhenConfirmationLinkMissing_ThrowsInvalidOperationException()
+    public async Task HandleAsync_WhenConfirmationLinkMissing_ThrowsNonTransientException()
     {
         var apiClient = new FakeNotificationInternalApiClient();
         var subscriber = new UserEmailVerificationRequestedSubscriber(
             apiClient,
             NullLogger<UserEmailVerificationRequestedSubscriber>.Instance);
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() => subscriber.HandleAsync(
+        await Assert.ThrowsAsync<NonTransientException>(() => subscriber.HandleAsync(
             new EmailVerificationRequestIntegrationEvent
             {
                 UserId = Guid.NewGuid(),

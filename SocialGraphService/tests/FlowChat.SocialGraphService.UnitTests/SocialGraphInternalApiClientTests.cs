@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text.Json;
+using FlowChat.Core.Exceptions;
 using FlowChat.SocialGraphService.Consumers.Configuration;
 using FlowChat.SocialGraphService.Consumers.Services;
 using FlowChat.SocialGraphService.Consumers.SocialGraph.Contracts;
@@ -48,7 +49,7 @@ public sealed class SocialGraphInternalApiClientTests
     }
 
     [Fact]
-    public async Task UpsertUserProfileReadModelAsync_WhenApiReturnsBadRequest_ThrowsInvalidOperationException()
+    public async Task UpsertUserProfileReadModelAsync_WhenApiReturnsBadRequest_ThrowsNonTransientException()
     {
         var handler = new CapturingHttpMessageHandler((_, _) =>
             Task.FromResult(new HttpResponseMessage(HttpStatusCode.BadRequest)
@@ -62,7 +63,7 @@ public sealed class SocialGraphInternalApiClientTests
                 BaseUrl = "https://localhost:7194"
             }));
 
-        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+        var exception = await Assert.ThrowsAsync<NonTransientException>(() =>
             client.UpsertUserProfileReadModelAsync(new UpsertUserProfileReadModelRequest(), CancellationToken.None));
 
         Assert.Contains("400", exception.Message);

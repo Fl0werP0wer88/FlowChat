@@ -1,3 +1,4 @@
+using FlowChat.Core.Exceptions;
 using FlowChat.Messaging.Contracts.UserProfileService.Events;
 using FlowChat.SocialGraphService.Consumers.Kafka;
 using FlowChat.SocialGraphService.Consumers.Services;
@@ -78,14 +79,14 @@ public sealed class UserProfileSubscriberTests
     }
 
     [Fact]
-    public async Task HandleAsync_WhenUserProfileIdIsMissing_ThrowsInvalidOperationException()
+    public async Task HandleAsync_WhenUserProfileIdIsMissing_ThrowsNonTransientException()
     {
         var apiClient = new FakeSocialGraphInternalApiClient();
         var subscriber = new UserProfileSubscriber(
             apiClient,
             NullLogger<UserProfileSubscriber>.Instance);
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() => subscriber.HandleAsync(
+        await Assert.ThrowsAsync<NonTransientException>(() => subscriber.HandleAsync(
             new UserProfileCreatedIntegrationEvent
             {
                 UserProfileId = Guid.Empty,

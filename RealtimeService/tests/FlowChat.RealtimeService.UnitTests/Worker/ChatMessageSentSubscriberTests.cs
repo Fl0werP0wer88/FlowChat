@@ -1,3 +1,4 @@
+using FlowChat.Core.Exceptions;
 using FlowChat.Messaging.Contracts.ChatService.Events;
 using FlowChat.RealtimeService.Consumers.Kafka;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -35,14 +36,14 @@ public sealed class ChatMessageSentSubscriberTests
     }
 
     [Fact]
-    public async Task HandleAsync_WhenMessageIdMissing_ThrowsInvalidOperationException()
+    public async Task HandleAsync_WhenMessageIdMissing_ThrowsNonTransientException()
     {
         var internalApiClient = new CapturingRealtimeInternalApiClient();
         var subscriber = new ChatMessageSentSubscriber(
             internalApiClient,
             NullLogger<ChatMessageSentSubscriber>.Instance);
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() => subscriber.HandleAsync(
+        await Assert.ThrowsAsync<NonTransientException>(() => subscriber.HandleAsync(
             new ChatMessageSentIntegrationEvent
             {
                 MessageId = Guid.Empty,

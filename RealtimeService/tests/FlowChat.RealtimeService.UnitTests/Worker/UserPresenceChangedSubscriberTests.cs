@@ -1,3 +1,4 @@
+using FlowChat.Core.Exceptions;
 using FlowChat.Messaging.Contracts.UserProfileService.Events;
 using FlowChat.RealtimeService.Consumers.Kafka;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -29,14 +30,14 @@ public sealed class UserPresenceChangedSubscriberTests
     }
 
     [Fact]
-    public async Task HandleAsync_WhenStatusUnsupported_ThrowsInvalidOperationException()
+    public async Task HandleAsync_WhenStatusUnsupported_ThrowsNonTransientException()
     {
         var internalApiClient = new CapturingRealtimeInternalApiClient();
         var subscriber = new UserPresenceChangedSubscriber(
             internalApiClient,
             NullLogger<UserPresenceChangedSubscriber>.Instance);
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() => subscriber.HandleAsync(
+        await Assert.ThrowsAsync<NonTransientException>(() => subscriber.HandleAsync(
             new UserPresenceChangedIntegrationEvent
             {
                 UserId = Guid.NewGuid(),

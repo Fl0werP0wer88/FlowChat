@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text.Json;
+using FlowChat.Core.Exceptions;
 using FlowChat.RealtimeService.Consumers.Configuration;
 using FlowChat.RealtimeService.Consumers.Realtime.Contracts;
 using FlowChat.RealtimeService.Consumers.Services;
@@ -50,5 +51,28 @@ public sealed class RealtimeInternalApiClientTests
             new JsonSerializerOptions(JsonSerializerDefaults.Web));
         Assert.NotNull(payload);
         Assert.Equal("John Doe", payload!.SenderDisplayName);
+    }
+
+    [Fact]
+    public async Task PublishMessageAsync_WhenApiReturnsBadRequest_ThrowsNonTransientException()
+    {
+        var handler = new CapturingHttpMessageHandler((_, _) =>
+            Task.FromResult(new HttpResponseMessage(HttpStatusCode.BadRequest)
+            {
+                Content = new StringContent("bad request")
+            }));
+        var httpClient = new HttpClient(handler);
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["RealtimeApi:BaseUrl"] = "http://localhost:5215"
+            })
+            .Build();
+        var client = new RealtimeInternalApiClient(httpClient, new ConsumersSettingsManager(configuration));
+
+        var exception = await Assert.ThrowsAsync<NonTransientException>(() =>
+            client.PublishMessageAsync(new PublishMessageRequest(), CancellationToken.None));
+
+        Assert.Contains("400", exception.Message);
     }
 }

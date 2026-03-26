@@ -6,6 +6,7 @@ public sealed class UserPresenceChangedConsumerOptions
 
     public string BootstrapServers { get; set; } = "localhost:9092";
     public string GroupId { get; set; } = "realtime-service";
+    public string RetryGroupId { get; set; } = "realtime-service-retry";
     public string Topic { get; set; } = "dev.flowchat.user-profile.presence-changed.v1";
     public string RetryTopic { get; set; } = "dev.flowchat.user-profile.presence-changed.v1.retry";
     public string DeadLetterTopic { get; set; } = "dev.flowchat.user-profile.presence-changed.v1.dlq";

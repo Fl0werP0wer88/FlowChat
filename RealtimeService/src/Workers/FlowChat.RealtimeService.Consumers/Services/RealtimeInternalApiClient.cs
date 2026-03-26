@@ -1,4 +1,6 @@
+using System.Net;
 using System.Net.Http.Json;
+using FlowChat.Core.Exceptions;
 using FlowChat.RealtimeService.Consumers.Configuration;
 using FlowChat.RealtimeService.Consumers.Realtime.Contracts;
 
@@ -39,6 +41,23 @@ public sealed class RealtimeInternalApiClient(HttpClient httpClient, IConsumersS
         }
 
         using var response = await _httpClient.SendAsync(message, cancellationToken);
+        if (response.StatusCode is HttpStatusCode.BadRequest or HttpStatusCode.Conflict or HttpStatusCode.Unauthorized)
+        {
+            throw new NonTransientException(await BuildFailureMessageAsync(response, cancellationToken));
+        }
+
         response.EnsureSuccessStatusCode();
+    }
+
+    private static async Task<string> BuildFailureMessageAsync(
+        HttpResponseMessage response,
+        CancellationToken cancellationToken)
+    {
+        var body = await response.Content.ReadAsStringAsync(cancellationToken);
+        var suffix = string.IsNullOrWhiteSpace(body)
+            ? string.Empty
+            : $": {body.Trim()}";
+
+        return $"Realtime API returned {(int)response.StatusCode} {response.ReasonPhrase}{suffix}";
     }
 }

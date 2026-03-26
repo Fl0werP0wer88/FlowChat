@@ -6,6 +6,7 @@ public sealed class UserEmailVerificationRequestedConsumerOptions
 
     public string BootstrapServers { get; set; } = "localhost:9092";
     public string GroupId { get; set; } = "notification-service";
+    public string RetryGroupId { get; set; } = "notification-service-retry";
     public string Topic { get; set; } = "dev.flowchat.notification.email.v1";
     public string RetryTopic { get; set; } = "dev.flowchat.notification.email.v1.retry";
     public string DeadLetterTopic { get; set; } = "dev.flowchat.notification.email.v1.dlq";

@@ -1,3 +1,4 @@
+using FlowChat.Core.Exceptions;
 using FlowChat.Messaging.Contracts.ChatService.Events;
 using FlowChat.RealtimeService.Consumers.Realtime.Contracts;
 using FlowChat.RealtimeService.Consumers.Services;
@@ -32,6 +33,17 @@ public sealed class ChatMessageSentSubscriber(
 
             await realtimeInternalApiClient.PublishMessageAsync(request, cancellationToken);
         }
+        catch (NonTransientException exception)
+        {
+            logger.LogInformation(
+                exception,
+                "Skipping forwarding {EventType} event for message {MessageId}. Reason: {Reason}",
+                nameof(ChatMessageSentIntegrationEvent),
+                message.MessageId,
+                exception.Message);
+
+            throw;
+        }
         catch (Exception exception)
         {
             logger.LogWarning(
@@ -48,32 +60,32 @@ public sealed class ChatMessageSentSubscriber(
     {
         if (message.MessageId == Guid.Empty)
         {
-            throw new InvalidOperationException("Payload does not contain valid MessageId.");
+            throw new NonTransientException("Payload does not contain valid MessageId.");
         }
 
         if (message.ConversationId == Guid.Empty)
         {
-            throw new InvalidOperationException("Payload does not contain valid ConversationId.");
+            throw new NonTransientException("Payload does not contain valid ConversationId.");
         }
 
         if (message.SenderUserId == Guid.Empty)
         {
-            throw new InvalidOperationException("Payload does not contain valid SenderUserId.");
+            throw new NonTransientException("Payload does not contain valid SenderUserId.");
         }
 
         if (string.IsNullOrWhiteSpace(message.SenderDisplayName))
         {
-            throw new InvalidOperationException("Payload does not contain valid SenderDisplayName.");
+            throw new NonTransientException("Payload does not contain valid SenderDisplayName.");
         }
 
         if (string.IsNullOrWhiteSpace(message.Text))
         {
-            throw new InvalidOperationException("Payload does not contain valid Text.");
+            throw new NonTransientException("Payload does not contain valid Text.");
         }
 
         if (message.RecipientUserIds is null || !message.RecipientUserIds.Any(userId => userId != Guid.Empty))
         {
-            throw new InvalidOperationException("Payload does not contain valid RecipientUserIds.");
+            throw new NonTransientException("Payload does not contain valid RecipientUserIds.");
         }
     }
 }

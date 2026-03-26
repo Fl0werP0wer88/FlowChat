@@ -1,3 +1,4 @@
+using FlowChat.Core.Exceptions;
 using FlowChat.Messaging.Contracts.AuthService.Events;
 using FlowChat.NotificationService.Consumers.NotificationApi.Contracts;
 using FlowChat.NotificationService.Consumers.Services;
@@ -10,11 +11,6 @@ public sealed class UserEmailVerificationRequestedSubscriber(
     INotificationInternalApiClient notificationInternalApiClient,
     ILogger<UserEmailVerificationRequestedSubscriber> logger)
 {
-    private readonly INotificationInternalApiClient _notificationInternalApiClient = notificationInternalApiClient
-        ?? throw new ArgumentNullException(nameof(notificationInternalApiClient));
-    private readonly ILogger<UserEmailVerificationRequestedSubscriber> _logger = logger
-        ?? throw new ArgumentNullException(nameof(logger));
-
     [Subscribe]
     public async Task HandleAsync(
         EmailVerificationRequestIntegrationEvent message,
@@ -22,28 +18,28 @@ public sealed class UserEmailVerificationRequestedSubscriber(
     {
         if (string.IsNullOrWhiteSpace(message.UserEmail))
         {
-            throw new InvalidOperationException("Payload does not contain UserEmail.");
+            throw new NonTransientException("Payload does not contain UserEmail.");
         }
 
         var userName = ResolveUserName(message.UserEmail);
         if (string.IsNullOrWhiteSpace(userName))
         {
-            throw new InvalidOperationException("Payload does not contain valid UserEmail local-part.");
+            throw new NonTransientException("Payload does not contain valid UserEmail local-part.");
         }
 
         if (message.UserId == Guid.Empty)
         {
-            throw new InvalidOperationException("Payload does not contain valid UserId.");
+            throw new NonTransientException("Payload does not contain valid UserId.");
         }
 
         if (string.IsNullOrWhiteSpace(message.ConfirmationLink))
         {
-            throw new InvalidOperationException("Payload does not contain ConfirmationLink.");
+            throw new NonTransientException("Payload does not contain ConfirmationLink.");
         }
 
         try
         {
-            await _notificationInternalApiClient.ProcessUserEmailVerificationRequestedAsync(
+            await notificationInternalApiClient.ProcessUserEmailVerificationRequestedAsync(
                 new ProcessUserEmailVerificationRequestedRequest
                 {
                     UserId = message.UserId,
@@ -55,9 +51,9 @@ public sealed class UserEmailVerificationRequestedSubscriber(
                 },
                 cancellationToken);
         }
-        catch (InvalidOperationException ex)
+        catch (NonTransientException ex)
         {
-            _logger.LogInformation(
+            logger.LogInformation(
                 ex,
                 "Skipping notification handling for user {UserId}. Reason: {Reason}",
                 message.UserId,
@@ -67,7 +63,7 @@ public sealed class UserEmailVerificationRequestedSubscriber(
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(
+            logger.LogWarning(
                 ex,
                 "Transient failure while handling notification for user {UserId}.",
                 message.UserId);
