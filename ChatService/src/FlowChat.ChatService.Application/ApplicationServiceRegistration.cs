@@ -8,7 +8,10 @@ public static class ApplicationServiceRegistration
 {
     public static IServiceCollection AddApplicationServices(this IServiceCollection services)
     {
+        var applicationAssembly = typeof(ApplicationServiceRegistration).Assembly;
+
         services.AddAutoMapper((Action<AutoMapper.IMapperConfigurationExpression>?)null, AppDomain.CurrentDomain.GetAssemblies());
+        services.AddFlowChatValidatorsFromAssembly(applicationAssembly);
         services.AddMediatR(cfg =>
         {
             cfg.RegisterServicesFromAssemblies(AppDomain.CurrentDomain.GetAssemblies());

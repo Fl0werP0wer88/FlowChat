@@ -1,4 +1,3 @@
-using CSharpFunctionalExtensions;
 using FlowChat.Application.Abstractions;
 using FlowChat.NotificationService.Application.Contracts.Infrastructure;
 using FlowChat.NotificationService.Application.Contracts.Persistence;
@@ -33,17 +32,6 @@ public sealed class UserEmailVerificationRequestedCommandHandler
         UserEmailVerificationRequestedCommand request,
         CancellationToken cancellationToken)
     {
-        var validationErrors = new ValidationErrorCollector()
-            .AddIf(request.UserId == Guid.Empty, "UserId is required.")
-            .AddIf(string.IsNullOrWhiteSpace(request.Email), "Email is required.")
-            .AddIf(string.IsNullOrWhiteSpace(request.UserName), "UserName is required.")
-            .AddIf(string.IsNullOrWhiteSpace(request.ConfirmationLink), "ConfirmationLink is required.");
-
-        if (validationErrors.HasErrors)
-        {
-            return validationErrors.ToFailure<Unit>();
-        }
-
         var displayName = string.IsNullOrWhiteSpace(request.DisplayName)
             ? request.UserName.Trim()
             : request.DisplayName.Trim();

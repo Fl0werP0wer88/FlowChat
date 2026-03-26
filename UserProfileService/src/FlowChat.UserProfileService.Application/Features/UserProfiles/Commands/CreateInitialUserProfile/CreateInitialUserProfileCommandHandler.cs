@@ -1,4 +1,3 @@
-using CSharpFunctionalExtensions;
 using FlowChat.Application.Abstractions;
 using FlowChat.Domain.Abstractions;
 using FlowChat.UserProfileService.Application.Contracts.Persistence;
@@ -28,10 +27,6 @@ public sealed class CreateInitialUserProfileCommandHandler
         CreateInitialUserProfileCommand request,
         CancellationToken cancellationToken)
     {
-        var validationErrors = new ValidationErrorCollector()
-            .AddIf(string.IsNullOrWhiteSpace(request.UserName), "UserName is required.")
-            .AddIf(string.IsNullOrWhiteSpace(request.DisplayName), "DisplayName is required.");
-
         var userName = string.IsNullOrWhiteSpace(request.UserName) ? null : request.UserName.Trim();
         var displayName = string.IsNullOrWhiteSpace(request.DisplayName) ? null : request.DisplayName.Trim();
         var email = string.IsNullOrWhiteSpace(request.Email) ? null : request.Email.Trim();
@@ -39,21 +34,14 @@ public sealed class CreateInitialUserProfileCommandHandler
         EmailAddress? emailAddress = null;
         PhoneNumber? phoneNumber = null;
 
-        validationErrors.AddIf(email is null && phone is null, "At least one email or phone is required to create a user profile.");
-
         if (email is not null && !EmailAddress.TryCreate(email, out emailAddress))
         {
-            validationErrors.AddIf(true, EmailAddress.InvalidEmailAddressMessage);
+            throw new InvalidOperationException("Validated email address could not be normalized.");
         }
 
         if (phone is not null && !PhoneNumber.TryCreate(phone, out phoneNumber))
         {
-            validationErrors.AddIf(true, PhoneNumber.InvalidPhoneNumberMessage);
-        }
-
-        if (validationErrors.HasErrors)
-        {
-            return validationErrors.ToFailure<Guid>();
+            throw new InvalidOperationException("Validated phone number could not be normalized.");
         }
 
         var exists = await _userProfileReadRepository

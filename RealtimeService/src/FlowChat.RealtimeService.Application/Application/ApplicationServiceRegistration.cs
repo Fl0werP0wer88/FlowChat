@@ -9,6 +9,7 @@ public static class ApplicationServiceRegistration
     {
         var applicationAssembly = typeof(ApplicationServiceRegistration).Assembly;
 
+        services.AddFlowChatValidatorsFromAssembly(applicationAssembly);
         services.AddMediatR(cfg =>
         {
             cfg.RegisterServicesFromAssemblies(applicationAssembly);

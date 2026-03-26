@@ -1,4 +1,3 @@
-using CSharpFunctionalExtensions;
 using FlowChat.Application.Abstractions;
 using FlowChat.Domain.Abstractions;
 using FlowChat.UserProfileService.Application.Contracts.Persistence;
@@ -25,20 +24,9 @@ public sealed class AddEmailCommandHandler
         AddEmailCommand request,
         CancellationToken cancellationToken)
     {
-        EmailAddress? normalizedEmailAddress = null;
-        var validationErrors = new ValidationErrorCollector()
-            .AddIf(request.UserId == Guid.Empty, "UserId is required.")
-            .AddIf(string.IsNullOrWhiteSpace(request.Address), "Email address is required.");
-
-        if (!string.IsNullOrWhiteSpace(request.Address) &&
-            !EmailAddress.TryCreate(request.Address, out normalizedEmailAddress))
+        if (!EmailAddress.TryCreate(request.Address!, out var normalizedEmailAddress))
         {
-            validationErrors.AddIf(true, EmailAddress.InvalidEmailAddressMessage);
-        }
-
-        if (validationErrors.HasErrors)
-        {
-            return validationErrors.ToFailure<Guid>();
+            throw new InvalidOperationException("Validated email address could not be normalized.");
         }
 
         _userProfile = await _userProfileRepository.GetByIdAsync(request.UserId, cancellationToken);

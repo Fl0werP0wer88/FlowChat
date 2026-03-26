@@ -1,4 +1,3 @@
-using CSharpFunctionalExtensions;
 using FlowChat.Application.Abstractions;
 using FlowChat.Domain.Abstractions;
 using FlowChat.UserProfileService.Application.Contracts.Persistence;
@@ -25,20 +24,9 @@ public sealed class AddPhoneCommandHandler
         AddPhoneCommand request,
         CancellationToken cancellationToken)
     {
-        PhoneNumber? normalizedPhoneNumber = null;
-        var validationErrors = new ValidationErrorCollector()
-            .AddIf(request.UserId == Guid.Empty, "UserId is required.")
-            .AddIf(string.IsNullOrWhiteSpace(request.Number), "Phone number is required.");
-
-        if (!string.IsNullOrWhiteSpace(request.Number) &&
-            !PhoneNumber.TryCreate(request.Number, out normalizedPhoneNumber))
+        if (!PhoneNumber.TryCreate(request.Number!, out var normalizedPhoneNumber))
         {
-            validationErrors.AddIf(true, PhoneNumber.InvalidPhoneNumberMessage);
-        }
-
-        if (validationErrors.HasErrors)
-        {
-            return validationErrors.ToFailure<Guid>();
+            throw new InvalidOperationException("Validated phone number could not be normalized.");
         }
 
         _userProfile = await _userProfileRepository.GetByIdAsync(request.UserId, cancellationToken);

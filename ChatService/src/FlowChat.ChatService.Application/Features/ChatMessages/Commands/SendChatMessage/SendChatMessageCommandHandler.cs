@@ -1,4 +1,3 @@
-using CSharpFunctionalExtensions;
 using FlowChat.Application.Abstractions;
 using FlowChat.ChatService.Application.Contracts.Persistence;
 using FlowChat.ChatService.Domain.Entities;
@@ -25,25 +24,10 @@ public sealed class SendChatMessageCommandHandler
         SendChatMessageCommand request,
         CancellationToken cancellationToken)
     {
-        var validationErrors = new ValidationErrorCollector()
-            .AddIf(request.ConversationId == Guid.Empty, "ConversationId is required.")
-            .AddIf(request.SenderUserId == Guid.Empty, "SenderUserId is required.")
-            .AddIf(string.IsNullOrWhiteSpace(request.SenderDisplayName), "SenderDisplayName is required.")
-            .AddIf(string.IsNullOrWhiteSpace(request.Text), "Text is required.");
-
         var normalizedRecipientUserIds = (request.RecipientUserIds ?? Array.Empty<Guid>())
             .Where(userId => userId != Guid.Empty)
             .Distinct()
             .ToArray();
-
-        validationErrors.AddIf(
-            normalizedRecipientUserIds.Length == 0,
-            "RecipientUserIds must contain at least one valid user id.");
-
-        if (validationErrors.HasErrors)
-        {
-            return validationErrors.ToFailure<Guid>();
-        }
 
         _chatMessage = ChatMessage.Create(
             request.ConversationId,

@@ -11,6 +11,7 @@ public static class ApplicationServiceRegistration
     {
         var applicationAssembly = typeof(ApplicationServiceRegistration).Assembly;
 
+        services.AddFlowChatValidatorsFromAssembly(applicationAssembly);
         services.AddMediatR(cfg =>
         {
             cfg.RegisterServicesFromAssemblies(applicationAssembly);
@@ -26,6 +27,7 @@ public static class ApplicationServiceRegistration
     {
         var consumerAssembly = typeof(CreateInitialUserProfileCommandHandler).Assembly;
 
+        services.AddFlowChatValidatorsFromAssembly(consumerAssembly);
         services.AddMediatR(cfg =>
         {
             cfg.RegisterServicesFromAssemblies(consumerAssembly);

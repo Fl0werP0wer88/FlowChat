@@ -1,4 +1,3 @@
-using CSharpFunctionalExtensions;
 using FlowChat.Application.Abstractions;
 using FlowChat.Domain.Abstractions;
 using FlowChat.UserProfileService.Application.Contracts.Persistence;
@@ -25,15 +24,6 @@ public sealed class SetMainEmailCommandHandler
         SetMainEmailCommand request,
         CancellationToken cancellationToken)
     {
-        var validationErrors = new ValidationErrorCollector()
-            .AddIf(request.UserId == Guid.Empty, "UserId is required.")
-            .AddIf(request.EmailId == Guid.Empty, "EmailId is required.");
-
-        if (validationErrors.HasErrors)
-        {
-            return validationErrors.ToFailure<Guid>();
-        }
-
         _userProfile = await _userProfileRepository.GetByIdAsync(request.UserId, cancellationToken);
         if (_userProfile is null)
         {
