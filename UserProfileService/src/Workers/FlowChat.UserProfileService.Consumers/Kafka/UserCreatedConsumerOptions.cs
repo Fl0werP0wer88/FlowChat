@@ -6,6 +6,7 @@ public sealed class UserCreatedConsumerOptions
 
     public string BootstrapServers { get; set; } = "localhost:9092";
     public string GroupId { get; set; } = "userprofile-service";
+    public string RetryGroupId { get; set; } = "userprofile-service-retry";
     public string Topic { get; set; } = "dev.flowchat.identity.user.v1";
     public string RetryTopic { get; set; } = "dev.flowchat.identity.user.v1.retry";
     public string DeadLetterTopic { get; set; } = "dev.flowchat.identity.user.v1.dlq";

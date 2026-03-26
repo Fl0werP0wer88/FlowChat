@@ -35,30 +35,57 @@ public static class ConsumersServiceRegistration
                     .AddConsumer(consumer => consumer
                         .WithGroupId(consumerOptions.GroupId)
                         .WithAutoOffsetReset(ParseAutoOffsetReset(consumerOptions.AutoOffsetReset))
-                        .Consume(endpoint => endpoint
-                            .ConsumeFrom(consumerOptions.Topic)
-                            .DeserializeJson(deserializer => deserializer.WithOptionalMessageTypeHeader())
-                            .IgnoreUnhandledMessages()
-                            .OnError(policy =>
-                            {
-                                policy.MoveTo(consumerOptions.DeadLetterTopic, move => move
-                                    .ApplyTo<InvalidOperationException>());
-
-                                policy.Retry(retry => retry
-                                        .WithMaxRetries(consumerOptions.MaxRetryCount)
-                                        .Exclude<InvalidOperationException>()
-                                        .WithExponentialDelay(
-                                            TimeSpan.FromSeconds(consumerOptions.RetryBaseDelaySeconds),
-                                            2,
-                                            TimeSpan.FromSeconds(consumerOptions.RetryMaxDelaySeconds)))
-                                    .ThenMoveTo(consumerOptions.DeadLetterTopic, move => move
-                                        .Exclude<InvalidOperationException>());
-                            })));
+                        .Consume(endpoint => ConfigureMainEndpoint(endpoint, consumerOptions)))
+                    .AddConsumer(consumer => consumer
+                        .WithGroupId(consumerOptions.RetryGroupId)
+                        .WithAutoOffsetReset(ParseAutoOffsetReset(consumerOptions.AutoOffsetReset))
+                        .Consume(endpoint => ConfigureRetryEndpoint(endpoint, consumerOptions)));
             })
             .AddScopedSubscriber<UserCreatedSubscriber>();
 
         return services;
     }
+
+    private static KafkaConsumerEndpointConfigurationBuilder<object> ConfigureMainEndpoint(
+        KafkaConsumerEndpointConfigurationBuilder<object> endpoint,
+        UserCreatedConsumerOptions consumerOptions) =>
+        ConfigureEndpointDefaults(endpoint, consumerOptions.Topic)
+            .OnError(policy =>
+            {
+                policy.MoveTo(consumerOptions.DeadLetterTopic, move => move
+                    .ApplyTo<InvalidOperationException>());
+
+                policy.MoveTo(consumerOptions.RetryTopic, move => move
+                    .Exclude<InvalidOperationException>());
+            });
+
+    private static KafkaConsumerEndpointConfigurationBuilder<object> ConfigureRetryEndpoint(
+        KafkaConsumerEndpointConfigurationBuilder<object> endpoint,
+        UserCreatedConsumerOptions consumerOptions) =>
+        ConfigureEndpointDefaults(endpoint, consumerOptions.RetryTopic)
+            .OnError(policy =>
+            {
+                policy.MoveTo(consumerOptions.DeadLetterTopic, move => move
+                    .ApplyTo<InvalidOperationException>());
+
+                policy.Retry(retry => retry
+                        .WithMaxRetries(consumerOptions.MaxRetryCount)
+                        .Exclude<InvalidOperationException>()
+                        .WithExponentialDelay(
+                            TimeSpan.FromSeconds(consumerOptions.RetryBaseDelaySeconds),
+                            2,
+                            TimeSpan.FromSeconds(consumerOptions.RetryMaxDelaySeconds)))
+                    .ThenMoveTo(consumerOptions.DeadLetterTopic, move => move
+                        .Exclude<InvalidOperationException>());
+            });
+
+    private static KafkaConsumerEndpointConfigurationBuilder<object> ConfigureEndpointDefaults(
+        KafkaConsumerEndpointConfigurationBuilder<object> endpoint,
+        string topic) =>
+        endpoint
+            .ConsumeFrom(topic)
+            .DeserializeJson(deserializer => deserializer.WithOptionalMessageTypeHeader())
+            .IgnoreUnhandledMessages();
 
     private static AutoOffsetReset ParseAutoOffsetReset(string value) =>
         Enum.TryParse<AutoOffsetReset>(value, true, out var parsed)
