@@ -12,6 +12,6 @@ public interface ICommand<TResponse> : IRequestBase, IRequest<Result<TResponse, 
 {
 }
 
-public interface ICommand : IRequestBase, IRequest<Result<Unit, IDomainError>>
+public interface ICommand : IRequestBase, IRequest<Result<Unit>>
 {
 }
