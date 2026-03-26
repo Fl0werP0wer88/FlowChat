@@ -21,7 +21,7 @@ public sealed class SetMainEmailCommandHandler
         _userProfileRepository = userProfileRepository;
     }
 
-    protected override async Task<Result<Guid, IDomainError>> ExecuteAsync(
+    protected override async Task<FlowChatResult<Guid>> ExecuteAsync(
         SetMainEmailCommand request,
         CancellationToken cancellationToken)
     {
@@ -37,13 +37,13 @@ public sealed class SetMainEmailCommandHandler
         _userProfile = await _userProfileRepository.GetByIdAsync(request.UserId, cancellationToken);
         if (_userProfile is null)
         {
-            return Result.Failure<Guid, IDomainError>(DomainError.NotFound($"User profile '{request.UserId}' was not found."));
+            return FlowChatResult<Guid>.Failure(DomainError.NotFound($"User profile '{request.UserId}' was not found."));
         }
 
         var email = _userProfile.Emails.FirstOrDefault(x => x.Id.Value == request.EmailId);
         if (email is null)
         {
-            return Result.Failure<Guid, IDomainError>(
+            return FlowChatResult<Guid>.Failure(
                 DomainError.NotFound($"Email '{request.EmailId}' was not found for user profile '{request.UserId}'."));
         }
 
@@ -52,7 +52,7 @@ public sealed class SetMainEmailCommandHandler
         return email.Id.Value;
     }
 
-    protected override IAggregateRoot? GetAggregateRoot(Result<Guid, IDomainError> result)
+    protected override IAggregateRoot? GetAggregateRoot(FlowChatResult<Guid> result)
     {
         return result.IsSuccess ? _userProfile : null;
     }

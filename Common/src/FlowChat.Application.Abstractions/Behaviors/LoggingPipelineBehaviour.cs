@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using FlowChat.Application.Abstractions.Observability;
+using FlowChat.Core.Results;
 using FlowChat.Domain.Abstractions;
 using MediatR;
 using Microsoft.Extensions.Logging;
@@ -9,7 +10,8 @@ namespace FlowChat.Application.Abstractions.Behaviors;
 public sealed class LoggingPipelineBehaviour<TRequest, TResponse>(
     ILogger<LoggingPipelineBehaviour<TRequest, TResponse>> logger)
     : IPipelineBehavior<TRequest, TResponse>
-    where TRequest : notnull
+    where TRequest : notnull, IRequest<TResponse>
+    where TResponse : notnull, IFlowChatResult
 {
     private static readonly TimeSpan SlowRequestThreshold = TimeSpan.FromSeconds(5);
     private static readonly string RequestKind = ResolveRequestKind();
@@ -51,8 +53,9 @@ public sealed class LoggingPipelineBehaviour<TRequest, TResponse>(
                     elapsed.TotalMilliseconds);
             }
 
-            if (TryGetDomainError(response, out var domainError))
+            if (response.IsFailure)
             {
+                var domainError = response.Error;
                 activity?.SetStatus(ActivityStatusCode.Error, domainError.ErrorMessage);
                 activity?.SetTag("error.type", domainError.ErrorType.Name.ToLowerInvariant());
 
@@ -111,38 +114,6 @@ public sealed class LoggingPipelineBehaviour<TRequest, TResponse>(
 
             throw;
         }
-    }
-
-    private static bool TryGetDomainError(TResponse response, out IDomainError domainError)
-    {
-        domainError = null!;
-
-        if (response is null)
-        {
-            return false;
-        }
-
-        var responseType = response.GetType();
-        if (!responseType.IsGenericType
-            || responseType.GetGenericTypeDefinition() != typeof(Result<,>))
-        {
-            return false;
-        }
-
-        var genericArguments = responseType.GetGenericArguments();
-        if (genericArguments[1] != typeof(IDomainError))
-        {
-            return false;
-        }
-
-        var isFailure = responseType.GetProperty(nameof(Result.IsFailure))?.GetValue(response) as bool?;
-        if (isFailure != true)
-        {
-            return false;
-        }
-
-        domainError = responseType.GetProperty("Error")?.GetValue(response) as IDomainError ?? null!;
-        return domainError is not null;
     }
 
     private static string ResolveRequestKind()

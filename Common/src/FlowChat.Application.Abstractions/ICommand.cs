@@ -1,3 +1,4 @@
+using FlowChat.Core.Results;
 using FlowChat.Domain.Abstractions;
 using MediatR;
 
@@ -7,7 +8,7 @@ public interface IRequestBase
 {
 }
 
-public interface ICommand<TResponse> : IRequestBase, IRequest<Result<TResponse, IDomainError>>
+public interface ICommand<TResponse> : IRequestBase, IRequest<FlowChatResult<TResponse>>
     where TResponse : notnull
 {
 }

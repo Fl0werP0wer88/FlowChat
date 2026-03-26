@@ -23,7 +23,7 @@ public class ConfirmUserEmailCommandHandler : CommandHandlerBase<ConfirmUserEmai
         _tokenEncoder = tokenEncoder;
     }
 
-    protected override async Task<Result<Unit, IDomainError>> ExecuteAsync(ConfirmUserEmailCommand request, CancellationToken cancellationToken)
+    protected override async Task<FlowChatResult<Unit>> ExecuteAsync(ConfirmUserEmailCommand request, CancellationToken cancellationToken)
     {
         string decodedToken;
         try
@@ -32,32 +32,32 @@ public class ConfirmUserEmailCommandHandler : CommandHandlerBase<ConfirmUserEmai
         }
         catch (FormatException)
         {
-            return Result.Failure<Unit, IDomainError>(
+            return FlowChatResult<Unit>.Failure(
                 DomainError.BadRequest("Email confirmation token is invalid."));
         }
         catch (ArgumentException)
         {
-            return Result.Failure<Unit, IDomainError>(
+            return FlowChatResult<Unit>.Failure(
                 DomainError.BadRequest("Email confirmation token is invalid."));
         }
 
         _domainUser = await _identityRepository.GetByIdAsync(request.UserId, cancellationToken);
         if (_domainUser is null)
         {
-            return Result.Failure<Unit, IDomainError>(
+            return FlowChatResult<Unit>.Failure(
                 DomainError.NotFound("User was not found."));
         }
 
         if (_domainUser.EmailConfirmed)
         {
-            return Result.Failure<Unit, IDomainError>(
+            return FlowChatResult<Unit>.Failure(
                 DomainError.Conflict("Email has already been confirmed."));
         }
 
         var isTokenValid = await _identityRepository.IsEmailConfirmationTokenValidAsync(request.UserId, decodedToken, cancellationToken);
         if (!isTokenValid)
         {
-            return Result.Failure<Unit, IDomainError>(
+            return FlowChatResult<Unit>.Failure(
                 DomainError.BadRequest("Email confirmation failed."));
         }
 
@@ -67,7 +67,7 @@ public class ConfirmUserEmailCommandHandler : CommandHandlerBase<ConfirmUserEmai
         return Unit.Value;
     }
 
-    protected override IAggregateRoot? GetAggregateRoot(Result<Unit, IDomainError> result)
+    protected override IAggregateRoot? GetAggregateRoot(FlowChatResult<Unit> result)
     {
         return _domainUser;
     }

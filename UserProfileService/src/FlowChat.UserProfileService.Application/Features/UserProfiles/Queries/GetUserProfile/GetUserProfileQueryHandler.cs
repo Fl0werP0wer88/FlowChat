@@ -14,7 +14,7 @@ public sealed class GetUserProfileQueryHandler : IQueryHandler<GetUserProfileQue
         _userProfileRepository = userProfileRepository;
     }
 
-    public async Task<Result<UserProfileDto, IDomainError>> Handle(
+    public async Task<FlowChatResult<UserProfileDto>> Handle(
         GetUserProfileQuery request,
         CancellationToken cancellationToken)
     {
@@ -22,10 +22,10 @@ public sealed class GetUserProfileQueryHandler : IQueryHandler<GetUserProfileQue
 
         if (userProfile is null)
         {
-            return Result.Failure<UserProfileDto, IDomainError>(
+            return FlowChatResult<UserProfileDto>.Failure(
                 DomainError.NotFound($"User profile '{request.UserId}' was not found."));
         }
 
-        return Result.Success<UserProfileDto, IDomainError>(userProfile);
+        return FlowChatResult<UserProfileDto>.Success(userProfile);
     }
 }

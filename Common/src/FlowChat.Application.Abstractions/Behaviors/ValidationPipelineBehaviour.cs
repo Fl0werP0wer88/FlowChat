@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using FluentValidation;
+using FlowChat.Core.Results;
 using MediatR;
 using DomainValidationException = FlowChat.Domain.Abstractions.Exceptions.ValidationException;
 
@@ -9,7 +10,7 @@ public sealed class ValidationPipelineBehaviour<TRequest, TResponse>(
     IEnumerable<IValidator<TRequest>> validators)
     : IPipelineBehavior<TRequest, TResponse>
     where TRequest : notnull, IRequest<TResponse>
-    where TResponse : notnull
+    where TResponse : notnull, IFlowChatResult
 {
     public async Task<TResponse> Handle(
         TRequest request,

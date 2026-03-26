@@ -24,7 +24,7 @@ public sealed class CreateInitialUserProfileCommandHandler
         _userProfileWriteRepository = userProfileWriteRepository;
     }
 
-    protected override async Task<Result<Guid, IDomainError>> ExecuteAsync(
+    protected override async Task<FlowChatResult<Guid>> ExecuteAsync(
         CreateInitialUserProfileCommand request,
         CancellationToken cancellationToken)
     {
@@ -61,7 +61,7 @@ public sealed class CreateInitialUserProfileCommandHandler
 
         if (exists)
         {
-            return Result.Failure<Guid, IDomainError>(DomainError.Conflict($"UserName '{userName}' already exists."));
+            return FlowChatResult<Guid>.Failure(DomainError.Conflict($"UserName '{userName}' already exists."));
         }
 
         var userProfileId = Id<UserProfile>.FromGuid(request.UserId);
@@ -86,7 +86,7 @@ public sealed class CreateInitialUserProfileCommandHandler
         return _userProfile.Id.Value;
     }
 
-    protected override IAggregateRoot? GetAggregateRoot(Result<Guid, IDomainError> result)
+    protected override IAggregateRoot? GetAggregateRoot(FlowChatResult<Guid> result)
     {
         return result.IsSuccess ? _userProfile : null;
     }

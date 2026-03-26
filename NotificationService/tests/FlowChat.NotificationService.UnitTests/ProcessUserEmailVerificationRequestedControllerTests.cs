@@ -132,9 +132,9 @@ public sealed class ProcessUserEmailVerificationRequestedControllerTests
         {
             LastCommand = request as UserEmailVerificationRequestedCommand;
 
-            if (typeof(TResponse) == typeof(Result<Unit, IDomainError>))
+            if (typeof(TResponse) == typeof(FlowChatResult<Unit>))
             {
-                return Task.FromResult((TResponse)(object)Result.Success<Unit, IDomainError>(Unit.Value));
+                return Task.FromResult((TResponse)(object)FlowChatResult<Unit>.Success(Unit.Value));
             }
 
             throw new NotSupportedException();
@@ -143,7 +143,7 @@ public sealed class ProcessUserEmailVerificationRequestedControllerTests
         public Task<object?> Send(object request, CancellationToken cancellationToken = default)
         {
             LastCommand = request as UserEmailVerificationRequestedCommand;
-            return Task.FromResult<object?>(Result.Success<Unit, IDomainError>(Unit.Value));
+            return Task.FromResult<object?>(FlowChatResult<Unit>.Success(Unit.Value));
         }
 
         public Task Send<TRequest>(TRequest request, CancellationToken cancellationToken = default)

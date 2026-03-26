@@ -21,7 +21,7 @@ public sealed class SendChatMessageCommandHandler
         _chatMessageRepository = chatMessageRepository ?? throw new ArgumentNullException(nameof(chatMessageRepository));
     }
 
-    protected override async Task<Result<Guid, IDomainError>> ExecuteAsync(
+    protected override async Task<FlowChatResult<Guid>> ExecuteAsync(
         SendChatMessageCommand request,
         CancellationToken cancellationToken)
     {
@@ -57,6 +57,6 @@ public sealed class SendChatMessageCommandHandler
         return _chatMessage.Id.Value;
     }
 
-    protected override IAggregateRoot? GetAggregateRoot(Result<Guid, IDomainError> result) =>
+    protected override IAggregateRoot? GetAggregateRoot(FlowChatResult<Guid> result) =>
         result.IsSuccess ? _chatMessage : null;
 }

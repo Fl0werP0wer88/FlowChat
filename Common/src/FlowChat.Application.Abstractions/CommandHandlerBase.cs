@@ -1,10 +1,11 @@
+using FlowChat.Core.Results;
 using FlowChat.Domain.Abstractions;
 using MediatR;
 
 namespace FlowChat.Application.Abstractions;
 
 public abstract class CommandHandlerBase<TCommand, TResponse> : ICommandHandler<TCommand, TResponse>
-    where TCommand : ICommand<TResponse>, IRequest<Result<TResponse, IDomainError>>
+    where TCommand : ICommand<TResponse>, IRequest<FlowChatResult<TResponse>>
     where TResponse : notnull
 {
     private readonly IDomainEventDispatcher _domainEventDispatcher;
@@ -18,7 +19,7 @@ public abstract class CommandHandlerBase<TCommand, TResponse> : ICommandHandler<
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<Result<TResponse, IDomainError>> Handle(TCommand request, CancellationToken cancellationToken)
+    public async Task<FlowChatResult<TResponse>> Handle(TCommand request, CancellationToken cancellationToken)
     {
         try
         {
@@ -46,9 +47,9 @@ public abstract class CommandHandlerBase<TCommand, TResponse> : ICommandHandler<
         }
     }
 
-    protected abstract Task<Result<TResponse, IDomainError>> ExecuteAsync(TCommand request, CancellationToken cancellationToken);
+    protected abstract Task<FlowChatResult<TResponse>> ExecuteAsync(TCommand request, CancellationToken cancellationToken);
 
-    protected abstract IAggregateRoot? GetAggregateRoot(Result<TResponse, IDomainError> result);
+    protected abstract IAggregateRoot? GetAggregateRoot(FlowChatResult<TResponse> result);
 
     protected Task DispatchDomainEventsAsync(IEnumerable<IDomainEvent> domainEvents, CancellationToken cancellationToken)
     {
@@ -60,8 +61,8 @@ public abstract class CommandHandlerBase<TCommand, TResponse> : ICommandHandler<
         return _domainEventDispatcher.DispatchAsync(domainEvents, cancellationToken);
     }
 
-    private sealed class CommandFailedException(Result<TResponse, IDomainError> result) : Exception
+    private sealed class CommandFailedException(FlowChatResult<TResponse> result) : Exception
     {
-        public Result<TResponse, IDomainError> Result { get; } = result;
+        public FlowChatResult<TResponse> Result { get; } = result;
     }
 }

@@ -21,7 +21,7 @@ public sealed class AddPhoneCommandHandler
         _userProfileRepository = userProfileRepository;
     }
 
-    protected override async Task<Result<Guid, IDomainError>> ExecuteAsync(
+    protected override async Task<FlowChatResult<Guid>> ExecuteAsync(
         AddPhoneCommand request,
         CancellationToken cancellationToken)
     {
@@ -44,12 +44,12 @@ public sealed class AddPhoneCommandHandler
         _userProfile = await _userProfileRepository.GetByIdAsync(request.UserId, cancellationToken);
         if (_userProfile is null)
         {
-            return Result.Failure<Guid, IDomainError>(DomainError.NotFound($"User profile '{request.UserId}' was not found."));
+            return FlowChatResult<Guid>.Failure(DomainError.NotFound($"User profile '{request.UserId}' was not found."));
         }
 
         if (_userProfile.Phones.Any(x => x.Number == normalizedPhoneNumber))
         {
-            return Result.Failure<Guid, IDomainError>(DomainError.Conflict($"Phone '{normalizedPhoneNumber!.Value}' already exists."));
+            return FlowChatResult<Guid>.Failure(DomainError.Conflict($"Phone '{normalizedPhoneNumber!.Value}' already exists."));
         }
 
         var phone = _userProfile.AddPhone(normalizedPhoneNumber!.Value);
@@ -57,7 +57,7 @@ public sealed class AddPhoneCommandHandler
         return phone.Id.Value;
     }
 
-    protected override IAggregateRoot? GetAggregateRoot(Result<Guid, IDomainError> result)
+    protected override IAggregateRoot? GetAggregateRoot(FlowChatResult<Guid> result)
     {
         return result.IsSuccess ? _userProfile : null;
     }

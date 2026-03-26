@@ -29,7 +29,7 @@ public sealed class UserEmailVerificationRequestedCommandHandler
         _notificationSender = notificationSender;
     }
 
-    protected override async Task<Result<Unit, IDomainError>> ExecuteAsync(
+    protected override async Task<FlowChatResult<Unit>> ExecuteAsync(
         UserEmailVerificationRequestedCommand request,
         CancellationToken cancellationToken)
     {
@@ -74,7 +74,7 @@ public sealed class UserEmailVerificationRequestedCommandHandler
 
         if (!sendResult.IsSuccess)
         {
-            return Result.Failure<Unit, IDomainError>(
+            return FlowChatResult<Unit>.Failure(
                 DomainError.UnExpected(
                     $"Email delivery failed for user '{request.UserId}': {sendResult.Error ?? "unknown error"}"));
         }
@@ -85,7 +85,7 @@ public sealed class UserEmailVerificationRequestedCommandHandler
         return Unit.Value;
     }
 
-    protected override IAggregateRoot? GetAggregateRoot(Result<Unit, IDomainError> result)
+    protected override IAggregateRoot? GetAggregateRoot(FlowChatResult<Unit> result)
     {
         return result.IsSuccess ? _notification : null;
     }

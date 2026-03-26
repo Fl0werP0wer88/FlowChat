@@ -14,7 +14,7 @@ public sealed class GetNotificationsQueryHandler : IQueryHandler<GetNotification
         _notificationRepository = notificationRepository;
     }
 
-    public async Task<Result<IReadOnlyList<NotificationDto>, IDomainError>> Handle(
+    public async Task<FlowChatResult<IReadOnlyList<NotificationDto>>> Handle(
         GetNotificationsQuery request,
         CancellationToken cancellationToken)
     {
@@ -22,6 +22,6 @@ public sealed class GetNotificationsQueryHandler : IQueryHandler<GetNotification
             ? await _notificationRepository.GetByUserIdAsync(request.UserId.Value, cancellationToken)
             : await _notificationRepository.GetRecentAsync(cancellationToken);
 
-        return Result.Success<IReadOnlyList<NotificationDto>, IDomainError>(notifications);
+        return FlowChatResult<IReadOnlyList<NotificationDto>>.Success(notifications);
     }
 }

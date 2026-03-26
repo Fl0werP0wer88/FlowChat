@@ -13,7 +13,7 @@ public sealed class GetContactsForUserQueryHandler : IQueryHandler<GetContactsFo
         _contactReadRepository = contactReadRepository;
     }
 
-    public async Task<Result<IReadOnlyList<ContactDto>, IDomainError>> Handle(
+    public async Task<FlowChatResult<IReadOnlyList<ContactDto>>> Handle(
         GetContactsForUserQuery request,
         CancellationToken cancellationToken)
     {
@@ -21,6 +21,6 @@ public sealed class GetContactsForUserQueryHandler : IQueryHandler<GetContactsFo
             request.UserId,
             cancellationToken);
 
-        return Result.Success<IReadOnlyList<ContactDto>, IDomainError>(contacts);
+        return FlowChatResult<IReadOnlyList<ContactDto>>.Success(contacts);
     }
 }

@@ -24,7 +24,7 @@ public sealed class AuthControllersTests
         var mediator = new TestMediator(request =>
             request switch
             {
-                RegisterUserCommand => Result.Failure<RegisterUserCommandResponse, IDomainError>(
+                RegisterUserCommand => FlowChatResult<RegisterUserCommandResponse>.Failure(
                     DomainError.Conflict("User with the provided username or email already exists.")),
                 _ => throw new InvalidOperationException("Unexpected request.")
             });
@@ -52,7 +52,7 @@ public sealed class AuthControllersTests
         var mediator = new TestMediator(request =>
             request switch
             {
-                ConfirmUserEmailCommand => Result.Failure<Unit, IDomainError>(
+                ConfirmUserEmailCommand => FlowChatResult<Unit>.Failure(
                     DomainError.NotFound("User was not found.")),
                 _ => throw new InvalidOperationException("Unexpected request.")
             });
@@ -78,7 +78,7 @@ public sealed class AuthControllersTests
         var mediator = new TestMediator(request =>
             request switch
             {
-                LoginUserCommand => Result.Failure<LoginUserCommandResponse, IDomainError>(
+                LoginUserCommand => FlowChatResult<LoginUserCommandResponse>.Failure(
                     DomainError.Unauthorized("Invalid credentials or account is not confirmed.")),
                 _ => throw new InvalidOperationException("Unexpected request.")
             });

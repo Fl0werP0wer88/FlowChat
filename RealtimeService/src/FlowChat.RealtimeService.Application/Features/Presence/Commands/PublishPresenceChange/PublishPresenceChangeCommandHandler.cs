@@ -16,29 +16,29 @@ public sealed class PublishPresenceChangeCommandHandler(IRealtimeClientDispatche
     private readonly IRealtimeClientDispatcher _realtimeClientDispatcher = realtimeClientDispatcher
         ?? throw new ArgumentNullException(nameof(realtimeClientDispatcher));
 
-    public async Task<Result<Unit, IDomainError>> Handle(PublishPresenceChangeCommand request, CancellationToken cancellationToken)
+    public async Task<FlowChatResult<Unit>> Handle(PublishPresenceChangeCommand request, CancellationToken cancellationToken)
     {
         if (request.UserId == Guid.Empty)
         {
-            return Result.Failure<Unit, IDomainError>(DomainError.BadRequest("UserId is required."));
+            return FlowChatResult<Unit>.Failure(DomainError.BadRequest("UserId is required."));
         }
 
         if (string.IsNullOrWhiteSpace(request.Status))
         {
-            return Result.Failure<Unit, IDomainError>(DomainError.BadRequest("Status is required."));
+            return FlowChatResult<Unit>.Failure(DomainError.BadRequest("Status is required."));
         }
 
         var normalizedStatus = request.Status.Trim().ToLowerInvariant();
         if (!AllowedStatuses.Contains(normalizedStatus))
         {
-            return Result.Failure<Unit, IDomainError>(
+            return FlowChatResult<Unit>.Failure(
                 DomainError.BadRequest("Status must be one of: online, away, offline."));
         }
 
         var recipientUserIds = NormalizeRecipientUserIds(request.RecipientUserIds);
         if (recipientUserIds.Length == 0)
         {
-            return Result.Failure<Unit, IDomainError>(
+            return FlowChatResult<Unit>.Failure(
                 DomainError.BadRequest("RecipientUserIds must contain at least one valid user id."));
         }
 
@@ -50,7 +50,7 @@ public sealed class PublishPresenceChangeCommandHandler(IRealtimeClientDispatche
 
         await _realtimeClientDispatcher.PresenceChangedAsync(notification, cancellationToken);
 
-        return Result.Success<Unit, IDomainError>(Unit.Value);
+        return FlowChatResult<Unit>.Success(Unit.Value);
     }
 
     private static Guid[] NormalizeRecipientUserIds(IReadOnlyCollection<Guid> recipientUserIds) =>

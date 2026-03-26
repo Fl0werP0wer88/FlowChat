@@ -21,7 +21,7 @@ public sealed class AddEmailCommandHandler
         _userProfileRepository = userProfileRepository;
     }
 
-    protected override async Task<Result<Guid, IDomainError>> ExecuteAsync(
+    protected override async Task<FlowChatResult<Guid>> ExecuteAsync(
         AddEmailCommand request,
         CancellationToken cancellationToken)
     {
@@ -44,12 +44,12 @@ public sealed class AddEmailCommandHandler
         _userProfile = await _userProfileRepository.GetByIdAsync(request.UserId, cancellationToken);
         if (_userProfile is null)
         {
-            return Result.Failure<Guid, IDomainError>(DomainError.NotFound($"User profile '{request.UserId}' was not found."));
+            return FlowChatResult<Guid>.Failure(DomainError.NotFound($"User profile '{request.UserId}' was not found."));
         }
 
         if (_userProfile.Emails.Any(x => x.Address == normalizedEmailAddress))
         {
-            return Result.Failure<Guid, IDomainError>(DomainError.Conflict($"Email '{normalizedEmailAddress!.Value}' already exists."));
+            return FlowChatResult<Guid>.Failure(DomainError.Conflict($"Email '{normalizedEmailAddress!.Value}' already exists."));
         }
 
         var email = _userProfile.AddEmail(normalizedEmailAddress!.Value);
@@ -57,7 +57,7 @@ public sealed class AddEmailCommandHandler
         return email.Id.Value;
     }
 
-    protected override IAggregateRoot? GetAggregateRoot(Result<Guid, IDomainError> result)
+    protected override IAggregateRoot? GetAggregateRoot(FlowChatResult<Guid> result)
     {
         return result.IsSuccess ? _userProfile : null;
     }

@@ -23,7 +23,7 @@ public sealed class UserProfilesControllerTests
         var mediator = new TestMediator(request =>
             request switch
             {
-                AddEmailCommand => Result.Success<Guid, IDomainError>(emailId),
+                AddEmailCommand => FlowChatResult<Guid>.Success(emailId),
                 _ => throw new InvalidOperationException("Unexpected request.")
             });
         var controller = CreateController(new AddEmailController(mediator));
@@ -42,7 +42,7 @@ public sealed class UserProfilesControllerTests
         var mediator = new TestMediator(request =>
             request switch
             {
-                AddPhoneCommand => Result.Success<Guid, IDomainError>(phoneId),
+                AddPhoneCommand => FlowChatResult<Guid>.Success(phoneId),
                 _ => throw new InvalidOperationException("Unexpected request.")
             });
         var controller = CreateController(new AddPhoneController(mediator));
@@ -61,7 +61,7 @@ public sealed class UserProfilesControllerTests
         var mediator = new TestMediator(request =>
             request switch
             {
-                GetUserProfileQuery => Result.Failure<UserProfileDto, IDomainError>(
+                GetUserProfileQuery => FlowChatResult<UserProfileDto>.Failure(
                     DomainError.NotFound($"User profile '{userId}' was not found.")),
                 _ => throw new InvalidOperationException("Unexpected request.")
             });

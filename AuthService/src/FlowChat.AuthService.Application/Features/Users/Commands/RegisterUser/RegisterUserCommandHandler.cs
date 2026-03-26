@@ -36,7 +36,7 @@ public class RegisterUserCommandHandler : CommandHandlerBase<RegisterUserCommand
         _integrationEventPublisher = integrationEventPublisher;
     }
 
-    protected override async Task<Result<RegisterUserCommandResponse, IDomainError>> ExecuteAsync(RegisterUserCommand request, CancellationToken cancellationToken)
+    protected override async Task<FlowChatResult<RegisterUserCommandResponse>> ExecuteAsync(RegisterUserCommand request, CancellationToken cancellationToken)
     {
         _domainUser = Identity.Create(Guid.NewGuid(), request.UserName, request.Email, request.PhoneNumber);
         Guid guid;
@@ -46,7 +46,7 @@ public class RegisterUserCommandHandler : CommandHandlerBase<RegisterUserCommand
         }
         catch (InvalidOperationException exception) when (TryMapUserCreationError(exception, out var domainError))
         {
-            return Result.Failure<RegisterUserCommandResponse, IDomainError>(domainError);
+            return FlowChatResult<RegisterUserCommandResponse>.Failure(domainError);
         }
 
         var confirmationToken = await _identityRepository.GenerateEmailConfirmationTokenAsync(guid, cancellationToken);
@@ -68,7 +68,7 @@ public class RegisterUserCommandHandler : CommandHandlerBase<RegisterUserCommand
         };
     }
 
-    protected override IAggregateRoot? GetAggregateRoot(Result<RegisterUserCommandResponse, IDomainError> result)
+    protected override IAggregateRoot? GetAggregateRoot(FlowChatResult<RegisterUserCommandResponse> result)
     {
         return _domainUser;
     }

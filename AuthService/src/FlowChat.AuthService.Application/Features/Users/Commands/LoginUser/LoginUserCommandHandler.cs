@@ -21,12 +21,12 @@ public class LoginUserCommandHandler : CommandHandlerBase<LoginUserCommand, Logi
         _jwtTokenGenerator = jwtTokenGenerator;
     }
 
-    protected override async Task<Result<LoginUserCommandResponse, IDomainError>> ExecuteAsync(LoginUserCommand request, CancellationToken cancellationToken)
+    protected override async Task<FlowChatResult<LoginUserCommandResponse>> ExecuteAsync(LoginUserCommand request, CancellationToken cancellationToken)
     {
         var user = await _identityRepository.AuthenticateUserAsync(request.Login, request.Password, cancellationToken);
         if (user is null)
         {
-            return Result.Failure<LoginUserCommandResponse, IDomainError>(
+            return FlowChatResult<LoginUserCommandResponse>.Failure(
                 DomainError.Unauthorized("Invalid credentials or account is not confirmed."));
         }
 
@@ -40,7 +40,7 @@ public class LoginUserCommandHandler : CommandHandlerBase<LoginUserCommand, Logi
         };
     }
 
-    protected override IAggregateRoot? GetAggregateRoot(Result<LoginUserCommandResponse, IDomainError> result)
+    protected override IAggregateRoot? GetAggregateRoot(FlowChatResult<LoginUserCommandResponse> result)
     {
         return null;
     }

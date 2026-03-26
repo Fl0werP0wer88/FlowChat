@@ -12,14 +12,14 @@ public sealed class LoggingPipelineBehaviourTests
     [Fact]
     public async Task Handle_LogsStartAndCompletionAndMarksActivityAsOk()
     {
-        var logger = new TestLogger<LoggingPipelineBehaviour<TestCommand, Result<Guid, IDomainError>>>();
-        var behaviour = new LoggingPipelineBehaviour<TestCommand, Result<Guid, IDomainError>>(logger);
+        var logger = new TestLogger<LoggingPipelineBehaviour<TestCommand, FlowChatResult<Guid>>>();
+        var behaviour = new LoggingPipelineBehaviour<TestCommand, FlowChatResult<Guid>>(logger);
         var expectedId = Guid.NewGuid();
         using var collector = new ActivityCollector();
 
         var response = await behaviour.Handle(
             new TestCommand(),
-            _ => Task.FromResult(Result.Success<Guid, IDomainError>(expectedId)),
+            _ => Task.FromResult(FlowChatResult<Guid>.Success(expectedId)),
             CancellationToken.None);
 
         Assert.True(response.IsSuccess);
@@ -50,14 +50,14 @@ public sealed class LoggingPipelineBehaviourTests
     [Fact]
     public async Task Handle_LogsErrorAndMarksActivityAsError_WhenHandlerThrows()
     {
-        var logger = new TestLogger<LoggingPipelineBehaviour<TestCommand, Result<Guid, IDomainError>>>();
-        var behaviour = new LoggingPipelineBehaviour<TestCommand, Result<Guid, IDomainError>>(logger);
+        var logger = new TestLogger<LoggingPipelineBehaviour<TestCommand, FlowChatResult<Guid>>>();
+        var behaviour = new LoggingPipelineBehaviour<TestCommand, FlowChatResult<Guid>>(logger);
         var exception = new InvalidOperationException("boom");
         using var collector = new ActivityCollector();
 
         var thrown = await Assert.ThrowsAsync<InvalidOperationException>(() => behaviour.Handle(
             new TestCommand(),
-            _ => Task.FromException<Result<Guid, IDomainError>>(exception),
+            _ => Task.FromException<FlowChatResult<Guid>>(exception),
             CancellationToken.None));
 
         Assert.Same(exception, thrown);
@@ -87,13 +87,13 @@ public sealed class LoggingPipelineBehaviourTests
     [Fact]
     public async Task Handle_LogsFailureAndMarksActivityAsError_WhenHandlerReturnsFailureResult()
     {
-        var logger = new TestLogger<LoggingPipelineBehaviour<TestCommand, Result<Guid, IDomainError>>>();
-        var behaviour = new LoggingPipelineBehaviour<TestCommand, Result<Guid, IDomainError>>(logger);
+        var logger = new TestLogger<LoggingPipelineBehaviour<TestCommand, FlowChatResult<Guid>>>();
+        var behaviour = new LoggingPipelineBehaviour<TestCommand, FlowChatResult<Guid>>(logger);
         using var collector = new ActivityCollector();
 
         var response = await behaviour.Handle(
             new TestCommand(),
-            _ => Task.FromResult(Result.Failure<Guid, IDomainError>(DomainError.Validation("validation failed", ["Email is required."]))),
+            _ => Task.FromResult(FlowChatResult<Guid>.Failure(DomainError.Validation("validation failed", ["Email is required."]))),
             CancellationToken.None);
 
         Assert.True(response.IsFailure);

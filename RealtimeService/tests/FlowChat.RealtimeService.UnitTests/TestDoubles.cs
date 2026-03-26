@@ -66,9 +66,9 @@ internal sealed class CapturingMediator : IMediator
     public Task<TResponse> Send<TResponse>(IRequest<TResponse> request, CancellationToken cancellationToken = default)
     {
         LastSentRequest = request;
-        if (typeof(TResponse) == typeof(Result<Unit, IDomainError>))
+        if (typeof(TResponse) == typeof(FlowChatResult<Unit>))
         {
-            var success = Result.Success<Unit, IDomainError>(Unit.Value);
+            var success = FlowChatResult<Unit>.Success(Unit.Value);
             return Task.FromResult((TResponse)(object)success);
         }
 

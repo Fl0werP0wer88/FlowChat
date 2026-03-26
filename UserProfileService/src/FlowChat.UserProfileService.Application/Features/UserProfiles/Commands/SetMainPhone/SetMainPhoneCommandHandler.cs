@@ -21,7 +21,7 @@ public sealed class SetMainPhoneCommandHandler
         _userProfileRepository = userProfileRepository;
     }
 
-    protected override async Task<Result<Guid, IDomainError>> ExecuteAsync(
+    protected override async Task<FlowChatResult<Guid>> ExecuteAsync(
         SetMainPhoneCommand request,
         CancellationToken cancellationToken)
     {
@@ -37,13 +37,13 @@ public sealed class SetMainPhoneCommandHandler
         _userProfile = await _userProfileRepository.GetByIdAsync(request.UserId, cancellationToken);
         if (_userProfile is null)
         {
-            return Result.Failure<Guid, IDomainError>(DomainError.NotFound($"User profile '{request.UserId}' was not found."));
+            return FlowChatResult<Guid>.Failure(DomainError.NotFound($"User profile '{request.UserId}' was not found."));
         }
 
         var phone = _userProfile.Phones.FirstOrDefault(x => x.Id.Value == request.PhoneId);
         if (phone is null)
         {
-            return Result.Failure<Guid, IDomainError>(
+            return FlowChatResult<Guid>.Failure(
                 DomainError.NotFound($"Phone '{request.PhoneId}' was not found for user profile '{request.UserId}'."));
         }
 
@@ -52,7 +52,7 @@ public sealed class SetMainPhoneCommandHandler
         return phone.Id.Value;
     }
 
-    protected override IAggregateRoot? GetAggregateRoot(Result<Guid, IDomainError> result)
+    protected override IAggregateRoot? GetAggregateRoot(FlowChatResult<Guid> result)
     {
         return result.IsSuccess ? _userProfile : null;
     }

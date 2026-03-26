@@ -96,7 +96,7 @@ public sealed class CreateInitialUserProfileControllerTests
         public Task<TResponse> Send<TResponse>(IRequest<TResponse> request, CancellationToken cancellationToken = default)
         {
             LastSentRequest = request;
-            return Task.FromResult((TResponse)(object)Result.Success<Guid, IDomainError>(Guid.NewGuid()));
+            return Task.FromResult((TResponse)(object)FlowChatResult<Guid>.Success(Guid.NewGuid()));
         }
 
         public Task Send<TRequest>(TRequest request, CancellationToken cancellationToken = default)
@@ -109,7 +109,7 @@ public sealed class CreateInitialUserProfileControllerTests
         public Task<object?> Send(object request, CancellationToken cancellationToken = default)
         {
             LastSentRequest = request;
-            return Task.FromResult<object?>(Result.Success<Guid, IDomainError>(Guid.NewGuid()));
+            return Task.FromResult<object?>(FlowChatResult<Guid>.Success(Guid.NewGuid()));
         }
 
         public IAsyncEnumerable<TResponse> CreateStream<TResponse>(

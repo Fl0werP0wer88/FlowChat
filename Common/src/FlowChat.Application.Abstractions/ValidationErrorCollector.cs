@@ -1,3 +1,4 @@
+using FlowChat.Core.Results;
 using FlowChat.Domain.Abstractions;
 
 namespace FlowChat.Application.Abstractions;
@@ -18,9 +19,9 @@ public sealed class ValidationErrorCollector
         return this;
     }
 
-    public Result<TResponse, IDomainError> ToFailure<TResponse>(string message = "Validation Failed.")
+    public FlowChatResult<TResponse> ToFailure<TResponse>(string message = "Validation Failed.")
     {
-        return Result.Failure<TResponse, IDomainError>(
+        return FlowChatResult<TResponse>.Failure(
             DomainError.Validation(message, [.. _errors]));
     }
 }

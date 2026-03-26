@@ -1,10 +1,11 @@
+using FlowChat.Core.Results;
 using FlowChat.Domain.Abstractions;
 using MediatR;
 
 namespace FlowChat.Application.Abstractions;
 
-public interface ICommandHandler<TRequest, TResponse> : IRequestHandler<TRequest, Result<TResponse, IDomainError>>
-    where TRequest : ICommand<TResponse>, IRequest<Result<TResponse, IDomainError>>
+public interface ICommandHandler<TRequest, TResponse> : IRequestHandler<TRequest, FlowChatResult<TResponse>>
+    where TRequest : ICommand<TResponse>, IRequest<FlowChatResult<TResponse>>
     where TResponse : notnull
 {
 }
