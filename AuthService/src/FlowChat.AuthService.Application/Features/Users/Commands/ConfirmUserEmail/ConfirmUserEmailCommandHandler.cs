@@ -64,7 +64,7 @@ public class ConfirmUserEmailCommandHandler : CommandHandlerBase<ConfirmUserEmai
         _domainUser.ConfirmEmail();
         await _identityRepository.UpdateAsync(_domainUser, cancellationToken);
 
-        return Unit.Value;
+        return FlowChatResult<Unit>.Success(Unit.Value);
     }
 
     protected override IAggregateRoot? GetAggregateRoot(FlowChatResult<Unit> result)

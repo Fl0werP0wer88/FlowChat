@@ -49,7 +49,7 @@ public sealed class SetMainEmailCommandHandler
 
         _userProfile.SetMainEmail(email.Id);
 
-        return email.Id.Value;
+        return FlowChatResult<Guid>.Success(email.Id.Value);
     }
 
     protected override IAggregateRoot? GetAggregateRoot(FlowChatResult<Guid> result)

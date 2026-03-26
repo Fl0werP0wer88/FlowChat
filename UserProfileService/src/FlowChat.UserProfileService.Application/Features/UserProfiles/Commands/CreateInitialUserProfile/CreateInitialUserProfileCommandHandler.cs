@@ -83,7 +83,7 @@ public sealed class CreateInitialUserProfileCommandHandler
 
         await _userProfileWriteRepository.AddAsync(_userProfile, cancellationToken);
 
-        return _userProfile.Id.Value;
+        return FlowChatResult<Guid>.Success(_userProfile.Id.Value);
     }
 
     protected override IAggregateRoot? GetAggregateRoot(FlowChatResult<Guid> result)

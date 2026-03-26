@@ -55,7 +55,7 @@ public sealed class UserEmailVerificationRequestedCommandHandler
 
         if (alreadyExists)
         {
-            return Unit.Value;
+            return FlowChatResult<Unit>.Success(Unit.Value);
         }
 
         _notification = Notification.CreateWelcome(
@@ -82,7 +82,7 @@ public sealed class UserEmailVerificationRequestedCommandHandler
         _notification.MarkSent(sendResult.ProviderMessageId);
         await _notificationWriteRepository.AddAsync(_notification, cancellationToken);
 
-        return Unit.Value;
+        return FlowChatResult<Unit>.Success(Unit.Value);
     }
 
     protected override IAggregateRoot? GetAggregateRoot(FlowChatResult<Unit> result)

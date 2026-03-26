@@ -37,15 +37,5 @@ public readonly struct FlowChatResult<TValue> :
         return new FlowChatResult<TValue>(result);
     }
 
-    public static implicit operator FlowChatResult<TValue>(TValue value)
-    {
-        return Success(value);
-    }
-
-    public static implicit operator FlowChatResult<TValue>(Result<TValue, IDomainError> result)
-    {
-        return From(result);
-    }
-
     public override string ToString() => _innerResult.ToString();
 }

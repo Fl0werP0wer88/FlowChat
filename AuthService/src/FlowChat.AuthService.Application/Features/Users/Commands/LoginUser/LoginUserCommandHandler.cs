@@ -32,12 +32,13 @@ public class LoginUserCommandHandler : CommandHandlerBase<LoginUserCommand, Logi
 
         var token = _jwtTokenGenerator.GenerateToken(user);
 
-        return new LoginUserCommandResponse
-        {
-            IsSuccess = true,
-            AccessToken = token.AccessToken,
-            ExpiresAtUtc = token.ExpiresAtUtc
-        };
+        return FlowChatResult<LoginUserCommandResponse>.Success(
+            new LoginUserCommandResponse
+            {
+                IsSuccess = true,
+                AccessToken = token.AccessToken,
+                ExpiresAtUtc = token.ExpiresAtUtc
+            });
     }
 
     protected override IAggregateRoot? GetAggregateRoot(FlowChatResult<LoginUserCommandResponse> result)

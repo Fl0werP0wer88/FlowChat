@@ -54,7 +54,7 @@ public sealed class AddEmailCommandHandler
 
         var email = _userProfile.AddEmail(normalizedEmailAddress!.Value);
 
-        return email.Id.Value;
+        return FlowChatResult<Guid>.Success(email.Id.Value);
     }
 
     protected override IAggregateRoot? GetAggregateRoot(FlowChatResult<Guid> result)

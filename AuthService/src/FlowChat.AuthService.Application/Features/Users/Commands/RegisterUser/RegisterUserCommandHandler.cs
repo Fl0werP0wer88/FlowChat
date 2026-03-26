@@ -62,10 +62,11 @@ public class RegisterUserCommandHandler : CommandHandlerBase<RegisterUserCommand
             },
             cancellationToken);
 
-        return new RegisterUserCommandResponse
-        {
-            Id = guid
-        };
+        return FlowChatResult<RegisterUserCommandResponse>.Success(
+            new RegisterUserCommandResponse
+            {
+                Id = guid
+            });
     }
 
     protected override IAggregateRoot? GetAggregateRoot(FlowChatResult<RegisterUserCommandResponse> result)

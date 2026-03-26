@@ -54,7 +54,7 @@ public sealed class SendChatMessageCommandHandler
 
         await _chatMessageRepository.AddAsync(_chatMessage, cancellationToken);
 
-        return _chatMessage.Id.Value;
+        return FlowChatResult<Guid>.Success(_chatMessage.Id.Value);
     }
 
     protected override IAggregateRoot? GetAggregateRoot(FlowChatResult<Guid> result) =>

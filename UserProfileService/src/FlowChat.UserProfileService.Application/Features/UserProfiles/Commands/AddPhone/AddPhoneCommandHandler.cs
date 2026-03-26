@@ -54,7 +54,7 @@ public sealed class AddPhoneCommandHandler
 
         var phone = _userProfile.AddPhone(normalizedPhoneNumber!.Value);
 
-        return phone.Id.Value;
+        return FlowChatResult<Guid>.Success(phone.Id.Value);
     }
 
     protected override IAggregateRoot? GetAggregateRoot(FlowChatResult<Guid> result)

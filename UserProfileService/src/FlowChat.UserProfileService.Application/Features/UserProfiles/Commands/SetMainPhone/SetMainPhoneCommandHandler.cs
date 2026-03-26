@@ -49,7 +49,7 @@ public sealed class SetMainPhoneCommandHandler
 
         _userProfile.SetMainPhone(phone.Id);
 
-        return phone.Id.Value;
+        return FlowChatResult<Guid>.Success(phone.Id.Value);
     }
 
     protected override IAggregateRoot? GetAggregateRoot(FlowChatResult<Guid> result)

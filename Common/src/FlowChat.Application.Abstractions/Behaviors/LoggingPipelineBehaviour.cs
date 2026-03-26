@@ -1,6 +1,5 @@
 using System.Diagnostics;
 using FlowChat.Application.Abstractions.Observability;
-using FlowChat.Core.Results;
 using FlowChat.Domain.Abstractions;
 using MediatR;
 using Microsoft.Extensions.Logging;
