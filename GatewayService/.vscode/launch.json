@@ -12,7 +12,7 @@
         "ASPNETCORE_ENVIRONMENT": "Development"
       },
       "stopAtEntry": false,
-      "console": "internalConsole",
+      "console": "integratedTerminal",
       "serverReadyAction": {
         "action": "openExternally",
         "pattern": "\\bNow listening on:\\s+(https?://\\S+)"
@@ -28,7 +28,7 @@
         "ASPNETCORE_ENVIRONMENT": "Development"
       },
       "stopAtEntry": false,
-      "console": "internalConsole",
+      "console": "integratedTerminal",
       "serverReadyAction": {
         "action": "openExternally",
         "pattern": "\\bNow listening on:\\s+(https?://\\S+)"

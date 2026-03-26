@@ -10,7 +10,7 @@
       "args": [],
       "cwd": "${workspaceFolder}/src/FlowChat.SocialGraphService.API",
       "stopAtEntry": false,
-      "console": "internalConsole",
+      "console": "integratedTerminal",
       "serverReadyAction": {
         "action": "openExternally",
         "pattern": "\\bNow listening on:\\s+(https?://\\S+)",
@@ -28,7 +28,7 @@
       "args": [],
       "cwd": "${workspaceFolder}/src/FlowChat.SocialGraphService.API",
       "stopAtEntry": false,
-      "console": "internalConsole",
+      "console": "integratedTerminal",
       "serverReadyAction": {
         "action": "openExternally",
         "pattern": "\\bNow listening on:\\s+(https?://\\S+)",
