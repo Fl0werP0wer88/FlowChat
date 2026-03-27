@@ -1,4 +1,4 @@
-using FlowChat.Messaging.Contracts.AuthService.Events;
+using FlowChat.Core.Messaging.AuthService.Events;
 
 namespace FlowChat.AuthService.Infrastructure.Kafka;
 

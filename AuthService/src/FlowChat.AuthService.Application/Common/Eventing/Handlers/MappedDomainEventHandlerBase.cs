@@ -1,7 +1,7 @@
 using AutoMapper;
 using FlowChat.Application.Abstractions;
 using FlowChat.Domain.Abstractions;
-using FlowChat.Messaging.Contracts;
+using FlowChat.Core.Messaging;
 
 namespace FlowChat.AuthService.Application.Common.Eventing.Handlers;
 

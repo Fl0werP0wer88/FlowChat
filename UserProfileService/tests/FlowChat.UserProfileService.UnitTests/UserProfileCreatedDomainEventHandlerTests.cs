@@ -1,8 +1,8 @@
 using AutoMapper;
 using FlowChat.Application.Abstractions;
 using FlowChat.Domain.Abstractions;
-using FlowChat.Messaging.Contracts;
-using FlowChat.Messaging.Contracts.UserProfileService.Events;
+using FlowChat.Core.Messaging;
+using FlowChat.Core.Messaging.UserProfileService.Events;
 using FlowChat.UserProfileService.Application.Common.Eventing;
 using FlowChat.UserProfileService.Application.Common.Eventing.Handlers;
 using FlowChat.UserProfileService.Domain.Entities;

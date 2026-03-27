@@ -1,4 +1,4 @@
-namespace FlowChat.Messaging.Contracts;
+namespace FlowChat.Core.Messaging;
 
 public abstract class IntegrationEvent
 {

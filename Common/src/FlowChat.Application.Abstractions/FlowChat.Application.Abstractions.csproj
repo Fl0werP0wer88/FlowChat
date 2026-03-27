@@ -9,7 +9,6 @@
   <ItemGroup>
     <ProjectReference Include="..\FlowChat.Core\FlowChat.Core.csproj" />
     <ProjectReference Include="..\FlowChat.Domain.Abstractions\FlowChat.Domain.Abstractions.csproj" />
-    <ProjectReference Include="..\FlowChat.Messaging.Contracts\FlowChat.Messaging.Contracts.csproj" />
   </ItemGroup>
 
   <ItemGroup>

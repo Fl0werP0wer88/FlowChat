@@ -20,7 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\Common\src\FlowChat.Messaging.Contracts\FlowChat.Messaging.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\Common\src\FlowChat.Core\FlowChat.Core.csproj" />
     <ProjectReference Include="..\..\src\FlowChat.RealtimeService.API\FlowChat.RealtimeService.API.csproj" />
     <ProjectReference Include="..\..\src\FlowChat.RealtimeService.Application\FlowChat.RealtimeService.Application.csproj" />
     <ProjectReference Include="..\..\src\FlowChat.RealtimeService.Domain\FlowChat.RealtimeService.Domain.csproj" />

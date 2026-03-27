@@ -1,5 +1,5 @@
 using FlowChat.Core.Exceptions;
-using FlowChat.Messaging.Contracts.AuthService.Events;
+using FlowChat.Core.Messaging.AuthService.Events;
 using FlowChat.NotificationService.Consumers.NotificationApi.Contracts;
 using FlowChat.NotificationService.Consumers.Services;
 using Microsoft.Extensions.Logging;

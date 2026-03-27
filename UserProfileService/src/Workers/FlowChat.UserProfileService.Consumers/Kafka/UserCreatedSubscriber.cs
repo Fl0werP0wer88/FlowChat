@@ -1,5 +1,5 @@
 using FlowChat.Core.Exceptions;
-using FlowChat.Messaging.Contracts.AuthService.Events;
+using FlowChat.Core.Messaging.AuthService.Events;
 using FlowChat.UserProfileService.Consumers.Services;
 using FlowChat.UserProfileService.Consumers.UserProfileApi.Contracts;
 using Silverback.Messaging.Subscribers;

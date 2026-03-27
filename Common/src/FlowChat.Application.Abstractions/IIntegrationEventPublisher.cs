@@ -1,4 +1,4 @@
-using FlowChat.Messaging.Contracts;
+using FlowChat.Core.Messaging;
 
 namespace FlowChat.Application.Abstractions;
 

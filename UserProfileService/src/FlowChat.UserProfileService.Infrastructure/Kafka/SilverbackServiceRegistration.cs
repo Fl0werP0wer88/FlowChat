@@ -1,4 +1,4 @@
-using FlowChat.Messaging.Contracts.UserProfileService.Events;
+using FlowChat.Core.Messaging.UserProfileService.Events;
 using FlowChat.UserProfileService.Persistence;
 using FlowChat.Shared.Infrastructure.Silverback.Behaviors;
 using Microsoft.Extensions.Configuration;

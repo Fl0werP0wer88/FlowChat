@@ -1,5 +1,5 @@
 using FlowChat.ChatService.Persistence;
-using FlowChat.Messaging.Contracts.ChatService.Events;
+using FlowChat.Core.Messaging.ChatService.Events;
 using FlowChat.Shared.Infrastructure.Silverback.Behaviors;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;

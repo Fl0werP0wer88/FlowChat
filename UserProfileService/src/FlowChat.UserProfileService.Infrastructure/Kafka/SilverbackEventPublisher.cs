@@ -1,5 +1,5 @@
 using FlowChat.Application.Abstractions;
-using FlowChat.Messaging.Contracts;
+using FlowChat.Core.Messaging;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Silverback.Messaging.Messages;

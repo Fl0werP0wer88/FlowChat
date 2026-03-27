@@ -1,5 +1,5 @@
 using FlowChat.Core.Exceptions;
-using FlowChat.Messaging.Contracts.ChatService.Events;
+using FlowChat.Core.Messaging.ChatService.Events;
 using FlowChat.RealtimeService.Consumers.Kafka;
 using Microsoft.Extensions.Logging.Abstractions;
 

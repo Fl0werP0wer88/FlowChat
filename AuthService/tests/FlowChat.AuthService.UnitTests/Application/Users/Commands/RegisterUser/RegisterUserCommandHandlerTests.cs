@@ -6,8 +6,8 @@ using FlowChat.AuthService.Application.Features.Users.Models;
 using FlowChat.AuthService.Domain.Entities;
 using FlowChat.AuthService.Domain.Events;
 using FlowChat.Domain.Abstractions;
-using FlowChat.Messaging.Contracts;
-using FlowChat.Messaging.Contracts.AuthService.Events;
+using FlowChat.Core.Messaging;
+using FlowChat.Core.Messaging.AuthService.Events;
 
 namespace FlowChat.AuthService.UnitTests;
 

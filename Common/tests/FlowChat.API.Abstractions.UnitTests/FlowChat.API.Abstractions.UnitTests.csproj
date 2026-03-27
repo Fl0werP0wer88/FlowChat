@@ -20,7 +20,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\FlowChat.API.Abstractions\FlowChat.API.Abstractions.csproj" />
-    <ProjectReference Include="..\..\src\FlowChat.Messaging.Contracts\FlowChat.Messaging.Contracts.csproj" />
+    <ProjectReference Include="..\..\src\FlowChat.Core\FlowChat.Core.csproj" />
   </ItemGroup>
 
   <ItemGroup>

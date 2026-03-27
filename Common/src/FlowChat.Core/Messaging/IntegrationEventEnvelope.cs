@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace FlowChat.Messaging.Contracts;
+namespace FlowChat.Core.Messaging;
 
 public class IntegrationEventEnvelope<TEvent> where TEvent : IntegrationEvent
 {
@@ -37,10 +37,10 @@ public class IntegrationEventEnvelope<TEvent> where TEvent : IntegrationEvent
             return "unknown";
         }
 
-        var contractsIndex = Array.IndexOf(namespaceParts, "Contracts");
-        if (contractsIndex >= 0 && contractsIndex + 1 < namespaceParts.Length)
+        var messagingIndex = Array.IndexOf(namespaceParts, "Messaging");
+        if (messagingIndex >= 0 && messagingIndex + 1 < namespaceParts.Length)
         {
-            return ToKebabCase(namespaceParts[contractsIndex + 1]);
+            return ToKebabCase(namespaceParts[messagingIndex + 1]);
         }
 
         return ToKebabCase(namespaceParts[^1]);

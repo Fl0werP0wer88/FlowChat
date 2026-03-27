@@ -3,7 +3,7 @@ using FlowChat.AuthService.Application.Common.Eventing;
 using FlowChat.AuthService.Domain.Entities;
 using FlowChat.AuthService.Domain.Events;
 using FlowChat.Domain.Abstractions;
-using FlowChat.Messaging.Contracts.AuthService.Events;
+using FlowChat.Core.Messaging.AuthService.Events;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace FlowChat.AuthService.UnitTests;

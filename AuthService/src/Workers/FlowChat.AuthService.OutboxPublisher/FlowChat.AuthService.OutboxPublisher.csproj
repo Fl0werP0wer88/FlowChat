@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Worker">
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\Common\src\FlowChat.API.Abstractions\FlowChat.API.Abstractions.csproj" />
-    <ProjectReference Include="..\..\..\..\Common\src\FlowChat.Messaging.Contracts\FlowChat.Messaging.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\..\Common\src\FlowChat.Core\FlowChat.Core.csproj" />
     <ProjectReference Include="..\..\FlowChat.AuthService.Persistence\FlowChat.AuthService.Persistence.csproj" />
     <ProjectReference Include="..\..\..\..\Common\src\FlowChat.Shared.Infrastructure\FlowChat.Shared.Infrastructure.csproj" />
   </ItemGroup>

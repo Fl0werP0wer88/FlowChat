@@ -26,7 +26,7 @@
     <ProjectReference Include="..\..\src\Workers\FlowChat.NotificationService.Consumers\FlowChat.NotificationService.Consumers.csproj" />
     <ProjectReference Include="..\..\src\FlowChat.NotificationService.Infrastructure\FlowChat.NotificationService.Infrastructure.csproj" />
     <ProjectReference Include="..\..\src\FlowChat.NotificationService.Persistence\FlowChat.NotificationService.Persistence.csproj" />
-    <ProjectReference Include="..\..\..\Common\src\FlowChat.Messaging.Contracts\FlowChat.Messaging.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\Common\src\FlowChat.Core\FlowChat.Core.csproj" />
   </ItemGroup>
 
   <ItemGroup>

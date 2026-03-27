@@ -6,7 +6,6 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\FlowChat.Core\FlowChat.Core.csproj" />
-    <ProjectReference Include="..\FlowChat.Messaging.Contracts\FlowChat.Messaging.Contracts.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Silverback.Integration.Kafka" Version="5.0.0" />

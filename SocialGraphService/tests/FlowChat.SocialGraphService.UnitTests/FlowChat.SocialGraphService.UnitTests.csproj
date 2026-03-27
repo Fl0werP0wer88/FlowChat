@@ -26,7 +26,7 @@
     <ProjectReference Include="..\..\src\FlowChat.SocialGraphService.Infrastructure\FlowChat.SocialGraphService.Infrastructure.csproj" />
     <ProjectReference Include="..\..\src\FlowChat.SocialGraphService.Persistence\FlowChat.SocialGraphService.Persistence.csproj" />
     <ProjectReference Include="..\..\..\Common\src\FlowChat.Domain.Abstractions\FlowChat.Domain.Abstractions.csproj" />
-    <ProjectReference Include="..\..\..\Common\src\FlowChat.Messaging.Contracts\FlowChat.Messaging.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\Common\src\FlowChat.Core\FlowChat.Core.csproj" />
   </ItemGroup>
 
   <ItemGroup>

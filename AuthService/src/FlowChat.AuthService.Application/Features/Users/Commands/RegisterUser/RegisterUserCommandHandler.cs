@@ -4,7 +4,7 @@ using FlowChat.AuthService.Application.Contracts.Persistence;
 using FlowChat.AuthService.Domain.Entities;
 using CSharpFunctionalExtensions;
 using FlowChat.Domain.Abstractions;
-using FlowChat.Messaging.Contracts.AuthService.Events;
+using FlowChat.Core.Messaging.AuthService.Events;
 
 namespace FlowChat.AuthService.Application.Features.Users.Commands.RegisterUser;
 

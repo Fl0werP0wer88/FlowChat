@@ -1,5 +1,5 @@
 using System.Diagnostics;
-using FlowChat.Messaging.Contracts;
+using FlowChat.Core.Messaging;
 using Silverback.Messaging.Broker.Behaviors;
 using Silverback.Messaging.Messages;
 

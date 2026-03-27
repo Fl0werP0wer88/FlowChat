@@ -1,4 +1,4 @@
-namespace FlowChat.Messaging.Contracts.AuthService.Events;
+namespace FlowChat.Core.Messaging.AuthService.Events;
 
 public sealed class EmailConfirmedIntegrationEvent : IntegrationEvent
 {

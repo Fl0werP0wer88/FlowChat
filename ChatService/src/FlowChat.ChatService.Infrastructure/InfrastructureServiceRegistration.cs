@@ -1,7 +1,7 @@
 using FlowChat.Application.Abstractions;
 using FlowChat.ChatService.Infrastructure.Configuration;
 using FlowChat.ChatService.Infrastructure.Kafka;
-using FlowChat.Messaging.Contracts.ChatService.Events;
+using FlowChat.Core.Messaging.ChatService.Events;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;

@@ -1,5 +1,5 @@
-using FlowChat.Messaging.Contracts;
-using FlowChat.Messaging.Contracts.UserProfileService.Events;
+using FlowChat.Core.Messaging;
+using FlowChat.Core.Messaging.UserProfileService.Events;
 
 namespace FlowChat.API.Abstractions.UnitTests;
 

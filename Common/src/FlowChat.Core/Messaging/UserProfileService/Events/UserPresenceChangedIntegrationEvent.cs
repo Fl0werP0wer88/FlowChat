@@ -1,4 +1,4 @@
-namespace FlowChat.Messaging.Contracts.UserProfileService.Events;
+namespace FlowChat.Core.Messaging.UserProfileService.Events;
 
 public sealed class UserPresenceChangedIntegrationEvent : IntegrationEvent
 {
