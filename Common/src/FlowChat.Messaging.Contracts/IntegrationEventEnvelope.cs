@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using System.Text;
 
 namespace FlowChat.Messaging.Contracts;
@@ -21,8 +20,6 @@ public class IntegrationEventEnvelope<TEvent> where TEvent : IntegrationEvent
         var messageId = Guid.NewGuid();
         var occurredOnUtc = DateTimeOffset.UtcNow;
         var messageType = typeof(TEvent);
-        var activity = Activity.Current;
-
         KafkaKey = kafkaKey;
         Payload = payload;
         Headers.Add(IntegrationMessageHeaders.EventId, messageId.ToString("D"));
@@ -30,10 +27,6 @@ public class IntegrationEventEnvelope<TEvent> where TEvent : IntegrationEvent
         Headers.Add(IntegrationMessageHeaders.EventVersion, "1");
         Headers.Add(IntegrationMessageHeaders.EventType, messageType.Name);
         Headers.Add(IntegrationMessageHeaders.Source, ResolveSource(messageType));
-        Headers.Add(IntegrationMessageHeaders.CorrelationId, activity?.RootId ?? messageId.ToString("D"));
-        Headers.Add(IntegrationMessageHeaders.CausationId, activity?.ParentId ?? string.Empty);
-        Headers.Add(IntegrationMessageHeaders.TraceId, activity?.TraceId.ToString() ?? string.Empty);
-        Headers.Add(IntegrationMessageHeaders.TraceParent, activity?.Id ?? string.Empty);
     }
 
     private static string ResolveSource(Type eventType)
