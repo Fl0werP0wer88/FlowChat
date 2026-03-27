@@ -1,4 +1,4 @@
-using FlowChat.Domain.Abstractions;
+﻿using FlowChat.Shared.Domain;
 using FlowChat.NotificationService.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -50,3 +50,4 @@ public sealed class NotificationConfiguration : IEntityTypeConfiguration<Notific
         builder.HasIndex(x => new { x.UserId, x.Type }).IsUnique();
     }
 }
+

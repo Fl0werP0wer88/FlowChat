@@ -1,4 +1,4 @@
-using FlowChat.API.Abstractions;
+﻿using FlowChat.Shared.API;
 using FlowChat.UserProfileService.Application.Features.UserProfiles.Commands.AddPhone;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -34,3 +34,4 @@ public sealed class AddPhoneController : ApiControllerBase
             : HandleError(result.Error);
     }
 }
+

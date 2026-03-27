@@ -1,4 +1,4 @@
-using FlowChat.Application.Abstractions;
+﻿using FlowChat.Shared.Application;
 
 namespace FlowChat.ChatService.Application.Features.ChatMessages.Commands.SendChatMessage;
 
@@ -8,3 +8,4 @@ public sealed record SendChatMessageCommand(
     string? SenderDisplayName,
     string? Text,
     IReadOnlyCollection<Guid> RecipientUserIds) : ICommand<Guid>;
+

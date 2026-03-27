@@ -1,5 +1,5 @@
-using CSharpFunctionalExtensions;
-using FlowChat.Domain.Abstractions;
+﻿using CSharpFunctionalExtensions;
+using FlowChat.Shared.Domain;
 using FlowChat.UserProfileService.Api.Features.UserProfiles.Internal.CreateInitialUserProfile;
 using FlowChat.UserProfileService.Application.Features.UserProfiles.Commands.CreateInitialUserProfile;
 using FlowChat.UserProfileService.Infrastructure.Configuration;
@@ -165,3 +165,4 @@ public sealed class CreateInitialUserProfileControllerTests
             };
     }
 }
+

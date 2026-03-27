@@ -1,10 +1,10 @@
-using FlowChat.Application.Abstractions;
+﻿using FlowChat.Shared.Application;
 using FlowChat.AuthService.Application.Contracts.Infrastructure;
 using FlowChat.AuthService.Application.Contracts.Persistence;
 using FlowChat.AuthService.Application.Features.Users.Commands.LoginUser;
 using FlowChat.AuthService.Application.Features.Users.Models;
 using FlowChat.AuthService.Domain.Entities;
-using FlowChat.Domain.Abstractions;
+using FlowChat.Shared.Domain;
 
 namespace FlowChat.AuthService.UnitTests;
 
@@ -153,3 +153,4 @@ public sealed class LoginUserCommandHandlerTests
         }
     }
 }
+

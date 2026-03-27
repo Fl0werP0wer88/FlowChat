@@ -1,7 +1,7 @@
-using FlowChat.Domain.Abstractions;
+﻿using FlowChat.Shared.Domain;
 using FlowChat.UserProfileService.Domain.Entities;
 using FlowChat.UserProfileService.Domain.Events;
-using FlowChat.Domain.Abstractions.ValueObjects;
+using FlowChat.Shared.Domain.ValueObjects;
 
 namespace FlowChat.UserProfileService.UnitTests;
 
@@ -327,3 +327,4 @@ public class UnitTest1
         Assert.Equal("+48123123123", stateChangedEvent.AggregateState.MainPhone);
     }
 }
+

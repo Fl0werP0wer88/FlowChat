@@ -1,5 +1,5 @@
-using AutoMapper;
-using FlowChat.Application.Abstractions;
+﻿using AutoMapper;
+using FlowChat.Shared.Application;
 using FlowChat.AuthService.Domain.Events;
 using FlowChat.Core.Messaging.AuthService.Events;
 
@@ -15,3 +15,4 @@ public sealed class EmailConfirmedDomainEventHandler
     {
     }
 }
+

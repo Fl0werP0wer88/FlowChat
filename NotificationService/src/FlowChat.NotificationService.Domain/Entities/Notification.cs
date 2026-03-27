@@ -1,4 +1,4 @@
-using FlowChat.Domain.Abstractions;
+﻿using FlowChat.Shared.Domain;
 using FlowChat.NotificationService.Domain.Enums;
 
 namespace FlowChat.NotificationService.Domain.Entities;
@@ -81,3 +81,4 @@ public sealed class Notification : AggregateRootBase<Notification>
         SentAtUtc = null;
     }
 }
+

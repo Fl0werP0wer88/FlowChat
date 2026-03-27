@@ -1,4 +1,4 @@
-using FlowChat.Application.Abstractions;
+﻿using FlowChat.Shared.Application;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace FlowChat.RealtimeService.Application;
@@ -26,3 +26,4 @@ public static class ApplicationServiceRegistration
         return services;
     }
 }
+

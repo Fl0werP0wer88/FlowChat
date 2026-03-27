@@ -1,4 +1,4 @@
-using FlowChat.Domain.Abstractions;
+﻿using FlowChat.Shared.Domain;
 
 namespace FlowChat.Core.Results;
 
@@ -10,3 +10,4 @@ public interface IFlowChatResult
 
     IDomainError Error { get; }
 }
+

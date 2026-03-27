@@ -1,4 +1,4 @@
-<Solution>
+﻿<Solution>
   <Folder Name="/AuthService/" />
   <Folder Name="/AuthService/src/">
     <Project Path="AuthService/src/FlowChat.AuthService.API/FlowChat.AuthService.API.csproj" />
@@ -58,16 +58,16 @@
   </Folder>
   <Folder Name="/Common/" />
   <Folder Name="/Common/src/">
-    <Project Path="Common/src/FlowChat.API.Abstractions/FlowChat.API.Abstractions.csproj" />
-    <Project Path="Common/src/FlowChat.Application.Abstractions/FlowChat.Application.Abstractions.csproj" />
+    <Project Path="Common/src/FlowChat.Shared.API/FlowChat.Shared.API.csproj" />
+    <Project Path="Common/src/FlowChat.Shared.Application/FlowChat.Shared.Application.csproj" />
     <Project Path="Common/src/FlowChat.Core/FlowChat.Core.csproj" />
-    <Project Path="Common/src/FlowChat.Domain.Abstractions/FlowChat.Domain.Abstractions.csproj" />
-    <Project Path="Common/src/FlowChat.Persistence.EntityFrameworkCore/FlowChat.Persistence.EntityFrameworkCore.csproj" />
+    <Project Path="Common/src/FlowChat.Shared.Domain/FlowChat.Shared.Domain.csproj" />
+    <Project Path="Common/src/FlowChat.Shared.Persistance/FlowChat.Shared.Persistance.csproj" />
     <Project Path="Common/src/FlowChat.Shared.Infrastructure/FlowChat.Shared.Infrastructure.csproj" />
   </Folder>
   <Folder Name="/Common/tests/">
-    <Project Path="Common/tests/FlowChat.API.Abstractions.UnitTests/FlowChat.API.Abstractions.UnitTests.csproj" />
-    <Project Path="Common/tests/FlowChat.Persistence.EntityFrameworkCore.UnitTests/FlowChat.Persistence.EntityFrameworkCore.UnitTests.csproj" />
+    <Project Path="Common/tests/FlowChat.Shared.API.UnitTests/FlowChat.Shared.API.UnitTests.csproj" />
+    <Project Path="Common/tests/FlowChat.Shared.Persistance.UnitTests/FlowChat.Shared.Persistance.UnitTests.csproj" />
   </Folder>
   <Folder Name="/SocialGraphService/" />
   <Folder Name="/SocialGraphService/src/">
@@ -103,4 +103,5 @@
   </Folder>
   <Folder Name="/ReactClient/" />
 </Solution>
+
 

@@ -1,4 +1,4 @@
-namespace FlowChat.Domain.Abstractions;
+﻿namespace FlowChat.Shared.Domain;
 
 public interface IDomainError
 {
@@ -8,3 +8,4 @@ public interface IDomainError
 
     List<string>? Errors { get; init; }
 }
+

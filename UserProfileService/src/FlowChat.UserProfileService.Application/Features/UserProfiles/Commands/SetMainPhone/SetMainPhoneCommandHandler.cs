@@ -1,5 +1,5 @@
-using FlowChat.Application.Abstractions;
-using FlowChat.Domain.Abstractions;
+﻿using FlowChat.Shared.Application;
+using FlowChat.Shared.Domain;
 using FlowChat.UserProfileService.Application.Contracts.Persistence;
 using FlowChat.UserProfileService.Domain.Entities;
 using FlowChat.UserProfileService.Domain.Events;
@@ -47,3 +47,4 @@ public sealed class SetMainPhoneCommandHandler
         return result.IsSuccess ? _userProfile : null;
     }
 }
+

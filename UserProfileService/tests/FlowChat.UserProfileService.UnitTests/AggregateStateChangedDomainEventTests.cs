@@ -1,4 +1,4 @@
-using FlowChat.Domain.Abstractions;
+﻿using FlowChat.Shared.Domain;
 
 namespace FlowChat.UserProfileService.UnitTests;
 
@@ -100,3 +100,4 @@ public sealed class AggregateStateChangedDomainEventTests
     private sealed class TestBusinessDomainEvent(Id<TestAggregate> aggregateId)
         : DomainEventBase(aggregateId, DateTimeOffset.UtcNow);
 }
+

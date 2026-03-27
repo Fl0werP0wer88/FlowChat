@@ -1,5 +1,5 @@
-using CSharpFunctionalExtensions;
-using FlowChat.Domain.Abstractions;
+﻿using CSharpFunctionalExtensions;
+using FlowChat.Shared.Domain;
 using FlowChat.UserProfileService.Api.Features.UserProfiles.Public.AddEmail;
 using FlowChat.UserProfileService.Api.Features.UserProfiles.Public.AddPhone;
 using FlowChat.UserProfileService.Api.Features.UserProfiles.Public.GetUserProfile;
@@ -163,3 +163,4 @@ public sealed class UserProfilesControllerTests
         }
     }
 }
+

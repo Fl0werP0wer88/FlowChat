@@ -1,6 +1,6 @@
-using FlowChat.AuthService.Domain.Common.Constants;
+﻿using FlowChat.AuthService.Domain.Common.Constants;
 using FlowChat.AuthService.Domain.Events;
-using FlowChat.Domain.Abstractions;
+using FlowChat.Shared.Domain;
 
 namespace FlowChat.AuthService.Domain.Entities;
 
@@ -170,3 +170,4 @@ public sealed class Identity : AggregateRootBase<Identity>
             : value.Trim();
     }
 }
+

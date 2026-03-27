@@ -1,5 +1,5 @@
-using System.Text;
-using FlowChat.API.Abstractions;
+﻿using System.Text;
+using FlowChat.Shared.API;
 using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
 using FlowChat.RealtimeService.Application;
 using FlowChat.RealtimeService.Api.Realtime;
@@ -111,3 +111,4 @@ public static class StartupExtensions
         return app;
     }
 }
+

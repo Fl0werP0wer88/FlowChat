@@ -1,10 +1,10 @@
-using FlowChat.Application.Abstractions;
+﻿using FlowChat.Shared.Application;
 using FlowChat.SocialGraphService.Application.Contracts.Persistence;
 using FlowChat.SocialGraphService.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using FlowChat.Persistence.EntityFrameworkCore.Auditing;
+using FlowChat.Shared.Persistance.Auditing;
 
 namespace FlowChat.SocialGraphService.Persistence;
 
@@ -27,3 +27,4 @@ public static class PersistenceServiceRegistration
         return services;
     }
 }
+

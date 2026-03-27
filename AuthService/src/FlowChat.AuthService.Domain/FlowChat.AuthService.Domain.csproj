@@ -7,7 +7,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\Common\src\FlowChat.Domain.Abstractions\FlowChat.Domain.Abstractions.csproj" />
+    <ProjectReference Include="..\..\..\Common\src\FlowChat.Shared.Domain\FlowChat.Shared.Domain.csproj" />
   </ItemGroup>
 
 </Project>
+

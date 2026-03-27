@@ -1,9 +1,9 @@
-using FlowChat.Application.Abstractions;
-using FlowChat.Domain.Abstractions;
+﻿using FlowChat.Shared.Application;
+using FlowChat.Shared.Domain;
 using FlowChat.UserProfileService.Application.Contracts.Persistence;
 using FlowChat.UserProfileService.Application.Features.UserProfiles.Commands.AddEmail;
 using FlowChat.UserProfileService.Domain.Entities;
-using FlowChat.Domain.Abstractions.ValueObjects;
+using FlowChat.Shared.Domain.ValueObjects;
 
 namespace FlowChat.UserProfileService.UnitTests;
 
@@ -95,3 +95,4 @@ public sealed class AddEmailCommandHandlerTests
             Task.CompletedTask;
     }
 }
+

@@ -1,5 +1,5 @@
-using AutoMapper;
-using FlowChat.Domain.Abstractions;
+﻿using AutoMapper;
+using FlowChat.Shared.Domain;
 using FlowChat.Core.Messaging.UserProfileService.Events;
 using FlowChat.UserProfileService.Domain.Entities;
 using FlowChat.UserProfileService.Domain.Events;
@@ -28,3 +28,4 @@ public sealed class DomainEventToIntegrationEventProfile : Profile
             .ForMember(destination => destination.IsPhoneVisible, options => options.MapFrom(source => source.AggregateState.IsPhoneVisible));
     }
 }
+

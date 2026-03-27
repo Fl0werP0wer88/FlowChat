@@ -1,6 +1,6 @@
-using FlowChat.ChatService.Domain.Entities;
+﻿using FlowChat.ChatService.Domain.Entities;
 using FlowChat.ChatService.Domain.Events.Contracts;
-using FlowChat.Domain.Abstractions;
+using FlowChat.Shared.Domain;
 
 namespace FlowChat.ChatService.Domain.Events;
 
@@ -22,3 +22,4 @@ public sealed class ChatMessageSentDomainEvent(
     public DateTime SentAtUtc { get; } = sentAtUtc;
     public IReadOnlyCollection<Guid> RecipientUserIds { get; } = recipientUserIds;
 }
+

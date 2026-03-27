@@ -1,4 +1,4 @@
-using FlowChat.API.Abstractions;
+﻿using FlowChat.Shared.API;
 using FlowChat.RealtimeService.Application.Features.Messages.Commands.PublishMessage;
 using FlowChat.RealtimeService.Infrastructure.Configuration;
 using MediatR;
@@ -56,3 +56,4 @@ public sealed class PublishMessageController(IMediator mediator, IApiSettingsMan
         return string.Equals(providedApiKey.ToString(), expectedApiKey, StringComparison.Ordinal);
     }
 }
+

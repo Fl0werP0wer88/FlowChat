@@ -1,4 +1,4 @@
-using FlowChat.Domain.Abstractions;
+﻿using FlowChat.Shared.Domain;
 using FlowChat.RealtimeService.Application.Features.Presence.Commands.PublishPresenceChange;
 
 namespace FlowChat.RealtimeService.UnitTests;
@@ -41,3 +41,4 @@ public sealed class PublishPresenceChangeCommandHandlerTests
         Assert.Null(dispatcher.LastPresenceNotification);
     }
 }
+

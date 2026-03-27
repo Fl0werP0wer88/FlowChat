@@ -1,4 +1,4 @@
-using FlowChat.API.Abstractions;
+﻿using FlowChat.Shared.API;
 using FlowChat.ChatService.Application.Features.ChatMessages.Commands.SendChatMessage;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -39,3 +39,4 @@ public sealed class SendChatMessageController : ApiControllerBase
             : HandleError(result.Error);
     }
 }
+

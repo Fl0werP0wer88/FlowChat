@@ -1,4 +1,4 @@
-using FlowChat.Application.Abstractions;
+﻿using FlowChat.Shared.Application;
 using FlowChat.AuthService.Application.Contracts.Persistence;
 using FlowChat.AuthService.Persistence.UnitOfWork;
 using FlowChat.AuthService.Persistence.Repositories;
@@ -42,3 +42,4 @@ public static class PersistenceServiceRegistration
         return services;
     }
 }
+

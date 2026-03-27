@@ -1,5 +1,6 @@
-namespace FlowChat.AuthService.Domain.Common;
+﻿namespace FlowChat.AuthService.Domain.Common;
 
-public interface IOutboxDomainEvent : FlowChat.Domain.Abstractions.IDomainEvent
+public interface IOutboxDomainEvent : FlowChat.Shared.Domain.IDomainEvent
 {
 }
+

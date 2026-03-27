@@ -1,6 +1,6 @@
-using FlowChat.ChatService.Domain.Common.Constants;
+﻿using FlowChat.ChatService.Domain.Common.Constants;
 using FlowChat.ChatService.Domain.Entities;
-using FlowChat.Domain.Abstractions;
+using FlowChat.Shared.Domain;
 
 namespace FlowChat.ChatService.Domain.Events.Contracts;
 
@@ -11,3 +11,4 @@ public abstract class BaseChatMessageDomainEvent(
     : DomainEventBase(aggregateId, occurredOnUtc ?? DateTimeOffset.UtcNow)
 {
 }
+

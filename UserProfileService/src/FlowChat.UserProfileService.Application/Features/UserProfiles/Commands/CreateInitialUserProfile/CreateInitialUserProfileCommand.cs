@@ -1,4 +1,4 @@
-using FlowChat.Application.Abstractions;
+﻿using FlowChat.Shared.Application;
 
 namespace FlowChat.UserProfileService.Application.Features.UserProfiles.Commands.CreateInitialUserProfile;
 
@@ -10,3 +10,4 @@ public sealed record CreateInitialUserProfileCommand(
     string? Email,
     string? Phone,
     Guid UserId) : ICommand<Guid>;
+

@@ -1,5 +1,5 @@
-using FluentValidation;
-using FlowChat.Domain.Abstractions.ValueObjects;
+﻿using FluentValidation;
+using FlowChat.Shared.Domain.ValueObjects;
 
 namespace FlowChat.UserProfileService.Application.Features.UserProfiles.Commands.AddEmail;
 
@@ -20,3 +20,4 @@ public sealed class AddEmailCommandValidator : AbstractValidator<AddEmailCommand
             .WithMessage(EmailAddress.InvalidEmailAddressMessage);
     }
 }
+

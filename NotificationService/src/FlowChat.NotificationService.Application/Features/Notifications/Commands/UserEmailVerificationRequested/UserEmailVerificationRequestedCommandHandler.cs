@@ -1,9 +1,9 @@
-using FlowChat.Application.Abstractions;
+﻿using FlowChat.Shared.Application;
 using FlowChat.NotificationService.Application.Contracts.Infrastructure;
 using FlowChat.NotificationService.Application.Contracts.Persistence;
 using FlowChat.NotificationService.Domain.Entities;
 using FlowChat.NotificationService.Domain.Enums;
-using FlowChat.Domain.Abstractions;
+using FlowChat.Shared.Domain;
 using MediatR;
 
 namespace FlowChat.NotificationService.Application.Features.Notifications.Commands.UserEmailVerificationRequested;
@@ -78,3 +78,4 @@ public sealed class UserEmailVerificationRequestedCommandHandler
         return result.IsSuccess ? _notification : null;
     }
 }
+

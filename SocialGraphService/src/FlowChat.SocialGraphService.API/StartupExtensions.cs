@@ -1,4 +1,4 @@
-using FlowChat.API.Abstractions;
+﻿using FlowChat.Shared.API;
 using FlowChat.SocialGraphService.Application;
 using FlowChat.SocialGraphService.Infrastructure.Configuration;
 using FlowChat.SocialGraphService.Infrastructure;
@@ -131,3 +131,4 @@ public static class StartupExtensions
         await context.Database.MigrateAsync();
     }
 }
+

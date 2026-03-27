@@ -1,5 +1,5 @@
-using FlowChat.Domain.Abstractions;
-using FlowChat.Persistence.EntityFrameworkCore;
+﻿using FlowChat.Shared.Domain;
+using FlowChat.Shared.Persistance;
 using FlowChat.UserProfileService.Application.Contracts.Persistence;
 using FlowChat.UserProfileService.Application.Features.UserProfiles.Queries.GetUserProfile;
 using FlowChat.UserProfileService.Domain.Entities;
@@ -70,3 +70,4 @@ public sealed class UserProfileReadRepository(AppDbContext dbContext)
 
     private static string NormalizeUserName(string userName) => userName.Trim().ToLowerInvariant();
 }
+

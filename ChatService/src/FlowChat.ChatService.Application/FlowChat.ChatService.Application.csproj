@@ -1,7 +1,7 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\Common\src\FlowChat.Application.Abstractions\FlowChat.Application.Abstractions.csproj" />
+    <ProjectReference Include="..\..\..\Common\src\FlowChat.Shared.Application\FlowChat.Shared.Application.csproj" />
     <ProjectReference Include="..\..\..\Common\src\FlowChat.Core\FlowChat.Core.csproj" />
     <ProjectReference Include="..\FlowChat.ChatService.Domain\FlowChat.ChatService.Domain.csproj" />
   </ItemGroup>
@@ -18,3 +18,4 @@
   </PropertyGroup>
 
 </Project>
+

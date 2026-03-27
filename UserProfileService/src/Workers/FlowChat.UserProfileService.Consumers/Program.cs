@@ -1,4 +1,4 @@
-using FlowChat.API.Abstractions;
+﻿using FlowChat.Shared.API;
 using FlowChat.UserProfileService.Consumers;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -31,3 +31,4 @@ catch (Exception exception)
 
     throw;
 }
+

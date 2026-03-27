@@ -1,4 +1,4 @@
-using FlowChat.Application.Abstractions;
+﻿using FlowChat.Shared.Application;
 using Microsoft.EntityFrameworkCore;
 
 namespace FlowChat.ChatService.Persistence;
@@ -43,3 +43,4 @@ public sealed class UnitOfWork(AppDbContext dbContext) : IUnitOfWork
         _dbContext.Dispose();
     }
 }
+

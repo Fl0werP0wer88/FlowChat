@@ -1,5 +1,5 @@
-using FlowChat.Domain.Abstractions;
-using FlowChat.Domain.Abstractions.ValueObjects;
+﻿using FlowChat.Shared.Domain;
+using FlowChat.Shared.Domain.ValueObjects;
 using FlowChat.SocialGraphService.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -62,3 +62,4 @@ public class ContactConfiguration : IEntityTypeConfiguration<Contact>
             .HasDatabaseName("uq_contact_owner_contact");
     }
 }
+

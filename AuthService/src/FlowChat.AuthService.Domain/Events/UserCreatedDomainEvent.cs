@@ -1,6 +1,6 @@
-using FlowChat.AuthService.Domain.Common;
+﻿using FlowChat.AuthService.Domain.Common;
 using FlowChat.AuthService.Domain.Entities;
-using FlowChat.Domain.Abstractions;
+using FlowChat.Shared.Domain;
 
 namespace FlowChat.AuthService.Domain.Events;
 
@@ -30,3 +30,4 @@ public sealed class UserCreatedDomainEvent : BaseIdentityDomainEvent
         LastName = lastName;
     }
 }
+

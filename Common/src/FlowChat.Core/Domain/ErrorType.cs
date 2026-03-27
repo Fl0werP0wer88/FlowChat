@@ -1,6 +1,6 @@
-using Ardalis.SmartEnum;
+﻿using Ardalis.SmartEnum;
 
-namespace FlowChat.Domain.Abstractions;
+namespace FlowChat.Shared.Domain;
 
 public abstract class ErrorType(string name, int value) : SmartEnum<ErrorType>(name, value)
 {
@@ -53,3 +53,4 @@ public abstract class ErrorType(string name, int value) : SmartEnum<ErrorType>(n
         }
     }
 }
+

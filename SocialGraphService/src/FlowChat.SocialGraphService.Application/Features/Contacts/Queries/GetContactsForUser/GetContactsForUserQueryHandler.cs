@@ -1,6 +1,6 @@
-using FlowChat.Application.Abstractions;
+﻿using FlowChat.Shared.Application;
 using FlowChat.SocialGraphService.Application.Contracts.Persistence;
-using FlowChat.Domain.Abstractions;
+using FlowChat.Shared.Domain;
 
 namespace FlowChat.SocialGraphService.Application.Features.Contacts.Queries.GetContactsForUser;
 
@@ -24,3 +24,4 @@ public sealed class GetContactsForUserQueryHandler : IQueryHandler<GetContactsFo
         return FlowChatResult<IReadOnlyList<ContactDto>>.Success(contacts);
     }
 }
+

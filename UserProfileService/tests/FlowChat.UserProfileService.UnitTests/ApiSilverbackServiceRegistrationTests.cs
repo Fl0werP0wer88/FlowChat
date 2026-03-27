@@ -1,4 +1,4 @@
-using FlowChat.Application.Abstractions;
+﻿using FlowChat.Shared.Application;
 using FlowChat.UserProfileService.Infrastructure;
 using FlowChat.UserProfileService.Infrastructure.Kafka;
 using FlowChat.UserProfileService.Persistence;
@@ -40,3 +40,4 @@ public sealed class ApiSilverbackServiceRegistrationTests
         Assert.NotNull(integrationEventPublisher);
     }
 }
+

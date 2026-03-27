@@ -1,7 +1,7 @@
-using FlowChat.Domain.Abstractions;
+﻿using FlowChat.Shared.Domain;
 using FlowChat.UserProfileService.Domain.Common.Constants;
 using FlowChat.UserProfileService.Domain.Events;
-using FlowChat.Domain.Abstractions.ValueObjects;
+using FlowChat.Shared.Domain.ValueObjects;
 
 namespace FlowChat.UserProfileService.Domain.Entities;
 
@@ -255,3 +255,4 @@ public class UserProfile : AggregateRootBase<UserProfile>
         }
     }
 }
+

@@ -1,5 +1,5 @@
-using AutoMapper;
-using FlowChat.API.Abstractions;
+﻿using AutoMapper;
+using FlowChat.Shared.API;
 using FlowChat.AuthService.Application.Features.Users.Commands.RegisterUser;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -34,3 +34,4 @@ public sealed class RegisterUserController : ApiControllerBase
             : HandleError(response.Error);
     }
 }
+

@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -25,7 +25,7 @@
     <ProjectReference Include="..\..\src\Workers\FlowChat.SocialGraphService.Consumers\FlowChat.SocialGraphService.Consumers.csproj" />
     <ProjectReference Include="..\..\src\FlowChat.SocialGraphService.Infrastructure\FlowChat.SocialGraphService.Infrastructure.csproj" />
     <ProjectReference Include="..\..\src\FlowChat.SocialGraphService.Persistence\FlowChat.SocialGraphService.Persistence.csproj" />
-    <ProjectReference Include="..\..\..\Common\src\FlowChat.Domain.Abstractions\FlowChat.Domain.Abstractions.csproj" />
+    <ProjectReference Include="..\..\..\Common\src\FlowChat.Shared.Domain\FlowChat.Shared.Domain.csproj" />
     <ProjectReference Include="..\..\..\Common\src\FlowChat.Core\FlowChat.Core.csproj" />
   </ItemGroup>
 
@@ -34,3 +34,4 @@
   </ItemGroup>
 
 </Project>
+

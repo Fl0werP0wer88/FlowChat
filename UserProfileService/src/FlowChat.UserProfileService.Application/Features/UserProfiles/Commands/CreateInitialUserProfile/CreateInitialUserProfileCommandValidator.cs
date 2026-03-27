@@ -1,5 +1,5 @@
-using FluentValidation;
-using FlowChat.Domain.Abstractions.ValueObjects;
+﻿using FluentValidation;
+using FlowChat.Shared.Domain.ValueObjects;
 
 namespace FlowChat.UserProfileService.Application.Features.UserProfiles.Commands.CreateInitialUserProfile;
 
@@ -32,3 +32,4 @@ public sealed class CreateInitialUserProfileCommandValidator
             .WithMessage(PhoneNumber.InvalidPhoneNumberMessage);
     }
 }
+

@@ -1,4 +1,4 @@
-using FlowChat.Application.Abstractions;
+﻿using FlowChat.Shared.Application;
 using FlowChat.SocialGraphService.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -39,3 +39,4 @@ public class UnitOfWork(AppDbContext dbContext) : IUnitOfWork
 
     public void Dispose() => _dbContext.Dispose();
 }
+

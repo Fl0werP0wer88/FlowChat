@@ -1,4 +1,4 @@
-using FlowChat.Application.Abstractions;
+﻿using FlowChat.Shared.Application;
 using FlowChat.UserProfileService.Domain.Entities;
 
 namespace FlowChat.UserProfileService.Application.Contracts.Persistence;
@@ -6,3 +6,4 @@ namespace FlowChat.UserProfileService.Application.Contracts.Persistence;
 public interface IUserProfileWriteRepository : IWriteRepository<UserProfile>
 {
 }
+

@@ -1,6 +1,6 @@
-using CSharpFunctionalExtensions;
-using FlowChat.Application.Abstractions;
-using FlowChat.Domain.Abstractions;
+﻿using CSharpFunctionalExtensions;
+using FlowChat.Shared.Application;
+using FlowChat.Shared.Domain;
 using FlowChat.NotificationService.Application.Contracts.Persistence;
 
 namespace FlowChat.NotificationService.Application.Features.Notifications.Queries.GetNotifications;
@@ -25,3 +25,4 @@ public sealed class GetNotificationsQueryHandler : IQueryHandler<GetNotification
         return FlowChatResult<IReadOnlyList<NotificationDto>>.Success(notifications);
     }
 }
+

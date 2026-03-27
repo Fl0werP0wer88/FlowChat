@@ -1,5 +1,5 @@
-using FlowChat.Application.Abstractions;
-using FlowChat.Domain.Abstractions;
+﻿using FlowChat.Shared.Application;
+using FlowChat.Shared.Domain;
 using MediatR;
 
 namespace FlowChat.AuthService.Application.Common.Eventing;
@@ -33,3 +33,4 @@ public sealed class DomainEventDispatcher : IDomainEventDispatcher
         }
     }
 }
+

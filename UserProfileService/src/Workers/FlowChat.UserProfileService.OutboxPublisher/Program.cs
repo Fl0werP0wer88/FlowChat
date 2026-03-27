@@ -1,4 +1,4 @@
-using FlowChat.API.Abstractions;
+﻿using FlowChat.Shared.API;
 using FlowChat.UserProfileService.OutboxPublisher;
 using FlowChat.UserProfileService.Persistence;
 using Microsoft.Extensions.DependencyInjection;
@@ -38,3 +38,4 @@ catch (Exception exception)
 
     throw;
 }
+

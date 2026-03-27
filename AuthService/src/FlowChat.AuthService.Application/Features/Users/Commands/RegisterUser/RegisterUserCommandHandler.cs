@@ -1,9 +1,9 @@
-using FlowChat.Application.Abstractions;
+﻿using FlowChat.Shared.Application;
 using FlowChat.AuthService.Application.Contracts.Infrastructure;
 using FlowChat.AuthService.Application.Contracts.Persistence;
 using FlowChat.AuthService.Domain.Entities;
 using CSharpFunctionalExtensions;
-using FlowChat.Domain.Abstractions;
+using FlowChat.Shared.Domain;
 using FlowChat.Core.Messaging.AuthService.Events;
 
 namespace FlowChat.AuthService.Application.Features.Users.Commands.RegisterUser;
@@ -119,3 +119,4 @@ public class RegisterUserCommandHandler : CommandHandlerBase<RegisterUserCommand
         return (code, description);
     }
 }
+

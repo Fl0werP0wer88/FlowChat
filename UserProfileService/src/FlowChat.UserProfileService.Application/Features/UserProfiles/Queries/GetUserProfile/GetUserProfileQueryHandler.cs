@@ -1,6 +1,6 @@
-using CSharpFunctionalExtensions;
-using FlowChat.Application.Abstractions;
-using FlowChat.Domain.Abstractions;
+﻿using CSharpFunctionalExtensions;
+using FlowChat.Shared.Application;
+using FlowChat.Shared.Domain;
 using FlowChat.UserProfileService.Application.Contracts.Persistence;
 
 namespace FlowChat.UserProfileService.Application.Features.UserProfiles.Queries.GetUserProfile;
@@ -29,3 +29,4 @@ public sealed class GetUserProfileQueryHandler : IQueryHandler<GetUserProfileQue
         return FlowChatResult<UserProfileDto>.Success(userProfile);
     }
 }
+

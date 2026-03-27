@@ -1,4 +1,4 @@
-using FlowChat.Application.Abstractions;
+﻿using FlowChat.Shared.Application;
 using FlowChat.UserProfileService.Infrastructure.Configuration;
 using FlowChat.UserProfileService.Infrastructure.Kafka;
 using FlowChat.Core.Messaging.UserProfileService.Events;
@@ -25,3 +25,4 @@ public static class InfrastructureServiceRegistration
         return services;
     }
 }
+

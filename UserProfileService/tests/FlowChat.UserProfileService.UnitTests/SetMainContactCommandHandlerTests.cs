@@ -1,5 +1,5 @@
-using FlowChat.Application.Abstractions;
-using FlowChat.Domain.Abstractions;
+﻿using FlowChat.Shared.Application;
+using FlowChat.Shared.Domain;
 using FlowChat.UserProfileService.Application.Contracts.Persistence;
 using FlowChat.UserProfileService.Application.Features.UserProfiles.Commands.SetMainEmail;
 using FlowChat.UserProfileService.Application.Features.UserProfiles.Commands.SetMainPhone;
@@ -193,3 +193,4 @@ public sealed class SetMainContactCommandHandlerTests
         }
     }
 }
+

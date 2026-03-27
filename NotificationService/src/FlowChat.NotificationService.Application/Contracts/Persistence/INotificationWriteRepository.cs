@@ -1,4 +1,4 @@
-using FlowChat.Application.Abstractions;
+﻿using FlowChat.Shared.Application;
 using FlowChat.NotificationService.Domain.Entities;
 
 namespace FlowChat.NotificationService.Application.Contracts.Persistence;
@@ -6,3 +6,4 @@ namespace FlowChat.NotificationService.Application.Contracts.Persistence;
 public interface INotificationWriteRepository : IWriteRepository<Notification>
 {
 }
+

@@ -1,4 +1,4 @@
-using FlowChat.Application.Abstractions;
+﻿using FlowChat.Shared.Application;
 using FlowChat.NotificationService.Application.Common.Eventing;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -36,3 +36,4 @@ public static class ApplicationServiceRegistration
         return services;
     }
 }
+

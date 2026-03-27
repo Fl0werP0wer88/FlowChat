@@ -1,4 +1,4 @@
-<Solution>
+﻿<Solution>
   <Folder Name="/src/">
     <Project Path="src/FlowChat.NotificationService.API/FlowChat.NotificationService.API.csproj" />
     <Project Path="src/FlowChat.NotificationService.Application/FlowChat.NotificationService.Application.csproj" />
@@ -13,7 +13,8 @@
     <Project Path="tests/FlowChat.NotificationService.AATs/FlowChat.NotificationService.AATs.csproj" />
     <Project Path="tests/FlowChat.NotificationService.UnitTests/FlowChat.NotificationService.UnitTests.csproj" />
   </Folder>
-  <Project Path="../Common/src/FlowChat.API.Abstractions/FlowChat.API.Abstractions.csproj" />
+  <Project Path="../Common/src/FlowChat.Shared.API/FlowChat.Shared.API.csproj" />
   <Project Path="../Common/src/FlowChat.Shared.Infrastructure/FlowChat.Shared.Infrastructure.csproj" />
 </Solution>
+
 

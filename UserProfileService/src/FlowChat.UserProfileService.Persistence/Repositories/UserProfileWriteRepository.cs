@@ -1,5 +1,5 @@
-using FlowChat.Domain.Abstractions;
-using FlowChat.Persistence.EntityFrameworkCore;
+﻿using FlowChat.Shared.Domain;
+using FlowChat.Shared.Persistance;
 using FlowChat.UserProfileService.Application.Contracts.Persistence;
 using FlowChat.UserProfileService.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -21,3 +21,4 @@ public sealed class UserProfileWriteRepository(AppDbContext dbContext)
             .FirstOrDefaultAsync(x => x.Id == typedId, cancellationToken);
     }
 }
+

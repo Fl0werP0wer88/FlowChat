@@ -1,6 +1,6 @@
-using FlowChat.Domain.Abstractions;
+﻿using FlowChat.Shared.Domain;
 using FlowChat.UserProfileService.Domain.Entities;
-using FlowChat.Domain.Abstractions.ValueObjects;
+using FlowChat.Shared.Domain.ValueObjects;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -34,3 +34,4 @@ public class PhoneConfiguration : IEntityTypeConfiguration<Phone>
             .HasDatabaseName("uq_phone_user_profile_number");
     }
 }
+

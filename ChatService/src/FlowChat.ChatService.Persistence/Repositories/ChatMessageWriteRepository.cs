@@ -1,4 +1,4 @@
-using FlowChat.Persistence.EntityFrameworkCore;
+﻿using FlowChat.Shared.Persistance;
 using FlowChat.ChatService.Application.Contracts.Persistence;
 using FlowChat.ChatService.Domain.Entities;
 
@@ -8,3 +8,4 @@ public sealed class ChatMessageWriteRepository(AppDbContext dbContext)
     : WriteRepositoryBase<ChatMessage>(dbContext), IChatMessageWriteRepository
 {
 }
+

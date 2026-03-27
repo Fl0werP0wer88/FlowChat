@@ -1,5 +1,5 @@
-using FlowChat.API.Abstractions;
-using FlowChat.Application.Abstractions;
+﻿using FlowChat.Shared.API;
+using FlowChat.Shared.Application;
 using FlowChat.SocialGraphService.Application.Contracts.Persistence;
 using FlowChat.SocialGraphService.Application.Features.UserProfiles;
 using FlowChat.SocialGraphService.Infrastructure.Configuration;
@@ -85,3 +85,4 @@ public sealed class UpsertUserProfileReadModelController(
     private static string? NormalizeOptional(string? value) =>
         string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 }
+

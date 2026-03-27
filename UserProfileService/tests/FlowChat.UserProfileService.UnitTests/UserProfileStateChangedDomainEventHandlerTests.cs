@@ -1,6 +1,6 @@
-using AutoMapper;
-using FlowChat.Application.Abstractions;
-using FlowChat.Domain.Abstractions;
+﻿using AutoMapper;
+using FlowChat.Shared.Application;
+using FlowChat.Shared.Domain;
 using FlowChat.Core.Messaging;
 using FlowChat.Core.Messaging.UserProfileService.Events;
 using FlowChat.UserProfileService.Application.Common.Eventing;
@@ -67,3 +67,4 @@ public sealed class UserProfileStateChangedDomainEventHandlerTests
         }
     }
 }
+

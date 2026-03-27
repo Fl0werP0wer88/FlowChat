@@ -1,6 +1,6 @@
-using AutoMapper;
-using FlowChat.Application.Abstractions;
-using FlowChat.Domain.Abstractions;
+﻿using AutoMapper;
+using FlowChat.Shared.Application;
+using FlowChat.Shared.Domain;
 using FlowChat.Core.Messaging;
 
 namespace FlowChat.AuthService.Application.Common.Eventing.Handlers;
@@ -26,3 +26,4 @@ public abstract class MappedDomainEventHandlerBase<TDomainEvent, TIntegrationEve
     protected override Task ExecuteAsync(TDomainEvent notification, CancellationToken cancellationToken) =>
         Task.CompletedTask;
 }
+

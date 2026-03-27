@@ -1,8 +1,8 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using CSharpFunctionalExtensions;
-using FlowChat.Application.Abstractions;
-using FlowChat.Application.Abstractions.Behaviors;
-using FlowChat.Domain.Abstractions;
+using FlowChat.Shared.Application;
+using FlowChat.Shared.Application.Behaviors;
+using FlowChat.Shared.Domain;
 using Microsoft.Extensions.Logging;
 
 namespace FlowChat.UserProfileService.UnitTests;
@@ -174,3 +174,4 @@ public sealed class LoggingPipelineBehaviourTests
         }
     }
 }
+

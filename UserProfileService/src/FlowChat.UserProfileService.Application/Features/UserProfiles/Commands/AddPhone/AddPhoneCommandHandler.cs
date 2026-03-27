@@ -1,8 +1,8 @@
-using FlowChat.Application.Abstractions;
-using FlowChat.Domain.Abstractions;
+﻿using FlowChat.Shared.Application;
+using FlowChat.Shared.Domain;
 using FlowChat.UserProfileService.Application.Contracts.Persistence;
 using FlowChat.UserProfileService.Domain.Entities;
-using FlowChat.Domain.Abstractions.ValueObjects;
+using FlowChat.Shared.Domain.ValueObjects;
 
 namespace FlowChat.UserProfileService.Application.Features.UserProfiles.Commands.AddPhone;
 
@@ -50,3 +50,4 @@ public sealed class AddPhoneCommandHandler
         return result.IsSuccess ? _userProfile : null;
     }
 }
+

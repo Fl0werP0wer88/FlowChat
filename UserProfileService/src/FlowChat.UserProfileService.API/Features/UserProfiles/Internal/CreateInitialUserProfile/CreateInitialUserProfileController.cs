@@ -1,4 +1,4 @@
-using FlowChat.API.Abstractions;
+﻿using FlowChat.Shared.API;
 using FlowChat.UserProfileService.Application.Features.UserProfiles.Commands.CreateInitialUserProfile;
 using FlowChat.UserProfileService.Infrastructure.Configuration;
 using MediatR;
@@ -60,3 +60,4 @@ public sealed class CreateInitialUserProfileController(
         return string.Equals(providedApiKey.ToString(), expectedApiKey, StringComparison.Ordinal);
     }
 }
+

@@ -1,5 +1,5 @@
-using FlowChat.Application.Abstractions;
-using FlowChat.Domain.Abstractions;
+﻿using FlowChat.Shared.Application;
+using FlowChat.Shared.Domain;
 using FlowChat.NotificationService.Application.Contracts.Infrastructure;
 using FlowChat.NotificationService.Application.Contracts.Persistence;
 using FlowChat.NotificationService.Application.Features.Notifications.Commands.UserEmailVerificationRequested;
@@ -165,7 +165,7 @@ public class HandleUserEmailVerificationRequestedNotificationCommandHandlerTests
     {
         public List<Notification> Notifications { get; } = [];
 
-        Task<Notification?> FlowChat.Application.Abstractions.IWriteRepository<Notification>.GetByIdAsync(
+        Task<Notification?> FlowChat.Shared.Application.IWriteRepository<Notification>.GetByIdAsync(
             Guid id,
             CancellationToken cancellationToken) =>
             Task.FromResult(Notifications.FirstOrDefault(x => x.Id.Value == id));
@@ -256,3 +256,4 @@ public class HandleUserEmailVerificationRequestedNotificationCommandHandlerTests
             => Task.CompletedTask;
     }
 }
+

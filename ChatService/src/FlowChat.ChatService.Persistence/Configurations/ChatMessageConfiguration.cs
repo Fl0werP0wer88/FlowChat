@@ -1,5 +1,5 @@
-using FlowChat.ChatService.Domain.Entities;
-using FlowChat.Domain.Abstractions;
+﻿using FlowChat.ChatService.Domain.Entities;
+using FlowChat.Shared.Domain;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -51,3 +51,4 @@ public sealed class ChatMessageConfiguration : IEntityTypeConfiguration<ChatMess
         builder.HasIndex(x => new { x.ConversationId, x.SentAtUtc });
     }
 }
+

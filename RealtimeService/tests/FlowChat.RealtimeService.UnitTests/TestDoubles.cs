@@ -1,8 +1,8 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http;
 using CSharpFunctionalExtensions;
 using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
-using FlowChat.Domain.Abstractions;
+using FlowChat.Shared.Domain;
 using FlowChat.RealtimeService.Domain.Notifications;
 using FlowChat.RealtimeService.Consumers.Realtime.Contracts;
 using FlowChat.RealtimeService.Consumers.Services;
@@ -125,3 +125,4 @@ internal static class RepositoryPathHelper
         throw new InvalidOperationException($"Could not locate file '{relativePath}' starting from '{AppContext.BaseDirectory}'.");
     }
 }
+

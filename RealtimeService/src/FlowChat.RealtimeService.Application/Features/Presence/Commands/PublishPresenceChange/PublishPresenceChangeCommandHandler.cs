@@ -1,7 +1,7 @@
-using CSharpFunctionalExtensions;
-using FlowChat.Application.Abstractions;
+﻿using CSharpFunctionalExtensions;
+using FlowChat.Shared.Application;
 using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
-using FlowChat.Domain.Abstractions;
+using FlowChat.Shared.Domain;
 using FlowChat.RealtimeService.Domain.Notifications;
 using MediatR;
 
@@ -59,3 +59,4 @@ public sealed class PublishPresenceChangeCommandHandler(IRealtimeClientDispatche
             .Distinct()
             .ToArray();
 }
+

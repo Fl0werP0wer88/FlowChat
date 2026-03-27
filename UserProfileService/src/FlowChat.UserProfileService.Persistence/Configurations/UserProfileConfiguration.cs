@@ -1,4 +1,4 @@
-using FlowChat.Domain.Abstractions;
+﻿using FlowChat.Shared.Domain;
 using FlowChat.UserProfileService.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -73,3 +73,4 @@ public class UserProfileConfiguration : IEntityTypeConfiguration<UserProfile>
             .UsePropertyAccessMode(PropertyAccessMode.Field);
     }
 }
+

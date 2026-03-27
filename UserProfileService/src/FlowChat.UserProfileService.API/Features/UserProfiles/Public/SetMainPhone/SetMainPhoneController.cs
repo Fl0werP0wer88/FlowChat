@@ -1,4 +1,4 @@
-using FlowChat.API.Abstractions;
+﻿using FlowChat.Shared.API;
 using FlowChat.UserProfileService.Application.Features.UserProfiles.Commands.SetMainPhone;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -33,3 +33,4 @@ public sealed class SetMainPhoneController : ApiControllerBase
             : HandleError(result.Error);
     }
 }
+

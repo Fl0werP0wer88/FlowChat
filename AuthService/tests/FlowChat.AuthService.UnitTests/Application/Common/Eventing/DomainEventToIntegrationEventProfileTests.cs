@@ -1,8 +1,8 @@
-using AutoMapper;
+﻿using AutoMapper;
 using FlowChat.AuthService.Application.Common.Eventing;
 using FlowChat.AuthService.Domain.Entities;
 using FlowChat.AuthService.Domain.Events;
-using FlowChat.Domain.Abstractions;
+using FlowChat.Shared.Domain;
 using FlowChat.Core.Messaging.AuthService.Events;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -83,3 +83,4 @@ public sealed class DomainEventToIntegrationEventProfileTests
         Assert.Equal("+48123123123", integrationEvent.PhoneNumber);
     }
 }
+

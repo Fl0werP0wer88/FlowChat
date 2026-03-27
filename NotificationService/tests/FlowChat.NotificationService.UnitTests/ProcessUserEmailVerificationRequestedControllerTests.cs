@@ -1,6 +1,6 @@
-using CSharpFunctionalExtensions;
-using FlowChat.API.Abstractions;
-using FlowChat.Domain.Abstractions;
+﻿using CSharpFunctionalExtensions;
+using FlowChat.Shared.API;
+using FlowChat.Shared.Domain;
 using FlowChat.NotificationService.Api.Features.Notifications.Internal.ProcessUserEmailVerificationRequested;
 using FlowChat.NotificationService.Application.Features.Notifications.Commands.UserEmailVerificationRequested;
 using FlowChat.NotificationService.Infrastructure.Configuration;
@@ -211,3 +211,4 @@ public sealed class ProcessUserEmailVerificationRequestedControllerTests
             };
     }
 }
+

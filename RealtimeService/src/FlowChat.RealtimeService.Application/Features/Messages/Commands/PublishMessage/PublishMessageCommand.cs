@@ -1,4 +1,4 @@
-using FlowChat.Application.Abstractions;
+﻿using FlowChat.Shared.Application;
 using MediatR;
 
 namespace FlowChat.RealtimeService.Application.Features.Messages.Commands.PublishMessage;
@@ -11,3 +11,4 @@ public sealed record PublishMessageCommand(
     string? Text,
     DateTime SentAtUtc,
     IReadOnlyCollection<Guid> RecipientUserIds) : ICommand<Unit>;
+

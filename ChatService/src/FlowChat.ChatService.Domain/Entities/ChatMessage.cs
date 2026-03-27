@@ -1,5 +1,5 @@
-using FlowChat.ChatService.Domain.Events;
-using FlowChat.Domain.Abstractions;
+﻿using FlowChat.ChatService.Domain.Events;
+using FlowChat.Shared.Domain;
 
 namespace FlowChat.ChatService.Domain.Entities;
 
@@ -91,3 +91,4 @@ public sealed class ChatMessage : AggregateRootBase<ChatMessage>
         return normalizedRecipientUserIds;
     }
 }
+

@@ -1,4 +1,4 @@
-using FlowChat.API.Abstractions;
+﻿using FlowChat.Shared.API;
 using FlowChat.UserProfileService.Application.Features.UserProfiles.Queries.GetUserProfile;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -28,3 +28,4 @@ public sealed class UserProfilesController : ApiControllerBase
             : HandleError(result.Error);
     }
 }
+

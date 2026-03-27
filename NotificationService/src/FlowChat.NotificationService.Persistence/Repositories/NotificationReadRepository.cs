@@ -1,8 +1,8 @@
-using FlowChat.NotificationService.Application.Contracts.Persistence;
+﻿using FlowChat.NotificationService.Application.Contracts.Persistence;
 using FlowChat.NotificationService.Application.Features.Notifications.Queries.GetNotifications;
 using FlowChat.NotificationService.Domain.Entities;
 using FlowChat.NotificationService.Domain.Enums;
-using FlowChat.Persistence.EntityFrameworkCore;
+using FlowChat.Shared.Persistance;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 
@@ -57,3 +57,4 @@ public sealed class NotificationReadRepository(AppDbContext dbContext)
             .ToListAsync(cancellationToken);
     }
 }
+

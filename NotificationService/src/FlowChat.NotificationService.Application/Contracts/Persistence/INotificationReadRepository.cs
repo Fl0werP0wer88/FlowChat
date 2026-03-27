@@ -1,4 +1,4 @@
-using FlowChat.Application.Abstractions;
+﻿using FlowChat.Shared.Application;
 using FlowChat.NotificationService.Application.Features.Notifications.Queries.GetNotifications;
 using FlowChat.NotificationService.Domain.Enums;
 
@@ -17,3 +17,4 @@ public interface INotificationReadRepository : IReadRepository<NotificationDto>
 
     Task<IReadOnlyList<NotificationDto>> GetRecentAsync(CancellationToken cancellationToken = default);
 }
+

@@ -1,4 +1,4 @@
-<Solution>
+﻿<Solution>
   <Folder Name="/src/">
     <Project Path="src/FlowChat.ChatService.API/FlowChat.ChatService.API.csproj" />
     <Project Path="src/FlowChat.ChatService.Application/FlowChat.ChatService.Application.csproj" />
@@ -9,9 +9,10 @@
   <Folder Name="/src/Workers/">
     <Project Path="src/Workers/FlowChat.ChatService.OutboxPublisher/FlowChat.ChatService.OutboxPublisher.csproj" />
   </Folder>
-  <Project Path="../Common/src/FlowChat.API.Abstractions/FlowChat.API.Abstractions.csproj" />
-  <Project Path="../Common/src/FlowChat.Application.Abstractions/FlowChat.Application.Abstractions.csproj" />
-  <Project Path="../Common/src/FlowChat.Domain.Abstractions/FlowChat.Domain.Abstractions.csproj" />
+  <Project Path="../Common/src/FlowChat.Shared.API/FlowChat.Shared.API.csproj" />
+  <Project Path="../Common/src/FlowChat.Shared.Application/FlowChat.Shared.Application.csproj" />
+  <Project Path="../Common/src/FlowChat.Shared.Domain/FlowChat.Shared.Domain.csproj" />
   <Project Path="../Common/src/FlowChat.Shared.Infrastructure/FlowChat.Shared.Infrastructure.csproj" />
 </Solution>
+
 

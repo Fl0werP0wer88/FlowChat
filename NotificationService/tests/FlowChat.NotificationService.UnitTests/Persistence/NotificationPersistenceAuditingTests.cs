@@ -1,5 +1,5 @@
-using FlowChat.NotificationService.Persistence;
-using FlowChat.Persistence.EntityFrameworkCore.Auditing;
+﻿using FlowChat.NotificationService.Persistence;
+using FlowChat.Shared.Persistance.Auditing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Infrastructure;
@@ -65,3 +65,4 @@ public sealed class NotificationPersistenceAuditingTests
         Assert.True(notification.LastModifiedAtUtc >= createdAtUtc);
     }
 }
+

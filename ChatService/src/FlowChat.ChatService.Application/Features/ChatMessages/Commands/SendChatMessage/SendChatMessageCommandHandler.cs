@@ -1,7 +1,7 @@
-using FlowChat.Application.Abstractions;
+﻿using FlowChat.Shared.Application;
 using FlowChat.ChatService.Application.Contracts.Persistence;
 using FlowChat.ChatService.Domain.Entities;
-using FlowChat.Domain.Abstractions;
+using FlowChat.Shared.Domain;
 
 namespace FlowChat.ChatService.Application.Features.ChatMessages.Commands.SendChatMessage;
 
@@ -44,3 +44,4 @@ public sealed class SendChatMessageCommandHandler
     protected override IAggregateRoot? GetAggregateRoot(FlowChatResult<Guid> result) =>
         result.IsSuccess ? _chatMessage : null;
 }
+

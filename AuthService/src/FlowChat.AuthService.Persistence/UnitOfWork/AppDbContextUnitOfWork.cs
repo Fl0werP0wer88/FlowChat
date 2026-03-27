@@ -1,4 +1,4 @@
-using FlowChat.Application.Abstractions;
+﻿using FlowChat.Shared.Application;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Silverback;
@@ -55,3 +55,4 @@ public sealed class AppDbContextUnitOfWork : IUnitOfWork
 
     public void Dispose() => _dbContext.Dispose();
 }
+

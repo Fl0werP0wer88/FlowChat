@@ -1,4 +1,4 @@
-using FlowChat.Domain.Abstractions;
+﻿using FlowChat.Shared.Domain;
 using FlowChat.UserProfileService.Domain.Entities;
 using FlowChat.UserProfileService.Domain.Events.Contracts;
 
@@ -30,3 +30,4 @@ public sealed class UserProfileCreatedDomainEvent(
     public bool IsEmailVisible { get; } = isEmailVisible;
     public bool IsPhoneVisible { get; } = isPhoneVisible;
 }
+

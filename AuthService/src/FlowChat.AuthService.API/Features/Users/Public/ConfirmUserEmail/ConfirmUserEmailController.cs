@@ -1,5 +1,5 @@
-using AutoMapper;
-using FlowChat.API.Abstractions;
+﻿using AutoMapper;
+using FlowChat.Shared.API;
 using FlowChat.AuthService.Application.Features.Users.Commands.ConfirmUserEmail;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -35,3 +35,4 @@ public sealed class ConfirmUserEmailController : ApiControllerBase
             : HandleError(response.Error);
     }
 }
+

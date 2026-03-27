@@ -1,4 +1,4 @@
-using FlowChat.API.Abstractions;
+﻿using FlowChat.Shared.API;
 using FlowChat.RealtimeService.Application.Features.Presence.Commands.PublishPresenceChange;
 using FlowChat.RealtimeService.Infrastructure.Configuration;
 using MediatR;
@@ -53,3 +53,4 @@ public sealed class PublishPresenceChangeController(IMediator mediator, IApiSett
         return string.Equals(providedApiKey.ToString(), expectedApiKey, StringComparison.Ordinal);
     }
 }
+

@@ -1,5 +1,5 @@
-using FlowChat.API.Abstractions;
-using FlowChat.Application.Abstractions;
+﻿using FlowChat.Shared.API;
+using FlowChat.Shared.Application;
 using FlowChat.SocialGraphService.Api.Features.UserProfiles.Internal.UpsertUserProfileReadModel;
 using FlowChat.SocialGraphService.Application.Contracts.Persistence;
 using FlowChat.SocialGraphService.Application.Features.UserProfiles;
@@ -193,3 +193,4 @@ public sealed class UpsertUserProfileReadModelControllerTests
             };
     }
 }
+

@@ -1,4 +1,4 @@
-using FlowChat.Domain.Abstractions;
+﻿using FlowChat.Shared.Domain;
 using FlowChat.RealtimeService.Application.Features.Messages.Commands.PublishMessage;
 
 namespace FlowChat.RealtimeService.UnitTests;
@@ -53,3 +53,4 @@ public sealed class PublishMessageCommandHandlerTests
         Assert.Null(dispatcher.LastMessageNotification);
     }
 }
+

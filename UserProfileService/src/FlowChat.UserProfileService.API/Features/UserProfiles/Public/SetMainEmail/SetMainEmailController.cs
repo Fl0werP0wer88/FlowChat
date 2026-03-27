@@ -1,4 +1,4 @@
-using FlowChat.API.Abstractions;
+﻿using FlowChat.Shared.API;
 using FlowChat.UserProfileService.Application.Features.UserProfiles.Commands.SetMainEmail;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -33,3 +33,4 @@ public sealed class SetMainEmailController : ApiControllerBase
             : HandleError(result.Error);
     }
 }
+

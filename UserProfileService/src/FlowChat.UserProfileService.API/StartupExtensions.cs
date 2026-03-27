@@ -1,4 +1,4 @@
-using FlowChat.API.Abstractions;
+﻿using FlowChat.Shared.API;
 using FlowChat.UserProfileService.Application;
 using FlowChat.UserProfileService.Infrastructure.Configuration;
 using FlowChat.UserProfileService.Infrastructure;
@@ -64,4 +64,5 @@ public static class StartupExtensions
         await context.Database.MigrateAsync();
     }
 }
+
 

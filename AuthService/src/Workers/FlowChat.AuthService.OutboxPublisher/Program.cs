@@ -1,5 +1,5 @@
-using System.Data.Common;
-using FlowChat.API.Abstractions;
+﻿using System.Data.Common;
+using FlowChat.Shared.API;
 using FlowChat.AuthService.OutboxPublisher;
 using FlowChat.AuthService.OutboxPublisher.Configuration;
 using FlowChat.AuthService.OutboxPublisher.Diagnostics;
@@ -108,3 +108,4 @@ static string GetConnectionStringPart(DbConnectionStringBuilder builder, string 
         ? value.ToString() ?? "<missing>"
         : "<missing>";
 }
+

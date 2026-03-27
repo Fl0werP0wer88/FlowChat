@@ -1,5 +1,5 @@
-using CSharpFunctionalExtensions;
-using FlowChat.Domain.Abstractions;
+﻿using CSharpFunctionalExtensions;
+using FlowChat.Shared.Domain;
 
 namespace FlowChat.Core.Results;
 
@@ -39,3 +39,4 @@ public readonly struct FlowChatResult<TValue> :
 
     public override string ToString() => _innerResult.ToString();
 }
+

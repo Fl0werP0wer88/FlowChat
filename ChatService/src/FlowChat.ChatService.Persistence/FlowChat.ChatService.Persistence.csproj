@@ -1,9 +1,9 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
     <ProjectReference Include="..\FlowChat.ChatService.Application\FlowChat.ChatService.Application.csproj" />
     <ProjectReference Include="..\..\..\Common\src\FlowChat.Core\FlowChat.Core.csproj" />
-    <ProjectReference Include="..\..\..\Common\src\FlowChat.Persistence.EntityFrameworkCore\FlowChat.Persistence.EntityFrameworkCore.csproj" />
+    <ProjectReference Include="..\..\..\Common\src\FlowChat.Shared.Persistance\FlowChat.Shared.Persistance.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -26,3 +26,4 @@
   </PropertyGroup>
 
 </Project>
+

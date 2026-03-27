@@ -1,7 +1,7 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\Common\src\FlowChat.API.Abstractions\FlowChat.API.Abstractions.csproj" />
+    <ProjectReference Include="..\..\..\Common\src\FlowChat.Shared.API\FlowChat.Shared.API.csproj" />
     <ProjectReference Include="..\FlowChat.NotificationService.Infrastructure\FlowChat.NotificationService.Infrastructure.csproj" />
     <ProjectReference Include="..\FlowChat.NotificationService.Persistence\FlowChat.NotificationService.Persistence.csproj" />
     <ProjectReference Include="..\FlowChat.NotificationService.Application\FlowChat.NotificationService.Application.csproj" />
@@ -25,3 +25,4 @@
   </PropertyGroup>
 
 </Project>
+

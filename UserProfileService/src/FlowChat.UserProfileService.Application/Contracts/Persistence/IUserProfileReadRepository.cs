@@ -1,4 +1,4 @@
-using FlowChat.Application.Abstractions;
+﻿using FlowChat.Shared.Application;
 using FlowChat.UserProfileService.Application.Features.UserProfiles.Queries.GetUserProfile;
 
 namespace FlowChat.UserProfileService.Application.Contracts.Persistence;
@@ -12,3 +12,4 @@ public interface IUserProfileReadRepository : IReadRepository<UserProfileDto>
         Guid? excludedUserId = null,
         CancellationToken cancellationToken = default);
 }
+

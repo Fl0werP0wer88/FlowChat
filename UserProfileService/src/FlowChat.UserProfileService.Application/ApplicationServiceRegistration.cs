@@ -1,4 +1,4 @@
-using FlowChat.Application.Abstractions;
+﻿using FlowChat.Shared.Application;
 using FlowChat.UserProfileService.Application.Common.Eventing;
 using FlowChat.UserProfileService.Application.Features.UserProfiles.Commands.CreateInitialUserProfile;
 using Microsoft.Extensions.DependencyInjection;
@@ -39,3 +39,4 @@ public static class ApplicationServiceRegistration
         return services;
     }
 }
+

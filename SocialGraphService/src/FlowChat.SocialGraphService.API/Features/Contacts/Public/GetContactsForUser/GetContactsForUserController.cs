@@ -1,5 +1,5 @@
-using AutoMapper;
-using FlowChat.API.Abstractions;
+﻿using AutoMapper;
+using FlowChat.Shared.API;
 using FlowChat.SocialGraphService.Application.Features.Contacts.Queries.GetContactsForUser;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -33,3 +33,4 @@ public sealed class GetContactsForUserController : ApiControllerBase
             : HandleError(result.Error);
     }
 }
+

@@ -1,4 +1,4 @@
-using CSharpFunctionalExtensions;
+﻿using CSharpFunctionalExtensions;
 using AutoMapper;
 using FlowChat.AuthService.API.Features.Users.Public.ConfirmUserEmail;
 using FlowChat.AuthService.API.Features.Users.Public.LoginUser;
@@ -6,7 +6,7 @@ using FlowChat.AuthService.API.Features.Users.Public.RegisterUser;
 using FlowChat.AuthService.Application.Features.Users.Commands.ConfirmUserEmail;
 using FlowChat.AuthService.Application.Features.Users.Commands.LoginUser;
 using FlowChat.AuthService.Application.Features.Users.Commands.RegisterUser;
-using FlowChat.Domain.Abstractions;
+using FlowChat.Shared.Domain;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -195,3 +195,4 @@ public sealed class AuthControllersTests
         }
     }
 }
+

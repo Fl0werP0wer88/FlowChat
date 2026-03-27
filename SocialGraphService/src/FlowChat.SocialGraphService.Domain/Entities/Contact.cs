@@ -1,5 +1,5 @@
-using FlowChat.Domain.Abstractions;
-using FlowChat.Domain.Abstractions.ValueObjects;
+﻿using FlowChat.Shared.Domain;
+using FlowChat.Shared.Domain.ValueObjects;
 
 namespace FlowChat.SocialGraphService.Domain.Entities;
 
@@ -74,3 +74,4 @@ public class Contact : AggregateRootBase<Contact>
         return new Contact(id, ownerUserId, contactUserId, displayedName, firstName, lastName, phoneNumber, emailAddress, isBlocked);
     }
 }
+

@@ -1,8 +1,8 @@
-using CSharpFunctionalExtensions;
-using FlowChat.Application.Abstractions;
+﻿using CSharpFunctionalExtensions;
+using FlowChat.Shared.Application;
 using FlowChat.AuthService.Application.Contracts.Infrastructure;
 using FlowChat.AuthService.Application.Contracts.Persistence;
-using FlowChat.Domain.Abstractions;
+using FlowChat.Shared.Domain;
 
 namespace FlowChat.AuthService.Application.Features.Users.Commands.LoginUser;
 
@@ -46,3 +46,4 @@ public class LoginUserCommandHandler : CommandHandlerBase<LoginUserCommand, Logi
         return null;
     }
 }
+
