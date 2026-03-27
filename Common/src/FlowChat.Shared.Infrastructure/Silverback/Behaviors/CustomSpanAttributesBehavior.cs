@@ -3,7 +3,7 @@ using FlowChat.Messaging.Contracts;
 using Silverback.Messaging.Broker.Behaviors;
 using Silverback.Messaging.Messages;
 
-namespace FlowChat.API.Abstractions;
+namespace FlowChat.Shared.Infrastructure.Silverback.Behaviors;
 
 public sealed class CustomSpanAttributesBehavior : IProducerBehavior, IConsumerBehavior
 {

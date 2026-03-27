@@ -2,8 +2,8 @@ using Confluent.Kafka;
 using FlowChat.RealtimeService.Consumers.Configuration;
 using FlowChat.RealtimeService.Consumers.Kafka;
 using FlowChat.RealtimeService.Consumers.Services;
-using FlowChat.Workers.Abstractions.Kafka;
-using FlowChat.API.Abstractions;
+using FlowChat.Shared.Infrastructure.Silverback.Kafka;
+using FlowChat.Shared.Infrastructure.Silverback.Behaviors;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -84,4 +84,5 @@ public static class ConsumersServiceRegistration
             ? parsed
             : AutoOffsetReset.Earliest;
 }
+
 

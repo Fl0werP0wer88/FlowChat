@@ -1,6 +1,6 @@
 using FlowChat.ChatService.Persistence;
 using FlowChat.Messaging.Contracts.ChatService.Events;
-using FlowChat.API.Abstractions;
+using FlowChat.Shared.Infrastructure.Silverback.Behaviors;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -42,4 +42,5 @@ public static class SilverbackServiceRegistration
         return services;
     }
 }
+
 

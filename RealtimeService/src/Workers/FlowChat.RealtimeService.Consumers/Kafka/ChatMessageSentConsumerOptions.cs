@@ -1,4 +1,4 @@
-using FlowChat.Workers.Abstractions.Kafka;
+using FlowChat.Shared.Infrastructure.Silverback.Kafka;
 
 namespace FlowChat.RealtimeService.Consumers.Kafka;
 

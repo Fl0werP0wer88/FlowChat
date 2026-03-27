@@ -2,7 +2,7 @@ using FlowChat.Core.Exceptions;
 using Silverback.Messaging.Configuration;
 using Silverback.Messaging.Configuration.Kafka;
 
-namespace FlowChat.Workers.Abstractions.Kafka;
+namespace FlowChat.Shared.Infrastructure.Silverback.Kafka;
 
 public static class KafkaConsumerEndpointConfigurationBuilderExtensions
 {

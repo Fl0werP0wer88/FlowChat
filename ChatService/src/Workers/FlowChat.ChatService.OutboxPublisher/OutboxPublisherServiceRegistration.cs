@@ -1,7 +1,7 @@
 using FlowChat.ChatService.OutboxPublisher.Configuration;
 using FlowChat.ChatService.Persistence;
 using FlowChat.Messaging.Contracts.ChatService.Events;
-using FlowChat.API.Abstractions;
+using FlowChat.Shared.Infrastructure.Silverback.Behaviors;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Silverback.Configuration;
@@ -59,4 +59,5 @@ public static class OutboxPublisherServiceRegistration
         return services;
     }
 }
+
 

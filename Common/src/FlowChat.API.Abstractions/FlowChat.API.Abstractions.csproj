@@ -6,7 +6,6 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\FlowChat.Domain.Abstractions\FlowChat.Domain.Abstractions.csproj" />
-    <ProjectReference Include="..\FlowChat.Messaging.Contracts\FlowChat.Messaging.Contracts.csproj" />
   </ItemGroup>
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
@@ -16,8 +15,5 @@
     <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.15.0" />
     <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.15.0" />
     <PackageReference Include="OpenTelemetry.Instrumentation.Http" Version="1.15.0" />
-  </ItemGroup>
-  <ItemGroup>
-    <PackageReference Include="Silverback.Integration" Version="5.0.0" />
   </ItemGroup>
 </Project>

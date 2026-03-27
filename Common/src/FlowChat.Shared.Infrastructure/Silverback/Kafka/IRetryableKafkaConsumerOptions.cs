@@ -1,4 +1,4 @@
-namespace FlowChat.Workers.Abstractions.Kafka;
+namespace FlowChat.Shared.Infrastructure.Silverback.Kafka;
 
 public interface IRetryableKafkaConsumerOptions
 {

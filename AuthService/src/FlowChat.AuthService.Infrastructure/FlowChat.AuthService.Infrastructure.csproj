@@ -1,9 +1,9 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
     <ProjectReference Include="..\FlowChat.AuthService.Application\FlowChat.AuthService.Application.csproj" />
     <ProjectReference Include="..\FlowChat.AuthService.Persistence\FlowChat.AuthService.Persistence.csproj" />
     <ProjectReference Include="..\..\..\Common\src\FlowChat.Messaging.Contracts\FlowChat.Messaging.Contracts.csproj" />
-    <ProjectReference Include="..\..\..\Common\src\FlowChat.API.Abstractions\FlowChat.API.Abstractions.csproj" />
+    <ProjectReference Include="..\..\..\Common\src\FlowChat.Shared.Infrastructure\FlowChat.Shared.Infrastructure.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Confluent.Kafka" Version="2.13.1" />

@@ -1,17 +1,14 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
-
   <ItemGroup>
-    <Compile Remove="Kafka\KafkaConsumerEndpointConfigurationBuilderExtensions.cs" />
+    <ProjectReference Include="..\FlowChat.Core\FlowChat.Core.csproj" />
+    <ProjectReference Include="..\FlowChat.Messaging.Contracts\FlowChat.Messaging.Contracts.csproj" />
   </ItemGroup>
-
   <ItemGroup>
-    <None Include="Kafka\KafkaConsumerEndpointConfigurationBuilderExtensions.cs" />
+    <PackageReference Include="Silverback.Integration.Kafka" Version="5.0.0" />
   </ItemGroup>
-
 </Project>
