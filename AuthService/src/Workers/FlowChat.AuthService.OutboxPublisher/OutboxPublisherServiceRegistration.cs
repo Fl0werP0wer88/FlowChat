@@ -1,6 +1,7 @@
 using FlowChat.AuthService.OutboxPublisher.Configuration;
 using FlowChat.AuthService.Persistence;
 using FlowChat.Messaging.Contracts.AuthService.Events;
+using FlowChat.API.Abstractions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Silverback.Configuration;
@@ -36,6 +37,7 @@ public static class OutboxPublisherServiceRegistration
             .BindConfiguration(UserEmailVerificationRequestedProducerOptions.SectionName);
 
         services.AddSilverback()
+            .AddSingletonBrokerBehavior<CustomSpanAttributesBehavior>()
             .WithConnectionToMessageBroker(options =>
             {
                 options.AddKafka();
@@ -83,3 +85,4 @@ public static class OutboxPublisherServiceRegistration
         return services;
     }
 }
+

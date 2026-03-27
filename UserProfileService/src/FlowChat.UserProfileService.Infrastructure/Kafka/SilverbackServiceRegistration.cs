@@ -1,5 +1,6 @@
 using FlowChat.Messaging.Contracts.UserProfileService.Events;
 using FlowChat.UserProfileService.Persistence;
+using FlowChat.API.Abstractions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Silverback.Configuration;
@@ -22,6 +23,7 @@ public static class SilverbackServiceRegistration
             : stateChangedProducerOptions.BootstrapServers;
 
         services.AddSilverback()
+            .AddSingletonBrokerBehavior<CustomSpanAttributesBehavior>()
             .WithConnectionToMessageBroker(options =>
             {
                 options.AddKafka();
@@ -48,3 +50,4 @@ public static class SilverbackServiceRegistration
         return services;
     }
 }
+

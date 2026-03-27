@@ -3,6 +3,7 @@ using FlowChat.SocialGraphService.Consumers.Configuration;
 using FlowChat.SocialGraphService.Consumers.Kafka;
 using FlowChat.SocialGraphService.Consumers.Services;
 using FlowChat.Workers.Abstractions.Kafka;
+using FlowChat.API.Abstractions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Silverback.Configuration;
@@ -26,6 +27,7 @@ public static class ConsumersServiceRegistration
         services.AddHttpClient<ISocialGraphInternalApiClient, SocialGraphInternalApiClient>();
 
         services.AddSilverback()
+            .AddSingletonBrokerBehavior<CustomSpanAttributesBehavior>()
             .WithConnectionToMessageBroker(options => options.AddKafka())
             .AddKafkaClients(clients =>
             {
@@ -58,3 +60,4 @@ public static class ConsumersServiceRegistration
             ? parsed
             : AutoOffsetReset.Earliest;
 }
+

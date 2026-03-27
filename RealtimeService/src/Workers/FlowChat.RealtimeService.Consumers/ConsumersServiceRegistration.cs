@@ -3,6 +3,7 @@ using FlowChat.RealtimeService.Consumers.Configuration;
 using FlowChat.RealtimeService.Consumers.Kafka;
 using FlowChat.RealtimeService.Consumers.Services;
 using FlowChat.Workers.Abstractions.Kafka;
+using FlowChat.API.Abstractions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -26,6 +27,7 @@ public static class ConsumersServiceRegistration
         services.AddHttpClient<IRealtimeInternalApiClient, RealtimeInternalApiClient>();
 
         services.AddSilverback()
+            .AddSingletonBrokerBehavior<CustomSpanAttributesBehavior>()
             .WithConnectionToMessageBroker(options => options.AddKafka())
             .AddKafkaClients(clients =>
             {
@@ -82,3 +84,4 @@ public static class ConsumersServiceRegistration
             ? parsed
             : AutoOffsetReset.Earliest;
 }
+

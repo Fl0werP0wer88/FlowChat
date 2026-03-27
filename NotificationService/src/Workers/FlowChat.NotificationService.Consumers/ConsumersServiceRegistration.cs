@@ -3,6 +3,7 @@ using FlowChat.NotificationService.Consumers.Configuration;
 using FlowChat.NotificationService.Consumers.Kafka;
 using FlowChat.NotificationService.Consumers.Services;
 using FlowChat.Workers.Abstractions.Kafka;
+using FlowChat.API.Abstractions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Silverback.Configuration;
@@ -26,6 +27,7 @@ public static class ConsumersServiceRegistration
         services.AddHttpClient<INotificationInternalApiClient, NotificationInternalApiClient>();
 
         services.AddSilverback()
+            .AddSingletonBrokerBehavior<CustomSpanAttributesBehavior>()
             .WithConnectionToMessageBroker(options => options.AddKafka())
             .AddKafkaClients(clients =>
             {
@@ -58,3 +60,4 @@ public static class ConsumersServiceRegistration
             ? parsed
             : AutoOffsetReset.Earliest;
 }
+

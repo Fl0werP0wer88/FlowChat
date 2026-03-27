@@ -1,5 +1,6 @@
 using FlowChat.AuthService.Persistence;
 using FlowChat.Messaging.Contracts.AuthService.Events;
+using FlowChat.API.Abstractions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -22,6 +23,7 @@ public static class SilverbackServiceRegistration
         var emailVerificationOptions = settingsManager.GetUserEmailVerificationRequestedProducerOptions();
 
         services.AddSilverback()
+            .AddSingletonBrokerBehavior<CustomSpanAttributesBehavior>()
             .WithConnectionToMessageBroker(options =>
             {
                 options.AddKafka();
@@ -66,3 +68,4 @@ public static class SilverbackServiceRegistration
     }
 
 }
+

@@ -1,6 +1,7 @@
 using FlowChat.ChatService.OutboxPublisher.Configuration;
 using FlowChat.ChatService.Persistence;
 using FlowChat.Messaging.Contracts.ChatService.Events;
+using FlowChat.API.Abstractions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Silverback.Configuration;
@@ -30,6 +31,7 @@ public static class OutboxPublisherServiceRegistration
             .BindConfiguration(ChatMessageSentProducerOptions.SectionName);
 
         services.AddSilverback()
+            .AddSingletonBrokerBehavior<CustomSpanAttributesBehavior>()
             .WithConnectionToMessageBroker(options =>
             {
                 options.AddKafka();
@@ -57,3 +59,4 @@ public static class OutboxPublisherServiceRegistration
         return services;
     }
 }
+
