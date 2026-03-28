@@ -25,33 +25,6 @@ public class Email : EntityBase<Email>
 
     public static Email Create(
         Id<UserProfile> userProfileId,
-        string address,
-        bool isMain = false,
-        Id<Email>? id = null)
-    {
-        return new Email(id, userProfileId, EmailAddress.Create(address), isMain);
-    }
-
-    public static Email Create(
-        Id<UserProfile> userProfileId,
-        EmailAddress address,
-        bool isMain = false,
-        Id<Email>? id = null)
-    {
-        return new Email(id, userProfileId, address, isMain);
-    }
-
-    public static Email Rehydrate(
-        Id<UserProfile> userProfileId,
-        string address,
-        bool isMain = false,
-        Id<Email>? id = null)
-    {
-        return new Email(id, userProfileId, EmailAddress.Create(address), isMain);
-    }
-
-    public static Email Rehydrate(
-        Id<UserProfile> userProfileId,
         EmailAddress address,
         bool isMain = false,
         Id<Email>? id = null)

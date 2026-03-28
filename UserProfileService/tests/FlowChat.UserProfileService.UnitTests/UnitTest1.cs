@@ -11,7 +11,7 @@ public class UnitTest1
     public void UserProfile_Create_WithTypedId_AssignsTypedAggregateId()
     {
         var id = Id<UserProfile>.New();
-        var email = Email.Create(id, "john@example.com", isMain: true);
+        var email = Email.Create(id, EmailAddress.Create("john@example.com"), isMain: true);
 
         var profile = UserProfile.Create("jdoe", "John Doe", emails: [email], id: id);
 
@@ -34,7 +34,7 @@ public class UnitTest1
     {
         var userProfileId = Id<UserProfile>.New();
 
-        var exception = Assert.Throws<ArgumentException>(() => Email.Create(userProfileId, "not-an-email"));
+        var exception = Assert.Throws<ArgumentException>(() => EmailAddress.Create("not-an-email"));
 
         Assert.StartsWith(EmailAddress.InvalidEmailAddressMessage, exception.Message, StringComparison.Ordinal);
     }
@@ -44,7 +44,7 @@ public class UnitTest1
     {
         var userProfileId = Id<UserProfile>.New();
 
-        var email = Email.Create(userProfileId, " john@example.com ");
+        var email = Email.Create(userProfileId, EmailAddress.Create(" john@example.com "));
 
         Assert.Equal("john@example.com", email.Address.Value);
     }
@@ -261,7 +261,7 @@ public class UnitTest1
     public void UserProfile_Create_WithEmailAndPhone_EmitsUserProfileCreatedDomainEvent()
     {
         var id = Id<UserProfile>.New();
-        var email = Email.Create(id, "john@example.com", isMain: true);
+        var email = Email.Create(id, EmailAddress.Create("john@example.com"), isMain: true);
         var phone = Phone.Create(id, "+48123123123", isMain: true);
 
         var profile = UserProfile.Create(
@@ -299,7 +299,7 @@ public class UnitTest1
     public void UserProfile_Create_WithEmailOnly_EmitsUserProfileCreatedDomainEvent()
     {
         var id = Id<UserProfile>.New();
-        var email = Email.Create(id, "john@example.com", isMain: true);
+        var email = Email.Create(id, EmailAddress.Create("john@example.com"), isMain: true);
 
         var profile = UserProfile.Create("jdoe", "John Doe", emails: [email], id: id);
 
