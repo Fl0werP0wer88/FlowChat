@@ -1,10 +1,12 @@
 using System.Text;
 using FlowChat.GatewayService.Api.Configuration;
+using FlowChat.GatewayService.Api.Observability;
 using FlowChat.Shared.API;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
+using OpenTelemetry.Instrumentation.AspNetCore;
 
 namespace FlowChat.GatewayService.Api;
 
@@ -16,6 +18,7 @@ public static class StartupExtensions
     public static WebApplication ConfigureServices(this WebApplicationBuilder builder)
     {
         builder.AddFlowChatOpenTelemetry();
+        builder.Services.Configure<AspNetCoreTraceInstrumentationOptions>(GatewayTraceEnrichment.Configure);
 
         var jwtSettings = builder.Configuration
             .GetSection(JwtSettings.SectionName)
