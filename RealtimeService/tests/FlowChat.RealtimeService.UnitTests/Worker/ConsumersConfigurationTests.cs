@@ -1,5 +1,6 @@
 using System.Collections;
 using FlowChat.RealtimeService.Consumers;
+using FlowChat.RealtimeService.Consumers.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Silverback.Messaging.Broker;
@@ -89,5 +90,54 @@ public sealed class ConsumersConfigurationTests
                 }
             }
         }
+    }
+
+    [Fact]
+    public async Task AddConsumers_RegistersRealtimeInternalApiNamedClient()
+    {
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["RealtimeApi:BaseUrl"] = "http://localhost:5215",
+                ["RealtimeApi:ApiKey"] = "worker-key",
+                ["Kafka:ChatMessageSentConsumer:BootstrapServers"] = "localhost:9092",
+                ["Kafka:ChatMessageSentConsumer:GroupId"] = "realtime-service",
+                ["Kafka:ChatMessageSentConsumer:RetryGroupId"] = "realtime-service-retry",
+                ["Kafka:ChatMessageSentConsumer:Topic"] = "dev.flowchat.chat.message.v1",
+                ["Kafka:ChatMessageSentConsumer:RetryTopic"] = "dev.flowchat.chat.message.v1.retry",
+                ["Kafka:ChatMessageSentConsumer:DeadLetterTopic"] = "dev.flowchat.chat.message.v1.dlq",
+                ["Kafka:ChatMessageSentConsumer:MaxRetryCount"] = "5",
+                ["Kafka:ChatMessageSentConsumer:RetryBaseDelaySeconds"] = "5",
+                ["Kafka:ChatMessageSentConsumer:RetryMaxDelaySeconds"] = "300",
+                ["Kafka:ChatMessageSentConsumer:AutoOffsetReset"] = "Earliest",
+                ["Kafka:UserPresenceChangedConsumer:BootstrapServers"] = "localhost:9092",
+                ["Kafka:UserPresenceChangedConsumer:GroupId"] = "realtime-service",
+                ["Kafka:UserPresenceChangedConsumer:RetryGroupId"] = "realtime-service-retry",
+                ["Kafka:UserPresenceChangedConsumer:Topic"] = "dev.flowchat.user-profile.presence-changed.v1",
+                ["Kafka:UserPresenceChangedConsumer:RetryTopic"] = "dev.flowchat.user-profile.presence-changed.v1.retry",
+                ["Kafka:UserPresenceChangedConsumer:DeadLetterTopic"] = "dev.flowchat.user-profile.presence-changed.v1.dlq",
+                ["Kafka:UserPresenceChangedConsumer:MaxRetryCount"] = "5",
+                ["Kafka:UserPresenceChangedConsumer:RetryBaseDelaySeconds"] = "5",
+                ["Kafka:UserPresenceChangedConsumer:RetryMaxDelaySeconds"] = "300",
+                ["Kafka:UserPresenceChangedConsumer:AutoOffsetReset"] = "Earliest"
+            })
+            .Build();
+
+        var services = new ServiceCollection();
+        services.AddSingleton<IConfiguration>(configuration);
+        services.AddOptions();
+        services.AddLogging();
+        services.AddConsumers(configuration);
+
+        await using var serviceProvider = services.BuildServiceProvider();
+
+        var internalApiClient = serviceProvider.GetRequiredService<IRealtimeInternalApiClient>();
+        var httpClient = serviceProvider
+            .GetRequiredService<IHttpClientFactory>()
+            .CreateClient(RealtimeInternalApiClient.HttpClientName);
+
+        Assert.NotNull(internalApiClient);
+        Assert.Equal(new Uri("http://localhost:5215"), httpClient.BaseAddress);
+        Assert.Equal("worker-key", httpClient.DefaultRequestHeaders.GetValues(RealtimeInternalApiClient.ApiKeyHeaderName).Single());
     }
 }

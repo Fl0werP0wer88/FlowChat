@@ -1,6 +1,7 @@
 using System.Collections;
 using FlowChat.SocialGraphService.Consumers;
 using FlowChat.SocialGraphService.Consumers.Kafka;
+using FlowChat.SocialGraphService.Consumers.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Silverback.Messaging.Broker;
@@ -117,5 +118,44 @@ public sealed class UserProfileConsumerConfigurationTests
         }
 
         throw new InvalidOperationException($"Could not locate file '{relativePath}' starting from '{AppContext.BaseDirectory}'.");
+    }
+
+    [Fact]
+    public async Task AddConsumers_RegistersSocialGraphInternalApiNamedClient()
+    {
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["SocialGraphApi:BaseUrl"] = "https://localhost:7194",
+                ["SocialGraphApi:ApiKey"] = "worker-key",
+                ["Kafka:UserProfileConsumer:BootstrapServers"] = "localhost:9092",
+                ["Kafka:UserProfileConsumer:GroupId"] = "socialgraph-service",
+                ["Kafka:UserProfileConsumer:RetryGroupId"] = "socialgraph-service-retry",
+                ["Kafka:UserProfileConsumer:Topic"] = "dev.flowchat.user-profile.user-profile.v1",
+                ["Kafka:UserProfileConsumer:RetryTopic"] = "dev.flowchat.user-profile.user-profile.v1.retry",
+                ["Kafka:UserProfileConsumer:DeadLetterTopic"] = "dev.flowchat.user-profile.user-profile.v1.dlq",
+                ["Kafka:UserProfileConsumer:MaxRetryCount"] = "5",
+                ["Kafka:UserProfileConsumer:RetryBaseDelaySeconds"] = "5",
+                ["Kafka:UserProfileConsumer:RetryMaxDelaySeconds"] = "300",
+                ["Kafka:UserProfileConsumer:AutoOffsetReset"] = "Earliest"
+            })
+            .Build();
+
+        var services = new ServiceCollection();
+        services.AddSingleton<IConfiguration>(configuration);
+        services.AddOptions();
+        services.AddLogging();
+        services.AddConsumers(configuration);
+
+        await using var serviceProvider = services.BuildServiceProvider();
+
+        var internalApiClient = serviceProvider.GetRequiredService<ISocialGraphInternalApiClient>();
+        var httpClient = serviceProvider
+            .GetRequiredService<IHttpClientFactory>()
+            .CreateClient(SocialGraphInternalApiClient.HttpClientName);
+
+        Assert.NotNull(internalApiClient);
+        Assert.Equal(new Uri("https://localhost:7194"), httpClient.BaseAddress);
+        Assert.Equal("worker-key", httpClient.DefaultRequestHeaders.GetValues(SocialGraphInternalApiClient.ApiKeyHeaderName).Single());
     }
 }

@@ -1,10 +1,8 @@
 using System.Net;
 using System.Text.Json;
 using FlowChat.Core.Exceptions;
-using FlowChat.NotificationService.Consumers.Configuration;
 using FlowChat.NotificationService.Consumers.NotificationApi.Contracts;
 using FlowChat.NotificationService.Consumers.Services;
-using Microsoft.Extensions.Options;
 
 namespace FlowChat.NotificationService.UnitTests;
 
@@ -19,13 +17,13 @@ public sealed class NotificationInternalApiClientTests
             requestBody = await request.Content!.ReadAsStringAsync();
             return new HttpResponseMessage(HttpStatusCode.Accepted);
         });
-        var client = new NotificationInternalApiClient(
-            new HttpClient(handler),
-            Options.Create(new NotificationApiSettings
-            {
-                BaseUrl = "https://localhost:7206",
-                ApiKey = "internal-key"
-            }));
+        var httpClient = new HttpClient(handler)
+        {
+            BaseAddress = new Uri("https://localhost:7206")
+        };
+        httpClient.DefaultRequestHeaders.Add(NotificationInternalApiClient.ApiKeyHeaderName, "internal-key");
+
+        var client = new NotificationInternalApiClient(httpClient);
 
         await client.ProcessUserEmailVerificationRequestedAsync(
             new ProcessUserEmailVerificationRequestedRequest
@@ -62,12 +60,10 @@ public sealed class NotificationInternalApiClientTests
             {
                 Content = new StringContent("bad request")
             }));
-        var client = new NotificationInternalApiClient(
-            new HttpClient(handler),
-            Options.Create(new NotificationApiSettings
-            {
-                BaseUrl = "https://localhost:7206"
-            }));
+        var client = new NotificationInternalApiClient(new HttpClient(handler)
+        {
+            BaseAddress = new Uri("https://localhost:7206")
+        });
 
         var exception = await Assert.ThrowsAsync<NonTransientException>(() =>
             client.ProcessUserEmailVerificationRequestedAsync(

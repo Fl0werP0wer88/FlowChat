@@ -24,7 +24,29 @@ public static class ConsumersServiceRegistration
         var chatMessageSentConsumerOptions = settingsManager.GetChatMessageSentConsumerOptions();
         var userPresenceChangedConsumerOptions = settingsManager.GetUserPresenceChangedConsumerOptions();
 
-        services.AddHttpClient<IRealtimeInternalApiClient, RealtimeInternalApiClient>();
+        services.AddHttpClient(RealtimeInternalApiClient.HttpClientName, (serviceProvider, httpClient) =>
+        {
+            var realtimeApiSettings = serviceProvider
+                .GetRequiredService<IConsumersSettingsManager>()
+                .GetRealtimeApiSettings();
+            if (!Uri.TryCreate(realtimeApiSettings.BaseUrl, UriKind.Absolute, out var baseAddress))
+            {
+                throw new InvalidOperationException("RealtimeApi:BaseUrl must be an absolute URI.");
+            }
+
+            httpClient.BaseAddress = baseAddress;
+            httpClient.DefaultRequestHeaders.Remove(RealtimeInternalApiClient.ApiKeyHeaderName);
+
+            if (!string.IsNullOrWhiteSpace(realtimeApiSettings.ApiKey))
+            {
+                httpClient.DefaultRequestHeaders.Add(RealtimeInternalApiClient.ApiKeyHeaderName, realtimeApiSettings.ApiKey);
+            }
+        });
+        services.AddScoped<IRealtimeInternalApiClient>(serviceProvider =>
+            new RealtimeInternalApiClient(
+                serviceProvider
+                    .GetRequiredService<IHttpClientFactory>()
+                    .CreateClient(RealtimeInternalApiClient.HttpClientName)));
 
         services.AddSilverback()
             .AddSingletonBrokerBehavior<CustomSpanAttributesBehavior>()

@@ -6,6 +6,7 @@ using FlowChat.Shared.Infrastructure.Silverback.Kafka;
 using FlowChat.Shared.Infrastructure.Silverback.Behaviors;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using Silverback.Configuration;
 using Silverback.Messaging.Configuration;
 
@@ -24,7 +25,27 @@ public static class ConsumersServiceRegistration
 
         services.AddOptions<SocialGraphApiSettings>()
             .BindConfiguration(SocialGraphApiSettings.SectionName);
-        services.AddHttpClient<ISocialGraphInternalApiClient, SocialGraphInternalApiClient>();
+        services.AddHttpClient(SocialGraphInternalApiClient.HttpClientName, (serviceProvider, httpClient) =>
+        {
+            var apiSettings = serviceProvider.GetRequiredService<IOptions<SocialGraphApiSettings>>().Value;
+            if (!Uri.TryCreate(apiSettings.BaseUrl, UriKind.Absolute, out var baseAddress))
+            {
+                throw new InvalidOperationException("SocialGraphApi:BaseUrl must be an absolute URI.");
+            }
+
+            httpClient.BaseAddress = baseAddress;
+            httpClient.DefaultRequestHeaders.Remove(SocialGraphInternalApiClient.ApiKeyHeaderName);
+
+            if (!string.IsNullOrWhiteSpace(apiSettings.ApiKey))
+            {
+                httpClient.DefaultRequestHeaders.Add(SocialGraphInternalApiClient.ApiKeyHeaderName, apiSettings.ApiKey);
+            }
+        });
+        services.AddScoped<ISocialGraphInternalApiClient>(serviceProvider =>
+            new SocialGraphInternalApiClient(
+                serviceProvider
+                    .GetRequiredService<IHttpClientFactory>()
+                    .CreateClient(SocialGraphInternalApiClient.HttpClientName)));
 
         services.AddSilverback()
             .AddSingletonBrokerBehavior<CustomSpanAttributesBehavior>()

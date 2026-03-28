@@ -1,6 +1,7 @@
 using System.Collections;
 using FlowChat.NotificationService.Consumers;
 using FlowChat.NotificationService.Consumers.Kafka;
+using FlowChat.NotificationService.Consumers.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Silverback.Messaging.Broker;
@@ -117,5 +118,44 @@ public sealed class NotificationConsumerConfigurationTests
         }
 
         throw new InvalidOperationException($"Could not locate file '{relativePath}' starting from '{AppContext.BaseDirectory}'.");
+    }
+
+    [Fact]
+    public async Task AddConsumers_RegistersNotificationInternalApiNamedClient()
+    {
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["NotificationApi:BaseUrl"] = "https://localhost:7206",
+                ["NotificationApi:ApiKey"] = "worker-key",
+                ["Kafka:UserEmailVerificationRequestedConsumer:BootstrapServers"] = "localhost:9092",
+                ["Kafka:UserEmailVerificationRequestedConsumer:GroupId"] = "notification-service",
+                ["Kafka:UserEmailVerificationRequestedConsumer:RetryGroupId"] = "notification-service-retry",
+                ["Kafka:UserEmailVerificationRequestedConsumer:Topic"] = "dev.flowchat.notification.email.v1",
+                ["Kafka:UserEmailVerificationRequestedConsumer:RetryTopic"] = "dev.flowchat.notification.email.v1.retry",
+                ["Kafka:UserEmailVerificationRequestedConsumer:DeadLetterTopic"] = "dev.flowchat.notification.email.v1.dlq",
+                ["Kafka:UserEmailVerificationRequestedConsumer:MaxRetryCount"] = "5",
+                ["Kafka:UserEmailVerificationRequestedConsumer:RetryBaseDelaySeconds"] = "5",
+                ["Kafka:UserEmailVerificationRequestedConsumer:RetryMaxDelaySeconds"] = "300",
+                ["Kafka:UserEmailVerificationRequestedConsumer:AutoOffsetReset"] = "Earliest"
+            })
+            .Build();
+
+        var services = new ServiceCollection();
+        services.AddSingleton<IConfiguration>(configuration);
+        services.AddOptions();
+        services.AddLogging();
+        services.AddConsumers(configuration);
+
+        await using var serviceProvider = services.BuildServiceProvider();
+
+        var internalApiClient = serviceProvider.GetRequiredService<INotificationInternalApiClient>();
+        var httpClient = serviceProvider
+            .GetRequiredService<IHttpClientFactory>()
+            .CreateClient(NotificationInternalApiClient.HttpClientName);
+
+        Assert.NotNull(internalApiClient);
+        Assert.Equal(new Uri("https://localhost:7206"), httpClient.BaseAddress);
+        Assert.Equal("worker-key", httpClient.DefaultRequestHeaders.GetValues(NotificationInternalApiClient.ApiKeyHeaderName).Single());
     }
 }

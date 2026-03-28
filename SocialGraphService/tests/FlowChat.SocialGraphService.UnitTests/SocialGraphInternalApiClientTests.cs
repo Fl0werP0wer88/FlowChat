@@ -1,10 +1,8 @@
 using System.Net;
 using System.Text.Json;
 using FlowChat.Core.Exceptions;
-using FlowChat.SocialGraphService.Consumers.Configuration;
 using FlowChat.SocialGraphService.Consumers.Services;
 using FlowChat.SocialGraphService.Consumers.SocialGraph.Contracts;
-using Microsoft.Extensions.Options;
 
 namespace FlowChat.SocialGraphService.UnitTests;
 
@@ -19,13 +17,13 @@ public sealed class SocialGraphInternalApiClientTests
             requestBody = await request.Content!.ReadAsStringAsync();
             return new HttpResponseMessage(HttpStatusCode.Accepted);
         });
-        var client = new SocialGraphInternalApiClient(
-            new HttpClient(handler),
-            Options.Create(new SocialGraphApiSettings
-            {
-                BaseUrl = "https://localhost:7194",
-                ApiKey = "internal-key"
-            }));
+        var httpClient = new HttpClient(handler)
+        {
+            BaseAddress = new Uri("https://localhost:7194")
+        };
+        httpClient.DefaultRequestHeaders.Add(SocialGraphInternalApiClient.ApiKeyHeaderName, "internal-key");
+
+        var client = new SocialGraphInternalApiClient(httpClient);
 
         await client.UpsertUserProfileReadModelAsync(
             new UpsertUserProfileReadModelRequest
@@ -56,12 +54,10 @@ public sealed class SocialGraphInternalApiClientTests
             {
                 Content = new StringContent("bad request")
             }));
-        var client = new SocialGraphInternalApiClient(
-            new HttpClient(handler),
-            Options.Create(new SocialGraphApiSettings
-            {
-                BaseUrl = "https://localhost:7194"
-            }));
+        var client = new SocialGraphInternalApiClient(new HttpClient(handler)
+        {
+            BaseAddress = new Uri("https://localhost:7194")
+        });
 
         var exception = await Assert.ThrowsAsync<NonTransientException>(() =>
             client.UpsertUserProfileReadModelAsync(new UpsertUserProfileReadModelRequest(), CancellationToken.None));

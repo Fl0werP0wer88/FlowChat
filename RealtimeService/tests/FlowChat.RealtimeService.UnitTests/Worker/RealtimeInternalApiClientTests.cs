@@ -1,10 +1,8 @@
 using System.Net;
 using System.Text.Json;
 using FlowChat.Core.Exceptions;
-using FlowChat.RealtimeService.Consumers.Configuration;
 using FlowChat.RealtimeService.Consumers.Realtime.Contracts;
 using FlowChat.RealtimeService.Consumers.Services;
-using Microsoft.Extensions.Configuration;
 
 namespace FlowChat.RealtimeService.UnitTests;
 
@@ -19,15 +17,12 @@ public sealed class RealtimeInternalApiClientTests
             requestBody = await request.Content!.ReadAsStringAsync();
             return new HttpResponseMessage(HttpStatusCode.Accepted);
         });
-        var httpClient = new HttpClient(handler);
-        var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                ["RealtimeApi:BaseUrl"] = "http://localhost:5215",
-                ["RealtimeApi:ApiKey"] = "internal-key"
-            })
-            .Build();
-        var client = new RealtimeInternalApiClient(httpClient, new ConsumersSettingsManager(configuration));
+        var httpClient = new HttpClient(handler)
+        {
+            BaseAddress = new Uri("http://localhost:5215")
+        };
+        httpClient.DefaultRequestHeaders.Add(RealtimeInternalApiClient.ApiKeyHeaderName, "internal-key");
+        var client = new RealtimeInternalApiClient(httpClient);
 
         await client.PublishMessageAsync(
             new PublishMessageRequest
@@ -61,14 +56,10 @@ public sealed class RealtimeInternalApiClientTests
             {
                 Content = new StringContent("bad request")
             }));
-        var httpClient = new HttpClient(handler);
-        var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                ["RealtimeApi:BaseUrl"] = "http://localhost:5215"
-            })
-            .Build();
-        var client = new RealtimeInternalApiClient(httpClient, new ConsumersSettingsManager(configuration));
+        var client = new RealtimeInternalApiClient(new HttpClient(handler)
+        {
+            BaseAddress = new Uri("http://localhost:5215")
+        });
 
         var exception = await Assert.ThrowsAsync<NonTransientException>(() =>
             client.PublishMessageAsync(new PublishMessageRequest(), CancellationToken.None));
