@@ -1,5 +1,6 @@
 using System.Text;
 using FlowChat.GatewayService.Api.Configuration;
+using FlowChat.Shared.API;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
@@ -14,6 +15,8 @@ public static class StartupExtensions
 
     public static WebApplication ConfigureServices(this WebApplicationBuilder builder)
     {
+        builder.AddFlowChatOpenTelemetry();
+
         var jwtSettings = builder.Configuration
             .GetSection(JwtSettings.SectionName)
             .Get<JwtSettings>()
