@@ -5,12 +5,20 @@ namespace FlowChat.Shared.Infrastructure.Http;
 
 public abstract class ConsumerHttpClientBase(HttpClient httpClient)
 {
+    private static readonly IReadOnlySet<HttpStatusCode> DefaultNonTransientStatusCodes =
+        new HashSet<HttpStatusCode>
+        {
+            HttpStatusCode.BadRequest,
+            HttpStatusCode.Conflict,
+            HttpStatusCode.Unauthorized
+        };
+
     private readonly HttpClient _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
 
     protected virtual string ClientDisplayName => "Consumer API";
 
     protected virtual IReadOnlySet<HttpStatusCode> NonTransientStatusCodes =>
-        new HashSet<HttpStatusCode>();
+        DefaultNonTransientStatusCodes;
 
     protected async Task SendAsync(
         HttpRequestMessage request,
