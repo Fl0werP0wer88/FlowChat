@@ -19,6 +19,7 @@ public sealed class DomainEventToIntegrationEventProfile : Profile
             .ForMember(destination => destination.UserName, options => options.MapFrom(source => source.AggregateState.UserName))
             .ForMember(destination => destination.DisplayName, options => options.MapFrom(source => source.AggregateState.DisplayName))
             .ForMember(destination => destination.MainEmail, options => options.MapFrom(source => source.AggregateState.MainEmail))
+            .ForMember(destination => destination.IsMainEmailConfirmed, options => options.MapFrom(source => source.AggregateState.IsMainEmailConfirmed))
             .ForMember(destination => destination.MainPhone, options => options.MapFrom(source => source.AggregateState.MainPhone))
             .ForMember(destination => destination.AvatarUrl, options => options.MapFrom(source => source.AggregateState.AvatarUrl))
             .ForMember(destination => destination.Bio, options => options.MapFrom(source => source.AggregateState.Bio))

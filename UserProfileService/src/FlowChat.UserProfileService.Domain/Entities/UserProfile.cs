@@ -172,6 +172,25 @@ public class UserProfile : AggregateRootBase<UserProfile>
         MarkAggregateStateChanged(UserProfileConstants.UserProfileAggregateTypeName, CreateSnapshot);
     }
 
+    public void ConfirmEmail(Id<Email> emailId)
+    {
+        ArgumentNullException.ThrowIfNull(emailId);
+
+        var targetEmail = _emails.FirstOrDefault(x => x.Id == emailId);
+        if (targetEmail is null)
+        {
+            throw new InvalidOperationException($"Email '{emailId}' was not found.");
+        }
+
+        if (targetEmail.IsConfirmed)
+        {
+            return;
+        }
+
+        targetEmail.Confirm();
+        MarkAggregateStateChanged(UserProfileConstants.UserProfileAggregateTypeName, CreateSnapshot);
+    }
+
     public Phone AddPhone(string number, Id<Phone>? id = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(number);
@@ -215,14 +234,17 @@ public class UserProfile : AggregateRootBase<UserProfile>
 
     private UserProfileSnapshot CreateSnapshot()
     {
-        var mainEmail = _emails.FirstOrDefault(x => x.IsMain)?.Address.Value;
+        var mainEmail = _emails.FirstOrDefault(x => x.IsMain);
+        var mainEmailAddress = mainEmail?.Address.Value;
+        bool? isMainEmailConfirmed = mainEmail?.IsConfirmed;
         var mainPhone = _phones.FirstOrDefault(x => x.IsMain)?.Number.Value;
 
         return new UserProfileSnapshot(
             Id.Value,
             UserName,
             DisplayName,
-            mainEmail,
+            mainEmailAddress,
+            isMainEmailConfirmed,
             mainPhone,
             AvatarUrl,
             Bio,

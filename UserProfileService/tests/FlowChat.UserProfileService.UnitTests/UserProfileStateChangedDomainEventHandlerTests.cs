@@ -30,6 +30,7 @@ public sealed class UserProfileStateChangedDomainEventHandlerTests
                 "jdoe",
                 "John Doe",
                 "john@example.com",
+                true,
                 "+48123123123",
                 "https://cdn.example/avatar.png",
                 "about me",
@@ -46,6 +47,7 @@ public sealed class UserProfileStateChangedDomainEventHandlerTests
         Assert.Equal("jdoe", integrationEvent.UserName);
         Assert.Equal("John Doe", integrationEvent.DisplayName);
         Assert.Equal("john@example.com", integrationEvent.MainEmail);
+        Assert.True(integrationEvent.IsMainEmailConfirmed);
         Assert.Equal("+48123123123", integrationEvent.MainPhone);
         Assert.Equal("https://cdn.example/avatar.png", integrationEvent.AvatarUrl);
         Assert.Equal("about me", integrationEvent.Bio);

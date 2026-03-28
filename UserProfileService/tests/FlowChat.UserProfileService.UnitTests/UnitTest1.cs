@@ -47,6 +47,7 @@ public class UnitTest1
         var email = Email.Create(userProfileId, EmailAddress.Create(" john@example.com "));
 
         Assert.Equal("john@example.com", email.Address.Value);
+        Assert.False(email.IsConfirmed);
     }
 
     [Fact]
@@ -61,9 +62,11 @@ public class UnitTest1
         Assert.Equal("john@example.com", profile.Emails[0].Address.Value);
         Assert.Equal(profile.Id, profile.Emails[0].UserProfileId);
         Assert.True(profile.Emails[0].IsMain);
+        Assert.False(profile.Emails[0].IsConfirmed);
         var @event = Assert.IsType<AggregateStateChangedDomainEvent<UserProfile, UserProfileSnapshot>>(
             Assert.Single(profile.DomainEvents));
         Assert.Equal("john@example.com", @event.AggregateState.MainEmail);
+        Assert.False(@event.AggregateState.IsMainEmailConfirmed);
         Assert.Null(@event.AggregateState.MainPhone);
     }
 
@@ -106,6 +109,7 @@ public class UnitTest1
         Assert.Equal(secondEmail.Address.Value, emailChangedEvent.Address);
         var stateChangedEvent = Assert.Single(profile.DomainEvents.OfType<AggregateStateChangedDomainEvent<UserProfile, UserProfileSnapshot>>());
         Assert.Equal(secondEmail.Address.Value, stateChangedEvent.AggregateState.MainEmail);
+        Assert.False(stateChangedEvent.AggregateState.IsMainEmailConfirmed);
     }
 
     [Fact]
@@ -125,6 +129,43 @@ public class UnitTest1
         profile.ClearEvents();
 
         profile.SetMainEmail(email.Id);
+
+        Assert.Empty(profile.DomainEvents);
+    }
+
+    [Fact]
+    public void UserProfile_ConfirmEmail_MarksEmailAsConfirmed()
+    {
+        var profile = UserProfile.Rehydrate("jdoe", "John Doe", id: Id<UserProfile>.New());
+        var email = profile.AddEmail("john@example.com");
+        profile.ClearEvents();
+
+        profile.ConfirmEmail(email.Id);
+
+        Assert.True(email.IsConfirmed);
+        var stateChangedEvent = Assert.Single(profile.DomainEvents.OfType<AggregateStateChangedDomainEvent<UserProfile, UserProfileSnapshot>>());
+        Assert.Equal("john@example.com", stateChangedEvent.AggregateState.MainEmail);
+        Assert.True(stateChangedEvent.AggregateState.IsMainEmailConfirmed);
+    }
+
+    [Fact]
+    public void UserProfile_ConfirmEmail_WhenEmailDoesNotExist_Throws()
+    {
+        var profile = UserProfile.Rehydrate("jdoe", "John Doe", id: Id<UserProfile>.New());
+        profile.AddEmail("john@example.com");
+
+        Assert.Throws<InvalidOperationException>(() => profile.ConfirmEmail(Id<Email>.New()));
+    }
+
+    [Fact]
+    public void UserProfile_ConfirmEmail_WhenEmailIsAlreadyConfirmed_DoesNotEmitDomainEvent()
+    {
+        var profile = UserProfile.Rehydrate("jdoe", "John Doe", id: Id<UserProfile>.New());
+        var email = profile.AddEmail("john@example.com");
+        profile.ConfirmEmail(email.Id);
+        profile.ClearEvents();
+
+        profile.ConfirmEmail(email.Id);
 
         Assert.Empty(profile.DomainEvents);
     }
@@ -292,6 +333,7 @@ public class UnitTest1
         Assert.True(createdEvent.IsPhoneVisible);
         var stateChangedEvent = Assert.Single(profile.DomainEvents.OfType<AggregateStateChangedDomainEvent<UserProfile, UserProfileSnapshot>>());
         Assert.Equal("john@example.com", stateChangedEvent.AggregateState.MainEmail);
+        Assert.False(stateChangedEvent.AggregateState.IsMainEmailConfirmed);
         Assert.Equal("+48123123123", stateChangedEvent.AggregateState.MainPhone);
     }
 
@@ -308,6 +350,7 @@ public class UnitTest1
         Assert.Null(createdEvent.MainPhone);
         var stateChangedEvent = Assert.Single(profile.DomainEvents.OfType<AggregateStateChangedDomainEvent<UserProfile, UserProfileSnapshot>>());
         Assert.Equal("john@example.com", stateChangedEvent.AggregateState.MainEmail);
+        Assert.False(stateChangedEvent.AggregateState.IsMainEmailConfirmed);
         Assert.Null(stateChangedEvent.AggregateState.MainPhone);
     }
 
@@ -324,6 +367,7 @@ public class UnitTest1
         Assert.Equal("+48123123123", createdEvent.MainPhone);
         var stateChangedEvent = Assert.Single(profile.DomainEvents.OfType<AggregateStateChangedDomainEvent<UserProfile, UserProfileSnapshot>>());
         Assert.Null(stateChangedEvent.AggregateState.MainEmail);
+        Assert.Null(stateChangedEvent.AggregateState.IsMainEmailConfirmed);
         Assert.Equal("+48123123123", stateChangedEvent.AggregateState.MainPhone);
     }
 }

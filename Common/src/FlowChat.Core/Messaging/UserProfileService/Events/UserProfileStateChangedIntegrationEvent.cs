@@ -6,6 +6,7 @@ public sealed class UserProfileStateChangedIntegrationEvent : IntegrationEvent
     public required string UserName { get; init; }
     public required string DisplayName { get; init; }
     public string? MainEmail { get; init; }
+    public bool? IsMainEmailConfirmed { get; init; }
     public string? MainPhone { get; init; }
     public string? AvatarUrl { get; init; }
     public string? Bio { get; init; }

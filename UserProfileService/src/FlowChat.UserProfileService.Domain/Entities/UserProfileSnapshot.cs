@@ -5,6 +5,7 @@ public sealed record UserProfileSnapshot(
     string UserName,
     string DisplayName,
     string? MainEmail,
+    bool? IsMainEmailConfirmed,
     string? MainPhone,
     string? AvatarUrl,
     string? Bio,
