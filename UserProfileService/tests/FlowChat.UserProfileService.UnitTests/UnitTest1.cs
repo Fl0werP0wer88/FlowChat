@@ -143,6 +143,10 @@ public class UnitTest1
         profile.ConfirmEmail(email.Id);
 
         Assert.True(email.IsConfirmed);
+        var emailConfirmedEvent = Assert.Single(profile.DomainEvents.OfType<EmailConfirmedDomainEvent>());
+        Assert.Equal(profile.Id.Value, emailConfirmedEvent.UserProfileId);
+        Assert.Equal(email.Id.Value, emailConfirmedEvent.EmailId);
+        Assert.Equal(email.Address.Value, emailConfirmedEvent.Email);
         var stateChangedEvent = Assert.Single(profile.DomainEvents.OfType<AggregateStateChangedDomainEvent<UserProfile, UserProfileSnapshot>>());
         Assert.Equal("john@example.com", stateChangedEvent.AggregateState.MainEmail);
         Assert.True(stateChangedEvent.AggregateState.IsMainEmailConfirmed);

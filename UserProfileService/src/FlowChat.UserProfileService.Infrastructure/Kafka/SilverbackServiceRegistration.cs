@@ -17,6 +17,7 @@ public static class SilverbackServiceRegistration
     {
         var settingsManager = new KafkaSettingsManager(configuration);
         var createdProducerOptions = settingsManager.GetUserProfileCreatedProducerOptions();
+        var emailConfirmedProducerOptions = settingsManager.GetUserEmailConfirmedProducerOptions();
         var stateChangedProducerOptions = settingsManager.GetUserProfileStateChangedProducerOptions();
         var bootstrapServers = !string.IsNullOrWhiteSpace(createdProducerOptions.BootstrapServers)
             ? createdProducerOptions.BootstrapServers
@@ -36,6 +37,12 @@ public static class SilverbackServiceRegistration
                     .AddProducer(producer => producer
                         .Produce<UserProfileCreatedIntegrationEvent>("user-profile-created", endpoint => endpoint
                             .ProduceTo(createdProducerOptions.Topic)
+                            .SetKafkaKey(message => message?.UserProfileId)
+                            .SerializeAsJson(serializer => serializer.SetTypeHeader())
+                            .StoreToOutbox(outbox => outbox.UseEntityFramework<AppDbContext>())))
+                    .AddProducer(producer => producer
+                        .Produce<UserEmailConfirmedIntegrationEvent>("user-email-confirmed", endpoint => endpoint
+                            .ProduceTo(emailConfirmedProducerOptions.Topic)
                             .SetKafkaKey(message => message?.UserProfileId)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())
                             .StoreToOutbox(outbox => outbox.UseEntityFramework<AppDbContext>())))

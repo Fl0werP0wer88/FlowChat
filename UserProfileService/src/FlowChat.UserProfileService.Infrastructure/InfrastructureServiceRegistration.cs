@@ -18,6 +18,8 @@ public static class InfrastructureServiceRegistration
         services.TryAddSingleton<IKafkaSettingsManager>(new KafkaSettingsManager(configuration));
         services.AddScoped<IKafkaProducerOptions<UserProfileCreatedIntegrationEvent>>(sp =>
             sp.GetRequiredService<IKafkaSettingsManager>().GetUserProfileCreatedProducerOptions());
+        services.AddScoped<IKafkaProducerOptions<UserEmailConfirmedIntegrationEvent>>(sp =>
+            sp.GetRequiredService<IKafkaSettingsManager>().GetUserEmailConfirmedProducerOptions());
         services.AddScoped<IKafkaProducerOptions<UserProfileStateChangedIntegrationEvent>>(sp =>
             sp.GetRequiredService<IKafkaSettingsManager>().GetUserProfileStateChangedProducerOptions());
         services.AddScoped<IIntegrationEventPublisher, SilverbackEventPublisher>();

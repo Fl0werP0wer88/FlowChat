@@ -13,6 +13,9 @@ public sealed class DomainEventToIntegrationEventProfile : Profile
         CreateMap<UserProfileCreatedDomainEvent, UserProfileCreatedIntegrationEvent>()
             .ForMember(destination => destination.Key, options => options.MapFrom(source => source.UserProfileId.ToString()));
 
+        CreateMap<EmailConfirmedDomainEvent, UserEmailConfirmedIntegrationEvent>()
+            .ForMember(destination => destination.Key, options => options.MapFrom(source => source.UserProfileId.ToString()));
+
         CreateMap<AggregateStateChangedDomainEvent<UserProfile, UserProfileSnapshot>, UserProfileStateChangedIntegrationEvent>()
             .ForMember(destination => destination.Key, options => options.MapFrom(source => source.AggregateId.ToString()))
             .ForMember(destination => destination.UserProfileId, options => options.MapFrom(source => source.AggregateState.UserProfileId))

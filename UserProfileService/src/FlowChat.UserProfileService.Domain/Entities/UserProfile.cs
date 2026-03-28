@@ -188,6 +188,7 @@ public class UserProfile : AggregateRootBase<UserProfile>
         }
 
         targetEmail.Confirm();
+        AddDomainEvent(new EmailConfirmedDomainEvent(Id, targetEmail.Id, targetEmail.Address.Value));
         MarkAggregateStateChanged(UserProfileConstants.UserProfileAggregateTypeName, CreateSnapshot);
     }
 

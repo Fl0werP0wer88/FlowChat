@@ -20,6 +20,10 @@ public static class OutboxPublisherServiceRegistration
             .GetSection(UserProfileCreatedProducerOptions.SectionName)
             .Get<UserProfileCreatedProducerOptions>()
             ?? new UserProfileCreatedProducerOptions();
+        var emailConfirmedProducerOptions = configuration
+            .GetSection(UserEmailConfirmedProducerOptions.SectionName)
+            .Get<UserEmailConfirmedProducerOptions>()
+            ?? new UserEmailConfirmedProducerOptions();
         var stateChangedProducerOptions = configuration
             .GetSection(UserProfileStateChangedProducerOptions.SectionName)
             .Get<UserProfileStateChangedProducerOptions>()
@@ -55,6 +59,11 @@ public static class OutboxPublisherServiceRegistration
                     .AddProducer(producer => producer
                         .Produce<UserProfileCreatedIntegrationEvent>("user-profile-created", endpoint => endpoint
                             .ProduceTo(createdProducerOptions.Topic)
+                            .SetKafkaKey(message => message?.UserProfileId)
+                            .SerializeAsJson(serializer => serializer.SetTypeHeader())))
+                    .AddProducer(producer => producer
+                        .Produce<UserEmailConfirmedIntegrationEvent>("user-email-confirmed", endpoint => endpoint
+                            .ProduceTo(emailConfirmedProducerOptions.Topic)
                             .SetKafkaKey(message => message?.UserProfileId)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())))
                     .AddProducer(producer => producer

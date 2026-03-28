@@ -18,6 +18,8 @@ public sealed class KafkaProducerConfigurationTests
                 ["Kafka:UserCreatedConsumer:Topic"] = "legacy-topic",
                 ["Kafka:UserProfileCreatedProducer:BootstrapServers"] = "broker:9092",
                 ["Kafka:UserProfileCreatedProducer:Topic"] = "user-profile-created-topic",
+                ["Kafka:UserEmailConfirmedProducer:BootstrapServers"] = "broker:9092",
+                ["Kafka:UserEmailConfirmedProducer:Topic"] = "user-email-confirmed-topic",
                 ["Kafka:UserProfileStateChangedProducer:BootstrapServers"] = "broker:9092",
                 ["Kafka:UserProfileStateChangedProducer:Topic"] = "user-profile-state-topic"
             })
@@ -32,17 +34,23 @@ public sealed class KafkaProducerConfigurationTests
 
         var settingsManager = serviceProvider.GetRequiredService<IKafkaSettingsManager>();
         var createdProducerOptions = settingsManager.GetUserProfileCreatedProducerOptions();
+        var emailConfirmedProducerOptions = settingsManager.GetUserEmailConfirmedProducerOptions();
         var stateChangedProducerOptions = settingsManager.GetUserProfileStateChangedProducerOptions();
         var typedCreatedProducerOptions = serviceProvider
             .GetRequiredService<IKafkaProducerOptions<UserProfileCreatedIntegrationEvent>>();
+        var typedEmailConfirmedProducerOptions = serviceProvider
+            .GetRequiredService<IKafkaProducerOptions<UserEmailConfirmedIntegrationEvent>>();
         var typedStateChangedProducerOptions = serviceProvider
             .GetRequiredService<IKafkaProducerOptions<UserProfileStateChangedIntegrationEvent>>();
 
         Assert.Equal("broker:9092", createdProducerOptions.BootstrapServers);
         Assert.Equal("user-profile-created-topic", createdProducerOptions.Topic);
+        Assert.Equal("broker:9092", emailConfirmedProducerOptions.BootstrapServers);
+        Assert.Equal("user-email-confirmed-topic", emailConfirmedProducerOptions.Topic);
         Assert.Equal("broker:9092", stateChangedProducerOptions.BootstrapServers);
         Assert.Equal("user-profile-state-topic", stateChangedProducerOptions.Topic);
         Assert.Equal("user-profile-created-topic", typedCreatedProducerOptions.Topic);
+        Assert.Equal("user-email-confirmed-topic", typedEmailConfirmedProducerOptions.Topic);
         Assert.Equal("user-profile-state-topic", typedStateChangedProducerOptions.Topic);
     }
 
@@ -60,13 +68,18 @@ public sealed class KafkaProducerConfigurationTests
         var producerOptions = configuration
             .GetSection(UserProfileCreatedProducerOptions.SectionName)
             .Get<UserProfileCreatedProducerOptions>();
+        var emailConfirmedProducerOptions = configuration
+            .GetSection(UserEmailConfirmedProducerOptions.SectionName)
+            .Get<UserEmailConfirmedProducerOptions>();
         var stateChangedProducerOptions = configuration
             .GetSection(UserProfileStateChangedProducerOptions.SectionName)
             .Get<UserProfileStateChangedProducerOptions>();
 
         Assert.NotNull(producerOptions);
+        Assert.NotNull(emailConfirmedProducerOptions);
         Assert.NotNull(stateChangedProducerOptions);
         Assert.Equal("dev.flowchat.user-profile.user-profile.v1", producerOptions!.Topic);
+        Assert.Equal("dev.flowchat.user-profile.user-profile.v1", emailConfirmedProducerOptions!.Topic);
         Assert.Equal("dev.flowchat.user-profile.user-profile.v1", stateChangedProducerOptions!.Topic);
     }
 
