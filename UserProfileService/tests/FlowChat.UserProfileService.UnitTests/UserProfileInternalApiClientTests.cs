@@ -1,10 +1,8 @@
 using System.Net;
 using System.Text.Json;
 using FlowChat.Core.Exceptions;
-using FlowChat.UserProfileService.Consumers.Configuration;
 using FlowChat.UserProfileService.Consumers.Services;
 using FlowChat.UserProfileService.Consumers.UserProfileApi.Contracts;
-using Microsoft.Extensions.Options;
 
 namespace FlowChat.UserProfileService.UnitTests;
 
@@ -19,13 +17,13 @@ public sealed class UserProfileInternalApiClientTests
             requestBody = await request.Content!.ReadAsStringAsync();
             return new HttpResponseMessage(HttpStatusCode.Accepted);
         });
-        var client = new UserProfileInternalApiClient(
-            new HttpClient(handler),
-            Options.Create(new UserProfileApiSettings
-            {
-                BaseUrl = "https://localhost:7148",
-                ApiKey = "internal-key"
-            }));
+        var httpClient = new HttpClient(handler)
+        {
+            BaseAddress = new Uri("https://localhost:7148")
+        };
+        httpClient.DefaultRequestHeaders.Add(UserProfileInternalApiClient.ApiKeyHeaderName, "internal-key");
+
+        var client = new UserProfileInternalApiClient(httpClient);
 
         await client.CreateInitialUserProfileAsync(
             new CreateInitialUserProfileRequest
@@ -58,12 +56,10 @@ public sealed class UserProfileInternalApiClientTests
             {
                 Content = new StringContent("conflict")
             }));
-        var client = new UserProfileInternalApiClient(
-            new HttpClient(handler),
-            Options.Create(new UserProfileApiSettings
-            {
-                BaseUrl = "https://localhost:7148"
-            }));
+        var client = new UserProfileInternalApiClient(new HttpClient(handler)
+        {
+            BaseAddress = new Uri("https://localhost:7148")
+        });
 
         var exception = await Assert.ThrowsAsync<NonTransientException>(() =>
             client.CreateInitialUserProfileAsync(new CreateInitialUserProfileRequest(), CancellationToken.None));

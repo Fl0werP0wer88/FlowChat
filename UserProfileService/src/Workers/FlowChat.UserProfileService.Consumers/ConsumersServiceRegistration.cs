@@ -7,6 +7,7 @@ using FlowChat.Shared.Infrastructure.Silverback.Kafka;
 using FlowChat.Shared.Infrastructure.Silverback.Behaviors;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using Silverback.Configuration;
 using Silverback.Messaging.Configuration;
 
@@ -25,7 +26,27 @@ public static class ConsumersServiceRegistration
 
         services.AddOptions<UserProfileApiSettings>()
             .BindConfiguration(UserProfileApiSettings.SectionName);
-        services.AddHttpClient<IUserProfileInternalApiClient, UserProfileInternalApiClient>();
+        services.AddHttpClient(UserProfileInternalApiClient.HttpClientName, (serviceProvider, httpClient) =>
+        {
+            var apiSettings = serviceProvider.GetRequiredService<IOptions<UserProfileApiSettings>>().Value;
+            if (!Uri.TryCreate(apiSettings.BaseUrl, UriKind.Absolute, out var baseAddress))
+            {
+                throw new InvalidOperationException("UserProfileApi:BaseUrl must be an absolute URI.");
+            }
+
+            httpClient.BaseAddress = baseAddress;
+            httpClient.DefaultRequestHeaders.Remove(UserProfileInternalApiClient.ApiKeyHeaderName);
+
+            if (!string.IsNullOrWhiteSpace(apiSettings.ApiKey))
+            {
+                httpClient.DefaultRequestHeaders.Add(UserProfileInternalApiClient.ApiKeyHeaderName, apiSettings.ApiKey);
+            }
+        });
+        services.AddScoped<IUserProfileInternalApiClient>(serviceProvider =>
+            new UserProfileInternalApiClient(
+                serviceProvider
+                    .GetRequiredService<IHttpClientFactory>()
+                    .CreateClient(UserProfileInternalApiClient.HttpClientName)));
 
         services.AddSilverback()
             .AddSingletonBrokerBehavior<CustomSpanAttributesBehavior>()

@@ -1,6 +1,7 @@
 using System.Collections;
 using FlowChat.UserProfileService.Consumers;
 using FlowChat.UserProfileService.Consumers.Kafka;
+using FlowChat.UserProfileService.Consumers.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Silverback.Messaging.Broker;
@@ -117,5 +118,44 @@ public sealed class UserCreatedConsumerConfigurationTests
         }
 
         throw new InvalidOperationException($"Could not locate file '{relativePath}' starting from '{AppContext.BaseDirectory}'.");
+    }
+
+    [Fact]
+    public async Task AddConsumers_RegistersUserProfileInternalApiNamedClient()
+    {
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["UserProfileApi:BaseUrl"] = "https://localhost:7148",
+                ["UserProfileApi:ApiKey"] = "worker-key",
+                ["Kafka:UserCreatedConsumer:BootstrapServers"] = "localhost:9092",
+                ["Kafka:UserCreatedConsumer:GroupId"] = "userprofile-service",
+                ["Kafka:UserCreatedConsumer:RetryGroupId"] = "userprofile-service-retry",
+                ["Kafka:UserCreatedConsumer:Topic"] = "dev.flowchat.identity.user.v1",
+                ["Kafka:UserCreatedConsumer:RetryTopic"] = "dev.flowchat.identity.user.v1.retry",
+                ["Kafka:UserCreatedConsumer:DeadLetterTopic"] = "dev.flowchat.identity.user.v1.dlq",
+                ["Kafka:UserCreatedConsumer:MaxRetryCount"] = "5",
+                ["Kafka:UserCreatedConsumer:RetryBaseDelaySeconds"] = "5",
+                ["Kafka:UserCreatedConsumer:RetryMaxDelaySeconds"] = "300",
+                ["Kafka:UserCreatedConsumer:AutoOffsetReset"] = "Earliest"
+            })
+            .Build();
+
+        var services = new ServiceCollection();
+        services.AddSingleton<IConfiguration>(configuration);
+        services.AddOptions();
+        services.AddLogging();
+        services.AddConsumers(configuration);
+
+        await using var serviceProvider = services.BuildServiceProvider();
+
+        var internalApiClient = serviceProvider.GetRequiredService<IUserProfileInternalApiClient>();
+        var httpClient = serviceProvider
+            .GetRequiredService<IHttpClientFactory>()
+            .CreateClient(UserProfileInternalApiClient.HttpClientName);
+
+        Assert.NotNull(internalApiClient);
+        Assert.Equal(new Uri("https://localhost:7148"), httpClient.BaseAddress);
+        Assert.Equal("worker-key", httpClient.DefaultRequestHeaders.GetValues(UserProfileInternalApiClient.ApiKeyHeaderName).Single());
     }
 }
