@@ -24,9 +24,6 @@ public sealed class CreateInitialUserProfileCommandValidator
             .Must(value => string.IsNullOrWhiteSpace(value) || EmailAddress.TryCreate(value, out _))
             .WithMessage(EmailAddress.InvalidEmailAddressMessage);
 
-        RuleFor(command => command.Email).MinimumLength(50).When(command => !string.IsNullOrWhiteSpace(command.Email))
-            .WithMessage("Email address must be at least 5 characters long.");
-
         RuleFor(command => command.Phone)
             .Must(value => string.IsNullOrWhiteSpace(value) || PhoneNumber.TryCreate(value, out _))
             .WithMessage(PhoneNumber.InvalidPhoneNumberMessage);
