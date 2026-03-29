@@ -1,9 +1,6 @@
-﻿using CSharpFunctionalExtensions;
 using AutoMapper;
-using FlowChat.AuthService.API.Features.Users.Public.ConfirmUserEmail;
 using FlowChat.AuthService.API.Features.Users.Public.LoginUser;
 using FlowChat.AuthService.API.Features.Users.Public.RegisterUser;
-using FlowChat.AuthService.Application.Features.Users.Commands.ConfirmUserEmail;
 using FlowChat.AuthService.Application.Features.Users.Commands.LoginUser;
 using FlowChat.AuthService.Application.Features.Users.Commands.RegisterUser;
 using FlowChat.Shared.Domain;
@@ -47,39 +44,13 @@ public sealed class AuthControllersTests
     }
 
     [Fact]
-    public async Task ConfirmEmail_ReturnsNotFoundProblemDetails_WhenUserDoesNotExist()
-    {
-        var mediator = new TestMediator(request =>
-            request switch
-            {
-                ConfirmUserEmailCommand => FlowChatResult<Unit>.Failure(
-                    DomainError.NotFound("User was not found.")),
-                _ => throw new InvalidOperationException("Unexpected request.")
-            });
-        var controller = CreateController(new ConfirmUserEmailController(mediator, CreateMapper()));
-
-        var result = await controller.ConfirmEmail(
-            new ConfirmUserEmailRequest
-            {
-                UserId = Guid.NewGuid(),
-                Token = "token"
-            },
-            CancellationToken.None);
-
-        var notFound = Assert.IsType<NotFoundObjectResult>(result);
-        var problemDetails = Assert.IsType<ProblemDetails>(notFound.Value);
-        Assert.Equal(StatusCodes.Status404NotFound, problemDetails.Status);
-        Assert.Equal("User was not found.", problemDetails.Detail);
-    }
-
-    [Fact]
     public async Task Login_ReturnsUnauthorizedProblemDetails_WhenCredentialsAreInvalid()
     {
         var mediator = new TestMediator(request =>
             request switch
             {
                 LoginUserCommand => FlowChatResult<LoginUserCommandResponse>.Failure(
-                    DomainError.Unauthorized("Invalid credentials or account is not confirmed.")),
+                    DomainError.Unauthorized("Invalid credentials.")),
                 _ => throw new InvalidOperationException("Unexpected request.")
             });
         var controller = CreateController(new LoginUserController(mediator, CreateMapper()));
@@ -95,7 +66,7 @@ public sealed class AuthControllersTests
         var unauthorized = Assert.IsType<UnauthorizedObjectResult>(result);
         var problemDetails = Assert.IsType<ProblemDetails>(unauthorized.Value);
         Assert.Equal(StatusCodes.Status401Unauthorized, problemDetails.Status);
-        Assert.Equal("Invalid credentials or account is not confirmed.", problemDetails.Detail);
+        Assert.Equal("Invalid credentials.", problemDetails.Detail);
     }
 
     private static TController CreateController<TController>(TController controller)
@@ -195,4 +166,3 @@ public sealed class AuthControllersTests
         }
     }
 }
-

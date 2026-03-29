@@ -65,7 +65,7 @@ public sealed class Identity : AggregateRootBase<Identity>
             normalizedUserName,
             normalizedEmail,
             normalizedPhoneNumber,
-            emailConfirmed: false,
+            emailConfirmed: normalizedEmail is not null,
             phoneNumberConfirmed: false,
             firstName: null,
             lastName: null);
@@ -119,27 +119,6 @@ public sealed class Identity : AggregateRootBase<Identity>
             phoneNumberConfirmed,
             NormalizeOptional(firstName),
             NormalizeOptional(lastName));
-    }
-
-    public void ConfirmEmail()
-    {
-        var email = Email;
-        if (string.IsNullOrWhiteSpace(email))
-        {
-            throw new InvalidOperationException("Email confirmation requires an email address.");
-        }
-
-        if (!EmailConfirmed)
-        {
-            EmailConfirmed = true;
-            AddDomainEvent(new EmailConfirmedDomainEvent(Id, email));
-        }
-
-        if (!AccountConfirmed)
-        {
-            AccountConfirmed = true;
-            AddDomainEvent(new AccountConfirmedDomainEvent(Id));
-        }
     }
 
     public void ConfirmPhone()

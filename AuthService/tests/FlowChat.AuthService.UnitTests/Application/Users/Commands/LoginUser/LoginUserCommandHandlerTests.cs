@@ -1,9 +1,9 @@
-﻿using FlowChat.Shared.Application;
 using FlowChat.AuthService.Application.Contracts.Infrastructure;
 using FlowChat.AuthService.Application.Contracts.Persistence;
 using FlowChat.AuthService.Application.Features.Users.Commands.LoginUser;
 using FlowChat.AuthService.Application.Features.Users.Models;
 using FlowChat.AuthService.Domain.Entities;
+using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
 
 namespace FlowChat.AuthService.UnitTests;
@@ -78,7 +78,7 @@ public sealed class LoginUserCommandHandlerTests
 
         Assert.False(result.IsSuccess);
         Assert.Equal(ErrorType.Unauthorized, result.Error.ErrorType);
-        Assert.Equal("Invalid credentials or account is not confirmed.", result.Error.ErrorMessage);
+        Assert.Equal("Invalid credentials.", result.Error.ErrorMessage);
         Assert.False(jwtTokenGenerator.WasCalled);
         Assert.Empty(domainEventDispatcher.DispatchedBatches);
     }
@@ -96,12 +96,6 @@ public sealed class LoginUserCommandHandlerTests
             => throw new NotSupportedException();
 
         public Task<Identity?> GetByIdAsync(Guid userId, CancellationToken cancellationToken)
-            => throw new NotSupportedException();
-
-        public Task<string> GenerateEmailConfirmationTokenAsync(Guid userId, CancellationToken cancellationToken)
-            => throw new NotSupportedException();
-
-        public Task<bool> IsEmailConfirmationTokenValidAsync(Guid userId, string token, CancellationToken cancellationToken)
             => throw new NotSupportedException();
 
         public Task UpdateAsync(Identity user, CancellationToken cancellationToken)
@@ -153,4 +147,3 @@ public sealed class LoginUserCommandHandlerTests
         }
     }
 }
-

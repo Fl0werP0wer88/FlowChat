@@ -151,9 +151,6 @@ public sealed class RegisterUserCommandHandlerTests
         public Task<Identity?> GetByIdAsync(Guid userId, CancellationToken cancellationToken)
             => throw new NotSupportedException();
 
-        public Task<bool> IsEmailConfirmationTokenValidAsync(Guid userId, string token, CancellationToken cancellationToken)
-            => throw new NotSupportedException();
-
         public Task UpdateAsync(Identity user, CancellationToken cancellationToken)
             => throw new NotSupportedException();
 

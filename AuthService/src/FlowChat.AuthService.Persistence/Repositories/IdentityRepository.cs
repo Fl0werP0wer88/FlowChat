@@ -9,7 +9,6 @@ namespace FlowChat.AuthService.Persistence.Repositories;
 public class IdentityRepository : IIdentityRepository
 {
     private readonly UserManager<UserEntity> _userManager;
-    private const string EmailConfirmationTokenPurpose = "EmailConfirmation";
 
     public IdentityRepository(UserManager<UserEntity> userManager)
     {
@@ -52,7 +51,7 @@ public class IdentityRepository : IIdentityRepository
             UserName = domainUser.UserName,
             Email = domainUser.Email,
             PhoneNumber = domainUser.PhoneNumber,
-            EmailConfirmed = false
+            EmailConfirmed = domainUser.EmailConfirmed
         };
 
         return user;
@@ -67,28 +66,6 @@ public class IdentityRepository : IIdentityRepository
             user.PhoneNumber,
             user.EmailConfirmed,
             user.PhoneNumberConfirmed);
-    }
-
-    public async Task<bool> IsEmailConfirmationTokenValidAsync(Guid userId, string token, CancellationToken cancellationToken)
-    {
-        cancellationToken.ThrowIfCancellationRequested();
-
-        if (string.IsNullOrWhiteSpace(token))
-        {
-            return false;
-        }
-
-        var user = await _userManager.FindByIdAsync(userId.ToString());
-        if (user is null)
-        {
-            return false;
-        }
-
-        return await _userManager.VerifyUserTokenAsync(
-            user,
-            _userManager.Options.Tokens.EmailConfirmationTokenProvider,
-            EmailConfirmationTokenPurpose,
-            token);
     }
 
     public async Task UpdateAsync(Domain.Entities.Identity domainUser, CancellationToken cancellationToken)
@@ -127,7 +104,7 @@ public class IdentityRepository : IIdentityRepository
         }
 
         var user = await _userManager.FindByEmailAsync(login) ?? await _userManager.FindByNameAsync(login);
-        if (user is null || !user.EmailConfirmed)
+        if (user is null)
         {
             return null;
         }

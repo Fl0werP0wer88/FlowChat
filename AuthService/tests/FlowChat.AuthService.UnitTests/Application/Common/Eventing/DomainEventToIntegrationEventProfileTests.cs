@@ -1,9 +1,9 @@
-﻿using AutoMapper;
+using AutoMapper;
 using FlowChat.AuthService.Application.Common.Eventing;
 using FlowChat.AuthService.Domain.Entities;
 using FlowChat.AuthService.Domain.Events;
-using FlowChat.Shared.Domain;
 using FlowChat.Core.Messaging.AuthService.Events;
+using FlowChat.Shared.Domain;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace FlowChat.AuthService.UnitTests;
@@ -58,19 +58,6 @@ public sealed class DomainEventToIntegrationEventProfileTests
     }
 
     [Fact]
-    public void EmailConfirmedDomainEvent_IsMappedToIntegrationEvent()
-    {
-        var userId = Id<Identity>.FromGuid(Guid.NewGuid());
-        var domainEvent = new EmailConfirmedDomainEvent(userId, "flower@example.com");
-
-        var integrationEvent = _mapper.Map<EmailConfirmedIntegrationEvent>(domainEvent);
-
-        Assert.Equal(userId.Value.ToString(), integrationEvent.Key);
-        Assert.Equal(userId.Value, integrationEvent.UserId);
-        Assert.Equal("flower@example.com", integrationEvent.Email);
-    }
-
-    [Fact]
     public void PhoneNumberConfirmedDomainEvent_IsMappedToIntegrationEvent()
     {
         var userId = Id<Identity>.FromGuid(Guid.NewGuid());
@@ -83,4 +70,3 @@ public sealed class DomainEventToIntegrationEventProfileTests
         Assert.Equal("+48123123123", integrationEvent.PhoneNumber);
     }
 }
-

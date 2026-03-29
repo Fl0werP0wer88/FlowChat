@@ -17,15 +17,11 @@ public static class InfrastructureServiceRegistration
         services.TryAddSingleton<IApiSettingsManager>(new ApiSettingsManager(configuration));
         services.TryAddSingleton<IWorkerSettingsManager>(new WorkerSettingsManager(configuration));
 
-        services.AddScoped<ITokenEncoder, Base64UrlTokenEncoder>();
         services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
         services.AddScoped<IKafkaProducerOptions<AccountRegisteredIntegrationEvent>>(sp =>
             sp.GetRequiredService<IWorkerSettingsManager>().GetAccountRegisteredProducerOptions());
         services.AddScoped<IKafkaProducerOptions<UserConfirmedIntegrationEvent>>(sp =>
             new KafkaProducerOptionsAdapter<UserConfirmedIntegrationEvent>(
-                sp.GetRequiredService<IWorkerSettingsManager>().GetAccountRegisteredProducerOptions()));
-        services.AddScoped<IKafkaProducerOptions<EmailConfirmedIntegrationEvent>>(sp =>
-            new KafkaProducerOptionsAdapter<EmailConfirmedIntegrationEvent>(
                 sp.GetRequiredService<IWorkerSettingsManager>().GetAccountRegisteredProducerOptions()));
         services.AddScoped<IKafkaProducerOptions<PhoneNumberConfirmedIntegrationEvent>>(sp =>
             new KafkaProducerOptionsAdapter<PhoneNumberConfirmedIntegrationEvent>(
