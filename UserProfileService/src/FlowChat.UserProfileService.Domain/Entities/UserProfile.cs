@@ -26,6 +26,7 @@ public class UserProfile : AggregateRootBase<UserProfile>
     private UserProfile(
         Id<UserProfile>? id,
         string userName,
+        string normalizedUserName,
         string displayName,
         string? avatarUrl = null,
         string? bio = null,
@@ -34,14 +35,11 @@ public class UserProfile : AggregateRootBase<UserProfile>
         bool isEmailVisible = true,
         bool isPhoneVisible = true) : base(id)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(userName);
-        ArgumentException.ThrowIfNullOrWhiteSpace(displayName);
-
-        UserName = userName.Trim();
-        NormalizedUserName = userName.Trim().ToLowerInvariant();
-        DisplayName = displayName.Trim();
-        AvatarUrl = string.IsNullOrWhiteSpace(avatarUrl) ? null : avatarUrl.Trim();
-        Bio = string.IsNullOrWhiteSpace(bio) ? null : bio.Trim();
+        UserName = userName;
+        NormalizedUserName = normalizedUserName;
+        DisplayName = displayName;
+        AvatarUrl = avatarUrl;
+        Bio = bio;
         IsActive = isActive;
         LastSeenAtUtc = lastSeenAtUtc;
         IsEmailVisible = isEmailVisible;
@@ -62,13 +60,19 @@ public class UserProfile : AggregateRootBase<UserProfile>
         Id<UserProfile>? id = null)
     {
         var typedId = id ?? Id<UserProfile>.New();
+        var normalizedUserName = NormalizeRequired(userName, nameof(userName));
+        var normalizedDisplayName = NormalizeRequired(displayName, nameof(displayName));
+        var normalizedNormalizedUserName = NormalizeUserName(normalizedUserName);
+        var normalizedAvatarUrl = NormalizeOptional(avatarUrl);
+        var normalizedBio = NormalizeOptional(bio);
 
         var userProfile = new UserProfile(
             typedId,
-            userName,
-            displayName,
-            avatarUrl,
-            bio,
+            normalizedUserName,
+            normalizedNormalizedUserName,
+            normalizedDisplayName,
+            normalizedAvatarUrl,
+            normalizedBio,
             isActive,
             lastSeenAtUtc,
             isEmailVisible,
@@ -316,6 +320,23 @@ public class UserProfile : AggregateRootBase<UserProfile>
             LastSeenAtUtc,
             IsEmailVisible,
             IsPhoneVisible);
+    }
+
+    private static string NormalizeRequired(string value, string paramName)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(value, paramName);
+        return value.Trim();
+    }
+
+    private static string NormalizeUserName(string userName)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(userName);
+        return userName.Trim().ToLowerInvariant();
+    }
+
+    private static string? NormalizeOptional(string? value)
+    {
+        return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
     }
 
     private static void EnsureInitialContactInvariant(
