@@ -1,9 +1,12 @@
 using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 
 #nullable disable
 
 namespace FlowChat.NotificationService.Persistence.Migrations
 {
+    [DbContext(typeof(AppDbContext))]
+    [Migration("20260329143500_AddEmailVerificationNotificationSupport")]
     public partial class AddEmailVerificationNotificationSupport : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
