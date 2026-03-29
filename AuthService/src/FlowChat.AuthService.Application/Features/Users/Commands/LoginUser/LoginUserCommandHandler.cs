@@ -27,7 +27,7 @@ public class LoginUserCommandHandler : CommandHandlerBase<LoginUserCommand, Logi
         if (user is null)
         {
             return FlowChatResult<LoginUserCommandResponse>.Failure(
-                DomainError.Unauthorized("Invalid credentials or account is not confirmed."));
+                DomainError.Unauthorized("Invalid credentials."));
         }
 
         var token = _jwtTokenGenerator.GenerateToken(user);

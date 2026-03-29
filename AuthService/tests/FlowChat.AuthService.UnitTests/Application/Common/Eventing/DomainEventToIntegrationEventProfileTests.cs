@@ -51,7 +51,7 @@ public sealed class DomainEventToIntegrationEventProfileTests
         var userId = Id<Identity>.FromGuid(Guid.NewGuid());
         var domainEvent = new AccountConfirmedDomainEvent(userId);
 
-        var integrationEvent = _mapper.Map<UserConfirmedIntegrationEvent>(domainEvent);
+        var integrationEvent = _mapper.Map<AccountConfirmedIntegrationEvent>(domainEvent);
 
         Assert.Equal(userId.Value.ToString(), integrationEvent.Key);
         Assert.Equal(userId.Value, integrationEvent.UserId);

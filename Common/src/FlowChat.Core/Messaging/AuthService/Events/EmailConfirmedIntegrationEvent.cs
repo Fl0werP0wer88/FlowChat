@@ -4,5 +4,5 @@ public sealed class EmailConfirmedIntegrationEvent : IntegrationEvent
 {
     public Guid UserId { get; init; }
 
-    public required string Email { get; init; }
+    public required Email Email { get; init; }
 }

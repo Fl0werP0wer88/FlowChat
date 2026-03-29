@@ -20,8 +20,8 @@ public static class InfrastructureServiceRegistration
         services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
         services.AddScoped<IKafkaProducerOptions<AccountRegisteredIntegrationEvent>>(sp =>
             sp.GetRequiredService<IWorkerSettingsManager>().GetAccountRegisteredProducerOptions());
-        services.AddScoped<IKafkaProducerOptions<UserConfirmedIntegrationEvent>>(sp =>
-            new KafkaProducerOptionsAdapter<UserConfirmedIntegrationEvent>(
+        services.AddScoped<IKafkaProducerOptions<AccountConfirmedIntegrationEvent>>(sp =>
+            new KafkaProducerOptionsAdapter<AccountConfirmedIntegrationEvent>(
                 sp.GetRequiredService<IWorkerSettingsManager>().GetAccountRegisteredProducerOptions()));
         services.AddScoped<IKafkaProducerOptions<PhoneNumberConfirmedIntegrationEvent>>(sp =>
             new KafkaProducerOptionsAdapter<PhoneNumberConfirmedIntegrationEvent>(
