@@ -299,7 +299,7 @@ public sealed class CreateInitialUserProfileCommandHandlerTests
         var dispatchedEvent = Assert.Single(dispatcher.DispatchedEvents.OfType<UserProfileCreatedDomainEvent>());
         Assert.Equal(addedEvent.UserProfileId, dispatchedEvent.UserProfileId);
         Assert.Equal(addedEvent.MainEmailId, dispatchedEvent.MainEmailId);
-        Assert.Equal("john@example.com", addedEvent.MainEmail);
+        Assert.Equal("john@example.com", addedEvent.MainEmail.Value);
         Assert.Null(addedEvent.MainPhone);
         var stateChangedEvent = Assert.Single(repository.DomainEventsAtAdd.OfType<AggregateStateChangedDomainEvent<UserProfile, UserProfileSnapshot>>());
         Assert.Equal("john@example.com", stateChangedEvent.AggregateState.MainEmail);

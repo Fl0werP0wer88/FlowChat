@@ -15,8 +15,8 @@ public sealed class EmailAddedDomainEventHandler(
         CancellationToken cancellationToken)
     {
         await _emailVerificationRequestIssuer.IssueAsync(
-            notification.UserProfileId,
-            notification.EmailId,
+            notification.UserProfileId.Value,
+            notification.EmailId.Value,
             notification.Email.Value,
             cancellationToken);
     }

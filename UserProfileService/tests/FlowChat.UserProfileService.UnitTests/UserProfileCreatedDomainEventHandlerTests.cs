@@ -1,6 +1,7 @@
-﻿using AutoMapper;
+using AutoMapper;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
+using FlowChat.Shared.Domain.ValueObjects;
 using FlowChat.Core.Messaging;
 using FlowChat.Core.Messaging.UserProfileService.Events;
 using FlowChat.UserProfileService.Application.Common.Eventing;
@@ -31,8 +32,8 @@ public sealed class UserProfileCreatedDomainEventHandlerTests
             mainEmailId,
             "jdoe",
             "John Doe",
-            "john@example.com",
-            "+48123123123",
+            EmailAddress.Create("john@example.com"),
+            PhoneNumber.Create("+48123123123"),
             "https://cdn.example/avatar.png",
             "about me",
             true,
@@ -96,4 +97,3 @@ public sealed class UserProfileCreatedDomainEventHandlerTests
         }
     }
 }
-

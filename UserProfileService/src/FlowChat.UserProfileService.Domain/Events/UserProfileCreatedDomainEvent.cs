@@ -1,4 +1,5 @@
-﻿using FlowChat.Shared.Domain;
+using FlowChat.Shared.Domain;
+using FlowChat.Shared.Domain.ValueObjects;
 using FlowChat.UserProfileService.Domain.Entities;
 using FlowChat.UserProfileService.Domain.Events.Contracts;
 
@@ -9,8 +10,8 @@ public sealed class UserProfileCreatedDomainEvent(
     Id<Email> mainEmailId,
     string userName,
     string displayName,
-    string mainEmail,
-    string? mainPhone,
+    EmailAddress mainEmail,
+    PhoneNumber? mainPhone,
     string? avatarUrl,
     string? bio,
     bool isActive,
@@ -19,12 +20,12 @@ public sealed class UserProfileCreatedDomainEvent(
     bool isPhoneVisible,
     DateTimeOffset? occurredOnUtc = null) : BaseUserProfileDomainEvent(aggregateId, occurredOnUtc)
 {
-    public Guid UserProfileId { get; } = aggregateId.Value;
-    public Guid MainEmailId { get; } = mainEmailId.Value;
+    public Id<UserProfile> UserProfileId { get; } = aggregateId;
+    public Id<Email> MainEmailId { get; } = mainEmailId;
     public string UserName { get; } = userName;
     public string DisplayName { get; } = displayName;
-    public string MainEmail { get; } = mainEmail;
-    public string? MainPhone { get; } = mainPhone;
+    public EmailAddress MainEmail { get; } = mainEmail;
+    public PhoneNumber? MainPhone { get; } = mainPhone;
     public string? AvatarUrl { get; } = avatarUrl;
     public string? Bio { get; } = bio;
     public bool IsActive { get; } = isActive;
@@ -32,4 +33,3 @@ public sealed class UserProfileCreatedDomainEvent(
     public bool IsEmailVisible { get; } = isEmailVisible;
     public bool IsPhoneVisible { get; } = isPhoneVisible;
 }
-

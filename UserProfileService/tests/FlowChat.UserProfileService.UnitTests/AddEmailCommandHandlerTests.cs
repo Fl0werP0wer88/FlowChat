@@ -85,8 +85,8 @@ public sealed class AddEmailCommandHandlerTests
         var addedEmail = Assert.Single(profile.Emails.Where(x => x.Address.Value == "secondary@example.com"));
         Assert.Equal(addedEmail.Id.Value, result.Value);
         var emailAddedEvent = Assert.Single(domainEventDispatcher.DispatchedEvents.OfType<EmailAddedDomainEvent>());
-        Assert.Equal(profile.Id.Value, emailAddedEvent.UserProfileId);
-        Assert.Equal(addedEmail.Id.Value, emailAddedEvent.EmailId);
+        Assert.Equal(profile.Id, emailAddedEvent.UserProfileId);
+        Assert.Equal(addedEmail.Id, emailAddedEvent.EmailId);
         Assert.Equal("secondary@example.com", emailAddedEvent.Email.Value);
     }
 

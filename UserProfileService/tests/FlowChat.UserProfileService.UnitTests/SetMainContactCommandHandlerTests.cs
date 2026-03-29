@@ -30,7 +30,9 @@ public sealed class SetMainContactCommandHandlerTests
         Assert.False(firstEmail.IsMain);
         Assert.True(secondEmail.IsMain);
         var emailChangedEvent = Assert.Single(dispatcher.DispatchedEvents.OfType<MainEmailChangedDomainEvent>());
-        Assert.Equal(secondEmail.Id.Value, emailChangedEvent.EmailId);
+        Assert.Equal(profile.Id, emailChangedEvent.UserProfileId);
+        Assert.Equal(secondEmail.Id, emailChangedEvent.EmailId);
+        Assert.Equal(secondEmail.Address, emailChangedEvent.Address);
         var stateChangedEvent = Assert.Single(dispatcher.DispatchedEvents.OfType<AggregateStateChangedDomainEvent<UserProfile, UserProfileSnapshot>>());
         Assert.Equal(secondEmail.Address.Value, stateChangedEvent.AggregateState.MainEmail);
     }
@@ -100,7 +102,9 @@ public sealed class SetMainContactCommandHandlerTests
         Assert.False(firstPhone.IsMain);
         Assert.True(secondPhone.IsMain);
         var phoneChangedEvent = Assert.Single(dispatcher.DispatchedEvents.OfType<MainPhoneChangedDomainEvent>());
-        Assert.Equal(secondPhone.Id.Value, phoneChangedEvent.PhoneId);
+        Assert.Equal(profile.Id, phoneChangedEvent.UserProfileId);
+        Assert.Equal(secondPhone.Id, phoneChangedEvent.PhoneId);
+        Assert.Equal(secondPhone.Number, phoneChangedEvent.Number);
         var stateChangedEvent = Assert.Single(dispatcher.DispatchedEvents.OfType<AggregateStateChangedDomainEvent<UserProfile, UserProfileSnapshot>>());
         Assert.Equal(secondPhone.Number.Value, stateChangedEvent.AggregateState.MainPhone);
     }

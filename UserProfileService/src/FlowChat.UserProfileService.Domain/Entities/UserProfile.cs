@@ -87,15 +87,14 @@ public class UserProfile : AggregateRootBase<UserProfile>
 
         EnsureInitialContactInvariant(userProfile._emails, userProfile._phones);
 
-        var currentMainEmail = userProfile.Emails.Single(x => x.IsMain).Address.Value;
-        var currentMainPhone = userProfile.Phones.FirstOrDefault(x => x.IsMain)?.Number.Value;
+        var currentMainPhone = userProfile.Phones.FirstOrDefault(x => x.IsMain)?.Number;
 
         userProfile.AddDomainEvent(new UserProfileCreatedDomainEvent(
             userProfile.Id,
             initialEmail.Id,
             userProfile.UserName,
             userProfile.DisplayName,
-            currentMainEmail,
+            initialEmail.Address,
             currentMainPhone,
             userProfile.AvatarUrl,
             userProfile.Bio,
@@ -150,7 +149,7 @@ public class UserProfile : AggregateRootBase<UserProfile>
         }
 
         targetEmail.Confirm();
-        AddDomainEvent(new EmailConfirmedDomainEvent(Id, targetEmail.Id, targetEmail.Address.Value));
+        AddDomainEvent(new EmailConfirmedDomainEvent(Id, targetEmail.Id, targetEmail.Address));
         MarkAggregateStateChanged(UserProfileConstants.UserProfileAggregateTypeName, CreateSnapshot);
     }
 
@@ -216,7 +215,7 @@ public class UserProfile : AggregateRootBase<UserProfile>
 
         if (shouldAddDomainEvent)
         {
-            AddDomainEvent(new MainEmailChangedDomainEvent(Id, targetEmail.Id, targetEmail.Address.Value));
+            AddDomainEvent(new MainEmailChangedDomainEvent(Id, targetEmail.Id, targetEmail.Address));
         }
 
         if (shouldMarkAggregateStateChanged)
@@ -297,7 +296,7 @@ public class UserProfile : AggregateRootBase<UserProfile>
 
         if (shouldAddDomainEvent)
         {
-            AddDomainEvent(new MainPhoneChangedDomainEvent(Id, targetPhone.Id, targetPhone.Number.Value));
+            AddDomainEvent(new MainPhoneChangedDomainEvent(Id, targetPhone.Id, targetPhone.Number));
         }
 
         if (shouldMarkAggregateStateChanged)

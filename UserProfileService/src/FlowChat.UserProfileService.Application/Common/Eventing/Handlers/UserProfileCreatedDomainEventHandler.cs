@@ -21,9 +21,9 @@ public sealed class UserProfileCreatedDomainEventHandler(
         CancellationToken cancellationToken)
     {
         return _emailVerificationRequestIssuer.IssueAsync(
-            notification.UserProfileId,
-            notification.MainEmailId,
-            notification.MainEmail,
+            notification.UserProfileId.Value,
+            notification.MainEmailId.Value,
+            notification.MainEmail.Value,
             cancellationToken);
     }
 }

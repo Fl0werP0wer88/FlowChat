@@ -11,7 +11,7 @@ public sealed class EmailAddedDomainEvent(
     EmailAddress email,
     DateTimeOffset? occurredOnUtc = null) : BaseUserProfileDomainEvent(aggregateId, occurredOnUtc)
 {
-    public Guid UserProfileId { get; } = aggregateId.Value;
-    public Guid EmailId { get; } = emailId.Value;
+    public Id<UserProfile> UserProfileId { get; } = aggregateId;
+    public Id<Email> EmailId { get; } = emailId;
     public EmailAddress Email { get; } = email;
 }

@@ -1,6 +1,7 @@
 using AutoMapper;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
+using FlowChat.Shared.Domain.ValueObjects;
 using FlowChat.Core.Messaging;
 using FlowChat.Core.Messaging.UserProfileService.Events;
 using FlowChat.UserProfileService.Application.Common.Eventing;
@@ -27,7 +28,7 @@ public sealed class EmailConfirmedDomainEventHandlerTests
         var domainEvent = new EmailConfirmedDomainEvent(
             userProfileId,
             emailId,
-            "john@example.com");
+            EmailAddress.Create("john@example.com"));
 
         await handler.Handle(domainEvent, CancellationToken.None);
 
