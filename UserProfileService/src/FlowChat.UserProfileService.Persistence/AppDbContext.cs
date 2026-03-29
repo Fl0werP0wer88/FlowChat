@@ -1,6 +1,5 @@
 using FlowChat.UserProfileService.Domain.Entities;
 using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
-using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore.Models;
 using Microsoft.EntityFrameworkCore;
 using Silverback.Messaging.Producing.TransactionalOutbox;
 
