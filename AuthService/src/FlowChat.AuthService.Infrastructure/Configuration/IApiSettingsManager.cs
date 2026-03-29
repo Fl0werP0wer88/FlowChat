@@ -4,7 +4,5 @@ public interface IApiSettingsManager
 {
     JwtSettings GetJwtSettings();
 
-    ConfirmationLinksSettings GetConfirmationLinksSettings();
-
     ApiRuntimeSettings GetApiRuntimeSettings();
 }

@@ -24,17 +24,11 @@ public static class OutboxPublisherServiceRegistration
             .GetSection(AccountRegisteredProducerOptions.SectionName)
             .Get<AccountRegisteredProducerOptions>()
             ?? new AccountRegisteredProducerOptions();
-        var emailVerificationOptions = configuration
-            .GetSection(UserEmailVerificationRequestedProducerOptions.SectionName)
-            .Get<UserEmailVerificationRequestedProducerOptions>()
-            ?? new UserEmailVerificationRequestedProducerOptions();
 
         services.AddOptions<OutboxPublisherRuntimeOptions>()
             .BindConfiguration(OutboxPublisherRuntimeOptions.SectionName);
         services.AddOptions<AccountRegisteredProducerOptions>()
             .BindConfiguration(AccountRegisteredProducerOptions.SectionName);
-        services.AddOptions<UserEmailVerificationRequestedProducerOptions>()
-            .BindConfiguration(UserEmailVerificationRequestedProducerOptions.SectionName);
 
         services.AddSilverback()
             .AddSingletonBrokerBehavior<CustomSpanAttributesBehavior>()
@@ -73,11 +67,6 @@ public static class OutboxPublisherServiceRegistration
                     .AddProducer(producer => producer
                         .Produce<PhoneNumberConfirmedIntegrationEvent>("auth-user-phone-confirmed", endpoint => endpoint
                             .ProduceTo(accountRegisteredOptions.Topic)
-                            .SetKafkaKey(message => message?.UserId)
-                            .SerializeAsJson(serializer => serializer.SetTypeHeader())))
-                    .AddProducer(producer => producer
-                        .Produce<EmailVerificationRequestIntegrationEvent>("auth-user-email-verification-requested", endpoint => endpoint
-                            .ProduceTo(emailVerificationOptions.Topic)
                             .SetKafkaKey(message => message?.UserId)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())));
             });

@@ -69,19 +69,6 @@ public class IdentityRepository : IIdentityRepository
             user.PhoneNumberConfirmed);
     }
 
-    public async Task<string> GenerateEmailConfirmationTokenAsync(Guid userId, CancellationToken cancellationToken)
-    {
-        cancellationToken.ThrowIfCancellationRequested();
-
-        var user = await _userManager.FindByIdAsync(userId.ToString());
-        if (user is null)
-        {
-            throw new InvalidOperationException($"User with id '{userId}' was not found.");
-        }
-
-        return await _userManager.GenerateEmailConfirmationTokenAsync(user);
-    }
-
     public async Task<bool> IsEmailConfirmationTokenValidAsync(Guid userId, string token, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();

@@ -1,10 +1,8 @@
 ﻿using FlowChat.Shared.Application;
-using FlowChat.AuthService.Application.Contracts.Infrastructure;
 using FlowChat.AuthService.Application.Contracts.Persistence;
 using FlowChat.AuthService.Domain.Entities;
 using CSharpFunctionalExtensions;
 using FlowChat.Shared.Domain;
-using FlowChat.Core.Messaging.AuthService.Events;
 
 namespace FlowChat.AuthService.Application.Features.Users.Commands.RegisterUser;
 
@@ -18,22 +16,13 @@ public class RegisterUserCommandHandler : CommandHandlerBase<RegisterUserCommand
     };
 
     private readonly IIdentityRepository _identityRepository;
-    private readonly ITokenEncoder _tokenEncoder;
-    private readonly IConfirmationLinkBuilder _confirmationLinkBuilder;
-    private readonly IIntegrationEventPublisher _integrationEventPublisher;
     private Identity? _domainUser;
     public RegisterUserCommandHandler(
         IIdentityRepository identityRepository,
-        ITokenEncoder tokenEncoder,
-        IConfirmationLinkBuilder confirmationLinkBuilder,
-        IIntegrationEventPublisher integrationEventPublisher,
         IUnitOfWork unitOfWork,
         IDomainEventDispatcher domainEventDispatcher) : base(domainEventDispatcher, unitOfWork)
     {
         _identityRepository = identityRepository;
-        _tokenEncoder = tokenEncoder;
-        _confirmationLinkBuilder = confirmationLinkBuilder;
-        _integrationEventPublisher = integrationEventPublisher;
     }
 
     protected override async Task<FlowChatResult<RegisterUserCommandResponse>> ExecuteAsync(RegisterUserCommand request, CancellationToken cancellationToken)
@@ -48,19 +37,6 @@ public class RegisterUserCommandHandler : CommandHandlerBase<RegisterUserCommand
         {
             return FlowChatResult<RegisterUserCommandResponse>.Failure(domainError);
         }
-
-        var confirmationToken = await _identityRepository.GenerateEmailConfirmationTokenAsync(guid, cancellationToken);
-        var encodedToken = _tokenEncoder.EncodeForUrl(confirmationToken);
-        var confirmationLink = _confirmationLinkBuilder.BuildEmailConfirmationLink(guid, encodedToken);
-        await _integrationEventPublisher.PublishToOutboxAsync(
-            new EmailVerificationRequestIntegrationEvent
-            {
-                Key = guid.ToString(),
-                UserId = guid,
-                UserEmail = _domainUser.Email!,
-                ConfirmationLink = confirmationLink
-            },
-            cancellationToken);
 
         return FlowChatResult<RegisterUserCommandResponse>.Success(
             new RegisterUserCommandResponse

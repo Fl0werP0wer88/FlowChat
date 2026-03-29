@@ -5,20 +5,17 @@ using Microsoft.Extensions.Options;
 namespace FlowChat.AuthService.OutboxPublisher.Diagnostics;
 
 public sealed class KafkaConnectivityProbe(
-    IOptions<AccountRegisteredProducerOptions> accountRegisteredOptions,
-    IOptions<UserEmailVerificationRequestedProducerOptions> emailVerificationOptions)
+    IOptions<AccountRegisteredProducerOptions> accountRegisteredOptions)
     : IKafkaConnectivityProbe
 {
     private static readonly TimeSpan MetadataTimeout = TimeSpan.FromSeconds(5);
     private readonly AccountRegisteredProducerOptions _accountRegisteredOptions = accountRegisteredOptions.Value;
-    private readonly UserEmailVerificationRequestedProducerOptions _emailVerificationOptions = emailVerificationOptions.Value;
 
     public Task ProbeAsync(CancellationToken cancellationToken)
     {
         var bootstrapServers = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         AddBootstrapServers(bootstrapServers, _accountRegisteredOptions.BootstrapServers);
-        AddBootstrapServers(bootstrapServers, _emailVerificationOptions.BootstrapServers);
 
         foreach (var bootstrapServer in bootstrapServers)
         {

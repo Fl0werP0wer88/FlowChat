@@ -20,7 +20,6 @@ public static class SilverbackServiceRegistration
         services.TryAddSingleton<IWorkerSettingsManager>(settingsManager);
 
         var accountRegisteredOptions = settingsManager.GetAccountRegisteredProducerOptions();
-        var emailVerificationOptions = settingsManager.GetUserEmailVerificationRequestedProducerOptions();
 
         services.AddSilverback()
             .AddSingletonBrokerBehavior<CustomSpanAttributesBehavior>()
@@ -53,12 +52,6 @@ public static class SilverbackServiceRegistration
                     .AddProducer(producer => producer
                         .Produce<PhoneNumberConfirmedIntegrationEvent>("auth-user-phone-confirmed", endpoint => endpoint
                             .ProduceTo(accountRegisteredOptions.Topic)
-                            .SetKafkaKey(message => message?.UserId)
-                            .SerializeAsJson(serializer => serializer.SetTypeHeader())
-                            .StoreToOutbox(outbox => outbox.UseEntityFramework<AppDbContext>())))
-                    .AddProducer(producer => producer
-                        .Produce<EmailVerificationRequestIntegrationEvent>("auth-user-email-verification-requested", endpoint => endpoint
-                            .ProduceTo(emailVerificationOptions.Topic)
                             .SetKafkaKey(message => message?.UserId)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())
                             .StoreToOutbox(outbox => outbox.UseEntityFramework<AppDbContext>())));

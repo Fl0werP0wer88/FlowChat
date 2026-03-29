@@ -18,7 +18,6 @@ public static class InfrastructureServiceRegistration
         services.TryAddSingleton<IWorkerSettingsManager>(new WorkerSettingsManager(configuration));
 
         services.AddScoped<ITokenEncoder, Base64UrlTokenEncoder>();
-        services.AddScoped<IConfirmationLinkBuilder, ConfirmationLinkBuilder>();
         services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
         services.AddScoped<IKafkaProducerOptions<AccountRegisteredIntegrationEvent>>(sp =>
             sp.GetRequiredService<IWorkerSettingsManager>().GetAccountRegisteredProducerOptions());
@@ -31,8 +30,6 @@ public static class InfrastructureServiceRegistration
         services.AddScoped<IKafkaProducerOptions<PhoneNumberConfirmedIntegrationEvent>>(sp =>
             new KafkaProducerOptionsAdapter<PhoneNumberConfirmedIntegrationEvent>(
                 sp.GetRequiredService<IWorkerSettingsManager>().GetAccountRegisteredProducerOptions()));
-        services.AddScoped<IKafkaProducerOptions<EmailVerificationRequestIntegrationEvent>>(sp =>
-            sp.GetRequiredService<IWorkerSettingsManager>().GetUserEmailVerificationRequestedProducerOptions());
         services.AddScoped<IIntegrationEventPublisher, SilverbackEventPublisher>();
 
         return services;

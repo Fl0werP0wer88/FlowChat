@@ -14,10 +14,6 @@ public sealed class WorkerSettingsManager : IWorkerSettingsManager
     public AccountRegisteredProducerOptions GetAccountRegisteredProducerOptions() =>
         ResolveSection<AccountRegisteredProducerOptions>(AccountRegisteredProducerOptions.SectionName);
 
-    public UserEmailVerificationRequestedProducerOptions GetUserEmailVerificationRequestedProducerOptions() =>
-        ResolveSection<UserEmailVerificationRequestedProducerOptions>(
-            UserEmailVerificationRequestedProducerOptions.SectionName);
-
     private TOptions ResolveSection<TOptions>(string sectionName)
         where TOptions : new()
     {

@@ -17,9 +17,7 @@ public sealed class KafkaProducerConfigurationTests
                 ["Kafka:AccountRegisteredConsumer:BootstrapServers"] = "legacy-broker:9092",
                 ["Kafka:AccountRegisteredConsumer:Topic"] = "legacy-user-created-topic",
                 ["Kafka:AccountRegisteredProducer:BootstrapServers"] = "broker:9092",
-                ["Kafka:AccountRegisteredProducer:Topic"] = "user-created-topic",
-                ["Kafka:UserEmailVerificationRequestedProducer:BootstrapServers"] = "broker:9092",
-                ["Kafka:UserEmailVerificationRequestedProducer:Topic"] = "email-verification-topic"
+                ["Kafka:AccountRegisteredProducer:Topic"] = "user-created-topic"
             })
             .Build();
 
@@ -32,18 +30,12 @@ public sealed class KafkaProducerConfigurationTests
 
         var settingsManager = serviceProvider.GetRequiredService<IWorkerSettingsManager>();
         var accountRegisteredOptions = settingsManager.GetAccountRegisteredProducerOptions();
-        var emailVerificationOptions = settingsManager.GetUserEmailVerificationRequestedProducerOptions();
         var typedAccountRegisteredOptions = serviceProvider
             .GetRequiredService<IKafkaProducerOptions<AccountRegisteredIntegrationEvent>>();
-        var typedEmailVerificationOptions = serviceProvider
-            .GetRequiredService<IKafkaProducerOptions<EmailVerificationRequestIntegrationEvent>>();
 
         Assert.Equal("broker:9092", accountRegisteredOptions.BootstrapServers);
         Assert.Equal("user-created-topic", accountRegisteredOptions.Topic);
-        Assert.Equal("broker:9092", emailVerificationOptions.BootstrapServers);
-        Assert.Equal("email-verification-topic", emailVerificationOptions.Topic);
         Assert.Equal("user-created-topic", typedAccountRegisteredOptions.Topic);
-        Assert.Equal("email-verification-topic", typedEmailVerificationOptions.Topic);
     }
 
     [Theory]
@@ -60,16 +52,10 @@ public sealed class KafkaProducerConfigurationTests
         var accountRegisteredOptions = configuration
             .GetSection(AccountRegisteredProducerOptions.SectionName)
             .Get<AccountRegisteredProducerOptions>();
-        var emailVerificationOptions = configuration
-            .GetSection(UserEmailVerificationRequestedProducerOptions.SectionName)
-            .Get<UserEmailVerificationRequestedProducerOptions>();
 
         Assert.NotNull(accountRegisteredOptions);
-        Assert.NotNull(emailVerificationOptions);
         Assert.Equal("localhost:9092", accountRegisteredOptions!.BootstrapServers);
         Assert.Equal("dev.flowchat.identity.user.v1", accountRegisteredOptions.Topic);
-        Assert.Equal("localhost:9092", emailVerificationOptions!.BootstrapServers);
-        Assert.Equal("dev.flowchat.notification.email.v1", emailVerificationOptions.Topic);
     }
 
     private static string GetRepositoryPath(string relativePath)

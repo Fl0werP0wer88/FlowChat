@@ -13,9 +13,6 @@ public sealed class ApiSettingsManager : IApiSettingsManager
 
     public JwtSettings GetJwtSettings() => ResolveSection<JwtSettings>(JwtSettings.SectionName);
 
-    public ConfirmationLinksSettings GetConfirmationLinksSettings() =>
-        ResolveSection<ConfirmationLinksSettings>(ConfirmationLinksSettings.SectionName);
-
     public ApiRuntimeSettings GetApiRuntimeSettings()
     {
         var settings = new ApiRuntimeSettings();

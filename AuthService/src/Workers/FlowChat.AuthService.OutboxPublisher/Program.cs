@@ -58,16 +58,12 @@ static void LogStartupDiagnostics(IHost host)
     var environment = host.Services.GetRequiredService<IHostEnvironment>();
     var configuration = host.Services.GetRequiredService<IConfiguration>();
     var accountRegisteredOptions = host.Services.GetRequiredService<IOptions<AccountRegisteredProducerOptions>>().Value;
-    var emailVerificationOptions = host.Services
-        .GetRequiredService<IOptions<UserEmailVerificationRequestedProducerOptions>>()
-        .Value;
     var outboxOptions = host.Services.GetRequiredService<IOptions<OutboxPublisherRuntimeOptions>>().Value;
     var authDbTarget = GetAuthDbTarget(configuration.GetConnectionString("AuthDb"));
 
     logger.LogInformation(
         "Starting AuthService outbox publisher in {Environment}. AuthDb target: {Host}:{Port}/{Database}. " +
         "AccountRegistered Kafka: {AccountRegisteredBootstrapServers} -> {AccountRegisteredTopic}. " +
-        "EmailVerification Kafka: {EmailVerificationBootstrapServers} -> {EmailVerificationTopic}. " +
         "Outbox worker settings: BatchSize={BatchSize}, PollIntervalSeconds={PollIntervalSeconds}, " +
         "RetryBaseDelaySeconds={RetryBaseDelaySeconds}, MaxRetryDelaySeconds={MaxRetryDelaySeconds}.",
         environment.EnvironmentName,
@@ -76,8 +72,6 @@ static void LogStartupDiagnostics(IHost host)
         authDbTarget.Database,
         accountRegisteredOptions.BootstrapServers,
         accountRegisteredOptions.Topic,
-        emailVerificationOptions.BootstrapServers,
-        emailVerificationOptions.Topic,
         outboxOptions.BatchSize,
         outboxOptions.PollIntervalSeconds,
         outboxOptions.RetryBaseDelaySeconds,

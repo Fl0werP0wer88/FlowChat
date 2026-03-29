@@ -8,7 +8,7 @@ namespace FlowChat.AuthService.UnitTests;
 public sealed class ApiSettingsManagerTests
 {
     [Fact]
-    public void ApiSettingsManager_ResolvesJwtConfirmationAndRuntimeSettings()
+    public void ApiSettingsManager_ResolvesJwtAndRuntimeSettings()
     {
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
@@ -17,7 +17,6 @@ public sealed class ApiSettingsManagerTests
                 ["JwtSettings:Issuer"] = "jwt-issuer",
                 ["JwtSettings:Audience"] = "jwt-audience",
                 ["JwtSettings:ExpiresMinutes"] = "90",
-                ["ConfirmationLinks:EmailConfirmationBaseUrl"] = "https://localhost:7236/api/users/confirm-email",
                 ["ApiUrl"] = "https://localhost:5000",
                 ["BlazorUrl"] = "https://localhost:5010"
             })
@@ -25,16 +24,12 @@ public sealed class ApiSettingsManagerTests
 
         var settingsManager = new ApiSettingsManager(configuration);
         var jwtSettings = settingsManager.GetJwtSettings();
-        var confirmationLinksSettings = settingsManager.GetConfirmationLinksSettings();
         var apiRuntimeSettings = settingsManager.GetApiRuntimeSettings();
 
         Assert.Equal("jwt-key", jwtSettings.Key);
         Assert.Equal("jwt-issuer", jwtSettings.Issuer);
         Assert.Equal("jwt-audience", jwtSettings.Audience);
         Assert.Equal(90, jwtSettings.ExpiresMinutes);
-        Assert.Equal(
-            "https://localhost:7236/api/users/confirm-email",
-            confirmationLinksSettings.EmailConfirmationBaseUrl);
         Assert.Equal("https://localhost:5000", apiRuntimeSettings.ApiUrl);
         Assert.Equal("https://localhost:5010", apiRuntimeSettings.BlazorUrl);
     }
@@ -47,8 +42,7 @@ public sealed class ApiSettingsManagerTests
             {
                 ["JwtSettings:Key"] = "jwt-key",
                 ["JwtSettings:Issuer"] = "jwt-issuer",
-                ["JwtSettings:Audience"] = "jwt-audience",
-                ["ConfirmationLinks:EmailConfirmationBaseUrl"] = "https://localhost:7236/api/users/confirm-email"
+                ["JwtSettings:Audience"] = "jwt-audience"
             })
             .Build();
 
@@ -62,8 +56,5 @@ public sealed class ApiSettingsManagerTests
 
         Assert.NotNull(settingsManager);
         Assert.Equal("jwt-key", settingsManager.GetJwtSettings().Key);
-        Assert.Equal(
-            "https://localhost:7236/api/users/confirm-email",
-            settingsManager.GetConfirmationLinksSettings().EmailConfirmationBaseUrl);
     }
 }

@@ -128,9 +128,7 @@ public sealed class OutboxPublisherStartupDiagnosticsTests
                 ["OutboxPublisher:RetryBaseDelaySeconds"] = "3",
                 ["OutboxPublisher:MaxRetryDelaySeconds"] = "120",
                 ["Kafka:AccountRegisteredProducer:BootstrapServers"] = "localhost:9092",
-                ["Kafka:AccountRegisteredProducer:Topic"] = "dev.flowchat.identity.user.v1",
-                ["Kafka:UserEmailVerificationRequestedProducer:BootstrapServers"] = "localhost:9092",
-                ["Kafka:UserEmailVerificationRequestedProducer:Topic"] = "dev.flowchat.notification.email.v1"
+                ["Kafka:AccountRegisteredProducer:Topic"] = "dev.flowchat.identity.user.v1"
             })
             .Build();
     }
