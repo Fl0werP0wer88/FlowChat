@@ -41,6 +41,35 @@ public sealed class Notification : AggregateRootBase<Notification>
         string displayName,
         string? sourceMessageKey)
     {
+        return Create(
+            userId,
+            email,
+            displayName,
+            NotificationType.Welcome,
+            sourceMessageKey);
+    }
+
+    public static Notification CreateEmailVerification(
+        Guid userId,
+        string email,
+        string displayName,
+        string? sourceMessageKey)
+    {
+        return Create(
+            userId,
+            email,
+            displayName,
+            NotificationType.EmailVerification,
+            sourceMessageKey);
+    }
+
+    private static Notification Create(
+        Guid userId,
+        string email,
+        string displayName,
+        NotificationType type,
+        string? sourceMessageKey)
+    {
         if (userId == Guid.Empty)
         {
             throw new InvalidOperationException("UserId is required.");
@@ -61,7 +90,7 @@ public sealed class Notification : AggregateRootBase<Notification>
             userId,
             email.Trim(),
             displayName.Trim(),
-            NotificationType.Welcome,
+            type,
             string.IsNullOrWhiteSpace(sourceMessageKey) ? null : sourceMessageKey.Trim());
     }
 

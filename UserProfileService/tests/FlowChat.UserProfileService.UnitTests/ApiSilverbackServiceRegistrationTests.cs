@@ -1,4 +1,5 @@
-﻿using FlowChat.Shared.Application;
+using FlowChat.Core.Messaging.AuthService.Events;
+using FlowChat.Shared.Application;
 using FlowChat.UserProfileService.Infrastructure;
 using FlowChat.UserProfileService.Infrastructure.Kafka;
 using FlowChat.UserProfileService.Persistence;
@@ -19,6 +20,8 @@ public sealed class ApiSilverbackServiceRegistrationTests
                 ["ConnectionStrings:UserProfileDb"] = "Host=localhost;Port=5432;Database=flowchat_userprofile_test_db;Username=flowchat_app;Password=flowchat_app_pw;",
                 ["Kafka:UserProfileCreatedProducer:BootstrapServers"] = "localhost:9092",
                 ["Kafka:UserProfileCreatedProducer:Topic"] = "dev.flowchat.user-profile.user-profile.v1",
+                ["Kafka:UserEmailVerificationRequestedProducer:BootstrapServers"] = "localhost:9092",
+                ["Kafka:UserEmailVerificationRequestedProducer:Topic"] = "dev.flowchat.notification.email.v1",
                 ["Kafka:UserProfileStateChangedProducer:BootstrapServers"] = "localhost:9092",
                 ["Kafka:UserProfileStateChangedProducer:Topic"] = "dev.flowchat.user-profile.user-profile.v1"
             })
@@ -35,9 +38,11 @@ public sealed class ApiSilverbackServiceRegistrationTests
 
         var publisher = serviceProvider.GetRequiredService<IPublisher>();
         var integrationEventPublisher = serviceProvider.GetRequiredService<IIntegrationEventPublisher>();
+        var emailVerificationOptions = serviceProvider
+            .GetRequiredService<IKafkaProducerOptions<EmailVerificationRequestIntegrationEvent>>();
 
         Assert.NotNull(publisher);
         Assert.NotNull(integrationEventPublisher);
+        Assert.Equal("dev.flowchat.notification.email.v1", emailVerificationOptions.Topic);
     }
 }
-

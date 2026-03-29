@@ -1,4 +1,4 @@
-﻿using FlowChat.Shared.Application;
+using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
 using FlowChat.NotificationService.Application.Contracts.Infrastructure;
 using FlowChat.NotificationService.Application.Contracts.Persistence;
@@ -39,7 +39,7 @@ public class HandleUserEmailVerificationRequestedNotificationCommandHandlerTests
         Assert.Single(repository.Notifications);
         var saved = repository.Notifications.Single();
         Assert.Equal(NotificationStatus.Sent, saved.Status);
-        Assert.Equal(NotificationType.Welcome, saved.Type);
+        Assert.Equal(NotificationType.EmailVerification, saved.Type);
         Assert.Equal("provider-123", saved.ProviderMessageId);
         Assert.Null(saved.FailureReason);
         Assert.NotNull(sender.LastRequest);
@@ -47,14 +47,14 @@ public class HandleUserEmailVerificationRequestedNotificationCommandHandlerTests
     }
 
     [Fact]
-    public async Task Handle_Should_NotCreateDuplicate_WhenWelcomeNotificationAlreadyExists()
+    public async Task Handle_Should_NotCreateDuplicate_WhenSourceMessageKeyAlreadyExists()
     {
         var repository = new InMemoryNotificationRepository();
-        var existing = Notification.CreateWelcome(
+        var existing = Notification.CreateEmailVerification(
             Guid.NewGuid(),
             "existing@flowchat.local",
             "Existing",
-            "source-key");
+            "message-key-2");
         existing.MarkSent("provider-existing");
         repository.Notifications.Add(existing);
 
@@ -196,6 +196,15 @@ public class HandleUserEmailVerificationRequestedNotificationCommandHandlerTests
             return Task.FromResult(exists);
         }
 
+        public Task<bool> ExistsBySourceMessageKeyAsync(
+            string sourceMessageKey,
+            CancellationToken cancellationToken = default)
+        {
+            var normalizedKey = sourceMessageKey.Trim();
+            var exists = Notifications.Any(x => x.SourceMessageKey == normalizedKey);
+            return Task.FromResult(exists);
+        }
+
         public Task<NotificationDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
         {
             return Task.FromResult(Notifications
@@ -256,4 +265,3 @@ public class HandleUserEmailVerificationRequestedNotificationCommandHandlerTests
             => Task.CompletedTask;
     }
 }
-

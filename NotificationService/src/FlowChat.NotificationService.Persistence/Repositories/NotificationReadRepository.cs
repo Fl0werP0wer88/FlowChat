@@ -36,6 +36,22 @@ public sealed class NotificationReadRepository(AppDbContext dbContext)
             cancellationToken);
     }
 
+    public async Task<bool> ExistsBySourceMessageKeyAsync(
+        string sourceMessageKey,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(sourceMessageKey))
+        {
+            return false;
+        }
+
+        var normalizedKey = sourceMessageKey.Trim();
+
+        return await DbContext.Set<Notification>().AnyAsync(
+            x => x.SourceMessageKey == normalizedKey,
+            cancellationToken);
+    }
+
     public async Task<IReadOnlyList<NotificationDto>> GetByUserIdAsync(
         Guid userId,
         CancellationToken cancellationToken = default)

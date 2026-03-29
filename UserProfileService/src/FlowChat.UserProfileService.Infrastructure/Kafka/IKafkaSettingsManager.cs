@@ -4,5 +4,6 @@ public interface IKafkaSettingsManager
 {
     UserProfileCreatedProducerOptions GetUserProfileCreatedProducerOptions();
     UserEmailConfirmedProducerOptions GetUserEmailConfirmedProducerOptions();
+    UserEmailVerificationRequestedProducerOptions GetUserEmailVerificationRequestedProducerOptions();
     UserProfileStateChangedProducerOptions GetUserProfileStateChangedProducerOptions();
 }

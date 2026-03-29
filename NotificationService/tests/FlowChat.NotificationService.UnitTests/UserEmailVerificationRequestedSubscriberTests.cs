@@ -21,6 +21,7 @@ public sealed class UserEmailVerificationRequestedSubscriberTests
         await subscriber.HandleAsync(
             new EmailVerificationRequestIntegrationEvent
             {
+                Key = "request-123",
                 UserId = userId,
                 UserEmail = " john.doe@flowchat.local ",
                 ConfirmationLink = " https://localhost/confirm "
@@ -33,7 +34,7 @@ public sealed class UserEmailVerificationRequestedSubscriberTests
         Assert.Equal("john.doe", apiClient.LastRequest.UserName);
         Assert.Equal("john.doe", apiClient.LastRequest.DisplayName);
         Assert.Equal("https://localhost/confirm", apiClient.LastRequest.ConfirmationLink);
-        Assert.Equal(userId.ToString(), apiClient.LastRequest.SourceMessageKey);
+        Assert.Equal("request-123", apiClient.LastRequest.SourceMessageKey);
     }
 
     [Fact]

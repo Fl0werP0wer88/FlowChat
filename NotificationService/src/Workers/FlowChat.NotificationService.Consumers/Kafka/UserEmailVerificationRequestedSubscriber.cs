@@ -47,7 +47,9 @@ public sealed class UserEmailVerificationRequestedSubscriber(
                     UserName = userName,
                     DisplayName = userName,
                     ConfirmationLink = message.ConfirmationLink.Trim(),
-                    SourceMessageKey = message.UserId.ToString()
+                    SourceMessageKey = string.IsNullOrWhiteSpace(message.Key)
+                        ? message.UserId.ToString()
+                        : message.Key.Trim()
                 },
                 cancellationToken);
         }

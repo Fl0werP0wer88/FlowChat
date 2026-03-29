@@ -1,10 +1,11 @@
-﻿using FlowChat.Shared.Application;
+using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
+using FlowChat.Shared.Domain.ValueObjects;
+using FlowChat.UserProfileService.Application.Contracts.Infrastructure;
 using FlowChat.UserProfileService.Application.Contracts.Persistence;
 using FlowChat.UserProfileService.Application.Features.UserProfiles.Commands.AddEmail;
 using FlowChat.UserProfileService.Application.Features.UserProfiles.Queries.GetUserProfile;
 using FlowChat.UserProfileService.Domain.Entities;
-using FlowChat.Shared.Domain.ValueObjects;
 
 namespace FlowChat.UserProfileService.UnitTests;
 
@@ -17,6 +18,7 @@ public sealed class AddEmailCommandHandlerTests
         var handler = new AddEmailCommandHandler(
             repository,
             repository,
+            new TestEmailVerificationRequestIssuer(),
             new TestUnitOfWork(),
             new TestDomainEventDispatcher());
 
@@ -36,6 +38,7 @@ public sealed class AddEmailCommandHandlerTests
         var handler = new AddEmailCommandHandler(
             repository,
             repository,
+            new TestEmailVerificationRequestIssuer(),
             new TestUnitOfWork(),
             new TestDomainEventDispatcher());
 
@@ -55,6 +58,7 @@ public sealed class AddEmailCommandHandlerTests
         var handler = new AddEmailCommandHandler(
             repository,
             repository,
+            new TestEmailVerificationRequestIssuer(),
             new TestUnitOfWork(),
             new TestDomainEventDispatcher());
 
@@ -62,7 +66,30 @@ public sealed class AddEmailCommandHandlerTests
 
         Assert.True(result.IsFailure);
         Assert.Equal(ErrorType.Conflict, result.Error.ErrorType);
-        Assert.Equal("Email 'john@example.com' already exists.", result.Error.ErrorMessage);
+        Assert.Equal("Email 'john@example.com' is already taken.", result.Error.ErrorMessage);
+    }
+
+    [Fact]
+    public async Task Handle_WithUniqueAddress_AddsEmailAndIssuesVerificationRequest()
+    {
+        var profile = CreateUserProfile("primary@example.com");
+        profile.ClearEvents();
+        var repository = new TestUserProfileRepository(profile);
+        var emailVerificationRequestIssuer = new TestEmailVerificationRequestIssuer();
+        var handler = new AddEmailCommandHandler(
+            repository,
+            repository,
+            emailVerificationRequestIssuer,
+            new TestUnitOfWork(),
+            new TestDomainEventDispatcher());
+
+        var result = await handler.Handle(new AddEmailCommand(profile.Id.Value, "secondary@example.com"), CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        var addedEmail = Assert.Single(profile.Emails.Where(x => x.Address.Value == "secondary@example.com"));
+        Assert.Equal(addedEmail.Id.Value, result.Value);
+        Assert.Equal(addedEmail.Id.Value, emailVerificationRequestIssuer.LastEmailId);
+        Assert.Equal("secondary@example.com", emailVerificationRequestIssuer.LastEmailAddress);
     }
 
     private static UserProfile CreateUserProfile(string emailAddress)
@@ -81,6 +108,27 @@ public sealed class AddEmailCommandHandlerTests
                     isAuth: true)
             ],
             id: userProfileId);
+    }
+
+    private sealed class TestEmailVerificationRequestIssuer : IEmailVerificationRequestIssuer
+    {
+        public Guid? LastEmailId { get; private set; }
+        public string? LastEmailAddress { get; private set; }
+
+        public Task<EmailVerificationRequest> IssueAsync(
+            UserProfile userProfile,
+            Email email,
+            CancellationToken cancellationToken)
+        {
+            LastEmailId = email.Id.Value;
+            LastEmailAddress = email.Address.Value;
+
+            return Task.FromResult(EmailVerificationRequest.Create(
+                userProfile.Id,
+                email.Id,
+                Guid.NewGuid().ToString("N"),
+                DateTime.UtcNow.AddHours(24)));
+        }
     }
 
     private sealed class TestUserProfileRepository(UserProfile? userProfile = null)
@@ -141,4 +189,3 @@ public sealed class AddEmailCommandHandlerTests
             Task.CompletedTask;
     }
 }
-

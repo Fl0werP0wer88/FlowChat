@@ -1,3 +1,4 @@
+using FlowChat.Core.Messaging.AuthService.Events;
 using FlowChat.Core.Messaging.UserProfileService.Events;
 using FlowChat.UserProfileService.OutboxPublisher.Configuration;
 using FlowChat.UserProfileService.Persistence;
@@ -24,6 +25,10 @@ public static class OutboxPublisherServiceRegistration
             .GetSection(UserEmailConfirmedProducerOptions.SectionName)
             .Get<UserEmailConfirmedProducerOptions>()
             ?? new UserEmailConfirmedProducerOptions();
+        var emailVerificationRequestedProducerOptions = configuration
+            .GetSection(UserEmailVerificationRequestedProducerOptions.SectionName)
+            .Get<UserEmailVerificationRequestedProducerOptions>()
+            ?? new UserEmailVerificationRequestedProducerOptions();
         var stateChangedProducerOptions = configuration
             .GetSection(UserProfileStateChangedProducerOptions.SectionName)
             .Get<UserProfileStateChangedProducerOptions>()
@@ -65,6 +70,11 @@ public static class OutboxPublisherServiceRegistration
                         .Produce<UserEmailConfirmedIntegrationEvent>("user-email-confirmed", endpoint => endpoint
                             .ProduceTo(emailConfirmedProducerOptions.Topic)
                             .SetKafkaKey(message => message?.UserProfileId)
+                            .SerializeAsJson(serializer => serializer.SetTypeHeader())))
+                    .AddProducer(producer => producer
+                        .Produce<EmailVerificationRequestIntegrationEvent>("email-verification-requested", endpoint => endpoint
+                            .ProduceTo(emailVerificationRequestedProducerOptions.Topic)
+                            .SetKafkaKey(message => message?.Key)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())))
                     .AddProducer(producer => producer
                         .Produce<UserProfileStateChangedIntegrationEvent>("user-profile-state-changed", endpoint => endpoint

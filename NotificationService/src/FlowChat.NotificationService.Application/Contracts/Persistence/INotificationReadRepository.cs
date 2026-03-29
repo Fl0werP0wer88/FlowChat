@@ -11,6 +11,10 @@ public interface INotificationReadRepository : IReadRepository<NotificationDto>
         NotificationType type,
         CancellationToken cancellationToken = default);
 
+    Task<bool> ExistsBySourceMessageKeyAsync(
+        string sourceMessageKey,
+        CancellationToken cancellationToken = default);
+
     Task<IReadOnlyList<NotificationDto>> GetByUserIdAsync(
         Guid userId,
         CancellationToken cancellationToken = default);

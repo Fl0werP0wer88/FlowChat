@@ -26,6 +26,7 @@ public static class PersistenceServiceRegistration
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<IUserProfileReadRepository, UserProfileReadRepository>();
         services.AddScoped<IUserProfileWriteRepository, UserProfileWriteRepository>();
+        services.AddScoped<IEmailVerificationRequestWriteRepository, EmailVerificationRequestWriteRepository>();
 
         return services;
     }

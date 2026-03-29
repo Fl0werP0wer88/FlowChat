@@ -1,3 +1,4 @@
+using FlowChat.Core.Messaging.AuthService.Events;
 using FlowChat.Core.Messaging.UserProfileService.Events;
 using FlowChat.UserProfileService.Persistence;
 using FlowChat.Shared.Infrastructure.Silverback.Behaviors;
@@ -18,6 +19,7 @@ public static class SilverbackServiceRegistration
         var settingsManager = new KafkaSettingsManager(configuration);
         var createdProducerOptions = settingsManager.GetUserProfileCreatedProducerOptions();
         var emailConfirmedProducerOptions = settingsManager.GetUserEmailConfirmedProducerOptions();
+        var emailVerificationRequestedProducerOptions = settingsManager.GetUserEmailVerificationRequestedProducerOptions();
         var stateChangedProducerOptions = settingsManager.GetUserProfileStateChangedProducerOptions();
         var bootstrapServers = !string.IsNullOrWhiteSpace(createdProducerOptions.BootstrapServers)
             ? createdProducerOptions.BootstrapServers
@@ -44,6 +46,12 @@ public static class SilverbackServiceRegistration
                         .Produce<UserEmailConfirmedIntegrationEvent>("user-email-confirmed", endpoint => endpoint
                             .ProduceTo(emailConfirmedProducerOptions.Topic)
                             .SetKafkaKey(message => message?.UserProfileId)
+                            .SerializeAsJson(serializer => serializer.SetTypeHeader())
+                            .StoreToOutbox(outbox => outbox.UseEntityFramework<AppDbContext>())))
+                    .AddProducer(producer => producer
+                        .Produce<EmailVerificationRequestIntegrationEvent>("email-verification-requested", endpoint => endpoint
+                            .ProduceTo(emailVerificationRequestedProducerOptions.Topic)
+                            .SetKafkaKey(message => message?.Key)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())
                             .StoreToOutbox(outbox => outbox.UseEntityFramework<AppDbContext>())))
                     .AddProducer(producer => producer

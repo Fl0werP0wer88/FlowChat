@@ -1,8 +1,9 @@
-﻿using FlowChat.Shared.Application;
+using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
+using FlowChat.Shared.Domain.ValueObjects;
+using FlowChat.UserProfileService.Application.Contracts.Infrastructure;
 using FlowChat.UserProfileService.Application.Contracts.Persistence;
 using FlowChat.UserProfileService.Domain.Entities;
-using FlowChat.Shared.Domain.ValueObjects;
 
 namespace FlowChat.UserProfileService.Application.Features.UserProfiles.Commands.CreateInitialUserProfile;
 
@@ -11,16 +12,19 @@ public sealed class CreateInitialUserProfileCommandHandler
 {
     private readonly IUserProfileReadRepository _userProfileReadRepository;
     private readonly IUserProfileWriteRepository _userProfileWriteRepository;
+    private readonly IEmailVerificationRequestIssuer _emailVerificationRequestIssuer;
     private UserProfile? _userProfile;
 
     public CreateInitialUserProfileCommandHandler(
         IUserProfileReadRepository userProfileReadRepository,
         IUserProfileWriteRepository userProfileWriteRepository,
+        IEmailVerificationRequestIssuer emailVerificationRequestIssuer,
         IUnitOfWork unitOfWork,
         IDomainEventDispatcher domainEventDispatcher) : base(domainEventDispatcher, unitOfWork)
     {
         _userProfileReadRepository = userProfileReadRepository;
         _userProfileWriteRepository = userProfileWriteRepository;
+        _emailVerificationRequestIssuer = emailVerificationRequestIssuer;
     }
 
     protected override async Task<FlowChatResult<Guid>> ExecuteAsync(
@@ -44,10 +48,10 @@ public sealed class CreateInitialUserProfileCommandHandler
             throw new InvalidOperationException("Validated phone number could not be normalized.");
         }
 
-        var exists = await _userProfileReadRepository
+        var userNameExists = await _userProfileReadRepository
             .UserNameExistsAsync(userName!, cancellationToken: cancellationToken);
 
-        if (exists)
+        if (userNameExists)
         {
             return FlowChatResult<Guid>.Failure(DomainError.Conflict($"UserName '{userName}' already exists."));
         }
@@ -61,9 +65,10 @@ public sealed class CreateInitialUserProfileCommandHandler
         }
 
         var userProfileId = Id<UserProfile>.FromGuid(request.UserId);
-        List<Email> emails = email is null
-            ? []
-            : [Email.Create(userProfileId, emailAddress!, isMain: true, isAuth: true)];
+        List<Email> emails =
+        [
+            Email.Create(userProfileId, emailAddress!, isMain: true, isAuth: true)
+        ];
         List<Phone> phones = phone is null
             ? []
             : [Phone.Create(userProfileId, phoneNumber!, isMain: true)];
@@ -78,6 +83,7 @@ public sealed class CreateInitialUserProfileCommandHandler
             id: userProfileId);
 
         await _userProfileWriteRepository.AddAsync(_userProfile, cancellationToken);
+        await _emailVerificationRequestIssuer.IssueAsync(_userProfile, _userProfile.Emails.Single(), cancellationToken);
 
         return FlowChatResult<Guid>.Success(_userProfile.Id.Value);
     }
@@ -87,4 +93,3 @@ public sealed class CreateInitialUserProfileCommandHandler
         return result.IsSuccess ? _userProfile : null;
     }
 }
-

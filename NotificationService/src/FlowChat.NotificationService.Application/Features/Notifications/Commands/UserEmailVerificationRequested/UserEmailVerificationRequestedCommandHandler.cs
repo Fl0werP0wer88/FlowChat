@@ -36,9 +36,8 @@ public sealed class UserEmailVerificationRequestedCommandHandler
             ? request.UserName.Trim()
             : request.DisplayName.Trim();
 
-        var alreadyExists = await _notificationReadRepository.ExistsByUserIdAndTypeAsync(
-            request.UserId,
-            NotificationType.Welcome,
+        var alreadyExists = await _notificationReadRepository.ExistsBySourceMessageKeyAsync(
+            request.SourceMessageKey ?? string.Empty,
             cancellationToken);
 
         if (alreadyExists)
@@ -46,7 +45,7 @@ public sealed class UserEmailVerificationRequestedCommandHandler
             return FlowChatResult<Unit>.Success(Unit.Value);
         }
 
-        _notification = Notification.CreateWelcome(
+        _notification = Notification.CreateEmailVerification(
             request.UserId,
             request.Email,
             displayName,

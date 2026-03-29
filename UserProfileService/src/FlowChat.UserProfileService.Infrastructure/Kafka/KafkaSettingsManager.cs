@@ -14,6 +14,10 @@ public sealed class KafkaSettingsManager(IConfiguration configuration) : IKafkaS
         _configuration.GetSection(UserEmailConfirmedProducerOptions.SectionName).Get<UserEmailConfirmedProducerOptions>()
         ?? new UserEmailConfirmedProducerOptions();
 
+    public UserEmailVerificationRequestedProducerOptions GetUserEmailVerificationRequestedProducerOptions() =>
+        _configuration.GetSection(UserEmailVerificationRequestedProducerOptions.SectionName).Get<UserEmailVerificationRequestedProducerOptions>()
+        ?? new UserEmailVerificationRequestedProducerOptions();
+
     public UserProfileStateChangedProducerOptions GetUserProfileStateChangedProducerOptions() =>
         _configuration.GetSection(UserProfileStateChangedProducerOptions.SectionName).Get<UserProfileStateChangedProducerOptions>()
         ?? new UserProfileStateChangedProducerOptions();

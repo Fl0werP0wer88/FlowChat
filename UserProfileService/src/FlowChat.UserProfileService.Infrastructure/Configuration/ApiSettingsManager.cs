@@ -22,6 +22,10 @@ public sealed class ApiSettingsManager : IApiSettingsManager
         return settings;
     }
 
+    public ConfirmationLinksSettings GetConfirmationLinksSettings() =>
+        _configuration.GetSection(ConfirmationLinksSettings.SectionName).Get<ConfirmationLinksSettings>()
+        ?? new ConfirmationLinksSettings();
+
     public InternalApiSettings GetInternalApiSettings() =>
         _configuration.GetSection(InternalApiSettings.SectionName).Get<InternalApiSettings>()
         ?? new InternalApiSettings();
