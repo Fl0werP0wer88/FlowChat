@@ -2,6 +2,7 @@
 using FlowChat.Shared.Domain;
 using FlowChat.UserProfileService.Application.Contracts.Persistence;
 using FlowChat.UserProfileService.Application.Features.UserProfiles.Commands.AddEmail;
+using FlowChat.UserProfileService.Application.Features.UserProfiles.Queries.GetUserProfile;
 using FlowChat.UserProfileService.Domain.Entities;
 using FlowChat.Shared.Domain.ValueObjects;
 
@@ -12,8 +13,10 @@ public sealed class AddEmailCommandHandlerTests
     [Fact]
     public async Task Handle_WithEmptyUserIdAndMissingAddress_ReturnsSingleValidationFailureWithBothErrors()
     {
+        var repository = new TestUserProfileRepository();
         var handler = new AddEmailCommandHandler(
-            new TestUserProfileRepository(),
+            repository,
+            repository,
             new TestUnitOfWork(),
             new TestDomainEventDispatcher());
 
@@ -28,9 +31,11 @@ public sealed class AddEmailCommandHandlerTests
     [Fact]
     public async Task Handle_WithInvalidAddress_ReturnsValidationFailure()
     {
-        var profile = UserProfile.Rehydrate("jdoe", "John Doe", id: Id<UserProfile>.New());
+        var profile = CreateUserProfile("primary@example.com");
+        var repository = new TestUserProfileRepository(profile);
         var handler = new AddEmailCommandHandler(
-            new TestUserProfileRepository(profile),
+            repository,
+            repository,
             new TestUnitOfWork(),
             new TestDomainEventDispatcher());
 
@@ -44,11 +49,12 @@ public sealed class AddEmailCommandHandlerTests
     [Fact]
     public async Task Handle_WithDuplicateAddressIgnoringCase_ReturnsConflict()
     {
-        var profile = UserProfile.Rehydrate("jdoe", "John Doe", id: Id<UserProfile>.New());
-        profile.AddEmail("john@example.com");
+        var profile = CreateUserProfile("john@example.com");
         profile.ClearEvents();
+        var repository = new TestUserProfileRepository(profile);
         var handler = new AddEmailCommandHandler(
-            new TestUserProfileRepository(profile),
+            repository,
+            repository,
             new TestUnitOfWork(),
             new TestDomainEventDispatcher());
 
@@ -59,10 +65,35 @@ public sealed class AddEmailCommandHandlerTests
         Assert.Equal("Email 'john@example.com' already exists.", result.Error.ErrorMessage);
     }
 
-    private sealed class TestUserProfileRepository(UserProfile? userProfile = null) : IUserProfileWriteRepository
+    private static UserProfile CreateUserProfile(string emailAddress)
+    {
+        var userProfileId = Id<UserProfile>.New();
+
+        return UserProfile.Rehydrate(
+            "jdoe",
+            "John Doe",
+            emails:
+            [
+                Email.Create(
+                    userProfileId,
+                    EmailAddress.Create(emailAddress),
+                    isMain: true,
+                    isAuth: true)
+            ],
+            id: userProfileId);
+    }
+
+    private sealed class TestUserProfileRepository(UserProfile? userProfile = null)
+        : IUserProfileReadRepository, IUserProfileWriteRepository
     {
         public Task<UserProfile?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
             Task.FromResult(userProfile?.Id.Value == id ? userProfile : null);
+
+        Task<UserProfileDto?> IReadRepository<UserProfileDto>.GetByIdAsync(Guid id, CancellationToken cancellationToken) =>
+            Task.FromResult<UserProfileDto?>(null);
+
+        Task<IReadOnlyList<UserProfileDto>> IReadRepository<UserProfileDto>.GetAllAsync(CancellationToken cancellationToken) =>
+            Task.FromResult<IReadOnlyList<UserProfileDto>>([]);
 
         public Task<UserProfile> AddAsync(UserProfile entity, CancellationToken cancellationToken = default) =>
             Task.FromResult(entity);
@@ -72,6 +103,21 @@ public sealed class AddEmailCommandHandlerTests
 
         public Task DeleteAsync(UserProfile entity, CancellationToken cancellationToken = default) =>
             Task.CompletedTask;
+
+        public Task<IReadOnlyList<UserProfileDto>> GetActiveAsync(CancellationToken cancellationToken = default) =>
+            Task.FromResult<IReadOnlyList<UserProfileDto>>([]);
+
+        public Task<UserProfileDto?> GetByUserNameAsync(string userName, CancellationToken cancellationToken = default) =>
+            Task.FromResult<UserProfileDto?>(null);
+
+        public Task<bool> EmailAddressExistsAsync(string emailAddress, CancellationToken cancellationToken = default) =>
+            Task.FromResult(userProfile?.Emails.Any(x => x.Address == EmailAddress.Create(emailAddress)) ?? false);
+
+        public Task<bool> UserNameExistsAsync(
+            string userName,
+            Guid? excludedUserId = null,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(false);
     }
 
     private sealed class TestUnitOfWork : IUnitOfWork

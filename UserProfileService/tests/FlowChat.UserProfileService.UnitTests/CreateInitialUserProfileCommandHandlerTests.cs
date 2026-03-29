@@ -41,6 +41,7 @@ public sealed class CreateInitialUserProfileCommandHandlerTests
         var phone = Assert.Single(profile.Phones);
         Assert.Equal("john@example.com", email.Address.Value);
         Assert.True(email.IsMain);
+        Assert.True(email.IsAuth);
         Assert.Equal("+48123123123", phone.Number.Value);
         Assert.True(phone.IsMain);
     }
@@ -68,7 +69,7 @@ public sealed class CreateInitialUserProfileCommandHandlerTests
 
         Assert.True(result.IsFailure);
         Assert.Equal(ErrorType.Validation, result.Error.ErrorType);
-        Assert.Equal(["At least one email or phone is required to create a user profile."], result.Error.Errors);
+        Assert.Equal(["Email is required."], result.Error.Errors);
         Assert.Null(repository.AddedEntity);
     }
 
@@ -95,7 +96,7 @@ public sealed class CreateInitialUserProfileCommandHandlerTests
 
         Assert.True(result.IsFailure);
         Assert.Equal(ErrorType.Validation, result.Error.ErrorType);
-        Assert.Equal(["At least one email or phone is required to create a user profile."], result.Error.Errors);
+        Assert.Equal(["Email is required."], result.Error.Errors);
         Assert.Null(repository.AddedEntity);
     }
 
@@ -127,7 +128,7 @@ public sealed class CreateInitialUserProfileCommandHandlerTests
             [
                 "UserName is required.",
                 "DisplayName is required.",
-                "At least one email or phone is required to create a user profile."
+                "Email is required."
             ],
             result.Error.Errors);
         Assert.Null(repository.AddedEntity);
@@ -159,6 +160,7 @@ public sealed class CreateInitialUserProfileCommandHandlerTests
         var email = Assert.Single(profile.Emails);
         Assert.Equal("john@example.com", email.Address.Value);
         Assert.True(email.IsMain);
+        Assert.True(email.IsAuth);
         Assert.Empty(profile.Phones);
     }
 
@@ -190,7 +192,7 @@ public sealed class CreateInitialUserProfileCommandHandlerTests
     }
 
     [Fact]
-    public async Task Handle_WithSinglePhone_AddsMainPhoneOnly()
+    public async Task Handle_WithSinglePhone_ReturnsValidationFailureBecauseEmailIsRequired()
     {
         var repository = new TestUserProfileRepository();
         var handler = new CreateInitialUserProfileCommandHandler(
@@ -210,16 +212,14 @@ public sealed class CreateInitialUserProfileCommandHandlerTests
                 Guid.NewGuid()),
             CancellationToken.None);
 
-        Assert.True(result.IsSuccess);
-        var profile = Assert.IsType<UserProfile>(repository.AddedEntity);
-        Assert.Empty(profile.Emails);
-        var phone = Assert.Single(profile.Phones);
-        Assert.Equal("+48123123123", phone.Number.Value);
-        Assert.True(phone.IsMain);
+        Assert.True(result.IsFailure);
+        Assert.Equal(ErrorType.Validation, result.Error.ErrorType);
+        Assert.Equal(["Email is required."], result.Error.Errors);
+        Assert.Null(repository.AddedEntity);
     }
 
     [Fact]
-    public async Task Handle_WithFormattedPhone_NormalizesPhoneToE164()
+    public async Task Handle_WithEmailAndFormattedPhone_NormalizesPhoneToE164()
     {
         var repository = new TestUserProfileRepository();
         var handler = new CreateInitialUserProfileCommandHandler(
@@ -234,7 +234,7 @@ public sealed class CreateInitialUserProfileCommandHandlerTests
                 "John Doe",
                 null,
                 null,
-                null,
+                "john@example.com",
                 "+48 123 123 123",
                 Guid.NewGuid()),
             CancellationToken.None);
@@ -246,7 +246,7 @@ public sealed class CreateInitialUserProfileCommandHandlerTests
     }
 
     [Fact]
-    public async Task Handle_WithInvalidPhone_ReturnsValidationFailure()
+    public async Task Handle_WithEmailAndInvalidPhone_ReturnsValidationFailure()
     {
         var repository = new TestUserProfileRepository();
         var handler = new CreateInitialUserProfileCommandHandler(
@@ -261,7 +261,7 @@ public sealed class CreateInitialUserProfileCommandHandlerTests
                 "John Doe",
                 null,
                 null,
-                null,
+                "john@example.com",
                 "123123123",
                 Guid.NewGuid()),
             CancellationToken.None);
@@ -335,6 +335,9 @@ public sealed class CreateInitialUserProfileCommandHandlerTests
 
         public Task<UserProfileDto?> GetByUserNameAsync(string userName, CancellationToken cancellationToken = default) =>
             Task.FromResult<UserProfileDto?>(null);
+
+        public Task<bool> EmailAddressExistsAsync(string emailAddress, CancellationToken cancellationToken = default) =>
+            Task.FromResult(false);
 
         public Task<bool> UserNameExistsAsync(
             string userName,
