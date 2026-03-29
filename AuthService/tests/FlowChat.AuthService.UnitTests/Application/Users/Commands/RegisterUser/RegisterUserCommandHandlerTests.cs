@@ -49,8 +49,8 @@ public sealed class RegisterUserCommandHandlerTests
         Assert.Equal(1, confirmationLinkBuilder.BuildCallCount);
 
         var dispatchedEvents = Assert.Single(domainEventDispatcher.DispatchedBatches);
-        var userCreatedDomainEvent = Assert.IsType<UserCreatedDomainEvent>(Assert.Single(dispatchedEvents));
-        Assert.Equal(createdUserId, userCreatedDomainEvent.UserId.Value);
+        var accountRegisteredDomainEvent = Assert.IsType<AccountRegisteredDomainEvent>(Assert.Single(dispatchedEvents));
+        Assert.Equal(createdUserId, accountRegisteredDomainEvent.UserId.Value);
     }
 
     [Fact]

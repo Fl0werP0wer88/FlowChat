@@ -5,10 +5,10 @@ using FlowChat.Core.Messaging.AuthService.Events;
 
 namespace FlowChat.AuthService.Application.Common.Eventing.Handlers;
 
-public sealed class UserCreatedDomainEventHandler
-    : MappedDomainEventHandlerBase<UserCreatedDomainEvent, UserCreatedIntegrationEvent>
+public sealed class AccountRegisteredDomainEventHandler
+    : MappedDomainEventHandlerBase<AccountRegisteredDomainEvent, AccountRegisteredIntegrationEvent>
 {
-    public UserCreatedDomainEventHandler(
+    public AccountRegisteredDomainEventHandler(
         IIntegrationEventPublisher integrationEventPublisher,
         IMapper mapper)
         : base(integrationEventPublisher, mapper)

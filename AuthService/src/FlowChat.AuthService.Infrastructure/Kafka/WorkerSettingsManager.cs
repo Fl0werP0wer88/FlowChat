@@ -11,8 +11,8 @@ public sealed class WorkerSettingsManager : IWorkerSettingsManager
         _configuration = configuration;
     }
 
-    public UserCreatedProducerOptions GetUserCreatedProducerOptions() =>
-        ResolveSection<UserCreatedProducerOptions>(UserCreatedProducerOptions.SectionName);
+    public AccountRegisteredProducerOptions GetAccountRegisteredProducerOptions() =>
+        ResolveSection<AccountRegisteredProducerOptions>(AccountRegisteredProducerOptions.SectionName);
 
     public UserEmailVerificationRequestedProducerOptions GetUserEmailVerificationRequestedProducerOptions() =>
         ResolveSection<UserEmailVerificationRequestedProducerOptions>(

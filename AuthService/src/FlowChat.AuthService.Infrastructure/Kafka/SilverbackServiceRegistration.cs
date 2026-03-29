@@ -19,7 +19,7 @@ public static class SilverbackServiceRegistration
         var settingsManager = new WorkerSettingsManager(configuration);
         services.TryAddSingleton<IWorkerSettingsManager>(settingsManager);
 
-        var userCreatedOptions = settingsManager.GetUserCreatedProducerOptions();
+        var accountRegisteredOptions = settingsManager.GetAccountRegisteredProducerOptions();
         var emailVerificationOptions = settingsManager.GetUserEmailVerificationRequestedProducerOptions();
 
         services.AddSilverback()
@@ -31,28 +31,28 @@ public static class SilverbackServiceRegistration
             })
             .AddKafkaClients(clients =>
             {
-                clients.WithBootstrapServers(userCreatedOptions.BootstrapServers)
+                clients.WithBootstrapServers(accountRegisteredOptions.BootstrapServers)
                     .AddProducer(producer => producer
-                        .Produce<UserCreatedIntegrationEvent>("auth-user-created", endpoint => endpoint
-                            .ProduceTo(userCreatedOptions.Topic)
+                        .Produce<AccountRegisteredIntegrationEvent>("auth-account-registered", endpoint => endpoint
+                            .ProduceTo(accountRegisteredOptions.Topic)
                             .SetKafkaKey(message => message?.UserId)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())
                             .StoreToOutbox(outbox => outbox.UseEntityFramework<AppDbContext>())))
                     .AddProducer(producer => producer
                         .Produce<UserConfirmedIntegrationEvent>("auth-user-confirmed", endpoint => endpoint
-                            .ProduceTo(userCreatedOptions.Topic)
+                            .ProduceTo(accountRegisteredOptions.Topic)
                             .SetKafkaKey(message => message?.UserId)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())
                             .StoreToOutbox(outbox => outbox.UseEntityFramework<AppDbContext>())))
                     .AddProducer(producer => producer
                         .Produce<EmailConfirmedIntegrationEvent>("auth-user-email-confirmed", endpoint => endpoint
-                            .ProduceTo(userCreatedOptions.Topic)
+                            .ProduceTo(accountRegisteredOptions.Topic)
                             .SetKafkaKey(message => message?.UserId)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())
                             .StoreToOutbox(outbox => outbox.UseEntityFramework<AppDbContext>())))
                     .AddProducer(producer => producer
                         .Produce<PhoneNumberConfirmedIntegrationEvent>("auth-user-phone-confirmed", endpoint => endpoint
-                            .ProduceTo(userCreatedOptions.Topic)
+                            .ProduceTo(accountRegisteredOptions.Topic)
                             .SetKafkaKey(message => message?.UserId)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())
                             .StoreToOutbox(outbox => outbox.UseEntityFramework<AppDbContext>())))

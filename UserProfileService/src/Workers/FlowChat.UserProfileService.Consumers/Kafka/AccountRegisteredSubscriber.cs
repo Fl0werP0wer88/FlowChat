@@ -6,13 +6,13 @@ using Silverback.Messaging.Subscribers;
 
 namespace FlowChat.UserProfileService.Consumers.Kafka;
 
-public sealed class UserCreatedSubscriber(
+public sealed class AccountRegisteredSubscriber(
     IUserProfileInternalApiClient userProfileInternalApiClient,
-    ILogger<UserCreatedSubscriber> logger)
+    ILogger<AccountRegisteredSubscriber> logger)
 {
     [Subscribe]
     public async Task HandleAsync(
-        UserCreatedIntegrationEvent message,
+        AccountRegisteredIntegrationEvent message,
         CancellationToken cancellationToken)
     {
         var userName = message.UserName?.Trim();
@@ -70,7 +70,7 @@ public sealed class UserCreatedSubscriber(
             ? payloadUserId
             : null;
 
-    private static string ResolveDisplayName(UserCreatedIntegrationEvent message, string userName)
+    private static string ResolveDisplayName(AccountRegisteredIntegrationEvent message, string userName)
     {
         if (!string.IsNullOrWhiteSpace(message.DisplayName))
         {

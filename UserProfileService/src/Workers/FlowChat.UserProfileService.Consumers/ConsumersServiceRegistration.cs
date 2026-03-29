@@ -20,9 +20,9 @@ public static class ConsumersServiceRegistration
         IConfiguration configuration)
     {
         var consumerOptions = configuration
-            .GetSection(UserCreatedConsumerOptions.SectionName)
-            .Get<UserCreatedConsumerOptions>()
-            ?? new UserCreatedConsumerOptions();
+            .GetSection(AccountRegisteredConsumerOptions.SectionName)
+            .Get<AccountRegisteredConsumerOptions>()
+            ?? new AccountRegisteredConsumerOptions();
 
         services.AddOptions<UserProfileApiSettings>()
             .BindConfiguration(UserProfileApiSettings.SectionName);
@@ -72,7 +72,7 @@ public static class ConsumersServiceRegistration
                             .ProduceTo(consumerOptions.DeadLetterTopic)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())));
             })
-            .AddScopedSubscriber<UserCreatedSubscriber>();
+            .AddScopedSubscriber<AccountRegisteredSubscriber>();
 
         return services;
     }

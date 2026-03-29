@@ -4,7 +4,7 @@ using FlowChat.Shared.Domain;
 
 namespace FlowChat.AuthService.Domain.Events;
 
-public sealed class UserCreatedDomainEvent : BaseIdentityDomainEvent
+public sealed class AccountRegisteredDomainEvent : BaseIdentityDomainEvent
 {
     public Id<Identity> UserId { get; }
     public string UserName { get; }
@@ -13,7 +13,7 @@ public sealed class UserCreatedDomainEvent : BaseIdentityDomainEvent
     public string? FirstName { get; }
     public string? LastName { get; }
 
-    public UserCreatedDomainEvent
+    public AccountRegisteredDomainEvent
     (
         Id<Identity> userId,
         string userName,

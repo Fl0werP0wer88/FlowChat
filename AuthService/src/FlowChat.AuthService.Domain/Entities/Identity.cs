@@ -70,7 +70,7 @@ public sealed class Identity : AggregateRootBase<Identity>
             firstName: null,
             lastName: null);
 
-        user.AddDomainEvent(new UserCreatedDomainEvent(
+        user.AddDomainEvent(new AccountRegisteredDomainEvent(
             user.Id,
             user.UserName,
             user.Email,

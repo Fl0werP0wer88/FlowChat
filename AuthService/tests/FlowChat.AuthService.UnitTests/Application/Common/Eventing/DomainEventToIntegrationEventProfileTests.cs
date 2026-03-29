@@ -22,10 +22,10 @@ public sealed class DomainEventToIntegrationEventProfileTests
     }
 
     [Fact]
-    public void UserCreatedDomainEvent_IsMappedToIntegrationEvent()
+    public void AccountRegisteredDomainEvent_IsMappedToIntegrationEvent()
     {
         var userId = Id<Identity>.FromGuid(Guid.NewGuid());
-        var domainEvent = new UserCreatedDomainEvent(
+        var domainEvent = new AccountRegisteredDomainEvent(
             userId,
             "flower",
             "flower@example.com",
@@ -33,7 +33,7 @@ public sealed class DomainEventToIntegrationEventProfileTests
             "Flow",
             "Er");
 
-        var integrationEvent = _mapper.Map<UserCreatedIntegrationEvent>(domainEvent);
+        var integrationEvent = _mapper.Map<AccountRegisteredIntegrationEvent>(domainEvent);
 
         Assert.Equal(userId.Value.ToString(), integrationEvent.Key);
         Assert.Equal(userId.Value, integrationEvent.UserId);

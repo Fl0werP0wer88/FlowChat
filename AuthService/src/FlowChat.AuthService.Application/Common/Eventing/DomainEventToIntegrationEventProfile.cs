@@ -8,7 +8,7 @@ public sealed class DomainEventToIntegrationEventProfile : Profile
 {
     public DomainEventToIntegrationEventProfile()
     {
-        CreateMap<UserCreatedDomainEvent, UserCreatedIntegrationEvent>()
+        CreateMap<AccountRegisteredDomainEvent, AccountRegisteredIntegrationEvent>()
             .ForMember(destination => destination.Key, options => options.MapFrom(source => source.UserId.Value.ToString()))
             .ForMember(destination => destination.UserId, options => options.MapFrom(source => source.UserId.Value))
             .ForMember(destination => destination.DisplayName, options => options.MapFrom(source => source.UserName));

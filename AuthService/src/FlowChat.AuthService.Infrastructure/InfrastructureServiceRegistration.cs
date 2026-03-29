@@ -20,17 +20,17 @@ public static class InfrastructureServiceRegistration
         services.AddScoped<ITokenEncoder, Base64UrlTokenEncoder>();
         services.AddScoped<IConfirmationLinkBuilder, ConfirmationLinkBuilder>();
         services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
-        services.AddScoped<IKafkaProducerOptions<UserCreatedIntegrationEvent>>(sp =>
-            sp.GetRequiredService<IWorkerSettingsManager>().GetUserCreatedProducerOptions());
+        services.AddScoped<IKafkaProducerOptions<AccountRegisteredIntegrationEvent>>(sp =>
+            sp.GetRequiredService<IWorkerSettingsManager>().GetAccountRegisteredProducerOptions());
         services.AddScoped<IKafkaProducerOptions<UserConfirmedIntegrationEvent>>(sp =>
             new KafkaProducerOptionsAdapter<UserConfirmedIntegrationEvent>(
-                sp.GetRequiredService<IWorkerSettingsManager>().GetUserCreatedProducerOptions()));
+                sp.GetRequiredService<IWorkerSettingsManager>().GetAccountRegisteredProducerOptions()));
         services.AddScoped<IKafkaProducerOptions<EmailConfirmedIntegrationEvent>>(sp =>
             new KafkaProducerOptionsAdapter<EmailConfirmedIntegrationEvent>(
-                sp.GetRequiredService<IWorkerSettingsManager>().GetUserCreatedProducerOptions()));
+                sp.GetRequiredService<IWorkerSettingsManager>().GetAccountRegisteredProducerOptions()));
         services.AddScoped<IKafkaProducerOptions<PhoneNumberConfirmedIntegrationEvent>>(sp =>
             new KafkaProducerOptionsAdapter<PhoneNumberConfirmedIntegrationEvent>(
-                sp.GetRequiredService<IWorkerSettingsManager>().GetUserCreatedProducerOptions()));
+                sp.GetRequiredService<IWorkerSettingsManager>().GetAccountRegisteredProducerOptions()));
         services.AddScoped<IKafkaProducerOptions<EmailVerificationRequestIntegrationEvent>>(sp =>
             sp.GetRequiredService<IWorkerSettingsManager>().GetUserEmailVerificationRequestedProducerOptions());
         services.AddScoped<IIntegrationEventPublisher, SilverbackEventPublisher>();

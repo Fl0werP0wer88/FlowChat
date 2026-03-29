@@ -7,15 +7,15 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 namespace FlowChat.UserProfileService.UnitTests;
 
-public sealed class UserCreatedSubscriberTests
+public sealed class AccountRegisteredSubscriberTests
 {
     [Fact]
     public async Task HandleAsync_MapsEmailAndPhoneToInternalApiRequest()
     {
         var userId = Guid.NewGuid();
         var internalApiClient = new CapturingUserProfileInternalApiClient();
-        var subscriber = new UserCreatedSubscriber(internalApiClient, NullLogger<UserCreatedSubscriber>.Instance);
-        var message = new UserCreatedIntegrationEvent
+        var subscriber = new AccountRegisteredSubscriber(internalApiClient, NullLogger<AccountRegisteredSubscriber>.Instance);
+        var message = new AccountRegisteredIntegrationEvent
         {
             UserId = userId,
             UserName = "jdoe",
@@ -37,13 +37,13 @@ public sealed class UserCreatedSubscriberTests
     [Fact]
     public async Task HandleAsync_WhenUserNameIsMissing_ThrowsNonTransientException()
     {
-        var subscriber = new UserCreatedSubscriber(
+        var subscriber = new AccountRegisteredSubscriber(
             new CapturingUserProfileInternalApiClient(),
-            NullLogger<UserCreatedSubscriber>.Instance);
+            NullLogger<AccountRegisteredSubscriber>.Instance);
 
         var exception = await Assert.ThrowsAsync<NonTransientException>(() =>
             subscriber.HandleAsync(
-                new UserCreatedIntegrationEvent
+                new AccountRegisteredIntegrationEvent
                 {
                     UserId = Guid.NewGuid(),
                     UserName = "   ",

@@ -2,9 +2,9 @@ using FlowChat.Shared.Infrastructure.Silverback.Kafka;
 
 namespace FlowChat.UserProfileService.Consumers.Kafka;
 
-public sealed class UserCreatedConsumerOptions : IRetryableKafkaConsumerOptions
+public sealed class AccountRegisteredConsumerOptions : IRetryableKafkaConsumerOptions
 {
-    public const string SectionName = "Kafka:UserCreatedConsumer";
+    public const string SectionName = "Kafka:AccountRegisteredConsumer";
 
     public string BootstrapServers { get; set; } = "localhost:9092";
     public string GroupId { get; set; } = "userprofile-service";

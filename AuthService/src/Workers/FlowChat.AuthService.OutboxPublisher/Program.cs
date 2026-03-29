@@ -57,7 +57,7 @@ static void LogStartupDiagnostics(IHost host)
         .CreateLogger("FlowChat.AuthService.OutboxPublisher.Startup");
     var environment = host.Services.GetRequiredService<IHostEnvironment>();
     var configuration = host.Services.GetRequiredService<IConfiguration>();
-    var userCreatedOptions = host.Services.GetRequiredService<IOptions<UserCreatedProducerOptions>>().Value;
+    var accountRegisteredOptions = host.Services.GetRequiredService<IOptions<AccountRegisteredProducerOptions>>().Value;
     var emailVerificationOptions = host.Services
         .GetRequiredService<IOptions<UserEmailVerificationRequestedProducerOptions>>()
         .Value;
@@ -66,7 +66,7 @@ static void LogStartupDiagnostics(IHost host)
 
     logger.LogInformation(
         "Starting AuthService outbox publisher in {Environment}. AuthDb target: {Host}:{Port}/{Database}. " +
-        "UserCreated Kafka: {UserCreatedBootstrapServers} -> {UserCreatedTopic}. " +
+        "AccountRegistered Kafka: {AccountRegisteredBootstrapServers} -> {AccountRegisteredTopic}. " +
         "EmailVerification Kafka: {EmailVerificationBootstrapServers} -> {EmailVerificationTopic}. " +
         "Outbox worker settings: BatchSize={BatchSize}, PollIntervalSeconds={PollIntervalSeconds}, " +
         "RetryBaseDelaySeconds={RetryBaseDelaySeconds}, MaxRetryDelaySeconds={MaxRetryDelaySeconds}.",
@@ -74,8 +74,8 @@ static void LogStartupDiagnostics(IHost host)
         authDbTarget.Host,
         authDbTarget.Port,
         authDbTarget.Database,
-        userCreatedOptions.BootstrapServers,
-        userCreatedOptions.Topic,
+        accountRegisteredOptions.BootstrapServers,
+        accountRegisteredOptions.Topic,
         emailVerificationOptions.BootstrapServers,
         emailVerificationOptions.Topic,
         outboxOptions.BatchSize,

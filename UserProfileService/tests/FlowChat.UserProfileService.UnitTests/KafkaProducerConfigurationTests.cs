@@ -15,8 +15,8 @@ public sealed class KafkaProducerConfigurationTests
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["Kafka:UserCreatedConsumer:BootstrapServers"] = "legacy-broker:9092",
-                ["Kafka:UserCreatedConsumer:Topic"] = "legacy-topic",
+                ["Kafka:AccountRegisteredConsumer:BootstrapServers"] = "legacy-broker:9092",
+                ["Kafka:AccountRegisteredConsumer:Topic"] = "legacy-topic",
                 ["Kafka:UserProfileCreatedProducer:BootstrapServers"] = "broker:9092",
                 ["Kafka:UserProfileCreatedProducer:Topic"] = "user-profile-created-topic",
                 ["Kafka:UserEmailConfirmedProducer:BootstrapServers"] = "broker:9092",

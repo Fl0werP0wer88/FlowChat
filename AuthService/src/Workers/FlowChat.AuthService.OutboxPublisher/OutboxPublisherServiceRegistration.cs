@@ -20,10 +20,10 @@ public static class OutboxPublisherServiceRegistration
             .GetSection(OutboxPublisherRuntimeOptions.SectionName)
             .Get<OutboxPublisherRuntimeOptions>()
             ?? new OutboxPublisherRuntimeOptions();
-        var userCreatedOptions = configuration
-            .GetSection(UserCreatedProducerOptions.SectionName)
-            .Get<UserCreatedProducerOptions>()
-            ?? new UserCreatedProducerOptions();
+        var accountRegisteredOptions = configuration
+            .GetSection(AccountRegisteredProducerOptions.SectionName)
+            .Get<AccountRegisteredProducerOptions>()
+            ?? new AccountRegisteredProducerOptions();
         var emailVerificationOptions = configuration
             .GetSection(UserEmailVerificationRequestedProducerOptions.SectionName)
             .Get<UserEmailVerificationRequestedProducerOptions>()
@@ -31,8 +31,8 @@ public static class OutboxPublisherServiceRegistration
 
         services.AddOptions<OutboxPublisherRuntimeOptions>()
             .BindConfiguration(OutboxPublisherRuntimeOptions.SectionName);
-        services.AddOptions<UserCreatedProducerOptions>()
-            .BindConfiguration(UserCreatedProducerOptions.SectionName);
+        services.AddOptions<AccountRegisteredProducerOptions>()
+            .BindConfiguration(AccountRegisteredProducerOptions.SectionName);
         services.AddOptions<UserEmailVerificationRequestedProducerOptions>()
             .BindConfiguration(UserEmailVerificationRequestedProducerOptions.SectionName);
 
@@ -54,25 +54,25 @@ public static class OutboxPublisherServiceRegistration
             })
             .AddKafkaClients(clients =>
             {
-                clients.WithBootstrapServers(userCreatedOptions.BootstrapServers)
+                clients.WithBootstrapServers(accountRegisteredOptions.BootstrapServers)
                     .AddProducer(producer => producer
-                        .Produce<UserCreatedIntegrationEvent>("auth-user-created", endpoint => endpoint
-                            .ProduceTo(userCreatedOptions.Topic)
+                        .Produce<AccountRegisteredIntegrationEvent>("auth-account-registered", endpoint => endpoint
+                            .ProduceTo(accountRegisteredOptions.Topic)
                             .SetKafkaKey(message => message?.UserId)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())))
                     .AddProducer(producer => producer
                         .Produce<UserConfirmedIntegrationEvent>("auth-user-confirmed", endpoint => endpoint
-                            .ProduceTo(userCreatedOptions.Topic)
+                            .ProduceTo(accountRegisteredOptions.Topic)
                             .SetKafkaKey(message => message?.UserId)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())))
                     .AddProducer(producer => producer
                         .Produce<EmailConfirmedIntegrationEvent>("auth-user-email-confirmed", endpoint => endpoint
-                            .ProduceTo(userCreatedOptions.Topic)
+                            .ProduceTo(accountRegisteredOptions.Topic)
                             .SetKafkaKey(message => message?.UserId)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())))
                     .AddProducer(producer => producer
                         .Produce<PhoneNumberConfirmedIntegrationEvent>("auth-user-phone-confirmed", endpoint => endpoint
-                            .ProduceTo(userCreatedOptions.Topic)
+                            .ProduceTo(accountRegisteredOptions.Topic)
                             .SetKafkaKey(message => message?.UserId)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())))
                     .AddProducer(producer => producer
