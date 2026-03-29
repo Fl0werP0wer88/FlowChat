@@ -81,7 +81,10 @@
         ]
       }
     ],
-    "explorer.compactFolders": false
+    "explorer.compactFolders": false,
+    "chat.tools.terminal.autoApprove": {
+      "dotnet ef": true
+    }
   },
   "tasks": {
     "version": "2.0.0",
