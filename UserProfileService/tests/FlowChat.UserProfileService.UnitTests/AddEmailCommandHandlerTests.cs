@@ -1,11 +1,11 @@
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
-using FlowChat.UserProfileService.Application.Contracts.Infrastructure;
 using FlowChat.UserProfileService.Application.Contracts.Persistence;
 using FlowChat.UserProfileService.Application.Features.UserProfiles.Commands.AddEmail;
 using FlowChat.UserProfileService.Application.Features.UserProfiles.Queries.GetUserProfile;
 using FlowChat.UserProfileService.Domain.Entities;
+using FlowChat.UserProfileService.Domain.Events;
 
 namespace FlowChat.UserProfileService.UnitTests;
 
@@ -18,7 +18,6 @@ public sealed class AddEmailCommandHandlerTests
         var handler = new AddEmailCommandHandler(
             repository,
             repository,
-            new TestEmailVerificationRequestIssuer(),
             new TestUnitOfWork(),
             new TestDomainEventDispatcher());
 
@@ -38,7 +37,6 @@ public sealed class AddEmailCommandHandlerTests
         var handler = new AddEmailCommandHandler(
             repository,
             repository,
-            new TestEmailVerificationRequestIssuer(),
             new TestUnitOfWork(),
             new TestDomainEventDispatcher());
 
@@ -58,7 +56,6 @@ public sealed class AddEmailCommandHandlerTests
         var handler = new AddEmailCommandHandler(
             repository,
             repository,
-            new TestEmailVerificationRequestIssuer(),
             new TestUnitOfWork(),
             new TestDomainEventDispatcher());
 
@@ -70,26 +67,27 @@ public sealed class AddEmailCommandHandlerTests
     }
 
     [Fact]
-    public async Task Handle_WithUniqueAddress_AddsEmailAndIssuesVerificationRequest()
+    public async Task Handle_WithUniqueAddress_AddsEmailAndDispatchesEmailAddedDomainEvent()
     {
         var profile = CreateUserProfile("primary@example.com");
         profile.ClearEvents();
         var repository = new TestUserProfileRepository(profile);
-        var emailVerificationRequestIssuer = new TestEmailVerificationRequestIssuer();
+        var domainEventDispatcher = new TestDomainEventDispatcher();
         var handler = new AddEmailCommandHandler(
             repository,
             repository,
-            emailVerificationRequestIssuer,
             new TestUnitOfWork(),
-            new TestDomainEventDispatcher());
+            domainEventDispatcher);
 
         var result = await handler.Handle(new AddEmailCommand(profile.Id.Value, "secondary@example.com"), CancellationToken.None);
 
         Assert.True(result.IsSuccess);
         var addedEmail = Assert.Single(profile.Emails.Where(x => x.Address.Value == "secondary@example.com"));
         Assert.Equal(addedEmail.Id.Value, result.Value);
-        Assert.Equal(addedEmail.Id.Value, emailVerificationRequestIssuer.LastEmailId);
-        Assert.Equal("secondary@example.com", emailVerificationRequestIssuer.LastEmailAddress);
+        var emailAddedEvent = Assert.Single(domainEventDispatcher.DispatchedEvents.OfType<EmailAddedDomainEvent>());
+        Assert.Equal(profile.Id.Value, emailAddedEvent.UserProfileId);
+        Assert.Equal(addedEmail.Id.Value, emailAddedEvent.EmailId);
+        Assert.Equal("secondary@example.com", emailAddedEvent.Email.Value);
     }
 
     private static UserProfile CreateUserProfile(string emailAddress)
@@ -97,27 +95,6 @@ public sealed class AddEmailCommandHandlerTests
         var userProfile = UserProfile.Create("jdoe", "John Doe", EmailAddress.Create(emailAddress), id: Id<UserProfile>.New());
         userProfile.ClearEvents();
         return userProfile;
-    }
-
-    private sealed class TestEmailVerificationRequestIssuer : IEmailVerificationRequestIssuer
-    {
-        public Guid? LastEmailId { get; private set; }
-        public string? LastEmailAddress { get; private set; }
-
-        public Task<EmailVerificationRequest> IssueAsync(
-            UserProfile userProfile,
-            Email email,
-            CancellationToken cancellationToken)
-        {
-            LastEmailId = email.Id.Value;
-            LastEmailAddress = email.Address.Value;
-
-            return Task.FromResult(EmailVerificationRequest.Create(
-                userProfile.Id,
-                email.Id,
-                Guid.NewGuid().ToString("N"),
-                DateTime.UtcNow.AddHours(24)));
-        }
     }
 
     private sealed class TestUserProfileRepository(UserProfile? userProfile = null)
@@ -174,7 +151,12 @@ public sealed class AddEmailCommandHandlerTests
 
     private sealed class TestDomainEventDispatcher : IDomainEventDispatcher
     {
-        public Task DispatchAsync(IEnumerable<IDomainEvent> domainEvents, CancellationToken cancellationToken = default) =>
-            Task.CompletedTask;
+        public List<IDomainEvent> DispatchedEvents { get; } = [];
+
+        public Task DispatchAsync(IEnumerable<IDomainEvent> domainEvents, CancellationToken cancellationToken = default)
+        {
+            DispatchedEvents.AddRange(domainEvents);
+            return Task.CompletedTask;
+        }
     }
 }

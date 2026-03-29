@@ -1,7 +1,6 @@
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
-using FlowChat.UserProfileService.Application.Contracts.Infrastructure;
 using FlowChat.UserProfileService.Application.Contracts.Persistence;
 using FlowChat.UserProfileService.Domain.Entities;
 
@@ -12,19 +11,16 @@ public sealed class CreateInitialUserProfileCommandHandler
 {
     private readonly IUserProfileReadRepository _userProfileReadRepository;
     private readonly IUserProfileWriteRepository _userProfileWriteRepository;
-    private readonly IEmailVerificationRequestIssuer _emailVerificationRequestIssuer;
     private UserProfile? _userProfile;
 
     public CreateInitialUserProfileCommandHandler(
         IUserProfileReadRepository userProfileReadRepository,
         IUserProfileWriteRepository userProfileWriteRepository,
-        IEmailVerificationRequestIssuer emailVerificationRequestIssuer,
         IUnitOfWork unitOfWork,
         IDomainEventDispatcher domainEventDispatcher) : base(domainEventDispatcher, unitOfWork)
     {
         _userProfileReadRepository = userProfileReadRepository;
         _userProfileWriteRepository = userProfileWriteRepository;
-        _emailVerificationRequestIssuer = emailVerificationRequestIssuer;
     }
 
     protected override async Task<FlowChatResult<Guid>> ExecuteAsync(
@@ -75,7 +71,6 @@ public sealed class CreateInitialUserProfileCommandHandler
             id: userProfileId);
 
         await _userProfileWriteRepository.AddAsync(_userProfile, cancellationToken);
-        await _emailVerificationRequestIssuer.IssueAsync(_userProfile, _userProfile.Emails.Single(), cancellationToken);
 
         return FlowChatResult<Guid>.Success(_userProfile.Id.Value);
     }

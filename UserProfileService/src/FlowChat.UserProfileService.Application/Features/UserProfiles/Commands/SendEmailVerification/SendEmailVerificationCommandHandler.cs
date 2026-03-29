@@ -8,16 +8,16 @@ namespace FlowChat.UserProfileService.Application.Features.UserProfiles.Commands
 public sealed class SendEmailVerificationCommandHandler
     : CommandHandlerBase<SendEmailVerificationCommand, Guid>
 {
-    private readonly IUserProfileWriteRepository _userProfileWriteRepository;
+    private readonly IUserProfileReadRepository _userProfileReadRepository;
     private readonly IEmailVerificationRequestIssuer _emailVerificationRequestIssuer;
 
     public SendEmailVerificationCommandHandler(
-        IUserProfileWriteRepository userProfileWriteRepository,
+        IUserProfileReadRepository userProfileReadRepository,
         IEmailVerificationRequestIssuer emailVerificationRequestIssuer,
         IUnitOfWork unitOfWork,
         IDomainEventDispatcher domainEventDispatcher) : base(domainEventDispatcher, unitOfWork)
     {
-        _userProfileWriteRepository = userProfileWriteRepository;
+        _userProfileReadRepository = userProfileReadRepository;
         _emailVerificationRequestIssuer = emailVerificationRequestIssuer;
     }
 
@@ -25,13 +25,13 @@ public sealed class SendEmailVerificationCommandHandler
         SendEmailVerificationCommand request,
         CancellationToken cancellationToken)
     {
-        var userProfile = await _userProfileWriteRepository.GetByIdAsync(request.UserId, cancellationToken);
+        var userProfile = await _userProfileReadRepository.GetByIdAsync(request.UserId, cancellationToken);
         if (userProfile is null)
         {
             return FlowChatResult<Guid>.Failure(DomainError.NotFound($"User profile '{request.UserId}' was not found."));
         }
 
-        var email = userProfile.Emails.FirstOrDefault(x => x.Id.Value == request.EmailId);
+        var email = userProfile.Emails.FirstOrDefault(x => x.Id == request.EmailId);
         if (email is null)
         {
             return FlowChatResult<Guid>.Failure(
@@ -41,10 +41,14 @@ public sealed class SendEmailVerificationCommandHandler
         if (email.IsConfirmed)
         {
             return FlowChatResult<Guid>.Failure(
-                DomainError.Validation($"Email '{email.Address.Value}' is already confirmed."));
+                DomainError.Validation($"Email '{email.Address}' is already confirmed."));
         }
 
-        var verificationRequest = await _emailVerificationRequestIssuer.IssueAsync(userProfile, email, cancellationToken);
+        var verificationRequest = await _emailVerificationRequestIssuer.IssueAsync(
+            userProfile.Id,
+            email.Id,
+            email.Address,
+            cancellationToken);
 
         return FlowChatResult<Guid>.Success(verificationRequest.Id.Value);
     }

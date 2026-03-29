@@ -78,7 +78,7 @@ public class UserProfile : AggregateRootBase<UserProfile>
             isEmailVisible,
             isPhoneVisible);
 
-        userProfile.AddEmailInternal(emailAddress, shouldMarkAggregateStateChanged: false);
+        var initialEmail = userProfile.AddEmailInternal(emailAddress, shouldMarkAggregateStateChanged: false);
 
         if (phoneNumber is not null)
         {
@@ -87,11 +87,12 @@ public class UserProfile : AggregateRootBase<UserProfile>
 
         EnsureInitialContactInvariant(userProfile._emails, userProfile._phones);
 
-        var currentMainEmail = userProfile.Emails.FirstOrDefault(x => x.IsMain)?.Address.Value;
+        var currentMainEmail = userProfile.Emails.Single(x => x.IsMain).Address.Value;
         var currentMainPhone = userProfile.Phones.FirstOrDefault(x => x.IsMain)?.Number.Value;
 
         userProfile.AddDomainEvent(new UserProfileCreatedDomainEvent(
             userProfile.Id,
+            initialEmail.Id,
             userProfile.UserName,
             userProfile.DisplayName,
             currentMainEmail,
@@ -111,7 +112,12 @@ public class UserProfile : AggregateRootBase<UserProfile>
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(address);
 
-        return AddEmailInternal(EmailAddress.Create(address), id);
+        var email = AddEmailInternal(EmailAddress.Create(address), id, shouldMarkAggregateStateChanged: false);
+
+        AddDomainEvent(new EmailAddedDomainEvent(Id, email.Id, email.Address));
+        MarkAggregateStateChanged(UserProfileConstants.UserProfileAggregateTypeName, CreateSnapshot);
+
+        return email;
     }
 
     public void SetMainEmail(Id<Email> emailId)

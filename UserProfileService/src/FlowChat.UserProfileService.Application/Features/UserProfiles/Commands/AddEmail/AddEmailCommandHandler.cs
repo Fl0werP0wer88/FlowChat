@@ -1,7 +1,6 @@
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
-using FlowChat.UserProfileService.Application.Contracts.Infrastructure;
 using FlowChat.UserProfileService.Application.Contracts.Persistence;
 using FlowChat.UserProfileService.Domain.Entities;
 
@@ -12,19 +11,16 @@ public sealed class AddEmailCommandHandler
 {
     private readonly IUserProfileReadRepository _userProfileReadRepository;
     private readonly IUserProfileWriteRepository _userProfileRepository;
-    private readonly IEmailVerificationRequestIssuer _emailVerificationRequestIssuer;
     private UserProfile? _userProfile;
 
     public AddEmailCommandHandler(
         IUserProfileReadRepository userProfileReadRepository,
         IUserProfileWriteRepository userProfileRepository,
-        IEmailVerificationRequestIssuer emailVerificationRequestIssuer,
         IUnitOfWork unitOfWork,
         IDomainEventDispatcher domainEventDispatcher) : base(domainEventDispatcher, unitOfWork)
     {
         _userProfileReadRepository = userProfileReadRepository;
         _userProfileRepository = userProfileRepository;
-        _emailVerificationRequestIssuer = emailVerificationRequestIssuer;
     }
 
     protected override async Task<FlowChatResult<Guid>> ExecuteAsync(
@@ -48,7 +44,6 @@ public sealed class AddEmailCommandHandler
         }
 
         var email = _userProfile.AddEmail(normalizedEmailAddress.Value);
-        await _emailVerificationRequestIssuer.IssueAsync(_userProfile, email, cancellationToken);
 
         return FlowChatResult<Guid>.Success(email.Id.Value);
     }

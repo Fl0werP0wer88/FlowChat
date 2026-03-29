@@ -4,6 +4,7 @@ using FlowChat.Shared.Domain.ValueObjects;
 using FlowChat.UserProfileService.Application.Contracts.Infrastructure;
 using FlowChat.UserProfileService.Application.Contracts.Persistence;
 using FlowChat.UserProfileService.Application.Features.UserProfiles.Commands.SendEmailVerification;
+using FlowChat.UserProfileService.Application.Features.UserProfiles.Queries.GetUserProfile;
 using FlowChat.UserProfileService.Domain.Entities;
 
 namespace FlowChat.UserProfileService.UnitTests;
@@ -23,20 +24,18 @@ public sealed class SendEmailVerificationCommandHandlerTests
             new TestUnitOfWork(),
             new TestDomainEventDispatcher());
 
-        var result = await sut.Handle(new SendEmailVerificationCommand(profile.Id.Value, email.Id.Value), CancellationToken.None);
+        var result = await sut.Handle(new SendEmailVerificationCommand(profile.Id, email.Id), CancellationToken.None);
 
         Assert.True(result.IsSuccess);
         Assert.Equal(emailVerificationRequestIssuer.LastRequestId, result.Value);
-        Assert.Equal(email.Id.Value, emailVerificationRequestIssuer.LastEmailId);
+        Assert.Equal(email.Id, emailVerificationRequestIssuer.LastEmailId);
     }
 
     [Fact]
     public async Task Handle_WithConfirmedEmail_ReturnsValidationFailure()
     {
-        var profile = CreateUserProfile("john@example.com");
+        var profile = CreateUserProfile("john@example.com", isConfirmed: true);
         var email = Assert.Single(profile.Emails);
-        profile.ConfirmEmail(email.Id);
-        profile.ClearEvents();
         var repository = new TestUserProfileRepository(profile);
         var sut = new SendEmailVerificationCommandHandler(
             repository,
@@ -44,34 +43,46 @@ public sealed class SendEmailVerificationCommandHandlerTests
             new TestUnitOfWork(),
             new TestDomainEventDispatcher());
 
-        var result = await sut.Handle(new SendEmailVerificationCommand(profile.Id.Value, email.Id.Value), CancellationToken.None);
+        var result = await sut.Handle(new SendEmailVerificationCommand(profile.Id, email.Id), CancellationToken.None);
 
         Assert.True(result.IsFailure);
         Assert.Equal(ErrorType.Validation, result.Error.ErrorType);
-        Assert.Equal($"Email '{email.Address.Value}' is already confirmed.", result.Error.ErrorMessage);
+        Assert.Equal($"Email '{email.Address}' is already confirmed.", result.Error.ErrorMessage);
     }
 
-    private static UserProfile CreateUserProfile(string emailAddress)
-    {
-        var userProfile = UserProfile.Create("jdoe", "John Doe", EmailAddress.Create(emailAddress), id: Id<UserProfile>.New());
-        userProfile.ClearEvents();
-        return userProfile;
-    }
+    private static UserProfileDto CreateUserProfile(string emailAddress, bool isConfirmed = false) =>
+        new(
+            Guid.NewGuid(),
+            "jdoe",
+            "John Doe",
+            null,
+            null,
+            true,
+            null,
+            [
+                new EmailDto(Guid.NewGuid(), EmailAddress.Create(emailAddress).Value, true, true, isConfirmed)
+            ],
+            []);
 
     private sealed class TestEmailVerificationRequestIssuer : IEmailVerificationRequestIssuer
     {
+        public Guid? LastUserProfileId { get; private set; }
         public Guid? LastEmailId { get; private set; }
+        public string? LastEmailAddress { get; private set; }
         public Guid LastRequestId { get; private set; }
 
         public Task<EmailVerificationRequest> IssueAsync(
-            UserProfile userProfile,
-            Email email,
+            Guid userProfileId,
+            Guid emailId,
+            string emailAddress,
             CancellationToken cancellationToken)
         {
-            LastEmailId = email.Id.Value;
+            LastUserProfileId = userProfileId;
+            LastEmailId = emailId;
+            LastEmailAddress = emailAddress;
             var verificationRequest = EmailVerificationRequest.Create(
-                userProfile.Id,
-                email.Id,
+                userProfileId,
+                emailId,
                 Guid.NewGuid().ToString("N"),
                 DateTime.UtcNow.AddHours(24));
             LastRequestId = verificationRequest.Id.Value;
@@ -80,19 +91,28 @@ public sealed class SendEmailVerificationCommandHandlerTests
         }
     }
 
-    private sealed class TestUserProfileRepository(UserProfile userProfile) : IUserProfileWriteRepository
+    private sealed class TestUserProfileRepository(UserProfileDto userProfile) : IUserProfileReadRepository
     {
-        public Task<UserProfile?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
-            Task.FromResult(userProfile.Id.Value == id ? userProfile : null);
+        public Task<UserProfileDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
+            Task.FromResult(userProfile.Id == id ? userProfile : null);
 
-        public Task<UserProfile> AddAsync(UserProfile entity, CancellationToken cancellationToken = default) =>
-            Task.FromResult(entity);
+        public Task<IReadOnlyList<UserProfileDto>> GetAllAsync(CancellationToken cancellationToken = default) =>
+            Task.FromResult<IReadOnlyList<UserProfileDto>>([]);
 
-        public Task UpdateAsync(UserProfile entity, CancellationToken cancellationToken = default) =>
-            Task.CompletedTask;
+        public Task<IReadOnlyList<UserProfileDto>> GetActiveAsync(CancellationToken cancellationToken = default) =>
+            Task.FromResult<IReadOnlyList<UserProfileDto>>([]);
 
-        public Task DeleteAsync(UserProfile entity, CancellationToken cancellationToken = default) =>
-            Task.CompletedTask;
+        public Task<UserProfileDto?> GetByUserNameAsync(string userName, CancellationToken cancellationToken = default) =>
+            Task.FromResult<UserProfileDto?>(null);
+
+        public Task<bool> EmailAddressExistsAsync(string emailAddress, CancellationToken cancellationToken = default) =>
+            Task.FromResult(false);
+
+        public Task<bool> UserNameExistsAsync(
+            string userName,
+            Guid? excludedUserId = null,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(false);
     }
 
     private sealed class TestUnitOfWork : IUnitOfWork

@@ -6,9 +6,10 @@ namespace FlowChat.UserProfileService.Domain.Events;
 
 public sealed class UserProfileCreatedDomainEvent(
     Id<UserProfile> aggregateId,
+    Id<Email> mainEmailId,
     string userName,
     string displayName,
-    string? mainEmail,
+    string mainEmail,
     string? mainPhone,
     string? avatarUrl,
     string? bio,
@@ -19,9 +20,10 @@ public sealed class UserProfileCreatedDomainEvent(
     DateTimeOffset? occurredOnUtc = null) : BaseUserProfileDomainEvent(aggregateId, occurredOnUtc)
 {
     public Guid UserProfileId { get; } = aggregateId.Value;
+    public Guid MainEmailId { get; } = mainEmailId.Value;
     public string UserName { get; } = userName;
     public string DisplayName { get; } = displayName;
-    public string? MainEmail { get; } = mainEmail;
+    public string MainEmail { get; } = mainEmail;
     public string? MainPhone { get; } = mainPhone;
     public string? AvatarUrl { get; } = avatarUrl;
     public string? Bio { get; } = bio;

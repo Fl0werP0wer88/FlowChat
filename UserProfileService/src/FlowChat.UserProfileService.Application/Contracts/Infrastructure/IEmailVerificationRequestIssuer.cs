@@ -5,7 +5,8 @@ namespace FlowChat.UserProfileService.Application.Contracts.Infrastructure;
 public interface IEmailVerificationRequestIssuer
 {
     Task<EmailVerificationRequest> IssueAsync(
-        UserProfile userProfile,
-        Email email,
+        Guid userProfileId,
+        Guid emailId,
+        string emailAddress,
         CancellationToken cancellationToken);
 }

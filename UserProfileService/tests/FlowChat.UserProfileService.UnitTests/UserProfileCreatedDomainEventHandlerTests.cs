@@ -5,6 +5,7 @@ using FlowChat.Core.Messaging;
 using FlowChat.Core.Messaging.UserProfileService.Events;
 using FlowChat.UserProfileService.Application.Common.Eventing;
 using FlowChat.UserProfileService.Application.Common.Eventing.Handlers;
+using FlowChat.UserProfileService.Application.Contracts.Infrastructure;
 using FlowChat.UserProfileService.Domain.Entities;
 using FlowChat.UserProfileService.Domain.Events;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -21,10 +22,13 @@ public sealed class UserProfileCreatedDomainEventHandlerTests
                 NullLoggerFactory.Instance)
             .CreateMapper();
         var publisher = new CapturingIntegrationEventPublisher();
-        var handler = new UserProfileCreatedDomainEventHandler(publisher, mapper);
+        var issuer = new CapturingEmailVerificationRequestIssuer();
+        var handler = new UserProfileCreatedDomainEventHandler(publisher, mapper, issuer);
         var userProfileId = Id<UserProfile>.New();
+        var mainEmailId = Id<Email>.New();
         var domainEvent = new UserProfileCreatedDomainEvent(
             userProfileId,
+            mainEmailId,
             "jdoe",
             "John Doe",
             "john@example.com",
@@ -51,6 +55,9 @@ public sealed class UserProfileCreatedDomainEventHandlerTests
         Assert.Equal(new DateTime(2026, 3, 10, 9, 0, 0, DateTimeKind.Utc), integrationEvent.LastSeenAtUtc);
         Assert.True(integrationEvent.IsEmailVisible);
         Assert.False(integrationEvent.IsPhoneVisible);
+        Assert.Equal(userProfileId.Value, issuer.LastUserProfileId);
+        Assert.Equal(mainEmailId.Value, issuer.LastEmailId);
+        Assert.Equal("john@example.com", issuer.LastEmailAddress);
     }
 
     private sealed class CapturingIntegrationEventPublisher : IIntegrationEventPublisher
@@ -62,6 +69,30 @@ public sealed class UserProfileCreatedDomainEventHandlerTests
         {
             PublishedEvents.Add(message);
             return Task.CompletedTask;
+        }
+    }
+
+    private sealed class CapturingEmailVerificationRequestIssuer : IEmailVerificationRequestIssuer
+    {
+        public Guid? LastUserProfileId { get; private set; }
+        public Guid? LastEmailId { get; private set; }
+        public string? LastEmailAddress { get; private set; }
+
+        public Task<EmailVerificationRequest> IssueAsync(
+            Guid userProfileId,
+            Guid emailId,
+            string emailAddress,
+            CancellationToken cancellationToken)
+        {
+            LastUserProfileId = userProfileId;
+            LastEmailId = emailId;
+            LastEmailAddress = emailAddress;
+
+            return Task.FromResult(EmailVerificationRequest.Create(
+                userProfileId,
+                emailId,
+                Guid.NewGuid().ToString("N"),
+                DateTime.UtcNow.AddHours(24)));
         }
     }
 }

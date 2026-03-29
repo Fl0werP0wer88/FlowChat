@@ -20,16 +20,16 @@ public sealed class EmailVerificationRequestIssuer(
     private readonly IIntegrationEventPublisher _integrationEventPublisher = integrationEventPublisher;
 
     public async Task<EmailVerificationRequest> IssueAsync(
-        UserProfile userProfile,
-        Email email,
+        Guid userProfileId,
+        Guid emailId,
+        string emailAddress,
         CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(userProfile);
-        ArgumentNullException.ThrowIfNull(email);
+        ArgumentException.ThrowIfNullOrWhiteSpace(emailAddress);
 
         var nowUtc = DateTime.UtcNow;
         var activeRequests = await _emailVerificationRequestWriteRepository
-            .GetActiveByEmailIdAsync(email.Id.Value, cancellationToken);
+            .GetActiveByEmailIdAsync(emailId, cancellationToken);
 
         foreach (var activeRequest in activeRequests)
         {
@@ -37,23 +37,23 @@ public sealed class EmailVerificationRequestIssuer(
         }
 
         var verificationRequest = EmailVerificationRequest.Create(
-            userProfile.Id,
-            email.Id,
+            userProfileId,
+            emailId,
             Guid.NewGuid().ToString("N"),
             nowUtc.AddHours(24));
 
         await _emailVerificationRequestWriteRepository.AddAsync(verificationRequest, cancellationToken);
 
         var token = _emailVerificationTokenProtector.Protect(
-            new EmailVerificationTokenPayload(userProfile.Id.Value, email.Id.Value, verificationRequest.Nonce));
+            new EmailVerificationTokenPayload(userProfileId, emailId, verificationRequest.Nonce));
         var confirmationLink = _emailVerificationLinkBuilder.BuildEmailVerificationLink(token);
 
         await _integrationEventPublisher.PublishToOutboxAsync(
             new EmailVerificationRequestIntegrationEvent
             {
                 Key = verificationRequest.Id.Value.ToString(),
-                UserId = userProfile.Id.Value,
-                UserEmail = email.Address.Value,
+                UserId = userProfileId,
+                UserEmail = emailAddress,
                 ConfirmationLink = confirmationLink
             },
             cancellationToken);

@@ -4,4 +4,5 @@ public sealed record EmailDto(
     Guid Id,
     string Address,
     bool IsMain,
-    bool IsAuth);
+    bool IsAuth,
+    bool IsConfirmed);

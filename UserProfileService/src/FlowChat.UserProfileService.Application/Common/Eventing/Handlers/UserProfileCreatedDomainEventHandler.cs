@@ -1,18 +1,29 @@
-﻿using AutoMapper;
-using FlowChat.Shared.Application;
+using AutoMapper;
 using FlowChat.Core.Messaging.UserProfileService.Events;
+using FlowChat.Shared.Application;
+using FlowChat.UserProfileService.Application.Contracts.Infrastructure;
 using FlowChat.UserProfileService.Domain.Events;
 
 namespace FlowChat.UserProfileService.Application.Common.Eventing.Handlers;
 
-public sealed class UserProfileCreatedDomainEventHandler
-    : MappedDomainEventHandlerBase<UserProfileCreatedDomainEvent, UserProfileCreatedIntegrationEvent>
+public sealed class UserProfileCreatedDomainEventHandler(
+    IIntegrationEventPublisher integrationEventPublisher,
+    IMapper mapper,
+    IEmailVerificationRequestIssuer emailVerificationRequestIssuer)
+    : MappedDomainEventHandlerBase<UserProfileCreatedDomainEvent, UserProfileCreatedIntegrationEvent>(
+        integrationEventPublisher,
+        mapper)
 {
-    public UserProfileCreatedDomainEventHandler(
-        IIntegrationEventPublisher integrationEventPublisher,
-        IMapper mapper)
-        : base(integrationEventPublisher, mapper)
+    private readonly IEmailVerificationRequestIssuer _emailVerificationRequestIssuer = emailVerificationRequestIssuer;
+
+    protected override Task ExecuteAsync(
+        UserProfileCreatedDomainEvent notification,
+        CancellationToken cancellationToken)
     {
+        return _emailVerificationRequestIssuer.IssueAsync(
+            notification.UserProfileId,
+            notification.MainEmailId,
+            notification.MainEmail,
+            cancellationToken);
     }
 }
-

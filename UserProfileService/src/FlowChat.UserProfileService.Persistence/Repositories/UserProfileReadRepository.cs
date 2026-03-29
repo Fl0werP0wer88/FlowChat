@@ -25,7 +25,8 @@ public sealed class UserProfileReadRepository(AppDbContext dbContext)
                 email.Id.Value,
                 email.Address.Value,
                 email.IsMain,
-                email.IsAuth))
+                email.IsAuth,
+                email.IsConfirmed))
             .ToList(),
         x.Phones
             .Select(phone => new PhoneDto(

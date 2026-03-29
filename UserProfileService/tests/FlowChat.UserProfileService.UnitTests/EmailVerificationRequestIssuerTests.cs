@@ -1,8 +1,6 @@
 using FlowChat.Core.Messaging;
 using FlowChat.Core.Messaging.AuthService.Events;
 using FlowChat.Shared.Application;
-using FlowChat.Shared.Domain;
-using FlowChat.Shared.Domain.ValueObjects;
 using FlowChat.UserProfileService.Application.Contracts.Infrastructure;
 using FlowChat.UserProfileService.Application.Contracts.Persistence;
 using FlowChat.UserProfileService.Application.Features.UserProfiles.EmailVerification;
@@ -16,11 +14,11 @@ public sealed class EmailVerificationRequestIssuerTests
     [Fact]
     public async Task IssueAsync_InvalidatesExistingRequestsAndPublishesIntegrationEvent()
     {
-        var userProfile = CreateUserProfile("john@example.com");
-        var email = Assert.Single(userProfile.Emails);
+        var userProfileId = Guid.NewGuid();
+        var emailId = Guid.NewGuid();
         var existingRequest = EmailVerificationRequest.Create(
-            userProfile.Id,
-            email.Id,
+            userProfileId,
+            emailId,
             "existing-nonce",
             DateTime.UtcNow.AddHours(6));
         var repository = new TestEmailVerificationRequestRepository([existingRequest]);
@@ -33,26 +31,19 @@ public sealed class EmailVerificationRequestIssuerTests
             linkBuilder,
             integrationEventPublisher);
 
-        var result = await sut.IssueAsync(userProfile, email, CancellationToken.None);
+        var result = await sut.IssueAsync(userProfileId, emailId, "john@example.com", CancellationToken.None);
 
         Assert.NotNull(existingRequest.InvalidatedAtUtc);
         Assert.Same(result, repository.AddedEntity);
         Assert.NotNull(tokenProtector.LastPayload);
-        Assert.Equal(userProfile.Id.Value, tokenProtector.LastPayload!.UserProfileId);
-        Assert.Equal(email.Id.Value, tokenProtector.LastPayload.EmailId);
+        Assert.Equal(userProfileId, tokenProtector.LastPayload!.UserProfileId);
+        Assert.Equal(emailId, tokenProtector.LastPayload.EmailId);
         Assert.Equal(result.Nonce, tokenProtector.LastPayload.Nonce);
         Assert.NotNull(integrationEventPublisher.LastPublishedEvent);
         Assert.Equal(result.Id.Value.ToString(), integrationEventPublisher.LastPublishedEvent!.Key);
-        Assert.Equal(userProfile.Id.Value, integrationEventPublisher.LastPublishedEvent.UserId);
+        Assert.Equal(userProfileId, integrationEventPublisher.LastPublishedEvent.UserId);
         Assert.Equal("john@example.com", integrationEventPublisher.LastPublishedEvent.UserEmail);
         Assert.Equal("https://frontend.flowchat.local/email-verification?token=protected-token", integrationEventPublisher.LastPublishedEvent.ConfirmationLink);
-    }
-
-    private static UserProfile CreateUserProfile(string emailAddress)
-    {
-        var userProfile = UserProfile.Create("jdoe", "John Doe", EmailAddress.Create(emailAddress), id: Id<UserProfile>.New());
-        userProfile.ClearEvents();
-        return userProfile;
     }
 
     private sealed class TestEmailVerificationRequestRepository(
