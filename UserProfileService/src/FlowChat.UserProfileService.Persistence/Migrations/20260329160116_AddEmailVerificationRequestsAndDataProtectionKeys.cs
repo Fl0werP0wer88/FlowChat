@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -6,8 +6,10 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 namespace FlowChat.UserProfileService.Persistence.Migrations
 {
+    /// <inheritdoc />
     public partial class AddEmailVerificationRequestsAndDataProtectionKeys : Migration
     {
+        /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
@@ -16,7 +18,7 @@ namespace FlowChat.UserProfileService.Persistence.Migrations
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    FriendlyName = table.Column<string>(type: "text", nullable: false),
+                    FriendlyName = table.Column<string>(type: "text", nullable: true),
                     Xml = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
@@ -35,10 +37,10 @@ namespace FlowChat.UserProfileService.Persistence.Migrations
                     ExpiresAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     InvalidatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     ConsumedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    CreatedAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     CreatedBy = table.Column<string>(type: "text", nullable: false),
-                    LastModifiedAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    LastModifiedBy = table.Column<string>(type: "text", nullable: false)
+                    CreatedAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    LastModifiedBy = table.Column<string>(type: "text", nullable: false),
+                    LastModifiedAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -63,12 +65,18 @@ namespace FlowChat.UserProfileService.Persistence.Migrations
                 column: "EmailId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_EmailVerificationRequests_UserProfileId",
+                table: "EmailVerificationRequests",
+                column: "UserProfileId");
+
+            migrationBuilder.CreateIndex(
                 name: "uq_email_verification_request_nonce",
                 table: "EmailVerificationRequests",
                 column: "Nonce",
                 unique: true);
         }
 
+        /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
