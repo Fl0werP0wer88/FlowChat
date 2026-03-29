@@ -1,7 +1,7 @@
-﻿using FlowChat.Shared.Domain;
+using FlowChat.Shared.Domain;
+using FlowChat.Shared.Domain.ValueObjects;
 using FlowChat.UserProfileService.Domain.Entities;
 using FlowChat.UserProfileService.Domain.Events;
-using FlowChat.Shared.Domain.ValueObjects;
 
 namespace FlowChat.UserProfileService.UnitTests;
 
@@ -11,9 +11,8 @@ public class UnitTest1
     public void UserProfile_Create_WithTypedId_AssignsTypedAggregateId()
     {
         var id = Id<UserProfile>.New();
-        var email = Email.Create(id, EmailAddress.Create("john@example.com"), isMain: true);
 
-        var profile = UserProfile.Create("jdoe", "John Doe", emails: [email], id: id);
+        var profile = UserProfile.Create("jdoe", "John Doe", EmailAddress.Create("john@example.com"), id: id);
 
         Assert.Equal(id, profile.Id);
         Assert.Equal(id.Value, profile.Id.Value);
@@ -22,18 +21,8 @@ public class UnitTest1
     }
 
     [Fact]
-    public void UserProfile_Rehydrate_DoesNotEmitDomainEvents()
-    {
-        var profile = UserProfile.Rehydrate("jdoe", "John Doe", id: Id<UserProfile>.New());
-
-        Assert.Empty(profile.DomainEvents);
-    }
-
-    [Fact]
     public void Email_Create_WithInvalidAddress_Throws()
     {
-        var userProfileId = Id<UserProfile>.New();
-
         var exception = Assert.Throws<ArgumentException>(() => EmailAddress.Create("not-an-email"));
 
         Assert.StartsWith(EmailAddress.InvalidEmailAddressMessage, exception.Message, StringComparison.Ordinal);
@@ -51,21 +40,23 @@ public class UnitTest1
     }
 
     [Fact]
-    public void UserProfile_AddEmail_AddsEmailToAggregate()
+    public void UserProfile_AddEmail_AddsSecondaryEmailToAggregate()
     {
-        var profile = UserProfile.Rehydrate("jdoe", "John Doe", id: Id<UserProfile>.New());
+        var profile = CreateExistingProfile();
+        var existingMainEmail = Assert.Single(profile.Emails);
 
-        var email = profile.AddEmail("john@example.com");
+        var email = profile.AddEmail("john.secondary@example.com");
 
-        Assert.Single(profile.Emails);
-        Assert.Equal(email.Id, profile.Emails[0].Id);
-        Assert.Equal("john@example.com", profile.Emails[0].Address.Value);
-        Assert.Equal(profile.Id, profile.Emails[0].UserProfileId);
-        Assert.True(profile.Emails[0].IsMain);
-        Assert.False(profile.Emails[0].IsConfirmed);
+        Assert.Equal(2, profile.Emails.Count);
+        Assert.Equal(email.Id, profile.Emails.Single(x => x.Address.Value == "john.secondary@example.com").Id);
+        Assert.Equal("john.secondary@example.com", email.Address.Value);
+        Assert.Equal(profile.Id, email.UserProfileId);
+        Assert.False(email.IsMain);
+        Assert.False(email.IsConfirmed);
+        Assert.True(existingMainEmail.IsMain);
         var @event = Assert.IsType<AggregateStateChangedDomainEvent<UserProfile, UserProfileSnapshot>>(
             Assert.Single(profile.DomainEvents));
-        Assert.Equal("john@example.com", @event.AggregateState.MainEmail);
+        Assert.Equal(existingMainEmail.Address.Value, @event.AggregateState.MainEmail);
         Assert.False(@event.AggregateState.IsMainEmailConfirmed);
         Assert.Null(@event.AggregateState.MainPhone);
     }
@@ -73,28 +64,16 @@ public class UnitTest1
     [Fact]
     public void UserProfile_AddEmail_WithDuplicateAddress_Throws()
     {
-        var profile = UserProfile.Rehydrate("jdoe", "John Doe", id: Id<UserProfile>.New());
-        profile.AddEmail("john@example.com");
+        var profile = CreateExistingProfile();
 
         Assert.Throws<InvalidOperationException>(() => profile.AddEmail("JOHN@example.com"));
     }
 
     [Fact]
-    public void UserProfile_AddEmail_SecondEmail_IsNotMain()
-    {
-        var profile = UserProfile.Rehydrate("jdoe", "John Doe", id: Id<UserProfile>.New());
-        profile.AddEmail("john@example.com");
-
-        var secondEmail = profile.AddEmail("john.secondary@example.com");
-
-        Assert.False(secondEmail.IsMain);
-    }
-
-    [Fact]
     public void UserProfile_SetMainEmail_SwitchesMainFlag()
     {
-        var profile = UserProfile.Rehydrate("jdoe", "John Doe", id: Id<UserProfile>.New());
-        var firstEmail = profile.AddEmail("john@example.com");
+        var profile = CreateExistingProfile();
+        var firstEmail = Assert.Single(profile.Emails);
         var secondEmail = profile.AddEmail("john.secondary@example.com");
         profile.ClearEvents();
 
@@ -115,8 +94,7 @@ public class UnitTest1
     [Fact]
     public void UserProfile_SetMainEmail_WhenEmailDoesNotExist_Throws()
     {
-        var profile = UserProfile.Rehydrate("jdoe", "John Doe", id: Id<UserProfile>.New());
-        profile.AddEmail("john@example.com");
+        var profile = CreateExistingProfile();
 
         Assert.Throws<InvalidOperationException>(() => profile.SetMainEmail(Id<Email>.New()));
     }
@@ -124,8 +102,8 @@ public class UnitTest1
     [Fact]
     public void UserProfile_SetMainEmail_WhenEmailIsAlreadyMain_DoesNotEmitDomainEvent()
     {
-        var profile = UserProfile.Rehydrate("jdoe", "John Doe", id: Id<UserProfile>.New());
-        var email = profile.AddEmail("john@example.com");
+        var profile = CreateExistingProfile();
+        var email = Assert.Single(profile.Emails);
         profile.ClearEvents();
 
         profile.SetMainEmail(email.Id);
@@ -136,8 +114,8 @@ public class UnitTest1
     [Fact]
     public void UserProfile_ConfirmEmail_MarksEmailAsConfirmed()
     {
-        var profile = UserProfile.Rehydrate("jdoe", "John Doe", id: Id<UserProfile>.New());
-        var email = profile.AddEmail("john@example.com");
+        var profile = CreateExistingProfile();
+        var email = Assert.Single(profile.Emails);
         profile.ClearEvents();
 
         profile.ConfirmEmail(email.Id);
@@ -148,15 +126,14 @@ public class UnitTest1
         Assert.Equal(email.Id.Value, emailConfirmedEvent.EmailId);
         Assert.Equal(email.Address.Value, emailConfirmedEvent.Email);
         var stateChangedEvent = Assert.Single(profile.DomainEvents.OfType<AggregateStateChangedDomainEvent<UserProfile, UserProfileSnapshot>>());
-        Assert.Equal("john@example.com", stateChangedEvent.AggregateState.MainEmail);
+        Assert.Equal(email.Address.Value, stateChangedEvent.AggregateState.MainEmail);
         Assert.True(stateChangedEvent.AggregateState.IsMainEmailConfirmed);
     }
 
     [Fact]
     public void UserProfile_ConfirmEmail_WhenEmailDoesNotExist_Throws()
     {
-        var profile = UserProfile.Rehydrate("jdoe", "John Doe", id: Id<UserProfile>.New());
-        profile.AddEmail("john@example.com");
+        var profile = CreateExistingProfile();
 
         Assert.Throws<InvalidOperationException>(() => profile.ConfirmEmail(Id<Email>.New()));
     }
@@ -164,8 +141,8 @@ public class UnitTest1
     [Fact]
     public void UserProfile_ConfirmEmail_WhenEmailIsAlreadyConfirmed_DoesNotEmitDomainEvent()
     {
-        var profile = UserProfile.Rehydrate("jdoe", "John Doe", id: Id<UserProfile>.New());
-        var email = profile.AddEmail("john@example.com");
+        var profile = CreateExistingProfile();
+        var email = Assert.Single(profile.Emails);
         profile.ConfirmEmail(email.Id);
         profile.ClearEvents();
 
@@ -177,7 +154,8 @@ public class UnitTest1
     [Fact]
     public void UserProfile_AddPhone_AddsPhoneToAggregate()
     {
-        var profile = UserProfile.Rehydrate("jdoe", "John Doe", id: Id<UserProfile>.New());
+        var profile = CreateExistingProfile();
+        var mainEmail = Assert.Single(profile.Emails);
 
         var phone = profile.AddPhone("+48123123123");
 
@@ -188,14 +166,14 @@ public class UnitTest1
         Assert.True(profile.Phones[0].IsMain);
         var @event = Assert.IsType<AggregateStateChangedDomainEvent<UserProfile, UserProfileSnapshot>>(
             Assert.Single(profile.DomainEvents));
-        Assert.Null(@event.AggregateState.MainEmail);
+        Assert.Equal(mainEmail.Address.Value, @event.AggregateState.MainEmail);
         Assert.Equal("+48123123123", @event.AggregateState.MainPhone);
     }
 
     [Fact]
     public void UserProfile_AddPhone_WithDuplicateNumber_Throws()
     {
-        var profile = UserProfile.Rehydrate("jdoe", "John Doe", id: Id<UserProfile>.New());
+        var profile = CreateExistingProfile();
         profile.AddPhone("+48123123123");
 
         Assert.Throws<InvalidOperationException>(() => profile.AddPhone("+48123123123"));
@@ -204,7 +182,7 @@ public class UnitTest1
     [Fact]
     public void UserProfile_AddPhone_WithSameNumberInDifferentFormat_Throws()
     {
-        var profile = UserProfile.Rehydrate("jdoe", "John Doe", id: Id<UserProfile>.New());
+        var profile = CreateExistingProfile();
         profile.AddPhone("+48 123 123 123");
 
         Assert.Throws<InvalidOperationException>(() => profile.AddPhone("+48123123123"));
@@ -213,7 +191,7 @@ public class UnitTest1
     [Fact]
     public void UserProfile_AddPhone_SecondPhone_IsNotMain()
     {
-        var profile = UserProfile.Rehydrate("jdoe", "John Doe", id: Id<UserProfile>.New());
+        var profile = CreateExistingProfile();
         profile.AddPhone("+48123123123");
 
         var secondPhone = profile.AddPhone("+48987654321");
@@ -224,7 +202,7 @@ public class UnitTest1
     [Fact]
     public void UserProfile_SetMainPhone_SwitchesMainFlag()
     {
-        var profile = UserProfile.Rehydrate("jdoe", "John Doe", id: Id<UserProfile>.New());
+        var profile = CreateExistingProfile();
         var firstPhone = profile.AddPhone("+48123123123");
         var secondPhone = profile.AddPhone("+48987654321");
         profile.ClearEvents();
@@ -245,7 +223,7 @@ public class UnitTest1
     [Fact]
     public void UserProfile_SetMainPhone_WhenPhoneDoesNotExist_Throws()
     {
-        var profile = UserProfile.Rehydrate("jdoe", "John Doe", id: Id<UserProfile>.New());
+        var profile = CreateExistingProfile();
         profile.AddPhone("+48123123123");
 
         Assert.Throws<InvalidOperationException>(() => profile.SetMainPhone(Id<Phone>.New()));
@@ -254,7 +232,7 @@ public class UnitTest1
     [Fact]
     public void UserProfile_SetMainPhone_WhenPhoneIsAlreadyMain_DoesNotEmitDomainEvent()
     {
-        var profile = UserProfile.Rehydrate("jdoe", "John Doe", id: Id<UserProfile>.New());
+        var profile = CreateExistingProfile();
         var phone = profile.AddPhone("+48123123123");
         profile.ClearEvents();
 
@@ -284,42 +262,44 @@ public class UnitTest1
     }
 
     [Fact]
-    public void UserProfile_Create_WithoutMainEmailOrPhone_Throws()
+    public void UserProfile_Create_WithoutEmail_Throws()
     {
-        Assert.Throws<InvalidOperationException>(() => UserProfile.Create("jdoe", "John Doe", id: Id<UserProfile>.New()));
+        Assert.Throws<ArgumentNullException>(() => UserProfile.Create("jdoe", "John Doe", null!, id: Id<UserProfile>.New()));
     }
 
     [Fact]
-    public void UserProfile_Create_WithMainPhone_Succeeds()
+    public void UserProfile_Create_WithEmailAndPhone_Succeeds()
     {
         var id = Id<UserProfile>.New();
-        var phone = Phone.Create(id, "+48123123123", isMain: true);
-
-        var profile = UserProfile.Create("jdoe", "John Doe", phones: [phone], id: id);
+        var profile = UserProfile.Create(
+            "jdoe",
+            "John Doe",
+            EmailAddress.Create("john@example.com"),
+            PhoneNumber.Create("+48123123123"),
+            id: id);
 
         Assert.Single(profile.Phones);
         Assert.True(profile.Phones[0].IsMain);
-        Assert.Empty(profile.Emails);
+        Assert.Single(profile.Emails);
+        Assert.True(profile.Emails[0].IsMain);
+        Assert.True(profile.Emails[0].IsAuth);
     }
 
     [Fact]
     public void UserProfile_Create_WithEmailAndPhone_EmitsUserProfileCreatedDomainEvent()
     {
         var id = Id<UserProfile>.New();
-        var email = Email.Create(id, EmailAddress.Create("john@example.com"), isMain: true);
-        var phone = Phone.Create(id, "+48123123123", isMain: true);
-
         var profile = UserProfile.Create(
             " jdoe ",
             " John Doe ",
+            EmailAddress.Create("john@example.com"),
+            PhoneNumber.Create("+48123123123"),
             " https://cdn.example/avatar.png ",
             " about me ",
             isActive: false,
             lastSeenAtUtc: new DateTime(2026, 3, 10, 8, 30, 0, DateTimeKind.Utc),
             isEmailVisible: false,
             isPhoneVisible: true,
-            emails: [email],
-            phones: [phone],
             id: id);
 
         var createdEvent = Assert.Single(profile.DomainEvents.OfType<UserProfileCreatedDomainEvent>());
@@ -345,9 +325,7 @@ public class UnitTest1
     public void UserProfile_Create_WithEmailOnly_EmitsUserProfileCreatedDomainEvent()
     {
         var id = Id<UserProfile>.New();
-        var email = Email.Create(id, EmailAddress.Create("john@example.com"), isMain: true);
-
-        var profile = UserProfile.Create("jdoe", "John Doe", emails: [email], id: id);
+        var profile = UserProfile.Create("jdoe", "John Doe", EmailAddress.Create("john@example.com"), id: id);
 
         var createdEvent = Assert.Single(profile.DomainEvents.OfType<UserProfileCreatedDomainEvent>());
         Assert.Equal("john@example.com", createdEvent.MainEmail);
@@ -359,20 +337,18 @@ public class UnitTest1
     }
 
     [Fact]
-    public void UserProfile_Create_WithPhoneOnly_EmitsUserProfileCreatedDomainEvent()
+    public void UserProfile_Create_WithEmailOnly_DoesNotCreatePhone()
     {
         var id = Id<UserProfile>.New();
-        var phone = Phone.Create(id, "+48123123123", isMain: true);
+        var profile = UserProfile.Create("jdoe", "John Doe", EmailAddress.Create("john@example.com"), id: id);
 
-        var profile = UserProfile.Create("jdoe", "John Doe", phones: [phone], id: id);
+        Assert.Empty(profile.Phones);
+    }
 
-        var createdEvent = Assert.Single(profile.DomainEvents.OfType<UserProfileCreatedDomainEvent>());
-        Assert.Null(createdEvent.MainEmail);
-        Assert.Equal("+48123123123", createdEvent.MainPhone);
-        var stateChangedEvent = Assert.Single(profile.DomainEvents.OfType<AggregateStateChangedDomainEvent<UserProfile, UserProfileSnapshot>>());
-        Assert.Null(stateChangedEvent.AggregateState.MainEmail);
-        Assert.Null(stateChangedEvent.AggregateState.IsMainEmailConfirmed);
-        Assert.Equal("+48123123123", stateChangedEvent.AggregateState.MainPhone);
+    private static UserProfile CreateExistingProfile()
+    {
+        var profile = UserProfile.Create("jdoe", "John Doe", EmailAddress.Create("john@example.com"), id: Id<UserProfile>.New());
+        profile.ClearEvents();
+        return profile;
     }
 }
-

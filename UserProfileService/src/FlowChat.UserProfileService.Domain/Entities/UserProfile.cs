@@ -51,21 +51,17 @@ public class UserProfile : AggregateRootBase<UserProfile>
     public static UserProfile Create(
         string userName,
         string displayName,
+        EmailAddress emailAddress,
+        PhoneNumber? phoneNumber = null,
         string? avatarUrl = null,
         string? bio = null,
         bool isActive = true,
         DateTime? lastSeenAtUtc = null,
         bool isEmailVisible = true,
         bool isPhoneVisible = true,
-        IEnumerable<Email>? emails = null,
-        IEnumerable<Phone>? phones = null,
         Id<UserProfile>? id = null)
     {
         var typedId = id ?? Id<UserProfile>.New();
-        var emailList = (emails ?? []).ToList();
-        var phoneList = (phones ?? []).ToList();
-
-        EnsureInitialContactInvariant(emailList, phoneList);
 
         var userProfile = new UserProfile(
             typedId,
@@ -78,47 +74,11 @@ public class UserProfile : AggregateRootBase<UserProfile>
             isEmailVisible,
             isPhoneVisible);
 
-        foreach (var email in emailList)
+        userProfile.AddEmailInternal(emailAddress, shouldMarkAggregateStateChanged: false);
+
+        if (phoneNumber is not null)
         {
-            if (email.UserProfileId != typedId)
-            {
-                throw new InvalidOperationException("Email must belong to the created user profile.");
-            }
-
-            var addedEmail = userProfile.AddEmailInternal(email.Address, email.Id, shouldMarkAggregateStateChanged: false);
-
-            if (email.IsConfirmed)
-            {
-                addedEmail.Confirm();
-            }
-        }
-
-        var mainEmail = emailList.FirstOrDefault(x => x.IsMain);
-        if (mainEmail is not null)
-        {
-            userProfile.SetMainEmailInternal(mainEmail.Id, shouldAddDomainEvent: false, shouldMarkAggregateStateChanged: false);
-        }
-
-        var authEmail = emailList.FirstOrDefault(x => x.IsAuth);
-        if (authEmail is not null)
-        {
-            userProfile.SetAuthEmailInternal(authEmail.Id, shouldMarkAggregateStateChanged: false);
-        }
-
-        foreach (var phone in phoneList)
-        {
-            if (phone.UserProfileId != typedId)
-            {
-                throw new InvalidOperationException("Phone must belong to the created user profile.");
-            }
-
-            userProfile.AddPhoneInternal(phone.Number, phone.Id, shouldMarkAggregateStateChanged: false);
-        }
-
-        var mainPhone = phoneList.FirstOrDefault(x => x.IsMain);
-        if (mainPhone is not null)
-        {
-            userProfile.SetMainPhoneInternal(mainPhone.Id, shouldAddDomainEvent: false, shouldMarkAggregateStateChanged: false);
+            userProfile.AddPhoneInternal(phoneNumber, shouldMarkAggregateStateChanged: false);
         }
 
         EnsureInitialContactInvariant(userProfile._emails, userProfile._phones);
@@ -139,39 +99,6 @@ public class UserProfile : AggregateRootBase<UserProfile>
             userProfile.IsEmailVisible,
             userProfile.IsPhoneVisible));
         userProfile.MarkAggregateStateChanged(UserProfileConstants.UserProfileAggregateTypeName, userProfile.CreateSnapshot);
-
-        return userProfile;
-    }
-
-    public static UserProfile Rehydrate(
-        string userName,
-        string displayName,
-        string? avatarUrl = null,
-        string? bio = null,
-        bool isActive = true,
-        DateTime? lastSeenAtUtc = null,
-        bool isEmailVisible = true,
-        bool isPhoneVisible = true,
-        IEnumerable<Email>? emails = null,
-        IEnumerable<Phone>? phones = null,
-        Id<UserProfile>? id = null)
-    {
-        var emailList = (emails ?? []).ToList();
-        var phoneList = (phones ?? []).ToList();
-
-        var userProfile = new UserProfile(
-            id,
-            userName,
-            displayName,
-            avatarUrl,
-            bio,
-            isActive,
-            lastSeenAtUtc,
-            isEmailVisible,
-            isPhoneVisible);
-
-        userProfile._emails.AddRange(emailList);
-        userProfile._phones.AddRange(phoneList);
 
         return userProfile;
     }

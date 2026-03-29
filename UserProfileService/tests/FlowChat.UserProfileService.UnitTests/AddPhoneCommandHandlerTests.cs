@@ -1,9 +1,9 @@
-﻿using FlowChat.Shared.Application;
+using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
+using FlowChat.Shared.Domain.ValueObjects;
 using FlowChat.UserProfileService.Application.Contracts.Persistence;
 using FlowChat.UserProfileService.Application.Features.UserProfiles.Commands.AddPhone;
 using FlowChat.UserProfileService.Domain.Entities;
-using FlowChat.Shared.Domain.ValueObjects;
 
 namespace FlowChat.UserProfileService.UnitTests;
 
@@ -28,7 +28,7 @@ public sealed class AddPhoneCommandHandlerTests
     [Fact]
     public async Task Handle_WithInvalidNumber_ReturnsValidationFailure()
     {
-        var profile = UserProfile.Rehydrate("jdoe", "John Doe", id: Id<UserProfile>.New());
+        var profile = CreateUserProfile();
         var handler = new AddPhoneCommandHandler(
             new TestUserProfileRepository(profile),
             new TestUnitOfWork(),
@@ -44,7 +44,7 @@ public sealed class AddPhoneCommandHandlerTests
     [Fact]
     public async Task Handle_WithFormattedDuplicateNumber_ReturnsConflict()
     {
-        var profile = UserProfile.Rehydrate("jdoe", "John Doe", id: Id<UserProfile>.New());
+        var profile = CreateUserProfile();
         profile.AddPhone("+48123123123");
         profile.ClearEvents();
         var handler = new AddPhoneCommandHandler(
@@ -57,6 +57,13 @@ public sealed class AddPhoneCommandHandlerTests
         Assert.True(result.IsFailure);
         Assert.Equal(ErrorType.Conflict, result.Error.ErrorType);
         Assert.Equal("Phone '+48123123123' already exists.", result.Error.ErrorMessage);
+    }
+
+    private static UserProfile CreateUserProfile()
+    {
+        var profile = UserProfile.Create("jdoe", "John Doe", EmailAddress.Create("john@example.com"), id: Id<UserProfile>.New());
+        profile.ClearEvents();
+        return profile;
     }
 
     private sealed class TestUserProfileRepository(UserProfile? userProfile = null) : IUserProfileWriteRepository
@@ -95,4 +102,3 @@ public sealed class AddPhoneCommandHandlerTests
             Task.CompletedTask;
     }
 }
-

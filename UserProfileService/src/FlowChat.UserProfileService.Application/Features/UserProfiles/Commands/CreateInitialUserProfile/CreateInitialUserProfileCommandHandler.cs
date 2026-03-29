@@ -65,21 +65,13 @@ public sealed class CreateInitialUserProfileCommandHandler
         }
 
         var userProfileId = Id<UserProfile>.FromGuid(request.UserId);
-        List<Email> emails =
-        [
-            Email.Create(userProfileId, emailAddress!, isMain: true, isAuth: true)
-        ];
-        List<Phone> phones = phone is null
-            ? []
-            : [Phone.Create(userProfileId, phoneNumber!, isMain: true)];
-
         _userProfile = UserProfile.Create(
             userName!,
             displayName!,
+            emailAddress!,
+            phoneNumber,
             request.AvatarUrl,
             request.Bio,
-            emails: emails,
-            phones: phones,
             id: userProfileId);
 
         await _userProfileWriteRepository.AddAsync(_userProfile, cancellationToken);

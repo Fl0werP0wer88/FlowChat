@@ -50,20 +50,9 @@ public sealed class EmailVerificationRequestIssuerTests
 
     private static UserProfile CreateUserProfile(string emailAddress)
     {
-        var userProfileId = Id<UserProfile>.New();
-
-        return UserProfile.Rehydrate(
-            "jdoe",
-            "John Doe",
-            emails:
-            [
-                Email.Create(
-                    userProfileId,
-                    EmailAddress.Create(emailAddress),
-                    isMain: true,
-                    isAuth: true)
-            ],
-            id: userProfileId);
+        var userProfile = UserProfile.Create("jdoe", "John Doe", EmailAddress.Create(emailAddress), id: Id<UserProfile>.New());
+        userProfile.ClearEvents();
+        return userProfile;
     }
 
     private sealed class TestEmailVerificationRequestRepository(

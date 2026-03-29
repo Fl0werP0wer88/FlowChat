@@ -1,5 +1,6 @@
-﻿using FlowChat.Shared.Application;
+using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
+using FlowChat.Shared.Domain.ValueObjects;
 using FlowChat.UserProfileService.Application.Contracts.Persistence;
 using FlowChat.UserProfileService.Application.Features.UserProfiles.Commands.SetMainEmail;
 using FlowChat.UserProfileService.Application.Features.UserProfiles.Commands.SetMainPhone;
@@ -13,8 +14,8 @@ public sealed class SetMainContactCommandHandlerTests
     [Fact]
     public async Task SetMainEmail_WhenEmailExists_SetsMainEmailAndDispatchesDomainEvents()
     {
-        var profile = UserProfile.Rehydrate("jdoe", "John Doe", id: Id<UserProfile>.New());
-        var firstEmail = profile.AddEmail("john@example.com");
+        var profile = CreateUserProfile();
+        var firstEmail = Assert.Single(profile.Emails);
         var secondEmail = profile.AddEmail("john.secondary@example.com");
         profile.ClearEvents();
 
@@ -37,8 +38,7 @@ public sealed class SetMainContactCommandHandlerTests
     [Fact]
     public async Task SetMainEmail_WhenEmailDoesNotExist_ReturnsNotFound()
     {
-        var profile = UserProfile.Rehydrate("jdoe", "John Doe", id: Id<UserProfile>.New());
-        profile.AddEmail("john@example.com");
+        var profile = CreateUserProfile();
         profile.ClearEvents();
 
         var repository = new TestUserProfileRepository(profile);
@@ -84,7 +84,7 @@ public sealed class SetMainContactCommandHandlerTests
     [Fact]
     public async Task SetMainPhone_WhenPhoneExists_SetsMainPhoneAndDispatchesDomainEvents()
     {
-        var profile = UserProfile.Rehydrate("jdoe", "John Doe", id: Id<UserProfile>.New());
+        var profile = CreateUserProfile();
         var firstPhone = profile.AddPhone("+48123123123");
         var secondPhone = profile.AddPhone("+48987654321");
         profile.ClearEvents();
@@ -108,7 +108,7 @@ public sealed class SetMainContactCommandHandlerTests
     [Fact]
     public async Task SetMainPhone_WhenPhoneDoesNotExist_ReturnsNotFound()
     {
-        var profile = UserProfile.Rehydrate("jdoe", "John Doe", id: Id<UserProfile>.New());
+        var profile = CreateUserProfile();
         profile.AddPhone("+48123123123");
         profile.ClearEvents();
 
@@ -152,6 +152,13 @@ public sealed class SetMainContactCommandHandlerTests
         Assert.Equal(["UserId is required.", "PhoneId is required."], result.Error.Errors);
     }
 
+    private static UserProfile CreateUserProfile()
+    {
+        var profile = UserProfile.Create("jdoe", "John Doe", EmailAddress.Create("john@example.com"), id: Id<UserProfile>.New());
+        profile.ClearEvents();
+        return profile;
+    }
+
     private sealed class TestUserProfileRepository(UserProfile? userProfile = null) : IUserProfileWriteRepository
     {
         public Task<UserProfile?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
@@ -193,4 +200,3 @@ public sealed class SetMainContactCommandHandlerTests
         }
     }
 }
-
