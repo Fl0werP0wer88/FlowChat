@@ -16,9 +16,9 @@ public sealed class CreateInitialUserProfileCommandValidator
             .Must(value => !string.IsNullOrWhiteSpace(value))
             .WithMessage("DisplayName is required.");
 
-        RuleFor(command => command)
-            .Must(command => !string.IsNullOrWhiteSpace(command.Email) || !string.IsNullOrWhiteSpace(command.Phone))
-            .WithMessage("At least one email or phone is required to create a user profile.");
+        RuleFor(command => command.Email)
+            .Must(value => !string.IsNullOrWhiteSpace(value))
+            .WithMessage("Email is required.");
 
         RuleFor(command => command.Email)
             .Must(value => string.IsNullOrWhiteSpace(value) || EmailAddress.TryCreate(value, out _))

@@ -3,4 +3,5 @@ namespace FlowChat.UserProfileService.Application.Features.UserProfiles.Queries.
 public sealed record EmailDto(
     Guid Id,
     string Address,
-    bool IsMain);
+    bool IsMain,
+    bool IsAuth);

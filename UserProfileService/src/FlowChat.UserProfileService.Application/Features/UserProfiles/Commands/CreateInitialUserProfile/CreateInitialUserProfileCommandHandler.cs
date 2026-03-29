@@ -52,10 +52,18 @@ public sealed class CreateInitialUserProfileCommandHandler
             return FlowChatResult<Guid>.Failure(DomainError.Conflict($"UserName '{userName}' already exists."));
         }
 
+        var emailExists = await _userProfileReadRepository
+            .EmailAddressExistsAsync(emailAddress!.Value, cancellationToken);
+
+        if (emailExists)
+        {
+            return FlowChatResult<Guid>.Failure(DomainError.Conflict($"Email '{emailAddress.Value}' already exists."));
+        }
+
         var userProfileId = Id<UserProfile>.FromGuid(request.UserId);
         List<Email> emails = email is null
             ? []
-            : [Email.Create(userProfileId, emailAddress!, isMain: true)];
+            : [Email.Create(userProfileId, emailAddress!, isMain: true, isAuth: true)];
         List<Phone> phones = phone is null
             ? []
             : [Phone.Create(userProfileId, phoneNumber!, isMain: true)];

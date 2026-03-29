@@ -114,6 +114,11 @@ public class UserProfile : AggregateRootBase<UserProfile>
         IEnumerable<Phone>? phones = null,
         Id<UserProfile>? id = null)
     {
+        var emailList = (emails ?? []).ToList();
+        var phoneList = (phones ?? []).ToList();
+
+        EnsureInitialContactInvariant(emailList, phoneList);
+
         var userProfile = new UserProfile(
             id,
             userName,
@@ -125,8 +130,8 @@ public class UserProfile : AggregateRootBase<UserProfile>
             isEmailVisible,
             isPhoneVisible);
 
-        userProfile._emails.AddRange(emails ?? []);
-        userProfile._phones.AddRange(phones ?? []);
+        userProfile._emails.AddRange(emailList);
+        userProfile._phones.AddRange(phoneList);
 
         return userProfile;
     }
@@ -141,7 +146,9 @@ public class UserProfile : AggregateRootBase<UserProfile>
             throw new InvalidOperationException($"Email '{normalizedAddress.Value}' already exists.");
         }
 
-        var email = Email.Create(Id, normalizedAddress, !_emails.Any(), id);
+        var shouldBeMainEmail = !_emails.Any(x => x.IsMain);
+        var shouldBeAuthEmail = !_emails.Any(x => x.IsAuth);
+        var email = Email.Create(Id, normalizedAddress, isMain: shouldBeMainEmail, isAuth: shouldBeAuthEmail, id: id);
         _emails.Add(email);
         MarkAggregateStateChanged(UserProfileConstants.UserProfileAggregateTypeName, CreateSnapshot);
 
@@ -169,6 +176,29 @@ public class UserProfile : AggregateRootBase<UserProfile>
         }
 
         AddDomainEvent(new MainEmailChangedDomainEvent(Id, targetEmail.Id, targetEmail.Address.Value));
+        MarkAggregateStateChanged(UserProfileConstants.UserProfileAggregateTypeName, CreateSnapshot);
+    }
+
+    public void SetAuthEmail(Id<Email> emailId)
+    {
+        ArgumentNullException.ThrowIfNull(emailId);
+
+        var targetEmail = _emails.FirstOrDefault(x => x.Id == emailId);
+        if (targetEmail is null)
+        {
+            throw new InvalidOperationException($"Email '{emailId}' was not found.");
+        }
+
+        if (targetEmail.IsAuth)
+        {
+            return;
+        }
+
+        foreach (var email in _emails)
+        {
+            email.SetAuth(email == targetEmail);
+        }
+
         MarkAggregateStateChanged(UserProfileConstants.UserProfileAggregateTypeName, CreateSnapshot);
     }
 
@@ -260,6 +290,7 @@ public class UserProfile : AggregateRootBase<UserProfile>
         IReadOnlyCollection<Phone> phones)
     {
         var mainEmailCount = emails.Count(x => x.IsMain);
+        var authEmailCount = emails.Count(x => x.IsAuth);
         var mainPhoneCount = phones.Count(x => x.IsMain);
 
         if (mainEmailCount > 1)
@@ -267,15 +298,26 @@ public class UserProfile : AggregateRootBase<UserProfile>
             throw new InvalidOperationException("User profile cannot have more than one main email.");
         }
 
+        if (mainEmailCount == 0)
+        {
+            throw new InvalidOperationException("User profile must have exactly one main email.");
+        }
+
+        if (authEmailCount > 1)
+        {
+            throw new InvalidOperationException("User profile cannot have more than one auth email.");
+        }
+
+        if (authEmailCount == 0)
+        {
+            throw new InvalidOperationException("User profile must have exactly one auth email.");
+        }
+
         if (mainPhoneCount > 1)
         {
             throw new InvalidOperationException("User profile cannot have more than one main phone.");
         }
 
-        if (mainEmailCount == 0 && mainPhoneCount == 0)
-        {
-            throw new InvalidOperationException("User profile must have at least one main email or main phone.");
-        }
     }
 }
 

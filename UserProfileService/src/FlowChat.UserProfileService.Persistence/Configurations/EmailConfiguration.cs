@@ -29,13 +29,22 @@ public class EmailConfiguration : IEntityTypeConfiguration<Email>
             .HasDefaultValue(false)
             .IsRequired();
 
+        builder.Property(x => x.IsAuth)
+            .HasDefaultValue(false)
+            .IsRequired();
+
         builder.Property(x => x.IsConfirmed)
             .HasDefaultValue(false)
             .IsRequired();
 
-        builder.HasIndex(x => new { x.UserProfileId, x.Address })
+        builder.HasIndex(x => x.Address)
             .IsUnique()
-            .HasDatabaseName("uq_email_user_profile_address");
+            .HasDatabaseName("uq_email_address");
+
+        builder.HasIndex(x => x.UserProfileId)
+            .IsUnique()
+            .HasFilter("\"IsAuth\" = TRUE")
+            .HasDatabaseName("uq_email_user_profile_auth");
     }
 }
 

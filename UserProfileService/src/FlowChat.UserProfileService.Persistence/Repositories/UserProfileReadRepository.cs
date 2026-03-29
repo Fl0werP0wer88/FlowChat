@@ -1,5 +1,6 @@
 ﻿using FlowChat.Shared.Domain;
 using FlowChat.Shared.Persistance;
+using FlowChat.Shared.Domain.ValueObjects;
 using FlowChat.UserProfileService.Application.Contracts.Persistence;
 using FlowChat.UserProfileService.Application.Features.UserProfiles.Queries.GetUserProfile;
 using FlowChat.UserProfileService.Domain.Entities;
@@ -23,7 +24,8 @@ public sealed class UserProfileReadRepository(AppDbContext dbContext)
             .Select(email => new EmailDto(
                 email.Id.Value,
                 email.Address.Value,
-                email.IsMain))
+                email.IsMain,
+                email.IsAuth))
             .ToList(),
         x.Phones
             .Select(phone => new PhoneDto(
@@ -52,6 +54,14 @@ public sealed class UserProfileReadRepository(AppDbContext dbContext)
             .Where(x => x.NormalizedUserName == normalizedUserName)
             .Select(MapToDto)
             .FirstOrDefaultAsync(cancellationToken);
+    }
+
+    public async Task<bool> EmailAddressExistsAsync(string emailAddress, CancellationToken cancellationToken = default)
+    {
+        var normalizedEmailAddress = EmailAddress.Create(emailAddress);
+
+        return await DbContext.Set<Email>()
+            .AnyAsync(x => x.Address == normalizedEmailAddress, cancellationToken);
     }
 
     public async Task<bool> UserNameExistsAsync(
