@@ -9,6 +9,7 @@ using FlowChat.UserProfileService.Application.Common.Eventing.Handlers;
 using FlowChat.UserProfileService.Domain.Entities;
 using FlowChat.UserProfileService.Domain.Events;
 using Microsoft.Extensions.Logging.Abstractions;
+using DomainEmail = FlowChat.UserProfileService.Domain.Entities.Email;
 
 namespace FlowChat.UserProfileService.UnitTests;
 
@@ -24,18 +25,20 @@ public sealed class EmailConfirmedDomainEventHandlerTests
         var publisher = new CapturingIntegrationEventPublisher();
         var handler = new EmailConfirmedDomainEventHandler(publisher, mapper);
         var userProfileId = Id<UserProfile>.New();
-        var emailId = Id<Email>.New();
+        var emailId = Id<DomainEmail>.New();
         var domainEvent = new EmailConfirmedDomainEvent(
             userProfileId,
             emailId,
-            EmailAddress.Create("john@example.com"));
+            EmailAddress.Create("john@example.com"),
+            isAuth: true);
 
         await handler.Handle(domainEvent, CancellationToken.None);
 
         var integrationEvent = Assert.IsType<UserEmailConfirmedIntegrationEvent>(Assert.Single(publisher.PublishedEvents));
         Assert.Equal(userProfileId.Value, integrationEvent.UserProfileId);
         Assert.Equal(emailId.Value, integrationEvent.EmailId);
-        Assert.Equal("john@example.com", integrationEvent.Email);
+        Assert.Equal("john@example.com", integrationEvent.Email.Address);
+        Assert.True(integrationEvent.Email.IsAuth);
         Assert.Equal(userProfileId.Value.ToString(), integrationEvent.Key);
     }
 

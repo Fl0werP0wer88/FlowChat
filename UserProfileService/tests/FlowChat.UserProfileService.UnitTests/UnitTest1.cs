@@ -130,6 +130,7 @@ public class UnitTest1
         Assert.Equal(profile.Id, emailConfirmedEvent.UserProfileId);
         Assert.Equal(email.Id, emailConfirmedEvent.EmailId);
         Assert.Equal(email.Address, emailConfirmedEvent.Email);
+        Assert.True(emailConfirmedEvent.IsAuth);
         var stateChangedEvent = Assert.Single(profile.DomainEvents.OfType<AggregateStateChangedDomainEvent<UserProfile, UserProfileSnapshot>>());
         Assert.Equal(email.Address.Value, stateChangedEvent.AggregateState.MainEmail);
         Assert.True(stateChangedEvent.AggregateState.IsMainEmailConfirmed);

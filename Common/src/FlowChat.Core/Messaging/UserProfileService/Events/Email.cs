@@ -1,4 +1,4 @@
-namespace FlowChat.Core.Messaging.AuthService.Events;
+namespace FlowChat.Core.Messaging.UserProfileService.Events;
 
 public sealed class Email
 {

@@ -10,6 +10,7 @@ using FlowChat.UserProfileService.Application.Contracts.Infrastructure;
 using FlowChat.UserProfileService.Domain.Entities;
 using FlowChat.UserProfileService.Domain.Events;
 using Microsoft.Extensions.Logging.Abstractions;
+using DomainEmail = FlowChat.UserProfileService.Domain.Entities.Email;
 
 namespace FlowChat.UserProfileService.UnitTests;
 
@@ -26,7 +27,7 @@ public sealed class UserProfileCreatedDomainEventHandlerTests
         var issuer = new CapturingEmailVerificationRequestIssuer();
         var handler = new UserProfileCreatedDomainEventHandler(publisher, mapper, issuer);
         var userProfileId = Id<UserProfile>.New();
-        var mainEmailId = Id<Email>.New();
+        var mainEmailId = Id<DomainEmail>.New();
         var domainEvent = new UserProfileCreatedDomainEvent(
             userProfileId,
             mainEmailId,
