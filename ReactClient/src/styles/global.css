@@ -215,6 +215,21 @@ body {
   border: 1px solid #bbdce9;
 }
 
+.verification-panel {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.verification-status {
+  margin: 0;
+  color: #385067;
+  line-height: 1.5;
+}
+
+.verification-actions {
+  justify-content: flex-start;
+}
+
 .chat-shell {
   width: min(74rem, 100%);
   min-height: min(48rem, 88vh);
