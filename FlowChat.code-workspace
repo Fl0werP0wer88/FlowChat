@@ -156,6 +156,10 @@
           {
             "folder": "AuthService",
             "name": "AuthService OutboxPublisher (No Build)"
+          },
+          {
+            "folder": "AuthService",
+            "name": "AuthService Consumers (No Build)"
           }
         ],
         "stopAll": true
@@ -301,6 +305,10 @@
         "configurations": [
           {
             "folder": "AuthService",
+            "name": "AuthService Consumers (No Build)"
+          },
+          {
+            "folder": "AuthService",
             "name": "AuthService OutboxPublisher (No Build)"
           },
           {
@@ -349,6 +357,10 @@
           {
             "folder": "SocialGraphService",
             "name": "SocialGraphService API (No Build)"
+          },
+          {
+            "folder": "AuthService",
+            "name": "AuthService Consumers (No Build)"
           },
           {
             "folder": "AuthService",
