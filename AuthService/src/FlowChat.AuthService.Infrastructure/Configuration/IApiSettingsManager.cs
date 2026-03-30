@@ -5,4 +5,6 @@ public interface IApiSettingsManager
     JwtSettings GetJwtSettings();
 
     ApiRuntimeSettings GetApiRuntimeSettings();
+
+    InternalApiSettings GetInternalApiSettings();
 }

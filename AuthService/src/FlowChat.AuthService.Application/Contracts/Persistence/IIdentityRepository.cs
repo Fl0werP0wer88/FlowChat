@@ -7,6 +7,7 @@ public interface IIdentityRepository
 {
     Task<Guid> CreateUserAsync(Identity user, string password, CancellationToken cancellationToken);
     Task<Identity?> GetByIdAsync(Guid userId, CancellationToken cancellationToken);
+    Task<Identity?> GetByEmailAsync(string emailAddress, CancellationToken cancellationToken);
     Task UpdateAsync(Identity user, CancellationToken cancellationToken);
     Task<AuthenticatedUser?> AuthenticateUserAsync(string login, string password, CancellationToken cancellationToken);
 }

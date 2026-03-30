@@ -43,6 +43,21 @@ public class IdentityRepository : IIdentityRepository
             : MapToDomainIdentity(user);
     }
 
+    public async Task<Domain.Entities.Identity?> GetByEmailAsync(string emailAddress, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        if (string.IsNullOrWhiteSpace(emailAddress))
+        {
+            return null;
+        }
+
+        var user = await _userManager.FindByEmailAsync(emailAddress.Trim());
+        return user is null
+            ? null
+            : MapToDomainIdentity(user);
+    }
+
     private static UserEntity MapToIdentityUser(Domain.Entities.Identity domainUser)
     {
         var user = new UserEntity
@@ -104,7 +119,7 @@ public class IdentityRepository : IIdentityRepository
         }
 
         var user = await _userManager.FindByEmailAsync(login) ?? await _userManager.FindByNameAsync(login);
-        if (user is null)
+        if (user is null || !user.EmailConfirmed)
         {
             return null;
         }

@@ -8,7 +8,7 @@ namespace FlowChat.AuthService.UnitTests;
 public sealed class ApiSettingsManagerTests
 {
     [Fact]
-    public void ApiSettingsManager_ResolvesJwtAndRuntimeSettings()
+    public void ApiSettingsManager_ResolvesJwtRuntimeAndInternalApiSettings()
     {
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
@@ -17,6 +17,7 @@ public sealed class ApiSettingsManagerTests
                 ["JwtSettings:Issuer"] = "jwt-issuer",
                 ["JwtSettings:Audience"] = "jwt-audience",
                 ["JwtSettings:ExpiresMinutes"] = "90",
+                ["FlowChat:InternalApi:ApiKey"] = "internal-key",
                 ["ApiUrl"] = "https://localhost:5000",
                 ["BlazorUrl"] = "https://localhost:5010"
             })
@@ -24,12 +25,14 @@ public sealed class ApiSettingsManagerTests
 
         var settingsManager = new ApiSettingsManager(configuration);
         var jwtSettings = settingsManager.GetJwtSettings();
+        var internalApiSettings = settingsManager.GetInternalApiSettings();
         var apiRuntimeSettings = settingsManager.GetApiRuntimeSettings();
 
         Assert.Equal("jwt-key", jwtSettings.Key);
         Assert.Equal("jwt-issuer", jwtSettings.Issuer);
         Assert.Equal("jwt-audience", jwtSettings.Audience);
         Assert.Equal(90, jwtSettings.ExpiresMinutes);
+        Assert.Equal("internal-key", internalApiSettings.ApiKey);
         Assert.Equal("https://localhost:5000", apiRuntimeSettings.ApiUrl);
         Assert.Equal("https://localhost:5010", apiRuntimeSettings.BlazorUrl);
     }
@@ -42,7 +45,8 @@ public sealed class ApiSettingsManagerTests
             {
                 ["JwtSettings:Key"] = "jwt-key",
                 ["JwtSettings:Issuer"] = "jwt-issuer",
-                ["JwtSettings:Audience"] = "jwt-audience"
+                ["JwtSettings:Audience"] = "jwt-audience",
+                ["FlowChat:InternalApi:ApiKey"] = "internal-key"
             })
             .Build();
 
@@ -56,5 +60,6 @@ public sealed class ApiSettingsManagerTests
 
         Assert.NotNull(settingsManager);
         Assert.Equal("jwt-key", settingsManager.GetJwtSettings().Key);
+        Assert.Equal("internal-key", settingsManager.GetInternalApiSettings().ApiKey);
     }
 }

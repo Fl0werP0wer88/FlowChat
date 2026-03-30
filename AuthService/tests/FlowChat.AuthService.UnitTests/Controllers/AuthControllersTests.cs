@@ -1,8 +1,11 @@
 using AutoMapper;
 using FlowChat.AuthService.API.Features.Users.Public.LoginUser;
 using FlowChat.AuthService.API.Features.Users.Public.RegisterUser;
+using FlowChat.AuthService.Api.Features.Users.Internal.ConfirmAuthEmail;
+using FlowChat.AuthService.Application.Features.Users.Commands.ConfirmAuthEmail;
 using FlowChat.AuthService.Application.Features.Users.Commands.LoginUser;
 using FlowChat.AuthService.Application.Features.Users.Commands.RegisterUser;
+using FlowChat.AuthService.Infrastructure.Configuration;
 using FlowChat.Shared.Domain;
 using MediatR;
 using Microsoft.AspNetCore.Http;
@@ -50,7 +53,7 @@ public sealed class AuthControllersTests
             request switch
             {
                 LoginUserCommand => FlowChatResult<LoginUserCommandResponse>.Failure(
-                    DomainError.Unauthorized("Invalid credentials.")),
+                    DomainError.Unauthorized("Invalid credentials or account is not confirmed.")),
                 _ => throw new InvalidOperationException("Unexpected request.")
             });
         var controller = CreateController(new LoginUserController(mediator, CreateMapper()));
@@ -66,18 +69,82 @@ public sealed class AuthControllersTests
         var unauthorized = Assert.IsType<UnauthorizedObjectResult>(result);
         var problemDetails = Assert.IsType<ProblemDetails>(unauthorized.Value);
         Assert.Equal(StatusCodes.Status401Unauthorized, problemDetails.Status);
-        Assert.Equal("Invalid credentials.", problemDetails.Detail);
+        Assert.Equal("Invalid credentials or account is not confirmed.", problemDetails.Detail);
     }
 
-    private static TController CreateController<TController>(TController controller)
+    [Fact]
+    public async Task ConfirmAuthEmail_ReturnsUnauthorized_WhenInternalApiKeyIsInvalid()
+    {
+        var mediator = new TestMediator(_ => throw new InvalidOperationException("Mediator should not be called."));
+        var controller = CreateController(
+            new ConfirmAuthEmailController(mediator, new TestApiSettingsManager("expected-key")),
+            new Dictionary<string, string?>
+            {
+                ["X-Internal-Api-Key"] = "wrong-key"
+            });
+
+        var result = await controller.ConfirmEmail(
+            new ConfirmAuthEmailRequest
+            {
+                EmailAddress = "john@example.com"
+            },
+            CancellationToken.None);
+
+        Assert.IsType<UnauthorizedResult>(result);
+    }
+
+    [Fact]
+    public async Task ConfirmAuthEmail_SendsCommand_WhenInternalApiKeyIsValid()
+    {
+        var capturedRequests = new List<object>();
+        var mediator = new TestMediator(request =>
+        {
+            capturedRequests.Add(request);
+            return FlowChatResult<Unit>.Success(Unit.Value);
+        });
+        var controller = CreateController(
+            new ConfirmAuthEmailController(mediator, new TestApiSettingsManager("expected-key")),
+            new Dictionary<string, string?>
+            {
+                ["X-Internal-Api-Key"] = "expected-key"
+            });
+
+        var result = await controller.ConfirmEmail(
+            new ConfirmAuthEmailRequest
+            {
+                EmailAddress = "john@example.com"
+            },
+            CancellationToken.None);
+
+        Assert.IsType<AcceptedResult>(result);
+        var command = Assert.IsType<ConfirmAuthEmailCommand>(Assert.Single(capturedRequests));
+        Assert.Equal("john@example.com", command.EmailAddress);
+    }
+
+    private static TController CreateController<TController>(
+        TController controller,
+        IDictionary<string, string?>? headers = null)
         where TController : ControllerBase
     {
+        var httpContext = new DefaultHttpContext
+        {
+            RequestServices = new SingleServiceProvider(new TestProblemDetailsFactory())
+        };
+
+        if (headers is not null)
+        {
+            foreach (var header in headers)
+            {
+                if (header.Value is not null)
+                {
+                    httpContext.Request.Headers[header.Key] = header.Value;
+                }
+            }
+        }
+
         controller.ControllerContext = new ControllerContext
         {
-            HttpContext = new DefaultHttpContext
-            {
-                RequestServices = new SingleServiceProvider(new TestProblemDetailsFactory())
-            }
+            HttpContext = httpContext
         };
 
         return controller;
@@ -124,6 +191,18 @@ public sealed class AuthControllersTests
     {
         public object? GetService(Type serviceType) =>
             serviceType.IsInstanceOfType(service) ? service : null;
+    }
+
+    private sealed class TestApiSettingsManager(string apiKey) : IApiSettingsManager
+    {
+        public JwtSettings GetJwtSettings() => new();
+
+        public ApiRuntimeSettings GetApiRuntimeSettings() => new();
+
+        public InternalApiSettings GetInternalApiSettings() => new()
+        {
+            ApiKey = apiKey
+        };
     }
 
     private sealed class TestProblemDetailsFactory : ProblemDetailsFactory

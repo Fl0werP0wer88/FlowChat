@@ -25,6 +25,7 @@
     <ProjectReference Include="..\..\src\FlowChat.AuthService.Application\FlowChat.AuthService.Application.csproj" />
     <ProjectReference Include="..\..\src\FlowChat.AuthService.Infrastructure\FlowChat.AuthService.Infrastructure.csproj" />
     <ProjectReference Include="..\..\src\FlowChat.AuthService.Persistence\FlowChat.AuthService.Persistence.csproj" />
+    <ProjectReference Include="..\..\src\Workers\FlowChat.AuthService.Consumers\FlowChat.AuthService.Consumers.csproj" />
     <ProjectReference Include="..\..\src\Workers\FlowChat.AuthService.OutboxPublisher\FlowChat.AuthService.OutboxPublisher.csproj" />
   </ItemGroup>
 

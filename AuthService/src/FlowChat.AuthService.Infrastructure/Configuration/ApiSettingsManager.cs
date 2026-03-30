@@ -13,6 +13,9 @@ public sealed class ApiSettingsManager : IApiSettingsManager
 
     public JwtSettings GetJwtSettings() => ResolveSection<JwtSettings>(JwtSettings.SectionName);
 
+    public InternalApiSettings GetInternalApiSettings() =>
+        ResolveSection<InternalApiSettings>(InternalApiSettings.SectionName);
+
     public ApiRuntimeSettings GetApiRuntimeSettings()
     {
         var settings = new ApiRuntimeSettings();

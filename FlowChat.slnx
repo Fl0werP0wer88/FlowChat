@@ -8,6 +8,7 @@
     <Project Path="AuthService/src/FlowChat.AuthService.Persistence/FlowChat.AuthService.Persistence.csproj" />
   </Folder>
   <Folder Name="/AuthService/src/Workers/">
+    <Project Path="AuthService/src/Workers/FlowChat.AuthService.Consumers/FlowChat.AuthService.Consumers.csproj" />
     <Project Path="AuthService/src/Workers/FlowChat.AuthService.OutboxPublisher/FlowChat.AuthService.OutboxPublisher.csproj" />
   </Folder>
   <Folder Name="/AuthService/tests/">

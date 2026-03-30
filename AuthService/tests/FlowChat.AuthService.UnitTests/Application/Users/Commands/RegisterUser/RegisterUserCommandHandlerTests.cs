@@ -25,6 +25,8 @@ public sealed class RegisterUserCommandHandlerTests
 
         Assert.True(result.IsSuccess);
         Assert.Equal(createdUserId, result.Value.Id);
+        Assert.False(createdUser.EmailConfirmed);
+        Assert.False(createdUser.AccountConfirmed);
 
         var dispatchedEvents = Assert.Single(domainEventDispatcher.DispatchedBatches);
         var accountRegisteredDomainEvent = Assert.IsType<AccountRegisteredDomainEvent>(Assert.Single(dispatchedEvents));
@@ -149,6 +151,9 @@ public sealed class RegisterUserCommandHandlerTests
         }
 
         public Task<Identity?> GetByIdAsync(Guid userId, CancellationToken cancellationToken)
+            => throw new NotSupportedException();
+
+        public Task<Identity?> GetByEmailAsync(string emailAddress, CancellationToken cancellationToken)
             => throw new NotSupportedException();
 
         public Task UpdateAsync(Identity user, CancellationToken cancellationToken)

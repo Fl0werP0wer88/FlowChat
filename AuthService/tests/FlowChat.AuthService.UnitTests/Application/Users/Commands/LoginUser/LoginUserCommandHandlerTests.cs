@@ -78,7 +78,7 @@ public sealed class LoginUserCommandHandlerTests
 
         Assert.False(result.IsSuccess);
         Assert.Equal(ErrorType.Unauthorized, result.Error.ErrorType);
-        Assert.Equal("Invalid credentials.", result.Error.ErrorMessage);
+        Assert.Equal("Invalid credentials or account is not confirmed.", result.Error.ErrorMessage);
         Assert.False(jwtTokenGenerator.WasCalled);
         Assert.Empty(domainEventDispatcher.DispatchedBatches);
     }
@@ -96,6 +96,9 @@ public sealed class LoginUserCommandHandlerTests
             => throw new NotSupportedException();
 
         public Task<Identity?> GetByIdAsync(Guid userId, CancellationToken cancellationToken)
+            => throw new NotSupportedException();
+
+        public Task<Identity?> GetByEmailAsync(string emailAddress, CancellationToken cancellationToken)
             => throw new NotSupportedException();
 
         public Task UpdateAsync(Identity user, CancellationToken cancellationToken)
