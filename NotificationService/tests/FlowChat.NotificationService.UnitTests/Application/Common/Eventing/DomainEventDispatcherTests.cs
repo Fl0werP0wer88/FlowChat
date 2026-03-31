@@ -31,7 +31,9 @@ public sealed class DomainEventDispatcherTests
 
         await _dispatcher.DispatchAsync([domainEvent], CancellationToken.None);
 
-        _mediatorMock.Verify(x => x.Publish(domainEvent, It.IsAny<CancellationToken>()), Times.Once);
+        _mediatorMock.Verify(
+            x => x.Publish(It.Is<IDomainEvent>(e => ReferenceEquals(e, domainEvent)), It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 
     [Fact]
@@ -79,7 +81,9 @@ public sealed class DomainEventDispatcherTests
 
         await _dispatcher.DispatchAsync([domainEvent], CancellationToken.None);
 
-        _mediatorMock.Verify(x => x.Publish(domainEvent, It.IsAny<CancellationToken>()), Times.Once);
+        _mediatorMock.Verify(
+            x => x.Publish(It.Is<IDomainEvent>(e => ReferenceEquals(e, domainEvent)), It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 
     // --- Test helpers ---

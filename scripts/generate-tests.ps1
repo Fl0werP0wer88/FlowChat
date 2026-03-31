@@ -14,8 +14,8 @@ try {
         exit 0
     }
 
-    $manifestRelativePath = [System.IO.Path]::GetRelativePath($repoRoot, $result.ManifestPath).Replace('\', '/')
-    $summaryRelativePath = [System.IO.Path]::GetRelativePath($repoRoot, $result.SummaryPath).Replace('\', '/')
+    $manifestRelativePath = Get-TestGenerationRelativePath -BasePath $repoRoot -TargetPath $result.ManifestPath
+    $summaryRelativePath = Get-TestGenerationRelativePath -BasePath $repoRoot -TargetPath $result.SummaryPath
 
     Write-Host "Run ID: $($result.RunId)"
     Write-Host "Manifest: $manifestRelativePath"

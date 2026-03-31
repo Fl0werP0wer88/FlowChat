@@ -2,29 +2,35 @@ using AutoFixture;
 using FlowChat.NotificationService.Domain.Entities;
 using FlowChat.NotificationService.Persistence;
 using FluentAssertions;
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 
 namespace FlowChat.NotificationService.IntegrationTests.Persistence;
 
 public sealed class UnitOfWorkTests : IDisposable
 {
-    private readonly IFixture _fixture = new Fixture();
+    private readonly SqliteConnection _connection;
     private readonly AppDbContext _dbContext;
     private readonly UnitOfWork _unitOfWork;
 
     public UnitOfWorkTests()
     {
+        _connection = new SqliteConnection("Data Source=:memory:");
+        _connection.Open();
+
         var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase(_fixture.Create<Guid>().ToString("N"))
+            .UseSqlite(_connection)
             .Options;
 
         _dbContext = new AppDbContext(options);
+        _dbContext.Database.EnsureCreated();
         _unitOfWork = new UnitOfWork(_dbContext);
     }
 
     public void Dispose()
     {
         _unitOfWork.Dispose();
+        _connection.Dispose();
     }
 
     private static Notification CreateNotification() =>

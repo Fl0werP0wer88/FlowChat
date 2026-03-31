@@ -84,6 +84,29 @@ function ConvertTo-TestGenerationPath {
     return $Path.Replace('\', '/')
 }
 
+function Get-TestGenerationRelativePath {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$BasePath,
+        [Parameter(Mandatory = $true)]
+        [string]$TargetPath
+    )
+
+    $resolvedBasePath = [System.IO.Path]::GetFullPath($BasePath)
+    $resolvedTargetPath = [System.IO.Path]::GetFullPath($TargetPath)
+
+    if (-not $resolvedBasePath.EndsWith([System.IO.Path]::DirectorySeparatorChar.ToString())) {
+        $resolvedBasePath = $resolvedBasePath + [System.IO.Path]::DirectorySeparatorChar
+    }
+
+    $baseUri = [System.Uri]$resolvedBasePath
+    $targetUri = [System.Uri]$resolvedTargetPath
+    $relativeUri = $baseUri.MakeRelativeUri($targetUri)
+    $relativePath = [System.Uri]::UnescapeDataString($relativeUri.ToString())
+
+    return ConvertTo-TestGenerationPath ($relativePath.Replace('/', '\'))
+}
+
 function ConvertFrom-TestGenerationKeyName {
     param(
         [Parameter(Mandatory = $true)]
@@ -878,7 +901,7 @@ function Ensure-TestGenerationWorktree {
 
     $branchName = "testgen/$RunId/$($Service.Name.ToLowerInvariant())"
     $worktreePath = Get-TestGenerationWorktreePath -RepoRoot $RepoRoot -RunId $RunId -ServiceName $Service.Name
-    $relativeWorktreePath = ConvertTo-TestGenerationPath ([System.IO.Path]::GetRelativePath($RepoRoot, $worktreePath))
+    $relativeWorktreePath = Get-TestGenerationRelativePath -BasePath $RepoRoot -TargetPath $worktreePath
 
     if (-not (Test-Path -LiteralPath $worktreePath)) {
         Ensure-TestGenerationDirectory -Path (Split-Path -Parent $worktreePath)
@@ -1574,9 +1597,9 @@ function Start-TestGenerationRun {
                         status = 'pending'
                         branch = $null
                         worktree = $null
-                        analysisFile = ConvertTo-TestGenerationPath ([System.IO.Path]::GetRelativePath($RepoRoot, (Get-TestGenerationAnalysisArtifactPath -RunRoot $runRoot -ServiceName $_.Name)))
-                        tasksFile = ConvertTo-TestGenerationPath ([System.IO.Path]::GetRelativePath($RepoRoot, (Get-TestGenerationTasksArtifactPath -RunRoot $runRoot -ServiceName $_.Name)))
-                        resultsFile = ConvertTo-TestGenerationPath ([System.IO.Path]::GetRelativePath($RepoRoot, (Get-TestGenerationResultsArtifactPath -RunRoot $runRoot -ServiceName $_.Name)))
+                        analysisFile = Get-TestGenerationRelativePath -BasePath $RepoRoot -TargetPath (Get-TestGenerationAnalysisArtifactPath -RunRoot $runRoot -ServiceName $_.Name)
+                        tasksFile = Get-TestGenerationRelativePath -BasePath $RepoRoot -TargetPath (Get-TestGenerationTasksArtifactPath -RunRoot $runRoot -ServiceName $_.Name)
+                        resultsFile = Get-TestGenerationRelativePath -BasePath $RepoRoot -TargetPath (Get-TestGenerationResultsArtifactPath -RunRoot $runRoot -ServiceName $_.Name)
                     }
                 }
             )
@@ -1718,6 +1741,7 @@ function Start-TestGenerationRun {
 Export-ModuleMember -Function @(
     'ConvertTo-TestGenerationTasks',
     'Get-TestGenerationServiceCatalog',
+    'Get-TestGenerationRelativePath',
     'Get-TestGenerationUsageText',
     'Invoke-TestGenerationAnalysisForService',
     'Invoke-TestGenerationWorkerForService',
