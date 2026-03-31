@@ -1,23 +1,39 @@
 using System.Net;
 using System.Text.Json;
+using AutoFixture;
 using FlowChat.Core.Exceptions;
 using FlowChat.NotificationService.Consumers.NotificationApi.Contracts;
 using FlowChat.NotificationService.Consumers.Services;
+using FluentAssertions;
+using Moq;
+using Moq.Protected;
 
 namespace FlowChat.NotificationService.UnitTests;
 
 public sealed class NotificationInternalApiClientTests
 {
+    private readonly IFixture _fixture = new Fixture();
+
     [Fact]
     public async Task ProcessUserEmailVerificationRequestedAsync_PostsToExpectedEndpointWithApiKey()
     {
         string? requestBody = null;
-        var handler = new CapturingHttpMessageHandler(async (request, _) =>
-        {
-            requestBody = await request.Content!.ReadAsStringAsync();
-            return new HttpResponseMessage(HttpStatusCode.Accepted);
-        });
-        var httpClient = new HttpClient(handler)
+        HttpRequestMessage? sentRequest = null;
+        var handlerMock = new Mock<HttpMessageHandler>();
+        handlerMock
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .Callback<HttpRequestMessage, CancellationToken>((request, _) =>
+            {
+                sentRequest = request;
+                requestBody = request.Content!.ReadAsStringAsync().GetAwaiter().GetResult();
+            })
+            .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.Accepted));
+
+        var httpClient = new HttpClient(handlerMock.Object)
         {
             BaseAddress = new Uri("https://localhost:7206")
         };
@@ -28,7 +44,7 @@ public sealed class NotificationInternalApiClientTests
         await client.ProcessUserEmailVerificationRequestedAsync(
             new ProcessUserEmailVerificationRequestedRequest
             {
-                UserId = Guid.NewGuid(),
+                UserId = _fixture.Create<Guid>(),
                 Email = "john.doe@flowchat.local",
                 UserName = "john.doe",
                 DisplayName = "John Doe",
@@ -36,57 +52,45 @@ public sealed class NotificationInternalApiClientTests
             },
             CancellationToken.None);
 
-        Assert.NotNull(handler.LastRequest);
-        Assert.Equal(
-            "https://localhost:7206/internal/notifications/email-verification-requested",
-            handler.LastRequest!.RequestUri!.ToString());
-        Assert.Equal(
-            "internal-key",
-            handler.LastRequest.Headers.GetValues(NotificationInternalApiClient.ApiKeyHeaderName).Single());
+        sentRequest.Should().NotBeNull();
+        sentRequest!.RequestUri!.ToString().Should().Be(
+            "https://localhost:7206/internal/notifications/email-verification-requested");
+        sentRequest.Headers.GetValues(NotificationInternalApiClient.ApiKeyHeaderName).Single().Should().Be("internal-key");
 
         var payload = JsonSerializer.Deserialize<ProcessUserEmailVerificationRequestedRequest>(
             requestBody!,
             new JsonSerializerOptions(JsonSerializerDefaults.Web));
-        Assert.NotNull(payload);
-        Assert.Equal("john.doe@flowchat.local", payload!.Email);
-        Assert.Equal("john.doe", payload.UserName);
+
+        payload.Should().NotBeNull();
+        payload!.Email.Should().Be("john.doe@flowchat.local");
+        payload.UserName.Should().Be("john.doe");
     }
 
     [Fact]
     public async Task ProcessUserEmailVerificationRequestedAsync_WhenApiReturnsBadRequest_ThrowsNonTransientException()
     {
-        var handler = new CapturingHttpMessageHandler((_, _) =>
-            Task.FromResult(new HttpResponseMessage(HttpStatusCode.BadRequest)
+        var handlerMock = new Mock<HttpMessageHandler>();
+        handlerMock
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.BadRequest)
             {
                 Content = new StringContent("bad request")
-            }));
-        var client = new NotificationInternalApiClient(new HttpClient(handler)
+            });
+
+        var client = new NotificationInternalApiClient(new HttpClient(handlerMock.Object)
         {
             BaseAddress = new Uri("https://localhost:7206")
         });
 
-        var exception = await Assert.ThrowsAsync<NonTransientException>(() =>
-            client.ProcessUserEmailVerificationRequestedAsync(
-                new ProcessUserEmailVerificationRequestedRequest(),
-                CancellationToken.None));
+        var act = () => client.ProcessUserEmailVerificationRequestedAsync(
+            new ProcessUserEmailVerificationRequestedRequest(),
+            CancellationToken.None);
 
-        Assert.Contains("400", exception.Message);
-    }
-
-    private sealed class CapturingHttpMessageHandler(
-        Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> responseFactory)
-        : HttpMessageHandler
-    {
-        private readonly Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> _responseFactory = responseFactory;
-
-        public HttpRequestMessage? LastRequest { get; private set; }
-
-        protected override async Task<HttpResponseMessage> SendAsync(
-            HttpRequestMessage request,
-            CancellationToken cancellationToken)
-        {
-            LastRequest = request;
-            return await _responseFactory(request, cancellationToken);
-        }
+        await act.Should().ThrowAsync<NonTransientException>()
+            .WithMessage("*400*");
     }
 }

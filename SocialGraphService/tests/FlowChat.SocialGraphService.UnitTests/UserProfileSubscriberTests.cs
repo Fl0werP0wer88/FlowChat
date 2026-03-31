@@ -1,24 +1,40 @@
+using AutoFixture;
 using FlowChat.Core.Exceptions;
 using FlowChat.Core.Messaging.UserProfileService.Events;
 using FlowChat.SocialGraphService.Consumers.Kafka;
 using FlowChat.SocialGraphService.Consumers.Services;
 using FlowChat.SocialGraphService.Consumers.SocialGraph.Contracts;
+using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
+using Moq;
 
 namespace FlowChat.SocialGraphService.UnitTests;
 
 public sealed class UserProfileSubscriberTests
 {
+    private readonly IFixture _fixture = new Fixture();
+    private readonly Mock<ISocialGraphInternalApiClient> _apiClientMock = new();
+    private readonly UserProfileSubscriber _subscriber;
+
+    public UserProfileSubscriberTests()
+    {
+        _subscriber = new UserProfileSubscriber(
+            _apiClientMock.Object,
+            NullLogger<UserProfileSubscriber>.Instance);
+    }
+
     [Fact]
     public async Task HandleAsync_WhenProfileCreatedEventArrives_PostsNormalizedReadModel()
     {
-        var apiClient = new FakeSocialGraphInternalApiClient();
-        var subscriber = new UserProfileSubscriber(
-            apiClient,
-            NullLogger<UserProfileSubscriber>.Instance);
+        UpsertUserProfileReadModelRequest? capturedRequest = null;
+        var userProfileId = _fixture.Create<Guid>();
 
-        var userProfileId = Guid.NewGuid();
-        await subscriber.HandleAsync(
+        _apiClientMock
+            .Setup(x => x.UpsertUserProfileReadModelAsync(It.IsAny<UpsertUserProfileReadModelRequest>(), It.IsAny<CancellationToken>()))
+            .Callback<UpsertUserProfileReadModelRequest, CancellationToken>((request, _) => capturedRequest = request)
+            .Returns(Task.CompletedTask);
+
+        await _subscriber.HandleAsync(
             new UserProfileCreatedIntegrationEvent
             {
                 UserProfileId = userProfileId,
@@ -35,29 +51,30 @@ public sealed class UserProfileSubscriberTests
             },
             CancellationToken.None);
 
-        Assert.NotNull(apiClient.LastRequest);
-        Assert.Equal(userProfileId, apiClient.LastRequest!.UserProfileId);
-        Assert.Equal("john.doe", apiClient.LastRequest.UserName);
-        Assert.Equal("John Doe", apiClient.LastRequest.DisplayName);
-        Assert.Equal("john@flowchat.local", apiClient.LastRequest.MainEmail);
-        Assert.Equal("+48123123123", apiClient.LastRequest.MainPhone);
-        Assert.Equal("https://cdn.example/avatar.png", apiClient.LastRequest.AvatarUrl);
-        Assert.Equal("hello", apiClient.LastRequest.Bio);
+        capturedRequest.Should().NotBeNull();
+        capturedRequest!.UserProfileId.Should().Be(userProfileId);
+        capturedRequest.UserName.Should().Be("john.doe");
+        capturedRequest.DisplayName.Should().Be("John Doe");
+        capturedRequest.MainEmail.Should().Be("john@flowchat.local");
+        capturedRequest.MainPhone.Should().Be("+48123123123");
+        capturedRequest.AvatarUrl.Should().Be("https://cdn.example/avatar.png");
+        capturedRequest.Bio.Should().Be("hello");
     }
 
     [Fact]
     public async Task HandleAsync_WhenStateChangedEventArrives_PostsReadModel()
     {
-        var apiClient = new FakeSocialGraphInternalApiClient();
-        var subscriber = new UserProfileSubscriber(
-            apiClient,
-            NullLogger<UserProfileSubscriber>.Instance);
+        UpsertUserProfileReadModelRequest? capturedRequest = null;
 
-        var userProfileId = Guid.NewGuid();
-        await subscriber.HandleAsync(
+        _apiClientMock
+            .Setup(x => x.UpsertUserProfileReadModelAsync(It.IsAny<UpsertUserProfileReadModelRequest>(), It.IsAny<CancellationToken>()))
+            .Callback<UpsertUserProfileReadModelRequest, CancellationToken>((request, _) => capturedRequest = request)
+            .Returns(Task.CompletedTask);
+
+        await _subscriber.HandleAsync(
             new UserProfileStateChangedIntegrationEvent
             {
-                UserProfileId = userProfileId,
+                UserProfileId = _fixture.Create<Guid>(),
                 UserName = "jane.doe",
                 DisplayName = "Jane Doe",
                 MainEmail = null,
@@ -71,43 +88,28 @@ public sealed class UserProfileSubscriberTests
             },
             CancellationToken.None);
 
-        Assert.NotNull(apiClient.LastRequest);
-        Assert.Equal("jane.doe", apiClient.LastRequest!.UserName);
-        Assert.Equal("Jane Doe", apiClient.LastRequest.DisplayName);
-        Assert.False(apiClient.LastRequest.IsActive);
-        Assert.True(apiClient.LastRequest.IsPhoneVisible);
+        capturedRequest.Should().NotBeNull();
+        capturedRequest!.UserName.Should().Be("jane.doe");
+        capturedRequest.DisplayName.Should().Be("Jane Doe");
+        capturedRequest.IsActive.Should().BeFalse();
+        capturedRequest.IsPhoneVisible.Should().BeTrue();
     }
 
     [Fact]
     public async Task HandleAsync_WhenUserProfileIdIsMissing_ThrowsNonTransientException()
     {
-        var apiClient = new FakeSocialGraphInternalApiClient();
-        var subscriber = new UserProfileSubscriber(
-            apiClient,
-            NullLogger<UserProfileSubscriber>.Instance);
-
-        await Assert.ThrowsAsync<NonTransientException>(() => subscriber.HandleAsync(
+        var act = () => _subscriber.HandleAsync(
             new UserProfileCreatedIntegrationEvent
             {
                 UserProfileId = Guid.Empty,
                 UserName = "john.doe",
                 DisplayName = "John Doe"
             },
-            CancellationToken.None));
+            CancellationToken.None);
 
-        Assert.Null(apiClient.LastRequest);
-    }
-
-    private sealed class FakeSocialGraphInternalApiClient : ISocialGraphInternalApiClient
-    {
-        public UpsertUserProfileReadModelRequest? LastRequest { get; private set; }
-
-        public Task UpsertUserProfileReadModelAsync(
-            UpsertUserProfileReadModelRequest request,
-            CancellationToken cancellationToken)
-        {
-            LastRequest = request;
-            return Task.CompletedTask;
-        }
+        await act.Should().ThrowAsync<NonTransientException>();
+        _apiClientMock.Verify(
+            x => x.UpsertUserProfileReadModelAsync(It.IsAny<UpsertUserProfileReadModelRequest>(), It.IsAny<CancellationToken>()),
+            Times.Never);
     }
 }

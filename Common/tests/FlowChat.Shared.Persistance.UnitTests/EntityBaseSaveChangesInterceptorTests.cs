@@ -1,11 +1,16 @@
-﻿using FlowChat.Shared.Domain;
+using AutoFixture;
+using FlowChat.Shared.Domain;
 using FlowChat.Shared.Persistance.Auditing;
+using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace FlowChat.Shared.Persistance.UnitTests;
 
 public sealed class EntityBaseSaveChangesInterceptorTests
 {
+    private readonly IFixture _fixture = new Fixture();
+
     [Fact]
     public async Task SavingChanges_ForAddedEntity_SetsAllAuditFields()
     {
@@ -16,10 +21,10 @@ public sealed class EntityBaseSaveChangesInterceptorTests
 
         await dbContext.SaveChangesAsync();
 
-        Assert.Equal("system", entity.CreatedBy);
-        Assert.Equal("system", entity.LastModifiedBy);
-        Assert.NotEqual(default, entity.CreatedAtUtc);
-        Assert.Equal(entity.CreatedAtUtc, entity.LastModifiedAtUtc);
+        entity.CreatedBy.Should().Be("system");
+        entity.LastModifiedBy.Should().Be("system");
+        entity.CreatedAtUtc.Should().NotBe(default);
+        entity.LastModifiedAtUtc.Should().BeOnOrAfter(entity.CreatedAtUtc);
     }
 
     [Fact]
@@ -36,10 +41,10 @@ public sealed class EntityBaseSaveChangesInterceptorTests
         entity.Rename("after");
         await dbContext.SaveChangesAsync();
 
-        Assert.Equal(createdBy, entity.CreatedBy);
-        Assert.Equal(createdAtUtc, entity.CreatedAtUtc);
-        Assert.Equal("system", entity.LastModifiedBy);
-        Assert.True(entity.LastModifiedAtUtc >= createdAtUtc);
+        entity.CreatedBy.Should().Be(createdBy);
+        entity.CreatedAtUtc.Should().Be(createdAtUtc);
+        entity.LastModifiedBy.Should().Be("system");
+        entity.LastModifiedAtUtc.Should().BeOnOrAfter(createdAtUtc);
     }
 
     [Fact]
@@ -51,13 +56,13 @@ public sealed class EntityBaseSaveChangesInterceptorTests
 
         await dbContext.SaveChangesAsync();
 
-        Assert.Equal(1, await dbContext.PlainEntities.CountAsync());
+        (await dbContext.PlainEntities.CountAsync()).Should().Be(1);
     }
 
-    private static TestDbContext CreateDbContext()
+    private TestDbContext CreateDbContext()
     {
         var options = new DbContextOptionsBuilder<TestDbContext>()
-            .UseInMemoryDatabase(Guid.NewGuid().ToString("N"))
+            .UseInMemoryDatabase(_fixture.Create<Guid>().ToString("N"))
             .AddInterceptors(new EntityBaseSaveChangesInterceptor())
             .Options;
 
@@ -68,6 +73,19 @@ public sealed class EntityBaseSaveChangesInterceptorTests
     {
         public DbSet<TestEntity> TestEntities => Set<TestEntity>();
         public DbSet<PlainEntity> PlainEntities => Set<PlainEntity>();
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            var idConverter = new ValueConverter<Id<TestEntity>, Guid>(
+                id => id.Value,
+                value => Id<TestEntity>.FromGuid(value));
+
+            modelBuilder.Entity<TestEntity>(entity =>
+            {
+                entity.HasKey(x => x.Id);
+                entity.Property(x => x.Id).HasConversion(idConverter);
+            });
+        }
     }
 
     private sealed class TestEntity : EntityBase<TestEntity>
@@ -98,4 +116,3 @@ public sealed class EntityBaseSaveChangesInterceptorTests
         public string Name { get; set; } = string.Empty;
     }
 }
-

@@ -1,4 +1,5 @@
 using FlowChat.RealtimeService.Application;
+using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace FlowChat.RealtimeService.UnitTests;
@@ -18,6 +19,6 @@ public sealed class WorkerApplicationServiceRegistrationTests
             ValidateScopes = true
         });
 
-        Assert.NotNull(serviceProvider);
+        serviceProvider.Should().NotBeNull();
     }
 }

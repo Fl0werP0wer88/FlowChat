@@ -1,5 +1,6 @@
 using FlowChat.RealtimeService.Api;
 using FlowChat.RealtimeService.Api.Realtime;
+using FluentAssertions;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
@@ -42,7 +43,7 @@ public sealed class StartupExtensionsTests
 
         await options.Events!.OnMessageReceived(messageContext);
 
-        Assert.NotNull(hubContext);
-        Assert.Equal("test-token", messageContext.Token);
+        hubContext.Should().NotBeNull();
+        messageContext.Token.Should().Be("test-token");
     }
 }

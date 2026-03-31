@@ -2,11 +2,13 @@ using System.Text.Json;
 using FlowChat.AuthService.OutboxPublisher;
 using FlowChat.AuthService.OutboxPublisher.Diagnostics;
 using FlowChat.AuthService.Persistence;
+using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging.Abstractions;
+using Moq;
 
 namespace FlowChat.AuthService.UnitTests;
 
@@ -28,9 +30,9 @@ public sealed class OutboxPublisherStartupDiagnosticsTests
         using var host = builder.Build();
         var hostedServices = host.Services.GetServices<IHostedService>().ToList();
 
-        Assert.Contains(
-            hostedServices,
-            hostedService => hostedService.GetType().FullName?.Contains("OutboxWorkerService") == true);
+        hostedServices.Should().Contain(
+            hostedService => hostedService.GetType().FullName != null
+                && hostedService.GetType().FullName!.Contains("OutboxWorkerService"));
     }
 
     [Fact]
@@ -48,7 +50,7 @@ public sealed class OutboxPublisherStartupDiagnosticsTests
         await using var serviceProvider = services.BuildServiceProvider();
         var dbContextFactory = serviceProvider.GetRequiredService<IDbContextFactory<AppDbContext>>();
 
-        Assert.NotNull(dbContextFactory);
+        dbContextFactory.Should().NotBeNull();
     }
 
     [Theory]
@@ -62,13 +64,13 @@ public sealed class OutboxPublisherStartupDiagnosticsTests
 
         var outboxSection = configuration.GetSection("OutboxPublisher");
 
-        Assert.True(outboxSection.Exists());
-        Assert.True(outboxSection.GetValue<int>("BatchSize") > 0);
-        Assert.True(outboxSection.GetValue<int>("PollIntervalSeconds") > 0);
-        Assert.True(outboxSection.GetValue<int>("RetryBaseDelaySeconds") > 0);
-        Assert.True(outboxSection.GetValue<int>("MaxRetryDelaySeconds") > 0);
-        Assert.Equal("Debug", configuration["Logging:LogLevel:Silverback"]);
-        Assert.Equal("Information", configuration["Logging:LogLevel:Microsoft.Hosting.Lifetime"]);
+        outboxSection.Exists().Should().BeTrue();
+        outboxSection.GetValue<int>("BatchSize").Should().BeGreaterThan(0);
+        outboxSection.GetValue<int>("PollIntervalSeconds").Should().BeGreaterThan(0);
+        outboxSection.GetValue<int>("RetryBaseDelaySeconds").Should().BeGreaterThan(0);
+        outboxSection.GetValue<int>("MaxRetryDelaySeconds").Should().BeGreaterThan(0);
+        configuration["Logging:LogLevel:Silverback"].Should().Be("Debug");
+        configuration["Logging:LogLevel:Microsoft.Hosting.Lifetime"].Should().Be("Information");
     }
 
     [Fact]
@@ -85,35 +87,55 @@ public sealed class OutboxPublisherStartupDiagnosticsTests
             .GetProperty("DOTNET_ENVIRONMENT")
             .GetString();
 
-        Assert.Equal("Development", environment);
+        environment.Should().Be("Development");
     }
 
     [Fact]
     public async Task OutboxWorkerStartupProbe_WhenAuthDbProbeFails_ThrowsInvalidOperationException()
     {
+        var authDbProbeMock = new Mock<IAuthDbConnectivityProbe>();
+        authDbProbeMock
+            .Setup(x => x.ProbeAsync(It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("db is unavailable"));
+
+        var kafkaProbeMock = new Mock<IKafkaConnectivityProbe>();
+        kafkaProbeMock
+            .Setup(x => x.ProbeAsync(It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
         var startupProbe = new OutboxWorkerStartupProbe(
-            new ThrowingAuthDbConnectivityProbe(),
-            new NoOpKafkaConnectivityProbe(),
+            authDbProbeMock.Object,
+            kafkaProbeMock.Object,
             NullLogger<OutboxWorkerStartupProbe>.Instance);
 
-        var exception = await Assert.ThrowsAsync<InvalidOperationException>(
-            () => startupProbe.StartAsync(CancellationToken.None));
+        var act = () => startupProbe.StartAsync(CancellationToken.None);
 
-        Assert.Contains("AuthDb connectivity probe failed", exception.Message);
+        await act.Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage("*AuthDb connectivity probe failed*");
     }
 
     [Fact]
     public async Task OutboxWorkerStartupProbe_WhenKafkaProbeFails_ThrowsInvalidOperationException()
     {
+        var authDbProbeMock = new Mock<IAuthDbConnectivityProbe>();
+        authDbProbeMock
+            .Setup(x => x.ProbeAsync(It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        var kafkaProbeMock = new Mock<IKafkaConnectivityProbe>();
+        kafkaProbeMock
+            .Setup(x => x.ProbeAsync(It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("kafka is unavailable"));
+
         var startupProbe = new OutboxWorkerStartupProbe(
-            new NoOpAuthDbConnectivityProbe(),
-            new ThrowingKafkaConnectivityProbe(),
+            authDbProbeMock.Object,
+            kafkaProbeMock.Object,
             NullLogger<OutboxWorkerStartupProbe>.Instance);
 
-        var exception = await Assert.ThrowsAsync<InvalidOperationException>(
-            () => startupProbe.StartAsync(CancellationToken.None));
+        var act = () => startupProbe.StartAsync(CancellationToken.None);
 
-        Assert.Contains("Kafka connectivity probe failed", exception.Message);
+        await act.Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage("*Kafka connectivity probe failed*");
     }
 
     private static IConfiguration BuildOutboxPublisherConfiguration()
@@ -149,27 +171,5 @@ public sealed class OutboxPublisherStartupDiagnosticsTests
         }
 
         throw new InvalidOperationException($"Could not locate file '{relativePath}' starting from '{AppContext.BaseDirectory}'.");
-    }
-
-    private sealed class NoOpAuthDbConnectivityProbe : IAuthDbConnectivityProbe
-    {
-        public Task ProbeAsync(CancellationToken cancellationToken) => Task.CompletedTask;
-    }
-
-    private sealed class ThrowingAuthDbConnectivityProbe : IAuthDbConnectivityProbe
-    {
-        public Task ProbeAsync(CancellationToken cancellationToken) =>
-            Task.FromException(new InvalidOperationException("db is unavailable"));
-    }
-
-    private sealed class NoOpKafkaConnectivityProbe : IKafkaConnectivityProbe
-    {
-        public Task ProbeAsync(CancellationToken cancellationToken) => Task.CompletedTask;
-    }
-
-    private sealed class ThrowingKafkaConnectivityProbe : IKafkaConnectivityProbe
-    {
-        public Task ProbeAsync(CancellationToken cancellationToken) =>
-            Task.FromException(new InvalidOperationException("kafka is unavailable"));
     }
 }

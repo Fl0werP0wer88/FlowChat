@@ -1,75 +1,91 @@
+using AutoFixture;
 using FlowChat.RealtimeService.Api.Features.Realtime.Internal.PublishMessage;
 using FlowChat.RealtimeService.Application.Features.Messages.Commands.PublishMessage;
 using FlowChat.RealtimeService.Infrastructure.Configuration;
+using FlowChat.Shared.Domain;
+using FluentAssertions;
+using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
+using Moq;
 
 namespace FlowChat.RealtimeService.UnitTests;
 
 public sealed class PublishMessageControllerTests
 {
+    private readonly IFixture _fixture = new Fixture();
+
     [Fact]
     public async Task Publish_WhenApiKeyMissing_ReturnsUnauthorized()
     {
-        var controller = CreateController("expected-key", out _);
-        controller.ControllerContext = new ControllerContext
-        {
-            HttpContext = new DefaultHttpContext()
-        };
+        var controller = CreateController("expected-key", new Mock<IMediator>(MockBehavior.Strict));
 
         var result = await controller.Publish(
             new PublishMessageRequest
             {
-                MessageId = Guid.NewGuid(),
-                ConversationId = Guid.NewGuid(),
-                SenderUserId = Guid.NewGuid(),
+                MessageId = _fixture.Create<Guid>(),
+                ConversationId = _fixture.Create<Guid>(),
+                SenderUserId = _fixture.Create<Guid>(),
                 SenderDisplayName = "John Doe",
                 Text = "Hello",
-                RecipientUserIds = [Guid.NewGuid()]
+                RecipientUserIds = [_fixture.Create<Guid>()]
             },
             CancellationToken.None);
 
-        Assert.IsType<UnauthorizedResult>(result);
+        result.Should().BeOfType<UnauthorizedResult>();
     }
 
     [Fact]
     public async Task Publish_WhenApiKeyMatches_DispatchesCommand()
     {
-        var controller = CreateController("expected-key", out var mediator);
-        var httpContext = new DefaultHttpContext();
-        httpContext.Request.Headers["X-Internal-Api-Key"] = "expected-key";
-        controller.ControllerContext = new ControllerContext
-        {
-            HttpContext = httpContext
-        };
+        PublishMessageCommand? capturedCommand = null;
+        var mediatorMock = new Mock<IMediator>();
+        mediatorMock
+            .Setup(x => x.Send(It.IsAny<PublishMessageCommand>(), It.IsAny<CancellationToken>()))
+            .Callback<IRequest<FlowChatResult<Unit>>, CancellationToken>((request, _) => capturedCommand = (PublishMessageCommand)request)
+            .ReturnsAsync(FlowChatResult<Unit>.Success(Unit.Value));
+
+        var controller = CreateController("expected-key", mediatorMock, "expected-key");
 
         var result = await controller.Publish(
             new PublishMessageRequest
             {
-                MessageId = Guid.NewGuid(),
-                ConversationId = Guid.NewGuid(),
-                SenderUserId = Guid.NewGuid(),
+                MessageId = _fixture.Create<Guid>(),
+                ConversationId = _fixture.Create<Guid>(),
+                SenderUserId = _fixture.Create<Guid>(),
                 SenderDisplayName = "John Doe",
                 Text = "Hello",
-                RecipientUserIds = [Guid.NewGuid()]
+                RecipientUserIds = [_fixture.Create<Guid>()]
             },
             CancellationToken.None);
 
-        Assert.IsType<AcceptedResult>(result);
-        Assert.IsType<PublishMessageCommand>(mediator.LastSentRequest);
+        result.Should().BeOfType<AcceptedResult>();
+        capturedCommand.Should().NotBeNull();
     }
 
-    private static PublishMessageController CreateController(string apiKey, out CapturingMediator mediator)
+    private static PublishMessageController CreateController(
+        string expectedApiKey,
+        Mock<IMediator> mediatorMock,
+        string? providedApiKey = null)
     {
-        mediator = new CapturingMediator();
-        var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                ["FlowChat:InternalApi:ApiKey"] = apiKey
-            })
-            .Build();
+        var apiSettingsManagerMock = new Mock<IApiSettingsManager>();
+        apiSettingsManagerMock
+            .Setup(x => x.GetInternalApiSettings())
+            .Returns(new InternalApiSettings { ApiKey = expectedApiKey });
 
-        return new PublishMessageController(mediator, new ApiSettingsManager(configuration));
+        var controller = new PublishMessageController(mediatorMock.Object, apiSettingsManagerMock.Object)
+        {
+            ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext()
+            }
+        };
+
+        if (providedApiKey is not null)
+        {
+            controller.HttpContext.Request.Headers["X-Internal-Api-Key"] = providedApiKey;
+        }
+
+        return controller;
     }
 }

@@ -1,63 +1,59 @@
-﻿using CSharpFunctionalExtensions;
-using FlowChat.Shared.API;
-using FlowChat.Shared.Domain;
+using AutoFixture;
+using CSharpFunctionalExtensions;
 using FlowChat.NotificationService.Api.Features.Notifications.Internal.ProcessUserEmailVerificationRequested;
 using FlowChat.NotificationService.Application.Features.Notifications.Commands.UserEmailVerificationRequested;
 using FlowChat.NotificationService.Infrastructure.Configuration;
+using FlowChat.Shared.Domain;
+using FluentAssertions;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
-using Microsoft.Extensions.Configuration;
+using Moq;
 
 namespace FlowChat.NotificationService.UnitTests;
 
 public sealed class ProcessUserEmailVerificationRequestedControllerTests
 {
+    private readonly IFixture _fixture = new Fixture();
+
     [Fact]
     public async Task Process_WhenApiKeyMissing_ReturnsUnauthorized()
     {
-        var controller = CreateController("expected-key", out _);
-        controller.ControllerContext = new ControllerContext
-        {
-            HttpContext = new DefaultHttpContext
-            {
-                RequestServices = new SingleServiceProvider(new TestProblemDetailsFactory())
-            }
-        };
+        var mediatorMock = new Mock<IMediator>(MockBehavior.Strict);
+        var controller = CreateController("expected-key", mediatorMock);
 
         var result = await controller.Process(
             new ProcessUserEmailVerificationRequestedRequest
             {
-                UserId = Guid.NewGuid(),
+                UserId = _fixture.Create<Guid>(),
                 Email = "john.doe@flowchat.local",
                 UserName = "john.doe",
                 ConfirmationLink = "https://localhost/confirm"
             },
             CancellationToken.None);
 
-        Assert.IsType<UnauthorizedResult>(result);
+        result.Should().BeOfType<UnauthorizedResult>();
     }
 
     [Fact]
     public async Task Process_WhenApiKeyMatches_SendsCommandAndReturnsAccepted()
     {
-        var controller = CreateController("expected-key", out var mediator);
-        var httpContext = new DefaultHttpContext
-        {
-            RequestServices = new SingleServiceProvider(new TestProblemDetailsFactory())
-        };
-        httpContext.Request.Headers["X-Internal-Api-Key"] = "expected-key";
-        controller.ControllerContext = new ControllerContext
-        {
-            HttpContext = httpContext
-        };
+        UserEmailVerificationRequestedCommand? capturedCommand = null;
+
+        var mediatorMock = new Mock<IMediator>();
+        mediatorMock
+            .Setup(x => x.Send(It.IsAny<UserEmailVerificationRequestedCommand>(), It.IsAny<CancellationToken>()))
+            .Callback<IRequest<FlowChatResult<Unit>>, CancellationToken>((request, _) => capturedCommand = (UserEmailVerificationRequestedCommand)request)
+            .ReturnsAsync(FlowChatResult<Unit>.Success(Unit.Value));
+
+        var controller = CreateController("expected-key", mediatorMock, "expected-key");
 
         var result = await controller.Process(
             new ProcessUserEmailVerificationRequestedRequest
             {
-                UserId = Guid.NewGuid(),
+                UserId = _fixture.Create<Guid>(),
                 Email = " john.doe@flowchat.local ",
                 UserName = " john.doe ",
                 DisplayName = " John Doe ",
@@ -66,28 +62,20 @@ public sealed class ProcessUserEmailVerificationRequestedControllerTests
             },
             CancellationToken.None);
 
-        Assert.IsType<AcceptedResult>(result);
-        Assert.NotNull(mediator.LastCommand);
-        Assert.Equal("john.doe@flowchat.local", mediator.LastCommand!.Email);
-        Assert.Equal("john.doe", mediator.LastCommand.UserName);
-        Assert.Equal("John Doe", mediator.LastCommand.DisplayName);
-        Assert.Equal("https://localhost/confirm", mediator.LastCommand.ConfirmationLink);
-        Assert.Equal("source-key", mediator.LastCommand.SourceMessageKey);
+        result.Should().BeOfType<AcceptedResult>();
+        capturedCommand.Should().NotBeNull();
+        capturedCommand!.Email.Should().Be("john.doe@flowchat.local");
+        capturedCommand.UserName.Should().Be("john.doe");
+        capturedCommand.DisplayName.Should().Be("John Doe");
+        capturedCommand.ConfirmationLink.Should().Be("https://localhost/confirm");
+        capturedCommand.SourceMessageKey.Should().Be("source-key");
     }
 
     [Fact]
-    public async Task Process_WhenPayloadInvalid_ReturnsBadRequest()
+    public async Task Process_WhenPayloadIsInvalid_ReturnsBadRequest()
     {
-        var controller = CreateController("expected-key", out _);
-        var httpContext = new DefaultHttpContext
-        {
-            RequestServices = new SingleServiceProvider(new TestProblemDetailsFactory())
-        };
-        httpContext.Request.Headers["X-Internal-Api-Key"] = "expected-key";
-        controller.ControllerContext = new ControllerContext
-        {
-            HttpContext = httpContext
-        };
+        var mediatorMock = new Mock<IMediator>(MockBehavior.Strict);
+        var controller = CreateController("expected-key", mediatorMock, "expected-key");
 
         var result = await controller.Process(
             new ProcessUserEmailVerificationRequestedRequest
@@ -99,74 +87,39 @@ public sealed class ProcessUserEmailVerificationRequestedControllerTests
             },
             CancellationToken.None);
 
-        Assert.IsType<BadRequestObjectResult>(result);
+        result.Should().BeOfType<BadRequestObjectResult>();
     }
 
     private static ProcessUserEmailVerificationRequestedController CreateController(
-        string apiKey,
-        out FakeMediator mediator)
+        string expectedApiKey,
+        Mock<IMediator> mediatorMock,
+        string? providedApiKey = null)
     {
-        mediator = new FakeMediator();
-        var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                ["FlowChat:InternalApi:ApiKey"] = apiKey
-            })
-            .Build();
+        var apiSettingsManagerMock = new Mock<IApiSettingsManager>();
+        apiSettingsManagerMock
+            .Setup(x => x.GetInternalApiSettings())
+            .Returns(new InternalApiSettings { ApiKey = expectedApiKey });
 
-        return new ProcessUserEmailVerificationRequestedController(
-            mediator,
-            new ApiSettingsManager(configuration));
-    }
+        var controller = new ProcessUserEmailVerificationRequestedController(
+            mediatorMock.Object,
+            apiSettingsManagerMock.Object);
 
-    private sealed class FakeMediator : IMediator
-    {
-        public UserEmailVerificationRequestedCommand? LastCommand { get; private set; }
-
-        public Task Publish(object notification, CancellationToken cancellationToken = default) => Task.CompletedTask;
-
-        public Task Publish<TNotification>(TNotification notification, CancellationToken cancellationToken = default)
-            where TNotification : INotification => Task.CompletedTask;
-
-        public Task<TResponse> Send<TResponse>(IRequest<TResponse> request, CancellationToken cancellationToken = default)
+        var httpContext = new DefaultHttpContext
         {
-            LastCommand = request as UserEmailVerificationRequestedCommand;
+            RequestServices = new SingleServiceProvider(new TestProblemDetailsFactory())
+        };
 
-            if (typeof(TResponse) == typeof(FlowChatResult<Unit>))
-            {
-                return Task.FromResult((TResponse)(object)FlowChatResult<Unit>.Success(Unit.Value));
-            }
-
-            throw new NotSupportedException();
+        if (providedApiKey is not null)
+        {
+            httpContext.Request.Headers["X-Internal-Api-Key"] = providedApiKey;
         }
 
-        public Task<object?> Send(object request, CancellationToken cancellationToken = default)
+        controller.ControllerContext = new ControllerContext
         {
-            LastCommand = request as UserEmailVerificationRequestedCommand;
-            return Task.FromResult<object?>(FlowChatResult<Unit>.Success(Unit.Value));
-        }
+            HttpContext = httpContext
+        };
 
-        public Task Send<TRequest>(TRequest request, CancellationToken cancellationToken = default)
-            where TRequest : IRequest
-        {
-            LastCommand = request as UserEmailVerificationRequestedCommand;
-            return Task.CompletedTask;
-        }
-
-        public IAsyncEnumerable<TResponse> CreateStream<TResponse>(
-            IStreamRequest<TResponse> request,
-            CancellationToken cancellationToken = default) =>
-            EmptyAsyncEnumerable<TResponse>();
-
-        public IAsyncEnumerable<object?> CreateStream(
-            object request,
-            CancellationToken cancellationToken = default) =>
-            EmptyAsyncEnumerable<object?>();
-
-        private static async IAsyncEnumerable<T> EmptyAsyncEnumerable<T>()
-        {
-            yield break;
-        }
+        return controller;
     }
 
     private sealed class SingleServiceProvider(object service) : IServiceProvider
@@ -211,4 +164,3 @@ public sealed class ProcessUserEmailVerificationRequestedControllerTests
             };
     }
 }
-

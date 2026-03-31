@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+using System.Text.Json;
+using FluentAssertions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
@@ -27,15 +28,15 @@ public sealed class GlobalExceptionHandlingMiddlewareTests
             responseBody,
             new JsonSerializerOptions(JsonSerializerDefaults.Web));
 
-        Assert.Equal(StatusCodes.Status500InternalServerError, context.Response.StatusCode);
-        Assert.Equal("application/problem+json", context.Response.ContentType);
-        Assert.NotNull(problemDetails);
-        Assert.Equal(StatusCodes.Status500InternalServerError, problemDetails.Status);
-        Assert.Equal("An unexpected error occurred.", problemDetails.Detail);
+        context.Response.StatusCode.Should().Be(StatusCodes.Status500InternalServerError);
+        context.Response.ContentType.Should().StartWith("application/json");
+        problemDetails.Should().NotBeNull();
+        problemDetails!.Status.Should().Be(StatusCodes.Status500InternalServerError);
+        problemDetails.Detail.Should().Be("An unexpected error occurred.");
 
-        var errorLog = Assert.Single(logger.Entries, entry => entry.LogLevel == LogLevel.Error);
-        Assert.Contains("Unhandled exception while processing POST /test. TraceId: trace-123", errorLog.Message);
-        Assert.IsType<InvalidOperationException>(errorLog.Exception);
+        var errorLog = logger.Entries.Should().ContainSingle(entry => entry.LogLevel == LogLevel.Error).Subject;
+        errorLog.Message.Should().Contain("Unhandled exception while processing POST /test. TraceId: trace-123");
+        errorLog.Exception.Should().BeOfType<InvalidOperationException>();
     }
 
     [Fact]
@@ -47,11 +48,13 @@ public sealed class GlobalExceptionHandlingMiddlewareTests
             logger);
         var context = CreateStartedResponseHttpContext();
 
-        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => middleware.InvokeAsync(context));
+        var act = () => middleware.InvokeAsync(context);
 
-        Assert.Equal("boom", exception.Message);
-        Assert.Single(logger.Entries, entry => entry.LogLevel == LogLevel.Error);
-        Assert.Single(logger.Entries, entry => entry.LogLevel == LogLevel.Warning);
+        await act.Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage("boom");
+
+        logger.Entries.Should().ContainSingle(entry => entry.LogLevel == LogLevel.Error);
+        logger.Entries.Should().ContainSingle(entry => entry.LogLevel == LogLevel.Warning);
     }
 
     private static HttpContext CreateHttpContext()
@@ -71,15 +74,13 @@ public sealed class GlobalExceptionHandlingMiddlewareTests
 
     private static HttpContext CreateStartedResponseHttpContext()
     {
-        var features = new FeatureCollection();
-        features.Set<IHttpResponseFeature>(new StartedHttpResponseFeature());
-
-        var context = new DefaultHttpContext(features)
+        var context = new DefaultHttpContext
         {
             TraceIdentifier = "trace-123",
             RequestServices = new SingleServiceProvider(new TestProblemDetailsFactory())
         };
 
+        context.Features.Set<IHttpResponseFeature>(new StartedHttpResponseFeature());
         context.Request.Method = HttpMethods.Post;
         context.Request.Path = "/test";
 
@@ -183,4 +184,3 @@ public sealed class GlobalExceptionHandlingMiddlewareTests
         }
     }
 }
-

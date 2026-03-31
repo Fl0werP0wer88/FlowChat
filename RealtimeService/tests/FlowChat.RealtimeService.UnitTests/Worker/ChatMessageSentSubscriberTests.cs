@@ -1,27 +1,45 @@
+using AutoFixture;
 using FlowChat.Core.Exceptions;
 using FlowChat.Core.Messaging.ChatService.Events;
 using FlowChat.RealtimeService.Consumers.Kafka;
+using FlowChat.RealtimeService.Consumers.Realtime.Contracts;
+using FlowChat.RealtimeService.Consumers.Services;
+using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
+using Moq;
 
 namespace FlowChat.RealtimeService.UnitTests;
 
 public sealed class ChatMessageSentSubscriberTests
 {
+    private readonly IFixture _fixture = new Fixture();
+    private readonly Mock<IRealtimeInternalApiClient> _internalApiClientMock = new();
+    private readonly ChatMessageSentSubscriber _subscriber;
+
+    public ChatMessageSentSubscriberTests()
+    {
+        _subscriber = new ChatMessageSentSubscriber(
+            _internalApiClientMock.Object,
+            NullLogger<ChatMessageSentSubscriber>.Instance);
+    }
+
     [Fact]
     public async Task HandleAsync_ForwardsMappedRequestToInternalApi()
     {
-        var internalApiClient = new CapturingRealtimeInternalApiClient();
-        var subscriber = new ChatMessageSentSubscriber(
-            internalApiClient,
-            NullLogger<ChatMessageSentSubscriber>.Instance);
-        var recipientUserId = Guid.NewGuid();
+        PublishMessageRequest? capturedRequest = null;
+        var recipientUserId = _fixture.Create<Guid>();
 
-        await subscriber.HandleAsync(
+        _internalApiClientMock
+            .Setup(x => x.PublishMessageAsync(It.IsAny<PublishMessageRequest>(), It.IsAny<CancellationToken>()))
+            .Callback<PublishMessageRequest, CancellationToken>((request, _) => capturedRequest = request)
+            .Returns(Task.CompletedTask);
+
+        await _subscriber.HandleAsync(
             new ChatMessageSentIntegrationEvent
             {
-                MessageId = Guid.NewGuid(),
-                ConversationId = Guid.NewGuid(),
-                SenderUserId = Guid.NewGuid(),
+                MessageId = _fixture.Create<Guid>(),
+                ConversationId = _fixture.Create<Guid>(),
+                SenderUserId = _fixture.Create<Guid>(),
                 SenderDisplayName = " Jane Doe ",
                 Text = " Hi there ",
                 SentAtUtc = new DateTime(2026, 3, 17, 10, 0, 0, DateTimeKind.Utc),
@@ -29,32 +47,30 @@ public sealed class ChatMessageSentSubscriberTests
             },
             CancellationToken.None);
 
-        Assert.NotNull(internalApiClient.LastPublishMessageRequest);
-        Assert.Equal("Jane Doe", internalApiClient.LastPublishMessageRequest!.SenderDisplayName);
-        Assert.Equal("Hi there", internalApiClient.LastPublishMessageRequest.Text);
-        Assert.Single(internalApiClient.LastPublishMessageRequest.RecipientUserIds);
+        capturedRequest.Should().NotBeNull();
+        capturedRequest!.SenderDisplayName.Should().Be("Jane Doe");
+        capturedRequest.Text.Should().Be("Hi there");
+        capturedRequest.RecipientUserIds.Should().ContainSingle().Which.Should().Be(recipientUserId);
     }
 
     [Fact]
     public async Task HandleAsync_WhenMessageIdMissing_ThrowsNonTransientException()
     {
-        var internalApiClient = new CapturingRealtimeInternalApiClient();
-        var subscriber = new ChatMessageSentSubscriber(
-            internalApiClient,
-            NullLogger<ChatMessageSentSubscriber>.Instance);
-
-        await Assert.ThrowsAsync<NonTransientException>(() => subscriber.HandleAsync(
+        var act = () => _subscriber.HandleAsync(
             new ChatMessageSentIntegrationEvent
             {
                 MessageId = Guid.Empty,
-                ConversationId = Guid.NewGuid(),
-                SenderUserId = Guid.NewGuid(),
+                ConversationId = _fixture.Create<Guid>(),
+                SenderUserId = _fixture.Create<Guid>(),
                 SenderDisplayName = "Jane Doe",
                 Text = "Hi there",
-                RecipientUserIds = [Guid.NewGuid()]
+                RecipientUserIds = [_fixture.Create<Guid>()]
             },
-            CancellationToken.None));
+            CancellationToken.None);
 
-        Assert.Null(internalApiClient.LastPublishMessageRequest);
+        await act.Should().ThrowAsync<NonTransientException>();
+        _internalApiClientMock.Verify(
+            x => x.PublishMessageAsync(It.IsAny<PublishMessageRequest>(), It.IsAny<CancellationToken>()),
+            Times.Never);
     }
 }

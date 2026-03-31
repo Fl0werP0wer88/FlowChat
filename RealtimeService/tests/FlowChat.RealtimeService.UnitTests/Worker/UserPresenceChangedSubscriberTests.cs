@@ -1,51 +1,67 @@
+using AutoFixture;
 using FlowChat.Core.Exceptions;
 using FlowChat.Core.Messaging.UserProfileService.Events;
 using FlowChat.RealtimeService.Consumers.Kafka;
+using FlowChat.RealtimeService.Consumers.Realtime.Contracts;
+using FlowChat.RealtimeService.Consumers.Services;
+using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
+using Moq;
 
 namespace FlowChat.RealtimeService.UnitTests;
 
 public sealed class UserPresenceChangedSubscriberTests
 {
+    private readonly IFixture _fixture = new Fixture();
+    private readonly Mock<IRealtimeInternalApiClient> _internalApiClientMock = new();
+    private readonly UserPresenceChangedSubscriber _subscriber;
+
+    public UserPresenceChangedSubscriberTests()
+    {
+        _subscriber = new UserPresenceChangedSubscriber(
+            _internalApiClientMock.Object,
+            NullLogger<UserPresenceChangedSubscriber>.Instance);
+    }
+
     [Fact]
     public async Task HandleAsync_ForwardsNormalizedPresenceRequestToInternalApi()
     {
-        var internalApiClient = new CapturingRealtimeInternalApiClient();
-        var subscriber = new UserPresenceChangedSubscriber(
-            internalApiClient,
-            NullLogger<UserPresenceChangedSubscriber>.Instance);
+        PublishPresenceChangeRequest? capturedRequest = null;
 
-        await subscriber.HandleAsync(
+        _internalApiClientMock
+            .Setup(x => x.PublishPresenceChangeAsync(It.IsAny<PublishPresenceChangeRequest>(), It.IsAny<CancellationToken>()))
+            .Callback<PublishPresenceChangeRequest, CancellationToken>((request, _) => capturedRequest = request)
+            .Returns(Task.CompletedTask);
+
+        await _subscriber.HandleAsync(
             new UserPresenceChangedIntegrationEvent
             {
-                UserId = Guid.NewGuid(),
+                UserId = _fixture.Create<Guid>(),
                 Status = " Away ",
                 ChangedAtUtc = new DateTime(2026, 3, 17, 10, 15, 0, DateTimeKind.Utc),
-                RecipientUserIds = [Guid.NewGuid()]
+                RecipientUserIds = [_fixture.Create<Guid>()]
             },
             CancellationToken.None);
 
-        Assert.NotNull(internalApiClient.LastPublishPresenceChangeRequest);
-        Assert.Equal("away", internalApiClient.LastPublishPresenceChangeRequest!.Status);
+        capturedRequest.Should().NotBeNull();
+        capturedRequest!.Status.Should().Be("away");
     }
 
     [Fact]
     public async Task HandleAsync_WhenStatusUnsupported_ThrowsNonTransientException()
     {
-        var internalApiClient = new CapturingRealtimeInternalApiClient();
-        var subscriber = new UserPresenceChangedSubscriber(
-            internalApiClient,
-            NullLogger<UserPresenceChangedSubscriber>.Instance);
-
-        await Assert.ThrowsAsync<NonTransientException>(() => subscriber.HandleAsync(
+        var act = () => _subscriber.HandleAsync(
             new UserPresenceChangedIntegrationEvent
             {
-                UserId = Guid.NewGuid(),
+                UserId = _fixture.Create<Guid>(),
                 Status = "busy",
-                RecipientUserIds = [Guid.NewGuid()]
+                RecipientUserIds = [_fixture.Create<Guid>()]
             },
-            CancellationToken.None));
+            CancellationToken.None);
 
-        Assert.Null(internalApiClient.LastPublishPresenceChangeRequest);
+        await act.Should().ThrowAsync<NonTransientException>();
+        _internalApiClientMock.Verify(
+            x => x.PublishPresenceChangeAsync(It.IsAny<PublishPresenceChangeRequest>(), It.IsAny<CancellationToken>()),
+            Times.Never);
     }
 }

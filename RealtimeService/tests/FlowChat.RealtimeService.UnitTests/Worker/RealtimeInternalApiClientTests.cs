@@ -1,23 +1,39 @@
 using System.Net;
 using System.Text.Json;
+using AutoFixture;
 using FlowChat.Core.Exceptions;
 using FlowChat.RealtimeService.Consumers.Realtime.Contracts;
 using FlowChat.RealtimeService.Consumers.Services;
+using FluentAssertions;
+using Moq;
+using Moq.Protected;
 
 namespace FlowChat.RealtimeService.UnitTests;
 
 public sealed class RealtimeInternalApiClientTests
 {
+    private readonly IFixture _fixture = new Fixture();
+
     [Fact]
     public async Task PublishMessageAsync_PostsToExpectedEndpointWithApiKey()
     {
         string? requestBody = null;
-        var handler = new CapturingHttpMessageHandler(async (request, _) =>
-        {
-            requestBody = await request.Content!.ReadAsStringAsync();
-            return new HttpResponseMessage(HttpStatusCode.Accepted);
-        });
-        var httpClient = new HttpClient(handler)
+        HttpRequestMessage? sentRequest = null;
+        var handlerMock = new Mock<HttpMessageHandler>();
+        handlerMock
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .Callback<HttpRequestMessage, CancellationToken>((request, _) =>
+            {
+                sentRequest = request;
+                requestBody = request.Content!.ReadAsStringAsync().GetAwaiter().GetResult();
+            })
+            .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.Accepted));
+
+        var httpClient = new HttpClient(handlerMock.Object)
         {
             BaseAddress = new Uri("http://localhost:5215")
         };
@@ -27,43 +43,51 @@ public sealed class RealtimeInternalApiClientTests
         await client.PublishMessageAsync(
             new PublishMessageRequest
             {
-                MessageId = Guid.NewGuid(),
-                ConversationId = Guid.NewGuid(),
-                SenderUserId = Guid.NewGuid(),
+                MessageId = _fixture.Create<Guid>(),
+                ConversationId = _fixture.Create<Guid>(),
+                SenderUserId = _fixture.Create<Guid>(),
                 SenderDisplayName = "John Doe",
                 Text = "Hello",
                 SentAtUtc = new DateTime(2026, 3, 17, 9, 0, 0, DateTimeKind.Utc),
-                RecipientUserIds = [Guid.NewGuid()]
+                RecipientUserIds = [_fixture.Create<Guid>()]
             },
             CancellationToken.None);
 
-        Assert.NotNull(handler.LastRequest);
-        Assert.Equal("http://localhost:5215/internal/realtime/messages", handler.LastRequest!.RequestUri!.ToString());
-        Assert.Equal("internal-key", handler.LastRequest.Headers.GetValues(RealtimeInternalApiClient.ApiKeyHeaderName).Single());
+        sentRequest.Should().NotBeNull();
+        sentRequest!.RequestUri!.ToString().Should().Be("http://localhost:5215/internal/realtime/messages");
+        sentRequest.Headers.GetValues(RealtimeInternalApiClient.ApiKeyHeaderName).Single().Should().Be("internal-key");
 
         var payload = JsonSerializer.Deserialize<PublishMessageRequest>(
             requestBody!,
             new JsonSerializerOptions(JsonSerializerDefaults.Web));
-        Assert.NotNull(payload);
-        Assert.Equal("John Doe", payload!.SenderDisplayName);
+
+        payload.Should().NotBeNull();
+        payload!.SenderDisplayName.Should().Be("John Doe");
     }
 
     [Fact]
     public async Task PublishMessageAsync_WhenApiReturnsBadRequest_ThrowsNonTransientException()
     {
-        var handler = new CapturingHttpMessageHandler((_, _) =>
-            Task.FromResult(new HttpResponseMessage(HttpStatusCode.BadRequest)
+        var handlerMock = new Mock<HttpMessageHandler>();
+        handlerMock
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.BadRequest)
             {
                 Content = new StringContent("bad request")
-            }));
-        var client = new RealtimeInternalApiClient(new HttpClient(handler)
+            });
+
+        var client = new RealtimeInternalApiClient(new HttpClient(handlerMock.Object)
         {
             BaseAddress = new Uri("http://localhost:5215")
         });
 
-        var exception = await Assert.ThrowsAsync<NonTransientException>(() =>
-            client.PublishMessageAsync(new PublishMessageRequest(), CancellationToken.None));
+        var act = () => client.PublishMessageAsync(new PublishMessageRequest(), CancellationToken.None);
 
-        Assert.Contains("400", exception.Message);
+        await act.Should().ThrowAsync<NonTransientException>()
+            .WithMessage("*400*");
     }
 }

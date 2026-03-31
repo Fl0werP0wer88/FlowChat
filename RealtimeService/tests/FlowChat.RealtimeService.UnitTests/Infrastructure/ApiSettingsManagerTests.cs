@@ -1,5 +1,6 @@
 using FlowChat.RealtimeService.Infrastructure;
 using FlowChat.RealtimeService.Infrastructure.Configuration;
+using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -24,9 +25,9 @@ public sealed class ApiSettingsManagerTests
 
         var settingsManager = new ApiSettingsManager(configuration);
 
-        Assert.Equal("jwt-key", settingsManager.GetJwtSettings().Key);
-        Assert.Equal("https://localhost:5000", settingsManager.GetApiRuntimeSettings().ApiUrl);
-        Assert.Equal("internal-key", settingsManager.GetInternalApiSettings().ApiKey);
+        settingsManager.GetJwtSettings().Key.Should().Be("jwt-key");
+        settingsManager.GetApiRuntimeSettings().ApiUrl.Should().Be("https://localhost:5000");
+        settingsManager.GetInternalApiSettings().ApiKey.Should().Be("internal-key");
     }
 
     [Fact]
@@ -49,6 +50,6 @@ public sealed class ApiSettingsManagerTests
 
         using var serviceProvider = services.BuildServiceProvider();
 
-        Assert.NotNull(serviceProvider.GetRequiredService<IApiSettingsManager>());
+        serviceProvider.GetRequiredService<IApiSettingsManager>().Should().NotBeNull();
     }
 }

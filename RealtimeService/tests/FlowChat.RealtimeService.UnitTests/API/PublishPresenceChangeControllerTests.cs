@@ -1,70 +1,86 @@
+using AutoFixture;
 using FlowChat.RealtimeService.Api.Features.Realtime.Internal.PublishPresenceChange;
 using FlowChat.RealtimeService.Application.Features.Presence.Commands.PublishPresenceChange;
 using FlowChat.RealtimeService.Infrastructure.Configuration;
+using FlowChat.Shared.Domain;
+using FluentAssertions;
+using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
+using Moq;
 
 namespace FlowChat.RealtimeService.UnitTests;
 
 public sealed class PublishPresenceChangeControllerTests
 {
+    private readonly IFixture _fixture = new Fixture();
+
     [Fact]
     public async Task Publish_WhenApiKeyMatches_DispatchesCommand()
     {
-        var controller = CreateController("expected-key", out var mediator);
-        var httpContext = new DefaultHttpContext();
-        httpContext.Request.Headers["X-Internal-Api-Key"] = "expected-key";
-        controller.ControllerContext = new ControllerContext
-        {
-            HttpContext = httpContext
-        };
+        PublishPresenceChangeCommand? capturedCommand = null;
+        var mediatorMock = new Mock<IMediator>();
+        mediatorMock
+            .Setup(x => x.Send(It.IsAny<PublishPresenceChangeCommand>(), It.IsAny<CancellationToken>()))
+            .Callback<IRequest<FlowChatResult<Unit>>, CancellationToken>((request, _) => capturedCommand = (PublishPresenceChangeCommand)request)
+            .ReturnsAsync(FlowChatResult<Unit>.Success(Unit.Value));
+
+        var controller = CreateController("expected-key", mediatorMock, "expected-key");
 
         var result = await controller.Publish(
             new PublishPresenceChangeRequest
             {
-                UserId = Guid.NewGuid(),
+                UserId = _fixture.Create<Guid>(),
                 Status = "online",
                 ChangedAtUtc = new DateTime(2026, 3, 17, 11, 0, 0, DateTimeKind.Utc),
-                RecipientUserIds = [Guid.NewGuid()]
+                RecipientUserIds = [_fixture.Create<Guid>()]
             },
             CancellationToken.None);
 
-        Assert.IsType<AcceptedResult>(result);
-        Assert.IsType<PublishPresenceChangeCommand>(mediator.LastSentRequest);
+        result.Should().BeOfType<AcceptedResult>();
+        capturedCommand.Should().NotBeNull();
     }
 
     [Fact]
     public async Task Publish_WhenApiKeyMissing_ReturnsUnauthorized()
     {
-        var controller = CreateController("expected-key", out _);
-        controller.ControllerContext = new ControllerContext
-        {
-            HttpContext = new DefaultHttpContext()
-        };
+        var controller = CreateController("expected-key", new Mock<IMediator>(MockBehavior.Strict));
 
         var result = await controller.Publish(
             new PublishPresenceChangeRequest
             {
-                UserId = Guid.NewGuid(),
+                UserId = _fixture.Create<Guid>(),
                 Status = "online",
-                RecipientUserIds = [Guid.NewGuid()]
+                RecipientUserIds = [_fixture.Create<Guid>()]
             },
             CancellationToken.None);
 
-        Assert.IsType<UnauthorizedResult>(result);
+        result.Should().BeOfType<UnauthorizedResult>();
     }
 
-    private static PublishPresenceChangeController CreateController(string apiKey, out CapturingMediator mediator)
+    private static PublishPresenceChangeController CreateController(
+        string expectedApiKey,
+        Mock<IMediator> mediatorMock,
+        string? providedApiKey = null)
     {
-        mediator = new CapturingMediator();
-        var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                ["FlowChat:InternalApi:ApiKey"] = apiKey
-            })
-            .Build();
+        var apiSettingsManagerMock = new Mock<IApiSettingsManager>();
+        apiSettingsManagerMock
+            .Setup(x => x.GetInternalApiSettings())
+            .Returns(new InternalApiSettings { ApiKey = expectedApiKey });
 
-        return new PublishPresenceChangeController(mediator, new ApiSettingsManager(configuration));
+        var controller = new PublishPresenceChangeController(mediatorMock.Object, apiSettingsManagerMock.Object)
+        {
+            ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext()
+            }
+        };
+
+        if (providedApiKey is not null)
+        {
+            controller.HttpContext.Request.Headers["X-Internal-Api-Key"] = providedApiKey;
+        }
+
+        return controller;
     }
 }

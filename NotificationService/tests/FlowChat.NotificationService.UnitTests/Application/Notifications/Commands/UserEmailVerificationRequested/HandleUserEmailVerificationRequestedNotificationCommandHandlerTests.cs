@@ -1,129 +1,161 @@
-using FlowChat.Shared.Application;
-using FlowChat.Shared.Domain;
+using AutoFixture;
 using FlowChat.NotificationService.Application.Contracts.Infrastructure;
 using FlowChat.NotificationService.Application.Contracts.Persistence;
 using FlowChat.NotificationService.Application.Features.Notifications.Commands.UserEmailVerificationRequested;
-using FlowChat.NotificationService.Application.Features.Notifications.Queries.GetNotifications;
 using FlowChat.NotificationService.Domain.Entities;
 using FlowChat.NotificationService.Domain.Enums;
+using FlowChat.Shared.Application;
+using FlowChat.Shared.Domain;
+using FluentAssertions;
 using MediatR;
+using Moq;
 
 namespace FlowChat.NotificationService.UnitTests;
 
-public class HandleUserEmailVerificationRequestedNotificationCommandHandlerTests
+public sealed class HandleUserEmailVerificationRequestedNotificationCommandHandlerTests
 {
-    [Fact]
-    public async Task Handle_Should_CreateSentNotification_WhenSenderReturnsSuccess()
+    private readonly IFixture _fixture = new Fixture();
+    private readonly Mock<INotificationReadRepository> _readRepositoryMock = new();
+    private readonly Mock<INotificationWriteRepository> _writeRepositoryMock = new();
+    private readonly Mock<INotificationSender> _notificationSenderMock = new();
+    private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
+    private readonly Mock<IDomainEventDispatcher> _domainEventDispatcherMock = new();
+    private readonly UserEmailVerificationRequestedCommandHandler _handler;
+
+    public HandleUserEmailVerificationRequestedNotificationCommandHandlerTests()
     {
-        var repository = new InMemoryNotificationRepository();
-        var sender = new StubNotificationSender(
-            new NotificationSendResult(true, "provider-123", null));
-        var sut = new UserEmailVerificationRequestedCommandHandler(
-            repository,
-            repository,
-            sender,
-            new TestUnitOfWork(),
-            new TestDomainEventDispatcher());
+        _readRepositoryMock
+            .Setup(x => x.ExistsBySourceMessageKeyAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(false);
+
+        _writeRepositoryMock
+            .Setup(x => x.AddAsync(It.IsAny<Notification>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Notification notification, CancellationToken _) => notification);
+
+        _unitOfWorkMock
+            .Setup(x => x.ExecuteInTransactionAsync(
+                It.IsAny<Func<CancellationToken, Task<FlowChatResult<Unit>>>>(),
+                It.IsAny<CancellationToken>()))
+            .Returns<Func<CancellationToken, Task<FlowChatResult<Unit>>>, CancellationToken>((operation, ct) => operation(ct));
+
+        _domainEventDispatcherMock
+            .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<IDomainEvent>>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        _handler = new UserEmailVerificationRequestedCommandHandler(
+            _readRepositoryMock.Object,
+            _writeRepositoryMock.Object,
+            _notificationSenderMock.Object,
+            _unitOfWorkMock.Object,
+            _domainEventDispatcherMock.Object);
+    }
+
+    private async Task<FlowChatResult<Unit>> SendAsync(UserEmailVerificationRequestedCommand command)
+    {
+        var validator = new UserEmailVerificationRequestedCommandValidator();
+        var validationResult = await validator.ValidateAsync(command);
+
+        if (!validationResult.IsValid)
+        {
+            var errors = validationResult.Errors.Select(error => error.ErrorMessage).ToList();
+            return FlowChatResult<Unit>.Failure(DomainError.Validation(errors: errors));
+        }
+
+        return await _handler.Handle(command, CancellationToken.None);
+    }
+
+    [Fact]
+    public async Task Handle_WhenSenderReturnsSuccess_CreatesSentNotification()
+    {
+        Notification? savedNotification = null;
+        NotificationSendRequest? sendRequest = null;
+
+        _notificationSenderMock
+            .Setup(x => x.SendAsync(It.IsAny<NotificationSendRequest>(), It.IsAny<CancellationToken>()))
+            .Callback<NotificationSendRequest, CancellationToken>((request, _) => sendRequest = request)
+            .ReturnsAsync(new NotificationSendResult(true, "provider-123", null));
+
+        _writeRepositoryMock
+            .Setup(x => x.AddAsync(It.IsAny<Notification>(), It.IsAny<CancellationToken>()))
+            .Callback<Notification, CancellationToken>((notification, _) => savedNotification = notification)
+            .ReturnsAsync((Notification notification, CancellationToken _) => notification);
 
         var command = new UserEmailVerificationRequestedCommand(
-            Guid.NewGuid(),
+            _fixture.Create<Guid>(),
             "john@flowchat.local",
             "john",
             "John",
             "https://flowchat.local/confirm?userId=1&token=abc",
             "message-key-1");
 
-        var result = await sut.Handle(command, CancellationToken.None);
+        var result = await SendAsync(command);
 
-        Assert.True(result.IsSuccess);
-        Assert.Single(repository.Notifications);
-        var saved = repository.Notifications.Single();
-        Assert.Equal(NotificationStatus.Sent, saved.Status);
-        Assert.Equal(NotificationType.EmailVerification, saved.Type);
-        Assert.Equal("provider-123", saved.ProviderMessageId);
-        Assert.Null(saved.FailureReason);
-        Assert.NotNull(sender.LastRequest);
-        Assert.Contains(command.ConfirmationLink, sender.LastRequest!.Body);
+        result.IsSuccess.Should().BeTrue();
+        savedNotification.Should().NotBeNull();
+        savedNotification!.Status.Should().Be(NotificationStatus.Sent);
+        savedNotification.Type.Should().Be(NotificationType.EmailVerification);
+        savedNotification.ProviderMessageId.Should().Be("provider-123");
+        savedNotification.FailureReason.Should().BeNull();
+        sendRequest.Should().NotBeNull();
+        sendRequest!.Body.Should().Contain(command.ConfirmationLink);
     }
 
     [Fact]
-    public async Task Handle_Should_NotCreateDuplicate_WhenSourceMessageKeyAlreadyExists()
+    public async Task Handle_WhenSourceMessageKeyAlreadyExists_DoesNotCreateDuplicate()
     {
-        var repository = new InMemoryNotificationRepository();
-        var existing = Notification.CreateEmailVerification(
-            Guid.NewGuid(),
-            "existing@flowchat.local",
-            "Existing",
-            "message-key-2");
-        existing.MarkSent("provider-existing");
-        repository.Notifications.Add(existing);
-
-        var sender = new StubNotificationSender(
-            new NotificationSendResult(true, "provider-new", null));
-        var sut = new UserEmailVerificationRequestedCommandHandler(
-            repository,
-            repository,
-            sender,
-            new TestUnitOfWork(),
-            new TestDomainEventDispatcher());
+        _readRepositoryMock
+            .Setup(x => x.ExistsBySourceMessageKeyAsync("message-key-2", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
 
         var command = new UserEmailVerificationRequestedCommand(
-            existing.UserId,
+            _fixture.Create<Guid>(),
             "existing@flowchat.local",
             "existing-user",
             "Existing",
             "https://flowchat.local/confirm?userId=2&token=def",
             "message-key-2");
 
-        var result = await sut.Handle(command, CancellationToken.None);
+        var result = await SendAsync(command);
 
-        Assert.True(result.IsSuccess);
-        Assert.Single(repository.Notifications);
-        Assert.Equal(0, sender.CallsCount);
+        result.IsSuccess.Should().BeTrue();
+        _notificationSenderMock.Verify(
+            x => x.SendAsync(It.IsAny<NotificationSendRequest>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+        _writeRepositoryMock.Verify(
+            x => x.AddAsync(It.IsAny<Notification>(), It.IsAny<CancellationToken>()),
+            Times.Never);
     }
 
     [Fact]
-    public async Task Handle_Should_ReturnFailureAndNotPersist_WhenSenderReturnsFailureResult()
+    public async Task Handle_WhenSenderReturnsFailureResult_ReturnsFailureAndDoesNotPersist()
     {
-        var repository = new InMemoryNotificationRepository();
-        var sender = new StubNotificationSender(
-            new NotificationSendResult(false, null, "smtp timeout"));
-        var sut = new UserEmailVerificationRequestedCommandHandler(
-            repository,
-            repository,
-            sender,
-            new TestUnitOfWork(),
-            new TestDomainEventDispatcher());
+        _notificationSenderMock
+            .Setup(x => x.SendAsync(It.IsAny<NotificationSendRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new NotificationSendResult(false, null, "smtp timeout"));
 
         var command = new UserEmailVerificationRequestedCommand(
-            Guid.NewGuid(),
+            _fixture.Create<Guid>(),
             "retry@flowchat.local",
             "retry",
             "Retry",
             "https://flowchat.local/confirm?userId=4&token=jkl",
             "message-key-4");
 
-        var result = await sut.Handle(command, CancellationToken.None);
+        var result = await SendAsync(command);
 
-        Assert.True(result.IsFailure);
-        Assert.Equal(ErrorType.Unexpected, result.Error.ErrorType);
-        Assert.Empty(repository.Notifications);
-        Assert.Equal(1, sender.CallsCount);
+        result.IsFailure.Should().BeTrue();
+        result.Error.ErrorType.Should().Be(ErrorType.Unexpected);
+        _writeRepositoryMock.Verify(
+            x => x.AddAsync(It.IsAny<Notification>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+        _notificationSenderMock.Verify(
+            x => x.SendAsync(It.IsAny<NotificationSendRequest>(), It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 
     [Fact]
-    public async Task Handle_Should_ReturnValidationFailure_WhenUserIdIsEmpty()
+    public async Task Handle_WhenUserIdIsEmpty_ReturnsValidationFailure()
     {
-        var repository = new InMemoryNotificationRepository();
-        var sender = new StubNotificationSender(
-            new NotificationSendResult(true, "provider-123", null));
-        var sut = new UserEmailVerificationRequestedCommandHandler(
-            repository,
-            repository,
-            sender,
-            new TestUnitOfWork(),
-            new TestDomainEventDispatcher());
-
         var command = new UserEmailVerificationRequestedCommand(
             Guid.Empty,
             "john@flowchat.local",
@@ -132,136 +164,13 @@ public class HandleUserEmailVerificationRequestedNotificationCommandHandlerTests
             "https://flowchat.local/confirm?userId=3&token=ghi",
             "message-key-3");
 
-        var result = await sut.Handle(command, CancellationToken.None);
+        var result = await SendAsync(command);
 
-        Assert.True(result.IsFailure);
-        Assert.Equal(ErrorType.Validation, result.Error.ErrorType);
-        Assert.Empty(repository.Notifications);
-    }
-
-    private sealed class StubNotificationSender : INotificationSender
-    {
-        private readonly NotificationSendResult _result;
-
-        public StubNotificationSender(NotificationSendResult result)
-        {
-            _result = result;
-        }
-
-        public int CallsCount { get; private set; }
-        public NotificationSendRequest? LastRequest { get; private set; }
-
-        public Task<NotificationSendResult> SendAsync(
-            NotificationSendRequest request,
-            CancellationToken cancellationToken = default)
-        {
-            CallsCount++;
-            LastRequest = request;
-            return Task.FromResult(_result);
-        }
-    }
-
-    private sealed class InMemoryNotificationRepository : INotificationReadRepository, INotificationWriteRepository
-    {
-        public List<Notification> Notifications { get; } = [];
-
-        Task<Notification?> FlowChat.Shared.Application.IWriteRepository<Notification>.GetByIdAsync(
-            Guid id,
-            CancellationToken cancellationToken) =>
-            Task.FromResult(Notifications.FirstOrDefault(x => x.Id.Value == id));
-
-        public Task<Notification> AddAsync(Notification entity, CancellationToken cancellationToken = default)
-        {
-            Notifications.Add(entity);
-            return Task.FromResult(entity);
-        }
-
-        public Task UpdateAsync(Notification entity, CancellationToken cancellationToken = default)
-        {
-            return Task.CompletedTask;
-        }
-
-        public Task DeleteAsync(Notification entity, CancellationToken cancellationToken = default)
-        {
-            Notifications.Remove(entity);
-            return Task.CompletedTask;
-        }
-
-        public Task<bool> ExistsByUserIdAndTypeAsync(
-            Guid userId,
-            NotificationType type,
-            CancellationToken cancellationToken = default)
-        {
-            var exists = Notifications.Any(x => x.UserId == userId && x.Type == type);
-            return Task.FromResult(exists);
-        }
-
-        public Task<bool> ExistsBySourceMessageKeyAsync(
-            string sourceMessageKey,
-            CancellationToken cancellationToken = default)
-        {
-            var normalizedKey = sourceMessageKey.Trim();
-            var exists = Notifications.Any(x => x.SourceMessageKey == normalizedKey);
-            return Task.FromResult(exists);
-        }
-
-        public Task<NotificationDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
-        {
-            return Task.FromResult(Notifications
-                .Where(x => x.Id.Value == id)
-                .Select(ToDto)
-                .FirstOrDefault());
-        }
-
-        public Task<IReadOnlyList<NotificationDto>> GetAllAsync(CancellationToken cancellationToken = default)
-        {
-            return Task.FromResult((IReadOnlyList<NotificationDto>)Notifications.Select(ToDto).ToArray());
-        }
-
-        public Task<IReadOnlyList<NotificationDto>> GetByUserIdAsync(
-            Guid userId,
-            CancellationToken cancellationToken = default)
-        {
-            return Task.FromResult((IReadOnlyList<NotificationDto>)Notifications
-                .Where(x => x.UserId == userId)
-                .Select(ToDto)
-                .ToArray());
-        }
-
-        public Task<IReadOnlyList<NotificationDto>> GetRecentAsync(CancellationToken cancellationToken = default)
-        {
-            return Task.FromResult((IReadOnlyList<NotificationDto>)Notifications.Select(ToDto).ToArray());
-        }
-
-        private static NotificationDto ToDto(Notification notification) => new(
-            notification.Id.Value,
-            notification.UserId,
-            notification.Email,
-            notification.DisplayName,
-            notification.Type,
-            notification.Status,
-            notification.ProviderMessageId,
-            notification.FailureReason,
-            notification.SourceMessageKey,
-            notification.SentAtUtc,
-            notification.CreatedAtUtc.UtcDateTime);
-    }
-
-    private sealed class TestUnitOfWork : IUnitOfWork
-    {
-        public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default) => Task.FromResult(0);
-
-        public Task<T> ExecuteInTransactionAsync<T>(Func<CancellationToken, Task<T>> operation, CancellationToken cancellationToken)
-            => operation(cancellationToken);
-
-        public void Dispose()
-        {
-        }
-    }
-
-    private sealed class TestDomainEventDispatcher : IDomainEventDispatcher
-    {
-        public Task DispatchAsync(IEnumerable<IDomainEvent> initialEvents, CancellationToken cancellationToken = default)
-            => Task.CompletedTask;
+        result.IsFailure.Should().BeTrue();
+        result.Error.ErrorType.Should().Be(ErrorType.Validation);
+        result.Error.Errors.Should().Contain("UserId is required.");
+        _writeRepositoryMock.Verify(
+            x => x.AddAsync(It.IsAny<Notification>(), It.IsAny<CancellationToken>()),
+            Times.Never);
     }
 }

@@ -1,5 +1,6 @@
 using FlowChat.AuthService.Infrastructure;
 using FlowChat.AuthService.Infrastructure.Configuration;
+using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -28,13 +29,13 @@ public sealed class ApiSettingsManagerTests
         var internalApiSettings = settingsManager.GetInternalApiSettings();
         var apiRuntimeSettings = settingsManager.GetApiRuntimeSettings();
 
-        Assert.Equal("jwt-key", jwtSettings.Key);
-        Assert.Equal("jwt-issuer", jwtSettings.Issuer);
-        Assert.Equal("jwt-audience", jwtSettings.Audience);
-        Assert.Equal(90, jwtSettings.ExpiresMinutes);
-        Assert.Equal("internal-key", internalApiSettings.ApiKey);
-        Assert.Equal("https://localhost:5000", apiRuntimeSettings.ApiUrl);
-        Assert.Equal("https://localhost:5010", apiRuntimeSettings.BlazorUrl);
+        jwtSettings.Key.Should().Be("jwt-key");
+        jwtSettings.Issuer.Should().Be("jwt-issuer");
+        jwtSettings.Audience.Should().Be("jwt-audience");
+        jwtSettings.ExpiresMinutes.Should().Be(90);
+        internalApiSettings.ApiKey.Should().Be("internal-key");
+        apiRuntimeSettings.ApiUrl.Should().Be("https://localhost:5000");
+        apiRuntimeSettings.BlazorUrl.Should().Be("https://localhost:5010");
     }
 
     [Fact]
@@ -58,8 +59,8 @@ public sealed class ApiSettingsManagerTests
         using var serviceProvider = services.BuildServiceProvider();
         var settingsManager = serviceProvider.GetRequiredService<IApiSettingsManager>();
 
-        Assert.NotNull(settingsManager);
-        Assert.Equal("jwt-key", settingsManager.GetJwtSettings().Key);
-        Assert.Equal("internal-key", settingsManager.GetInternalApiSettings().ApiKey);
+        settingsManager.Should().NotBeNull();
+        settingsManager.GetJwtSettings().Key.Should().Be("jwt-key");
+        settingsManager.GetInternalApiSettings().ApiKey.Should().Be("internal-key");
     }
 }

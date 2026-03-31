@@ -1,42 +1,68 @@
+using AutoFixture;
 using FlowChat.AuthService.Application.Contracts.Infrastructure;
 using FlowChat.AuthService.Application.Contracts.Persistence;
 using FlowChat.AuthService.Application.Features.Users.Commands.LoginUser;
 using FlowChat.AuthService.Application.Features.Users.Models;
-using FlowChat.AuthService.Domain.Entities;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
+using FluentAssertions;
+using Moq;
 
 namespace FlowChat.AuthService.UnitTests;
 
 public sealed class LoginUserCommandHandlerTests
 {
-    [Fact]
-    public async Task Handle_ReturnsAccessToken_WhenCredentialsAreValid()
+    private readonly IFixture _fixture = new Fixture();
+    private readonly Mock<IIdentityRepository> _identityRepositoryMock = new();
+    private readonly Mock<IJwtTokenGenerator> _jwtTokenGeneratorMock = new();
+    private readonly Mock<IDomainEventDispatcher> _domainEventDispatcherMock = new();
+    private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
+    private readonly LoginUserCommandHandler _handler;
+
+    public LoginUserCommandHandlerTests()
     {
-        var expiresAtUtc = DateTime.UtcNow.AddHours(1);
+        _unitOfWorkMock
+            .Setup(x => x.ExecuteInTransactionAsync(
+                It.IsAny<Func<CancellationToken, Task<FlowChatResult<LoginUserCommandResponse>>>>(),
+                It.IsAny<CancellationToken>()))
+            .Returns<Func<CancellationToken, Task<FlowChatResult<LoginUserCommandResponse>>>, CancellationToken>((operation, ct) => operation(ct));
+
+        _domainEventDispatcherMock
+            .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<IDomainEvent>>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        _handler = new LoginUserCommandHandler(
+            _identityRepositoryMock.Object,
+            _jwtTokenGeneratorMock.Object,
+            _domainEventDispatcherMock.Object,
+            _unitOfWorkMock.Object);
+    }
+
+    [Fact]
+    public async Task Handle_WhenCredentialsAreValid_ReturnsAccessToken()
+    {
+        var expiresAtUtc = _fixture.Create<DateTime>().ToUniversalTime();
         var authenticatedUser = new AuthenticatedUser
         {
-            Id = Guid.NewGuid(),
+            Id = _fixture.Create<Guid>(),
             UserName = "flower",
             Email = "flower@example.com",
             Roles = ["User"]
         };
-        var repository = new LoginUserIdentityRepository(authenticatedUser);
-        var jwtTokenGenerator = new FakeJwtTokenGenerator(
-            new JwtTokenResult
+
+        _identityRepositoryMock
+            .Setup(x => x.AuthenticateUserAsync("flower@example.com", "P@ssw0rd!", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(authenticatedUser);
+
+        _jwtTokenGeneratorMock
+            .Setup(x => x.GenerateToken(authenticatedUser))
+            .Returns(new JwtTokenResult
             {
                 AccessToken = "jwt-token",
                 ExpiresAtUtc = expiresAtUtc
             });
-        var domainEventDispatcher = new CapturingDomainEventDispatcher();
-        var unitOfWork = new PassThroughUnitOfWork();
-        var handler = new LoginUserCommandHandler(
-            repository,
-            jwtTokenGenerator,
-            domainEventDispatcher,
-            unitOfWork);
 
-        var result = await handler.Handle(
+        var result = await _handler.Handle(
             new LoginUserCommand
             {
                 Login = "flower@example.com",
@@ -44,31 +70,22 @@ public sealed class LoginUserCommandHandlerTests
             },
             CancellationToken.None);
 
-        Assert.True(result.IsSuccess);
-        Assert.Equal("jwt-token", result.Value.AccessToken);
-        Assert.Equal(expiresAtUtc, result.Value.ExpiresAtUtc);
-        Assert.Empty(domainEventDispatcher.DispatchedBatches);
+        result.IsSuccess.Should().BeTrue();
+        result.Value.AccessToken.Should().Be("jwt-token");
+        result.Value.ExpiresAtUtc.Should().Be(expiresAtUtc);
+        _domainEventDispatcherMock.Verify(
+            x => x.DispatchAsync(It.IsAny<IEnumerable<IDomainEvent>>(), It.IsAny<CancellationToken>()),
+            Times.Never);
     }
 
     [Fact]
-    public async Task Handle_ReturnsUnauthorized_WhenCredentialsAreInvalid()
+    public async Task Handle_WhenCredentialsAreInvalid_ReturnsUnauthorizedFailure()
     {
-        var repository = new LoginUserIdentityRepository(null);
-        var jwtTokenGenerator = new FakeJwtTokenGenerator(
-            new JwtTokenResult
-            {
-                AccessToken = "unused",
-                ExpiresAtUtc = DateTime.UtcNow.AddHours(1)
-            });
-        var domainEventDispatcher = new CapturingDomainEventDispatcher();
-        var unitOfWork = new PassThroughUnitOfWork();
-        var handler = new LoginUserCommandHandler(
-            repository,
-            jwtTokenGenerator,
-            domainEventDispatcher,
-            unitOfWork);
+        _identityRepositoryMock
+            .Setup(x => x.AuthenticateUserAsync("flower@example.com", "wrong-password", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((AuthenticatedUser?)null);
 
-        var result = await handler.Handle(
+        var result = await _handler.Handle(
             new LoginUserCommand
             {
                 Login = "flower@example.com",
@@ -76,77 +93,12 @@ public sealed class LoginUserCommandHandlerTests
             },
             CancellationToken.None);
 
-        Assert.False(result.IsSuccess);
-        Assert.Equal(ErrorType.Unauthorized, result.Error.ErrorType);
-        Assert.Equal("Invalid credentials or account is not confirmed.", result.Error.ErrorMessage);
-        Assert.False(jwtTokenGenerator.WasCalled);
-        Assert.Empty(domainEventDispatcher.DispatchedBatches);
-    }
-
-    private sealed class LoginUserIdentityRepository : IIdentityRepository
-    {
-        private readonly AuthenticatedUser? _authenticatedUser;
-
-        public LoginUserIdentityRepository(AuthenticatedUser? authenticatedUser)
-        {
-            _authenticatedUser = authenticatedUser;
-        }
-
-        public Task<Guid> CreateUserAsync(Identity user, string password, CancellationToken cancellationToken)
-            => throw new NotSupportedException();
-
-        public Task<Identity?> GetByIdAsync(Guid userId, CancellationToken cancellationToken)
-            => throw new NotSupportedException();
-
-        public Task<Identity?> GetByEmailAsync(string emailAddress, CancellationToken cancellationToken)
-            => throw new NotSupportedException();
-
-        public Task UpdateAsync(Identity user, CancellationToken cancellationToken)
-            => throw new NotSupportedException();
-
-        public Task<AuthenticatedUser?> AuthenticateUserAsync(string login, string password, CancellationToken cancellationToken)
-            => Task.FromResult(_authenticatedUser);
-    }
-
-    private sealed class FakeJwtTokenGenerator : IJwtTokenGenerator
-    {
-        private readonly JwtTokenResult _tokenResult;
-
-        public FakeJwtTokenGenerator(JwtTokenResult tokenResult)
-        {
-            _tokenResult = tokenResult;
-        }
-
-        public bool WasCalled { get; private set; }
-
-        public JwtTokenResult GenerateToken(AuthenticatedUser user)
-        {
-            WasCalled = true;
-            return _tokenResult;
-        }
-    }
-
-    private sealed class PassThroughUnitOfWork : IUnitOfWork
-    {
-        public void Dispose()
-        {
-        }
-
-        public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
-            => Task.FromResult(0);
-
-        public Task<T> ExecuteInTransactionAsync<T>(Func<CancellationToken, Task<T>> operation, CancellationToken cancellationToken)
-            => operation(cancellationToken);
-    }
-
-    private sealed class CapturingDomainEventDispatcher : IDomainEventDispatcher
-    {
-        public List<IReadOnlyCollection<IDomainEvent>> DispatchedBatches { get; } = [];
-
-        public Task DispatchAsync(IEnumerable<IDomainEvent> domainEvents, CancellationToken cancellationToken = default)
-        {
-            DispatchedBatches.Add(domainEvents.ToArray());
-            return Task.CompletedTask;
-        }
+        result.IsFailure.Should().BeTrue();
+        result.Error.ErrorType.Should().Be(ErrorType.Unauthorized);
+        result.Error.ErrorMessage.Should().Be("Invalid credentials or account is not confirmed.");
+        _jwtTokenGeneratorMock.Verify(x => x.GenerateToken(It.IsAny<AuthenticatedUser>()), Times.Never);
+        _domainEventDispatcherMock.Verify(
+            x => x.DispatchAsync(It.IsAny<IEnumerable<IDomainEvent>>(), It.IsAny<CancellationToken>()),
+            Times.Never);
     }
 }

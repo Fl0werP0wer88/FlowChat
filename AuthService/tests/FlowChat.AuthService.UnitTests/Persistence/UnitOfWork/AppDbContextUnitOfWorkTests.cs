@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using FluentAssertions;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Silverback;
@@ -27,15 +28,15 @@ public sealed class AppDbContextUnitOfWorkTests
 
                 var storageTransaction = silverbackContext.GetStorageTransaction();
 
-                Assert.NotNull(storageTransaction);
-                Assert.NotNull(storageTransaction!.UnderlyingTransaction);
+                storageTransaction.Should().NotBeNull();
+                storageTransaction!.UnderlyingTransaction.Should().NotBeNull();
 
                 return Task.FromResult(42);
             },
             CancellationToken.None);
 
-        Assert.Equal(42, result);
-        Assert.Null(silverbackContext.GetStorageTransaction());
+        result.Should().Be(42);
+        silverbackContext.GetStorageTransaction().Should().BeNull();
     }
 
     [Fact]
@@ -48,19 +49,21 @@ public sealed class AppDbContextUnitOfWorkTests
         await using var dbContext = CreateDbContext(connection);
         var unitOfWork = new AppDbContextUnitOfWork(dbContext, silverbackContext);
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            unitOfWork.ExecuteInTransactionAsync<int>(
-                token =>
-                {
-                    token.ThrowIfCancellationRequested();
+        var act = () => unitOfWork.ExecuteInTransactionAsync<int>(
+            token =>
+            {
+                token.ThrowIfCancellationRequested();
 
-                    Assert.NotNull(silverbackContext.GetStorageTransaction());
+                silverbackContext.GetStorageTransaction().Should().NotBeNull();
 
-                    throw new InvalidOperationException("boom");
-                },
-                CancellationToken.None));
+                throw new InvalidOperationException("boom");
+            },
+            CancellationToken.None);
 
-        Assert.Null(silverbackContext.GetStorageTransaction());
+        await act.Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage("boom");
+
+        silverbackContext.GetStorageTransaction().Should().BeNull();
     }
 
     private static AppDbContext CreateDbContext(SqliteConnection connection)

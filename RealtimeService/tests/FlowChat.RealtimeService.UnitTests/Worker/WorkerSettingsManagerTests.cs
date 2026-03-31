@@ -1,5 +1,6 @@
 using FlowChat.RealtimeService.Consumers.Configuration;
 using FlowChat.RealtimeService.Consumers.Kafka;
+using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 
 namespace FlowChat.RealtimeService.UnitTests;
@@ -25,13 +26,13 @@ public sealed class WorkerSettingsManagerTests
 
         var settingsManager = new ConsumersSettingsManager(configuration);
 
-        Assert.Equal("broker:9092", settingsManager.GetChatMessageSentConsumerOptions().BootstrapServers);
-        Assert.Equal("chat-topic", settingsManager.GetChatMessageSentConsumerOptions().Topic);
-        Assert.Equal("realtime-service-retry", settingsManager.GetChatMessageSentConsumerOptions().RetryGroupId);
-        Assert.Equal("presence-topic", settingsManager.GetUserPresenceChangedConsumerOptions().Topic);
-        Assert.Equal("realtime-service-retry", settingsManager.GetUserPresenceChangedConsumerOptions().RetryGroupId);
-        Assert.Equal("http://localhost:5215", settingsManager.GetRealtimeApiSettings().BaseUrl);
-        Assert.Equal("worker-key", settingsManager.GetRealtimeApiSettings().ApiKey);
+        settingsManager.GetChatMessageSentConsumerOptions().BootstrapServers.Should().Be("broker:9092");
+        settingsManager.GetChatMessageSentConsumerOptions().Topic.Should().Be("chat-topic");
+        settingsManager.GetChatMessageSentConsumerOptions().RetryGroupId.Should().Be("realtime-service-retry");
+        settingsManager.GetUserPresenceChangedConsumerOptions().Topic.Should().Be("presence-topic");
+        settingsManager.GetUserPresenceChangedConsumerOptions().RetryGroupId.Should().Be("realtime-service-retry");
+        settingsManager.GetRealtimeApiSettings().BaseUrl.Should().Be("http://localhost:5215");
+        settingsManager.GetRealtimeApiSettings().ApiKey.Should().Be("worker-key");
     }
 
     [Theory]
@@ -53,13 +54,13 @@ public sealed class WorkerSettingsManagerTests
             .GetSection(RealtimeApiSettings.SectionName)
             .Get<RealtimeApiSettings>();
 
-        Assert.NotNull(chatMessageOptions);
-        Assert.NotNull(presenceOptions);
-        Assert.NotNull(realtimeApiSettings);
-        Assert.Equal("dev.flowchat.chat.message.v1", chatMessageOptions!.Topic);
-        Assert.Equal("realtime-service-retry", chatMessageOptions.RetryGroupId);
-        Assert.Equal("dev.flowchat.user-profile.presence-changed.v1", presenceOptions!.Topic);
-        Assert.Equal("realtime-service-retry", presenceOptions.RetryGroupId);
-        Assert.Equal("http://localhost:5215", realtimeApiSettings!.BaseUrl);
+        chatMessageOptions.Should().NotBeNull();
+        presenceOptions.Should().NotBeNull();
+        realtimeApiSettings.Should().NotBeNull();
+        chatMessageOptions!.Topic.Should().Be("dev.flowchat.chat.message.v1");
+        chatMessageOptions.RetryGroupId.Should().Be("realtime-service-retry");
+        presenceOptions!.Topic.Should().Be("dev.flowchat.user-profile.presence-changed.v1");
+        presenceOptions.RetryGroupId.Should().Be("realtime-service-retry");
+        realtimeApiSettings!.BaseUrl.Should().Be("http://localhost:5215");
     }
 }

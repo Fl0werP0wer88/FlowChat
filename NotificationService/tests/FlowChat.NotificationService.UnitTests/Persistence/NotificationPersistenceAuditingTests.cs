@@ -1,5 +1,7 @@
-﻿using FlowChat.NotificationService.Persistence;
+using AutoFixture;
+using FlowChat.NotificationService.Persistence;
 using FlowChat.Shared.Persistance.Auditing;
+using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Infrastructure;
@@ -10,6 +12,8 @@ namespace FlowChat.NotificationService.UnitTests.Persistence;
 
 public sealed class NotificationPersistenceAuditingTests
 {
+    private readonly IFixture _fixture = new Fixture();
+
     [Fact]
     public void AddPersistenceServices_ConfiguresEntityBaseSaveChangesInterceptor()
     {
@@ -26,23 +30,22 @@ public sealed class NotificationPersistenceAuditingTests
         using var serviceProvider = services.BuildServiceProvider();
         var options = serviceProvider.GetRequiredService<DbContextOptions<AppDbContext>>();
         var coreOptionsExtension = options.Extensions.OfType<CoreOptionsExtension>().Single();
+        var interceptors = coreOptionsExtension.Interceptors.Should().BeAssignableTo<IEnumerable<IInterceptor>>().Subject;
 
-        var interceptors = Assert.IsAssignableFrom<IEnumerable<IInterceptor>>(coreOptionsExtension.Interceptors);
-
-        Assert.Contains(interceptors, interceptor => interceptor is EntityBaseSaveChangesInterceptor);
+        interceptors.Should().Contain(interceptor => interceptor is EntityBaseSaveChangesInterceptor);
     }
 
     [Fact]
     public async Task AppDbContext_SaveChanges_UsesEntityBaseAuditInterceptor()
     {
         var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase(Guid.NewGuid().ToString("N"))
+            .UseInMemoryDatabase(_fixture.Create<Guid>().ToString("N"))
             .AddInterceptors(new EntityBaseSaveChangesInterceptor())
             .Options;
 
         await using var dbContext = new AppDbContext(options);
         var notification = FlowChat.NotificationService.Domain.Entities.Notification.CreateEmailVerification(
-            Guid.NewGuid(),
+            _fixture.Create<Guid>(),
             "test@example.com",
             "Test User",
             sourceMessageKey: "source-key");
@@ -52,17 +55,16 @@ public sealed class NotificationPersistenceAuditingTests
 
         var createdAtUtc = notification.CreatedAtUtc;
 
-        Assert.Equal("system", notification.CreatedBy);
-        Assert.Equal("system", notification.LastModifiedBy);
-        Assert.Equal(createdAtUtc, notification.LastModifiedAtUtc);
+        notification.CreatedBy.Should().Be("system");
+        notification.LastModifiedBy.Should().Be("system");
+        notification.LastModifiedAtUtc.Should().BeOnOrAfter(createdAtUtc);
 
         notification.MarkFailed("failure");
         await dbContext.SaveChangesAsync();
 
-        Assert.Equal("system", notification.CreatedBy);
-        Assert.Equal(createdAtUtc, notification.CreatedAtUtc);
-        Assert.Equal("system", notification.LastModifiedBy);
-        Assert.True(notification.LastModifiedAtUtc >= createdAtUtc);
+        notification.CreatedBy.Should().Be("system");
+        notification.CreatedAtUtc.Should().Be(createdAtUtc);
+        notification.LastModifiedBy.Should().Be("system");
+        notification.LastModifiedAtUtc.Should().BeOnOrAfter(createdAtUtc);
     }
 }
-

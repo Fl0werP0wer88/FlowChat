@@ -1,88 +1,78 @@
-﻿using FlowChat.Shared.API;
+using AutoFixture;
 using FlowChat.Shared.Application;
 using FlowChat.SocialGraphService.Api.Features.UserProfiles.Internal.UpsertUserProfileReadModel;
 using FlowChat.SocialGraphService.Application.Contracts.Persistence;
 using FlowChat.SocialGraphService.Application.Features.UserProfiles;
 using FlowChat.SocialGraphService.Infrastructure.Configuration;
+using FluentAssertions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
-using Microsoft.Extensions.Configuration;
+using Moq;
 
 namespace FlowChat.SocialGraphService.UnitTests;
 
 public sealed class UpsertUserProfileReadModelControllerTests
 {
+    private readonly IFixture _fixture = new Fixture();
+
     [Fact]
     public async Task Upsert_WhenApiKeyMissing_ReturnsUnauthorized()
     {
-        var controller = CreateController("expected-key", out _, out _);
-        controller.ControllerContext = new ControllerContext
-        {
-            HttpContext = new DefaultHttpContext
-            {
-                RequestServices = new SingleServiceProvider(new TestProblemDetailsFactory())
-            }
-        };
+        var controller = CreateController("expected-key", new Mock<IUserProfileReadModelRepository>(), new Mock<IUnitOfWork>());
 
         var result = await controller.Upsert(
             new UpsertUserProfileReadModelRequest
             {
-                UserProfileId = Guid.NewGuid(),
+                UserProfileId = _fixture.Create<Guid>(),
                 UserName = "jdoe",
                 DisplayName = "John Doe"
             },
             CancellationToken.None);
 
-        Assert.IsType<UnauthorizedResult>(result);
+        result.Should().BeOfType<UnauthorizedResult>();
     }
 
     [Fact]
     public async Task Upsert_WhenApiKeyMatches_UpsertsReadModelAndSavesChanges()
     {
-        var controller = CreateController("expected-key", out var repository, out var unitOfWork);
-        var httpContext = new DefaultHttpContext
-        {
-            RequestServices = new SingleServiceProvider(new TestProblemDetailsFactory())
-        };
-        httpContext.Request.Headers["X-Internal-Api-Key"] = "expected-key";
-        controller.ControllerContext = new ControllerContext
-        {
-            HttpContext = httpContext
-        };
+        UserProfileReadModel? capturedReadModel = null;
+        var repositoryMock = new Mock<IUserProfileReadModelRepository>();
+        repositoryMock
+            .Setup(x => x.UpsertAsync(It.IsAny<UserProfileReadModel>(), It.IsAny<CancellationToken>()))
+            .Callback<UserProfileReadModel, CancellationToken>((readModel, _) => capturedReadModel = readModel)
+            .ReturnsAsync(true);
+
+        var unitOfWorkMock = new Mock<IUnitOfWork>();
+        unitOfWorkMock
+            .Setup(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(1);
+
+        var controller = CreateController("expected-key", repositoryMock, unitOfWorkMock, "expected-key");
 
         var result = await controller.Upsert(
             new UpsertUserProfileReadModelRequest
             {
-                UserProfileId = Guid.NewGuid(),
+                UserProfileId = _fixture.Create<Guid>(),
                 UserName = " jdoe ",
                 DisplayName = " John Doe ",
                 MainEmail = " john@example.com "
             },
             CancellationToken.None);
 
-        Assert.IsType<AcceptedResult>(result);
-        Assert.NotNull(repository.LastUpsertedReadModel);
-        Assert.Equal("jdoe", repository.LastUpsertedReadModel!.UserName);
-        Assert.Equal("John Doe", repository.LastUpsertedReadModel.DisplayName);
-        Assert.Equal("john@example.com", repository.LastUpsertedReadModel.MainEmail);
-        Assert.Equal(1, unitOfWork.SaveChangesCallCount);
+        result.Should().BeOfType<AcceptedResult>();
+        capturedReadModel.Should().NotBeNull();
+        capturedReadModel!.UserName.Should().Be("jdoe");
+        capturedReadModel.DisplayName.Should().Be("John Doe");
+        capturedReadModel.MainEmail.Should().Be("john@example.com");
+        unitOfWorkMock.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
     public async Task Upsert_WhenPayloadInvalid_ReturnsBadRequest()
     {
-        var controller = CreateController("expected-key", out _, out _);
-        var httpContext = new DefaultHttpContext
-        {
-            RequestServices = new SingleServiceProvider(new TestProblemDetailsFactory())
-        };
-        httpContext.Request.Headers["X-Internal-Api-Key"] = "expected-key";
-        controller.ControllerContext = new ControllerContext
-        {
-            HttpContext = httpContext
-        };
+        var controller = CreateController("expected-key", new Mock<IUserProfileReadModelRepository>(), new Mock<IUnitOfWork>(), "expected-key");
 
         var result = await controller.Upsert(
             new UpsertUserProfileReadModelRequest
@@ -93,62 +83,41 @@ public sealed class UpsertUserProfileReadModelControllerTests
             },
             CancellationToken.None);
 
-        Assert.IsType<BadRequestObjectResult>(result);
+        result.Should().BeOfType<BadRequestObjectResult>();
     }
 
     private static UpsertUserProfileReadModelController CreateController(
-        string apiKey,
-        out FakeUserProfileReadModelRepository repository,
-        out FakeUnitOfWork unitOfWork)
+        string expectedApiKey,
+        Mock<IUserProfileReadModelRepository> repositoryMock,
+        Mock<IUnitOfWork> unitOfWorkMock,
+        string? providedApiKey = null)
     {
-        repository = new FakeUserProfileReadModelRepository();
-        unitOfWork = new FakeUnitOfWork();
-        var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                ["FlowChat:InternalApi:ApiKey"] = apiKey
-            })
-            .Build();
+        var apiSettingsManagerMock = new Mock<IApiSettingsManager>();
+        apiSettingsManagerMock
+            .Setup(x => x.GetInternalApiSettings())
+            .Returns(new InternalApiSettings { ApiKey = expectedApiKey });
 
-        return new UpsertUserProfileReadModelController(
-            repository,
-            unitOfWork,
-            new ApiSettingsManager(configuration));
-    }
+        var controller = new UpsertUserProfileReadModelController(
+            repositoryMock.Object,
+            unitOfWorkMock.Object,
+            apiSettingsManagerMock.Object);
 
-    private sealed class FakeUserProfileReadModelRepository : IUserProfileReadModelRepository
-    {
-        public UserProfileReadModel? LastUpsertedReadModel { get; private set; }
-
-        public Task<bool> UpsertAsync(UserProfileReadModel readModel, CancellationToken cancellationToken = default)
+        var httpContext = new DefaultHttpContext
         {
-            LastUpsertedReadModel = readModel;
-            return Task.FromResult(true);
-        }
-    }
+            RequestServices = new SingleServiceProvider(new TestProblemDetailsFactory())
+        };
 
-    private sealed class FakeUnitOfWork : IUnitOfWork
-    {
-        public int SaveChangesCallCount { get; private set; }
-
-        public void Dispose()
+        if (providedApiKey is not null)
         {
+            httpContext.Request.Headers["X-Internal-Api-Key"] = providedApiKey;
         }
 
-        public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+        controller.ControllerContext = new ControllerContext
         {
-            SaveChangesCallCount++;
-            return Task.FromResult(1);
-        }
+            HttpContext = httpContext
+        };
 
-        public async Task<T> ExecuteInTransactionAsync<T>(
-            Func<CancellationToken, Task<T>> operation,
-            CancellationToken cancellationToken)
-        {
-            var result = await operation(cancellationToken);
-            SaveChangesCallCount++;
-            return result;
-        }
+        return controller;
     }
 
     private sealed class SingleServiceProvider(object service) : IServiceProvider
@@ -193,4 +162,3 @@ public sealed class UpsertUserProfileReadModelControllerTests
             };
     }
 }
-

@@ -1,45 +1,63 @@
+using AutoFixture;
 using FlowChat.AuthService.Consumers.AuthApi.Contracts;
 using FlowChat.AuthService.Consumers.Kafka;
 using FlowChat.AuthService.Consumers.Services;
 using FlowChat.Core.Exceptions;
 using FlowChat.Core.Messaging.UserProfileService.Events;
+using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
+using Moq;
 
 namespace FlowChat.AuthService.UnitTests;
 
 public sealed class UserEmailConfirmedSubscriberTests
 {
+    private readonly IFixture _fixture = new Fixture();
+    private readonly Mock<IAuthInternalApiClient> _internalApiClientMock = new();
+    private readonly UserEmailConfirmedSubscriber _subscriber;
+
+    public UserEmailConfirmedSubscriberTests()
+    {
+        _subscriber = new UserEmailConfirmedSubscriber(
+            _internalApiClientMock.Object,
+            NullLogger<UserEmailConfirmedSubscriber>.Instance);
+    }
+
     [Fact]
     public async Task HandleAsync_WhenEmailIsAuth_MapsEmailToInternalApiRequest()
     {
-        var internalApiClient = new CapturingAuthInternalApiClient();
-        var subscriber = new UserEmailConfirmedSubscriber(internalApiClient, NullLogger<UserEmailConfirmedSubscriber>.Instance);
+        AuthEmailConfirmationRequest? capturedRequest = null;
+        var emailAddress = "john@example.com";
+
+        _internalApiClientMock
+            .Setup(x => x.ConfirmEmailAsync(It.IsAny<AuthEmailConfirmationRequest>(), It.IsAny<CancellationToken>()))
+            .Callback<AuthEmailConfirmationRequest, CancellationToken>((request, _) => capturedRequest = request)
+            .Returns(Task.CompletedTask);
+
         var message = new UserEmailConfirmedIntegrationEvent
         {
-            UserProfileId = Guid.NewGuid(),
-            EmailId = Guid.NewGuid(),
+            UserProfileId = _fixture.Create<Guid>(),
+            EmailId = _fixture.Create<Guid>(),
             Email = new Email
             {
-                Address = "john@example.com",
+                Address = emailAddress,
                 IsAuth = true
             }
         };
 
-        await subscriber.HandleAsync(message, CancellationToken.None);
+        await _subscriber.HandleAsync(message, CancellationToken.None);
 
-        var request = Assert.IsType<AuthEmailConfirmationRequest>(internalApiClient.LastRequest);
-        Assert.Equal("john@example.com", request.EmailAddress);
+        capturedRequest.Should().NotBeNull();
+        capturedRequest!.EmailAddress.Should().Be(emailAddress);
     }
 
     [Fact]
     public async Task HandleAsync_WhenEmailIsNotAuth_DoesNotCallInternalApi()
     {
-        var internalApiClient = new CapturingAuthInternalApiClient();
-        var subscriber = new UserEmailConfirmedSubscriber(internalApiClient, NullLogger<UserEmailConfirmedSubscriber>.Instance);
         var message = new UserEmailConfirmedIntegrationEvent
         {
-            UserProfileId = Guid.NewGuid(),
-            EmailId = Guid.NewGuid(),
+            UserProfileId = _fixture.Create<Guid>(),
+            EmailId = _fixture.Create<Guid>(),
             Email = new Email
             {
                 Address = "john@example.com",
@@ -47,20 +65,20 @@ public sealed class UserEmailConfirmedSubscriberTests
             }
         };
 
-        await subscriber.HandleAsync(message, CancellationToken.None);
+        await _subscriber.HandleAsync(message, CancellationToken.None);
 
-        Assert.Null(internalApiClient.LastRequest);
+        _internalApiClientMock.Verify(
+            x => x.ConfirmEmailAsync(It.IsAny<AuthEmailConfirmationRequest>(), It.IsAny<CancellationToken>()),
+            Times.Never);
     }
 
     [Fact]
     public async Task HandleAsync_WhenEmailAddressIsMissing_ThrowsNonTransientException()
     {
-        var internalApiClient = new CapturingAuthInternalApiClient();
-        var subscriber = new UserEmailConfirmedSubscriber(internalApiClient, NullLogger<UserEmailConfirmedSubscriber>.Instance);
         var message = new UserEmailConfirmedIntegrationEvent
         {
-            UserProfileId = Guid.NewGuid(),
-            EmailId = Guid.NewGuid(),
+            UserProfileId = _fixture.Create<Guid>(),
+            EmailId = _fixture.Create<Guid>(),
             Email = new Email
             {
                 Address = "   ",
@@ -68,19 +86,9 @@ public sealed class UserEmailConfirmedSubscriberTests
             }
         };
 
-        var exception = await Assert.ThrowsAsync<NonTransientException>(() => subscriber.HandleAsync(message, CancellationToken.None));
+        var act = () => _subscriber.HandleAsync(message, CancellationToken.None);
 
-        Assert.Contains("Email.Address", exception.Message);
-    }
-
-    private sealed class CapturingAuthInternalApiClient : IAuthInternalApiClient
-    {
-        public AuthEmailConfirmationRequest? LastRequest { get; private set; }
-
-        public Task ConfirmEmailAsync(AuthEmailConfirmationRequest request, CancellationToken cancellationToken)
-        {
-            LastRequest = request;
-            return Task.CompletedTask;
-        }
+        await act.Should().ThrowAsync<NonTransientException>()
+            .WithMessage("*Email.Address*");
     }
 }

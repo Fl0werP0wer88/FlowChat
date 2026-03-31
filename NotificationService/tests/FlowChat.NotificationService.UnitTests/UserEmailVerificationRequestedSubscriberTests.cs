@@ -1,24 +1,42 @@
+using AutoFixture;
 using FlowChat.Core.Exceptions;
 using FlowChat.Core.Messaging.AuthService.Events;
 using FlowChat.NotificationService.Consumers.Kafka;
 using FlowChat.NotificationService.Consumers.NotificationApi.Contracts;
 using FlowChat.NotificationService.Consumers.Services;
+using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
+using Moq;
 
 namespace FlowChat.NotificationService.UnitTests;
 
 public sealed class UserEmailVerificationRequestedSubscriberTests
 {
+    private readonly IFixture _fixture = new Fixture();
+    private readonly Mock<INotificationInternalApiClient> _apiClientMock = new();
+    private readonly UserEmailVerificationRequestedSubscriber _subscriber;
+
+    public UserEmailVerificationRequestedSubscriberTests()
+    {
+        _subscriber = new UserEmailVerificationRequestedSubscriber(
+            _apiClientMock.Object,
+            NullLogger<UserEmailVerificationRequestedSubscriber>.Instance);
+    }
+
     [Fact]
     public async Task HandleAsync_WhenEventArrives_PostsNormalizedRequest()
     {
-        var apiClient = new FakeNotificationInternalApiClient();
-        var subscriber = new UserEmailVerificationRequestedSubscriber(
-            apiClient,
-            NullLogger<UserEmailVerificationRequestedSubscriber>.Instance);
+        ProcessUserEmailVerificationRequestedRequest? capturedRequest = null;
+        var userId = _fixture.Create<Guid>();
 
-        var userId = Guid.NewGuid();
-        await subscriber.HandleAsync(
+        _apiClientMock
+            .Setup(x => x.ProcessUserEmailVerificationRequestedAsync(
+                It.IsAny<ProcessUserEmailVerificationRequestedRequest>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<ProcessUserEmailVerificationRequestedRequest, CancellationToken>((request, _) => capturedRequest = request)
+            .Returns(Task.CompletedTask);
+
+        await _subscriber.HandleAsync(
             new EmailVerificationRequestIntegrationEvent
             {
                 Key = "request-123",
@@ -28,65 +46,52 @@ public sealed class UserEmailVerificationRequestedSubscriberTests
             },
             CancellationToken.None);
 
-        Assert.NotNull(apiClient.LastRequest);
-        Assert.Equal(userId, apiClient.LastRequest!.UserId);
-        Assert.Equal("john.doe@flowchat.local", apiClient.LastRequest.Email);
-        Assert.Equal("john.doe", apiClient.LastRequest.UserName);
-        Assert.Equal("john.doe", apiClient.LastRequest.DisplayName);
-        Assert.Equal("https://localhost/confirm", apiClient.LastRequest.ConfirmationLink);
-        Assert.Equal("request-123", apiClient.LastRequest.SourceMessageKey);
+        capturedRequest.Should().NotBeNull();
+        capturedRequest!.UserId.Should().Be(userId);
+        capturedRequest.Email.Should().Be("john.doe@flowchat.local");
+        capturedRequest.UserName.Should().Be("john.doe");
+        capturedRequest.DisplayName.Should().Be("john.doe");
+        capturedRequest.ConfirmationLink.Should().Be("https://localhost/confirm");
+        capturedRequest.SourceMessageKey.Should().Be("request-123");
     }
 
     [Fact]
-    public async Task HandleAsync_WhenUserEmailMissing_ThrowsNonTransientException()
+    public async Task HandleAsync_WhenUserEmailIsMissing_ThrowsNonTransientException()
     {
-        var apiClient = new FakeNotificationInternalApiClient();
-        var subscriber = new UserEmailVerificationRequestedSubscriber(
-            apiClient,
-            NullLogger<UserEmailVerificationRequestedSubscriber>.Instance);
-
-        await Assert.ThrowsAsync<NonTransientException>(() => subscriber.HandleAsync(
+        var act = () => _subscriber.HandleAsync(
             new EmailVerificationRequestIntegrationEvent
             {
-                UserId = Guid.NewGuid(),
+                UserId = _fixture.Create<Guid>(),
                 UserEmail = " ",
                 ConfirmationLink = "https://localhost/confirm"
             },
-            CancellationToken.None));
+            CancellationToken.None);
 
-        Assert.Null(apiClient.LastRequest);
+        await act.Should().ThrowAsync<NonTransientException>();
+        _apiClientMock.Verify(
+            x => x.ProcessUserEmailVerificationRequestedAsync(
+                It.IsAny<ProcessUserEmailVerificationRequestedRequest>(),
+                It.IsAny<CancellationToken>()),
+            Times.Never);
     }
 
     [Fact]
-    public async Task HandleAsync_WhenConfirmationLinkMissing_ThrowsNonTransientException()
+    public async Task HandleAsync_WhenConfirmationLinkIsMissing_ThrowsNonTransientException()
     {
-        var apiClient = new FakeNotificationInternalApiClient();
-        var subscriber = new UserEmailVerificationRequestedSubscriber(
-            apiClient,
-            NullLogger<UserEmailVerificationRequestedSubscriber>.Instance);
-
-        await Assert.ThrowsAsync<NonTransientException>(() => subscriber.HandleAsync(
+        var act = () => _subscriber.HandleAsync(
             new EmailVerificationRequestIntegrationEvent
             {
-                UserId = Guid.NewGuid(),
+                UserId = _fixture.Create<Guid>(),
                 UserEmail = "john.doe@flowchat.local",
                 ConfirmationLink = " "
             },
-            CancellationToken.None));
+            CancellationToken.None);
 
-        Assert.Null(apiClient.LastRequest);
-    }
-
-    private sealed class FakeNotificationInternalApiClient : INotificationInternalApiClient
-    {
-        public ProcessUserEmailVerificationRequestedRequest? LastRequest { get; private set; }
-
-        public Task ProcessUserEmailVerificationRequestedAsync(
-            ProcessUserEmailVerificationRequestedRequest request,
-            CancellationToken cancellationToken)
-        {
-            LastRequest = request;
-            return Task.CompletedTask;
-        }
+        await act.Should().ThrowAsync<NonTransientException>();
+        _apiClientMock.Verify(
+            x => x.ProcessUserEmailVerificationRequestedAsync(
+                It.IsAny<ProcessUserEmailVerificationRequestedRequest>(),
+                It.IsAny<CancellationToken>()),
+            Times.Never);
     }
 }

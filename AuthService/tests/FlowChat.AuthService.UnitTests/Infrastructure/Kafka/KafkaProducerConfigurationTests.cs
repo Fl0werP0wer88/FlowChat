@@ -1,6 +1,7 @@
 using FlowChat.AuthService.Infrastructure;
 using FlowChat.AuthService.Infrastructure.Kafka;
 using FlowChat.Core.Messaging.AuthService.Events;
+using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -33,9 +34,9 @@ public sealed class KafkaProducerConfigurationTests
         var typedAccountRegisteredOptions = serviceProvider
             .GetRequiredService<IKafkaProducerOptions<AccountRegisteredIntegrationEvent>>();
 
-        Assert.Equal("broker:9092", accountRegisteredOptions.BootstrapServers);
-        Assert.Equal("user-created-topic", accountRegisteredOptions.Topic);
-        Assert.Equal("user-created-topic", typedAccountRegisteredOptions.Topic);
+        accountRegisteredOptions.BootstrapServers.Should().Be("broker:9092");
+        accountRegisteredOptions.Topic.Should().Be("user-created-topic");
+        typedAccountRegisteredOptions.Topic.Should().Be("user-created-topic");
     }
 
     [Theory]
@@ -53,9 +54,9 @@ public sealed class KafkaProducerConfigurationTests
             .GetSection(AccountRegisteredProducerOptions.SectionName)
             .Get<AccountRegisteredProducerOptions>();
 
-        Assert.NotNull(accountRegisteredOptions);
-        Assert.Equal("localhost:9092", accountRegisteredOptions!.BootstrapServers);
-        Assert.Equal("dev.flowchat.identity.user.v1", accountRegisteredOptions.Topic);
+        accountRegisteredOptions.Should().NotBeNull();
+        accountRegisteredOptions!.BootstrapServers.Should().Be("localhost:9092");
+        accountRegisteredOptions.Topic.Should().Be("dev.flowchat.identity.user.v1");
     }
 
     private static string GetRepositoryPath(string relativePath)

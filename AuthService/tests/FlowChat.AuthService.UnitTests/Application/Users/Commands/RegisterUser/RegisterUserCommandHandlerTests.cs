@@ -1,123 +1,146 @@
+using AutoFixture;
 using FlowChat.AuthService.Application.Contracts.Persistence;
 using FlowChat.AuthService.Application.Features.Users.Commands.RegisterUser;
-using FlowChat.AuthService.Application.Features.Users.Models;
 using FlowChat.AuthService.Domain.Entities;
 using FlowChat.AuthService.Domain.Events;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
+using FluentAssertions;
+using Moq;
 
 namespace FlowChat.AuthService.UnitTests;
 
 public sealed class RegisterUserCommandHandlerTests
 {
+    private readonly IFixture _fixture = new Fixture();
+    private readonly Mock<IIdentityRepository> _identityRepositoryMock = new();
+    private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
+    private readonly Mock<IDomainEventDispatcher> _domainEventDispatcherMock = new();
+    private readonly RegisterUserCommandHandler _handler;
+
+    public RegisterUserCommandHandlerTests()
+    {
+        _unitOfWorkMock
+            .Setup(x => x.ExecuteInTransactionAsync(
+                It.IsAny<Func<CancellationToken, Task<FlowChatResult<RegisterUserCommandResponse>>>>(),
+                It.IsAny<CancellationToken>()))
+            .Returns<Func<CancellationToken, Task<FlowChatResult<RegisterUserCommandResponse>>>, CancellationToken>((operation, ct) => operation(ct));
+
+        _domainEventDispatcherMock
+            .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<IDomainEvent>>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        _handler = new RegisterUserCommandHandler(
+            _identityRepositoryMock.Object,
+            _unitOfWorkMock.Object,
+            _domainEventDispatcherMock.Object);
+    }
+
     [Fact]
     public async Task Handle_CreatesUser_AndDispatchesAccountRegisteredDomainEvent()
     {
-        var repository = new FakeIdentityRepository();
-        var unitOfWork = new TrackingUnitOfWork();
-        var domainEventDispatcher = new CapturingDomainEventDispatcher();
-        var handler = CreateHandler(repository, unitOfWork, domainEventDispatcher);
+        Identity? createdUser = null;
+        List<IDomainEvent> dispatchedEvents = [];
 
-        var result = await handler.Handle(CreateCommand(), CancellationToken.None);
-        var createdUser = repository.CreatedUser;
-        Assert.NotNull(createdUser);
-        var createdUserId = createdUser.Id.Value;
+        _identityRepositoryMock
+            .Setup(x => x.CreateUserAsync(It.IsAny<Identity>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Callback<Identity, string, CancellationToken>((user, _, _) => createdUser = user)
+            .ReturnsAsync((Identity user, string _, CancellationToken _) => user.Id.Value);
 
-        Assert.True(result.IsSuccess);
-        Assert.Equal(createdUserId, result.Value.Id);
-        Assert.False(createdUser.EmailConfirmed);
-        Assert.False(createdUser.AccountConfirmed);
+        _domainEventDispatcherMock
+            .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<IDomainEvent>>(), It.IsAny<CancellationToken>()))
+            .Callback<IEnumerable<IDomainEvent>, CancellationToken>((events, _) => dispatchedEvents.AddRange(events))
+            .Returns(Task.CompletedTask);
 
-        var dispatchedEvents = Assert.Single(domainEventDispatcher.DispatchedBatches);
-        var accountRegisteredDomainEvent = Assert.IsType<AccountRegisteredDomainEvent>(Assert.Single(dispatchedEvents));
-        Assert.Equal(createdUserId, accountRegisteredDomainEvent.UserId.Value);
+        var result = await _handler.Handle(CreateCommand(), CancellationToken.None);
+
+        result.IsSuccess.Should().BeTrue();
+        createdUser.Should().NotBeNull();
+        result.Value.Id.Should().Be(createdUser!.Id.Value);
+        createdUser.EmailConfirmed.Should().BeFalse();
+        createdUser.AccountConfirmed.Should().BeFalse();
+
+        dispatchedEvents.Should().ContainSingle()
+            .Which.Should().BeOfType<AccountRegisteredDomainEvent>()
+            .Which.UserId.Value.Should().Be(createdUser.Id.Value);
     }
 
     [Fact]
-    public async Task Handle_ReturnsConflict_WhenDuplicateUserNameIsReportedByRepository()
+    public async Task Handle_WhenRepositoryReportsDuplicateUserName_ReturnsConflictFailure()
     {
-        var repository = new FakeIdentityRepository(
-            createUserException: new InvalidOperationException(
+        _identityRepositoryMock
+            .Setup(x => x.CreateUserAsync(It.IsAny<Identity>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException(
                 "User creation failed: DuplicateUserName: Username 'flower' is already taken."));
-        var unitOfWork = new TrackingUnitOfWork();
-        var domainEventDispatcher = new CapturingDomainEventDispatcher();
-        var handler = CreateHandler(repository, unitOfWork, domainEventDispatcher);
 
-        var result = await handler.Handle(CreateCommand(), CancellationToken.None);
+        var result = await _handler.Handle(CreateCommand(), CancellationToken.None);
 
-        Assert.False(result.IsSuccess);
-        Assert.Equal(ErrorType.Conflict, result.Error.ErrorType);
-        Assert.Equal("User with the provided username or email already exists.", result.Error.ErrorMessage);
-        Assert.Contains("Username 'flower' is already taken.", result.Error.Errors ?? []);
-        Assert.Empty(domainEventDispatcher.DispatchedBatches);
+        result.IsFailure.Should().BeTrue();
+        result.Error.ErrorType.Should().Be(ErrorType.Conflict);
+        result.Error.ErrorMessage.Should().Be("User with the provided username or email already exists.");
+        result.Error.Errors.Should().Contain("Username 'flower' is already taken.");
+        _domainEventDispatcherMock.Verify(
+            x => x.DispatchAsync(It.IsAny<IEnumerable<IDomainEvent>>(), It.IsAny<CancellationToken>()),
+            Times.Never);
     }
 
     [Fact]
-    public async Task Handle_ReturnsConflict_WhenDuplicateEmailIsReportedByRepository()
+    public async Task Handle_WhenRepositoryReportsDuplicateEmail_ReturnsConflictFailure()
     {
-        var repository = new FakeIdentityRepository(
-            createUserException: new InvalidOperationException(
+        _identityRepositoryMock
+            .Setup(x => x.CreateUserAsync(It.IsAny<Identity>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException(
                 "User creation failed: DuplicateEmail: Email 'flower@example.com' is already taken."));
-        var unitOfWork = new TrackingUnitOfWork();
-        var domainEventDispatcher = new CapturingDomainEventDispatcher();
-        var handler = CreateHandler(repository, unitOfWork, domainEventDispatcher);
 
-        var result = await handler.Handle(CreateCommand(), CancellationToken.None);
+        var result = await _handler.Handle(CreateCommand(), CancellationToken.None);
 
-        Assert.False(result.IsSuccess);
-        Assert.Equal(ErrorType.Conflict, result.Error.ErrorType);
-        Assert.Equal("User with the provided username or email already exists.", result.Error.ErrorMessage);
-        Assert.Contains("Email 'flower@example.com' is already taken.", result.Error.Errors ?? []);
-        Assert.Empty(domainEventDispatcher.DispatchedBatches);
+        result.IsFailure.Should().BeTrue();
+        result.Error.ErrorType.Should().Be(ErrorType.Conflict);
+        result.Error.ErrorMessage.Should().Be("User with the provided username or email already exists.");
+        result.Error.Errors.Should().Contain("Email 'flower@example.com' is already taken.");
+        _domainEventDispatcherMock.Verify(
+            x => x.DispatchAsync(It.IsAny<IEnumerable<IDomainEvent>>(), It.IsAny<CancellationToken>()),
+            Times.Never);
     }
 
     [Fact]
-    public async Task Handle_ReturnsValidation_WhenRepositoryReportsValidationErrors()
+    public async Task Handle_WhenRepositoryReportsValidationErrors_ReturnsValidationFailure()
     {
-        var repository = new FakeIdentityRepository(
-            createUserException: new InvalidOperationException(
+        _identityRepositoryMock
+            .Setup(x => x.CreateUserAsync(It.IsAny<Identity>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException(
                 "User creation failed: PasswordTooShort: Password must be at least 8 characters.; PasswordRequiresUpper: Password must contain an uppercase letter."));
-        var unitOfWork = new TrackingUnitOfWork();
-        var domainEventDispatcher = new CapturingDomainEventDispatcher();
-        var handler = CreateHandler(repository, unitOfWork, domainEventDispatcher);
 
-        var result = await handler.Handle(CreateCommand(), CancellationToken.None);
+        var result = await _handler.Handle(CreateCommand(), CancellationToken.None);
 
-        Assert.False(result.IsSuccess);
-        Assert.Equal(ErrorType.Validation, result.Error.ErrorType);
-        Assert.Equal("User registration validation failed.", result.Error.ErrorMessage);
-        Assert.Contains("Password must be at least 8 characters.", result.Error.Errors ?? []);
-        Assert.Contains("Password must contain an uppercase letter.", result.Error.Errors ?? []);
-        Assert.Empty(domainEventDispatcher.DispatchedBatches);
+        result.IsFailure.Should().BeTrue();
+        result.Error.ErrorType.Should().Be(ErrorType.Validation);
+        result.Error.ErrorMessage.Should().Be("User registration validation failed.");
+        result.Error.Errors.Should().Contain("Password must be at least 8 characters.");
+        result.Error.Errors.Should().Contain("Password must contain an uppercase letter.");
+        _domainEventDispatcherMock.Verify(
+            x => x.DispatchAsync(It.IsAny<IEnumerable<IDomainEvent>>(), It.IsAny<CancellationToken>()),
+            Times.Never);
     }
 
     [Fact]
-    public async Task Handle_RethrowsUnexpectedInvalidOperationException()
+    public async Task Handle_WhenRepositoryThrowsUnexpectedInvalidOperationException_RethrowsIt()
     {
-        var repository = new FakeIdentityRepository(
-            createUserException: new InvalidOperationException("Database connection failed."));
-        var unitOfWork = new TrackingUnitOfWork();
-        var domainEventDispatcher = new CapturingDomainEventDispatcher();
-        var handler = CreateHandler(repository, unitOfWork, domainEventDispatcher);
+        _identityRepositoryMock
+            .Setup(x => x.CreateUserAsync(It.IsAny<Identity>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("Database connection failed."));
 
-        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => handler.Handle(CreateCommand(), CancellationToken.None));
+        var act = () => _handler.Handle(CreateCommand(), CancellationToken.None);
 
-        Assert.Equal("Database connection failed.", exception.Message);
-        Assert.Empty(domainEventDispatcher.DispatchedBatches);
+        await act.Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage("Database connection failed.");
+
+        _domainEventDispatcherMock.Verify(
+            x => x.DispatchAsync(It.IsAny<IEnumerable<IDomainEvent>>(), It.IsAny<CancellationToken>()),
+            Times.Never);
     }
 
-    private static RegisterUserCommandHandler CreateHandler(
-        FakeIdentityRepository repository,
-        TrackingUnitOfWork unitOfWork,
-        CapturingDomainEventDispatcher domainEventDispatcher)
-    {
-        return new RegisterUserCommandHandler(
-            repository,
-            unitOfWork,
-            domainEventDispatcher);
-    }
-
-    private static RegisterUserCommand CreateCommand()
+    private RegisterUserCommand CreateCommand()
     {
         return new RegisterUserCommand
         {
@@ -126,64 +149,5 @@ public sealed class RegisterUserCommandHandlerTests
             PhoneNumber = "+48123123123",
             Password = "P@ssw0rd!"
         };
-    }
-
-    private sealed class FakeIdentityRepository : IIdentityRepository
-    {
-        private readonly Exception? _createUserException;
-
-        public FakeIdentityRepository(Exception? createUserException = null)
-        {
-            _createUserException = createUserException;
-        }
-
-        public Identity? CreatedUser { get; private set; }
-
-        public Task<Guid> CreateUserAsync(Identity user, string password, CancellationToken cancellationToken)
-        {
-            if (_createUserException is not null)
-            {
-                throw _createUserException;
-            }
-
-            CreatedUser = user;
-            return Task.FromResult(user.Id.Value);
-        }
-
-        public Task<Identity?> GetByIdAsync(Guid userId, CancellationToken cancellationToken)
-            => throw new NotSupportedException();
-
-        public Task<Identity?> GetByEmailAsync(string emailAddress, CancellationToken cancellationToken)
-            => throw new NotSupportedException();
-
-        public Task UpdateAsync(Identity user, CancellationToken cancellationToken)
-            => throw new NotSupportedException();
-
-        public Task<AuthenticatedUser?> AuthenticateUserAsync(string login, string password, CancellationToken cancellationToken)
-            => throw new NotSupportedException();
-    }
-
-    private sealed class TrackingUnitOfWork : IUnitOfWork
-    {
-        public void Dispose()
-        {
-        }
-
-        public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
-            => Task.FromResult(0);
-
-        public Task<T> ExecuteInTransactionAsync<T>(Func<CancellationToken, Task<T>> operation, CancellationToken cancellationToken)
-            => operation(cancellationToken);
-    }
-
-    private sealed class CapturingDomainEventDispatcher : IDomainEventDispatcher
-    {
-        public List<IReadOnlyCollection<IDomainEvent>> DispatchedBatches { get; } = [];
-
-        public Task DispatchAsync(IEnumerable<IDomainEvent> domainEvents, CancellationToken cancellationToken = default)
-        {
-            DispatchedBatches.Add(domainEvents.ToArray());
-            return Task.CompletedTask;
-        }
     }
 }

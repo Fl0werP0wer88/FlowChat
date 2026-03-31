@@ -1,44 +1,64 @@
-﻿using FlowChat.Shared.Domain;
+using AutoFixture;
+using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
 using FlowChat.RealtimeService.Application.Features.Presence.Commands.PublishPresenceChange;
+using FlowChat.RealtimeService.Domain.Notifications;
+using FlowChat.Shared.Domain;
+using FluentAssertions;
+using Moq;
 
 namespace FlowChat.RealtimeService.UnitTests;
 
 public sealed class PublishPresenceChangeCommandHandlerTests
 {
+    private readonly IFixture _fixture = new Fixture();
+    private readonly Mock<IRealtimeClientDispatcher> _dispatcherMock = new();
+    private readonly PublishPresenceChangeCommandHandler _handler;
+
+    public PublishPresenceChangeCommandHandlerTests()
+    {
+        _dispatcherMock
+            .Setup(x => x.PresenceChangedAsync(It.IsAny<PresenceChangedNotification>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        _handler = new PublishPresenceChangeCommandHandler(_dispatcherMock.Object);
+    }
+
     [Fact]
     public async Task Handle_NormalizesStatusAndDispatches()
     {
-        var dispatcher = new CapturingRealtimeClientDispatcher();
-        var handler = new PublishPresenceChangeCommandHandler(dispatcher);
-        var recipientUserId = Guid.NewGuid();
+        PresenceChangedNotification? capturedNotification = null;
+        var recipientUserId = _fixture.Create<Guid>();
 
-        var result = await handler.Handle(
+        _dispatcherMock
+            .Setup(x => x.PresenceChangedAsync(It.IsAny<PresenceChangedNotification>(), It.IsAny<CancellationToken>()))
+            .Callback<PresenceChangedNotification, CancellationToken>((notification, _) => capturedNotification = notification)
+            .Returns(Task.CompletedTask);
+
+        var result = await _handler.Handle(
             new PublishPresenceChangeCommand(
-                Guid.NewGuid(),
+                _fixture.Create<Guid>(),
                 " Online ",
                 new DateTime(2026, 3, 17, 12, 30, 0, DateTimeKind.Utc),
                 [recipientUserId]),
             CancellationToken.None);
 
-        Assert.True(result.IsSuccess);
-        Assert.NotNull(dispatcher.LastPresenceNotification);
-        Assert.Equal("online", dispatcher.LastPresenceNotification!.Status);
-        Assert.Equal(recipientUserId, dispatcher.LastPresenceNotification.RecipientUserIds.Single());
+        result.IsSuccess.Should().BeTrue();
+        capturedNotification.Should().NotBeNull();
+        capturedNotification!.Status.Should().Be("online");
+        capturedNotification.RecipientUserIds.Should().ContainSingle().Which.Should().Be(recipientUserId);
     }
 
     [Fact]
     public async Task Handle_WhenStatusIsInvalid_ReturnsBadRequestFailure()
     {
-        var dispatcher = new CapturingRealtimeClientDispatcher();
-        var handler = new PublishPresenceChangeCommandHandler(dispatcher);
-
-        var result = await handler.Handle(
-            new PublishPresenceChangeCommand(Guid.NewGuid(), "busy", DateTime.UtcNow, [Guid.NewGuid()]),
+        var result = await _handler.Handle(
+            new PublishPresenceChangeCommand(_fixture.Create<Guid>(), "busy", DateTime.UtcNow, [_fixture.Create<Guid>()]),
             CancellationToken.None);
 
-        Assert.True(result.IsFailure);
-        Assert.Equal(ErrorType.BadRequest, result.Error.ErrorType);
-        Assert.Null(dispatcher.LastPresenceNotification);
+        result.IsFailure.Should().BeTrue();
+        result.Error.ErrorType.Should().Be(ErrorType.BadRequest);
+        _dispatcherMock.Verify(
+            x => x.PresenceChangedAsync(It.IsAny<PresenceChangedNotification>(), It.IsAny<CancellationToken>()),
+            Times.Never);
     }
 }
-

@@ -1,10 +1,11 @@
-﻿using FlowChat.Shared.Domain;
+using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
 using FlowChat.SocialGraphService.Domain.Entities;
+using FluentAssertions;
 
 namespace FlowChat.SocialGraphService.UnitTests;
 
-public class TypedDomainIdsTests
+public sealed class TypedDomainIdsTests
 {
     [Fact]
     public void Contact_Create_WithTypedId_AssignsTypedIdValue()
@@ -13,8 +14,8 @@ public class TypedDomainIdsTests
 
         var contact = Contact.Create(Guid.NewGuid(), Guid.NewGuid(), "user-login", id: id);
 
-        Assert.Equal(id, contact.Id);
-        Assert.Equal(id.Value, contact.Id.Value);
+        contact.Id.Should().Be(id);
+        contact.Id.Value.Should().Be(id.Value);
     }
 
     [Fact]
@@ -24,7 +25,7 @@ public class TypedDomainIdsTests
 
         var contact = Contact.Create(Guid.NewGuid(), Guid.NewGuid(), "user-login", id: id);
 
-        Assert.Equal(id, contact.Id.Value);
+        contact.Id.Value.Should().Be(id);
     }
 
     [Fact]
@@ -40,11 +41,11 @@ public class TypedDomainIdsTests
             EmailAddress.Create("jan@example.com"),
             id: Id<Contact>.New());
 
-        Assert.Equal("Jan", contact.FirstName);
-        Assert.Equal("Kowalski", contact.LastName);
-        Assert.Equal("jkowalski", contact.DisplayedName);
-        Assert.Equal("+48123456789", contact.PhoneNumber!.Value);
-        Assert.Equal("jan@example.com", contact.EmailAddress!.Value);
+        contact.FirstName.Should().Be("Jan");
+        contact.LastName.Should().Be("Kowalski");
+        contact.DisplayedName.Should().Be("jkowalski");
+        contact.PhoneNumber!.Value.Should().Be("+48123456789");
+        contact.EmailAddress!.Value.Should().Be("jan@example.com");
     }
 
     [Fact]
@@ -56,10 +57,10 @@ public class TypedDomainIdsTests
             "user-login",
             id: Id<Contact>.New());
 
-        Assert.Null(contact.FirstName);
-        Assert.Null(contact.LastName);
-        Assert.Null(contact.PhoneNumber);
-        Assert.Null(contact.EmailAddress);
+        contact.FirstName.Should().BeNull();
+        contact.LastName.Should().BeNull();
+        contact.PhoneNumber.Should().BeNull();
+        contact.EmailAddress.Should().BeNull();
     }
 
     [Fact]
@@ -70,7 +71,7 @@ public class TypedDomainIdsTests
             contactUserId: Guid.NewGuid(),
             displayedName: "user-login");
 
-        Assert.NotEqual(Guid.Empty, contact.Id.Value);
+        contact.Id.Value.Should().NotBe(Guid.Empty);
     }
 
     [Fact]
@@ -82,18 +83,18 @@ public class TypedDomainIdsTests
             "user-login",
             id: Id<Contact>.New());
 
-        Assert.Empty(contact.DomainEvents);
+        contact.DomainEvents.Should().BeEmpty();
     }
 
     [Fact]
     public void Contact_Create_WithoutDisplayedName_Throws()
     {
-        Assert.Throws<ArgumentException>(() => Contact.Create(
+        var act = () => Contact.Create(
             Guid.NewGuid(),
             Guid.NewGuid(),
-            "",
-            id: Id<Contact>.New()));
+            string.Empty,
+            id: Id<Contact>.New());
+
+        act.Should().Throw<ArgumentException>();
     }
-
 }
-

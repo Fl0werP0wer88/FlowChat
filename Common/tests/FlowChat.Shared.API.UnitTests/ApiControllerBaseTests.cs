@@ -1,5 +1,6 @@
-﻿using FlowChat.Shared.API;
+using FlowChat.Shared.API;
 using FlowChat.Shared.Domain;
+using FluentAssertions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
@@ -27,11 +28,11 @@ public sealed class ApiControllerBaseTests
 
         var result = controller.InvokeHandleError(error);
 
-        var objectResult = Assert.IsAssignableFrom<ObjectResult>(result);
-        var problemDetails = Assert.IsType<ProblemDetails>(objectResult.Value);
-        Assert.Equal(expectedStatusCode, objectResult.StatusCode);
-        Assert.Equal(expectedStatusCode, problemDetails.Status);
-        Assert.Equal(error.ErrorMessage, problemDetails.Detail);
+        var objectResult = result.Should().BeAssignableTo<ObjectResult>().Subject;
+        var problemDetails = objectResult.Value.Should().BeOfType<ProblemDetails>().Subject;
+        objectResult.StatusCode.Should().Be(expectedStatusCode);
+        problemDetails.Status.Should().Be(expectedStatusCode);
+        problemDetails.Detail.Should().Be(error.ErrorMessage);
     }
 
     [Fact]
@@ -42,9 +43,9 @@ public sealed class ApiControllerBaseTests
 
         var result = controller.InvokeHandleError(error);
 
-        var badRequest = Assert.IsType<BadRequestObjectResult>(result);
-        var problemDetails = Assert.IsType<ProblemDetails>(badRequest.Value);
-        Assert.Equal("first issue,second issue", problemDetails.Detail);
+        var badRequest = result.Should().BeOfType<BadRequestObjectResult>().Subject;
+        var problemDetails = badRequest.Value.Should().BeOfType<ProblemDetails>().Subject;
+        problemDetails.Detail.Should().Be("first issue,second issue");
     }
 
     [Fact]
@@ -52,8 +53,8 @@ public sealed class ApiControllerBaseTests
     {
         var error = DomainError.Unauthorized("Unauthorized detail");
 
-        Assert.Equal(ErrorType.Unauthorized, error.ErrorType);
-        Assert.Equal("Unauthorized detail", error.ErrorMessage);
+        error.ErrorType.Should().Be(ErrorType.Unauthorized);
+        error.ErrorMessage.Should().Be("Unauthorized detail");
     }
 
     private static TestApiController CreateController()
@@ -121,4 +122,3 @@ public sealed class ApiControllerBaseTests
         }
     }
 }
-

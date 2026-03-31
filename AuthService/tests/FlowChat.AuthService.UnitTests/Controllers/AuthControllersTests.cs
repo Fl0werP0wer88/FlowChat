@@ -1,3 +1,4 @@
+using AutoFixture;
 using AutoMapper;
 using FlowChat.AuthService.API.Features.Users.Public.LoginUser;
 using FlowChat.AuthService.API.Features.Users.Public.RegisterUser;
@@ -7,56 +8,57 @@ using FlowChat.AuthService.Application.Features.Users.Commands.LoginUser;
 using FlowChat.AuthService.Application.Features.Users.Commands.RegisterUser;
 using FlowChat.AuthService.Infrastructure.Configuration;
 using FlowChat.Shared.Domain;
+using FluentAssertions;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.Extensions.Logging.Abstractions;
+using Moq;
 
 namespace FlowChat.AuthService.UnitTests.Controllers;
 
 public sealed class AuthControllersTests
 {
+    private readonly IFixture _fixture = new Fixture();
+
     [Fact]
-    public async Task Register_ReturnsConflictProblemDetails_WhenRegistrationFailsWithConflict()
+    public async Task Register_WhenRegistrationFailsWithConflict_ReturnsConflictProblemDetails()
     {
-        var mediator = new TestMediator(request =>
-            request switch
-            {
-                RegisterUserCommand => FlowChatResult<RegisterUserCommandResponse>.Failure(
-                    DomainError.Conflict("User with the provided username or email already exists.")),
-                _ => throw new InvalidOperationException("Unexpected request.")
-            });
-        var controller = CreateController(new RegisterUserController(mediator, CreateMapper()));
+        var mediatorMock = new Mock<IMediator>();
+        mediatorMock
+            .Setup(x => x.Send(It.IsAny<RegisterUserCommand>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(FlowChatResult<RegisterUserCommandResponse>.Failure(
+                DomainError.Conflict("User with the provided username or email already exists.")));
+
+        var controller = CreateController(new RegisterUserController(mediatorMock.Object, CreateMapper()));
 
         var result = await controller.Create(
             new RegisterUserRequest
             {
                 UserName = "jdoe",
                 Email = "john@example.com",
-                PhoneNumber = null,
                 Password = "Password123!"
             },
             CancellationToken.None);
 
-        var conflict = Assert.IsType<ConflictObjectResult>(result);
-        var problemDetails = Assert.IsType<ProblemDetails>(conflict.Value);
-        Assert.Equal(StatusCodes.Status409Conflict, problemDetails.Status);
-        Assert.Equal("User with the provided username or email already exists.", problemDetails.Detail);
+        var conflict = result.Should().BeOfType<ConflictObjectResult>().Subject;
+        var problemDetails = conflict.Value.Should().BeOfType<ProblemDetails>().Subject;
+        problemDetails.Status.Should().Be(StatusCodes.Status409Conflict);
+        problemDetails.Detail.Should().Be("User with the provided username or email already exists.");
     }
 
     [Fact]
-    public async Task Login_ReturnsUnauthorizedProblemDetails_WhenCredentialsAreInvalid()
+    public async Task Login_WhenCredentialsAreInvalid_ReturnsUnauthorizedProblemDetails()
     {
-        var mediator = new TestMediator(request =>
-            request switch
-            {
-                LoginUserCommand => FlowChatResult<LoginUserCommandResponse>.Failure(
-                    DomainError.Unauthorized("Invalid credentials or account is not confirmed.")),
-                _ => throw new InvalidOperationException("Unexpected request.")
-            });
-        var controller = CreateController(new LoginUserController(mediator, CreateMapper()));
+        var mediatorMock = new Mock<IMediator>();
+        mediatorMock
+            .Setup(x => x.Send(It.IsAny<LoginUserCommand>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(FlowChatResult<LoginUserCommandResponse>.Failure(
+                DomainError.Unauthorized("Invalid credentials or account is not confirmed.")));
+
+        var controller = CreateController(new LoginUserController(mediatorMock.Object, CreateMapper()));
 
         var result = await controller.Login(
             new LoginUserRequest
@@ -66,21 +68,27 @@ public sealed class AuthControllersTests
             },
             CancellationToken.None);
 
-        var unauthorized = Assert.IsType<UnauthorizedObjectResult>(result);
-        var problemDetails = Assert.IsType<ProblemDetails>(unauthorized.Value);
-        Assert.Equal(StatusCodes.Status401Unauthorized, problemDetails.Status);
-        Assert.Equal("Invalid credentials or account is not confirmed.", problemDetails.Detail);
+        var unauthorized = result.Should().BeOfType<UnauthorizedObjectResult>().Subject;
+        var problemDetails = unauthorized.Value.Should().BeOfType<ProblemDetails>().Subject;
+        problemDetails.Status.Should().Be(StatusCodes.Status401Unauthorized);
+        problemDetails.Detail.Should().Be("Invalid credentials or account is not confirmed.");
     }
 
     [Fact]
-    public async Task ConfirmAuthEmail_ReturnsUnauthorized_WhenInternalApiKeyIsInvalid()
+    public async Task ConfirmAuthEmail_WhenInternalApiKeyIsInvalid_ReturnsUnauthorized()
     {
-        var mediator = new TestMediator(_ => throw new InvalidOperationException("Mediator should not be called."));
+        var expectedApiKey = _fixture.Create<string>();
+        var mediatorMock = new Mock<IMediator>(MockBehavior.Strict);
+        var apiSettingsManagerMock = new Mock<IApiSettingsManager>();
+        apiSettingsManagerMock
+            .Setup(x => x.GetInternalApiSettings())
+            .Returns(new InternalApiSettings { ApiKey = expectedApiKey });
+
         var controller = CreateController(
-            new ConfirmAuthEmailController(mediator, new TestApiSettingsManager("expected-key")),
+            new ConfirmAuthEmailController(mediatorMock.Object, apiSettingsManagerMock.Object),
             new Dictionary<string, string?>
             {
-                ["X-Internal-Api-Key"] = "wrong-key"
+                ["X-Internal-Api-Key"] = $"{expectedApiKey}-invalid"
             });
 
         var result = await controller.ConfirmEmail(
@@ -90,23 +98,34 @@ public sealed class AuthControllersTests
             },
             CancellationToken.None);
 
-        Assert.IsType<UnauthorizedResult>(result);
+        result.Should().BeOfType<UnauthorizedResult>();
+        mediatorMock.Verify(
+            x => x.Send(It.IsAny<ConfirmAuthEmailCommand>(), It.IsAny<CancellationToken>()),
+            Times.Never);
     }
 
     [Fact]
-    public async Task ConfirmAuthEmail_SendsCommand_WhenInternalApiKeyIsValid()
+    public async Task ConfirmAuthEmail_WhenInternalApiKeyIsValid_SendsCommand()
     {
-        var capturedRequests = new List<object>();
-        var mediator = new TestMediator(request =>
-        {
-            capturedRequests.Add(request);
-            return FlowChatResult<Unit>.Success(Unit.Value);
-        });
+        var expectedApiKey = _fixture.Create<string>();
+        ConfirmAuthEmailCommand? capturedCommand = null;
+
+        var mediatorMock = new Mock<IMediator>();
+        mediatorMock
+            .Setup(x => x.Send(It.IsAny<ConfirmAuthEmailCommand>(), It.IsAny<CancellationToken>()))
+            .Callback<IRequest<FlowChatResult<Unit>>, CancellationToken>((request, _) => capturedCommand = (ConfirmAuthEmailCommand)request)
+            .ReturnsAsync(FlowChatResult<Unit>.Success(Unit.Value));
+
+        var apiSettingsManagerMock = new Mock<IApiSettingsManager>();
+        apiSettingsManagerMock
+            .Setup(x => x.GetInternalApiSettings())
+            .Returns(new InternalApiSettings { ApiKey = expectedApiKey });
+
         var controller = CreateController(
-            new ConfirmAuthEmailController(mediator, new TestApiSettingsManager("expected-key")),
+            new ConfirmAuthEmailController(mediatorMock.Object, apiSettingsManagerMock.Object),
             new Dictionary<string, string?>
             {
-                ["X-Internal-Api-Key"] = "expected-key"
+                ["X-Internal-Api-Key"] = expectedApiKey
             });
 
         var result = await controller.ConfirmEmail(
@@ -116,9 +135,9 @@ public sealed class AuthControllersTests
             },
             CancellationToken.None);
 
-        Assert.IsType<AcceptedResult>(result);
-        var command = Assert.IsType<ConfirmAuthEmailCommand>(Assert.Single(capturedRequests));
-        Assert.Equal("john@example.com", command.EmailAddress);
+        result.Should().BeOfType<AcceptedResult>();
+        capturedCommand.Should().NotBeNull();
+        capturedCommand!.EmailAddress.Should().Be("john@example.com");
     }
 
     private static TController CreateController<TController>(
@@ -159,50 +178,10 @@ public sealed class AuthControllersTests
         return configuration.CreateMapper();
     }
 
-    private sealed class TestMediator(Func<object, object?> handler) : IMediator
-    {
-        public Task Publish(object notification, CancellationToken cancellationToken = default) =>
-            Task.CompletedTask;
-
-        public Task Publish<TNotification>(TNotification notification, CancellationToken cancellationToken = default)
-            where TNotification : INotification =>
-            Task.CompletedTask;
-
-        public Task<TResponse> Send<TResponse>(IRequest<TResponse> request, CancellationToken cancellationToken = default) =>
-            Task.FromResult((TResponse)handler(request)!);
-
-        public Task Send<TRequest>(TRequest request, CancellationToken cancellationToken = default)
-            where TRequest : IRequest =>
-            Task.CompletedTask;
-
-        public Task<object?> Send(object request, CancellationToken cancellationToken = default) =>
-            Task.FromResult(handler(request));
-
-        public IAsyncEnumerable<TResponse> CreateStream<TResponse>(
-            IStreamRequest<TResponse> request,
-            CancellationToken cancellationToken = default) =>
-            AsyncEnumerable.Empty<TResponse>();
-
-        public IAsyncEnumerable<object?> CreateStream(object request, CancellationToken cancellationToken = default) =>
-            AsyncEnumerable.Empty<object?>();
-    }
-
     private sealed class SingleServiceProvider(object service) : IServiceProvider
     {
         public object? GetService(Type serviceType) =>
             serviceType.IsInstanceOfType(service) ? service : null;
-    }
-
-    private sealed class TestApiSettingsManager(string apiKey) : IApiSettingsManager
-    {
-        public JwtSettings GetJwtSettings() => new();
-
-        public ApiRuntimeSettings GetApiRuntimeSettings() => new();
-
-        public InternalApiSettings GetInternalApiSettings() => new()
-        {
-            ApiKey = apiKey
-        };
     }
 
     private sealed class TestProblemDetailsFactory : ProblemDetailsFactory
