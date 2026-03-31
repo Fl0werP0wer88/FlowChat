@@ -221,6 +221,239 @@ public sealed class {Controller}Tests
 - Unit test: mock HTTP clients, verify message handling logic
 - Integration test: verify DI registration, consumer configuration
 
+---
+
+## Integration Test Tooling (Advanced)
+
+Beyond simple SQLite/InMemory tests, use these tools for higher-fidelity integration tests:
+
+### Microsoft.AspNetCore.Mvc.Testing — API Integration Tests
+
+Use `WebApplicationFactory<T>` to spin up the real HTTP pipeline (middleware, routing, DI, serialization) without a network socket.
+
+**This project already uses this pattern** — see `UserProfileService/tests/.../API/UserProfileApiFactory.cs` as the reference implementation.
+
+Key conventions from the existing factory:
+
+```csharp
+using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.TestHost;
+using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+
+// Use a CONTROLLER type as anchor — not Program — to avoid ambiguity
+// when a service has multiple hosts (API + Consumers worker both define Program).
+public sealed class {Service}ApiFactory : WebApplicationFactory<{AnchorController}>, IAsyncLifetime
+{
+    public const string InternalApiKey = "test-internal-api-key";
+    private readonly SqliteConnection _connection = new("DataSource=:memory:");
+
+    public RecordingIntegrationEventPublisher EventPublisher { get; } = new();
+
+    protected override void ConfigureWebHost(IWebHostBuilder builder)
+    {
+        builder.UseEnvironment("Test");
+
+        // Override config values — Kafka, connection strings, feature URLs
+        builder.ConfigureAppConfiguration((_, config) =>
+        {
+            config.AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["FlowChat:InternalApi:ApiKey"] = InternalApiKey,
+                ["ConnectionStrings:{Service}Db"] = "Host=localhost;Database=test",
+                // ... Kafka topics, feature URLs, etc.
+            });
+        });
+
+        // ConfigureTestServices runs AFTER all app services — overrides are guaranteed
+        builder.ConfigureTestServices(services =>
+        {
+            // Remove Silverback hosted services (needs real Kafka broker)
+            services.RemoveAll<IHostedService>();
+
+            // Replace AppDbContext with SQLite — remove ALL related registrations
+            // including IDbContextOptionsConfiguration<T> to avoid
+            // "Multiple relational database provider configurations found"
+            services.RemoveAll<DbContextOptions<AppDbContext>>();
+            services.RemoveAll<IDbContextFactory<AppDbContext>>();
+            services.RemoveAll<AppDbContext>();
+            services.RemoveAll<IDbContextOptionsConfiguration<AppDbContext>>();
+
+            services.AddDbContext<AppDbContext>((sp, options) =>
+                options.UseSqlite(_connection)
+                    .AddInterceptors(sp.GetRequiredService<EntityBaseSaveChangesInterceptor>()));
+
+            // Replace IIntegrationEventPublisher with recording stub
+            services.RemoveAll<IIntegrationEventPublisher>();
+            services.AddSingleton<IIntegrationEventPublisher>(EventPublisher);
+
+            // Ephemeral data protection — no DB-backed key store needed
+            services.RemoveAll<IXmlRepository>();
+            services.AddDataProtection().UseEphemeralDataProtectionProvider();
+        });
+    }
+
+    // Helper for seeding/asserting DB state
+    public async Task WithDbContextAsync(Func<AppDbContext, Task> action)
+    {
+        using var scope = Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        await action(db);
+    }
+
+    public async Task InitializeAsync()
+    {
+        await _connection.OpenAsync();
+
+        // Create schema BEFORE host starts — data protection reads tables on startup
+        var opts = new DbContextOptionsBuilder<AppDbContext>().UseSqlite(_connection).Options;
+        await using (var db = new AppDbContext(opts))
+            await db.Database.EnsureCreatedAsync();
+
+        _ = Services; // triggers host startup
+    }
+
+    public new async Task DisposeAsync()
+    {
+        base.Dispose();
+        await _connection.DisposeAsync();
+    }
+}
+```
+
+Key gotchas (learned from the existing implementation):
+- Use a **controller type** as `WebApplicationFactory<T>` anchor, not `Program` — avoids ambiguity when multiple hosts exist in the same service
+- Remove `IDbContextOptionsConfiguration<AppDbContext>` — without this, Npgsql callback fires alongside SQLite → "Multiple relational database provider configurations found"
+- Remove `IHostedService` registrations — Silverback registers hosted services that need a real Kafka broker
+- Create DB schema **before** host starts — data protection background thread reads tables on startup
+- Use `ConfigureTestServices` (not `ConfigureServices`) — runs after all app registrations, guaranteeing overrides apply
+
+When to use:
+- Testing full HTTP request/response cycle (status codes, content negotiation, headers)
+- Verifying middleware (auth, validation, error handling)
+- Verifying route mapping and model binding
+- Testing integration events are published via `RecordingIntegrationEventPublisher`
+- Smoke-testing that the app boots and critical endpoints respond
+
+When NOT to use:
+- For testing business logic — use unit tests against handlers
+- When you only need DI resolution checks — use plain `ServiceCollection` tests
+
+### Testcontainers — Real Infrastructure in Tests
+
+Use `Testcontainers.Kafka` (or `Testcontainers.PostgreSql`) when you need a real broker/database, not a mock:
+
+```csharp
+using DotNet.Testcontainers.Builders;
+using Testcontainers.Kafka;
+
+public sealed class KafkaIntegrationTests : IAsyncLifetime
+{
+    private readonly KafkaContainer _kafka = new KafkaBuilder()
+        .WithImage("confluentinc/cp-kafka:7.6.0")
+        .Build();
+
+    public Task InitializeAsync() => _kafka.StartAsync();
+    public Task DisposeAsync() => _kafka.DisposeAsync().AsTask();
+
+    [Fact]
+    public async Task Producer_PublishesMessage_ConsumerReceives()
+    {
+        var bootstrapServers = _kafka.GetBootstrapAddress();
+
+        // Use real Kafka producer/consumer with bootstrapServers
+        // Verify end-to-end message flow
+    }
+}
+```
+
+When to use:
+- Testing Kafka producer/consumer end-to-end (message serialization, topic routing, consumer groups)
+- Testing against real PostgreSQL when SQLite diverges (JSON columns, array types, full-text search)
+- Verifying Outbox pattern end-to-end (DB → Outbox → Kafka)
+
+When NOT to use:
+- For unit tests — too slow, use mocks
+- For simple repository CRUD — SQLite in-memory is sufficient
+- In CI without Docker — guard with `[Trait("Category", "Docker")]`
+
+NuGet packages:
+- `Testcontainers` (base)
+- `Testcontainers.Kafka`
+- `Testcontainers.PostgreSql`
+
+### WireMock.Net — HTTP Dependency Stubs
+
+Use `WireMock.Server` to stub external HTTP APIs (internal service-to-service calls, third-party APIs):
+
+```csharp
+using WireMock.Server;
+using WireMock.RequestBuilders;
+using WireMock.ResponseBuilders;
+
+public sealed class AuthInternalApiClientTests : IDisposable
+{
+    private readonly WireMockServer _server;
+    private readonly AuthInternalApiClient _client;
+
+    public AuthInternalApiClientTests()
+    {
+        _server = WireMockServer.Start();
+
+        var httpClient = new HttpClient { BaseAddress = new Uri(_server.Url!) };
+        _client = new AuthInternalApiClient(httpClient);
+    }
+
+    [Fact]
+    public async Task ConfirmEmail_WhenServiceReturns200_ReturnsSuccess()
+    {
+        _server
+            .Given(Request.Create()
+                .WithPath("/api/auth/confirm-email")
+                .UsingPost())
+            .RespondWith(Response.Create()
+                .WithStatusCode(200)
+                .WithBody("{}"));
+
+        var result = await _client.ConfirmEmailAsync("user@example.com", "token123");
+
+        result.IsSuccess.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task ConfirmEmail_WhenServiceReturns500_ReturnsFailure()
+    {
+        _server
+            .Given(Request.Create()
+                .WithPath("/api/auth/confirm-email")
+                .UsingPost())
+            .RespondWith(Response.Create()
+                .WithStatusCode(500));
+
+        var result = await _client.ConfirmEmailAsync("user@example.com", "token123");
+
+        result.IsFailure.Should().BeTrue();
+    }
+
+    public void Dispose() => _server.Dispose();
+}
+```
+
+When to use:
+- Testing HTTP clients that call other FlowChat services (e.g. `AuthInternalApiClient`)
+- Simulating error responses (timeouts, 500s, malformed JSON)
+- Verifying retry/circuit-breaker policies on HttpClient
+- Testing webhook/callback handlers
+
+When NOT to use:
+- For in-process service calls (use `WebApplicationFactory` instead)
+- When a simple `Mock<HttpMessageHandler>` suffices for one-off tests
+
+NuGet package: `WireMock.Net`
+
+---
+
 ## What NOT to Test
 
 - Simple DTOs / records with no logic
