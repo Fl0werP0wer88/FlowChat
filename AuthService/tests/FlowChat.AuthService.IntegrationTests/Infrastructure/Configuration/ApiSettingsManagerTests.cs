@@ -1,15 +1,14 @@
-using FlowChat.RealtimeService.Infrastructure;
-using FlowChat.RealtimeService.Infrastructure.Configuration;
-using FluentAssertions;
+using FlowChat.AuthService.Infrastructure;
+using FlowChat.AuthService.Infrastructure.Configuration;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace FlowChat.RealtimeService.UnitTests;
+namespace FlowChat.AuthService.IntegrationTests;
 
 public sealed class ApiSettingsManagerTests
 {
     [Fact]
-    public void ApiSettingsManager_ResolvesJwtRuntimeAndInternalSettings()
+    public void AddInfrastructureServices_RegistersApiSettingsManager()
     {
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
@@ -17,17 +16,20 @@ public sealed class ApiSettingsManagerTests
                 ["JwtSettings:Key"] = "jwt-key",
                 ["JwtSettings:Issuer"] = "jwt-issuer",
                 ["JwtSettings:Audience"] = "jwt-audience",
-                ["ApiUrl"] = "https://localhost:5000",
-                ["BlazorUrl"] = "https://localhost:5010",
                 ["FlowChat:InternalApi:ApiKey"] = "internal-key"
             })
             .Build();
 
-        var settingsManager = new ApiSettingsManager(configuration);
+        var services = new ServiceCollection();
+        services.AddOptions();
+        services.AddLogging();
+        services.AddInfrastructureServices(configuration);
 
+        using var serviceProvider = services.BuildServiceProvider();
+        var settingsManager = serviceProvider.GetRequiredService<IApiSettingsManager>();
+
+        settingsManager.Should().NotBeNull();
         settingsManager.GetJwtSettings().Key.Should().Be("jwt-key");
-        settingsManager.GetApiRuntimeSettings().ApiUrl.Should().Be("https://localhost:5000");
         settingsManager.GetInternalApiSettings().ApiKey.Should().Be("internal-key");
     }
-
 }

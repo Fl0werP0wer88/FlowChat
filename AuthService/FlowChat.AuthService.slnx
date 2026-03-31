@@ -12,6 +12,7 @@
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/FlowChat.AuthService.AATs/FlowChat.AuthService.AATs.csproj" />
+    <Project Path="tests/FlowChat.AuthService.IntegrationTests/FlowChat.AuthService.IntegrationTests.csproj" />
     <Project Path="tests/FlowChat.AuthService.UnitTests/FlowChat.AuthService.UnitTests.csproj" />
   </Folder>
   <Project Path="../Common/src/FlowChat.Shared.API/FlowChat.Shared.API.csproj" />

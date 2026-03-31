@@ -11,6 +11,7 @@
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/FlowChat.NotificationService.AATs/FlowChat.NotificationService.AATs.csproj" />
+    <Project Path="tests/FlowChat.NotificationService.IntegrationTests/FlowChat.NotificationService.IntegrationTests.csproj" />
     <Project Path="tests/FlowChat.NotificationService.UnitTests/FlowChat.NotificationService.UnitTests.csproj" />
   </Folder>
   <Project Path="../Common/src/FlowChat.Shared.API/FlowChat.Shared.API.csproj" />

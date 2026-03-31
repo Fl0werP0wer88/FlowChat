@@ -3,7 +3,7 @@
 ## Solution Files
 
 Every new `.csproj` must be added to **both**:
-1. The local service solution (e.g. `UserProfileService/FlowChat.UserProfileService.slnx`)
+1. The local service solution ( `{Service}/FlowChat.{Service}.slnx`)
 2. The global solution `FlowChat.slnx` in the root — in the appropriate service folder
 
 ## Collaboration Rules
@@ -92,6 +92,12 @@ The project uses tactical DDD. All domain logic lives in the `Domain` layer. The
   - When refactoring without behaviour change: keep existing tests as-is; adjust only if they no longer compile or structurally mismatch
   - For new features: cover the happy path, relevant edge cases, and known failure modes
   - Do not write low-value tests just to have coverage (e.g. testing that a constructor assigns a property)
+- **Integration tests**: `{Service}/tests/{Service}.IntegrationTests/`
+  - Use when: test builds a real `ServiceCollection` + `BuildServiceProvider()`, uses a real `DbContext` (even in-memory), tests DI registration, or validates startup configuration across multiple layers
+  - Do NOT mock at layer boundaries — the point is to verify the layers work together
+  - Mirror the `src/` folder structure inside the test project (same rule as UnitTests)
+  - If a file has a mix of unit and integration tests, split it into two separate files
+  - Prefer `UseInMemoryDatabase` or `Sqlite` in-memory over a real Postgres connection in integration tests
 - **AATs** (Application Acceptance Tests): `{Service}/tests/{Service}.AATs/`
 
 Run tests:
@@ -108,7 +114,9 @@ dotnet test UserProfileService/FlowChat.UserProfileService.slnx
 
 # Common & standalone (no solution file)
 dotnet test Common/tests/FlowChat.Shared.API.UnitTests
+dotnet test Common/tests/FlowChat.Shared.Persistance.IntegrationTests
 dotnet test Common/tests/FlowChat.Shared.Persistance.UnitTests
+dotnet test RealtimeService/tests/FlowChat.RealtimeService.IntegrationTests
 dotnet test RealtimeService/tests/FlowChat.RealtimeService.UnitTests
 ```
 

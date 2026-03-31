@@ -38,29 +38,4 @@ public sealed class ApiSettingsManagerTests
         apiRuntimeSettings.BlazorUrl.Should().Be("https://localhost:5010");
     }
 
-    [Fact]
-    public void AddInfrastructureServices_RegistersApiSettingsManager()
-    {
-        var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                ["JwtSettings:Key"] = "jwt-key",
-                ["JwtSettings:Issuer"] = "jwt-issuer",
-                ["JwtSettings:Audience"] = "jwt-audience",
-                ["FlowChat:InternalApi:ApiKey"] = "internal-key"
-            })
-            .Build();
-
-        var services = new ServiceCollection();
-        services.AddOptions();
-        services.AddLogging();
-        services.AddInfrastructureServices(configuration);
-
-        using var serviceProvider = services.BuildServiceProvider();
-        var settingsManager = serviceProvider.GetRequiredService<IApiSettingsManager>();
-
-        settingsManager.Should().NotBeNull();
-        settingsManager.GetJwtSettings().Key.Should().Be("jwt-key");
-        settingsManager.GetInternalApiSettings().ApiKey.Should().Be("internal-key");
-    }
 }

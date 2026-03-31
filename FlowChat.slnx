@@ -13,6 +13,7 @@
   </Folder>
   <Folder Name="/AuthService/tests/">
     <Project Path="AuthService/tests/FlowChat.AuthService.AATs/FlowChat.AuthService.AATs.csproj" />
+    <Project Path="AuthService/tests/FlowChat.AuthService.IntegrationTests/FlowChat.AuthService.IntegrationTests.csproj" />
     <Project Path="AuthService/tests/FlowChat.AuthService.UnitTests/FlowChat.AuthService.UnitTests.csproj" />
   </Folder>
   <Folder Name="/ChatService/" />
@@ -40,6 +41,7 @@
   </Folder>
   <Folder Name="/UserProfileService/tests/">
     <Project Path="UserProfileService/tests/FlowChat.UserProfileService.AATs/FlowChat.UserProfileService.AATs.csproj" />
+    <Project Path="UserProfileService/tests/FlowChat.UserProfileService.IntegrationTests/FlowChat.UserProfileService.IntegrationTests.csproj" />
     <Project Path="UserProfileService/tests/FlowChat.UserProfileService.UnitTests/FlowChat.UserProfileService.UnitTests.csproj" />
   </Folder>
   <Folder Name="/NotificationService/" />
@@ -55,6 +57,7 @@
   </Folder>
   <Folder Name="/NotificationService/tests/">
     <Project Path="NotificationService/tests/FlowChat.NotificationService.AATs/FlowChat.NotificationService.AATs.csproj" />
+    <Project Path="NotificationService/tests/FlowChat.NotificationService.IntegrationTests/FlowChat.NotificationService.IntegrationTests.csproj" />
     <Project Path="NotificationService/tests/FlowChat.NotificationService.UnitTests/FlowChat.NotificationService.UnitTests.csproj" />
   </Folder>
   <Folder Name="/Common/" />
@@ -68,6 +71,7 @@
   </Folder>
   <Folder Name="/Common/tests/">
     <Project Path="Common/tests/FlowChat.Shared.API.UnitTests/FlowChat.Shared.API.UnitTests.csproj" />
+    <Project Path="Common/tests/FlowChat.Shared.Persistance.IntegrationTests/FlowChat.Shared.Persistance.IntegrationTests.csproj" />
     <Project Path="Common/tests/FlowChat.Shared.Persistance.UnitTests/FlowChat.Shared.Persistance.UnitTests.csproj" />
   </Folder>
   <Folder Name="/SocialGraphService/" />
@@ -83,6 +87,7 @@
   </Folder>
   <Folder Name="/SocialGraphService/tests/">
     <Project Path="SocialGraphService/tests/FlowChat.SocialGraphService.AATs/FlowChat.SocialGraphService.AATs.csproj" />
+    <Project Path="SocialGraphService/tests/FlowChat.SocialGraphService.IntegrationTests/FlowChat.SocialGraphService.IntegrationTests.csproj" />
     <Project Path="SocialGraphService/tests/FlowChat.SocialGraphService.UnitTests/FlowChat.SocialGraphService.UnitTests.csproj" />
   </Folder>
   <Folder Name="/RealtimeService/" />
@@ -96,6 +101,7 @@
     <Project Path="RealtimeService/src/Workers/FlowChat.RealtimeService.Consumers/FlowChat.RealtimeService.Consumers.csproj" />
   </Folder>
   <Folder Name="/RealtimeService/tests/">
+    <Project Path="RealtimeService/tests/FlowChat.RealtimeService.IntegrationTests/FlowChat.RealtimeService.IntegrationTests.csproj" />
     <Project Path="RealtimeService/tests/FlowChat.RealtimeService.UnitTests/FlowChat.RealtimeService.UnitTests.csproj" />
   </Folder>
   <Folder Name="/GatewayService/" />
