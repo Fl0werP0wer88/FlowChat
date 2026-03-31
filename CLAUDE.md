@@ -1,5 +1,11 @@
 # FlowChat — Claude Code Instructions
 
+## Solution Files
+
+Every new `.csproj` must be added to **both**:
+1. The local service solution (e.g. `UserProfileService/FlowChat.UserProfileService.slnx`)
+2. The global solution `FlowChat.slnx` in the root — in the appropriate service folder
+
 ## Collaboration Rules
 
 - If the user's message ends with `?`, treat it as a question — answer it, do not make any code changes unless explicitly asked afterwards.

@@ -15,7 +15,7 @@
   </Folder>
   <Project Path="../Common/src/FlowChat.Shared.API/FlowChat.Shared.API.csproj" />
   <Project Path="../Common/src/FlowChat.Shared.Application/FlowChat.Shared.Application.csproj" />
-    <Project Path="../Common/src/FlowChat.Shared.Infrastructure/FlowChat.Shared.Infrastructure.csproj" />
+  <Project Path="../Common/src/FlowChat.Shared.Infrastructure/FlowChat.Shared.Infrastructure.csproj" />
 </Solution>
 
 
