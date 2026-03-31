@@ -5,7 +5,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Silverback.Messaging.Broker;
 
-namespace FlowChat.UserProfileService.UnitTests;
+namespace FlowChat.UserProfileService.IntegrationTests;
 
 public sealed class AccountRegisteredConsumerConfigurationTests
 {

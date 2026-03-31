@@ -5,7 +5,7 @@ using FlowChat.UserProfileService.Infrastructure.Kafka;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace FlowChat.UserProfileService.UnitTests;
+namespace FlowChat.UserProfileService.IntegrationTests;
 
 public sealed class KafkaProducerConfigurationTests
 {

@@ -21,7 +21,14 @@ catch (Exception exception)
 {
     if (app is not null)
     {
-        app.Logger.LogCritical(exception, "UserProfileService API terminated unexpectedly.");
+        try
+        {
+            app.Logger.LogCritical(exception, "UserProfileService API terminated unexpectedly.");
+        }
+        catch
+        {
+            Console.Error.WriteLine($"UserProfileService API terminated unexpectedly: {exception}");
+        }
     }
     else
     {
@@ -30,3 +37,5 @@ catch (Exception exception)
 
     throw;
 }
+
+public partial class Program { }

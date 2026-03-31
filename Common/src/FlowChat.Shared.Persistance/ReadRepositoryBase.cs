@@ -15,8 +15,9 @@ public abstract class ReadRepositoryBase<TEntity, TDto>(DbContext dbContext) : I
 
     public virtual async Task<TDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
+        var typedId = Id<TEntity>.FromGuid(id);
         return await Query
-            .Where(x => x.Id.Value == id)
+            .Where(x => x.Id == typedId)
             .Select(MapToDto)
             .FirstOrDefaultAsync(cancellationToken);
     }
