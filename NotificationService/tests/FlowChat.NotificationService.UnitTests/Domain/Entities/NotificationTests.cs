@@ -1,0 +1,185 @@
+using FlowChat.NotificationService.Domain.Entities;
+using FlowChat.NotificationService.Domain.Enums;
+using FluentAssertions;
+
+namespace FlowChat.NotificationService.UnitTests.Domain.Entities;
+
+public sealed class NotificationTests
+{
+    // --- CreateEmailVerification ---
+
+    [Fact]
+    public void CreateEmailVerification_WithValidArguments_ReturnsNotificationWithPendingStatus()
+    {
+        var userId = Guid.NewGuid();
+        var notification = Notification.CreateEmailVerification(userId, "user@example.com", "John Doe", "key-1");
+
+        notification.UserId.Should().Be(userId);
+        notification.Email.Should().Be("user@example.com");
+        notification.DisplayName.Should().Be("John Doe");
+        notification.Type.Should().Be(NotificationType.EmailVerification);
+        notification.Status.Should().Be(NotificationStatus.Pending);
+        notification.SourceMessageKey.Should().Be("key-1");
+        notification.ProviderMessageId.Should().BeNull();
+        notification.FailureReason.Should().BeNull();
+        notification.SentAtUtc.Should().BeNull();
+    }
+
+    [Fact]
+    public void CreateEmailVerification_WithNullSourceMessageKey_SetsSourceMessageKeyToNull()
+    {
+        var notification = Notification.CreateEmailVerification(Guid.NewGuid(), "user@example.com", "John Doe", null);
+
+        notification.SourceMessageKey.Should().BeNull();
+    }
+
+    [Fact]
+    public void CreateEmailVerification_WithWhitespaceSourceMessageKey_SetsSourceMessageKeyToNull()
+    {
+        var notification = Notification.CreateEmailVerification(Guid.NewGuid(), "user@example.com", "John Doe", "   ");
+
+        notification.SourceMessageKey.Should().BeNull();
+    }
+
+    [Fact]
+    public void CreateEmailVerification_TrimsEmailAndDisplayName()
+    {
+        var notification = Notification.CreateEmailVerification(Guid.NewGuid(), "  user@example.com  ", "  John Doe  ", "key-1");
+
+        notification.Email.Should().Be("user@example.com");
+        notification.DisplayName.Should().Be("John Doe");
+    }
+
+    [Fact]
+    public void CreateEmailVerification_WithEmptyUserId_ThrowsInvalidOperationException()
+    {
+        var act = () => Notification.CreateEmailVerification(Guid.Empty, "user@example.com", "John Doe", null);
+
+        act.Should().Throw<InvalidOperationException>().WithMessage("UserId is required.");
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void CreateEmailVerification_WithBlankEmail_ThrowsInvalidOperationException(string email)
+    {
+        var act = () => Notification.CreateEmailVerification(Guid.NewGuid(), email, "John Doe", null);
+
+        act.Should().Throw<InvalidOperationException>().WithMessage("Email is required.");
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void CreateEmailVerification_WithBlankDisplayName_ThrowsInvalidOperationException(string displayName)
+    {
+        var act = () => Notification.CreateEmailVerification(Guid.NewGuid(), "user@example.com", displayName, null);
+
+        act.Should().Throw<InvalidOperationException>().WithMessage("DisplayName is required.");
+    }
+
+    // --- CreateWelcome ---
+
+    [Fact]
+    public void CreateWelcome_WithValidArguments_ReturnsNotificationWithWelcomeType()
+    {
+        var userId = Guid.NewGuid();
+        var notification = Notification.CreateWelcome(userId, "user@example.com", "Jane Doe", "welcome-key");
+
+        notification.UserId.Should().Be(userId);
+        notification.Type.Should().Be(NotificationType.Welcome);
+        notification.Status.Should().Be(NotificationStatus.Pending);
+    }
+
+    // --- MarkSent ---
+
+    [Fact]
+    public void MarkSent_WithProviderMessageId_SetsStatusToSentAndStoresId()
+    {
+        var notification = Notification.CreateEmailVerification(Guid.NewGuid(), "user@example.com", "John", null);
+
+        notification.MarkSent("msg-123");
+
+        notification.Status.Should().Be(NotificationStatus.Sent);
+        notification.ProviderMessageId.Should().Be("msg-123");
+        notification.FailureReason.Should().BeNull();
+        notification.SentAtUtc.Should().NotBeNull();
+        notification.SentAtUtc.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void MarkSent_WithNullOrWhitespaceProviderMessageId_SetsProviderMessageIdToNull(string? providerId)
+    {
+        var notification = Notification.CreateEmailVerification(Guid.NewGuid(), "user@example.com", "John", null);
+
+        notification.MarkSent(providerId);
+
+        notification.Status.Should().Be(NotificationStatus.Sent);
+        notification.ProviderMessageId.Should().BeNull();
+    }
+
+    [Fact]
+    public void MarkSent_TrimsProviderMessageId()
+    {
+        var notification = Notification.CreateEmailVerification(Guid.NewGuid(), "user@example.com", "John", null);
+
+        notification.MarkSent("  msg-abc  ");
+
+        notification.ProviderMessageId.Should().Be("msg-abc");
+    }
+
+    // --- MarkFailed ---
+
+    [Fact]
+    public void MarkFailed_WithReason_SetsStatusToFailedAndStoresReason()
+    {
+        var notification = Notification.CreateEmailVerification(Guid.NewGuid(), "user@example.com", "John", null);
+
+        notification.MarkFailed("smtp timeout");
+
+        notification.Status.Should().Be(NotificationStatus.Failed);
+        notification.FailureReason.Should().Be("smtp timeout");
+        notification.ProviderMessageId.Should().BeNull();
+        notification.SentAtUtc.Should().BeNull();
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void MarkFailed_WithNullOrWhitespaceReason_UsesDefaultMessage(string? reason)
+    {
+        var notification = Notification.CreateEmailVerification(Guid.NewGuid(), "user@example.com", "John", null);
+
+        notification.MarkFailed(reason);
+
+        notification.Status.Should().Be(NotificationStatus.Failed);
+        notification.FailureReason.Should().Be("Unknown notification error.");
+    }
+
+    [Fact]
+    public void MarkFailed_TrimsFailureReason()
+    {
+        var notification = Notification.CreateEmailVerification(Guid.NewGuid(), "user@example.com", "John", null);
+
+        notification.MarkFailed("  smtp error  ");
+
+        notification.FailureReason.Should().Be("smtp error");
+    }
+
+    [Fact]
+    public void MarkFailed_AfterMarkSent_ClearsSentAtUtcAndProviderMessageId()
+    {
+        var notification = Notification.CreateEmailVerification(Guid.NewGuid(), "user@example.com", "John", null);
+        notification.MarkSent("msg-123");
+
+        notification.MarkFailed("retry failed");
+
+        notification.Status.Should().Be(NotificationStatus.Failed);
+        notification.ProviderMessageId.Should().BeNull();
+        notification.SentAtUtc.Should().BeNull();
+    }
+}
