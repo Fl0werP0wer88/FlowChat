@@ -9,12 +9,26 @@ namespace FlowChat.UserProfileService.UnitTests;
 
 public sealed class AccountRegisteredSubscriberTests
 {
+    private readonly Mock<IUserProfileInternalApiClient> _apiClientMock = new();
+
+    public AccountRegisteredSubscriberTests()
+    {
+        _apiClientMock
+            .Setup(x => x.CreateInitialUserProfileAsync(It.IsAny<CreateInitialUserProfileRequest>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+    }
+
     [Fact]
     public async Task HandleAsync_MapsEmailAndPhoneToInternalApiRequest()
     {
         var userId = Guid.NewGuid();
-        var internalApiClient = new CapturingUserProfileInternalApiClient();
-        var subscriber = new AccountRegisteredSubscriber(internalApiClient, NullLogger<AccountRegisteredSubscriber>.Instance);
+        CreateInitialUserProfileRequest? capturedRequest = null;
+        _apiClientMock
+            .Setup(x => x.CreateInitialUserProfileAsync(It.IsAny<CreateInitialUserProfileRequest>(), It.IsAny<CancellationToken>()))
+            .Callback<CreateInitialUserProfileRequest, CancellationToken>((req, _) => capturedRequest = req)
+            .Returns(Task.CompletedTask);
+
+        var subscriber = new AccountRegisteredSubscriber(_apiClientMock.Object, NullLogger<AccountRegisteredSubscriber>.Instance);
         var message = new AccountRegisteredIntegrationEvent
         {
             UserId = userId,
@@ -26,19 +40,20 @@ public sealed class AccountRegisteredSubscriberTests
 
         await subscriber.HandleAsync(message, CancellationToken.None);
 
-        var request = Assert.IsType<CreateInitialUserProfileRequest>(internalApiClient.LastRequest);
-        Assert.Equal("jdoe", request.UserName);
-        Assert.Equal("John Doe", request.DisplayName);
-        Assert.Equal("john@example.com", request.Email);
-        Assert.Equal("+48123123123", request.Phone);
-        Assert.Equal(userId, request.UserId);
+        capturedRequest.Should().NotBeNull();
+        capturedRequest!.Should().BeOfType<CreateInitialUserProfileRequest>();
+        capturedRequest.UserName.Should().Be("jdoe");
+        capturedRequest.DisplayName.Should().Be("John Doe");
+        capturedRequest.Email.Should().Be("john@example.com");
+        capturedRequest.Phone.Should().Be("+48123123123");
+        capturedRequest.UserId.Should().Be(userId);
     }
 
     [Fact]
     public async Task HandleAsync_WhenUserNameIsMissing_ThrowsNonTransientException()
     {
         var subscriber = new AccountRegisteredSubscriber(
-            new CapturingUserProfileInternalApiClient(),
+            _apiClientMock.Object,
             NullLogger<AccountRegisteredSubscriber>.Instance);
 
         var exception = await Assert.ThrowsAsync<NonTransientException>(() =>
@@ -53,19 +68,32 @@ public sealed class AccountRegisteredSubscriberTests
                 },
                 CancellationToken.None));
 
-        Assert.Contains("UserName", exception.Message);
+        exception.Message.Should().Contain("UserName");
     }
 
-    private sealed class CapturingUserProfileInternalApiClient : IUserProfileInternalApiClient
+    [Fact]
+    public async Task HandleAsync_WhenPhoneIsMissing_MapsNullPhone()
     {
-        public CreateInitialUserProfileRequest? LastRequest { get; private set; }
+        var userId = Guid.NewGuid();
+        CreateInitialUserProfileRequest? capturedRequest = null;
+        _apiClientMock
+            .Setup(x => x.CreateInitialUserProfileAsync(It.IsAny<CreateInitialUserProfileRequest>(), It.IsAny<CancellationToken>()))
+            .Callback<CreateInitialUserProfileRequest, CancellationToken>((req, _) => capturedRequest = req)
+            .Returns(Task.CompletedTask);
 
-        public Task CreateInitialUserProfileAsync(
-            CreateInitialUserProfileRequest request,
-            CancellationToken cancellationToken)
+        var subscriber = new AccountRegisteredSubscriber(_apiClientMock.Object, NullLogger<AccountRegisteredSubscriber>.Instance);
+        var message = new AccountRegisteredIntegrationEvent
         {
-            LastRequest = request;
-            return Task.CompletedTask;
-        }
+            UserId = userId,
+            UserName = "jdoe",
+            DisplayName = "John Doe",
+            Email = "john@example.com",
+            PhoneNumber = null
+        };
+
+        await subscriber.HandleAsync(message, CancellationToken.None);
+
+        capturedRequest.Should().NotBeNull();
+        capturedRequest!.Phone.Should().BeNull();
     }
 }

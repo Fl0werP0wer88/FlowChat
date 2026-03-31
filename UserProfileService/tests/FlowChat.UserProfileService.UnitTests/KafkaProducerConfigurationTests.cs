@@ -49,18 +49,18 @@ public sealed class KafkaProducerConfigurationTests
         var typedStateChangedProducerOptions = serviceProvider
             .GetRequiredService<IKafkaProducerOptions<UserProfileStateChangedIntegrationEvent>>();
 
-        Assert.Equal("broker:9092", createdProducerOptions.BootstrapServers);
-        Assert.Equal("user-profile-created-topic", createdProducerOptions.Topic);
-        Assert.Equal("broker:9092", emailConfirmedProducerOptions.BootstrapServers);
-        Assert.Equal("user-email-confirmed-topic", emailConfirmedProducerOptions.Topic);
-        Assert.Equal("broker:9092", emailVerificationRequestedProducerOptions.BootstrapServers);
-        Assert.Equal("user-email-verification-topic", emailVerificationRequestedProducerOptions.Topic);
-        Assert.Equal("broker:9092", stateChangedProducerOptions.BootstrapServers);
-        Assert.Equal("user-profile-state-topic", stateChangedProducerOptions.Topic);
-        Assert.Equal("user-profile-created-topic", typedCreatedProducerOptions.Topic);
-        Assert.Equal("user-email-confirmed-topic", typedEmailConfirmedProducerOptions.Topic);
-        Assert.Equal("user-email-verification-topic", typedEmailVerificationRequestedProducerOptions.Topic);
-        Assert.Equal("user-profile-state-topic", typedStateChangedProducerOptions.Topic);
+        createdProducerOptions.BootstrapServers.Should().Be("broker:9092");
+        createdProducerOptions.Topic.Should().Be("user-profile-created-topic");
+        emailConfirmedProducerOptions.BootstrapServers.Should().Be("broker:9092");
+        emailConfirmedProducerOptions.Topic.Should().Be("user-email-confirmed-topic");
+        emailVerificationRequestedProducerOptions.BootstrapServers.Should().Be("broker:9092");
+        emailVerificationRequestedProducerOptions.Topic.Should().Be("user-email-verification-topic");
+        stateChangedProducerOptions.BootstrapServers.Should().Be("broker:9092");
+        stateChangedProducerOptions.Topic.Should().Be("user-profile-state-topic");
+        typedCreatedProducerOptions.Topic.Should().Be("user-profile-created-topic");
+        typedEmailConfirmedProducerOptions.Topic.Should().Be("user-email-confirmed-topic");
+        typedEmailVerificationRequestedProducerOptions.Topic.Should().Be("user-email-verification-topic");
+        typedStateChangedProducerOptions.Topic.Should().Be("user-profile-state-topic");
     }
 
     [Theory]
@@ -87,14 +87,14 @@ public sealed class KafkaProducerConfigurationTests
             .GetSection(UserProfileStateChangedProducerOptions.SectionName)
             .Get<UserProfileStateChangedProducerOptions>();
 
-        Assert.NotNull(producerOptions);
-        Assert.NotNull(emailConfirmedProducerOptions);
-        Assert.NotNull(emailVerificationRequestedProducerOptions);
-        Assert.NotNull(stateChangedProducerOptions);
-        Assert.Equal("dev.flowchat.user-profile.user-profile.v1", producerOptions!.Topic);
-        Assert.Equal("dev.flowchat.user-profile.user-profile.v1", emailConfirmedProducerOptions!.Topic);
-        Assert.Equal("dev.flowchat.notification.email.v1", emailVerificationRequestedProducerOptions!.Topic);
-        Assert.Equal("dev.flowchat.user-profile.user-profile.v1", stateChangedProducerOptions!.Topic);
+        producerOptions.Should().NotBeNull();
+        emailConfirmedProducerOptions.Should().NotBeNull();
+        emailVerificationRequestedProducerOptions.Should().NotBeNull();
+        stateChangedProducerOptions.Should().NotBeNull();
+        producerOptions!.Topic.Should().Be("dev.flowchat.user-profile.user-profile.v1");
+        emailConfirmedProducerOptions!.Topic.Should().Be("dev.flowchat.user-profile.user-profile.v1");
+        emailVerificationRequestedProducerOptions!.Topic.Should().Be("dev.flowchat.notification.email.v1");
+        stateChangedProducerOptions!.Topic.Should().Be("dev.flowchat.user-profile.user-profile.v1");
     }
 
     private static string GetRepositoryPath(string relativePath)

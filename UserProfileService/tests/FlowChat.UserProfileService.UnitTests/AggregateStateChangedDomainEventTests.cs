@@ -1,4 +1,4 @@
-﻿using FlowChat.Shared.Domain;
+using FlowChat.Shared.Domain;
 
 namespace FlowChat.UserProfileService.UnitTests;
 
@@ -13,10 +13,11 @@ public sealed class AggregateStateChangedDomainEventTests
         aggregate.MarkChanged(() => new TestSnapshot("second"));
 
         var stateChangedEvents = aggregate.DomainEvents.OfType<IAggregateStateChangedDomainEvent>().ToList();
-        var @event = Assert.IsType<AggregateStateChangedDomainEvent<TestAggregate, TestSnapshot>>(Assert.Single(aggregate.DomainEvents));
+        var @event = aggregate.DomainEvents.Should().ContainSingle()
+            .Which.Should().BeOfType<AggregateStateChangedDomainEvent<TestAggregate, TestSnapshot>>().Subject;
 
-        Assert.Single(stateChangedEvents);
-        Assert.Equal(new TestSnapshot("second"), @event.AggregateState);
+        stateChangedEvents.Should().ContainSingle();
+        @event.AggregateState.Should().Be(new TestSnapshot("second"));
     }
 
     [Fact]
@@ -37,10 +38,11 @@ public sealed class AggregateStateChangedDomainEventTests
             return new TestSnapshot("second");
         });
 
-        var @event = Assert.IsType<AggregateStateChangedDomainEvent<TestAggregate, TestSnapshot>>(Assert.Single(aggregate.DomainEvents));
+        var @event = aggregate.DomainEvents.Should().ContainSingle()
+            .Which.Should().BeOfType<AggregateStateChangedDomainEvent<TestAggregate, TestSnapshot>>().Subject;
 
-        Assert.Equal(2, calls);
-        Assert.Equal(new TestSnapshot("second"), @event.AggregateState);
+        calls.Should().Be(2);
+        @event.AggregateState.Should().Be(new TestSnapshot("second"));
     }
 
     [Fact]
@@ -52,16 +54,16 @@ public sealed class AggregateStateChangedDomainEventTests
         aggregate.MarkChanged(() => new TestSnapshot("expected"));
 
         var after = DateTimeOffset.UtcNow;
-        var @event = Assert.IsType<AggregateStateChangedDomainEvent<TestAggregate, TestSnapshot>>(Assert.Single(aggregate.DomainEvents));
+        var @event = aggregate.DomainEvents.Should().ContainSingle()
+            .Which.Should().BeOfType<AggregateStateChangedDomainEvent<TestAggregate, TestSnapshot>>().Subject;
 
-        Assert.Equal(aggregate.Id.Value, @event.AggregateId);
-        Assert.Equal(TestAggregate.AggregateTypeName, @event.AggregateType);
-        Assert.Equal(
-            DomainEventBase.GetEventType(typeof(AggregateStateChangedDomainEvent<TestAggregate, TestSnapshot>), TestAggregate.AggregateTypeName),
-            @event.EventType);
-        Assert.Equal(TimeSpan.Zero, @event.OccurredOnUtc.Offset);
-        Assert.InRange(@event.OccurredOnUtc, before, after);
-        Assert.Equal(new TestSnapshot("expected"), @event.AggregateState);
+        @event.AggregateId.Should().Be(aggregate.Id.Value);
+        @event.AggregateType.Should().Be(TestAggregate.AggregateTypeName);
+        @event.EventType.Should().Be(
+            DomainEventBase.GetEventType(typeof(AggregateStateChangedDomainEvent<TestAggregate, TestSnapshot>), TestAggregate.AggregateTypeName));
+        @event.OccurredOnUtc.Offset.Should().Be(TimeSpan.Zero);
+        @event.OccurredOnUtc.Should().BeOnOrAfter(before).And.BeOnOrBefore(after);
+        @event.AggregateState.Should().Be(new TestSnapshot("expected"));
     }
 
     [Fact]
@@ -72,9 +74,9 @@ public sealed class AggregateStateChangedDomainEventTests
         aggregate.AddBusinessEvent();
         aggregate.MarkChanged(() => new TestSnapshot("expected"));
 
-        Assert.Single(aggregate.DomainEvents.OfType<TestBusinessDomainEvent>());
-        Assert.Single(aggregate.DomainEvents.OfType<IAggregateStateChangedDomainEvent>());
-        Assert.Equal(2, aggregate.DomainEvents.Count);
+        aggregate.DomainEvents.OfType<TestBusinessDomainEvent>().Should().ContainSingle();
+        aggregate.DomainEvents.OfType<IAggregateStateChangedDomainEvent>().Should().ContainSingle();
+        aggregate.DomainEvents.Should().HaveCount(2);
     }
 
     private sealed class TestAggregate : AggregateRootBase<TestAggregate>
@@ -100,4 +102,3 @@ public sealed class AggregateStateChangedDomainEventTests
     private sealed class TestBusinessDomainEvent(Id<TestAggregate> aggregateId)
         : DomainEventBase(aggregateId, DateTimeOffset.UtcNow);
 }
-

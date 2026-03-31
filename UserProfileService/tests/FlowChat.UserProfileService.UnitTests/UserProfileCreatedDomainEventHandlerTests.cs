@@ -16,16 +16,31 @@ namespace FlowChat.UserProfileService.UnitTests;
 
 public sealed class UserProfileCreatedDomainEventHandlerTests
 {
-    [Fact]
-    public async Task Handle_PublishesMappedUserProfileCreatedIntegrationEvent()
+    private readonly IMapper _mapper;
+    private readonly Mock<IIntegrationEventPublisher> _publisherMock = new();
+    private readonly Mock<IEmailVerificationRequestIssuer> _issuerMock = new();
+
+    public UserProfileCreatedDomainEventHandlerTests()
     {
-        var mapper = new MapperConfiguration(
+        _mapper = new MapperConfiguration(
                 configuration => configuration.AddProfile<DomainEventToIntegrationEventProfile>(),
                 NullLoggerFactory.Instance)
             .CreateMapper();
-        var publisher = new CapturingIntegrationEventPublisher();
-        var issuer = new CapturingEmailVerificationRequestIssuer();
-        var handler = new UserProfileCreatedDomainEventHandler(publisher, mapper, issuer);
+
+        _publisherMock
+            .Setup(x => x.PublishToOutboxAsync(It.IsAny<UserProfileCreatedIntegrationEvent>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        _issuerMock
+            .Setup(x => x.IssueAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Guid userProfileId, Guid emailId, string _, CancellationToken _) =>
+                EmailVerificationRequest.Create(userProfileId, emailId, Guid.NewGuid().ToString("N"), DateTime.UtcNow.AddHours(24)));
+    }
+
+    [Fact]
+    public async Task Handle_PublishesMappedUserProfileCreatedIntegrationEvent()
+    {
+        var handler = new UserProfileCreatedDomainEventHandler(_publisherMock.Object, _mapper, _issuerMock.Object);
         var userProfileId = Id<UserProfile>.New();
         var mainEmailId = Id<DomainEmail>.New();
         var domainEvent = new UserProfileCreatedDomainEvent(
@@ -42,59 +57,60 @@ public sealed class UserProfileCreatedDomainEventHandlerTests
             true,
             false);
 
+        UserProfileCreatedIntegrationEvent? capturedEvent = null;
+        _publisherMock
+            .Setup(x => x.PublishToOutboxAsync(It.IsAny<UserProfileCreatedIntegrationEvent>(), It.IsAny<CancellationToken>()))
+            .Callback<UserProfileCreatedIntegrationEvent, CancellationToken>((evt, _) => capturedEvent = evt)
+            .Returns(Task.CompletedTask);
+
         await handler.Handle(domainEvent, CancellationToken.None);
 
-        var integrationEvent = Assert.IsType<UserProfileCreatedIntegrationEvent>(Assert.Single(publisher.PublishedEvents));
-        Assert.Equal(userProfileId.Value, integrationEvent.UserProfileId);
-        Assert.Equal(userProfileId.Value.ToString(), integrationEvent.Key);
-        Assert.Equal("jdoe", integrationEvent.UserName);
-        Assert.Equal("John Doe", integrationEvent.DisplayName);
-        Assert.Equal("john@example.com", integrationEvent.MainEmail);
-        Assert.Equal("+48123123123", integrationEvent.MainPhone);
-        Assert.Equal("https://cdn.example/avatar.png", integrationEvent.AvatarUrl);
-        Assert.Equal("about me", integrationEvent.Bio);
-        Assert.True(integrationEvent.IsActive);
-        Assert.Equal(new DateTime(2026, 3, 10, 9, 0, 0, DateTimeKind.Utc), integrationEvent.LastSeenAtUtc);
-        Assert.True(integrationEvent.IsEmailVisible);
-        Assert.False(integrationEvent.IsPhoneVisible);
-        Assert.Equal(userProfileId.Value, issuer.LastUserProfileId);
-        Assert.Equal(mainEmailId.Value, issuer.LastEmailId);
-        Assert.Equal("john@example.com", issuer.LastEmailAddress);
+        capturedEvent.Should().NotBeNull();
+        capturedEvent!.UserProfileId.Should().Be(userProfileId.Value);
+        capturedEvent.Key.Should().Be(userProfileId.Value.ToString());
+        capturedEvent.UserName.Should().Be("jdoe");
+        capturedEvent.DisplayName.Should().Be("John Doe");
+        capturedEvent.MainEmail.Should().Be("john@example.com");
+        capturedEvent.MainPhone.Should().Be("+48123123123");
+        capturedEvent.AvatarUrl.Should().Be("https://cdn.example/avatar.png");
+        capturedEvent.Bio.Should().Be("about me");
+        capturedEvent.IsActive.Should().BeTrue();
+        capturedEvent.LastSeenAtUtc.Should().Be(new DateTime(2026, 3, 10, 9, 0, 0, DateTimeKind.Utc));
+        capturedEvent.IsEmailVisible.Should().BeTrue();
+        capturedEvent.IsPhoneVisible.Should().BeFalse();
+
+        _issuerMock.Verify(x => x.IssueAsync(userProfileId.Value, mainEmailId.Value, "john@example.com", It.IsAny<CancellationToken>()), Times.Once);
     }
 
-    private sealed class CapturingIntegrationEventPublisher : IIntegrationEventPublisher
+    [Fact]
+    public async Task Handle_WithoutPhone_MapsNullMainPhone()
     {
-        public List<IntegrationEvent> PublishedEvents { get; } = [];
+        var handler = new UserProfileCreatedDomainEventHandler(_publisherMock.Object, _mapper, _issuerMock.Object);
+        var userProfileId = Id<UserProfile>.New();
+        var mainEmailId = Id<DomainEmail>.New();
+        var domainEvent = new UserProfileCreatedDomainEvent(
+            userProfileId,
+            mainEmailId,
+            "jdoe",
+            "John Doe",
+            EmailAddress.Create("john@example.com"),
+            null,
+            null,
+            null,
+            true,
+            null,
+            true,
+            false);
 
-        public Task PublishToOutboxAsync<TEvent>(TEvent message, CancellationToken cancellationToken)
-            where TEvent : IntegrationEvent
-        {
-            PublishedEvents.Add(message);
-            return Task.CompletedTask;
-        }
-    }
+        UserProfileCreatedIntegrationEvent? capturedEvent = null;
+        _publisherMock
+            .Setup(x => x.PublishToOutboxAsync(It.IsAny<UserProfileCreatedIntegrationEvent>(), It.IsAny<CancellationToken>()))
+            .Callback<UserProfileCreatedIntegrationEvent, CancellationToken>((evt, _) => capturedEvent = evt)
+            .Returns(Task.CompletedTask);
 
-    private sealed class CapturingEmailVerificationRequestIssuer : IEmailVerificationRequestIssuer
-    {
-        public Guid? LastUserProfileId { get; private set; }
-        public Guid? LastEmailId { get; private set; }
-        public string? LastEmailAddress { get; private set; }
+        await handler.Handle(domainEvent, CancellationToken.None);
 
-        public Task<EmailVerificationRequest> IssueAsync(
-            Guid userProfileId,
-            Guid emailId,
-            string emailAddress,
-            CancellationToken cancellationToken)
-        {
-            LastUserProfileId = userProfileId;
-            LastEmailId = emailId;
-            LastEmailAddress = emailAddress;
-
-            return Task.FromResult(EmailVerificationRequest.Create(
-                userProfileId,
-                emailId,
-                Guid.NewGuid().ToString("N"),
-                DateTime.UtcNow.AddHours(24)));
-        }
+        capturedEvent.Should().NotBeNull();
+        capturedEvent!.MainPhone.Should().BeNull();
     }
 }

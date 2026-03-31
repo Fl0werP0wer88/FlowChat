@@ -36,16 +36,16 @@ public sealed class UserProfileInternalApiClientTests
             },
             CancellationToken.None);
 
-        Assert.NotNull(handler.LastRequest);
-        Assert.Equal("https://localhost:7148/internal/userprofiles/initial", handler.LastRequest!.RequestUri!.ToString());
-        Assert.Equal("internal-key", handler.LastRequest.Headers.GetValues(UserProfileInternalApiClient.ApiKeyHeaderName).Single());
+        handler.LastRequest.Should().NotBeNull();
+        handler.LastRequest!.RequestUri!.ToString().Should().Be("https://localhost:7148/internal/userprofiles/initial");
+        handler.LastRequest.Headers.GetValues(UserProfileInternalApiClient.ApiKeyHeaderName).Single().Should().Be("internal-key");
 
         var payload = JsonSerializer.Deserialize<CreateInitialUserProfileRequest>(
             requestBody!,
             new JsonSerializerOptions(JsonSerializerDefaults.Web));
-        Assert.NotNull(payload);
-        Assert.Equal("jdoe", payload!.UserName);
-        Assert.Equal("John Doe", payload.DisplayName);
+        payload.Should().NotBeNull();
+        payload!.UserName.Should().Be("jdoe");
+        payload.DisplayName.Should().Be("John Doe");
     }
 
     [Fact]
@@ -64,7 +64,7 @@ public sealed class UserProfileInternalApiClientTests
         var exception = await Assert.ThrowsAsync<NonTransientException>(() =>
             client.CreateInitialUserProfileAsync(new CreateInitialUserProfileRequest(), CancellationToken.None));
 
-        Assert.Contains("409", exception.Message);
+        exception.Message.Should().Contain("409");
     }
 
     private sealed class CapturingHttpMessageHandler(

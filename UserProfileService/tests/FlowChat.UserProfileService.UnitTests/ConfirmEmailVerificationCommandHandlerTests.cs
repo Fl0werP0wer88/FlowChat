@@ -12,73 +12,134 @@ namespace FlowChat.UserProfileService.UnitTests;
 
 public sealed class ConfirmEmailVerificationCommandHandlerTests
 {
+    private readonly Mock<IUserProfileWriteRepository> _userProfileRepositoryMock = new();
+    private readonly Mock<IEmailVerificationRequestWriteRepository> _verificationRequestRepositoryMock = new();
+    private readonly Mock<IEmailVerificationTokenProtector> _tokenProtectorMock = new();
+    private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
+    private readonly Mock<IDomainEventDispatcher> _dispatcherMock = new();
+    private readonly ConfirmEmailVerificationCommandHandler _handler;
+
+    public ConfirmEmailVerificationCommandHandlerTests()
+    {
+        // Default: token is tampered (unprotect returns false)
+        EmailVerificationTokenPayload? nullPayload = null;
+        _tokenProtectorMock
+            .Setup(x => x.TryUnprotect(It.IsAny<string>(), out nullPayload))
+            .Returns(false);
+
+        _userProfileRepositoryMock
+            .Setup(x => x.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((UserProfile?)null);
+
+        _verificationRequestRepositoryMock
+            .Setup(x => x.GetByNonceAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((EmailVerificationRequest?)null);
+
+        _unitOfWorkMock
+            .Setup(x => x.ExecuteInTransactionAsync(
+                It.IsAny<Func<CancellationToken, Task<FlowChatResult<Unit>>>>(),
+                It.IsAny<CancellationToken>()))
+            .Returns<Func<CancellationToken, Task<FlowChatResult<Unit>>>, CancellationToken>((op, ct) => op(ct));
+
+        _handler = new ConfirmEmailVerificationCommandHandler(
+            _userProfileRepositoryMock.Object,
+            _verificationRequestRepositoryMock.Object,
+            _tokenProtectorMock.Object,
+            _unitOfWorkMock.Object,
+            _dispatcherMock.Object);
+    }
+
+    private async Task<FlowChatResult<Unit>> SendAsync(ConfirmEmailVerificationCommand command)
+    {
+        var validator = new ConfirmEmailVerificationCommandValidator();
+        var validationResult = await validator.ValidateAsync(command);
+
+        if (!validationResult.IsValid)
+        {
+            var errors = validationResult.Errors.Select(e => e.ErrorMessage).ToList();
+            return FlowChatResult<Unit>.Failure(DomainError.Validation(errors: errors));
+        }
+
+        return await _handler.Handle(command, CancellationToken.None);
+    }
+
+    private static UserProfile CreateUserProfile(string emailAddress)
+    {
+        var userProfile = UserProfile.Create("jdoe", "John Doe", EmailAddress.Create(emailAddress), id: Id<UserProfile>.New());
+        userProfile.ClearEvents();
+        return userProfile;
+    }
+
     [Fact]
     public async Task Handle_WithValidToken_ConfirmsEmailAndConsumesRequest()
     {
         var profile = CreateUserProfile("john@example.com");
-        var email = Assert.Single(profile.Emails);
+        var email = profile.Emails.Should().ContainSingle().Subject;
         var verificationRequest = EmailVerificationRequest.Create(
             profile.Id,
             email.Id,
             "valid-nonce",
             DateTime.UtcNow.AddHours(24));
-        var userProfileRepository = new TestUserProfileRepository(profile);
-        var verificationRequestRepository = new TestEmailVerificationRequestRepository(verificationRequest);
-        var sut = new ConfirmEmailVerificationCommandHandler(
-            userProfileRepository,
-            verificationRequestRepository,
-            new TestEmailVerificationTokenProtector(new EmailVerificationTokenPayload(profile.Id.Value, email.Id.Value, verificationRequest.Nonce)),
-            new TestUnitOfWork(),
-            new TestDomainEventDispatcher());
 
-        var result = await sut.Handle(new ConfirmEmailVerificationCommand("valid-token"), CancellationToken.None);
+        var payload = new EmailVerificationTokenPayload(profile.Id.Value, email.Id.Value, verificationRequest.Nonce);
+        _tokenProtectorMock
+            .Setup(x => x.TryUnprotect("valid-token", out payload))
+            .Returns(true);
 
-        Assert.True(result.IsSuccess);
-        Assert.Equal(Unit.Value, result.Value);
-        Assert.True(email.IsConfirmed);
-        Assert.NotNull(verificationRequest.ConsumedAtUtc);
+        _verificationRequestRepositoryMock
+            .Setup(x => x.GetByNonceAsync("valid-nonce", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(verificationRequest);
+
+        _userProfileRepositoryMock
+            .Setup(x => x.GetByIdAsync(profile.Id.Value, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(profile);
+
+        var result = await SendAsync(new ConfirmEmailVerificationCommand("valid-token"));
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().Be(Unit.Value);
+        email.IsConfirmed.Should().BeTrue();
+        verificationRequest.ConsumedAtUtc.Should().NotBeNull();
     }
 
     [Fact]
     public async Task Handle_WithTamperedToken_ReturnsValidationFailure()
     {
-        var sut = new ConfirmEmailVerificationCommandHandler(
-            new TestUserProfileRepository(null),
-            new TestEmailVerificationRequestRepository(null),
-            new TestEmailVerificationTokenProtector(null),
-            new TestUnitOfWork(),
-            new TestDomainEventDispatcher());
+        // Default setup: token protector returns false
 
-        var result = await sut.Handle(new ConfirmEmailVerificationCommand("invalid-token"), CancellationToken.None);
+        var result = await SendAsync(new ConfirmEmailVerificationCommand("invalid-token"));
 
-        Assert.True(result.IsFailure);
-        Assert.Equal(ErrorType.Validation, result.Error.ErrorType);
-        Assert.Equal("Email verification link is invalid or has expired.", result.Error.ErrorMessage);
+        result.IsFailure.Should().BeTrue();
+        result.Error.ErrorType.Should().Be(ErrorType.Validation);
+        result.Error.ErrorMessage.Should().Be("Email verification link is invalid or has expired.");
     }
 
     [Fact]
     public async Task Handle_WithConsumedRequest_ReturnsValidationFailure()
     {
         var profile = CreateUserProfile("john@example.com");
-        var email = Assert.Single(profile.Emails);
+        var email = profile.Emails.Should().ContainSingle().Subject;
         var verificationRequest = EmailVerificationRequest.Create(
             profile.Id,
             email.Id,
             "used-nonce",
             DateTime.UtcNow.AddHours(24));
         verificationRequest.Consume(DateTime.UtcNow);
-        var sut = new ConfirmEmailVerificationCommandHandler(
-            new TestUserProfileRepository(profile),
-            new TestEmailVerificationRequestRepository(verificationRequest),
-            new TestEmailVerificationTokenProtector(new EmailVerificationTokenPayload(profile.Id.Value, email.Id.Value, verificationRequest.Nonce)),
-            new TestUnitOfWork(),
-            new TestDomainEventDispatcher());
 
-        var result = await sut.Handle(new ConfirmEmailVerificationCommand("used-token"), CancellationToken.None);
+        var payload = new EmailVerificationTokenPayload(profile.Id.Value, email.Id.Value, verificationRequest.Nonce);
+        _tokenProtectorMock
+            .Setup(x => x.TryUnprotect("used-token", out payload))
+            .Returns(true);
 
-        Assert.True(result.IsFailure);
-        Assert.Equal(ErrorType.Validation, result.Error.ErrorType);
-        Assert.Equal("Email verification link is invalid or has expired.", result.Error.ErrorMessage);
+        _verificationRequestRepositoryMock
+            .Setup(x => x.GetByNonceAsync("used-nonce", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(verificationRequest);
+
+        var result = await SendAsync(new ConfirmEmailVerificationCommand("used-token"));
+
+        result.IsFailure.Should().BeTrue();
+        result.Error.ErrorType.Should().Be(ErrorType.Validation);
+        result.Error.ErrorMessage.Should().Be("Email verification link is invalid or has expired.");
     }
 
     [Fact]
@@ -91,98 +152,49 @@ public sealed class ConfirmEmailVerificationCommandHandlerTests
             Id<Email>.FromGuid(emailId),
             "missing-profile-nonce",
             DateTime.UtcNow.AddHours(24));
-        var sut = new ConfirmEmailVerificationCommandHandler(
-            new TestUserProfileRepository(null),
-            new TestEmailVerificationRequestRepository(verificationRequest),
-            new TestEmailVerificationTokenProtector(new EmailVerificationTokenPayload(userProfileId, emailId, verificationRequest.Nonce)),
-            new TestUnitOfWork(),
-            new TestDomainEventDispatcher());
 
-        var result = await sut.Handle(new ConfirmEmailVerificationCommand("valid-token"), CancellationToken.None);
+        var payload = new EmailVerificationTokenPayload(userProfileId, emailId, verificationRequest.Nonce);
+        _tokenProtectorMock
+            .Setup(x => x.TryUnprotect("valid-token", out payload))
+            .Returns(true);
 
-        Assert.True(result.IsFailure);
-        Assert.Equal(ErrorType.NotFound, result.Error.ErrorType);
-        Assert.Equal($"User profile '{userProfileId}' was not found.", result.Error.ErrorMessage);
+        _verificationRequestRepositoryMock
+            .Setup(x => x.GetByNonceAsync("missing-profile-nonce", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(verificationRequest);
+
+        // userProfileRepositoryMock returns null by default
+
+        var result = await SendAsync(new ConfirmEmailVerificationCommand("valid-token"));
+
+        result.IsFailure.Should().BeTrue();
+        result.Error.ErrorType.Should().Be(ErrorType.NotFound);
+        result.Error.ErrorMessage.Should().Be($"User profile '{userProfileId}' was not found.");
     }
 
-    private static UserProfile CreateUserProfile(string emailAddress)
+    [Fact]
+    public async Task Handle_WithExpiredRequest_ReturnsValidationFailure()
     {
-        var userProfile = UserProfile.Create("jdoe", "John Doe", EmailAddress.Create(emailAddress), id: Id<UserProfile>.New());
-        userProfile.ClearEvents();
-        return userProfile;
-    }
+        var profile = CreateUserProfile("john@example.com");
+        var email = profile.Emails.Should().ContainSingle().Subject;
+        var verificationRequest = EmailVerificationRequest.Create(
+            profile.Id,
+            email.Id,
+            "expired-nonce",
+            DateTime.UtcNow.AddHours(-1)); // already expired
 
-    private sealed class TestEmailVerificationTokenProtector(EmailVerificationTokenPayload? payload)
-        : IEmailVerificationTokenProtector
-    {
-        public string Protect(EmailVerificationTokenPayload tokenPayload) => "unused";
+        var payload = new EmailVerificationTokenPayload(profile.Id.Value, email.Id.Value, verificationRequest.Nonce);
+        _tokenProtectorMock
+            .Setup(x => x.TryUnprotect("expired-token", out payload))
+            .Returns(true);
 
-        public bool TryUnprotect(string token, out EmailVerificationTokenPayload? unprotectedPayload)
-        {
-            unprotectedPayload = payload;
-            return payload is not null;
-        }
-    }
+        _verificationRequestRepositoryMock
+            .Setup(x => x.GetByNonceAsync("expired-nonce", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(verificationRequest);
 
-    private sealed class TestUserProfileRepository(UserProfile? userProfile) : IUserProfileWriteRepository
-    {
-        public Task<UserProfile?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
-            Task.FromResult(userProfile?.Id.Value == id ? userProfile : null);
+        var result = await SendAsync(new ConfirmEmailVerificationCommand("expired-token"));
 
-        public Task<UserProfile> AddAsync(UserProfile entity, CancellationToken cancellationToken = default) =>
-            Task.FromResult(entity);
-
-        public Task UpdateAsync(UserProfile entity, CancellationToken cancellationToken = default) =>
-            Task.CompletedTask;
-
-        public Task DeleteAsync(UserProfile entity, CancellationToken cancellationToken = default) =>
-            Task.CompletedTask;
-    }
-
-    private sealed class TestEmailVerificationRequestRepository(EmailVerificationRequest? verificationRequest)
-        : IEmailVerificationRequestWriteRepository
-    {
-        public Task<EmailVerificationRequest?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
-            Task.FromResult(verificationRequest?.Id.Value == id ? verificationRequest : null);
-
-        public Task<EmailVerificationRequest> AddAsync(EmailVerificationRequest entity, CancellationToken cancellationToken = default) =>
-            Task.FromResult(entity);
-
-        public Task UpdateAsync(EmailVerificationRequest entity, CancellationToken cancellationToken = default) =>
-            Task.CompletedTask;
-
-        public Task DeleteAsync(EmailVerificationRequest entity, CancellationToken cancellationToken = default) =>
-            Task.CompletedTask;
-
-        public Task<IReadOnlyList<EmailVerificationRequest>> GetActiveByEmailIdAsync(
-            Guid emailId,
-            CancellationToken cancellationToken = default) =>
-            Task.FromResult<IReadOnlyList<EmailVerificationRequest>>([]);
-
-        public Task<EmailVerificationRequest?> GetByNonceAsync(
-            string nonce,
-            CancellationToken cancellationToken = default) =>
-            Task.FromResult(verificationRequest?.Nonce == nonce ? verificationRequest : null);
-    }
-
-    private sealed class TestUnitOfWork : IUnitOfWork
-    {
-        public void Dispose()
-        {
-        }
-
-        public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default) =>
-            Task.FromResult(0);
-
-        public Task<T> ExecuteInTransactionAsync<T>(
-            Func<CancellationToken, Task<T>> operation,
-            CancellationToken cancellationToken) =>
-            operation(cancellationToken);
-    }
-
-    private sealed class TestDomainEventDispatcher : IDomainEventDispatcher
-    {
-        public Task DispatchAsync(IEnumerable<IDomainEvent> domainEvents, CancellationToken cancellationToken = default) =>
-            Task.CompletedTask;
+        result.IsFailure.Should().BeTrue();
+        result.Error.ErrorType.Should().Be(ErrorType.Validation);
+        result.Error.ErrorMessage.Should().Be("Email verification link is invalid or has expired.");
     }
 }

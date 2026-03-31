@@ -1,4 +1,3 @@
-﻿using CSharpFunctionalExtensions;
 using FlowChat.Shared.Domain;
 using FlowChat.UserProfileService.Api.Features.UserProfiles.Internal.CreateInitialUserProfile;
 using FlowChat.UserProfileService.Application.Features.UserProfiles.Commands.CreateInitialUserProfile;
@@ -14,17 +13,45 @@ namespace FlowChat.UserProfileService.UnitTests;
 
 public sealed class CreateInitialUserProfileControllerTests
 {
+    private readonly Mock<IMediator> _mediatorMock = new();
+
+    public CreateInitialUserProfileControllerTests()
+    {
+        _mediatorMock
+            .Setup(x => x.Send(It.IsAny<CreateInitialUserProfileCommand>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(FlowChatResult<Guid>.Success(Guid.NewGuid()));
+    }
+
+    private CreateInitialUserProfileController CreateController(string apiKey)
+    {
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["FlowChat:InternalApi:ApiKey"] = apiKey
+            })
+            .Build();
+
+        return new CreateInitialUserProfileController(_mediatorMock.Object, new ApiSettingsManager(configuration));
+    }
+
+    private static void SetupHttpContext(CreateInitialUserProfileController controller, string? apiKeyHeader = null)
+    {
+        var httpContext = new DefaultHttpContext
+        {
+            RequestServices = new SingleServiceProvider(new TestProblemDetailsFactory())
+        };
+        if (apiKeyHeader is not null)
+        {
+            httpContext.Request.Headers["X-Internal-Api-Key"] = apiKeyHeader;
+        }
+        controller.ControllerContext = new ControllerContext { HttpContext = httpContext };
+    }
+
     [Fact]
     public async Task CreateInitialUserProfile_WhenApiKeyMissing_ReturnsUnauthorized()
     {
-        var controller = CreateController("expected-key", out _);
-        controller.ControllerContext = new ControllerContext
-        {
-            HttpContext = new DefaultHttpContext
-            {
-                RequestServices = new SingleServiceProvider(new TestProblemDetailsFactory())
-            }
-        };
+        var controller = CreateController("expected-key");
+        SetupHttpContext(controller); // no header
 
         var result = await controller.CreateInitialUserProfile(
             new CreateInitialUserProfileRequest
@@ -35,92 +62,38 @@ public sealed class CreateInitialUserProfileControllerTests
             },
             CancellationToken.None);
 
-        Assert.IsType<UnauthorizedResult>(result);
+        result.Should().BeOfType<UnauthorizedResult>();
     }
 
     [Fact]
     public async Task CreateInitialUserProfile_WhenApiKeyMatches_DispatchesCommand()
     {
-        var controller = CreateController("expected-key", out var mediator);
-        var httpContext = new DefaultHttpContext
-        {
-            RequestServices = new SingleServiceProvider(new TestProblemDetailsFactory())
-        };
-        httpContext.Request.Headers["X-Internal-Api-Key"] = "expected-key";
-        controller.ControllerContext = new ControllerContext
-        {
-            HttpContext = httpContext
-        };
+        var controller = CreateController("expected-key");
+        SetupHttpContext(controller, "expected-key");
+        CreateInitialUserProfileCommand? capturedCommand = null;
+        _mediatorMock
+            .Setup(x => x.Send(It.IsAny<IRequest<FlowChatResult<Guid>>>(), It.IsAny<CancellationToken>()))
+            .Callback<IRequest<FlowChatResult<Guid>>, CancellationToken>((request, _) => capturedCommand = request as CreateInitialUserProfileCommand)
+            .ReturnsAsync(FlowChatResult<Guid>.Success(Guid.NewGuid()));
+
+        var userId = Guid.NewGuid();
 
         var result = await controller.CreateInitialUserProfile(
             new CreateInitialUserProfileRequest
             {
-                UserId = Guid.NewGuid(),
+                UserId = userId,
                 UserName = "jdoe",
                 DisplayName = "John Doe",
                 Email = "john@example.com"
             },
             CancellationToken.None);
 
-        Assert.IsType<AcceptedResult>(result);
-        var command = Assert.IsType<CreateInitialUserProfileCommand>(mediator.LastSentRequest);
-        Assert.Equal("jdoe", command.UserName);
-        Assert.Equal("John Doe", command.DisplayName);
-        Assert.Equal("john@example.com", command.Email);
-    }
-
-    private static CreateInitialUserProfileController CreateController(string apiKey, out CapturingMediator mediator)
-    {
-        mediator = new CapturingMediator();
-        var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                ["FlowChat:InternalApi:ApiKey"] = apiKey
-            })
-            .Build();
-
-        return new CreateInitialUserProfileController(mediator, new ApiSettingsManager(configuration));
-    }
-
-    private sealed class CapturingMediator : IMediator
-    {
-        public object? LastSentRequest { get; private set; }
-
-        public Task Publish(object notification, CancellationToken cancellationToken = default) =>
-            Task.CompletedTask;
-
-        public Task Publish<TNotification>(TNotification notification, CancellationToken cancellationToken = default)
-            where TNotification : INotification =>
-            Task.CompletedTask;
-
-        public Task<TResponse> Send<TResponse>(IRequest<TResponse> request, CancellationToken cancellationToken = default)
-        {
-            LastSentRequest = request;
-            return Task.FromResult((TResponse)(object)FlowChatResult<Guid>.Success(Guid.NewGuid()));
-        }
-
-        public Task Send<TRequest>(TRequest request, CancellationToken cancellationToken = default)
-            where TRequest : IRequest
-        {
-            LastSentRequest = request;
-            return Task.CompletedTask;
-        }
-
-        public Task<object?> Send(object request, CancellationToken cancellationToken = default)
-        {
-            LastSentRequest = request;
-            return Task.FromResult<object?>(FlowChatResult<Guid>.Success(Guid.NewGuid()));
-        }
-
-        public IAsyncEnumerable<TResponse> CreateStream<TResponse>(
-            IStreamRequest<TResponse> request,
-            CancellationToken cancellationToken = default) =>
-            AsyncEnumerable.Empty<TResponse>();
-
-        public IAsyncEnumerable<object?> CreateStream(
-            object request,
-            CancellationToken cancellationToken = default) =>
-            AsyncEnumerable.Empty<object?>();
+        result.Should().BeOfType<AcceptedResult>();
+        capturedCommand.Should().NotBeNull();
+        capturedCommand!.UserId.Should().Be(userId);
+        capturedCommand.UserName.Should().Be("jdoe");
+        capturedCommand.DisplayName.Should().Be("John Doe");
+        capturedCommand.Email.Should().Be("john@example.com");
     }
 
     private sealed class SingleServiceProvider(object service) : IServiceProvider
@@ -165,4 +138,3 @@ public sealed class CreateInitialUserProfileControllerTests
             };
     }
 }
-

@@ -1,4 +1,3 @@
-﻿using CSharpFunctionalExtensions;
 using FlowChat.Shared.Domain;
 using FlowChat.UserProfileService.Api.Features.UserProfiles.Public.AddEmail;
 using FlowChat.UserProfileService.Api.Features.UserProfiles.Public.AddPhone;
@@ -16,66 +15,9 @@ namespace FlowChat.UserProfileService.UnitTests;
 
 public sealed class UserProfilesControllerTests
 {
-    [Fact]
-    public async Task AddEmail_ReturnsOk_WithNewEmailId()
-    {
-        var emailId = Guid.NewGuid();
-        var mediator = new TestMediator(request =>
-            request switch
-            {
-                AddEmailCommand => FlowChatResult<Guid>.Success(emailId),
-                _ => throw new InvalidOperationException("Unexpected request.")
-            });
-        var controller = CreateController(new AddEmailController(mediator));
+    private readonly Mock<IMediator> _mediatorMock = new();
 
-        var result = await controller.AddEmail(Guid.NewGuid(), new AddEmailRequest("john@example.com"), CancellationToken.None);
-
-        var ok = Assert.IsType<OkObjectResult>(result);
-        var response = Assert.IsType<AddEmailResponse>(ok.Value);
-        Assert.Equal(emailId, response.EmailId);
-    }
-
-    [Fact]
-    public async Task AddPhone_ReturnsOk_WithNewPhoneId()
-    {
-        var phoneId = Guid.NewGuid();
-        var mediator = new TestMediator(request =>
-            request switch
-            {
-                AddPhoneCommand => FlowChatResult<Guid>.Success(phoneId),
-                _ => throw new InvalidOperationException("Unexpected request.")
-            });
-        var controller = CreateController(new AddPhoneController(mediator));
-
-        var result = await controller.AddPhone(Guid.NewGuid(), new AddPhoneRequest("+48123123123"), CancellationToken.None);
-
-        var ok = Assert.IsType<OkObjectResult>(result);
-        var response = Assert.IsType<AddPhoneResponse>(ok.Value);
-        Assert.Equal(phoneId, response.PhoneId);
-    }
-
-    [Fact]
-    public async Task GetById_ReturnsProblemDetails_WhenProfileIsMissing()
-    {
-        var userId = Guid.NewGuid();
-        var mediator = new TestMediator(request =>
-            request switch
-            {
-                GetUserProfileQuery => FlowChatResult<UserProfileDto>.Failure(
-                    DomainError.NotFound($"User profile '{userId}' was not found.")),
-                _ => throw new InvalidOperationException("Unexpected request.")
-            });
-        var controller = CreateController(new UserProfilesController(mediator));
-
-        var result = await controller.GetById(userId, CancellationToken.None);
-
-        var notFound = Assert.IsType<NotFoundObjectResult>(result);
-        var problemDetails = Assert.IsType<ProblemDetails>(notFound.Value);
-        Assert.Equal(StatusCodes.Status404NotFound, problemDetails.Status);
-        Assert.Equal($"User profile '{userId}' was not found.", problemDetails.Detail);
-    }
-
-    private static TController CreateController<TController>(TController controller)
+    private static TController SetupController<TController>(TController controller)
         where TController : ControllerBase
     {
         controller.ControllerContext = new ControllerContext
@@ -85,36 +27,92 @@ public sealed class UserProfilesControllerTests
                 RequestServices = new SingleServiceProvider(new TestProblemDetailsFactory())
             }
         };
-
         return controller;
     }
 
-    private sealed class TestMediator(Func<object, object?> handler) : IMediator
+    [Fact]
+    public async Task AddEmail_ReturnsOk_WithNewEmailId()
     {
-        public Task Publish(object notification, CancellationToken cancellationToken = default) =>
-            Task.CompletedTask;
+        var emailId = Guid.NewGuid();
+        _mediatorMock
+            .Setup(x => x.Send(It.IsAny<AddEmailCommand>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(FlowChatResult<Guid>.Success(emailId));
 
-        public Task Publish<TNotification>(TNotification notification, CancellationToken cancellationToken = default)
-            where TNotification : INotification =>
-            Task.CompletedTask;
+        var controller = SetupController(new AddEmailController(_mediatorMock.Object));
 
-        public Task<TResponse> Send<TResponse>(IRequest<TResponse> request, CancellationToken cancellationToken = default) =>
-            Task.FromResult((TResponse)handler(request)!);
+        var result = await controller.AddEmail(Guid.NewGuid(), new AddEmailRequest("john@example.com"), CancellationToken.None);
 
-        public Task Send<TRequest>(TRequest request, CancellationToken cancellationToken = default)
-            where TRequest : IRequest =>
-            Task.CompletedTask;
+        var ok = result.Should().BeOfType<OkObjectResult>().Subject;
+        var response = ok.Value.Should().BeOfType<AddEmailResponse>().Subject;
+        response.EmailId.Should().Be(emailId);
+    }
 
-        public Task<object?> Send(object request, CancellationToken cancellationToken = default) =>
-            Task.FromResult(handler(request));
+    [Fact]
+    public async Task AddPhone_ReturnsOk_WithNewPhoneId()
+    {
+        var phoneId = Guid.NewGuid();
+        _mediatorMock
+            .Setup(x => x.Send(It.IsAny<AddPhoneCommand>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(FlowChatResult<Guid>.Success(phoneId));
 
-        public IAsyncEnumerable<TResponse> CreateStream<TResponse>(
-            IStreamRequest<TResponse> request,
-            CancellationToken cancellationToken = default) =>
-            AsyncEnumerable.Empty<TResponse>();
+        var controller = SetupController(new AddPhoneController(_mediatorMock.Object));
 
-        public IAsyncEnumerable<object?> CreateStream(object request, CancellationToken cancellationToken = default) =>
-            AsyncEnumerable.Empty<object?>();
+        var result = await controller.AddPhone(Guid.NewGuid(), new AddPhoneRequest("+48123123123"), CancellationToken.None);
+
+        var ok = result.Should().BeOfType<OkObjectResult>().Subject;
+        var response = ok.Value.Should().BeOfType<AddPhoneResponse>().Subject;
+        response.PhoneId.Should().Be(phoneId);
+    }
+
+    [Fact]
+    public async Task GetById_ReturnsProblemDetails_WhenProfileIsMissing()
+    {
+        var userId = Guid.NewGuid();
+        _mediatorMock
+            .Setup(x => x.Send(It.IsAny<GetUserProfileQuery>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(FlowChatResult<UserProfileDto>.Failure(
+                DomainError.NotFound($"User profile '{userId}' was not found.")));
+
+        var controller = SetupController(new UserProfilesController(_mediatorMock.Object));
+
+        var result = await controller.GetById(userId, CancellationToken.None);
+
+        var notFound = result.Should().BeOfType<NotFoundObjectResult>().Subject;
+        var problemDetails = notFound.Value.Should().BeOfType<ProblemDetails>().Subject;
+        problemDetails.Status.Should().Be(StatusCodes.Status404NotFound);
+        problemDetails.Detail.Should().Be($"User profile '{userId}' was not found.");
+    }
+
+    [Fact]
+    public async Task AddEmail_WhenCommandFails_ReturnsProblemDetails()
+    {
+        _mediatorMock
+            .Setup(x => x.Send(It.IsAny<AddEmailCommand>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(FlowChatResult<Guid>.Failure(DomainError.Conflict("Email 'john@example.com' is already taken.")));
+
+        var controller = SetupController(new AddEmailController(_mediatorMock.Object));
+
+        var result = await controller.AddEmail(Guid.NewGuid(), new AddEmailRequest("john@example.com"), CancellationToken.None);
+
+        result.Should().BeOfType<ConflictObjectResult>();
+    }
+
+    [Fact]
+    public async Task GetById_ReturnsOk_WhenProfileFound()
+    {
+        var userId = Guid.NewGuid();
+        var dto = new UserProfileDto(userId, "jdoe", "John Doe", null, null, true, null, [], []);
+        _mediatorMock
+            .Setup(x => x.Send(It.IsAny<GetUserProfileQuery>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(FlowChatResult<UserProfileDto>.Success(dto));
+
+        var controller = SetupController(new UserProfilesController(_mediatorMock.Object));
+
+        var result = await controller.GetById(userId, CancellationToken.None);
+
+        var ok = result.Should().BeOfType<OkObjectResult>().Subject;
+        var response = ok.Value.Should().BeOfType<GetUserProfileResponse>().Subject;
+        response.UserProfile.Should().BeEquivalentTo(dto);
     }
 
     private sealed class SingleServiceProvider(object service) : IServiceProvider
@@ -131,9 +129,8 @@ public sealed class UserProfilesControllerTests
             string? title = null,
             string? type = null,
             string? detail = null,
-            string? instance = null)
-        {
-            return new ProblemDetails
+            string? instance = null) =>
+            new()
             {
                 Status = statusCode,
                 Title = title,
@@ -141,7 +138,6 @@ public sealed class UserProfilesControllerTests
                 Detail = detail,
                 Instance = instance
             };
-        }
 
         public override ValidationProblemDetails CreateValidationProblemDetails(
             HttpContext httpContext,
@@ -150,9 +146,8 @@ public sealed class UserProfilesControllerTests
             string? title = null,
             string? type = null,
             string? detail = null,
-            string? instance = null)
-        {
-            return new ValidationProblemDetails(modelStateDictionary)
+            string? instance = null) =>
+            new(modelStateDictionary)
             {
                 Status = statusCode,
                 Title = title,
@@ -160,7 +155,5 @@ public sealed class UserProfilesControllerTests
                 Detail = detail,
                 Instance = instance
             };
-        }
     }
 }
-

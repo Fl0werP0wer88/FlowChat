@@ -11,128 +11,139 @@ namespace FlowChat.UserProfileService.UnitTests;
 
 public sealed class SendEmailVerificationCommandHandlerTests
 {
-    [Fact]
-    public async Task Handle_WithUnconfirmedEmail_IssuesVerificationRequest()
+    private readonly Mock<IUserProfileReadRepository> _readRepositoryMock = new();
+    private readonly Mock<IEmailVerificationRequestIssuer> _issuerMock = new();
+    private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
+    private readonly Mock<IDomainEventDispatcher> _dispatcherMock = new();
+    private readonly SendEmailVerificationCommandHandler _handler;
+
+    public SendEmailVerificationCommandHandlerTests()
     {
-        var profile = CreateUserProfile("john@example.com");
-        var email = Assert.Single(profile.Emails);
-        var repository = new TestUserProfileRepository(profile);
-        var emailVerificationRequestIssuer = new TestEmailVerificationRequestIssuer();
-        var sut = new SendEmailVerificationCommandHandler(
-            repository,
-            emailVerificationRequestIssuer,
-            new TestUnitOfWork(),
-            new TestDomainEventDispatcher());
+        _readRepositoryMock
+            .Setup(x => x.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((UserProfileDto?)null);
 
-        var result = await sut.Handle(new SendEmailVerificationCommand(profile.Id, email.Id), CancellationToken.None);
+        _issuerMock
+            .Setup(x => x.IssueAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Guid userProfileId, Guid emailId, string emailAddress, CancellationToken _) =>
+                EmailVerificationRequest.Create(userProfileId, emailId, Guid.NewGuid().ToString("N"), DateTime.UtcNow.AddHours(24)));
 
-        Assert.True(result.IsSuccess);
-        Assert.Equal(emailVerificationRequestIssuer.LastRequestId, result.Value);
-        Assert.Equal(email.Id, emailVerificationRequestIssuer.LastEmailId);
+        _unitOfWorkMock
+            .Setup(x => x.ExecuteInTransactionAsync(
+                It.IsAny<Func<CancellationToken, Task<FlowChatResult<Guid>>>>(),
+                It.IsAny<CancellationToken>()))
+            .Returns<Func<CancellationToken, Task<FlowChatResult<Guid>>>, CancellationToken>((op, ct) => op(ct));
+
+        _handler = new SendEmailVerificationCommandHandler(
+            _readRepositoryMock.Object,
+            _issuerMock.Object,
+            _unitOfWorkMock.Object,
+            _dispatcherMock.Object);
     }
 
-    [Fact]
-    public async Task Handle_WithConfirmedEmail_ReturnsValidationFailure()
+    private async Task<FlowChatResult<Guid>> SendAsync(SendEmailVerificationCommand command)
     {
-        var profile = CreateUserProfile("john@example.com", isConfirmed: true);
-        var email = Assert.Single(profile.Emails);
-        var repository = new TestUserProfileRepository(profile);
-        var sut = new SendEmailVerificationCommandHandler(
-            repository,
-            new TestEmailVerificationRequestIssuer(),
-            new TestUnitOfWork(),
-            new TestDomainEventDispatcher());
+        var validator = new SendEmailVerificationCommandValidator();
+        var validationResult = await validator.ValidateAsync(command);
 
-        var result = await sut.Handle(new SendEmailVerificationCommand(profile.Id, email.Id), CancellationToken.None);
+        if (!validationResult.IsValid)
+        {
+            var errors = validationResult.Errors.Select(e => e.ErrorMessage).ToList();
+            return FlowChatResult<Guid>.Failure(DomainError.Validation(errors: errors));
+        }
 
-        Assert.True(result.IsFailure);
-        Assert.Equal(ErrorType.Validation, result.Error.ErrorType);
-        Assert.Equal($"Email '{email.Address}' is already confirmed.", result.Error.ErrorMessage);
+        return await _handler.Handle(command, CancellationToken.None);
     }
 
-    private static UserProfileDto CreateUserProfile(string emailAddress, bool isConfirmed = false) =>
+    private static UserProfileDto CreateUserProfileDto(Guid profileId, string email, bool isConfirmed = false) =>
         new(
-            Guid.NewGuid(),
+            profileId,
             "jdoe",
             "John Doe",
             null,
             null,
             true,
             null,
-            [
-                new EmailDto(Guid.NewGuid(), EmailAddress.Create(emailAddress).Value, true, true, isConfirmed)
-            ],
+            [new EmailDto(Guid.NewGuid(), EmailAddress.Create(email).Value, true, true, isConfirmed)],
             []);
 
-    private sealed class TestEmailVerificationRequestIssuer : IEmailVerificationRequestIssuer
+    [Fact]
+    public async Task Handle_WithUnconfirmedEmail_IssuesVerificationRequest()
     {
-        public Guid? LastUserProfileId { get; private set; }
-        public Guid? LastEmailId { get; private set; }
-        public string? LastEmailAddress { get; private set; }
-        public Guid LastRequestId { get; private set; }
+        var profileId = Guid.NewGuid();
+        var dto = CreateUserProfileDto(profileId, "john@example.com");
+        var emailId = dto.Emails[0].Id;
 
-        public Task<EmailVerificationRequest> IssueAsync(
-            Guid userProfileId,
-            Guid emailId,
-            string emailAddress,
-            CancellationToken cancellationToken)
-        {
-            LastUserProfileId = userProfileId;
-            LastEmailId = emailId;
-            LastEmailAddress = emailAddress;
-            var verificationRequest = EmailVerificationRequest.Create(
-                userProfileId,
-                emailId,
-                Guid.NewGuid().ToString("N"),
-                DateTime.UtcNow.AddHours(24));
-            LastRequestId = verificationRequest.Id.Value;
+        _readRepositoryMock
+            .Setup(x => x.GetByIdAsync(profileId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(dto);
 
-            return Task.FromResult(verificationRequest);
-        }
+        EmailVerificationRequest? issuedRequest = null;
+        _issuerMock
+            .Setup(x => x.IssueAsync(profileId, emailId, "john@example.com", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Guid upId, Guid eId, string _, CancellationToken _) =>
+            {
+                issuedRequest = EmailVerificationRequest.Create(upId, eId, Guid.NewGuid().ToString("N"), DateTime.UtcNow.AddHours(24));
+                return issuedRequest;
+            });
+
+        var result = await SendAsync(new SendEmailVerificationCommand(profileId, emailId));
+
+        result.IsSuccess.Should().BeTrue();
+        issuedRequest.Should().NotBeNull();
+        result.Value.Should().Be(issuedRequest!.Id.Value);
+        _issuerMock.Verify(x => x.IssueAsync(profileId, emailId, "john@example.com", It.IsAny<CancellationToken>()), Times.Once);
     }
 
-    private sealed class TestUserProfileRepository(UserProfileDto userProfile) : IUserProfileReadRepository
+    [Fact]
+    public async Task Handle_WithConfirmedEmail_ReturnsValidationFailure()
     {
-        public Task<UserProfileDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
-            Task.FromResult(userProfile.Id == id ? userProfile : null);
+        var profileId = Guid.NewGuid();
+        var dto = CreateUserProfileDto(profileId, "john@example.com", isConfirmed: true);
+        var emailId = dto.Emails[0].Id;
 
-        public Task<IReadOnlyList<UserProfileDto>> GetAllAsync(CancellationToken cancellationToken = default) =>
-            Task.FromResult<IReadOnlyList<UserProfileDto>>([]);
+        _readRepositoryMock
+            .Setup(x => x.GetByIdAsync(profileId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(dto);
 
-        public Task<IReadOnlyList<UserProfileDto>> GetActiveAsync(CancellationToken cancellationToken = default) =>
-            Task.FromResult<IReadOnlyList<UserProfileDto>>([]);
+        var result = await SendAsync(new SendEmailVerificationCommand(profileId, emailId));
 
-        public Task<UserProfileDto?> GetByUserNameAsync(string userName, CancellationToken cancellationToken = default) =>
-            Task.FromResult<UserProfileDto?>(null);
-
-        public Task<bool> EmailAddressExistsAsync(string emailAddress, CancellationToken cancellationToken = default) =>
-            Task.FromResult(false);
-
-        public Task<bool> UserNameExistsAsync(
-            string userName,
-            Guid? excludedUserId = null,
-            CancellationToken cancellationToken = default) =>
-            Task.FromResult(false);
+        result.IsFailure.Should().BeTrue();
+        result.Error.ErrorType.Should().Be(ErrorType.Validation);
+        result.Error.ErrorMessage.Should().Be($"Email 'john@example.com' is already confirmed.");
+        _issuerMock.Verify(x => x.IssueAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
-    private sealed class TestUnitOfWork : IUnitOfWork
+    [Fact]
+    public async Task Handle_WithMissingProfile_ReturnsNotFound()
     {
-        public void Dispose()
-        {
-        }
+        var profileId = Guid.NewGuid();
+        var emailId = Guid.NewGuid();
 
-        public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default) =>
-            Task.FromResult(0);
+        // default setup returns null
 
-        public Task<T> ExecuteInTransactionAsync<T>(
-            Func<CancellationToken, Task<T>> operation,
-            CancellationToken cancellationToken) =>
-            operation(cancellationToken);
+        var result = await SendAsync(new SendEmailVerificationCommand(profileId, emailId));
+
+        result.IsFailure.Should().BeTrue();
+        result.Error.ErrorType.Should().Be(ErrorType.NotFound);
+        _issuerMock.Verify(x => x.IssueAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
-    private sealed class TestDomainEventDispatcher : IDomainEventDispatcher
+    [Fact]
+    public async Task Handle_WithEmailNotInProfile_ReturnsNotFound()
     {
-        public Task DispatchAsync(IEnumerable<IDomainEvent> domainEvents, CancellationToken cancellationToken = default) =>
-            Task.CompletedTask;
+        var profileId = Guid.NewGuid();
+        var dto = CreateUserProfileDto(profileId, "john@example.com");
+        var wrongEmailId = Guid.NewGuid();
+
+        _readRepositoryMock
+            .Setup(x => x.GetByIdAsync(profileId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(dto);
+
+        var result = await SendAsync(new SendEmailVerificationCommand(profileId, wrongEmailId));
+
+        result.IsFailure.Should().BeTrue();
+        result.Error.ErrorType.Should().Be(ErrorType.NotFound);
+        _issuerMock.Verify(x => x.IssueAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 }

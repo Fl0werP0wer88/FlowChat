@@ -11,6 +11,38 @@ namespace FlowChat.UserProfileService.UnitTests;
 
 public sealed class EmailVerificationRequestIssuerTests
 {
+    private readonly Mock<IEmailVerificationRequestWriteRepository> _repositoryMock = new();
+    private readonly Mock<IEmailVerificationTokenProtector> _tokenProtectorMock = new();
+    private readonly Mock<IEmailVerificationLinkBuilder> _linkBuilderMock = new();
+    private readonly Mock<IIntegrationEventPublisher> _publisherMock = new();
+
+    public EmailVerificationRequestIssuerTests()
+    {
+        _tokenProtectorMock
+            .Setup(x => x.Protect(It.IsAny<EmailVerificationTokenPayload>()))
+            .Returns("protected-token");
+
+        _linkBuilderMock
+            .Setup(x => x.BuildEmailVerificationLink(It.IsAny<string>()))
+            .Returns<string>(token => $"https://frontend.flowchat.local/email-verification?token={token}");
+
+        _publisherMock
+            .Setup(x => x.PublishToOutboxAsync(It.IsAny<EmailVerificationRequestIntegrationEvent>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        _repositoryMock
+            .Setup(x => x.GetActiveByEmailIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([]);
+
+        _repositoryMock
+            .Setup(x => x.AddAsync(It.IsAny<EmailVerificationRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((EmailVerificationRequest entity, CancellationToken _) => entity);
+
+        _repositoryMock
+            .Setup(x => x.UpdateAsync(It.IsAny<EmailVerificationRequest>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+    }
+
     [Fact]
     public async Task IssueAsync_InvalidatesExistingRequestsAndPublishesIntegrationEvent()
     {
@@ -21,104 +53,50 @@ public sealed class EmailVerificationRequestIssuerTests
             emailId,
             "existing-nonce",
             DateTime.UtcNow.AddHours(6));
-        var repository = new TestEmailVerificationRequestRepository([existingRequest]);
-        var tokenProtector = new TestEmailVerificationTokenProtector();
-        var linkBuilder = new TestEmailVerificationLinkBuilder();
-        var integrationEventPublisher = new TestIntegrationEventPublisher();
+
+        _repositoryMock
+            .Setup(x => x.GetActiveByEmailIdAsync(emailId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync([existingRequest]);
+
+        EmailVerificationRequest? addedEntity = null;
+        _repositoryMock
+            .Setup(x => x.AddAsync(It.IsAny<EmailVerificationRequest>(), It.IsAny<CancellationToken>()))
+            .Callback<EmailVerificationRequest, CancellationToken>((entity, _) => addedEntity = entity)
+            .ReturnsAsync((EmailVerificationRequest entity, CancellationToken _) => entity);
+
+        EmailVerificationTokenPayload? capturedPayload = null;
+        _tokenProtectorMock
+            .Setup(x => x.Protect(It.IsAny<EmailVerificationTokenPayload>()))
+            .Callback<EmailVerificationTokenPayload>(p => capturedPayload = p)
+            .Returns("protected-token");
+
+        EmailVerificationRequestIntegrationEvent? capturedEvent = null;
+        _publisherMock
+            .Setup(x => x.PublishToOutboxAsync(It.IsAny<EmailVerificationRequestIntegrationEvent>(), It.IsAny<CancellationToken>()))
+            .Callback<EmailVerificationRequestIntegrationEvent, CancellationToken>((evt, _) => capturedEvent = evt)
+            .Returns(Task.CompletedTask);
+
         var sut = new EmailVerificationRequestIssuer(
-            repository,
-            tokenProtector,
-            linkBuilder,
-            integrationEventPublisher);
+            _repositoryMock.Object,
+            _tokenProtectorMock.Object,
+            _linkBuilderMock.Object,
+            _publisherMock.Object);
 
         var result = await sut.IssueAsync(userProfileId, emailId, "john@example.com", CancellationToken.None);
 
-        Assert.NotNull(existingRequest.InvalidatedAtUtc);
-        Assert.Same(result, repository.AddedEntity);
-        Assert.NotNull(tokenProtector.LastPayload);
-        Assert.Equal(userProfileId, tokenProtector.LastPayload!.UserProfileId);
-        Assert.Equal(emailId, tokenProtector.LastPayload.EmailId);
-        Assert.Equal(result.Nonce, tokenProtector.LastPayload.Nonce);
-        Assert.NotNull(integrationEventPublisher.LastPublishedEvent);
-        Assert.Equal(result.Id.Value.ToString(), integrationEventPublisher.LastPublishedEvent!.Key);
-        Assert.Equal(userProfileId, integrationEventPublisher.LastPublishedEvent.UserId);
-        Assert.Equal("john@example.com", integrationEventPublisher.LastPublishedEvent.UserEmail);
-        Assert.Equal("https://frontend.flowchat.local/email-verification?token=protected-token", integrationEventPublisher.LastPublishedEvent.ConfirmationLink);
-    }
+        existingRequest.InvalidatedAtUtc.Should().NotBeNull();
+        addedEntity.Should().NotBeNull();
+        addedEntity.Should().BeSameAs(result);
 
-    private sealed class TestEmailVerificationRequestRepository(
-        IReadOnlyList<EmailVerificationRequest>? activeRequests = null)
-        : IEmailVerificationRequestWriteRepository
-    {
-        private readonly List<EmailVerificationRequest> _requests = activeRequests?.ToList() ?? [];
+        capturedPayload.Should().NotBeNull();
+        capturedPayload!.UserProfileId.Should().Be(userProfileId);
+        capturedPayload.EmailId.Should().Be(emailId);
+        capturedPayload.Nonce.Should().Be(result.Nonce);
 
-        public EmailVerificationRequest? AddedEntity { get; private set; }
-
-        public Task<EmailVerificationRequest?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
-            Task.FromResult(_requests.FirstOrDefault(x => x.Id.Value == id));
-
-        public Task<EmailVerificationRequest> AddAsync(EmailVerificationRequest entity, CancellationToken cancellationToken = default)
-        {
-            AddedEntity = entity;
-            _requests.Add(entity);
-            return Task.FromResult(entity);
-        }
-
-        public Task UpdateAsync(EmailVerificationRequest entity, CancellationToken cancellationToken = default) =>
-            Task.CompletedTask;
-
-        public Task DeleteAsync(EmailVerificationRequest entity, CancellationToken cancellationToken = default)
-        {
-            _requests.Remove(entity);
-            return Task.CompletedTask;
-        }
-
-        public Task<IReadOnlyList<EmailVerificationRequest>> GetActiveByEmailIdAsync(
-            Guid emailId,
-            CancellationToken cancellationToken = default)
-        {
-            var requests = _requests.Where(x => x.EmailId.Value == emailId && x.IsActive(DateTime.UtcNow)).ToArray();
-            return Task.FromResult((IReadOnlyList<EmailVerificationRequest>)requests);
-        }
-
-        public Task<EmailVerificationRequest?> GetByNonceAsync(
-            string nonce,
-            CancellationToken cancellationToken = default) =>
-            Task.FromResult(_requests.FirstOrDefault(x => x.Nonce == nonce));
-    }
-
-    private sealed class TestEmailVerificationTokenProtector : IEmailVerificationTokenProtector
-    {
-        public EmailVerificationTokenPayload? LastPayload { get; private set; }
-
-        public string Protect(EmailVerificationTokenPayload payload)
-        {
-            LastPayload = payload;
-            return "protected-token";
-        }
-
-        public bool TryUnprotect(string token, out EmailVerificationTokenPayload? payload)
-        {
-            payload = null;
-            return false;
-        }
-    }
-
-    private sealed class TestEmailVerificationLinkBuilder : IEmailVerificationLinkBuilder
-    {
-        public string BuildEmailVerificationLink(string token) =>
-            $"https://frontend.flowchat.local/email-verification?token={token}";
-    }
-
-    private sealed class TestIntegrationEventPublisher : IIntegrationEventPublisher
-    {
-        public EmailVerificationRequestIntegrationEvent? LastPublishedEvent { get; private set; }
-
-        public Task PublishToOutboxAsync<TEvent>(TEvent message, CancellationToken cancellationToken)
-            where TEvent : IntegrationEvent
-        {
-            LastPublishedEvent = message as EmailVerificationRequestIntegrationEvent;
-            return Task.CompletedTask;
-        }
+        capturedEvent.Should().NotBeNull();
+        capturedEvent!.Key.Should().Be(result.Id.Value.ToString());
+        capturedEvent.UserId.Should().Be(userProfileId);
+        capturedEvent.UserEmail.Should().Be("john@example.com");
+        capturedEvent.ConfirmationLink.Should().Be("https://frontend.flowchat.local/email-verification?token=protected-token");
     }
 }

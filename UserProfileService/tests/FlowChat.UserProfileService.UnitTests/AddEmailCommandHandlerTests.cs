@@ -3,7 +3,6 @@ using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
 using FlowChat.UserProfileService.Application.Contracts.Persistence;
 using FlowChat.UserProfileService.Application.Features.UserProfiles.Commands.AddEmail;
-using FlowChat.UserProfileService.Application.Features.UserProfiles.Queries.GetUserProfile;
 using FlowChat.UserProfileService.Domain.Entities;
 using FlowChat.UserProfileService.Domain.Events;
 
@@ -11,152 +10,137 @@ namespace FlowChat.UserProfileService.UnitTests;
 
 public sealed class AddEmailCommandHandlerTests
 {
+    private readonly IFixture _fixture = new Fixture();
+    private readonly Mock<IUserProfileReadRepository> _readRepositoryMock = new();
+    private readonly Mock<IUserProfileWriteRepository> _writeRepositoryMock = new();
+    private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
+    private readonly Mock<IDomainEventDispatcher> _dispatcherMock = new();
+    private readonly AddEmailCommandHandler _handler;
+
+    public AddEmailCommandHandlerTests()
+    {
+        _readRepositoryMock
+            .Setup(x => x.EmailAddressExistsAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(false);
+
+        _writeRepositoryMock
+            .Setup(x => x.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((UserProfile?)null);
+
+        _unitOfWorkMock
+            .Setup(x => x.ExecuteInTransactionAsync(
+                It.IsAny<Func<CancellationToken, Task<FlowChatResult<Guid>>>>(),
+                It.IsAny<CancellationToken>()))
+            .Returns<Func<CancellationToken, Task<FlowChatResult<Guid>>>, CancellationToken>((op, ct) => op(ct));
+
+        _handler = new AddEmailCommandHandler(
+            _readRepositoryMock.Object,
+            _writeRepositoryMock.Object,
+            _unitOfWorkMock.Object,
+            _dispatcherMock.Object);
+    }
+
+    private async Task<FlowChatResult<Guid>> SendAsync(AddEmailCommand command)
+    {
+        var validator = new AddEmailCommandValidator();
+        var validationResult = await validator.ValidateAsync(command);
+
+        if (!validationResult.IsValid)
+        {
+            var errors = validationResult.Errors.Select(e => e.ErrorMessage).ToList();
+            return FlowChatResult<Guid>.Failure(DomainError.Validation(errors: errors));
+        }
+
+        return await _handler.Handle(command, CancellationToken.None);
+    }
+
+    private static UserProfile CreateProfile(string emailAddress)
+    {
+        var profile = UserProfile.Create("jdoe", "John Doe", EmailAddress.Create(emailAddress), id: Id<UserProfile>.New());
+        profile.ClearEvents();
+        return profile;
+    }
+
     [Fact]
     public async Task Handle_WithEmptyUserIdAndMissingAddress_ReturnsSingleValidationFailureWithBothErrors()
     {
-        var repository = new TestUserProfileRepository();
-        var handler = new AddEmailCommandHandler(
-            repository,
-            repository,
-            new TestUnitOfWork(),
-            new TestDomainEventDispatcher());
+        var result = await SendAsync(new AddEmailCommand(Guid.Empty, null));
 
-        var result = await handler.Handle(new AddEmailCommand(Guid.Empty, null), CancellationToken.None);
-
-        Assert.True(result.IsFailure);
-        Assert.Equal(ErrorType.Validation, result.Error.ErrorType);
-        Assert.Equal("Validation Failed.", result.Error.ErrorMessage);
-        Assert.Equal(["UserId is required.", "Email address is required."], result.Error.Errors);
+        result.IsFailure.Should().BeTrue();
+        result.Error.ErrorType.Should().Be(ErrorType.Validation);
+        result.Error.ErrorMessage.Should().Be("Validation Failed.");
+        result.Error.Errors.Should().Equal("UserId is required.", "Email address is required.");
     }
 
     [Fact]
     public async Task Handle_WithInvalidAddress_ReturnsValidationFailure()
     {
-        var profile = CreateUserProfile("primary@example.com");
-        var repository = new TestUserProfileRepository(profile);
-        var handler = new AddEmailCommandHandler(
-            repository,
-            repository,
-            new TestUnitOfWork(),
-            new TestDomainEventDispatcher());
+        var profile = CreateProfile("primary@example.com");
+        _writeRepositoryMock
+            .Setup(x => x.GetByIdAsync(profile.Id.Value, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(profile);
 
-        var result = await handler.Handle(new AddEmailCommand(profile.Id.Value, "not-an-email"), CancellationToken.None);
+        var result = await SendAsync(new AddEmailCommand(profile.Id.Value, "not-an-email"));
 
-        Assert.True(result.IsFailure);
-        Assert.Equal(ErrorType.Validation, result.Error.ErrorType);
-        Assert.Equal([EmailAddress.InvalidEmailAddressMessage], result.Error.Errors);
+        result.IsFailure.Should().BeTrue();
+        result.Error.ErrorType.Should().Be(ErrorType.Validation);
+        result.Error.Errors.Should().Equal(EmailAddress.InvalidEmailAddressMessage);
     }
 
     [Fact]
     public async Task Handle_WithDuplicateAddressIgnoringCase_ReturnsConflict()
     {
-        var profile = CreateUserProfile("john@example.com");
-        profile.ClearEvents();
-        var repository = new TestUserProfileRepository(profile);
-        var handler = new AddEmailCommandHandler(
-            repository,
-            repository,
-            new TestUnitOfWork(),
-            new TestDomainEventDispatcher());
+        var profile = CreateProfile("john@example.com");
+        _writeRepositoryMock
+            .Setup(x => x.GetByIdAsync(profile.Id.Value, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(profile);
+        _readRepositoryMock
+            .Setup(x => x.EmailAddressExistsAsync("john@example.com", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
 
-        var result = await handler.Handle(new AddEmailCommand(profile.Id.Value, "JOHN@example.com"), CancellationToken.None);
+        var result = await SendAsync(new AddEmailCommand(profile.Id.Value, "JOHN@example.com"));
 
-        Assert.True(result.IsFailure);
-        Assert.Equal(ErrorType.Conflict, result.Error.ErrorType);
-        Assert.Equal("Email 'john@example.com' is already taken.", result.Error.ErrorMessage);
+        result.IsFailure.Should().BeTrue();
+        result.Error.ErrorType.Should().Be(ErrorType.Conflict);
+        result.Error.ErrorMessage.Should().Be("Email 'john@example.com' is already taken.");
     }
 
     [Fact]
-    public async Task Handle_WithUniqueAddress_AddsEmailAndDispatchesEmailAddedDomainEvent()
+    public async Task Handle_WithUniqueAddress_AddsEmailAndReturnsEmailId()
     {
-        var profile = CreateUserProfile("primary@example.com");
-        profile.ClearEvents();
-        var repository = new TestUserProfileRepository(profile);
-        var domainEventDispatcher = new TestDomainEventDispatcher();
-        var handler = new AddEmailCommandHandler(
-            repository,
-            repository,
-            new TestUnitOfWork(),
-            domainEventDispatcher);
+        var profile = CreateProfile("primary@example.com");
+        _writeRepositoryMock
+            .Setup(x => x.GetByIdAsync(profile.Id.Value, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(profile);
 
-        var result = await handler.Handle(new AddEmailCommand(profile.Id.Value, "secondary@example.com"), CancellationToken.None);
+        var result = await SendAsync(new AddEmailCommand(profile.Id.Value, "secondary@example.com"));
 
-        Assert.True(result.IsSuccess);
-        var addedEmail = Assert.Single(profile.Emails.Where(x => x.Address.Value == "secondary@example.com"));
-        Assert.Equal(addedEmail.Id.Value, result.Value);
-        var emailAddedEvent = Assert.Single(domainEventDispatcher.DispatchedEvents.OfType<EmailAddedDomainEvent>());
-        Assert.Equal(profile.Id, emailAddedEvent.UserProfileId);
-        Assert.Equal(addedEmail.Id, emailAddedEvent.EmailId);
-        Assert.Equal("secondary@example.com", emailAddedEvent.Email.Value);
+        result.IsSuccess.Should().BeTrue();
+        var addedEmail = profile.Emails.Single(x => x.Address.Value == "secondary@example.com");
+        result.Value.Should().Be(addedEmail.Id.Value);
     }
 
-    private static UserProfile CreateUserProfile(string emailAddress)
+    [Fact]
+    public async Task Handle_WithUniqueAddress_DispatchesEmailAddedDomainEvent()
     {
-        var userProfile = UserProfile.Create("jdoe", "John Doe", EmailAddress.Create(emailAddress), id: Id<UserProfile>.New());
-        userProfile.ClearEvents();
-        return userProfile;
-    }
+        var profile = CreateProfile("primary@example.com");
+        _writeRepositoryMock
+            .Setup(x => x.GetByIdAsync(profile.Id.Value, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(profile);
 
-    private sealed class TestUserProfileRepository(UserProfile? userProfile = null)
-        : IUserProfileReadRepository, IUserProfileWriteRepository
-    {
-        public Task<UserProfile?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
-            Task.FromResult(userProfile?.Id.Value == id ? userProfile : null);
+        List<IDomainEvent> dispatchedEvents = [];
+        _dispatcherMock
+            .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<IDomainEvent>>(), It.IsAny<CancellationToken>()))
+            .Callback<IEnumerable<IDomainEvent>, CancellationToken>((events, _) => dispatchedEvents.AddRange(events))
+            .Returns(Task.CompletedTask);
 
-        Task<UserProfileDto?> IReadRepository<UserProfileDto>.GetByIdAsync(Guid id, CancellationToken cancellationToken) =>
-            Task.FromResult<UserProfileDto?>(null);
+        var result = await SendAsync(new AddEmailCommand(profile.Id.Value, "secondary@example.com"));
 
-        Task<IReadOnlyList<UserProfileDto>> IReadRepository<UserProfileDto>.GetAllAsync(CancellationToken cancellationToken) =>
-            Task.FromResult<IReadOnlyList<UserProfileDto>>([]);
-
-        public Task<UserProfile> AddAsync(UserProfile entity, CancellationToken cancellationToken = default) =>
-            Task.FromResult(entity);
-
-        public Task UpdateAsync(UserProfile entity, CancellationToken cancellationToken = default) =>
-            Task.CompletedTask;
-
-        public Task DeleteAsync(UserProfile entity, CancellationToken cancellationToken = default) =>
-            Task.CompletedTask;
-
-        public Task<IReadOnlyList<UserProfileDto>> GetActiveAsync(CancellationToken cancellationToken = default) =>
-            Task.FromResult<IReadOnlyList<UserProfileDto>>([]);
-
-        public Task<UserProfileDto?> GetByUserNameAsync(string userName, CancellationToken cancellationToken = default) =>
-            Task.FromResult<UserProfileDto?>(null);
-
-        public Task<bool> EmailAddressExistsAsync(string emailAddress, CancellationToken cancellationToken = default) =>
-            Task.FromResult(userProfile?.Emails.Any(x => x.Address == EmailAddress.Create(emailAddress)) ?? false);
-
-        public Task<bool> UserNameExistsAsync(
-            string userName,
-            Guid? excludedUserId = null,
-            CancellationToken cancellationToken = default) =>
-            Task.FromResult(false);
-    }
-
-    private sealed class TestUnitOfWork : IUnitOfWork
-    {
-        public void Dispose()
-        {
-        }
-
-        public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default) =>
-            Task.FromResult(0);
-
-        public Task<T> ExecuteInTransactionAsync<T>(
-            Func<CancellationToken, Task<T>> operation,
-            CancellationToken cancellationToken) =>
-            operation(cancellationToken);
-    }
-
-    private sealed class TestDomainEventDispatcher : IDomainEventDispatcher
-    {
-        public List<IDomainEvent> DispatchedEvents { get; } = [];
-
-        public Task DispatchAsync(IEnumerable<IDomainEvent> domainEvents, CancellationToken cancellationToken = default)
-        {
-            DispatchedEvents.AddRange(domainEvents);
-            return Task.CompletedTask;
-        }
+        result.IsSuccess.Should().BeTrue();
+        var addedEmail = profile.Emails.Single(x => x.Address.Value == "secondary@example.com");
+        var emailAddedEvent = dispatchedEvents.OfType<EmailAddedDomainEvent>().Should().ContainSingle().Subject;
+        emailAddedEvent.UserProfileId.Should().Be(profile.Id);
+        emailAddedEvent.EmailId.Should().Be(addedEmail.Id);
+        emailAddedEvent.Email.Value.Should().Be("secondary@example.com");
     }
 }

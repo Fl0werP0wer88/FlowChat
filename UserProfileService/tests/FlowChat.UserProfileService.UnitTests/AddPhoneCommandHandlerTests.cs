@@ -4,101 +4,133 @@ using FlowChat.Shared.Domain.ValueObjects;
 using FlowChat.UserProfileService.Application.Contracts.Persistence;
 using FlowChat.UserProfileService.Application.Features.UserProfiles.Commands.AddPhone;
 using FlowChat.UserProfileService.Domain.Entities;
+using FlowChat.UserProfileService.Domain.Events;
 
 namespace FlowChat.UserProfileService.UnitTests;
 
 public sealed class AddPhoneCommandHandlerTests
 {
-    [Fact]
-    public async Task Handle_WithEmptyUserIdAndMissingNumber_ReturnsSingleValidationFailureWithBothErrors()
+    private readonly IFixture _fixture = new Fixture();
+    private readonly Mock<IUserProfileWriteRepository> _writeRepositoryMock = new();
+    private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
+    private readonly Mock<IDomainEventDispatcher> _dispatcherMock = new();
+    private readonly AddPhoneCommandHandler _handler;
+
+    public AddPhoneCommandHandlerTests()
     {
-        var handler = new AddPhoneCommandHandler(
-            new TestUserProfileRepository(),
-            new TestUnitOfWork(),
-            new TestDomainEventDispatcher());
+        _writeRepositoryMock
+            .Setup(x => x.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((UserProfile?)null);
 
-        var result = await handler.Handle(new AddPhoneCommand(Guid.Empty, null), CancellationToken.None);
+        _unitOfWorkMock
+            .Setup(x => x.ExecuteInTransactionAsync(
+                It.IsAny<Func<CancellationToken, Task<FlowChatResult<Guid>>>>(),
+                It.IsAny<CancellationToken>()))
+            .Returns<Func<CancellationToken, Task<FlowChatResult<Guid>>>, CancellationToken>((op, ct) => op(ct));
 
-        Assert.True(result.IsFailure);
-        Assert.Equal(ErrorType.Validation, result.Error.ErrorType);
-        Assert.Equal("Validation Failed.", result.Error.ErrorMessage);
-        Assert.Equal(["UserId is required.", "Phone number is required."], result.Error.Errors);
+        _handler = new AddPhoneCommandHandler(
+            _writeRepositoryMock.Object,
+            _unitOfWorkMock.Object,
+            _dispatcherMock.Object);
     }
 
-    [Fact]
-    public async Task Handle_WithInvalidNumber_ReturnsValidationFailure()
+    private async Task<FlowChatResult<Guid>> SendAsync(AddPhoneCommand command)
     {
-        var profile = CreateUserProfile();
-        var handler = new AddPhoneCommandHandler(
-            new TestUserProfileRepository(profile),
-            new TestUnitOfWork(),
-            new TestDomainEventDispatcher());
+        var validator = new AddPhoneCommandValidator();
+        var validationResult = await validator.ValidateAsync(command);
 
-        var result = await handler.Handle(new AddPhoneCommand(profile.Id.Value, "123123123"), CancellationToken.None);
+        if (!validationResult.IsValid)
+        {
+            var errors = validationResult.Errors.Select(e => e.ErrorMessage).ToList();
+            return FlowChatResult<Guid>.Failure(DomainError.Validation(errors: errors));
+        }
 
-        Assert.True(result.IsFailure);
-        Assert.Equal(ErrorType.Validation, result.Error.ErrorType);
-        Assert.Equal([PhoneNumber.InvalidPhoneNumberMessage], result.Error.Errors);
+        return await _handler.Handle(command, CancellationToken.None);
     }
 
-    [Fact]
-    public async Task Handle_WithFormattedDuplicateNumber_ReturnsConflict()
-    {
-        var profile = CreateUserProfile();
-        profile.AddPhone("+48123123123");
-        profile.ClearEvents();
-        var handler = new AddPhoneCommandHandler(
-            new TestUserProfileRepository(profile),
-            new TestUnitOfWork(),
-            new TestDomainEventDispatcher());
-
-        var result = await handler.Handle(new AddPhoneCommand(profile.Id.Value, "+48 123 123 123"), CancellationToken.None);
-
-        Assert.True(result.IsFailure);
-        Assert.Equal(ErrorType.Conflict, result.Error.ErrorType);
-        Assert.Equal("Phone '+48123123123' already exists.", result.Error.ErrorMessage);
-    }
-
-    private static UserProfile CreateUserProfile()
+    private static UserProfile CreateProfile()
     {
         var profile = UserProfile.Create("jdoe", "John Doe", EmailAddress.Create("john@example.com"), id: Id<UserProfile>.New());
         profile.ClearEvents();
         return profile;
     }
 
-    private sealed class TestUserProfileRepository(UserProfile? userProfile = null) : IUserProfileWriteRepository
+    [Fact]
+    public async Task Handle_WithEmptyUserIdAndMissingNumber_ReturnsSingleValidationFailureWithBothErrors()
     {
-        public Task<UserProfile?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
-            Task.FromResult(userProfile?.Id.Value == id ? userProfile : null);
+        var result = await SendAsync(new AddPhoneCommand(Guid.Empty, null));
 
-        public Task<UserProfile> AddAsync(UserProfile entity, CancellationToken cancellationToken = default) =>
-            Task.FromResult(entity);
-
-        public Task UpdateAsync(UserProfile entity, CancellationToken cancellationToken = default) =>
-            Task.CompletedTask;
-
-        public Task DeleteAsync(UserProfile entity, CancellationToken cancellationToken = default) =>
-            Task.CompletedTask;
+        result.IsFailure.Should().BeTrue();
+        result.Error.ErrorType.Should().Be(ErrorType.Validation);
+        result.Error.ErrorMessage.Should().Be("Validation Failed.");
+        result.Error.Errors.Should().Equal("UserId is required.", "Phone number is required.");
     }
 
-    private sealed class TestUnitOfWork : IUnitOfWork
+    [Fact]
+    public async Task Handle_WithInvalidNumber_ReturnsValidationFailure()
     {
-        public void Dispose()
-        {
-        }
+        var profile = CreateProfile();
+        _writeRepositoryMock
+            .Setup(x => x.GetByIdAsync(profile.Id.Value, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(profile);
 
-        public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default) =>
-            Task.FromResult(0);
+        var result = await SendAsync(new AddPhoneCommand(profile.Id.Value, "123123123"));
 
-        public Task<T> ExecuteInTransactionAsync<T>(
-            Func<CancellationToken, Task<T>> operation,
-            CancellationToken cancellationToken) =>
-            operation(cancellationToken);
+        result.IsFailure.Should().BeTrue();
+        result.Error.ErrorType.Should().Be(ErrorType.Validation);
+        result.Error.Errors.Should().Equal(PhoneNumber.InvalidPhoneNumberMessage);
     }
 
-    private sealed class TestDomainEventDispatcher : IDomainEventDispatcher
+    [Fact]
+    public async Task Handle_WithFormattedDuplicateNumber_ReturnsConflict()
     {
-        public Task DispatchAsync(IEnumerable<IDomainEvent> domainEvents, CancellationToken cancellationToken = default) =>
-            Task.CompletedTask;
+        var profile = CreateProfile();
+        profile.AddPhone("+48123123123");
+        profile.ClearEvents();
+        _writeRepositoryMock
+            .Setup(x => x.GetByIdAsync(profile.Id.Value, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(profile);
+
+        var result = await SendAsync(new AddPhoneCommand(profile.Id.Value, "+48 123 123 123"));
+
+        result.IsFailure.Should().BeTrue();
+        result.Error.ErrorType.Should().Be(ErrorType.Conflict);
+        result.Error.ErrorMessage.Should().Be("Phone '+48123123123' already exists.");
+    }
+
+    [Fact]
+    public async Task Handle_WithValidNumber_AddsPhoneAndReturnsPhoneId()
+    {
+        var profile = CreateProfile();
+        _writeRepositoryMock
+            .Setup(x => x.GetByIdAsync(profile.Id.Value, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(profile);
+
+        var result = await SendAsync(new AddPhoneCommand(profile.Id.Value, "+48123123123"));
+
+        result.IsSuccess.Should().BeTrue();
+        var addedPhone = profile.Phones.Should().ContainSingle().Subject;
+        result.Value.Should().Be(addedPhone.Id.Value);
+        addedPhone.Number.Value.Should().Be("+48123123123");
+    }
+
+    [Fact]
+    public async Task Handle_WithValidNumber_DispatchesDomainEvent()
+    {
+        var profile = CreateProfile();
+        _writeRepositoryMock
+            .Setup(x => x.GetByIdAsync(profile.Id.Value, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(profile);
+
+        List<IDomainEvent> dispatchedEvents = [];
+        _dispatcherMock
+            .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<IDomainEvent>>(), It.IsAny<CancellationToken>()))
+            .Callback<IEnumerable<IDomainEvent>, CancellationToken>((events, _) => dispatchedEvents.AddRange(events))
+            .Returns(Task.CompletedTask);
+
+        var result = await SendAsync(new AddPhoneCommand(profile.Id.Value, "+48123123123"));
+
+        result.IsSuccess.Should().BeTrue();
+        dispatchedEvents.Should().NotBeEmpty();
     }
 }

@@ -41,8 +41,8 @@ public sealed class ApiSilverbackServiceRegistrationTests
         var emailVerificationOptions = serviceProvider
             .GetRequiredService<IKafkaProducerOptions<EmailVerificationRequestIntegrationEvent>>();
 
-        Assert.NotNull(publisher);
-        Assert.NotNull(integrationEventPublisher);
-        Assert.Equal("dev.flowchat.notification.email.v1", emailVerificationOptions.Topic);
+        publisher.Should().NotBeNull();
+        integrationEventPublisher.Should().NotBeNull();
+        emailVerificationOptions.Topic.Should().Be("dev.flowchat.notification.email.v1");
     }
 }

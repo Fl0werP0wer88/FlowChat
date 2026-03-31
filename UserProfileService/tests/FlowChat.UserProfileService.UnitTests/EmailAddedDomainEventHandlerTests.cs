@@ -8,43 +8,44 @@ namespace FlowChat.UserProfileService.UnitTests;
 
 public sealed class EmailAddedDomainEventHandlerTests
 {
+    private readonly Mock<IEmailVerificationRequestIssuer> _issuerMock = new();
+
+    public EmailAddedDomainEventHandlerTests()
+    {
+        _issuerMock
+            .Setup(x => x.IssueAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Guid userProfileId, Guid emailId, string _, CancellationToken _) =>
+                EmailVerificationRequest.Create(userProfileId, emailId, Guid.NewGuid().ToString("N"), DateTime.UtcNow.AddHours(24)));
+    }
+
     [Fact]
     public async Task Handle_IssuesVerificationRequestForAddedEmail()
     {
-        var issuer = new TestEmailVerificationRequestIssuer();
-        var handler = new EmailAddedDomainEventHandler(issuer);
+        var handler = new EmailAddedDomainEventHandler(_issuerMock.Object);
         var userProfileId = Guid.NewGuid();
         var emailId = Guid.NewGuid();
         var domainEvent = new EmailAddedDomainEvent(userProfileId, emailId, EmailAddress.Create("secondary@example.com"));
 
         await handler.Handle(domainEvent, CancellationToken.None);
 
-        Assert.Equal(userProfileId, issuer.LastUserProfileId);
-        Assert.Equal(emailId, issuer.LastEmailId);
-        Assert.Equal("secondary@example.com", issuer.LastEmailAddress);
+        _issuerMock.Verify(x => x.IssueAsync(userProfileId, emailId, "secondary@example.com", It.IsAny<CancellationToken>()), Times.Once);
     }
 
-    private sealed class TestEmailVerificationRequestIssuer : IEmailVerificationRequestIssuer
+    [Fact]
+    public async Task Handle_PassesCorrectEmailAddressToIssuer()
     {
-        public Guid? LastUserProfileId { get; private set; }
-        public Guid? LastEmailId { get; private set; }
-        public string? LastEmailAddress { get; private set; }
+        var handler = new EmailAddedDomainEventHandler(_issuerMock.Object);
+        var userProfileId = Guid.NewGuid();
+        var emailId = Guid.NewGuid();
+        const string emailAddress = "test@flowchat.com";
+        var domainEvent = new EmailAddedDomainEvent(userProfileId, emailId, EmailAddress.Create(emailAddress));
 
-        public Task<EmailVerificationRequest> IssueAsync(
-            Guid userProfileId,
-            Guid emailId,
-            string emailAddress,
-            CancellationToken cancellationToken)
-        {
-            LastUserProfileId = userProfileId;
-            LastEmailId = emailId;
-            LastEmailAddress = emailAddress;
+        await handler.Handle(domainEvent, CancellationToken.None);
 
-            return Task.FromResult(EmailVerificationRequest.Create(
-                userProfileId,
-                emailId,
-                Guid.NewGuid().ToString("N"),
-                DateTime.UtcNow.AddHours(24)));
-        }
+        _issuerMock.Verify(x => x.IssueAsync(
+            It.IsAny<Guid>(),
+            It.IsAny<Guid>(),
+            emailAddress,
+            It.IsAny<CancellationToken>()), Times.Once);
     }
 }

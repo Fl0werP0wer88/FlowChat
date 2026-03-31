@@ -1,5 +1,4 @@
-﻿using System.Diagnostics;
-using CSharpFunctionalExtensions;
+using System.Diagnostics;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Application.Behaviors;
 using FlowChat.Shared.Domain;
@@ -22,29 +21,22 @@ public sealed class LoggingPipelineBehaviourTests
             _ => Task.FromResult(FlowChatResult<Guid>.Success(expectedId)),
             CancellationToken.None);
 
-        Assert.True(response.IsSuccess);
-        Assert.Equal(expectedId, response.Value);
+        response.IsSuccess.Should().BeTrue();
+        response.Value.Should().Be(expectedId);
 
-        Assert.Collection(
-            logger.Entries,
-            entry =>
-            {
-                Assert.Equal(LogLevel.Information, entry.LogLevel);
-                Assert.Contains("command started: TestCommand", entry.Message);
-            },
-            entry =>
-            {
-                Assert.Equal(LogLevel.Information, entry.LogLevel);
-                Assert.Contains("command completed: TestCommand", entry.Message);
-            });
+        logger.Entries.Should().HaveCount(2);
+        logger.Entries[0].LogLevel.Should().Be(LogLevel.Information);
+        logger.Entries[0].Message.Should().Contain("command started: TestCommand");
+        logger.Entries[1].LogLevel.Should().Be(LogLevel.Information);
+        logger.Entries[1].Message.Should().Contain("command completed: TestCommand");
 
-        var activity = Assert.Single(collector.Activities);
-        Assert.Equal("TestCommand", activity.DisplayName);
-        Assert.Equal(ActivityStatusCode.Ok, activity.Status);
-        Assert.Equal("mediatr", activity.Tags.Single(x => x.Key == "messaging.system").Value);
-        Assert.Equal("TestCommand", activity.Tags.Single(x => x.Key == "request.name").Value);
-        Assert.Equal("command", activity.Tags.Single(x => x.Key == "request.kind").Value);
-        Assert.Equal("application", activity.Tags.Single(x => x.Key == "layer").Value);
+        var activity = collector.Activities.Should().ContainSingle().Subject;
+        activity.DisplayName.Should().Be("TestCommand");
+        activity.Status.Should().Be(ActivityStatusCode.Ok);
+        activity.Tags.Single(x => x.Key == "messaging.system").Value.Should().Be("mediatr");
+        activity.Tags.Single(x => x.Key == "request.name").Value.Should().Be("TestCommand");
+        activity.Tags.Single(x => x.Key == "request.kind").Value.Should().Be("command");
+        activity.Tags.Single(x => x.Key == "layer").Value.Should().Be("application");
     }
 
     [Fact]
@@ -60,28 +52,22 @@ public sealed class LoggingPipelineBehaviourTests
             _ => Task.FromException<FlowChatResult<Guid>>(exception),
             CancellationToken.None));
 
-        Assert.Same(exception, thrown);
+        thrown.Should().BeSameAs(exception);
 
-        Assert.Collection(
-            logger.Entries,
-            entry =>
-            {
-                Assert.Equal(LogLevel.Information, entry.LogLevel);
-                Assert.Contains("command started: TestCommand", entry.Message);
-            },
-            entry =>
-            {
-                Assert.Equal(LogLevel.Error, entry.LogLevel);
-                Assert.Contains("command failed: TestCommand", entry.Message);
-                Assert.Same(exception, entry.Exception);
-            });
+        logger.Entries.Should().HaveCount(2);
+        logger.Entries[0].LogLevel.Should().Be(LogLevel.Information);
+        logger.Entries[0].Message.Should().Contain("command started: TestCommand");
+        logger.Entries[1].LogLevel.Should().Be(LogLevel.Error);
+        logger.Entries[1].Message.Should().Contain("command failed: TestCommand");
+        logger.Entries[1].Exception.Should().BeSameAs(exception);
 
-        var activity = Assert.Single(collector.Activities);
-        Assert.Equal("TestCommand", activity.DisplayName);
-        Assert.Equal(ActivityStatusCode.Error, activity.Status);
-        Assert.Equal("boom", activity.StatusDescription);
-        var exceptionEvent = Assert.Single(activity.Events, x => x.Name == "exception");
-        Assert.Contains(exceptionEvent.Tags, x => x.Key == "exception.message" && Equals(x.Value, "boom"));
+        var activity = collector.Activities.Should().ContainSingle().Subject;
+        activity.DisplayName.Should().Be("TestCommand");
+        activity.Status.Should().Be(ActivityStatusCode.Error);
+        activity.StatusDescription.Should().Be("boom");
+        activity.Events.Should().Contain(e => e.Name == "exception");
+        var exceptionEvent = activity.Events.Single(x => x.Name == "exception");
+        exceptionEvent.Tags.Should().Contain(x => x.Key == "exception.message" && Equals(x.Value, "boom"));
     }
 
     [Fact]
@@ -96,28 +82,21 @@ public sealed class LoggingPipelineBehaviourTests
             _ => Task.FromResult(FlowChatResult<Guid>.Failure(DomainError.Validation("validation failed", ["Email is required."]))),
             CancellationToken.None);
 
-        Assert.True(response.IsFailure);
-        Assert.Equal(ErrorType.Validation, response.Error.ErrorType);
+        response.IsFailure.Should().BeTrue();
+        response.Error.ErrorType.Should().Be(ErrorType.Validation);
 
-        Assert.Collection(
-            logger.Entries,
-            entry =>
-            {
-                Assert.Equal(LogLevel.Information, entry.LogLevel);
-                Assert.Contains("command started: TestCommand", entry.Message);
-            },
-            entry =>
-            {
-                Assert.Equal(LogLevel.Warning, entry.LogLevel);
-                Assert.Contains("command failed: TestCommand", entry.Message);
-                Assert.Contains("ErrorType: Validation", entry.Message);
-            });
+        logger.Entries.Should().HaveCount(2);
+        logger.Entries[0].LogLevel.Should().Be(LogLevel.Information);
+        logger.Entries[0].Message.Should().Contain("command started: TestCommand");
+        logger.Entries[1].LogLevel.Should().Be(LogLevel.Warning);
+        logger.Entries[1].Message.Should().Contain("command failed: TestCommand");
+        logger.Entries[1].Message.Should().Contain("ErrorType: Validation");
 
-        var activity = Assert.Single(collector.Activities);
-        Assert.Equal(ActivityStatusCode.Error, activity.Status);
-        Assert.Equal("validation failed", activity.StatusDescription);
-        Assert.Equal("validation", activity.Tags.Single(x => x.Key == "error.type").Value);
-        Assert.Equal(1, activity.TagObjects.Single(x => x.Key == "error.count").Value);
+        var activity = collector.Activities.Should().ContainSingle().Subject;
+        activity.Status.Should().Be(ActivityStatusCode.Error);
+        activity.StatusDescription.Should().Be("validation failed");
+        activity.Tags.Single(x => x.Key == "error.type").Value.Should().Be("validation");
+        activity.TagObjects.Single(x => x.Key == "error.count").Value.Should().Be(1);
     }
 
     private sealed record TestCommand : ICommand<Guid>;
@@ -174,4 +153,3 @@ public sealed class LoggingPipelineBehaviourTests
         }
     }
 }
-

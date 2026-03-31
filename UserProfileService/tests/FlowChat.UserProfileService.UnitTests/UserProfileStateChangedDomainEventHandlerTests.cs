@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
 using FlowChat.Core.Messaging;
@@ -12,15 +12,25 @@ namespace FlowChat.UserProfileService.UnitTests;
 
 public sealed class UserProfileStateChangedDomainEventHandlerTests
 {
-    [Fact]
-    public async Task Handle_PublishesMappedUserProfileStateChangedIntegrationEvent()
+    private readonly IMapper _mapper;
+    private readonly Mock<IIntegrationEventPublisher> _publisherMock = new();
+
+    public UserProfileStateChangedDomainEventHandlerTests()
     {
-        var mapper = new MapperConfiguration(
+        _mapper = new MapperConfiguration(
                 configuration => configuration.AddProfile<DomainEventToIntegrationEventProfile>(),
                 NullLoggerFactory.Instance)
             .CreateMapper();
-        var publisher = new CapturingIntegrationEventPublisher();
-        var handler = new UserProfileStateChangedDomainEventHandler(publisher, mapper);
+
+        _publisherMock
+            .Setup(x => x.PublishToOutboxAsync(It.IsAny<UserProfileStateChangedIntegrationEvent>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+    }
+
+    [Fact]
+    public async Task Handle_PublishesMappedUserProfileStateChangedIntegrationEvent()
+    {
+        var handler = new UserProfileStateChangedDomainEventHandler(_publisherMock.Object, _mapper);
         var userProfileId = Id<UserProfile>.New();
         var domainEvent = new AggregateStateChangedDomainEvent<UserProfile, UserProfileSnapshot>(
             userProfileId,
@@ -39,34 +49,27 @@ public sealed class UserProfileStateChangedDomainEventHandlerTests
                 true,
                 false));
 
+        UserProfileStateChangedIntegrationEvent? capturedEvent = null;
+        _publisherMock
+            .Setup(x => x.PublishToOutboxAsync(It.IsAny<UserProfileStateChangedIntegrationEvent>(), It.IsAny<CancellationToken>()))
+            .Callback<UserProfileStateChangedIntegrationEvent, CancellationToken>((evt, _) => capturedEvent = evt)
+            .Returns(Task.CompletedTask);
+
         await handler.Handle(domainEvent, CancellationToken.None);
 
-        var integrationEvent = Assert.IsType<UserProfileStateChangedIntegrationEvent>(Assert.Single(publisher.PublishedEvents));
-        Assert.Equal(userProfileId.Value, integrationEvent.UserProfileId);
-        Assert.Equal(userProfileId.Value.ToString(), integrationEvent.Key);
-        Assert.Equal("jdoe", integrationEvent.UserName);
-        Assert.Equal("John Doe", integrationEvent.DisplayName);
-        Assert.Equal("john@example.com", integrationEvent.MainEmail);
-        Assert.True(integrationEvent.IsMainEmailConfirmed);
-        Assert.Equal("+48123123123", integrationEvent.MainPhone);
-        Assert.Equal("https://cdn.example/avatar.png", integrationEvent.AvatarUrl);
-        Assert.Equal("about me", integrationEvent.Bio);
-        Assert.True(integrationEvent.IsActive);
-        Assert.Equal(new DateTime(2026, 3, 11, 9, 0, 0, DateTimeKind.Utc), integrationEvent.LastSeenAtUtc);
-        Assert.True(integrationEvent.IsEmailVisible);
-        Assert.False(integrationEvent.IsPhoneVisible);
-    }
-
-    private sealed class CapturingIntegrationEventPublisher : IIntegrationEventPublisher
-    {
-        public List<IntegrationEvent> PublishedEvents { get; } = [];
-
-        public Task PublishToOutboxAsync<TEvent>(TEvent message, CancellationToken cancellationToken)
-            where TEvent : IntegrationEvent
-        {
-            PublishedEvents.Add(message);
-            return Task.CompletedTask;
-        }
+        capturedEvent.Should().NotBeNull();
+        capturedEvent!.UserProfileId.Should().Be(userProfileId.Value);
+        capturedEvent.Key.Should().Be(userProfileId.Value.ToString());
+        capturedEvent.UserName.Should().Be("jdoe");
+        capturedEvent.DisplayName.Should().Be("John Doe");
+        capturedEvent.MainEmail.Should().Be("john@example.com");
+        capturedEvent.IsMainEmailConfirmed.Should().BeTrue();
+        capturedEvent.MainPhone.Should().Be("+48123123123");
+        capturedEvent.AvatarUrl.Should().Be("https://cdn.example/avatar.png");
+        capturedEvent.Bio.Should().Be("about me");
+        capturedEvent.IsActive.Should().BeTrue();
+        capturedEvent.LastSeenAtUtc.Should().Be(new DateTime(2026, 3, 11, 9, 0, 0, DateTimeKind.Utc));
+        capturedEvent.IsEmailVisible.Should().BeTrue();
+        capturedEvent.IsPhoneVisible.Should().BeFalse();
     }
 }
-

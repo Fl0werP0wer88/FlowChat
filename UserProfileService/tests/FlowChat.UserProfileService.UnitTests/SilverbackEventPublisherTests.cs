@@ -25,6 +25,6 @@ public sealed class SilverbackEventPublisherTests
                 },
                 CancellationToken.None));
 
-        Assert.Contains("does not contain a Kafka key", exception.Message);
+        exception.Message.Should().Contain("does not contain a Kafka key");
     }
 }

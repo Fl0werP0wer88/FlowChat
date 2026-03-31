@@ -15,42 +15,77 @@ namespace FlowChat.UserProfileService.UnitTests;
 
 public sealed class EmailConfirmedDomainEventHandlerTests
 {
-    [Fact]
-    public async Task Handle_PublishesMappedUserEmailConfirmedIntegrationEvent()
+    private readonly IMapper _mapper;
+    private readonly Mock<IIntegrationEventPublisher> _publisherMock = new();
+
+    public EmailConfirmedDomainEventHandlerTests()
     {
-        var mapper = new MapperConfiguration(
+        _mapper = new MapperConfiguration(
                 configuration => configuration.AddProfile<DomainEventToIntegrationEventProfile>(),
                 NullLoggerFactory.Instance)
             .CreateMapper();
-        var publisher = new CapturingIntegrationEventPublisher();
-        var handler = new EmailConfirmedDomainEventHandler(publisher, mapper);
+
+        _publisherMock
+            .Setup(x => x.PublishToOutboxAsync(It.IsAny<UserEmailConfirmedIntegrationEvent>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+    }
+
+    [Fact]
+    public async Task Handle_PublishesMappedUserEmailConfirmedIntegrationEvent()
+    {
+        var handler = new EmailConfirmedDomainEventHandler(_publisherMock.Object, _mapper);
         var userProfileId = Id<UserProfile>.New();
         var emailId = Id<DomainEmail>.New();
+        UserEmailConfirmedIntegrationEvent? capturedEvent = null;
         var domainEvent = new EmailConfirmedDomainEvent(
             userProfileId,
             emailId,
             EmailAddress.Create("john@example.com"),
             isAuth: true);
 
+        _publisherMock
+            .Setup(x => x.PublishToOutboxAsync(It.IsAny<UserEmailConfirmedIntegrationEvent>(), It.IsAny<CancellationToken>()))
+            .Callback<UserEmailConfirmedIntegrationEvent, CancellationToken>((evt, _) => capturedEvent = evt)
+            .Returns(Task.CompletedTask);
+
         await handler.Handle(domainEvent, CancellationToken.None);
 
-        var integrationEvent = Assert.IsType<UserEmailConfirmedIntegrationEvent>(Assert.Single(publisher.PublishedEvents));
-        Assert.Equal(userProfileId.Value, integrationEvent.UserProfileId);
-        Assert.Equal(emailId.Value, integrationEvent.EmailId);
-        Assert.Equal("john@example.com", integrationEvent.Email.Address);
-        Assert.True(integrationEvent.Email.IsAuth);
-        Assert.Equal(userProfileId.Value.ToString(), integrationEvent.Key);
+        _publisherMock.Verify(x => x.PublishToOutboxAsync(
+            It.IsAny<UserEmailConfirmedIntegrationEvent>(),
+            It.IsAny<CancellationToken>()), Times.Once);
+
+        capturedEvent.Should().NotBeNull();
+        var integrationEvent = capturedEvent!;
+        integrationEvent.UserProfileId.Should().Be(userProfileId.Value);
+        integrationEvent.EmailId.Should().Be(emailId.Value);
+        integrationEvent.Email.Address.Should().Be("john@example.com");
+        integrationEvent.Email.IsAuth.Should().BeTrue();
+        integrationEvent.Key.Should().Be(userProfileId.Value.ToString());
     }
 
-    private sealed class CapturingIntegrationEventPublisher : IIntegrationEventPublisher
+    [Fact]
+    public async Task Handle_WithNonAuthEmail_MapsIsAuthFalse()
     {
-        public List<IntegrationEvent> PublishedEvents { get; } = [];
+        var handler = new EmailConfirmedDomainEventHandler(_publisherMock.Object, _mapper);
+        var userProfileId = Id<UserProfile>.New();
+        var emailId = Id<DomainEmail>.New();
+        var domainEvent = new EmailConfirmedDomainEvent(
+            userProfileId,
+            emailId,
+            EmailAddress.Create("secondary@example.com"),
+            isAuth: false);
 
-        public Task PublishToOutboxAsync<TEvent>(TEvent message, CancellationToken cancellationToken)
-            where TEvent : IntegrationEvent
-        {
-            PublishedEvents.Add(message);
-            return Task.CompletedTask;
-        }
+        UserEmailConfirmedIntegrationEvent? capturedEvent = null;
+        _publisherMock
+            .Setup(x => x.PublishToOutboxAsync(It.IsAny<UserEmailConfirmedIntegrationEvent>(), It.IsAny<CancellationToken>()))
+            .Callback<UserEmailConfirmedIntegrationEvent, CancellationToken>((evt, _) => capturedEvent = evt)
+            .Returns(Task.CompletedTask);
+
+        await handler.Handle(domainEvent, CancellationToken.None);
+
+        capturedEvent.Should().NotBeNull();
+        var integrationEvent = capturedEvent!;
+        integrationEvent.Email.IsAuth.Should().BeFalse();
+        integrationEvent.Email.Address.Should().Be("secondary@example.com");
     }
 }

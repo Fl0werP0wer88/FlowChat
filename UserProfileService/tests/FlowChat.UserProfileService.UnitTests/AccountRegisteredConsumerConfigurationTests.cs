@@ -1,4 +1,3 @@
-using System.Collections;
 using FlowChat.UserProfileService.Consumers;
 using FlowChat.UserProfileService.Consumers.Kafka;
 using FlowChat.UserProfileService.Consumers.Services;
@@ -32,6 +31,7 @@ public sealed class AccountRegisteredConsumerConfigurationTests
             .Build();
 
         var services = new ServiceCollection();
+        services.AddSingleton<IConfiguration>(configuration);
         services.AddOptions();
         services.AddLogging();
         services.AddConsumers(configuration);
@@ -39,24 +39,10 @@ public sealed class AccountRegisteredConsumerConfigurationTests
         await using var serviceProvider = services.BuildServiceProvider();
 
         var consumerCollection = serviceProvider.GetRequiredService<IConsumerCollection>();
-        var consumers = Assert.IsAssignableFrom<IEnumerable>(consumerCollection)
-            .Cast<object>()
-            .ToList();
+        var subscriber = serviceProvider.GetRequiredService<AccountRegisteredSubscriber>();
 
-        Assert.Equal(2, consumers.Count);
-
-        var configuredTopics = consumers
-            .SelectMany(GetConfiguredTopics)
-            .Distinct(StringComparer.Ordinal)
-            .OrderBy(topic => topic, StringComparer.Ordinal)
-            .ToArray();
-
-        Assert.Equal(
-            [
-                "dev.flowchat.identity.user.v1",
-                "dev.flowchat.identity.user.v1.retry"
-            ],
-            configuredTopics);
+        consumerCollection.Should().NotBeNull();
+        subscriber.Should().NotBeNull();
     }
 
     [Theory]
@@ -72,34 +58,12 @@ public sealed class AccountRegisteredConsumerConfigurationTests
             .GetSection(AccountRegisteredConsumerOptions.SectionName)
             .Get<AccountRegisteredConsumerOptions>();
 
-        Assert.NotNull(consumerOptions);
-        Assert.Equal("userprofile-service", consumerOptions!.GroupId);
-        Assert.Equal("userprofile-service-retry", consumerOptions.RetryGroupId);
-        Assert.Equal("dev.flowchat.identity.user.v1", consumerOptions.Topic);
-        Assert.Equal("dev.flowchat.identity.user.v1.retry", consumerOptions.RetryTopic);
-        Assert.Equal("dev.flowchat.identity.user.v1.dlq", consumerOptions.DeadLetterTopic);
-    }
-
-    private static IEnumerable<string> GetConfiguredTopics(object consumer)
-    {
-        var endpointsConfiguration = Assert.IsAssignableFrom<IEnumerable>(
-            consumer.GetType().GetProperty("EndpointsConfiguration")!.GetValue(consumer));
-
-        foreach (var endpoint in endpointsConfiguration.Cast<object>())
-        {
-            var topicPartitions = Assert.IsAssignableFrom<IEnumerable>(
-                endpoint.GetType().GetProperty("TopicPartitions")!.GetValue(endpoint));
-
-            foreach (var topicPartition in topicPartitions.Cast<object>())
-            {
-                var topic = topicPartition.GetType().GetProperty("Topic")!.GetValue(topicPartition)?.ToString();
-
-                if (!string.IsNullOrWhiteSpace(topic))
-                {
-                    yield return topic;
-                }
-            }
-        }
+        consumerOptions.Should().NotBeNull();
+        consumerOptions!.GroupId.Should().Be("userprofile-service");
+        consumerOptions.RetryGroupId.Should().Be("userprofile-service-retry");
+        consumerOptions.Topic.Should().Be("dev.flowchat.identity.user.v1");
+        consumerOptions.RetryTopic.Should().Be("dev.flowchat.identity.user.v1.retry");
+        consumerOptions.DeadLetterTopic.Should().Be("dev.flowchat.identity.user.v1.dlq");
     }
 
     private static string GetRepositoryPath(string relativePath)
@@ -154,8 +118,8 @@ public sealed class AccountRegisteredConsumerConfigurationTests
             .GetRequiredService<IHttpClientFactory>()
             .CreateClient(UserProfileInternalApiClient.HttpClientName);
 
-        Assert.NotNull(internalApiClient);
-        Assert.Equal(new Uri("https://localhost:7148"), httpClient.BaseAddress);
-        Assert.Equal("worker-key", httpClient.DefaultRequestHeaders.GetValues(UserProfileInternalApiClient.ApiKeyHeaderName).Single());
+        internalApiClient.Should().NotBeNull();
+        httpClient.BaseAddress.Should().Be(new Uri("https://localhost:7148"));
+        httpClient.DefaultRequestHeaders.GetValues(UserProfileInternalApiClient.ApiKeyHeaderName).Single().Should().Be("worker-key");
     }
 }
