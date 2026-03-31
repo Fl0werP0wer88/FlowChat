@@ -92,12 +92,27 @@ The project uses tactical DDD. All domain logic lives in the `Domain` layer. The
   - When refactoring without behaviour change: keep existing tests as-is; adjust only if they no longer compile or structurally mismatch
   - For new features: cover the happy path, relevant edge cases, and known failure modes
   - Do not write low-value tests just to have coverage (e.g. testing that a constructor assigns a property)
+- **After every code change:**
+  1. Run unit tests for the affected service (`dotnet test {Service}/FlowChat.{Service}.slnx`)
+  2. Fix any failures before continuing — do not leave a test suite red while working on the next thing
+  3. Run integration tests for the affected service when the change touches: DI registration, EF Core / persistence, Kafka producers or consumers, command handler wiring, API controller mapping, or startup/host configuration
+  4. Before marking a task as done, run the full test suite for the affected service and report: what passed, what failed, and any known risks or untested edge cases
+  5. Never ignore a failing test unless the user explicitly instructs it — if a pre-existing test breaks, investigate before continuing
+
 - **Integration tests**: `{Service}/tests/{Service}.IntegrationTests/`
   - Use when: test builds a real `ServiceCollection` + `BuildServiceProvider()`, uses a real `DbContext` (even in-memory), tests DI registration, or validates startup configuration across multiple layers
   - Do NOT mock at layer boundaries — the point is to verify the layers work together
   - Mirror the `src/` folder structure inside the test project (same rule as UnitTests)
   - If a file has a mix of unit and integration tests, split it into two separate files
   - Prefer `UseInMemoryDatabase` or `Sqlite` in-memory over a real Postgres connection in integration tests
+- **When to write integration tests:**
+  - DI registration — verify that `AddXxxServices(...)` correctly registers all expected services and they resolve without errors
+  - EF Core interceptors / persistence behaviour — test that interceptors (e.g. auditing) actually fire on `SaveChangesAsync()`
+  - Startup / host configuration — verify that the host or `WebApplication` builds and critical services resolve (e.g. `StartupExtensions`, `OutboxPublisher` host)
+  - Kafka consumer/producer registration — verify that `ConsumersServiceRegistration` or `SilverbackServiceRegistration` correctly registers consumers, producers, and their topic/endpoint options via DI
+  - Cross-layer wiring — when a bug could only exist because two layers interact incorrectly and a unit test with mocks would give false confidence
+  - Do NOT write integration tests for business logic — that belongs in unit tests against the domain/handlers
+  - Do NOT duplicate coverage: if a unit test already covers the behaviour, an integration test of the same scenario adds noise, not safety
 - **AATs** (Application Acceptance Tests): `{Service}/tests/{Service}.AATs/`
 
 Run tests:
