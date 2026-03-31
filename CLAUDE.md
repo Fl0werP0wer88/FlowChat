@@ -42,9 +42,14 @@ Domain events are dispatched via `IDomainEventDispatcher` and mapped to integrat
 
 - **Unit tests**: xUnit + FluentAssertions + Moq + AutoFixture
   - Location: `{Service}/tests/{Service}.UnitTests/`
-  - Mirror the `src/` folder structure inside the test project
+  - Mirror the `src/` folder structure inside the test project — if a file moves or a new folder is added in `src/`, update the corresponding location in `tests/` accordingly
   - Mock only external dependencies (repositories, event dispatchers, HTTP clients)
   - Test naming: `MethodName_Scenario_ExpectedResult`
+- **When to write/update tests:**
+  - Add or update tests when behaviour changes: public interface, business logic, error handling, or a bug is being fixed
+  - When refactoring without behaviour change: keep existing tests as-is; adjust only if they no longer compile or structurally mismatch
+  - For new features: cover the happy path, relevant edge cases, and known failure modes
+  - Do not write low-value tests just to have coverage (e.g. testing that a constructor assigns a property)
 - **AATs** (Application Acceptance Tests): `{Service}/tests/{Service}.AATs/`
 
 Run tests:
