@@ -1,5 +1,9 @@
 # FlowChat — Claude Code Instructions
 
+## Collaboration Rules
+
+- If the user's message ends with `?`, treat it as a question — answer it, do not make any code changes unless explicitly asked afterwards.
+
 ## Project Overview
 
 FlowChat is a microservices-based chat application built with .NET 10. Services communicate via Kafka (integration events) and expose REST APIs through a gateway.
