@@ -12,6 +12,8 @@ artifacts/
 # Claude Code
 .claude/worktrees/
 .codex-temp/
+.codex/worktrees/
+.codex/testgen/
 *.sln.iml
 
 # User-specific files
