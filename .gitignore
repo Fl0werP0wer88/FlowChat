@@ -8,6 +8,9 @@ artifacts/
 # Visual Studio / VS Code / Rider
 .vs/
 .idea/
+
+# Claude Code
+.claude/worktrees/
 .codex-temp/
 *.sln.iml
 
