@@ -23,6 +23,9 @@ public sealed class EmailVerificationRequestConfiguration : IEntityTypeConfigura
             .HasConversion(x => x.Value, x => Id<Email>.FromGuid(x))
             .IsRequired();
 
+        builder.Property(x => x.Version)
+            .IsConcurrencyToken();
+
         builder.Property(x => x.Nonce)
             .HasMaxLength(64)
             .IsRequired();

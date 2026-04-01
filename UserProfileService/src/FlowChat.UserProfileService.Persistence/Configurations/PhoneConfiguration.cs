@@ -25,6 +25,9 @@ public class PhoneConfiguration : IEntityTypeConfiguration<Phone>
             .HasMaxLength(32)
             .IsRequired();
 
+        builder.Property(x => x.Version)
+            .IsConcurrencyToken();
+
         builder.Property(x => x.IsMain)
             .HasDefaultValue(false)
             .IsRequired();

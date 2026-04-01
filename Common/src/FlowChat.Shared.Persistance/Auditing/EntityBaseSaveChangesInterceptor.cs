@@ -42,6 +42,10 @@ public sealed class EntityBaseSaveChangesInterceptor : SaveChangesInterceptor
                     break;
                 case EntityState.Modified:
                     entry.Entity.SetUpdated(SystemActor);
+                    if (entry.Entity is IVersionedEntity versioned)
+                    {
+                        versioned.IncrementVersion();
+                    }
                     break;
             }
         }

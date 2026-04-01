@@ -5,6 +5,7 @@ public abstract class EntityBase<TDomainEntity>
     where TDomainEntity : EntityBase<TDomainEntity>
 {
     public Id<TDomainEntity> Id { get; }
+    public int Version { get; private set; } = 1;
     public string CreatedBy { get; private set; } = string.Empty;
     public DateTimeOffset CreatedAtUtc { get; private set; }
     public string LastModifiedBy { get; private set; } = string.Empty;
@@ -16,6 +17,11 @@ public abstract class EntityBase<TDomainEntity>
         Id = id ?? Id<TDomainEntity>.New();
         CreatedAtUtc = DateTimeOffset.UtcNow;
         LastModifiedAtUtc = DateTimeOffset.UtcNow;
+    }
+
+    public void IncrementVersion()
+    {
+        Version++;
     }
 
     public void SetCreated(string createdBy)

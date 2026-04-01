@@ -48,6 +48,52 @@ public sealed class EntityBaseSaveChangesInterceptorTests
     }
 
     [Fact]
+    public async Task SavingChanges_ForAddedEntity_KeepsVersionAtInitialValue()
+    {
+        var entity = TestEntity.Create("new");
+
+        await using var dbContext = CreateDbContext();
+        dbContext.TestEntities.Add(entity);
+
+        await dbContext.SaveChangesAsync();
+
+        entity.Version.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task SavingChanges_ForModifiedEntity_IncrementsVersion()
+    {
+        await using var dbContext = CreateDbContext();
+        var entity = TestEntity.Create("before");
+        dbContext.TestEntities.Add(entity);
+        await dbContext.SaveChangesAsync();
+
+        entity.Version.Should().Be(1);
+
+        entity.Rename("after");
+        await dbContext.SaveChangesAsync();
+
+        entity.Version.Should().Be(2);
+    }
+
+    [Fact]
+    public async Task SavingChanges_ForMultipleModifications_IncrementsVersionEachTime()
+    {
+        await using var dbContext = CreateDbContext();
+        var entity = TestEntity.Create("v1");
+        dbContext.TestEntities.Add(entity);
+        await dbContext.SaveChangesAsync();
+
+        entity.Rename("v2");
+        await dbContext.SaveChangesAsync();
+
+        entity.Rename("v3");
+        await dbContext.SaveChangesAsync();
+
+        entity.Version.Should().Be(3);
+    }
+
+    [Fact]
     public async Task SavingChanges_IgnoresEntitiesThatDoNotDeriveFromEntityBase()
     {
         await using var dbContext = CreateDbContext();

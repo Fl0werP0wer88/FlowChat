@@ -41,6 +41,9 @@ public class UserProfileConfiguration : IEntityTypeConfiguration<UserProfile>
             .HasDefaultValue(true)
             .IsRequired();
 
+        builder.Property(x => x.Version)
+            .IsConcurrencyToken();
+
         builder.Property(x => x.CreatedBy)
             .HasMaxLength(256)
             .IsRequired();

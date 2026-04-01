@@ -36,6 +36,9 @@ public sealed class ChatMessageConfiguration : IEntityTypeConfiguration<ChatMess
             .HasColumnType("uuid[]")
             .IsRequired();
 
+        builder.Property(x => x.Version)
+            .IsConcurrencyToken();
+
         builder.Property(x => x.CreatedBy)
             .HasMaxLength(256)
             .IsRequired();

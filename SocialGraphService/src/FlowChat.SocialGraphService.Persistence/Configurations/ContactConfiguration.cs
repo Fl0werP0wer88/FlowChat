@@ -45,6 +45,9 @@ public class ContactConfiguration : IEntityTypeConfiguration<Contact>
                 x => x == null ? null : EmailAddress.Create(x))
             .HasMaxLength(256);
 
+        builder.Property(x => x.Version)
+            .IsConcurrencyToken();
+
         builder.Property(x => x.CreatedBy)
             .HasMaxLength(256)
             .IsRequired();
