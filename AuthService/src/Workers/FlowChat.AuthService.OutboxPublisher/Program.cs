@@ -1,4 +1,4 @@
-﻿using System.Data.Common;
+using System.Data.Common;
 using FlowChat.Shared.API;
 using FlowChat.AuthService.OutboxPublisher;
 using FlowChat.AuthService.OutboxPublisher.Configuration;

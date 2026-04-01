@@ -1,4 +1,4 @@
-﻿using FluentValidation;
+using FluentValidation;
 using FlowChat.Shared.Domain.ValueObjects;
 
 namespace FlowChat.UserProfileService.Application.Features.UserProfiles.Commands.AddPhone;

@@ -1,4 +1,4 @@
-﻿using FlowChat.Core.Results;
+using FlowChat.Core.Results;
 using FlowChat.Shared.Domain;
 using MediatR;
 

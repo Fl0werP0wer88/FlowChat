@@ -1,4 +1,4 @@
-﻿using FlowChat.Shared.Domain;
+using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
 
 namespace FlowChat.UserProfileService.Domain.Entities;

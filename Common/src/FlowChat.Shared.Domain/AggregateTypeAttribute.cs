@@ -1,4 +1,4 @@
-﻿namespace FlowChat.Shared.Domain;
+namespace FlowChat.Shared.Domain;
 
 [AttributeUsage(AttributeTargets.Class)]
 public class AggregateTypeAttribute(string aggregateType) : Attribute

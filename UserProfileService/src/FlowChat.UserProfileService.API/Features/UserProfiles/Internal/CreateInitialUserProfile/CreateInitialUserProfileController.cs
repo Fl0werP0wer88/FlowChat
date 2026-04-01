@@ -1,4 +1,4 @@
-﻿using FlowChat.Shared.API;
+using FlowChat.Shared.API;
 using FlowChat.UserProfileService.Application.Features.UserProfiles.Commands.CreateInitialUserProfile;
 using FlowChat.UserProfileService.Infrastructure.Configuration;
 using MediatR;

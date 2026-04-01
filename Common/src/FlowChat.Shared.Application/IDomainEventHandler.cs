@@ -1,4 +1,4 @@
-﻿using FlowChat.Shared.Domain;
+using FlowChat.Shared.Domain;
 using MediatR;
 
 namespace FlowChat.Shared.Application;

@@ -1,4 +1,4 @@
-﻿using FlowChat.Shared.Application;
+using FlowChat.Shared.Application;
 using FlowChat.NotificationService.Application.Contracts.Persistence;
 using FlowChat.NotificationService.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;

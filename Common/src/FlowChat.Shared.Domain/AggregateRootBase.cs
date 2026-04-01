@@ -1,4 +1,4 @@
-﻿namespace FlowChat.Shared.Domain;
+namespace FlowChat.Shared.Domain;
 
 public abstract class AggregateRootBase<TDomainEntity> : EntityBase<TDomainEntity>, IAggregateRoot
     where TDomainEntity : AggregateRootBase<TDomainEntity>

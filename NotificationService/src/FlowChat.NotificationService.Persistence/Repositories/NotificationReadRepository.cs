@@ -1,4 +1,4 @@
-﻿using FlowChat.NotificationService.Application.Contracts.Persistence;
+using FlowChat.NotificationService.Application.Contracts.Persistence;
 using FlowChat.NotificationService.Application.Features.Notifications.Queries.GetNotifications;
 using FlowChat.NotificationService.Domain.Entities;
 using FlowChat.NotificationService.Domain.Enums;

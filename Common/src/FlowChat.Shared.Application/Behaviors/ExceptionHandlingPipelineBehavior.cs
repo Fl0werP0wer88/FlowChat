@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using FluentValidation;
 using FlowChat.Core.Exceptions;
 using FlowChat.Core.Results;

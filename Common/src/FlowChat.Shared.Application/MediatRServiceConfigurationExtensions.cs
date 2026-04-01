@@ -1,4 +1,4 @@
-﻿using FlowChat.Shared.Application.Behaviors;
+using FlowChat.Shared.Application.Behaviors;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 

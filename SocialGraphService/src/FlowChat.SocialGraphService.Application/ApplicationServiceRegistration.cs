@@ -1,5 +1,5 @@
-﻿using FlowChat.Shared.Application;
-using FlowChat.SocialGraphService.Application.Common.Eventing;
+using FlowChat.Shared.Application;
+using FlowChat.Shared.Application.Common.Eventing;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace FlowChat.SocialGraphService.Application;
@@ -17,7 +17,7 @@ public static class ApplicationServiceRegistration
             cfg.RegisterServicesFromAssemblies(applicationAssembly);
             cfg.AddFlowChatBehaviors();
         });
-        services.AddScoped<IDomainEventDispatcher, DomainEventDispatcher>();
+        services.AddScoped<IDomainEventDispatcher, FlowChatDomainEventDispatcher>();
 
         return services;
     }
@@ -33,7 +33,7 @@ public static class ApplicationServiceRegistration
             cfg.RegisterServicesFromAssemblies(applicationAssembly);
             cfg.AddFlowChatBehaviors();
         });
-        services.AddScoped<IDomainEventDispatcher, DomainEventDispatcher>();
+        services.AddScoped<IDomainEventDispatcher, FlowChatDomainEventDispatcher>();
 
         return services;
     }

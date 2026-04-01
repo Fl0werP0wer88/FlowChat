@@ -1,7 +1,7 @@
-import { useEffect, useEffectEvent, useState } from "react";
 import { HubConnectionBuilder, LogLevel } from "@microsoft/signalr";
-import { chatHubUrl } from "./config";
+import { useEffect, useEffectEvent, useState } from "react";
 import type { PresenceChangedEvent, RealtimeChatMessage, RealtimeConnectionStatus } from "../types/realtime";
+import { chatHubUrl } from "./config";
 
 interface UseRealtimeConnectionOptions {
   accessToken: string | null;

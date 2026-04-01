@@ -1,4 +1,4 @@
-﻿using FlowChat.Shared.Domain;
+using FlowChat.Shared.Domain;
 using FlowChat.UserProfileService.Domain.Entities;
 using FlowChat.Shared.Domain.ValueObjects;
 using Microsoft.EntityFrameworkCore;

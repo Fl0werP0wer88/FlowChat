@@ -1,4 +1,4 @@
-﻿using FlowChat.Shared.Application;
+using FlowChat.Shared.Application;
 using FlowChat.SocialGraphService.Domain.Entities;
 
 namespace FlowChat.SocialGraphService.Application.Contracts.Persistence;

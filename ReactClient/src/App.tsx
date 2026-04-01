@@ -21,13 +21,17 @@ export default function App() {
 
   return (
     <AppBackgroundLayout>
-      {screen === "emailVerification" ? (
-        <EmailVerificationFeature token={verificationToken} />
-      ) : screen === "auth" ? (
-        <AuthFeature onLoginSuccess={signIn} />
-      ) : (
-        <ChatFeature accessToken={session.accessToken ?? ""} userLogin={session.login ?? "Uzytkownik"} onLogout={signOut} />
-      )}
+      {screen === "emailVerification"
+        ? <EmailVerificationFeature token={verificationToken} />
+        : screen === "auth"
+        ? <AuthFeature onLoginSuccess={signIn} />
+        : (
+          <ChatFeature
+            accessToken={session.accessToken ?? ""}
+            userLogin={session.login ?? "Uzytkownik"}
+            onLogout={signOut}
+          />
+        )}
     </AppBackgroundLayout>
   );
 }

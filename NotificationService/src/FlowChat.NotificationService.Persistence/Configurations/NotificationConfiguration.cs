@@ -1,4 +1,4 @@
-﻿using FlowChat.Shared.Domain;
+using FlowChat.Shared.Domain;
 using FlowChat.NotificationService.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;

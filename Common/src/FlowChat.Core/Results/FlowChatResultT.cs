@@ -1,4 +1,4 @@
-﻿using CSharpFunctionalExtensions;
+using CSharpFunctionalExtensions;
 using FlowChat.Shared.Domain;
 
 namespace FlowChat.Core.Results;

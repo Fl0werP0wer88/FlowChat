@@ -1,4 +1,4 @@
-﻿using FlowChat.Shared.Domain;
+using FlowChat.Shared.Domain;
 using FlowChat.UserProfileService.Domain.Common.Constants;
 using FlowChat.UserProfileService.Domain.Events;
 using FlowChat.Shared.Domain.ValueObjects;

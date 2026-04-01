@@ -1,4 +1,4 @@
-﻿using FlowChat.Shared.API;
+using FlowChat.Shared.API;
 using FlowChat.ChatService.Application.Features.ChatMessages.Commands.SendChatMessage;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;

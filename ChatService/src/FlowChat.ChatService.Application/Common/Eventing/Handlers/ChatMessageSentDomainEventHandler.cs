@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using FlowChat.Shared.Application;
 using FlowChat.ChatService.Domain.Events;
 using FlowChat.Core.Messaging.ChatService.Events;

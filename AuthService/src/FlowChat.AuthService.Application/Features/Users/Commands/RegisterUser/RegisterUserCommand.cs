@@ -1,4 +1,4 @@
-﻿using FlowChat.Shared.Application;
+using FlowChat.Shared.Application;
 namespace FlowChat.AuthService.Application.Features.Users.Commands.RegisterUser;
 
 public class RegisterUserCommand : ICommand<RegisterUserCommandResponse>

@@ -1,4 +1,4 @@
-﻿using FlowChat.Shared.Application;
+using FlowChat.Shared.Application;
 using MediatR;
 
 namespace FlowChat.RealtimeService.Application.Features.Presence.Commands.PublishPresenceChange;

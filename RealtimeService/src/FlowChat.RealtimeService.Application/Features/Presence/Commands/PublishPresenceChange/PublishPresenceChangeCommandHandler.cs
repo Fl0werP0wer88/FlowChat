@@ -1,4 +1,4 @@
-﻿using CSharpFunctionalExtensions;
+using CSharpFunctionalExtensions;
 using FlowChat.Shared.Application;
 using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
 using FlowChat.Shared.Domain;

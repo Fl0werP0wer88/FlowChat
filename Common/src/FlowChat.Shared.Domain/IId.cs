@@ -1,4 +1,4 @@
-﻿namespace FlowChat.Shared.Domain;
+namespace FlowChat.Shared.Domain;
 
 public interface IId : IComparable, IComparable<IId>, IComparable<Guid>, IEquatable<IId>
 {

@@ -1,4 +1,4 @@
-﻿using System.Runtime.Serialization;
+using System.Runtime.Serialization;
 using FlowChat.Core.Exceptions;
 
 namespace FlowChat.Shared.Domain.Exceptions;

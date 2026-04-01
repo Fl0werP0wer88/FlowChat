@@ -1,19 +1,19 @@
-using FlowChat.NotificationService.Application.Common.Eventing;
+using FlowChat.Shared.Application.Common.Eventing;
 using FlowChat.Shared.Domain;
 using FluentAssertions;
 using MediatR;
 using Moq;
 
-namespace FlowChat.NotificationService.UnitTests.Application.Common.Eventing;
+namespace FlowChat.Shared.API.UnitTests.Application.Common.Eventing;
 
-public sealed class DomainEventDispatcherTests
+public sealed class FlowChatDomainEventDispatcherTests
 {
     private readonly Mock<IMediator> _mediatorMock = new();
-    private readonly DomainEventDispatcher _dispatcher;
+    private readonly FlowChatDomainEventDispatcher _dispatcher;
 
-    public DomainEventDispatcherTests()
+    public FlowChatDomainEventDispatcherTests()
     {
-        _dispatcher = new DomainEventDispatcher(_mediatorMock.Object);
+        _dispatcher = new FlowChatDomainEventDispatcher(_mediatorMock.Object);
     }
 
     [Fact]
@@ -86,8 +86,6 @@ public sealed class DomainEventDispatcherTests
             Times.Once);
     }
 
-    // --- Test helpers ---
-
     private sealed class TestDomainEvent : IDomainEvent
     {
         public int Version => 1;
@@ -114,7 +112,9 @@ public sealed class DomainEventDispatcherTests
 
         public IReadOnlyCollection<IDomainEvent> DomainEvents => _additionalEvents;
 
-        public void ClearEvents() { }
+        public void ClearEvents()
+        {
+        }
 
         public IReadOnlyCollection<IDomainEvent> PopDomainEvents()
         {

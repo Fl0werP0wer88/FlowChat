@@ -1,10 +1,9 @@
-﻿using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
 using MediatR;
 
-namespace FlowChat.NotificationService.Application.Common.Eventing;
+namespace FlowChat.Shared.Application.Common.Eventing;
 
-public sealed class DomainEventDispatcher(IMediator mediator) : IDomainEventDispatcher
+public sealed class FlowChatDomainEventDispatcher(IMediator mediator) : IDomainEventDispatcher
 {
     private readonly IMediator _mediator = mediator;
 
@@ -28,4 +27,3 @@ public sealed class DomainEventDispatcher(IMediator mediator) : IDomainEventDisp
         }
     }
 }
-

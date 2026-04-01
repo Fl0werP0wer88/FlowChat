@@ -1,4 +1,4 @@
-﻿using FlowChat.Core.Messaging;
+using FlowChat.Core.Messaging;
 
 namespace FlowChat.Shared.Application;
 

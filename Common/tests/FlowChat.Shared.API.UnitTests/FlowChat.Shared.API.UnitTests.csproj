@@ -23,6 +23,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\FlowChat.Shared.API\FlowChat.Shared.API.csproj" />
+    <ProjectReference Include="..\..\src\FlowChat.Shared.Application\FlowChat.Shared.Application.csproj" />
     <ProjectReference Include="..\..\src\FlowChat.Core\FlowChat.Core.csproj" />
   </ItemGroup>
 

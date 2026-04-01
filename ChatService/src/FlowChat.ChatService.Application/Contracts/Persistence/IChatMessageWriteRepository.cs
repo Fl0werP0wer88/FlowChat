@@ -1,4 +1,4 @@
-﻿using FlowChat.Shared.Application;
+using FlowChat.Shared.Application;
 using FlowChat.ChatService.Domain.Entities;
 
 namespace FlowChat.ChatService.Application.Contracts.Persistence;

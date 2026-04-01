@@ -1,4 +1,4 @@
-﻿using FlowChat.Shared.API;
+using FlowChat.Shared.API;
 using FlowChat.SocialGraphService.Application;
 using FlowChat.SocialGraphService.Infrastructure.Configuration;
 using FlowChat.SocialGraphService.Infrastructure;

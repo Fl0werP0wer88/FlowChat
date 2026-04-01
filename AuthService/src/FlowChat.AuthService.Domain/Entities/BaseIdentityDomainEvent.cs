@@ -1,4 +1,4 @@
-﻿using FlowChat.AuthService.Domain.Common.Constants;
+using FlowChat.AuthService.Domain.Common.Constants;
 using FlowChat.Shared.Domain;
 
 namespace FlowChat.AuthService.Domain.Entities;

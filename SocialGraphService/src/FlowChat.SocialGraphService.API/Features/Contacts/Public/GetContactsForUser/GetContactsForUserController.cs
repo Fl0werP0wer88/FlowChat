@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using FlowChat.Shared.API;
 using FlowChat.SocialGraphService.Application.Features.Contacts.Queries.GetContactsForUser;
 using MediatR;

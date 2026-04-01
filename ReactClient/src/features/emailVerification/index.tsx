@@ -82,11 +82,13 @@ export function EmailVerificationFeature({ token }: EmailVerificationFeatureProp
           <Button type="button" onClick={navigateToLogin}>
             Przejdz do logowania
           </Button>
-          {status === "error" && token ? (
-            <Button type="button" variant="secondary" onClick={retryConfirmation}>
-              Sprobuj ponownie
-            </Button>
-          ) : null}
+          {status === "error" && token
+            ? (
+              <Button type="button" variant="secondary" onClick={retryConfirmation}>
+                Sprobuj ponownie
+              </Button>
+            )
+            : null}
         </div>
       </div>
     </AuthTemplate>

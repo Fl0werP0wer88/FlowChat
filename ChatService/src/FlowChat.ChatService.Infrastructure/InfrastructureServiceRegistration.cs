@@ -1,4 +1,4 @@
-﻿using FlowChat.Shared.Application;
+using FlowChat.Shared.Application;
 using FlowChat.ChatService.Infrastructure.Configuration;
 using FlowChat.ChatService.Infrastructure.Kafka;
 using FlowChat.Core.Messaging.ChatService.Events;

@@ -1,5 +1,5 @@
-import { Button } from "../atoms/Button";
 import type { RealtimeConnectionStatus } from "../../types/realtime";
+import { Button } from "../atoms/Button";
 
 interface ChatHeaderProps {
   userLogin: string;

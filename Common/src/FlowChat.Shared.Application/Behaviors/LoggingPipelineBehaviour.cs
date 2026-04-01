@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using FlowChat.Shared.Application.Observability;
 using FlowChat.Shared.Domain;
 using MediatR;

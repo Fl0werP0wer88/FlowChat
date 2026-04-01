@@ -1,4 +1,4 @@
-﻿using FlowChat.Shared.Application;
+using FlowChat.Shared.Application;
 
 namespace FlowChat.NotificationService.Application.Features.Notifications.Queries.GetNotifications;
 

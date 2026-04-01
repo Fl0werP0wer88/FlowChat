@@ -1,4 +1,4 @@
-﻿using FlowChat.Shared.Application;
+using FlowChat.Shared.Application;
 using FlowChat.NotificationService.Application.Features.Notifications.Queries.GetNotifications;
 using FlowChat.NotificationService.Domain.Enums;
 

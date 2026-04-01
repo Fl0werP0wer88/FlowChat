@@ -1,4 +1,4 @@
-﻿using FlowChat.Shared.Application;
+using FlowChat.Shared.Application;
 
 namespace FlowChat.ChatService.Application.Features.ChatMessages.Commands.SendChatMessage;
 

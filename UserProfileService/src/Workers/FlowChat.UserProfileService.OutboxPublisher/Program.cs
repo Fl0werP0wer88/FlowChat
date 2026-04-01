@@ -1,4 +1,4 @@
-﻿using FlowChat.Shared.API;
+using FlowChat.Shared.API;
 using FlowChat.UserProfileService.OutboxPublisher;
 using FlowChat.UserProfileService.Persistence;
 using Microsoft.Extensions.DependencyInjection;

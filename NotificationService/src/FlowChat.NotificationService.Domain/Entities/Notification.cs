@@ -1,4 +1,4 @@
-﻿using FlowChat.Shared.Domain;
+using FlowChat.Shared.Domain;
 using FlowChat.NotificationService.Domain.Enums;
 
 namespace FlowChat.NotificationService.Domain.Entities;

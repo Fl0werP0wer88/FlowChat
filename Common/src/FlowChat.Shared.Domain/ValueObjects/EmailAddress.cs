@@ -1,4 +1,4 @@
-﻿using System.Diagnostics.CodeAnalysis;
+using System.Diagnostics.CodeAnalysis;
 using System.Net.Mail;
 
 namespace FlowChat.Shared.Domain.ValueObjects;

@@ -1,4 +1,4 @@
-﻿namespace FlowChat.Shared.Domain;
+namespace FlowChat.Shared.Domain;
 
 public sealed class AggregateStateChangedDomainEvent<TRoot, TSnapshot> : DomainEventBase, IAggregateStateChangedDomainEvent
     where TRoot : AggregateRootBase<TRoot>

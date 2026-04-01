@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using FlowChat.Shared.API;
 using FlowChat.AuthService.Application.Features.Users.Commands.LoginUser;
 using MediatR;

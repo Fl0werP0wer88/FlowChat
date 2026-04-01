@@ -1,4 +1,4 @@
-﻿namespace FlowChat.Shared.Domain;
+namespace FlowChat.Shared.Domain;
 
 public record DomainError : IDomainError
 {

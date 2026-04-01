@@ -1,4 +1,4 @@
-﻿using FlowChat.Shared.API;
+using FlowChat.Shared.API;
 using FlowChat.NotificationService.Application.Features.Notifications.Commands.UserEmailVerificationRequested;
 using FlowChat.NotificationService.Infrastructure.Configuration;
 using MediatR;

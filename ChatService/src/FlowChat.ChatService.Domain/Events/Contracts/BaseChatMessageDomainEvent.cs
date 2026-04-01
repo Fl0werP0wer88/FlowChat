@@ -1,4 +1,4 @@
-﻿using FlowChat.ChatService.Domain.Common.Constants;
+using FlowChat.ChatService.Domain.Common.Constants;
 using FlowChat.ChatService.Domain.Entities;
 using FlowChat.Shared.Domain;
 

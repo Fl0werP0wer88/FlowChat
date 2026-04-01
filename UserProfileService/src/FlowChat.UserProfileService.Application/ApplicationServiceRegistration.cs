@@ -1,5 +1,5 @@
-﻿using FlowChat.Shared.Application;
-using FlowChat.UserProfileService.Application.Common.Eventing;
+using FlowChat.Shared.Application;
+using FlowChat.Shared.Application.Common.Eventing;
 using FlowChat.UserProfileService.Application.Features.UserProfiles.Commands.CreateInitialUserProfile;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -18,7 +18,7 @@ public static class ApplicationServiceRegistration
             cfg.AddFlowChatBehaviors();
         });
         services.AddAutoMapper((Action<AutoMapper.IMapperConfigurationExpression>?)null, applicationAssembly);
-        services.AddScoped<IDomainEventDispatcher, DomainEventDispatcher>();
+        services.AddScoped<IDomainEventDispatcher, FlowChatDomainEventDispatcher>();
 
         return services;
     }
@@ -34,7 +34,7 @@ public static class ApplicationServiceRegistration
             cfg.AddFlowChatBehaviors();
         });
         services.AddAutoMapper((Action<AutoMapper.IMapperConfigurationExpression>?)null, consumerAssembly);
-        services.AddScoped<IDomainEventDispatcher, DomainEventDispatcher>();
+        services.AddScoped<IDomainEventDispatcher, FlowChatDomainEventDispatcher>();
 
         return services;
     }

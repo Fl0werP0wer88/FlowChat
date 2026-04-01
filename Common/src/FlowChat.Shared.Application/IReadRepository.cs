@@ -1,4 +1,4 @@
-﻿namespace FlowChat.Shared.Application;
+namespace FlowChat.Shared.Application;
 
 public interface IReadRepository<TDto> where TDto : class
 {

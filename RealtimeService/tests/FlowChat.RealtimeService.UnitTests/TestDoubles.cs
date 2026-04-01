@@ -1,4 +1,4 @@
-﻿using System.Net;
+using System.Net;
 using System.Net.Http;
 using CSharpFunctionalExtensions;
 using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;

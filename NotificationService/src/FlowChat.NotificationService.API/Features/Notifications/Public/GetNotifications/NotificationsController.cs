@@ -1,4 +1,4 @@
-﻿using FlowChat.Shared.API;
+using FlowChat.Shared.API;
 using FlowChat.NotificationService.Application.Features.Notifications.Queries.GetNotifications;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;

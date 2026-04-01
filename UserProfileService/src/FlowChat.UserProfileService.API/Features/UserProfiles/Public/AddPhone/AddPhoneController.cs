@@ -1,4 +1,4 @@
-﻿using FlowChat.Shared.API;
+using FlowChat.Shared.API;
 using FlowChat.UserProfileService.Application.Features.UserProfiles.Commands.AddPhone;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;

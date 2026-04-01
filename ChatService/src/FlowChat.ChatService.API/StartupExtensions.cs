@@ -1,4 +1,4 @@
-﻿using FlowChat.Shared.API;
+using FlowChat.Shared.API;
 using FlowChat.ChatService.Application;
 using FlowChat.ChatService.Infrastructure;
 using FlowChat.ChatService.Infrastructure.Configuration;
