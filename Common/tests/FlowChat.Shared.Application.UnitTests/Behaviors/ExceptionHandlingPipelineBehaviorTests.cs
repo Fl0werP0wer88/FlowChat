@@ -6,7 +6,7 @@ using FlowChat.Shared.Domain;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
-namespace FlowChat.Shared.API.UnitTests;
+namespace FlowChat.Shared.Application.UnitTests.Behaviors;
 
 public sealed class ExceptionHandlingPipelineBehaviorTests
 {

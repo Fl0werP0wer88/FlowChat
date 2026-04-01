@@ -5,7 +5,7 @@ using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
-namespace FlowChat.Shared.Persistance.UnitTests;
+namespace FlowChat.Shared.Persistance.IntegrationTests;
 
 public sealed class EntityBaseSaveChangesInterceptorTests
 {

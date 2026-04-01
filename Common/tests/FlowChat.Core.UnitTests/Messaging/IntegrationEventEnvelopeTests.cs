@@ -3,7 +3,7 @@ using FlowChat.Core.Messaging;
 using FlowChat.Core.Messaging.UserProfileService.Events;
 using FluentAssertions;
 
-namespace FlowChat.Shared.API.UnitTests;
+namespace FlowChat.Core.UnitTests.Messaging;
 
 public sealed class IntegrationEventEnvelopeTests
 {

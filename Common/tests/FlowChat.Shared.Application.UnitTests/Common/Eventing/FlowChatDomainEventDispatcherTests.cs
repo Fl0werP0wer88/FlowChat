@@ -4,7 +4,7 @@ using FluentAssertions;
 using MediatR;
 using Moq;
 
-namespace FlowChat.Shared.API.UnitTests.Application.Common.Eventing;
+namespace FlowChat.Shared.Application.UnitTests.Common.Eventing;
 
 public sealed class FlowChatDomainEventDispatcherTests
 {

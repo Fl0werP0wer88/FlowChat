@@ -68,7 +68,7 @@ public static class ProblemDetailsExtensions
         HttpContext context,
         string? message = null,
         IEnumerable<string>? errors = null,
-        string? error = null)
+        string? errorTag = null)
     {
         ProblemDetails problemDetails;
 
@@ -84,9 +84,9 @@ public static class ProblemDetailsExtensions
             problemDetails = detailsFactory.CreateProblemDetails(context, statusCode: statusCode, detail: message);
         }
 
-        if (!string.IsNullOrWhiteSpace(error))
+        if (!string.IsNullOrWhiteSpace(errorTag))
         {
-            problemDetails.Extensions["error"] = error;
+            problemDetails.Extensions["error"] = errorTag;
         }
 
         return problemDetails;
