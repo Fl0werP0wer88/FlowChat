@@ -19,6 +19,8 @@ export interface AuthSession {
   accessToken: string;
   login: string;
   expiresAtUtc: string | null;
+  refreshToken: string;
+  refreshTokenExpiresAtUtc: string | null;
 }
 
 export interface AuthNotice {
@@ -26,11 +28,18 @@ export interface AuthNotice {
   message: string;
 }
 
-export interface LoginResponseDto {
+export interface AuthTokenResponseDto {
   isSuccess?: boolean;
   IsSuccess?: boolean;
   accessToken?: string;
   AccessToken?: string;
   expiresAtUtc?: string | null;
   ExpiresAtUtc?: string | null;
+  refreshToken?: string;
+  RefreshToken?: string;
+  refreshTokenExpiresAtUtc?: string | null;
+  RefreshTokenExpiresAtUtc?: string | null;
 }
+
+export type LoginResponseDto = AuthTokenResponseDto;
+export type RefreshTokenResponseDto = AuthTokenResponseDto;

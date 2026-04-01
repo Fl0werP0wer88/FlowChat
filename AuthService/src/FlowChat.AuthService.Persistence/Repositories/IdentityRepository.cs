@@ -175,8 +175,8 @@ public class IdentityRepository : IIdentityRepository
             ?? throw new InvalidOperationException($"User with id '{userId}' was not found.");
 
         await _userManager.SetAuthenticationTokenAsync(user, LoginProvider, RefreshTokenName, token);
-        await _userManager.SetAuthenticationTokenAsync(user, LoginProvider, RefreshTokenExpiryName,
-            expiresAtUtc.ToString("O", CultureInfo.InvariantCulture));
+        // await _userManager.SetAuthenticationTokenAsync(user, LoginProvider, RefreshTokenExpiryName,
+        //     expiresAtUtc.ToString("O", CultureInfo.InvariantCulture));
     }
 
     public async Task<(string Token, DateTime ExpiresAtUtc)?> GetRefreshTokenAsync(Guid userId, CancellationToken cancellationToken)
