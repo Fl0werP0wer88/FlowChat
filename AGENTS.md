@@ -79,41 +79,111 @@ The project uses tactical DDD. All domain logic lives in the `Domain` layer. The
 
 ## Testing
 
-- **Unit tests**: xUnit + FluentAssertions + Moq + AutoFixture
-  - Location: `{Service}/tests/{Service}.UnitTests/`
+- **Tech stack**: xUnit + FluentAssertions + Moq + AutoFixture
+- **Result type**: `FlowChatResult<T>` from `FlowChat.Shared`
+- **Test naming**: `MethodName_Scenario_ExpectedResult`
+- **File structure**:
   - Mirror the `src/` folder structure inside the test project — if a file moves or a new folder is added in `src/`, update the corresponding location in `tests/` accordingly
-  - Mock only at layer boundaries (Application → Persistence, Application → Infrastructure, Workers → HTTP clients); Domain layer tests need no mocks at all — entities are pure C# objects
-  - Test naming: `MethodName_Scenario_ExpectedResult`
-- **Asserting results**: always verify `FlowChatResult<T>` explicitly — check `IsSuccess`/`IsFailure` and the returned value or error, not just what was passed to a mock
-- **Domain events**: command handler tests should assert domain events raised on the aggregate (via `DomainEvents.OfType<T>()`) in addition to the return value — events drive the Outbox and Kafka integration, so they are part of the observable behaviour
-- **`Restore(...)` factory**: do not assert domain events after calling `Restore(...)` — it intentionally does not raise any
-- **When to write/update tests:**
-  - Add or update tests when behaviour changes: public interface, business logic, error handling, or a bug is being fixed
-  - When refactoring without behaviour change: keep existing tests as-is; adjust only if they no longer compile or structurally mismatch
-  - For new features: cover the happy path, relevant edge cases, and known failure modes
-  - Do not write low-value tests just to have coverage (e.g. testing that a constructor assigns a property)
+  - Unit test path: `{Service}/tests/FlowChat.{Service}.UnitTests/{path}/{Class}Tests.cs`
+  - Integration test path: `{Service}/tests/FlowChat.{Service}.IntegrationTests/{path}/{Class}Tests.cs`
+  - AAT path: `{Service}/tests/FlowChat.{Service}.AATs/`
+
+- **Unit tests**:
+  - Domain layer tests use no mocks at all — entities/value objects are pure C# objects
+  - Mock only at layer boundaries: Application → Persistence, Application → Infrastructure, Workers → HTTP clients
+  - Use `_fixture.Create<T>()` for test data unless a literal value is important to the assertion
+  - Always verify `FlowChatResult<T>` explicitly — check `IsSuccess`/`IsFailure` and the returned value or error, not just what was passed to a mock
+  - Command/query handler tests should capture and assert dispatched domain events, not just the return value
+  - Domain tests should assert domain events via `entity.DomainEvents.OfType<T>()`
+  - Assert `AggregateStateChangedDomainEvent<TAggregate, TSnapshot>` where applicable
+  - Do not assert domain events after `Restore(...)` — it intentionally raises none
+
+- **Layer-specific expectations**:
+  - Domain: test `Create(...)`, validation failures, state-changing methods, value-object equality and invariants
+  - Application handlers: mock repositories/UoW/domain event dispatcher/infrastructure services only; assert result shape and dispatched events
+  - Application domain event handlers: verify mapping to integration events and publishing behaviour
+  - Infrastructure unit tests: test isolated services such as JWT generation or settings management with mocked dependencies
+  - API controller unit tests: mock `IMediator`, verify status code/payload/problem details, and validate request-to-command mapping where relevant
+  - Workers/consumers unit tests: mock HTTP clients or external services and verify message handling logic
+
+- **Integration tests**: `{Service}/tests/FlowChat.{Service}.IntegrationTests/`
+  - Use when a test builds a real `ServiceCollection` + `BuildServiceProvider()`, uses a real `DbContext` (even in-memory), tests DI registration, or validates startup configuration across multiple layers
+  - Do NOT mock at layer boundaries — the point is to verify the layers work together
+  - If a file has a mix of unit and integration tests, split it into separate files
+  - Prefer `Sqlite` in-memory or `UseInMemoryDatabase`; do not use a real Postgres instance unless the scenario genuinely requires provider-specific behaviour
+  - Persistence integration tests should cover repositories, Unit of Work, EF interceptors, and real DB interaction
+  - DI/startup integration tests should verify service registration, host bootstrapping, consumer/producer wiring, and critical service resolution
+  - Do NOT write integration tests for business logic already covered by domain/handler unit tests
+  - Do NOT duplicate coverage: if a unit test already proves the behaviour, an integration test of the same scenario adds noise rather than safety
+
+- **Advanced integration tooling**:
+  - Use `WebApplicationFactory<T>` for full HTTP pipeline tests; in services with multiple hosts prefer a controller type as the anchor instead of `Program`
+  - For `WebApplicationFactory` overrides, use `ConfigureTestServices`, remove conflicting `DbContext` registrations including `IDbContextOptionsConfiguration<AppDbContext>`, remove hosted services that need Kafka, and create the test DB schema before host startup
+  - Use `Testcontainers.Kafka` / `Testcontainers.PostgreSql` only when you need real infrastructure behaviour such as end-to-end Kafka flow, Outbox-to-Kafka verification, or provider-specific Postgres features that SQLite cannot model
+  - Use `WireMock.Net` for HTTP dependency stubs when testing service-to-service HTTP clients or retry/error handling
+
+- **Canonical test patterns**:
+  - The canonical source for test style and example code is `.claude/skills/generate-tests/patterns.md`
+  - When generating tests, follow the patterns from that file for structure, mocking boundaries, result assertions, domain event assertions, `WebApplicationFactory`, `Testcontainers`, and `WireMock.Net`
+  - If a rule here and an example in `patterns.md` seem to diverge, keep the architectural rule from `AGENTS.md` and adapt the example to the current codebase rather than copying it blindly
+  - Prefer matching an existing project pattern over inventing a new test style
+
+```csharp
+// Handler test: UoW pass-through + dispatcher capture
+_unitOfWorkMock
+    .Setup(x => x.ExecuteInTransactionAsync(
+        It.IsAny<Func<CancellationToken, Task<FlowChatResult<TResponse>>>>(),
+        It.IsAny<CancellationToken>()))
+    .Returns<Func<CancellationToken, Task<FlowChatResult<TResponse>>>, CancellationToken>(
+        (operation, ct) => operation(ct));
+
+List<IDomainEvent> dispatchedEvents = [];
+_domainEventDispatcherMock
+    .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<IDomainEvent>>(), It.IsAny<CancellationToken>()))
+    .Callback<IEnumerable<IDomainEvent>, CancellationToken>((events, _) => dispatchedEvents.AddRange(events))
+    .Returns(Task.CompletedTask);
+```
+
+```csharp
+// FlowChatResult assertions
+result.IsSuccess.Should().BeTrue();
+result.Value.Should().NotBeNull();
+
+result.IsFailure.Should().BeTrue();
+result.Error.ErrorType.Should().Be(ErrorType.Conflict);
+result.Error.ErrorMessage.Should().Contain("already exists");
+```
+
+```csharp
+// Domain event assertions
+entity.DomainEvents.OfType<MyDomainEvent>().Should().ContainSingle()
+    .Which.PropertyName.Should().Be(expectedValue);
+
+dispatchedEvents.Should().ContainSingle()
+    .Which.Should().BeOfType<MyDomainEvent>();
+```
+
+```csharp
+// WireMock.Net for HTTP client tests
+_server
+    .Given(Request.Create().WithPath("/api/example").UsingPost())
+    .RespondWith(Response.Create().WithStatusCode(200).WithBody("{}"));
+```
+
+- **What to write and what to avoid**:
+  - Add or update tests when behaviour changes: public interface, business logic, error handling, or a bug fix
+  - When refactoring without behaviour change, keep existing tests as-is and adjust only when they no longer compile or structurally mismatch
+  - For new features, cover the happy path, relevant edge cases, and known failure modes
+  - Do not write low-value tests just for coverage
+  - Do not test simple DTOs/records with no logic, `GlobalUsings.cs`, constants files without behaviour, marker interfaces, or EF migrations
+  - Do not unit test `*ServiceRegistration.cs` directly — cover DI registration through integration tests
+
 - **After every code change:**
   1. Run unit tests for the affected service (`dotnet test {Service}/FlowChat.{Service}.slnx`)
   2. Fix any failures before continuing — do not leave a test suite red while working on the next thing
   3. Run integration tests for the affected service when the change touches: DI registration, EF Core / persistence, Kafka producers or consumers, command handler wiring, API controller mapping, or startup/host configuration
   4. Before marking a task as done, run the full test suite for the affected service and report: what passed, what failed, and any known risks or untested edge cases
   5. Never ignore a failing test unless the user explicitly instructs it — if a pre-existing test breaks, investigate before continuing
-
-- **Integration tests**: `{Service}/tests/{Service}.IntegrationTests/`
-  - Use when: test builds a real `ServiceCollection` + `BuildServiceProvider()`, uses a real `DbContext` (even in-memory), tests DI registration, or validates startup configuration across multiple layers
-  - Do NOT mock at layer boundaries — the point is to verify the layers work together
-  - Mirror the `src/` folder structure inside the test project (same rule as UnitTests)
-  - If a file has a mix of unit and integration tests, split it into two separate files
-  - Prefer `UseInMemoryDatabase` or `Sqlite` in-memory over a real Postgres connection in integration tests
-- **When to write integration tests:**
-  - DI registration — verify that `AddXxxServices(...)` correctly registers all expected services and they resolve without errors
-  - EF Core interceptors / persistence behaviour — test that interceptors (e.g. auditing) actually fire on `SaveChangesAsync()`
-  - Startup / host configuration — verify that the host or `WebApplication` builds and critical services resolve (e.g. `StartupExtensions`, `OutboxPublisher` host)
-  - Kafka consumer/producer registration — verify that `ConsumersServiceRegistration` or `SilverbackServiceRegistration` correctly registers consumers, producers, and their topic/endpoint options via DI
-  - Cross-layer wiring — when a bug could only exist because two layers interact incorrectly and a unit test with mocks would give false confidence
-  - Do NOT write integration tests for business logic — that belongs in unit tests against the domain/handlers
-  - Do NOT duplicate coverage: if a unit test already covers the behaviour, an integration test of the same scenario adds noise, not safety
-- **AATs** (Application Acceptance Tests): `{Service}/tests/{Service}.AATs/`
 
 Run tests:
 ```bash
