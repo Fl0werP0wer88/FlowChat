@@ -123,6 +123,46 @@ public sealed class UserProfileAggregateTests
     }
 
     [Fact]
+    public void UserProfile_SetAuthEmail_SwitchesAuthFlag()
+    {
+        var profile = CreateExistingProfile();
+        var firstEmail = profile.Emails.Should().ContainSingle().Subject;
+        var secondEmail = profile.AddEmail("john.secondary@example.com");
+        profile.ClearEvents();
+
+        profile.SetAuthEmail(secondEmail.Id);
+
+        firstEmail.IsAuth.Should().BeFalse();
+        secondEmail.IsAuth.Should().BeTrue();
+        profile.Emails.Should().ContainSingle(x => x.IsAuth);
+
+        var stateChangedEvent = profile.DomainEvents.OfType<AggregateStateChangedDomainEvent<UserProfile, UserProfileSnapshot>>()
+            .Should().ContainSingle().Subject;
+        stateChangedEvent.AggregateState.MainEmail.Should().Be(firstEmail.Address.Value);
+        stateChangedEvent.AggregateState.IsMainEmailConfirmed.Should().BeFalse();
+    }
+
+    [Fact]
+    public void UserProfile_SetAuthEmail_WhenEmailDoesNotExist_Throws()
+    {
+        var profile = CreateExistingProfile();
+
+        Assert.Throws<InvalidOperationException>(() => profile.SetAuthEmail(Id<Email>.New()));
+    }
+
+    [Fact]
+    public void UserProfile_SetAuthEmail_WhenEmailIsAlreadyAuth_DoesNotEmitDomainEvent()
+    {
+        var profile = CreateExistingProfile();
+        var email = profile.Emails.Should().ContainSingle().Subject;
+        profile.ClearEvents();
+
+        profile.SetAuthEmail(email.Id);
+
+        profile.DomainEvents.Should().BeEmpty();
+    }
+
+    [Fact]
     public void UserProfile_ConfirmEmail_MarksEmailAsConfirmed()
     {
         var profile = CreateExistingProfile();
