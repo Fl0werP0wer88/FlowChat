@@ -104,7 +104,7 @@ public class JwtTokenGenerator : IJwtTokenGenerator
                 return userId;
             }
         }
-        catch (SecurityTokenException)
+        catch (Exception ex) when (ex is SecurityTokenException or ArgumentException)
         {
         }
 

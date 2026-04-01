@@ -171,6 +171,117 @@ public sealed class IdentityRepositoryTests : IDisposable
         result.Should().BeNull();
     }
 
+    [Fact]
+    public async Task GetAuthenticatedUserByIdAsync_ConfirmedUser_ReturnsAuthenticatedUser()
+    {
+        var identity = Identity.Create(Guid.NewGuid(), "authuser", "authuser@test.com");
+        await _sut.CreateUserAsync(identity, "Pass1234!", CancellationToken.None);
+        await ConfirmEmailAsync(identity);
+
+        var result = await _sut.GetAuthenticatedUserByIdAsync(identity.Id.Value, CancellationToken.None);
+
+        result.Should().NotBeNull();
+        result!.Id.Should().Be(identity.Id.Value);
+        result.UserName.Should().Be("authuser");
+        result.Email.Should().Be("authuser@test.com");
+    }
+
+    [Fact]
+    public async Task GetAuthenticatedUserByIdAsync_UnconfirmedUser_ReturnsNull()
+    {
+        var identity = Identity.Create(Guid.NewGuid(), "unconfirmed2", "unconfirmed2@test.com");
+        await _sut.CreateUserAsync(identity, "Pass1234!", CancellationToken.None);
+
+        var result = await _sut.GetAuthenticatedUserByIdAsync(identity.Id.Value, CancellationToken.None);
+
+        result.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task GetAuthenticatedUserByIdAsync_NonExistentUser_ReturnsNull()
+    {
+        var result = await _sut.GetAuthenticatedUserByIdAsync(Guid.NewGuid(), CancellationToken.None);
+
+        result.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task SaveRefreshTokenAsync_ValidData_CanBeRetrieved()
+    {
+        var identity = Identity.Create(Guid.NewGuid(), "tokenuser", "tokenuser@test.com");
+        await _sut.CreateUserAsync(identity, "Pass1234!", CancellationToken.None);
+
+        var expiresAtUtc = DateTime.UtcNow.AddDays(7);
+        await _sut.SaveRefreshTokenAsync(identity.Id.Value, "refresh-token-value", expiresAtUtc, CancellationToken.None);
+
+        var result = await _sut.GetRefreshTokenAsync(identity.Id.Value, CancellationToken.None);
+
+        result.Should().NotBeNull();
+        result!.Value.Token.Should().Be("refresh-token-value");
+        result.Value.ExpiresAtUtc.Should().BeCloseTo(expiresAtUtc, TimeSpan.FromSeconds(1));
+    }
+
+    [Fact]
+    public async Task SaveRefreshTokenAsync_CalledTwice_OverwritesPreviousToken()
+    {
+        var identity = Identity.Create(Guid.NewGuid(), "overwrite", "overwrite@test.com");
+        await _sut.CreateUserAsync(identity, "Pass1234!", CancellationToken.None);
+
+        var expiry = DateTime.UtcNow.AddDays(7);
+        await _sut.SaveRefreshTokenAsync(identity.Id.Value, "first-token", expiry, CancellationToken.None);
+        await _sut.SaveRefreshTokenAsync(identity.Id.Value, "second-token", expiry, CancellationToken.None);
+
+        var result = await _sut.GetRefreshTokenAsync(identity.Id.Value, CancellationToken.None);
+
+        result.Should().NotBeNull();
+        result!.Value.Token.Should().Be("second-token");
+    }
+
+    [Fact]
+    public async Task GetRefreshTokenAsync_NoTokenSaved_ReturnsNull()
+    {
+        var identity = Identity.Create(Guid.NewGuid(), "notoken", "notoken@test.com");
+        await _sut.CreateUserAsync(identity, "Pass1234!", CancellationToken.None);
+
+        var result = await _sut.GetRefreshTokenAsync(identity.Id.Value, CancellationToken.None);
+
+        result.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task GetRefreshTokenAsync_NonExistentUser_ReturnsNull()
+    {
+        var result = await _sut.GetRefreshTokenAsync(Guid.NewGuid(), CancellationToken.None);
+
+        result.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task RevokeRefreshTokenAsync_ExistingToken_RemovesToken()
+    {
+        var identity = Identity.Create(Guid.NewGuid(), "revoke", "revoke@test.com");
+        await _sut.CreateUserAsync(identity, "Pass1234!", CancellationToken.None);
+
+        var expiry = DateTime.UtcNow.AddDays(7);
+        await _sut.SaveRefreshTokenAsync(identity.Id.Value, "token-to-revoke", expiry, CancellationToken.None);
+
+        await _sut.RevokeRefreshTokenAsync(identity.Id.Value, CancellationToken.None);
+
+        var result = await _sut.GetRefreshTokenAsync(identity.Id.Value, CancellationToken.None);
+        result.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task RevokeRefreshTokenAsync_NoToken_DoesNotThrow()
+    {
+        var identity = Identity.Create(Guid.NewGuid(), "norevoke", "norevoke@test.com");
+        await _sut.CreateUserAsync(identity, "Pass1234!", CancellationToken.None);
+
+        var act = () => _sut.RevokeRefreshTokenAsync(identity.Id.Value, CancellationToken.None);
+
+        await act.Should().NotThrowAsync();
+    }
+
     private async Task ConfirmEmailAsync(Identity identity)
     {
         var confirmedIdentity = Identity.Restore(

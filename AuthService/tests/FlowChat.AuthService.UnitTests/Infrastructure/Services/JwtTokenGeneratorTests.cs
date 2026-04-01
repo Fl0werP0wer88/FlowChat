@@ -109,18 +109,126 @@ public sealed class JwtTokenGeneratorTests
         return new JwtTokenGenerator(apiSettingsManagerMock.Object);
     }
 
+    [Fact]
+    public void GenerateToken_ValidUser_ReturnsRefreshTokenAndExpiry()
+    {
+        var settings = CreateJwtSettings(refreshTokenExpiresMinutes: 10080);
+        var sut = CreateSut(settings);
+        var user = new AuthenticatedUser
+        {
+            Id = Guid.NewGuid(),
+            UserName = "flower",
+            Email = "flower@example.com"
+        };
+
+        var beforeGeneration = DateTime.UtcNow;
+
+        var result = sut.GenerateToken(user);
+
+        result.RefreshToken.Should().NotBeNullOrWhiteSpace();
+        result.RefreshTokenExpiresAtUtc.Should().BeCloseTo(
+            beforeGeneration.AddMinutes(10080), TimeSpan.FromSeconds(5));
+    }
+
+    [Fact]
+    public void GenerateToken_CalledTwice_ReturnsDifferentRefreshTokens()
+    {
+        var sut = CreateSut(CreateJwtSettings());
+        var user = new AuthenticatedUser
+        {
+            Id = Guid.NewGuid(),
+            UserName = "flower",
+            Email = "flower@example.com"
+        };
+
+        var result1 = sut.GenerateToken(user);
+        var result2 = sut.GenerateToken(user);
+
+        result1.RefreshToken.Should().NotBe(result2.RefreshToken);
+    }
+
+    [Fact]
+    public void ExtractUserIdFromExpiredToken_ValidExpiredToken_ReturnsUserId()
+    {
+        var sut = CreateSut(CreateJwtSettings(expiresMinutes: 0));
+        var userId = Guid.NewGuid();
+        var user = new AuthenticatedUser
+        {
+            Id = userId,
+            UserName = "flower",
+            Email = "flower@example.com"
+        };
+
+        var token = sut.GenerateToken(user);
+
+        var extractedUserId = sut.ExtractUserIdFromExpiredToken(token.AccessToken);
+
+        extractedUserId.Should().Be(userId);
+    }
+
+    [Fact]
+    public void ExtractUserIdFromExpiredToken_ValidNonExpiredToken_ReturnsUserId()
+    {
+        var sut = CreateSut(CreateJwtSettings(expiresMinutes: 60));
+        var userId = Guid.NewGuid();
+        var user = new AuthenticatedUser
+        {
+            Id = userId,
+            UserName = "flower",
+            Email = "flower@example.com"
+        };
+
+        var token = sut.GenerateToken(user);
+
+        var extractedUserId = sut.ExtractUserIdFromExpiredToken(token.AccessToken);
+
+        extractedUserId.Should().Be(userId);
+    }
+
+    [Fact]
+    public void ExtractUserIdFromExpiredToken_MalformedToken_ReturnsNull()
+    {
+        var sut = CreateSut(CreateJwtSettings());
+
+        var result = sut.ExtractUserIdFromExpiredToken("not-a-jwt-token");
+
+        result.Should().BeNull();
+    }
+
+    [Fact]
+    public void ExtractUserIdFromExpiredToken_TokenSignedWithDifferentKey_ReturnsNull()
+    {
+        var sutOriginal = CreateSut(CreateJwtSettings(key: "OriginalKeyThatIsLongEnoughForHmacSha256Algorithm!"));
+        var sutDifferent = CreateSut(CreateJwtSettings(key: "DifferentKeyThatIsLongEnoughForHmacSha256Algorithm!"));
+
+        var user = new AuthenticatedUser
+        {
+            Id = Guid.NewGuid(),
+            UserName = "flower",
+            Email = "flower@example.com"
+        };
+
+        var token = sutOriginal.GenerateToken(user);
+
+        var result = sutDifferent.ExtractUserIdFromExpiredToken(token.AccessToken);
+
+        result.Should().BeNull();
+    }
+
     private static JwtSettings CreateJwtSettings(
         string? key = "ThisIsASecretKeyForTestingPurposesOnly1234567890",
         string? issuer = "TestIssuer",
         string? audience = "TestAudience",
-        int expiresMinutes = 30)
+        int expiresMinutes = 30,
+        int refreshTokenExpiresMinutes = 10080)
     {
         return new JwtSettings
         {
             Key = key ?? string.Empty,
             Issuer = issuer ?? string.Empty,
             Audience = audience ?? string.Empty,
-            ExpiresMinutes = expiresMinutes
+            ExpiresMinutes = expiresMinutes,
+            RefreshTokenExpiresMinutes = refreshTokenExpiresMinutes
         };
     }
 }
