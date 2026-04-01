@@ -59,7 +59,9 @@ public sealed class LoginUserCommandHandlerTests
             .Returns(new JwtTokenResult
             {
                 AccessToken = "jwt-token",
-                ExpiresAtUtc = expiresAtUtc
+                ExpiresAtUtc = expiresAtUtc,
+                RefreshToken = "refresh-token",
+                RefreshTokenExpiresAtUtc = expiresAtUtc.AddDays(7)
             });
 
         var result = await _handler.Handle(
@@ -73,6 +75,11 @@ public sealed class LoginUserCommandHandlerTests
         result.IsSuccess.Should().BeTrue();
         result.Value.AccessToken.Should().Be("jwt-token");
         result.Value.ExpiresAtUtc.Should().Be(expiresAtUtc);
+        result.Value.RefreshToken.Should().Be("refresh-token");
+        result.Value.RefreshTokenExpiresAtUtc.Should().Be(expiresAtUtc.AddDays(7));
+        _identityRepositoryMock.Verify(
+            x => x.SaveRefreshTokenAsync(authenticatedUser.Id, "refresh-token", expiresAtUtc.AddDays(7), It.IsAny<CancellationToken>()),
+            Times.Once);
         _domainEventDispatcherMock.Verify(
             x => x.DispatchAsync(It.IsAny<IEnumerable<IDomainEvent>>(), It.IsAny<CancellationToken>()),
             Times.Never);

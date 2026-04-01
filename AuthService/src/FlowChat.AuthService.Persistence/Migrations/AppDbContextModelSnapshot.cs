@@ -247,7 +247,7 @@ namespace FlowChat.AuthService.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("SilverbackOutboxMessages");
+                    b.ToTable("SilverbackOutboxMessages", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>

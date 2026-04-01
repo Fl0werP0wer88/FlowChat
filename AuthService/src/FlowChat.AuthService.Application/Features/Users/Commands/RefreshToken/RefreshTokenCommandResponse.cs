@@ -1,6 +1,6 @@
-namespace FlowChat.AuthService.API.Features.Users.Public.LoginUser;
+namespace FlowChat.AuthService.Application.Features.Users.Commands.RefreshToken;
 
-public sealed class LoginUserResponse
+public class RefreshTokenCommandResponse
 {
     public string? AccessToken { get; set; }
     public DateTime? ExpiresAtUtc { get; set; }

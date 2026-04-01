@@ -10,4 +10,8 @@ public interface IIdentityRepository
     Task<Identity?> GetByEmailAsync(string emailAddress, CancellationToken cancellationToken);
     Task UpdateAsync(Identity user, CancellationToken cancellationToken);
     Task<AuthenticatedUser?> AuthenticateUserAsync(string login, string password, CancellationToken cancellationToken);
+    Task<AuthenticatedUser?> GetAuthenticatedUserByIdAsync(Guid userId, CancellationToken cancellationToken);
+    Task SaveRefreshTokenAsync(Guid userId, string token, DateTime expiresAtUtc, CancellationToken cancellationToken);
+    Task<(string Token, DateTime ExpiresAtUtc)?> GetRefreshTokenAsync(Guid userId, CancellationToken cancellationToken);
+    Task RevokeRefreshTokenAsync(Guid userId, CancellationToken cancellationToken);
 }

@@ -32,12 +32,17 @@ public class LoginUserCommandHandler : CommandHandlerBase<LoginUserCommand, Logi
 
         var token = _jwtTokenGenerator.GenerateToken(user);
 
+        await _identityRepository.SaveRefreshTokenAsync(
+            user.Id, token.RefreshToken, token.RefreshTokenExpiresAtUtc, cancellationToken);
+
         return FlowChatResult<LoginUserCommandResponse>.Success(
             new LoginUserCommandResponse
             {
                 IsSuccess = true,
                 AccessToken = token.AccessToken,
-                ExpiresAtUtc = token.ExpiresAtUtc
+                ExpiresAtUtc = token.ExpiresAtUtc,
+                RefreshToken = token.RefreshToken,
+                RefreshTokenExpiresAtUtc = token.RefreshTokenExpiresAtUtc
             });
     }
 

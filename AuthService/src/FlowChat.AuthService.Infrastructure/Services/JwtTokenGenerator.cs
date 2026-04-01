@@ -1,5 +1,6 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 using FlowChat.AuthService.Application.Contracts.Infrastructure;
 using FlowChat.AuthService.Application.Features.Users.Models;
@@ -63,10 +64,56 @@ public class JwtTokenGenerator : IJwtTokenGenerator
 
         var serializedToken = new JwtSecurityTokenHandler().WriteToken(token);
 
+        var refreshToken = GenerateRefreshToken();
+        var refreshTokenExpiresAtUtc = DateTime.UtcNow.AddMinutes(jwtSettings.RefreshTokenExpiresMinutes);
+
         return new JwtTokenResult
         {
             AccessToken = serializedToken,
-            ExpiresAtUtc = tokenExpiresAtUtc
+            ExpiresAtUtc = tokenExpiresAtUtc,
+            RefreshToken = refreshToken,
+            RefreshTokenExpiresAtUtc = refreshTokenExpiresAtUtc
         };
+    }
+
+    public Guid? ExtractUserIdFromExpiredToken(string accessToken)
+    {
+        var jwtSettings = _apiSettingsManager.GetJwtSettings();
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Key));
+
+        var tokenHandler = new JwtSecurityTokenHandler();
+        var validationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateIssuerSigningKey = true,
+            ValidateLifetime = false,
+            ValidIssuer = jwtSettings.Issuer,
+            ValidAudience = jwtSettings.Audience,
+            IssuerSigningKey = key
+        };
+
+        try
+        {
+            var principal = tokenHandler.ValidateToken(accessToken, validationParameters, out _);
+            var userIdClaim = principal.FindFirst(JwtRegisteredClaimNames.Sub)
+                ?? principal.FindFirst(ClaimTypes.NameIdentifier);
+
+            if (userIdClaim is not null && Guid.TryParse(userIdClaim.Value, out var userId))
+            {
+                return userId;
+            }
+        }
+        catch (SecurityTokenException)
+        {
+        }
+
+        return null;
+    }
+
+    private static string GenerateRefreshToken()
+    {
+        var randomBytes = RandomNumberGenerator.GetBytes(64);
+        return Convert.ToBase64String(randomBytes);
     }
 }

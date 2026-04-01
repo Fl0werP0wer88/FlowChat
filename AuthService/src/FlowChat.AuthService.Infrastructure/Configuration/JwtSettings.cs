@@ -11,4 +11,6 @@ public sealed class JwtSettings
     public string Audience { get; set; } = string.Empty;
 
     public int ExpiresMinutes { get; set; } = 60;
+
+    public int RefreshTokenExpiresMinutes { get; set; } = 10080; // 7 days
 }
