@@ -47,6 +47,7 @@
     "editor.formatOnSave": true,
     "editor.defaultFormatter": "dprint.dprint",
     "dprint.configPath": "${workspaceFolder:FlowChat}/dprint.json",
+    "dotnet.unitTests.runSettingsPath": "${workspaceFolder:FlowChat}/coverage.runsettings",
     "[csharp]": {
       "editor.defaultFormatter": "dprint.dprint"
     },

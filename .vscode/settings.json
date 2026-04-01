@@ -4,6 +4,7 @@
   "editor.formatOnSave": true,
   "editor.defaultFormatter": "dprint.dprint",
   "dprint.configPath": "${workspaceFolder}/dprint.json",
+  "dotnet.unitTests.runSettingsPath": "coverage.runsettings",
   "[csharp]": {
     "editor.defaultFormatter": "dprint.dprint"
   },
