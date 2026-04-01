@@ -4,6 +4,7 @@ using FlowChat.Core.Exceptions;
 using FlowChat.Core.Results;
 using FlowChat.Shared.Domain;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using DomainValidationException = FlowChat.Shared.Domain.Exceptions.ValidationException;
 
 namespace FlowChat.Shared.Application.Behaviors;
@@ -54,6 +55,15 @@ public sealed class ExceptionHandlingPipelineBehavior<TRequest, TResponse>
             Activity.Current?.SetTag("error.type", "bad_request");
 
             var domainError = DomainError.BadRequest(exception.Message);
+            return TResponse.Failure(domainError);
+        }
+        catch (DbUpdateConcurrencyException exception)
+        {
+            Activity.Current?.SetStatus(ActivityStatusCode.Error, "concurrency_conflict");
+            Activity.Current?.AddException(exception);
+            Activity.Current?.SetTag("error.type", "concurrency_conflict");
+
+            var domainError = DomainError.ConcurencyConflict(exception.Message);
             return TResponse.Failure(domainError);
         }
         catch (Exception exception)

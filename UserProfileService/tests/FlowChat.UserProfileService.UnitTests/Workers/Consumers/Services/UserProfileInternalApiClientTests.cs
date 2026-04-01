@@ -1,4 +1,5 @@
 using System.Net;
+using System.Text;
 using System.Text.Json;
 using FlowChat.Core.Exceptions;
 using FlowChat.UserProfileService.Consumers.Services;
@@ -62,6 +63,28 @@ public sealed class UserProfileInternalApiClientTests
         });
 
         var exception = await Assert.ThrowsAsync<NonTransientException>(() =>
+            client.CreateInitialUserProfileAsync(new CreateInitialUserProfileRequest(), CancellationToken.None));
+
+        exception.Message.Should().Contain("409");
+    }
+
+    [Fact]
+    public async Task CreateInitialUserProfileAsync_WhenApiReturnsTaggedConcurrencyConflict_ThrowsHttpRequestException()
+    {
+        var handler = new CapturingHttpMessageHandler((_, _) =>
+            Task.FromResult(new HttpResponseMessage(HttpStatusCode.Conflict)
+            {
+                Content = new StringContent(
+                    """{"detail":"conflict","error":"concurrency_conflict"}""",
+                    Encoding.UTF8,
+                    "application/problem+json")
+            }));
+        var client = new UserProfileInternalApiClient(new HttpClient(handler)
+        {
+            BaseAddress = new Uri("https://localhost:7148")
+        });
+
+        var exception = await Assert.ThrowsAsync<HttpRequestException>(() =>
             client.CreateInitialUserProfileAsync(new CreateInitialUserProfileRequest(), CancellationToken.None));
 
         exception.Message.Should().Contain("409");

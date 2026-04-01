@@ -56,7 +56,7 @@ public sealed class LoggingPipelineBehaviour<TRequest, TResponse>(
             {
                 var domainError = response.Error;
                 activity?.SetStatus(ActivityStatusCode.Error, domainError.ErrorMessage);
-                activity?.SetTag("error.type", domainError.ErrorType.Name.ToLowerInvariant());
+                activity?.SetTag("error.type", ResolveErrorTypeTag(domainError.ErrorType));
 
                 if (domainError.Errors?.Count > 0)
                 {
@@ -134,5 +134,10 @@ public sealed class LoggingPipelineBehaviour<TRequest, TResponse>(
 
         return "request";
     }
+
+    private static string ResolveErrorTypeTag(ErrorType errorType) =>
+        errorType == ErrorType.ConcurencyConflict
+            ? "concurrency_conflict"
+            : errorType.Name.ToLowerInvariant();
 }
 

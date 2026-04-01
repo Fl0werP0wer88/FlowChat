@@ -1,4 +1,5 @@
 using System.Net;
+using System.Text.Json;
 using FlowChat.Core.Exceptions;
 
 namespace FlowChat.Shared.Infrastructure.Http;
@@ -32,6 +33,11 @@ public abstract class ConsumerHttpClientBase(HttpClient httpClient)
 
         if (NonTransientStatusCodes.Contains(response.StatusCode))
         {
+            if (await IsConcurrencyConflictAsync(response, cancellationToken))
+            {
+                response.EnsureSuccessStatusCode();
+            }
+
             throw new NonTransientException(await BuildFailureMessageAsync(response, cancellationToken));
         }
 
@@ -48,5 +54,34 @@ public abstract class ConsumerHttpClientBase(HttpClient httpClient)
             : $": {body.Trim()}";
 
         return $"{ClientDisplayName} returned {(int)response.StatusCode} {response.ReasonPhrase}{suffix}";
+    }
+
+    private static async Task<bool> IsConcurrencyConflictAsync(
+        HttpResponseMessage response,
+        CancellationToken cancellationToken)
+    {
+        if (response.StatusCode != HttpStatusCode.Conflict || response.Content.Headers.ContentLength == 0)
+        {
+            return false;
+        }
+
+        var body = await response.Content.ReadAsStringAsync(cancellationToken);
+        if (string.IsNullOrWhiteSpace(body))
+        {
+            return false;
+        }
+
+        try
+        {
+            using var document = JsonDocument.Parse(body);
+            return document.RootElement.ValueKind == JsonValueKind.Object
+                && document.RootElement.TryGetProperty("error", out var errorProperty)
+                && errorProperty.ValueKind == JsonValueKind.String
+                && string.Equals(errorProperty.GetString(), "concurrency_conflict", StringComparison.Ordinal);
+        }
+        catch (JsonException)
+        {
+            return false;
+        }
     }
 }

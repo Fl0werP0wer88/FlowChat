@@ -28,6 +28,19 @@ public static class ProblemDetailsExtensions
         IEnumerable<string>? errors = null) =>
         CreateProblemDetailsWith(detailsFactory, StatusCodes.Status409Conflict, context, details, errors);
 
+    public static ProblemDetails CreateConcurrencyConflict(
+        this ProblemDetailsFactory detailsFactory,
+        HttpContext context,
+        string? details = null,
+        IEnumerable<string>? errors = null) =>
+        CreateProblemDetailsWith(
+            detailsFactory,
+            StatusCodes.Status409Conflict,
+            context,
+            details,
+            errors,
+            "concurrency_conflict");
+
     public static ProblemDetails CreateValidation(
         this ProblemDetailsFactory detailsFactory,
         HttpContext context,
@@ -54,17 +67,29 @@ public static class ProblemDetailsExtensions
         int statusCode,
         HttpContext context,
         string? message = null,
-        IEnumerable<string>? errors = null)
+        IEnumerable<string>? errors = null,
+        string? error = null)
     {
+        ProblemDetails problemDetails;
+
         if (errors is not null && errors.Any())
         {
             var errorList = new StringBuilder();
             errorList.AppendJoin(",", errors);
 
-            return detailsFactory.CreateProblemDetails(context, statusCode: statusCode, detail: errorList.ToString());
+            problemDetails = detailsFactory.CreateProblemDetails(context, statusCode: statusCode, detail: errorList.ToString());
+        }
+        else
+        {
+            problemDetails = detailsFactory.CreateProblemDetails(context, statusCode: statusCode, detail: message);
         }
 
-        return detailsFactory.CreateProblemDetails(context, statusCode: statusCode, detail: message);
+        if (!string.IsNullOrWhiteSpace(error))
+        {
+            problemDetails.Extensions["error"] = error;
+        }
+
+        return problemDetails;
     }
 }
 

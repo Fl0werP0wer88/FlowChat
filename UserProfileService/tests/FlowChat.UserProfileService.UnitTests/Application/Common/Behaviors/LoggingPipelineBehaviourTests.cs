@@ -99,6 +99,26 @@ public sealed class LoggingPipelineBehaviourTests
         activity.TagObjects.Single(x => x.Key == "error.count").Value.Should().Be(1);
     }
 
+    [Fact]
+    public async Task Handle_UsesConcurrencyConflictErrorTag_WhenHandlerReturnsConcurrencyConflict()
+    {
+        var logger = new TestLogger<LoggingPipelineBehaviour<TestCommand, FlowChatResult<Guid>>>();
+        var behaviour = new LoggingPipelineBehaviour<TestCommand, FlowChatResult<Guid>>(logger);
+        using var collector = new ActivityCollector();
+
+        var response = await behaviour.Handle(
+            new TestCommand(),
+            _ => Task.FromResult(FlowChatResult<Guid>.Failure(DomainError.ConcurencyConflict("Concurrency conflict"))),
+            CancellationToken.None);
+
+        response.IsFailure.Should().BeTrue();
+        response.Error.ErrorType.Should().Be(ErrorType.ConcurencyConflict);
+
+        var activity = collector.Activities.Should().ContainSingle().Subject;
+        activity.Status.Should().Be(ActivityStatusCode.Error);
+        activity.Tags.Single(x => x.Key == "error.type").Value.Should().Be("concurrency_conflict");
+    }
+
     private sealed record TestCommand : ICommand<Guid>;
 
     private sealed class ActivityCollector : IDisposable

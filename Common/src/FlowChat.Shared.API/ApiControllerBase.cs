@@ -13,6 +13,7 @@ public abstract class ApiControllerBase : ControllerBase
         _errorHandlers = new Dictionary<ErrorType, Func<string?, IEnumerable<string>?, ObjectResult>>
         {
             { ErrorType.Conflict, ConflictResponse },
+            { ErrorType.ConcurencyConflict, ConcurrencyConflictResponse },
             { ErrorType.NotFound, NotFoundResponse },
             { ErrorType.BadRequest, BadRequestResponse },
             { ErrorType.Validation, ValidationResponse },
@@ -39,6 +40,9 @@ public abstract class ApiControllerBase : ControllerBase
 
     protected ObjectResult ConflictResponse(string? details = null, IEnumerable<string>? errors = null) =>
         Conflict(ProblemDetailsFactory.CreateConflict(HttpContext, details, errors));
+
+    protected ObjectResult ConcurrencyConflictResponse(string? details = null, IEnumerable<string>? errors = null) =>
+        Conflict(ProblemDetailsFactory.CreateConcurrencyConflict(HttpContext, details, errors));
 
     protected ObjectResult ValidationResponse(string? details = null, IEnumerable<string>? errors = null) =>
         BadRequest(ProblemDetailsFactory.CreateValidation(HttpContext, details, errors));
