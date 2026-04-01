@@ -43,6 +43,12 @@ function RunMigration($service) {
                 throw "Migration add failed"
             }
 
+            Write-Host "${name}: rebuilding startup project to include the newly generated migration"
+            dotnet build $startup -c Debug
+            if ($LASTEXITCODE -ne 0) {
+                throw "Build failed after migration add"
+            }
+
             $updateOutput = dotnet ef database update --project $proj --startup-project $startup --no-build 2>&1
             if ($LASTEXITCODE -ne 0) {
                 Write-Error "${name}: database update after migration add failed: $($updateOutput -join "`n")"
