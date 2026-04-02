@@ -32,8 +32,9 @@
     "arguments": [
       {
         "commands": [
-          "workbench.actions.treeView.solutionExplorer.collapseAll",
-          "csdevkit.syncWithActiveItem"
+          "workbench.files.action.collapseExplorerFolders",
+          "workbench.files.action.collapseExplorerFolders",
+          "workbench.files.action.showActiveFileInExplorer"
         ]
       }
     ]
