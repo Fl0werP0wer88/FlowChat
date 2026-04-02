@@ -1,0 +1,18 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/FlowChat.RealtimeService.API/FlowChat.RealtimeService.API.csproj" />
+    <Project Path="src/FlowChat.RealtimeService.Application/FlowChat.RealtimeService.Application.csproj" />
+    <Project Path="src/FlowChat.RealtimeService.Domain/FlowChat.RealtimeService.Domain.csproj" />
+    <Project Path="src/FlowChat.RealtimeService.Infrastructure/FlowChat.RealtimeService.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/src/Workers/">
+    <Project Path="src/Workers/FlowChat.RealtimeService.Consumers/FlowChat.RealtimeService.Consumers.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/FlowChat.RealtimeService.IntegrationTests/FlowChat.RealtimeService.IntegrationTests.csproj" />
+    <Project Path="tests/FlowChat.RealtimeService.UnitTests/FlowChat.RealtimeService.UnitTests.csproj" />
+  </Folder>
+  <Project Path="../Common/src/FlowChat.Shared.API/FlowChat.Shared.API.csproj" />
+  <Project Path="../Common/src/FlowChat.Shared.Application/FlowChat.Shared.Application.csproj" />
+  <Project Path="../Common/src/FlowChat.Shared.Infrastructure/FlowChat.Shared.Infrastructure.csproj" />
+</Solution>
