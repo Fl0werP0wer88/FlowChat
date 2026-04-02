@@ -1,10 +1,8 @@
 using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
-using FlowChat.UserProfileService.Domain.Entities.EmailVerificationRequest;
 using FlowChat.UserProfileService.Domain.Entities.UserProfile;
-using FlowChat.UserProfileService.Domain.Events.Contracts;
 
-namespace FlowChat.UserProfileService.Domain.Events;
+namespace FlowChat.UserProfileService.Domain.Entities.UserProfile.Events;
 
 public sealed class MainEmailChangedDomainEvent(
     Id<UserProfile> aggregateId,

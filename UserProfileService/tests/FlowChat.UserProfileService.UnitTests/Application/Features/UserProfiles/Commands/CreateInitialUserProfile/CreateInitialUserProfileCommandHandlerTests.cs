@@ -6,7 +6,7 @@ using FlowChat.UserProfileService.Application.Contracts.Persistence;
 using FlowChat.UserProfileService.Application.Features.UserProfiles.Commands.CreateInitialUserProfile;
 using FlowChat.UserProfileService.Domain.Entities.EmailVerificationRequest;
 using FlowChat.UserProfileService.Domain.Entities.UserProfile;
-using FlowChat.UserProfileService.Domain.Events;
+using FlowChat.UserProfileService.Domain.Entities.UserProfile.Events;
 using FluentAssertions;
 using Moq;
 

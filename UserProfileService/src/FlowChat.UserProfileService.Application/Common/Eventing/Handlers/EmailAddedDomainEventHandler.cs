@@ -1,6 +1,6 @@
 using FlowChat.Shared.Application;
 using FlowChat.UserProfileService.Application.Contracts.Infrastructure;
-using FlowChat.UserProfileService.Domain.Events;
+using FlowChat.UserProfileService.Domain.Entities.UserProfile.Events;
 
 namespace FlowChat.UserProfileService.Application.Common.Eventing.Handlers;
 

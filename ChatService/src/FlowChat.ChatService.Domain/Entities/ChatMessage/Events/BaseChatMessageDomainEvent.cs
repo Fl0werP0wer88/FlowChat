@@ -2,7 +2,7 @@ using FlowChat.ChatService.Domain.Common.Constants;
 using FlowChat.ChatService.Domain.Entities.ChatMessage;
 using FlowChat.Shared.Domain;
 
-namespace FlowChat.ChatService.Domain.Events.Contracts;
+namespace FlowChat.ChatService.Domain.Entities.ChatMessage.Events;
 
 [AggregateType(ChatMessageConstants.ChatMessageAggregateTypeName)]
 public abstract class BaseChatMessageDomainEvent(

@@ -3,7 +3,7 @@ using FlowChat.UserProfileService.Application.Contracts.Infrastructure;
 using FlowChat.Shared.Domain.ValueObjects;
 using FlowChat.UserProfileService.Domain.Entities.EmailVerificationRequest;
 using FlowChat.UserProfileService.Domain.Entities.UserProfile;
-using FlowChat.UserProfileService.Domain.Events;
+using FlowChat.UserProfileService.Domain.Entities.UserProfile.Events;
 
 namespace FlowChat.UserProfileService.UnitTests;
 

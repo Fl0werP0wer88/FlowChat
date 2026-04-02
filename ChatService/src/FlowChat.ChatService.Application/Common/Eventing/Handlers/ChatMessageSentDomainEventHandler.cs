@@ -1,6 +1,6 @@
 using AutoMapper;
 using FlowChat.Shared.Application;
-using FlowChat.ChatService.Domain.Events;
+using FlowChat.ChatService.Domain.Entities.ChatMessage.Events;
 using FlowChat.Core.Messaging.ChatService.Events;
 
 namespace FlowChat.ChatService.Application.Common.Eventing.Handlers;

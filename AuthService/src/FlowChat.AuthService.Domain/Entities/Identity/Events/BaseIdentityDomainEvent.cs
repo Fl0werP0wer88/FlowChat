@@ -1,7 +1,8 @@
 using FlowChat.AuthService.Domain.Common.Constants;
+using FlowChat.AuthService.Domain.Entities.Identity;
 using FlowChat.Shared.Domain;
 
-namespace FlowChat.AuthService.Domain.Entities.Identity;
+namespace FlowChat.AuthService.Domain.Entities.Identity.Events;
 
 [AggregateType(AggregateTypeNames.Identity)]
 public abstract class BaseIdentityDomainEvent(Id<Identity> aggregateId, DateTimeOffset? occurredOnUtc = null)

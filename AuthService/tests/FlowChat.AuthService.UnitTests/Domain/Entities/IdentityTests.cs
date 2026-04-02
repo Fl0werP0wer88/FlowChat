@@ -1,5 +1,5 @@
 using FlowChat.AuthService.Domain.Entities.Identity;
-using FlowChat.AuthService.Domain.Events;
+using FlowChat.AuthService.Domain.Entities.Identity.Events;
 using FluentAssertions;
 
 namespace FlowChat.AuthService.UnitTests;

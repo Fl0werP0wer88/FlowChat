@@ -1,8 +1,8 @@
 using FlowChat.ChatService.Domain.Entities.ChatMessage;
-using FlowChat.ChatService.Domain.Events.Contracts;
+using FlowChat.ChatService.Domain.Entities.ChatMessage.Events;
 using FlowChat.Shared.Domain;
 
-namespace FlowChat.ChatService.Domain.Events;
+namespace FlowChat.ChatService.Domain.Entities.ChatMessage.Events;
 
 public sealed class ChatMessageSentDomainEvent(
     Id<ChatMessage> aggregateId,

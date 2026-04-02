@@ -1,9 +1,8 @@
 using FlowChat.Shared.Domain;
 using FlowChat.UserProfileService.Domain.Common.Constants;
-using FlowChat.UserProfileService.Domain.Entities.EmailVerificationRequest;
 using FlowChat.UserProfileService.Domain.Entities.UserProfile;
 
-namespace FlowChat.UserProfileService.Domain.Events.Contracts;
+namespace FlowChat.UserProfileService.Domain.Entities.UserProfile.Events;
 
 [AggregateType(UserProfileConstants.UserProfileAggregateTypeName)]
 public abstract class BaseUserProfileDomainEvent(Id<UserProfile> aggregateId, DateTimeOffset? occurredOnUtc = null)

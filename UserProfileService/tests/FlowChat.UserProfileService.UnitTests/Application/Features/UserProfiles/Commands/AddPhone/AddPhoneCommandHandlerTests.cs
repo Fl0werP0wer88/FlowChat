@@ -5,7 +5,7 @@ using FlowChat.UserProfileService.Application.Contracts.Persistence;
 using FlowChat.UserProfileService.Application.Features.UserProfiles.Commands.AddPhone;
 using FlowChat.UserProfileService.Domain.Entities.EmailVerificationRequest;
 using FlowChat.UserProfileService.Domain.Entities.UserProfile;
-using FlowChat.UserProfileService.Domain.Events;
+using FlowChat.UserProfileService.Domain.Entities.UserProfile.Events;
 
 namespace FlowChat.UserProfileService.UnitTests;
 
