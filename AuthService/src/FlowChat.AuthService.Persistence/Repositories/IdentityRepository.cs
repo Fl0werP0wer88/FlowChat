@@ -116,11 +116,18 @@ public class IdentityRepository : IIdentityRepository
         }
     }
 
-    public async Task<AuthenticatedUser?> AuthenticateUserAsync(string login, string password, CancellationToken cancellationToken)
+    public async Task<AuthenticatedUser?> LoginUserAsync(
+        string login,
+        string password,
+        string refreshToken,
+        DateTime refreshTokenExpiresAtUtc,
+        CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        if (string.IsNullOrWhiteSpace(login) || string.IsNullOrWhiteSpace(password))
+        if (string.IsNullOrWhiteSpace(login)
+            || string.IsNullOrWhiteSpace(password)
+            || string.IsNullOrWhiteSpace(refreshToken))
         {
             return null;
         }
@@ -136,6 +143,8 @@ public class IdentityRepository : IIdentityRepository
         {
             return null;
         }
+
+        await SaveRefreshTokenAsync(user, refreshToken, refreshTokenExpiresAtUtc);
 
         var roles = await _userManager.GetRolesAsync(user);
 
@@ -176,6 +185,11 @@ public class IdentityRepository : IIdentityRepository
         var user = await _userManager.FindByIdAsync(userId.ToString())
             ?? throw new InvalidOperationException($"User with id '{userId}' was not found.");
 
+        await SaveRefreshTokenAsync(user, token, expiresAtUtc);
+    }
+
+    private async Task SaveRefreshTokenAsync(UserEntity user, string token, DateTime expiresAtUtc)
+    {
         var payload = new RefreshTokenPayload(token, NormalizeUtc(expiresAtUtc));
 
         await _userManager.SetAuthenticationTokenAsync(

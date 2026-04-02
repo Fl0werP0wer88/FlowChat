@@ -23,17 +23,21 @@ public class LoginUserCommandHandler : CommandHandlerBase<LoginUserCommand, Logi
 
     protected override async Task<FlowChatResult<LoginUserCommandResponse>> ExecuteAsync(LoginUserCommand request, CancellationToken cancellationToken)
     {
-        var user = await _identityRepository.AuthenticateUserAsync(request.Login, request.Password, cancellationToken);
+        var refreshToken = _jwtTokenGenerator.GenerateRefreshToken();
+
+        var user = await _identityRepository.LoginUserAsync(
+            request.Login,
+            request.Password,
+            refreshToken.Token,
+            refreshToken.ExpiresAtUtc,
+            cancellationToken);
         if (user is null)
         {
             return FlowChatResult<LoginUserCommandResponse>.Failure(
                 DomainError.Unauthorized("Invalid credentials or account is not confirmed."));
         }
 
-        var token = _jwtTokenGenerator.GenerateToken(user);
-
-        await _identityRepository.SaveRefreshTokenAsync(
-            user.Id, token.RefreshToken, token.RefreshTokenExpiresAtUtc, cancellationToken);
+        var token = _jwtTokenGenerator.GenerateToken(user, refreshToken.Token, refreshToken.ExpiresAtUtc);
 
         return FlowChatResult<LoginUserCommandResponse>.Success(
             new LoginUserCommandResponse

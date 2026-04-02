@@ -20,6 +20,23 @@ public class JwtTokenGenerator : IJwtTokenGenerator
 
     public JwtTokenResult GenerateToken(AuthenticatedUser user)
     {
+        var refreshToken = GenerateRefreshToken();
+        return GenerateToken(user, refreshToken.Token, refreshToken.ExpiresAtUtc);
+    }
+
+    public RefreshTokenResult GenerateRefreshToken()
+    {
+        var jwtSettings = _apiSettingsManager.GetJwtSettings();
+
+        return new RefreshTokenResult
+        {
+            Token = GenerateRefreshTokenValue(),
+            ExpiresAtUtc = DateTime.UtcNow.AddMinutes(jwtSettings.RefreshTokenExpiresMinutes)
+        };
+    }
+
+    public JwtTokenResult GenerateToken(AuthenticatedUser user, string refreshToken, DateTime refreshTokenExpiresAtUtc)
+    {
         var jwtSettings = _apiSettingsManager.GetJwtSettings();
         var key = jwtSettings.Key;
         var issuer = jwtSettings.Issuer;
@@ -63,9 +80,6 @@ public class JwtTokenGenerator : IJwtTokenGenerator
             signingCredentials: credentials);
 
         var serializedToken = new JwtSecurityTokenHandler().WriteToken(token);
-
-        var refreshToken = GenerateRefreshToken();
-        var refreshTokenExpiresAtUtc = DateTime.UtcNow.AddMinutes(jwtSettings.RefreshTokenExpiresMinutes);
 
         return new JwtTokenResult
         {
@@ -111,7 +125,7 @@ public class JwtTokenGenerator : IJwtTokenGenerator
         return null;
     }
 
-    private static string GenerateRefreshToken()
+    private static string GenerateRefreshTokenValue()
     {
         var randomBytes = RandomNumberGenerator.GetBytes(64);
         return Convert.ToBase64String(randomBytes);

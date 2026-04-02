@@ -121,52 +121,79 @@ public sealed class IdentityRepositoryTests : IDisposable
     }
 
     [Fact]
-    public async Task AuthenticateUserAsync_ConfirmedUserWithValidEmail_ReturnsAuthenticatedUser()
+    public async Task LoginUserAsync_ConfirmedUserWithValidEmail_ReturnsAuthenticatedUserAndSavesRefreshToken()
     {
         var identity = Identity.Create(Guid.NewGuid(), "flower", "flower@example.com");
         await _sut.CreateUserAsync(identity, "Pass1234!", CancellationToken.None);
         await ConfirmEmailAsync(identity);
+        var refreshToken = "refresh-token";
+        var refreshTokenExpiresAtUtc = DateTime.UtcNow.AddDays(7);
 
-        var result = await _sut.AuthenticateUserAsync("flower@example.com", "Pass1234!", CancellationToken.None);
+        var result = await _sut.LoginUserAsync(
+            "flower@example.com",
+            "Pass1234!",
+            refreshToken,
+            refreshTokenExpiresAtUtc,
+            CancellationToken.None);
 
         result.Should().NotBeNull();
         result!.Id.Should().Be(identity.Id.Value);
         result.UserName.Should().Be("flower");
         result.Email.Should().Be("flower@example.com");
+
+        var storedToken = await _sut.GetRefreshTokenAsync(identity.Id.Value, CancellationToken.None);
+        storedToken.Should().NotBeNull();
+        storedToken!.Value.Token.Should().Be(refreshToken);
+        storedToken.Value.ExpiresAtUtc.Should().BeCloseTo(refreshTokenExpiresAtUtc, TimeSpan.FromSeconds(1));
     }
 
     [Fact]
-    public async Task AuthenticateUserAsync_ConfirmedUserWithValidUserName_ReturnsAuthenticatedUser()
+    public async Task LoginUserAsync_ConfirmedUserWithValidUserName_ReturnsAuthenticatedUser()
     {
         var identity = Identity.Create(Guid.NewGuid(), "flower", "flower@example.com");
         await _sut.CreateUserAsync(identity, "Pass1234!", CancellationToken.None);
         await ConfirmEmailAsync(identity);
 
-        var result = await _sut.AuthenticateUserAsync("flower", "Pass1234!", CancellationToken.None);
+        var result = await _sut.LoginUserAsync(
+            "flower",
+            "Pass1234!",
+            "refresh-token",
+            DateTime.UtcNow.AddDays(7),
+            CancellationToken.None);
 
         result.Should().NotBeNull();
         result!.UserName.Should().Be("flower");
     }
 
     [Fact]
-    public async Task AuthenticateUserAsync_UnconfirmedUser_ReturnsNull()
+    public async Task LoginUserAsync_UnconfirmedUser_ReturnsNull()
     {
         var identity = Identity.Create(Guid.NewGuid(), "unconfirmed", "unconfirmed@example.com");
         await _sut.CreateUserAsync(identity, "Pass1234!", CancellationToken.None);
 
-        var result = await _sut.AuthenticateUserAsync("unconfirmed@example.com", "Pass1234!", CancellationToken.None);
+        var result = await _sut.LoginUserAsync(
+            "unconfirmed@example.com",
+            "Pass1234!",
+            "refresh-token",
+            DateTime.UtcNow.AddDays(7),
+            CancellationToken.None);
 
         result.Should().BeNull();
     }
 
     [Fact]
-    public async Task AuthenticateUserAsync_InvalidPassword_ReturnsNull()
+    public async Task LoginUserAsync_InvalidPassword_ReturnsNull()
     {
         var identity = Identity.Create(Guid.NewGuid(), "wrongpw", "wrongpw@example.com");
         await _sut.CreateUserAsync(identity, "Pass1234!", CancellationToken.None);
         await ConfirmEmailAsync(identity);
 
-        var result = await _sut.AuthenticateUserAsync("wrongpw@example.com", "WrongPassword!", CancellationToken.None);
+        var result = await _sut.LoginUserAsync(
+            "wrongpw@example.com",
+            "WrongPassword!",
+            "refresh-token",
+            DateTime.UtcNow.AddDays(7),
+            CancellationToken.None);
 
         result.Should().BeNull();
     }

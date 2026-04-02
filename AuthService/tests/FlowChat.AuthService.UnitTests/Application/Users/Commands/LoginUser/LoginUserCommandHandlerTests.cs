@@ -42,6 +42,7 @@ public sealed class LoginUserCommandHandlerTests
     public async Task Handle_WhenCredentialsAreValid_ReturnsAccessToken()
     {
         var expiresAtUtc = _fixture.Create<DateTime>().ToUniversalTime();
+        var refreshTokenExpiresAtUtc = expiresAtUtc.AddDays(7);
         var authenticatedUser = new AuthenticatedUser
         {
             Id = _fixture.Create<Guid>(),
@@ -49,19 +50,33 @@ public sealed class LoginUserCommandHandlerTests
             Email = "flower@example.com",
             Roles = ["User"]
         };
+        var refreshToken = new RefreshTokenResult
+        {
+            Token = "refresh-token",
+            ExpiresAtUtc = refreshTokenExpiresAtUtc
+        };
 
         _identityRepositoryMock
-            .Setup(x => x.AuthenticateUserAsync("flower@example.com", "P@ssw0rd!", It.IsAny<CancellationToken>()))
+            .Setup(x => x.LoginUserAsync(
+                "flower@example.com",
+                "P@ssw0rd!",
+                refreshToken.Token,
+                refreshToken.ExpiresAtUtc,
+                It.IsAny<CancellationToken>()))
             .ReturnsAsync(authenticatedUser);
 
         _jwtTokenGeneratorMock
-            .Setup(x => x.GenerateToken(authenticatedUser))
+            .Setup(x => x.GenerateRefreshToken())
+            .Returns(refreshToken);
+
+        _jwtTokenGeneratorMock
+            .Setup(x => x.GenerateToken(authenticatedUser, refreshToken.Token, refreshToken.ExpiresAtUtc))
             .Returns(new JwtTokenResult
             {
                 AccessToken = "jwt-token",
                 ExpiresAtUtc = expiresAtUtc,
-                RefreshToken = "refresh-token",
-                RefreshTokenExpiresAtUtc = expiresAtUtc.AddDays(7)
+                RefreshToken = refreshToken.Token,
+                RefreshTokenExpiresAtUtc = refreshToken.ExpiresAtUtc
             });
 
         var result = await _handler.Handle(
@@ -75,10 +90,15 @@ public sealed class LoginUserCommandHandlerTests
         result.IsSuccess.Should().BeTrue();
         result.Value.AccessToken.Should().Be("jwt-token");
         result.Value.ExpiresAtUtc.Should().Be(expiresAtUtc);
-        result.Value.RefreshToken.Should().Be("refresh-token");
-        result.Value.RefreshTokenExpiresAtUtc.Should().Be(expiresAtUtc.AddDays(7));
+        result.Value.RefreshToken.Should().Be(refreshToken.Token);
+        result.Value.RefreshTokenExpiresAtUtc.Should().Be(refreshToken.ExpiresAtUtc);
         _identityRepositoryMock.Verify(
-            x => x.SaveRefreshTokenAsync(authenticatedUser.Id, "refresh-token", expiresAtUtc.AddDays(7), It.IsAny<CancellationToken>()),
+            x => x.LoginUserAsync(
+                "flower@example.com",
+                "P@ssw0rd!",
+                refreshToken.Token,
+                refreshToken.ExpiresAtUtc,
+                It.IsAny<CancellationToken>()),
             Times.Once);
         _domainEventDispatcherMock.Verify(
             x => x.DispatchAsync(It.IsAny<IEnumerable<IDomainEvent>>(), It.IsAny<CancellationToken>()),
@@ -88,8 +108,23 @@ public sealed class LoginUserCommandHandlerTests
     [Fact]
     public async Task Handle_WhenCredentialsAreInvalid_ReturnsUnauthorizedFailure()
     {
+        var refreshToken = new RefreshTokenResult
+        {
+            Token = "refresh-token",
+            ExpiresAtUtc = _fixture.Create<DateTime>().ToUniversalTime()
+        };
+
+        _jwtTokenGeneratorMock
+            .Setup(x => x.GenerateRefreshToken())
+            .Returns(refreshToken);
+
         _identityRepositoryMock
-            .Setup(x => x.AuthenticateUserAsync("flower@example.com", "wrong-password", It.IsAny<CancellationToken>()))
+            .Setup(x => x.LoginUserAsync(
+                "flower@example.com",
+                "wrong-password",
+                refreshToken.Token,
+                refreshToken.ExpiresAtUtc,
+                It.IsAny<CancellationToken>()))
             .ReturnsAsync((AuthenticatedUser?)null);
 
         var result = await _handler.Handle(
@@ -104,6 +139,9 @@ public sealed class LoginUserCommandHandlerTests
         result.Error.ErrorType.Should().Be(ErrorType.Unauthorized);
         result.Error.ErrorMessage.Should().Be("Invalid credentials or account is not confirmed.");
         _jwtTokenGeneratorMock.Verify(x => x.GenerateToken(It.IsAny<AuthenticatedUser>()), Times.Never);
+        _jwtTokenGeneratorMock.Verify(
+            x => x.GenerateToken(It.IsAny<AuthenticatedUser>(), It.IsAny<string>(), It.IsAny<DateTime>()),
+            Times.Never);
         _domainEventDispatcherMock.Verify(
             x => x.DispatchAsync(It.IsAny<IEnumerable<IDomainEvent>>(), It.IsAny<CancellationToken>()),
             Times.Never);

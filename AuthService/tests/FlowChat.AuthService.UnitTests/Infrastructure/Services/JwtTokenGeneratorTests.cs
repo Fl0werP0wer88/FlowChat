@@ -131,6 +131,40 @@ public sealed class JwtTokenGeneratorTests
     }
 
     [Fact]
+    public void GenerateRefreshToken_ReturnsRefreshTokenAndExpiry()
+    {
+        var settings = CreateJwtSettings(refreshTokenExpiresMinutes: 10080);
+        var sut = CreateSut(settings);
+
+        var beforeGeneration = DateTime.UtcNow;
+
+        var result = sut.GenerateRefreshToken();
+
+        result.Token.Should().NotBeNullOrWhiteSpace();
+        result.ExpiresAtUtc.Should().BeCloseTo(
+            beforeGeneration.AddMinutes(10080), TimeSpan.FromSeconds(5));
+    }
+
+    [Fact]
+    public void GenerateToken_WithProvidedRefreshToken_UsesProvidedRefreshTokenData()
+    {
+        var sut = CreateSut(CreateJwtSettings());
+        var user = new AuthenticatedUser
+        {
+            Id = Guid.NewGuid(),
+            UserName = "flower",
+            Email = "flower@example.com"
+        };
+        var refreshToken = "provided-refresh-token";
+        var refreshTokenExpiresAtUtc = DateTime.UtcNow.AddDays(7);
+
+        var result = sut.GenerateToken(user, refreshToken, refreshTokenExpiresAtUtc);
+
+        result.RefreshToken.Should().Be(refreshToken);
+        result.RefreshTokenExpiresAtUtc.Should().Be(refreshTokenExpiresAtUtc);
+    }
+
+    [Fact]
     public void GenerateToken_CalledTwice_ReturnsDifferentRefreshTokens()
     {
         var sut = CreateSut(CreateJwtSettings());
