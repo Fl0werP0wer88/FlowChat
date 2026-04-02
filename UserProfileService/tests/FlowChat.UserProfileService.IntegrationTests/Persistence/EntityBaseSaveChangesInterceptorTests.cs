@@ -1,7 +1,8 @@
 using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
 using FlowChat.Shared.Persistance.Auditing;
-using FlowChat.UserProfileService.Domain.Entities;
+using FlowChat.UserProfileService.Domain.Entities.EmailVerificationRequest;
+using FlowChat.UserProfileService.Domain.Entities.UserProfile;
 using FlowChat.UserProfileService.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;

@@ -1,6 +1,6 @@
 using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
-using FlowChat.SocialGraphService.Domain.Entities;
+using FlowChat.SocialGraphService.Domain.Entities.Contact;
 using FluentAssertions;
 
 namespace FlowChat.SocialGraphService.UnitTests;

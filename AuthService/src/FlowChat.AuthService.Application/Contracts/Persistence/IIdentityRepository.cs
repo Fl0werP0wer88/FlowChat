@@ -1,5 +1,5 @@
 using FlowChat.AuthService.Application.Features.Users.Models;
-using FlowChat.AuthService.Domain.Entities;
+using FlowChat.AuthService.Domain.Entities.Identity;
 
 namespace FlowChat.AuthService.Application.Contracts.Persistence;
 

@@ -1,6 +1,7 @@
 using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
-using FlowChat.UserProfileService.Domain.Entities;
+using FlowChat.UserProfileService.Domain.Entities.EmailVerificationRequest;
+using FlowChat.UserProfileService.Domain.Entities.UserProfile;
 using FlowChat.UserProfileService.Domain.Events;
 
 namespace FlowChat.UserProfileService.UnitTests;

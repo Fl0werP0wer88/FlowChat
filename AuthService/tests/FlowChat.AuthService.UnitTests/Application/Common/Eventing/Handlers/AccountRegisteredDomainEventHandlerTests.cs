@@ -1,7 +1,7 @@
 using AutoMapper;
 using FlowChat.AuthService.Application.Common.Eventing;
 using FlowChat.AuthService.Application.Common.Eventing.Handlers;
-using FlowChat.AuthService.Domain.Entities;
+using FlowChat.AuthService.Domain.Entities.Identity;
 using FlowChat.AuthService.Domain.Events;
 using FlowChat.Core.Messaging.AuthService.Events;
 using FlowChat.Shared.Application;

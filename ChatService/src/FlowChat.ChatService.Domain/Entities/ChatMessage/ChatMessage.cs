@@ -1,7 +1,7 @@
 using FlowChat.ChatService.Domain.Events;
 using FlowChat.Shared.Domain;
 
-namespace FlowChat.ChatService.Domain.Entities;
+namespace FlowChat.ChatService.Domain.Entities.ChatMessage;
 
 public sealed class ChatMessage : AggregateRootBase<ChatMessage>
 {

@@ -1,4 +1,4 @@
-namespace FlowChat.UserProfileService.Domain.Entities;
+namespace FlowChat.UserProfileService.Domain.Entities.UserProfile;
 
 public sealed record UserProfileSnapshot(
     Guid UserProfileId,

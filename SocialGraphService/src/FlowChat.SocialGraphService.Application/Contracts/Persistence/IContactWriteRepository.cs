@@ -1,5 +1,5 @@
 using FlowChat.Shared.Application;
-using FlowChat.SocialGraphService.Domain.Entities;
+using FlowChat.SocialGraphService.Domain.Entities.Contact;
 
 namespace FlowChat.SocialGraphService.Application.Contracts.Persistence;
 

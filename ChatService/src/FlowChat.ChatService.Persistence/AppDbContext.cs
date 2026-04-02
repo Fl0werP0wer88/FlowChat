@@ -1,4 +1,4 @@
-using FlowChat.ChatService.Domain.Entities;
+using FlowChat.ChatService.Domain.Entities.ChatMessage;
 using Microsoft.EntityFrameworkCore;
 using Silverback.Messaging.Producing.TransactionalOutbox;
 

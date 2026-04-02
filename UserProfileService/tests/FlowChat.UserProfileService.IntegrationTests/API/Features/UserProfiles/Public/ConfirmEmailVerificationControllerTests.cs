@@ -100,8 +100,8 @@ public sealed class ConfirmEmailVerificationControllerTests(UserProfileApiFactor
         // already issues an earlier request, so we need the latest active one.
         string nonce = await factory.WithDbContextAsync(async db =>
         {
-            var typedUserId = FlowChat.Shared.Domain.Id<FlowChat.UserProfileService.Domain.Entities.UserProfile>.FromGuid(userId);
-            var typedEmailId = FlowChat.Shared.Domain.Id<FlowChat.UserProfileService.Domain.Entities.Email>.FromGuid(emailId);
+            var typedUserId = FlowChat.Shared.Domain.Id<FlowChat.UserProfileService.Domain.Entities.UserProfile.UserProfile>.FromGuid(userId);
+            var typedEmailId = FlowChat.Shared.Domain.Id<FlowChat.UserProfileService.Domain.Entities.UserProfile.Email>.FromGuid(emailId);
             var verificationRequest = await db.EmailVerificationRequests
                 .Where(r => r.UserProfileId == typedUserId
                             && r.EmailId == typedEmailId

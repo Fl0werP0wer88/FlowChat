@@ -1,7 +1,7 @@
 using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
 
-namespace FlowChat.SocialGraphService.Domain.Entities;
+namespace FlowChat.SocialGraphService.Domain.Entities.Contact;
 
 public class Contact : AggregateRootBase<Contact>
 {

@@ -1,6 +1,6 @@
 using FlowChat.Shared.Application;
 using FlowChat.ChatService.Application.Contracts.Persistence;
-using FlowChat.ChatService.Domain.Entities;
+using FlowChat.ChatService.Domain.Entities.ChatMessage;
 using FlowChat.Shared.Domain;
 
 namespace FlowChat.ChatService.Application.Features.ChatMessages.Commands.SendChatMessage;

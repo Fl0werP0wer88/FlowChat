@@ -3,7 +3,8 @@ using FlowChat.Shared.Persistance;
 using FlowChat.Shared.Domain.ValueObjects;
 using FlowChat.UserProfileService.Application.Contracts.Persistence;
 using FlowChat.UserProfileService.Application.Features.UserProfiles.Queries.GetUserProfile;
-using FlowChat.UserProfileService.Domain.Entities;
+using FlowChat.UserProfileService.Domain.Entities.EmailVerificationRequest;
+using FlowChat.UserProfileService.Domain.Entities.UserProfile;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 

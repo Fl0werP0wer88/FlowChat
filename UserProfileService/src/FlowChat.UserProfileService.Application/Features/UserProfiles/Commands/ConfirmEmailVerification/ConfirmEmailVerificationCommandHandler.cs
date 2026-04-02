@@ -2,7 +2,8 @@ using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
 using FlowChat.UserProfileService.Application.Contracts.Infrastructure;
 using FlowChat.UserProfileService.Application.Contracts.Persistence;
-using FlowChat.UserProfileService.Domain.Entities;
+using FlowChat.UserProfileService.Domain.Entities.EmailVerificationRequest;
+using FlowChat.UserProfileService.Domain.Entities.UserProfile;
 using MediatR;
 
 namespace FlowChat.UserProfileService.Application.Features.UserProfiles.Commands.ConfirmEmailVerification;

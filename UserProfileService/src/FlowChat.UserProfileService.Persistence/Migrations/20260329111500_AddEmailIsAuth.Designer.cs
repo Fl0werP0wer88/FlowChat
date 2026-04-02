@@ -25,7 +25,7 @@ namespace FlowChat.UserProfileService.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("FlowChat.UserProfileService.Domain.Entities.Email", b =>
+            modelBuilder.Entity("FlowChat.UserProfileService.Domain.Entities.UserProfile.Email", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
@@ -81,7 +81,7 @@ namespace FlowChat.UserProfileService.Persistence.Migrations
                     b.ToTable("Emails", (string)null);
                 });
 
-            modelBuilder.Entity("FlowChat.UserProfileService.Domain.Entities.Phone", b =>
+            modelBuilder.Entity("FlowChat.UserProfileService.Domain.Entities.UserProfile.Phone", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
@@ -122,7 +122,7 @@ namespace FlowChat.UserProfileService.Persistence.Migrations
                     b.ToTable("Phones", (string)null);
                 });
 
-            modelBuilder.Entity("FlowChat.UserProfileService.Domain.Entities.UserProfile", b =>
+            modelBuilder.Entity("FlowChat.UserProfileService.Domain.Entities.UserProfile.UserProfile", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
@@ -223,25 +223,25 @@ namespace FlowChat.UserProfileService.Persistence.Migrations
                     b.ToTable("SilverbackOutboxMessages");
                 });
 
-            modelBuilder.Entity("FlowChat.UserProfileService.Domain.Entities.Email", b =>
+            modelBuilder.Entity("FlowChat.UserProfileService.Domain.Entities.UserProfile.Email", b =>
                 {
-                    b.HasOne("FlowChat.UserProfileService.Domain.Entities.UserProfile", null)
+                    b.HasOne("FlowChat.UserProfileService.Domain.Entities.UserProfile.UserProfile", null)
                         .WithMany("Emails")
                         .HasForeignKey("UserProfileId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("FlowChat.UserProfileService.Domain.Entities.Phone", b =>
+            modelBuilder.Entity("FlowChat.UserProfileService.Domain.Entities.UserProfile.Phone", b =>
                 {
-                    b.HasOne("FlowChat.UserProfileService.Domain.Entities.UserProfile", null)
+                    b.HasOne("FlowChat.UserProfileService.Domain.Entities.UserProfile.UserProfile", null)
                         .WithMany("Phones")
                         .HasForeignKey("UserProfileId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("FlowChat.UserProfileService.Domain.Entities.UserProfile", b =>
+            modelBuilder.Entity("FlowChat.UserProfileService.Domain.Entities.UserProfile.UserProfile", b =>
                 {
                     b.Navigation("Emails");
 

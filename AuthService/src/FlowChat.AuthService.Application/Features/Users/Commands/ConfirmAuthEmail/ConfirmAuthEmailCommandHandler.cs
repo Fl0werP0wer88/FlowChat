@@ -1,6 +1,7 @@
 using FlowChat.AuthService.Application.Contracts.Persistence;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
+using FlowChat.AuthService.Domain.Entities.Identity;
 using MediatR;
 
 namespace FlowChat.AuthService.Application.Features.Users.Commands.ConfirmAuthEmail;
@@ -8,7 +9,7 @@ namespace FlowChat.AuthService.Application.Features.Users.Commands.ConfirmAuthEm
 public sealed class ConfirmAuthEmailCommandHandler : CommandHandlerBase<ConfirmAuthEmailCommand, Unit>
 {
     private readonly IIdentityRepository _identityRepository;
-    private Domain.Entities.Identity? _domainUser;
+    private Identity? _domainUser;
 
     public ConfirmAuthEmailCommandHandler(
         IIdentityRepository identityRepository,

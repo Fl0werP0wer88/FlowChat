@@ -1,5 +1,5 @@
 using FlowChat.ChatService.Domain.Common.Constants;
-using FlowChat.ChatService.Domain.Entities;
+using FlowChat.ChatService.Domain.Entities.ChatMessage;
 using FlowChat.Shared.Domain;
 
 namespace FlowChat.ChatService.Domain.Events.Contracts;

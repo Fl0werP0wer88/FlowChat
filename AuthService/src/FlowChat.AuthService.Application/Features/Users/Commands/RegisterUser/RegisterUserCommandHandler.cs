@@ -1,6 +1,6 @@
 using FlowChat.Shared.Application;
 using FlowChat.AuthService.Application.Contracts.Persistence;
-using FlowChat.AuthService.Domain.Entities;
+using FlowChat.AuthService.Domain.Entities.Identity;
 using CSharpFunctionalExtensions;
 using FlowChat.Shared.Domain;
 

@@ -25,7 +25,7 @@ namespace FlowChat.SocialGraphService.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("FlowChat.SocialGraphService.Domain.Entities.Contact", b =>
+            modelBuilder.Entity("FlowChat.SocialGraphService.Domain.Entities.Contact.Contact", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");

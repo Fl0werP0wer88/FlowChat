@@ -1,7 +1,7 @@
 using FlowChat.Shared.Domain;
 using FlowChat.NotificationService.Domain.Enums;
 
-namespace FlowChat.NotificationService.Domain.Entities;
+namespace FlowChat.NotificationService.Domain.Entities.Notification;
 
 public sealed class Notification : AggregateRootBase<Notification>
 {

@@ -52,7 +52,7 @@ public sealed class SendEmailVerificationControllerTests(UserProfileApiFactory f
         // Confirm the email first via the token flow
         await factory.WithDbContextAsync(async db =>
         {
-            var typedUserId = FlowChat.Shared.Domain.Id<FlowChat.UserProfileService.Domain.Entities.UserProfile>.FromGuid(userId);
+            var typedUserId = FlowChat.Shared.Domain.Id<FlowChat.UserProfileService.Domain.Entities.UserProfile.UserProfile>.FromGuid(userId);
             var profile = await db.UserProfiles
                 .Include(p => p.Emails)
                 .FirstAsync(p => p.Id == typedUserId);

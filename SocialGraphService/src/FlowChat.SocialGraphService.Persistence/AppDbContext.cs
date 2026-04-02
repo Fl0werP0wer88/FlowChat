@@ -1,4 +1,4 @@
-using FlowChat.SocialGraphService.Domain.Entities;
+using FlowChat.SocialGraphService.Domain.Entities.Contact;
 using FlowChat.SocialGraphService.Persistence.Entities;
 using Microsoft.EntityFrameworkCore;
 

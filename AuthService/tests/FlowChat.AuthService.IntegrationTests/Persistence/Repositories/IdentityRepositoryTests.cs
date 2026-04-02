@@ -1,4 +1,4 @@
-using FlowChat.AuthService.Domain.Entities;
+using FlowChat.AuthService.Domain.Entities.Identity;
 using FlowChat.AuthService.Persistence;
 using FlowChat.AuthService.Persistence.Identity;
 using FlowChat.AuthService.Persistence.Repositories;

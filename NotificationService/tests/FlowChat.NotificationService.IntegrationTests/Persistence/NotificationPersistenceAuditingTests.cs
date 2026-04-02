@@ -44,7 +44,7 @@ public sealed class NotificationPersistenceAuditingTests
             .Options;
 
         await using var dbContext = new AppDbContext(options);
-        var notification = FlowChat.NotificationService.Domain.Entities.Notification.CreateEmailVerification(
+        var notification = FlowChat.NotificationService.Domain.Entities.Notification.Notification.CreateEmailVerification(
             _fixture.Create<Guid>(),
             "test@example.com",
             "Test User",

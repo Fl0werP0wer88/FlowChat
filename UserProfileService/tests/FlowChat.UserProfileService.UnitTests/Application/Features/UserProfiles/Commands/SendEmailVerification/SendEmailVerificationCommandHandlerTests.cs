@@ -5,7 +5,8 @@ using FlowChat.UserProfileService.Application.Contracts.Infrastructure;
 using FlowChat.UserProfileService.Application.Contracts.Persistence;
 using FlowChat.UserProfileService.Application.Features.UserProfiles.Commands.SendEmailVerification;
 using FlowChat.UserProfileService.Application.Features.UserProfiles.Queries.GetUserProfile;
-using FlowChat.UserProfileService.Domain.Entities;
+using FlowChat.UserProfileService.Domain.Entities.EmailVerificationRequest;
+using FlowChat.UserProfileService.Domain.Entities.UserProfile;
 
 namespace FlowChat.UserProfileService.UnitTests;
 

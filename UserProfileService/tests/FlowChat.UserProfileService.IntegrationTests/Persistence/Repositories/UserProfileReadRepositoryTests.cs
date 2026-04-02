@@ -1,5 +1,6 @@
 using FlowChat.Shared.Domain.ValueObjects;
-using FlowChat.UserProfileService.Domain.Entities;
+using FlowChat.UserProfileService.Domain.Entities.EmailVerificationRequest;
+using FlowChat.UserProfileService.Domain.Entities.UserProfile;
 using FlowChat.UserProfileService.Persistence;
 using FlowChat.UserProfileService.Persistence.Repositories;
 using Microsoft.Data.Sqlite;

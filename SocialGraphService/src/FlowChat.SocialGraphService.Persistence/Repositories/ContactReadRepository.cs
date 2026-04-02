@@ -1,7 +1,7 @@
 using FlowChat.Shared.Persistance;
 using FlowChat.SocialGraphService.Application.Contracts.Persistence;
 using FlowChat.SocialGraphService.Application.Features.Contacts.Queries.GetContactsForUser;
-using FlowChat.SocialGraphService.Domain.Entities;
+using FlowChat.SocialGraphService.Domain.Entities.Contact;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 

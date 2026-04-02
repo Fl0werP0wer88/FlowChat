@@ -3,7 +3,7 @@ using FlowChat.UserProfileService.Domain.Common.Constants;
 using FlowChat.UserProfileService.Domain.Events;
 using FlowChat.Shared.Domain.ValueObjects;
 
-namespace FlowChat.UserProfileService.Domain.Entities;
+namespace FlowChat.UserProfileService.Domain.Entities.UserProfile;
 
 public class UserProfile : AggregateRootBase<UserProfile>
 {

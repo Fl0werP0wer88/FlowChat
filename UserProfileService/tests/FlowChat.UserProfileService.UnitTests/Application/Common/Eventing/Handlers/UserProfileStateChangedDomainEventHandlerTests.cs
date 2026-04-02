@@ -5,7 +5,8 @@ using FlowChat.Core.Messaging;
 using FlowChat.Core.Messaging.UserProfileService.Events;
 using FlowChat.UserProfileService.Application.Common.Eventing;
 using FlowChat.UserProfileService.Application.Common.Eventing.Handlers;
-using FlowChat.UserProfileService.Domain.Entities;
+using FlowChat.UserProfileService.Domain.Entities.EmailVerificationRequest;
+using FlowChat.UserProfileService.Domain.Entities.UserProfile;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace FlowChat.UserProfileService.UnitTests;

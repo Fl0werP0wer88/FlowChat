@@ -2,7 +2,7 @@ using FlowChat.AuthService.Domain.Common.Constants;
 using FlowChat.AuthService.Domain.Events;
 using FlowChat.Shared.Domain;
 
-namespace FlowChat.AuthService.Domain.Entities;
+namespace FlowChat.AuthService.Domain.Entities.Identity;
 
 public sealed class Identity : AggregateRootBase<Identity>
 {

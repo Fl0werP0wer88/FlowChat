@@ -1,7 +1,7 @@
 using FlowChat.Shared.Application;
 using FlowChat.NotificationService.Application.Contracts.Infrastructure;
 using FlowChat.NotificationService.Application.Contracts.Persistence;
-using FlowChat.NotificationService.Domain.Entities;
+using FlowChat.NotificationService.Domain.Entities.Notification;
 using FlowChat.NotificationService.Domain.Enums;
 using FlowChat.Shared.Domain;
 using MediatR;

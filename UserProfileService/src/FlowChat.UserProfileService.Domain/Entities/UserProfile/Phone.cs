@@ -1,7 +1,7 @@
 using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
 
-namespace FlowChat.UserProfileService.Domain.Entities;
+namespace FlowChat.UserProfileService.Domain.Entities.UserProfile;
 
 public class Phone : EntityBase<Phone>
 {

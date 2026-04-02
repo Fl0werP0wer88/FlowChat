@@ -1,4 +1,4 @@
-using FlowChat.NotificationService.Domain.Entities;
+using FlowChat.NotificationService.Domain.Entities.Notification;
 using Microsoft.EntityFrameworkCore;
 
 namespace FlowChat.NotificationService.Persistence;

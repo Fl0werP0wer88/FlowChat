@@ -2,7 +2,7 @@ using AutoFixture;
 using FlowChat.AuthService.Application.Contracts.Persistence;
 using FlowChat.AuthService.Application.Features.Users.Commands.ConfirmAuthEmail;
 using FlowChat.AuthService.Application.Features.Users.Models;
-using FlowChat.AuthService.Domain.Entities;
+using FlowChat.AuthService.Domain.Entities.Identity;
 using FlowChat.AuthService.Domain.Events;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;

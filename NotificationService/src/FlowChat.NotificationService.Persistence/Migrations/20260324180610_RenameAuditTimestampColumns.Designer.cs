@@ -25,7 +25,7 @@ namespace FlowChat.NotificationService.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("FlowChat.NotificationService.Domain.Entities.Notification", b =>
+            modelBuilder.Entity("FlowChat.NotificationService.Domain.Entities.Notification.Notification", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");

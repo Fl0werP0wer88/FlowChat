@@ -1,4 +1,4 @@
-using FlowChat.AuthService.Domain.Entities;
+using FlowChat.AuthService.Domain.Entities.Identity;
 using FlowChat.AuthService.Domain.Events;
 using FluentAssertions;
 

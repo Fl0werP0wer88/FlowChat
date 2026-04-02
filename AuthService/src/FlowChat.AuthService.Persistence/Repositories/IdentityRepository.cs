@@ -1,8 +1,8 @@
 using System.Text.Json;
 using FlowChat.AuthService.Application.Contracts.Persistence;
 using FlowChat.AuthService.Application.Features.Users.Models;
-using FlowChat.AuthService.Domain.Entities;
-using FlowChat.AuthService.Persistence.Identity;
+using DomainIdentity = FlowChat.AuthService.Domain.Entities.Identity.Identity;
+using UserEntity = FlowChat.AuthService.Persistence.Identity.UserEntity;
 using Microsoft.AspNetCore.Identity;
 
 namespace FlowChat.AuthService.Persistence.Repositories;
@@ -22,7 +22,7 @@ public class IdentityRepository : IIdentityRepository
         _userManager = userManager;
     }
 
-    public async Task<Guid> CreateUserAsync(Domain.Entities.Identity domainUser, string password, CancellationToken cancellationToken)
+    public async Task<Guid> CreateUserAsync(DomainIdentity domainUser, string password, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
@@ -40,7 +40,7 @@ public class IdentityRepository : IIdentityRepository
         return user.Id;
     }
 
-    public async Task<Domain.Entities.Identity?> GetByIdAsync(Guid userId, CancellationToken cancellationToken)
+    public async Task<DomainIdentity?> GetByIdAsync(Guid userId, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
@@ -50,7 +50,7 @@ public class IdentityRepository : IIdentityRepository
             : MapToDomainIdentity(user);
     }
 
-    public async Task<Domain.Entities.Identity?> GetByEmailAsync(string emailAddress, CancellationToken cancellationToken)
+    public async Task<DomainIdentity?> GetByEmailAsync(string emailAddress, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
@@ -65,7 +65,7 @@ public class IdentityRepository : IIdentityRepository
             : MapToDomainIdentity(user);
     }
 
-    private static UserEntity MapToIdentityUser(Domain.Entities.Identity domainUser)
+    private static UserEntity MapToIdentityUser(DomainIdentity domainUser)
     {
         var user = new UserEntity
         {
@@ -79,9 +79,9 @@ public class IdentityRepository : IIdentityRepository
         return user;
     }
 
-    private static Domain.Entities.Identity MapToDomainIdentity(UserEntity user)
+    private static DomainIdentity MapToDomainIdentity(UserEntity user)
     {
-        return Domain.Entities.Identity.Restore(
+        return DomainIdentity.Restore(
             user.Id,
             user.UserName ?? string.Empty,
             user.Email,
@@ -90,7 +90,7 @@ public class IdentityRepository : IIdentityRepository
             user.PhoneNumberConfirmed);
     }
 
-    public async Task UpdateAsync(Domain.Entities.Identity domainUser, CancellationToken cancellationToken)
+    public async Task UpdateAsync(DomainIdentity domainUser, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
 

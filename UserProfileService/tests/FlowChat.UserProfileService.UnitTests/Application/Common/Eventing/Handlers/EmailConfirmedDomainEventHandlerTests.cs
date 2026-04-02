@@ -6,10 +6,11 @@ using FlowChat.Core.Messaging;
 using FlowChat.Core.Messaging.UserProfileService.Events;
 using FlowChat.UserProfileService.Application.Common.Eventing;
 using FlowChat.UserProfileService.Application.Common.Eventing.Handlers;
-using FlowChat.UserProfileService.Domain.Entities;
+using FlowChat.UserProfileService.Domain.Entities.EmailVerificationRequest;
+using FlowChat.UserProfileService.Domain.Entities.UserProfile;
 using FlowChat.UserProfileService.Domain.Events;
 using Microsoft.Extensions.Logging.Abstractions;
-using DomainEmail = FlowChat.UserProfileService.Domain.Entities.Email;
+using DomainEmail = FlowChat.UserProfileService.Domain.Entities.UserProfile.Email;
 
 namespace FlowChat.UserProfileService.UnitTests;
 

@@ -25,7 +25,7 @@ namespace FlowChat.ChatService.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("FlowChat.ChatService.Domain.Entities.ChatMessage", b =>
+            modelBuilder.Entity("FlowChat.ChatService.Domain.Entities.ChatMessage.ChatMessage", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");

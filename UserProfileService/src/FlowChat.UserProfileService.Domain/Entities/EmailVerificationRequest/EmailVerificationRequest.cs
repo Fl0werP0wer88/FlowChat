@@ -1,6 +1,9 @@
 using FlowChat.Shared.Domain;
+using FlowChat.UserProfileService.Domain.Entities.UserProfile;
+using DomainEmail = FlowChat.UserProfileService.Domain.Entities.UserProfile.Email;
+using DomainUserProfile = FlowChat.UserProfileService.Domain.Entities.UserProfile.UserProfile;
 
-namespace FlowChat.UserProfileService.Domain.Entities;
+namespace FlowChat.UserProfileService.Domain.Entities.EmailVerificationRequest;
 
 public sealed class EmailVerificationRequest : AggregateRootBase<EmailVerificationRequest>
 {
@@ -10,8 +13,8 @@ public sealed class EmailVerificationRequest : AggregateRootBase<EmailVerificati
 
     private EmailVerificationRequest(
         Id<EmailVerificationRequest>? id,
-        Id<UserProfile> userProfileId,
-        Id<Email> emailId,
+        Id<DomainUserProfile> userProfileId,
+        Id<DomainEmail> emailId,
         string nonce,
         DateTime expiresAtUtc) : base(id)
     {
@@ -30,16 +33,16 @@ public sealed class EmailVerificationRequest : AggregateRootBase<EmailVerificati
         ExpiresAtUtc = expiresAtUtc;
     }
 
-    public Id<UserProfile> UserProfileId { get; private set; }
-    public Id<Email> EmailId { get; private set; }
+    public Id<DomainUserProfile> UserProfileId { get; private set; } = default!;
+    public Id<DomainEmail> EmailId { get; private set; } = default!;
     public string Nonce { get; private set; } = string.Empty;
     public DateTime ExpiresAtUtc { get; private set; }
     public DateTime? InvalidatedAtUtc { get; private set; }
     public DateTime? ConsumedAtUtc { get; private set; }
 
     public static EmailVerificationRequest Create(
-        Id<UserProfile> userProfileId,
-        Id<Email> emailId,
+        Id<DomainUserProfile> userProfileId,
+        Id<DomainEmail> emailId,
         string nonce,
         DateTime expiresAtUtc,
         Id<EmailVerificationRequest>? id = null)

@@ -1,5 +1,5 @@
 using AutoFixture;
-using FlowChat.NotificationService.Domain.Entities;
+using FlowChat.NotificationService.Domain.Entities.Notification;
 using FlowChat.NotificationService.Domain.Enums;
 using FlowChat.NotificationService.Persistence;
 using FluentAssertions;

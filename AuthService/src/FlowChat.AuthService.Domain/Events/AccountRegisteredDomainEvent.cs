@@ -1,5 +1,6 @@
 using FlowChat.AuthService.Domain.Common;
 using FlowChat.AuthService.Domain.Entities;
+using FlowChat.AuthService.Domain.Entities.Identity;
 using FlowChat.Shared.Domain;
 
 namespace FlowChat.AuthService.Domain.Events;

@@ -1,7 +1,8 @@
 using FlowChat.Shared.Domain;
 using FlowChat.Shared.Persistance;
 using FlowChat.UserProfileService.Application.Contracts.Persistence;
-using FlowChat.UserProfileService.Domain.Entities;
+using FlowChat.UserProfileService.Domain.Entities.EmailVerificationRequest;
+using FlowChat.UserProfileService.Domain.Entities.UserProfile;
 using Microsoft.EntityFrameworkCore;
 
 namespace FlowChat.UserProfileService.Persistence.Repositories;
