@@ -9,6 +9,7 @@ Every new `.csproj` must be added to **both**:
 ## Collaboration Rules
 
 - If the user's message ends with `?`, treat it as a question — answer it, do not make any code changes unless explicitly asked afterwards.
+- If the model needs to create any temporary working files (for example decompiled library output, scratch files, generated investigation artifacts, or similar), create them under `.codex/temp` in the repository root.
 
 ## Project Overview
 
