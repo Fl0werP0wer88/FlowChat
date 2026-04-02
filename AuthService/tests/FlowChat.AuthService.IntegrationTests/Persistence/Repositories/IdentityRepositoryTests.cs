@@ -257,6 +257,22 @@ public sealed class IdentityRepositoryTests : IDisposable
     }
 
     [Fact]
+    public async Task GetRefreshTokenAsync_InvalidStoredPayload_ReturnsNull()
+    {
+        var identity = Identity.Create(Guid.NewGuid(), "invalid-payload", "invalid-payload@test.com");
+        await _sut.CreateUserAsync(identity, "Pass1234!", CancellationToken.None);
+
+        var user = await _userManager.FindByIdAsync(identity.Id.Value.ToString());
+        user.Should().NotBeNull();
+
+        await _userManager.SetAuthenticationTokenAsync(user!, "FlowChat", "RefreshToken", "not-json");
+
+        var result = await _sut.GetRefreshTokenAsync(identity.Id.Value, CancellationToken.None);
+
+        result.Should().BeNull();
+    }
+
+    [Fact]
     public async Task RevokeRefreshTokenAsync_ExistingToken_RemovesToken()
     {
         var identity = Identity.Create(Guid.NewGuid(), "revoke", "revoke@test.com");

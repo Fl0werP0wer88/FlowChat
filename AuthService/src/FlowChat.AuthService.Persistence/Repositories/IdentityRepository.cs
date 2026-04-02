@@ -1,4 +1,4 @@
-using System.Globalization;
+using System.Text.Json;
 using FlowChat.AuthService.Application.Contracts.Persistence;
 using FlowChat.AuthService.Application.Features.Users.Models;
 using FlowChat.AuthService.Domain.Entities;
@@ -11,7 +11,9 @@ public class IdentityRepository : IIdentityRepository
 {
     private const string LoginProvider = "FlowChat";
     private const string RefreshTokenName = "RefreshToken";
-    private const string RefreshTokenExpiryName = "RefreshTokenExpiry";
+    private const string LegacyRefreshTokenExpiryName = "RefreshTokenExpiry";
+
+    private static readonly JsonSerializerOptions RefreshTokenSerializerOptions = new(JsonSerializerDefaults.Web);
 
     private readonly UserManager<UserEntity> _userManager;
 
@@ -174,9 +176,13 @@ public class IdentityRepository : IIdentityRepository
         var user = await _userManager.FindByIdAsync(userId.ToString())
             ?? throw new InvalidOperationException($"User with id '{userId}' was not found.");
 
-        await _userManager.SetAuthenticationTokenAsync(user, LoginProvider, RefreshTokenName, token);
-        // await _userManager.SetAuthenticationTokenAsync(user, LoginProvider, RefreshTokenExpiryName,
-        //     expiresAtUtc.ToString("O", CultureInfo.InvariantCulture));
+        var payload = new RefreshTokenPayload(token, NormalizeUtc(expiresAtUtc));
+
+        await _userManager.SetAuthenticationTokenAsync(
+            user,
+            LoginProvider,
+            RefreshTokenName,
+            JsonSerializer.Serialize(payload, RefreshTokenSerializerOptions));
     }
 
     public async Task<(string Token, DateTime ExpiresAtUtc)?> GetRefreshTokenAsync(Guid userId, CancellationToken cancellationToken)
@@ -189,20 +195,26 @@ public class IdentityRepository : IIdentityRepository
             return null;
         }
 
-        var token = await _userManager.GetAuthenticationTokenAsync(user, LoginProvider, RefreshTokenName);
-        var expiryString = await _userManager.GetAuthenticationTokenAsync(user, LoginProvider, RefreshTokenExpiryName);
-
-        if (string.IsNullOrEmpty(token) || string.IsNullOrEmpty(expiryString))
+        var payloadJson = await _userManager.GetAuthenticationTokenAsync(user, LoginProvider, RefreshTokenName);
+        if (string.IsNullOrWhiteSpace(payloadJson))
         {
             return null;
         }
 
-        if (!DateTime.TryParse(expiryString, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var expiresAtUtc))
+        try
+        {
+            var payload = JsonSerializer.Deserialize<RefreshTokenPayload>(payloadJson, RefreshTokenSerializerOptions);
+            if (payload is null || string.IsNullOrWhiteSpace(payload.Token))
+            {
+                return null;
+            }
+
+            return (payload.Token, NormalizeUtc(payload.ExpiresAtUtc));
+        }
+        catch (JsonException)
         {
             return null;
         }
-
-        return (token, expiresAtUtc);
     }
 
     public async Task RevokeRefreshTokenAsync(Guid userId, CancellationToken cancellationToken)
@@ -216,6 +228,18 @@ public class IdentityRepository : IIdentityRepository
         }
 
         await _userManager.RemoveAuthenticationTokenAsync(user, LoginProvider, RefreshTokenName);
-        await _userManager.RemoveAuthenticationTokenAsync(user, LoginProvider, RefreshTokenExpiryName);
+        await _userManager.RemoveAuthenticationTokenAsync(user, LoginProvider, LegacyRefreshTokenExpiryName);
     }
+
+    private static DateTime NormalizeUtc(DateTime value)
+    {
+        return value.Kind switch
+        {
+            DateTimeKind.Utc => value,
+            DateTimeKind.Unspecified => DateTime.SpecifyKind(value, DateTimeKind.Utc),
+            _ => value.ToUniversalTime()
+        };
+    }
+
+    private sealed record RefreshTokenPayload(string Token, DateTime ExpiresAtUtc);
 }
