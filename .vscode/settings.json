@@ -18,6 +18,7 @@
     "**/*.rsuser": true,
     "**/*.sln.docstates": true,
     "**/*.sln.iml": true,
+    "**/*.slnx": true,
     "**/*.snupkg": true,
     "**/*.suo": true,
     "**/*.trx": true,
