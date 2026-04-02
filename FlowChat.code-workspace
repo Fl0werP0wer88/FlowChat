@@ -83,10 +83,17 @@
       "**/appsettings.*.local.json": true,
       "**/appsettings.Local.json": true,
       "**/artifacts": true,
+      ".claude": true,
       ".claude/worktrees": true,
+      ".codex": true,
       ".codex-temp": true,
       ".codex/testgen": true,
-      ".codex/worktrees": true
+      ".codex/worktrees": true,
+      ".editorconfig": true,
+      ".gitattributes": true,
+      ".gitignore": true,
+      "coverage.runsettings": true,
+      "dprint.json": true
     },
     "search.exclude": {
       "**/TestResults": true,
