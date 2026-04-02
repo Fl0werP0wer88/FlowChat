@@ -1,4 +1,4 @@
-using FlowChat.UserProfileService.Application.Features.UserProfiles.EmailVerification;
+using FlowChat.UserProfileService.Application.Features.UserProfile.EmailVerification;
 using FlowChat.UserProfileService.Infrastructure.Services;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.DependencyInjection;

@@ -1,7 +1,7 @@
 using AutoFixture;
 using FlowChat.NotificationService.Application.Contracts.Infrastructure;
 using FlowChat.NotificationService.Application.Contracts.Persistence;
-using FlowChat.NotificationService.Application.Features.Notifications.Commands.UserEmailVerificationRequested;
+using FlowChat.NotificationService.Application.Features.Notification.Commands.UserEmailVerificationRequested;
 using FlowChat.NotificationService.Domain.Entities.Notification;
 using FlowChat.NotificationService.Domain.Enums;
 using FlowChat.Shared.Application;

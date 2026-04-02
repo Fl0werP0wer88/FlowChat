@@ -1,4 +1,4 @@
-using FlowChat.UserProfileService.Application.Features.UserProfiles.EmailVerification;
+using FlowChat.UserProfileService.Application.Features.UserProfile.EmailVerification;
 
 namespace FlowChat.UserProfileService.Application.Contracts.Infrastructure;
 

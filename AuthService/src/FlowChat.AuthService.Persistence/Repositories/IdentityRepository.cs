@@ -1,6 +1,6 @@
 using System.Text.Json;
 using FlowChat.AuthService.Application.Contracts.Persistence;
-using FlowChat.AuthService.Application.Features.Users.Models;
+using FlowChat.AuthService.Application.Features.User.Models;
 using DomainIdentity = FlowChat.AuthService.Domain.Entities.Identity.Identity;
 using UserEntity = FlowChat.AuthService.Persistence.Identity.UserEntity;
 using Microsoft.AspNetCore.Identity;

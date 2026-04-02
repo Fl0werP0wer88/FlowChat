@@ -1,5 +1,5 @@
 using FlowChat.Shared.Application;
-using FlowChat.UserProfileService.Api.Features.UserProfiles.Internal.CreateInitialUserProfile;
+using FlowChat.UserProfileService.Api.Features.UserProfile.Internal.CreateInitialUserProfile;
 using FlowChat.UserProfileService.Persistence;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.DataProtection.Repositories;

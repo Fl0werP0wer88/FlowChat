@@ -1,8 +1,8 @@
 using AutoFixture;
 using FlowChat.AuthService.Application.Contracts.Infrastructure;
 using FlowChat.AuthService.Application.Contracts.Persistence;
-using FlowChat.AuthService.Application.Features.Users.Commands.RefreshToken;
-using FlowChat.AuthService.Application.Features.Users.Models;
+using FlowChat.AuthService.Application.Features.User.Commands.RefreshToken;
+using FlowChat.AuthService.Application.Features.User.Models;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
 using FluentAssertions;

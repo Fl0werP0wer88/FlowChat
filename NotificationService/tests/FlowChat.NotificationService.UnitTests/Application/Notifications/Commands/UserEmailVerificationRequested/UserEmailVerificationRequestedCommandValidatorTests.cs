@@ -1,4 +1,4 @@
-using FlowChat.NotificationService.Application.Features.Notifications.Commands.UserEmailVerificationRequested;
+using FlowChat.NotificationService.Application.Features.Notification.Commands.UserEmailVerificationRequested;
 using FluentAssertions;
 
 namespace FlowChat.NotificationService.UnitTests.Application.Notifications.Commands.UserEmailVerificationRequested;

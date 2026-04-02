@@ -1,5 +1,5 @@
 using FlowChat.SocialGraphService.Application.Contracts.Persistence;
-using FlowChat.SocialGraphService.Application.Features.UserProfiles;
+using FlowChat.SocialGraphService.Application.Features.UserProfile;
 using FlowChat.SocialGraphService.Persistence.Entities;
 using Microsoft.EntityFrameworkCore;
 

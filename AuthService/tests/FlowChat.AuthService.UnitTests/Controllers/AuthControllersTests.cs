@@ -1,11 +1,11 @@
 using AutoFixture;
 using AutoMapper;
-using FlowChat.AuthService.API.Features.Users.Public.LoginUser;
-using FlowChat.AuthService.API.Features.Users.Public.RegisterUser;
-using FlowChat.AuthService.Api.Features.Users.Internal.ConfirmAuthEmail;
-using FlowChat.AuthService.Application.Features.Users.Commands.ConfirmAuthEmail;
-using FlowChat.AuthService.Application.Features.Users.Commands.LoginUser;
-using FlowChat.AuthService.Application.Features.Users.Commands.RegisterUser;
+using FlowChat.AuthService.API.Features.User.Public.LoginUser;
+using FlowChat.AuthService.API.Features.User.Public.RegisterUser;
+using FlowChat.AuthService.Api.Features.User.Internal.ConfirmAuthEmail;
+using FlowChat.AuthService.Application.Features.User.Commands.ConfirmAuthEmail;
+using FlowChat.AuthService.Application.Features.User.Commands.LoginUser;
+using FlowChat.AuthService.Application.Features.User.Commands.RegisterUser;
 using FlowChat.AuthService.Infrastructure.Configuration;
 using FlowChat.Shared.Domain;
 using FluentAssertions;

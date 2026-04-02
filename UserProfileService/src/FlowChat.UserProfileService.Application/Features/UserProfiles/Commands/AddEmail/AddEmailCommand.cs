@@ -1,6 +1,0 @@
-using FlowChat.Shared.Application;
-
-namespace FlowChat.UserProfileService.Application.Features.UserProfiles.Commands.AddEmail;
-
-public sealed record AddEmailCommand(Guid UserId, string? Address) : ICommand<Guid>;
-

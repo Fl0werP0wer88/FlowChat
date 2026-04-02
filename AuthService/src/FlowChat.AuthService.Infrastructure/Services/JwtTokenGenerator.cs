@@ -3,7 +3,7 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using FlowChat.AuthService.Application.Contracts.Infrastructure;
-using FlowChat.AuthService.Application.Features.Users.Models;
+using FlowChat.AuthService.Application.Features.User.Models;
 using FlowChat.AuthService.Infrastructure.Configuration;
 using Microsoft.IdentityModel.Tokens;
 

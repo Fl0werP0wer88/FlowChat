@@ -1,6 +1,6 @@
 using AutoFixture;
 using FlowChat.AuthService.Application.Contracts.Persistence;
-using FlowChat.AuthService.Application.Features.Users.Commands.RegisterUser;
+using FlowChat.AuthService.Application.Features.User.Commands.RegisterUser;
 using FlowChat.AuthService.Domain.Entities.Identity;
 using FlowChat.AuthService.Domain.Entities.Identity.Events;
 using FlowChat.Shared.Application;

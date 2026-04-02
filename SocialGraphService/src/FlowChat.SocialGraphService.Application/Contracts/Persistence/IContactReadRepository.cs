@@ -1,5 +1,5 @@
 using FlowChat.Shared.Application;
-using FlowChat.SocialGraphService.Application.Features.Contacts.Queries.GetContactsForUser;
+using FlowChat.SocialGraphService.Application.Features.Contact.Queries.GetContactsForUser;
 
 namespace FlowChat.SocialGraphService.Application.Contracts.Persistence;
 

@@ -1,7 +1,7 @@
 using System.Security.Cryptography;
 using System.Text.Json;
 using FlowChat.UserProfileService.Application.Contracts.Infrastructure;
-using FlowChat.UserProfileService.Application.Features.UserProfiles.EmailVerification;
+using FlowChat.UserProfileService.Application.Features.UserProfile.EmailVerification;
 using Microsoft.AspNetCore.DataProtection;
 
 namespace FlowChat.UserProfileService.Infrastructure.Services;
