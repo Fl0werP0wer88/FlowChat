@@ -7,6 +7,7 @@ using FlowChat.Core.Messaging.AuthService.Events;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using FlowChat.Shared.Infrastructure.Silverback.Kafka;
 
 namespace FlowChat.AuthService.Infrastructure;
 
@@ -26,7 +27,7 @@ public static class InfrastructureServiceRegistration
         services.AddScoped<IKafkaProducerOptions<PhoneNumberConfirmedIntegrationEvent>>(sp =>
             new KafkaProducerOptionsAdapter<PhoneNumberConfirmedIntegrationEvent>(
                 sp.GetRequiredService<IWorkerSettingsManager>().GetAccountRegisteredProducerOptions()));
-        services.AddScoped<IIntegrationEventPublisher, SilverbackEventPublisher>();
+        services.AddScoped<IIntegrationEventPublisher, FlowChatSilverbackEventPublisher>();
 
         return services;
     }

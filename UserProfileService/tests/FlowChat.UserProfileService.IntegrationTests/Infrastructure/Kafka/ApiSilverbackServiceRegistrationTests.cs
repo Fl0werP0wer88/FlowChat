@@ -1,5 +1,6 @@
 using FlowChat.Core.Messaging.AuthService.Events;
 using FlowChat.Shared.Application;
+using FlowChat.Shared.Infrastructure.Silverback.Kafka;
 using FlowChat.UserProfileService.Infrastructure;
 using FlowChat.UserProfileService.Infrastructure.Kafka;
 using FlowChat.UserProfileService.Persistence;

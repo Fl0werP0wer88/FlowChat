@@ -1,22 +1,25 @@
-using FlowChat.Shared.Application;
 using FlowChat.Core.Messaging;
+using FlowChat.Shared.Application;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Silverback.Messaging.Messages;
 using Silverback.Messaging.Publishing;
 
-namespace FlowChat.UserProfileService.Infrastructure.Kafka;
+namespace FlowChat.Shared.Infrastructure.Silverback.Kafka;
 
-public sealed class SilverbackEventPublisher : IIntegrationEventPublisher
+public sealed class FlowChatSilverbackEventPublisher : IIntegrationEventPublisher
 {
     private readonly IServiceProvider _serviceProvider;
-    private readonly ILogger<SilverbackEventPublisher> _logger;
+    private readonly IPublisher _publisher;
+    private readonly ILogger<FlowChatSilverbackEventPublisher> _logger;
 
-    public SilverbackEventPublisher(
+    public FlowChatSilverbackEventPublisher(
         IServiceProvider serviceProvider,
-        ILogger<SilverbackEventPublisher> logger)
+        IPublisher publisher,
+        ILogger<FlowChatSilverbackEventPublisher> logger)
     {
         _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
+        _publisher = publisher ?? throw new ArgumentNullException(nameof(publisher));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -39,7 +42,6 @@ public sealed class SilverbackEventPublisher : IIntegrationEventPublisher
         where TEvent : IntegrationEvent
     {
         cancellationToken.ThrowIfCancellationRequested();
-
         ArgumentNullException.ThrowIfNull(message);
 
         var options = _serviceProvider.GetService<IKafkaProducerOptions<TEvent>>();
@@ -49,16 +51,12 @@ public sealed class SilverbackEventPublisher : IIntegrationEventPublisher
                 $"Kafka producer options for event '{typeof(TEvent).FullName}' are not registered.");
         }
 
-        var key = message.KafkaKey;
-        if (string.IsNullOrWhiteSpace(key))
+        if (string.IsNullOrWhiteSpace(message.KafkaKey))
         {
             throw new InvalidOperationException("Kafka message key cannot be null or empty.");
         }
 
-        var publisher = _serviceProvider.GetService<IPublisher>()
-            ?? throw new InvalidOperationException("Silverback publisher is not registered.");
-
-        await publisher.WrapAndPublishAsync(
+        await _publisher.WrapAndPublishAsync(
             message.Payload,
             envelope => EnrichEnvelope(envelope, message),
             cancellationToken);
@@ -67,7 +65,7 @@ public sealed class SilverbackEventPublisher : IIntegrationEventPublisher
             "Queued {EventType} event to Silverback producer for topic {Topic} with key {Key}.",
             typeof(TEvent).Name,
             options.Topic,
-            key);
+            message.KafkaKey);
     }
 
     private static void EnrichEnvelope<TEvent>(
@@ -82,4 +80,3 @@ public sealed class SilverbackEventPublisher : IIntegrationEventPublisher
         }
     }
 }
-

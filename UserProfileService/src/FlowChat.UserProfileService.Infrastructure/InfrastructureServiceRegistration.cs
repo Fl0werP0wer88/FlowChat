@@ -1,6 +1,7 @@
 using FlowChat.Core.Messaging.AuthService.Events;
 using FlowChat.Core.Messaging.UserProfileService.Events;
 using FlowChat.Shared.Application;
+using FlowChat.Shared.Infrastructure.Silverback.Kafka;
 using FlowChat.UserProfileService.Application.Contracts.Infrastructure;
 using FlowChat.UserProfileService.Infrastructure.Configuration;
 using FlowChat.UserProfileService.Infrastructure.Kafka;
@@ -30,7 +31,7 @@ public static class InfrastructureServiceRegistration
         services.AddScoped<IEmailVerificationLinkBuilder, EmailVerificationLinkBuilder>();
         services.AddScoped<IEmailVerificationTokenProtector, EmailVerificationTokenProtector>();
         services.AddScoped<IEmailVerificationRequestIssuer, EmailVerificationRequestIssuer>();
-        services.AddScoped<IIntegrationEventPublisher, SilverbackEventPublisher>();
+        services.AddScoped<IIntegrationEventPublisher, FlowChatSilverbackEventPublisher>();
 
         return services;
     }

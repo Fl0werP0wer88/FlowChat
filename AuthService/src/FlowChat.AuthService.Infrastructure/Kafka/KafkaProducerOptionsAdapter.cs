@@ -1,3 +1,5 @@
+using FlowChat.Shared.Infrastructure.Silverback.Kafka;
+
 namespace FlowChat.AuthService.Infrastructure.Kafka;
 
 public sealed class KafkaProducerOptionsAdapter<TEvent> : IKafkaProducerOptions<TEvent>

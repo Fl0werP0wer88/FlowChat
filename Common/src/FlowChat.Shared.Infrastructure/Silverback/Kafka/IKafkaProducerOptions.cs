@@ -1,4 +1,4 @@
-namespace FlowChat.ChatService.Infrastructure.Kafka;
+namespace FlowChat.Shared.Infrastructure.Silverback.Kafka;
 
 public interface IKafkaProducerOptions
 {
