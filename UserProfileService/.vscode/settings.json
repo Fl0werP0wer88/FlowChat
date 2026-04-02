@@ -1,3 +1,11 @@
 {
+  "files.exclude": {
+    "**/TestResults": true,
+    "**/TestResults/**": true
+  },
+  "search.exclude": {
+    "**/TestResults": true,
+    "**/TestResults/**": true
+  },
   "dotnet.unitTests.runSettingsPath": "../coverage.runsettings"
 }

@@ -1,6 +1,14 @@
 {
   "workbench.iconTheme": "material-icon-theme",
   "explorer.autoReveal": true,
+  "files.exclude": {
+    "**/TestResults": true,
+    "**/TestResults/**": true
+  },
+  "search.exclude": {
+    "**/TestResults": true,
+    "**/TestResults/**": true
+  },
   "editor.formatOnSave": true,
   "editor.defaultFormatter": "dprint.dprint",
   "dprint.configPath": "${workspaceFolder}/dprint.json",
