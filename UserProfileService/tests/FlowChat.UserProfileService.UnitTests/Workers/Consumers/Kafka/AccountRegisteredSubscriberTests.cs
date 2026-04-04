@@ -32,7 +32,7 @@ public sealed class AccountRegisteredSubscriberTests
         var message = new AccountRegisteredIntegrationEvent
         {
             UserId = userId,
-            UserName = "jdoe",
+            FriendlyUserId = "jdoe",
             DisplayName = "John Doe",
             Email = "john@example.com",
             PhoneNumber = "+48123123123"
@@ -42,7 +42,7 @@ public sealed class AccountRegisteredSubscriberTests
 
         capturedRequest.Should().NotBeNull();
         capturedRequest!.Should().BeOfType<CreateInitialUserProfileRequest>();
-        capturedRequest.UserName.Should().Be("jdoe");
+        capturedRequest.FriendlyUserId.Should().Be("jdoe");
         capturedRequest.DisplayName.Should().Be("John Doe");
         capturedRequest.Email.Should().Be("john@example.com");
         capturedRequest.Phone.Should().Be("+48123123123");
@@ -50,7 +50,7 @@ public sealed class AccountRegisteredSubscriberTests
     }
 
     [Fact]
-    public async Task HandleAsync_WhenUserNameIsMissing_ThrowsNonTransientException()
+    public async Task HandleAsync_WhenFriendlyUserIdIsMissing_ThrowsNonTransientException()
     {
         var subscriber = new AccountRegisteredSubscriber(
             _apiClientMock.Object,
@@ -61,14 +61,14 @@ public sealed class AccountRegisteredSubscriberTests
                 new AccountRegisteredIntegrationEvent
                 {
                     UserId = Guid.NewGuid(),
-                    UserName = "   ",
+                    FriendlyUserId = "   ",
                     DisplayName = "John Doe",
                     Email = "test@example.com",
                     PhoneNumber = "+48123123123"
                 },
                 CancellationToken.None));
 
-        exception.Message.Should().Contain("UserName");
+        exception.Message.Should().Contain("FriendlyUserId");
     }
 
     [Fact]
@@ -85,7 +85,7 @@ public sealed class AccountRegisteredSubscriberTests
         var message = new AccountRegisteredIntegrationEvent
         {
             UserId = userId,
-            UserName = "jdoe",
+            FriendlyUserId = "jdoe",
             DisplayName = "John Doe",
             Email = "john@example.com",
             PhoneNumber = null

@@ -6,10 +6,10 @@ namespace FlowChat.UserProfileService.Application.Contracts.Persistence;
 public interface IUserProfileReadRepository : IReadRepository<UserProfileDto>
 {
     Task<IReadOnlyList<UserProfileDto>> GetActiveAsync(CancellationToken cancellationToken = default);
-    Task<UserProfileDto?> GetByUserNameAsync(string userName, CancellationToken cancellationToken = default);
+    Task<UserProfileDto?> GetByFriendlyUserIdAsync(string friendlyUserId, CancellationToken cancellationToken = default);
     Task<bool> EmailAddressExistsAsync(string emailAddress, CancellationToken cancellationToken = default);
-    Task<bool> UserNameExistsAsync(
-        string userName,
+    Task<bool> FriendlyUserIdExistsAsync(
+        string friendlyUserId,
         Guid? excludedUserId = null,
         CancellationToken cancellationToken = default);
 }

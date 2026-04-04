@@ -14,6 +14,7 @@ public sealed class DomainEventToIntegrationEventProfile : Profile
         CreateMap<UserProfileCreatedDomainEvent, UserProfileCreatedIntegrationEvent>()
             .ForMember(destination => destination.Key, options => options.MapFrom(source => source.UserProfileId.Value.ToString()))
             .ForMember(destination => destination.UserProfileId, options => options.MapFrom(source => source.UserProfileId.Value))
+            .ForMember(destination => destination.UserName, options => options.MapFrom(source => source.FriendlyUserId))
             .ForMember(destination => destination.MainEmail, options => options.MapFrom(source => source.MainEmail.Value))
             .ForMember(destination => destination.MainPhone, options => options.MapFrom(source => source.MainPhone == null ? null : source.MainPhone.Value));
 
@@ -30,7 +31,7 @@ public sealed class DomainEventToIntegrationEventProfile : Profile
         CreateMap<AggregateStateChangedDomainEvent<UserProfile, UserProfileSnapshot>, UserProfileStateChangedIntegrationEvent>()
             .ForMember(destination => destination.Key, options => options.MapFrom(source => source.AggregateId.ToString()))
             .ForMember(destination => destination.UserProfileId, options => options.MapFrom(source => source.AggregateState.UserProfileId))
-            .ForMember(destination => destination.UserName, options => options.MapFrom(source => source.AggregateState.UserName))
+            .ForMember(destination => destination.UserName, options => options.MapFrom(source => source.AggregateState.FriendlyUserId))
             .ForMember(destination => destination.DisplayName, options => options.MapFrom(source => source.AggregateState.DisplayName))
             .ForMember(destination => destination.MainEmail, options => options.MapFrom(source => source.AggregateState.MainEmail))
             .ForMember(destination => destination.IsMainEmailConfirmed, options => options.MapFrom(source => source.AggregateState.IsMainEmailConfirmed))

@@ -57,7 +57,7 @@ public sealed class CreateInitialUserProfileControllerTests
             new CreateInitialUserProfileRequest
             {
                 UserId = Guid.NewGuid(),
-                UserName = "jdoe",
+                FriendlyUserId = "jdoe",
                 DisplayName = "John Doe"
             },
             CancellationToken.None);
@@ -82,7 +82,7 @@ public sealed class CreateInitialUserProfileControllerTests
             new CreateInitialUserProfileRequest
             {
                 UserId = userId,
-                UserName = "jdoe",
+                FriendlyUserId = "jdoe",
                 DisplayName = "John Doe",
                 Email = "john@example.com"
             },
@@ -91,7 +91,7 @@ public sealed class CreateInitialUserProfileControllerTests
         result.Should().BeOfType<AcceptedResult>();
         capturedCommand.Should().NotBeNull();
         capturedCommand!.UserId.Should().Be(userId);
-        capturedCommand.UserName.Should().Be("jdoe");
+        capturedCommand.FriendlyUserId.Should().Be("jdoe");
         capturedCommand.DisplayName.Should().Be("John Doe");
         capturedCommand.Email.Should().Be("john@example.com");
     }

@@ -24,7 +24,7 @@ public sealed class CreateInitialUserProfileCommandHandlerTests
     public CreateInitialUserProfileCommandHandlerTests()
     {
         _readRepositoryMock
-            .Setup(x => x.UserNameExistsAsync(It.IsAny<string>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.FriendlyUserIdExistsAsync(It.IsAny<string>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(false);
 
         _readRepositoryMock
@@ -119,7 +119,7 @@ public sealed class CreateInitialUserProfileCommandHandlerTests
         result.Error.ErrorType.Should().Be(ErrorType.Validation);
         result.Error.ErrorMessage.Should().Be("Validation Failed.");
         result.Error.Errors.Should().Equal(
-            "UserName is required.",
+            "FriendlyUserId is required.",
             "DisplayName is required.",
             "Email is required.");
         _writeRepositoryMock.Verify(x => x.AddAsync(It.IsAny<UserProfile>(), It.IsAny<CancellationToken>()), Times.Never);
@@ -199,10 +199,10 @@ public sealed class CreateInitialUserProfileCommandHandlerTests
     }
 
     [Fact]
-    public async Task Handle_WithExistingUserName_ReturnsConflictFailure()
+    public async Task Handle_WithExistingFriendlyUserId_ReturnsConflictFailure()
     {
         _readRepositoryMock
-            .Setup(x => x.UserNameExistsAsync("jdoe", It.IsAny<Guid?>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.FriendlyUserIdExistsAsync("jdoe", It.IsAny<Guid?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
         var result = await SendAsync(
@@ -264,7 +264,7 @@ public sealed class CreateInitialUserProfileCommandHandlerTests
 
         result.IsSuccess.Should().BeTrue();
         capturedProfile.Should().NotBeNull();
-        capturedProfile.UserName.Should().Be("jdoe");
+        capturedProfile.FriendlyUserId.Should().Be("jdoe");
         capturedProfile.DisplayName.Should().Be("John Doe");
         capturedProfile.Emails.Should().ContainSingle()
             .Which.Address.Value.Should().Be("john@example.com");

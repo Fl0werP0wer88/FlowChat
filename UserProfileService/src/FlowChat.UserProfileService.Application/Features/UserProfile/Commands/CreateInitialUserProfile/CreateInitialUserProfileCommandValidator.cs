@@ -8,9 +8,9 @@ public sealed class CreateInitialUserProfileCommandValidator
 {
     public CreateInitialUserProfileCommandValidator()
     {
-        RuleFor(command => command.UserName)
+        RuleFor(command => command.FriendlyUserId)
             .Must(value => !string.IsNullOrWhiteSpace(value))
-            .WithMessage("UserName is required.");
+            .WithMessage("FriendlyUserId is required.");
 
         RuleFor(command => command.DisplayName)
             .Must(value => !string.IsNullOrWhiteSpace(value))

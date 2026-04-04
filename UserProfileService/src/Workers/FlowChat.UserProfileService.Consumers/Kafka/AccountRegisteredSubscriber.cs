@@ -15,10 +15,10 @@ public sealed class AccountRegisteredSubscriber(
         AccountRegisteredIntegrationEvent message,
         CancellationToken cancellationToken)
     {
-        var userName = message.UserName?.Trim();
-        if (string.IsNullOrWhiteSpace(userName))
+        var friendlyUserId = message.FriendlyUserId?.Trim();
+        if (string.IsNullOrWhiteSpace(friendlyUserId))
         {
-            throw new NonTransientException("Payload does not contain UserName.");
+            throw new NonTransientException("Payload does not contain FriendlyUserId.");
         }
 
         var userId = ResolveUserId(message.UserId);
@@ -27,14 +27,14 @@ public sealed class AccountRegisteredSubscriber(
             throw new NonTransientException("Payload does not contain valid UserId.");
         }
 
-        var displayName = ResolveDisplayName(message, userName);
+        var displayName = ResolveDisplayName(message, friendlyUserId);
 
         try
         {
             await userProfileInternalApiClient.CreateInitialUserProfileAsync(
                 new CreateInitialUserProfileRequest
                 {
-                    UserName = userName,
+                    FriendlyUserId = friendlyUserId,
                     DisplayName = displayName,
                     AvatarUrl = null,
                     Bio = null,
@@ -70,7 +70,7 @@ public sealed class AccountRegisteredSubscriber(
             ? payloadUserId
             : null;
 
-    private static string ResolveDisplayName(AccountRegisteredIntegrationEvent message, string userName)
+    private static string ResolveDisplayName(AccountRegisteredIntegrationEvent message, string friendlyUserId)
     {
         if (!string.IsNullOrWhiteSpace(message.DisplayName))
         {
@@ -82,7 +82,7 @@ public sealed class AccountRegisteredSubscriber(
         var fullName = $"{firstName} {lastName}".Trim();
 
         return string.IsNullOrWhiteSpace(fullName)
-            ? userName
+            ? friendlyUserId
             : fullName;
     }
 }

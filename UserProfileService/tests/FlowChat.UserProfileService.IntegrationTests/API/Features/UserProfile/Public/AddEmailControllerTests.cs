@@ -83,7 +83,7 @@ public sealed class AddEmailControllerTests(UserProfileApiFactory factory)
         var request = new
         {
             UserId = userId,
-            UserName = $"emailuser_{userId:N}",
+            FriendlyUserId = $"emailuser_{userId:N}",
             DisplayName = "Email Test User",
             Email = $"initial_{userId:N}@example.com"
         };

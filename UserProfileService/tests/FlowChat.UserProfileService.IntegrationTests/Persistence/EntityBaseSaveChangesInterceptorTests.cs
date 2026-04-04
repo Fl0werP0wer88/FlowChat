@@ -33,7 +33,7 @@ public sealed class EntityBaseSaveChangesInterceptorTests : IDisposable
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
         var profile = UserProfile.Create(
-            userName: "interceptortest",
+            friendlyUserId: "interceptortest",
             displayName: "Interceptor Test User",
             emailAddress: EmailAddress.Create("interceptor@example.com"));
 
@@ -53,7 +53,7 @@ public sealed class EntityBaseSaveChangesInterceptorTests : IDisposable
         var before = DateTimeOffset.UtcNow;
 
         var profile = UserProfile.Create(
-            userName: "timestamptest",
+            friendlyUserId: "timestamptest",
             displayName: "Timestamp Test User",
             emailAddress: EmailAddress.Create("timestamp@example.com"));
 
@@ -71,7 +71,7 @@ public sealed class EntityBaseSaveChangesInterceptorTests : IDisposable
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
         var profile = UserProfile.Create(
-            userName: "modifytest",
+            friendlyUserId: "modifytest",
             displayName: "Modify Test User",
             emailAddress: EmailAddress.Create("modify@example.com"));
 
@@ -105,7 +105,7 @@ public sealed class EntityBaseSaveChangesInterceptorTests : IDisposable
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
         var profile = UserProfile.Create(
-            userName: "childtest",
+            friendlyUserId: "childtest",
             displayName: "Child Test User",
             emailAddress: EmailAddress.Create("childtest@example.com"));
 

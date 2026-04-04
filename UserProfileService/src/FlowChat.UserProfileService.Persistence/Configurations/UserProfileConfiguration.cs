@@ -16,11 +16,13 @@ public class UserProfileConfiguration : IEntityTypeConfiguration<UserProfile>
         builder.Property(x => x.Id)
             .HasConversion(x => x.Value, x => Id<UserProfile>.FromGuid(x));
 
-        builder.Property(x => x.UserName)
+        builder.Property(x => x.FriendlyUserId)
+            .HasColumnName("UserName")
             .HasMaxLength(100)
             .IsRequired();
 
-        builder.Property(x => x.NormalizedUserName)
+        builder.Property(x => x.NormalizedFriendlyUserId)
+            .HasColumnName("NormalizedUserName")
             .HasMaxLength(100)
             .IsRequired();
 
@@ -57,7 +59,8 @@ public class UserProfileConfiguration : IEntityTypeConfiguration<UserProfile>
 
         builder.Property(x => x.LastModifiedAtUtc);
 
-        builder.HasIndex(x => x.UserName)
+        builder.HasIndex(x => x.FriendlyUserId)
+            .HasDatabaseName("IX_UserProfiles_UserName")
             .IsUnique();
 
         builder.HasMany(x => x.Emails)

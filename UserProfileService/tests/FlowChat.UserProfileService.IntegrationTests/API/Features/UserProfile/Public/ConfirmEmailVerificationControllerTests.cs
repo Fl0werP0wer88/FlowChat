@@ -76,7 +76,7 @@ public sealed class ConfirmEmailVerificationControllerTests(UserProfileApiFactor
         var request = new
         {
             UserId = userId,
-            UserName = $"confirmverif_{userId:N}",
+            FriendlyUserId = $"confirmverif_{userId:N}",
             DisplayName = "Confirm Verification Test",
             Email = $"confirmverif_{userId:N}@example.com"
         };

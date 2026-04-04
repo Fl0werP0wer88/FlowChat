@@ -10,8 +10,8 @@ public class UserProfile : AggregateRootBase<UserProfile>
     private readonly List<Email> _emails = [];
     private readonly List<Phone> _phones = [];
 
-    public string UserName { get; private set; }
-    public string NormalizedUserName { get; private set; }
+    public string FriendlyUserId { get; private set; }
+    public string NormalizedFriendlyUserId { get; private set; }
     public string DisplayName { get; private set; }
     public string? AvatarUrl { get; private set; }
     public string? Bio { get; private set; }
@@ -25,8 +25,8 @@ public class UserProfile : AggregateRootBase<UserProfile>
 
     private UserProfile(
         Id<UserProfile>? id,
-        string userName,
-        string normalizedUserName,
+        string friendlyUserId,
+        string normalizedFriendlyUserId,
         string displayName,
         string? avatarUrl = null,
         string? bio = null,
@@ -35,8 +35,8 @@ public class UserProfile : AggregateRootBase<UserProfile>
         bool isEmailVisible = true,
         bool isPhoneVisible = true) : base(id)
     {
-        UserName = userName;
-        NormalizedUserName = normalizedUserName;
+        FriendlyUserId = friendlyUserId;
+        NormalizedFriendlyUserId = normalizedFriendlyUserId;
         DisplayName = displayName;
         AvatarUrl = avatarUrl;
         Bio = bio;
@@ -47,7 +47,7 @@ public class UserProfile : AggregateRootBase<UserProfile>
     }
 
     public static UserProfile Create(
-        string userName,
+        string friendlyUserId,
         string displayName,
         EmailAddress emailAddress,
         PhoneNumber? phoneNumber = null,
@@ -60,16 +60,16 @@ public class UserProfile : AggregateRootBase<UserProfile>
         Id<UserProfile>? id = null)
     {
         var typedId = id ?? Id<UserProfile>.New();
-        var normalizedUserName = NormalizeRequired(userName, nameof(userName));
+        var normalizedFriendlyUserId = NormalizeRequired(friendlyUserId, nameof(friendlyUserId));
         var normalizedDisplayName = NormalizeRequired(displayName, nameof(displayName));
-        var normalizedNormalizedUserName = NormalizeUserName(normalizedUserName);
+        var canonicalFriendlyUserId = NormalizeFriendlyUserId(normalizedFriendlyUserId);
         var normalizedAvatarUrl = NormalizeOptional(avatarUrl);
         var normalizedBio = NormalizeOptional(bio);
 
         var userProfile = new UserProfile(
             typedId,
-            normalizedUserName,
-            normalizedNormalizedUserName,
+            normalizedFriendlyUserId,
+            canonicalFriendlyUserId,
             normalizedDisplayName,
             normalizedAvatarUrl,
             normalizedBio,
@@ -92,7 +92,7 @@ public class UserProfile : AggregateRootBase<UserProfile>
         userProfile.AddDomainEvent(new UserProfileCreatedDomainEvent(
             userProfile.Id,
             initialEmail.Id,
-            userProfile.UserName,
+            userProfile.FriendlyUserId,
             userProfile.DisplayName,
             initialEmail.Address,
             currentMainPhone,
@@ -314,7 +314,7 @@ public class UserProfile : AggregateRootBase<UserProfile>
 
         return new UserProfileSnapshot(
             Id.Value,
-            UserName,
+            FriendlyUserId,
             DisplayName,
             mainEmailAddress,
             isMainEmailConfirmed,
@@ -333,10 +333,10 @@ public class UserProfile : AggregateRootBase<UserProfile>
         return value.Trim();
     }
 
-    private static string NormalizeUserName(string userName)
+    private static string NormalizeFriendlyUserId(string friendlyUserId)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(userName);
-        return userName.Trim().ToLowerInvariant();
+        ArgumentException.ThrowIfNullOrWhiteSpace(friendlyUserId);
+        return friendlyUserId.Trim().ToLowerInvariant();
     }
 
     private static string? NormalizeOptional(string? value)

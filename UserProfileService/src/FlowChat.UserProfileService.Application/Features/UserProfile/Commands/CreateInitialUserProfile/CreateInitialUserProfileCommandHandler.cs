@@ -28,7 +28,7 @@ public sealed class CreateInitialUserProfileCommandHandler
         CreateInitialUserProfileCommand request,
         CancellationToken cancellationToken)
     {
-        var userName = string.IsNullOrWhiteSpace(request.UserName) ? null : request.UserName.Trim();
+        var friendlyUserId = string.IsNullOrWhiteSpace(request.FriendlyUserId) ? null : request.FriendlyUserId.Trim();
         var displayName = string.IsNullOrWhiteSpace(request.DisplayName) ? null : request.DisplayName.Trim();
         var email = string.IsNullOrWhiteSpace(request.Email) ? null : request.Email.Trim();
         var phone = string.IsNullOrWhiteSpace(request.Phone) ? null : request.Phone.Trim();
@@ -45,12 +45,12 @@ public sealed class CreateInitialUserProfileCommandHandler
             throw new InvalidOperationException("Validated phone number could not be normalized.");
         }
 
-        var userNameExists = await _userProfileReadRepository
-            .UserNameExistsAsync(userName!, cancellationToken: cancellationToken);
+        var friendlyUserIdExists = await _userProfileReadRepository
+            .FriendlyUserIdExistsAsync(friendlyUserId!, cancellationToken: cancellationToken);
 
-        if (userNameExists)
+        if (friendlyUserIdExists)
         {
-            return FlowChatResult<Guid>.Failure(DomainError.Conflict($"UserName '{userName}' already exists."));
+            return FlowChatResult<Guid>.Failure(DomainError.Conflict($"FriendlyUserId '{friendlyUserId}' already exists."));
         }
 
         var emailExists = await _userProfileReadRepository
@@ -63,7 +63,7 @@ public sealed class CreateInitialUserProfileCommandHandler
 
         var userProfileId = Id<UserProfileAggregate>.FromGuid(request.UserId);
         _userProfile = UserProfileAggregate.Create(
-            userName!,
+            friendlyUserId!,
             displayName!,
             emailAddress!,
             phoneNumber,

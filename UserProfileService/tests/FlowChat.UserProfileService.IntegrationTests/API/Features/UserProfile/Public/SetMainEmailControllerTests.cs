@@ -49,7 +49,7 @@ public sealed class SetMainEmailControllerTests(UserProfileApiFactory factory)
         var request = new
         {
             UserId = userId,
-            UserName = $"mainemailuser_{userId:N}",
+            FriendlyUserId = $"mainemailuser_{userId:N}",
             DisplayName = "Main Email Test User",
             Email = $"first_{userId:N}@example.com"
         };

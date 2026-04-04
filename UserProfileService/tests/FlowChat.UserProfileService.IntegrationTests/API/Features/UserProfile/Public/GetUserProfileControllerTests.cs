@@ -20,7 +20,7 @@ public sealed class GetUserProfileControllerTests(UserProfileApiFactory factory)
         var body = await response.Content.ReadFromJsonAsync<GetUserProfileResponse>();
         body.Should().NotBeNull();
         body!.UserProfile.Id.Should().Be(userId);
-        body.UserProfile.UserName.Should().NotBeNullOrWhiteSpace();
+        body.UserProfile.FriendlyUserId.Should().NotBeNullOrWhiteSpace();
         body.UserProfile.Emails.Should().HaveCount(1);
     }
 
@@ -38,7 +38,7 @@ public sealed class GetUserProfileControllerTests(UserProfileApiFactory factory)
         var request = new
         {
             UserId = userId,
-            UserName = $"getuser_{userId:N}",
+            FriendlyUserId = $"getuser_{userId:N}",
             DisplayName = "Get Test User",
             Email = $"gettest_{userId:N}@example.com"
         };
@@ -52,7 +52,7 @@ public sealed class GetUserProfileControllerTests(UserProfileApiFactory factory)
     }
 
     private sealed record GetUserProfileResponse(UserProfileDto UserProfile);
-    private sealed record UserProfileDto(Guid Id, string UserName, string DisplayName, List<EmailDto> Emails, List<PhoneDto> Phones);
+    private sealed record UserProfileDto(Guid Id, string FriendlyUserId, string DisplayName, List<EmailDto> Emails, List<PhoneDto> Phones);
     private sealed record EmailDto(Guid Id, string Address, bool IsMain, bool IsAuth, bool IsConfirmed);
     private sealed record PhoneDto(Guid Id, string Number, bool IsMain);
 }

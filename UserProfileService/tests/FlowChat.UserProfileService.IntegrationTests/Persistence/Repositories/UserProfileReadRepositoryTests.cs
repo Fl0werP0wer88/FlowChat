@@ -11,7 +11,7 @@ namespace FlowChat.UserProfileService.IntegrationTests.Persistence.Repositories;
 public sealed class UserProfileReadRepositoryTests
 {
     [Fact]
-    public async Task GetByUserNameAsync_WhenUserNameHasDifferentCasing_ReturnsProjectedProfile()
+    public async Task GetByFriendlyUserIdAsync_WhenFriendlyUserIdHasDifferentCasing_ReturnsProjectedProfile()
     {
         await using var connection = new SqliteConnection("Data Source=:memory:");
         await connection.OpenAsync();
@@ -31,16 +31,16 @@ public sealed class UserProfileReadRepositoryTests
         await using var readContext = CreateDbContext(connection);
         var repository = new UserProfileReadRepository(readContext);
 
-        var result = await repository.GetByUserNameAsync("  JDOE  ", CancellationToken.None);
+        var result = await repository.GetByFriendlyUserIdAsync("  JDOE  ", CancellationToken.None);
 
         result.Should().NotBeNull();
-        result!.UserName.Should().Be("Jdoe");
+        result!.FriendlyUserId.Should().Be("Jdoe");
         result.Emails.Should().ContainSingle(email => email.IsMain && email.Address == "john@example.com");
         result.Phones.Should().ContainSingle(phone => phone.Number == "+48123123123");
     }
 
     [Fact]
-    public async Task GetActiveAsync_ReturnsOnlyActiveProfilesOrderedByDisplayNameThenUserName()
+    public async Task GetActiveAsync_ReturnsOnlyActiveProfilesOrderedByDisplayNameThenFriendlyUserId()
     {
         await using var connection = new SqliteConnection("Data Source=:memory:");
         await connection.OpenAsync();
@@ -69,11 +69,11 @@ public sealed class UserProfileReadRepositoryTests
 
         var result = await repository.GetActiveAsync(CancellationToken.None);
 
-        result.Select(profile => profile.UserName).Should().Equal("adam", "zoe");
+        result.Select(profile => profile.FriendlyUserId).Should().Equal("adam", "zoe");
     }
 
     [Fact]
-    public async Task UserNameExistsAsync_WhenExcludedUserMatchesFoundProfile_ReturnsFalse()
+    public async Task FriendlyUserIdExistsAsync_WhenExcludedUserMatchesFoundProfile_ReturnsFalse()
     {
         await using var connection = new SqliteConnection("Data Source=:memory:");
         await connection.OpenAsync();
@@ -94,7 +94,7 @@ public sealed class UserProfileReadRepositoryTests
         await using var readContext = CreateDbContext(connection);
         var repository = new UserProfileReadRepository(readContext);
 
-        var result = await repository.UserNameExistsAsync("  JDOE ", userId, CancellationToken.None);
+        var result = await repository.FriendlyUserIdExistsAsync("  JDOE ", userId, CancellationToken.None);
 
         result.Should().BeFalse();
     }

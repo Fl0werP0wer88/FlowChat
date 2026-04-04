@@ -67,7 +67,7 @@ public sealed class AddPhoneControllerTests(UserProfileApiFactory factory)
         var request = new
         {
             UserId = userId,
-            UserName = $"phoneuser_{userId:N}",
+            FriendlyUserId = $"phoneuser_{userId:N}",
             DisplayName = "Phone Test User",
             Email = $"phone_{userId:N}@example.com"
         };

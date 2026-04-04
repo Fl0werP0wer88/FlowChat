@@ -32,7 +32,7 @@ public sealed class UnitOfWorkTests
             CancellationToken.None);
 
         var persistedProfile = (await context.UserProfiles.ToListAsync()).Single(profile => profile.Id.Value == profileId);
-        persistedProfile.UserName.Should().Be("jdoe");
+        persistedProfile.FriendlyUserId.Should().Be("jdoe");
     }
 
     [Fact]

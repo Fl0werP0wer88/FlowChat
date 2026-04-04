@@ -15,7 +15,7 @@ public sealed class UserProfileReadRepository(AppDbContext dbContext)
 {
     private static readonly Expression<Func<UserProfile, UserProfileDto>> UserProfileDtoProjection = x => new(
         x.Id.Value,
-        x.UserName,
+        x.FriendlyUserId,
         x.DisplayName,
         x.AvatarUrl,
         x.Bio,
@@ -43,17 +43,17 @@ public sealed class UserProfileReadRepository(AppDbContext dbContext)
         return await Query
             .Where(x => x.IsActive)
             .OrderBy(x => x.DisplayName)
-            .ThenBy(x => x.UserName)
+            .ThenBy(x => x.FriendlyUserId)
             .Select(MapToDto)
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<UserProfileDto?> GetByUserNameAsync(string userName, CancellationToken cancellationToken = default)
+    public async Task<UserProfileDto?> GetByFriendlyUserIdAsync(string friendlyUserId, CancellationToken cancellationToken = default)
     {
-        var normalizedUserName = NormalizeUserName(userName);
+        var normalizedFriendlyUserId = NormalizeFriendlyUserId(friendlyUserId);
 
         return await Query
-            .Where(x => x.NormalizedUserName == normalizedUserName)
+            .Where(x => x.NormalizedFriendlyUserId == normalizedFriendlyUserId)
             .Select(MapToDto)
             .FirstOrDefaultAsync(cancellationToken);
     }
@@ -66,20 +66,20 @@ public sealed class UserProfileReadRepository(AppDbContext dbContext)
             .AnyAsync(x => x.Address == normalizedEmailAddress, cancellationToken);
     }
 
-    public async Task<bool> UserNameExistsAsync(
-        string userName,
+    public async Task<bool> FriendlyUserIdExistsAsync(
+        string friendlyUserId,
         Guid? excludedUserId = null,
         CancellationToken cancellationToken = default)
     {
-        var normalizedUserName = NormalizeUserName(userName);
+        var normalizedFriendlyUserId = NormalizeFriendlyUserId(friendlyUserId);
 
         return await DbContext.Set<UserProfile>()
             .AnyAsync(
                 x => (!excludedUserId.HasValue || x.Id != Id<UserProfile>.FromGuid(excludedUserId.Value))
-                     && x.NormalizedUserName == normalizedUserName,
+                     && x.NormalizedFriendlyUserId == normalizedFriendlyUserId,
                 cancellationToken);
     }
 
-    private static string NormalizeUserName(string userName) => userName.Trim().ToLowerInvariant();
+    private static string NormalizeFriendlyUserId(string friendlyUserId) => friendlyUserId.Trim().ToLowerInvariant();
 }
 

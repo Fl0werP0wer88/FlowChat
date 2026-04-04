@@ -49,7 +49,7 @@ public sealed class SetMainPhoneControllerTests(UserProfileApiFactory factory)
         var request = new
         {
             UserId = userId,
-            UserName = $"phonesetuser_{userId:N}",
+            FriendlyUserId = $"phonesetuser_{userId:N}",
             DisplayName = "Set Phone Test User",
             Email = $"setphone_{userId:N}@example.com"
         };
@@ -68,7 +68,7 @@ public sealed class SetMainPhoneControllerTests(UserProfileApiFactory factory)
         var request = new
         {
             UserId = userId,
-            UserName = $"phonemain_{userId:N}",
+            FriendlyUserId = $"phonemain_{userId:N}",
             DisplayName = "Set Main Phone Test User",
             Email = $"phonemain_{userId:N}@example.com",
             Phone = "+48100200300"

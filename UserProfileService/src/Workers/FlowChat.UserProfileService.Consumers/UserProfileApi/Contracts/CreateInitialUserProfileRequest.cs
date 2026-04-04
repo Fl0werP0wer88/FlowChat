@@ -2,7 +2,7 @@ namespace FlowChat.UserProfileService.Consumers.UserProfileApi.Contracts;
 
 public sealed class CreateInitialUserProfileRequest
 {
-    public string UserName { get; set; } = string.Empty;
+    public string FriendlyUserId { get; set; } = string.Empty;
 
     public string DisplayName { get; set; } = string.Empty;
 

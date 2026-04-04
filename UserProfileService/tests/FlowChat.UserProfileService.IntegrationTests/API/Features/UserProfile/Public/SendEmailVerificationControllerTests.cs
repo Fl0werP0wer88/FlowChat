@@ -75,7 +75,7 @@ public sealed class SendEmailVerificationControllerTests(UserProfileApiFactory f
         var request = new
         {
             UserId = userId,
-            UserName = $"sendverif_{userId:N}",
+            FriendlyUserId = $"sendverif_{userId:N}",
             DisplayName = "Send Verification Test",
             Email = $"sendverif_{userId:N}@example.com"
         };

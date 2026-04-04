@@ -30,7 +30,7 @@ public sealed class CreateInitialUserProfileController(
 
         var result = await _mediator.Send(
             new CreateInitialUserProfileCommand(
-                request.UserName,
+                request.FriendlyUserId,
                 request.DisplayName,
                 request.AvatarUrl,
                 request.Bio,

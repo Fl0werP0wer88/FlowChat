@@ -367,7 +367,7 @@ public sealed class UserProfileAggregateTests
         createdEvent.AggregateId.Should().Be(id.Value);
         createdEvent.UserProfileId.Should().Be(id);
         createdEvent.MainEmailId.Should().Be(profile.Emails.Single().Id);
-        createdEvent.UserName.Should().Be("jdoe");
+        createdEvent.FriendlyUserId.Should().Be("jdoe");
         createdEvent.DisplayName.Should().Be("John Doe");
         createdEvent.MainEmail.Should().Be(EmailAddress.Create("john@example.com"));
         createdEvent.MainPhone.Should().Be(PhoneNumber.Create("+48123123123"));

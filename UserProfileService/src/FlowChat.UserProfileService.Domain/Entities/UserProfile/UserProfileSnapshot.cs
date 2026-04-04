@@ -2,7 +2,7 @@ namespace FlowChat.UserProfileService.Domain.Entities.UserProfile;
 
 public sealed record UserProfileSnapshot(
     Guid UserProfileId,
-    string UserName,
+    string FriendlyUserId,
     string DisplayName,
     string? MainEmail,
     bool? IsMainEmailConfirmed,
