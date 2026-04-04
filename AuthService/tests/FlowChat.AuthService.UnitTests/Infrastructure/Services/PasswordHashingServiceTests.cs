@@ -14,7 +14,7 @@ public sealed class PasswordHashingServiceTests
         var hash = sut.HashPassword("P@ssw0rd!");
         var result = sut.VerifyHashedPassword(hash, "P@ssw0rd!");
 
-        hash.Should().Contain("pbkdf2-sha512");
+        hash.Should().StartWith("$argon2id$");
         result.Should().Be(PasswordVerificationResult.Succeeded);
     }
 
@@ -25,6 +25,17 @@ public sealed class PasswordHashingServiceTests
         var hash = sut.HashPassword("P@ssw0rd!");
 
         var result = sut.VerifyHashedPassword(hash, "wrong-password");
+
+        result.Should().Be(PasswordVerificationResult.Failed);
+    }
+
+    [Fact]
+    public void VerifyHashedPassword_WithLegacyPbkdf2Hash_ReturnsFailed()
+    {
+        var sut = new PasswordHashingService();
+        const string legacyHash = "v1$pbkdf2-sha512$210000$4i9EiIqlTLQSe+gJrbAtWQ==$8m0gP8INwQkQnyAPQWCF3s1t1mY4V8j+I0xSL2gSArM=";
+
+        var result = sut.VerifyHashedPassword(legacyHash, "P@ssw0rd!");
 
         result.Should().Be(PasswordVerificationResult.Failed);
     }

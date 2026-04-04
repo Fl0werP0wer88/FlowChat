@@ -1,35 +1,28 @@
 using System.Security.Cryptography;
 using FlowChat.AuthService.Application.Contracts.Infrastructure;
+using Isopoh.Cryptography.Argon2;
 
 namespace FlowChat.AuthService.Infrastructure.Services;
 
 public sealed class PasswordHashingService : IPasswordHashingService
 {
-    private const string Version = "v1";
-    private const string Algorithm = "pbkdf2-sha512";
-    private const int Iterations = 210_000;
-    private const int SaltSize = 16;
-    private const int HashSize = 32;
+    private const int TimeCost = 3;
+    private const int MemoryCost = 65_536;
+    private const int Parallelism = 1;
+    private const int HashLength = 32;
+    private const Argon2Type HashType = Argon2Type.HybridAddressing;
 
     public string HashPassword(string password)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(password);
 
-        var salt = RandomNumberGenerator.GetBytes(SaltSize);
-        var hash = Rfc2898DeriveBytes.Pbkdf2(
+        return Argon2.Hash(
             password,
-            salt,
-            Iterations,
-            HashAlgorithmName.SHA512,
-            HashSize);
-
-        return string.Join(
-            '$',
-            Version,
-            Algorithm,
-            Iterations.ToString(),
-            Convert.ToBase64String(salt),
-            Convert.ToBase64String(hash));
+            timeCost: TimeCost,
+            memoryCost: MemoryCost,
+            parallelism: Parallelism,
+            type: HashType,
+            hashLength: HashLength);
     }
 
     public PasswordVerificationResult VerifyHashedPassword(string hashedPassword, string providedPassword)
@@ -37,31 +30,13 @@ public sealed class PasswordHashingService : IPasswordHashingService
         ArgumentException.ThrowIfNullOrWhiteSpace(hashedPassword);
         ArgumentException.ThrowIfNullOrWhiteSpace(providedPassword);
 
-        var segments = hashedPassword.Split('$', StringSplitOptions.TrimEntries);
-        if (segments.Length != 5
-            || !string.Equals(segments[0], Version, StringComparison.Ordinal)
-            || !string.Equals(segments[1], Algorithm, StringComparison.Ordinal)
-            || !int.TryParse(segments[2], out var iterations))
-        {
-            return PasswordVerificationResult.Failed;
-        }
-
         try
         {
-            var salt = Convert.FromBase64String(segments[3]);
-            var expectedHash = Convert.FromBase64String(segments[4]);
-            var computedHash = Rfc2898DeriveBytes.Pbkdf2(
-                providedPassword,
-                salt,
-                iterations,
-                HashAlgorithmName.SHA512,
-                expectedHash.Length);
-
-            return CryptographicOperations.FixedTimeEquals(computedHash, expectedHash)
+            return Argon2.Verify(hashedPassword, providedPassword, Parallelism)
                 ? PasswordVerificationResult.Succeeded
                 : PasswordVerificationResult.Failed;
         }
-        catch (FormatException)
+        catch (Exception)
         {
             return PasswordVerificationResult.Failed;
         }
