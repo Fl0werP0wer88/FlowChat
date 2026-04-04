@@ -21,7 +21,7 @@ public static class StartupExtensions
         .AddInfrastructureServices(builder.Configuration)
         .AddAPIPersistenceServices(builder.Configuration)
         .AddApiSilverbackMessaging(builder.Configuration)
-        .AddAPIServices(builder.Configuration);
+        .AddAPIServices(builder.Configuration, builder.Environment);
         builder.Services.AddAutoMapper(
             (Action<AutoMapper.IMapperConfigurationExpression>?)null,
             typeof(StartupExtensions).Assembly);

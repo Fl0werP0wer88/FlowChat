@@ -10,7 +10,8 @@ public static class APIServiceRegistration
 {
     public static IServiceCollection AddAPIServices(
                             this IServiceCollection services,
-                            IConfiguration configuration)
+                            IConfiguration configuration,
+                            IHostEnvironment environment)
     {
         var apiSettingsManager = new ApiSettingsManager(configuration);
         var jwtSettings = apiSettingsManager.GetJwtSettings();
@@ -91,6 +92,17 @@ public static class APIServiceRegistration
 
                 options.AddSigningKey(signingKey);
                 options.AddEncryptionKey(encryptionKey);
+
+                // OpenIddict requires an asymmetric signing credential for identity tokens.
+                if (environment.IsDevelopment())
+                {
+                    options.AddDevelopmentSigningCertificate();
+                }
+                else
+                {
+                    options.AddEphemeralSigningKey();
+                }
+
                 options.DisableAccessTokenEncryption();
 
                 options.UseAspNetCore()

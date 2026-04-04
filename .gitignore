@@ -10,6 +10,8 @@ artifacts/
 .idea/
 
 # Claude Code
+.claude/
+.codex/
 .claude/worktrees/
 .codex-temp/
 .codex/worktrees/
