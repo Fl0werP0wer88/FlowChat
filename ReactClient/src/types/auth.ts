@@ -9,9 +9,7 @@ export interface LoginFormValues {
 
 export interface RegisterFormValues {
   email: string;
-  userName: string;
-  firstName: string;
-  lastName: string;
+  friendlyUserId: string;
   password: string;
 }
 
@@ -29,14 +27,17 @@ export interface AuthNotice {
 }
 
 export interface AuthTokenResponseDto {
-  isSuccess?: boolean;
-  IsSuccess?: boolean;
+  access_token?: string;
   accessToken?: string;
   AccessToken?: string;
+  expires_in?: number;
   expiresAtUtc?: string | null;
   ExpiresAtUtc?: string | null;
+  refresh_token?: string;
   refreshToken?: string;
   RefreshToken?: string;
+  token_type?: string;
+  scope?: string;
   refreshTokenExpiresAtUtc?: string | null;
   RefreshTokenExpiresAtUtc?: string | null;
 }

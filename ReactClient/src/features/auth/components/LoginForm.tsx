@@ -24,7 +24,7 @@ export function LoginForm({
 }: LoginFormProps) {
   return (
     <form className="auth-form" onSubmit={onSubmit}>
-      <FormField label="Email lub UserName" htmlFor="loginField">
+      <FormField label="Email lub FriendlyUserId" htmlFor="loginField">
         <Input
           id="loginField"
           autoComplete="username"

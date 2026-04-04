@@ -14,9 +14,7 @@ const emptyLoginFormValues: LoginFormValues = {
 
 const emptyRegisterFormValues: RegisterFormValues = {
   email: "",
-  userName: "",
-  firstName: "",
-  lastName: "",
+  friendlyUserId: "",
   password: "",
 };
 

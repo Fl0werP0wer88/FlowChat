@@ -35,32 +35,15 @@ export function RegisterForm({
         />
       </FormField>
 
-      <FormField label="UserName" htmlFor="registerUserName">
+      <FormField label="FriendlyUserId" htmlFor="registerFriendlyUserId">
         <Input
-          id="registerUserName"
+          id="registerFriendlyUserId"
           autoComplete="username"
           required
-          value={values.userName}
-          onChange={(event) => onFieldChange("userName", event.target.value)}
+          value={values.friendlyUserId}
+          onChange={(event) => onFieldChange("friendlyUserId", event.target.value)}
         />
       </FormField>
-
-      <div className="optional-grid">
-        <FormField label="First name (opcjonalnie)" htmlFor="registerFirstName">
-          <Input
-            id="registerFirstName"
-            value={values.firstName}
-            onChange={(event) => onFieldChange("firstName", event.target.value)}
-          />
-        </FormField>
-        <FormField label="Last name (opcjonalnie)" htmlFor="registerLastName">
-          <Input
-            id="registerLastName"
-            value={values.lastName}
-            onChange={(event) => onFieldChange("lastName", event.target.value)}
-          />
-        </FormField>
-      </div>
 
       <FormField label="Haslo" htmlFor="registerPassword" hint="Minimum 8 znakow.">
         <Input
