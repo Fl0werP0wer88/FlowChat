@@ -14,6 +14,7 @@ public sealed class ApiSettingsManagerTests
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
                 ["JwtSettings:Key"] = "jwt-key",
+                ["JwtSettings:EncryptionKey"] = "12345678901234567890123456789012",
                 ["JwtSettings:Issuer"] = "jwt-issuer",
                 ["JwtSettings:Audience"] = "jwt-audience",
                 ["FlowChat:InternalApi:ApiKey"] = "internal-key"
@@ -30,6 +31,7 @@ public sealed class ApiSettingsManagerTests
 
         settingsManager.Should().NotBeNull();
         settingsManager.GetJwtSettings().Key.Should().Be("jwt-key");
+        settingsManager.GetJwtSettings().EncryptionKey.Should().Be("12345678901234567890123456789012");
         settingsManager.GetInternalApiSettings().ApiKey.Should().Be("internal-key");
     }
 }

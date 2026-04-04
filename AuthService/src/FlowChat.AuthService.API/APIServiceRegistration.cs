@@ -15,6 +15,7 @@ public static class APIServiceRegistration
         var apiSettingsManager = new ApiSettingsManager(configuration);
         var jwtSettings = apiSettingsManager.GetJwtSettings();
         var jwtKey = jwtSettings.Key;
+        var encryptionKeyValue = jwtSettings.EncryptionKey;
         var jwtIssuer = jwtSettings.Issuer;
         var jwtAudience = jwtSettings.Audience;
 
@@ -26,6 +27,11 @@ public static class APIServiceRegistration
         if (string.IsNullOrWhiteSpace(jwtIssuer))
         {
             throw new InvalidOperationException("Missing configuration value: JwtSettings:Issuer.");
+        }
+
+        if (string.IsNullOrWhiteSpace(encryptionKeyValue))
+        {
+            throw new InvalidOperationException("Missing configuration value: JwtSettings:EncryptionKey.");
         }
 
         if (string.IsNullOrWhiteSpace(jwtAudience))
@@ -55,7 +61,17 @@ public static class APIServiceRegistration
             };
         });
 
-        var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
+        var jwtKeyBytes = Encoding.UTF8.GetBytes(jwtKey);
+        var encryptionKeyBytes = Encoding.UTF8.GetBytes(encryptionKeyValue);
+
+        if (encryptionKeyBytes.Length != 32)
+        {
+            throw new InvalidOperationException(
+                $"Invalid configuration value: JwtSettings:EncryptionKey must be 256 bits (32 bytes), received {encryptionKeyBytes.Length * 8} bits.");
+        }
+
+        var signingKey = new SymmetricSecurityKey(jwtKeyBytes);
+        var encryptionKey = new SymmetricSecurityKey(encryptionKeyBytes);
 
         services.AddOpenIddict()
             .AddCore(options =>
@@ -74,7 +90,7 @@ public static class APIServiceRegistration
                 options.SetRefreshTokenLifetime(TimeSpan.FromMinutes(jwtSettings.RefreshTokenExpiresMinutes));
 
                 options.AddSigningKey(signingKey);
-                options.AddEncryptionKey(signingKey);
+                options.AddEncryptionKey(encryptionKey);
                 options.DisableAccessTokenEncryption();
 
                 options.UseAspNetCore()

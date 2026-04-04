@@ -15,6 +15,7 @@ public sealed class ApiSettingsManagerTests
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
                 ["JwtSettings:Key"] = "jwt-key",
+                ["JwtSettings:EncryptionKey"] = "12345678901234567890123456789012",
                 ["JwtSettings:Issuer"] = "jwt-issuer",
                 ["JwtSettings:Audience"] = "jwt-audience",
                 ["JwtSettings:ExpiresMinutes"] = "90",
@@ -30,6 +31,7 @@ public sealed class ApiSettingsManagerTests
         var apiRuntimeSettings = settingsManager.GetApiRuntimeSettings();
 
         jwtSettings.Key.Should().Be("jwt-key");
+        jwtSettings.EncryptionKey.Should().Be("12345678901234567890123456789012");
         jwtSettings.Issuer.Should().Be("jwt-issuer");
         jwtSettings.Audience.Should().Be("jwt-audience");
         jwtSettings.ExpiresMinutes.Should().Be(90);
