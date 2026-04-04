@@ -22,10 +22,9 @@ namespace FlowChat.AuthService.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("FlowChat.AuthService.Persistence.Entities.AccountEntity", b =>
+            modelBuilder.Entity("FlowChat.AuthService.Domain.Entities.Account.Account", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<int>("AccessFailedCount")
@@ -47,12 +46,14 @@ namespace FlowChat.AuthService.Persistence.Migrations
                     b.Property<string>("NormalizedEmail")
                         .IsRequired()
                         .HasMaxLength(320)
-                        .HasColumnType("character varying(320)");
+                        .HasColumnType("character varying(320)")
+                        .HasColumnName("NormalizedEmail");
 
                     b.Property<string>("NormalizedFriendlyUserId")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("NormalizedFriendlyUserId");
 
                     b.Property<string>("PasswordHash")
                         .IsRequired()

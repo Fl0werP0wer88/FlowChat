@@ -80,7 +80,7 @@ public sealed class AccountRepositoryTests : IDisposable
         await _sut.UpdateAsync(account, CancellationToken.None);
         await _dbContext.SaveChangesAsync();
 
-        var persistedEntity = await _dbContext.Accounts.SingleAsync(x => x.Id == account.Id.Value);
+        var persistedEntity = await _dbContext.Accounts.SingleAsync(x => x.Id == account.Id);
 
         persistedEntity.AccessFailedCount.Should().Be(1);
         persistedEntity.IsEmailConfirmed.Should().BeTrue();

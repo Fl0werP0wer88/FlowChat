@@ -1,13 +1,16 @@
 using FlowChat.AuthService.Application.Contracts.Persistence;
 using FlowChat.AuthService.Domain.Entities.Account;
-using FlowChat.AuthService.Persistence.Entities;
+using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 
 namespace FlowChat.AuthService.Persistence.Repositories;
 
 public sealed class AccountRepository : IAccountRepository
 {
+    private const string NormalizedEmailPropertyName = "NormalizedEmail";
+    private const string NormalizedFriendlyUserIdPropertyName = "NormalizedFriendlyUserId";
     private readonly AppDbContext _dbContext;
 
     public AccountRepository(AppDbContext dbContext)
@@ -20,18 +23,20 @@ public sealed class AccountRepository : IAccountRepository
         cancellationToken.ThrowIfCancellationRequested();
         ArgumentNullException.ThrowIfNull(account);
 
-        await _dbContext.Accounts.AddAsync(MapToEntity(account), cancellationToken);
+        var entry = await _dbContext.Accounts.AddAsync(account, cancellationToken);
+        SetNormalizedProperties(entry, account);
     }
 
     public async Task<Account?> GetByIdAsync(Guid accountId, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
+        var typedId = Id<Account>.FromGuid(accountId);
         var entity = await _dbContext.Accounts
             .AsNoTracking()
-            .FirstOrDefaultAsync(x => x.Id == accountId, cancellationToken);
+            .FirstOrDefaultAsync(x => x.Id == typedId, cancellationToken);
 
-        return entity is null ? null : MapToDomain(entity);
+        return entity;
     }
 
     public async Task<Account?> GetByEmailAsync(string emailAddress, CancellationToken cancellationToken)
@@ -46,9 +51,11 @@ public sealed class AccountRepository : IAccountRepository
 
         var entity = await _dbContext.Accounts
             .AsNoTracking()
-            .FirstOrDefaultAsync(x => x.NormalizedEmail == normalizedEmail, cancellationToken);
+            .FirstOrDefaultAsync(
+                x => EF.Property<string>(x, NormalizedEmailPropertyName) == normalizedEmail,
+                cancellationToken);
 
-        return entity is null ? null : MapToDomain(entity);
+        return entity;
     }
 
     public async Task<Account?> GetByFriendlyUserIdAsync(string friendlyUserId, CancellationToken cancellationToken)
@@ -63,9 +70,11 @@ public sealed class AccountRepository : IAccountRepository
 
         var entity = await _dbContext.Accounts
             .AsNoTracking()
-            .FirstOrDefaultAsync(x => x.NormalizedFriendlyUserId == normalizedFriendlyUserId, cancellationToken);
+            .FirstOrDefaultAsync(
+                x => EF.Property<string>(x, NormalizedFriendlyUserIdPropertyName) == normalizedFriendlyUserId,
+                cancellationToken);
 
-        return entity is null ? null : MapToDomain(entity);
+        return entity;
     }
 
     public async Task<Account?> GetByLoginAsync(string login, CancellationToken cancellationToken)
@@ -88,48 +97,34 @@ public sealed class AccountRepository : IAccountRepository
         cancellationToken.ThrowIfCancellationRequested();
         ArgumentNullException.ThrowIfNull(account);
 
-        var entity = await _dbContext.Accounts.FirstOrDefaultAsync(x => x.Id == account.Id.Value, cancellationToken);
-        if (entity is null)
+        var localEntity = _dbContext.Accounts.Local.FirstOrDefault(x => x.Id == account.Id);
+        if (localEntity is not null && !ReferenceEquals(localEntity, account))
+        {
+            var localEntry = _dbContext.Entry(localEntity);
+            localEntry.CurrentValues.SetValues(account);
+            SetNormalizedProperties(localEntry, account);
+            return;
+        }
+
+        var exists = await _dbContext.Accounts
+            .AsNoTracking()
+            .AnyAsync(x => x.Id == account.Id, cancellationToken);
+
+        if (!exists)
         {
             throw new InvalidOperationException($"Account with id '{account.Id.Value}' was not found.");
         }
 
-        entity.Email = account.Email;
-        entity.NormalizedEmail = NormalizeRequired(account.Email.Value);
-        entity.FriendlyUserId = account.FriendlyUserId;
-        entity.NormalizedFriendlyUserId = NormalizeRequired(account.FriendlyUserId);
-        entity.PasswordHash = account.PasswordHash;
-        entity.SecurityStamp = account.SecurityStamp;
-        entity.AccessFailedCount = account.AccessFailedCount;
-        entity.IsEmailConfirmed = account.IsEmailConfirmed;
+        _dbContext.Accounts.Attach(account);
+        var entry = _dbContext.Entry(account);
+        entry.State = EntityState.Modified;
+        SetNormalizedProperties(entry, account);
     }
 
-    private static AccountEntity MapToEntity(Account account)
+    private static void SetNormalizedProperties(EntityEntry<Account> entry, Account account)
     {
-        return new AccountEntity
-        {
-            Id = account.Id.Value,
-            Email = account.Email,
-            NormalizedEmail = NormalizeRequired(account.Email.Value),
-            FriendlyUserId = account.FriendlyUserId,
-            NormalizedFriendlyUserId = NormalizeRequired(account.FriendlyUserId),
-            PasswordHash = account.PasswordHash,
-            SecurityStamp = account.SecurityStamp,
-            AccessFailedCount = account.AccessFailedCount,
-            IsEmailConfirmed = account.IsEmailConfirmed
-        };
-    }
-
-    private static Account MapToDomain(AccountEntity entity)
-    {
-        return Account.Restore(
-            entity.Id,
-            entity.FriendlyUserId,
-            entity.Email,
-            entity.PasswordHash,
-            entity.SecurityStamp,
-            entity.AccessFailedCount,
-            entity.IsEmailConfirmed);
+        entry.Property(NormalizedEmailPropertyName).CurrentValue = NormalizeRequired(account.Email.Value);
+        entry.Property(NormalizedFriendlyUserIdPropertyName).CurrentValue = NormalizeRequired(account.FriendlyUserId);
     }
 
     private static string? NormalizeEmail(string? emailAddress)

@@ -1,5 +1,5 @@
 using System.Data.Common;
-using FlowChat.AuthService.Persistence.Entities;
+using FlowChat.AuthService.Domain.Entities.Account;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Silverback.Messaging.Producing.TransactionalOutbox;
@@ -21,7 +21,7 @@ public class AppDbContext : DbContext
     {
     }
 
-    public DbSet<AccountEntity> Accounts => Set<AccountEntity>();
+    public DbSet<Account> Accounts => Set<Account>();
     public DbSet<SilverbackOutboxMessage> SilverbackOutboxMessages => Set<SilverbackOutboxMessage>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

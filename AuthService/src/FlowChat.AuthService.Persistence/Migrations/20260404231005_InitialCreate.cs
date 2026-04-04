@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -17,14 +17,14 @@ namespace FlowChat.AuthService.Persistence.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    Email = table.Column<string>(type: "character varying(320)", maxLength: 320, nullable: false),
-                    NormalizedEmail = table.Column<string>(type: "character varying(320)", maxLength: 320, nullable: false),
                     FriendlyUserId = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
-                    NormalizedFriendlyUserId = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    Email = table.Column<string>(type: "character varying(320)", maxLength: 320, nullable: false),
                     PasswordHash = table.Column<string>(type: "character varying(1024)", maxLength: 1024, nullable: false),
                     SecurityStamp = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
                     AccessFailedCount = table.Column<int>(type: "integer", nullable: false),
-                    IsEmailConfirmed = table.Column<bool>(type: "boolean", nullable: false)
+                    IsEmailConfirmed = table.Column<bool>(type: "boolean", nullable: false),
+                    NormalizedEmail = table.Column<string>(type: "character varying(320)", maxLength: 320, nullable: false),
+                    NormalizedFriendlyUserId = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false)
                 },
                 constraints: table =>
                 {
