@@ -38,17 +38,18 @@ public sealed class AccountRepositoryTests : IDisposable
     [Fact]
     public async Task CreateAsync_AndGetByEmailAsync_PersistsAndReturnsAccount()
     {
-        var account = Account.Create("flower", EmailAddress.Create("flower@example.com"), "hash", "stamp");
+        var emailAddress = EmailAddress.Create("flower@example.com");
+        var account = Account.Create("flower", emailAddress, "hash", "stamp");
 
         await _sut.CreateAsync(account, CancellationToken.None);
         await _dbContext.SaveChangesAsync();
 
-        var result = await _sut.GetByEmailAsync("flower@example.com", CancellationToken.None);
+        var result = await _sut.GetByEmailAsync(emailAddress, CancellationToken.None);
 
         result.Should().NotBeNull();
         result!.Id.Value.Should().Be(account.Id.Value);
         result.FriendlyUserId.Should().Be("flower");
-        result.Email.Should().Be(EmailAddress.Create("flower@example.com"));
+        result.Email.Should().Be(emailAddress);
     }
 
     [Fact]

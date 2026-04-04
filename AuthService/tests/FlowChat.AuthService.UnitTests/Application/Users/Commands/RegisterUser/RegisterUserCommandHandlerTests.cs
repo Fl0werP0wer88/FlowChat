@@ -46,9 +46,10 @@ public sealed class RegisterUserCommandHandlerTests
     {
         Account? persistedAccount = null;
         List<IDomainEvent> dispatchedEvents = [];
+        var emailAddress = EmailAddress.Create("flower@example.com");
 
         _accountRepositoryMock
-            .Setup(x => x.GetByEmailAsync("flower@example.com", It.IsAny<CancellationToken>()))
+            .Setup(x => x.GetByEmailAsync(emailAddress, It.IsAny<CancellationToken>()))
             .ReturnsAsync((Account?)null);
         _accountRepositoryMock
             .Setup(x => x.GetByFriendlyUserIdAsync("flower", It.IsAny<CancellationToken>()))
@@ -76,9 +77,11 @@ public sealed class RegisterUserCommandHandlerTests
     [Fact]
     public async Task Handle_WhenEmailAlreadyExists_ReturnsConflict()
     {
+        var emailAddress = EmailAddress.Create("flower@example.com");
+
         _accountRepositoryMock
-            .Setup(x => x.GetByEmailAsync("flower@example.com", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Account.Restore(Guid.NewGuid(), "other", EmailAddress.Create("flower@example.com"), "hash", "stamp", 0, false));
+            .Setup(x => x.GetByEmailAsync(emailAddress, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Account.Restore(Guid.NewGuid(), "other", emailAddress, "hash", "stamp", 0, false));
 
         var result = await _handler.Handle(CreateCommand(), CancellationToken.None);
 
@@ -91,8 +94,10 @@ public sealed class RegisterUserCommandHandlerTests
     [Fact]
     public async Task Handle_WhenFriendlyUserIdAlreadyExists_ReturnsConflict()
     {
+        var emailAddress = EmailAddress.Create("flower@example.com");
+
         _accountRepositoryMock
-            .Setup(x => x.GetByEmailAsync("flower@example.com", It.IsAny<CancellationToken>()))
+            .Setup(x => x.GetByEmailAsync(emailAddress, It.IsAny<CancellationToken>()))
             .ReturnsAsync((Account?)null);
         _accountRepositoryMock
             .Setup(x => x.GetByFriendlyUserIdAsync("flower", It.IsAny<CancellationToken>()))

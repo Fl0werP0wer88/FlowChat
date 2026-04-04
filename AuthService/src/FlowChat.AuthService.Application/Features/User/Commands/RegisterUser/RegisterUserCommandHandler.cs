@@ -26,7 +26,7 @@ public class RegisterUserCommandHandler : CommandHandlerBase<RegisterUserCommand
     protected override async Task<FlowChatResult<RegisterUserCommandResponse>> ExecuteAsync(RegisterUserCommand request, CancellationToken cancellationToken)
     {
         var emailAddress = EmailAddress.Create(request.Email);
-        if (await _accountRepository.GetByEmailAsync(emailAddress.Value, cancellationToken) is not null)
+        if (await _accountRepository.GetByEmailAsync(emailAddress, cancellationToken) is not null)
         {
             return FlowChatResult<RegisterUserCommandResponse>.Failure(
                 DomainError.Conflict("Account with the provided email already exists."));

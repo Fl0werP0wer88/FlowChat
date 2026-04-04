@@ -1,6 +1,7 @@
 using FlowChat.AuthService.Application.Contracts.Persistence;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
+using FlowChat.Shared.Domain.ValueObjects;
 using FlowChat.AuthService.Domain.Entities.Account;
 using MediatR;
 
@@ -21,10 +22,14 @@ public sealed class ConfirmAuthEmailCommandHandler : CommandHandlerBase<ConfirmA
 
     protected override async Task<FlowChatResult<Unit>> ExecuteAsync(ConfirmAuthEmailCommand request, CancellationToken cancellationToken)
     {
-        var emailAddress = request.EmailAddress?.Trim();
-        if (string.IsNullOrWhiteSpace(emailAddress))
+        if (string.IsNullOrWhiteSpace(request.EmailAddress))
         {
             return FlowChatResult<Unit>.Failure(DomainError.BadRequest("Email address is required."));
+        }
+
+        if (!EmailAddress.TryCreate(request.EmailAddress, out var emailAddress))
+        {
+            return FlowChatResult<Unit>.Failure(DomainError.BadRequest(EmailAddress.InvalidEmailAddressMessage));
         }
 
         _account = await _accountRepository.GetByEmailAsync(emailAddress, cancellationToken);

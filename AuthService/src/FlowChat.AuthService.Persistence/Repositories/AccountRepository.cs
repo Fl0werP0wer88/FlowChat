@@ -39,20 +39,15 @@ public sealed class AccountRepository : IAccountRepository
         return entity;
     }
 
-    public async Task<Account?> GetByEmailAsync(string emailAddress, CancellationToken cancellationToken)
+    public async Task<Account?> GetByEmailAsync(EmailAddress emailAddress, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
-
-        var normalizedEmail = NormalizeEmail(emailAddress);
-        if (normalizedEmail is null)
-        {
-            return null;
-        }
+        ArgumentNullException.ThrowIfNull(emailAddress);
 
         var entity = await _dbContext.Accounts
             .AsNoTracking()
             .FirstOrDefaultAsync(
-                x => EF.Property<string>(x, NormalizedEmailPropertyName) == normalizedEmail,
+                x => EF.Property<string>(x, NormalizedEmailPropertyName) == emailAddress.Value,
                 cancellationToken);
 
         return entity;
@@ -87,9 +82,16 @@ public sealed class AccountRepository : IAccountRepository
         }
 
         var normalizedLogin = login.Trim();
+        if (EmailAddress.TryCreate(normalizedLogin, out var emailAddress))
+        {
+            var accountByEmail = await GetByEmailAsync(emailAddress, cancellationToken);
+            if (accountByEmail is not null)
+            {
+                return accountByEmail;
+            }
+        }
 
-        return await GetByEmailAsync(normalizedLogin, cancellationToken)
-            ?? await GetByFriendlyUserIdAsync(normalizedLogin, cancellationToken);
+        return await GetByFriendlyUserIdAsync(normalizedLogin, cancellationToken);
     }
 
     public async Task UpdateAsync(Account account, CancellationToken cancellationToken)
@@ -125,16 +127,6 @@ public sealed class AccountRepository : IAccountRepository
     {
         entry.Property(NormalizedEmailPropertyName).CurrentValue = NormalizeRequired(account.Email.Value);
         entry.Property(NormalizedFriendlyUserIdPropertyName).CurrentValue = NormalizeRequired(account.FriendlyUserId);
-    }
-
-    private static string? NormalizeEmail(string? emailAddress)
-    {
-        if (!EmailAddress.TryCreate(emailAddress, out var normalized))
-        {
-            return null;
-        }
-
-        return normalized.Value;
     }
 
     private static string? NormalizeFriendlyUserId(string? friendlyUserId)

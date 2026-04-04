@@ -39,11 +39,12 @@ public sealed class ConfirmAuthEmailCommandHandlerTests
     [Fact]
     public async Task Handle_WhenAccountExists_ConfirmsEmailAndDispatchesAccountConfirmedDomainEvent()
     {
-        var account = Account.Restore(Guid.NewGuid(), "flower", EmailAddress.Create("flower@example.com"), "hash", "stamp", 0, false);
+        var emailAddress = EmailAddress.Create("flower@example.com");
+        var account = Account.Restore(Guid.NewGuid(), "flower", emailAddress, "hash", "stamp", 0, false);
         List<IDomainEvent> dispatchedEvents = [];
 
         _accountRepositoryMock
-            .Setup(x => x.GetByEmailAsync("flower@example.com", It.IsAny<CancellationToken>()))
+            .Setup(x => x.GetByEmailAsync(emailAddress, It.IsAny<CancellationToken>()))
             .ReturnsAsync(account);
         _domainEventDispatcherMock
             .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<IDomainEvent>>(), It.IsAny<CancellationToken>()))
@@ -60,13 +61,26 @@ public sealed class ConfirmAuthEmailCommandHandlerTests
     [Fact]
     public async Task Handle_WhenAccountDoesNotExist_ReturnsNotFound()
     {
+        var emailAddress = EmailAddress.Create("flower@example.com");
+
         _accountRepositoryMock
-            .Setup(x => x.GetByEmailAsync("flower@example.com", It.IsAny<CancellationToken>()))
+            .Setup(x => x.GetByEmailAsync(emailAddress, It.IsAny<CancellationToken>()))
             .ReturnsAsync((Account?)null);
 
         var result = await _handler.Handle(new ConfirmAuthEmailCommand { EmailAddress = "flower@example.com" }, CancellationToken.None);
 
         result.IsFailure.Should().BeTrue();
         result.Error.ErrorType.Should().Be(ErrorType.NotFound);
+    }
+
+    [Fact]
+    public async Task Handle_WhenEmailAddressIsInvalid_ReturnsBadRequest()
+    {
+        var result = await _handler.Handle(new ConfirmAuthEmailCommand { EmailAddress = "not-an-email" }, CancellationToken.None);
+
+        result.IsFailure.Should().BeTrue();
+        result.Error.ErrorType.Should().Be(ErrorType.BadRequest);
+        result.Error.ErrorMessage.Should().Be(EmailAddress.InvalidEmailAddressMessage);
+        _accountRepositoryMock.Verify(x => x.GetByEmailAsync(It.IsAny<EmailAddress>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 }
