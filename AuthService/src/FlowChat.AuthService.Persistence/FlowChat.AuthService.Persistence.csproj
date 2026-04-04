@@ -6,7 +6,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.3" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.3" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.3">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -14,6 +13,7 @@
     </PackageReference>
     <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.3" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.0" />
+    <PackageReference Include="OpenIddict.EntityFrameworkCore" Version="7.3.0" />
     <PackageReference Include="Silverback.Integration.Kafka" Version="5.0.0" />
     <PackageReference Include="Silverback.Storage.EntityFramework" Version="5.0.0" />
     <PackageReference Include="Silverback.Storage.PostgreSql" Version="5.0.0" />

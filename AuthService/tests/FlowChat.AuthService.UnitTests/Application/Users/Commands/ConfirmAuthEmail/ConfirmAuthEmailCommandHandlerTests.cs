@@ -1,11 +1,10 @@
-using AutoFixture;
 using FlowChat.AuthService.Application.Contracts.Persistence;
 using FlowChat.AuthService.Application.Features.User.Commands.ConfirmAuthEmail;
-using FlowChat.AuthService.Application.Features.User.Models;
-using FlowChat.AuthService.Domain.Entities.Identity;
-using FlowChat.AuthService.Domain.Entities.Identity.Events;
+using FlowChat.AuthService.Domain.Entities.Account;
+using FlowChat.AuthService.Domain.Entities.Account.Events;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
+using FlowChat.Shared.Domain.ValueObjects;
 using FluentAssertions;
 using MediatR;
 using Moq;
@@ -14,8 +13,7 @@ namespace FlowChat.AuthService.UnitTests;
 
 public sealed class ConfirmAuthEmailCommandHandlerTests
 {
-    private readonly IFixture _fixture = new Fixture();
-    private readonly Mock<IIdentityRepository> _identityRepositoryMock = new();
+    private readonly Mock<IAccountRepository> _accountRepositoryMock = new();
     private readonly Mock<IDomainEventDispatcher> _domainEventDispatcherMock = new();
     private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
     private readonly ConfirmAuthEmailCommandHandler _handler;
@@ -33,103 +31,42 @@ public sealed class ConfirmAuthEmailCommandHandlerTests
             .Returns(Task.CompletedTask);
 
         _handler = new ConfirmAuthEmailCommandHandler(
-            _identityRepositoryMock.Object,
+            _accountRepositoryMock.Object,
             _domainEventDispatcherMock.Object,
             _unitOfWorkMock.Object);
     }
 
     [Fact]
-    public async Task Handle_WhenUserExists_ConfirmsEmail_UpdatesUser_AndDispatchesAccountConfirmedDomainEvent()
+    public async Task Handle_WhenAccountExists_ConfirmsEmailAndDispatchesAccountConfirmedDomainEvent()
     {
-        var user = Identity.Restore(
-            _fixture.Create<Guid>(),
-            "flower",
-            "flower@example.com",
-            null,
-            emailConfirmed: false,
-            phoneNumberConfirmed: false);
-        Identity? updatedUser = null;
+        var account = Account.Restore(Guid.NewGuid(), "flower", EmailAddress.Create("flower@example.com"), "hash", "stamp", 0, false);
         List<IDomainEvent> dispatchedEvents = [];
 
-        _identityRepositoryMock
+        _accountRepositoryMock
             .Setup(x => x.GetByEmailAsync("flower@example.com", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(user);
-
-        _identityRepositoryMock
-            .Setup(x => x.UpdateAsync(It.IsAny<Identity>(), It.IsAny<CancellationToken>()))
-            .Callback<Identity, CancellationToken>((identity, _) => updatedUser = identity)
-            .Returns(Task.CompletedTask);
-
+            .ReturnsAsync(account);
         _domainEventDispatcherMock
             .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<IDomainEvent>>(), It.IsAny<CancellationToken>()))
             .Callback<IEnumerable<IDomainEvent>, CancellationToken>((events, _) => dispatchedEvents.AddRange(events))
             .Returns(Task.CompletedTask);
 
-        var result = await _handler.Handle(
-            new ConfirmAuthEmailCommand
-            {
-                EmailAddress = "flower@example.com"
-            },
-            CancellationToken.None);
+        var result = await _handler.Handle(new ConfirmAuthEmailCommand { EmailAddress = "flower@example.com" }, CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
-        updatedUser.Should().NotBeNull();
-        updatedUser!.EmailConfirmed.Should().BeTrue();
-        dispatchedEvents.Should().ContainSingle()
-            .Which.Should().BeOfType<AccountConfirmedDomainEvent>();
+        account.IsEmailConfirmed.Should().BeTrue();
+        dispatchedEvents.Should().ContainSingle(x => x is AccountConfirmedDomainEvent);
     }
 
     [Fact]
-    public async Task Handle_WhenUserIsAlreadyConfirmed_ReturnsConflictWithoutUpdate()
+    public async Task Handle_WhenAccountDoesNotExist_ReturnsNotFound()
     {
-        var user = Identity.Restore(
-            _fixture.Create<Guid>(),
-            "flower",
-            "flower@example.com",
-            null,
-            emailConfirmed: true,
-            phoneNumberConfirmed: false);
-
-        _identityRepositoryMock
+        _accountRepositoryMock
             .Setup(x => x.GetByEmailAsync("flower@example.com", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(user);
+            .ReturnsAsync((Account?)null);
 
-        var result = await _handler.Handle(
-            new ConfirmAuthEmailCommand
-            {
-                EmailAddress = "flower@example.com"
-            },
-            CancellationToken.None);
-
-        result.IsFailure.Should().BeTrue();
-        result.Error.ErrorType.Should().Be(ErrorType.Conflict);
-        result.Error.ErrorMessage.Should().Be("Email is already confirmed.");
-        _identityRepositoryMock.Verify(x => x.UpdateAsync(It.IsAny<Identity>(), It.IsAny<CancellationToken>()), Times.Never);
-        _domainEventDispatcherMock.Verify(
-            x => x.DispatchAsync(It.IsAny<IEnumerable<IDomainEvent>>(), It.IsAny<CancellationToken>()),
-            Times.Never);
-    }
-
-    [Fact]
-    public async Task Handle_WhenUserDoesNotExist_ReturnsNotFoundFailure()
-    {
-        _identityRepositoryMock
-            .Setup(x => x.GetByEmailAsync("flower@example.com", It.IsAny<CancellationToken>()))
-            .ReturnsAsync((Identity?)null);
-
-        var result = await _handler.Handle(
-            new ConfirmAuthEmailCommand
-            {
-                EmailAddress = "flower@example.com"
-            },
-            CancellationToken.None);
+        var result = await _handler.Handle(new ConfirmAuthEmailCommand { EmailAddress = "flower@example.com" }, CancellationToken.None);
 
         result.IsFailure.Should().BeTrue();
         result.Error.ErrorType.Should().Be(ErrorType.NotFound);
-        result.Error.ErrorMessage.Should().Be("User was not found.");
-        _identityRepositoryMock.Verify(x => x.UpdateAsync(It.IsAny<Identity>(), It.IsAny<CancellationToken>()), Times.Never);
-        _domainEventDispatcherMock.Verify(
-            x => x.DispatchAsync(It.IsAny<IEnumerable<IDomainEvent>>(), It.IsAny<CancellationToken>()),
-            Times.Never);
     }
 }

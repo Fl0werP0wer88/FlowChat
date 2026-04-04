@@ -1,9 +1,8 @@
+using FlowChat.AuthService.Application.Features.User.Models;
+
 namespace FlowChat.AuthService.Application.Features.User.Commands.RefreshToken;
 
-public class RefreshTokenCommandResponse
+public sealed class RefreshTokenCommandResponse
 {
-    public string? AccessToken { get; set; }
-    public DateTime? ExpiresAtUtc { get; set; }
-    public string? RefreshToken { get; set; }
-    public DateTime? RefreshTokenExpiresAtUtc { get; set; }
+    public required OpenIddictTokenGrantResult Grant { get; init; }
 }

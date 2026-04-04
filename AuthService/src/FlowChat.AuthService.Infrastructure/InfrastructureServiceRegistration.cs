@@ -18,14 +18,12 @@ public static class InfrastructureServiceRegistration
         services.TryAddSingleton<IApiSettingsManager>(new ApiSettingsManager(configuration));
         services.TryAddSingleton<IWorkerSettingsManager>(new WorkerSettingsManager(configuration));
 
-        services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
+        services.AddScoped<IPasswordHashingService, PasswordHashingService>();
+        services.AddScoped<IOpenIddictTokenService, OpenIddictTokenService>();
         services.AddScoped<IKafkaProducerOptions<AccountRegisteredIntegrationEvent>>(sp =>
             sp.GetRequiredService<IWorkerSettingsManager>().GetAccountRegisteredProducerOptions());
         services.AddScoped<IKafkaProducerOptions<AccountConfirmedIntegrationEvent>>(sp =>
             new KafkaProducerOptionsAdapter<AccountConfirmedIntegrationEvent>(
-                sp.GetRequiredService<IWorkerSettingsManager>().GetAccountRegisteredProducerOptions()));
-        services.AddScoped<IKafkaProducerOptions<PhoneNumberConfirmedIntegrationEvent>>(sp =>
-            new KafkaProducerOptionsAdapter<PhoneNumberConfirmedIntegrationEvent>(
                 sp.GetRequiredService<IWorkerSettingsManager>().GetAccountRegisteredProducerOptions()));
         services.AddScoped<IIntegrationEventPublisher, FlowChatSilverbackEventPublisher>();
 

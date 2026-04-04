@@ -1,13 +1,12 @@
 using System.Data.Common;
-using FlowChat.AuthService.Persistence.Identity;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using FlowChat.AuthService.Persistence.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Silverback.Messaging.Producing.TransactionalOutbox;
 
 namespace FlowChat.AuthService.Persistence;
 
-public class AppDbContext : IdentityDbContext<UserEntity, RoleEntity, Guid>
+public class AppDbContext : DbContext
 {
     [ActivatorUtilitiesConstructor]
     public AppDbContext(DbContextOptions<AppDbContext> options)
@@ -22,10 +21,13 @@ public class AppDbContext : IdentityDbContext<UserEntity, RoleEntity, Guid>
     {
     }
 
+    public DbSet<AccountEntity> Accounts => Set<AccountEntity>();
     public DbSet<SilverbackOutboxMessage> SilverbackOutboxMessages => Set<SilverbackOutboxMessage>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
+        modelBuilder.UseOpenIddict();
     }
 }

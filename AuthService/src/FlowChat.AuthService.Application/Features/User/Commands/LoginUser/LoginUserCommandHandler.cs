@@ -1,58 +1,85 @@
-using CSharpFunctionalExtensions;
+using System.Security.Claims;
 using FlowChat.Shared.Application;
 using FlowChat.AuthService.Application.Contracts.Infrastructure;
 using FlowChat.AuthService.Application.Contracts.Persistence;
+using FlowChat.AuthService.Application.Features.User.Models;
+using FlowChat.AuthService.Domain.Entities.Account;
 using FlowChat.Shared.Domain;
+using MediatR;
 
 namespace FlowChat.AuthService.Application.Features.User.Commands.LoginUser;
 
-public class LoginUserCommandHandler : CommandHandlerBase<LoginUserCommand, LoginUserCommandResponse>
+public sealed class LoginUserCommandHandler : ICommandHandler<LoginUserCommand, LoginUserCommandResponse>
 {
-    private readonly IIdentityRepository _identityRepository;
-    private readonly IJwtTokenGenerator _jwtTokenGenerator;
+    private readonly IAccountRepository _accountRepository;
+    private readonly IPasswordHashingService _passwordHashingService;
+    private readonly IOpenIddictTokenService _openIddictTokenService;
+    private readonly IDomainEventDispatcher _domainEventDispatcher;
+    private readonly IUnitOfWork _unitOfWork;
 
     public LoginUserCommandHandler(
-        IIdentityRepository identityRepository,
-        IJwtTokenGenerator jwtTokenGenerator,
+        IAccountRepository accountRepository,
+        IPasswordHashingService passwordHashingService,
+        IOpenIddictTokenService openIddictTokenService,
         IDomainEventDispatcher domainEventDispatcher,
-        IUnitOfWork unitOfWork) : base(domainEventDispatcher, unitOfWork)
+        IUnitOfWork unitOfWork)
     {
-        _identityRepository = identityRepository;
-        _jwtTokenGenerator = jwtTokenGenerator;
+        _accountRepository = accountRepository;
+        _passwordHashingService = passwordHashingService;
+        _openIddictTokenService = openIddictTokenService;
+        _domainEventDispatcher = domainEventDispatcher;
+        _unitOfWork = unitOfWork;
     }
 
-    protected override async Task<FlowChatResult<LoginUserCommandResponse>> ExecuteAsync(LoginUserCommand request, CancellationToken cancellationToken)
+    public Task<FlowChatResult<LoginUserCommandResponse>> Handle(LoginUserCommand request, CancellationToken cancellationToken)
     {
-        var refreshToken = _jwtTokenGenerator.GenerateRefreshToken();
-
-        var user = await _identityRepository.LoginUserAsync(
-            request.Login,
-            request.Password,
-            refreshToken.Token,
-            refreshToken.ExpiresAtUtc,
-            cancellationToken);
-        if (user is null)
+        return _unitOfWork.ExecuteInTransactionAsync(async token =>
         {
-            return FlowChatResult<LoginUserCommandResponse>.Failure(
-                DomainError.Unauthorized("Invalid credentials or account is not confirmed."));
-        }
-
-        var token = _jwtTokenGenerator.GenerateToken(user, refreshToken.Token, refreshToken.ExpiresAtUtc);
-
-        return FlowChatResult<LoginUserCommandResponse>.Success(
-            new LoginUserCommandResponse
+            var account = await _accountRepository.GetByLoginAsync(request.Login, token);
+            if (account is null || !account.IsEmailConfirmed)
             {
-                IsSuccess = true,
-                AccessToken = token.AccessToken,
-                ExpiresAtUtc = token.ExpiresAtUtc,
-                RefreshToken = token.RefreshToken,
-                RefreshTokenExpiresAtUtc = token.RefreshTokenExpiresAtUtc
-            });
+                return FlowChatResult<LoginUserCommandResponse>.Failure(
+                    DomainError.Unauthorized("Invalid credentials or account is not confirmed."));
+            }
+
+            var verificationResult = _passwordHashingService.VerifyHashedPassword(account.PasswordHash, request.Password);
+            if (verificationResult == PasswordVerificationResult.Failed)
+            {
+                account.RecordFailedLogin();
+                await _accountRepository.UpdateAsync(account, token);
+                await DispatchDomainEventsAsync(account, token);
+
+                return FlowChatResult<LoginUserCommandResponse>.Failure(
+                    DomainError.Unauthorized("Invalid credentials or account is not confirmed."));
+            }
+
+            account.ResetFailedLogins();
+            await _accountRepository.UpdateAsync(account, token);
+            await DispatchDomainEventsAsync(account, token);
+
+            var authenticatedAccount = new AuthenticatedAccount
+            {
+                Id = account.Id.Value,
+                FriendlyUserId = account.FriendlyUserId,
+                Email = account.Email.Value,
+                Roles = []
+            };
+
+            return FlowChatResult<LoginUserCommandResponse>.Success(
+                new LoginUserCommandResponse
+                {
+                    Grant = new OpenIddictTokenGrantResult
+                    {
+                        Principal = _openIddictTokenService.CreatePrincipal(authenticatedAccount, request.Scopes)
+                    }
+                });
+        }, cancellationToken);
     }
 
-    protected override IAggregateRoot? GetAggregateRoot(FlowChatResult<LoginUserCommandResponse> result)
+    private Task DispatchDomainEventsAsync(Account account, CancellationToken cancellationToken)
     {
-        return null;
+        var domainEvents = account.PopDomainEvents();
+        return _domainEventDispatcher.DispatchAsync(domainEvents, cancellationToken);
     }
 }
 

@@ -1,64 +1,50 @@
 using FlowChat.Shared.Application;
 using FlowChat.AuthService.Application.Contracts.Infrastructure;
 using FlowChat.AuthService.Application.Contracts.Persistence;
+using FlowChat.AuthService.Application.Features.User.Models;
 using FlowChat.Shared.Domain;
 
 namespace FlowChat.AuthService.Application.Features.User.Commands.RefreshToken;
 
-public class RefreshTokenCommandHandler : CommandHandlerBase<RefreshTokenCommand, RefreshTokenCommandResponse>
+public sealed class RefreshTokenCommandHandler : CommandHandlerBase<RefreshTokenCommand, RefreshTokenCommandResponse>
 {
-    private readonly IIdentityRepository _identityRepository;
-    private readonly IJwtTokenGenerator _jwtTokenGenerator;
+    private readonly IAccountRepository _accountRepository;
+    private readonly IOpenIddictTokenService _openIddictTokenService;
 
     public RefreshTokenCommandHandler(
-        IIdentityRepository identityRepository,
-        IJwtTokenGenerator jwtTokenGenerator,
+        IAccountRepository accountRepository,
+        IOpenIddictTokenService openIddictTokenService,
         IDomainEventDispatcher domainEventDispatcher,
         IUnitOfWork unitOfWork) : base(domainEventDispatcher, unitOfWork)
     {
-        _identityRepository = identityRepository;
-        _jwtTokenGenerator = jwtTokenGenerator;
+        _accountRepository = accountRepository;
+        _openIddictTokenService = openIddictTokenService;
     }
 
     protected override async Task<FlowChatResult<RefreshTokenCommandResponse>> ExecuteAsync(RefreshTokenCommand request, CancellationToken cancellationToken)
     {
-        var userId = _jwtTokenGenerator.ExtractUserIdFromExpiredToken(request.AccessToken);
-        if (userId is null)
-        {
-            return FlowChatResult<RefreshTokenCommandResponse>.Failure(
-                DomainError.Unauthorized("Invalid access token."));
-        }
-
-        var storedToken = await _identityRepository.GetRefreshTokenAsync(userId.Value, cancellationToken);
-        if (storedToken is null
-            || storedToken.Value.Token != request.RefreshToken
-            || storedToken.Value.ExpiresAtUtc <= DateTime.UtcNow)
-        {
-            return FlowChatResult<RefreshTokenCommandResponse>.Failure(
-                DomainError.Unauthorized("Invalid or expired refresh token."));
-        }
-
-        var user = await _identityRepository.GetAuthenticatedUserByIdAsync(userId.Value, cancellationToken);
-        if (user is null)
+        var account = await _accountRepository.GetByIdAsync(request.AccountId, cancellationToken);
+        if (account is null || !account.IsEmailConfirmed)
         {
             return FlowChatResult<RefreshTokenCommandResponse>.Failure(
                 DomainError.Unauthorized("User not found or account is not confirmed."));
         }
 
-        await _identityRepository.RevokeRefreshTokenAsync(userId.Value, cancellationToken);
-
-        var newToken = _jwtTokenGenerator.GenerateToken(user);
-
-        await _identityRepository.SaveRefreshTokenAsync(
-            user.Id, newToken.RefreshToken, newToken.RefreshTokenExpiresAtUtc, cancellationToken);
+        var authenticatedAccount = new AuthenticatedAccount
+        {
+            Id = account.Id.Value,
+            FriendlyUserId = account.FriendlyUserId,
+            Email = account.Email.Value,
+            Roles = []
+        };
 
         return FlowChatResult<RefreshTokenCommandResponse>.Success(
             new RefreshTokenCommandResponse
             {
-                AccessToken = newToken.AccessToken,
-                ExpiresAtUtc = newToken.ExpiresAtUtc,
-                RefreshToken = newToken.RefreshToken,
-                RefreshTokenExpiresAtUtc = newToken.RefreshTokenExpiresAtUtc
+                Grant = new OpenIddictTokenGrantResult
+                {
+                    Principal = _openIddictTokenService.CreatePrincipal(authenticatedAccount, request.Scopes)
+                }
             });
     }
 

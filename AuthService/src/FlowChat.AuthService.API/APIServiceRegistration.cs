@@ -1,10 +1,8 @@
 using System.Text;
 using FlowChat.AuthService.Infrastructure.Configuration;
-using FlowChat.AuthService.Persistence.Identity;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using OpenIddict.Abstractions;
 
 namespace FlowChat.AuthService.Persistence;
 
@@ -37,34 +35,6 @@ public static class APIServiceRegistration
 
         services.AddDataProtection();
 
-        services.AddIdentityCore<UserEntity>(options =>
-        {
-            options.User.RequireUniqueEmail = true;
-            options.SignIn.RequireConfirmedEmail = true;
-            options.Password.RequiredLength = 8;
-            options.Password.RequireDigit = true;
-            options.Password.RequireLowercase = true;
-            options.Password.RequireUppercase = true;
-            options.Password.RequireNonAlphanumeric = true;
-            options.Password.RequiredUniqueChars = 3;
-        })
-            .AddRoles<RoleEntity>()
-            .AddEntityFrameworkStores<AppDbContext>()
-            .AddDefaultTokenProviders();
-
-        services.AddScoped<IUserStore<UserEntity>>(sp =>
-        {
-            var context = sp.GetRequiredService<AppDbContext>();
-            var describer = sp.GetRequiredService<IdentityErrorDescriber>();
-
-            return new UserStore<UserEntity, RoleEntity, AppDbContext, Guid>(
-                context,
-                describer)
-            {
-                AutoSaveChanges = false
-            };
-        });
-
         services.AddAuthentication(options =>
         {
             options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -84,6 +54,32 @@ public static class APIServiceRegistration
                 ClockSkew = TimeSpan.Zero
             };
         });
+
+        var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
+
+        services.AddOpenIddict()
+            .AddCore(options =>
+            {
+                options.UseEntityFrameworkCore()
+                    .UseDbContext<AppDbContext>();
+            })
+            .AddServer(options =>
+            {
+                options.SetTokenEndpointUris("/api/users/login", "/api/users/refresh-token");
+                options.AllowPasswordFlow();
+                options.AllowRefreshTokenFlow();
+                options.AcceptAnonymousClients();
+
+                options.SetAccessTokenLifetime(TimeSpan.FromMinutes(jwtSettings.ExpiresMinutes));
+                options.SetRefreshTokenLifetime(TimeSpan.FromMinutes(jwtSettings.RefreshTokenExpiresMinutes));
+
+                options.AddSigningKey(signingKey);
+                options.AddEncryptionKey(signingKey);
+                options.DisableAccessTokenEncryption();
+
+                options.UseAspNetCore()
+                    .EnableTokenEndpointPassthrough();
+            });
 
         services.AddAuthorization();
 

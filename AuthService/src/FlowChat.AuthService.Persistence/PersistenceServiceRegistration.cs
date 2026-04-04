@@ -23,7 +23,7 @@ public static class PersistenceServiceRegistration
             options => options.UseNpgsql(configuration.GetConnectionString("AuthDb")),
             ServiceLifetime.Scoped);
 
-        services.AddScoped<IIdentityRepository, IdentityRepository>();
+        services.AddScoped<IAccountRepository, AccountRepository>();
 
         return services;
     }

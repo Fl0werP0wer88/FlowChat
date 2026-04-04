@@ -1,8 +1,8 @@
 using AutoMapper;
 using FlowChat.AuthService.Application.Common.Eventing;
 using FlowChat.AuthService.Application.Common.Eventing.Handlers;
-using FlowChat.AuthService.Domain.Entities.Identity;
-using FlowChat.AuthService.Domain.Entities.Identity.Events;
+using FlowChat.AuthService.Domain.Entities.Account;
+using FlowChat.AuthService.Domain.Entities.Account.Events;
 using FlowChat.Core.Messaging.AuthService.Events;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
@@ -14,29 +14,18 @@ namespace FlowChat.AuthService.UnitTests;
 
 public sealed class AccountConfirmedDomainEventHandlerTests
 {
-    private readonly IMapper _mapper;
     private readonly Mock<IIntegrationEventPublisher> _publisherMock = new();
-
-    public AccountConfirmedDomainEventHandlerTests()
-    {
-        _mapper = new MapperConfiguration(
-                configuration => configuration.AddProfile<DomainEventToIntegrationEventProfile>(),
-                NullLoggerFactory.Instance)
-            .CreateMapper();
-
-        _publisherMock
-            .Setup(x => x.PublishToOutboxAsync(It.IsAny<AccountConfirmedIntegrationEvent>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-    }
+    private readonly IMapper _mapper = new MapperConfiguration(
+        cfg => cfg.AddProfile<DomainEventToIntegrationEventProfile>(),
+        NullLoggerFactory.Instance).CreateMapper();
 
     [Fact]
     public async Task Handle_MapsAndPublishesAccountConfirmedIntegrationEvent()
     {
         var handler = new AccountConfirmedDomainEventHandler(_publisherMock.Object, _mapper);
-        var userId = Id<Identity>.New();
-        var domainEvent = new AccountConfirmedDomainEvent(userId);
-
+        var domainEvent = new AccountConfirmedDomainEvent(Id<Account>.New());
         AccountConfirmedIntegrationEvent? capturedEvent = null;
+
         _publisherMock
             .Setup(x => x.PublishToOutboxAsync(It.IsAny<AccountConfirmedIntegrationEvent>(), It.IsAny<CancellationToken>()))
             .Callback<AccountConfirmedIntegrationEvent, CancellationToken>((integrationEvent, _) => capturedEvent = integrationEvent)
@@ -45,7 +34,6 @@ public sealed class AccountConfirmedDomainEventHandlerTests
         await handler.Handle(domainEvent, CancellationToken.None);
 
         capturedEvent.Should().NotBeNull();
-        capturedEvent!.Key.Should().Be(userId.Value.ToString());
-        capturedEvent.UserId.Should().Be(userId.Value);
+        capturedEvent!.UserId.Should().Be(domainEvent.AccountId.Value);
     }
 }

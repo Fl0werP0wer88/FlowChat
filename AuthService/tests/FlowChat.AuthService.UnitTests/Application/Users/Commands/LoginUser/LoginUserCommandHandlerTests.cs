@@ -1,10 +1,12 @@
-using AutoFixture;
+using System.Security.Claims;
 using FlowChat.AuthService.Application.Contracts.Infrastructure;
 using FlowChat.AuthService.Application.Contracts.Persistence;
 using FlowChat.AuthService.Application.Features.User.Commands.LoginUser;
 using FlowChat.AuthService.Application.Features.User.Models;
+using FlowChat.AuthService.Domain.Entities.Account;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
+using FlowChat.Shared.Domain.ValueObjects;
 using FluentAssertions;
 using Moq;
 
@@ -12,9 +14,9 @@ namespace FlowChat.AuthService.UnitTests;
 
 public sealed class LoginUserCommandHandlerTests
 {
-    private readonly IFixture _fixture = new Fixture();
-    private readonly Mock<IIdentityRepository> _identityRepositoryMock = new();
-    private readonly Mock<IJwtTokenGenerator> _jwtTokenGeneratorMock = new();
+    private readonly Mock<IAccountRepository> _accountRepositoryMock = new();
+    private readonly Mock<IPasswordHashingService> _passwordHashingServiceMock = new();
+    private readonly Mock<IOpenIddictTokenService> _openIddictTokenServiceMock = new();
     private readonly Mock<IDomainEventDispatcher> _domainEventDispatcherMock = new();
     private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
     private readonly LoginUserCommandHandler _handler;
@@ -32,100 +34,69 @@ public sealed class LoginUserCommandHandlerTests
             .Returns(Task.CompletedTask);
 
         _handler = new LoginUserCommandHandler(
-            _identityRepositoryMock.Object,
-            _jwtTokenGeneratorMock.Object,
+            _accountRepositoryMock.Object,
+            _passwordHashingServiceMock.Object,
+            _openIddictTokenServiceMock.Object,
             _domainEventDispatcherMock.Object,
             _unitOfWorkMock.Object);
     }
 
     [Fact]
-    public async Task Handle_WhenCredentialsAreValid_ReturnsAccessToken()
+    public async Task Handle_WhenCredentialsAreValid_ReturnsPrincipalAndResetsFailedCount()
     {
-        var expiresAtUtc = _fixture.Create<DateTime>().ToUniversalTime();
-        var refreshTokenExpiresAtUtc = expiresAtUtc.AddDays(7);
-        var authenticatedUser = new AuthenticatedUser
-        {
-            Id = _fixture.Create<Guid>(),
-            UserName = "flower",
-            Email = "flower@example.com",
-            Roles = ["User"]
-        };
-        var refreshToken = new RefreshTokenResult
-        {
-            Token = "refresh-token",
-            ExpiresAtUtc = refreshTokenExpiresAtUtc
-        };
+        var account = Account.Restore(
+            Guid.NewGuid(),
+            "flower",
+            EmailAddress.Create("flower@example.com"),
+            "hashed-password",
+            "stamp",
+            2,
+            true);
+        var principal = new ClaimsPrincipal(new ClaimsIdentity([new Claim(ClaimTypes.NameIdentifier, account.Id.Value.ToString())]));
 
-        _identityRepositoryMock
-            .Setup(x => x.LoginUserAsync(
-                "flower@example.com",
-                "P@ssw0rd!",
-                refreshToken.Token,
-                refreshToken.ExpiresAtUtc,
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(authenticatedUser);
-
-        _jwtTokenGeneratorMock
-            .Setup(x => x.GenerateRefreshToken())
-            .Returns(refreshToken);
-
-        _jwtTokenGeneratorMock
-            .Setup(x => x.GenerateToken(authenticatedUser, refreshToken.Token, refreshToken.ExpiresAtUtc))
-            .Returns(new JwtTokenResult
-            {
-                AccessToken = "jwt-token",
-                ExpiresAtUtc = expiresAtUtc,
-                RefreshToken = refreshToken.Token,
-                RefreshTokenExpiresAtUtc = refreshToken.ExpiresAtUtc
-            });
+        _accountRepositoryMock
+            .Setup(x => x.GetByLoginAsync("flower@example.com", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(account);
+        _passwordHashingServiceMock
+            .Setup(x => x.VerifyHashedPassword("hashed-password", "P@ssw0rd!"))
+            .Returns(PasswordVerificationResult.Succeeded);
+        _openIddictTokenServiceMock
+            .Setup(x => x.CreatePrincipal(It.IsAny<AuthenticatedAccount>(), It.IsAny<IEnumerable<string>>()))
+            .Returns(principal);
 
         var result = await _handler.Handle(
             new LoginUserCommand
             {
                 Login = "flower@example.com",
-                Password = "P@ssw0rd!"
+                Password = "P@ssw0rd!",
+                Scopes = ["offline_access"]
             },
             CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
-        result.Value.AccessToken.Should().Be("jwt-token");
-        result.Value.ExpiresAtUtc.Should().Be(expiresAtUtc);
-        result.Value.RefreshToken.Should().Be(refreshToken.Token);
-        result.Value.RefreshTokenExpiresAtUtc.Should().Be(refreshToken.ExpiresAtUtc);
-        _identityRepositoryMock.Verify(
-            x => x.LoginUserAsync(
-                "flower@example.com",
-                "P@ssw0rd!",
-                refreshToken.Token,
-                refreshToken.ExpiresAtUtc,
-                It.IsAny<CancellationToken>()),
-            Times.Once);
-        _domainEventDispatcherMock.Verify(
-            x => x.DispatchAsync(It.IsAny<IEnumerable<IDomainEvent>>(), It.IsAny<CancellationToken>()),
-            Times.Never);
+        result.Value.Grant.Principal.Should().BeSameAs(principal);
+        account.AccessFailedCount.Should().Be(0);
+        _accountRepositoryMock.Verify(x => x.UpdateAsync(account, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
-    public async Task Handle_WhenCredentialsAreInvalid_ReturnsUnauthorizedFailure()
+    public async Task Handle_WhenPasswordIsInvalid_ReturnsUnauthorizedAndIncrementsFailedCount()
     {
-        var refreshToken = new RefreshTokenResult
-        {
-            Token = "refresh-token",
-            ExpiresAtUtc = _fixture.Create<DateTime>().ToUniversalTime()
-        };
+        var account = Account.Restore(
+            Guid.NewGuid(),
+            "flower",
+            EmailAddress.Create("flower@example.com"),
+            "hashed-password",
+            "stamp",
+            0,
+            true);
 
-        _jwtTokenGeneratorMock
-            .Setup(x => x.GenerateRefreshToken())
-            .Returns(refreshToken);
-
-        _identityRepositoryMock
-            .Setup(x => x.LoginUserAsync(
-                "flower@example.com",
-                "wrong-password",
-                refreshToken.Token,
-                refreshToken.ExpiresAtUtc,
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync((AuthenticatedUser?)null);
+        _accountRepositoryMock
+            .Setup(x => x.GetByLoginAsync("flower@example.com", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(account);
+        _passwordHashingServiceMock
+            .Setup(x => x.VerifyHashedPassword("hashed-password", "wrong-password"))
+            .Returns(PasswordVerificationResult.Failed);
 
         var result = await _handler.Handle(
             new LoginUserCommand
@@ -137,13 +108,28 @@ public sealed class LoginUserCommandHandlerTests
 
         result.IsFailure.Should().BeTrue();
         result.Error.ErrorType.Should().Be(ErrorType.Unauthorized);
-        result.Error.ErrorMessage.Should().Be("Invalid credentials or account is not confirmed.");
-        _jwtTokenGeneratorMock.Verify(x => x.GenerateToken(It.IsAny<AuthenticatedUser>()), Times.Never);
-        _jwtTokenGeneratorMock.Verify(
-            x => x.GenerateToken(It.IsAny<AuthenticatedUser>(), It.IsAny<string>(), It.IsAny<DateTime>()),
-            Times.Never);
-        _domainEventDispatcherMock.Verify(
-            x => x.DispatchAsync(It.IsAny<IEnumerable<IDomainEvent>>(), It.IsAny<CancellationToken>()),
-            Times.Never);
+        account.AccessFailedCount.Should().Be(1);
+        _accountRepositoryMock.Verify(x => x.UpdateAsync(account, It.IsAny<CancellationToken>()), Times.Once);
+        _openIddictTokenServiceMock.Verify(x => x.CreatePrincipal(It.IsAny<AuthenticatedAccount>(), It.IsAny<IEnumerable<string>>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task Handle_WhenAccountIsMissingOrUnconfirmed_ReturnsUnauthorized()
+    {
+        _accountRepositoryMock
+            .Setup(x => x.GetByLoginAsync("flower@example.com", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Account?)null);
+
+        var result = await _handler.Handle(
+            new LoginUserCommand
+            {
+                Login = "flower@example.com",
+                Password = "P@ssw0rd!"
+            },
+            CancellationToken.None);
+
+        result.IsFailure.Should().BeTrue();
+        result.Error.ErrorType.Should().Be(ErrorType.Unauthorized);
+        _accountRepositoryMock.Verify(x => x.UpdateAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 }

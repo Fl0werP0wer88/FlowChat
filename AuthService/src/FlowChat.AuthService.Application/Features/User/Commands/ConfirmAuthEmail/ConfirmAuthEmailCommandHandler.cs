@@ -1,22 +1,22 @@
 using FlowChat.AuthService.Application.Contracts.Persistence;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
-using FlowChat.AuthService.Domain.Entities.Identity;
+using FlowChat.AuthService.Domain.Entities.Account;
 using MediatR;
 
 namespace FlowChat.AuthService.Application.Features.User.Commands.ConfirmAuthEmail;
 
 public sealed class ConfirmAuthEmailCommandHandler : CommandHandlerBase<ConfirmAuthEmailCommand, Unit>
 {
-    private readonly IIdentityRepository _identityRepository;
-    private Identity? _domainUser;
+    private readonly IAccountRepository _accountRepository;
+    private Account? _account;
 
     public ConfirmAuthEmailCommandHandler(
-        IIdentityRepository identityRepository,
+        IAccountRepository accountRepository,
         IDomainEventDispatcher domainEventDispatcher,
         IUnitOfWork unitOfWork) : base(domainEventDispatcher, unitOfWork)
     {
-        _identityRepository = identityRepository;
+        _accountRepository = accountRepository;
     }
 
     protected override async Task<FlowChatResult<Unit>> ExecuteAsync(ConfirmAuthEmailCommand request, CancellationToken cancellationToken)
@@ -27,25 +27,25 @@ public sealed class ConfirmAuthEmailCommandHandler : CommandHandlerBase<ConfirmA
             return FlowChatResult<Unit>.Failure(DomainError.BadRequest("Email address is required."));
         }
 
-        _domainUser = await _identityRepository.GetByEmailAsync(emailAddress, cancellationToken);
-        if (_domainUser is null)
+        _account = await _accountRepository.GetByEmailAsync(emailAddress, cancellationToken);
+        if (_account is null)
         {
             return FlowChatResult<Unit>.Failure(DomainError.NotFound("User was not found."));
         }
 
-        if (_domainUser.EmailConfirmed)
+        if (_account.IsEmailConfirmed)
         {
             return FlowChatResult<Unit>.Failure(DomainError.Conflict("Email is already confirmed."));
         }
 
-        _domainUser.ConfirmEmail();
-        await _identityRepository.UpdateAsync(_domainUser, cancellationToken);
+        _account.ConfirmEmail();
+        await _accountRepository.UpdateAsync(_account, cancellationToken);
 
         return FlowChatResult<Unit>.Success(Unit.Value);
     }
 
     protected override IAggregateRoot? GetAggregateRoot(FlowChatResult<Unit> result)
     {
-        return _domainUser;
+        return _account;
     }
 }
