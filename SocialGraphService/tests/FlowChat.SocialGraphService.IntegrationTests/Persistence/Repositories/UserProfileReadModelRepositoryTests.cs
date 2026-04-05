@@ -25,7 +25,7 @@ public sealed class UserProfileReadModelRepositoryTests
             "https://cdn.example/avatar.png",
             "Hello there",
             true,
-            new DateTime(2026, 4, 1, 10, 30, 0, DateTimeKind.Utc),
+            new DateTimeOffset(2026, 4, 1, 10, 30, 0, TimeSpan.Zero),
             true,
             false);
 
@@ -70,7 +70,7 @@ public sealed class UserProfileReadModelRepositoryTests
                 AvatarUrl = "https://cdn.example/old.png",
                 Bio = "Old bio",
                 IsActive = false,
-                LastSeenAtUtc = new DateTime(2026, 3, 29, 12, 0, 0, DateTimeKind.Utc),
+                LastSeenAtUtc = new DateTimeOffset(2026, 3, 29, 12, 0, 0, TimeSpan.Zero),
                 IsEmailVisible = false,
                 IsPhoneVisible = false,
                 CreatedBy = "seed",

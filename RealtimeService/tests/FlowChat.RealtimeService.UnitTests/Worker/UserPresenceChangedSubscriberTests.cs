@@ -38,7 +38,7 @@ public sealed class UserPresenceChangedSubscriberTests
             {
                 UserId = _fixture.Create<Guid>(),
                 Status = " Away ",
-                ChangedAtUtc = new DateTime(2026, 3, 17, 10, 15, 0, DateTimeKind.Utc),
+                ChangedAtUtc = new DateTimeOffset(2026, 3, 17, 10, 15, 0, TimeSpan.Zero),
                 RecipientUserIds = [_fixture.Create<Guid>()]
             },
             CancellationToken.None);

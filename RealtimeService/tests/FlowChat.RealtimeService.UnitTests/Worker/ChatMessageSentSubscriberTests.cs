@@ -42,7 +42,7 @@ public sealed class ChatMessageSentSubscriberTests
                 SenderUserId = _fixture.Create<Guid>(),
                 SenderDisplayName = " Jane Doe ",
                 Text = " Hi there ",
-                SentAtUtc = new DateTime(2026, 3, 17, 10, 0, 0, DateTimeKind.Utc),
+                SentAtUtc = new DateTimeOffset(2026, 3, 17, 10, 0, 0, TimeSpan.Zero),
                 RecipientUserIds = [recipientUserId, recipientUserId]
             },
             CancellationToken.None);

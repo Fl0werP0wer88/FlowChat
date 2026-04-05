@@ -16,7 +16,7 @@ public sealed class EmailAddedDomainEventHandlerTests
         _issuerMock
             .Setup(x => x.IssueAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((Guid userProfileId, Guid emailId, string _, CancellationToken _) =>
-                EmailVerificationRequest.Create(userProfileId, emailId, Guid.NewGuid().ToString("N"), DateTime.UtcNow.AddHours(24)));
+                EmailVerificationRequest.Create(userProfileId, emailId, Guid.NewGuid().ToString("N"), DateTimeOffset.UtcNow.AddHours(24)));
     }
 
     [Fact]

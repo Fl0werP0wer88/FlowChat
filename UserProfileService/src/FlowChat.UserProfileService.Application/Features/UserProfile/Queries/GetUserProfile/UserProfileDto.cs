@@ -7,6 +7,6 @@ public sealed record UserProfileDto(
     string? AvatarUrl,
     string? Bio,
     bool IsActive,
-    DateTime? LastSeenAtUtc,
+    DateTimeOffset? LastSeenAtUtc,
     IReadOnlyList<EmailDto> Emails,
     IReadOnlyList<PhoneDto> Phones);

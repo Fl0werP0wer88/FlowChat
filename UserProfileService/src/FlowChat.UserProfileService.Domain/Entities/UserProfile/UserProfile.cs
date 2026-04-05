@@ -16,7 +16,7 @@ public class UserProfile : AggregateRootBase<UserProfile>
     public string? AvatarUrl { get; private set; }
     public string? Bio { get; private set; }
     public bool IsActive { get; private set; }
-    public DateTime? LastSeenAtUtc { get; private set; }
+    public DateTimeOffset? LastSeenAtUtc { get; private set; }
     public bool IsEmailVisible { get; private set; }
     public bool IsPhoneVisible { get; private set; }
     public IReadOnlyList<Email> Emails => _emails.AsReadOnly();
@@ -31,7 +31,7 @@ public class UserProfile : AggregateRootBase<UserProfile>
         string? avatarUrl = null,
         string? bio = null,
         bool isActive = true,
-        DateTime? lastSeenAtUtc = null,
+        DateTimeOffset? lastSeenAtUtc = null,
         bool isEmailVisible = true,
         bool isPhoneVisible = true) : base(id)
     {
@@ -54,7 +54,7 @@ public class UserProfile : AggregateRootBase<UserProfile>
         string? avatarUrl = null,
         string? bio = null,
         bool isActive = true,
-        DateTime? lastSeenAtUtc = null,
+        DateTimeOffset? lastSeenAtUtc = null,
         bool isEmailVisible = true,
         bool isPhoneVisible = true,
         Id<UserProfile>? id = null)

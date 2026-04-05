@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FlowChat.ChatService.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260405122004_InitialCreate")]
+    [Migration("20260405165627_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -61,7 +61,7 @@ namespace FlowChat.ChatService.Persistence.Migrations
                     b.Property<Guid>("SenderUserId")
                         .HasColumnType("uuid");
 
-                    b.Property<DateTime>("SentAtUtc")
+                    b.Property<DateTimeOffset>("SentAtUtc")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Text")

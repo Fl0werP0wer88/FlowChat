@@ -58,7 +58,7 @@ namespace FlowChat.ChatService.Persistence.Migrations
                     b.Property<Guid>("SenderUserId")
                         .HasColumnType("uuid");
 
-                    b.Property<DateTime>("SentAtUtc")
+                    b.Property<DateTimeOffset>("SentAtUtc")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Text")

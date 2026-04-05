@@ -17,13 +17,21 @@ public sealed class EmailVerificationRequestWriteRepository(AppDbContext dbConte
         CancellationToken cancellationToken = default)
     {
         var typedEmailId = Id<Email>.FromGuid(emailId);
-        var nowUtc = DateTime.UtcNow;
-
-        return await _dbContext.EmailVerificationRequests
+        var nowUtc = DateTimeOffset.UtcNow;
+        var query = _dbContext.EmailVerificationRequests
             .Where(x => x.EmailId == typedEmailId
                         && x.InvalidatedAtUtc == null
-                        && x.ConsumedAtUtc == null
-                        && x.ExpiresAtUtc > nowUtc)
+                        && x.ConsumedAtUtc == null);
+
+        if (string.Equals(_dbContext.Database.ProviderName, "Microsoft.EntityFrameworkCore.Sqlite", StringComparison.Ordinal))
+        {
+            return (await query.ToListAsync(cancellationToken))
+                .Where(x => x.ExpiresAtUtc > nowUtc)
+                .ToList();
+        }
+
+        return await query
+            .Where(x => x.ExpiresAtUtc > nowUtc)
             .ToListAsync(cancellationToken);
     }
 

@@ -32,7 +32,7 @@ public sealed class PublishPresenceChangeControllerTests
             {
                 UserId = _fixture.Create<Guid>(),
                 Status = "online",
-                ChangedAtUtc = new DateTime(2026, 3, 17, 11, 0, 0, DateTimeKind.Utc),
+                ChangedAtUtc = new DateTimeOffset(2026, 3, 17, 11, 0, 0, TimeSpan.Zero),
                 RecipientUserIds = [_fixture.Create<Guid>()]
             },
             CancellationToken.None);

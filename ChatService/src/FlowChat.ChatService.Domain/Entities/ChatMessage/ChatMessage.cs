@@ -9,7 +9,7 @@ public sealed class ChatMessage : AggregateRootBase<ChatMessage>
     public Guid SenderUserId { get; private set; }
     public string SenderDisplayName { get; private set; }
     public string Text { get; private set; }
-    public DateTime SentAtUtc { get; private set; }
+    public DateTimeOffset SentAtUtc { get; private set; }
     public Guid[] RecipientUserIds { get; private set; }
 
     private ChatMessage(
@@ -18,7 +18,7 @@ public sealed class ChatMessage : AggregateRootBase<ChatMessage>
         Guid senderUserId,
         string senderDisplayName,
         string text,
-        DateTime sentAtUtc,
+        DateTimeOffset sentAtUtc,
         Guid[] recipientUserIds) : base(id)
     {
         if (conversationId == Guid.Empty)
@@ -38,7 +38,7 @@ public sealed class ChatMessage : AggregateRootBase<ChatMessage>
         SenderUserId = senderUserId;
         SenderDisplayName = senderDisplayName.Trim();
         Text = text.Trim();
-        SentAtUtc = DateTime.SpecifyKind(sentAtUtc, DateTimeKind.Utc);
+        SentAtUtc = sentAtUtc.ToUniversalTime();
         RecipientUserIds = NormalizeRecipientUserIds(recipientUserIds);
     }
 
@@ -48,7 +48,7 @@ public sealed class ChatMessage : AggregateRootBase<ChatMessage>
         string senderDisplayName,
         string text,
         IEnumerable<Guid> recipientUserIds,
-        DateTime? sentAtUtc = null,
+        DateTimeOffset? sentAtUtc = null,
         Id<ChatMessage>? id = null)
     {
         var normalizedRecipientUserIds = NormalizeRecipientUserIds(recipientUserIds);
@@ -58,7 +58,7 @@ public sealed class ChatMessage : AggregateRootBase<ChatMessage>
             senderUserId,
             senderDisplayName,
             text,
-            sentAtUtc ?? DateTime.UtcNow,
+            sentAtUtc ?? DateTimeOffset.UtcNow,
             normalizedRecipientUserIds);
 
         chatMessage.AddDomainEvent(

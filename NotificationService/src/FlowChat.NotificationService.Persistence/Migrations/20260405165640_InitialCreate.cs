@@ -24,7 +24,7 @@ namespace FlowChat.NotificationService.Persistence.Migrations
                     ProviderMessageId = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
                     FailureReason = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
                     SourceMessageKey = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
-                    SentAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    SentAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     Version = table.Column<int>(type: "integer", nullable: false),
                     CreatedBy = table.Column<string>(type: "text", nullable: false),
                     CreatedAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),

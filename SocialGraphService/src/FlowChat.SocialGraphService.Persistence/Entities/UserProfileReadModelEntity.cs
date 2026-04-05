@@ -10,7 +10,7 @@ public sealed class UserProfileReadModelEntity
     public string? AvatarUrl { get; set; }
     public string? Bio { get; set; }
     public bool IsActive { get; set; }
-    public DateTime? LastSeenAtUtc { get; set; }
+    public DateTimeOffset? LastSeenAtUtc { get; set; }
     public bool IsEmailVisible { get; set; }
     public bool IsPhoneVisible { get; set; }
     public string CreatedBy { get; set; } = string.Empty;

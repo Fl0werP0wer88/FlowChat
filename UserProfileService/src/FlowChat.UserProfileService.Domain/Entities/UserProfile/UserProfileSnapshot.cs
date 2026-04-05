@@ -10,6 +10,6 @@ public sealed record UserProfileSnapshot(
     string? AvatarUrl,
     string? Bio,
     bool IsActive,
-    DateTime? LastSeenAtUtc,
+    DateTimeOffset? LastSeenAtUtc,
     bool IsEmailVisible,
     bool IsPhoneVisible);

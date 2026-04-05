@@ -46,7 +46,7 @@ public sealed class UserProfileStateChangedDomainEventHandlerTests
                 "https://cdn.example/avatar.png",
                 "about me",
                 true,
-                new DateTime(2026, 3, 11, 9, 0, 0, DateTimeKind.Utc),
+                new DateTimeOffset(2026, 3, 11, 9, 0, 0, TimeSpan.Zero),
                 true,
                 false));
 
@@ -69,7 +69,7 @@ public sealed class UserProfileStateChangedDomainEventHandlerTests
         capturedEvent.AvatarUrl.Should().Be("https://cdn.example/avatar.png");
         capturedEvent.Bio.Should().Be("about me");
         capturedEvent.IsActive.Should().BeTrue();
-        capturedEvent.LastSeenAtUtc.Should().Be(new DateTime(2026, 3, 11, 9, 0, 0, DateTimeKind.Utc));
+        capturedEvent.LastSeenAtUtc.Should().Be(new DateTimeOffset(2026, 3, 11, 9, 0, 0, TimeSpan.Zero));
         capturedEvent.IsEmailVisible.Should().BeTrue();
         capturedEvent.IsPhoneVisible.Should().BeFalse();
     }

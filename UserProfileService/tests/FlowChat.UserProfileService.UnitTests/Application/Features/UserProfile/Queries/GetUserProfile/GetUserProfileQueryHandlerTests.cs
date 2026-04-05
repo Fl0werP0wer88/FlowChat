@@ -28,7 +28,7 @@ public sealed class GetUserProfileQueryHandlerTests
             "https://cdn.example/avatar.png",
             "about me",
             true,
-            new DateTime(2026, 4, 1, 8, 0, 0, DateTimeKind.Utc),
+            new DateTimeOffset(2026, 4, 1, 8, 0, 0, TimeSpan.Zero),
             [new EmailDto(Guid.NewGuid(), "john@example.com", true, true, false)],
             [new PhoneDto(Guid.NewGuid(), "+48123123123", true)]);
 

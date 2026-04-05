@@ -28,7 +28,7 @@ public sealed class EmailVerificationRequestIssuer(
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(emailAddress);
 
-        var nowUtc = DateTime.UtcNow;
+        var nowUtc = DateTimeOffset.UtcNow;
         var activeRequests = await _emailVerificationRequestWriteRepository
             .GetActiveByEmailIdAsync(emailId, cancellationToken);
 

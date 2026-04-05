@@ -49,7 +49,7 @@ public sealed class ConfirmEmailVerificationCommandHandler
             return FlowChatResult<Unit>.Failure(DomainError.Validation(InvalidTokenMessage));
         }
 
-        var nowUtc = DateTime.UtcNow;
+        var nowUtc = DateTimeOffset.UtcNow;
         if (!verificationRequest.IsActive(nowUtc))
         {
             return FlowChatResult<Unit>.Failure(DomainError.Validation(InvalidTokenMessage));

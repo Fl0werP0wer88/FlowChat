@@ -11,7 +11,7 @@ public sealed class EmailVerificationRequestTests
     {
         var userProfileId = Id<UserProfile>.New();
         var emailId = Id<Email>.New();
-        var expiresAtUtc = new DateTime(2026, 4, 2, 8, 0, 0, DateTimeKind.Utc);
+        var expiresAtUtc = new DateTimeOffset(2026, 4, 2, 8, 0, 0, TimeSpan.Zero);
 
         var request = EmailVerificationRequest.Create(userProfileId, emailId, " nonce-123 ", expiresAtUtc);
 
@@ -30,7 +30,7 @@ public sealed class EmailVerificationRequestTests
             Id<UserProfile>.New(),
             Id<Email>.New(),
             "nonce-123",
-            new DateTime(2026, 4, 2, 8, 0, 0, DateTimeKind.Local));
+            new DateTimeOffset(2026, 4, 2, 8, 0, 0, TimeSpan.FromHours(1)));
 
         act.Should().Throw<InvalidOperationException>()
             .WithMessage("Expiration time must be in UTC.");
@@ -39,7 +39,7 @@ public sealed class EmailVerificationRequestTests
     [Fact]
     public void IsActive_WhenRequestIsNotConsumedInvalidatedOrExpired_ReturnsTrue()
     {
-        var nowUtc = new DateTime(2026, 4, 1, 8, 0, 0, DateTimeKind.Utc);
+        var nowUtc = new DateTimeOffset(2026, 4, 1, 8, 0, 0, TimeSpan.Zero);
         var request = EmailVerificationRequest.Create(
             Id<UserProfile>.New(),
             Id<Email>.New(),
@@ -55,7 +55,7 @@ public sealed class EmailVerificationRequestTests
     [Fact]
     public void Invalidate_WhenRequestIsActive_MarksItInvalidated()
     {
-        var nowUtc = new DateTime(2026, 4, 1, 8, 0, 0, DateTimeKind.Utc);
+        var nowUtc = new DateTimeOffset(2026, 4, 1, 8, 0, 0, TimeSpan.Zero);
         var request = EmailVerificationRequest.Create(
             Id<UserProfile>.New(),
             Id<Email>.New(),
@@ -71,7 +71,7 @@ public sealed class EmailVerificationRequestTests
     [Fact]
     public void Consume_WhenRequestAlreadyConsumed_DoesNotOverwriteConsumedAtUtc()
     {
-        var firstConsumeAtUtc = new DateTime(2026, 4, 1, 8, 0, 0, DateTimeKind.Utc);
+        var firstConsumeAtUtc = new DateTimeOffset(2026, 4, 1, 8, 0, 0, TimeSpan.Zero);
         var secondConsumeAtUtc = firstConsumeAtUtc.AddMinutes(5);
         var request = EmailVerificationRequest.Create(
             Id<UserProfile>.New(),
@@ -92,11 +92,11 @@ public sealed class EmailVerificationRequestTests
             Id<UserProfile>.New(),
             Id<Email>.New(),
             "nonce-123",
-            new DateTime(2026, 4, 1, 9, 0, 0, DateTimeKind.Utc));
+            new DateTimeOffset(2026, 4, 1, 9, 0, 0, TimeSpan.Zero));
 
-        var act = () => request.IsActive(new DateTime(2026, 4, 1, 8, 0, 0, DateTimeKind.Local));
+        var act = () => request.IsActive(new DateTimeOffset(2026, 4, 1, 8, 0, 0, TimeSpan.FromHours(1)));
 
         act.Should().Throw<InvalidOperationException>()
-            .WithMessage("DateTime value must be in UTC.");
+            .WithMessage("DateTimeOffset value must be in UTC.");
     }
 }

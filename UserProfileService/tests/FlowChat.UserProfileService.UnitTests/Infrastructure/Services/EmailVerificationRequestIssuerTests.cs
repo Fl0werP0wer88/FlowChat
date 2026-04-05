@@ -53,7 +53,7 @@ public sealed class EmailVerificationRequestIssuerTests
             userProfileId,
             emailId,
             "existing-nonce",
-            DateTime.UtcNow.AddHours(6));
+            DateTimeOffset.UtcNow.AddHours(6));
 
         _repositoryMock
             .Setup(x => x.GetActiveByEmailIdAsync(emailId, It.IsAny<CancellationToken>()))

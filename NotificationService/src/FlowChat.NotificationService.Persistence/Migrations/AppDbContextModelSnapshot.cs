@@ -59,7 +59,7 @@ namespace FlowChat.NotificationService.Persistence.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
-                    b.Property<DateTime?>("SentAtUtc")
+                    b.Property<DateTimeOffset?>("SentAtUtc")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("SourceMessageKey")

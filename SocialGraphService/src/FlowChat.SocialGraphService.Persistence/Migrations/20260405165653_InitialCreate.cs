@@ -48,7 +48,7 @@ namespace FlowChat.SocialGraphService.Persistence.Migrations
                     AvatarUrl = table.Column<string>(type: "character varying(2048)", maxLength: 2048, nullable: true),
                     Bio = table.Column<string>(type: "character varying(2000)", maxLength: 2000, nullable: true),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true),
-                    LastSeenAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    LastSeenAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     IsEmailVisible = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
                     IsPhoneVisible = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
                     CreatedBy = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),

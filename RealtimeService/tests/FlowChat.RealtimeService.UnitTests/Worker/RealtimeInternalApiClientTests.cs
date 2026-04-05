@@ -48,7 +48,7 @@ public sealed class RealtimeInternalApiClientTests
                 SenderUserId = _fixture.Create<Guid>(),
                 SenderDisplayName = "John Doe",
                 Text = "Hello",
-                SentAtUtc = new DateTime(2026, 3, 17, 9, 0, 0, DateTimeKind.Utc),
+                SentAtUtc = new DateTimeOffset(2026, 3, 17, 9, 0, 0, TimeSpan.Zero),
                 RecipientUserIds = [_fixture.Create<Guid>()]
             },
             CancellationToken.None);

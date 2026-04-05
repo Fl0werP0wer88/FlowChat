@@ -45,7 +45,7 @@ public sealed class UserProfileCreatedSubscriberTests
                 AvatarUrl = " https://cdn.example/avatar.png ",
                 Bio = " hello ",
                 IsActive = true,
-                LastSeenAtUtc = new DateTime(2026, 3, 11, 10, 0, 0, DateTimeKind.Utc),
+                LastSeenAtUtc = new DateTimeOffset(2026, 3, 11, 10, 0, 0, TimeSpan.Zero),
                 IsEmailVisible = true,
                 IsPhoneVisible = false
             },

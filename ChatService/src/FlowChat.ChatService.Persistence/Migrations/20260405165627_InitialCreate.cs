@@ -21,7 +21,7 @@ namespace FlowChat.ChatService.Persistence.Migrations
                     SenderUserId = table.Column<Guid>(type: "uuid", nullable: false),
                     SenderDisplayName = table.Column<string>(type: "character varying(120)", maxLength: 120, nullable: false),
                     Text = table.Column<string>(type: "character varying(4000)", maxLength: 4000, nullable: false),
-                    SentAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    SentAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     RecipientUserIds = table.Column<Guid[]>(type: "uuid[]", nullable: false),
                     Version = table.Column<int>(type: "integer", nullable: false),
                     CreatedBy = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),

@@ -16,13 +16,13 @@ public sealed class EmailVerificationRequest : AggregateRootBase<EmailVerificati
         Id<DomainUserProfile> userProfileId,
         Id<DomainEmail> emailId,
         string nonce,
-        DateTime expiresAtUtc) : base(id)
+        DateTimeOffset expiresAtUtc) : base(id)
     {
         ArgumentNullException.ThrowIfNull(userProfileId);
         ArgumentNullException.ThrowIfNull(emailId);
         ArgumentException.ThrowIfNullOrWhiteSpace(nonce);
 
-        if (expiresAtUtc.Kind != DateTimeKind.Utc)
+        if (expiresAtUtc.Offset != TimeSpan.Zero)
         {
             throw new InvalidOperationException("Expiration time must be in UTC.");
         }
@@ -36,33 +36,33 @@ public sealed class EmailVerificationRequest : AggregateRootBase<EmailVerificati
     public Id<DomainUserProfile> UserProfileId { get; private set; } = default!;
     public Id<DomainEmail> EmailId { get; private set; } = default!;
     public string Nonce { get; private set; } = string.Empty;
-    public DateTime ExpiresAtUtc { get; private set; }
-    public DateTime? InvalidatedAtUtc { get; private set; }
-    public DateTime? ConsumedAtUtc { get; private set; }
+    public DateTimeOffset ExpiresAtUtc { get; private set; }
+    public DateTimeOffset? InvalidatedAtUtc { get; private set; }
+    public DateTimeOffset? ConsumedAtUtc { get; private set; }
 
     public static EmailVerificationRequest Create(
         Id<DomainUserProfile> userProfileId,
         Id<DomainEmail> emailId,
         string nonce,
-        DateTime expiresAtUtc,
+        DateTimeOffset expiresAtUtc,
         Id<EmailVerificationRequest>? id = null)
     {
         return new EmailVerificationRequest(id, userProfileId, emailId, nonce, expiresAtUtc);
     }
 
-    public bool IsExpired(DateTime utcNow)
+    public bool IsExpired(DateTimeOffset utcNow)
     {
         EnsureUtc(utcNow);
         return ExpiresAtUtc <= utcNow;
     }
 
-    public bool IsActive(DateTime utcNow)
+    public bool IsActive(DateTimeOffset utcNow)
     {
         EnsureUtc(utcNow);
         return ConsumedAtUtc is null && InvalidatedAtUtc is null && !IsExpired(utcNow);
     }
 
-    public void Invalidate(DateTime utcNow)
+    public void Invalidate(DateTimeOffset utcNow)
     {
         EnsureUtc(utcNow);
 
@@ -74,7 +74,7 @@ public sealed class EmailVerificationRequest : AggregateRootBase<EmailVerificati
         InvalidatedAtUtc = utcNow;
     }
 
-    public void Consume(DateTime utcNow)
+    public void Consume(DateTimeOffset utcNow)
     {
         EnsureUtc(utcNow);
 
@@ -86,11 +86,11 @@ public sealed class EmailVerificationRequest : AggregateRootBase<EmailVerificati
         ConsumedAtUtc = utcNow;
     }
 
-    private static void EnsureUtc(DateTime value)
+    private static void EnsureUtc(DateTimeOffset value)
     {
-        if (value.Kind != DateTimeKind.Utc)
+        if (value.Offset != TimeSpan.Zero)
         {
-            throw new InvalidOperationException("DateTime value must be in UTC.");
+            throw new InvalidOperationException("DateTimeOffset value must be in UTC.");
         }
     }
 }

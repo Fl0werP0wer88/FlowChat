@@ -80,7 +80,7 @@ public sealed class ConfirmEmailVerificationCommandHandlerTests
             profile.Id,
             email.Id,
             "valid-nonce",
-            DateTime.UtcNow.AddHours(24));
+            DateTimeOffset.UtcNow.AddHours(24));
 
         var payload = new EmailVerificationTokenPayload(profile.Id.Value, email.Id.Value, verificationRequest.Nonce);
         _tokenProtectorMock
@@ -124,8 +124,8 @@ public sealed class ConfirmEmailVerificationCommandHandlerTests
             profile.Id,
             email.Id,
             "used-nonce",
-            DateTime.UtcNow.AddHours(24));
-        verificationRequest.Consume(DateTime.UtcNow);
+            DateTimeOffset.UtcNow.AddHours(24));
+        verificationRequest.Consume(DateTimeOffset.UtcNow);
 
         var payload = new EmailVerificationTokenPayload(profile.Id.Value, email.Id.Value, verificationRequest.Nonce);
         _tokenProtectorMock
@@ -152,7 +152,7 @@ public sealed class ConfirmEmailVerificationCommandHandlerTests
             Id<UserProfile>.FromGuid(userProfileId),
             Id<Email>.FromGuid(emailId),
             "missing-profile-nonce",
-            DateTime.UtcNow.AddHours(24));
+            DateTimeOffset.UtcNow.AddHours(24));
 
         var payload = new EmailVerificationTokenPayload(userProfileId, emailId, verificationRequest.Nonce);
         _tokenProtectorMock
@@ -181,7 +181,7 @@ public sealed class ConfirmEmailVerificationCommandHandlerTests
             profile.Id,
             email.Id,
             "expired-nonce",
-            DateTime.UtcNow.AddHours(-1)); // already expired
+            DateTimeOffset.UtcNow.AddHours(-1)); // already expired
 
         var payload = new EmailVerificationTokenPayload(profile.Id.Value, email.Id.Value, verificationRequest.Nonce);
         _tokenProtectorMock

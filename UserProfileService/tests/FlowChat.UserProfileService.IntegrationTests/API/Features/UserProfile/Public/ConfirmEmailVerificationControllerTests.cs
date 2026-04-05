@@ -102,14 +102,24 @@ public sealed class ConfirmEmailVerificationControllerTests(UserProfileApiFactor
         {
             var typedUserId = FlowChat.Shared.Domain.Id<FlowChat.UserProfileService.Domain.Entities.UserProfile.UserProfile>.FromGuid(userId);
             var typedEmailId = FlowChat.Shared.Domain.Id<FlowChat.UserProfileService.Domain.Entities.UserProfile.Email>.FromGuid(emailId);
-            var verificationRequest = await db.EmailVerificationRequests
+            var query = db.EmailVerificationRequests
                 .Where(r => r.UserProfileId == typedUserId
                             && r.EmailId == typedEmailId
                             && r.InvalidatedAtUtc == null
-                            && r.ConsumedAtUtc == null
-                            && r.ExpiresAtUtc > DateTime.UtcNow)
-                .OrderByDescending(r => r.ExpiresAtUtc)
-                .FirstAsync();
+                            && r.ConsumedAtUtc == null);
+
+            var verificationRequest = string.Equals(
+                db.Database.ProviderName,
+                "Microsoft.EntityFrameworkCore.Sqlite",
+                StringComparison.Ordinal)
+                ? (await query.ToListAsync())
+                    .Where(r => r.ExpiresAtUtc > DateTimeOffset.UtcNow)
+                    .OrderByDescending(r => r.ExpiresAtUtc)
+                    .First()
+                : await query
+                    .Where(r => r.ExpiresAtUtc > DateTimeOffset.UtcNow)
+                    .OrderByDescending(r => r.ExpiresAtUtc)
+                    .FirstAsync();
             return verificationRequest.Nonce;
         });
 

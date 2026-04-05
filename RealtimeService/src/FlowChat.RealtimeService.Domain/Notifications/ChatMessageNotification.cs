@@ -6,5 +6,5 @@ public sealed record ChatMessageNotification(
     Guid SenderUserId,
     string SenderDisplayName,
     string Text,
-    DateTime SentAtUtc,
+    DateTimeOffset SentAtUtc,
     IReadOnlyCollection<Guid> RecipientUserIds);

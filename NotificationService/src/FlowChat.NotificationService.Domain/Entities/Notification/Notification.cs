@@ -34,7 +34,7 @@ public sealed class Notification : AggregateRootBase<Notification>
     public string? ProviderMessageId { get; private set; }
     public string? FailureReason { get; private set; }
     public string? SourceMessageKey { get; private set; }
-    public DateTime? SentAtUtc { get; private set; }
+    public DateTimeOffset? SentAtUtc { get; private set; }
 
     public static Notification CreateWelcome(
         Guid userId,
@@ -97,7 +97,7 @@ public sealed class Notification : AggregateRootBase<Notification>
         Status = NotificationStatus.Sent;
         ProviderMessageId = string.IsNullOrWhiteSpace(providerMessageId) ? null : providerMessageId.Trim();
         FailureReason = null;
-        SentAtUtc = DateTime.UtcNow;
+        SentAtUtc = DateTimeOffset.UtcNow;
     }
 
     public void MarkFailed(string? failureReason)

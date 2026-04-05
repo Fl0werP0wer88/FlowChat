@@ -11,7 +11,7 @@ public sealed class UserProfileStateChangedIntegrationEvent : IntegrationEvent
     public string? AvatarUrl { get; init; }
     public string? Bio { get; init; }
     public bool IsActive { get; init; }
-    public DateTime? LastSeenAtUtc { get; init; }
+    public DateTimeOffset? LastSeenAtUtc { get; init; }
     public bool IsEmailVisible { get; init; }
     public bool IsPhoneVisible { get; init; }
 }

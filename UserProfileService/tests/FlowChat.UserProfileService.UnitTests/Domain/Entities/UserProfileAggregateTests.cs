@@ -358,7 +358,7 @@ public sealed class UserProfileAggregateTests
             " https://cdn.example/avatar.png ",
             " about me ",
             isActive: false,
-            lastSeenAtUtc: new DateTime(2026, 3, 10, 8, 30, 0, DateTimeKind.Utc),
+            lastSeenAtUtc: new DateTimeOffset(2026, 3, 10, 8, 30, 0, TimeSpan.Zero),
             isEmailVisible: false,
             isPhoneVisible: true,
             id: id);
@@ -374,7 +374,7 @@ public sealed class UserProfileAggregateTests
         createdEvent.AvatarUrl.Should().Be("https://cdn.example/avatar.png");
         createdEvent.Bio.Should().Be("about me");
         createdEvent.IsActive.Should().BeFalse();
-        createdEvent.LastSeenAtUtc.Should().Be(new DateTime(2026, 3, 10, 8, 30, 0, DateTimeKind.Utc));
+        createdEvent.LastSeenAtUtc.Should().Be(new DateTimeOffset(2026, 3, 10, 8, 30, 0, TimeSpan.Zero));
         createdEvent.IsEmailVisible.Should().BeFalse();
         createdEvent.IsPhoneVisible.Should().BeTrue();
 

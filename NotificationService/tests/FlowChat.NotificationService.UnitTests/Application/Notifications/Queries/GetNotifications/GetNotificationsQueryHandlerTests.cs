@@ -25,7 +25,7 @@ public sealed class GetNotificationsQueryHandlerTests
         var expected = new List<NotificationDto>
         {
             new(Guid.NewGuid(), userId, "a@b.com", "Alice", NotificationType.EmailVerification,
-                NotificationStatus.Sent, "msg-1", null, "key-1", DateTime.UtcNow, DateTime.UtcNow)
+                NotificationStatus.Sent, "msg-1", null, "key-1", DateTimeOffset.UtcNow, DateTimeOffset.UtcNow)
         };
 
         _repositoryMock
@@ -46,7 +46,7 @@ public sealed class GetNotificationsQueryHandlerTests
         var expected = new List<NotificationDto>
         {
             new(Guid.NewGuid(), Guid.NewGuid(), "x@y.com", "Bob", NotificationType.Welcome,
-                NotificationStatus.Pending, null, null, null, null, DateTime.UtcNow)
+                NotificationStatus.Pending, null, null, null, null, DateTimeOffset.UtcNow)
         };
 
         _repositoryMock

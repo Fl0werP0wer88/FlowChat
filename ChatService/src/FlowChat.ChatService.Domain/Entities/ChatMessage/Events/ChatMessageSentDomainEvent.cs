@@ -10,7 +10,7 @@ public sealed class ChatMessageSentDomainEvent(
     Guid senderUserId,
     string senderDisplayName,
     string text,
-    DateTime sentAtUtc,
+    DateTimeOffset sentAtUtc,
     IReadOnlyCollection<Guid> recipientUserIds,
     DateTimeOffset? occurredOnUtc = null) : BaseChatMessageDomainEvent(aggregateId, occurredOnUtc)
 {
@@ -19,7 +19,7 @@ public sealed class ChatMessageSentDomainEvent(
     public Guid SenderUserId { get; } = senderUserId;
     public string SenderDisplayName { get; } = senderDisplayName;
     public string Text { get; } = text;
-    public DateTime SentAtUtc { get; } = sentAtUtc;
+    public DateTimeOffset SentAtUtc { get; } = sentAtUtc;
     public IReadOnlyCollection<Guid> RecipientUserIds { get; } = recipientUserIds;
 }
 

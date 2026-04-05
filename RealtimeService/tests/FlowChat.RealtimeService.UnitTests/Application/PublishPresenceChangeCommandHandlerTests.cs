@@ -38,7 +38,7 @@ public sealed class PublishPresenceChangeCommandHandlerTests
             new PublishPresenceChangeCommand(
                 _fixture.Create<Guid>(),
                 " Online ",
-                new DateTime(2026, 3, 17, 12, 30, 0, DateTimeKind.Utc),
+                new DateTimeOffset(2026, 3, 17, 12, 30, 0, TimeSpan.Zero),
                 [recipientUserId]),
             CancellationToken.None);
 
@@ -52,7 +52,7 @@ public sealed class PublishPresenceChangeCommandHandlerTests
     public async Task Handle_WhenStatusIsInvalid_ReturnsBadRequestFailure()
     {
         var result = await _handler.Handle(
-            new PublishPresenceChangeCommand(_fixture.Create<Guid>(), "busy", DateTime.UtcNow, [_fixture.Create<Guid>()]),
+            new PublishPresenceChangeCommand(_fixture.Create<Guid>(), "busy", DateTimeOffset.UtcNow, [_fixture.Create<Guid>()]),
             CancellationToken.None);
 
         result.IsFailure.Should().BeTrue();

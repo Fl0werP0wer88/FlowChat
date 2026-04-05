@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FlowChat.SocialGraphService.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260405122032_InitialCreate")]
+    [Migration("20260405165653_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -144,7 +144,7 @@ namespace FlowChat.SocialGraphService.Persistence.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
 
-                    b.Property<DateTime?>("LastSeenAtUtc")
+                    b.Property<DateTimeOffset?>("LastSeenAtUtc")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("MainEmail")

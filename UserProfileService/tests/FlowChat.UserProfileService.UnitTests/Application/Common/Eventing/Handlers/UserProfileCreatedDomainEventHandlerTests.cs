@@ -35,7 +35,7 @@ public sealed class UserProfileCreatedDomainEventHandlerTests
         _issuerMock
             .Setup(x => x.IssueAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((Guid userProfileId, Guid emailId, string _, CancellationToken _) =>
-                EmailVerificationRequest.Create(userProfileId, emailId, Guid.NewGuid().ToString("N"), DateTime.UtcNow.AddHours(24)));
+                EmailVerificationRequest.Create(userProfileId, emailId, Guid.NewGuid().ToString("N"), DateTimeOffset.UtcNow.AddHours(24)));
     }
 
     [Fact]
@@ -54,7 +54,7 @@ public sealed class UserProfileCreatedDomainEventHandlerTests
             "https://cdn.example/avatar.png",
             "about me",
             true,
-            new DateTime(2026, 3, 10, 9, 0, 0, DateTimeKind.Utc),
+            new DateTimeOffset(2026, 3, 10, 9, 0, 0, TimeSpan.Zero),
             true,
             false);
 
@@ -76,7 +76,7 @@ public sealed class UserProfileCreatedDomainEventHandlerTests
         capturedEvent.AvatarUrl.Should().Be("https://cdn.example/avatar.png");
         capturedEvent.Bio.Should().Be("about me");
         capturedEvent.IsActive.Should().BeTrue();
-        capturedEvent.LastSeenAtUtc.Should().Be(new DateTime(2026, 3, 10, 9, 0, 0, DateTimeKind.Utc));
+        capturedEvent.LastSeenAtUtc.Should().Be(new DateTimeOffset(2026, 3, 10, 9, 0, 0, TimeSpan.Zero));
         capturedEvent.IsEmailVisible.Should().BeTrue();
         capturedEvent.IsPhoneVisible.Should().BeFalse();
 

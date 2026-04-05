@@ -27,7 +27,7 @@ namespace FlowChat.UserProfileService.Persistence.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
 
-                    b.Property<DateTime?>("ConsumedAtUtc")
+                    b.Property<DateTimeOffset?>("ConsumedAtUtc")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTimeOffset>("CreatedAtUtc")
@@ -40,10 +40,10 @@ namespace FlowChat.UserProfileService.Persistence.Migrations
                     b.Property<Guid>("EmailId")
                         .HasColumnType("uuid");
 
-                    b.Property<DateTime>("ExpiresAtUtc")
+                    b.Property<DateTimeOffset>("ExpiresAtUtc")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<DateTime?>("InvalidatedAtUtc")
+                    b.Property<DateTimeOffset?>("InvalidatedAtUtc")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTimeOffset>("LastModifiedAtUtc")
@@ -237,7 +237,7 @@ namespace FlowChat.UserProfileService.Persistence.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
 
-                    b.Property<DateTime?>("LastSeenAtUtc")
+                    b.Property<DateTimeOffset?>("LastSeenAtUtc")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("NormalizedFriendlyUserId")

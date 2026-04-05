@@ -34,24 +34,24 @@ public sealed class EmailVerificationRequestWriteRepositoryTests
                 profile.Id,
                 emailId,
                 "active-nonce",
-                DateTime.UtcNow.AddHours(2));
+                DateTimeOffset.UtcNow.AddHours(2));
             var expiredRequest = EmailVerificationRequest.Create(
                 profile.Id,
                 emailId,
                 "expired-nonce",
-                DateTime.UtcNow.AddHours(-2));
+                DateTimeOffset.UtcNow.AddHours(-2));
             var invalidatedRequest = EmailVerificationRequest.Create(
                 profile.Id,
                 emailId,
                 "invalidated-nonce",
-                DateTime.UtcNow.AddHours(2));
-            invalidatedRequest.Invalidate(DateTime.UtcNow);
+                DateTimeOffset.UtcNow.AddHours(2));
+            invalidatedRequest.Invalidate(DateTimeOffset.UtcNow);
             var consumedRequest = EmailVerificationRequest.Create(
                 profile.Id,
                 emailId,
                 "consumed-nonce",
-                DateTime.UtcNow.AddHours(2));
-            consumedRequest.Consume(DateTime.UtcNow);
+                DateTimeOffset.UtcNow.AddHours(2));
+            consumedRequest.Consume(DateTimeOffset.UtcNow);
 
             seedContext.EmailVerificationRequests.AddRange(activeRequest, expiredRequest, invalidatedRequest, consumedRequest);
             await seedContext.SaveChangesAsync();
@@ -85,7 +85,7 @@ public sealed class EmailVerificationRequestWriteRepositoryTests
                 profile.Id,
                 profile.Emails.Single().Id,
                 "nonce-123",
-                DateTime.UtcNow.AddHours(1));
+                DateTimeOffset.UtcNow.AddHours(1));
 
             seedContext.EmailVerificationRequests.Add(request);
             await seedContext.SaveChangesAsync();

@@ -41,7 +41,7 @@ public sealed class PublishMessageCommandHandlerTests
                 _fixture.Create<Guid>(),
                 " John Doe ",
                 " Hello there ",
-                new DateTime(2026, 3, 17, 12, 0, 0, DateTimeKind.Utc),
+                new DateTimeOffset(2026, 3, 17, 12, 0, 0, TimeSpan.Zero),
                 [recipientUserId, recipientUserId, Guid.Empty]),
             CancellationToken.None);
 
@@ -62,7 +62,7 @@ public sealed class PublishMessageCommandHandlerTests
                 _fixture.Create<Guid>(),
                 "John Doe",
                 "Hello",
-                DateTime.UtcNow,
+                DateTimeOffset.UtcNow,
                 [Guid.Empty]),
             CancellationToken.None);
 

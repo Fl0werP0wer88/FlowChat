@@ -12,5 +12,5 @@ public sealed record NotificationDto(
     string? ProviderMessageId,
     string? FailureReason,
     string? SourceMessageKey,
-    DateTime? SentAtUtc,
-    DateTime CreatedDate);
+    DateTimeOffset? SentAtUtc,
+    DateTimeOffset CreatedDate);

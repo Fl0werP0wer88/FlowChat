@@ -27,7 +27,7 @@ public sealed class SendEmailVerificationCommandHandlerTests
         _issuerMock
             .Setup(x => x.IssueAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((Guid userProfileId, Guid emailId, string emailAddress, CancellationToken _) =>
-                EmailVerificationRequest.Create(userProfileId, emailId, Guid.NewGuid().ToString("N"), DateTime.UtcNow.AddHours(24)));
+                EmailVerificationRequest.Create(userProfileId, emailId, Guid.NewGuid().ToString("N"), DateTimeOffset.UtcNow.AddHours(24)));
 
         _unitOfWorkMock
             .Setup(x => x.ExecuteInTransactionAsync(
@@ -84,7 +84,7 @@ public sealed class SendEmailVerificationCommandHandlerTests
             .Setup(x => x.IssueAsync(profileId, emailId, "john@example.com", It.IsAny<CancellationToken>()))
             .ReturnsAsync((Guid upId, Guid eId, string _, CancellationToken _) =>
             {
-                issuedRequest = EmailVerificationRequest.Create(upId, eId, Guid.NewGuid().ToString("N"), DateTime.UtcNow.AddHours(24));
+                issuedRequest = EmailVerificationRequest.Create(upId, eId, Guid.NewGuid().ToString("N"), DateTimeOffset.UtcNow.AddHours(24));
                 return issuedRequest;
             });
 

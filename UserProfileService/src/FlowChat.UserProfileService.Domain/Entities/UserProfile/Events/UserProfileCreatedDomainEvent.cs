@@ -14,7 +14,7 @@ public sealed class UserProfileCreatedDomainEvent(
     string? avatarUrl,
     string? bio,
     bool isActive,
-    DateTime? lastSeenAtUtc,
+    DateTimeOffset? lastSeenAtUtc,
     bool isEmailVisible,
     bool isPhoneVisible,
     DateTimeOffset? occurredOnUtc = null) : BaseUserProfileDomainEvent(aggregateId, occurredOnUtc)
@@ -28,7 +28,7 @@ public sealed class UserProfileCreatedDomainEvent(
     public string? AvatarUrl { get; } = avatarUrl;
     public string? Bio { get; } = bio;
     public bool IsActive { get; } = isActive;
-    public DateTime? LastSeenAtUtc { get; } = lastSeenAtUtc;
+    public DateTimeOffset? LastSeenAtUtc { get; } = lastSeenAtUtc;
     public bool IsEmailVisible { get; } = isEmailVisible;
     public bool IsPhoneVisible { get; } = isPhoneVisible;
 }
