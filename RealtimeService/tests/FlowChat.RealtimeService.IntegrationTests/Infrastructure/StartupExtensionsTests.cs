@@ -21,7 +21,7 @@ public sealed class StartupExtensionsTests
         builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?>
         {
             ["JwtSettings:Key"] = "FLOWCHAT_DEVELOPMENT_JWT_KEY_CHANGE_ME_123456789",
-            ["JwtSettings:Issuer"] = "FlowChat.AuthService",
+            ["JwtSettings:Issuer"] = "https://localhost:7236/",
             ["JwtSettings:Audience"] = "FlowChat.Client",
             ["FlowChat:InternalApi:ApiKey"] = "internal-key",
             ["RealtimeApi:BaseUrl"] = "http://localhost:5215",

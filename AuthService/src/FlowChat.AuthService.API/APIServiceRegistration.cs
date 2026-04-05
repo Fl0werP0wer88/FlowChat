@@ -82,6 +82,7 @@ public static class APIServiceRegistration
             })
             .AddServer(options =>
             {
+                options.SetIssuer(new Uri(jwtIssuer, UriKind.Absolute));
                 options.SetTokenEndpointUris("/api/users/login", "/api/users/refresh-token");
                 options.AllowPasswordFlow();
                 options.AllowRefreshTokenFlow();
