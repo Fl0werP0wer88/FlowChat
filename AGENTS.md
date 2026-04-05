@@ -74,6 +74,9 @@ The project uses tactical DDD. All domain logic lives in the `Domain` layer. The
 - **Formatting**: enforced by `dprint` — run `dprint fmt` before committing
 - **Nullability**: nullable reference types enabled everywhere
 - **Results**: use `FlowChatResult<T>` (from `FlowChat.Shared`) instead of throwing exceptions in handlers
+- **CQRS commands/queries**: use only primitive/simple scalar types at the application boundary (`string`, numeric types, `bool`, `Guid`, `DateTime`, enums, and collections of those when needed); do not pass domain entities or value objects in commands/queries
+- **Domain modeling**: in the `Domain` layer, prefer existing value objects wherever reasonable instead of raw primitives; first look in `Common`, then in the local service
+- **Value object suggestions**: if you see a field that is a good fit for a value object but none exists yet in `Common` or the local service, explicitly suggest creating one
 - **Entities**: use `static Create(...)` factory methods, never public constructors
 - **Domain events**: raise via `AddDomainEvent(...)` inside the entity
 - **Restore from DB**: use `static Restore(...)` — does NOT raise domain events
