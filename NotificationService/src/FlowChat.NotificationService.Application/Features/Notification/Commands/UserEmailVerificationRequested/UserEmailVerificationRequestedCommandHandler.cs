@@ -38,6 +38,8 @@ public sealed class UserEmailVerificationRequestedCommandHandler
             : request.DisplayName.Trim();
         var emailAddress = EmailAddress.Create(request.Email);
 
+        // Idempotency guard: Kafka may redeliver the same message. If a notification was already
+        // sent for this source message key, succeed without resending to avoid duplicate emails.
         var alreadyExists = await _notificationReadRepository.ExistsBySourceMessageKeyAsync(
             request.SourceMessageKey ?? string.Empty,
             cancellationToken);

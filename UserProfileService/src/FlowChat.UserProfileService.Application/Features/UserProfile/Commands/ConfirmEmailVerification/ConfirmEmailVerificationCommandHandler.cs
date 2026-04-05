@@ -11,6 +11,8 @@ namespace FlowChat.UserProfileService.Application.Features.UserProfile.Commands.
 public sealed class ConfirmEmailVerificationCommandHandler
     : CommandHandlerBase<ConfirmEmailVerificationCommand, Unit>
 {
+    // Single generic message for all token failure cases — prevents callers from probing
+    // whether a token exists, has been consumed, or belongs to a different user.
     private const string InvalidTokenMessage = "Email verification link is invalid or has expired.";
 
     private readonly IUserProfileWriteRepository _userProfileWriteRepository;
@@ -42,6 +44,8 @@ public sealed class ConfirmEmailVerificationCommandHandler
         var verificationRequest = await _emailVerificationRequestWriteRepository
             .GetByNonceAsync(payload.Nonce, cancellationToken);
 
+        // Validate IDs from the payload against the stored request before checking IsActive —
+        // a tampered token that maps to a real nonce but wrong IDs must be rejected early.
         if (verificationRequest is null
             || verificationRequest.UserProfileId.Value != payload.UserProfileId
             || verificationRequest.EmailId.Value != payload.EmailId)

@@ -22,6 +22,7 @@ public sealed class EmailVerificationRequest : AggregateRootBase<EmailVerificati
         ArgumentNullException.ThrowIfNull(emailId);
         ArgumentException.ThrowIfNullOrWhiteSpace(nonce);
 
+        // Enforce UTC at construction to prevent subtle expiry bugs when comparing against DateTimeOffset.UtcNow.
         if (expiresAtUtc.Offset != TimeSpan.Zero)
         {
             throw new InvalidOperationException("Expiration time must be in UTC.");
@@ -56,6 +57,8 @@ public sealed class EmailVerificationRequest : AggregateRootBase<EmailVerificati
         return ExpiresAtUtc <= utcNow;
     }
 
+    // A request is only usable when none of the three terminal states have been reached:
+    // consumed (successfully used), invalidated (explicitly cancelled), or expired (time-based).
     public bool IsActive(DateTimeOffset utcNow)
     {
         EnsureUtc(utcNow);
@@ -66,6 +69,8 @@ public sealed class EmailVerificationRequest : AggregateRootBase<EmailVerificati
     {
         EnsureUtc(utcNow);
 
+        // Idempotent — also blocks invalidating an already-consumed request to prevent
+        // overwriting ConsumedAtUtc with a later timestamp.
         if (InvalidatedAtUtc is not null || ConsumedAtUtc is not null)
         {
             return;
@@ -78,6 +83,7 @@ public sealed class EmailVerificationRequest : AggregateRootBase<EmailVerificati
     {
         EnsureUtc(utcNow);
 
+        // Idempotent — email confirmation links may be followed more than once.
         if (ConsumedAtUtc is not null)
         {
             return;

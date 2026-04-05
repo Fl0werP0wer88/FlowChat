@@ -89,6 +89,7 @@ public sealed class Account : AggregateRootBase<Account>
 
     public void ConfirmEmail()
     {
+        // Idempotent — email links may be clicked more than once or the event replayed.
         if (IsEmailConfirmed)
         {
             return;
@@ -107,6 +108,7 @@ public sealed class Account : AggregateRootBase<Account>
 
     public void ResetFailedLogins()
     {
+        // Skip the state change event when already at zero — avoids a no-op snapshot on every successful login.
         if (AccessFailedCount == 0)
         {
             return;
@@ -118,6 +120,8 @@ public sealed class Account : AggregateRootBase<Account>
 
     public void RotateSecurityStamp(string securityStamp)
     {
+        // A new security stamp invalidates all previously issued tokens that embed the old stamp.
+        // Must be called on password change, email change, or explicit sign-out-everywhere.
         SecurityStamp = NormalizeRequired(securityStamp, nameof(securityStamp));
         MarkAggregateStateChanged(AggregateTypeNames.Account, CreateSnapshot);
     }

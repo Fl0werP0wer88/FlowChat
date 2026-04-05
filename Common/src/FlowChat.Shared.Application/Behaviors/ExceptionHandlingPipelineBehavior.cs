@@ -33,6 +33,7 @@ public sealed class ExceptionHandlingPipelineBehavior<TRequest, TResponse>
             var domainError = DomainError.Validation(exception.Message, exception.Errors.ToList());
             return TResponse.Failure(domainError);
         }
+        // Separate catch for FluentValidation — domain layer and FluentValidation have distinct exception types.
         catch (ValidationException exception)
         {
             var errors = exception.Errors
@@ -72,6 +73,7 @@ public sealed class ExceptionHandlingPipelineBehavior<TRequest, TResponse>
             Activity.Current?.AddException(exception);
             Activity.Current?.SetTag("error.type", "unexpected");
 
+            // Generic message intentionally hides internal details from external callers.
             var domainError = DomainError.UnExpected("An unexpected error occurred.");
             return TResponse.Failure(domainError);
         }

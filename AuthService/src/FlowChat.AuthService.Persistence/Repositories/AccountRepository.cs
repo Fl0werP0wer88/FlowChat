@@ -9,6 +9,8 @@ namespace FlowChat.AuthService.Persistence.Repositories;
 
 public sealed class AccountRepository : IAccountRepository
 {
+    // EF shadow properties — lowercase-normalised versions stored alongside the entity for
+    // case-insensitive unique indexes without exposing normalization in the domain model.
     private const string NormalizedEmailPropertyName = "NormalizedEmail";
     private const string NormalizedFriendlyUserIdPropertyName = "NormalizedFriendlyUserId";
     private readonly AppDbContext _dbContext;
@@ -82,6 +84,8 @@ public sealed class AccountRepository : IAccountRepository
         }
 
         var normalizedLogin = login.Trim();
+        // Try email first — if the input is a valid email address look it up by email;
+        // fall back to friendlyUserId so users can log in with either identifier.
         if (EmailAddress.TryCreate(normalizedLogin, out var emailAddress))
         {
             var accountByEmail = await GetByEmailAsync(emailAddress, cancellationToken);
@@ -99,6 +103,9 @@ public sealed class AccountRepository : IAccountRepository
         cancellationToken.ThrowIfCancellationRequested();
         ArgumentNullException.ThrowIfNull(account);
 
+        // If a different instance of the same entity is already tracked by EF, update its values
+        // in place rather than attaching the new instance — attaching would throw an InvalidOperationException
+        // ("another instance with the same key value is already being tracked").
         var localEntity = _dbContext.Accounts.Local.FirstOrDefault(x => x.Id == account.Id);
         if (localEntity is not null && !ReferenceEquals(localEntity, account))
         {

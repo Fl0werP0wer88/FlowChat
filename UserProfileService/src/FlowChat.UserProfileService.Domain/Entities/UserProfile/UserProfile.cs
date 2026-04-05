@@ -78,6 +78,8 @@ public class UserProfile : AggregateRootBase<UserProfile>
             isEmailVisible,
             isPhoneVisible);
 
+        // Suppress intermediate snapshots while building initial state — a single snapshot
+        // is emitted below after the invariant check confirms the aggregate is fully valid.
         var initialEmail = userProfile.AddEmailInternal(emailAddress, shouldMarkAggregateStateChanged: false);
 
         if (phoneNumber is not null)
@@ -85,6 +87,8 @@ public class UserProfile : AggregateRootBase<UserProfile>
             userProfile.AddPhoneInternal(phoneNumber, shouldMarkAggregateStateChanged: false);
         }
 
+        // Validate after all contacts are added, not per-add, because AddEmailInternal auto-assigns
+        // IsMain/IsAuth to the first email and these flags must be consistent as a group.
         EnsureInitialContactInvariant(userProfile._emails, userProfile._phones);
 
         var currentMainPhone = userProfile.Phones.FirstOrDefault(x => x.IsMain)?.Number;
@@ -178,6 +182,7 @@ public class UserProfile : AggregateRootBase<UserProfile>
             throw new InvalidOperationException($"Email '{normalizedAddress.Value}' already exists.");
         }
 
+        // First email added becomes both the main (display) and auth (login) email automatically.
         var shouldBeMainEmail = !_emails.Any(x => x.IsMain);
         var shouldBeAuthEmail = !_emails.Any(x => x.IsAuth);
         var email = Email.Create(Id, normalizedAddress, isMain: shouldBeMainEmail, isAuth: shouldBeAuthEmail, id: id);

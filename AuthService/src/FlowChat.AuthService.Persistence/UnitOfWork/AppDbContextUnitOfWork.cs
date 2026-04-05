@@ -32,6 +32,9 @@ public sealed class AppDbContextUnitOfWork : IUnitOfWork
         return await strategy.ExecuteAsync(async () =>
         {
             await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+            // Enlist Silverback in the same DB transaction so outbox messages and business data
+            // are committed atomically. ownTransaction: false means EF owns commit/rollback,
+            // not Silverback — prevents double-commit on success or swallowed rollbacks on failure.
             _silverbackContext.EnlistDbTransaction(transaction.GetDbTransaction(), ownTransaction: false);
 
             try
@@ -48,6 +51,8 @@ public sealed class AppDbContextUnitOfWork : IUnitOfWork
             }
             finally
             {
+                // Always clean up the Silverback storage transaction reference even on exception,
+                // so the context is not left in a broken state for the next operation.
                 _silverbackContext.ClearStorageTransaction();
             }
         });

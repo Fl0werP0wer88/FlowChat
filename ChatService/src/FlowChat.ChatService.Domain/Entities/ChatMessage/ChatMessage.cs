@@ -78,6 +78,8 @@ public sealed class ChatMessage : AggregateRootBase<ChatMessage>
     {
         ArgumentNullException.ThrowIfNull(recipientUserIds);
 
+        // Guid.Empty is filtered out because callers may pass uninitialized or placeholder IDs.
+        // Deduplication prevents the same user receiving the same message notification multiple times.
         var normalizedRecipientUserIds = recipientUserIds
             .Where(userId => userId != Guid.Empty)
             .Distinct()

@@ -20,6 +20,9 @@ public sealed class UserProfileCreatedDomainEventHandler(
         UserProfileCreatedDomainEvent notification,
         CancellationToken cancellationToken)
     {
+        // Issuing the verification request is a side effect of profile creation — done here
+        // rather than in the command handler so the domain event is the single source of truth
+        // for triggering the verification flow (including replays).
         return _emailVerificationRequestIssuer.IssueAsync(
             notification.UserProfileId.Value,
             notification.MainEmailId.Value,

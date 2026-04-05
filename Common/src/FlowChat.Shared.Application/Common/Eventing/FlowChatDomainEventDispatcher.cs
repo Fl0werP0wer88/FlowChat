@@ -16,6 +16,9 @@ public sealed class FlowChatDomainEventDispatcher(IMediator mediator) : IDomainE
             var currentEvent = eventQueue.Dequeue();
             await _mediator.Publish(currentEvent, cancellationToken);
 
+            // Domain event handlers may themselves raise new domain events on aggregates
+            // (e.g. UserProfileCreated → EmailVerificationRequest created → events added).
+            // Enqueue those so they are dispatched in the same unit of work.
             if (currentEvent is IAggregateRoot aggregateRoot)
             {
                 var additionalEvents = aggregateRoot.PopDomainEvents();

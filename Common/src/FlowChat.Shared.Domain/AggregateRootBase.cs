@@ -29,6 +29,8 @@ public abstract class AggregateRootBase<TDomainEntity> : EntityBase<TDomainEntit
         ArgumentException.ThrowIfNullOrWhiteSpace(aggregateType);
         ArgumentNullException.ThrowIfNull(snapshotFactory);
 
+        // Replace any existing snapshot event for this aggregate so only the latest state
+        // is published per transaction — multiple mutations in one operation emit one snapshot.
         var existingEvent = _domainEvents.FirstOrDefault(
             domainEvent => domainEvent is IAggregateStateChangedDomainEvent && domainEvent.AggregateId == Id.Value);
 

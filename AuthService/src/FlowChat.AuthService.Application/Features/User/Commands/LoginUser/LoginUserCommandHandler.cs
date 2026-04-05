@@ -36,6 +36,8 @@ public sealed class LoginUserCommandHandler : ICommandHandler<LoginUserCommand, 
         return _unitOfWork.ExecuteInTransactionAsync(async token =>
         {
             var account = await _accountRepository.GetByLoginAsync(request.Login, token);
+            // Treat unconfirmed accounts as non-existent to prevent confirming account existence
+            // before email verification is complete.
             if (account is null || !account.IsEmailConfirmed)
             {
                 return FlowChatResult<LoginUserCommandResponse>.Failure(
@@ -62,7 +64,7 @@ public sealed class LoginUserCommandHandler : ICommandHandler<LoginUserCommand, 
                 Id = account.Id.Value,
                 FriendlyUserId = account.FriendlyUserId,
                 Email = account.Email.Value,
-                Roles = []
+                Roles = [] // Role-based authorization not yet implemented.
             };
 
             return FlowChatResult<LoginUserCommandResponse>.Success(

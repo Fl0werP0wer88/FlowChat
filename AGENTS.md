@@ -210,6 +210,33 @@ dotnet test RealtimeService/tests/FlowChat.RealtimeService.IntegrationTests
 dotnet test RealtimeService/tests/FlowChat.RealtimeService.UnitTests
 ```
 
+## Code Comments
+
+Add comments only where they provide information that cannot be derived by reading the code — the **why**, not the **what**.
+
+### Add a comment when:
+- A business rule or domain invariant is enforced and the reason is not obvious from the code alone (e.g. why a method is idempotent, why a specific constant value was chosen)
+- A deliberate design decision was made that a future reader might question or "fix" incorrectly (e.g. why `ownTransaction: false`, why a generic error message is used for all failure paths)
+- An edge case is handled that would not be apparent without domain or infrastructure context (e.g. Kafka redelivery guard, EF duplicate-tracking workaround)
+- Security-sensitive reasoning must be preserved (e.g. timing attack resistance, information leakage prevention)
+
+### Do NOT add a comment when:
+- The code reads like plain English and the intent is self-evident
+- The comment merely restates what the code does (e.g. `// increment counter` above `counter++`)
+- The information is already captured in the class/method name, XML docs, or a test name
+- The code is a simple CRUD operation, DTO, mapping, or DI registration
+
+### Format rules:
+- One sentence preferred; two sentences maximum
+- No period at the end of a single-sentence inline comment
+- Place the comment on the line immediately above the relevant code, not inline at the end of the line (except for single-value annotations like `Roles = [] // reason`)
+- Use `//` only — no block comments (`/* */`) in application code
+
+### When modifying existing code:
+- Read comments already present in the file before adding new ones
+- Update a comment if the behaviour it describes has changed — stale comments are worse than no comments
+- Do not duplicate a comment that already exists nearby
+
 ## What to Avoid
 
 - Do not use `AutoMapper` — mapping is done manually or via dedicated profile classes
