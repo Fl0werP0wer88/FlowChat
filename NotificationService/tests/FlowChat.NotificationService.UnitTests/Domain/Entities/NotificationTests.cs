@@ -1,5 +1,6 @@
 using FlowChat.NotificationService.Domain.Entities.Notification;
 using FlowChat.NotificationService.Domain.Enums;
+using FlowChat.Shared.Domain.ValueObjects;
 using FluentAssertions;
 
 namespace FlowChat.NotificationService.UnitTests.Domain.Entities;
@@ -12,10 +13,10 @@ public sealed class NotificationTests
     public void CreateEmailVerification_WithValidArguments_ReturnsNotificationWithPendingStatus()
     {
         var userId = Guid.NewGuid();
-        var notification = Notification.CreateEmailVerification(userId, "user@example.com", "John Doe", "key-1");
+        var notification = Notification.CreateEmailVerification(userId, EmailAddress.Create("user@example.com"), "John Doe", "key-1");
 
         notification.UserId.Should().Be(userId);
-        notification.Email.Should().Be("user@example.com");
+        notification.Email.Value.Should().Be("user@example.com");
         notification.DisplayName.Should().Be("John Doe");
         notification.Type.Should().Be(NotificationType.EmailVerification);
         notification.Status.Should().Be(NotificationStatus.Pending);
@@ -28,7 +29,7 @@ public sealed class NotificationTests
     [Fact]
     public void CreateEmailVerification_WithNullSourceMessageKey_SetsSourceMessageKeyToNull()
     {
-        var notification = Notification.CreateEmailVerification(Guid.NewGuid(), "user@example.com", "John Doe", null);
+        var notification = Notification.CreateEmailVerification(Guid.NewGuid(), EmailAddress.Create("user@example.com"), "John Doe", null);
 
         notification.SourceMessageKey.Should().BeNull();
     }
@@ -36,7 +37,7 @@ public sealed class NotificationTests
     [Fact]
     public void CreateEmailVerification_WithWhitespaceSourceMessageKey_SetsSourceMessageKeyToNull()
     {
-        var notification = Notification.CreateEmailVerification(Guid.NewGuid(), "user@example.com", "John Doe", "   ");
+        var notification = Notification.CreateEmailVerification(Guid.NewGuid(), EmailAddress.Create("user@example.com"), "John Doe", "   ");
 
         notification.SourceMessageKey.Should().BeNull();
     }
@@ -44,16 +45,16 @@ public sealed class NotificationTests
     [Fact]
     public void CreateEmailVerification_TrimsEmailAndDisplayName()
     {
-        var notification = Notification.CreateEmailVerification(Guid.NewGuid(), "  user@example.com  ", "  John Doe  ", "key-1");
+        var notification = Notification.CreateEmailVerification(Guid.NewGuid(), EmailAddress.Create("  user@example.com  "), "  John Doe  ", "key-1");
 
-        notification.Email.Should().Be("user@example.com");
+        notification.Email.Value.Should().Be("user@example.com");
         notification.DisplayName.Should().Be("John Doe");
     }
 
     [Fact]
     public void CreateEmailVerification_WithEmptyUserId_ThrowsInvalidOperationException()
     {
-        var act = () => Notification.CreateEmailVerification(Guid.Empty, "user@example.com", "John Doe", null);
+        var act = () => Notification.CreateEmailVerification(Guid.Empty, EmailAddress.Create("user@example.com"), "John Doe", null);
 
         act.Should().Throw<InvalidOperationException>().WithMessage("UserId is required.");
     }
@@ -61,11 +62,11 @@ public sealed class NotificationTests
     [Theory]
     [InlineData("")]
     [InlineData("   ")]
-    public void CreateEmailVerification_WithBlankEmail_ThrowsInvalidOperationException(string email)
+    public void CreateEmailVerification_WithBlankEmail_ThrowsArgumentException(string email)
     {
-        var act = () => Notification.CreateEmailVerification(Guid.NewGuid(), email, "John Doe", null);
+        var act = () => EmailAddress.Create(email);
 
-        act.Should().Throw<InvalidOperationException>().WithMessage("Email is required.");
+        act.Should().Throw<ArgumentException>();
     }
 
     [Theory]
@@ -73,7 +74,7 @@ public sealed class NotificationTests
     [InlineData("   ")]
     public void CreateEmailVerification_WithBlankDisplayName_ThrowsInvalidOperationException(string displayName)
     {
-        var act = () => Notification.CreateEmailVerification(Guid.NewGuid(), "user@example.com", displayName, null);
+        var act = () => Notification.CreateEmailVerification(Guid.NewGuid(), EmailAddress.Create("user@example.com"), displayName, null);
 
         act.Should().Throw<InvalidOperationException>().WithMessage("DisplayName is required.");
     }
@@ -84,7 +85,7 @@ public sealed class NotificationTests
     public void CreateWelcome_WithValidArguments_ReturnsNotificationWithWelcomeType()
     {
         var userId = Guid.NewGuid();
-        var notification = Notification.CreateWelcome(userId, "user@example.com", "Jane Doe", "welcome-key");
+        var notification = Notification.CreateWelcome(userId, EmailAddress.Create("user@example.com"), "Jane Doe", "welcome-key");
 
         notification.UserId.Should().Be(userId);
         notification.Type.Should().Be(NotificationType.Welcome);
@@ -96,7 +97,7 @@ public sealed class NotificationTests
     [Fact]
     public void MarkSent_WithProviderMessageId_SetsStatusToSentAndStoresId()
     {
-        var notification = Notification.CreateEmailVerification(Guid.NewGuid(), "user@example.com", "John", null);
+        var notification = Notification.CreateEmailVerification(Guid.NewGuid(), EmailAddress.Create("user@example.com"), "John", null);
 
         notification.MarkSent("msg-123");
 
@@ -113,7 +114,7 @@ public sealed class NotificationTests
     [InlineData("   ")]
     public void MarkSent_WithNullOrWhitespaceProviderMessageId_SetsProviderMessageIdToNull(string? providerId)
     {
-        var notification = Notification.CreateEmailVerification(Guid.NewGuid(), "user@example.com", "John", null);
+        var notification = Notification.CreateEmailVerification(Guid.NewGuid(), EmailAddress.Create("user@example.com"), "John", null);
 
         notification.MarkSent(providerId);
 
@@ -124,7 +125,7 @@ public sealed class NotificationTests
     [Fact]
     public void MarkSent_TrimsProviderMessageId()
     {
-        var notification = Notification.CreateEmailVerification(Guid.NewGuid(), "user@example.com", "John", null);
+        var notification = Notification.CreateEmailVerification(Guid.NewGuid(), EmailAddress.Create("user@example.com"), "John", null);
 
         notification.MarkSent("  msg-abc  ");
 
@@ -136,7 +137,7 @@ public sealed class NotificationTests
     [Fact]
     public void MarkFailed_WithReason_SetsStatusToFailedAndStoresReason()
     {
-        var notification = Notification.CreateEmailVerification(Guid.NewGuid(), "user@example.com", "John", null);
+        var notification = Notification.CreateEmailVerification(Guid.NewGuid(), EmailAddress.Create("user@example.com"), "John", null);
 
         notification.MarkFailed("smtp timeout");
 
@@ -152,7 +153,7 @@ public sealed class NotificationTests
     [InlineData("   ")]
     public void MarkFailed_WithNullOrWhitespaceReason_UsesDefaultMessage(string? reason)
     {
-        var notification = Notification.CreateEmailVerification(Guid.NewGuid(), "user@example.com", "John", null);
+        var notification = Notification.CreateEmailVerification(Guid.NewGuid(), EmailAddress.Create("user@example.com"), "John", null);
 
         notification.MarkFailed(reason);
 
@@ -163,7 +164,7 @@ public sealed class NotificationTests
     [Fact]
     public void MarkFailed_TrimsFailureReason()
     {
-        var notification = Notification.CreateEmailVerification(Guid.NewGuid(), "user@example.com", "John", null);
+        var notification = Notification.CreateEmailVerification(Guid.NewGuid(), EmailAddress.Create("user@example.com"), "John", null);
 
         notification.MarkFailed("  smtp error  ");
 
@@ -173,7 +174,7 @@ public sealed class NotificationTests
     [Fact]
     public void MarkFailed_AfterMarkSent_ClearsSentAtUtcAndProviderMessageId()
     {
-        var notification = Notification.CreateEmailVerification(Guid.NewGuid(), "user@example.com", "John", null);
+        var notification = Notification.CreateEmailVerification(Guid.NewGuid(), EmailAddress.Create("user@example.com"), "John", null);
         notification.MarkSent("msg-123");
 
         notification.MarkFailed("retry failed");

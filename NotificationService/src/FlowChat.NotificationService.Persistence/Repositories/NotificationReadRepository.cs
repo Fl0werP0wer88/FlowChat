@@ -14,7 +14,7 @@ public sealed class NotificationReadRepository(AppDbContext dbContext)
     private static readonly Expression<Func<Notification, NotificationDto>> NotificationDtoProjection = x => new(
         x.Id.Value,
         x.UserId,
-        x.Email,
+        x.Email.Value,
         x.DisplayName,
         x.Type,
         x.Status,

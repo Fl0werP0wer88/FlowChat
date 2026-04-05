@@ -25,29 +25,11 @@ public class Phone : EntityBase<Phone>
 
     public static Phone Create(
         Id<UserProfile> userProfileId,
-        string number,
-        bool isMain = false,
-        Id<Phone>? id = null)
-    {
-        return new Phone(id, userProfileId, PhoneNumber.Create(number), isMain);
-    }
-
-    public static Phone Create(
-        Id<UserProfile> userProfileId,
         PhoneNumber number,
         bool isMain = false,
         Id<Phone>? id = null)
     {
         return new Phone(id, userProfileId, number, isMain);
-    }
-
-    public static Phone Rehydrate(
-        Id<UserProfile> userProfileId,
-        string number,
-        bool isMain = false,
-        Id<Phone>? id = null)
-    {
-        return new Phone(id, userProfileId, PhoneNumber.Create(number), isMain);
     }
 
     public static Phone Rehydrate(

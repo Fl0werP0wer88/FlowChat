@@ -2,6 +2,7 @@ using AutoFixture;
 using FlowChat.NotificationService.Domain.Entities.Notification;
 using FlowChat.NotificationService.Domain.Enums;
 using FlowChat.NotificationService.Persistence;
+using FlowChat.Shared.Domain.ValueObjects;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 
@@ -29,7 +30,7 @@ public sealed class NotificationConfigurationTests : IDisposable
         var userId = _fixture.Create<Guid>();
         var notification = Notification.CreateEmailVerification(
             userId,
-            "config-test@example.com",
+            EmailAddress.Create("config-test@example.com"),
             "Config Test User",
             "config-source-key");
         notification.MarkSent("provider-msg-xyz");
@@ -43,7 +44,7 @@ public sealed class NotificationConfigurationTests : IDisposable
 
         reloaded.Should().NotBeNull();
         reloaded!.UserId.Should().Be(userId);
-        reloaded.Email.Should().Be("config-test@example.com");
+        reloaded.Email.Value.Should().Be("config-test@example.com");
         reloaded.DisplayName.Should().Be("Config Test User");
         reloaded.Type.Should().Be(NotificationType.EmailVerification);
         reloaded.Status.Should().Be(NotificationStatus.Sent);
@@ -58,7 +59,7 @@ public sealed class NotificationConfigurationTests : IDisposable
     {
         var notification = Notification.CreateEmailVerification(
             _fixture.Create<Guid>(),
-            "fail@example.com",
+            EmailAddress.Create("fail@example.com"),
             "Fail User",
             null);
         notification.MarkFailed("connection refused");
@@ -81,7 +82,7 @@ public sealed class NotificationConfigurationTests : IDisposable
     public async Task NotificationConfiguration_MapsIdUsingTypedId()
     {
         var notification = Notification.CreateEmailVerification(
-            _fixture.Create<Guid>(), "id-test@example.com", "ID Test", null);
+            _fixture.Create<Guid>(), EmailAddress.Create("id-test@example.com"), "ID Test", null);
 
         _dbContext.Notifications.Add(notification);
         await _dbContext.SaveChangesAsync();
@@ -107,7 +108,7 @@ public sealed class NotificationConfigurationTests : IDisposable
     public async Task NotificationConfiguration_CanPersistWelcomeNotification()
     {
         var notification = Notification.CreateWelcome(
-            _fixture.Create<Guid>(), "welcome@example.com", "Welcome User", "welcome-key");
+            _fixture.Create<Guid>(), EmailAddress.Create("welcome@example.com"), "Welcome User", "welcome-key");
 
         _dbContext.Notifications.Add(notification);
         await _dbContext.SaveChangesAsync();

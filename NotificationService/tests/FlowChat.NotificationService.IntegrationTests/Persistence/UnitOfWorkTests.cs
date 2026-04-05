@@ -1,6 +1,7 @@
 using AutoFixture;
 using FlowChat.NotificationService.Domain.Entities.Notification;
 using FlowChat.NotificationService.Persistence;
+using FlowChat.Shared.Domain.ValueObjects;
 using FluentAssertions;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
@@ -34,7 +35,7 @@ public sealed class UnitOfWorkTests : IDisposable
     }
 
     private static Notification CreateNotification() =>
-        Notification.CreateEmailVerification(Guid.NewGuid(), "test@example.com", "Test User", null);
+        Notification.CreateEmailVerification(Guid.NewGuid(), EmailAddress.Create("test@example.com"), "Test User", null);
 
     // --- SaveChangesAsync ---
 

@@ -3,6 +3,7 @@ using FlowChat.NotificationService.Domain.Entities.Notification;
 using FlowChat.NotificationService.Domain.Enums;
 using FlowChat.NotificationService.Persistence;
 using FlowChat.NotificationService.Persistence.Repositories;
+using FlowChat.Shared.Domain.ValueObjects;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 
@@ -30,7 +31,7 @@ public sealed class NotificationWriteRepositoryTests : IDisposable
     {
         return Notification.CreateEmailVerification(
             userId ?? Guid.NewGuid(),
-            "test@example.com",
+            EmailAddress.Create("test@example.com"),
             "Test User",
             sourceMessageKey);
     }
@@ -47,7 +48,7 @@ public sealed class NotificationWriteRepositoryTests : IDisposable
 
         var persisted = await _dbContext.Notifications.FindAsync(notification.Id);
         persisted.Should().NotBeNull();
-        persisted!.Email.Should().Be("test@example.com");
+        persisted!.Email.Value.Should().Be("test@example.com");
     }
 
     [Fact]

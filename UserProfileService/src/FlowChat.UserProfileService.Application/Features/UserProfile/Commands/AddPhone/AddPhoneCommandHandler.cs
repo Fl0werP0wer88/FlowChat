@@ -41,7 +41,7 @@ public sealed class AddPhoneCommandHandler
             return FlowChatResult<Guid>.Failure(DomainError.Conflict($"Phone '{normalizedPhoneNumber!.Value}' already exists."));
         }
 
-        var phone = _userProfile.AddPhone(normalizedPhoneNumber!.Value);
+        var phone = _userProfile.AddPhone(normalizedPhoneNumber!);
 
         return FlowChatResult<Guid>.Success(phone.Id.Value);
     }

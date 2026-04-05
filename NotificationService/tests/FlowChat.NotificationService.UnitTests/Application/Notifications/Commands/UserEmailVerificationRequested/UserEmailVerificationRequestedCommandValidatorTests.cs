@@ -1,4 +1,5 @@
 using FlowChat.NotificationService.Application.Features.Notification.Commands.UserEmailVerificationRequested;
+using FlowChat.Shared.Domain.ValueObjects;
 using FluentAssertions;
 
 namespace FlowChat.NotificationService.UnitTests.Application.Notifications.Commands.UserEmailVerificationRequested;
@@ -46,6 +47,17 @@ public sealed class UserEmailVerificationRequestedCommandValidatorTests
 
         result.IsValid.Should().BeFalse();
         result.Errors.Should().ContainSingle(e => e.ErrorMessage == "Email is required.");
+    }
+
+    [Fact]
+    public async Task Validate_WhenEmailIsInvalid_ReturnsValidationError()
+    {
+        var command = ValidCommand() with { Email = "not-an-email" };
+
+        var result = await _validator.ValidateAsync(command);
+
+        result.IsValid.Should().BeFalse();
+        result.Errors.Should().ContainSingle(e => e.ErrorMessage == EmailAddress.InvalidEmailAddressMessage);
     }
 
     [Theory]

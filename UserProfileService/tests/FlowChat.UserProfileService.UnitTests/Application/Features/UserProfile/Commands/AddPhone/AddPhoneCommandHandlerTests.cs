@@ -86,7 +86,7 @@ public sealed class AddPhoneCommandHandlerTests
     public async Task Handle_WithFormattedDuplicateNumber_ReturnsConflict()
     {
         var profile = CreateProfile();
-        profile.AddPhone("+48123123123");
+        profile.AddPhone(PhoneNumber.Create("+48123123123"));
         profile.ClearEvents();
         _writeRepositoryMock
             .Setup(x => x.GetByIdAsync(profile.Id.Value, It.IsAny<CancellationToken>()))

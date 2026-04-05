@@ -3,6 +3,7 @@ using FlowChat.NotificationService.Application.Contracts.Infrastructure;
 using FlowChat.NotificationService.Application.Contracts.Persistence;
 using FlowChat.NotificationService.Domain.Enums;
 using FlowChat.Shared.Domain;
+using FlowChat.Shared.Domain.ValueObjects;
 using MediatR;
 using NotificationEntity = FlowChat.NotificationService.Domain.Entities.Notification.Notification;
 
@@ -35,6 +36,7 @@ public sealed class UserEmailVerificationRequestedCommandHandler
         var displayName = string.IsNullOrWhiteSpace(request.DisplayName)
             ? request.UserName.Trim()
             : request.DisplayName.Trim();
+        var emailAddress = EmailAddress.Create(request.Email);
 
         var alreadyExists = await _notificationReadRepository.ExistsBySourceMessageKeyAsync(
             request.SourceMessageKey ?? string.Empty,
@@ -47,13 +49,13 @@ public sealed class UserEmailVerificationRequestedCommandHandler
 
         _notification = NotificationEntity.CreateEmailVerification(
             request.UserId,
-            request.Email,
+            emailAddress,
             displayName,
             request.SourceMessageKey);
 
         var sendRequest = new NotificationSendRequest(
             request.UserId,
-            request.Email,
+            emailAddress.Value,
             "Confirm your email in FlowChat",
             $"Hello {displayName}, please confirm your email by clicking the link: {request.ConfirmationLink.Trim()}");
 

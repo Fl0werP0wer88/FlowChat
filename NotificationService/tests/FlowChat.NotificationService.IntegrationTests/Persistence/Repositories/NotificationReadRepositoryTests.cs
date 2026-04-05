@@ -3,6 +3,7 @@ using FlowChat.NotificationService.Domain.Entities.Notification;
 using FlowChat.NotificationService.Domain.Enums;
 using FlowChat.NotificationService.Persistence;
 using FlowChat.NotificationService.Persistence.Repositories;
+using FlowChat.Shared.Domain.ValueObjects;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 
@@ -33,7 +34,7 @@ public sealed class NotificationReadRepositoryTests : IDisposable
     {
         var notification = Notification.CreateEmailVerification(
             userId ?? _fixture.Create<Guid>(),
-            $"{_fixture.Create<string>()}@example.com",
+            EmailAddress.Create($"{_fixture.Create<string>()}@example.com"),
             _fixture.Create<string>(),
             sourceMessageKey);
 
@@ -163,7 +164,7 @@ public sealed class NotificationReadRepositoryTests : IDisposable
     public async Task GetRecentAsync_MapsAllExpectedFields()
     {
         var userId = _fixture.Create<Guid>();
-        var notification = Notification.CreateEmailVerification(userId, "test@example.com", "Test User", "map-test-key");
+        var notification = Notification.CreateEmailVerification(userId, EmailAddress.Create("test@example.com"), "Test User", "map-test-key");
         notification.MarkSent("provider-msg-123");
 
         _dbContext.Notifications.Add(notification);

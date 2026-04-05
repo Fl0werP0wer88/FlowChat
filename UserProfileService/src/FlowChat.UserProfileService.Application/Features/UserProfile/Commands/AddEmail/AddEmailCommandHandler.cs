@@ -44,7 +44,7 @@ public sealed class AddEmailCommandHandler
             return FlowChatResult<Guid>.Failure(DomainError.Conflict($"Email '{normalizedEmailAddress.Value}' is already taken."));
         }
 
-        var email = _userProfile.AddEmail(normalizedEmailAddress.Value);
+        var email = _userProfile.AddEmail(normalizedEmailAddress);
 
         return FlowChatResult<Guid>.Success(email.Id.Value);
     }

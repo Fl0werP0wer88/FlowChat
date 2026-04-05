@@ -46,7 +46,7 @@ public sealed class UserProfileAggregateTests
         var profile = CreateExistingProfile();
         var existingMainEmail = profile.Emails.Should().ContainSingle().Subject;
 
-        var email = profile.AddEmail("john.secondary@example.com");
+        var email = profile.AddEmail(EmailAddress.Create("john.secondary@example.com"));
 
         profile.Emails.Should().HaveCount(2);
         profile.Emails.Single(x => x.Address.Value == "john.secondary@example.com").Id.Should().Be(email.Id);
@@ -74,7 +74,7 @@ public sealed class UserProfileAggregateTests
     {
         var profile = CreateExistingProfile();
 
-        Assert.Throws<InvalidOperationException>(() => profile.AddEmail("JOHN@example.com"));
+        Assert.Throws<InvalidOperationException>(() => profile.AddEmail(EmailAddress.Create("JOHN@example.com")));
     }
 
     [Fact]
@@ -82,7 +82,7 @@ public sealed class UserProfileAggregateTests
     {
         var profile = CreateExistingProfile();
         var firstEmail = profile.Emails.Should().ContainSingle().Subject;
-        var secondEmail = profile.AddEmail("john.secondary@example.com");
+        var secondEmail = profile.AddEmail(EmailAddress.Create("john.secondary@example.com"));
         profile.ClearEvents();
 
         profile.SetMainEmail(secondEmail.Id);
@@ -128,7 +128,7 @@ public sealed class UserProfileAggregateTests
     {
         var profile = CreateExistingProfile();
         var firstEmail = profile.Emails.Should().ContainSingle().Subject;
-        var secondEmail = profile.AddEmail("john.secondary@example.com");
+        var secondEmail = profile.AddEmail(EmailAddress.Create("john.secondary@example.com"));
         profile.ClearEvents();
 
         profile.SetAuthEmail(secondEmail.Id);
@@ -213,7 +213,7 @@ public sealed class UserProfileAggregateTests
         var profile = CreateExistingProfile();
         var mainEmail = profile.Emails.Should().ContainSingle().Subject;
 
-        var phone = profile.AddPhone("+48123123123");
+        var phone = profile.AddPhone(PhoneNumber.Create("+48123123123"));
 
         profile.Phones.Should().ContainSingle();
         profile.Phones[0].Id.Should().Be(phone.Id);
@@ -231,27 +231,27 @@ public sealed class UserProfileAggregateTests
     public void UserProfile_AddPhone_WithDuplicateNumber_Throws()
     {
         var profile = CreateExistingProfile();
-        profile.AddPhone("+48123123123");
+        profile.AddPhone(PhoneNumber.Create("+48123123123"));
 
-        Assert.Throws<InvalidOperationException>(() => profile.AddPhone("+48123123123"));
+        Assert.Throws<InvalidOperationException>(() => profile.AddPhone(PhoneNumber.Create("+48123123123")));
     }
 
     [Fact]
     public void UserProfile_AddPhone_WithSameNumberInDifferentFormat_Throws()
     {
         var profile = CreateExistingProfile();
-        profile.AddPhone("+48 123 123 123");
+        profile.AddPhone(PhoneNumber.Create("+48 123 123 123"));
 
-        Assert.Throws<InvalidOperationException>(() => profile.AddPhone("+48123123123"));
+        Assert.Throws<InvalidOperationException>(() => profile.AddPhone(PhoneNumber.Create("+48123123123")));
     }
 
     [Fact]
     public void UserProfile_AddPhone_SecondPhone_IsNotMain()
     {
         var profile = CreateExistingProfile();
-        profile.AddPhone("+48123123123");
+        profile.AddPhone(PhoneNumber.Create("+48123123123"));
 
-        var secondPhone = profile.AddPhone("+48987654321");
+        var secondPhone = profile.AddPhone(PhoneNumber.Create("+48987654321"));
 
         secondPhone.IsMain.Should().BeFalse();
     }
@@ -260,8 +260,8 @@ public sealed class UserProfileAggregateTests
     public void UserProfile_SetMainPhone_SwitchesMainFlag()
     {
         var profile = CreateExistingProfile();
-        var firstPhone = profile.AddPhone("+48123123123");
-        var secondPhone = profile.AddPhone("+48987654321");
+        var firstPhone = profile.AddPhone(PhoneNumber.Create("+48123123123"));
+        var secondPhone = profile.AddPhone(PhoneNumber.Create("+48987654321"));
         profile.ClearEvents();
 
         profile.SetMainPhone(secondPhone.Id);
@@ -285,7 +285,7 @@ public sealed class UserProfileAggregateTests
     public void UserProfile_SetMainPhone_WhenPhoneDoesNotExist_Throws()
     {
         var profile = CreateExistingProfile();
-        profile.AddPhone("+48123123123");
+        profile.AddPhone(PhoneNumber.Create("+48123123123"));
 
         Assert.Throws<InvalidOperationException>(() => profile.SetMainPhone(Id<Phone>.New()));
     }
@@ -294,7 +294,7 @@ public sealed class UserProfileAggregateTests
     public void UserProfile_SetMainPhone_WhenPhoneIsAlreadyMain_DoesNotEmitDomainEvent()
     {
         var profile = CreateExistingProfile();
-        var phone = profile.AddPhone("+48123123123");
+        var phone = profile.AddPhone(PhoneNumber.Create("+48123123123"));
         profile.ClearEvents();
 
         profile.SetMainPhone(phone.Id);
@@ -307,7 +307,7 @@ public sealed class UserProfileAggregateTests
     {
         var userProfileId = Id<UserProfile>.New();
 
-        var exception = Assert.Throws<ArgumentException>(() => Phone.Create(userProfileId, "123123123"));
+        var exception = Assert.Throws<ArgumentException>(() => PhoneNumber.Create("123123123"));
 
         exception.Message.Should().StartWith(PhoneNumber.InvalidPhoneNumberMessage);
     }
@@ -317,7 +317,7 @@ public sealed class UserProfileAggregateTests
     {
         var userProfileId = Id<UserProfile>.New();
 
-        var phone = Phone.Create(userProfileId, "+48 123 123 123");
+        var phone = Phone.Create(userProfileId, PhoneNumber.Create("+48 123 123 123"));
 
         phone.Number.Value.Should().Be("+48123123123");
     }

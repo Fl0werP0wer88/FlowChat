@@ -39,7 +39,7 @@ public sealed class SetAuthEmailCommandHandlerTests
     {
         var profile = CreateUserProfile();
         var initialAuthEmail = profile.Emails.Should().ContainSingle().Subject;
-        var secondaryEmail = profile.AddEmail("john.secondary@example.com");
+        var secondaryEmail = profile.AddEmail(EmailAddress.Create("john.secondary@example.com"));
         profile.ClearEvents();
 
         _writeRepositoryMock

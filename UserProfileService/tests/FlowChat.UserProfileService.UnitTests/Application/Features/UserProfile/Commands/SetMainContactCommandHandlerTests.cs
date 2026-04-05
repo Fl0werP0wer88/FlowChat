@@ -81,7 +81,7 @@ public sealed class SetMainContactCommandHandlerTests
     {
         var profile = CreateUserProfile();
         var firstEmail = profile.Emails.Should().ContainSingle().Subject;
-        var secondEmail = profile.AddEmail("john.secondary@example.com");
+        var secondEmail = profile.AddEmail(EmailAddress.Create("john.secondary@example.com"));
         profile.ClearEvents();
 
         _writeRepositoryMock
@@ -151,8 +151,8 @@ public sealed class SetMainContactCommandHandlerTests
     public async Task SetMainPhone_WhenPhoneExists_SetsMainPhoneAndDispatchesDomainEvents()
     {
         var profile = CreateUserProfile();
-        var firstPhone = profile.AddPhone("+48123123123");
-        var secondPhone = profile.AddPhone("+48987654321");
+        var firstPhone = profile.AddPhone(PhoneNumber.Create("+48123123123"));
+        var secondPhone = profile.AddPhone(PhoneNumber.Create("+48987654321"));
         profile.ClearEvents();
 
         _writeRepositoryMock
@@ -187,7 +187,7 @@ public sealed class SetMainContactCommandHandlerTests
     public async Task SetMainPhone_WhenPhoneDoesNotExist_ReturnsNotFound()
     {
         var profile = CreateUserProfile();
-        profile.AddPhone("+48123123123");
+        profile.AddPhone(PhoneNumber.Create("+48123123123"));
         profile.ClearEvents();
 
         _writeRepositoryMock

@@ -1,5 +1,6 @@
 using FlowChat.Shared.Domain;
 using FlowChat.NotificationService.Domain.Entities.Notification;
+using FlowChat.Shared.Domain.ValueObjects;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -16,6 +17,7 @@ public sealed class NotificationConfiguration : IEntityTypeConfiguration<Notific
             .HasConversion(x => x.Value, x => Id<Notification>.FromGuid(x));
 
         builder.Property(x => x.Email)
+            .HasConversion(x => x.Value, x => EmailAddress.Create(x))
             .HasMaxLength(320)
             .IsRequired();
 

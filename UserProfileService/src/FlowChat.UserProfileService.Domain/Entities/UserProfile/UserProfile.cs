@@ -107,11 +107,11 @@ public class UserProfile : AggregateRootBase<UserProfile>
         return userProfile;
     }
 
-    public Email AddEmail(string address, Id<Email>? id = null)
+    public Email AddEmail(EmailAddress address, Id<Email>? id = null)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(address);
+        ArgumentNullException.ThrowIfNull(address);
 
-        var email = AddEmailInternal(EmailAddress.Create(address), id, shouldMarkAggregateStateChanged: false);
+        var email = AddEmailInternal(address, id, shouldMarkAggregateStateChanged: false);
 
         AddDomainEvent(new EmailAddedDomainEvent(Id, email.Id, email.Address));
         MarkAggregateStateChanged(UserProfileConstants.UserProfileAggregateTypeName, CreateSnapshot);
@@ -153,11 +153,10 @@ public class UserProfile : AggregateRootBase<UserProfile>
         MarkAggregateStateChanged(UserProfileConstants.UserProfileAggregateTypeName, CreateSnapshot);
     }
 
-    public Phone AddPhone(string number, Id<Phone>? id = null)
+    public Phone AddPhone(PhoneNumber number, Id<Phone>? id = null)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(number);
-
-        return AddPhoneInternal(PhoneNumber.Create(number), id);
+        ArgumentNullException.ThrowIfNull(number);
+        return AddPhoneInternal(number, id);
     }
 
     public void SetMainPhone(Id<Phone> phoneId)

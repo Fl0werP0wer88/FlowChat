@@ -26,7 +26,7 @@ public sealed class UserProfileWriteRepositoryTests
                 EmailAddress.Create("john@example.com"),
                 PhoneNumber.Create("+48123123123"),
                 id: profileId);
-            profile.AddEmail("john.secondary@example.com");
+            profile.AddEmail(EmailAddress.Create("john.secondary@example.com"));
 
             seedContext.UserProfiles.Add(profile);
             await seedContext.SaveChangesAsync();

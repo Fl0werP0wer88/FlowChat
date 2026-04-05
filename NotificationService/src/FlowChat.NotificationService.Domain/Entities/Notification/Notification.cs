@@ -1,4 +1,5 @@
 using FlowChat.Shared.Domain;
+using FlowChat.Shared.Domain.ValueObjects;
 using FlowChat.NotificationService.Domain.Enums;
 
 namespace FlowChat.NotificationService.Domain.Entities.Notification;
@@ -12,7 +13,7 @@ public sealed class Notification : AggregateRootBase<Notification>
     private Notification(
         Id<Notification>? id,
         Guid userId,
-        string email,
+        EmailAddress email,
         string displayName,
         NotificationType type,
         string? sourceMessageKey) : base(id)
@@ -26,7 +27,7 @@ public sealed class Notification : AggregateRootBase<Notification>
     }
 
     public Guid UserId { get; private set; }
-    public string Email { get; private set; } = string.Empty;
+    public EmailAddress Email { get; private set; } = null!;
     public string DisplayName { get; private set; } = string.Empty;
     public NotificationType Type { get; private set; }
     public NotificationStatus Status { get; private set; }
@@ -37,7 +38,7 @@ public sealed class Notification : AggregateRootBase<Notification>
 
     public static Notification CreateWelcome(
         Guid userId,
-        string email,
+        EmailAddress email,
         string displayName,
         string? sourceMessageKey)
     {
@@ -51,7 +52,7 @@ public sealed class Notification : AggregateRootBase<Notification>
 
     public static Notification CreateEmailVerification(
         Guid userId,
-        string email,
+        EmailAddress email,
         string displayName,
         string? sourceMessageKey)
     {
@@ -65,7 +66,7 @@ public sealed class Notification : AggregateRootBase<Notification>
 
     private static Notification Create(
         Guid userId,
-        string email,
+        EmailAddress email,
         string displayName,
         NotificationType type,
         string? sourceMessageKey)
@@ -75,10 +76,7 @@ public sealed class Notification : AggregateRootBase<Notification>
             throw new InvalidOperationException("UserId is required.");
         }
 
-        if (string.IsNullOrWhiteSpace(email))
-        {
-            throw new InvalidOperationException("Email is required.");
-        }
+        ArgumentNullException.ThrowIfNull(email);
 
         if (string.IsNullOrWhiteSpace(displayName))
         {
@@ -88,7 +86,7 @@ public sealed class Notification : AggregateRootBase<Notification>
         return new Notification(
             null,
             userId,
-            email.Trim(),
+            email,
             displayName.Trim(),
             type,
             string.IsNullOrWhiteSpace(sourceMessageKey) ? null : sourceMessageKey.Trim());
