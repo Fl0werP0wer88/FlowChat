@@ -1,4 +1,5 @@
 using FlowChat.Shared.Domain;
+using FlowChat.Shared.Domain.ValueObjects;
 using FlowChat.Shared.Persistance;
 using FlowChat.UserProfileService.Application.Contracts.Persistence;
 using FlowChat.UserProfileService.Domain.Entities.EmailVerificationRequest;
@@ -17,7 +18,7 @@ public sealed class EmailVerificationRequestWriteRepository(AppDbContext dbConte
         CancellationToken cancellationToken = default)
     {
         var typedEmailId = Id<Email>.FromGuid(emailId);
-        var nowUtc = DateTimeOffset.UtcNow;
+        var nowUtc = UtcDateTimeOffset.UtcNow;
         var query = _dbContext.EmailVerificationRequests
             .Where(x => x.EmailId == typedEmailId
                         && x.InvalidatedAtUtc == null

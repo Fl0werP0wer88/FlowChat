@@ -1,7 +1,6 @@
 using AutoFixture;
 using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
 using FlowChat.RealtimeService.Application.Features.Presence.Commands.PublishPresenceChange;
-using FlowChat.RealtimeService.Domain.Notifications;
 using FlowChat.Shared.Domain;
 using FluentAssertions;
 using Moq;

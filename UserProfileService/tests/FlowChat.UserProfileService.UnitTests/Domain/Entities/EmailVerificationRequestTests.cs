@@ -24,7 +24,7 @@ public sealed class EmailVerificationRequestTests
     }
 
     [Fact]
-    public void Create_WithNonUtcExpiration_ThrowsInvalidOperationException()
+    public void Create_WithNonUtcExpiration_ThrowsArgumentException()
     {
         var act = () => EmailVerificationRequest.Create(
             Id<UserProfile>.New(),
@@ -32,8 +32,8 @@ public sealed class EmailVerificationRequestTests
             "nonce-123",
             new DateTimeOffset(2026, 4, 2, 8, 0, 0, TimeSpan.FromHours(1)));
 
-        act.Should().Throw<InvalidOperationException>()
-            .WithMessage("Expiration time must be in UTC.");
+        act.Should().Throw<ArgumentException>()
+            .WithMessage($"{FlowChat.Shared.Domain.ValueObjects.UtcDateTimeOffset.InvalidUtcDateTimeOffsetMessage}*");
     }
 
     [Fact]
@@ -86,7 +86,7 @@ public sealed class EmailVerificationRequestTests
     }
 
     [Fact]
-    public void IsActive_WithNonUtcArgument_ThrowsInvalidOperationException()
+    public void IsActive_WithNonUtcArgument_ThrowsArgumentException()
     {
         var request = EmailVerificationRequest.Create(
             Id<UserProfile>.New(),
@@ -96,7 +96,7 @@ public sealed class EmailVerificationRequestTests
 
         var act = () => request.IsActive(new DateTimeOffset(2026, 4, 1, 8, 0, 0, TimeSpan.FromHours(1)));
 
-        act.Should().Throw<InvalidOperationException>()
-            .WithMessage("DateTimeOffset value must be in UTC.");
+        act.Should().Throw<ArgumentException>()
+            .WithMessage($"{FlowChat.Shared.Domain.ValueObjects.UtcDateTimeOffset.InvalidUtcDateTimeOffsetMessage}*");
     }
 }

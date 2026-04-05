@@ -5,6 +5,7 @@ using FlowChat.UserProfileService.Application.Contracts.Persistence;
 using FlowChat.UserProfileService.Application.Features.UserProfile.EmailVerification;
 using FlowChat.UserProfileService.Domain.Entities.EmailVerificationRequest;
 using FlowChat.UserProfileService.Domain.Entities.UserProfile;
+using FlowChat.Shared.Domain.ValueObjects;
 
 namespace FlowChat.UserProfileService.Infrastructure.Services;
 
@@ -28,7 +29,7 @@ public sealed class EmailVerificationRequestIssuer(
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(emailAddress);
 
-        var nowUtc = DateTimeOffset.UtcNow;
+        var nowUtc = UtcDateTimeOffset.UtcNow;
         var activeRequests = await _emailVerificationRequestWriteRepository
             .GetActiveByEmailIdAsync(emailId, cancellationToken);
 

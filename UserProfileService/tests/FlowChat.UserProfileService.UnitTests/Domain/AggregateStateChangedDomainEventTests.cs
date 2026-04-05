@@ -1,4 +1,5 @@
 using FlowChat.Shared.Domain;
+using FlowChat.Shared.Domain.ValueObjects;
 
 namespace FlowChat.UserProfileService.UnitTests;
 
@@ -62,7 +63,7 @@ public sealed class AggregateStateChangedDomainEventTests
         @event.EventType.Should().Be(
             DomainEventBase.GetEventType(typeof(AggregateStateChangedDomainEvent<TestAggregate, TestSnapshot>), TestAggregate.AggregateTypeName));
         @event.OccurredOnUtc.Offset.Should().Be(TimeSpan.Zero);
-        @event.OccurredOnUtc.Should().BeOnOrAfter(before).And.BeOnOrBefore(after);
+        @event.OccurredOnUtc.Value.Should().BeOnOrAfter(before).And.BeOnOrBefore(after);
         @event.AggregateState.Should().Be(new TestSnapshot("expected"));
     }
 
@@ -100,5 +101,5 @@ public sealed class AggregateStateChangedDomainEventTests
 
     [AggregateType(TestAggregate.AggregateTypeName)]
     private sealed class TestBusinessDomainEvent(Id<TestAggregate> aggregateId)
-        : DomainEventBase(aggregateId, DateTimeOffset.UtcNow);
+        : DomainEventBase(aggregateId, UtcDateTimeOffset.UtcNow);
 }

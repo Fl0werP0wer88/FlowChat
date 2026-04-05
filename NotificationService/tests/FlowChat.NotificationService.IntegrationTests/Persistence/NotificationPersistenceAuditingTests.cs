@@ -58,7 +58,7 @@ public sealed class NotificationPersistenceAuditingTests
 
         notification.CreatedBy.Should().Be("system");
         notification.LastModifiedBy.Should().Be("system");
-        notification.LastModifiedAtUtc.Should().BeOnOrAfter(createdAtUtc);
+        notification.LastModifiedAtUtc.Value.Should().BeOnOrAfter(createdAtUtc.Value);
 
         notification.MarkFailed("failure");
         await dbContext.SaveChangesAsync();
@@ -66,6 +66,6 @@ public sealed class NotificationPersistenceAuditingTests
         notification.CreatedBy.Should().Be("system");
         notification.CreatedAtUtc.Should().Be(createdAtUtc);
         notification.LastModifiedBy.Should().Be("system");
-        notification.LastModifiedAtUtc.Should().BeOnOrAfter(createdAtUtc);
+        notification.LastModifiedAtUtc.Value.Should().BeOnOrAfter(createdAtUtc.Value);
     }
 }

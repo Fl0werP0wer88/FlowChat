@@ -1,8 +1,10 @@
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
+using FlowChat.Shared.Domain.ValueObjects;
 using FlowChat.Shared.Persistance.Auditing;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace FlowChat.Shared.Persistance.IntegrationTests;
 
@@ -111,6 +113,10 @@ public sealed class WriteRepositoryBaseConcurrencyTests : IDisposable
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            var utcDateTimeOffsetConverter = new ValueConverter<UtcDateTimeOffset, DateTimeOffset>(
+                value => value.Value,
+                value => UtcDateTimeOffset.Create(value));
+
             modelBuilder.Entity<TestAggregate>(b =>
             {
                 b.HasKey(x => x.Id);
@@ -118,6 +124,8 @@ public sealed class WriteRepositoryBaseConcurrencyTests : IDisposable
                     .HasConversion(x => x.Value, x => Id<TestAggregate>.FromGuid(x));
                 b.Property(x => x.Name).IsRequired();
                 b.Property(x => x.Version).IsConcurrencyToken();
+                b.Property(x => x.CreatedAtUtc).HasConversion(utcDateTimeOffsetConverter);
+                b.Property(x => x.LastModifiedAtUtc).HasConversion(utcDateTimeOffsetConverter);
             });
         }
     }

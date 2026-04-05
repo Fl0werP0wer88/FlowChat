@@ -1,4 +1,5 @@
 using MediatR;
+using FlowChat.Shared.Domain.ValueObjects;
 
 namespace FlowChat.Shared.Domain;
 
@@ -12,7 +13,7 @@ public interface IDomainEvent : INotification
 
     Guid Id { get; }
 
-    DateTimeOffset OccurredOnUtc { get; }
+    UtcDateTimeOffset OccurredOnUtc { get; }
 
     Guid AggregateId { get; }
 

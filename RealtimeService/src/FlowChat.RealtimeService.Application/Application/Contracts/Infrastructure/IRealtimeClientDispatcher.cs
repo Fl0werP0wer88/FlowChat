@@ -1,5 +1,3 @@
-using FlowChat.RealtimeService.Domain.Notifications;
-
 namespace FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
 
 public interface IRealtimeClientDispatcher

@@ -1,3 +1,5 @@
+using FlowChat.Shared.Domain.ValueObjects;
+
 namespace FlowChat.Shared.Domain;
 
 public sealed class AggregateStateChangedDomainEvent<TRoot, TSnapshot> : DomainEventBase, IAggregateStateChangedDomainEvent
@@ -7,7 +9,7 @@ public sealed class AggregateStateChangedDomainEvent<TRoot, TSnapshot> : DomainE
         Id<TRoot> aggregateId,
         string aggregateType,
         TSnapshot aggregateState)
-        : base(aggregateId, aggregateType, DateTimeOffset.UtcNow)
+        : base(aggregateId, aggregateType, UtcDateTimeOffset.UtcNow)
     {
         AggregateState = aggregateState;
     }

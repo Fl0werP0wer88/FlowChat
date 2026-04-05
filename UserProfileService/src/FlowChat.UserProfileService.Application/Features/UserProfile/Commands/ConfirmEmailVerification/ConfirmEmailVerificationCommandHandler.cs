@@ -1,5 +1,6 @@
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
+using FlowChat.Shared.Domain.ValueObjects;
 using FlowChat.UserProfileService.Application.Contracts.Infrastructure;
 using FlowChat.UserProfileService.Application.Contracts.Persistence;
 using FlowChat.UserProfileService.Domain.Entities.EmailVerificationRequest;
@@ -53,7 +54,7 @@ public sealed class ConfirmEmailVerificationCommandHandler
             return FlowChatResult<Unit>.Failure(DomainError.Validation(InvalidTokenMessage));
         }
 
-        var nowUtc = DateTimeOffset.UtcNow;
+        var nowUtc = UtcDateTimeOffset.UtcNow;
         if (!verificationRequest.IsActive(nowUtc))
         {
             return FlowChatResult<Unit>.Failure(DomainError.Validation(InvalidTokenMessage));

@@ -1,5 +1,6 @@
 using AutoFixture;
 using FlowChat.Shared.Domain;
+using FlowChat.Shared.Domain.ValueObjects;
 using FlowChat.Shared.Persistance.Auditing;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
@@ -23,8 +24,8 @@ public sealed class EntityBaseSaveChangesInterceptorTests
 
         entity.CreatedBy.Should().Be("system");
         entity.LastModifiedBy.Should().Be("system");
-        entity.CreatedAtUtc.Should().NotBe(default);
-        entity.LastModifiedAtUtc.Should().BeOnOrAfter(entity.CreatedAtUtc);
+        entity.CreatedAtUtc.Should().NotBeNull();
+        entity.LastModifiedAtUtc.Value.Should().BeOnOrAfter(entity.CreatedAtUtc.Value);
     }
 
     [Fact]
@@ -44,7 +45,7 @@ public sealed class EntityBaseSaveChangesInterceptorTests
         entity.CreatedBy.Should().Be(createdBy);
         entity.CreatedAtUtc.Should().Be(createdAtUtc);
         entity.LastModifiedBy.Should().Be("system");
-        entity.LastModifiedAtUtc.Should().BeOnOrAfter(createdAtUtc);
+        entity.LastModifiedAtUtc.Value.Should().BeOnOrAfter(createdAtUtc.Value);
     }
 
     [Fact]
@@ -125,11 +126,16 @@ public sealed class EntityBaseSaveChangesInterceptorTests
             var idConverter = new ValueConverter<Id<TestEntity>, Guid>(
                 id => id.Value,
                 value => Id<TestEntity>.FromGuid(value));
+            var utcDateTimeOffsetConverter = new ValueConverter<UtcDateTimeOffset, DateTimeOffset>(
+                value => value.Value,
+                value => UtcDateTimeOffset.Create(value));
 
             modelBuilder.Entity<TestEntity>(entity =>
             {
                 entity.HasKey(x => x.Id);
                 entity.Property(x => x.Id).HasConversion(idConverter);
+                entity.Property(x => x.CreatedAtUtc).HasConversion(utcDateTimeOffsetConverter);
+                entity.Property(x => x.LastModifiedAtUtc).HasConversion(utcDateTimeOffsetConverter);
             });
         }
     }

@@ -9,7 +9,7 @@ public sealed class EmailConfirmedDomainEvent(
     Id<Email> emailId,
     EmailAddress email,
     bool isAuth,
-    DateTimeOffset? occurredOnUtc = null) : BaseUserProfileDomainEvent(aggregateId, occurredOnUtc)
+    UtcDateTimeOffset? occurredOnUtc = null) : BaseUserProfileDomainEvent(aggregateId, occurredOnUtc)
 {
     public Id<UserProfile> UserProfileId { get; } = aggregateId;
     public Id<Email> EmailId { get; } = emailId;

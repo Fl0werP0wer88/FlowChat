@@ -8,7 +8,7 @@ public sealed class MainPhoneChangedDomainEvent(
     Id<UserProfile> aggregateId,
     Id<Phone> phoneId,
     PhoneNumber number,
-    DateTimeOffset? occurredOnUtc = null) : BaseUserProfileDomainEvent(aggregateId, occurredOnUtc)
+    UtcDateTimeOffset? occurredOnUtc = null) : BaseUserProfileDomainEvent(aggregateId, occurredOnUtc)
 {
     public Id<UserProfile> UserProfileId { get; } = aggregateId;
     public Id<Phone> PhoneId { get; } = phoneId;

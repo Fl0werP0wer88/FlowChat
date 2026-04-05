@@ -16,6 +16,7 @@ public sealed class DomainEventToIntegrationEventProfile : Profile
             .ForMember(destination => destination.UserProfileId, options => options.MapFrom(source => source.UserProfileId.Value))
             .ForMember(destination => destination.UserName, options => options.MapFrom(source => source.FriendlyUserId))
             .ForMember(destination => destination.MainEmail, options => options.MapFrom(source => source.MainEmail.Value))
+            .ForMember(destination => destination.LastSeenAtUtc, options => options.MapFrom(source => source.LastSeenAtUtc == null ? (DateTimeOffset?)null : source.LastSeenAtUtc.Value))
             .ForMember(destination => destination.MainPhone, options => options.MapFrom(source => source.MainPhone == null ? null : source.MainPhone.Value));
 
         CreateMap<EmailConfirmedDomainEvent, UserEmailConfirmedIntegrationEvent>()
@@ -39,7 +40,7 @@ public sealed class DomainEventToIntegrationEventProfile : Profile
             .ForMember(destination => destination.AvatarUrl, options => options.MapFrom(source => source.AggregateState.AvatarUrl))
             .ForMember(destination => destination.Bio, options => options.MapFrom(source => source.AggregateState.Bio))
             .ForMember(destination => destination.IsActive, options => options.MapFrom(source => source.AggregateState.IsActive))
-            .ForMember(destination => destination.LastSeenAtUtc, options => options.MapFrom(source => source.AggregateState.LastSeenAtUtc))
+            .ForMember(destination => destination.LastSeenAtUtc, options => options.MapFrom(source => source.AggregateState.LastSeenAtUtc == null ? (DateTimeOffset?)null : source.AggregateState.LastSeenAtUtc.Value))
             .ForMember(destination => destination.IsEmailVisible, options => options.MapFrom(source => source.AggregateState.IsEmailVisible))
             .ForMember(destination => destination.IsPhoneVisible, options => options.MapFrom(source => source.AggregateState.IsPhoneVisible));
     }

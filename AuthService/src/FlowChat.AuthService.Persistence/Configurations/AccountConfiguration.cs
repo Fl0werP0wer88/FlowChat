@@ -1,5 +1,6 @@
 using FlowChat.AuthService.Domain.Entities.Account;
 using FlowChat.Shared.Domain;
+using FlowChat.Shared.Persistance;
 using FlowChat.Shared.Domain.ValueObjects;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -55,6 +56,12 @@ public sealed class AccountConfiguration : IEntityTypeConfiguration<Account>
 
         builder.Property(x => x.Version)
             .IsConcurrencyToken();
+
+        builder.Property(x => x.CreatedAtUtc)
+            .HasUtcDateTimeOffsetConversion();
+
+        builder.Property(x => x.LastModifiedAtUtc)
+            .HasUtcDateTimeOffsetConversion();
 
         builder.Ignore(x => x.DomainEvents);
 

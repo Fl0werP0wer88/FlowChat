@@ -3,6 +3,7 @@
   <ItemGroup>
     <ProjectReference Include="..\FlowChat.AuthService.Application\FlowChat.AuthService.Application.csproj" />
     <ProjectReference Include="..\..\..\Common\src\FlowChat.Core\FlowChat.Core.csproj" />
+    <ProjectReference Include="..\..\..\Common\src\FlowChat.Shared.Persistance\FlowChat.Shared.Persistance.csproj" />
   </ItemGroup>
 
   <ItemGroup>

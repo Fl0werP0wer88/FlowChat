@@ -14,10 +14,10 @@ public sealed class UserProfileCreatedDomainEvent(
     string? avatarUrl,
     string? bio,
     bool isActive,
-    DateTimeOffset? lastSeenAtUtc,
+    UtcDateTimeOffset? lastSeenAtUtc,
     bool isEmailVisible,
     bool isPhoneVisible,
-    DateTimeOffset? occurredOnUtc = null) : BaseUserProfileDomainEvent(aggregateId, occurredOnUtc)
+    UtcDateTimeOffset? occurredOnUtc = null) : BaseUserProfileDomainEvent(aggregateId, occurredOnUtc)
 {
     public Id<UserProfile> UserProfileId { get; } = aggregateId;
     public Id<Email> MainEmailId { get; } = mainEmailId;
@@ -28,7 +28,7 @@ public sealed class UserProfileCreatedDomainEvent(
     public string? AvatarUrl { get; } = avatarUrl;
     public string? Bio { get; } = bio;
     public bool IsActive { get; } = isActive;
-    public DateTimeOffset? LastSeenAtUtc { get; } = lastSeenAtUtc;
+    public UtcDateTimeOffset? LastSeenAtUtc { get; } = lastSeenAtUtc;
     public bool IsEmailVisible { get; } = isEmailVisible;
     public bool IsPhoneVisible { get; } = isPhoneVisible;
 }

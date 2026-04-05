@@ -1,4 +1,5 @@
 using FlowChat.Shared.Domain;
+using FlowChat.Shared.Persistance;
 using FlowChat.NotificationService.Domain.Entities.Notification;
 using FlowChat.Shared.Domain.ValueObjects;
 using Microsoft.EntityFrameworkCore;
@@ -47,9 +48,14 @@ public sealed class NotificationConfiguration : IEntityTypeConfiguration<Notific
         builder.Property(x => x.Version)
             .IsConcurrencyToken();
 
-        builder.Property(x => x.CreatedAtUtc);
+        builder.Property(x => x.CreatedAtUtc)
+            .HasUtcDateTimeOffsetConversion();
 
-        builder.Property(x => x.LastModifiedAtUtc);
+        builder.Property(x => x.LastModifiedAtUtc)
+            .HasUtcDateTimeOffsetConversion();
+
+        builder.Property(x => x.SentAtUtc)
+            .HasNullableUtcDateTimeOffsetConversion();
 
         builder.Ignore(x => x.DomainEvents);
 

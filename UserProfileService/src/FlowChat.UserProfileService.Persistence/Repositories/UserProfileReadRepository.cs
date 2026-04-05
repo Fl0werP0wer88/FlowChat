@@ -20,7 +20,7 @@ public sealed class UserProfileReadRepository(AppDbContext dbContext)
         x.AvatarUrl,
         x.Bio,
         x.IsActive,
-        x.LastSeenAtUtc,
+        x.LastSeenAtUtc == null ? null : x.LastSeenAtUtc.Value,
         x.Emails
             .Select(email => new EmailDto(
                 email.Id.Value,

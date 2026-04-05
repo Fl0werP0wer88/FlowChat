@@ -1,4 +1,5 @@
 using FlowChat.Shared.Domain;
+using FlowChat.Shared.Persistance;
 using FlowChat.UserProfileService.Domain.Entities.EmailVerificationRequest;
 using FlowChat.UserProfileService.Domain.Entities.UserProfile;
 using Microsoft.EntityFrameworkCore;
@@ -32,11 +33,20 @@ public sealed class EmailVerificationRequestConfiguration : IEntityTypeConfigura
             .IsRequired();
 
         builder.Property(x => x.ExpiresAtUtc)
+            .HasUtcDateTimeOffsetConversion()
             .IsRequired();
 
-        builder.Property(x => x.InvalidatedAtUtc);
+        builder.Property(x => x.InvalidatedAtUtc)
+            .HasNullableUtcDateTimeOffsetConversion();
 
-        builder.Property(x => x.ConsumedAtUtc);
+        builder.Property(x => x.ConsumedAtUtc)
+            .HasNullableUtcDateTimeOffsetConversion();
+
+        builder.Property(x => x.CreatedAtUtc)
+            .HasUtcDateTimeOffsetConversion();
+
+        builder.Property(x => x.LastModifiedAtUtc)
+            .HasUtcDateTimeOffsetConversion();
 
         builder.Ignore(x => x.DomainEvents);
 

@@ -1,5 +1,6 @@
 using FlowChat.ChatService.Domain.Entities.ChatMessage.Events;
 using FlowChat.Shared.Domain;
+using FlowChat.Shared.Domain.ValueObjects;
 
 namespace FlowChat.ChatService.Domain.Entities.ChatMessage;
 
@@ -9,7 +10,7 @@ public sealed class ChatMessage : AggregateRootBase<ChatMessage>
     public Guid SenderUserId { get; private set; }
     public string SenderDisplayName { get; private set; }
     public string Text { get; private set; }
-    public DateTimeOffset SentAtUtc { get; private set; }
+    public UtcDateTimeOffset SentAtUtc { get; private set; } = UtcDateTimeOffset.UtcNow;
     public Guid[] RecipientUserIds { get; private set; }
 
     private ChatMessage(
@@ -18,7 +19,7 @@ public sealed class ChatMessage : AggregateRootBase<ChatMessage>
         Guid senderUserId,
         string senderDisplayName,
         string text,
-        DateTimeOffset sentAtUtc,
+        UtcDateTimeOffset sentAtUtc,
         Guid[] recipientUserIds) : base(id)
     {
         if (conversationId == Guid.Empty)
@@ -38,7 +39,7 @@ public sealed class ChatMessage : AggregateRootBase<ChatMessage>
         SenderUserId = senderUserId;
         SenderDisplayName = senderDisplayName.Trim();
         Text = text.Trim();
-        SentAtUtc = sentAtUtc.ToUniversalTime();
+        SentAtUtc = sentAtUtc;
         RecipientUserIds = NormalizeRecipientUserIds(recipientUserIds);
     }
 
@@ -48,7 +49,7 @@ public sealed class ChatMessage : AggregateRootBase<ChatMessage>
         string senderDisplayName,
         string text,
         IEnumerable<Guid> recipientUserIds,
-        DateTimeOffset? sentAtUtc = null,
+        UtcDateTimeOffset? sentAtUtc = null,
         Id<ChatMessage>? id = null)
     {
         var normalizedRecipientUserIds = NormalizeRecipientUserIds(recipientUserIds);
@@ -58,7 +59,7 @@ public sealed class ChatMessage : AggregateRootBase<ChatMessage>
             senderUserId,
             senderDisplayName,
             text,
-            sentAtUtc ?? DateTimeOffset.UtcNow,
+            sentAtUtc ?? UtcDateTimeOffset.UtcNow,
             normalizedRecipientUserIds);
 
         chatMessage.AddDomainEvent(

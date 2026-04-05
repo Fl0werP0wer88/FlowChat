@@ -60,8 +60,8 @@ public sealed class EntityBaseSaveChangesInterceptorTests : IDisposable
         db.UserProfiles.Add(profile);
         await db.SaveChangesAsync();
 
-        profile.CreatedAtUtc.Should().BeOnOrAfter(before);
-        profile.LastModifiedAtUtc.Should().BeOnOrAfter(before);
+        profile.CreatedAtUtc.Value.Should().BeOnOrAfter(before);
+        profile.LastModifiedAtUtc.Value.Should().BeOnOrAfter(before);
     }
 
     [Fact]
@@ -95,7 +95,7 @@ public sealed class EntityBaseSaveChangesInterceptorTests : IDisposable
 
         // LastModified fields must be updated
         profile.LastModifiedBy.Should().Be("system");
-        profile.LastModifiedAtUtc.Should().BeOnOrAfter(createdAt);
+        profile.LastModifiedAtUtc.Value.Should().BeOnOrAfter(createdAt.Value);
     }
 
     [Fact]

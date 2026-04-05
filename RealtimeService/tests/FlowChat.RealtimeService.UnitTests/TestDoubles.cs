@@ -3,7 +3,6 @@ using System.Net.Http;
 using CSharpFunctionalExtensions;
 using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
 using FlowChat.Shared.Domain;
-using FlowChat.RealtimeService.Domain.Notifications;
 using FlowChat.RealtimeService.Consumers.Realtime.Contracts;
 using FlowChat.RealtimeService.Consumers.Services;
 using MediatR;

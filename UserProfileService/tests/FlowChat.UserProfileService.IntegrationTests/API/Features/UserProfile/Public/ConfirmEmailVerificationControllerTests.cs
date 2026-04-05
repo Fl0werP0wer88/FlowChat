@@ -3,6 +3,7 @@ using System.Net.Http.Json;
 using FlowChat.UserProfileService.Application.Contracts.Infrastructure;
 using FlowChat.UserProfileService.Application.Features.UserProfile.EmailVerification;
 using FlowChat.UserProfileService.IntegrationTests.API;
+using FlowChat.Shared.Domain.ValueObjects;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -102,6 +103,7 @@ public sealed class ConfirmEmailVerificationControllerTests(UserProfileApiFactor
         {
             var typedUserId = FlowChat.Shared.Domain.Id<FlowChat.UserProfileService.Domain.Entities.UserProfile.UserProfile>.FromGuid(userId);
             var typedEmailId = FlowChat.Shared.Domain.Id<FlowChat.UserProfileService.Domain.Entities.UserProfile.Email>.FromGuid(emailId);
+            var nowUtc = UtcDateTimeOffset.UtcNow;
             var query = db.EmailVerificationRequests
                 .Where(r => r.UserProfileId == typedUserId
                             && r.EmailId == typedEmailId
@@ -113,11 +115,11 @@ public sealed class ConfirmEmailVerificationControllerTests(UserProfileApiFactor
                 "Microsoft.EntityFrameworkCore.Sqlite",
                 StringComparison.Ordinal)
                 ? (await query.ToListAsync())
-                    .Where(r => r.ExpiresAtUtc > DateTimeOffset.UtcNow)
+                    .Where(r => r.ExpiresAtUtc > nowUtc)
                     .OrderByDescending(r => r.ExpiresAtUtc)
                     .First()
                 : await query
-                    .Where(r => r.ExpiresAtUtc > DateTimeOffset.UtcNow)
+                    .Where(r => r.ExpiresAtUtc > nowUtc)
                     .OrderByDescending(r => r.ExpiresAtUtc)
                     .FirstAsync();
             return verificationRequest.Nonce;

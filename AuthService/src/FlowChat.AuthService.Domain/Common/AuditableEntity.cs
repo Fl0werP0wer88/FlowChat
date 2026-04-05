@@ -1,10 +1,12 @@
+using FlowChat.Shared.Domain.ValueObjects;
+
 namespace FlowChat.AuthService.Domain.Common;
 
 public class AuditableEntity
 {
     public string CreatedBy { get; set; } = string.Empty;
-    public DateTimeOffset CreatedDate { get; set; }
+    public UtcDateTimeOffset CreatedDate { get; set; } = UtcDateTimeOffset.UtcNow;
     public string LastModifiedBy { get; set; } = string.Empty;
-    public DateTimeOffset LastModifiedDate { get; set; }
+    public UtcDateTimeOffset LastModifiedDate { get; set; } = UtcDateTimeOffset.UtcNow;
 }
 

@@ -105,7 +105,7 @@ public sealed class NotificationTests
         notification.ProviderMessageId.Should().Be("msg-123");
         notification.FailureReason.Should().BeNull();
         notification.SentAtUtc.Should().NotBeNull();
-        notification.SentAtUtc.Should().BeCloseTo(DateTimeOffset.UtcNow, TimeSpan.FromSeconds(5));
+        notification.SentAtUtc!.Value.Should().BeCloseTo(DateTimeOffset.UtcNow, TimeSpan.FromSeconds(5));
     }
 
     [Theory]

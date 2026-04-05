@@ -1,3 +1,5 @@
+using FlowChat.Shared.Domain.ValueObjects;
+
 namespace FlowChat.UserProfileService.Domain.Entities.UserProfile;
 
 public sealed record UserProfileSnapshot(
@@ -10,6 +12,6 @@ public sealed record UserProfileSnapshot(
     string? AvatarUrl,
     string? Bio,
     bool IsActive,
-    DateTimeOffset? LastSeenAtUtc,
+    UtcDateTimeOffset? LastSeenAtUtc,
     bool IsEmailVisible,
     bool IsPhoneVisible);

@@ -1,5 +1,6 @@
 using FlowChat.Shared.Application.Common.Eventing;
 using FlowChat.Shared.Domain;
+using FlowChat.Shared.Domain.ValueObjects;
 using FluentAssertions;
 using MediatR;
 using Moq;
@@ -92,7 +93,7 @@ public sealed class FlowChatDomainEventDispatcherTests
         public string AggregateType => "Test";
         public string EventType => "TestEvent";
         public Guid Id { get; } = Guid.NewGuid();
-        public DateTimeOffset OccurredOnUtc { get; } = DateTimeOffset.UtcNow;
+        public UtcDateTimeOffset OccurredOnUtc { get; } = UtcDateTimeOffset.UtcNow;
         public Guid AggregateId { get; } = Guid.NewGuid();
         public string? TraceInfo => null;
     }
@@ -106,7 +107,7 @@ public sealed class FlowChatDomainEventDispatcherTests
         public string AggregateType => "TestAggregate";
         public string EventType => "TestAggregateEvent";
         public Guid Id { get; } = Guid.NewGuid();
-        public DateTimeOffset OccurredOnUtc { get; } = DateTimeOffset.UtcNow;
+        public UtcDateTimeOffset OccurredOnUtc { get; } = UtcDateTimeOffset.UtcNow;
         public Guid AggregateId { get; } = Guid.NewGuid();
         public string? TraceInfo => null;
 

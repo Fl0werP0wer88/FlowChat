@@ -1,4 +1,5 @@
 using FlowChat.Shared.Domain;
+using FlowChat.Shared.Persistance;
 using FlowChat.UserProfileService.Domain.Entities.EmailVerificationRequest;
 using FlowChat.UserProfileService.Domain.Entities.UserProfile;
 using FlowChat.Shared.Domain.ValueObjects;
@@ -32,6 +33,12 @@ public class PhoneConfiguration : IEntityTypeConfiguration<Phone>
         builder.Property(x => x.IsMain)
             .HasDefaultValue(false)
             .IsRequired();
+
+        builder.Property(x => x.CreatedAtUtc)
+            .HasUtcDateTimeOffsetConversion();
+
+        builder.Property(x => x.LastModifiedAtUtc)
+            .HasUtcDateTimeOffsetConversion();
 
         builder.HasIndex(x => new { x.UserProfileId, x.Number })
             .IsUnique()

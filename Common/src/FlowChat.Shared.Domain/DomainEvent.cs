@@ -1,4 +1,5 @@
 using System.Reflection;
+using FlowChat.Shared.Domain.ValueObjects;
 
 namespace FlowChat.Shared.Domain;
 
@@ -10,7 +11,7 @@ public abstract class DomainEventBase : IDomainEvent
 
     public Guid AggregateId { get; set; }
 
-    public DateTimeOffset OccurredOnUtc { get; set; }
+    public UtcDateTimeOffset OccurredOnUtc { get; set; } = UtcDateTimeOffset.UtcNow;
 
     public string EventType { get; set; } = string.Empty;
 
@@ -22,7 +23,7 @@ public abstract class DomainEventBase : IDomainEvent
     {
     }
 
-    protected DomainEventBase(Guid aggregateId, DateTimeOffset occurredOnUtc)
+    protected DomainEventBase(Guid aggregateId, UtcDateTimeOffset occurredOnUtc)
     {
         AggregateId = aggregateId != Guid.Empty
             ? aggregateId
@@ -32,7 +33,7 @@ public abstract class DomainEventBase : IDomainEvent
         EventType = GetEventType(this);
     }
 
-    protected DomainEventBase(Guid aggregateId, string aggregateType, DateTimeOffset occurredOnUtc)
+    protected DomainEventBase(Guid aggregateId, string aggregateType, UtcDateTimeOffset occurredOnUtc)
     {
         AggregateId = aggregateId != Guid.Empty
             ? aggregateId

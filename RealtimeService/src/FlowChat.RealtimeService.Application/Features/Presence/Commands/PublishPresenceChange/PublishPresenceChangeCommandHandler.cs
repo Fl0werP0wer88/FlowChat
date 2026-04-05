@@ -2,7 +2,6 @@ using CSharpFunctionalExtensions;
 using FlowChat.Shared.Application;
 using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
 using FlowChat.Shared.Domain;
-using FlowChat.RealtimeService.Domain.Notifications;
 using MediatR;
 
 namespace FlowChat.RealtimeService.Application.Features.Presence.Commands.PublishPresenceChange;

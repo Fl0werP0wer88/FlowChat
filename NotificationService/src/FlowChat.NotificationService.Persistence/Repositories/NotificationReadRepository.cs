@@ -21,7 +21,7 @@ public sealed class NotificationReadRepository(AppDbContext dbContext)
         x.ProviderMessageId,
         x.FailureReason,
         x.SourceMessageKey,
-        x.SentAtUtc,
+        x.SentAtUtc == null ? null : x.SentAtUtc.Value,
         x.CreatedAtUtc.UtcDateTime);
 
     protected override Expression<Func<Notification, NotificationDto>> MapToDto => NotificationDtoProjection;

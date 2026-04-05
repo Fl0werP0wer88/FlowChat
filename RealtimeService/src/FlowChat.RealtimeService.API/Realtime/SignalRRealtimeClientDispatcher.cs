@@ -1,5 +1,4 @@
 using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
-using FlowChat.RealtimeService.Domain.Notifications;
 using Microsoft.AspNetCore.SignalR;
 
 namespace FlowChat.RealtimeService.Api.Realtime;

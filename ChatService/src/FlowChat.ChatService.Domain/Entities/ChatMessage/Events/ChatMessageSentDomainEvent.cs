@@ -1,6 +1,7 @@
 using FlowChat.ChatService.Domain.Entities.ChatMessage;
 using FlowChat.ChatService.Domain.Entities.ChatMessage.Events;
 using FlowChat.Shared.Domain;
+using FlowChat.Shared.Domain.ValueObjects;
 
 namespace FlowChat.ChatService.Domain.Entities.ChatMessage.Events;
 
@@ -10,16 +11,16 @@ public sealed class ChatMessageSentDomainEvent(
     Guid senderUserId,
     string senderDisplayName,
     string text,
-    DateTimeOffset sentAtUtc,
+    UtcDateTimeOffset sentAtUtc,
     IReadOnlyCollection<Guid> recipientUserIds,
-    DateTimeOffset? occurredOnUtc = null) : BaseChatMessageDomainEvent(aggregateId, occurredOnUtc)
+    UtcDateTimeOffset? occurredOnUtc = null) : BaseChatMessageDomainEvent(aggregateId, occurredOnUtc)
 {
     public Guid MessageId { get; } = aggregateId.Value;
     public Guid ConversationId { get; } = conversationId;
     public Guid SenderUserId { get; } = senderUserId;
     public string SenderDisplayName { get; } = senderDisplayName;
     public string Text { get; } = text;
-    public DateTimeOffset SentAtUtc { get; } = sentAtUtc;
+    public UtcDateTimeOffset SentAtUtc { get; } = sentAtUtc;
     public IReadOnlyCollection<Guid> RecipientUserIds { get; } = recipientUserIds;
 }
 

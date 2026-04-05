@@ -1,4 +1,4 @@
-namespace FlowChat.RealtimeService.Domain.Notifications;
+namespace FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
 
 public sealed record PresenceChangedNotification(
     Guid UserId,

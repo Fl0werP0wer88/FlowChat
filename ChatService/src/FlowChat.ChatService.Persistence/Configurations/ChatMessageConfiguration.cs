@@ -1,5 +1,6 @@
 using FlowChat.ChatService.Domain.Entities.ChatMessage;
 using FlowChat.Shared.Domain;
+using FlowChat.Shared.Persistance;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -30,6 +31,7 @@ public sealed class ChatMessageConfiguration : IEntityTypeConfiguration<ChatMess
             .IsRequired();
 
         builder.Property(x => x.SentAtUtc)
+            .HasUtcDateTimeOffsetConversion()
             .IsRequired();
 
         builder.Property(x => x.RecipientUserIds)
@@ -43,13 +45,15 @@ public sealed class ChatMessageConfiguration : IEntityTypeConfiguration<ChatMess
             .HasMaxLength(256)
             .IsRequired();
 
-        builder.Property(x => x.CreatedAtUtc);
+        builder.Property(x => x.CreatedAtUtc)
+            .HasUtcDateTimeOffsetConversion();
 
         builder.Property(x => x.LastModifiedBy)
             .HasMaxLength(256)
             .IsRequired();
 
-        builder.Property(x => x.LastModifiedAtUtc);
+        builder.Property(x => x.LastModifiedAtUtc)
+            .HasUtcDateTimeOffsetConversion();
 
         builder.Ignore(x => x.DomainEvents);
 

@@ -1,4 +1,5 @@
 using FlowChat.Shared.Domain;
+using FlowChat.Shared.Persistance;
 using FlowChat.UserProfileService.Domain.Entities.EmailVerificationRequest;
 using FlowChat.UserProfileService.Domain.Entities.UserProfile;
 using Microsoft.EntityFrameworkCore;
@@ -51,13 +52,18 @@ public class UserProfileConfiguration : IEntityTypeConfiguration<UserProfile>
             .HasMaxLength(256)
             .IsRequired();
 
-        builder.Property(x => x.CreatedAtUtc);
+        builder.Property(x => x.CreatedAtUtc)
+            .HasUtcDateTimeOffsetConversion();
 
         builder.Property(x => x.LastModifiedBy)
             .HasMaxLength(256)
             .IsRequired();
 
-        builder.Property(x => x.LastModifiedAtUtc);
+        builder.Property(x => x.LastModifiedAtUtc)
+            .HasUtcDateTimeOffsetConversion();
+
+        builder.Property(x => x.LastSeenAtUtc)
+            .HasNullableUtcDateTimeOffsetConversion();
 
         builder.Ignore(x => x.DomainEvents);
 
