@@ -1,13 +1,11 @@
 #requires -Version 5.1
 <#
-Ensures FlowChat Kafka topics exist on a running broker.
+Removes all FlowChat Kafka topics defined in kafka-topic-definitions.ps1.
 
 Can be run standalone:
-  .\ensure-kafka-topics.ps1
-  .\ensure-kafka-topics.ps1 -ComposeFile ".\docker-compose.kafka.yml"
-  .\ensure-kafka-topics.ps1 -ContainerId "<docker-container-id>"
-
-Can also be called from bootstrap scripts after containers are started.
+  .\remove-topics.ps1
+  .\remove-topics.ps1 -ComposeFile ".\docker-compose.kafka.yml"
+  .\remove-topics.ps1 -ContainerId "<docker-container-id>"
 #>
 
 param(
@@ -126,39 +124,23 @@ function Topic-Exists([string]$ResolvedContainerId, [string]$Topic) {
   return ($code -eq 0)
 }
 
-function Ensure-Topic(
-  [string]$ResolvedContainerId,
-  [string]$Topic,
-  [int]$Partitions = 1,
-  [int]$ReplicationFactor = 1,
-  [hashtable]$Config = $null
-) {
-  if (Topic-Exists -ResolvedContainerId $ResolvedContainerId -Topic $Topic) {
-    Write-Host "Topic exists: $Topic"
+function Remove-Topic([string]$ResolvedContainerId, [string]$Topic) {
+  if (-not (Topic-Exists -ResolvedContainerId $ResolvedContainerId -Topic $Topic)) {
+    Write-Host "Topic missing, skipping: $Topic"
     return
   }
 
-  Write-Host "Creating topic: $Topic"
+  Write-Host "Deleting topic: $Topic"
 
-  $args = @(
+  $code = Invoke-DockerQuiet -ResolvedContainerId $ResolvedContainerId -Args @(
     $KafkaTopics,
-    "--create",
-    "--if-not-exists",
+    "--delete",
     "--topic", $Topic,
-    "--bootstrap-server", $BootstrapServer,
-    "--partitions", $Partitions.ToString(),
-    "--replication-factor", $ReplicationFactor.ToString()
+    "--bootstrap-server", $BootstrapServer
   )
 
-  if ($null -ne $Config) {
-    foreach ($key in $Config.Keys) {
-      $args += @("--config", "$key=$($Config[$key])")
-    }
-  }
-
-  $code = Invoke-DockerQuiet -ResolvedContainerId $ResolvedContainerId -Args $args
   if ($code -ne 0) {
-    throw "Failed to create topic '$Topic' (exit=$code). Check logs: docker logs $ResolvedContainerId"
+    throw "Failed to delete topic '$Topic' (exit=$code). Check logs: docker logs $ResolvedContainerId"
   }
 }
 
@@ -168,14 +150,9 @@ $resolvedContainerId = Resolve-ContainerId
 Write-Step "Using broker container id: $resolvedContainerId"
 Wait-ForKafkaReady -ResolvedContainerId $resolvedContainerId -WaitTimeoutSeconds $TimeoutSeconds
 
-Write-Step "Ensuring topics exist"
+Write-Step "Removing FlowChat topics"
 foreach ($topic in (Get-TopicDefinitions)) {
-  Ensure-Topic `
-    -ResolvedContainerId $resolvedContainerId `
-    -Topic $topic.name `
-    -Partitions $topic.partitions `
-    -ReplicationFactor $topic.rf `
-    -Config $topic.config
+  Remove-Topic -ResolvedContainerId $resolvedContainerId -Topic $topic.name
 }
 
 Write-Step "Final topic list"
