@@ -1,59 +1,37 @@
 using FlowChat.Core.Exceptions;
 using FlowChat.Core.Messaging.UserProfileService.Events;
+using FlowChat.Shared.Infrastructure.Silverback.Subscribers;
 using FlowChat.RealtimeService.Consumers.Realtime.Contracts;
 using FlowChat.RealtimeService.Consumers.Services;
-using Silverback.Messaging.Subscribers;
 
 namespace FlowChat.RealtimeService.Consumers.Kafka;
 
 public sealed class UserPresenceChangedSubscriber(
     IRealtimeInternalApiClient realtimeInternalApiClient,
     ILogger<UserPresenceChangedSubscriber> logger)
+    : SubscriberBase<UserPresenceChangedIntegrationEvent>(logger)
 {
     private static readonly HashSet<string> AllowedStatuses =
         ["online", "away", "offline"];
 
-    [Subscribe]
-    public async Task HandleAsync(UserPresenceChangedIntegrationEvent message, CancellationToken cancellationToken)
+    protected override async Task ExecuteAsync(
+        UserPresenceChangedIntegrationEvent message,
+        CancellationToken cancellationToken)
     {
         var normalizedStatus = ValidateAndNormalizeStatus(message);
 
-        try
+        var request = new PublishPresenceChangeRequest
         {
-            var request = new PublishPresenceChangeRequest
-            {
-                UserId = message.UserId,
-                Status = normalizedStatus,
-                ChangedAtUtc = message.ChangedAtUtc,
-                RecipientUserIds = message.RecipientUserIds
-                    .Where(userId => userId != Guid.Empty)
-                    .Distinct()
-                    .ToArray()
-            };
+            UserId = message.UserId,
+            Status = normalizedStatus,
+            ChangedAtUtc = message.ChangedAtUtc,
+            RecipientUserIds = message.RecipientUserIds
+                .Where(userId => userId != Guid.Empty)
+                .Distinct()
+                .ToArray()
+        };
 
-            await realtimeInternalApiClient.PublishPresenceChangeAsync(request, cancellationToken);
-        }
-        catch (NonTransientException exception)
-        {
-            logger.LogInformation(
-                exception,
-                "Skipping forwarding {EventType} event for user {UserId}. Reason: {Reason}",
-                nameof(UserPresenceChangedIntegrationEvent),
-                message.UserId,
-                exception.Message);
-
-            throw;
-        }
-        catch (Exception exception)
-        {
-            logger.LogWarning(
-                exception,
-                "Failed to forward {EventType} event for user {UserId} to RealtimeService API.",
-                nameof(UserPresenceChangedIntegrationEvent),
-                message.UserId);
-
-            throw;
-        }
+        await realtimeInternalApiClient.PublishPresenceChangeAsync(request, cancellationToken);
     }
 
     private static string ValidateAndNormalizeStatus(UserPresenceChangedIntegrationEvent message)

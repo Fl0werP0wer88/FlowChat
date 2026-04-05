@@ -25,11 +25,13 @@ public sealed class UserProfileConsumerConfigurationTests
         await using var scope = serviceProvider.CreateAsyncScope();
 
         var consumerCollection = serviceProvider.GetRequiredService<IConsumerCollection>();
-        var subscriber = scope.ServiceProvider.GetRequiredService<UserProfileSubscriber>();
+        var createdSubscriber = scope.ServiceProvider.GetRequiredService<UserProfileCreatedSubscriber>();
+        var stateChangedSubscriber = scope.ServiceProvider.GetRequiredService<UserProfileStateChangedSubscriber>();
         var internalApiClient = scope.ServiceProvider.GetRequiredService<ISocialGraphInternalApiClient>();
 
         consumerCollection.Should().NotBeNull();
-        subscriber.Should().NotBeNull();
+        createdSubscriber.Should().NotBeNull();
+        stateChangedSubscriber.Should().NotBeNull();
         internalApiClient.Should().NotBeNull();
     }
 

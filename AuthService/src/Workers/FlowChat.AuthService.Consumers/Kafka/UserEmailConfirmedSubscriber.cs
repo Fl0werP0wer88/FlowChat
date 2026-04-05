@@ -2,17 +2,16 @@ using FlowChat.AuthService.Consumers.AuthApi.Contracts;
 using FlowChat.AuthService.Consumers.Services;
 using FlowChat.Core.Exceptions;
 using FlowChat.Core.Messaging.UserProfileService.Events;
-using Microsoft.Extensions.Logging;
-using Silverback.Messaging.Subscribers;
+using FlowChat.Shared.Infrastructure.Silverback.Subscribers;
 
 namespace FlowChat.AuthService.Consumers.Kafka;
 
 public sealed class UserEmailConfirmedSubscriber(
     IAuthInternalApiClient authInternalApiClient,
     ILogger<UserEmailConfirmedSubscriber> logger)
+    : SubscriberBase<UserEmailConfirmedIntegrationEvent>(logger)
 {
-    [Subscribe]
-    public async Task HandleAsync(
+    protected override async Task ExecuteAsync(
         UserEmailConfirmedIntegrationEvent message,
         CancellationToken cancellationToken)
     {
@@ -29,42 +28,18 @@ public sealed class UserEmailConfirmedSubscriber(
 
         if (!email.IsAuth)
         {
-            logger.LogDebug(
+            Logger.LogDebug(
                 "Skipping non-auth email confirmation for user profile {UserProfileId}, email {EmailId}.",
                 message.UserProfileId,
                 message.EmailId);
             return;
         }
 
-        try
-        {
-            await authInternalApiClient.ConfirmEmailAsync(
-                new AuthEmailConfirmationRequest
-                {
-                    EmailAddress = emailAddress
-                },
-                cancellationToken);
-        }
-        catch (NonTransientException exception)
-        {
-            logger.LogInformation(
-                exception,
-                "Skipping auth email confirmation for user profile {UserProfileId}, email {EmailId}. Reason: {Reason}",
-                message.UserProfileId,
-                message.EmailId,
-                exception.Message);
-
-            throw;
-        }
-        catch (Exception exception)
-        {
-            logger.LogWarning(
-                exception,
-                "Transient failure while confirming auth email for user profile {UserProfileId}, email {EmailId}.",
-                message.UserProfileId,
-                message.EmailId);
-
-            throw;
-        }
+        await authInternalApiClient.ConfirmEmailAsync(
+            new AuthEmailConfirmationRequest
+            {
+                EmailAddress = emailAddress
+            },
+            cancellationToken);
     }
 }

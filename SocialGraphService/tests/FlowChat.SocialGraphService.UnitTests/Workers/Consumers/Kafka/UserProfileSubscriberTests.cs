@@ -10,17 +10,17 @@ using Moq;
 
 namespace FlowChat.SocialGraphService.UnitTests;
 
-public sealed class UserProfileSubscriberTests
+public sealed class UserProfileCreatedSubscriberTests
 {
     private readonly IFixture _fixture = new Fixture();
     private readonly Mock<ISocialGraphInternalApiClient> _apiClientMock = new();
-    private readonly UserProfileSubscriber _subscriber;
+    private readonly UserProfileCreatedSubscriber _subscriber;
 
-    public UserProfileSubscriberTests()
+    public UserProfileCreatedSubscriberTests()
     {
-        _subscriber = new UserProfileSubscriber(
+        _subscriber = new UserProfileCreatedSubscriber(
             _apiClientMock.Object,
-            NullLogger<UserProfileSubscriber>.Instance);
+            NullLogger<UserProfileCreatedSubscriber>.Instance);
     }
 
     [Fact]
@@ -62,6 +62,38 @@ public sealed class UserProfileSubscriberTests
     }
 
     [Fact]
+    public async Task HandleAsync_WhenUserProfileIdIsMissing_ThrowsNonTransientException()
+    {
+        var act = () => _subscriber.HandleAsync(
+            new UserProfileCreatedIntegrationEvent
+            {
+                UserProfileId = Guid.Empty,
+                UserName = "john.doe",
+                DisplayName = "John Doe"
+            },
+            CancellationToken.None);
+
+        await act.Should().ThrowAsync<NonTransientException>();
+        _apiClientMock.Verify(
+            x => x.UpsertUserProfileReadModelAsync(It.IsAny<UpsertUserProfileReadModelRequest>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+}
+
+public sealed class UserProfileStateChangedSubscriberTests
+{
+    private readonly IFixture _fixture = new Fixture();
+    private readonly Mock<ISocialGraphInternalApiClient> _apiClientMock = new();
+    private readonly UserProfileStateChangedSubscriber _subscriber;
+
+    public UserProfileStateChangedSubscriberTests()
+    {
+        _subscriber = new UserProfileStateChangedSubscriber(
+            _apiClientMock.Object,
+            NullLogger<UserProfileStateChangedSubscriber>.Instance);
+    }
+
+    [Fact]
     public async Task HandleAsync_WhenStateChangedEventArrives_PostsReadModel()
     {
         UpsertUserProfileReadModelRequest? capturedRequest = null;
@@ -93,23 +125,5 @@ public sealed class UserProfileSubscriberTests
         capturedRequest.DisplayName.Should().Be("Jane Doe");
         capturedRequest.IsActive.Should().BeFalse();
         capturedRequest.IsPhoneVisible.Should().BeTrue();
-    }
-
-    [Fact]
-    public async Task HandleAsync_WhenUserProfileIdIsMissing_ThrowsNonTransientException()
-    {
-        var act = () => _subscriber.HandleAsync(
-            new UserProfileCreatedIntegrationEvent
-            {
-                UserProfileId = Guid.Empty,
-                UserName = "john.doe",
-                DisplayName = "John Doe"
-            },
-            CancellationToken.None);
-
-        await act.Should().ThrowAsync<NonTransientException>();
-        _apiClientMock.Verify(
-            x => x.UpsertUserProfileReadModelAsync(It.IsAny<UpsertUserProfileReadModelRequest>(), It.IsAny<CancellationToken>()),
-            Times.Never);
     }
 }

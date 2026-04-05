@@ -2,17 +2,16 @@ using FlowChat.Core.Exceptions;
 using FlowChat.Core.Messaging.AuthService.Events;
 using FlowChat.NotificationService.Consumers.NotificationApi.Contracts;
 using FlowChat.NotificationService.Consumers.Services;
-using Microsoft.Extensions.Logging;
-using Silverback.Messaging.Subscribers;
+using FlowChat.Shared.Infrastructure.Silverback.Subscribers;
 
 namespace FlowChat.NotificationService.Consumers.Kafka;
 
 public sealed class UserEmailVerificationRequestedSubscriber(
     INotificationInternalApiClient notificationInternalApiClient,
     ILogger<UserEmailVerificationRequestedSubscriber> logger)
+    : SubscriberBase<EmailVerificationRequestIntegrationEvent>(logger)
 {
-    [Subscribe]
-    public async Task HandleAsync(
+    protected override async Task ExecuteAsync(
         EmailVerificationRequestIntegrationEvent message,
         CancellationToken cancellationToken)
     {
@@ -37,41 +36,19 @@ public sealed class UserEmailVerificationRequestedSubscriber(
             throw new NonTransientException("Payload does not contain ConfirmationLink.");
         }
 
-        try
-        {
-            await notificationInternalApiClient.ProcessUserEmailVerificationRequestedAsync(
-                new ProcessUserEmailVerificationRequestedRequest
-                {
-                    UserId = message.UserId,
-                    Email = message.UserEmail.Trim(),
-                    UserName = userName,
-                    DisplayName = userName,
-                    ConfirmationLink = message.ConfirmationLink.Trim(),
-                    SourceMessageKey = string.IsNullOrWhiteSpace(message.Key)
-                        ? message.UserId.ToString()
-                        : message.Key.Trim()
-                },
-                cancellationToken);
-        }
-        catch (NonTransientException ex)
-        {
-            logger.LogInformation(
-                ex,
-                "Skipping notification handling for user {UserId}. Reason: {Reason}",
-                message.UserId,
-                ex.Message);
-
-            throw;
-        }
-        catch (Exception ex)
-        {
-            logger.LogWarning(
-                ex,
-                "Transient failure while handling notification for user {UserId}.",
-                message.UserId);
-
-            throw;
-        }
+        await notificationInternalApiClient.ProcessUserEmailVerificationRequestedAsync(
+            new ProcessUserEmailVerificationRequestedRequest
+            {
+                UserId = message.UserId,
+                Email = message.UserEmail.Trim(),
+                UserName = userName,
+                DisplayName = userName,
+                ConfirmationLink = message.ConfirmationLink.Trim(),
+                SourceMessageKey = string.IsNullOrWhiteSpace(message.Key)
+                    ? message.UserId.ToString()
+                    : message.Key.Trim()
+            },
+            cancellationToken);
     }
 
     private static string? ResolveUserName(string? email)

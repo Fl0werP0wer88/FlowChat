@@ -1,17 +1,17 @@
 using FlowChat.Core.Exceptions;
 using FlowChat.Core.Messaging.AuthService.Events;
+using FlowChat.Shared.Infrastructure.Silverback.Subscribers;
 using FlowChat.UserProfileService.Consumers.Services;
 using FlowChat.UserProfileService.Consumers.UserProfileApi.Contracts;
-using Silverback.Messaging.Subscribers;
 
 namespace FlowChat.UserProfileService.Consumers.Kafka;
 
 public sealed class AccountRegisteredSubscriber(
     IUserProfileInternalApiClient userProfileInternalApiClient,
     ILogger<AccountRegisteredSubscriber> logger)
+    : SubscriberBase<AccountRegisteredIntegrationEvent>(logger)
 {
-    [Subscribe]
-    public async Task HandleAsync(
+    protected override async Task ExecuteAsync(
         AccountRegisteredIntegrationEvent message,
         CancellationToken cancellationToken)
     {
@@ -29,40 +29,18 @@ public sealed class AccountRegisteredSubscriber(
 
         var displayName = ResolveDisplayName(message, friendlyUserId);
 
-        try
-        {
-            await userProfileInternalApiClient.CreateInitialUserProfileAsync(
-                new CreateInitialUserProfileRequest
-                {
-                    FriendlyUserId = friendlyUserId,
-                    DisplayName = displayName,
-                    AvatarUrl = null,
-                    Bio = null,
-                    Email = message.Email,
-                    Phone = message.PhoneNumber,
-                    UserId = userId.Value
-                },
-                cancellationToken);
-        }
-        catch (NonTransientException ex)
-        {
-            logger.LogInformation(
-                ex,
-                "Skipping user profile creation for user {UserId}. Reason: {Reason}",
-                userId.Value,
-                ex.Message);
-
-            throw;
-        }
-        catch (Exception ex)
-        {
-            logger.LogWarning(
-                ex,
-                "Transient failure while creating user profile for user {UserId}.",
-                userId.Value);
-
-            throw;
-        }
+        await userProfileInternalApiClient.CreateInitialUserProfileAsync(
+            new CreateInitialUserProfileRequest
+            {
+                FriendlyUserId = friendlyUserId,
+                DisplayName = displayName,
+                AvatarUrl = null,
+                Bio = null,
+                Email = message.Email,
+                Phone = message.PhoneNumber,
+                UserId = userId.Value
+            },
+            cancellationToken);
     }
 
     private static Guid? ResolveUserId(Guid payloadUserId) =>

@@ -116,7 +116,7 @@ public sealed class UserEmailConfirmedSubscriberTests
         await act.Should().ThrowAsync<NonTransientException>()
             .WithMessage("boom");
 
-        VerifyLog(LogLevel.Information, "Skipping auth email confirmation for user profile");
+        VerifyLog(LogLevel.Information, "Skipping UserEmailConfirmedIntegrationEvent in UserEmailConfirmedSubscriber. Reason: boom");
     }
 
     [Fact]
@@ -142,17 +142,17 @@ public sealed class UserEmailConfirmedSubscriberTests
         await act.Should().ThrowAsync<HttpRequestException>()
             .WithMessage("boom");
 
-        VerifyLog(LogLevel.Warning, "Transient failure while confirming auth email for user profile");
+        VerifyLog(LogLevel.Warning, "Transient failure while handling UserEmailConfirmedIntegrationEvent in UserEmailConfirmedSubscriber.");
     }
 
-    private void VerifyLog(LogLevel expectedLogLevel, string expectedMessageFragment)
+    private void VerifyLog(LogLevel expectedLogLevel, string expectedMessage)
     {
         _loggerMock.Verify(
             logger => logger.Log(
                 expectedLogLevel,
                 It.IsAny<EventId>(),
                 It.Is<It.IsAnyType>((state, _) =>
-                    state.ToString()!.Contains(expectedMessageFragment, StringComparison.Ordinal)),
+                    state.ToString() == expectedMessage),
                 It.IsAny<Exception>(),
                 It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.Once);

@@ -1,59 +1,37 @@
 using FlowChat.Core.Exceptions;
 using FlowChat.Core.Messaging.ChatService.Events;
+using FlowChat.Shared.Infrastructure.Silverback.Subscribers;
 using FlowChat.RealtimeService.Consumers.Realtime.Contracts;
 using FlowChat.RealtimeService.Consumers.Services;
-using Silverback.Messaging.Subscribers;
 
 namespace FlowChat.RealtimeService.Consumers.Kafka;
 
 public sealed class ChatMessageSentSubscriber(
     IRealtimeInternalApiClient realtimeInternalApiClient,
     ILogger<ChatMessageSentSubscriber> logger)
+    : SubscriberBase<ChatMessageSentIntegrationEvent>(logger)
 {
-    [Subscribe]
-    public async Task HandleAsync(ChatMessageSentIntegrationEvent message, CancellationToken cancellationToken)
+    protected override async Task ExecuteAsync(
+        ChatMessageSentIntegrationEvent message,
+        CancellationToken cancellationToken)
     {
         Validate(message);
 
-        try
+        var request = new PublishMessageRequest
         {
-            var request = new PublishMessageRequest
-            {
-                MessageId = message.MessageId,
-                ConversationId = message.ConversationId,
-                SenderUserId = message.SenderUserId,
-                SenderDisplayName = message.SenderDisplayName.Trim(),
-                Text = message.Text.Trim(),
-                SentAtUtc = message.SentAtUtc,
-                RecipientUserIds = message.RecipientUserIds
-                    .Where(userId => userId != Guid.Empty)
-                    .Distinct()
-                    .ToArray()
-            };
+            MessageId = message.MessageId,
+            ConversationId = message.ConversationId,
+            SenderUserId = message.SenderUserId,
+            SenderDisplayName = message.SenderDisplayName.Trim(),
+            Text = message.Text.Trim(),
+            SentAtUtc = message.SentAtUtc,
+            RecipientUserIds = message.RecipientUserIds
+                .Where(userId => userId != Guid.Empty)
+                .Distinct()
+                .ToArray()
+        };
 
-            await realtimeInternalApiClient.PublishMessageAsync(request, cancellationToken);
-        }
-        catch (NonTransientException exception)
-        {
-            logger.LogInformation(
-                exception,
-                "Skipping forwarding {EventType} event for message {MessageId}. Reason: {Reason}",
-                nameof(ChatMessageSentIntegrationEvent),
-                message.MessageId,
-                exception.Message);
-
-            throw;
-        }
-        catch (Exception exception)
-        {
-            logger.LogWarning(
-                exception,
-                "Failed to forward {EventType} event for message {MessageId} to RealtimeService API.",
-                nameof(ChatMessageSentIntegrationEvent),
-                message.MessageId);
-
-            throw;
-        }
+        await realtimeInternalApiClient.PublishMessageAsync(request, cancellationToken);
     }
 
     private static void Validate(ChatMessageSentIntegrationEvent message)

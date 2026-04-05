@@ -2,68 +2,28 @@ using FlowChat.Core.Exceptions;
 using FlowChat.Core.Messaging.UserProfileService.Events;
 using FlowChat.SocialGraphService.Consumers.Services;
 using FlowChat.SocialGraphService.Consumers.SocialGraph.Contracts;
-using Silverback.Messaging.Subscribers;
+using Microsoft.Extensions.Logging;
 
 namespace FlowChat.SocialGraphService.Consumers.Kafka;
 
-public sealed class UserProfileSubscriber(
-    ISocialGraphInternalApiClient socialGraphInternalApiClient,
-    ILogger<UserProfileSubscriber> logger)
+internal static class UserProfileSubscriberHelper
 {
-    [Subscribe]
-    public Task HandleAsync(
-        UserProfileCreatedIntegrationEvent message,
-        CancellationToken cancellationToken) =>
-        UpsertAsync(
-            Map(message),
-            nameof(UserProfileCreatedIntegrationEvent),
-            cancellationToken);
-
-    [Subscribe]
-    public Task HandleAsync(
-        UserProfileStateChangedIntegrationEvent message,
-        CancellationToken cancellationToken) =>
-        UpsertAsync(
-            Map(message),
-            nameof(UserProfileStateChangedIntegrationEvent),
-            cancellationToken);
-
-    private async Task UpsertAsync(
+    public static async Task UpsertAsync(
+        ISocialGraphInternalApiClient socialGraphInternalApiClient,
+        ILogger logger,
         UpsertUserProfileReadModelRequest request,
         string eventType,
         CancellationToken cancellationToken)
     {
-        try
-        {
-            await socialGraphInternalApiClient.UpsertUserProfileReadModelAsync(request, cancellationToken);
+        await socialGraphInternalApiClient.UpsertUserProfileReadModelAsync(request, cancellationToken);
 
-            logger.LogInformation(
-                "Upserted user profile read model for profile {UserProfileId} from {EventType}.",
-                request.UserProfileId,
-                eventType);
-        }
-        catch (NonTransientException ex)
-        {
-            logger.LogInformation(
-                ex,
-                "Skipping user profile read model upsert for profile {UserProfileId}. Reason: {Reason}",
-                request.UserProfileId,
-                ex.Message);
-
-            throw;
-        }
-        catch (Exception ex)
-        {
-            logger.LogWarning(
-                ex,
-                "Transient failure while upserting user profile read model for profile {UserProfileId}.",
-                request.UserProfileId);
-
-            throw;
-        }
+        logger.LogInformation(
+            "Upserted user profile read model for profile {UserProfileId} from {EventType}.",
+            request.UserProfileId,
+            eventType);
     }
 
-    private static UpsertUserProfileReadModelRequest Map(UserProfileCreatedIntegrationEvent message) =>
+    public static UpsertUserProfileReadModelRequest Map(UserProfileCreatedIntegrationEvent message) =>
         new()
         {
             UserProfileId = ResolveUserProfileId(message.UserProfileId),
@@ -79,7 +39,7 @@ public sealed class UserProfileSubscriber(
             IsPhoneVisible = message.IsPhoneVisible
         };
 
-    private static UpsertUserProfileReadModelRequest Map(UserProfileStateChangedIntegrationEvent message) =>
+    public static UpsertUserProfileReadModelRequest Map(UserProfileStateChangedIntegrationEvent message) =>
         new()
         {
             UserProfileId = ResolveUserProfileId(message.UserProfileId),
