@@ -24,7 +24,7 @@ FlowChat is a microservices-based chat application built with .NET 10. Services 
 - **UserProfileService** — user profiles
 
 ### Dev Infrastructure (Docker)
-Located in `DevInfrastructure/`: PostgreSQL, Kafka, MailHog, Observability stack.
+Located in `Scripts/`: PostgreSQL, Kafka, MailHog, Observability stack.
 
 ## Architecture
 
