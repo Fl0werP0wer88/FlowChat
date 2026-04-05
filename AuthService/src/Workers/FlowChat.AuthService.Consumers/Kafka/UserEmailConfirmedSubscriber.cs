@@ -36,11 +36,35 @@ public sealed class UserEmailConfirmedSubscriber(
             return;
         }
 
-        await authInternalApiClient.ConfirmEmailAsync(
-            new AuthEmailConfirmationRequest
-            {
-                EmailAddress = emailAddress
-            },
-            cancellationToken);
+        try
+        {
+            await authInternalApiClient.ConfirmEmailAsync(
+                new AuthEmailConfirmationRequest
+                {
+                    EmailAddress = emailAddress
+                },
+                cancellationToken);
+        }
+        catch (NonTransientException exception)
+        {
+            logger.LogInformation(
+                exception,
+                "Skipping auth email confirmation for user profile {UserProfileId}, email {EmailId}. Reason: {Reason}",
+                message.UserProfileId,
+                message.EmailId,
+                exception.Message);
+
+            throw;
+        }
+        catch (Exception exception)
+        {
+            logger.LogWarning(
+                exception,
+                "Transient failure while confirming auth email for user profile {UserProfileId}, email {EmailId}.",
+                message.UserProfileId,
+                message.EmailId);
+
+            throw;
+        }
     }
 }
