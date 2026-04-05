@@ -73,8 +73,9 @@ The project uses tactical DDD. All domain logic lives in the `Domain` layer. The
 - **Language**: C# 13, .NET 10
 - **Formatting**: enforced by `dprint` — run `dprint fmt` before committing
 - **Nullability**: nullable reference types enabled everywhere
+- **Time handling**: always prefer `DateTimeOffset` over `DateTime`; when representing UTC time, use `DateTimeOffset` with offset `+00:00`
 - **Results**: use `FlowChatResult<T>` (from `FlowChat.Shared`) instead of throwing exceptions in handlers
-- **CQRS commands/queries**: use only primitive/simple scalar types at the application boundary (`string`, numeric types, `bool`, `Guid`, `DateTime`, enums, and collections of those when needed); do not pass domain entities or value objects in commands/queries
+- **CQRS commands/queries**: use only primitive/simple scalar types at the application boundary (`string`, numeric types, `bool`, `Guid`, `DateTimeOffset`, enums, and collections of those when needed); do not pass domain entities or value objects in commands/queries
 - **Domain modeling**: in the `Domain` layer, prefer existing value objects wherever reasonable instead of raw primitives; first look in `Common`, then in the local service
 - **Value object suggestions**: if you see a field that is a good fit for a value object but none exists yet in `Common` or the local service, explicitly suggest creating one
 - **Entities**: use `static Create(...)` factory methods, never public constructors
@@ -215,4 +216,4 @@ dotnet test RealtimeService/tests/FlowChat.RealtimeService.UnitTests
 - Do not add `try/catch` inside command handlers — use `FlowChatResult` instead
 - Do not put business logic in controllers or infrastructure layer
 - Do not raise domain events in `Restore(...)` factory methods
-- Do not use `DateTime.Now` — use `DateTime.UtcNow`
+- Do not introduce `DateTime` for timestamps or UTC values — use `DateTimeOffset` in UTC instead
