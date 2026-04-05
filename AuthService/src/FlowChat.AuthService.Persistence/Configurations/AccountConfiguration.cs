@@ -53,12 +53,10 @@ public sealed class AccountConfiguration : IEntityTypeConfiguration<Account>
         builder.Property(x => x.IsEmailConfirmed)
             .IsRequired();
 
+        builder.Property(x => x.Version)
+            .IsConcurrencyToken();
+
         builder.Ignore(x => x.DomainEvents);
-        builder.Ignore(x => x.Version);
-        builder.Ignore(x => x.CreatedBy);
-        builder.Ignore(x => x.CreatedAtUtc);
-        builder.Ignore(x => x.LastModifiedBy);
-        builder.Ignore(x => x.LastModifiedAtUtc);
 
         builder.HasIndex(NormalizedEmailPropertyName)
             .IsUnique();

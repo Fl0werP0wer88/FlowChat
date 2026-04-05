@@ -38,6 +38,8 @@ public sealed class EmailVerificationRequestConfiguration : IEntityTypeConfigura
 
         builder.Property(x => x.ConsumedAtUtc);
 
+        builder.Ignore(x => x.DomainEvents);
+
         builder.HasIndex(x => x.Nonce)
             .IsUnique()
             .HasDatabaseName("uq_email_verification_request_nonce");

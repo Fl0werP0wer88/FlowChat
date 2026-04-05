@@ -60,6 +60,8 @@ public class ContactConfiguration : IEntityTypeConfiguration<Contact>
 
         builder.Property(x => x.LastModifiedAtUtc);
 
+        builder.Ignore(x => x.DomainEvents);
+
         builder.HasIndex(x => new { x.OwnerUserId, x.ContactUserId })
             .IsUnique()
             .HasDatabaseName("uq_contact_owner_contact");

@@ -51,6 +51,8 @@ public sealed class ChatMessageConfiguration : IEntityTypeConfiguration<ChatMess
 
         builder.Property(x => x.LastModifiedAtUtc);
 
+        builder.Ignore(x => x.DomainEvents);
+
         builder.HasIndex(x => new { x.ConversationId, x.SentAtUtc });
     }
 }

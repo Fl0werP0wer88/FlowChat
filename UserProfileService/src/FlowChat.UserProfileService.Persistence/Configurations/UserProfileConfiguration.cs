@@ -59,6 +59,8 @@ public class UserProfileConfiguration : IEntityTypeConfiguration<UserProfile>
 
         builder.Property(x => x.LastModifiedAtUtc);
 
+        builder.Ignore(x => x.DomainEvents);
+
         builder.HasIndex(x => x.FriendlyUserId)
             .HasDatabaseName("IX_UserProfiles_UserName")
             .IsUnique();

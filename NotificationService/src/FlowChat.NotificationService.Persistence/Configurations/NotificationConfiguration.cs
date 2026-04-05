@@ -51,6 +51,8 @@ public sealed class NotificationConfiguration : IEntityTypeConfiguration<Notific
 
         builder.Property(x => x.LastModifiedAtUtc);
 
+        builder.Ignore(x => x.DomainEvents);
+
         builder.HasIndex(x => x.UserId);
         builder.HasIndex(x => x.SourceMessageKey)
             .IsUnique()
