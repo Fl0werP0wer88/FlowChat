@@ -11,19 +11,19 @@ internal static class UserProfileSubscriberHelper
     public static async Task UpsertAsync(
         ISocialGraphInternalApiClient socialGraphInternalApiClient,
         ILogger logger,
-        UpsertUserProfileReadModelRequest request,
+        UpsertUserProfileProjectionRequest request,
         string eventType,
         CancellationToken cancellationToken)
     {
-        await socialGraphInternalApiClient.UpsertUserProfileReadModelAsync(request, cancellationToken);
+        await socialGraphInternalApiClient.UpsertUserProfileProjectionAsync(request, cancellationToken);
 
         logger.LogInformation(
-            "Upserted user profile read model for profile {UserProfileId} from {EventType}.",
+            "Upserted user profile projection for profile {UserProfileId} from {EventType}.",
             request.UserProfileId,
             eventType);
     }
 
-    public static UpsertUserProfileReadModelRequest Map(UserProfileCreatedIntegrationEvent message) =>
+    public static UpsertUserProfileProjectionRequest Map(UserProfileCreatedIntegrationEvent message) =>
         new()
         {
             UserProfileId = ResolveUserProfileId(message.UserProfileId),
@@ -39,7 +39,7 @@ internal static class UserProfileSubscriberHelper
             IsPhoneVisible = message.IsPhoneVisible
         };
 
-    public static UpsertUserProfileReadModelRequest Map(UserProfileStateChangedIntegrationEvent message) =>
+    public static UpsertUserProfileProjectionRequest Map(UserProfileStateChangedIntegrationEvent message) =>
         new()
         {
             UserProfileId = ResolveUserProfileId(message.UserProfileId),

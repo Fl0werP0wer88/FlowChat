@@ -5,26 +5,26 @@ using FlowChat.SocialGraphService.Application.Features.UserProfile;
 using FlowChat.SocialGraphService.Infrastructure.Configuration;
 using Microsoft.AspNetCore.Mvc;
 
-namespace FlowChat.SocialGraphService.Api.Features.UserProfile.Internal.UpsertUserProfileReadModel;
+namespace FlowChat.SocialGraphService.Api.Features.UserProfile.Internal.UpsertUserProfileProjection;
 
 [ApiController]
 [ApiExplorerSettings(IgnoreApi = true)]
 [Route("internal/userprofiles")]
-public sealed class UpsertUserProfileReadModelController(
-    IUserProfileReadModelRepository userProfileReadModelRepository,
+public sealed class UpsertUserProfileProjectionController(
+    IUserProfileProjectionRepository userProfileProjectionRepository,
     IUnitOfWork unitOfWork,
     IApiSettingsManager apiSettingsManager) : ApiControllerBase
 {
     private const string InternalApiKeyHeaderName = "X-Internal-Api-Key";
-    private readonly IUserProfileReadModelRepository _userProfileReadModelRepository = userProfileReadModelRepository
-        ?? throw new ArgumentNullException(nameof(userProfileReadModelRepository));
+    private readonly IUserProfileProjectionRepository _userProfileProjectionRepository = userProfileProjectionRepository
+        ?? throw new ArgumentNullException(nameof(userProfileProjectionRepository));
     private readonly IUnitOfWork _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
     private readonly IApiSettingsManager _apiSettingsManager = apiSettingsManager
         ?? throw new ArgumentNullException(nameof(apiSettingsManager));
 
-    [HttpPost("read-model")]
+    [HttpPost("projection")]
     public async Task<IActionResult> Upsert(
-        [FromBody] UpsertUserProfileReadModelRequest request,
+        [FromBody] UpsertUserProfileProjectionRequest request,
         CancellationToken cancellationToken)
     {
         if (!HasValidInternalApiKey())
@@ -47,8 +47,8 @@ public sealed class UpsertUserProfileReadModelController(
             return BadRequestResponse("Payload does not contain valid DisplayName.");
         }
 
-        await _userProfileReadModelRepository.UpsertAsync(
-            new UserProfileReadModel(
+        await _userProfileProjectionRepository.UpsertAsync(
+            new UserProfileProjection(
                 request.UserProfileId,
                 request.UserName.Trim(),
                 request.DisplayName.Trim(),

@@ -1,6 +1,6 @@
 namespace FlowChat.SocialGraphService.Application.Features.UserProfile;
 
-public sealed record UserProfileReadModel(
+public sealed record UserProfileProjection(
     Guid UserProfileId,
     string UserName,
     string DisplayName,

@@ -1,6 +1,6 @@
 namespace FlowChat.SocialGraphService.Consumers.SocialGraph.Contracts;
 
-public sealed class UpsertUserProfileReadModelRequest
+public sealed class UpsertUserProfileProjectionRequest
 {
     public Guid UserProfileId { get; set; }
     public string UserName { get; set; } = string.Empty;

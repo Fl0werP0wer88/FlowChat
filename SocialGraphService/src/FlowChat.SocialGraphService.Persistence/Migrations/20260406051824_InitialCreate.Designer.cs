@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FlowChat.SocialGraphService.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260405220804_InitialCreate")]
+    [Migration("20260406051824_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -94,7 +94,7 @@ namespace FlowChat.SocialGraphService.Persistence.Migrations
                         });
                 });
 
-            modelBuilder.Entity("FlowChat.SocialGraphService.Persistence.Entities.UserProfileReadModelEntity", b =>
+            modelBuilder.Entity("FlowChat.SocialGraphService.Persistence.Entities.UserProfileProjectionEntity", b =>
                 {
                     b.Property<Guid>("UserProfileId")
                         .ValueGeneratedOnAdd()
@@ -163,9 +163,9 @@ namespace FlowChat.SocialGraphService.Persistence.Migrations
                     b.HasKey("UserProfileId");
 
                     b.HasIndex("UserName")
-                        .HasDatabaseName("ix_user_profile_read_model_user_name");
+                        .HasDatabaseName("ix_user_profile_projection_user_name");
 
-                    b.ToTable("UserProfileReadModel", (string)null);
+                    b.ToTable("UserProfileProjection", (string)null);
                 });
 #pragma warning restore 612, 618
         }

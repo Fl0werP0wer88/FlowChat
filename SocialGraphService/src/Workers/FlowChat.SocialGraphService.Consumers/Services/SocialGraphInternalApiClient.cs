@@ -10,15 +10,15 @@ public sealed class SocialGraphInternalApiClient(HttpClient httpClient)
 {
     public const string HttpClientName = nameof(SocialGraphInternalApiClient);
     public const string ApiKeyHeaderName = "X-Internal-Api-Key";
-    private const string UpsertUserProfileReadModelPath = "/internal/userprofiles/read-model";
+    private const string UpsertUserProfileProjectionPath = "/internal/userprofiles/projection";
 
     protected override string ClientDisplayName => "SocialGraph API";
 
-    public async Task UpsertUserProfileReadModelAsync(
-        UpsertUserProfileReadModelRequest request,
+    public async Task UpsertUserProfileProjectionAsync(
+        UpsertUserProfileProjectionRequest request,
         CancellationToken cancellationToken)
     {
-        using var message = new HttpRequestMessage(HttpMethod.Post, UpsertUserProfileReadModelPath)
+        using var message = new HttpRequestMessage(HttpMethod.Post, UpsertUserProfileProjectionPath)
         {
             Content = JsonContent.Create(request)
         };

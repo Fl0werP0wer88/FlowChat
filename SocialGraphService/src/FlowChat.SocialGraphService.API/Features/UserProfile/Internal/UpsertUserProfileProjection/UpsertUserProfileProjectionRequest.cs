@@ -1,6 +1,6 @@
-namespace FlowChat.SocialGraphService.Api.Features.UserProfile.Internal.UpsertUserProfileReadModel;
+namespace FlowChat.SocialGraphService.Api.Features.UserProfile.Internal.UpsertUserProfileProjection;
 
-public sealed class UpsertUserProfileReadModelRequest
+public sealed class UpsertUserProfileProjectionRequest
 {
     public Guid UserProfileId { get; set; }
     public string UserName { get; set; } = string.Empty;

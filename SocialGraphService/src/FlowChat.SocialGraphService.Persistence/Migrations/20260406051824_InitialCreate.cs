@@ -37,7 +37,7 @@ namespace FlowChat.SocialGraphService.Persistence.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "UserProfileReadModel",
+                name: "UserProfileProjection",
                 columns: table => new
                 {
                     UserProfileId = table.Column<Guid>(type: "uuid", nullable: false),
@@ -58,7 +58,7 @@ namespace FlowChat.SocialGraphService.Persistence.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_UserProfileReadModel", x => x.UserProfileId);
+                    table.PrimaryKey("PK_UserProfileProjection", x => x.UserProfileId);
                 });
 
             migrationBuilder.CreateIndex(
@@ -68,8 +68,8 @@ namespace FlowChat.SocialGraphService.Persistence.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "ix_user_profile_read_model_user_name",
-                table: "UserProfileReadModel",
+                name: "ix_user_profile_projection_user_name",
+                table: "UserProfileProjection",
                 column: "UserName");
         }
 
@@ -80,7 +80,7 @@ namespace FlowChat.SocialGraphService.Persistence.Migrations
                 name: "Contacts");
 
             migrationBuilder.DropTable(
-                name: "UserProfileReadModel");
+                name: "UserProfileProjection");
         }
     }
 }

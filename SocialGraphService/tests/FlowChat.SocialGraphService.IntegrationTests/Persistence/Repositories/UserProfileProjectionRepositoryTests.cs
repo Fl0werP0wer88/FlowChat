@@ -7,16 +7,16 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FlowChat.SocialGraphService.IntegrationTests.Persistence.Repositories;
 
-public sealed class UserProfileReadModelRepositoryTests
+public sealed class UserProfileProjectionRepositoryTests
 {
     [Fact]
-    public async Task UpsertAsync_WhenReadModelDoesNotExist_AddsNewEntityAndReturnsTrue()
+    public async Task UpsertAsync_WhenProjectionDoesNotExist_AddsNewEntityAndReturnsTrue()
     {
         await using var connection = new SqliteConnection("Data Source=:memory:");
         await connection.OpenAsync();
         await using var context = CreateDbContext(connection);
-        var repository = new UserProfileReadModelRepository(context);
-        var readModel = new UserProfileReadModel(
+        var repository = new UserProfileProjectionRepository(context);
+        var projection = new UserProfileProjection(
             Guid.NewGuid(),
             "jdoe",
             "John Doe",
@@ -29,10 +29,10 @@ public sealed class UserProfileReadModelRepositoryTests
             true,
             false);
 
-        var wasCreated = await repository.UpsertAsync(readModel, CancellationToken.None);
+        var wasCreated = await repository.UpsertAsync(projection, CancellationToken.None);
         await context.SaveChangesAsync();
 
-        var entity = await context.UserProfileReadModels.SingleAsync(x => x.UserProfileId == readModel.UserProfileId);
+        var entity = await context.UserProfileProjections.SingleAsync(x => x.UserProfileId == projection.UserProfileId);
 
         wasCreated.Should().BeTrue();
         entity.UserName.Should().Be("jdoe");
@@ -42,7 +42,7 @@ public sealed class UserProfileReadModelRepositoryTests
         entity.AvatarUrl.Should().Be("https://cdn.example/avatar.png");
         entity.Bio.Should().Be("Hello there");
         entity.IsActive.Should().BeTrue();
-        entity.LastSeenAtUtc.Should().Be(readModel.LastSeenAtUtc);
+        entity.LastSeenAtUtc.Should().Be(projection.LastSeenAtUtc);
         entity.IsEmailVisible.Should().BeTrue();
         entity.IsPhoneVisible.Should().BeFalse();
         entity.CreatedBy.Should().Be("user-profile-events");
@@ -50,7 +50,7 @@ public sealed class UserProfileReadModelRepositoryTests
     }
 
     [Fact]
-    public async Task UpsertAsync_WhenReadModelExists_UpdatesEntityAndReturnsFalse()
+    public async Task UpsertAsync_WhenProjectionExists_UpdatesEntityAndReturnsFalse()
     {
         await using var connection = new SqliteConnection("Data Source=:memory:");
         await connection.OpenAsync();
@@ -60,7 +60,7 @@ public sealed class UserProfileReadModelRepositoryTests
 
         await using (var seedContext = CreateDbContext(connection))
         {
-            seedContext.UserProfileReadModels.Add(new UserProfileReadModelEntity
+            seedContext.UserProfileProjections.Add(new UserProfileProjectionEntity
             {
                 UserProfileId = userProfileId,
                 UserName = "old-user",
@@ -83,8 +83,8 @@ public sealed class UserProfileReadModelRepositoryTests
         }
 
         await using var updateContext = CreateDbContext(connection);
-        var repository = new UserProfileReadModelRepository(updateContext);
-        var updatedReadModel = new UserProfileReadModel(
+        var repository = new UserProfileProjectionRepository(updateContext);
+        var updatedProjection = new UserProfileProjection(
             userProfileId,
             "new-user",
             "New Display Name",
@@ -97,10 +97,10 @@ public sealed class UserProfileReadModelRepositoryTests
             true,
             true);
 
-        var wasCreated = await repository.UpsertAsync(updatedReadModel, CancellationToken.None);
+        var wasCreated = await repository.UpsertAsync(updatedProjection, CancellationToken.None);
         await updateContext.SaveChangesAsync();
 
-        var entity = await updateContext.UserProfileReadModels.SingleAsync(x => x.UserProfileId == userProfileId);
+        var entity = await updateContext.UserProfileProjections.SingleAsync(x => x.UserProfileId == userProfileId);
 
         wasCreated.Should().BeFalse();
         entity.UserName.Should().Be("new-user");

@@ -1,6 +1,6 @@
 using AutoFixture;
 using FlowChat.Shared.Application;
-using FlowChat.SocialGraphService.Api.Features.UserProfile.Internal.UpsertUserProfileReadModel;
+using FlowChat.SocialGraphService.Api.Features.UserProfile.Internal.UpsertUserProfileProjection;
 using FlowChat.SocialGraphService.Application.Contracts.Persistence;
 using FlowChat.SocialGraphService.Application.Features.UserProfile;
 using FlowChat.SocialGraphService.Infrastructure.Configuration;
@@ -13,17 +13,17 @@ using Moq;
 
 namespace FlowChat.SocialGraphService.UnitTests;
 
-public sealed class UpsertUserProfileReadModelControllerTests
+public sealed class UpsertUserProfileProjectionControllerTests
 {
     private readonly IFixture _fixture = new Fixture();
 
     [Fact]
     public async Task Upsert_WhenApiKeyMissing_ReturnsUnauthorized()
     {
-        var controller = CreateController("expected-key", new Mock<IUserProfileReadModelRepository>(), new Mock<IUnitOfWork>());
+        var controller = CreateController("expected-key", new Mock<IUserProfileProjectionRepository>(), new Mock<IUnitOfWork>());
 
         var result = await controller.Upsert(
-            new UpsertUserProfileReadModelRequest
+            new UpsertUserProfileProjectionRequest
             {
                 UserProfileId = _fixture.Create<Guid>(),
                 UserName = "jdoe",
@@ -35,13 +35,13 @@ public sealed class UpsertUserProfileReadModelControllerTests
     }
 
     [Fact]
-    public async Task Upsert_WhenApiKeyMatches_UpsertsReadModelAndSavesChanges()
+    public async Task Upsert_WhenApiKeyMatches_UpsertsProjectionAndSavesChanges()
     {
-        UserProfileReadModel? capturedReadModel = null;
-        var repositoryMock = new Mock<IUserProfileReadModelRepository>();
+        UserProfileProjection? capturedProjection = null;
+        var repositoryMock = new Mock<IUserProfileProjectionRepository>();
         repositoryMock
-            .Setup(x => x.UpsertAsync(It.IsAny<UserProfileReadModel>(), It.IsAny<CancellationToken>()))
-            .Callback<UserProfileReadModel, CancellationToken>((readModel, _) => capturedReadModel = readModel)
+            .Setup(x => x.UpsertAsync(It.IsAny<UserProfileProjection>(), It.IsAny<CancellationToken>()))
+            .Callback<UserProfileProjection, CancellationToken>((projection, _) => capturedProjection = projection)
             .ReturnsAsync(true);
 
         var unitOfWorkMock = new Mock<IUnitOfWork>();
@@ -52,7 +52,7 @@ public sealed class UpsertUserProfileReadModelControllerTests
         var controller = CreateController("expected-key", repositoryMock, unitOfWorkMock, "expected-key");
 
         var result = await controller.Upsert(
-            new UpsertUserProfileReadModelRequest
+            new UpsertUserProfileProjectionRequest
             {
                 UserProfileId = _fixture.Create<Guid>(),
                 UserName = " jdoe ",
@@ -62,20 +62,20 @@ public sealed class UpsertUserProfileReadModelControllerTests
             CancellationToken.None);
 
         result.Should().BeOfType<AcceptedResult>();
-        capturedReadModel.Should().NotBeNull();
-        capturedReadModel!.UserName.Should().Be("jdoe");
-        capturedReadModel.DisplayName.Should().Be("John Doe");
-        capturedReadModel.MainEmail.Should().Be("john@example.com");
+        capturedProjection.Should().NotBeNull();
+        capturedProjection!.UserName.Should().Be("jdoe");
+        capturedProjection.DisplayName.Should().Be("John Doe");
+        capturedProjection.MainEmail.Should().Be("john@example.com");
         unitOfWorkMock.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
     public async Task Upsert_WhenPayloadInvalid_ReturnsBadRequest()
     {
-        var controller = CreateController("expected-key", new Mock<IUserProfileReadModelRepository>(), new Mock<IUnitOfWork>(), "expected-key");
+        var controller = CreateController("expected-key", new Mock<IUserProfileProjectionRepository>(), new Mock<IUnitOfWork>(), "expected-key");
 
         var result = await controller.Upsert(
-            new UpsertUserProfileReadModelRequest
+            new UpsertUserProfileProjectionRequest
             {
                 UserProfileId = Guid.Empty,
                 UserName = "jdoe",
@@ -86,9 +86,9 @@ public sealed class UpsertUserProfileReadModelControllerTests
         result.Should().BeOfType<BadRequestObjectResult>();
     }
 
-    private static UpsertUserProfileReadModelController CreateController(
+    private static UpsertUserProfileProjectionController CreateController(
         string expectedApiKey,
-        Mock<IUserProfileReadModelRepository> repositoryMock,
+        Mock<IUserProfileProjectionRepository> repositoryMock,
         Mock<IUnitOfWork> unitOfWorkMock,
         string? providedApiKey = null)
     {
@@ -97,7 +97,7 @@ public sealed class UpsertUserProfileReadModelControllerTests
             .Setup(x => x.GetInternalApiSettings())
             .Returns(new InternalApiSettings { ApiKey = expectedApiKey });
 
-        var controller = new UpsertUserProfileReadModelController(
+        var controller = new UpsertUserProfileProjectionController(
             repositoryMock.Object,
             unitOfWorkMock.Object,
             apiSettingsManagerMock.Object);
