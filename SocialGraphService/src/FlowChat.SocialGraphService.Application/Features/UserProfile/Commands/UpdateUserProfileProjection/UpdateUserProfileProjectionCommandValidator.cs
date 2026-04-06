@@ -1,0 +1,21 @@
+using FluentValidation;
+
+namespace FlowChat.SocialGraphService.Application.Features.UserProfile.Commands.UpdateUserProfileProjection;
+
+public sealed class UpdateUserProfileProjectionCommandValidator : AbstractValidator<UpdateUserProfileProjectionCommand>
+{
+    public UpdateUserProfileProjectionCommandValidator()
+    {
+        RuleFor(command => command.UserProfileId)
+            .NotEmpty()
+            .WithMessage("Payload does not contain valid UserProfileId.");
+
+        RuleFor(command => command.FriendlyUserId)
+            .Must(value => !string.IsNullOrWhiteSpace(value))
+            .WithMessage("Payload does not contain valid FriendlyUserId.");
+
+        RuleFor(command => command.DisplayName)
+            .Must(value => !string.IsNullOrWhiteSpace(value))
+            .WithMessage("Payload does not contain valid DisplayName.");
+    }
+}

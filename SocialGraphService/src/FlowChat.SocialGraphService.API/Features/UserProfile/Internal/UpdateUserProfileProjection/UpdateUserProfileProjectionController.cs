@@ -1,7 +1,7 @@
-using FlowChat.Shared.Application;
 using FlowChat.SocialGraphService.Api.Features.UserProfile.Internal.UserProfileProjection;
-using FlowChat.SocialGraphService.Application.Contracts.Persistence;
+using FlowChat.SocialGraphService.Application.Features.UserProfile.Commands.UpdateUserProfileProjection;
 using FlowChat.SocialGraphService.Infrastructure.Configuration;
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FlowChat.SocialGraphService.Api.Features.UserProfile.Internal.UpdateUserProfileProjection;
@@ -10,33 +10,39 @@ namespace FlowChat.SocialGraphService.Api.Features.UserProfile.Internal.UpdateUs
 [ApiExplorerSettings(IgnoreApi = true)]
 [Route("internal/userprofiles/projection/update")]
 public sealed class UpdateUserProfileProjectionController(
-    IUserProfileProjectionWriteRepository userProfileProjectionWriteRepository,
-    IUnitOfWork unitOfWork,
+    IMediator mediator,
     IApiSettingsManager apiSettingsManager)
-    : InternalUserProfileProjectionControllerBase(unitOfWork, apiSettingsManager)
+    : InternalUserProfileProjectionControllerBase(apiSettingsManager)
 {
-    private readonly IUserProfileProjectionWriteRepository _userProfileProjectionWriteRepository = userProfileProjectionWriteRepository
-        ?? throw new ArgumentNullException(nameof(userProfileProjectionWriteRepository));
+    private readonly IMediator _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
 
     [HttpPut]
     public async Task<IActionResult> Update(
         [FromBody] UserProfileProjectionRequest request,
         CancellationToken cancellationToken)
     {
-        var validationResult = ValidateAndMapRequest(request, out var projection);
-        if (validationResult is not null)
+        if (!HasValidInternalApiKey())
         {
-            return validationResult;
+            return Unauthorized();
         }
 
-        var wasUpdated = await _userProfileProjectionWriteRepository.UpdateAsync(projection!, cancellationToken);
-        if (!wasUpdated)
-        {
-            return NotFoundResponse("User profile projection was not found.");
-        }
+        var result = await _mediator.Send(
+            new UpdateUserProfileProjectionCommand(
+                request.UserProfileId,
+                request.FriendlyUserId,
+                request.DisplayName,
+                request.MainEmail,
+                request.MainPhone,
+                request.AvatarUrl,
+                request.Bio,
+                request.IsActive,
+                request.LastSeenAtUtc,
+                request.IsEmailVisible,
+                request.IsPhoneVisible),
+            cancellationToken);
 
-        await UnitOfWork.SaveChangesAsync(cancellationToken);
-
-        return Accepted();
+        return result.IsSuccess
+            ? Accepted()
+            : HandleError(result.Error);
     }
 }

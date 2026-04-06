@@ -1,10 +1,10 @@
 using AutoFixture;
-using FlowChat.Shared.Application;
 using FlowChat.SocialGraphService.Api.Features.UserProfile.Internal.UpdateUserProfileProjection;
 using FlowChat.SocialGraphService.Api.Features.UserProfile.Internal.UserProfileProjection;
-using FlowChat.SocialGraphService.Application.Contracts.Persistence;
-using FlowChat.SocialGraphService.Application.Features.UserProfile;
+using FlowChat.Shared.Domain;
+using FlowChat.SocialGraphService.Application.Features.UserProfile.Commands.UpdateUserProfileProjection;
 using FluentAssertions;
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 
@@ -15,21 +15,16 @@ public sealed class UpdateUserProfileProjectionControllerTests
     private readonly IFixture _fixture = new Fixture();
 
     [Fact]
-    public async Task Update_WhenApiKeyMatches_UpdatesProjectionAndSavesChanges()
+    public async Task Update_WhenApiKeyMatches_SendsCommandAndReturnsAccepted()
     {
-        UserProfileProjection? capturedProjection = null;
-        var repositoryMock = new Mock<IUserProfileProjectionWriteRepository>();
-        repositoryMock
-            .Setup(x => x.UpdateAsync(It.IsAny<UserProfileProjection>(), It.IsAny<CancellationToken>()))
-            .Callback<UserProfileProjection, CancellationToken>((projection, _) => capturedProjection = projection)
-            .ReturnsAsync(true);
+        UpdateUserProfileProjectionCommand? capturedCommand = null;
+        var mediatorMock = new Mock<IMediator>();
+        mediatorMock
+            .Setup(x => x.Send(It.IsAny<UpdateUserProfileProjectionCommand>(), It.IsAny<CancellationToken>()))
+            .Callback<IRequest<FlowChatResult<Unit>>, CancellationToken>((request, _) => capturedCommand = (UpdateUserProfileProjectionCommand)request)
+            .ReturnsAsync(FlowChatResult<Unit>.Success(Unit.Value));
 
-        var unitOfWorkMock = new Mock<IUnitOfWork>();
-        unitOfWorkMock
-            .Setup(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(1);
-
-        var controller = CreateController("expected-key", repositoryMock, unitOfWorkMock, "expected-key");
+        var controller = CreateController("expected-key", mediatorMock, "expected-key");
 
         var result = await controller.Update(
             new UserProfileProjectionRequest
@@ -42,23 +37,21 @@ public sealed class UpdateUserProfileProjectionControllerTests
             CancellationToken.None);
 
         result.Should().BeOfType<AcceptedResult>();
-        capturedProjection.Should().NotBeNull();
-        capturedProjection!.FriendlyUserId.Should().Be("jane.doe");
-        capturedProjection.DisplayName.Should().Be("Jane Doe");
-        capturedProjection.Bio.Should().Be("updated");
-        unitOfWorkMock.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+        capturedCommand.Should().NotBeNull();
+        capturedCommand!.FriendlyUserId.Should().Be(" jane.doe ");
+        capturedCommand.DisplayName.Should().Be(" Jane Doe ");
+        capturedCommand.Bio.Should().Be(" updated ");
     }
 
     [Fact]
     public async Task Update_WhenProjectionDoesNotExist_ReturnsNotFound()
     {
-        var repositoryMock = new Mock<IUserProfileProjectionWriteRepository>();
-        repositoryMock
-            .Setup(x => x.UpdateAsync(It.IsAny<UserProfileProjection>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(false);
+        var mediatorMock = new Mock<IMediator>();
+        mediatorMock
+            .Setup(x => x.Send(It.IsAny<UpdateUserProfileProjectionCommand>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(FlowChatResult<Unit>.Failure(DomainError.NotFound("User profile projection was not found.")));
 
-        var unitOfWorkMock = new Mock<IUnitOfWork>();
-        var controller = CreateController("expected-key", repositoryMock, unitOfWorkMock, "expected-key");
+        var controller = CreateController("expected-key", mediatorMock, "expected-key");
 
         var result = await controller.Update(
             new UserProfileProjectionRequest
@@ -70,13 +63,18 @@ public sealed class UpdateUserProfileProjectionControllerTests
             CancellationToken.None);
 
         result.Should().BeOfType<NotFoundObjectResult>();
-        unitOfWorkMock.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
     public async Task Update_WhenPayloadInvalid_ReturnsBadRequest()
     {
-        var controller = CreateController("expected-key", new Mock<IUserProfileProjectionWriteRepository>(), new Mock<IUnitOfWork>(), "expected-key");
+        var mediatorMock = new Mock<IMediator>();
+        mediatorMock
+            .Setup(x => x.Send(It.IsAny<UpdateUserProfileProjectionCommand>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(FlowChatResult<Unit>.Failure(
+                DomainError.Validation(errors: ["Payload does not contain valid FriendlyUserId."])));
+
+        var controller = CreateController("expected-key", mediatorMock, "expected-key");
 
         var result = await controller.Update(
             new UserProfileProjectionRequest
@@ -92,13 +90,11 @@ public sealed class UpdateUserProfileProjectionControllerTests
 
     private static UpdateUserProfileProjectionController CreateController(
         string expectedApiKey,
-        Mock<IUserProfileProjectionWriteRepository> repositoryMock,
-        Mock<IUnitOfWork> unitOfWorkMock,
+        Mock<IMediator> mediatorMock,
         string? providedApiKey = null)
     {
         var controller = new UpdateUserProfileProjectionController(
-            repositoryMock.Object,
-            unitOfWorkMock.Object,
+            mediatorMock.Object,
             InternalUserProfileProjectionControllerTestFactory.CreateApiSettingsManager(expectedApiKey).Object);
 
         InternalUserProfileProjectionControllerTestFactory.ConfigureControllerContext(controller, providedApiKey);

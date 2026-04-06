@@ -39,6 +39,11 @@ Each service follows **Clean Architecture**:
 
 Domain events are dispatched via `IDomainEventDispatcher` and mapped to integration events published to Kafka.
 
+### API and Application boundaries
+- Controllers do not call repositories or persistence services directly
+- A controller's role is limited to HTTP concerns: reading the request, authorization/authentication, invoking the appropriate command/query through MediatR, and mapping HTTP DTOs and responses
+- Request validation belongs in the Application layer via FluentValidation / MediatR pipeline, not in controllers
+
 ## Domain-Driven Design
 
 The project uses tactical DDD. All domain logic lives in the `Domain` layer. These rules are non-negotiable:

@@ -1,10 +1,10 @@
 using AutoFixture;
-using FlowChat.Shared.Application;
 using FlowChat.SocialGraphService.Api.Features.UserProfile.Internal.InsertUserProfileProjection;
 using FlowChat.SocialGraphService.Api.Features.UserProfile.Internal.UserProfileProjection;
-using FlowChat.SocialGraphService.Application.Contracts.Persistence;
-using FlowChat.SocialGraphService.Application.Features.UserProfile;
+using FlowChat.Shared.Domain;
+using FlowChat.SocialGraphService.Application.Features.UserProfile.Commands.InsertUserProfileProjection;
 using FluentAssertions;
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 
@@ -17,8 +17,8 @@ public sealed class InsertUserProfileProjectionControllerTests
     [Fact]
     public async Task Insert_WhenApiKeyMissing_ReturnsUnauthorized()
     {
-        var repositoryMock = new Mock<IUserProfileProjectionWriteRepository>();
-        var controller = CreateController("expected-key", repositoryMock, new Mock<IUnitOfWork>());
+        var mediatorMock = new Mock<IMediator>(MockBehavior.Strict);
+        var controller = CreateController("expected-key", mediatorMock);
 
         var result = await controller.Insert(
             new UserProfileProjectionRequest
@@ -33,21 +33,16 @@ public sealed class InsertUserProfileProjectionControllerTests
     }
 
     [Fact]
-    public async Task Insert_WhenApiKeyMatches_InsertsProjectionAndSavesChanges()
+    public async Task Insert_WhenApiKeyMatches_SendsCommandAndReturnsAccepted()
     {
-        UserProfileProjection? capturedProjection = null;
-        var repositoryMock = new Mock<IUserProfileProjectionWriteRepository>();
-        repositoryMock
-            .Setup(x => x.InsertAsync(It.IsAny<UserProfileProjection>(), It.IsAny<CancellationToken>()))
-            .Callback<UserProfileProjection, CancellationToken>((projection, _) => capturedProjection = projection)
-            .ReturnsAsync(true);
+        InsertUserProfileProjectionCommand? capturedCommand = null;
+        var mediatorMock = new Mock<IMediator>();
+        mediatorMock
+            .Setup(x => x.Send(It.IsAny<InsertUserProfileProjectionCommand>(), It.IsAny<CancellationToken>()))
+            .Callback<IRequest<FlowChatResult<Unit>>, CancellationToken>((request, _) => capturedCommand = (InsertUserProfileProjectionCommand)request)
+            .ReturnsAsync(FlowChatResult<Unit>.Success(Unit.Value));
 
-        var unitOfWorkMock = new Mock<IUnitOfWork>();
-        unitOfWorkMock
-            .Setup(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(1);
-
-        var controller = CreateController("expected-key", repositoryMock, unitOfWorkMock, "expected-key");
+        var controller = CreateController("expected-key", mediatorMock, "expected-key");
 
         var result = await controller.Insert(
             new UserProfileProjectionRequest
@@ -60,23 +55,21 @@ public sealed class InsertUserProfileProjectionControllerTests
             CancellationToken.None);
 
         result.Should().BeOfType<AcceptedResult>();
-        capturedProjection.Should().NotBeNull();
-        capturedProjection!.FriendlyUserId.Should().Be("jdoe");
-        capturedProjection.DisplayName.Should().Be("John Doe");
-        capturedProjection.MainEmail.Should().Be("john@example.com");
-        unitOfWorkMock.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+        capturedCommand.Should().NotBeNull();
+        capturedCommand!.FriendlyUserId.Should().Be(" jdoe ");
+        capturedCommand.DisplayName.Should().Be(" John Doe ");
+        capturedCommand.MainEmail.Should().Be(" john@example.com ");
     }
 
     [Fact]
     public async Task Insert_WhenProjectionAlreadyExists_ReturnsConflict()
     {
-        var repositoryMock = new Mock<IUserProfileProjectionWriteRepository>();
-        repositoryMock
-            .Setup(x => x.InsertAsync(It.IsAny<UserProfileProjection>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(false);
+        var mediatorMock = new Mock<IMediator>();
+        mediatorMock
+            .Setup(x => x.Send(It.IsAny<InsertUserProfileProjectionCommand>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(FlowChatResult<Unit>.Failure(DomainError.Conflict("User profile projection already exists.")));
 
-        var unitOfWorkMock = new Mock<IUnitOfWork>();
-        var controller = CreateController("expected-key", repositoryMock, unitOfWorkMock, "expected-key");
+        var controller = CreateController("expected-key", mediatorMock, "expected-key");
 
         var result = await controller.Insert(
             new UserProfileProjectionRequest
@@ -88,13 +81,18 @@ public sealed class InsertUserProfileProjectionControllerTests
             CancellationToken.None);
 
         result.Should().BeOfType<ConflictObjectResult>();
-        unitOfWorkMock.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
     public async Task Insert_WhenPayloadInvalid_ReturnsBadRequest()
     {
-        var controller = CreateController("expected-key", new Mock<IUserProfileProjectionWriteRepository>(), new Mock<IUnitOfWork>(), "expected-key");
+        var mediatorMock = new Mock<IMediator>();
+        mediatorMock
+            .Setup(x => x.Send(It.IsAny<InsertUserProfileProjectionCommand>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(FlowChatResult<Unit>.Failure(
+                DomainError.Validation(errors: ["Payload does not contain valid UserProfileId."])));
+
+        var controller = CreateController("expected-key", mediatorMock, "expected-key");
 
         var result = await controller.Insert(
             new UserProfileProjectionRequest
@@ -110,13 +108,11 @@ public sealed class InsertUserProfileProjectionControllerTests
 
     private static InsertUserProfileProjectionController CreateController(
         string expectedApiKey,
-        Mock<IUserProfileProjectionWriteRepository> repositoryMock,
-        Mock<IUnitOfWork> unitOfWorkMock,
+        Mock<IMediator> mediatorMock,
         string? providedApiKey = null)
     {
         var controller = new InsertUserProfileProjectionController(
-            repositoryMock.Object,
-            unitOfWorkMock.Object,
+            mediatorMock.Object,
             InternalUserProfileProjectionControllerTestFactory.CreateApiSettingsManager(expectedApiKey).Object);
 
         InternalUserProfileProjectionControllerTestFactory.ConfigureControllerContext(controller, providedApiKey);
