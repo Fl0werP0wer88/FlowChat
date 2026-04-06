@@ -38,7 +38,6 @@ public sealed class DomainEventToIntegrationEventProfileTests
         integrationEvent.UserId.Should().Be(accountId.Value);
         integrationEvent.FriendlyUserId.Should().Be("flower");
         integrationEvent.Email.Should().Be("flower@example.com");
-        integrationEvent.DisplayName.Should().Be("Flower Power");
         integrationEvent.FirstName.Should().Be("Flower");
         integrationEvent.LastName.Should().Be("Power");
         integrationEvent.Organization.Should().Be("FlowChat");

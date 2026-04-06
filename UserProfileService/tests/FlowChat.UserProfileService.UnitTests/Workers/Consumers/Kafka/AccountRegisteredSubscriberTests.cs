@@ -33,9 +33,7 @@ public sealed class AccountRegisteredSubscriberTests
         {
             UserId = userId,
             FriendlyUserId = "jdoe",
-            DisplayName = "johnny",
             Email = "john@example.com",
-            PhoneNumber = "+48123123123",
             FirstName = " John ",
             LastName = " Doe ",
             Organization = " FlowChat "
@@ -51,7 +49,6 @@ public sealed class AccountRegisteredSubscriberTests
         capturedRequest.LastName.Should().Be("Doe");
         capturedRequest.Organization.Should().Be("FlowChat");
         capturedRequest.Email.Should().Be("john@example.com");
-        capturedRequest.Phone.Should().Be("+48123123123");
         capturedRequest.UserId.Should().Be(userId);
     }
 
@@ -68,9 +65,7 @@ public sealed class AccountRegisteredSubscriberTests
                 {
                     UserId = Guid.NewGuid(),
                     FriendlyUserId = "   ",
-                    DisplayName = "John Doe",
-                    Email = "test@example.com",
-                    PhoneNumber = "+48123123123"
+                    Email = "test@example.com"
                 },
                 CancellationToken.None));
 
@@ -92,19 +87,17 @@ public sealed class AccountRegisteredSubscriberTests
         {
             UserId = userId,
             FriendlyUserId = "jdoe",
-            DisplayName = "John Doe",
-            Email = "john@example.com",
-            PhoneNumber = null
+            Email = "john@example.com"
         };
 
         await subscriber.HandleAsync(message, CancellationToken.None);
 
         capturedRequest.Should().NotBeNull();
-        capturedRequest!.Phone.Should().BeNull();
+        capturedRequest!.Email.Should().Be("john@example.com");
     }
 
     [Fact]
-    public async Task HandleAsync_WhenFirstAndLastNameMissing_FallsBackToPayloadDisplayName()
+    public async Task HandleAsync_WhenFirstAndLastNameMissing_FallsBackToFriendlyUserId()
     {
         CreateInitialUserProfileRequest? capturedRequest = null;
         _apiClientMock
@@ -119,12 +112,11 @@ public sealed class AccountRegisteredSubscriberTests
             {
                 UserId = Guid.NewGuid(),
                 FriendlyUserId = "jdoe",
-                DisplayName = " John Doe ",
                 Email = "john@example.com"
             },
             CancellationToken.None);
 
         capturedRequest.Should().NotBeNull();
-        capturedRequest!.DisplayName.Should().Be("John Doe");
+        capturedRequest!.DisplayName.Should().Be("jdoe");
     }
 }

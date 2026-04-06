@@ -32,8 +32,7 @@ public sealed class UserProfileInternalApiClientTests
                 UserId = Guid.NewGuid(),
                 FriendlyUserId = "jdoe",
                 DisplayName = "John Doe",
-                Email = "john@example.com",
-                Phone = "+48123123123"
+                Email = "john@example.com"
             },
             CancellationToken.None);
 

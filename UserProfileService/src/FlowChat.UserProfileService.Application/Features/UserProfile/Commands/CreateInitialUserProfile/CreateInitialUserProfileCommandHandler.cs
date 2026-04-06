@@ -34,18 +34,11 @@ public sealed class CreateInitialUserProfileCommandHandler
         var lastName = NormalizeOptional(request.LastName);
         var organization = NormalizeOptional(request.Organization);
         var email = string.IsNullOrWhiteSpace(request.Email) ? null : request.Email.Trim();
-        var phone = string.IsNullOrWhiteSpace(request.Phone) ? null : request.Phone.Trim();
         EmailAddress? emailAddress = null;
-        PhoneNumber? phoneNumber = null;
 
         if (email is not null && !EmailAddress.TryCreate(email, out emailAddress))
         {
             throw new InvalidOperationException("Validated email address could not be normalized.");
-        }
-
-        if (phone is not null && !PhoneNumber.TryCreate(phone, out phoneNumber))
-        {
-            throw new InvalidOperationException("Validated phone number could not be normalized.");
         }
 
         var friendlyUserIdExists = await _userProfileReadRepository
@@ -69,9 +62,6 @@ public sealed class CreateInitialUserProfileCommandHandler
             friendlyUserId!,
             displayName!,
             emailAddress!,
-            phoneNumber,
-            request.AvatarUrl,
-            request.Bio,
             id: userProfileId,
             firstName: firstName,
             lastName: lastName,

@@ -23,10 +23,6 @@ public sealed class CreateInitialUserProfileCommandValidator
         RuleFor(command => command.Email)
             .Must(value => string.IsNullOrWhiteSpace(value) || EmailAddress.TryCreate(value, out _))
             .WithMessage(EmailAddress.InvalidEmailAddressMessage);
-
-        RuleFor(command => command.Phone)
-            .Must(value => string.IsNullOrWhiteSpace(value) || PhoneNumber.TryCreate(value, out _))
-            .WithMessage(PhoneNumber.InvalidPhoneNumberMessage);
     }
 }
 

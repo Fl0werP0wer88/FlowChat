@@ -43,7 +43,6 @@ public sealed class AccountRegisteredDomainEventHandlerTests
         capturedEvent.Should().NotBeNull();
         capturedEvent!.FriendlyUserId.Should().Be("flower");
         capturedEvent.Email.Should().Be("flower@example.com");
-        capturedEvent.DisplayName.Should().Be("Flower Power");
         capturedEvent.FirstName.Should().Be("Flower");
         capturedEvent.LastName.Should().Be("Power");
         capturedEvent.Organization.Should().Be("FlowChat");

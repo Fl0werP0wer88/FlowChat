@@ -60,6 +60,7 @@ public sealed class Account : AggregateRootBase<Account>
             NormalizeOptional(firstName),
             NormalizeOptional(lastName),
             NormalizeOptional(organization)));
+        account.MarkAggregateStateChanged(AggregateTypeNames.Account, account.CreateSnapshot);
 
         return account;
     }

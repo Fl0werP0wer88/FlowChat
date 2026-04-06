@@ -32,10 +32,7 @@ public sealed class CreateInitialUserProfileController(
             new CreateInitialUserProfileCommand(
                 request.FriendlyUserId,
                 request.DisplayName,
-                request.AvatarUrl,
-                request.Bio,
                 request.Email,
-                request.Phone,
                 request.UserId,
                 request.FirstName,
                 request.LastName,

@@ -37,10 +37,7 @@ public sealed class AccountRegisteredSubscriber(
                 FirstName = NormalizeOptional(message.FirstName),
                 LastName = NormalizeOptional(message.LastName),
                 Organization = NormalizeOptional(message.Organization),
-                AvatarUrl = null,
-                Bio = null,
                 Email = message.Email,
-                Phone = message.PhoneNumber,
                 UserId = userId.Value
             },
             cancellationToken);
@@ -62,14 +59,7 @@ public sealed class AccountRegisteredSubscriber(
             return fullName;
         }
 
-        if (!string.IsNullOrWhiteSpace(message.DisplayName))
-        {
-            return message.DisplayName.Trim();
-        }
-
-        return string.IsNullOrWhiteSpace(fullName)
-            ? friendlyUserId
-            : fullName;
+        return friendlyUserId;
     }
 
     private static string? NormalizeOptional(string? value) =>

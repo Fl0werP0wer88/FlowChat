@@ -64,7 +64,7 @@ public sealed class CreateInitialUserProfileCommandHandlerTests
     }
 
     [Fact]
-    public async Task Handle_WithEmailAndPhone_AddsContactsToAggregate()
+    public async Task Handle_WithEmail_AddsEmailToAggregate()
     {
         var userId = _fixture.Create<Guid>();
         UserProfile? capturedProfile = null;
@@ -77,10 +77,7 @@ public sealed class CreateInitialUserProfileCommandHandlerTests
             new CreateInitialUserProfileCommand(
                 "jdoe",
                 "John Doe",
-                null,
-                null,
                 "john@example.com",
-                "+48123123123",
                 userId,
                 " John ",
                 " Doe ",
@@ -91,8 +88,7 @@ public sealed class CreateInitialUserProfileCommandHandlerTests
         capturedProfile.Should().NotBeNull();
         capturedProfile.Emails.Should().ContainSingle()
             .Which.Should().Match<Email>(e => e.Address.Value == "john@example.com" && e.IsMain && e.IsAuth);
-        capturedProfile.Phones.Should().ContainSingle()
-            .Which.Should().Match<Phone>(p => p.Number.Value == "+48123123123" && p.IsMain);
+        capturedProfile.Phones.Should().BeEmpty();
         capturedProfile.FirstName.Should().Be("John");
         capturedProfile.LastName.Should().Be("Doe");
         capturedProfile.Organization.Should().Be("FlowChat");
@@ -102,7 +98,7 @@ public sealed class CreateInitialUserProfileCommandHandlerTests
     public async Task Handle_WithNullContacts_ReturnsValidationFailure()
     {
         var result = await SendAsync(
-            new CreateInitialUserProfileCommand("jdoe", "John Doe", null, null, null, null, _fixture.Create<Guid>()));
+            new CreateInitialUserProfileCommand("jdoe", "John Doe", null, _fixture.Create<Guid>()));
 
         result.IsFailure.Should().BeTrue();
         result.Error.ErrorType.Should().Be(ErrorType.Validation);
@@ -114,7 +110,7 @@ public sealed class CreateInitialUserProfileCommandHandlerTests
     public async Task Handle_WithWhitespaceContacts_ReturnsValidationFailure()
     {
         var result = await SendAsync(
-            new CreateInitialUserProfileCommand("jdoe", "John Doe", null, null, "   ", "   ", _fixture.Create<Guid>()));
+            new CreateInitialUserProfileCommand("jdoe", "John Doe", "   ", _fixture.Create<Guid>()));
 
         result.IsFailure.Should().BeTrue();
         result.Error.ErrorType.Should().Be(ErrorType.Validation);
@@ -126,7 +122,7 @@ public sealed class CreateInitialUserProfileCommandHandlerTests
     public async Task Handle_WithMissingRequiredFields_ReturnsValidationFailureWithAllErrorsInOrder()
     {
         var result = await SendAsync(
-            new CreateInitialUserProfileCommand("   ", "   ", null, null, null, null, _fixture.Create<Guid>()));
+            new CreateInitialUserProfileCommand("   ", "   ", null, _fixture.Create<Guid>()));
 
         result.IsFailure.Should().BeTrue();
         result.Error.ErrorType.Should().Be(ErrorType.Validation);
@@ -148,7 +144,7 @@ public sealed class CreateInitialUserProfileCommandHandlerTests
             .ReturnsAsync((UserProfile entity, CancellationToken _) => entity);
 
         var result = await SendAsync(
-            new CreateInitialUserProfileCommand("jdoe", "John Doe", null, null, "john@example.com", null, _fixture.Create<Guid>()));
+            new CreateInitialUserProfileCommand("jdoe", "John Doe", "john@example.com", _fixture.Create<Guid>()));
 
         result.IsSuccess.Should().BeTrue();
         capturedProfile.Should().NotBeNull();
@@ -161,7 +157,7 @@ public sealed class CreateInitialUserProfileCommandHandlerTests
     public async Task Handle_WithInvalidEmail_ReturnsValidationFailure()
     {
         var result = await SendAsync(
-            new CreateInitialUserProfileCommand("jdoe", "John Doe", null, null, "not-an-email", null, _fixture.Create<Guid>()));
+            new CreateInitialUserProfileCommand("jdoe", "John Doe", "not-an-email", _fixture.Create<Guid>()));
 
         result.IsFailure.Should().BeTrue();
         result.Error.ErrorType.Should().Be(ErrorType.Validation);
@@ -170,44 +166,14 @@ public sealed class CreateInitialUserProfileCommandHandlerTests
     }
 
     [Fact]
-    public async Task Handle_WithSinglePhone_ReturnsValidationFailureBecauseEmailIsRequired()
+    public async Task Handle_WhenEmailMissing_ReturnsValidationFailure()
     {
         var result = await SendAsync(
-            new CreateInitialUserProfileCommand("jdoe", "John Doe", null, null, null, "+48123123123", _fixture.Create<Guid>()));
+            new CreateInitialUserProfileCommand("jdoe", "John Doe", null, _fixture.Create<Guid>()));
 
         result.IsFailure.Should().BeTrue();
         result.Error.ErrorType.Should().Be(ErrorType.Validation);
         result.Error.Errors.Should().Equal("Email is required.");
-        _writeRepositoryMock.Verify(x => x.AddAsync(It.IsAny<UserProfile>(), It.IsAny<CancellationToken>()), Times.Never);
-    }
-
-    [Fact]
-    public async Task Handle_WithEmailAndFormattedPhone_NormalizesPhoneToE164()
-    {
-        UserProfile? capturedProfile = null;
-        _writeRepositoryMock
-            .Setup(x => x.AddAsync(It.IsAny<UserProfile>(), It.IsAny<CancellationToken>()))
-            .Callback<UserProfile, CancellationToken>((entity, _) => capturedProfile = entity)
-            .ReturnsAsync((UserProfile entity, CancellationToken _) => entity);
-
-        var result = await SendAsync(
-            new CreateInitialUserProfileCommand("jdoe", "John Doe", null, null, "john@example.com", "+48 123 123 123", _fixture.Create<Guid>()));
-
-        result.IsSuccess.Should().BeTrue();
-        capturedProfile.Should().NotBeNull();
-        capturedProfile.Phones.Should().ContainSingle()
-            .Which.Number.Value.Should().Be("+48123123123");
-    }
-
-    [Fact]
-    public async Task Handle_WithEmailAndInvalidPhone_ReturnsValidationFailure()
-    {
-        var result = await SendAsync(
-            new CreateInitialUserProfileCommand("jdoe", "John Doe", null, null, "john@example.com", "123123123", _fixture.Create<Guid>()));
-
-        result.IsFailure.Should().BeTrue();
-        result.Error.ErrorType.Should().Be(ErrorType.Validation);
-        result.Error.Errors.Should().Equal(PhoneNumber.InvalidPhoneNumberMessage);
         _writeRepositoryMock.Verify(x => x.AddAsync(It.IsAny<UserProfile>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
@@ -219,7 +185,7 @@ public sealed class CreateInitialUserProfileCommandHandlerTests
             .ReturnsAsync(true);
 
         var result = await SendAsync(
-            new CreateInitialUserProfileCommand("jdoe", "John Doe", null, null, "john@example.com", null, _fixture.Create<Guid>()));
+            new CreateInitialUserProfileCommand("jdoe", "John Doe", "john@example.com", _fixture.Create<Guid>()));
 
         result.IsFailure.Should().BeTrue();
         result.Error.ErrorType.Should().Be(ErrorType.Conflict);
@@ -235,32 +201,12 @@ public sealed class CreateInitialUserProfileCommandHandlerTests
             .ReturnsAsync(true);
 
         var result = await SendAsync(
-            new CreateInitialUserProfileCommand("jdoe", "John Doe", null, null, "john@example.com", null, _fixture.Create<Guid>()));
+            new CreateInitialUserProfileCommand("jdoe", "John Doe", "john@example.com", _fixture.Create<Guid>()));
 
         result.IsFailure.Should().BeTrue();
         result.Error.ErrorType.Should().Be(ErrorType.Conflict);
         result.Error.ErrorMessage.Should().Contain("john@example.com");
         _writeRepositoryMock.Verify(x => x.AddAsync(It.IsAny<UserProfile>(), It.IsAny<CancellationToken>()), Times.Never);
-    }
-
-    [Fact]
-    public async Task Handle_WithAvatarUrlAndBio_SetsOptionalFields()
-    {
-        const string avatarUrl = "https://cdn.example.com/avatar.png";
-        const string bio = "Software developer";
-        UserProfile? capturedProfile = null;
-        _writeRepositoryMock
-            .Setup(x => x.AddAsync(It.IsAny<UserProfile>(), It.IsAny<CancellationToken>()))
-            .Callback<UserProfile, CancellationToken>((entity, _) => capturedProfile = entity)
-            .ReturnsAsync((UserProfile entity, CancellationToken _) => entity);
-
-        var result = await SendAsync(
-            new CreateInitialUserProfileCommand("jdoe", "John Doe", avatarUrl, bio, "john@example.com", null, _fixture.Create<Guid>()));
-
-        result.IsSuccess.Should().BeTrue();
-        capturedProfile.Should().NotBeNull();
-        capturedProfile.AvatarUrl.Should().Be(avatarUrl);
-        capturedProfile.Bio.Should().Be(bio);
     }
 
     [Fact]
@@ -273,7 +219,7 @@ public sealed class CreateInitialUserProfileCommandHandlerTests
             .ReturnsAsync((UserProfile entity, CancellationToken _) => entity);
 
         var result = await SendAsync(
-            new CreateInitialUserProfileCommand("  jdoe  ", "  John Doe  ", null, null, "  john@example.com  ", null, _fixture.Create<Guid>()));
+            new CreateInitialUserProfileCommand("  jdoe  ", "  John Doe  ", "  john@example.com  ", _fixture.Create<Guid>()));
 
         result.IsSuccess.Should().BeTrue();
         capturedProfile.Should().NotBeNull();
@@ -281,31 +227,6 @@ public sealed class CreateInitialUserProfileCommandHandlerTests
         capturedProfile.DisplayName.Should().Be("John Doe");
         capturedProfile.Emails.Should().ContainSingle()
             .Which.Address.Value.Should().Be("john@example.com");
-    }
-
-    [Fact]
-    public async Task Handle_WithPhone_DomainEventContainsPhoneNumber()
-    {
-        IReadOnlyList<IDomainEvent> domainEventsAtAdd = [];
-
-        _writeRepositoryMock
-            .Setup(x => x.AddAsync(It.IsAny<UserProfile>(), It.IsAny<CancellationToken>()))
-            .Callback<UserProfile, CancellationToken>((entity, _) => domainEventsAtAdd = entity.DomainEvents.ToList())
-            .ReturnsAsync((UserProfile entity, CancellationToken _) => entity);
-
-        var result = await SendAsync(
-            new CreateInitialUserProfileCommand("jdoe", "John Doe", null, null, "john@example.com", "+48123123123", _fixture.Create<Guid>()));
-
-        result.IsSuccess.Should().BeTrue();
-
-        var createdEvent = domainEventsAtAdd.OfType<UserProfileCreatedDomainEvent>().Should().ContainSingle().Subject;
-        createdEvent.MainPhone.Should().NotBeNull();
-        createdEvent.MainPhone.Value.Should().Be("+48123123123");
-
-        var stateChangedEvent = domainEventsAtAdd
-            .OfType<AggregateStateChangedDomainEvent<UserProfile, UserProfileSnapshot>>()
-            .Should().ContainSingle().Subject;
-        stateChangedEvent.AggregateState.MainPhone.Should().Be("+48123123123");
     }
 
     [Fact]
@@ -325,7 +246,7 @@ public sealed class CreateInitialUserProfileCommandHandlerTests
             .Returns(Task.CompletedTask);
 
         var result = await SendAsync(
-            new CreateInitialUserProfileCommand("jdoe", "John Doe", null, null, "john@example.com", null, _fixture.Create<Guid>()));
+            new CreateInitialUserProfileCommand("jdoe", "John Doe", "john@example.com", _fixture.Create<Guid>()));
 
         result.IsSuccess.Should().BeTrue();
 
@@ -363,10 +284,7 @@ public sealed class CreateInitialUserProfileCommandHandlerTests
             new CreateInitialUserProfileCommand(
                 "jdoe",
                 "John Doe",
-                null,
-                null,
                 "john@example.com",
-                null,
                 _fixture.Create<Guid>(),
                 " John ",
                 " Doe ",
