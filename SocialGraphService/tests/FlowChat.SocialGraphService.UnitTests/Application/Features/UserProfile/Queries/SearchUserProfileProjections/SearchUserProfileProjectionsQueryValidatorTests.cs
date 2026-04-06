@@ -15,37 +15,43 @@ public sealed class SearchUserProfileProjectionsQueryValidatorTests
         result.IsValid.Should().BeTrue();
     }
 
-    [Theory]
-    [InlineData("")]
-    [InlineData("   ")]
-    public async Task Validate_WhenFirstNameIsBlank_ReturnsValidationError(string firstName)
+    [Fact]
+    public async Task Validate_WhenOnlyFirstNameIsProvided_ReturnsValid()
     {
-        var result = await _validator.ValidateAsync(CreateValidQuery() with { FirstName = firstName });
+        var result = await _validator.ValidateAsync(new SearchUserProfileProjectionsQuery("Jane", null, null));
 
-        result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(error => error.ErrorMessage == "Query does not contain valid FirstName.");
+        result.IsValid.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task Validate_WhenOnlyLastNameIsProvided_ReturnsValid()
+    {
+        var result = await _validator.ValidateAsync(new SearchUserProfileProjectionsQuery(null, "Doe", null));
+
+        result.IsValid.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task Validate_WhenOnlyOrganizationIsProvided_ReturnsValid()
+    {
+        var result = await _validator.ValidateAsync(new SearchUserProfileProjectionsQuery(null, null, "FlowChat"));
+
+        result.IsValid.Should().BeTrue();
     }
 
     [Theory]
-    [InlineData("")]
-    [InlineData("   ")]
-    public async Task Validate_WhenLastNameIsBlank_ReturnsValidationError(string lastName)
+    [InlineData(null, null, null)]
+    [InlineData("", "", "")]
+    [InlineData("   ", null, "  ")]
+    public async Task Validate_WhenNoCriteriaProvided_ReturnsValidationError(
+        string? firstName,
+        string? lastName,
+        string? organization)
     {
-        var result = await _validator.ValidateAsync(CreateValidQuery() with { LastName = lastName });
+        var result = await _validator.ValidateAsync(new SearchUserProfileProjectionsQuery(firstName, lastName, organization));
 
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(error => error.ErrorMessage == "Query does not contain valid LastName.");
-    }
-
-    [Theory]
-    [InlineData("")]
-    [InlineData("   ")]
-    public async Task Validate_WhenOrganizationIsBlank_ReturnsValidationError(string organization)
-    {
-        var result = await _validator.ValidateAsync(CreateValidQuery() with { Organization = organization });
-
-        result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(error => error.ErrorMessage == "Query does not contain valid Organization.");
+        result.Errors.Should().ContainSingle(error => error.ErrorMessage == "Query must contain at least one search criterion.");
     }
 
     [Fact]
@@ -55,6 +61,24 @@ public sealed class SearchUserProfileProjectionsQueryValidatorTests
 
         result.IsValid.Should().BeFalse();
         result.Errors.Should().ContainSingle(error => error.ErrorMessage == "Query Organization cannot be longer than 200 characters.");
+    }
+
+    [Fact]
+    public async Task Validate_WhenFirstNameIsTooLong_ReturnsValidationError()
+    {
+        var result = await _validator.ValidateAsync(CreateValidQuery() with { FirstName = new string('a', 101) });
+
+        result.IsValid.Should().BeFalse();
+        result.Errors.Should().ContainSingle(error => error.ErrorMessage == "Query FirstName cannot be longer than 100 characters.");
+    }
+
+    [Fact]
+    public async Task Validate_WhenLastNameIsTooLong_ReturnsValidationError()
+    {
+        var result = await _validator.ValidateAsync(CreateValidQuery() with { LastName = new string('a', 101) });
+
+        result.IsValid.Should().BeFalse();
+        result.Errors.Should().ContainSingle(error => error.ErrorMessage == "Query LastName cannot be longer than 100 characters.");
     }
 
     private static SearchUserProfileProjectionsQuery CreateValidQuery() =>

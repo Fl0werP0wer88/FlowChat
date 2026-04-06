@@ -27,24 +27,34 @@ public sealed class UserProfileProjectionReadRepository(AppDbContext dbContext) 
         entity.Organization);
 
     public async Task<IReadOnlyList<UserProfileProjection>> SearchAsync(
-        string firstName,
-        string lastName,
-        string organization,
+        string? firstName,
+        string? lastName,
+        string? organization,
         CancellationToken cancellationToken = default)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(firstName);
-        ArgumentException.ThrowIfNullOrWhiteSpace(lastName);
-        ArgumentException.ThrowIfNullOrWhiteSpace(organization);
-
-        var firstNamePattern = $"{firstName}%";
-        var lastNamePattern = $"{lastName}%";
-        var organizationPattern = $"{organization}%";
-
-        return await _dbContext.UserProfileProjections
+        var query = _dbContext.UserProfileProjections
             .AsNoTracking()
-            .Where(entity => entity.FirstName != null && EF.Functions.Like(entity.FirstName, firstNamePattern))
-            .Where(entity => entity.LastName != null && EF.Functions.Like(entity.LastName, lastNamePattern))
-            .Where(entity => entity.Organization != null && EF.Functions.Like(entity.Organization, organizationPattern))
+            .AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(firstName))
+        {
+            var firstNamePattern = $"{firstName}%";
+            query = query.Where(entity => entity.FirstName != null && EF.Functions.Like(entity.FirstName, firstNamePattern));
+        }
+
+        if (!string.IsNullOrWhiteSpace(lastName))
+        {
+            var lastNamePattern = $"{lastName}%";
+            query = query.Where(entity => entity.LastName != null && EF.Functions.Like(entity.LastName, lastNamePattern));
+        }
+
+        if (!string.IsNullOrWhiteSpace(organization))
+        {
+            var organizationPattern = $"{organization}%";
+            query = query.Where(entity => entity.Organization != null && EF.Functions.Like(entity.Organization, organizationPattern));
+        }
+
+        return await query
             .OrderBy(entity => entity.DisplayName)
             .Select(Projection)
             .ToListAsync(cancellationToken);

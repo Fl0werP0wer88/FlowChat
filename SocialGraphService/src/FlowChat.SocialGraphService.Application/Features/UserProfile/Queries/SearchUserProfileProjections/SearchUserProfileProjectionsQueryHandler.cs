@@ -20,11 +20,14 @@ public sealed class SearchUserProfileProjectionsQueryHandler
         CancellationToken cancellationToken)
     {
         var projections = await _userProfileProjectionReadRepository.SearchAsync(
-            request.FirstName.Trim(),
-            request.LastName.Trim(),
-            request.Organization.Trim(),
+            Normalize(request.FirstName),
+            Normalize(request.LastName),
+            Normalize(request.Organization),
             cancellationToken);
 
         return FlowChatResult<IReadOnlyList<UserProfileProjection>>.Success(projections);
     }
+
+    private static string? Normalize(string? value) =>
+        string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 }

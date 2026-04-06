@@ -24,9 +24,9 @@ public sealed class SearchUserProfileProjectionsController : ApiControllerBase
     {
         var result = await _mediator.Send(
             new SearchUserProfileProjectionsQuery(
-                request.FirstName ?? string.Empty,
-                request.LastName ?? string.Empty,
-                request.Organization ?? string.Empty),
+                request.FirstName,
+                request.LastName,
+                request.Organization),
             cancellationToken);
 
         return result.IsSuccess

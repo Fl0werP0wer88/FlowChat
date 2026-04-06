@@ -44,8 +44,8 @@ public sealed class SearchUserProfileProjectionsControllerTests
             .Setup(x => x.Send(
                 It.Is<SearchUserProfileProjectionsQuery>(query =>
                     query.FirstName == "Jan" &&
-                    query.LastName == "Do" &&
-                    query.Organization == "Flow"),
+                    query.LastName == null &&
+                    query.Organization == null),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(FlowChatResult<IReadOnlyList<UserProfileProjection>>.Success(projections));
 
@@ -54,9 +54,7 @@ public sealed class SearchUserProfileProjectionsControllerTests
         var result = await controller.Search(
             new SearchUserProfileProjectionsRequest
             {
-                FirstName = "Jan",
-                LastName = "Do",
-                Organization = "Flow"
+                FirstName = "Jan"
             },
             CancellationToken.None);
 
@@ -71,7 +69,7 @@ public sealed class SearchUserProfileProjectionsControllerTests
         _mediatorMock
             .Setup(x => x.Send(It.IsAny<SearchUserProfileProjectionsQuery>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(FlowChatResult<IReadOnlyList<UserProfileProjection>>.Failure(
-                DomainError.Validation(errors: ["Query does not contain valid FirstName."])));
+                DomainError.Validation(errors: ["Query must contain at least one search criterion."])));
 
         var controller = SetupController(new SearchUserProfileProjectionsController(_mediatorMock.Object));
 

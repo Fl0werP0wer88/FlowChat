@@ -41,17 +41,17 @@ public sealed class SearchUserProfileProjectionsQueryHandlerTests
         ];
 
         _userProfileProjectionReadRepositoryMock
-            .Setup(x => x.SearchAsync("Jane", "Doe", "Flow", It.IsAny<CancellationToken>()))
+            .Setup(x => x.SearchAsync("Jane", null, "Flow", It.IsAny<CancellationToken>()))
             .ReturnsAsync(expectedProjections);
 
         var result = await _handler.Handle(
-            new SearchUserProfileProjectionsQuery(" Jane ", " Doe ", " Flow "),
+            new SearchUserProfileProjectionsQuery(" Jane ", "   ", " Flow "),
             CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().BeEquivalentTo(expectedProjections);
         _userProfileProjectionReadRepositoryMock.Verify(
-            x => x.SearchAsync("Jane", "Doe", "Flow", It.IsAny<CancellationToken>()),
+            x => x.SearchAsync("Jane", null, "Flow", It.IsAny<CancellationToken>()),
             Times.Once);
     }
 }

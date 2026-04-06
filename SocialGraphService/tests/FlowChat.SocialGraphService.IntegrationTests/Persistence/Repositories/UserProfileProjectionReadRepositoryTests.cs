@@ -60,6 +60,56 @@ public sealed class UserProfileProjectionReadRepositoryTests
         result.Should().BeEmpty();
     }
 
+    [Fact]
+    public async Task SearchAsync_WhenOnlyFirstNameIsProvided_ReturnsMatchesForThatSingleCriterion()
+    {
+        await using var connection = new SqliteConnection("Data Source=:memory:");
+        await connection.OpenAsync();
+
+        await using (var seedContext = CreateDbContext(connection))
+        {
+            seedContext.UserProfileProjections.AddRange(
+                CreateProjection("jdoe", "Jane Doe", "Jane", "Doe", "FlowChat"),
+                CreateProjection("jsmith", "Jane Smith", "Jane", "Smith", "OtherCorp"),
+                CreateProjection("adoe", "Ann Doe", "Ann", "Doe", "FlowChat"));
+
+            await seedContext.SaveChangesAsync();
+        }
+
+        await using var readContext = CreateDbContext(connection);
+        var repository = new UserProfileProjectionReadRepository(readContext);
+
+        var result = await repository.SearchAsync("Jan", null, string.Empty, CancellationToken.None);
+
+        result.Should().HaveCount(2);
+        result.Select(projection => projection.DisplayName).Should().Equal("Jane Doe", "Jane Smith");
+    }
+
+    [Fact]
+    public async Task SearchAsync_WhenCriterionIsNullOrEmpty_IgnoresThatFilter()
+    {
+        await using var connection = new SqliteConnection("Data Source=:memory:");
+        await connection.OpenAsync();
+
+        await using (var seedContext = CreateDbContext(connection))
+        {
+            seedContext.UserProfileProjections.AddRange(
+                CreateProjection("jdoe", "Jane Doe", "Jane", "Doe", "FlowChat"),
+                CreateProjection("jdoe2", "Jane Doe Flow", "Jane", "Doe", "FlowLab"),
+                CreateProjection("jother", "Jane Other", "Jane", "Other", "FlowChat"));
+
+            await seedContext.SaveChangesAsync();
+        }
+
+        await using var readContext = CreateDbContext(connection);
+        var repository = new UserProfileProjectionReadRepository(readContext);
+
+        var result = await repository.SearchAsync(null, "Do", "Flow", CancellationToken.None);
+
+        result.Should().HaveCount(2);
+        result.Select(projection => projection.DisplayName).Should().Equal("Jane Doe", "Jane Doe Flow");
+    }
+
     private static UserProfileProjectionEntity CreateProjection(
         string friendlyUserId,
         string displayName,
