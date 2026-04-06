@@ -18,7 +18,7 @@ public sealed class UpdateUserProfileProjectionControllerTests
     public async Task Update_WhenApiKeyMatches_UpdatesProjectionAndSavesChanges()
     {
         UserProfileProjection? capturedProjection = null;
-        var repositoryMock = new Mock<IUserProfileProjectionRepository>();
+        var repositoryMock = new Mock<IUserProfileProjectionWriteRepository>();
         repositoryMock
             .Setup(x => x.UpdateAsync(It.IsAny<UserProfileProjection>(), It.IsAny<CancellationToken>()))
             .Callback<UserProfileProjection, CancellationToken>((projection, _) => capturedProjection = projection)
@@ -52,7 +52,7 @@ public sealed class UpdateUserProfileProjectionControllerTests
     [Fact]
     public async Task Update_WhenProjectionDoesNotExist_ReturnsNotFound()
     {
-        var repositoryMock = new Mock<IUserProfileProjectionRepository>();
+        var repositoryMock = new Mock<IUserProfileProjectionWriteRepository>();
         repositoryMock
             .Setup(x => x.UpdateAsync(It.IsAny<UserProfileProjection>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(false);
@@ -76,7 +76,7 @@ public sealed class UpdateUserProfileProjectionControllerTests
     [Fact]
     public async Task Update_WhenPayloadInvalid_ReturnsBadRequest()
     {
-        var controller = CreateController("expected-key", new Mock<IUserProfileProjectionRepository>(), new Mock<IUnitOfWork>(), "expected-key");
+        var controller = CreateController("expected-key", new Mock<IUserProfileProjectionWriteRepository>(), new Mock<IUnitOfWork>(), "expected-key");
 
         var result = await controller.Update(
             new UserProfileProjectionRequest
@@ -92,7 +92,7 @@ public sealed class UpdateUserProfileProjectionControllerTests
 
     private static UpdateUserProfileProjectionController CreateController(
         string expectedApiKey,
-        Mock<IUserProfileProjectionRepository> repositoryMock,
+        Mock<IUserProfileProjectionWriteRepository> repositoryMock,
         Mock<IUnitOfWork> unitOfWorkMock,
         string? providedApiKey = null)
     {

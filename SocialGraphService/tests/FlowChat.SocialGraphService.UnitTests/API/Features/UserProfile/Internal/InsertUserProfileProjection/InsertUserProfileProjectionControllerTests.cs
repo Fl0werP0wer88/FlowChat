@@ -17,7 +17,7 @@ public sealed class InsertUserProfileProjectionControllerTests
     [Fact]
     public async Task Insert_WhenApiKeyMissing_ReturnsUnauthorized()
     {
-        var repositoryMock = new Mock<IUserProfileProjectionRepository>();
+        var repositoryMock = new Mock<IUserProfileProjectionWriteRepository>();
         var controller = CreateController("expected-key", repositoryMock, new Mock<IUnitOfWork>());
 
         var result = await controller.Insert(
@@ -36,7 +36,7 @@ public sealed class InsertUserProfileProjectionControllerTests
     public async Task Insert_WhenApiKeyMatches_InsertsProjectionAndSavesChanges()
     {
         UserProfileProjection? capturedProjection = null;
-        var repositoryMock = new Mock<IUserProfileProjectionRepository>();
+        var repositoryMock = new Mock<IUserProfileProjectionWriteRepository>();
         repositoryMock
             .Setup(x => x.InsertAsync(It.IsAny<UserProfileProjection>(), It.IsAny<CancellationToken>()))
             .Callback<UserProfileProjection, CancellationToken>((projection, _) => capturedProjection = projection)
@@ -70,7 +70,7 @@ public sealed class InsertUserProfileProjectionControllerTests
     [Fact]
     public async Task Insert_WhenProjectionAlreadyExists_ReturnsConflict()
     {
-        var repositoryMock = new Mock<IUserProfileProjectionRepository>();
+        var repositoryMock = new Mock<IUserProfileProjectionWriteRepository>();
         repositoryMock
             .Setup(x => x.InsertAsync(It.IsAny<UserProfileProjection>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(false);
@@ -94,7 +94,7 @@ public sealed class InsertUserProfileProjectionControllerTests
     [Fact]
     public async Task Insert_WhenPayloadInvalid_ReturnsBadRequest()
     {
-        var controller = CreateController("expected-key", new Mock<IUserProfileProjectionRepository>(), new Mock<IUnitOfWork>(), "expected-key");
+        var controller = CreateController("expected-key", new Mock<IUserProfileProjectionWriteRepository>(), new Mock<IUnitOfWork>(), "expected-key");
 
         var result = await controller.Insert(
             new UserProfileProjectionRequest
@@ -110,7 +110,7 @@ public sealed class InsertUserProfileProjectionControllerTests
 
     private static InsertUserProfileProjectionController CreateController(
         string expectedApiKey,
-        Mock<IUserProfileProjectionRepository> repositoryMock,
+        Mock<IUserProfileProjectionWriteRepository> repositoryMock,
         Mock<IUnitOfWork> unitOfWorkMock,
         string? providedApiKey = null)
     {

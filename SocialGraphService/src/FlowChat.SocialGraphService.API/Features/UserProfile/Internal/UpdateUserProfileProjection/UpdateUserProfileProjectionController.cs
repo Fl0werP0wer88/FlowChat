@@ -10,13 +10,13 @@ namespace FlowChat.SocialGraphService.Api.Features.UserProfile.Internal.UpdateUs
 [ApiExplorerSettings(IgnoreApi = true)]
 [Route("internal/userprofiles/projection/update")]
 public sealed class UpdateUserProfileProjectionController(
-    IUserProfileProjectionRepository userProfileProjectionRepository,
+    IUserProfileProjectionWriteRepository userProfileProjectionWriteRepository,
     IUnitOfWork unitOfWork,
     IApiSettingsManager apiSettingsManager)
     : InternalUserProfileProjectionControllerBase(unitOfWork, apiSettingsManager)
 {
-    private readonly IUserProfileProjectionRepository _userProfileProjectionRepository = userProfileProjectionRepository
-        ?? throw new ArgumentNullException(nameof(userProfileProjectionRepository));
+    private readonly IUserProfileProjectionWriteRepository _userProfileProjectionWriteRepository = userProfileProjectionWriteRepository
+        ?? throw new ArgumentNullException(nameof(userProfileProjectionWriteRepository));
 
     [HttpPut]
     public async Task<IActionResult> Update(
@@ -29,7 +29,7 @@ public sealed class UpdateUserProfileProjectionController(
             return validationResult;
         }
 
-        var wasUpdated = await _userProfileProjectionRepository.UpdateAsync(projection!, cancellationToken);
+        var wasUpdated = await _userProfileProjectionWriteRepository.UpdateAsync(projection!, cancellationToken);
         if (!wasUpdated)
         {
             return NotFoundResponse("User profile projection was not found.");

@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FlowChat.SocialGraphService.Persistence.Repositories;
 
-public sealed class UserProfileProjectionRepository(AppDbContext dbContext) : IUserProfileProjectionRepository
+public sealed class UserProfileProjectionWriteRepository(AppDbContext dbContext) : IUserProfileProjectionWriteRepository
 {
     private const string ProjectionSource = "user-profile-events";
     private readonly AppDbContext _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));

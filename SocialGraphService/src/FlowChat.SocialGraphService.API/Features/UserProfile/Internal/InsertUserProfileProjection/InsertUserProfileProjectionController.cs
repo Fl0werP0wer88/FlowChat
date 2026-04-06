@@ -10,13 +10,13 @@ namespace FlowChat.SocialGraphService.Api.Features.UserProfile.Internal.InsertUs
 [ApiExplorerSettings(IgnoreApi = true)]
 [Route("internal/userprofiles/projection/insert")]
 public sealed class InsertUserProfileProjectionController(
-    IUserProfileProjectionRepository userProfileProjectionRepository,
+    IUserProfileProjectionWriteRepository userProfileProjectionWriteRepository,
     IUnitOfWork unitOfWork,
     IApiSettingsManager apiSettingsManager)
     : InternalUserProfileProjectionControllerBase(unitOfWork, apiSettingsManager)
 {
-    private readonly IUserProfileProjectionRepository _userProfileProjectionRepository = userProfileProjectionRepository
-        ?? throw new ArgumentNullException(nameof(userProfileProjectionRepository));
+    private readonly IUserProfileProjectionWriteRepository _userProfileProjectionWriteRepository = userProfileProjectionWriteRepository
+        ?? throw new ArgumentNullException(nameof(userProfileProjectionWriteRepository));
 
     [HttpPost]
     public async Task<IActionResult> Insert(
@@ -29,7 +29,7 @@ public sealed class InsertUserProfileProjectionController(
             return validationResult;
         }
 
-        var wasInserted = await _userProfileProjectionRepository.InsertAsync(projection!, cancellationToken);
+        var wasInserted = await _userProfileProjectionWriteRepository.InsertAsync(projection!, cancellationToken);
         if (!wasInserted)
         {
             return ConflictResponse("User profile projection already exists.");

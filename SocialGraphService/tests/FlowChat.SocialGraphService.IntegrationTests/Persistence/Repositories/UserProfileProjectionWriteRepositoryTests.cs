@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FlowChat.SocialGraphService.IntegrationTests.Persistence.Repositories;
 
-public sealed class UserProfileProjectionRepositoryTests
+public sealed class UserProfileProjectionWriteRepositoryTests
 {
     [Fact]
     public async Task InsertAsync_WhenProjectionDoesNotExist_AddsNewEntityAndReturnsTrue()
@@ -15,7 +15,7 @@ public sealed class UserProfileProjectionRepositoryTests
         await using var connection = new SqliteConnection("Data Source=:memory:");
         await connection.OpenAsync();
         await using var context = CreateDbContext(connection);
-        var repository = new UserProfileProjectionRepository(context);
+        var repository = new UserProfileProjectionWriteRepository(context);
         var projection = new UserProfileProjection(
             Guid.NewGuid(),
             "jdoe",
@@ -74,7 +74,7 @@ public sealed class UserProfileProjectionRepositoryTests
         }
 
         await using var context = CreateDbContext(connection);
-        var repository = new UserProfileProjectionRepository(context);
+        var repository = new UserProfileProjectionWriteRepository(context);
         var projection = new UserProfileProjection(
             userProfileId,
             "new-user",
@@ -132,7 +132,7 @@ public sealed class UserProfileProjectionRepositoryTests
         }
 
         await using var updateContext = CreateDbContext(connection);
-        var repository = new UserProfileProjectionRepository(updateContext);
+        var repository = new UserProfileProjectionWriteRepository(updateContext);
         var updatedProjection = new UserProfileProjection(
             userProfileId,
             "new-user",
@@ -173,7 +173,7 @@ public sealed class UserProfileProjectionRepositoryTests
         await using var connection = new SqliteConnection("Data Source=:memory:");
         await connection.OpenAsync();
         await using var context = CreateDbContext(connection);
-        var repository = new UserProfileProjectionRepository(context);
+        var repository = new UserProfileProjectionWriteRepository(context);
         var projection = new UserProfileProjection(
             Guid.NewGuid(),
             "jdoe",
