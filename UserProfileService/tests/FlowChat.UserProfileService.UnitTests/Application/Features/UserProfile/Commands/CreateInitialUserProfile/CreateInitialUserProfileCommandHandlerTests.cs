@@ -76,7 +76,6 @@ public sealed class CreateInitialUserProfileCommandHandlerTests
         var result = await SendAsync(
             new CreateInitialUserProfileCommand(
                 "jdoe",
-                "John Doe",
                 "john@example.com",
                 userId,
                 " John ",
@@ -98,7 +97,7 @@ public sealed class CreateInitialUserProfileCommandHandlerTests
     public async Task Handle_WithNullContacts_ReturnsValidationFailure()
     {
         var result = await SendAsync(
-            new CreateInitialUserProfileCommand("jdoe", "John Doe", null, _fixture.Create<Guid>()));
+            new CreateInitialUserProfileCommand("jdoe", null, _fixture.Create<Guid>()));
 
         result.IsFailure.Should().BeTrue();
         result.Error.ErrorType.Should().Be(ErrorType.Validation);
@@ -110,7 +109,7 @@ public sealed class CreateInitialUserProfileCommandHandlerTests
     public async Task Handle_WithWhitespaceContacts_ReturnsValidationFailure()
     {
         var result = await SendAsync(
-            new CreateInitialUserProfileCommand("jdoe", "John Doe", "   ", _fixture.Create<Guid>()));
+            new CreateInitialUserProfileCommand("jdoe", "   ", _fixture.Create<Guid>()));
 
         result.IsFailure.Should().BeTrue();
         result.Error.ErrorType.Should().Be(ErrorType.Validation);
@@ -122,14 +121,13 @@ public sealed class CreateInitialUserProfileCommandHandlerTests
     public async Task Handle_WithMissingRequiredFields_ReturnsValidationFailureWithAllErrorsInOrder()
     {
         var result = await SendAsync(
-            new CreateInitialUserProfileCommand("   ", "   ", null, _fixture.Create<Guid>()));
+            new CreateInitialUserProfileCommand("   ", null, _fixture.Create<Guid>()));
 
         result.IsFailure.Should().BeTrue();
         result.Error.ErrorType.Should().Be(ErrorType.Validation);
         result.Error.ErrorMessage.Should().Be("Validation Failed.");
         result.Error.Errors.Should().Equal(
             "FriendlyUserId is required.",
-            "DisplayName is required.",
             "Email is required.");
         _writeRepositoryMock.Verify(x => x.AddAsync(It.IsAny<UserProfile>(), It.IsAny<CancellationToken>()), Times.Never);
     }
@@ -144,20 +142,38 @@ public sealed class CreateInitialUserProfileCommandHandlerTests
             .ReturnsAsync((UserProfile entity, CancellationToken _) => entity);
 
         var result = await SendAsync(
-            new CreateInitialUserProfileCommand("jdoe", "John Doe", "john@example.com", _fixture.Create<Guid>()));
+            new CreateInitialUserProfileCommand("jdoe", "john@example.com", _fixture.Create<Guid>()));
 
         result.IsSuccess.Should().BeTrue();
         capturedProfile.Should().NotBeNull();
         capturedProfile.Emails.Should().ContainSingle()
             .Which.Should().Match<Email>(e => e.Address.Value == "john@example.com" && e.IsMain && e.IsAuth);
         capturedProfile.Phones.Should().BeEmpty();
+        capturedProfile.DisplayName.Should().Be("jdoe");
+    }
+
+    [Fact]
+    public async Task Handle_WithFirstAndLastName_BuildsDisplayNameFromThem()
+    {
+        UserProfile? capturedProfile = null;
+        _writeRepositoryMock
+            .Setup(x => x.AddAsync(It.IsAny<UserProfile>(), It.IsAny<CancellationToken>()))
+            .Callback<UserProfile, CancellationToken>((entity, _) => capturedProfile = entity)
+            .ReturnsAsync((UserProfile entity, CancellationToken _) => entity);
+
+        var result = await SendAsync(
+            new CreateInitialUserProfileCommand("jdoe", "john@example.com", _fixture.Create<Guid>(), " John ", " Doe "));
+
+        result.IsSuccess.Should().BeTrue();
+        capturedProfile.Should().NotBeNull();
+        capturedProfile!.DisplayName.Should().Be("John Doe");
     }
 
     [Fact]
     public async Task Handle_WithInvalidEmail_ReturnsValidationFailure()
     {
         var result = await SendAsync(
-            new CreateInitialUserProfileCommand("jdoe", "John Doe", "not-an-email", _fixture.Create<Guid>()));
+            new CreateInitialUserProfileCommand("jdoe", "not-an-email", _fixture.Create<Guid>()));
 
         result.IsFailure.Should().BeTrue();
         result.Error.ErrorType.Should().Be(ErrorType.Validation);
@@ -169,7 +185,7 @@ public sealed class CreateInitialUserProfileCommandHandlerTests
     public async Task Handle_WhenEmailMissing_ReturnsValidationFailure()
     {
         var result = await SendAsync(
-            new CreateInitialUserProfileCommand("jdoe", "John Doe", null, _fixture.Create<Guid>()));
+            new CreateInitialUserProfileCommand("jdoe", null, _fixture.Create<Guid>()));
 
         result.IsFailure.Should().BeTrue();
         result.Error.ErrorType.Should().Be(ErrorType.Validation);
@@ -185,7 +201,7 @@ public sealed class CreateInitialUserProfileCommandHandlerTests
             .ReturnsAsync(true);
 
         var result = await SendAsync(
-            new CreateInitialUserProfileCommand("jdoe", "John Doe", "john@example.com", _fixture.Create<Guid>()));
+            new CreateInitialUserProfileCommand("jdoe", "john@example.com", _fixture.Create<Guid>()));
 
         result.IsFailure.Should().BeTrue();
         result.Error.ErrorType.Should().Be(ErrorType.Conflict);
@@ -201,7 +217,7 @@ public sealed class CreateInitialUserProfileCommandHandlerTests
             .ReturnsAsync(true);
 
         var result = await SendAsync(
-            new CreateInitialUserProfileCommand("jdoe", "John Doe", "john@example.com", _fixture.Create<Guid>()));
+            new CreateInitialUserProfileCommand("jdoe", "john@example.com", _fixture.Create<Guid>()));
 
         result.IsFailure.Should().BeTrue();
         result.Error.ErrorType.Should().Be(ErrorType.Conflict);
@@ -219,7 +235,12 @@ public sealed class CreateInitialUserProfileCommandHandlerTests
             .ReturnsAsync((UserProfile entity, CancellationToken _) => entity);
 
         var result = await SendAsync(
-            new CreateInitialUserProfileCommand("  jdoe  ", "  John Doe  ", "  john@example.com  ", _fixture.Create<Guid>()));
+            new CreateInitialUserProfileCommand(
+                "  jdoe  ",
+                "  john@example.com  ",
+                _fixture.Create<Guid>(),
+                "  John  ",
+                "  Doe  "));
 
         result.IsSuccess.Should().BeTrue();
         capturedProfile.Should().NotBeNull();
@@ -246,7 +267,7 @@ public sealed class CreateInitialUserProfileCommandHandlerTests
             .Returns(Task.CompletedTask);
 
         var result = await SendAsync(
-            new CreateInitialUserProfileCommand("jdoe", "John Doe", "john@example.com", _fixture.Create<Guid>()));
+            new CreateInitialUserProfileCommand("jdoe", "john@example.com", _fixture.Create<Guid>()));
 
         result.IsSuccess.Should().BeTrue();
 
@@ -283,7 +304,6 @@ public sealed class CreateInitialUserProfileCommandHandlerTests
         var result = await SendAsync(
             new CreateInitialUserProfileCommand(
                 "jdoe",
-                "John Doe",
                 "john@example.com",
                 _fixture.Create<Guid>(),
                 " John ",

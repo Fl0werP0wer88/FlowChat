@@ -27,13 +27,10 @@ public sealed class AccountRegisteredSubscriber(
             throw new NonTransientException("Payload does not contain valid UserId.");
         }
 
-        var displayName = ResolveDisplayName(message, friendlyUserId);
-
         await userProfileInternalApiClient.CreateInitialUserProfileAsync(
             new CreateInitialUserProfileRequest
             {
                 FriendlyUserId = friendlyUserId,
-                DisplayName = displayName,
                 FirstName = NormalizeOptional(message.FirstName),
                 LastName = NormalizeOptional(message.LastName),
                 Organization = NormalizeOptional(message.Organization),
@@ -47,20 +44,6 @@ public sealed class AccountRegisteredSubscriber(
         payloadUserId != Guid.Empty
             ? payloadUserId
             : null;
-
-    private static string ResolveDisplayName(AccountRegisteredIntegrationEvent message, string friendlyUserId)
-    {
-        var firstName = NormalizeOptional(message.FirstName);
-        var lastName = NormalizeOptional(message.LastName);
-        var fullName = $"{firstName} {lastName}".Trim();
-
-        if (!string.IsNullOrWhiteSpace(fullName))
-        {
-            return fullName;
-        }
-
-        return friendlyUserId;
-    }
 
     private static string? NormalizeOptional(string? value) =>
         string.IsNullOrWhiteSpace(value) ? null : value.Trim();

@@ -29,7 +29,6 @@ public sealed class CreateInitialUserProfileCommandHandler
         CancellationToken cancellationToken)
     {
         var friendlyUserId = string.IsNullOrWhiteSpace(request.FriendlyUserId) ? null : request.FriendlyUserId.Trim();
-        var displayName = string.IsNullOrWhiteSpace(request.DisplayName) ? null : request.DisplayName.Trim();
         var firstName = NormalizeOptional(request.FirstName);
         var lastName = NormalizeOptional(request.LastName);
         var organization = NormalizeOptional(request.Organization);
@@ -57,6 +56,7 @@ public sealed class CreateInitialUserProfileCommandHandler
             return FlowChatResult<Guid>.Failure(DomainError.Conflict($"Email '{emailAddress.Value}' already exists."));
         }
 
+        var displayName = ResolveDisplayName(friendlyUserId!, firstName, lastName);
         var userProfileId = Id<UserProfileAggregate>.FromGuid(request.UserId);
         _userProfile = UserProfileAggregate.Create(
             friendlyUserId!,
@@ -79,4 +79,13 @@ public sealed class CreateInitialUserProfileCommandHandler
 
     private static string? NormalizeOptional(string? value) =>
         string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+
+    private static string ResolveDisplayName(string friendlyUserId, string? firstName, string? lastName)
+    {
+        var displayName = $"{firstName} {lastName}".Trim();
+
+        return string.IsNullOrWhiteSpace(displayName)
+            ? friendlyUserId
+            : displayName;
+    }
 }

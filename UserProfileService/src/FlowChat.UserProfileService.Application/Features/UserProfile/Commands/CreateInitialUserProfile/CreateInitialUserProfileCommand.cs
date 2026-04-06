@@ -4,7 +4,6 @@ namespace FlowChat.UserProfileService.Application.Features.UserProfile.Commands.
 
 public sealed record CreateInitialUserProfileCommand(
     string FriendlyUserId,
-    string DisplayName,
     string? Email,
     Guid UserId,
     string? FirstName = null,

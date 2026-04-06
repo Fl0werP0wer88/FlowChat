@@ -31,7 +31,8 @@ public sealed class UserProfileInternalApiClientTests
             {
                 UserId = Guid.NewGuid(),
                 FriendlyUserId = "jdoe",
-                DisplayName = "John Doe",
+                FirstName = "John",
+                LastName = "Doe",
                 Email = "john@example.com"
             },
             CancellationToken.None);
@@ -45,7 +46,8 @@ public sealed class UserProfileInternalApiClientTests
             new JsonSerializerOptions(JsonSerializerDefaults.Web));
         payload.Should().NotBeNull();
         payload!.FriendlyUserId.Should().Be("jdoe");
-        payload.DisplayName.Should().Be("John Doe");
+        payload.FirstName.Should().Be("John");
+        payload.LastName.Should().Be("Doe");
     }
 
     [Fact]

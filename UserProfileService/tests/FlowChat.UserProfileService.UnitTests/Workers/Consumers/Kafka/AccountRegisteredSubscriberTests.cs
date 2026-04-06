@@ -44,7 +44,6 @@ public sealed class AccountRegisteredSubscriberTests
         capturedRequest.Should().NotBeNull();
         capturedRequest!.Should().BeOfType<CreateInitialUserProfileRequest>();
         capturedRequest.FriendlyUserId.Should().Be("jdoe");
-        capturedRequest.DisplayName.Should().Be("John Doe");
         capturedRequest.FirstName.Should().Be("John");
         capturedRequest.LastName.Should().Be("Doe");
         capturedRequest.Organization.Should().Be("FlowChat");
@@ -117,6 +116,8 @@ public sealed class AccountRegisteredSubscriberTests
             CancellationToken.None);
 
         capturedRequest.Should().NotBeNull();
-        capturedRequest!.DisplayName.Should().Be("jdoe");
+        capturedRequest!.FriendlyUserId.Should().Be("jdoe");
+        capturedRequest.FirstName.Should().BeNull();
+        capturedRequest.LastName.Should().BeNull();
     }
 }

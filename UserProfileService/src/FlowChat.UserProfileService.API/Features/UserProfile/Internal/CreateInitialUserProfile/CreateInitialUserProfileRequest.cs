@@ -4,8 +4,6 @@ public sealed class CreateInitialUserProfileRequest
 {
     public string FriendlyUserId { get; set; } = string.Empty;
 
-    public string DisplayName { get; set; } = string.Empty;
-
     public string? FirstName { get; set; }
 
     public string? LastName { get; set; }

@@ -12,10 +12,6 @@ public sealed class CreateInitialUserProfileCommandValidator
             .Must(value => !string.IsNullOrWhiteSpace(value))
             .WithMessage("FriendlyUserId is required.");
 
-        RuleFor(command => command.DisplayName)
-            .Must(value => !string.IsNullOrWhiteSpace(value))
-            .WithMessage("DisplayName is required.");
-
         RuleFor(command => command.Email)
             .Must(value => !string.IsNullOrWhiteSpace(value))
             .WithMessage("Email is required.");
