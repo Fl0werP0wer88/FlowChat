@@ -45,6 +45,33 @@ export function RegisterForm({
         />
       </FormField>
 
+      <FormField label="Imie" htmlFor="registerFirstName">
+        <Input
+          id="registerFirstName"
+          autoComplete="given-name"
+          value={values.firstName}
+          onChange={(event) => onFieldChange("firstName", event.target.value)}
+        />
+      </FormField>
+
+      <FormField label="Nazwisko" htmlFor="registerLastName">
+        <Input
+          id="registerLastName"
+          autoComplete="family-name"
+          value={values.lastName}
+          onChange={(event) => onFieldChange("lastName", event.target.value)}
+        />
+      </FormField>
+
+      <FormField label="Organizacja" htmlFor="registerOrganization">
+        <Input
+          id="registerOrganization"
+          autoComplete="organization"
+          value={values.organization}
+          onChange={(event) => onFieldChange("organization", event.target.value)}
+        />
+      </FormField>
+
       <FormField label="Haslo" htmlFor="registerPassword" hint="Minimum 8 znakow.">
         <Input
           id="registerPassword"

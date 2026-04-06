@@ -16,6 +16,9 @@ const emptyRegisterFormValues: RegisterFormValues = {
   email: "",
   friendlyUserId: "",
   password: "",
+  firstName: "",
+  lastName: "",
+  organization: "",
 };
 
 export function useAuthFlow({ onLoginSuccess }: UseAuthFlowOptions) {

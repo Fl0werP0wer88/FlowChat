@@ -11,6 +11,9 @@ export interface RegisterFormValues {
   email: string;
   friendlyUserId: string;
   password: string;
+  firstName: string;
+  lastName: string;
+  organization: string;
 }
 
 export interface AuthSession {

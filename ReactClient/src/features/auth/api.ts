@@ -18,6 +18,9 @@ interface RegisterPayload {
   email: string;
   friendlyUserId: string;
   password: string;
+  firstName?: string;
+  lastName?: string;
+  organization?: string;
 }
 
 interface RefreshTokenPayload {
@@ -84,6 +87,9 @@ export async function registerUser(values: RegisterFormValues): Promise<void> {
     email: values.email.trim(),
     friendlyUserId: values.friendlyUserId.trim(),
     password: values.password,
+    firstName: values.firstName.trim() || undefined,
+    lastName: values.lastName.trim() || undefined,
+    organization: values.organization.trim() || undefined,
   };
 
   await postJson<unknown, RegisterPayload>("/api/users", payload);
