@@ -24,14 +24,14 @@ public sealed class UserProfileCreatedSubscriberTests
     }
 
     [Fact]
-    public async Task HandleAsync_WhenProfileCreatedEventArrives_PostsNormalizedProjection()
+    public async Task HandleAsync_WhenProfileCreatedEventArrives_InsertsNormalizedProjection()
     {
-        UpsertUserProfileProjectionRequest? capturedRequest = null;
+        UserProfileProjectionRequest? capturedRequest = null;
         var userProfileId = _fixture.Create<Guid>();
 
         _apiClientMock
-            .Setup(x => x.UpsertUserProfileProjectionAsync(It.IsAny<UpsertUserProfileProjectionRequest>(), It.IsAny<CancellationToken>()))
-            .Callback<UpsertUserProfileProjectionRequest, CancellationToken>((request, _) => capturedRequest = request)
+            .Setup(x => x.InsertUserProfileProjectionAsync(It.IsAny<UserProfileProjectionRequest>(), It.IsAny<CancellationToken>()))
+            .Callback<UserProfileProjectionRequest, CancellationToken>((request, _) => capturedRequest = request)
             .Returns(Task.CompletedTask);
 
         await _subscriber.HandleAsync(
@@ -75,7 +75,7 @@ public sealed class UserProfileCreatedSubscriberTests
 
         await act.Should().ThrowAsync<NonTransientException>();
         _apiClientMock.Verify(
-            x => x.UpsertUserProfileProjectionAsync(It.IsAny<UpsertUserProfileProjectionRequest>(), It.IsAny<CancellationToken>()),
+            x => x.InsertUserProfileProjectionAsync(It.IsAny<UserProfileProjectionRequest>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 }
@@ -94,13 +94,13 @@ public sealed class UserProfileStateChangedSubscriberTests
     }
 
     [Fact]
-    public async Task HandleAsync_WhenStateChangedEventArrives_PostsProjection()
+    public async Task HandleAsync_WhenStateChangedEventArrives_UpdatesProjection()
     {
-        UpsertUserProfileProjectionRequest? capturedRequest = null;
+        UserProfileProjectionRequest? capturedRequest = null;
 
         _apiClientMock
-            .Setup(x => x.UpsertUserProfileProjectionAsync(It.IsAny<UpsertUserProfileProjectionRequest>(), It.IsAny<CancellationToken>()))
-            .Callback<UpsertUserProfileProjectionRequest, CancellationToken>((request, _) => capturedRequest = request)
+            .Setup(x => x.UpdateUserProfileProjectionAsync(It.IsAny<UserProfileProjectionRequest>(), It.IsAny<CancellationToken>()))
+            .Callback<UserProfileProjectionRequest, CancellationToken>((request, _) => capturedRequest = request)
             .Returns(Task.CompletedTask);
 
         await _subscriber.HandleAsync(

@@ -12,7 +12,7 @@ public sealed class UserProfileCreatedSubscriber(
     protected override Task ExecuteAsync(
         UserProfileCreatedIntegrationEvent message,
         CancellationToken cancellationToken) =>
-        UserProfileSubscriberHelper.UpsertAsync(
+        UserProfileSubscriberHelper.InsertAsync(
             socialGraphInternalApiClient,
             Logger,
             UserProfileSubscriberHelper.Map(message),

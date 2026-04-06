@@ -15,7 +15,7 @@ public sealed class SocialGraphInternalApiClientTests
     private readonly IFixture _fixture = new Fixture();
 
     [Fact]
-    public async Task UpsertUserProfileProjectionAsync_PostsToExpectedEndpointWithApiKey()
+    public async Task InsertUserProfileProjectionAsync_PostsToExpectedEndpointWithApiKey()
     {
         string? requestBody = null;
         HttpRequestMessage? sentRequest = null;
@@ -41,8 +41,8 @@ public sealed class SocialGraphInternalApiClientTests
 
         var client = new SocialGraphInternalApiClient(httpClient);
 
-        await client.UpsertUserProfileProjectionAsync(
-            new UpsertUserProfileProjectionRequest
+        await client.InsertUserProfileProjectionAsync(
+            new UserProfileProjectionRequest
             {
                 UserProfileId = _fixture.Create<Guid>(),
                 UserName = "jdoe",
@@ -51,10 +51,11 @@ public sealed class SocialGraphInternalApiClientTests
             CancellationToken.None);
 
         sentRequest.Should().NotBeNull();
-        sentRequest!.RequestUri!.ToString().Should().Be("https://localhost:7194/internal/userprofiles/projection");
+        sentRequest!.Method.Should().Be(HttpMethod.Post);
+        sentRequest.RequestUri!.ToString().Should().Be("https://localhost:7194/internal/userprofiles/projection/insert");
         sentRequest.Headers.GetValues(SocialGraphInternalApiClient.ApiKeyHeaderName).Single().Should().Be("internal-key");
 
-        var payload = JsonSerializer.Deserialize<UpsertUserProfileProjectionRequest>(
+        var payload = JsonSerializer.Deserialize<UserProfileProjectionRequest>(
             requestBody!,
             new JsonSerializerOptions(JsonSerializerDefaults.Web));
 
@@ -64,7 +65,7 @@ public sealed class SocialGraphInternalApiClientTests
     }
 
     [Fact]
-    public async Task UpsertUserProfileProjectionAsync_WhenApiReturnsBadRequest_ThrowsNonTransientException()
+    public async Task UpdateUserProfileProjectionAsync_WhenApiReturnsBadRequest_ThrowsNonTransientException()
     {
         var handlerMock = new Mock<HttpMessageHandler>();
         handlerMock
@@ -83,7 +84,7 @@ public sealed class SocialGraphInternalApiClientTests
             BaseAddress = new Uri("https://localhost:7194")
         });
 
-        var act = () => client.UpsertUserProfileProjectionAsync(new UpsertUserProfileProjectionRequest(), CancellationToken.None);
+        var act = () => client.UpdateUserProfileProjectionAsync(new UserProfileProjectionRequest(), CancellationToken.None);
 
         await act.Should().ThrowAsync<NonTransientException>()
             .WithMessage("*400*");

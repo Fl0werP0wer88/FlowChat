@@ -4,7 +4,11 @@ namespace FlowChat.SocialGraphService.Consumers.Services;
 
 public interface ISocialGraphInternalApiClient
 {
-    Task UpsertUserProfileProjectionAsync(
-        UpsertUserProfileProjectionRequest request,
+    Task InsertUserProfileProjectionAsync(
+        UserProfileProjectionRequest request,
+        CancellationToken cancellationToken);
+
+    Task UpdateUserProfileProjectionAsync(
+        UserProfileProjectionRequest request,
         CancellationToken cancellationToken);
 }

@@ -4,5 +4,6 @@ namespace FlowChat.SocialGraphService.Application.Contracts.Persistence;
 
 public interface IUserProfileProjectionRepository
 {
-    Task<bool> UpsertAsync(UserProfileProjection projection, CancellationToken cancellationToken = default);
+    Task<bool> InsertAsync(UserProfileProjection projection, CancellationToken cancellationToken = default);
+    Task<bool> UpdateAsync(UserProfileProjection projection, CancellationToken cancellationToken = default);
 }

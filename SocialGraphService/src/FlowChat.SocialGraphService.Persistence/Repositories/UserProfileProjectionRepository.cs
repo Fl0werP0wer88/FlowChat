@@ -10,7 +10,45 @@ public sealed class UserProfileProjectionRepository(AppDbContext dbContext) : IU
     private const string ProjectionSource = "user-profile-events";
     private readonly AppDbContext _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
 
-    public async Task<bool> UpsertAsync(UserProfileProjection projection, CancellationToken cancellationToken = default)
+    public async Task<bool> InsertAsync(UserProfileProjection projection, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(projection);
+
+        var exists = await _dbContext.UserProfileProjections
+            .AnyAsync(x => x.UserProfileId == projection.UserProfileId, cancellationToken);
+
+        if (exists)
+        {
+            return false;
+        }
+
+        var now = DateTimeOffset.UtcNow;
+
+        await _dbContext.UserProfileProjections.AddAsync(
+            new UserProfileProjectionEntity
+            {
+                UserProfileId = projection.UserProfileId,
+                UserName = projection.UserName,
+                DisplayName = projection.DisplayName,
+                MainEmail = projection.MainEmail,
+                MainPhone = projection.MainPhone,
+                AvatarUrl = projection.AvatarUrl,
+                Bio = projection.Bio,
+                IsActive = projection.IsActive,
+                LastSeenAtUtc = projection.LastSeenAtUtc,
+                IsEmailVisible = projection.IsEmailVisible,
+                IsPhoneVisible = projection.IsPhoneVisible,
+                CreatedBy = ProjectionSource,
+                CreatedAtUtc = now,
+                LastModifiedBy = ProjectionSource,
+                LastModifiedAtUtc = now
+            },
+            cancellationToken);
+
+        return true;
+    }
+
+    public async Task<bool> UpdateAsync(UserProfileProjection projection, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(projection);
 
@@ -19,30 +57,7 @@ public sealed class UserProfileProjectionRepository(AppDbContext dbContext) : IU
 
         if (entity is null)
         {
-            var now = DateTimeOffset.UtcNow;
-
-            await _dbContext.UserProfileProjections.AddAsync(
-                new UserProfileProjectionEntity
-                {
-                    UserProfileId = projection.UserProfileId,
-                    UserName = projection.UserName,
-                    DisplayName = projection.DisplayName,
-                    MainEmail = projection.MainEmail,
-                    MainPhone = projection.MainPhone,
-                    AvatarUrl = projection.AvatarUrl,
-                    Bio = projection.Bio,
-                    IsActive = projection.IsActive,
-                    LastSeenAtUtc = projection.LastSeenAtUtc,
-                    IsEmailVisible = projection.IsEmailVisible,
-                    IsPhoneVisible = projection.IsPhoneVisible,
-                    CreatedBy = ProjectionSource,
-                    CreatedAtUtc = now,
-                    LastModifiedBy = ProjectionSource,
-                    LastModifiedAtUtc = now
-                },
-                cancellationToken);
-
-            return true;
+            return false;
         }
 
         entity.UserName = projection.UserName;
@@ -58,6 +73,6 @@ public sealed class UserProfileProjectionRepository(AppDbContext dbContext) : IU
         entity.LastModifiedBy = ProjectionSource;
         entity.LastModifiedAtUtc = DateTimeOffset.UtcNow;
 
-        return false;
+        return true;
     }
 }

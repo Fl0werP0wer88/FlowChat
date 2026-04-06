@@ -8,22 +8,37 @@ namespace FlowChat.SocialGraphService.Consumers.Kafka;
 
 internal static class UserProfileSubscriberHelper
 {
-    public static async Task UpsertAsync(
+    public static async Task InsertAsync(
         ISocialGraphInternalApiClient socialGraphInternalApiClient,
         ILogger logger,
-        UpsertUserProfileProjectionRequest request,
+        UserProfileProjectionRequest request,
         string eventType,
         CancellationToken cancellationToken)
     {
-        await socialGraphInternalApiClient.UpsertUserProfileProjectionAsync(request, cancellationToken);
+        await socialGraphInternalApiClient.InsertUserProfileProjectionAsync(request, cancellationToken);
 
         logger.LogInformation(
-            "Upserted user profile projection for profile {UserProfileId} from {EventType}.",
+            "Inserted user profile projection for profile {UserProfileId} from {EventType}.",
             request.UserProfileId,
             eventType);
     }
 
-    public static UpsertUserProfileProjectionRequest Map(UserProfileCreatedIntegrationEvent message) =>
+    public static async Task UpdateAsync(
+        ISocialGraphInternalApiClient socialGraphInternalApiClient,
+        ILogger logger,
+        UserProfileProjectionRequest request,
+        string eventType,
+        CancellationToken cancellationToken)
+    {
+        await socialGraphInternalApiClient.UpdateUserProfileProjectionAsync(request, cancellationToken);
+
+        logger.LogInformation(
+            "Updated user profile projection for profile {UserProfileId} from {EventType}.",
+            request.UserProfileId,
+            eventType);
+    }
+
+    public static UserProfileProjectionRequest Map(UserProfileCreatedIntegrationEvent message) =>
         new()
         {
             UserProfileId = ResolveUserProfileId(message.UserProfileId),
@@ -39,7 +54,7 @@ internal static class UserProfileSubscriberHelper
             IsPhoneVisible = message.IsPhoneVisible
         };
 
-    public static UpsertUserProfileProjectionRequest Map(UserProfileStateChangedIntegrationEvent message) =>
+    public static UserProfileProjectionRequest Map(UserProfileStateChangedIntegrationEvent message) =>
         new()
         {
             UserProfileId = ResolveUserProfileId(message.UserProfileId),

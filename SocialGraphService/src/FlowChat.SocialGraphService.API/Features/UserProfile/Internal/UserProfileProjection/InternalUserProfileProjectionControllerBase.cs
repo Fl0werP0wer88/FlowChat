@@ -1,32 +1,27 @@
 using FlowChat.Shared.API;
 using FlowChat.Shared.Application;
-using FlowChat.SocialGraphService.Application.Contracts.Persistence;
-using FlowChat.SocialGraphService.Application.Features.UserProfile;
 using FlowChat.SocialGraphService.Infrastructure.Configuration;
 using Microsoft.AspNetCore.Mvc;
+using UserProfileProjectionModel = FlowChat.SocialGraphService.Application.Features.UserProfile.UserProfileProjection;
 
-namespace FlowChat.SocialGraphService.Api.Features.UserProfile.Internal.UpsertUserProfileProjection;
+namespace FlowChat.SocialGraphService.Api.Features.UserProfile.Internal.UserProfileProjection;
 
-[ApiController]
-[ApiExplorerSettings(IgnoreApi = true)]
-[Route("internal/userprofiles")]
-public sealed class UpsertUserProfileProjectionController(
-    IUserProfileProjectionRepository userProfileProjectionRepository,
+public abstract class InternalUserProfileProjectionControllerBase(
     IUnitOfWork unitOfWork,
     IApiSettingsManager apiSettingsManager) : ApiControllerBase
 {
     private const string InternalApiKeyHeaderName = "X-Internal-Api-Key";
-    private readonly IUserProfileProjectionRepository _userProfileProjectionRepository = userProfileProjectionRepository
-        ?? throw new ArgumentNullException(nameof(userProfileProjectionRepository));
-    private readonly IUnitOfWork _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
     private readonly IApiSettingsManager _apiSettingsManager = apiSettingsManager
         ?? throw new ArgumentNullException(nameof(apiSettingsManager));
 
-    [HttpPost("projection")]
-    public async Task<IActionResult> Upsert(
-        [FromBody] UpsertUserProfileProjectionRequest request,
-        CancellationToken cancellationToken)
+    protected IUnitOfWork UnitOfWork { get; } = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
+
+    protected IActionResult? ValidateAndMapRequest(
+        UserProfileProjectionRequest request,
+        out UserProfileProjectionModel? projection)
     {
+        projection = null;
+
         if (!HasValidInternalApiKey())
         {
             return Unauthorized();
@@ -47,23 +42,20 @@ public sealed class UpsertUserProfileProjectionController(
             return BadRequestResponse("Payload does not contain valid DisplayName.");
         }
 
-        await _userProfileProjectionRepository.UpsertAsync(
-            new UserProfileProjection(
-                request.UserProfileId,
-                request.UserName.Trim(),
-                request.DisplayName.Trim(),
-                NormalizeOptional(request.MainEmail),
-                NormalizeOptional(request.MainPhone),
-                NormalizeOptional(request.AvatarUrl),
-                NormalizeOptional(request.Bio),
-                request.IsActive,
-                request.LastSeenAtUtc,
-                request.IsEmailVisible,
-                request.IsPhoneVisible),
-            cancellationToken);
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
+        projection = new UserProfileProjectionModel(
+            request.UserProfileId,
+            request.UserName.Trim(),
+            request.DisplayName.Trim(),
+            NormalizeOptional(request.MainEmail),
+            NormalizeOptional(request.MainPhone),
+            NormalizeOptional(request.AvatarUrl),
+            NormalizeOptional(request.Bio),
+            request.IsActive,
+            request.LastSeenAtUtc,
+            request.IsEmailVisible,
+            request.IsPhoneVisible);
 
-        return Accepted();
+        return null;
     }
 
     private bool HasValidInternalApiKey()
@@ -85,4 +77,3 @@ public sealed class UpsertUserProfileProjectionController(
     private static string? NormalizeOptional(string? value) =>
         string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 }
-

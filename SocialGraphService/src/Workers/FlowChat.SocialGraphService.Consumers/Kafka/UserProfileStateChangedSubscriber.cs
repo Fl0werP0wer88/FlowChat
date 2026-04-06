@@ -12,7 +12,7 @@ public sealed class UserProfileStateChangedSubscriber(
     protected override Task ExecuteAsync(
         UserProfileStateChangedIntegrationEvent message,
         CancellationToken cancellationToken) =>
-        UserProfileSubscriberHelper.UpsertAsync(
+        UserProfileSubscriberHelper.UpdateAsync(
             socialGraphInternalApiClient,
             Logger,
             UserProfileSubscriberHelper.Map(message),
