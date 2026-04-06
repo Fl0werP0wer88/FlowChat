@@ -9,4 +9,5 @@ public sealed class AccountRegisteredIntegrationEvent : IntegrationEvent
     public required string DisplayName { get; init; }
     public string? FirstName { get; init; }
     public string? LastName { get; init; }
+    public string? Organization { get; init; }
 }

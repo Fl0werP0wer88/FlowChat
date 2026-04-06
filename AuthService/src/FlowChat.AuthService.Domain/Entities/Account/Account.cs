@@ -37,6 +37,9 @@ public sealed class Account : AggregateRootBase<Account>
         EmailAddress email,
         string passwordHash,
         string securityStamp,
+        string? firstName = null,
+        string? lastName = null,
+        string? organization = null,
         Id<Account>? id = null)
     {
         ArgumentNullException.ThrowIfNull(email);
@@ -50,8 +53,13 @@ public sealed class Account : AggregateRootBase<Account>
             accessFailedCount: 0,
             isEmailConfirmed: false);
 
-        account.AddDomainEvent(new AccountRegisteredDomainEvent(account.Id, account.FriendlyUserId, account.Email));
-        account.MarkAggregateStateChanged(AggregateTypeNames.Account, account.CreateSnapshot);
+        account.AddDomainEvent(new AccountRegisteredDomainEvent(
+            account.Id,
+            account.FriendlyUserId,
+            account.Email,
+            NormalizeOptional(firstName),
+            NormalizeOptional(lastName),
+            NormalizeOptional(organization)));
 
         return account;
     }
@@ -141,5 +149,10 @@ public sealed class Account : AggregateRootBase<Account>
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(value, paramName);
         return value.Trim();
+    }
+
+    private static string? NormalizeOptional(string? value)
+    {
+        return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
     }
 }

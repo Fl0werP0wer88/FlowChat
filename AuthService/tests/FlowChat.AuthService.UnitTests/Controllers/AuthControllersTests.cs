@@ -31,7 +31,10 @@ public sealed class AuthControllersTests
             {
                 FriendlyUserId = "flower",
                 Email = "flower@example.com",
-                Password = "P@ssw0rd!"
+                Password = "P@ssw0rd!",
+                FirstName = "Flower",
+                LastName = "Power",
+                Organization = "FlowChat"
             },
             CancellationToken.None);
 

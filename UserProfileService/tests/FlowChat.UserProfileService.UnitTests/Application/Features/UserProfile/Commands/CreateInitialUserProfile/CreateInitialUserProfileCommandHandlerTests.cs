@@ -74,7 +74,17 @@ public sealed class CreateInitialUserProfileCommandHandlerTests
             .ReturnsAsync((UserProfile entity, CancellationToken _) => entity);
 
         var result = await SendAsync(
-            new CreateInitialUserProfileCommand("jdoe", "John Doe", null, null, "john@example.com", "+48123123123", userId));
+            new CreateInitialUserProfileCommand(
+                "jdoe",
+                "John Doe",
+                null,
+                null,
+                "john@example.com",
+                "+48123123123",
+                userId,
+                " John ",
+                " Doe ",
+                " FlowChat "));
 
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().Be(userId);
@@ -83,6 +93,9 @@ public sealed class CreateInitialUserProfileCommandHandlerTests
             .Which.Should().Match<Email>(e => e.Address.Value == "john@example.com" && e.IsMain && e.IsAuth);
         capturedProfile.Phones.Should().ContainSingle()
             .Which.Should().Match<Phone>(p => p.Number.Value == "+48123123123" && p.IsMain);
+        capturedProfile.FirstName.Should().Be("John");
+        capturedProfile.LastName.Should().Be("Doe");
+        capturedProfile.Organization.Should().Be("FlowChat");
     }
 
     [Fact]
@@ -329,5 +342,52 @@ public sealed class CreateInitialUserProfileCommandHandlerTests
             .Should().ContainSingle().Subject;
         stateChangedEvent.AggregateState.MainEmail.Should().Be("john@example.com");
         stateChangedEvent.AggregateState.MainPhone.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task Handle_WithPersonalFields_StoresThemInAggregateAndEvents()
+    {
+        IReadOnlyList<IDomainEvent> domainEventsAtAdd = [];
+        UserProfile? capturedProfile = null;
+
+        _writeRepositoryMock
+            .Setup(x => x.AddAsync(It.IsAny<UserProfile>(), It.IsAny<CancellationToken>()))
+            .Callback<UserProfile, CancellationToken>((entity, _) =>
+            {
+                capturedProfile = entity;
+                domainEventsAtAdd = entity.DomainEvents.ToList();
+            })
+            .ReturnsAsync((UserProfile entity, CancellationToken _) => entity);
+
+        var result = await SendAsync(
+            new CreateInitialUserProfileCommand(
+                "jdoe",
+                "John Doe",
+                null,
+                null,
+                "john@example.com",
+                null,
+                _fixture.Create<Guid>(),
+                " John ",
+                " Doe ",
+                " FlowChat "));
+
+        result.IsSuccess.Should().BeTrue();
+        capturedProfile.Should().NotBeNull();
+        capturedProfile!.FirstName.Should().Be("John");
+        capturedProfile.LastName.Should().Be("Doe");
+        capturedProfile.Organization.Should().Be("FlowChat");
+
+        var createdEvent = domainEventsAtAdd.OfType<UserProfileCreatedDomainEvent>().Should().ContainSingle().Subject;
+        createdEvent.FirstName.Should().Be("John");
+        createdEvent.LastName.Should().Be("Doe");
+        createdEvent.Organization.Should().Be("FlowChat");
+
+        var stateChangedEvent = domainEventsAtAdd
+            .OfType<AggregateStateChangedDomainEvent<UserProfile, UserProfileSnapshot>>()
+            .Should().ContainSingle().Subject;
+        stateChangedEvent.AggregateState.FirstName.Should().Be("John");
+        stateChangedEvent.AggregateState.LastName.Should().Be("Doe");
+        stateChangedEvent.AggregateState.Organization.Should().Be("FlowChat");
     }
 }

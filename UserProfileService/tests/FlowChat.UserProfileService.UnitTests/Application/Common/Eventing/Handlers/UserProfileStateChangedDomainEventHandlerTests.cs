@@ -48,7 +48,10 @@ public sealed class UserProfileStateChangedDomainEventHandlerTests
                 true,
                 new DateTimeOffset(2026, 3, 11, 9, 0, 0, TimeSpan.Zero),
                 true,
-                false));
+                false,
+                "John",
+                "Doe",
+                "FlowChat"));
 
         UserProfileStateChangedIntegrationEvent? capturedEvent = null;
         _publisherMock
@@ -72,5 +75,8 @@ public sealed class UserProfileStateChangedDomainEventHandlerTests
         capturedEvent.LastSeenAtUtc.Should().Be(new DateTimeOffset(2026, 3, 11, 9, 0, 0, TimeSpan.Zero));
         capturedEvent.IsEmailVisible.Should().BeTrue();
         capturedEvent.IsPhoneVisible.Should().BeFalse();
+        capturedEvent.FirstName.Should().Be("John");
+        capturedEvent.LastName.Should().Be("Doe");
+        capturedEvent.Organization.Should().Be("FlowChat");
     }
 }

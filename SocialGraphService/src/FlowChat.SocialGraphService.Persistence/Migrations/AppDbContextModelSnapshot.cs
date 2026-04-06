@@ -118,6 +118,10 @@ namespace FlowChat.SocialGraphService.Persistence.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
+                    b.Property<string>("FirstName")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
                     b.Property<string>("FriendlyUserId")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -146,6 +150,10 @@ namespace FlowChat.SocialGraphService.Persistence.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
 
+                    b.Property<string>("LastName")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
                     b.Property<DateTimeOffset?>("LastSeenAtUtc")
                         .HasColumnType("timestamp with time zone");
 
@@ -156,6 +164,10 @@ namespace FlowChat.SocialGraphService.Persistence.Migrations
                     b.Property<string>("MainPhone")
                         .HasMaxLength(32)
                         .HasColumnType("character varying(32)");
+
+                    b.Property<string>("Organization")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
 
                     b.HasKey("UserProfileId");
 

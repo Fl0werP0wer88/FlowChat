@@ -24,7 +24,13 @@ public sealed class AccountRegisteredDomainEventHandlerTests
     public async Task Handle_MapsAndPublishesAccountRegisteredIntegrationEvent()
     {
         var handler = new AccountRegisteredDomainEventHandler(_publisherMock.Object, _mapper);
-        var domainEvent = new AccountRegisteredDomainEvent(Id<Account>.New(), "flower", EmailAddress.Create("flower@example.com"));
+        var domainEvent = new AccountRegisteredDomainEvent(
+            Id<Account>.New(),
+            "flower",
+            EmailAddress.Create("flower@example.com"),
+            "Flower",
+            "Power",
+            "FlowChat");
         AccountRegisteredIntegrationEvent? capturedEvent = null;
 
         _publisherMock
@@ -37,5 +43,9 @@ public sealed class AccountRegisteredDomainEventHandlerTests
         capturedEvent.Should().NotBeNull();
         capturedEvent!.FriendlyUserId.Should().Be("flower");
         capturedEvent.Email.Should().Be("flower@example.com");
+        capturedEvent.DisplayName.Should().Be("Flower Power");
+        capturedEvent.FirstName.Should().Be("Flower");
+        capturedEvent.LastName.Should().Be("Power");
+        capturedEvent.Organization.Should().Be("FlowChat");
     }
 }

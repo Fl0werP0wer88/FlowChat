@@ -36,7 +36,10 @@ public sealed class CreateInitialUserProfileController(
                 request.Bio,
                 request.Email,
                 request.Phone,
-                request.UserId),
+                request.UserId,
+                request.FirstName,
+                request.LastName,
+                request.Organization),
             cancellationToken);
 
         return result.IsSuccess

@@ -14,4 +14,7 @@ public sealed record UserProfileSnapshot(
     bool IsActive,
     UtcDateTimeOffset? LastSeenAtUtc,
     bool IsEmailVisible,
-    bool IsPhoneVisible);
+    bool IsPhoneVisible,
+    string? FirstName = null,
+    string? LastName = null,
+    string? Organization = null);

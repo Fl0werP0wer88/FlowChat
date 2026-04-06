@@ -60,7 +60,10 @@ public sealed class UpdateUserProfileProjectionCommandHandlerTests
             false,
             _fixture.Create<DateTimeOffset>(),
             false,
-            true);
+            true,
+            " Jane ",
+            " Doe ",
+            " FlowChat ");
 
         var result = await SendAsync(command);
 
@@ -73,6 +76,9 @@ public sealed class UpdateUserProfileProjectionCommandHandlerTests
         capturedProjection.MainPhone.Should().Be("+48987654321");
         capturedProjection.AvatarUrl.Should().Be("https://example.com/jane.jpg");
         capturedProjection.Bio.Should().Be("updated bio");
+        capturedProjection.FirstName.Should().Be("Jane");
+        capturedProjection.LastName.Should().Be("Doe");
+        capturedProjection.Organization.Should().Be("FlowChat");
     }
 
     [Fact]

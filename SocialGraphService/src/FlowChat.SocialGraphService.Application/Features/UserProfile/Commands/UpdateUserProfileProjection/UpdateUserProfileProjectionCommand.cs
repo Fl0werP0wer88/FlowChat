@@ -14,4 +14,7 @@ public sealed record UpdateUserProfileProjectionCommand(
     bool IsActive,
     DateTimeOffset? LastSeenAtUtc,
     bool IsEmailVisible,
-    bool IsPhoneVisible) : ICommand<Unit>;
+    bool IsPhoneVisible,
+    string? FirstName = null,
+    string? LastName = null,
+    string? Organization = null) : ICommand<Unit>;

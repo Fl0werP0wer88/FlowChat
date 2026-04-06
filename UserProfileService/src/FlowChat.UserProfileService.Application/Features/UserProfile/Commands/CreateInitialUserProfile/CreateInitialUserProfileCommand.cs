@@ -9,5 +9,8 @@ public sealed record CreateInitialUserProfileCommand(
     string? Bio,
     string? Email,
     string? Phone,
-    Guid UserId) : ICommand<Guid>;
+    Guid UserId,
+    string? FirstName = null,
+    string? LastName = null,
+    string? Organization = null) : ICommand<Guid>;
 

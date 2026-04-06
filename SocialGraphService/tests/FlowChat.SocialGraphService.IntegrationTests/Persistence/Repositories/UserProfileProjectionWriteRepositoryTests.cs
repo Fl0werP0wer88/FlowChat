@@ -27,7 +27,10 @@ public sealed class UserProfileProjectionWriteRepositoryTests
             true,
             new DateTimeOffset(2026, 4, 1, 10, 30, 0, TimeSpan.Zero),
             true,
-            false);
+            false,
+            "John",
+            "Doe",
+            "FlowChat");
 
         var wasInserted = await repository.InsertAsync(projection, CancellationToken.None);
         await context.SaveChangesAsync();
@@ -37,6 +40,9 @@ public sealed class UserProfileProjectionWriteRepositoryTests
         wasInserted.Should().BeTrue();
         entity.FriendlyUserId.Should().Be("jdoe");
         entity.DisplayName.Should().Be("John Doe");
+        entity.FirstName.Should().Be("John");
+        entity.LastName.Should().Be("Doe");
+        entity.Organization.Should().Be("FlowChat");
         entity.MainEmail.Should().Be("john@example.com");
         entity.MainPhone.Should().Be("+48123123123");
         entity.AvatarUrl.Should().Be("https://cdn.example/avatar.png");
@@ -144,7 +150,10 @@ public sealed class UserProfileProjectionWriteRepositoryTests
             true,
             null,
             true,
-            true);
+            true,
+            "Jane",
+            "Doe",
+            "FlowChat");
 
         var wasUpdated = await repository.UpdateAsync(updatedProjection, CancellationToken.None);
         await updateContext.SaveChangesAsync();
@@ -154,6 +163,9 @@ public sealed class UserProfileProjectionWriteRepositoryTests
         wasUpdated.Should().BeTrue();
         entity.FriendlyUserId.Should().Be("new-user");
         entity.DisplayName.Should().Be("New Display Name");
+        entity.FirstName.Should().Be("Jane");
+        entity.LastName.Should().Be("Doe");
+        entity.Organization.Should().Be("FlowChat");
         entity.MainEmail.Should().BeNull();
         entity.MainPhone.Should().Be("+48123123123");
         entity.AvatarUrl.Should().BeNull();

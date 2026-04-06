@@ -34,7 +34,10 @@ public sealed class InsertUserProfileProjectionCommandHandler
             request.IsActive,
             request.LastSeenAtUtc,
             request.IsEmailVisible,
-            request.IsPhoneVisible);
+            request.IsPhoneVisible,
+            NormalizeOptional(request.FirstName),
+            NormalizeOptional(request.LastName),
+            NormalizeOptional(request.Organization));
 
         var wasInserted = await _userProfileProjectionWriteRepository.InsertAsync(projection, cancellationToken);
         if (!wasInserted)

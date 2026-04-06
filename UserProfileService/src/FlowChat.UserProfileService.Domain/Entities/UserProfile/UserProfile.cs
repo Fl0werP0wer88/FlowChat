@@ -13,6 +13,9 @@ public class UserProfile : AggregateRootBase<UserProfile>
     public string FriendlyUserId { get; private set; }
     public string NormalizedFriendlyUserId { get; private set; }
     public string DisplayName { get; private set; }
+    public string? FirstName { get; private set; }
+    public string? LastName { get; private set; }
+    public string? Organization { get; private set; }
     public string? AvatarUrl { get; private set; }
     public string? Bio { get; private set; }
     public bool IsActive { get; private set; }
@@ -28,6 +31,9 @@ public class UserProfile : AggregateRootBase<UserProfile>
         string friendlyUserId,
         string normalizedFriendlyUserId,
         string displayName,
+        string? firstName = null,
+        string? lastName = null,
+        string? organization = null,
         string? avatarUrl = null,
         string? bio = null,
         bool isActive = true,
@@ -38,6 +44,9 @@ public class UserProfile : AggregateRootBase<UserProfile>
         FriendlyUserId = friendlyUserId;
         NormalizedFriendlyUserId = normalizedFriendlyUserId;
         DisplayName = displayName;
+        FirstName = firstName;
+        LastName = lastName;
+        Organization = organization;
         AvatarUrl = avatarUrl;
         Bio = bio;
         IsActive = isActive;
@@ -57,11 +66,17 @@ public class UserProfile : AggregateRootBase<UserProfile>
         UtcDateTimeOffset? lastSeenAtUtc = null,
         bool isEmailVisible = true,
         bool isPhoneVisible = true,
-        Id<UserProfile>? id = null)
+        Id<UserProfile>? id = null,
+        string? firstName = null,
+        string? lastName = null,
+        string? organization = null)
     {
         var typedId = id ?? Id<UserProfile>.New();
         var normalizedFriendlyUserId = NormalizeRequired(friendlyUserId, nameof(friendlyUserId));
         var normalizedDisplayName = NormalizeRequired(displayName, nameof(displayName));
+        var normalizedFirstName = NormalizeOptional(firstName);
+        var normalizedLastName = NormalizeOptional(lastName);
+        var normalizedOrganization = NormalizeOptional(organization);
         var canonicalFriendlyUserId = NormalizeFriendlyUserId(normalizedFriendlyUserId);
         var normalizedAvatarUrl = NormalizeOptional(avatarUrl);
         var normalizedBio = NormalizeOptional(bio);
@@ -71,6 +86,9 @@ public class UserProfile : AggregateRootBase<UserProfile>
             normalizedFriendlyUserId,
             canonicalFriendlyUserId,
             normalizedDisplayName,
+            normalizedFirstName,
+            normalizedLastName,
+            normalizedOrganization,
             normalizedAvatarUrl,
             normalizedBio,
             isActive,
@@ -105,7 +123,10 @@ public class UserProfile : AggregateRootBase<UserProfile>
             userProfile.IsActive,
             userProfile.LastSeenAtUtc,
             userProfile.IsEmailVisible,
-            userProfile.IsPhoneVisible));
+            userProfile.IsPhoneVisible,
+            userProfile.FirstName,
+            userProfile.LastName,
+            userProfile.Organization));
         userProfile.MarkAggregateStateChanged(UserProfileConstants.UserProfileAggregateTypeName, userProfile.CreateSnapshot);
 
         return userProfile;
@@ -328,7 +349,10 @@ public class UserProfile : AggregateRootBase<UserProfile>
             IsActive,
             LastSeenAtUtc,
             IsEmailVisible,
-            IsPhoneVisible);
+            IsPhoneVisible,
+            FirstName,
+            LastName,
+            Organization);
     }
 
     private static string NormalizeRequired(string value, string paramName)

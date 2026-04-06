@@ -72,6 +72,11 @@ public sealed class RegisterUserCommandHandlerTests
         persistedAccount.PasswordHash.Should().Be("hashed-password");
         result.Value.Id.Should().Be(persistedAccount.Id.Value);
         dispatchedEvents.Should().ContainSingle(x => x is AccountRegisteredDomainEvent);
+
+        var registeredEvent = dispatchedEvents.OfType<AccountRegisteredDomainEvent>().Single();
+        registeredEvent.FirstName.Should().Be("Flower");
+        registeredEvent.LastName.Should().Be("Power");
+        registeredEvent.Organization.Should().Be("FlowChat");
     }
 
     [Fact]
@@ -116,6 +121,9 @@ public sealed class RegisterUserCommandHandlerTests
         {
             FriendlyUserId = "flower",
             Email = "flower@example.com",
-            Password = "P@ssw0rd!"
+            Password = "P@ssw0rd!",
+            FirstName = "Flower",
+            LastName = "Power",
+            Organization = "FlowChat"
         };
 }

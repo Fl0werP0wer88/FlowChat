@@ -31,6 +31,15 @@ public class UserProfileConfiguration : IEntityTypeConfiguration<UserProfile>
             .HasMaxLength(120)
             .IsRequired();
 
+        builder.Property(x => x.FirstName)
+            .HasMaxLength(100);
+
+        builder.Property(x => x.LastName)
+            .HasMaxLength(100);
+
+        builder.Property(x => x.Organization)
+            .HasMaxLength(200);
+
         builder.Property(x => x.AvatarUrl)
             .HasMaxLength(500);
 

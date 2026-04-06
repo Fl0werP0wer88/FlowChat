@@ -42,7 +42,10 @@ public class RegisterUserCommandHandler : CommandHandlerBase<RegisterUserCommand
             request.FriendlyUserId,
             emailAddress,
             _passwordHashingService.HashPassword(request.Password),
-            _passwordHashingService.GenerateSecurityStamp());
+            _passwordHashingService.GenerateSecurityStamp(),
+            request.FirstName,
+            request.LastName,
+            request.Organization);
 
         await _accountRepository.CreateAsync(_account, cancellationToken);
 

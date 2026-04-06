@@ -13,13 +13,24 @@ public sealed class DomainEventToIntegrationEventProfile : Profile
             .ForMember(destination => destination.UserId, options => options.MapFrom(source => source.AccountId.Value))
             .ForMember(destination => destination.Email, options => options.MapFrom(source => source.Email.Value))
             .ForMember(destination => destination.FriendlyUserId, options => options.MapFrom(source => source.FriendlyUserId))
-            .ForMember(destination => destination.DisplayName, options => options.MapFrom(source => source.FriendlyUserId))
+            .ForMember(destination => destination.DisplayName, options => options.MapFrom(source =>
+                ResolveDisplayName(source.FirstName, source.LastName, source.FriendlyUserId)))
             .ForMember(destination => destination.PhoneNumber, options => options.MapFrom(_ => (string?)null))
-            .ForMember(destination => destination.FirstName, options => options.MapFrom(_ => (string?)null))
-            .ForMember(destination => destination.LastName, options => options.MapFrom(_ => (string?)null));
+            .ForMember(destination => destination.FirstName, options => options.MapFrom(source => source.FirstName))
+            .ForMember(destination => destination.LastName, options => options.MapFrom(source => source.LastName))
+            .ForMember(destination => destination.Organization, options => options.MapFrom(source => source.Organization));
 
         CreateMap<AccountConfirmedDomainEvent, AccountConfirmedIntegrationEvent>()
             .ForMember(destination => destination.Key, options => options.MapFrom(source => source.AccountId.Value.ToString()))
             .ForMember(destination => destination.UserId, options => options.MapFrom(source => source.AccountId.Value));
+    }
+
+    private static string ResolveDisplayName(string? firstName, string? lastName, string friendlyUserId)
+    {
+        var displayName = $"{firstName} {lastName}".Trim();
+
+        return string.IsNullOrWhiteSpace(displayName)
+            ? friendlyUserId
+            : displayName;
     }
 }

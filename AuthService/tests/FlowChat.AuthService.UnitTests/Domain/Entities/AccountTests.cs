@@ -14,7 +14,10 @@ public sealed class AccountTests
             "  flower  ",
             EmailAddress.Create(" Flower@example.com "),
             "hashed-password",
-            "security-stamp");
+            "security-stamp",
+            " Flower ",
+            " Power ",
+            " FlowChat ");
 
         account.FriendlyUserId.Should().Be("flower");
         account.Email.Should().Be(EmailAddress.Create("flower@example.com"));
@@ -24,7 +27,11 @@ public sealed class AccountTests
         account.IsEmailConfirmed.Should().BeFalse();
 
         account.DomainEvents.OfType<AccountRegisteredDomainEvent>().Should().ContainSingle()
-            .Which.FriendlyUserId.Should().Be("flower");
+            .Which.Should().Match<AccountRegisteredDomainEvent>(x =>
+                x.FriendlyUserId == "flower"
+                && x.FirstName == "Flower"
+                && x.LastName == "Power"
+                && x.Organization == "FlowChat");
 
         account.DomainEvents.OfType<AggregateStateChangedDomainEvent<Account, AccountSnapshot>>().Should().ContainSingle()
             .Which.AggregateState.Should().Be(new AccountSnapshot(

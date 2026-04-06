@@ -38,7 +38,10 @@ public sealed class InsertUserProfileProjectionController(
                 request.IsActive,
                 request.LastSeenAtUtc,
                 request.IsEmailVisible,
-                request.IsPhoneVisible),
+                request.IsPhoneVisible,
+                request.FirstName,
+                request.LastName,
+                request.Organization),
             cancellationToken);
 
         return result.IsSuccess

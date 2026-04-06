@@ -34,6 +34,9 @@ public sealed class AccountRegisteredSubscriber(
             {
                 FriendlyUserId = friendlyUserId,
                 DisplayName = displayName,
+                FirstName = NormalizeOptional(message.FirstName),
+                LastName = NormalizeOptional(message.LastName),
+                Organization = NormalizeOptional(message.Organization),
                 AvatarUrl = null,
                 Bio = null,
                 Email = message.Email,
@@ -50,17 +53,25 @@ public sealed class AccountRegisteredSubscriber(
 
     private static string ResolveDisplayName(AccountRegisteredIntegrationEvent message, string friendlyUserId)
     {
+        var firstName = NormalizeOptional(message.FirstName);
+        var lastName = NormalizeOptional(message.LastName);
+        var fullName = $"{firstName} {lastName}".Trim();
+
+        if (!string.IsNullOrWhiteSpace(fullName))
+        {
+            return fullName;
+        }
+
         if (!string.IsNullOrWhiteSpace(message.DisplayName))
         {
             return message.DisplayName.Trim();
         }
 
-        var firstName = message.FirstName?.Trim();
-        var lastName = message.LastName?.Trim();
-        var fullName = $"{firstName} {lastName}".Trim();
-
         return string.IsNullOrWhiteSpace(fullName)
             ? friendlyUserId
             : fullName;
     }
+
+    private static string? NormalizeOptional(string? value) =>
+        string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 }

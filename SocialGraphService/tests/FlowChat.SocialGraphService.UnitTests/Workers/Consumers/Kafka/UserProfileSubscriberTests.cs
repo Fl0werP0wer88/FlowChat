@@ -40,6 +40,9 @@ public sealed class UserProfileCreatedSubscriberTests
                 UserProfileId = userProfileId,
                 FriendlyUserId = " john.doe ",
                 DisplayName = " John Doe ",
+                FirstName = " John ",
+                LastName = " Doe ",
+                Organization = " FlowChat ",
                 MainEmail = " john@flowchat.local ",
                 MainPhone = " +48123123123 ",
                 AvatarUrl = " https://cdn.example/avatar.png ",
@@ -55,6 +58,9 @@ public sealed class UserProfileCreatedSubscriberTests
         capturedRequest!.UserProfileId.Should().Be(userProfileId);
         capturedRequest.FriendlyUserId.Should().Be("john.doe");
         capturedRequest.DisplayName.Should().Be("John Doe");
+        capturedRequest.FirstName.Should().Be("John");
+        capturedRequest.LastName.Should().Be("Doe");
+        capturedRequest.Organization.Should().Be("FlowChat");
         capturedRequest.MainEmail.Should().Be("john@flowchat.local");
         capturedRequest.MainPhone.Should().Be("+48123123123");
         capturedRequest.AvatarUrl.Should().Be("https://cdn.example/avatar.png");
@@ -109,6 +115,9 @@ public sealed class UserProfileStateChangedSubscriberTests
                 UserProfileId = _fixture.Create<Guid>(),
                 FriendlyUserId = "jane.doe",
                 DisplayName = "Jane Doe",
+                FirstName = "Jane",
+                LastName = "Doe",
+                Organization = "FlowChat",
                 MainEmail = null,
                 MainPhone = "123456",
                 AvatarUrl = null,
@@ -123,6 +132,9 @@ public sealed class UserProfileStateChangedSubscriberTests
         capturedRequest.Should().NotBeNull();
         capturedRequest!.FriendlyUserId.Should().Be("jane.doe");
         capturedRequest.DisplayName.Should().Be("Jane Doe");
+        capturedRequest.FirstName.Should().Be("Jane");
+        capturedRequest.LastName.Should().Be("Doe");
+        capturedRequest.Organization.Should().Be("FlowChat");
         capturedRequest.IsActive.Should().BeFalse();
         capturedRequest.IsPhoneVisible.Should().BeTrue();
     }

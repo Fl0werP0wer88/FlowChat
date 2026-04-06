@@ -6,6 +6,12 @@ public sealed class CreateInitialUserProfileRequest
 
     public string DisplayName { get; set; } = string.Empty;
 
+    public string? FirstName { get; set; }
+
+    public string? LastName { get; set; }
+
+    public string? Organization { get; set; }
+
     public string? AvatarUrl { get; set; }
 
     public string? Bio { get; set; }

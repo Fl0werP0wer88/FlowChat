@@ -25,14 +25,23 @@ public sealed class DomainEventToIntegrationEventProfileTests
     public void AccountRegisteredDomainEvent_IsMappedToIntegrationEvent()
     {
         var accountId = Id<Account>.New();
-        var domainEvent = new AccountRegisteredDomainEvent(accountId, "flower", EmailAddress.Create("flower@example.com"));
+        var domainEvent = new AccountRegisteredDomainEvent(
+            accountId,
+            "flower",
+            EmailAddress.Create("flower@example.com"),
+            "Flower",
+            "Power",
+            "FlowChat");
 
         var integrationEvent = _mapper.Map<AccountRegisteredIntegrationEvent>(domainEvent);
 
         integrationEvent.UserId.Should().Be(accountId.Value);
         integrationEvent.FriendlyUserId.Should().Be("flower");
         integrationEvent.Email.Should().Be("flower@example.com");
-        integrationEvent.DisplayName.Should().Be("flower");
+        integrationEvent.DisplayName.Should().Be("Flower Power");
+        integrationEvent.FirstName.Should().Be("Flower");
+        integrationEvent.LastName.Should().Be("Power");
+        integrationEvent.Organization.Should().Be("FlowChat");
     }
 
     [Fact]

@@ -30,6 +30,9 @@ public sealed class UserProfileProjectionWriteRepository(AppDbContext dbContext)
                 UserProfileId = projection.UserProfileId,
                 FriendlyUserId = projection.FriendlyUserId,
                 DisplayName = projection.DisplayName,
+                FirstName = projection.FirstName,
+                LastName = projection.LastName,
+                Organization = projection.Organization,
                 MainEmail = projection.MainEmail,
                 MainPhone = projection.MainPhone,
                 AvatarUrl = projection.AvatarUrl,
@@ -62,6 +65,9 @@ public sealed class UserProfileProjectionWriteRepository(AppDbContext dbContext)
 
         entity.FriendlyUserId = projection.FriendlyUserId;
         entity.DisplayName = projection.DisplayName;
+        entity.FirstName = projection.FirstName;
+        entity.LastName = projection.LastName;
+        entity.Organization = projection.Organization;
         entity.MainEmail = projection.MainEmail;
         entity.MainPhone = projection.MainPhone;
         entity.AvatarUrl = projection.AvatarUrl;

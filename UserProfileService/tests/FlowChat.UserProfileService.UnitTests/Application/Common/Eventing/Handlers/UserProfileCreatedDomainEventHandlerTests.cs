@@ -56,7 +56,10 @@ public sealed class UserProfileCreatedDomainEventHandlerTests
             true,
             new DateTimeOffset(2026, 3, 10, 9, 0, 0, TimeSpan.Zero),
             true,
-            false);
+            false,
+            "John",
+            "Doe",
+            "FlowChat");
 
         UserProfileCreatedIntegrationEvent? capturedEvent = null;
         _publisherMock
@@ -79,6 +82,9 @@ public sealed class UserProfileCreatedDomainEventHandlerTests
         capturedEvent.LastSeenAtUtc.Should().Be(new DateTimeOffset(2026, 3, 10, 9, 0, 0, TimeSpan.Zero));
         capturedEvent.IsEmailVisible.Should().BeTrue();
         capturedEvent.IsPhoneVisible.Should().BeFalse();
+        capturedEvent.FirstName.Should().Be("John");
+        capturedEvent.LastName.Should().Be("Doe");
+        capturedEvent.Organization.Should().Be("FlowChat");
 
         _issuerMock.Verify(x => x.IssueAsync(userProfileId.Value, mainEmailId.Value, "john@example.com", It.IsAny<CancellationToken>()), Times.Once);
     }

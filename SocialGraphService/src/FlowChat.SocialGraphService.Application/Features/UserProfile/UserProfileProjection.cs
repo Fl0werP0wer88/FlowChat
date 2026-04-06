@@ -11,4 +11,7 @@ public sealed record UserProfileProjection(
     bool IsActive,
     DateTimeOffset? LastSeenAtUtc,
     bool IsEmailVisible,
-    bool IsPhoneVisible);
+    bool IsPhoneVisible,
+    string? FirstName = null,
+    string? LastName = null,
+    string? Organization = null);

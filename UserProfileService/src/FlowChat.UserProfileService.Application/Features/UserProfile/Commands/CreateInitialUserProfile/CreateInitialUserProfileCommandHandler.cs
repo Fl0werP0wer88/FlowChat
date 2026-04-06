@@ -30,6 +30,9 @@ public sealed class CreateInitialUserProfileCommandHandler
     {
         var friendlyUserId = string.IsNullOrWhiteSpace(request.FriendlyUserId) ? null : request.FriendlyUserId.Trim();
         var displayName = string.IsNullOrWhiteSpace(request.DisplayName) ? null : request.DisplayName.Trim();
+        var firstName = NormalizeOptional(request.FirstName);
+        var lastName = NormalizeOptional(request.LastName);
+        var organization = NormalizeOptional(request.Organization);
         var email = string.IsNullOrWhiteSpace(request.Email) ? null : request.Email.Trim();
         var phone = string.IsNullOrWhiteSpace(request.Phone) ? null : request.Phone.Trim();
         EmailAddress? emailAddress = null;
@@ -69,7 +72,10 @@ public sealed class CreateInitialUserProfileCommandHandler
             phoneNumber,
             request.AvatarUrl,
             request.Bio,
-            id: userProfileId);
+            id: userProfileId,
+            firstName: firstName,
+            lastName: lastName,
+            organization: organization);
 
         await _userProfileWriteRepository.AddAsync(_userProfile, cancellationToken);
 
@@ -80,4 +86,7 @@ public sealed class CreateInitialUserProfileCommandHandler
     {
         return result.IsSuccess ? _userProfile : null;
     }
+
+    private static string? NormalizeOptional(string? value) =>
+        string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 }

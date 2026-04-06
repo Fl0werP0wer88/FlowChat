@@ -34,7 +34,10 @@ public sealed class UpdateUserProfileProjectionCommandHandler
             request.IsActive,
             request.LastSeenAtUtc,
             request.IsEmailVisible,
-            request.IsPhoneVisible);
+            request.IsPhoneVisible,
+            NormalizeOptional(request.FirstName),
+            NormalizeOptional(request.LastName),
+            NormalizeOptional(request.Organization));
 
         var wasUpdated = await _userProfileProjectionWriteRepository.UpdateAsync(projection, cancellationToken);
         if (!wasUpdated)

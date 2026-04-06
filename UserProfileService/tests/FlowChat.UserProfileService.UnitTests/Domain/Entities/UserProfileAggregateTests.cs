@@ -406,6 +406,34 @@ public sealed class UserProfileAggregateTests
     }
 
     [Fact]
+    public void UserProfile_Create_WithPersonalFields_StoresThemInAggregateAndSnapshot()
+    {
+        var profile = UserProfile.Create(
+            "jdoe",
+            "John Doe",
+            EmailAddress.Create("john@example.com"),
+            id: Id<UserProfile>.New(),
+            firstName: " John ",
+            lastName: " Doe ",
+            organization: " FlowChat ");
+
+        profile.FirstName.Should().Be("John");
+        profile.LastName.Should().Be("Doe");
+        profile.Organization.Should().Be("FlowChat");
+
+        var createdEvent = profile.DomainEvents.OfType<UserProfileCreatedDomainEvent>().Should().ContainSingle().Subject;
+        createdEvent.FirstName.Should().Be("John");
+        createdEvent.LastName.Should().Be("Doe");
+        createdEvent.Organization.Should().Be("FlowChat");
+
+        var stateChangedEvent = profile.DomainEvents.OfType<AggregateStateChangedDomainEvent<UserProfile, UserProfileSnapshot>>()
+            .Should().ContainSingle().Subject;
+        stateChangedEvent.AggregateState.FirstName.Should().Be("John");
+        stateChangedEvent.AggregateState.LastName.Should().Be("Doe");
+        stateChangedEvent.AggregateState.Organization.Should().Be("FlowChat");
+    }
+
+    [Fact]
     public void UserProfile_Create_WithEmailOnly_DoesNotCreatePhone()
     {
         var id = Id<UserProfile>.New();
