@@ -3,7 +3,7 @@ namespace FlowChat.Core.Messaging.UserProfileService.Events;
 public sealed class UserProfileCreatedIntegrationEvent : IntegrationEvent
 {
     public Guid UserProfileId { get; init; }
-    public required string UserName { get; init; }
+    public required string FriendlyUserId { get; init; }
     public required string DisplayName { get; init; }
     public string? MainEmail { get; init; }
     public string? MainPhone { get; init; }

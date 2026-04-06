@@ -69,7 +69,7 @@ public sealed class UserProfileCreatedDomainEventHandlerTests
         capturedEvent.Should().NotBeNull();
         capturedEvent!.UserProfileId.Should().Be(userProfileId.Value);
         capturedEvent.Key.Should().Be(userProfileId.Value.ToString());
-        capturedEvent.UserName.Should().Be("jdoe");
+        capturedEvent.FriendlyUserId.Should().Be("jdoe");
         capturedEvent.DisplayName.Should().Be("John Doe");
         capturedEvent.MainEmail.Should().Be("john@example.com");
         capturedEvent.MainPhone.Should().Be("+48123123123");

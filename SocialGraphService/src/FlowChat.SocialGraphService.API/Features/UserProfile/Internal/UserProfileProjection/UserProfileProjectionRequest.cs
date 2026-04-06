@@ -3,7 +3,7 @@ namespace FlowChat.SocialGraphService.Api.Features.UserProfile.Internal.UserProf
 public sealed class UserProfileProjectionRequest
 {
     public Guid UserProfileId { get; set; }
-    public string UserName { get; set; } = string.Empty;
+    public string FriendlyUserId { get; set; } = string.Empty;
     public string DisplayName { get; set; } = string.Empty;
     public string? MainEmail { get; set; }
     public string? MainPhone { get; set; }

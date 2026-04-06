@@ -42,7 +42,7 @@ internal static class UserProfileSubscriberHelper
         new()
         {
             UserProfileId = ResolveUserProfileId(message.UserProfileId),
-            UserName = NormalizeRequired(message.UserName, nameof(message.UserName)),
+            FriendlyUserId = NormalizeRequired(message.FriendlyUserId, nameof(message.FriendlyUserId)),
             DisplayName = NormalizeRequired(message.DisplayName, nameof(message.DisplayName)),
             MainEmail = NormalizeOptional(message.MainEmail),
             MainPhone = NormalizeOptional(message.MainPhone),
@@ -58,7 +58,7 @@ internal static class UserProfileSubscriberHelper
         new()
         {
             UserProfileId = ResolveUserProfileId(message.UserProfileId),
-            UserName = NormalizeRequired(message.UserName, nameof(message.UserName)),
+            FriendlyUserId = NormalizeRequired(message.FriendlyUserId, nameof(message.FriendlyUserId)),
             DisplayName = NormalizeRequired(message.DisplayName, nameof(message.DisplayName)),
             MainEmail = NormalizeOptional(message.MainEmail),
             MainPhone = NormalizeOptional(message.MainPhone),

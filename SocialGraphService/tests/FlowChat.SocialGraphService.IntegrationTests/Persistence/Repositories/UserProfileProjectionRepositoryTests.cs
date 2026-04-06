@@ -35,7 +35,7 @@ public sealed class UserProfileProjectionRepositoryTests
         var entity = await context.UserProfileProjections.SingleAsync(x => x.UserProfileId == projection.UserProfileId);
 
         wasInserted.Should().BeTrue();
-        entity.UserName.Should().Be("jdoe");
+        entity.FriendlyUserId.Should().Be("jdoe");
         entity.DisplayName.Should().Be("John Doe");
         entity.MainEmail.Should().Be("john@example.com");
         entity.MainPhone.Should().Be("+48123123123");
@@ -62,7 +62,7 @@ public sealed class UserProfileProjectionRepositoryTests
             seedContext.UserProfileProjections.Add(new UserProfileProjectionEntity
             {
                 UserProfileId = userProfileId,
-                UserName = "existing-user",
+                FriendlyUserId = "existing-user",
                 DisplayName = "Existing Display Name",
                 CreatedBy = "seed",
                 CreatedAtUtc = new DateTimeOffset(2026, 3, 29, 7, 0, 0, TimeSpan.Zero),
@@ -94,7 +94,7 @@ public sealed class UserProfileProjectionRepositoryTests
         var entity = await context.UserProfileProjections.SingleAsync(x => x.UserProfileId == userProfileId);
 
         wasInserted.Should().BeFalse();
-        entity.UserName.Should().Be("existing-user");
+        entity.FriendlyUserId.Should().Be("existing-user");
         entity.DisplayName.Should().Be("Existing Display Name");
     }
 
@@ -112,7 +112,7 @@ public sealed class UserProfileProjectionRepositoryTests
             seedContext.UserProfileProjections.Add(new UserProfileProjectionEntity
             {
                 UserProfileId = userProfileId,
-                UserName = "old-user",
+                FriendlyUserId = "old-user",
                 DisplayName = "Old Display Name",
                 MainEmail = "old@example.com",
                 MainPhone = "+48000000000",
@@ -152,7 +152,7 @@ public sealed class UserProfileProjectionRepositoryTests
         var entity = await updateContext.UserProfileProjections.SingleAsync(x => x.UserProfileId == userProfileId);
 
         wasUpdated.Should().BeTrue();
-        entity.UserName.Should().Be("new-user");
+        entity.FriendlyUserId.Should().Be("new-user");
         entity.DisplayName.Should().Be("New Display Name");
         entity.MainEmail.Should().BeNull();
         entity.MainPhone.Should().Be("+48123123123");

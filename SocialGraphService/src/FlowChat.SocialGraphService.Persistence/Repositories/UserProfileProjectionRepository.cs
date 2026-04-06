@@ -28,7 +28,7 @@ public sealed class UserProfileProjectionRepository(AppDbContext dbContext) : IU
             new UserProfileProjectionEntity
             {
                 UserProfileId = projection.UserProfileId,
-                UserName = projection.UserName,
+                FriendlyUserId = projection.FriendlyUserId,
                 DisplayName = projection.DisplayName,
                 MainEmail = projection.MainEmail,
                 MainPhone = projection.MainPhone,
@@ -60,7 +60,7 @@ public sealed class UserProfileProjectionRepository(AppDbContext dbContext) : IU
             return false;
         }
 
-        entity.UserName = projection.UserName;
+        entity.FriendlyUserId = projection.FriendlyUserId;
         entity.DisplayName = projection.DisplayName;
         entity.MainEmail = projection.MainEmail;
         entity.MainPhone = projection.MainPhone;

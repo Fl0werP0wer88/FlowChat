@@ -24,7 +24,7 @@ public sealed class InsertUserProfileProjectionControllerTests
             new UserProfileProjectionRequest
             {
                 UserProfileId = _fixture.Create<Guid>(),
-                UserName = "jdoe",
+                FriendlyUserId = "jdoe",
                 DisplayName = "John Doe"
             },
             CancellationToken.None);
@@ -53,7 +53,7 @@ public sealed class InsertUserProfileProjectionControllerTests
             new UserProfileProjectionRequest
             {
                 UserProfileId = _fixture.Create<Guid>(),
-                UserName = " jdoe ",
+                FriendlyUserId = " jdoe ",
                 DisplayName = " John Doe ",
                 MainEmail = " john@example.com "
             },
@@ -61,7 +61,7 @@ public sealed class InsertUserProfileProjectionControllerTests
 
         result.Should().BeOfType<AcceptedResult>();
         capturedProjection.Should().NotBeNull();
-        capturedProjection!.UserName.Should().Be("jdoe");
+        capturedProjection!.FriendlyUserId.Should().Be("jdoe");
         capturedProjection.DisplayName.Should().Be("John Doe");
         capturedProjection.MainEmail.Should().Be("john@example.com");
         unitOfWorkMock.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
@@ -82,7 +82,7 @@ public sealed class InsertUserProfileProjectionControllerTests
             new UserProfileProjectionRequest
             {
                 UserProfileId = _fixture.Create<Guid>(),
-                UserName = "jdoe",
+                FriendlyUserId = "jdoe",
                 DisplayName = "John Doe"
             },
             CancellationToken.None);
@@ -100,7 +100,7 @@ public sealed class InsertUserProfileProjectionControllerTests
             new UserProfileProjectionRequest
             {
                 UserProfileId = Guid.Empty,
-                UserName = "jdoe",
+                FriendlyUserId = "jdoe",
                 DisplayName = "John Doe"
             },
             CancellationToken.None);

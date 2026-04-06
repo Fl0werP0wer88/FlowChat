@@ -35,7 +35,7 @@ public sealed class UpdateUserProfileProjectionControllerTests
             new UserProfileProjectionRequest
             {
                 UserProfileId = _fixture.Create<Guid>(),
-                UserName = " jane.doe ",
+                FriendlyUserId = " jane.doe ",
                 DisplayName = " Jane Doe ",
                 Bio = " updated "
             },
@@ -43,7 +43,7 @@ public sealed class UpdateUserProfileProjectionControllerTests
 
         result.Should().BeOfType<AcceptedResult>();
         capturedProjection.Should().NotBeNull();
-        capturedProjection!.UserName.Should().Be("jane.doe");
+        capturedProjection!.FriendlyUserId.Should().Be("jane.doe");
         capturedProjection.DisplayName.Should().Be("Jane Doe");
         capturedProjection.Bio.Should().Be("updated");
         unitOfWorkMock.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
@@ -64,7 +64,7 @@ public sealed class UpdateUserProfileProjectionControllerTests
             new UserProfileProjectionRequest
             {
                 UserProfileId = _fixture.Create<Guid>(),
-                UserName = "jane.doe",
+                FriendlyUserId = "jane.doe",
                 DisplayName = "Jane Doe"
             },
             CancellationToken.None);
@@ -82,7 +82,7 @@ public sealed class UpdateUserProfileProjectionControllerTests
             new UserProfileProjectionRequest
             {
                 UserProfileId = _fixture.Create<Guid>(),
-                UserName = string.Empty,
+                FriendlyUserId = string.Empty,
                 DisplayName = "Jane Doe"
             },
             CancellationToken.None);

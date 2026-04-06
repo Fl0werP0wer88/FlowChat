@@ -32,9 +32,9 @@ public abstract class InternalUserProfileProjectionControllerBase(
             return BadRequestResponse("Payload does not contain valid UserProfileId.");
         }
 
-        if (string.IsNullOrWhiteSpace(request.UserName))
+        if (string.IsNullOrWhiteSpace(request.FriendlyUserId))
         {
-            return BadRequestResponse("Payload does not contain valid UserName.");
+            return BadRequestResponse("Payload does not contain valid FriendlyUserId.");
         }
 
         if (string.IsNullOrWhiteSpace(request.DisplayName))
@@ -44,7 +44,7 @@ public abstract class InternalUserProfileProjectionControllerBase(
 
         projection = new UserProfileProjectionModel(
             request.UserProfileId,
-            request.UserName.Trim(),
+            request.FriendlyUserId.Trim(),
             request.DisplayName.Trim(),
             NormalizeOptional(request.MainEmail),
             NormalizeOptional(request.MainPhone),

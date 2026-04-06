@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -41,7 +41,7 @@ namespace FlowChat.SocialGraphService.Persistence.Migrations
                 columns: table => new
                 {
                     UserProfileId = table.Column<Guid>(type: "uuid", nullable: false),
-                    UserName = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    FriendlyUserId = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     DisplayName = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     MainEmail = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
                     MainPhone = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: true),
@@ -68,9 +68,9 @@ namespace FlowChat.SocialGraphService.Persistence.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "ix_user_profile_projection_user_name",
+                name: "ix_user_profile_projection_friendly_user_id",
                 table: "UserProfileProjection",
-                column: "UserName");
+                column: "FriendlyUserId");
         }
 
         /// <inheritdoc />

@@ -45,7 +45,7 @@ public sealed class SocialGraphInternalApiClientTests
             new UserProfileProjectionRequest
             {
                 UserProfileId = _fixture.Create<Guid>(),
-                UserName = "jdoe",
+                FriendlyUserId = "jdoe",
                 DisplayName = "John Doe"
             },
             CancellationToken.None);
@@ -60,7 +60,7 @@ public sealed class SocialGraphInternalApiClientTests
             new JsonSerializerOptions(JsonSerializerDefaults.Web));
 
         payload.Should().NotBeNull();
-        payload!.UserName.Should().Be("jdoe");
+        payload!.FriendlyUserId.Should().Be("jdoe");
         payload.DisplayName.Should().Be("John Doe");
     }
 

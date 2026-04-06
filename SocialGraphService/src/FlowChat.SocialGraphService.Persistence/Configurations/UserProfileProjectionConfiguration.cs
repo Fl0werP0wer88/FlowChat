@@ -12,7 +12,7 @@ public sealed class UserProfileProjectionConfiguration : IEntityTypeConfiguratio
 
         builder.HasKey(x => x.UserProfileId);
 
-        builder.Property(x => x.UserName)
+        builder.Property(x => x.FriendlyUserId)
             .HasMaxLength(100)
             .IsRequired();
 
@@ -56,7 +56,7 @@ public sealed class UserProfileProjectionConfiguration : IEntityTypeConfiguratio
 
         builder.Property(x => x.LastModifiedAtUtc);
 
-        builder.HasIndex(x => x.UserName)
-            .HasDatabaseName("ix_user_profile_projection_user_name");
+        builder.HasIndex(x => x.FriendlyUserId)
+            .HasDatabaseName("ix_user_profile_projection_friendly_user_id");
     }
 }

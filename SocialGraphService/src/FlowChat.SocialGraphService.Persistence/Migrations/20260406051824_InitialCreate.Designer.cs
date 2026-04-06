@@ -155,15 +155,15 @@ namespace FlowChat.SocialGraphService.Persistence.Migrations
                         .HasMaxLength(32)
                         .HasColumnType("character varying(32)");
 
-                    b.Property<string>("UserName")
+                    b.Property<string>("FriendlyUserId")
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
                     b.HasKey("UserProfileId");
 
-                    b.HasIndex("UserName")
-                        .HasDatabaseName("ix_user_profile_projection_user_name");
+                    b.HasIndex("FriendlyUserId")
+                        .HasDatabaseName("ix_user_profile_projection_friendly_user_id");
 
                     b.ToTable("UserProfileProjection", (string)null);
                 });

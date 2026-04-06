@@ -16,7 +16,7 @@ public sealed class IntegrationEventEnvelopeTests
         {
             Key = _fixture.Create<Guid>().ToString("D"),
             UserProfileId = _fixture.Create<Guid>(),
-            UserName = "jdoe",
+            FriendlyUserId = "jdoe",
             DisplayName = "John Doe"
         };
 
