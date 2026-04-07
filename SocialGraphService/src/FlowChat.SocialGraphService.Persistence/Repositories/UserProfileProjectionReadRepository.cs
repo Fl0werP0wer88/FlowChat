@@ -26,6 +26,47 @@ public sealed class UserProfileProjectionReadRepository(AppDbContext dbContext) 
         entity.LastName,
         entity.Organization);
 
+    public async Task<UserProfileProjection?> GetByUserProfileIdAsync(
+        Guid userProfileId,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentOutOfRangeException.ThrowIfEqual(userProfileId, Guid.Empty);
+
+        return await _dbContext.UserProfileProjections
+            .AsNoTracking()
+            .Where(entity => entity.UserProfileId == userProfileId)
+            .Select(Projection)
+            .FirstOrDefaultAsync(cancellationToken);
+    }
+
+    public async Task<UserProfileProjection?> GetByFriendlyUserIdAsync(
+        string friendlyUserId,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(friendlyUserId);
+
+        return await _dbContext.UserProfileProjections
+            .AsNoTracking()
+            .Where(entity => entity.FriendlyUserId == friendlyUserId)
+            .Select(Projection)
+            .FirstOrDefaultAsync(cancellationToken);
+    }
+
+    public async Task<UserProfileProjection?> GetByEmailAsync(
+        string email,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(email);
+
+        var normalizedEmail = email.Trim().ToLowerInvariant();
+
+        return await _dbContext.UserProfileProjections
+            .AsNoTracking()
+            .Where(entity => entity.MainEmail != null && entity.MainEmail.ToLower() == normalizedEmail)
+            .Select(Projection)
+            .FirstOrDefaultAsync(cancellationToken);
+    }
+
     public async Task<IReadOnlyList<UserProfileProjection>> SearchAsync(
         string? firstName,
         string? lastName,

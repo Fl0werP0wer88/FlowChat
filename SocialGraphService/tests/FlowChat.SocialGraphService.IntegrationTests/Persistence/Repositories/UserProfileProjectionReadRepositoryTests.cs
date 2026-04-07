@@ -110,20 +110,92 @@ public sealed class UserProfileProjectionReadRepositoryTests
         result.Select(projection => projection.DisplayName).Should().Equal("Jane Doe", "Jane Doe Flow");
     }
 
+    [Fact]
+    public async Task GetByUserProfileIdAsync_WhenProjectionExists_ReturnsProjection()
+    {
+        await using var connection = new SqliteConnection("Data Source=:memory:");
+        await connection.OpenAsync();
+
+        var userProfileId = Guid.NewGuid();
+
+        await using (var seedContext = CreateDbContext(connection))
+        {
+            seedContext.UserProfileProjections.Add(
+                CreateProjection("jdoe", "Jane Doe", "Jane", "Doe", "FlowChat", userProfileId, "jane@example.com"));
+            await seedContext.SaveChangesAsync();
+        }
+
+        await using var readContext = CreateDbContext(connection);
+        var repository = new UserProfileProjectionReadRepository(readContext);
+
+        var result = await repository.GetByUserProfileIdAsync(userProfileId, CancellationToken.None);
+
+        result.Should().NotBeNull();
+        result!.UserProfileId.Should().Be(userProfileId);
+        result.DisplayName.Should().Be("Jane Doe");
+    }
+
+    [Fact]
+    public async Task GetByFriendlyUserIdAsync_WhenProjectionExists_ReturnsProjection()
+    {
+        await using var connection = new SqliteConnection("Data Source=:memory:");
+        await connection.OpenAsync();
+
+        await using (var seedContext = CreateDbContext(connection))
+        {
+            seedContext.UserProfileProjections.Add(
+                CreateProjection("jdoe", "Jane Doe", "Jane", "Doe", "FlowChat", Guid.NewGuid(), "jane@example.com"));
+            await seedContext.SaveChangesAsync();
+        }
+
+        await using var readContext = CreateDbContext(connection);
+        var repository = new UserProfileProjectionReadRepository(readContext);
+
+        var result = await repository.GetByFriendlyUserIdAsync("jdoe", CancellationToken.None);
+
+        result.Should().NotBeNull();
+        result!.FriendlyUserId.Should().Be("jdoe");
+    }
+
+    [Fact]
+    public async Task GetByEmailAsync_WhenProjectionExists_ReturnsProjectionUsingCaseInsensitiveMatch()
+    {
+        await using var connection = new SqliteConnection("Data Source=:memory:");
+        await connection.OpenAsync();
+
+        await using (var seedContext = CreateDbContext(connection))
+        {
+            seedContext.UserProfileProjections.Add(
+                CreateProjection("jdoe", "Jane Doe", "Jane", "Doe", "FlowChat", Guid.NewGuid(), "Jane@Example.com"));
+            await seedContext.SaveChangesAsync();
+        }
+
+        await using var readContext = CreateDbContext(connection);
+        var repository = new UserProfileProjectionReadRepository(readContext);
+
+        var result = await repository.GetByEmailAsync("jane@example.com", CancellationToken.None);
+
+        result.Should().NotBeNull();
+        result!.MainEmail.Should().Be("Jane@Example.com");
+    }
+
     private static UserProfileProjectionEntity CreateProjection(
         string friendlyUserId,
         string displayName,
         string? firstName,
         string? lastName,
-        string? organization) =>
+        string? organization,
+        Guid? userProfileId = null,
+        string? mainEmail = null) =>
         new()
         {
-            UserProfileId = Guid.NewGuid(),
+            UserProfileId = userProfileId ?? Guid.NewGuid(),
             FriendlyUserId = friendlyUserId,
             DisplayName = displayName,
             FirstName = firstName,
             LastName = lastName,
             Organization = organization,
+            MainEmail = mainEmail,
             IsActive = true,
             IsEmailVisible = false,
             IsPhoneVisible = false,
