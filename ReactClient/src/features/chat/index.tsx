@@ -39,7 +39,9 @@ export function ChatFeature({ accessToken, userLogin, onLogout }: ChatFeaturePro
           isAddingContact={contacts.isAddingContact}
           isLoadingContacts={contacts.isLoadingContacts}
           onAddContact={contacts.addContactByLookup}
+          onAddContactByUserId={contacts.addContactByUserId}
           onClearNotice={contacts.clearNotice}
+          onSearchUsers={contacts.searchUsers}
         />
       )}
     />

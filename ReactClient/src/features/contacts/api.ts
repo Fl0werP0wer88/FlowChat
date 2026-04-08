@@ -24,6 +24,47 @@ interface AddContactResponseDto {
   ContactId?: string;
 }
 
+interface SearchUsersRequest {
+  firstName?: string;
+  lastName?: string;
+  organization?: string;
+}
+
+interface UserProfileProjectionDto {
+  userProfileId?: string;
+  UserProfileId?: string;
+  friendlyUserId?: string;
+  FriendlyUserId?: string;
+  displayName?: string;
+  DisplayName?: string;
+  firstName?: string | null;
+  FirstName?: string | null;
+  lastName?: string | null;
+  LastName?: string | null;
+  organization?: string | null;
+  Organization?: string | null;
+}
+
+interface SearchUsersResponseDto {
+  userProfiles?: UserProfileProjectionDto[];
+  UserProfiles?: UserProfileProjectionDto[];
+}
+
+export interface SearchUsersCriteria {
+  firstName: string;
+  lastName: string;
+  organization: string;
+}
+
+export interface SearchUserResult {
+  userProfileId: string;
+  friendlyUserId: string;
+  displayName: string;
+  firstName: string | null;
+  lastName: string | null;
+  organization: string | null;
+}
+
 function resolveContacts(response: GetContactsResponseDto): ContactDto[] {
   return response.contacts ?? response.Contacts ?? [];
 }
@@ -33,6 +74,36 @@ function mapContact(dto: ContactDto): Contact {
     id: dto.id ?? dto.Id ?? crypto.randomUUID(),
     displayName: dto.displayName ?? dto.DisplayName ?? "Nowy kontakt",
     status: "offline",
+  };
+}
+
+function buildQueryString(parameters: SearchUsersRequest): string {
+  const searchParams = new URLSearchParams();
+
+  if (parameters.firstName) {
+    searchParams.set("firstName", parameters.firstName);
+  }
+
+  if (parameters.lastName) {
+    searchParams.set("lastName", parameters.lastName);
+  }
+
+  if (parameters.organization) {
+    searchParams.set("organization", parameters.organization);
+  }
+
+  const serialized = searchParams.toString();
+  return serialized.length > 0 ? `?${serialized}` : "";
+}
+
+function mapSearchUserResult(dto: UserProfileProjectionDto): SearchUserResult {
+  return {
+    userProfileId: dto.userProfileId ?? dto.UserProfileId ?? crypto.randomUUID(),
+    friendlyUserId: dto.friendlyUserId ?? dto.FriendlyUserId ?? "",
+    displayName: dto.displayName ?? dto.DisplayName ?? "Nieznany uzytkownik",
+    firstName: dto.firstName ?? dto.FirstName ?? null,
+    lastName: dto.lastName ?? dto.LastName ?? null,
+    organization: dto.organization ?? dto.Organization ?? null,
   };
 }
 
@@ -66,4 +137,44 @@ export async function addContact(
   });
 
   return response.contactId ?? response.ContactId ?? null;
+}
+
+export async function addContactByUserId(
+  ownerUserId: string,
+  userId: string,
+  accessToken: string,
+): Promise<string | null> {
+  const payload = {
+    ownerUserId,
+    userId,
+  };
+
+  const response = await postJson<AddContactResponseDto, typeof payload>("/api/contacts", payload, {
+    accessToken,
+  });
+
+  return response.contactId ?? response.ContactId ?? null;
+}
+
+export async function searchUsers(
+  criteria: SearchUsersCriteria,
+  accessToken: string,
+  signal?: AbortSignal,
+): Promise<SearchUserResult[]> {
+  const normalizedCriteria: SearchUsersRequest = {
+    firstName: criteria.firstName.trim() || undefined,
+    lastName: criteria.lastName.trim() || undefined,
+    organization: criteria.organization.trim() || undefined,
+  };
+
+  const response = await getJson<SearchUsersResponseDto>(
+    `/api/userprofiles/projections/socialgraph/search${buildQueryString(normalizedCriteria)}`,
+    {
+      accessToken,
+      signal,
+    },
+  );
+
+  const results = response.userProfiles ?? response.UserProfiles ?? [];
+  return results.map(mapSearchUserResult);
 }

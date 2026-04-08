@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace FlowChat.SocialGraphService.Api.Features.UserProfile.Public.SearchUserProfileProjections;
 
 [ApiController]
-[Route("api/userprofiles/projections")]
+[Route("api/userprofiles/projections/socialgraph")]
 public sealed class SearchUserProfileProjectionsController : ApiControllerBase
 {
     private readonly IMediator _mediator;

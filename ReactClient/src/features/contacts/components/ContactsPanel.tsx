@@ -1,6 +1,7 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { KeyboardEventHandler } from "react";
 import type { Contact } from "../../../types/contacts";
+import type { SearchUserResult, SearchUsersCriteria } from "../api";
 
 interface ContactsPanelProps {
   addContactNotice: { kind: "error" | "info"; message: string } | null;
@@ -8,7 +9,9 @@ interface ContactsPanelProps {
   isAddingContact: boolean;
   isLoadingContacts: boolean;
   onAddContact: (lookupValue: string) => Promise<boolean>;
+  onAddContactByUserId: (userId: string) => Promise<boolean>;
   onClearNotice: () => void;
+  onSearchUsers: (criteria: SearchUsersCriteria, signal?: AbortSignal) => Promise<SearchUserResult[]>;
 }
 
 export function ContactsPanel({
@@ -17,11 +20,73 @@ export function ContactsPanel({
   isAddingContact,
   isLoadingContacts,
   onAddContact,
+  onAddContactByUserId,
   onClearNotice,
+  onSearchUsers,
 }: ContactsPanelProps) {
   const [isComposerOpen, setIsComposerOpen] = useState(false);
+  const [isSearchExpanded, setIsSearchExpanded] = useState(false);
   const [lookupValue, setLookupValue] = useState("");
+  const [searchCriteria, setSearchCriteria] = useState<SearchUsersCriteria>({
+    firstName: "",
+    lastName: "",
+    organization: "",
+  });
+  const [searchResults, setSearchResults] = useState<SearchUserResult[]>([]);
+  const [isSearchingUsers, setIsSearchingUsers] = useState(false);
+  const [searchNotice, setSearchNotice] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const firstNameInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!isComposerOpen || !isSearchExpanded) {
+      setSearchResults([]);
+      setSearchNotice(null);
+      setIsSearchingUsers(false);
+      return;
+    }
+
+    const hasAnyCriteria = Object.values(searchCriteria).some((value) => value.trim().length > 0);
+    if (!hasAnyCriteria) {
+      setSearchResults([]);
+      setSearchNotice(null);
+      setIsSearchingUsers(false);
+      return;
+    }
+
+    const abortController = new AbortController();
+    const timeoutId = window.setTimeout(() => {
+      setIsSearchingUsers(true);
+      setSearchNotice(null);
+
+      void onSearchUsers(searchCriteria, abortController.signal)
+        .then((results) => {
+          setSearchResults(results);
+          if (results.length === 0) {
+            setSearchNotice("Nie znaleziono uzytkownikow dla podanych danych.");
+          }
+        })
+        .catch((error) => {
+          if (abortController.signal.aborted) {
+            return;
+          }
+
+          const message = error instanceof Error ? error.message : "Nie udalo sie wyszukac uzytkownikow.";
+          setSearchResults([]);
+          setSearchNotice(message);
+        })
+        .finally(() => {
+          if (!abortController.signal.aborted) {
+            setIsSearchingUsers(false);
+          }
+        });
+    }, 280);
+
+    return () => {
+      abortController.abort();
+      window.clearTimeout(timeoutId);
+    };
+  }, [isComposerOpen, isSearchExpanded, onSearchUsers, searchCriteria]);
 
   const openComposer = () => {
     setIsComposerOpen(true);
@@ -31,7 +96,15 @@ export function ContactsPanel({
 
   const closeComposer = () => {
     setIsComposerOpen(false);
+    setIsSearchExpanded(false);
     setLookupValue("");
+    setSearchCriteria({
+      firstName: "",
+      lastName: "",
+      organization: "",
+    });
+    setSearchResults([]);
+    setSearchNotice(null);
     onClearNotice();
   };
 
@@ -50,6 +123,49 @@ export function ContactsPanel({
 
     event.preventDefault();
     await submitLookup();
+  };
+
+  const toggleSearch = () => {
+    setIsSearchExpanded((current) => {
+      const next = !current;
+
+      if (!next) {
+        setSearchCriteria({
+          firstName: "",
+          lastName: "",
+          organization: "",
+        });
+        setSearchResults([]);
+        setSearchNotice(null);
+      } else {
+        window.requestAnimationFrame(() => firstNameInputRef.current?.focus());
+      }
+
+      return next;
+    });
+  };
+
+  const handleSearchFieldChange = (field: keyof SearchUsersCriteria, value: string) => {
+    setSearchCriteria((current) => ({
+      ...current,
+      [field]: value,
+    }));
+  };
+
+  const handleSearchResultClick = async (userProfileId: string) => {
+    const wasAdded = await onAddContactByUserId(userProfileId);
+    if (wasAdded) {
+      setSearchResults([]);
+      setSearchNotice(null);
+      setSearchCriteria({
+        firstName: "",
+        lastName: "",
+        organization: "",
+      });
+      setLookupValue("");
+      setIsSearchExpanded(false);
+      setIsComposerOpen(false);
+    }
   };
 
   return (
@@ -127,13 +243,72 @@ export function ContactsPanel({
           : null}
 
         <button
-          className="contacts-composer__action"
-          onClick={() => inputRef.current?.focus()}
+          className={`contacts-composer__action ${isSearchExpanded ? "contacts-composer__action--active" : ""}`}
+          onClick={toggleSearch}
           type="button"
         >
           <span aria-hidden="true" className="material-symbols-rounded">person_search</span>
           <span>Search User</span>
         </button>
+
+        <div className={`contacts-composer__typeahead ${isSearchExpanded ? "contacts-composer__typeahead--open" : ""}`}>
+          <div className="contacts-composer__typeahead-fields">
+            <input
+              className="contacts-composer__typeahead-input"
+              onChange={(event) => handleSearchFieldChange("firstName", event.target.value)}
+              placeholder="First name"
+              ref={firstNameInputRef}
+              type="text"
+              value={searchCriteria.firstName}
+            />
+            <input
+              className="contacts-composer__typeahead-input"
+              onChange={(event) => handleSearchFieldChange("lastName", event.target.value)}
+              placeholder="Last name"
+              type="text"
+              value={searchCriteria.lastName}
+            />
+            <input
+              className="contacts-composer__typeahead-input"
+              onChange={(event) => handleSearchFieldChange("organization", event.target.value)}
+              placeholder="Organization"
+              type="text"
+              value={searchCriteria.organization}
+            />
+          </div>
+
+          <div className="contacts-composer__typeahead-results">
+            {isSearchingUsers
+              ? <p className="contacts-composer__typeahead-status">Szukanie uzytkownikow...</p>
+              : searchResults.length > 0
+              ? (
+                <ul className="contacts-composer__results-list">
+                  {searchResults.map((result) => (
+                    <li key={result.userProfileId}>
+                      <button
+                        className="contacts-composer__result"
+                        disabled={isAddingContact}
+                        onClick={() => void handleSearchResultClick(result.userProfileId)}
+                        type="button"
+                      >
+                        <span className="contacts-composer__result-copy">
+                          <strong>{result.displayName}</strong>
+                          <span>@{result.friendlyUserId}</span>
+                          {result.organization
+                            ? <span>{result.organization}</span>
+                            : null}
+                        </span>
+                        <span aria-hidden="true" className="material-symbols-rounded">person_add</span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )
+              : searchNotice
+              ? <p className="contacts-composer__typeahead-status">{searchNotice}</p>
+              : null}
+          </div>
+        </div>
       </div>
     </aside>
   );

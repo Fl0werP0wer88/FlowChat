@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { addContact, fetchContacts } from "../api";
+import { addContact, addContactByUserId, fetchContacts, searchUsers } from "../api";
 import type { Contact } from "../../../types/contacts";
+import type { SearchUserResult, SearchUsersCriteria } from "../api";
 
 interface ContactsNotice {
   kind: "error" | "info";
@@ -13,7 +14,9 @@ interface UseContactsResult {
   isLoadingContacts: boolean;
   notice: ContactsNotice | null;
   addContactByLookup: (lookupValue: string) => Promise<boolean>;
+  addContactByUserId: (userId: string) => Promise<boolean>;
   clearNotice: () => void;
+  searchUsers: (criteria: SearchUsersCriteria, signal?: AbortSignal) => Promise<SearchUserResult[]>;
 }
 
 function decodeJwtPayload(accessToken: string): Record<string, unknown> | null {
@@ -131,12 +134,59 @@ export function useContacts(accessToken: string): UseContactsResult {
     }
   };
 
+  const addContactByUserIdAction = async (userId: string): Promise<boolean> => {
+    const trimmedUserId = userId.trim();
+
+    if (!trimmedUserId) {
+      setNotice({ kind: "error", message: "Brakuje identyfikatora uzytkownika." });
+      return false;
+    }
+
+    if (!accessToken || !ownerUserId) {
+      setNotice({
+        kind: "error",
+        message: "Brakuje aktywnej sesji potrzebnej do dodania kontaktu.",
+      });
+      return false;
+    }
+
+    setIsAddingContact(true);
+    setNotice(null);
+
+    try {
+      await addContactByUserId(ownerUserId, trimmedUserId, accessToken);
+      const loadedContacts = await fetchContacts(ownerUserId, accessToken);
+      setContacts(loadedContacts);
+      setNotice({ kind: "info", message: "Kontakt zostal dodany." });
+      return true;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Nie udalo sie dodac kontaktu.";
+      setNotice({ kind: "error", message });
+      return false;
+    } finally {
+      setIsAddingContact(false);
+    }
+  };
+
+  const searchUsersAction = async (
+    criteria: SearchUsersCriteria,
+    signal?: AbortSignal,
+  ): Promise<SearchUserResult[]> => {
+    if (!accessToken || !ownerUserId) {
+      throw new Error("Brakuje aktywnej sesji potrzebnej do wyszukiwania uzytkownikow.");
+    }
+
+    return await searchUsers(criteria, accessToken, signal);
+  };
+
   return {
     contacts,
     isAddingContact,
     isLoadingContacts,
     notice,
     addContactByLookup,
+    addContactByUserId: addContactByUserIdAction,
     clearNotice,
+    searchUsers: searchUsersAction,
   };
 }

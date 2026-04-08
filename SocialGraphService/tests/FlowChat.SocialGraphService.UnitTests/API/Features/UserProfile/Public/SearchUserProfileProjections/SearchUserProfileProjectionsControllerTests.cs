@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.AspNetCore.Mvc.Routing;
 using Moq;
 
 namespace FlowChat.SocialGraphService.UnitTests;
@@ -17,6 +18,17 @@ public sealed class SearchUserProfileProjectionsControllerTests
 {
     private readonly IFixture _fixture = new Fixture();
     private readonly Mock<IMediator> _mediatorMock = new();
+
+    [Fact]
+    public void Controller_RouteTemplate_UsesSocialGraphPath()
+    {
+        var routeAttribute = typeof(SearchUserProfileProjectionsController)
+            .GetCustomAttributes(typeof(RouteAttribute), inherit: false)
+            .Cast<RouteAttribute>()
+            .Single();
+
+        routeAttribute.Template.Should().Be("api/userprofiles/projections/socialgraph");
+    }
 
     [Fact]
     public async Task Search_WhenQuerySucceeds_ReturnsOkResponse()
