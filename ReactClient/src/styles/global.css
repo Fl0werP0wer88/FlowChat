@@ -601,6 +601,7 @@ body {
 .contacts-composer__typeahead-fields {
   display: grid;
   gap: 0.55rem;
+  padding-top: 0.2rem;
 }
 
 .contacts-composer__typeahead-input {
@@ -617,7 +618,7 @@ body {
 .contacts-composer__typeahead-input:focus {
   border-color: color-mix(in srgb, var(--accent) 60%, #19c37d 40%);
   box-shadow: 0 0 0 3px rgba(23, 103, 255, 0.12);
-  transform: translateY(-1px);
+  transform: translateY(0);
 }
 
 .contacts-composer__typeahead-input::placeholder {
