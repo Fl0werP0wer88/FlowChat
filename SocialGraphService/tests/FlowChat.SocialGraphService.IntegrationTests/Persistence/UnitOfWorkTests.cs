@@ -27,7 +27,7 @@ public sealed class UnitOfWorkTests
 
         var persistedContact = (await context.Contacts.ToListAsync()).Single(contact => contact.Id.Value == contactId);
 
-        persistedContact.DisplayedName.Should().Be("John Doe");
+        persistedContact.DisplayName.Should().Be("John Doe");
         persistedContact.CreatedBy.Should().Be("system");
         persistedContact.LastModifiedBy.Should().Be("system");
     }

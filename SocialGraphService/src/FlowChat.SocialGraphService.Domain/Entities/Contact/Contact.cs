@@ -9,7 +9,7 @@ public class Contact : AggregateRootBase<Contact>
     public Guid ContactUserId { get; }
     public string? FirstName { get; }
     public string? LastName { get; }
-    public string DisplayedName { get; }
+    public string DisplayName { get; }
     public PhoneNumber? PhoneNumber { get; }
     public EmailAddress? EmailAddress { get; }
     public bool IsBlocked { get; }
@@ -18,7 +18,7 @@ public class Contact : AggregateRootBase<Contact>
         Id<Contact>? id,
         Guid ownerUserId,
         Guid contactUserId,
-        string displayedName,
+        string displayName,
         string? firstName = null,
         string? lastName = null,
         PhoneNumber? phoneNumber = null,
@@ -33,13 +33,13 @@ public class Contact : AggregateRootBase<Contact>
             throw new ArgumentException("OwnerUserId and ContactUserId must be different.");
         }
 
-        ArgumentException.ThrowIfNullOrWhiteSpace(displayedName);
+        ArgumentException.ThrowIfNullOrWhiteSpace(displayName);
 
         OwnerUserId = ownerUserId;
         ContactUserId = contactUserId;
         FirstName = firstName;
         LastName = lastName;
-        DisplayedName = displayedName;
+        DisplayName = displayName;
         PhoneNumber = phoneNumber;
         EmailAddress = emailAddress;
         IsBlocked = isBlocked;
@@ -49,7 +49,7 @@ public class Contact : AggregateRootBase<Contact>
     public static Contact Create(
         Guid ownerUserId,
         Guid contactUserId,
-        string displayedName,
+        string displayName,
         string? firstName = null,
         string? lastName = null,
         PhoneNumber? phoneNumber = null,
@@ -57,13 +57,13 @@ public class Contact : AggregateRootBase<Contact>
         bool isBlocked = false,
         Id<Contact>? id = null)
     {
-        return new Contact(id, ownerUserId, contactUserId, displayedName, firstName, lastName, phoneNumber, emailAddress, isBlocked);
+        return new Contact(id, ownerUserId, contactUserId, displayName, firstName, lastName, phoneNumber, emailAddress, isBlocked);
     }
 
     public static Contact Rehydrate(
         Guid ownerUserId,
         Guid contactUserId,
-        string displayedName,
+        string displayName,
         string? firstName = null,
         string? lastName = null,
         PhoneNumber? phoneNumber = null,
@@ -71,7 +71,7 @@ public class Contact : AggregateRootBase<Contact>
         bool isBlocked = false,
         Id<Contact>? id = null)
     {
-        return new Contact(id, ownerUserId, contactUserId, displayedName, firstName, lastName, phoneNumber, emailAddress, isBlocked);
+        return new Contact(id, ownerUserId, contactUserId, displayName, firstName, lastName, phoneNumber, emailAddress, isBlocked);
     }
 }
 

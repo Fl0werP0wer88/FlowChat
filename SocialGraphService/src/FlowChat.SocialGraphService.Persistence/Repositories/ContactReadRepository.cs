@@ -14,7 +14,7 @@ public sealed class ContactReadRepository(AppDbContext dbContext)
         x.Id.Value,
         x.OwnerUserId,
         x.ContactUserId,
-        x.DisplayedName,
+        x.DisplayName,
         x.FirstName,
         x.LastName,
         x.PhoneNumber == null ? null : x.PhoneNumber.Value,

@@ -57,12 +57,12 @@ public sealed class ContactReadRepositoryTests
         result.Should().HaveCount(2);
         result.Select(contact => contact.Id).Should().Equal(newerContactId, olderContactId);
 
-        result[0].DisplayedName.Should().Be("Newer Contact");
+        result[0].DisplayName.Should().Be("Newer Contact");
         result[0].IsBlocked.Should().BeTrue();
         result[0].PhoneNumber.Should().BeNull();
         result[0].Email.Should().BeNull();
 
-        result[1].DisplayedName.Should().Be("Older Contact");
+        result[1].DisplayName.Should().Be("Older Contact");
         result[1].FirstName.Should().Be("Older");
         result[1].LastName.Should().Be("Person");
         result[1].PhoneNumber.Should().Be("+48111111111");

@@ -43,7 +43,7 @@ public sealed class TypedDomainIdsTests
 
         contact.FirstName.Should().Be("Jan");
         contact.LastName.Should().Be("Kowalski");
-        contact.DisplayedName.Should().Be("jkowalski");
+        contact.DisplayName.Should().Be("jkowalski");
         contact.PhoneNumber!.Value.Should().Be("+48123456789");
         contact.EmailAddress!.Value.Should().Be("jan@example.com");
     }
@@ -69,7 +69,7 @@ public sealed class TypedDomainIdsTests
         var contact = Contact.Create(
             ownerUserId: Guid.NewGuid(),
             contactUserId: Guid.NewGuid(),
-            displayedName: "user-login");
+            displayName: "user-login");
 
         contact.Id.Value.Should().NotBe(Guid.Empty);
     }
@@ -87,7 +87,7 @@ public sealed class TypedDomainIdsTests
     }
 
     [Fact]
-    public void Contact_Create_WithoutDisplayedName_Throws()
+    public void Contact_Create_WithoutDisplayName_Throws()
     {
         var act = () => Contact.Create(
             Guid.NewGuid(),

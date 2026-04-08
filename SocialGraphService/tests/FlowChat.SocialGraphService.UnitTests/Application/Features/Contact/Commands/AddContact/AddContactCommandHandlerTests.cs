@@ -85,7 +85,7 @@ public sealed class AddContactCommandHandlerTests
         capturedContact.Should().NotBeNull();
         capturedContact!.OwnerUserId.Should().Be(ownerUserId);
         capturedContact.ContactUserId.Should().Be(contactUserId);
-        capturedContact.DisplayedName.Should().Be("Jane Doe");
+        capturedContact.DisplayName.Should().Be("Jane Doe");
         capturedContact.FirstName.Should().Be("Jane");
         capturedContact.LastName.Should().Be("Doe");
         capturedContact.EmailAddress!.Value.Should().Be("jane@example.com");
