@@ -26,6 +26,9 @@ public sealed class NotificationConfiguration : IEntityTypeConfiguration<Notific
             .HasMaxLength(120)
             .IsRequired();
 
+        builder.Property(x => x.Body)
+            .IsRequired();
+
         builder.Property(x => x.Type)
             .HasConversion<string>()
             .HasMaxLength(50)

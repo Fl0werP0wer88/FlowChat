@@ -16,6 +16,7 @@ public sealed class NotificationReadRepository(AppDbContext dbContext)
         x.UserId,
         x.Email.Value,
         x.DisplayName,
+        x.Body,
         x.Type,
         x.Status,
         x.ProviderMessageId,

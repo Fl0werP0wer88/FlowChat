@@ -40,7 +40,7 @@ public sealed class NotificationsControllerTests
         var userId = _fixture.Create<Guid>();
         var dtos = new List<NotificationDto>
         {
-            new(Guid.NewGuid(), userId, "a@b.com", "Alice", NotificationType.EmailVerification,
+            new(Guid.NewGuid(), userId, "a@b.com", "Alice", "Please confirm your email", NotificationType.EmailVerification,
                 NotificationStatus.Sent, "msg-1", null, "key-1", DateTimeOffset.UtcNow, DateTimeOffset.UtcNow)
         };
 

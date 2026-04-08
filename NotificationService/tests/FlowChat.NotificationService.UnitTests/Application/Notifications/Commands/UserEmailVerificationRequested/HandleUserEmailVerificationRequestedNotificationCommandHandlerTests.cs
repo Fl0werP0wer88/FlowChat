@@ -97,6 +97,7 @@ public sealed class HandleUserEmailVerificationRequestedNotificationCommandHandl
         savedNotification.ProviderMessageId.Should().Be("provider-123");
         savedNotification.FailureReason.Should().BeNull();
         sendRequest.Should().NotBeNull();
+        savedNotification.Body.Should().Be(sendRequest!.Body);
         sendRequest!.Body.Should().Contain(command.ConfirmationLink);
     }
 

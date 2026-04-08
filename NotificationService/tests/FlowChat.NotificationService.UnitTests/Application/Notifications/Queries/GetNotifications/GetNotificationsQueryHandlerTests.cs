@@ -24,7 +24,7 @@ public sealed class GetNotificationsQueryHandlerTests
         var userId = _fixture.Create<Guid>();
         var expected = new List<NotificationDto>
         {
-            new(Guid.NewGuid(), userId, "a@b.com", "Alice", NotificationType.EmailVerification,
+            new(Guid.NewGuid(), userId, "a@b.com", "Alice", "Please confirm your email", NotificationType.EmailVerification,
                 NotificationStatus.Sent, "msg-1", null, "key-1", DateTimeOffset.UtcNow, DateTimeOffset.UtcNow)
         };
 
@@ -45,7 +45,7 @@ public sealed class GetNotificationsQueryHandlerTests
     {
         var expected = new List<NotificationDto>
         {
-            new(Guid.NewGuid(), Guid.NewGuid(), "x@y.com", "Bob", NotificationType.Welcome,
+            new(Guid.NewGuid(), Guid.NewGuid(), "x@y.com", "Bob", "Welcome to FlowChat", NotificationType.Welcome,
                 NotificationStatus.Pending, null, null, null, null, DateTimeOffset.UtcNow)
         };
 

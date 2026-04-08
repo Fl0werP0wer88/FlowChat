@@ -33,6 +33,7 @@ public sealed class NotificationWriteRepositoryTests : IDisposable
             userId ?? Guid.NewGuid(),
             EmailAddress.Create("test@example.com"),
             "Test User",
+            "Confirm your email by clicking the provided link",
             sourceMessageKey);
     }
 
@@ -49,6 +50,7 @@ public sealed class NotificationWriteRepositoryTests : IDisposable
         var persisted = await _dbContext.Notifications.FindAsync(notification.Id);
         persisted.Should().NotBeNull();
         persisted!.Email.Value.Should().Be("test@example.com");
+        persisted.Body.Should().Be("Confirm your email by clicking the provided link");
     }
 
     [Fact]

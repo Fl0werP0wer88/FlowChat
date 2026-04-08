@@ -15,12 +15,14 @@ public sealed class Notification : AggregateRootBase<Notification>
         Guid userId,
         EmailAddress email,
         string displayName,
+        string body,
         NotificationType type,
         string? sourceMessageKey) : base(id)
     {
         UserId = userId;
         Email = email;
         DisplayName = displayName;
+        Body = body;
         Type = type;
         Status = NotificationStatus.Pending;
         SourceMessageKey = sourceMessageKey;
@@ -29,6 +31,7 @@ public sealed class Notification : AggregateRootBase<Notification>
     public Guid UserId { get; private set; }
     public EmailAddress Email { get; private set; } = null!;
     public string DisplayName { get; private set; } = string.Empty;
+    public string Body { get; private set; } = string.Empty;
     public NotificationType Type { get; private set; }
     public NotificationStatus Status { get; private set; }
     public string? ProviderMessageId { get; private set; }
@@ -40,12 +43,14 @@ public sealed class Notification : AggregateRootBase<Notification>
         Guid userId,
         EmailAddress email,
         string displayName,
+        string body,
         string? sourceMessageKey)
     {
         return Create(
             userId,
             email,
             displayName,
+            body,
             NotificationType.Welcome,
             sourceMessageKey);
     }
@@ -54,12 +59,14 @@ public sealed class Notification : AggregateRootBase<Notification>
         Guid userId,
         EmailAddress email,
         string displayName,
+        string body,
         string? sourceMessageKey)
     {
         return Create(
             userId,
             email,
             displayName,
+            body,
             NotificationType.EmailVerification,
             sourceMessageKey);
     }
@@ -68,6 +75,7 @@ public sealed class Notification : AggregateRootBase<Notification>
         Guid userId,
         EmailAddress email,
         string displayName,
+        string body,
         NotificationType type,
         string? sourceMessageKey)
     {
@@ -83,11 +91,17 @@ public sealed class Notification : AggregateRootBase<Notification>
             throw new InvalidOperationException("DisplayName is required.");
         }
 
+        if (string.IsNullOrWhiteSpace(body))
+        {
+            throw new InvalidOperationException("Body is required.");
+        }
+
         return new Notification(
             null,
             userId,
             email,
             displayName.Trim(),
+            body.Trim(),
             type,
             string.IsNullOrWhiteSpace(sourceMessageKey) ? null : sourceMessageKey.Trim());
     }

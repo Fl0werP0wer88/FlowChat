@@ -32,6 +32,7 @@ public sealed class NotificationConfigurationTests : IDisposable
             userId,
             EmailAddress.Create("config-test@example.com"),
             "Config Test User",
+            "Confirm your email by clicking the provided link",
             "config-source-key");
         notification.MarkSent("provider-msg-xyz");
 
@@ -46,6 +47,7 @@ public sealed class NotificationConfigurationTests : IDisposable
         reloaded!.UserId.Should().Be(userId);
         reloaded.Email.Value.Should().Be("config-test@example.com");
         reloaded.DisplayName.Should().Be("Config Test User");
+        reloaded.Body.Should().Be("Confirm your email by clicking the provided link");
         reloaded.Type.Should().Be(NotificationType.EmailVerification);
         reloaded.Status.Should().Be(NotificationStatus.Sent);
         reloaded.ProviderMessageId.Should().Be("provider-msg-xyz");
@@ -61,6 +63,7 @@ public sealed class NotificationConfigurationTests : IDisposable
             _fixture.Create<Guid>(),
             EmailAddress.Create("fail@example.com"),
             "Fail User",
+            "Delivery failed for this content",
             null);
         notification.MarkFailed("connection refused");
 
@@ -82,7 +85,7 @@ public sealed class NotificationConfigurationTests : IDisposable
     public async Task NotificationConfiguration_MapsIdUsingTypedId()
     {
         var notification = Notification.CreateEmailVerification(
-            _fixture.Create<Guid>(), EmailAddress.Create("id-test@example.com"), "ID Test", null);
+            _fixture.Create<Guid>(), EmailAddress.Create("id-test@example.com"), "ID Test", "ID body", null);
 
         _dbContext.Notifications.Add(notification);
         await _dbContext.SaveChangesAsync();
@@ -108,7 +111,7 @@ public sealed class NotificationConfigurationTests : IDisposable
     public async Task NotificationConfiguration_CanPersistWelcomeNotification()
     {
         var notification = Notification.CreateWelcome(
-            _fixture.Create<Guid>(), EmailAddress.Create("welcome@example.com"), "Welcome User", "welcome-key");
+            _fixture.Create<Guid>(), EmailAddress.Create("welcome@example.com"), "Welcome User", "Welcome to FlowChat", "welcome-key");
 
         _dbContext.Notifications.Add(notification);
         await _dbContext.SaveChangesAsync();
@@ -118,7 +121,8 @@ public sealed class NotificationConfigurationTests : IDisposable
         var reloaded = await _dbContext.Notifications.FindAsync(notification.Id);
 
         reloaded.Should().NotBeNull();
-        reloaded!.Type.Should().Be(NotificationType.Welcome);
+        reloaded!.Body.Should().Be("Welcome to FlowChat");
+        reloaded.Type.Should().Be(NotificationType.Welcome);
         reloaded.Status.Should().Be(NotificationStatus.Pending);
     }
 }

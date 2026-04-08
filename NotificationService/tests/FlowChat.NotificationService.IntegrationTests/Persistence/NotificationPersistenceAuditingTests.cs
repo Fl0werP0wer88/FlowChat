@@ -49,6 +49,7 @@ public sealed class NotificationPersistenceAuditingTests
             _fixture.Create<Guid>(),
             EmailAddress.Create("test@example.com"),
             "Test User",
+            "Confirm your email by clicking the provided link",
             sourceMessageKey: "source-key");
 
         dbContext.Notifications.Add(notification);

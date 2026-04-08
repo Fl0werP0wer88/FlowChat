@@ -7,6 +7,7 @@ public sealed record NotificationDto(
     Guid UserId,
     string Email,
     string DisplayName,
+    string Body,
     NotificationType Type,
     NotificationStatus Status,
     string? ProviderMessageId,

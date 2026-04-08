@@ -19,6 +19,7 @@ namespace FlowChat.NotificationService.Persistence.Migrations
                     UserId = table.Column<Guid>(type: "uuid", nullable: false),
                     Email = table.Column<string>(type: "character varying(320)", maxLength: 320, nullable: false),
                     DisplayName = table.Column<string>(type: "character varying(120)", maxLength: 120, nullable: false),
+                    Body = table.Column<string>(type: "text", nullable: false),
                     Type = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     Status = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     ProviderMessageId = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),

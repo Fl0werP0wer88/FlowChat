@@ -36,6 +36,7 @@ public sealed class NotificationReadRepositoryTests : IDisposable
             userId ?? _fixture.Create<Guid>(),
             EmailAddress.Create($"{_fixture.Create<string>()}@example.com"),
             _fixture.Create<string>(),
+            _fixture.Create<string>(),
             sourceMessageKey);
 
         _dbContext.Notifications.Add(notification);
@@ -164,7 +165,12 @@ public sealed class NotificationReadRepositoryTests : IDisposable
     public async Task GetRecentAsync_MapsAllExpectedFields()
     {
         var userId = _fixture.Create<Guid>();
-        var notification = Notification.CreateEmailVerification(userId, EmailAddress.Create("test@example.com"), "Test User", "map-test-key");
+        var notification = Notification.CreateEmailVerification(
+            userId,
+            EmailAddress.Create("test@example.com"),
+            "Test User",
+            "Confirm your email by clicking the provided link",
+            "map-test-key");
         notification.MarkSent("provider-msg-123");
 
         _dbContext.Notifications.Add(notification);
@@ -176,6 +182,7 @@ public sealed class NotificationReadRepositoryTests : IDisposable
         dto.UserId.Should().Be(userId);
         dto.Email.Should().Be("test@example.com");
         dto.DisplayName.Should().Be("Test User");
+        dto.Body.Should().Be("Confirm your email by clicking the provided link");
         dto.Type.Should().Be(NotificationType.EmailVerification);
         dto.Status.Should().Be(NotificationStatus.Sent);
         dto.ProviderMessageId.Should().Be("provider-msg-123");

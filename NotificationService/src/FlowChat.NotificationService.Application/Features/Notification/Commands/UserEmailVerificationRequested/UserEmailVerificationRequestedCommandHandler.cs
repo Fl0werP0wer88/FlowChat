@@ -37,6 +37,7 @@ public sealed class UserEmailVerificationRequestedCommandHandler
             ? request.UserName.Trim()
             : request.DisplayName.Trim();
         var emailAddress = EmailAddress.Create(request.Email);
+        var notificationBody = $"Hello {displayName}, please confirm your email by clicking the link: {request.ConfirmationLink.Trim()}";
 
         // Idempotency guard: Kafka may redeliver the same message. If a notification was already
         // sent for this source message key, succeed without resending to avoid duplicate emails.
@@ -53,13 +54,14 @@ public sealed class UserEmailVerificationRequestedCommandHandler
             request.UserId,
             emailAddress,
             displayName,
+            notificationBody,
             request.SourceMessageKey);
 
         var sendRequest = new NotificationSendRequest(
             request.UserId,
             emailAddress.Value,
             "Confirm your email in FlowChat",
-            $"Hello {displayName}, please confirm your email by clicking the link: {request.ConfirmationLink.Trim()}");
+            notificationBody);
 
         var sendResult = await _notificationSender.SendAsync(sendRequest, cancellationToken);
 

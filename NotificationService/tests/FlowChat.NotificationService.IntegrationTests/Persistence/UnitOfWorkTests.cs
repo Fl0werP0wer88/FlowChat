@@ -35,7 +35,12 @@ public sealed class UnitOfWorkTests : IDisposable
     }
 
     private static Notification CreateNotification() =>
-        Notification.CreateEmailVerification(Guid.NewGuid(), EmailAddress.Create("test@example.com"), "Test User", null);
+        Notification.CreateEmailVerification(
+            Guid.NewGuid(),
+            EmailAddress.Create("test@example.com"),
+            "Test User",
+            "Confirm your email by clicking the provided link",
+            null);
 
     // --- SaveChangesAsync ---
 
