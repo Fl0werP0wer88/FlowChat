@@ -12,7 +12,7 @@ interface ChatFeatureProps {
 }
 
 export function ChatFeature({ accessToken, userLogin, onLogout }: ChatFeatureProps) {
-  const contacts = useContacts();
+  const contacts = useContacts(accessToken);
   const chat = useChatMessages();
   const realtime = useRealtimeConnection({
     accessToken,
@@ -32,7 +32,16 @@ export function ChatFeature({ accessToken, userLogin, onLogout }: ChatFeaturePro
           onSendDraft={chat.sendDraft}
         />
       }
-      sidebar={<ContactsPanel contacts={contacts} />}
+      sidebar={(
+        <ContactsPanel
+          addContactNotice={contacts.notice}
+          contacts={contacts.contacts}
+          isAddingContact={contacts.isAddingContact}
+          isLoadingContacts={contacts.isLoadingContacts}
+          onAddContact={contacts.addContactByLookup}
+          onClearNotice={contacts.clearNotice}
+        />
+      )}
     />
   );
 }

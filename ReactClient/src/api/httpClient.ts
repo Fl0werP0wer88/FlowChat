@@ -5,6 +5,10 @@ const apiBaseUrl = (
 ).replace(/\/+$/, "");
 
 type JsonRecord = Record<string, unknown>;
+interface RequestOptions {
+  accessToken?: string;
+  signal?: AbortSignal;
+}
 
 function parseJsonSafe(value: string): unknown {
   try {
@@ -48,16 +52,30 @@ function resolveErrorMessage(payload: unknown, statusCode: number): string {
   return `Request failed with status ${statusCode}.`;
 }
 
+function createHeaders(contentType: string | null, accessToken?: string): HeadersInit {
+  const headers: Record<string, string> = {};
+
+  if (contentType) {
+    headers["Content-Type"] = contentType;
+  }
+
+  if (accessToken) {
+    headers.Authorization = `Bearer ${accessToken}`;
+  }
+
+  return headers;
+}
+
 export async function postJson<TResponse, TRequest extends object>(
   path: string,
   payload: TRequest,
+  options: RequestOptions = {},
 ): Promise<TResponse> {
   const response = await fetch(`${apiBaseUrl}${path}`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: createHeaders("application/json", options.accessToken),
     body: JSON.stringify(payload),
+    signal: options.signal,
   });
 
   const rawText = await response.text();
@@ -73,13 +91,33 @@ export async function postJson<TResponse, TRequest extends object>(
 export async function postForm<TResponse>(
   path: string,
   payload: Record<string, string>,
+  options: RequestOptions = {},
 ): Promise<TResponse> {
   const response = await fetch(`${apiBaseUrl}${path}`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
+    headers: createHeaders("application/x-www-form-urlencoded", options.accessToken),
     body: new URLSearchParams(payload),
+    signal: options.signal,
+  });
+
+  const rawText = await response.text();
+  const parsedPayload = rawText.length > 0 ? parseJsonSafe(rawText) : null;
+
+  if (!response.ok) {
+    throw new Error(resolveErrorMessage(parsedPayload, response.status));
+  }
+
+  return parsedPayload as TResponse;
+}
+
+export async function getJson<TResponse>(
+  path: string,
+  options: RequestOptions = {},
+): Promise<TResponse> {
+  const response = await fetch(`${apiBaseUrl}${path}`, {
+    method: "GET",
+    headers: createHeaders(null, options.accessToken),
+    signal: options.signal,
   });
 
   const rawText = await response.text();

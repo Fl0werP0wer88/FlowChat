@@ -1,7 +1,7 @@
 export type ContactStatus = "online" | "away" | "offline";
 
 export interface Contact {
-  id: number;
+  id: string;
   displayName: string;
   status: ContactStatus;
 }
