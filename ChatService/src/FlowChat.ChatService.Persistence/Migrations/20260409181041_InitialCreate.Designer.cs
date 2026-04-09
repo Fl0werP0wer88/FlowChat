@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FlowChat.ChatService.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260408192149_InitialCreate")]
+    [Migration("20260409181041_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />

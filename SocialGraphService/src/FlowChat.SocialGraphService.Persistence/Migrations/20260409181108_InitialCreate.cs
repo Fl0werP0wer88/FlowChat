@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -42,7 +42,6 @@ namespace FlowChat.SocialGraphService.Persistence.Migrations
                 {
                     UserProfileId = table.Column<Guid>(type: "uuid", nullable: false),
                     FriendlyUserId = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
-                    DisplayName = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     FirstName = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
                     LastName = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
                     Organization = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
@@ -52,8 +51,6 @@ namespace FlowChat.SocialGraphService.Persistence.Migrations
                     Bio = table.Column<string>(type: "character varying(2000)", maxLength: 2000, nullable: true),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true),
                     LastSeenAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
-                    IsEmailVisible = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
-                    IsPhoneVisible = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
                     CreatedBy = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
                     CreatedAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     LastModifiedBy = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),

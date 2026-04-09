@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -50,7 +50,6 @@ namespace FlowChat.UserProfileService.Persistence.Migrations
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     UserName = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     NormalizedUserName = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
-                    DisplayName = table.Column<string>(type: "character varying(120)", maxLength: 120, nullable: false),
                     FirstName = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
                     LastName = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
                     Organization = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
@@ -58,8 +57,6 @@ namespace FlowChat.UserProfileService.Persistence.Migrations
                     Bio = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false),
                     LastSeenAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
-                    IsEmailVisible = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true),
-                    IsPhoneVisible = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true),
                     Version = table.Column<int>(type: "integer", nullable: false),
                     CreatedBy = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
                     CreatedAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
@@ -81,6 +78,7 @@ namespace FlowChat.UserProfileService.Persistence.Migrations
                     IsMain = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
                     IsAuth = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
                     IsConfirmed = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
+                    IsVisible = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true),
                     Version = table.Column<int>(type: "integer", nullable: false),
                     CreatedBy = table.Column<string>(type: "text", nullable: false),
                     CreatedAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
@@ -106,6 +104,8 @@ namespace FlowChat.UserProfileService.Persistence.Migrations
                     UserProfileId = table.Column<Guid>(type: "uuid", nullable: false),
                     Number = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
                     IsMain = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
+                    IsConfirmed = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
+                    IsVisible = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true),
                     Version = table.Column<int>(type: "integer", nullable: false),
                     CreatedBy = table.Column<string>(type: "text", nullable: false),
                     CreatedAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
