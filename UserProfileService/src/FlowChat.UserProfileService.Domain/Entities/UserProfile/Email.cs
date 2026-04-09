@@ -52,6 +52,11 @@ public class Email : EntityBase<Email>
         IsMain = isMain;
     }
 
+    internal void SetVisible(bool isVisible)
+    {
+        IsVisible = isVisible;
+    }
+
     internal void SetAuth(bool isAuth)
     {
         IsAuth = isAuth;
