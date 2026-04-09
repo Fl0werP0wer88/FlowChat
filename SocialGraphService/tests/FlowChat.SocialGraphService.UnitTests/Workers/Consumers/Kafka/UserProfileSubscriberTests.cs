@@ -42,8 +42,25 @@ public sealed class UserProfileCreatedSubscriberTests
                 FirstName = " John ",
                 LastName = " Doe ",
                 Organization = " FlowChat ",
-                MainEmail = " john@flowchat.local ",
-                MainPhone = " +48123123123 ",
+                MainEmail = new UserProfileEmail
+                {
+                    Id = _fixture.Create<Guid>(),
+                    UserProfileId = userProfileId,
+                    Address = " john@flowchat.local ",
+                    IsMain = true,
+                    IsAuth = true,
+                    IsConfirmed = false,
+                    IsVisible = true
+                },
+                MainPhone = new UserProfilePhone
+                {
+                    Id = _fixture.Create<Guid>(),
+                    UserProfileId = userProfileId,
+                    Number = " +48123123123 ",
+                    IsMain = true,
+                    IsConfirmed = false,
+                    IsVisible = true
+                },
                 AvatarUrl = " https://cdn.example/avatar.png ",
                 Bio = " hello ",
                 IsActive = true,
@@ -70,7 +87,17 @@ public sealed class UserProfileCreatedSubscriberTests
             new UserProfileCreatedIntegrationEvent
             {
                 UserProfileId = Guid.Empty,
-                FriendlyUserId = "john.doe"
+                FriendlyUserId = "john.doe",
+                MainEmail = new UserProfileEmail
+                {
+                    Id = _fixture.Create<Guid>(),
+                    UserProfileId = Guid.Empty,
+                    Address = "john@flowchat.local",
+                    IsMain = true,
+                    IsAuth = true,
+                    IsConfirmed = false,
+                    IsVisible = true
+                }
             },
             CancellationToken.None);
 

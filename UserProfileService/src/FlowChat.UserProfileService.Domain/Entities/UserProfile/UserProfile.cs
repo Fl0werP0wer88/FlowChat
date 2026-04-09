@@ -90,14 +90,15 @@ public class UserProfile : AggregateRootBase<UserProfile>
 
         EnsureInitialContactInvariant(userProfile._emails, userProfile._phones);
 
-        var currentMainPhone = userProfile.Phones.FirstOrDefault(x => x.IsMain)?.Number;
+        var currentMainPhone = userProfile.Phones.FirstOrDefault(x => x.IsMain);
 
         userProfile.AddDomainEvent(new UserProfileCreatedDomainEvent(
             userProfile.Id,
             initialEmail.Id,
+            currentMainPhone?.Id,
             userProfile.FriendlyUserId,
             initialEmail.Address,
-            currentMainPhone,
+            currentMainPhone?.Number,
             userProfile.AvatarUrl,
             userProfile.Bio,
             userProfile.IsActive,

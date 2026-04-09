@@ -7,8 +7,8 @@ public sealed class UserProfileCreatedIntegrationEvent : IntegrationEvent
     public string? FirstName { get; init; }
     public string? LastName { get; init; }
     public string? Organization { get; init; }
-    public string? MainEmail { get; init; }
-    public string? MainPhone { get; init; }
+    public required UserProfileEmail MainEmail { get; init; }
+    public UserProfilePhone? MainPhone { get; init; }
     public string? AvatarUrl { get; init; }
     public string? Bio { get; init; }
     public bool IsActive { get; init; }

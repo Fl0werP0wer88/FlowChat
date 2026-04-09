@@ -509,6 +509,7 @@ public sealed class UserProfileAggregateTests
         createdEvent.AggregateId.Should().Be(id.Value);
         createdEvent.UserProfileId.Should().Be(id);
         createdEvent.MainEmailId.Should().Be(profile.Emails.Single().Id);
+        createdEvent.MainPhoneId.Should().Be(profile.Phones.Single().Id);
         createdEvent.FriendlyUserId.Should().Be("jdoe");
         createdEvent.MainEmail.Should().Be(EmailAddress.Create("john@example.com"));
         createdEvent.MainPhone.Should().Be(PhoneNumber.Create("+48123123123"));
@@ -528,6 +529,7 @@ public sealed class UserProfileAggregateTests
 
         var createdEvent = profile.DomainEvents.OfType<UserProfileCreatedDomainEvent>().Should().ContainSingle().Subject;
         createdEvent.MainEmailId.Should().Be(profile.Emails.Single().Id);
+        createdEvent.MainPhoneId.Should().BeNull();
         createdEvent.MainEmail.Should().Be(EmailAddress.Create("john@example.com"));
         createdEvent.MainPhone.Should().BeNull();
 

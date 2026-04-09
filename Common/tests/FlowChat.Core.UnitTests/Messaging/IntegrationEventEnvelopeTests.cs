@@ -16,7 +16,17 @@ public sealed class IntegrationEventEnvelopeTests
         {
             Key = _fixture.Create<Guid>().ToString("D"),
             UserProfileId = _fixture.Create<Guid>(),
-            FriendlyUserId = "jdoe"
+            FriendlyUserId = "jdoe",
+            MainEmail = new UserProfileEmail
+            {
+                Id = _fixture.Create<Guid>(),
+                UserProfileId = _fixture.Create<Guid>(),
+                Address = "jdoe@example.com",
+                IsMain = true,
+                IsAuth = true,
+                IsConfirmed = false,
+                IsVisible = true
+            }
         };
 
         var envelope = new IntegrationEventEnvelope<UserProfileCreatedIntegrationEvent>(payload, payload.Key!);

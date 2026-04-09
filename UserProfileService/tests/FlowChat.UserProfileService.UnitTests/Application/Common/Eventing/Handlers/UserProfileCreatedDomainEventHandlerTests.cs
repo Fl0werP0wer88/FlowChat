@@ -44,9 +44,11 @@ public sealed class UserProfileCreatedDomainEventHandlerTests
         var handler = new UserProfileCreatedDomainEventHandler(_publisherMock.Object, _mapper, _issuerMock.Object);
         var userProfileId = Id<UserProfile>.New();
         var mainEmailId = Id<DomainEmail>.New();
+        var mainPhoneId = Id<Phone>.New();
         var domainEvent = new UserProfileCreatedDomainEvent(
             userProfileId,
             mainEmailId,
+            mainPhoneId,
             "jdoe",
             EmailAddress.Create("john@example.com"),
             PhoneNumber.Create("+48123123123"),
@@ -70,8 +72,20 @@ public sealed class UserProfileCreatedDomainEventHandlerTests
         capturedEvent!.UserProfileId.Should().Be(userProfileId.Value);
         capturedEvent.Key.Should().Be(userProfileId.Value.ToString());
         capturedEvent.FriendlyUserId.Should().Be("jdoe");
-        capturedEvent.MainEmail.Should().Be("john@example.com");
-        capturedEvent.MainPhone.Should().Be("+48123123123");
+        capturedEvent.MainEmail.Address.Should().Be("john@example.com");
+        capturedEvent.MainEmail.Id.Should().Be(mainEmailId.Value);
+        capturedEvent.MainEmail.UserProfileId.Should().Be(userProfileId.Value);
+        capturedEvent.MainEmail.IsMain.Should().BeTrue();
+        capturedEvent.MainEmail.IsAuth.Should().BeTrue();
+        capturedEvent.MainEmail.IsConfirmed.Should().BeFalse();
+        capturedEvent.MainEmail.IsVisible.Should().BeTrue();
+        capturedEvent.MainPhone.Should().NotBeNull();
+        capturedEvent.MainPhone!.Number.Should().Be("+48123123123");
+        capturedEvent.MainPhone.Id.Should().Be(mainPhoneId.Value);
+        capturedEvent.MainPhone.UserProfileId.Should().Be(userProfileId.Value);
+        capturedEvent.MainPhone.IsMain.Should().BeTrue();
+        capturedEvent.MainPhone.IsConfirmed.Should().BeFalse();
+        capturedEvent.MainPhone.IsVisible.Should().BeTrue();
         capturedEvent.AvatarUrl.Should().Be("https://cdn.example/avatar.png");
         capturedEvent.Bio.Should().Be("about me");
         capturedEvent.IsActive.Should().BeTrue();
@@ -92,6 +106,7 @@ public sealed class UserProfileCreatedDomainEventHandlerTests
         var domainEvent = new UserProfileCreatedDomainEvent(
             userProfileId,
             mainEmailId,
+            null,
             "jdoe",
             EmailAddress.Create("john@example.com"),
             null,
@@ -109,6 +124,8 @@ public sealed class UserProfileCreatedDomainEventHandlerTests
         await handler.Handle(domainEvent, CancellationToken.None);
 
         capturedEvent.Should().NotBeNull();
+        capturedEvent!.MainEmail.Should().NotBeNull();
+        capturedEvent.MainEmail.Address.Should().Be("john@example.com");
         capturedEvent!.MainPhone.Should().BeNull();
     }
 }

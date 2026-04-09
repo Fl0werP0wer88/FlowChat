@@ -18,9 +18,28 @@ public sealed class DomainEventToIntegrationEventProfile : Profile
             .ForMember(destination => destination.FirstName, options => options.MapFrom(source => source.FirstName))
             .ForMember(destination => destination.LastName, options => options.MapFrom(source => source.LastName))
             .ForMember(destination => destination.Organization, options => options.MapFrom(source => source.Organization))
-            .ForMember(destination => destination.MainEmail, options => options.MapFrom(source => source.MainEmail.Value))
+            .ForMember(destination => destination.MainEmail, options => options.MapFrom(source => new UserProfileEmail
+            {
+                Id = source.MainEmailId.Value,
+                UserProfileId = source.UserProfileId.Value,
+                Address = source.MainEmail.Value,
+                IsMain = true,
+                IsAuth = true,
+                IsConfirmed = false,
+                IsVisible = true
+            }))
             .ForMember(destination => destination.LastSeenAtUtc, options => options.MapFrom(source => source.LastSeenAtUtc == null ? (DateTimeOffset?)null : source.LastSeenAtUtc.Value))
-            .ForMember(destination => destination.MainPhone, options => options.MapFrom(source => source.MainPhone == null ? null : source.MainPhone.Value));
+            .ForMember(destination => destination.MainPhone, options => options.MapFrom(source => source.MainPhone == null
+                ? null
+                : new UserProfilePhone
+                {
+                    Id = source.MainPhoneId == null ? Guid.Empty : source.MainPhoneId.Value,
+                    UserProfileId = source.UserProfileId.Value,
+                    Number = source.MainPhone.Value,
+                    IsMain = true,
+                    IsConfirmed = false,
+                    IsVisible = true
+                }));
 
         CreateMap<EmailConfirmedDomainEvent, UserEmailConfirmedIntegrationEvent>()
             .ForMember(destination => destination.Key, options => options.MapFrom(source => source.UserProfileId.Value.ToString()))

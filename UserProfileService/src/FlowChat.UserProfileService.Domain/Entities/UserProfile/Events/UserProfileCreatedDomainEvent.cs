@@ -7,6 +7,7 @@ namespace FlowChat.UserProfileService.Domain.Entities.UserProfile.Events;
 public sealed class UserProfileCreatedDomainEvent(
     Id<UserProfile> aggregateId,
     Id<Email> mainEmailId,
+    Id<Phone>? mainPhoneId,
     string friendlyUserId,
     EmailAddress mainEmail,
     PhoneNumber? mainPhone,
@@ -21,6 +22,7 @@ public sealed class UserProfileCreatedDomainEvent(
 {
     public Id<UserProfile> UserProfileId { get; } = aggregateId;
     public Id<Email> MainEmailId { get; } = mainEmailId;
+    public Id<Phone>? MainPhoneId { get; } = mainPhoneId;
     public string FriendlyUserId { get; } = friendlyUserId;
     public EmailAddress MainEmail { get; } = mainEmail;
     public PhoneNumber? MainPhone { get; } = mainPhone;
