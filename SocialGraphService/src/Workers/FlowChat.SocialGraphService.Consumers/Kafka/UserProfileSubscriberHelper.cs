@@ -54,7 +54,7 @@ internal static class UserProfileSubscriberHelper
             LastSeenAtUtc = message.LastSeenAtUtc
         };
 
-    public static UserProfileProjectionRequest Map(UserProfileStateChangedIntegrationEvent message) =>
+    public static UserProfileProjectionRequest Map(UserProfileChangedIntegrationEvent message) =>
         new()
         {
             UserProfileId = ResolveUserProfileId(message.UserProfileId),

@@ -3,7 +3,7 @@ using FlowChat.Shared.Infrastructure.Silverback.Kafka;
 
 namespace FlowChat.UserProfileService.Infrastructure.Kafka;
 
-public sealed class UserProfileStateChangedProducerOptions : IKafkaProducerOptions<UserProfileStateChangedIntegrationEvent>
+public sealed class UserProfileStateChangedProducerOptions : IKafkaProducerOptions<UserProfileChangedIntegrationEvent>
 {
     public const string SectionName = "Kafka:UserProfileStateChangedProducer";
 

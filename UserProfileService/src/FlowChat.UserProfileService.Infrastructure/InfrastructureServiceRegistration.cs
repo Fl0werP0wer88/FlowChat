@@ -26,7 +26,7 @@ public static class InfrastructureServiceRegistration
             sp.GetRequiredService<IKafkaSettingsManager>().GetUserEmailConfirmedProducerOptions());
         services.AddScoped<IKafkaProducerOptions<EmailVerificationRequestIntegrationEvent>>(sp =>
             sp.GetRequiredService<IKafkaSettingsManager>().GetUserEmailVerificationRequestedProducerOptions());
-        services.AddScoped<IKafkaProducerOptions<UserProfileStateChangedIntegrationEvent>>(sp =>
+        services.AddScoped<IKafkaProducerOptions<UserProfileChangedIntegrationEvent>>(sp =>
             sp.GetRequiredService<IKafkaSettingsManager>().GetUserProfileStateChangedProducerOptions());
         services.AddScoped<IEmailVerificationLinkBuilder, EmailVerificationLinkBuilder>();
         services.AddScoped<IEmailVerificationTokenProtector, EmailVerificationTokenProtector>();

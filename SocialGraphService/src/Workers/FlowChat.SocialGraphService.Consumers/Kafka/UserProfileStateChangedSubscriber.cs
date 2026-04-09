@@ -7,15 +7,15 @@ namespace FlowChat.SocialGraphService.Consumers.Kafka;
 public sealed class UserProfileStateChangedSubscriber(
     ISocialGraphInternalApiClient socialGraphInternalApiClient,
     ILogger<UserProfileStateChangedSubscriber> logger)
-    : SubscriberBase<UserProfileStateChangedIntegrationEvent>(logger)
+    : SubscriberBase<UserProfileChangedIntegrationEvent>(logger)
 {
     protected override Task ExecuteAsync(
-        UserProfileStateChangedIntegrationEvent message,
+        UserProfileChangedIntegrationEvent message,
         CancellationToken cancellationToken) =>
         UserProfileSubscriberHelper.UpdateAsync(
             socialGraphInternalApiClient,
             Logger,
             UserProfileSubscriberHelper.Map(message),
-            nameof(UserProfileStateChangedIntegrationEvent),
+            nameof(UserProfileChangedIntegrationEvent),
             cancellationToken);
 }

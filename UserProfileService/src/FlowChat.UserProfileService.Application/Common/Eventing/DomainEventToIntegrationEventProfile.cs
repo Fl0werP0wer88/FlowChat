@@ -51,7 +51,7 @@ public sealed class DomainEventToIntegrationEventProfile : Profile
                 IsAuth = source.IsAuth
             }));
 
-        CreateMap<AggregateStateChangedDomainEvent<UserProfile, UserProfileState>, UserProfileStateChangedIntegrationEvent>()
+        CreateMap<AggregateStateChangedDomainEvent<UserProfile, UserProfileState>, UserProfileChangedIntegrationEvent>()
             .ForMember(destination => destination.Key, options => options.MapFrom(source => source.AggregateId.ToString()))
             .ForMember(destination => destination.UserProfileId, options => options.MapFrom(source => source.AggregateState.Id))
             .ForMember(destination => destination.FriendlyUserId, options => options.MapFrom(source => source.AggregateState.FriendlyUserId))

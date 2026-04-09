@@ -132,7 +132,7 @@ public sealed class UserProfileStateChangedSubscriberTests
             .Returns(Task.CompletedTask);
 
         await _subscriber.HandleAsync(
-            new UserProfileStateChangedIntegrationEvent
+            new UserProfileChangedIntegrationEvent
             {
                 UserProfileId = _fixture.Create<Guid>(),
                 FriendlyUserId = "jane.doe",

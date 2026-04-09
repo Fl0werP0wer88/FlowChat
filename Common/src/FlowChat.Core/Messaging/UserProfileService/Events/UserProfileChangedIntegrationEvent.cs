@@ -1,6 +1,6 @@
 namespace FlowChat.Core.Messaging.UserProfileService.Events;
 
-public sealed class UserProfileStateChangedIntegrationEvent : IntegrationEvent
+public sealed class UserProfileChangedIntegrationEvent : IntegrationEvent
 {
     public Guid UserProfileId { get; init; }
     public required string FriendlyUserId { get; init; }
