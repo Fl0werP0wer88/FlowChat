@@ -42,6 +42,10 @@ public class EmailConfiguration : IEntityTypeConfiguration<Email>
             .HasDefaultValue(false)
             .IsRequired();
 
+        builder.Property(x => x.IsVisible)
+            .HasDefaultValue(true)
+            .IsRequired();
+
         builder.Property(x => x.CreatedAtUtc)
             .HasUtcDateTimeOffsetConversion();
 

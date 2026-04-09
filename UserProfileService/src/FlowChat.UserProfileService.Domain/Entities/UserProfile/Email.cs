@@ -10,6 +10,7 @@ public class Email : EntityBase<Email>
     public bool IsMain { get; private set; }
     public bool IsAuth { get; private set; }
     public bool IsConfirmed { get; private set; }
+    public bool IsVisible { get; private set; }
 
     private Email(
         Id<Email>? id,
@@ -17,7 +18,8 @@ public class Email : EntityBase<Email>
         EmailAddress address,
         bool isMain = false,
         bool isAuth = false,
-        bool isConfirmed = false) : base(id)
+        bool isConfirmed = false,
+        bool isVisible = true) : base(id)
     {
         ArgumentNullException.ThrowIfNull(userProfileId);
         ArgumentNullException.ThrowIfNull(address);
@@ -27,6 +29,7 @@ public class Email : EntityBase<Email>
         IsMain = isMain;
         IsAuth = isAuth;
         IsConfirmed = isConfirmed;
+        IsVisible = isVisible;
     }
 
     public static Email Create(
@@ -36,7 +39,7 @@ public class Email : EntityBase<Email>
         bool isAuth = false,
         Id<Email>? id = null)
     {
-        return new Email(id, userProfileId, address, isMain, isAuth, isConfirmed: false);
+        return new Email(id, userProfileId, address, isMain, isAuth, isConfirmed: false, isVisible: true);
     }
 
     internal void Confirm()

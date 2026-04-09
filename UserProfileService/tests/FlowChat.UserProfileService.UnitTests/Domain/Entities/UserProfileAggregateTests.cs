@@ -38,6 +38,7 @@ public sealed class UserProfileAggregateTests
 
         email.Address.Value.Should().Be("john@example.com");
         email.IsConfirmed.Should().BeFalse();
+        email.IsVisible.Should().BeTrue();
     }
 
     [Fact]
@@ -55,6 +56,7 @@ public sealed class UserProfileAggregateTests
         email.IsMain.Should().BeFalse();
         email.IsAuth.Should().BeFalse();
         email.IsConfirmed.Should().BeFalse();
+        email.IsVisible.Should().BeTrue();
         existingMainEmail.IsMain.Should().BeTrue();
 
         var emailAddedEvent = profile.DomainEvents.OfType<EmailAddedDomainEvent>().Should().ContainSingle().Subject;
@@ -344,6 +346,7 @@ public sealed class UserProfileAggregateTests
         profile.Emails.Should().ContainSingle();
         profile.Emails[0].IsMain.Should().BeTrue();
         profile.Emails[0].IsAuth.Should().BeTrue();
+        profile.Emails[0].IsVisible.Should().BeTrue();
     }
 
     [Fact]

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { addContact, addContactByUserId, fetchContacts, searchUsers } from "../api";
 import type { Contact } from "../../../types/contacts";
+import { addContact, addContactByUserId, fetchContacts, searchUsers } from "../api";
 import type { SearchUserResult, SearchUsersCriteria } from "../api";
 
 interface ContactsNotice {

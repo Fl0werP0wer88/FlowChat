@@ -32,7 +32,7 @@ export function ChatFeature({ accessToken, userLogin, onLogout }: ChatFeaturePro
           onSendDraft={chat.sendDraft}
         />
       }
-      sidebar={(
+      sidebar={
         <ContactsPanel
           addContactNotice={contacts.notice}
           contacts={contacts.contacts}
@@ -43,7 +43,7 @@ export function ChatFeature({ accessToken, userLogin, onLogout }: ChatFeaturePro
           onClearNotice={contacts.clearNotice}
           onSearchUsers={contacts.searchUsers}
         />
-      )}
+      }
     />
   );
 }

@@ -86,7 +86,7 @@ public sealed class CreateInitialUserProfileCommandHandlerTests
         result.Value.Should().Be(userId);
         capturedProfile.Should().NotBeNull();
         capturedProfile.Emails.Should().ContainSingle()
-            .Which.Should().Match<Email>(e => e.Address.Value == "john@example.com" && e.IsMain && e.IsAuth);
+            .Which.Should().Match<Email>(e => e.Address.Value == "john@example.com" && e.IsMain && e.IsAuth && e.IsVisible);
         capturedProfile.Phones.Should().BeEmpty();
         capturedProfile.FirstName.Should().Be("John");
         capturedProfile.LastName.Should().Be("Doe");
@@ -147,7 +147,7 @@ public sealed class CreateInitialUserProfileCommandHandlerTests
         result.IsSuccess.Should().BeTrue();
         capturedProfile.Should().NotBeNull();
         capturedProfile.Emails.Should().ContainSingle()
-            .Which.Should().Match<Email>(e => e.Address.Value == "john@example.com" && e.IsMain && e.IsAuth);
+            .Which.Should().Match<Email>(e => e.Address.Value == "john@example.com" && e.IsMain && e.IsAuth && e.IsVisible);
         capturedProfile.Phones.Should().BeEmpty();
         capturedProfile.DisplayName.Should().Be("jdoe");
     }

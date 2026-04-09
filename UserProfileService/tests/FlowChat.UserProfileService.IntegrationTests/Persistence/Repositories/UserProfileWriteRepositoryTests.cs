@@ -41,6 +41,7 @@ public sealed class UserProfileWriteRepositoryTests
         result!.Id.Should().Be(profileId);
         result.Emails.Should().HaveCount(2);
         result.Emails.Should().ContainSingle(email => email.IsMain && email.Address.Value == "john@example.com");
+        result.Emails.Should().OnlyContain(email => email.IsVisible);
         result.Phones.Should().ContainSingle(phone => phone.IsMain && phone.Number.Value == "+48123123123");
     }
 

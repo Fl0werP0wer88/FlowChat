@@ -4,7 +4,7 @@ import type { Contact } from "../../../types/contacts";
 import type { SearchUserResult, SearchUsersCriteria } from "../api";
 
 interface ContactsPanelProps {
-  addContactNotice: { kind: "error" | "info"; message: string } | null;
+  addContactNotice: { kind: "error" | "info"; message: string; } | null;
   contacts: Contact[];
   isAddingContact: boolean;
   isLoadingContacts: boolean;
@@ -184,7 +184,11 @@ export function ContactsPanel({
         </div>
 
         {addContactNotice && !isComposerOpen
-          ? <p className={`alert ${addContactNotice.kind === "error" ? "alert-error" : "alert-info"}`}>{addContactNotice.message}</p>
+          ? (
+            <p className={`alert ${addContactNotice.kind === "error" ? "alert-error" : "alert-info"}`}>
+              {addContactNotice.message}
+            </p>
+          )
           : null}
 
         {isLoadingContacts
@@ -239,7 +243,11 @@ export function ContactsPanel({
         </div>
 
         {addContactNotice
-          ? <p className={`alert ${addContactNotice.kind === "error" ? "alert-error" : "alert-info"}`}>{addContactNotice.message}</p>
+          ? (
+            <p className={`alert ${addContactNotice.kind === "error" ? "alert-error" : "alert-info"}`}>
+              {addContactNotice.message}
+            </p>
+          )
           : null}
 
         <button
