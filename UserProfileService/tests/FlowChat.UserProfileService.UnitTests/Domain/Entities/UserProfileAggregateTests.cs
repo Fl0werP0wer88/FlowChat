@@ -222,6 +222,7 @@ public sealed class UserProfileAggregateTests
         profile.Phones[0].Number.Value.Should().Be("+48123123123");
         profile.Phones[0].UserProfileId.Should().Be(profile.Id);
         profile.Phones[0].IsMain.Should().BeTrue();
+        profile.Phones[0].IsVisible.Should().BeTrue();
 
         var @event = profile.DomainEvents.Should().ContainSingle()
             .Which.Should().BeOfType<AggregateStateChangedDomainEvent<UserProfile, UserProfileSnapshot>>().Subject;
@@ -322,6 +323,7 @@ public sealed class UserProfileAggregateTests
         var phone = Phone.Create(userProfileId, PhoneNumber.Create("+48 123 123 123"));
 
         phone.Number.Value.Should().Be("+48123123123");
+        phone.IsVisible.Should().BeTrue();
     }
 
     [Fact]
@@ -343,6 +345,7 @@ public sealed class UserProfileAggregateTests
 
         profile.Phones.Should().ContainSingle();
         profile.Phones[0].IsMain.Should().BeTrue();
+        profile.Phones[0].IsVisible.Should().BeTrue();
         profile.Emails.Should().ContainSingle();
         profile.Emails[0].IsMain.Should().BeTrue();
         profile.Emails[0].IsAuth.Should().BeTrue();

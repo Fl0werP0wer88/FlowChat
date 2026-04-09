@@ -127,7 +127,6 @@ public class UserProfile : AggregateRootBase<UserProfile>
             userProfile.FirstName,
             userProfile.LastName,
             userProfile.Organization));
-        userProfile.MarkAggregateStateChanged(UserProfileConstants.UserProfileAggregateTypeName, userProfile.CreateSnapshot);
 
         return userProfile;
     }

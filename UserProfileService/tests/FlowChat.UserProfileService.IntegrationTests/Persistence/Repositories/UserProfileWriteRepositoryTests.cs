@@ -43,6 +43,7 @@ public sealed class UserProfileWriteRepositoryTests
         result.Emails.Should().ContainSingle(email => email.IsMain && email.Address.Value == "john@example.com");
         result.Emails.Should().OnlyContain(email => email.IsVisible);
         result.Phones.Should().ContainSingle(phone => phone.IsMain && phone.Number.Value == "+48123123123");
+        result.Phones.Should().OnlyContain(phone => phone.IsVisible);
     }
 
     [Fact]
