@@ -1,6 +1,8 @@
+using FlowChat.Core.Contracts;
+
 namespace FlowChat.SocialGraphService.Consumers.SocialGraph.Contracts;
 
-public sealed class UserProfileProjectionRequest
+public sealed class UserProfileProjectionRequest : IConsumerOutput
 {
     public Guid UserProfileId { get; set; }
     public string FriendlyUserId { get; set; } = string.Empty;

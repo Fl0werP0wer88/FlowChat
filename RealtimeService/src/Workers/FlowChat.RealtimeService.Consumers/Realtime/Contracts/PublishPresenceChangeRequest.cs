@@ -1,6 +1,8 @@
+using FlowChat.Core.Contracts;
+
 namespace FlowChat.RealtimeService.Consumers.Realtime.Contracts;
 
-public sealed class PublishPresenceChangeRequest
+public sealed class PublishPresenceChangeRequest : IConsumerOutput
 {
     public Guid UserId { get; init; }
     public string? Status { get; init; }

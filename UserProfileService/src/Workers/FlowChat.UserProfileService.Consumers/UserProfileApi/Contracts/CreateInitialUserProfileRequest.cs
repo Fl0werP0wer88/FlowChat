@@ -1,6 +1,8 @@
+using FlowChat.Core.Contracts;
+
 namespace FlowChat.UserProfileService.Consumers.UserProfileApi.Contracts;
 
-public sealed class CreateInitialUserProfileRequest
+public sealed class CreateInitialUserProfileRequest : IConsumerOutput
 {
     public string FriendlyUserId { get; set; } = string.Empty;
 

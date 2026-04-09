@@ -1,6 +1,8 @@
+using FlowChat.Core.Contracts;
+
 namespace FlowChat.NotificationService.Consumers.NotificationApi.Contracts;
 
-public sealed class ProcessUserEmailVerificationRequestedRequest
+public sealed class ProcessUserEmailVerificationRequestedRequest : IConsumerOutput
 {
     public Guid UserId { get; set; }
 

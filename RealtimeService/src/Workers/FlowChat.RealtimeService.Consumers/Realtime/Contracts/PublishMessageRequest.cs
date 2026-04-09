@@ -1,6 +1,8 @@
+using FlowChat.Core.Contracts;
+
 namespace FlowChat.RealtimeService.Consumers.Realtime.Contracts;
 
-public sealed class PublishMessageRequest
+public sealed class PublishMessageRequest : IConsumerOutput
 {
     public Guid MessageId { get; init; }
     public Guid ConversationId { get; init; }
