@@ -19,11 +19,7 @@ public sealed class DomainEventToIntegrationEventProfile : Profile
             .ForMember(destination => destination.Organization, options => options.MapFrom(source => source.Organization))
             .ForMember(destination => destination.MainEmail, options => options.MapFrom(source => new UserProfileEmail
             {
-                Id = source.MainEmailId.Value,
-                UserProfileId = source.UserProfileId.Value,
                 Address = source.MainEmail.Value,
-                IsMain = true,
-                IsAuth = true,
                 IsConfirmed = false,
                 IsVisible = true
             }))
@@ -32,10 +28,7 @@ public sealed class DomainEventToIntegrationEventProfile : Profile
                 ? null
                 : new UserProfilePhone
                 {
-                    Id = source.MainPhoneId == null ? Guid.Empty : source.MainPhoneId.Value,
-                    UserProfileId = source.UserProfileId.Value,
                     Number = source.MainPhone.Value,
-                    IsMain = true,
                     IsConfirmed = false,
                     IsVisible = true
                 }));
@@ -72,11 +65,7 @@ public sealed class DomainEventToIntegrationEventProfile : Profile
             ? null
             : new UserProfileEmail
             {
-                Id = mainEmail.Id,
-                UserProfileId = mainEmail.UserProfileId,
                 Address = mainEmail.Address,
-                IsMain = mainEmail.IsMain,
-                IsAuth = mainEmail.IsAuth,
                 IsConfirmed = mainEmail.IsConfirmed,
                 IsVisible = mainEmail.IsVisible
             };
@@ -89,10 +78,7 @@ public sealed class DomainEventToIntegrationEventProfile : Profile
             ? null
             : new UserProfilePhone
             {
-                Id = mainPhone.Id,
-                UserProfileId = mainPhone.UserProfileId,
                 Number = mainPhone.Number,
-                IsMain = mainPhone.IsMain,
                 IsConfirmed = mainPhone.IsConfirmed,
                 IsVisible = mainPhone.IsVisible
             };

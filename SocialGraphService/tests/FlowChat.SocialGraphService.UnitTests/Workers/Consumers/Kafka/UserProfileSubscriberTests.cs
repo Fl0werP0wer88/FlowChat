@@ -44,20 +44,13 @@ public sealed class UserProfileCreatedSubscriberTests
                 Organization = " FlowChat ",
                 MainEmail = new UserProfileEmail
                 {
-                    Id = _fixture.Create<Guid>(),
-                    UserProfileId = userProfileId,
                     Address = " john@flowchat.local ",
-                    IsMain = true,
-                    IsAuth = true,
                     IsConfirmed = false,
                     IsVisible = true
                 },
                 MainPhone = new UserProfilePhone
                 {
-                    Id = _fixture.Create<Guid>(),
-                    UserProfileId = userProfileId,
                     Number = " +48123123123 ",
-                    IsMain = true,
                     IsConfirmed = false,
                     IsVisible = true
                 },
@@ -90,11 +83,7 @@ public sealed class UserProfileCreatedSubscriberTests
                 FriendlyUserId = "john.doe",
                 MainEmail = new UserProfileEmail
                 {
-                    Id = _fixture.Create<Guid>(),
-                    UserProfileId = Guid.Empty,
                     Address = "john@flowchat.local",
-                    IsMain = true,
-                    IsAuth = true,
                     IsConfirmed = false,
                     IsVisible = true
                 }
@@ -142,10 +131,7 @@ public sealed class UserProfileStateChangedSubscriberTests
                 MainEmail = null,
                 MainPhone = new UserProfilePhone
                 {
-                    Id = _fixture.Create<Guid>(),
-                    UserProfileId = _fixture.Create<Guid>(),
                     Number = "123456",
-                    IsMain = true,
                     IsConfirmed = true,
                     IsVisible = true
                 },

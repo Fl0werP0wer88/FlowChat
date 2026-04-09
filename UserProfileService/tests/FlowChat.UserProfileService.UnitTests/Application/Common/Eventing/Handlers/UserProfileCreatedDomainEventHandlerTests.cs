@@ -44,11 +44,10 @@ public sealed class UserProfileCreatedDomainEventHandlerTests
         var handler = new UserProfileCreatedDomainEventHandler(_publisherMock.Object, _mapper, _issuerMock.Object);
         var userProfileId = Id<UserProfile>.New();
         var mainEmailId = Id<DomainEmail>.New();
-        var mainPhoneId = Id<Phone>.New();
         var domainEvent = new UserProfileCreatedDomainEvent(
             userProfileId,
             mainEmailId,
-            mainPhoneId,
+            Id<Phone>.New(),
             "jdoe",
             EmailAddress.Create("john@example.com"),
             PhoneNumber.Create("+48123123123"),
@@ -73,17 +72,10 @@ public sealed class UserProfileCreatedDomainEventHandlerTests
         capturedEvent.Key.Should().Be(userProfileId.Value.ToString());
         capturedEvent.FriendlyUserId.Should().Be("jdoe");
         capturedEvent.MainEmail.Address.Should().Be("john@example.com");
-        capturedEvent.MainEmail.Id.Should().Be(mainEmailId.Value);
-        capturedEvent.MainEmail.UserProfileId.Should().Be(userProfileId.Value);
-        capturedEvent.MainEmail.IsMain.Should().BeTrue();
-        capturedEvent.MainEmail.IsAuth.Should().BeTrue();
         capturedEvent.MainEmail.IsConfirmed.Should().BeFalse();
         capturedEvent.MainEmail.IsVisible.Should().BeTrue();
         capturedEvent.MainPhone.Should().NotBeNull();
         capturedEvent.MainPhone!.Number.Should().Be("+48123123123");
-        capturedEvent.MainPhone.Id.Should().Be(mainPhoneId.Value);
-        capturedEvent.MainPhone.UserProfileId.Should().Be(userProfileId.Value);
-        capturedEvent.MainPhone.IsMain.Should().BeTrue();
         capturedEvent.MainPhone.IsConfirmed.Should().BeFalse();
         capturedEvent.MainPhone.IsVisible.Should().BeTrue();
         capturedEvent.AvatarUrl.Should().Be("https://cdn.example/avatar.png");

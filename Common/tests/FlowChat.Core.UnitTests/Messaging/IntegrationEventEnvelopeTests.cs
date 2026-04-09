@@ -19,11 +19,7 @@ public sealed class IntegrationEventEnvelopeTests
             FriendlyUserId = "jdoe",
             MainEmail = new UserProfileEmail
             {
-                Id = _fixture.Create<Guid>(),
-                UserProfileId = _fixture.Create<Guid>(),
                 Address = "jdoe@example.com",
-                IsMain = true,
-                IsAuth = true,
                 IsConfirmed = false,
                 IsVisible = true
             }
