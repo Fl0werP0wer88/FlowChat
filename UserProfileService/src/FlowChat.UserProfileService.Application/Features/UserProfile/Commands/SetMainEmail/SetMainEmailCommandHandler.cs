@@ -10,6 +10,8 @@ namespace FlowChat.UserProfileService.Application.Features.UserProfile.Commands.
 public sealed class SetMainEmailCommandHandler
     : CommandHandlerBase<SetMainEmailCommand, Guid>
 {
+    private const string EmailMustBeConfirmedMessageTemplate = "Email '{0}' must be confirmed before it can be set as the main email.";
+
     private readonly IUserProfileWriteRepository _userProfileRepository;
     private UserProfileAggregate? _userProfile;
 
@@ -36,6 +38,12 @@ public sealed class SetMainEmailCommandHandler
         {
             return FlowChatResult<Guid>.Failure(
                 DomainError.NotFound($"Email '{request.EmailId}' was not found for user profile '{request.UserId}'."));
+        }
+
+        if (!email.IsMain && !email.IsConfirmed)
+        {
+            return FlowChatResult<Guid>.Failure(
+                DomainError.Validation(string.Format(EmailMustBeConfirmedMessageTemplate, email.Address.Value)));
         }
 
         _userProfile.SetMainEmail(email.Id);

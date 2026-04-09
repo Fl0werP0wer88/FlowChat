@@ -12,13 +12,25 @@ public sealed class SetMainEmailControllerTests(UserProfileApiFactory factory)
     [Fact]
     public async Task SetMainEmail_WhenProfileAndEmailExist_Returns204NoContent()
     {
+        var (userId, firstEmailId, _) = await CreateProfileWithTwoEmailsAsync();
+
+        var response = await _client.PutAsync(
+            $"/api/userprofiles/{userId}/emails/{firstEmailId}/main",
+            content: null);
+
+        response.StatusCode.Should().Be(HttpStatusCode.NoContent);
+    }
+
+    [Fact]
+    public async Task SetMainEmail_WhenEmailIsNotConfirmed_Returns400BadRequest()
+    {
         var (userId, _, secondEmailId) = await CreateProfileWithTwoEmailsAsync();
 
         var response = await _client.PutAsync(
             $"/api/userprofiles/{userId}/emails/{secondEmailId}/main",
             content: null);
 
-        response.StatusCode.Should().Be(HttpStatusCode.NoContent);
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
     [Fact]

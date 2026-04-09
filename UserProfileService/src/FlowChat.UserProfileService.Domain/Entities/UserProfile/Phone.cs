@@ -8,6 +8,7 @@ public class Phone : EntityBase<Phone>
     public Id<UserProfile> UserProfileId { get; private set; }
     public PhoneNumber Number { get; private set; }
     public bool IsMain { get; private set; }
+    public bool IsConfirmed { get; private set; }
     public bool IsVisible { get; private set; }
 
     private Phone(
@@ -15,6 +16,7 @@ public class Phone : EntityBase<Phone>
         Id<UserProfile> userProfileId,
         PhoneNumber number,
         bool isMain = false,
+        bool isConfirmed = false,
         bool isVisible = true) : base(id)
     {
         ArgumentNullException.ThrowIfNull(userProfileId);
@@ -23,6 +25,7 @@ public class Phone : EntityBase<Phone>
         UserProfileId = userProfileId;
         Number = number;
         IsMain = isMain;
+        IsConfirmed = isConfirmed;
         IsVisible = isVisible;
     }
 
@@ -30,24 +33,36 @@ public class Phone : EntityBase<Phone>
         Id<UserProfile> userProfileId,
         PhoneNumber number,
         bool isMain = false,
+        bool isConfirmed = false,
         Id<Phone>? id = null,
         bool isVisible = true)
     {
-        return new Phone(id, userProfileId, number, isMain, isVisible);
+        return new Phone(id, userProfileId, number, isMain, isConfirmed, isVisible);
     }
 
     public static Phone Rehydrate(
         Id<UserProfile> userProfileId,
         PhoneNumber number,
         bool isMain = false,
+        bool isConfirmed = false,
         Id<Phone>? id = null,
         bool isVisible = true)
     {
-        return new Phone(id, userProfileId, number, isMain, isVisible);
+        return new Phone(id, userProfileId, number, isMain, isConfirmed, isVisible);
+    }
+
+    internal void Confirm()
+    {
+        IsConfirmed = true;
     }
 
     internal void SetMain(bool isMain)
     {
+        if (isMain && !IsConfirmed)
+        {
+            throw new InvalidOperationException($"Phone '{Number.Value}' must be confirmed before it can be set as main.");
+        }
+
         IsMain = isMain;
     }
 

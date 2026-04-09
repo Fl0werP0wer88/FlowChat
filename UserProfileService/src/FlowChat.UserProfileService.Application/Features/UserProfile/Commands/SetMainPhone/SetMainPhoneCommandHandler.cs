@@ -10,6 +10,8 @@ namespace FlowChat.UserProfileService.Application.Features.UserProfile.Commands.
 public sealed class SetMainPhoneCommandHandler
     : CommandHandlerBase<SetMainPhoneCommand, Guid>
 {
+    private const string PhoneMustBeConfirmedMessageTemplate = "Phone '{0}' must be confirmed before it can be set as the main phone.";
+
     private readonly IUserProfileWriteRepository _userProfileRepository;
     private UserProfileAggregate? _userProfile;
 
@@ -36,6 +38,12 @@ public sealed class SetMainPhoneCommandHandler
         {
             return FlowChatResult<Guid>.Failure(
                 DomainError.NotFound($"Phone '{request.PhoneId}' was not found for user profile '{request.UserId}'."));
+        }
+
+        if (!phone.IsMain && !phone.IsConfirmed)
+        {
+            return FlowChatResult<Guid>.Failure(
+                DomainError.Validation(string.Format(PhoneMustBeConfirmedMessageTemplate, phone.Number.Value)));
         }
 
         _userProfile.SetMainPhone(phone.Id);

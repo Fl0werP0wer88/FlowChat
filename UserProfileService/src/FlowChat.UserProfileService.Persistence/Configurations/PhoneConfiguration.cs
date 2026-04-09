@@ -34,6 +34,10 @@ public class PhoneConfiguration : IEntityTypeConfiguration<Phone>
             .HasDefaultValue(false)
             .IsRequired();
 
+        builder.Property(x => x.IsConfirmed)
+            .HasDefaultValue(false)
+            .IsRequired();
+
         builder.Property(x => x.IsVisible)
             .HasDefaultValue(true)
             .IsRequired();

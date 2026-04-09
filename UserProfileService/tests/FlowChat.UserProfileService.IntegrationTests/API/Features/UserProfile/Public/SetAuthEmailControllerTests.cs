@@ -48,6 +48,18 @@ public sealed class SetAuthEmailControllerTests(UserProfileApiFactory factory)
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
+    [Fact]
+    public async Task SetAuthEmail_WhenEmailIsNotConfirmed_Returns400BadRequest()
+    {
+        var (userId, secondEmailId) = await CreateProfileWithTwoEmailsAsync();
+
+        var response = await _client.PutAsync(
+            $"/api/userprofiles/{userId}/emails/{secondEmailId}/auth",
+            content: null);
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
     private async Task<Guid> CreateProfileAsync()
     {
         var userId = Guid.NewGuid();
@@ -87,6 +99,18 @@ public sealed class SetAuthEmailControllerTests(UserProfileApiFactory factory)
         var firstEmailId = profile!.UserProfile.Emails[0].Id;
 
         return (userId, firstEmailId);
+    }
+
+    private async Task<(Guid UserId, Guid SecondEmailId)> CreateProfileWithTwoEmailsAsync()
+    {
+        var (userId, _) = await CreateProfileAndGetFirstEmailAsync();
+
+        var addEmailResponse = await _client.PostAsJsonAsync(
+            $"/api/userprofiles/{userId}/emails",
+            new { Address = $"authsecond_{userId:N}@example.com" });
+        var addedEmail = await addEmailResponse.Content.ReadFromJsonAsync<AddEmailResponse>();
+
+        return (userId, addedEmail!.EmailId);
     }
 
     private sealed record GetUserProfileResponse(UserProfileDto UserProfile);

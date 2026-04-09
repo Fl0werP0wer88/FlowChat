@@ -80,17 +80,15 @@ public class UserProfile : AggregateRootBase<UserProfile>
             isActive,
             lastSeenAtUtc);
 
-        // Suppress intermediate snapshots while building initial state — a single snapshot
-        // is emitted below after the invariant check confirms the aggregate is fully valid.
-        var initialEmail = userProfile.AddEmailInternal(emailAddress, shouldMarkAggregateStateChanged: false);
+        var initialEmail = Email.Create(userProfile.Id, emailAddress, isMain: true, isAuth: true);
+        userProfile._emails.Add(initialEmail);
 
         if (phoneNumber is not null)
         {
-            userProfile.AddPhoneInternal(phoneNumber, shouldMarkAggregateStateChanged: false);
+            var initialPhone = Phone.Create(userProfile.Id, phoneNumber, isMain: true);
+            userProfile._phones.Add(initialPhone);
         }
 
-        // Validate after all contacts are added, not per-add, because AddEmailInternal auto-assigns
-        // IsMain/IsAuth to the first email and these flags must be consistent as a group.
         EnsureInitialContactInvariant(userProfile._emails, userProfile._phones);
 
         var currentMainPhone = userProfile.Phones.FirstOrDefault(x => x.IsMain)?.Number;
@@ -116,7 +114,15 @@ public class UserProfile : AggregateRootBase<UserProfile>
     {
         ArgumentNullException.ThrowIfNull(address);
 
-        var email = AddEmailInternal(address, id, shouldMarkAggregateStateChanged: false);
+        if (_emails.Any(x => x.Address == address))
+        {
+            throw new InvalidOperationException($"Email '{address.Value}' already exists.");
+        }
+
+        var shouldBeMainEmail = !_emails.Any(x => x.IsMain);
+        var shouldBeAuthEmail = !_emails.Any(x => x.IsAuth);
+        var email = Email.Create(Id, address, isMain: shouldBeMainEmail, isAuth: shouldBeAuthEmail, id: id);
+        _emails.Add(email);
 
         AddDomainEvent(new EmailAddedDomainEvent(Id, email.Id, email.Address));
         MarkAggregateStateChanged(UserProfileConstants.UserProfileAggregateTypeName, CreateSnapshot);
@@ -128,14 +134,57 @@ public class UserProfile : AggregateRootBase<UserProfile>
     {
         ArgumentNullException.ThrowIfNull(emailId);
 
-        SetMainEmailInternal(emailId, shouldAddDomainEvent: true, shouldMarkAggregateStateChanged: true);
+        var targetEmail = _emails.FirstOrDefault(x => x.Id == emailId);
+        if (targetEmail is null)
+        {
+            throw new InvalidOperationException($"Email '{emailId}' was not found.");
+        }
+
+        if (targetEmail.IsMain)
+        {
+            return;
+        }
+
+        if (!targetEmail.IsConfirmed)
+        {
+            throw new InvalidOperationException($"Email '{targetEmail.Address.Value}' must be confirmed before it can be set as main.");
+        }
+
+        foreach (var email in _emails)
+        {
+            email.SetMain(email == targetEmail);
+        }
+
+        AddDomainEvent(new MainEmailChangedDomainEvent(Id, targetEmail.Id, targetEmail.Address));
+        MarkAggregateStateChanged(UserProfileConstants.UserProfileAggregateTypeName, CreateSnapshot);
     }
 
     public void SetAuthEmail(Id<Email> emailId)
     {
         ArgumentNullException.ThrowIfNull(emailId);
 
-        SetAuthEmailInternal(emailId, shouldMarkAggregateStateChanged: true);
+        var targetEmail = _emails.FirstOrDefault(x => x.Id == emailId);
+        if (targetEmail is null)
+        {
+            throw new InvalidOperationException($"Email '{emailId}' was not found.");
+        }
+
+        if (targetEmail.IsAuth)
+        {
+            return;
+        }
+
+        if (!targetEmail.IsConfirmed)
+        {
+            throw new InvalidOperationException($"Email '{targetEmail.Address.Value}' must be confirmed before it can be set as auth.");
+        }
+
+        foreach (var email in _emails)
+        {
+            email.SetAuth(email == targetEmail);
+        }
+
+        MarkAggregateStateChanged(UserProfileConstants.UserProfileAggregateTypeName, CreateSnapshot);
     }
 
     public void ConfirmEmail(Id<Email> emailId)
@@ -161,128 +210,22 @@ public class UserProfile : AggregateRootBase<UserProfile>
     public Phone AddPhone(PhoneNumber number, Id<Phone>? id = null)
     {
         ArgumentNullException.ThrowIfNull(number);
-        return AddPhoneInternal(number, id);
+
+        if (_phones.Any(x => x.Number == number))
+        {
+            throw new InvalidOperationException($"Phone '{number.Value}' already exists.");
+        }
+
+        var phone = Phone.Create(Id, number, isMain: !_phones.Any(), id: id);
+        _phones.Add(phone);
+
+        return phone;
     }
 
     public void SetMainPhone(Id<Phone> phoneId)
     {
         ArgumentNullException.ThrowIfNull(phoneId);
 
-        SetMainPhoneInternal(phoneId);
-    }
-
-    private Email AddEmailInternal(
-        EmailAddress normalizedAddress,
-        Id<Email>? id = null,
-        bool shouldMarkAggregateStateChanged = true)
-    {
-        ArgumentNullException.ThrowIfNull(normalizedAddress);
-
-        if (_emails.Any(x => x.Address == normalizedAddress))
-        {
-            throw new InvalidOperationException($"Email '{normalizedAddress.Value}' already exists.");
-        }
-
-        // First email added becomes both the main (display) and auth (login) email automatically.
-        var shouldBeMainEmail = !_emails.Any(x => x.IsMain);
-        var shouldBeAuthEmail = !_emails.Any(x => x.IsAuth);
-        var email = Email.Create(Id, normalizedAddress, isMain: shouldBeMainEmail, isAuth: shouldBeAuthEmail, id: id);
-        _emails.Add(email);
-
-        if (shouldMarkAggregateStateChanged)
-        {
-            MarkAggregateStateChanged(UserProfileConstants.UserProfileAggregateTypeName, CreateSnapshot);
-        }
-
-        return email;
-    }
-
-    private void SetMainEmailInternal(
-        Id<Email> emailId,
-        bool shouldAddDomainEvent = true,
-        bool shouldMarkAggregateStateChanged = true)
-    {
-        var targetEmail = _emails.FirstOrDefault(x => x.Id == emailId);
-        if (targetEmail is null)
-        {
-            throw new InvalidOperationException($"Email '{emailId}' was not found.");
-        }
-
-        if (targetEmail.IsMain)
-        {
-            return;
-        }
-
-        foreach (var email in _emails)
-        {
-            email.SetMain(email == targetEmail);
-        }
-
-        if (shouldAddDomainEvent)
-        {
-            AddDomainEvent(new MainEmailChangedDomainEvent(Id, targetEmail.Id, targetEmail.Address));
-        }
-
-        if (shouldMarkAggregateStateChanged)
-        {
-            MarkAggregateStateChanged(UserProfileConstants.UserProfileAggregateTypeName, CreateSnapshot);
-        }
-    }
-
-    private void SetAuthEmailInternal(
-        Id<Email> emailId,
-        bool shouldMarkAggregateStateChanged = true)
-    {
-        var targetEmail = _emails.FirstOrDefault(x => x.Id == emailId);
-        if (targetEmail is null)
-        {
-            throw new InvalidOperationException($"Email '{emailId}' was not found.");
-        }
-
-        if (targetEmail.IsAuth)
-        {
-            return;
-        }
-
-        foreach (var email in _emails)
-        {
-            email.SetAuth(email == targetEmail);
-        }
-
-        if (shouldMarkAggregateStateChanged)
-        {
-            MarkAggregateStateChanged(UserProfileConstants.UserProfileAggregateTypeName, CreateSnapshot);
-        }
-    }
-
-    private Phone AddPhoneInternal(
-        PhoneNumber normalizedNumber,
-        Id<Phone>? id = null,
-        bool shouldMarkAggregateStateChanged = true)
-    {
-        ArgumentNullException.ThrowIfNull(normalizedNumber);
-
-        if (_phones.Any(x => x.Number == normalizedNumber))
-        {
-            throw new InvalidOperationException($"Phone '{normalizedNumber.Value}' already exists.");
-        }
-
-        var phone = Phone.Create(Id, normalizedNumber, !_phones.Any(), id);
-        _phones.Add(phone);
-
-        if (shouldMarkAggregateStateChanged)
-        {
-            MarkAggregateStateChanged(UserProfileConstants.UserProfileAggregateTypeName, CreateSnapshot);
-        }
-
-        return phone;
-    }
-
-    private void SetMainPhoneInternal(
-        Id<Phone> phoneId,
-        bool shouldAddDomainEvent = true,
-        bool shouldMarkAggregateStateChanged = true)
-    {
         var targetPhone = _phones.FirstOrDefault(x => x.Id == phoneId);
         if (targetPhone is null)
         {
@@ -294,20 +237,18 @@ public class UserProfile : AggregateRootBase<UserProfile>
             return;
         }
 
+        if (!targetPhone.IsConfirmed)
+        {
+            throw new InvalidOperationException($"Phone '{targetPhone.Number.Value}' must be confirmed before it can be set as main.");
+        }
+
         foreach (var phone in _phones)
         {
             phone.SetMain(phone == targetPhone);
         }
 
-        if (shouldAddDomainEvent)
-        {
-            AddDomainEvent(new MainPhoneChangedDomainEvent(Id, targetPhone.Id, targetPhone.Number));
-        }
-
-        if (shouldMarkAggregateStateChanged)
-        {
-            MarkAggregateStateChanged(UserProfileConstants.UserProfileAggregateTypeName, CreateSnapshot);
-        }
+        AddDomainEvent(new MainPhoneChangedDomainEvent(Id, targetPhone.Id, targetPhone.Number));
+        MarkAggregateStateChanged(UserProfileConstants.UserProfileAggregateTypeName, CreateSnapshot);
     }
 
     private UserProfileSnapshot CreateSnapshot()

@@ -40,6 +40,7 @@ public sealed class SetAuthEmailCommandHandlerTests
         var profile = CreateUserProfile();
         var initialAuthEmail = profile.Emails.Should().ContainSingle().Subject;
         var secondaryEmail = profile.AddEmail(EmailAddress.Create("john.secondary@example.com"));
+        profile.ConfirmEmail(secondaryEmail.Id);
         profile.ClearEvents();
 
         _writeRepositoryMock
@@ -98,6 +99,25 @@ public sealed class SetAuthEmailCommandHandlerTests
         result.IsFailure.Should().BeTrue();
         result.Error.ErrorType.Should().Be(ErrorType.Validation);
         result.Error.Errors.Should().Equal("EmailId is required.");
+    }
+
+    [Fact]
+    public async Task Handle_WhenEmailIsNotConfirmed_ReturnsValidationFailure()
+    {
+        var profile = CreateUserProfile();
+        var secondaryEmail = profile.AddEmail(EmailAddress.Create("john.secondary@example.com"));
+        profile.ClearEvents();
+
+        _writeRepositoryMock
+            .Setup(x => x.GetByIdAsync(profile.Id.Value, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(profile);
+
+        var result = await SendAsync(new SetAuthEmailCommand(profile.Id.Value, secondaryEmail.Id.Value));
+
+        result.IsFailure.Should().BeTrue();
+        result.Error.ErrorType.Should().Be(ErrorType.Validation);
+        result.Error.ErrorMessage.Should().Be(
+            $"Email '{secondaryEmail.Address.Value}' must be confirmed before it can be set as the auth email.");
     }
 
     private async Task<FlowChatResult<Guid>> SendAsync(SetAuthEmailCommand command)

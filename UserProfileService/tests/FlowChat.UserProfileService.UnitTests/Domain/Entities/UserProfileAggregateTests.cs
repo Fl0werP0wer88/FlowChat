@@ -41,6 +41,48 @@ public sealed class UserProfileAggregateTests
     }
 
     [Fact]
+    public void Email_SetMain_WhenEmailIsNotConfirmed_Throws()
+    {
+        var email = Email.Create(Id<UserProfile>.New(), EmailAddress.Create("john@example.com"));
+
+        var action = () => email.SetMain(true);
+
+        action.Should().Throw<InvalidOperationException>()
+            .WithMessage("Email 'john@example.com' must be confirmed before it can be set as main.");
+    }
+
+    [Fact]
+    public void Email_SetMain_WhenClearingFlagOnUnconfirmedEmail_Succeeds()
+    {
+        var email = Email.Create(Id<UserProfile>.New(), EmailAddress.Create("john@example.com"), isMain: true);
+
+        email.SetMain(false);
+
+        email.IsMain.Should().BeFalse();
+    }
+
+    [Fact]
+    public void Email_SetAuth_WhenEmailIsNotConfirmed_Throws()
+    {
+        var email = Email.Create(Id<UserProfile>.New(), EmailAddress.Create("john@example.com"));
+
+        var action = () => email.SetAuth(true);
+
+        action.Should().Throw<InvalidOperationException>()
+            .WithMessage("Email 'john@example.com' must be confirmed before it can be set as auth.");
+    }
+
+    [Fact]
+    public void Email_SetAuth_WhenClearingFlagOnUnconfirmedEmail_Succeeds()
+    {
+        var email = Email.Create(Id<UserProfile>.New(), EmailAddress.Create("john@example.com"), isAuth: true);
+
+        email.SetAuth(false);
+
+        email.IsAuth.Should().BeFalse();
+    }
+
+    [Fact]
     public void UserProfile_AddEmail_AddsSecondaryEmailToAggregate()
     {
         var profile = CreateExistingProfile();
@@ -84,6 +126,7 @@ public sealed class UserProfileAggregateTests
         var profile = CreateExistingProfile();
         var firstEmail = profile.Emails.Should().ContainSingle().Subject;
         var secondEmail = profile.AddEmail(EmailAddress.Create("john.secondary@example.com"));
+        profile.ConfirmEmail(secondEmail.Id);
         profile.ClearEvents();
 
         profile.SetMainEmail(secondEmail.Id);
@@ -101,7 +144,7 @@ public sealed class UserProfileAggregateTests
         var stateChangedEvent = profile.DomainEvents.OfType<AggregateStateChangedDomainEvent<UserProfile, UserProfileSnapshot>>()
             .Should().ContainSingle().Subject;
         stateChangedEvent.AggregateState.MainEmail.Should().Be(secondEmail.Address.Value);
-        stateChangedEvent.AggregateState.IsMainEmailConfirmed.Should().BeFalse();
+        stateChangedEvent.AggregateState.IsMainEmailConfirmed.Should().BeTrue();
     }
 
     [Fact]
@@ -125,11 +168,25 @@ public sealed class UserProfileAggregateTests
     }
 
     [Fact]
+    public void UserProfile_SetMainEmail_WhenEmailIsNotConfirmed_Throws()
+    {
+        var profile = CreateExistingProfile();
+        var secondEmail = profile.AddEmail(EmailAddress.Create("john.secondary@example.com"));
+
+        var action = () => profile.SetMainEmail(secondEmail.Id);
+
+        action.Should().Throw<InvalidOperationException>()
+            .WithMessage($"Email '{secondEmail.Address.Value}' must be confirmed before it can be set as main.");
+        profile.Emails.Should().ContainSingle(x => x.IsMain && x.Id != secondEmail.Id);
+    }
+
+    [Fact]
     public void UserProfile_SetAuthEmail_SwitchesAuthFlag()
     {
         var profile = CreateExistingProfile();
         var firstEmail = profile.Emails.Should().ContainSingle().Subject;
         var secondEmail = profile.AddEmail(EmailAddress.Create("john.secondary@example.com"));
+        profile.ConfirmEmail(secondEmail.Id);
         profile.ClearEvents();
 
         profile.SetAuthEmail(secondEmail.Id);
@@ -162,6 +219,19 @@ public sealed class UserProfileAggregateTests
         profile.SetAuthEmail(email.Id);
 
         profile.DomainEvents.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void UserProfile_SetAuthEmail_WhenEmailIsNotConfirmed_Throws()
+    {
+        var profile = CreateExistingProfile();
+        var secondEmail = profile.AddEmail(EmailAddress.Create("john.secondary@example.com"));
+
+        var action = () => profile.SetAuthEmail(secondEmail.Id);
+
+        action.Should().Throw<InvalidOperationException>()
+            .WithMessage($"Email '{secondEmail.Address.Value}' must be confirmed before it can be set as auth.");
+        profile.Emails.Should().ContainSingle(x => x.IsAuth && x.Id != secondEmail.Id);
     }
 
     [Fact]
@@ -221,6 +291,7 @@ public sealed class UserProfileAggregateTests
         profile.Phones[0].Number.Value.Should().Be("+48123123123");
         profile.Phones[0].UserProfileId.Should().Be(profile.Id);
         profile.Phones[0].IsMain.Should().BeTrue();
+        profile.Phones[0].IsConfirmed.Should().BeFalse();
         profile.Phones[0].IsVisible.Should().BeTrue();
 
         var @event = profile.DomainEvents.Should().ContainSingle()
@@ -264,6 +335,7 @@ public sealed class UserProfileAggregateTests
         var profile = CreateExistingProfile();
         var firstPhone = profile.AddPhone(PhoneNumber.Create("+48123123123"));
         var secondPhone = profile.AddPhone(PhoneNumber.Create("+48987654321"));
+        secondPhone.Confirm();
         profile.ClearEvents();
 
         profile.SetMainPhone(secondPhone.Id);
@@ -305,6 +377,20 @@ public sealed class UserProfileAggregateTests
     }
 
     [Fact]
+    public void UserProfile_SetMainPhone_WhenPhoneIsNotConfirmed_Throws()
+    {
+        var profile = CreateExistingProfile();
+        profile.AddPhone(PhoneNumber.Create("+48123123123"));
+        var secondPhone = profile.AddPhone(PhoneNumber.Create("+48987654321"));
+
+        var action = () => profile.SetMainPhone(secondPhone.Id);
+
+        action.Should().Throw<InvalidOperationException>()
+            .WithMessage($"Phone '{secondPhone.Number.Value}' must be confirmed before it can be set as main.");
+        profile.Phones.Should().ContainSingle(x => x.IsMain && x.Id != secondPhone.Id);
+    }
+
+    [Fact]
     public void Phone_Create_WithInvalidNumber_Throws()
     {
         var userProfileId = Id<UserProfile>.New();
@@ -322,7 +408,40 @@ public sealed class UserProfileAggregateTests
         var phone = Phone.Create(userProfileId, PhoneNumber.Create("+48 123 123 123"));
 
         phone.Number.Value.Should().Be("+48123123123");
+        phone.IsConfirmed.Should().BeFalse();
         phone.IsVisible.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Phone_Rehydrate_WithConfirmedPhone_RestoresConfirmedState()
+    {
+        var phone = Phone.Rehydrate(
+            Id<UserProfile>.New(),
+            PhoneNumber.Create("+48123123123"),
+            isConfirmed: true);
+
+        phone.IsConfirmed.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Phone_SetMain_WhenPhoneIsNotConfirmed_Throws()
+    {
+        var phone = Phone.Create(Id<UserProfile>.New(), PhoneNumber.Create("+48123123123"));
+
+        var action = () => phone.SetMain(true);
+
+        action.Should().Throw<InvalidOperationException>()
+            .WithMessage("Phone '+48123123123' must be confirmed before it can be set as main.");
+    }
+
+    [Fact]
+    public void Phone_SetMain_WhenClearingFlagOnUnconfirmedPhone_Succeeds()
+    {
+        var phone = Phone.Create(Id<UserProfile>.New(), PhoneNumber.Create("+48123123123"), isMain: true);
+
+        phone.SetMain(false);
+
+        phone.IsMain.Should().BeFalse();
     }
 
     [Fact]
@@ -343,10 +462,12 @@ public sealed class UserProfileAggregateTests
 
         profile.Phones.Should().ContainSingle();
         profile.Phones[0].IsMain.Should().BeTrue();
+        profile.Phones[0].IsConfirmed.Should().BeFalse();
         profile.Phones[0].IsVisible.Should().BeTrue();
         profile.Emails.Should().ContainSingle();
         profile.Emails[0].IsMain.Should().BeTrue();
         profile.Emails[0].IsAuth.Should().BeTrue();
+        profile.Emails[0].IsConfirmed.Should().BeFalse();
         profile.Emails[0].IsVisible.Should().BeTrue();
     }
 

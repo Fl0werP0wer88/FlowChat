@@ -12,13 +12,25 @@ public sealed class SetMainPhoneControllerTests(UserProfileApiFactory factory)
     [Fact]
     public async Task SetMainPhone_WhenProfileAndPhoneExist_Returns204NoContent()
     {
-        var (userId, secondPhoneId) = await CreateProfileWithTwoPhonesAsync();
+        var (userId, firstPhoneId, _) = await CreateProfileWithTwoPhonesAsync();
+
+        var response = await _client.PutAsync(
+            $"/api/userprofiles/{userId}/phones/{firstPhoneId}/main",
+            content: null);
+
+        response.StatusCode.Should().Be(HttpStatusCode.NoContent);
+    }
+
+    [Fact]
+    public async Task SetMainPhone_WhenPhoneIsNotConfirmed_Returns400BadRequest()
+    {
+        var (userId, _, secondPhoneId) = await CreateProfileWithTwoPhonesAsync();
 
         var response = await _client.PutAsync(
             $"/api/userprofiles/{userId}/phones/{secondPhoneId}/main",
             content: null);
 
-        response.StatusCode.Should().Be(HttpStatusCode.NoContent);
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
     [Fact]
@@ -61,30 +73,21 @@ public sealed class SetMainPhoneControllerTests(UserProfileApiFactory factory)
         return userId;
     }
 
-    private async Task<(Guid UserId, Guid SecondPhoneId)> CreateProfileWithTwoPhonesAsync()
+    private async Task<(Guid UserId, Guid FirstPhoneId, Guid SecondPhoneId)> CreateProfileWithTwoPhonesAsync()
     {
-        var userId = Guid.NewGuid();
-        var request = new
-        {
-            UserId = userId,
-            FriendlyUserId = $"phonemain_{userId:N}",
-            Email = $"phonemain_{userId:N}@example.com",
-            Phone = "+48100200300"
-        };
-        var httpRequest = new HttpRequestMessage(HttpMethod.Post, "/internal/userprofiles/initial")
-        {
-            Content = JsonContent.Create(request)
-        };
-        httpRequest.Headers.Add("X-Internal-Api-Key", UserProfileApiFactory.InternalApiKey);
-        await _client.SendAsync(httpRequest);
+        var userId = await CreateProfileAsync();
+
+        var firstPhoneResponse = await _client.PostAsJsonAsync(
+            $"/api/userprofiles/{userId}/phones",
+            new { Number = "+48100200300" });
+        var firstPhone = await firstPhoneResponse.Content.ReadFromJsonAsync<AddPhoneResponse>();
 
         var addPhoneResponse = await _client.PostAsJsonAsync(
             $"/api/userprofiles/{userId}/phones",
             new { Number = "+48400500600" });
         var addedPhone = await addPhoneResponse.Content.ReadFromJsonAsync<AddPhoneResponse>();
 
-        return (userId, addedPhone!.PhoneId);
+        return (userId, firstPhone!.PhoneId, addedPhone!.PhoneId);
     }
-
     private sealed record AddPhoneResponse(Guid PhoneId);
 }

@@ -49,6 +49,11 @@ public class Email : EntityBase<Email>
 
     internal void SetMain(bool isMain)
     {
+        if (isMain && !IsConfirmed)
+        {
+            throw new InvalidOperationException($"Email '{Address.Value}' must be confirmed before it can be set as main.");
+        }
+
         IsMain = isMain;
     }
 
@@ -59,7 +64,11 @@ public class Email : EntityBase<Email>
 
     internal void SetAuth(bool isAuth)
     {
+        if (isAuth && !IsConfirmed)
+        {
+            throw new InvalidOperationException($"Email '{Address.Value}' must be confirmed before it can be set as auth.");
+        }
+
         IsAuth = isAuth;
     }
 }
-

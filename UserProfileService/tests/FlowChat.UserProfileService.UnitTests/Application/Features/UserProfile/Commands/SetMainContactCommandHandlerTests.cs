@@ -82,6 +82,7 @@ public sealed class SetMainContactCommandHandlerTests
         var profile = CreateUserProfile();
         var firstEmail = profile.Emails.Should().ContainSingle().Subject;
         var secondEmail = profile.AddEmail(EmailAddress.Create("john.secondary@example.com"));
+        profile.ConfirmEmail(secondEmail.Id);
         profile.ClearEvents();
 
         _writeRepositoryMock
@@ -110,6 +111,7 @@ public sealed class SetMainContactCommandHandlerTests
             .OfType<AggregateStateChangedDomainEvent<UserProfile, UserProfileSnapshot>>()
             .Should().ContainSingle().Subject;
         stateChangedEvent.AggregateState.MainEmail.Should().Be(secondEmail.Address.Value);
+        stateChangedEvent.AggregateState.IsMainEmailConfirmed.Should().BeTrue();
     }
 
     [Fact]
@@ -137,6 +139,25 @@ public sealed class SetMainContactCommandHandlerTests
     }
 
     [Fact]
+    public async Task SetMainEmail_WhenEmailIsNotConfirmed_ReturnsValidationFailure()
+    {
+        var profile = CreateUserProfile();
+        var secondEmail = profile.AddEmail(EmailAddress.Create("john.secondary@example.com"));
+        profile.ClearEvents();
+
+        _writeRepositoryMock
+            .Setup(x => x.GetByIdAsync(profile.Id.Value, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(profile);
+
+        var result = await SendAsync(new SetMainEmailCommand(profile.Id.Value, secondEmail.Id.Value));
+
+        result.IsFailure.Should().BeTrue();
+        result.Error.ErrorType.Should().Be(ErrorType.Validation);
+        result.Error.ErrorMessage.Should().Be(
+            $"Email '{secondEmail.Address.Value}' must be confirmed before it can be set as the main email.");
+    }
+
+    [Fact]
     public async Task SetMainEmail_WhenUserIdAndEmailIdAreEmpty_ReturnsValidationFailureWithBothErrors()
     {
         var result = await SendAsync(new SetMainEmailCommand(Guid.Empty, Guid.Empty));
@@ -153,6 +174,7 @@ public sealed class SetMainContactCommandHandlerTests
         var profile = CreateUserProfile();
         var firstPhone = profile.AddPhone(PhoneNumber.Create("+48123123123"));
         var secondPhone = profile.AddPhone(PhoneNumber.Create("+48987654321"));
+        secondPhone.Confirm();
         profile.ClearEvents();
 
         _writeRepositoryMock
@@ -208,6 +230,26 @@ public sealed class SetMainContactCommandHandlerTests
         result.IsFailure.Should().BeTrue();
         result.Error.ErrorType.Should().Be(ErrorType.Validation);
         result.Error.Errors.Should().Equal("PhoneId is required.");
+    }
+
+    [Fact]
+    public async Task SetMainPhone_WhenPhoneIsNotConfirmed_ReturnsValidationFailure()
+    {
+        var profile = CreateUserProfile();
+        profile.AddPhone(PhoneNumber.Create("+48123123123"));
+        var secondPhone = profile.AddPhone(PhoneNumber.Create("+48987654321"));
+        profile.ClearEvents();
+
+        _writeRepositoryMock
+            .Setup(x => x.GetByIdAsync(profile.Id.Value, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(profile);
+
+        var result = await SendAsync(new SetMainPhoneCommand(profile.Id.Value, secondPhone.Id.Value));
+
+        result.IsFailure.Should().BeTrue();
+        result.Error.ErrorType.Should().Be(ErrorType.Validation);
+        result.Error.ErrorMessage.Should().Be(
+            $"Phone '{secondPhone.Number.Value}' must be confirmed before it can be set as the main phone.");
     }
 
     [Fact]
