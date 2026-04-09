@@ -59,8 +59,6 @@ public sealed class InsertUserProfileProjectionCommandHandlerTests
             " hello there ",
             true,
             _fixture.Create<DateTimeOffset>(),
-            true,
-            false,
             " John ",
             " Doe ",
             " FlowChat ");
@@ -97,9 +95,7 @@ public sealed class InsertUserProfileProjectionCommandHandlerTests
             null,
             null,
             true,
-            null,
-            true,
-            false);
+            null);
 
         var result = await SendAsync(command);
 
@@ -120,9 +116,7 @@ public sealed class InsertUserProfileProjectionCommandHandlerTests
             null,
             null,
             true,
-            null,
-            true,
-            false);
+            null);
 
         var result = await SendAsync(command);
 

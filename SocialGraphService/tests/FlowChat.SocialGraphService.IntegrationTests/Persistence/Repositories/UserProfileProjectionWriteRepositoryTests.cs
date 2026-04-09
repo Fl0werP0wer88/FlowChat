@@ -26,8 +26,6 @@ public sealed class UserProfileProjectionWriteRepositoryTests
             "Hello there",
             true,
             new DateTimeOffset(2026, 4, 1, 10, 30, 0, TimeSpan.Zero),
-            true,
-            false,
             "John",
             "Doe",
             "FlowChat");
@@ -49,8 +47,6 @@ public sealed class UserProfileProjectionWriteRepositoryTests
         entity.Bio.Should().Be("Hello there");
         entity.IsActive.Should().BeTrue();
         entity.LastSeenAtUtc.Should().Be(projection.LastSeenAtUtc);
-        entity.IsEmailVisible.Should().BeTrue();
-        entity.IsPhoneVisible.Should().BeFalse();
         entity.CreatedBy.Should().Be("user-profile-events");
         entity.LastModifiedBy.Should().Be("user-profile-events");
     }
@@ -90,9 +86,7 @@ public sealed class UserProfileProjectionWriteRepositoryTests
             null,
             null,
             true,
-            null,
-            false,
-            false);
+            null);
 
         var wasInserted = await repository.InsertAsync(projection, CancellationToken.None);
         await context.SaveChangesAsync();
@@ -126,8 +120,6 @@ public sealed class UserProfileProjectionWriteRepositoryTests
                 Bio = "Old bio",
                 IsActive = false,
                 LastSeenAtUtc = new DateTimeOffset(2026, 3, 29, 12, 0, 0, TimeSpan.Zero),
-                IsEmailVisible = false,
-                IsPhoneVisible = false,
                 CreatedBy = "seed",
                 CreatedAtUtc = new DateTimeOffset(2026, 3, 29, 7, 0, 0, TimeSpan.Zero),
                 LastModifiedBy = "seed",
@@ -149,8 +141,6 @@ public sealed class UserProfileProjectionWriteRepositoryTests
             "Updated bio",
             true,
             null,
-            true,
-            true,
             "Jane",
             "Doe",
             "FlowChat");
@@ -172,8 +162,6 @@ public sealed class UserProfileProjectionWriteRepositoryTests
         entity.Bio.Should().Be("Updated bio");
         entity.IsActive.Should().BeTrue();
         entity.LastSeenAtUtc.Should().BeNull();
-        entity.IsEmailVisible.Should().BeTrue();
-        entity.IsPhoneVisible.Should().BeTrue();
         entity.CreatedBy.Should().Be("seed");
         entity.LastModifiedBy.Should().Be("user-profile-events");
         entity.LastModifiedAtUtc.Should().BeAfter(originalLastModifiedAtUtc);
@@ -195,9 +183,7 @@ public sealed class UserProfileProjectionWriteRepositoryTests
             null,
             null,
             true,
-            null,
-            false,
-            false);
+            null);
 
         var wasUpdated = await repository.UpdateAsync(projection, CancellationToken.None);
 

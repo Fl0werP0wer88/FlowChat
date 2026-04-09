@@ -45,8 +45,6 @@ public sealed class SearchUserProfileProjectionsControllerTests
                 null,
                 true,
                 _fixture.Create<DateTimeOffset>(),
-                true,
-                false,
                 "Jane",
                 "Doe",
                 "FlowChat")

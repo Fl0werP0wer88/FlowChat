@@ -20,8 +20,6 @@ public sealed class UserProfileProjectionReadRepository(AppDbContext dbContext) 
         entity.Bio,
         entity.IsActive,
         entity.LastSeenAtUtc,
-        entity.IsEmailVisible,
-        entity.IsPhoneVisible,
         entity.FirstName,
         entity.LastName,
         entity.Organization);

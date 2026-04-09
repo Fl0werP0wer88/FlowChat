@@ -20,8 +20,6 @@ public class UserProfile : AggregateRootBase<UserProfile>
     public string? Bio { get; private set; }
     public bool IsActive { get; private set; }
     public UtcDateTimeOffset? LastSeenAtUtc { get; private set; }
-    public bool IsEmailVisible { get; private set; }
-    public bool IsPhoneVisible { get; private set; }
     public IReadOnlyList<Email> Emails => _emails.AsReadOnly();
     public IReadOnlyList<Phone> Phones => _phones.AsReadOnly();
 
@@ -37,9 +35,7 @@ public class UserProfile : AggregateRootBase<UserProfile>
         string? avatarUrl = null,
         string? bio = null,
         bool isActive = true,
-        UtcDateTimeOffset? lastSeenAtUtc = null,
-        bool isEmailVisible = true,
-        bool isPhoneVisible = true) : base(id)
+        UtcDateTimeOffset? lastSeenAtUtc = null) : base(id)
     {
         FriendlyUserId = friendlyUserId;
         NormalizedFriendlyUserId = normalizedFriendlyUserId;
@@ -51,8 +47,6 @@ public class UserProfile : AggregateRootBase<UserProfile>
         Bio = bio;
         IsActive = isActive;
         LastSeenAtUtc = lastSeenAtUtc;
-        IsEmailVisible = isEmailVisible;
-        IsPhoneVisible = isPhoneVisible;
     }
 
     public static UserProfile Create(
@@ -64,8 +58,6 @@ public class UserProfile : AggregateRootBase<UserProfile>
         string? bio = null,
         bool isActive = true,
         UtcDateTimeOffset? lastSeenAtUtc = null,
-        bool isEmailVisible = true,
-        bool isPhoneVisible = true,
         Id<UserProfile>? id = null,
         string? firstName = null,
         string? lastName = null,
@@ -92,9 +84,7 @@ public class UserProfile : AggregateRootBase<UserProfile>
             normalizedAvatarUrl,
             normalizedBio,
             isActive,
-            lastSeenAtUtc,
-            isEmailVisible,
-            isPhoneVisible);
+            lastSeenAtUtc);
 
         // Suppress intermediate snapshots while building initial state — a single snapshot
         // is emitted below after the invariant check confirms the aggregate is fully valid.
@@ -122,8 +112,6 @@ public class UserProfile : AggregateRootBase<UserProfile>
             userProfile.Bio,
             userProfile.IsActive,
             userProfile.LastSeenAtUtc,
-            userProfile.IsEmailVisible,
-            userProfile.IsPhoneVisible,
             userProfile.FirstName,
             userProfile.LastName,
             userProfile.Organization));
@@ -347,8 +335,6 @@ public class UserProfile : AggregateRootBase<UserProfile>
             Bio,
             IsActive,
             LastSeenAtUtc,
-            IsEmailVisible,
-            IsPhoneVisible,
             FirstName,
             LastName,
             Organization);

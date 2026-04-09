@@ -47,8 +47,6 @@ public sealed class UserProfileStateChangedDomainEventHandlerTests
                 "about me",
                 true,
                 new DateTimeOffset(2026, 3, 11, 9, 0, 0, TimeSpan.Zero),
-                true,
-                false,
                 "John",
                 "Doe",
                 "FlowChat"));
@@ -73,8 +71,6 @@ public sealed class UserProfileStateChangedDomainEventHandlerTests
         capturedEvent.Bio.Should().Be("about me");
         capturedEvent.IsActive.Should().BeTrue();
         capturedEvent.LastSeenAtUtc.Should().Be(new DateTimeOffset(2026, 3, 11, 9, 0, 0, TimeSpan.Zero));
-        capturedEvent.IsEmailVisible.Should().BeTrue();
-        capturedEvent.IsPhoneVisible.Should().BeFalse();
         capturedEvent.FirstName.Should().Be("John");
         capturedEvent.LastName.Should().Be("Doe");
         capturedEvent.Organization.Should().Be("FlowChat");

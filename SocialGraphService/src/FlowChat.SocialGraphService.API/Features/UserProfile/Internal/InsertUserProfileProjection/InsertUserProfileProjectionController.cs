@@ -37,8 +37,6 @@ public sealed class InsertUserProfileProjectionController(
                 request.Bio,
                 request.IsActive,
                 request.LastSeenAtUtc,
-                request.IsEmailVisible,
-                request.IsPhoneVisible,
                 request.FirstName,
                 request.LastName,
                 request.Organization),

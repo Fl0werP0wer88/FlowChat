@@ -14,6 +14,4 @@ public sealed class UserProfileCreatedIntegrationEvent : IntegrationEvent
     public string? Bio { get; init; }
     public bool IsActive { get; init; }
     public DateTimeOffset? LastSeenAtUtc { get; init; }
-    public bool IsEmailVisible { get; init; }
-    public bool IsPhoneVisible { get; init; }
 }

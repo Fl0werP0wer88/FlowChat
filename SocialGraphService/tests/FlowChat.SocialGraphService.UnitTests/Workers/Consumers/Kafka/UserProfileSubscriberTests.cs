@@ -48,9 +48,7 @@ public sealed class UserProfileCreatedSubscriberTests
                 AvatarUrl = " https://cdn.example/avatar.png ",
                 Bio = " hello ",
                 IsActive = true,
-                LastSeenAtUtc = new DateTimeOffset(2026, 3, 11, 10, 0, 0, TimeSpan.Zero),
-                IsEmailVisible = true,
-                IsPhoneVisible = false
+                LastSeenAtUtc = new DateTimeOffset(2026, 3, 11, 10, 0, 0, TimeSpan.Zero)
             },
             CancellationToken.None);
 
@@ -123,9 +121,7 @@ public sealed class UserProfileStateChangedSubscriberTests
                 AvatarUrl = null,
                 Bio = "updated",
                 IsActive = false,
-                LastSeenAtUtc = null,
-                IsEmailVisible = false,
-                IsPhoneVisible = true
+                LastSeenAtUtc = null
             },
             CancellationToken.None);
 
@@ -136,6 +132,6 @@ public sealed class UserProfileStateChangedSubscriberTests
         capturedRequest.LastName.Should().Be("Doe");
         capturedRequest.Organization.Should().Be("FlowChat");
         capturedRequest.IsActive.Should().BeFalse();
-        capturedRequest.IsPhoneVisible.Should().BeTrue();
+        capturedRequest.MainPhone.Should().Be("123456");
     }
 }

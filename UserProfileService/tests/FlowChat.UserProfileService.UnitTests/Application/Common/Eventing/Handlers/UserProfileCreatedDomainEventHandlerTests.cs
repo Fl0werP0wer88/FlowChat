@@ -55,8 +55,6 @@ public sealed class UserProfileCreatedDomainEventHandlerTests
             "about me",
             true,
             new DateTimeOffset(2026, 3, 10, 9, 0, 0, TimeSpan.Zero),
-            true,
-            false,
             "John",
             "Doe",
             "FlowChat");
@@ -80,8 +78,6 @@ public sealed class UserProfileCreatedDomainEventHandlerTests
         capturedEvent.Bio.Should().Be("about me");
         capturedEvent.IsActive.Should().BeTrue();
         capturedEvent.LastSeenAtUtc.Should().Be(new DateTimeOffset(2026, 3, 10, 9, 0, 0, TimeSpan.Zero));
-        capturedEvent.IsEmailVisible.Should().BeTrue();
-        capturedEvent.IsPhoneVisible.Should().BeFalse();
         capturedEvent.FirstName.Should().Be("John");
         capturedEvent.LastName.Should().Be("Doe");
         capturedEvent.Organization.Should().Be("FlowChat");
@@ -105,9 +101,7 @@ public sealed class UserProfileCreatedDomainEventHandlerTests
             null,
             null,
             true,
-            null,
-            true,
-            false);
+            null);
 
         UserProfileCreatedIntegrationEvent? capturedEvent = null;
         _publisherMock

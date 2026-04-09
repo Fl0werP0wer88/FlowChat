@@ -14,8 +14,6 @@ public sealed class UserProfileProjectionEntity
     public string? Bio { get; set; }
     public bool IsActive { get; set; }
     public DateTimeOffset? LastSeenAtUtc { get; set; }
-    public bool IsEmailVisible { get; set; }
-    public bool IsPhoneVisible { get; set; }
     public string CreatedBy { get; set; } = string.Empty;
     public DateTimeOffset CreatedAtUtc { get; set; }
     public string LastModifiedBy { get; set; } = string.Empty;

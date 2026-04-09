@@ -365,8 +365,6 @@ public sealed class UserProfileAggregateTests
             " about me ",
             isActive: false,
             lastSeenAtUtc: new DateTimeOffset(2026, 3, 10, 8, 30, 0, TimeSpan.Zero),
-            isEmailVisible: false,
-            isPhoneVisible: true,
             id: id);
 
         var createdEvent = profile.DomainEvents.OfType<UserProfileCreatedDomainEvent>().Should().ContainSingle().Subject;
@@ -381,8 +379,6 @@ public sealed class UserProfileAggregateTests
         createdEvent.Bio.Should().Be("about me");
         createdEvent.IsActive.Should().BeFalse();
         createdEvent.LastSeenAtUtc.Should().Be(new DateTimeOffset(2026, 3, 10, 8, 30, 0, TimeSpan.Zero));
-        createdEvent.IsEmailVisible.Should().BeFalse();
-        createdEvent.IsPhoneVisible.Should().BeTrue();
 
         var stateChangedEvent = profile.DomainEvents.OfType<AggregateStateChangedDomainEvent<UserProfile, UserProfileSnapshot>>()
             .Should().ContainSingle().Subject;

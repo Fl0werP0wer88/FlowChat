@@ -197,8 +197,6 @@ public sealed class UserProfileProjectionReadRepositoryTests
             Organization = organization,
             MainEmail = mainEmail,
             IsActive = true,
-            IsEmailVisible = false,
-            IsPhoneVisible = false,
             CreatedBy = "seed",
             CreatedAtUtc = new DateTimeOffset(2026, 4, 6, 8, 0, 0, TimeSpan.Zero),
             LastModifiedBy = "seed",

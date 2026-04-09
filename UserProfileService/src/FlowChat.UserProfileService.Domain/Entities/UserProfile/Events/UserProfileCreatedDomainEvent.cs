@@ -15,8 +15,6 @@ public sealed class UserProfileCreatedDomainEvent(
     string? bio,
     bool isActive,
     UtcDateTimeOffset? lastSeenAtUtc,
-    bool isEmailVisible,
-    bool isPhoneVisible,
     string? firstName = null,
     string? lastName = null,
     string? organization = null,
@@ -32,8 +30,6 @@ public sealed class UserProfileCreatedDomainEvent(
     public string? Bio { get; } = bio;
     public bool IsActive { get; } = isActive;
     public UtcDateTimeOffset? LastSeenAtUtc { get; } = lastSeenAtUtc;
-    public bool IsEmailVisible { get; } = isEmailVisible;
-    public bool IsPhoneVisible { get; } = isPhoneVisible;
     public string? FirstName { get; } = firstName;
     public string? LastName { get; } = lastName;
     public string? Organization { get; } = organization;

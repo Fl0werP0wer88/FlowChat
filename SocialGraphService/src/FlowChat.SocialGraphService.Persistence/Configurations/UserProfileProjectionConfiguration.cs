@@ -45,14 +45,6 @@ public sealed class UserProfileProjectionConfiguration : IEntityTypeConfiguratio
             .HasDefaultValue(true)
             .IsRequired();
 
-        builder.Property(x => x.IsEmailVisible)
-            .HasDefaultValue(false)
-            .IsRequired();
-
-        builder.Property(x => x.IsPhoneVisible)
-            .HasDefaultValue(false)
-            .IsRequired();
-
         builder.Property(x => x.CreatedBy)
             .HasMaxLength(256)
             .IsRequired();

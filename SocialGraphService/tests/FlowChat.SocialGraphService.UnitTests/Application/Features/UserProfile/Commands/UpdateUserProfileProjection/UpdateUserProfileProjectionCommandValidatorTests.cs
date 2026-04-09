@@ -62,7 +62,5 @@ public sealed class UpdateUserProfileProjectionCommandValidatorTests
             "https://example.com/jane.jpg",
             "Updated bio",
             false,
-            DateTimeOffset.UtcNow,
-            false,
-            true);
+            DateTimeOffset.UtcNow);
 }

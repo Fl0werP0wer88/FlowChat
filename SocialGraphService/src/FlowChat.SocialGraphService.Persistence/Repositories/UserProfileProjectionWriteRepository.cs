@@ -39,8 +39,6 @@ public sealed class UserProfileProjectionWriteRepository(AppDbContext dbContext)
                 Bio = projection.Bio,
                 IsActive = projection.IsActive,
                 LastSeenAtUtc = projection.LastSeenAtUtc,
-                IsEmailVisible = projection.IsEmailVisible,
-                IsPhoneVisible = projection.IsPhoneVisible,
                 CreatedBy = ProjectionSource,
                 CreatedAtUtc = now,
                 LastModifiedBy = ProjectionSource,
@@ -74,8 +72,6 @@ public sealed class UserProfileProjectionWriteRepository(AppDbContext dbContext)
         entity.Bio = projection.Bio;
         entity.IsActive = projection.IsActive;
         entity.LastSeenAtUtc = projection.LastSeenAtUtc;
-        entity.IsEmailVisible = projection.IsEmailVisible;
-        entity.IsPhoneVisible = projection.IsPhoneVisible;
         entity.LastModifiedBy = ProjectionSource;
         entity.LastModifiedAtUtc = DateTimeOffset.UtcNow;
 

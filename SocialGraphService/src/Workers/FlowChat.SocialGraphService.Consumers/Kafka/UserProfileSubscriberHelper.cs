@@ -52,9 +52,7 @@ internal static class UserProfileSubscriberHelper
             AvatarUrl = NormalizeOptional(message.AvatarUrl),
             Bio = NormalizeOptional(message.Bio),
             IsActive = message.IsActive,
-            LastSeenAtUtc = message.LastSeenAtUtc,
-            IsEmailVisible = message.IsEmailVisible,
-            IsPhoneVisible = message.IsPhoneVisible
+            LastSeenAtUtc = message.LastSeenAtUtc
         };
 
     public static UserProfileProjectionRequest Map(UserProfileStateChangedIntegrationEvent message) =>
@@ -71,9 +69,7 @@ internal static class UserProfileSubscriberHelper
             AvatarUrl = NormalizeOptional(message.AvatarUrl),
             Bio = NormalizeOptional(message.Bio),
             IsActive = message.IsActive,
-            LastSeenAtUtc = message.LastSeenAtUtc,
-            IsEmailVisible = message.IsEmailVisible,
-            IsPhoneVisible = message.IsPhoneVisible
+            LastSeenAtUtc = message.LastSeenAtUtc
         };
 
     private static Guid ResolveUserProfileId(Guid userProfileId) =>

@@ -14,6 +14,4 @@ public sealed class UserProfileProjectionRequest
     public string? Bio { get; set; }
     public bool IsActive { get; set; }
     public DateTimeOffset? LastSeenAtUtc { get; set; }
-    public bool IsEmailVisible { get; set; }
-    public bool IsPhoneVisible { get; set; }
 }

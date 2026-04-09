@@ -62,7 +62,5 @@ public sealed class InsertUserProfileProjectionCommandValidatorTests
             "https://example.com/avatar.jpg",
             "Hello there",
             true,
-            DateTimeOffset.UtcNow,
-            true,
-            false);
+            DateTimeOffset.UtcNow);
 }

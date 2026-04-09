@@ -33,8 +33,6 @@ public sealed class SearchUserProfileProjectionsQueryHandlerTests
                 null,
                 true,
                 _fixture.Create<DateTimeOffset>(),
-                true,
-                false,
                 "Jane",
                 "Doe",
                 "FlowChat")

@@ -65,8 +65,6 @@ public sealed class AddContactCommandHandlerTests
                 null,
                 true,
                 _fixture.Create<DateTimeOffset>(),
-                true,
-                false,
                 "Jane",
                 "Doe",
                 "FlowChat"));
@@ -89,7 +87,7 @@ public sealed class AddContactCommandHandlerTests
         capturedContact.FirstName.Should().Be("Jane");
         capturedContact.LastName.Should().Be("Doe");
         capturedContact.EmailAddress!.Value.Should().Be("jane@example.com");
-        capturedContact.PhoneNumber.Should().BeNull();
+        capturedContact.PhoneNumber!.Value.Should().Be("+48123123123");
     }
 
     [Fact]
@@ -110,8 +108,6 @@ public sealed class AddContactCommandHandlerTests
                 null,
                 true,
                 null,
-                false,
-                true,
                 "Jane",
                 "Doe",
                 "FlowChat"));
@@ -144,8 +140,6 @@ public sealed class AddContactCommandHandlerTests
                 null,
                 true,
                 null,
-                true,
-                false,
                 "John",
                 "Doe",
                 "FlowChat"));
@@ -197,8 +191,6 @@ public sealed class AddContactCommandHandlerTests
                 null,
                 true,
                 null,
-                false,
-                false,
                 "Jane",
                 "Doe",
                 "FlowChat"));
@@ -233,8 +225,6 @@ public sealed class AddContactCommandHandlerTests
                 null,
                 true,
                 null,
-                false,
-                false,
                 "Self",
                 "User",
                 "FlowChat"));

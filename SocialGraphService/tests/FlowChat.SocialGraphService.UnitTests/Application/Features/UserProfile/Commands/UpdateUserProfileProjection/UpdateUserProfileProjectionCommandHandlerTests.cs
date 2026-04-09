@@ -59,8 +59,6 @@ public sealed class UpdateUserProfileProjectionCommandHandlerTests
             " updated bio ",
             false,
             _fixture.Create<DateTimeOffset>(),
-            false,
-            true,
             " Jane ",
             " Doe ",
             " FlowChat ");
@@ -97,9 +95,7 @@ public sealed class UpdateUserProfileProjectionCommandHandlerTests
             null,
             null,
             true,
-            null,
-            true,
-            false);
+            null);
 
         var result = await SendAsync(command);
 
@@ -120,9 +116,7 @@ public sealed class UpdateUserProfileProjectionCommandHandlerTests
             null,
             null,
             true,
-            null,
-            true,
-            false);
+            null);
 
         var result = await SendAsync(command);
 

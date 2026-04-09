@@ -33,8 +33,6 @@ public sealed class UpdateUserProfileProjectionCommandHandler
             NormalizeOptional(request.Bio),
             request.IsActive,
             request.LastSeenAtUtc,
-            request.IsEmailVisible,
-            request.IsPhoneVisible,
             NormalizeOptional(request.FirstName),
             NormalizeOptional(request.LastName),
             NormalizeOptional(request.Organization));

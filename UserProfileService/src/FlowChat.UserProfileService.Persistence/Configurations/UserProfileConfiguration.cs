@@ -46,14 +46,6 @@ public class UserProfileConfiguration : IEntityTypeConfiguration<UserProfile>
         builder.Property(x => x.Bio)
             .HasMaxLength(500);
 
-        builder.Property(x => x.IsEmailVisible)
-            .HasDefaultValue(true)
-            .IsRequired();
-
-        builder.Property(x => x.IsPhoneVisible)
-            .HasDefaultValue(true)
-            .IsRequired();
-
         builder.Property(x => x.Version)
             .IsConcurrencyToken();
 
