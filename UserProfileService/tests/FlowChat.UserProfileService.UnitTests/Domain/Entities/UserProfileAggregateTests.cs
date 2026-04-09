@@ -105,11 +105,16 @@ public sealed class UserProfileAggregateTests
         emailAddedEvent.EmailId.Should().Be(email.Id);
         emailAddedEvent.Email.Should().Be(email.Address);
 
-        var @event = profile.DomainEvents.OfType<AggregateStateChangedDomainEvent<UserProfile, UserProfileSnapshot>>()
+        var @event = profile.DomainEvents.OfType<AggregateStateChangedDomainEvent<UserProfile, UserProfileState>>()
             .Should().ContainSingle().Subject;
-        @event.AggregateState.MainEmail.Should().Be(existingMainEmail.Address.Value);
-        @event.AggregateState.IsMainEmailConfirmed.Should().BeFalse();
-        @event.AggregateState.MainPhone.Should().BeNull();
+        @event.AggregateState.Id.Should().Be(profile.Id.Value);
+        @event.AggregateState.NormalizedFriendlyUserId.Should().Be(profile.NormalizedFriendlyUserId);
+        @event.AggregateState.Emails.Should().ContainSingle(x =>
+            x.Id == existingMainEmail.Id.Value &&
+            x.Address == existingMainEmail.Address.Value &&
+            x.IsMain &&
+            !x.IsConfirmed);
+        @event.AggregateState.Phones.Should().BeEmpty();
     }
 
     [Fact]
@@ -141,10 +146,13 @@ public sealed class UserProfileAggregateTests
         emailChangedEvent.EmailId.Should().Be(secondEmail.Id);
         emailChangedEvent.Address.Should().Be(secondEmail.Address);
 
-        var stateChangedEvent = profile.DomainEvents.OfType<AggregateStateChangedDomainEvent<UserProfile, UserProfileSnapshot>>()
+        var stateChangedEvent = profile.DomainEvents.OfType<AggregateStateChangedDomainEvent<UserProfile, UserProfileState>>()
             .Should().ContainSingle().Subject;
-        stateChangedEvent.AggregateState.MainEmail.Should().Be(secondEmail.Address.Value);
-        stateChangedEvent.AggregateState.IsMainEmailConfirmed.Should().BeTrue();
+        stateChangedEvent.AggregateState.Emails.Should().ContainSingle(x =>
+            x.Id == secondEmail.Id.Value &&
+            x.Address == secondEmail.Address.Value &&
+            x.IsMain &&
+            x.IsConfirmed);
     }
 
     [Fact]
@@ -195,10 +203,13 @@ public sealed class UserProfileAggregateTests
         secondEmail.IsAuth.Should().BeTrue();
         profile.Emails.Should().ContainSingle(x => x.IsAuth);
 
-        var stateChangedEvent = profile.DomainEvents.OfType<AggregateStateChangedDomainEvent<UserProfile, UserProfileSnapshot>>()
+        var stateChangedEvent = profile.DomainEvents.OfType<AggregateStateChangedDomainEvent<UserProfile, UserProfileState>>()
             .Should().ContainSingle().Subject;
-        stateChangedEvent.AggregateState.MainEmail.Should().Be(firstEmail.Address.Value);
-        stateChangedEvent.AggregateState.IsMainEmailConfirmed.Should().BeFalse();
+        stateChangedEvent.AggregateState.Emails.Should().ContainSingle(x =>
+            x.Id == firstEmail.Id.Value &&
+            x.Address == firstEmail.Address.Value &&
+            x.IsMain &&
+            !x.IsConfirmed);
     }
 
     [Fact]
@@ -251,10 +262,13 @@ public sealed class UserProfileAggregateTests
         emailConfirmedEvent.Email.Should().Be(email.Address);
         emailConfirmedEvent.IsAuth.Should().BeTrue();
 
-        var stateChangedEvent = profile.DomainEvents.OfType<AggregateStateChangedDomainEvent<UserProfile, UserProfileSnapshot>>()
+        var stateChangedEvent = profile.DomainEvents.OfType<AggregateStateChangedDomainEvent<UserProfile, UserProfileState>>()
             .Should().ContainSingle().Subject;
-        stateChangedEvent.AggregateState.MainEmail.Should().Be(email.Address.Value);
-        stateChangedEvent.AggregateState.IsMainEmailConfirmed.Should().BeTrue();
+        stateChangedEvent.AggregateState.Emails.Should().ContainSingle(x =>
+            x.Id == email.Id.Value &&
+            x.Address == email.Address.Value &&
+            x.IsMain &&
+            x.IsConfirmed);
     }
 
     [Fact]
@@ -295,9 +309,12 @@ public sealed class UserProfileAggregateTests
         profile.Phones[0].IsVisible.Should().BeTrue();
 
         var @event = profile.DomainEvents.Should().ContainSingle()
-            .Which.Should().BeOfType<AggregateStateChangedDomainEvent<UserProfile, UserProfileSnapshot>>().Subject;
-        @event.AggregateState.MainEmail.Should().Be(mainEmail.Address.Value);
-        @event.AggregateState.MainPhone.Should().Be("+48123123123");
+            .Which.Should().BeOfType<AggregateStateChangedDomainEvent<UserProfile, UserProfileState>>().Subject;
+        @event.AggregateState.Emails.Should().ContainSingle(x =>
+            x.Id == mainEmail.Id.Value &&
+            x.Address == mainEmail.Address.Value &&
+            x.IsMain);
+        @event.AggregateState.Phones.Should().ContainSingle(x => x.Number == "+48123123123" && x.IsMain);
     }
 
     [Fact]
@@ -350,9 +367,12 @@ public sealed class UserProfileAggregateTests
         phoneChangedEvent.PhoneId.Should().Be(secondPhone.Id);
         phoneChangedEvent.Number.Should().Be(secondPhone.Number);
 
-        var stateChangedEvent = profile.DomainEvents.OfType<AggregateStateChangedDomainEvent<UserProfile, UserProfileSnapshot>>()
+        var stateChangedEvent = profile.DomainEvents.OfType<AggregateStateChangedDomainEvent<UserProfile, UserProfileState>>()
             .Should().ContainSingle().Subject;
-        stateChangedEvent.AggregateState.MainPhone.Should().Be(secondPhone.Number.Value);
+        stateChangedEvent.AggregateState.Phones.Should().ContainSingle(x =>
+            x.Id == secondPhone.Id.Value &&
+            x.Number == secondPhone.Number.Value &&
+            x.IsMain);
     }
 
     [Fact]

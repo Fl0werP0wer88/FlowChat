@@ -108,10 +108,13 @@ public sealed class SetMainContactCommandHandlerTests
         emailChangedEvent.Address.Should().Be(secondEmail.Address);
 
         var stateChangedEvent = dispatchedEvents
-            .OfType<AggregateStateChangedDomainEvent<UserProfile, UserProfileSnapshot>>()
+            .OfType<AggregateStateChangedDomainEvent<UserProfile, UserProfileState>>()
             .Should().ContainSingle().Subject;
-        stateChangedEvent.AggregateState.MainEmail.Should().Be(secondEmail.Address.Value);
-        stateChangedEvent.AggregateState.IsMainEmailConfirmed.Should().BeTrue();
+        stateChangedEvent.AggregateState.Emails.Should().ContainSingle(x =>
+            x.Id == secondEmail.Id.Value &&
+            x.Address == secondEmail.Address.Value &&
+            x.IsMain &&
+            x.IsConfirmed);
     }
 
     [Fact]
@@ -200,9 +203,12 @@ public sealed class SetMainContactCommandHandlerTests
         phoneChangedEvent.Number.Should().Be(secondPhone.Number);
 
         var stateChangedEvent = dispatchedEvents
-            .OfType<AggregateStateChangedDomainEvent<UserProfile, UserProfileSnapshot>>()
+            .OfType<AggregateStateChangedDomainEvent<UserProfile, UserProfileState>>()
             .Should().ContainSingle().Subject;
-        stateChangedEvent.AggregateState.MainPhone.Should().Be(secondPhone.Number.Value);
+        stateChangedEvent.AggregateState.Phones.Should().ContainSingle(x =>
+            x.Id == secondPhone.Id.Value &&
+            x.Number == secondPhone.Number.Value &&
+            x.IsMain);
     }
 
     [Fact]

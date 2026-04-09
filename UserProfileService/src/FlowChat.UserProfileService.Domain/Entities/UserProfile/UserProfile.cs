@@ -1,7 +1,7 @@
 using FlowChat.Shared.Domain;
+using FlowChat.Shared.Domain.ValueObjects;
 using FlowChat.UserProfileService.Domain.Common.Constants;
 using FlowChat.UserProfileService.Domain.Entities.UserProfile.Events;
-using FlowChat.Shared.Domain.ValueObjects;
 
 namespace FlowChat.UserProfileService.Domain.Entities.UserProfile;
 
@@ -21,7 +21,6 @@ public class UserProfile : AggregateRootBase<UserProfile>
     public UtcDateTimeOffset? LastSeenAtUtc { get; private set; }
     public IReadOnlyList<Email> Emails => _emails.AsReadOnly();
     public IReadOnlyList<Phone> Phones => _phones.AsReadOnly();
-
 
     private UserProfile(
         Id<UserProfile>? id,
@@ -125,7 +124,7 @@ public class UserProfile : AggregateRootBase<UserProfile>
         _emails.Add(email);
 
         AddDomainEvent(new EmailAddedDomainEvent(Id, email.Id, email.Address));
-        MarkAggregateStateChanged(UserProfileConstants.UserProfileAggregateTypeName, CreateSnapshot);
+        MarkAggregateStateChanged(UserProfileConstants.UserProfileAggregateTypeName, CreateState);
 
         return email;
     }
@@ -156,7 +155,7 @@ public class UserProfile : AggregateRootBase<UserProfile>
         }
 
         AddDomainEvent(new MainEmailChangedDomainEvent(Id, targetEmail.Id, targetEmail.Address));
-        MarkAggregateStateChanged(UserProfileConstants.UserProfileAggregateTypeName, CreateSnapshot);
+        MarkAggregateStateChanged(UserProfileConstants.UserProfileAggregateTypeName, CreateState);
     }
 
     public void SetAuthEmail(Id<Email> emailId)
@@ -184,7 +183,7 @@ public class UserProfile : AggregateRootBase<UserProfile>
             email.SetAuth(email == targetEmail);
         }
 
-        MarkAggregateStateChanged(UserProfileConstants.UserProfileAggregateTypeName, CreateSnapshot);
+        MarkAggregateStateChanged(UserProfileConstants.UserProfileAggregateTypeName, CreateState);
     }
 
     public void ConfirmEmail(Id<Email> emailId)
@@ -204,7 +203,7 @@ public class UserProfile : AggregateRootBase<UserProfile>
 
         targetEmail.Confirm();
         AddDomainEvent(new EmailConfirmedDomainEvent(Id, targetEmail.Id, targetEmail.Address, targetEmail.IsAuth));
-        MarkAggregateStateChanged(UserProfileConstants.UserProfileAggregateTypeName, CreateSnapshot);
+        MarkAggregateStateChanged(UserProfileConstants.UserProfileAggregateTypeName, CreateState);
     }
 
     public Phone AddPhone(PhoneNumber number, Id<Phone>? id = null)
@@ -218,6 +217,7 @@ public class UserProfile : AggregateRootBase<UserProfile>
 
         var phone = Phone.Create(Id, number, isMain: !_phones.Any(), id: id);
         _phones.Add(phone);
+        MarkAggregateStateChanged(UserProfileConstants.UserProfileAggregateTypeName, CreateState);
 
         return phone;
     }
@@ -248,29 +248,43 @@ public class UserProfile : AggregateRootBase<UserProfile>
         }
 
         AddDomainEvent(new MainPhoneChangedDomainEvent(Id, targetPhone.Id, targetPhone.Number));
-        MarkAggregateStateChanged(UserProfileConstants.UserProfileAggregateTypeName, CreateSnapshot);
+        MarkAggregateStateChanged(UserProfileConstants.UserProfileAggregateTypeName, CreateState);
     }
 
-    private UserProfileSnapshot CreateSnapshot()
+    private UserProfileState CreateState()
     {
-        var mainEmail = _emails.FirstOrDefault(x => x.IsMain);
-        var mainEmailAddress = mainEmail?.Address.Value;
-        bool? isMainEmailConfirmed = mainEmail?.IsConfirmed;
-        var mainPhone = _phones.FirstOrDefault(x => x.IsMain)?.Number.Value;
-
-        return new UserProfileSnapshot(
-            Id.Value,
-            FriendlyUserId,
-            mainEmailAddress,
-            isMainEmailConfirmed,
-            mainPhone,
-            AvatarUrl,
-            Bio,
-            IsActive,
-            LastSeenAtUtc,
-            FirstName,
-            LastName,
-            Organization);
+        return new UserProfileState
+        {
+            Id = Id.Value,
+            FriendlyUserId = FriendlyUserId,
+            NormalizedFriendlyUserId = NormalizedFriendlyUserId,
+            FirstName = FirstName,
+            LastName = LastName,
+            Organization = Organization,
+            AvatarUrl = AvatarUrl,
+            Bio = Bio,
+            IsActive = IsActive,
+            LastSeenAtUtc = LastSeenAtUtc,
+            Emails = _emails.Select(email => new UserProfileEmailState
+            {
+                Id = email.Id.Value,
+                UserProfileId = email.UserProfileId.Value,
+                Address = email.Address.Value,
+                IsMain = email.IsMain,
+                IsAuth = email.IsAuth,
+                IsConfirmed = email.IsConfirmed,
+                IsVisible = email.IsVisible
+            }).ToArray(),
+            Phones = _phones.Select(phone => new UserProfilePhoneState
+            {
+                Id = phone.Id.Value,
+                UserProfileId = phone.UserProfileId.Value,
+                Number = phone.Number.Value,
+                IsMain = phone.IsMain,
+                IsConfirmed = phone.IsConfirmed,
+                IsVisible = phone.IsVisible
+            }).ToArray()
+        };
     }
 
     private static string NormalizeRequired(string value, string paramName)
@@ -322,6 +336,5 @@ public class UserProfile : AggregateRootBase<UserProfile>
         {
             throw new InvalidOperationException("User profile cannot have more than one main phone.");
         }
-
     }
 }

@@ -8,7 +8,7 @@ namespace FlowChat.UserProfileService.Application.Common.Eventing.Handlers;
 
 public sealed class UserProfileStateChangedDomainEventHandler
     : MappedDomainEventHandlerBase<
-        AggregateStateChangedDomainEvent<UserProfile, UserProfileSnapshot>,
+        AggregateStateChangedDomainEvent<UserProfile, UserProfileState>,
         UserProfileStateChangedIntegrationEvent>
 {
     public UserProfileStateChangedDomainEventHandler(

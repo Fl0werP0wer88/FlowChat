@@ -61,9 +61,12 @@ public sealed class SetAuthEmailCommandHandlerTests
         secondaryEmail.IsAuth.Should().BeTrue();
 
         var stateChangedEvent = dispatchedEvents
-            .OfType<AggregateStateChangedDomainEvent<UserProfile, UserProfileSnapshot>>()
+            .OfType<AggregateStateChangedDomainEvent<UserProfile, UserProfileState>>()
             .Should().ContainSingle().Subject;
-        stateChangedEvent.AggregateState.MainEmail.Should().Be(initialAuthEmail.Address.Value);
+        stateChangedEvent.AggregateState.Emails.Should().ContainSingle(x =>
+            x.Id == initialAuthEmail.Id.Value &&
+            x.Address == initialAuthEmail.Address.Value &&
+            x.IsMain);
     }
 
     [Fact]

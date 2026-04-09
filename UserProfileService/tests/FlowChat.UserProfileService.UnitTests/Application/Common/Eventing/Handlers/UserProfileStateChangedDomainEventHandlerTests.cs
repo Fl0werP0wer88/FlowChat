@@ -33,22 +33,47 @@ public sealed class UserProfileStateChangedDomainEventHandlerTests
     {
         var handler = new UserProfileStateChangedDomainEventHandler(_publisherMock.Object, _mapper);
         var userProfileId = Id<UserProfile>.New();
-        var domainEvent = new AggregateStateChangedDomainEvent<UserProfile, UserProfileSnapshot>(
+        var domainEvent = new AggregateStateChangedDomainEvent<UserProfile, UserProfileState>(
             userProfileId,
             "user-profile-service.user-profile",
-            new UserProfileSnapshot(
-                userProfileId.Value,
-                "jdoe",
-                "john@example.com",
-                true,
-                "+48123123123",
-                "https://cdn.example/avatar.png",
-                "about me",
-                true,
-                new DateTimeOffset(2026, 3, 11, 9, 0, 0, TimeSpan.Zero),
-                "John",
-                "Doe",
-                "FlowChat"));
+            new UserProfileState
+            {
+                Id = userProfileId.Value,
+                FriendlyUserId = "jdoe",
+                NormalizedFriendlyUserId = "jdoe",
+                FirstName = "John",
+                LastName = "Doe",
+                Organization = "FlowChat",
+                AvatarUrl = "https://cdn.example/avatar.png",
+                Bio = "about me",
+                IsActive = true,
+                LastSeenAtUtc = new DateTimeOffset(2026, 3, 11, 9, 0, 0, TimeSpan.Zero),
+                Emails =
+                [
+                    new UserProfileEmailState
+                    {
+                        Id = Guid.NewGuid(),
+                        UserProfileId = userProfileId.Value,
+                        Address = "john@example.com",
+                        IsMain = true,
+                        IsAuth = true,
+                        IsConfirmed = true,
+                        IsVisible = true
+                    }
+                ],
+                Phones =
+                [
+                    new UserProfilePhoneState
+                    {
+                        Id = Guid.NewGuid(),
+                        UserProfileId = userProfileId.Value,
+                        Number = "+48123123123",
+                        IsMain = true,
+                        IsConfirmed = true,
+                        IsVisible = true
+                    }
+                ]
+            });
 
         UserProfileStateChangedIntegrationEvent? capturedEvent = null;
         _publisherMock
