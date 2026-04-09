@@ -1,3 +1,4 @@
+using FlowChat.Core.Contracts;
 using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
 using FlowChat.Shared.Persistance;
@@ -87,7 +88,7 @@ public sealed class ReadRepositoryBaseTests : IDisposable
         }
     }
 
-    private sealed record TestItemDto(Guid Id, string Name);
+    private sealed record TestItemDto(Guid Id, string Name) : IDbResponse;
 
     private sealed class TestDbContext(DbContextOptions<TestDbContext> options) : DbContext(options)
     {

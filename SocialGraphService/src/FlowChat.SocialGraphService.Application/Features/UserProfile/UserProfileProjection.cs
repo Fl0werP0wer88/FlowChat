@@ -1,3 +1,5 @@
+using FlowChat.Core.Contracts;
+
 namespace FlowChat.SocialGraphService.Application.Features.UserProfile;
 
 public sealed record UserProfileProjection(
@@ -11,4 +13,4 @@ public sealed record UserProfileProjection(
     DateTimeOffset? LastSeenAtUtc,
     string? FirstName = null,
     string? LastName = null,
-    string? Organization = null);
+    string? Organization = null) : IDbResponse;

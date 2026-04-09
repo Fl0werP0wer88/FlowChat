@@ -1,3 +1,5 @@
+using FlowChat.Core.Contracts;
+
 namespace FlowChat.UserProfileService.Application.Features.UserProfile.Queries.GetUserProfile;
 
 public sealed record EmailDto(
@@ -5,4 +7,4 @@ public sealed record EmailDto(
     string Address,
     bool IsMain,
     bool IsAuth,
-    bool IsConfirmed);
+    bool IsConfirmed) : IDbResponse;

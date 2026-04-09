@@ -1,3 +1,4 @@
+using FlowChat.Core.Contracts;
 using FlowChat.NotificationService.Domain.Enums;
 
 namespace FlowChat.NotificationService.Application.Features.Notification.Queries.GetNotifications;
@@ -14,4 +15,4 @@ public sealed record NotificationDto(
     string? FailureReason,
     string? SourceMessageKey,
     DateTimeOffset? SentAtUtc,
-    DateTimeOffset CreatedDate);
+    DateTimeOffset CreatedDate) : IDbResponse;

@@ -1,3 +1,5 @@
+using FlowChat.Core.Contracts;
+
 namespace FlowChat.SocialGraphService.Application.Features.Contact.Queries.GetContactsForUser;
 
 public sealed record ContactDto(
@@ -9,4 +11,4 @@ public sealed record ContactDto(
     string? LastName,
     string? PhoneNumber,
     string? Email,
-    bool IsBlocked);
+    bool IsBlocked) : IDbResponse;

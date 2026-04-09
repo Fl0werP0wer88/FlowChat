@@ -1,3 +1,5 @@
+using FlowChat.Core.Contracts;
+
 namespace FlowChat.UserProfileService.Application.Features.UserProfile.Queries.GetUserProfile;
 
 public sealed record UserProfileDto(
@@ -8,4 +10,4 @@ public sealed record UserProfileDto(
     bool IsActive,
     DateTimeOffset? LastSeenAtUtc,
     IReadOnlyList<EmailDto> Emails,
-    IReadOnlyList<PhoneDto> Phones);
+    IReadOnlyList<PhoneDto> Phones) : IDbResponse;
