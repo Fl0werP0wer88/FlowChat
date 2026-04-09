@@ -17,12 +17,12 @@ public sealed class UserProfileProjectionReadRepositoryTests
         await using (var seedContext = CreateDbContext(connection))
         {
             seedContext.UserProfileProjections.AddRange(
-                CreateProjection("jdoe", "Jane Doe", "Jane", "Doe", "FlowChat"),
-                CreateProjection("jdoe2", "Janet Doe", "Janet", "Doe", "FlowLab"),
-                CreateProjection("jwrong-last", "Jane Smith", "Jane", "Smith", "FlowChat"),
-                CreateProjection("jwrong-org", "Jane Doe Other", "Jane", "Doe", "OtherCorp"),
-                CreateProjection("jwrong-first", "Ann Doe", "Ann", "Doe", "FlowChat"),
-                CreateProjection("jnull-org", "Jane Doe Null", "Jane", "Doe", null));
+                CreateProjection("jdoe", "Jane", "Doe", "FlowChat"),
+                CreateProjection("jdoe2", "Janet", "Doe", "FlowLab"),
+                CreateProjection("jwrong-last", "Jane", "Smith", "FlowChat"),
+                CreateProjection("jwrong-org", "Jane", "Doe", "OtherCorp"),
+                CreateProjection("jwrong-first", "Ann", "Doe", "FlowChat"),
+                CreateProjection("jnull-org", "Jane", "Doe", null));
 
             await seedContext.SaveChangesAsync();
         }
@@ -33,7 +33,7 @@ public sealed class UserProfileProjectionReadRepositoryTests
         var result = await repository.SearchAsync("Jan", "Do", "Flow", CancellationToken.None);
 
         result.Should().HaveCount(2);
-        result.Select(projection => projection.DisplayName).Should().Equal("Jane Doe", "Janet Doe");
+        result.Select(projection => projection.FriendlyUserId).Should().Equal("jdoe", "jdoe2");
         result.All(projection =>
             projection.FirstName!.StartsWith("Jan", StringComparison.Ordinal) &&
             projection.LastName!.StartsWith("Do", StringComparison.Ordinal) &&
@@ -48,7 +48,7 @@ public sealed class UserProfileProjectionReadRepositoryTests
 
         await using (var seedContext = CreateDbContext(connection))
         {
-            seedContext.UserProfileProjections.Add(CreateProjection("jdoe", "Jane Doe", "Jane", "Doe", "FlowChat"));
+            seedContext.UserProfileProjections.Add(CreateProjection("jdoe", "Jane", "Doe", "FlowChat"));
             await seedContext.SaveChangesAsync();
         }
 
@@ -69,9 +69,9 @@ public sealed class UserProfileProjectionReadRepositoryTests
         await using (var seedContext = CreateDbContext(connection))
         {
             seedContext.UserProfileProjections.AddRange(
-                CreateProjection("jdoe", "Jane Doe", "Jane", "Doe", "FlowChat"),
-                CreateProjection("jsmith", "Jane Smith", "Jane", "Smith", "OtherCorp"),
-                CreateProjection("adoe", "Ann Doe", "Ann", "Doe", "FlowChat"));
+                CreateProjection("jdoe", "Jane", "Doe", "FlowChat"),
+                CreateProjection("jsmith", "Jane", "Smith", "OtherCorp"),
+                CreateProjection("adoe", "Ann", "Doe", "FlowChat"));
 
             await seedContext.SaveChangesAsync();
         }
@@ -82,7 +82,7 @@ public sealed class UserProfileProjectionReadRepositoryTests
         var result = await repository.SearchAsync("Jan", null, string.Empty, CancellationToken.None);
 
         result.Should().HaveCount(2);
-        result.Select(projection => projection.DisplayName).Should().Equal("Jane Doe", "Jane Smith");
+        result.Select(projection => projection.FriendlyUserId).Should().Equal("jdoe", "jsmith");
     }
 
     [Fact]
@@ -94,9 +94,9 @@ public sealed class UserProfileProjectionReadRepositoryTests
         await using (var seedContext = CreateDbContext(connection))
         {
             seedContext.UserProfileProjections.AddRange(
-                CreateProjection("jdoe", "Jane Doe", "Jane", "Doe", "FlowChat"),
-                CreateProjection("jdoe2", "Jane Doe Flow", "Jane", "Doe", "FlowLab"),
-                CreateProjection("jother", "Jane Other", "Jane", "Other", "FlowChat"));
+                CreateProjection("jdoe", "Jane", "Doe", "FlowChat"),
+                CreateProjection("jdoe2", "Jane", "Doe", "FlowLab"),
+                CreateProjection("jother", "Jane", "Other", "FlowChat"));
 
             await seedContext.SaveChangesAsync();
         }
@@ -107,7 +107,31 @@ public sealed class UserProfileProjectionReadRepositoryTests
         var result = await repository.SearchAsync(null, "Do", "Flow", CancellationToken.None);
 
         result.Should().HaveCount(2);
-        result.Select(projection => projection.DisplayName).Should().Equal("Jane Doe", "Jane Doe Flow");
+        result.Select(projection => projection.FriendlyUserId).Should().Equal("jdoe", "jdoe2");
+    }
+
+    [Fact]
+    public async Task SearchAsync_OrdersResultsByLastNameThenFirstName()
+    {
+        await using var connection = new SqliteConnection("Data Source=:memory:");
+        await connection.OpenAsync();
+
+        await using (var seedContext = CreateDbContext(connection))
+        {
+            seedContext.UserProfileProjections.AddRange(
+                CreateProjection("smith-jane", "Jane", "Smith", "FlowChat"),
+                CreateProjection("doe-zoe", "Zoe", "Doe", "FlowChat"),
+                CreateProjection("doe-adam", "Adam", "Doe", "FlowChat"));
+
+            await seedContext.SaveChangesAsync();
+        }
+
+        await using var readContext = CreateDbContext(connection);
+        var repository = new UserProfileProjectionReadRepository(readContext);
+
+        var result = await repository.SearchAsync(null, null, "Flow", CancellationToken.None);
+
+        result.Select(projection => projection.FriendlyUserId).Should().Equal("doe-adam", "doe-zoe", "smith-jane");
     }
 
     [Fact]
@@ -121,7 +145,7 @@ public sealed class UserProfileProjectionReadRepositoryTests
         await using (var seedContext = CreateDbContext(connection))
         {
             seedContext.UserProfileProjections.Add(
-                CreateProjection("jdoe", "Jane Doe", "Jane", "Doe", "FlowChat", userProfileId, "jane@example.com"));
+                CreateProjection("jdoe", "Jane", "Doe", "FlowChat", userProfileId, "jane@example.com"));
             await seedContext.SaveChangesAsync();
         }
 
@@ -132,7 +156,8 @@ public sealed class UserProfileProjectionReadRepositoryTests
 
         result.Should().NotBeNull();
         result!.UserProfileId.Should().Be(userProfileId);
-        result.DisplayName.Should().Be("Jane Doe");
+        result.FirstName.Should().Be("Jane");
+        result.LastName.Should().Be("Doe");
     }
 
     [Fact]
@@ -144,7 +169,7 @@ public sealed class UserProfileProjectionReadRepositoryTests
         await using (var seedContext = CreateDbContext(connection))
         {
             seedContext.UserProfileProjections.Add(
-                CreateProjection("jdoe", "Jane Doe", "Jane", "Doe", "FlowChat", Guid.NewGuid(), "jane@example.com"));
+                CreateProjection("jdoe", "Jane", "Doe", "FlowChat", Guid.NewGuid(), "jane@example.com"));
             await seedContext.SaveChangesAsync();
         }
 
@@ -166,7 +191,7 @@ public sealed class UserProfileProjectionReadRepositoryTests
         await using (var seedContext = CreateDbContext(connection))
         {
             seedContext.UserProfileProjections.Add(
-                CreateProjection("jdoe", "Jane Doe", "Jane", "Doe", "FlowChat", Guid.NewGuid(), "Jane@Example.com"));
+                CreateProjection("jdoe", "Jane", "Doe", "FlowChat", Guid.NewGuid(), "Jane@Example.com"));
             await seedContext.SaveChangesAsync();
         }
 
@@ -181,7 +206,6 @@ public sealed class UserProfileProjectionReadRepositoryTests
 
     private static UserProfileProjectionEntity CreateProjection(
         string friendlyUserId,
-        string displayName,
         string? firstName,
         string? lastName,
         string? organization,
@@ -191,7 +215,6 @@ public sealed class UserProfileProjectionReadRepositoryTests
         {
             UserProfileId = userProfileId ?? Guid.NewGuid(),
             FriendlyUserId = friendlyUserId,
-            DisplayName = displayName,
             FirstName = firstName,
             LastName = lastName,
             Organization = organization,

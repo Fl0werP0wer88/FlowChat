@@ -13,7 +13,6 @@ public sealed class UserProfileProjectionReadRepository(AppDbContext dbContext) 
     private static readonly Expression<Func<UserProfileProjectionEntity, UserProfileProjection>> Projection = entity => new(
         entity.UserProfileId,
         entity.FriendlyUserId,
-        entity.DisplayName,
         entity.MainEmail,
         entity.MainPhone,
         entity.AvatarUrl,
@@ -94,7 +93,9 @@ public sealed class UserProfileProjectionReadRepository(AppDbContext dbContext) 
         }
 
         return await query
-            .OrderBy(entity => entity.DisplayName)
+            .OrderBy(entity => entity.LastName ?? string.Empty)
+            .ThenBy(entity => entity.FirstName ?? string.Empty)
+            .ThenBy(entity => entity.FriendlyUserId)
             .Select(Projection)
             .ToListAsync(cancellationToken);
     }

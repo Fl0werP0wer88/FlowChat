@@ -23,7 +23,6 @@ public sealed class UnitOfWorkTests
             {
                 var profile = UserProfile.Create(
                     "jdoe",
-                    "John Doe",
                     EmailAddress.Create("john@example.com"));
 
                 await context.UserProfiles.AddAsync(profile, token);
@@ -47,7 +46,7 @@ public sealed class UnitOfWorkTests
             async token =>
             {
                 await context.UserProfiles.AddAsync(
-                    UserProfile.Create("jdoe", "John Doe", EmailAddress.Create("john@example.com")),
+                    UserProfile.Create("jdoe", EmailAddress.Create("john@example.com")),
                     token);
 
                 throw new InvalidOperationException("boom");
@@ -68,7 +67,7 @@ public sealed class UnitOfWorkTests
         await using var context = CreateDbContext(connection);
         var unitOfWork = new UnitOfWork(context);
 
-        context.UserProfiles.Add(UserProfile.Create("jdoe", "John Doe", EmailAddress.Create("john@example.com")));
+        context.UserProfiles.Add(UserProfile.Create("jdoe", EmailAddress.Create("john@example.com")));
 
         var affectedRows = await unitOfWork.SaveChangesAsync(CancellationToken.None);
 

@@ -8,7 +8,6 @@ public sealed class UserProfileCreatedDomainEvent(
     Id<UserProfile> aggregateId,
     Id<Email> mainEmailId,
     string friendlyUserId,
-    string displayName,
     EmailAddress mainEmail,
     PhoneNumber? mainPhone,
     string? avatarUrl,
@@ -23,7 +22,6 @@ public sealed class UserProfileCreatedDomainEvent(
     public Id<UserProfile> UserProfileId { get; } = aggregateId;
     public Id<Email> MainEmailId { get; } = mainEmailId;
     public string FriendlyUserId { get; } = friendlyUserId;
-    public string DisplayName { get; } = displayName;
     public EmailAddress MainEmail { get; } = mainEmail;
     public PhoneNumber? MainPhone { get; } = mainPhone;
     public string? AvatarUrl { get; } = avatarUrl;

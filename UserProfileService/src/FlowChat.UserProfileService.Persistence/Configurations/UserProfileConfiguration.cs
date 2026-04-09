@@ -27,10 +27,6 @@ public class UserProfileConfiguration : IEntityTypeConfiguration<UserProfile>
             .HasMaxLength(100)
             .IsRequired();
 
-        builder.Property(x => x.DisplayName)
-            .HasMaxLength(120)
-            .IsRequired();
-
         builder.Property(x => x.FirstName)
             .HasMaxLength(100);
 

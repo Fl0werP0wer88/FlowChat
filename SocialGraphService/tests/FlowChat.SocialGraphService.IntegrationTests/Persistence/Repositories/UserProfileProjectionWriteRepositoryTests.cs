@@ -19,7 +19,6 @@ public sealed class UserProfileProjectionWriteRepositoryTests
         var projection = new UserProfileProjection(
             Guid.NewGuid(),
             "jdoe",
-            "John Doe",
             "john@example.com",
             "+48123123123",
             "https://cdn.example/avatar.png",
@@ -37,7 +36,6 @@ public sealed class UserProfileProjectionWriteRepositoryTests
 
         wasInserted.Should().BeTrue();
         entity.FriendlyUserId.Should().Be("jdoe");
-        entity.DisplayName.Should().Be("John Doe");
         entity.FirstName.Should().Be("John");
         entity.LastName.Should().Be("Doe");
         entity.Organization.Should().Be("FlowChat");
@@ -65,7 +63,6 @@ public sealed class UserProfileProjectionWriteRepositoryTests
             {
                 UserProfileId = userProfileId,
                 FriendlyUserId = "existing-user",
-                DisplayName = "Existing Display Name",
                 CreatedBy = "seed",
                 CreatedAtUtc = new DateTimeOffset(2026, 3, 29, 7, 0, 0, TimeSpan.Zero),
                 LastModifiedBy = "seed",
@@ -80,7 +77,6 @@ public sealed class UserProfileProjectionWriteRepositoryTests
         var projection = new UserProfileProjection(
             userProfileId,
             "new-user",
-            "New Display Name",
             null,
             null,
             null,
@@ -95,7 +91,6 @@ public sealed class UserProfileProjectionWriteRepositoryTests
 
         wasInserted.Should().BeFalse();
         entity.FriendlyUserId.Should().Be("existing-user");
-        entity.DisplayName.Should().Be("Existing Display Name");
     }
 
     [Fact]
@@ -113,7 +108,6 @@ public sealed class UserProfileProjectionWriteRepositoryTests
             {
                 UserProfileId = userProfileId,
                 FriendlyUserId = "old-user",
-                DisplayName = "Old Display Name",
                 MainEmail = "old@example.com",
                 MainPhone = "+48000000000",
                 AvatarUrl = "https://cdn.example/old.png",
@@ -134,7 +128,6 @@ public sealed class UserProfileProjectionWriteRepositoryTests
         var updatedProjection = new UserProfileProjection(
             userProfileId,
             "new-user",
-            "New Display Name",
             null,
             "+48123123123",
             null,
@@ -152,7 +145,6 @@ public sealed class UserProfileProjectionWriteRepositoryTests
 
         wasUpdated.Should().BeTrue();
         entity.FriendlyUserId.Should().Be("new-user");
-        entity.DisplayName.Should().Be("New Display Name");
         entity.FirstName.Should().Be("Jane");
         entity.LastName.Should().Be("Doe");
         entity.Organization.Should().Be("FlowChat");
@@ -177,7 +169,6 @@ public sealed class UserProfileProjectionWriteRepositoryTests
         var projection = new UserProfileProjection(
             Guid.NewGuid(),
             "jdoe",
-            "John Doe",
             null,
             null,
             null,

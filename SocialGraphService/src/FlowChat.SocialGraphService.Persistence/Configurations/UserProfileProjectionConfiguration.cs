@@ -16,10 +16,6 @@ public sealed class UserProfileProjectionConfiguration : IEntityTypeConfiguratio
             .HasMaxLength(100)
             .IsRequired();
 
-        builder.Property(x => x.DisplayName)
-            .HasMaxLength(200)
-            .IsRequired();
-
         builder.Property(x => x.FirstName)
             .HasMaxLength(100);
 

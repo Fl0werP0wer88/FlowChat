@@ -4,7 +4,6 @@ public sealed class UserProfileStateChangedIntegrationEvent : IntegrationEvent
 {
     public Guid UserProfileId { get; init; }
     public required string FriendlyUserId { get; init; }
-    public required string DisplayName { get; init; }
     public string? FirstName { get; init; }
     public string? LastName { get; init; }
     public string? Organization { get; init; }

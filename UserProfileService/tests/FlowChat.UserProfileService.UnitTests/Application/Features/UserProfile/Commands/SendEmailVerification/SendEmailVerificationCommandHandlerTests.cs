@@ -60,7 +60,6 @@ public sealed class SendEmailVerificationCommandHandlerTests
         new(
             profileId,
             "jdoe",
-            "John Doe",
             null,
             null,
             true,

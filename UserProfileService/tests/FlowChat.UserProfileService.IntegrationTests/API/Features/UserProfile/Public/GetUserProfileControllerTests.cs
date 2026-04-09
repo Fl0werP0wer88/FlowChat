@@ -39,7 +39,6 @@ public sealed class GetUserProfileControllerTests(UserProfileApiFactory factory)
         {
             UserId = userId,
             FriendlyUserId = $"getuser_{userId:N}",
-            DisplayName = "Get Test User",
             Email = $"gettest_{userId:N}@example.com"
         };
         var httpRequest = new HttpRequestMessage(HttpMethod.Post, "/internal/userprofiles/initial")
@@ -52,7 +51,7 @@ public sealed class GetUserProfileControllerTests(UserProfileApiFactory factory)
     }
 
     private sealed record GetUserProfileResponse(UserProfileDto UserProfile);
-    private sealed record UserProfileDto(Guid Id, string FriendlyUserId, string DisplayName, List<EmailDto> Emails, List<PhoneDto> Phones);
+    private sealed record UserProfileDto(Guid Id, string FriendlyUserId, List<EmailDto> Emails, List<PhoneDto> Phones);
     private sealed record EmailDto(Guid Id, string Address, bool IsMain, bool IsAuth, bool IsConfirmed);
     private sealed record PhoneDto(Guid Id, string Number, bool IsMain);
 }

@@ -22,7 +22,6 @@ public sealed class EmailVerificationRequestWriteRepositoryTests
         {
             var profile = UserProfile.Create(
                 "jdoe",
-                "John Doe",
                 EmailAddress.Create("john@example.com"),
                 id: Id<UserProfile>.New());
             seedContext.UserProfiles.Add(profile);
@@ -76,7 +75,6 @@ public sealed class EmailVerificationRequestWriteRepositoryTests
         {
             var profile = UserProfile.Create(
                 "jdoe",
-                "John Doe",
                 EmailAddress.Create("john@example.com"));
             seedContext.UserProfiles.Add(profile);
             await seedContext.SaveChangesAsync();

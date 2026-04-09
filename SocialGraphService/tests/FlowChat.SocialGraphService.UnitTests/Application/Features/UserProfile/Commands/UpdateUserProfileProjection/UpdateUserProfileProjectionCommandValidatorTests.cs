@@ -39,24 +39,10 @@ public sealed class UpdateUserProfileProjectionCommandValidatorTests
         result.Errors.Should().ContainSingle(error => error.ErrorMessage == "Payload does not contain valid FriendlyUserId.");
     }
 
-    [Theory]
-    [InlineData("")]
-    [InlineData("   ")]
-    public async Task Validate_WhenDisplayNameIsBlank_ReturnsValidationError(string displayName)
-    {
-        var command = CreateValidCommand() with { DisplayName = displayName };
-
-        var result = await _validator.ValidateAsync(command);
-
-        result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(error => error.ErrorMessage == "Payload does not contain valid DisplayName.");
-    }
-
     private static UpdateUserProfileProjectionCommand CreateValidCommand() =>
         new(
             Guid.NewGuid(),
             "jane.doe",
-            "Jane Doe",
             "jane@example.com",
             "+48987654321",
             "https://example.com/jane.jpg",

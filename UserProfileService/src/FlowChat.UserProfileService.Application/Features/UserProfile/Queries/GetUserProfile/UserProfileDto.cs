@@ -3,7 +3,6 @@ namespace FlowChat.UserProfileService.Application.Features.UserProfile.Queries.G
 public sealed record UserProfileDto(
     Guid Id,
     string FriendlyUserId,
-    string DisplayName,
     string? AvatarUrl,
     string? Bio,
     bool IsActive,

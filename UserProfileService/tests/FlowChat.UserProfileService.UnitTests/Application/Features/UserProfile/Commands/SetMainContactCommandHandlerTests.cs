@@ -71,7 +71,7 @@ public sealed class SetMainContactCommandHandlerTests
 
     private static UserProfile CreateUserProfile()
     {
-        var profile = UserProfile.Create("jdoe", "John Doe", EmailAddress.Create("john@example.com"), id: Id<UserProfile>.New());
+        var profile = UserProfile.Create("jdoe", EmailAddress.Create("john@example.com"), id: Id<UserProfile>.New());
         profile.ClearEvents();
         return profile;
     }

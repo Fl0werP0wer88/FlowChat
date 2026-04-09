@@ -50,7 +50,6 @@ public sealed class SetMainEmailControllerTests(UserProfileApiFactory factory)
         {
             UserId = userId,
             FriendlyUserId = $"mainemailuser_{userId:N}",
-            DisplayName = "Main Email Test User",
             Email = $"first_{userId:N}@example.com"
         };
         var httpRequest = new HttpRequestMessage(HttpMethod.Post, "/internal/userprofiles/initial")

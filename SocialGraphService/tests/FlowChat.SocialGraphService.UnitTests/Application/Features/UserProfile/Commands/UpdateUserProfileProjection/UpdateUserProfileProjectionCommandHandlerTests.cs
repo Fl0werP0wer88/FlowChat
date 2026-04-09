@@ -52,7 +52,6 @@ public sealed class UpdateUserProfileProjectionCommandHandlerTests
         var command = new UpdateUserProfileProjectionCommand(
             _fixture.Create<Guid>(),
             " jane.doe ",
-            " Jane Doe ",
             " jane@example.com ",
             " +48987654321 ",
             " https://example.com/jane.jpg ",
@@ -69,7 +68,6 @@ public sealed class UpdateUserProfileProjectionCommandHandlerTests
         result.Value.Should().Be(Unit.Value);
         capturedProjection.Should().NotBeNull();
         capturedProjection!.FriendlyUserId.Should().Be("jane.doe");
-        capturedProjection.DisplayName.Should().Be("Jane Doe");
         capturedProjection.MainEmail.Should().Be("jane@example.com");
         capturedProjection.MainPhone.Should().Be("+48987654321");
         capturedProjection.AvatarUrl.Should().Be("https://example.com/jane.jpg");
@@ -89,7 +87,6 @@ public sealed class UpdateUserProfileProjectionCommandHandlerTests
         var command = new UpdateUserProfileProjectionCommand(
             _fixture.Create<Guid>(),
             "jane.doe",
-            "Jane Doe",
             null,
             null,
             null,
@@ -110,7 +107,6 @@ public sealed class UpdateUserProfileProjectionCommandHandlerTests
         var command = new UpdateUserProfileProjectionCommand(
             Guid.Empty,
             null,
-            " ",
             null,
             null,
             null,
@@ -124,8 +120,7 @@ public sealed class UpdateUserProfileProjectionCommandHandlerTests
         result.Error.ErrorType.Should().Be(ErrorType.Validation);
         result.Error.Errors.Should().Equal(
             "Payload does not contain valid UserProfileId.",
-            "Payload does not contain valid FriendlyUserId.",
-            "Payload does not contain valid DisplayName.");
+            "Payload does not contain valid FriendlyUserId.");
         _repositoryMock.Verify(
             x => x.UpdateAsync(It.IsAny<UserProfileProjection>(), It.IsAny<CancellationToken>()),
             Times.Never);

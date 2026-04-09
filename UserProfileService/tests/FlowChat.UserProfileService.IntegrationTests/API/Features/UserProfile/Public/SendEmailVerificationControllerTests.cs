@@ -76,7 +76,6 @@ public sealed class SendEmailVerificationControllerTests(UserProfileApiFactory f
         {
             UserId = userId,
             FriendlyUserId = $"sendverif_{userId:N}",
-            DisplayName = "Send Verification Test",
             Email = $"sendverif_{userId:N}@example.com"
         };
         var httpRequest = new HttpRequestMessage(HttpMethod.Post, "/internal/userprofiles/initial")

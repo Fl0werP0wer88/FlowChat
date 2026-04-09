@@ -20,7 +20,6 @@ public sealed class UserProfileReadRepositoryTests
         {
             var profile = UserProfile.Create(
                 "Jdoe",
-                "John Doe",
                 EmailAddress.Create("john@example.com"),
                 PhoneNumber.Create("+48123123123"));
 
@@ -40,7 +39,7 @@ public sealed class UserProfileReadRepositoryTests
     }
 
     [Fact]
-    public async Task GetActiveAsync_ReturnsOnlyActiveProfilesOrderedByDisplayNameThenFriendlyUserId()
+    public async Task GetActiveAsync_ReturnsOnlyActiveProfilesOrderedByDerivedLabelThenFriendlyUserId()
     {
         await using var connection = new SqliteConnection("Data Source=:memory:");
         await connection.OpenAsync();
@@ -49,15 +48,14 @@ public sealed class UserProfileReadRepositoryTests
         {
             seedContext.UserProfiles.Add(UserProfile.Create(
                 "zoe",
-                "Alex",
-                EmailAddress.Create("zoe@example.com")));
+                EmailAddress.Create("zoe@example.com"),
+                firstName: "Alex"));
             seedContext.UserProfiles.Add(UserProfile.Create(
                 "adam",
-                "Alex",
-                EmailAddress.Create("adam@example.com")));
+                EmailAddress.Create("adam@example.com"),
+                firstName: "Alex"));
             seedContext.UserProfiles.Add(UserProfile.Create(
                 "hidden",
-                "Hidden User",
                 EmailAddress.Create("hidden@example.com"),
                 isActive: false));
 
@@ -83,7 +81,6 @@ public sealed class UserProfileReadRepositoryTests
         {
             var profile = UserProfile.Create(
                 "jdoe",
-                "John Doe",
                 EmailAddress.Create("john@example.com"));
             userId = profile.Id.Value;
 
@@ -109,7 +106,6 @@ public sealed class UserProfileReadRepositoryTests
         {
             var profile = UserProfile.Create(
                 "jdoe",
-                "John Doe",
                 EmailAddress.Create("john@example.com"));
 
             seedContext.UserProfiles.Add(profile);

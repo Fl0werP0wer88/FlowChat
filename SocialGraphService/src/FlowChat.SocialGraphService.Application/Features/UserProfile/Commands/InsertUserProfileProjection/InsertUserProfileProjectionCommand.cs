@@ -6,7 +6,6 @@ namespace FlowChat.SocialGraphService.Application.Features.UserProfile.Commands.
 public sealed record InsertUserProfileProjectionCommand(
     Guid UserProfileId,
     string? FriendlyUserId,
-    string? DisplayName,
     string? MainEmail,
     string? MainPhone,
     string? AvatarUrl,

@@ -66,7 +66,7 @@ public sealed class ConfirmEmailVerificationCommandHandlerTests
 
     private static UserProfile CreateUserProfile(string emailAddress)
     {
-        var userProfile = UserProfile.Create("jdoe", "John Doe", EmailAddress.Create(emailAddress), id: Id<UserProfile>.New());
+        var userProfile = UserProfile.Create("jdoe", EmailAddress.Create(emailAddress), id: Id<UserProfile>.New());
         userProfile.ClearEvents();
         return userProfile;
     }

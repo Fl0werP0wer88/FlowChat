@@ -39,7 +39,6 @@ public sealed class UserProfileCreatedSubscriberTests
             {
                 UserProfileId = userProfileId,
                 FriendlyUserId = " john.doe ",
-                DisplayName = " John Doe ",
                 FirstName = " John ",
                 LastName = " Doe ",
                 Organization = " FlowChat ",
@@ -55,7 +54,6 @@ public sealed class UserProfileCreatedSubscriberTests
         capturedRequest.Should().NotBeNull();
         capturedRequest!.UserProfileId.Should().Be(userProfileId);
         capturedRequest.FriendlyUserId.Should().Be("john.doe");
-        capturedRequest.DisplayName.Should().Be("John Doe");
         capturedRequest.FirstName.Should().Be("John");
         capturedRequest.LastName.Should().Be("Doe");
         capturedRequest.Organization.Should().Be("FlowChat");
@@ -72,8 +70,7 @@ public sealed class UserProfileCreatedSubscriberTests
             new UserProfileCreatedIntegrationEvent
             {
                 UserProfileId = Guid.Empty,
-                FriendlyUserId = "john.doe",
-                DisplayName = "John Doe"
+                FriendlyUserId = "john.doe"
             },
             CancellationToken.None);
 
@@ -112,7 +109,6 @@ public sealed class UserProfileStateChangedSubscriberTests
             {
                 UserProfileId = _fixture.Create<Guid>(),
                 FriendlyUserId = "jane.doe",
-                DisplayName = "Jane Doe",
                 FirstName = "Jane",
                 LastName = "Doe",
                 Organization = "FlowChat",
@@ -127,7 +123,6 @@ public sealed class UserProfileStateChangedSubscriberTests
 
         capturedRequest.Should().NotBeNull();
         capturedRequest!.FriendlyUserId.Should().Be("jane.doe");
-        capturedRequest.DisplayName.Should().Be("Jane Doe");
         capturedRequest.FirstName.Should().Be("Jane");
         capturedRequest.LastName.Should().Be("Doe");
         capturedRequest.Organization.Should().Be("FlowChat");

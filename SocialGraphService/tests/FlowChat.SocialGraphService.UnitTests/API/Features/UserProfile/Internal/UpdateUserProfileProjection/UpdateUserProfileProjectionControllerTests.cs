@@ -31,7 +31,6 @@ public sealed class UpdateUserProfileProjectionControllerTests
             {
                 UserProfileId = _fixture.Create<Guid>(),
                 FriendlyUserId = " jane.doe ",
-                DisplayName = " Jane Doe ",
                 Bio = " updated "
             },
             CancellationToken.None);
@@ -39,7 +38,6 @@ public sealed class UpdateUserProfileProjectionControllerTests
         result.Should().BeOfType<AcceptedResult>();
         capturedCommand.Should().NotBeNull();
         capturedCommand!.FriendlyUserId.Should().Be(" jane.doe ");
-        capturedCommand.DisplayName.Should().Be(" Jane Doe ");
         capturedCommand.Bio.Should().Be(" updated ");
     }
 
@@ -57,8 +55,7 @@ public sealed class UpdateUserProfileProjectionControllerTests
             new UserProfileProjectionRequest
             {
                 UserProfileId = _fixture.Create<Guid>(),
-                FriendlyUserId = "jane.doe",
-                DisplayName = "Jane Doe"
+                FriendlyUserId = "jane.doe"
             },
             CancellationToken.None);
 
@@ -80,8 +77,7 @@ public sealed class UpdateUserProfileProjectionControllerTests
             new UserProfileProjectionRequest
             {
                 UserProfileId = _fixture.Create<Guid>(),
-                FriendlyUserId = string.Empty,
-                DisplayName = "Jane Doe"
+                FriendlyUserId = string.Empty
             },
             CancellationToken.None);
 

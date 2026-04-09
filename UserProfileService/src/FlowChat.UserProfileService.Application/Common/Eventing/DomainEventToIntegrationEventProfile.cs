@@ -36,7 +36,6 @@ public sealed class DomainEventToIntegrationEventProfile : Profile
             .ForMember(destination => destination.Key, options => options.MapFrom(source => source.AggregateId.ToString()))
             .ForMember(destination => destination.UserProfileId, options => options.MapFrom(source => source.AggregateState.UserProfileId))
             .ForMember(destination => destination.FriendlyUserId, options => options.MapFrom(source => source.AggregateState.FriendlyUserId))
-            .ForMember(destination => destination.DisplayName, options => options.MapFrom(source => source.AggregateState.DisplayName))
             .ForMember(destination => destination.FirstName, options => options.MapFrom(source => source.AggregateState.FirstName))
             .ForMember(destination => destination.LastName, options => options.MapFrom(source => source.AggregateState.LastName))
             .ForMember(destination => destination.Organization, options => options.MapFrom(source => source.AggregateState.Organization))

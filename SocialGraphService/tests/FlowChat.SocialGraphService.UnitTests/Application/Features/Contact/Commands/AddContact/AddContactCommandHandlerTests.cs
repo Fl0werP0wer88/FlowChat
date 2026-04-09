@@ -58,7 +58,6 @@ public sealed class AddContactCommandHandlerTests
             .ReturnsAsync(new UserProfileProjection(
                 contactUserId,
                 "jdoe",
-                "Jane Doe",
                 "jane@example.com",
                 "+48123123123",
                 null,
@@ -101,7 +100,6 @@ public sealed class AddContactCommandHandlerTests
             .ReturnsAsync(new UserProfileProjection(
                 projectionUserId,
                 "jdoe",
-                "Jane Doe",
                 null,
                 "+48123123123",
                 null,
@@ -133,7 +131,6 @@ public sealed class AddContactCommandHandlerTests
             .ReturnsAsync(new UserProfileProjection(
                 projectionUserId,
                 "jdoe",
-                "John Doe",
                 "JOHN@example.com",
                 null,
                 null,
@@ -184,7 +181,6 @@ public sealed class AddContactCommandHandlerTests
             .ReturnsAsync(new UserProfileProjection(
                 projectionUserId,
                 "jdoe",
-                "Jane Doe",
                 null,
                 null,
                 null,
@@ -218,7 +214,6 @@ public sealed class AddContactCommandHandlerTests
             .ReturnsAsync(new UserProfileProjection(
                 ownerUserId,
                 "self",
-                "Self User",
                 null,
                 null,
                 null,
@@ -236,5 +231,38 @@ public sealed class AddContactCommandHandlerTests
         result.IsFailure.Should().BeTrue();
         result.Error.ErrorType.Should().Be(ErrorType.BadRequest);
         result.Error.ErrorMessage.Should().Be("OwnerUserId and ContactUserId must be different.");
+    }
+
+    [Fact]
+    public async Task Handle_WhenNamesAreMissing_UsesFriendlyUserIdAsDisplayName()
+    {
+        Contact? capturedContact = null;
+        var ownerUserId = _fixture.Create<Guid>();
+        var contactUserId = _fixture.Create<Guid>();
+
+        _userProfileProjectionReadRepositoryMock
+            .Setup(x => x.GetByUserProfileIdAsync(contactUserId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new UserProfileProjection(
+                contactUserId,
+                "fallback.user",
+                "fallback@example.com",
+                null,
+                null,
+                null,
+                true,
+                null));
+
+        _contactWriteRepositoryMock
+            .Setup(x => x.AddAsync(It.IsAny<Contact>(), It.IsAny<CancellationToken>()))
+            .Callback<Contact, CancellationToken>((contact, _) => capturedContact = contact)
+            .ReturnsAsync((Contact contact, CancellationToken _) => contact);
+
+        var result = await _handler.Handle(
+            new AddContactCommand(ownerUserId, contactUserId, null, null),
+            CancellationToken.None);
+
+        result.IsSuccess.Should().BeTrue();
+        capturedContact.Should().NotBeNull();
+        capturedContact!.DisplayName.Should().Be("fallback.user");
     }
 }

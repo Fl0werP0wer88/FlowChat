@@ -30,7 +30,6 @@ public sealed class UpdateUserProfileProjectionController(
             new UpdateUserProfileProjectionCommand(
                 request.UserProfileId,
                 request.FriendlyUserId,
-                request.DisplayName,
                 request.MainEmail,
                 request.MainPhone,
                 request.AvatarUrl,

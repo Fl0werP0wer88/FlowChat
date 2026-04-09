@@ -52,7 +52,6 @@ public sealed class InsertUserProfileProjectionCommandHandlerTests
         var command = new InsertUserProfileProjectionCommand(
             _fixture.Create<Guid>(),
             " jdoe ",
-            " John Doe ",
             " john@example.com ",
             " +48123123123 ",
             " https://example.com/avatar.jpg ",
@@ -69,7 +68,6 @@ public sealed class InsertUserProfileProjectionCommandHandlerTests
         result.Value.Should().Be(Unit.Value);
         capturedProjection.Should().NotBeNull();
         capturedProjection!.FriendlyUserId.Should().Be("jdoe");
-        capturedProjection.DisplayName.Should().Be("John Doe");
         capturedProjection.MainEmail.Should().Be("john@example.com");
         capturedProjection.MainPhone.Should().Be("+48123123123");
         capturedProjection.AvatarUrl.Should().Be("https://example.com/avatar.jpg");
@@ -89,7 +87,6 @@ public sealed class InsertUserProfileProjectionCommandHandlerTests
         var command = new InsertUserProfileProjectionCommand(
             _fixture.Create<Guid>(),
             "jdoe",
-            "John Doe",
             null,
             null,
             null,
@@ -114,7 +111,6 @@ public sealed class InsertUserProfileProjectionCommandHandlerTests
             null,
             null,
             null,
-            null,
             true,
             null);
 
@@ -124,8 +120,7 @@ public sealed class InsertUserProfileProjectionCommandHandlerTests
         result.Error.ErrorType.Should().Be(ErrorType.Validation);
         result.Error.Errors.Should().Equal(
             "Payload does not contain valid UserProfileId.",
-            "Payload does not contain valid FriendlyUserId.",
-            "Payload does not contain valid DisplayName.");
+            "Payload does not contain valid FriendlyUserId.");
         _repositoryMock.Verify(
             x => x.InsertAsync(It.IsAny<UserProfileProjection>(), It.IsAny<CancellationToken>()),
             Times.Never);

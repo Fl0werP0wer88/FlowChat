@@ -57,7 +57,7 @@ public sealed class AddEmailCommandHandlerTests
 
     private static UserProfile CreateProfile(string emailAddress)
     {
-        var profile = UserProfile.Create("jdoe", "John Doe", EmailAddress.Create(emailAddress), id: Id<UserProfile>.New());
+        var profile = UserProfile.Create("jdoe", EmailAddress.Create(emailAddress), id: Id<UserProfile>.New());
         profile.ClearEvents();
         return profile;
     }

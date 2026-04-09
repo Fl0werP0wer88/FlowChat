@@ -22,7 +22,6 @@ public sealed class UserProfileWriteRepositoryTests
         {
             var profile = UserProfile.Create(
                 "jdoe",
-                "John Doe",
                 EmailAddress.Create("john@example.com"),
                 PhoneNumber.Create("+48123123123"),
                 id: profileId);

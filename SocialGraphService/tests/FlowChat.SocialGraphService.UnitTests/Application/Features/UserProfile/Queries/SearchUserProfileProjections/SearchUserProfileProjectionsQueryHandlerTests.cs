@@ -26,7 +26,6 @@ public sealed class SearchUserProfileProjectionsQueryHandlerTests
             new(
                 _fixture.Create<Guid>(),
                 "jdoe",
-                "Jane Doe",
                 "jane@example.com",
                 "+48123123123",
                 null,

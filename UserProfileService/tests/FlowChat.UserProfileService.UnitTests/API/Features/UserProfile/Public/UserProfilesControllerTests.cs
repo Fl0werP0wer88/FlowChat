@@ -101,7 +101,7 @@ public sealed class UserProfilesControllerTests
     public async Task GetById_ReturnsOk_WhenProfileFound()
     {
         var userId = Guid.NewGuid();
-        var dto = new UserProfileDto(userId, "jdoe", "John Doe", null, null, true, null, [], []);
+        var dto = new UserProfileDto(userId, "jdoe", null, null, true, null, [], []);
         _mediatorMock
             .Setup(x => x.Send(It.IsAny<GetUserProfileQuery>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(FlowChatResult<UserProfileDto>.Success(dto));

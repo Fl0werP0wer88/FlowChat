@@ -24,7 +24,6 @@ public sealed class GetUserProfileQueryHandlerTests
         var expectedProfile = new UserProfileDto(
             userId,
             "jdoe",
-            "John Doe",
             "https://cdn.example/avatar.png",
             "about me",
             true,

@@ -26,7 +26,6 @@ public sealed class UpdateUserProfileProjectionCommandHandler
         var projection = new UserProfileProjection(
             request.UserProfileId,
             request.FriendlyUserId!.Trim(),
-            request.DisplayName!.Trim(),
             NormalizeOptional(request.MainEmail),
             NormalizeOptional(request.MainPhone),
             NormalizeOptional(request.AvatarUrl),

@@ -45,8 +45,7 @@ public sealed class SocialGraphInternalApiClientTests
             new UserProfileProjectionRequest
             {
                 UserProfileId = _fixture.Create<Guid>(),
-                FriendlyUserId = "jdoe",
-                DisplayName = "John Doe"
+                FriendlyUserId = "jdoe"
             },
             CancellationToken.None);
 
@@ -61,7 +60,6 @@ public sealed class SocialGraphInternalApiClientTests
 
         payload.Should().NotBeNull();
         payload!.FriendlyUserId.Should().Be("jdoe");
-        payload.DisplayName.Should().Be("John Doe");
     }
 
     [Fact]

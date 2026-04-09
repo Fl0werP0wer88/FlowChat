@@ -13,12 +13,11 @@ public sealed class UserProfileAggregateTests
     {
         var id = Id<UserProfile>.New();
 
-        var profile = UserProfile.Create("jdoe", "John Doe", EmailAddress.Create("john@example.com"), id: id);
+        var profile = UserProfile.Create("jdoe", EmailAddress.Create("john@example.com"), id: id);
 
         profile.Id.Should().Be(id);
         profile.Id.Value.Should().Be(id.Value);
         profile.DomainEvents.OfType<UserProfileCreatedDomainEvent>().Should().ContainSingle();
-        profile.DomainEvents.OfType<AggregateStateChangedDomainEvent<UserProfile, UserProfileSnapshot>>().Should().ContainSingle();
     }
 
     [Fact]
@@ -329,7 +328,7 @@ public sealed class UserProfileAggregateTests
     [Fact]
     public void UserProfile_Create_WithoutEmail_Throws()
     {
-        Assert.Throws<ArgumentNullException>(() => UserProfile.Create("jdoe", "John Doe", null!, id: Id<UserProfile>.New()));
+        Assert.Throws<ArgumentNullException>(() => UserProfile.Create("jdoe", null!, id: Id<UserProfile>.New()));
     }
 
     [Fact]
@@ -338,7 +337,6 @@ public sealed class UserProfileAggregateTests
         var id = Id<UserProfile>.New();
         var profile = UserProfile.Create(
             "jdoe",
-            "John Doe",
             EmailAddress.Create("john@example.com"),
             PhoneNumber.Create("+48123123123"),
             id: id);
@@ -358,7 +356,6 @@ public sealed class UserProfileAggregateTests
         var id = Id<UserProfile>.New();
         var profile = UserProfile.Create(
             " jdoe ",
-            " John Doe ",
             EmailAddress.Create("john@example.com"),
             PhoneNumber.Create("+48123123123"),
             " https://cdn.example/avatar.png ",
@@ -372,7 +369,6 @@ public sealed class UserProfileAggregateTests
         createdEvent.UserProfileId.Should().Be(id);
         createdEvent.MainEmailId.Should().Be(profile.Emails.Single().Id);
         createdEvent.FriendlyUserId.Should().Be("jdoe");
-        createdEvent.DisplayName.Should().Be("John Doe");
         createdEvent.MainEmail.Should().Be(EmailAddress.Create("john@example.com"));
         createdEvent.MainPhone.Should().Be(PhoneNumber.Create("+48123123123"));
         createdEvent.AvatarUrl.Should().Be("https://cdn.example/avatar.png");
@@ -380,11 +376,6 @@ public sealed class UserProfileAggregateTests
         createdEvent.IsActive.Should().BeFalse();
         createdEvent.LastSeenAtUtc.Should().Be(new DateTimeOffset(2026, 3, 10, 8, 30, 0, TimeSpan.Zero));
 
-        var stateChangedEvent = profile.DomainEvents.OfType<AggregateStateChangedDomainEvent<UserProfile, UserProfileSnapshot>>()
-            .Should().ContainSingle().Subject;
-        stateChangedEvent.AggregateState.MainEmail.Should().Be("john@example.com");
-        stateChangedEvent.AggregateState.IsMainEmailConfirmed.Should().BeFalse();
-        stateChangedEvent.AggregateState.MainPhone.Should().Be("+48123123123");
         profile.DomainEvents.OfType<EmailAddedDomainEvent>().Should().BeEmpty();
     }
 
@@ -392,18 +383,13 @@ public sealed class UserProfileAggregateTests
     public void UserProfile_Create_WithEmailOnly_EmitsUserProfileCreatedDomainEvent()
     {
         var id = Id<UserProfile>.New();
-        var profile = UserProfile.Create("jdoe", "John Doe", EmailAddress.Create("john@example.com"), id: id);
+        var profile = UserProfile.Create("jdoe", EmailAddress.Create("john@example.com"), id: id);
 
         var createdEvent = profile.DomainEvents.OfType<UserProfileCreatedDomainEvent>().Should().ContainSingle().Subject;
         createdEvent.MainEmailId.Should().Be(profile.Emails.Single().Id);
         createdEvent.MainEmail.Should().Be(EmailAddress.Create("john@example.com"));
         createdEvent.MainPhone.Should().BeNull();
 
-        var stateChangedEvent = profile.DomainEvents.OfType<AggregateStateChangedDomainEvent<UserProfile, UserProfileSnapshot>>()
-            .Should().ContainSingle().Subject;
-        stateChangedEvent.AggregateState.MainEmail.Should().Be("john@example.com");
-        stateChangedEvent.AggregateState.IsMainEmailConfirmed.Should().BeFalse();
-        stateChangedEvent.AggregateState.MainPhone.Should().BeNull();
         profile.DomainEvents.OfType<EmailAddedDomainEvent>().Should().BeEmpty();
     }
 
@@ -412,7 +398,6 @@ public sealed class UserProfileAggregateTests
     {
         var profile = UserProfile.Create(
             "jdoe",
-            "John Doe",
             EmailAddress.Create("john@example.com"),
             id: Id<UserProfile>.New(),
             firstName: " John ",
@@ -428,25 +413,20 @@ public sealed class UserProfileAggregateTests
         createdEvent.LastName.Should().Be("Doe");
         createdEvent.Organization.Should().Be("FlowChat");
 
-        var stateChangedEvent = profile.DomainEvents.OfType<AggregateStateChangedDomainEvent<UserProfile, UserProfileSnapshot>>()
-            .Should().ContainSingle().Subject;
-        stateChangedEvent.AggregateState.FirstName.Should().Be("John");
-        stateChangedEvent.AggregateState.LastName.Should().Be("Doe");
-        stateChangedEvent.AggregateState.Organization.Should().Be("FlowChat");
     }
 
     [Fact]
     public void UserProfile_Create_WithEmailOnly_DoesNotCreatePhone()
     {
         var id = Id<UserProfile>.New();
-        var profile = UserProfile.Create("jdoe", "John Doe", EmailAddress.Create("john@example.com"), id: id);
+        var profile = UserProfile.Create("jdoe", EmailAddress.Create("john@example.com"), id: id);
 
         profile.Phones.Should().BeEmpty();
     }
 
     private static UserProfile CreateExistingProfile()
     {
-        var profile = UserProfile.Create("jdoe", "John Doe", EmailAddress.Create("john@example.com"), id: Id<UserProfile>.New());
+        var profile = UserProfile.Create("jdoe", EmailAddress.Create("john@example.com"), id: Id<UserProfile>.New());
         profile.ClearEvents();
         return profile;
     }

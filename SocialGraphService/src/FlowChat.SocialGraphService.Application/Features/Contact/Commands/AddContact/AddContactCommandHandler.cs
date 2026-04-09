@@ -50,7 +50,7 @@ public sealed class AddContactCommandHandler : CommandHandlerBase<AddContactComm
         var contact = ContactAggregate.Create(
             request.OwnerUserId,
             projection.UserProfileId,
-            projection.DisplayName,
+            CreateDisplayName(projection),
             projection.FirstName,
             projection.LastName,
             CreatePhoneNumber(projection),
@@ -105,4 +105,18 @@ public sealed class AddContactCommandHandler : CommandHandlerBase<AddContactComm
 
         return phoneNumber;
     }
+
+    private static string CreateDisplayName(UserProfileProjection projection)
+    {
+        var firstName = NormalizeOptional(projection.FirstName);
+        var lastName = NormalizeOptional(projection.LastName);
+        var displayName = $"{firstName} {lastName}".Trim();
+
+        return string.IsNullOrWhiteSpace(displayName)
+            ? projection.FriendlyUserId
+            : displayName;
+    }
+
+    private static string? NormalizeOptional(string? value) =>
+        string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 }

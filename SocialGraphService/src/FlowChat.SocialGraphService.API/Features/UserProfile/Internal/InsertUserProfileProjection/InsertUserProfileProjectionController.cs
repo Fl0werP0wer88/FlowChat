@@ -30,7 +30,6 @@ public sealed class InsertUserProfileProjectionController(
             new InsertUserProfileProjectionCommand(
                 request.UserProfileId,
                 request.FriendlyUserId,
-                request.DisplayName,
                 request.MainEmail,
                 request.MainPhone,
                 request.AvatarUrl,

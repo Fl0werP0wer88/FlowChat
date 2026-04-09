@@ -13,10 +13,14 @@ namespace FlowChat.UserProfileService.Persistence.Repositories;
 public sealed class UserProfileReadRepository(AppDbContext dbContext)
     : ReadRepositoryBase<UserProfile, UserProfileDto>(dbContext), IUserProfileReadRepository
 {
+    private static readonly Expression<Func<UserProfile, string>> DerivedLabelExpression = x =>
+        (((x.FirstName ?? string.Empty) + " " + (x.LastName ?? string.Empty)).Trim() == string.Empty)
+            ? x.FriendlyUserId
+            : ((x.FirstName ?? string.Empty) + " " + (x.LastName ?? string.Empty)).Trim();
+
     private static readonly Expression<Func<UserProfile, UserProfileDto>> UserProfileDtoProjection = x => new(
         x.Id.Value,
         x.FriendlyUserId,
-        x.DisplayName,
         x.AvatarUrl,
         x.Bio,
         x.IsActive,
@@ -42,7 +46,7 @@ public sealed class UserProfileReadRepository(AppDbContext dbContext)
     {
         return await Query
             .Where(x => x.IsActive)
-            .OrderBy(x => x.DisplayName)
+            .OrderBy(DerivedLabelExpression)
             .ThenBy(x => x.FriendlyUserId)
             .Select(MapToDto)
             .ToListAsync(cancellationToken);

@@ -34,7 +34,6 @@ public sealed class EntityBaseSaveChangesInterceptorTests : IDisposable
 
         var profile = UserProfile.Create(
             friendlyUserId: "interceptortest",
-            displayName: "Interceptor Test User",
             emailAddress: EmailAddress.Create("interceptor@example.com"));
 
         db.UserProfiles.Add(profile);
@@ -54,7 +53,6 @@ public sealed class EntityBaseSaveChangesInterceptorTests : IDisposable
 
         var profile = UserProfile.Create(
             friendlyUserId: "timestamptest",
-            displayName: "Timestamp Test User",
             emailAddress: EmailAddress.Create("timestamp@example.com"));
 
         db.UserProfiles.Add(profile);
@@ -72,7 +70,6 @@ public sealed class EntityBaseSaveChangesInterceptorTests : IDisposable
 
         var profile = UserProfile.Create(
             friendlyUserId: "modifytest",
-            displayName: "Modify Test User",
             emailAddress: EmailAddress.Create("modify@example.com"));
 
         db.UserProfiles.Add(profile);
@@ -106,7 +103,6 @@ public sealed class EntityBaseSaveChangesInterceptorTests : IDisposable
 
         var profile = UserProfile.Create(
             friendlyUserId: "childtest",
-            displayName: "Child Test User",
             emailAddress: EmailAddress.Create("childtest@example.com"));
 
         db.UserProfiles.Add(profile);

@@ -24,8 +24,7 @@ public sealed class InsertUserProfileProjectionControllerTests
             new UserProfileProjectionRequest
             {
                 UserProfileId = _fixture.Create<Guid>(),
-                FriendlyUserId = "jdoe",
-                DisplayName = "John Doe"
+                FriendlyUserId = "jdoe"
             },
             CancellationToken.None);
 
@@ -49,7 +48,6 @@ public sealed class InsertUserProfileProjectionControllerTests
             {
                 UserProfileId = _fixture.Create<Guid>(),
                 FriendlyUserId = " jdoe ",
-                DisplayName = " John Doe ",
                 MainEmail = " john@example.com "
             },
             CancellationToken.None);
@@ -57,7 +55,6 @@ public sealed class InsertUserProfileProjectionControllerTests
         result.Should().BeOfType<AcceptedResult>();
         capturedCommand.Should().NotBeNull();
         capturedCommand!.FriendlyUserId.Should().Be(" jdoe ");
-        capturedCommand.DisplayName.Should().Be(" John Doe ");
         capturedCommand.MainEmail.Should().Be(" john@example.com ");
     }
 
@@ -75,8 +72,7 @@ public sealed class InsertUserProfileProjectionControllerTests
             new UserProfileProjectionRequest
             {
                 UserProfileId = _fixture.Create<Guid>(),
-                FriendlyUserId = "jdoe",
-                DisplayName = "John Doe"
+                FriendlyUserId = "jdoe"
             },
             CancellationToken.None);
 
@@ -98,8 +94,7 @@ public sealed class InsertUserProfileProjectionControllerTests
             new UserProfileProjectionRequest
             {
                 UserProfileId = Guid.Empty,
-                FriendlyUserId = "jdoe",
-                DisplayName = "John Doe"
+                FriendlyUserId = "jdoe"
             },
             CancellationToken.None);
 

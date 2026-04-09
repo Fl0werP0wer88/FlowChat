@@ -50,7 +50,6 @@ public sealed class SetMainPhoneControllerTests(UserProfileApiFactory factory)
         {
             UserId = userId,
             FriendlyUserId = $"phonesetuser_{userId:N}",
-            DisplayName = "Set Phone Test User",
             Email = $"setphone_{userId:N}@example.com"
         };
         var httpRequest = new HttpRequestMessage(HttpMethod.Post, "/internal/userprofiles/initial")
@@ -69,7 +68,6 @@ public sealed class SetMainPhoneControllerTests(UserProfileApiFactory factory)
         {
             UserId = userId,
             FriendlyUserId = $"phonemain_{userId:N}",
-            DisplayName = "Set Main Phone Test User",
             Email = $"phonemain_{userId:N}@example.com",
             Phone = "+48100200300"
         };

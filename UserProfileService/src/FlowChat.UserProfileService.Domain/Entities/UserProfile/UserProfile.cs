@@ -12,7 +12,6 @@ public class UserProfile : AggregateRootBase<UserProfile>
 
     public string FriendlyUserId { get; private set; }
     public string NormalizedFriendlyUserId { get; private set; }
-    public string DisplayName { get; private set; }
     public string? FirstName { get; private set; }
     public string? LastName { get; private set; }
     public string? Organization { get; private set; }
@@ -28,7 +27,6 @@ public class UserProfile : AggregateRootBase<UserProfile>
         Id<UserProfile>? id,
         string friendlyUserId,
         string normalizedFriendlyUserId,
-        string displayName,
         string? firstName = null,
         string? lastName = null,
         string? organization = null,
@@ -39,7 +37,6 @@ public class UserProfile : AggregateRootBase<UserProfile>
     {
         FriendlyUserId = friendlyUserId;
         NormalizedFriendlyUserId = normalizedFriendlyUserId;
-        DisplayName = displayName;
         FirstName = firstName;
         LastName = lastName;
         Organization = organization;
@@ -51,7 +48,6 @@ public class UserProfile : AggregateRootBase<UserProfile>
 
     public static UserProfile Create(
         string friendlyUserId,
-        string displayName,
         EmailAddress emailAddress,
         PhoneNumber? phoneNumber = null,
         string? avatarUrl = null,
@@ -65,7 +61,6 @@ public class UserProfile : AggregateRootBase<UserProfile>
     {
         var typedId = id ?? Id<UserProfile>.New();
         var normalizedFriendlyUserId = NormalizeRequired(friendlyUserId, nameof(friendlyUserId));
-        var normalizedDisplayName = NormalizeRequired(displayName, nameof(displayName));
         var normalizedFirstName = NormalizeOptional(firstName);
         var normalizedLastName = NormalizeOptional(lastName);
         var normalizedOrganization = NormalizeOptional(organization);
@@ -77,7 +72,6 @@ public class UserProfile : AggregateRootBase<UserProfile>
             typedId,
             normalizedFriendlyUserId,
             canonicalFriendlyUserId,
-            normalizedDisplayName,
             normalizedFirstName,
             normalizedLastName,
             normalizedOrganization,
@@ -105,7 +99,6 @@ public class UserProfile : AggregateRootBase<UserProfile>
             userProfile.Id,
             initialEmail.Id,
             userProfile.FriendlyUserId,
-            userProfile.DisplayName,
             initialEmail.Address,
             currentMainPhone,
             userProfile.AvatarUrl,
@@ -327,7 +320,6 @@ public class UserProfile : AggregateRootBase<UserProfile>
         return new UserProfileSnapshot(
             Id.Value,
             FriendlyUserId,
-            DisplayName,
             mainEmailAddress,
             isMainEmailConfirmed,
             mainPhone,

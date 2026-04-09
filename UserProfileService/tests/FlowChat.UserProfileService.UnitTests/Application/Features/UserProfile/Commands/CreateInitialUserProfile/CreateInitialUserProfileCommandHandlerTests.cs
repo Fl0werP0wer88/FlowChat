@@ -149,24 +149,6 @@ public sealed class CreateInitialUserProfileCommandHandlerTests
         capturedProfile.Emails.Should().ContainSingle()
             .Which.Should().Match<Email>(e => e.Address.Value == "john@example.com" && e.IsMain && e.IsAuth && e.IsVisible);
         capturedProfile.Phones.Should().BeEmpty();
-        capturedProfile.DisplayName.Should().Be("jdoe");
-    }
-
-    [Fact]
-    public async Task Handle_WithFirstAndLastName_BuildsDisplayNameFromThem()
-    {
-        UserProfile? capturedProfile = null;
-        _writeRepositoryMock
-            .Setup(x => x.AddAsync(It.IsAny<UserProfile>(), It.IsAny<CancellationToken>()))
-            .Callback<UserProfile, CancellationToken>((entity, _) => capturedProfile = entity)
-            .ReturnsAsync((UserProfile entity, CancellationToken _) => entity);
-
-        var result = await SendAsync(
-            new CreateInitialUserProfileCommand("jdoe", "john@example.com", _fixture.Create<Guid>(), " John ", " Doe "));
-
-        result.IsSuccess.Should().BeTrue();
-        capturedProfile.Should().NotBeNull();
-        capturedProfile!.DisplayName.Should().Be("John Doe");
     }
 
     [Fact]
@@ -245,7 +227,6 @@ public sealed class CreateInitialUserProfileCommandHandlerTests
         result.IsSuccess.Should().BeTrue();
         capturedProfile.Should().NotBeNull();
         capturedProfile.FriendlyUserId.Should().Be("jdoe");
-        capturedProfile.DisplayName.Should().Be("John Doe");
         capturedProfile.Emails.Should().ContainSingle()
             .Which.Address.Value.Should().Be("john@example.com");
     }
@@ -279,11 +260,6 @@ public sealed class CreateInitialUserProfileCommandHandlerTests
         addedEvent.MainEmail.Value.Should().Be("john@example.com");
         addedEvent.MainPhone.Should().BeNull();
 
-        var stateChangedEvent = domainEventsAtAdd
-            .OfType<AggregateStateChangedDomainEvent<UserProfile, UserProfileSnapshot>>()
-            .Should().ContainSingle().Subject;
-        stateChangedEvent.AggregateState.MainEmail.Should().Be("john@example.com");
-        stateChangedEvent.AggregateState.MainPhone.Should().BeNull();
     }
 
     [Fact]
@@ -321,11 +297,5 @@ public sealed class CreateInitialUserProfileCommandHandlerTests
         createdEvent.LastName.Should().Be("Doe");
         createdEvent.Organization.Should().Be("FlowChat");
 
-        var stateChangedEvent = domainEventsAtAdd
-            .OfType<AggregateStateChangedDomainEvent<UserProfile, UserProfileSnapshot>>()
-            .Should().ContainSingle().Subject;
-        stateChangedEvent.AggregateState.FirstName.Should().Be("John");
-        stateChangedEvent.AggregateState.LastName.Should().Be("Doe");
-        stateChangedEvent.AggregateState.Organization.Should().Be("FlowChat");
     }
 }

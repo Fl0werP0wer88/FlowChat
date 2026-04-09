@@ -39,7 +39,6 @@ public sealed class UserProfileStateChangedDomainEventHandlerTests
             new UserProfileSnapshot(
                 userProfileId.Value,
                 "jdoe",
-                "John Doe",
                 "john@example.com",
                 true,
                 "+48123123123",
@@ -63,7 +62,6 @@ public sealed class UserProfileStateChangedDomainEventHandlerTests
         capturedEvent!.UserProfileId.Should().Be(userProfileId.Value);
         capturedEvent.Key.Should().Be(userProfileId.Value.ToString());
         capturedEvent.FriendlyUserId.Should().Be("jdoe");
-        capturedEvent.DisplayName.Should().Be("John Doe");
         capturedEvent.MainEmail.Should().Be("john@example.com");
         capturedEvent.IsMainEmailConfirmed.Should().BeTrue();
         capturedEvent.MainPhone.Should().Be("+48123123123");
