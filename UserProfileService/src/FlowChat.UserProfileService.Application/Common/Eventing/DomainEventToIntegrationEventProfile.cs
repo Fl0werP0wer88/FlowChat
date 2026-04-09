@@ -1,7 +1,6 @@
 using AutoMapper;
 using FlowChat.Shared.Domain;
 using FlowChat.Core.Messaging.UserProfileService.Events;
-using FlowChat.UserProfileService.Domain.Entities.EmailVerificationRequest;
 using FlowChat.UserProfileService.Domain.Entities.UserProfile;
 using FlowChat.UserProfileService.Domain.Entities.UserProfile.Events;
 
@@ -59,7 +58,6 @@ public sealed class DomainEventToIntegrationEventProfile : Profile
             .ForMember(destination => destination.LastName, options => options.MapFrom(source => source.AggregateState.LastName))
             .ForMember(destination => destination.Organization, options => options.MapFrom(source => source.AggregateState.Organization))
             .ForMember(destination => destination.MainEmail, options => options.MapFrom(source => GetMainEmail(source.AggregateState)))
-            .ForMember(destination => destination.IsMainEmailConfirmed, options => options.MapFrom(source => GetMainEmailConfirmation(source.AggregateState)))
             .ForMember(destination => destination.MainPhone, options => options.MapFrom(source => GetMainPhone(source.AggregateState)))
             .ForMember(destination => destination.AvatarUrl, options => options.MapFrom(source => source.AggregateState.AvatarUrl))
             .ForMember(destination => destination.Bio, options => options.MapFrom(source => source.AggregateState.Bio))
@@ -67,19 +65,36 @@ public sealed class DomainEventToIntegrationEventProfile : Profile
             .ForMember(destination => destination.LastSeenAtUtc, options => options.MapFrom(source => source.AggregateState.LastSeenAtUtc == null ? (DateTimeOffset?)null : source.AggregateState.LastSeenAtUtc.Value));
     }
 
-    private static string? GetMainEmail(UserProfileState state)
+    private static UserProfileEmail? GetMainEmail(UserProfileState state)
     {
-        return state.Emails.FirstOrDefault(email => email.IsMain)?.Address;
+        var mainEmail = state.Emails.FirstOrDefault(email => email.IsMain);
+        return mainEmail == null
+            ? null
+            : new UserProfileEmail
+            {
+                Id = mainEmail.Id,
+                UserProfileId = mainEmail.UserProfileId,
+                Address = mainEmail.Address,
+                IsMain = mainEmail.IsMain,
+                IsAuth = mainEmail.IsAuth,
+                IsConfirmed = mainEmail.IsConfirmed,
+                IsVisible = mainEmail.IsVisible
+            };
     }
 
-    private static bool? GetMainEmailConfirmation(UserProfileState state)
+    private static UserProfilePhone? GetMainPhone(UserProfileState state)
     {
-        return state.Emails.FirstOrDefault(email => email.IsMain)?.IsConfirmed;
-    }
-
-    private static string? GetMainPhone(UserProfileState state)
-    {
-        return state.Phones.FirstOrDefault(phone => phone.IsMain)?.Number;
+        var mainPhone = state.Phones.FirstOrDefault(phone => phone.IsMain);
+        return mainPhone == null
+            ? null
+            : new UserProfilePhone
+            {
+                Id = mainPhone.Id,
+                UserProfileId = mainPhone.UserProfileId,
+                Number = mainPhone.Number,
+                IsMain = mainPhone.IsMain,
+                IsConfirmed = mainPhone.IsConfirmed,
+                IsVisible = mainPhone.IsVisible
+            };
     }
 }
-

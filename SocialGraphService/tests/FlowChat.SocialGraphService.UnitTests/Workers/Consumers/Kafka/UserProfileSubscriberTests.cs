@@ -140,7 +140,15 @@ public sealed class UserProfileStateChangedSubscriberTests
                 LastName = "Doe",
                 Organization = "FlowChat",
                 MainEmail = null,
-                MainPhone = "123456",
+                MainPhone = new UserProfilePhone
+                {
+                    Id = _fixture.Create<Guid>(),
+                    UserProfileId = _fixture.Create<Guid>(),
+                    Number = "123456",
+                    IsMain = true,
+                    IsConfirmed = true,
+                    IsVisible = true
+                },
                 AvatarUrl = null,
                 Bio = "updated",
                 IsActive = false,

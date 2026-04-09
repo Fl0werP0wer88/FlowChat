@@ -87,9 +87,11 @@ public sealed class UserProfileStateChangedDomainEventHandlerTests
         capturedEvent!.UserProfileId.Should().Be(userProfileId.Value);
         capturedEvent.Key.Should().Be(userProfileId.Value.ToString());
         capturedEvent.FriendlyUserId.Should().Be("jdoe");
-        capturedEvent.MainEmail.Should().Be("john@example.com");
-        capturedEvent.IsMainEmailConfirmed.Should().BeTrue();
-        capturedEvent.MainPhone.Should().Be("+48123123123");
+        capturedEvent.MainEmail.Should().NotBeNull();
+        capturedEvent.MainEmail!.Address.Should().Be("john@example.com");
+        capturedEvent.MainEmail.IsConfirmed.Should().BeTrue();
+        capturedEvent.MainPhone.Should().NotBeNull();
+        capturedEvent.MainPhone!.Number.Should().Be("+48123123123");
         capturedEvent.AvatarUrl.Should().Be("https://cdn.example/avatar.png");
         capturedEvent.Bio.Should().Be("about me");
         capturedEvent.IsActive.Should().BeTrue();
