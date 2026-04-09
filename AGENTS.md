@@ -87,6 +87,16 @@ The project uses tactical DDD. All domain logic lives in the `Domain` layer. The
 - **Domain events**: raise via `AddDomainEvent(...)` inside the entity
 - **Restore from DB**: use `static Restore(...)` — does NOT raise domain events
 
+### Marker interfaces
+- Marker interfaces from `Common/src/FlowChat.Core/Contracts` and `Common/src/FlowChat.Core/Messaging` classify transport and projection models by role; add them whenever creating a new contract of the matching kind
+- `IServiceEndpoint` is the common marker for service endpoint contracts
+- `IServiceInput` marks request models declared in `API` projects
+- `IServiceOutput` marks response models declared in `API` projects
+- `IConsumerOutput` marks request contracts emitted by worker consumers to other internal endpoints
+- `IConsumerInput` marks payloads consumed by workers; integration events implement this through the `IntegrationEvent` base class
+- `IDbResponse` marks read models and DTOs that are direct EF Core projection targets in queries and repositories
+- If a model changes role, update its marker interface to match the new responsibility instead of keeping the previous classification
+
 ## Testing
 
 - **Tech stack**: xUnit + FluentAssertions + Moq + AutoFixture
