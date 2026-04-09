@@ -1,6 +1,8 @@
+using FlowChat.Core.Contracts;
+
 namespace FlowChat.GatewayService.Api.Models;
 
-public sealed class GatewayStatusResponse
+public sealed class GatewayStatusResponse : IServiceOutput
 {
     public string Service { get; init; } = string.Empty;
 

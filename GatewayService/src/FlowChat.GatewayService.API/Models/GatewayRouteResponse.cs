@@ -1,6 +1,8 @@
+using FlowChat.Core.Contracts;
+
 namespace FlowChat.GatewayService.Api.Models;
 
-public sealed class GatewayRouteResponse
+public sealed class GatewayRouteResponse : IServiceOutput
 {
     public string Name { get; init; } = string.Empty;
 

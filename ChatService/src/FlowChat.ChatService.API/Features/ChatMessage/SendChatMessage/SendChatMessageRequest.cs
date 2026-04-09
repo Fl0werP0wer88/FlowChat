@@ -1,6 +1,8 @@
+using FlowChat.Core.Contracts;
+
 namespace FlowChat.ChatService.Api.Features.ChatMessage.SendChatMessage;
 
-public sealed class SendChatMessageRequest
+public sealed class SendChatMessageRequest : IServiceInput
 {
     public Guid ConversationId { get; init; }
     public Guid SenderUserId { get; init; }

@@ -1,3 +1,5 @@
+using FlowChat.Core.Contracts;
+
 namespace FlowChat.UserProfileService.Api.Features.UserProfile.Public.AddPhone;
 
-public sealed record AddPhoneResponse(Guid PhoneId);
+public sealed record AddPhoneResponse(Guid PhoneId) : IServiceOutput;

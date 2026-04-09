@@ -1,6 +1,8 @@
+using FlowChat.Core.Contracts;
+
 namespace FlowChat.SocialGraphService.Api.Features.UserProfile.Internal.UserProfileProjection;
 
-public sealed class UserProfileProjectionRequest
+public sealed class UserProfileProjectionRequest : IServiceInput
 {
     public Guid UserProfileId { get; set; }
     public string FriendlyUserId { get; set; } = string.Empty;

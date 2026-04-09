@@ -1,6 +1,8 @@
+using FlowChat.Core.Contracts;
+
 namespace FlowChat.AuthService.API.Features.User.Public.RegisterUser;
 
-public sealed class RegisterUserRequest
+public sealed class RegisterUserRequest : IServiceInput
 {
     public required string FriendlyUserId { get; set; }
     public required string Email { get; set; }

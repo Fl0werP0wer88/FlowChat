@@ -1,6 +1,8 @@
+using FlowChat.Core.Contracts;
+
 namespace FlowChat.NotificationService.Api.Features.Notification.Internal.ProcessUserEmailVerificationRequested;
 
-public sealed class ProcessUserEmailVerificationRequestedRequest
+public sealed class ProcessUserEmailVerificationRequestedRequest : IServiceInput
 {
     public Guid UserId { get; set; }
 
