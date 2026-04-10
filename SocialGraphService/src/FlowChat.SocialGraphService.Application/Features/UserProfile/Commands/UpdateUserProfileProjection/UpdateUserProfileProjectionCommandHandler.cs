@@ -23,18 +23,26 @@ public sealed class UpdateUserProfileProjectionCommandHandler
         UpdateUserProfileProjectionCommand request,
         CancellationToken cancellationToken)
     {
-        var projection = new UserProfileProjection(
-            request.UserProfileId,
-            request.FriendlyUserId!.Trim(),
-            NormalizeOptional(request.MainEmail),
-            NormalizeOptional(request.MainPhone),
-            NormalizeOptional(request.AvatarUrl),
-            NormalizeOptional(request.Bio),
-            request.IsActive,
-            request.LastSeenAtUtc,
-            NormalizeOptional(request.FirstName),
-            NormalizeOptional(request.LastName),
-            NormalizeOptional(request.Organization));
+        var projection = new UserProfileProjection
+        {
+            UserProfileId = request.UserProfileId,
+            FriendlyUserId = request.FriendlyUserId!.Trim(),
+            FirstName = NormalizeOptional(request.FirstName),
+            LastName = NormalizeOptional(request.LastName),
+            Organization = NormalizeOptional(request.Organization),
+            MainEmail = CreateMainEmail(
+                request.MainEmailAddress,
+                request.MainEmailIsConfirmed,
+                request.MainEmailIsVisible),
+            MainPhone = CreateMainPhone(
+                request.MainPhoneNumber,
+                request.MainPhoneIsConfirmed,
+                request.MainPhoneIsVisible),
+            AvatarUrl = NormalizeOptional(request.AvatarUrl),
+            Bio = NormalizeOptional(request.Bio),
+            IsActive = request.IsActive,
+            LastSeenAtUtc = request.LastSeenAtUtc
+        };
 
         var wasUpdated = await _userProfileProjectionWriteRepository.UpdateAsync(projection, cancellationToken);
         if (!wasUpdated)
@@ -49,4 +57,36 @@ public sealed class UpdateUserProfileProjectionCommandHandler
 
     private static string? NormalizeOptional(string? value) =>
         string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+
+    private static UserProfileProjectionEmail? CreateMainEmail(
+        string? address,
+        bool? isConfirmed,
+        bool? isVisible)
+    {
+        var normalizedAddress = NormalizeOptional(address);
+        return normalizedAddress == null
+            ? null
+            : new UserProfileProjectionEmail
+            {
+                Address = normalizedAddress,
+                IsConfirmed = isConfirmed ?? false,
+                IsVisible = isVisible ?? false
+            };
+    }
+
+    private static UserProfileProjectionPhone? CreateMainPhone(
+        string? number,
+        bool? isConfirmed,
+        bool? isVisible)
+    {
+        var normalizedNumber = NormalizeOptional(number);
+        return normalizedNumber == null
+            ? null
+            : new UserProfileProjectionPhone
+            {
+                Number = normalizedNumber,
+                IsConfirmed = isConfirmed ?? false,
+                IsVisible = isVisible ?? false
+            };
+    }
 }

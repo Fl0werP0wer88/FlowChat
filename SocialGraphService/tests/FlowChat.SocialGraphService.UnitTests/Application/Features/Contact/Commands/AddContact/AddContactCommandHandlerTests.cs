@@ -55,18 +55,28 @@ public sealed class AddContactCommandHandlerTests
 
         _userProfileProjectionReadRepositoryMock
             .Setup(x => x.GetByUserProfileIdAsync(contactUserId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new UserProfileProjection(
-                contactUserId,
-                "jdoe",
-                "jane@example.com",
-                "+48123123123",
-                null,
-                null,
-                true,
-                _fixture.Create<DateTimeOffset>(),
-                "Jane",
-                "Doe",
-                "FlowChat"));
+            .ReturnsAsync(new UserProfileProjection
+            {
+                UserProfileId = contactUserId,
+                FriendlyUserId = "jdoe",
+                FirstName = "Jane",
+                LastName = "Doe",
+                Organization = "FlowChat",
+                MainEmail = new UserProfileProjectionEmail
+                {
+                    Address = "jane@example.com",
+                    IsConfirmed = true,
+                    IsVisible = true
+                },
+                MainPhone = new UserProfileProjectionPhone
+                {
+                    Number = "+48123123123",
+                    IsConfirmed = true,
+                    IsVisible = true
+                },
+                IsActive = true,
+                LastSeenAtUtc = _fixture.Create<DateTimeOffset>()
+            });
 
         _contactWriteRepositoryMock
             .Setup(x => x.AddAsync(It.IsAny<Contact>(), It.IsAny<CancellationToken>()))
@@ -97,18 +107,21 @@ public sealed class AddContactCommandHandlerTests
 
         _userProfileProjectionReadRepositoryMock
             .Setup(x => x.GetByFriendlyUserIdAsync("jdoe", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new UserProfileProjection(
-                projectionUserId,
-                "jdoe",
-                null,
-                "+48123123123",
-                null,
-                null,
-                true,
-                null,
-                "Jane",
-                "Doe",
-                "FlowChat"));
+            .ReturnsAsync(new UserProfileProjection
+            {
+                UserProfileId = projectionUserId,
+                FriendlyUserId = "jdoe",
+                FirstName = "Jane",
+                LastName = "Doe",
+                Organization = "FlowChat",
+                MainPhone = new UserProfileProjectionPhone
+                {
+                    Number = "+48123123123",
+                    IsConfirmed = true,
+                    IsVisible = true
+                },
+                IsActive = true
+            });
 
         var result = await _handler.Handle(
             new AddContactCommand(ownerUserId, null, " jdoe ", null),
@@ -128,18 +141,21 @@ public sealed class AddContactCommandHandlerTests
 
         _userProfileProjectionReadRepositoryMock
             .Setup(x => x.GetByEmailAsync("john@example.com", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new UserProfileProjection(
-                projectionUserId,
-                "jdoe",
-                "JOHN@example.com",
-                null,
-                null,
-                null,
-                true,
-                null,
-                "John",
-                "Doe",
-                "FlowChat"));
+            .ReturnsAsync(new UserProfileProjection
+            {
+                UserProfileId = projectionUserId,
+                FriendlyUserId = "jdoe",
+                FirstName = "John",
+                LastName = "Doe",
+                Organization = "FlowChat",
+                MainEmail = new UserProfileProjectionEmail
+                {
+                    Address = "JOHN@example.com",
+                    IsConfirmed = true,
+                    IsVisible = true
+                },
+                IsActive = true
+            });
 
         var result = await _handler.Handle(
             new AddContactCommand(ownerUserId, null, null, " JOHN@example.com "),
@@ -178,18 +194,15 @@ public sealed class AddContactCommandHandlerTests
 
         _userProfileProjectionReadRepositoryMock
             .Setup(x => x.GetByUserProfileIdAsync(projectionUserId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new UserProfileProjection(
-                projectionUserId,
-                "jdoe",
-                null,
-                null,
-                null,
-                null,
-                true,
-                null,
-                "Jane",
-                "Doe",
-                "FlowChat"));
+            .ReturnsAsync(new UserProfileProjection
+            {
+                UserProfileId = projectionUserId,
+                FriendlyUserId = "jdoe",
+                FirstName = "Jane",
+                LastName = "Doe",
+                Organization = "FlowChat",
+                IsActive = true
+            });
 
         _contactWriteRepositoryMock
             .Setup(x => x.ExistsAsync(ownerUserId, projectionUserId, It.IsAny<CancellationToken>()))
@@ -211,18 +224,15 @@ public sealed class AddContactCommandHandlerTests
 
         _userProfileProjectionReadRepositoryMock
             .Setup(x => x.GetByUserProfileIdAsync(ownerUserId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new UserProfileProjection(
-                ownerUserId,
-                "self",
-                null,
-                null,
-                null,
-                null,
-                true,
-                null,
-                "Self",
-                "User",
-                "FlowChat"));
+            .ReturnsAsync(new UserProfileProjection
+            {
+                UserProfileId = ownerUserId,
+                FriendlyUserId = "self",
+                FirstName = "Self",
+                LastName = "User",
+                Organization = "FlowChat",
+                IsActive = true
+            });
 
         var result = await _handler.Handle(
             new AddContactCommand(ownerUserId, ownerUserId, null, null),
@@ -242,15 +252,18 @@ public sealed class AddContactCommandHandlerTests
 
         _userProfileProjectionReadRepositoryMock
             .Setup(x => x.GetByUserProfileIdAsync(contactUserId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new UserProfileProjection(
-                contactUserId,
-                "fallback.user",
-                "fallback@example.com",
-                null,
-                null,
-                null,
-                true,
-                null));
+            .ReturnsAsync(new UserProfileProjection
+            {
+                UserProfileId = contactUserId,
+                FriendlyUserId = "fallback.user",
+                MainEmail = new UserProfileProjectionEmail
+                {
+                    Address = "fallback@example.com",
+                    IsConfirmed = false,
+                    IsVisible = true
+                },
+                IsActive = true
+            });
 
         _contactWriteRepositoryMock
             .Setup(x => x.AddAsync(It.IsAny<Contact>(), It.IsAny<CancellationToken>()))

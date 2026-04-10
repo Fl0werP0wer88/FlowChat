@@ -8,7 +8,11 @@ public sealed class UserProfileProjectionEntity
     public string? LastName { get; set; }
     public string? Organization { get; set; }
     public string? MainEmail { get; set; }
+    public bool? MainEmailIsConfirmed { get; set; }
+    public bool? MainEmailIsVisible { get; set; }
     public string? MainPhone { get; set; }
+    public bool? MainPhoneIsConfirmed { get; set; }
+    public bool? MainPhoneIsVisible { get; set; }
     public string? AvatarUrl { get; set; }
     public string? Bio { get; set; }
     public bool IsActive { get; set; }

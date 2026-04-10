@@ -52,15 +52,19 @@ public sealed class UpdateUserProfileProjectionCommandHandlerTests
         var command = new UpdateUserProfileProjectionCommand(
             _fixture.Create<Guid>(),
             " jane.doe ",
+            " Jane ",
+            " Doe ",
+            " FlowChat ",
             " jane@example.com ",
+            true,
+            false,
             " +48987654321 ",
+            false,
+            true,
             " https://example.com/jane.jpg ",
             " updated bio ",
             false,
-            _fixture.Create<DateTimeOffset>(),
-            " Jane ",
-            " Doe ",
-            " FlowChat ");
+            _fixture.Create<DateTimeOffset>());
 
         var result = await SendAsync(command);
 
@@ -68,8 +72,14 @@ public sealed class UpdateUserProfileProjectionCommandHandlerTests
         result.Value.Should().Be(Unit.Value);
         capturedProjection.Should().NotBeNull();
         capturedProjection!.FriendlyUserId.Should().Be("jane.doe");
-        capturedProjection.MainEmail.Should().Be("jane@example.com");
-        capturedProjection.MainPhone.Should().Be("+48987654321");
+        capturedProjection.MainEmail.Should().NotBeNull();
+        capturedProjection.MainEmail!.Address.Should().Be("jane@example.com");
+        capturedProjection.MainEmail.IsConfirmed.Should().BeTrue();
+        capturedProjection.MainEmail.IsVisible.Should().BeFalse();
+        capturedProjection.MainPhone.Should().NotBeNull();
+        capturedProjection.MainPhone!.Number.Should().Be("+48987654321");
+        capturedProjection.MainPhone.IsConfirmed.Should().BeFalse();
+        capturedProjection.MainPhone.IsVisible.Should().BeTrue();
         capturedProjection.AvatarUrl.Should().Be("https://example.com/jane.jpg");
         capturedProjection.Bio.Should().Be("updated bio");
         capturedProjection.FirstName.Should().Be("Jane");
@@ -91,6 +101,13 @@ public sealed class UpdateUserProfileProjectionCommandHandlerTests
             null,
             null,
             null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
             true,
             null);
 
@@ -106,6 +123,13 @@ public sealed class UpdateUserProfileProjectionCommandHandlerTests
     {
         var command = new UpdateUserProfileProjectionCommand(
             Guid.Empty,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
             null,
             null,
             null,

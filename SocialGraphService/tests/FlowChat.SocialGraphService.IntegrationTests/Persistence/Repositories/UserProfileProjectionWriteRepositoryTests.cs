@@ -16,18 +16,30 @@ public sealed class UserProfileProjectionWriteRepositoryTests
         await connection.OpenAsync();
         await using var context = CreateDbContext(connection);
         var repository = new UserProfileProjectionWriteRepository(context);
-        var projection = new UserProfileProjection(
-            Guid.NewGuid(),
-            "jdoe",
-            "john@example.com",
-            "+48123123123",
-            "https://cdn.example/avatar.png",
-            "Hello there",
-            true,
-            new DateTimeOffset(2026, 4, 1, 10, 30, 0, TimeSpan.Zero),
-            "John",
-            "Doe",
-            "FlowChat");
+        var projection = new UserProfileProjection
+        {
+            UserProfileId = Guid.NewGuid(),
+            FriendlyUserId = "jdoe",
+            FirstName = "John",
+            LastName = "Doe",
+            Organization = "FlowChat",
+            MainEmail = new UserProfileProjectionEmail
+            {
+                Address = "john@example.com",
+                IsConfirmed = true,
+                IsVisible = true
+            },
+            MainPhone = new UserProfileProjectionPhone
+            {
+                Number = "+48123123123",
+                IsConfirmed = false,
+                IsVisible = true
+            },
+            AvatarUrl = "https://cdn.example/avatar.png",
+            Bio = "Hello there",
+            IsActive = true,
+            LastSeenAtUtc = new DateTimeOffset(2026, 4, 1, 10, 30, 0, TimeSpan.Zero)
+        };
 
         var wasInserted = await repository.InsertAsync(projection, CancellationToken.None);
         await context.SaveChangesAsync();
@@ -40,7 +52,11 @@ public sealed class UserProfileProjectionWriteRepositoryTests
         entity.LastName.Should().Be("Doe");
         entity.Organization.Should().Be("FlowChat");
         entity.MainEmail.Should().Be("john@example.com");
+        entity.MainEmailIsConfirmed.Should().BeTrue();
+        entity.MainEmailIsVisible.Should().BeTrue();
         entity.MainPhone.Should().Be("+48123123123");
+        entity.MainPhoneIsConfirmed.Should().BeFalse();
+        entity.MainPhoneIsVisible.Should().BeTrue();
         entity.AvatarUrl.Should().Be("https://cdn.example/avatar.png");
         entity.Bio.Should().Be("Hello there");
         entity.IsActive.Should().BeTrue();
@@ -74,15 +90,12 @@ public sealed class UserProfileProjectionWriteRepositoryTests
 
         await using var context = CreateDbContext(connection);
         var repository = new UserProfileProjectionWriteRepository(context);
-        var projection = new UserProfileProjection(
-            userProfileId,
-            "new-user",
-            null,
-            null,
-            null,
-            null,
-            true,
-            null);
+        var projection = new UserProfileProjection
+        {
+            UserProfileId = userProfileId,
+            FriendlyUserId = "new-user",
+            IsActive = true
+        };
 
         var wasInserted = await repository.InsertAsync(projection, CancellationToken.None);
         await context.SaveChangesAsync();
@@ -109,7 +122,11 @@ public sealed class UserProfileProjectionWriteRepositoryTests
                 UserProfileId = userProfileId,
                 FriendlyUserId = "old-user",
                 MainEmail = "old@example.com",
+                MainEmailIsConfirmed = false,
+                MainEmailIsVisible = true,
                 MainPhone = "+48000000000",
+                MainPhoneIsConfirmed = false,
+                MainPhoneIsVisible = false,
                 AvatarUrl = "https://cdn.example/old.png",
                 Bio = "Old bio",
                 IsActive = false,
@@ -125,18 +142,22 @@ public sealed class UserProfileProjectionWriteRepositoryTests
 
         await using var updateContext = CreateDbContext(connection);
         var repository = new UserProfileProjectionWriteRepository(updateContext);
-        var updatedProjection = new UserProfileProjection(
-            userProfileId,
-            "new-user",
-            null,
-            "+48123123123",
-            null,
-            "Updated bio",
-            true,
-            null,
-            "Jane",
-            "Doe",
-            "FlowChat");
+        var updatedProjection = new UserProfileProjection
+        {
+            UserProfileId = userProfileId,
+            FriendlyUserId = "new-user",
+            FirstName = "Jane",
+            LastName = "Doe",
+            Organization = "FlowChat",
+            MainPhone = new UserProfileProjectionPhone
+            {
+                Number = "+48123123123",
+                IsConfirmed = true,
+                IsVisible = true
+            },
+            Bio = "Updated bio",
+            IsActive = true
+        };
 
         var wasUpdated = await repository.UpdateAsync(updatedProjection, CancellationToken.None);
         await updateContext.SaveChangesAsync();
@@ -149,7 +170,11 @@ public sealed class UserProfileProjectionWriteRepositoryTests
         entity.LastName.Should().Be("Doe");
         entity.Organization.Should().Be("FlowChat");
         entity.MainEmail.Should().BeNull();
+        entity.MainEmailIsConfirmed.Should().BeNull();
+        entity.MainEmailIsVisible.Should().BeNull();
         entity.MainPhone.Should().Be("+48123123123");
+        entity.MainPhoneIsConfirmed.Should().BeTrue();
+        entity.MainPhoneIsVisible.Should().BeTrue();
         entity.AvatarUrl.Should().BeNull();
         entity.Bio.Should().Be("Updated bio");
         entity.IsActive.Should().BeTrue();
@@ -166,15 +191,12 @@ public sealed class UserProfileProjectionWriteRepositoryTests
         await connection.OpenAsync();
         await using var context = CreateDbContext(connection);
         var repository = new UserProfileProjectionWriteRepository(context);
-        var projection = new UserProfileProjection(
-            Guid.NewGuid(),
-            "jdoe",
-            null,
-            null,
-            null,
-            null,
-            true,
-            null);
+        var projection = new UserProfileProjection
+        {
+            UserProfileId = Guid.NewGuid(),
+            FriendlyUserId = "jdoe",
+            IsActive = true
+        };
 
         var wasUpdated = await repository.UpdateAsync(projection, CancellationToken.None);
 

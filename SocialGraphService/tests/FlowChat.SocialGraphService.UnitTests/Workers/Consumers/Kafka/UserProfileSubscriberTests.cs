@@ -67,8 +67,12 @@ public sealed class UserProfileCreatedSubscriberTests
         capturedRequest.FirstName.Should().Be("John");
         capturedRequest.LastName.Should().Be("Doe");
         capturedRequest.Organization.Should().Be("FlowChat");
-        capturedRequest.MainEmail.Should().Be("john@flowchat.local");
-        capturedRequest.MainPhone.Should().Be("+48123123123");
+        capturedRequest.MainEmailAddress.Should().Be("john@flowchat.local");
+        capturedRequest.MainEmailIsConfirmed.Should().BeFalse();
+        capturedRequest.MainEmailIsVisible.Should().BeTrue();
+        capturedRequest.MainPhoneNumber.Should().Be("+48123123123");
+        capturedRequest.MainPhoneIsConfirmed.Should().BeFalse();
+        capturedRequest.MainPhoneIsVisible.Should().BeTrue();
         capturedRequest.AvatarUrl.Should().Be("https://cdn.example/avatar.png");
         capturedRequest.Bio.Should().Be("hello");
     }
@@ -148,6 +152,9 @@ public sealed class UserProfileStateChangedSubscriberTests
         capturedRequest.LastName.Should().Be("Doe");
         capturedRequest.Organization.Should().Be("FlowChat");
         capturedRequest.IsActive.Should().BeFalse();
-        capturedRequest.MainPhone.Should().Be("123456");
+        capturedRequest.MainEmailAddress.Should().BeNull();
+        capturedRequest.MainPhoneNumber.Should().Be("123456");
+        capturedRequest.MainPhoneIsConfirmed.Should().BeTrue();
+        capturedRequest.MainPhoneIsVisible.Should().BeTrue();
     }
 }

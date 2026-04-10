@@ -23,18 +23,28 @@ public sealed class SearchUserProfileProjectionsQueryHandlerTests
     {
         IReadOnlyList<UserProfileProjection> expectedProjections =
         [
-            new(
-                _fixture.Create<Guid>(),
-                "jdoe",
-                "jane@example.com",
-                "+48123123123",
-                null,
-                null,
-                true,
-                _fixture.Create<DateTimeOffset>(),
-                "Jane",
-                "Doe",
-                "FlowChat")
+            new UserProfileProjection
+            {
+                UserProfileId = _fixture.Create<Guid>(),
+                FriendlyUserId = "jdoe",
+                FirstName = "Jane",
+                LastName = "Doe",
+                Organization = "FlowChat",
+                MainEmail = new UserProfileProjectionEmail
+                {
+                    Address = "jane@example.com",
+                    IsConfirmed = true,
+                    IsVisible = true
+                },
+                MainPhone = new UserProfileProjectionPhone
+                {
+                    Number = "+48123123123",
+                    IsConfirmed = true,
+                    IsVisible = true
+                },
+                IsActive = true,
+                LastSeenAtUtc = _fixture.Create<DateTimeOffset>()
+            }
         ];
 
         _userProfileProjectionReadRepositoryMock

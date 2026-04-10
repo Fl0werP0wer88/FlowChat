@@ -6,12 +6,16 @@ namespace FlowChat.SocialGraphService.Application.Features.UserProfile.Commands.
 public sealed record InsertUserProfileProjectionCommand(
     Guid UserProfileId,
     string? FriendlyUserId,
-    string? MainEmail,
-    string? MainPhone,
+    string? FirstName,
+    string? LastName,
+    string? Organization,
+    string? MainEmailAddress,
+    bool? MainEmailIsConfirmed,
+    bool? MainEmailIsVisible,
+    string? MainPhoneNumber,
+    bool? MainPhoneIsConfirmed,
+    bool? MainPhoneIsVisible,
     string? AvatarUrl,
     string? Bio,
     bool IsActive,
-    DateTimeOffset? LastSeenAtUtc,
-    string? FirstName = null,
-    string? LastName = null,
-    string? Organization = null) : ICommand<Unit>;
+    DateTimeOffset? LastSeenAtUtc) : ICommand<Unit>;

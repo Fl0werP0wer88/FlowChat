@@ -88,7 +88,7 @@ public sealed class AddContactCommandHandler : CommandHandlerBase<AddContactComm
 
     private static EmailAddress? CreateEmailAddress(UserProfileProjection projection)
     {
-        if (!EmailAddress.TryCreate(projection.MainEmail, out var emailAddress))
+        if (!EmailAddress.TryCreate(projection.MainEmail?.Address, out var emailAddress))
         {
             return null;
         }
@@ -98,7 +98,7 @@ public sealed class AddContactCommandHandler : CommandHandlerBase<AddContactComm
 
     private static PhoneNumber? CreatePhoneNumber(UserProfileProjection projection)
     {
-        if (!PhoneNumber.TryCreate(projection.MainPhone, out var phoneNumber))
+        if (!PhoneNumber.TryCreate(projection.MainPhone?.Number, out var phoneNumber))
         {
             return null;
         }

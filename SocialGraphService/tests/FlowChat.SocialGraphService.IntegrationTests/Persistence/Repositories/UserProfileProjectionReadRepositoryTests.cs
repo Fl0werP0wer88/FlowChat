@@ -201,7 +201,8 @@ public sealed class UserProfileProjectionReadRepositoryTests
         var result = await repository.GetByEmailAsync("jane@example.com", CancellationToken.None);
 
         result.Should().NotBeNull();
-        result!.MainEmail.Should().Be("Jane@Example.com");
+        result!.MainEmail.Should().NotBeNull();
+        result.MainEmail!.Address.Should().Be("Jane@Example.com");
     }
 
     private static UserProfileProjectionEntity CreateProjection(
@@ -219,6 +220,8 @@ public sealed class UserProfileProjectionReadRepositoryTests
             LastName = lastName,
             Organization = organization,
             MainEmail = mainEmail,
+            MainEmailIsConfirmed = mainEmail == null ? null : false,
+            MainEmailIsVisible = mainEmail == null ? null : true,
             IsActive = true,
             CreatedBy = "seed",
             CreatedAtUtc = new DateTimeOffset(2026, 4, 6, 8, 0, 0, TimeSpan.Zero),

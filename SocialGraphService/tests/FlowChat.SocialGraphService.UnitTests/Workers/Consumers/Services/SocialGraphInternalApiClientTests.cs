@@ -45,7 +45,10 @@ public sealed class SocialGraphInternalApiClientTests
             new UserProfileProjectionRequest
             {
                 UserProfileId = _fixture.Create<Guid>(),
-                FriendlyUserId = "jdoe"
+                FriendlyUserId = "jdoe",
+                MainEmailAddress = "jdoe@example.com",
+                MainEmailIsConfirmed = true,
+                MainEmailIsVisible = true
             },
             CancellationToken.None);
 
@@ -60,6 +63,9 @@ public sealed class SocialGraphInternalApiClientTests
 
         payload.Should().NotBeNull();
         payload!.FriendlyUserId.Should().Be("jdoe");
+        payload.MainEmailAddress.Should().Be("jdoe@example.com");
+        payload.MainEmailIsConfirmed.Should().BeTrue();
+        payload.MainEmailIsVisible.Should().BeTrue();
     }
 
     [Fact]

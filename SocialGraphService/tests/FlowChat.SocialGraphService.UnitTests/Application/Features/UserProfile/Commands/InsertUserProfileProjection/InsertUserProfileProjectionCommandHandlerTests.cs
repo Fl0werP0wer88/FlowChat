@@ -52,15 +52,19 @@ public sealed class InsertUserProfileProjectionCommandHandlerTests
         var command = new InsertUserProfileProjectionCommand(
             _fixture.Create<Guid>(),
             " jdoe ",
+            " John ",
+            " Doe ",
+            " FlowChat ",
             " john@example.com ",
+            true,
+            true,
             " +48123123123 ",
+            false,
+            true,
             " https://example.com/avatar.jpg ",
             " hello there ",
             true,
-            _fixture.Create<DateTimeOffset>(),
-            " John ",
-            " Doe ",
-            " FlowChat ");
+            _fixture.Create<DateTimeOffset>());
 
         var result = await SendAsync(command);
 
@@ -68,8 +72,14 @@ public sealed class InsertUserProfileProjectionCommandHandlerTests
         result.Value.Should().Be(Unit.Value);
         capturedProjection.Should().NotBeNull();
         capturedProjection!.FriendlyUserId.Should().Be("jdoe");
-        capturedProjection.MainEmail.Should().Be("john@example.com");
-        capturedProjection.MainPhone.Should().Be("+48123123123");
+        capturedProjection.MainEmail.Should().NotBeNull();
+        capturedProjection.MainEmail!.Address.Should().Be("john@example.com");
+        capturedProjection.MainEmail.IsConfirmed.Should().BeTrue();
+        capturedProjection.MainEmail.IsVisible.Should().BeTrue();
+        capturedProjection.MainPhone.Should().NotBeNull();
+        capturedProjection.MainPhone!.Number.Should().Be("+48123123123");
+        capturedProjection.MainPhone.IsConfirmed.Should().BeFalse();
+        capturedProjection.MainPhone.IsVisible.Should().BeTrue();
         capturedProjection.AvatarUrl.Should().Be("https://example.com/avatar.jpg");
         capturedProjection.Bio.Should().Be("hello there");
         capturedProjection.FirstName.Should().Be("John");
@@ -91,6 +101,13 @@ public sealed class InsertUserProfileProjectionCommandHandlerTests
             null,
             null,
             null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
             true,
             null);
 
@@ -107,6 +124,13 @@ public sealed class InsertUserProfileProjectionCommandHandlerTests
         var command = new InsertUserProfileProjectionCommand(
             Guid.Empty,
             " ",
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
             null,
             null,
             null,

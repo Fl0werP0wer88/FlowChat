@@ -10,18 +10,34 @@ public sealed class UserProfileProjectionReadRepository(AppDbContext dbContext) 
 {
     private readonly AppDbContext _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
 
-    private static readonly Expression<Func<UserProfileProjectionEntity, UserProfileProjection>> Projection = entity => new(
-        entity.UserProfileId,
-        entity.FriendlyUserId,
-        entity.MainEmail,
-        entity.MainPhone,
-        entity.AvatarUrl,
-        entity.Bio,
-        entity.IsActive,
-        entity.LastSeenAtUtc,
-        entity.FirstName,
-        entity.LastName,
-        entity.Organization);
+    private static readonly Expression<Func<UserProfileProjectionEntity, UserProfileProjection>> Projection = entity => new UserProfileProjection
+    {
+        UserProfileId = entity.UserProfileId,
+        FriendlyUserId = entity.FriendlyUserId,
+        FirstName = entity.FirstName,
+        LastName = entity.LastName,
+        Organization = entity.Organization,
+        MainEmail = entity.MainEmail == null
+            ? null
+            : new UserProfileProjectionEmail
+            {
+                Address = entity.MainEmail,
+                IsConfirmed = entity.MainEmailIsConfirmed ?? false,
+                IsVisible = entity.MainEmailIsVisible ?? false
+            },
+        MainPhone = entity.MainPhone == null
+            ? null
+            : new UserProfileProjectionPhone
+            {
+                Number = entity.MainPhone,
+                IsConfirmed = entity.MainPhoneIsConfirmed ?? false,
+                IsVisible = entity.MainPhoneIsVisible ?? false
+            },
+        AvatarUrl = entity.AvatarUrl,
+        Bio = entity.Bio,
+        IsActive = entity.IsActive,
+        LastSeenAtUtc = entity.LastSeenAtUtc
+    };
 
     public async Task<UserProfileProjection?> GetByUserProfileIdAsync(
         Guid userProfileId,

@@ -28,8 +28,16 @@ public sealed class UserProfileProjectionConfiguration : IEntityTypeConfiguratio
         builder.Property(x => x.MainEmail)
             .HasMaxLength(256);
 
+        builder.Property(x => x.MainEmailIsConfirmed);
+
+        builder.Property(x => x.MainEmailIsVisible);
+
         builder.Property(x => x.MainPhone)
             .HasMaxLength(32);
+
+        builder.Property(x => x.MainPhoneIsConfirmed);
+
+        builder.Property(x => x.MainPhoneIsVisible);
 
         builder.Property(x => x.AvatarUrl)
             .HasMaxLength(2048);

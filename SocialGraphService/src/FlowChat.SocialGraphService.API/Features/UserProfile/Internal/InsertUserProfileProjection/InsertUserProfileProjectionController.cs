@@ -30,15 +30,19 @@ public sealed class InsertUserProfileProjectionController(
             new InsertUserProfileProjectionCommand(
                 request.UserProfileId,
                 request.FriendlyUserId,
-                request.MainEmail,
-                request.MainPhone,
+                request.FirstName,
+                request.LastName,
+                request.Organization,
+                request.MainEmailAddress,
+                request.MainEmailIsConfirmed,
+                request.MainEmailIsVisible,
+                request.MainPhoneNumber,
+                request.MainPhoneIsConfirmed,
+                request.MainPhoneIsVisible,
                 request.AvatarUrl,
                 request.Bio,
                 request.IsActive,
-                request.LastSeenAtUtc,
-                request.FirstName,
-                request.LastName,
-                request.Organization),
+                request.LastSeenAtUtc),
             cancellationToken);
 
         return result.IsSuccess

@@ -48,14 +48,18 @@ public sealed class InsertUserProfileProjectionControllerTests
             {
                 UserProfileId = _fixture.Create<Guid>(),
                 FriendlyUserId = " jdoe ",
-                MainEmail = " john@example.com "
+                MainEmailAddress = " john@example.com ",
+                MainEmailIsConfirmed = true,
+                MainEmailIsVisible = true
             },
             CancellationToken.None);
 
         result.Should().BeOfType<AcceptedResult>();
         capturedCommand.Should().NotBeNull();
         capturedCommand!.FriendlyUserId.Should().Be(" jdoe ");
-        capturedCommand.MainEmail.Should().Be(" john@example.com ");
+        capturedCommand.MainEmailAddress.Should().Be(" john@example.com ");
+        capturedCommand.MainEmailIsConfirmed.Should().BeTrue();
+        capturedCommand.MainEmailIsVisible.Should().BeTrue();
     }
 
     [Fact]
