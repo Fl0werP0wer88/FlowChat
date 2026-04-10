@@ -17,7 +17,10 @@ param(
   [string]$ComposeFile = ".\docker-compose.redisinsight.yml",
   [string]$ServiceName = "redisinsight",
   [string]$UiUrl = "http://localhost:5540",
-  [int]$TimeoutSeconds = 120
+  [string]$RedisUsername = "default",
+  [string]$RedisPassword = "flowchat_redis_pw",
+  [int]$TimeoutSeconds = 120,
+  [switch]$SkipRedisBootstrap
 )
 
 Set-StrictMode -Version Latest
@@ -74,8 +77,13 @@ Assert-Command "docker"
 $redisBootstrapScript = Join-Path $PSScriptRoot "bootstrap-redis.ps1"
 Assert-PathExists -path $redisBootstrapScript -label "Redis bootstrap script"
 
-Write-Step "Ensuring Redis is running"
-& $redisBootstrapScript
+$env:FLOWCHAT_REDIS_USERNAME = $RedisUsername
+$env:FLOWCHAT_REDIS_PASSWORD = $RedisPassword
+
+if (-not $SkipRedisBootstrap) {
+  Write-Step "Ensuring Redis is running"
+  & $redisBootstrapScript -RedisUsername $RedisUsername -RedisPassword $RedisPassword
+}
 
 Write-Step "Starting RedisInsight via docker compose"
 # Idempotent: creates if missing, starts if stopped, and leaves it running if already up
@@ -93,3 +101,5 @@ Write-Step "RedisInsight ready"
 Write-Host "UI            : $UiUrl"
 Write-Host "Redis alias   : FlowChat Redis"
 Write-Host "Redis target  : host.docker.internal:6379"
+Write-Host "Redis user    : $RedisUsername"
+Write-Host "Redis password: $RedisPassword"

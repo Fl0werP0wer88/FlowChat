@@ -15,6 +15,8 @@ Optional:
 param(
   [string]$ComposeFile = ".\docker-compose.yml",
   [string]$ServiceName = "redis",
+  [string]$RedisUsername = "default",
+  [string]$RedisPassword = "flowchat_redis_pw",
   [int]$TimeoutSeconds = 60
 )
 
@@ -33,10 +35,15 @@ function Assert-Command([string]$cmd) {
 }
 
 function Get-ContainerIdForService([string]$service) {
-  (docker compose -f $ComposeFile ps -q $service 2>$null).Trim()
+  $containerId = docker compose -f $ComposeFile ps -q $service 2>$null
+  if ($null -eq $containerId) {
+    return ""
+  }
+
+  return ($containerId | Out-String).Trim()
 }
 
-function Wait-ForRedisReady([string]$containerId, [int]$timeoutSeconds) {
+function Wait-ForRedisReady([string]$containerId, [string]$redisUsername, [string]$redisPassword, [int]$timeoutSeconds) {
   Write-Step "Waiting for Redis to be ready (timeout ${timeoutSeconds}s)..."
   $deadline = (Get-Date).AddSeconds($timeoutSeconds)
 
@@ -44,7 +51,7 @@ function Wait-ForRedisReady([string]$containerId, [int]$timeoutSeconds) {
     $old = $ErrorActionPreference
     try {
       $ErrorActionPreference = "Continue"
-      $response = docker exec $containerId redis-cli ping 2>$null
+      $response = docker exec $containerId redis-cli --user $redisUsername --pass $redisPassword ping 2>$null
       if ($LASTEXITCODE -eq 0 -and ($response | Out-String).Trim() -eq "PONG") {
         Write-Host "Redis is ready"
         return
@@ -63,6 +70,9 @@ function Wait-ForRedisReady([string]$containerId, [int]$timeoutSeconds) {
 
 Assert-Command "docker"
 
+$env:FLOWCHAT_REDIS_USERNAME = $RedisUsername
+$env:FLOWCHAT_REDIS_PASSWORD = $RedisPassword
+
 Write-Step "Starting Redis via docker compose"
 # Idempotent: creates if missing, starts if stopped, and leaves it running if already up
 docker compose -f $ComposeFile up -d --remove-orphans | Out-Null
@@ -73,8 +83,10 @@ if ([string]::IsNullOrWhiteSpace($containerId)) {
 }
 
 Write-Step "Using container id: $containerId"
-Wait-ForRedisReady -containerId $containerId -timeoutSeconds $TimeoutSeconds
+Wait-ForRedisReady -containerId $containerId -redisUsername $RedisUsername -redisPassword $RedisPassword -timeoutSeconds $TimeoutSeconds
 
 Write-Step "Redis ready"
-Write-Host "Host : localhost"
-Write-Host "Port : 6379"
+Write-Host "Host     : localhost"
+Write-Host "Port     : 6379"
+Write-Host "Username : $RedisUsername"
+Write-Host "Password : $RedisPassword"

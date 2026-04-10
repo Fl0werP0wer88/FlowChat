@@ -5,17 +5,20 @@ services:
     image: redis:7-alpine
     ports:
       - "6379:6379"
+    environment:
+      FLOWCHAT_REDIS_PASSWORD: "${FLOWCHAT_REDIS_PASSWORD:-flowchat_redis_pw}"
     command:
       - redis-server
       - --appendonly
       - "yes"
+      - --requirepass
+      - "${FLOWCHAT_REDIS_PASSWORD:-flowchat_redis_pw}"
     volumes:
       - redis_data:/data
     healthcheck:
       test:
-        - CMD
-        - redis-cli
-        - ping
+        - CMD-SHELL
+        - redis-cli --pass "$FLOWCHAT_REDIS_PASSWORD" ping
       interval: 5s
       timeout: 3s
       retries: 20
