@@ -19,7 +19,7 @@ public sealed class AccountTests
             " Power ",
             " FlowChat ");
 
-        account.FriendlyUserId.Should().Be("flower");
+        account.FriendlyUserId.Value.Should().Be("flower");
         account.Email.Should().Be(EmailAddress.Create("flower@example.com"));
         account.PasswordHash.Should().Be("hashed-password");
         account.SecurityStamp.Should().Be("security-stamp");

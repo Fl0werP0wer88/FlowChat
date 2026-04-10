@@ -1,4 +1,4 @@
-﻿using AutoFixture;
+using AutoFixture;
 using FlowChat.SocialGraphService.Application.Contracts.Persistence;
 using FlowChat.SocialGraphService.Application.Features.UserProfile;
 using FlowChat.SocialGraphService.Application.Features.UserProfile.Queries.SearchUserProfileProjections;

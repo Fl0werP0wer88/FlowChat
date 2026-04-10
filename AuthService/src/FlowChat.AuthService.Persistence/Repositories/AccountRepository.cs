@@ -59,8 +59,7 @@ public sealed class AccountRepository : IAccountRepository
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        var normalizedFriendlyUserId = NormalizeFriendlyUserId(friendlyUserId);
-        if (normalizedFriendlyUserId is null)
+        if (!FriendlyUserId.TryCreate(friendlyUserId, out var normalizedFriendlyUserId))
         {
             return null;
         }
@@ -68,7 +67,7 @@ public sealed class AccountRepository : IAccountRepository
         var entity = await _dbContext.Accounts
             .AsNoTracking()
             .FirstOrDefaultAsync(
-                x => EF.Property<string>(x, NormalizedFriendlyUserIdPropertyName) == normalizedFriendlyUserId,
+                x => EF.Property<string>(x, NormalizedFriendlyUserIdPropertyName) == normalizedFriendlyUserId.Value,
                 cancellationToken);
 
         return entity;
@@ -133,14 +132,7 @@ public sealed class AccountRepository : IAccountRepository
     private static void SetNormalizedProperties(EntityEntry<Account> entry, Account account)
     {
         entry.Property(NormalizedEmailPropertyName).CurrentValue = NormalizeRequired(account.Email.Value);
-        entry.Property(NormalizedFriendlyUserIdPropertyName).CurrentValue = NormalizeRequired(account.FriendlyUserId);
-    }
-
-    private static string? NormalizeFriendlyUserId(string? friendlyUserId)
-    {
-        return string.IsNullOrWhiteSpace(friendlyUserId)
-            ? null
-            : NormalizeRequired(friendlyUserId);
+        entry.Property(NormalizedFriendlyUserIdPropertyName).CurrentValue = account.FriendlyUserId.Value;
     }
 
     private static string NormalizeRequired(string value)

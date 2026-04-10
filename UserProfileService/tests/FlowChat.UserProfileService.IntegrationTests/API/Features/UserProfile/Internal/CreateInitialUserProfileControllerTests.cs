@@ -16,7 +16,7 @@ public sealed class CreateInitialUserProfileControllerTests(UserProfileApiFactor
         var request = new
         {
             UserId = userId,
-            FriendlyUserId = $"testuser_{userId:N}",
+            FriendlyUserId = $"testuser-{userId:N}",
             FirstName = "Test",
             LastName = "User",
             Email = $"test_{userId:N}@example.com"
@@ -40,7 +40,7 @@ public sealed class CreateInitialUserProfileControllerTests(UserProfileApiFactor
         var request = new
         {
             UserId = userId,
-            FriendlyUserId = $"testuser_{userId:N}",
+            FriendlyUserId = $"testuser-{userId:N}",
             FirstName = "Test",
             LastName = "User",
             Email = $"test_{userId:N}@example.com"
@@ -58,7 +58,7 @@ public sealed class CreateInitialUserProfileControllerTests(UserProfileApiFactor
         var request = new
         {
             UserId = userId,
-            FriendlyUserId = $"testuser_{userId:N}",
+            FriendlyUserId = $"testuser-{userId:N}",
             FirstName = "Test",
             LastName = "User",
             Email = $"test_{userId:N}@example.com"
@@ -82,7 +82,7 @@ public sealed class CreateInitialUserProfileControllerTests(UserProfileApiFactor
         var request = new
         {
             UserId = userId,
-            FriendlyUserId = $"dupuser_{userId:N}",
+            FriendlyUserId = $"dupuser-{userId:N}",
             FirstName = "Dup",
             LastName = "User",
             Email = $"dup_{userId:N}@example.com"
@@ -113,7 +113,7 @@ public sealed class CreateInitialUserProfileControllerTests(UserProfileApiFactor
         var request = new
         {
             UserId = userId,
-            FriendlyUserId = $"noemail_{userId:N}",
+            FriendlyUserId = $"noemail-{userId:N}",
             FirstName = "No",
             LastName = "Email",
             Email = (string?)null

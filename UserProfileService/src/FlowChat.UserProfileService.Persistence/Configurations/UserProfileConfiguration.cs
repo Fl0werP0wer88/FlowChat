@@ -1,4 +1,5 @@
 using FlowChat.Shared.Domain;
+using FlowChat.Shared.Domain.ValueObjects;
 using FlowChat.Shared.Persistance;
 using FlowChat.UserProfileService.Domain.Entities.EmailVerificationRequest;
 using FlowChat.UserProfileService.Domain.Entities.UserProfile;
@@ -18,13 +19,14 @@ public class UserProfileConfiguration : IEntityTypeConfiguration<UserProfile>
             .HasConversion(x => x.Value, x => Id<UserProfile>.FromGuid(x));
 
         builder.Property(x => x.FriendlyUserId)
+            .HasConversion(x => x.Value, x => FriendlyUserId.Create(x))
             .HasColumnName("UserName")
-            .HasMaxLength(100)
+            .HasMaxLength(FriendlyUserId.MaxLength)
             .IsRequired();
 
-        builder.Property(x => x.NormalizedFriendlyUserId)
+        builder.Property<string>("NormalizedFriendlyUserId")
             .HasColumnName("NormalizedUserName")
-            .HasMaxLength(100)
+            .HasMaxLength(FriendlyUserId.MaxLength)
             .IsRequired();
 
         builder.Property(x => x.FirstName)

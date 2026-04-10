@@ -33,7 +33,7 @@ public sealed class RefreshTokenCommandHandler : CommandHandlerBase<RefreshToken
         var authenticatedAccount = new AuthenticatedAccount
         {
             Id = account.Id.Value,
-            FriendlyUserId = account.FriendlyUserId,
+            FriendlyUserId = account.FriendlyUserId.Value,
             Email = account.Email.Value,
             Roles = []
         };

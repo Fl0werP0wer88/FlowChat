@@ -1,4 +1,4 @@
-﻿using AutoFixture;
+using AutoFixture;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
 using FlowChat.SocialGraphService.Application.Contracts.Persistence;

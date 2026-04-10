@@ -66,7 +66,7 @@ public sealed class SetAuthEmailControllerTests(UserProfileApiFactory factory)
         var request = new
         {
             UserId = userId,
-            FriendlyUserId = $"authuser_{userId:N}",
+            FriendlyUserId = $"authuser-{userId:N}",
             Email = $"auth_{userId:N}@example.com"
         };
         var httpRequest = new HttpRequestMessage(HttpMethod.Post, "/internal/userprofiles/initial")
@@ -84,7 +84,7 @@ public sealed class SetAuthEmailControllerTests(UserProfileApiFactory factory)
         var request = new
         {
             UserId = userId,
-            FriendlyUserId = $"authemailuser_{userId:N}",
+            FriendlyUserId = $"authemailuser-{userId:N}",
             Email = $"authfirst_{userId:N}@example.com"
         };
         var httpRequest = new HttpRequestMessage(HttpMethod.Post, "/internal/userprofiles/initial")

@@ -32,12 +32,13 @@ public sealed class AccountConfiguration : IEntityTypeConfiguration<Account>
             .IsRequired();
 
         builder.Property(x => x.FriendlyUserId)
-            .HasMaxLength(100)
+            .HasConversion(x => x.Value, x => FriendlyUserId.Create(x))
+            .HasMaxLength(FriendlyUserId.MaxLength)
             .IsRequired();
 
         builder.Property<string>(NormalizedFriendlyUserIdPropertyName)
             .HasColumnName(NormalizedFriendlyUserIdPropertyName)
-            .HasMaxLength(100)
+            .HasMaxLength(FriendlyUserId.MaxLength)
             .IsRequired();
 
         builder.Property(x => x.PasswordHash)

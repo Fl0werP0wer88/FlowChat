@@ -38,7 +38,7 @@ public sealed class GetUserProfileControllerTests(UserProfileApiFactory factory)
         var request = new
         {
             UserId = userId,
-            FriendlyUserId = $"getuser_{userId:N}",
+            FriendlyUserId = $"getuser-{userId:N}",
             Email = $"gettest_{userId:N}@example.com"
         };
         var httpRequest = new HttpRequestMessage(HttpMethod.Post, "/internal/userprofiles/initial")

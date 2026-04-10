@@ -62,7 +62,7 @@ public sealed class LoginUserCommandHandler : ICommandHandler<LoginUserCommand, 
             var authenticatedAccount = new AuthenticatedAccount
             {
                 Id = account.Id.Value,
-                FriendlyUserId = account.FriendlyUserId,
+                FriendlyUserId = account.FriendlyUserId.Value,
                 Email = account.Email.Value,
                 Roles = [] // Role-based authorization not yet implemented.
             };

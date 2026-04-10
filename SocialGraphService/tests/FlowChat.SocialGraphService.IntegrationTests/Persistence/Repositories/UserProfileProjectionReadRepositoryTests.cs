@@ -1,4 +1,4 @@
-﻿using FlowChat.SocialGraphService.Persistence;
+using FlowChat.SocialGraphService.Persistence;
 using FlowChat.SocialGraphService.Persistence.Entities;
 using FlowChat.SocialGraphService.Persistence.Repositories;
 using Microsoft.Data.Sqlite;

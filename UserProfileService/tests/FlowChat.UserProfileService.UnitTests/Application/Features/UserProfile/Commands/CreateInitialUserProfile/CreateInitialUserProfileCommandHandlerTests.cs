@@ -226,7 +226,7 @@ public sealed class CreateInitialUserProfileCommandHandlerTests
 
         result.IsSuccess.Should().BeTrue();
         capturedProfile.Should().NotBeNull();
-        capturedProfile.FriendlyUserId.Should().Be("jdoe");
+        capturedProfile.FriendlyUserId.Value.Should().Be("jdoe");
         capturedProfile.Emails.Should().ContainSingle()
             .Which.Address.Value.Should().Be("john@example.com");
     }

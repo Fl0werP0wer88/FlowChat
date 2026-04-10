@@ -83,7 +83,7 @@ public sealed class AddEmailControllerTests(UserProfileApiFactory factory)
         var request = new
         {
             UserId = userId,
-            FriendlyUserId = $"emailuser_{userId:N}",
+            FriendlyUserId = $"emailuser-{userId:N}",
             Email = $"initial_{userId:N}@example.com"
         };
         var httpRequest = new HttpRequestMessage(HttpMethod.Post, "/internal/userprofiles/initial")

@@ -9,9 +9,9 @@ public class UserProfile : AggregateRootBase<UserProfile>
 {
     private readonly List<Email> _emails = [];
     private readonly List<Phone> _phones = [];
+    private string NormalizedFriendlyUserId { get; set; }
 
-    public string FriendlyUserId { get; private set; }
-    public string NormalizedFriendlyUserId { get; private set; }
+    public FriendlyUserId FriendlyUserId { get; private set; }
     public string? FirstName { get; private set; }
     public string? LastName { get; private set; }
     public string? Organization { get; private set; }
@@ -24,8 +24,7 @@ public class UserProfile : AggregateRootBase<UserProfile>
 
     private UserProfile(
         Id<UserProfile>? id,
-        string friendlyUserId,
-        string normalizedFriendlyUserId,
+        FriendlyUserId friendlyUserId,
         string? firstName = null,
         string? lastName = null,
         string? organization = null,
@@ -35,7 +34,7 @@ public class UserProfile : AggregateRootBase<UserProfile>
         UtcDateTimeOffset? lastSeenAtUtc = null) : base(id)
     {
         FriendlyUserId = friendlyUserId;
-        NormalizedFriendlyUserId = normalizedFriendlyUserId;
+        NormalizedFriendlyUserId = friendlyUserId.Value;
         FirstName = firstName;
         LastName = lastName;
         Organization = organization;
@@ -59,18 +58,16 @@ public class UserProfile : AggregateRootBase<UserProfile>
         string? organization = null)
     {
         var typedId = id ?? Id<UserProfile>.New();
-        var normalizedFriendlyUserId = NormalizeRequired(friendlyUserId, nameof(friendlyUserId));
+        var normalizedFriendlyUserId = FriendlyUserId.Create(friendlyUserId);
         var normalizedFirstName = NormalizeOptional(firstName);
         var normalizedLastName = NormalizeOptional(lastName);
         var normalizedOrganization = NormalizeOptional(organization);
-        var canonicalFriendlyUserId = NormalizeFriendlyUserId(normalizedFriendlyUserId);
         var normalizedAvatarUrl = NormalizeOptional(avatarUrl);
         var normalizedBio = NormalizeOptional(bio);
 
         var userProfile = new UserProfile(
             typedId,
             normalizedFriendlyUserId,
-            canonicalFriendlyUserId,
             normalizedFirstName,
             normalizedLastName,
             normalizedOrganization,
@@ -96,7 +93,7 @@ public class UserProfile : AggregateRootBase<UserProfile>
             userProfile.Id,
             initialEmail.Id,
             currentMainPhone?.Id,
-            userProfile.FriendlyUserId,
+            userProfile.FriendlyUserId.Value,
             initialEmail.Address,
             currentMainPhone?.Number,
             userProfile.AvatarUrl,
@@ -257,8 +254,8 @@ public class UserProfile : AggregateRootBase<UserProfile>
         return new UserProfileState
         {
             Id = Id.Value,
-            FriendlyUserId = FriendlyUserId,
-            NormalizedFriendlyUserId = NormalizedFriendlyUserId,
+            FriendlyUserId = FriendlyUserId.Value,
+            NormalizedFriendlyUserId = FriendlyUserId.Value,
             FirstName = FirstName,
             LastName = LastName,
             Organization = Organization,
@@ -292,12 +289,6 @@ public class UserProfile : AggregateRootBase<UserProfile>
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(value, paramName);
         return value.Trim();
-    }
-
-    private static string NormalizeFriendlyUserId(string friendlyUserId)
-    {
-        ArgumentException.ThrowIfNullOrWhiteSpace(friendlyUserId);
-        return friendlyUserId.Trim().ToLowerInvariant();
     }
 
     private static string? NormalizeOptional(string? value)

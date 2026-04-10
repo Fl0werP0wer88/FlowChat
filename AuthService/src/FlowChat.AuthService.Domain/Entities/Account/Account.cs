@@ -9,7 +9,7 @@ public sealed class Account : AggregateRootBase<Account>
 {
     private Account(
         Id<Account>? id,
-        string friendlyUserId,
+        FriendlyUserId friendlyUserId,
         EmailAddress email,
         string passwordHash,
         string securityStamp,
@@ -25,7 +25,7 @@ public sealed class Account : AggregateRootBase<Account>
         IsEmailConfirmed = isEmailConfirmed;
     }
 
-    public string FriendlyUserId { get; private set; }
+    public FriendlyUserId FriendlyUserId { get; private set; }
     public EmailAddress Email { get; private set; }
     public string PasswordHash { get; private set; }
     public string SecurityStamp { get; private set; }
@@ -46,7 +46,7 @@ public sealed class Account : AggregateRootBase<Account>
 
         var account = new Account(
             id ?? Id<Account>.New(),
-            NormalizeRequired(friendlyUserId, nameof(friendlyUserId)),
+            FriendlyUserId.Create(friendlyUserId),
             email,
             NormalizeRequired(passwordHash, nameof(passwordHash)),
             NormalizeRequired(securityStamp, nameof(securityStamp)),
@@ -55,7 +55,7 @@ public sealed class Account : AggregateRootBase<Account>
 
         account.AddDomainEvent(new AccountRegisteredDomainEvent(
             account.Id,
-            account.FriendlyUserId,
+            account.FriendlyUserId.Value,
             account.Email,
             NormalizeOptional(firstName),
             NormalizeOptional(lastName),
@@ -88,7 +88,7 @@ public sealed class Account : AggregateRootBase<Account>
 
         return new Account(
             new Id<Account>(id),
-            NormalizeRequired(friendlyUserId, nameof(friendlyUserId)),
+            FriendlyUserId.Create(friendlyUserId),
             email,
             NormalizeRequired(passwordHash, nameof(passwordHash)),
             NormalizeRequired(securityStamp, nameof(securityStamp)),
@@ -139,7 +139,7 @@ public sealed class Account : AggregateRootBase<Account>
     {
         return new AccountSnapshot(
             Id.Value,
-            FriendlyUserId,
+            FriendlyUserId.Value,
             Email.Value,
             SecurityStamp,
             AccessFailedCount,

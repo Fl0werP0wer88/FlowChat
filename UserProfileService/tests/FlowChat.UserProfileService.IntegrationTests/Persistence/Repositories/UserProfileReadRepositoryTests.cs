@@ -33,7 +33,7 @@ public sealed class UserProfileReadRepositoryTests
         var result = await repository.GetByFriendlyUserIdAsync("  JDOE  ", CancellationToken.None);
 
         result.Should().NotBeNull();
-        result!.FriendlyUserId.Should().Be("Jdoe");
+        result!.FriendlyUserId.Should().Be("jdoe");
         result.Emails.Should().ContainSingle(email => email.IsMain && email.Address == "john@example.com");
         result.Phones.Should().ContainSingle(phone => phone.Number == "+48123123123");
     }

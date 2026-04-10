@@ -68,7 +68,7 @@ public sealed class RegisterUserCommandHandlerTests
         result.IsSuccess.Should().BeTrue();
         persistedAccount.Should().NotBeNull();
         persistedAccount!.Email.Should().Be(EmailAddress.Create("flower@example.com"));
-        persistedAccount.FriendlyUserId.Should().Be("flower");
+        persistedAccount.FriendlyUserId.Value.Should().Be("flower");
         persistedAccount.PasswordHash.Should().Be("hashed-password");
         result.Value.Id.Should().Be(persistedAccount.Id.Value);
         dispatchedEvents.Should().ContainSingle(x => x is AccountRegisteredDomainEvent);

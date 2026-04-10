@@ -67,7 +67,7 @@ public sealed class AddPhoneControllerTests(UserProfileApiFactory factory)
         var request = new
         {
             UserId = userId,
-            FriendlyUserId = $"phoneuser_{userId:N}",
+            FriendlyUserId = $"phoneuser-{userId:N}",
             Email = $"phone_{userId:N}@example.com"
         };
         var httpRequest = new HttpRequestMessage(HttpMethod.Post, "/internal/userprofiles/initial")

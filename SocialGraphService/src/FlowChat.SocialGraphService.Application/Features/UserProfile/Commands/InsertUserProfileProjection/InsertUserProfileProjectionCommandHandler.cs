@@ -1,4 +1,4 @@
-﻿using FlowChat.Shared.Application;
+using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
 using FlowChat.SocialGraphService.Application.Contracts.Persistence;
 using FlowChat.SocialGraphService.Application.Features.UserProfile;

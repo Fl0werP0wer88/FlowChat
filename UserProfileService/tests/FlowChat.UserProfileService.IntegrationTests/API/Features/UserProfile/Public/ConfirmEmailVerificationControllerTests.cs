@@ -77,7 +77,7 @@ public sealed class ConfirmEmailVerificationControllerTests(UserProfileApiFactor
         var request = new
         {
             UserId = userId,
-            FriendlyUserId = $"confirmverif_{userId:N}",
+            FriendlyUserId = $"confirmverif-{userId:N}",
             Email = $"confirmverif_{userId:N}@example.com"
         };
         var httpRequest = new HttpRequestMessage(HttpMethod.Post, "/internal/userprofiles/initial")

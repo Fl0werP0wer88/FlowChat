@@ -1,4 +1,4 @@
-﻿using FlowChat.SocialGraphService.Persistence.Entities;
+using FlowChat.SocialGraphService.Persistence.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 

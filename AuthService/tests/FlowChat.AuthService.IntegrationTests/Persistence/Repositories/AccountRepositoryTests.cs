@@ -48,7 +48,7 @@ public sealed class AccountRepositoryTests : IDisposable
 
         result.Should().NotBeNull();
         result!.Id.Value.Should().Be(account.Id.Value);
-        result.FriendlyUserId.Should().Be("flower");
+        result.FriendlyUserId.Value.Should().Be("flower");
         result.Email.Should().Be(emailAddress);
     }
 
