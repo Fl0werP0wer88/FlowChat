@@ -1,4 +1,4 @@
-using AutoFixture;
+﻿using AutoFixture;
 using FlowChat.Shared.Domain;
 using FlowChat.SocialGraphService.Api.Features.UserProfile.Public.SearchUserProfileProjections;
 using FlowChat.SocialGraphService.Application.Features.UserProfile;
@@ -33,22 +33,22 @@ public sealed class SearchUserProfileProjectionsControllerTests
     [Fact]
     public async Task Search_WhenQuerySucceeds_ReturnsOkResponse()
     {
-        IReadOnlyList<UserProfileProjection> projections =
+        IReadOnlyList<UserProfileProjectionDto> projections =
         [
-            new UserProfileProjection
+            new UserProfileProjectionDto
             {
                 UserProfileId = _fixture.Create<Guid>(),
                 FriendlyUserId = "jdoe",
                 FirstName = "Jane",
                 LastName = "Doe",
                 Organization = "FlowChat",
-                MainEmail = new UserProfileProjectionEmail
+                MainEmail = new UserProfileProjectionEmailDto
                 {
                     Address = "jane@example.com",
                     IsConfirmed = true,
                     IsVisible = true
                 },
-                MainPhone = new UserProfileProjectionPhone
+                MainPhone = new UserProfileProjectionPhoneDto
                 {
                     Number = "+48123123123",
                     IsConfirmed = true,
@@ -66,7 +66,7 @@ public sealed class SearchUserProfileProjectionsControllerTests
                     query.LastName == null &&
                     query.Organization == null),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(FlowChatResult<IReadOnlyList<UserProfileProjection>>.Success(projections));
+            .ReturnsAsync(FlowChatResult<IReadOnlyList<UserProfileProjectionDto>>.Success(projections));
 
         var controller = SetupController(new SearchUserProfileProjectionsController(_mediatorMock.Object));
 
@@ -87,7 +87,7 @@ public sealed class SearchUserProfileProjectionsControllerTests
     {
         _mediatorMock
             .Setup(x => x.Send(It.IsAny<SearchUserProfileProjectionsQuery>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(FlowChatResult<IReadOnlyList<UserProfileProjection>>.Failure(
+            .ReturnsAsync(FlowChatResult<IReadOnlyList<UserProfileProjectionDto>>.Failure(
                 DomainError.Validation(errors: ["Query must contain at least one search criterion."])));
 
         var controller = SetupController(new SearchUserProfileProjectionsController(_mediatorMock.Object));
@@ -155,3 +155,4 @@ public sealed class SearchUserProfileProjectionsControllerTests
             };
     }
 }
+

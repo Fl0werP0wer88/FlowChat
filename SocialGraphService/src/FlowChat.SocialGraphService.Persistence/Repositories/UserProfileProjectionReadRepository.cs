@@ -1,4 +1,4 @@
-using FlowChat.SocialGraphService.Application.Contracts.Persistence;
+﻿using FlowChat.SocialGraphService.Application.Contracts.Persistence;
 using FlowChat.SocialGraphService.Application.Features.UserProfile;
 using FlowChat.SocialGraphService.Persistence.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -10,7 +10,7 @@ public sealed class UserProfileProjectionReadRepository(AppDbContext dbContext) 
 {
     private readonly AppDbContext _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
 
-    private static readonly Expression<Func<UserProfileProjectionEntity, UserProfileProjection>> Projection = entity => new UserProfileProjection
+    private static readonly Expression<Func<UserProfileProjectionEntityDto, UserProfileProjectionDto>> Projection = entity => new UserProfileProjectionDto
     {
         UserProfileId = entity.UserProfileId,
         FriendlyUserId = entity.FriendlyUserId,
@@ -19,7 +19,7 @@ public sealed class UserProfileProjectionReadRepository(AppDbContext dbContext) 
         Organization = entity.Organization,
         MainEmail = entity.MainEmail == null
             ? null
-            : new UserProfileProjectionEmail
+            : new UserProfileProjectionEmailDto
             {
                 Address = entity.MainEmail,
                 IsConfirmed = entity.MainEmailIsConfirmed ?? false,
@@ -27,7 +27,7 @@ public sealed class UserProfileProjectionReadRepository(AppDbContext dbContext) 
             },
         MainPhone = entity.MainPhone == null
             ? null
-            : new UserProfileProjectionPhone
+            : new UserProfileProjectionPhoneDto
             {
                 Number = entity.MainPhone,
                 IsConfirmed = entity.MainPhoneIsConfirmed ?? false,
@@ -39,7 +39,7 @@ public sealed class UserProfileProjectionReadRepository(AppDbContext dbContext) 
         LastSeenAtUtc = entity.LastSeenAtUtc
     };
 
-    public async Task<UserProfileProjection?> GetByUserProfileIdAsync(
+    public async Task<UserProfileProjectionDto?> GetByUserProfileIdAsync(
         Guid userProfileId,
         CancellationToken cancellationToken = default)
     {
@@ -52,7 +52,7 @@ public sealed class UserProfileProjectionReadRepository(AppDbContext dbContext) 
             .FirstOrDefaultAsync(cancellationToken);
     }
 
-    public async Task<UserProfileProjection?> GetByFriendlyUserIdAsync(
+    public async Task<UserProfileProjectionDto?> GetByFriendlyUserIdAsync(
         string friendlyUserId,
         CancellationToken cancellationToken = default)
     {
@@ -65,7 +65,7 @@ public sealed class UserProfileProjectionReadRepository(AppDbContext dbContext) 
             .FirstOrDefaultAsync(cancellationToken);
     }
 
-    public async Task<UserProfileProjection?> GetByEmailAsync(
+    public async Task<UserProfileProjectionDto?> GetByEmailAsync(
         string email,
         CancellationToken cancellationToken = default)
     {
@@ -80,7 +80,7 @@ public sealed class UserProfileProjectionReadRepository(AppDbContext dbContext) 
             .FirstOrDefaultAsync(cancellationToken);
     }
 
-    public async Task<IReadOnlyList<UserProfileProjection>> SearchAsync(
+    public async Task<IReadOnlyList<UserProfileProjectionDto>> SearchAsync(
         string? firstName,
         string? lastName,
         string? organization,
@@ -116,3 +116,5 @@ public sealed class UserProfileProjectionReadRepository(AppDbContext dbContext) 
             .ToListAsync(cancellationToken);
     }
 }
+
+

@@ -1,4 +1,4 @@
-using FlowChat.SocialGraphService.Application.Contracts.Persistence;
+﻿using FlowChat.SocialGraphService.Application.Contracts.Persistence;
 using FlowChat.SocialGraphService.Application.Features.UserProfile;
 using FlowChat.SocialGraphService.Persistence.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -10,7 +10,7 @@ public sealed class UserProfileProjectionWriteRepository(AppDbContext dbContext)
     private const string ProjectionSource = "user-profile-events";
     private readonly AppDbContext _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
 
-    public async Task<bool> InsertAsync(UserProfileProjection projection, CancellationToken cancellationToken = default)
+    public async Task<bool> InsertAsync(UserProfileProjectionDto projection, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(projection);
 
@@ -25,7 +25,7 @@ public sealed class UserProfileProjectionWriteRepository(AppDbContext dbContext)
         var now = DateTimeOffset.UtcNow;
 
         await _dbContext.UserProfileProjections.AddAsync(
-            new UserProfileProjectionEntity
+            new UserProfileProjectionEntityDto
             {
                 UserProfileId = projection.UserProfileId,
                 FriendlyUserId = projection.FriendlyUserId,
@@ -52,7 +52,7 @@ public sealed class UserProfileProjectionWriteRepository(AppDbContext dbContext)
         return true;
     }
 
-    public async Task<bool> UpdateAsync(UserProfileProjection projection, CancellationToken cancellationToken = default)
+    public async Task<bool> UpdateAsync(UserProfileProjectionDto projection, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(projection);
 
@@ -84,3 +84,5 @@ public sealed class UserProfileProjectionWriteRepository(AppDbContext dbContext)
         return true;
     }
 }
+
+

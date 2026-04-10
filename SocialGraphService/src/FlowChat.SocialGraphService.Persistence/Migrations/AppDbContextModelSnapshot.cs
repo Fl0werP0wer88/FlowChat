@@ -91,7 +91,7 @@ namespace FlowChat.SocialGraphService.Persistence.Migrations
                         });
                 });
 
-            modelBuilder.Entity("FlowChat.SocialGraphService.Persistence.Entities.UserProfileProjectionEntity", b =>
+            modelBuilder.Entity("FlowChat.SocialGraphService.Persistence.Entities.UserProfileProjectionEntityDto", b =>
                 {
                     b.Property<Guid>("UserProfileId")
                         .ValueGeneratedOnAdd()
@@ -177,3 +177,4 @@ namespace FlowChat.SocialGraphService.Persistence.Migrations
         }
     }
 }
+

@@ -1,4 +1,4 @@
-using FlowChat.Shared.Application;
+﻿using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
 using FlowChat.SocialGraphService.Application.Contracts.Persistence;
 using FlowChat.SocialGraphService.Application.Features.UserProfile;
@@ -6,7 +6,7 @@ using FlowChat.SocialGraphService.Application.Features.UserProfile;
 namespace FlowChat.SocialGraphService.Application.Features.UserProfile.Queries.SearchUserProfileProjections;
 
 public sealed class SearchUserProfileProjectionsQueryHandler
-    : IQueryHandler<SearchUserProfileProjectionsQuery, IReadOnlyList<UserProfileProjection>>
+    : IQueryHandler<SearchUserProfileProjectionsQuery, IReadOnlyList<UserProfileProjectionDto>>
 {
     private readonly IUserProfileProjectionReadRepository _userProfileProjectionReadRepository;
 
@@ -15,7 +15,7 @@ public sealed class SearchUserProfileProjectionsQueryHandler
         _userProfileProjectionReadRepository = userProfileProjectionReadRepository;
     }
 
-    public async Task<FlowChatResult<IReadOnlyList<UserProfileProjection>>> Handle(
+    public async Task<FlowChatResult<IReadOnlyList<UserProfileProjectionDto>>> Handle(
         SearchUserProfileProjectionsQuery request,
         CancellationToken cancellationToken)
     {
@@ -25,9 +25,10 @@ public sealed class SearchUserProfileProjectionsQueryHandler
             Normalize(request.Organization),
             cancellationToken);
 
-        return FlowChatResult<IReadOnlyList<UserProfileProjection>>.Success(projections);
+        return FlowChatResult<IReadOnlyList<UserProfileProjectionDto>>.Success(projections);
     }
 
     private static string? Normalize(string? value) =>
         string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 }
+

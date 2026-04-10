@@ -1,4 +1,4 @@
-using FlowChat.Shared.Application;
+﻿using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
 using FlowChat.SocialGraphService.Application.Contracts.Persistence;
@@ -63,7 +63,7 @@ public sealed class AddContactCommandHandler : CommandHandlerBase<AddContactComm
 
     protected override IAggregateRoot? GetAggregateRoot(FlowChatResult<Guid> result) => null;
 
-    private async Task<UserProfileProjection?> GetUserProfileProjectionAsync(
+    private async Task<UserProfileProjectionDto?> GetUserProfileProjectionAsync(
         AddContactCommand request,
         CancellationToken cancellationToken)
     {
@@ -86,7 +86,7 @@ public sealed class AddContactCommandHandler : CommandHandlerBase<AddContactComm
             cancellationToken);
     }
 
-    private static EmailAddress? CreateEmailAddress(UserProfileProjection projection)
+    private static EmailAddress? CreateEmailAddress(UserProfileProjectionDto projection)
     {
         if (!EmailAddress.TryCreate(projection.MainEmail?.Address, out var emailAddress))
         {
@@ -96,7 +96,7 @@ public sealed class AddContactCommandHandler : CommandHandlerBase<AddContactComm
         return emailAddress;
     }
 
-    private static PhoneNumber? CreatePhoneNumber(UserProfileProjection projection)
+    private static PhoneNumber? CreatePhoneNumber(UserProfileProjectionDto projection)
     {
         if (!PhoneNumber.TryCreate(projection.MainPhone?.Number, out var phoneNumber))
         {
@@ -106,7 +106,7 @@ public sealed class AddContactCommandHandler : CommandHandlerBase<AddContactComm
         return phoneNumber;
     }
 
-    private static string CreateDisplayName(UserProfileProjection projection)
+    private static string CreateDisplayName(UserProfileProjectionDto projection)
     {
         var firstName = NormalizeOptional(projection.FirstName);
         var lastName = NormalizeOptional(projection.LastName);
@@ -120,3 +120,4 @@ public sealed class AddContactCommandHandler : CommandHandlerBase<AddContactComm
     private static string? NormalizeOptional(string? value) =>
         string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 }
+

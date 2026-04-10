@@ -1,4 +1,4 @@
-using FlowChat.SocialGraphService.Application.Features.UserProfile;
+﻿using FlowChat.SocialGraphService.Application.Features.UserProfile;
 using FlowChat.SocialGraphService.Persistence;
 using FlowChat.SocialGraphService.Persistence.Entities;
 using FlowChat.SocialGraphService.Persistence.Repositories;
@@ -16,20 +16,20 @@ public sealed class UserProfileProjectionWriteRepositoryTests
         await connection.OpenAsync();
         await using var context = CreateDbContext(connection);
         var repository = new UserProfileProjectionWriteRepository(context);
-        var projection = new UserProfileProjection
+        var projection = new UserProfileProjectionDto
         {
             UserProfileId = Guid.NewGuid(),
             FriendlyUserId = "jdoe",
             FirstName = "John",
             LastName = "Doe",
             Organization = "FlowChat",
-            MainEmail = new UserProfileProjectionEmail
+            MainEmail = new UserProfileProjectionEmailDto
             {
                 Address = "john@example.com",
                 IsConfirmed = true,
                 IsVisible = true
             },
-            MainPhone = new UserProfileProjectionPhone
+            MainPhone = new UserProfileProjectionPhoneDto
             {
                 Number = "+48123123123",
                 IsConfirmed = false,
@@ -75,7 +75,7 @@ public sealed class UserProfileProjectionWriteRepositoryTests
 
         await using (var seedContext = CreateDbContext(connection))
         {
-            seedContext.UserProfileProjections.Add(new UserProfileProjectionEntity
+            seedContext.UserProfileProjections.Add(new UserProfileProjectionEntityDto
             {
                 UserProfileId = userProfileId,
                 FriendlyUserId = "existing-user",
@@ -90,7 +90,7 @@ public sealed class UserProfileProjectionWriteRepositoryTests
 
         await using var context = CreateDbContext(connection);
         var repository = new UserProfileProjectionWriteRepository(context);
-        var projection = new UserProfileProjection
+        var projection = new UserProfileProjectionDto
         {
             UserProfileId = userProfileId,
             FriendlyUserId = "new-user",
@@ -117,7 +117,7 @@ public sealed class UserProfileProjectionWriteRepositoryTests
 
         await using (var seedContext = CreateDbContext(connection))
         {
-            seedContext.UserProfileProjections.Add(new UserProfileProjectionEntity
+            seedContext.UserProfileProjections.Add(new UserProfileProjectionEntityDto
             {
                 UserProfileId = userProfileId,
                 FriendlyUserId = "old-user",
@@ -142,14 +142,14 @@ public sealed class UserProfileProjectionWriteRepositoryTests
 
         await using var updateContext = CreateDbContext(connection);
         var repository = new UserProfileProjectionWriteRepository(updateContext);
-        var updatedProjection = new UserProfileProjection
+        var updatedProjection = new UserProfileProjectionDto
         {
             UserProfileId = userProfileId,
             FriendlyUserId = "new-user",
             FirstName = "Jane",
             LastName = "Doe",
             Organization = "FlowChat",
-            MainPhone = new UserProfileProjectionPhone
+            MainPhone = new UserProfileProjectionPhoneDto
             {
                 Number = "+48123123123",
                 IsConfirmed = true,
@@ -191,7 +191,7 @@ public sealed class UserProfileProjectionWriteRepositoryTests
         await connection.OpenAsync();
         await using var context = CreateDbContext(connection);
         var repository = new UserProfileProjectionWriteRepository(context);
-        var projection = new UserProfileProjection
+        var projection = new UserProfileProjectionDto
         {
             UserProfileId = Guid.NewGuid(),
             FriendlyUserId = "jdoe",
@@ -214,3 +214,5 @@ public sealed class UserProfileProjectionWriteRepositoryTests
         return context;
     }
 }
+
+

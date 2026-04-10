@@ -1,12 +1,12 @@
-using FlowChat.SocialGraphService.Persistence.Entities;
+﻿using FlowChat.SocialGraphService.Persistence.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace FlowChat.SocialGraphService.Persistence.Configurations;
 
-public sealed class UserProfileProjectionConfiguration : IEntityTypeConfiguration<UserProfileProjectionEntity>
+public sealed class UserProfileProjectionConfiguration : IEntityTypeConfiguration<UserProfileProjectionEntityDto>
 {
-    public void Configure(EntityTypeBuilder<UserProfileProjectionEntity> builder)
+    public void Configure(EntityTypeBuilder<UserProfileProjectionEntityDto> builder)
     {
         builder.ToTable("UserProfileProjection");
 
@@ -65,3 +65,4 @@ public sealed class UserProfileProjectionConfiguration : IEntityTypeConfiguratio
             .HasDatabaseName("ix_user_profile_projection_friendly_user_id");
     }
 }
+

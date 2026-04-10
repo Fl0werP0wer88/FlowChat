@@ -1,4 +1,4 @@
-using FlowChat.Shared.Application;
+﻿using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
 using FlowChat.SocialGraphService.Application.Contracts.Persistence;
 using FlowChat.SocialGraphService.Application.Features.UserProfile;
@@ -23,7 +23,7 @@ public sealed class UpdateUserProfileProjectionCommandHandler
         UpdateUserProfileProjectionCommand request,
         CancellationToken cancellationToken)
     {
-        var projection = new UserProfileProjection
+        var projection = new UserProfileProjectionDto
         {
             UserProfileId = request.UserProfileId,
             FriendlyUserId = request.FriendlyUserId!.Trim(),
@@ -58,7 +58,7 @@ public sealed class UpdateUserProfileProjectionCommandHandler
     private static string? NormalizeOptional(string? value) =>
         string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 
-    private static UserProfileProjectionEmail? CreateMainEmail(
+    private static UserProfileProjectionEmailDto? CreateMainEmail(
         string? address,
         bool? isConfirmed,
         bool? isVisible)
@@ -66,7 +66,7 @@ public sealed class UpdateUserProfileProjectionCommandHandler
         var normalizedAddress = NormalizeOptional(address);
         return normalizedAddress == null
             ? null
-            : new UserProfileProjectionEmail
+            : new UserProfileProjectionEmailDto
             {
                 Address = normalizedAddress,
                 IsConfirmed = isConfirmed ?? false,
@@ -74,7 +74,7 @@ public sealed class UpdateUserProfileProjectionCommandHandler
             };
     }
 
-    private static UserProfileProjectionPhone? CreateMainPhone(
+    private static UserProfileProjectionPhoneDto? CreateMainPhone(
         string? number,
         bool? isConfirmed,
         bool? isVisible)
@@ -82,7 +82,7 @@ public sealed class UpdateUserProfileProjectionCommandHandler
         var normalizedNumber = NormalizeOptional(number);
         return normalizedNumber == null
             ? null
-            : new UserProfileProjectionPhone
+            : new UserProfileProjectionPhoneDto
             {
                 Number = normalizedNumber,
                 IsConfirmed = isConfirmed ?? false,
@@ -90,3 +90,4 @@ public sealed class UpdateUserProfileProjectionCommandHandler
             };
     }
 }
+

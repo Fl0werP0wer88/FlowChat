@@ -1,4 +1,4 @@
-using AutoFixture;
+﻿using AutoFixture;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
 using FlowChat.SocialGraphService.Application.Contracts.Persistence;
@@ -55,20 +55,20 @@ public sealed class AddContactCommandHandlerTests
 
         _userProfileProjectionReadRepositoryMock
             .Setup(x => x.GetByUserProfileIdAsync(contactUserId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new UserProfileProjection
+            .ReturnsAsync(new UserProfileProjectionDto
             {
                 UserProfileId = contactUserId,
                 FriendlyUserId = "jdoe",
                 FirstName = "Jane",
                 LastName = "Doe",
                 Organization = "FlowChat",
-                MainEmail = new UserProfileProjectionEmail
+                MainEmail = new UserProfileProjectionEmailDto
                 {
                     Address = "jane@example.com",
                     IsConfirmed = true,
                     IsVisible = true
                 },
-                MainPhone = new UserProfileProjectionPhone
+                MainPhone = new UserProfileProjectionPhoneDto
                 {
                     Number = "+48123123123",
                     IsConfirmed = true,
@@ -107,14 +107,14 @@ public sealed class AddContactCommandHandlerTests
 
         _userProfileProjectionReadRepositoryMock
             .Setup(x => x.GetByFriendlyUserIdAsync("jdoe", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new UserProfileProjection
+            .ReturnsAsync(new UserProfileProjectionDto
             {
                 UserProfileId = projectionUserId,
                 FriendlyUserId = "jdoe",
                 FirstName = "Jane",
                 LastName = "Doe",
                 Organization = "FlowChat",
-                MainPhone = new UserProfileProjectionPhone
+                MainPhone = new UserProfileProjectionPhoneDto
                 {
                     Number = "+48123123123",
                     IsConfirmed = true,
@@ -141,14 +141,14 @@ public sealed class AddContactCommandHandlerTests
 
         _userProfileProjectionReadRepositoryMock
             .Setup(x => x.GetByEmailAsync("john@example.com", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new UserProfileProjection
+            .ReturnsAsync(new UserProfileProjectionDto
             {
                 UserProfileId = projectionUserId,
                 FriendlyUserId = "jdoe",
                 FirstName = "John",
                 LastName = "Doe",
                 Organization = "FlowChat",
-                MainEmail = new UserProfileProjectionEmail
+                MainEmail = new UserProfileProjectionEmailDto
                 {
                     Address = "JOHN@example.com",
                     IsConfirmed = true,
@@ -172,7 +172,7 @@ public sealed class AddContactCommandHandlerTests
     {
         _userProfileProjectionReadRepositoryMock
             .Setup(x => x.GetByUserProfileIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((UserProfileProjection?)null);
+            .ReturnsAsync((UserProfileProjectionDto?)null);
 
         var result = await _handler.Handle(
             new AddContactCommand(_fixture.Create<Guid>(), _fixture.Create<Guid>(), null, null),
@@ -194,7 +194,7 @@ public sealed class AddContactCommandHandlerTests
 
         _userProfileProjectionReadRepositoryMock
             .Setup(x => x.GetByUserProfileIdAsync(projectionUserId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new UserProfileProjection
+            .ReturnsAsync(new UserProfileProjectionDto
             {
                 UserProfileId = projectionUserId,
                 FriendlyUserId = "jdoe",
@@ -224,7 +224,7 @@ public sealed class AddContactCommandHandlerTests
 
         _userProfileProjectionReadRepositoryMock
             .Setup(x => x.GetByUserProfileIdAsync(ownerUserId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new UserProfileProjection
+            .ReturnsAsync(new UserProfileProjectionDto
             {
                 UserProfileId = ownerUserId,
                 FriendlyUserId = "self",
@@ -252,11 +252,11 @@ public sealed class AddContactCommandHandlerTests
 
         _userProfileProjectionReadRepositoryMock
             .Setup(x => x.GetByUserProfileIdAsync(contactUserId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new UserProfileProjection
+            .ReturnsAsync(new UserProfileProjectionDto
             {
                 UserProfileId = contactUserId,
                 FriendlyUserId = "fallback.user",
-                MainEmail = new UserProfileProjectionEmail
+                MainEmail = new UserProfileProjectionEmailDto
                 {
                     Address = "fallback@example.com",
                     IsConfirmed = false,
@@ -279,3 +279,4 @@ public sealed class AddContactCommandHandlerTests
         capturedContact!.DisplayName.Should().Be("fallback.user");
     }
 }
+

@@ -1,4 +1,4 @@
-using FlowChat.SocialGraphService.Persistence;
+﻿using FlowChat.SocialGraphService.Persistence;
 using FlowChat.SocialGraphService.Persistence.Entities;
 using FlowChat.SocialGraphService.Persistence.Repositories;
 using Microsoft.Data.Sqlite;
@@ -205,7 +205,7 @@ public sealed class UserProfileProjectionReadRepositoryTests
         result.MainEmail!.Address.Should().Be("Jane@Example.com");
     }
 
-    private static UserProfileProjectionEntity CreateProjection(
+    private static UserProfileProjectionEntityDto CreateProjection(
         string friendlyUserId,
         string? firstName,
         string? lastName,
@@ -240,3 +240,4 @@ public sealed class UserProfileProjectionReadRepositoryTests
         return context;
     }
 }
+

@@ -1,4 +1,4 @@
-using AutoFixture;
+﻿using AutoFixture;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
 using FlowChat.SocialGraphService.Application.Contracts.Persistence;
@@ -21,7 +21,7 @@ public sealed class UpdateUserProfileProjectionCommandHandlerTests
     public UpdateUserProfileProjectionCommandHandlerTests()
     {
         _repositoryMock
-            .Setup(x => x.UpdateAsync(It.IsAny<UserProfileProjection>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.UpdateAsync(It.IsAny<UserProfileProjectionDto>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
         _unitOfWorkMock
@@ -43,10 +43,10 @@ public sealed class UpdateUserProfileProjectionCommandHandlerTests
     [Fact]
     public async Task Handle_WhenCommandIsValid_UpdatesNormalizedProjectionAndReturnsSuccess()
     {
-        UserProfileProjection? capturedProjection = null;
+        UserProfileProjectionDto? capturedProjection = null;
         _repositoryMock
-            .Setup(x => x.UpdateAsync(It.IsAny<UserProfileProjection>(), It.IsAny<CancellationToken>()))
-            .Callback<UserProfileProjection, CancellationToken>((projection, _) => capturedProjection = projection)
+            .Setup(x => x.UpdateAsync(It.IsAny<UserProfileProjectionDto>(), It.IsAny<CancellationToken>()))
+            .Callback<UserProfileProjectionDto, CancellationToken>((projection, _) => capturedProjection = projection)
             .ReturnsAsync(true);
 
         var command = new UpdateUserProfileProjectionCommand(
@@ -91,7 +91,7 @@ public sealed class UpdateUserProfileProjectionCommandHandlerTests
     public async Task Handle_WhenProjectionDoesNotExist_ReturnsNotFound()
     {
         _repositoryMock
-            .Setup(x => x.UpdateAsync(It.IsAny<UserProfileProjection>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.UpdateAsync(It.IsAny<UserProfileProjectionDto>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(false);
 
         var command = new UpdateUserProfileProjectionCommand(
@@ -146,7 +146,7 @@ public sealed class UpdateUserProfileProjectionCommandHandlerTests
             "Payload does not contain valid UserProfileId.",
             "Payload does not contain valid FriendlyUserId.");
         _repositoryMock.Verify(
-            x => x.UpdateAsync(It.IsAny<UserProfileProjection>(), It.IsAny<CancellationToken>()),
+            x => x.UpdateAsync(It.IsAny<UserProfileProjectionDto>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
@@ -164,3 +164,4 @@ public sealed class UpdateUserProfileProjectionCommandHandlerTests
         return await _handler.Handle(command, CancellationToken.None);
     }
 }
+

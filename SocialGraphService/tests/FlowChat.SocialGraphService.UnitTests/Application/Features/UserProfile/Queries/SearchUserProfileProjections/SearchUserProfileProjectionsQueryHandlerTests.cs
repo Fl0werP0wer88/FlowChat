@@ -1,4 +1,4 @@
-using AutoFixture;
+﻿using AutoFixture;
 using FlowChat.SocialGraphService.Application.Contracts.Persistence;
 using FlowChat.SocialGraphService.Application.Features.UserProfile;
 using FlowChat.SocialGraphService.Application.Features.UserProfile.Queries.SearchUserProfileProjections;
@@ -21,22 +21,22 @@ public sealed class SearchUserProfileProjectionsQueryHandlerTests
     [Fact]
     public async Task Handle_WhenMatchingProjectionsExist_ReturnsSuccessWithTrimmedSearchArguments()
     {
-        IReadOnlyList<UserProfileProjection> expectedProjections =
+        IReadOnlyList<UserProfileProjectionDto> expectedProjections =
         [
-            new UserProfileProjection
+            new UserProfileProjectionDto
             {
                 UserProfileId = _fixture.Create<Guid>(),
                 FriendlyUserId = "jdoe",
                 FirstName = "Jane",
                 LastName = "Doe",
                 Organization = "FlowChat",
-                MainEmail = new UserProfileProjectionEmail
+                MainEmail = new UserProfileProjectionEmailDto
                 {
                     Address = "jane@example.com",
                     IsConfirmed = true,
                     IsVisible = true
                 },
-                MainPhone = new UserProfileProjectionPhone
+                MainPhone = new UserProfileProjectionPhoneDto
                 {
                     Number = "+48123123123",
                     IsConfirmed = true,
@@ -62,3 +62,4 @@ public sealed class SearchUserProfileProjectionsQueryHandlerTests
             Times.Once);
     }
 }
+
