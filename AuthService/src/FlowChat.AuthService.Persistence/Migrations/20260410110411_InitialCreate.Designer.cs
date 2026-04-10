@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FlowChat.AuthService.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260409181024_InitialCreate")]
+    [Migration("20260410110411_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -66,12 +66,6 @@ namespace FlowChat.AuthService.Persistence.Migrations
                         .HasColumnType("character varying(320)")
                         .HasColumnName("NormalizedEmail");
 
-                    b.Property<string>("NormalizedFriendlyUserId")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("NormalizedFriendlyUserId");
-
                     b.Property<string>("PasswordHash")
                         .IsRequired()
                         .HasMaxLength(1024)
@@ -89,9 +83,6 @@ namespace FlowChat.AuthService.Persistence.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("NormalizedEmail")
-                        .IsUnique();
-
-                    b.HasIndex("NormalizedFriendlyUserId")
                         .IsUnique();
 
                     b.ToTable("Accounts", (string)null);

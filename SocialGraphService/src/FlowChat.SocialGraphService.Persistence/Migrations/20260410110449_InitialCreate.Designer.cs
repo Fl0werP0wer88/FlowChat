@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FlowChat.SocialGraphService.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260410073246_AddUserProfileProjectionContactMetadata")]
-    partial class AddUserProfileProjectionContactMetadata
+    [Migration("20260410110449_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -180,4 +180,3 @@ namespace FlowChat.SocialGraphService.Persistence.Migrations
         }
     }
 }
-

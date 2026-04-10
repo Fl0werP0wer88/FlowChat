@@ -177,4 +177,3 @@ namespace FlowChat.SocialGraphService.Persistence.Migrations
         }
     }
 }
-
