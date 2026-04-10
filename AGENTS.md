@@ -6,6 +6,37 @@ Every new `.csproj` must be added to **both**:
 1. The local service solution ( `{Service}/FlowChat.{Service}.slnx`)
 2. The global solution `FlowChat.slnx` in the root — in the appropriate service folder
 
+## Adding A New Service Or Other Bootable Workspace Entry
+
+When asked to add a new service or any other bootable project/solution to the workspace, update the workspace and repo coordination files as well as the code projects.
+
+- `FlowChat.code-workspace`
+  - Add a new entry to `folders` so the service appears as a separate workspace folder
+  - Add or update `launch.compounds` for the new service so the root workspace can start its bootable projects
+  - Update shared compounds such as `All APIs`, `All Workers`, and `All Services` when the new executable should participate in those startup sets
+  - Keep build tasks aligned only when an extra explicit build step is needed; regular `.NET` service projects are usually picked up through `FlowChat.slnx`
+- `FlowChat.slnx`
+  - Add the top-level service folder and all relevant `src/`, `src/Workers/`, and `tests/` projects in the correct solution folders
+- `{Service}/FlowChat.{Service}.slnx`
+  - Add every local project for that service, including bootable projects and tests
+  - Keep any shared `Common` project entries aligned with the existing service-solution pattern
+- `{Service}/.vscode/launch.json`
+  - Add launch configurations for every bootable project in that service, for example `API`, `Consumers`, `OutboxPublisher`, or other executable hosts
+  - Add or update the local compound that starts the service from that folder
+- `{Service}/.vscode/tasks.json`
+  - Add matching build tasks for each launch configuration referenced in the local launch file
+- `{Service}/.vscode/settings.json`
+  - Keep the local VS Code settings file in place so the service mirrors the existing per-service workspace setup
+- `Scripts/PostgreSQL/migrate-all.ps1`
+  - If the new service has `Persistence` plus a startup project, add it to `$services` so the bulk migration script includes it
+- `Scripts/*`
+  - Review infrastructure scripts only when the new service introduces new shared resources such as database migrations, Kafka topics, Redis usage, or other dev-stack dependencies; today the only script with an explicit service inventory is `Scripts/PostgreSQL/migrate-all.ps1`
+- `AGENTS.md`
+  - Add the new service under `### Services` with its repo location (for example `{Service}/`) and a short responsibility/description
+  - Update any explicit service-specific examples or command lists in this file when the new service should be part of them
+
+After creating a new service folder, treat files like `AuthService/.vscode/*` and `AuthService/FlowChat.AuthService.slnx` as the template for the new service's local workspace setup.
+
 ## Collaboration Rules
 
 - If the user's message ends with `?`, treat it as a question — answer it, do not make any code changes unless explicitly asked afterwards.
