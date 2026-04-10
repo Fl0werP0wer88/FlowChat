@@ -347,6 +347,36 @@ public sealed class UserProfileAggregateTests
     }
 
     [Fact]
+    public void UserProfile_UpdateProfile_UpdatesProfileFieldsAndEmitsAggregateStateChangedEvent()
+    {
+        var profile = CreateExistingProfile();
+
+        profile.UpdateProfile(
+            " John ",
+            " Doe ",
+            " FlowChat ",
+            " https://cdn.example/avatar.png ",
+            " about me ",
+            false);
+
+        profile.FirstName.Should().Be("John");
+        profile.LastName.Should().Be("Doe");
+        profile.Organization.Should().Be("FlowChat");
+        profile.AvatarUrl.Should().Be("https://cdn.example/avatar.png");
+        profile.Bio.Should().Be("about me");
+        profile.IsActive.Should().BeFalse();
+
+        var stateChangedEvent = profile.DomainEvents.OfType<AggregateStateChangedDomainEvent<UserProfile, UserProfileState>>()
+            .Should().ContainSingle().Subject;
+        stateChangedEvent.AggregateState.FirstName.Should().Be("John");
+        stateChangedEvent.AggregateState.LastName.Should().Be("Doe");
+        stateChangedEvent.AggregateState.Organization.Should().Be("FlowChat");
+        stateChangedEvent.AggregateState.AvatarUrl.Should().Be("https://cdn.example/avatar.png");
+        stateChangedEvent.AggregateState.Bio.Should().Be("about me");
+        stateChangedEvent.AggregateState.IsActive.Should().BeFalse();
+    }
+
+    [Fact]
     public void UserProfile_SetMainPhone_SwitchesMainFlag()
     {
         var profile = CreateExistingProfile();

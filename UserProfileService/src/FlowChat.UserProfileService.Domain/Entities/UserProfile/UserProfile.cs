@@ -218,6 +218,24 @@ public class UserProfile : AggregateRootBase<UserProfile>
         return phone;
     }
 
+    public void UpdateProfile(
+        string? firstName,
+        string? lastName,
+        string? organization,
+        string? avatarUrl,
+        string? bio,
+        bool isActive)
+    {
+        FirstName = NormalizeOptional(firstName);
+        LastName = NormalizeOptional(lastName);
+        Organization = NormalizeOptional(organization);
+        AvatarUrl = NormalizeOptional(avatarUrl);
+        Bio = NormalizeOptional(bio);
+        IsActive = isActive;
+
+        MarkAggregateStateChanged(UserProfileConstants.UserProfileAggregateTypeName, CreateState);
+    }
+
     public void SetMainPhone(Id<Phone> phoneId)
     {
         ArgumentNullException.ThrowIfNull(phoneId);
