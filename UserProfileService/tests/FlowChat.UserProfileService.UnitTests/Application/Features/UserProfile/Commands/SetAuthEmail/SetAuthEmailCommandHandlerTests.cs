@@ -5,6 +5,8 @@ using FlowChat.UserProfileService.Application.Contracts.Persistence;
 using FlowChat.UserProfileService.Application.Features.UserProfile.Commands.SetAuthEmail;
 using FlowChat.UserProfileService.Domain.Entities.EmailVerificationRequest;
 using FlowChat.UserProfileService.Domain.Entities.UserProfile;
+using FlowChat.UserProfileService.Domain.Entities.UserProfile.Events;
+using FluentAssertions;
 using Moq;
 
 namespace FlowChat.UserProfileService.UnitTests;
@@ -35,7 +37,7 @@ public sealed class SetAuthEmailCommandHandlerTests
     }
 
     [Fact]
-    public async Task Handle_WhenEmailExists_SetsAuthEmailAndDispatchesAggregateStateChangedEvent()
+    public async Task Handle_WhenEmailExists_SetsAuthEmailAndDispatchesAuthEmailChangedDomainEvent()
     {
         var profile = CreateUserProfile();
         var initialAuthEmail = profile.Emails.Should().ContainSingle().Subject;
@@ -59,6 +61,12 @@ public sealed class SetAuthEmailCommandHandlerTests
         result.Value.Should().Be(secondaryEmail.Id.Value);
         initialAuthEmail.IsAuth.Should().BeFalse();
         secondaryEmail.IsAuth.Should().BeTrue();
+
+        dispatchedEvents.OfType<AuthEmailChangedDomainEvent>().Should().ContainSingle()
+            .Which.Should().Match<AuthEmailChangedDomainEvent>(x =>
+                x.UserProfileId == profile.Id &&
+                x.EmailId == secondaryEmail.Id &&
+                x.Address == secondaryEmail.Address);
 
         var stateChangedEvent = dispatchedEvents
             .OfType<AggregateStateChangedDomainEvent<UserProfile, UserProfileState>>()

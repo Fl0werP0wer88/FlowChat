@@ -71,7 +71,8 @@ public static class ConsumersServiceRegistration
                             .ProduceTo(consumerOptions.DeadLetterTopic)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())));
             })
-            .AddScopedSubscriber<UserEmailConfirmedSubscriber>();
+            .AddScopedSubscriber<UserEmailConfirmedSubscriber>()
+            .AddScopedSubscriber<AuthEmailChangedSubscriber>();
 
         return services;
     }

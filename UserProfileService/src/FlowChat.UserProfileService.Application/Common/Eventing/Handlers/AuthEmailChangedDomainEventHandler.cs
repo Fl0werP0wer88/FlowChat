@@ -1,0 +1,17 @@
+using AutoMapper;
+using FlowChat.Core.Messaging.UserProfileService.Events;
+using FlowChat.Shared.Application;
+using FlowChat.UserProfileService.Domain.Entities.UserProfile.Events;
+
+namespace FlowChat.UserProfileService.Application.Common.Eventing.Handlers;
+
+public sealed class AuthEmailChangedDomainEventHandler
+    : MappedDomainEventHandlerBase<AuthEmailChangedDomainEvent, AuthEmailChangedIntegrationEvent>
+{
+    public AuthEmailChangedDomainEventHandler(
+        IIntegrationEventPublisher integrationEventPublisher,
+        IMapper mapper)
+        : base(integrationEventPublisher, mapper)
+    {
+    }
+}

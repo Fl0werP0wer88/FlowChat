@@ -14,6 +14,22 @@ public sealed class AuthInternalApiClientTests
     private readonly IFixture _fixture = new Fixture();
 
     [Fact]
+    public async Task ChangeAuthEmailAsync_WhenApiReturnsBadRequest_ThrowsNonTransientException()
+    {
+        var client = new AuthInternalApiClient(CreateHttpClient(HttpStatusCode.BadRequest));
+
+        var act = () => client.ChangeAuthEmailAsync(
+            new AuthEmailChangeRequest
+            {
+                UserId = _fixture.Create<Guid>(),
+                EmailAddress = $"{_fixture.Create<string>()}@example.com"
+            },
+            CancellationToken.None);
+
+        await act.Should().ThrowAsync<NonTransientException>();
+    }
+
+    [Fact]
     public async Task ConfirmEmailAsync_WhenApiReturnsNotFound_ThrowsHttpRequestException()
     {
         var client = new AuthInternalApiClient(CreateHttpClient(HttpStatusCode.NotFound));

@@ -64,6 +64,33 @@ public sealed class AccountTests
     }
 
     [Fact]
+    public void ChangeAuthEmail_WhenEmailChanges_UpdatesEmailAndSecurityStampAndSnapshot()
+    {
+        var account = Account.Restore(
+            Guid.NewGuid(),
+            "flower",
+            EmailAddress.Create("flower@example.com"),
+            "hashed-password",
+            "old-stamp",
+            0,
+            false);
+
+        account.ChangeAuthEmail(EmailAddress.Create("new@example.com"), "new-stamp");
+
+        account.Email.Should().Be(EmailAddress.Create("new@example.com"));
+        account.SecurityStamp.Should().Be("new-stamp");
+        account.IsEmailConfirmed.Should().BeTrue();
+        account.DomainEvents.OfType<AggregateStateChangedDomainEvent<Account, AccountSnapshot>>().Should().ContainSingle()
+            .Which.AggregateState.Should().Be(new AccountSnapshot(
+                account.Id.Value,
+                "flower",
+                "new@example.com",
+                "new-stamp",
+                0,
+                true));
+    }
+
+    [Fact]
     public void RecordFailedLogin_IncrementsFailedCountAndUpdatesSnapshot()
     {
         var account = Account.Restore(

@@ -109,6 +109,21 @@ public sealed class Account : AggregateRootBase<Account>
         MarkAggregateStateChanged(AggregateTypeNames.Account, CreateSnapshot);
     }
 
+    public void ChangeAuthEmail(EmailAddress email, string securityStamp)
+    {
+        ArgumentNullException.ThrowIfNull(email);
+
+        if (Email == email)
+        {
+            return;
+        }
+
+        Email = email;
+        // UserProfile emits this event only after the selected auth email is already confirmed there
+        IsEmailConfirmed = true;
+        RotateSecurityStamp(securityStamp);
+    }
+
     public void RecordFailedLogin()
     {
         AccessFailedCount++;

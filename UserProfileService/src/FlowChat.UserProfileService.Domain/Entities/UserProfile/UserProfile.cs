@@ -179,6 +179,7 @@ public class UserProfile : AggregateRootBase<UserProfile>
             email.SetAuth(email == targetEmail);
         }
 
+        AddDomainEvent(new AuthEmailChangedDomainEvent(Id, targetEmail.Id, targetEmail.Address));
         MarkAggregateStateChanged(UserProfileConstants.UserProfileAggregateTypeName, CreateState);
     }
 

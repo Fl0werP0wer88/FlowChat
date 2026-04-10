@@ -203,6 +203,12 @@ public sealed class UserProfileAggregateTests
         secondEmail.IsAuth.Should().BeTrue();
         profile.Emails.Should().ContainSingle(x => x.IsAuth);
 
+        var authEmailChangedEvent = profile.DomainEvents.OfType<AuthEmailChangedDomainEvent>().Should().ContainSingle().Subject;
+        authEmailChangedEvent.AggregateId.Should().Be(profile.Id.Value);
+        authEmailChangedEvent.UserProfileId.Should().Be(profile.Id);
+        authEmailChangedEvent.EmailId.Should().Be(secondEmail.Id);
+        authEmailChangedEvent.Address.Should().Be(secondEmail.Address);
+
         var stateChangedEvent = profile.DomainEvents.OfType<AggregateStateChangedDomainEvent<UserProfile, UserProfileState>>()
             .Should().ContainSingle().Subject;
         stateChangedEvent.AggregateState.Emails.Should().ContainSingle(x =>

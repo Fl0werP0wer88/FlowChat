@@ -43,6 +43,12 @@ public sealed class DomainEventToIntegrationEventProfile : Profile
                 IsAuth = source.IsAuth
             }));
 
+        CreateMap<AuthEmailChangedDomainEvent, AuthEmailChangedIntegrationEvent>()
+            .ForMember(destination => destination.Key, options => options.MapFrom(source => source.UserProfileId.Value.ToString()))
+            .ForMember(destination => destination.UserProfileId, options => options.MapFrom(source => source.UserProfileId.Value))
+            .ForMember(destination => destination.EmailId, options => options.MapFrom(source => source.EmailId.Value))
+            .ForMember(destination => destination.EmailAddress, options => options.MapFrom(source => source.Address.Value));
+
         CreateMap<AggregateStateChangedDomainEvent<UserProfile, UserProfileState>, UserProfileChangedIntegrationEvent>()
             .ForMember(destination => destination.Key, options => options.MapFrom(source => source.AggregateId.ToString()))
             .ForMember(destination => destination.UserProfileId, options => options.MapFrom(source => source.AggregateState.Id))

@@ -25,10 +25,12 @@ public sealed class UserEmailConfirmedConsumerConfigurationTests
         await using var scope = serviceProvider.CreateAsyncScope();
 
         var consumerCollection = serviceProvider.GetRequiredService<IConsumerCollection>();
+        var authEmailChangedSubscriber = scope.ServiceProvider.GetRequiredService<AuthEmailChangedSubscriber>();
         var subscriber = scope.ServiceProvider.GetRequiredService<UserEmailConfirmedSubscriber>();
         var internalApiClient = scope.ServiceProvider.GetRequiredService<IAuthInternalApiClient>();
 
         consumerCollection.Should().NotBeNull();
+        authEmailChangedSubscriber.Should().NotBeNull();
         subscriber.Should().NotBeNull();
         internalApiClient.Should().NotBeNull();
     }
