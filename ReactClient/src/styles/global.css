@@ -722,6 +722,8 @@ body {
   width: 0.6rem;
   height: 0.6rem;
   border-radius: 999px;
+  margin-top: 0.3rem;
+  flex-shrink: 0;
 }
 
 .status-online {
