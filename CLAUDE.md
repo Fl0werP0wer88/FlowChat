@@ -6,9 +6,41 @@ Every new `.csproj` must be added to **both**:
 1. The local service solution ( `{Service}/FlowChat.{Service}.slnx`)
 2. The global solution `FlowChat.slnx` in the root — in the appropriate service folder
 
+## Adding A New Service Or Other Bootable Workspace Entry
+
+When asked to add a new service or any other bootable project/solution to the workspace, update the workspace and repo coordination files as well as the code projects.
+
+- `FlowChat.code-workspace`
+  - Add a new entry to `folders` so the service appears as a separate workspace folder
+  - Add or update `launch.compounds` for the new service so the root workspace can start its bootable projects
+  - Update shared compounds such as `All APIs`, `All Workers`, and `All Services` when the new executable should participate in those startup sets
+  - Keep build tasks aligned only when an extra explicit build step is needed; regular `.NET` service projects are usually picked up through `FlowChat.slnx`
+- `FlowChat.slnx`
+  - Add the top-level service folder and all relevant `src/`, `src/Workers/`, and `tests/` projects in the correct solution folders
+- `{Service}/FlowChat.{Service}.slnx`
+  - Add every local project for that service, including bootable projects and tests
+  - Keep any shared `Common` project entries aligned with the existing service-solution pattern
+- `{Service}/.vscode/launch.json`
+  - Add launch configurations for every bootable project in that service, for example `API`, `Consumers`, `OutboxPublisher`, or other executable hosts
+  - Add or update the local compound that starts the service from that folder
+- `{Service}/.vscode/tasks.json`
+  - Add matching build tasks for each launch configuration referenced in the local launch file
+- `{Service}/.vscode/settings.json`
+  - Keep the local VS Code settings file in place so the service mirrors the existing per-service workspace setup
+- `Scripts/PostgreSQL/migrate-all.ps1`
+  - If the new service has `Persistence` plus a startup project, add it to `$services` so the bulk migration script includes it
+- `Scripts/*`
+  - Review infrastructure scripts only when the new service introduces new shared resources such as database migrations, Kafka topics, Redis usage, or other dev-stack dependencies; today the only script with an explicit service inventory is `Scripts/PostgreSQL/migrate-all.ps1`
+- `CLAUDE.md`
+  - Add the new service under `### Services` with its repo location (for example `{Service}/`) and a short responsibility/description
+  - Update any explicit service-specific examples or command lists in this file when the new service should be part of them
+
+After creating a new service folder, treat files like `AuthService/.vscode/*` and `AuthService/FlowChat.AuthService.slnx` as the template for the new service's local workspace setup.
+
 ## Collaboration Rules
 
 - If the user's message ends with `?`, treat it as a question — answer it, do not make any code changes unless explicitly asked afterwards.
+- If the model needs to create any temporary working files (for example decompiled library output, scratch files, generated investigation artifacts, or similar), create them under `.claude/temp` in the repository root.
 
 ## Project Overview
 
@@ -37,6 +69,11 @@ Each service follows **Clean Architecture**:
 - `Workers` — background workers (e.g. outbox publisher)
 
 Domain events are dispatched via `IDomainEventDispatcher` and mapped to integration events published to Kafka.
+
+### API and Application boundaries
+- Controllers do not call repositories or persistence services directly
+- A controller's role is limited to HTTP concerns: reading the request, authorization/authentication, invoking the appropriate command/query through MediatR, and mapping HTTP DTOs and responses
+- Request validation belongs in the Application layer via FluentValidation / MediatR pipeline, not in controllers
 
 ## Domain-Driven Design
 
@@ -72,10 +109,24 @@ The project uses tactical DDD. All domain logic lives in the `Domain` layer. The
 - **Language**: C# 13, .NET 10
 - **Formatting**: enforced by `dprint` — run `dprint fmt` before committing
 - **Nullability**: nullable reference types enabled everywhere
+- **Time handling**: always prefer `DateTimeOffset` over `DateTime`; when representing UTC time, use `DateTimeOffset` with offset `+00:00`
 - **Results**: use `FlowChatResult<T>` (from `FlowChat.Shared`) instead of throwing exceptions in handlers
+- **CQRS commands/queries**: use only primitive/simple scalar types at the application boundary (`string`, numeric types, `bool`, `Guid`, `DateTimeOffset`, enums, and collections of those when needed); do not pass domain entities or value objects in commands/queries
+- **Domain modeling**: in the `Domain` layer, prefer existing value objects wherever reasonable instead of raw primitives; first look in `Common`, then in the local service
+- **Value object suggestions**: if you see a field that is a good fit for a value object but none exists yet in `Common` or the local service, explicitly suggest creating one
 - **Entities**: use `static Create(...)` factory methods, never public constructors
 - **Domain events**: raise via `AddDomainEvent(...)` inside the entity
 - **Restore from DB**: use `static Restore(...)` — does NOT raise domain events
+
+### Marker interfaces
+- Marker interfaces from `Common/src/FlowChat.Core/Contracts` and `Common/src/FlowChat.Core/Messaging` classify transport and projection models by role; add them whenever creating a new contract of the matching kind
+- `IServiceEndpoint` is the common marker for service endpoint contracts
+- `IServiceInput` marks request models declared in `API` projects
+- `IServiceOutput` marks response models declared in `API` projects
+- `IConsumerOutput` marks request contracts emitted by worker consumers to other internal endpoints
+- `IConsumerInput` marks payloads consumed by workers; integration events implement this through the `IntegrationEvent` base class
+- `IDbResponse` marks read models and DTOs that are direct EF Core projection targets in queries and repositories
+- If a model changes role, update its marker interface to match the new responsibility instead of keeping the previous classification
 
 ## Testing
 
@@ -125,7 +176,7 @@ The project uses tactical DDD. All domain logic lives in the `Domain` layer. The
 - **Canonical test patterns**:
   - The canonical source for test style and example code is `.claude/skills/generate-tests/patterns.md`
   - When generating tests, follow the patterns from that file for structure, mocking boundaries, result assertions, domain event assertions, `WebApplicationFactory`, `Testcontainers`, and `WireMock.Net`
-  - If a rule here and an example in `patterns.md` seem to diverge, keep the architectural rule from `AGENTS.md` and adapt the example to the current codebase rather than copying it blindly
+  - If a rule here and an example in `patterns.md` seem to diverge, keep the architectural rule from `CLAUDE.md` and adapt the example to the current codebase rather than copying it blindly
   - Prefer matching an existing project pattern over inventing a new test style
 
 ```csharp
@@ -205,10 +256,37 @@ dotnet test RealtimeService/tests/FlowChat.RealtimeService.IntegrationTests
 dotnet test RealtimeService/tests/FlowChat.RealtimeService.UnitTests
 ```
 
+## Code Comments
+
+Add comments only where they provide information that cannot be derived by reading the code — the **why**, not the **what**.
+
+### Add a comment when:
+- A business rule or domain invariant is enforced and the reason is not obvious from the code alone (e.g. why a method is idempotent, why a specific constant value was chosen)
+- A deliberate design decision was made that a future reader might question or "fix" incorrectly (e.g. why `ownTransaction: false`, why a generic error message is used for all failure paths)
+- An edge case is handled that would not be apparent without domain or infrastructure context (e.g. Kafka redelivery guard, EF duplicate-tracking workaround)
+- Security-sensitive reasoning must be preserved (e.g. timing attack resistance, information leakage prevention)
+
+### Do NOT add a comment when:
+- The code reads like plain English and the intent is self-evident
+- The comment merely restates what the code does (e.g. `// increment counter` above `counter++`)
+- The information is already captured in the class/method name, XML docs, or a test name
+- The code is a simple CRUD operation, DTO, mapping, or DI registration
+
+### Format rules:
+- One sentence preferred; two sentences maximum
+- No period at the end of a single-sentence inline comment
+- Place the comment on the line immediately above the relevant code, not inline at the end of the line (except for single-value annotations like `Roles = [] // reason`)
+- Use `//` only — no block comments (`/* */`) in application code
+
+### When modifying existing code:
+- Read comments already present in the file before adding new ones
+- Update a comment if the behaviour it describes has changed — stale comments are worse than no comments
+- Do not duplicate a comment that already exists nearby
+
 ## What to Avoid
 
 - Do not use `AutoMapper` — mapping is done manually or via dedicated profile classes
 - Do not add `try/catch` inside command handlers — use `FlowChatResult` instead
 - Do not put business logic in controllers or infrastructure layer
 - Do not raise domain events in `Restore(...)` factory methods
-- Do not use `DateTime.Now` — use `DateTime.UtcNow`
+- Do not introduce `DateTime` for timestamps or UTC values — use `DateTimeOffset` in UTC instead
