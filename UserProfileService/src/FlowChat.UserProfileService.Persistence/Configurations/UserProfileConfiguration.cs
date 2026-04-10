@@ -24,11 +24,6 @@ public class UserProfileConfiguration : IEntityTypeConfiguration<UserProfile>
             .HasMaxLength(FriendlyUserId.MaxLength)
             .IsRequired();
 
-        builder.Property<string>("NormalizedFriendlyUserId")
-            .HasColumnName("NormalizedUserName")
-            .HasMaxLength(FriendlyUserId.MaxLength)
-            .IsRequired();
-
         builder.Property(x => x.FirstName)
             .HasMaxLength(100);
 

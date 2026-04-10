@@ -10,7 +10,6 @@ namespace FlowChat.AuthService.Persistence.Configurations;
 public sealed class AccountConfiguration : IEntityTypeConfiguration<Account>
 {
     private const string NormalizedEmailPropertyName = "NormalizedEmail";
-    private const string NormalizedFriendlyUserIdPropertyName = "NormalizedFriendlyUserId";
 
     public void Configure(EntityTypeBuilder<Account> builder)
     {
@@ -33,11 +32,6 @@ public sealed class AccountConfiguration : IEntityTypeConfiguration<Account>
 
         builder.Property(x => x.FriendlyUserId)
             .HasConversion(x => x.Value, x => FriendlyUserId.Create(x))
-            .HasMaxLength(FriendlyUserId.MaxLength)
-            .IsRequired();
-
-        builder.Property<string>(NormalizedFriendlyUserIdPropertyName)
-            .HasColumnName(NormalizedFriendlyUserIdPropertyName)
             .HasMaxLength(FriendlyUserId.MaxLength)
             .IsRequired();
 
@@ -67,9 +61,6 @@ public sealed class AccountConfiguration : IEntityTypeConfiguration<Account>
         builder.Ignore(x => x.DomainEvents);
 
         builder.HasIndex(NormalizedEmailPropertyName)
-            .IsUnique();
-
-        builder.HasIndex(NormalizedFriendlyUserIdPropertyName)
             .IsUnique();
     }
 }

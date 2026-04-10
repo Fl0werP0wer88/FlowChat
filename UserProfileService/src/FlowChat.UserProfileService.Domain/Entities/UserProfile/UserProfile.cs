@@ -9,7 +9,6 @@ public class UserProfile : AggregateRootBase<UserProfile>
 {
     private readonly List<Email> _emails = [];
     private readonly List<Phone> _phones = [];
-    private string NormalizedFriendlyUserId { get; set; }
 
     public FriendlyUserId FriendlyUserId { get; private set; }
     public string? FirstName { get; private set; }
@@ -34,7 +33,6 @@ public class UserProfile : AggregateRootBase<UserProfile>
         UtcDateTimeOffset? lastSeenAtUtc = null) : base(id)
     {
         FriendlyUserId = friendlyUserId;
-        NormalizedFriendlyUserId = friendlyUserId.Value;
         FirstName = firstName;
         LastName = lastName;
         Organization = organization;
@@ -255,7 +253,6 @@ public class UserProfile : AggregateRootBase<UserProfile>
         {
             Id = Id.Value,
             FriendlyUserId = FriendlyUserId.Value,
-            NormalizedFriendlyUserId = FriendlyUserId.Value,
             FirstName = FirstName,
             LastName = LastName,
             Organization = Organization,

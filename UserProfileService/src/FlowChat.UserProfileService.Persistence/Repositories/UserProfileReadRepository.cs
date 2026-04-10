@@ -10,7 +10,6 @@ namespace FlowChat.UserProfileService.Persistence.Repositories;
 
 public sealed class UserProfileReadRepository(AppDbContext dbContext) : IUserProfileReadRepository
 {
-    private const string NormalizedFriendlyUserIdPropertyName = "NormalizedFriendlyUserId";
     private readonly AppDbContext _dbContext = dbContext;
 
     public async Task<UserProfileDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
@@ -51,7 +50,7 @@ public sealed class UserProfileReadRepository(AppDbContext dbContext) : IUserPro
 
         var entity = await Query()
             .FirstOrDefaultAsync(
-                x => EF.Property<string>(x, NormalizedFriendlyUserIdPropertyName) == normalizedFriendlyUserId.Value,
+                x => x.FriendlyUserId == normalizedFriendlyUserId,
                 cancellationToken);
 
         return entity is null ? null : MapToDto(entity);
@@ -79,7 +78,7 @@ public sealed class UserProfileReadRepository(AppDbContext dbContext) : IUserPro
             .AsNoTracking()
             .AnyAsync(
                 x => (!excludedUserId.HasValue || x.Id != Id<UserProfile>.FromGuid(excludedUserId.Value))
-                     && EF.Property<string>(x, NormalizedFriendlyUserIdPropertyName) == normalizedFriendlyUserId.Value,
+                     && x.FriendlyUserId == normalizedFriendlyUserId,
                 cancellationToken);
     }
 

@@ -6,7 +6,6 @@ public sealed record UserProfileState
 {
     public Guid Id { get; init; }
     public required string FriendlyUserId { get; init; }
-    public required string NormalizedFriendlyUserId { get; init; }
     public string? FirstName { get; init; }
     public string? LastName { get; init; }
     public string? Organization { get; init; }

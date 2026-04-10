@@ -9,10 +9,8 @@ namespace FlowChat.AuthService.Persistence.Repositories;
 
 public sealed class AccountRepository : IAccountRepository
 {
-    // EF shadow properties — lowercase-normalised versions stored alongside the entity for
-    // case-insensitive unique indexes without exposing normalization in the domain model.
+    // EF shadow property keeps email lookups case-insensitive without leaking normalization into the domain model.
     private const string NormalizedEmailPropertyName = "NormalizedEmail";
-    private const string NormalizedFriendlyUserIdPropertyName = "NormalizedFriendlyUserId";
     private readonly AppDbContext _dbContext;
 
     public AccountRepository(AppDbContext dbContext)
@@ -67,7 +65,7 @@ public sealed class AccountRepository : IAccountRepository
         var entity = await _dbContext.Accounts
             .AsNoTracking()
             .FirstOrDefaultAsync(
-                x => EF.Property<string>(x, NormalizedFriendlyUserIdPropertyName) == normalizedFriendlyUserId.Value,
+                x => x.FriendlyUserId == normalizedFriendlyUserId,
                 cancellationToken);
 
         return entity;
@@ -83,7 +81,7 @@ public sealed class AccountRepository : IAccountRepository
         }
 
         var normalizedLogin = login.Trim();
-        // Try email first — if the input is a valid email address look it up by email;
+        // Try email first â€” if the input is a valid email address look it up by email;
         // fall back to friendlyUserId so users can log in with either identifier.
         if (EmailAddress.TryCreate(normalizedLogin, out var emailAddress))
         {
@@ -103,7 +101,7 @@ public sealed class AccountRepository : IAccountRepository
         ArgumentNullException.ThrowIfNull(account);
 
         // If a different instance of the same entity is already tracked by EF, update its values
-        // in place rather than attaching the new instance — attaching would throw an InvalidOperationException
+        // in place rather than attaching the new instance â€” attaching would throw an InvalidOperationException
         // ("another instance with the same key value is already being tracked").
         var localEntity = _dbContext.Accounts.Local.FirstOrDefault(x => x.Id == account.Id);
         if (localEntity is not null && !ReferenceEquals(localEntity, account))
@@ -132,7 +130,6 @@ public sealed class AccountRepository : IAccountRepository
     private static void SetNormalizedProperties(EntityEntry<Account> entry, Account account)
     {
         entry.Property(NormalizedEmailPropertyName).CurrentValue = NormalizeRequired(account.Email.Value);
-        entry.Property(NormalizedFriendlyUserIdPropertyName).CurrentValue = account.FriendlyUserId.Value;
     }
 
     private static string NormalizeRequired(string value)

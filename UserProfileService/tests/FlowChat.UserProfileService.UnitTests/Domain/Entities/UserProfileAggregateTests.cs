@@ -108,7 +108,7 @@ public sealed class UserProfileAggregateTests
         var @event = profile.DomainEvents.OfType<AggregateStateChangedDomainEvent<UserProfile, UserProfileState>>()
             .Should().ContainSingle().Subject;
         @event.AggregateState.Id.Should().Be(profile.Id.Value);
-        @event.AggregateState.NormalizedFriendlyUserId.Should().Be(profile.FriendlyUserId.Value);
+        @event.AggregateState.FriendlyUserId.Should().Be(profile.FriendlyUserId.Value);
         @event.AggregateState.Emails.Should().ContainSingle(x =>
             x.Id == existingMainEmail.Id.Value &&
             x.Address == existingMainEmail.Address.Value &&

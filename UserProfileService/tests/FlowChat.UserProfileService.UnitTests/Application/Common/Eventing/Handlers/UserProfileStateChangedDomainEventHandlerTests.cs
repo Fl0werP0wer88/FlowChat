@@ -40,7 +40,6 @@ public sealed class UserProfileStateChangedDomainEventHandlerTests
             {
                 Id = userProfileId.Value,
                 FriendlyUserId = "jdoe",
-                NormalizedFriendlyUserId = "jdoe",
                 FirstName = "John",
                 LastName = "Doe",
                 Organization = "FlowChat",
