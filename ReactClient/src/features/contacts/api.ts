@@ -35,8 +35,6 @@ interface UserProfileProjectionDto {
   UserProfileId?: string;
   friendlyUserId?: string;
   FriendlyUserId?: string;
-  displayName?: string;
-  DisplayName?: string;
   firstName?: string | null;
   FirstName?: string | null;
   lastName?: string | null;
@@ -96,11 +94,19 @@ function buildQueryString(parameters: SearchUsersRequest): string {
   return serialized.length > 0 ? `?${serialized}` : "";
 }
 
+function buildSearchUserDisplayName(dto: UserProfileProjectionDto): string {
+  const firstName = (dto.firstName ?? dto.FirstName ?? "").trim();
+  const lastName = (dto.lastName ?? dto.LastName ?? "").trim();
+  const displayName = `${firstName} ${lastName}`.trim();
+
+  return displayName || "Nieznany uzytkownik";
+}
+
 function mapSearchUserResult(dto: UserProfileProjectionDto): SearchUserResult {
   return {
     userProfileId: dto.userProfileId ?? dto.UserProfileId ?? crypto.randomUUID(),
     friendlyUserId: dto.friendlyUserId ?? dto.FriendlyUserId ?? "",
-    displayName: dto.displayName ?? dto.DisplayName ?? "Nieznany uzytkownik",
+    displayName: buildSearchUserDisplayName(dto),
     firstName: dto.firstName ?? dto.FirstName ?? null,
     lastName: dto.lastName ?? dto.LastName ?? null,
     organization: dto.organization ?? dto.Organization ?? null,
