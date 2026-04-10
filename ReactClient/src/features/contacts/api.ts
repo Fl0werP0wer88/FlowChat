@@ -6,6 +6,8 @@ interface ContactDto {
   Id?: string;
   displayName?: string;
   DisplayName?: string;
+  email?: string | null;
+  Email?: string | null;
 }
 
 interface GetContactsResponseDto {
@@ -71,6 +73,7 @@ function mapContact(dto: ContactDto): Contact {
   return {
     id: dto.id ?? dto.Id ?? crypto.randomUUID(),
     displayName: dto.displayName ?? dto.DisplayName ?? "Nowy kontakt",
+    email: dto.email ?? dto.Email ?? null,
     status: "offline",
   };
 }

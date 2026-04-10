@@ -200,7 +200,12 @@ export function ContactsPanel({
               {contacts.map((contact) => (
                 <li key={contact.id}>
                   <span className={`status-dot status-${contact.status}`} />
-                  <span>{contact.displayName}</span>
+                  <span className="contacts-panel__contact-copy">
+                    <span className="contacts-panel__contact-name">{contact.displayName}</span>
+                    {contact.email
+                      ? <span className="contacts-panel__contact-email">{contact.email}</span>
+                      : null}
+                  </span>
                 </li>
               ))}
             </ul>
