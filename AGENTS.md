@@ -31,6 +31,10 @@ When asked to add a new service or any other bootable project/solution to the wo
   - If the new service has `Persistence` plus a startup project, add it to `$services` so the bulk migration script includes it
 - `Scripts/*`
   - Review infrastructure scripts only when the new service introduces new shared resources such as database migrations, Kafka topics, Redis usage, or other dev-stack dependencies; today the only script with an explicit service inventory is `Scripts/PostgreSQL/migrate-all.ps1`
+- `Scripts/PostgreSQL/*`
+  - If the new service needs its own database, update the PostgreSQL scripts immediately so the database is created and maintained according to the existing rules, privileges, and naming conventions
+  - Keep database naming aligned with the current pattern used by `bootstrap-postgres.ps1`, for example `flowchat_<service>_db`
+  - At minimum review `bootstrap-postgres.ps1`, `migrate-all.ps1`, and `reset-db.ps1` so bootstrap, bulk migration, and reset flows all include the new database consistently
 - `AGENTS.md`
   - Add the new service under `### Services` with its repo location (for example `{Service}/`) and a short responsibility/description
   - Update any explicit service-specific examples or command lists in this file when the new service should be part of them
