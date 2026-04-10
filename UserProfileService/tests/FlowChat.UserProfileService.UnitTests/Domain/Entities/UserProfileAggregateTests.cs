@@ -104,17 +104,7 @@ public sealed class UserProfileAggregateTests
         emailAddedEvent.UserProfileId.Should().Be(profile.Id);
         emailAddedEvent.EmailId.Should().Be(email.Id);
         emailAddedEvent.Email.Should().Be(email.Address);
-
-        var @event = profile.DomainEvents.OfType<AggregateStateChangedDomainEvent<UserProfile, UserProfileState>>()
-            .Should().ContainSingle().Subject;
-        @event.AggregateState.Id.Should().Be(profile.Id.Value);
-        @event.AggregateState.FriendlyUserId.Should().Be(profile.FriendlyUserId.Value);
-        @event.AggregateState.Emails.Should().ContainSingle(x =>
-            x.Id == existingMainEmail.Id.Value &&
-            x.Address == existingMainEmail.Address.Value &&
-            x.IsMain &&
-            !x.IsConfirmed);
-        @event.AggregateState.Phones.Should().BeEmpty();
+        profile.DomainEvents.OfType<AggregateStateChangedDomainEvent<UserProfile, UserProfileState>>().Should().BeEmpty();
     }
 
     [Fact]
@@ -208,14 +198,7 @@ public sealed class UserProfileAggregateTests
         authEmailChangedEvent.UserProfileId.Should().Be(profile.Id);
         authEmailChangedEvent.EmailId.Should().Be(secondEmail.Id);
         authEmailChangedEvent.Address.Should().Be(secondEmail.Address);
-
-        var stateChangedEvent = profile.DomainEvents.OfType<AggregateStateChangedDomainEvent<UserProfile, UserProfileState>>()
-            .Should().ContainSingle().Subject;
-        stateChangedEvent.AggregateState.Emails.Should().ContainSingle(x =>
-            x.Id == firstEmail.Id.Value &&
-            x.Address == firstEmail.Address.Value &&
-            x.IsMain &&
-            !x.IsConfirmed);
+        profile.DomainEvents.OfType<AggregateStateChangedDomainEvent<UserProfile, UserProfileState>>().Should().BeEmpty();
     }
 
     [Fact]
@@ -275,6 +258,19 @@ public sealed class UserProfileAggregateTests
             x.Address == email.Address.Value &&
             x.IsMain &&
             x.IsConfirmed);
+    }
+
+    [Fact]
+    public void UserProfile_ConfirmEmail_WhenNonMainEmailIsConfirmed_DoesNotEmitAggregateStateChangedEvent()
+    {
+        var profile = CreateExistingProfile();
+        var secondaryEmail = profile.AddEmail(EmailAddress.Create("john.secondary@example.com"));
+        profile.ClearEvents();
+
+        profile.ConfirmEmail(secondaryEmail.Id);
+
+        profile.DomainEvents.OfType<EmailConfirmedDomainEvent>().Should().ContainSingle();
+        profile.DomainEvents.OfType<AggregateStateChangedDomainEvent<UserProfile, UserProfileState>>().Should().BeEmpty();
     }
 
     [Fact]
@@ -346,10 +342,12 @@ public sealed class UserProfileAggregateTests
     {
         var profile = CreateExistingProfile();
         profile.AddPhone(PhoneNumber.Create("+48123123123"));
+        profile.ClearEvents();
 
         var secondPhone = profile.AddPhone(PhoneNumber.Create("+48987654321"));
 
         secondPhone.IsMain.Should().BeFalse();
+        profile.DomainEvents.OfType<AggregateStateChangedDomainEvent<UserProfile, UserProfileState>>().Should().BeEmpty();
     }
 
     [Fact]
@@ -380,6 +378,36 @@ public sealed class UserProfileAggregateTests
         stateChangedEvent.AggregateState.AvatarUrl.Should().Be("https://cdn.example/avatar.png");
         stateChangedEvent.AggregateState.Bio.Should().Be("about me");
         stateChangedEvent.AggregateState.IsActive.Should().BeFalse();
+    }
+
+    [Fact]
+    public void UserProfile_UpdateProfile_WhenProjectedFieldsDoNotChange_DoesNotEmitAggregateStateChangedEvent()
+    {
+        var profile = UserProfile.Create(
+            "jdoe",
+            EmailAddress.Create("john@example.com"),
+            id: Id<UserProfile>.New(),
+            firstName: "John",
+            lastName: "Doe",
+            organization: "FlowChat");
+        profile.UpdateProfile(
+            " John ",
+            " Doe ",
+            " FlowChat ",
+            null,
+            null,
+            true);
+        profile.ClearEvents();
+
+        profile.UpdateProfile(
+            "John",
+            "Doe",
+            "FlowChat",
+            null,
+            null,
+            true);
+
+        profile.DomainEvents.OfType<AggregateStateChangedDomainEvent<UserProfile, UserProfileState>>().Should().BeEmpty();
     }
 
     [Fact]

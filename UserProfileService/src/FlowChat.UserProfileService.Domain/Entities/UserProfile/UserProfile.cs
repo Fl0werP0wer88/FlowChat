@@ -120,7 +120,11 @@ public class UserProfile : AggregateRootBase<UserProfile>
         _emails.Add(email);
 
         AddDomainEvent(new EmailAddedDomainEvent(Id, email.Id, email.Address));
-        MarkAggregateStateChanged(UserProfileConstants.UserProfileAggregateTypeName, CreateState);
+
+        if (email.IsMain)
+        {
+            MarkUserProfileProjectionChanged();
+        }
 
         return email;
     }
@@ -151,7 +155,7 @@ public class UserProfile : AggregateRootBase<UserProfile>
         }
 
         AddDomainEvent(new MainEmailChangedDomainEvent(Id, targetEmail.Id, targetEmail.Address));
-        MarkAggregateStateChanged(UserProfileConstants.UserProfileAggregateTypeName, CreateState);
+        MarkUserProfileProjectionChanged();
     }
 
     public void SetAuthEmail(Id<Email> emailId)
@@ -180,7 +184,6 @@ public class UserProfile : AggregateRootBase<UserProfile>
         }
 
         AddDomainEvent(new AuthEmailChangedDomainEvent(Id, targetEmail.Id, targetEmail.Address));
-        MarkAggregateStateChanged(UserProfileConstants.UserProfileAggregateTypeName, CreateState);
     }
 
     public void ConfirmEmail(Id<Email> emailId)
@@ -200,7 +203,11 @@ public class UserProfile : AggregateRootBase<UserProfile>
 
         targetEmail.Confirm();
         AddDomainEvent(new EmailConfirmedDomainEvent(Id, targetEmail.Id, targetEmail.Address, targetEmail.IsAuth));
-        MarkAggregateStateChanged(UserProfileConstants.UserProfileAggregateTypeName, CreateState);
+
+        if (targetEmail.IsMain)
+        {
+            MarkUserProfileProjectionChanged();
+        }
     }
 
     public Phone AddPhone(PhoneNumber number, Id<Phone>? id = null)
@@ -214,7 +221,11 @@ public class UserProfile : AggregateRootBase<UserProfile>
 
         var phone = Phone.Create(Id, number, isMain: !_phones.Any(), id: id);
         _phones.Add(phone);
-        MarkAggregateStateChanged(UserProfileConstants.UserProfileAggregateTypeName, CreateState);
+
+        if (phone.IsMain)
+        {
+            MarkUserProfileProjectionChanged();
+        }
 
         return phone;
     }
@@ -227,14 +238,31 @@ public class UserProfile : AggregateRootBase<UserProfile>
         string? bio,
         bool isActive)
     {
-        FirstName = NormalizeOptional(firstName);
-        LastName = NormalizeOptional(lastName);
-        Organization = NormalizeOptional(organization);
-        AvatarUrl = NormalizeOptional(avatarUrl);
-        Bio = NormalizeOptional(bio);
+        var normalizedFirstName = NormalizeOptional(firstName);
+        var normalizedLastName = NormalizeOptional(lastName);
+        var normalizedOrganization = NormalizeOptional(organization);
+        var normalizedAvatarUrl = NormalizeOptional(avatarUrl);
+        var normalizedBio = NormalizeOptional(bio);
+
+        var hasChanged =
+            FirstName != normalizedFirstName ||
+            LastName != normalizedLastName ||
+            Organization != normalizedOrganization ||
+            AvatarUrl != normalizedAvatarUrl ||
+            Bio != normalizedBio ||
+            IsActive != isActive;
+
+        FirstName = normalizedFirstName;
+        LastName = normalizedLastName;
+        Organization = normalizedOrganization;
+        AvatarUrl = normalizedAvatarUrl;
+        Bio = normalizedBio;
         IsActive = isActive;
 
-        MarkAggregateStateChanged(UserProfileConstants.UserProfileAggregateTypeName, CreateState);
+        if (hasChanged)
+        {
+            MarkUserProfileProjectionChanged();
+        }
     }
 
     public void SetMainPhone(Id<Phone> phoneId)
@@ -263,7 +291,7 @@ public class UserProfile : AggregateRootBase<UserProfile>
         }
 
         AddDomainEvent(new MainPhoneChangedDomainEvent(Id, targetPhone.Id, targetPhone.Number));
-        MarkAggregateStateChanged(UserProfileConstants.UserProfileAggregateTypeName, CreateState);
+        MarkUserProfileProjectionChanged();
     }
 
     private UserProfileState CreateState()
@@ -299,6 +327,11 @@ public class UserProfile : AggregateRootBase<UserProfile>
                 IsVisible = phone.IsVisible
             }).ToArray()
         };
+    }
+
+    private void MarkUserProfileProjectionChanged()
+    {
+        MarkAggregateStateChanged(UserProfileConstants.UserProfileAggregateTypeName, CreateState);
     }
 
     private static string NormalizeRequired(string value, string paramName)
