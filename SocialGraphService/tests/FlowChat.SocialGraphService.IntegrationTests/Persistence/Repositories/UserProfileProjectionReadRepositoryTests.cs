@@ -205,7 +205,7 @@ public sealed class UserProfileProjectionReadRepositoryTests
         result.MainEmail!.Address.Should().Be("Jane@Example.com");
     }
 
-    private static UserProfileProjectionEntityDto CreateProjection(
+    private static UserProfileProjectionEntity CreateProjection(
         string friendlyUserId,
         string? firstName,
         string? lastName,

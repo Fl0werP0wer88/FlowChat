@@ -25,7 +25,7 @@ public sealed class UserProfileProjectionWriteRepository(AppDbContext dbContext)
         var now = DateTimeOffset.UtcNow;
 
         await _dbContext.UserProfileProjections.AddAsync(
-            new UserProfileProjectionEntityDto
+            new UserProfileProjectionEntity
             {
                 UserProfileId = projection.UserProfileId,
                 FriendlyUserId = projection.FriendlyUserId,

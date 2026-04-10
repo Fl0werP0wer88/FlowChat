@@ -4,9 +4,9 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace FlowChat.SocialGraphService.Persistence.Configurations;
 
-public sealed class UserProfileProjectionConfiguration : IEntityTypeConfiguration<UserProfileProjectionEntityDto>
+public sealed class UserProfileProjectionConfiguration : IEntityTypeConfiguration<UserProfileProjectionEntity>
 {
-    public void Configure(EntityTypeBuilder<UserProfileProjectionEntityDto> builder)
+    public void Configure(EntityTypeBuilder<UserProfileProjectionEntity> builder)
     {
         builder.ToTable("UserProfileProjection");
 

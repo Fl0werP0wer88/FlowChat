@@ -1,6 +1,6 @@
 namespace FlowChat.SocialGraphService.Persistence.Entities;
 
-public sealed class UserProfileProjectionEntityDto
+public sealed class UserProfileProjectionEntity
 {
     public Guid UserProfileId { get; set; }
     public string FriendlyUserId { get; set; } = string.Empty;

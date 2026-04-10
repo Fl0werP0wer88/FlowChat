@@ -10,7 +10,7 @@ public sealed class UserProfileProjectionReadRepository(AppDbContext dbContext) 
 {
     private readonly AppDbContext _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
 
-    private static readonly Expression<Func<UserProfileProjectionEntityDto, UserProfileProjectionDto>> Projection = entity => new UserProfileProjectionDto
+    private static readonly Expression<Func<UserProfileProjectionEntity, UserProfileProjectionDto>> Projection = entity => new UserProfileProjectionDto
     {
         UserProfileId = entity.UserProfileId,
         FriendlyUserId = entity.FriendlyUserId,

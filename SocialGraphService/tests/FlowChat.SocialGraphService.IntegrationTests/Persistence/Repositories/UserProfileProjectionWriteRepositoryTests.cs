@@ -75,7 +75,7 @@ public sealed class UserProfileProjectionWriteRepositoryTests
 
         await using (var seedContext = CreateDbContext(connection))
         {
-            seedContext.UserProfileProjections.Add(new UserProfileProjectionEntityDto
+            seedContext.UserProfileProjections.Add(new UserProfileProjectionEntity
             {
                 UserProfileId = userProfileId,
                 FriendlyUserId = "existing-user",
@@ -117,7 +117,7 @@ public sealed class UserProfileProjectionWriteRepositoryTests
 
         await using (var seedContext = CreateDbContext(connection))
         {
-            seedContext.UserProfileProjections.Add(new UserProfileProjectionEntityDto
+            seedContext.UserProfileProjections.Add(new UserProfileProjectionEntity
             {
                 UserProfileId = userProfileId,
                 FriendlyUserId = "old-user",
