@@ -1,0 +1,26 @@
+name: flowchat-redis
+
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    command:
+      - redis-server
+      - --appendonly
+      - "yes"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test:
+        - CMD
+        - redis-cli
+        - ping
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 5s
+    restart: unless-stopped
+
+volumes:
+  redis_data:

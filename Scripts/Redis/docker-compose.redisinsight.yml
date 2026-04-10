@@ -1,0 +1,20 @@
+name: flowchat-redisinsight
+
+services:
+  redisinsight:
+    image: redis/redisinsight:latest
+    ports:
+      - "5540:5540"
+    environment:
+      RI_ACCEPT_TERMS_AND_CONDITIONS: "true"
+      RI_REDIS_HOST: "host.docker.internal"
+      RI_REDIS_PORT: "6379"
+      RI_REDIS_ALIAS: "FlowChat Redis"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - redisinsight_data:/data
+    restart: unless-stopped
+
+volumes:
+  redisinsight_data:
