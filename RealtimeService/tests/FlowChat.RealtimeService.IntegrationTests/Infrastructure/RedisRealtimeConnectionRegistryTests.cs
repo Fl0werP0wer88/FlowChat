@@ -67,7 +67,7 @@ public sealed class RedisRealtimeConnectionRegistryTests : IAsyncLifetime
         await database.KeyExpireAsync("flowchat:test:connections:connection-3", TimeSpan.FromSeconds(2));
         await database.KeyExpireAsync(userSetKey, TimeSpan.FromSeconds(2));
 
-        await registry.RefreshAsync(["connection-3"], CancellationToken.None);
+        await registry.RefreshAsync([new RealtimeConnectionRefreshEntry(userId, "connection-3")], CancellationToken.None);
 
         var connectionTtl = await database.KeyTimeToLiveAsync("flowchat:test:connections:connection-3");
         var setTtl = await database.KeyTimeToLiveAsync(userSetKey);

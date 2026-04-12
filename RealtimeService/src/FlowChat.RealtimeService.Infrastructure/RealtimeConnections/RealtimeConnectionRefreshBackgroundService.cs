@@ -25,15 +25,15 @@ internal sealed class RealtimeConnectionRefreshBackgroundService(
 
         while (!stoppingToken.IsCancellationRequested && await timer.WaitForNextTickAsync(stoppingToken))
         {
-            var connectionIds = _activeConnectionTracker.Snapshot();
-            if (connectionIds.Count == 0)
+            var connections = _activeConnectionTracker.Snapshot();
+            if (connections.Count == 0)
             {
                 continue;
             }
 
             try
             {
-                await _realtimeConnectionRegistry.RefreshAsync(connectionIds, stoppingToken);
+                await _realtimeConnectionRegistry.RefreshAsync(connections, stoppingToken);
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
             {

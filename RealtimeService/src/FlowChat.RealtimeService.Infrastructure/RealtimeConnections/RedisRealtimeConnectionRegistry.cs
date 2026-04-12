@@ -56,7 +56,7 @@ internal sealed class RedisRealtimeConnectionRegistry(
         }
 
         await Task.WhenAll(hashSetTask, addToSetTask, expireConnectionTask, expireUserSetTask);
-        _activeConnectionTracker.Track(connectionId);
+        _activeConnectionTracker.Track(userId, connectionId);
     }
 
     public async Task UnregisterAsync(string connectionId, CancellationToken cancellationToken)
@@ -68,12 +68,20 @@ internal sealed class RedisRealtimeConnectionRegistry(
         {
             var database = _connectionMultiplexer.GetDatabase();
             var connectionKey = GetConnectionKey(connectionId);
-            var userIdValue = await database.HashGetAsync(connectionKey, HashFields.UserId);
 
-            if (userIdValue.IsNullOrEmpty || !Guid.TryParse(userIdValue.ToString(), out var userId) || userId == Guid.Empty)
+            Guid userId;
+            if (_activeConnectionTracker.TryGet(connectionId, out var trackedConnection) && trackedConnection is not null)
             {
-                await database.KeyDeleteAsync(connectionKey);
-                return;
+                userId = trackedConnection.UserId;
+            }
+            else
+            {
+                var userIdValue = await database.HashGetAsync(connectionKey, HashFields.UserId);
+                if (userIdValue.IsNullOrEmpty || !Guid.TryParse(userIdValue.ToString(), out userId) || userId == Guid.Empty)
+                {
+                    await database.KeyDeleteAsync(connectionKey);
+                    return;
+                }
             }
 
             var userConnectionsKey = GetUserConnectionsKey(userId);
@@ -91,30 +99,40 @@ internal sealed class RedisRealtimeConnectionRegistry(
         }
     }
 
-    public async Task RefreshAsync(IReadOnlyCollection<string> connectionIds, CancellationToken cancellationToken)
+    public async Task RefreshAsync(IReadOnlyCollection<RealtimeConnectionRefreshEntry> connections, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        if (connectionIds.Count == 0)
+        if (connections.Count == 0)
         {
             return;
         }
 
         var database = _connectionMultiplexer.GetDatabase();
-        foreach (var connectionId in connectionIds.Where(static connectionId => !string.IsNullOrWhiteSpace(connectionId)).Distinct(StringComparer.Ordinal))
+        var activeConnections = connections
+            .Where(static connection => connection.UserId != Guid.Empty && !string.IsNullOrWhiteSpace(connection.ConnectionId))
+            .DistinctBy(static connection => connection.ConnectionId)
+            .ToArray();
+
+        var connectionExpireTasks = activeConnections.ToDictionary(
+            static connection => connection.ConnectionId,
+            connection => database.KeyExpireAsync(GetConnectionKey(connection.ConnectionId), _settings.ConnectionTtl),
+            StringComparer.Ordinal);
+
+        var userSetExpireTasks = activeConnections
+            .DistinctBy(static connection => connection.UserId)
+            .ToDictionary(
+                static connection => connection.UserId,
+                connection => database.KeyExpireAsync(GetUserConnectionsKey(connection.UserId), _settings.ConnectionTtl));
+
+        await Task.WhenAll(connectionExpireTasks.Values.Concat(userSetExpireTasks.Values));
+
+        foreach (var (connectionId, expireTask) in connectionExpireTasks)
         {
             cancellationToken.ThrowIfCancellationRequested();
-
-            var connectionKey = GetConnectionKey(connectionId);
-            var userIdValue = await database.HashGetAsync(connectionKey, HashFields.UserId);
-            if (userIdValue.IsNullOrEmpty || !Guid.TryParse(userIdValue.ToString(), out var userId) || userId == Guid.Empty)
+            if (!expireTask.Result)
             {
                 _activeConnectionTracker.Untrack(connectionId);
-                continue;
             }
-
-            var userConnectionsKey = GetUserConnectionsKey(userId);
-            await database.KeyExpireAsync(connectionKey, _settings.ConnectionTtl);
-            await database.KeyExpireAsync(userConnectionsKey, _settings.ConnectionTtl);
         }
     }
 

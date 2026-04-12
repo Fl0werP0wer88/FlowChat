@@ -6,5 +6,5 @@ public interface IRealtimeConnectionRegistry
 
     Task UnregisterAsync(string connectionId, CancellationToken cancellationToken);
 
-    Task RefreshAsync(IReadOnlyCollection<string> connectionIds, CancellationToken cancellationToken);
+    Task RefreshAsync(IReadOnlyCollection<RealtimeConnectionRefreshEntry> connections, CancellationToken cancellationToken);
 }

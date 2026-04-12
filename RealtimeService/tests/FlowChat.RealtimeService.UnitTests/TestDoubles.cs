@@ -135,7 +135,7 @@ internal sealed class CapturingRealtimeConnectionRegistry : IRealtimeConnectionR
     public Guid? LastRegisteredUserId { get; private set; }
     public string? LastRegisteredConnectionId { get; private set; }
     public string? LastUnregisteredConnectionId { get; private set; }
-    public IReadOnlyCollection<string>? LastRefreshedConnectionIds { get; private set; }
+    public IReadOnlyCollection<RealtimeConnectionRefreshEntry>? LastRefreshedConnections { get; private set; }
 
     public Exception? RegisterException { get; set; }
     public Exception? UnregisterException { get; set; }
@@ -163,9 +163,9 @@ internal sealed class CapturingRealtimeConnectionRegistry : IRealtimeConnectionR
         return Task.CompletedTask;
     }
 
-    public Task RefreshAsync(IReadOnlyCollection<string> connectionIds, CancellationToken cancellationToken)
+    public Task RefreshAsync(IReadOnlyCollection<RealtimeConnectionRefreshEntry> connections, CancellationToken cancellationToken)
     {
-        LastRefreshedConnectionIds = connectionIds;
+        LastRefreshedConnections = connections;
         return Task.CompletedTask;
     }
 }

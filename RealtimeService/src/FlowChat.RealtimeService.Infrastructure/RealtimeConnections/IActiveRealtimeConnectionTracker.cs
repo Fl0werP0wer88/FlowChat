@@ -1,10 +1,14 @@
+using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
+
 namespace FlowChat.RealtimeService.Infrastructure.RealtimeConnections;
 
 internal interface IActiveRealtimeConnectionTracker
 {
-    void Track(string connectionId);
+    void Track(Guid userId, string connectionId);
 
     void Untrack(string connectionId);
 
-    IReadOnlyCollection<string> Snapshot();
+    bool TryGet(string connectionId, out RealtimeConnectionRefreshEntry? connection);
+
+    IReadOnlyCollection<RealtimeConnectionRefreshEntry> Snapshot();
 }
