@@ -1,11 +1,11 @@
 using FlowChat.Core.Domain;
 using FluentValidation;
 
-namespace FlowChat.PresenceService.Application.Features.Presence.Commands.ChangeUserStatus;
+namespace FlowChat.PresenceService.Application.Features.Presence.Commands.ChangePresenceStatus;
 
-public sealed class ChangeUserStatusCommandValidator : AbstractValidator<ChangeUserStatusCommand>
+public sealed class ChangePresenceStatusCommandValidator : AbstractValidator<ChangePresenceStatusCommand>
 {
-    public ChangeUserStatusCommandValidator()
+    public ChangePresenceStatusCommandValidator()
     {
         RuleFor(x => x.UserId)
             .NotEmpty();

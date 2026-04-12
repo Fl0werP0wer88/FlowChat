@@ -6,7 +6,7 @@ public interface IConsumersSettingsManager
 {
     ChatMessageSentConsumerOptions GetChatMessageSentConsumerOptions();
 
-    UserPresenceChangedConsumerOptions GetUserStatusChangedConsumerOptions();
+    PresenceStatusChangedConsumerOptions GetPresenceStatusChangedConsumerOptions();
 
     RealtimeApiSettings GetRealtimeApiSettings();
 }

@@ -9,10 +9,10 @@ namespace FlowChat.RealtimeService.Consumers.Kafka;
 public sealed class UserPresenceChangedSubscriber(
     IRealtimeInternalApiClient realtimeInternalApiClient,
     ILogger<UserPresenceChangedSubscriber> logger)
-    : SubscriberBase<UserStatusChangedIntegrationEvent>(logger)
+    : SubscriberBase<PresenceStatusChangedIntegrationEvent>(logger)
 {
     protected override async Task ExecuteAsync(
-        UserStatusChangedIntegrationEvent message,
+        PresenceStatusChangedIntegrationEvent message,
         CancellationToken cancellationToken)
     {
         Validate(message);
@@ -31,7 +31,7 @@ public sealed class UserPresenceChangedSubscriber(
         await realtimeInternalApiClient.PublishPresenceChangeAsync(request, cancellationToken);
     }
 
-    private static void Validate(UserStatusChangedIntegrationEvent message)
+    private static void Validate(PresenceStatusChangedIntegrationEvent message)
     {
         if (message.UserId == Guid.Empty)
         {

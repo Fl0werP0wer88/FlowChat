@@ -5,16 +5,16 @@ using FlowChat.PresenceService.Application.Contracts.Persistence;
 using FlowChat.Shared.Application;
 using MediatR;
 
-namespace FlowChat.PresenceService.Application.Features.Presence.Commands.ChangeUserStatus;
+namespace FlowChat.PresenceService.Application.Features.Presence.Commands.ChangePresenceStatus;
 
-public sealed class ChangeUserStatusCommandHandler(
+public sealed class ChangePresenceStatusCommandHandler(
     IContactObserverProjectionReadRepository contactObserverProjectionReadRepository,
     IPresenceStatusStore presenceStatusStore,
     IPresenceStatusUpdateService presenceStatusUpdateService)
-    : ICommandHandler<ChangeUserStatusCommand, Unit>
+    : ICommandHandler<ChangePresenceStatusCommand, Unit>
 {
     public async Task<FlowChatResult<Unit>> Handle(
-        ChangeUserStatusCommand request,
+        ChangePresenceStatusCommand request,
         CancellationToken cancellationToken)
     {
         var previousStatus = await presenceStatusStore.GetAsync(request.UserId, cancellationToken);
@@ -27,7 +27,7 @@ public sealed class ChangeUserStatusCommandHandler(
             request.UserId,
             cancellationToken);
         var changedAtUtc = DateTimeOffset.UtcNow;
-        var integrationEvent = new UserStatusChangedIntegrationEvent
+        var integrationEvent = new PresenceStatusChangedIntegrationEvent
         {
             Key = request.UserId.ToString("D"),
             UserId = request.UserId,

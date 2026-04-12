@@ -6,13 +6,13 @@ using FlowChat.PresenceService.Persistence.Entities;
 
 namespace FlowChat.PresenceService.IntegrationTests.API.Features.Presence.Public;
 
-public sealed class ChangeUserStatusControllerTests(PresenceApiFactory factory)
+public sealed class ChangePresenceStatusControllerTests(PresenceApiFactory factory)
     : IClassFixture<PresenceApiFactory>
 {
     private readonly HttpClient _client = factory.CreateClient();
 
     [Fact]
-    public async Task ChangeUserStatus_WithAuthenticatedUser_StoresStatusAndPublishesEvent()
+    public async Task ChangePresenceStatus_WithAuthenticatedUser_StoresStatusAndPublishesEvent()
     {
         var userId = Guid.NewGuid();
         var observerUserId = Guid.NewGuid();
@@ -45,7 +45,7 @@ public sealed class ChangeUserStatusControllerTests(PresenceApiFactory factory)
         storedStatus.Should().NotBeNull();
         storedStatus!.Status.Should().Be(PresenceStatus.Busy);
 
-        var publishedEvent = factory.EventPublisher.PublishedOfType<UserStatusChangedIntegrationEvent>().Should().ContainSingle().Subject;
+        var publishedEvent = factory.EventPublisher.PublishedOfType<PresenceStatusChangedIntegrationEvent>().Should().ContainSingle().Subject;
         publishedEvent.UserId.Should().Be(userId);
         publishedEvent.Status.Should().Be(PresenceStatus.Busy);
         publishedEvent.RecipientUserIds.Should().BeEquivalentTo([observerUserId]);

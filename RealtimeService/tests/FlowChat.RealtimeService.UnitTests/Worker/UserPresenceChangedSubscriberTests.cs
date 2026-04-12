@@ -35,7 +35,7 @@ public sealed class UserPresenceChangedSubscriberTests
             .Returns(Task.CompletedTask);
 
         await _subscriber.HandleAsync(
-            new UserStatusChangedIntegrationEvent
+            new PresenceStatusChangedIntegrationEvent
             {
                 UserId = _fixture.Create<Guid>(),
                 Status = PresenceStatus.AFK,
@@ -52,7 +52,7 @@ public sealed class UserPresenceChangedSubscriberTests
     public async Task HandleAsync_WhenStatusUnsupported_ThrowsNonTransientException()
     {
         var act = () => _subscriber.HandleAsync(
-            new UserStatusChangedIntegrationEvent
+            new PresenceStatusChangedIntegrationEvent
             {
                 UserId = _fixture.Create<Guid>(),
                 Status = (PresenceStatus)999,

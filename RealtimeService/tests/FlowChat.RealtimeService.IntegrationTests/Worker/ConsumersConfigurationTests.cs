@@ -76,16 +76,16 @@ public sealed class ConsumersConfigurationTests
                 ["Kafka:ChatMessageSentConsumer:RetryBaseDelaySeconds"] = "5",
                 ["Kafka:ChatMessageSentConsumer:RetryMaxDelaySeconds"] = "300",
                 ["Kafka:ChatMessageSentConsumer:AutoOffsetReset"] = "Earliest",
-                ["Kafka:UserStatusChangedConsumer:BootstrapServers"] = "localhost:9092",
-                ["Kafka:UserStatusChangedConsumer:GroupId"] = "realtime-service",
-                ["Kafka:UserStatusChangedConsumer:RetryGroupId"] = "realtime-service-retry",
-                ["Kafka:UserStatusChangedConsumer:Topic"] = "dev.flowchat.presence.user-status-changed.v1",
-                ["Kafka:UserStatusChangedConsumer:RetryTopic"] = "dev.flowchat.presence.user-status-changed.v1.retry",
-                ["Kafka:UserStatusChangedConsumer:DeadLetterTopic"] = "dev.flowchat.presence.user-status-changed.v1.dlq",
-                ["Kafka:UserStatusChangedConsumer:MaxRetryCount"] = "5",
-                ["Kafka:UserStatusChangedConsumer:RetryBaseDelaySeconds"] = "5",
-                ["Kafka:UserStatusChangedConsumer:RetryMaxDelaySeconds"] = "300",
-                ["Kafka:UserStatusChangedConsumer:AutoOffsetReset"] = "Earliest"
+                ["Kafka:PresenceStatusChangedConsumer:BootstrapServers"] = "localhost:9092",
+                ["Kafka:PresenceStatusChangedConsumer:GroupId"] = "realtime-service",
+                ["Kafka:PresenceStatusChangedConsumer:RetryGroupId"] = "realtime-service-retry",
+                ["Kafka:PresenceStatusChangedConsumer:Topic"] = "dev.flowchat.presence.presence-status-changed.v1",
+                ["Kafka:PresenceStatusChangedConsumer:RetryTopic"] = "dev.flowchat.presence.presence-status-changed.v1.retry",
+                ["Kafka:PresenceStatusChangedConsumer:DeadLetterTopic"] = "dev.flowchat.presence.presence-status-changed.v1.dlq",
+                ["Kafka:PresenceStatusChangedConsumer:MaxRetryCount"] = "5",
+                ["Kafka:PresenceStatusChangedConsumer:RetryBaseDelaySeconds"] = "5",
+                ["Kafka:PresenceStatusChangedConsumer:RetryMaxDelaySeconds"] = "300",
+                ["Kafka:PresenceStatusChangedConsumer:AutoOffsetReset"] = "Earliest"
             })
             .Build();
     }

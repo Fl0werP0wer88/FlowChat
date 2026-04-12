@@ -27,7 +27,7 @@ internal sealed class RedisPresenceStatusStore(
 
         var database = _connectionMultiplexer.GetDatabase();
         var values = await database.HashGetAsync(
-            GetUserStatusKey(userId),
+            GetPresenceStatusKey(userId),
             [HashFields.UserId, HashFields.Status, HashFields.ChangedAtUtc]);
         if (values.All(static value => value.IsNullOrEmpty))
         {
@@ -54,7 +54,7 @@ internal sealed class RedisPresenceStatusStore(
 
         var database = _connectionMultiplexer.GetDatabase();
         await database.HashSetAsync(
-            GetUserStatusKey(userId),
+            GetPresenceStatusKey(userId),
             [
                 new HashEntry(HashFields.UserId, userId.ToString("D")),
                 new HashEntry(HashFields.Status, status.ToString()),
@@ -65,8 +65,8 @@ internal sealed class RedisPresenceStatusStore(
     public Task DeleteAsync(Guid userId, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        return _connectionMultiplexer.GetDatabase().KeyDeleteAsync(GetUserStatusKey(userId));
+        return _connectionMultiplexer.GetDatabase().KeyDeleteAsync(GetPresenceStatusKey(userId));
     }
 
-    private string GetUserStatusKey(Guid userId) => $"{_settings.KeyPrefix}:user-status:{userId:D}";
+    private string GetPresenceStatusKey(Guid userId) => $"{_settings.KeyPrefix}:presence-status:{userId:D}";
 }

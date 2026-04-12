@@ -8,6 +8,6 @@ public interface IPresenceStatusUpdateService
     Task<FlowChatResult<Unit>> UpdateAndPublishAsync(
         Guid userId,
         Features.Presence.PresenceStatusSnapshot? previousStatus,
-        UserStatusChangedIntegrationEvent integrationEvent,
+        PresenceStatusChangedIntegrationEvent integrationEvent,
         CancellationToken cancellationToken);
 }

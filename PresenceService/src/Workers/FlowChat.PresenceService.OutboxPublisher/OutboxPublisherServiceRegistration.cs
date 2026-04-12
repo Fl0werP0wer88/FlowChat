@@ -17,9 +17,9 @@ public static class OutboxPublisherServiceRegistration
         IConfiguration configuration)
     {
         var producerOptions = configuration
-            .GetSection(UserStatusChangedProducerOptions.SectionName)
-            .Get<UserStatusChangedProducerOptions>()
-            ?? new UserStatusChangedProducerOptions();
+            .GetSection(PresenceStatusChangedProducerOptions.SectionName)
+            .Get<PresenceStatusChangedProducerOptions>()
+            ?? new PresenceStatusChangedProducerOptions();
         var outboxOptions = configuration
             .GetSection(OutboxPublisherRuntimeOptions.SectionName)
             .Get<OutboxPublisherRuntimeOptions>()
@@ -44,7 +44,7 @@ public static class OutboxPublisherServiceRegistration
             .AddKafkaClients(clients => clients
                 .WithBootstrapServers(producerOptions.BootstrapServers)
                 .AddProducer(producer => producer
-                    .Produce<UserStatusChangedIntegrationEvent>("presence-user-status-changed", endpoint => endpoint
+                    .Produce<PresenceStatusChangedIntegrationEvent>("presence-status-changed", endpoint => endpoint
                         .ProduceTo(producerOptions.Topic)
                         .SetKafkaKey(message => message?.Key)
                         .SerializeAsJson(serializer => serializer.SetTypeHeader()))));

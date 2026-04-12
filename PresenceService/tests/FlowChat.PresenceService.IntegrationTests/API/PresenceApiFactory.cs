@@ -1,4 +1,4 @@
-using FlowChat.PresenceService.API.Features.Presence.Public.ChangeUserStatus;
+using FlowChat.PresenceService.API.Features.Presence.Public.ChangePresenceStatus;
 using FlowChat.PresenceService.Application.Contracts.Infrastructure;
 using FlowChat.PresenceService.Persistence;
 using Microsoft.AspNetCore.Authentication;
@@ -15,7 +15,7 @@ using Microsoft.Extensions.Hosting;
 
 namespace FlowChat.PresenceService.IntegrationTests.API;
 
-public sealed class PresenceApiFactory : WebApplicationFactory<ChangeUserStatusController>, IAsyncLifetime
+public sealed class PresenceApiFactory : WebApplicationFactory<ChangePresenceStatusController>, IAsyncLifetime
 {
     public const string InternalApiKey = "test-presence-internal-key";
     private readonly SqliteConnection _connection = new("DataSource=:memory:");
@@ -37,8 +37,8 @@ public sealed class PresenceApiFactory : WebApplicationFactory<ChangeUserStatusC
                 ["JwtSettings:Audience"] = "FlowChat.Client",
                 ["ConnectionStrings:PresenceDb"] = "Host=localhost;Database=test",
                 ["ConnectionStrings:Redis"] = "localhost:6379,user=default,password=flowchat_redis_pw",
-                ["Kafka:UserStatusChangedProducer:BootstrapServers"] = "localhost:9092",
-                ["Kafka:UserStatusChangedProducer:Topic"] = "test.presence.user-status-changed"
+                ["Kafka:PresenceStatusChangedProducer:BootstrapServers"] = "localhost:9092",
+                ["Kafka:PresenceStatusChangedProducer:Topic"] = "test.presence.presence-status-changed"
             });
         });
 

@@ -4,32 +4,32 @@ using FlowChat.Core.Messaging.PresenceService.Events;
 using FlowChat.PresenceService.Application.Contracts.Infrastructure;
 using FlowChat.PresenceService.Application.Contracts.Persistence;
 using FlowChat.PresenceService.Application.Features.Presence;
-using FlowChat.PresenceService.Application.Features.Presence.Commands.ChangeUserStatus;
+using FlowChat.PresenceService.Application.Features.Presence.Commands.ChangePresenceStatus;
 using FluentAssertions;
 using MediatR;
 using Moq;
 
 namespace FlowChat.PresenceService.UnitTests;
 
-public sealed class ChangeUserStatusCommandHandlerTests
+public sealed class ChangePresenceStatusCommandHandlerTests
 {
     private readonly IFixture _fixture = new Fixture();
     private readonly Mock<IContactObserverProjectionReadRepository> _readRepositoryMock = new();
     private readonly Mock<IPresenceStatusStore> _presenceStatusStoreMock = new();
     private readonly Mock<IPresenceStatusUpdateService> _presenceStatusUpdateServiceMock = new();
-    private readonly ChangeUserStatusCommandHandler _handler;
+    private readonly ChangePresenceStatusCommandHandler _handler;
 
-    public ChangeUserStatusCommandHandlerTests()
+    public ChangePresenceStatusCommandHandlerTests()
     {
         _presenceStatusUpdateServiceMock
             .Setup(x => x.UpdateAndPublishAsync(
                 It.IsAny<Guid>(),
                 It.IsAny<PresenceStatusSnapshot?>(),
-                It.IsAny<UserStatusChangedIntegrationEvent>(),
+                It.IsAny<PresenceStatusChangedIntegrationEvent>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(FlowChatResult<Unit>.Success(Unit.Value));
 
-        _handler = new ChangeUserStatusCommandHandler(
+        _handler = new ChangePresenceStatusCommandHandler(
             _readRepositoryMock.Object,
             _presenceStatusStoreMock.Object,
             _presenceStatusUpdateServiceMock.Object);
@@ -42,7 +42,7 @@ public sealed class ChangeUserStatusCommandHandlerTests
         var recipient1 = _fixture.Create<Guid>();
         var recipient2 = _fixture.Create<Guid>();
         var previous = new PresenceStatusSnapshot(userId, PresenceStatus.Active, DateTimeOffset.UtcNow.AddMinutes(-5));
-        UserStatusChangedIntegrationEvent? capturedEvent = null;
+        PresenceStatusChangedIntegrationEvent? capturedEvent = null;
 
         _presenceStatusStoreMock
             .Setup(x => x.GetAsync(userId, It.IsAny<CancellationToken>()))
@@ -54,13 +54,13 @@ public sealed class ChangeUserStatusCommandHandlerTests
             .Setup(x => x.UpdateAndPublishAsync(
                 userId,
                 previous,
-                It.IsAny<UserStatusChangedIntegrationEvent>(),
+                It.IsAny<PresenceStatusChangedIntegrationEvent>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<Guid, PresenceStatusSnapshot?, UserStatusChangedIntegrationEvent, CancellationToken>((_, _, integrationEvent, _) => capturedEvent = integrationEvent)
+            .Callback<Guid, PresenceStatusSnapshot?, PresenceStatusChangedIntegrationEvent, CancellationToken>((_, _, integrationEvent, _) => capturedEvent = integrationEvent)
             .ReturnsAsync(FlowChatResult<Unit>.Success(Unit.Value));
 
         var result = await _handler.Handle(
-            new ChangeUserStatusCommand(userId, PresenceStatus.Busy),
+            new ChangePresenceStatusCommand(userId, PresenceStatus.Busy),
             CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
@@ -81,7 +81,7 @@ public sealed class ChangeUserStatusCommandHandlerTests
             .ReturnsAsync(new PresenceStatusSnapshot(userId, PresenceStatus.Invisible, DateTimeOffset.UtcNow));
 
         var result = await _handler.Handle(
-            new ChangeUserStatusCommand(userId, PresenceStatus.Invisible),
+            new ChangePresenceStatusCommand(userId, PresenceStatus.Invisible),
             CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
@@ -92,7 +92,7 @@ public sealed class ChangeUserStatusCommandHandlerTests
             x => x.UpdateAndPublishAsync(
                 It.IsAny<Guid>(),
                 It.IsAny<PresenceStatusSnapshot?>(),
-                It.IsAny<UserStatusChangedIntegrationEvent>(),
+                It.IsAny<PresenceStatusChangedIntegrationEvent>(),
                 It.IsAny<CancellationToken>()),
             Times.Never);
     }

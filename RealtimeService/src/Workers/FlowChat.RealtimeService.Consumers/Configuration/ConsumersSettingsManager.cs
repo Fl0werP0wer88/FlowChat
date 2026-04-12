@@ -11,9 +11,9 @@ public sealed class ConsumersSettingsManager(IConfiguration configuration) : ICo
         _configuration.GetSection(ChatMessageSentConsumerOptions.SectionName).Get<ChatMessageSentConsumerOptions>()
         ?? new ChatMessageSentConsumerOptions();
 
-    public UserPresenceChangedConsumerOptions GetUserStatusChangedConsumerOptions() =>
-        _configuration.GetSection(UserPresenceChangedConsumerOptions.SectionName).Get<UserPresenceChangedConsumerOptions>()
-        ?? new UserPresenceChangedConsumerOptions();
+    public PresenceStatusChangedConsumerOptions GetPresenceStatusChangedConsumerOptions() =>
+        _configuration.GetSection(PresenceStatusChangedConsumerOptions.SectionName).Get<PresenceStatusChangedConsumerOptions>()
+        ?? new PresenceStatusChangedConsumerOptions();
 
     public RealtimeApiSettings GetRealtimeApiSettings() =>
         _configuration.GetSection(RealtimeApiSettings.SectionName).Get<RealtimeApiSettings>()

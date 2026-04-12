@@ -16,7 +16,7 @@ internal sealed class PresenceStatusUpdateService(
     public async Task<FlowChatResult<Unit>> UpdateAndPublishAsync(
         Guid userId,
         PresenceStatusSnapshot? previousStatus,
-        UserStatusChangedIntegrationEvent integrationEvent,
+        PresenceStatusChangedIntegrationEvent integrationEvent,
         CancellationToken cancellationToken)
     {
         try
@@ -38,7 +38,7 @@ internal sealed class PresenceStatusUpdateService(
             await RestorePreviousStatusAsync(userId, previousStatus, cancellationToken);
 
             return FlowChatResult<Unit>.Failure(
-                DomainError.UnExpected("Failed to update user status."));
+                DomainError.UnExpected("Failed to update presence status."));
         }
     }
 

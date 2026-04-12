@@ -140,7 +140,7 @@ public sealed class PresenceStatusUpdateServiceTests
             _integrationEventPublisherMock.Object,
             _unitOfWorkMock.Object);
 
-    private UserStatusChangedIntegrationEvent CreateEvent(Guid userId, PresenceStatus status) =>
+    private PresenceStatusChangedIntegrationEvent CreateEvent(Guid userId, PresenceStatus status) =>
         new()
         {
             Key = userId.ToString("D"),

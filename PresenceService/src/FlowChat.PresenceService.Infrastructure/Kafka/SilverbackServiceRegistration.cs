@@ -16,7 +16,7 @@ public static class SilverbackServiceRegistration
         IConfiguration configuration)
     {
         var settingsManager = new KafkaSettingsManager(configuration);
-        var producerOptions = settingsManager.GetUserStatusChangedProducerOptions();
+        var producerOptions = settingsManager.GetPresenceStatusChangedProducerOptions();
 
         services.AddSilverback()
             .AddSingletonBrokerBehavior<CustomSpanAttributesBehavior>()
@@ -28,7 +28,7 @@ public static class SilverbackServiceRegistration
             .AddKafkaClients(clients => clients
                 .WithBootstrapServers(producerOptions.BootstrapServers)
                 .AddProducer(producer => producer
-                    .Produce<UserStatusChangedIntegrationEvent>("presence-user-status-changed", endpoint => endpoint
+                    .Produce<PresenceStatusChangedIntegrationEvent>("presence-status-changed", endpoint => endpoint
                         .ProduceTo(producerOptions.Topic)
                         .SetKafkaKey(message => message?.Key)
                         .SerializeAsJson(serializer => serializer.SetTypeHeader())

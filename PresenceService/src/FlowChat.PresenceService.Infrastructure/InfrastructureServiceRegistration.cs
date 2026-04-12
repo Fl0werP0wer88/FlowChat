@@ -29,8 +29,8 @@ public static class InfrastructureServiceRegistration
 
             return ConnectionMultiplexer.Connect(options);
         });
-        services.AddScoped<IKafkaProducerOptions<UserStatusChangedIntegrationEvent>>(sp =>
-            sp.GetRequiredService<IKafkaSettingsManager>().GetUserStatusChangedProducerOptions());
+        services.AddScoped<IKafkaProducerOptions<PresenceStatusChangedIntegrationEvent>>(sp =>
+            sp.GetRequiredService<IKafkaSettingsManager>().GetPresenceStatusChangedProducerOptions());
         services.AddScoped<IIntegrationEventPublisher, FlowChatSilverbackEventPublisher>();
         services.AddScoped<IPresenceStatusStore, RedisPresenceStatusStore>();
         services.AddScoped<IPresenceStatusUpdateService, PresenceStatusUpdateService>();
