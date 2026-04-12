@@ -11,7 +11,7 @@ public sealed class ChangeUserStatusCommandValidator : AbstractValidator<ChangeU
             .NotEmpty();
 
         RuleFor(x => x.Status)
-            .Must(status => Enum.IsDefined(typeof(UserStatus), status))
+            .Must(status => Enum.IsDefined(typeof(UserPresenceStatus), status))
             .WithMessage("Status is invalid.");
     }
 }

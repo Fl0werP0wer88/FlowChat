@@ -37,14 +37,14 @@ public sealed class PublishPresenceChangeCommandHandlerTests
         var result = await _handler.Handle(
             new PublishPresenceChangeCommand(
                 _fixture.Create<Guid>(),
-                UserStatus.Active,
+                UserPresenceStatus.Active,
                 new DateTimeOffset(2026, 3, 17, 12, 30, 0, TimeSpan.Zero),
                 [recipientUserId]),
             CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
         capturedNotification.Should().NotBeNull();
-        capturedNotification!.Status.Should().Be(UserStatus.Active);
+        capturedNotification!.Status.Should().Be(UserPresenceStatus.Active);
         capturedNotification.RecipientUserIds.Should().ContainSingle().Which.Should().Be(recipientUserId);
     }
 
@@ -52,7 +52,7 @@ public sealed class PublishPresenceChangeCommandHandlerTests
     public async Task Handle_WhenStatusIsInvalid_ReturnsBadRequestFailure()
     {
         var result = await _handler.Handle(
-            new PublishPresenceChangeCommand(_fixture.Create<Guid>(), (UserStatus)999, DateTimeOffset.UtcNow, [_fixture.Create<Guid>()]),
+            new PublishPresenceChangeCommand(_fixture.Create<Guid>(), (UserPresenceStatus)999, DateTimeOffset.UtcNow, [_fixture.Create<Guid>()]),
             CancellationToken.None);
 
         result.IsFailure.Should().BeTrue();

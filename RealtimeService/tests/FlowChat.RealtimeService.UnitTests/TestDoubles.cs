@@ -135,14 +135,14 @@ internal sealed class CapturingRealtimeConnectionRegistry : IRealtimeConnectionR
 {
     public Guid? LastRegisteredUserId { get; private set; }
     public string? LastRegisteredConnectionId { get; private set; }
-    public UserStatus? LastRegisteredStatus { get; private set; }
+    public UserPresenceStatus? LastRegisteredStatus { get; private set; }
     public string? LastUnregisteredConnectionId { get; private set; }
     public IReadOnlyCollection<RealtimeConnectionRefreshEntry>? LastRefreshedConnections { get; private set; }
 
     public Exception? RegisterException { get; set; }
     public Exception? UnregisterException { get; set; }
 
-    public Task RegisterAsync(Guid userId, string connectionId, UserStatus status, CancellationToken cancellationToken)
+    public Task RegisterAsync(Guid userId, string connectionId, UserPresenceStatus status, CancellationToken cancellationToken)
     {
         if (RegisterException is not null)
         {

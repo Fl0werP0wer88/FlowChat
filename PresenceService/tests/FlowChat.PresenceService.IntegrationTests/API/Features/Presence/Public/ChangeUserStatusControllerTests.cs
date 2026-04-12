@@ -33,7 +33,7 @@ public sealed class ChangeUserStatusControllerTests(PresenceApiFactory factory)
 
         var request = new HttpRequestMessage(HttpMethod.Put, "/api/presence/status")
         {
-            Content = JsonContent.Create(new { Status = UserStatus.Busy })
+            Content = JsonContent.Create(new { Status = UserPresenceStatus.Busy })
         };
         request.Headers.Add(TestAuthenticationHandler.UserIdHeaderName, userId.ToString("D"));
 
@@ -43,11 +43,11 @@ public sealed class ChangeUserStatusControllerTests(PresenceApiFactory factory)
 
         var storedStatus = await factory.PresenceStatusStore.GetAsync(userId, CancellationToken.None);
         storedStatus.Should().NotBeNull();
-        storedStatus!.Status.Should().Be(UserStatus.Busy);
+        storedStatus!.Status.Should().Be(UserPresenceStatus.Busy);
 
         var publishedEvent = factory.EventPublisher.PublishedOfType<UserStatusChangedIntegrationEvent>().Should().ContainSingle().Subject;
         publishedEvent.UserId.Should().Be(userId);
-        publishedEvent.Status.Should().Be(UserStatus.Busy);
+        publishedEvent.Status.Should().Be(UserPresenceStatus.Busy);
         publishedEvent.RecipientUserIds.Should().BeEquivalentTo([observerUserId]);
     }
 }

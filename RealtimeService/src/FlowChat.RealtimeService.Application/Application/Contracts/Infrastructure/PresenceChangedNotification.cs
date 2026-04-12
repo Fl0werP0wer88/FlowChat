@@ -4,6 +4,6 @@ namespace FlowChat.RealtimeService.Application.Application.Contracts.Infrastruct
 
 public sealed record PresenceChangedNotification(
     Guid UserId,
-    UserStatus Status,
+    UserPresenceStatus Status,
     DateTimeOffset ChangedAtUtc,
     IReadOnlyCollection<Guid> RecipientUserIds);

@@ -4,5 +4,5 @@ namespace FlowChat.PresenceService.Application.Features.Presence;
 
 public sealed record PresenceStatusSnapshot(
     Guid UserId,
-    UserStatus Status,
+    UserPresenceStatus Status,
     DateTimeOffset ChangedAtUtc);

@@ -9,7 +9,7 @@ public interface IPresenceStatusStore
 
     Task SetAsync(
         Guid userId,
-        UserStatus status,
+        UserPresenceStatus status,
         DateTimeOffset changedAtUtc,
         CancellationToken cancellationToken);
 

@@ -6,4 +6,4 @@ namespace FlowChat.PresenceService.Application.Features.Presence.Commands.Change
 
 public sealed record ChangeUserStatusCommand(
     Guid UserId,
-    UserStatus Status) : ICommand<Unit>;
+    UserPresenceStatus Status) : ICommand<Unit>;

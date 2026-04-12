@@ -5,7 +5,7 @@ namespace FlowChat.RealtimeService.Infrastructure.RealtimeConnections;
 
 internal interface IActiveRealtimeConnectionTracker
 {
-    void Track(Guid userId, string connectionId, UserStatus status);
+    void Track(Guid userId, string connectionId, UserPresenceStatus status);
 
     void Untrack(string connectionId);
 

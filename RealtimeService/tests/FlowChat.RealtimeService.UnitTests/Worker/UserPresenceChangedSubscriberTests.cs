@@ -38,14 +38,14 @@ public sealed class UserPresenceChangedSubscriberTests
             new UserStatusChangedIntegrationEvent
             {
                 UserId = _fixture.Create<Guid>(),
-                Status = UserStatus.AFK,
+                Status = UserPresenceStatus.AFK,
                 ChangedAtUtc = new DateTimeOffset(2026, 3, 17, 10, 15, 0, TimeSpan.Zero),
                 RecipientUserIds = [_fixture.Create<Guid>()]
             },
             CancellationToken.None);
 
         capturedRequest.Should().NotBeNull();
-        capturedRequest!.Status.Should().Be(UserStatus.AFK);
+        capturedRequest!.Status.Should().Be(UserPresenceStatus.AFK);
     }
 
     [Fact]
@@ -55,7 +55,7 @@ public sealed class UserPresenceChangedSubscriberTests
             new UserStatusChangedIntegrationEvent
             {
                 UserId = _fixture.Create<Guid>(),
-                Status = (UserStatus)999,
+                Status = (UserPresenceStatus)999,
                 RecipientUserIds = [_fixture.Create<Guid>()]
             },
             CancellationToken.None);

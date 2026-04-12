@@ -35,7 +35,7 @@ internal sealed class RedisPresenceStatusStore(
         }
 
         if (!Guid.TryParse(values[0].ToString(), out var storedUserId)
-            || !Enum.TryParse<UserStatus>(values[1].ToString(), true, out var status)
+            || !Enum.TryParse<UserPresenceStatus>(values[1].ToString(), true, out var status)
             || !DateTimeOffset.TryParse(values[2].ToString(), out var changedAtUtc))
         {
             return null;
@@ -46,7 +46,7 @@ internal sealed class RedisPresenceStatusStore(
 
     public async Task SetAsync(
         Guid userId,
-        UserStatus status,
+        UserPresenceStatus status,
         DateTimeOffset changedAtUtc,
         CancellationToken cancellationToken)
     {

@@ -8,7 +8,7 @@ internal sealed class InMemoryActiveRealtimeConnectionTracker : IActiveRealtimeC
 {
     private readonly ConcurrentDictionary<string, RealtimeConnectionRefreshEntry> _connections = new(StringComparer.Ordinal);
 
-    public void Track(Guid userId, string connectionId, UserStatus status)
+    public void Track(Guid userId, string connectionId, UserPresenceStatus status)
     {
         if (userId == Guid.Empty || string.IsNullOrWhiteSpace(connectionId))
         {
