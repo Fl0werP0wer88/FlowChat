@@ -1,4 +1,5 @@
 using CSharpFunctionalExtensions;
+using FlowChat.Core.Domain;
 using FlowChat.Shared.Application;
 using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
 using FlowChat.Shared.Domain;
@@ -9,9 +10,6 @@ namespace FlowChat.RealtimeService.Application.Features.Presence.Commands.Publis
 public sealed class PublishPresenceChangeCommandHandler(IRealtimeClientDispatcher realtimeClientDispatcher)
     : ICommandHandler<PublishPresenceChangeCommand, Unit>
 {
-    private static readonly HashSet<string> AllowedStatuses =
-        ["online", "away", "offline"];
-
     private readonly IRealtimeClientDispatcher _realtimeClientDispatcher = realtimeClientDispatcher
         ?? throw new ArgumentNullException(nameof(realtimeClientDispatcher));
 
@@ -22,16 +20,10 @@ public sealed class PublishPresenceChangeCommandHandler(IRealtimeClientDispatche
             return FlowChatResult<Unit>.Failure(DomainError.BadRequest("UserId is required."));
         }
 
-        if (string.IsNullOrWhiteSpace(request.Status))
-        {
-            return FlowChatResult<Unit>.Failure(DomainError.BadRequest("Status is required."));
-        }
-
-        var normalizedStatus = request.Status.Trim().ToLowerInvariant();
-        if (!AllowedStatuses.Contains(normalizedStatus))
+        if (!Enum.IsDefined(typeof(UserStatus), request.Status))
         {
             return FlowChatResult<Unit>.Failure(
-                DomainError.BadRequest("Status must be one of: online, away, offline."));
+                DomainError.BadRequest("Status must be one of: Active, AFK, Busy, Invisible."));
         }
 
         var recipientUserIds = NormalizeRecipientUserIds(request.RecipientUserIds);
@@ -43,7 +35,7 @@ public sealed class PublishPresenceChangeCommandHandler(IRealtimeClientDispatche
 
         var notification = new PresenceChangedNotification(
             request.UserId,
-            normalizedStatus,
+            request.Status,
             request.ChangedAtUtc,
             recipientUserIds);
 
@@ -58,4 +50,3 @@ public sealed class PublishPresenceChangeCommandHandler(IRealtimeClientDispatche
             .Distinct()
             .ToArray();
 }
-

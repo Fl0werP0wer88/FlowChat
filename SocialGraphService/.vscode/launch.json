@@ -64,6 +64,33 @@
       "env": {
         "DOTNET_ENVIRONMENT": "Development"
       }
+    },
+    {
+      "name": "SocialGraphService OutboxPublisher",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build: SocialGraphService OutboxPublisher",
+      "program": "${workspaceFolder}/src/Workers/FlowChat.SocialGraphService.OutboxPublisher/bin/Debug/net10.0/FlowChat.SocialGraphService.OutboxPublisher.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/src/Workers/FlowChat.SocialGraphService.OutboxPublisher",
+      "stopAtEntry": false,
+      "console": "integratedTerminal",
+      "env": {
+        "DOTNET_ENVIRONMENT": "Development"
+      }
+    },
+    {
+      "name": "SocialGraphService OutboxPublisher (No Build)",
+      "type": "coreclr",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/Workers/FlowChat.SocialGraphService.OutboxPublisher/bin/Debug/net10.0/FlowChat.SocialGraphService.OutboxPublisher.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/src/Workers/FlowChat.SocialGraphService.OutboxPublisher",
+      "stopAtEntry": false,
+      "console": "integratedTerminal",
+      "env": {
+        "DOTNET_ENVIRONMENT": "Development"
+      }
     }
   ],
   "compounds": [
@@ -71,7 +98,8 @@
       "name": "SocialGraphService",
         "configurations": [
         "SocialGraphService API",
-        "SocialGraphService Consumers"
+        "SocialGraphService Consumers",
+        "SocialGraphService OutboxPublisher"
       ],
       "stopAll": true
     }

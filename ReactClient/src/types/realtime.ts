@@ -1,3 +1,5 @@
+export type UserStatus = "Active" | "AFK" | "Busy" | "Invisible";
+
 export interface RealtimeChatMessage {
   messageId: string;
   conversationId: string;
@@ -9,7 +11,7 @@ export interface RealtimeChatMessage {
 
 export interface PresenceChangedEvent {
   userId: string;
-  status: string;
+  status: UserStatus;
   changedAtUtc: string;
 }
 

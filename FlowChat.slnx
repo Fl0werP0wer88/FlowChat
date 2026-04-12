@@ -90,11 +90,29 @@
   </Folder>
   <Folder Name="/SocialGraphService/src/Workers/">
     <Project Path="SocialGraphService/src/Workers/FlowChat.SocialGraphService.Consumers/FlowChat.SocialGraphService.Consumers.csproj" />
+    <Project Path="SocialGraphService/src/Workers/FlowChat.SocialGraphService.OutboxPublisher/FlowChat.SocialGraphService.OutboxPublisher.csproj" />
   </Folder>
   <Folder Name="/SocialGraphService/tests/">
     <Project Path="SocialGraphService/tests/FlowChat.SocialGraphService.AATs/FlowChat.SocialGraphService.AATs.csproj" />
     <Project Path="SocialGraphService/tests/FlowChat.SocialGraphService.IntegrationTests/FlowChat.SocialGraphService.IntegrationTests.csproj" />
     <Project Path="SocialGraphService/tests/FlowChat.SocialGraphService.UnitTests/FlowChat.SocialGraphService.UnitTests.csproj" />
+  </Folder>
+  <Folder Name="/PresenceService/" />
+  <Folder Name="/PresenceService/src/">
+    <Project Path="PresenceService/src/FlowChat.PresenceService.API/FlowChat.PresenceService.API.csproj" />
+    <Project Path="PresenceService/src/FlowChat.PresenceService.Application/FlowChat.PresenceService.Application.csproj" />
+    <Project Path="PresenceService/src/FlowChat.PresenceService.Domain/FlowChat.PresenceService.Domain.csproj" />
+    <Project Path="PresenceService/src/FlowChat.PresenceService.Infrastructure/FlowChat.PresenceService.Infrastructure.csproj" />
+    <Project Path="PresenceService/src/FlowChat.PresenceService.Persistence/FlowChat.PresenceService.Persistence.csproj" />
+  </Folder>
+  <Folder Name="/PresenceService/src/Workers/">
+    <Project Path="PresenceService/src/Workers/FlowChat.PresenceService.Consumers/FlowChat.PresenceService.Consumers.csproj" />
+    <Project Path="PresenceService/src/Workers/FlowChat.PresenceService.OutboxPublisher/FlowChat.PresenceService.OutboxPublisher.csproj" />
+  </Folder>
+  <Folder Name="/PresenceService/tests/">
+    <Project Path="PresenceService/tests/FlowChat.PresenceService.AATs/FlowChat.PresenceService.AATs.csproj" />
+    <Project Path="PresenceService/tests/FlowChat.PresenceService.IntegrationTests/FlowChat.PresenceService.IntegrationTests.csproj" />
+    <Project Path="PresenceService/tests/FlowChat.PresenceService.UnitTests/FlowChat.PresenceService.UnitTests.csproj" />
   </Folder>
   <Folder Name="/RealtimeService/" />
   <Folder Name="/RealtimeService/src/">

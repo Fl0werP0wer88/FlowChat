@@ -1,4 +1,5 @@
 using AutoFixture;
+using FlowChat.Core.Domain;
 using FlowChat.RealtimeService.Api.Features.Realtime.Internal.PublishPresenceChange;
 using FlowChat.RealtimeService.Application.Features.Presence.Commands.PublishPresenceChange;
 using FlowChat.RealtimeService.Infrastructure.Configuration;
@@ -31,7 +32,7 @@ public sealed class PublishPresenceChangeControllerTests
             new PublishPresenceChangeRequest
             {
                 UserId = _fixture.Create<Guid>(),
-                Status = "online",
+                Status = UserStatus.Active,
                 ChangedAtUtc = new DateTimeOffset(2026, 3, 17, 11, 0, 0, TimeSpan.Zero),
                 RecipientUserIds = [_fixture.Create<Guid>()]
             },
@@ -50,7 +51,7 @@ public sealed class PublishPresenceChangeControllerTests
             new PublishPresenceChangeRequest
             {
                 UserId = _fixture.Create<Guid>(),
-                Status = "online",
+                Status = UserStatus.Active,
                 RecipientUserIds = [_fixture.Create<Guid>()]
             },
             CancellationToken.None);

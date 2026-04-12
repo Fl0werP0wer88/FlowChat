@@ -12,6 +12,7 @@ $services = @(
     @{ Name = 'AuthService'; Project = 'AuthService\src\FlowChat.AuthService.Persistence\FlowChat.AuthService.Persistence.csproj'; Startup = 'AuthService\src\FlowChat.AuthService.API\FlowChat.AuthService.API.csproj' },
     @{ Name = 'ChatService'; Project = 'ChatService\src\FlowChat.ChatService.Persistence\FlowChat.ChatService.Persistence.csproj'; Startup = 'ChatService\src\FlowChat.ChatService.API\FlowChat.ChatService.API.csproj' },
     @{ Name = 'NotificationService'; Project = 'NotificationService\src\FlowChat.NotificationService.Persistence\FlowChat.NotificationService.Persistence.csproj'; Startup = 'NotificationService\src\FlowChat.NotificationService.API\FlowChat.NotificationService.API.csproj' },
+    @{ Name = 'PresenceService'; Project = 'PresenceService\src\FlowChat.PresenceService.Persistence\FlowChat.PresenceService.Persistence.csproj'; Startup = 'PresenceService\src\FlowChat.PresenceService.API\FlowChat.PresenceService.API.csproj' },
     @{ Name = 'SocialGraphService'; Project = 'SocialGraphService\src\FlowChat.SocialGraphService.Persistence\FlowChat.SocialGraphService.Persistence.csproj'; Startup = 'SocialGraphService\src\FlowChat.SocialGraphService.API\FlowChat.SocialGraphService.API.csproj' },
     @{ Name = 'UserProfileService'; Project = 'UserProfileService\src\FlowChat.UserProfileService.Persistence\FlowChat.UserProfileService.Persistence.csproj'; Startup = 'UserProfileService\src\FlowChat.UserProfileService.API\FlowChat.UserProfileService.API.csproj' }
 )

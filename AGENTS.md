@@ -51,6 +51,7 @@ After creating a new service folder, treat files like `AuthService/.vscode/*` an
 FlowChat is a microservices-based chat application built with .NET 10. Services communicate via Kafka (integration events) and expose REST APIs through a gateway.
 
 ### Services
+- **PresenceService** — user presence statuses and contact-based fan-out projection
 - **AuthService** — registration, login, email/phone confirmation, JWT tokens
 - **ChatService** — chat rooms and messages
 - **NotificationService** — email/SMS notifications
@@ -249,6 +250,7 @@ dotnet test FlowChat.slnx
 dotnet test AuthService/FlowChat.AuthService.slnx
 dotnet test ChatService/FlowChat.ChatService.slnx
 dotnet test NotificationService/FlowChat.NotificationService.slnx
+dotnet test PresenceService/FlowChat.PresenceService.slnx
 dotnet test SocialGraphService/FlowChat.SocialGraphService.slnx
 dotnet test UserProfileService/FlowChat.UserProfileService.slnx
 
@@ -294,3 +296,5 @@ Add comments only where they provide information that cannot be derived by readi
 - Do not put business logic in controllers or infrastructure layer
 - Do not raise domain events in `Restore(...)` factory methods
 - Do not introduce `DateTime` for timestamps or UTC values — use `DateTimeOffset` in UTC instead
+
+

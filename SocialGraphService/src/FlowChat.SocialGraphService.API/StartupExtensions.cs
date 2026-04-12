@@ -2,6 +2,7 @@ using FlowChat.Shared.API;
 using FlowChat.SocialGraphService.Application;
 using FlowChat.SocialGraphService.Infrastructure.Configuration;
 using FlowChat.SocialGraphService.Infrastructure;
+using FlowChat.SocialGraphService.Infrastructure.Kafka;
 using FlowChat.SocialGraphService.Persistence;
 using AutoMapper;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -42,6 +43,7 @@ public static class StartupExtensions
         builder.Services.AddApiApplicationServices();
         builder.Services.AddInfrastructureServices(builder.Configuration);
         builder.Services.AddPersistenceServices(builder.Configuration);
+        builder.Services.AddApiSilverbackMessaging(builder.Configuration);
         builder.Services.AddAutoMapper(
             (Action<AutoMapper.IMapperConfigurationExpression>?)null,
             typeof(StartupExtensions).Assembly);

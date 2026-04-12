@@ -11,6 +11,7 @@ public sealed class AddContactCommandHandler : CommandHandlerBase<AddContactComm
 {
     private readonly IContactWriteRepository _contactWriteRepository;
     private readonly IUserProfileProjectionReadRepository _userProfileProjectionReadRepository;
+    private ContactAggregate? _contact;
 
     public AddContactCommandHandler(
         IContactWriteRepository contactWriteRepository,
@@ -47,7 +48,7 @@ public sealed class AddContactCommandHandler : CommandHandlerBase<AddContactComm
             return FlowChatResult<Guid>.Failure(DomainError.Conflict("Contact already exists."));
         }
 
-        var contact = ContactAggregate.Create(
+        _contact = ContactAggregate.Create(
             request.OwnerUserId,
             projection.UserProfileId,
             CreateDisplayName(projection),
@@ -56,12 +57,13 @@ public sealed class AddContactCommandHandler : CommandHandlerBase<AddContactComm
             CreatePhoneNumber(projection),
             CreateEmailAddress(projection));
 
-        await _contactWriteRepository.AddAsync(contact, cancellationToken);
+        await _contactWriteRepository.AddAsync(_contact, cancellationToken);
 
-        return FlowChatResult<Guid>.Success(contact.Id.Value);
+        return FlowChatResult<Guid>.Success(_contact.Id.Value);
     }
 
-    protected override IAggregateRoot? GetAggregateRoot(FlowChatResult<Guid> result) => null;
+    protected override IAggregateRoot? GetAggregateRoot(FlowChatResult<Guid> result) =>
+        result.IsSuccess ? _contact : null;
 
     private async Task<UserProfileProjectionDto?> GetUserProfileProjectionAsync(
         AddContactCommand request,

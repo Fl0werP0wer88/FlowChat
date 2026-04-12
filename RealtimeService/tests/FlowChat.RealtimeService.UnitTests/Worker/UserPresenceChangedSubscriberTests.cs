@@ -1,6 +1,7 @@
 using AutoFixture;
+using FlowChat.Core.Domain;
 using FlowChat.Core.Exceptions;
-using FlowChat.Core.Messaging.UserProfileService.Events;
+using FlowChat.Core.Messaging.PresenceService.Events;
 using FlowChat.RealtimeService.Consumers.Kafka;
 using FlowChat.RealtimeService.Consumers.Realtime.Contracts;
 using FlowChat.RealtimeService.Consumers.Services;
@@ -34,27 +35,27 @@ public sealed class UserPresenceChangedSubscriberTests
             .Returns(Task.CompletedTask);
 
         await _subscriber.HandleAsync(
-            new UserPresenceChangedIntegrationEvent
+            new UserStatusChangedIntegrationEvent
             {
                 UserId = _fixture.Create<Guid>(),
-                Status = " Away ",
+                Status = UserStatus.AFK,
                 ChangedAtUtc = new DateTimeOffset(2026, 3, 17, 10, 15, 0, TimeSpan.Zero),
                 RecipientUserIds = [_fixture.Create<Guid>()]
             },
             CancellationToken.None);
 
         capturedRequest.Should().NotBeNull();
-        capturedRequest!.Status.Should().Be("away");
+        capturedRequest!.Status.Should().Be(UserStatus.AFK);
     }
 
     [Fact]
     public async Task HandleAsync_WhenStatusUnsupported_ThrowsNonTransientException()
     {
         var act = () => _subscriber.HandleAsync(
-            new UserPresenceChangedIntegrationEvent
+            new UserStatusChangedIntegrationEvent
             {
                 UserId = _fixture.Create<Guid>(),
-                Status = "busy",
+                Status = (UserStatus)999,
                 RecipientUserIds = [_fixture.Create<Guid>()]
             },
             CancellationToken.None);

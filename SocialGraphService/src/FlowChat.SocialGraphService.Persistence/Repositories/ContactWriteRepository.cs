@@ -15,5 +15,16 @@ public sealed class ContactWriteRepository(AppDbContext dbContext)
                 contact => contact.OwnerUserId == ownerUserId && contact.ContactUserId == contactUserId,
                 cancellationToken);
     }
+
+    public Task<Contact?> GetByOwnerAndContactAsync(
+        Guid ownerUserId,
+        Guid contactUserId,
+        CancellationToken cancellationToken = default)
+    {
+        return DbContext.Set<Contact>()
+            .FirstOrDefaultAsync(
+                contact => contact.OwnerUserId == ownerUserId && contact.ContactUserId == contactUserId,
+                cancellationToken);
+    }
 }
 

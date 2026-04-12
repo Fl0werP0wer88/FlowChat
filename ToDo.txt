@@ -1,0 +1,6 @@
+
+
+1. Tutaj owner user Id powinien raczej btc brany z JWT a nie przekazywany jako parametr (Inaczej inni uzytkownicy beda mogli dodawac kontakty komus innemu): C:\GithubRepos\FlowChat\SocialGraphService\src\FlowChat.SocialGraphService.API\Features\Contact\Public\AddContact\AddContactRequest.cs
+2. Tutaj: C:\GithubRepos\FlowChat\SocialGraphService\src\FlowChat.SocialGraphService.API\Features\Contact\Public\DeleteContact\DeleteContactController.cs Mozna by chyba usowac po ContacId tylko trzeba by sprawdzac czy faktycznie kontakt nalezy do usuwajacego uzytkownika.
+3. Kazac GPT poszukac requestow w ktorych UserId nie jest brany z JWT i popoprawiać.
+4, Przemianować ContacAdded na ContactCreated

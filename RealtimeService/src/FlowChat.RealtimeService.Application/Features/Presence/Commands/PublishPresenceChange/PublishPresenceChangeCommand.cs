@@ -1,3 +1,4 @@
+using FlowChat.Core.Domain;
 using FlowChat.Shared.Application;
 using MediatR;
 
@@ -5,7 +6,7 @@ namespace FlowChat.RealtimeService.Application.Features.Presence.Commands.Publis
 
 public sealed record PublishPresenceChangeCommand(
     Guid UserId,
-    string? Status,
+    UserStatus Status,
     DateTimeOffset ChangedAtUtc,
     IReadOnlyCollection<Guid> RecipientUserIds) : ICommand<Unit>;
 

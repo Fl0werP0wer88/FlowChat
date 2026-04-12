@@ -11,7 +11,7 @@ public sealed class ConsumersSettingsManager(IConfiguration configuration) : ICo
         _configuration.GetSection(ChatMessageSentConsumerOptions.SectionName).Get<ChatMessageSentConsumerOptions>()
         ?? new ChatMessageSentConsumerOptions();
 
-    public UserPresenceChangedConsumerOptions GetUserPresenceChangedConsumerOptions() =>
+    public UserPresenceChangedConsumerOptions GetUserStatusChangedConsumerOptions() =>
         _configuration.GetSection(UserPresenceChangedConsumerOptions.SectionName).Get<UserPresenceChangedConsumerOptions>()
         ?? new UserPresenceChangedConsumerOptions();
 

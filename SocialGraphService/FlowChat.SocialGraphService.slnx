@@ -8,6 +8,7 @@
   </Folder>
   <Folder Name="/src/Workers/">
     <Project Path="src/Workers/FlowChat.SocialGraphService.Consumers/FlowChat.SocialGraphService.Consumers.csproj" />
+    <Project Path="src/Workers/FlowChat.SocialGraphService.OutboxPublisher/FlowChat.SocialGraphService.OutboxPublisher.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/FlowChat.SocialGraphService.AATs/FlowChat.SocialGraphService.AATs.csproj" />

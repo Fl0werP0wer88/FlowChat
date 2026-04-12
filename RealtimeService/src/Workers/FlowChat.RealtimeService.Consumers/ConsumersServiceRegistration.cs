@@ -22,7 +22,7 @@ public static class ConsumersServiceRegistration
         services.TryAddSingleton<IConsumersSettingsManager>(settingsManager);
 
         var chatMessageSentConsumerOptions = settingsManager.GetChatMessageSentConsumerOptions();
-        var userPresenceChangedConsumerOptions = settingsManager.GetUserPresenceChangedConsumerOptions();
+        var userPresenceChangedConsumerOptions = settingsManager.GetUserStatusChangedConsumerOptions();
 
         services.AddHttpClient(RealtimeInternalApiClient.HttpClientName, (serviceProvider, httpClient) =>
         {

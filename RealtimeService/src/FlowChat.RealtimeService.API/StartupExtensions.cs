@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.Json.Serialization;
 using FlowChat.Shared.API;
 using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
 using FlowChat.RealtimeService.Application;
@@ -102,8 +103,12 @@ public static class StartupExtensions
                 };
             });
         builder.Services.AddAuthorization();
-        builder.Services.AddSignalR();
-        builder.Services.AddControllers();
+        builder.Services.AddSignalR()
+            .AddJsonProtocol(options =>
+                options.PayloadSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
+        builder.Services.AddControllers()
+            .AddJsonOptions(options =>
+                options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
         builder.Services.AddCors(
             options => options.AddPolicy(
                 "open",

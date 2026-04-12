@@ -6,5 +6,6 @@ namespace FlowChat.SocialGraphService.Application.Contracts.Persistence;
 public interface IContactWriteRepository : IWriteRepository<Contact>
 {
     Task<bool> ExistsAsync(Guid ownerUserId, Guid contactUserId, CancellationToken cancellationToken = default);
+    Task<Contact?> GetByOwnerAndContactAsync(Guid ownerUserId, Guid contactUserId, CancellationToken cancellationToken = default);
 }
 

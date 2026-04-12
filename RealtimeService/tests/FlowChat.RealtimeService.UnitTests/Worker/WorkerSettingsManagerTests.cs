@@ -16,9 +16,9 @@ public sealed class WorkerSettingsManagerTests
                 ["Kafka:ChatMessageSentConsumer:BootstrapServers"] = "broker:9092",
                 ["Kafka:ChatMessageSentConsumer:RetryGroupId"] = "realtime-service-retry",
                 ["Kafka:ChatMessageSentConsumer:Topic"] = "chat-topic",
-                ["Kafka:UserPresenceChangedConsumer:BootstrapServers"] = "broker:9092",
-                ["Kafka:UserPresenceChangedConsumer:RetryGroupId"] = "realtime-service-retry",
-                ["Kafka:UserPresenceChangedConsumer:Topic"] = "presence-topic",
+                ["Kafka:UserStatusChangedConsumer:BootstrapServers"] = "broker:9092",
+                ["Kafka:UserStatusChangedConsumer:RetryGroupId"] = "realtime-service-retry",
+                ["Kafka:UserStatusChangedConsumer:Topic"] = "presence-topic",
                 ["RealtimeApi:BaseUrl"] = "http://localhost:5215",
                 ["RealtimeApi:ApiKey"] = "worker-key"
             })
@@ -29,8 +29,8 @@ public sealed class WorkerSettingsManagerTests
         settingsManager.GetChatMessageSentConsumerOptions().BootstrapServers.Should().Be("broker:9092");
         settingsManager.GetChatMessageSentConsumerOptions().Topic.Should().Be("chat-topic");
         settingsManager.GetChatMessageSentConsumerOptions().RetryGroupId.Should().Be("realtime-service-retry");
-        settingsManager.GetUserPresenceChangedConsumerOptions().Topic.Should().Be("presence-topic");
-        settingsManager.GetUserPresenceChangedConsumerOptions().RetryGroupId.Should().Be("realtime-service-retry");
+        settingsManager.GetUserStatusChangedConsumerOptions().Topic.Should().Be("presence-topic");
+        settingsManager.GetUserStatusChangedConsumerOptions().RetryGroupId.Should().Be("realtime-service-retry");
         settingsManager.GetRealtimeApiSettings().BaseUrl.Should().Be("http://localhost:5215");
         settingsManager.GetRealtimeApiSettings().ApiKey.Should().Be("worker-key");
     }
@@ -59,7 +59,7 @@ public sealed class WorkerSettingsManagerTests
         realtimeApiSettings.Should().NotBeNull();
         chatMessageOptions!.Topic.Should().Be("dev.flowchat.chat.message.v1");
         chatMessageOptions.RetryGroupId.Should().Be("realtime-service-retry");
-        presenceOptions!.Topic.Should().Be("dev.flowchat.user-profile.presence-changed.v1");
+        presenceOptions!.Topic.Should().Be("dev.flowchat.presence.user-status-changed.v1");
         presenceOptions.RetryGroupId.Should().Be("realtime-service-retry");
         realtimeApiSettings!.BaseUrl.Should().Be("http://localhost:5215");
     }

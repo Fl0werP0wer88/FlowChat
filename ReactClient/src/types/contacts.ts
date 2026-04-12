@@ -1,4 +1,6 @@
-export type ContactStatus = "online" | "away" | "offline";
+import type { UserStatus } from "./realtime";
+
+export type ContactStatus = UserStatus;
 
 export interface Contact {
   id: string;

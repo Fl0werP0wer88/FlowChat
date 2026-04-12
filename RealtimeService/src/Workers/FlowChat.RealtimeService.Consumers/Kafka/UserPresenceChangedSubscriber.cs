@@ -1,5 +1,5 @@
 using FlowChat.Core.Exceptions;
-using FlowChat.Core.Messaging.UserProfileService.Events;
+using FlowChat.Core.Messaging.PresenceService.Events;
 using FlowChat.Shared.Infrastructure.Silverback.Subscribers;
 using FlowChat.RealtimeService.Consumers.Realtime.Contracts;
 using FlowChat.RealtimeService.Consumers.Services;
@@ -9,21 +9,18 @@ namespace FlowChat.RealtimeService.Consumers.Kafka;
 public sealed class UserPresenceChangedSubscriber(
     IRealtimeInternalApiClient realtimeInternalApiClient,
     ILogger<UserPresenceChangedSubscriber> logger)
-    : SubscriberBase<UserPresenceChangedIntegrationEvent>(logger)
+    : SubscriberBase<UserStatusChangedIntegrationEvent>(logger)
 {
-    private static readonly HashSet<string> AllowedStatuses =
-        ["online", "away", "offline"];
-
     protected override async Task ExecuteAsync(
-        UserPresenceChangedIntegrationEvent message,
+        UserStatusChangedIntegrationEvent message,
         CancellationToken cancellationToken)
     {
-        var normalizedStatus = ValidateAndNormalizeStatus(message);
+        Validate(message);
 
         var request = new PublishPresenceChangeRequest
         {
             UserId = message.UserId,
-            Status = normalizedStatus,
+            Status = message.Status,
             ChangedAtUtc = message.ChangedAtUtc,
             RecipientUserIds = message.RecipientUserIds
                 .Where(userId => userId != Guid.Empty)
@@ -34,14 +31,14 @@ public sealed class UserPresenceChangedSubscriber(
         await realtimeInternalApiClient.PublishPresenceChangeAsync(request, cancellationToken);
     }
 
-    private static string ValidateAndNormalizeStatus(UserPresenceChangedIntegrationEvent message)
+    private static void Validate(UserStatusChangedIntegrationEvent message)
     {
         if (message.UserId == Guid.Empty)
         {
             throw new NonTransientException("Payload does not contain valid UserId.");
         }
 
-        if (string.IsNullOrWhiteSpace(message.Status))
+        if (!Enum.IsDefined(typeof(FlowChat.Core.Domain.UserStatus), message.Status))
         {
             throw new NonTransientException("Payload does not contain valid Status.");
         }
@@ -50,13 +47,5 @@ public sealed class UserPresenceChangedSubscriber(
         {
             throw new NonTransientException("Payload does not contain valid RecipientUserIds.");
         }
-
-        var normalizedStatus = message.Status.Trim().ToLowerInvariant();
-        if (!AllowedStatuses.Contains(normalizedStatus))
-        {
-            throw new NonTransientException("Payload contains unsupported Status.");
-        }
-
-        return normalizedStatus;
     }
 }
