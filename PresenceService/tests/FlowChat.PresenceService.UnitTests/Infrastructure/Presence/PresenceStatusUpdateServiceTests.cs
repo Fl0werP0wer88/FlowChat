@@ -22,7 +22,7 @@ public sealed class PresenceStatusUpdateServiceTests
     public async Task UpdateAndPublishAsync_WhenTransactionSucceeds_PersistsStatusAndPublishesEvent()
     {
         var userId = _fixture.Create<Guid>();
-        var integrationEvent = CreateEvent(userId, UserPresenceStatus.AFK);
+        var integrationEvent = CreateEvent(userId, PresenceStatus.AFK);
 
         _unitOfWorkMock
             .Setup(x => x.ExecuteInTransactionAsync(
@@ -49,9 +49,9 @@ public sealed class PresenceStatusUpdateServiceTests
         var userId = _fixture.Create<Guid>();
         var previousStatus = new PresenceStatusSnapshot(
             userId,
-            UserPresenceStatus.Active,
+            PresenceStatus.Active,
             DateTimeOffset.UtcNow.AddMinutes(-10));
-        var integrationEvent = CreateEvent(userId, UserPresenceStatus.Busy);
+        var integrationEvent = CreateEvent(userId, PresenceStatus.Busy);
 
         _unitOfWorkMock
             .Setup(x => x.ExecuteInTransactionAsync(
@@ -80,7 +80,7 @@ public sealed class PresenceStatusUpdateServiceTests
     public async Task UpdateAndPublishAsync_WhenCommitFailsWithoutPreviousStatus_DeletesRedisEntry()
     {
         var userId = _fixture.Create<Guid>();
-        var integrationEvent = CreateEvent(userId, UserPresenceStatus.Invisible);
+        var integrationEvent = CreateEvent(userId, PresenceStatus.Invisible);
 
         _unitOfWorkMock
             .Setup(x => x.ExecuteInTransactionAsync(
@@ -108,9 +108,9 @@ public sealed class PresenceStatusUpdateServiceTests
         var userId = _fixture.Create<Guid>();
         var previousStatus = new PresenceStatusSnapshot(
             userId,
-            UserPresenceStatus.Active,
+            PresenceStatus.Active,
             DateTimeOffset.UtcNow.AddMinutes(-3));
-        var integrationEvent = CreateEvent(userId, UserPresenceStatus.Busy);
+        var integrationEvent = CreateEvent(userId, PresenceStatus.Busy);
 
         _unitOfWorkMock
             .Setup(x => x.ExecuteInTransactionAsync(
@@ -140,7 +140,7 @@ public sealed class PresenceStatusUpdateServiceTests
             _integrationEventPublisherMock.Object,
             _unitOfWorkMock.Object);
 
-    private UserStatusChangedIntegrationEvent CreateEvent(Guid userId, UserPresenceStatus status) =>
+    private UserStatusChangedIntegrationEvent CreateEvent(Guid userId, PresenceStatus status) =>
         new()
         {
             Key = userId.ToString("D"),

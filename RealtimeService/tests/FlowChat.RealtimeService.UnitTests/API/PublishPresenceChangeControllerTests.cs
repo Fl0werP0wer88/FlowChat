@@ -32,7 +32,7 @@ public sealed class PublishPresenceChangeControllerTests
             new PublishPresenceChangeRequest
             {
                 UserId = _fixture.Create<Guid>(),
-                Status = UserPresenceStatus.Active,
+                Status = PresenceStatus.Active,
                 ChangedAtUtc = new DateTimeOffset(2026, 3, 17, 11, 0, 0, TimeSpan.Zero),
                 RecipientUserIds = [_fixture.Create<Guid>()]
             },
@@ -51,7 +51,7 @@ public sealed class PublishPresenceChangeControllerTests
             new PublishPresenceChangeRequest
             {
                 UserId = _fixture.Create<Guid>(),
-                Status = UserPresenceStatus.Active,
+                Status = PresenceStatus.Active,
                 RecipientUserIds = [_fixture.Create<Guid>()]
             },
             CancellationToken.None);

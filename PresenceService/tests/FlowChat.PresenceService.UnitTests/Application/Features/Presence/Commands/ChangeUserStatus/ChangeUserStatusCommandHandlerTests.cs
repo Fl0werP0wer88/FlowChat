@@ -41,7 +41,7 @@ public sealed class ChangeUserStatusCommandHandlerTests
         var userId = _fixture.Create<Guid>();
         var recipient1 = _fixture.Create<Guid>();
         var recipient2 = _fixture.Create<Guid>();
-        var previous = new PresenceStatusSnapshot(userId, UserPresenceStatus.Active, DateTimeOffset.UtcNow.AddMinutes(-5));
+        var previous = new PresenceStatusSnapshot(userId, PresenceStatus.Active, DateTimeOffset.UtcNow.AddMinutes(-5));
         UserStatusChangedIntegrationEvent? capturedEvent = null;
 
         _presenceStatusStoreMock
@@ -60,14 +60,14 @@ public sealed class ChangeUserStatusCommandHandlerTests
             .ReturnsAsync(FlowChatResult<Unit>.Success(Unit.Value));
 
         var result = await _handler.Handle(
-            new ChangeUserStatusCommand(userId, UserPresenceStatus.Busy),
+            new ChangeUserStatusCommand(userId, PresenceStatus.Busy),
             CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
         capturedEvent.Should().NotBeNull();
         capturedEvent!.Key.Should().Be(userId.ToString("D"));
         capturedEvent.UserId.Should().Be(userId);
-        capturedEvent.Status.Should().Be(UserPresenceStatus.Busy);
+        capturedEvent.Status.Should().Be(PresenceStatus.Busy);
         capturedEvent.RecipientUserIds.Should().BeEquivalentTo([recipient1, recipient2]);
         capturedEvent.ChangedAtUtc.Should().BeCloseTo(DateTimeOffset.UtcNow, TimeSpan.FromSeconds(5));
     }
@@ -78,10 +78,10 @@ public sealed class ChangeUserStatusCommandHandlerTests
         var userId = _fixture.Create<Guid>();
         _presenceStatusStoreMock
             .Setup(x => x.GetAsync(userId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new PresenceStatusSnapshot(userId, UserPresenceStatus.Invisible, DateTimeOffset.UtcNow));
+            .ReturnsAsync(new PresenceStatusSnapshot(userId, PresenceStatus.Invisible, DateTimeOffset.UtcNow));
 
         var result = await _handler.Handle(
-            new ChangeUserStatusCommand(userId, UserPresenceStatus.Invisible),
+            new ChangeUserStatusCommand(userId, PresenceStatus.Invisible),
             CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();

@@ -15,7 +15,7 @@ public sealed class InMemoryPresenceStatusStore : IPresenceStatusStore
         return Task.FromResult(value);
     }
 
-    public Task SetAsync(Guid userId, UserPresenceStatus status, DateTimeOffset changedAtUtc, CancellationToken cancellationToken)
+    public Task SetAsync(Guid userId, PresenceStatus status, DateTimeOffset changedAtUtc, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
         _values[userId] = new PresenceStatusSnapshot(userId, status, changedAtUtc);

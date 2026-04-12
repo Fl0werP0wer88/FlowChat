@@ -26,7 +26,7 @@ internal sealed class RedisRealtimeConnectionRegistry(
     private readonly IActiveRealtimeConnectionTracker _activeConnectionTracker = activeConnectionTracker
         ?? throw new ArgumentNullException(nameof(activeConnectionTracker));
 
-    public async Task RegisterAsync(Guid userId, string connectionId, UserPresenceStatus status, CancellationToken cancellationToken)
+    public async Task RegisterAsync(Guid userId, string connectionId, PresenceStatus status, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
 

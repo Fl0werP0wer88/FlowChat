@@ -5,5 +5,5 @@ namespace FlowChat.PresenceService.API.Features.Presence.Public.ChangeUserStatus
 
 public sealed class ChangeUserStatusRequest : IServiceInput
 {
-    public UserPresenceStatus Status { get; init; }
+    public PresenceStatus Status { get; init; }
 }

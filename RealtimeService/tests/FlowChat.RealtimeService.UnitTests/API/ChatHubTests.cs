@@ -40,7 +40,7 @@ public sealed class ChatHubTests
             .Which.Should().Be(("connection-1", GroupNames.ForUser(userId)));
         registry.LastRegisteredUserId.Should().Be(userId);
         registry.LastRegisteredConnectionId.Should().Be("connection-1");
-        registry.LastRegisteredStatus.Should().Be(UserPresenceStatus.Active);
+        registry.LastRegisteredStatus.Should().Be(PresenceStatus.Active);
         GetContext(hub).AbortCalled.Should().BeFalse();
     }
 

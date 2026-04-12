@@ -26,7 +26,7 @@ public sealed class RedisRealtimeConnectionRegistryTests : IAsyncLifetime
         var database = serviceProvider.GetRequiredService<IConnectionMultiplexer>().GetDatabase();
         var userId = Guid.NewGuid();
 
-        await registry.RegisterAsync(userId, "connection-1", UserPresenceStatus.Active, CancellationToken.None);
+        await registry.RegisterAsync(userId, "connection-1", PresenceStatus.Active, CancellationToken.None);
 
         var connectionEntries = await database.HashGetAllAsync("flowchat:test:connections:connection-1");
         var userConnections = await database.SetMembersAsync($"flowchat:test:user-connections:{userId:D}");
@@ -34,7 +34,7 @@ public sealed class RedisRealtimeConnectionRegistryTests : IAsyncLifetime
         connectionEntries.Should().Contain(entry => entry.Name == "userId" && entry.Value == userId.ToString());
         connectionEntries.Should().Contain(entry => entry.Name == "connectionId" && entry.Value == "connection-1");
         connectionEntries.Should().Contain(entry => entry.Name == "instanceId" && entry.Value == "test-instance");
-        connectionEntries.Should().Contain(entry => entry.Name == "status" && entry.Value == UserPresenceStatus.Active.ToString());
+        connectionEntries.Should().Contain(entry => entry.Name == "status" && entry.Value == PresenceStatus.Active.ToString());
         connectionEntries.Should().Contain(entry => entry.Name == "connectedAtUtc");
         connectionEntries.Should().Contain(entry => entry.Name == "lastSeenUtc");
         userConnections.Should().Contain(value => value == "connection-1");
@@ -49,7 +49,7 @@ public sealed class RedisRealtimeConnectionRegistryTests : IAsyncLifetime
         var userId = Guid.NewGuid();
         var userSetKey = $"flowchat:test:user-connections:{userId:D}";
 
-        await registry.RegisterAsync(userId, "connection-2", UserPresenceStatus.Busy, CancellationToken.None);
+        await registry.RegisterAsync(userId, "connection-2", PresenceStatus.Busy, CancellationToken.None);
         await registry.UnregisterAsync("connection-2", CancellationToken.None);
 
         (await database.KeyExistsAsync("flowchat:test:connections:connection-2")).Should().BeFalse();
@@ -65,11 +65,11 @@ public sealed class RedisRealtimeConnectionRegistryTests : IAsyncLifetime
         var userId = Guid.NewGuid();
         var userSetKey = $"flowchat:test:user-connections:{userId:D}";
 
-        await registry.RegisterAsync(userId, "connection-3", UserPresenceStatus.Invisible, CancellationToken.None);
+        await registry.RegisterAsync(userId, "connection-3", PresenceStatus.Invisible, CancellationToken.None);
         await database.KeyExpireAsync("flowchat:test:connections:connection-3", TimeSpan.FromSeconds(2));
         await database.KeyExpireAsync(userSetKey, TimeSpan.FromSeconds(2));
 
-        await registry.RefreshAsync([new RealtimeConnectionRefreshEntry(userId, "connection-3", UserPresenceStatus.Invisible)], CancellationToken.None);
+        await registry.RefreshAsync([new RealtimeConnectionRefreshEntry(userId, "connection-3", PresenceStatus.Invisible)], CancellationToken.None);
 
         var connectionTtl = await database.KeyTimeToLiveAsync("flowchat:test:connections:connection-3");
         var setTtl = await database.KeyTimeToLiveAsync(userSetKey);

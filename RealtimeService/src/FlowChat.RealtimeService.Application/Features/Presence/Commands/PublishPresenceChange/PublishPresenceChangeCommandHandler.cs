@@ -20,7 +20,7 @@ public sealed class PublishPresenceChangeCommandHandler(IRealtimeClientDispatche
             return FlowChatResult<Unit>.Failure(DomainError.BadRequest("UserId is required."));
         }
 
-        if (!Enum.IsDefined(typeof(UserPresenceStatus), request.Status))
+        if (!Enum.IsDefined(typeof(PresenceStatus), request.Status))
         {
             return FlowChatResult<Unit>.Failure(
                 DomainError.BadRequest("Status must be one of: Active, AFK, Busy, Invisible."));

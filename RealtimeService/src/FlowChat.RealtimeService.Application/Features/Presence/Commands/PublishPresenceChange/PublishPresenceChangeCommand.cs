@@ -6,7 +6,7 @@ namespace FlowChat.RealtimeService.Application.Features.Presence.Commands.Publis
 
 public sealed record PublishPresenceChangeCommand(
     Guid UserId,
-    UserPresenceStatus Status,
+    PresenceStatus Status,
     DateTimeOffset ChangedAtUtc,
     IReadOnlyCollection<Guid> RecipientUserIds) : ICommand<Unit>;
 

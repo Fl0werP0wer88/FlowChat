@@ -38,7 +38,7 @@ public sealed class UserPresenceChangedSubscriber(
             throw new NonTransientException("Payload does not contain valid UserId.");
         }
 
-        if (!Enum.IsDefined(typeof(FlowChat.Core.Domain.UserPresenceStatus), message.Status))
+        if (!Enum.IsDefined(typeof(FlowChat.Core.Domain.PresenceStatus), message.Status))
         {
             throw new NonTransientException("Payload does not contain valid Status.");
         }

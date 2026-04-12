@@ -1,6 +1,6 @@
 namespace FlowChat.Core.Domain;
 
-public enum UserPresenceStatus
+public enum PresenceStatus
 {
     Active = 0,
     AFK = 1,

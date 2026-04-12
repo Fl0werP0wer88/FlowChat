@@ -6,7 +6,7 @@ namespace FlowChat.RealtimeService.Api.Features.Realtime.Internal.PublishPresenc
 public sealed class PublishPresenceChangeRequest : IServiceInput
 {
     public Guid UserId { get; init; }
-    public UserPresenceStatus Status { get; init; }
+    public PresenceStatus Status { get; init; }
     public DateTimeOffset ChangedAtUtc { get; init; }
     public IReadOnlyCollection<Guid> RecipientUserIds { get; init; } = [];
 }
