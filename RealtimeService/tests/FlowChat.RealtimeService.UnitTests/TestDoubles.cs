@@ -1,11 +1,16 @@
 using System.Net;
 using System.Net.Http;
+using System.Security.Claims;
 using CSharpFunctionalExtensions;
 using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
+using FlowChat.RealtimeService.Api.Realtime;
 using FlowChat.Shared.Domain;
 using FlowChat.RealtimeService.Consumers.Realtime.Contracts;
 using FlowChat.RealtimeService.Consumers.Services;
 using MediatR;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Features;
+using Microsoft.AspNetCore.SignalR;
 
 namespace FlowChat.RealtimeService.UnitTests;
 
@@ -124,4 +129,96 @@ internal static class RepositoryPathHelper
         throw new InvalidOperationException($"Could not locate file '{relativePath}' starting from '{AppContext.BaseDirectory}'.");
     }
 }
+
+internal sealed class CapturingRealtimeConnectionRegistry : IRealtimeConnectionRegistry
+{
+    public Guid? LastRegisteredUserId { get; private set; }
+    public string? LastRegisteredConnectionId { get; private set; }
+    public string? LastUnregisteredConnectionId { get; private set; }
+    public IReadOnlyCollection<string>? LastRefreshedConnectionIds { get; private set; }
+
+    public Exception? RegisterException { get; set; }
+    public Exception? UnregisterException { get; set; }
+
+    public Task RegisterAsync(Guid userId, string connectionId, CancellationToken cancellationToken)
+    {
+        if (RegisterException is not null)
+        {
+            throw RegisterException;
+        }
+
+        LastRegisteredUserId = userId;
+        LastRegisteredConnectionId = connectionId;
+        return Task.CompletedTask;
+    }
+
+    public Task UnregisterAsync(string connectionId, CancellationToken cancellationToken)
+    {
+        LastUnregisteredConnectionId = connectionId;
+        if (UnregisterException is not null)
+        {
+            throw UnregisterException;
+        }
+
+        return Task.CompletedTask;
+    }
+
+    public Task RefreshAsync(IReadOnlyCollection<string> connectionIds, CancellationToken cancellationToken)
+    {
+        LastRefreshedConnectionIds = connectionIds;
+        return Task.CompletedTask;
+    }
+}
+
+internal sealed class CapturingGroupManager : IGroupManager
+{
+    public List<(string ConnectionId, string GroupName)> AddedConnections { get; } = [];
+    public List<(string ConnectionId, string GroupName)> RemovedConnections { get; } = [];
+
+    public Task AddToGroupAsync(string connectionId, string groupName, CancellationToken cancellationToken = default)
+    {
+        AddedConnections.Add((connectionId, groupName));
+        return Task.CompletedTask;
+    }
+
+    public Task RemoveFromGroupAsync(string connectionId, string groupName, CancellationToken cancellationToken = default)
+    {
+        RemovedConnections.Add((connectionId, groupName));
+        return Task.CompletedTask;
+    }
+}
+
+internal sealed class TestHubCallerContext : HubCallerContext
+{
+    private readonly CancellationTokenSource _connectionAbortedSource = new();
+
+    public TestHubCallerContext(string connectionId, ClaimsPrincipal? user = null)
+    {
+        ConnectionId = connectionId;
+        User = user;
+        Items = new Dictionary<object, object?>();
+        Features = new FeatureCollection();
+    }
+
+    public bool AbortCalled { get; private set; }
+
+    public override string ConnectionId { get; }
+
+    public override string? UserIdentifier => User?.FindFirstValue("sub") ?? User?.FindFirstValue(ClaimTypes.NameIdentifier);
+
+    public override ClaimsPrincipal? User { get; }
+
+    public override IDictionary<object, object?> Items { get; }
+
+    public override IFeatureCollection Features { get; }
+
+    public override CancellationToken ConnectionAborted => _connectionAbortedSource.Token;
+
+    public override void Abort()
+    {
+        AbortCalled = true;
+        _connectionAbortedSource.Cancel();
+    }
+}
+
 

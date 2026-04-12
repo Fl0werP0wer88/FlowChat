@@ -22,4 +22,15 @@ public sealed class ApiSettingsManager(IConfiguration configuration) : IApiSetti
 
     public InternalApiSettings GetInternalApiSettings() =>
         _configuration.GetSection(InternalApiSettings.SectionName).Get<InternalApiSettings>() ?? new InternalApiSettings();
+
+    public RealtimeConnectionsSettings GetRealtimeConnectionsSettings()
+    {
+        var settings = _configuration.GetSection(RealtimeConnectionsSettings.SectionName).Get<RealtimeConnectionsSettings>()
+            ?? new RealtimeConnectionsSettings();
+
+        settings.RedisConnectionString = _configuration.GetConnectionString(RealtimeConnectionsSettings.RedisConnectionStringName)
+            ?? settings.RedisConnectionString;
+
+        return settings;
+    }
 }

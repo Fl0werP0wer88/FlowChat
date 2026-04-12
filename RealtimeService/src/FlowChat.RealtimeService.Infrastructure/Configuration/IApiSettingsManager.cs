@@ -7,4 +7,6 @@ public interface IApiSettingsManager
     ApiRuntimeSettings GetApiRuntimeSettings();
 
     InternalApiSettings GetInternalApiSettings();
+
+    RealtimeConnectionsSettings GetRealtimeConnectionsSettings();
 }

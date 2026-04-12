@@ -17,6 +17,7 @@ public static class StartupExtensions
         var apiSettingsManager = new ApiSettingsManager(builder.Configuration);
         var apiRuntimeSettings = apiSettingsManager.GetApiRuntimeSettings();
         var jwtSettings = apiSettingsManager.GetJwtSettings();
+        var realtimeConnectionsSettings = apiSettingsManager.GetRealtimeConnectionsSettings();
         var jwtKey = jwtSettings.Key;
         var jwtIssuer = jwtSettings.Issuer;
         var jwtAudience = jwtSettings.Audience;
@@ -34,6 +35,31 @@ public static class StartupExtensions
         if (string.IsNullOrWhiteSpace(jwtAudience))
         {
             throw new InvalidOperationException("Missing configuration value: JwtSettings:Audience.");
+        }
+
+        if (string.IsNullOrWhiteSpace(realtimeConnectionsSettings.RedisConnectionString))
+        {
+            throw new InvalidOperationException("Missing configuration value: ConnectionStrings:Redis.");
+        }
+
+        if (string.IsNullOrWhiteSpace(realtimeConnectionsSettings.InstanceId))
+        {
+            throw new InvalidOperationException("Missing configuration value: RealtimeConnections:InstanceId.");
+        }
+
+        if (realtimeConnectionsSettings.ConnectionTtl <= TimeSpan.Zero)
+        {
+            throw new InvalidOperationException("RealtimeConnections:ConnectionTtl must be greater than zero.");
+        }
+
+        if (realtimeConnectionsSettings.RefreshInterval <= TimeSpan.Zero)
+        {
+            throw new InvalidOperationException("RealtimeConnections:RefreshInterval must be greater than zero.");
+        }
+
+        if (realtimeConnectionsSettings.RefreshInterval >= realtimeConnectionsSettings.ConnectionTtl)
+        {
+            throw new InvalidOperationException("RealtimeConnections:RefreshInterval must be smaller than RealtimeConnections:ConnectionTtl.");
         }
 
         builder.Services.AddApiApplicationServices();
