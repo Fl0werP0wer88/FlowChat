@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using FlowChat.Core.Domain;
 using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
@@ -32,7 +33,11 @@ public sealed class ChatHub(
             await Groups.AddToGroupAsync(Context.ConnectionId, GroupNames.ForUser(userId.Value));
             addedToGroup = true;
 
-            await _realtimeConnectionRegistry.RegisterAsync(userId.Value, Context.ConnectionId, Context.ConnectionAborted);
+            await _realtimeConnectionRegistry.RegisterAsync(
+                userId.Value,
+                Context.ConnectionId,
+                UserStatus.Active,
+                Context.ConnectionAborted);
             await base.OnConnectedAsync();
         }
         catch (OperationCanceledException) when (Context.ConnectionAborted.IsCancellationRequested)

@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using FlowChat.Core.Domain;
 using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
 
 namespace FlowChat.RealtimeService.Infrastructure.RealtimeConnections;
@@ -7,14 +8,14 @@ internal sealed class InMemoryActiveRealtimeConnectionTracker : IActiveRealtimeC
 {
     private readonly ConcurrentDictionary<string, RealtimeConnectionRefreshEntry> _connections = new(StringComparer.Ordinal);
 
-    public void Track(Guid userId, string connectionId)
+    public void Track(Guid userId, string connectionId, UserStatus status)
     {
         if (userId == Guid.Empty || string.IsNullOrWhiteSpace(connectionId))
         {
             return;
         }
 
-        _connections[connectionId] = new RealtimeConnectionRefreshEntry(userId, connectionId);
+        _connections[connectionId] = new RealtimeConnectionRefreshEntry(userId, connectionId, status);
     }
 
     public void Untrack(string connectionId)
