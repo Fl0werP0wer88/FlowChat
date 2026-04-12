@@ -9,5 +9,5 @@ public sealed class ContactDeletedProducerOptions : IKafkaProducerOptions<Contac
 
     public string BootstrapServers { get; set; } = "localhost:9092";
 
-    public string Topic { get; set; } = "dev.flowchat.social-graph.contact-deleted.v1";
+    public string Topic { get; set; } = "dev.flowchat.social-graph.contact";
 }

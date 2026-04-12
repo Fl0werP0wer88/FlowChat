@@ -6,5 +6,5 @@ public sealed class ContactAddedProducerOptions
 
     public string BootstrapServers { get; set; } = "localhost:9092";
 
-    public string Topic { get; set; } = "dev.flowchat.social-graph.contact-added.v1";
+    public string Topic { get; set; } = "dev.flowchat.social-graph.contact";
 }

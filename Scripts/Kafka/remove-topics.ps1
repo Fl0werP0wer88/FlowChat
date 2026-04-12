@@ -151,8 +151,14 @@ Write-Step "Using broker container id: $resolvedContainerId"
 Wait-ForKafkaReady -ResolvedContainerId $resolvedContainerId -WaitTimeoutSeconds $TimeoutSeconds
 
 Write-Step "Removing FlowChat topics"
-foreach ($topic in (Get-TopicDefinitions)) {
-  Remove-Topic -ResolvedContainerId $resolvedContainerId -Topic $topic.name
+$topicNames = @((Get-TopicDefinitions | ForEach-Object { $_.name }))
+
+if (Get-Command Get-LegacyTopicNames -ErrorAction SilentlyContinue) {
+  $topicNames += Get-LegacyTopicNames
+}
+
+foreach ($topicName in ($topicNames | Select-Object -Unique)) {
+  Remove-Topic -ResolvedContainerId $resolvedContainerId -Topic $topicName
 }
 
 Write-Step "Final topic list"

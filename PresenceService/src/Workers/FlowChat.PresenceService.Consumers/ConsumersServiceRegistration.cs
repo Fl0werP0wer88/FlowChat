@@ -18,14 +18,10 @@ public static class ConsumersServiceRegistration
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        var contactAddedOptions = configuration
-            .GetSection(ContactAddedConsumerOptions.SectionName)
-            .Get<ContactAddedConsumerOptions>()
-            ?? new ContactAddedConsumerOptions();
-        var contactDeletedOptions = configuration
-            .GetSection(ContactDeletedConsumerOptions.SectionName)
-            .Get<ContactDeletedConsumerOptions>()
-            ?? new ContactDeletedConsumerOptions();
+        var contactOptions = configuration
+            .GetSection(SocialGraphContactConsumerOptions.SectionName)
+            .Get<SocialGraphContactConsumerOptions>()
+            ?? new SocialGraphContactConsumerOptions();
 
         services.AddOptions<PresenceApiSettings>()
             .BindConfiguration(PresenceApiSettings.SectionName);
@@ -56,38 +52,22 @@ public static class ConsumersServiceRegistration
             .AddKafkaClients(clients =>
             {
                 clients
-                    .WithBootstrapServers(ResolveBootstrapServers(contactAddedOptions, contactDeletedOptions))
+                    .WithBootstrapServers(contactOptions.BootstrapServers)
                     .AddConsumer(consumer => consumer
-                        .WithGroupId(contactAddedOptions.GroupId)
-                        .WithAutoOffsetReset(ParseAutoOffsetReset(contactAddedOptions.AutoOffsetReset))
-                        .Consume(endpoint => endpoint.ConfigureFlowChatMainEndpoint(contactAddedOptions)))
+                        .WithGroupId(contactOptions.GroupId)
+                        .WithAutoOffsetReset(ParseAutoOffsetReset(contactOptions.AutoOffsetReset))
+                        .Consume(endpoint => endpoint.ConfigureFlowChatMainEndpoint(contactOptions)))
                     .AddConsumer(consumer => consumer
-                        .WithGroupId(contactAddedOptions.RetryGroupId)
-                        .WithAutoOffsetReset(ParseAutoOffsetReset(contactAddedOptions.AutoOffsetReset))
-                        .Consume(endpoint => endpoint.ConfigureFlowChatRetryEndpoint(contactAddedOptions)))
-                    .AddConsumer(consumer => consumer
-                        .WithGroupId(contactDeletedOptions.GroupId)
-                        .WithAutoOffsetReset(ParseAutoOffsetReset(contactDeletedOptions.AutoOffsetReset))
-                        .Consume(endpoint => endpoint.ConfigureFlowChatMainEndpoint(contactDeletedOptions)))
-                    .AddConsumer(consumer => consumer
-                        .WithGroupId(contactDeletedOptions.RetryGroupId)
-                        .WithAutoOffsetReset(ParseAutoOffsetReset(contactDeletedOptions.AutoOffsetReset))
-                        .Consume(endpoint => endpoint.ConfigureFlowChatRetryEndpoint(contactDeletedOptions)))
+                        .WithGroupId(contactOptions.RetryGroupId)
+                        .WithAutoOffsetReset(ParseAutoOffsetReset(contactOptions.AutoOffsetReset))
+                        .Consume(endpoint => endpoint.ConfigureFlowChatRetryEndpoint(contactOptions)))
                     .AddProducer(producer => producer
                         .Produce(endpoint => endpoint
-                            .ProduceTo(contactAddedOptions.RetryTopic)
+                            .ProduceTo(contactOptions.RetryTopic)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())))
                     .AddProducer(producer => producer
                         .Produce(endpoint => endpoint
-                            .ProduceTo(contactAddedOptions.DeadLetterTopic)
-                            .SerializeAsJson(serializer => serializer.SetTypeHeader())))
-                    .AddProducer(producer => producer
-                        .Produce(endpoint => endpoint
-                            .ProduceTo(contactDeletedOptions.RetryTopic)
-                            .SerializeAsJson(serializer => serializer.SetTypeHeader())))
-                    .AddProducer(producer => producer
-                        .Produce(endpoint => endpoint
-                            .ProduceTo(contactDeletedOptions.DeadLetterTopic)
+                            .ProduceTo(contactOptions.DeadLetterTopic)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())));
             })
             .AddScopedSubscriber<ContactAddedSubscriber>()
@@ -100,11 +80,4 @@ public static class ConsumersServiceRegistration
         Enum.TryParse<AutoOffsetReset>(value, true, out var parsed)
             ? parsed
             : AutoOffsetReset.Earliest;
-
-    private static string ResolveBootstrapServers(
-        ContactAddedConsumerOptions contactAddedOptions,
-        ContactDeletedConsumerOptions contactDeletedOptions) =>
-        !string.IsNullOrWhiteSpace(contactAddedOptions.BootstrapServers)
-            ? contactAddedOptions.BootstrapServers
-            : contactDeletedOptions.BootstrapServers;
 }
