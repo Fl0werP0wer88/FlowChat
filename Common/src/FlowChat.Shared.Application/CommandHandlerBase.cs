@@ -1,6 +1,8 @@
 using FlowChat.Core.Results;
 using FlowChat.Shared.Domain;
 using MediatR;
+using System.Diagnostics;
+using System.Runtime.ExceptionServices;
 
 namespace FlowChat.Shared.Application;
 
@@ -45,11 +47,24 @@ public abstract class CommandHandlerBase<TCommand, TResponse> : ICommandHandler<
         {
             return exception.Result;
         }
+        catch (Exception exception)
+        {
+            return await HandleUnexpectedExceptionAsync(request, exception, cancellationToken);
+        }
     }
 
     protected abstract Task<FlowChatResult<TResponse>> ExecuteAsync(TCommand request, CancellationToken cancellationToken);
 
     protected abstract IAggregateRoot? GetAggregateRoot(FlowChatResult<TResponse> result);
+
+    protected virtual Task<FlowChatResult<TResponse>> HandleUnexpectedExceptionAsync(
+        TCommand request,
+        Exception exception,
+        CancellationToken cancellationToken)
+    {
+        ExceptionDispatchInfo.Capture(exception).Throw();
+        throw new UnreachableException();
+    }
 
     protected Task DispatchDomainEventsAsync(IEnumerable<IDomainEvent> domainEvents, CancellationToken cancellationToken)
     {
