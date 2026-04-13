@@ -33,7 +33,6 @@ public static class InfrastructureServiceRegistration
             sp.GetRequiredService<IKafkaSettingsManager>().GetPresenceStatusChangedProducerOptions());
         services.AddScoped<IIntegrationEventPublisher, FlowChatSilverbackEventPublisher>();
         services.AddScoped<IPresenceStatusStore, RedisPresenceStatusStore>();
-        services.AddScoped<IPresenceStatusUpdateService, PresenceStatusUpdateService>();
 
         return services;
     }

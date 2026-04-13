@@ -3,6 +3,7 @@ using FlowChat.Core.Results;
 using FlowChat.PresenceService.Application.Contracts.Infrastructure;
 using FlowChat.PresenceService.Application.Contracts.Persistence;
 using FlowChat.Shared.Application;
+using FlowChat.Shared.Domain;
 using MediatR;
 
 namespace FlowChat.PresenceService.Application.Features.Presence.Commands.ChangePresenceStatus;
@@ -10,15 +11,19 @@ namespace FlowChat.PresenceService.Application.Features.Presence.Commands.Change
 public sealed class ChangePresenceStatusCommandHandler(
     IContactObserverProjectionReadRepository contactObserverProjectionReadRepository,
     IPresenceStatusStore presenceStatusStore,
-    IPresenceStatusUpdateService presenceStatusUpdateService)
-    : ICommandHandler<ChangePresenceStatusCommand, Unit>
+    IIntegrationEventPublisher integrationEventPublisher,
+    IUnitOfWork unitOfWork,
+    IDomainEventDispatcher domainEventDispatcher)
+    : CommandHandlerBase<ChangePresenceStatusCommand, Unit>(domainEventDispatcher, unitOfWork)
 {
-    public async Task<FlowChatResult<Unit>> Handle(
+    private PresenceStatusSnapshot? _previousStatus;
+
+    protected override async Task<FlowChatResult<Unit>> ExecuteAsync(
         ChangePresenceStatusCommand request,
         CancellationToken cancellationToken)
     {
-        var previousStatus = await presenceStatusStore.GetAsync(request.UserId, cancellationToken);
-        if (previousStatus?.Status == request.Status)
+        _previousStatus = await presenceStatusStore.GetAsync(request.UserId, cancellationToken);
+        if (_previousStatus?.Status == request.Status)
         {
             return FlowChatResult<Unit>.Success(Unit.Value);
         }
@@ -39,10 +44,58 @@ public sealed class ChangePresenceStatusCommandHandler(
                 .ToArray()
         };
 
-        return await presenceStatusUpdateService.UpdateAndPublishAsync(
+        await presenceStatusStore.SetAsync(
             request.UserId,
-            previousStatus,
-            integrationEvent,
+            integrationEvent.Status,
+            integrationEvent.ChangedAtUtc,
             cancellationToken);
+        await integrationEventPublisher.PublishToOutboxAsync(integrationEvent, cancellationToken);
+
+        return FlowChatResult<Unit>.Success(Unit.Value);
+    }
+
+    protected override IAggregateRoot? GetAggregateRoot(FlowChatResult<Unit> result) => null;
+
+    protected override async Task<FlowChatResult<Unit>> HandleUnexpectedExceptionAsync(
+        ChangePresenceStatusCommand request,
+        Exception exception,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            await RestorePreviousStatusAsync(request.UserId, _previousStatus, cancellationToken);
+        }
+        finally
+        {
+            _previousStatus = null;
+        }
+
+        return FlowChatResult<Unit>.Failure(
+            DomainError.UnExpected("Failed to update presence status."));
+    }
+
+    private async Task RestorePreviousStatusAsync(
+        Guid userId,
+        PresenceStatusSnapshot? previousStatus,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            if (previousStatus is null)
+            {
+                await presenceStatusStore.DeleteAsync(userId, cancellationToken);
+                return;
+            }
+
+            await presenceStatusStore.SetAsync(
+                userId,
+                previousStatus.Status,
+                previousStatus.ChangedAtUtc,
+                cancellationToken);
+        }
+        catch
+        {
+            // Redis rollback is best-effort because the transactional outbox failure is the primary result for callers
+        }
     }
 }

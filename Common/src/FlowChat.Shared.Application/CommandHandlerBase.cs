@@ -81,4 +81,3 @@ public abstract class CommandHandlerBase<TCommand, TResponse> : ICommandHandler<
         public FlowChatResult<TResponse> Result { get; } = result;
     }
 }
-
