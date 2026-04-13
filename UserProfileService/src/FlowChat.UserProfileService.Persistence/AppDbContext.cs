@@ -1,3 +1,4 @@
+using System.Data.Common;
 using FlowChat.UserProfileService.Domain.Entities.EmailVerificationRequest;
 using FlowChat.UserProfileService.Domain.Entities.UserProfile;
 using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
@@ -10,6 +11,13 @@ public class AppDbContext : DbContext, IDataProtectionKeyContext
 {
     public AppDbContext(DbContextOptions<AppDbContext> options)
     : base(options)
+    {
+    }
+
+    public AppDbContext(DbConnection connection)
+        : base(new DbContextOptionsBuilder<AppDbContext>()
+            .UseNpgsql(connection)
+            .Options)
     {
     }
 

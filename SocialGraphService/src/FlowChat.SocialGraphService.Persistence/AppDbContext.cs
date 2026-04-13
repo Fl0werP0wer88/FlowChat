@@ -1,3 +1,4 @@
+using System.Data.Common;
 using FlowChat.SocialGraphService.Domain.Entities.Contact;
 using FlowChat.SocialGraphService.Persistence.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -9,6 +10,13 @@ public class AppDbContext : DbContext
 {
     public AppDbContext(DbContextOptions<AppDbContext> options)
     : base(options)
+    {
+    }
+
+    public AppDbContext(DbConnection connection)
+        : base(new DbContextOptionsBuilder<AppDbContext>()
+            .UseNpgsql(connection)
+            .Options)
     {
     }
 

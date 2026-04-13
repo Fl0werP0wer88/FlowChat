@@ -1,3 +1,4 @@
+using System.Data.Common;
 using FlowChat.ChatService.Domain.Entities.ChatMessage;
 using Microsoft.EntityFrameworkCore;
 using Silverback.Messaging.Producing.TransactionalOutbox;
@@ -8,6 +9,13 @@ public sealed class AppDbContext : DbContext
 {
     public AppDbContext(DbContextOptions<AppDbContext> options)
         : base(options)
+    {
+    }
+
+    public AppDbContext(DbConnection connection)
+        : base(new DbContextOptionsBuilder<AppDbContext>()
+            .UseNpgsql(connection)
+            .Options)
     {
     }
 
