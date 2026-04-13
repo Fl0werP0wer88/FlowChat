@@ -2,9 +2,9 @@ namespace FlowChat.RealtimeService.Application.Application.Contracts.Infrastruct
 
 public interface IRealtimeConnectionRegistry
 {
-    Task RegisterAsync(Guid userId, string connectionId, CancellationToken cancellationToken);
+    Task<RealtimeConnectionMutationResult> RegisterAsync(Guid userId, string connectionId, CancellationToken cancellationToken);
 
-    Task UnregisterAsync(string connectionId, CancellationToken cancellationToken);
+    Task<RealtimeConnectionMutationResult?> UnregisterAsync(string connectionId, CancellationToken cancellationToken);
 
     Task RefreshAsync(IReadOnlyCollection<RealtimeConnectionRefreshEntry> connections, CancellationToken cancellationToken);
 }

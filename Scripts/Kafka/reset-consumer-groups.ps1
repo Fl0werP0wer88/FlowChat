@@ -42,6 +42,30 @@ function Write-Step($msg) {
   Write-Host "`n==> $msg"
 }
 
+function Resolve-ScriptRelativePath([string]$Path) {
+  if ([string]::IsNullOrWhiteSpace($Path)) {
+    return $Path
+  }
+
+  if ([System.IO.Path]::IsPathRooted($Path)) {
+    return $Path
+  }
+
+  return Join-Path $PSScriptRoot $Path
+}
+
+if (-not [string]::IsNullOrWhiteSpace($ComposeFile)) {
+  $ComposeFile = Resolve-ScriptRelativePath $ComposeFile
+}
+
+if (-not [string]::IsNullOrWhiteSpace($KafkaComposeFile)) {
+  $KafkaComposeFile = Resolve-ScriptRelativePath $KafkaComposeFile
+}
+
+if (-not [string]::IsNullOrWhiteSpace($UiComposeFile)) {
+  $UiComposeFile = Resolve-ScriptRelativePath $UiComposeFile
+}
+
 function Assert-Command($cmd) {
   if (-not (Get-Command $cmd -ErrorAction SilentlyContinue)) {
     throw "Missing required command: $cmd. Make sure it is installed and available in PATH."

@@ -1,6 +1,9 @@
 using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
 using FlowChat.RealtimeService.Infrastructure.Configuration;
+using FlowChat.RealtimeService.Infrastructure.Kafka;
 using FlowChat.RealtimeService.Infrastructure.RealtimeConnections;
+using FlowChat.Shared.Application;
+using FlowChat.Shared.Infrastructure.Silverback.Kafka;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -15,6 +18,7 @@ public static class InfrastructureServiceRegistration
         IConfiguration configuration)
     {
         services.TryAddSingleton<IApiSettingsManager>(new ApiSettingsManager(configuration));
+        services.TryAddSingleton<IKafkaSettingsManager>(new KafkaSettingsManager(configuration));
         services.TryAddSingleton(sp => sp.GetRequiredService<IApiSettingsManager>().GetRealtimeConnectionsSettings());
         services.TryAddSingleton<IConnectionMultiplexer>(sp =>
         {
@@ -25,6 +29,12 @@ public static class InfrastructureServiceRegistration
         });
         services.TryAddSingleton<IActiveRealtimeConnectionTracker, InMemoryActiveRealtimeConnectionTracker>();
         services.TryAddSingleton<IRealtimeConnectionRegistry, RedisRealtimeConnectionRegistry>();
+        services.AddScoped<IKafkaProducerOptions<FlowChat.Core.Messaging.RealtimeService.Events.RealtimeConnectionRegisteredIntegrationEvent>>(sp =>
+            sp.GetRequiredService<IKafkaSettingsManager>().GetRealtimeConnectionProducerOptions());
+        services.AddScoped<IKafkaProducerOptions<FlowChat.Core.Messaging.RealtimeService.Events.RealtimeConnectionUnregisteredIntegrationEvent>>(sp =>
+            sp.GetRequiredService<IKafkaSettingsManager>().GetRealtimeConnectionProducerOptions());
+        services.AddScoped<IIntegrationEventPublisher, FlowChatSilverbackEventPublisher>();
+        services.AddScoped<IRealtimeConnectionLifecycleService, RealtimeConnectionLifecycleService>();
         services.AddHostedService<RealtimeConnectionRefreshBackgroundService>();
 
         return services;

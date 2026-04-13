@@ -6,6 +6,7 @@ using FlowChat.RealtimeService.Application;
 using FlowChat.RealtimeService.Api.Realtime;
 using FlowChat.RealtimeService.Infrastructure;
 using FlowChat.RealtimeService.Infrastructure.Configuration;
+using FlowChat.RealtimeService.Infrastructure.Kafka;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 
@@ -19,6 +20,7 @@ public static class StartupExtensions
         var apiRuntimeSettings = apiSettingsManager.GetApiRuntimeSettings();
         var jwtSettings = apiSettingsManager.GetJwtSettings();
         var realtimeConnectionsSettings = apiSettingsManager.GetRealtimeConnectionsSettings();
+        var realtimeConnectionProducerOptions = new KafkaSettingsManager(builder.Configuration).GetRealtimeConnectionProducerOptions();
         var jwtKey = jwtSettings.Key;
         var jwtIssuer = jwtSettings.Issuer;
         var jwtAudience = jwtSettings.Audience;
@@ -63,8 +65,19 @@ public static class StartupExtensions
             throw new InvalidOperationException("RealtimeConnections:RefreshInterval must be smaller than RealtimeConnections:ConnectionTtl.");
         }
 
+        if (string.IsNullOrWhiteSpace(realtimeConnectionProducerOptions.BootstrapServers))
+        {
+            throw new InvalidOperationException("Missing configuration value: Kafka:RealtimeConnectionProducer:BootstrapServers.");
+        }
+
+        if (string.IsNullOrWhiteSpace(realtimeConnectionProducerOptions.Topic))
+        {
+            throw new InvalidOperationException("Missing configuration value: Kafka:RealtimeConnectionProducer:Topic.");
+        }
+
         builder.Services.AddApiApplicationServices();
         builder.Services.AddInfrastructureServices(builder.Configuration);
+        builder.Services.AddApiSilverbackMessaging(builder.Configuration);
         builder.Services.AddScoped<IRealtimeClientDispatcher, SignalRRealtimeClientDispatcher>();
         builder.AddFlowChatOpenTelemetry(typeof(ApplicationServiceRegistration).Assembly);
 

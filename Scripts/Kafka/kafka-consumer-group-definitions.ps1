@@ -8,6 +8,8 @@ function Get-ConsumerGroupDefinitions {
     "notification-service-retry",
     "realtime-service",
     "realtime-service-retry",
+    "presence-service-realtime-connection",
+    "presence-service-realtime-connection-retry",
     "socialgraph-service",
     "socialgraph-service-retry",
     "userprofile-service",

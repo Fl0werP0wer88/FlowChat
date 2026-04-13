@@ -2,9 +2,11 @@ using System.Net;
 using System.Net.Http;
 using System.Security.Claims;
 using CSharpFunctionalExtensions;
+using FlowChat.Core.Messaging;
 using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
 using FlowChat.RealtimeService.Api.Realtime;
 using FlowChat.Shared.Domain;
+using FlowChat.Shared.Application;
 using FlowChat.RealtimeService.Consumers.Realtime.Contracts;
 using FlowChat.RealtimeService.Consumers.Services;
 using MediatR;
@@ -136,7 +138,51 @@ internal sealed class CapturingRealtimeConnectionRegistry : IRealtimeConnectionR
     public string? LastRegisteredConnectionId { get; private set; }
     public string? LastUnregisteredConnectionId { get; private set; }
     public IReadOnlyCollection<RealtimeConnectionRefreshEntry>? LastRefreshedConnections { get; private set; }
+    public RealtimeConnectionMutationResult? RegisterResult { get; set; }
+    public RealtimeConnectionMutationResult? UnregisterResult { get; set; }
 
+    public Exception? RegisterException { get; set; }
+    public Exception? UnregisterException { get; set; }
+
+    public Task<RealtimeConnectionMutationResult> RegisterAsync(Guid userId, string connectionId, CancellationToken cancellationToken)
+    {
+        if (RegisterException is not null)
+        {
+            throw RegisterException;
+        }
+
+        LastRegisteredUserId = userId;
+        LastRegisteredConnectionId = connectionId;
+        return Task.FromResult(RegisterResult ?? new RealtimeConnectionMutationResult(
+            userId,
+            connectionId,
+            1,
+            DateTimeOffset.UtcNow));
+    }
+
+    public Task<RealtimeConnectionMutationResult?> UnregisterAsync(string connectionId, CancellationToken cancellationToken)
+    {
+        LastUnregisteredConnectionId = connectionId;
+        if (UnregisterException is not null)
+        {
+            throw UnregisterException;
+        }
+
+        return Task.FromResult(UnregisterResult);
+    }
+
+    public Task RefreshAsync(IReadOnlyCollection<RealtimeConnectionRefreshEntry> connections, CancellationToken cancellationToken)
+    {
+        LastRefreshedConnections = connections;
+        return Task.CompletedTask;
+    }
+}
+
+internal sealed class CapturingRealtimeConnectionLifecycleService : IRealtimeConnectionLifecycleService
+{
+    public Guid? LastRegisteredUserId { get; private set; }
+    public string? LastRegisteredConnectionId { get; private set; }
+    public string? LastUnregisteredConnectionId { get; private set; }
     public Exception? RegisterException { get; set; }
     public Exception? UnregisterException { get; set; }
 
@@ -162,10 +208,24 @@ internal sealed class CapturingRealtimeConnectionRegistry : IRealtimeConnectionR
 
         return Task.CompletedTask;
     }
+}
 
-    public Task RefreshAsync(IReadOnlyCollection<RealtimeConnectionRefreshEntry> connections, CancellationToken cancellationToken)
+internal sealed class RecordingIntegrationEventPublisher : IIntegrationEventPublisher
+{
+    private readonly List<IntegrationEvent> _published = [];
+
+    public IReadOnlyList<IntegrationEvent> Published => _published.AsReadOnly();
+    public Exception? PublishException { get; set; }
+
+    public Task PublishToOutboxAsync<TEvent>(TEvent message, CancellationToken cancellationToken)
+        where TEvent : IntegrationEvent
     {
-        LastRefreshedConnections = connections;
+        if (PublishException is not null)
+        {
+            throw PublishException;
+        }
+
+        _published.Add(message);
         return Task.CompletedTask;
     }
 }

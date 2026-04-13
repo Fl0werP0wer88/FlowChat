@@ -29,12 +29,15 @@ public sealed class StartupExtensionsTests
             ["RealtimeApi:BaseUrl"] = "http://localhost:5215",
             ["RealtimeApi:ApiKey"] = "worker-key",
             ["ConnectionStrings:Redis"] = "localhost:6379,password=secret",
-            ["RealtimeConnections:InstanceId"] = "realtime-instance"
+            ["RealtimeConnections:InstanceId"] = "realtime-instance",
+            ["Kafka:RealtimeConnectionProducer:BootstrapServers"] = "localhost:9092",
+            ["Kafka:RealtimeConnectionProducer:Topic"] = "dev.flowchat.realtime.connection.v1"
         });
 
         var app = builder.ConfigureServices();
         var hubContext = app.Services.GetRequiredService<IHubContext<ChatHub, IRealtimeClient>>();
         var connectionRegistry = app.Services.GetRequiredService<IRealtimeConnectionRegistry>();
+        var lifecycleService = app.Services.GetRequiredService<IRealtimeConnectionLifecycleService>();
         var hostedServices = app.Services.GetServices<IHostedService>().ToList();
         var optionsMonitor = app.Services.GetRequiredService<IOptionsMonitor<JwtBearerOptions>>();
         var options = optionsMonitor.Get(JwtBearerDefaults.AuthenticationScheme);
@@ -51,6 +54,7 @@ public sealed class StartupExtensionsTests
 
         hubContext.Should().NotBeNull();
         connectionRegistry.Should().NotBeNull();
+        lifecycleService.Should().NotBeNull();
         hostedServices.Should().Contain(service => service.GetType().Name == "RealtimeConnectionRefreshBackgroundService");
         messageContext.Token.Should().Be("test-token");
     }

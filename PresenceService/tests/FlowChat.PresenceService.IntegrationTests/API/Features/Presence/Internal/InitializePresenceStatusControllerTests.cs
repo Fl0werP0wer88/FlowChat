@@ -45,4 +45,34 @@ public sealed class InitializePresenceStatusControllerTests(PresenceApiFactory f
 
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
+
+    [Fact]
+    public async Task Initialize_WhenPresenceAlreadyExists_ReturnsAcceptedWithoutOverwriting()
+    {
+        factory.EventPublisher.Clear();
+
+        var userId = Guid.NewGuid();
+        var changedAtUtc = new DateTimeOffset(2026, 4, 13, 8, 30, 0, TimeSpan.Zero);
+        await factory.PresenceStatusStore.SetAsync(
+            userId,
+            PresenceStatus.Busy,
+            changedAtUtc,
+            CancellationToken.None);
+
+        var request = new HttpRequestMessage(HttpMethod.Post, "/internal/presence/status/initialize")
+        {
+            Content = JsonContent.Create(new { UserId = userId })
+        };
+        request.Headers.Add("X-Internal-Api-Key", PresenceApiFactory.InternalApiKey);
+
+        var response = await _client.SendAsync(request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.Accepted);
+
+        var storedStatus = await factory.PresenceStatusStore.GetAsync(userId, CancellationToken.None);
+        storedStatus.Should().NotBeNull();
+        storedStatus!.Status.Should().Be(PresenceStatus.Busy);
+        storedStatus.ChangedAtUtc.Should().Be(changedAtUtc);
+        factory.EventPublisher.PublishedOfType<PresenceStatusChangedIntegrationEvent>().Should().BeEmpty();
+    }
 }

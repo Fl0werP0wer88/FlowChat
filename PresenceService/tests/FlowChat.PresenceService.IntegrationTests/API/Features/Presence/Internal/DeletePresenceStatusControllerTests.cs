@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using FlowChat.Core.Domain;
+using FlowChat.Core.Messaging.PresenceService.Events;
 
 namespace FlowChat.PresenceService.IntegrationTests.API.Features.Presence.Internal;
 
@@ -10,7 +11,7 @@ public sealed class DeletePresenceStatusControllerTests(PresenceApiFactory facto
     private readonly HttpClient _client = factory.CreateClient();
 
     [Fact]
-    public async Task Delete_WithValidInternalApiKey_RemovesPresenceWithoutPublishingEvent()
+    public async Task Delete_WithValidInternalApiKey_RemovesPresenceAndPublishesInvisibleEvent()
     {
         factory.EventPublisher.Clear();
 
@@ -33,7 +34,9 @@ public sealed class DeletePresenceStatusControllerTests(PresenceApiFactory facto
 
         var storedStatus = await factory.PresenceStatusStore.GetAsync(userId, CancellationToken.None);
         storedStatus.Should().BeNull();
-        factory.EventPublisher.Published.Should().BeEmpty();
+        var publishedEvent = factory.EventPublisher.PublishedOfType<PresenceStatusChangedIntegrationEvent>().Should().ContainSingle().Subject;
+        publishedEvent.UserId.Should().Be(userId);
+        publishedEvent.Status.Should().Be(PresenceStatus.Invisible);
     }
 
     [Fact]
@@ -45,5 +48,22 @@ public sealed class DeletePresenceStatusControllerTests(PresenceApiFactory facto
         });
 
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task Delete_WhenPresenceDoesNotExist_ReturnsAcceptedWithoutPublishingEvent()
+    {
+        factory.EventPublisher.Clear();
+
+        var request = new HttpRequestMessage(HttpMethod.Delete, "/internal/presence/status/delete")
+        {
+            Content = JsonContent.Create(new { UserId = Guid.NewGuid() })
+        };
+        request.Headers.Add("X-Internal-Api-Key", PresenceApiFactory.InternalApiKey);
+
+        var response = await _client.SendAsync(request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.Accepted);
+        factory.EventPublisher.PublishedOfType<PresenceStatusChangedIntegrationEvent>().Should().BeEmpty();
     }
 }

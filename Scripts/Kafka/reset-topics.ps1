@@ -29,6 +29,22 @@ function Write-Step($msg) {
   Write-Host "`n==> $msg"
 }
 
+function Resolve-ScriptRelativePath([string]$Path) {
+  if ([string]::IsNullOrWhiteSpace($Path)) {
+    return $Path
+  }
+
+  if ([System.IO.Path]::IsPathRooted($Path)) {
+    return $Path
+  }
+
+  return Join-Path $PSScriptRoot $Path
+}
+
+$ComposeFile = Resolve-ScriptRelativePath $ComposeFile
+$KafkaComposeFile = Resolve-ScriptRelativePath $KafkaComposeFile
+$UiComposeFile = Resolve-ScriptRelativePath $UiComposeFile
+
 $removeScript = Join-Path $PSScriptRoot "remove-topics.ps1"
 if (-not (Test-Path $removeScript)) {
   throw "Missing shared script: $removeScript"

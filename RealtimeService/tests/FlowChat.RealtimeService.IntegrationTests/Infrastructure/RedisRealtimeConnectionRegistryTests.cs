@@ -25,11 +25,12 @@ public sealed class RedisRealtimeConnectionRegistryTests : IAsyncLifetime
         var database = serviceProvider.GetRequiredService<IConnectionMultiplexer>().GetDatabase();
         var userId = Guid.NewGuid();
 
-        await registry.RegisterAsync(userId, "connection-1", CancellationToken.None);
+        var result = await registry.RegisterAsync(userId, "connection-1", CancellationToken.None);
 
         var connectionEntries = await database.HashGetAllAsync("flowchat:test:connections:connection-1");
         var userConnections = await database.SetMembersAsync($"flowchat:test:user-connections:{userId:D}");
 
+        result.ActiveConnectionCount.Should().Be(1);
         connectionEntries.Should().Contain(entry => entry.Name == "userId" && entry.Value == userId.ToString());
         connectionEntries.Should().Contain(entry => entry.Name == "connectionId" && entry.Value == "connection-1");
         connectionEntries.Should().Contain(entry => entry.Name == "instanceId" && entry.Value == "test-instance");
@@ -48,8 +49,10 @@ public sealed class RedisRealtimeConnectionRegistryTests : IAsyncLifetime
         var userSetKey = $"flowchat:test:user-connections:{userId:D}";
 
         await registry.RegisterAsync(userId, "connection-2", CancellationToken.None);
-        await registry.UnregisterAsync("connection-2", CancellationToken.None);
+        var result = await registry.UnregisterAsync("connection-2", CancellationToken.None);
 
+        result.Should().NotBeNull();
+        result!.ActiveConnectionCount.Should().Be(0);
         (await database.KeyExistsAsync("flowchat:test:connections:connection-2")).Should().BeFalse();
         (await database.SetLengthAsync(userSetKey)).Should().Be(0);
     }
@@ -76,6 +79,19 @@ public sealed class RedisRealtimeConnectionRegistryTests : IAsyncLifetime
         setTtl.Should().NotBeNull();
         connectionTtl!.Value.Should().BeGreaterThan(TimeSpan.FromSeconds(10));
         setTtl!.Value.Should().BeGreaterThan(TimeSpan.FromSeconds(10));
+    }
+
+    [Fact]
+    public async Task RegisterAsync_WhenUserAlreadyHasConnections_ReturnsCurrentConnectionCount()
+    {
+        using var serviceProvider = BuildServiceProvider();
+        var registry = serviceProvider.GetRequiredService<IRealtimeConnectionRegistry>();
+        var userId = Guid.NewGuid();
+
+        await registry.RegisterAsync(userId, "connection-a", CancellationToken.None);
+        var result = await registry.RegisterAsync(userId, "connection-b", CancellationToken.None);
+
+        result.ActiveConnectionCount.Should().Be(2);
     }
 
     private ServiceProvider BuildServiceProvider(TimeSpan? connectionTtl = null, TimeSpan? refreshInterval = null)

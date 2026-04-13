@@ -7,25 +7,24 @@ using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
 using MediatR;
 
-namespace FlowChat.PresenceService.Application.Features.Presence.Commands.DeletePresenceStatus;
+namespace FlowChat.PresenceService.Application.Features.Presence.Commands.InitializePresenceStatus;
 
-public sealed class DeletePresenceStatusCommandHandler(
+public sealed class InitializePresenceStatusCommandHandler(
     IContactObserverProjectionReadRepository contactObserverProjectionReadRepository,
     IPresenceStatusStore presenceStatusStore,
     IIntegrationEventPublisher integrationEventPublisher,
     IUnitOfWork unitOfWork,
     IDomainEventDispatcher domainEventDispatcher)
-    : CommandHandlerBase<DeletePresenceStatusCommand, Unit>(domainEventDispatcher, unitOfWork)
+    : CommandHandlerBase<InitializePresenceStatusCommand, Unit>(domainEventDispatcher, unitOfWork)
 {
     private PresenceStatusSnapshot? _previousStatus;
 
     protected override async Task<FlowChatResult<Unit>> ExecuteAsync(
-        DeletePresenceStatusCommand request,
+        InitializePresenceStatusCommand request,
         CancellationToken cancellationToken)
     {
-        _previousStatus = null;
         _previousStatus = await presenceStatusStore.GetAsync(request.UserId, cancellationToken);
-        if (_previousStatus is null)
+        if (_previousStatus is not null)
         {
             return FlowChatResult<Unit>.Success(Unit.Value);
         }
@@ -33,19 +32,24 @@ public sealed class DeletePresenceStatusCommandHandler(
         var recipients = await contactObserverProjectionReadRepository.GetObserverUserIdsAsync(
             request.UserId,
             cancellationToken);
+        var changedAtUtc = DateTimeOffset.UtcNow;
         var integrationEvent = new PresenceStatusChangedIntegrationEvent
         {
             Key = request.UserId.ToString("D"),
             UserId = request.UserId,
-            Status = PresenceStatus.Invisible,
-            ChangedAtUtc = DateTimeOffset.UtcNow,
+            Status = PresenceStatus.Active,
+            ChangedAtUtc = changedAtUtc,
             RecipientUserIds = recipients
                 .Where(recipientUserId => recipientUserId != Guid.Empty)
                 .Distinct()
                 .ToArray()
         };
 
-        await presenceStatusStore.DeleteAsync(request.UserId, cancellationToken);
+        await presenceStatusStore.SetAsync(
+            request.UserId,
+            integrationEvent.Status,
+            integrationEvent.ChangedAtUtc,
+            cancellationToken);
         await integrationEventPublisher.PublishToOutboxAsync(integrationEvent, cancellationToken);
         _previousStatus = null;
 
@@ -55,30 +59,45 @@ public sealed class DeletePresenceStatusCommandHandler(
     protected override IAggregateRoot? GetAggregateRoot(FlowChatResult<Unit> result) => null;
 
     protected override async Task<FlowChatResult<Unit>> HandleUnexpectedExceptionAsync(
-        DeletePresenceStatusCommand request,
+        InitializePresenceStatusCommand request,
         Exception exception,
         CancellationToken cancellationToken)
     {
         try
         {
-            if (_previousStatus is not null)
-            {
-                await presenceStatusStore.SetAsync(
-                    request.UserId,
-                    _previousStatus.Status,
-                    _previousStatus.ChangedAtUtc,
-                    cancellationToken);
-            }
-        }
-        catch
-        {
-            // Redis rollback is best-effort because the transactional outbox failure is the primary result for callers
+            await RestorePreviousStatusAsync(request.UserId, _previousStatus, cancellationToken);
         }
         finally
         {
             _previousStatus = null;
         }
 
-        return FlowChatResult<Unit>.Failure(DomainError.UnExpected("Failed to delete presence status."));
+        return FlowChatResult<Unit>.Failure(
+            DomainError.UnExpected("Failed to initialize presence status."));
+    }
+
+    private async Task RestorePreviousStatusAsync(
+        Guid userId,
+        PresenceStatusSnapshot? previousStatus,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            if (previousStatus is null)
+            {
+                await presenceStatusStore.DeleteAsync(userId, cancellationToken);
+                return;
+            }
+
+            await presenceStatusStore.SetAsync(
+                userId,
+                previousStatus.Status,
+                previousStatus.ChangedAtUtc,
+                cancellationToken);
+        }
+        catch
+        {
+            // Redis rollback is best-effort because the transactional outbox failure is the primary result for callers
+        }
     }
 }

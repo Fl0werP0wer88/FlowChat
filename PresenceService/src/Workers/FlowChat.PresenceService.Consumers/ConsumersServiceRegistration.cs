@@ -22,6 +22,10 @@ public static class ConsumersServiceRegistration
             .GetSection(SocialGraphContactConsumerOptions.SectionName)
             .Get<SocialGraphContactConsumerOptions>()
             ?? new SocialGraphContactConsumerOptions();
+        var realtimeConnectionOptions = configuration
+            .GetSection(RealtimeConnectionConsumerOptions.SectionName)
+            .Get<RealtimeConnectionConsumerOptions>()
+            ?? new RealtimeConnectionConsumerOptions();
 
         services.AddOptions<PresenceApiSettings>()
             .BindConfiguration(PresenceApiSettings.SectionName);
@@ -52,7 +56,7 @@ public static class ConsumersServiceRegistration
             .AddKafkaClients(clients =>
             {
                 clients
-                    .WithBootstrapServers(contactOptions.BootstrapServers)
+                    .WithBootstrapServers(ResolveBootstrapServers(contactOptions, realtimeConnectionOptions))
                     .AddConsumer(consumer => consumer
                         .WithGroupId(contactOptions.GroupId)
                         .WithAutoOffsetReset(ParseAutoOffsetReset(contactOptions.AutoOffsetReset))
@@ -61,6 +65,14 @@ public static class ConsumersServiceRegistration
                         .WithGroupId(contactOptions.RetryGroupId)
                         .WithAutoOffsetReset(ParseAutoOffsetReset(contactOptions.AutoOffsetReset))
                         .Consume(endpoint => endpoint.ConfigureFlowChatRetryEndpoint(contactOptions)))
+                    .AddConsumer(consumer => consumer
+                        .WithGroupId(realtimeConnectionOptions.GroupId)
+                        .WithAutoOffsetReset(ParseAutoOffsetReset(realtimeConnectionOptions.AutoOffsetReset))
+                        .Consume(endpoint => endpoint.ConfigureFlowChatMainEndpoint(realtimeConnectionOptions)))
+                    .AddConsumer(consumer => consumer
+                        .WithGroupId(realtimeConnectionOptions.RetryGroupId)
+                        .WithAutoOffsetReset(ParseAutoOffsetReset(realtimeConnectionOptions.AutoOffsetReset))
+                        .Consume(endpoint => endpoint.ConfigureFlowChatRetryEndpoint(realtimeConnectionOptions)))
                     .AddProducer(producer => producer
                         .Produce(endpoint => endpoint
                             .ProduceTo(contactOptions.RetryTopic)
@@ -68,13 +80,30 @@ public static class ConsumersServiceRegistration
                     .AddProducer(producer => producer
                         .Produce(endpoint => endpoint
                             .ProduceTo(contactOptions.DeadLetterTopic)
+                            .SerializeAsJson(serializer => serializer.SetTypeHeader())))
+                    .AddProducer(producer => producer
+                        .Produce(endpoint => endpoint
+                            .ProduceTo(realtimeConnectionOptions.RetryTopic)
+                            .SerializeAsJson(serializer => serializer.SetTypeHeader())))
+                    .AddProducer(producer => producer
+                        .Produce(endpoint => endpoint
+                            .ProduceTo(realtimeConnectionOptions.DeadLetterTopic)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())));
             })
             .AddScopedSubscriber<ContactAddedSubscriber>()
-            .AddScopedSubscriber<ContactDeletedSubscriber>();
+            .AddScopedSubscriber<ContactDeletedSubscriber>()
+            .AddScopedSubscriber<RealtimeConnectionRegisteredSubscriber>()
+            .AddScopedSubscriber<RealtimeConnectionUnregisteredSubscriber>();
 
         return services;
     }
+
+    private static string ResolveBootstrapServers(
+        SocialGraphContactConsumerOptions contactOptions,
+        RealtimeConnectionConsumerOptions realtimeConnectionOptions) =>
+        !string.IsNullOrWhiteSpace(contactOptions.BootstrapServers)
+            ? contactOptions.BootstrapServers
+            : realtimeConnectionOptions.BootstrapServers;
 
     private static AutoOffsetReset ParseAutoOffsetReset(string value) =>
         Enum.TryParse<AutoOffsetReset>(value, true, out var parsed)

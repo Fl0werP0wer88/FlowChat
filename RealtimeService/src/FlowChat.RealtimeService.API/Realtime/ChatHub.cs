@@ -1,5 +1,4 @@
 using System.Security.Claims;
-using FlowChat.Core.Domain;
 using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
@@ -10,12 +9,12 @@ namespace FlowChat.RealtimeService.Api.Realtime;
 [Authorize]
 public sealed class ChatHub(
     ILogger<ChatHub> logger,
-    IRealtimeConnectionRegistry realtimeConnectionRegistry) : Hub<IRealtimeClient>
+    IRealtimeConnectionLifecycleService realtimeConnectionLifecycleService) : Hub<IRealtimeClient>
 {
     private const string SubjectClaimType = "sub";
     private readonly ILogger<ChatHub> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-    private readonly IRealtimeConnectionRegistry _realtimeConnectionRegistry = realtimeConnectionRegistry
-        ?? throw new ArgumentNullException(nameof(realtimeConnectionRegistry));
+    private readonly IRealtimeConnectionLifecycleService _realtimeConnectionLifecycleService = realtimeConnectionLifecycleService
+        ?? throw new ArgumentNullException(nameof(realtimeConnectionLifecycleService));
 
     public override async Task OnConnectedAsync()
     {
@@ -33,7 +32,7 @@ public sealed class ChatHub(
             await Groups.AddToGroupAsync(Context.ConnectionId, GroupNames.ForUser(userId.Value));
             addedToGroup = true;
 
-            await _realtimeConnectionRegistry.RegisterAsync(
+            await _realtimeConnectionLifecycleService.RegisterAsync(
                 userId.Value,
                 Context.ConnectionId,
                 Context.ConnectionAborted);
@@ -56,7 +55,7 @@ public sealed class ChatHub(
     {
         try
         {
-            await _realtimeConnectionRegistry.UnregisterAsync(Context.ConnectionId, CancellationToken.None);
+            await _realtimeConnectionLifecycleService.UnregisterAsync(Context.ConnectionId, CancellationToken.None);
         }
         catch (Exception unregisterException)
         {
@@ -78,20 +77,11 @@ public sealed class ChatHub(
     {
         try
         {
-            await _realtimeConnectionRegistry.UnregisterAsync(Context.ConnectionId, CancellationToken.None);
-        }
-        catch (Exception exception)
-        {
-            _logger.LogWarning(exception, "Failed to clean up realtime connection {ConnectionId} in Redis after connection failure.", Context.ConnectionId);
-        }
+            if (!addedToGroup)
+            {
+                return;
+            }
 
-        if (!addedToGroup)
-        {
-            return;
-        }
-
-        try
-        {
             await Groups.RemoveFromGroupAsync(Context.ConnectionId, GroupNames.ForUser(userId));
         }
         catch (Exception exception)

@@ -24,7 +24,7 @@ internal sealed class RedisRealtimeConnectionRegistry(
     private readonly IActiveRealtimeConnectionTracker _activeConnectionTracker = activeConnectionTracker
         ?? throw new ArgumentNullException(nameof(activeConnectionTracker));
 
-    public async Task RegisterAsync(Guid userId, string connectionId, CancellationToken cancellationToken)
+    public async Task<RealtimeConnectionMutationResult> RegisterAsync(Guid userId, string connectionId, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
@@ -57,9 +57,16 @@ internal sealed class RedisRealtimeConnectionRegistry(
 
         await Task.WhenAll(hashSetTask, addToSetTask, expireConnectionTask, expireUserSetTask);
         _activeConnectionTracker.Track(userId, connectionId);
+        var activeConnectionCount = (int)await database.SetLengthAsync(userConnectionsKey);
+
+        return new RealtimeConnectionMutationResult(
+            userId,
+            connectionId,
+            activeConnectionCount,
+            nowUtc);
     }
 
-    public async Task UnregisterAsync(string connectionId, CancellationToken cancellationToken)
+    public async Task<RealtimeConnectionMutationResult?> UnregisterAsync(string connectionId, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
         ArgumentException.ThrowIfNullOrWhiteSpace(connectionId);
@@ -80,18 +87,32 @@ internal sealed class RedisRealtimeConnectionRegistry(
                 if (userIdValue.IsNullOrEmpty || !Guid.TryParse(userIdValue.ToString(), out userId) || userId == Guid.Empty)
                 {
                     await database.KeyDeleteAsync(connectionKey);
-                    return;
+                    return null;
                 }
             }
 
             var userConnectionsKey = GetUserConnectionsKey(userId);
+            var connectionExists = await database.KeyExistsAsync(connectionKey);
+            var connectionInUserSet = await database.SetContainsAsync(userConnectionsKey, connectionId);
+            if (!connectionExists && !connectionInUserSet)
+            {
+                return null;
+            }
+
             await database.SetRemoveAsync(userConnectionsKey, connectionId);
             await database.KeyDeleteAsync(connectionKey);
+            var activeConnectionCount = (int)await database.SetLengthAsync(userConnectionsKey);
 
-            if (await database.SetLengthAsync(userConnectionsKey) == 0)
+            if (activeConnectionCount == 0)
             {
                 await database.KeyDeleteAsync(userConnectionsKey);
             }
+
+            return new RealtimeConnectionMutationResult(
+                userId,
+                connectionId,
+                activeConnectionCount,
+                DateTimeOffset.UtcNow);
         }
         finally
         {

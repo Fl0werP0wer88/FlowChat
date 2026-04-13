@@ -1,5 +1,4 @@
-using FlowChat.Core.Domain;
-using FlowChat.PresenceService.Application.Features.Presence.Commands.ChangePresenceStatus;
+using FlowChat.PresenceService.Application.Features.Presence.Commands.InitializePresenceStatus;
 using FlowChat.PresenceService.Infrastructure.Configuration;
 using FlowChat.Shared.API;
 using MediatR;
@@ -32,7 +31,7 @@ public sealed class InitializePresenceStatusController : ApiControllerBase
         }
 
         var result = await _mediator.Send(
-            new ChangePresenceStatusCommand(request.UserId, PresenceStatus.Active),
+            new InitializePresenceStatusCommand(request.UserId),
             cancellationToken);
 
         return result.IsSuccess ? Accepted() : HandleError(result.Error);
