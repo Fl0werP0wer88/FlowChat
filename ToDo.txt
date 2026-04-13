@@ -5,3 +5,4 @@
 3. Kazac GPT poszukac requestow w ktorych UserId nie jest brany z JWT i popoprawiać.
 4. Przemianować ContacAdded na ContactCreated
 5. Trzeba się zastanowić czy ChangePresenceStatusCommandHandler powinien bezpośrednio publikować PresenceStatusChangedIntegrationEvent czy moze dorzucic jakis posredni ApplicationEvent.
+6. CleanupFailedConnectionAsync na ChatHub powinna czyscic tez redisa i lokalny cache.
