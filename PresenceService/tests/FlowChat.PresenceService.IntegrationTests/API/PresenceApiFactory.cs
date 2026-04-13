@@ -38,7 +38,7 @@ public sealed class PresenceApiFactory : WebApplicationFactory<ChangePresenceSta
                 ["ConnectionStrings:PresenceDb"] = "Host=localhost;Database=test",
                 ["ConnectionStrings:Redis"] = "localhost:6379,user=default,password=flowchat_redis_pw",
                 ["Kafka:PresenceStatusChangedProducer:BootstrapServers"] = "localhost:9092",
-                ["Kafka:PresenceStatusChangedProducer:Topic"] = "test.presence.presence-status-changed"
+                ["Kafka:PresenceStatusChangedProducer:Topic"] = "test.presence.presence"
             });
         });
 

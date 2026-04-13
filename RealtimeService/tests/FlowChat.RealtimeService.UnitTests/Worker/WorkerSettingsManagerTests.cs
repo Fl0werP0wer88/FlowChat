@@ -59,7 +59,7 @@ public sealed class WorkerSettingsManagerTests
         realtimeApiSettings.Should().NotBeNull();
         chatMessageOptions!.Topic.Should().Be("dev.flowchat.chat.message.v1");
         chatMessageOptions.RetryGroupId.Should().Be("realtime-service-retry");
-        presenceOptions!.Topic.Should().Be("dev.flowchat.presence.presence-status-changed.v1");
+        presenceOptions!.Topic.Should().Be("dev.flowchat.presence.presence");
         presenceOptions.RetryGroupId.Should().Be("realtime-service-retry");
         realtimeApiSettings!.BaseUrl.Should().Be("http://localhost:5215");
     }

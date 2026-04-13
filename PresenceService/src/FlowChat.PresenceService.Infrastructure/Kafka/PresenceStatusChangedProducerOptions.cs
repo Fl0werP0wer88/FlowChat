@@ -9,5 +9,5 @@ public sealed class PresenceStatusChangedProducerOptions : IKafkaProducerOptions
 
     public string BootstrapServers { get; set; } = "localhost:9092";
 
-    public string Topic { get; set; } = "dev.flowchat.presence.presence-status-changed.v1";
+    public string Topic { get; set; } = "dev.flowchat.presence.presence";
 }

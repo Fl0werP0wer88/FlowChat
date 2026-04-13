@@ -6,3 +6,4 @@
 4. Przemianować ContacAdded na ContactCreated
 5. Trzeba się zastanowić czy ChangePresenceStatusCommandHandler powinien bezpośrednio publikować PresenceStatusChangedIntegrationEvent czy moze dorzucic jakis posredni ApplicationEvent.
 6. CleanupFailedConnectionAsync na ChatHub powinna czyscic tez redisa i lokalny cache.
+7. Ten event na razie jest bez sensu bo jest nieuzywany: C:\GithubRepos\FlowChat\Common\src\FlowChat.Core\Messaging\AuthService\Events\PhoneNumberConfirmedIntegrationEvent.cs

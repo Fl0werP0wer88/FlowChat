@@ -112,6 +112,33 @@ function Get-TopicDefinitions {
       }
     },
     @{
+      name = "dev.flowchat.presence.presence"
+      partitions = 1
+      rf = 1
+      config = @{
+        "cleanup.policy" = "delete"
+        "retention.ms" = "2419200000"
+      }
+    },
+    @{
+      name = "dev.flowchat.presence.presence.retry"
+      partitions = 1
+      rf = 1
+      config = @{
+        "cleanup.policy" = "delete"
+        "retention.ms" = "3600000"
+      }
+    },
+    @{
+      name = "dev.flowchat.presence.presence.dlq"
+      partitions = 1
+      rf = 1
+      config = @{
+        "cleanup.policy" = "delete"
+        "retention.ms" = "1209600000"
+      }
+    },
+    @{
       name = "dev.flowchat.social-graph.contact"
       partitions = 1
       rf = 1
@@ -170,6 +197,9 @@ function Get-TopicDefinitions {
 
 function Get-LegacyTopicNames {
   return @(
+    "dev.flowchat.presence.presence-status-changed.v1",
+    "dev.flowchat.presence.presence-status-changed.v1.retry",
+    "dev.flowchat.presence.presence-status-changed.v1.dlq",
     "dev.flowchat.social-graph.contact-added.v1",
     "dev.flowchat.social-graph.contact-added.v1.retry",
     "dev.flowchat.social-graph.contact-added.v1.dlq",
