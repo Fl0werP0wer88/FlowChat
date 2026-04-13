@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <ProjectReference Include="..\..\..\Common\src\FlowChat.Shared.Infrastructure\FlowChat.Shared.Infrastructure.csproj" />
     <ProjectReference Include="..\..\..\Common\src\FlowChat.Shared.Persistance\FlowChat.Shared.Persistance.csproj" />
     <ProjectReference Include="..\FlowChat.PresenceService.Application\FlowChat.PresenceService.Application.csproj" />
   </ItemGroup>

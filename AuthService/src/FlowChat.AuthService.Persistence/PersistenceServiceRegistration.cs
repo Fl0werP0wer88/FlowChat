@@ -1,8 +1,7 @@
 using FlowChat.Shared.Application;
 using FlowChat.AuthService.Application.Contracts.Persistence;
-using FlowChat.AuthService.Persistence.UnitOfWork;
+using FlowChat.Shared.Infrastructure.Silverback.Persistence;
 using FlowChat.AuthService.Persistence.Repositories;
-using FlowChat.Shared.Persistance;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -14,7 +13,7 @@ public static class PersistenceServiceRegistration
     public static IServiceCollection AddAPIPersistenceServices(
                             this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddScoped<IUnitOfWork, SilverbackEfUnitOfWork>();
+        services.AddScoped<IUnitOfWork, SilverbackEfUnitOfWork<AppDbContext>>();
 
         services.AddDbContext<AppDbContext>(options =>
         {

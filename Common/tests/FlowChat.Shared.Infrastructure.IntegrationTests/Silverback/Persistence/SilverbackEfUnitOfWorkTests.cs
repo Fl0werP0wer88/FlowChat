@@ -4,57 +4,54 @@ using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Silverback;
 using Silverback.Storage;
-using FlowChat.AuthService.Persistence;
-using FlowChat.AuthService.Persistence.UnitOfWork;
+using FlowChat.Shared.Infrastructure.Silverback.Persistence;
 
-namespace FlowChat.AuthService.UnitTests;
+namespace FlowChat.Shared.Infrastructure.IntegrationTests.Silverback.Persistence;
 
 public sealed class SilverbackEfUnitOfWorkTests
 {
     [Fact]
-    public async Task ExecuteInTransactionAsync_EnlistsAndClearsStorageTransaction_OnSuccess()
+    public async Task ExecuteInTransactionAsync_WhenOperationSucceeds_CommitsChangesAndClearsStorageTransaction()
     {
         await using var connection = new SqliteConnection("Data Source=:memory:");
         await connection.OpenAsync();
 
         var silverbackContext = new TestSilverbackContext();
         await using var dbContext = CreateDbContext(connection);
-        var unitOfWork = new SilverbackEfUnitOfWork(dbContext, silverbackContext);
+        var unitOfWork = new SilverbackEfUnitOfWork<TestDbContext>(dbContext, silverbackContext);
 
         var result = await unitOfWork.ExecuteInTransactionAsync(
-            token =>
+            async token =>
             {
-                token.ThrowIfCancellationRequested();
+                silverbackContext.GetStorageTransaction().Should().NotBeNull();
 
-                var storageTransaction = silverbackContext.GetStorageTransaction();
+                await dbContext.Records.AddAsync(new TestRecord { Name = "alpha" }, token);
 
-                storageTransaction.Should().NotBeNull();
-                storageTransaction!.UnderlyingTransaction.Should().NotBeNull();
-
-                return Task.FromResult(42);
+                return 42;
             },
             CancellationToken.None);
 
         result.Should().Be(42);
         silverbackContext.GetStorageTransaction().Should().BeNull();
+        (await dbContext.Records.SingleAsync()).Name.Should().Be("alpha");
     }
 
     [Fact]
-    public async Task ExecuteInTransactionAsync_ClearsStorageTransaction_OnFailure()
+    public async Task ExecuteInTransactionAsync_WhenOperationThrows_RollsBackAndClearsStorageTransaction()
     {
         await using var connection = new SqliteConnection("Data Source=:memory:");
         await connection.OpenAsync();
 
         var silverbackContext = new TestSilverbackContext();
         await using var dbContext = CreateDbContext(connection);
-        var unitOfWork = new SilverbackEfUnitOfWork(dbContext, silverbackContext);
+        var unitOfWork = new SilverbackEfUnitOfWork<TestDbContext>(dbContext, silverbackContext);
 
         var act = () => unitOfWork.ExecuteInTransactionAsync<int>(
-            token =>
+            async token =>
             {
-                token.ThrowIfCancellationRequested();
-
                 silverbackContext.GetStorageTransaction().Should().NotBeNull();
+
+                await dbContext.Records.AddAsync(new TestRecord { Name = "beta" }, token);
 
                 throw new InvalidOperationException("boom");
             },
@@ -64,18 +61,31 @@ public sealed class SilverbackEfUnitOfWorkTests
             .WithMessage("boom");
 
         silverbackContext.GetStorageTransaction().Should().BeNull();
+        (await dbContext.Records.CountAsync()).Should().Be(0);
     }
 
-    private static AppDbContext CreateDbContext(SqliteConnection connection)
+    private static TestDbContext CreateDbContext(SqliteConnection connection)
     {
-        var options = new DbContextOptionsBuilder<AppDbContext>()
+        var options = new DbContextOptionsBuilder<TestDbContext>()
             .UseSqlite(connection)
             .Options;
 
-        var dbContext = new AppDbContext(options);
+        var dbContext = new TestDbContext(options);
         dbContext.Database.EnsureCreated();
 
         return dbContext;
+    }
+
+    private sealed class TestDbContext(DbContextOptions<TestDbContext> options) : DbContext(options)
+    {
+        public DbSet<TestRecord> Records => Set<TestRecord>();
+    }
+
+    private sealed class TestRecord
+    {
+        public int Id { get; set; }
+
+        public required string Name { get; set; }
     }
 
     private sealed class TestSilverbackContext : ISilverbackContext
@@ -127,7 +137,8 @@ public sealed class SilverbackEfUnitOfWorkTests
             return false;
         }
 
-        public bool TryGetObject(Guid objectTypeId, [NotNullWhen(true)] out object? obj) => _objects.TryGetValue(objectTypeId, out obj);
+        public bool TryGetObject(Guid objectTypeId, [NotNullWhen(true)] out object? obj) =>
+            _objects.TryGetValue(objectTypeId, out obj);
 
         public T GetOrAddObject<T>(Guid objectTypeId, Func<T> factory)
         {
@@ -142,7 +153,10 @@ public sealed class SilverbackEfUnitOfWorkTests
             return created;
         }
 
-        public TObject GetOrAddObject<TObject, TArg>(Guid objectTypeId, Func<TArg, TObject> factory, TArg argument)
+        public TObject GetOrAddObject<TObject, TArg>(
+            Guid objectTypeId,
+            Func<TArg, TObject> factory,
+            TArg argument)
         {
             if (TryGetObject(objectTypeId, out TObject? existing))
             {

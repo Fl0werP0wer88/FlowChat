@@ -1,7 +1,7 @@
 using FlowChat.PresenceService.Application.Contracts.Persistence;
 using FlowChat.PresenceService.Persistence.Repositories;
 using FlowChat.Shared.Application;
-using FlowChat.Shared.Persistance;
+using FlowChat.Shared.Infrastructure.Silverback.Persistence;
 using FlowChat.Shared.Persistance.Auditing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -26,7 +26,7 @@ public static class PersistenceServiceRegistration
 
         services.AddScoped<IContactObserverProjectionReadRepository, ContactObserverProjectionReadRepository>();
         services.AddScoped<IContactObserverProjectionWriteRepository, ContactObserverProjectionWriteRepository>();
-        services.AddScoped<IUnitOfWork, EfUnitOfWork<AppDbContext>>();
+        services.AddScoped<IUnitOfWork, SilverbackEfUnitOfWork<AppDbContext>>();
 
         return services;
     }

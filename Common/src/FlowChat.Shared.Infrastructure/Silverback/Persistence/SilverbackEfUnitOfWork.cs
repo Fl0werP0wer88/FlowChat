@@ -4,10 +4,13 @@ using Microsoft.EntityFrameworkCore.Storage;
 using Silverback;
 using Silverback.Storage;
 
-namespace FlowChat.AuthService.Persistence.UnitOfWork;
+namespace FlowChat.Shared.Infrastructure.Silverback.Persistence;
 
-public sealed class SilverbackEfUnitOfWork(AppDbContext dbContext, ISilverbackContext silverbackContext)
-    : EfUnitOfWork<AppDbContext>(dbContext)
+public sealed class SilverbackEfUnitOfWork<TDbContext>(
+    TDbContext dbContext,
+    ISilverbackContext silverbackContext)
+    : EfUnitOfWork<TDbContext>(dbContext)
+    where TDbContext : DbContext
 {
     public override async Task<T> ExecuteInTransactionAsync<T>(
         Func<CancellationToken, Task<T>> operation,
@@ -21,9 +24,8 @@ public sealed class SilverbackEfUnitOfWork(AppDbContext dbContext, ISilverbackCo
         return await strategy.ExecuteAsync(async () =>
         {
             await using var transaction = await DbContext.Database.BeginTransactionAsync(cancellationToken);
-            // Enlist Silverback in the same DB transaction so outbox messages and business data
-            // are committed atomically. ownTransaction: false means EF owns commit/rollback,
-            // not Silverback — prevents double-commit on success or swallowed rollbacks on failure.
+
+            // Silverback must share the EF transaction so business data and the outbox commit atomically
             silverbackContext.EnlistDbTransaction(transaction.GetDbTransaction(), ownTransaction: false);
 
             try
@@ -40,8 +42,7 @@ public sealed class SilverbackEfUnitOfWork(AppDbContext dbContext, ISilverbackCo
             }
             finally
             {
-                // Always clean up the Silverback storage transaction reference even on exception,
-                // so the context is not left in a broken state for the next operation.
+                // Clear the storage transaction even after failures so the scoped context is reusable
                 silverbackContext.ClearStorageTransaction();
             }
         });
