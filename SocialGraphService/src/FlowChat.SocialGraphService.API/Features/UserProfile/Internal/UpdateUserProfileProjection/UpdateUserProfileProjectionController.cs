@@ -1,6 +1,7 @@
 using FlowChat.SocialGraphService.Api.Features.UserProfile.Internal.UserProfileProjection;
 using FlowChat.SocialGraphService.Application.Features.UserProfile.Commands.UpdateUserProfileProjection;
 using FlowChat.SocialGraphService.Infrastructure.Configuration;
+using FlowChat.Shared.API;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -9,12 +10,16 @@ namespace FlowChat.SocialGraphService.Api.Features.UserProfile.Internal.UpdateUs
 [ApiController]
 [ApiExplorerSettings(IgnoreApi = true)]
 [Route("internal/userprofiles/projection/update")]
-public sealed class UpdateUserProfileProjectionController(
-    IMediator mediator,
-    IApiSettingsManager apiSettingsManager)
-    : InternalUserProfileProjectionControllerBase(apiSettingsManager)
+public sealed class UpdateUserProfileProjectionController : ApiControllerBase
 {
-    private readonly IMediator _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
+    private readonly IMediator _mediator;
+
+    public UpdateUserProfileProjectionController(IMediator mediator, IApiSettingsManager apiSettingsManager)
+        : base(() => apiSettingsManager.GetInternalApiSettings().ApiKey)
+    {
+        _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
+        ArgumentNullException.ThrowIfNull(apiSettingsManager);
+    }
 
     [HttpPut]
     public async Task<IActionResult> Update(

@@ -1,28 +1,29 @@
-using FlowChat.PresenceService.Application.Features.ContactObserverProjections.Commands.DeleteContactObserverProjection;
+using FlowChat.Core.Domain;
+using FlowChat.PresenceService.Application.Features.Presence.Commands.ChangePresenceStatus;
 using FlowChat.PresenceService.Infrastructure.Configuration;
 using FlowChat.Shared.API;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
-namespace FlowChat.PresenceService.API.Features.ContactObserverProjection.Internal.DeleteContactObserverProjection;
+namespace FlowChat.PresenceService.API.Features.Presence.Internal.InitializePresenceStatus;
 
 [ApiController]
 [ApiExplorerSettings(IgnoreApi = true)]
-[Route("internal/presence/contact-observers")]
-public sealed class DeleteContactObserverProjectionController : ApiControllerBase
+[Route("internal/presence/status")]
+public sealed class InitializePresenceStatusController : ApiControllerBase
 {
     private readonly IMediator _mediator;
 
-    public DeleteContactObserverProjectionController(IMediator mediator, IApiSettingsManager apiSettingsManager)
+    public InitializePresenceStatusController(IMediator mediator, IApiSettingsManager apiSettingsManager)
         : base(() => apiSettingsManager.GetInternalApiSettings().ApiKey)
     {
         _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
         ArgumentNullException.ThrowIfNull(apiSettingsManager);
     }
 
-    [HttpDelete("delete")]
-    public async Task<IActionResult> Delete(
-        [FromBody] ContactObserverProjectionRequest request,
+    [HttpPost("initialize")]
+    public async Task<IActionResult> Initialize(
+        [FromBody] InitializePresenceStatusRequest request,
         CancellationToken cancellationToken)
     {
         if (!HasValidInternalApiKey())
@@ -31,7 +32,7 @@ public sealed class DeleteContactObserverProjectionController : ApiControllerBas
         }
 
         var result = await _mediator.Send(
-            new DeleteContactObserverProjectionCommand(request.ObservedUserId, request.ObserverUserId),
+            new ChangePresenceStatusCommand(request.UserId, PresenceStatus.Active),
             cancellationToken);
 
         return result.IsSuccess ? Accepted() : HandleError(result.Error);

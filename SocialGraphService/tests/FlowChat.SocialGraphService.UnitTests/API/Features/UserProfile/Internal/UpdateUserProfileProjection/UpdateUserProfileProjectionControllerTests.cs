@@ -15,6 +15,23 @@ public sealed class UpdateUserProfileProjectionControllerTests
     private readonly IFixture _fixture = new Fixture();
 
     [Fact]
+    public async Task Update_WhenApiKeyMissing_ReturnsUnauthorized()
+    {
+        var mediatorMock = new Mock<IMediator>(MockBehavior.Strict);
+        var controller = CreateController("expected-key", mediatorMock);
+
+        var result = await controller.Update(
+            new UserProfileProjectionRequest
+            {
+                UserProfileId = _fixture.Create<Guid>(),
+                FriendlyUserId = "jane.doe"
+            },
+            CancellationToken.None);
+
+        result.Should().BeOfType<UnauthorizedResult>();
+    }
+
+    [Fact]
     public async Task Update_WhenApiKeyMatches_SendsCommandAndReturnsAccepted()
     {
         UpdateUserProfileProjectionCommand? capturedCommand = null;

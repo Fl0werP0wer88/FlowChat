@@ -9,14 +9,16 @@ namespace FlowChat.UserProfileService.Api.Features.UserProfile.Internal.CreateIn
 [ApiController]
 [ApiExplorerSettings(IgnoreApi = true)]
 [Route("internal/userprofiles")]
-public sealed class CreateInitialUserProfileController(
-    IMediator mediator,
-    IApiSettingsManager apiSettingsManager) : ApiControllerBase
+public sealed class CreateInitialUserProfileController : ApiControllerBase
 {
-    private const string InternalApiKeyHeaderName = "X-Internal-Api-Key";
-    private readonly IMediator _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
-    private readonly IApiSettingsManager _apiSettingsManager = apiSettingsManager
-        ?? throw new ArgumentNullException(nameof(apiSettingsManager));
+    private readonly IMediator _mediator;
+
+    public CreateInitialUserProfileController(IMediator mediator, IApiSettingsManager apiSettingsManager)
+        : base(() => apiSettingsManager.GetInternalApiSettings().ApiKey)
+    {
+        _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
+        ArgumentNullException.ThrowIfNull(apiSettingsManager);
+    }
 
     [HttpPost("initial")]
     public async Task<IActionResult> CreateInitialUserProfile(
@@ -41,22 +43,6 @@ public sealed class CreateInitialUserProfileController(
         return result.IsSuccess
             ? Accepted()
             : HandleError(result.Error);
-    }
-
-    private bool HasValidInternalApiKey()
-    {
-        var expectedApiKey = _apiSettingsManager.GetInternalApiSettings().ApiKey;
-        if (string.IsNullOrWhiteSpace(expectedApiKey))
-        {
-            return false;
-        }
-
-        if (!Request.Headers.TryGetValue(InternalApiKeyHeaderName, out var providedApiKey))
-        {
-            return false;
-        }
-
-        return string.Equals(providedApiKey.ToString(), expectedApiKey, StringComparison.Ordinal);
     }
 }
 

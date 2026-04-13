@@ -79,23 +79,91 @@ public sealed class ApiControllerBaseTests
         error.ErrorMessage.Should().Be("Concurrency conflict detail");
     }
 
-    private static TestApiController CreateController()
+    [Fact]
+    public void HasValidInternalApiKey_WhenAccessorIsNotConfigured_ReturnsFalse()
     {
-        var controller = new TestApiController();
-        controller.ControllerContext = new ControllerContext
+        var controller = CreateController();
+
+        var result = controller.InvokeHasValidInternalApiKey();
+
+        result.Should().BeFalse();
+    }
+
+    [Fact]
+    public void HasValidInternalApiKey_WhenConfiguredKeyIsBlank_ReturnsFalse()
+    {
+        var controller = CreateController(() => " ");
+
+        var result = controller.InvokeHasValidInternalApiKey();
+
+        result.Should().BeFalse();
+    }
+
+    [Fact]
+    public void HasValidInternalApiKey_WhenHeaderIsMissing_ReturnsFalse()
+    {
+        var controller = CreateController(() => "expected-key");
+
+        var result = controller.InvokeHasValidInternalApiKey();
+
+        result.Should().BeFalse();
+    }
+
+    [Fact]
+    public void HasValidInternalApiKey_WhenHeaderDoesNotMatch_ReturnsFalse()
+    {
+        var controller = CreateController(() => "expected-key", "other-key");
+
+        var result = controller.InvokeHasValidInternalApiKey();
+
+        result.Should().BeFalse();
+    }
+
+    [Fact]
+    public void HasValidInternalApiKey_WhenHeaderMatches_ReturnsTrue()
+    {
+        var controller = CreateController(() => "expected-key", "expected-key");
+
+        var result = controller.InvokeHasValidInternalApiKey();
+
+        result.Should().BeTrue();
+    }
+
+    private static TestApiController CreateController(
+        Func<string?>? internalApiKeyAccessor = null,
+        string? providedApiKey = null)
+    {
+        var httpContext = new DefaultHttpContext
         {
-            HttpContext = new DefaultHttpContext
-            {
-                RequestServices = new SingleServiceProvider(new TestProblemDetailsFactory())
-            }
+            RequestServices = new SingleServiceProvider(new TestProblemDetailsFactory())
         };
+
+        if (providedApiKey is not null)
+        {
+            httpContext.Request.Headers["X-Internal-Api-Key"] = providedApiKey;
+        }
+
+        var controller = internalApiKeyAccessor is null
+            ? new TestApiController()
+            : new TestApiController(internalApiKeyAccessor);
+        controller.ControllerContext = new ControllerContext { HttpContext = httpContext };
 
         return controller;
     }
 
     private sealed class TestApiController : ApiControllerBase
     {
+        public TestApiController()
+        {
+        }
+
+        public TestApiController(Func<string?> internalApiKeyAccessor) : base(internalApiKeyAccessor)
+        {
+        }
+
         public ObjectResult InvokeHandleError(IDomainError error) => HandleError(error);
+
+        public bool InvokeHasValidInternalApiKey() => HasValidInternalApiKey();
     }
 
     private sealed class SingleServiceProvider(object service) : IServiceProvider

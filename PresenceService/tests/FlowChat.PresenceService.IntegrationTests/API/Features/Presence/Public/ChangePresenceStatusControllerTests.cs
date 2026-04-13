@@ -14,6 +14,8 @@ public sealed class ChangePresenceStatusControllerTests(PresenceApiFactory facto
     [Fact]
     public async Task ChangePresenceStatus_WithAuthenticatedUser_StoresStatusAndPublishesEvent()
     {
+        factory.EventPublisher.Clear();
+
         var userId = Guid.NewGuid();
         var observerUserId = Guid.NewGuid();
 

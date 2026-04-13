@@ -6,10 +6,17 @@ namespace FlowChat.Shared.API;
 
 public abstract class ApiControllerBase : ControllerBase
 {
+    private const string InternalApiKeyHeaderName = "X-Internal-Api-Key";
     private readonly Dictionary<ErrorType, Func<string?, IEnumerable<string>?, ObjectResult>> _errorHandlers;
+    private readonly Func<string?>? _internalApiKeyAccessor;
 
-    protected ApiControllerBase()
+    protected ApiControllerBase() : this(null)
     {
+    }
+
+    protected ApiControllerBase(Func<string?>? internalApiKeyAccessor)
+    {
+        _internalApiKeyAccessor = internalApiKeyAccessor;
         _errorHandlers = new Dictionary<ErrorType, Func<string?, IEnumerable<string>?, ObjectResult>>
         {
             { ErrorType.Conflict, ConflictResponse },
@@ -30,6 +37,27 @@ public abstract class ApiControllerBase : ControllerBase
         }
 
         throw new InvalidOperationException($"Unsupported error type: {error.ErrorType}");
+    }
+
+    protected bool HasValidInternalApiKey()
+    {
+        if (_internalApiKeyAccessor is null)
+        {
+            return false;
+        }
+
+        var expectedApiKey = _internalApiKeyAccessor();
+        if (string.IsNullOrWhiteSpace(expectedApiKey))
+        {
+            return false;
+        }
+
+        if (!Request.Headers.TryGetValue(InternalApiKeyHeaderName, out var providedApiKey))
+        {
+            return false;
+        }
+
+        return string.Equals(providedApiKey.ToString(), expectedApiKey, StringComparison.Ordinal);
     }
 
     protected ObjectResult NotFoundResponse(string? details = null, IEnumerable<string>? errors = null) =>

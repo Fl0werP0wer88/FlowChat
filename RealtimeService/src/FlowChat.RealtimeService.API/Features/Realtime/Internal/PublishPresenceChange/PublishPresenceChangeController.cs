@@ -9,12 +9,16 @@ namespace FlowChat.RealtimeService.Api.Features.Realtime.Internal.PublishPresenc
 [ApiController]
 [ApiExplorerSettings(IgnoreApi = true)]
 [Route("internal/realtime")]
-public sealed class PublishPresenceChangeController(IMediator mediator, IApiSettingsManager apiSettingsManager) : ApiControllerBase
+public sealed class PublishPresenceChangeController : ApiControllerBase
 {
-    private const string InternalApiKeyHeaderName = "X-Internal-Api-Key";
-    private readonly IMediator _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
-    private readonly IApiSettingsManager _apiSettingsManager = apiSettingsManager
-        ?? throw new ArgumentNullException(nameof(apiSettingsManager));
+    private readonly IMediator _mediator;
+
+    public PublishPresenceChangeController(IMediator mediator, IApiSettingsManager apiSettingsManager)
+        : base(() => apiSettingsManager.GetInternalApiSettings().ApiKey)
+    {
+        _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
+        ArgumentNullException.ThrowIfNull(apiSettingsManager);
+    }
 
     [HttpPost("presence")]
     public async Task<IActionResult> Publish([FromBody] PublishPresenceChangeRequest request, CancellationToken cancellationToken)
@@ -35,22 +39,6 @@ public sealed class PublishPresenceChangeController(IMediator mediator, IApiSett
         return result.IsSuccess
             ? Accepted()
             : HandleError(result.Error);
-    }
-
-    private bool HasValidInternalApiKey()
-    {
-        var expectedApiKey = _apiSettingsManager.GetInternalApiSettings().ApiKey;
-        if (string.IsNullOrWhiteSpace(expectedApiKey))
-        {
-            return false;
-        }
-
-        if (!Request.Headers.TryGetValue(InternalApiKeyHeaderName, out var providedApiKey))
-        {
-            return false;
-        }
-
-        return string.Equals(providedApiKey.ToString(), expectedApiKey, StringComparison.Ordinal);
     }
 }
 
