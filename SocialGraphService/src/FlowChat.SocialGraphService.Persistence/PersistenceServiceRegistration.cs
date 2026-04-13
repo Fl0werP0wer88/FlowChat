@@ -1,10 +1,11 @@
 using FlowChat.Shared.Application;
 using FlowChat.SocialGraphService.Application.Contracts.Persistence;
 using FlowChat.SocialGraphService.Persistence.Repositories;
+using FlowChat.Shared.Persistance;
+using FlowChat.Shared.Persistance.Auditing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using FlowChat.Shared.Persistance.Auditing;
 
 namespace FlowChat.SocialGraphService.Persistence;
 
@@ -23,7 +24,7 @@ public static class PersistenceServiceRegistration
         services.AddScoped<IContactReadRepository, ContactReadRepository>();
         services.AddScoped<IUserProfileProjectionReadRepository, UserProfileProjectionReadRepository>();
         services.AddScoped<IUserProfileProjectionWriteRepository, UserProfileProjectionWriteRepository>();
-        services.AddScoped<IUnitOfWork, UnitOfWork>();
+        services.AddScoped<IUnitOfWork, EfUnitOfWork<AppDbContext>>();
 
         return services;
     }

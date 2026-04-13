@@ -1,10 +1,11 @@
 using FlowChat.Shared.Application;
 using FlowChat.UserProfileService.Application.Contracts.Persistence;
 using FlowChat.UserProfileService.Persistence.Repositories;
+using FlowChat.Shared.Persistance;
+using FlowChat.Shared.Persistance.Auditing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using FlowChat.Shared.Persistance.Auditing;
 
 namespace FlowChat.UserProfileService.Persistence;
 
@@ -23,7 +24,7 @@ public static class PersistenceServiceRegistration
                 .AddInterceptors(serviceProvider.GetRequiredService<EntityBaseSaveChangesInterceptor>()),
             ServiceLifetime.Scoped);
 
-        services.AddScoped<IUnitOfWork, UnitOfWork>();
+        services.AddScoped<IUnitOfWork, EfUnitOfWork<AppDbContext>>();
         services.AddScoped<IUserProfileReadRepository, UserProfileReadRepository>();
         services.AddScoped<IUserProfileWriteRepository, UserProfileWriteRepository>();
         services.AddScoped<IEmailVerificationRequestWriteRepository, EmailVerificationRequestWriteRepository>();

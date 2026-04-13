@@ -1,4 +1,5 @@
 using FlowChat.Shared.Domain.ValueObjects;
+using FlowChat.Shared.Persistance;
 using FlowChat.UserProfileService.Domain.Entities.EmailVerificationRequest;
 using FlowChat.UserProfileService.Domain.Entities.UserProfile;
 using FlowChat.UserProfileService.Persistence;
@@ -16,7 +17,7 @@ public sealed class UnitOfWorkTests
         await using var connection = new SqliteConnection("Data Source=:memory:");
         await connection.OpenAsync();
         await using var context = CreateDbContext(connection);
-        var unitOfWork = new UnitOfWork(context);
+        var unitOfWork = new EfUnitOfWork<AppDbContext>(context);
 
         var profileId = await unitOfWork.ExecuteInTransactionAsync(
             async token =>
@@ -40,7 +41,7 @@ public sealed class UnitOfWorkTests
         await using var connection = new SqliteConnection("Data Source=:memory:");
         await connection.OpenAsync();
         await using var context = CreateDbContext(connection);
-        var unitOfWork = new UnitOfWork(context);
+        var unitOfWork = new EfUnitOfWork<AppDbContext>(context);
 
         var act = () => unitOfWork.ExecuteInTransactionAsync<int>(
             async token =>
@@ -65,7 +66,7 @@ public sealed class UnitOfWorkTests
         await using var connection = new SqliteConnection("Data Source=:memory:");
         await connection.OpenAsync();
         await using var context = CreateDbContext(connection);
-        var unitOfWork = new UnitOfWork(context);
+        var unitOfWork = new EfUnitOfWork<AppDbContext>(context);
 
         context.UserProfiles.Add(UserProfile.Create("jdoe", EmailAddress.Create("john@example.com")));
 

@@ -9,7 +9,7 @@ using FlowChat.AuthService.Persistence.UnitOfWork;
 
 namespace FlowChat.AuthService.UnitTests;
 
-public sealed class AppDbContextUnitOfWorkTests
+public sealed class SilverbackEfUnitOfWorkTests
 {
     [Fact]
     public async Task ExecuteInTransactionAsync_EnlistsAndClearsStorageTransaction_OnSuccess()
@@ -19,7 +19,7 @@ public sealed class AppDbContextUnitOfWorkTests
 
         var silverbackContext = new TestSilverbackContext();
         await using var dbContext = CreateDbContext(connection);
-        var unitOfWork = new AppDbContextUnitOfWork(dbContext, silverbackContext);
+        var unitOfWork = new SilverbackEfUnitOfWork(dbContext, silverbackContext);
 
         var result = await unitOfWork.ExecuteInTransactionAsync(
             token =>
@@ -47,7 +47,7 @@ public sealed class AppDbContextUnitOfWorkTests
 
         var silverbackContext = new TestSilverbackContext();
         await using var dbContext = CreateDbContext(connection);
-        var unitOfWork = new AppDbContextUnitOfWork(dbContext, silverbackContext);
+        var unitOfWork = new SilverbackEfUnitOfWork(dbContext, silverbackContext);
 
         var act = () => unitOfWork.ExecuteInTransactionAsync<int>(
             token =>

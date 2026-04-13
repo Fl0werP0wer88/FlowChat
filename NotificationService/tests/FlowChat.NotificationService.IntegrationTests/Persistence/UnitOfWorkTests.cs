@@ -2,6 +2,7 @@ using AutoFixture;
 using FlowChat.NotificationService.Domain.Entities.Notification;
 using FlowChat.NotificationService.Persistence;
 using FlowChat.Shared.Domain.ValueObjects;
+using FlowChat.Shared.Persistance;
 using FluentAssertions;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
@@ -12,7 +13,7 @@ public sealed class UnitOfWorkTests : IDisposable
 {
     private readonly SqliteConnection _connection;
     private readonly AppDbContext _dbContext;
-    private readonly UnitOfWork _unitOfWork;
+    private readonly EfUnitOfWork<AppDbContext> _unitOfWork;
 
     public UnitOfWorkTests()
     {
@@ -25,7 +26,7 @@ public sealed class UnitOfWorkTests : IDisposable
 
         _dbContext = new AppDbContext(options);
         _dbContext.Database.EnsureCreated();
-        _unitOfWork = new UnitOfWork(_dbContext);
+        _unitOfWork = new EfUnitOfWork<AppDbContext>(_dbContext);
     }
 
     public void Dispose()

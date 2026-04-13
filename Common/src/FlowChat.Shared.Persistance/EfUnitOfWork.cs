@@ -1,32 +1,33 @@
 using FlowChat.Shared.Application;
 using Microsoft.EntityFrameworkCore;
 
-namespace FlowChat.ChatService.Persistence;
+namespace FlowChat.Shared.Persistance;
 
-public sealed class UnitOfWork(AppDbContext dbContext) : IUnitOfWork
+public class EfUnitOfWork<TDbContext>(TDbContext dbContext) : IUnitOfWork
+    where TDbContext : DbContext
 {
-    private readonly AppDbContext _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
+    protected readonly TDbContext DbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
 
     public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default) =>
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        await DbContext.SaveChangesAsync(cancellationToken);
 
-    public async Task<T> ExecuteInTransactionAsync<T>(
+    public virtual async Task<T> ExecuteInTransactionAsync<T>(
         Func<CancellationToken, Task<T>> operation,
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(operation);
         cancellationToken.ThrowIfCancellationRequested();
 
-        var strategy = _dbContext.Database.CreateExecutionStrategy();
+        var strategy = DbContext.Database.CreateExecutionStrategy();
 
         return await strategy.ExecuteAsync(async () =>
         {
-            await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+            await using var transaction = await DbContext.Database.BeginTransactionAsync(cancellationToken);
 
             try
             {
                 var result = await operation(cancellationToken);
-                await _dbContext.SaveChangesAsync(cancellationToken);
+                await DbContext.SaveChangesAsync(cancellationToken);
                 await transaction.CommitAsync(cancellationToken);
                 return result;
             }
@@ -38,9 +39,5 @@ public sealed class UnitOfWork(AppDbContext dbContext) : IUnitOfWork
         });
     }
 
-    public void Dispose()
-    {
-        _dbContext.Dispose();
-    }
+    public void Dispose() => DbContext.Dispose();
 }
-

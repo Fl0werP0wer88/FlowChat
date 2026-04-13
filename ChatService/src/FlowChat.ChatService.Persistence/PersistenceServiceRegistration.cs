@@ -1,10 +1,11 @@
 using FlowChat.Shared.Application;
 using FlowChat.ChatService.Application.Contracts.Persistence;
 using FlowChat.ChatService.Persistence.Repositories;
+using FlowChat.Shared.Persistance;
+using FlowChat.Shared.Persistance.Auditing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using FlowChat.Shared.Persistance.Auditing;
 
 namespace FlowChat.ChatService.Persistence;
 
@@ -13,7 +14,7 @@ public static class PersistenceServiceRegistration
     public static IServiceCollection AddApiPersistenceServices(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddScoped<EntityBaseSaveChangesInterceptor>();
-        services.AddScoped<IUnitOfWork, UnitOfWork>();
+        services.AddScoped<IUnitOfWork, EfUnitOfWork<AppDbContext>>();
         services.AddDbContext<AppDbContext>((serviceProvider, options) =>
             options.UseNpgsql(configuration.GetConnectionString("ChatDb"))
                 .AddInterceptors(serviceProvider.GetRequiredService<EntityBaseSaveChangesInterceptor>()));

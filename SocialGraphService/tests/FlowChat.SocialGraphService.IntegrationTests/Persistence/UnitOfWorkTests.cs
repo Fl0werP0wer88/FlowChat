@@ -1,3 +1,4 @@
+using FlowChat.Shared.Persistance;
 using FlowChat.Shared.Persistance.Auditing;
 using FlowChat.SocialGraphService.Domain.Entities.Contact;
 using FlowChat.SocialGraphService.Persistence;
@@ -14,7 +15,7 @@ public sealed class UnitOfWorkTests
         await using var connection = new SqliteConnection("Data Source=:memory:");
         await connection.OpenAsync();
         await using var context = CreateDbContext(connection);
-        var unitOfWork = new UnitOfWork(context);
+        var unitOfWork = new EfUnitOfWork<AppDbContext>(context);
 
         var contactId = await unitOfWork.ExecuteInTransactionAsync(
             async cancellationToken =>
@@ -38,7 +39,7 @@ public sealed class UnitOfWorkTests
         await using var connection = new SqliteConnection("Data Source=:memory:");
         await connection.OpenAsync();
         await using var context = CreateDbContext(connection);
-        var unitOfWork = new UnitOfWork(context);
+        var unitOfWork = new EfUnitOfWork<AppDbContext>(context);
 
         var act = () => unitOfWork.ExecuteInTransactionAsync<int>(
             async cancellationToken =>
@@ -63,7 +64,7 @@ public sealed class UnitOfWorkTests
         await using var connection = new SqliteConnection("Data Source=:memory:");
         await connection.OpenAsync();
         await using var context = CreateDbContext(connection);
-        var unitOfWork = new UnitOfWork(context);
+        var unitOfWork = new EfUnitOfWork<AppDbContext>(context);
 
         context.Contacts.Add(Contact.Create(Guid.NewGuid(), Guid.NewGuid(), "John Doe"));
 
