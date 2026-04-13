@@ -36,7 +36,6 @@ public sealed class ChatHub(
             await _realtimeConnectionRegistry.RegisterAsync(
                 userId.Value,
                 Context.ConnectionId,
-                PresenceStatus.Active,
                 Context.ConnectionAborted);
             await base.OnConnectedAsync();
         }

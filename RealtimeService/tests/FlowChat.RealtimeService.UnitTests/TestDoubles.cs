@@ -2,7 +2,6 @@ using System.Net;
 using System.Net.Http;
 using System.Security.Claims;
 using CSharpFunctionalExtensions;
-using FlowChat.Core.Domain;
 using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
 using FlowChat.RealtimeService.Api.Realtime;
 using FlowChat.Shared.Domain;
@@ -135,14 +134,13 @@ internal sealed class CapturingRealtimeConnectionRegistry : IRealtimeConnectionR
 {
     public Guid? LastRegisteredUserId { get; private set; }
     public string? LastRegisteredConnectionId { get; private set; }
-    public PresenceStatus? LastRegisteredStatus { get; private set; }
     public string? LastUnregisteredConnectionId { get; private set; }
     public IReadOnlyCollection<RealtimeConnectionRefreshEntry>? LastRefreshedConnections { get; private set; }
 
     public Exception? RegisterException { get; set; }
     public Exception? UnregisterException { get; set; }
 
-    public Task RegisterAsync(Guid userId, string connectionId, PresenceStatus status, CancellationToken cancellationToken)
+    public Task RegisterAsync(Guid userId, string connectionId, CancellationToken cancellationToken)
     {
         if (RegisterException is not null)
         {
@@ -151,7 +149,6 @@ internal sealed class CapturingRealtimeConnectionRegistry : IRealtimeConnectionR
 
         LastRegisteredUserId = userId;
         LastRegisteredConnectionId = connectionId;
-        LastRegisteredStatus = status;
         return Task.CompletedTask;
     }
 

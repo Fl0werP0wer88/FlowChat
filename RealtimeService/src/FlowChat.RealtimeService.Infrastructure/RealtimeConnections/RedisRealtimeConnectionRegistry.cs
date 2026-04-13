@@ -1,4 +1,3 @@
-using FlowChat.Core.Domain;
 using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
 using FlowChat.RealtimeService.Infrastructure.Configuration;
 using StackExchange.Redis;
@@ -15,7 +14,6 @@ internal sealed class RedisRealtimeConnectionRegistry(
         public const string UserId = "userId";
         public const string ConnectionId = "connectionId";
         public const string InstanceId = "instanceId";
-        public const string Status = "status";
         public const string ConnectedAtUtc = "connectedAtUtc";
         public const string LastSeenUtc = "lastSeenUtc";
     }
@@ -26,7 +24,7 @@ internal sealed class RedisRealtimeConnectionRegistry(
     private readonly IActiveRealtimeConnectionTracker _activeConnectionTracker = activeConnectionTracker
         ?? throw new ArgumentNullException(nameof(activeConnectionTracker));
 
-    public async Task RegisterAsync(Guid userId, string connectionId, PresenceStatus status, CancellationToken cancellationToken)
+    public async Task RegisterAsync(Guid userId, string connectionId, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
@@ -44,7 +42,6 @@ internal sealed class RedisRealtimeConnectionRegistry(
             new HashEntry(HashFields.UserId, userId.ToString()),
             new HashEntry(HashFields.ConnectionId, connectionId),
             new HashEntry(HashFields.InstanceId, _settings.InstanceId),
-            new HashEntry(HashFields.Status, status.ToString()),
             new HashEntry(HashFields.ConnectedAtUtc, nowUtc.ToString("O")),
             new HashEntry(HashFields.LastSeenUtc, nowUtc.ToString("O"))
         ]);
@@ -59,7 +56,7 @@ internal sealed class RedisRealtimeConnectionRegistry(
         }
 
         await Task.WhenAll(hashSetTask, addToSetTask, expireConnectionTask, expireUserSetTask);
-        _activeConnectionTracker.Track(userId, connectionId, status);
+        _activeConnectionTracker.Track(userId, connectionId);
     }
 
     public async Task UnregisterAsync(string connectionId, CancellationToken cancellationToken)

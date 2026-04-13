@@ -1,6 +1,5 @@
 using System.Reflection;
 using System.Security.Claims;
-using FlowChat.Core.Domain;
 using FlowChat.RealtimeService.Api.Realtime;
 using FluentAssertions;
 using Microsoft.AspNetCore.SignalR;
@@ -40,7 +39,6 @@ public sealed class ChatHubTests
             .Which.Should().Be(("connection-1", GroupNames.ForUser(userId)));
         registry.LastRegisteredUserId.Should().Be(userId);
         registry.LastRegisteredConnectionId.Should().Be("connection-1");
-        registry.LastRegisteredStatus.Should().Be(PresenceStatus.Active);
         GetContext(hub).AbortCalled.Should().BeFalse();
     }
 
