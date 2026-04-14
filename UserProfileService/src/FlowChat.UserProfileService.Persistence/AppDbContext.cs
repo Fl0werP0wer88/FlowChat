@@ -3,12 +3,14 @@ using FlowChat.UserProfileService.Domain.Entities.EmailVerificationRequest;
 using FlowChat.UserProfileService.Domain.Entities.UserProfile;
 using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Silverback.Messaging.Producing.TransactionalOutbox;
 
 namespace FlowChat.UserProfileService.Persistence;
 
 public class AppDbContext : DbContext, IDataProtectionKeyContext
 {
+    [ActivatorUtilitiesConstructor]
     public AppDbContext(DbContextOptions<AppDbContext> options)
     : base(options)
     {

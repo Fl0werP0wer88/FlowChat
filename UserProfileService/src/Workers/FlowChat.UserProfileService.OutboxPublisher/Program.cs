@@ -12,12 +12,12 @@ try
 {
     var builder = Host.CreateApplicationBuilder(args);
     builder.AddFlowChatOpenTelemetry(typeof(OutboxPublisherServiceRegistration).Assembly);
-    builder.Services.AddOutboxPublisher(builder.Configuration);
     builder.Services.AddDbContext<AppDbContext>(options =>
         options.UseNpgsql(builder.Configuration.GetConnectionString("UserProfileDb")));
     builder.Services.AddDbContextFactory<AppDbContext>(
         options => options.UseNpgsql(builder.Configuration.GetConnectionString("UserProfileDb")),
         ServiceLifetime.Scoped);
+    builder.Services.AddOutboxPublisher(builder.Configuration);
 
     host = builder.Build();
     await host.RunAsync();
