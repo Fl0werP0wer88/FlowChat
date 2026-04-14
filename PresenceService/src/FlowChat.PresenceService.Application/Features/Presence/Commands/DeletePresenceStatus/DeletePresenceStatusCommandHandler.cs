@@ -42,7 +42,7 @@ public sealed class DeletePresenceStatusCommandHandler(
             RecipientUserIds = recipients
                 .Where(recipientUserId => recipientUserId != Guid.Empty)
                 .Distinct()
-                .ToArray()
+                .ToList()
         };
 
         await presenceStatusStore.DeleteAsync(request.UserId, cancellationToken);

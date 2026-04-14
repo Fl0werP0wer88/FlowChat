@@ -42,7 +42,7 @@ public sealed class InitializePresenceStatusCommandHandler(
             RecipientUserIds = recipients
                 .Where(recipientUserId => recipientUserId != Guid.Empty)
                 .Distinct()
-                .ToArray()
+                .ToList()
         };
 
         await presenceStatusStore.SetAsync(

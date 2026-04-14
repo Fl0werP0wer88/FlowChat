@@ -41,7 +41,7 @@ public sealed class ChangePresenceStatusCommandHandler(
             RecipientUserIds = recipients
                 .Where(recipientUserId => recipientUserId != Guid.Empty)
                 .Distinct()
-                .ToArray()
+                .ToList()
         };
 
         await presenceStatusStore.SetAsync(

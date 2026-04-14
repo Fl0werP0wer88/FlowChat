@@ -8,5 +8,5 @@ public sealed class ChatMessageSentIntegrationEvent : IntegrationEvent
     public required string SenderDisplayName { get; init; }
     public required string Text { get; init; }
     public DateTimeOffset SentAtUtc { get; init; }
-    public IReadOnlyCollection<Guid> RecipientUserIds { get; init; } = [];
+    public List<Guid> RecipientUserIds { get; init; } = [];
 }
