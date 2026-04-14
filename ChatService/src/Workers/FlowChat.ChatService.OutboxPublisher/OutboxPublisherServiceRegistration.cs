@@ -31,7 +31,7 @@ public static class OutboxPublisherServiceRegistration
             .BindConfiguration(ChatMessageSentProducerOptions.SectionName);
 
         services.AddSilverback()
-            .AddSingletonBrokerBehavior<CustomSpanAttributesBehavior>()
+            .AddSingletonBrokerBehavior<CustomSpanAttributesProducerBehavior>()
             .WithConnectionToMessageBroker(options =>
             {
                 options.AddKafka();

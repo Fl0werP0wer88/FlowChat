@@ -26,7 +26,7 @@ public static class OutboxPublisherServiceRegistration
             ?? new OutboxPublisherRuntimeOptions();
 
         services.AddSilverback()
-            .AddSingletonBrokerBehavior<CustomSpanAttributesBehavior>()
+            .AddSingletonBrokerBehavior<CustomSpanAttributesProducerBehavior>()
             .WithConnectionToMessageBroker(options =>
             {
                 options.AddKafka();

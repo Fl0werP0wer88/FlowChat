@@ -49,7 +49,8 @@ public static class ConsumersServiceRegistration
                     .CreateClient(RealtimeInternalApiClient.HttpClientName)));
 
         services.AddSilverback()
-            .AddSingletonBrokerBehavior<CustomSpanAttributesBehavior>()
+            .AddSingletonBrokerBehavior<CustomSpanAttributesProducerBehavior>()
+            .AddSingletonBrokerBehavior<CustomSpanAttributesConsumerBehavior>()
             .WithConnectionToMessageBroker(options => options.AddKafka())
             .AddKafkaClients(clients =>
             {

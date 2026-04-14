@@ -23,7 +23,7 @@ public static class SilverbackServiceRegistration
             : contactDeletedOptions.BootstrapServers;
 
         services.AddSilverback()
-            .AddSingletonBrokerBehavior<CustomSpanAttributesBehavior>()
+            .AddSingletonBrokerBehavior<CustomSpanAttributesProducerBehavior>()
             .WithConnectionToMessageBroker(options =>
             {
                 options.AddKafka();

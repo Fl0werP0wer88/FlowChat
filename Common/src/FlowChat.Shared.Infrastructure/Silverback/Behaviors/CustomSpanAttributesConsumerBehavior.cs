@@ -5,15 +5,15 @@ using Silverback.Messaging.Messages;
 
 namespace FlowChat.Shared.Infrastructure.Silverback.Behaviors;
 
-public sealed class CustomSpanAttributesProducerBehavior : IProducerBehavior
+public sealed class CustomSpanAttributesConsumerBehavior : IConsumerBehavior
 {
     public const string EventNameTag = "flowchat.event.name";
 
-    public int SortIndex => BrokerBehaviorsSortIndexes.Producer.MessageEnricher + 10;
+    public int SortIndex => BrokerBehaviorsSortIndexes.Consumer.CustomHeadersMapper + 10;
 
     public async ValueTask HandleAsync(
-        ProducerPipelineContext context,
-        ProducerBehaviorHandler next,
+        ConsumerPipelineContext context,
+        ConsumerBehaviorHandler next,
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);

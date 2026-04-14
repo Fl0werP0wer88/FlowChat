@@ -42,7 +42,7 @@ public static class OutboxPublisherServiceRegistration
             : stateChangedProducerOptions.BootstrapServers;
 
         services.AddSilverback()
-            .AddSingletonBrokerBehavior<CustomSpanAttributesBehavior>()
+            .AddSingletonBrokerBehavior<CustomSpanAttributesProducerBehavior>()
             .WithConnectionToMessageBroker(options =>
             {
                 options.AddKafka();

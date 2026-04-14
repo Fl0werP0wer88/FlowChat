@@ -26,7 +26,7 @@ public static class SilverbackServiceRegistration
             : stateChangedProducerOptions.BootstrapServers;
 
         services.AddSilverback()
-            .AddSingletonBrokerBehavior<CustomSpanAttributesBehavior>()
+            .AddSingletonBrokerBehavior<CustomSpanAttributesProducerBehavior>()
             .WithConnectionToMessageBroker(options =>
             {
                 options.AddKafka();

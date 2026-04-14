@@ -22,7 +22,7 @@ public static class SilverbackServiceRegistration
         var accountRegisteredOptions = settingsManager.GetAccountRegisteredProducerOptions();
 
         services.AddSilverback()
-            .AddSingletonBrokerBehavior<CustomSpanAttributesBehavior>()
+            .AddSingletonBrokerBehavior<CustomSpanAttributesProducerBehavior>()
             .WithConnectionToMessageBroker(options =>
             {
                 options.AddKafka();

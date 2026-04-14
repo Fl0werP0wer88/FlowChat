@@ -17,7 +17,7 @@ public static class SilverbackServiceRegistration
         var producerOptions = settingsManager.GetRealtimeConnectionProducerOptions();
 
         services.AddSilverback()
-            .AddSingletonBrokerBehavior<CustomSpanAttributesBehavior>()
+            .AddSingletonBrokerBehavior<CustomSpanAttributesProducerBehavior>()
             .WithConnectionToMessageBroker(options => options.AddKafka())
             .AddKafkaClients(clients => clients
                 .WithBootstrapServers(producerOptions.BootstrapServers)

@@ -19,7 +19,7 @@ public static class SilverbackServiceRegistration
         var producerOptions = settingsManager.GetPresenceStatusChangedProducerOptions();
 
         services.AddSilverback()
-            .AddSingletonBrokerBehavior<CustomSpanAttributesBehavior>()
+            .AddSingletonBrokerBehavior<CustomSpanAttributesProducerBehavior>()
             .WithConnectionToMessageBroker(options =>
             {
                 options.AddKafka();

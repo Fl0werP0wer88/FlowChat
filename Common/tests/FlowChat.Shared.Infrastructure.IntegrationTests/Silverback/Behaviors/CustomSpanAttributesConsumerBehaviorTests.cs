@@ -7,22 +7,23 @@ using Moq;
 using Silverback.Messaging.Broker;
 using Silverback.Messaging.Broker.Behaviors;
 using Silverback.Messaging.Messages;
+using Silverback.Messaging.Sequences;
 
 namespace FlowChat.Shared.Infrastructure.IntegrationTests.Silverback.Behaviors;
 
-public sealed class CustomSpanAttributesProducerBehaviorTests
+public sealed class CustomSpanAttributesConsumerBehaviorTests
 {
     [Fact]
     public async Task HandleAsync_WithEventTypeHeader_SetsActivityTagAndInvokesNext()
     {
         var headers = new MessageHeaderCollection(1);
-        headers.Add(IntegrationMessageHeaders.EventType, "user-profile-created");
+        headers.Add(IntegrationMessageHeaders.EventType, "chat-message-sent");
 
-        var context = CreateProducerContext(headers);
-        var behavior = new CustomSpanAttributesProducerBehavior();
+        var context = CreateConsumerContext(headers);
+        var behavior = new CustomSpanAttributesConsumerBehavior();
         var nextInvoked = false;
 
-        using var activity = new Activity("producer-test");
+        using var activity = new Activity("consumer-test");
         activity.Start();
 
         await behavior.HandleAsync(
@@ -35,15 +36,15 @@ public sealed class CustomSpanAttributesProducerBehaviorTests
             CancellationToken.None);
 
         nextInvoked.Should().BeTrue();
-        activity.GetTagItem(CustomSpanAttributesProducerBehavior.EventNameTag).Should().Be("user-profile-created");
-        behavior.SortIndex.Should().Be(BrokerBehaviorsSortIndexes.Producer.MessageEnricher + 10);
+        activity.GetTagItem(CustomSpanAttributesConsumerBehavior.EventNameTag).Should().Be("chat-message-sent");
+        behavior.SortIndex.Should().Be(BrokerBehaviorsSortIndexes.Consumer.CustomHeadersMapper + 10);
     }
 
     [Fact]
     public async Task HandleAsync_WhenEventTypeHeaderIsMissing_DoesNotSetActivityTag()
     {
-        var context = CreateProducerContext(new MessageHeaderCollection(0));
-        var behavior = new CustomSpanAttributesProducerBehavior();
+        var context = CreateConsumerContext(new MessageHeaderCollection(0));
+        var behavior = new CustomSpanAttributesConsumerBehavior();
 
         using var activity = new Activity("missing-header-test");
         activity.Start();
@@ -53,21 +54,22 @@ public sealed class CustomSpanAttributesProducerBehaviorTests
             static (pipelineContext, cancellationToken) => ValueTask.CompletedTask,
             CancellationToken.None);
 
-        activity.GetTagItem(CustomSpanAttributesProducerBehavior.EventNameTag).Should().BeNull();
+        activity.GetTagItem(CustomSpanAttributesConsumerBehavior.EventNameTag).Should().BeNull();
     }
 
-    private static ProducerPipelineContext CreateProducerContext(MessageHeaderCollection headers)
+    private static ConsumerPipelineContext CreateConsumerContext(MessageHeaderCollection headers)
     {
-        var envelopeMock = new Mock<IOutboundEnvelope>();
+        var envelopeMock = new Mock<IRawInboundEnvelope>();
         envelopeMock.SetupGet(x => x.Headers).Returns(headers);
 
-        var producerMock = new Mock<IProducer>();
+        var consumerMock = new Mock<IConsumer>();
+        var sequenceStoreMock = new Mock<ISequenceStore>();
 
-        return new ProducerPipelineContext(
+        return new ConsumerPipelineContext(
             envelopeMock.Object,
-            producerMock.Object,
+            consumerMock.Object,
+            sequenceStoreMock.Object,
             [],
-            static (pipelineContext, cancellationToken) => ValueTask.CompletedTask,
             new ServiceCollection().BuildServiceProvider());
     }
 }

@@ -33,7 +33,7 @@ public static class OutboxPublisherServiceRegistration
             : contactDeletedOptions.BootstrapServers;
 
         services.AddSilverback()
-            .AddSingletonBrokerBehavior<CustomSpanAttributesBehavior>()
+            .AddSingletonBrokerBehavior<CustomSpanAttributesProducerBehavior>()
             .WithConnectionToMessageBroker(options =>
             {
                 options.AddKafka();
