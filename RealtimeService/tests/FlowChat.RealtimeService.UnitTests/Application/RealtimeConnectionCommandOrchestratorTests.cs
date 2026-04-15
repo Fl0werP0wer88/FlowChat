@@ -84,6 +84,28 @@ public sealed class RealtimeConnectionCommandOrchestratorTests
     }
 
     [Fact]
+    public async Task RegisterAsync_WhenCanceled_CompensatesByUnregisteringAndRethrows()
+    {
+        var userId = _fixture.Create<Guid>();
+        using var cancellationTokenSource = new CancellationTokenSource();
+        cancellationTokenSource.Cancel();
+
+        _registryMock
+            .Setup(x => x.RegisterAsync(userId, "connection-canceled", It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new OperationCanceledException(cancellationTokenSource.Token));
+        _registryMock
+            .Setup(x => x.UnregisterAsync("connection-canceled", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((RealtimeConnectionMutationResult?)null);
+
+        var act = () => _orchestrator.RegisterAsync(userId, "connection-canceled", cancellationTokenSource.Token);
+
+        await act.Should().ThrowAsync<OperationCanceledException>();
+        _registryMock.Verify(
+            x => x.UnregisterAsync("connection-canceled", It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
     public async Task UnregisterAsync_WhenLastConnection_PublishesUnregisteredEvent()
     {
         var userId = _fixture.Create<Guid>();

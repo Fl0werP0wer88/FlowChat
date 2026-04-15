@@ -29,10 +29,10 @@ internal sealed class RealtimeConnectionCommandOrchestrator(
 
     public async Task<FlowChatResult<Unit>> RegisterAsync(Guid userId, string connectionId, CancellationToken cancellationToken)
     {
-        var mutation = await _realtimeConnectionRegistry.RegisterAsync(userId, connectionId, cancellationToken);
-
         try
         {
+            var mutation = await _realtimeConnectionRegistry.RegisterAsync(userId, connectionId, cancellationToken);
+
             await _integrationEventPublisher.Publish(
                 new RealtimeConnectionRegisteredIntegrationEvent
                 {
@@ -46,13 +46,18 @@ internal sealed class RealtimeConnectionCommandOrchestrator(
 
             return FlowChatResult<Unit>.Success(Unit.Value);
         }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            await TryCompensateRegistrationAsync(connectionId);
+            throw;
+        }
         catch (Exception exception)
         {
             _logger.LogError(
                 exception,
-                "Failed to publish realtime connection registered event for user {UserId} and connection {ConnectionId}.",
-                mutation.UserId,
-                mutation.ConnectionId);
+                "Failed to register realtime connection for user {UserId} and connection {ConnectionId}.",
+                userId,
+                connectionId);
 
             await TryCompensateRegistrationAsync(connectionId);
 
