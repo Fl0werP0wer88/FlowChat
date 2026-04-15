@@ -27,7 +27,7 @@ public sealed class EmailConfirmedDomainEventHandlerTests
             .CreateMapper();
 
         _publisherMock
-            .Setup(x => x.PublishToOutboxAsync(It.IsAny<UserEmailConfirmedIntegrationEvent>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.Publish(It.IsAny<UserEmailConfirmedIntegrationEvent>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
     }
 
@@ -45,13 +45,13 @@ public sealed class EmailConfirmedDomainEventHandlerTests
             isAuth: true);
 
         _publisherMock
-            .Setup(x => x.PublishToOutboxAsync(It.IsAny<UserEmailConfirmedIntegrationEvent>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.Publish(It.IsAny<UserEmailConfirmedIntegrationEvent>(), It.IsAny<CancellationToken>()))
             .Callback<UserEmailConfirmedIntegrationEvent, CancellationToken>((evt, _) => capturedEvent = evt)
             .Returns(Task.CompletedTask);
 
         await handler.Handle(domainEvent, CancellationToken.None);
 
-        _publisherMock.Verify(x => x.PublishToOutboxAsync(
+        _publisherMock.Verify(x => x.Publish(
             It.IsAny<UserEmailConfirmedIntegrationEvent>(),
             It.IsAny<CancellationToken>()), Times.Once);
 
@@ -78,7 +78,7 @@ public sealed class EmailConfirmedDomainEventHandlerTests
 
         UserEmailConfirmedIntegrationEvent? capturedEvent = null;
         _publisherMock
-            .Setup(x => x.PublishToOutboxAsync(It.IsAny<UserEmailConfirmedIntegrationEvent>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.Publish(It.IsAny<UserEmailConfirmedIntegrationEvent>(), It.IsAny<CancellationToken>()))
             .Callback<UserEmailConfirmedIntegrationEvent, CancellationToken>((evt, _) => capturedEvent = evt)
             .Returns(Task.CompletedTask);
 

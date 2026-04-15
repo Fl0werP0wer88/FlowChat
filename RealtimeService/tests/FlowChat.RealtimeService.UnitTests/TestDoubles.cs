@@ -191,7 +191,7 @@ internal sealed class RecordingIntegrationEventPublisher : IIntegrationEventPubl
     public IReadOnlyList<IntegrationEvent> Published => _published.AsReadOnly();
     public Exception? PublishException { get; set; }
 
-    public Task PublishToOutboxAsync<TEvent>(TEvent message, CancellationToken cancellationToken)
+    public Task Publish<TEvent>(TEvent message, CancellationToken cancellationToken)
         where TEvent : IntegrationEvent
     {
         if (PublishException is not null)

@@ -24,7 +24,7 @@ public sealed class UserProfileStateChangedDomainEventHandlerTests
             .CreateMapper();
 
         _publisherMock
-            .Setup(x => x.PublishToOutboxAsync(It.IsAny<UserProfileChangedIntegrationEvent>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.Publish(It.IsAny<UserProfileChangedIntegrationEvent>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
     }
 
@@ -76,7 +76,7 @@ public sealed class UserProfileStateChangedDomainEventHandlerTests
 
         UserProfileChangedIntegrationEvent? capturedEvent = null;
         _publisherMock
-            .Setup(x => x.PublishToOutboxAsync(It.IsAny<UserProfileChangedIntegrationEvent>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.Publish(It.IsAny<UserProfileChangedIntegrationEvent>(), It.IsAny<CancellationToken>()))
             .Callback<UserProfileChangedIntegrationEvent, CancellationToken>((evt, _) => capturedEvent = evt)
             .Returns(Task.CompletedTask);
 

@@ -60,7 +60,7 @@ public sealed class DeletePresenceStatusCommandHandlerTests
             x => x.DeleteAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()),
             Times.Never);
         _integrationEventPublisherMock.Verify(
-            x => x.PublishToOutboxAsync(It.IsAny<PresenceStatusChangedIntegrationEvent>(), It.IsAny<CancellationToken>()),
+            x => x.Publish(It.IsAny<PresenceStatusChangedIntegrationEvent>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
@@ -78,7 +78,7 @@ public sealed class DeletePresenceStatusCommandHandlerTests
             .Setup(x => x.GetObserverUserIdsAsync(userId, It.IsAny<CancellationToken>()))
             .ReturnsAsync([observerUserId, Guid.Empty, observerUserId]);
         _integrationEventPublisherMock
-            .Setup(x => x.PublishToOutboxAsync(It.IsAny<PresenceStatusChangedIntegrationEvent>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.Publish(It.IsAny<PresenceStatusChangedIntegrationEvent>(), It.IsAny<CancellationToken>()))
             .Callback<PresenceStatusChangedIntegrationEvent, CancellationToken>((integrationEvent, _) => capturedEvent = integrationEvent)
             .Returns(Task.CompletedTask);
 

@@ -50,7 +50,7 @@ public sealed class EmailVerificationRequestIssuer(
             new EmailVerificationTokenPayload(userProfileId, emailId, verificationRequest.Nonce));
         var confirmationLink = _emailVerificationLinkBuilder.BuildEmailVerificationLink(token);
 
-        await _integrationEventPublisher.PublishToOutboxAsync(
+        await _integrationEventPublisher.Publish(
             new EmailVerificationRequestIntegrationEvent
             {
                 Key = verificationRequest.Id.Value.ToString(),

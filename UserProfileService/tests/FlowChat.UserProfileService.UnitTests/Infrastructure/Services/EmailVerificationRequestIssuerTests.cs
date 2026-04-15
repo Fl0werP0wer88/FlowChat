@@ -28,7 +28,7 @@ public sealed class EmailVerificationRequestIssuerTests
             .Returns<string>(token => $"https://frontend.flowchat.local/email-verification?token={token}");
 
         _publisherMock
-            .Setup(x => x.PublishToOutboxAsync(It.IsAny<EmailVerificationRequestIntegrationEvent>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.Publish(It.IsAny<EmailVerificationRequestIntegrationEvent>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         _repositoryMock
@@ -73,7 +73,7 @@ public sealed class EmailVerificationRequestIssuerTests
 
         EmailVerificationRequestIntegrationEvent? capturedEvent = null;
         _publisherMock
-            .Setup(x => x.PublishToOutboxAsync(It.IsAny<EmailVerificationRequestIntegrationEvent>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.Publish(It.IsAny<EmailVerificationRequestIntegrationEvent>(), It.IsAny<CancellationToken>()))
             .Callback<EmailVerificationRequestIntegrationEvent, CancellationToken>((evt, _) => capturedEvent = evt)
             .Returns(Task.CompletedTask);
 

@@ -20,7 +20,7 @@ public sealed class SilverbackEventPublisherTests
             NullLogger<FlowChatSilverbackEventPublisher>.Instance);
 
         var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            publisher.PublishToOutboxAsync(
+            publisher.Publish(
                 new TestIntegrationEvent(),
                 CancellationToken.None));
 
@@ -37,7 +37,7 @@ public sealed class SilverbackEventPublisherTests
             NullLogger<FlowChatSilverbackEventPublisher>.Instance);
 
         var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            publisher.PublishToOutboxAsync(
+            publisher.Publish(
                 new TestIntegrationEvent { Key = "user-1" },
                 CancellationToken.None));
 

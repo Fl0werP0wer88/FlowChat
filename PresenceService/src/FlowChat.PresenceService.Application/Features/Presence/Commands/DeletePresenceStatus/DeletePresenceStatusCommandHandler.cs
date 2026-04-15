@@ -46,7 +46,7 @@ public sealed class DeletePresenceStatusCommandHandler(
         };
 
         await presenceStatusStore.DeleteAsync(request.UserId, cancellationToken);
-        await integrationEventPublisher.PublishToOutboxAsync(integrationEvent, cancellationToken);
+        await integrationEventPublisher.Publish(integrationEvent, cancellationToken);
         _previousStatus = null;
 
         return FlowChatResult<Unit>.Success(Unit.Value);

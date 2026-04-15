@@ -33,7 +33,7 @@ internal sealed class RealtimeConnectionCommandOrchestrator(
 
         try
         {
-            await _integrationEventPublisher.PublishToOutboxAsync(
+            await _integrationEventPublisher.Publish(
                 new RealtimeConnectionRegisteredIntegrationEvent
                 {
                     Key = mutation.UserId.ToString("D"),
@@ -70,7 +70,7 @@ internal sealed class RealtimeConnectionCommandOrchestrator(
 
         try
         {
-            await _integrationEventPublisher.PublishToOutboxAsync(
+            await _integrationEventPublisher.Publish(
                 new RealtimeConnectionUnregisteredIntegrationEvent
                 {
                     Key = mutation.UserId.ToString("D"),

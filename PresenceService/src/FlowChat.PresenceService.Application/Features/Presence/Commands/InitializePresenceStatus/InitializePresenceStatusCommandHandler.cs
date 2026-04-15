@@ -50,7 +50,7 @@ public sealed class InitializePresenceStatusCommandHandler(
             integrationEvent.Status,
             integrationEvent.ChangedAtUtc,
             cancellationToken);
-        await integrationEventPublisher.PublishToOutboxAsync(integrationEvent, cancellationToken);
+        await integrationEventPublisher.Publish(integrationEvent, cancellationToken);
         _previousStatus = null;
 
         return FlowChatResult<Unit>.Success(Unit.Value);

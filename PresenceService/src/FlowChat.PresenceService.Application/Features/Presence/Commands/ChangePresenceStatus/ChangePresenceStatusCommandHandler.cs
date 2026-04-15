@@ -49,7 +49,7 @@ public sealed class ChangePresenceStatusCommandHandler(
             integrationEvent.Status,
             integrationEvent.ChangedAtUtc,
             cancellationToken);
-        await integrationEventPublisher.PublishToOutboxAsync(integrationEvent, cancellationToken);
+        await integrationEventPublisher.Publish(integrationEvent, cancellationToken);
 
         return FlowChatResult<Unit>.Success(Unit.Value);
     }

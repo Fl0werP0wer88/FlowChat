@@ -17,7 +17,7 @@ public abstract class DomainEventHandlerBase<TDomainEvent, TIntegrationEvent> : 
 
     public async Task Handle(TDomainEvent notification, CancellationToken cancellationToken)
     {
-        await _integrationEventPublisher.PublishToOutboxAsync(
+        await _integrationEventPublisher.Publish(
             MapToIntegrationEvent(notification),
             cancellationToken);
         await ExecuteAsync(notification, cancellationToken);

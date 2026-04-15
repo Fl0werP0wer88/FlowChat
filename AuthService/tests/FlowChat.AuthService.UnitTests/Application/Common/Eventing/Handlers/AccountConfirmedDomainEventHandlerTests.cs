@@ -27,7 +27,7 @@ public sealed class AccountConfirmedDomainEventHandlerTests
         AccountConfirmedIntegrationEvent? capturedEvent = null;
 
         _publisherMock
-            .Setup(x => x.PublishToOutboxAsync(It.IsAny<AccountConfirmedIntegrationEvent>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.Publish(It.IsAny<AccountConfirmedIntegrationEvent>(), It.IsAny<CancellationToken>()))
             .Callback<AccountConfirmedIntegrationEvent, CancellationToken>((integrationEvent, _) => capturedEvent = integrationEvent)
             .Returns(Task.CompletedTask);
 
