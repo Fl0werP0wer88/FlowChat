@@ -726,15 +726,19 @@ body {
   flex-shrink: 0;
 }
 
-.status-online {
+.status-Active {
   background: #2fca7f;
 }
 
-.status-away {
+.status-AFK {
   background: #e8b13d;
 }
 
-.status-offline {
+.status-Busy {
+  background: #e85d3d;
+}
+
+.status-Invisible {
   background: #adb8c6;
 }
 
