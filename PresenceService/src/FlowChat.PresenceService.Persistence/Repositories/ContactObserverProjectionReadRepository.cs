@@ -18,4 +18,15 @@ public sealed class ContactObserverProjectionReadRepository(AppDbContext dbConte
             .Distinct()
             .ToArrayAsync(cancellationToken);
     }
+
+    public async Task<IReadOnlyCollection<Guid>> GetObservedUserIdsAsync(
+        Guid observerUserId,
+        CancellationToken cancellationToken = default)
+    {
+        return await _dbContext.ContactObserverProjections
+            .Where(x => x.ObserverUserId == observerUserId)
+            .Select(x => x.ObservedUserId)
+            .Distinct()
+            .ToArrayAsync(cancellationToken);
+    }
 }

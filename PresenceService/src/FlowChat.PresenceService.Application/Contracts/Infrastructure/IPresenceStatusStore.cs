@@ -16,4 +16,9 @@ public interface IPresenceStatusStore
     Task DeleteAsync(Guid userId, CancellationToken cancellationToken);
 
     Task<bool> RefreshTtlAsync(Guid userId, CancellationToken cancellationToken);
+
+    /// <summary>Returns a snapshot for every userId found in Redis; absent keys are omitted (caller maps to Invisible).</summary>
+    Task<IReadOnlyDictionary<Guid, PresenceStatusSnapshot>> GetManyAsync(
+        IReadOnlyCollection<Guid> userIds,
+        CancellationToken cancellationToken);
 }

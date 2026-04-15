@@ -3,4 +3,8 @@ namespace FlowChat.RealtimeService.Application.Application.Contracts.Infrastruct
 public interface IPresenceInternalApiClient
 {
     Task RefreshPresenceStatusAsync(IReadOnlyCollection<Guid> userIds, CancellationToken cancellationToken);
+
+    Task<IReadOnlyCollection<ContactPresenceStatusDto>> GetContactPresenceStatusesAsync(
+        Guid userId,
+        CancellationToken cancellationToken);
 }

@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
 using FlowChat.RealtimeService.Application.Features.RealtimeConnection.Commands.RegisterRealtimeConnection;
 using FlowChat.RealtimeService.Application.Features.RealtimeConnection.Commands.UnregisterRealtimeConnection;
 using MediatR;
@@ -11,11 +12,14 @@ namespace FlowChat.RealtimeService.Api.Realtime;
 [Authorize]
 public sealed class ChatHub(
     ILogger<ChatHub> logger,
-    IMediator mediator) : Hub<IRealtimeClient>
+    IMediator mediator,
+    IPresenceInternalApiClient presenceInternalApiClient) : Hub<IRealtimeClient>
 {
     private const string SubjectClaimType = "sub";
     private readonly ILogger<ChatHub> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     private readonly IMediator _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
+    private readonly IPresenceInternalApiClient _presenceInternalApiClient = presenceInternalApiClient
+        ?? throw new ArgumentNullException(nameof(presenceInternalApiClient));
 
     public override async Task OnConnectedAsync()
     {
@@ -49,6 +53,29 @@ public sealed class ChatHub(
             }
 
             await base.OnConnectedAsync();
+
+            try
+            {
+                var statuses = await _presenceInternalApiClient.GetContactPresenceStatusesAsync(
+                    userId.Value,
+                    Context.ConnectionAborted);
+                if (statuses.Count > 0)
+                {
+                    await Clients.Caller.ReceiveContactPresenceStatuses(
+                        statuses.Select(static s => new PresenceChangedNotificationDto
+                        {
+                            UserId = s.UserId,
+                            Status = s.Status,
+                            ChangedAtUtc = s.ChangedAtUtc
+                        }).ToArray());
+                }
+            }
+            catch (Exception exception)
+            {
+                // Best-effort: presence push failure must not abort a valid connection
+                _logger.LogWarning(exception,
+                    "Failed to push initial presence statuses for connection {ConnectionId}.", Context.ConnectionId);
+            }
         }
         catch (OperationCanceledException) when (Context.ConnectionAborted.IsCancellationRequested)
         {

@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using FlowChat.Core.Domain;
 using FlowChat.PresenceService.Application.Contracts.Infrastructure;
 using FlowChat.PresenceService.Application.Features.Presence;
@@ -74,6 +75,47 @@ internal sealed class RedisPresenceStatusStore(
     {
         cancellationToken.ThrowIfCancellationRequested();
         return _connectionMultiplexer.GetDatabase().KeyExpireAsync(GetPresenceStatusKey(userId), _settings.PresenceTtl);
+    }
+
+    public async Task<IReadOnlyDictionary<Guid, PresenceStatusSnapshot>> GetManyAsync(
+        IReadOnlyCollection<Guid> userIds,
+        CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        if (userIds.Count == 0)
+        {
+            return ImmutableDictionary<Guid, PresenceStatusSnapshot>.Empty;
+        }
+
+        var database = _connectionMultiplexer.GetDatabase();
+        var batch = database.CreateBatch();
+        RedisValue[] fields = [HashFields.UserId, HashFields.Status, HashFields.ChangedAtUtc];
+        var tasks = userIds
+            .Select(id => (Id: id, Task: batch.HashGetAsync(GetPresenceStatusKey(id), fields)))
+            .ToArray();
+        batch.Execute();
+        await Task.WhenAll(tasks.Select(static t => (Task)t.Task));
+
+        var result = new Dictionary<Guid, PresenceStatusSnapshot>(tasks.Length);
+        foreach (var (id, task) in tasks)
+        {
+            var values = task.Result;
+            if (values.All(static v => v.IsNullOrEmpty))
+            {
+                continue;
+            }
+
+            if (!Guid.TryParse(values[0].ToString(), out var storedId)
+                || !Enum.TryParse<PresenceStatus>(values[1].ToString(), true, out var status)
+                || !DateTimeOffset.TryParse(values[2].ToString(), out var changedAt))
+            {
+                continue;
+            }
+
+            result[id] = new PresenceStatusSnapshot(storedId, status, changedAt);
+        }
+
+        return result;
     }
 
     private string GetPresenceStatusKey(Guid userId) => $"{_settings.KeyPrefix}:presence-status:{userId:D}";

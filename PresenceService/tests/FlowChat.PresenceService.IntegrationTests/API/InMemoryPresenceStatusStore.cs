@@ -34,4 +34,21 @@ public sealed class InMemoryPresenceStatusStore : IPresenceStatusStore
         cancellationToken.ThrowIfCancellationRequested();
         return Task.FromResult(_values.ContainsKey(userId));
     }
+
+    public Task<IReadOnlyDictionary<Guid, PresenceStatusSnapshot>> GetManyAsync(
+        IReadOnlyCollection<Guid> userIds,
+        CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        var result = new Dictionary<Guid, PresenceStatusSnapshot>();
+        foreach (var id in userIds)
+        {
+            if (_values.TryGetValue(id, out var snapshot))
+            {
+                result[id] = snapshot;
+            }
+        }
+
+        return Task.FromResult<IReadOnlyDictionary<Guid, PresenceStatusSnapshot>>(result);
+    }
 }
