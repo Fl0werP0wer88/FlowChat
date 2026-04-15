@@ -1,6 +1,7 @@
 using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
 using FlowChat.RealtimeService.Infrastructure.Configuration;
 using FlowChat.RealtimeService.Infrastructure.Kafka;
+using FlowChat.RealtimeService.Infrastructure.Presence;
 using FlowChat.RealtimeService.Infrastructure.RealtimeConnections;
 using FlowChat.RealtimeService.Infrastructure.RealtimeConnections.ConnectionsTracker;
 using FlowChat.RealtimeService.Infrastructure.RealtimeConnections.Stores.ConnectionStore;
@@ -43,6 +44,24 @@ public static class InfrastructureServiceRegistration
         services.AddScoped<IKafkaProducerOptions<FlowChat.Core.Messaging.RealtimeService.Events.RealtimeConnectionUnregisteredIntegrationEvent>>(sp =>
             sp.GetRequiredService<IKafkaSettingsManager>().GetRealtimeConnectionProducerOptions());
         services.AddScoped<IDirectEventPublisher, FlowChatSilverbackEventPublisher>();
+
+        services.TryAddSingleton(sp => sp.GetRequiredService<IApiSettingsManager>().GetPresenceServiceSettings());
+        services.AddHttpClient(PresenceInternalApiClient.HttpClientName, (sp, client) =>
+        {
+            var settings = sp.GetRequiredService<PresenceServiceSettings>();
+            if (!Uri.TryCreate(settings.BaseUrl, UriKind.Absolute, out var baseAddress))
+            {
+                throw new InvalidOperationException("PresenceService:BaseUrl must be an absolute URI.");
+            }
+
+            client.BaseAddress = baseAddress;
+            if (!string.IsNullOrWhiteSpace(settings.InternalApiKey))
+            {
+                client.DefaultRequestHeaders.Add("X-Internal-Api-Key", settings.InternalApiKey);
+            }
+        });
+        services.TryAddSingleton<IPresenceInternalApiClient, PresenceInternalApiClient>();
+
         services.AddHostedService<RealtimeConnectionRefreshBackgroundService>();
 
         return services;

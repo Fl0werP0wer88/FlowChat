@@ -14,4 +14,6 @@ public interface IPresenceStatusStore
         CancellationToken cancellationToken);
 
     Task DeleteAsync(Guid userId, CancellationToken cancellationToken);
+
+    Task<bool> RefreshTtlAsync(Guid userId, CancellationToken cancellationToken);
 }

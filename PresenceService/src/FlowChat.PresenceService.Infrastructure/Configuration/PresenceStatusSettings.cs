@@ -8,4 +8,6 @@ public sealed class PresenceStatusSettings
     public string RedisConnectionString { get; set; } = string.Empty;
 
     public string KeyPrefix { get; set; } = "flowchat:presence";
+
+    public TimeSpan PresenceTtl { get; set; } = TimeSpan.FromMinutes(2);
 }

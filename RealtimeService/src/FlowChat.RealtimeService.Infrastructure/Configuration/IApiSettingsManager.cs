@@ -9,4 +9,6 @@ public interface IApiSettingsManager
     InternalApiSettings GetInternalApiSettings();
 
     RealtimeConnectionsSettings GetRealtimeConnectionsSettings();
+
+    PresenceServiceSettings GetPresenceServiceSettings();
 }

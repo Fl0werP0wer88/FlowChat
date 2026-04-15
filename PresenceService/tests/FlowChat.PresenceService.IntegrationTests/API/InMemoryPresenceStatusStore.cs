@@ -28,4 +28,10 @@ public sealed class InMemoryPresenceStatusStore : IPresenceStatusStore
         _values.Remove(userId);
         return Task.CompletedTask;
     }
+
+    public Task<bool> RefreshTtlAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        return Task.FromResult(_values.ContainsKey(userId));
+    }
 }

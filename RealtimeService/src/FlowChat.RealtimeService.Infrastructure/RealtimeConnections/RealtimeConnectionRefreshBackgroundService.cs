@@ -9,6 +9,7 @@ namespace FlowChat.RealtimeService.Infrastructure.RealtimeConnections;
 internal sealed class RealtimeConnectionRefreshBackgroundService(
     IRealtimeConnectionRegistry realtimeConnectionRegistry,
     IActiveConnectionsTracker activeConnectionsTracker,
+    IPresenceInternalApiClient presenceInternalApiClient,
     RealtimeConnectionsSettings settings,
     ILogger<RealtimeConnectionRefreshBackgroundService> logger) : BackgroundService
 {
@@ -16,6 +17,8 @@ internal sealed class RealtimeConnectionRefreshBackgroundService(
         ?? throw new ArgumentNullException(nameof(realtimeConnectionRegistry));
     private readonly IActiveConnectionsTracker _activeConnectionsTracker = activeConnectionsTracker
         ?? throw new ArgumentNullException(nameof(activeConnectionsTracker));
+    private readonly IPresenceInternalApiClient _presenceInternalApiClient = presenceInternalApiClient
+        ?? throw new ArgumentNullException(nameof(presenceInternalApiClient));
     private readonly RealtimeConnectionsSettings _settings = settings ?? throw new ArgumentNullException(nameof(settings));
     private readonly ILogger<RealtimeConnectionRefreshBackgroundService> _logger = logger
         ?? throw new ArgumentNullException(nameof(logger));
@@ -43,6 +46,25 @@ internal sealed class RealtimeConnectionRefreshBackgroundService(
             catch (Exception exception)
             {
                 _logger.LogError(exception, "Failed to refresh realtime connection TTLs in Redis.");
+            }
+
+            try
+            {
+                var userIds = connections
+                    .Select(static c => c.UserId)
+                    .Where(static id => id != Guid.Empty)
+                    .Distinct()
+                    .ToArray();
+
+                await _presenceInternalApiClient.RefreshPresenceStatusAsync(userIds, stoppingToken);
+            }
+            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+            {
+                break;
+            }
+            catch (Exception exception)
+            {
+                _logger.LogError(exception, "Failed to refresh presence status TTLs in PresenceService.");
             }
         }
     }

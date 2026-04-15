@@ -53,19 +53,27 @@ internal sealed class RedisPresenceStatusStore(
         cancellationToken.ThrowIfCancellationRequested();
 
         var database = _connectionMultiplexer.GetDatabase();
+        var key = GetPresenceStatusKey(userId);
         await database.HashSetAsync(
-            GetPresenceStatusKey(userId),
+            key,
             [
                 new HashEntry(HashFields.UserId, userId.ToString("D")),
                 new HashEntry(HashFields.Status, status.ToString()),
                 new HashEntry(HashFields.ChangedAtUtc, changedAtUtc.ToString("O"))
             ]);
+        await database.KeyExpireAsync(key, _settings.PresenceTtl);
     }
 
     public Task DeleteAsync(Guid userId, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
         return _connectionMultiplexer.GetDatabase().KeyDeleteAsync(GetPresenceStatusKey(userId));
+    }
+
+    public Task<bool> RefreshTtlAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        return _connectionMultiplexer.GetDatabase().KeyExpireAsync(GetPresenceStatusKey(userId), _settings.PresenceTtl);
     }
 
     private string GetPresenceStatusKey(Guid userId) => $"{_settings.KeyPrefix}:presence-status:{userId:D}";

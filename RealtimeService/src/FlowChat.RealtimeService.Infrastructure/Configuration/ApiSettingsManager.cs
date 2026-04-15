@@ -33,4 +33,8 @@ public sealed class ApiSettingsManager(IConfiguration configuration) : IApiSetti
 
         return settings;
     }
+
+    public PresenceServiceSettings GetPresenceServiceSettings() =>
+        _configuration.GetSection(PresenceServiceSettings.SectionName).Get<PresenceServiceSettings>()
+            ?? new PresenceServiceSettings();
 }
