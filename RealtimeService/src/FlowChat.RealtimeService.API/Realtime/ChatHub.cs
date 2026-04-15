@@ -1,5 +1,7 @@
 using System.Security.Claims;
-using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
+using FlowChat.RealtimeService.Application.Features.RealtimeConnection.Commands.RegisterRealtimeConnection;
+using FlowChat.RealtimeService.Application.Features.RealtimeConnection.Commands.UnregisterRealtimeConnection;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
@@ -9,12 +11,11 @@ namespace FlowChat.RealtimeService.Api.Realtime;
 [Authorize]
 public sealed class ChatHub(
     ILogger<ChatHub> logger,
-    IRealtimeConnectionLifecycleService realtimeConnectionLifecycleService) : Hub<IRealtimeClient>
+    IMediator mediator) : Hub<IRealtimeClient>
 {
     private const string SubjectClaimType = "sub";
     private readonly ILogger<ChatHub> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-    private readonly IRealtimeConnectionLifecycleService _realtimeConnectionLifecycleService = realtimeConnectionLifecycleService
-        ?? throw new ArgumentNullException(nameof(realtimeConnectionLifecycleService));
+    private readonly IMediator _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
 
     public override async Task OnConnectedAsync()
     {
@@ -32,10 +33,21 @@ public sealed class ChatHub(
             await Groups.AddToGroupAsync(Context.ConnectionId, GroupNames.ForUser(userId.Value));
             addedToGroup = true;
 
-            await _realtimeConnectionLifecycleService.RegisterAsync(
-                userId.Value,
-                Context.ConnectionId,
+            var result = await _mediator.Send(
+                new RegisterRealtimeConnectionCommand(userId.Value, Context.ConnectionId),
                 Context.ConnectionAborted);
+            if (result.IsFailure)
+            {
+                _logger.LogError(
+                    "Failed to register realtime connection {ConnectionId} for user {UserId}: {ErrorMessage}",
+                    Context.ConnectionId,
+                    userId.Value,
+                    result.Error.ErrorMessage);
+                await CleanupFailedConnectionAsync(userId.Value, addedToGroup);
+                Context.Abort();
+                return;
+            }
+
             await base.OnConnectedAsync();
         }
         catch (OperationCanceledException) when (Context.ConnectionAborted.IsCancellationRequested)
@@ -55,11 +67,20 @@ public sealed class ChatHub(
     {
         try
         {
-            await _realtimeConnectionLifecycleService.UnregisterAsync(Context.ConnectionId, CancellationToken.None);
+            var result = await _mediator.Send(
+                new UnregisterRealtimeConnectionCommand(Context.ConnectionId),
+                CancellationToken.None);
+            if (result.IsFailure)
+            {
+                _logger.LogError(
+                    "Failed to unregister realtime connection {ConnectionId}: {ErrorMessage}",
+                    Context.ConnectionId,
+                    result.Error.ErrorMessage);
+            }
         }
         catch (Exception unregisterException)
         {
-            _logger.LogError(unregisterException, "Failed to unregister realtime connection {ConnectionId} from Redis.", Context.ConnectionId);
+            _logger.LogError(unregisterException, "Failed to unregister realtime connection {ConnectionId}.", Context.ConnectionId);
         }
 
         await base.OnDisconnectedAsync(exception);

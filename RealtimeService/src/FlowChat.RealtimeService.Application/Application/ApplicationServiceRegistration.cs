@@ -1,3 +1,4 @@
+using FlowChat.RealtimeService.Application.Features.RealtimeConnection.Commands;
 using FlowChat.Shared.Application;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -15,6 +16,7 @@ public static class ApplicationServiceRegistration
             cfg.RegisterServicesFromAssemblies(applicationAssembly);
             cfg.AddFlowChatBehaviors();
         });
+        services.AddScoped<IRealtimeConnectionCommandOrchestrator, RealtimeConnectionCommandOrchestrator>();
 
         return services;
     }

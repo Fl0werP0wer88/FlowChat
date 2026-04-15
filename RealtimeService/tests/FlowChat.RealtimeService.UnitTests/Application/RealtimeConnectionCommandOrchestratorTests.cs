@@ -1,26 +1,27 @@
 using AutoFixture;
 using FlowChat.Core.Messaging.RealtimeService.Events;
 using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
-using FlowChat.RealtimeService.Infrastructure.RealtimeConnections;
+using FlowChat.RealtimeService.Application.Features.RealtimeConnection.Commands;
+using FlowChat.Shared.Domain;
 using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 
 namespace FlowChat.RealtimeService.UnitTests;
 
-public sealed class RealtimeConnectionLifecycleServiceTests
+public sealed class RealtimeConnectionCommandOrchestratorTests
 {
     private readonly IFixture _fixture = new Fixture();
     private readonly Mock<IRealtimeConnectionRegistry> _registryMock = new();
     private readonly RecordingIntegrationEventPublisher _eventPublisher = new();
-    private readonly RealtimeConnectionLifecycleService _service;
+    private readonly RealtimeConnectionCommandOrchestrator _orchestrator;
 
-    public RealtimeConnectionLifecycleServiceTests()
+    public RealtimeConnectionCommandOrchestratorTests()
     {
-        _service = new RealtimeConnectionLifecycleService(
+        _orchestrator = new RealtimeConnectionCommandOrchestrator(
             _registryMock.Object,
             _eventPublisher,
-            NullLogger<RealtimeConnectionLifecycleService>.Instance);
+            NullLogger<RealtimeConnectionCommandOrchestrator>.Instance);
     }
 
     [Fact]
@@ -33,8 +34,9 @@ public sealed class RealtimeConnectionLifecycleServiceTests
             .Setup(x => x.RegisterAsync(userId, "connection-1", It.IsAny<CancellationToken>()))
             .ReturnsAsync(mutation);
 
-        await _service.RegisterAsync(userId, "connection-1", CancellationToken.None);
+        var result = await _orchestrator.RegisterAsync(userId, "connection-1", CancellationToken.None);
 
+        result.IsSuccess.Should().BeTrue();
         var integrationEvent = _eventPublisher.Published.Should().ContainSingle().Subject
             .Should().BeOfType<RealtimeConnectionRegisteredIntegrationEvent>().Subject;
         integrationEvent.UserId.Should().Be(userId);
@@ -51,15 +53,16 @@ public sealed class RealtimeConnectionLifecycleServiceTests
             .Setup(x => x.RegisterAsync(userId, "connection-2", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new RealtimeConnectionMutationResult(userId, "connection-2", 3, DateTimeOffset.UtcNow));
 
-        await _service.RegisterAsync(userId, "connection-2", CancellationToken.None);
+        var result = await _orchestrator.RegisterAsync(userId, "connection-2", CancellationToken.None);
 
+        result.IsSuccess.Should().BeTrue();
         _eventPublisher.Published.Should().ContainSingle()
             .Which.Should().BeOfType<RealtimeConnectionRegisteredIntegrationEvent>()
             .Which.ActiveConnectionCount.Should().Be(3);
     }
 
     [Fact]
-    public async Task RegisterAsync_WhenPublishFails_CompensatesByUnregisteringAndThrows()
+    public async Task RegisterAsync_WhenPublishFails_CompensatesByUnregisteringAndReturnsFailure()
     {
         var userId = _fixture.Create<Guid>();
         _eventPublisher.PublishException = new InvalidOperationException("kafka unavailable");
@@ -71,9 +74,10 @@ public sealed class RealtimeConnectionLifecycleServiceTests
             .Setup(x => x.UnregisterAsync("connection-3", It.IsAny<CancellationToken>()))
             .ReturnsAsync((RealtimeConnectionMutationResult?)null);
 
-        var act = () => _service.RegisterAsync(userId, "connection-3", CancellationToken.None);
+        var result = await _orchestrator.RegisterAsync(userId, "connection-3", CancellationToken.None);
 
-        await act.Should().ThrowAsync<InvalidOperationException>();
+        result.IsFailure.Should().BeTrue();
+        result.Error.ErrorType.Should().Be(ErrorType.Unexpected);
         _registryMock.Verify(
             x => x.UnregisterAsync("connection-3", It.IsAny<CancellationToken>()),
             Times.Once);
@@ -88,8 +92,9 @@ public sealed class RealtimeConnectionLifecycleServiceTests
             .Setup(x => x.UnregisterAsync("connection-4", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new RealtimeConnectionMutationResult(userId, "connection-4", 0, DateTimeOffset.UtcNow));
 
-        await _service.UnregisterAsync("connection-4", CancellationToken.None);
+        var result = await _orchestrator.UnregisterAsync("connection-4", CancellationToken.None);
 
+        result.IsSuccess.Should().BeTrue();
         _eventPublisher.Published.Should().ContainSingle()
             .Which.Should().BeOfType<RealtimeConnectionUnregisteredIntegrationEvent>()
             .Which.ActiveConnectionCount.Should().Be(0);
@@ -102,13 +107,14 @@ public sealed class RealtimeConnectionLifecycleServiceTests
             .Setup(x => x.UnregisterAsync("missing-connection", It.IsAny<CancellationToken>()))
             .ReturnsAsync((RealtimeConnectionMutationResult?)null);
 
-        await _service.UnregisterAsync("missing-connection", CancellationToken.None);
+        var result = await _orchestrator.UnregisterAsync("missing-connection", CancellationToken.None);
 
+        result.IsSuccess.Should().BeTrue();
         _eventPublisher.Published.Should().BeEmpty();
     }
 
     [Fact]
-    public async Task UnregisterAsync_WhenPublishFails_LogsBestEffortAndDoesNotThrow()
+    public async Task UnregisterAsync_WhenPublishFails_ReturnsSuccess()
     {
         var userId = _fixture.Create<Guid>();
         _eventPublisher.PublishException = new InvalidOperationException("kafka unavailable");
@@ -117,8 +123,8 @@ public sealed class RealtimeConnectionLifecycleServiceTests
             .Setup(x => x.UnregisterAsync("connection-5", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new RealtimeConnectionMutationResult(userId, "connection-5", 0, DateTimeOffset.UtcNow));
 
-        var act = () => _service.UnregisterAsync("connection-5", CancellationToken.None);
+        var result = await _orchestrator.UnregisterAsync("connection-5", CancellationToken.None);
 
-        await act.Should().NotThrowAsync();
+        result.IsSuccess.Should().BeTrue();
     }
 }

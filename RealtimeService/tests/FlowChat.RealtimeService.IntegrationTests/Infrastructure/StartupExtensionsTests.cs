@@ -5,6 +5,7 @@ using FlowChat.RealtimeService.Infrastructure.RealtimeConnections;
 using FlowChat.RealtimeService.Infrastructure.RealtimeConnections.Stores.ConnectionStore;
 using FlowChat.RealtimeService.Infrastructure.RealtimeConnections.Stores.UserConnectionStore;
 using FluentAssertions;
+using MediatR;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
@@ -39,10 +40,10 @@ public sealed class StartupExtensionsTests
 
         var app = builder.ConfigureServices();
         var hubContext = app.Services.GetRequiredService<IHubContext<ChatHub, IRealtimeClient>>();
+        var mediator = app.Services.GetRequiredService<IMediator>();
         var connectionRegistry = app.Services.GetRequiredService<IRealtimeConnectionRegistry>();
         var connectionStore = app.Services.GetRequiredService<IConnectionStore>();
         var userConnectionsStore = app.Services.GetRequiredService<IUserConnectionsStore>();
-        var lifecycleService = app.Services.GetRequiredService<IRealtimeConnectionLifecycleService>();
         var hostedServices = app.Services.GetServices<IHostedService>().ToList();
         var optionsMonitor = app.Services.GetRequiredService<IOptionsMonitor<JwtBearerOptions>>();
         var options = optionsMonitor.Get(JwtBearerDefaults.AuthenticationScheme);
@@ -58,10 +59,10 @@ public sealed class StartupExtensionsTests
         await options.Events!.OnMessageReceived(messageContext);
 
         hubContext.Should().NotBeNull();
+        mediator.Should().NotBeNull();
         connectionRegistry.Should().NotBeNull();
         connectionStore.Should().NotBeNull();
         userConnectionsStore.Should().NotBeNull();
-        lifecycleService.Should().NotBeNull();
         hostedServices.Should().Contain(service => service.GetType().Name == "RealtimeConnectionRefreshBackgroundService");
         messageContext.Token.Should().Be("test-token");
     }

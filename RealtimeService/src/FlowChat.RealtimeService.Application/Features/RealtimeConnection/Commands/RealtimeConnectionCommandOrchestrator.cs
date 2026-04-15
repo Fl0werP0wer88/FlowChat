@@ -1,23 +1,33 @@
+using CSharpFunctionalExtensions;
 using FlowChat.Core.Messaging.RealtimeService.Events;
 using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
 using FlowChat.Shared.Application;
+using FlowChat.Shared.Domain;
+using MediatR;
 using Microsoft.Extensions.Logging;
 
-namespace FlowChat.RealtimeService.Infrastructure.RealtimeConnections;
+namespace FlowChat.RealtimeService.Application.Features.RealtimeConnection.Commands;
 
-public sealed class RealtimeConnectionLifecycleService(
+public interface IRealtimeConnectionCommandOrchestrator
+{
+    Task<FlowChatResult<Unit>> RegisterAsync(Guid userId, string connectionId, CancellationToken cancellationToken);
+
+    Task<FlowChatResult<Unit>> UnregisterAsync(string connectionId, CancellationToken cancellationToken);
+}
+
+internal sealed class RealtimeConnectionCommandOrchestrator(
     IRealtimeConnectionRegistry realtimeConnectionRegistry,
     IIntegrationEventPublisher integrationEventPublisher,
-    ILogger<RealtimeConnectionLifecycleService> logger) : IRealtimeConnectionLifecycleService
+    ILogger<RealtimeConnectionCommandOrchestrator> logger) : IRealtimeConnectionCommandOrchestrator
 {
     private readonly IRealtimeConnectionRegistry _realtimeConnectionRegistry = realtimeConnectionRegistry
         ?? throw new ArgumentNullException(nameof(realtimeConnectionRegistry));
     private readonly IIntegrationEventPublisher _integrationEventPublisher = integrationEventPublisher
         ?? throw new ArgumentNullException(nameof(integrationEventPublisher));
-    private readonly ILogger<RealtimeConnectionLifecycleService> _logger = logger
+    private readonly ILogger<RealtimeConnectionCommandOrchestrator> _logger = logger
         ?? throw new ArgumentNullException(nameof(logger));
 
-    public async Task RegisterAsync(Guid userId, string connectionId, CancellationToken cancellationToken)
+    public async Task<FlowChatResult<Unit>> RegisterAsync(Guid userId, string connectionId, CancellationToken cancellationToken)
     {
         var mutation = await _realtimeConnectionRegistry.RegisterAsync(userId, connectionId, cancellationToken);
 
@@ -33,20 +43,29 @@ public sealed class RealtimeConnectionLifecycleService(
                     OccurredAtUtc = mutation.OccurredAtUtc
                 },
                 cancellationToken);
+
+            return FlowChatResult<Unit>.Success(Unit.Value);
         }
-        catch
+        catch (Exception exception)
         {
+            _logger.LogError(
+                exception,
+                "Failed to publish realtime connection registered event for user {UserId} and connection {ConnectionId}.",
+                mutation.UserId,
+                mutation.ConnectionId);
+
             await TryCompensateRegistrationAsync(connectionId);
-            throw;
+
+            return FlowChatResult<Unit>.Failure(DomainError.UnExpected("Failed to register realtime connection."));
         }
     }
 
-    public async Task UnregisterAsync(string connectionId, CancellationToken cancellationToken)
+    public async Task<FlowChatResult<Unit>> UnregisterAsync(string connectionId, CancellationToken cancellationToken)
     {
         var mutation = await _realtimeConnectionRegistry.UnregisterAsync(connectionId, cancellationToken);
         if (mutation is null)
         {
-            return;
+            return FlowChatResult<Unit>.Success(Unit.Value);
         }
 
         try
@@ -70,6 +89,8 @@ public sealed class RealtimeConnectionLifecycleService(
                 mutation.UserId,
                 mutation.ConnectionId);
         }
+
+        return FlowChatResult<Unit>.Success(Unit.Value);
     }
 
     private async Task TryCompensateRegistrationAsync(string connectionId)

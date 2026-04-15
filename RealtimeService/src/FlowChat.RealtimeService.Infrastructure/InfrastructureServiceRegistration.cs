@@ -43,7 +43,6 @@ public static class InfrastructureServiceRegistration
         services.AddScoped<IKafkaProducerOptions<FlowChat.Core.Messaging.RealtimeService.Events.RealtimeConnectionUnregisteredIntegrationEvent>>(sp =>
             sp.GetRequiredService<IKafkaSettingsManager>().GetRealtimeConnectionProducerOptions());
         services.AddScoped<IIntegrationEventPublisher, FlowChatSilverbackEventPublisher>();
-        services.AddScoped<IRealtimeConnectionLifecycleService, RealtimeConnectionLifecycleService>();
         services.AddHostedService<RealtimeConnectionRefreshBackgroundService>();
 
         return services;

@@ -55,6 +55,8 @@ internal sealed class CapturingRealtimeInternalApiClient : IRealtimeInternalApiC
 internal sealed class CapturingMediator : IMediator
 {
     public object? LastSentRequest { get; private set; }
+    public FlowChatResult<Unit> SendUnitResult { get; set; } = FlowChatResult<Unit>.Success(Unit.Value);
+    public Exception? SendException { get; set; }
 
     public Task Publish(object notification, CancellationToken cancellationToken = default) => Task.CompletedTask;
 
@@ -71,11 +73,15 @@ internal sealed class CapturingMediator : IMediator
 
     public Task<TResponse> Send<TResponse>(IRequest<TResponse> request, CancellationToken cancellationToken = default)
     {
+        if (SendException is not null)
+        {
+            throw SendException;
+        }
+
         LastSentRequest = request;
         if (typeof(TResponse) == typeof(FlowChatResult<Unit>))
         {
-            var success = FlowChatResult<Unit>.Success(Unit.Value);
-            return Task.FromResult((TResponse)(object)success);
+            return Task.FromResult((TResponse)(object)SendUnitResult);
         }
 
         return Task.FromResult(default(TResponse)!);
@@ -174,38 +180,6 @@ internal sealed class CapturingRealtimeConnectionRegistry : IRealtimeConnectionR
     public Task RefreshAsync(IReadOnlyCollection<RealtimeConnectionRefreshEntry> connections, CancellationToken cancellationToken)
     {
         LastRefreshedConnections = connections;
-        return Task.CompletedTask;
-    }
-}
-
-internal sealed class CapturingRealtimeConnectionLifecycleService : IRealtimeConnectionLifecycleService
-{
-    public Guid? LastRegisteredUserId { get; private set; }
-    public string? LastRegisteredConnectionId { get; private set; }
-    public string? LastUnregisteredConnectionId { get; private set; }
-    public Exception? RegisterException { get; set; }
-    public Exception? UnregisterException { get; set; }
-
-    public Task RegisterAsync(Guid userId, string connectionId, CancellationToken cancellationToken)
-    {
-        if (RegisterException is not null)
-        {
-            throw RegisterException;
-        }
-
-        LastRegisteredUserId = userId;
-        LastRegisteredConnectionId = connectionId;
-        return Task.CompletedTask;
-    }
-
-    public Task UnregisterAsync(string connectionId, CancellationToken cancellationToken)
-    {
-        LastUnregisteredConnectionId = connectionId;
-        if (UnregisterException is not null)
-        {
-            throw UnregisterException;
-        }
-
         return Task.CompletedTask;
     }
 }

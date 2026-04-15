@@ -1,7 +1,11 @@
 using System.Reflection;
 using System.Security.Claims;
 using FlowChat.RealtimeService.Api.Realtime;
+using FlowChat.RealtimeService.Application.Features.RealtimeConnection.Commands.RegisterRealtimeConnection;
+using FlowChat.RealtimeService.Application.Features.RealtimeConnection.Commands.UnregisterRealtimeConnection;
+using FlowChat.Shared.Domain;
 using FluentAssertions;
+using MediatR;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -13,45 +17,45 @@ public sealed class ChatHubTests
     [Fact]
     public async Task OnConnectedAsync_WhenUserIdMissing_AbortsConnectionAndDoesNotRegister()
     {
-        var lifecycleService = new CapturingRealtimeConnectionLifecycleService();
+        var mediator = new CapturingMediator();
         var hub = CreateHub(
-            lifecycleService,
+            mediator,
             new TestHubCallerContext("connection-1", new ClaimsPrincipal(new ClaimsIdentity())),
             new CapturingGroupManager());
 
         await hub.OnConnectedAsync();
 
         GetContext(hub).AbortCalled.Should().BeTrue();
-        lifecycleService.LastRegisteredConnectionId.Should().BeNull();
+        mediator.LastSentRequest.Should().BeNull();
     }
 
     [Fact]
     public async Task OnConnectedAsync_WhenUserIdPresent_AddsGroupAndRegistersConnection()
     {
         var userId = Guid.NewGuid();
-        var lifecycleService = new CapturingRealtimeConnectionLifecycleService();
+        var mediator = new CapturingMediator();
         var groups = new CapturingGroupManager();
-        var hub = CreateHub(lifecycleService, new TestHubCallerContext("connection-1", CreatePrincipal(userId)), groups);
+        var hub = CreateHub(mediator, new TestHubCallerContext("connection-1", CreatePrincipal(userId)), groups);
 
         await hub.OnConnectedAsync();
 
         groups.AddedConnections.Should().ContainSingle()
             .Which.Should().Be(("connection-1", GroupNames.ForUser(userId)));
-        lifecycleService.LastRegisteredUserId.Should().Be(userId);
-        lifecycleService.LastRegisteredConnectionId.Should().Be("connection-1");
+        mediator.LastSentRequest.Should().BeOfType<RegisterRealtimeConnectionCommand>()
+            .Which.Should().Be(new RegisterRealtimeConnectionCommand(userId, "connection-1"));
         GetContext(hub).AbortCalled.Should().BeFalse();
     }
 
     [Fact]
-    public async Task OnConnectedAsync_WhenRegisterFails_AbortsConnectionAndRollsBackGroupMembership()
+    public async Task OnConnectedAsync_WhenRegisterCommandFails_AbortsConnectionAndRollsBackGroupMembership()
     {
         var userId = Guid.NewGuid();
-        var lifecycleService = new CapturingRealtimeConnectionLifecycleService
+        var mediator = new CapturingMediator
         {
-            RegisterException = new InvalidOperationException("redis unavailable")
+            SendUnitResult = FlowChatResult<Unit>.Failure(DomainError.UnExpected("Failed to register realtime connection."))
         };
         var groups = new CapturingGroupManager();
-        var hub = CreateHub(lifecycleService, new TestHubCallerContext("connection-1", CreatePrincipal(userId)), groups);
+        var hub = CreateHub(mediator, new TestHubCallerContext("connection-1", CreatePrincipal(userId)), groups);
 
         await hub.OnConnectedAsync();
 
@@ -63,36 +67,38 @@ public sealed class ChatHubTests
     [Fact]
     public async Task OnDisconnectedAsync_UnregistersConnectionByConnectionId()
     {
-        var lifecycleService = new CapturingRealtimeConnectionLifecycleService();
-        var hub = CreateHub(lifecycleService, new TestHubCallerContext("connection-9"), new CapturingGroupManager());
+        var mediator = new CapturingMediator();
+        var hub = CreateHub(mediator, new TestHubCallerContext("connection-9"), new CapturingGroupManager());
 
         await hub.OnDisconnectedAsync(null);
 
-        lifecycleService.LastUnregisteredConnectionId.Should().Be("connection-9");
+        mediator.LastSentRequest.Should().BeOfType<UnregisterRealtimeConnectionCommand>()
+            .Which.Should().Be(new UnregisterRealtimeConnectionCommand("connection-9"));
     }
 
     [Fact]
-    public async Task OnDisconnectedAsync_WhenUnregisterFails_DoesNotThrow()
+    public async Task OnDisconnectedAsync_WhenUnregisterCommandFails_DoesNotThrow()
     {
-        var lifecycleService = new CapturingRealtimeConnectionLifecycleService
+        var mediator = new CapturingMediator
         {
-            UnregisterException = new InvalidOperationException("redis unavailable")
+            SendUnitResult = FlowChatResult<Unit>.Failure(DomainError.UnExpected("Failed to unregister realtime connection."))
         };
-        var hub = CreateHub(lifecycleService, new TestHubCallerContext("connection-9"), new CapturingGroupManager());
+        var hub = CreateHub(mediator, new TestHubCallerContext("connection-9"), new CapturingGroupManager());
 
         var act = () => hub.OnDisconnectedAsync(null);
 
         await act.Should().NotThrowAsync();
-        lifecycleService.LastUnregisteredConnectionId.Should().Be("connection-9");
+        mediator.LastSentRequest.Should().BeOfType<UnregisterRealtimeConnectionCommand>()
+            .Which.Should().Be(new UnregisterRealtimeConnectionCommand("connection-9"));
     }
 
     private static ChatHub CreateHub(
-        CapturingRealtimeConnectionLifecycleService lifecycleService,
+        IMediator mediator,
         TestHubCallerContext context,
         CapturingGroupManager groups)
     {
         var logger = new Mock<ILogger<ChatHub>>();
-        var hub = new ChatHub(logger.Object, lifecycleService);
+        var hub = new ChatHub(logger.Object, mediator);
 
         SetHubProperty(hub, nameof(Hub.Context), context);
         SetHubProperty(hub, nameof(Hub.Groups), groups);
