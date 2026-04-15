@@ -22,6 +22,7 @@ public sealed class AppDbContext : DbContext
     }
 
     public DbSet<ContactObserverProjectionEntity> ContactObserverProjections => Set<ContactObserverProjectionEntity>();
+    public DbSet<UserPresencePreferencesEntity> UserPresencePreferences => Set<UserPresencePreferencesEntity>();
     public DbSet<SilverbackOutboxMessage> SilverbackOutboxMessages => Set<SilverbackOutboxMessage>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

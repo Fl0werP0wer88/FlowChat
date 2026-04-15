@@ -19,6 +19,7 @@ public sealed class ChangePresenceStatusCommandHandlerTests
     private readonly Mock<IContactObserverProjectionReadRepository> _readRepositoryMock = new();
     private readonly Mock<IPresenceStatusStore> _presenceStatusStoreMock = new();
     private readonly Mock<IOutboxIntegrationEventPublisher> _integrationEventPublisherMock = new();
+    private readonly Mock<IUserPresencePreferencesRepository> _preferencesRepositoryMock = new();
     private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
     private readonly Mock<IDomainEventDispatcher> _domainEventDispatcherMock = new();
     private readonly ChangePresenceStatusCommandHandler _handler;
@@ -39,6 +40,7 @@ public sealed class ChangePresenceStatusCommandHandlerTests
             _readRepositoryMock.Object,
             _presenceStatusStoreMock.Object,
             _integrationEventPublisherMock.Object,
+            _preferencesRepositoryMock.Object,
             _unitOfWorkMock.Object,
             _domainEventDispatcherMock.Object);
     }
@@ -171,6 +173,83 @@ public sealed class ChangePresenceStatusCommandHandlerTests
         _presenceStatusStoreMock.Verify(
             x => x.DeleteAsync(userId, It.IsAny<CancellationToken>()),
             Times.Once);
+    }
+
+    [Theory]
+    [InlineData(PresenceStatus.Busy)]
+    [InlineData(PresenceStatus.Invisible)]
+    public async Task Handle_WithManualStatus_UpsertsPreference(PresenceStatus status)
+    {
+        var userId = _fixture.Create<Guid>();
+
+        _presenceStatusStoreMock
+            .Setup(x => x.GetAsync(userId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new PresenceStatusSnapshot(userId, PresenceStatus.Active, DateTimeOffset.UtcNow));
+        _readRepositoryMock
+            .Setup(x => x.GetObserverUserIdsAsync(userId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync([]);
+
+        var result = await _handler.Handle(
+            new ChangePresenceStatusCommand(userId, status),
+            CancellationToken.None);
+
+        result.IsSuccess.Should().BeTrue();
+        _preferencesRepositoryMock.Verify(
+            x => x.UpsertAsync(userId, status, It.IsAny<DateTimeOffset>(), It.IsAny<CancellationToken>()),
+            Times.Once);
+        _preferencesRepositoryMock.Verify(
+            x => x.DeleteAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task Handle_WithActiveStatus_DeletesPreference()
+    {
+        var userId = _fixture.Create<Guid>();
+
+        _presenceStatusStoreMock
+            .Setup(x => x.GetAsync(userId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new PresenceStatusSnapshot(userId, PresenceStatus.Busy, DateTimeOffset.UtcNow));
+        _readRepositoryMock
+            .Setup(x => x.GetObserverUserIdsAsync(userId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync([]);
+
+        var result = await _handler.Handle(
+            new ChangePresenceStatusCommand(userId, PresenceStatus.Active),
+            CancellationToken.None);
+
+        result.IsSuccess.Should().BeTrue();
+        _preferencesRepositoryMock.Verify(
+            x => x.DeleteAsync(userId, It.IsAny<CancellationToken>()),
+            Times.Once);
+        _preferencesRepositoryMock.Verify(
+            x => x.UpsertAsync(It.IsAny<Guid>(), It.IsAny<PresenceStatus>(), It.IsAny<DateTimeOffset>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task Handle_WithAFKStatus_DoesNotTouchPreference()
+    {
+        var userId = _fixture.Create<Guid>();
+
+        _presenceStatusStoreMock
+            .Setup(x => x.GetAsync(userId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new PresenceStatusSnapshot(userId, PresenceStatus.Active, DateTimeOffset.UtcNow));
+        _readRepositoryMock
+            .Setup(x => x.GetObserverUserIdsAsync(userId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync([]);
+
+        var result = await _handler.Handle(
+            new ChangePresenceStatusCommand(userId, PresenceStatus.AFK),
+            CancellationToken.None);
+
+        result.IsSuccess.Should().BeTrue();
+        _preferencesRepositoryMock.Verify(
+            x => x.UpsertAsync(It.IsAny<Guid>(), It.IsAny<PresenceStatus>(), It.IsAny<DateTimeOffset>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+        _preferencesRepositoryMock.Verify(
+            x => x.DeleteAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()),
+            Times.Never);
     }
 
     [Fact]

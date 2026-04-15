@@ -1,3 +1,4 @@
+using FlowChat.Core.Domain;
 using FlowChat.Core.Messaging.PresenceService.Events;
 using FlowChat.Core.Results;
 using FlowChat.PresenceService.Application.Contracts.Infrastructure;
@@ -12,6 +13,7 @@ public sealed class ChangePresenceStatusCommandHandler(
     IContactObserverProjectionReadRepository contactObserverProjectionReadRepository,
     IPresenceStatusStore presenceStatusStore,
     IOutboxIntegrationEventPublisher integrationEventPublisher,
+    IUserPresencePreferencesRepository userPresencePreferencesRepository,
     IUnitOfWork unitOfWork,
     IDomainEventDispatcher domainEventDispatcher)
     : CommandHandlerBase<ChangePresenceStatusCommand, Unit>(domainEventDispatcher, unitOfWork)
@@ -43,6 +45,19 @@ public sealed class ChangePresenceStatusCommandHandler(
                 .Distinct()
                 .ToList()
         };
+
+        // Busy / Invisible are manual choices — persist so they survive reconnect
+        if (request.Status is PresenceStatus.Busy or PresenceStatus.Invisible)
+        {
+            await userPresencePreferencesRepository.UpsertAsync(
+                request.UserId, request.Status, changedAtUtc, cancellationToken);
+        }
+        else if (request.Status == PresenceStatus.Active)
+        {
+            // User explicitly came back online — clear any saved override
+            await userPresencePreferencesRepository.DeleteAsync(request.UserId, cancellationToken);
+        }
+        // AFK is automatic — leave any saved preference unchanged
 
         await presenceStatusStore.SetAsync(
             request.UserId,

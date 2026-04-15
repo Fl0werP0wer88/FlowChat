@@ -26,6 +26,7 @@ public static class PersistenceServiceRegistration
 
         services.AddScoped<IContactObserverProjectionReadRepository, ContactObserverProjectionReadRepository>();
         services.AddScoped<IContactObserverProjectionWriteRepository, ContactObserverProjectionWriteRepository>();
+        services.AddScoped<IUserPresencePreferencesRepository, UserPresencePreferencesRepository>();
         services.AddScoped<IUnitOfWork, SilverbackEfUnitOfWork<AppDbContext>>();
 
         return services;
