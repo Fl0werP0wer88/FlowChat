@@ -2,6 +2,9 @@ using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
 using FlowChat.RealtimeService.Infrastructure.Configuration;
 using FlowChat.RealtimeService.Infrastructure.Kafka;
 using FlowChat.RealtimeService.Infrastructure.RealtimeConnections;
+using FlowChat.RealtimeService.Infrastructure.RealtimeConnections.ConnectionsTracker;
+using FlowChat.RealtimeService.Infrastructure.RealtimeConnections.Stores.ConnectionStore;
+using FlowChat.RealtimeService.Infrastructure.RealtimeConnections.Stores.UserConnectionStore;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Infrastructure.Redis;
 using FlowChat.Shared.Infrastructure.Silverback.Kafka;
@@ -31,10 +34,10 @@ public static class InfrastructureServiceRegistration
         services.TryAddSingleton<RedisUnitOfWork>();
         services.TryAddSingleton<IUnitOfWork>(sp => sp.GetRequiredService<RedisUnitOfWork>());
         services.TryAddSingleton<IRedisTransactionContext>(sp => sp.GetRequiredService<RedisUnitOfWork>());
-        services.TryAddSingleton<IActiveRealtimeConnectionTracker, InMemoryActiveRealtimeConnectionTracker>();
+        services.TryAddSingleton<IActiveConnectionsTracker, InMemoryActiveConnectionsTracker>();
         services.TryAddSingleton<IConnectionStore, RedisConnectionStore>();
         services.TryAddSingleton<IUserConnectionsStore, RedisUserConnectionsStore>();
-        services.TryAddSingleton<IRealtimeConnectionRegistry, RedisRealtimeConnectionRegistry>();
+        services.TryAddSingleton<IRealtimeConnectionRegistry, RealtimeConnectionRegistry>();
         services.AddScoped<IKafkaProducerOptions<FlowChat.Core.Messaging.RealtimeService.Events.RealtimeConnectionRegisteredIntegrationEvent>>(sp =>
             sp.GetRequiredService<IKafkaSettingsManager>().GetRealtimeConnectionProducerOptions());
         services.AddScoped<IKafkaProducerOptions<FlowChat.Core.Messaging.RealtimeService.Events.RealtimeConnectionUnregisteredIntegrationEvent>>(sp =>

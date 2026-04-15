@@ -1,9 +1,9 @@
 using System.Collections.Concurrent;
 using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
 
-namespace FlowChat.RealtimeService.Infrastructure.RealtimeConnections;
+namespace FlowChat.RealtimeService.Infrastructure.RealtimeConnections.ConnectionsTracker;
 
-internal sealed class InMemoryActiveRealtimeConnectionTracker : IActiveRealtimeConnectionTracker
+internal sealed class InMemoryActiveConnectionsTracker : IActiveConnectionsTracker
 {
     private readonly ConcurrentDictionary<string, RealtimeConnectionRefreshEntry> _connections = new(StringComparer.Ordinal);
 

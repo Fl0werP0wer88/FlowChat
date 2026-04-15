@@ -1,4 +1,4 @@
-namespace FlowChat.RealtimeService.Infrastructure.RealtimeConnections;
+namespace FlowChat.RealtimeService.Infrastructure.RealtimeConnections.Stores.ConnectionStore;
 
 internal interface IConnectionStore
 {

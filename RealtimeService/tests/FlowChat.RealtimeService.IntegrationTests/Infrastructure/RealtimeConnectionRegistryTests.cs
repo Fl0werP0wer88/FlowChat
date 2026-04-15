@@ -7,7 +7,7 @@ using Testcontainers.Redis;
 
 namespace FlowChat.RealtimeService.IntegrationTests;
 
-public sealed class RedisRealtimeConnectionRegistryTests : IAsyncLifetime
+public sealed class RealtimeConnectionRegistryTests : IAsyncLifetime
 {
     private readonly RedisContainer _redisContainer = new RedisBuilder()
         .WithImage("redis:7-alpine")

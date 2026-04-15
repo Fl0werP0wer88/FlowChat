@@ -1,8 +1,8 @@
 using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
 
-namespace FlowChat.RealtimeService.Infrastructure.RealtimeConnections;
+namespace FlowChat.RealtimeService.Infrastructure.RealtimeConnections.ConnectionsTracker;
 
-internal interface IActiveRealtimeConnectionTracker
+internal interface IActiveConnectionsTracker
 {
     void Track(Guid userId, string connectionId);
 

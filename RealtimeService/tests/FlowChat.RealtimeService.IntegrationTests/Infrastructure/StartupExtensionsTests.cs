@@ -2,6 +2,8 @@ using FlowChat.RealtimeService.Api;
 using FlowChat.RealtimeService.Api.Realtime;
 using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
 using FlowChat.RealtimeService.Infrastructure.RealtimeConnections;
+using FlowChat.RealtimeService.Infrastructure.RealtimeConnections.Stores.ConnectionStore;
+using FlowChat.RealtimeService.Infrastructure.RealtimeConnections.Stores.UserConnectionStore;
 using FluentAssertions;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;

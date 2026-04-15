@@ -2,7 +2,7 @@ using FlowChat.RealtimeService.Infrastructure.Configuration;
 using FlowChat.Shared.Infrastructure.Redis;
 using StackExchange.Redis;
 
-namespace FlowChat.RealtimeService.Infrastructure.RealtimeConnections;
+namespace FlowChat.RealtimeService.Infrastructure.RealtimeConnections.Stores.UserConnectionStore;
 
 internal sealed class RedisUserConnectionsStore(
     IRedisTransactionContext redisTransactionContext,

@@ -1,21 +1,24 @@
 using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
+using FlowChat.RealtimeService.Infrastructure.RealtimeConnections.ConnectionsTracker;
+using FlowChat.RealtimeService.Infrastructure.RealtimeConnections.Stores.ConnectionStore;
+using FlowChat.RealtimeService.Infrastructure.RealtimeConnections.Stores.UserConnectionStore;
 using FlowChat.Shared.Application;
 
 namespace FlowChat.RealtimeService.Infrastructure.RealtimeConnections;
 
-internal sealed class RedisRealtimeConnectionRegistry(
+internal sealed class RealtimeConnectionRegistry(
     IConnectionStore connectionStore,
     IUserConnectionsStore userConnectionsStore,
     IUnitOfWork unitOfWork,
-    IActiveRealtimeConnectionTracker activeConnectionTracker) : IRealtimeConnectionRegistry
+    IActiveConnectionsTracker activeConnectionsTracker) : IRealtimeConnectionRegistry
 {
     private readonly IConnectionStore _connectionStore = connectionStore
         ?? throw new ArgumentNullException(nameof(connectionStore));
     private readonly IUserConnectionsStore _userConnectionsStore = userConnectionsStore
         ?? throw new ArgumentNullException(nameof(userConnectionsStore));
     private readonly IUnitOfWork _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
-    private readonly IActiveRealtimeConnectionTracker _activeConnectionTracker = activeConnectionTracker
-        ?? throw new ArgumentNullException(nameof(activeConnectionTracker));
+    private readonly IActiveConnectionsTracker _activeConnectionsTracker = activeConnectionsTracker
+        ?? throw new ArgumentNullException(nameof(activeConnectionsTracker));
 
     public async Task<RealtimeConnectionMutationResult> RegisterAsync(Guid userId, string connectionId, CancellationToken cancellationToken)
     {
@@ -34,7 +37,7 @@ internal sealed class RedisRealtimeConnectionRegistry(
             return 0;
         }, cancellationToken);
 
-        _activeConnectionTracker.Track(userId, connectionId);
+        _activeConnectionsTracker.Track(userId, connectionId);
         var activeConnectionCount = await _userConnectionsStore.GetConnectionCountAsync(userId);
 
         return new RealtimeConnectionMutationResult(
@@ -52,7 +55,7 @@ internal sealed class RedisRealtimeConnectionRegistry(
         try
         {
             Guid userId;
-            if (_activeConnectionTracker.TryGet(connectionId, out var trackedConnection) && trackedConnection is not null)
+            if (_activeConnectionsTracker.TryGet(connectionId, out var trackedConnection) && trackedConnection is not null)
             {
                 userId = trackedConnection.UserId;
             }
@@ -92,7 +95,7 @@ internal sealed class RedisRealtimeConnectionRegistry(
         }
         finally
         {
-            _activeConnectionTracker.Untrack(connectionId);
+            _activeConnectionsTracker.Untrack(connectionId);
         }
     }
 
@@ -127,7 +130,7 @@ internal sealed class RedisRealtimeConnectionRegistry(
             cancellationToken.ThrowIfCancellationRequested();
             if (!expireTask.Result)
             {
-                _activeConnectionTracker.Untrack(connectionId);
+                _activeConnectionsTracker.Untrack(connectionId);
             }
         }
     }

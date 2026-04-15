@@ -1,5 +1,6 @@
 using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
 using FlowChat.RealtimeService.Infrastructure.Configuration;
+using FlowChat.RealtimeService.Infrastructure.RealtimeConnections.ConnectionsTracker;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
@@ -7,14 +8,14 @@ namespace FlowChat.RealtimeService.Infrastructure.RealtimeConnections;
 
 internal sealed class RealtimeConnectionRefreshBackgroundService(
     IRealtimeConnectionRegistry realtimeConnectionRegistry,
-    IActiveRealtimeConnectionTracker activeConnectionTracker,
+    IActiveConnectionsTracker activeConnectionsTracker,
     RealtimeConnectionsSettings settings,
     ILogger<RealtimeConnectionRefreshBackgroundService> logger) : BackgroundService
 {
     private readonly IRealtimeConnectionRegistry _realtimeConnectionRegistry = realtimeConnectionRegistry
         ?? throw new ArgumentNullException(nameof(realtimeConnectionRegistry));
-    private readonly IActiveRealtimeConnectionTracker _activeConnectionTracker = activeConnectionTracker
-        ?? throw new ArgumentNullException(nameof(activeConnectionTracker));
+    private readonly IActiveConnectionsTracker _activeConnectionsTracker = activeConnectionsTracker
+        ?? throw new ArgumentNullException(nameof(activeConnectionsTracker));
     private readonly RealtimeConnectionsSettings _settings = settings ?? throw new ArgumentNullException(nameof(settings));
     private readonly ILogger<RealtimeConnectionRefreshBackgroundService> _logger = logger
         ?? throw new ArgumentNullException(nameof(logger));
@@ -25,7 +26,7 @@ internal sealed class RealtimeConnectionRefreshBackgroundService(
 
         while (!stoppingToken.IsCancellationRequested && await timer.WaitForNextTickAsync(stoppingToken))
         {
-            var connections = _activeConnectionTracker.Snapshot();
+            var connections = _activeConnectionsTracker.Snapshot();
             if (connections.Count == 0)
             {
                 continue;
