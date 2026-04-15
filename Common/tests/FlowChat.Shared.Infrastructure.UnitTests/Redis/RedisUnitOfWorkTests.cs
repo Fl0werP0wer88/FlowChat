@@ -182,4 +182,65 @@ public sealed class RedisUnitOfWorkTests
         var db = unitOfWork.GetActiveDatabase();
         db.Should().BeSameAs(_databaseMock.Object);
     }
+
+    [Fact]
+    public async Task GetActiveDatabase_WhenConcurrentTransactionsRun_KeepsTransactionContextPerAsyncFlow()
+    {
+        var firstTransactionMock = new Mock<ITransaction>();
+        var secondTransactionMock = new Mock<ITransaction>();
+        var createdTransactions = new Queue<ITransaction>([firstTransactionMock.Object, secondTransactionMock.Object]);
+
+        _databaseMock
+            .Setup(x => x.CreateTransaction(It.IsAny<object?>()))
+            .Returns(() => createdTransactions.Dequeue());
+
+        firstTransactionMock
+            .Setup(x => x.ExecuteAsync(It.IsAny<CommandFlags>()))
+            .ReturnsAsync(true);
+        secondTransactionMock
+            .Setup(x => x.ExecuteAsync(It.IsAny<CommandFlags>()))
+            .ReturnsAsync(true);
+
+        var unitOfWork = new RedisUnitOfWork(_multiplexerMock.Object);
+        var firstOperationStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var allowFirstCapture = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var firstCaptured = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var secondCaptured = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var releaseTransactions = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        IDatabaseAsync? firstCapturedDatabase = null;
+        IDatabaseAsync? secondCapturedDatabase = null;
+
+        var firstTask = unitOfWork.ExecuteInTransactionAsync(async _ =>
+        {
+            firstOperationStarted.SetResult();
+            await allowFirstCapture.Task;
+            firstCapturedDatabase = unitOfWork.GetActiveDatabase();
+            firstCaptured.SetResult();
+            await releaseTransactions.Task;
+
+            return 1;
+        }, CancellationToken.None);
+
+        await firstOperationStarted.Task;
+
+        var secondTask = unitOfWork.ExecuteInTransactionAsync(async _ =>
+        {
+            secondCapturedDatabase = unitOfWork.GetActiveDatabase();
+            secondCaptured.SetResult();
+            await releaseTransactions.Task;
+
+            return 2;
+        }, CancellationToken.None);
+
+        await secondCaptured.Task;
+        allowFirstCapture.SetResult();
+        await firstCaptured.Task;
+        releaseTransactions.SetResult();
+
+        await Task.WhenAll(firstTask, secondTask);
+
+        firstCapturedDatabase.Should().BeSameAs(firstTransactionMock.Object);
+        secondCapturedDatabase.Should().BeSameAs(secondTransactionMock.Object);
+        unitOfWork.GetActiveDatabase().Should().BeSameAs(_databaseMock.Object);
+    }
 }

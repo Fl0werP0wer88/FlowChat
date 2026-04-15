@@ -8,7 +8,7 @@
 
   <ItemGroup>
     <PackageReference Include="Silverback.Integration.Kafka" Version="5.0.0" />
-    <PackageReference Include="StackExchange.Redis" Version="2.8.41" />
+    <PackageReference Include="StackExchange.Redis" Version="2.10.1" />
   </ItemGroup>
 
   <ItemGroup>

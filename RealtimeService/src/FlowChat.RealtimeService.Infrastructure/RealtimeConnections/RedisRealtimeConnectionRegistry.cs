@@ -1,26 +1,19 @@
 using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
-using FlowChat.RealtimeService.Infrastructure.Configuration;
-using StackExchange.Redis;
+using FlowChat.Shared.Application;
 
 namespace FlowChat.RealtimeService.Infrastructure.RealtimeConnections;
 
 internal sealed class RedisRealtimeConnectionRegistry(
-    IConnectionMultiplexer connectionMultiplexer,
-    RealtimeConnectionsSettings settings,
+    IConnectionStore connectionStore,
+    IUserConnectionsStore userConnectionsStore,
+    IUnitOfWork unitOfWork,
     IActiveRealtimeConnectionTracker activeConnectionTracker) : IRealtimeConnectionRegistry
 {
-    private static class HashFields
-    {
-        public const string UserId = "userId";
-        public const string ConnectionId = "connectionId";
-        public const string InstanceId = "instanceId";
-        public const string ConnectedAtUtc = "connectedAtUtc";
-        public const string LastSeenUtc = "lastSeenUtc";
-    }
-
-    private readonly IConnectionMultiplexer _connectionMultiplexer = connectionMultiplexer
-        ?? throw new ArgumentNullException(nameof(connectionMultiplexer));
-    private readonly RealtimeConnectionsSettings _settings = settings ?? throw new ArgumentNullException(nameof(settings));
+    private readonly IConnectionStore _connectionStore = connectionStore
+        ?? throw new ArgumentNullException(nameof(connectionStore));
+    private readonly IUserConnectionsStore _userConnectionsStore = userConnectionsStore
+        ?? throw new ArgumentNullException(nameof(userConnectionsStore));
+    private readonly IUnitOfWork _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
     private readonly IActiveRealtimeConnectionTracker _activeConnectionTracker = activeConnectionTracker
         ?? throw new ArgumentNullException(nameof(activeConnectionTracker));
 
@@ -31,33 +24,18 @@ internal sealed class RedisRealtimeConnectionRegistry(
         ArgumentOutOfRangeException.ThrowIfEqual(userId, Guid.Empty);
         ArgumentException.ThrowIfNullOrWhiteSpace(connectionId);
 
-        var database = _connectionMultiplexer.GetDatabase();
         var nowUtc = DateTimeOffset.UtcNow;
-        var connectionKey = GetConnectionKey(connectionId);
-        var userConnectionsKey = GetUserConnectionsKey(userId);
 
-        var transaction = database.CreateTransaction();
-        var hashSetTask = transaction.HashSetAsync(connectionKey,
-        [
-            new HashEntry(HashFields.UserId, userId.ToString()),
-            new HashEntry(HashFields.ConnectionId, connectionId),
-            new HashEntry(HashFields.InstanceId, _settings.InstanceId),
-            new HashEntry(HashFields.ConnectedAtUtc, nowUtc.ToString("O")),
-            new HashEntry(HashFields.LastSeenUtc, nowUtc.ToString("O"))
-        ]);
-        var addToSetTask = transaction.SetAddAsync(userConnectionsKey, connectionId);
-        var expireConnectionTask = transaction.KeyExpireAsync(connectionKey, _settings.ConnectionTtl);
-        var expireUserSetTask = transaction.KeyExpireAsync(userConnectionsKey, _settings.ConnectionTtl);
-
-        var committed = await transaction.ExecuteAsync();
-        if (!committed)
+        await _unitOfWork.ExecuteInTransactionAsync(async _ =>
         {
-            throw new InvalidOperationException($"Failed to register realtime connection '{connectionId}' in Redis.");
-        }
+            await _connectionStore.UpsertAsync(userId, connectionId, nowUtc, nowUtc);
+            await _userConnectionsStore.AddConnectionAsync(userId, connectionId);
 
-        await Task.WhenAll(hashSetTask, addToSetTask, expireConnectionTask, expireUserSetTask);
+            return 0;
+        }, cancellationToken);
+
         _activeConnectionTracker.Track(userId, connectionId);
-        var activeConnectionCount = (int)await database.SetLengthAsync(userConnectionsKey);
+        var activeConnectionCount = await _userConnectionsStore.GetConnectionCountAsync(userId);
 
         return new RealtimeConnectionMutationResult(
             userId,
@@ -73,9 +51,6 @@ internal sealed class RedisRealtimeConnectionRegistry(
 
         try
         {
-            var database = _connectionMultiplexer.GetDatabase();
-            var connectionKey = GetConnectionKey(connectionId);
-
             Guid userId;
             if (_activeConnectionTracker.TryGet(connectionId, out var trackedConnection) && trackedConnection is not null)
             {
@@ -83,29 +58,30 @@ internal sealed class RedisRealtimeConnectionRegistry(
             }
             else
             {
-                var userIdValue = await database.HashGetAsync(connectionKey, HashFields.UserId);
-                if (userIdValue.IsNullOrEmpty || !Guid.TryParse(userIdValue.ToString(), out userId) || userId == Guid.Empty)
+                var storedUserId = await _connectionStore.GetUserIdAsync(connectionId);
+                if (!storedUserId.HasValue || storedUserId.Value == Guid.Empty)
                 {
-                    await database.KeyDeleteAsync(connectionKey);
+                    await _connectionStore.DeleteAsync(connectionId);
                     return null;
                 }
+
+                userId = storedUserId.Value;
             }
 
-            var userConnectionsKey = GetUserConnectionsKey(userId);
-            var connectionExists = await database.KeyExistsAsync(connectionKey);
-            var connectionInUserSet = await database.SetContainsAsync(userConnectionsKey, connectionId);
+            var connectionExists = await _connectionStore.ExistsAsync(connectionId);
+            var connectionInUserSet = await _userConnectionsStore.ContainsConnectionAsync(userId, connectionId);
             if (!connectionExists && !connectionInUserSet)
             {
                 return null;
             }
 
-            await database.SetRemoveAsync(userConnectionsKey, connectionId);
-            await database.KeyDeleteAsync(connectionKey);
-            var activeConnectionCount = (int)await database.SetLengthAsync(userConnectionsKey);
+            await _userConnectionsStore.RemoveConnectionAsync(userId, connectionId);
+            await _connectionStore.DeleteAsync(connectionId);
+            var activeConnectionCount = await _userConnectionsStore.GetConnectionCountAsync(userId);
 
             if (activeConnectionCount == 0)
             {
-                await database.KeyDeleteAsync(userConnectionsKey);
+                await _userConnectionsStore.DeleteIfEmptyAsync(userId);
             }
 
             return new RealtimeConnectionMutationResult(
@@ -128,7 +104,6 @@ internal sealed class RedisRealtimeConnectionRegistry(
             return;
         }
 
-        var database = _connectionMultiplexer.GetDatabase();
         var activeConnections = connections
             .Where(static connection => connection.UserId != Guid.Empty && !string.IsNullOrWhiteSpace(connection.ConnectionId))
             .DistinctBy(static connection => connection.ConnectionId)
@@ -136,16 +111,16 @@ internal sealed class RedisRealtimeConnectionRegistry(
 
         var connectionExpireTasks = activeConnections.ToDictionary(
             static connection => connection.ConnectionId,
-            connection => database.KeyExpireAsync(GetConnectionKey(connection.ConnectionId), _settings.ConnectionTtl),
+            connection => _connectionStore.RefreshTtlAsync(connection.ConnectionId),
             StringComparer.Ordinal);
 
         var userSetExpireTasks = activeConnections
             .DistinctBy(static connection => connection.UserId)
             .ToDictionary(
                 static connection => connection.UserId,
-                connection => database.KeyExpireAsync(GetUserConnectionsKey(connection.UserId), _settings.ConnectionTtl));
+                connection => _userConnectionsStore.RefreshTtlAsync(connection.UserId));
 
-        await Task.WhenAll(connectionExpireTasks.Values.Concat(userSetExpireTasks.Values));
+        await Task.WhenAll(connectionExpireTasks.Values.Cast<Task>().Concat(userSetExpireTasks.Values.Cast<Task>()));
 
         foreach (var (connectionId, expireTask) in connectionExpireTasks)
         {
@@ -156,8 +131,4 @@ internal sealed class RedisRealtimeConnectionRegistry(
             }
         }
     }
-
-    private string GetConnectionKey(string connectionId) => $"{_settings.KeyPrefix}:connections:{connectionId}";
-
-    private string GetUserConnectionsKey(Guid userId) => $"{_settings.KeyPrefix}:user-connections:{userId:D}";
 }

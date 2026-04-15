@@ -1,5 +1,6 @@
 using FlowChat.Shared.Application;
 using StackExchange.Redis;
+using System.Threading;
 
 namespace FlowChat.Shared.Infrastructure.Redis;
 
@@ -9,7 +10,8 @@ public class RedisUnitOfWork(IConnectionMultiplexer connectionMultiplexer)
     private readonly IConnectionMultiplexer _connectionMultiplexer = connectionMultiplexer
         ?? throw new ArgumentNullException(nameof(connectionMultiplexer));
 
-    private ITransaction? _currentTransaction;
+    // AsyncLocal keeps the ambient transaction isolated per async flow even when the UoW is shared as a singleton
+    private readonly AsyncLocal<ITransaction?> _currentTransaction = new();
 
     /// <inheritdoc />
     /// <remarks>
@@ -18,7 +20,7 @@ public class RedisUnitOfWork(IConnectionMultiplexer connectionMultiplexer)
     /// returns the plain IDatabase (fire-and-forget semantics).
     /// </remarks>
     public IDatabaseAsync GetActiveDatabase() =>
-        (IDatabaseAsync?)_currentTransaction ?? _connectionMultiplexer.GetDatabase();
+        (IDatabaseAsync?)_currentTransaction.Value ?? _connectionMultiplexer.GetDatabase();
 
     // Redis operations are immediately persisted — there are no pending changes to flush.
     public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default) =>
@@ -32,14 +34,16 @@ public class RedisUnitOfWork(IConnectionMultiplexer connectionMultiplexer)
         cancellationToken.ThrowIfCancellationRequested();
 
         var database = _connectionMultiplexer.GetDatabase();
-        _currentTransaction = database.CreateTransaction();
+        var previousTransaction = _currentTransaction.Value;
+        var currentTransaction = database.CreateTransaction();
+        _currentTransaction.Value = currentTransaction;
 
         try
         {
             var result = await operation(cancellationToken);
 
             // Commands queued by repositories via GetActiveDatabase() are sent atomically here.
-            var committed = await _currentTransaction.ExecuteAsync();
+            var committed = await currentTransaction.ExecuteAsync();
             if (!committed)
             {
                 // EXEC returns nil when a WATCH condition fails (optimistic concurrency guard).
@@ -52,7 +56,7 @@ public class RedisUnitOfWork(IConnectionMultiplexer connectionMultiplexer)
         }
         finally
         {
-            _currentTransaction = null;
+            _currentTransaction.Value = previousTransaction;
         }
     }
 
