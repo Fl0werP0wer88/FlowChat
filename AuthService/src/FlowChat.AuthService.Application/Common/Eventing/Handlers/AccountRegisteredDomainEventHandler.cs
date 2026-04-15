@@ -9,7 +9,7 @@ public sealed class AccountRegisteredDomainEventHandler
     : MappedDomainEventHandlerBase<AccountRegisteredDomainEvent, AccountRegisteredIntegrationEvent>
 {
     public AccountRegisteredDomainEventHandler(
-        IIntegrationEventPublisher integrationEventPublisher,
+        IOutboxIntegrationEventPublisher integrationEventPublisher,
         IMapper mapper)
         : base(integrationEventPublisher, mapper)
     {

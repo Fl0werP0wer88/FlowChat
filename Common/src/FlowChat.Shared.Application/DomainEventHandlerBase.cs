@@ -7,9 +7,9 @@ public abstract class DomainEventHandlerBase<TDomainEvent, TIntegrationEvent> : 
     where TDomainEvent : DomainEventBase
     where TIntegrationEvent : IntegrationEvent
 {
-    private readonly IIntegrationEventPublisher _integrationEventPublisher;
+    private readonly IOutboxIntegrationEventPublisher _integrationEventPublisher;
 
-    protected DomainEventHandlerBase(IIntegrationEventPublisher integrationEventPublisher)
+    protected DomainEventHandlerBase(IOutboxIntegrationEventPublisher integrationEventPublisher)
     {
         _integrationEventPublisher = integrationEventPublisher
             ?? throw new ArgumentNullException(nameof(integrationEventPublisher));

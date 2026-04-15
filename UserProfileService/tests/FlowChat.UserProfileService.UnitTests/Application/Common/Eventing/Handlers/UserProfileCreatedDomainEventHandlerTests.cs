@@ -18,7 +18,7 @@ namespace FlowChat.UserProfileService.UnitTests;
 public sealed class UserProfileCreatedDomainEventHandlerTests
 {
     private readonly IMapper _mapper;
-    private readonly Mock<IIntegrationEventPublisher> _publisherMock = new();
+    private readonly Mock<IOutboxIntegrationEventPublisher> _publisherMock = new();
     private readonly Mock<IEmailVerificationRequestIssuer> _issuerMock = new();
 
     public UserProfileCreatedDomainEventHandlerTests()

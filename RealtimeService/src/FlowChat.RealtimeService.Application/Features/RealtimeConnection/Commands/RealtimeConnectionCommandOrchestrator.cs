@@ -17,12 +17,12 @@ public interface IRealtimeConnectionCommandOrchestrator
 
 internal sealed class RealtimeConnectionCommandOrchestrator(
     IRealtimeConnectionRegistry realtimeConnectionRegistry,
-    IIntegrationEventPublisher integrationEventPublisher,
+    IDirectEventPublisher integrationEventPublisher,
     ILogger<RealtimeConnectionCommandOrchestrator> logger) : IRealtimeConnectionCommandOrchestrator
 {
     private readonly IRealtimeConnectionRegistry _realtimeConnectionRegistry = realtimeConnectionRegistry
         ?? throw new ArgumentNullException(nameof(realtimeConnectionRegistry));
-    private readonly IIntegrationEventPublisher _integrationEventPublisher = integrationEventPublisher
+    private readonly IDirectEventPublisher _integrationEventPublisher = integrationEventPublisher
         ?? throw new ArgumentNullException(nameof(integrationEventPublisher));
     private readonly ILogger<RealtimeConnectionCommandOrchestrator> _logger = logger
         ?? throw new ArgumentNullException(nameof(logger));

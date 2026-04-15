@@ -31,7 +31,7 @@ public static class InfrastructureServiceRegistration
         });
         services.AddScoped<IKafkaProducerOptions<PresenceStatusChangedIntegrationEvent>>(sp =>
             sp.GetRequiredService<IKafkaSettingsManager>().GetPresenceStatusChangedProducerOptions());
-        services.AddScoped<IIntegrationEventPublisher, FlowChatSilverbackEventPublisher>();
+        services.AddScoped<IOutboxIntegrationEventPublisher, FlowChatSilverbackEventPublisher>();
         services.AddScoped<IPresenceStatusStore, RedisPresenceStatusStore>();
 
         return services;

@@ -9,7 +9,7 @@ public sealed class AuthEmailChangedDomainEventHandler
     : MappedDomainEventHandlerBase<AuthEmailChangedDomainEvent, AuthEmailChangedIntegrationEvent>
 {
     public AuthEmailChangedDomainEventHandler(
-        IIntegrationEventPublisher integrationEventPublisher,
+        IOutboxIntegrationEventPublisher integrationEventPublisher,
         IMapper mapper)
         : base(integrationEventPublisher, mapper)
     {

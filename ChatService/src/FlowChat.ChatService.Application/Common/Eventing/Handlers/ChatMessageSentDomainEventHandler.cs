@@ -9,7 +9,7 @@ public sealed class ChatMessageSentDomainEventHandler
     : MappedDomainEventHandlerBase<ChatMessageSentDomainEvent, ChatMessageSentIntegrationEvent>
 {
     public ChatMessageSentDomainEventHandler(
-        IIntegrationEventPublisher integrationEventPublisher,
+        IOutboxIntegrationEventPublisher integrationEventPublisher,
         IMapper mapper)
         : base(integrationEventPublisher, mapper)
     {

@@ -14,7 +14,7 @@ namespace FlowChat.AuthService.UnitTests;
 
 public sealed class AccountConfirmedDomainEventHandlerTests
 {
-    private readonly Mock<IIntegrationEventPublisher> _publisherMock = new();
+    private readonly Mock<IOutboxIntegrationEventPublisher> _publisherMock = new();
     private readonly IMapper _mapper = new MapperConfiguration(
         cfg => cfg.AddProfile<DomainEventToIntegrationEventProfile>(),
         NullLoggerFactory.Instance).CreateMapper();

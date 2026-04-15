@@ -18,7 +18,7 @@ public sealed class ChangePresenceStatusCommandHandlerTests
     private readonly IFixture _fixture = new Fixture();
     private readonly Mock<IContactObserverProjectionReadRepository> _readRepositoryMock = new();
     private readonly Mock<IPresenceStatusStore> _presenceStatusStoreMock = new();
-    private readonly Mock<IIntegrationEventPublisher> _integrationEventPublisherMock = new();
+    private readonly Mock<IOutboxIntegrationEventPublisher> _integrationEventPublisherMock = new();
     private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
     private readonly Mock<IDomainEventDispatcher> _domainEventDispatcherMock = new();
     private readonly ChangePresenceStatusCommandHandler _handler;

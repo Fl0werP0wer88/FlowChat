@@ -12,7 +12,7 @@ namespace FlowChat.PresenceService.Application.Features.Presence.Commands.Initia
 public sealed class InitializePresenceStatusCommandHandler(
     IContactObserverProjectionReadRepository contactObserverProjectionReadRepository,
     IPresenceStatusStore presenceStatusStore,
-    IIntegrationEventPublisher integrationEventPublisher,
+    IOutboxIntegrationEventPublisher integrationEventPublisher,
     IUnitOfWork unitOfWork,
     IDomainEventDispatcher domainEventDispatcher)
     : CommandHandlerBase<InitializePresenceStatusCommand, Unit>(domainEventDispatcher, unitOfWork)

@@ -6,7 +6,7 @@ using FlowChat.SocialGraphService.Domain.Entities.Contact.Events;
 namespace FlowChat.SocialGraphService.Application.Common.Eventing.Handlers;
 
 public sealed class ContactAddedDomainEventHandler(
-    IIntegrationEventPublisher integrationEventPublisher,
+    IOutboxIntegrationEventPublisher integrationEventPublisher,
     IMapper mapper)
     : MappedDomainEventHandlerBase<ContactAddedDomainEvent, ContactAddedIntegrationEvent>(
         integrationEventPublisher,

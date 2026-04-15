@@ -12,7 +12,7 @@ namespace FlowChat.PresenceService.Application.Features.Presence.Commands.Delete
 public sealed class DeletePresenceStatusCommandHandler(
     IContactObserverProjectionReadRepository contactObserverProjectionReadRepository,
     IPresenceStatusStore presenceStatusStore,
-    IIntegrationEventPublisher integrationEventPublisher,
+    IOutboxIntegrationEventPublisher integrationEventPublisher,
     IUnitOfWork unitOfWork,
     IDomainEventDispatcher domainEventDispatcher)
     : CommandHandlerBase<DeletePresenceStatusCommand, Unit>(domainEventDispatcher, unitOfWork)

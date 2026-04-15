@@ -25,7 +25,7 @@ public static class InfrastructureServiceRegistration
         services.AddScoped<IKafkaProducerOptions<AccountConfirmedIntegrationEvent>>(sp =>
             new KafkaProducerOptionsAdapter<AccountConfirmedIntegrationEvent>(
                 sp.GetRequiredService<IWorkerSettingsManager>().GetAccountRegisteredProducerOptions()));
-        services.AddScoped<IIntegrationEventPublisher, FlowChatSilverbackEventPublisher>();
+        services.AddScoped<IOutboxIntegrationEventPublisher, FlowChatSilverbackEventPublisher>();
 
         return services;
     }

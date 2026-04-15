@@ -184,7 +184,7 @@ internal sealed class CapturingRealtimeConnectionRegistry : IRealtimeConnectionR
     }
 }
 
-internal sealed class RecordingIntegrationEventPublisher : IIntegrationEventPublisher
+internal sealed class RecordingIntegrationEventPublisher : IDirectEventPublisher
 {
     private readonly List<IntegrationEvent> _published = [];
 

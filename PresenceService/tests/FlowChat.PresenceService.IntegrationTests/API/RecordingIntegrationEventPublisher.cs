@@ -3,7 +3,7 @@ using FlowChat.Shared.Application;
 
 namespace FlowChat.PresenceService.IntegrationTests.API;
 
-public sealed class RecordingIntegrationEventPublisher : IIntegrationEventPublisher
+public sealed class RecordingIntegrationEventPublisher : IOutboxIntegrationEventPublisher
 {
     private readonly List<IntegrationEvent> _published = [];
 

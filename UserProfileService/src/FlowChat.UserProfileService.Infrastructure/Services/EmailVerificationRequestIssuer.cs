@@ -13,13 +13,13 @@ public sealed class EmailVerificationRequestIssuer(
     IEmailVerificationRequestWriteRepository emailVerificationRequestWriteRepository,
     IEmailVerificationTokenProtector emailVerificationTokenProtector,
     IEmailVerificationLinkBuilder emailVerificationLinkBuilder,
-    IIntegrationEventPublisher integrationEventPublisher)
+    IOutboxIntegrationEventPublisher integrationEventPublisher)
     : IEmailVerificationRequestIssuer
 {
     private readonly IEmailVerificationRequestWriteRepository _emailVerificationRequestWriteRepository = emailVerificationRequestWriteRepository;
     private readonly IEmailVerificationTokenProtector _emailVerificationTokenProtector = emailVerificationTokenProtector;
     private readonly IEmailVerificationLinkBuilder _emailVerificationLinkBuilder = emailVerificationLinkBuilder;
-    private readonly IIntegrationEventPublisher _integrationEventPublisher = integrationEventPublisher;
+    private readonly IOutboxIntegrationEventPublisher _integrationEventPublisher = integrationEventPublisher;
 
     public async Task<EmailVerificationRequest> IssueAsync(
         Guid userProfileId,

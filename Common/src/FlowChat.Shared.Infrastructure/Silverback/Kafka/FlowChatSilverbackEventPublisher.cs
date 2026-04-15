@@ -7,7 +7,7 @@ using Silverback.Messaging.Publishing;
 
 namespace FlowChat.Shared.Infrastructure.Silverback.Kafka;
 
-public sealed class FlowChatSilverbackEventPublisher : IIntegrationEventPublisher
+public sealed class FlowChatSilverbackEventPublisher : IOutboxIntegrationEventPublisher, IDirectEventPublisher
 {
     private readonly IServiceProvider _serviceProvider;
     private readonly IPublisher _publisher;

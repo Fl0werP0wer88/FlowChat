@@ -84,9 +84,9 @@ public sealed class UserProfileApiFactory : WebApplicationFactory<CreateInitialU
                     .AddInterceptors(sp.GetRequiredService<FlowChat.Shared.Persistance.Auditing.EntityBaseSaveChangesInterceptor>()),
                 ServiceLifetime.Scoped);
 
-            // Replace IIntegrationEventPublisher with recording stub
-            services.RemoveAll<IIntegrationEventPublisher>();
-            services.AddSingleton<IIntegrationEventPublisher>(EventPublisher);
+            // Replace IOutboxIntegrationEventPublisher with recording stub
+            services.RemoveAll<IOutboxIntegrationEventPublisher>();
+            services.AddSingleton<IOutboxIntegrationEventPublisher>(EventPublisher);
 
             // Replace DataProtection with ephemeral provider so we don't need the DB-backed key store.
             // Also remove IXmlRepository so the non-ephemeral KeyRingProvider doesn't still try

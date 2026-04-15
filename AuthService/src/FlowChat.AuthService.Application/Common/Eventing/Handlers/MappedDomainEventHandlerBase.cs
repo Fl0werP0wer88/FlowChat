@@ -13,7 +13,7 @@ public abstract class MappedDomainEventHandlerBase<TDomainEvent, TIntegrationEve
     private readonly IMapper _mapper;
 
     protected MappedDomainEventHandlerBase(
-        IIntegrationEventPublisher integrationEventPublisher,
+        IOutboxIntegrationEventPublisher integrationEventPublisher,
         IMapper mapper)
         : base(integrationEventPublisher)
     {

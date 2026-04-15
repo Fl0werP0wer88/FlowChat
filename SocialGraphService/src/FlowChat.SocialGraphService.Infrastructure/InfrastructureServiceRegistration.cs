@@ -23,7 +23,7 @@ public static class InfrastructureServiceRegistration
             sp.GetRequiredService<IKafkaSettingsManager>().GetContactAddedProducerOptions());
         services.AddScoped<IKafkaProducerOptions<ContactDeletedIntegrationEvent>>(sp =>
             sp.GetRequiredService<IKafkaSettingsManager>().GetContactDeletedProducerOptions());
-        services.AddScoped<IIntegrationEventPublisher, FlowChatSilverbackEventPublisher>();
+        services.AddScoped<IOutboxIntegrationEventPublisher, FlowChatSilverbackEventPublisher>();
         services.AddAutoMapper((Action<AutoMapper.IMapperConfigurationExpression>?)null, infrastructureAssembly);
 
         return services;

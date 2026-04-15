@@ -12,7 +12,7 @@ public sealed class UserProfileStateChangedDomainEventHandler
         UserProfileChangedIntegrationEvent>
 {
     public UserProfileStateChangedDomainEventHandler(
-        IIntegrationEventPublisher integrationEventPublisher,
+        IOutboxIntegrationEventPublisher integrationEventPublisher,
         IMapper mapper)
         : base(integrationEventPublisher, mapper)
     {

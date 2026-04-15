@@ -15,7 +15,7 @@ public sealed class EmailVerificationRequestIssuerTests
     private readonly Mock<IEmailVerificationRequestWriteRepository> _repositoryMock = new();
     private readonly Mock<IEmailVerificationTokenProtector> _tokenProtectorMock = new();
     private readonly Mock<IEmailVerificationLinkBuilder> _linkBuilderMock = new();
-    private readonly Mock<IIntegrationEventPublisher> _publisherMock = new();
+    private readonly Mock<IOutboxIntegrationEventPublisher> _publisherMock = new();
 
     public EmailVerificationRequestIssuerTests()
     {

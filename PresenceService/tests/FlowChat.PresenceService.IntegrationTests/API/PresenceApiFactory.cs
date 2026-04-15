@@ -54,8 +54,8 @@ public sealed class PresenceApiFactory : WebApplicationFactory<ChangePresenceSta
             services.AddDbContext<AppDbContext>(options => options.UseSqlite(_connection));
             services.AddDbContextFactory<AppDbContext>(options => options.UseSqlite(_connection), ServiceLifetime.Scoped);
 
-            services.RemoveAll<IIntegrationEventPublisher>();
-            services.AddSingleton<IIntegrationEventPublisher>(EventPublisher);
+            services.RemoveAll<IOutboxIntegrationEventPublisher>();
+            services.AddSingleton<IOutboxIntegrationEventPublisher>(EventPublisher);
 
             services.RemoveAll<IPresenceStatusStore>();
             services.AddSingleton(PresenceStatusStore);

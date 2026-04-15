@@ -7,7 +7,7 @@ using FlowChat.UserProfileService.Domain.Entities.UserProfile.Events;
 namespace FlowChat.UserProfileService.Application.Common.Eventing.Handlers;
 
 public sealed class UserProfileCreatedDomainEventHandler(
-    IIntegrationEventPublisher integrationEventPublisher,
+    IOutboxIntegrationEventPublisher integrationEventPublisher,
     IMapper mapper,
     IEmailVerificationRequestIssuer emailVerificationRequestIssuer)
     : MappedDomainEventHandlerBase<UserProfileCreatedDomainEvent, UserProfileCreatedIntegrationEvent>(

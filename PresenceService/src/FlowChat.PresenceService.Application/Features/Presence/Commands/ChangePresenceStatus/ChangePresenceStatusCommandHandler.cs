@@ -11,7 +11,7 @@ namespace FlowChat.PresenceService.Application.Features.Presence.Commands.Change
 public sealed class ChangePresenceStatusCommandHandler(
     IContactObserverProjectionReadRepository contactObserverProjectionReadRepository,
     IPresenceStatusStore presenceStatusStore,
-    IIntegrationEventPublisher integrationEventPublisher,
+    IOutboxIntegrationEventPublisher integrationEventPublisher,
     IUnitOfWork unitOfWork,
     IDomainEventDispatcher domainEventDispatcher)
     : CommandHandlerBase<ChangePresenceStatusCommand, Unit>(domainEventDispatcher, unitOfWork)

@@ -2,9 +2,8 @@ using FlowChat.Core.Messaging;
 
 namespace FlowChat.Shared.Application;
 
-public interface IIntegrationEventPublisher
+public interface IDirectEventPublisher
 {
     Task Publish<TEvent>(TEvent message, CancellationToken cancellationToken)
         where TEvent : IntegrationEvent;
 }
-

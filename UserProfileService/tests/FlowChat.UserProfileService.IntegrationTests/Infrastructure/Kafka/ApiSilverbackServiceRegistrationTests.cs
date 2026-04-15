@@ -38,7 +38,7 @@ public sealed class ApiSilverbackServiceRegistrationTests
         using var serviceProvider = services.BuildServiceProvider();
 
         var publisher = serviceProvider.GetRequiredService<IPublisher>();
-        var integrationEventPublisher = serviceProvider.GetRequiredService<IIntegrationEventPublisher>();
+        var integrationEventPublisher = serviceProvider.GetRequiredService<IOutboxIntegrationEventPublisher>();
         var emailVerificationOptions = serviceProvider
             .GetRequiredService<IKafkaProducerOptions<EmailVerificationRequestIntegrationEvent>>();
 

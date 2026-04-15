@@ -31,7 +31,7 @@ public static class InfrastructureServiceRegistration
         services.AddScoped<IEmailVerificationLinkBuilder, EmailVerificationLinkBuilder>();
         services.AddScoped<IEmailVerificationTokenProtector, EmailVerificationTokenProtector>();
         services.AddScoped<IEmailVerificationRequestIssuer, EmailVerificationRequestIssuer>();
-        services.AddScoped<IIntegrationEventPublisher, FlowChatSilverbackEventPublisher>();
+        services.AddScoped<IOutboxIntegrationEventPublisher, FlowChatSilverbackEventPublisher>();
 
         return services;
     }
