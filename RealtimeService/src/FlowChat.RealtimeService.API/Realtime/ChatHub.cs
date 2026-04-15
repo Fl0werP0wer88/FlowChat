@@ -56,25 +56,35 @@ public sealed class ChatHub(
 
             try
             {
-                var statuses = await _presenceInternalApiClient.GetContactPresenceStatusesAsync(
+                // Fetch contact statuses and own preferences in parallel
+                var contactStatusesTask = _presenceInternalApiClient.GetContactPresenceStatusesAsync(
                     userId.Value,
                     Context.ConnectionAborted);
-                if (statuses.Count > 0)
+                var preferencesTask = _presenceInternalApiClient.GetUserPresencePreferencesAsync(
+                    userId.Value,
+                    Context.ConnectionAborted);
+
+                await Task.WhenAll(contactStatusesTask, preferencesTask);
+
+                if (contactStatusesTask.Result.Count > 0)
                 {
                     await Clients.Caller.ReceiveContactPresenceStatuses(
-                        statuses.Select(static s => new PresenceChangedNotificationDto
+                        contactStatusesTask.Result.Select(static s => new PresenceChangedNotificationDto
                         {
                             UserId = s.UserId,
                             Status = s.Status,
                             ChangedAtUtc = s.ChangedAtUtc
                         }).ToArray());
                 }
+
+                await Clients.Caller.ReceivePresencePreferences(
+                    new PresencePreferencesDto { PreferredStatus = preferencesTask.Result });
             }
             catch (Exception exception)
             {
                 // Best-effort: presence push failure must not abort a valid connection
                 _logger.LogWarning(exception,
-                    "Failed to push initial presence statuses for connection {ConnectionId}.", Context.ConnectionId);
+                    "Failed to push initial presence data for connection {ConnectionId}.", Context.ConnectionId);
             }
         }
         catch (OperationCanceledException) when (Context.ConnectionAborted.IsCancellationRequested)

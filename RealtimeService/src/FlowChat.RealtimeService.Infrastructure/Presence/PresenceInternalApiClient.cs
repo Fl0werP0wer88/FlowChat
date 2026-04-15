@@ -9,6 +9,7 @@ internal sealed class PresenceInternalApiClient(IHttpClientFactory httpClientFac
     public const string HttpClientName = nameof(PresenceInternalApiClient);
     private const string RefreshPath = "/internal/presence/status/refresh";
     private const string ContactStatusesPath = "/internal/presence/contacts/{0}/statuses";
+    private const string UserPreferencesPath = "/internal/presence/preferences/{0}";
 
     private readonly IHttpClientFactory _httpClientFactory = httpClientFactory
         ?? throw new ArgumentNullException(nameof(httpClientFactory));
@@ -38,4 +39,20 @@ internal sealed class PresenceInternalApiClient(IHttpClientFactory httpClientFac
         var result = await response.Content.ReadFromJsonAsync<IReadOnlyCollection<ContactPresenceStatusDto>>(cancellationToken);
         return result ?? [];
     }
+
+    public async Task<PresenceStatus?> GetUserPresencePreferencesAsync(
+        Guid userId,
+        CancellationToken cancellationToken)
+    {
+        using var client = _httpClientFactory.CreateClient(HttpClientName);
+        using var response = await client.GetAsync(
+            string.Format(UserPreferencesPath, userId.ToString("D")),
+            cancellationToken);
+        response.EnsureSuccessStatusCode();
+        var result = await response.Content.ReadFromJsonAsync<UserPresencePreferencesResponse>(cancellationToken);
+        return result?.PreferredStatus;
+    }
+
+    // Local record matching PresenceService's UserPresencePreferencesInternalResponse shape
+    private sealed record UserPresencePreferencesResponse(PresenceStatus? PreferredStatus);
 }

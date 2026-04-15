@@ -1,3 +1,5 @@
+using FlowChat.Core.Domain;
+
 namespace FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
 
 public interface IPresenceInternalApiClient
@@ -7,4 +9,6 @@ public interface IPresenceInternalApiClient
     Task<IReadOnlyCollection<ContactPresenceStatusDto>> GetContactPresenceStatusesAsync(
         Guid userId,
         CancellationToken cancellationToken);
+
+    Task<PresenceStatus?> GetUserPresencePreferencesAsync(Guid userId, CancellationToken cancellationToken);
 }

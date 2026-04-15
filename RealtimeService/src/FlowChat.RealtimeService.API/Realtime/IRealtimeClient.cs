@@ -7,4 +7,6 @@ public interface IRealtimeClient
     Task PresenceChanged(PresenceChangedNotificationDto payload);
 
     Task ReceiveContactPresenceStatuses(IReadOnlyCollection<PresenceChangedNotificationDto> statuses);
+
+    Task ReceivePresencePreferences(PresencePreferencesDto preferences);
 }
