@@ -1,6 +1,6 @@
 using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
-using FlowChat.UserProfileService.Domain.Common.Constants;
+using FlowChat.UserProfileService.Domain.Entities.UserProfile.Constants;
 using FlowChat.UserProfileService.Domain.Entities.UserProfile;
 
 namespace FlowChat.UserProfileService.Domain.Entities.UserProfile.Events;

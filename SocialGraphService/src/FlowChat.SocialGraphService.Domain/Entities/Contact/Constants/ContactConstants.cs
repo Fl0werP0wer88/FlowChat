@@ -1,4 +1,4 @@
-namespace FlowChat.SocialGraphService.Domain.Common.Constants;
+namespace FlowChat.SocialGraphService.Domain.Entities.Contact.Constants;
 
 public static class ContactConstants
 {

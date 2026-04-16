@@ -1,6 +1,6 @@
 using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
-using FlowChat.SocialGraphService.Domain.Common.Constants;
+using FlowChat.SocialGraphService.Domain.Entities.Contact.Constants;
 
 namespace FlowChat.SocialGraphService.Domain.Entities.Contact.Events;
 

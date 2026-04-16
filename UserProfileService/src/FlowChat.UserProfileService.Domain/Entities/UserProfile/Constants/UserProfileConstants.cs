@@ -1,4 +1,4 @@
-namespace FlowChat.UserProfileService.Domain.Common.Constants;
+namespace FlowChat.UserProfileService.Domain.Entities.UserProfile.Constants;
 
 public static class UserProfileConstants
 {

@@ -1,4 +1,4 @@
-namespace FlowChat.ChatService.Domain.Common.Constants;
+namespace FlowChat.ChatService.Domain.Entities.ChatMessage.Constants;
 
 public static class ChatMessageConstants
 {
