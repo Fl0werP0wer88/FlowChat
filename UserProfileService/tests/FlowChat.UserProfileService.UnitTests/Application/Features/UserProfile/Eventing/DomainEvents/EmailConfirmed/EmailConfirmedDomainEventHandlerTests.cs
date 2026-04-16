@@ -4,7 +4,6 @@ using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
 using FlowChat.Core.Messaging;
 using FlowChat.Core.Messaging.UserProfileService.Events;
-using FlowChat.UserProfileService.Application.Common.Eventing;
 using FlowChat.UserProfileService.Application.Features.UserProfile.Eventing.DomainEvents.EmailConfirmed;
 using FlowChat.UserProfileService.Domain.Entities.EmailVerificationRequest;
 using FlowChat.UserProfileService.Domain.Entities.UserProfile;
@@ -22,7 +21,7 @@ public sealed class EmailConfirmedDomainEventHandlerTests
     public EmailConfirmedDomainEventHandlerTests()
     {
         _mapper = new MapperConfiguration(
-                configuration => configuration.AddProfile<DomainEventToIntegrationEventProfile>(),
+                configuration => configuration.AddProfile<EmailConfirmedDomainEventToIntegrationEventProfile>(),
                 NullLoggerFactory.Instance)
             .CreateMapper();
 

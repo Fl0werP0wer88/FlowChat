@@ -80,6 +80,17 @@ Domain events are dispatched via `IDomainEventDispatcher` and mapped to integrat
 - A controller's role is limited to HTTP concerns: reading the request, authorization/authentication, invoking the appropriate command/query through MediatR, and mapping HTTP DTOs and responses
 - Request validation belongs in the Application layer via FluentValidation / MediatR pipeline, not in controllers
 
+### Application eventing structure
+- Place  aggregate-specific domain event handlers inside the vertical slice of the aggregate that produces the event
+- In `Application/Features/{Aggregate}/`, event-related files live under `Eventing/`
+- `Eventing/` contains two subfolders: `DomainEvents/` and `ApplicationEvents/`
+- Keep `ApplicationEvents/` present even when it is temporarily empty
+- Under `DomainEvents/`, create one folder per event named after the event/handler stem without the `DomainEventHandler` suffix, for example `UserProfileCreated/` or `UserProfileStateChanged/`
+- Store files that belong only to that event inside its folder, such as the `*DomainEventHandler` and any dedicated AutoMapper `Profile` used to map that event to an integration event
+- Split event-to-integration-event AutoMapper mappings into separate profiles per event instead of using one aggregate-wide profile
+- Keep only truly shared eventing infrastructure in `Common/Eventing`, such as base handler classes or reusable abstractions
+- Keep namespaces aligned with the folder structure after every move
+
 ## Domain-Driven Design
 
 The project uses tactical DDD. All domain logic lives in the `Domain` layer. These rules are non-negotiable:

@@ -4,7 +4,6 @@ using FlowChat.Core.Messaging.UserProfileService.Events;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
-using FlowChat.UserProfileService.Application.Common.Eventing;
 using FlowChat.UserProfileService.Application.Features.UserProfile.Eventing.DomainEvents.AuthEmailChanged;
 using FlowChat.UserProfileService.Domain.Entities.EmailVerificationRequest;
 using FlowChat.UserProfileService.Domain.Entities.UserProfile;
@@ -23,7 +22,7 @@ public sealed class AuthEmailChangedDomainEventHandlerTests
     public AuthEmailChangedDomainEventHandlerTests()
     {
         _mapper = new MapperConfiguration(
-                configuration => configuration.AddProfile<DomainEventToIntegrationEventProfile>(),
+                configuration => configuration.AddProfile<AuthEmailChangedDomainEventToIntegrationEventProfile>(),
                 NullLoggerFactory.Instance)
             .CreateMapper();
 
