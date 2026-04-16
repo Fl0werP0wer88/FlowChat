@@ -1,7 +1,6 @@
 using FlowChat.UserProfileService.Domain.Entities.EmailVerificationRequest;
-using FlowChat.UserProfileService.Domain.Entities.UserProfile;
 
-namespace FlowChat.UserProfileService.Application.Contracts.Infrastructure;
+namespace FlowChat.UserProfileService.Application.Features.UserProfile.EmailVerification.Interfaces;
 
 public interface IEmailVerificationRequestIssuer
 {

@@ -3,6 +3,7 @@ using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain.ValueObjects;
 using FlowChat.UserProfileService.Application.Contracts.Infrastructure;
 using FlowChat.UserProfileService.Application.Contracts.Persistence;
+using FlowChat.UserProfileService.Application.Features.UserProfile.EmailVerification.Interfaces;
 using FlowChat.UserProfileService.Domain.Entities.EmailVerificationRequest;
 
 namespace FlowChat.UserProfileService.Application.Features.UserProfile.EmailVerification;

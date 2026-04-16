@@ -1,8 +1,8 @@
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Application.Common.Eventing;
-using FlowChat.UserProfileService.Application.Contracts.Infrastructure;
 using FlowChat.UserProfileService.Application.Features.UserProfile.Commands.CreateInitialUserProfile;
 using FlowChat.UserProfileService.Application.Features.UserProfile.EmailVerification;
+using FlowChat.UserProfileService.Application.Features.UserProfile.EmailVerification.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace FlowChat.UserProfileService.Application;

@@ -1,7 +1,7 @@
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
-using FlowChat.UserProfileService.Application.Contracts.Infrastructure;
 using FlowChat.UserProfileService.Application.Contracts.Persistence;
+using FlowChat.UserProfileService.Application.Features.UserProfile.EmailVerification.Interfaces;
 
 namespace FlowChat.UserProfileService.Application.Features.UserProfile.Commands.SendEmailVerification;
 

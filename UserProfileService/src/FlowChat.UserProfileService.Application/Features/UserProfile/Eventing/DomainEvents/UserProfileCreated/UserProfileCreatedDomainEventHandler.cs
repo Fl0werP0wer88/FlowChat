@@ -1,7 +1,7 @@
 using AutoMapper;
 using FlowChat.Core.Messaging.UserProfileService.Events;
 using FlowChat.Shared.Application;
-using FlowChat.UserProfileService.Application.Contracts.Infrastructure;
+using FlowChat.UserProfileService.Application.Features.UserProfile.EmailVerification.Interfaces;
 using FlowChat.UserProfileService.Domain.Entities.UserProfile.Events;
 
 namespace FlowChat.UserProfileService.Application.Features.UserProfile.Eventing.DomainEvents.UserProfileCreated;
