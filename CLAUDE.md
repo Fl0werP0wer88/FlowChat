@@ -1,4 +1,4 @@
-# FlowChat — Claude Code Instructions
+# FlowChat — Claude & Codex Instructions
 
 ## Solution Files
 
@@ -31,22 +31,28 @@ When asked to add a new service or any other bootable project/solution to the wo
   - If the new service has `Persistence` plus a startup project, add it to `$services` so the bulk migration script includes it
 - `Scripts/*`
   - Review infrastructure scripts only when the new service introduces new shared resources such as database migrations, Kafka topics, Redis usage, or other dev-stack dependencies; today the only script with an explicit service inventory is `Scripts/PostgreSQL/migrate-all.ps1`
-- `CLAUDE.md`
-  - Add the new service under `### Services` with its repo location (for example `{Service}/`) and a short responsibility/description
-  - Update any explicit service-specific examples or command lists in this file when the new service should be part of them
+- `Scripts/PostgreSQL/*`
+  - If the new service needs its own database, update the PostgreSQL scripts immediately so the database is created and maintained according to the existing rules, privileges, and naming conventions
+  - Keep database naming aligned with the current pattern used by `bootstrap-postgres.ps1`, for example `flowchat_<service>_db`
+  - At minimum review `bootstrap-postgres.ps1`, `migrate-all.ps1`, and `reset-db.ps1` so bootstrap, bulk migration, and reset flows all include the new database consistently
+- `AGENTS.md` and `CLAUDE.md`
+  - Add the new service under `### Services` with its repo location (for example `{Service}/`) and a short responsibility/description in both files
+  - Update any explicit service-specific examples or command lists in both files when the new service should be part of them
 
 After creating a new service folder, treat files like `AuthService/.vscode/*` and `AuthService/FlowChat.AuthService.slnx` as the template for the new service's local workspace setup.
 
 ## Collaboration Rules
 
 - If the user's message ends with `?`, treat it as a question — answer it, do not make any code changes unless explicitly asked afterwards.
-- If the model needs to create any temporary working files (for example decompiled library output, scratch files, generated investigation artifacts, or similar), create them under `.claude/temp` in the repository root.
+- If you edit `AGENTS.md` or `CLAUDE.md`, apply the same changes to the other file so both instruction files stay synchronized.
+- If the model needs to create any temporary working files (for example decompiled library output, scratch files, generated investigation artifacts, or similar), create them under the tool-specific temp folder in the repository root: `.codex/temp` for Codex and `.claude/temp` for Claude.
 
 ## Project Overview
 
 FlowChat is a microservices-based chat application built with .NET 10. Services communicate via Kafka (integration events) and expose REST APIs through a gateway.
 
 ### Services
+- **PresenceService** — user presence statuses and contact-based fan-out projection
 - **AuthService** — registration, login, email/phone confirmation, JWT tokens
 - **ChatService** — chat rooms and messages
 - **NotificationService** — email/SMS notifications
@@ -74,6 +80,17 @@ Domain events are dispatched via `IDomainEventDispatcher` and mapped to integrat
 - Controllers do not call repositories or persistence services directly
 - A controller's role is limited to HTTP concerns: reading the request, authorization/authentication, invoking the appropriate command/query through MediatR, and mapping HTTP DTOs and responses
 - Request validation belongs in the Application layer via FluentValidation / MediatR pipeline, not in controllers
+
+### Application eventing structure
+- Place  aggregate-specific domain event handlers inside the vertical slice of the aggregate that produces the event
+- In `Application/Features/{Aggregate}/`, event-related files live under `Eventing/`
+- `Eventing/` contains two subfolders: `DomainEvents/` and `ApplicationEvents/`
+- Keep `ApplicationEvents/` present even when it is temporarily empty
+- Under `DomainEvents/`, create one folder per event named after the event/handler stem without the `DomainEventHandler` suffix, for example `UserProfileCreated/` or `UserProfileStateChanged/`
+- Store files that belong only to that event inside its folder, such as the `*DomainEventHandler` and any dedicated AutoMapper `Profile` used to map that event to an integration event
+- Split event-to-integration-event AutoMapper mappings into separate profiles per event instead of using one aggregate-wide profile
+- Keep only truly shared eventing infrastructure in `Common/Eventing`, such as base handler classes or reusable abstractions
+- Keep namespaces aligned with the folder structure after every move
 
 ## Domain-Driven Design
 
@@ -117,6 +134,7 @@ The project uses tactical DDD. All domain logic lives in the `Domain` layer. The
 - **Entities**: use `static Create(...)` factory methods, never public constructors
 - **Domain events**: raise via `AddDomainEvent(...)` inside the entity
 - **Restore from DB**: use `static Restore(...)` — does NOT raise domain events
+- Do mappings via dedicated profile classes for AutoMapper on Application, Infrastructure & Api layers. On Domain layer all mapping must be done manually in dedicated method.
 
 ### Marker interfaces
 - Marker interfaces from `Common/src/FlowChat.Core/Contracts` and `Common/src/FlowChat.Core/Messaging` classify transport and projection models by role; add them whenever creating a new contract of the matching kind
@@ -176,7 +194,7 @@ The project uses tactical DDD. All domain logic lives in the `Domain` layer. The
 - **Canonical test patterns**:
   - The canonical source for test style and example code is `.claude/skills/generate-tests/patterns.md`
   - When generating tests, follow the patterns from that file for structure, mocking boundaries, result assertions, domain event assertions, `WebApplicationFactory`, `Testcontainers`, and `WireMock.Net`
-  - If a rule here and an example in `patterns.md` seem to diverge, keep the architectural rule from `CLAUDE.md` and adapt the example to the current codebase rather than copying it blindly
+  - If a rule here and an example in `patterns.md` seem to diverge, keep the architectural rule from these instructions and adapt the example to the current codebase rather than copying it blindly
   - Prefer matching an existing project pattern over inventing a new test style
 
 ```csharp
@@ -245,6 +263,7 @@ dotnet test FlowChat.slnx
 dotnet test AuthService/FlowChat.AuthService.slnx
 dotnet test ChatService/FlowChat.ChatService.slnx
 dotnet test NotificationService/FlowChat.NotificationService.slnx
+dotnet test PresenceService/FlowChat.PresenceService.slnx
 dotnet test SocialGraphService/FlowChat.SocialGraphService.slnx
 dotnet test UserProfileService/FlowChat.UserProfileService.slnx
 
@@ -285,8 +304,10 @@ Add comments only where they provide information that cannot be derived by readi
 
 ## What to Avoid
 
-- Do mappings via dedicated profile classes for AutoMapper
+
 - Do not add `try/catch` inside command handlers — use `FlowChatResult` instead
 - Do not put business logic in controllers or infrastructure layer
 - Do not raise domain events in `Restore(...)` factory methods
 - Do not introduce `DateTime` for timestamps or UTC values — use `DateTimeOffset` in UTC instead
+
+
