@@ -1,5 +1,5 @@
 using AutoMapper;
-using FlowChat.AuthService.Application.Common.Eventing;
+using FlowChat.AuthService.Application.Features.Account.Eventing.DomainEvents.AccountRegistered;
 using FlowChat.AuthService.Domain.Entities.Account;
 using FlowChat.AuthService.Domain.Entities.Account.Events;
 using FlowChat.Core.Messaging.AuthService.Events;
@@ -10,14 +10,14 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 namespace FlowChat.AuthService.UnitTests;
 
-public sealed class DomainEventToIntegrationEventProfileTests
+public sealed class AccountRegisteredDomainEventToIntegrationEventProfileTests
 {
     private readonly IMapper _mapper;
 
-    public DomainEventToIntegrationEventProfileTests()
+    public AccountRegisteredDomainEventToIntegrationEventProfileTests()
     {
         _mapper = new MapperConfiguration(
-            cfg => cfg.AddProfile<DomainEventToIntegrationEventProfile>(),
+            cfg => cfg.AddProfile<AccountRegisteredDomainEventToIntegrationEventProfile>(),
             NullLoggerFactory.Instance).CreateMapper();
     }
 
@@ -41,16 +41,5 @@ public sealed class DomainEventToIntegrationEventProfileTests
         integrationEvent.FirstName.Should().Be("Flower");
         integrationEvent.LastName.Should().Be("Power");
         integrationEvent.Organization.Should().Be("FlowChat");
-    }
-
-    [Fact]
-    public void AccountConfirmedDomainEvent_IsMappedToIntegrationEvent()
-    {
-        var accountId = Id<Account>.New();
-        var domainEvent = new AccountConfirmedDomainEvent(accountId);
-
-        var integrationEvent = _mapper.Map<AccountConfirmedIntegrationEvent>(domainEvent);
-
-        integrationEvent.UserId.Should().Be(accountId.Value);
     }
 }

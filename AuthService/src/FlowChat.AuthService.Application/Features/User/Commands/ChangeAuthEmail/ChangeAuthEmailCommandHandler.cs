@@ -5,6 +5,7 @@ using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
 using MediatR;
+using DomainAccount = FlowChat.AuthService.Domain.Entities.Account.Account;
 
 namespace FlowChat.AuthService.Application.Features.User.Commands.ChangeAuthEmail;
 
@@ -12,7 +13,7 @@ public sealed class ChangeAuthEmailCommandHandler : CommandHandlerBase<ChangeAut
 {
     private readonly IAccountRepository _accountRepository;
     private readonly IPasswordHashingService _passwordHashingService;
-    private Account? _account;
+    private DomainAccount? _account;
 
     public ChangeAuthEmailCommandHandler(
         IAccountRepository accountRepository,

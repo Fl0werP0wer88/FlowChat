@@ -2,11 +2,11 @@ using AutoMapper;
 using FlowChat.AuthService.Domain.Entities.Account.Events;
 using FlowChat.Core.Messaging.AuthService.Events;
 
-namespace FlowChat.AuthService.Application.Common.Eventing;
+namespace FlowChat.AuthService.Application.Features.Account.Eventing.DomainEvents.AccountRegistered;
 
-public sealed class DomainEventToIntegrationEventProfile : Profile
+public sealed class AccountRegisteredDomainEventToIntegrationEventProfile : Profile
 {
-    public DomainEventToIntegrationEventProfile()
+    public AccountRegisteredDomainEventToIntegrationEventProfile()
     {
         CreateMap<AccountRegisteredDomainEvent, AccountRegisteredIntegrationEvent>()
             .ForMember(destination => destination.Key, options => options.MapFrom(source => source.AccountId.Value.ToString()))
@@ -16,9 +16,5 @@ public sealed class DomainEventToIntegrationEventProfile : Profile
             .ForMember(destination => destination.FirstName, options => options.MapFrom(source => source.FirstName))
             .ForMember(destination => destination.LastName, options => options.MapFrom(source => source.LastName))
             .ForMember(destination => destination.Organization, options => options.MapFrom(source => source.Organization));
-
-        CreateMap<AccountConfirmedDomainEvent, AccountConfirmedIntegrationEvent>()
-            .ForMember(destination => destination.Key, options => options.MapFrom(source => source.AccountId.Value.ToString()))
-            .ForMember(destination => destination.UserId, options => options.MapFrom(source => source.AccountId.Value));
     }
 }

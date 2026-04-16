@@ -4,6 +4,7 @@ using FlowChat.AuthService.Application.Contracts.Persistence;
 using FlowChat.AuthService.Domain.Entities.Account;
 using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
+using DomainAccount = FlowChat.AuthService.Domain.Entities.Account.Account;
 
 namespace FlowChat.AuthService.Application.Features.User.Commands.RegisterUser;
 
@@ -11,7 +12,7 @@ public class RegisterUserCommandHandler : CommandHandlerBase<RegisterUserCommand
 {
     private readonly IAccountRepository _accountRepository;
     private readonly IPasswordHashingService _passwordHashingService;
-    private Account? _account;
+    private DomainAccount? _account;
 
     public RegisterUserCommandHandler(
         IAccountRepository accountRepository,
@@ -38,7 +39,7 @@ public class RegisterUserCommandHandler : CommandHandlerBase<RegisterUserCommand
                 DomainError.Conflict("Account with the provided friendly user id already exists."));
         }
 
-        _account = Account.Create(
+        _account = DomainAccount.Create(
             request.FriendlyUserId,
             emailAddress,
             _passwordHashingService.HashPassword(request.Password),

@@ -2,11 +2,11 @@ using AutoMapper;
 using FlowChat.ChatService.Domain.Entities.ChatMessage.Events;
 using FlowChat.Core.Messaging.ChatService.Events;
 
-namespace FlowChat.ChatService.Application.Common.Eventing;
+namespace FlowChat.ChatService.Application.Features.ChatMessage.Eventing.DomainEvents.ChatMessageSent;
 
-public sealed class DomainEventToIntegrationEventProfile : Profile
+public sealed class ChatMessageSentDomainEventToIntegrationEventProfile : Profile
 {
-    public DomainEventToIntegrationEventProfile()
+    public ChatMessageSentDomainEventToIntegrationEventProfile()
     {
         CreateMap<ChatMessageSentDomainEvent, ChatMessageSentIntegrationEvent>()
             .ForMember(destination => destination.Key, options => options.MapFrom(source => source.ConversationId.ToString()))

@@ -1,9 +1,10 @@
 using AutoMapper;
 using FlowChat.Shared.Application;
+using FlowChat.AuthService.Application.Common.Eventing.Handlers;
 using FlowChat.AuthService.Domain.Entities.Account.Events;
 using FlowChat.Core.Messaging.AuthService.Events;
 
-namespace FlowChat.AuthService.Application.Common.Eventing.Handlers;
+namespace FlowChat.AuthService.Application.Features.Account.Eventing.DomainEvents.AccountConfirmed;
 
 public sealed class AccountConfirmedDomainEventHandler
     : MappedDomainEventHandlerBase<AccountConfirmedDomainEvent, AccountConfirmedIntegrationEvent>

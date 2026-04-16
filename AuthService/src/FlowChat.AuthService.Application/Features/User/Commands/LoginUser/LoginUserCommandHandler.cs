@@ -6,6 +6,7 @@ using FlowChat.AuthService.Application.Features.User.Models;
 using FlowChat.AuthService.Domain.Entities.Account;
 using FlowChat.Shared.Domain;
 using MediatR;
+using DomainAccount = FlowChat.AuthService.Domain.Entities.Account.Account;
 
 namespace FlowChat.AuthService.Application.Features.User.Commands.LoginUser;
 
@@ -78,7 +79,7 @@ public sealed class LoginUserCommandHandler : ICommandHandler<LoginUserCommand, 
         }, cancellationToken);
     }
 
-    private Task DispatchDomainEventsAsync(Account account, CancellationToken cancellationToken)
+    private Task DispatchDomainEventsAsync(DomainAccount account, CancellationToken cancellationToken)
     {
         var domainEvents = account.PopDomainEvents();
         return _domainEventDispatcher.DispatchAsync(domainEvents, cancellationToken);

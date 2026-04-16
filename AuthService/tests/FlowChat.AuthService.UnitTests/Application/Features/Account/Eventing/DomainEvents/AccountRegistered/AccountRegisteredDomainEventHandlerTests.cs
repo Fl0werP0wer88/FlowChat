@@ -1,6 +1,5 @@
 using AutoMapper;
-using FlowChat.AuthService.Application.Common.Eventing;
-using FlowChat.AuthService.Application.Common.Eventing.Handlers;
+using FlowChat.AuthService.Application.Features.Account.Eventing.DomainEvents.AccountRegistered;
 using FlowChat.AuthService.Domain.Entities.Account;
 using FlowChat.AuthService.Domain.Entities.Account.Events;
 using FlowChat.Core.Messaging.AuthService.Events;
@@ -17,7 +16,7 @@ public sealed class AccountRegisteredDomainEventHandlerTests
 {
     private readonly Mock<IOutboxIntegrationEventPublisher> _publisherMock = new();
     private readonly IMapper _mapper = new MapperConfiguration(
-        cfg => cfg.AddProfile<DomainEventToIntegrationEventProfile>(),
+        cfg => cfg.AddProfile<AccountRegisteredDomainEventToIntegrationEventProfile>(),
         NullLoggerFactory.Instance).CreateMapper();
 
     [Fact]

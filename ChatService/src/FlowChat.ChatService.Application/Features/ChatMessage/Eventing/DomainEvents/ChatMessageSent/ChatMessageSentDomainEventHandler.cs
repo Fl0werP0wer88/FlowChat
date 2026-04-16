@@ -1,9 +1,10 @@
 using AutoMapper;
 using FlowChat.Shared.Application;
+using FlowChat.ChatService.Application.Common.Eventing.Handlers;
 using FlowChat.ChatService.Domain.Entities.ChatMessage.Events;
 using FlowChat.Core.Messaging.ChatService.Events;
 
-namespace FlowChat.ChatService.Application.Common.Eventing.Handlers;
+namespace FlowChat.ChatService.Application.Features.ChatMessage.Eventing.DomainEvents.ChatMessageSent;
 
 public sealed class ChatMessageSentDomainEventHandler
     : MappedDomainEventHandlerBase<ChatMessageSentDomainEvent, ChatMessageSentIntegrationEvent>

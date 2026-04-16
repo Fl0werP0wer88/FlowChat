@@ -4,13 +4,14 @@ using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
 using FlowChat.AuthService.Domain.Entities.Account;
 using MediatR;
+using DomainAccount = FlowChat.AuthService.Domain.Entities.Account.Account;
 
 namespace FlowChat.AuthService.Application.Features.User.Commands.ConfirmAuthEmail;
 
 public sealed class ConfirmAuthEmailCommandHandler : CommandHandlerBase<ConfirmAuthEmailCommand, Unit>
 {
     private readonly IAccountRepository _accountRepository;
-    private Account? _account;
+    private DomainAccount? _account;
 
     public ConfirmAuthEmailCommandHandler(
         IAccountRepository accountRepository,
