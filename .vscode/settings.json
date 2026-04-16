@@ -65,6 +65,22 @@
         "FlowChat.SocialGraphService.Persistence",
         "FlowChat.UserProfileService.Persistence"
       ]
+    },
+    {
+      "name": "domain",
+      "base": "core",
+      "color": "#7c6bcf",
+      "lightColor": "#7c6bcf",
+      "folderNames": [
+        "FlowChat.AuthService.Domain",
+        "FlowChat.ChatService.Domain",
+        "FlowChat.NotificationService.Domain",
+        "FlowChat.PresenceService.Domain",
+        "FlowChat.RealtimeService.Domain",
+        "FlowChat.Shared.Domain",
+        "FlowChat.SocialGraphService.Domain",
+        "FlowChat.UserProfileService.Domain"
+      ]
     }
   ],
   "explorer.autoReveal": true,
