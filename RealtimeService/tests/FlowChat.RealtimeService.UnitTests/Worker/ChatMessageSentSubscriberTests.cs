@@ -13,23 +13,23 @@ namespace FlowChat.RealtimeService.UnitTests;
 public sealed class ChatMessageSentSubscriberTests
 {
     private readonly IFixture _fixture = new Fixture();
-    private readonly Mock<IRealtimeInternalApiClient> _internalApiClientMock = new();
+    private readonly Mock<IRealtimeEventRouter> _eventRouterMock = new();
     private readonly ChatMessageSentSubscriber _subscriber;
 
     public ChatMessageSentSubscriberTests()
     {
         _subscriber = new ChatMessageSentSubscriber(
-            _internalApiClientMock.Object,
+            _eventRouterMock.Object,
             NullLogger<ChatMessageSentSubscriber>.Instance);
     }
 
     [Fact]
-    public async Task HandleAsync_ForwardsMappedRequestToInternalApi()
+    public async Task HandleAsync_ForwardsMappedRequestToRouter()
     {
         PublishMessageRequest? capturedRequest = null;
         var recipientUserId = _fixture.Create<Guid>();
 
-        _internalApiClientMock
+        _eventRouterMock
             .Setup(x => x.PublishMessageAsync(It.IsAny<PublishMessageRequest>(), It.IsAny<CancellationToken>()))
             .Callback<PublishMessageRequest, CancellationToken>((request, _) => capturedRequest = request)
             .Returns(Task.CompletedTask);
@@ -69,7 +69,7 @@ public sealed class ChatMessageSentSubscriberTests
             CancellationToken.None);
 
         await act.Should().ThrowAsync<NonTransientException>();
-        _internalApiClientMock.Verify(
+        _eventRouterMock.Verify(
             x => x.PublishMessageAsync(It.IsAny<PublishMessageRequest>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }

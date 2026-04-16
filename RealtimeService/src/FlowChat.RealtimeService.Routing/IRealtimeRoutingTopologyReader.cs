@@ -1,4 +1,4 @@
-namespace FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
+namespace FlowChat.RealtimeService.Routing;
 
 public interface IRealtimeRoutingTopologyReader
 {

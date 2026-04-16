@@ -14,22 +14,22 @@ namespace FlowChat.RealtimeService.UnitTests;
 public sealed class UserPresenceChangedSubscriberTests
 {
     private readonly IFixture _fixture = new Fixture();
-    private readonly Mock<IRealtimeInternalApiClient> _internalApiClientMock = new();
+    private readonly Mock<IRealtimeEventRouter> _eventRouterMock = new();
     private readonly UserPresenceChangedSubscriber _subscriber;
 
     public UserPresenceChangedSubscriberTests()
     {
         _subscriber = new UserPresenceChangedSubscriber(
-            _internalApiClientMock.Object,
+            _eventRouterMock.Object,
             NullLogger<UserPresenceChangedSubscriber>.Instance);
     }
 
     [Fact]
-    public async Task HandleAsync_ForwardsNormalizedPresenceRequestToInternalApi()
+    public async Task HandleAsync_ForwardsNormalizedPresenceRequestToRouter()
     {
         PublishPresenceChangeRequest? capturedRequest = null;
 
-        _internalApiClientMock
+        _eventRouterMock
             .Setup(x => x.PublishPresenceChangeAsync(It.IsAny<PublishPresenceChangeRequest>(), It.IsAny<CancellationToken>()))
             .Callback<PublishPresenceChangeRequest, CancellationToken>((request, _) => capturedRequest = request)
             .Returns(Task.CompletedTask);
@@ -61,7 +61,7 @@ public sealed class UserPresenceChangedSubscriberTests
             CancellationToken.None);
 
         await act.Should().ThrowAsync<NonTransientException>();
-        _internalApiClientMock.Verify(
+        _eventRouterMock.Verify(
             x => x.PublishPresenceChangeAsync(It.IsAny<PublishPresenceChangeRequest>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }

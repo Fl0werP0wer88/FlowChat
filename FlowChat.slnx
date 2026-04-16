@@ -120,6 +120,7 @@
     <Project Path="RealtimeService/src/FlowChat.RealtimeService.Application/FlowChat.RealtimeService.Application.csproj" />
     <Project Path="RealtimeService/src/FlowChat.RealtimeService.Domain/FlowChat.RealtimeService.Domain.csproj" />
     <Project Path="RealtimeService/src/FlowChat.RealtimeService.Infrastructure/FlowChat.RealtimeService.Infrastructure.csproj" />
+    <Project Path="RealtimeService/src/FlowChat.RealtimeService.Routing/FlowChat.RealtimeService.Routing.csproj" />
   </Folder>
   <Folder Name="/RealtimeService/src/Workers/">
     <Project Path="RealtimeService/src/Workers/FlowChat.RealtimeService.Consumers/FlowChat.RealtimeService.Consumers.csproj" />

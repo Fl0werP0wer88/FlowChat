@@ -15,15 +15,20 @@ public sealed class RealtimeInternalApiClient(HttpClient httpClient)
 
     protected override string ClientDisplayName => "Realtime API";
 
-    public Task PublishMessageAsync(PublishMessageRequest request, CancellationToken cancellationToken) =>
-        PostAsync(ReceiveMessagePath, request, cancellationToken);
+    public Task PublishMessageAsync(Uri baseAddress, PublishMessageRequest request, CancellationToken cancellationToken) =>
+        PostAsync(baseAddress, ReceiveMessagePath, request, cancellationToken);
 
-    public Task PublishPresenceChangeAsync(PublishPresenceChangeRequest request, CancellationToken cancellationToken) =>
-        PostAsync(PresenceChangedPath, request, cancellationToken);
+    public Task PublishPresenceChangeAsync(
+        Uri baseAddress,
+        PublishPresenceChangeRequest request,
+        CancellationToken cancellationToken) =>
+        PostAsync(baseAddress, PresenceChangedPath, request, cancellationToken);
 
-    private async Task PostAsync<TRequest>(string path, TRequest request, CancellationToken cancellationToken)
+    private async Task PostAsync<TRequest>(Uri baseAddress, string path, TRequest request, CancellationToken cancellationToken)
     {
-        using var message = new HttpRequestMessage(HttpMethod.Post, path)
+        ArgumentNullException.ThrowIfNull(baseAddress);
+
+        using var message = new HttpRequestMessage(HttpMethod.Post, new Uri(baseAddress, path))
         {
             Content = JsonContent.Create(request)
         };

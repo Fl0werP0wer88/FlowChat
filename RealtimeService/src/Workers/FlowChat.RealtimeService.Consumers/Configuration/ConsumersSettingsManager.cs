@@ -1,4 +1,5 @@
 using FlowChat.RealtimeService.Consumers.Kafka;
+using FlowChat.RealtimeService.Routing.Configuration;
 using Microsoft.Extensions.Configuration;
 
 namespace FlowChat.RealtimeService.Consumers.Configuration;
@@ -18,4 +19,8 @@ public sealed class ConsumersSettingsManager(IConfiguration configuration) : ICo
     public RealtimeApiSettings GetRealtimeApiSettings() =>
         _configuration.GetSection(RealtimeApiSettings.SectionName).Get<RealtimeApiSettings>()
         ?? new RealtimeApiSettings();
+
+    public RealtimeRoutingSettings GetRealtimeRoutingSettings() =>
+        _configuration.GetSection(RealtimeRoutingSettings.SectionName).Get<RealtimeRoutingSettings>()
+        ?? new RealtimeRoutingSettings();
 }

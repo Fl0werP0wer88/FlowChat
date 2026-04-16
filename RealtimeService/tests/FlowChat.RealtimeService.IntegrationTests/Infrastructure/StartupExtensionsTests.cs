@@ -4,7 +4,7 @@ using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
 using FlowChat.RealtimeService.Infrastructure.RealtimeConnections;
 using FlowChat.RealtimeService.Infrastructure.RealtimeConnections.Stores.ConnectionStore;
 using FlowChat.RealtimeService.Infrastructure.RealtimeConnections.Stores.UserConnectionStore;
-using FlowChat.RealtimeService.Infrastructure.RealtimeConnections.Stores.UserInstanceRoutingStore;
+using FlowChat.RealtimeService.Routing;
 using FluentAssertions;
 using MediatR;
 using Microsoft.AspNetCore.Authentication;
@@ -31,7 +31,6 @@ public sealed class StartupExtensionsTests
             ["JwtSettings:Issuer"] = "https://localhost:7236/",
             ["JwtSettings:Audience"] = "FlowChat.Client",
             ["FlowChat:InternalApi:ApiKey"] = "internal-key",
-            ["RealtimeApi:BaseUrl"] = "http://localhost:5215",
             ["RealtimeApi:ApiKey"] = "worker-key",
             ["ConnectionStrings:Redis"] = "localhost:6379,password=secret",
             ["RealtimeConnections:InstanceId"] = "realtime-instance",
@@ -45,7 +44,7 @@ public sealed class StartupExtensionsTests
         var connectionRegistry = app.Services.GetRequiredService<IRealtimeConnectionRegistry>();
         var connectionStore = app.Services.GetRequiredService<IConnectionStore>();
         var userConnectionsStore = app.Services.GetRequiredService<IUserConnectionsStore>();
-        var userInstanceRoutingStore = app.Services.GetRequiredService<IUserInstanceRoutingStore>();
+        var routingTopologyStore = app.Services.GetRequiredService<IRealtimeRoutingTopologyStore>();
         var routingTopologyReader = app.Services.GetRequiredService<IRealtimeRoutingTopologyReader>();
         var hostedServices = app.Services.GetServices<IHostedService>().ToList();
         var optionsMonitor = app.Services.GetRequiredService<IOptionsMonitor<JwtBearerOptions>>();
@@ -66,7 +65,7 @@ public sealed class StartupExtensionsTests
         connectionRegistry.Should().NotBeNull();
         connectionStore.Should().NotBeNull();
         userConnectionsStore.Should().NotBeNull();
-        userInstanceRoutingStore.Should().NotBeNull();
+        routingTopologyStore.Should().NotBeNull();
         routingTopologyReader.Should().NotBeNull();
         hostedServices.Should().Contain(service => service.GetType().Name == "RealtimeConnectionRefreshBackgroundService");
         messageContext.Token.Should().Be("test-token");

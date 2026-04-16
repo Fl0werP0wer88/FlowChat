@@ -4,7 +4,7 @@ public sealed class RealtimeApiSettings
 {
     public const string SectionName = "RealtimeApi";
 
-    public string BaseUrl { get; set; } = "http://localhost:5215";
-
     public string ApiKey { get; set; } = string.Empty;
+
+    public Dictionary<string, string> Instances { get; set; } = new(StringComparer.Ordinal);
 }

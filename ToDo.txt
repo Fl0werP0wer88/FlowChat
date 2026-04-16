@@ -14,3 +14,5 @@
       "Silverback": "Warning"
     }
   }
+
+  9. Pamiętać że RealTimeService robi routing dzieki wpisom adresów instancji w settings . Docolowo raczej tak nie bedzie . Przy depoyowaniu na ks trzeba bedzie to przerobić.

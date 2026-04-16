@@ -1,14 +1,13 @@
-using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
-using FlowChat.RealtimeService.Infrastructure.Configuration;
+using FlowChat.RealtimeService.Routing.Configuration;
 using FlowChat.Shared.Infrastructure.Redis;
 using StackExchange.Redis;
 
-namespace FlowChat.RealtimeService.Infrastructure.RealtimeConnections.Stores.UserInstanceRoutingStore;
+namespace FlowChat.RealtimeService.Routing;
 
-internal sealed class RedisUserInstanceRoutingStore(
+public sealed class RedisRealtimeRoutingTopologyStore(
     IRedisTransactionContext redisTransactionContext,
-    RealtimeConnectionsSettings settings)
-    : IUserInstanceRoutingStore, IRealtimeRoutingTopologyReader
+    RealtimeRoutingSettings settings)
+    : IRealtimeRoutingTopologyStore, IRealtimeRoutingTopologyReader
 {
     // The routing read-model is split across a SET and HASH so reads stay cheap while unregister can still distinguish
     // "last connection on this instance" from "one of many connections on this instance"
@@ -32,7 +31,7 @@ internal sealed class RedisUserInstanceRoutingStore(
 
     private readonly IRedisTransactionContext _redisTransactionContext = redisTransactionContext
         ?? throw new ArgumentNullException(nameof(redisTransactionContext));
-    private readonly RealtimeConnectionsSettings _settings = settings ?? throw new ArgumentNullException(nameof(settings));
+    private readonly RealtimeRoutingSettings _settings = settings ?? throw new ArgumentNullException(nameof(settings));
 
     public Task AddConnectionAsync(Guid userId, string instanceId)
     {
@@ -40,8 +39,8 @@ internal sealed class RedisUserInstanceRoutingStore(
         ArgumentException.ThrowIfNullOrWhiteSpace(instanceId);
 
         var database = _redisTransactionContext.GetActiveDatabase();
-        var userInstancesKey = GetUserInstancesKey(userId);
-        var userInstanceCountsKey = GetUserInstanceCountsKey(userId);
+        var userInstancesKey = RealtimeRoutingKeys.GetUserInstancesKey(_settings.KeyPrefix, userId);
+        var userInstanceCountsKey = RealtimeRoutingKeys.GetUserInstanceCountsKey(_settings.KeyPrefix, userId);
         var incrementTask = database.HashIncrementAsync(userInstanceCountsKey, instanceId, 1);
         var addTask = database.SetAddAsync(userInstancesKey, instanceId);
         var userInstancesExpireTask = database.KeyExpireAsync(userInstancesKey, _settings.ConnectionTtl);
@@ -59,8 +58,8 @@ internal sealed class RedisUserInstanceRoutingStore(
         await _redisTransactionContext.GetActiveDatabase().ScriptEvaluateAsync(
             RemoveConnectionScript,
             [
-                GetUserInstancesKey(userId),
-                GetUserInstanceCountsKey(userId)
+                RealtimeRoutingKeys.GetUserInstancesKey(_settings.KeyPrefix, userId),
+                RealtimeRoutingKeys.GetUserInstanceCountsKey(_settings.KeyPrefix, userId)
             ],
             [instanceId]);
     }
@@ -84,7 +83,7 @@ internal sealed class RedisUserInstanceRoutingStore(
         var database = _redisTransactionContext.GetActiveDatabase();
         var instanceTasks = filteredUserIds.ToDictionary(
             userId => userId,
-            userId => database.SetMembersAsync(GetUserInstancesKey(userId)));
+            userId => database.SetMembersAsync(RealtimeRoutingKeys.GetUserInstancesKey(_settings.KeyPrefix, userId)));
 
         await Task.WhenAll(instanceTasks.Values.Cast<Task>());
 
@@ -115,16 +114,15 @@ internal sealed class RedisUserInstanceRoutingStore(
         ArgumentOutOfRangeException.ThrowIfEqual(userId, Guid.Empty);
 
         var database = _redisTransactionContext.GetActiveDatabase();
-        var userInstancesExpireTask = database.KeyExpireAsync(GetUserInstancesKey(userId), _settings.ConnectionTtl);
-        var userInstanceCountsExpireTask = database.KeyExpireAsync(GetUserInstanceCountsKey(userId), _settings.ConnectionTtl);
+        var userInstancesExpireTask = database.KeyExpireAsync(
+            RealtimeRoutingKeys.GetUserInstancesKey(_settings.KeyPrefix, userId),
+            _settings.ConnectionTtl);
+        var userInstanceCountsExpireTask = database.KeyExpireAsync(
+            RealtimeRoutingKeys.GetUserInstanceCountsKey(_settings.KeyPrefix, userId),
+            _settings.ConnectionTtl);
 
         return CompleteWriteAsync(database, userInstancesExpireTask, userInstanceCountsExpireTask);
     }
-
-    private string GetUserInstancesKey(Guid userId) => $"{_settings.KeyPrefix}:user-instances:{userId:D}";
-
-    // Counts prevent unregister from removing an instance while the same user still has other active connections there
-    private string GetUserInstanceCountsKey(Guid userId) => $"{_settings.KeyPrefix}:user-instance-counts:{userId:D}";
 
     private static Task CompleteWriteAsync(IDatabaseAsync database, params Task[] operations) =>
         database is ITransaction ? Task.CompletedTask : Task.WhenAll(operations);

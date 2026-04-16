@@ -33,14 +33,12 @@ public sealed class RealtimeInternalApiClientTests
             })
             .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.Accepted));
 
-        var httpClient = new HttpClient(handlerMock.Object)
-        {
-            BaseAddress = new Uri("http://localhost:5215")
-        };
+        var httpClient = new HttpClient(handlerMock.Object);
         httpClient.DefaultRequestHeaders.Add(RealtimeInternalApiClient.ApiKeyHeaderName, "internal-key");
         var client = new RealtimeInternalApiClient(httpClient);
 
         await client.PublishMessageAsync(
+            new Uri("http://localhost:5215"),
             new PublishMessageRequest
             {
                 MessageId = _fixture.Create<Guid>(),
@@ -80,12 +78,12 @@ public sealed class RealtimeInternalApiClientTests
                 Content = new StringContent("bad request")
             });
 
-        var client = new RealtimeInternalApiClient(new HttpClient(handlerMock.Object)
-        {
-            BaseAddress = new Uri("http://localhost:5215")
-        });
+        var client = new RealtimeInternalApiClient(new HttpClient(handlerMock.Object));
 
-        var act = () => client.PublishMessageAsync(new PublishMessageRequest(), CancellationToken.None);
+        var act = () => client.PublishMessageAsync(
+            new Uri("http://localhost:5215"),
+            new PublishMessageRequest(),
+            CancellationToken.None);
 
         await act.Should().ThrowAsync<NonTransientException>()
             .WithMessage("*400*");

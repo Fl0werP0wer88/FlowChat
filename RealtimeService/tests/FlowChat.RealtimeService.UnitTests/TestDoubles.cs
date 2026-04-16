@@ -5,6 +5,7 @@ using CSharpFunctionalExtensions;
 using FlowChat.Core.Messaging;
 using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
 using FlowChat.RealtimeService.Api.Realtime;
+using FlowChat.RealtimeService.Routing;
 using FlowChat.Shared.Domain;
 using FlowChat.Shared.Application;
 using FlowChat.RealtimeService.Consumers.Realtime.Contracts;
@@ -36,6 +37,31 @@ internal sealed class CapturingRealtimeClientDispatcher : IRealtimeClientDispatc
 
 internal sealed class CapturingRealtimeInternalApiClient : IRealtimeInternalApiClient
 {
+    public Uri? LastMessageBaseAddress { get; private set; }
+    public Uri? LastPresenceBaseAddress { get; private set; }
+    public PublishMessageRequest? LastPublishMessageRequest { get; private set; }
+    public PublishPresenceChangeRequest? LastPublishPresenceChangeRequest { get; private set; }
+
+    public Task PublishMessageAsync(Uri baseAddress, PublishMessageRequest request, CancellationToken cancellationToken)
+    {
+        LastMessageBaseAddress = baseAddress;
+        LastPublishMessageRequest = request;
+        return Task.CompletedTask;
+    }
+
+    public Task PublishPresenceChangeAsync(
+        Uri baseAddress,
+        PublishPresenceChangeRequest request,
+        CancellationToken cancellationToken)
+    {
+        LastPresenceBaseAddress = baseAddress;
+        LastPublishPresenceChangeRequest = request;
+        return Task.CompletedTask;
+    }
+}
+
+internal sealed class CapturingRealtimeEventRouter : IRealtimeEventRouter
+{
     public PublishMessageRequest? LastPublishMessageRequest { get; private set; }
     public PublishPresenceChangeRequest? LastPublishPresenceChangeRequest { get; private set; }
 
@@ -50,6 +76,17 @@ internal sealed class CapturingRealtimeInternalApiClient : IRealtimeInternalApiC
         LastPublishPresenceChangeRequest = request;
         return Task.CompletedTask;
     }
+}
+
+internal sealed class StubRealtimeRoutingTopologyReader : IRealtimeRoutingTopologyReader
+{
+    public IReadOnlyDictionary<Guid, IReadOnlyCollection<string>> Result { get; set; } =
+        new Dictionary<Guid, IReadOnlyCollection<string>>();
+
+    public Task<IReadOnlyDictionary<Guid, IReadOnlyCollection<string>>> GetInstanceIdsByUserAsync(
+        IReadOnlyCollection<Guid> userIds,
+        CancellationToken cancellationToken) =>
+        Task.FromResult(Result);
 }
 
 internal sealed class CapturingMediator : IMediator

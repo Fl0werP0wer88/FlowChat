@@ -4,6 +4,7 @@
     <Project Path="src/FlowChat.RealtimeService.Application/FlowChat.RealtimeService.Application.csproj" />
     <Project Path="src/FlowChat.RealtimeService.Domain/FlowChat.RealtimeService.Domain.csproj" />
     <Project Path="src/FlowChat.RealtimeService.Infrastructure/FlowChat.RealtimeService.Infrastructure.csproj" />
+    <Project Path="src/FlowChat.RealtimeService.Routing/FlowChat.RealtimeService.Routing.csproj" />
   </Folder>
   <Folder Name="/src/Workers/">
     <Project Path="src/Workers/FlowChat.RealtimeService.Consumers/FlowChat.RealtimeService.Consumers.csproj" />
