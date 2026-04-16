@@ -81,6 +81,11 @@ Domain events are dispatched via `IDomainEventDispatcher` and mapped to integrat
 - A controller's role is limited to HTTP concerns: reading the request, authorization/authentication, invoking the appropriate command/query through MediatR, and mapping HTTP DTOs and responses
 - Request validation belongs in the Application layer via FluentValidation / MediatR pipeline, not in controllers
 
+### Application contract placement
+- Keep interfaces in `Application/Contracts/*` only when their implementations live outside the `Application` project, for example in `Infrastructure`, `Persistence`, `API`, or `Workers`
+- If an interface is implemented inside the same `Application` layer, keep it next to the implementing class in a local `Interfaces/` folder within that feature slice instead of `Application/Contracts/*`
+- When moving or creating such interfaces, keep namespaces aligned with the feature folder structure and update tests to mirror the `src/` layout
+
 ### Application eventing structure
 - Place  aggregate-specific domain event handlers inside the vertical slice of the aggregate that produces the event
 - In `Application/Features/{Aggregate}/`, event-related files live under `Eventing/`
