@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 
 namespace FlowChat.RealtimeService.Infrastructure.RealtimeConnections;
 
+// Keeps Redis connection metadata alive for locally active realtime clients and refreshes their presence lease upstream
 internal sealed class RealtimeConnectionRefreshBackgroundService(
     IRealtimeConnectionRegistry realtimeConnectionRegistry,
     IActiveConnectionsTracker activeConnectionsTracker,
@@ -29,6 +30,7 @@ internal sealed class RealtimeConnectionRefreshBackgroundService(
 
         while (!stoppingToken.IsCancellationRequested && await timer.WaitForNextTickAsync(stoppingToken))
         {
+            // Only locally tracked connections are refreshed here; other instances are responsible for extending their own TTLs
             var connections = _activeConnectionsTracker.Snapshot();
             if (connections.Count == 0)
             {
@@ -50,6 +52,7 @@ internal sealed class RealtimeConnectionRefreshBackgroundService(
 
             try
             {
+                // Presence refresh is isolated from Redis refresh so a transient failure in one system does not stop the other
                 var userIds = connections
                     .Select(static c => c.UserId)
                     .Where(static id => id != Guid.Empty)
