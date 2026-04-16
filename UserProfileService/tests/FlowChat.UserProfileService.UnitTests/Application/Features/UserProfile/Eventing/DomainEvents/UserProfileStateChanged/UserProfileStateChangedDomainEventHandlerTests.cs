@@ -4,7 +4,7 @@ using FlowChat.Shared.Domain;
 using FlowChat.Core.Messaging;
 using FlowChat.Core.Messaging.UserProfileService.Events;
 using FlowChat.UserProfileService.Application.Common.Eventing;
-using FlowChat.UserProfileService.Application.Common.Eventing.Handlers;
+using FlowChat.UserProfileService.Application.Features.UserProfile.Eventing.DomainEvents.UserProfileStateChanged;
 using FlowChat.UserProfileService.Domain.Entities.EmailVerificationRequest;
 using FlowChat.UserProfileService.Domain.Entities.UserProfile;
 using Microsoft.Extensions.Logging.Abstractions;

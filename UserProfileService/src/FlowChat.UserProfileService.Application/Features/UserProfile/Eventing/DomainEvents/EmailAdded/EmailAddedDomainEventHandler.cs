@@ -2,7 +2,7 @@ using FlowChat.Shared.Application;
 using FlowChat.UserProfileService.Application.Contracts.Infrastructure;
 using FlowChat.UserProfileService.Domain.Entities.UserProfile.Events;
 
-namespace FlowChat.UserProfileService.Application.Common.Eventing.Handlers;
+namespace FlowChat.UserProfileService.Application.Features.UserProfile.Eventing.DomainEvents.EmailAdded;
 
 public sealed class EmailAddedDomainEventHandler(
     IEmailVerificationRequestIssuer emailVerificationRequestIssuer)

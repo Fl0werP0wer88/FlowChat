@@ -1,5 +1,5 @@
-using FlowChat.UserProfileService.Application.Common.Eventing.Handlers;
 using FlowChat.UserProfileService.Application.Contracts.Infrastructure;
+using FlowChat.UserProfileService.Application.Features.UserProfile.Eventing.DomainEvents.EmailAdded;
 using FlowChat.Shared.Domain.ValueObjects;
 using FlowChat.UserProfileService.Domain.Entities.EmailVerificationRequest;
 using FlowChat.UserProfileService.Domain.Entities.UserProfile;
