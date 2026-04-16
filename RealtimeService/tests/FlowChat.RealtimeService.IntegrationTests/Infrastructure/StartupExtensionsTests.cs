@@ -4,6 +4,7 @@ using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
 using FlowChat.RealtimeService.Infrastructure.RealtimeConnections;
 using FlowChat.RealtimeService.Infrastructure.RealtimeConnections.Stores.ConnectionStore;
 using FlowChat.RealtimeService.Infrastructure.RealtimeConnections.Stores.UserConnectionStore;
+using FlowChat.RealtimeService.Infrastructure.RealtimeConnections.Stores.UserInstanceRoutingStore;
 using FluentAssertions;
 using MediatR;
 using Microsoft.AspNetCore.Authentication;
@@ -44,6 +45,8 @@ public sealed class StartupExtensionsTests
         var connectionRegistry = app.Services.GetRequiredService<IRealtimeConnectionRegistry>();
         var connectionStore = app.Services.GetRequiredService<IConnectionStore>();
         var userConnectionsStore = app.Services.GetRequiredService<IUserConnectionsStore>();
+        var userInstanceRoutingStore = app.Services.GetRequiredService<IUserInstanceRoutingStore>();
+        var routingTopologyReader = app.Services.GetRequiredService<IRealtimeRoutingTopologyReader>();
         var hostedServices = app.Services.GetServices<IHostedService>().ToList();
         var optionsMonitor = app.Services.GetRequiredService<IOptionsMonitor<JwtBearerOptions>>();
         var options = optionsMonitor.Get(JwtBearerDefaults.AuthenticationScheme);
@@ -63,6 +66,8 @@ public sealed class StartupExtensionsTests
         connectionRegistry.Should().NotBeNull();
         connectionStore.Should().NotBeNull();
         userConnectionsStore.Should().NotBeNull();
+        userInstanceRoutingStore.Should().NotBeNull();
+        routingTopologyReader.Should().NotBeNull();
         hostedServices.Should().Contain(service => service.GetType().Name == "RealtimeConnectionRefreshBackgroundService");
         messageContext.Token.Should().Be("test-token");
     }

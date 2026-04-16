@@ -1,7 +1,9 @@
 using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
+using FlowChat.RealtimeService.Infrastructure.Configuration;
 using FlowChat.RealtimeService.Infrastructure.RealtimeConnections.ConnectionsTracker;
 using FlowChat.RealtimeService.Infrastructure.RealtimeConnections.Stores.ConnectionStore;
 using FlowChat.RealtimeService.Infrastructure.RealtimeConnections.Stores.UserConnectionStore;
+using FlowChat.RealtimeService.Infrastructure.RealtimeConnections.Stores.UserInstanceRoutingStore;
 using FlowChat.Shared.Application;
 
 namespace FlowChat.RealtimeService.Infrastructure.RealtimeConnections;
@@ -9,16 +11,21 @@ namespace FlowChat.RealtimeService.Infrastructure.RealtimeConnections;
 internal sealed class RealtimeConnectionRegistry(
     IConnectionStore connectionStore,
     IUserConnectionsStore userConnectionsStore,
+    IUserInstanceRoutingStore userInstanceRoutingStore,
     IUnitOfWork unitOfWork,
-    IActiveConnectionsTracker activeConnectionsTracker) : IRealtimeConnectionRegistry
+    IActiveConnectionsTracker activeConnectionsTracker,
+    RealtimeConnectionsSettings settings) : IRealtimeConnectionRegistry
 {
     private readonly IConnectionStore _connectionStore = connectionStore
         ?? throw new ArgumentNullException(nameof(connectionStore));
     private readonly IUserConnectionsStore _userConnectionsStore = userConnectionsStore
         ?? throw new ArgumentNullException(nameof(userConnectionsStore));
+    private readonly IUserInstanceRoutingStore _userInstanceRoutingStore = userInstanceRoutingStore
+        ?? throw new ArgumentNullException(nameof(userInstanceRoutingStore));
     private readonly IUnitOfWork _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
     private readonly IActiveConnectionsTracker _activeConnectionsTracker = activeConnectionsTracker
         ?? throw new ArgumentNullException(nameof(activeConnectionsTracker));
+    private readonly RealtimeConnectionsSettings _settings = settings ?? throw new ArgumentNullException(nameof(settings));
 
     public async Task<RealtimeConnectionMutationResult> RegisterAsync(Guid userId, string connectionId, CancellationToken cancellationToken)
     {
@@ -33,6 +40,7 @@ internal sealed class RealtimeConnectionRegistry(
         {
             await _connectionStore.UpsertAsync(userId, connectionId, nowUtc, nowUtc);
             await _userConnectionsStore.AddConnectionAsync(userId, connectionId);
+            await _userInstanceRoutingStore.AddConnectionAsync(userId, _settings.InstanceId);
 
             return 0;
         }, cancellationToken);
@@ -80,6 +88,7 @@ internal sealed class RealtimeConnectionRegistry(
 
             await _userConnectionsStore.RemoveConnectionAsync(userId, connectionId);
             await _connectionStore.DeleteAsync(connectionId);
+            await _userInstanceRoutingStore.RemoveConnectionAsync(userId, _settings.InstanceId);
             var activeConnectionCount = await _userConnectionsStore.GetConnectionCountAsync(userId);
 
             if (activeConnectionCount == 0)
@@ -122,8 +131,14 @@ internal sealed class RealtimeConnectionRegistry(
             .ToDictionary(
                 static connection => connection.UserId,
                 connection => _userConnectionsStore.RefreshTtlAsync(connection.UserId));
+        var routingExpireTasks = activeConnections
+            .DistinctBy(static connection => connection.UserId)
+            .Select(connection => _userInstanceRoutingStore.RefreshTtlAsync(connection.UserId))
+            .ToArray();
 
-        await Task.WhenAll(connectionExpireTasks.Values.Cast<Task>().Concat(userSetExpireTasks.Values.Cast<Task>()));
+        await Task.WhenAll(connectionExpireTasks.Values.Cast<Task>()
+            .Concat(userSetExpireTasks.Values.Cast<Task>())
+            .Concat(routingExpireTasks));
 
         foreach (var (connectionId, expireTask) in connectionExpireTasks)
         {
