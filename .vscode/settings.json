@@ -1,130 +1,139 @@
-{
-  "workbench.iconTheme": "material-icon-theme",
-  "material-icon-theme.folders.theme": "specific",
-  "material-icon-theme.folders.customClones": [
-    {
-      "name": "flowchat-application-folders",
-      "base": "app",
-      "color": "#d95c6a",
-      "lightColor": "#d95c6a",
-      "folderNames": [
-        "FlowChat.AuthService.Application",
-        "FlowChat.ChatService.Application",
-        "FlowChat.NotificationService.Application",
-        "FlowChat.PresenceService.Application",
-        "FlowChat.RealtimeService.Application",
-        "FlowChat.Shared.Application",
-        "FlowChat.SocialGraphService.Application",
-        "FlowChat.UserProfileService.Application"
-      ]
-    },
-    {
-      "name": "flowchat-api-folders",
-      "base": "api",
-      "color": "#d99a2b",
-      "lightColor": "#d99a2b",
-      "folderNames": [
-        "FlowChat.AuthService.API",
-        "FlowChat.ChatService.API",
-        "FlowChat.GatewayService.API",
-        "FlowChat.NotificationService.API",
-        "FlowChat.PresenceService.API",
-        "FlowChat.RealtimeService.API",
-        "FlowChat.Shared.API",
-        "FlowChat.SocialGraphService.API",
-        "FlowChat.UserProfileService.API"
-      ]
-    },
-    {
-      "name": "flowchat-infrastructure-folders",
-      "base": "server",
-      "color": "#4f93b3",
-      "lightColor": "#4f93b3",
-      "folderNames": [
-        "FlowChat.AuthService.Infrastructure",
-        "FlowChat.ChatService.Infrastructure",
-        "FlowChat.NotificationService.Infrastructure",
-        "FlowChat.PresenceService.Infrastructure",
-        "FlowChat.RealtimeService.Infrastructure",
-        "FlowChat.Shared.Infrastructure",
-        "FlowChat.SocialGraphService.Infrastructure",
-        "FlowChat.UserProfileService.Infrastructure"
-      ]
-    },
-    {
-      "name": "flowchat-persistence-folders",
-      "base": "database",
-      "color": "#6f9d4a",
-      "lightColor": "#6f9d4a",
-      "folderNames": [
-        "FlowChat.AuthService.Persistence",
-        "FlowChat.ChatService.Persistence",
-        "FlowChat.NotificationService.Persistence",
-        "FlowChat.PresenceService.Persistence",
-        "FlowChat.RealtimeService.Persistence",
-        "FlowChat.SocialGraphService.Persistence",
-        "FlowChat.UserProfileService.Persistence"
-      ]
-    },
-    {
-      "name": "domain",
-      "base": "core",
-      "color": "#7c6bcf",
-      "lightColor": "#7c6bcf",
-      "folderNames": [
-        "FlowChat.AuthService.Domain",
-        "FlowChat.ChatService.Domain",
-        "FlowChat.NotificationService.Domain",
-        "FlowChat.PresenceService.Domain",
-        "FlowChat.RealtimeService.Domain",
-        "FlowChat.Shared.Domain",
-        "FlowChat.SocialGraphService.Domain",
-        "FlowChat.UserProfileService.Domain"
-      ]
-    }
-  ],
-  "explorer.autoReveal": true,
-  "search.exclude": {
-    "**/TestResults": true,
-    "**/TestResults/**": true
-  },
-  "editor.formatOnSave": true,
-  "editor.defaultFormatter": "dprint.dprint",
-  "dprint.configPath": "${workspaceFolder}/dprint.json",
-  "dotnet.unitTests.runSettingsPath": "coverage.runsettings",
-  "[csharp]": {
-    "editor.defaultFormatter": "dprint.dprint"
-  },
-  "[javascript]": {
-    "editor.defaultFormatter": "dprint.dprint"
-  },
-  "[javascriptreact]": {
-    "editor.defaultFormatter": "dprint.dprint"
-  },
-  "[typescript]": {
-    "editor.defaultFormatter": "dprint.dprint"
-  },
-  "[typescriptreact]": {
-    "editor.defaultFormatter": "dprint.dprint"
-  },
-  "statusbar_command.commands": [
-  {
-    "text": "$(target)",
-    "tooltip": "Sync z aktywnym plikiem (.NET)",
-    "id": "sbc_sync_dotnet",
-    "name": "Sync Active",
-    "alignment": "right",
-    "priority": 1000,
-    "command": "runCommands",
-    "arguments": [
-      {
-        "commands": [
-          "workbench.files.action.collapseExplorerFolders",
-          "workbench.files.action.collapseExplorerFolders",
-          "workbench.files.action.showActiveFileInExplorer"
-        ]
-      }
-    ]
-  }
-]
+﻿{
+    "workbench.iconTheme":  "material-icon-theme",
+    "material-icon-theme.folders.theme":  "specific",
+    "material-icon-theme.folders.customClones":  [
+                                                     {
+                                                         "name":  "flowchat-application-folders",
+                                                         "base":  "app",
+                                                         "color":  "#d95c6a",
+                                                         "lightColor":  "#d95c6a",
+                                                         "folderNames":  [
+                                                                             "FlowChat.AuthService.Application",
+                                                                             "FlowChat.ChatService.Application",
+                                                                             "FlowChat.NotificationService.Application",
+                                                                             "FlowChat.PresenceService.Application",
+                                                                             "FlowChat.RealtimeService.Application",
+                                                                             "FlowChat.Shared.Application",
+                                                                             "FlowChat.SocialGraphService.Application",
+                                                                             "FlowChat.UserProfileService.Application"
+                                                                         ]
+                                                     },
+                                                     {
+                                                         "name":  "flowchat-api-folders",
+                                                         "base":  "api",
+                                                         "color":  "#d99a2b",
+                                                         "lightColor":  "#d99a2b",
+                                                         "folderNames":  [
+                                                                             "FlowChat.AuthService.API",
+                                                                             "FlowChat.ChatService.API",
+                                                                             "FlowChat.GatewayService.API",
+                                                                             "FlowChat.NotificationService.API",
+                                                                             "FlowChat.PresenceService.API",
+                                                                             "FlowChat.RealtimeService.API",
+                                                                             "FlowChat.Shared.API",
+                                                                             "FlowChat.SocialGraphService.API",
+                                                                             "FlowChat.UserProfileService.API"
+                                                                         ]
+                                                     },
+                                                     {
+                                                         "name":  "flowchat-infrastructure-folders",
+                                                         "base":  "server",
+                                                         "color":  "#4f93b3",
+                                                         "lightColor":  "#4f93b3",
+                                                         "folderNames":  [
+                                                                             "FlowChat.AuthService.Infrastructure",
+                                                                             "FlowChat.ChatService.Infrastructure",
+                                                                             "FlowChat.NotificationService.Infrastructure",
+                                                                             "FlowChat.PresenceService.Infrastructure",
+                                                                             "FlowChat.RealtimeService.Infrastructure",
+                                                                             "FlowChat.Shared.Infrastructure",
+                                                                             "FlowChat.SocialGraphService.Infrastructure",
+                                                                             "FlowChat.UserProfileService.Infrastructure"
+                                                                         ]
+                                                     },
+                                                     {
+                                                         "name":  "flowchat-persistence-folders",
+                                                         "base":  "database",
+                                                         "color":  "#6f9d4a",
+                                                         "lightColor":  "#6f9d4a",
+                                                         "folderNames":  [
+                                                                             "FlowChat.AuthService.Persistence",
+                                                                             "FlowChat.ChatService.Persistence",
+                                                                             "FlowChat.NotificationService.Persistence",
+                                                                             "FlowChat.PresenceService.Persistence",
+                                                                             "FlowChat.RealtimeService.Persistence",
+                                                                             "FlowChat.SocialGraphService.Persistence",
+                                                                             "FlowChat.UserProfileService.Persistence"
+                                                                         ]
+                                                     },
+                                                     {
+                                                         "name":  "domain",
+                                                         "base":  "core",
+                                                         "color":  "#7c6bcf",
+                                                         "lightColor":  "#7c6bcf",
+                                                         "folderNames":  [
+                                                                             "FlowChat.AuthService.Domain",
+                                                                             "FlowChat.ChatService.Domain",
+                                                                             "FlowChat.NotificationService.Domain",
+                                                                             "FlowChat.PresenceService.Domain",
+                                                                             "FlowChat.RealtimeService.Domain",
+                                                                             "FlowChat.Shared.Domain",
+                                                                             "FlowChat.SocialGraphService.Domain",
+                                                                             "FlowChat.UserProfileService.Domain"
+                                                                         ]
+                                                     },
+                                                     {
+                                                         "name":  "workers",
+                                                         "base":  "tasks",
+                                                         "color":  "#5f73d8",
+                                                         "lightColor":  "#5f73d8",
+                                                         "folderNames":  [
+                                                                             "Workers"
+                                                                         ]
+                                                     }
+                                                 ],
+    "explorer.autoReveal":  true,
+    "search.exclude":  {
+                           "**/TestResults":  true,
+                           "**/TestResults/**":  true
+                       },
+    "editor.formatOnSave":  true,
+    "editor.defaultFormatter":  "dprint.dprint",
+    "dprint.configPath":  "${workspaceFolder}/dprint.json",
+    "dotnet.unitTests.runSettingsPath":  "coverage.runsettings",
+    "[csharp]":  {
+                     "editor.defaultFormatter":  "dprint.dprint"
+                 },
+    "[javascript]":  {
+                         "editor.defaultFormatter":  "dprint.dprint"
+                     },
+    "[javascriptreact]":  {
+                              "editor.defaultFormatter":  "dprint.dprint"
+                          },
+    "[typescript]":  {
+                         "editor.defaultFormatter":  "dprint.dprint"
+                     },
+    "[typescriptreact]":  {
+                              "editor.defaultFormatter":  "dprint.dprint"
+                          },
+    "statusbar_command.commands":  [
+                                       {
+                                           "text":  "$(target)",
+                                           "tooltip":  "Sync z aktywnym plikiem (.NET)",
+                                           "id":  "sbc_sync_dotnet",
+                                           "name":  "Sync Active",
+                                           "alignment":  "right",
+                                           "priority":  1000,
+                                           "command":  "runCommands",
+                                           "arguments":  [
+                                                             {
+                                                                 "commands":  [
+                                                                                  "workbench.files.action.collapseExplorerFolders",
+                                                                                  "workbench.files.action.collapseExplorerFolders",
+                                                                                  "workbench.files.action.showActiveFileInExplorer"
+                                                                              ]
+                                                             }
+                                                         ]
+                                       }
+                                   ]
 }
