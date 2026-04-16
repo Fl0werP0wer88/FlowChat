@@ -2,7 +2,6 @@ using AutoMapper;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
 using FlowChat.Core.Messaging.UserProfileService.Events;
-using FlowChat.UserProfileService.Application.Common.Eventing.Handlers;
 using FlowChat.UserProfileService.Domain.Entities.UserProfile;
 using DomainUserProfile = FlowChat.UserProfileService.Domain.Entities.UserProfile.UserProfile;
 

@@ -302,7 +302,7 @@ Add comments only where they provide information that cannot be derived by readi
 
 ## What to Avoid
 
-- Do not use `AutoMapper` — mapping is done manually or via dedicated profile classes
+- Do mappings via dedicated profile classes for AutoMapper
 - Do not add `try/catch` inside command handlers — use `FlowChatResult` instead
 - Do not put business logic in controllers or infrastructure layer
 - Do not raise domain events in `Restore(...)` factory methods
