@@ -123,6 +123,7 @@ internal sealed class RedisUserInstanceRoutingStore(
 
     private string GetUserInstancesKey(Guid userId) => $"{_settings.KeyPrefix}:user-instances:{userId:D}";
 
+    // Counts prevent unregister from removing an instance while the same user still has other active connections there
     private string GetUserInstanceCountsKey(Guid userId) => $"{_settings.KeyPrefix}:user-instance-counts:{userId:D}";
 
     private static Task CompleteWriteAsync(IDatabaseAsync database, params Task[] operations) =>
