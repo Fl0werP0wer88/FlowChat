@@ -88,6 +88,28 @@ export async function postJson<TResponse, TRequest extends object>(
   return parsedPayload as TResponse;
 }
 
+export async function putJson<TResponse, TRequest extends object>(
+  path: string,
+  payload: TRequest,
+  options: RequestOptions = {},
+): Promise<TResponse> {
+  const response = await fetch(`${apiBaseUrl}${path}`, {
+    method: "PUT",
+    headers: createHeaders("application/json", options.accessToken),
+    body: JSON.stringify(payload),
+    signal: options.signal,
+  });
+
+  const rawText = await response.text();
+  const parsedPayload = rawText.length > 0 ? parseJsonSafe(rawText) : null;
+
+  if (!response.ok) {
+    throw new Error(resolveErrorMessage(parsedPayload, response.status));
+  }
+
+  return parsedPayload as TResponse;
+}
+
 export async function postForm<TResponse>(
   path: string,
   payload: Record<string, string>,

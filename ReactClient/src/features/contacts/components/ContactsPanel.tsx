@@ -1,28 +1,39 @@
 import { useEffect, useRef, useState } from "react";
 import type { KeyboardEventHandler } from "react";
 import type { Contact } from "../../../types/contacts";
+import type { ManualUserStatus, UserStatus } from "../../../types/realtime";
 import type { SearchUserResult, SearchUsersCriteria } from "../api";
 
 interface ContactsPanelProps {
   addContactNotice: { kind: "error" | "info"; message: string; } | null;
   contacts: Contact[];
+  currentUserStatus: UserStatus;
   isAddingContact: boolean;
+  isChangingPresenceStatus: boolean;
   isLoadingContacts: boolean;
   onAddContact: (lookupValue: string) => Promise<boolean>;
   onAddContactByUserId: (userId: string) => Promise<boolean>;
+  onChangePresenceStatus: (status: ManualUserStatus) => Promise<void>;
   onClearNotice: () => void;
   onSearchUsers: (criteria: SearchUsersCriteria, signal?: AbortSignal) => Promise<SearchUserResult[]>;
+  presenceNotice: string | null;
 }
+
+const presenceOptions: ManualUserStatus[] = ["Active", "Busy", "Invisible"];
 
 export function ContactsPanel({
   addContactNotice,
   contacts,
+  currentUserStatus,
   isAddingContact,
+  isChangingPresenceStatus,
   isLoadingContacts,
   onAddContact,
   onAddContactByUserId,
+  onChangePresenceStatus,
   onClearNotice,
   onSearchUsers,
+  presenceNotice,
 }: ContactsPanelProps) {
   const [isComposerOpen, setIsComposerOpen] = useState(false);
   const [isSearchExpanded, setIsSearchExpanded] = useState(false);
@@ -168,11 +179,40 @@ export function ContactsPanel({
     }
   };
 
+  const handlePresenceStatusChange = async (value: string) => {
+    if (value === "AFK") {
+      return;
+    }
+
+    await onChangePresenceStatus(value as ManualUserStatus);
+  };
+
   return (
     <aside className={`contacts-panel ${isComposerOpen ? "contacts-panel--composer-open" : ""}`}>
       <div className="contacts-panel__main">
         <div className="contacts-panel__header">
-          <h2>Kontakty</h2>
+          <div className="contacts-panel__header-main">
+            <h2>Kontakty</h2>
+            <label className="contacts-panel__presence-control">
+              <span className="contacts-panel__presence-label">Status</span>
+              <select
+                aria-label="Ustaw status Presence"
+                className="contacts-panel__presence-select"
+                disabled={isChangingPresenceStatus}
+                onChange={(event) => void handlePresenceStatusChange(event.target.value)}
+                value={currentUserStatus}
+              >
+                {currentUserStatus === "AFK"
+                  ? <option value="AFK">AFK (auto)</option>
+                  : null}
+                {presenceOptions.map((status) => (
+                  <option key={status} value={status}>
+                    {status}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
           <button
             aria-label="Dodaj kontakt"
             className="contacts-panel__icon-button"
@@ -182,6 +222,10 @@ export function ContactsPanel({
             <span aria-hidden="true" className="material-symbols-rounded">add_box</span>
           </button>
         </div>
+
+        {presenceNotice
+          ? <p className="alert alert-error">{presenceNotice}</p>
+          : null}
 
         {addContactNotice && !isComposerOpen
           ? (

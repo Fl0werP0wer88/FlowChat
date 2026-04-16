@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Contact } from "../../../types/contacts";
+import type { ContactPresenceStatusesEvent, PresenceChangedEvent } from "../../../types/realtime";
 import { addContact, addContactByUserId, fetchContacts, searchUsers } from "../api";
 import type { SearchUserResult, SearchUsersCriteria } from "../api";
 
@@ -16,8 +17,12 @@ interface UseContactsResult {
   addContactByLookup: (lookupValue: string) => Promise<boolean>;
   addContactByUserId: (userId: string) => Promise<boolean>;
   clearNotice: () => void;
+  applyPresenceChanged: (payload: PresenceChangedEvent) => void;
+  initializePresenceStatuses: (statuses: ContactPresenceStatusesEvent) => void;
   searchUsers: (criteria: SearchUsersCriteria, signal?: AbortSignal) => Promise<SearchUserResult[]>;
 }
+
+type ContactPresenceMap = Record<string, Contact["status"]>;
 
 function decodeJwtPayload(accessToken: string): Record<string, unknown> | null {
   const [, payload] = accessToken.split(".");
@@ -47,11 +52,18 @@ export function useContacts(accessToken: string): UseContactsResult {
   const [isLoadingContacts, setIsLoadingContacts] = useState(false);
   const [isAddingContact, setIsAddingContact] = useState(false);
   const [notice, setNotice] = useState<ContactsNotice | null>(null);
+  const presenceStatusesRef = useRef<ContactPresenceMap>({});
   const ownerUserId = resolveOwnerUserId(accessToken);
 
   const clearNotice = () => {
     setNotice(null);
   };
+
+  const applyStatusesToContacts = (loadedContacts: Contact[], statuses: ContactPresenceMap = presenceStatusesRef.current) =>
+    loadedContacts.map((contact) => ({
+      ...contact,
+      status: statuses[contact.userId] ?? "Invisible",
+    }));
 
   useEffect(() => {
     let isActive = true;
@@ -60,6 +72,7 @@ export function useContacts(accessToken: string): UseContactsResult {
       if (!accessToken || !ownerUserId) {
         if (isActive) {
           setContacts([]);
+          presenceStatusesRef.current = {};
           setNotice({
             kind: "error",
             message: "Nie udalo sie odczytac identyfikatora uzytkownika z sesji.",
@@ -78,7 +91,7 @@ export function useContacts(accessToken: string): UseContactsResult {
           return;
         }
 
-        setContacts(loadedContacts);
+        setContacts(applyStatusesToContacts(loadedContacts));
       } catch (error) {
         if (!isActive) {
           return;
@@ -99,6 +112,33 @@ export function useContacts(accessToken: string): UseContactsResult {
       isActive = false;
     };
   }, [accessToken, ownerUserId]);
+
+  const initializePresenceStatuses = (statuses: ContactPresenceStatusesEvent) => {
+    const nextPresenceStatuses = statuses.reduce<ContactPresenceMap>((current, status) => {
+      current[status.userId] = status.status;
+      return current;
+    }, {});
+
+    presenceStatusesRef.current = nextPresenceStatuses;
+    setContacts((current) => applyStatusesToContacts(current, nextPresenceStatuses));
+  };
+
+  const applyPresenceChanged = (payload: PresenceChangedEvent) => {
+    presenceStatusesRef.current = {
+      ...presenceStatusesRef.current,
+      [payload.userId]: payload.status,
+    };
+
+    setContacts((current) =>
+      current.map((contact) =>
+        contact.userId === payload.userId
+          ? {
+            ...contact,
+            status: payload.status,
+          }
+          : contact
+      ));
+  };
 
   const addContactByLookup = async (lookupValue: string): Promise<boolean> => {
     const trimmedLookupValue = lookupValue.trim();
@@ -122,7 +162,7 @@ export function useContacts(accessToken: string): UseContactsResult {
     try {
       await addContact(ownerUserId, trimmedLookupValue, accessToken);
       const loadedContacts = await fetchContacts(ownerUserId, accessToken);
-      setContacts(loadedContacts);
+      setContacts(applyStatusesToContacts(loadedContacts));
       setNotice({ kind: "info", message: "Kontakt zostal dodany." });
       return true;
     } catch (error) {
@@ -156,7 +196,7 @@ export function useContacts(accessToken: string): UseContactsResult {
     try {
       await addContactByUserId(ownerUserId, trimmedUserId, accessToken);
       const loadedContacts = await fetchContacts(ownerUserId, accessToken);
-      setContacts(loadedContacts);
+      setContacts(applyStatusesToContacts(loadedContacts));
       setNotice({ kind: "info", message: "Kontakt zostal dodany." });
       return true;
     } catch (error) {
@@ -186,7 +226,9 @@ export function useContacts(accessToken: string): UseContactsResult {
     notice,
     addContactByLookup,
     addContactByUserId: addContactByUserIdAction,
+    applyPresenceChanged,
     clearNotice,
+    initializePresenceStatuses,
     searchUsers: searchUsersAction,
   };
 }

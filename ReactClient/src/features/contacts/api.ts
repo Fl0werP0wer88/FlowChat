@@ -4,6 +4,8 @@ import type { Contact } from "../../types/contacts";
 interface ContactDto {
   id?: string;
   Id?: string;
+  contactUserId?: string;
+  ContactUserId?: string;
   displayName?: string;
   DisplayName?: string;
   email?: string | null;
@@ -70,8 +72,11 @@ function resolveContacts(response: GetContactsResponseDto): ContactDto[] {
 }
 
 function mapContact(dto: ContactDto): Contact {
+  const userId = dto.contactUserId ?? dto.ContactUserId ?? dto.id ?? dto.Id ?? crypto.randomUUID();
+
   return {
     id: dto.id ?? dto.Id ?? crypto.randomUUID(),
+    userId,
     displayName: dto.displayName ?? dto.DisplayName ?? "Nowy kontakt",
     email: dto.email ?? dto.Email ?? null,
     status: "Invisible",

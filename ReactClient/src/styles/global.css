@@ -416,10 +416,64 @@ body {
   gap: 0.75rem;
 }
 
+.contacts-panel__header-main {
+  display: grid;
+  gap: 0.45rem;
+  min-width: 0;
+  flex: 1;
+}
+
 .contacts-panel__header h2 {
   margin: 0;
   font-size: 1rem;
   font-family: "Space Grotesk", sans-serif;
+}
+
+.contacts-panel__presence-control {
+  display: inline-grid;
+  gap: 0.28rem;
+  justify-items: start;
+}
+
+.contacts-panel__presence-label {
+  font-size: 0.72rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.contacts-panel__presence-select {
+  min-width: 8.5rem;
+  border: 1px solid color-mix(in srgb, var(--accent) 18%, var(--border) 82%);
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(240, 247, 255, 0.98));
+  padding: 0.45rem 2rem 0.45rem 0.75rem;
+  font: inherit;
+  font-size: 0.85rem;
+  color: var(--ink);
+  outline: none;
+  appearance: none;
+  box-shadow: 0 12px 24px -24px rgba(23, 103, 255, 0.4);
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--accent) 50%),
+    linear-gradient(135deg, var(--accent) 50%, transparent 50%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(240, 247, 255, 0.98));
+  background-position:
+    calc(100% - 1rem) calc(50% - 0.12rem),
+    calc(100% - 0.7rem) calc(50% - 0.12rem),
+    0 0;
+  background-size: 0.38rem 0.38rem, 0.38rem 0.38rem, 100% 100%;
+  background-repeat: no-repeat;
+}
+
+.contacts-panel__presence-select:focus {
+  border-color: color-mix(in srgb, var(--accent) 58%, #1ec97e 42%);
+  box-shadow: 0 0 0 3px rgba(23, 103, 255, 0.12);
+}
+
+.contacts-panel__presence-select:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
 }
 
 .contacts-panel__icon-button,

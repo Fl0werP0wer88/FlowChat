@@ -1,7 +1,7 @@
 import type { KeyboardEvent } from "react";
 import { useState } from "react";
 import type { ChatMessage, MessageSender } from "../../../types/chat";
-import type { PresenceChangedEvent, RealtimeChatMessage } from "../../../types/realtime";
+import type { RealtimeChatMessage } from "../../../types/realtime";
 
 function createMessage(
   sender: MessageSender,
@@ -45,10 +45,6 @@ export function useChatMessages() {
     });
   };
 
-  const receivePresenceChanged = (payload: PresenceChangedEvent) => {
-    appendMessage("system", `Obecnosc uzytkownika ${payload.userId} zmienila sie na ${payload.status}.`);
-  };
-
   const sendDraft = () => {
     const trimmedDraft = draft.trim();
     if (!trimmedDraft) {
@@ -77,6 +73,5 @@ export function useChatMessages() {
     sendDraft,
     handleDraftKeyDown,
     receiveRealtimeMessage,
-    receivePresenceChanged,
   };
 }

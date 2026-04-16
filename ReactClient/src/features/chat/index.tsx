@@ -2,6 +2,7 @@ import { ChatHeader } from "../../components/organisms/ChatHeader";
 import { ChatTemplate } from "../../components/templates/ChatTemplate";
 import { useRealtimeConnection } from "../../realtime/useRealtimeConnection";
 import { ContactsPanel, useContacts } from "../contacts";
+import { usePresenceStatus } from "../presence/hooks/usePresenceStatus";
 import { ConversationPanel } from "./components/ConversationPanel";
 import { useChatMessages } from "./hooks/useChatMessages";
 
@@ -14,10 +15,13 @@ interface ChatFeatureProps {
 export function ChatFeature({ accessToken, userLogin, onLogout }: ChatFeatureProps) {
   const contacts = useContacts(accessToken);
   const chat = useChatMessages();
+  const presence = usePresenceStatus(accessToken);
   const realtime = useRealtimeConnection({
     accessToken,
-    onPresenceChanged: chat.receivePresenceChanged,
+    onPresenceChanged: contacts.applyPresenceChanged,
+    onReceiveContactPresenceStatuses: contacts.initializePresenceStatuses,
     onReceiveMessage: chat.receiveRealtimeMessage,
+    onReceivePresencePreferences: presence.applyPresencePreferences,
   });
 
   return (
@@ -36,12 +40,16 @@ export function ChatFeature({ accessToken, userLogin, onLogout }: ChatFeaturePro
         <ContactsPanel
           addContactNotice={contacts.notice}
           contacts={contacts.contacts}
+          currentUserStatus={presence.currentStatus}
           isAddingContact={contacts.isAddingContact}
+          isChangingPresenceStatus={presence.isUpdatingStatus}
           isLoadingContacts={contacts.isLoadingContacts}
           onAddContact={contacts.addContactByLookup}
           onAddContactByUserId={contacts.addContactByUserId}
+          onChangePresenceStatus={presence.changeManualPresenceStatus}
           onClearNotice={contacts.clearNotice}
           onSearchUsers={contacts.searchUsers}
+          presenceNotice={presence.errorMessage}
         />
       }
     />
