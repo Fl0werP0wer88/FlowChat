@@ -30,7 +30,6 @@ public static class InfrastructureServiceRegistration
             sp.GetRequiredService<IKafkaSettingsManager>().GetUserProfileStateChangedProducerOptions());
         services.AddScoped<IEmailVerificationLinkBuilder, EmailVerificationLinkBuilder>();
         services.AddScoped<IEmailVerificationTokenProtector, EmailVerificationTokenProtector>();
-        services.AddScoped<IEmailVerificationRequestIssuer, EmailVerificationRequestIssuer>();
         services.AddScoped<IOutboxIntegrationEventPublisher, FlowChatSilverbackEventPublisher>();
 
         return services;

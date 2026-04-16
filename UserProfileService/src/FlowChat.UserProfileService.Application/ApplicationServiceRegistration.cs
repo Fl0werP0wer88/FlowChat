@@ -1,6 +1,8 @@
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Application.Common.Eventing;
+using FlowChat.UserProfileService.Application.Contracts.Infrastructure;
 using FlowChat.UserProfileService.Application.Features.UserProfile.Commands.CreateInitialUserProfile;
+using FlowChat.UserProfileService.Application.Features.UserProfile.EmailVerification;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace FlowChat.UserProfileService.Application;
@@ -19,6 +21,7 @@ public static class ApplicationServiceRegistration
         });
         services.AddAutoMapper((Action<AutoMapper.IMapperConfigurationExpression>?)null, applicationAssembly);
         services.AddScoped<IDomainEventDispatcher, FlowChatDomainEventDispatcher>();
+        services.AddScoped<IEmailVerificationRequestIssuer, EmailVerificationRequestIssuer>();
 
         return services;
     }
@@ -35,6 +38,7 @@ public static class ApplicationServiceRegistration
         });
         services.AddAutoMapper((Action<AutoMapper.IMapperConfigurationExpression>?)null, consumerAssembly);
         services.AddScoped<IDomainEventDispatcher, FlowChatDomainEventDispatcher>();
+        services.AddScoped<IEmailVerificationRequestIssuer, EmailVerificationRequestIssuer>();
 
         return services;
     }

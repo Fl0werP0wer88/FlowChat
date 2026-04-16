@@ -1,13 +1,11 @@
 using FlowChat.Core.Messaging.AuthService.Events;
 using FlowChat.Shared.Application;
+using FlowChat.Shared.Domain.ValueObjects;
 using FlowChat.UserProfileService.Application.Contracts.Infrastructure;
 using FlowChat.UserProfileService.Application.Contracts.Persistence;
-using FlowChat.UserProfileService.Application.Features.UserProfile.EmailVerification;
 using FlowChat.UserProfileService.Domain.Entities.EmailVerificationRequest;
-using FlowChat.UserProfileService.Domain.Entities.UserProfile;
-using FlowChat.Shared.Domain.ValueObjects;
 
-namespace FlowChat.UserProfileService.Infrastructure.Services;
+namespace FlowChat.UserProfileService.Application.Features.UserProfile.EmailVerification;
 
 public sealed class EmailVerificationRequestIssuer(
     IEmailVerificationRequestWriteRepository emailVerificationRequestWriteRepository,
