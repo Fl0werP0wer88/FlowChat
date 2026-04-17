@@ -129,7 +129,6 @@ The project uses tactical DDD. All domain logic lives in the `Domain` layer. The
 ## Coding Conventions
 
 - **Language**: C# 13, .NET 10
-- **Formatting**: enforced by `dprint` — run `dprint fmt` before committing
 - **Nullability**: nullable reference types enabled everywhere
 - **Time handling**: always prefer `DateTimeOffset` over `DateTime`; when representing UTC time, use `DateTimeOffset` with offset `+00:00`
 - **Results**: use `FlowChatResult<T>` (from `FlowChat.Shared`) instead of throwing exceptions in handlers
