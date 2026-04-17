@@ -1,4 +1,4 @@
-using FlowChat.PresenceService.API.Features.Presence.Public.ChangePresenceStatus;
+﻿using FlowChat.PresenceService.API.Features.Presence.Public.ChangePresenceStatus;
 using FlowChat.PresenceService.Application.Contracts.Infrastructure;
 using FlowChat.PresenceService.Persistence;
 using Microsoft.AspNetCore.Authentication;
@@ -32,9 +32,9 @@ public sealed class PresenceApiFactory : WebApplicationFactory<ChangePresenceSta
             config.AddInMemoryCollection(new Dictionary<string, string?>
             {
                 ["FlowChat:InternalApi:ApiKey"] = InternalApiKey,
-                ["JwtSettings:Key"] = "FLOWCHAT_TEST_JWT_KEY_CHANGE_ME_123456789",
-                ["JwtSettings:Issuer"] = "https://localhost:7236/",
-                ["JwtSettings:Audience"] = "FlowChat.Client",
+                ["JwtSettingsSection:Key"] = "FLOWCHAT_TEST_JWT_KEY_CHANGE_ME_123456789",
+                ["JwtSettingsSection:Issuer"] = "https://localhost:7236/",
+                ["JwtSettingsSection:Audience"] = "FlowChat.Client",
                 ["ConnectionStrings:PresenceDb"] = "Host=localhost;Database=test",
                 ["ConnectionStrings:Redis"] = "localhost:6379,user=default,password=flowchat_redis_pw",
                 ["Kafka:PresenceStatusChangedProducer:BootstrapServers"] = "localhost:9092",

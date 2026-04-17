@@ -1,4 +1,4 @@
-using FlowChat.Core.Messaging.PresenceService.Events;
+﻿using FlowChat.Core.Messaging.PresenceService.Events;
 using FlowChat.PresenceService.Persistence;
 using FlowChat.Shared.Infrastructure.Silverback.Behaviors;
 using Microsoft.Extensions.Configuration;
@@ -16,7 +16,7 @@ public static class SilverbackServiceRegistration
         IConfiguration configuration)
     {
         var settingsManager = new KafkaSettingsManager(configuration);
-        var producerOptions = settingsManager.GetPresenceStatusChangedProducerOptions();
+        var producerOptions = settingsManager.GetPresenceStatusChangedProducerSettingsSection();
 
         services.AddSilverback()
             .AddSingletonBrokerBehavior<CustomSpanAttributesProducerBehavior>()

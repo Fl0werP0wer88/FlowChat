@@ -1,4 +1,4 @@
-using FlowChat.Core.Messaging.AuthService.Events;
+﻿using FlowChat.Core.Messaging.AuthService.Events;
 using FlowChat.Core.Messaging.UserProfileService.Events;
 using FlowChat.UserProfileService.Persistence;
 using FlowChat.Shared.Infrastructure.Silverback.Behaviors;
@@ -17,10 +17,10 @@ public static class SilverbackServiceRegistration
         IConfiguration configuration)
     {
         var settingsManager = new KafkaSettingsManager(configuration);
-        var createdProducerOptions = settingsManager.GetUserProfileCreatedProducerOptions();
-        var emailConfirmedProducerOptions = settingsManager.GetUserEmailConfirmedProducerOptions();
-        var emailVerificationRequestedProducerOptions = settingsManager.GetUserEmailVerificationRequestedProducerOptions();
-        var stateChangedProducerOptions = settingsManager.GetUserProfileStateChangedProducerOptions();
+        var createdProducerOptions = settingsManager.GetUserProfileCreatedProducerSettingsSection();
+        var emailConfirmedProducerOptions = settingsManager.GetUserEmailConfirmedProducerSettingsSection();
+        var emailVerificationRequestedProducerOptions = settingsManager.GetUserEmailVerificationRequestedProducerSettingsSection();
+        var stateChangedProducerOptions = settingsManager.GetUserProfileStateChangedProducerSettingsSection();
         var bootstrapServers = !string.IsNullOrWhiteSpace(createdProducerOptions.BootstrapServers)
             ? createdProducerOptions.BootstrapServers
             : stateChangedProducerOptions.BootstrapServers;

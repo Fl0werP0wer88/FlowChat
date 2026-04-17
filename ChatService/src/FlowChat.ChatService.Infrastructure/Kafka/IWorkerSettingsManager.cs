@@ -1,9 +1,9 @@
-using FlowChat.ChatService.Persistence.Configuration;
+﻿using FlowChat.ChatService.Persistence.Configuration;
 
 namespace FlowChat.ChatService.Infrastructure.Kafka;
 
 public interface IWorkerSettingsManager
 {
-    ChatMessageSentProducerOptions GetChatMessageSentProducerOptions();
-    OutboxPublisherRuntimeOptions GetOutboxPublisherRuntimeOptions();
+    ChatMessageSentProducerSettingsSection GetChatMessageSentProducerSettingsSection();
+    OutboxPublisherRuntimeSettingsSection GetOutboxPublisherRuntimeSettingsSection();
 }

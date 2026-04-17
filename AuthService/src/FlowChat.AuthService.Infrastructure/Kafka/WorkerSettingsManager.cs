@@ -1,4 +1,4 @@
-using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.Configuration;
 
 namespace FlowChat.AuthService.Infrastructure.Kafka;
 
@@ -11,8 +11,8 @@ public sealed class WorkerSettingsManager : IWorkerSettingsManager
         _configuration = configuration;
     }
 
-    public AccountRegisteredProducerOptions GetAccountRegisteredProducerOptions() =>
-        ResolveSection<AccountRegisteredProducerOptions>(AccountRegisteredProducerOptions.SectionName);
+    public AccountRegisteredProducerSettingsSection GetAccountRegisteredProducerSettingsSection() =>
+        ResolveSection<AccountRegisteredProducerSettingsSection>(AccountRegisteredProducerSettingsSection.SectionName);
 
     private TOptions ResolveSection<TOptions>(string sectionName)
         where TOptions : new()

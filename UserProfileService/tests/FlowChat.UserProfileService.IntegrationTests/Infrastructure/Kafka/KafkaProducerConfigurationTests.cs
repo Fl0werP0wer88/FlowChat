@@ -1,4 +1,4 @@
-using FlowChat.Core.Messaging.AuthService.Events;
+﻿using FlowChat.Core.Messaging.AuthService.Events;
 using FlowChat.Core.Messaging.UserProfileService.Events;
 using FlowChat.Shared.Infrastructure.Silverback.Kafka;
 using FlowChat.UserProfileService.Infrastructure;
@@ -37,10 +37,10 @@ public sealed class KafkaProducerConfigurationTests
         using var serviceProvider = services.BuildServiceProvider();
 
         var settingsManager = serviceProvider.GetRequiredService<IKafkaSettingsManager>();
-        var createdProducerOptions = settingsManager.GetUserProfileCreatedProducerOptions();
-        var emailConfirmedProducerOptions = settingsManager.GetUserEmailConfirmedProducerOptions();
-        var emailVerificationRequestedProducerOptions = settingsManager.GetUserEmailVerificationRequestedProducerOptions();
-        var stateChangedProducerOptions = settingsManager.GetUserProfileStateChangedProducerOptions();
+        var createdProducerOptions = settingsManager.GetUserProfileCreatedProducerSettingsSection();
+        var emailConfirmedProducerOptions = settingsManager.GetUserEmailConfirmedProducerSettingsSection();
+        var emailVerificationRequestedProducerOptions = settingsManager.GetUserEmailVerificationRequestedProducerSettingsSection();
+        var stateChangedProducerOptions = settingsManager.GetUserProfileStateChangedProducerSettingsSection();
         var typedCreatedProducerOptions = serviceProvider
             .GetRequiredService<IKafkaProducerOptions<UserProfileCreatedIntegrationEvent>>();
         var typedEmailConfirmedProducerOptions = serviceProvider
@@ -76,17 +76,17 @@ public sealed class KafkaProducerConfigurationTests
             .Build();
 
         var producerOptions = configuration
-            .GetSection(UserProfileCreatedProducerOptions.SectionName)
-            .Get<UserProfileCreatedProducerOptions>();
+            .GetSection(UserProfileCreatedProducerSettingsSection.SectionName)
+            .Get<UserProfileCreatedProducerSettingsSection>();
         var emailConfirmedProducerOptions = configuration
-            .GetSection(UserEmailConfirmedProducerOptions.SectionName)
-            .Get<UserEmailConfirmedProducerOptions>();
+            .GetSection(UserEmailConfirmedProducerSettingsSection.SectionName)
+            .Get<UserEmailConfirmedProducerSettingsSection>();
         var emailVerificationRequestedProducerOptions = configuration
-            .GetSection(UserEmailVerificationRequestedProducerOptions.SectionName)
-            .Get<UserEmailVerificationRequestedProducerOptions>();
+            .GetSection(UserEmailVerificationRequestedProducerSettingsSection.SectionName)
+            .Get<UserEmailVerificationRequestedProducerSettingsSection>();
         var stateChangedProducerOptions = configuration
-            .GetSection(UserProfileStateChangedProducerOptions.SectionName)
-            .Get<UserProfileStateChangedProducerOptions>();
+            .GetSection(UserProfileStateChangedProducerSettingsSection.SectionName)
+            .Get<UserProfileStateChangedProducerSettingsSection>();
 
         producerOptions.Should().NotBeNull();
         emailConfirmedProducerOptions.Should().NotBeNull();

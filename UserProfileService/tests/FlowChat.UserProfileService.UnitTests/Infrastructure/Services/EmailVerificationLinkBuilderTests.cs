@@ -1,4 +1,4 @@
-using FlowChat.UserProfileService.Infrastructure.Configuration;
+﻿using FlowChat.UserProfileService.Infrastructure.Configuration;
 using FlowChat.UserProfileService.Infrastructure.Services;
 using Moq;
 
@@ -12,8 +12,8 @@ public sealed class EmailVerificationLinkBuilderTests
     public void BuildEmailVerificationLink_WhenBaseUrlHasNoQuery_AppendsTokenQueryParameter()
     {
         _apiSettingsManagerMock
-            .Setup(x => x.GetConfirmationLinksSettings())
-            .Returns(new ConfirmationLinksSettings
+            .Setup(x => x.GetConfirmationLinksSettingsSection())
+            .Returns(new ConfirmationLinksSettingsSection
             {
                 EmailVerificationBaseUrl = "https://frontend.flowchat.local/verify"
             });
@@ -29,8 +29,8 @@ public sealed class EmailVerificationLinkBuilderTests
     public void BuildEmailVerificationLink_WhenBaseUrlAlreadyHasQuery_AppendsTokenWithAmpersand()
     {
         _apiSettingsManagerMock
-            .Setup(x => x.GetConfirmationLinksSettings())
-            .Returns(new ConfirmationLinksSettings
+            .Setup(x => x.GetConfirmationLinksSettingsSection())
+            .Returns(new ConfirmationLinksSettingsSection
             {
                 EmailVerificationBaseUrl = "https://frontend.flowchat.local/verify?source=email"
             });
@@ -46,8 +46,8 @@ public sealed class EmailVerificationLinkBuilderTests
     public void BuildEmailVerificationLink_WhenBaseUrlIsMissing_ThrowsInvalidOperationException()
     {
         _apiSettingsManagerMock
-            .Setup(x => x.GetConfirmationLinksSettings())
-            .Returns(new ConfirmationLinksSettings());
+            .Setup(x => x.GetConfirmationLinksSettingsSection())
+            .Returns(new ConfirmationLinksSettingsSection());
 
         var sut = new EmailVerificationLinkBuilder(_apiSettingsManagerMock.Object);
 

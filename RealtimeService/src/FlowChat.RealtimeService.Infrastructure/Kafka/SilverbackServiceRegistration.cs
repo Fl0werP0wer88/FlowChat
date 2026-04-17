@@ -1,4 +1,4 @@
-using FlowChat.Core.Messaging.RealtimeService.Events;
+﻿using FlowChat.Core.Messaging.RealtimeService.Events;
 using FlowChat.Shared.Infrastructure.Silverback.Behaviors;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -14,7 +14,7 @@ public static class SilverbackServiceRegistration
         IConfiguration configuration)
     {
         var settingsManager = new KafkaSettingsManager(configuration);
-        var producerOptions = settingsManager.GetRealtimeConnectionProducerOptions();
+        var producerOptions = settingsManager.GetRealtimeConnectionProducerSettingsSection();
 
         services.AddSilverback()
             .AddSingletonBrokerBehavior<CustomSpanAttributesProducerBehavior>()

@@ -1,4 +1,4 @@
-using FlowChat.Shared.API;
+﻿using FlowChat.Shared.API;
 using FlowChat.SocialGraphService.Application;
 using FlowChat.SocialGraphService.Infrastructure.Configuration;
 using FlowChat.SocialGraphService.Infrastructure;
@@ -19,25 +19,25 @@ public static class StartupExtensions
     public static WebApplication ConfigureServices(this WebApplicationBuilder builder)
     {
         var apiSettingsManager = new ApiSettingsManager(builder.Configuration);
-        var jwtSettings = apiSettingsManager.GetJwtSettings();
-        var apiRuntimeSettings = apiSettingsManager.GetApiRuntimeSettings();
+        var jwtSettings = apiSettingsManager.GetJwtSettingsSection();
+        var apiRuntimeSettings = apiSettingsManager.GetApiRuntimeSettingsSection();
         var jwtKey = jwtSettings.Key;
         var jwtIssuer = jwtSettings.Issuer;
         var jwtAudience = jwtSettings.Audience;
 
         if (string.IsNullOrWhiteSpace(jwtKey))
         {
-            throw new InvalidOperationException("Missing configuration value: JwtSettings:Key.");
+            throw new InvalidOperationException("Missing configuration value: JwtSettingsSection:Key.");
         }
 
         if (string.IsNullOrWhiteSpace(jwtIssuer))
         {
-            throw new InvalidOperationException("Missing configuration value: JwtSettings:Issuer.");
+            throw new InvalidOperationException("Missing configuration value: JwtSettingsSection:Issuer.");
         }
 
         if (string.IsNullOrWhiteSpace(jwtAudience))
         {
-            throw new InvalidOperationException("Missing configuration value: JwtSettings:Audience.");
+            throw new InvalidOperationException("Missing configuration value: JwtSettingsSection:Audience.");
         }
 
         builder.Services.AddApiApplicationServices();

@@ -1,4 +1,4 @@
-using FlowChat.AuthService.OutboxPublisher.Configuration;
+﻿using FlowChat.AuthService.OutboxPublisher.Configuration;
 using FlowChat.AuthService.Persistence;
 using FlowChat.Core.Messaging.AuthService.Events;
 using FlowChat.Shared.Infrastructure.Silverback.Behaviors;
@@ -17,18 +17,18 @@ public static class OutboxPublisherServiceRegistration
         IConfiguration configuration)
     {
         var outboxOptions = configuration
-            .GetSection(OutboxPublisherRuntimeOptions.SectionName)
-            .Get<OutboxPublisherRuntimeOptions>()
-            ?? new OutboxPublisherRuntimeOptions();
+            .GetSection(OutboxPublisherRuntimeSettingsSection.SectionName)
+            .Get<OutboxPublisherRuntimeSettingsSection>()
+            ?? new OutboxPublisherRuntimeSettingsSection();
         var accountRegisteredOptions = configuration
-            .GetSection(AccountRegisteredProducerOptions.SectionName)
-            .Get<AccountRegisteredProducerOptions>()
-            ?? new AccountRegisteredProducerOptions();
+            .GetSection(AccountRegisteredProducerSettingsSection.SectionName)
+            .Get<AccountRegisteredProducerSettingsSection>()
+            ?? new AccountRegisteredProducerSettingsSection();
 
-        services.AddOptions<OutboxPublisherRuntimeOptions>()
-            .BindConfiguration(OutboxPublisherRuntimeOptions.SectionName);
-        services.AddOptions<AccountRegisteredProducerOptions>()
-            .BindConfiguration(AccountRegisteredProducerOptions.SectionName);
+        services.AddOptions<OutboxPublisherRuntimeSettingsSection>()
+            .BindConfiguration(OutboxPublisherRuntimeSettingsSection.SectionName);
+        services.AddOptions<AccountRegisteredProducerSettingsSection>()
+            .BindConfiguration(AccountRegisteredProducerSettingsSection.SectionName);
 
         services.AddSilverback()
             .AddSingletonBrokerBehavior<CustomSpanAttributesProducerBehavior>()

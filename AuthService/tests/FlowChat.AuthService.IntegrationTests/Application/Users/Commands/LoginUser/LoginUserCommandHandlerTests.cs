@@ -1,4 +1,4 @@
-using FlowChat.AuthService.Application.Contracts.Infrastructure;
+﻿using FlowChat.AuthService.Application.Contracts.Infrastructure;
 using FlowChat.AuthService.Application.Features.User.Commands.LoginUser;
 using FlowChat.AuthService.Infrastructure.Configuration;
 using FlowChat.AuthService.Infrastructure.Services;
@@ -41,7 +41,7 @@ public sealed class LoginUserCommandHandlerTests : IDisposable
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["JwtSettings:Audience"] = "FlowChat.Client"
+                ["JwtSettingsSection:Audience"] = "FlowChat.Client"
             })
             .Build();
 

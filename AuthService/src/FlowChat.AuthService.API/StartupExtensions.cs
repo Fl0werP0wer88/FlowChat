@@ -1,4 +1,4 @@
-using FlowChat.Shared.API;
+﻿using FlowChat.Shared.API;
 using FlowChat.AuthService.Application;
 using FlowChat.AuthService.Infrastructure.Configuration;
 using FlowChat.AuthService.Infrastructure;
@@ -14,7 +14,7 @@ public static class StartupExtensions
     public static WebApplication ConfigureServices(this WebApplicationBuilder builder)
     {
         var apiSettingsManager = new ApiSettingsManager(builder.Configuration);
-        var apiRuntimeSettings = apiSettingsManager.GetApiRuntimeSettings();
+        var apiRuntimeSettings = apiSettingsManager.GetApiRuntimeSettingsSection();
 
         builder.Services
         .AddApplicationServices()

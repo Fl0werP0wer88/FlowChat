@@ -1,4 +1,4 @@
-using FlowChat.AuthService.Infrastructure;
+﻿using FlowChat.AuthService.Infrastructure;
 using FlowChat.AuthService.Infrastructure.Configuration;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
@@ -9,16 +9,16 @@ namespace FlowChat.AuthService.UnitTests;
 public sealed class ApiSettingsManagerTests
 {
     [Fact]
-    public void ApiSettingsManager_ResolvesJwtRuntimeAndInternalApiSettings()
+    public void ApiSettingsManager_ResolvesJwtRuntimeAndInternalApiSettingsSection()
     {
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["JwtSettings:Key"] = "jwt-key",
-                ["JwtSettings:EncryptionKey"] = "12345678901234567890123456789012",
-                ["JwtSettings:Issuer"] = "jwt-issuer",
-                ["JwtSettings:Audience"] = "jwt-audience",
-                ["JwtSettings:ExpiresMinutes"] = "90",
+                ["JwtSettingsSection:Key"] = "jwt-key",
+                ["JwtSettingsSection:EncryptionKey"] = "12345678901234567890123456789012",
+                ["JwtSettingsSection:Issuer"] = "jwt-issuer",
+                ["JwtSettingsSection:Audience"] = "jwt-audience",
+                ["JwtSettingsSection:ExpiresMinutes"] = "90",
                 ["FlowChat:InternalApi:ApiKey"] = "internal-key",
                 ["ApiUrl"] = "https://localhost:5000",
                 ["BlazorUrl"] = "https://localhost:5010"
@@ -26,9 +26,9 @@ public sealed class ApiSettingsManagerTests
             .Build();
 
         var settingsManager = new ApiSettingsManager(configuration);
-        var jwtSettings = settingsManager.GetJwtSettings();
-        var internalApiSettings = settingsManager.GetInternalApiSettings();
-        var apiRuntimeSettings = settingsManager.GetApiRuntimeSettings();
+        var jwtSettings = settingsManager.GetJwtSettingsSection();
+        var internalApiSettings = settingsManager.GetInternalApiSettingsSection();
+        var apiRuntimeSettings = settingsManager.GetApiRuntimeSettingsSection();
 
         jwtSettings.Key.Should().Be("jwt-key");
         jwtSettings.EncryptionKey.Should().Be("12345678901234567890123456789012");

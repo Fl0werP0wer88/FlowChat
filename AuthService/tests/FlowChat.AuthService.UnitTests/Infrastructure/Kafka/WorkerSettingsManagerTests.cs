@@ -1,4 +1,4 @@
-using FlowChat.AuthService.Infrastructure.Kafka;
+﻿using FlowChat.AuthService.Infrastructure.Kafka;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 
@@ -7,7 +7,7 @@ namespace FlowChat.AuthService.UnitTests;
 public sealed class WorkerSettingsManagerTests
 {
     [Fact]
-    public void GetAccountRegisteredProducerOptions_WhenSectionExists_ReturnsConfiguredValues()
+    public void GetAccountRegisteredProducerSettingsSection_WhenSectionExists_ReturnsConfiguredValues()
     {
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
@@ -19,19 +19,19 @@ public sealed class WorkerSettingsManagerTests
 
         var sut = new WorkerSettingsManager(configuration);
 
-        var result = sut.GetAccountRegisteredProducerOptions();
+        var result = sut.GetAccountRegisteredProducerSettingsSection();
 
         result.BootstrapServers.Should().Be("broker:9092");
         result.Topic.Should().Be("account-registered");
     }
 
     [Fact]
-    public void GetAccountRegisteredProducerOptions_WhenSectionIsMissing_ReturnsDefaultOptions()
+    public void GetAccountRegisteredProducerSettingsSection_WhenSectionIsMissing_ReturnsDefaultOptions()
     {
         var configuration = new ConfigurationBuilder().Build();
         var sut = new WorkerSettingsManager(configuration);
 
-        var result = sut.GetAccountRegisteredProducerOptions();
+        var result = sut.GetAccountRegisteredProducerSettingsSection();
 
         result.BootstrapServers.Should().Be("localhost:9092");
         result.Topic.Should().Be("dev.flowchat.identity.user.v1");

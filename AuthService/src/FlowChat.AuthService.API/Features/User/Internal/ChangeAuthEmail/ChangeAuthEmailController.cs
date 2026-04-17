@@ -1,4 +1,4 @@
-using FlowChat.AuthService.Application.Features.User.Commands.ChangeAuthEmail;
+﻿using FlowChat.AuthService.Application.Features.User.Commands.ChangeAuthEmail;
 using FlowChat.AuthService.Infrastructure.Configuration;
 using FlowChat.Shared.API;
 using MediatR;
@@ -14,7 +14,7 @@ public sealed class ChangeAuthEmailController : ApiControllerBase
     private readonly IMediator _mediator;
 
     public ChangeAuthEmailController(IMediator mediator, IApiSettingsManager apiSettingsManager)
-        : base(() => apiSettingsManager.GetInternalApiSettings().ApiKey)
+        : base(() => apiSettingsManager.GetInternalApiSettingsSection().ApiKey)
     {
         _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
         ArgumentNullException.ThrowIfNull(apiSettingsManager);

@@ -1,4 +1,4 @@
-using FlowChat.Core.Messaging.AuthService.Events;
+﻿using FlowChat.Core.Messaging.AuthService.Events;
 using FlowChat.Core.Messaging.UserProfileService.Events;
 using FlowChat.UserProfileService.OutboxPublisher.Configuration;
 using FlowChat.UserProfileService.Persistence;
@@ -18,25 +18,25 @@ public static class OutboxPublisherServiceRegistration
         IConfiguration configuration)
     {
         var createdProducerOptions = configuration
-            .GetSection(UserProfileCreatedProducerOptions.SectionName)
-            .Get<UserProfileCreatedProducerOptions>()
-            ?? new UserProfileCreatedProducerOptions();
+            .GetSection(UserProfileCreatedProducerSettingsSection.SectionName)
+            .Get<UserProfileCreatedProducerSettingsSection>()
+            ?? new UserProfileCreatedProducerSettingsSection();
         var emailConfirmedProducerOptions = configuration
-            .GetSection(UserEmailConfirmedProducerOptions.SectionName)
-            .Get<UserEmailConfirmedProducerOptions>()
-            ?? new UserEmailConfirmedProducerOptions();
+            .GetSection(UserEmailConfirmedProducerSettingsSection.SectionName)
+            .Get<UserEmailConfirmedProducerSettingsSection>()
+            ?? new UserEmailConfirmedProducerSettingsSection();
         var emailVerificationRequestedProducerOptions = configuration
-            .GetSection(UserEmailVerificationRequestedProducerOptions.SectionName)
-            .Get<UserEmailVerificationRequestedProducerOptions>()
-            ?? new UserEmailVerificationRequestedProducerOptions();
+            .GetSection(UserEmailVerificationRequestedProducerSettingsSection.SectionName)
+            .Get<UserEmailVerificationRequestedProducerSettingsSection>()
+            ?? new UserEmailVerificationRequestedProducerSettingsSection();
         var stateChangedProducerOptions = configuration
-            .GetSection(UserProfileStateChangedProducerOptions.SectionName)
-            .Get<UserProfileStateChangedProducerOptions>()
-            ?? new UserProfileStateChangedProducerOptions();
+            .GetSection(UserProfileStateChangedProducerSettingsSection.SectionName)
+            .Get<UserProfileStateChangedProducerSettingsSection>()
+            ?? new UserProfileStateChangedProducerSettingsSection();
         var outboxOptions = configuration
-            .GetSection(OutboxPublisherRuntimeOptions.SectionName)
-            .Get<OutboxPublisherRuntimeOptions>()
-            ?? new OutboxPublisherRuntimeOptions();
+            .GetSection(OutboxPublisherRuntimeSettingsSection.SectionName)
+            .Get<OutboxPublisherRuntimeSettingsSection>()
+            ?? new OutboxPublisherRuntimeSettingsSection();
         var bootstrapServers = !string.IsNullOrWhiteSpace(createdProducerOptions.BootstrapServers)
             ? createdProducerOptions.BootstrapServers
             : stateChangedProducerOptions.BootstrapServers;

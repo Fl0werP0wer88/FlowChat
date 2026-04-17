@@ -1,4 +1,4 @@
-using FlowChat.AuthService.Consumers;
+﻿using FlowChat.AuthService.Consumers;
 using FlowChat.AuthService.Consumers.Kafka;
 using FlowChat.AuthService.Consumers.Services;
 using FluentAssertions;
@@ -45,8 +45,8 @@ public sealed class UserEmailConfirmedConsumerConfigurationTests
             .Build();
 
         var consumerOptions = configuration
-            .GetSection(UserEmailConfirmedConsumerOptions.SectionName)
-            .Get<UserEmailConfirmedConsumerOptions>();
+            .GetSection(UserEmailConfirmedConsumerSettingsSection.SectionName)
+            .Get<UserEmailConfirmedConsumerSettingsSection>();
 
         consumerOptions.Should().NotBeNull();
         consumerOptions!.GroupId.Should().Be("auth-service");

@@ -1,4 +1,4 @@
-using FlowChat.Core.Contracts;
+﻿using FlowChat.Core.Contracts;
 using FlowChat.Core.Domain;
 using FlowChat.PresenceService.Application.Features.Presence.Queries.GetUserPresencePreferences;
 using FlowChat.PresenceService.Infrastructure.Configuration;
@@ -16,7 +16,7 @@ public sealed class GetUserPresencePreferencesInternalController : ApiController
     private readonly IMediator _mediator;
 
     public GetUserPresencePreferencesInternalController(IMediator mediator, IApiSettingsManager apiSettingsManager)
-        : base(() => apiSettingsManager.GetInternalApiSettings().ApiKey)
+        : base(() => apiSettingsManager.GetInternalApiSettingsSection().ApiKey)
     {
         _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
         ArgumentNullException.ThrowIfNull(apiSettingsManager);

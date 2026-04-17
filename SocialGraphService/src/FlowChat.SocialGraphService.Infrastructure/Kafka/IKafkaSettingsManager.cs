@@ -1,7 +1,7 @@
-namespace FlowChat.SocialGraphService.Infrastructure.Kafka;
+﻿namespace FlowChat.SocialGraphService.Infrastructure.Kafka;
 
 public interface IKafkaSettingsManager
 {
-    ContactAddedProducerOptions GetContactAddedProducerOptions();
-    ContactDeletedProducerOptions GetContactDeletedProducerOptions();
+    ContactAddedProducerSettingsSection GetContactAddedProducerSettingsSection();
+    ContactDeletedProducerSettingsSection GetContactDeletedProducerSettingsSection();
 }

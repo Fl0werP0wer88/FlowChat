@@ -1,4 +1,4 @@
-using Confluent.Kafka;
+﻿using Confluent.Kafka;
 using FlowChat.Core.Messaging.AuthService.Events;
 using FlowChat.UserProfileService.Consumers.Configuration;
 using FlowChat.UserProfileService.Consumers.Kafka;
@@ -20,15 +20,15 @@ public static class ConsumersServiceRegistration
         IConfiguration configuration)
     {
         var consumerOptions = configuration
-            .GetSection(AccountRegisteredConsumerOptions.SectionName)
-            .Get<AccountRegisteredConsumerOptions>()
-            ?? new AccountRegisteredConsumerOptions();
+            .GetSection(AccountRegisteredConsumerSettingsSection.SectionName)
+            .Get<AccountRegisteredConsumerSettingsSection>()
+            ?? new AccountRegisteredConsumerSettingsSection();
 
-        services.AddOptions<UserProfileApiSettings>()
-            .BindConfiguration(UserProfileApiSettings.SectionName);
+        services.AddOptions<UserProfileApiSettingsSection>()
+            .BindConfiguration(UserProfileApiSettingsSection.SectionName);
         services.AddHttpClient(UserProfileInternalApiClient.HttpClientName, (serviceProvider, httpClient) =>
         {
-            var apiSettings = serviceProvider.GetRequiredService<IOptions<UserProfileApiSettings>>().Value;
+            var apiSettings = serviceProvider.GetRequiredService<IOptions<UserProfileApiSettingsSection>>().Value;
             if (!Uri.TryCreate(apiSettings.BaseUrl, UriKind.Absolute, out var baseAddress))
             {
                 throw new InvalidOperationException("UserProfileApi:BaseUrl must be an absolute URI.");

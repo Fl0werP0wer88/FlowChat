@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 using System.Text.Json.Serialization;
 using FlowChat.Shared.API;
 using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
@@ -17,27 +17,27 @@ public static class StartupExtensions
     public static WebApplication ConfigureServices(this WebApplicationBuilder builder)
     {
         var apiSettingsManager = new ApiSettingsManager(builder.Configuration);
-        var apiRuntimeSettings = apiSettingsManager.GetApiRuntimeSettings();
-        var jwtSettings = apiSettingsManager.GetJwtSettings();
-        var realtimeConnectionsSettings = apiSettingsManager.GetRealtimeConnectionsSettings();
-        var realtimeConnectionProducerOptions = new KafkaSettingsManager(builder.Configuration).GetRealtimeConnectionProducerOptions();
+        var apiRuntimeSettings = apiSettingsManager.GetApiRuntimeSettingsSection();
+        var jwtSettings = apiSettingsManager.GetJwtSettingsSection();
+        var realtimeConnectionsSettings = apiSettingsManager.GetRealtimeConnectionsSettingsSection();
+        var realtimeConnectionProducerOptions = new KafkaSettingsManager(builder.Configuration).GetRealtimeConnectionProducerSettingsSection();
         var jwtKey = jwtSettings.Key;
         var jwtIssuer = jwtSettings.Issuer;
         var jwtAudience = jwtSettings.Audience;
 
         if (string.IsNullOrWhiteSpace(jwtKey))
         {
-            throw new InvalidOperationException("Missing configuration value: JwtSettings:Key.");
+            throw new InvalidOperationException("Missing configuration value: JwtSettingsSection:Key.");
         }
 
         if (string.IsNullOrWhiteSpace(jwtIssuer))
         {
-            throw new InvalidOperationException("Missing configuration value: JwtSettings:Issuer.");
+            throw new InvalidOperationException("Missing configuration value: JwtSettingsSection:Issuer.");
         }
 
         if (string.IsNullOrWhiteSpace(jwtAudience))
         {
-            throw new InvalidOperationException("Missing configuration value: JwtSettings:Audience.");
+            throw new InvalidOperationException("Missing configuration value: JwtSettingsSection:Audience.");
         }
 
         if (string.IsNullOrWhiteSpace(realtimeConnectionsSettings.RedisConnectionString))

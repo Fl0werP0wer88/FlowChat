@@ -1,4 +1,4 @@
-using FlowChat.AuthService.Infrastructure;
+﻿using FlowChat.AuthService.Infrastructure;
 using FlowChat.AuthService.Infrastructure.Kafka;
 using FlowChat.Core.Messaging.AuthService.Events;
 using FlowChat.Shared.Infrastructure.Silverback.Kafka;
@@ -31,7 +31,7 @@ public sealed class KafkaProducerConfigurationTests
         using var serviceProvider = services.BuildServiceProvider();
 
         var settingsManager = serviceProvider.GetRequiredService<IWorkerSettingsManager>();
-        var accountRegisteredOptions = settingsManager.GetAccountRegisteredProducerOptions();
+        var accountRegisteredOptions = settingsManager.GetAccountRegisteredProducerSettingsSection();
         var typedAccountRegisteredOptions = serviceProvider
             .GetRequiredService<IKafkaProducerOptions<AccountRegisteredIntegrationEvent>>();
 
@@ -52,8 +52,8 @@ public sealed class KafkaProducerConfigurationTests
             .Build();
 
         var accountRegisteredOptions = configuration
-            .GetSection(AccountRegisteredProducerOptions.SectionName)
-            .Get<AccountRegisteredProducerOptions>();
+            .GetSection(AccountRegisteredProducerSettingsSection.SectionName)
+            .Get<AccountRegisteredProducerSettingsSection>();
 
         accountRegisteredOptions.Should().NotBeNull();
         accountRegisteredOptions!.BootstrapServers.Should().Be("localhost:9092");

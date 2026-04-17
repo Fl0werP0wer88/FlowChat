@@ -1,4 +1,4 @@
-using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.Configuration;
 
 namespace FlowChat.PresenceService.Infrastructure.Configuration;
 
@@ -6,18 +6,18 @@ public sealed class ApiSettingsManager(IConfiguration configuration) : IApiSetti
 {
     private readonly IConfiguration _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
 
-    public JwtSettings GetJwtSettings() =>
-        _configuration.GetSection(JwtSettings.SectionName).Get<JwtSettings>() ?? new JwtSettings();
+    public JwtSettingsSection GetJwtSettingsSection() =>
+        _configuration.GetSection(JwtSettingsSection.SectionName).Get<JwtSettingsSection>() ?? new JwtSettingsSection();
 
-    public InternalApiSettings GetInternalApiSettings() =>
-        _configuration.GetSection(InternalApiSettings.SectionName).Get<InternalApiSettings>() ?? new InternalApiSettings();
+    public InternalApiSettingsSection GetInternalApiSettingsSection() =>
+        _configuration.GetSection(InternalApiSettingsSection.SectionName).Get<InternalApiSettingsSection>() ?? new InternalApiSettingsSection();
 
-    public PresenceStatusSettings GetPresenceStatusSettings()
+    public PresenceStatusSettingsSection GetPresenceStatusSettingsSection()
     {
-        var settings = _configuration.GetSection(PresenceStatusSettings.SectionName).Get<PresenceStatusSettings>()
-            ?? new PresenceStatusSettings();
+        var settings = _configuration.GetSection(PresenceStatusSettingsSection.SectionName).Get<PresenceStatusSettingsSection>()
+            ?? new PresenceStatusSettingsSection();
 
-        settings.RedisConnectionString = _configuration.GetConnectionString(PresenceStatusSettings.RedisConnectionStringName)
+        settings.RedisConnectionString = _configuration.GetConnectionString(PresenceStatusSettingsSection.RedisConnectionStringName)
             ?? settings.RedisConnectionString;
 
         return settings;

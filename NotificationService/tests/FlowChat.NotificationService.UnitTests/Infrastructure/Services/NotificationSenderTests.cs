@@ -1,4 +1,4 @@
-using FlowChat.NotificationService.Application.Contracts.Infrastructure;
+﻿using FlowChat.NotificationService.Application.Contracts.Infrastructure;
 using FlowChat.NotificationService.Infrastructure.Configuration;
 using FlowChat.NotificationService.Infrastructure.Services;
 using FluentAssertions;
@@ -18,7 +18,7 @@ public sealed class NotificationSenderTests
         _sender = new NotificationSender(_settingsManagerMock.Object, _loggerMock.Object);
     }
 
-    private void SetupEmailSettings(
+    private void SetupEmailSettingsSection(
         string smtpHost = "smtp.example.com",
         int smtpPort = 587,
         string fromEmail = "noreply@example.com",
@@ -26,8 +26,8 @@ public sealed class NotificationSenderTests
         bool enableSsl = false)
     {
         _settingsManagerMock
-            .Setup(x => x.GetEmailSettings())
-            .Returns(new EmailSettings
+            .Setup(x => x.GetEmailSettingsSection())
+            .Returns(new EmailSettingsSection
             {
                 SmtpHost = smtpHost,
                 SmtpPort = smtpPort,
@@ -42,7 +42,7 @@ public sealed class NotificationSenderTests
     [Fact]
     public async Task SendAsync_WhenSmtpHostIsMissing_ThrowsInvalidOperationException()
     {
-        SetupEmailSettings(smtpHost: "");
+        SetupEmailSettingsSection(smtpHost: "");
 
         var request = new NotificationSendRequest(Guid.NewGuid(), "user@example.com", "Test Subject", "Body");
 
@@ -55,7 +55,7 @@ public sealed class NotificationSenderTests
     [Fact]
     public async Task SendAsync_WhenFromEmailIsMissing_ThrowsInvalidOperationException()
     {
-        SetupEmailSettings(fromEmail: "");
+        SetupEmailSettingsSection(fromEmail: "");
 
         var request = new NotificationSendRequest(Guid.NewGuid(), "user@example.com", "Test Subject", "Body");
 
@@ -68,7 +68,7 @@ public sealed class NotificationSenderTests
     [Fact]
     public async Task SendAsync_WhenSmtpPortIsZero_ThrowsInvalidOperationException()
     {
-        SetupEmailSettings(smtpPort: 0);
+        SetupEmailSettingsSection(smtpPort: 0);
 
         var request = new NotificationSendRequest(Guid.NewGuid(), "user@example.com", "Test Subject", "Body");
 
@@ -81,7 +81,7 @@ public sealed class NotificationSenderTests
     [Fact]
     public async Task SendAsync_WhenRecipientEmailIsMissing_ThrowsInvalidOperationException()
     {
-        SetupEmailSettings();
+        SetupEmailSettingsSection();
 
         var request = new NotificationSendRequest(Guid.NewGuid(), "", "Test Subject", "Body");
 
@@ -94,7 +94,7 @@ public sealed class NotificationSenderTests
     [Fact]
     public async Task SendAsync_WhenSubjectIsMissing_ThrowsInvalidOperationException()
     {
-        SetupEmailSettings();
+        SetupEmailSettingsSection();
 
         var request = new NotificationSendRequest(Guid.NewGuid(), "user@example.com", "", "Body");
 
@@ -107,7 +107,7 @@ public sealed class NotificationSenderTests
     [Fact]
     public async Task SendAsync_WhenCancellationIsRequested_ThrowsOperationCanceledException()
     {
-        SetupEmailSettings();
+        SetupEmailSettingsSection();
 
         using var cts = new CancellationTokenSource();
         cts.Cancel();
@@ -123,7 +123,7 @@ public sealed class NotificationSenderTests
     public async Task SendAsync_WhenSmtpConnectionFails_ReturnsFailureResult()
     {
         // Set valid settings but unreachable SMTP host — connection will fail
-        SetupEmailSettings(smtpHost: "127.0.0.1", smtpPort: 1, fromEmail: "noreply@example.com");
+        SetupEmailSettingsSection(smtpHost: "127.0.0.1", smtpPort: 1, fromEmail: "noreply@example.com");
 
         var request = new NotificationSendRequest(Guid.NewGuid(), "user@example.com", "Test Subject", "Body");
 

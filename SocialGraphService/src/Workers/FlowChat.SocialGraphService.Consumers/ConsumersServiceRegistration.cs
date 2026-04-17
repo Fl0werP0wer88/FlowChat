@@ -1,4 +1,4 @@
-using Confluent.Kafka;
+﻿using Confluent.Kafka;
 using FlowChat.SocialGraphService.Consumers.Configuration;
 using FlowChat.SocialGraphService.Consumers.Kafka;
 using FlowChat.SocialGraphService.Consumers.Services;
@@ -19,15 +19,15 @@ public static class ConsumersServiceRegistration
         IConfiguration configuration)
     {
         var consumerOptions = configuration
-            .GetSection(UserProfileConsumerOptions.SectionName)
-            .Get<UserProfileConsumerOptions>()
-            ?? new UserProfileConsumerOptions();
+            .GetSection(UserProfileConsumerSettingsSection.SectionName)
+            .Get<UserProfileConsumerSettingsSection>()
+            ?? new UserProfileConsumerSettingsSection();
 
-        services.AddOptions<SocialGraphApiSettings>()
-            .BindConfiguration(SocialGraphApiSettings.SectionName);
+        services.AddOptions<SocialGraphApiSettingsSection>()
+            .BindConfiguration(SocialGraphApiSettingsSection.SectionName);
         services.AddHttpClient(SocialGraphInternalApiClient.HttpClientName, (serviceProvider, httpClient) =>
         {
-            var apiSettings = serviceProvider.GetRequiredService<IOptions<SocialGraphApiSettings>>().Value;
+            var apiSettings = serviceProvider.GetRequiredService<IOptions<SocialGraphApiSettingsSection>>().Value;
             if (!Uri.TryCreate(apiSettings.BaseUrl, UriKind.Absolute, out var baseAddress))
             {
                 throw new InvalidOperationException("SocialGraphApi:BaseUrl must be an absolute URI.");

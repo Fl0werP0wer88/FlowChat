@@ -1,15 +1,15 @@
-using Confluent.Kafka;
+﻿using Confluent.Kafka;
 using FlowChat.AuthService.OutboxPublisher.Configuration;
 using Microsoft.Extensions.Options;
 
 namespace FlowChat.AuthService.OutboxPublisher.Diagnostics;
 
 public sealed class KafkaConnectivityProbe(
-    IOptions<AccountRegisteredProducerOptions> accountRegisteredOptions)
+    IOptions<AccountRegisteredProducerSettingsSection> accountRegisteredOptions)
     : IKafkaConnectivityProbe
 {
     private static readonly TimeSpan MetadataTimeout = TimeSpan.FromSeconds(5);
-    private readonly AccountRegisteredProducerOptions _accountRegisteredOptions = accountRegisteredOptions.Value;
+    private readonly AccountRegisteredProducerSettingsSection _accountRegisteredOptions = accountRegisteredOptions.Value;
 
     public Task ProbeAsync(CancellationToken cancellationToken)
     {

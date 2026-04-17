@@ -1,4 +1,4 @@
-using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.Configuration;
 
 namespace FlowChat.SocialGraphService.Infrastructure.Configuration;
 
@@ -11,21 +11,21 @@ public sealed class ApiSettingsManager : IApiSettingsManager
         _configuration = configuration;
     }
 
-    public JwtSettings GetJwtSettings() =>
-        _configuration.GetSection(JwtSettings.SectionName).Get<JwtSettings>() ?? new JwtSettings();
+    public JwtSettingsSection GetJwtSettingsSection() =>
+        _configuration.GetSection(JwtSettingsSection.SectionName).Get<JwtSettingsSection>() ?? new JwtSettingsSection();
 
-    public ApiRuntimeSettings GetApiRuntimeSettings()
+    public ApiRuntimeSettingsSection GetApiRuntimeSettingsSection()
     {
-        var settings = new ApiRuntimeSettings();
+        var settings = new ApiRuntimeSettingsSection();
 
-        _configuration.GetSection("FlowChat").Bind(settings);
+        _configuration.GetSection(ApiRuntimeSettingsSection.SectionName).Bind(settings);
         settings.ApiUrl = _configuration["ApiUrl"] ?? settings.ApiUrl;
         settings.BlazorUrl = _configuration["BlazorUrl"] ?? settings.BlazorUrl;
 
         return settings;
     }
 
-    public InternalApiSettings GetInternalApiSettings() =>
-        _configuration.GetSection(InternalApiSettings.SectionName).Get<InternalApiSettings>()
-        ?? new InternalApiSettings();
+    public InternalApiSettingsSection GetInternalApiSettingsSection() =>
+        _configuration.GetSection(InternalApiSettingsSection.SectionName).Get<InternalApiSettingsSection>()
+        ?? new InternalApiSettingsSection();
 }

@@ -1,4 +1,4 @@
-using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.Configuration;
 
 namespace FlowChat.RealtimeService.Infrastructure.Configuration;
 
@@ -6,35 +6,35 @@ public sealed class ApiSettingsManager(IConfiguration configuration) : IApiSetti
 {
     private readonly IConfiguration _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
 
-    public JwtSettings GetJwtSettings() =>
-        _configuration.GetSection(JwtSettings.SectionName).Get<JwtSettings>() ?? new JwtSettings();
+    public JwtSettingsSection GetJwtSettingsSection() =>
+        _configuration.GetSection(JwtSettingsSection.SectionName).Get<JwtSettingsSection>() ?? new JwtSettingsSection();
 
-    public ApiRuntimeSettings GetApiRuntimeSettings()
+    public ApiRuntimeSettingsSection GetApiRuntimeSettingsSection()
     {
-        var settings = new ApiRuntimeSettings();
+        var settings = new ApiRuntimeSettingsSection();
 
-        _configuration.GetSection("FlowChat").Bind(settings);
+        _configuration.GetSection(ApiRuntimeSettingsSection.SectionName).Bind(settings);
         settings.ApiUrl = _configuration["ApiUrl"] ?? settings.ApiUrl;
         settings.BlazorUrl = _configuration["BlazorUrl"] ?? settings.BlazorUrl;
 
         return settings;
     }
 
-    public InternalApiSettings GetInternalApiSettings() =>
-        _configuration.GetSection(InternalApiSettings.SectionName).Get<InternalApiSettings>() ?? new InternalApiSettings();
+    public InternalApiSettingsSection GetInternalApiSettingsSection() =>
+        _configuration.GetSection(InternalApiSettingsSection.SectionName).Get<InternalApiSettingsSection>() ?? new InternalApiSettingsSection();
 
-    public RealtimeConnectionsSettings GetRealtimeConnectionsSettings()
+    public RealtimeConnectionsSettingsSection GetRealtimeConnectionsSettingsSection()
     {
-        var settings = _configuration.GetSection(RealtimeConnectionsSettings.SectionName).Get<RealtimeConnectionsSettings>()
-            ?? new RealtimeConnectionsSettings();
+        var settings = _configuration.GetSection(RealtimeConnectionsSettingsSection.SectionName).Get<RealtimeConnectionsSettingsSection>()
+            ?? new RealtimeConnectionsSettingsSection();
 
-        settings.RedisConnectionString = _configuration.GetConnectionString(RealtimeConnectionsSettings.RedisConnectionStringName)
+        settings.RedisConnectionString = _configuration.GetConnectionString(RealtimeConnectionsSettingsSection.RedisConnectionStringName)
             ?? settings.RedisConnectionString;
 
         return settings;
     }
 
-    public PresenceServiceSettings GetPresenceServiceSettings() =>
-        _configuration.GetSection(PresenceServiceSettings.SectionName).Get<PresenceServiceSettings>()
-            ?? new PresenceServiceSettings();
+    public PresenceServiceSettingsSection GetPresenceServiceSettingsSection() =>
+        _configuration.GetSection(PresenceServiceSettingsSection.SectionName).Get<PresenceServiceSettingsSection>()
+            ?? new PresenceServiceSettingsSection();
 }

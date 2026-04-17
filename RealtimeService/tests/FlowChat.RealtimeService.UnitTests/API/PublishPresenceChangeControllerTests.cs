@@ -1,4 +1,4 @@
-using AutoFixture;
+﻿using AutoFixture;
 using FlowChat.Core.Domain;
 using FlowChat.RealtimeService.Api.Features.Realtime.Internal.PublishPresenceChange;
 using FlowChat.RealtimeService.Application.Features.Presence.Commands.PublishPresenceChange;
@@ -66,8 +66,8 @@ public sealed class PublishPresenceChangeControllerTests
     {
         var apiSettingsManagerMock = new Mock<IApiSettingsManager>();
         apiSettingsManagerMock
-            .Setup(x => x.GetInternalApiSettings())
-            .Returns(new InternalApiSettings { ApiKey = expectedApiKey });
+            .Setup(x => x.GetInternalApiSettingsSection())
+            .Returns(new InternalApiSettingsSection { ApiKey = expectedApiKey });
 
         var controller = new PublishPresenceChangeController(mediatorMock.Object, apiSettingsManagerMock.Object)
         {

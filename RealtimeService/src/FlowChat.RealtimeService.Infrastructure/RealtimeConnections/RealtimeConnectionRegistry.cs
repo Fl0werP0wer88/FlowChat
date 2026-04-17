@@ -1,4 +1,4 @@
-using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
+﻿using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
 using FlowChat.RealtimeService.Infrastructure.Configuration;
 using FlowChat.RealtimeService.Infrastructure.RealtimeConnections.ConnectionsTracker;
 using FlowChat.RealtimeService.Infrastructure.RealtimeConnections.Stores.ConnectionStore;
@@ -14,7 +14,7 @@ internal sealed class RealtimeConnectionRegistry(
     IRealtimeRoutingTopologyStore routingTopologyStore,
     IUnitOfWork unitOfWork,
     IActiveConnectionsTracker activeConnectionsTracker,
-    RealtimeConnectionsSettings settings) : IRealtimeConnectionRegistry
+    RealtimeConnectionsSettingsSection settings) : IRealtimeConnectionRegistry
 {
     private readonly IConnectionStore _connectionStore = connectionStore
         ?? throw new ArgumentNullException(nameof(connectionStore));
@@ -25,7 +25,7 @@ internal sealed class RealtimeConnectionRegistry(
     private readonly IUnitOfWork _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
     private readonly IActiveConnectionsTracker _activeConnectionsTracker = activeConnectionsTracker
         ?? throw new ArgumentNullException(nameof(activeConnectionsTracker));
-    private readonly RealtimeConnectionsSettings _settings = settings ?? throw new ArgumentNullException(nameof(settings));
+    private readonly RealtimeConnectionsSettingsSection _settings = settings ?? throw new ArgumentNullException(nameof(settings));
 
     public async Task<RealtimeConnectionMutationResult> RegisterAsync(Guid userId, string connectionId, CancellationToken cancellationToken)
     {

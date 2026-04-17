@@ -1,4 +1,4 @@
-using FlowChat.Shared.API;
+﻿using FlowChat.Shared.API;
 using FlowChat.RealtimeService.Application.Features.Presence.Commands.PublishPresenceChange;
 using FlowChat.RealtimeService.Infrastructure.Configuration;
 using MediatR;
@@ -14,7 +14,7 @@ public sealed class PublishPresenceChangeController : ApiControllerBase
     private readonly IMediator _mediator;
 
     public PublishPresenceChangeController(IMediator mediator, IApiSettingsManager apiSettingsManager)
-        : base(() => apiSettingsManager.GetInternalApiSettings().ApiKey)
+        : base(() => apiSettingsManager.GetInternalApiSettingsSection().ApiKey)
     {
         _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
         ArgumentNullException.ThrowIfNull(apiSettingsManager);

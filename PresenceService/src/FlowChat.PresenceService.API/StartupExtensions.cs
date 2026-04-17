@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 using System.Text.Json.Serialization;
 using FlowChat.PresenceService.Application;
 using FlowChat.PresenceService.Infrastructure;
@@ -18,7 +18,7 @@ public static class StartupExtensions
     public static WebApplication ConfigureServices(this WebApplicationBuilder builder)
     {
         var settingsManager = new ApiSettingsManager(builder.Configuration);
-        var jwtSettings = settingsManager.GetJwtSettings();
+        var jwtSettings = settingsManager.GetJwtSettingsSection();
 
         builder.Services.AddApiApplicationServices();
         builder.Services.AddInfrastructureServices(builder.Configuration);

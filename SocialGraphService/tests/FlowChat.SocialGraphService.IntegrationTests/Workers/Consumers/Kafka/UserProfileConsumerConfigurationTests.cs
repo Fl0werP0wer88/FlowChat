@@ -1,4 +1,4 @@
-using FlowChat.SocialGraphService.Consumers;
+﻿using FlowChat.SocialGraphService.Consumers;
 using FlowChat.SocialGraphService.Consumers.Kafka;
 using FlowChat.SocialGraphService.Consumers.Services;
 using FluentAssertions;
@@ -45,8 +45,8 @@ public sealed class UserProfileConsumerConfigurationTests
             .Build();
 
         var consumerOptions = configuration
-            .GetSection(UserProfileConsumerOptions.SectionName)
-            .Get<UserProfileConsumerOptions>();
+            .GetSection(UserProfileConsumerSettingsSection.SectionName)
+            .Get<UserProfileConsumerSettingsSection>();
 
         consumerOptions.Should().NotBeNull();
         consumerOptions!.GroupId.Should().Be("socialgraph-service");

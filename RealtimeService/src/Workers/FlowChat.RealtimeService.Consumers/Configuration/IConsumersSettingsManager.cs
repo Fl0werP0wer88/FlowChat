@@ -1,15 +1,15 @@
-using FlowChat.RealtimeService.Consumers.Kafka;
+﻿using FlowChat.RealtimeService.Consumers.Kafka;
 using FlowChat.RealtimeService.Routing.Configuration;
 
 namespace FlowChat.RealtimeService.Consumers.Configuration;
 
 public interface IConsumersSettingsManager
 {
-    ChatMessageSentConsumerOptions GetChatMessageSentConsumerOptions();
+    ChatMessageSentConsumerSettingsSection GetChatMessageSentConsumerSettingsSection();
 
-    PresenceStatusChangedConsumerOptions GetPresenceStatusChangedConsumerOptions();
+    PresenceStatusChangedConsumerSettingsSection GetPresenceStatusChangedConsumerSettingsSection();
 
-    RealtimeApiSettings GetRealtimeApiSettings();
+    RealtimeApiSettingsSection GetRealtimeApiSettingsSection();
 
-    RealtimeRoutingSettings GetRealtimeRoutingSettings();
+    RealtimeRoutingSettingsSection GetRealtimeRoutingSettingsSection();
 }

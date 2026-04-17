@@ -1,4 +1,4 @@
-using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.Configuration;
 
 namespace FlowChat.UserProfileService.Infrastructure.Kafka;
 
@@ -6,19 +6,19 @@ public sealed class KafkaSettingsManager(IConfiguration configuration) : IKafkaS
 {
     private readonly IConfiguration _configuration = configuration;
 
-    public UserProfileCreatedProducerOptions GetUserProfileCreatedProducerOptions() =>
-        _configuration.GetSection(UserProfileCreatedProducerOptions.SectionName).Get<UserProfileCreatedProducerOptions>()
-        ?? new UserProfileCreatedProducerOptions();
+    public UserProfileCreatedProducerSettingsSection GetUserProfileCreatedProducerSettingsSection() =>
+        _configuration.GetSection(UserProfileCreatedProducerSettingsSection.SectionName).Get<UserProfileCreatedProducerSettingsSection>()
+        ?? new UserProfileCreatedProducerSettingsSection();
 
-    public UserEmailConfirmedProducerOptions GetUserEmailConfirmedProducerOptions() =>
-        _configuration.GetSection(UserEmailConfirmedProducerOptions.SectionName).Get<UserEmailConfirmedProducerOptions>()
-        ?? new UserEmailConfirmedProducerOptions();
+    public UserEmailConfirmedProducerSettingsSection GetUserEmailConfirmedProducerSettingsSection() =>
+        _configuration.GetSection(UserEmailConfirmedProducerSettingsSection.SectionName).Get<UserEmailConfirmedProducerSettingsSection>()
+        ?? new UserEmailConfirmedProducerSettingsSection();
 
-    public UserEmailVerificationRequestedProducerOptions GetUserEmailVerificationRequestedProducerOptions() =>
-        _configuration.GetSection(UserEmailVerificationRequestedProducerOptions.SectionName).Get<UserEmailVerificationRequestedProducerOptions>()
-        ?? new UserEmailVerificationRequestedProducerOptions();
+    public UserEmailVerificationRequestedProducerSettingsSection GetUserEmailVerificationRequestedProducerSettingsSection() =>
+        _configuration.GetSection(UserEmailVerificationRequestedProducerSettingsSection.SectionName).Get<UserEmailVerificationRequestedProducerSettingsSection>()
+        ?? new UserEmailVerificationRequestedProducerSettingsSection();
 
-    public UserProfileStateChangedProducerOptions GetUserProfileStateChangedProducerOptions() =>
-        _configuration.GetSection(UserProfileStateChangedProducerOptions.SectionName).Get<UserProfileStateChangedProducerOptions>()
-        ?? new UserProfileStateChangedProducerOptions();
+    public UserProfileStateChangedProducerSettingsSection GetUserProfileStateChangedProducerSettingsSection() =>
+        _configuration.GetSection(UserProfileStateChangedProducerSettingsSection.SectionName).Get<UserProfileStateChangedProducerSettingsSection>()
+        ?? new UserProfileStateChangedProducerSettingsSection();
 }

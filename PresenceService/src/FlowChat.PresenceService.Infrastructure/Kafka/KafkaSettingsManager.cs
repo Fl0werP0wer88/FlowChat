@@ -1,4 +1,4 @@
-using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.Configuration;
 
 namespace FlowChat.PresenceService.Infrastructure.Kafka;
 
@@ -6,7 +6,7 @@ public sealed class KafkaSettingsManager(IConfiguration configuration) : IKafkaS
 {
     private readonly IConfiguration _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
 
-    public PresenceStatusChangedProducerOptions GetPresenceStatusChangedProducerOptions() =>
-        _configuration.GetSection(PresenceStatusChangedProducerOptions.SectionName).Get<PresenceStatusChangedProducerOptions>()
-        ?? new PresenceStatusChangedProducerOptions();
+    public PresenceStatusChangedProducerSettingsSection GetPresenceStatusChangedProducerSettingsSection() =>
+        _configuration.GetSection(PresenceStatusChangedProducerSettingsSection.SectionName).Get<PresenceStatusChangedProducerSettingsSection>()
+        ?? new PresenceStatusChangedProducerSettingsSection();
 }

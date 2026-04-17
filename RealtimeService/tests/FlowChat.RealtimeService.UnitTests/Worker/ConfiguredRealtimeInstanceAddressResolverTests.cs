@@ -1,4 +1,4 @@
-using FlowChat.RealtimeService.Consumers.Configuration;
+﻿using FlowChat.RealtimeService.Consumers.Configuration;
 using FlowChat.RealtimeService.Consumers.Services;
 using FluentAssertions;
 
@@ -9,7 +9,7 @@ public sealed class ConfiguredRealtimeInstanceAddressResolverTests
     [Fact]
     public void Resolve_WhenInstanceConfigured_ReturnsBaseAddress()
     {
-        var resolver = new ConfiguredRealtimeInstanceAddressResolver(new RealtimeApiSettings
+        var resolver = new ConfiguredRealtimeInstanceAddressResolver(new RealtimeApiSettingsSection
         {
             Instances = new Dictionary<string, string>
             {
@@ -25,7 +25,7 @@ public sealed class ConfiguredRealtimeInstanceAddressResolverTests
     [Fact]
     public void Resolve_WhenInstanceMissing_ThrowsInvalidOperationException()
     {
-        var resolver = new ConfiguredRealtimeInstanceAddressResolver(new RealtimeApiSettings
+        var resolver = new ConfiguredRealtimeInstanceAddressResolver(new RealtimeApiSettingsSection
         {
             Instances = new Dictionary<string, string>
             {

@@ -1,4 +1,4 @@
-using System.IdentityModel.Tokens.Jwt;
+﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using FlowChat.AuthService.Application.Contracts.Infrastructure;
 using FlowChat.AuthService.Application.Features.User.Models;
@@ -53,7 +53,7 @@ public sealed class OpenIddictTokenService : IOpenIddictTokenService
         }
 
         principal.SetScopes(grantedScopes);
-        principal.SetResources(_apiSettingsManager.GetJwtSettings().Audience);
+        principal.SetResources(_apiSettingsManager.GetJwtSettingsSection().Audience);
 
         return principal;
     }

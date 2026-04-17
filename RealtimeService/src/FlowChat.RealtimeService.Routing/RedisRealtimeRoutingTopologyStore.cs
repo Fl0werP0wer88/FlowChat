@@ -1,4 +1,4 @@
-using FlowChat.RealtimeService.Routing.Configuration;
+﻿using FlowChat.RealtimeService.Routing.Configuration;
 using FlowChat.Shared.Infrastructure.Redis;
 using StackExchange.Redis;
 
@@ -6,7 +6,7 @@ namespace FlowChat.RealtimeService.Routing;
 
 public sealed class RedisRealtimeRoutingTopologyStore(
     IRedisTransactionContext redisTransactionContext,
-    RealtimeRoutingSettings settings)
+    RealtimeRoutingSettingsSection settings)
     : IRealtimeRoutingTopologyStore, IRealtimeRoutingTopologyReader
 {
     // The routing read-model is split across a SET and HASH so reads stay cheap while unregister can still distinguish
@@ -31,7 +31,7 @@ public sealed class RedisRealtimeRoutingTopologyStore(
 
     private readonly IRedisTransactionContext _redisTransactionContext = redisTransactionContext
         ?? throw new ArgumentNullException(nameof(redisTransactionContext));
-    private readonly RealtimeRoutingSettings _settings = settings ?? throw new ArgumentNullException(nameof(settings));
+    private readonly RealtimeRoutingSettingsSection _settings = settings ?? throw new ArgumentNullException(nameof(settings));
 
     public Task AddConnectionAsync(Guid userId, string instanceId)
     {

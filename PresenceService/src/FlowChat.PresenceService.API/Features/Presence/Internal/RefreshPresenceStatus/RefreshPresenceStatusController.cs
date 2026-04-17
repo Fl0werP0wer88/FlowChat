@@ -1,4 +1,4 @@
-using FlowChat.PresenceService.Application.Features.Presence.Commands.RefreshPresenceStatus;
+﻿using FlowChat.PresenceService.Application.Features.Presence.Commands.RefreshPresenceStatus;
 using FlowChat.PresenceService.Infrastructure.Configuration;
 using FlowChat.Shared.API;
 using MediatR;
@@ -14,7 +14,7 @@ public sealed class RefreshPresenceStatusController : ApiControllerBase
     private readonly IMediator _mediator;
 
     public RefreshPresenceStatusController(IMediator mediator, IApiSettingsManager apiSettingsManager)
-        : base(() => apiSettingsManager.GetInternalApiSettings().ApiKey)
+        : base(() => apiSettingsManager.GetInternalApiSettingsSection().ApiKey)
     {
         _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
         ArgumentNullException.ThrowIfNull(apiSettingsManager);

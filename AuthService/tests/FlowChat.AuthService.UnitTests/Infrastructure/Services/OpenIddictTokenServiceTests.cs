@@ -1,4 +1,4 @@
-using System.IdentityModel.Tokens.Jwt;
+﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using FlowChat.AuthService.Application.Features.User.Models;
 using FlowChat.AuthService.Infrastructure.Configuration;
@@ -16,8 +16,8 @@ public sealed class OpenIddictTokenServiceTests
     {
         var apiSettingsManagerMock = new Mock<IApiSettingsManager>();
         apiSettingsManagerMock
-            .Setup(x => x.GetJwtSettings())
-            .Returns(new JwtSettings
+            .Setup(x => x.GetJwtSettingsSection())
+            .Returns(new JwtSettingsSection
             {
                 Audience = "FlowChat.Client"
             });

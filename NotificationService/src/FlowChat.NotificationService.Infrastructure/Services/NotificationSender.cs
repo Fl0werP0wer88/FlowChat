@@ -1,4 +1,4 @@
-using FlowChat.NotificationService.Application.Contracts.Infrastructure;
+﻿using FlowChat.NotificationService.Application.Contracts.Infrastructure;
 using FlowChat.NotificationService.Infrastructure.Configuration;
 using MailKit.Net.Smtp;
 using MailKit.Security;
@@ -26,7 +26,7 @@ public sealed class NotificationSender : INotificationSender
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        var emailSettings = _apiSettingsManager.GetEmailSettings();
+        var emailSettings = _apiSettingsManager.GetEmailSettingsSection();
         var smtpHost = emailSettings.SmtpHost;
         var smtpPort = emailSettings.SmtpPort;
         var fromEmail = emailSettings.FromEmail;
@@ -36,17 +36,17 @@ public sealed class NotificationSender : INotificationSender
 
         if (string.IsNullOrWhiteSpace(smtpHost))
         {
-            throw new InvalidOperationException("Missing configuration value: EmailSettings:SmtpHost.");
+            throw new InvalidOperationException("Missing configuration value: EmailSettingsSection:SmtpHost.");
         }
 
         if (string.IsNullOrWhiteSpace(fromEmail))
         {
-            throw new InvalidOperationException("Missing configuration value: EmailSettings:FromEmail.");
+            throw new InvalidOperationException("Missing configuration value: EmailSettingsSection:FromEmail.");
         }
 
         if (smtpPort <= 0)
         {
-            throw new InvalidOperationException("Invalid configuration value: EmailSettings:SmtpPort.");
+            throw new InvalidOperationException("Invalid configuration value: EmailSettingsSection:SmtpPort.");
         }
 
         if (string.IsNullOrWhiteSpace(request.RecipientEmail))

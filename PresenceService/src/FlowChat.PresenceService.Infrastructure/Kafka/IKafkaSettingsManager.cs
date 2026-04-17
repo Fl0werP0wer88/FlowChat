@@ -1,6 +1,6 @@
-namespace FlowChat.PresenceService.Infrastructure.Kafka;
+﻿namespace FlowChat.PresenceService.Infrastructure.Kafka;
 
 public interface IKafkaSettingsManager
 {
-    PresenceStatusChangedProducerOptions GetPresenceStatusChangedProducerOptions();
+    PresenceStatusChangedProducerSettingsSection GetPresenceStatusChangedProducerSettingsSection();
 }

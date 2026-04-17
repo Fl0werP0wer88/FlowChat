@@ -1,4 +1,4 @@
-using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
+﻿using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
 using FlowChat.RealtimeService.Infrastructure;
 using FlowChat.RealtimeService.Routing;
 using Microsoft.Extensions.Configuration;
@@ -158,9 +158,9 @@ public sealed class RealtimeConnectionRegistryTests : IAsyncLifetime
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["JwtSettings:Key"] = "jwt-key",
-                ["JwtSettings:Issuer"] = "jwt-issuer",
-                ["JwtSettings:Audience"] = "jwt-audience",
+                ["JwtSettingsSection:Key"] = "jwt-key",
+                ["JwtSettingsSection:Issuer"] = "jwt-issuer",
+                ["JwtSettingsSection:Audience"] = "jwt-audience",
                 ["FlowChat:InternalApi:ApiKey"] = "internal-key",
                 ["ConnectionStrings:Redis"] = _redisContainer.GetConnectionString(),
                 ["RealtimeConnections:InstanceId"] = "test-instance",

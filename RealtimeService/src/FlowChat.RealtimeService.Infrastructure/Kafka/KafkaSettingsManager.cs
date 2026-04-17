@@ -1,4 +1,4 @@
-using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.Configuration;
 
 namespace FlowChat.RealtimeService.Infrastructure.Kafka;
 
@@ -6,7 +6,7 @@ public sealed class KafkaSettingsManager(IConfiguration configuration) : IKafkaS
 {
     private readonly IConfiguration _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
 
-    public RealtimeConnectionProducerOptions GetRealtimeConnectionProducerOptions() =>
-        _configuration.GetSection(RealtimeConnectionProducerOptions.SectionName).Get<RealtimeConnectionProducerOptions>()
-        ?? new RealtimeConnectionProducerOptions();
+    public RealtimeConnectionProducerSettingsSection GetRealtimeConnectionProducerSettingsSection() =>
+        _configuration.GetSection(RealtimeConnectionProducerSettingsSection.SectionName).Get<RealtimeConnectionProducerSettingsSection>()
+        ?? new RealtimeConnectionProducerSettingsSection();
 }

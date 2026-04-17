@@ -1,10 +1,10 @@
-namespace FlowChat.SocialGraphService.Infrastructure.Configuration;
+﻿namespace FlowChat.SocialGraphService.Infrastructure.Configuration;
 
 public interface IApiSettingsManager
 {
-    JwtSettings GetJwtSettings();
+    JwtSettingsSection GetJwtSettingsSection();
 
-    ApiRuntimeSettings GetApiRuntimeSettings();
+    ApiRuntimeSettingsSection GetApiRuntimeSettingsSection();
 
-    InternalApiSettings GetInternalApiSettings();
+    InternalApiSettingsSection GetInternalApiSettingsSection();
 }

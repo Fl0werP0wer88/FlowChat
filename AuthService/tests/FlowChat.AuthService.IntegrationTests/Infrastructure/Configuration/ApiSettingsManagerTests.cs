@@ -1,4 +1,4 @@
-using FlowChat.AuthService.Infrastructure;
+﻿using FlowChat.AuthService.Infrastructure;
 using FlowChat.AuthService.Infrastructure.Configuration;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -13,10 +13,10 @@ public sealed class ApiSettingsManagerTests
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["JwtSettings:Key"] = "jwt-key",
-                ["JwtSettings:EncryptionKey"] = "12345678901234567890123456789012",
-                ["JwtSettings:Issuer"] = "jwt-issuer",
-                ["JwtSettings:Audience"] = "jwt-audience",
+                ["JwtSettingsSection:Key"] = "jwt-key",
+                ["JwtSettingsSection:EncryptionKey"] = "12345678901234567890123456789012",
+                ["JwtSettingsSection:Issuer"] = "jwt-issuer",
+                ["JwtSettingsSection:Audience"] = "jwt-audience",
                 ["FlowChat:InternalApi:ApiKey"] = "internal-key"
             })
             .Build();
@@ -30,8 +30,8 @@ public sealed class ApiSettingsManagerTests
         var settingsManager = serviceProvider.GetRequiredService<IApiSettingsManager>();
 
         settingsManager.Should().NotBeNull();
-        settingsManager.GetJwtSettings().Key.Should().Be("jwt-key");
-        settingsManager.GetJwtSettings().EncryptionKey.Should().Be("12345678901234567890123456789012");
-        settingsManager.GetInternalApiSettings().ApiKey.Should().Be("internal-key");
+        settingsManager.GetJwtSettingsSection().Key.Should().Be("jwt-key");
+        settingsManager.GetJwtSettingsSection().EncryptionKey.Should().Be("12345678901234567890123456789012");
+        settingsManager.GetInternalApiSettingsSection().ApiKey.Should().Be("internal-key");
     }
 }

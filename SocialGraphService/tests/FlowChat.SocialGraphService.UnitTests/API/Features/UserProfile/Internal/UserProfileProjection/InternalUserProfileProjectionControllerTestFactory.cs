@@ -1,4 +1,4 @@
-using FlowChat.SocialGraphService.Infrastructure.Configuration;
+﻿using FlowChat.SocialGraphService.Infrastructure.Configuration;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
@@ -13,8 +13,8 @@ internal static class InternalUserProfileProjectionControllerTestFactory
     {
         var apiSettingsManagerMock = new Mock<IApiSettingsManager>();
         apiSettingsManagerMock
-            .Setup(x => x.GetInternalApiSettings())
-            .Returns(new InternalApiSettings { ApiKey = expectedApiKey });
+            .Setup(x => x.GetInternalApiSettingsSection())
+            .Returns(new InternalApiSettingsSection { ApiKey = expectedApiKey });
 
         return apiSettingsManagerMock;
     }

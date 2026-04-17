@@ -1,4 +1,4 @@
-using FlowChat.SocialGraphService.Infrastructure.Configuration;
+﻿using FlowChat.SocialGraphService.Infrastructure.Configuration;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 
@@ -12,9 +12,9 @@ public sealed class ApiSettingsManagerTests
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["JwtSettings:Key"] = "jwt-key",
-                ["JwtSettings:Issuer"] = "jwt-issuer",
-                ["JwtSettings:Audience"] = "jwt-audience",
+                ["JwtSettingsSection:Key"] = "jwt-key",
+                ["JwtSettingsSection:Issuer"] = "jwt-issuer",
+                ["JwtSettingsSection:Audience"] = "jwt-audience",
                 ["FlowChat:InternalApi:ApiKey"] = "internal-key",
                 ["FlowChat:ApiUrl"] = "https://section-api.flowchat.local",
                 ["FlowChat:BlazorUrl"] = "https://section-ui.flowchat.local",
@@ -24,9 +24,9 @@ public sealed class ApiSettingsManagerTests
             .Build();
 
         var settingsManager = new ApiSettingsManager(configuration);
-        var jwtSettings = settingsManager.GetJwtSettings();
-        var internalApiSettings = settingsManager.GetInternalApiSettings();
-        var apiRuntimeSettings = settingsManager.GetApiRuntimeSettings();
+        var jwtSettings = settingsManager.GetJwtSettingsSection();
+        var internalApiSettings = settingsManager.GetInternalApiSettingsSection();
+        var apiRuntimeSettings = settingsManager.GetApiRuntimeSettingsSection();
 
         jwtSettings.Key.Should().Be("jwt-key");
         jwtSettings.Issuer.Should().Be("jwt-issuer");
@@ -41,9 +41,9 @@ public sealed class ApiSettingsManagerTests
     {
         var settingsManager = new ApiSettingsManager(new ConfigurationBuilder().Build());
 
-        var jwtSettings = settingsManager.GetJwtSettings();
-        var internalApiSettings = settingsManager.GetInternalApiSettings();
-        var apiRuntimeSettings = settingsManager.GetApiRuntimeSettings();
+        var jwtSettings = settingsManager.GetJwtSettingsSection();
+        var internalApiSettings = settingsManager.GetInternalApiSettingsSection();
+        var apiRuntimeSettings = settingsManager.GetApiRuntimeSettingsSection();
 
         jwtSettings.Key.Should().BeEmpty();
         jwtSettings.Issuer.Should().BeEmpty();

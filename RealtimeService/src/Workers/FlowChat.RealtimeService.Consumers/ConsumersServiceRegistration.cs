@@ -1,4 +1,4 @@
-using Confluent.Kafka;
+﻿using Confluent.Kafka;
 using FlowChat.RealtimeService.Consumers.Configuration;
 using FlowChat.RealtimeService.Consumers.Kafka;
 using FlowChat.RealtimeService.Consumers.Services;
@@ -24,17 +24,17 @@ public static class ConsumersServiceRegistration
     {
         var settingsManager = new ConsumersSettingsManager(configuration);
         services.TryAddSingleton<IConsumersSettingsManager>(settingsManager);
-        services.TryAddSingleton(sp => sp.GetRequiredService<IConsumersSettingsManager>().GetRealtimeApiSettings());
-        services.TryAddSingleton(sp => sp.GetRequiredService<IConsumersSettingsManager>().GetRealtimeRoutingSettings());
+        services.TryAddSingleton(sp => sp.GetRequiredService<IConsumersSettingsManager>().GetRealtimeApiSettingsSection());
+        services.TryAddSingleton(sp => sp.GetRequiredService<IConsumersSettingsManager>().GetRealtimeRoutingSettingsSection());
 
-        var chatMessageSentConsumerOptions = settingsManager.GetChatMessageSentConsumerOptions();
-        var presenceStatusChangedConsumerOptions = settingsManager.GetPresenceStatusChangedConsumerOptions();
+        var chatMessageSentConsumerOptions = settingsManager.GetChatMessageSentConsumerSettingsSection();
+        var presenceStatusChangedConsumerOptions = settingsManager.GetPresenceStatusChangedConsumerSettingsSection();
 
         services.AddHttpClient(RealtimeInternalApiClient.HttpClientName, (serviceProvider, httpClient) =>
         {
             var realtimeApiSettings = serviceProvider
                 .GetRequiredService<IConsumersSettingsManager>()
-                .GetRealtimeApiSettings();
+                .GetRealtimeApiSettingsSection();
             httpClient.DefaultRequestHeaders.Remove(RealtimeInternalApiClient.ApiKeyHeaderName);
 
             if (!string.IsNullOrWhiteSpace(realtimeApiSettings.ApiKey))
@@ -50,7 +50,7 @@ public static class ConsumersServiceRegistration
         services.TryAddSingleton<IRealtimeInstanceAddressResolver, ConfiguredRealtimeInstanceAddressResolver>();
         services.TryAddSingleton<IConnectionMultiplexer>(sp =>
         {
-            var options = ConfigurationOptions.Parse(sp.GetRequiredService<RealtimeRoutingSettings>().RedisConnectionString);
+            var options = ConfigurationOptions.Parse(sp.GetRequiredService<RealtimeRoutingSettingsSection>().RedisConnectionString);
             options.AbortOnConnectFail = false;
 
             return ConnectionMultiplexer.Connect(options);
@@ -108,8 +108,8 @@ public static class ConsumersServiceRegistration
     }
 
     private static string ResolveBootstrapServers(
-        ChatMessageSentConsumerOptions chatMessageSentConsumerOptions,
-        PresenceStatusChangedConsumerOptions presenceStatusChangedConsumerOptions) =>
+        ChatMessageSentConsumerSettingsSection chatMessageSentConsumerOptions,
+        PresenceStatusChangedConsumerSettingsSection presenceStatusChangedConsumerOptions) =>
         !string.IsNullOrWhiteSpace(chatMessageSentConsumerOptions.BootstrapServers)
             ? chatMessageSentConsumerOptions.BootstrapServers
             : presenceStatusChangedConsumerOptions.BootstrapServers;

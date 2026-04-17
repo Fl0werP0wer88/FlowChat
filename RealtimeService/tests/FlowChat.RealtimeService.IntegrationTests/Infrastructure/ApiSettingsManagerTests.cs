@@ -1,4 +1,4 @@
-using FlowChat.RealtimeService.Infrastructure;
+﻿using FlowChat.RealtimeService.Infrastructure;
 using FlowChat.RealtimeService.Infrastructure.Configuration;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -13,9 +13,9 @@ public sealed class ApiSettingsManagerTests
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["JwtSettings:Key"] = "jwt-key",
-                ["JwtSettings:Issuer"] = "jwt-issuer",
-                ["JwtSettings:Audience"] = "jwt-audience",
+                ["JwtSettingsSection:Key"] = "jwt-key",
+                ["JwtSettingsSection:Issuer"] = "jwt-issuer",
+                ["JwtSettingsSection:Audience"] = "jwt-audience",
                 ["FlowChat:InternalApi:ApiKey"] = "internal-key",
                 ["ConnectionStrings:Redis"] = "localhost:6379,password=secret",
                 ["RealtimeConnections:InstanceId"] = "realtime-instance"

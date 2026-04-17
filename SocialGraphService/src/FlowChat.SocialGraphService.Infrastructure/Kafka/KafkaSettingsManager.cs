@@ -1,4 +1,4 @@
-using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.Configuration;
 
 namespace FlowChat.SocialGraphService.Infrastructure.Kafka;
 
@@ -6,11 +6,11 @@ public sealed class KafkaSettingsManager(IConfiguration configuration) : IKafkaS
 {
     private readonly IConfiguration _configuration = configuration;
 
-    public ContactAddedProducerOptions GetContactAddedProducerOptions() =>
-        _configuration.GetSection(ContactAddedProducerOptions.SectionName).Get<ContactAddedProducerOptions>()
-        ?? new ContactAddedProducerOptions();
+    public ContactAddedProducerSettingsSection GetContactAddedProducerSettingsSection() =>
+        _configuration.GetSection(ContactAddedProducerSettingsSection.SectionName).Get<ContactAddedProducerSettingsSection>()
+        ?? new ContactAddedProducerSettingsSection();
 
-    public ContactDeletedProducerOptions GetContactDeletedProducerOptions() =>
-        _configuration.GetSection(ContactDeletedProducerOptions.SectionName).Get<ContactDeletedProducerOptions>()
-        ?? new ContactDeletedProducerOptions();
+    public ContactDeletedProducerSettingsSection GetContactDeletedProducerSettingsSection() =>
+        _configuration.GetSection(ContactDeletedProducerSettingsSection.SectionName).Get<ContactDeletedProducerSettingsSection>()
+        ?? new ContactDeletedProducerSettingsSection();
 }

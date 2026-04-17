@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 using FlowChat.AuthService.Infrastructure.Configuration;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -14,7 +14,7 @@ public static class APIServiceRegistration
                             IHostEnvironment environment)
     {
         var apiSettingsManager = new ApiSettingsManager(configuration);
-        var jwtSettings = apiSettingsManager.GetJwtSettings();
+        var jwtSettings = apiSettingsManager.GetJwtSettingsSection();
         var jwtKey = jwtSettings.Key;
         var encryptionKeyValue = jwtSettings.EncryptionKey;
         var jwtIssuer = jwtSettings.Issuer;
@@ -22,22 +22,22 @@ public static class APIServiceRegistration
 
         if (string.IsNullOrWhiteSpace(jwtKey))
         {
-            throw new InvalidOperationException("Missing configuration value: JwtSettings:Key.");
+            throw new InvalidOperationException("Missing configuration value: JwtSettingsSection:Key.");
         }
 
         if (string.IsNullOrWhiteSpace(jwtIssuer))
         {
-            throw new InvalidOperationException("Missing configuration value: JwtSettings:Issuer.");
+            throw new InvalidOperationException("Missing configuration value: JwtSettingsSection:Issuer.");
         }
 
         if (string.IsNullOrWhiteSpace(encryptionKeyValue))
         {
-            throw new InvalidOperationException("Missing configuration value: JwtSettings:EncryptionKey.");
+            throw new InvalidOperationException("Missing configuration value: JwtSettingsSection:EncryptionKey.");
         }
 
         if (string.IsNullOrWhiteSpace(jwtAudience))
         {
-            throw new InvalidOperationException("Missing configuration value: JwtSettings:Audience.");
+            throw new InvalidOperationException("Missing configuration value: JwtSettingsSection:Audience.");
         }
 
         services.AddDataProtection();
@@ -68,7 +68,7 @@ public static class APIServiceRegistration
         if (encryptionKeyBytes.Length != 32)
         {
             throw new InvalidOperationException(
-                $"Invalid configuration value: JwtSettings:EncryptionKey must be 256 bits (32 bytes), received {encryptionKeyBytes.Length * 8} bits.");
+                $"Invalid configuration value: JwtSettingsSection:EncryptionKey must be 256 bits (32 bytes), received {encryptionKeyBytes.Length * 8} bits.");
         }
 
         var signingKey = new SymmetricSecurityKey(jwtKeyBytes);

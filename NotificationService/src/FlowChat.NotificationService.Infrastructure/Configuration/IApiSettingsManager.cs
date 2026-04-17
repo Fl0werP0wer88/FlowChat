@@ -1,10 +1,10 @@
-namespace FlowChat.NotificationService.Infrastructure.Configuration;
+﻿namespace FlowChat.NotificationService.Infrastructure.Configuration;
 
 public interface IApiSettingsManager
 {
-    ApiRuntimeSettings GetApiRuntimeSettings();
+    ApiRuntimeSettingsSection GetApiRuntimeSettingsSection();
 
-    EmailSettings GetEmailSettings();
+    EmailSettingsSection GetEmailSettingsSection();
 
-    InternalApiSettings GetInternalApiSettings();
+    InternalApiSettingsSection GetInternalApiSettingsSection();
 }

@@ -1,4 +1,4 @@
-using FlowChat.Core.Messaging.PresenceService.Events;
+﻿using FlowChat.Core.Messaging.PresenceService.Events;
 using FlowChat.PresenceService.OutboxPublisher.Configuration;
 using FlowChat.PresenceService.Persistence;
 using FlowChat.Shared.Infrastructure.Silverback.Behaviors;
@@ -17,13 +17,13 @@ public static class OutboxPublisherServiceRegistration
         IConfiguration configuration)
     {
         var producerOptions = configuration
-            .GetSection(PresenceStatusChangedProducerOptions.SectionName)
-            .Get<PresenceStatusChangedProducerOptions>()
-            ?? new PresenceStatusChangedProducerOptions();
+            .GetSection(PresenceStatusChangedProducerSettingsSection.SectionName)
+            .Get<PresenceStatusChangedProducerSettingsSection>()
+            ?? new PresenceStatusChangedProducerSettingsSection();
         var outboxOptions = configuration
-            .GetSection(OutboxPublisherRuntimeOptions.SectionName)
-            .Get<OutboxPublisherRuntimeOptions>()
-            ?? new OutboxPublisherRuntimeOptions();
+            .GetSection(OutboxPublisherRuntimeSettingsSection.SectionName)
+            .Get<OutboxPublisherRuntimeSettingsSection>()
+            ?? new OutboxPublisherRuntimeSettingsSection();
 
         services.AddSilverback()
             .AddSingletonBrokerBehavior<CustomSpanAttributesProducerBehavior>()

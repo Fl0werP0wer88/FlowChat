@@ -1,4 +1,4 @@
-using FlowChat.Core.Messaging.AuthService.Events;
+﻿using FlowChat.Core.Messaging.AuthService.Events;
 using FlowChat.Core.Messaging.UserProfileService.Events;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Infrastructure.Silverback.Kafka;
@@ -21,13 +21,13 @@ public static class InfrastructureServiceRegistration
         services.TryAddSingleton<IApiSettingsManager>(new ApiSettingsManager(configuration));
         services.TryAddSingleton<IKafkaSettingsManager>(new KafkaSettingsManager(configuration));
         services.AddScoped<IKafkaProducerOptions<UserProfileCreatedIntegrationEvent>>(sp =>
-            sp.GetRequiredService<IKafkaSettingsManager>().GetUserProfileCreatedProducerOptions());
+            sp.GetRequiredService<IKafkaSettingsManager>().GetUserProfileCreatedProducerSettingsSection());
         services.AddScoped<IKafkaProducerOptions<UserEmailConfirmedIntegrationEvent>>(sp =>
-            sp.GetRequiredService<IKafkaSettingsManager>().GetUserEmailConfirmedProducerOptions());
+            sp.GetRequiredService<IKafkaSettingsManager>().GetUserEmailConfirmedProducerSettingsSection());
         services.AddScoped<IKafkaProducerOptions<EmailVerificationRequestIntegrationEvent>>(sp =>
-            sp.GetRequiredService<IKafkaSettingsManager>().GetUserEmailVerificationRequestedProducerOptions());
+            sp.GetRequiredService<IKafkaSettingsManager>().GetUserEmailVerificationRequestedProducerSettingsSection());
         services.AddScoped<IKafkaProducerOptions<UserProfileChangedIntegrationEvent>>(sp =>
-            sp.GetRequiredService<IKafkaSettingsManager>().GetUserProfileStateChangedProducerOptions());
+            sp.GetRequiredService<IKafkaSettingsManager>().GetUserProfileStateChangedProducerSettingsSection());
         services.AddScoped<IEmailVerificationLinkBuilder, EmailVerificationLinkBuilder>();
         services.AddScoped<IEmailVerificationTokenProtector, EmailVerificationTokenProtector>();
         services.AddScoped<IOutboxIntegrationEventPublisher, FlowChatSilverbackEventPublisher>();

@@ -1,4 +1,4 @@
-using FlowChat.GatewayService.Api.Configuration;
+﻿using FlowChat.GatewayService.Api.Configuration;
 using FlowChat.GatewayService.Api.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -10,7 +10,7 @@ namespace FlowChat.GatewayService.Api.Controllers;
 [Route("gateway")]
 public sealed class GatewayController(
     IWebHostEnvironment environment,
-    IOptions<GatewayCatalogOptions> catalogOptions) : ControllerBase
+    IOptions<GatewayCatalogSettingsSection> catalogOptions) : ControllerBase
 {
     [AllowAnonymous]
     [HttpGet("health")]

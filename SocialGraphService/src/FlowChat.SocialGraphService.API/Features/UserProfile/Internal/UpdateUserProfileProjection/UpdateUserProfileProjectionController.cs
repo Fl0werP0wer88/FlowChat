@@ -1,4 +1,4 @@
-using FlowChat.SocialGraphService.Api.Features.UserProfile.Internal.UserProfileProjection;
+﻿using FlowChat.SocialGraphService.Api.Features.UserProfile.Internal.UserProfileProjection;
 using FlowChat.SocialGraphService.Application.Features.UserProfile.Commands.UpdateUserProfileProjection;
 using FlowChat.SocialGraphService.Infrastructure.Configuration;
 using FlowChat.Shared.API;
@@ -15,7 +15,7 @@ public sealed class UpdateUserProfileProjectionController : ApiControllerBase
     private readonly IMediator _mediator;
 
     public UpdateUserProfileProjectionController(IMediator mediator, IApiSettingsManager apiSettingsManager)
-        : base(() => apiSettingsManager.GetInternalApiSettings().ApiKey)
+        : base(() => apiSettingsManager.GetInternalApiSettingsSection().ApiKey)
     {
         _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
         ArgumentNullException.ThrowIfNull(apiSettingsManager);

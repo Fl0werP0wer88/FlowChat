@@ -1,4 +1,4 @@
-using FlowChat.ChatService.Persistence.Configuration;
+﻿using FlowChat.ChatService.Persistence.Configuration;
 using Microsoft.Extensions.Configuration;
 
 namespace FlowChat.ChatService.Infrastructure.Kafka;
@@ -12,11 +12,11 @@ public sealed class WorkerSettingsManager : IWorkerSettingsManager
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
     }
 
-    public ChatMessageSentProducerOptions GetChatMessageSentProducerOptions() =>
-        ResolveSection<ChatMessageSentProducerOptions>(ChatMessageSentProducerOptions.SectionName);
+    public ChatMessageSentProducerSettingsSection GetChatMessageSentProducerSettingsSection() =>
+        ResolveSection<ChatMessageSentProducerSettingsSection>(ChatMessageSentProducerSettingsSection.SectionName);
 
-    public OutboxPublisherRuntimeOptions GetOutboxPublisherRuntimeOptions() =>
-        ResolveSection<OutboxPublisherRuntimeOptions>(OutboxPublisherRuntimeOptions.SectionName);
+    public OutboxPublisherRuntimeSettingsSection GetOutboxPublisherRuntimeSettingsSection() =>
+        ResolveSection<OutboxPublisherRuntimeSettingsSection>(OutboxPublisherRuntimeSettingsSection.SectionName);
 
     private TOptions ResolveSection<TOptions>(string sectionName)
         where TOptions : new() =>

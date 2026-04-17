@@ -1,4 +1,4 @@
-using Confluent.Kafka;
+﻿using Confluent.Kafka;
 using FlowChat.PresenceService.Consumers.Configuration;
 using FlowChat.PresenceService.Consumers.Kafka;
 using FlowChat.PresenceService.Consumers.Services;
@@ -19,19 +19,19 @@ public static class ConsumersServiceRegistration
         IConfiguration configuration)
     {
         var contactOptions = configuration
-            .GetSection(SocialGraphContactConsumerOptions.SectionName)
-            .Get<SocialGraphContactConsumerOptions>()
-            ?? new SocialGraphContactConsumerOptions();
+            .GetSection(SocialGraphContactConsumerSettingsSection.SectionName)
+            .Get<SocialGraphContactConsumerSettingsSection>()
+            ?? new SocialGraphContactConsumerSettingsSection();
         var realtimeConnectionOptions = configuration
-            .GetSection(RealtimeConnectionConsumerOptions.SectionName)
-            .Get<RealtimeConnectionConsumerOptions>()
-            ?? new RealtimeConnectionConsumerOptions();
+            .GetSection(RealtimeConnectionConsumerSettingsSection.SectionName)
+            .Get<RealtimeConnectionConsumerSettingsSection>()
+            ?? new RealtimeConnectionConsumerSettingsSection();
 
-        services.AddOptions<PresenceApiSettings>()
-            .BindConfiguration(PresenceApiSettings.SectionName);
+        services.AddOptions<PresenceApiSettingsSection>()
+            .BindConfiguration(PresenceApiSettingsSection.SectionName);
         services.AddHttpClient(PresenceInternalApiClient.HttpClientName, (serviceProvider, httpClient) =>
         {
-            var apiSettings = serviceProvider.GetRequiredService<IOptions<PresenceApiSettings>>().Value;
+            var apiSettings = serviceProvider.GetRequiredService<IOptions<PresenceApiSettingsSection>>().Value;
             if (!Uri.TryCreate(apiSettings.BaseUrl, UriKind.Absolute, out var baseAddress))
             {
                 throw new InvalidOperationException("PresenceApi:BaseUrl must be an absolute URI.");
@@ -100,8 +100,8 @@ public static class ConsumersServiceRegistration
     }
 
     private static string ResolveBootstrapServers(
-        SocialGraphContactConsumerOptions contactOptions,
-        RealtimeConnectionConsumerOptions realtimeConnectionOptions) =>
+        SocialGraphContactConsumerSettingsSection contactOptions,
+        RealtimeConnectionConsumerSettingsSection realtimeConnectionOptions) =>
         !string.IsNullOrWhiteSpace(contactOptions.BootstrapServers)
             ? contactOptions.BootstrapServers
             : realtimeConnectionOptions.BootstrapServers;

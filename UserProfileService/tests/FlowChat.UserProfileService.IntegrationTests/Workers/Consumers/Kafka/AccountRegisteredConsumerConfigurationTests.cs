@@ -1,4 +1,4 @@
-using FlowChat.UserProfileService.Consumers;
+﻿using FlowChat.UserProfileService.Consumers;
 using FlowChat.UserProfileService.Consumers.Kafka;
 using FlowChat.UserProfileService.Consumers.Services;
 using Microsoft.Extensions.Configuration;
@@ -55,8 +55,8 @@ public sealed class AccountRegisteredConsumerConfigurationTests
             .Build();
 
         var consumerOptions = configuration
-            .GetSection(AccountRegisteredConsumerOptions.SectionName)
-            .Get<AccountRegisteredConsumerOptions>();
+            .GetSection(AccountRegisteredConsumerSettingsSection.SectionName)
+            .Get<AccountRegisteredConsumerSettingsSection>();
 
         consumerOptions.Should().NotBeNull();
         consumerOptions!.GroupId.Should().Be("userprofile-service");

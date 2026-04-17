@@ -1,4 +1,4 @@
-using FlowChat.Shared.Application;
+﻿using FlowChat.Shared.Application;
 using FlowChat.Shared.Infrastructure.Silverback.Kafka;
 using FlowChat.ChatService.Infrastructure.Configuration;
 using FlowChat.ChatService.Infrastructure.Kafka;
@@ -16,7 +16,7 @@ public static class InfrastructureServiceRegistration
         services.TryAddSingleton<IApiSettingsManager>(new ApiSettingsManager(configuration));
         services.TryAddSingleton<IWorkerSettingsManager>(new WorkerSettingsManager(configuration));
         services.AddScoped<IKafkaProducerOptions<ChatMessageSentIntegrationEvent>>(sp =>
-            sp.GetRequiredService<IWorkerSettingsManager>().GetChatMessageSentProducerOptions());
+            sp.GetRequiredService<IWorkerSettingsManager>().GetChatMessageSentProducerSettingsSection());
         services.AddScoped<IOutboxIntegrationEventPublisher, FlowChatSilverbackEventPublisher>();
 
         return services;

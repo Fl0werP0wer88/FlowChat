@@ -1,4 +1,4 @@
-using FlowChat.AuthService.Persistence;
+﻿using FlowChat.AuthService.Persistence;
 using FlowChat.Core.Messaging.AuthService.Events;
 using FlowChat.Shared.Infrastructure.Silverback.Behaviors;
 using Microsoft.Extensions.Configuration;
@@ -19,7 +19,7 @@ public static class SilverbackServiceRegistration
         var settingsManager = new WorkerSettingsManager(configuration);
         services.TryAddSingleton<IWorkerSettingsManager>(settingsManager);
 
-        var accountRegisteredOptions = settingsManager.GetAccountRegisteredProducerOptions();
+        var accountRegisteredOptions = settingsManager.GetAccountRegisteredProducerSettingsSection();
 
         services.AddSilverback()
             .AddSingletonBrokerBehavior<CustomSpanAttributesProducerBehavior>()

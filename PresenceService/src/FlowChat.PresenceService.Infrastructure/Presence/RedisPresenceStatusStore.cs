@@ -1,4 +1,4 @@
-using System.Collections.Immutable;
+﻿using System.Collections.Immutable;
 using FlowChat.Core.Domain;
 using FlowChat.PresenceService.Application.Contracts.Infrastructure;
 using FlowChat.PresenceService.Application.Features.Presence;
@@ -9,7 +9,7 @@ namespace FlowChat.PresenceService.Infrastructure.Presence;
 
 internal sealed class RedisPresenceStatusStore(
     IConnectionMultiplexer connectionMultiplexer,
-    PresenceStatusSettings settings) : IPresenceStatusStore
+    PresenceStatusSettingsSection settings) : IPresenceStatusStore
 {
     private static class HashFields
     {
@@ -20,7 +20,7 @@ internal sealed class RedisPresenceStatusStore(
 
     private readonly IConnectionMultiplexer _connectionMultiplexer = connectionMultiplexer
         ?? throw new ArgumentNullException(nameof(connectionMultiplexer));
-    private readonly PresenceStatusSettings _settings = settings ?? throw new ArgumentNullException(nameof(settings));
+    private readonly PresenceStatusSettingsSection _settings = settings ?? throw new ArgumentNullException(nameof(settings));
 
     public async Task<PresenceStatusSnapshot?> GetAsync(Guid userId, CancellationToken cancellationToken)
     {

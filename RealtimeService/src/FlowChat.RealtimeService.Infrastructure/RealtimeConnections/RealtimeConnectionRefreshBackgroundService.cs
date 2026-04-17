@@ -1,4 +1,4 @@
-using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
+﻿using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
 using FlowChat.RealtimeService.Infrastructure.Configuration;
 using FlowChat.RealtimeService.Infrastructure.RealtimeConnections.ConnectionsTracker;
 using Microsoft.Extensions.Hosting;
@@ -11,7 +11,7 @@ internal sealed class RealtimeConnectionRefreshBackgroundService(
     IRealtimeConnectionRegistry realtimeConnectionRegistry,
     IActiveConnectionsTracker activeConnectionsTracker,
     IPresenceInternalApiClient presenceInternalApiClient,
-    RealtimeConnectionsSettings settings,
+    RealtimeConnectionsSettingsSection settings,
     ILogger<RealtimeConnectionRefreshBackgroundService> logger) : BackgroundService
 {
     private readonly IRealtimeConnectionRegistry _realtimeConnectionRegistry = realtimeConnectionRegistry
@@ -20,7 +20,7 @@ internal sealed class RealtimeConnectionRefreshBackgroundService(
         ?? throw new ArgumentNullException(nameof(activeConnectionsTracker));
     private readonly IPresenceInternalApiClient _presenceInternalApiClient = presenceInternalApiClient
         ?? throw new ArgumentNullException(nameof(presenceInternalApiClient));
-    private readonly RealtimeConnectionsSettings _settings = settings ?? throw new ArgumentNullException(nameof(settings));
+    private readonly RealtimeConnectionsSettingsSection _settings = settings ?? throw new ArgumentNullException(nameof(settings));
     private readonly ILogger<RealtimeConnectionRefreshBackgroundService> _logger = logger
         ?? throw new ArgumentNullException(nameof(logger));
 

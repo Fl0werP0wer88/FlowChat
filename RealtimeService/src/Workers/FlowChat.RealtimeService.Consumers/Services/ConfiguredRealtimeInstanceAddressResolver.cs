@@ -1,4 +1,4 @@
-using FlowChat.RealtimeService.Consumers.Configuration;
+﻿using FlowChat.RealtimeService.Consumers.Configuration;
 
 namespace FlowChat.RealtimeService.Consumers.Services;
 
@@ -6,7 +6,7 @@ public sealed class ConfiguredRealtimeInstanceAddressResolver : IRealtimeInstanc
 {
     private readonly IReadOnlyDictionary<string, Uri> _instanceAddresses;
 
-    public ConfiguredRealtimeInstanceAddressResolver(RealtimeApiSettings settings)
+    public ConfiguredRealtimeInstanceAddressResolver(RealtimeApiSettingsSection settings)
     {
         ArgumentNullException.ThrowIfNull(settings);
 

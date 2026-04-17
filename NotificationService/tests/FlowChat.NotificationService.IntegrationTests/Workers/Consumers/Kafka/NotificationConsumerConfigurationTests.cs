@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using FlowChat.NotificationService.Consumers;
 using FlowChat.NotificationService.Consumers.Kafka;
 using FlowChat.NotificationService.Consumers.Services;
@@ -44,8 +44,8 @@ public sealed class NotificationConsumerConfigurationTests
             .Build();
 
         var consumerOptions = configuration
-            .GetSection(UserEmailVerificationRequestedConsumerOptions.SectionName)
-            .Get<UserEmailVerificationRequestedConsumerOptions>();
+            .GetSection(UserEmailVerificationRequestedConsumerSettingsSection.SectionName)
+            .Get<UserEmailVerificationRequestedConsumerSettingsSection>();
 
         consumerOptions.Should().NotBeNull();
         consumerOptions!.GroupId.Should().Be("notification-service");

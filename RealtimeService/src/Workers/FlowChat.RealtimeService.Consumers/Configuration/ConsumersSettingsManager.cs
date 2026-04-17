@@ -1,4 +1,4 @@
-using FlowChat.RealtimeService.Consumers.Kafka;
+﻿using FlowChat.RealtimeService.Consumers.Kafka;
 using FlowChat.RealtimeService.Routing.Configuration;
 using Microsoft.Extensions.Configuration;
 
@@ -8,19 +8,19 @@ public sealed class ConsumersSettingsManager(IConfiguration configuration) : ICo
 {
     private readonly IConfiguration _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
 
-    public ChatMessageSentConsumerOptions GetChatMessageSentConsumerOptions() =>
-        _configuration.GetSection(ChatMessageSentConsumerOptions.SectionName).Get<ChatMessageSentConsumerOptions>()
-        ?? new ChatMessageSentConsumerOptions();
+    public ChatMessageSentConsumerSettingsSection GetChatMessageSentConsumerSettingsSection() =>
+        _configuration.GetSection(ChatMessageSentConsumerSettingsSection.SectionName).Get<ChatMessageSentConsumerSettingsSection>()
+        ?? new ChatMessageSentConsumerSettingsSection();
 
-    public PresenceStatusChangedConsumerOptions GetPresenceStatusChangedConsumerOptions() =>
-        _configuration.GetSection(PresenceStatusChangedConsumerOptions.SectionName).Get<PresenceStatusChangedConsumerOptions>()
-        ?? new PresenceStatusChangedConsumerOptions();
+    public PresenceStatusChangedConsumerSettingsSection GetPresenceStatusChangedConsumerSettingsSection() =>
+        _configuration.GetSection(PresenceStatusChangedConsumerSettingsSection.SectionName).Get<PresenceStatusChangedConsumerSettingsSection>()
+        ?? new PresenceStatusChangedConsumerSettingsSection();
 
-    public RealtimeApiSettings GetRealtimeApiSettings() =>
-        _configuration.GetSection(RealtimeApiSettings.SectionName).Get<RealtimeApiSettings>()
-        ?? new RealtimeApiSettings();
+    public RealtimeApiSettingsSection GetRealtimeApiSettingsSection() =>
+        _configuration.GetSection(RealtimeApiSettingsSection.SectionName).Get<RealtimeApiSettingsSection>()
+        ?? new RealtimeApiSettingsSection();
 
-    public RealtimeRoutingSettings GetRealtimeRoutingSettings() =>
-        _configuration.GetSection(RealtimeRoutingSettings.SectionName).Get<RealtimeRoutingSettings>()
-        ?? new RealtimeRoutingSettings();
+    public RealtimeRoutingSettingsSection GetRealtimeRoutingSettingsSection() =>
+        _configuration.GetSection(RealtimeRoutingSettingsSection.SectionName).Get<RealtimeRoutingSettingsSection>()
+        ?? new RealtimeRoutingSettingsSection();
 }

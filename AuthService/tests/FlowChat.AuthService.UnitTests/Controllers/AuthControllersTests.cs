@@ -1,4 +1,4 @@
-using AutoMapper;
+﻿using AutoMapper;
 using FlowChat.AuthService.API.Features.User.Public.LoginUser;
 using FlowChat.AuthService.API.Features.User.Public.RefreshToken;
 using FlowChat.AuthService.API.Features.User.Public.RegisterUser;
@@ -70,8 +70,8 @@ public sealed class AuthControllersTests
         var mediatorMock = new Mock<IMediator>();
         var apiSettingsManagerMock = new Mock<IApiSettingsManager>();
         apiSettingsManagerMock
-            .Setup(x => x.GetInternalApiSettings())
-            .Returns(new InternalApiSettings { ApiKey = "expected-key" });
+            .Setup(x => x.GetInternalApiSettingsSection())
+            .Returns(new InternalApiSettingsSection { ApiKey = "expected-key" });
 
         var controller = CreateController(
             new ChangeAuthEmailController(mediatorMock.Object, apiSettingsManagerMock.Object));
@@ -93,8 +93,8 @@ public sealed class AuthControllersTests
         var mediatorMock = new Mock<IMediator>();
         var apiSettingsManagerMock = new Mock<IApiSettingsManager>();
         apiSettingsManagerMock
-            .Setup(x => x.GetInternalApiSettings())
-            .Returns(new InternalApiSettings { ApiKey = "expected-key" });
+            .Setup(x => x.GetInternalApiSettingsSection())
+            .Returns(new InternalApiSettingsSection { ApiKey = "expected-key" });
 
         var controller = CreateController(
             new ConfirmAuthEmailController(mediatorMock.Object, apiSettingsManagerMock.Object));
@@ -112,8 +112,8 @@ public sealed class AuthControllersTests
         var mediatorMock = new Mock<IMediator>();
         var apiSettingsManagerMock = new Mock<IApiSettingsManager>();
         apiSettingsManagerMock
-            .Setup(x => x.GetInternalApiSettings())
-            .Returns(new InternalApiSettings { ApiKey = "expected-key" });
+            .Setup(x => x.GetInternalApiSettingsSection())
+            .Returns(new InternalApiSettingsSection { ApiKey = "expected-key" });
 
         ChangeAuthEmailCommand? capturedCommand = null;
         mediatorMock

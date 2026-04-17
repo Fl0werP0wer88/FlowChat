@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 using FlowChat.GatewayService.Api.Configuration;
 using FlowChat.GatewayService.Api.Observability;
 using FlowChat.Shared.API;
@@ -21,19 +21,19 @@ public static class StartupExtensions
         builder.Services.Configure<AspNetCoreTraceInstrumentationOptions>(GatewayTraceEnrichment.Configure);
 
         var jwtSettings = builder.Configuration
-            .GetSection(JwtSettings.SectionName)
-            .Get<JwtSettings>()
-            ?? throw new InvalidOperationException("Missing configuration section: JwtSettings.");
+            .GetSection(JwtSettingsSection.SectionName)
+            .Get<JwtSettingsSection>()
+            ?? throw new InvalidOperationException("Missing configuration section: JwtSettingsSection.");
 
         var clientSettings = builder.Configuration
-            .GetSection(GatewayClientSettings.SectionName)
-            .Get<GatewayClientSettings>()
-            ?? new GatewayClientSettings();
+            .GetSection(GatewayClientSettingsSection.SectionName)
+            .Get<GatewayClientSettingsSection>()
+            ?? new GatewayClientSettingsSection();
 
-        ValidateJwtSettings(jwtSettings);
+        ValidateJwtSettingsSection(jwtSettings);
 
-        builder.Services.Configure<GatewayCatalogOptions>(
-            builder.Configuration.GetSection(GatewayCatalogOptions.SectionName));
+        builder.Services.Configure<GatewayCatalogSettingsSection>(
+            builder.Configuration.GetSection(GatewayCatalogSettingsSection.SectionName));
 
         builder.Services
             .AddAuthentication(options =>
@@ -165,21 +165,21 @@ public static class StartupExtensions
         return app;
     }
 
-    private static void ValidateJwtSettings(JwtSettings jwtSettings)
+    private static void ValidateJwtSettingsSection(JwtSettingsSection jwtSettings)
     {
         if (string.IsNullOrWhiteSpace(jwtSettings.Key))
         {
-            throw new InvalidOperationException("Missing configuration value: JwtSettings:Key.");
+            throw new InvalidOperationException("Missing configuration value: JwtSettingsSection:Key.");
         }
 
         if (string.IsNullOrWhiteSpace(jwtSettings.Issuer))
         {
-            throw new InvalidOperationException("Missing configuration value: JwtSettings:Issuer.");
+            throw new InvalidOperationException("Missing configuration value: JwtSettingsSection:Issuer.");
         }
 
         if (string.IsNullOrWhiteSpace(jwtSettings.Audience))
         {
-            throw new InvalidOperationException("Missing configuration value: JwtSettings:Audience.");
+            throw new InvalidOperationException("Missing configuration value: JwtSettingsSection:Audience.");
         }
     }
 }

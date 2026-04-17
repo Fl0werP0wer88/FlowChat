@@ -1,4 +1,4 @@
-using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.Configuration;
 
 namespace FlowChat.AuthService.Infrastructure.Configuration;
 
@@ -11,16 +11,16 @@ public sealed class ApiSettingsManager : IApiSettingsManager
         _configuration = configuration;
     }
 
-    public JwtSettings GetJwtSettings() => ResolveSection<JwtSettings>(JwtSettings.SectionName);
+    public JwtSettingsSection GetJwtSettingsSection() => ResolveSection<JwtSettingsSection>(JwtSettingsSection.SectionName);
 
-    public InternalApiSettings GetInternalApiSettings() =>
-        ResolveSection<InternalApiSettings>(InternalApiSettings.SectionName);
+    public InternalApiSettingsSection GetInternalApiSettingsSection() =>
+        ResolveSection<InternalApiSettingsSection>(InternalApiSettingsSection.SectionName);
 
-    public ApiRuntimeSettings GetApiRuntimeSettings()
+    public ApiRuntimeSettingsSection GetApiRuntimeSettingsSection()
     {
-        var settings = new ApiRuntimeSettings();
+        var settings = new ApiRuntimeSettingsSection();
 
-        _configuration.GetSection(ApiRuntimeSettings.FlowChatSectionName).Bind(settings);
+        _configuration.GetSection(ApiRuntimeSettingsSection.SectionName).Bind(settings);
         settings.ApiUrl = _configuration["ApiUrl"] ?? settings.ApiUrl;
         settings.BlazorUrl = _configuration["BlazorUrl"] ?? settings.BlazorUrl;
 

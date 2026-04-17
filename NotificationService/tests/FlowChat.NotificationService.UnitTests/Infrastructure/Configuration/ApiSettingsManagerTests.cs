@@ -1,4 +1,4 @@
-using FlowChat.NotificationService.Infrastructure.Configuration;
+﻿using FlowChat.NotificationService.Infrastructure.Configuration;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 
@@ -11,10 +11,10 @@ public sealed class ApiSettingsManagerTests
             .AddInMemoryCollection(values)
             .Build();
 
-    // --- GetApiRuntimeSettings ---
+    // --- GetApiRuntimeSettingsSection ---
 
     [Fact]
-    public void GetApiRuntimeSettings_WhenValuesConfigured_ReturnsConfiguredSettings()
+    public void GetApiRuntimeSettingsSection_WhenValuesConfigured_ReturnsConfiguredSettings()
     {
         var config = BuildConfiguration(new()
         {
@@ -23,26 +23,26 @@ public sealed class ApiSettingsManagerTests
         });
 
         var manager = new ApiSettingsManager(config);
-        var settings = manager.GetApiRuntimeSettings();
+        var settings = manager.GetApiRuntimeSettingsSection();
 
         settings.ApiUrl.Should().Be("https://api.flowchat.com");
         settings.BlazorUrl.Should().Be("https://app.flowchat.com");
     }
 
     [Fact]
-    public void GetApiRuntimeSettings_WhenNoConfiguration_ReturnsDefaultValues()
+    public void GetApiRuntimeSettingsSection_WhenNoConfiguration_ReturnsDefaultValues()
     {
         var config = BuildConfiguration([]);
 
         var manager = new ApiSettingsManager(config);
-        var settings = manager.GetApiRuntimeSettings();
+        var settings = manager.GetApiRuntimeSettingsSection();
 
         settings.ApiUrl.Should().Be("https://localhost:5000");
         settings.BlazorUrl.Should().Be("https://localhost:5010");
     }
 
     [Fact]
-    public void GetApiRuntimeSettings_TopLevelApiUrlOverridesFlowChatSection()
+    public void GetApiRuntimeSettingsSection_TopLevelApiUrlOverridesFlowChatSection()
     {
         var config = BuildConfiguration(new()
         {
@@ -51,29 +51,29 @@ public sealed class ApiSettingsManagerTests
         });
 
         var manager = new ApiSettingsManager(config);
-        var settings = manager.GetApiRuntimeSettings();
+        var settings = manager.GetApiRuntimeSettingsSection();
 
         settings.ApiUrl.Should().Be("https://toplevel-api.flowchat.com");
     }
 
-    // --- GetEmailSettings ---
+    // --- GetEmailSettingsSection ---
 
     [Fact]
-    public void GetEmailSettings_WhenConfigured_ReturnsConfiguredValues()
+    public void GetEmailSettingsSection_WhenConfigured_ReturnsConfiguredValues()
     {
         var config = BuildConfiguration(new()
         {
-            [$"{EmailSettings.SectionName}:SmtpHost"] = "smtp.mailhog.local",
-            [$"{EmailSettings.SectionName}:SmtpPort"] = "1025",
-            [$"{EmailSettings.SectionName}:FromEmail"] = "noreply@flowchat.com",
-            [$"{EmailSettings.SectionName}:FromName"] = "FlowChat Bot",
-            [$"{EmailSettings.SectionName}:Username"] = "user",
-            [$"{EmailSettings.SectionName}:Password"] = "pass",
-            [$"{EmailSettings.SectionName}:EnableSsl"] = "false"
+            [$"{EmailSettingsSection.SectionName}:SmtpHost"] = "smtp.mailhog.local",
+            [$"{EmailSettingsSection.SectionName}:SmtpPort"] = "1025",
+            [$"{EmailSettingsSection.SectionName}:FromEmail"] = "noreply@flowchat.com",
+            [$"{EmailSettingsSection.SectionName}:FromName"] = "FlowChat Bot",
+            [$"{EmailSettingsSection.SectionName}:Username"] = "user",
+            [$"{EmailSettingsSection.SectionName}:Password"] = "pass",
+            [$"{EmailSettingsSection.SectionName}:EnableSsl"] = "false"
         });
 
         var manager = new ApiSettingsManager(config);
-        var settings = manager.GetEmailSettings();
+        var settings = manager.GetEmailSettingsSection();
 
         settings.SmtpHost.Should().Be("smtp.mailhog.local");
         settings.SmtpPort.Should().Be(1025);
@@ -85,12 +85,12 @@ public sealed class ApiSettingsManagerTests
     }
 
     [Fact]
-    public void GetEmailSettings_WhenSectionMissing_ReturnsDefaultValues()
+    public void GetEmailSettingsSection_WhenSectionMissing_ReturnsDefaultValues()
     {
         var config = BuildConfiguration([]);
 
         var manager = new ApiSettingsManager(config);
-        var settings = manager.GetEmailSettings();
+        var settings = manager.GetEmailSettingsSection();
 
         settings.SmtpHost.Should().BeEmpty();
         settings.SmtpPort.Should().Be(587);
@@ -98,29 +98,29 @@ public sealed class ApiSettingsManagerTests
         settings.EnableSsl.Should().BeTrue();
     }
 
-    // --- GetInternalApiSettings ---
+    // --- GetInternalApiSettingsSection ---
 
     [Fact]
-    public void GetInternalApiSettings_WhenConfigured_ReturnsApiKey()
+    public void GetInternalApiSettingsSection_WhenConfigured_ReturnsApiKey()
     {
         var config = BuildConfiguration(new()
         {
-            [$"{InternalApiSettings.SectionName}:ApiKey"] = "super-secret-key"
+            [$"{InternalApiSettingsSection.SectionName}:ApiKey"] = "super-secret-key"
         });
 
         var manager = new ApiSettingsManager(config);
-        var settings = manager.GetInternalApiSettings();
+        var settings = manager.GetInternalApiSettingsSection();
 
         settings.ApiKey.Should().Be("super-secret-key");
     }
 
     [Fact]
-    public void GetInternalApiSettings_WhenSectionMissing_ReturnsDefaultEmptyApiKey()
+    public void GetInternalApiSettingsSection_WhenSectionMissing_ReturnsDefaultEmptyApiKey()
     {
         var config = BuildConfiguration([]);
 
         var manager = new ApiSettingsManager(config);
-        var settings = manager.GetInternalApiSettings();
+        var settings = manager.GetInternalApiSettingsSection();
 
         settings.ApiKey.Should().BeEmpty();
     }

@@ -1,4 +1,4 @@
-using FlowChat.RealtimeService.Infrastructure.Configuration;
+﻿using FlowChat.RealtimeService.Infrastructure.Configuration;
 using FlowChat.Shared.Infrastructure.Redis;
 using StackExchange.Redis;
 
@@ -6,11 +6,11 @@ namespace FlowChat.RealtimeService.Infrastructure.RealtimeConnections.Stores.Use
 
 internal sealed class RedisUserConnectionsStore(
     IRedisTransactionContext redisTransactionContext,
-    RealtimeConnectionsSettings settings) : IUserConnectionsStore
+    RealtimeConnectionsSettingsSection settings) : IUserConnectionsStore
 {
     private readonly IRedisTransactionContext _redisTransactionContext = redisTransactionContext
         ?? throw new ArgumentNullException(nameof(redisTransactionContext));
-    private readonly RealtimeConnectionsSettings _settings = settings ?? throw new ArgumentNullException(nameof(settings));
+    private readonly RealtimeConnectionsSettingsSection _settings = settings ?? throw new ArgumentNullException(nameof(settings));
 
     public Task AddConnectionAsync(Guid userId, string connectionId)
     {

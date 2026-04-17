@@ -1,4 +1,4 @@
-using System.Data.Common;
+﻿using System.Data.Common;
 using FlowChat.Shared.API;
 using FlowChat.ChatService.OutboxPublisher;
 using FlowChat.ChatService.OutboxPublisher.Configuration;
@@ -52,8 +52,8 @@ static void LogStartupDiagnostics(IHost host)
         .CreateLogger("FlowChat.ChatService.OutboxPublisher.Startup");
     var environment = host.Services.GetRequiredService<IHostEnvironment>();
     var configuration = host.Services.GetRequiredService<IConfiguration>();
-    var producerOptions = host.Services.GetRequiredService<IOptions<ChatMessageSentProducerOptions>>().Value;
-    var outboxOptions = host.Services.GetRequiredService<IOptions<OutboxPublisherRuntimeOptions>>().Value;
+    var producerOptions = host.Services.GetRequiredService<IOptions<ChatMessageSentProducerSettingsSection>>().Value;
+    var outboxOptions = host.Services.GetRequiredService<IOptions<OutboxPublisherRuntimeSettingsSection>>().Value;
     var chatDbTarget = GetChatDbTarget(configuration.GetConnectionString("ChatDb"));
 
     logger.LogInformation(

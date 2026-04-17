@@ -1,10 +1,10 @@
-namespace FlowChat.PresenceService.Infrastructure.Configuration;
+﻿namespace FlowChat.PresenceService.Infrastructure.Configuration;
 
 public interface IApiSettingsManager
 {
-    JwtSettings GetJwtSettings();
+    JwtSettingsSection GetJwtSettingsSection();
 
-    InternalApiSettings GetInternalApiSettings();
+    InternalApiSettingsSection GetInternalApiSettingsSection();
 
-    PresenceStatusSettings GetPresenceStatusSettings();
+    PresenceStatusSettingsSection GetPresenceStatusSettingsSection();
 }

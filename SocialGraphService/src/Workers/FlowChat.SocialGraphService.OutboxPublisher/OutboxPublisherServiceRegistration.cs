@@ -1,4 +1,4 @@
-using FlowChat.Core.Messaging.SocialGraphService.Events;
+﻿using FlowChat.Core.Messaging.SocialGraphService.Events;
 using FlowChat.Shared.Infrastructure.Silverback.Behaviors;
 using FlowChat.SocialGraphService.OutboxPublisher.Configuration;
 using FlowChat.SocialGraphService.Persistence;
@@ -17,17 +17,17 @@ public static class OutboxPublisherServiceRegistration
         IConfiguration configuration)
     {
         var contactAddedOptions = configuration
-            .GetSection(ContactAddedProducerOptions.SectionName)
-            .Get<ContactAddedProducerOptions>()
-            ?? new ContactAddedProducerOptions();
+            .GetSection(ContactAddedProducerSettingsSection.SectionName)
+            .Get<ContactAddedProducerSettingsSection>()
+            ?? new ContactAddedProducerSettingsSection();
         var contactDeletedOptions = configuration
-            .GetSection(ContactDeletedProducerOptions.SectionName)
-            .Get<ContactDeletedProducerOptions>()
-            ?? new ContactDeletedProducerOptions();
+            .GetSection(ContactDeletedProducerSettingsSection.SectionName)
+            .Get<ContactDeletedProducerSettingsSection>()
+            ?? new ContactDeletedProducerSettingsSection();
         var outboxOptions = configuration
-            .GetSection(OutboxPublisherRuntimeOptions.SectionName)
-            .Get<OutboxPublisherRuntimeOptions>()
-            ?? new OutboxPublisherRuntimeOptions();
+            .GetSection(OutboxPublisherRuntimeSettingsSection.SectionName)
+            .Get<OutboxPublisherRuntimeSettingsSection>()
+            ?? new OutboxPublisherRuntimeSettingsSection();
         var bootstrapServers = !string.IsNullOrWhiteSpace(contactAddedOptions.BootstrapServers)
             ? contactAddedOptions.BootstrapServers
             : contactDeletedOptions.BootstrapServers;

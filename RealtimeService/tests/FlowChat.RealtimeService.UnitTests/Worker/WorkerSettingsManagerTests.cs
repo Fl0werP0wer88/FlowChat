@@ -1,4 +1,4 @@
-using FlowChat.RealtimeService.Consumers.Configuration;
+﻿using FlowChat.RealtimeService.Consumers.Configuration;
 using FlowChat.RealtimeService.Consumers.Kafka;
 using FlowChat.RealtimeService.Routing.Configuration;
 using FluentAssertions;
@@ -29,16 +29,16 @@ public sealed class WorkerSettingsManagerTests
 
         var settingsManager = new ConsumersSettingsManager(configuration);
 
-        settingsManager.GetChatMessageSentConsumerOptions().BootstrapServers.Should().Be("broker:9092");
-        settingsManager.GetChatMessageSentConsumerOptions().Topic.Should().Be("chat-topic");
-        settingsManager.GetChatMessageSentConsumerOptions().RetryGroupId.Should().Be("realtime-service-retry");
-        settingsManager.GetPresenceStatusChangedConsumerOptions().Topic.Should().Be("presence-topic");
-        settingsManager.GetPresenceStatusChangedConsumerOptions().RetryGroupId.Should().Be("realtime-service-retry");
-        settingsManager.GetRealtimeApiSettings().ApiKey.Should().Be("worker-key");
-        settingsManager.GetRealtimeApiSettings().Instances.Should().ContainKey("instance-a")
+        settingsManager.GetChatMessageSentConsumerSettingsSection().BootstrapServers.Should().Be("broker:9092");
+        settingsManager.GetChatMessageSentConsumerSettingsSection().Topic.Should().Be("chat-topic");
+        settingsManager.GetChatMessageSentConsumerSettingsSection().RetryGroupId.Should().Be("realtime-service-retry");
+        settingsManager.GetPresenceStatusChangedConsumerSettingsSection().Topic.Should().Be("presence-topic");
+        settingsManager.GetPresenceStatusChangedConsumerSettingsSection().RetryGroupId.Should().Be("realtime-service-retry");
+        settingsManager.GetRealtimeApiSettingsSection().ApiKey.Should().Be("worker-key");
+        settingsManager.GetRealtimeApiSettingsSection().Instances.Should().ContainKey("instance-a")
             .WhoseValue.Should().Be("http://localhost:5215");
-        settingsManager.GetRealtimeRoutingSettings().RedisConnectionString.Should().Be("localhost:6379,password=secret");
-        settingsManager.GetRealtimeRoutingSettings().KeyPrefix.Should().Be("flowchat:test");
+        settingsManager.GetRealtimeRoutingSettingsSection().RedisConnectionString.Should().Be("localhost:6379,password=secret");
+        settingsManager.GetRealtimeRoutingSettingsSection().KeyPrefix.Should().Be("flowchat:test");
     }
 
     [Theory]
@@ -51,17 +51,17 @@ public sealed class WorkerSettingsManagerTests
             .Build();
 
         var chatMessageOptions = configuration
-            .GetSection(ChatMessageSentConsumerOptions.SectionName)
-            .Get<ChatMessageSentConsumerOptions>();
+            .GetSection(ChatMessageSentConsumerSettingsSection.SectionName)
+            .Get<ChatMessageSentConsumerSettingsSection>();
         var presenceOptions = configuration
-            .GetSection(PresenceStatusChangedConsumerOptions.SectionName)
-            .Get<PresenceStatusChangedConsumerOptions>();
+            .GetSection(PresenceStatusChangedConsumerSettingsSection.SectionName)
+            .Get<PresenceStatusChangedConsumerSettingsSection>();
         var realtimeApiSettings = configuration
-            .GetSection(RealtimeApiSettings.SectionName)
-            .Get<RealtimeApiSettings>();
+            .GetSection(RealtimeApiSettingsSection.SectionName)
+            .Get<RealtimeApiSettingsSection>();
         var realtimeRoutingSettings = configuration
-            .GetSection(RealtimeRoutingSettings.SectionName)
-            .Get<RealtimeRoutingSettings>();
+            .GetSection(RealtimeRoutingSettingsSection.SectionName)
+            .Get<RealtimeRoutingSettingsSection>();
 
         chatMessageOptions.Should().NotBeNull();
         presenceOptions.Should().NotBeNull();

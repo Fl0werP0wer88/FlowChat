@@ -1,9 +1,9 @@
-namespace FlowChat.UserProfileService.Infrastructure.Configuration;
+﻿namespace FlowChat.UserProfileService.Infrastructure.Configuration;
 
 public interface IApiSettingsManager
 {
-    ApiRuntimeSettings GetApiRuntimeSettings();
-    ConfirmationLinksSettings GetConfirmationLinksSettings();
+    ApiRuntimeSettingsSection GetApiRuntimeSettingsSection();
+    ConfirmationLinksSettingsSection GetConfirmationLinksSettingsSection();
 
-    InternalApiSettings GetInternalApiSettings();
+    InternalApiSettingsSection GetInternalApiSettingsSection();
 }

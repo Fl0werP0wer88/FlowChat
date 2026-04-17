@@ -1,0 +1,13 @@
+﻿namespace FlowChat.PresenceService.Infrastructure.Configuration;
+
+public sealed class PresenceStatusSettingsSection
+{
+    public const string SectionName = "PresenceStatus";
+    public const string RedisConnectionStringName = "Redis";
+
+    public string RedisConnectionString { get; set; } = string.Empty;
+
+    public string KeyPrefix { get; set; } = "flowchat:presence";
+
+    public TimeSpan PresenceTtl { get; set; } = TimeSpan.FromMinutes(2);
+}

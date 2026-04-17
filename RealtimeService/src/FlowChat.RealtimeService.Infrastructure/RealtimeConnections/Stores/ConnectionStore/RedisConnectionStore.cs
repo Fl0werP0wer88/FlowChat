@@ -1,4 +1,4 @@
-using FlowChat.RealtimeService.Infrastructure.Configuration;
+﻿using FlowChat.RealtimeService.Infrastructure.Configuration;
 using FlowChat.Shared.Infrastructure.Redis;
 using StackExchange.Redis;
 
@@ -6,7 +6,7 @@ namespace FlowChat.RealtimeService.Infrastructure.RealtimeConnections.Stores.Con
 
 internal sealed class RedisConnectionStore(
     IRedisTransactionContext redisTransactionContext,
-    RealtimeConnectionsSettings settings) : IConnectionStore
+    RealtimeConnectionsSettingsSection settings) : IConnectionStore
 {
     private static class HashFields
     {
@@ -19,7 +19,7 @@ internal sealed class RedisConnectionStore(
 
     private readonly IRedisTransactionContext _redisTransactionContext = redisTransactionContext
         ?? throw new ArgumentNullException(nameof(redisTransactionContext));
-    private readonly RealtimeConnectionsSettings _settings = settings ?? throw new ArgumentNullException(nameof(settings));
+    private readonly RealtimeConnectionsSettingsSection _settings = settings ?? throw new ArgumentNullException(nameof(settings));
 
     public Task UpsertAsync(Guid userId, string connectionId, DateTimeOffset connectedAtUtc, DateTimeOffset lastSeenUtc)
     {

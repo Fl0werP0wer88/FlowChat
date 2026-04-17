@@ -1,4 +1,4 @@
-using FlowChat.ChatService.OutboxPublisher.Configuration;
+﻿using FlowChat.ChatService.OutboxPublisher.Configuration;
 using FlowChat.ChatService.Persistence;
 using FlowChat.Core.Messaging.ChatService.Events;
 using FlowChat.Shared.Infrastructure.Silverback.Behaviors;
@@ -17,18 +17,18 @@ public static class OutboxPublisherServiceRegistration
         IConfiguration configuration)
     {
         var outboxOptions = configuration
-            .GetSection(OutboxPublisherRuntimeOptions.SectionName)
-            .Get<OutboxPublisherRuntimeOptions>()
-            ?? new OutboxPublisherRuntimeOptions();
+            .GetSection(OutboxPublisherRuntimeSettingsSection.SectionName)
+            .Get<OutboxPublisherRuntimeSettingsSection>()
+            ?? new OutboxPublisherRuntimeSettingsSection();
         var producerOptions = configuration
-            .GetSection(ChatMessageSentProducerOptions.SectionName)
-            .Get<ChatMessageSentProducerOptions>()
-            ?? new ChatMessageSentProducerOptions();
+            .GetSection(ChatMessageSentProducerSettingsSection.SectionName)
+            .Get<ChatMessageSentProducerSettingsSection>()
+            ?? new ChatMessageSentProducerSettingsSection();
 
-        services.AddOptions<OutboxPublisherRuntimeOptions>()
-            .BindConfiguration(OutboxPublisherRuntimeOptions.SectionName);
-        services.AddOptions<ChatMessageSentProducerOptions>()
-            .BindConfiguration(ChatMessageSentProducerOptions.SectionName);
+        services.AddOptions<OutboxPublisherRuntimeSettingsSection>()
+            .BindConfiguration(OutboxPublisherRuntimeSettingsSection.SectionName);
+        services.AddOptions<ChatMessageSentProducerSettingsSection>()
+            .BindConfiguration(ChatMessageSentProducerSettingsSection.SectionName);
 
         services.AddSilverback()
             .AddSingletonBrokerBehavior<CustomSpanAttributesProducerBehavior>()

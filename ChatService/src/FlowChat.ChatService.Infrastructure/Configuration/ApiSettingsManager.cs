@@ -1,4 +1,4 @@
-using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.Configuration;
 
 namespace FlowChat.ChatService.Infrastructure.Configuration;
 
@@ -11,11 +11,11 @@ public sealed class ApiSettingsManager : IApiSettingsManager
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
     }
 
-    public ApiRuntimeSettings GetApiRuntimeSettings()
+    public ApiRuntimeSettingsSection GetApiRuntimeSettingsSection()
     {
-        var settings = new ApiRuntimeSettings();
+        var settings = new ApiRuntimeSettingsSection();
 
-        _configuration.GetSection("FlowChat").Bind(settings);
+        _configuration.GetSection(ApiRuntimeSettingsSection.SectionName).Bind(settings);
         settings.ApiUrl = _configuration["ApiUrl"] ?? settings.ApiUrl;
         settings.BlazorUrl = _configuration["BlazorUrl"] ?? settings.BlazorUrl;
 

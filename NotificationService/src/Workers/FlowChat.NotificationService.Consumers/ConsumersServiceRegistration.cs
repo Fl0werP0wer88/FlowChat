@@ -1,4 +1,4 @@
-using Confluent.Kafka;
+﻿using Confluent.Kafka;
 using FlowChat.NotificationService.Consumers.Configuration;
 using FlowChat.NotificationService.Consumers.Kafka;
 using FlowChat.NotificationService.Consumers.Services;
@@ -19,15 +19,15 @@ public static class ConsumersServiceRegistration
         IConfiguration configuration)
     {
         var consumerOptions = configuration
-            .GetSection(UserEmailVerificationRequestedConsumerOptions.SectionName)
-            .Get<UserEmailVerificationRequestedConsumerOptions>()
-            ?? new UserEmailVerificationRequestedConsumerOptions();
+            .GetSection(UserEmailVerificationRequestedConsumerSettingsSection.SectionName)
+            .Get<UserEmailVerificationRequestedConsumerSettingsSection>()
+            ?? new UserEmailVerificationRequestedConsumerSettingsSection();
 
-        services.AddOptions<NotificationApiSettings>()
-            .BindConfiguration(NotificationApiSettings.SectionName);
+        services.AddOptions<NotificationApiSettingsSection>()
+            .BindConfiguration(NotificationApiSettingsSection.SectionName);
         services.AddHttpClient(NotificationInternalApiClient.HttpClientName, (serviceProvider, httpClient) =>
         {
-            var apiSettings = serviceProvider.GetRequiredService<IOptions<NotificationApiSettings>>().Value;
+            var apiSettings = serviceProvider.GetRequiredService<IOptions<NotificationApiSettingsSection>>().Value;
             if (!Uri.TryCreate(apiSettings.BaseUrl, UriKind.Absolute, out var baseAddress))
             {
                 throw new InvalidOperationException("NotificationApi:BaseUrl must be an absolute URI.");

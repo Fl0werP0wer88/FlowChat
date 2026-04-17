@@ -1,6 +1,6 @@
-namespace FlowChat.AuthService.Infrastructure.Kafka;
+﻿namespace FlowChat.AuthService.Infrastructure.Kafka;
 
 public interface IWorkerSettingsManager
 {
-    AccountRegisteredProducerOptions GetAccountRegisteredProducerOptions();
+    AccountRegisteredProducerSettingsSection GetAccountRegisteredProducerSettingsSection();
 }

@@ -1,4 +1,4 @@
-using FlowChat.Core.Messaging.PresenceService.Events;
+﻿using FlowChat.Core.Messaging.PresenceService.Events;
 using FlowChat.PresenceService.Application.Contracts.Infrastructure;
 using FlowChat.PresenceService.Infrastructure.Configuration;
 using FlowChat.PresenceService.Infrastructure.Kafka;
@@ -20,17 +20,17 @@ public static class InfrastructureServiceRegistration
     {
         services.TryAddSingleton<IApiSettingsManager>(new ApiSettingsManager(configuration));
         services.TryAddSingleton<IKafkaSettingsManager>(new KafkaSettingsManager(configuration));
-        services.TryAddSingleton(sp => sp.GetRequiredService<IApiSettingsManager>().GetPresenceStatusSettings());
+        services.TryAddSingleton(sp => sp.GetRequiredService<IApiSettingsManager>().GetPresenceStatusSettingsSection());
         services.TryAddSingleton<IConnectionMultiplexer>(sp =>
         {
             var options = ConfigurationOptions.Parse(
-                sp.GetRequiredService<PresenceStatusSettings>().RedisConnectionString);
+                sp.GetRequiredService<PresenceStatusSettingsSection>().RedisConnectionString);
             options.AbortOnConnectFail = false;
 
             return ConnectionMultiplexer.Connect(options);
         });
         services.AddScoped<IKafkaProducerOptions<PresenceStatusChangedIntegrationEvent>>(sp =>
-            sp.GetRequiredService<IKafkaSettingsManager>().GetPresenceStatusChangedProducerOptions());
+            sp.GetRequiredService<IKafkaSettingsManager>().GetPresenceStatusChangedProducerSettingsSection());
         services.AddScoped<IOutboxIntegrationEventPublisher, FlowChatSilverbackEventPublisher>();
         services.AddScoped<IPresenceStatusStore, RedisPresenceStatusStore>();
 

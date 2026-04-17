@@ -1,4 +1,4 @@
-using System.Data.Common;
+﻿using System.Data.Common;
 using FlowChat.Shared.API;
 using FlowChat.AuthService.OutboxPublisher;
 using FlowChat.AuthService.OutboxPublisher.Configuration;
@@ -57,8 +57,8 @@ static void LogStartupDiagnostics(IHost host)
         .CreateLogger("FlowChat.AuthService.OutboxPublisher.Startup");
     var environment = host.Services.GetRequiredService<IHostEnvironment>();
     var configuration = host.Services.GetRequiredService<IConfiguration>();
-    var accountRegisteredOptions = host.Services.GetRequiredService<IOptions<AccountRegisteredProducerOptions>>().Value;
-    var outboxOptions = host.Services.GetRequiredService<IOptions<OutboxPublisherRuntimeOptions>>().Value;
+    var accountRegisteredOptions = host.Services.GetRequiredService<IOptions<AccountRegisteredProducerSettingsSection>>().Value;
+    var outboxOptions = host.Services.GetRequiredService<IOptions<OutboxPublisherRuntimeSettingsSection>>().Value;
     var authDbTarget = GetAuthDbTarget(configuration.GetConnectionString("AuthDb"));
 
     logger.LogInformation(

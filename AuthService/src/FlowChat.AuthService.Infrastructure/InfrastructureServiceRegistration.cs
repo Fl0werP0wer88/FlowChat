@@ -1,4 +1,4 @@
-using FlowChat.Shared.Application;
+﻿using FlowChat.Shared.Application;
 using FlowChat.AuthService.Application.Contracts.Infrastructure;
 using FlowChat.AuthService.Infrastructure.Configuration;
 using FlowChat.AuthService.Infrastructure.Kafka;
@@ -21,10 +21,10 @@ public static class InfrastructureServiceRegistration
         services.AddScoped<IPasswordHashingService, PasswordHashingService>();
         services.AddScoped<IOpenIddictTokenService, OpenIddictTokenService>();
         services.AddScoped<IKafkaProducerOptions<AccountRegisteredIntegrationEvent>>(sp =>
-            sp.GetRequiredService<IWorkerSettingsManager>().GetAccountRegisteredProducerOptions());
+            sp.GetRequiredService<IWorkerSettingsManager>().GetAccountRegisteredProducerSettingsSection());
         services.AddScoped<IKafkaProducerOptions<AccountConfirmedIntegrationEvent>>(sp =>
             new KafkaProducerOptionsAdapter<AccountConfirmedIntegrationEvent>(
-                sp.GetRequiredService<IWorkerSettingsManager>().GetAccountRegisteredProducerOptions()));
+                sp.GetRequiredService<IWorkerSettingsManager>().GetAccountRegisteredProducerSettingsSection()));
         services.AddScoped<IOutboxIntegrationEventPublisher, FlowChatSilverbackEventPublisher>();
 
         return services;
