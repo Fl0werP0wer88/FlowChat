@@ -15,7 +15,6 @@ public sealed class ApiSettingsManager(IConfiguration configuration) : IApiSetti
 
         _configuration.GetSection(new ApiRuntimeSettingsSection().SectionName).Bind(settings);
         settings.ApiUrl = _configuration["ApiUrl"] ?? settings.ApiUrl;
-        settings.BlazorUrl = _configuration["BlazorUrl"] ?? settings.BlazorUrl;
 
         return settings;
     }

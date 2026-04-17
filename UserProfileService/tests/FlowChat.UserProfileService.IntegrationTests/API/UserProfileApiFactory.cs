@@ -45,8 +45,7 @@ public sealed class UserProfileApiFactory : WebApplicationFactory<CreateInitialU
                 ["Kafka:UserProfileStateChangedProducer:BootstrapServers"] = "localhost:9092",
                 ["Kafka:UserProfileStateChangedProducer:Topic"] = "test.user-profile-state",
                 ["ConfirmationLinks:EmailVerificationBaseUrl"] = "https://test.example.com/verify",
-                ["ApiUrl"] = "https://localhost",
-                ["BlazorUrl"] = "https://localhost"
+                ["ApiUrl"] = "https://localhost"
             });
         });
 

@@ -20,8 +20,7 @@ public sealed class ApiSettingsManagerTests
                 ["JwtSettings:Audience"] = "jwt-audience",
                 ["JwtSettings:ExpiresMinutes"] = "90",
                 ["FlowChat:InternalApi:ApiKey"] = "internal-key",
-                ["ApiUrl"] = "https://localhost:5000",
-                ["BlazorUrl"] = "https://localhost:5010"
+                ["ApiUrl"] = "https://localhost:5000"
             })
             .Build();
 
@@ -37,7 +36,6 @@ public sealed class ApiSettingsManagerTests
         jwtSettings.ExpiresMinutes.Should().Be(90);
         internalApiSettings.ApiKey.Should().Be("internal-key");
         apiRuntimeSettings.ApiUrl.Should().Be("https://localhost:5000");
-        apiRuntimeSettings.BlazorUrl.Should().Be("https://localhost:5010");
     }
 
 }

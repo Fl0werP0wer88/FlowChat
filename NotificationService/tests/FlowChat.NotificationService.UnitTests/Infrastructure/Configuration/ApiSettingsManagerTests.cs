@@ -18,15 +18,13 @@ public sealed class ApiSettingsManagerTests
     {
         var config = BuildConfiguration(new()
         {
-            ["ApiUrl"] = "https://api.flowchat.com",
-            ["BlazorUrl"] = "https://app.flowchat.com"
+            ["ApiUrl"] = "https://api.flowchat.com"
         });
 
         var manager = new ApiSettingsManager(config);
         var settings = manager.GetApiRuntimeSettingsSection();
 
         settings.ApiUrl.Should().Be("https://api.flowchat.com");
-        settings.BlazorUrl.Should().Be("https://app.flowchat.com");
     }
 
     [Fact]
@@ -38,7 +36,6 @@ public sealed class ApiSettingsManagerTests
         var settings = manager.GetApiRuntimeSettingsSection();
 
         settings.ApiUrl.Should().Be("https://localhost:5000");
-        settings.BlazorUrl.Should().Be("https://localhost:5010");
     }
 
     [Fact]

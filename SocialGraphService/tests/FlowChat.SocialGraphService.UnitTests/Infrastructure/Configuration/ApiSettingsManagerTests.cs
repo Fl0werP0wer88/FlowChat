@@ -17,9 +17,7 @@ public sealed class ApiSettingsManagerTests
                 ["JwtSettings:Audience"] = "jwt-audience",
                 ["FlowChat:InternalApi:ApiKey"] = "internal-key",
                 ["FlowChat:ApiUrl"] = "https://section-api.flowchat.local",
-                ["FlowChat:BlazorUrl"] = "https://section-ui.flowchat.local",
-                ["ApiUrl"] = "https://root-api.flowchat.local",
-                ["BlazorUrl"] = "https://root-ui.flowchat.local"
+                ["ApiUrl"] = "https://root-api.flowchat.local"
             })
             .Build();
 
@@ -33,7 +31,6 @@ public sealed class ApiSettingsManagerTests
         jwtSettings.Audience.Should().Be("jwt-audience");
         internalApiSettings.ApiKey.Should().Be("internal-key");
         apiRuntimeSettings.ApiUrl.Should().Be("https://root-api.flowchat.local");
-        apiRuntimeSettings.BlazorUrl.Should().Be("https://root-ui.flowchat.local");
     }
 
     [Fact]
@@ -50,6 +47,5 @@ public sealed class ApiSettingsManagerTests
         jwtSettings.Audience.Should().BeEmpty();
         internalApiSettings.ApiKey.Should().BeEmpty();
         apiRuntimeSettings.ApiUrl.Should().Be("https://localhost:5000");
-        apiRuntimeSettings.BlazorUrl.Should().Be("https://localhost:5010");
     }
 }

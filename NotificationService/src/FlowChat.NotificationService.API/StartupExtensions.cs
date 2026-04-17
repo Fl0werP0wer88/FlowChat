@@ -26,8 +26,7 @@ public static class StartupExtensions
                 "open",
                 policy => policy.WithOrigins(
                         [
-                            apiRuntimeSettings.ApiUrl,
-                            apiRuntimeSettings.BlazorUrl
+                            apiRuntimeSettings.ApiUrl
                         ])
                     .AllowAnyMethod()
                     .SetIsOriginAllowed(_ => true)

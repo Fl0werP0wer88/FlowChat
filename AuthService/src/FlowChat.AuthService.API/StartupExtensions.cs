@@ -33,7 +33,7 @@ public static class StartupExtensions
         builder.Services.AddCors(
             options => options.AddPolicy(
                 "open",
-                policy => policy.WithOrigins([apiRuntimeSettings.ApiUrl, apiRuntimeSettings.BlazorUrl])
+                policy => policy.WithOrigins([apiRuntimeSettings.ApiUrl])
         .AllowAnyMethod()
         .SetIsOriginAllowed(pol => true) // DevNote To be removed whe UI address established
         .AllowAnyHeader()

@@ -18,7 +18,6 @@ public sealed class ApiSettingsManagerTests
                 ["JwtSettings:Issuer"] = "jwt-issuer",
                 ["JwtSettings:Audience"] = "jwt-audience",
                 ["ApiUrl"] = "https://localhost:5000",
-                ["BlazorUrl"] = "https://localhost:5010",
                 ["FlowChat:InternalApi:ApiKey"] = "internal-key",
                 ["ConnectionStrings:Redis"] = "localhost:6379,password=secret",
                 ["RealtimeConnections:InstanceId"] = "realtime-instance"
