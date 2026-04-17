@@ -1,10 +1,10 @@
 #requires -Version 5.1
 param(
-    [string]$BaseUrl = 'http://localhost:5234',
+    [string]$BaseUrl = 'https://localhost:7236',
     [string]$Route = 'api/users',
-    [string]$NotificationBaseUrl = 'http://localhost:5206',
+    [string]$NotificationBaseUrl = 'https://localhost:7206',
     [string]$NotificationRoute = 'api/notifications',
-    [string]$UserProfileBaseUrl = 'http://localhost:5054',
+    [string]$UserProfileBaseUrl = 'https://localhost:7148',
     [string]$UserProfileConfirmRoute = 'api/userprofiles/email-verification/confirm',
     [int]$ActivationDelaySeconds = 10,
     [switch]$DryRun
