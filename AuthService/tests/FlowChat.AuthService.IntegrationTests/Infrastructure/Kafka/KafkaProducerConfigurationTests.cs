@@ -19,7 +19,9 @@ public sealed class KafkaProducerConfigurationTests
                 ["Kafka:AccountRegisteredConsumer:BootstrapServers"] = "legacy-broker:9092",
                 ["Kafka:AccountRegisteredConsumer:Topic"] = "legacy-user-created-topic",
                 ["Kafka:AccountRegisteredProducer:BootstrapServers"] = "broker:9092",
-                ["Kafka:AccountRegisteredProducer:Topic"] = "user-created-topic"
+                ["Kafka:AccountRegisteredProducer:Topic"] = "user-created-topic",
+                ["Kafka:AccountConfirmedProducer:BootstrapServers"] = "broker:9092",
+                ["Kafka:AccountConfirmedProducer:Topic"] = "account-confirmed-topic"
             })
             .Build();
 
@@ -30,14 +32,20 @@ public sealed class KafkaProducerConfigurationTests
 
         using var serviceProvider = services.BuildServiceProvider();
 
-        var settingsManager = serviceProvider.GetRequiredService<IWorkerSettingsManager>();
+        var settingsManager = serviceProvider.GetRequiredService<IKafkaSettingsManager>();
         var accountRegisteredOptions = settingsManager.GetAccountRegisteredProducerSettingsSection();
+        var accountConfirmedOptions = settingsManager.GetAccountConfirmedProducerSettingsSection();
         var typedAccountRegisteredOptions = serviceProvider
             .GetRequiredService<IKafkaProducerSettingsSection<AccountRegisteredIntegrationEvent>>();
+        var typedAccountConfirmedOptions = serviceProvider
+            .GetRequiredService<IKafkaProducerSettingsSection<AccountConfirmedIntegrationEvent>>();
 
         accountRegisteredOptions.BootstrapServers.Should().Be("broker:9092");
         accountRegisteredOptions.Topic.Should().Be("user-created-topic");
+        accountConfirmedOptions.BootstrapServers.Should().Be("broker:9092");
+        accountConfirmedOptions.Topic.Should().Be("account-confirmed-topic");
         typedAccountRegisteredOptions.Topic.Should().Be("user-created-topic");
+        typedAccountConfirmedOptions.Topic.Should().Be("account-confirmed-topic");
     }
 
     [Theory]
@@ -54,10 +62,16 @@ public sealed class KafkaProducerConfigurationTests
         var accountRegisteredOptions = configuration
             .GetSection(new AccountRegisteredProducerSettingsSection().SectionName)
             .Get<AccountRegisteredProducerSettingsSection>();
+        var accountConfirmedOptions = configuration
+            .GetSection(new AccountConfirmedProducerSettingsSection().SectionName)
+            .Get<AccountConfirmedProducerSettingsSection>();
 
         accountRegisteredOptions.Should().NotBeNull();
+        accountConfirmedOptions.Should().NotBeNull();
         accountRegisteredOptions!.BootstrapServers.Should().Be("localhost:9092");
         accountRegisteredOptions.Topic.Should().Be("dev.flowchat.identity.user.v1");
+        accountConfirmedOptions!.BootstrapServers.Should().Be("localhost:9092");
+        accountConfirmedOptions.Topic.Should().Be("dev.flowchat.identity.user.v1");
     }
 
     private static string GetRepositoryPath(string relativePath)

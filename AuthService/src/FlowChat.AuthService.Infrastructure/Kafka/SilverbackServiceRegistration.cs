@@ -16,10 +16,14 @@ public static class SilverbackServiceRegistration
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        var settingsManager = new WorkerSettingsManager(configuration);
-        services.TryAddSingleton<IWorkerSettingsManager>(settingsManager);
+        var settingsManager = new KafkaSettingsManager(configuration);
+        services.TryAddSingleton<IKafkaSettingsManager>(settingsManager);
 
         var accountRegisteredOptions = settingsManager.GetAccountRegisteredProducerSettingsSection();
+        var accountConfirmedOptions = settingsManager.GetAccountConfirmedProducerSettingsSection();
+        var bootstrapServers = !string.IsNullOrWhiteSpace(accountRegisteredOptions.BootstrapServers)
+            ? accountRegisteredOptions.BootstrapServers
+            : accountConfirmedOptions.BootstrapServers;
 
         services.AddSilverback()
             .AddSingletonBrokerBehavior<CustomSpanAttributesProducerBehavior>()
@@ -30,7 +34,7 @@ public static class SilverbackServiceRegistration
             })
             .AddKafkaClients(clients =>
             {
-                clients.WithBootstrapServers(accountRegisteredOptions.BootstrapServers)
+                clients.WithBootstrapServers(bootstrapServers)
                     .AddProducer(producer => producer
                         .Produce<AccountRegisteredIntegrationEvent>("auth-account-registered", endpoint => endpoint
                             .ProduceTo(accountRegisteredOptions.Topic)
@@ -39,7 +43,7 @@ public static class SilverbackServiceRegistration
                             .StoreToOutbox(outbox => outbox.UseEntityFramework<AppDbContext>())))
                     .AddProducer(producer => producer
                         .Produce<AccountConfirmedIntegrationEvent>("auth-account-confirmed", endpoint => endpoint
-                            .ProduceTo(accountRegisteredOptions.Topic)
+                            .ProduceTo(accountConfirmedOptions.Topic)
                             .SetKafkaKey(message => message?.UserId)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())
                             .StoreToOutbox(outbox => outbox.UseEntityFramework<AppDbContext>())))

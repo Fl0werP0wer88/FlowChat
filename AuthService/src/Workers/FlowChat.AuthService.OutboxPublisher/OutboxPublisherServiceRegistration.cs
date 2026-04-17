@@ -24,11 +24,17 @@ public static class OutboxPublisherServiceRegistration
             .GetSection(new AccountRegisteredProducerSettingsSection().SectionName)
             .Get<AccountRegisteredProducerSettingsSection>()
             ?? new AccountRegisteredProducerSettingsSection();
+        var accountConfirmedOptions = configuration
+            .GetSection(new AccountConfirmedProducerSettingsSection().SectionName)
+            .Get<AccountConfirmedProducerSettingsSection>()
+            ?? new AccountConfirmedProducerSettingsSection();
 
         services.AddOptions<OutboxPublisherRuntimeSettingsSection>()
             .BindConfiguration(new OutboxPublisherRuntimeSettingsSection().SectionName);
         services.AddOptions<AccountRegisteredProducerSettingsSection>()
             .BindConfiguration(new AccountRegisteredProducerSettingsSection().SectionName);
+        services.AddOptions<AccountConfirmedProducerSettingsSection>()
+            .BindConfiguration(new AccountConfirmedProducerSettingsSection().SectionName);
 
         services.AddSilverback()
             .AddSingletonBrokerBehavior<CustomSpanAttributesProducerBehavior>()
@@ -56,7 +62,7 @@ public static class OutboxPublisherServiceRegistration
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())))
                     .AddProducer(producer => producer
                         .Produce<AccountConfirmedIntegrationEvent>("auth-account-confirmed", endpoint => endpoint
-                            .ProduceTo(accountRegisteredOptions.Topic)
+                            .ProduceTo(accountConfirmedOptions.Topic)
                             .SetKafkaKey(message => message?.UserId)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())))
                     .AddProducer(producer => producer

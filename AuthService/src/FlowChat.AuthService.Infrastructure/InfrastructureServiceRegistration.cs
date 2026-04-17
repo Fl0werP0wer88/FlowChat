@@ -16,15 +16,14 @@ public static class InfrastructureServiceRegistration
     public static IServiceCollection AddInfrastructureServices(this IServiceCollection services, IConfiguration configuration)
     {
         services.TryAddSingleton<IApiSettingsManager>(new ApiSettingsManager(configuration));
-        services.TryAddSingleton<IWorkerSettingsManager>(new WorkerSettingsManager(configuration));
+        services.TryAddSingleton<IKafkaSettingsManager>(new KafkaSettingsManager(configuration));
 
         services.AddScoped<IPasswordHashingService, PasswordHashingService>();
         services.AddScoped<IOpenIddictTokenService, OpenIddictTokenService>();
         services.AddScoped<IKafkaProducerSettingsSection<AccountRegisteredIntegrationEvent>>(sp =>
-            sp.GetRequiredService<IWorkerSettingsManager>().GetAccountRegisteredProducerSettingsSection());
+            sp.GetRequiredService<IKafkaSettingsManager>().GetAccountRegisteredProducerSettingsSection());
         services.AddScoped<IKafkaProducerSettingsSection<AccountConfirmedIntegrationEvent>>(sp =>
-            new KafkaProducerOptionsAdapter<AccountConfirmedIntegrationEvent>(
-                sp.GetRequiredService<IWorkerSettingsManager>().GetAccountRegisteredProducerSettingsSection()));
+            sp.GetRequiredService<IKafkaSettingsManager>().GetAccountConfirmedProducerSettingsSection());
         services.AddScoped<IOutboxIntegrationEventPublisher, FlowChatSilverbackEventPublisher>();
 
         return services;
