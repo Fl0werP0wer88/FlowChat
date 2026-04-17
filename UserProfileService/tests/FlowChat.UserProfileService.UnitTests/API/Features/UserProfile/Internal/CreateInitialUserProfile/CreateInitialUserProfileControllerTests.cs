@@ -1,7 +1,7 @@
 using FlowChat.Shared.Domain;
+using FlowChat.Shared.Infrastructure.Configuration;
 using FlowChat.UserProfileService.Api.Features.UserProfile.Internal.CreateInitialUserProfile;
 using FlowChat.UserProfileService.Application.Features.UserProfile.Commands.CreateInitialUserProfile;
-using FlowChat.UserProfileService.Infrastructure.Configuration;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -31,7 +31,7 @@ public sealed class CreateInitialUserProfileControllerTests
             })
             .Build();
 
-        return new CreateInitialUserProfileController(_mediatorMock.Object, new ApiSettingsManager(configuration));
+        return new CreateInitialUserProfileController(_mediatorMock.Object, new SettingsProvider(configuration));
     }
 
     private static void SetupHttpContext(CreateInitialUserProfileController controller, string? apiKeyHeader = null)

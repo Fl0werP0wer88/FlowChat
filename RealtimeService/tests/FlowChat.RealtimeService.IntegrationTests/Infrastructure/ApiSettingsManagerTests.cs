@@ -1,5 +1,5 @@
-﻿using FlowChat.RealtimeService.Infrastructure;
-using FlowChat.RealtimeService.Infrastructure.Configuration;
+﻿using FlowChat.Core.Contracts;
+using FlowChat.RealtimeService.Infrastructure;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -8,7 +8,7 @@ namespace FlowChat.RealtimeService.IntegrationTests;
 public sealed class ApiSettingsManagerTests
 {
     [Fact]
-    public void AddInfrastructureServices_RegistersSettingsManager()
+    public void AddInfrastructureServices_RegistersSettingsProvider()
     {
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
@@ -29,6 +29,6 @@ public sealed class ApiSettingsManagerTests
 
         using var serviceProvider = services.BuildServiceProvider();
 
-        serviceProvider.GetRequiredService<IApiSettingsManager>().Should().NotBeNull();
+        serviceProvider.GetRequiredService<ISettingsProvider>().Should().NotBeNull();
     }
 }

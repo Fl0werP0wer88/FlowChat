@@ -1,6 +1,7 @@
-﻿using FlowChat.Shared.API;
+﻿using FlowChat.Core.Contracts;
 using FlowChat.NotificationService.Application.Features.Notification.Commands.UserEmailVerificationRequested;
 using FlowChat.NotificationService.Infrastructure.Configuration;
+using FlowChat.Shared.API;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -13,11 +14,11 @@ public sealed class ProcessUserEmailVerificationRequestedController : ApiControl
 {
     private readonly IMediator _mediator;
 
-    public ProcessUserEmailVerificationRequestedController(IMediator mediator, IApiSettingsManager apiSettingsManager)
-        : base(() => apiSettingsManager.GetInternalApiSettingsSection().ApiKey)
+    public ProcessUserEmailVerificationRequestedController(IMediator mediator, ISettingsProvider settingsProvider)
+        : base(() => settingsProvider.GetSection<InternalApiSettingsSection>().ApiKey)
     {
         _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
-        ArgumentNullException.ThrowIfNull(apiSettingsManager);
+        ArgumentNullException.ThrowIfNull(settingsProvider);
     }
 
     [HttpPost("email-verification-requested")]

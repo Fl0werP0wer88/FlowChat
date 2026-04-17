@@ -1,5 +1,6 @@
-﻿using FlowChat.AuthService.Infrastructure;
+using FlowChat.AuthService.Infrastructure;
 using FlowChat.AuthService.Infrastructure.Configuration;
+using FlowChat.Core.Contracts;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -8,7 +9,7 @@ namespace FlowChat.AuthService.IntegrationTests;
 public sealed class ApiSettingsManagerTests
 {
     [Fact]
-    public void AddInfrastructureServices_RegistersApiSettingsManager()
+    public void AddInfrastructureServices_RegistersSettingsProvider()
     {
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
@@ -27,11 +28,11 @@ public sealed class ApiSettingsManagerTests
         services.AddInfrastructureServices(configuration);
 
         using var serviceProvider = services.BuildServiceProvider();
-        var settingsManager = serviceProvider.GetRequiredService<IApiSettingsManager>();
+        var settingsProvider = serviceProvider.GetRequiredService<ISettingsProvider>();
 
-        settingsManager.Should().NotBeNull();
-        settingsManager.GetJwtSettingsSection().Key.Should().Be("jwt-key");
-        settingsManager.GetJwtSettingsSection().EncryptionKey.Should().Be("12345678901234567890123456789012");
-        settingsManager.GetInternalApiSettingsSection().ApiKey.Should().Be("internal-key");
+        settingsProvider.Should().NotBeNull();
+        settingsProvider.GetSection<JwtSettingsSection>().Key.Should().Be("jwt-key");
+        settingsProvider.GetSection<JwtSettingsSection>().EncryptionKey.Should().Be("12345678901234567890123456789012");
+        settingsProvider.GetSection<InternalApiSettingsSection>().ApiKey.Should().Be("internal-key");
     }
 }

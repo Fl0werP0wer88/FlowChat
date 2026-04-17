@@ -1,6 +1,7 @@
-﻿using FlowChat.RealtimeService.Consumers.Configuration;
+using FlowChat.RealtimeService.Consumers.Configuration;
 using FlowChat.RealtimeService.Consumers.Kafka;
 using FlowChat.RealtimeService.Routing.Configuration;
+using FlowChat.Shared.Infrastructure.Configuration;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 
@@ -9,7 +10,7 @@ namespace FlowChat.RealtimeService.UnitTests;
 public sealed class WorkerSettingsManagerTests
 {
     [Fact]
-    public void ConsumersSettingsManager_ResolvesConsumerSections()
+    public void SettingsProvider_ResolvesConsumerSections()
     {
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
@@ -27,18 +28,18 @@ public sealed class WorkerSettingsManagerTests
             })
             .Build();
 
-        var settingsManager = new ConsumersSettingsManager(configuration);
+        var settingsProvider = new SettingsProvider(configuration);
 
-        settingsManager.GetChatMessageSentConsumerSettingsSection().BootstrapServers.Should().Be("broker:9092");
-        settingsManager.GetChatMessageSentConsumerSettingsSection().Topic.Should().Be("chat-topic");
-        settingsManager.GetChatMessageSentConsumerSettingsSection().RetryGroupId.Should().Be("realtime-service-retry");
-        settingsManager.GetPresenceStatusChangedConsumerSettingsSection().Topic.Should().Be("presence-topic");
-        settingsManager.GetPresenceStatusChangedConsumerSettingsSection().RetryGroupId.Should().Be("realtime-service-retry");
-        settingsManager.GetRealtimeApiSettingsSection().ApiKey.Should().Be("worker-key");
-        settingsManager.GetRealtimeApiSettingsSection().Instances.Should().ContainKey("instance-a")
+        settingsProvider.GetSection<ChatMessageSentConsumerSettingsSection>().BootstrapServers.Should().Be("broker:9092");
+        settingsProvider.GetSection<ChatMessageSentConsumerSettingsSection>().Topic.Should().Be("chat-topic");
+        settingsProvider.GetSection<ChatMessageSentConsumerSettingsSection>().RetryGroupId.Should().Be("realtime-service-retry");
+        settingsProvider.GetSection<PresenceStatusChangedConsumerSettingsSection>().Topic.Should().Be("presence-topic");
+        settingsProvider.GetSection<PresenceStatusChangedConsumerSettingsSection>().RetryGroupId.Should().Be("realtime-service-retry");
+        settingsProvider.GetSection<RealtimeApiSettingsSection>().ApiKey.Should().Be("worker-key");
+        settingsProvider.GetSection<RealtimeApiSettingsSection>().Instances.Should().ContainKey("instance-a")
             .WhoseValue.Should().Be("http://localhost:5215");
-        settingsManager.GetRealtimeRoutingSettingsSection().RedisConnectionString.Should().Be("localhost:6379,password=secret");
-        settingsManager.GetRealtimeRoutingSettingsSection().KeyPrefix.Should().Be("flowchat:test");
+        settingsProvider.GetSection<RealtimeRoutingSettingsSection>().RedisConnectionString.Should().Be("localhost:6379,password=secret");
+        settingsProvider.GetSection<RealtimeRoutingSettingsSection>().KeyPrefix.Should().Be("flowchat:test");
     }
 
     [Theory]

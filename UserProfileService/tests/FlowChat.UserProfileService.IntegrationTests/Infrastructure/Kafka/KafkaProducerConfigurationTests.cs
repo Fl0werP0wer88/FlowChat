@@ -1,4 +1,5 @@
-﻿using FlowChat.Core.Messaging.AuthService.Events;
+using FlowChat.Core.Contracts;
+using FlowChat.Core.Messaging.AuthService.Events;
 using FlowChat.Core.Messaging.UserProfileService.Events;
 using FlowChat.Shared.Infrastructure.Silverback.Kafka;
 using FlowChat.UserProfileService.Infrastructure;
@@ -36,11 +37,11 @@ public sealed class KafkaProducerConfigurationTests
 
         using var serviceProvider = services.BuildServiceProvider();
 
-        var settingsManager = serviceProvider.GetRequiredService<IKafkaSettingsManager>();
-        var createdProducerOptions = settingsManager.GetUserProfileCreatedProducerSettingsSection();
-        var emailConfirmedProducerOptions = settingsManager.GetUserEmailConfirmedProducerSettingsSection();
-        var emailVerificationRequestedProducerOptions = settingsManager.GetUserEmailVerificationRequestedProducerSettingsSection();
-        var stateChangedProducerOptions = settingsManager.GetUserProfileStateChangedProducerSettingsSection();
+        var settingsProvider = serviceProvider.GetRequiredService<ISettingsProvider>();
+        var createdProducerOptions = settingsProvider.GetSection<UserProfileCreatedProducerSettingsSection>();
+        var emailConfirmedProducerOptions = settingsProvider.GetSection<UserEmailConfirmedProducerSettingsSection>();
+        var emailVerificationRequestedProducerOptions = settingsProvider.GetSection<UserEmailVerificationRequestedProducerSettingsSection>();
+        var stateChangedProducerOptions = settingsProvider.GetSection<UserProfileStateChangedProducerSettingsSection>();
         var typedCreatedProducerOptions = serviceProvider
             .GetRequiredService<IKafkaProducerSettingsSection<UserProfileCreatedIntegrationEvent>>();
         var typedEmailConfirmedProducerOptions = serviceProvider

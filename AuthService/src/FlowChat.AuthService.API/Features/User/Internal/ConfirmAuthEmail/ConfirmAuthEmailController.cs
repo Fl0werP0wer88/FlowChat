@@ -1,5 +1,6 @@
-﻿using FlowChat.AuthService.Application.Features.User.Commands.ConfirmAuthEmail;
+using FlowChat.AuthService.Application.Features.User.Commands.ConfirmAuthEmail;
 using FlowChat.AuthService.Infrastructure.Configuration;
+using FlowChat.Core.Contracts;
 using FlowChat.Shared.API;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -13,11 +14,11 @@ public sealed class ConfirmAuthEmailController : ApiControllerBase
 {
     private readonly IMediator _mediator;
 
-    public ConfirmAuthEmailController(IMediator mediator, IApiSettingsManager apiSettingsManager)
-        : base(() => apiSettingsManager.GetInternalApiSettingsSection().ApiKey)
+    public ConfirmAuthEmailController(IMediator mediator, ISettingsProvider settingsProvider)
+        : base(() => settingsProvider.GetSection<InternalApiSettingsSection>().ApiKey)
     {
         _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
-        ArgumentNullException.ThrowIfNull(apiSettingsManager);
+        ArgumentNullException.ThrowIfNull(settingsProvider);
     }
 
     [HttpPost("email-confirmation")]

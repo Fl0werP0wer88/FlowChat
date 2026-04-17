@@ -6,6 +6,7 @@ using FlowChat.PresenceService.Infrastructure.Configuration;
 using FlowChat.PresenceService.Infrastructure.Kafka;
 using FlowChat.PresenceService.Persistence;
 using FlowChat.Shared.API;
+using FlowChat.Shared.Infrastructure.Configuration;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -17,8 +18,8 @@ public static class StartupExtensions
 {
     public static WebApplication ConfigureServices(this WebApplicationBuilder builder)
     {
-        var settingsManager = new ApiSettingsManager(builder.Configuration);
-        var jwtSettings = settingsManager.GetJwtSettingsSection();
+        var settingsProvider = new SettingsProvider(builder.Configuration);
+        var jwtSettings = settingsProvider.GetSection<JwtSettingsSection>();
 
         builder.Services.AddApiApplicationServices();
         builder.Services.AddInfrastructureServices(builder.Configuration);

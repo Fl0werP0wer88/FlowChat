@@ -2,6 +2,7 @@
 using FlowChat.Core.Domain;
 using FlowChat.RealtimeService.Api.Features.Realtime.Internal.PublishPresenceChange;
 using FlowChat.RealtimeService.Application.Features.Presence.Commands.PublishPresenceChange;
+using FlowChat.Core.Contracts;
 using FlowChat.RealtimeService.Infrastructure.Configuration;
 using FlowChat.Shared.Domain;
 using FluentAssertions;
@@ -64,12 +65,12 @@ public sealed class PublishPresenceChangeControllerTests
         Mock<IMediator> mediatorMock,
         string? providedApiKey = null)
     {
-        var apiSettingsManagerMock = new Mock<IApiSettingsManager>();
-        apiSettingsManagerMock
-            .Setup(x => x.GetInternalApiSettingsSection())
+        var settingsProviderMock = new Mock<ISettingsProvider>();
+        settingsProviderMock
+            .Setup(x => x.GetSection<InternalApiSettingsSection>())
             .Returns(new InternalApiSettingsSection { ApiKey = expectedApiKey });
 
-        var controller = new PublishPresenceChangeController(mediatorMock.Object, apiSettingsManagerMock.Object)
+        var controller = new PublishPresenceChangeController(mediatorMock.Object, settingsProviderMock.Object)
         {
             ControllerContext = new ControllerContext
             {

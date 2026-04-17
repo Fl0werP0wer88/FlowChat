@@ -2,6 +2,7 @@
 using FlowChat.GatewayService.Api.Configuration;
 using FlowChat.GatewayService.Api.Observability;
 using FlowChat.Shared.API;
+using FlowChat.Shared.Infrastructure.Configuration;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
@@ -20,15 +21,9 @@ public static class StartupExtensions
         builder.AddFlowChatOpenTelemetry();
         builder.Services.Configure<AspNetCoreTraceInstrumentationOptions>(GatewayTraceEnrichment.Configure);
 
-        var jwtSettings = builder.Configuration
-            .GetSection(new JwtSettingsSection().SectionName)
-            .Get<JwtSettingsSection>()
-            ?? throw new InvalidOperationException("Missing configuration section: JwtSettingsSection.");
-
-        var clientSettings = builder.Configuration
-            .GetSection(new GatewayClientSettingsSection().SectionName)
-            .Get<GatewayClientSettingsSection>()
-            ?? new GatewayClientSettingsSection();
+        var settingsProvider = new SettingsProvider(builder.Configuration);
+        var jwtSettings = settingsProvider.GetRequiredSection<JwtSettingsSection>();
+        var clientSettings = settingsProvider.GetSection<GatewayClientSettingsSection>();
 
         ValidateJwtSettingsSection(jwtSettings);
 

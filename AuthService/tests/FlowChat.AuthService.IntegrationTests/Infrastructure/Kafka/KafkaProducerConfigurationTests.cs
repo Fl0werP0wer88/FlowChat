@@ -1,5 +1,6 @@
 using FlowChat.AuthService.Infrastructure;
 using FlowChat.AuthService.Infrastructure.Kafka;
+using FlowChat.Core.Contracts;
 using FlowChat.Core.Messaging.AuthService.Events;
 using FlowChat.Shared.Infrastructure.Silverback.Kafka;
 using FluentAssertions;
@@ -34,10 +35,10 @@ public sealed class KafkaProducerConfigurationTests
 
         using var serviceProvider = services.BuildServiceProvider();
 
-        var settingsManager = serviceProvider.GetRequiredService<IKafkaSettingsManager>();
-        var accountRegisteredOptions = settingsManager.GetAccountRegisteredProducerSettingsSection();
-        var accountConfirmedOptions = settingsManager.GetAccountConfirmedProducerSettingsSection();
-        var phoneNumberConfirmedOptions = settingsManager.GetPhoneNumberConfirmedProducerSettingsSection();
+        var settingsProvider = serviceProvider.GetRequiredService<ISettingsProvider>();
+        var accountRegisteredOptions = settingsProvider.GetSection<AccountRegisteredProducerSettingsSection>();
+        var accountConfirmedOptions = settingsProvider.GetSection<AccountConfirmedProducerSettingsSection>();
+        var phoneNumberConfirmedOptions = settingsProvider.GetSection<PhoneNumberConfirmedProducerSettingsSection>();
         var typedAccountRegisteredOptions = serviceProvider
             .GetRequiredService<IKafkaProducerSettingsSection<AccountRegisteredIntegrationEvent>>();
         var typedAccountConfirmedOptions = serviceProvider

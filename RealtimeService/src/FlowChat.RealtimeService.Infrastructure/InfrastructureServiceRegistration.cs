@@ -1,3 +1,4 @@
+using FlowChat.Core.Contracts;
 using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
 using FlowChat.RealtimeService.Infrastructure.Configuration;
 using FlowChat.RealtimeService.Infrastructure.Kafka;
@@ -9,6 +10,7 @@ using FlowChat.RealtimeService.Infrastructure.RealtimeConnections.Stores.UserCon
 using FlowChat.RealtimeService.Routing;
 using FlowChat.RealtimeService.Routing.Configuration;
 using FlowChat.Shared.Application;
+using FlowChat.Shared.Infrastructure.Configuration;
 using FlowChat.Shared.Infrastructure.Redis;
 using FlowChat.Shared.Infrastructure.Silverback.Kafka;
 using Microsoft.Extensions.Configuration;
@@ -24,9 +26,14 @@ public static class InfrastructureServiceRegistration
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        services.TryAddSingleton<IApiSettingsManager>(new ApiSettingsManager(configuration));
-        services.TryAddSingleton<IKafkaSettingsManager>(new KafkaSettingsManager(configuration));
-        services.TryAddSingleton(sp => sp.GetRequiredService<IApiSettingsManager>().GetRealtimeConnectionsSettingsSection());
+        services.TryAddSingleton<ISettingsProvider>(new SettingsProvider(configuration));
+        services.TryAddSingleton(sp =>
+        {
+            var settings = sp.GetRequiredService<ISettingsProvider>().GetSection<RealtimeConnectionsSettingsSection>();
+            settings.RedisConnectionString = configuration.GetConnectionString(RealtimeConnectionsSettingsSection.RedisConnectionStringName)
+                ?? settings.RedisConnectionString;
+            return settings;
+        });
         services.TryAddSingleton<IConnectionMultiplexer>(sp =>
         {
             var options = ConfigurationOptions.Parse(sp.GetRequiredService<RealtimeConnectionsSettingsSection>().RedisConnectionString);
@@ -55,12 +62,12 @@ public static class InfrastructureServiceRegistration
         services.TryAddSingleton<IRealtimeRoutingTopologyReader>(sp => sp.GetRequiredService<RedisRealtimeRoutingTopologyStore>());
         services.TryAddSingleton<IRealtimeConnectionRegistry, RealtimeConnectionRegistry>();
         services.AddScoped<IKafkaProducerSettingsSection<FlowChat.Core.Messaging.RealtimeService.Events.RealtimeConnectionRegisteredIntegrationEvent>>(sp =>
-            sp.GetRequiredService<IKafkaSettingsManager>().GetRealtimeConnectionRegisteredProducerSettingsSection());
+            sp.GetRequiredService<ISettingsProvider>().GetSection<RealtimeConnectionRegisteredProducerSettingsSection>());
         services.AddScoped<IKafkaProducerSettingsSection<FlowChat.Core.Messaging.RealtimeService.Events.RealtimeConnectionUnregisteredIntegrationEvent>>(sp =>
-            sp.GetRequiredService<IKafkaSettingsManager>().GetRealtimeConnectionUnregisteredProducerSettingsSection());
+            sp.GetRequiredService<ISettingsProvider>().GetSection<RealtimeConnectionUnregisteredProducerSettingsSection>());
         services.AddScoped<IDirectEventPublisher, FlowChatSilverbackEventPublisher>();
 
-        services.TryAddSingleton(sp => sp.GetRequiredService<IApiSettingsManager>().GetPresenceServiceSettingsSection());
+        services.TryAddSingleton(sp => sp.GetRequiredService<ISettingsProvider>().GetSection<PresenceServiceSettingsSection>());
         services.AddHttpClient(PresenceInternalApiClient.HttpClientName, (sp, client) =>
         {
             var settings = sp.GetRequiredService<PresenceServiceSettingsSection>();

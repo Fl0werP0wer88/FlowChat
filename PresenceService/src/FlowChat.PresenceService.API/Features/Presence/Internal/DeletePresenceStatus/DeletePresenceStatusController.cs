@@ -1,5 +1,6 @@
 ﻿using FlowChat.PresenceService.Application.Features.Presence.Commands.DeletePresenceStatus;
 using FlowChat.PresenceService.Infrastructure.Configuration;
+using FlowChat.Core.Contracts;
 using FlowChat.Shared.API;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -13,11 +14,11 @@ public sealed class DeletePresenceStatusController : ApiControllerBase
 {
     private readonly IMediator _mediator;
 
-    public DeletePresenceStatusController(IMediator mediator, IApiSettingsManager apiSettingsManager)
-        : base(() => apiSettingsManager.GetInternalApiSettingsSection().ApiKey)
+    public DeletePresenceStatusController(IMediator mediator, ISettingsProvider settingsProvider)
+        : base(() => settingsProvider.GetSection<InternalApiSettingsSection>().ApiKey)
     {
         _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
-        ArgumentNullException.ThrowIfNull(apiSettingsManager);
+        ArgumentNullException.ThrowIfNull(settingsProvider);
     }
 
     [HttpDelete("delete")]

@@ -1,6 +1,7 @@
 ﻿using FlowChat.Core.Messaging.SocialGraphService.Events;
-using FlowChat.SocialGraphService.Persistence;
+using FlowChat.Shared.Infrastructure.Configuration;
 using FlowChat.Shared.Infrastructure.Silverback.Behaviors;
+using FlowChat.SocialGraphService.Persistence;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Silverback.Configuration;
@@ -15,9 +16,9 @@ public static class SilverbackServiceRegistration
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        var settingsManager = new KafkaSettingsManager(configuration);
-        var contactAddedOptions = settingsManager.GetContactAddedProducerSettingsSection();
-        var contactDeletedOptions = settingsManager.GetContactDeletedProducerSettingsSection();
+        var settingsProvider = new SettingsProvider(configuration);
+        var contactAddedOptions = settingsProvider.GetSection<ContactAddedProducerSettingsSection>();
+        var contactDeletedOptions = settingsProvider.GetSection<ContactDeletedProducerSettingsSection>();
         var bootstrapServers = !string.IsNullOrWhiteSpace(contactAddedOptions.BootstrapServers)
             ? contactAddedOptions.BootstrapServers
             : contactDeletedOptions.BootstrapServers;

@@ -1,12 +1,14 @@
-﻿using Confluent.Kafka;
+using Confluent.Kafka;
+using FlowChat.Core.Contracts;
 using FlowChat.RealtimeService.Consumers.Configuration;
 using FlowChat.RealtimeService.Consumers.Kafka;
 using FlowChat.RealtimeService.Consumers.Services;
 using FlowChat.RealtimeService.Routing;
 using FlowChat.RealtimeService.Routing.Configuration;
+using FlowChat.Shared.Infrastructure.Configuration;
 using FlowChat.Shared.Infrastructure.Redis;
-using FlowChat.Shared.Infrastructure.Silverback.Kafka;
 using FlowChat.Shared.Infrastructure.Silverback.Behaviors;
+using FlowChat.Shared.Infrastructure.Silverback.Kafka;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -22,19 +24,20 @@ public static class ConsumersServiceRegistration
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        var settingsManager = new ConsumersSettingsManager(configuration);
-        services.TryAddSingleton<IConsumersSettingsManager>(settingsManager);
-        services.TryAddSingleton(sp => sp.GetRequiredService<IConsumersSettingsManager>().GetRealtimeApiSettingsSection());
-        services.TryAddSingleton(sp => sp.GetRequiredService<IConsumersSettingsManager>().GetRealtimeRoutingSettingsSection());
+        services.TryAddSingleton<ISettingsProvider>(new SettingsProvider(configuration));
 
-        var chatMessageSentConsumerOptions = settingsManager.GetChatMessageSentConsumerSettingsSection();
-        var presenceStatusChangedConsumerOptions = settingsManager.GetPresenceStatusChangedConsumerSettingsSection();
+        var settingsProvider = new SettingsProvider(configuration);
+        services.TryAddSingleton(sp => sp.GetRequiredService<ISettingsProvider>().GetSection<RealtimeApiSettingsSection>());
+        services.TryAddSingleton(sp => sp.GetRequiredService<ISettingsProvider>().GetSection<RealtimeRoutingSettingsSection>());
+
+        var chatMessageSentConsumerOptions = settingsProvider.GetSection<ChatMessageSentConsumerSettingsSection>();
+        var presenceStatusChangedConsumerOptions = settingsProvider.GetSection<PresenceStatusChangedConsumerSettingsSection>();
 
         services.AddHttpClient(RealtimeInternalApiClient.HttpClientName, (serviceProvider, httpClient) =>
         {
             var realtimeApiSettings = serviceProvider
-                .GetRequiredService<IConsumersSettingsManager>()
-                .GetRealtimeApiSettingsSection();
+                .GetRequiredService<ISettingsProvider>()
+                .GetSection<RealtimeApiSettingsSection>();
             httpClient.DefaultRequestHeaders.Remove(RealtimeInternalApiClient.ApiKeyHeaderName);
 
             if (!string.IsNullOrWhiteSpace(realtimeApiSettings.ApiKey))
@@ -119,5 +122,3 @@ public static class ConsumersServiceRegistration
             ? parsed
             : AutoOffsetReset.Earliest;
 }
-
-

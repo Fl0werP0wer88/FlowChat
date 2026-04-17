@@ -1,9 +1,10 @@
-﻿using FlowChat.Core.Messaging.AuthService.Events;
+﻿using FlowChat.Core.Contracts;
+using FlowChat.Core.Messaging.AuthService.Events;
 using FlowChat.Core.Messaging.UserProfileService.Events;
 using FlowChat.Shared.Application;
+using FlowChat.Shared.Infrastructure.Configuration;
 using FlowChat.Shared.Infrastructure.Silverback.Kafka;
 using FlowChat.UserProfileService.Application.Contracts.Infrastructure;
-using FlowChat.UserProfileService.Infrastructure.Configuration;
 using FlowChat.UserProfileService.Infrastructure.Kafka;
 using FlowChat.UserProfileService.Infrastructure.Services;
 using Microsoft.Extensions.Configuration;
@@ -18,16 +19,15 @@ public static class InfrastructureServiceRegistration
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        services.TryAddSingleton<IApiSettingsManager>(new ApiSettingsManager(configuration));
-        services.TryAddSingleton<IKafkaSettingsManager>(new KafkaSettingsManager(configuration));
+        services.TryAddSingleton<ISettingsProvider>(new SettingsProvider(configuration));
         services.AddScoped<IKafkaProducerSettingsSection<UserProfileCreatedIntegrationEvent>>(sp =>
-            sp.GetRequiredService<IKafkaSettingsManager>().GetUserProfileCreatedProducerSettingsSection());
+            sp.GetRequiredService<ISettingsProvider>().GetSection<UserProfileCreatedProducerSettingsSection>());
         services.AddScoped<IKafkaProducerSettingsSection<UserEmailConfirmedIntegrationEvent>>(sp =>
-            sp.GetRequiredService<IKafkaSettingsManager>().GetUserEmailConfirmedProducerSettingsSection());
+            sp.GetRequiredService<ISettingsProvider>().GetSection<UserEmailConfirmedProducerSettingsSection>());
         services.AddScoped<IKafkaProducerSettingsSection<EmailVerificationRequestIntegrationEvent>>(sp =>
-            sp.GetRequiredService<IKafkaSettingsManager>().GetUserEmailVerificationRequestedProducerSettingsSection());
+            sp.GetRequiredService<ISettingsProvider>().GetSection<UserEmailVerificationRequestedProducerSettingsSection>());
         services.AddScoped<IKafkaProducerSettingsSection<UserProfileChangedIntegrationEvent>>(sp =>
-            sp.GetRequiredService<IKafkaSettingsManager>().GetUserProfileStateChangedProducerSettingsSection());
+            sp.GetRequiredService<ISettingsProvider>().GetSection<UserProfileStateChangedProducerSettingsSection>());
         services.AddScoped<IEmailVerificationLinkBuilder, EmailVerificationLinkBuilder>();
         services.AddScoped<IEmailVerificationTokenProtector, EmailVerificationTokenProtector>();
         services.AddScoped<IOutboxIntegrationEventPublisher, FlowChatSilverbackEventPublisher>();

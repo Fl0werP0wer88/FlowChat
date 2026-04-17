@@ -1,8 +1,9 @@
-﻿using System.IdentityModel.Tokens.Jwt;
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using FlowChat.AuthService.Application.Contracts.Infrastructure;
 using FlowChat.AuthService.Application.Features.User.Models;
 using FlowChat.AuthService.Infrastructure.Configuration;
+using FlowChat.Core.Contracts;
 using Microsoft.IdentityModel.Tokens;
 using OpenIddict.Abstractions;
 
@@ -10,11 +11,11 @@ namespace FlowChat.AuthService.Infrastructure.Services;
 
 public sealed class OpenIddictTokenService : IOpenIddictTokenService
 {
-    private readonly IApiSettingsManager _apiSettingsManager;
+    private readonly ISettingsProvider _settingsProvider;
 
-    public OpenIddictTokenService(IApiSettingsManager apiSettingsManager)
+    public OpenIddictTokenService(ISettingsProvider settingsProvider)
     {
-        _apiSettingsManager = apiSettingsManager;
+        _settingsProvider = settingsProvider;
     }
 
     public ClaimsPrincipal CreatePrincipal(AuthenticatedAccount account, IEnumerable<string> scopes)
@@ -53,7 +54,7 @@ public sealed class OpenIddictTokenService : IOpenIddictTokenService
         }
 
         principal.SetScopes(grantedScopes);
-        principal.SetResources(_apiSettingsManager.GetJwtSettingsSection().Audience);
+        principal.SetResources(_settingsProvider.GetSection<JwtSettingsSection>().Audience);
 
         return principal;
     }

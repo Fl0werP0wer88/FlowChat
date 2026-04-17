@@ -1,5 +1,6 @@
 ﻿using FlowChat.PresenceService.Application.Features.ContactObserverProjections.Commands.InsertContactObserverProjection;
 using FlowChat.PresenceService.Infrastructure.Configuration;
+using FlowChat.Core.Contracts;
 using FlowChat.Shared.API;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -13,11 +14,11 @@ public sealed class InsertContactObserverProjectionController : ApiControllerBas
 {
     private readonly IMediator _mediator;
 
-    public InsertContactObserverProjectionController(IMediator mediator, IApiSettingsManager apiSettingsManager)
-        : base(() => apiSettingsManager.GetInternalApiSettingsSection().ApiKey)
+    public InsertContactObserverProjectionController(IMediator mediator, ISettingsProvider settingsProvider)
+        : base(() => settingsProvider.GetSection<InternalApiSettingsSection>().ApiKey)
     {
         _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
-        ArgumentNullException.ThrowIfNull(apiSettingsManager);
+        ArgumentNullException.ThrowIfNull(settingsProvider);
     }
 
     [HttpPost("insert")]

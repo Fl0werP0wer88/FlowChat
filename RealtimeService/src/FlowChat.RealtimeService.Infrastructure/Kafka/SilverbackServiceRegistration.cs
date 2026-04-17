@@ -1,4 +1,5 @@
 using FlowChat.Core.Messaging.RealtimeService.Events;
+using FlowChat.Shared.Infrastructure.Configuration;
 using FlowChat.Shared.Infrastructure.Silverback.Behaviors;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -13,9 +14,9 @@ public static class SilverbackServiceRegistration
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        var settingsManager = new KafkaSettingsManager(configuration);
-        var registeredProducerOptions = settingsManager.GetRealtimeConnectionRegisteredProducerSettingsSection();
-        var unregisteredProducerOptions = settingsManager.GetRealtimeConnectionUnregisteredProducerSettingsSection();
+        var settingsProvider = new SettingsProvider(configuration);
+        var registeredProducerOptions = settingsProvider.GetSection<RealtimeConnectionRegisteredProducerSettingsSection>();
+        var unregisteredProducerOptions = settingsProvider.GetSection<RealtimeConnectionUnregisteredProducerSettingsSection>();
         var bootstrapServers = !string.IsNullOrWhiteSpace(registeredProducerOptions.BootstrapServers)
             ? registeredProducerOptions.BootstrapServers
             : unregisteredProducerOptions.BootstrapServers;

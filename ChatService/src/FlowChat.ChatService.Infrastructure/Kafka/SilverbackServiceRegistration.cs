@@ -1,5 +1,7 @@
-﻿using FlowChat.ChatService.Persistence;
+using FlowChat.ChatService.Persistence;
+using FlowChat.Core.Contracts;
 using FlowChat.Core.Messaging.ChatService.Events;
+using FlowChat.Shared.Infrastructure.Configuration;
 using FlowChat.Shared.Infrastructure.Silverback.Behaviors;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -16,10 +18,10 @@ public static class SilverbackServiceRegistration
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        var settingsManager = new WorkerSettingsManager(configuration);
-        services.TryAddSingleton<IWorkerSettingsManager>(settingsManager);
+        services.TryAddSingleton<ISettingsProvider>(new SettingsProvider(configuration));
 
-        var producerOptions = settingsManager.GetChatMessageSentProducerSettingsSection();
+        var settingsProvider = new SettingsProvider(configuration);
+        var producerOptions = settingsProvider.GetSection<ChatMessageSentProducerSettingsSection>();
 
         services.AddSilverback()
             .AddSingletonBrokerBehavior<CustomSpanAttributesProducerBehavior>()
@@ -42,5 +44,3 @@ public static class SilverbackServiceRegistration
         return services;
     }
 }
-
-

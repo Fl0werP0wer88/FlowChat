@@ -1,3 +1,4 @@
+using FlowChat.Core.Contracts;
 using FlowChat.Core.Messaging.RealtimeService.Events;
 using FlowChat.RealtimeService.Infrastructure;
 using FlowChat.RealtimeService.Infrastructure.Kafka;
@@ -37,9 +38,9 @@ public sealed class KafkaProducerConfigurationTests
 
         using var serviceProvider = services.BuildServiceProvider();
 
-        var settingsManager = serviceProvider.GetRequiredService<IKafkaSettingsManager>();
-        var registeredOptions = settingsManager.GetRealtimeConnectionRegisteredProducerSettingsSection();
-        var unregisteredOptions = settingsManager.GetRealtimeConnectionUnregisteredProducerSettingsSection();
+        var settingsProvider = serviceProvider.GetRequiredService<ISettingsProvider>();
+        var registeredOptions = settingsProvider.GetSection<RealtimeConnectionRegisteredProducerSettingsSection>();
+        var unregisteredOptions = settingsProvider.GetSection<RealtimeConnectionUnregisteredProducerSettingsSection>();
         var typedRegisteredOptions = serviceProvider
             .GetRequiredService<IKafkaProducerSettingsSection<RealtimeConnectionRegisteredIntegrationEvent>>();
         var typedUnregisteredOptions = serviceProvider

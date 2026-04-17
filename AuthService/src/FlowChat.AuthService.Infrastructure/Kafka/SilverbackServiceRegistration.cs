@@ -1,5 +1,7 @@
 using FlowChat.AuthService.Persistence;
+using FlowChat.Core.Contracts;
 using FlowChat.Core.Messaging.AuthService.Events;
+using FlowChat.Shared.Infrastructure.Configuration;
 using FlowChat.Shared.Infrastructure.Silverback.Behaviors;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -16,12 +18,12 @@ public static class SilverbackServiceRegistration
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        var settingsManager = new KafkaSettingsManager(configuration);
-        services.TryAddSingleton<IKafkaSettingsManager>(settingsManager);
+        services.TryAddSingleton<ISettingsProvider>(new SettingsProvider(configuration));
 
-        var accountRegisteredOptions = settingsManager.GetAccountRegisteredProducerSettingsSection();
-        var accountConfirmedOptions = settingsManager.GetAccountConfirmedProducerSettingsSection();
-        var phoneNumberConfirmedOptions = settingsManager.GetPhoneNumberConfirmedProducerSettingsSection();
+        var settingsProvider = new SettingsProvider(configuration);
+        var accountRegisteredOptions = settingsProvider.GetSection<AccountRegisteredProducerSettingsSection>();
+        var accountConfirmedOptions = settingsProvider.GetSection<AccountConfirmedProducerSettingsSection>();
+        var phoneNumberConfirmedOptions = settingsProvider.GetSection<PhoneNumberConfirmedProducerSettingsSection>();
         var bootstrapServers = !string.IsNullOrWhiteSpace(accountRegisteredOptions.BootstrapServers)
             ? accountRegisteredOptions.BootstrapServers
             : !string.IsNullOrWhiteSpace(accountConfirmedOptions.BootstrapServers)
@@ -60,7 +62,4 @@ public static class SilverbackServiceRegistration
 
         return services;
     }
-
 }
-
-

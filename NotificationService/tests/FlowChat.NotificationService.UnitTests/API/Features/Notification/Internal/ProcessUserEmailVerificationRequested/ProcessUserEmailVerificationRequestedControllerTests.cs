@@ -1,5 +1,6 @@
 ﻿using AutoFixture;
 using CSharpFunctionalExtensions;
+using FlowChat.Core.Contracts;
 using FlowChat.NotificationService.Api.Features.Notification.Internal.ProcessUserEmailVerificationRequested;
 using FlowChat.NotificationService.Application.Features.Notification.Commands.UserEmailVerificationRequested;
 using FlowChat.NotificationService.Infrastructure.Configuration;
@@ -95,14 +96,14 @@ public sealed class ProcessUserEmailVerificationRequestedControllerTests
         Mock<IMediator> mediatorMock,
         string? providedApiKey = null)
     {
-        var apiSettingsManagerMock = new Mock<IApiSettingsManager>();
-        apiSettingsManagerMock
-            .Setup(x => x.GetInternalApiSettingsSection())
+        var settingsProviderMock = new Mock<ISettingsProvider>();
+        settingsProviderMock
+            .Setup(x => x.GetSection<InternalApiSettingsSection>())
             .Returns(new InternalApiSettingsSection { ApiKey = expectedApiKey });
 
         var controller = new ProcessUserEmailVerificationRequestedController(
             mediatorMock.Object,
-            apiSettingsManagerMock.Object);
+            settingsProviderMock.Object);
 
         var httpContext = new DefaultHttpContext
         {

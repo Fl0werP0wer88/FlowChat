@@ -1,12 +1,13 @@
 using System.Text;
 using System.Text.Json.Serialization;
-using FlowChat.Shared.API;
-using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
-using FlowChat.RealtimeService.Application;
 using FlowChat.RealtimeService.Api.Realtime;
+using FlowChat.RealtimeService.Application;
+using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
 using FlowChat.RealtimeService.Infrastructure;
 using FlowChat.RealtimeService.Infrastructure.Configuration;
 using FlowChat.RealtimeService.Infrastructure.Kafka;
+using FlowChat.Shared.API;
+using FlowChat.Shared.Infrastructure.Configuration;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 
@@ -16,14 +17,16 @@ public static class StartupExtensions
 {
     public static WebApplication ConfigureServices(this WebApplicationBuilder builder)
     {
-        var apiSettingsManager = new ApiSettingsManager(builder.Configuration);
-        var jwtSettings = apiSettingsManager.GetJwtSettingsSection();
-        var realtimeConnectionsSettings = apiSettingsManager.GetRealtimeConnectionsSettingsSection();
-        var kafkaSettingsManager = new KafkaSettingsManager(builder.Configuration);
+        var settingsProvider = new SettingsProvider(builder.Configuration);
+        var jwtSettings = settingsProvider.GetSection<JwtSettingsSection>();
+        var realtimeConnectionsSettings = settingsProvider.GetSection<RealtimeConnectionsSettingsSection>();
+        realtimeConnectionsSettings.RedisConnectionString =
+            builder.Configuration.GetConnectionString(RealtimeConnectionsSettingsSection.RedisConnectionStringName)
+            ?? realtimeConnectionsSettings.RedisConnectionString;
         var realtimeConnectionRegisteredProducerOptions =
-            kafkaSettingsManager.GetRealtimeConnectionRegisteredProducerSettingsSection();
+            settingsProvider.GetSection<RealtimeConnectionRegisteredProducerSettingsSection>();
         var realtimeConnectionUnregisteredProducerOptions =
-            kafkaSettingsManager.GetRealtimeConnectionUnregisteredProducerSettingsSection();
+            settingsProvider.GetSection<RealtimeConnectionUnregisteredProducerSettingsSection>();
         var jwtKey = jwtSettings.Key;
         var jwtIssuer = jwtSettings.Issuer;
         var jwtAudience = jwtSettings.Audience;

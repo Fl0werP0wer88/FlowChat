@@ -3,6 +3,7 @@ using System.Security.Claims;
 using FlowChat.AuthService.Application.Features.User.Models;
 using FlowChat.AuthService.Infrastructure.Configuration;
 using FlowChat.AuthService.Infrastructure.Services;
+using FlowChat.Core.Contracts;
 using FluentAssertions;
 using Moq;
 using OpenIddict.Abstractions;
@@ -14,15 +15,15 @@ public sealed class OpenIddictTokenServiceTests
     [Fact]
     public void CreatePrincipal_IncludesRequiredClaimsAndScopes()
     {
-        var apiSettingsManagerMock = new Mock<IApiSettingsManager>();
-        apiSettingsManagerMock
-            .Setup(x => x.GetJwtSettingsSection())
+        var settingsProviderMock = new Mock<ISettingsProvider>();
+        settingsProviderMock
+            .Setup(x => x.GetSection<JwtSettingsSection>())
             .Returns(new JwtSettingsSection
             {
                 Audience = "FlowChat.Client"
             });
 
-        var sut = new OpenIddictTokenService(apiSettingsManagerMock.Object);
+        var sut = new OpenIddictTokenService(settingsProviderMock.Object);
 
         var principal = sut.CreatePrincipal(
             new AuthenticatedAccount

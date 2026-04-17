@@ -1,6 +1,7 @@
 ﻿using FlowChat.SocialGraphService.Api.Features.UserProfile.Internal.UserProfileProjection;
 using FlowChat.SocialGraphService.Application.Features.UserProfile.Commands.InsertUserProfileProjection;
 using FlowChat.SocialGraphService.Infrastructure.Configuration;
+using FlowChat.Core.Contracts;
 using FlowChat.Shared.API;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -14,11 +15,11 @@ public sealed class InsertUserProfileProjectionController : ApiControllerBase
 {
     private readonly IMediator _mediator;
 
-    public InsertUserProfileProjectionController(IMediator mediator, IApiSettingsManager apiSettingsManager)
-        : base(() => apiSettingsManager.GetInternalApiSettingsSection().ApiKey)
+    public InsertUserProfileProjectionController(IMediator mediator, ISettingsProvider settingsProvider)
+        : base(() => settingsProvider.GetSection<InternalApiSettingsSection>().ApiKey)
     {
         _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
-        ArgumentNullException.ThrowIfNull(apiSettingsManager);
+        ArgumentNullException.ThrowIfNull(settingsProvider);
     }
 
     [HttpPost]

@@ -1,7 +1,7 @@
 ﻿using FlowChat.AuthService.Application.Contracts.Infrastructure;
 using FlowChat.AuthService.Application.Features.User.Commands.LoginUser;
-using FlowChat.AuthService.Infrastructure.Configuration;
 using FlowChat.AuthService.Infrastructure.Services;
+using FlowChat.Shared.Infrastructure.Configuration;
 using FlowChat.AuthService.Persistence;
 using FlowChat.AuthService.Persistence.Repositories;
 using FlowChat.Shared.Application;
@@ -45,7 +45,7 @@ public sealed class LoginUserCommandHandlerTests : IDisposable
             })
             .Build();
 
-        var tokenService = new OpenIddictTokenService(new ApiSettingsManager(configuration));
+        var tokenService = new OpenIddictTokenService(new SettingsProvider(configuration));
         var dispatcherMock = new Mock<IDomainEventDispatcher>();
         dispatcherMock
             .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<IDomainEvent>>(), It.IsAny<CancellationToken>()))

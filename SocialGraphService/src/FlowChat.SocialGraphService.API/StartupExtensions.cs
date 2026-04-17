@@ -1,7 +1,8 @@
 ﻿using FlowChat.Shared.API;
+using FlowChat.Shared.Infrastructure.Configuration;
 using FlowChat.SocialGraphService.Application;
-using FlowChat.SocialGraphService.Infrastructure.Configuration;
 using FlowChat.SocialGraphService.Infrastructure;
+using FlowChat.SocialGraphService.Infrastructure.Configuration;
 using FlowChat.SocialGraphService.Infrastructure.Kafka;
 using FlowChat.SocialGraphService.Persistence;
 using AutoMapper;
@@ -18,8 +19,8 @@ public static class StartupExtensions
 {
     public static WebApplication ConfigureServices(this WebApplicationBuilder builder)
     {
-        var apiSettingsManager = new ApiSettingsManager(builder.Configuration);
-        var jwtSettings = apiSettingsManager.GetJwtSettingsSection();
+        var settingsProvider = new SettingsProvider(builder.Configuration);
+        var jwtSettings = settingsProvider.GetSection<JwtSettingsSection>();
         var jwtKey = jwtSettings.Key;
         var jwtIssuer = jwtSettings.Issuer;
         var jwtAudience = jwtSettings.Audience;

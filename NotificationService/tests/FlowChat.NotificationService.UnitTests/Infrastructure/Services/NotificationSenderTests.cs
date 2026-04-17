@@ -1,4 +1,5 @@
-﻿using FlowChat.NotificationService.Application.Contracts.Infrastructure;
+﻿using FlowChat.Core.Contracts;
+using FlowChat.NotificationService.Application.Contracts.Infrastructure;
 using FlowChat.NotificationService.Infrastructure.Configuration;
 using FlowChat.NotificationService.Infrastructure.Services;
 using FluentAssertions;
@@ -9,13 +10,13 @@ namespace FlowChat.NotificationService.UnitTests.Infrastructure.Services;
 
 public sealed class NotificationSenderTests
 {
-    private readonly Mock<IApiSettingsManager> _settingsManagerMock = new();
+    private readonly Mock<ISettingsProvider> _settingsProviderMock = new();
     private readonly Mock<ILogger<NotificationSender>> _loggerMock = new();
     private readonly NotificationSender _sender;
 
     public NotificationSenderTests()
     {
-        _sender = new NotificationSender(_settingsManagerMock.Object, _loggerMock.Object);
+        _sender = new NotificationSender(_settingsProviderMock.Object, _loggerMock.Object);
     }
 
     private void SetupEmailSettingsSection(
@@ -25,8 +26,8 @@ public sealed class NotificationSenderTests
         string fromName = "FlowChat",
         bool enableSsl = false)
     {
-        _settingsManagerMock
-            .Setup(x => x.GetEmailSettingsSection())
+        _settingsProviderMock
+            .Setup(x => x.GetSection<EmailSettingsSection>())
             .Returns(new EmailSettingsSection
             {
                 SmtpHost = smtpHost,

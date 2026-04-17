@@ -1,7 +1,8 @@
-﻿using FlowChat.Core.Messaging.SocialGraphService.Events;
+﻿using FlowChat.Core.Contracts;
+using FlowChat.Core.Messaging.SocialGraphService.Events;
 using FlowChat.Shared.Application;
+using FlowChat.Shared.Infrastructure.Configuration;
 using FlowChat.Shared.Infrastructure.Silverback.Kafka;
-using FlowChat.SocialGraphService.Infrastructure.Configuration;
 using FlowChat.SocialGraphService.Infrastructure.Kafka;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -17,12 +18,11 @@ public static class InfrastructureServiceRegistration
     {
         var infrastructureAssembly = typeof(InfrastructureServiceRegistration).Assembly;
 
-        services.TryAddSingleton<IApiSettingsManager>(new ApiSettingsManager(configuration));
-        services.TryAddSingleton<IKafkaSettingsManager>(new KafkaSettingsManager(configuration));
+        services.TryAddSingleton<ISettingsProvider>(new SettingsProvider(configuration));
         services.AddScoped<IKafkaProducerSettingsSection<ContactAddedIntegrationEvent>>(sp =>
-            sp.GetRequiredService<IKafkaSettingsManager>().GetContactAddedProducerSettingsSection());
+            sp.GetRequiredService<ISettingsProvider>().GetSection<ContactAddedProducerSettingsSection>());
         services.AddScoped<IKafkaProducerSettingsSection<ContactDeletedIntegrationEvent>>(sp =>
-            sp.GetRequiredService<IKafkaSettingsManager>().GetContactDeletedProducerSettingsSection());
+            sp.GetRequiredService<ISettingsProvider>().GetSection<ContactDeletedProducerSettingsSection>());
         services.AddScoped<IOutboxIntegrationEventPublisher, FlowChatSilverbackEventPublisher>();
         services.AddAutoMapper((Action<AutoMapper.IMapperConfigurationExpression>?)null, infrastructureAssembly);
 

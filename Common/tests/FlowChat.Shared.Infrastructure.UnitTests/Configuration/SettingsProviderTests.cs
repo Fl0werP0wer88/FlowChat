@@ -33,6 +33,33 @@ public sealed class SettingsProviderTests
         result.ApiUrl.Should().Be("https://localhost:5000");
     }
 
+    [Fact]
+    public void GetRequiredSection_WhenConfigurationContainsSection_ReturnsBoundSettings()
+    {
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(
+            [
+                new KeyValuePair<string, string?>("FlowChat:ApiUrl", "https://flowchat.test"),
+            ])
+            .Build();
+        var sut = new SettingsProvider(configuration);
+
+        var result = sut.GetRequiredSection<TestSettingsSection>();
+
+        result.ApiUrl.Should().Be("https://flowchat.test");
+    }
+
+    [Fact]
+    public void GetRequiredSection_WhenConfigurationDoesNotContainSection_ThrowsInvalidOperationException()
+    {
+        var sut = new SettingsProvider(new ConfigurationBuilder().Build());
+
+        var act = () => sut.GetRequiredSection<TestSettingsSection>();
+
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("Missing configuration section: FlowChat.");
+    }
+
     public sealed class TestSettingsSection : SettingsSectionBase
     {
         public override string SectionName => "FlowChat";

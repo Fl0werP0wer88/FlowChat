@@ -1,9 +1,0 @@
-﻿namespace FlowChat.UserProfileService.Infrastructure.Kafka;
-
-public interface IKafkaSettingsManager
-{
-    UserProfileCreatedProducerSettingsSection GetUserProfileCreatedProducerSettingsSection();
-    UserEmailConfirmedProducerSettingsSection GetUserEmailConfirmedProducerSettingsSection();
-    UserEmailVerificationRequestedProducerSettingsSection GetUserEmailVerificationRequestedProducerSettingsSection();
-    UserProfileStateChangedProducerSettingsSection GetUserProfileStateChangedProducerSettingsSection();
-}

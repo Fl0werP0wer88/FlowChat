@@ -1,6 +1,7 @@
 ﻿using AutoFixture;
 using FlowChat.RealtimeService.Api.Features.Realtime.Internal.PublishMessage;
 using FlowChat.RealtimeService.Application.Features.Message.Commands.PublishMessage;
+using FlowChat.Core.Contracts;
 using FlowChat.RealtimeService.Infrastructure.Configuration;
 using FlowChat.Shared.Domain;
 using FluentAssertions;
@@ -68,12 +69,12 @@ public sealed class PublishMessageControllerTests
         Mock<IMediator> mediatorMock,
         string? providedApiKey = null)
     {
-        var apiSettingsManagerMock = new Mock<IApiSettingsManager>();
-        apiSettingsManagerMock
-            .Setup(x => x.GetInternalApiSettingsSection())
+        var settingsProviderMock = new Mock<ISettingsProvider>();
+        settingsProviderMock
+            .Setup(x => x.GetSection<InternalApiSettingsSection>())
             .Returns(new InternalApiSettingsSection { ApiKey = expectedApiKey });
 
-        var controller = new PublishMessageController(mediatorMock.Object, apiSettingsManagerMock.Object)
+        var controller = new PublishMessageController(mediatorMock.Object, settingsProviderMock.Object)
         {
             ControllerContext = new ControllerContext
             {
