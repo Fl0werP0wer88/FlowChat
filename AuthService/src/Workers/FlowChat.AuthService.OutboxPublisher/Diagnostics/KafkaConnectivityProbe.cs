@@ -1,21 +1,27 @@
-﻿using Confluent.Kafka;
+using Confluent.Kafka;
 using FlowChat.AuthService.OutboxPublisher.Configuration;
 using Microsoft.Extensions.Options;
 
 namespace FlowChat.AuthService.OutboxPublisher.Diagnostics;
 
 public sealed class KafkaConnectivityProbe(
-    IOptions<AccountRegisteredProducerSettingsSection> accountRegisteredOptions)
+    IOptions<AccountRegisteredProducerSettingsSection> accountRegisteredOptions,
+    IOptions<AccountConfirmedProducerSettingsSection> accountConfirmedOptions,
+    IOptions<PhoneNumberConfirmedProducerSettingsSection> phoneNumberConfirmedOptions)
     : IKafkaConnectivityProbe
 {
     private static readonly TimeSpan MetadataTimeout = TimeSpan.FromSeconds(5);
     private readonly AccountRegisteredProducerSettingsSection _accountRegisteredOptions = accountRegisteredOptions.Value;
+    private readonly AccountConfirmedProducerSettingsSection _accountConfirmedOptions = accountConfirmedOptions.Value;
+    private readonly PhoneNumberConfirmedProducerSettingsSection _phoneNumberConfirmedOptions = phoneNumberConfirmedOptions.Value;
 
     public Task ProbeAsync(CancellationToken cancellationToken)
     {
         var bootstrapServers = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         AddBootstrapServers(bootstrapServers, _accountRegisteredOptions.BootstrapServers);
+        AddBootstrapServers(bootstrapServers, _accountConfirmedOptions.BootstrapServers);
+        AddBootstrapServers(bootstrapServers, _phoneNumberConfirmedOptions.BootstrapServers);
 
         foreach (var bootstrapServer in bootstrapServers)
         {

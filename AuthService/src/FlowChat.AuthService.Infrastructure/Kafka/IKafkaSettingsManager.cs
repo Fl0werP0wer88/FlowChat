@@ -4,4 +4,5 @@ public interface IKafkaSettingsManager
 {
     AccountRegisteredProducerSettingsSection GetAccountRegisteredProducerSettingsSection();
     AccountConfirmedProducerSettingsSection GetAccountConfirmedProducerSettingsSection();
+    PhoneNumberConfirmedProducerSettingsSection GetPhoneNumberConfirmedProducerSettingsSection();
 }

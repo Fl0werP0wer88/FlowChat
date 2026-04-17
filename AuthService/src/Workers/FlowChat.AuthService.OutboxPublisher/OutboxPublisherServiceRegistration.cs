@@ -1,4 +1,4 @@
-﻿using FlowChat.AuthService.OutboxPublisher.Configuration;
+using FlowChat.AuthService.OutboxPublisher.Configuration;
 using FlowChat.AuthService.Persistence;
 using FlowChat.Core.Messaging.AuthService.Events;
 using FlowChat.Shared.Infrastructure.Silverback.Behaviors;
@@ -28,6 +28,15 @@ public static class OutboxPublisherServiceRegistration
             .GetSection(new AccountConfirmedProducerSettingsSection().SectionName)
             .Get<AccountConfirmedProducerSettingsSection>()
             ?? new AccountConfirmedProducerSettingsSection();
+        var phoneNumberConfirmedOptions = configuration
+            .GetSection(new PhoneNumberConfirmedProducerSettingsSection().SectionName)
+            .Get<PhoneNumberConfirmedProducerSettingsSection>()
+            ?? new PhoneNumberConfirmedProducerSettingsSection();
+        var bootstrapServers = !string.IsNullOrWhiteSpace(accountRegisteredOptions.BootstrapServers)
+            ? accountRegisteredOptions.BootstrapServers
+            : !string.IsNullOrWhiteSpace(accountConfirmedOptions.BootstrapServers)
+                ? accountConfirmedOptions.BootstrapServers
+                : phoneNumberConfirmedOptions.BootstrapServers;
 
         services.AddOptions<OutboxPublisherRuntimeSettingsSection>()
             .BindConfiguration(new OutboxPublisherRuntimeSettingsSection().SectionName);
@@ -35,6 +44,8 @@ public static class OutboxPublisherServiceRegistration
             .BindConfiguration(new AccountRegisteredProducerSettingsSection().SectionName);
         services.AddOptions<AccountConfirmedProducerSettingsSection>()
             .BindConfiguration(new AccountConfirmedProducerSettingsSection().SectionName);
+        services.AddOptions<PhoneNumberConfirmedProducerSettingsSection>()
+            .BindConfiguration(new PhoneNumberConfirmedProducerSettingsSection().SectionName);
 
         services.AddSilverback()
             .AddSingletonBrokerBehavior<CustomSpanAttributesProducerBehavior>()
@@ -54,7 +65,7 @@ public static class OutboxPublisherServiceRegistration
             })
             .AddKafkaClients(clients =>
             {
-                clients.WithBootstrapServers(accountRegisteredOptions.BootstrapServers)
+                clients.WithBootstrapServers(bootstrapServers)
                     .AddProducer(producer => producer
                         .Produce<AccountRegisteredIntegrationEvent>("auth-account-registered", endpoint => endpoint
                             .ProduceTo(accountRegisteredOptions.Topic)
@@ -67,7 +78,7 @@ public static class OutboxPublisherServiceRegistration
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())))
                     .AddProducer(producer => producer
                         .Produce<PhoneNumberConfirmedIntegrationEvent>("auth-user-phone-confirmed", endpoint => endpoint
-                            .ProduceTo(accountRegisteredOptions.Topic)
+                            .ProduceTo(phoneNumberConfirmedOptions.Topic)
                             .SetKafkaKey(message => message?.UserId)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())));
             });

@@ -1,4 +1,4 @@
-﻿using FlowChat.AuthService.Infrastructure;
+using FlowChat.AuthService.Infrastructure;
 using FlowChat.AuthService.Infrastructure.Kafka;
 using FlowChat.Core.Messaging.AuthService.Events;
 using FlowChat.Shared.Infrastructure.Silverback.Kafka;
@@ -21,7 +21,9 @@ public sealed class KafkaProducerConfigurationTests
                 ["Kafka:AccountRegisteredProducer:BootstrapServers"] = "broker:9092",
                 ["Kafka:AccountRegisteredProducer:Topic"] = "user-created-topic",
                 ["Kafka:AccountConfirmedProducer:BootstrapServers"] = "broker:9092",
-                ["Kafka:AccountConfirmedProducer:Topic"] = "account-confirmed-topic"
+                ["Kafka:AccountConfirmedProducer:Topic"] = "account-confirmed-topic",
+                ["Kafka:PhoneNumberConfirmedProducer:BootstrapServers"] = "broker:9092",
+                ["Kafka:PhoneNumberConfirmedProducer:Topic"] = "phone-number-confirmed-topic"
             })
             .Build();
 
@@ -35,17 +37,23 @@ public sealed class KafkaProducerConfigurationTests
         var settingsManager = serviceProvider.GetRequiredService<IKafkaSettingsManager>();
         var accountRegisteredOptions = settingsManager.GetAccountRegisteredProducerSettingsSection();
         var accountConfirmedOptions = settingsManager.GetAccountConfirmedProducerSettingsSection();
+        var phoneNumberConfirmedOptions = settingsManager.GetPhoneNumberConfirmedProducerSettingsSection();
         var typedAccountRegisteredOptions = serviceProvider
             .GetRequiredService<IKafkaProducerSettingsSection<AccountRegisteredIntegrationEvent>>();
         var typedAccountConfirmedOptions = serviceProvider
             .GetRequiredService<IKafkaProducerSettingsSection<AccountConfirmedIntegrationEvent>>();
+        var typedPhoneNumberConfirmedOptions = serviceProvider
+            .GetRequiredService<IKafkaProducerSettingsSection<PhoneNumberConfirmedIntegrationEvent>>();
 
         accountRegisteredOptions.BootstrapServers.Should().Be("broker:9092");
         accountRegisteredOptions.Topic.Should().Be("user-created-topic");
         accountConfirmedOptions.BootstrapServers.Should().Be("broker:9092");
         accountConfirmedOptions.Topic.Should().Be("account-confirmed-topic");
+        phoneNumberConfirmedOptions.BootstrapServers.Should().Be("broker:9092");
+        phoneNumberConfirmedOptions.Topic.Should().Be("phone-number-confirmed-topic");
         typedAccountRegisteredOptions.Topic.Should().Be("user-created-topic");
         typedAccountConfirmedOptions.Topic.Should().Be("account-confirmed-topic");
+        typedPhoneNumberConfirmedOptions.Topic.Should().Be("phone-number-confirmed-topic");
     }
 
     [Theory]
@@ -65,13 +73,19 @@ public sealed class KafkaProducerConfigurationTests
         var accountConfirmedOptions = configuration
             .GetSection(new AccountConfirmedProducerSettingsSection().SectionName)
             .Get<AccountConfirmedProducerSettingsSection>();
+        var phoneNumberConfirmedOptions = configuration
+            .GetSection(new PhoneNumberConfirmedProducerSettingsSection().SectionName)
+            .Get<PhoneNumberConfirmedProducerSettingsSection>();
 
         accountRegisteredOptions.Should().NotBeNull();
         accountConfirmedOptions.Should().NotBeNull();
+        phoneNumberConfirmedOptions.Should().NotBeNull();
         accountRegisteredOptions!.BootstrapServers.Should().Be("localhost:9092");
         accountRegisteredOptions.Topic.Should().Be("dev.flowchat.identity.user.v1");
         accountConfirmedOptions!.BootstrapServers.Should().Be("localhost:9092");
         accountConfirmedOptions.Topic.Should().Be("dev.flowchat.identity.user.v1");
+        phoneNumberConfirmedOptions!.BootstrapServers.Should().Be("localhost:9092");
+        phoneNumberConfirmedOptions.Topic.Should().Be("dev.flowchat.identity.user.v1");
     }
 
     private static string GetRepositoryPath(string relativePath)

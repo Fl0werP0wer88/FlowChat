@@ -1,6 +1,7 @@
-﻿namespace FlowChat.RealtimeService.Infrastructure.Kafka;
+namespace FlowChat.RealtimeService.Infrastructure.Kafka;
 
 public interface IKafkaSettingsManager
 {
-    RealtimeConnectionProducerSettingsSection GetRealtimeConnectionProducerSettingsSection();
+    RealtimeConnectionRegisteredProducerSettingsSection GetRealtimeConnectionRegisteredProducerSettingsSection();
+    RealtimeConnectionUnregisteredProducerSettingsSection GetRealtimeConnectionUnregisteredProducerSettingsSection();
 }

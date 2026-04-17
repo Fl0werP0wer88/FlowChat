@@ -1,4 +1,4 @@
-﻿using System.Data.Common;
+using System.Data.Common;
 using FlowChat.Shared.API;
 using FlowChat.AuthService.OutboxPublisher;
 using FlowChat.AuthService.OutboxPublisher.Configuration;
@@ -58,12 +58,16 @@ static void LogStartupDiagnostics(IHost host)
     var environment = host.Services.GetRequiredService<IHostEnvironment>();
     var configuration = host.Services.GetRequiredService<IConfiguration>();
     var accountRegisteredOptions = host.Services.GetRequiredService<IOptions<AccountRegisteredProducerSettingsSection>>().Value;
+    var accountConfirmedOptions = host.Services.GetRequiredService<IOptions<AccountConfirmedProducerSettingsSection>>().Value;
+    var phoneNumberConfirmedOptions = host.Services.GetRequiredService<IOptions<PhoneNumberConfirmedProducerSettingsSection>>().Value;
     var outboxOptions = host.Services.GetRequiredService<IOptions<OutboxPublisherRuntimeSettingsSection>>().Value;
     var authDbTarget = GetAuthDbTarget(configuration.GetConnectionString("AuthDb"));
 
     logger.LogInformation(
         "Starting AuthService outbox publisher in {Environment}. AuthDb target: {Host}:{Port}/{Database}. " +
         "AccountRegistered Kafka: {AccountRegisteredBootstrapServers} -> {AccountRegisteredTopic}. " +
+        "AccountConfirmed Kafka: {AccountConfirmedBootstrapServers} -> {AccountConfirmedTopic}. " +
+        "PhoneNumberConfirmed Kafka: {PhoneNumberConfirmedBootstrapServers} -> {PhoneNumberConfirmedTopic}. " +
         "Outbox worker settings: BatchSize={BatchSize}, PollIntervalSeconds={PollIntervalSeconds}, " +
         "RetryBaseDelaySeconds={RetryBaseDelaySeconds}, MaxRetryDelaySeconds={MaxRetryDelaySeconds}.",
         environment.EnvironmentName,
@@ -72,6 +76,10 @@ static void LogStartupDiagnostics(IHost host)
         authDbTarget.Database,
         accountRegisteredOptions.BootstrapServers,
         accountRegisteredOptions.Topic,
+        accountConfirmedOptions.BootstrapServers,
+        accountConfirmedOptions.Topic,
+        phoneNumberConfirmedOptions.BootstrapServers,
+        phoneNumberConfirmedOptions.Topic,
         outboxOptions.BatchSize,
         outboxOptions.PollIntervalSeconds,
         outboxOptions.RetryBaseDelaySeconds,

@@ -1,4 +1,4 @@
-﻿using FlowChat.Shared.Application;
+using FlowChat.Shared.Application;
 using FlowChat.AuthService.Application.Contracts.Infrastructure;
 using FlowChat.AuthService.Infrastructure.Configuration;
 using FlowChat.AuthService.Infrastructure.Kafka;
@@ -24,6 +24,8 @@ public static class InfrastructureServiceRegistration
             sp.GetRequiredService<IKafkaSettingsManager>().GetAccountRegisteredProducerSettingsSection());
         services.AddScoped<IKafkaProducerSettingsSection<AccountConfirmedIntegrationEvent>>(sp =>
             sp.GetRequiredService<IKafkaSettingsManager>().GetAccountConfirmedProducerSettingsSection());
+        services.AddScoped<IKafkaProducerSettingsSection<PhoneNumberConfirmedIntegrationEvent>>(sp =>
+            sp.GetRequiredService<IKafkaSettingsManager>().GetPhoneNumberConfirmedProducerSettingsSection());
         services.AddScoped<IOutboxIntegrationEventPublisher, FlowChatSilverbackEventPublisher>();
 
         return services;

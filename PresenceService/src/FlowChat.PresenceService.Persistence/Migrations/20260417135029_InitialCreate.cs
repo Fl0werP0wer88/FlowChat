@@ -46,6 +46,19 @@ namespace FlowChat.PresenceService.Persistence.Migrations
                     table.PrimaryKey("PK_SilverbackOutboxMessages", x => x.Id);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "UserPresencePreferences",
+                columns: table => new
+                {
+                    UserId = table.Column<Guid>(type: "uuid", nullable: false),
+                    PreferredStatus = table.Column<int>(type: "integer", nullable: false),
+                    LastModifiedAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_UserPresencePreferences", x => x.UserId);
+                });
+
             migrationBuilder.CreateIndex(
                 name: "ix_contact_observer_projection_observed_user_id",
                 table: "ContactObserverProjection",
@@ -60,6 +73,9 @@ namespace FlowChat.PresenceService.Persistence.Migrations
 
             migrationBuilder.DropTable(
                 name: "SilverbackOutboxMessages");
+
+            migrationBuilder.DropTable(
+                name: "UserPresencePreferences");
         }
     }
 }

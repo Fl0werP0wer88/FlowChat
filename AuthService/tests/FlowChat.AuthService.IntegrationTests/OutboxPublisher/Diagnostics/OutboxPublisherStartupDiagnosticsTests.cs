@@ -65,7 +65,7 @@ public sealed class OutboxPublisherStartupDiagnosticsTests
         outboxSection.GetValue<int>("PollIntervalSeconds").Should().BeGreaterThan(0);
         outboxSection.GetValue<int>("RetryBaseDelaySeconds").Should().BeGreaterThan(0);
         outboxSection.GetValue<int>("MaxRetryDelaySeconds").Should().BeGreaterThan(0);
-        configuration["Logging:LogLevel:Silverback"].Should().Be("Debug");
+        configuration["Logging:LogLevel:Silverback"].Should().Be("Warning");
         configuration["Logging:LogLevel:Microsoft.Hosting.Lifetime"].Should().Be("Information");
     }
 
@@ -98,7 +98,11 @@ public sealed class OutboxPublisherStartupDiagnosticsTests
                 ["OutboxPublisher:RetryBaseDelaySeconds"] = "3",
                 ["OutboxPublisher:MaxRetryDelaySeconds"] = "120",
                 ["Kafka:AccountRegisteredProducer:BootstrapServers"] = "localhost:9092",
-                ["Kafka:AccountRegisteredProducer:Topic"] = "dev.flowchat.identity.user.v1"
+                ["Kafka:AccountRegisteredProducer:Topic"] = "dev.flowchat.identity.user.v1",
+                ["Kafka:AccountConfirmedProducer:BootstrapServers"] = "localhost:9092",
+                ["Kafka:AccountConfirmedProducer:Topic"] = "dev.flowchat.identity.user.v1",
+                ["Kafka:PhoneNumberConfirmedProducer:BootstrapServers"] = "localhost:9092",
+                ["Kafka:PhoneNumberConfirmedProducer:Topic"] = "dev.flowchat.identity.user.v1"
             })
             .Build();
     }

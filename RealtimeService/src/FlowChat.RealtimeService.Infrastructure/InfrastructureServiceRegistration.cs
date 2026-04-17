@@ -1,4 +1,4 @@
-﻿using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
+using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
 using FlowChat.RealtimeService.Infrastructure.Configuration;
 using FlowChat.RealtimeService.Infrastructure.Kafka;
 using FlowChat.RealtimeService.Infrastructure.Presence;
@@ -55,9 +55,9 @@ public static class InfrastructureServiceRegistration
         services.TryAddSingleton<IRealtimeRoutingTopologyReader>(sp => sp.GetRequiredService<RedisRealtimeRoutingTopologyStore>());
         services.TryAddSingleton<IRealtimeConnectionRegistry, RealtimeConnectionRegistry>();
         services.AddScoped<IKafkaProducerSettingsSection<FlowChat.Core.Messaging.RealtimeService.Events.RealtimeConnectionRegisteredIntegrationEvent>>(sp =>
-            sp.GetRequiredService<IKafkaSettingsManager>().GetRealtimeConnectionProducerSettingsSection());
+            sp.GetRequiredService<IKafkaSettingsManager>().GetRealtimeConnectionRegisteredProducerSettingsSection());
         services.AddScoped<IKafkaProducerSettingsSection<FlowChat.Core.Messaging.RealtimeService.Events.RealtimeConnectionUnregisteredIntegrationEvent>>(sp =>
-            sp.GetRequiredService<IKafkaSettingsManager>().GetRealtimeConnectionProducerSettingsSection());
+            sp.GetRequiredService<IKafkaSettingsManager>().GetRealtimeConnectionUnregisteredProducerSettingsSection());
         services.AddScoped<IDirectEventPublisher, FlowChatSilverbackEventPublisher>();
 
         services.TryAddSingleton(sp => sp.GetRequiredService<IApiSettingsManager>().GetPresenceServiceSettingsSection());

@@ -1,4 +1,4 @@
-﻿using System.Text;
+using System.Text;
 using System.Text.Json.Serialization;
 using FlowChat.Shared.API;
 using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
@@ -19,7 +19,11 @@ public static class StartupExtensions
         var apiSettingsManager = new ApiSettingsManager(builder.Configuration);
         var jwtSettings = apiSettingsManager.GetJwtSettingsSection();
         var realtimeConnectionsSettings = apiSettingsManager.GetRealtimeConnectionsSettingsSection();
-        var realtimeConnectionProducerOptions = new KafkaSettingsManager(builder.Configuration).GetRealtimeConnectionProducerSettingsSection();
+        var kafkaSettingsManager = new KafkaSettingsManager(builder.Configuration);
+        var realtimeConnectionRegisteredProducerOptions =
+            kafkaSettingsManager.GetRealtimeConnectionRegisteredProducerSettingsSection();
+        var realtimeConnectionUnregisteredProducerOptions =
+            kafkaSettingsManager.GetRealtimeConnectionUnregisteredProducerSettingsSection();
         var jwtKey = jwtSettings.Key;
         var jwtIssuer = jwtSettings.Issuer;
         var jwtAudience = jwtSettings.Audience;
@@ -64,15 +68,14 @@ public static class StartupExtensions
             throw new InvalidOperationException("RealtimeConnections:RefreshInterval must be smaller than RealtimeConnections:ConnectionTtl.");
         }
 
-        if (string.IsNullOrWhiteSpace(realtimeConnectionProducerOptions.BootstrapServers))
-        {
-            throw new InvalidOperationException("Missing configuration value: Kafka:RealtimeConnectionProducer:BootstrapServers.");
-        }
-
-        if (string.IsNullOrWhiteSpace(realtimeConnectionProducerOptions.Topic))
-        {
-            throw new InvalidOperationException("Missing configuration value: Kafka:RealtimeConnectionProducer:Topic.");
-        }
+        ValidateKafkaProducerOptions(
+            realtimeConnectionRegisteredProducerOptions.SectionName,
+            realtimeConnectionRegisteredProducerOptions.BootstrapServers,
+            realtimeConnectionRegisteredProducerOptions.Topic);
+        ValidateKafkaProducerOptions(
+            realtimeConnectionUnregisteredProducerOptions.SectionName,
+            realtimeConnectionUnregisteredProducerOptions.BootstrapServers,
+            realtimeConnectionUnregisteredProducerOptions.Topic);
 
         builder.Services.AddApiApplicationServices();
         builder.Services.AddInfrastructureServices(builder.Configuration);
@@ -143,6 +146,19 @@ public static class StartupExtensions
         app.MapHub<ChatHub>("/hubs/chat").RequireAuthorization();
 
         return app;
+    }
+
+    private static void ValidateKafkaProducerOptions(string sectionName, string bootstrapServers, string topic)
+    {
+        if (string.IsNullOrWhiteSpace(bootstrapServers))
+        {
+            throw new InvalidOperationException($"Missing configuration value: {sectionName}:BootstrapServers.");
+        }
+
+        if (string.IsNullOrWhiteSpace(topic))
+        {
+            throw new InvalidOperationException($"Missing configuration value: {sectionName}:Topic.");
+        }
     }
 }
 

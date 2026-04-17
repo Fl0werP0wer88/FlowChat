@@ -1,4 +1,4 @@
-﻿using FlowChat.AuthService.Infrastructure.Kafka;
+using FlowChat.AuthService.Infrastructure.Kafka;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 
@@ -63,6 +63,37 @@ public sealed class KafkaSettingsManagerTests
         var sut = new KafkaSettingsManager(configuration);
 
         var result = sut.GetAccountConfirmedProducerSettingsSection();
+
+        result.BootstrapServers.Should().Be("localhost:9092");
+        result.Topic.Should().Be("dev.flowchat.identity.user.v1");
+    }
+
+    [Fact]
+    public void GetPhoneNumberConfirmedProducerSettingsSection_WhenSectionExists_ReturnsConfiguredValues()
+    {
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Kafka:PhoneNumberConfirmedProducer:BootstrapServers"] = "broker:9092",
+                ["Kafka:PhoneNumberConfirmedProducer:Topic"] = "phone-number-confirmed"
+            })
+            .Build();
+
+        var sut = new KafkaSettingsManager(configuration);
+
+        var result = sut.GetPhoneNumberConfirmedProducerSettingsSection();
+
+        result.BootstrapServers.Should().Be("broker:9092");
+        result.Topic.Should().Be("phone-number-confirmed");
+    }
+
+    [Fact]
+    public void GetPhoneNumberConfirmedProducerSettingsSection_WhenSectionIsMissing_ReturnsDefaultOptions()
+    {
+        var configuration = new ConfigurationBuilder().Build();
+        var sut = new KafkaSettingsManager(configuration);
+
+        var result = sut.GetPhoneNumberConfirmedProducerSettingsSection();
 
         result.BootstrapServers.Should().Be("localhost:9092");
         result.Topic.Should().Be("dev.flowchat.identity.user.v1");

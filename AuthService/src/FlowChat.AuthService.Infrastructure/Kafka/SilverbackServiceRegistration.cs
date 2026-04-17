@@ -1,4 +1,4 @@
-﻿using FlowChat.AuthService.Persistence;
+using FlowChat.AuthService.Persistence;
 using FlowChat.Core.Messaging.AuthService.Events;
 using FlowChat.Shared.Infrastructure.Silverback.Behaviors;
 using Microsoft.Extensions.Configuration;
@@ -21,9 +21,12 @@ public static class SilverbackServiceRegistration
 
         var accountRegisteredOptions = settingsManager.GetAccountRegisteredProducerSettingsSection();
         var accountConfirmedOptions = settingsManager.GetAccountConfirmedProducerSettingsSection();
+        var phoneNumberConfirmedOptions = settingsManager.GetPhoneNumberConfirmedProducerSettingsSection();
         var bootstrapServers = !string.IsNullOrWhiteSpace(accountRegisteredOptions.BootstrapServers)
             ? accountRegisteredOptions.BootstrapServers
-            : accountConfirmedOptions.BootstrapServers;
+            : !string.IsNullOrWhiteSpace(accountConfirmedOptions.BootstrapServers)
+                ? accountConfirmedOptions.BootstrapServers
+                : phoneNumberConfirmedOptions.BootstrapServers;
 
         services.AddSilverback()
             .AddSingletonBrokerBehavior<CustomSpanAttributesProducerBehavior>()
@@ -49,7 +52,7 @@ public static class SilverbackServiceRegistration
                             .StoreToOutbox(outbox => outbox.UseEntityFramework<AppDbContext>())))
                     .AddProducer(producer => producer
                         .Produce<PhoneNumberConfirmedIntegrationEvent>("auth-user-phone-confirmed", endpoint => endpoint
-                            .ProduceTo(accountRegisteredOptions.Topic)
+                            .ProduceTo(phoneNumberConfirmedOptions.Topic)
                             .SetKafkaKey(message => message?.UserId)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())
                             .StoreToOutbox(outbox => outbox.UseEntityFramework<AppDbContext>())));

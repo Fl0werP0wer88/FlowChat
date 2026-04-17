@@ -13,4 +13,8 @@ public sealed class KafkaSettingsManager(IConfiguration configuration) : IKafkaS
     public AccountConfirmedProducerSettingsSection GetAccountConfirmedProducerSettingsSection() =>
         _configuration.GetSection(new AccountConfirmedProducerSettingsSection().SectionName).Get<AccountConfirmedProducerSettingsSection>()
         ?? new AccountConfirmedProducerSettingsSection();
+
+    public PhoneNumberConfirmedProducerSettingsSection GetPhoneNumberConfirmedProducerSettingsSection() =>
+        _configuration.GetSection(new PhoneNumberConfirmedProducerSettingsSection().SectionName).Get<PhoneNumberConfirmedProducerSettingsSection>()
+        ?? new PhoneNumberConfirmedProducerSettingsSection();
 }

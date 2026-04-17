@@ -1,4 +1,4 @@
-﻿using FlowChat.RealtimeService.Api;
+using FlowChat.RealtimeService.Api;
 using FlowChat.RealtimeService.Api.Realtime;
 using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
 using FlowChat.RealtimeService.Infrastructure.RealtimeConnections;
@@ -34,8 +34,10 @@ public sealed class StartupExtensionsTests
             ["RealtimeApi:ApiKey"] = "worker-key",
             ["ConnectionStrings:Redis"] = "localhost:6379,password=secret",
             ["RealtimeConnections:InstanceId"] = "realtime-instance",
-            ["Kafka:RealtimeConnectionProducer:BootstrapServers"] = "localhost:9092",
-            ["Kafka:RealtimeConnectionProducer:Topic"] = "dev.flowchat.realtime.connection.v1"
+            ["Kafka:RealtimeConnectionRegisteredProducer:BootstrapServers"] = "localhost:9092",
+            ["Kafka:RealtimeConnectionRegisteredProducer:Topic"] = "dev.flowchat.realtime.connection.v1",
+            ["Kafka:RealtimeConnectionUnregisteredProducer:BootstrapServers"] = "localhost:9092",
+            ["Kafka:RealtimeConnectionUnregisteredProducer:Topic"] = "dev.flowchat.realtime.connection.v1"
         });
 
         var app = builder.ConfigureServices();
