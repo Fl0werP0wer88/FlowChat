@@ -29,7 +29,7 @@ public static class InfrastructureServiceRegistration
 
             return ConnectionMultiplexer.Connect(options);
         });
-        services.AddScoped<IKafkaProducerOptions<PresenceStatusChangedIntegrationEvent>>(sp =>
+        services.AddScoped<IKafkaProducerSettingsSection<PresenceStatusChangedIntegrationEvent>>(sp =>
             sp.GetRequiredService<IKafkaSettingsManager>().GetPresenceStatusChangedProducerSettingsSection());
         services.AddScoped<IOutboxIntegrationEventPublisher, FlowChatSilverbackEventPublisher>();
         services.AddScoped<IPresenceStatusStore, RedisPresenceStatusStore>();

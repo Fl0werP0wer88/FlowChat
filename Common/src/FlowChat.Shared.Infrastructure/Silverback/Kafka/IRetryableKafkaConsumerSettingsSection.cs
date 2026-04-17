@@ -1,6 +1,6 @@
 namespace FlowChat.Shared.Infrastructure.Silverback.Kafka;
 
-public interface IRetryableKafkaConsumerOptions
+public interface IRetryableKafkaConsumerSettingsSection
 {
     string Topic { get; }
     string RetryTopic { get; }

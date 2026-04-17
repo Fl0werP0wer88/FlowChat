@@ -5,7 +5,7 @@ using FlowChat.Core.Contracts;
 
 namespace FlowChat.UserProfileService.Infrastructure.Kafka;
 
-public sealed class UserProfileStateChangedProducerSettingsSection : SettingsSectionBase, IKafkaProducerOptions<UserProfileChangedIntegrationEvent>
+public sealed class UserProfileStateChangedProducerSettingsSection : SettingsSectionBase, IKafkaProducerSettingsSection<UserProfileChangedIntegrationEvent>
 {
     public override string SectionName => "Kafka:UserProfileStateChangedProducer";
 

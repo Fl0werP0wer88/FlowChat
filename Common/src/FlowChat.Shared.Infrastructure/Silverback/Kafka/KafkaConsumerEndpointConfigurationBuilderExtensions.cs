@@ -8,7 +8,7 @@ public static class KafkaConsumerEndpointConfigurationBuilderExtensions
 {
     public static KafkaConsumerEndpointConfigurationBuilder<object> ConfigureFlowChatMainEndpoint(
         this KafkaConsumerEndpointConfigurationBuilder<object> endpoint,
-        IRetryableKafkaConsumerOptions options) =>
+        IRetryableKafkaConsumerSettingsSection options) =>
         ConfigureFlowChatEndpointDefaults(endpoint, options.Topic)
             .OnError(policy =>
             {
@@ -21,7 +21,7 @@ public static class KafkaConsumerEndpointConfigurationBuilderExtensions
 
     public static KafkaConsumerEndpointConfigurationBuilder<object> ConfigureFlowChatRetryEndpoint(
         this KafkaConsumerEndpointConfigurationBuilder<object> endpoint,
-        IRetryableKafkaConsumerOptions options) =>
+        IRetryableKafkaConsumerSettingsSection options) =>
         ConfigureFlowChatEndpointDefaults(endpoint, options.RetryTopic)
             .OnError(policy =>
             {

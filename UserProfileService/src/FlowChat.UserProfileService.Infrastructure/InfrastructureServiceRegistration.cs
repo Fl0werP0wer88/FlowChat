@@ -20,13 +20,13 @@ public static class InfrastructureServiceRegistration
     {
         services.TryAddSingleton<IApiSettingsManager>(new ApiSettingsManager(configuration));
         services.TryAddSingleton<IKafkaSettingsManager>(new KafkaSettingsManager(configuration));
-        services.AddScoped<IKafkaProducerOptions<UserProfileCreatedIntegrationEvent>>(sp =>
+        services.AddScoped<IKafkaProducerSettingsSection<UserProfileCreatedIntegrationEvent>>(sp =>
             sp.GetRequiredService<IKafkaSettingsManager>().GetUserProfileCreatedProducerSettingsSection());
-        services.AddScoped<IKafkaProducerOptions<UserEmailConfirmedIntegrationEvent>>(sp =>
+        services.AddScoped<IKafkaProducerSettingsSection<UserEmailConfirmedIntegrationEvent>>(sp =>
             sp.GetRequiredService<IKafkaSettingsManager>().GetUserEmailConfirmedProducerSettingsSection());
-        services.AddScoped<IKafkaProducerOptions<EmailVerificationRequestIntegrationEvent>>(sp =>
+        services.AddScoped<IKafkaProducerSettingsSection<EmailVerificationRequestIntegrationEvent>>(sp =>
             sp.GetRequiredService<IKafkaSettingsManager>().GetUserEmailVerificationRequestedProducerSettingsSection());
-        services.AddScoped<IKafkaProducerOptions<UserProfileChangedIntegrationEvent>>(sp =>
+        services.AddScoped<IKafkaProducerSettingsSection<UserProfileChangedIntegrationEvent>>(sp =>
             sp.GetRequiredService<IKafkaSettingsManager>().GetUserProfileStateChangedProducerSettingsSection());
         services.AddScoped<IEmailVerificationLinkBuilder, EmailVerificationLinkBuilder>();
         services.AddScoped<IEmailVerificationTokenProtector, EmailVerificationTokenProtector>();

@@ -5,7 +5,7 @@ using FlowChat.Core.Contracts;
 
 namespace FlowChat.PresenceService.Infrastructure.Kafka;
 
-public sealed class PresenceStatusChangedProducerSettingsSection : SettingsSectionBase, IKafkaProducerOptions<PresenceStatusChangedIntegrationEvent>
+public sealed class PresenceStatusChangedProducerSettingsSection : SettingsSectionBase, IKafkaProducerSettingsSection<PresenceStatusChangedIntegrationEvent>
 {
     public override string SectionName => "Kafka:PresenceStatusChangedProducer";
 

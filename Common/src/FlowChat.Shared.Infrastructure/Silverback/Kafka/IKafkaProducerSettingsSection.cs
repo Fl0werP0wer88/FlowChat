@@ -1,11 +1,11 @@
 namespace FlowChat.Shared.Infrastructure.Silverback.Kafka;
 
-public interface IKafkaProducerOptions
+public interface IKafkaProducerSettingsSection
 {
     string BootstrapServers { get; set; }
     string Topic { get; set; }
 }
 
-public interface IKafkaProducerOptions<TEvent> : IKafkaProducerOptions
+public interface IKafkaProducerSettingsSection<TEvent> : IKafkaProducerSettingsSection
 {
 }

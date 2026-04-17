@@ -33,7 +33,7 @@ public sealed class KafkaProducerConfigurationTests
         var settingsManager = serviceProvider.GetRequiredService<IWorkerSettingsManager>();
         var accountRegisteredOptions = settingsManager.GetAccountRegisteredProducerSettingsSection();
         var typedAccountRegisteredOptions = serviceProvider
-            .GetRequiredService<IKafkaProducerOptions<AccountRegisteredIntegrationEvent>>();
+            .GetRequiredService<IKafkaProducerSettingsSection<AccountRegisteredIntegrationEvent>>();
 
         accountRegisteredOptions.BootstrapServers.Should().Be("broker:9092");
         accountRegisteredOptions.Topic.Should().Be("user-created-topic");

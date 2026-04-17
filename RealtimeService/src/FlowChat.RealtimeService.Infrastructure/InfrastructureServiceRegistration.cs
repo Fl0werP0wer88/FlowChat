@@ -54,9 +54,9 @@ public static class InfrastructureServiceRegistration
         services.TryAddSingleton<IRealtimeRoutingTopologyStore>(sp => sp.GetRequiredService<RedisRealtimeRoutingTopologyStore>());
         services.TryAddSingleton<IRealtimeRoutingTopologyReader>(sp => sp.GetRequiredService<RedisRealtimeRoutingTopologyStore>());
         services.TryAddSingleton<IRealtimeConnectionRegistry, RealtimeConnectionRegistry>();
-        services.AddScoped<IKafkaProducerOptions<FlowChat.Core.Messaging.RealtimeService.Events.RealtimeConnectionRegisteredIntegrationEvent>>(sp =>
+        services.AddScoped<IKafkaProducerSettingsSection<FlowChat.Core.Messaging.RealtimeService.Events.RealtimeConnectionRegisteredIntegrationEvent>>(sp =>
             sp.GetRequiredService<IKafkaSettingsManager>().GetRealtimeConnectionProducerSettingsSection());
-        services.AddScoped<IKafkaProducerOptions<FlowChat.Core.Messaging.RealtimeService.Events.RealtimeConnectionUnregisteredIntegrationEvent>>(sp =>
+        services.AddScoped<IKafkaProducerSettingsSection<FlowChat.Core.Messaging.RealtimeService.Events.RealtimeConnectionUnregisteredIntegrationEvent>>(sp =>
             sp.GetRequiredService<IKafkaSettingsManager>().GetRealtimeConnectionProducerSettingsSection());
         services.AddScoped<IDirectEventPublisher, FlowChatSilverbackEventPublisher>();
 

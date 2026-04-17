@@ -2,9 +2,9 @@ using FlowChat.Shared.Infrastructure.Silverback.Kafka;
 
 namespace FlowChat.AuthService.Infrastructure.Kafka;
 
-public sealed class KafkaProducerOptionsAdapter<TEvent> : IKafkaProducerOptions<TEvent>
+public sealed class KafkaProducerOptionsAdapter<TEvent> : IKafkaProducerSettingsSection<TEvent>
 {
-    public KafkaProducerOptionsAdapter(IKafkaProducerOptions source)
+    public KafkaProducerOptionsAdapter(IKafkaProducerSettingsSection source)
     {
         ArgumentNullException.ThrowIfNull(source);
 

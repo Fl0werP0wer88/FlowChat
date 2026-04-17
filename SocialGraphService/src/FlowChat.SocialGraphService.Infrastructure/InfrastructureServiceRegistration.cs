@@ -19,9 +19,9 @@ public static class InfrastructureServiceRegistration
 
         services.TryAddSingleton<IApiSettingsManager>(new ApiSettingsManager(configuration));
         services.TryAddSingleton<IKafkaSettingsManager>(new KafkaSettingsManager(configuration));
-        services.AddScoped<IKafkaProducerOptions<ContactAddedIntegrationEvent>>(sp =>
+        services.AddScoped<IKafkaProducerSettingsSection<ContactAddedIntegrationEvent>>(sp =>
             sp.GetRequiredService<IKafkaSettingsManager>().GetContactAddedProducerSettingsSection());
-        services.AddScoped<IKafkaProducerOptions<ContactDeletedIntegrationEvent>>(sp =>
+        services.AddScoped<IKafkaProducerSettingsSection<ContactDeletedIntegrationEvent>>(sp =>
             sp.GetRequiredService<IKafkaSettingsManager>().GetContactDeletedProducerSettingsSection());
         services.AddScoped<IOutboxIntegrationEventPublisher, FlowChatSilverbackEventPublisher>();
         services.AddAutoMapper((Action<AutoMapper.IMapperConfigurationExpression>?)null, infrastructureAssembly);

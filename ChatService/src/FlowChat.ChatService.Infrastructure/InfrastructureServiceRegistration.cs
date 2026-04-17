@@ -15,7 +15,7 @@ public static class InfrastructureServiceRegistration
     {
         services.TryAddSingleton<IApiSettingsManager>(new ApiSettingsManager(configuration));
         services.TryAddSingleton<IWorkerSettingsManager>(new WorkerSettingsManager(configuration));
-        services.AddScoped<IKafkaProducerOptions<ChatMessageSentIntegrationEvent>>(sp =>
+        services.AddScoped<IKafkaProducerSettingsSection<ChatMessageSentIntegrationEvent>>(sp =>
             sp.GetRequiredService<IWorkerSettingsManager>().GetChatMessageSentProducerSettingsSection());
         services.AddScoped<IOutboxIntegrationEventPublisher, FlowChatSilverbackEventPublisher>();
 

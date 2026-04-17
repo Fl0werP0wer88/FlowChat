@@ -130,7 +130,7 @@ public sealed class KafkaConsumerEndpointConfigurationBuilderExtensionsTests
         return ((IEnumerable<ErrorPolicyBase>)policiesField!.GetValue(errorPolicy)!).ToArray();
     }
 
-    private sealed class TestRetryableKafkaConsumerOptions : IRetryableKafkaConsumerOptions
+    private sealed class TestRetryableKafkaConsumerOptions : IRetryableKafkaConsumerSettingsSection
     {
         public string BootstrapServers { get; init; } = "localhost:9092";
         public string Topic { get; init; } = "test-topic";

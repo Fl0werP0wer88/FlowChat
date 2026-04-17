@@ -42,13 +42,13 @@ public sealed class KafkaProducerConfigurationTests
         var emailVerificationRequestedProducerOptions = settingsManager.GetUserEmailVerificationRequestedProducerSettingsSection();
         var stateChangedProducerOptions = settingsManager.GetUserProfileStateChangedProducerSettingsSection();
         var typedCreatedProducerOptions = serviceProvider
-            .GetRequiredService<IKafkaProducerOptions<UserProfileCreatedIntegrationEvent>>();
+            .GetRequiredService<IKafkaProducerSettingsSection<UserProfileCreatedIntegrationEvent>>();
         var typedEmailConfirmedProducerOptions = serviceProvider
-            .GetRequiredService<IKafkaProducerOptions<UserEmailConfirmedIntegrationEvent>>();
+            .GetRequiredService<IKafkaProducerSettingsSection<UserEmailConfirmedIntegrationEvent>>();
         var typedEmailVerificationRequestedProducerOptions = serviceProvider
-            .GetRequiredService<IKafkaProducerOptions<EmailVerificationRequestIntegrationEvent>>();
+            .GetRequiredService<IKafkaProducerSettingsSection<EmailVerificationRequestIntegrationEvent>>();
         var typedStateChangedProducerOptions = serviceProvider
-            .GetRequiredService<IKafkaProducerOptions<UserProfileChangedIntegrationEvent>>();
+            .GetRequiredService<IKafkaProducerSettingsSection<UserProfileChangedIntegrationEvent>>();
 
         createdProducerOptions.BootstrapServers.Should().Be("broker:9092");
         createdProducerOptions.Topic.Should().Be("user-profile-created-topic");

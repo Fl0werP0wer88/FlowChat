@@ -4,7 +4,7 @@ using FlowChat.Core.Contracts;
 
 namespace FlowChat.UserProfileService.Infrastructure.Kafka;
 
-public sealed class UserEmailVerificationRequestedProducerSettingsSection : SettingsSectionBase, IKafkaProducerOptions<EmailVerificationRequestIntegrationEvent>
+public sealed class UserEmailVerificationRequestedProducerSettingsSection : SettingsSectionBase, IKafkaProducerSettingsSection<EmailVerificationRequestIntegrationEvent>
 {
     public override string SectionName => "Kafka:UserEmailVerificationRequestedProducer";
 

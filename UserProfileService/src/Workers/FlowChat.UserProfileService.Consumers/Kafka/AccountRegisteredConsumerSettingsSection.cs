@@ -4,7 +4,7 @@ using FlowChat.Core.Contracts;
 
 namespace FlowChat.UserProfileService.Consumers.Kafka;
 
-public sealed class AccountRegisteredConsumerSettingsSection : SettingsSectionBase, IRetryableKafkaConsumerOptions
+public sealed class AccountRegisteredConsumerSettingsSection : SettingsSectionBase, IRetryableKafkaConsumerSettingsSection
 {
     public override string SectionName => "Kafka:AccountRegisteredConsumer";
 

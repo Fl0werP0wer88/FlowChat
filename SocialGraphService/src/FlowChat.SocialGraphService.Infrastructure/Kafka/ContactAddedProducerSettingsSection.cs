@@ -5,7 +5,7 @@ using FlowChat.Core.Contracts;
 
 namespace FlowChat.SocialGraphService.Infrastructure.Kafka;
 
-public sealed class ContactAddedProducerSettingsSection : SettingsSectionBase, IKafkaProducerOptions<ContactAddedIntegrationEvent>
+public sealed class ContactAddedProducerSettingsSection : SettingsSectionBase, IKafkaProducerSettingsSection<ContactAddedIntegrationEvent>
 {
     public override string SectionName => "Kafka:ContactAddedProducer";
 

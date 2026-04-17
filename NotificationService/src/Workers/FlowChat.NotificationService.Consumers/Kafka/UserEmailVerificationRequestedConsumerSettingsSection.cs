@@ -4,7 +4,7 @@ using FlowChat.Core.Contracts;
 
 namespace FlowChat.NotificationService.Consumers.Kafka;
 
-public sealed class UserEmailVerificationRequestedConsumerSettingsSection : SettingsSectionBase, IRetryableKafkaConsumerOptions
+public sealed class UserEmailVerificationRequestedConsumerSettingsSection : SettingsSectionBase, IRetryableKafkaConsumerSettingsSection
 {
     public override string SectionName => "Kafka:UserEmailVerificationRequestedConsumer";
 

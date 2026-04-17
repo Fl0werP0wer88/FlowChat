@@ -4,7 +4,7 @@ using FlowChat.Core.Contracts;
 
 namespace FlowChat.UserProfileService.Infrastructure.Kafka;
 
-public sealed class UserEmailConfirmedProducerSettingsSection : SettingsSectionBase, IKafkaProducerOptions<UserEmailConfirmedIntegrationEvent>
+public sealed class UserEmailConfirmedProducerSettingsSection : SettingsSectionBase, IKafkaProducerSettingsSection<UserEmailConfirmedIntegrationEvent>
 {
     public override string SectionName => "Kafka:UserEmailConfirmedProducer";
 

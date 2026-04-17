@@ -4,7 +4,7 @@ using FlowChat.Core.Contracts;
 
 namespace FlowChat.AuthService.Infrastructure.Kafka;
 
-public sealed class AccountRegisteredProducerSettingsSection : SettingsSectionBase, IKafkaProducerOptions<AccountRegisteredIntegrationEvent>
+public sealed class AccountRegisteredProducerSettingsSection : SettingsSectionBase, IKafkaProducerSettingsSection<AccountRegisteredIntegrationEvent>
 {
     public override string SectionName => "Kafka:AccountRegisteredProducer";
     public string BootstrapServers { get; set; } = "localhost:9092";

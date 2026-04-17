@@ -4,7 +4,7 @@ using FlowChat.Core.Contracts;
 
 namespace FlowChat.ChatService.Infrastructure.Kafka;
 
-public sealed class ChatMessageSentProducerSettingsSection : SettingsSectionBase, IKafkaProducerOptions<ChatMessageSentIntegrationEvent>
+public sealed class ChatMessageSentProducerSettingsSection : SettingsSectionBase, IKafkaProducerSettingsSection<ChatMessageSentIntegrationEvent>
 {
     public override string SectionName => "Kafka:ChatMessageSentProducer";
 

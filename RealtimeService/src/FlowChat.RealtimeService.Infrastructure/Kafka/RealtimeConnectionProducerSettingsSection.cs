@@ -6,8 +6,8 @@ using FlowChat.Core.Contracts;
 namespace FlowChat.RealtimeService.Infrastructure.Kafka;
 
 public sealed class RealtimeConnectionProducerSettingsSection : SettingsSectionBase,
-    IKafkaProducerOptions<RealtimeConnectionRegisteredIntegrationEvent>,
-    IKafkaProducerOptions<RealtimeConnectionUnregisteredIntegrationEvent>
+    IKafkaProducerSettingsSection<RealtimeConnectionRegisteredIntegrationEvent>,
+    IKafkaProducerSettingsSection<RealtimeConnectionUnregisteredIntegrationEvent>
 {
     public override string SectionName => "Kafka:RealtimeConnectionProducer";
 

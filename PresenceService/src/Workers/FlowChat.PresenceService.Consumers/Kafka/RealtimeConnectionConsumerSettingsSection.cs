@@ -4,7 +4,7 @@ using FlowChat.Core.Contracts;
 
 namespace FlowChat.PresenceService.Consumers.Kafka;
 
-public sealed class RealtimeConnectionConsumerSettingsSection : SettingsSectionBase, IRetryableKafkaConsumerOptions
+public sealed class RealtimeConnectionConsumerSettingsSection : SettingsSectionBase, IRetryableKafkaConsumerSettingsSection
 {
     public override string SectionName => "Kafka:RealtimeConnectionConsumer";
 

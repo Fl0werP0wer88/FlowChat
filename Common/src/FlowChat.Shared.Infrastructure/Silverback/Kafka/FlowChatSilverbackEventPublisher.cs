@@ -44,7 +44,7 @@ public sealed class FlowChatSilverbackEventPublisher : IOutboxIntegrationEventPu
         cancellationToken.ThrowIfCancellationRequested();
         ArgumentNullException.ThrowIfNull(message);
 
-        var options = _serviceProvider.GetService<IKafkaProducerOptions<TEvent>>();
+        var options = _serviceProvider.GetService<IKafkaProducerSettingsSection<TEvent>>();
         if (options is null)
         {
             throw new InvalidOperationException(
