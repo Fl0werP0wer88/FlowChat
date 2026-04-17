@@ -53,6 +53,7 @@ dist/
 **/appsettings.Local.json
 **/appsettings.*.local.json
 secrets.json
+Scripts/Infisical/.env
 
 # OS files
 .DS_Store
