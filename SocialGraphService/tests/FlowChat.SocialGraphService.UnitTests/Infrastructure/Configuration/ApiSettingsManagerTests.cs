@@ -1,4 +1,4 @@
-﻿using FlowChat.SocialGraphService.Infrastructure.Configuration;
+using FlowChat.SocialGraphService.Infrastructure.Configuration;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 
@@ -7,7 +7,7 @@ namespace FlowChat.SocialGraphService.UnitTests;
 public sealed class ApiSettingsManagerTests
 {
     [Fact]
-    public void GetSettings_WhenConfigured_ReturnsConfiguredValuesAndRootUrlsOverrideSectionValues()
+    public void GetSettings_WhenConfigured_ReturnsConfiguredValues()
     {
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
@@ -15,22 +15,18 @@ public sealed class ApiSettingsManagerTests
                 ["JwtSettings:Key"] = "jwt-key",
                 ["JwtSettings:Issuer"] = "jwt-issuer",
                 ["JwtSettings:Audience"] = "jwt-audience",
-                ["FlowChat:InternalApi:ApiKey"] = "internal-key",
-                ["FlowChat:ApiUrl"] = "https://section-api.flowchat.local",
-                ["ApiUrl"] = "https://root-api.flowchat.local"
+                ["FlowChat:InternalApi:ApiKey"] = "internal-key"
             })
             .Build();
 
         var settingsManager = new ApiSettingsManager(configuration);
         var jwtSettings = settingsManager.GetJwtSettingsSection();
         var internalApiSettings = settingsManager.GetInternalApiSettingsSection();
-        var apiRuntimeSettings = settingsManager.GetApiRuntimeSettingsSection();
 
         jwtSettings.Key.Should().Be("jwt-key");
         jwtSettings.Issuer.Should().Be("jwt-issuer");
         jwtSettings.Audience.Should().Be("jwt-audience");
         internalApiSettings.ApiKey.Should().Be("internal-key");
-        apiRuntimeSettings.ApiUrl.Should().Be("https://root-api.flowchat.local");
     }
 
     [Fact]
@@ -40,12 +36,10 @@ public sealed class ApiSettingsManagerTests
 
         var jwtSettings = settingsManager.GetJwtSettingsSection();
         var internalApiSettings = settingsManager.GetInternalApiSettingsSection();
-        var apiRuntimeSettings = settingsManager.GetApiRuntimeSettingsSection();
 
         jwtSettings.Key.Should().BeEmpty();
         jwtSettings.Issuer.Should().BeEmpty();
         jwtSettings.Audience.Should().BeEmpty();
         internalApiSettings.ApiKey.Should().BeEmpty();
-        apiRuntimeSettings.ApiUrl.Should().Be("https://localhost:5000");
     }
 }

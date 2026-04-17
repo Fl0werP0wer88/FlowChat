@@ -1,10 +1,8 @@
-﻿namespace FlowChat.RealtimeService.Infrastructure.Configuration;
+namespace FlowChat.RealtimeService.Infrastructure.Configuration;
 
 public interface IApiSettingsManager
 {
     JwtSettingsSection GetJwtSettingsSection();
-
-    ApiRuntimeSettingsSection GetApiRuntimeSettingsSection();
 
     InternalApiSettingsSection GetInternalApiSettingsSection();
 

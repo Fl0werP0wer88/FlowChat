@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Configuration;
 
 namespace FlowChat.NotificationService.Infrastructure.Configuration;
 
@@ -9,16 +9,6 @@ public sealed class ApiSettingsManager : IApiSettingsManager
     public ApiSettingsManager(IConfiguration configuration)
     {
         _configuration = configuration;
-    }
-
-    public ApiRuntimeSettingsSection GetApiRuntimeSettingsSection()
-    {
-        var settings = new ApiRuntimeSettingsSection();
-
-        _configuration.GetSection(new ApiRuntimeSettingsSection().SectionName).Bind(settings);
-        settings.ApiUrl = _configuration["ApiUrl"] ?? settings.ApiUrl;
-
-        return settings;
     }
 
     public EmailSettingsSection GetEmailSettingsSection() =>

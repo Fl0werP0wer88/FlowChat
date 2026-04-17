@@ -1,4 +1,4 @@
-﻿using FlowChat.RealtimeService.Infrastructure;
+using FlowChat.RealtimeService.Infrastructure;
 using FlowChat.RealtimeService.Infrastructure.Configuration;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
@@ -17,7 +17,6 @@ public sealed class ApiSettingsManagerTests
                 ["JwtSettings:Key"] = "jwt-key",
                 ["JwtSettings:Issuer"] = "jwt-issuer",
                 ["JwtSettings:Audience"] = "jwt-audience",
-                ["ApiUrl"] = "https://localhost:5000",
                 ["FlowChat:InternalApi:ApiKey"] = "internal-key",
                 ["ConnectionStrings:Redis"] = "localhost:6379,password=secret",
                 ["RealtimeConnections:InstanceId"] = "realtime-instance"
@@ -27,7 +26,6 @@ public sealed class ApiSettingsManagerTests
         var settingsManager = new ApiSettingsManager(configuration);
 
         settingsManager.GetJwtSettingsSection().Key.Should().Be("jwt-key");
-        settingsManager.GetApiRuntimeSettingsSection().ApiUrl.Should().Be("https://localhost:5000");
         settingsManager.GetInternalApiSettingsSection().ApiKey.Should().Be("internal-key");
         settingsManager.GetRealtimeConnectionsSettingsSection().RedisConnectionString.Should().Be("localhost:6379,password=secret");
         settingsManager.GetRealtimeConnectionsSettingsSection().InstanceId.Should().Be("realtime-instance");

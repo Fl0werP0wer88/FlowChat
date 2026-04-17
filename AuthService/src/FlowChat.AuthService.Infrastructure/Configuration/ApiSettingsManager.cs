@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Configuration;
 
 namespace FlowChat.AuthService.Infrastructure.Configuration;
 
@@ -15,16 +15,6 @@ public sealed class ApiSettingsManager : IApiSettingsManager
 
     public InternalApiSettingsSection GetInternalApiSettingsSection() =>
         ResolveSection<InternalApiSettingsSection>(new InternalApiSettingsSection().SectionName);
-
-    public ApiRuntimeSettingsSection GetApiRuntimeSettingsSection()
-    {
-        var settings = new ApiRuntimeSettingsSection();
-
-        _configuration.GetSection(new ApiRuntimeSettingsSection().SectionName).Bind(settings);
-        settings.ApiUrl = _configuration["ApiUrl"] ?? settings.ApiUrl;
-
-        return settings;
-    }
 
     private TSettings ResolveSection<TSettings>(string sectionName)
         where TSettings : new()

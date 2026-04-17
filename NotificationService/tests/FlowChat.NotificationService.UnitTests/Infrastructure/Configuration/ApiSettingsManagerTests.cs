@@ -1,4 +1,4 @@
-﻿using FlowChat.NotificationService.Infrastructure.Configuration;
+using FlowChat.NotificationService.Infrastructure.Configuration;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 
@@ -10,48 +10,6 @@ public sealed class ApiSettingsManagerTests
         new ConfigurationBuilder()
             .AddInMemoryCollection(values)
             .Build();
-
-    // --- GetApiRuntimeSettingsSection ---
-
-    [Fact]
-    public void GetApiRuntimeSettingsSection_WhenValuesConfigured_ReturnsConfiguredSettings()
-    {
-        var config = BuildConfiguration(new()
-        {
-            ["ApiUrl"] = "https://api.flowchat.com"
-        });
-
-        var manager = new ApiSettingsManager(config);
-        var settings = manager.GetApiRuntimeSettingsSection();
-
-        settings.ApiUrl.Should().Be("https://api.flowchat.com");
-    }
-
-    [Fact]
-    public void GetApiRuntimeSettingsSection_WhenNoConfiguration_ReturnsDefaultValues()
-    {
-        var config = BuildConfiguration([]);
-
-        var manager = new ApiSettingsManager(config);
-        var settings = manager.GetApiRuntimeSettingsSection();
-
-        settings.ApiUrl.Should().Be("https://localhost:5000");
-    }
-
-    [Fact]
-    public void GetApiRuntimeSettingsSection_TopLevelApiUrlOverridesFlowChatSection()
-    {
-        var config = BuildConfiguration(new()
-        {
-            ["FlowChat:ApiUrl"] = "https://section-api.flowchat.com",
-            ["ApiUrl"] = "https://toplevel-api.flowchat.com"
-        });
-
-        var manager = new ApiSettingsManager(config);
-        var settings = manager.GetApiRuntimeSettingsSection();
-
-        settings.ApiUrl.Should().Be("https://toplevel-api.flowchat.com");
-    }
 
     // --- GetEmailSettingsSection ---
 
