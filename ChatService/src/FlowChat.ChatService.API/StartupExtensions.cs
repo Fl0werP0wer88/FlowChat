@@ -12,9 +12,6 @@ public static class StartupExtensions
 {
     public static WebApplication ConfigureServices(this WebApplicationBuilder builder)
     {
-        var apiSettingsManager = new ApiSettingsManager(builder.Configuration);
-        var apiRuntimeSettings = apiSettingsManager.GetApiRuntimeSettingsSection();
-
         builder.Services
             .AddApplicationServices()
             .AddInfrastructureServices(builder.Configuration)
@@ -23,14 +20,6 @@ public static class StartupExtensions
         builder.AddFlowChatOpenTelemetry(typeof(ApplicationServiceRegistration).Assembly);
 
         builder.Services.AddControllers();
-        builder.Services.AddCors(
-            options => options.AddPolicy(
-                "open",
-                policy => policy.WithOrigins([apiRuntimeSettings.ApiUrl])
-                    .AllowAnyMethod()
-                    .SetIsOriginAllowed(_ => true)
-                    .AllowAnyHeader()
-                    .AllowCredentials()));
         builder.Services.AddSwaggerGen();
 
         return builder.Build();
@@ -38,7 +27,6 @@ public static class StartupExtensions
 
     public static WebApplication ConfigurePipeline(this WebApplication app)
     {
-        app.UseCors("open");
         app.UseFlowChatGlobalExceptionHandling();
 
         if (app.Environment.IsDevelopment())

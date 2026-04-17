@@ -20,7 +20,6 @@ public static class StartupExtensions
     {
         var apiSettingsManager = new ApiSettingsManager(builder.Configuration);
         var jwtSettings = apiSettingsManager.GetJwtSettingsSection();
-        var apiRuntimeSettings = apiSettingsManager.GetApiRuntimeSettingsSection();
         var jwtKey = jwtSettings.Key;
         var jwtIssuer = jwtSettings.Issuer;
         var jwtAudience = jwtSettings.Audience;
@@ -72,15 +71,6 @@ public static class StartupExtensions
 
         builder.Services.AddControllers();
 
-        builder.Services.AddCors(
-            options => options.AddPolicy(
-                "open",
-                policy => policy.WithOrigins([apiRuntimeSettings.ApiUrl])
-        .AllowAnyMethod()
-        .SetIsOriginAllowed(pol => true) // DevNote To be removed whe UI address established
-        .AllowAnyHeader()
-        .AllowCredentials()));
-
         builder.Services.AddSwaggerGen(options =>
         {
             options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
@@ -107,7 +97,6 @@ public static class StartupExtensions
 
     public static WebApplication ConfigurePipeline(this WebApplication app)
     {
-        app.UseCors("open");
         app.UseFlowChatGlobalExceptionHandling();
         if (app.Environment.IsDevelopment())
         {

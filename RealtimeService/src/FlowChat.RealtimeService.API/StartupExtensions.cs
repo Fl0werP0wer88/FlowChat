@@ -17,7 +17,6 @@ public static class StartupExtensions
     public static WebApplication ConfigureServices(this WebApplicationBuilder builder)
     {
         var apiSettingsManager = new ApiSettingsManager(builder.Configuration);
-        var apiRuntimeSettings = apiSettingsManager.GetApiRuntimeSettingsSection();
         var jwtSettings = apiSettingsManager.GetJwtSettingsSection();
         var realtimeConnectionsSettings = apiSettingsManager.GetRealtimeConnectionsSettingsSection();
         var realtimeConnectionProducerOptions = new KafkaSettingsManager(builder.Configuration).GetRealtimeConnectionProducerSettingsSection();
@@ -122,14 +121,6 @@ public static class StartupExtensions
         builder.Services.AddControllers()
             .AddJsonOptions(options =>
                 options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
-        builder.Services.AddCors(
-            options => options.AddPolicy(
-                "open",
-                policy => policy.WithOrigins([apiRuntimeSettings.ApiUrl])
-                    .AllowAnyMethod()
-                    .SetIsOriginAllowed(_ => true)
-                    .AllowAnyHeader()
-                    .AllowCredentials()));
         builder.Services.AddSwaggerGen();
 
         return builder.Build();
@@ -137,7 +128,6 @@ public static class StartupExtensions
 
     public static WebApplication ConfigurePipeline(this WebApplication app)
     {
-        app.UseCors("open");
         app.UseFlowChatGlobalExceptionHandling();
 
         if (app.Environment.IsDevelopment())
