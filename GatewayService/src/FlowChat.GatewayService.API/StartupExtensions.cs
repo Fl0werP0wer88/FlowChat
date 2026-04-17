@@ -22,7 +22,7 @@ public static class StartupExtensions
         builder.Services.Configure<AspNetCoreTraceInstrumentationOptions>(GatewayTraceEnrichment.Configure);
 
         var settingsProvider = new SettingsProvider(builder.Configuration);
-        var jwtSettings = settingsProvider.GetRequiredSection<JwtSettingsSection>();
+        var jwtSettings = settingsProvider.GetSection<JwtSettingsSection>();
         var clientSettings = settingsProvider.GetSection<GatewayClientSettingsSection>();
 
         ValidateJwtSettingsSection(jwtSettings);

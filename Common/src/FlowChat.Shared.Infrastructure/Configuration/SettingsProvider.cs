@@ -10,16 +10,9 @@ public sealed class SettingsProvider(IConfiguration configuration) : ISettingsPr
     public TSection GetSection<TSection>()
         where TSection : ISettingSection, new()
     {
-        var defaultSection = CreateSection<TSection>();
-        return _configuration.GetSection(defaultSection.SectionName).Get<TSection>() ?? defaultSection;
-    }
-
-    public TSection GetRequiredSection<TSection>()
-        where TSection : ISettingSection, new()
-    {
-        var sectionName = CreateSection<TSection>().SectionName;
-        return _configuration.GetSection(sectionName).Get<TSection>()
-            ?? throw new InvalidOperationException($"Missing configuration section: {sectionName}.");
+        var section = CreateSection<TSection>();
+        return _configuration.GetSection(section.SectionName).Get<TSection>()
+            ?? section;
     }
 
     private static TSection CreateSection<TSection>()
