@@ -39,6 +39,34 @@ function Test-HasMigrationFiles([string]$projectPath) {
     return $null -ne (Get-ChildItem -LiteralPath $migrationsDirectory -Filter '*.cs' -File | Select-Object -First 1)
 }
 
+# Native tools often write warnings to stderr, so rely on their exit codes instead of PowerShell error records
+function Invoke-DotnetCommand([string[]]$Arguments) {
+    $previousErrorActionPreference = $ErrorActionPreference
+
+    try {
+        $ErrorActionPreference = 'Continue'
+        $output = & dotnet @Arguments 2>&1
+        $exitCode = $LASTEXITCODE
+    }
+    finally {
+        $ErrorActionPreference = $previousErrorActionPreference
+    }
+
+    return [pscustomobject]@{
+        ExitCode = $exitCode
+        Output = @(
+            $output | ForEach-Object {
+                if ($_ -is [System.Management.Automation.ErrorRecord]) {
+                    $_.ToString()
+                }
+                else {
+                    "$_"
+                }
+            }
+        )
+    }
+}
+
 function RunMigration($service) {
     $name = $service.Name
     $proj = Join-Path $repoRoot $service.Project
@@ -56,9 +84,9 @@ function RunMigration($service) {
         $migName = GetMigrationName $true
         Write-Host "${name}: no migration files found, creating migration $migName"
 
-        $addOutput = dotnet ef migrations add $migName --project $proj --startup-project $startup --no-build 2>&1
-        if ($LASTEXITCODE -ne 0) {
-            Write-Error "${name}: initial migration add failed: $($addOutput -join "`n")"
+        $addResult = Invoke-DotnetCommand @('ef', 'migrations', 'add', $migName, '--project', $proj, '--startup-project', $startup, '--no-build')
+        if ($addResult.ExitCode -ne 0) {
+            Write-Error "${name}: initial migration add failed: $($addResult.Output -join "`n")"
             throw "Initial migration add failed"
         }
 
@@ -69,8 +97,9 @@ function RunMigration($service) {
         }
     }
 
-    $efOutput = dotnet ef database update --project $proj --startup-project $startup --no-build 2>&1
-    if ($LASTEXITCODE -eq 0) {
+    $updateResult = Invoke-DotnetCommand @('ef', 'database', 'update', '--project', $proj, '--startup-project', $startup, '--no-build')
+    $efOutput = $updateResult.Output
+    if ($updateResult.ExitCode -eq 0) {
         Write-Host "${name}: database is up to date"
     }
     else {
@@ -85,9 +114,9 @@ function RunMigration($service) {
 
             Write-Host "${name}: $migrationReason, creating migration $migName"
 
-            $addOutput = dotnet ef migrations add $migName --project $proj --startup-project $startup --no-build 2>&1
-            if ($LASTEXITCODE -ne 0) {
-                Write-Error "${name}: migration add failed: $($addOutput -join "`n")"
+            $addResult = Invoke-DotnetCommand @('ef', 'migrations', 'add', $migName, '--project', $proj, '--startup-project', $startup, '--no-build')
+            if ($addResult.ExitCode -ne 0) {
+                Write-Error "${name}: migration add failed: $($addResult.Output -join "`n")"
                 throw "Migration add failed"
             }
 
@@ -97,9 +126,9 @@ function RunMigration($service) {
                 throw "Build failed after migration add"
             }
 
-            $updateOutput = dotnet ef database update --project $proj --startup-project $startup --no-build 2>&1
-            if ($LASTEXITCODE -ne 0) {
-                Write-Error "${name}: database update after migration add failed: $($updateOutput -join "`n")"
+            $updateResult = Invoke-DotnetCommand @('ef', 'database', 'update', '--project', $proj, '--startup-project', $startup, '--no-build')
+            if ($updateResult.ExitCode -ne 0) {
+                Write-Error "${name}: database update after migration add failed: $($updateResult.Output -join "`n")"
                 throw "Database update after migration add failed"
             }
 
