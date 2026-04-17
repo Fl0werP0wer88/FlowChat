@@ -21,19 +21,19 @@ public static class StartupExtensions
         builder.Services.Configure<AspNetCoreTraceInstrumentationOptions>(GatewayTraceEnrichment.Configure);
 
         var jwtSettings = builder.Configuration
-            .GetSection(JwtSettingsSection.SectionName)
+            .GetSection(new JwtSettingsSection().SectionName)
             .Get<JwtSettingsSection>()
             ?? throw new InvalidOperationException("Missing configuration section: JwtSettingsSection.");
 
         var clientSettings = builder.Configuration
-            .GetSection(GatewayClientSettingsSection.SectionName)
+            .GetSection(new GatewayClientSettingsSection().SectionName)
             .Get<GatewayClientSettingsSection>()
             ?? new GatewayClientSettingsSection();
 
         ValidateJwtSettingsSection(jwtSettings);
 
         builder.Services.Configure<GatewayCatalogSettingsSection>(
-            builder.Configuration.GetSection(GatewayCatalogSettingsSection.SectionName));
+            builder.Configuration.GetSection(new GatewayCatalogSettingsSection().SectionName));
 
         builder.Services
             .AddAuthentication(options =>

@@ -19,16 +19,16 @@ public static class ConsumersServiceRegistration
         IConfiguration configuration)
     {
         var contactOptions = configuration
-            .GetSection(SocialGraphContactConsumerSettingsSection.SectionName)
+            .GetSection(new SocialGraphContactConsumerSettingsSection().SectionName)
             .Get<SocialGraphContactConsumerSettingsSection>()
             ?? new SocialGraphContactConsumerSettingsSection();
         var realtimeConnectionOptions = configuration
-            .GetSection(RealtimeConnectionConsumerSettingsSection.SectionName)
+            .GetSection(new RealtimeConnectionConsumerSettingsSection().SectionName)
             .Get<RealtimeConnectionConsumerSettingsSection>()
             ?? new RealtimeConnectionConsumerSettingsSection();
 
         services.AddOptions<PresenceApiSettingsSection>()
-            .BindConfiguration(PresenceApiSettingsSection.SectionName);
+            .BindConfiguration(new PresenceApiSettingsSection().SectionName);
         services.AddHttpClient(PresenceInternalApiClient.HttpClientName, (serviceProvider, httpClient) =>
         {
             var apiSettings = serviceProvider.GetRequiredService<IOptions<PresenceApiSettingsSection>>().Value;

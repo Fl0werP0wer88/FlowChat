@@ -1,11 +1,13 @@
 ﻿using FlowChat.Core.Messaging.SocialGraphService.Events;
 using FlowChat.Shared.Infrastructure.Silverback.Kafka;
 
+using FlowChat.Core.Contracts;
+
 namespace FlowChat.SocialGraphService.Infrastructure.Kafka;
 
-public sealed class ContactDeletedProducerSettingsSection : IKafkaProducerOptions<ContactDeletedIntegrationEvent>
+public sealed class ContactDeletedProducerSettingsSection : SettingsSectionBase, IKafkaProducerOptions<ContactDeletedIntegrationEvent>
 {
-    public const string SectionName = "Kafka:ContactDeletedProducer";
+    public override string SectionName => "Kafka:ContactDeletedProducer";
 
     public string BootstrapServers { get; set; } = "localhost:9092";
 

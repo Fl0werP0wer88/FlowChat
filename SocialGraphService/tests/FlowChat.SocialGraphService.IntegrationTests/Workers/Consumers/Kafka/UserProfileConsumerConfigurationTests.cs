@@ -45,7 +45,7 @@ public sealed class UserProfileConsumerConfigurationTests
             .Build();
 
         var consumerOptions = configuration
-            .GetSection(UserProfileConsumerSettingsSection.SectionName)
+            .GetSection(new UserProfileConsumerSettingsSection().SectionName)
             .Get<UserProfileConsumerSettingsSection>();
 
         consumerOptions.Should().NotBeNull();

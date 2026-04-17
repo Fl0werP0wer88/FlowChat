@@ -27,9 +27,9 @@ public sealed class StartupExtensionsTests
         var builder = WebApplication.CreateBuilder();
         builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?>
         {
-            ["JwtSettingsSection:Key"] = "FLOWCHAT_DEVELOPMENT_JWT_KEY_CHANGE_ME_123456789",
-            ["JwtSettingsSection:Issuer"] = "https://localhost:7236/",
-            ["JwtSettingsSection:Audience"] = "FlowChat.Client",
+            ["JwtSettings:Key"] = "FLOWCHAT_DEVELOPMENT_JWT_KEY_CHANGE_ME_123456789",
+            ["JwtSettings:Issuer"] = "https://localhost:7236/",
+            ["JwtSettings:Audience"] = "FlowChat.Client",
             ["FlowChat:InternalApi:ApiKey"] = "internal-key",
             ["RealtimeApi:ApiKey"] = "worker-key",
             ["ConnectionStrings:Redis"] = "localhost:6379,password=secret",

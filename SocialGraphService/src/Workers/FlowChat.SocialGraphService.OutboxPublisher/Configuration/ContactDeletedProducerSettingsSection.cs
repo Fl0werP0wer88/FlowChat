@@ -1,8 +1,10 @@
-﻿namespace FlowChat.SocialGraphService.OutboxPublisher.Configuration;
+﻿using FlowChat.Core.Contracts;
 
-public sealed class ContactDeletedProducerSettingsSection
+namespace FlowChat.SocialGraphService.OutboxPublisher.Configuration;
+
+public sealed class ContactDeletedProducerSettingsSection : SettingsSectionBase
 {
-    public const string SectionName = "Kafka:ContactDeletedProducer";
+    public override string SectionName => "Kafka:ContactDeletedProducer";
 
     public string BootstrapServers { get; set; } = "localhost:9092";
 

@@ -1,8 +1,10 @@
-﻿namespace FlowChat.SocialGraphService.Infrastructure.Configuration;
+﻿using FlowChat.Core.Contracts;
 
-public sealed class ApiRuntimeSettingsSection
+namespace FlowChat.SocialGraphService.Infrastructure.Configuration;
+
+public sealed class ApiRuntimeSettingsSection : SettingsSectionBase
 {
-    public const string SectionName = "FlowChat";
+    public override string SectionName => "FlowChat";
 
     public string ApiUrl { get; set; } = "https://localhost:5000";
 

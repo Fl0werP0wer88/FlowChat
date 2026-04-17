@@ -7,13 +7,13 @@ public sealed class ApiSettingsManager(IConfiguration configuration) : IApiSetti
     private readonly IConfiguration _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
 
     public JwtSettingsSection GetJwtSettingsSection() =>
-        _configuration.GetSection(JwtSettingsSection.SectionName).Get<JwtSettingsSection>() ?? new JwtSettingsSection();
+        _configuration.GetSection(new JwtSettingsSection().SectionName).Get<JwtSettingsSection>() ?? new JwtSettingsSection();
 
     public ApiRuntimeSettingsSection GetApiRuntimeSettingsSection()
     {
         var settings = new ApiRuntimeSettingsSection();
 
-        _configuration.GetSection(ApiRuntimeSettingsSection.SectionName).Bind(settings);
+        _configuration.GetSection(new ApiRuntimeSettingsSection().SectionName).Bind(settings);
         settings.ApiUrl = _configuration["ApiUrl"] ?? settings.ApiUrl;
         settings.BlazorUrl = _configuration["BlazorUrl"] ?? settings.BlazorUrl;
 
@@ -21,11 +21,11 @@ public sealed class ApiSettingsManager(IConfiguration configuration) : IApiSetti
     }
 
     public InternalApiSettingsSection GetInternalApiSettingsSection() =>
-        _configuration.GetSection(InternalApiSettingsSection.SectionName).Get<InternalApiSettingsSection>() ?? new InternalApiSettingsSection();
+        _configuration.GetSection(new InternalApiSettingsSection().SectionName).Get<InternalApiSettingsSection>() ?? new InternalApiSettingsSection();
 
     public RealtimeConnectionsSettingsSection GetRealtimeConnectionsSettingsSection()
     {
-        var settings = _configuration.GetSection(RealtimeConnectionsSettingsSection.SectionName).Get<RealtimeConnectionsSettingsSection>()
+        var settings = _configuration.GetSection(new RealtimeConnectionsSettingsSection().SectionName).Get<RealtimeConnectionsSettingsSection>()
             ?? new RealtimeConnectionsSettingsSection();
 
         settings.RedisConnectionString = _configuration.GetConnectionString(RealtimeConnectionsSettingsSection.RedisConnectionStringName)
@@ -35,6 +35,6 @@ public sealed class ApiSettingsManager(IConfiguration configuration) : IApiSetti
     }
 
     public PresenceServiceSettingsSection GetPresenceServiceSettingsSection() =>
-        _configuration.GetSection(PresenceServiceSettingsSection.SectionName).Get<PresenceServiceSettingsSection>()
+        _configuration.GetSection(new PresenceServiceSettingsSection().SectionName).Get<PresenceServiceSettingsSection>()
             ?? new PresenceServiceSettingsSection();
 }

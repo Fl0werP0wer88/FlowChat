@@ -17,18 +17,18 @@ public static class OutboxPublisherServiceRegistration
         IConfiguration configuration)
     {
         var outboxOptions = configuration
-            .GetSection(OutboxPublisherRuntimeSettingsSection.SectionName)
+            .GetSection(new OutboxPublisherRuntimeSettingsSection().SectionName)
             .Get<OutboxPublisherRuntimeSettingsSection>()
             ?? new OutboxPublisherRuntimeSettingsSection();
         var accountRegisteredOptions = configuration
-            .GetSection(AccountRegisteredProducerSettingsSection.SectionName)
+            .GetSection(new AccountRegisteredProducerSettingsSection().SectionName)
             .Get<AccountRegisteredProducerSettingsSection>()
             ?? new AccountRegisteredProducerSettingsSection();
 
         services.AddOptions<OutboxPublisherRuntimeSettingsSection>()
-            .BindConfiguration(OutboxPublisherRuntimeSettingsSection.SectionName);
+            .BindConfiguration(new OutboxPublisherRuntimeSettingsSection().SectionName);
         services.AddOptions<AccountRegisteredProducerSettingsSection>()
-            .BindConfiguration(AccountRegisteredProducerSettingsSection.SectionName);
+            .BindConfiguration(new AccountRegisteredProducerSettingsSection().SectionName);
 
         services.AddSilverback()
             .AddSingletonBrokerBehavior<CustomSpanAttributesProducerBehavior>()

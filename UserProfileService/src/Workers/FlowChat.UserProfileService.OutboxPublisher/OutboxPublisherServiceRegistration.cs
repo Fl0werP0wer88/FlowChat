@@ -18,23 +18,23 @@ public static class OutboxPublisherServiceRegistration
         IConfiguration configuration)
     {
         var createdProducerOptions = configuration
-            .GetSection(UserProfileCreatedProducerSettingsSection.SectionName)
+            .GetSection(new UserProfileCreatedProducerSettingsSection().SectionName)
             .Get<UserProfileCreatedProducerSettingsSection>()
             ?? new UserProfileCreatedProducerSettingsSection();
         var emailConfirmedProducerOptions = configuration
-            .GetSection(UserEmailConfirmedProducerSettingsSection.SectionName)
+            .GetSection(new UserEmailConfirmedProducerSettingsSection().SectionName)
             .Get<UserEmailConfirmedProducerSettingsSection>()
             ?? new UserEmailConfirmedProducerSettingsSection();
         var emailVerificationRequestedProducerOptions = configuration
-            .GetSection(UserEmailVerificationRequestedProducerSettingsSection.SectionName)
+            .GetSection(new UserEmailVerificationRequestedProducerSettingsSection().SectionName)
             .Get<UserEmailVerificationRequestedProducerSettingsSection>()
             ?? new UserEmailVerificationRequestedProducerSettingsSection();
         var stateChangedProducerOptions = configuration
-            .GetSection(UserProfileStateChangedProducerSettingsSection.SectionName)
+            .GetSection(new UserProfileStateChangedProducerSettingsSection().SectionName)
             .Get<UserProfileStateChangedProducerSettingsSection>()
             ?? new UserProfileStateChangedProducerSettingsSection();
         var outboxOptions = configuration
-            .GetSection(OutboxPublisherRuntimeSettingsSection.SectionName)
+            .GetSection(new OutboxPublisherRuntimeSettingsSection().SectionName)
             .Get<OutboxPublisherRuntimeSettingsSection>()
             ?? new OutboxPublisherRuntimeSettingsSection();
         var bootstrapServers = !string.IsNullOrWhiteSpace(createdProducerOptions.BootstrapServers)

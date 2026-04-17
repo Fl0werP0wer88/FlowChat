@@ -17,11 +17,11 @@ public static class OutboxPublisherServiceRegistration
         IConfiguration configuration)
     {
         var producerOptions = configuration
-            .GetSection(PresenceStatusChangedProducerSettingsSection.SectionName)
+            .GetSection(new PresenceStatusChangedProducerSettingsSection().SectionName)
             .Get<PresenceStatusChangedProducerSettingsSection>()
             ?? new PresenceStatusChangedProducerSettingsSection();
         var outboxOptions = configuration
-            .GetSection(OutboxPublisherRuntimeSettingsSection.SectionName)
+            .GetSection(new OutboxPublisherRuntimeSettingsSection().SectionName)
             .Get<OutboxPublisherRuntimeSettingsSection>()
             ?? new OutboxPublisherRuntimeSettingsSection();
 

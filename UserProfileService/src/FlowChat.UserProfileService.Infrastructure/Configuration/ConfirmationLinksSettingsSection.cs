@@ -1,8 +1,10 @@
-﻿namespace FlowChat.UserProfileService.Infrastructure.Configuration;
+﻿using FlowChat.Core.Contracts;
 
-public sealed class ConfirmationLinksSettingsSection
+namespace FlowChat.UserProfileService.Infrastructure.Configuration;
+
+public sealed class ConfirmationLinksSettingsSection : SettingsSectionBase
 {
-    public const string SectionName = "ConfirmationLinks";
+    public override string SectionName => "ConfirmationLinks";
 
     public string EmailVerificationBaseUrl { get; set; } = string.Empty;
 }

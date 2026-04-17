@@ -1,8 +1,10 @@
-﻿namespace FlowChat.PresenceService.OutboxPublisher.Configuration;
+﻿using FlowChat.Core.Contracts;
 
-public sealed class PresenceStatusChangedProducerSettingsSection
+namespace FlowChat.PresenceService.OutboxPublisher.Configuration;
+
+public sealed class PresenceStatusChangedProducerSettingsSection : SettingsSectionBase
 {
-    public const string SectionName = "Kafka:PresenceStatusChangedProducer";
+    public override string SectionName => "Kafka:PresenceStatusChangedProducer";
 
     public string BootstrapServers { get; set; } = "localhost:9092";
 

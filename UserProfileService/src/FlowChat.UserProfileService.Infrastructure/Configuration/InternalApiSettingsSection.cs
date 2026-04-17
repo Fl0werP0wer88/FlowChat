@@ -1,8 +1,10 @@
-﻿namespace FlowChat.UserProfileService.Infrastructure.Configuration;
+﻿using FlowChat.Core.Contracts;
 
-public sealed class InternalApiSettingsSection
+namespace FlowChat.UserProfileService.Infrastructure.Configuration;
+
+public sealed class InternalApiSettingsSection : SettingsSectionBase
 {
-    public const string SectionName = "FlowChat:InternalApi";
+    public override string SectionName => "FlowChat:InternalApi";
 
     public string ApiKey { get; set; } = string.Empty;
 }

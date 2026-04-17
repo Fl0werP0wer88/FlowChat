@@ -19,12 +19,12 @@ public static class ConsumersServiceRegistration
         IConfiguration configuration)
     {
         var consumerOptions = configuration
-            .GetSection(UserEmailVerificationRequestedConsumerSettingsSection.SectionName)
+            .GetSection(new UserEmailVerificationRequestedConsumerSettingsSection().SectionName)
             .Get<UserEmailVerificationRequestedConsumerSettingsSection>()
             ?? new UserEmailVerificationRequestedConsumerSettingsSection();
 
         services.AddOptions<NotificationApiSettingsSection>()
-            .BindConfiguration(NotificationApiSettingsSection.SectionName);
+            .BindConfiguration(new NotificationApiSettingsSection().SectionName);
         services.AddHttpClient(NotificationInternalApiClient.HttpClientName, (serviceProvider, httpClient) =>
         {
             var apiSettings = serviceProvider.GetRequiredService<IOptions<NotificationApiSettingsSection>>().Value;

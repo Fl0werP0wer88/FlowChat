@@ -52,7 +52,7 @@ public sealed class KafkaProducerConfigurationTests
             .Build();
 
         var accountRegisteredOptions = configuration
-            .GetSection(AccountRegisteredProducerSettingsSection.SectionName)
+            .GetSection(new AccountRegisteredProducerSettingsSection().SectionName)
             .Get<AccountRegisteredProducerSettingsSection>();
 
         accountRegisteredOptions.Should().NotBeNull();

@@ -63,13 +63,13 @@ public sealed class ApiSettingsManagerTests
     {
         var config = BuildConfiguration(new()
         {
-            [$"{EmailSettingsSection.SectionName}:SmtpHost"] = "smtp.mailhog.local",
-            [$"{EmailSettingsSection.SectionName}:SmtpPort"] = "1025",
-            [$"{EmailSettingsSection.SectionName}:FromEmail"] = "noreply@flowchat.com",
-            [$"{EmailSettingsSection.SectionName}:FromName"] = "FlowChat Bot",
-            [$"{EmailSettingsSection.SectionName}:Username"] = "user",
-            [$"{EmailSettingsSection.SectionName}:Password"] = "pass",
-            [$"{EmailSettingsSection.SectionName}:EnableSsl"] = "false"
+            [$"{new EmailSettingsSection().SectionName}:SmtpHost"] = "smtp.mailhog.local",
+            [$"{new EmailSettingsSection().SectionName}:SmtpPort"] = "1025",
+            [$"{new EmailSettingsSection().SectionName}:FromEmail"] = "noreply@flowchat.com",
+            [$"{new EmailSettingsSection().SectionName}:FromName"] = "FlowChat Bot",
+            [$"{new EmailSettingsSection().SectionName}:Username"] = "user",
+            [$"{new EmailSettingsSection().SectionName}:Password"] = "pass",
+            [$"{new EmailSettingsSection().SectionName}:EnableSsl"] = "false"
         });
 
         var manager = new ApiSettingsManager(config);
@@ -105,7 +105,7 @@ public sealed class ApiSettingsManagerTests
     {
         var config = BuildConfiguration(new()
         {
-            [$"{InternalApiSettingsSection.SectionName}:ApiKey"] = "super-secret-key"
+            [$"{new InternalApiSettingsSection().SectionName}:ApiKey"] = "super-secret-key"
         });
 
         var manager = new ApiSettingsManager(config);

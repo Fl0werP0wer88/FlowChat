@@ -17,15 +17,15 @@ public static class OutboxPublisherServiceRegistration
         IConfiguration configuration)
     {
         var contactAddedOptions = configuration
-            .GetSection(ContactAddedProducerSettingsSection.SectionName)
+            .GetSection(new ContactAddedProducerSettingsSection().SectionName)
             .Get<ContactAddedProducerSettingsSection>()
             ?? new ContactAddedProducerSettingsSection();
         var contactDeletedOptions = configuration
-            .GetSection(ContactDeletedProducerSettingsSection.SectionName)
+            .GetSection(new ContactDeletedProducerSettingsSection().SectionName)
             .Get<ContactDeletedProducerSettingsSection>()
             ?? new ContactDeletedProducerSettingsSection();
         var outboxOptions = configuration
-            .GetSection(OutboxPublisherRuntimeSettingsSection.SectionName)
+            .GetSection(new OutboxPublisherRuntimeSettingsSection().SectionName)
             .Get<OutboxPublisherRuntimeSettingsSection>()
             ?? new OutboxPublisherRuntimeSettingsSection();
         var bootstrapServers = !string.IsNullOrWhiteSpace(contactAddedOptions.BootstrapServers)

@@ -45,7 +45,7 @@ public sealed class UserEmailConfirmedConsumerConfigurationTests
             .Build();
 
         var consumerOptions = configuration
-            .GetSection(UserEmailConfirmedConsumerSettingsSection.SectionName)
+            .GetSection(new UserEmailConfirmedConsumerSettingsSection().SectionName)
             .Get<UserEmailConfirmedConsumerSettingsSection>();
 
         consumerOptions.Should().NotBeNull();

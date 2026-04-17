@@ -1,10 +1,12 @@
 ﻿using FlowChat.Shared.Infrastructure.Silverback.Kafka;
 
+using FlowChat.Core.Contracts;
+
 namespace FlowChat.NotificationService.Consumers.Kafka;
 
-public sealed class UserEmailVerificationRequestedConsumerSettingsSection : IRetryableKafkaConsumerOptions
+public sealed class UserEmailVerificationRequestedConsumerSettingsSection : SettingsSectionBase, IRetryableKafkaConsumerOptions
 {
-    public const string SectionName = "Kafka:UserEmailVerificationRequestedConsumer";
+    public override string SectionName => "Kafka:UserEmailVerificationRequestedConsumer";
 
     public string BootstrapServers { get; set; } = "localhost:9092";
     public string GroupId { get; set; } = "notification-service";

@@ -1,8 +1,10 @@
-﻿namespace FlowChat.NotificationService.Infrastructure.Configuration;
+﻿using FlowChat.Core.Contracts;
 
-public sealed class EmailSettingsSection
+namespace FlowChat.NotificationService.Infrastructure.Configuration;
+
+public sealed class EmailSettingsSection : SettingsSectionBase
 {
-    public const string SectionName = "EmailSettings";
+    public override string SectionName => "EmailSettings";
 
     public string SmtpHost { get; set; } = string.Empty;
 

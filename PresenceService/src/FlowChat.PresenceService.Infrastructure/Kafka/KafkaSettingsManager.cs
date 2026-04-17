@@ -7,6 +7,6 @@ public sealed class KafkaSettingsManager(IConfiguration configuration) : IKafkaS
     private readonly IConfiguration _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
 
     public PresenceStatusChangedProducerSettingsSection GetPresenceStatusChangedProducerSettingsSection() =>
-        _configuration.GetSection(PresenceStatusChangedProducerSettingsSection.SectionName).Get<PresenceStatusChangedProducerSettingsSection>()
+        _configuration.GetSection(new PresenceStatusChangedProducerSettingsSection().SectionName).Get<PresenceStatusChangedProducerSettingsSection>()
         ?? new PresenceStatusChangedProducerSettingsSection();
 }

@@ -1,8 +1,10 @@
-﻿namespace FlowChat.ChatService.OutboxPublisher.Configuration;
+﻿using FlowChat.Core.Contracts;
 
-public sealed class ChatMessageSentProducerSettingsSection
+namespace FlowChat.ChatService.OutboxPublisher.Configuration;
+
+public sealed class ChatMessageSentProducerSettingsSection : SettingsSectionBase
 {
-    public const string SectionName = "Kafka:ChatMessageSentProducer";
+    public override string SectionName => "Kafka:ChatMessageSentProducer";
 
     public string BootstrapServers { get; set; } = "localhost:9092";
 

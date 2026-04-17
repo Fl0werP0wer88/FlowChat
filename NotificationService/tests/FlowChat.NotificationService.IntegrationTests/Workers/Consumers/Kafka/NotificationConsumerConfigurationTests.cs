@@ -44,7 +44,7 @@ public sealed class NotificationConsumerConfigurationTests
             .Build();
 
         var consumerOptions = configuration
-            .GetSection(UserEmailVerificationRequestedConsumerSettingsSection.SectionName)
+            .GetSection(new UserEmailVerificationRequestedConsumerSettingsSection().SectionName)
             .Get<UserEmailVerificationRequestedConsumerSettingsSection>();
 
         consumerOptions.Should().NotBeNull();

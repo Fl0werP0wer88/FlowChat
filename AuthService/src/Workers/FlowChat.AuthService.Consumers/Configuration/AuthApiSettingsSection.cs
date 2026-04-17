@@ -1,8 +1,10 @@
-﻿namespace FlowChat.AuthService.Consumers.Configuration;
+﻿using FlowChat.Core.Contracts;
 
-public sealed class AuthApiSettingsSection
+namespace FlowChat.AuthService.Consumers.Configuration;
+
+public sealed class AuthApiSettingsSection : SettingsSectionBase
 {
-    public const string SectionName = "AuthApi";
+    public override string SectionName => "AuthApi";
 
     public string BaseUrl { get; set; } = "https://localhost:7236";
 

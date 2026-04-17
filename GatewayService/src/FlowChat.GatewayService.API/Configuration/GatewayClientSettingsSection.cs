@@ -1,8 +1,10 @@
-﻿namespace FlowChat.GatewayService.Api.Configuration;
+﻿using FlowChat.Core.Contracts;
 
-public sealed class GatewayClientSettingsSection
+namespace FlowChat.GatewayService.Api.Configuration;
+
+public sealed class GatewayClientSettingsSection : SettingsSectionBase
 {
-    public const string SectionName = "GatewayClient";
+    public override string SectionName => "GatewayClient";
 
     public List<string> AllowedOrigins { get; set; } = [];
 }

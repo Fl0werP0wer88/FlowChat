@@ -1,8 +1,10 @@
-﻿namespace FlowChat.RealtimeService.Infrastructure.Configuration;
+﻿using FlowChat.Core.Contracts;
 
-public sealed class PresenceServiceSettingsSection
+namespace FlowChat.RealtimeService.Infrastructure.Configuration;
+
+public sealed class PresenceServiceSettingsSection : SettingsSectionBase
 {
-    public const string SectionName = "PresenceService";
+    public override string SectionName => "PresenceService";
 
     public string BaseUrl { get; set; } = string.Empty;
 

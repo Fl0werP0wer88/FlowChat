@@ -41,7 +41,7 @@ public sealed class LoginUserCommandHandlerTests : IDisposable
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["JwtSettingsSection:Audience"] = "FlowChat.Client"
+                ["JwtSettings:Audience"] = "FlowChat.Client"
             })
             .Build();
 

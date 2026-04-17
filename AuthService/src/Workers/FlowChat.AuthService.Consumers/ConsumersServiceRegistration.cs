@@ -19,12 +19,12 @@ public static class ConsumersServiceRegistration
         IConfiguration configuration)
     {
         var consumerOptions = configuration
-            .GetSection(UserEmailConfirmedConsumerSettingsSection.SectionName)
+            .GetSection(new UserEmailConfirmedConsumerSettingsSection().SectionName)
             .Get<UserEmailConfirmedConsumerSettingsSection>()
             ?? new UserEmailConfirmedConsumerSettingsSection();
 
         services.AddOptions<AuthApiSettingsSection>()
-            .BindConfiguration(AuthApiSettingsSection.SectionName);
+            .BindConfiguration(new AuthApiSettingsSection().SectionName);
         services.AddHttpClient(AuthInternalApiClient.HttpClientName, (serviceProvider, httpClient) =>
         {
             var apiSettings = serviceProvider.GetRequiredService<IOptions<AuthApiSettingsSection>>().Value;

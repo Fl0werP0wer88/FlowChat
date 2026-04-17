@@ -14,9 +14,9 @@ public sealed class ApiSettingsManagerTests
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["JwtSettingsSection:Key"] = "jwt-key",
-                ["JwtSettingsSection:Issuer"] = "jwt-issuer",
-                ["JwtSettingsSection:Audience"] = "jwt-audience",
+                ["JwtSettings:Key"] = "jwt-key",
+                ["JwtSettings:Issuer"] = "jwt-issuer",
+                ["JwtSettings:Audience"] = "jwt-audience",
                 ["ApiUrl"] = "https://localhost:5000",
                 ["BlazorUrl"] = "https://localhost:5010",
                 ["FlowChat:InternalApi:ApiKey"] = "internal-key",

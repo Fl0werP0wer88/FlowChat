@@ -1,11 +1,12 @@
 ﻿using FlowChat.Core.Messaging.UserProfileService.Events;
 using FlowChat.Shared.Infrastructure.Silverback.Kafka;
+using FlowChat.Core.Contracts;
 
 namespace FlowChat.UserProfileService.Infrastructure.Kafka;
 
-public sealed class UserEmailConfirmedProducerSettingsSection : IKafkaProducerOptions<UserEmailConfirmedIntegrationEvent>
+public sealed class UserEmailConfirmedProducerSettingsSection : SettingsSectionBase, IKafkaProducerOptions<UserEmailConfirmedIntegrationEvent>
 {
-    public const string SectionName = "Kafka:UserEmailConfirmedProducer";
+    public override string SectionName => "Kafka:UserEmailConfirmedProducer";
 
     public string BootstrapServers { get; set; } = "localhost:9092";
 

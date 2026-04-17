@@ -1,8 +1,10 @@
-﻿namespace FlowChat.UserProfileService.Consumers.Configuration;
+﻿using FlowChat.Core.Contracts;
 
-public sealed class UserProfileApiSettingsSection
+namespace FlowChat.UserProfileService.Consumers.Configuration;
+
+public sealed class UserProfileApiSettingsSection : SettingsSectionBase
 {
-    public const string SectionName = "UserProfileApi";
+    public override string SectionName => "UserProfileApi";
 
     public string BaseUrl { get; set; } = "https://localhost:7148";
 

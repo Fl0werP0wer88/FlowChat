@@ -51,16 +51,16 @@ public sealed class WorkerSettingsManagerTests
             .Build();
 
         var chatMessageOptions = configuration
-            .GetSection(ChatMessageSentConsumerSettingsSection.SectionName)
+            .GetSection(new ChatMessageSentConsumerSettingsSection().SectionName)
             .Get<ChatMessageSentConsumerSettingsSection>();
         var presenceOptions = configuration
-            .GetSection(PresenceStatusChangedConsumerSettingsSection.SectionName)
+            .GetSection(new PresenceStatusChangedConsumerSettingsSection().SectionName)
             .Get<PresenceStatusChangedConsumerSettingsSection>();
         var realtimeApiSettings = configuration
-            .GetSection(RealtimeApiSettingsSection.SectionName)
+            .GetSection(new RealtimeApiSettingsSection().SectionName)
             .Get<RealtimeApiSettingsSection>();
         var realtimeRoutingSettings = configuration
-            .GetSection(RealtimeRoutingSettingsSection.SectionName)
+            .GetSection(new RealtimeRoutingSettingsSection().SectionName)
             .Get<RealtimeRoutingSettingsSection>();
 
         chatMessageOptions.Should().NotBeNull();

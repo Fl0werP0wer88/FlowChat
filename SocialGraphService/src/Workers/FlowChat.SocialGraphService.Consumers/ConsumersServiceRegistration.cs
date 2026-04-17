@@ -19,12 +19,12 @@ public static class ConsumersServiceRegistration
         IConfiguration configuration)
     {
         var consumerOptions = configuration
-            .GetSection(UserProfileConsumerSettingsSection.SectionName)
+            .GetSection(new UserProfileConsumerSettingsSection().SectionName)
             .Get<UserProfileConsumerSettingsSection>()
             ?? new UserProfileConsumerSettingsSection();
 
         services.AddOptions<SocialGraphApiSettingsSection>()
-            .BindConfiguration(SocialGraphApiSettingsSection.SectionName);
+            .BindConfiguration(new SocialGraphApiSettingsSection().SectionName);
         services.AddHttpClient(SocialGraphInternalApiClient.HttpClientName, (serviceProvider, httpClient) =>
         {
             var apiSettings = serviceProvider.GetRequiredService<IOptions<SocialGraphApiSettingsSection>>().Value;

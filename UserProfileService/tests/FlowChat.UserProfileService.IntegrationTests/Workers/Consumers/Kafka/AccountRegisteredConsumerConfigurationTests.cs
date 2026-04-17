@@ -55,7 +55,7 @@ public sealed class AccountRegisteredConsumerConfigurationTests
             .Build();
 
         var consumerOptions = configuration
-            .GetSection(AccountRegisteredConsumerSettingsSection.SectionName)
+            .GetSection(new AccountRegisteredConsumerSettingsSection().SectionName)
             .Get<AccountRegisteredConsumerSettingsSection>();
 
         consumerOptions.Should().NotBeNull();

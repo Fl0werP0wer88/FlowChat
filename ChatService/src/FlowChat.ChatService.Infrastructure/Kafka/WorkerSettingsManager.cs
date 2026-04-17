@@ -13,10 +13,10 @@ public sealed class WorkerSettingsManager : IWorkerSettingsManager
     }
 
     public ChatMessageSentProducerSettingsSection GetChatMessageSentProducerSettingsSection() =>
-        ResolveSection<ChatMessageSentProducerSettingsSection>(ChatMessageSentProducerSettingsSection.SectionName);
+        ResolveSection<ChatMessageSentProducerSettingsSection>(new ChatMessageSentProducerSettingsSection().SectionName);
 
     public OutboxPublisherRuntimeSettingsSection GetOutboxPublisherRuntimeSettingsSection() =>
-        ResolveSection<OutboxPublisherRuntimeSettingsSection>(OutboxPublisherRuntimeSettingsSection.SectionName);
+        ResolveSection<OutboxPublisherRuntimeSettingsSection>(new OutboxPublisherRuntimeSettingsSection().SectionName);
 
     private TOptions ResolveSection<TOptions>(string sectionName)
         where TOptions : new() =>

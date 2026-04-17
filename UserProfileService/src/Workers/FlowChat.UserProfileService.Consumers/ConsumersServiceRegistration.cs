@@ -20,12 +20,12 @@ public static class ConsumersServiceRegistration
         IConfiguration configuration)
     {
         var consumerOptions = configuration
-            .GetSection(AccountRegisteredConsumerSettingsSection.SectionName)
+            .GetSection(new AccountRegisteredConsumerSettingsSection().SectionName)
             .Get<AccountRegisteredConsumerSettingsSection>()
             ?? new AccountRegisteredConsumerSettingsSection();
 
         services.AddOptions<UserProfileApiSettingsSection>()
-            .BindConfiguration(UserProfileApiSettingsSection.SectionName);
+            .BindConfiguration(new UserProfileApiSettingsSection().SectionName);
         services.AddHttpClient(UserProfileInternalApiClient.HttpClientName, (serviceProvider, httpClient) =>
         {
             var apiSettings = serviceProvider.GetRequiredService<IOptions<UserProfileApiSettingsSection>>().Value;

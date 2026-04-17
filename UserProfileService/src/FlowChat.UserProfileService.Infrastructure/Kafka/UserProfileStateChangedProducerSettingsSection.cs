@@ -1,11 +1,13 @@
 ﻿using FlowChat.Core.Messaging.UserProfileService.Events;
 using FlowChat.Shared.Infrastructure.Silverback.Kafka;
 
+using FlowChat.Core.Contracts;
+
 namespace FlowChat.UserProfileService.Infrastructure.Kafka;
 
-public sealed class UserProfileStateChangedProducerSettingsSection : IKafkaProducerOptions<UserProfileChangedIntegrationEvent>
+public sealed class UserProfileStateChangedProducerSettingsSection : SettingsSectionBase, IKafkaProducerOptions<UserProfileChangedIntegrationEvent>
 {
-    public const string SectionName = "Kafka:UserProfileStateChangedProducer";
+    public override string SectionName => "Kafka:UserProfileStateChangedProducer";
 
     public string BootstrapServers { get; set; } = "localhost:9092";
 

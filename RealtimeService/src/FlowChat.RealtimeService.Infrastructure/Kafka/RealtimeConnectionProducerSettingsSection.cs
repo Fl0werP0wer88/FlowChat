@@ -1,13 +1,15 @@
 ﻿using FlowChat.Core.Messaging.RealtimeService.Events;
 using FlowChat.Shared.Infrastructure.Silverback.Kafka;
 
+using FlowChat.Core.Contracts;
+
 namespace FlowChat.RealtimeService.Infrastructure.Kafka;
 
-public sealed class RealtimeConnectionProducerSettingsSection :
+public sealed class RealtimeConnectionProducerSettingsSection : SettingsSectionBase,
     IKafkaProducerOptions<RealtimeConnectionRegisteredIntegrationEvent>,
     IKafkaProducerOptions<RealtimeConnectionUnregisteredIntegrationEvent>
 {
-    public const string SectionName = "Kafka:RealtimeConnectionProducer";
+    public override string SectionName => "Kafka:RealtimeConnectionProducer";
 
     public string BootstrapServers { get; set; } = "localhost:9092";
 

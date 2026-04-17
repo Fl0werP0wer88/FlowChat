@@ -15,7 +15,7 @@ public sealed class ApiSettingsManager : IApiSettingsManager
     {
         var settings = new ApiRuntimeSettingsSection();
 
-        _configuration.GetSection(ApiRuntimeSettingsSection.SectionName).Bind(settings);
+        _configuration.GetSection(new ApiRuntimeSettingsSection().SectionName).Bind(settings);
         settings.ApiUrl = _configuration["ApiUrl"] ?? settings.ApiUrl;
         settings.BlazorUrl = _configuration["BlazorUrl"] ?? settings.BlazorUrl;
 
@@ -23,9 +23,9 @@ public sealed class ApiSettingsManager : IApiSettingsManager
     }
 
     public EmailSettingsSection GetEmailSettingsSection() =>
-        _configuration.GetSection(EmailSettingsSection.SectionName).Get<EmailSettingsSection>() ?? new EmailSettingsSection();
+        _configuration.GetSection(new EmailSettingsSection().SectionName).Get<EmailSettingsSection>() ?? new EmailSettingsSection();
 
     public InternalApiSettingsSection GetInternalApiSettingsSection() =>
-        _configuration.GetSection(InternalApiSettingsSection.SectionName).Get<InternalApiSettingsSection>()
+        _configuration.GetSection(new InternalApiSettingsSection().SectionName).Get<InternalApiSettingsSection>()
         ?? new InternalApiSettingsSection();
 }

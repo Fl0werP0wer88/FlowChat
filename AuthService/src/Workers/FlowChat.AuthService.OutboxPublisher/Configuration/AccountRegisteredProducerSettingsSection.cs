@@ -1,8 +1,10 @@
-﻿namespace FlowChat.AuthService.OutboxPublisher.Configuration;
+﻿using FlowChat.Core.Contracts;
 
-public sealed class AccountRegisteredProducerSettingsSection
+namespace FlowChat.AuthService.OutboxPublisher.Configuration;
+
+public sealed class AccountRegisteredProducerSettingsSection : SettingsSectionBase
 {
-    public const string SectionName = "Kafka:AccountRegisteredProducer";
+    public override string SectionName => "Kafka:AccountRegisteredProducer";
 
     public string BootstrapServers { get; set; } = "localhost:9092";
     public string Topic { get; set; } = "dev.flowchat.identity.user.v1";

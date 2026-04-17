@@ -1,10 +1,12 @@
 ﻿using FlowChat.Shared.Infrastructure.Silverback.Kafka;
 
+using FlowChat.Core.Contracts;
+
 namespace FlowChat.RealtimeService.Consumers.Kafka;
 
-public sealed class PresenceStatusChangedConsumerSettingsSection : IRetryableKafkaConsumerOptions
+public sealed class PresenceStatusChangedConsumerSettingsSection : SettingsSectionBase, IRetryableKafkaConsumerOptions
 {
-    public const string SectionName = "Kafka:PresenceStatusChangedConsumer";
+    public override string SectionName => "Kafka:PresenceStatusChangedConsumer";
 
     public string BootstrapServers { get; set; } = "localhost:9092";
     public string GroupId { get; set; } = "realtime-service";

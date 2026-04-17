@@ -1,8 +1,10 @@
-﻿namespace FlowChat.PresenceService.Infrastructure.Configuration;
+﻿using FlowChat.Core.Contracts;
 
-public sealed class PresenceStatusSettingsSection
+namespace FlowChat.PresenceService.Infrastructure.Configuration;
+
+public sealed class PresenceStatusSettingsSection : SettingsSectionBase
 {
-    public const string SectionName = "PresenceStatus";
+    public override string SectionName => "PresenceStatus";
     public const string RedisConnectionStringName = "Redis";
 
     public string RedisConnectionString { get; set; } = string.Empty;

@@ -1,8 +1,10 @@
-﻿namespace FlowChat.ChatService.Persistence.Configuration;
+﻿using FlowChat.Core.Contracts;
 
-public sealed class OutboxPublisherRuntimeSettingsSection
+namespace FlowChat.ChatService.Persistence.Configuration;
+
+public sealed class OutboxPublisherRuntimeSettingsSection : SettingsSectionBase
 {
-    public const string SectionName = "OutboxPublisher";
+    public override string SectionName => "OutboxPublisher";
 
     public int BatchSize { get; set; } = 25;
     public int PollIntervalSeconds { get; set; } = 3;

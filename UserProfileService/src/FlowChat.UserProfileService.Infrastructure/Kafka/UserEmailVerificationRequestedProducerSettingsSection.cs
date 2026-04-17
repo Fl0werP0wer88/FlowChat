@@ -1,11 +1,12 @@
 ﻿using FlowChat.Core.Messaging.AuthService.Events;
 using FlowChat.Shared.Infrastructure.Silverback.Kafka;
+using FlowChat.Core.Contracts;
 
 namespace FlowChat.UserProfileService.Infrastructure.Kafka;
 
-public sealed class UserEmailVerificationRequestedProducerSettingsSection : IKafkaProducerOptions<EmailVerificationRequestIntegrationEvent>
+public sealed class UserEmailVerificationRequestedProducerSettingsSection : SettingsSectionBase, IKafkaProducerOptions<EmailVerificationRequestIntegrationEvent>
 {
-    public const string SectionName = "Kafka:UserEmailVerificationRequestedProducer";
+    public override string SectionName => "Kafka:UserEmailVerificationRequestedProducer";
 
     public string BootstrapServers { get; set; } = "localhost:9092";
 

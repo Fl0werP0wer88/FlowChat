@@ -7,10 +7,10 @@ public sealed class KafkaSettingsManager(IConfiguration configuration) : IKafkaS
     private readonly IConfiguration _configuration = configuration;
 
     public ContactAddedProducerSettingsSection GetContactAddedProducerSettingsSection() =>
-        _configuration.GetSection(ContactAddedProducerSettingsSection.SectionName).Get<ContactAddedProducerSettingsSection>()
+        _configuration.GetSection(new ContactAddedProducerSettingsSection().SectionName).Get<ContactAddedProducerSettingsSection>()
         ?? new ContactAddedProducerSettingsSection();
 
     public ContactDeletedProducerSettingsSection GetContactDeletedProducerSettingsSection() =>
-        _configuration.GetSection(ContactDeletedProducerSettingsSection.SectionName).Get<ContactDeletedProducerSettingsSection>()
+        _configuration.GetSection(new ContactDeletedProducerSettingsSection().SectionName).Get<ContactDeletedProducerSettingsSection>()
         ?? new ContactDeletedProducerSettingsSection();
 }

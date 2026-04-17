@@ -12,13 +12,13 @@ public sealed class ApiSettingsManager : IApiSettingsManager
     }
 
     public JwtSettingsSection GetJwtSettingsSection() =>
-        _configuration.GetSection(JwtSettingsSection.SectionName).Get<JwtSettingsSection>() ?? new JwtSettingsSection();
+        _configuration.GetSection(new JwtSettingsSection().SectionName).Get<JwtSettingsSection>() ?? new JwtSettingsSection();
 
     public ApiRuntimeSettingsSection GetApiRuntimeSettingsSection()
     {
         var settings = new ApiRuntimeSettingsSection();
 
-        _configuration.GetSection(ApiRuntimeSettingsSection.SectionName).Bind(settings);
+        _configuration.GetSection(new ApiRuntimeSettingsSection().SectionName).Bind(settings);
         settings.ApiUrl = _configuration["ApiUrl"] ?? settings.ApiUrl;
         settings.BlazorUrl = _configuration["BlazorUrl"] ?? settings.BlazorUrl;
 
@@ -26,6 +26,6 @@ public sealed class ApiSettingsManager : IApiSettingsManager
     }
 
     public InternalApiSettingsSection GetInternalApiSettingsSection() =>
-        _configuration.GetSection(InternalApiSettingsSection.SectionName).Get<InternalApiSettingsSection>()
+        _configuration.GetSection(new InternalApiSettingsSection().SectionName).Get<InternalApiSettingsSection>()
         ?? new InternalApiSettingsSection();
 }

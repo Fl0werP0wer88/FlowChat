@@ -1,8 +1,10 @@
-﻿namespace FlowChat.GatewayService.Api.Configuration;
+﻿using FlowChat.Core.Contracts;
 
-public sealed class GatewayCatalogSettingsSection
+namespace FlowChat.GatewayService.Api.Configuration;
+
+public sealed class GatewayCatalogSettingsSection : SettingsSectionBase
 {
-    public const string SectionName = "GatewayCatalog";
+    public override string SectionName => "GatewayCatalog";
 
     public List<GatewayRouteCatalogEntry> Routes { get; set; } = [];
 }

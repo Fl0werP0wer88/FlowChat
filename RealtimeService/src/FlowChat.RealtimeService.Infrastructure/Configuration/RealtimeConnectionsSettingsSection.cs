@@ -1,8 +1,10 @@
-﻿namespace FlowChat.RealtimeService.Infrastructure.Configuration;
+﻿using FlowChat.Core.Contracts;
 
-public sealed class RealtimeConnectionsSettingsSection
+namespace FlowChat.RealtimeService.Infrastructure.Configuration;
+
+public sealed class RealtimeConnectionsSettingsSection : SettingsSectionBase
 {
-    public const string SectionName = "RealtimeConnections";
+    public override string SectionName => "RealtimeConnections";
     public const string RedisConnectionStringName = "Redis";
 
     public string RedisConnectionString { get; set; } = string.Empty;

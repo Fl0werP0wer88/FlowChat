@@ -1,8 +1,10 @@
-﻿namespace FlowChat.PresenceService.Consumers.Configuration;
+﻿using FlowChat.Core.Contracts;
 
-public sealed class PresenceApiSettingsSection
+namespace FlowChat.PresenceService.Consumers.Configuration;
+
+public sealed class PresenceApiSettingsSection : SettingsSectionBase
 {
-    public const string SectionName = "PresenceApi";
+    public override string SectionName => "PresenceApi";
 
     public string BaseUrl { get; set; } = string.Empty;
 

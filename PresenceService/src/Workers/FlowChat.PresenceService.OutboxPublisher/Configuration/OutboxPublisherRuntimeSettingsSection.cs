@@ -1,8 +1,10 @@
-﻿namespace FlowChat.PresenceService.OutboxPublisher.Configuration;
+﻿using FlowChat.Core.Contracts;
 
-public sealed class OutboxPublisherRuntimeSettingsSection
+namespace FlowChat.PresenceService.OutboxPublisher.Configuration;
+
+public sealed class OutboxPublisherRuntimeSettingsSection : SettingsSectionBase
 {
-    public const string SectionName = "OutboxPublisher";
+    public override string SectionName => "OutboxPublisher";
 
     public int BatchSize { get; set; } = 25;
 

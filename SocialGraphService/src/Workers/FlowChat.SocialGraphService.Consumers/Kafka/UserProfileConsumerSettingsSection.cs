@@ -1,10 +1,12 @@
 ﻿using FlowChat.Shared.Infrastructure.Silverback.Kafka;
 
+using FlowChat.Core.Contracts;
+
 namespace FlowChat.SocialGraphService.Consumers.Kafka;
 
-public sealed class UserProfileConsumerSettingsSection : IRetryableKafkaConsumerOptions
+public sealed class UserProfileConsumerSettingsSection : SettingsSectionBase, IRetryableKafkaConsumerOptions
 {
-    public const string SectionName = "Kafka:UserProfileConsumer";
+    public override string SectionName => "Kafka:UserProfileConsumer";
 
     public string BootstrapServers { get; set; } = "localhost:9092";
     public string GroupId { get; set; } = "socialgraph-service";

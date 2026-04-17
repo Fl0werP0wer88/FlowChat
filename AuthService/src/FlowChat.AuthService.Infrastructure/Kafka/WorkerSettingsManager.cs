@@ -12,7 +12,7 @@ public sealed class WorkerSettingsManager : IWorkerSettingsManager
     }
 
     public AccountRegisteredProducerSettingsSection GetAccountRegisteredProducerSettingsSection() =>
-        ResolveSection<AccountRegisteredProducerSettingsSection>(AccountRegisteredProducerSettingsSection.SectionName);
+        ResolveSection<AccountRegisteredProducerSettingsSection>(new AccountRegisteredProducerSettingsSection().SectionName);
 
     private TOptions ResolveSection<TOptions>(string sectionName)
         where TOptions : new()

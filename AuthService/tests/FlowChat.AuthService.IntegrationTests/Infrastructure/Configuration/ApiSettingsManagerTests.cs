@@ -13,10 +13,10 @@ public sealed class ApiSettingsManagerTests
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["JwtSettingsSection:Key"] = "jwt-key",
-                ["JwtSettingsSection:EncryptionKey"] = "12345678901234567890123456789012",
-                ["JwtSettingsSection:Issuer"] = "jwt-issuer",
-                ["JwtSettingsSection:Audience"] = "jwt-audience",
+                ["JwtSettings:Key"] = "jwt-key",
+                ["JwtSettings:EncryptionKey"] = "12345678901234567890123456789012",
+                ["JwtSettings:Issuer"] = "jwt-issuer",
+                ["JwtSettings:Audience"] = "jwt-audience",
                 ["FlowChat:InternalApi:ApiKey"] = "internal-key"
             })
             .Build();

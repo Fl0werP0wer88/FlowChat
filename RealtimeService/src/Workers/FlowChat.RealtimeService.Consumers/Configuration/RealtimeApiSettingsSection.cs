@@ -1,8 +1,10 @@
-﻿namespace FlowChat.RealtimeService.Consumers.Configuration;
+﻿using FlowChat.Core.Contracts;
 
-public sealed class RealtimeApiSettingsSection
+namespace FlowChat.RealtimeService.Consumers.Configuration;
+
+public sealed class RealtimeApiSettingsSection : SettingsSectionBase
 {
-    public const string SectionName = "RealtimeApi";
+    public override string SectionName => "RealtimeApi";
 
     public string ApiKey { get; set; } = string.Empty;
 

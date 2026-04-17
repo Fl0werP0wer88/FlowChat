@@ -1,8 +1,10 @@
-﻿namespace FlowChat.UserProfileService.OutboxPublisher.Configuration;
+﻿using FlowChat.Core.Contracts;
 
-public sealed class UserProfileStateChangedProducerSettingsSection
+namespace FlowChat.UserProfileService.OutboxPublisher.Configuration;
+
+public sealed class UserProfileStateChangedProducerSettingsSection : SettingsSectionBase
 {
-    public const string SectionName = "Kafka:UserProfileStateChangedProducer";
+    public override string SectionName => "Kafka:UserProfileStateChangedProducer";
 
     public string BootstrapServers { get; set; } = "localhost:9092";
 

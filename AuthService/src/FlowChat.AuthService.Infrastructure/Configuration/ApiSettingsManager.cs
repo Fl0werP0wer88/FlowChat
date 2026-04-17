@@ -11,16 +11,16 @@ public sealed class ApiSettingsManager : IApiSettingsManager
         _configuration = configuration;
     }
 
-    public JwtSettingsSection GetJwtSettingsSection() => ResolveSection<JwtSettingsSection>(JwtSettingsSection.SectionName);
+    public JwtSettingsSection GetJwtSettingsSection() => ResolveSection<JwtSettingsSection>(new JwtSettingsSection().SectionName);
 
     public InternalApiSettingsSection GetInternalApiSettingsSection() =>
-        ResolveSection<InternalApiSettingsSection>(InternalApiSettingsSection.SectionName);
+        ResolveSection<InternalApiSettingsSection>(new InternalApiSettingsSection().SectionName);
 
     public ApiRuntimeSettingsSection GetApiRuntimeSettingsSection()
     {
         var settings = new ApiRuntimeSettingsSection();
 
-        _configuration.GetSection(ApiRuntimeSettingsSection.SectionName).Bind(settings);
+        _configuration.GetSection(new ApiRuntimeSettingsSection().SectionName).Bind(settings);
         settings.ApiUrl = _configuration["ApiUrl"] ?? settings.ApiUrl;
         settings.BlazorUrl = _configuration["BlazorUrl"] ?? settings.BlazorUrl;
 

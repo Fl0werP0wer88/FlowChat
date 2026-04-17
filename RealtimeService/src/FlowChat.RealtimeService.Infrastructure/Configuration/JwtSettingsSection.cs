@@ -1,8 +1,10 @@
-﻿namespace FlowChat.RealtimeService.Infrastructure.Configuration;
+﻿using FlowChat.Core.Contracts;
 
-public sealed class JwtSettingsSection
+namespace FlowChat.RealtimeService.Infrastructure.Configuration;
+
+public sealed class JwtSettingsSection : SettingsSectionBase
 {
-    public const string SectionName = "JwtSettings";
+    public override string SectionName => "JwtSettings";
 
     public string Key { get; set; } = string.Empty;
 

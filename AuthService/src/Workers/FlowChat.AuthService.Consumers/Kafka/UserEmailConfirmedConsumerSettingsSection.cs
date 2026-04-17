@@ -1,10 +1,12 @@
 ﻿using FlowChat.Shared.Infrastructure.Silverback.Kafka;
 
+using FlowChat.Core.Contracts;
+
 namespace FlowChat.AuthService.Consumers.Kafka;
 
-public sealed class UserEmailConfirmedConsumerSettingsSection : IRetryableKafkaConsumerOptions
+public sealed class UserEmailConfirmedConsumerSettingsSection : SettingsSectionBase, IRetryableKafkaConsumerOptions
 {
-    public const string SectionName = "Kafka:UserEmailConfirmedConsumer";
+    public override string SectionName => "Kafka:UserEmailConfirmedConsumer";
 
     public string BootstrapServers { get; set; } = "localhost:9092";
     public string GroupId { get; set; } = "auth-service";

@@ -76,16 +76,16 @@ public sealed class KafkaProducerConfigurationTests
             .Build();
 
         var producerOptions = configuration
-            .GetSection(UserProfileCreatedProducerSettingsSection.SectionName)
+            .GetSection(new UserProfileCreatedProducerSettingsSection().SectionName)
             .Get<UserProfileCreatedProducerSettingsSection>();
         var emailConfirmedProducerOptions = configuration
-            .GetSection(UserEmailConfirmedProducerSettingsSection.SectionName)
+            .GetSection(new UserEmailConfirmedProducerSettingsSection().SectionName)
             .Get<UserEmailConfirmedProducerSettingsSection>();
         var emailVerificationRequestedProducerOptions = configuration
-            .GetSection(UserEmailVerificationRequestedProducerSettingsSection.SectionName)
+            .GetSection(new UserEmailVerificationRequestedProducerSettingsSection().SectionName)
             .Get<UserEmailVerificationRequestedProducerSettingsSection>();
         var stateChangedProducerOptions = configuration
-            .GetSection(UserProfileStateChangedProducerSettingsSection.SectionName)
+            .GetSection(new UserProfileStateChangedProducerSettingsSection().SectionName)
             .Get<UserProfileStateChangedProducerSettingsSection>();
 
         producerOptions.Should().NotBeNull();

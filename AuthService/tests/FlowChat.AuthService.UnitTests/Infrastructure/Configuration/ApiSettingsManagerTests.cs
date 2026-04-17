@@ -14,11 +14,11 @@ public sealed class ApiSettingsManagerTests
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["JwtSettingsSection:Key"] = "jwt-key",
-                ["JwtSettingsSection:EncryptionKey"] = "12345678901234567890123456789012",
-                ["JwtSettingsSection:Issuer"] = "jwt-issuer",
-                ["JwtSettingsSection:Audience"] = "jwt-audience",
-                ["JwtSettingsSection:ExpiresMinutes"] = "90",
+                ["JwtSettings:Key"] = "jwt-key",
+                ["JwtSettings:EncryptionKey"] = "12345678901234567890123456789012",
+                ["JwtSettings:Issuer"] = "jwt-issuer",
+                ["JwtSettings:Audience"] = "jwt-audience",
+                ["JwtSettings:ExpiresMinutes"] = "90",
                 ["FlowChat:InternalApi:ApiKey"] = "internal-key",
                 ["ApiUrl"] = "https://localhost:5000",
                 ["BlazorUrl"] = "https://localhost:5010"

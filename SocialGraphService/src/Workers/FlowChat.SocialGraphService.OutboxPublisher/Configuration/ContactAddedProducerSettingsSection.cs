@@ -1,8 +1,10 @@
-﻿namespace FlowChat.SocialGraphService.OutboxPublisher.Configuration;
+﻿using FlowChat.Core.Contracts;
 
-public sealed class ContactAddedProducerSettingsSection
+namespace FlowChat.SocialGraphService.OutboxPublisher.Configuration;
+
+public sealed class ContactAddedProducerSettingsSection : SettingsSectionBase
 {
-    public const string SectionName = "Kafka:ContactAddedProducer";
+    public override string SectionName => "Kafka:ContactAddedProducer";
 
     public string BootstrapServers { get; set; } = "localhost:9092";
 

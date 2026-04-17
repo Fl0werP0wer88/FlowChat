@@ -17,18 +17,18 @@ public static class OutboxPublisherServiceRegistration
         IConfiguration configuration)
     {
         var outboxOptions = configuration
-            .GetSection(OutboxPublisherRuntimeSettingsSection.SectionName)
+            .GetSection(new OutboxPublisherRuntimeSettingsSection().SectionName)
             .Get<OutboxPublisherRuntimeSettingsSection>()
             ?? new OutboxPublisherRuntimeSettingsSection();
         var producerOptions = configuration
-            .GetSection(ChatMessageSentProducerSettingsSection.SectionName)
+            .GetSection(new ChatMessageSentProducerSettingsSection().SectionName)
             .Get<ChatMessageSentProducerSettingsSection>()
             ?? new ChatMessageSentProducerSettingsSection();
 
         services.AddOptions<OutboxPublisherRuntimeSettingsSection>()
-            .BindConfiguration(OutboxPublisherRuntimeSettingsSection.SectionName);
+            .BindConfiguration(new OutboxPublisherRuntimeSettingsSection().SectionName);
         services.AddOptions<ChatMessageSentProducerSettingsSection>()
-            .BindConfiguration(ChatMessageSentProducerSettingsSection.SectionName);
+            .BindConfiguration(new ChatMessageSentProducerSettingsSection().SectionName);
 
         services.AddSilverback()
             .AddSingletonBrokerBehavior<CustomSpanAttributesProducerBehavior>()

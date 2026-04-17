@@ -1,8 +1,10 @@
-﻿namespace FlowChat.RealtimeService.Routing.Configuration;
+﻿using FlowChat.Core.Contracts;
 
-public sealed class RealtimeRoutingSettingsSection
+namespace FlowChat.RealtimeService.Routing.Configuration;
+
+public sealed class RealtimeRoutingSettingsSection : SettingsSectionBase
 {
-    public const string SectionName = "RealtimeRouting";
+    public override string SectionName => "RealtimeRouting";
 
     public string RedisConnectionString { get; set; } = string.Empty;
 

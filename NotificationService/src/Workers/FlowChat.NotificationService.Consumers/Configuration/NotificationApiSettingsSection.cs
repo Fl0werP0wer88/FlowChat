@@ -1,8 +1,10 @@
-﻿namespace FlowChat.NotificationService.Consumers.Configuration;
+﻿using FlowChat.Core.Contracts;
 
-public sealed class NotificationApiSettingsSection
+namespace FlowChat.NotificationService.Consumers.Configuration;
+
+public sealed class NotificationApiSettingsSection : SettingsSectionBase
 {
-    public const string SectionName = "NotificationApi";
+    public override string SectionName => "NotificationApi";
 
     public string BaseUrl { get; set; } = "https://localhost:7206";
 

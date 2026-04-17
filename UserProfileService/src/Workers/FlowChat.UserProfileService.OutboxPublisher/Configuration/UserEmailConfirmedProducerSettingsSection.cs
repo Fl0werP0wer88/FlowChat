@@ -1,8 +1,10 @@
-﻿namespace FlowChat.UserProfileService.OutboxPublisher.Configuration;
+﻿using FlowChat.Core.Contracts;
 
-public sealed class UserEmailConfirmedProducerSettingsSection
+namespace FlowChat.UserProfileService.OutboxPublisher.Configuration;
+
+public sealed class UserEmailConfirmedProducerSettingsSection : SettingsSectionBase
 {
-    public const string SectionName = "Kafka:UserEmailConfirmedProducer";
+    public override string SectionName => "Kafka:UserEmailConfirmedProducer";
 
     public string BootstrapServers { get; set; } = "localhost:9092";
 
