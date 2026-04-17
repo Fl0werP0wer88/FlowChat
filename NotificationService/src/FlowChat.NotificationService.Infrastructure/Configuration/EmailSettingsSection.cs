@@ -2,7 +2,7 @@
 
 public sealed class EmailSettingsSection
 {
-    public const string SectionName = "EmailSettingsSection";
+    public const string SectionName = "EmailSettings";
 
     public string SmtpHost { get; set; } = string.Empty;
 
