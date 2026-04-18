@@ -2,7 +2,6 @@ using FlowChat.Core.Contracts;
 using FlowChat.Core.Messaging.RealtimeService.Events;
 using FlowChat.RealtimeService.Infrastructure;
 using FlowChat.RealtimeService.Infrastructure.Kafka;
-using FlowChat.Shared.Infrastructure.Silverback.Kafka;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;

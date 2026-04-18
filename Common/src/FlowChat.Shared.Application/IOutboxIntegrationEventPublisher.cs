@@ -1,9 +1,11 @@
+using FlowChat.Core.Contracts;
 using FlowChat.Core.Messaging;
 
 namespace FlowChat.Shared.Application;
 
 public interface IOutboxIntegrationEventPublisher
 {
-    Task Publish<TEvent>(TEvent message, CancellationToken cancellationToken)
-        where TEvent : IntegrationEvent;
+    Task Publish<TEvent, TSection>(TEvent message, CancellationToken cancellationToken)
+            where TEvent : IntegrationEvent
+            where TSection : IKafkaProducerSettingsSection<TEvent>, new();
 }

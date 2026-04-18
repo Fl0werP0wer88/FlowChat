@@ -1,6 +1,5 @@
 using FlowChat.Core.Contracts;
 using FlowChat.Core.Messaging;
-using FlowChat.Shared.Infrastructure.Silverback.Kafka;
 using Microsoft.Extensions.Configuration;
 
 namespace FlowChat.Shared.Infrastructure.Configuration;

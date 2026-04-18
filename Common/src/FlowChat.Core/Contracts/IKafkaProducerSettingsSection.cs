@@ -1,7 +1,4 @@
-using FlowChat.Core.Contracts;
-using FlowChat.Core.Messaging;
-
-namespace FlowChat.Shared.Infrastructure.Silverback.Kafka;
+namespace FlowChat.Core.Contracts;
 
 public interface IKafkaProducerSettingsSection : ISettingSection
 {

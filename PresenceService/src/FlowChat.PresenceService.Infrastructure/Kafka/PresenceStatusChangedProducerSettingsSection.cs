@@ -1,5 +1,4 @@
 ﻿using FlowChat.Core.Messaging.PresenceService.Events;
-using FlowChat.Shared.Infrastructure.Silverback.Kafka;
 
 using FlowChat.Core.Contracts;
 

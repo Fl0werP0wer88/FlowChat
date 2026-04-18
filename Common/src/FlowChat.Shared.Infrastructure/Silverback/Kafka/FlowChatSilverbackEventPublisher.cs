@@ -1,3 +1,4 @@
+using FlowChat.Core.Contracts;
 using FlowChat.Core.Messaging;
 using FlowChat.Shared.Application;
 using Microsoft.Extensions.DependencyInjection;

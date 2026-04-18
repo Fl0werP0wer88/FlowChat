@@ -1,6 +1,5 @@
 using FlowChat.Core.Contracts;
 using FlowChat.Core.Messaging.RealtimeService.Events;
-using FlowChat.Shared.Infrastructure.Silverback.Kafka;
 
 namespace FlowChat.RealtimeService.Infrastructure.Kafka;
 
