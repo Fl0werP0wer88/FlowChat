@@ -13,20 +13,22 @@ public sealed class FlowChatSilverbackEventPublisher : IOutboxIntegrationEventPu
     private readonly IServiceProvider _serviceProvider;
     private readonly IPublisher _publisher;
     private readonly ILogger<FlowChatSilverbackEventPublisher> _logger;
+    private readonly ISettingsProvider _settingsProvider;
 
     public FlowChatSilverbackEventPublisher(
         IServiceProvider serviceProvider,
         IPublisher publisher,
-        ILogger<FlowChatSilverbackEventPublisher> logger)
+        ILogger<FlowChatSilverbackEventPublisher> logger,
+        ISettingsProvider settingsProvider)
     {
         _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
         _publisher = publisher ?? throw new ArgumentNullException(nameof(publisher));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _settingsProvider = settingsProvider ?? throw new ArgumentNullException(nameof(settingsProvider));
     }
 
-    public Task Publish<TEvent, TSection>(TEvent message, CancellationToken cancellationToken)
+    public Task Publish<TEvent>(TEvent message, CancellationToken cancellationToken)
             where TEvent : IntegrationEvent
-            where TSection : IKafkaProducerSettingsSection<TEvent>, new()
     {
         ArgumentNullException.ThrowIfNull(message);
         cancellationToken.ThrowIfCancellationRequested();
@@ -37,16 +39,14 @@ public sealed class FlowChatSilverbackEventPublisher : IOutboxIntegrationEventPu
                 $"Integration event '{typeof(TEvent).FullName}' does not contain a Kafka key.");
         }
 
-        return PublishAsync<TEvent, TSection>(new IntegrationEventEnvelope<TEvent>(message, message.Key), cancellationToken);
+        return PublishAsync(new IntegrationEventEnvelope<TEvent>(message, message.Key), cancellationToken);
     }
 
-    private async Task PublishAsync<TEvent, TSection>(IntegrationEventEnvelope<TEvent> message, CancellationToken cancellationToken)
+    private async Task PublishAsync<TEvent>(IntegrationEventEnvelope<TEvent> message, CancellationToken cancellationToken)
             where TEvent : IntegrationEvent
-            where TSection : IKafkaProducerSettingsSection<TEvent>, new()
     {
         cancellationToken.ThrowIfCancellationRequested();
         ArgumentNullException.ThrowIfNull(message);
-
         var options = _serviceProvider.GetService<IKafkaProducerSettingsSection<TEvent>>();
         if (options is null)
         {

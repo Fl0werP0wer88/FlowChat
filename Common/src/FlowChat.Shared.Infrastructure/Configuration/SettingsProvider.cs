@@ -17,7 +17,7 @@ public sealed class SettingsProvider(IConfiguration configuration) : ISettingsPr
     }
 
 
-    public TSection GetSection<TSection, TEvent>()
+    public TSection GetSectionForKafkaProducer<TSection, TEvent>()
       where TSection : IKafkaProducerSettingsSection<TEvent>, new()
       where TEvent : IntegrationEvent
     {
