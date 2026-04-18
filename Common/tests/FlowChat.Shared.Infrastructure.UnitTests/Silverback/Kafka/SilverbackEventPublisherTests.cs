@@ -1,3 +1,4 @@
+using FlowChat.Core.Contracts;
 using FlowChat.Core.Messaging;
 using FlowChat.Shared.Infrastructure.Silverback.Kafka;
 using FluentAssertions;
@@ -17,7 +18,8 @@ public sealed class SilverbackEventPublisherTests
         var publisher = new FlowChatSilverbackEventPublisher(
             services,
             Mock.Of<IPublisher>(),
-            NullLogger<FlowChatSilverbackEventPublisher>.Instance);
+            NullLogger<FlowChatSilverbackEventPublisher>.Instance,
+            Mock.Of<ISettingsProvider>());
 
         var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
             publisher.Publish(
@@ -34,7 +36,8 @@ public sealed class SilverbackEventPublisherTests
         var publisher = new FlowChatSilverbackEventPublisher(
             services,
             Mock.Of<IPublisher>(),
-            NullLogger<FlowChatSilverbackEventPublisher>.Instance);
+            NullLogger<FlowChatSilverbackEventPublisher>.Instance,
+            Mock.Of<ISettingsProvider>());
 
         var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
             publisher.Publish(
