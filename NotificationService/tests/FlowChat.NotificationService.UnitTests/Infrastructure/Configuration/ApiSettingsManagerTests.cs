@@ -1,4 +1,5 @@
 using FlowChat.NotificationService.Infrastructure.Configuration;
+using FlowChat.Shared.Infrastructure.Configuration;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 
@@ -27,8 +28,8 @@ public sealed class ApiSettingsManagerTests
             [$"{new EmailSettingsSection().SectionName}:EnableSsl"] = "false"
         });
 
-        var manager = new ApiSettingsManager(config);
-        var settings = manager.GetEmailSettingsSection();
+        var settingsProvider = new SettingsProvider(config);
+        var settings = settingsProvider.GetSection<EmailSettingsSection>();
 
         settings.SmtpHost.Should().Be("smtp.mailhog.local");
         settings.SmtpPort.Should().Be(1025);
@@ -44,8 +45,8 @@ public sealed class ApiSettingsManagerTests
     {
         var config = BuildConfiguration([]);
 
-        var manager = new ApiSettingsManager(config);
-        var settings = manager.GetEmailSettingsSection();
+        var settingsProvider = new SettingsProvider(config);
+        var settings = settingsProvider.GetSection<EmailSettingsSection>();
 
         settings.SmtpHost.Should().BeEmpty();
         settings.SmtpPort.Should().Be(587);
@@ -63,8 +64,8 @@ public sealed class ApiSettingsManagerTests
             [$"{new InternalApiSettingsSection().SectionName}:ApiKey"] = "super-secret-key"
         });
 
-        var manager = new ApiSettingsManager(config);
-        var settings = manager.GetInternalApiSettingsSection();
+        var settingsProvider = new SettingsProvider(config);
+        var settings = settingsProvider.GetSection<InternalApiSettingsSection>();
 
         settings.ApiKey.Should().Be("super-secret-key");
     }
@@ -74,8 +75,8 @@ public sealed class ApiSettingsManagerTests
     {
         var config = BuildConfiguration([]);
 
-        var manager = new ApiSettingsManager(config);
-        var settings = manager.GetInternalApiSettingsSection();
+        var settingsProvider = new SettingsProvider(config);
+        var settings = settingsProvider.GetSection<InternalApiSettingsSection>();
 
         settings.ApiKey.Should().BeEmpty();
     }

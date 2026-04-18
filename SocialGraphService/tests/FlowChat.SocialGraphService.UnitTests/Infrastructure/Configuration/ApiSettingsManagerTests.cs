@@ -1,3 +1,4 @@
+using FlowChat.Shared.Infrastructure.Configuration;
 using FlowChat.SocialGraphService.Infrastructure.Configuration;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
@@ -19,9 +20,9 @@ public sealed class ApiSettingsManagerTests
             })
             .Build();
 
-        var settingsManager = new ApiSettingsManager(configuration);
-        var jwtSettings = settingsManager.GetJwtSettingsSection();
-        var internalApiSettings = settingsManager.GetInternalApiSettingsSection();
+        var settingsProvider = new SettingsProvider(configuration);
+        var jwtSettings = settingsProvider.GetSection<JwtSettingsSection>();
+        var internalApiSettings = settingsProvider.GetSection<InternalApiSettingsSection>();
 
         jwtSettings.Key.Should().Be("jwt-key");
         jwtSettings.Issuer.Should().Be("jwt-issuer");
@@ -32,10 +33,10 @@ public sealed class ApiSettingsManagerTests
     [Fact]
     public void GetSettings_WhenConfigurationMissing_ReturnsDefaultValues()
     {
-        var settingsManager = new ApiSettingsManager(new ConfigurationBuilder().Build());
+        var settingsProvider = new SettingsProvider(new ConfigurationBuilder().Build());
 
-        var jwtSettings = settingsManager.GetJwtSettingsSection();
-        var internalApiSettings = settingsManager.GetInternalApiSettingsSection();
+        var jwtSettings = settingsProvider.GetSection<JwtSettingsSection>();
+        var internalApiSettings = settingsProvider.GetSection<InternalApiSettingsSection>();
 
         jwtSettings.Key.Should().BeEmpty();
         jwtSettings.Issuer.Should().BeEmpty();
