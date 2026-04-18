@@ -24,8 +24,9 @@ public sealed class FlowChatSilverbackEventPublisher : IOutboxIntegrationEventPu
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public Task Publish<TEvent>(TEvent message, CancellationToken cancellationToken)
-        where TEvent : IntegrationEvent
+    public Task Publish<TEvent, TSection>(TEvent message, CancellationToken cancellationToken)
+            where TEvent : IntegrationEvent
+            where TSection : IKafkaProducerSettingsSection<TEvent>, new()
     {
         ArgumentNullException.ThrowIfNull(message);
         cancellationToken.ThrowIfCancellationRequested();
@@ -36,11 +37,12 @@ public sealed class FlowChatSilverbackEventPublisher : IOutboxIntegrationEventPu
                 $"Integration event '{typeof(TEvent).FullName}' does not contain a Kafka key.");
         }
 
-        return PublishAsync(new IntegrationEventEnvelope<TEvent>(message, message.Key), cancellationToken);
+        return PublishAsync<TEvent, TSection>(new IntegrationEventEnvelope<TEvent>(message, message.Key), cancellationToken);
     }
 
-    private async Task PublishAsync<TEvent>(IntegrationEventEnvelope<TEvent> message, CancellationToken cancellationToken)
-        where TEvent : IntegrationEvent
+    private async Task PublishAsync<TEvent, TSection>(IntegrationEventEnvelope<TEvent> message, CancellationToken cancellationToken)
+            where TEvent : IntegrationEvent
+            where TSection : IKafkaProducerSettingsSection<TEvent>, new()
     {
         cancellationToken.ThrowIfCancellationRequested();
         ArgumentNullException.ThrowIfNull(message);
