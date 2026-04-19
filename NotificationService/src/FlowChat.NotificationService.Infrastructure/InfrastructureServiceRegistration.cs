@@ -14,7 +14,7 @@ public static class InfrastructureServiceRegistration
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        services.TryAddSingleton<ISettingsProvider>(new SettingsProvider(configuration));
+        services.TryAddSingleton<ISettingsProvider>(new AppSettingsProvider(configuration));
         services.AddScoped<INotificationSender, NotificationSender>();
         return services;
     }

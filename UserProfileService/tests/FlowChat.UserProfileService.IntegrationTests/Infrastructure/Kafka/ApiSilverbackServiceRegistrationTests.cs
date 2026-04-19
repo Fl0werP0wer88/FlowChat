@@ -2,6 +2,7 @@ using FlowChat.Core.Contracts;
 using FlowChat.Core.Messaging.AuthService.Events;
 using FlowChat.Shared.Application;
 using FlowChat.UserProfileService.Infrastructure;
+using FlowChat.UserProfileService.Infrastructure.Configuration;
 using FlowChat.UserProfileService.Infrastructure.Kafka;
 using FlowChat.UserProfileService.Persistence;
 using Microsoft.Extensions.Configuration;

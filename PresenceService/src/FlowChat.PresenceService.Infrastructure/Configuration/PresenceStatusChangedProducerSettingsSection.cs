@@ -2,7 +2,7 @@
 
 using FlowChat.Core.Contracts;
 
-namespace FlowChat.PresenceService.Infrastructure.Kafka;
+namespace FlowChat.PresenceService.Infrastructure.Configuration;
 
 public sealed class PresenceStatusChangedProducerSettingsSection : SettingsSectionBase, IKafkaProducerSettingsSection<PresenceStatusChangedIntegrationEvent>
 {

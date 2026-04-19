@@ -17,7 +17,7 @@ public static class StartupExtensions
 {
     public static WebApplication ConfigureServices(this WebApplicationBuilder builder)
     {
-        var settingsProvider = new SettingsProvider(builder.Configuration);
+        var settingsProvider = new AppSettingsProvider(builder.Configuration);
         var jwtSettings = settingsProvider.GetSection<JwtSettingsSection>();
         var realtimeConnectionsSettings = settingsProvider.GetSection<RealtimeConnectionsSettingsSection>();
         realtimeConnectionsSettings.RedisConnectionString =

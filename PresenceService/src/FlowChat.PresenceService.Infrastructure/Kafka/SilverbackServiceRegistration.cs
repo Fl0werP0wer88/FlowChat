@@ -1,4 +1,5 @@
 ﻿using FlowChat.Core.Messaging.PresenceService.Events;
+using FlowChat.PresenceService.Infrastructure.Configuration;
 using FlowChat.PresenceService.Persistence;
 using FlowChat.Shared.Infrastructure.Configuration;
 using FlowChat.Shared.Infrastructure.Silverback.Behaviors;
@@ -16,7 +17,7 @@ public static class SilverbackServiceRegistration
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        var settingsProvider = new SettingsProvider(configuration);
+        var settingsProvider = new AppSettingsProvider(configuration);
         var producerOptions = settingsProvider.GetSection<PresenceStatusChangedProducerSettingsSection>();
 
         services.AddSilverback()

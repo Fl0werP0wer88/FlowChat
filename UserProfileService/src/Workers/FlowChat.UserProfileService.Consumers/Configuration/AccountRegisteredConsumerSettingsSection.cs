@@ -2,7 +2,7 @@
 
 using FlowChat.Core.Contracts;
 
-namespace FlowChat.UserProfileService.Consumers.Kafka;
+namespace FlowChat.UserProfileService.Consumers.Configuration;
 
 public sealed class AccountRegisteredConsumerSettingsSection : SettingsSectionBase, IRetryableKafkaConsumerSettingsSection
 {

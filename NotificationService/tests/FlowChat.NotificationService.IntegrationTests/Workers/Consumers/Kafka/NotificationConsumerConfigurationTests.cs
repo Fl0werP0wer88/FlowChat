@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using FlowChat.NotificationService.Consumers;
 using FlowChat.NotificationService.Consumers.Kafka;
+using FlowChat.NotificationService.Consumers.Configuration;
 using FlowChat.NotificationService.Consumers.Services;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;

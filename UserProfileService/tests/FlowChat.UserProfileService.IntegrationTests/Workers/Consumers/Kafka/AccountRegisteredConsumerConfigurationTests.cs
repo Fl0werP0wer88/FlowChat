@@ -1,5 +1,6 @@
 ﻿using FlowChat.UserProfileService.Consumers;
 using FlowChat.UserProfileService.Consumers.Kafka;
+using FlowChat.UserProfileService.Consumers.Configuration;
 using FlowChat.UserProfileService.Consumers.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;

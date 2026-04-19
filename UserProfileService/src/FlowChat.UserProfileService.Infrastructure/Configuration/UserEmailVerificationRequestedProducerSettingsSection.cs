@@ -1,7 +1,7 @@
 ﻿using FlowChat.Core.Messaging.AuthService.Events;
 using FlowChat.Core.Contracts;
 
-namespace FlowChat.UserProfileService.Infrastructure.Kafka;
+namespace FlowChat.UserProfileService.Infrastructure.Configuration;
 
 public sealed class UserEmailVerificationRequestedProducerSettingsSection : SettingsSectionBase, IKafkaProducerSettingsSection<EmailVerificationRequestIntegrationEvent>
 {

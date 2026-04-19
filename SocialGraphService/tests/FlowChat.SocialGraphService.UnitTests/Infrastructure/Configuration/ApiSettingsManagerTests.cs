@@ -20,7 +20,7 @@ public sealed class ApiSettingsManagerTests
             })
             .Build();
 
-        var settingsProvider = new SettingsProvider(configuration);
+        var settingsProvider = new AppSettingsProvider(configuration);
         var jwtSettings = settingsProvider.GetSection<JwtSettingsSection>();
         var internalApiSettings = settingsProvider.GetSection<InternalApiSettingsSection>();
 
@@ -33,7 +33,7 @@ public sealed class ApiSettingsManagerTests
     [Fact]
     public void GetSettings_WhenConfigurationMissing_ReturnsDefaultValues()
     {
-        var settingsProvider = new SettingsProvider(new ConfigurationBuilder().Build());
+        var settingsProvider = new AppSettingsProvider(new ConfigurationBuilder().Build());
 
         var jwtSettings = settingsProvider.GetSection<JwtSettingsSection>();
         var internalApiSettings = settingsProvider.GetSection<InternalApiSettingsSection>();

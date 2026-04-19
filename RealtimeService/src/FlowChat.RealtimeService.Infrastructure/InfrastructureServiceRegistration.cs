@@ -1,7 +1,6 @@
 using FlowChat.Core.Contracts;
 using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
 using FlowChat.RealtimeService.Infrastructure.Configuration;
-using FlowChat.RealtimeService.Infrastructure.Kafka;
 using FlowChat.RealtimeService.Infrastructure.Presence;
 using FlowChat.RealtimeService.Infrastructure.RealtimeConnections;
 using FlowChat.RealtimeService.Infrastructure.RealtimeConnections.ConnectionsTracker;
@@ -26,7 +25,7 @@ public static class InfrastructureServiceRegistration
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        services.TryAddSingleton<ISettingsProvider>(new SettingsProvider(configuration));
+        services.TryAddSingleton<ISettingsProvider>(new AppSettingsProvider(configuration));
         services.TryAddSingleton(sp =>
         {
             var settings = sp.GetRequiredService<ISettingsProvider>().GetSection<RealtimeConnectionsSettingsSection>();

@@ -24,9 +24,9 @@ public static class ConsumersServiceRegistration
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        services.TryAddSingleton<ISettingsProvider>(new SettingsProvider(configuration));
+        services.TryAddSingleton<ISettingsProvider>(new AppSettingsProvider(configuration));
 
-        var settingsProvider = new SettingsProvider(configuration);
+        var settingsProvider = new AppSettingsProvider(configuration);
         services.TryAddSingleton(sp => sp.GetRequiredService<ISettingsProvider>().GetSection<RealtimeApiSettingsSection>());
         services.TryAddSingleton(sp => sp.GetRequiredService<ISettingsProvider>().GetSection<RealtimeRoutingSettingsSection>());
 

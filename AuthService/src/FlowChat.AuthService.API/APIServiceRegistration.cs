@@ -14,7 +14,7 @@ public static class APIServiceRegistration
                             IConfiguration configuration,
                             IHostEnvironment environment)
     {
-        var settingsProvider = new SettingsProvider(configuration);
+        var settingsProvider = new AppSettingsProvider(configuration);
         var jwtSettings = settingsProvider.GetSection<JwtSettingsSection>();
         var jwtKey = jwtSettings.Key;
         var encryptionKeyValue = jwtSettings.EncryptionKey;

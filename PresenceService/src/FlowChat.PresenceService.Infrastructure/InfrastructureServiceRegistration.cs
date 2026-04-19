@@ -2,7 +2,6 @@ using FlowChat.Core.Contracts;
 using FlowChat.Core.Messaging.PresenceService.Events;
 using FlowChat.PresenceService.Application.Contracts.Infrastructure;
 using FlowChat.PresenceService.Infrastructure.Configuration;
-using FlowChat.PresenceService.Infrastructure.Kafka;
 using FlowChat.PresenceService.Infrastructure.Presence;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Infrastructure.Configuration;
@@ -20,7 +19,7 @@ public static class InfrastructureServiceRegistration
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        services.TryAddSingleton<ISettingsProvider>(new SettingsProvider(configuration));
+        services.TryAddSingleton<ISettingsProvider>(new AppSettingsProvider(configuration));
         services.TryAddSingleton(sp =>
         {
             var settings = sp.GetRequiredService<ISettingsProvider>().GetSection<PresenceStatusSettingsSection>();

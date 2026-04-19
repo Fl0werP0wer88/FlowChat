@@ -1,5 +1,4 @@
 using FlowChat.RealtimeService.Consumers.Configuration;
-using FlowChat.RealtimeService.Consumers.Kafka;
 using FlowChat.RealtimeService.Routing.Configuration;
 using FlowChat.Shared.Infrastructure.Configuration;
 using FluentAssertions;
@@ -28,7 +27,7 @@ public sealed class WorkerSettingsManagerTests
             })
             .Build();
 
-        var settingsProvider = new SettingsProvider(configuration);
+        var settingsProvider = new AppSettingsProvider(configuration);
 
         settingsProvider.GetSection<ChatMessageSentConsumerSettingsSection>().BootstrapServers.Should().Be("broker:9092");
         settingsProvider.GetSection<ChatMessageSentConsumerSettingsSection>().Topic.Should().Be("chat-topic");

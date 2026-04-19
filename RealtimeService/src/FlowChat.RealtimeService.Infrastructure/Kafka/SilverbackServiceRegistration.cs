@@ -1,4 +1,5 @@
 using FlowChat.Core.Messaging.RealtimeService.Events;
+using FlowChat.RealtimeService.Infrastructure.Configuration;
 using FlowChat.Shared.Infrastructure.Configuration;
 using FlowChat.Shared.Infrastructure.Silverback.Behaviors;
 using Microsoft.Extensions.Configuration;
@@ -14,7 +15,7 @@ public static class SilverbackServiceRegistration
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        var settingsProvider = new SettingsProvider(configuration);
+        var settingsProvider = new AppSettingsProvider(configuration);
         var registeredProducerOptions = settingsProvider.GetSection<RealtimeConnectionRegisteredProducerSettingsSection>();
         var unregisteredProducerOptions = settingsProvider.GetSection<RealtimeConnectionUnregisteredProducerSettingsSection>();
         var bootstrapServers = !string.IsNullOrWhiteSpace(registeredProducerOptions.BootstrapServers)

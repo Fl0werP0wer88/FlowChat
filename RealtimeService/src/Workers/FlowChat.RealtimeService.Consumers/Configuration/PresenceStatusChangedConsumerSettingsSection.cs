@@ -2,7 +2,7 @@
 
 using FlowChat.Core.Contracts;
 
-namespace FlowChat.RealtimeService.Consumers.Kafka;
+namespace FlowChat.RealtimeService.Consumers.Configuration;
 
 public sealed class PresenceStatusChangedConsumerSettingsSection : SettingsSectionBase, IRetryableKafkaConsumerSettingsSection
 {

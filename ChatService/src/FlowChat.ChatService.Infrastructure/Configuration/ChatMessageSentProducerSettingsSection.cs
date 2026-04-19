@@ -1,7 +1,7 @@
 ﻿using FlowChat.Core.Messaging.ChatService.Events;
 using FlowChat.Core.Contracts;
 
-namespace FlowChat.ChatService.Infrastructure.Kafka;
+namespace FlowChat.ChatService.Infrastructure.Configuration;
 
 public sealed class ChatMessageSentProducerSettingsSection : SettingsSectionBase, IKafkaProducerSettingsSection<ChatMessageSentIntegrationEvent>
 {

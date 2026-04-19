@@ -1,4 +1,5 @@
 using FlowChat.ChatService.Persistence;
+using FlowChat.ChatService.Infrastructure.Configuration;
 using FlowChat.Core.Contracts;
 using FlowChat.Core.Messaging.ChatService.Events;
 using FlowChat.Shared.Infrastructure.Configuration;
@@ -18,9 +19,9 @@ public static class SilverbackServiceRegistration
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        services.TryAddSingleton<ISettingsProvider>(new SettingsProvider(configuration));
+        services.TryAddSingleton<ISettingsProvider>(new AppSettingsProvider(configuration));
 
-        var settingsProvider = new SettingsProvider(configuration);
+        var settingsProvider = new AppSettingsProvider(configuration);
         var producerOptions = settingsProvider.GetSection<ChatMessageSentProducerSettingsSection>();
 
         services.AddSilverback()

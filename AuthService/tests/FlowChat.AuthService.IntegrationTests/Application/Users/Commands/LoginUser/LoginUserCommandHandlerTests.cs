@@ -45,7 +45,7 @@ public sealed class LoginUserCommandHandlerTests : IDisposable
             })
             .Build();
 
-        var tokenService = new OpenIddictTokenService(new SettingsProvider(configuration));
+        var tokenService = new OpenIddictTokenService(new AppSettingsProvider(configuration));
         var dispatcherMock = new Mock<IDomainEventDispatcher>();
         dispatcherMock
             .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<IDomainEvent>>(), It.IsAny<CancellationToken>()))

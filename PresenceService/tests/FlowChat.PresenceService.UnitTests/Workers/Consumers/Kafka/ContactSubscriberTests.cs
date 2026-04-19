@@ -1,6 +1,7 @@
 using AutoFixture;
 using FlowChat.Core.Messaging.SocialGraphService.Events;
 using FlowChat.PresenceService.Consumers.Kafka;
+using FlowChat.PresenceService.Consumers.Configuration;
 using FlowChat.PresenceService.Consumers.Presence.Contracts;
 using FlowChat.PresenceService.Consumers.Services;
 using FluentAssertions;

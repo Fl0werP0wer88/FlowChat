@@ -1,4 +1,5 @@
 using FlowChat.AuthService.Persistence;
+using FlowChat.AuthService.Infrastructure.Configuration;
 using FlowChat.Core.Contracts;
 using FlowChat.Core.Messaging.AuthService.Events;
 using FlowChat.Shared.Infrastructure.Configuration;
@@ -18,9 +19,9 @@ public static class SilverbackServiceRegistration
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        services.TryAddSingleton<ISettingsProvider>(new SettingsProvider(configuration));
+        services.TryAddSingleton<ISettingsProvider>(new AppSettingsProvider(configuration));
 
-        var settingsProvider = new SettingsProvider(configuration);
+        var settingsProvider = new AppSettingsProvider(configuration);
         var accountRegisteredOptions = settingsProvider.GetSection<AccountRegisteredProducerSettingsSection>();
         var accountConfirmedOptions = settingsProvider.GetSection<AccountConfirmedProducerSettingsSection>();
         var phoneNumberConfirmedOptions = settingsProvider.GetSection<PhoneNumberConfirmedProducerSettingsSection>();

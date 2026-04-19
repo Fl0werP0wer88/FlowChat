@@ -1,6 +1,6 @@
 using FlowChat.Shared.Application;
 using FlowChat.AuthService.Application.Contracts.Infrastructure;
-using FlowChat.AuthService.Infrastructure.Kafka;
+using FlowChat.AuthService.Infrastructure.Configuration;
 using FlowChat.AuthService.Infrastructure.Services;
 using FlowChat.Core.Contracts;
 using FlowChat.Core.Messaging.AuthService.Events;
@@ -16,7 +16,7 @@ public static class InfrastructureServiceRegistration
 {
     public static IServiceCollection AddInfrastructureServices(this IServiceCollection services, IConfiguration configuration)
     {
-        services.TryAddSingleton<ISettingsProvider>(new SettingsProvider(configuration));
+        services.TryAddSingleton<ISettingsProvider>(new AppSettingsProvider(configuration));
 
         services.AddScoped<IPasswordHashingService, PasswordHashingService>();
         services.AddScoped<IOpenIddictTokenService, OpenIddictTokenService>();

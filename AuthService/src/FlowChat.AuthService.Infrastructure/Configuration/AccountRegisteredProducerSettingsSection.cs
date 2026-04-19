@@ -1,7 +1,7 @@
 ﻿using FlowChat.Core.Messaging.AuthService.Events;
 using FlowChat.Core.Contracts;
 
-namespace FlowChat.AuthService.Infrastructure.Kafka;
+namespace FlowChat.AuthService.Infrastructure.Configuration;
 
 public sealed class AccountRegisteredProducerSettingsSection : SettingsSectionBase, IKafkaProducerSettingsSection<AccountRegisteredIntegrationEvent>
 {

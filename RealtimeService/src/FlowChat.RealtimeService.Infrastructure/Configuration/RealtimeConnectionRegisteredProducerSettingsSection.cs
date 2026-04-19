@@ -1,7 +1,7 @@
 using FlowChat.Core.Contracts;
 using FlowChat.Core.Messaging.RealtimeService.Events;
 
-namespace FlowChat.RealtimeService.Infrastructure.Kafka;
+namespace FlowChat.RealtimeService.Infrastructure.Configuration;
 
 public sealed class RealtimeConnectionRegisteredProducerSettingsSection : SettingsSectionBase,
     IKafkaProducerSettingsSection<RealtimeConnectionRegisteredIntegrationEvent>

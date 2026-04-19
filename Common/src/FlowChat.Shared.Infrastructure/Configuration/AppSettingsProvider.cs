@@ -4,7 +4,7 @@ using Microsoft.Extensions.Configuration;
 
 namespace FlowChat.Shared.Infrastructure.Configuration;
 
-public sealed class SettingsProvider(IConfiguration configuration) : ISettingsProvider
+public sealed class AppSettingsProvider(IConfiguration configuration) : ISettingsProvider
 {
     private readonly IConfiguration _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
 

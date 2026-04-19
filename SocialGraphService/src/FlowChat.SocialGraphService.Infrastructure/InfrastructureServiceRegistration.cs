@@ -3,7 +3,7 @@ using FlowChat.Core.Messaging.SocialGraphService.Events;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Infrastructure.Configuration;
 using FlowChat.Shared.Infrastructure.Silverback.Kafka;
-using FlowChat.SocialGraphService.Infrastructure.Kafka;
+using FlowChat.SocialGraphService.Infrastructure.Configuration;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -18,7 +18,7 @@ public static class InfrastructureServiceRegistration
     {
         var infrastructureAssembly = typeof(InfrastructureServiceRegistration).Assembly;
 
-        services.TryAddSingleton<ISettingsProvider>(new SettingsProvider(configuration));
+        services.TryAddSingleton<ISettingsProvider>(new AppSettingsProvider(configuration));
         services.AddScoped<IKafkaProducerSettingsSection<ContactAddedIntegrationEvent>>(sp =>
             sp.GetRequiredService<ISettingsProvider>().GetSection<ContactAddedProducerSettingsSection>());
         services.AddScoped<IKafkaProducerSettingsSection<ContactDeletedIntegrationEvent>>(sp =>

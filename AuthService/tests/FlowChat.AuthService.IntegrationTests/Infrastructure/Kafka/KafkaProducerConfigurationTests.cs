@@ -1,5 +1,5 @@
 using FlowChat.AuthService.Infrastructure;
-using FlowChat.AuthService.Infrastructure.Kafka;
+using FlowChat.AuthService.Infrastructure.Configuration;
 using FlowChat.Core.Contracts;
 using FlowChat.Core.Messaging.AuthService.Events;
 using FluentAssertions;

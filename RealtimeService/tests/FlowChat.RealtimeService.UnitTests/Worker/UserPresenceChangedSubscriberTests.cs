@@ -3,6 +3,7 @@ using FlowChat.Core.Domain;
 using FlowChat.Core.Exceptions;
 using FlowChat.Core.Messaging.PresenceService.Events;
 using FlowChat.RealtimeService.Consumers.Kafka;
+using FlowChat.RealtimeService.Consumers.Configuration;
 using FlowChat.RealtimeService.Consumers.Realtime.Contracts;
 using FlowChat.RealtimeService.Consumers.Services;
 using FluentAssertions;

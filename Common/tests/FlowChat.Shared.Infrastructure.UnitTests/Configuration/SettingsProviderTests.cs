@@ -16,7 +16,7 @@ public sealed class SettingsProviderTests
                 new KeyValuePair<string, string?>("FlowChat:ApiUrl", "https://flowchat.test"),
             ])
             .Build();
-        var sut = new SettingsProvider(configuration);
+        var sut = new AppSettingsProvider(configuration);
 
         var result = sut.GetSection<TestSettingsSection>();
 
@@ -26,7 +26,7 @@ public sealed class SettingsProviderTests
     [Fact]
     public void GetSection_WhenConfigurationDoesNotContainSection_ReturnsDefaultSettings()
     {
-        var sut = new SettingsProvider(new ConfigurationBuilder().Build());
+        var sut = new AppSettingsProvider(new ConfigurationBuilder().Build());
 
         var result = sut.GetSection<TestSettingsSection>();
 

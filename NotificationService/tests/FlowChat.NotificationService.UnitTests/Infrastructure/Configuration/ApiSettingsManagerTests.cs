@@ -28,7 +28,7 @@ public sealed class ApiSettingsManagerTests
             [$"{new EmailSettingsSection().SectionName}:EnableSsl"] = "false"
         });
 
-        var settingsProvider = new SettingsProvider(config);
+        var settingsProvider = new AppSettingsProvider(config);
         var settings = settingsProvider.GetSection<EmailSettingsSection>();
 
         settings.SmtpHost.Should().Be("smtp.mailhog.local");
@@ -45,7 +45,7 @@ public sealed class ApiSettingsManagerTests
     {
         var config = BuildConfiguration([]);
 
-        var settingsProvider = new SettingsProvider(config);
+        var settingsProvider = new AppSettingsProvider(config);
         var settings = settingsProvider.GetSection<EmailSettingsSection>();
 
         settings.SmtpHost.Should().BeEmpty();
@@ -64,7 +64,7 @@ public sealed class ApiSettingsManagerTests
             [$"{new InternalApiSettingsSection().SectionName}:ApiKey"] = "super-secret-key"
         });
 
-        var settingsProvider = new SettingsProvider(config);
+        var settingsProvider = new AppSettingsProvider(config);
         var settings = settingsProvider.GetSection<InternalApiSettingsSection>();
 
         settings.ApiKey.Should().Be("super-secret-key");
@@ -75,7 +75,7 @@ public sealed class ApiSettingsManagerTests
     {
         var config = BuildConfiguration([]);
 
-        var settingsProvider = new SettingsProvider(config);
+        var settingsProvider = new AppSettingsProvider(config);
         var settings = settingsProvider.GetSection<InternalApiSettingsSection>();
 
         settings.ApiKey.Should().BeEmpty();

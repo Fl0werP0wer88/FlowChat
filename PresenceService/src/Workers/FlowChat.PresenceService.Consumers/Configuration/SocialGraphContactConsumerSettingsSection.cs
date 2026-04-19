@@ -2,7 +2,7 @@
 
 using FlowChat.Core.Contracts;
 
-namespace FlowChat.PresenceService.Consumers.Kafka;
+namespace FlowChat.PresenceService.Consumers.Configuration;
 
 public sealed class SocialGraphContactConsumerSettingsSection : SettingsSectionBase, IRetryableKafkaConsumerSettingsSection
 {

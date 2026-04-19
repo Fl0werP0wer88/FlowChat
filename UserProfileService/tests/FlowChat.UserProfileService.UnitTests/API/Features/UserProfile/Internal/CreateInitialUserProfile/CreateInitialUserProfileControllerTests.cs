@@ -31,7 +31,7 @@ public sealed class CreateInitialUserProfileControllerTests
             })
             .Build();
 
-        return new CreateInitialUserProfileController(_mediatorMock.Object, new SettingsProvider(configuration));
+        return new CreateInitialUserProfileController(_mediatorMock.Object, new AppSettingsProvider(configuration));
     }
 
     private static void SetupHttpContext(CreateInitialUserProfileController controller, string? apiKeyHeader = null)

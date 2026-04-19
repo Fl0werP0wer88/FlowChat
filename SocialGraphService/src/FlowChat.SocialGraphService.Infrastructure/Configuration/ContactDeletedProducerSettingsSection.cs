@@ -2,7 +2,7 @@
 
 using FlowChat.Core.Contracts;
 
-namespace FlowChat.SocialGraphService.Infrastructure.Kafka;
+namespace FlowChat.SocialGraphService.Infrastructure.Configuration;
 
 public sealed class ContactDeletedProducerSettingsSection : SettingsSectionBase, IKafkaProducerSettingsSection<ContactDeletedIntegrationEvent>
 {

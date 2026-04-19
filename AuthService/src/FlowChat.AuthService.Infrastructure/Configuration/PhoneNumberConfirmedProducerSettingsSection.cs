@@ -1,7 +1,7 @@
 using FlowChat.Core.Contracts;
 using FlowChat.Core.Messaging.AuthService.Events;
 
-namespace FlowChat.AuthService.Infrastructure.Kafka;
+namespace FlowChat.AuthService.Infrastructure.Configuration;
 
 public sealed class PhoneNumberConfirmedProducerSettingsSection : SettingsSectionBase,
     IKafkaProducerSettingsSection<PhoneNumberConfirmedIntegrationEvent>
