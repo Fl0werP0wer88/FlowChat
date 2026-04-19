@@ -113,11 +113,11 @@
                                                                                               "FlowChat.UserProfileService.Persistence"
                                                                                           ]
                                                                       },
-                                                                      {
-                                                                          "name":  "domain",
-                                                                          "base":  "core",
-                                                                          "color":  "#7c6bcf",
-                                                                          "lightColor":  "#7c6bcf",
+                                                                     {
+                                                                         "name":  "domain",
+                                                                         "base":  "core",
+                                                                         "color":  "#7c6bcf",
+                                                                         "lightColor":  "#7c6bcf",
                                                                           "folderNames":  [
                                                                                               "FlowChat.AuthService.Domain",
                                                                                               "FlowChat.ChatService.Domain",
@@ -126,14 +126,14 @@
                                                                                               "FlowChat.RealtimeService.Domain",
                                                                                               "FlowChat.Shared.Domain",
                                                                                               "FlowChat.SocialGraphService.Domain",
-                                                                                              "FlowChat.UserProfileService.Domain"
-                                                                                          ]
-                                                                      },
-                                                                      {
-                                                                          "name":  "workers",
-                                                                          "base":  "tasks",
-                                                                          "color":  "#5f73d8",
-                                                                          "lightColor":  "#5f73d8",
+                                                                                             "FlowChat.UserProfileService.Domain"
+                                                                                         ]
+                                                                     },
+                                                                     {
+                                                                         "name":  "workers",
+                                                                         "base":  "tasks",
+                                                                         "color":  "#5f73d8",
+                                                                         "lightColor":  "#5f73d8",
                                                                           "folderNames":  [
                                                                                               "Workers"
                                                                                           ]
@@ -163,12 +163,10 @@
                         "**/*.trx": true,
                         "**/*.user": true,
                         "**/*.userosscache": true,
-                        "**/Bin": true,
                         "**/bin": true,
                         "**/desktop.ini": true,
                         "**/dist": true,
                         "**/node_modules": true,
-                        "**/Obj": true,
                         "**/obj": true,
                         "**/out": true,
                         "**/project.fragment.lock.json": true,
