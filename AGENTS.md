@@ -140,6 +140,7 @@ The project uses tactical DDD. All domain logic lives in the `Domain` layer. The
 - **Restore from DB**: use `static Restore(...)` — does NOT raise domain events
 - **App settings loading**: always load `appsettings` sections via `AppSettingsProvider` from `Common/src/FlowChat.Shared.Infrastructure/Configuration/AppSettingsProvider.cs`; do not bind sections directly via raw `IConfiguration.GetSection(...).Get<T>()` in application code when the provider can be used
 - **Settings section placement**: classes representing `appsettings` sections must implement `ISettingSection` from `Common/src/FlowChat.Core/Contracts/ISettingSection.cs` and must live in the project-level `Configuration/Settings` folder, for example `{Project}/Configuration/Settings/*SettingsSection.cs`, not directly in `Configuration` and not in feature folders such as `Kafka`
+- **Service registration placement**: classes registering project services such as `ApplicationServiceRegistration`, `APIServiceRegistration`, `InfrastructureServiceRegistration`, `PersistenceServiceRegistration`, `ConsumersServiceRegistration`, `OutboxPublisherServiceRegistration`, or `SilverbackServiceRegistration` must live directly in the project-level `Configuration` folder, for example `{Project}/Configuration/*ServiceRegistration.cs`, not in feature folders such as `Kafka` and not in `Configuration/Settings`
 - Do mappings via dedicated profile classes for AutoMapper on Application, Infrastructure & Api layers. On Domain layer all mapping must be done manually in dedicated method.
 
 ### Marker interfaces
