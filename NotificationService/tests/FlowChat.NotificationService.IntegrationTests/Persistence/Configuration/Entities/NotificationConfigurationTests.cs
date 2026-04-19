@@ -6,7 +6,7 @@ using FlowChat.Shared.Domain.ValueObjects;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 
-namespace FlowChat.NotificationService.IntegrationTests.Persistence.Configurations;
+namespace FlowChat.NotificationService.IntegrationTests.Persistence.Configuration.Entities;
 
 public sealed class NotificationConfigurationTests : IDisposable
 {

@@ -4,7 +4,7 @@ using FlowChat.Shared.Persistance;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace FlowChat.ChatService.Persistence.Configurations;
+namespace FlowChat.ChatService.Persistence.Configuration.Entities;
 
 public sealed class ChatMessageConfiguration : IEntityTypeConfiguration<ChatMessage>
 {

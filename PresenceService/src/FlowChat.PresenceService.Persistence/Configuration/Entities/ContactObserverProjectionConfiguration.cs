@@ -2,7 +2,7 @@ using FlowChat.PresenceService.Persistence.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace FlowChat.PresenceService.Persistence.Configurations;
+namespace FlowChat.PresenceService.Persistence.Configuration.Entities;
 
 public sealed class ContactObserverProjectionConfiguration : IEntityTypeConfiguration<ContactObserverProjectionEntity>
 {

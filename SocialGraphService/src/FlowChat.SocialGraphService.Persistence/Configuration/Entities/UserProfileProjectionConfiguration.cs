@@ -2,7 +2,7 @@ using FlowChat.SocialGraphService.Persistence.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace FlowChat.SocialGraphService.Persistence.Configurations;
+namespace FlowChat.SocialGraphService.Persistence.Configuration.Entities;
 
 public sealed class UserProfileProjectionConfiguration : IEntityTypeConfiguration<UserProfileProjectionEntity>
 {

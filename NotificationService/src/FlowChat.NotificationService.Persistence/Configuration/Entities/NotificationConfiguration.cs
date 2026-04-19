@@ -5,7 +5,7 @@ using FlowChat.Shared.Domain.ValueObjects;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace FlowChat.NotificationService.Persistence.Configurations;
+namespace FlowChat.NotificationService.Persistence.Configuration.Entities;
 
 public sealed class NotificationConfiguration : IEntityTypeConfiguration<Notification>
 {

@@ -5,7 +5,7 @@ using FlowChat.Shared.Domain.ValueObjects;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace FlowChat.AuthService.Persistence.Configurations;
+namespace FlowChat.AuthService.Persistence.Configuration.Entities;
 
 public sealed class AccountConfiguration : IEntityTypeConfiguration<Account>
 {

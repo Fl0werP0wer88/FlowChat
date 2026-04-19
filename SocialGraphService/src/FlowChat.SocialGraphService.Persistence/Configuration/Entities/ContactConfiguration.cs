@@ -5,7 +5,7 @@ using FlowChat.SocialGraphService.Domain.Entities.Contact;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace FlowChat.SocialGraphService.Persistence.Configurations;
+namespace FlowChat.SocialGraphService.Persistence.Configuration.Entities;
 
 public class ContactConfiguration : IEntityTypeConfiguration<Contact>
 {

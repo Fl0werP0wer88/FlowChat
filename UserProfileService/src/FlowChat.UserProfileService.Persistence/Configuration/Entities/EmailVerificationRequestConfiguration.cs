@@ -5,7 +5,7 @@ using FlowChat.UserProfileService.Domain.Entities.UserProfile;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace FlowChat.UserProfileService.Persistence.Configurations;
+namespace FlowChat.UserProfileService.Persistence.Configuration.Entities;
 
 public sealed class EmailVerificationRequestConfiguration : IEntityTypeConfiguration<EmailVerificationRequest>
 {
