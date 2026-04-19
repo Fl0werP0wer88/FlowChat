@@ -1,13 +1,52 @@
 #requires -Version 5.1
 [CmdletBinding(SupportsShouldProcess = $true, ConfirmImpact = 'Medium')]
 param(
-    [string]$RootPath = (Join-Path $PSScriptRoot '..'),
+    [string]$RootPath,
     [string[]]$ExcludePathPattern = @(
         '.git',
         '.vs',
         '.idea',
+        '.vscode',
         '.claude',
         '.codex',
+        'artifacts',
+        '*\artifacts',
+        'bin',
+        '*\bin',
+        'obj',
+        '*\obj',
+        'node_modules',
+        '*\node_modules',
+        'dist',
+        '*\dist',
+        'coverage',
+        '*\coverage',
+        '.next',
+        '*\.next',
+        '.nuxt',
+        '*\.nuxt',
+        '.svelte-kit',
+        '*\.svelte-kit',
+        '.angular',
+        '*\.angular',
+        '.turbo',
+        '*\.turbo',
+        '.pnpm-store',
+        '*\.pnpm-store',
+        '.yarn',
+        '*\.yarn',
+        '.cache',
+        '*\.cache',
+        '.parcel-cache',
+        '*\.parcel-cache',
+        '.vite',
+        '*\.vite',
+        '.vite-temp',
+        '*\.vite-temp',
+        'publish',
+        '*\publish',
+        'TestResults',
+        '*\TestResults',
         'ApplicationEvents',
         '*\ApplicationEvents'
     )
@@ -117,6 +156,40 @@ function Test-IsExcludedPath {
     return $false
 }
 
+$scriptDirectory = Split-Path -Parent $MyInvocation.MyCommand.Path
+
+if ([string]::IsNullOrWhiteSpace($RootPath)) {
+    $RootPath = Join-Path $scriptDirectory '..'
+}
+
+function Get-DirectoryTreePostOrder {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$CurrentPath,
+        [Parameter(Mandatory = $true)]
+        [string]$ResolvedRootPath,
+        [Parameter(Mandatory = $true)]
+        [string[]]$Patterns
+    )
+
+    $directories = Get-ChildItem -LiteralPath $CurrentPath -Directory -Force
+
+    foreach ($directory in $directories) {
+        $directoryPath = Normalize-PathString -Path $directory.FullName
+        $relativeDirectoryPath = Normalize-RelativePath (Get-RelativePath -BasePath $ResolvedRootPath -TargetPath $directoryPath)
+
+        if (Test-IsExcludedPath -RelativePath $relativeDirectoryPath -Patterns $Patterns) {
+            continue
+        }
+
+        foreach ($nestedDirectory in Get-DirectoryTreePostOrder -CurrentPath $directoryPath -ResolvedRootPath $ResolvedRootPath -Patterns $Patterns) {
+            $nestedDirectory
+        }
+
+        $directory
+    }
+}
+
 $resolvedRootPath = Normalize-PathString -Path (Resolve-Path -LiteralPath $RootPath).Path
 $removedDirectories = [System.Collections.Generic.List[string]]::new()
 $normalizedExcludePathPattern = @(
@@ -129,8 +202,9 @@ if ($normalizedExcludePathPattern.Count -gt 0) {
     Write-Host "Excluded patterns: $($normalizedExcludePathPattern -join ', ')"
 }
 
-$directories = Get-ChildItem -LiteralPath $resolvedRootPath -Directory -Recurse -Force |
-    Sort-Object { $_.FullName.Length } -Descending
+$directories = @(
+    Get-DirectoryTreePostOrder -CurrentPath $resolvedRootPath -ResolvedRootPath $resolvedRootPath -Patterns $normalizedExcludePathPattern
+)
 
 foreach ($directory in $directories) {
     $directoryPath = Normalize-PathString -Path $directory.FullName
