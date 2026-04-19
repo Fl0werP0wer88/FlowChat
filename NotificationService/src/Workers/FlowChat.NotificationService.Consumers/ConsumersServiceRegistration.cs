@@ -1,5 +1,5 @@
-﻿using Confluent.Kafka;
-using FlowChat.NotificationService.Consumers.Configuration;
+using Confluent.Kafka;
+using FlowChat.NotificationService.Consumers.Configuration.Settings;
 using FlowChat.NotificationService.Consumers.Kafka;
 using FlowChat.NotificationService.Consumers.Services;
 using FlowChat.Shared.Infrastructure.Silverback.Kafka;

@@ -6,7 +6,7 @@ using FlowChat.AuthService.Api.Features.User.Internal.ChangeAuthEmail;
 using FlowChat.AuthService.Api.Features.User.Internal.ConfirmAuthEmail;
 using FlowChat.AuthService.Application.Features.User.Commands.ChangeAuthEmail;
 using FlowChat.AuthService.Application.Features.User.Commands.RegisterUser;
-using FlowChat.AuthService.Infrastructure.Configuration;
+using FlowChat.AuthService.Infrastructure.Configuration.Settings;
 using FlowChat.Core.Contracts;
 using FluentAssertions;
 using MediatR;

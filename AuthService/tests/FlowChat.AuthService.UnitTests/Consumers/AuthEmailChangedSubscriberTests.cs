@@ -1,7 +1,7 @@
 using AutoFixture;
 using FlowChat.AuthService.Consumers.AuthApi.Contracts;
 using FlowChat.AuthService.Consumers.Kafka;
-using FlowChat.AuthService.Consumers.Configuration;
+using FlowChat.AuthService.Consumers.Configuration.Settings;
 using FlowChat.AuthService.Consumers.Services;
 using FlowChat.Core.Exceptions;
 using FlowChat.Core.Messaging.UserProfileService.Events;

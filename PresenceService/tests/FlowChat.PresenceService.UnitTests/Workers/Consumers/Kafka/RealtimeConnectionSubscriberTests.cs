@@ -2,7 +2,7 @@ using AutoFixture;
 using FlowChat.Core.Exceptions;
 using FlowChat.Core.Messaging.RealtimeService.Events;
 using FlowChat.PresenceService.Consumers.Kafka;
-using FlowChat.PresenceService.Consumers.Configuration;
+using FlowChat.PresenceService.Consumers.Configuration.Settings;
 using FlowChat.PresenceService.Consumers.Presence.Contracts;
 using FlowChat.PresenceService.Consumers.Services;
 using FluentAssertions;

@@ -1,7 +1,7 @@
 using FlowChat.Core.Exceptions;
 using FlowChat.Core.Messaging.AuthService.Events;
 using FlowChat.UserProfileService.Consumers.Kafka;
-using FlowChat.UserProfileService.Consumers.Configuration;
+using FlowChat.UserProfileService.Consumers.Configuration.Settings;
 using FlowChat.UserProfileService.Consumers.Services;
 using FlowChat.UserProfileService.Consumers.UserProfileApi.Contracts;
 using Microsoft.Extensions.Logging.Abstractions;

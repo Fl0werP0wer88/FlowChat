@@ -1,5 +1,5 @@
-﻿using FlowChat.Core.Messaging.PresenceService.Events;
-using FlowChat.PresenceService.OutboxPublisher.Configuration;
+using FlowChat.Core.Messaging.PresenceService.Events;
+using FlowChat.PresenceService.OutboxPublisher.Configuration.Settings;
 using FlowChat.PresenceService.Persistence;
 using FlowChat.Shared.Infrastructure.Silverback.Behaviors;
 using Microsoft.Extensions.Configuration;

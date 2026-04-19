@@ -1,4 +1,4 @@
-﻿using FlowChat.RealtimeService.Routing.Configuration;
+using FlowChat.RealtimeService.Routing.Configuration.Settings;
 using FlowChat.Shared.Infrastructure.Redis;
 using StackExchange.Redis;
 

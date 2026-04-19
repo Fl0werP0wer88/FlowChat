@@ -1,6 +1,6 @@
-﻿using FlowChat.Shared.API;
+using FlowChat.Shared.API;
 using FlowChat.UserProfileService.Application;
-using FlowChat.UserProfileService.Infrastructure.Configuration;
+using FlowChat.UserProfileService.Infrastructure.Configuration.Settings;
 using FlowChat.UserProfileService.Infrastructure;
 using FlowChat.UserProfileService.Infrastructure.Kafka;
 using FlowChat.UserProfileService.Persistence;

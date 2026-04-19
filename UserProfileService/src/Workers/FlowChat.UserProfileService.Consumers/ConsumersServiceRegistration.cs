@@ -1,6 +1,6 @@
-﻿using Confluent.Kafka;
+using Confluent.Kafka;
 using FlowChat.Core.Messaging.AuthService.Events;
-using FlowChat.UserProfileService.Consumers.Configuration;
+using FlowChat.UserProfileService.Consumers.Configuration.Settings;
 using FlowChat.UserProfileService.Consumers.Kafka;
 using FlowChat.UserProfileService.Consumers.Services;
 using FlowChat.Shared.Infrastructure.Silverback.Kafka;

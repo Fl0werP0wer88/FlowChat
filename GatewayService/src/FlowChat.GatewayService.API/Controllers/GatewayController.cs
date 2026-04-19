@@ -1,4 +1,4 @@
-﻿using FlowChat.GatewayService.Api.Configuration;
+using FlowChat.GatewayService.Api.Configuration.Settings;
 using FlowChat.GatewayService.Api.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

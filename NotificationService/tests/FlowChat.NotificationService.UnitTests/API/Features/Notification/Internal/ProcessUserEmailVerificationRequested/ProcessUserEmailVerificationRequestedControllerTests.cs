@@ -1,9 +1,9 @@
-﻿using AutoFixture;
+using AutoFixture;
 using CSharpFunctionalExtensions;
 using FlowChat.Core.Contracts;
 using FlowChat.NotificationService.Api.Features.Notification.Internal.ProcessUserEmailVerificationRequested;
 using FlowChat.NotificationService.Application.Features.Notification.Commands.UserEmailVerificationRequested;
-using FlowChat.NotificationService.Infrastructure.Configuration;
+using FlowChat.NotificationService.Infrastructure.Configuration.Settings;
 using FlowChat.Shared.Domain;
 using FluentAssertions;
 using MediatR;

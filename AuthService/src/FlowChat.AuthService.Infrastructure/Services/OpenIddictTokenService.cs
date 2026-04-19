@@ -2,7 +2,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using FlowChat.AuthService.Application.Contracts.Infrastructure;
 using FlowChat.AuthService.Application.Features.User.Models;
-using FlowChat.AuthService.Infrastructure.Configuration;
+using FlowChat.AuthService.Infrastructure.Configuration.Settings;
 using FlowChat.Core.Contracts;
 using Microsoft.IdentityModel.Tokens;
 using OpenIddict.Abstractions;

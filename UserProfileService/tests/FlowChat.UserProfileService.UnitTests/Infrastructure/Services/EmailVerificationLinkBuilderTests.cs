@@ -1,5 +1,5 @@
 using FlowChat.Core.Contracts;
-using FlowChat.UserProfileService.Infrastructure.Configuration;
+using FlowChat.UserProfileService.Infrastructure.Configuration.Settings;
 using FlowChat.UserProfileService.Infrastructure.Services;
 using Moq;
 

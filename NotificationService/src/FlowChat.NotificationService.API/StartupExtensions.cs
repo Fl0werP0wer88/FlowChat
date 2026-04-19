@@ -1,6 +1,6 @@
-﻿using FlowChat.Shared.API;
+using FlowChat.Shared.API;
 using FlowChat.NotificationService.Application;
-using FlowChat.NotificationService.Infrastructure.Configuration;
+using FlowChat.NotificationService.Infrastructure.Configuration.Settings;
 using FlowChat.NotificationService.Infrastructure;
 using FlowChat.NotificationService.Persistence;
 using Microsoft.EntityFrameworkCore;

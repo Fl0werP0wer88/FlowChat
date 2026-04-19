@@ -1,7 +1,7 @@
-﻿using FlowChat.Core.Contracts;
+using FlowChat.Core.Contracts;
 using FlowChat.Shared.API;
 using FlowChat.RealtimeService.Application.Features.Presence.Commands.PublishPresenceChange;
-using FlowChat.RealtimeService.Infrastructure.Configuration;
+using FlowChat.RealtimeService.Infrastructure.Configuration.Settings;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 

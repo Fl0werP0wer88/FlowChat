@@ -1,5 +1,5 @@
-﻿using FlowChat.PresenceService.Application.Features.Presence.Commands.InitializePresenceStatus;
-using FlowChat.PresenceService.Infrastructure.Configuration;
+using FlowChat.PresenceService.Application.Features.Presence.Commands.InitializePresenceStatus;
+using FlowChat.PresenceService.Infrastructure.Configuration.Settings;
 using FlowChat.Core.Contracts;
 using FlowChat.Shared.API;
 using MediatR;

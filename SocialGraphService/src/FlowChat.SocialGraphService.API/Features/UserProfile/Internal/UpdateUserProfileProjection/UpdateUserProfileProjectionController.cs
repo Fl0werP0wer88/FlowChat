@@ -1,6 +1,6 @@
-﻿using FlowChat.SocialGraphService.Api.Features.UserProfile.Internal.UserProfileProjection;
+using FlowChat.SocialGraphService.Api.Features.UserProfile.Internal.UserProfileProjection;
 using FlowChat.SocialGraphService.Application.Features.UserProfile.Commands.UpdateUserProfileProjection;
-using FlowChat.SocialGraphService.Infrastructure.Configuration;
+using FlowChat.SocialGraphService.Infrastructure.Configuration.Settings;
 using FlowChat.Core.Contracts;
 using FlowChat.Shared.API;
 using MediatR;

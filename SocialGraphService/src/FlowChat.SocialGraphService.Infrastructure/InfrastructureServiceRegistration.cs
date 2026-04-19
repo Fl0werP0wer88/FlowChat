@@ -1,9 +1,9 @@
-﻿using FlowChat.Core.Contracts;
+using FlowChat.Core.Contracts;
 using FlowChat.Core.Messaging.SocialGraphService.Events;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Infrastructure.Configuration;
 using FlowChat.Shared.Infrastructure.Silverback.Kafka;
-using FlowChat.SocialGraphService.Infrastructure.Configuration;
+using FlowChat.SocialGraphService.Infrastructure.Configuration.Settings;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;

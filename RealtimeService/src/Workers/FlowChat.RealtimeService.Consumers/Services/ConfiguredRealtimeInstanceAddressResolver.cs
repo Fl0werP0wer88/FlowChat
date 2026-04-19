@@ -1,4 +1,4 @@
-﻿using FlowChat.RealtimeService.Consumers.Configuration;
+using FlowChat.RealtimeService.Consumers.Configuration.Settings;
 
 namespace FlowChat.RealtimeService.Consumers.Services;
 

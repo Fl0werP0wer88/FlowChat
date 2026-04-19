@@ -1,5 +1,5 @@
-﻿using Confluent.Kafka;
-using FlowChat.SocialGraphService.Consumers.Configuration;
+using Confluent.Kafka;
+using FlowChat.SocialGraphService.Consumers.Configuration.Settings;
 using FlowChat.SocialGraphService.Consumers.Kafka;
 using FlowChat.SocialGraphService.Consumers.Services;
 using FlowChat.Shared.Infrastructure.Silverback.Kafka;

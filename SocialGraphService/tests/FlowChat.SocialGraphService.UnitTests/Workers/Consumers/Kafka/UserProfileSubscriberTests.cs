@@ -2,7 +2,7 @@ using AutoFixture;
 using FlowChat.Core.Exceptions;
 using FlowChat.Core.Messaging.UserProfileService.Events;
 using FlowChat.SocialGraphService.Consumers.Kafka;
-using FlowChat.SocialGraphService.Consumers.Configuration;
+using FlowChat.SocialGraphService.Consumers.Configuration.Settings;
 using FlowChat.SocialGraphService.Consumers.Services;
 using FlowChat.SocialGraphService.Consumers.SocialGraph.Contracts;
 using FluentAssertions;

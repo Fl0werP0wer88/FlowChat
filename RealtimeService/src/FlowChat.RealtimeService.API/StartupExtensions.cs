@@ -4,7 +4,7 @@ using FlowChat.RealtimeService.Api.Realtime;
 using FlowChat.RealtimeService.Application;
 using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
 using FlowChat.RealtimeService.Infrastructure;
-using FlowChat.RealtimeService.Infrastructure.Configuration;
+using FlowChat.RealtimeService.Infrastructure.Configuration.Settings;
 using FlowChat.RealtimeService.Infrastructure.Kafka;
 using FlowChat.Shared.API;
 using FlowChat.Shared.Infrastructure.Configuration;

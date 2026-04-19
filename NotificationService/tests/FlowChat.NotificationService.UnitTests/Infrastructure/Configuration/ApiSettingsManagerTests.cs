@@ -1,4 +1,4 @@
-using FlowChat.NotificationService.Infrastructure.Configuration;
+using FlowChat.NotificationService.Infrastructure.Configuration.Settings;
 using FlowChat.Shared.Infrastructure.Configuration;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;

@@ -1,4 +1,4 @@
-using FlowChat.AuthService.OutboxPublisher.Configuration;
+using FlowChat.AuthService.OutboxPublisher.Configuration.Settings;
 using FlowChat.AuthService.Persistence;
 using FlowChat.Core.Messaging.AuthService.Events;
 using FlowChat.Shared.Infrastructure.Silverback.Behaviors;

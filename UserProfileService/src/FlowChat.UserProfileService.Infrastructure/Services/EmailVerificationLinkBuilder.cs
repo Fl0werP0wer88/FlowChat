@@ -1,6 +1,6 @@
-﻿using FlowChat.Core.Contracts;
+using FlowChat.Core.Contracts;
 using FlowChat.UserProfileService.Application.Contracts.Infrastructure;
-using FlowChat.UserProfileService.Infrastructure.Configuration;
+using FlowChat.UserProfileService.Infrastructure.Configuration.Settings;
 
 namespace FlowChat.UserProfileService.Infrastructure.Services;
 

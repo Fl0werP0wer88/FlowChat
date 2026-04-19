@@ -1,4 +1,4 @@
-﻿using FlowChat.ChatService.OutboxPublisher.Configuration;
+using FlowChat.ChatService.OutboxPublisher.Configuration.Settings;
 using FlowChat.ChatService.Persistence;
 using FlowChat.Core.Messaging.ChatService.Events;
 using FlowChat.Shared.Infrastructure.Silverback.Behaviors;

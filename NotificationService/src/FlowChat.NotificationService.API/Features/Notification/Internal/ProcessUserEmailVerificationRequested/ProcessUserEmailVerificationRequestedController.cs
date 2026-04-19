@@ -1,6 +1,6 @@
-﻿using FlowChat.Core.Contracts;
+using FlowChat.Core.Contracts;
 using FlowChat.NotificationService.Application.Features.Notification.Commands.UserEmailVerificationRequested;
-using FlowChat.NotificationService.Infrastructure.Configuration;
+using FlowChat.NotificationService.Infrastructure.Configuration.Settings;
 using FlowChat.Shared.API;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;

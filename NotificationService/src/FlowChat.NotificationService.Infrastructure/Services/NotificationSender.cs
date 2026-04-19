@@ -1,6 +1,6 @@
-﻿using FlowChat.Core.Contracts;
+using FlowChat.Core.Contracts;
 using FlowChat.NotificationService.Application.Contracts.Infrastructure;
-using FlowChat.NotificationService.Infrastructure.Configuration;
+using FlowChat.NotificationService.Infrastructure.Configuration.Settings;
 using MailKit.Net.Smtp;
 using MailKit.Security;
 using Microsoft.Extensions.Logging;

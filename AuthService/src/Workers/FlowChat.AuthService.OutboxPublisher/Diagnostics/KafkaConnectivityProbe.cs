@@ -1,5 +1,5 @@
 using Confluent.Kafka;
-using FlowChat.AuthService.OutboxPublisher.Configuration;
+using FlowChat.AuthService.OutboxPublisher.Configuration.Settings;
 using Microsoft.Extensions.Options;
 
 namespace FlowChat.AuthService.OutboxPublisher.Diagnostics;

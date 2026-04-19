@@ -1,7 +1,7 @@
-﻿using System.Data.Common;
+using System.Data.Common;
 using FlowChat.Shared.API;
 using FlowChat.ChatService.OutboxPublisher;
-using FlowChat.ChatService.OutboxPublisher.Configuration;
+using FlowChat.ChatService.OutboxPublisher.Configuration.Settings;
 using FlowChat.ChatService.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;

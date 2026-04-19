@@ -1,5 +1,5 @@
 using FlowChat.Shared.Infrastructure.Configuration;
-using FlowChat.SocialGraphService.Infrastructure.Configuration;
+using FlowChat.SocialGraphService.Infrastructure.Configuration.Settings;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 

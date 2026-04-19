@@ -1,9 +1,9 @@
-﻿using AutoFixture;
+using AutoFixture;
 using FlowChat.Core.Domain;
 using FlowChat.RealtimeService.Api.Features.Realtime.Internal.PublishPresenceChange;
 using FlowChat.RealtimeService.Application.Features.Presence.Commands.PublishPresenceChange;
 using FlowChat.Core.Contracts;
-using FlowChat.RealtimeService.Infrastructure.Configuration;
+using FlowChat.RealtimeService.Infrastructure.Configuration.Settings;
 using FlowChat.Shared.Domain;
 using FluentAssertions;
 using MediatR;

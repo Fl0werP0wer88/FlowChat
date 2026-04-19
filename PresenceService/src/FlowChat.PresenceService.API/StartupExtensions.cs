@@ -1,8 +1,8 @@
-﻿using System.Text;
+using System.Text;
 using System.Text.Json.Serialization;
 using FlowChat.PresenceService.Application;
 using FlowChat.PresenceService.Infrastructure;
-using FlowChat.PresenceService.Infrastructure.Configuration;
+using FlowChat.PresenceService.Infrastructure.Configuration.Settings;
 using FlowChat.PresenceService.Infrastructure.Kafka;
 using FlowChat.PresenceService.Persistence;
 using FlowChat.Shared.API;

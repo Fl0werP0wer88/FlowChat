@@ -1,5 +1,5 @@
-﻿using System.Text;
-using FlowChat.GatewayService.Api.Configuration;
+using System.Text;
+using FlowChat.GatewayService.Api.Configuration.Settings;
 using FlowChat.GatewayService.Api.Observability;
 using FlowChat.Shared.API;
 using FlowChat.Shared.Infrastructure.Configuration;

@@ -1,7 +1,7 @@
-﻿using FlowChat.Shared.API;
+using FlowChat.Shared.API;
 using FlowChat.ChatService.Application;
 using FlowChat.ChatService.Infrastructure;
-using FlowChat.ChatService.Infrastructure.Configuration;
+using FlowChat.ChatService.Infrastructure.Configuration.Settings;
 using FlowChat.ChatService.Infrastructure.Kafka;
 using FlowChat.ChatService.Persistence;
 using Microsoft.EntityFrameworkCore;

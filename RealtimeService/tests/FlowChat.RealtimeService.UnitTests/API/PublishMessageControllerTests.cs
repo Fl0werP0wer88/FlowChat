@@ -1,8 +1,8 @@
-﻿using AutoFixture;
+using AutoFixture;
 using FlowChat.RealtimeService.Api.Features.Realtime.Internal.PublishMessage;
 using FlowChat.RealtimeService.Application.Features.Message.Commands.PublishMessage;
 using FlowChat.Core.Contracts;
-using FlowChat.RealtimeService.Infrastructure.Configuration;
+using FlowChat.RealtimeService.Infrastructure.Configuration.Settings;
 using FlowChat.Shared.Domain;
 using FluentAssertions;
 using MediatR;

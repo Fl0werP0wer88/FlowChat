@@ -1,7 +1,7 @@
 using System.Data.Common;
 using FlowChat.Shared.API;
 using FlowChat.AuthService.OutboxPublisher;
-using FlowChat.AuthService.OutboxPublisher.Configuration;
+using FlowChat.AuthService.OutboxPublisher.Configuration.Settings;
 using FlowChat.AuthService.OutboxPublisher.Diagnostics;
 using FlowChat.AuthService.Persistence;
 using Microsoft.EntityFrameworkCore;

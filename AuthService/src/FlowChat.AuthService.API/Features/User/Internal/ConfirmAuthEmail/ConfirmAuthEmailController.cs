@@ -1,5 +1,5 @@
 using FlowChat.AuthService.Application.Features.User.Commands.ConfirmAuthEmail;
-using FlowChat.AuthService.Infrastructure.Configuration;
+using FlowChat.AuthService.Infrastructure.Configuration.Settings;
 using FlowChat.Core.Contracts;
 using FlowChat.Shared.API;
 using MediatR;

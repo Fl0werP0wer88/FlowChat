@@ -1,6 +1,6 @@
-﻿using FlowChat.Core.Messaging.SocialGraphService.Events;
+using FlowChat.Core.Messaging.SocialGraphService.Events;
 using FlowChat.Shared.Infrastructure.Configuration;
-using FlowChat.SocialGraphService.Infrastructure.Configuration;
+using FlowChat.SocialGraphService.Infrastructure.Configuration.Settings;
 using FlowChat.Shared.Infrastructure.Silverback.Behaviors;
 using FlowChat.SocialGraphService.Persistence;
 using Microsoft.Extensions.Configuration;

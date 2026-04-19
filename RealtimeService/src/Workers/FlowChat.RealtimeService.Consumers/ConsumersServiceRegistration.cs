@@ -1,10 +1,10 @@
 using Confluent.Kafka;
 using FlowChat.Core.Contracts;
-using FlowChat.RealtimeService.Consumers.Configuration;
+using FlowChat.RealtimeService.Consumers.Configuration.Settings;
 using FlowChat.RealtimeService.Consumers.Kafka;
 using FlowChat.RealtimeService.Consumers.Services;
 using FlowChat.RealtimeService.Routing;
-using FlowChat.RealtimeService.Routing.Configuration;
+using FlowChat.RealtimeService.Routing.Configuration.Settings;
 using FlowChat.Shared.Infrastructure.Configuration;
 using FlowChat.Shared.Infrastructure.Redis;
 using FlowChat.Shared.Infrastructure.Silverback.Behaviors;

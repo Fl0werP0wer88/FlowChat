@@ -1,6 +1,6 @@
 using FlowChat.RealtimeService.Consumers;
 using FlowChat.RealtimeService.Consumers.Kafka;
-using FlowChat.RealtimeService.Consumers.Configuration;
+using FlowChat.RealtimeService.Consumers.Configuration.Settings;
 using FlowChat.RealtimeService.Consumers.Services;
 using FlowChat.RealtimeService.Routing;
 using FluentAssertions;

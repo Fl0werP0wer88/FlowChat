@@ -1,5 +1,5 @@
-﻿using System.Text;
-using FlowChat.AuthService.Infrastructure.Configuration;
+using System.Text;
+using FlowChat.AuthService.Infrastructure.Configuration.Settings;
 using FlowChat.Shared.Infrastructure.Configuration;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;

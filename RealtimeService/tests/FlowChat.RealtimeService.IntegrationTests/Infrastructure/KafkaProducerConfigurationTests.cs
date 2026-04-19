@@ -1,7 +1,7 @@
 using FlowChat.Core.Contracts;
 using FlowChat.Core.Messaging.RealtimeService.Events;
 using FlowChat.RealtimeService.Infrastructure;
-using FlowChat.RealtimeService.Infrastructure.Configuration;
+using FlowChat.RealtimeService.Infrastructure.Configuration.Settings;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;

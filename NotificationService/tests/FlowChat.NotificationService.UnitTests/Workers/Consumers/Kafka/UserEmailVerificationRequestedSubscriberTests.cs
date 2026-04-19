@@ -2,7 +2,7 @@ using AutoFixture;
 using FlowChat.Core.Exceptions;
 using FlowChat.Core.Messaging.AuthService.Events;
 using FlowChat.NotificationService.Consumers.Kafka;
-using FlowChat.NotificationService.Consumers.Configuration;
+using FlowChat.NotificationService.Consumers.Configuration.Settings;
 using FlowChat.NotificationService.Consumers.NotificationApi.Contracts;
 using FlowChat.NotificationService.Consumers.Services;
 using FluentAssertions;

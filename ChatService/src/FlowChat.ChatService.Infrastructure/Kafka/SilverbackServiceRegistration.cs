@@ -1,5 +1,5 @@
 using FlowChat.ChatService.Persistence;
-using FlowChat.ChatService.Infrastructure.Configuration;
+using FlowChat.ChatService.Infrastructure.Configuration.Settings;
 using FlowChat.Core.Contracts;
 using FlowChat.Core.Messaging.ChatService.Events;
 using FlowChat.Shared.Infrastructure.Configuration;

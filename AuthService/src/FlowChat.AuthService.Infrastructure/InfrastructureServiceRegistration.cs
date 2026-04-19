@@ -1,6 +1,6 @@
 using FlowChat.Shared.Application;
 using FlowChat.AuthService.Application.Contracts.Infrastructure;
-using FlowChat.AuthService.Infrastructure.Configuration;
+using FlowChat.AuthService.Infrastructure.Configuration.Settings;
 using FlowChat.AuthService.Infrastructure.Services;
 using FlowChat.Core.Contracts;
 using FlowChat.Core.Messaging.AuthService.Events;

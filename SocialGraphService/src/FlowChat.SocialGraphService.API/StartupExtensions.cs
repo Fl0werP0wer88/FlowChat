@@ -1,8 +1,8 @@
-﻿using FlowChat.Shared.API;
+using FlowChat.Shared.API;
 using FlowChat.Shared.Infrastructure.Configuration;
 using FlowChat.SocialGraphService.Application;
 using FlowChat.SocialGraphService.Infrastructure;
-using FlowChat.SocialGraphService.Infrastructure.Configuration;
+using FlowChat.SocialGraphService.Infrastructure.Configuration.Settings;
 using FlowChat.SocialGraphService.Infrastructure.Kafka;
 using FlowChat.SocialGraphService.Persistence;
 using AutoMapper;

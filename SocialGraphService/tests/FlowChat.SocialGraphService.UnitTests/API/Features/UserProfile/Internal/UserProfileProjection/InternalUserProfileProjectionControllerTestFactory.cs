@@ -1,5 +1,5 @@
-﻿using FlowChat.Core.Contracts;
-using FlowChat.SocialGraphService.Infrastructure.Configuration;
+using FlowChat.Core.Contracts;
+using FlowChat.SocialGraphService.Infrastructure.Configuration.Settings;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;

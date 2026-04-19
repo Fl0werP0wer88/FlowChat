@@ -1,7 +1,7 @@
-﻿using FlowChat.Core.Contracts;
+using FlowChat.Core.Contracts;
 using FlowChat.Shared.API;
 using FlowChat.UserProfileService.Application.Features.UserProfile.Commands.CreateInitialUserProfile;
-using FlowChat.UserProfileService.Infrastructure.Configuration;
+using FlowChat.UserProfileService.Infrastructure.Configuration.Settings;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 

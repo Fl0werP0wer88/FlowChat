@@ -1,6 +1,6 @@
-﻿using FlowChat.Core.Messaging.AuthService.Events;
+using FlowChat.Core.Messaging.AuthService.Events;
 using FlowChat.Core.Messaging.UserProfileService.Events;
-using FlowChat.UserProfileService.OutboxPublisher.Configuration;
+using FlowChat.UserProfileService.OutboxPublisher.Configuration.Settings;
 using FlowChat.UserProfileService.Persistence;
 using FlowChat.Shared.Infrastructure.Silverback.Behaviors;
 using Microsoft.Extensions.Configuration;

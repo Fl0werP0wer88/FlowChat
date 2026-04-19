@@ -1,6 +1,6 @@
-﻿using FlowChat.SocialGraphService.Consumers;
+using FlowChat.SocialGraphService.Consumers;
 using FlowChat.SocialGraphService.Consumers.Kafka;
-using FlowChat.SocialGraphService.Consumers.Configuration;
+using FlowChat.SocialGraphService.Consumers.Configuration.Settings;
 using FlowChat.SocialGraphService.Consumers.Services;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;

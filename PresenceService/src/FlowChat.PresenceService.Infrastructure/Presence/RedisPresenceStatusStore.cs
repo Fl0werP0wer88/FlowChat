@@ -1,8 +1,8 @@
-﻿using System.Collections.Immutable;
+using System.Collections.Immutable;
 using FlowChat.Core.Domain;
 using FlowChat.PresenceService.Application.Contracts.Infrastructure;
 using FlowChat.PresenceService.Application.Features.Presence;
-using FlowChat.PresenceService.Infrastructure.Configuration;
+using FlowChat.PresenceService.Infrastructure.Configuration.Settings;
 using StackExchange.Redis;
 
 namespace FlowChat.PresenceService.Infrastructure.Presence;

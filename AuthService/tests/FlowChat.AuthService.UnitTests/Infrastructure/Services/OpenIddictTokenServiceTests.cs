@@ -1,7 +1,7 @@
-﻿using System.IdentityModel.Tokens.Jwt;
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using FlowChat.AuthService.Application.Features.User.Models;
-using FlowChat.AuthService.Infrastructure.Configuration;
+using FlowChat.AuthService.Infrastructure.Configuration.Settings;
 using FlowChat.AuthService.Infrastructure.Services;
 using FlowChat.Core.Contracts;
 using FluentAssertions;

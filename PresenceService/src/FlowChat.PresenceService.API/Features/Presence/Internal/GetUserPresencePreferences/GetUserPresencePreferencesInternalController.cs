@@ -1,7 +1,7 @@
-﻿using FlowChat.Core.Contracts;
+using FlowChat.Core.Contracts;
 using FlowChat.Core.Domain;
 using FlowChat.PresenceService.Application.Features.Presence.Queries.GetUserPresencePreferences;
-using FlowChat.PresenceService.Infrastructure.Configuration;
+using FlowChat.PresenceService.Infrastructure.Configuration.Settings;
 using FlowChat.Shared.API;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;

@@ -1,5 +1,5 @@
-﻿using Confluent.Kafka;
-using FlowChat.AuthService.Consumers.Configuration;
+using Confluent.Kafka;
+using FlowChat.AuthService.Consumers.Configuration.Settings;
 using FlowChat.AuthService.Consumers.Kafka;
 using FlowChat.AuthService.Consumers.Services;
 using FlowChat.Shared.Infrastructure.Silverback.Behaviors;

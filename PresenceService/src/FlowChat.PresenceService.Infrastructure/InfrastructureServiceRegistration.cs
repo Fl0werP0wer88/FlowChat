@@ -1,7 +1,7 @@
 using FlowChat.Core.Contracts;
 using FlowChat.Core.Messaging.PresenceService.Events;
 using FlowChat.PresenceService.Application.Contracts.Infrastructure;
-using FlowChat.PresenceService.Infrastructure.Configuration;
+using FlowChat.PresenceService.Infrastructure.Configuration.Settings;
 using FlowChat.PresenceService.Infrastructure.Presence;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Infrastructure.Configuration;

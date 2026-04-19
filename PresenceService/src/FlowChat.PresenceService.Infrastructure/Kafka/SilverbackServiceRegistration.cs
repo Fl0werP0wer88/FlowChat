@@ -1,5 +1,5 @@
-﻿using FlowChat.Core.Messaging.PresenceService.Events;
-using FlowChat.PresenceService.Infrastructure.Configuration;
+using FlowChat.Core.Messaging.PresenceService.Events;
+using FlowChat.PresenceService.Infrastructure.Configuration.Settings;
 using FlowChat.PresenceService.Persistence;
 using FlowChat.Shared.Infrastructure.Configuration;
 using FlowChat.Shared.Infrastructure.Silverback.Behaviors;
