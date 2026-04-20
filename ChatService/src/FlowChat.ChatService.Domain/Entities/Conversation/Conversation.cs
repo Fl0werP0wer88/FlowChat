@@ -66,6 +66,26 @@ public sealed class Conversation : AggregateRootBase<Conversation>
         return conversation;
     }
 
+    public void AddParticipant(Guid participantUserId)
+    {
+        if (!IsGroup)
+            throw new InvalidOperationException("Cannot add participants to a one-on-one conversation.");
+
+        if (participantUserId == Guid.Empty)
+            throw new ArgumentException("ParticipantUserId is required.", nameof(participantUserId));
+
+        if (_participantUserIds.Contains(participantUserId))
+            throw new InvalidOperationException("User is already a participant in this conversation.");
+
+        _participantUserIds.Add(participantUserId);
+
+        AddDomainEvent(new ParticipantAddedDomainEvent(Id, participantUserId));
+
+        MarkAggregateStateChanged(
+            ConversationConstants.ConversationAggregateTypeName,
+            () => new ConversationSnapshot(Id, IsGroup, Name, CreatedByUserId, ParticipantUserIds));
+    }
+
     public static Conversation Restore(
         Id<Conversation> id,
         bool isGroup,
