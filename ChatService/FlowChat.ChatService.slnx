@@ -7,6 +7,7 @@
     <Project Path="src/FlowChat.ChatService.Persistence/FlowChat.ChatService.Persistence.csproj" />
   </Folder>
   <Folder Name="/src/Workers/">
+    <Project Path="src/Workers/FlowChat.ChatService.Consumers/FlowChat.ChatService.Consumers.csproj" />
     <Project Path="src/Workers/FlowChat.ChatService.OutboxPublisher/FlowChat.ChatService.OutboxPublisher.csproj" />
   </Folder>
   <Project Path="../Common/src/FlowChat.Shared.API/FlowChat.Shared.API.csproj" />

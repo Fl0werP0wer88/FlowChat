@@ -39,6 +39,33 @@
       }
     },
     {
+      "name": "ChatService Consumers",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build: ChatService Consumers",
+      "program": "${workspaceFolder}/src/Workers/FlowChat.ChatService.Consumers/bin/Debug/net10.0/FlowChat.ChatService.Consumers.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/src/Workers/FlowChat.ChatService.Consumers",
+      "stopAtEntry": false,
+      "console": "integratedTerminal",
+      "env": {
+        "DOTNET_ENVIRONMENT": "Development"
+      }
+    },
+    {
+      "name": "ChatService Consumers (No Build)",
+      "type": "coreclr",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/Workers/FlowChat.ChatService.Consumers/bin/Debug/net10.0/FlowChat.ChatService.Consumers.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/src/Workers/FlowChat.ChatService.Consumers",
+      "stopAtEntry": false,
+      "console": "integratedTerminal",
+      "env": {
+        "DOTNET_ENVIRONMENT": "Development"
+      }
+    },
+    {
       "name": "ChatService OutboxPublisher",
       "type": "coreclr",
       "request": "launch",
@@ -71,6 +98,7 @@
       "name": "ChatService",
       "configurations": [
         "ChatService API",
+        "ChatService Consumers",
         "ChatService OutboxPublisher"
       ],
       "stopAll": true

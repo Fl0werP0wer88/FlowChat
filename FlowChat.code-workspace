@@ -327,6 +327,10 @@
                                                                 },
                                                                 {
                                                                     "folder":  "ChatService",
+                                                                    "name":  "ChatService Consumers (No Build)"
+                                                                },
+                                                                {
+                                                                    "folder":  "ChatService",
                                                                     "name":  "ChatService OutboxPublisher (No Build)"
                                                                 }
                                                             ],
@@ -493,6 +497,10 @@
                                                                 },
                                                                 {
                                                                     "folder":  "ChatService",
+                                                                    "name":  "ChatService Consumers (No Build)"
+                                                                },
+                                                                {
+                                                                    "folder":  "ChatService",
                                                                     "name":  "ChatService OutboxPublisher (No Build)"
                                                                 },
                                                                 {
@@ -561,6 +569,10 @@
                                                                 {
                                                                     "folder":  "AuthService",
                                                                     "name":  "AuthService OutboxPublisher (No Build)"
+                                                                },
+                                                                {
+                                                                    "folder":  "ChatService",
+                                                                    "name":  "ChatService Consumers (No Build)"
                                                                 },
                                                                 {
                                                                     "folder":  "ChatService",

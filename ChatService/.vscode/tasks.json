@@ -17,6 +17,21 @@
       "problemMatcher": "$msCompile"
     },
     {
+      "label": "build: ChatService Consumers",
+      "type": "process",
+      "command": "dotnet",
+      "args": [
+        "build",
+        "${workspaceFolder}/src/Workers/FlowChat.ChatService.Consumers/FlowChat.ChatService.Consumers.csproj",
+        "-c",
+        "Debug"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": "$msCompile"
+    },
+    {
       "label": "build: ChatService OutboxPublisher",
       "type": "process",
       "command": "dotnet",
