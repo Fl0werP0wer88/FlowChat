@@ -1,0 +1,69 @@
+using FlowChat.Shared.Domain;
+using FlowChat.Shared.Domain.ValueObjects;
+
+namespace FlowChat.ChatService.Domain.Entities.Conversation;
+
+public sealed class ParticipantUser : EntityBase<ParticipantUser>
+{
+    public Id<Conversation> ConversationId { get; private set; }
+    public Guid UserId { get; private set; }
+    public bool IsBlocked { get; private set; }
+    public UtcDateTimeOffset JoinedAtUtc { get; private set; }
+
+    private ParticipantUser(
+        Id<ParticipantUser>? id,
+        Id<Conversation> conversationId,
+        Guid userId,
+        bool isBlocked,
+        UtcDateTimeOffset joinedAtUtc) : base(id)
+    {
+        ArgumentNullException.ThrowIfNull(conversationId);
+
+        if (userId == Guid.Empty)
+            throw new ArgumentException("UserId is required.", nameof(userId));
+
+        ConversationId = conversationId;
+        UserId = userId;
+        IsBlocked = isBlocked;
+        JoinedAtUtc = joinedAtUtc;
+    }
+
+    public static ParticipantUser Create(
+        Id<Conversation> conversationId,
+        Guid userId,
+        Id<ParticipantUser>? id = null)
+    {
+        return new ParticipantUser(
+            id ?? Id<ParticipantUser>.New(),
+            conversationId,
+            userId,
+            isBlocked: false,
+            UtcDateTimeOffset.UtcNow);
+    }
+
+    public static ParticipantUser Restore(
+        Id<ParticipantUser> id,
+        Id<Conversation> conversationId,
+        Guid userId,
+        bool isBlocked,
+        UtcDateTimeOffset joinedAtUtc)
+    {
+        return new ParticipantUser(id, conversationId, userId, isBlocked, joinedAtUtc);
+    }
+
+    internal void Block()
+    {
+        if (IsBlocked)
+            throw new InvalidOperationException("Participant is already blocked.");
+
+        IsBlocked = true;
+    }
+
+    internal void Unblock()
+    {
+        if (!IsBlocked)
+            throw new InvalidOperationException("Participant is not blocked.");
+
+        IsBlocked = false;
+    }
+}

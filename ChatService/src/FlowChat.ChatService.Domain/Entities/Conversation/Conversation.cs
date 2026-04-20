@@ -11,26 +11,20 @@ public sealed class Conversation : AggregateRootBase<Conversation>
     public string? Name { get; private set; }
     public Guid CreatedByUserId { get; private set; }
 
-    private readonly List<Guid> _participantUserIds = [];
-    public IReadOnlyCollection<Guid> ParticipantUserIds => _participantUserIds.AsReadOnly();
+    private readonly List<ParticipantUser> _participants = [];
+    public IReadOnlyCollection<ParticipantUser> Participants => _participants.AsReadOnly();
 
     private Conversation(
-        Id<Conversation>? id,
+        Id<Conversation> id,
         bool isGroup,
         string? name,
         Guid createdByUserId,
-        IEnumerable<Guid> participantUserIds) : base(id)
+        List<ParticipantUser> participants) : base(id)
     {
-        if (createdByUserId == Guid.Empty)
-            throw new ArgumentException("CreatedByUserId is required.", nameof(createdByUserId));
-
-        if (isGroup && string.IsNullOrWhiteSpace(name))
-            throw new ArgumentException("Group conversations must have a name.", nameof(name));
-
         IsGroup = isGroup;
         Name = name?.Trim();
         CreatedByUserId = createdByUserId;
-        _participantUserIds = NormalizeParticipants(participantUserIds, isGroup);
+        _participants = participants;
     }
 
     public static Conversation Create(
@@ -40,19 +34,19 @@ public sealed class Conversation : AggregateRootBase<Conversation>
         string? name = null,
         Id<Conversation>? id = null)
     {
-        var conversation = new Conversation(
-            id ?? Id<Conversation>.New(),
-            isGroup,
-            name,
-            createdByUserId,
-            participantUserIds);
+        ValidateInvariants(isGroup, name, createdByUserId);
+
+        var conversationId = id ?? Id<Conversation>.New();
+        var participants = BuildParticipants(participantUserIds, isGroup, conversationId);
+
+        var conversation = new Conversation(conversationId, isGroup, name, createdByUserId, participants);
 
         conversation.AddDomainEvent(new ConversationCreatedDomainEvent(
             conversation.Id,
             conversation.IsGroup,
             conversation.Name,
             conversation.CreatedByUserId,
-            conversation.ParticipantUserIds));
+            [ .. conversation.Participants.Select(p => p.UserId)]));
 
         conversation.MarkAggregateStateChanged(
             ConversationConstants.ConversationAggregateTypeName,
@@ -61,9 +55,19 @@ public sealed class Conversation : AggregateRootBase<Conversation>
                 conversation.IsGroup,
                 conversation.Name,
                 conversation.CreatedByUserId,
-                conversation.ParticipantUserIds));
+                [ .. conversation.Participants.Select(p => p.UserId)]));
 
         return conversation;
+    }
+
+    public static Conversation Restore(
+        Id<Conversation> id,
+        bool isGroup,
+        string? name,
+        Guid createdByUserId,
+        IEnumerable<ParticipantUser> participants)
+    {
+        return new Conversation(id, isGroup, name, createdByUserId, [.. participants]);
     }
 
     public void AddParticipant(Guid participantUserId)
@@ -74,44 +78,51 @@ public sealed class Conversation : AggregateRootBase<Conversation>
         if (participantUserId == Guid.Empty)
             throw new ArgumentException("ParticipantUserId is required.", nameof(participantUserId));
 
-        if (_participantUserIds.Contains(participantUserId))
+        if (_participants.Any(p => p.UserId == participantUserId))
             throw new InvalidOperationException("User is already a participant in this conversation.");
 
-        _participantUserIds.Add(participantUserId);
+        _participants.Add(ParticipantUser.Create(Id, participantUserId));
 
         AddDomainEvent(new ParticipantAddedDomainEvent(Id, participantUserId));
 
         MarkAggregateStateChanged(
             ConversationConstants.ConversationAggregateTypeName,
-            () => new ConversationSnapshot(Id, IsGroup, Name, CreatedByUserId, ParticipantUserIds));
+            () => new ConversationSnapshot(
+                Id,
+                IsGroup,
+                Name,
+                CreatedByUserId,
+                [ .. Participants.Select(p => p.UserId)]));
     }
 
-    public static Conversation Restore(
-        Id<Conversation> id,
-        bool isGroup,
-        string? name,
-        Guid createdByUserId,
-        IEnumerable<Guid> participantUserIds)
+    private static void ValidateInvariants(bool isGroup, string? name, Guid createdByUserId)
     {
-        return new Conversation(id, isGroup, name, createdByUserId, participantUserIds);
+        if (createdByUserId == Guid.Empty)
+            throw new ArgumentException("CreatedByUserId is required.", nameof(createdByUserId));
+
+        if (isGroup && string.IsNullOrWhiteSpace(name))
+            throw new ArgumentException("Group conversations must have a name.", nameof(name));
     }
 
-    private static List<Guid> NormalizeParticipants(IEnumerable<Guid> participantUserIds, bool isGroup)
+    private static List<ParticipantUser> BuildParticipants(
+        IEnumerable<Guid> participantUserIds,
+        bool isGroup,
+        Id<Conversation> conversationId)
     {
         ArgumentNullException.ThrowIfNull(participantUserIds);
 
-        var participants = participantUserIds
+        var uniqueIds = participantUserIds
             .Where(id => id != Guid.Empty)
             .Distinct()
             .ToList();
 
-        if (!isGroup && participants.Count != 2)
+        if (!isGroup && uniqueIds.Count != 2)
             throw new InvalidOperationException("One-on-one conversations must have exactly two participants.");
 
-        if (isGroup && participants.Count < 2)
+        if (isGroup && uniqueIds.Count < 2)
             throw new InvalidOperationException("Group conversations must have at least two participants.");
 
-        return participants;
+        return [.. uniqueIds.Select(userId => ParticipantUser.Create(conversationId, userId))];
     }
 }
 
