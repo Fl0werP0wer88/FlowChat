@@ -11,14 +11,14 @@ public sealed class GetOrCreateDuetConversationCommandHandler
 {
     private readonly IConversationWriteRepository _conversationRepository;
     private readonly IDuetConversationReadRepository _duetConversationReadRepository;
-    private readonly IDuetConversationRepository _duetConversationRepository;
+    private readonly IDuetConversationWriteRepository _duetConversationWriteRepository;
     private readonly IUserProfileProjectionReadRepository _profileReadRepository;
     private ConversationAggregate? _newConversation;
 
     public GetOrCreateDuetConversationCommandHandler(
         IConversationWriteRepository conversationRepository,
         IDuetConversationReadRepository duetConversationReadRepository,
-        IDuetConversationRepository duetConversationRepository,
+        IDuetConversationWriteRepository duetConversationWriteRepository,
         IUserProfileProjectionReadRepository profileReadRepository,
         IUnitOfWork unitOfWork,
         IDomainEventDispatcher domainEventDispatcher)
@@ -26,7 +26,7 @@ public sealed class GetOrCreateDuetConversationCommandHandler
     {
         _conversationRepository = conversationRepository ?? throw new ArgumentNullException(nameof(conversationRepository));
         _duetConversationReadRepository = duetConversationReadRepository ?? throw new ArgumentNullException(nameof(duetConversationReadRepository));
-        _duetConversationRepository = duetConversationRepository ?? throw new ArgumentNullException(nameof(duetConversationRepository));
+        _duetConversationWriteRepository = duetConversationWriteRepository ?? throw new ArgumentNullException(nameof(duetConversationWriteRepository));
         _profileReadRepository = profileReadRepository ?? throw new ArgumentNullException(nameof(profileReadRepository));
     }
 
@@ -44,7 +44,7 @@ public sealed class GetOrCreateDuetConversationCommandHandler
             return FlowChatResult<DuetConversationDetailDto>.Success(existing);
         }
 
-        var existingConversationId = await _duetConversationRepository.FindConversationIdAsync(
+        var existingConversationId = await _duetConversationReadRepository.FindConversationIdAsync(
             request.RequestingUserId,
             request.PartnerUserId,
             cancellationToken);
@@ -63,7 +63,7 @@ public sealed class GetOrCreateDuetConversationCommandHandler
 
         await _conversationRepository.AddAsync(_newConversation, cancellationToken);
 
-        await _duetConversationRepository.AddAsync(
+        await _duetConversationWriteRepository.AddAsync(
             request.RequestingUserId,
             request.PartnerUserId,
             _newConversation.Id.Value,

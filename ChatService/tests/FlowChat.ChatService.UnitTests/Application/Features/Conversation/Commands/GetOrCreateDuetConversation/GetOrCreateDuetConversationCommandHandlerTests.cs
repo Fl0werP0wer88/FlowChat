@@ -16,7 +16,7 @@ public sealed class GetOrCreateDuetConversationCommandHandlerTests
 {
     private readonly Mock<IConversationWriteRepository> _conversationWriteRepositoryMock = new();
     private readonly Mock<IDuetConversationReadRepository> _duetConversationReadRepositoryMock = new();
-    private readonly Mock<IDuetConversationRepository> _duetConversationRepositoryMock = new();
+    private readonly Mock<IDuetConversationWriteRepository> _duetConversationWriteRepositoryMock = new();
     private readonly Mock<IUserProfileProjectionReadRepository> _userProfileProjectionReadRepositoryMock = new();
     private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
     private readonly Mock<IDomainEventDispatcher> _domainEventDispatcherMock = new();
@@ -38,7 +38,7 @@ public sealed class GetOrCreateDuetConversationCommandHandlerTests
         _handler = new GetOrCreateDuetConversationCommandHandler(
             _conversationWriteRepositoryMock.Object,
             _duetConversationReadRepositoryMock.Object,
-            _duetConversationRepositoryMock.Object,
+            _duetConversationWriteRepositoryMock.Object,
             _userProfileProjectionReadRepositoryMock.Object,
             _unitOfWorkMock.Object,
             _domainEventDispatcherMock.Object);
@@ -63,7 +63,7 @@ public sealed class GetOrCreateDuetConversationCommandHandlerTests
 
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().Be(dto);
-        _duetConversationRepositoryMock.Verify(
+        _duetConversationReadRepositoryMock.Verify(
             x => x.FindConversationIdAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<CancellationToken>()),
             Times.Never);
         _conversationWriteRepositoryMock.Verify(
@@ -85,7 +85,7 @@ public sealed class GetOrCreateDuetConversationCommandHandlerTests
         _duetConversationReadRepositoryMock
             .Setup(x => x.GetByUserIdsAsync(command.RequestingUserId, command.PartnerUserId, It.IsAny<CancellationToken>()))
             .ReturnsAsync((DuetConversationDetailDto?)null);
-        _duetConversationRepositoryMock
+        _duetConversationReadRepositoryMock
             .Setup(x => x.FindConversationIdAsync(command.RequestingUserId, command.PartnerUserId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(Guid.NewGuid());
 
@@ -112,7 +112,7 @@ public sealed class GetOrCreateDuetConversationCommandHandlerTests
         _duetConversationReadRepositoryMock
             .Setup(x => x.GetByUserIdsAsync(command.RequestingUserId, command.PartnerUserId, It.IsAny<CancellationToken>()))
             .ReturnsAsync((DuetConversationDetailDto?)null);
-        _duetConversationRepositoryMock
+        _duetConversationReadRepositoryMock
             .Setup(x => x.FindConversationIdAsync(command.RequestingUserId, command.PartnerUserId, It.IsAny<CancellationToken>()))
             .ReturnsAsync((Guid?)null);
         _conversationWriteRepositoryMock
@@ -141,7 +141,7 @@ public sealed class GetOrCreateDuetConversationCommandHandlerTests
         dispatchedEvents.Should().ContainSingle(x => x is ConversationCreatedDomainEvent);
         dispatchedEvents.Should().ContainSingle(
             x => x is AggregateStateChangedDomainEvent<ConversationAggregate, ConversationSnapshot>);
-        _duetConversationRepositoryMock.Verify(
+        _duetConversationWriteRepositoryMock.Verify(
             x => x.AddAsync(command.RequestingUserId, command.PartnerUserId, persistedConversation.Id.Value, It.IsAny<CancellationToken>()),
             Times.Once);
     }

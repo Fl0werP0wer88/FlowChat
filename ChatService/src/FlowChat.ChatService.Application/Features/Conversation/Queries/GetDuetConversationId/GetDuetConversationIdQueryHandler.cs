@@ -7,16 +7,16 @@ namespace FlowChat.ChatService.Application.Features.Conversation.Queries.GetDuet
 
 public sealed class GetDuetConversationIdQueryHandler : IQueryHandler<GetDuetConversationIdQuery, Guid>
 {
-    private readonly IDuetConversationRepository _duetConversationRepository;
+    private readonly IDuetConversationReadRepository _duetConversationReadRepository;
 
-    public GetDuetConversationIdQueryHandler(IDuetConversationRepository duetConversationRepository)
+    public GetDuetConversationIdQueryHandler(IDuetConversationReadRepository duetConversationReadRepository)
     {
-        _duetConversationRepository = duetConversationRepository ?? throw new ArgumentNullException(nameof(duetConversationRepository));
+        _duetConversationReadRepository = duetConversationReadRepository ?? throw new ArgumentNullException(nameof(duetConversationReadRepository));
     }
 
     public async Task<FlowChatResult<Guid>> Handle(GetDuetConversationIdQuery request, CancellationToken cancellationToken)
     {
-        var conversationId = await _duetConversationRepository.FindConversationIdAsync(
+        var conversationId = await _duetConversationReadRepository.FindConversationIdAsync(
             request.RequestingUserId,
             request.PartnerUserId,
             cancellationToken);

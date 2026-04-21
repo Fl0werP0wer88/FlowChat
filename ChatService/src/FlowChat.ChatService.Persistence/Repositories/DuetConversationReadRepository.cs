@@ -6,12 +6,26 @@ namespace FlowChat.ChatService.Persistence.Repositories;
 
 public sealed class DuetConversationReadRepository(AppDbContext dbContext) : IDuetConversationReadRepository
 {
+    public async Task<Guid?> FindConversationIdAsync(
+        Guid userId1,
+        Guid userId2,
+        CancellationToken cancellationToken = default)
+    {
+        var (first, second) = DuetConversationUserPair.Normalize(userId1, userId2);
+
+        var entry = await dbContext.DuetConversations
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.FirstUserId == first && x.SecondUserId == second, cancellationToken);
+
+        return entry?.ConversationId.Value;
+    }
+
     public async Task<DuetConversationDetailDto?> GetByUserIdsAsync(
         Guid requestingUserId,
         Guid partnerUserId,
         CancellationToken cancellationToken = default)
     {
-        var (first, second) = Normalize(requestingUserId, partnerUserId);
+        var (first, second) = DuetConversationUserPair.Normalize(requestingUserId, partnerUserId);
 
         var rows = await (
             from duet in dbContext.DuetConversations.AsNoTracking()
@@ -63,9 +77,6 @@ public sealed class DuetConversationReadRepository(AppDbContext dbContext) : IDu
             conversationId,
             [requestingParticipant, partnerParticipant]);
     }
-
-    private static (Guid First, Guid Second) Normalize(Guid userId1, Guid userId2) =>
-        userId1 < userId2 ? (userId1, userId2) : (userId2, userId1);
 
     private sealed record DuetConversationParticipantRow(
         Guid ConversationId,

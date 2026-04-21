@@ -4,6 +4,8 @@ namespace FlowChat.ChatService.Application.Contracts.Persistence;
 
 public interface IDuetConversationReadRepository
 {
+    Task<Guid?> FindConversationIdAsync(Guid userId1, Guid userId2, CancellationToken cancellationToken = default);
+
     Task<DuetConversationDetailDto?> GetByUserIdsAsync(
         Guid requestingUserId,
         Guid partnerUserId,
