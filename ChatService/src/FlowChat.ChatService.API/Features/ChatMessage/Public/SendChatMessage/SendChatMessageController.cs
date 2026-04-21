@@ -3,7 +3,7 @@ using FlowChat.ChatService.Application.Features.ChatMessage.Commands.SendChatMes
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
-namespace FlowChat.ChatService.Api.Features.ChatMessage.SendChatMessage;
+namespace FlowChat.ChatService.Api.Features.ChatMessage.Public.SendChatMessage;
 
 [ApiController]
 [Route("api/chat/messages")]

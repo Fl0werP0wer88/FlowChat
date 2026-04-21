@@ -1,6 +1,6 @@
 using FlowChat.Core.Contracts;
 
-namespace FlowChat.ChatService.Api.Features.ChatMessage.SendChatMessage;
+namespace FlowChat.ChatService.Api.Features.ChatMessage.Public.SendChatMessage;
 
 public sealed class SendChatMessageRequest : IServiceInput
 {
