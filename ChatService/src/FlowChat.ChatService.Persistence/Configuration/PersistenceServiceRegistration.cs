@@ -23,6 +23,7 @@ public static class PersistenceServiceRegistration
                 .AddInterceptors(serviceProvider.GetRequiredService<EntityBaseSaveChangesInterceptor>()),
             ServiceLifetime.Scoped);
         services.AddScoped<IChatMessageWriteRepository, ChatMessageWriteRepository>();
+        services.AddScoped<IConversationWriteRepository, ConversationWriteRepository>();
         services.AddScoped<IUserProfileProjectionWriteRepository, UserProfileProjectionWriteRepository>();
 
         return services;
