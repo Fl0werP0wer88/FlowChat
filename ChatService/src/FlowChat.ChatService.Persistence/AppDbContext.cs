@@ -1,5 +1,6 @@
 using System.Data.Common;
 using FlowChat.ChatService.Domain.Entities.ChatMessage;
+using FlowChat.ChatService.Domain.Entities.Conversation;
 using FlowChat.ChatService.Persistence.ReadModels;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -23,6 +24,7 @@ public sealed class AppDbContext : DbContext
     }
 
     public DbSet<ChatMessage> ChatMessages => Set<ChatMessage>();
+    public DbSet<Conversation> Conversations => Set<Conversation>();
     public DbSet<SilverbackOutboxMessage> SilverbackOutboxMessages => Set<SilverbackOutboxMessage>();
     public DbSet<UserProfileProjection> UserProfileProjections => Set<UserProfileProjection>();
     public DbSet<DuetConversation> DuetConversations => Set<DuetConversation>();

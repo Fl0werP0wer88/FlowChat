@@ -14,16 +14,25 @@ public sealed class Conversation : AggregateRootBase<Conversation>
     private readonly List<ParticipantUser> _participants = [];
     public IReadOnlyCollection<ParticipantUser> Participants => _participants.AsReadOnly();
 
+    // Required by EF Core — scalar-only constructor so EF can bind properties without the navigation collection
+    private Conversation(
+        Id<Conversation> id,
+        bool isGroup,
+        string? name,
+        Guid createdByUserId) : base(id)
+    {
+        IsGroup = isGroup;
+        Name = name?.Trim();
+        CreatedByUserId = createdByUserId;
+    }
+
     private Conversation(
         Id<Conversation> id,
         bool isGroup,
         string? name,
         Guid createdByUserId,
-        List<ParticipantUser> participants) : base(id)
+        List<ParticipantUser> participants) : this(id, isGroup, name, createdByUserId)
     {
-        IsGroup = isGroup;
-        Name = name?.Trim();
-        CreatedByUserId = createdByUserId;
         _participants = participants;
     }
 

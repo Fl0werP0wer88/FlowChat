@@ -26,6 +26,7 @@ public static class PersistenceServiceRegistration
         services.AddScoped<IConversationWriteRepository, ConversationWriteRepository>();
         services.AddScoped<IUserProfileProjectionWriteRepository, UserProfileProjectionWriteRepository>();
         services.AddScoped<IDuetConversationRepository, DuetConversationRepository>();
+        services.AddScoped<IUserProfileProjectionReadRepository, UserProfileProjectionReadRepository>();
 
         return services;
     }
