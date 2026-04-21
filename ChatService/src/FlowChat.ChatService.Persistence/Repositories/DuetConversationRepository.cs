@@ -1,5 +1,7 @@
 using FlowChat.ChatService.Application.Contracts.Persistence;
+using FlowChat.ChatService.Domain.Entities.Conversation;
 using FlowChat.ChatService.Persistence.ReadModels;
+using FlowChat.Shared.Domain;
 using Microsoft.EntityFrameworkCore;
 
 namespace FlowChat.ChatService.Persistence.Repositories;
@@ -21,7 +23,7 @@ public sealed class DuetConversationRepository : IDuetConversationRepository
             .AsNoTracking()
             .FirstOrDefaultAsync(x => x.FirstUserId == first && x.SecondUserId == second, cancellationToken);
 
-        return entry?.ConversationId;
+        return entry?.ConversationId.Value;
     }
 
     public Task AddAsync(Guid userId1, Guid userId2, Guid conversationId, CancellationToken cancellationToken = default)
@@ -32,7 +34,7 @@ public sealed class DuetConversationRepository : IDuetConversationRepository
         {
             FirstUserId = first,
             SecondUserId = second,
-            ConversationId = conversationId
+            ConversationId = Id<Conversation>.FromGuid(conversationId)
         });
 
         return Task.CompletedTask;

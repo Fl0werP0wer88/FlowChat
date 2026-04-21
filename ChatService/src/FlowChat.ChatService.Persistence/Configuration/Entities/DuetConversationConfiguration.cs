@@ -1,4 +1,6 @@
+using FlowChat.ChatService.Domain.Entities.Conversation;
 using FlowChat.ChatService.Persistence.ReadModels;
+using FlowChat.Shared.Domain;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -13,6 +15,15 @@ public sealed class DuetConversationConfiguration : IEntityTypeConfiguration<Due
 
         builder.Property(x => x.FirstUserId).IsRequired();
         builder.Property(x => x.SecondUserId).IsRequired();
-        builder.Property(x => x.ConversationId).IsRequired();
+        builder.Property(x => x.ConversationId)
+            .HasConversion(x => x.Value, x => Id<Conversation>.FromGuid(x))
+            .IsRequired();
+
+        builder.HasIndex(x => x.ConversationId);
+
+        builder.HasOne<Conversation>()
+            .WithMany()
+            .HasForeignKey(x => x.ConversationId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

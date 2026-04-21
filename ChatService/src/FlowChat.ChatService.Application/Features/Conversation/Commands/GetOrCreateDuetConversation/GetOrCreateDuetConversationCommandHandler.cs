@@ -10,12 +10,14 @@ public sealed class GetOrCreateDuetConversationCommandHandler
     : CommandHandlerBase<GetOrCreateDuetConversationCommand, DuetConversationDetailDto>
 {
     private readonly IConversationWriteRepository _conversationRepository;
+    private readonly IDuetConversationReadRepository _duetConversationReadRepository;
     private readonly IDuetConversationRepository _duetConversationRepository;
     private readonly IUserProfileProjectionReadRepository _profileReadRepository;
     private ConversationAggregate? _newConversation;
 
     public GetOrCreateDuetConversationCommandHandler(
         IConversationWriteRepository conversationRepository,
+        IDuetConversationReadRepository duetConversationReadRepository,
         IDuetConversationRepository duetConversationRepository,
         IUserProfileProjectionReadRepository profileReadRepository,
         IUnitOfWork unitOfWork,
@@ -23,6 +25,7 @@ public sealed class GetOrCreateDuetConversationCommandHandler
         : base(domainEventDispatcher, unitOfWork)
     {
         _conversationRepository = conversationRepository ?? throw new ArgumentNullException(nameof(conversationRepository));
+        _duetConversationReadRepository = duetConversationReadRepository ?? throw new ArgumentNullException(nameof(duetConversationReadRepository));
         _duetConversationRepository = duetConversationRepository ?? throw new ArgumentNullException(nameof(duetConversationRepository));
         _profileReadRepository = profileReadRepository ?? throw new ArgumentNullException(nameof(profileReadRepository));
     }
@@ -31,41 +34,42 @@ public sealed class GetOrCreateDuetConversationCommandHandler
         GetOrCreateDuetConversationCommand request,
         CancellationToken cancellationToken)
     {
-        var existingConversationId = await _duetConversationRepository.FindConversationIdAsync(
-            request.RequestingUserId, request.PartnerUserId, cancellationToken);
+        var existing = await _duetConversationReadRepository.GetByUserIdsAsync(
+            request.RequestingUserId,
+            request.PartnerUserId,
+            cancellationToken);
 
-        Guid conversationId;
-        IReadOnlyCollection<Guid> participantUserIds;
+        if (existing is not null)
+        {
+            return FlowChatResult<DuetConversationDetailDto>.Success(existing);
+        }
+
+        var existingConversationId = await _duetConversationRepository.FindConversationIdAsync(
+            request.RequestingUserId,
+            request.PartnerUserId,
+            cancellationToken);
 
         if (existingConversationId.HasValue)
         {
-            var existing = await _conversationRepository.GetByIdAsync(
-                existingConversationId.Value, cancellationToken);
-
-            if (existing is null)
-                return FlowChatResult<DuetConversationDetailDto>.Failure(
-                    DomainError.NotFound("Conversation not found."));
-
-            conversationId = existing.Id.Value;
-            participantUserIds = [.. existing.Participants.Select(p => p.UserId)];
+            return FlowChatResult<DuetConversationDetailDto>.Failure(
+                DomainError.NotFound("Conversation not found."));
         }
-        else
-        {
-            _newConversation = ConversationAggregate.Create(
-                isGroup: false,
-                createdByUserId: request.RequestingUserId,
-                participantUserIds: [request.RequestingUserId, request.PartnerUserId],
-                name: null);
 
-            await _conversationRepository.AddAsync(_newConversation, cancellationToken);
+        _newConversation = ConversationAggregate.Create(
+            isGroup: false,
+            createdByUserId: request.RequestingUserId,
+            participantUserIds: [request.RequestingUserId, request.PartnerUserId],
+            name: null);
 
-            await _duetConversationRepository.AddAsync(
-                request.RequestingUserId, request.PartnerUserId, _newConversation.Id.Value,
-                cancellationToken);
+        await _conversationRepository.AddAsync(_newConversation, cancellationToken);
 
-            conversationId = _newConversation.Id.Value;
-            participantUserIds = [request.RequestingUserId, request.PartnerUserId];
-        }
+        await _duetConversationRepository.AddAsync(
+            request.RequestingUserId,
+            request.PartnerUserId,
+            _newConversation.Id.Value,
+            cancellationToken);
+
+        IReadOnlyCollection<Guid> participantUserIds = [request.RequestingUserId, request.PartnerUserId];
 
         var profiles = await _profileReadRepository.GetByIdsAsync(participantUserIds, cancellationToken);
 
@@ -82,7 +86,7 @@ public sealed class GetOrCreateDuetConversationCommandHandler
             .ToList();
 
         return FlowChatResult<DuetConversationDetailDto>.Success(
-            new DuetConversationDetailDto(conversationId, participantDtos));
+            new DuetConversationDetailDto(_newConversation.Id.Value, participantDtos));
     }
 
     protected override IAggregateRoot? GetAggregateRoot(FlowChatResult<DuetConversationDetailDto> result) =>

@@ -28,6 +28,10 @@
     <Project Path="ChatService/src/Workers/FlowChat.ChatService.Consumers/FlowChat.ChatService.Consumers.csproj" />
     <Project Path="ChatService/src/Workers/FlowChat.ChatService.OutboxPublisher/FlowChat.ChatService.OutboxPublisher.csproj" />
   </Folder>
+  <Folder Name="/ChatService/tests/">
+    <Project Path="ChatService/tests/FlowChat.ChatService.IntegrationTests/FlowChat.ChatService.IntegrationTests.csproj" />
+    <Project Path="ChatService/tests/FlowChat.ChatService.UnitTests/FlowChat.ChatService.UnitTests.csproj" />
+  </Folder>
   <Folder Name="/UserProfileService/" />
   <Folder Name="/UserProfileService/src/">
     <Project Path="UserProfileService/src/FlowChat.UserProfileService.API/FlowChat.UserProfileService.API.csproj" />
