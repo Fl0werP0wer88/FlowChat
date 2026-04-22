@@ -6,6 +6,5 @@ public sealed record SendChatMessageCommand(
     Guid ConversationId,
     Guid SenderUserId,
     string? SenderDisplayName,
-    string? Text,
-    IReadOnlyCollection<Guid> RecipientUserIds) : ICommand<Guid>;
+    string? Text) : ICommand<Guid>;
 

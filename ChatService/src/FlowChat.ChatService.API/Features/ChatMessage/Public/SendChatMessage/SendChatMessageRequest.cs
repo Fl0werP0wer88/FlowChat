@@ -8,5 +8,4 @@ public sealed class SendChatMessageRequest : IServiceInput
     public Guid SenderUserId { get; init; }
     public string? SenderDisplayName { get; init; }
     public string? Text { get; init; }
-    public IReadOnlyCollection<Guid> RecipientUserIds { get; init; } = [];
 }

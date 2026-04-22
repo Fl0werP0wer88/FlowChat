@@ -9,23 +9,35 @@ public sealed class SendChatMessageCommandHandler
     : CommandHandlerBase<SendChatMessageCommand, Guid>
 {
     private readonly IChatMessageWriteRepository _chatMessageRepository;
+    private readonly IConversationWriteRepository _conversationRepository;
     private ChatMessageAggregate? _chatMessage;
 
     public SendChatMessageCommandHandler(
         IChatMessageWriteRepository chatMessageRepository,
+        IConversationWriteRepository conversationRepository,
         IUnitOfWork unitOfWork,
         IDomainEventDispatcher domainEventDispatcher)
         : base(domainEventDispatcher, unitOfWork)
     {
         _chatMessageRepository = chatMessageRepository ?? throw new ArgumentNullException(nameof(chatMessageRepository));
+        _conversationRepository = conversationRepository ?? throw new ArgumentNullException(nameof(conversationRepository));
     }
 
     protected override async Task<FlowChatResult<Guid>> ExecuteAsync(
         SendChatMessageCommand request,
         CancellationToken cancellationToken)
     {
-        var normalizedRecipientUserIds = (request.RecipientUserIds ?? Array.Empty<Guid>())
-            .Where(userId => userId != Guid.Empty)
+        var conversation = await _conversationRepository.GetByIdAsync(request.ConversationId, cancellationToken);
+
+        if (conversation is null)
+            return FlowChatResult<Guid>.Failure(DomainError.NotFound("Conversation not found."));
+
+        if (!conversation.Participants.Any(p => p.UserId == request.SenderUserId))
+            return FlowChatResult<Guid>.Failure(DomainError.Unauthorized("Sender is not a participant of this conversation."));
+
+        var recipientUserIds = conversation.Participants
+            .Select(p => p.UserId)
+            .Where(id => id != request.SenderUserId && id != Guid.Empty)
             .Distinct()
             .ToArray();
 
@@ -34,7 +46,7 @@ public sealed class SendChatMessageCommandHandler
             request.SenderUserId,
             request.SenderDisplayName!.Trim(),
             request.Text!.Trim(),
-            normalizedRecipientUserIds);
+            recipientUserIds);
 
         await _chatMessageRepository.AddAsync(_chatMessage, cancellationToken);
 
@@ -44,4 +56,3 @@ public sealed class SendChatMessageCommandHandler
     protected override IAggregateRoot? GetAggregateRoot(FlowChatResult<Guid> result) =>
         result.IsSuccess ? _chatMessage : null;
 }
-

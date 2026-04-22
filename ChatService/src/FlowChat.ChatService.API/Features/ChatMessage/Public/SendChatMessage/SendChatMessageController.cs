@@ -19,6 +19,8 @@ public sealed class SendChatMessageController : ApiControllerBase
     [HttpPost]
     [ProducesResponseType(typeof(SendChatMessageResponse), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> SendChatMessage(
@@ -30,8 +32,7 @@ public sealed class SendChatMessageController : ApiControllerBase
                 request.ConversationId,
                 request.SenderUserId,
                 request.SenderDisplayName,
-                request.Text,
-                request.RecipientUserIds),
+                request.Text),
             cancellationToken);
 
         return result.IsSuccess
