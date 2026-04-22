@@ -7,6 +7,7 @@ using FlowChat.AuthService.Persistence.Repositories;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
+using FlowChat.Shared.Persistance.Auditing;
 using FluentAssertions;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
@@ -32,6 +33,7 @@ public sealed class LoginUserCommandHandlerTests : IDisposable
         var options = new DbContextOptionsBuilder<AppDbContext>()
             .UseSqlite(_connection)
             .UseOpenIddict()
+            .AddInterceptors(new EntityBaseSaveChangesInterceptor())
             .Options;
 
         _dbContext = new AppDbContext(options);

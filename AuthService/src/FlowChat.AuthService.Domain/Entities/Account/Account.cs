@@ -8,7 +8,7 @@ namespace FlowChat.AuthService.Domain.Entities.Account;
 public sealed class Account : AggregateRootBase<Account>
 {
     private Account(
-        Id<Account>? id,
+        Id<Account> id,
         FriendlyUserId friendlyUserId,
         EmailAddress email,
         string passwordHash,

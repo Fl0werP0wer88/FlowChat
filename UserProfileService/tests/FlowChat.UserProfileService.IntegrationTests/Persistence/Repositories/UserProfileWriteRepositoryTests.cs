@@ -1,5 +1,6 @@
 using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
+using FlowChat.Shared.Persistance.Auditing;
 using FlowChat.UserProfileService.Domain.Entities.EmailVerificationRequest;
 using FlowChat.UserProfileService.Domain.Entities.UserProfile;
 using FlowChat.UserProfileService.Persistence;
@@ -62,6 +63,7 @@ public sealed class UserProfileWriteRepositoryTests
     {
         var options = new DbContextOptionsBuilder<AppDbContext>()
             .UseSqlite(connection)
+            .AddInterceptors(new EntityBaseSaveChangesInterceptor())
             .Options;
 
         var context = new AppDbContext(options);

@@ -16,7 +16,7 @@ public class Contact : AggregateRootBase<Contact>
     public bool IsBlocked { get; }
 
     private Contact(
-        Id<Contact>? id,
+        Id<Contact> id,
         Guid ownerUserId,
         Guid contactUserId,
         string displayName,
@@ -84,7 +84,7 @@ public class Contact : AggregateRootBase<Contact>
         bool isBlocked = false,
         Id<Contact>? id = null)
     {
-        return new Contact(id, ownerUserId, contactUserId, displayName, firstName, lastName, phoneNumber, emailAddress, isBlocked);
+        return new Contact(id ?? Id<Contact>.New(), ownerUserId, contactUserId, displayName, firstName, lastName, phoneNumber, emailAddress, isBlocked);
     }
 
     public void MarkDeleted()

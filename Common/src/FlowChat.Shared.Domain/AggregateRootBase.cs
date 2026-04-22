@@ -7,7 +7,7 @@ public abstract class AggregateRootBase<TDomainEntity> : EntityBase<TDomainEntit
 
     public IReadOnlyCollection<IDomainEvent> DomainEvents => _domainEvents.AsReadOnly();
 
-    protected AggregateRootBase(Id<TDomainEntity>? id) : base(id)
+    protected AggregateRootBase(Id<TDomainEntity> id) : base(id)
     {
     }
 

@@ -11,7 +11,7 @@ public sealed class ParticipantUser : EntityBase<ParticipantUser>
     public UtcDateTimeOffset JoinedAtUtc { get; private set; }
 
     private ParticipantUser(
-        Id<ParticipantUser>? id,
+        Id<ParticipantUser> id,
         Id<Conversation> conversationId,
         Guid userId,
         bool isBlocked,

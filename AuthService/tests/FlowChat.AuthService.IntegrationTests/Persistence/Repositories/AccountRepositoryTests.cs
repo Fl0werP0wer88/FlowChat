@@ -2,6 +2,7 @@ using FlowChat.AuthService.Domain.Entities.Account;
 using FlowChat.AuthService.Persistence;
 using FlowChat.AuthService.Persistence.Repositories;
 using FlowChat.Shared.Domain.ValueObjects;
+using FlowChat.Shared.Persistance.Auditing;
 using FluentAssertions;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
@@ -22,6 +23,7 @@ public sealed class AccountRepositoryTests : IDisposable
         var options = new DbContextOptionsBuilder<AppDbContext>()
             .UseSqlite(_connection)
             .UseOpenIddict()
+            .AddInterceptors(new EntityBaseSaveChangesInterceptor())
             .Options;
 
         _dbContext = new AppDbContext(options);

@@ -9,16 +9,15 @@ public abstract class EntityBase<TDomainEntity>
     public Id<TDomainEntity> Id { get; }
     public int Version { get; private set; } = 1;
     public string CreatedBy { get; private set; } = string.Empty;
-    public UtcDateTimeOffset CreatedAtUtc { get; private set; }
+    public UtcDateTimeOffset CreatedAtUtc { get; private set; } = null!;
     public string LastModifiedBy { get; private set; } = string.Empty;
-    public UtcDateTimeOffset LastModifiedAtUtc { get; private set; }
+    public UtcDateTimeOffset LastModifiedAtUtc { get; private set; } = null!;
 
-    protected EntityBase() : this(Id<TDomainEntity>.New()) { }
-    protected EntityBase(Id<TDomainEntity>? id)
+    protected EntityBase(Id<TDomainEntity> id)
     {
-        Id = id ?? Id<TDomainEntity>.New();
-        CreatedAtUtc = UtcDateTimeOffset.UtcNow;
-        LastModifiedAtUtc = UtcDateTimeOffset.UtcNow;
+        ArgumentNullException.ThrowIfNull(id);
+
+        Id = id;
     }
 
     public void IncrementVersion()

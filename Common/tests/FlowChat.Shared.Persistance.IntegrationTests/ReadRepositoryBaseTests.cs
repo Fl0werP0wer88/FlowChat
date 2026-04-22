@@ -2,6 +2,7 @@ using FlowChat.Core.Contracts;
 using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
 using FlowChat.Shared.Persistance;
+using FlowChat.Shared.Persistance.Auditing;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
@@ -22,6 +23,7 @@ public sealed class ReadRepositoryBaseTests : IDisposable
 
         var options = new DbContextOptionsBuilder<TestDbContext>()
             .UseSqlite(_connection)
+            .AddInterceptors(new EntityBaseSaveChangesInterceptor())
             .Options;
 
         _dbContext = new TestDbContext(options);

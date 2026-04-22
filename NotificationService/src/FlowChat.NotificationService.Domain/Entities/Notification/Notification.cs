@@ -6,12 +6,12 @@ namespace FlowChat.NotificationService.Domain.Entities.Notification;
 
 public sealed class Notification : AggregateRootBase<Notification>
 {
-    private Notification() : base(null)
+    private Notification() : base(Id<Notification>.New())
     {
     }
 
     private Notification(
-        Id<Notification>? id,
+        Id<Notification> id,
         Guid userId,
         EmailAddress email,
         string displayName,
@@ -97,7 +97,7 @@ public sealed class Notification : AggregateRootBase<Notification>
         }
 
         return new Notification(
-            null,
+            Id<Notification>.New(),
             userId,
             email,
             displayName.Trim(),

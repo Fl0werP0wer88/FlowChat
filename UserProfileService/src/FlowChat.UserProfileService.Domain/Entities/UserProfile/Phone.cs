@@ -12,7 +12,7 @@ public class Phone : EntityBase<Phone>
     public bool IsVisible { get; private set; }
 
     private Phone(
-        Id<Phone>? id,
+        Id<Phone> id,
         Id<UserProfile> userProfileId,
         PhoneNumber number,
         bool isMain = false,
@@ -37,7 +37,7 @@ public class Phone : EntityBase<Phone>
         Id<Phone>? id = null,
         bool isVisible = true)
     {
-        return new Phone(id, userProfileId, number, isMain, isConfirmed, isVisible);
+        return new Phone(id ?? Id<Phone>.New(), userProfileId, number, isMain, isConfirmed, isVisible);
     }
 
     public static Phone Rehydrate(
@@ -48,7 +48,7 @@ public class Phone : EntityBase<Phone>
         Id<Phone>? id = null,
         bool isVisible = true)
     {
-        return new Phone(id, userProfileId, number, isMain, isConfirmed, isVisible);
+        return new Phone(id ?? Id<Phone>.New(), userProfileId, number, isMain, isConfirmed, isVisible);
     }
 
     internal void Confirm()

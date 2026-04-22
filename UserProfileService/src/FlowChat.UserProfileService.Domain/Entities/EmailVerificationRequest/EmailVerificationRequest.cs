@@ -8,12 +8,12 @@ namespace FlowChat.UserProfileService.Domain.Entities.EmailVerificationRequest;
 
 public sealed class EmailVerificationRequest : AggregateRootBase<EmailVerificationRequest>
 {
-    private EmailVerificationRequest() : base(null)
+    private EmailVerificationRequest() : base(Id<EmailVerificationRequest>.New())
     {
     }
 
     private EmailVerificationRequest(
-        Id<EmailVerificationRequest>? id,
+        Id<EmailVerificationRequest> id,
         Id<DomainUserProfile> userProfileId,
         Id<DomainEmail> emailId,
         string nonce,
@@ -43,7 +43,7 @@ public sealed class EmailVerificationRequest : AggregateRootBase<EmailVerificati
         UtcDateTimeOffset expiresAtUtc,
         Id<EmailVerificationRequest>? id = null)
     {
-        return new EmailVerificationRequest(id, userProfileId, emailId, nonce, expiresAtUtc);
+        return new EmailVerificationRequest(id ?? Id<EmailVerificationRequest>.New(), userProfileId, emailId, nonce, expiresAtUtc);
     }
 
     public bool IsExpired(UtcDateTimeOffset utcNow)

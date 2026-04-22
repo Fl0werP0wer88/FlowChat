@@ -22,7 +22,7 @@ public class UserProfile : AggregateRootBase<UserProfile>
     public IReadOnlyList<Phone> Phones => _phones.AsReadOnly();
 
     private UserProfile(
-        Id<UserProfile>? id,
+        Id<UserProfile> id,
         FriendlyUserId friendlyUserId,
         string? firstName = null,
         string? lastName = null,

@@ -3,6 +3,7 @@ using FlowChat.NotificationService.Domain.Entities.Notification;
 using FlowChat.NotificationService.Persistence;
 using FlowChat.Shared.Domain.ValueObjects;
 using FlowChat.Shared.Persistance;
+using FlowChat.Shared.Persistance.Auditing;
 using FluentAssertions;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
@@ -22,6 +23,7 @@ public sealed class UnitOfWorkTests : IDisposable
 
         var options = new DbContextOptionsBuilder<AppDbContext>()
             .UseSqlite(_connection)
+            .AddInterceptors(new EntityBaseSaveChangesInterceptor())
             .Options;
 
         _dbContext = new AppDbContext(options);

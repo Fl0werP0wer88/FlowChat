@@ -15,7 +15,7 @@ public sealed class ChatMessage : AggregateRootBase<ChatMessage>
     public Guid[] RecipientUserIds { get; private set; }
 
     private ChatMessage(
-        Id<ChatMessage>? id,
+        Id<ChatMessage> id,
         Id<ConversationAggregate> conversationId,
         Guid senderUserId,
         string senderDisplayName,

@@ -84,11 +84,11 @@ public sealed class AggregateStateChangedDomainEventTests
     {
         public const string AggregateTypeName = "tests.test-aggregate";
 
-        private TestAggregate(Id<TestAggregate>? id = null) : base(id)
+        private TestAggregate(Id<TestAggregate> id) : base(id)
         {
         }
 
-        public static TestAggregate Create() => new();
+        public static TestAggregate Create() => new(Id<TestAggregate>.New());
 
         public void MarkChanged(Func<TestSnapshot> snapshotFactory) =>
             MarkAggregateStateChanged(AggregateTypeName, snapshotFactory);

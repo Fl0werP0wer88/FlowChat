@@ -13,7 +13,7 @@ public class Email : EntityBase<Email>
     public bool IsVisible { get; private set; }
 
     private Email(
-        Id<Email>? id,
+        Id<Email> id,
         Id<UserProfile> userProfileId,
         EmailAddress address,
         bool isMain = false,
@@ -39,7 +39,7 @@ public class Email : EntityBase<Email>
         bool isAuth = false,
         Id<Email>? id = null)
     {
-        return new Email(id, userProfileId, address, isMain, isAuth, isConfirmed: false, isVisible: true);
+        return new Email(id ?? Id<Email>.New(), userProfileId, address, isMain, isAuth, isConfirmed: false, isVisible: true);
     }
 
     internal void Confirm()

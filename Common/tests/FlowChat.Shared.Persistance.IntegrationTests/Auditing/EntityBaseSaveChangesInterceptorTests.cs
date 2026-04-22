@@ -143,6 +143,7 @@ public sealed class EntityBaseSaveChangesInterceptorTests
     private sealed class TestEntity : EntityBase<TestEntity>
     {
         private TestEntity()
+            : base(Id<TestEntity>.New())
         {
         }
 

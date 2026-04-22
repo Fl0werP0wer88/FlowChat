@@ -134,7 +134,7 @@ public sealed class WriteRepositoryBaseConcurrencyTests : IDisposable
     {
         public string Name { get; private set; } = string.Empty;
 
-        private TestAggregate() : base(null) { }
+        private TestAggregate() : base(Id<TestAggregate>.New()) { }
 
         private TestAggregate(string name) : base(Id<TestAggregate>.New())
         {
