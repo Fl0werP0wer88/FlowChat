@@ -1,12 +1,13 @@
 using FlowChat.ChatService.Domain.Entities.ChatMessage.Events;
 using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
+using ConversationAggregate = FlowChat.ChatService.Domain.Entities.Conversation.Conversation;
 
 namespace FlowChat.ChatService.Domain.Entities.ChatMessage;
 
 public sealed class ChatMessage : AggregateRootBase<ChatMessage>
 {
-    public Guid ConversationId { get; private set; }
+    public Id<ConversationAggregate> ConversationId { get; private set; }
     public Guid SenderUserId { get; private set; }
     public string SenderDisplayName { get; private set; }
     public string Text { get; private set; }
@@ -15,17 +16,14 @@ public sealed class ChatMessage : AggregateRootBase<ChatMessage>
 
     private ChatMessage(
         Id<ChatMessage>? id,
-        Guid conversationId,
+        Id<ConversationAggregate> conversationId,
         Guid senderUserId,
         string senderDisplayName,
         string text,
         UtcDateTimeOffset sentAtUtc,
         Guid[] recipientUserIds) : base(id)
     {
-        if (conversationId == Guid.Empty)
-        {
-            throw new ArgumentException("ConversationId is required.", nameof(conversationId));
-        }
+        ArgumentNullException.ThrowIfNull(conversationId);
 
         if (senderUserId == Guid.Empty)
         {
@@ -44,7 +42,7 @@ public sealed class ChatMessage : AggregateRootBase<ChatMessage>
     }
 
     public static ChatMessage Create(
-        Guid conversationId,
+        Id<ConversationAggregate> conversationId,
         Guid senderUserId,
         string senderDisplayName,
         string text,
@@ -65,7 +63,7 @@ public sealed class ChatMessage : AggregateRootBase<ChatMessage>
         chatMessage.AddDomainEvent(
             new ChatMessageSentDomainEvent(
                 chatMessage.Id,
-                chatMessage.ConversationId,
+                chatMessage.ConversationId.Value,
                 chatMessage.SenderUserId,
                 chatMessage.SenderDisplayName,
                 chatMessage.Text,

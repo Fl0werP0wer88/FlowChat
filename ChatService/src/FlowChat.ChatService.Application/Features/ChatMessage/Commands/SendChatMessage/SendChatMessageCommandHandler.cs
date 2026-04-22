@@ -42,7 +42,7 @@ public sealed class SendChatMessageCommandHandler
             .ToArray();
 
         _chatMessage = ChatMessageAggregate.Create(
-            request.ConversationId,
+            conversation.Id,
             request.SenderUserId,
             request.SenderDisplayName!.Trim(),
             request.Text!.Trim(),

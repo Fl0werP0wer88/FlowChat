@@ -1,4 +1,5 @@
 using FlowChat.ChatService.Domain.Entities.ChatMessage;
+using FlowChat.ChatService.Domain.Entities.Conversation;
 using FlowChat.Shared.Domain;
 using FlowChat.Shared.Persistance;
 using Microsoft.EntityFrameworkCore;
@@ -17,6 +18,7 @@ public sealed class ChatMessageConfiguration : IEntityTypeConfiguration<ChatMess
             .HasConversion(x => x.Value, x => Id<ChatMessage>.FromGuid(x));
 
         builder.Property(x => x.ConversationId)
+            .HasConversion(x => x.Value, x => Id<Conversation>.FromGuid(x))
             .IsRequired();
 
         builder.Property(x => x.SenderUserId)
@@ -56,6 +58,11 @@ public sealed class ChatMessageConfiguration : IEntityTypeConfiguration<ChatMess
             .HasUtcDateTimeOffsetConversion();
 
         builder.Ignore(x => x.DomainEvents);
+
+        builder.HasOne<Conversation>()
+            .WithMany()
+            .HasForeignKey(x => x.ConversationId)
+            .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasIndex(x => new { x.ConversationId, x.SentAtUtc });
     }

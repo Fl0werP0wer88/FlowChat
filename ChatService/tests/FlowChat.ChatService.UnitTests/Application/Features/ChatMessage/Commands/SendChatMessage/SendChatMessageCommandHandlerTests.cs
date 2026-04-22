@@ -66,9 +66,8 @@ public sealed class SendChatMessageCommandHandlerTests
         var senderId = Guid.NewGuid();
         var otherUser1 = Guid.NewGuid();
         var otherUser2 = Guid.NewGuid();
-        var command = new SendChatMessageCommand(Guid.NewGuid(), senderId, "Alice", "Hello");
-
         var conversationId = Id<ConversationAggregate>.New();
+        var command = new SendChatMessageCommand(conversationId.Value, senderId, "Alice", "Hello");
         var conversation = ConversationAggregate.Restore(
             conversationId,
             isGroup: false,
@@ -99,9 +98,8 @@ public sealed class SendChatMessageCommandHandlerTests
     {
         var senderId = Guid.NewGuid();
         var recipientId = Guid.NewGuid();
-        var command = new SendChatMessageCommand(Guid.NewGuid(), senderId, "Alice", "Hello");
-
         var conversationId = Id<ConversationAggregate>.New();
+        var command = new SendChatMessageCommand(conversationId.Value, senderId, "Alice", "Hello");
         var conversation = ConversationAggregate.Restore(
             conversationId,
             isGroup: false,
@@ -136,7 +134,7 @@ public sealed class SendChatMessageCommandHandlerTests
         result.Value.Should().NotBeEmpty();
         persistedMessage.Should().NotBeNull();
         result.Value.Should().Be(persistedMessage!.Id.Value);
-        persistedMessage.ConversationId.Should().Be(command.ConversationId);
+        persistedMessage.ConversationId.Value.Should().Be(conversationId.Value);
         persistedMessage.SenderUserId.Should().Be(senderId);
         persistedMessage.RecipientUserIds.Should().BeEquivalentTo(new[] { recipientId });
         dispatchedEvents.Should().ContainSingle()
