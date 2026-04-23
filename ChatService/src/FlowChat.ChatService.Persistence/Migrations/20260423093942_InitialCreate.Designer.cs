@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FlowChat.ChatService.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260421162006_AddConversationsAndParticipantUsers")]
-    partial class AddConversationsAndParticipantUsers
+    [Migration("20260423093942_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -178,6 +178,8 @@ namespace FlowChat.ChatService.Persistence.Migrations
 
                     b.HasKey("FirstUserId", "SecondUserId");
 
+                    b.HasIndex("ConversationId");
+
                     b.ToTable("DuetConversations", (string)null);
                 });
 
@@ -241,10 +243,28 @@ namespace FlowChat.ChatService.Persistence.Migrations
                     b.ToTable("SilverbackOutboxMessages");
                 });
 
+            modelBuilder.Entity("FlowChat.ChatService.Domain.Entities.ChatMessage.ChatMessage", b =>
+                {
+                    b.HasOne("FlowChat.ChatService.Domain.Entities.Conversation.Conversation", null)
+                        .WithMany()
+                        .HasForeignKey("ConversationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("FlowChat.ChatService.Domain.Entities.Conversation.ParticipantUser", b =>
                 {
                     b.HasOne("FlowChat.ChatService.Domain.Entities.Conversation.Conversation", null)
                         .WithMany("Participants")
+                        .HasForeignKey("ConversationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("FlowChat.ChatService.Persistence.ReadModels.DuetConversation", b =>
+                {
+                    b.HasOne("FlowChat.ChatService.Domain.Entities.Conversation.Conversation", null)
+                        .WithMany()
                         .HasForeignKey("ConversationId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();

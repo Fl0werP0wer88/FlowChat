@@ -86,10 +86,12 @@ function Get-Users {
         $lastName = $lastNames[[int][Math]::Floor($i / 5)]
         $organization = $organizations[$i % $organizations.Count]
         $sequenceToken = '{0:D2}' -f $sequence
+        $id = [Guid]::Parse(('00000000-0000-0000-0000-{0:x12}' -f $sequence))
         $friendlyUserId = ('{0}.{1}.{2}' -f $firstName, $lastName, $sequenceToken).ToLowerInvariant()
         $email = ('{0}.{1}{2}@seed.flowchat.local' -f $firstName, $lastName, $sequenceToken).ToLowerInvariant()
 
         $users += [PSCustomObject]@{
+            Id = $id
             FriendlyUserId = $friendlyUserId
             Email = $email
             Password = $password
@@ -180,6 +182,7 @@ function Get-QueryParameterValue {
 function Get-LatestEmailVerificationNotification {
     param(
         [Parameter(Mandatory = $true)]
+        [AllowEmptyCollection()]
         [object[]]$Notifications,
         [Parameter(Mandatory = $true)]
         [string]$Email
@@ -287,6 +290,7 @@ for ($index = 0; $index -lt $users.Count; $index++) {
     }
 
     $payload = @{
+        Id = $user.Id
         FriendlyUserId = $user.FriendlyUserId
         Email = $user.Email
         Password = $user.Password
