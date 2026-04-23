@@ -6,10 +6,10 @@ public record DomainError : IDomainError
         new(message ?? "The data provided conflicts with existing data.", ErrorType.Conflict);
 
     public static DomainError ConcurencyConflict(string? message = "The data was modified by another operation.") =>
-        new(message ?? "The data was modified by another operation.", ErrorType.ConcurencyConflict);
+        new(message ?? "The data was modified by another operation.", ErrorType.ConcurencyConflict, isTransient: true);
 
-    public static DomainError NotFound(string? message = "The requested item could not be found.") =>
-        new(message ?? "The requested item could not be found.", ErrorType.NotFound);
+    public static DomainError NotFound(string? message = "The requested item could not be found.", bool isTransient = false) =>
+        new(message ?? "The requested item could not be found.", ErrorType.NotFound, isTransient: isTransient);
 
     public static DomainError BadRequest(string? message = "Invalid request or parameters.") =>
         new(message ?? "Invalid request or parameters.", ErrorType.BadRequest);
@@ -17,18 +17,21 @@ public record DomainError : IDomainError
     public static DomainError Validation(string? message = "Validation Failed.", List<string>? errors = null) =>
         new(message ?? "Validation Failed.", ErrorType.Validation, errors);
 
-    public static DomainError UnExpected(string? message = "Unexpected error happened.") =>
-        new(message ?? "Something when wrong.", ErrorType.Unexpected);
+    public static DomainError UnExpected(string? message = "Unexpected error happened.", bool isTransient = false) =>
+        new(message ?? "Something when wrong.", ErrorType.Unexpected, isTransient: isTransient);
 
     public static DomainError Unauthorized(string? message = "Unauthorized.") =>
         new(message ?? "Unauthorized.", ErrorType.Unauthorized);
 
-    private DomainError(string? message, ErrorType errorType, List<string>? errors = null)
+    private DomainError(string? message, ErrorType errorType, List<string>? errors = null, bool isTransient = false)
     {
         ErrorMessage = message;
         ErrorType = errorType;
         Errors = errors ?? [];
+        IsTransient = isTransient;
     }
+
+    public bool IsTransient { get; init; }
 
     public string? ErrorMessage { get; init; }
 
