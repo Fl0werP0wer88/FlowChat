@@ -57,7 +57,7 @@ public sealed class AddEmailCommandHandlerTests
 
     private static UserProfile CreateProfile(string emailAddress)
     {
-        var profile = UserProfile.Create("jdoe", EmailAddress.Create(emailAddress), id: Id<UserProfile>.New());
+        var profile = UserProfile.Create(Id<UserProfile>.New(), "jdoe", EmailAddress.Create(emailAddress));
         profile.ClearEvents();
         return profile;
     }
@@ -65,7 +65,7 @@ public sealed class AddEmailCommandHandlerTests
     [Fact]
     public async Task Handle_WithEmptyUserIdAndMissingAddress_ReturnsSingleValidationFailureWithBothErrors()
     {
-        var result = await SendAsync(new AddEmailCommand(Guid.Empty, null));
+        var result = await SendAsync(new AddEmailCommand(Guid.Empty, Guid.NewGuid(), null));
 
         result.IsFailure.Should().BeTrue();
         result.Error.ErrorType.Should().Be(ErrorType.Validation);
@@ -81,7 +81,7 @@ public sealed class AddEmailCommandHandlerTests
             .Setup(x => x.GetByIdAsync(profile.Id.Value, It.IsAny<CancellationToken>()))
             .ReturnsAsync(profile);
 
-        var result = await SendAsync(new AddEmailCommand(profile.Id.Value, "not-an-email"));
+        var result = await SendAsync(new AddEmailCommand(profile.Id.Value, Guid.NewGuid(), "not-an-email"));
 
         result.IsFailure.Should().BeTrue();
         result.Error.ErrorType.Should().Be(ErrorType.Validation);
@@ -99,7 +99,7 @@ public sealed class AddEmailCommandHandlerTests
             .Setup(x => x.EmailAddressExistsAsync("john@example.com", It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
-        var result = await SendAsync(new AddEmailCommand(profile.Id.Value, "JOHN@example.com"));
+        var result = await SendAsync(new AddEmailCommand(profile.Id.Value, Guid.NewGuid(), "JOHN@example.com"));
 
         result.IsFailure.Should().BeTrue();
         result.Error.ErrorType.Should().Be(ErrorType.Conflict);
@@ -114,7 +114,7 @@ public sealed class AddEmailCommandHandlerTests
             .Setup(x => x.GetByIdAsync(profile.Id.Value, It.IsAny<CancellationToken>()))
             .ReturnsAsync(profile);
 
-        var result = await SendAsync(new AddEmailCommand(profile.Id.Value, "secondary@example.com"));
+        var result = await SendAsync(new AddEmailCommand(profile.Id.Value, Guid.NewGuid(), "secondary@example.com"));
 
         result.IsSuccess.Should().BeTrue();
         var addedEmail = profile.Emails.Single(x => x.Address.Value == "secondary@example.com");
@@ -135,7 +135,7 @@ public sealed class AddEmailCommandHandlerTests
             .Callback<IEnumerable<IDomainEvent>, CancellationToken>((events, _) => dispatchedEvents.AddRange(events))
             .Returns(Task.CompletedTask);
 
-        var result = await SendAsync(new AddEmailCommand(profile.Id.Value, "secondary@example.com"));
+        var result = await SendAsync(new AddEmailCommand(profile.Id.Value, Guid.NewGuid(), "secondary@example.com"));
 
         result.IsSuccess.Should().BeTrue();
         var addedEmail = profile.Emails.Single(x => x.Address.Value == "secondary@example.com");

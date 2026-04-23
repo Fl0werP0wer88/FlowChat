@@ -22,31 +22,35 @@ public sealed class EmailVerificationRequestWriteRepositoryTests
         await using (var seedContext = CreateDbContext(connection))
         {
             var profile = UserProfile.Create(
+                Id<UserProfile>.New(),
                 "jdoe",
-                EmailAddress.Create("john@example.com"),
-                id: Id<UserProfile>.New());
+                EmailAddress.Create("john@example.com"));
             seedContext.UserProfiles.Add(profile);
             await seedContext.SaveChangesAsync();
 
             emailId = profile.Emails.Single().Id;
 
             var activeRequest = EmailVerificationRequest.Create(
+                Id<EmailVerificationRequest>.New(),
                 profile.Id,
                 emailId,
                 "active-nonce",
                 DateTimeOffset.UtcNow.AddHours(2));
             var expiredRequest = EmailVerificationRequest.Create(
+                Id<EmailVerificationRequest>.New(),
                 profile.Id,
                 emailId,
                 "expired-nonce",
                 DateTimeOffset.UtcNow.AddHours(-2));
             var invalidatedRequest = EmailVerificationRequest.Create(
+                Id<EmailVerificationRequest>.New(),
                 profile.Id,
                 emailId,
                 "invalidated-nonce",
                 DateTimeOffset.UtcNow.AddHours(2));
             invalidatedRequest.Invalidate(DateTimeOffset.UtcNow);
             var consumedRequest = EmailVerificationRequest.Create(
+                Id<EmailVerificationRequest>.New(),
                 profile.Id,
                 emailId,
                 "consumed-nonce",
@@ -75,12 +79,14 @@ public sealed class EmailVerificationRequestWriteRepositoryTests
         await using (var seedContext = CreateDbContext(connection))
         {
             var profile = UserProfile.Create(
+                Id<UserProfile>.New(),
                 "jdoe",
                 EmailAddress.Create("john@example.com"));
             seedContext.UserProfiles.Add(profile);
             await seedContext.SaveChangesAsync();
 
             var request = EmailVerificationRequest.Create(
+                Id<EmailVerificationRequest>.New(),
                 profile.Id,
                 profile.Emails.Single().Id,
                 "nonce-123",

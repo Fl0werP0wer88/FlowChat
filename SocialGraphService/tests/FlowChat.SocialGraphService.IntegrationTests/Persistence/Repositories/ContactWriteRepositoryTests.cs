@@ -1,3 +1,4 @@
+using FlowChat.Shared.Domain;
 using FlowChat.Shared.Persistance.Auditing;
 using FlowChat.SocialGraphService.Domain.Entities.Contact;
 using FlowChat.SocialGraphService.Persistence;
@@ -20,7 +21,7 @@ public sealed class ContactWriteRepositoryTests
 
         await using (var seedContext = CreateDbContext(connection))
         {
-            seedContext.Contacts.Add(Contact.Create(ownerUserId, contactUserId, "Jane Doe"));
+            seedContext.Contacts.Add(Contact.Create(Id<Contact>.New(), ownerUserId, contactUserId, "Jane Doe"));
             await seedContext.SaveChangesAsync();
         }
 

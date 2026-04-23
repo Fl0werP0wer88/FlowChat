@@ -1,5 +1,6 @@
 using FlowChat.UserProfileService.Application.Features.UserProfile.Eventing.DomainEvents.EmailAdded;
 using FlowChat.UserProfileService.Application.Features.UserProfile.EmailVerification.Interfaces;
+using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
 using FlowChat.UserProfileService.Domain.Entities.EmailVerificationRequest;
 using FlowChat.UserProfileService.Domain.Entities.UserProfile;
@@ -16,7 +17,7 @@ public sealed class EmailAddedDomainEventHandlerTests
         _issuerMock
             .Setup(x => x.IssueAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((Guid userProfileId, Guid emailId, string _, CancellationToken _) =>
-                EmailVerificationRequest.Create(userProfileId, emailId, Guid.NewGuid().ToString("N"), DateTimeOffset.UtcNow.AddHours(24)));
+                EmailVerificationRequest.Create(Id<EmailVerificationRequest>.New(), userProfileId, emailId, Guid.NewGuid().ToString("N"), DateTimeOffset.UtcNow.AddHours(24)));
     }
 
     [Fact]

@@ -3,6 +3,7 @@ using FlowChat.Shared.Domain;
 using FlowChat.UserProfileService.Application.Contracts.Persistence;
 using FlowChat.UserProfileService.Domain.Entities.EmailVerificationRequest;
 using FlowChat.Shared.Domain.ValueObjects;
+using DomainPhone = FlowChat.UserProfileService.Domain.Entities.UserProfile.Phone;
 using UserProfileAggregate = FlowChat.UserProfileService.Domain.Entities.UserProfile.UserProfile;
 
 namespace FlowChat.UserProfileService.Application.Features.UserProfile.Commands.AddPhone;
@@ -41,7 +42,7 @@ public sealed class AddPhoneCommandHandler
             return FlowChatResult<Guid>.Failure(DomainError.Conflict($"Phone '{normalizedPhoneNumber!.Value}' already exists."));
         }
 
-        var phone = _userProfile.AddPhone(normalizedPhoneNumber!);
+        var phone = _userProfile.AddPhone(Id<DomainPhone>.FromGuid(request.PhoneId), normalizedPhoneNumber!);
 
         return FlowChatResult<Guid>.Success(phone.Id.Value);
     }

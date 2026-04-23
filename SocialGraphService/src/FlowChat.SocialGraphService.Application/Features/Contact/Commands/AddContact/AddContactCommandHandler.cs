@@ -49,6 +49,7 @@ public sealed class AddContactCommandHandler : CommandHandlerBase<AddContactComm
         }
 
         _contact = ContactAggregate.Create(
+            Id<ContactAggregate>.FromGuid(request.Id),
             request.OwnerUserId,
             projection.UserProfileId,
             CreateDisplayName(projection),

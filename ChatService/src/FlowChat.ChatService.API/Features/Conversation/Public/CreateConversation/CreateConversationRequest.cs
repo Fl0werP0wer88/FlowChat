@@ -4,6 +4,7 @@ namespace FlowChat.ChatService.Api.Features.Conversation.Public.CreateConversati
 
 public sealed class CreateConversationRequest : IServiceInput
 {
+    public Guid Id { get; init; }
     public bool IsGroup { get; init; }
     public Guid CreatedByUserId { get; init; }
     public IReadOnlyCollection<Guid> ParticipantUserIds { get; init; } = [];

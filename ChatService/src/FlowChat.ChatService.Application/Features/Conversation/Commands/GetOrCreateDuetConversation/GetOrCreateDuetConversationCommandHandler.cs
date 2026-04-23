@@ -56,6 +56,7 @@ public sealed class GetOrCreateDuetConversationCommandHandler
         }
 
         _newConversation = ConversationAggregate.Create(
+            Id<ConversationAggregate>.FromGuid(request.Id),
             isGroup: false,
             createdByUserId: request.RequestingUserId,
             participantUserIds: [request.RequestingUserId, request.PartnerUserId],

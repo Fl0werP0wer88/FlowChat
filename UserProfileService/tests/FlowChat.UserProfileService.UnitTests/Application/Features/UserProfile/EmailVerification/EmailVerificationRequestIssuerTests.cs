@@ -1,6 +1,7 @@
 using FlowChat.Core.Messaging;
 using FlowChat.Core.Messaging.AuthService.Events;
 using FlowChat.Shared.Application;
+using FlowChat.Shared.Domain;
 using FlowChat.UserProfileService.Application.Contracts.Infrastructure;
 using FlowChat.UserProfileService.Application.Contracts.Persistence;
 using FlowChat.UserProfileService.Application.Features.UserProfile.EmailVerification;
@@ -49,6 +50,7 @@ public sealed class EmailVerificationRequestIssuerTests
         var userProfileId = Guid.NewGuid();
         var emailId = Guid.NewGuid();
         var existingRequest = EmailVerificationRequest.Create(
+            Id<EmailVerificationRequest>.New(),
             userProfileId,
             emailId,
             "existing-nonce",

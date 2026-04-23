@@ -51,6 +51,7 @@ public sealed class UserEmailVerificationRequestedCommandHandler
         }
 
         _notification = NotificationEntity.CreateEmailVerification(
+            Id<NotificationEntity>.New(),
             request.UserId,
             emailAddress,
             displayName,

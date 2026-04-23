@@ -71,7 +71,7 @@ public sealed class SetMainContactCommandHandlerTests
 
     private static UserProfile CreateUserProfile()
     {
-        var profile = UserProfile.Create("jdoe", EmailAddress.Create("john@example.com"), id: Id<UserProfile>.New());
+        var profile = UserProfile.Create(Id<UserProfile>.New(), "jdoe", EmailAddress.Create("john@example.com"));
         profile.ClearEvents();
         return profile;
     }
@@ -81,7 +81,7 @@ public sealed class SetMainContactCommandHandlerTests
     {
         var profile = CreateUserProfile();
         var firstEmail = profile.Emails.Should().ContainSingle().Subject;
-        var secondEmail = profile.AddEmail(EmailAddress.Create("john.secondary@example.com"));
+        var secondEmail = profile.AddEmail(Id<Email>.New(), EmailAddress.Create("john.secondary@example.com"));
         profile.ConfirmEmail(secondEmail.Id);
         profile.ClearEvents();
 
@@ -145,7 +145,7 @@ public sealed class SetMainContactCommandHandlerTests
     public async Task SetMainEmail_WhenEmailIsNotConfirmed_ReturnsValidationFailure()
     {
         var profile = CreateUserProfile();
-        var secondEmail = profile.AddEmail(EmailAddress.Create("john.secondary@example.com"));
+        var secondEmail = profile.AddEmail(Id<Email>.New(), EmailAddress.Create("john.secondary@example.com"));
         profile.ClearEvents();
 
         _writeRepositoryMock
@@ -175,8 +175,8 @@ public sealed class SetMainContactCommandHandlerTests
     public async Task SetMainPhone_WhenPhoneExists_SetsMainPhoneAndDispatchesDomainEvents()
     {
         var profile = CreateUserProfile();
-        var firstPhone = profile.AddPhone(PhoneNumber.Create("+48123123123"));
-        var secondPhone = profile.AddPhone(PhoneNumber.Create("+48987654321"));
+        var firstPhone = profile.AddPhone(Id<Phone>.New(), PhoneNumber.Create("+48123123123"));
+        var secondPhone = profile.AddPhone(Id<Phone>.New(), PhoneNumber.Create("+48987654321"));
         secondPhone.Confirm();
         profile.ClearEvents();
 
@@ -215,7 +215,7 @@ public sealed class SetMainContactCommandHandlerTests
     public async Task SetMainPhone_WhenPhoneDoesNotExist_ReturnsNotFound()
     {
         var profile = CreateUserProfile();
-        profile.AddPhone(PhoneNumber.Create("+48123123123"));
+        profile.AddPhone(Id<Phone>.New(), PhoneNumber.Create("+48123123123"));
         profile.ClearEvents();
 
         _writeRepositoryMock
@@ -242,8 +242,8 @@ public sealed class SetMainContactCommandHandlerTests
     public async Task SetMainPhone_WhenPhoneIsNotConfirmed_ReturnsValidationFailure()
     {
         var profile = CreateUserProfile();
-        profile.AddPhone(PhoneNumber.Create("+48123123123"));
-        var secondPhone = profile.AddPhone(PhoneNumber.Create("+48987654321"));
+        profile.AddPhone(Id<Phone>.New(), PhoneNumber.Create("+48123123123"));
+        var secondPhone = profile.AddPhone(Id<Phone>.New(), PhoneNumber.Create("+48987654321"));
         profile.ClearEvents();
 
         _writeRepositoryMock

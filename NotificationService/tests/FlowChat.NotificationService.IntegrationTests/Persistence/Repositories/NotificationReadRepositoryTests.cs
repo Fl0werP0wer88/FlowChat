@@ -3,6 +3,7 @@ using FlowChat.NotificationService.Domain.Entities.Notification;
 using FlowChat.NotificationService.Domain.Enums;
 using FlowChat.NotificationService.Persistence;
 using FlowChat.NotificationService.Persistence.Repositories;
+using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
 using FlowChat.Shared.Persistance.Auditing;
 using FluentAssertions;
@@ -35,6 +36,7 @@ public sealed class NotificationReadRepositoryTests : IDisposable
         string? sourceMessageKey = null)
     {
         var notification = Notification.CreateEmailVerification(
+            Id<Notification>.New(),
             userId ?? _fixture.Create<Guid>(),
             EmailAddress.Create($"{_fixture.Create<string>()}@example.com"),
             _fixture.Create<string>(),
@@ -168,6 +170,7 @@ public sealed class NotificationReadRepositoryTests : IDisposable
     {
         var userId = _fixture.Create<Guid>();
         var notification = Notification.CreateEmailVerification(
+            Id<Notification>.New(),
             userId,
             EmailAddress.Create("test@example.com"),
             "Test User",

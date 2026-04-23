@@ -13,7 +13,7 @@ public sealed class UserProfileAggregateTests
     {
         var id = Id<UserProfile>.New();
 
-        var profile = UserProfile.Create("jdoe", EmailAddress.Create("john@example.com"), id: id);
+        var profile = UserProfile.Create(id, "jdoe", EmailAddress.Create("john@example.com"));
 
         profile.Id.Should().Be(id);
         profile.Id.Value.Should().Be(id.Value);
@@ -33,7 +33,7 @@ public sealed class UserProfileAggregateTests
     {
         var userProfileId = Id<UserProfile>.New();
 
-        var email = Email.Create(userProfileId, EmailAddress.Create(" john@example.com "));
+        var email = Email.Create(Id<Email>.New(), userProfileId, EmailAddress.Create(" john@example.com "));
 
         email.Address.Value.Should().Be("john@example.com");
         email.IsConfirmed.Should().BeFalse();
@@ -43,7 +43,7 @@ public sealed class UserProfileAggregateTests
     [Fact]
     public void Email_SetMain_WhenEmailIsNotConfirmed_Throws()
     {
-        var email = Email.Create(Id<UserProfile>.New(), EmailAddress.Create("john@example.com"));
+        var email = Email.Create(Id<Email>.New(), Id<UserProfile>.New(), EmailAddress.Create("john@example.com"));
 
         var action = () => email.SetMain(true);
 
@@ -54,7 +54,7 @@ public sealed class UserProfileAggregateTests
     [Fact]
     public void Email_SetMain_WhenClearingFlagOnUnconfirmedEmail_Succeeds()
     {
-        var email = Email.Create(Id<UserProfile>.New(), EmailAddress.Create("john@example.com"), isMain: true);
+        var email = Email.Create(Id<Email>.New(), Id<UserProfile>.New(), EmailAddress.Create("john@example.com"), isMain: true);
 
         email.SetMain(false);
 
@@ -64,7 +64,7 @@ public sealed class UserProfileAggregateTests
     [Fact]
     public void Email_SetAuth_WhenEmailIsNotConfirmed_Throws()
     {
-        var email = Email.Create(Id<UserProfile>.New(), EmailAddress.Create("john@example.com"));
+        var email = Email.Create(Id<Email>.New(), Id<UserProfile>.New(), EmailAddress.Create("john@example.com"));
 
         var action = () => email.SetAuth(true);
 
@@ -75,7 +75,7 @@ public sealed class UserProfileAggregateTests
     [Fact]
     public void Email_SetAuth_WhenClearingFlagOnUnconfirmedEmail_Succeeds()
     {
-        var email = Email.Create(Id<UserProfile>.New(), EmailAddress.Create("john@example.com"), isAuth: true);
+        var email = Email.Create(Id<Email>.New(), Id<UserProfile>.New(), EmailAddress.Create("john@example.com"), isAuth: true);
 
         email.SetAuth(false);
 
@@ -88,7 +88,7 @@ public sealed class UserProfileAggregateTests
         var profile = CreateExistingProfile();
         var existingMainEmail = profile.Emails.Should().ContainSingle().Subject;
 
-        var email = profile.AddEmail(EmailAddress.Create("john.secondary@example.com"));
+        var email = profile.AddEmail(Id<Email>.New(), EmailAddress.Create("john.secondary@example.com"));
 
         profile.Emails.Should().HaveCount(2);
         profile.Emails.Single(x => x.Address.Value == "john.secondary@example.com").Id.Should().Be(email.Id);
@@ -112,7 +112,7 @@ public sealed class UserProfileAggregateTests
     {
         var profile = CreateExistingProfile();
 
-        Assert.Throws<InvalidOperationException>(() => profile.AddEmail(EmailAddress.Create("JOHN@example.com")));
+        Assert.Throws<InvalidOperationException>(() => profile.AddEmail(Id<Email>.New(), EmailAddress.Create("JOHN@example.com")));
     }
 
     [Fact]
@@ -120,7 +120,7 @@ public sealed class UserProfileAggregateTests
     {
         var profile = CreateExistingProfile();
         var firstEmail = profile.Emails.Should().ContainSingle().Subject;
-        var secondEmail = profile.AddEmail(EmailAddress.Create("john.secondary@example.com"));
+        var secondEmail = profile.AddEmail(Id<Email>.New(), EmailAddress.Create("john.secondary@example.com"));
         profile.ConfirmEmail(secondEmail.Id);
         profile.ClearEvents();
 
@@ -169,7 +169,7 @@ public sealed class UserProfileAggregateTests
     public void UserProfile_SetMainEmail_WhenEmailIsNotConfirmed_Throws()
     {
         var profile = CreateExistingProfile();
-        var secondEmail = profile.AddEmail(EmailAddress.Create("john.secondary@example.com"));
+        var secondEmail = profile.AddEmail(Id<Email>.New(), EmailAddress.Create("john.secondary@example.com"));
 
         var action = () => profile.SetMainEmail(secondEmail.Id);
 
@@ -183,7 +183,7 @@ public sealed class UserProfileAggregateTests
     {
         var profile = CreateExistingProfile();
         var firstEmail = profile.Emails.Should().ContainSingle().Subject;
-        var secondEmail = profile.AddEmail(EmailAddress.Create("john.secondary@example.com"));
+        var secondEmail = profile.AddEmail(Id<Email>.New(), EmailAddress.Create("john.secondary@example.com"));
         profile.ConfirmEmail(secondEmail.Id);
         profile.ClearEvents();
 
@@ -225,7 +225,7 @@ public sealed class UserProfileAggregateTests
     public void UserProfile_SetAuthEmail_WhenEmailIsNotConfirmed_Throws()
     {
         var profile = CreateExistingProfile();
-        var secondEmail = profile.AddEmail(EmailAddress.Create("john.secondary@example.com"));
+        var secondEmail = profile.AddEmail(Id<Email>.New(), EmailAddress.Create("john.secondary@example.com"));
 
         var action = () => profile.SetAuthEmail(secondEmail.Id);
 
@@ -264,7 +264,7 @@ public sealed class UserProfileAggregateTests
     public void UserProfile_ConfirmEmail_WhenNonMainEmailIsConfirmed_DoesNotEmitAggregateStateChangedEvent()
     {
         var profile = CreateExistingProfile();
-        var secondaryEmail = profile.AddEmail(EmailAddress.Create("john.secondary@example.com"));
+        var secondaryEmail = profile.AddEmail(Id<Email>.New(), EmailAddress.Create("john.secondary@example.com"));
         profile.ClearEvents();
 
         profile.ConfirmEmail(secondaryEmail.Id);
@@ -300,7 +300,7 @@ public sealed class UserProfileAggregateTests
         var profile = CreateExistingProfile();
         var mainEmail = profile.Emails.Should().ContainSingle().Subject;
 
-        var phone = profile.AddPhone(PhoneNumber.Create("+48123123123"));
+        var phone = profile.AddPhone(Id<Phone>.New(), PhoneNumber.Create("+48123123123"));
 
         profile.Phones.Should().ContainSingle();
         profile.Phones[0].Id.Should().Be(phone.Id);
@@ -323,28 +323,28 @@ public sealed class UserProfileAggregateTests
     public void UserProfile_AddPhone_WithDuplicateNumber_Throws()
     {
         var profile = CreateExistingProfile();
-        profile.AddPhone(PhoneNumber.Create("+48123123123"));
+        profile.AddPhone(Id<Phone>.New(), PhoneNumber.Create("+48123123123"));
 
-        Assert.Throws<InvalidOperationException>(() => profile.AddPhone(PhoneNumber.Create("+48123123123")));
+        Assert.Throws<InvalidOperationException>(() => profile.AddPhone(Id<Phone>.New(), PhoneNumber.Create("+48123123123")));
     }
 
     [Fact]
     public void UserProfile_AddPhone_WithSameNumberInDifferentFormat_Throws()
     {
         var profile = CreateExistingProfile();
-        profile.AddPhone(PhoneNumber.Create("+48 123 123 123"));
+        profile.AddPhone(Id<Phone>.New(), PhoneNumber.Create("+48 123 123 123"));
 
-        Assert.Throws<InvalidOperationException>(() => profile.AddPhone(PhoneNumber.Create("+48123123123")));
+        Assert.Throws<InvalidOperationException>(() => profile.AddPhone(Id<Phone>.New(), PhoneNumber.Create("+48123123123")));
     }
 
     [Fact]
     public void UserProfile_AddPhone_SecondPhone_IsNotMain()
     {
         var profile = CreateExistingProfile();
-        profile.AddPhone(PhoneNumber.Create("+48123123123"));
+        profile.AddPhone(Id<Phone>.New(), PhoneNumber.Create("+48123123123"));
         profile.ClearEvents();
 
-        var secondPhone = profile.AddPhone(PhoneNumber.Create("+48987654321"));
+        var secondPhone = profile.AddPhone(Id<Phone>.New(), PhoneNumber.Create("+48987654321"));
 
         secondPhone.IsMain.Should().BeFalse();
         profile.DomainEvents.OfType<AggregateStateChangedDomainEvent<UserProfile, UserProfileState>>().Should().BeEmpty();
@@ -384,9 +384,9 @@ public sealed class UserProfileAggregateTests
     public void UserProfile_UpdateProfile_WhenProjectedFieldsDoNotChange_DoesNotEmitAggregateStateChangedEvent()
     {
         var profile = UserProfile.Create(
+            Id<UserProfile>.New(),
             "jdoe",
             EmailAddress.Create("john@example.com"),
-            id: Id<UserProfile>.New(),
             firstName: "John",
             lastName: "Doe",
             organization: "FlowChat");
@@ -414,8 +414,8 @@ public sealed class UserProfileAggregateTests
     public void UserProfile_SetMainPhone_SwitchesMainFlag()
     {
         var profile = CreateExistingProfile();
-        var firstPhone = profile.AddPhone(PhoneNumber.Create("+48123123123"));
-        var secondPhone = profile.AddPhone(PhoneNumber.Create("+48987654321"));
+        var firstPhone = profile.AddPhone(Id<Phone>.New(), PhoneNumber.Create("+48123123123"));
+        var secondPhone = profile.AddPhone(Id<Phone>.New(), PhoneNumber.Create("+48987654321"));
         secondPhone.Confirm();
         profile.ClearEvents();
 
@@ -443,7 +443,7 @@ public sealed class UserProfileAggregateTests
     public void UserProfile_SetMainPhone_WhenPhoneDoesNotExist_Throws()
     {
         var profile = CreateExistingProfile();
-        profile.AddPhone(PhoneNumber.Create("+48123123123"));
+        profile.AddPhone(Id<Phone>.New(), PhoneNumber.Create("+48123123123"));
 
         Assert.Throws<InvalidOperationException>(() => profile.SetMainPhone(Id<Phone>.New()));
     }
@@ -452,7 +452,7 @@ public sealed class UserProfileAggregateTests
     public void UserProfile_SetMainPhone_WhenPhoneIsAlreadyMain_DoesNotEmitDomainEvent()
     {
         var profile = CreateExistingProfile();
-        var phone = profile.AddPhone(PhoneNumber.Create("+48123123123"));
+        var phone = profile.AddPhone(Id<Phone>.New(), PhoneNumber.Create("+48123123123"));
         profile.ClearEvents();
 
         profile.SetMainPhone(phone.Id);
@@ -464,8 +464,8 @@ public sealed class UserProfileAggregateTests
     public void UserProfile_SetMainPhone_WhenPhoneIsNotConfirmed_Throws()
     {
         var profile = CreateExistingProfile();
-        profile.AddPhone(PhoneNumber.Create("+48123123123"));
-        var secondPhone = profile.AddPhone(PhoneNumber.Create("+48987654321"));
+        profile.AddPhone(Id<Phone>.New(), PhoneNumber.Create("+48123123123"));
+        var secondPhone = profile.AddPhone(Id<Phone>.New(), PhoneNumber.Create("+48987654321"));
 
         var action = () => profile.SetMainPhone(secondPhone.Id);
 
@@ -477,8 +477,6 @@ public sealed class UserProfileAggregateTests
     [Fact]
     public void Phone_Create_WithInvalidNumber_Throws()
     {
-        var userProfileId = Id<UserProfile>.New();
-
         var exception = Assert.Throws<ArgumentException>(() => PhoneNumber.Create("123123123"));
 
         exception.Message.Should().StartWith(PhoneNumber.InvalidPhoneNumberMessage);
@@ -489,7 +487,7 @@ public sealed class UserProfileAggregateTests
     {
         var userProfileId = Id<UserProfile>.New();
 
-        var phone = Phone.Create(userProfileId, PhoneNumber.Create("+48 123 123 123"));
+        var phone = Phone.Create(Id<Phone>.New(), userProfileId, PhoneNumber.Create("+48 123 123 123"));
 
         phone.Number.Value.Should().Be("+48123123123");
         phone.IsConfirmed.Should().BeFalse();
@@ -510,7 +508,7 @@ public sealed class UserProfileAggregateTests
     [Fact]
     public void Phone_SetMain_WhenPhoneIsNotConfirmed_Throws()
     {
-        var phone = Phone.Create(Id<UserProfile>.New(), PhoneNumber.Create("+48123123123"));
+        var phone = Phone.Create(Id<Phone>.New(), Id<UserProfile>.New(), PhoneNumber.Create("+48123123123"));
 
         var action = () => phone.SetMain(true);
 
@@ -521,7 +519,7 @@ public sealed class UserProfileAggregateTests
     [Fact]
     public void Phone_SetMain_WhenClearingFlagOnUnconfirmedPhone_Succeeds()
     {
-        var phone = Phone.Create(Id<UserProfile>.New(), PhoneNumber.Create("+48123123123"), isMain: true);
+        var phone = Phone.Create(Id<Phone>.New(), Id<UserProfile>.New(), PhoneNumber.Create("+48123123123"), isMain: true);
 
         phone.SetMain(false);
 
@@ -531,7 +529,7 @@ public sealed class UserProfileAggregateTests
     [Fact]
     public void UserProfile_Create_WithoutEmail_Throws()
     {
-        Assert.Throws<ArgumentNullException>(() => UserProfile.Create("jdoe", null!, id: Id<UserProfile>.New()));
+        Assert.Throws<ArgumentNullException>(() => UserProfile.Create(Id<UserProfile>.New(), "jdoe", null!));
     }
 
     [Fact]
@@ -539,10 +537,10 @@ public sealed class UserProfileAggregateTests
     {
         var id = Id<UserProfile>.New();
         var profile = UserProfile.Create(
+            id,
             "jdoe",
             EmailAddress.Create("john@example.com"),
-            PhoneNumber.Create("+48123123123"),
-            id: id);
+            PhoneNumber.Create("+48123123123"));
 
         profile.Phones.Should().ContainSingle();
         profile.Phones[0].IsMain.Should().BeTrue();
@@ -560,14 +558,14 @@ public sealed class UserProfileAggregateTests
     {
         var id = Id<UserProfile>.New();
         var profile = UserProfile.Create(
+            id,
             " jdoe ",
             EmailAddress.Create("john@example.com"),
             PhoneNumber.Create("+48123123123"),
             " https://cdn.example/avatar.png ",
             " about me ",
             isActive: false,
-            lastSeenAtUtc: new DateTimeOffset(2026, 3, 10, 8, 30, 0, TimeSpan.Zero),
-            id: id);
+            lastSeenAtUtc: new DateTimeOffset(2026, 3, 10, 8, 30, 0, TimeSpan.Zero));
 
         var createdEvent = profile.DomainEvents.OfType<UserProfileCreatedDomainEvent>().Should().ContainSingle().Subject;
         createdEvent.AggregateId.Should().Be(id.Value);
@@ -589,7 +587,7 @@ public sealed class UserProfileAggregateTests
     public void UserProfile_Create_WithEmailOnly_EmitsUserProfileCreatedDomainEvent()
     {
         var id = Id<UserProfile>.New();
-        var profile = UserProfile.Create("jdoe", EmailAddress.Create("john@example.com"), id: id);
+        var profile = UserProfile.Create(id, "jdoe", EmailAddress.Create("john@example.com"));
 
         var createdEvent = profile.DomainEvents.OfType<UserProfileCreatedDomainEvent>().Should().ContainSingle().Subject;
         createdEvent.MainEmailId.Should().Be(profile.Emails.Single().Id);
@@ -604,12 +602,12 @@ public sealed class UserProfileAggregateTests
     public void UserProfile_Create_WithPersonalFields_StoresThemInAggregateAndSnapshot()
     {
         var profile = UserProfile.Create(
+            Id<UserProfile>.New(),
             "jdoe",
             EmailAddress.Create("john@example.com"),
-            id: Id<UserProfile>.New(),
-            firstName: " John ",
-            lastName: " Doe ",
-            organization: " FlowChat ");
+            firstName: "John",
+            lastName: "Doe",
+            organization: "FlowChat");
 
         profile.FirstName.Should().Be("John");
         profile.LastName.Should().Be("Doe");
@@ -619,21 +617,20 @@ public sealed class UserProfileAggregateTests
         createdEvent.FirstName.Should().Be("John");
         createdEvent.LastName.Should().Be("Doe");
         createdEvent.Organization.Should().Be("FlowChat");
-
     }
 
     [Fact]
     public void UserProfile_Create_WithEmailOnly_DoesNotCreatePhone()
     {
         var id = Id<UserProfile>.New();
-        var profile = UserProfile.Create("jdoe", EmailAddress.Create("john@example.com"), id: id);
+        var profile = UserProfile.Create(id, "jdoe", EmailAddress.Create("john@example.com"));
 
         profile.Phones.Should().BeEmpty();
     }
 
     private static UserProfile CreateExistingProfile()
     {
-        var profile = UserProfile.Create("jdoe", EmailAddress.Create("john@example.com"), id: Id<UserProfile>.New());
+        var profile = UserProfile.Create(Id<UserProfile>.New(), "jdoe", EmailAddress.Create("john@example.com"));
         profile.ClearEvents();
         return profile;
     }

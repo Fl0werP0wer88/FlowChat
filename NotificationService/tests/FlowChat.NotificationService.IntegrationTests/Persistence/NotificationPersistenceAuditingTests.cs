@@ -1,5 +1,6 @@
 using AutoFixture;
 using FlowChat.NotificationService.Persistence;
+using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
 using FlowChat.Shared.Persistance.Auditing;
 using FluentAssertions;
@@ -46,6 +47,7 @@ public sealed class NotificationPersistenceAuditingTests
 
         await using var dbContext = new AppDbContext(options);
         var notification = FlowChat.NotificationService.Domain.Entities.Notification.Notification.CreateEmailVerification(
+            Id<FlowChat.NotificationService.Domain.Entities.Notification.Notification>.New(),
             _fixture.Create<Guid>(),
             EmailAddress.Create("test@example.com"),
             "Test User",

@@ -11,6 +11,7 @@ public sealed class AccountTests
     public void Create_WithValidData_InitializesStateAndEmitsRegistrationAndSnapshotEvents()
     {
         var account = Account.Create(
+            Id<Account>.New(),
             "  flower  ",
             EmailAddress.Create(" Flower@example.com "),
             "hashed-password",

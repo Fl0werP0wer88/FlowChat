@@ -40,6 +40,7 @@ public sealed class Notification : AggregateRootBase<Notification>
     public UtcDateTimeOffset? SentAtUtc { get; private set; }
 
     public static Notification CreateWelcome(
+        Id<Notification> id,
         Guid userId,
         EmailAddress email,
         string displayName,
@@ -47,6 +48,7 @@ public sealed class Notification : AggregateRootBase<Notification>
         string? sourceMessageKey)
     {
         return Create(
+            id,
             userId,
             email,
             displayName,
@@ -56,6 +58,7 @@ public sealed class Notification : AggregateRootBase<Notification>
     }
 
     public static Notification CreateEmailVerification(
+        Id<Notification> id,
         Guid userId,
         EmailAddress email,
         string displayName,
@@ -63,6 +66,7 @@ public sealed class Notification : AggregateRootBase<Notification>
         string? sourceMessageKey)
     {
         return Create(
+            id,
             userId,
             email,
             displayName,
@@ -72,6 +76,7 @@ public sealed class Notification : AggregateRootBase<Notification>
     }
 
     private static Notification Create(
+        Id<Notification> id,
         Guid userId,
         EmailAddress email,
         string displayName,
@@ -79,6 +84,8 @@ public sealed class Notification : AggregateRootBase<Notification>
         NotificationType type,
         string? sourceMessageKey)
     {
+        ArgumentNullException.ThrowIfNull(id);
+
         if (userId == Guid.Empty)
         {
             throw new InvalidOperationException("UserId is required.");
@@ -97,7 +104,7 @@ public sealed class Notification : AggregateRootBase<Notification>
         }
 
         return new Notification(
-            Id<Notification>.New(),
+            id,
             userId,
             email,
             displayName.Trim(),

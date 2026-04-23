@@ -42,17 +42,18 @@ public sealed class ChatMessage : AggregateRootBase<ChatMessage>
     }
 
     public static ChatMessage Create(
+        Id<ChatMessage> id,
         Id<ConversationAggregate> conversationId,
         Guid senderUserId,
         string senderDisplayName,
         string text,
         IEnumerable<Guid> recipientUserIds,
-        UtcDateTimeOffset? sentAtUtc = null,
-        Id<ChatMessage>? id = null)
+        UtcDateTimeOffset? sentAtUtc = null)
     {
+        ArgumentNullException.ThrowIfNull(id);
         var normalizedRecipientUserIds = NormalizeRecipientUserIds(recipientUserIds);
         var chatMessage = new ChatMessage(
-            id ?? Id<ChatMessage>.New(),
+            id,
             conversationId,
             senderUserId,
             senderDisplayName,

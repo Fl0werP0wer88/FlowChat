@@ -1,3 +1,4 @@
+using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
 using FlowChat.Shared.Persistance.Auditing;
 using FlowChat.SocialGraphService.Domain.Entities.Contact;
@@ -21,6 +22,7 @@ public sealed class ContactReadRepositoryTests
         await using (var seedContext = CreateDbContext(databaseName))
         {
             var olderContact = Contact.Create(
+                Id<Contact>.New(),
                 ownerUserId,
                 Guid.NewGuid(),
                 "Older Contact",
@@ -32,12 +34,14 @@ public sealed class ContactReadRepositoryTests
             await Task.Delay(20);
 
             var newerContact = Contact.Create(
+                Id<Contact>.New(),
                 ownerUserId,
                 Guid.NewGuid(),
                 "Newer Contact",
                 isBlocked: true);
 
             var ignoredContact = Contact.Create(
+                Id<Contact>.New(),
                 anotherOwnerUserId,
                 Guid.NewGuid(),
                 "Ignored Contact");

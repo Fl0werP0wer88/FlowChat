@@ -1,3 +1,4 @@
+using FlowChat.Shared.Domain;
 using FlowChat.SocialGraphService.Domain.Entities.Contact;
 using FlowChat.SocialGraphService.Domain.Entities.Contact.Events;
 using FluentAssertions;
@@ -9,7 +10,7 @@ public sealed class ContactTests
     [Fact]
     public void Create_WhenOwnerUserIdIsEmpty_ThrowsArgumentOutOfRangeException()
     {
-        var act = () => Contact.Create(Guid.Empty, Guid.NewGuid(), "John Doe");
+        var act = () => Contact.Create(Id<Contact>.New(), Guid.Empty, Guid.NewGuid(), "John Doe");
 
         act.Should().Throw<ArgumentOutOfRangeException>();
     }
@@ -17,7 +18,7 @@ public sealed class ContactTests
     [Fact]
     public void Create_WhenContactUserIdIsEmpty_ThrowsArgumentOutOfRangeException()
     {
-        var act = () => Contact.Create(Guid.NewGuid(), Guid.Empty, "John Doe");
+        var act = () => Contact.Create(Id<Contact>.New(), Guid.NewGuid(), Guid.Empty, "John Doe");
 
         act.Should().Throw<ArgumentOutOfRangeException>();
     }
@@ -27,7 +28,7 @@ public sealed class ContactTests
     {
         var userId = Guid.NewGuid();
 
-        var act = () => Contact.Create(userId, userId, "John Doe");
+        var act = () => Contact.Create(Id<Contact>.New(), userId, userId, "John Doe");
 
         act.Should().Throw<ArgumentException>()
             .WithMessage("OwnerUserId and ContactUserId must be different.");
@@ -36,7 +37,7 @@ public sealed class ContactTests
     [Fact]
     public void Create_WhenContactIsCreated_RaisesContactAddedDomainEvent()
     {
-        var contact = Contact.Create(Guid.NewGuid(), Guid.NewGuid(), "John Doe");
+        var contact = Contact.Create(Id<Contact>.New(), Guid.NewGuid(), Guid.NewGuid(), "John Doe");
 
         contact.DomainEvents.OfType<ContactAddedDomainEvent>().Should().ContainSingle();
     }
@@ -44,7 +45,7 @@ public sealed class ContactTests
     [Fact]
     public void MarkDeleted_WhenCalled_RaisesContactDeletedDomainEvent()
     {
-        var contact = Contact.Create(Guid.NewGuid(), Guid.NewGuid(), "John Doe");
+        var contact = Contact.Create(Id<Contact>.New(), Guid.NewGuid(), Guid.NewGuid(), "John Doe");
         contact.PopDomainEvents();
 
         contact.MarkDeleted();

@@ -24,6 +24,7 @@ public sealed class AddContactController : ApiControllerBase
     {
         var result = await _mediator.Send(
             new AddContactCommand(
+                request.Id,
                 request.OwnerUserId,
                 request.UserId,
                 request.FriendlyUserId,

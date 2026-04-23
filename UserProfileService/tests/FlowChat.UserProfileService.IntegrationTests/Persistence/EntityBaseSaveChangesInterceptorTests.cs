@@ -33,8 +33,9 @@ public sealed class EntityBaseSaveChangesInterceptorTests : IDisposable
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
         var profile = UserProfile.Create(
-            friendlyUserId: "interceptortest",
-            emailAddress: EmailAddress.Create("interceptor@example.com"));
+            Id<UserProfile>.New(),
+            "interceptortest",
+            EmailAddress.Create("interceptor@example.com"));
 
         db.UserProfiles.Add(profile);
         await db.SaveChangesAsync();
@@ -52,8 +53,9 @@ public sealed class EntityBaseSaveChangesInterceptorTests : IDisposable
         var before = DateTimeOffset.UtcNow;
 
         var profile = UserProfile.Create(
-            friendlyUserId: "timestamptest",
-            emailAddress: EmailAddress.Create("timestamp@example.com"));
+            Id<UserProfile>.New(),
+            "timestamptest",
+            EmailAddress.Create("timestamp@example.com"));
 
         db.UserProfiles.Add(profile);
         await db.SaveChangesAsync();
@@ -69,8 +71,9 @@ public sealed class EntityBaseSaveChangesInterceptorTests : IDisposable
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
         var profile = UserProfile.Create(
-            friendlyUserId: "modifytest",
-            emailAddress: EmailAddress.Create("modify@example.com"));
+            Id<UserProfile>.New(),
+            "modifytest",
+            EmailAddress.Create("modify@example.com"));
 
         db.UserProfiles.Add(profile);
         await db.SaveChangesAsync();
@@ -102,8 +105,9 @@ public sealed class EntityBaseSaveChangesInterceptorTests : IDisposable
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
         var profile = UserProfile.Create(
-            friendlyUserId: "childtest",
-            emailAddress: EmailAddress.Create("childtest@example.com"));
+            Id<UserProfile>.New(),
+            "childtest",
+            EmailAddress.Create("childtest@example.com"));
 
         db.UserProfiles.Add(profile);
         await db.SaveChangesAsync();

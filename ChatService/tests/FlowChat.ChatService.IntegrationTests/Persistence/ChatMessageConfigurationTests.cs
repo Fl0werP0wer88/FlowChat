@@ -18,6 +18,7 @@ public sealed class ChatMessageConfigurationTests
 
         await using var context = CreateDbContext(connection);
         var chatMessage = ChatMessage.Create(
+            Id<ChatMessage>.New(),
             Id<Conversation>.New(),
             Guid.NewGuid(),
             "Alice",

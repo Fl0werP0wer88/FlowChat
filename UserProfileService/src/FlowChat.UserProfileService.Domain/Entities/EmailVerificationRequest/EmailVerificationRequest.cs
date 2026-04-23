@@ -37,13 +37,14 @@ public sealed class EmailVerificationRequest : AggregateRootBase<EmailVerificati
     public UtcDateTimeOffset? ConsumedAtUtc { get; private set; }
 
     public static EmailVerificationRequest Create(
+        Id<EmailVerificationRequest> id,
         Id<DomainUserProfile> userProfileId,
         Id<DomainEmail> emailId,
         string nonce,
-        UtcDateTimeOffset expiresAtUtc,
-        Id<EmailVerificationRequest>? id = null)
+        UtcDateTimeOffset expiresAtUtc)
     {
-        return new EmailVerificationRequest(id ?? Id<EmailVerificationRequest>.New(), userProfileId, emailId, nonce, expiresAtUtc);
+        ArgumentNullException.ThrowIfNull(id);
+        return new EmailVerificationRequest(id, userProfileId, emailId, nonce, expiresAtUtc);
     }
 
     public bool IsExpired(UtcDateTimeOffset utcNow)

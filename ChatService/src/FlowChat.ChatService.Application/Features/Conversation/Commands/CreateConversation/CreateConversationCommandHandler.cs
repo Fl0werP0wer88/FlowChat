@@ -44,6 +44,7 @@ public sealed class CreateConversationCommandHandler
         }
 
         _conversation = ConversationAggregate.Create(
+            Id<ConversationAggregate>.FromGuid(request.Id),
             request.IsGroup,
             request.CreatedByUserId,
             request.ParticipantUserIds,

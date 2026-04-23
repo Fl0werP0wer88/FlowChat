@@ -43,6 +43,7 @@ public class UserProfile : AggregateRootBase<UserProfile>
     }
 
     public static UserProfile Create(
+        Id<UserProfile> id,
         string friendlyUserId,
         EmailAddress emailAddress,
         PhoneNumber? phoneNumber = null,
@@ -50,12 +51,12 @@ public class UserProfile : AggregateRootBase<UserProfile>
         string? bio = null,
         bool isActive = true,
         UtcDateTimeOffset? lastSeenAtUtc = null,
-        Id<UserProfile>? id = null,
         string? firstName = null,
         string? lastName = null,
         string? organization = null)
     {
-        var typedId = id ?? Id<UserProfile>.New();
+        ArgumentNullException.ThrowIfNull(id);
+        var typedId = id;
         var normalizedFriendlyUserId = FriendlyUserId.Create(friendlyUserId);
         var normalizedFirstName = NormalizeOptional(firstName);
         var normalizedLastName = NormalizeOptional(lastName);
@@ -74,12 +75,12 @@ public class UserProfile : AggregateRootBase<UserProfile>
             isActive,
             lastSeenAtUtc);
 
-        var initialEmail = Email.Create(userProfile.Id, emailAddress, isMain: true, isAuth: true);
+        var initialEmail = Email.Create(Id<Email>.New(), userProfile.Id, emailAddress, isMain: true, isAuth: true);
         userProfile._emails.Add(initialEmail);
 
         if (phoneNumber is not null)
         {
-            var initialPhone = Phone.Create(userProfile.Id, phoneNumber, isMain: true);
+            var initialPhone = Phone.Create(Id<Phone>.New(), userProfile.Id, phoneNumber, isMain: true);
             userProfile._phones.Add(initialPhone);
         }
 
@@ -105,8 +106,9 @@ public class UserProfile : AggregateRootBase<UserProfile>
         return userProfile;
     }
 
-    public Email AddEmail(EmailAddress address, Id<Email>? id = null)
+    public Email AddEmail(Id<Email> id, EmailAddress address)
     {
+        ArgumentNullException.ThrowIfNull(id);
         ArgumentNullException.ThrowIfNull(address);
 
         if (_emails.Any(x => x.Address == address))
@@ -116,7 +118,7 @@ public class UserProfile : AggregateRootBase<UserProfile>
 
         var shouldBeMainEmail = !_emails.Any(x => x.IsMain);
         var shouldBeAuthEmail = !_emails.Any(x => x.IsAuth);
-        var email = Email.Create(Id, address, isMain: shouldBeMainEmail, isAuth: shouldBeAuthEmail, id: id);
+        var email = Email.Create(id, Id, address, isMain: shouldBeMainEmail, isAuth: shouldBeAuthEmail);
         _emails.Add(email);
 
         AddDomainEvent(new EmailAddedDomainEvent(Id, email.Id, email.Address));
@@ -210,8 +212,9 @@ public class UserProfile : AggregateRootBase<UserProfile>
         }
     }
 
-    public Phone AddPhone(PhoneNumber number, Id<Phone>? id = null)
+    public Phone AddPhone(Id<Phone> id, PhoneNumber number)
     {
+        ArgumentNullException.ThrowIfNull(id);
         ArgumentNullException.ThrowIfNull(number);
 
         if (_phones.Any(x => x.Number == number))
@@ -219,7 +222,7 @@ public class UserProfile : AggregateRootBase<UserProfile>
             throw new InvalidOperationException($"Phone '{number.Value}' already exists.");
         }
 
-        var phone = Phone.Create(Id, number, isMain: !_phones.Any(), id: id);
+        var phone = Phone.Create(id, Id, number, isMain: !_phones.Any());
         _phones.Add(phone);
 
         if (phone.IsMain)

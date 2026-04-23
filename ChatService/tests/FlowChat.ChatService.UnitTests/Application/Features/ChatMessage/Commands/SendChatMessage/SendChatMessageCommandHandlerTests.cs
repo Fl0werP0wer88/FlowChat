@@ -44,7 +44,7 @@ public sealed class SendChatMessageCommandHandlerTests
     [Fact]
     public async Task Handle_ConversationNotFound_ReturnsNotFoundFailure()
     {
-        var command = new SendChatMessageCommand(Guid.NewGuid(), Guid.NewGuid(), "Alice", "Hello");
+        var command = new SendChatMessageCommand(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "Alice", "Hello");
 
         _conversationRepositoryMock
             .Setup(x => x.GetByIdAsync(command.ConversationId, It.IsAny<CancellationToken>()))
@@ -67,7 +67,7 @@ public sealed class SendChatMessageCommandHandlerTests
         var otherUser1 = Guid.NewGuid();
         var otherUser2 = Guid.NewGuid();
         var conversationId = Id<ConversationAggregate>.New();
-        var command = new SendChatMessageCommand(conversationId.Value, senderId, "Alice", "Hello");
+        var command = new SendChatMessageCommand(Guid.NewGuid(), conversationId.Value, senderId, "Alice", "Hello");
         var conversation = ConversationAggregate.Restore(
             conversationId,
             isGroup: false,
@@ -75,8 +75,8 @@ public sealed class SendChatMessageCommandHandlerTests
             createdByUserId: otherUser1,
             participants:
             [
-                ParticipantUser.Create(conversationId, otherUser1),
-                ParticipantUser.Create(conversationId, otherUser2)
+                ParticipantUser.Create(Id<ParticipantUser>.New(), conversationId, otherUser1),
+                ParticipantUser.Create(Id<ParticipantUser>.New(), conversationId, otherUser2)
             ]);
 
         _conversationRepositoryMock
@@ -99,7 +99,7 @@ public sealed class SendChatMessageCommandHandlerTests
         var senderId = Guid.NewGuid();
         var recipientId = Guid.NewGuid();
         var conversationId = Id<ConversationAggregate>.New();
-        var command = new SendChatMessageCommand(conversationId.Value, senderId, "Alice", "Hello");
+        var command = new SendChatMessageCommand(Guid.NewGuid(), conversationId.Value, senderId, "Alice", "Hello");
         var conversation = ConversationAggregate.Restore(
             conversationId,
             isGroup: false,
@@ -107,8 +107,8 @@ public sealed class SendChatMessageCommandHandlerTests
             createdByUserId: senderId,
             participants:
             [
-                ParticipantUser.Create(conversationId, senderId),
-                ParticipantUser.Create(conversationId, recipientId)
+                ParticipantUser.Create(Id<ParticipantUser>.New(), conversationId, senderId),
+                ParticipantUser.Create(Id<ParticipantUser>.New(), conversationId, recipientId)
             ]);
 
         ChatMessageAggregate? persistedMessage = null;

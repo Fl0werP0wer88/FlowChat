@@ -78,6 +78,7 @@ public sealed class LoginUserCommandHandlerTests : IDisposable
     public async Task Handle_WhenCredentialsAreValid_ReturnsPrincipalBuiltFromPersistedAccount()
     {
         var account = FlowChat.AuthService.Domain.Entities.Account.Account.Create(
+            Id<FlowChat.AuthService.Domain.Entities.Account.Account>.New(),
             "flower",
             EmailAddress.Create("flower@example.com"),
             _passwordHashingService.HashPassword("P@ssw0rd!"),

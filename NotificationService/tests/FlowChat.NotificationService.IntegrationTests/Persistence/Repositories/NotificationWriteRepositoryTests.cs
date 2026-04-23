@@ -3,6 +3,7 @@ using FlowChat.NotificationService.Domain.Entities.Notification;
 using FlowChat.NotificationService.Domain.Enums;
 using FlowChat.NotificationService.Persistence;
 using FlowChat.NotificationService.Persistence.Repositories;
+using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
 using FlowChat.Shared.Persistance.Auditing;
 using FluentAssertions;
@@ -32,6 +33,7 @@ public sealed class NotificationWriteRepositoryTests : IDisposable
     private static Notification CreateNotification(Guid? userId = null, string? sourceMessageKey = null)
     {
         return Notification.CreateEmailVerification(
+            Id<Notification>.New(),
             userId ?? Guid.NewGuid(),
             EmailAddress.Create("test@example.com"),
             "Test User",

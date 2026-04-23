@@ -41,7 +41,7 @@ public sealed class SetAuthEmailCommandHandlerTests
     {
         var profile = CreateUserProfile();
         var initialAuthEmail = profile.Emails.Should().ContainSingle().Subject;
-        var secondaryEmail = profile.AddEmail(EmailAddress.Create("john.secondary@example.com"));
+        var secondaryEmail = profile.AddEmail(Id<Email>.New(), EmailAddress.Create("john.secondary@example.com"));
         profile.ConfirmEmail(secondaryEmail.Id);
         profile.ClearEvents();
 
@@ -109,7 +109,7 @@ public sealed class SetAuthEmailCommandHandlerTests
     public async Task Handle_WhenEmailIsNotConfirmed_ReturnsValidationFailure()
     {
         var profile = CreateUserProfile();
-        var secondaryEmail = profile.AddEmail(EmailAddress.Create("john.secondary@example.com"));
+        var secondaryEmail = profile.AddEmail(Id<Email>.New(), EmailAddress.Create("john.secondary@example.com"));
         profile.ClearEvents();
 
         _writeRepositoryMock
@@ -140,7 +140,7 @@ public sealed class SetAuthEmailCommandHandlerTests
 
     private static UserProfile CreateUserProfile()
     {
-        var profile = UserProfile.Create("jdoe", EmailAddress.Create("john@example.com"), id: Id<UserProfile>.New());
+        var profile = UserProfile.Create(Id<UserProfile>.New(), "jdoe", EmailAddress.Create("john@example.com"));
         profile.ClearEvents();
         return profile;
     }

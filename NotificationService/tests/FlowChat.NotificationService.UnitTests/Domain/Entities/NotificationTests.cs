@@ -1,5 +1,6 @@
 using FlowChat.NotificationService.Domain.Entities.Notification;
 using FlowChat.NotificationService.Domain.Enums;
+using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
 using FluentAssertions;
 
@@ -14,6 +15,7 @@ public sealed class NotificationTests
     {
         var userId = Guid.NewGuid();
         var notification = Notification.CreateEmailVerification(
+            Id<Notification>.New(),
             userId,
             EmailAddress.Create("user@example.com"),
             "John Doe",
@@ -36,6 +38,7 @@ public sealed class NotificationTests
     public void CreateEmailVerification_WithNullSourceMessageKey_SetsSourceMessageKeyToNull()
     {
         var notification = Notification.CreateEmailVerification(
+            Id<Notification>.New(),
             Guid.NewGuid(),
             EmailAddress.Create("user@example.com"),
             "John Doe",
@@ -49,6 +52,7 @@ public sealed class NotificationTests
     public void CreateEmailVerification_WithWhitespaceSourceMessageKey_SetsSourceMessageKeyToNull()
     {
         var notification = Notification.CreateEmailVerification(
+            Id<Notification>.New(),
             Guid.NewGuid(),
             EmailAddress.Create("user@example.com"),
             "John Doe",
@@ -62,6 +66,7 @@ public sealed class NotificationTests
     public void CreateEmailVerification_TrimsEmailDisplayNameAndBody()
     {
         var notification = Notification.CreateEmailVerification(
+            Id<Notification>.New(),
             Guid.NewGuid(),
             EmailAddress.Create("  user@example.com  "),
             "  John Doe  ",
@@ -77,6 +82,7 @@ public sealed class NotificationTests
     public void CreateEmailVerification_WithEmptyUserId_ThrowsInvalidOperationException()
     {
         var act = () => Notification.CreateEmailVerification(
+            Id<Notification>.New(),
             Guid.Empty,
             EmailAddress.Create("user@example.com"),
             "John Doe",
@@ -102,6 +108,7 @@ public sealed class NotificationTests
     public void CreateEmailVerification_WithBlankDisplayName_ThrowsInvalidOperationException(string displayName)
     {
         var act = () => Notification.CreateEmailVerification(
+            Id<Notification>.New(),
             Guid.NewGuid(),
             EmailAddress.Create("user@example.com"),
             displayName,
@@ -117,6 +124,7 @@ public sealed class NotificationTests
     public void CreateEmailVerification_WithBlankBody_ThrowsInvalidOperationException(string body)
     {
         var act = () => Notification.CreateEmailVerification(
+            Id<Notification>.New(),
             Guid.NewGuid(),
             EmailAddress.Create("user@example.com"),
             "John Doe",
@@ -133,6 +141,7 @@ public sealed class NotificationTests
     {
         var userId = Guid.NewGuid();
         var notification = Notification.CreateWelcome(
+            Id<Notification>.New(),
             userId,
             EmailAddress.Create("user@example.com"),
             "Jane Doe",
@@ -151,6 +160,7 @@ public sealed class NotificationTests
     public void MarkSent_WithProviderMessageId_SetsStatusToSentAndStoresId()
     {
         var notification = Notification.CreateEmailVerification(
+            Id<Notification>.New(),
             Guid.NewGuid(),
             EmailAddress.Create("user@example.com"),
             "John",
@@ -173,6 +183,7 @@ public sealed class NotificationTests
     public void MarkSent_WithNullOrWhitespaceProviderMessageId_SetsProviderMessageIdToNull(string? providerId)
     {
         var notification = Notification.CreateEmailVerification(
+            Id<Notification>.New(),
             Guid.NewGuid(),
             EmailAddress.Create("user@example.com"),
             "John",
@@ -189,6 +200,7 @@ public sealed class NotificationTests
     public void MarkSent_TrimsProviderMessageId()
     {
         var notification = Notification.CreateEmailVerification(
+            Id<Notification>.New(),
             Guid.NewGuid(),
             EmailAddress.Create("user@example.com"),
             "John",
@@ -206,6 +218,7 @@ public sealed class NotificationTests
     public void MarkFailed_WithReason_SetsStatusToFailedAndStoresReason()
     {
         var notification = Notification.CreateEmailVerification(
+            Id<Notification>.New(),
             Guid.NewGuid(),
             EmailAddress.Create("user@example.com"),
             "John",
@@ -227,6 +240,7 @@ public sealed class NotificationTests
     public void MarkFailed_WithNullOrWhitespaceReason_UsesDefaultMessage(string? reason)
     {
         var notification = Notification.CreateEmailVerification(
+            Id<Notification>.New(),
             Guid.NewGuid(),
             EmailAddress.Create("user@example.com"),
             "John",
@@ -243,6 +257,7 @@ public sealed class NotificationTests
     public void MarkFailed_TrimsFailureReason()
     {
         var notification = Notification.CreateEmailVerification(
+            Id<Notification>.New(),
             Guid.NewGuid(),
             EmailAddress.Create("user@example.com"),
             "John",
@@ -258,6 +273,7 @@ public sealed class NotificationTests
     public void MarkFailed_AfterMarkSent_ClearsSentAtUtcAndProviderMessageId()
     {
         var notification = Notification.CreateEmailVerification(
+            Id<Notification>.New(),
             Guid.NewGuid(),
             EmailAddress.Create("user@example.com"),
             "John",

@@ -27,7 +27,7 @@ public sealed class AddEmailController : ApiControllerBase
         [FromBody] AddEmailRequest request,
         CancellationToken cancellationToken)
     {
-        var result = await _mediator.Send(new AddEmailCommand(userId, request.Address), cancellationToken);
+        var result = await _mediator.Send(new AddEmailCommand(userId, request.EmailId, request.Address), cancellationToken);
 
         return result.IsSuccess
             ? Ok(new AddEmailResponse(result.Value))

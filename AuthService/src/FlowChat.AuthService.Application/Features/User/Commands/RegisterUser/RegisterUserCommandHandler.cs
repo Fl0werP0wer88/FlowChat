@@ -40,6 +40,7 @@ public class RegisterUserCommandHandler : CommandHandlerBase<RegisterUserCommand
         }
 
         _account = DomainAccount.Create(
+            Id<DomainAccount>.FromGuid(request.Id),
             request.FriendlyUserId,
             emailAddress,
             _passwordHashingService.HashPassword(request.Password),

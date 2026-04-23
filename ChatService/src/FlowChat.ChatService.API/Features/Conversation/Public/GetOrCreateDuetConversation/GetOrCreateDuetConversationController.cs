@@ -26,7 +26,7 @@ public sealed class GetOrCreateDuetConversationController : ApiControllerBase
         CancellationToken cancellationToken)
     {
         var result = await _mediator.Send(
-            new GetOrCreateDuetConversationCommand(request.RequestingUserId, request.PartnerUserId),
+            new GetOrCreateDuetConversationCommand(request.Id, request.RequestingUserId, request.PartnerUserId),
             cancellationToken);
 
         if (!result.IsSuccess)

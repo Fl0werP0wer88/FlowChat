@@ -1,6 +1,7 @@
 using AutoFixture;
 using FlowChat.NotificationService.Domain.Entities.Notification;
 using FlowChat.NotificationService.Persistence;
+using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
 using FlowChat.Shared.Persistance;
 using FlowChat.Shared.Persistance.Auditing;
@@ -39,6 +40,7 @@ public sealed class UnitOfWorkTests : IDisposable
 
     private static Notification CreateNotification() =>
         Notification.CreateEmailVerification(
+            Id<Notification>.New(),
             Guid.NewGuid(),
             EmailAddress.Create("test@example.com"),
             "Test User",

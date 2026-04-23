@@ -1,3 +1,4 @@
+using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
 using FlowChat.Shared.Persistance.Auditing;
 using FlowChat.UserProfileService.Domain.Entities.EmailVerificationRequest;
@@ -20,6 +21,7 @@ public sealed class UserProfileReadRepositoryTests
         await using (var seedContext = CreateDbContext(connection))
         {
             var profile = UserProfile.Create(
+                Id<UserProfile>.New(),
                 "Jdoe",
                 EmailAddress.Create("john@example.com"),
                 PhoneNumber.Create("+48123123123"));
@@ -48,14 +50,17 @@ public sealed class UserProfileReadRepositoryTests
         await using (var seedContext = CreateDbContext(connection))
         {
             seedContext.UserProfiles.Add(UserProfile.Create(
+                Id<UserProfile>.New(),
                 "zoe",
                 EmailAddress.Create("zoe@example.com"),
                 firstName: "Alex"));
             seedContext.UserProfiles.Add(UserProfile.Create(
+                Id<UserProfile>.New(),
                 "adam",
                 EmailAddress.Create("adam@example.com"),
                 firstName: "Alex"));
             seedContext.UserProfiles.Add(UserProfile.Create(
+                Id<UserProfile>.New(),
                 "hidden",
                 EmailAddress.Create("hidden@example.com"),
                 isActive: false));
@@ -81,6 +86,7 @@ public sealed class UserProfileReadRepositoryTests
         await using (var seedContext = CreateDbContext(connection))
         {
             var profile = UserProfile.Create(
+                Id<UserProfile>.New(),
                 "jdoe",
                 EmailAddress.Create("john@example.com"));
             userId = profile.Id.Value;
@@ -106,6 +112,7 @@ public sealed class UserProfileReadRepositoryTests
         await using (var seedContext = CreateDbContext(connection))
         {
             var profile = UserProfile.Create(
+                Id<UserProfile>.New(),
                 "jdoe",
                 EmailAddress.Create("john@example.com"));
 

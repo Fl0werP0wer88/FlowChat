@@ -29,12 +29,12 @@ public sealed class ParticipantUser : EntityBase<ParticipantUser>
     }
 
     public static ParticipantUser Create(
+        Id<ParticipantUser> id,
         Id<Conversation> conversationId,
-        Guid userId,
-        Id<ParticipantUser>? id = null)
+        Guid userId)
     {
         return new ParticipantUser(
-            id ?? Id<ParticipantUser>.New(),
+            id,
             conversationId,
             userId,
             isBlocked: false,

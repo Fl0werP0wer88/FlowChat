@@ -22,11 +22,11 @@ public sealed class UserProfileWriteRepositoryTests
         await using (var seedContext = CreateDbContext(connection))
         {
             var profile = UserProfile.Create(
+                profileId,
                 "jdoe",
                 EmailAddress.Create("john@example.com"),
-                PhoneNumber.Create("+48123123123"),
-                id: profileId);
-            profile.AddEmail(EmailAddress.Create("john.secondary@example.com"));
+                PhoneNumber.Create("+48123123123"));
+            profile.AddEmail(Id<Email>.New(), EmailAddress.Create("john.secondary@example.com"));
 
             seedContext.UserProfiles.Add(profile);
             await seedContext.SaveChangesAsync();

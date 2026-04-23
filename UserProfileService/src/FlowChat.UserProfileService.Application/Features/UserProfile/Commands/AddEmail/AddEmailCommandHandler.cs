@@ -3,6 +3,7 @@ using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
 using FlowChat.UserProfileService.Application.Contracts.Persistence;
 using FlowChat.UserProfileService.Domain.Entities.EmailVerificationRequest;
+using DomainEmail = FlowChat.UserProfileService.Domain.Entities.UserProfile.Email;
 using UserProfileAggregate = FlowChat.UserProfileService.Domain.Entities.UserProfile.UserProfile;
 
 namespace FlowChat.UserProfileService.Application.Features.UserProfile.Commands.AddEmail;
@@ -44,7 +45,7 @@ public sealed class AddEmailCommandHandler
             return FlowChatResult<Guid>.Failure(DomainError.Conflict($"Email '{normalizedEmailAddress.Value}' is already taken."));
         }
 
-        var email = _userProfile.AddEmail(normalizedEmailAddress);
+        var email = _userProfile.AddEmail(Id<DomainEmail>.FromGuid(request.EmailId), normalizedEmailAddress);
 
         return FlowChatResult<Guid>.Success(email.Id.Value);
     }

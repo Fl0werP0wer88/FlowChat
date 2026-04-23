@@ -1,3 +1,4 @@
+using FlowChat.Shared.Domain;
 using FlowChat.Shared.Persistance;
 using FlowChat.Shared.Persistance.Auditing;
 using FlowChat.SocialGraphService.Domain.Entities.Contact;
@@ -20,7 +21,7 @@ public sealed class UnitOfWorkTests
         var contactId = await unitOfWork.ExecuteInTransactionAsync(
             async cancellationToken =>
             {
-                var contact = Contact.Create(Guid.NewGuid(), Guid.NewGuid(), "John Doe");
+                var contact = Contact.Create(Id<Contact>.New(), Guid.NewGuid(), Guid.NewGuid(), "John Doe");
                 await context.Contacts.AddAsync(contact, cancellationToken);
                 return contact.Id.Value;
             },
@@ -45,7 +46,7 @@ public sealed class UnitOfWorkTests
             async cancellationToken =>
             {
                 await context.Contacts.AddAsync(
-                    Contact.Create(Guid.NewGuid(), Guid.NewGuid(), "John Doe"),
+                    Contact.Create(Id<Contact>.New(), Guid.NewGuid(), Guid.NewGuid(), "John Doe"),
                     cancellationToken);
 
                 throw new InvalidOperationException("boom");
@@ -66,7 +67,7 @@ public sealed class UnitOfWorkTests
         await using var context = CreateDbContext(connection);
         var unitOfWork = new EfUnitOfWork<AppDbContext>(context);
 
-        context.Contacts.Add(Contact.Create(Guid.NewGuid(), Guid.NewGuid(), "John Doe"));
+        context.Contacts.Add(Contact.Create(Id<Contact>.New(), Guid.NewGuid(), Guid.NewGuid(), "John Doe"));
 
         var affectedRows = await unitOfWork.SaveChangesAsync(CancellationToken.None);
 

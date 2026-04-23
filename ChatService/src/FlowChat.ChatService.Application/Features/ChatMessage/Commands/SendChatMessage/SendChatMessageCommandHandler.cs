@@ -42,6 +42,7 @@ public sealed class SendChatMessageCommandHandler
             .ToArray();
 
         _chatMessage = ChatMessageAggregate.Create(
+            Id<ChatMessageAggregate>.FromGuid(request.Id),
             conversation.Id,
             request.SenderUserId,
             request.SenderDisplayName!.Trim(),

@@ -1,6 +1,7 @@
 using FlowChat.AuthService.Domain.Entities.Account;
 using FlowChat.AuthService.Persistence;
 using FlowChat.AuthService.Persistence.Repositories;
+using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
 using FlowChat.Shared.Persistance.Auditing;
 using FluentAssertions;
@@ -41,7 +42,7 @@ public sealed class AccountRepositoryTests : IDisposable
     public async Task CreateAsync_AndGetByEmailAsync_PersistsAndReturnsAccount()
     {
         var emailAddress = EmailAddress.Create("flower@example.com");
-        var account = Account.Create("flower", emailAddress, "hash", "stamp");
+        var account = Account.Create(Id<Account>.New(), "flower", emailAddress, "hash", "stamp");
 
         await _sut.CreateAsync(account, CancellationToken.None);
         await _dbContext.SaveChangesAsync();
@@ -57,7 +58,7 @@ public sealed class AccountRepositoryTests : IDisposable
     [Fact]
     public async Task GetByLoginAsync_WithFriendlyUserId_ReturnsMatchingAccount()
     {
-        var account = Account.Create("flower", EmailAddress.Create("flower@example.com"), "hash", "stamp");
+        var account = Account.Create(Id<Account>.New(), "flower", EmailAddress.Create("flower@example.com"), "hash", "stamp");
 
         await _sut.CreateAsync(account, CancellationToken.None);
         await _dbContext.SaveChangesAsync();
@@ -71,7 +72,7 @@ public sealed class AccountRepositoryTests : IDisposable
     [Fact]
     public async Task UpdateAsync_PersistsMutableFields()
     {
-        var account = Account.Create("flower", EmailAddress.Create("flower@example.com"), "hash", "stamp");
+        var account = Account.Create(Id<Account>.New(), "flower", EmailAddress.Create("flower@example.com"), "hash", "stamp");
 
         await _sut.CreateAsync(account, CancellationToken.None);
         await _dbContext.SaveChangesAsync();

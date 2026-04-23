@@ -13,7 +13,7 @@ public sealed class EmailVerificationRequestTests
         var emailId = Id<Email>.New();
         var expiresAtUtc = new DateTimeOffset(2026, 4, 2, 8, 0, 0, TimeSpan.Zero);
 
-        var request = EmailVerificationRequest.Create(userProfileId, emailId, " nonce-123 ", expiresAtUtc);
+        var request = EmailVerificationRequest.Create(Id<EmailVerificationRequest>.New(), userProfileId, emailId, " nonce-123 ", expiresAtUtc);
 
         request.UserProfileId.Should().Be(userProfileId);
         request.EmailId.Should().Be(emailId);
@@ -27,6 +27,7 @@ public sealed class EmailVerificationRequestTests
     public void Create_WithNonUtcExpiration_ThrowsArgumentException()
     {
         var act = () => EmailVerificationRequest.Create(
+            Id<EmailVerificationRequest>.New(),
             Id<UserProfile>.New(),
             Id<Email>.New(),
             "nonce-123",
@@ -41,6 +42,7 @@ public sealed class EmailVerificationRequestTests
     {
         var nowUtc = new DateTimeOffset(2026, 4, 1, 8, 0, 0, TimeSpan.Zero);
         var request = EmailVerificationRequest.Create(
+            Id<EmailVerificationRequest>.New(),
             Id<UserProfile>.New(),
             Id<Email>.New(),
             "nonce-123",
@@ -57,6 +59,7 @@ public sealed class EmailVerificationRequestTests
     {
         var nowUtc = new DateTimeOffset(2026, 4, 1, 8, 0, 0, TimeSpan.Zero);
         var request = EmailVerificationRequest.Create(
+            Id<EmailVerificationRequest>.New(),
             Id<UserProfile>.New(),
             Id<Email>.New(),
             "nonce-123",
@@ -74,6 +77,7 @@ public sealed class EmailVerificationRequestTests
         var firstConsumeAtUtc = new DateTimeOffset(2026, 4, 1, 8, 0, 0, TimeSpan.Zero);
         var secondConsumeAtUtc = firstConsumeAtUtc.AddMinutes(5);
         var request = EmailVerificationRequest.Create(
+            Id<EmailVerificationRequest>.New(),
             Id<UserProfile>.New(),
             Id<Email>.New(),
             "nonce-123",
@@ -89,6 +93,7 @@ public sealed class EmailVerificationRequestTests
     public void IsActive_WithNonUtcArgument_ThrowsArgumentException()
     {
         var request = EmailVerificationRequest.Create(
+            Id<EmailVerificationRequest>.New(),
             Id<UserProfile>.New(),
             Id<Email>.New(),
             "nonce-123",

@@ -30,14 +30,15 @@ public class Phone : EntityBase<Phone>
     }
 
     public static Phone Create(
+        Id<Phone> id,
         Id<UserProfile> userProfileId,
         PhoneNumber number,
         bool isMain = false,
         bool isConfirmed = false,
-        Id<Phone>? id = null,
         bool isVisible = true)
     {
-        return new Phone(id ?? Id<Phone>.New(), userProfileId, number, isMain, isConfirmed, isVisible);
+        ArgumentNullException.ThrowIfNull(id);
+        return new Phone(id, userProfileId, number, isMain, isConfirmed, isVisible);
     }
 
     public static Phone Rehydrate(

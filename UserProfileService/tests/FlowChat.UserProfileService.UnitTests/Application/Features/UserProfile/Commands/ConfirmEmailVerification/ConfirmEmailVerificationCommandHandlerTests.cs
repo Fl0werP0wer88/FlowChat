@@ -66,7 +66,7 @@ public sealed class ConfirmEmailVerificationCommandHandlerTests
 
     private static UserProfile CreateUserProfile(string emailAddress)
     {
-        var userProfile = UserProfile.Create("jdoe", EmailAddress.Create(emailAddress), id: Id<UserProfile>.New());
+        var userProfile = UserProfile.Create(Id<UserProfile>.New(), "jdoe", EmailAddress.Create(emailAddress));
         userProfile.ClearEvents();
         return userProfile;
     }
@@ -77,6 +77,7 @@ public sealed class ConfirmEmailVerificationCommandHandlerTests
         var profile = CreateUserProfile("john@example.com");
         var email = profile.Emails.Should().ContainSingle().Subject;
         var verificationRequest = EmailVerificationRequest.Create(
+            Id<EmailVerificationRequest>.New(),
             profile.Id,
             email.Id,
             "valid-nonce",
@@ -121,6 +122,7 @@ public sealed class ConfirmEmailVerificationCommandHandlerTests
         var profile = CreateUserProfile("john@example.com");
         var email = profile.Emails.Should().ContainSingle().Subject;
         var verificationRequest = EmailVerificationRequest.Create(
+            Id<EmailVerificationRequest>.New(),
             profile.Id,
             email.Id,
             "used-nonce",
@@ -149,6 +151,7 @@ public sealed class ConfirmEmailVerificationCommandHandlerTests
         var userProfileId = Guid.NewGuid();
         var emailId = Guid.NewGuid();
         var verificationRequest = EmailVerificationRequest.Create(
+            Id<EmailVerificationRequest>.New(),
             Id<UserProfile>.FromGuid(userProfileId),
             Id<Email>.FromGuid(emailId),
             "missing-profile-nonce",
@@ -178,6 +181,7 @@ public sealed class ConfirmEmailVerificationCommandHandlerTests
         var profile = CreateUserProfile("john@example.com");
         var email = profile.Emails.Should().ContainSingle().Subject;
         var verificationRequest = EmailVerificationRequest.Create(
+            Id<EmailVerificationRequest>.New(),
             profile.Id,
             email.Id,
             "expired-nonce",

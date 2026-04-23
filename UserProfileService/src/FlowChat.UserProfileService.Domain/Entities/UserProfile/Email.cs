@@ -33,13 +33,14 @@ public class Email : EntityBase<Email>
     }
 
     public static Email Create(
+        Id<Email> id,
         Id<UserProfile> userProfileId,
         EmailAddress address,
         bool isMain = false,
-        bool isAuth = false,
-        Id<Email>? id = null)
+        bool isAuth = false)
     {
-        return new Email(id ?? Id<Email>.New(), userProfileId, address, isMain, isAuth, isConfirmed: false, isVisible: true);
+        ArgumentNullException.ThrowIfNull(id);
+        return new Email(id, userProfileId, address, isMain, isAuth, isConfirmed: false, isVisible: true);
     }
 
     internal void Confirm()

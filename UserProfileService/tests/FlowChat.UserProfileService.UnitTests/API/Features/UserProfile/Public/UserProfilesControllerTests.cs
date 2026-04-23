@@ -40,7 +40,7 @@ public sealed class UserProfilesControllerTests
 
         var controller = SetupController(new AddEmailController(_mediatorMock.Object));
 
-        var result = await controller.AddEmail(Guid.NewGuid(), new AddEmailRequest("john@example.com"), CancellationToken.None);
+        var result = await controller.AddEmail(Guid.NewGuid(), new AddEmailRequest(Guid.NewGuid(), "john@example.com"), CancellationToken.None);
 
         var ok = result.Should().BeOfType<OkObjectResult>().Subject;
         var response = ok.Value.Should().BeOfType<AddEmailResponse>().Subject;
@@ -57,7 +57,7 @@ public sealed class UserProfilesControllerTests
 
         var controller = SetupController(new AddPhoneController(_mediatorMock.Object));
 
-        var result = await controller.AddPhone(Guid.NewGuid(), new AddPhoneRequest("+48123123123"), CancellationToken.None);
+        var result = await controller.AddPhone(Guid.NewGuid(), new AddPhoneRequest(Guid.NewGuid(), "+48123123123"), CancellationToken.None);
 
         var ok = result.Should().BeOfType<OkObjectResult>().Subject;
         var response = ok.Value.Should().BeOfType<AddPhoneResponse>().Subject;
@@ -92,7 +92,7 @@ public sealed class UserProfilesControllerTests
 
         var controller = SetupController(new AddEmailController(_mediatorMock.Object));
 
-        var result = await controller.AddEmail(Guid.NewGuid(), new AddEmailRequest("john@example.com"), CancellationToken.None);
+        var result = await controller.AddEmail(Guid.NewGuid(), new AddEmailRequest(Guid.NewGuid(), "john@example.com"), CancellationToken.None);
 
         result.Should().BeOfType<ConflictObjectResult>();
     }

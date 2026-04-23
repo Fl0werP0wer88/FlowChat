@@ -37,15 +37,16 @@ public sealed class Conversation : AggregateRootBase<Conversation>
     }
 
     public static Conversation Create(
+        Id<Conversation> id,
         bool isGroup,
         Guid createdByUserId,
         IEnumerable<Guid> participantUserIds,
-        string? name = null,
-        Id<Conversation>? id = null)
+        string? name = null)
     {
+        ArgumentNullException.ThrowIfNull(id);
         ValidateInvariants(isGroup, name, createdByUserId);
 
-        var conversationId = id ?? Id<Conversation>.New();
+        var conversationId = id;
         var participants = BuildParticipants(participantUserIds, isGroup, conversationId);
 
         var conversation = new Conversation(conversationId, isGroup, name, createdByUserId, participants);
@@ -90,7 +91,7 @@ public sealed class Conversation : AggregateRootBase<Conversation>
         if (_participants.Any(p => p.UserId == participantUserId))
             throw new InvalidOperationException("User is already a participant in this conversation.");
 
-        _participants.Add(ParticipantUser.Create(Id, participantUserId));
+        _participants.Add(ParticipantUser.Create(Id<ParticipantUser>.New(), Id, participantUserId));
 
         AddDomainEvent(new ParticipantAddedDomainEvent(Id, participantUserId));
 
@@ -131,7 +132,7 @@ public sealed class Conversation : AggregateRootBase<Conversation>
         if (isGroup && uniqueIds.Count < 2)
             throw new InvalidOperationException("Group conversations must have at least two participants.");
 
-        return [.. uniqueIds.Select(userId => ParticipantUser.Create(conversationId, userId))];
+        return [.. uniqueIds.Select(userId => ParticipantUser.Create(Id<ParticipantUser>.New(), conversationId, userId))];
     }
 }
 

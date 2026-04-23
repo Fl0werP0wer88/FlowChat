@@ -48,6 +48,7 @@ public class Contact : AggregateRootBase<Contact>
 
 
     public static Contact Create(
+        Id<Contact> id,
         Guid ownerUserId,
         Guid contactUserId,
         string displayName,
@@ -55,11 +56,11 @@ public class Contact : AggregateRootBase<Contact>
         string? lastName = null,
         PhoneNumber? phoneNumber = null,
         EmailAddress? emailAddress = null,
-        bool isBlocked = false,
-        Id<Contact>? id = null)
+        bool isBlocked = false)
     {
+        ArgumentNullException.ThrowIfNull(id);
         var contact = new Contact(
-            id ?? Id<Contact>.New(),
+            id,
             ownerUserId,
             contactUserId,
             displayName,

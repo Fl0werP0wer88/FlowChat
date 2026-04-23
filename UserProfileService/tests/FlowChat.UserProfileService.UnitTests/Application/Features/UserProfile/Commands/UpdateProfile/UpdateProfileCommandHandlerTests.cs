@@ -127,7 +127,7 @@ public sealed class UpdateProfileCommandHandlerTests
 
     private static UserProfile CreateUserProfile()
     {
-        var profile = UserProfile.Create("jdoe", EmailAddress.Create("john@example.com"), id: Id<UserProfile>.New());
+        var profile = UserProfile.Create(Id<UserProfile>.New(), "jdoe", EmailAddress.Create("john@example.com"));
         profile.ClearEvents();
         return profile;
     }

@@ -1,3 +1,4 @@
+using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
 using FlowChat.Shared.Persistance;
 using FlowChat.Shared.Persistance.Auditing;
@@ -48,7 +49,7 @@ public sealed class UnitOfWorkTests
             async token =>
             {
                 await context.UserProfiles.AddAsync(
-                    UserProfile.Create("jdoe", EmailAddress.Create("john@example.com")),
+                    UserProfile.Create(Id<UserProfile>.New(), "jdoe", EmailAddress.Create("john@example.com")),
                     token);
 
                 throw new InvalidOperationException("boom");
@@ -69,7 +70,7 @@ public sealed class UnitOfWorkTests
         await using var context = CreateDbContext(connection);
         var unitOfWork = new EfUnitOfWork<AppDbContext>(context);
 
-        context.UserProfiles.Add(UserProfile.Create("jdoe", EmailAddress.Create("john@example.com")));
+        context.UserProfiles.Add(UserProfile.Create(Id<UserProfile>.New(), "jdoe", EmailAddress.Create("john@example.com")));
 
         var affectedRows = await unitOfWork.SaveChangesAsync(CancellationToken.None);
 

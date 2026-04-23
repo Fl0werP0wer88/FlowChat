@@ -33,19 +33,20 @@ public sealed class Account : AggregateRootBase<Account>
     public bool IsEmailConfirmed { get; private set; }
 
     public static Account Create(
+        Id<Account> id,
         string friendlyUserId,
         EmailAddress email,
         string passwordHash,
         string securityStamp,
         string? firstName = null,
         string? lastName = null,
-        string? organization = null,
-        Id<Account>? id = null)
+        string? organization = null)
     {
+        ArgumentNullException.ThrowIfNull(id);
         ArgumentNullException.ThrowIfNull(email);
 
         var account = new Account(
-            id ?? Id<Account>.New(),
+            id,
             FriendlyUserId.Create(friendlyUserId),
             email,
             NormalizeRequired(passwordHash, nameof(passwordHash)),

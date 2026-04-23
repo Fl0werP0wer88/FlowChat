@@ -12,7 +12,7 @@ public sealed class TypedDomainIdsTests
     {
         var id = Id<Contact>.New();
 
-        var contact = Contact.Create(Guid.NewGuid(), Guid.NewGuid(), "user-login", id: id);
+        var contact = Contact.Create(id, Guid.NewGuid(), Guid.NewGuid(), "user-login");
 
         contact.Id.Should().Be(id);
         contact.Id.Value.Should().Be(id.Value);
@@ -23,7 +23,7 @@ public sealed class TypedDomainIdsTests
     {
         var id = Guid.NewGuid();
 
-        var contact = Contact.Create(Guid.NewGuid(), Guid.NewGuid(), "user-login", id: id);
+        var contact = Contact.Create(id, Guid.NewGuid(), Guid.NewGuid(), "user-login");
 
         contact.Id.Value.Should().Be(id);
     }
@@ -32,14 +32,14 @@ public sealed class TypedDomainIdsTests
     public void Contact_Create_AssignsProfileData()
     {
         var contact = Contact.Create(
+            Id<Contact>.New(),
             Guid.NewGuid(),
             Guid.NewGuid(),
             "jkowalski",
             "Jan",
             "Kowalski",
             PhoneNumber.Create("+48123456789"),
-            EmailAddress.Create("jan@example.com"),
-            id: Id<Contact>.New());
+            EmailAddress.Create("jan@example.com"));
 
         contact.FirstName.Should().Be("Jan");
         contact.LastName.Should().Be("Kowalski");
@@ -52,10 +52,10 @@ public sealed class TypedDomainIdsTests
     public void Contact_Create_AllowsMissingOptionalProfileData()
     {
         var contact = Contact.Create(
+            Id<Contact>.New(),
             Guid.NewGuid(),
             Guid.NewGuid(),
-            "user-login",
-            id: Id<Contact>.New());
+            "user-login");
 
         contact.FirstName.Should().BeNull();
         contact.LastName.Should().BeNull();
@@ -67,9 +67,10 @@ public sealed class TypedDomainIdsTests
     public void Contact_Create_WithoutId_GeneratesTypedId()
     {
         var contact = Contact.Create(
-            ownerUserId: Guid.NewGuid(),
-            contactUserId: Guid.NewGuid(),
-            displayName: "user-login");
+            Id<Contact>.New(),
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            "user-login");
 
         contact.Id.Value.Should().NotBe(Guid.Empty);
     }
@@ -90,10 +91,10 @@ public sealed class TypedDomainIdsTests
     public void Contact_Create_WithoutDisplayName_Throws()
     {
         var act = () => Contact.Create(
+            Id<Contact>.New(),
             Guid.NewGuid(),
             Guid.NewGuid(),
-            string.Empty,
-            id: Id<Contact>.New());
+            string.Empty);
 
         act.Should().Throw<ArgumentException>();
     }

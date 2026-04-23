@@ -51,7 +51,7 @@ public sealed class AddPhoneCommandHandlerTests
 
     private static UserProfile CreateProfile()
     {
-        var profile = UserProfile.Create("jdoe", EmailAddress.Create("john@example.com"), id: Id<UserProfile>.New());
+        var profile = UserProfile.Create(Id<UserProfile>.New(), "jdoe", EmailAddress.Create("john@example.com"));
         profile.ClearEvents();
         return profile;
     }
@@ -59,7 +59,7 @@ public sealed class AddPhoneCommandHandlerTests
     [Fact]
     public async Task Handle_WithEmptyUserIdAndMissingNumber_ReturnsSingleValidationFailureWithBothErrors()
     {
-        var result = await SendAsync(new AddPhoneCommand(Guid.Empty, null));
+        var result = await SendAsync(new AddPhoneCommand(Guid.Empty, Guid.NewGuid(), null));
 
         result.IsFailure.Should().BeTrue();
         result.Error.ErrorType.Should().Be(ErrorType.Validation);
@@ -75,7 +75,7 @@ public sealed class AddPhoneCommandHandlerTests
             .Setup(x => x.GetByIdAsync(profile.Id.Value, It.IsAny<CancellationToken>()))
             .ReturnsAsync(profile);
 
-        var result = await SendAsync(new AddPhoneCommand(profile.Id.Value, "123123123"));
+        var result = await SendAsync(new AddPhoneCommand(profile.Id.Value, Guid.NewGuid(), "123123123"));
 
         result.IsFailure.Should().BeTrue();
         result.Error.ErrorType.Should().Be(ErrorType.Validation);
@@ -86,13 +86,13 @@ public sealed class AddPhoneCommandHandlerTests
     public async Task Handle_WithFormattedDuplicateNumber_ReturnsConflict()
     {
         var profile = CreateProfile();
-        profile.AddPhone(PhoneNumber.Create("+48123123123"));
+        profile.AddPhone(Id<Phone>.New(), PhoneNumber.Create("+48123123123"));
         profile.ClearEvents();
         _writeRepositoryMock
             .Setup(x => x.GetByIdAsync(profile.Id.Value, It.IsAny<CancellationToken>()))
             .ReturnsAsync(profile);
 
-        var result = await SendAsync(new AddPhoneCommand(profile.Id.Value, "+48 123 123 123"));
+        var result = await SendAsync(new AddPhoneCommand(profile.Id.Value, Guid.NewGuid(), "+48 123 123 123"));
 
         result.IsFailure.Should().BeTrue();
         result.Error.ErrorType.Should().Be(ErrorType.Conflict);
@@ -107,7 +107,7 @@ public sealed class AddPhoneCommandHandlerTests
             .Setup(x => x.GetByIdAsync(profile.Id.Value, It.IsAny<CancellationToken>()))
             .ReturnsAsync(profile);
 
-        var result = await SendAsync(new AddPhoneCommand(profile.Id.Value, "+48123123123"));
+        var result = await SendAsync(new AddPhoneCommand(profile.Id.Value, Guid.NewGuid(), "+48123123123"));
 
         result.IsSuccess.Should().BeTrue();
         var addedPhone = profile.Phones.Should().ContainSingle().Subject;
@@ -129,7 +129,7 @@ public sealed class AddPhoneCommandHandlerTests
             .Callback<IEnumerable<IDomainEvent>, CancellationToken>((events, _) => dispatchedEvents.AddRange(events))
             .Returns(Task.CompletedTask);
 
-        var result = await SendAsync(new AddPhoneCommand(profile.Id.Value, "+48123123123"));
+        var result = await SendAsync(new AddPhoneCommand(profile.Id.Value, Guid.NewGuid(), "+48123123123"));
 
         result.IsSuccess.Should().BeTrue();
         dispatchedEvents.Should().NotBeEmpty();

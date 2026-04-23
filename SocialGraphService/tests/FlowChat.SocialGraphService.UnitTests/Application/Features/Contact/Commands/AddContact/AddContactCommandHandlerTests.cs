@@ -84,7 +84,7 @@ public sealed class AddContactCommandHandlerTests
             .ReturnsAsync((Contact contact, CancellationToken _) => contact);
 
         var result = await _handler.Handle(
-            new AddContactCommand(ownerUserId, contactUserId, null, null),
+            new AddContactCommand(Guid.NewGuid(), ownerUserId, contactUserId, null, null),
             CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
@@ -124,7 +124,7 @@ public sealed class AddContactCommandHandlerTests
             });
 
         var result = await _handler.Handle(
-            new AddContactCommand(ownerUserId, null, " jdoe ", null),
+            new AddContactCommand(Guid.NewGuid(), ownerUserId, null, " jdoe ", null),
             CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
@@ -158,7 +158,7 @@ public sealed class AddContactCommandHandlerTests
             });
 
         var result = await _handler.Handle(
-            new AddContactCommand(ownerUserId, null, null, " JOHN@example.com "),
+            new AddContactCommand(Guid.NewGuid(), ownerUserId, null, null, " JOHN@example.com "),
             CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
@@ -175,7 +175,7 @@ public sealed class AddContactCommandHandlerTests
             .ReturnsAsync((UserProfileProjectionDto?)null);
 
         var result = await _handler.Handle(
-            new AddContactCommand(_fixture.Create<Guid>(), _fixture.Create<Guid>(), null, null),
+            new AddContactCommand(Guid.NewGuid(), _fixture.Create<Guid>(), _fixture.Create<Guid>(), null, null),
             CancellationToken.None);
 
         result.IsFailure.Should().BeTrue();
@@ -209,7 +209,7 @@ public sealed class AddContactCommandHandlerTests
             .ReturnsAsync(true);
 
         var result = await _handler.Handle(
-            new AddContactCommand(ownerUserId, projectionUserId, null, null),
+            new AddContactCommand(Guid.NewGuid(), ownerUserId, projectionUserId, null, null),
             CancellationToken.None);
 
         result.IsFailure.Should().BeTrue();
@@ -235,7 +235,7 @@ public sealed class AddContactCommandHandlerTests
             });
 
         var result = await _handler.Handle(
-            new AddContactCommand(ownerUserId, ownerUserId, null, null),
+            new AddContactCommand(Guid.NewGuid(), ownerUserId, ownerUserId, null, null),
             CancellationToken.None);
 
         result.IsFailure.Should().BeTrue();
@@ -271,7 +271,7 @@ public sealed class AddContactCommandHandlerTests
             .ReturnsAsync((Contact contact, CancellationToken _) => contact);
 
         var result = await _handler.Handle(
-            new AddContactCommand(ownerUserId, contactUserId, null, null),
+            new AddContactCommand(Guid.NewGuid(), ownerUserId, contactUserId, null, null),
             CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();

@@ -58,9 +58,9 @@ public sealed class CreateInitialUserProfileCommandHandler
 
         var userProfileId = Id<UserProfileAggregate>.FromGuid(request.UserId);
         _userProfile = UserProfileAggregate.Create(
+            userProfileId,
             friendlyUserId!,
             emailAddress!,
-            id: userProfileId,
             firstName: firstName,
             lastName: lastName,
             organization: organization);

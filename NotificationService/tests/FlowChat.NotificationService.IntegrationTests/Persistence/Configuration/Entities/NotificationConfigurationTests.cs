@@ -2,6 +2,7 @@ using AutoFixture;
 using FlowChat.NotificationService.Domain.Entities.Notification;
 using FlowChat.NotificationService.Domain.Enums;
 using FlowChat.NotificationService.Persistence;
+using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
 using FlowChat.Shared.Persistance.Auditing;
 using FluentAssertions;
@@ -31,6 +32,7 @@ public sealed class NotificationConfigurationTests : IDisposable
     {
         var userId = _fixture.Create<Guid>();
         var notification = Notification.CreateEmailVerification(
+            Id<Notification>.New(),
             userId,
             EmailAddress.Create("config-test@example.com"),
             "Config Test User",
@@ -62,6 +64,7 @@ public sealed class NotificationConfigurationTests : IDisposable
     public async Task NotificationConfiguration_CanPersistFailedNotification()
     {
         var notification = Notification.CreateEmailVerification(
+            Id<Notification>.New(),
             _fixture.Create<Guid>(),
             EmailAddress.Create("fail@example.com"),
             "Fail User",
@@ -87,7 +90,7 @@ public sealed class NotificationConfigurationTests : IDisposable
     public async Task NotificationConfiguration_MapsIdUsingTypedId()
     {
         var notification = Notification.CreateEmailVerification(
-            _fixture.Create<Guid>(), EmailAddress.Create("id-test@example.com"), "ID Test", "ID body", null);
+            Id<Notification>.New(), _fixture.Create<Guid>(), EmailAddress.Create("id-test@example.com"), "ID Test", "ID body", null);
 
         _dbContext.Notifications.Add(notification);
         await _dbContext.SaveChangesAsync();
@@ -113,7 +116,7 @@ public sealed class NotificationConfigurationTests : IDisposable
     public async Task NotificationConfiguration_CanPersistWelcomeNotification()
     {
         var notification = Notification.CreateWelcome(
-            _fixture.Create<Guid>(), EmailAddress.Create("welcome@example.com"), "Welcome User", "Welcome to FlowChat", "welcome-key");
+            Id<Notification>.New(), _fixture.Create<Guid>(), EmailAddress.Create("welcome@example.com"), "Welcome User", "Welcome to FlowChat", "welcome-key");
 
         _dbContext.Notifications.Add(notification);
         await _dbContext.SaveChangesAsync();

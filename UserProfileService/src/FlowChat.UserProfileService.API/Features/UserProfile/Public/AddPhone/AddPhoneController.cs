@@ -27,7 +27,7 @@ public sealed class AddPhoneController : ApiControllerBase
         [FromBody] AddPhoneRequest request,
         CancellationToken cancellationToken)
     {
-        var result = await _mediator.Send(new AddPhoneCommand(userId, request.Number), cancellationToken);
+        var result = await _mediator.Send(new AddPhoneCommand(userId, request.PhoneId, request.Number), cancellationToken);
 
         return result.IsSuccess
             ? Ok(new AddPhoneResponse(result.Value))

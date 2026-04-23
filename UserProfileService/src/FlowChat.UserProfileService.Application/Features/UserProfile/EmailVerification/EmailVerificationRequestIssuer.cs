@@ -1,5 +1,6 @@
 using FlowChat.Core.Messaging.AuthService.Events;
 using FlowChat.Shared.Application;
+using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
 using FlowChat.UserProfileService.Application.Contracts.Infrastructure;
 using FlowChat.UserProfileService.Application.Contracts.Persistence;
@@ -36,8 +37,9 @@ public sealed class EmailVerificationRequestIssuer(
         {
             activeRequest.Invalidate(nowUtc);
         }
-
+        // ToDo: Think about theIdea: Verification RequestId should be generated otside of issuer (On Client) and passed in as parameter to provide idempotency. Instead cancelling alll active request and creating new one
         var verificationRequest = EmailVerificationRequest.Create(
+            Id<EmailVerificationRequest>.New(),
             userProfileId,
             emailId,
             Guid.NewGuid().ToString("N"),

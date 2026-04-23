@@ -29,6 +29,7 @@ public sealed class SendChatMessageController : ApiControllerBase
     {
         var result = await _mediator.Send(
             new SendChatMessageCommand(
+                request.Id,
                 request.ConversationId,
                 request.SenderUserId,
                 request.SenderDisplayName,
