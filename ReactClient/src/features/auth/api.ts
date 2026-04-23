@@ -15,6 +15,7 @@ interface LoginPayload {
 }
 
 interface RegisterPayload {
+  id: string;
   email: string;
   friendlyUserId: string;
   password: string;
@@ -84,6 +85,7 @@ export async function refreshUserSession(
 
 export async function registerUser(values: RegisterFormValues): Promise<void> {
   const payload: RegisterPayload = {
+    id: crypto.randomUUID(),
     email: values.email.trim(),
     friendlyUserId: values.friendlyUserId.trim(),
     password: values.password,

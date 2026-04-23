@@ -18,7 +18,9 @@ interface GetContactsResponseDto {
 }
 
 interface AddContactPayload {
+  id: string;
   ownerUserId: string;
+  userId?: string;
   friendlyUserId?: string;
   email?: string;
 }
@@ -140,6 +142,7 @@ export async function addContact(
 ): Promise<string | null> {
   const trimmedLookupValue = lookupValue.trim();
   const payload: AddContactPayload = {
+    id: crypto.randomUUID(),
     ownerUserId,
     ...(isEmailLookup(trimmedLookupValue)
       ? { email: trimmedLookupValue }
@@ -158,7 +161,8 @@ export async function addContactByUserId(
   userId: string,
   accessToken: string,
 ): Promise<string | null> {
-  const payload = {
+  const payload: AddContactPayload = {
+    id: crypto.randomUUID(),
     ownerUserId,
     userId,
   };

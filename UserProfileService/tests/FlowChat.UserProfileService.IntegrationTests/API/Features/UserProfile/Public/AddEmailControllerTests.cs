@@ -16,7 +16,7 @@ public sealed class AddEmailControllerTests(UserProfileApiFactory factory)
 
         var response = await _client.PostAsJsonAsync(
             $"/api/userprofiles/{userId}/emails",
-            new { Address = $"new_{userId:N}@example.com" });
+            new { EmailId = Guid.NewGuid(), Address = $"new_{userId:N}@example.com" });
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var body = await response.Content.ReadFromJsonAsync<AddEmailResponse>();
@@ -43,12 +43,12 @@ public sealed class AddEmailControllerTests(UserProfileApiFactory factory)
         // Add the email once
         await _client.PostAsJsonAsync(
             $"/api/userprofiles/{userId}/emails",
-            new { Address = duplicateEmail });
+            new { EmailId = Guid.NewGuid(), Address = duplicateEmail });
 
         // Try to add the same email again (to any profile)
         var response = await _client.PostAsJsonAsync(
             $"/api/userprofiles/{userId}/emails",
-            new { Address = duplicateEmail });
+            new { EmailId = Guid.NewGuid(), Address = duplicateEmail });
 
         response.StatusCode.Should().Be(HttpStatusCode.Conflict);
     }
@@ -60,7 +60,7 @@ public sealed class AddEmailControllerTests(UserProfileApiFactory factory)
 
         var response = await _client.PostAsJsonAsync(
             $"/api/userprofiles/{userId}/emails",
-            new { Address = "not-a-valid-email" });
+            new { EmailId = Guid.NewGuid(), Address = "not-a-valid-email" });
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
@@ -72,7 +72,7 @@ public sealed class AddEmailControllerTests(UserProfileApiFactory factory)
 
         var response = await _client.PostAsJsonAsync(
             $"/api/userprofiles/{userId}/emails",
-            new { Address = (string?)null });
+            new { EmailId = Guid.NewGuid(), Address = (string?)null });
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }

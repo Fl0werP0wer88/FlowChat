@@ -16,7 +16,7 @@ public sealed class AddPhoneControllerTests(UserProfileApiFactory factory)
 
         var response = await _client.PostAsJsonAsync(
             $"/api/userprofiles/{userId}/phones",
-            new { Number = "+48123456789" });
+            new { PhoneId = Guid.NewGuid(), Number = "+48123456789" });
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var body = await response.Content.ReadFromJsonAsync<AddPhoneResponse>();
@@ -41,7 +41,7 @@ public sealed class AddPhoneControllerTests(UserProfileApiFactory factory)
 
         var response = await _client.PostAsJsonAsync(
             $"/api/userprofiles/{userId}/phones",
-            new { Number = (string?)null });
+            new { PhoneId = Guid.NewGuid(), Number = (string?)null });
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
@@ -52,11 +52,11 @@ public sealed class AddPhoneControllerTests(UserProfileApiFactory factory)
         var userId = await CreateUserProfileAsync();
         var phoneNumber = "+48500100200";
 
-        await _client.PostAsJsonAsync($"/api/userprofiles/{userId}/phones", new { Number = phoneNumber });
+        await _client.PostAsJsonAsync($"/api/userprofiles/{userId}/phones", new { PhoneId = Guid.NewGuid(), Number = phoneNumber });
 
         var response = await _client.PostAsJsonAsync(
             $"/api/userprofiles/{userId}/phones",
-            new { Number = phoneNumber });
+            new { PhoneId = Guid.NewGuid(), Number = phoneNumber });
 
         response.StatusCode.Should().Be(HttpStatusCode.Conflict);
     }

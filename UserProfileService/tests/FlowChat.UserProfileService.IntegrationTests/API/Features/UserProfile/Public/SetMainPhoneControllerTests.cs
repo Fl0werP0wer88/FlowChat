@@ -79,12 +79,12 @@ public sealed class SetMainPhoneControllerTests(UserProfileApiFactory factory)
 
         var firstPhoneResponse = await _client.PostAsJsonAsync(
             $"/api/userprofiles/{userId}/phones",
-            new { Number = "+48100200300" });
+            new { PhoneId = Guid.NewGuid(), Number = "+48100200300" });
         var firstPhone = await firstPhoneResponse.Content.ReadFromJsonAsync<AddPhoneResponse>();
 
         var addPhoneResponse = await _client.PostAsJsonAsync(
             $"/api/userprofiles/{userId}/phones",
-            new { Number = "+48400500600" });
+            new { PhoneId = Guid.NewGuid(), Number = "+48400500600" });
         var addedPhone = await addPhoneResponse.Content.ReadFromJsonAsync<AddPhoneResponse>();
 
         return (userId, firstPhone!.PhoneId, addedPhone!.PhoneId);

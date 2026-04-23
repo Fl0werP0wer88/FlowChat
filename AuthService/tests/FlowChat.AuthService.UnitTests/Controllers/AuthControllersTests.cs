@@ -33,6 +33,7 @@ public sealed class AuthControllersTests
         var result = await controller.Create(
             new RegisterUserRequest
             {
+                Id = Guid.NewGuid(),
                 FriendlyUserId = "flower",
                 Email = "flower@example.com",
                 Password = "P@ssw0rd!",

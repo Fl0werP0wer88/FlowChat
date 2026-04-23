@@ -119,6 +119,7 @@ public sealed class RegisterUserCommandHandlerTests
     private static RegisterUserCommand CreateCommand() =>
         new()
         {
+            Id = Guid.NewGuid(),
             FriendlyUserId = "flower",
             Email = "flower@example.com",
             Password = "P@ssw0rd!",

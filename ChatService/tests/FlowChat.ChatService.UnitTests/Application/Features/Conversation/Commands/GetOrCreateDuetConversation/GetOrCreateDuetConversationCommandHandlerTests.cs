@@ -47,7 +47,7 @@ public sealed class GetOrCreateDuetConversationCommandHandlerTests
     [Fact]
     public async Task Handle_WhenDuetConversationExists_ReturnsProjectedConversation()
     {
-        var command = new GetOrCreateDuetConversationCommand(Guid.NewGuid(), Guid.NewGuid());
+        var command = new GetOrCreateDuetConversationCommand(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid());
         var dto = new DuetConversationDetailDto(
             Guid.NewGuid(),
             [
@@ -80,7 +80,7 @@ public sealed class GetOrCreateDuetConversationCommandHandlerTests
     [Fact]
     public async Task Handle_WhenReadModelIsMissingButDuetEntryExists_ReturnsNotFound()
     {
-        var command = new GetOrCreateDuetConversationCommand(Guid.NewGuid(), Guid.NewGuid());
+        var command = new GetOrCreateDuetConversationCommand(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid());
 
         _duetConversationReadRepositoryMock
             .Setup(x => x.GetByUserIdsAsync(command.RequestingUserId, command.PartnerUserId, It.IsAny<CancellationToken>()))
@@ -105,7 +105,7 @@ public sealed class GetOrCreateDuetConversationCommandHandlerTests
     [Fact]
     public async Task Handle_WhenDuetConversationDoesNotExist_CreatesConversationAndDispatchesDomainEvents()
     {
-        var command = new GetOrCreateDuetConversationCommand(Guid.NewGuid(), Guid.NewGuid());
+        var command = new GetOrCreateDuetConversationCommand(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid());
         ConversationAggregate? persistedConversation = null;
         List<IDomainEvent> dispatchedEvents = [];
 

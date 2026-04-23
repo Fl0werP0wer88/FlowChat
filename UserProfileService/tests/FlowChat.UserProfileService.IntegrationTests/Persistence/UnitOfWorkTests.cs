@@ -25,6 +25,7 @@ public sealed class UnitOfWorkTests
             async token =>
             {
                 var profile = UserProfile.Create(
+                    Id<UserProfile>.New(),
                     "jdoe",
                     EmailAddress.Create("john@example.com"));
 
