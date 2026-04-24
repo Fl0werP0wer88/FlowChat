@@ -14,7 +14,6 @@ public sealed class ApiControllerBaseTests
     public static TheoryData<IDomainError, int> ErrorCases => new()
     {
         { DomainError.Conflict("Conflict detail"), StatusCodes.Status409Conflict },
-        { DomainError.ConcurrencyConflict("Concurrency conflict detail"), StatusCodes.Status409Conflict },
         { DomainError.NotFound("Not found detail"), StatusCodes.Status404NotFound },
         { DomainError.BadRequest("Bad request detail"), StatusCodes.Status400BadRequest },
         { DomainError.Validation("Validation detail"), StatusCodes.Status400BadRequest },
@@ -53,33 +52,12 @@ public sealed class ApiControllerBaseTests
     }
 
     [Fact]
-    public void HandleError_WhenConcurrencyConflict_AddsConcurrencyErrorTag()
-    {
-        var controller = CreateController();
-
-        var result = controller.InvokeHandleError(DomainError.ConcurrencyConflict("Concurrency conflict detail"));
-
-        var conflict = result.Should().BeOfType<ConflictObjectResult>().Subject;
-        var problemDetails = conflict.Value.Should().BeOfType<ProblemDetails>().Subject;
-        problemDetails.Extensions["error"].Should().Be("concurrency_conflict");
-    }
-
-    [Fact]
     public void DomainError_Unauthorized_UsesUnauthorizedErrorType()
     {
         var error = DomainError.Unauthorized("Unauthorized detail");
 
         error.ErrorType.Should().Be(ErrorType.Unauthorized);
         error.ErrorMessage.Should().Be("Unauthorized detail");
-    }
-
-    [Fact]
-    public void DomainError_ConcurrencyConflict_UsesConcurrencyConflictErrorType()
-    {
-        var error = DomainError.ConcurrencyConflict("Concurrency conflict detail");
-
-        error.ErrorType.Should().Be(ErrorType.ConcurrencyConflict);
-        error.ErrorMessage.Should().Be("Concurrency conflict detail");
     }
 
     [Fact]

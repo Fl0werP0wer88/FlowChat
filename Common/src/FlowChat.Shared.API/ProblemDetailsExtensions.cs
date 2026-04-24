@@ -50,21 +50,6 @@ public static class ProblemDetailsExtensions
             errors,
             isTransient);
 
-    public static ProblemDetails CreateConcurrencyConflict(
-        this ProblemDetailsFactory detailsFactory,
-        HttpContext context,
-        string? details = null,
-        IEnumerable<string>? errors = null,
-        bool isTransient = false) =>
-        CreateProblemDetailsWith(
-            detailsFactory,
-            StatusCodes.Status409Conflict,
-            context,
-            details,
-            errors,
-            isTransient,
-            "concurrency_conflict");
-
     public static ProblemDetails CreateValidation(
         this ProblemDetailsFactory detailsFactory,
         HttpContext context,

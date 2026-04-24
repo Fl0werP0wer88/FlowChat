@@ -100,7 +100,7 @@ public sealed class LoggingPipelineBehaviourTests
     }
 
     [Fact]
-    public async Task Handle_UsesLowercaseErrorTag_WhenHandlerReturnsConcurrencyConflict()
+    public async Task Handle_UsesLowercaseErrorTag_WhenHandlerReturnsConflict()
     {
         var logger = new TestLogger<LoggingPipelineBehaviour<TestCommand, FlowChatResult<Guid>>>();
         var behaviour = new LoggingPipelineBehaviour<TestCommand, FlowChatResult<Guid>>(logger);
@@ -108,15 +108,15 @@ public sealed class LoggingPipelineBehaviourTests
 
         var response = await behaviour.Handle(
             new TestCommand(),
-            _ => Task.FromResult(FlowChatResult<Guid>.Failure(DomainError.ConcurrencyConflict("Concurrency conflict"))),
+            _ => Task.FromResult(FlowChatResult<Guid>.Failure(DomainError.Conflict("Conflict"))),
             CancellationToken.None);
 
         response.IsFailure.Should().BeTrue();
-        response.Error.ErrorType.Should().Be(ErrorType.ConcurrencyConflict);
+        response.Error.ErrorType.Should().Be(ErrorType.Conflict);
 
         var activity = collector.Activities.Should().ContainSingle().Subject;
         activity.Status.Should().Be(ActivityStatusCode.Error);
-        activity.Tags.Single(x => x.Key == "error.type").Value.Should().Be("concurrencyconflict");
+        activity.Tags.Single(x => x.Key == "error.type").Value.Should().Be("conflict");
     }
 
     private sealed record TestCommand : ICommand<Guid>;
