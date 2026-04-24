@@ -21,7 +21,7 @@ public class RedisUnitOfWork(IConnectionMultiplexer connectionMultiplexer)
     /// </remarks>
     public IDatabaseAsync GetActiveDatabase() =>
         (IDatabaseAsync?)_currentTransaction.Value ?? _connectionMultiplexer.GetDatabase();
-
+    //ToDo: I think latter im gonna move redis to its own IRedisUnitOfWor to avoid such empty method
     // Redis operations are immediately persisted — there are no pending changes to flush.
     public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default) =>
         Task.FromResult(0);

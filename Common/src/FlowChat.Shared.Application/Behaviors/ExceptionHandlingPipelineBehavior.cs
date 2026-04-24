@@ -59,6 +59,25 @@ public sealed class ExceptionHandlingPipelineBehavior<TRequest, TResponse>
             var domainError = DomainError.BadRequest(exception.Message);
             return TResponse.Failure(domainError);
         }
+        catch (DbUpdateConcurrencyException exception)
+        {
+            foreach (var entry in exception.Entries)
+            {
+                var databaseValues = await entry.GetDatabaseValuesAsync(cancellationToken);
+
+                if (databaseValues is null)
+                {
+                    //ToDo: Think about concurrency handling for missing or deleted rows
+                }
+                else
+                {
+                    //ToDo: Think about optimistic concurrency handling for existing rows
+                }
+            }
+
+            var domainError = DomainError.UnExpected("An unexpected error occurred.");
+            return TResponse.Failure(domainError);
+        }
         catch (DbUpdateException exception)
         {
             var dbException = exception.InnerException as DbException;
