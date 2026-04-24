@@ -1,4 +1,5 @@
 using System.Data.Common;
+using FlowChat.PresenceService.Domain.Entities.UserPresencePreferences;
 using FlowChat.PresenceService.Persistence.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -22,7 +23,7 @@ public sealed class AppDbContext : DbContext
     }
 
     public DbSet<ContactObserverProjectionEntity> ContactObserverProjections => Set<ContactObserverProjectionEntity>();
-    public DbSet<UserPresencePreferencesEntity> UserPresencePreferences => Set<UserPresencePreferencesEntity>();
+    public DbSet<UserPresencePreferences> UserPresencePreferences => Set<UserPresencePreferences>();
     public DbSet<SilverbackOutboxMessage> SilverbackOutboxMessages => Set<SilverbackOutboxMessage>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

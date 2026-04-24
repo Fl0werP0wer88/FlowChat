@@ -2,7 +2,9 @@ using System.Net;
 using System.Net.Http.Json;
 using FlowChat.Core.Domain;
 using FlowChat.Core.Messaging.PresenceService.Events;
+using FlowChat.PresenceService.Domain.Entities.UserPresencePreferences;
 using FlowChat.PresenceService.Persistence;
+using FlowChat.Shared.Domain;
 
 namespace FlowChat.PresenceService.IntegrationTests.API.Features.Presence;
 
@@ -30,7 +32,7 @@ public sealed class UserPresencePreferencesIntegrationTests(PresenceApiFactory f
 
         var preferredStatus = await factory.WithDbContextAsync(async db =>
         {
-            var entity = await db.UserPresencePreferences.FindAsync(userId);
+            var entity = await db.UserPresencePreferences.FindAsync(Id<UserPresencePreferences>.FromGuid(userId));
             return entity?.PreferredStatus;
         });
 
@@ -62,7 +64,7 @@ public sealed class UserPresencePreferencesIntegrationTests(PresenceApiFactory f
 
         var preferredStatus = await factory.WithDbContextAsync(async db =>
         {
-            var entity = await db.UserPresencePreferences.FindAsync(userId);
+            var entity = await db.UserPresencePreferences.FindAsync(Id<UserPresencePreferences>.FromGuid(userId));
             return entity?.PreferredStatus;
         });
 

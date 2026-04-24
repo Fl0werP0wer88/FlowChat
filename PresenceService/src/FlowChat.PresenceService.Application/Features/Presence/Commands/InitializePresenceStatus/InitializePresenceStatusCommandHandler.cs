@@ -13,7 +13,7 @@ public sealed class InitializePresenceStatusCommandHandler(
     IContactObserverProjectionReadRepository contactObserverProjectionReadRepository,
     IPresenceStatusStore presenceStatusStore,
     IOutboxIntegrationEventPublisher integrationEventPublisher,
-    IUserPresencePreferencesRepository userPresencePreferencesRepository,
+    IUserPresencePreferencesReadRepository userPresencePreferencesReadRepository,
     IUnitOfWork unitOfWork,
     IDomainEventDispatcher domainEventDispatcher)
     : CommandHandlerBase<InitializePresenceStatusCommand, Unit>(domainEventDispatcher, unitOfWork)
@@ -36,7 +36,7 @@ public sealed class InitializePresenceStatusCommandHandler(
         var changedAtUtc = DateTimeOffset.UtcNow;
 
         // Restore any saved manual preference (Busy/Invisible); default to Active otherwise
-        var preference = await userPresencePreferencesRepository.FindPreferredStatusAsync(request.UserId, cancellationToken);
+        var preference = await userPresencePreferencesReadRepository.FindPreferredStatusAsync(request.UserId, cancellationToken);
         var statusToSet = preference ?? PresenceStatus.Active;
 
         var integrationEvent = new PresenceStatusChangedIntegrationEvent

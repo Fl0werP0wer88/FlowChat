@@ -19,7 +19,7 @@ public sealed class InitializePresenceStatusCommandHandlerTests
     private readonly Mock<IContactObserverProjectionReadRepository> _readRepositoryMock = new();
     private readonly Mock<IPresenceStatusStore> _presenceStatusStoreMock = new();
     private readonly Mock<IOutboxIntegrationEventPublisher> _integrationEventPublisherMock = new();
-    private readonly Mock<IUserPresencePreferencesRepository> _preferencesRepositoryMock = new();
+    private readonly Mock<IUserPresencePreferencesReadRepository> _preferencesReadRepositoryMock = new();
     private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
     private readonly Mock<IDomainEventDispatcher> _domainEventDispatcherMock = new();
     private readonly InitializePresenceStatusCommandHandler _handler;
@@ -40,7 +40,7 @@ public sealed class InitializePresenceStatusCommandHandlerTests
             _readRepositoryMock.Object,
             _presenceStatusStoreMock.Object,
             _integrationEventPublisherMock.Object,
-            _preferencesRepositoryMock.Object,
+            _preferencesReadRepositoryMock.Object,
             _unitOfWorkMock.Object,
             _domainEventDispatcherMock.Object);
     }
@@ -138,7 +138,7 @@ public sealed class InitializePresenceStatusCommandHandlerTests
         _presenceStatusStoreMock
             .Setup(x => x.GetAsync(userId, It.IsAny<CancellationToken>()))
             .ReturnsAsync((PresenceStatusSnapshot?)null);
-        _preferencesRepositoryMock
+        _preferencesReadRepositoryMock
             .Setup(x => x.FindPreferredStatusAsync(userId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(preferredStatus);
         _readRepositoryMock
@@ -170,7 +170,7 @@ public sealed class InitializePresenceStatusCommandHandlerTests
         _presenceStatusStoreMock
             .Setup(x => x.GetAsync(userId, It.IsAny<CancellationToken>()))
             .ReturnsAsync((PresenceStatusSnapshot?)null);
-        _preferencesRepositoryMock
+        _preferencesReadRepositoryMock
             .Setup(x => x.FindPreferredStatusAsync(userId, It.IsAny<CancellationToken>()))
             .ReturnsAsync((PresenceStatus?)null);
         _readRepositoryMock

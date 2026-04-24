@@ -3,6 +3,7 @@ using FlowChat.Core.Messaging.PresenceService.Events;
 using FlowChat.Core.Results;
 using FlowChat.PresenceService.Application.Contracts.Infrastructure;
 using FlowChat.PresenceService.Application.Contracts.Persistence;
+using FlowChat.PresenceService.Domain.Entities.UserPresencePreferences;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
 using MediatR;
@@ -13,7 +14,7 @@ public sealed class ChangePresenceStatusCommandHandler(
     IContactObserverProjectionReadRepository contactObserverProjectionReadRepository,
     IPresenceStatusStore presenceStatusStore,
     IOutboxIntegrationEventPublisher integrationEventPublisher,
-    IUserPresencePreferencesRepository userPresencePreferencesRepository,
+    IUserPresencePreferencesWriteRepository userPresencePreferencesWriteRepository,
     IUnitOfWork unitOfWork,
     IDomainEventDispatcher domainEventDispatcher)
     : CommandHandlerBase<ChangePresenceStatusCommand, Unit>(domainEventDispatcher, unitOfWork)
@@ -49,13 +50,31 @@ public sealed class ChangePresenceStatusCommandHandler(
         // Busy / Invisible are manual choices — persist so they survive reconnect
         if (request.Status is PresenceStatus.Busy or PresenceStatus.Invisible)
         {
-            await userPresencePreferencesRepository.UpsertAsync(
-                request.UserId, request.Status, changedAtUtc, cancellationToken);
+            var preferences = await userPresencePreferencesWriteRepository.GetByIdAsync(
+                request.UserId,
+                cancellationToken);
+            if (preferences is null)
+            {
+                await userPresencePreferencesWriteRepository.AddAsync(
+                    UserPresencePreferences.Create(request.UserId, request.Status),
+                    cancellationToken);
+            }
+            else
+            {
+                preferences.SetPreferredStatus(request.Status);
+                await userPresencePreferencesWriteRepository.UpdateAsync(preferences, cancellationToken);
+            }
         }
         else if (request.Status == PresenceStatus.Active)
         {
             // User explicitly came back online — clear any saved override
-            await userPresencePreferencesRepository.DeleteAsync(request.UserId, cancellationToken);
+            var preferences = await userPresencePreferencesWriteRepository.GetByIdAsync(
+                request.UserId,
+                cancellationToken);
+            if (preferences is not null)
+            {
+                await userPresencePreferencesWriteRepository.DeleteAsync(preferences, cancellationToken);
+            }
         }
         // AFK is automatic — leave any saved preference unchanged
 
