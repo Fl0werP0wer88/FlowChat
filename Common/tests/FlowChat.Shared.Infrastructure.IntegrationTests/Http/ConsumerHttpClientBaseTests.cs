@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using FlowChat.Core.Exceptions;
+using FlowChat.Core.Http;
 using FlowChat.Shared.Infrastructure.Http;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -51,14 +52,14 @@ public sealed class ConsumerHttpClientBaseTests
     }
 
     [Fact]
-    public async Task SendAsync_WhenApiReturnsTaggedConcurrencyConflict_ThrowsHttpRequestException()
+    public async Task SendAsync_WhenApiReturnsTransientProblemDetails_ThrowsHttpRequestException()
     {
         using var host = await CreateHostAsync(async context =>
         {
-            context.Response.StatusCode = StatusCodes.Status409Conflict;
+            context.Response.StatusCode = StatusCodes.Status500InternalServerError;
             context.Response.ContentType = "application/problem+json";
             await context.Response.WriteAsync(
-                """{"detail":"conflict","error":"concurrency_conflict"}""",
+                $$"""{"detail":"conflict","{{ProblemDetailsExtensionNames.IsTransient}}":true}""",
                 context.RequestAborted);
         });
 
@@ -67,24 +68,64 @@ public sealed class ConsumerHttpClientBaseTests
         var exception = await Assert.ThrowsAsync<HttpRequestException>(() =>
             client.SendPingAsync(CancellationToken.None));
 
-        exception.Message.Should().Contain("409");
+        exception.Message.Should().Contain("500");
     }
 
     [Fact]
-    public async Task SendAsync_WhenCustomNonTransientStatusCodeIsReturned_UsesOverriddenStatusCodes()
+    public async Task SendAsync_WhenApiReturnsProblemDetailsWithFalseTransientFlag_ThrowsNonTransientException()
     {
         using var host = await CreateHostAsync(async context =>
         {
-            context.Response.StatusCode = StatusCodes.Status404NotFound;
-            await context.Response.WriteAsync("not found", context.RequestAborted);
+            context.Response.StatusCode = StatusCodes.Status409Conflict;
+            context.Response.ContentType = "application/problem+json";
+            await context.Response.WriteAsync(
+                $$"""{"detail":"conflict","{{ProblemDetailsExtensionNames.IsTransient}}":false}""",
+                context.RequestAborted);
         });
 
-        var client = new CustomStatusConsumerHttpClient(host.GetTestClient());
+        var client = new TestConsumerHttpClient(host.GetTestClient());
 
         var exception = await Assert.ThrowsAsync<NonTransientException>(() =>
             client.SendPingAsync(CancellationToken.None));
 
-        exception.Message.Should().Be("Custom Consumer API returned 404 Not Found: not found");
+        exception.Message.Should().Be(
+            $$"""Test Consumer API returned 409 Conflict: {"detail":"conflict","{{ProblemDetailsExtensionNames.IsTransient}}":false}""");
+    }
+
+    [Fact]
+    public async Task SendAsync_WhenApiReturnsInvalidProblemDetailsPayload_ThrowsNonTransientException()
+    {
+        using var host = await CreateHostAsync(async context =>
+        {
+            context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+            context.Response.ContentType = "application/problem+json";
+            await context.Response.WriteAsync("{not-json", context.RequestAborted);
+        });
+
+        var client = new TestConsumerHttpClient(host.GetTestClient());
+
+        var exception = await Assert.ThrowsAsync<NonTransientException>(() =>
+            client.SendPingAsync(CancellationToken.None));
+
+        exception.Message.Should().Be("Test Consumer API returned 500 Internal Server Error: {not-json");
+    }
+
+    [Fact]
+    public async Task SendAsync_WhenApiReturnsPayloadWithoutTransientFlag_ThrowsNonTransientException()
+    {
+        using var host = await CreateHostAsync(async context =>
+        {
+            context.Response.StatusCode = StatusCodes.Status404NotFound;
+            context.Response.ContentType = "application/problem+json";
+            await context.Response.WriteAsync("""{"detail":"not found"}""", context.RequestAborted);
+        });
+
+        var client = new TestConsumerHttpClient(host.GetTestClient());
+
+        var exception = await Assert.ThrowsAsync<NonTransientException>(() =>
+            client.SendPingAsync(CancellationToken.None));
+
+        exception.Message.Should().Be("""Test Consumer API returned 404 Not Found: {"detail":"not found"}""");
     }
 
     [Fact]
@@ -122,28 +163,6 @@ public sealed class ConsumerHttpClientBaseTests
         : ConsumerHttpClientBase(httpClient)
     {
         protected override string ClientDisplayName => "Test Consumer API";
-
-        public async Task SendPingAsync(CancellationToken cancellationToken)
-        {
-            using var request = new HttpRequestMessage(HttpMethod.Post, "/test")
-            {
-                Content = JsonContent.Create(new PingRequest("ping"))
-            };
-
-            await SendAsync(request, cancellationToken);
-        }
-    }
-
-    private sealed class CustomStatusConsumerHttpClient(HttpClient httpClient)
-        : ConsumerHttpClientBase(httpClient)
-    {
-        protected override string ClientDisplayName => "Custom Consumer API";
-
-        protected override IReadOnlySet<HttpStatusCode> NonTransientStatusCodes =>
-            new HashSet<HttpStatusCode>
-            {
-                HttpStatusCode.NotFound
-            };
 
         public async Task SendPingAsync(CancellationToken cancellationToken)
         {

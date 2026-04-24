@@ -1,3 +1,4 @@
+using System.Data.Common;
 using System.Diagnostics;
 using FluentAssertions;
 using FlowChat.Core.Results;
@@ -11,10 +12,10 @@ namespace FlowChat.Shared.Application.UnitTests.Behaviors;
 public sealed class ExceptionHandlingPipelineBehaviorTests
 {
     [Fact]
-    public async Task Handle_WhenDbUpdateConcurrencyExceptionIsThrown_ReturnsConcurrencyConflictFailure()
+    public async Task Handle_WhenDbUpdateExceptionIsThrownWithTransientInnerException_ReturnsTransientUnexpectedFailure()
     {
         var behavior = new ExceptionHandlingPipelineBehavior<TestRequest, FlowChatResult<Guid>>();
-        var exception = new DbUpdateConcurrencyException("Row version mismatch.");
+        var exception = new DbUpdateException("Row version mismatch.", new TestDbException(isTransient: true, sqlState: "40001"));
         using var activity = new Activity("test").Start();
 
         var result = await behavior.Handle(
@@ -23,14 +24,51 @@ public sealed class ExceptionHandlingPipelineBehaviorTests
             CancellationToken.None);
 
         result.IsFailure.Should().BeTrue();
-        result.Error.ErrorType.Should().Be(ErrorType.ConcurencyConflict);
-        result.Error.ErrorMessage.Should().Be("Row version mismatch.");
+        result.Error.ErrorType.Should().Be(ErrorType.Unexpected);
+        result.Error.ErrorMessage.Should().Be("An unexpected error occurred.");
+        result.Error.IsTransient.Should().BeTrue();
 
         activity.Status.Should().Be(ActivityStatusCode.Error);
-        activity.StatusDescription.Should().Be("concurrency_conflict");
-        activity.Tags.Single(x => x.Key == "error.type").Value.Should().Be("concurrency_conflict");
+        activity.StatusDescription.Should().Be("db_update_failed");
+        activity.GetTagItem("error.type").Should().Be("db_update");
+        activity.GetTagItem("db.exception.transient").Should().Be(true);
+        activity.GetTagItem("db.exception.type").Should().Be(nameof(DbUpdateException));
+        activity.GetTagItem("db.exception.sql_state").Should().Be("40001");
+        activity.Events.Should().Contain(x => x.Name == "exception");
+    }
+
+    [Fact]
+    public async Task Handle_WhenDbUpdateExceptionIsThrownWithoutTransientInnerException_ReturnsNonTransientUnexpectedFailure()
+    {
+        var behavior = new ExceptionHandlingPipelineBehavior<TestRequest, FlowChatResult<Guid>>();
+        var exception = new DbUpdateException("Row version mismatch.");
+        using var activity = new Activity("test").Start();
+
+        var result = await behavior.Handle(
+            new TestRequest(),
+            _ => Task.FromException<FlowChatResult<Guid>>(exception),
+            CancellationToken.None);
+
+        result.IsFailure.Should().BeTrue();
+        result.Error.ErrorType.Should().Be(ErrorType.Unexpected);
+        result.Error.ErrorMessage.Should().Be("An unexpected error occurred.");
+        result.Error.IsTransient.Should().BeFalse();
+
+        activity.Status.Should().Be(ActivityStatusCode.Error);
+        activity.StatusDescription.Should().Be("db_update_failed");
+        activity.GetTagItem("error.type").Should().Be("db_update");
+        activity.GetTagItem("db.exception.transient").Should().Be(false);
+        activity.GetTagItem("db.exception.type").Should().Be(nameof(DbUpdateException));
+        activity.GetTagItem("db.exception.sql_state").Should().BeNull();
         activity.Events.Should().Contain(x => x.Name == "exception");
     }
 
     private sealed record TestRequest : IRequest<FlowChatResult<Guid>>;
+
+    private sealed class TestDbException(bool isTransient, string? sqlState = null) : DbException("Database exception")
+    {
+        public override bool IsTransient => isTransient;
+
+        public override string? SqlState => sqlState;
+    }
 }

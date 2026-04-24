@@ -1,3 +1,4 @@
+using System.Data.Common;
 using System.Diagnostics;
 using FluentValidation;
 using FlowChat.Core.Exceptions;
@@ -58,13 +59,23 @@ public sealed class ExceptionHandlingPipelineBehavior<TRequest, TResponse>
             var domainError = DomainError.BadRequest(exception.Message);
             return TResponse.Failure(domainError);
         }
-        catch (DbUpdateConcurrencyException exception)
+        catch (DbUpdateException exception)
         {
-            Activity.Current?.SetStatus(ActivityStatusCode.Error, "concurrency_conflict");
-            Activity.Current?.AddException(exception);
-            Activity.Current?.SetTag("error.type", "concurrency_conflict");
+            var dbException = exception.InnerException as DbException;
+            var isTransient = dbException?.IsTransient == true;
 
-            var domainError = DomainError.ConcurencyConflict(exception.Message);
+            Activity.Current?.SetStatus(ActivityStatusCode.Error, "db_update_failed");
+            Activity.Current?.AddException(exception);
+            Activity.Current?.SetTag("error.type", "db_update");
+            Activity.Current?.SetTag("db.exception.transient", isTransient);
+            Activity.Current?.SetTag("db.exception.type", exception.GetType().Name);
+
+            if (!string.IsNullOrWhiteSpace(dbException?.SqlState))
+            {
+                Activity.Current?.SetTag("db.exception.sql_state", dbException.SqlState);
+            }
+
+            var domainError = DomainError.UnExpected("An unexpected error occurred.", isTransient);
             return TResponse.Failure(domainError);
         }
         catch (Exception exception)

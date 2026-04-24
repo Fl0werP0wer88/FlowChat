@@ -1,4 +1,5 @@
 using System.Text;
+using FlowChat.Core.Http;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
@@ -7,8 +8,6 @@ namespace FlowChat.Shared.API;
 
 public static class ProblemDetailsExtensions
 {
-    private const string IsTransientExtensionName = "isTransient";
-
     public static ProblemDetails CreateNotFound(
         this ProblemDetailsFactory detailsFactory,
         HttpContext context,
@@ -139,7 +138,7 @@ public static class ProblemDetailsExtensions
             problemDetails.Extensions["error"] = errorTag;
         }
 
-        problemDetails.Extensions[IsTransientExtensionName] = isTransient;
+        problemDetails.Extensions[ProblemDetailsExtensionNames.IsTransient] = isTransient;
 
         return problemDetails;
     }

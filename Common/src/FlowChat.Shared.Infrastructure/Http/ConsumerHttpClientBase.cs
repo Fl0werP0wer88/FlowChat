@@ -1,25 +1,14 @@
-using System.Net;
 using System.Text.Json;
 using FlowChat.Core.Exceptions;
+using FlowChat.Core.Http;
 
 namespace FlowChat.Shared.Infrastructure.Http;
 
 public abstract class ConsumerHttpClientBase(HttpClient httpClient)
 {
-    private static readonly IReadOnlySet<HttpStatusCode> DefaultNonTransientStatusCodes =
-        new HashSet<HttpStatusCode>
-        {
-            HttpStatusCode.BadRequest,
-            HttpStatusCode.Conflict,
-            HttpStatusCode.Unauthorized
-        };
-
     private readonly HttpClient _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
 
     protected virtual string ClientDisplayName => "Consumer API";
-
-    protected virtual IReadOnlySet<HttpStatusCode> NonTransientStatusCodes =>
-        DefaultNonTransientStatusCodes;
 
     protected async Task SendAsync(
         HttpRequestMessage request,
@@ -31,24 +20,22 @@ public abstract class ConsumerHttpClientBase(HttpClient httpClient)
             return;
         }
 
-        if (NonTransientStatusCodes.Contains(response.StatusCode))
-        {
-            if (await IsConcurrencyConflictAsync(response, cancellationToken))
-            {
-                response.EnsureSuccessStatusCode();
-            }
+        var body = response.Content is null
+            ? null
+            : await response.Content.ReadAsStringAsync(cancellationToken);
 
-            throw new NonTransientException(await BuildFailureMessageAsync(response, cancellationToken));
+        if (HasTransientProblemDetails(body))
+        {
+            response.EnsureSuccessStatusCode();
         }
 
-        response.EnsureSuccessStatusCode();
+        throw new NonTransientException(BuildFailureMessage(response, body));
     }
 
-    protected async Task<string> BuildFailureMessageAsync(
+    protected string BuildFailureMessage(
         HttpResponseMessage response,
-        CancellationToken cancellationToken)
+        string? body)
     {
-        var body = await response.Content.ReadAsStringAsync(cancellationToken);
         var suffix = string.IsNullOrWhiteSpace(body)
             ? string.Empty
             : $": {body.Trim()}";
@@ -56,16 +43,8 @@ public abstract class ConsumerHttpClientBase(HttpClient httpClient)
         return $"{ClientDisplayName} returned {(int)response.StatusCode} {response.ReasonPhrase}{suffix}";
     }
 
-    private static async Task<bool> IsConcurrencyConflictAsync(
-        HttpResponseMessage response,
-        CancellationToken cancellationToken)
+    private static bool HasTransientProblemDetails(string? body)
     {
-        if (response.StatusCode != HttpStatusCode.Conflict || response.Content.Headers.ContentLength == 0)
-        {
-            return false;
-        }
-
-        var body = await response.Content.ReadAsStringAsync(cancellationToken);
         if (string.IsNullOrWhiteSpace(body))
         {
             return false;
@@ -75,9 +54,8 @@ public abstract class ConsumerHttpClientBase(HttpClient httpClient)
         {
             using var document = JsonDocument.Parse(body);
             return document.RootElement.ValueKind == JsonValueKind.Object
-                && document.RootElement.TryGetProperty("error", out var errorProperty)
-                && errorProperty.ValueKind == JsonValueKind.String
-                && string.Equals(errorProperty.GetString(), "concurrency_conflict", StringComparison.Ordinal);
+                && document.RootElement.TryGetProperty(ProblemDetailsExtensionNames.IsTransient, out var isTransientProperty)
+                && isTransientProperty.ValueKind == JsonValueKind.True;
         }
         catch (JsonException)
         {

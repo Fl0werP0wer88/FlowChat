@@ -30,7 +30,7 @@ public sealed class AuthInternalApiClientTests
     }
 
     [Fact]
-    public async Task ConfirmEmailAsync_WhenApiReturnsNotFound_ThrowsHttpRequestException()
+    public async Task ConfirmEmailAsync_WhenApiReturnsNotFound_ThrowsNonTransientException()
     {
         var client = new AuthInternalApiClient(CreateHttpClient(HttpStatusCode.NotFound));
 
@@ -41,7 +41,7 @@ public sealed class AuthInternalApiClientTests
             },
             CancellationToken.None);
 
-        await act.Should().ThrowAsync<HttpRequestException>();
+        await act.Should().ThrowAsync<NonTransientException>();
     }
 
     [Fact]

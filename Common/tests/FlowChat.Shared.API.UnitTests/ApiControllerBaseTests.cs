@@ -1,3 +1,4 @@
+using FlowChat.Core.Http;
 using FlowChat.Shared.API;
 using FlowChat.Shared.Domain;
 using FluentAssertions;
@@ -34,8 +35,8 @@ public sealed class ApiControllerBaseTests
         objectResult.StatusCode.Should().Be(expectedStatusCode);
         problemDetails.Status.Should().Be(expectedStatusCode);
         problemDetails.Detail.Should().Be(error.ErrorMessage);
-        problemDetails.Extensions.Should().ContainKey("isTransient");
-        problemDetails.Extensions["isTransient"].Should().Be(error.IsTransient);
+        problemDetails.Extensions.Should().ContainKey(ProblemDetailsExtensionNames.IsTransient);
+        problemDetails.Extensions[ProblemDetailsExtensionNames.IsTransient].Should().Be(error.IsTransient);
     }
 
     [Fact]

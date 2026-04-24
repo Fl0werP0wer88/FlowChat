@@ -2,6 +2,7 @@ using System.Net;
 using System.Text;
 using System.Text.Json;
 using FlowChat.Core.Exceptions;
+using FlowChat.Core.Http;
 using FlowChat.UserProfileService.Consumers.Services;
 using FlowChat.UserProfileService.Consumers.UserProfileApi.Contracts;
 
@@ -70,13 +71,13 @@ public sealed class UserProfileInternalApiClientTests
     }
 
     [Fact]
-    public async Task CreateInitialUserProfileAsync_WhenApiReturnsTaggedConcurrencyConflict_ThrowsHttpRequestException()
+    public async Task CreateInitialUserProfileAsync_WhenApiReturnsTransientProblemDetails_ThrowsHttpRequestException()
     {
         var handler = new CapturingHttpMessageHandler((_, _) =>
-            Task.FromResult(new HttpResponseMessage(HttpStatusCode.Conflict)
+            Task.FromResult(new HttpResponseMessage(HttpStatusCode.InternalServerError)
             {
                 Content = new StringContent(
-                    """{"detail":"conflict","error":"concurrency_conflict"}""",
+                    $$"""{"detail":"conflict","{{ProblemDetailsExtensionNames.IsTransient}}":true}""",
                     Encoding.UTF8,
                     "application/problem+json")
             }));
@@ -88,7 +89,7 @@ public sealed class UserProfileInternalApiClientTests
         var exception = await Assert.ThrowsAsync<HttpRequestException>(() =>
             client.CreateInitialUserProfileAsync(new CreateInitialUserProfileRequest(), CancellationToken.None));
 
-        exception.Message.Should().Contain("409");
+        exception.Message.Should().Contain("500");
     }
 
     private sealed class CapturingHttpMessageHandler(
