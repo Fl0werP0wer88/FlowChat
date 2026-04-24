@@ -15,9 +15,10 @@ public sealed class SendEmailVerificationControllerTests(UserProfileApiFactory f
     {
         var (userId, emailId) = await CreateProfileAndGetEmailIdAsync();
 
-        var response = await _client.PostAsync(
-            $"/api/userprofiles/{userId}/emails/{emailId}/verification",
-            content: null);
+        var request = new HttpRequestMessage(HttpMethod.Post, $"/api/userprofiles/emails/{emailId}/verification");
+        request.Headers.Add(TestAuthenticationHandler.UserIdHeaderName, userId.ToString("D"));
+
+        var response = await _client.SendAsync(request);
 
         response.StatusCode.Should().Be(HttpStatusCode.Accepted);
     }
@@ -25,9 +26,10 @@ public sealed class SendEmailVerificationControllerTests(UserProfileApiFactory f
     [Fact]
     public async Task SendEmailVerification_WhenProfileNotFound_Returns404NotFound()
     {
-        var response = await _client.PostAsync(
-            $"/api/userprofiles/{Guid.NewGuid()}/emails/{Guid.NewGuid()}/verification",
-            content: null);
+        var request = new HttpRequestMessage(HttpMethod.Post, $"/api/userprofiles/emails/{Guid.NewGuid()}/verification");
+        request.Headers.Add(TestAuthenticationHandler.UserIdHeaderName, Guid.NewGuid().ToString("D"));
+
+        var response = await _client.SendAsync(request);
 
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
@@ -37,9 +39,10 @@ public sealed class SendEmailVerificationControllerTests(UserProfileApiFactory f
     {
         var userId = await CreateProfileAsync();
 
-        var response = await _client.PostAsync(
-            $"/api/userprofiles/{userId}/emails/{Guid.NewGuid()}/verification",
-            content: null);
+        var request = new HttpRequestMessage(HttpMethod.Post, $"/api/userprofiles/emails/{Guid.NewGuid()}/verification");
+        request.Headers.Add(TestAuthenticationHandler.UserIdHeaderName, userId.ToString("D"));
+
+        var response = await _client.SendAsync(request);
 
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
@@ -62,9 +65,10 @@ public sealed class SendEmailVerificationControllerTests(UserProfileApiFactory f
             await db.SaveChangesAsync();
         });
 
-        var response = await _client.PostAsync(
-            $"/api/userprofiles/{userId}/emails/{emailId}/verification",
-            content: null);
+        var request = new HttpRequestMessage(HttpMethod.Post, $"/api/userprofiles/emails/{emailId}/verification");
+        request.Headers.Add(TestAuthenticationHandler.UserIdHeaderName, userId.ToString("D"));
+
+        var response = await _client.SendAsync(request);
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
@@ -90,9 +94,13 @@ public sealed class SendEmailVerificationControllerTests(UserProfileApiFactory f
     private async Task<(Guid UserId, Guid EmailId)> CreateProfileAndGetEmailIdAsync()
     {
         var userId = await CreateProfileAsync();
-        var profileResponse = await _client.GetAsync($"/api/userprofiles/{userId}");
+
+        var getProfile = new HttpRequestMessage(HttpMethod.Get, "/api/userprofiles");
+        getProfile.Headers.Add(TestAuthenticationHandler.UserIdHeaderName, userId.ToString("D"));
+        var profileResponse = await _client.SendAsync(getProfile);
         var profile = await profileResponse.Content.ReadFromJsonAsync<GetUserProfileResponse>();
         var emailId = profile!.UserProfile.Emails[0].Id;
+
         return (userId, emailId);
     }
 

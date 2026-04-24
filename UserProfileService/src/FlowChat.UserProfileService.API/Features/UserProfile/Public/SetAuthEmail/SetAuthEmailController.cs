@@ -1,11 +1,13 @@
 using FlowChat.Shared.API;
 using FlowChat.UserProfileService.Application.Features.UserProfile.Commands.SetAuthEmail;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FlowChat.UserProfileService.Api.Features.UserProfile.Public.SetAuthEmail;
 
 [ApiController]
+[Authorize]
 [Route("api/userprofiles")]
 public sealed class SetAuthEmailController : ApiControllerBase
 {
@@ -16,16 +18,21 @@ public sealed class SetAuthEmailController : ApiControllerBase
         _mediator = mediator;
     }
 
-    [HttpPut("{userId:guid}/emails/{emailId:guid}/auth")]
+    [HttpPut("emails/{emailId:guid}/auth")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> SetAuthEmail(
-        [FromRoute] Guid userId,
         [FromRoute] Guid emailId,
         CancellationToken cancellationToken)
     {
+        if (!TryGetCurrentUserId(out var userId))
+        {
+            return Unauthorized();
+        }
+
         var result = await _mediator.Send(new SetAuthEmailCommand(userId, emailId), cancellationToken);
 
         return result.IsSuccess

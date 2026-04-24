@@ -14,9 +14,13 @@ public sealed class AddEmailControllerTests(UserProfileApiFactory factory)
     {
         var userId = await CreateUserProfileAsync();
 
-        var response = await _client.PostAsJsonAsync(
-            $"/api/userprofiles/{userId}/emails",
-            new { EmailId = Guid.NewGuid(), Address = $"new_{userId:N}@example.com" });
+        var request = new HttpRequestMessage(HttpMethod.Post, "/api/userprofiles/emails")
+        {
+            Content = JsonContent.Create(new { EmailId = Guid.NewGuid(), Address = $"new_{userId:N}@example.com" })
+        };
+        request.Headers.Add(TestAuthenticationHandler.UserIdHeaderName, userId.ToString("D"));
+
+        var response = await _client.SendAsync(request);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var body = await response.Content.ReadFromJsonAsync<AddEmailResponse>();
@@ -27,9 +31,13 @@ public sealed class AddEmailControllerTests(UserProfileApiFactory factory)
     [Fact]
     public async Task AddEmail_WhenProfileNotFound_Returns404NotFound()
     {
-        var response = await _client.PostAsJsonAsync(
-            $"/api/userprofiles/{Guid.NewGuid()}/emails",
-            new { Address = "any@example.com" });
+        var request = new HttpRequestMessage(HttpMethod.Post, "/api/userprofiles/emails")
+        {
+            Content = JsonContent.Create(new { Address = "any@example.com" })
+        };
+        request.Headers.Add(TestAuthenticationHandler.UserIdHeaderName, Guid.NewGuid().ToString("D"));
+
+        var response = await _client.SendAsync(request);
 
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
@@ -40,15 +48,19 @@ public sealed class AddEmailControllerTests(UserProfileApiFactory factory)
         var userId = await CreateUserProfileAsync();
         var duplicateEmail = $"dup_{userId:N}@example.com";
 
-        // Add the email once
-        await _client.PostAsJsonAsync(
-            $"/api/userprofiles/{userId}/emails",
-            new { EmailId = Guid.NewGuid(), Address = duplicateEmail });
+        var addFirst = new HttpRequestMessage(HttpMethod.Post, "/api/userprofiles/emails")
+        {
+            Content = JsonContent.Create(new { EmailId = Guid.NewGuid(), Address = duplicateEmail })
+        };
+        addFirst.Headers.Add(TestAuthenticationHandler.UserIdHeaderName, userId.ToString("D"));
+        await _client.SendAsync(addFirst);
 
-        // Try to add the same email again (to any profile)
-        var response = await _client.PostAsJsonAsync(
-            $"/api/userprofiles/{userId}/emails",
-            new { EmailId = Guid.NewGuid(), Address = duplicateEmail });
+        var addSecond = new HttpRequestMessage(HttpMethod.Post, "/api/userprofiles/emails")
+        {
+            Content = JsonContent.Create(new { EmailId = Guid.NewGuid(), Address = duplicateEmail })
+        };
+        addSecond.Headers.Add(TestAuthenticationHandler.UserIdHeaderName, userId.ToString("D"));
+        var response = await _client.SendAsync(addSecond);
 
         response.StatusCode.Should().Be(HttpStatusCode.Conflict);
     }
@@ -58,9 +70,13 @@ public sealed class AddEmailControllerTests(UserProfileApiFactory factory)
     {
         var userId = await CreateUserProfileAsync();
 
-        var response = await _client.PostAsJsonAsync(
-            $"/api/userprofiles/{userId}/emails",
-            new { EmailId = Guid.NewGuid(), Address = "not-a-valid-email" });
+        var request = new HttpRequestMessage(HttpMethod.Post, "/api/userprofiles/emails")
+        {
+            Content = JsonContent.Create(new { EmailId = Guid.NewGuid(), Address = "not-a-valid-email" })
+        };
+        request.Headers.Add(TestAuthenticationHandler.UserIdHeaderName, userId.ToString("D"));
+
+        var response = await _client.SendAsync(request);
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
@@ -70,9 +86,13 @@ public sealed class AddEmailControllerTests(UserProfileApiFactory factory)
     {
         var userId = await CreateUserProfileAsync();
 
-        var response = await _client.PostAsJsonAsync(
-            $"/api/userprofiles/{userId}/emails",
-            new { EmailId = Guid.NewGuid(), Address = (string?)null });
+        var request = new HttpRequestMessage(HttpMethod.Post, "/api/userprofiles/emails")
+        {
+            Content = JsonContent.Create(new { EmailId = Guid.NewGuid(), Address = (string?)null })
+        };
+        request.Headers.Add(TestAuthenticationHandler.UserIdHeaderName, userId.ToString("D"));
+
+        var response = await _client.SendAsync(request);
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }

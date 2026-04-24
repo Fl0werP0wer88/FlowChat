@@ -19,7 +19,6 @@ interface GetContactsResponseDto {
 
 interface AddContactPayload {
   id: string;
-  ownerUserId: string;
   userId?: string;
   friendlyUserId?: string;
   email?: string;
@@ -127,8 +126,8 @@ export function isEmailLookup(value: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
 }
 
-export async function fetchContacts(ownerUserId: string, accessToken: string): Promise<Contact[]> {
-  const response = await getJson<GetContactsResponseDto>(`/api/contacts/${ownerUserId}`, {
+export async function fetchContacts(accessToken: string): Promise<Contact[]> {
+  const response = await getJson<GetContactsResponseDto>("/api/contacts", {
     accessToken,
   });
 
@@ -136,14 +135,12 @@ export async function fetchContacts(ownerUserId: string, accessToken: string): P
 }
 
 export async function addContact(
-  ownerUserId: string,
   lookupValue: string,
   accessToken: string,
 ): Promise<string | null> {
   const trimmedLookupValue = lookupValue.trim();
   const payload: AddContactPayload = {
     id: crypto.randomUUID(),
-    ownerUserId,
     ...(isEmailLookup(trimmedLookupValue)
       ? { email: trimmedLookupValue }
       : { friendlyUserId: trimmedLookupValue }),
@@ -157,13 +154,11 @@ export async function addContact(
 }
 
 export async function addContactByUserId(
-  ownerUserId: string,
   userId: string,
   accessToken: string,
 ): Promise<string | null> {
   const payload: AddContactPayload = {
     id: crypto.randomUUID(),
-    ownerUserId,
     userId,
   };
 

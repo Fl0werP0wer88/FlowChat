@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using FlowChat.Core.Http;
 using FlowChat.Shared.API;
 using FlowChat.Shared.Domain;
@@ -61,6 +62,78 @@ public sealed class ApiControllerBaseTests
     }
 
     [Fact]
+    public void TryGetCurrentUserId_WhenSubClaimIsValidGuid_ReturnsTrueAndParsedId()
+    {
+        var expectedUserId = Guid.NewGuid();
+        var controller = CreateController(claims: [new Claim("sub", expectedUserId.ToString("D"))]);
+
+        var result = controller.InvokeTryGetCurrentUserId(out var userId);
+
+        result.Should().BeTrue();
+        userId.Should().Be(expectedUserId);
+    }
+
+    [Fact]
+    public void TryGetCurrentUserId_WhenNameIdentifierClaimIsPresent_ReturnsTrueAndParsedId()
+    {
+        var expectedUserId = Guid.NewGuid();
+        var controller = CreateController(claims: [new Claim(ClaimTypes.NameIdentifier, expectedUserId.ToString("D"))]);
+
+        var result = controller.InvokeTryGetCurrentUserId(out var userId);
+
+        result.Should().BeTrue();
+        userId.Should().Be(expectedUserId);
+    }
+
+    [Fact]
+    public void TryGetCurrentUserId_WhenSubClaimTakesPrecedenceOverNameIdentifier_ReturnsSubValue()
+    {
+        var subUserId = Guid.NewGuid();
+        var nameIdUserId = Guid.NewGuid();
+        var controller = CreateController(claims:
+        [
+            new Claim("sub", subUserId.ToString("D")),
+            new Claim(ClaimTypes.NameIdentifier, nameIdUserId.ToString("D"))
+        ]);
+
+        var result = controller.InvokeTryGetCurrentUserId(out var userId);
+
+        result.Should().BeTrue();
+        userId.Should().Be(subUserId);
+    }
+
+    [Fact]
+    public void TryGetCurrentUserId_WhenNoRelevantClaimsPresent_ReturnsFalse()
+    {
+        var controller = CreateController();
+
+        var result = controller.InvokeTryGetCurrentUserId(out var userId);
+
+        result.Should().BeFalse();
+        userId.Should().Be(Guid.Empty);
+    }
+
+    [Fact]
+    public void TryGetCurrentUserId_WhenSubClaimIsEmptyGuid_ReturnsFalse()
+    {
+        var controller = CreateController(claims: [new Claim("sub", Guid.Empty.ToString("D"))]);
+
+        var result = controller.InvokeTryGetCurrentUserId(out var userId);
+
+        result.Should().BeFalse();
+    }
+
+    [Fact]
+    public void TryGetCurrentUserId_WhenSubClaimIsNotAGuid_ReturnsFalse()
+    {
+        var controller = CreateController(claims: [new Claim("sub", "not-a-guid")]);
+
+        var result = controller.InvokeTryGetCurrentUserId(out var userId);
+
+        result.Should().BeFalse();
+    }
+
+    [Fact]
     public void HasValidInternalApiKey_WhenAccessorIsNotConfigured_ReturnsFalse()
     {
         var controller = CreateController();
@@ -112,7 +185,8 @@ public sealed class ApiControllerBaseTests
 
     private static TestApiController CreateController(
         Func<string?>? internalApiKeyAccessor = null,
-        string? providedApiKey = null)
+        string? providedApiKey = null,
+        IEnumerable<Claim>? claims = null)
     {
         var httpContext = new DefaultHttpContext
         {
@@ -122,6 +196,11 @@ public sealed class ApiControllerBaseTests
         if (providedApiKey is not null)
         {
             httpContext.Request.Headers["X-Internal-Api-Key"] = providedApiKey;
+        }
+
+        if (claims is not null)
+        {
+            httpContext.User = new ClaimsPrincipal(new ClaimsIdentity(claims, "Test"));
         }
 
         var controller = internalApiKeyAccessor is null
@@ -145,6 +224,8 @@ public sealed class ApiControllerBaseTests
         public ObjectResult InvokeHandleError(IDomainError error) => HandleError(error);
 
         public bool InvokeHasValidInternalApiKey() => HasValidInternalApiKey();
+
+        public bool InvokeTryGetCurrentUserId(out Guid userId) => TryGetCurrentUserId(out userId);
     }
 
     private sealed class SingleServiceProvider(object service) : IServiceProvider

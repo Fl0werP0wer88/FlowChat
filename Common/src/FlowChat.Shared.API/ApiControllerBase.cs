@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using FlowChat.Shared.Domain;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -36,6 +37,12 @@ public abstract class ApiControllerBase : ControllerBase
         }
 
         throw new InvalidOperationException($"Unsupported error type: {error.ErrorType}");
+    }
+
+    protected bool TryGetCurrentUserId(out Guid userId)
+    {
+        var value = User.FindFirstValue("sub") ?? User.FindFirstValue(ClaimTypes.NameIdentifier);
+        return Guid.TryParse(value, out userId) && userId != Guid.Empty;
     }
 
     protected bool HasValidInternalApiKey()

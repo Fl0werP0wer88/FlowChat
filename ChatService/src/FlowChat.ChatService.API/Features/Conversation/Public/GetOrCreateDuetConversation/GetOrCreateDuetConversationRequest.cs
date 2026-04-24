@@ -5,6 +5,5 @@ namespace FlowChat.ChatService.Api.Features.Conversation.Public.GetOrCreateDuetC
 public sealed class GetOrCreateDuetConversationRequest : IServiceInput
 {
     public Guid Id { get; init; }
-    public Guid RequestingUserId { get; init; }
     public Guid PartnerUserId { get; init; }
 }

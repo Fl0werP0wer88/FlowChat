@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using FlowChat.ChatService.Api.Features.ChatMessage.Public.GetConversationMessages;
 using FlowChat.ChatService.Application.Features.ChatMessage.Dtos;
 using FlowChat.ChatService.Application.Features.ChatMessage.Queries.GetConversationMessages;
@@ -16,16 +17,20 @@ namespace FlowChat.ChatService.UnitTests.API.Features.ChatMessage.Public.GetConv
 public sealed class GetConversationMessagesControllerTests
 {
     private readonly Mock<IMediator> _mediatorMock = new();
-    private readonly GetConversationMessagesController _controller;
 
-    public GetConversationMessagesControllerTests()
+    private GetConversationMessagesController CreateController(Guid? authenticatedUserId = null)
     {
-        _controller = new GetConversationMessagesController(_mediatorMock.Object)
+        var httpContext = new DefaultHttpContext();
+
+        if (authenticatedUserId.HasValue)
         {
-            ControllerContext = new ControllerContext
-            {
-                HttpContext = new DefaultHttpContext()
-            },
+            httpContext.User = new ClaimsPrincipal(new ClaimsIdentity(
+                [new Claim("sub", authenticatedUserId.Value.ToString("D"))], "Test"));
+        }
+
+        return new GetConversationMessagesController(_mediatorMock.Object)
+        {
+            ControllerContext = new ControllerContext { HttpContext = httpContext },
             ProblemDetailsFactory = new TestProblemDetailsFactory()
         };
     }
@@ -57,9 +62,10 @@ public sealed class GetConversationMessagesControllerTests
             .Callback<object, CancellationToken>((query, _) => capturedQuery = (GetConversationMessagesQuery)query)
             .ReturnsAsync(FlowChatResult<ConversationMessagesPageDto>.Success(page));
 
-        var actionResult = await _controller.GetConversationMessages(
+        var controller = CreateController(requestingUserId);
+
+        var actionResult = await controller.GetConversationMessages(
             conversationId,
-            requestingUserId,
             25,
             beforeSentAtUtc,
             beforeMessageId,
@@ -87,8 +93,9 @@ public sealed class GetConversationMessagesControllerTests
             .ReturnsAsync(FlowChatResult<ConversationMessagesPageDto>.Failure(
                 DomainError.NotFound("Conversation not found.")));
 
-        var actionResult = await _controller.GetConversationMessages(
-            Guid.NewGuid(),
+        var controller = CreateController(Guid.NewGuid());
+
+        var actionResult = await controller.GetConversationMessages(
             Guid.NewGuid(),
             50,
             null,
@@ -97,6 +104,21 @@ public sealed class GetConversationMessagesControllerTests
 
         var notFoundResult = actionResult.Should().BeOfType<NotFoundObjectResult>().Subject;
         notFoundResult.Value.Should().BeOfType<ProblemDetails>();
+    }
+
+    [Fact]
+    public async Task GetConversationMessages_ReturnsUnauthorized_WhenNoClaimPresent()
+    {
+        var controller = CreateController();
+
+        var actionResult = await controller.GetConversationMessages(
+            Guid.NewGuid(),
+            50,
+            null,
+            null,
+            CancellationToken.None);
+
+        actionResult.Should().BeOfType<UnauthorizedResult>();
     }
 
     private sealed class TestProblemDetailsFactory : ProblemDetailsFactory

@@ -14,9 +14,10 @@ public sealed class SetMainPhoneControllerTests(UserProfileApiFactory factory)
     {
         var (userId, firstPhoneId, _) = await CreateProfileWithTwoPhonesAsync();
 
-        var response = await _client.PutAsync(
-            $"/api/userprofiles/{userId}/phones/{firstPhoneId}/main",
-            content: null);
+        var request = new HttpRequestMessage(HttpMethod.Put, $"/api/userprofiles/phones/{firstPhoneId}/main");
+        request.Headers.Add(TestAuthenticationHandler.UserIdHeaderName, userId.ToString("D"));
+
+        var response = await _client.SendAsync(request);
 
         response.StatusCode.Should().Be(HttpStatusCode.NoContent);
     }
@@ -26,9 +27,10 @@ public sealed class SetMainPhoneControllerTests(UserProfileApiFactory factory)
     {
         var (userId, _, secondPhoneId) = await CreateProfileWithTwoPhonesAsync();
 
-        var response = await _client.PutAsync(
-            $"/api/userprofiles/{userId}/phones/{secondPhoneId}/main",
-            content: null);
+        var request = new HttpRequestMessage(HttpMethod.Put, $"/api/userprofiles/phones/{secondPhoneId}/main");
+        request.Headers.Add(TestAuthenticationHandler.UserIdHeaderName, userId.ToString("D"));
+
+        var response = await _client.SendAsync(request);
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
@@ -36,9 +38,10 @@ public sealed class SetMainPhoneControllerTests(UserProfileApiFactory factory)
     [Fact]
     public async Task SetMainPhone_WhenProfileNotFound_Returns404NotFound()
     {
-        var response = await _client.PutAsync(
-            $"/api/userprofiles/{Guid.NewGuid()}/phones/{Guid.NewGuid()}/main",
-            content: null);
+        var request = new HttpRequestMessage(HttpMethod.Put, $"/api/userprofiles/phones/{Guid.NewGuid()}/main");
+        request.Headers.Add(TestAuthenticationHandler.UserIdHeaderName, Guid.NewGuid().ToString("D"));
+
+        var response = await _client.SendAsync(request);
 
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
@@ -48,9 +51,10 @@ public sealed class SetMainPhoneControllerTests(UserProfileApiFactory factory)
     {
         var userId = await CreateProfileAsync();
 
-        var response = await _client.PutAsync(
-            $"/api/userprofiles/{userId}/phones/{Guid.NewGuid()}/main",
-            content: null);
+        var request = new HttpRequestMessage(HttpMethod.Put, $"/api/userprofiles/phones/{Guid.NewGuid()}/main");
+        request.Headers.Add(TestAuthenticationHandler.UserIdHeaderName, userId.ToString("D"));
+
+        var response = await _client.SendAsync(request);
 
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
@@ -77,17 +81,24 @@ public sealed class SetMainPhoneControllerTests(UserProfileApiFactory factory)
     {
         var userId = await CreateProfileAsync();
 
-        var firstPhoneResponse = await _client.PostAsJsonAsync(
-            $"/api/userprofiles/{userId}/phones",
-            new { PhoneId = Guid.NewGuid(), Number = "+48100200300" });
+        var addFirst = new HttpRequestMessage(HttpMethod.Post, "/api/userprofiles/phones")
+        {
+            Content = JsonContent.Create(new { PhoneId = Guid.NewGuid(), Number = "+48100200300" })
+        };
+        addFirst.Headers.Add(TestAuthenticationHandler.UserIdHeaderName, userId.ToString("D"));
+        var firstPhoneResponse = await _client.SendAsync(addFirst);
         var firstPhone = await firstPhoneResponse.Content.ReadFromJsonAsync<AddPhoneResponse>();
 
-        var addPhoneResponse = await _client.PostAsJsonAsync(
-            $"/api/userprofiles/{userId}/phones",
-            new { PhoneId = Guid.NewGuid(), Number = "+48400500600" });
+        var addSecond = new HttpRequestMessage(HttpMethod.Post, "/api/userprofiles/phones")
+        {
+            Content = JsonContent.Create(new { PhoneId = Guid.NewGuid(), Number = "+48400500600" })
+        };
+        addSecond.Headers.Add(TestAuthenticationHandler.UserIdHeaderName, userId.ToString("D"));
+        var addPhoneResponse = await _client.SendAsync(addSecond);
         var addedPhone = await addPhoneResponse.Content.ReadFromJsonAsync<AddPhoneResponse>();
 
         return (userId, firstPhone!.PhoneId, addedPhone!.PhoneId);
     }
+
     private sealed record AddPhoneResponse(Guid PhoneId);
 }

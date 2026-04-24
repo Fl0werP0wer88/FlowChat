@@ -1,11 +1,13 @@
 using FlowChat.Shared.API;
 using FlowChat.UserProfileService.Application.Features.UserProfile.Commands.AddPhone;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FlowChat.UserProfileService.Api.Features.UserProfile.Public.AddPhone;
 
 [ApiController]
+[Authorize]
 [Route("api/userprofiles")]
 public sealed class AddPhoneController : ApiControllerBase
 {
@@ -16,17 +18,22 @@ public sealed class AddPhoneController : ApiControllerBase
         _mediator = mediator;
     }
 
-    [HttpPost("{userId:guid}/phones")]
+    [HttpPost("phones")]
     [ProducesResponseType(typeof(AddPhoneResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> AddPhone(
-        [FromRoute] Guid userId,
         [FromBody] AddPhoneRequest request,
         CancellationToken cancellationToken)
     {
+        if (!TryGetCurrentUserId(out var userId))
+        {
+            return Unauthorized();
+        }
+
         var result = await _mediator.Send(new AddPhoneCommand(userId, request.PhoneId, request.Number), cancellationToken);
 
         return result.IsSuccess
@@ -34,4 +41,3 @@ public sealed class AddPhoneController : ApiControllerBase
             : HandleError(result.Error);
     }
 }
-

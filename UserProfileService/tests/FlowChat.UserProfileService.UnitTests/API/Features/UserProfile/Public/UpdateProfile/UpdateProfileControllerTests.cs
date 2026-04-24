@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using FlowChat.Shared.Domain;
 using FlowChat.UserProfileService.Api.Features.UserProfile.Public.UpdateProfile;
 using FlowChat.UserProfileService.Application.Features.UserProfile.Commands.UpdateProfile;
@@ -13,32 +14,36 @@ public sealed class UpdateProfileControllerTests
 {
     private readonly Mock<IMediator> _mediatorMock = new();
 
-    private static UpdateProfileController SetupController(UpdateProfileController controller)
+    private static UpdateProfileController SetupController(UpdateProfileController controller, Guid? authenticatedUserId = null)
     {
-        controller.ControllerContext = new ControllerContext
+        var httpContext = new DefaultHttpContext
         {
-            HttpContext = new DefaultHttpContext
-            {
-                RequestServices = new SingleServiceProvider(new TestProblemDetailsFactory())
-            }
+            RequestServices = new SingleServiceProvider(new TestProblemDetailsFactory())
         };
+
+        if (authenticatedUserId.HasValue)
+        {
+            httpContext.User = new ClaimsPrincipal(new ClaimsIdentity(
+                [new Claim("sub", authenticatedUserId.Value.ToString("D"))], "Test"));
+        }
+
+        controller.ControllerContext = new ControllerContext { HttpContext = httpContext };
         return controller;
     }
 
     [Fact]
     public async Task UpdateProfile_WhenCommandSucceeds_ReturnsNoContent()
     {
+        var userId = Guid.NewGuid();
         UpdateProfileCommand? capturedCommand = null;
         _mediatorMock
             .Setup(x => x.Send(It.IsAny<UpdateProfileCommand>(), It.IsAny<CancellationToken>()))
             .Callback<IRequest<FlowChatResult<Guid>>, CancellationToken>((request, _) => capturedCommand = request as UpdateProfileCommand)
             .ReturnsAsync(FlowChatResult<Guid>.Success(Guid.NewGuid()));
 
-        var controller = SetupController(new UpdateProfileController(_mediatorMock.Object));
-        var userId = Guid.NewGuid();
+        var controller = SetupController(new UpdateProfileController(_mediatorMock.Object), userId);
 
         var result = await controller.UpdateProfile(
-            userId,
             new UpdateProfileRequest("John", "Doe", "FlowChat", "https://cdn.example/avatar.png", "about me", false),
             CancellationToken.None);
 
@@ -60,14 +65,25 @@ public sealed class UpdateProfileControllerTests
             .Setup(x => x.Send(It.IsAny<UpdateProfileCommand>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(FlowChatResult<Guid>.Failure(DomainError.NotFound("User profile was not found.")));
 
-        var controller = SetupController(new UpdateProfileController(_mediatorMock.Object));
+        var controller = SetupController(new UpdateProfileController(_mediatorMock.Object), Guid.NewGuid());
 
         var result = await controller.UpdateProfile(
-            Guid.NewGuid(),
             new UpdateProfileRequest("John", "Doe", "FlowChat", null, null, true),
             CancellationToken.None);
 
         result.Should().BeOfType<NotFoundObjectResult>();
+    }
+
+    [Fact]
+    public async Task UpdateProfile_ReturnsUnauthorized_WhenNoClaimPresent()
+    {
+        var controller = SetupController(new UpdateProfileController(_mediatorMock.Object));
+
+        var result = await controller.UpdateProfile(
+            new UpdateProfileRequest("John", "Doe", "FlowChat", null, null, true),
+            CancellationToken.None);
+
+        result.Should().BeOfType<UnauthorizedResult>();
     }
 
     private sealed class SingleServiceProvider(object service) : IServiceProvider

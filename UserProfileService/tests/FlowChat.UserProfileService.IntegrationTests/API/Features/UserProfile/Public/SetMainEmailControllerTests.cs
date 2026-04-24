@@ -14,9 +14,10 @@ public sealed class SetMainEmailControllerTests(UserProfileApiFactory factory)
     {
         var (userId, firstEmailId, _) = await CreateProfileWithTwoEmailsAsync();
 
-        var response = await _client.PutAsync(
-            $"/api/userprofiles/{userId}/emails/{firstEmailId}/main",
-            content: null);
+        var request = new HttpRequestMessage(HttpMethod.Put, $"/api/userprofiles/emails/{firstEmailId}/main");
+        request.Headers.Add(TestAuthenticationHandler.UserIdHeaderName, userId.ToString("D"));
+
+        var response = await _client.SendAsync(request);
 
         response.StatusCode.Should().Be(HttpStatusCode.NoContent);
     }
@@ -26,9 +27,10 @@ public sealed class SetMainEmailControllerTests(UserProfileApiFactory factory)
     {
         var (userId, _, secondEmailId) = await CreateProfileWithTwoEmailsAsync();
 
-        var response = await _client.PutAsync(
-            $"/api/userprofiles/{userId}/emails/{secondEmailId}/main",
-            content: null);
+        var request = new HttpRequestMessage(HttpMethod.Put, $"/api/userprofiles/emails/{secondEmailId}/main");
+        request.Headers.Add(TestAuthenticationHandler.UserIdHeaderName, userId.ToString("D"));
+
+        var response = await _client.SendAsync(request);
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
@@ -36,9 +38,10 @@ public sealed class SetMainEmailControllerTests(UserProfileApiFactory factory)
     [Fact]
     public async Task SetMainEmail_WhenProfileNotFound_Returns404NotFound()
     {
-        var response = await _client.PutAsync(
-            $"/api/userprofiles/{Guid.NewGuid()}/emails/{Guid.NewGuid()}/main",
-            content: null);
+        var request = new HttpRequestMessage(HttpMethod.Put, $"/api/userprofiles/emails/{Guid.NewGuid()}/main");
+        request.Headers.Add(TestAuthenticationHandler.UserIdHeaderName, Guid.NewGuid().ToString("D"));
+
+        var response = await _client.SendAsync(request);
 
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
@@ -48,9 +51,10 @@ public sealed class SetMainEmailControllerTests(UserProfileApiFactory factory)
     {
         var (userId, _, _) = await CreateProfileWithTwoEmailsAsync();
 
-        var response = await _client.PutAsync(
-            $"/api/userprofiles/{userId}/emails/{Guid.NewGuid()}/main",
-            content: null);
+        var request = new HttpRequestMessage(HttpMethod.Put, $"/api/userprofiles/emails/{Guid.NewGuid()}/main");
+        request.Headers.Add(TestAuthenticationHandler.UserIdHeaderName, userId.ToString("D"));
+
+        var response = await _client.SendAsync(request);
 
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
@@ -58,7 +62,7 @@ public sealed class SetMainEmailControllerTests(UserProfileApiFactory factory)
     private async Task<(Guid UserId, Guid FirstEmailId, Guid SecondEmailId)> CreateProfileWithTwoEmailsAsync()
     {
         var userId = Guid.NewGuid();
-        var request = new
+        var createRequest = new
         {
             UserId = userId,
             FriendlyUserId = $"mainemailuser-{userId:N}",
@@ -66,20 +70,23 @@ public sealed class SetMainEmailControllerTests(UserProfileApiFactory factory)
         };
         var httpRequest = new HttpRequestMessage(HttpMethod.Post, "/internal/userprofiles/initial")
         {
-            Content = JsonContent.Create(request)
+            Content = JsonContent.Create(createRequest)
         };
         httpRequest.Headers.Add("X-Internal-Api-Key", UserProfileApiFactory.InternalApiKey);
         await _client.SendAsync(httpRequest);
 
-        // Get the profile to get first email ID
-        var profileResponse = await _client.GetAsync($"/api/userprofiles/{userId}");
+        var getProfile = new HttpRequestMessage(HttpMethod.Get, "/api/userprofiles");
+        getProfile.Headers.Add(TestAuthenticationHandler.UserIdHeaderName, userId.ToString("D"));
+        var profileResponse = await _client.SendAsync(getProfile);
         var profile = await profileResponse.Content.ReadFromJsonAsync<GetUserProfileResponse>();
         var firstEmailId = profile!.UserProfile.Emails[0].Id;
 
-        // Add second email
-        var addEmailResponse = await _client.PostAsJsonAsync(
-            $"/api/userprofiles/{userId}/emails",
-            new { Address = $"second_{userId:N}@example.com" });
+        var addEmail = new HttpRequestMessage(HttpMethod.Post, "/api/userprofiles/emails")
+        {
+            Content = JsonContent.Create(new { Address = $"second_{userId:N}@example.com" })
+        };
+        addEmail.Headers.Add(TestAuthenticationHandler.UserIdHeaderName, userId.ToString("D"));
+        var addEmailResponse = await _client.SendAsync(addEmail);
         var addedEmail = await addEmailResponse.Content.ReadFromJsonAsync<AddEmailResponse>();
 
         return (userId, firstEmailId, addedEmail!.EmailId);

@@ -1,11 +1,13 @@
 using FlowChat.Shared.API;
 using FlowChat.ChatService.Application.Features.ChatMessage.Commands.SendChatMessage;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FlowChat.ChatService.Api.Features.ChatMessage.Public.SendChatMessage;
 
 [ApiController]
+[Authorize]
 [Route("api/chat/messages")]
 public sealed class SendChatMessageController : ApiControllerBase
 {
@@ -27,11 +29,16 @@ public sealed class SendChatMessageController : ApiControllerBase
         [FromBody] SendChatMessageRequest request,
         CancellationToken cancellationToken)
     {
+        if (!TryGetCurrentUserId(out var userId))
+        {
+            return Unauthorized();
+        }
+
         var result = await _mediator.Send(
             new SendChatMessageCommand(
                 request.Id,
                 request.ConversationId,
-                request.SenderUserId,
+                userId,
                 request.SenderDisplayName,
                 request.Text),
             cancellationToken);
@@ -41,4 +48,3 @@ public sealed class SendChatMessageController : ApiControllerBase
             : HandleError(result.Error);
     }
 }
-

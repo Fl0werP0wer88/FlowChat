@@ -14,7 +14,10 @@ public sealed class GetUserProfileControllerTests(UserProfileApiFactory factory)
     {
         var userId = await CreateUserProfileAsync();
 
-        var response = await _client.GetAsync($"/api/userprofiles/{userId}");
+        var request = new HttpRequestMessage(HttpMethod.Get, "/api/userprofiles");
+        request.Headers.Add(TestAuthenticationHandler.UserIdHeaderName, userId.ToString("D"));
+
+        var response = await _client.SendAsync(request);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var body = await response.Content.ReadFromJsonAsync<GetUserProfileResponse>();
@@ -27,7 +30,10 @@ public sealed class GetUserProfileControllerTests(UserProfileApiFactory factory)
     [Fact]
     public async Task GetById_WhenProfileDoesNotExist_Returns404NotFound()
     {
-        var response = await _client.GetAsync($"/api/userprofiles/{Guid.NewGuid()}");
+        var request = new HttpRequestMessage(HttpMethod.Get, "/api/userprofiles");
+        request.Headers.Add(TestAuthenticationHandler.UserIdHeaderName, Guid.NewGuid().ToString("D"));
+
+        var response = await _client.SendAsync(request);
 
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }

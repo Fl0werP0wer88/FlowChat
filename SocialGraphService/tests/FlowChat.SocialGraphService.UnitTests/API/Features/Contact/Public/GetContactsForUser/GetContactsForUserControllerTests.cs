@@ -1,4 +1,4 @@
-using AutoMapper;
+using System.Security.Claims;
 using FlowChat.Shared.Domain;
 using FlowChat.SocialGraphService.Api.Features.Contact.Public.GetContactsForUser;
 using FlowChat.SocialGraphService.Application.Features.Contact.Queries.GetContactsForUser;
@@ -8,7 +8,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
-using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 
 namespace FlowChat.SocialGraphService.UnitTests;
@@ -16,9 +15,6 @@ namespace FlowChat.SocialGraphService.UnitTests;
 public sealed class GetContactsForUserControllerTests
 {
     private readonly Mock<IMediator> _mediatorMock = new();
-    private readonly IMapper _mapper = new MapperConfiguration(
-        configuration => configuration.AddProfile<GetContactsForUserMappingProfile>(),
-        NullLoggerFactory.Instance).CreateMapper();
 
     [Fact]
     public async Task GetForUser_WhenQuerySucceeds_ReturnsOkResponse()
@@ -44,9 +40,9 @@ public sealed class GetContactsForUserControllerTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(FlowChatResult<IReadOnlyList<ContactDto>>.Success(contacts));
 
-        var controller = SetupController(new GetContactsForUserController(_mediatorMock.Object, _mapper));
+        var controller = SetupController(new GetContactsForUserController(_mediatorMock.Object), userId);
 
-        var result = await controller.GetForUser(new GetContactsForUserRequest { UserId = userId }, CancellationToken.None);
+        var result = await controller.GetForUser(CancellationToken.None);
 
         var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
         var response = okResult.Value.Should().BeOfType<GetContactsForUserResponse>().Subject;
@@ -65,9 +61,9 @@ public sealed class GetContactsForUserControllerTests
             .ReturnsAsync(FlowChatResult<IReadOnlyList<ContactDto>>.Failure(
                 DomainError.NotFound($"Contacts for user '{userId}' were not found.")));
 
-        var controller = SetupController(new GetContactsForUserController(_mediatorMock.Object, _mapper));
+        var controller = SetupController(new GetContactsForUserController(_mediatorMock.Object), userId);
 
-        var result = await controller.GetForUser(new GetContactsForUserRequest { UserId = userId }, CancellationToken.None);
+        var result = await controller.GetForUser(CancellationToken.None);
 
         var notFoundResult = result.Should().BeOfType<NotFoundObjectResult>().Subject;
         var problemDetails = notFoundResult.Value.Should().BeOfType<ProblemDetails>().Subject;
@@ -75,17 +71,31 @@ public sealed class GetContactsForUserControllerTests
         problemDetails.Detail.Should().Be($"Contacts for user '{userId}' were not found.");
     }
 
-    private static TController SetupController<TController>(TController controller)
+    [Fact]
+    public async Task GetForUser_ReturnsUnauthorized_WhenNoClaimPresent()
+    {
+        var controller = SetupController(new GetContactsForUserController(_mediatorMock.Object));
+
+        var result = await controller.GetForUser(CancellationToken.None);
+
+        result.Should().BeOfType<UnauthorizedResult>();
+    }
+
+    private static TController SetupController<TController>(TController controller, Guid? authenticatedUserId = null)
         where TController : ControllerBase
     {
-        controller.ControllerContext = new ControllerContext
+        var httpContext = new DefaultHttpContext
         {
-            HttpContext = new DefaultHttpContext
-            {
-                RequestServices = new SingleServiceProvider(new TestProblemDetailsFactory())
-            }
+            RequestServices = new SingleServiceProvider(new TestProblemDetailsFactory())
         };
 
+        if (authenticatedUserId.HasValue)
+        {
+            httpContext.User = new ClaimsPrincipal(new ClaimsIdentity(
+                [new Claim("sub", authenticatedUserId.Value.ToString("D"))], "Test"));
+        }
+
+        controller.ControllerContext = new ControllerContext { HttpContext = httpContext };
         return controller;
     }
 

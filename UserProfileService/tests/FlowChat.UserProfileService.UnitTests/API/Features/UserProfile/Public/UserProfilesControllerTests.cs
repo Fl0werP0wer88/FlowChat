@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using FlowChat.Shared.Domain;
 using FlowChat.UserProfileService.Api.Features.UserProfile.Public.AddEmail;
 using FlowChat.UserProfileService.Api.Features.UserProfile.Public.AddPhone;
@@ -17,30 +18,36 @@ public sealed class UserProfilesControllerTests
 {
     private readonly Mock<IMediator> _mediatorMock = new();
 
-    private static TController SetupController<TController>(TController controller)
+    private static TController SetupController<TController>(TController controller, Guid? authenticatedUserId = null)
         where TController : ControllerBase
     {
-        controller.ControllerContext = new ControllerContext
+        var httpContext = new DefaultHttpContext
         {
-            HttpContext = new DefaultHttpContext
-            {
-                RequestServices = new SingleServiceProvider(new TestProblemDetailsFactory())
-            }
+            RequestServices = new SingleServiceProvider(new TestProblemDetailsFactory())
         };
+
+        if (authenticatedUserId.HasValue)
+        {
+            httpContext.User = new ClaimsPrincipal(new ClaimsIdentity(
+                [new Claim("sub", authenticatedUserId.Value.ToString("D"))], "Test"));
+        }
+
+        controller.ControllerContext = new ControllerContext { HttpContext = httpContext };
         return controller;
     }
 
     [Fact]
     public async Task AddEmail_ReturnsOk_WithNewEmailId()
     {
+        var userId = Guid.NewGuid();
         var emailId = Guid.NewGuid();
         _mediatorMock
             .Setup(x => x.Send(It.IsAny<AddEmailCommand>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(FlowChatResult<Guid>.Success(emailId));
 
-        var controller = SetupController(new AddEmailController(_mediatorMock.Object));
+        var controller = SetupController(new AddEmailController(_mediatorMock.Object), userId);
 
-        var result = await controller.AddEmail(Guid.NewGuid(), new AddEmailRequest(Guid.NewGuid(), "john@example.com"), CancellationToken.None);
+        var result = await controller.AddEmail(new AddEmailRequest(Guid.NewGuid(), "john@example.com"), CancellationToken.None);
 
         var ok = result.Should().BeOfType<OkObjectResult>().Subject;
         var response = ok.Value.Should().BeOfType<AddEmailResponse>().Subject;
@@ -50,14 +57,15 @@ public sealed class UserProfilesControllerTests
     [Fact]
     public async Task AddPhone_ReturnsOk_WithNewPhoneId()
     {
+        var userId = Guid.NewGuid();
         var phoneId = Guid.NewGuid();
         _mediatorMock
             .Setup(x => x.Send(It.IsAny<AddPhoneCommand>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(FlowChatResult<Guid>.Success(phoneId));
 
-        var controller = SetupController(new AddPhoneController(_mediatorMock.Object));
+        var controller = SetupController(new AddPhoneController(_mediatorMock.Object), userId);
 
-        var result = await controller.AddPhone(Guid.NewGuid(), new AddPhoneRequest(Guid.NewGuid(), "+48123123123"), CancellationToken.None);
+        var result = await controller.AddPhone(new AddPhoneRequest(Guid.NewGuid(), "+48123123123"), CancellationToken.None);
 
         var ok = result.Should().BeOfType<OkObjectResult>().Subject;
         var response = ok.Value.Should().BeOfType<AddPhoneResponse>().Subject;
@@ -73,9 +81,9 @@ public sealed class UserProfilesControllerTests
             .ReturnsAsync(FlowChatResult<UserProfileDto>.Failure(
                 DomainError.NotFound($"User profile '{userId}' was not found.")));
 
-        var controller = SetupController(new UserProfilesController(_mediatorMock.Object));
+        var controller = SetupController(new UserProfilesController(_mediatorMock.Object), userId);
 
-        var result = await controller.GetById(userId, CancellationToken.None);
+        var result = await controller.GetById(CancellationToken.None);
 
         var notFound = result.Should().BeOfType<NotFoundObjectResult>().Subject;
         var problemDetails = notFound.Value.Should().BeOfType<ProblemDetails>().Subject;
@@ -90,9 +98,9 @@ public sealed class UserProfilesControllerTests
             .Setup(x => x.Send(It.IsAny<AddEmailCommand>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(FlowChatResult<Guid>.Failure(DomainError.Conflict("Email 'john@example.com' is already taken.")));
 
-        var controller = SetupController(new AddEmailController(_mediatorMock.Object));
+        var controller = SetupController(new AddEmailController(_mediatorMock.Object), Guid.NewGuid());
 
-        var result = await controller.AddEmail(Guid.NewGuid(), new AddEmailRequest(Guid.NewGuid(), "john@example.com"), CancellationToken.None);
+        var result = await controller.AddEmail(new AddEmailRequest(Guid.NewGuid(), "john@example.com"), CancellationToken.None);
 
         result.Should().BeOfType<ConflictObjectResult>();
     }
@@ -106,13 +114,23 @@ public sealed class UserProfilesControllerTests
             .Setup(x => x.Send(It.IsAny<GetUserProfileQuery>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(FlowChatResult<UserProfileDto>.Success(dto));
 
-        var controller = SetupController(new UserProfilesController(_mediatorMock.Object));
+        var controller = SetupController(new UserProfilesController(_mediatorMock.Object), userId);
 
-        var result = await controller.GetById(userId, CancellationToken.None);
+        var result = await controller.GetById(CancellationToken.None);
 
         var ok = result.Should().BeOfType<OkObjectResult>().Subject;
         var response = ok.Value.Should().BeOfType<GetUserProfileResponse>().Subject;
         response.UserProfile.Should().BeEquivalentTo(dto);
+    }
+
+    [Fact]
+    public async Task GetById_ReturnsUnauthorized_WhenNoClaimPresent()
+    {
+        var controller = SetupController(new UserProfilesController(_mediatorMock.Object));
+
+        var result = await controller.GetById(CancellationToken.None);
+
+        result.Should().BeOfType<UnauthorizedResult>();
     }
 
     private sealed class SingleServiceProvider(object service) : IServiceProvider

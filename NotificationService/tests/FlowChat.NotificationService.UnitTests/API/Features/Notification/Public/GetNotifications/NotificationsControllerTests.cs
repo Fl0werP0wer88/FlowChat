@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using AutoFixture;
 using FlowChat.NotificationService.Api.Features.Notification.Public.GetNotifications;
 using FlowChat.NotificationService.Application.Features.Notification.Queries.GetNotifications;
@@ -17,7 +18,7 @@ public sealed class NotificationsControllerTests
     private readonly IFixture _fixture = new Fixture();
     private readonly Mock<IMediator> _mediatorMock = new();
 
-    private NotificationsController CreateController()
+    private NotificationsController CreateController(Guid? authenticatedUserId = null)
     {
         var controller = new NotificationsController(_mediatorMock.Object);
 
@@ -26,11 +27,13 @@ public sealed class NotificationsControllerTests
             RequestServices = new SingleServiceProvider(new TestProblemDetailsFactory())
         };
 
-        controller.ControllerContext = new ControllerContext
+        if (authenticatedUserId.HasValue)
         {
-            HttpContext = httpContext
-        };
+            httpContext.User = new ClaimsPrincipal(new ClaimsIdentity(
+                [new Claim("sub", authenticatedUserId.Value.ToString("D"))], "Test"));
+        }
 
+        controller.ControllerContext = new ControllerContext { HttpContext = httpContext };
         return controller;
     }
 
@@ -48,8 +51,8 @@ public sealed class NotificationsControllerTests
             .Setup(x => x.Send(It.IsAny<GetNotificationsQuery>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(FlowChat.Core.Results.FlowChatResult<IReadOnlyList<NotificationDto>>.Success(dtos));
 
-        var controller = CreateController();
-        var result = await controller.Get(userId, CancellationToken.None);
+        var controller = CreateController(userId);
+        var result = await controller.Get(CancellationToken.None);
 
         var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
         var response = okResult.Value.Should().BeOfType<GetNotificationsResponse>().Subject;
@@ -57,26 +60,7 @@ public sealed class NotificationsControllerTests
     }
 
     [Fact]
-    public async Task Get_WhenUserIdIsNull_SendsQueryWithNullUserId()
-    {
-        GetNotificationsQuery? capturedQuery = null;
-
-        _mediatorMock
-            .Setup(x => x.Send(It.IsAny<GetNotificationsQuery>(), It.IsAny<CancellationToken>()))
-            .Callback<IRequest<FlowChat.Core.Results.FlowChatResult<IReadOnlyList<NotificationDto>>>, CancellationToken>(
-                (q, _) => capturedQuery = (GetNotificationsQuery)q)
-            .ReturnsAsync(FlowChat.Core.Results.FlowChatResult<IReadOnlyList<NotificationDto>>.Success(
-                new List<NotificationDto>()));
-
-        var controller = CreateController();
-        await controller.Get(null, CancellationToken.None);
-
-        capturedQuery.Should().NotBeNull();
-        capturedQuery!.UserId.Should().BeNull();
-    }
-
-    [Fact]
-    public async Task Get_WithSpecificUserId_SendsQueryWithThatUserId()
+    public async Task Get_PassesUserIdFromClaimToQuery()
     {
         var userId = _fixture.Create<Guid>();
         GetNotificationsQuery? capturedQuery = null;
@@ -88,9 +72,10 @@ public sealed class NotificationsControllerTests
             .ReturnsAsync(FlowChat.Core.Results.FlowChatResult<IReadOnlyList<NotificationDto>>.Success(
                 new List<NotificationDto>()));
 
-        var controller = CreateController();
-        await controller.Get(userId, CancellationToken.None);
+        var controller = CreateController(userId);
+        await controller.Get(CancellationToken.None);
 
+        capturedQuery.Should().NotBeNull();
         capturedQuery!.UserId.Should().Be(userId);
     }
 
@@ -102,12 +87,22 @@ public sealed class NotificationsControllerTests
             .ReturnsAsync(FlowChat.Core.Results.FlowChatResult<IReadOnlyList<NotificationDto>>.Success(
                 new List<NotificationDto>()));
 
-        var controller = CreateController();
-        var result = await controller.Get(null, CancellationToken.None);
+        var controller = CreateController(_fixture.Create<Guid>());
+        var result = await controller.Get(CancellationToken.None);
 
         var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
         var response = okResult.Value.Should().BeOfType<GetNotificationsResponse>().Subject;
         response.Notifications.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task Get_ReturnsUnauthorized_WhenNoClaimPresent()
+    {
+        var controller = CreateController();
+
+        var result = await controller.Get(CancellationToken.None);
+
+        result.Should().BeOfType<UnauthorizedResult>();
     }
 
     // --- Test helpers ---

@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using FlowChat.PresenceService.Application.Features.Presence.Queries.GetUserPresencePreferences;
 using FlowChat.Shared.API;
 using MediatR;
@@ -31,9 +30,5 @@ public sealed class GetUserPresencePreferencesController(IMediator mediator) : A
             : HandleError(result.Error);
     }
 
-    private bool TryGetCurrentUserId(out Guid userId)
-    {
-        var value = User.FindFirstValue("sub") ?? User.FindFirstValue(ClaimTypes.NameIdentifier);
-        return Guid.TryParse(value, out userId) && userId != Guid.Empty;
-    }
+
 }

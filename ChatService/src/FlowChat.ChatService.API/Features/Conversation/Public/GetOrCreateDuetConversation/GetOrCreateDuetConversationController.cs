@@ -1,11 +1,13 @@
 using FlowChat.ChatService.Application.Features.Conversation.Commands.GetOrCreateDuetConversation;
 using FlowChat.Shared.API;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FlowChat.ChatService.Api.Features.Conversation.Public.GetOrCreateDuetConversation;
 
 [ApiController]
+[Authorize]
 [Route("api/conversations/duet")]
 public sealed class GetOrCreateDuetConversationController : ApiControllerBase
 {
@@ -19,14 +21,20 @@ public sealed class GetOrCreateDuetConversationController : ApiControllerBase
     [HttpPost]
     [ProducesResponseType(typeof(GetOrCreateDuetConversationResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> GetOrCreateDuetConversation(
         [FromBody] GetOrCreateDuetConversationRequest request,
         CancellationToken cancellationToken)
     {
+        if (!TryGetCurrentUserId(out var userId))
+        {
+            return Unauthorized();
+        }
+
         var result = await _mediator.Send(
-            new GetOrCreateDuetConversationCommand(request.Id, request.RequestingUserId, request.PartnerUserId),
+            new GetOrCreateDuetConversationCommand(request.Id, userId, request.PartnerUserId),
             cancellationToken);
 
         if (!result.IsSuccess)

@@ -1,11 +1,13 @@
 using FlowChat.ChatService.Application.Features.Conversation.Commands.CreateConversation;
 using FlowChat.Shared.API;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FlowChat.ChatService.Api.Features.Conversation.Public.CreateConversation;
 
 [ApiController]
+[Authorize]
 [Route("api/conversations")]
 public sealed class CreateConversationController : ApiControllerBase
 {
@@ -19,16 +21,22 @@ public sealed class CreateConversationController : ApiControllerBase
     [HttpPost]
     [ProducesResponseType(typeof(CreateConversationResponse), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> CreateConversation(
         [FromBody] CreateConversationRequest request,
         CancellationToken cancellationToken)
     {
+        if (!TryGetCurrentUserId(out var userId))
+        {
+            return Unauthorized();
+        }
+
         var result = await _mediator.Send(
             new CreateConversationCommand(
                 request.Id,
                 request.IsGroup,
-                request.CreatedByUserId,
+                userId,
                 request.ParticipantUserIds,
                 request.Name),
             cancellationToken);

@@ -1,11 +1,13 @@
 using FlowChat.ChatService.Application.Features.ChatMessage.Queries.GetConversationMessages;
 using FlowChat.Shared.API;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FlowChat.ChatService.Api.Features.ChatMessage.Public.GetConversationMessages;
 
 [ApiController]
+[Authorize]
 [Route("api/chat/conversations/{conversationId:guid}/messages")]
 public sealed class GetConversationMessagesController : ApiControllerBase
 {
@@ -25,16 +27,20 @@ public sealed class GetConversationMessagesController : ApiControllerBase
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> GetConversationMessages(
         [FromRoute] Guid conversationId,
-        [FromQuery] Guid requestingUserId,
         [FromQuery] int limit = DefaultLimit,
         [FromQuery] DateTimeOffset? beforeSentAtUtc = null,
         [FromQuery] Guid? beforeMessageId = null,
         CancellationToken cancellationToken = default)
     {
+        if (!TryGetCurrentUserId(out var userId))
+        {
+            return Unauthorized();
+        }
+
         var result = await _mediator.Send(
             new GetConversationMessagesQuery(
                 conversationId,
-                requestingUserId,
+                userId,
                 limit,
                 beforeSentAtUtc,
                 beforeMessageId),

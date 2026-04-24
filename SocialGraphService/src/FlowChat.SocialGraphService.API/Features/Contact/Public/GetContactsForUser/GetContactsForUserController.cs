@@ -1,36 +1,37 @@
-using AutoMapper;
 using FlowChat.Shared.API;
 using FlowChat.SocialGraphService.Application.Features.Contact.Queries.GetContactsForUser;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FlowChat.SocialGraphService.Api.Features.Contact.Public.GetContactsForUser;
 
 [ApiController]
+[Authorize]
 [Route("api/contacts")]
 public sealed class GetContactsForUserController : ApiControllerBase
 {
     private readonly IMediator _mediator;
-    private readonly IMapper _mapper;
 
-    public GetContactsForUserController(IMediator mediator, IMapper mapper)
+    public GetContactsForUserController(IMediator mediator)
     {
         _mediator = mediator;
-        _mapper = mapper;
     }
 
-    [HttpGet("{userId:guid}")]
+    [HttpGet]
     [ProducesResponseType(typeof(GetContactsForUserResponse), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetForUser(
-        [FromRoute] GetContactsForUserRequest request,
-        CancellationToken cancellationToken)
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> GetForUser(CancellationToken cancellationToken)
     {
-        var query = _mapper.Map<GetContactsForUserQuery>(request);
-        var result = await _mediator.Send(query, cancellationToken);
+        if (!TryGetCurrentUserId(out var userId))
+        {
+            return Unauthorized();
+        }
+
+        var result = await _mediator.Send(new GetContactsForUserQuery(userId), cancellationToken);
 
         return result.IsSuccess
             ? Ok(new GetContactsForUserResponse(result.Value))
             : HandleError(result.Error);
     }
 }
-

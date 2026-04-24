@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using AutoFixture;
 using FlowChat.Shared.Domain;
 using FlowChat.SocialGraphService.Api.Features.Contact.Public.AddContact;
@@ -34,14 +35,10 @@ public sealed class AddContactControllerTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(FlowChatResult<Guid>.Success(contactId));
 
-        var controller = SetupController(new AddContactController(_mediatorMock.Object));
+        var controller = SetupController(new AddContactController(_mediatorMock.Object), ownerUserId);
 
         var result = await controller.Add(
-            new AddContactRequest
-            {
-                OwnerUserId = ownerUserId,
-                UserId = userId
-            },
+            new AddContactRequest { UserId = userId },
             CancellationToken.None);
 
         var createdResult = result.Should().BeOfType<ObjectResult>().Subject;
@@ -57,14 +54,10 @@ public sealed class AddContactControllerTests
             .Setup(x => x.Send(It.IsAny<AddContactCommand>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(FlowChatResult<Guid>.Failure(DomainError.Conflict("Contact already exists.")));
 
-        var controller = SetupController(new AddContactController(_mediatorMock.Object));
+        var controller = SetupController(new AddContactController(_mediatorMock.Object), _fixture.Create<Guid>());
 
         var result = await controller.Add(
-            new AddContactRequest
-            {
-                OwnerUserId = _fixture.Create<Guid>(),
-                FriendlyUserId = "jdoe"
-            },
+            new AddContactRequest { FriendlyUserId = "jdoe" },
             CancellationToken.None);
 
         var conflictResult = result.Should().BeOfType<ConflictObjectResult>().Subject;
@@ -73,17 +66,31 @@ public sealed class AddContactControllerTests
         problemDetails.Detail.Should().Be("Contact already exists.");
     }
 
-    private static TController SetupController<TController>(TController controller)
+    [Fact]
+    public async Task Add_ReturnsUnauthorized_WhenNoClaimPresent()
+    {
+        var controller = SetupController(new AddContactController(_mediatorMock.Object));
+
+        var result = await controller.Add(new AddContactRequest(), CancellationToken.None);
+
+        result.Should().BeOfType<UnauthorizedResult>();
+    }
+
+    private static TController SetupController<TController>(TController controller, Guid? authenticatedUserId = null)
         where TController : ControllerBase
     {
-        controller.ControllerContext = new ControllerContext
+        var httpContext = new DefaultHttpContext
         {
-            HttpContext = new DefaultHttpContext
-            {
-                RequestServices = new SingleServiceProvider(new TestProblemDetailsFactory())
-            }
+            RequestServices = new SingleServiceProvider(new TestProblemDetailsFactory())
         };
 
+        if (authenticatedUserId.HasValue)
+        {
+            httpContext.User = new ClaimsPrincipal(new ClaimsIdentity(
+                [new Claim("sub", authenticatedUserId.Value.ToString("D"))], "Test"));
+        }
+
+        controller.ControllerContext = new ControllerContext { HttpContext = httpContext };
         return controller;
     }
 

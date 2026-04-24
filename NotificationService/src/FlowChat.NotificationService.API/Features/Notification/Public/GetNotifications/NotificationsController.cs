@@ -1,11 +1,13 @@
 using FlowChat.Shared.API;
 using FlowChat.NotificationService.Application.Features.Notification.Queries.GetNotifications;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FlowChat.NotificationService.Api.Features.Notification.Public.GetNotifications;
 
 [ApiController]
+[Authorize]
 [Route("api/[controller]")]
 public sealed class NotificationsController : ApiControllerBase
 {
@@ -18,8 +20,14 @@ public sealed class NotificationsController : ApiControllerBase
 
     [HttpGet]
     [ProducesResponseType(typeof(GetNotificationsResponse), StatusCodes.Status200OK)]
-    public async Task<IActionResult> Get([FromQuery] Guid? userId, CancellationToken cancellationToken)
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> Get(CancellationToken cancellationToken)
     {
+        if (!TryGetCurrentUserId(out var userId))
+        {
+            return Unauthorized();
+        }
+
         var result = await _mediator.Send(new GetNotificationsQuery(userId), cancellationToken);
 
         return result.IsSuccess
@@ -27,4 +35,3 @@ public sealed class NotificationsController : ApiControllerBase
             : HandleError(result.Error);
     }
 }
-

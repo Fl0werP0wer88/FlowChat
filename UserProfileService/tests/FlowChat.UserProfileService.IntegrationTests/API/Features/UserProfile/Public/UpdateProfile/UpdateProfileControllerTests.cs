@@ -18,9 +18,9 @@ public sealed class UpdateProfileControllerTests(UserProfileApiFactory factory)
     {
         var userId = await CreateUserProfileAsync();
 
-        var response = await _client.PutAsJsonAsync(
-            $"/api/userprofiles/{userId}",
-            new
+        var request = new HttpRequestMessage(HttpMethod.Put, "/api/userprofiles")
+        {
+            Content = JsonContent.Create(new
             {
                 FirstName = "John",
                 LastName = "Doe",
@@ -28,7 +28,11 @@ public sealed class UpdateProfileControllerTests(UserProfileApiFactory factory)
                 AvatarUrl = "https://cdn.example/avatar.png",
                 Bio = "about me",
                 IsActive = false
-            });
+            })
+        };
+        request.Headers.Add(TestAuthenticationHandler.UserIdHeaderName, userId.ToString("D"));
+
+        var response = await _client.SendAsync(request);
 
         response.StatusCode.Should().Be(HttpStatusCode.NoContent);
 
@@ -51,9 +55,9 @@ public sealed class UpdateProfileControllerTests(UserProfileApiFactory factory)
     [Fact]
     public async Task UpdateProfile_WhenProfileDoesNotExist_Returns404NotFound()
     {
-        var response = await _client.PutAsJsonAsync(
-            $"/api/userprofiles/{Guid.NewGuid()}",
-            new
+        var request = new HttpRequestMessage(HttpMethod.Put, "/api/userprofiles")
+        {
+            Content = JsonContent.Create(new
             {
                 FirstName = "John",
                 LastName = "Doe",
@@ -61,7 +65,11 @@ public sealed class UpdateProfileControllerTests(UserProfileApiFactory factory)
                 AvatarUrl = "https://cdn.example/avatar.png",
                 Bio = "about me",
                 IsActive = true
-            });
+            })
+        };
+        request.Headers.Add(TestAuthenticationHandler.UserIdHeaderName, Guid.NewGuid().ToString("D"));
+
+        var response = await _client.SendAsync(request);
 
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
@@ -71,9 +79,9 @@ public sealed class UpdateProfileControllerTests(UserProfileApiFactory factory)
     {
         var userId = await CreateUserProfileAsync();
 
-        var response = await _client.PutAsJsonAsync(
-            $"/api/userprofiles/{userId}",
-            new
+        var request = new HttpRequestMessage(HttpMethod.Put, "/api/userprofiles")
+        {
+            Content = JsonContent.Create(new
             {
                 FirstName = new string('a', 101),
                 LastName = "Doe",
@@ -81,7 +89,11 @@ public sealed class UpdateProfileControllerTests(UserProfileApiFactory factory)
                 AvatarUrl = "https://cdn.example/avatar.png",
                 Bio = "about me",
                 IsActive = true
-            });
+            })
+        };
+        request.Headers.Add(TestAuthenticationHandler.UserIdHeaderName, userId.ToString("D"));
+
+        var response = await _client.SendAsync(request);
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }

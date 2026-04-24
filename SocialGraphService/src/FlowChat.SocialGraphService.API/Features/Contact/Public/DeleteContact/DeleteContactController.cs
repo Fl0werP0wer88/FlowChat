@@ -1,11 +1,13 @@
 using FlowChat.Shared.API;
 using FlowChat.SocialGraphService.Application.Features.Contact.Commands.DeleteContact;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FlowChat.SocialGraphService.Api.Features.Contact.Public.DeleteContact;
 
 [ApiController]
+[Authorize]
 [Route("api/contacts")]
 public sealed class DeleteContactController : ApiControllerBase
 {
@@ -16,13 +18,18 @@ public sealed class DeleteContactController : ApiControllerBase
         _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
     }
 
-    [HttpDelete("{ownerUserId:guid}/{contactUserId:guid}")]
+    [HttpDelete("{contactUserId:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Delete(
-        [FromRoute] Guid ownerUserId,
         [FromRoute] Guid contactUserId,
         CancellationToken cancellationToken)
     {
+        if (!TryGetCurrentUserId(out var ownerUserId))
+        {
+            return Unauthorized();
+        }
+
         var result = await _mediator.Send(
             new DeleteContactCommand(ownerUserId, contactUserId),
             cancellationToken);

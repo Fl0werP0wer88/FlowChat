@@ -86,7 +86,7 @@ export function useContacts(accessToken: string): UseContactsResult {
       }
 
       try {
-        const loadedContacts = await fetchContacts(ownerUserId, accessToken);
+        const loadedContacts = await fetchContacts(accessToken);
         if (!isActive) {
           return;
         }
@@ -160,8 +160,8 @@ export function useContacts(accessToken: string): UseContactsResult {
     setNotice(null);
 
     try {
-      await addContact(ownerUserId, trimmedLookupValue, accessToken);
-      const loadedContacts = await fetchContacts(ownerUserId, accessToken);
+      await addContact(trimmedLookupValue, accessToken);
+      const loadedContacts = await fetchContacts(accessToken);
       setContacts(applyStatusesToContacts(loadedContacts));
       setNotice({ kind: "info", message: "Kontakt zostal dodany." });
       return true;
@@ -194,8 +194,8 @@ export function useContacts(accessToken: string): UseContactsResult {
     setNotice(null);
 
     try {
-      await addContactByUserId(ownerUserId, trimmedUserId, accessToken);
-      const loadedContacts = await fetchContacts(ownerUserId, accessToken);
+      await addContactByUserId(trimmedUserId, accessToken);
+      const loadedContacts = await fetchContacts(accessToken);
       setContacts(applyStatusesToContacts(loadedContacts));
       setNotice({ kind: "info", message: "Kontakt zostal dodany." });
       return true;

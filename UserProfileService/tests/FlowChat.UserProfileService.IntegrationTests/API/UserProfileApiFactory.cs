@@ -1,6 +1,7 @@
 using FlowChat.Shared.Application;
 using FlowChat.UserProfileService.Api.Features.UserProfile.Internal.CreateInitialUserProfile;
 using FlowChat.UserProfileService.Persistence;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.DataProtection.Repositories;
 using Microsoft.AspNetCore.Hosting;
@@ -86,6 +87,14 @@ public sealed class UserProfileApiFactory : WebApplicationFactory<CreateInitialU
             // Replace IOutboxIntegrationEventPublisher with recording stub
             services.RemoveAll<IOutboxIntegrationEventPublisher>();
             services.AddSingleton<IOutboxIntegrationEventPublisher>(EventPublisher);
+
+            services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = TestAuthenticationHandler.SchemeName;
+                options.DefaultChallengeScheme = TestAuthenticationHandler.SchemeName;
+            }).AddScheme<AuthenticationSchemeOptions, TestAuthenticationHandler>(
+                TestAuthenticationHandler.SchemeName,
+                _ => { });
 
             // Replace DataProtection with ephemeral provider so we don't need the DB-backed key store.
             // Also remove IXmlRepository so the non-ephemeral KeyRingProvider doesn't still try
