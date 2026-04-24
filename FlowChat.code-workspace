@@ -193,6 +193,12 @@
                                             "**/TestResults":  true,
                                             "**/TestResults/**":  true
                                         },
+                     "search-presets.custom":  {
+                                                   "C# Source (No Tests)":  {
+                                                                                "filesToInclude":  "**/*.cs",
+                                                                                "filesToExclude":  "**/tests/**, **/*Tests*/**, **/*.UnitTests/**, **/*.IntegrationTests/**, **/*.AATs/**"
+                                                                            }
+                                               },
                      "editor.formatOnSave":  true,
                      "editor.defaultFormatter":  "dprint.dprint",
                      "dprint.configPath":  "${workspaceFolder:FlowChat}/dprint.json",
