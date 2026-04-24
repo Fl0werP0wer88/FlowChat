@@ -5,7 +5,7 @@ namespace FlowChat.Shared.Domain;
 public abstract class ErrorType(string name, int value) : SmartEnum<ErrorType>(name, value)
 {
     public static readonly ErrorType Conflict = new ConflictEnum();
-    public static readonly ErrorType ConcurencyConflict = new ConcurencyConflictEnum();
+    public static readonly ErrorType ConcurrencyConflict = new ConcurrencyConflictEnum();
     public static readonly ErrorType NotFound = new NotFoundEnum();
     public static readonly ErrorType BadRequest = new BadRequestEnum();
     public static readonly ErrorType Validation = new ValidationEnum();
@@ -19,9 +19,9 @@ public abstract class ErrorType(string name, int value) : SmartEnum<ErrorType>(n
         }
     }
 
-    private sealed class ConcurencyConflictEnum : ErrorType
+    private sealed class ConcurrencyConflictEnum : ErrorType
     {
-        public ConcurencyConflictEnum() : base("ConcurencyConflict", 6)
+        public ConcurrencyConflictEnum() : base("ConcurrencyConflict", 6)
         {
         }
     }

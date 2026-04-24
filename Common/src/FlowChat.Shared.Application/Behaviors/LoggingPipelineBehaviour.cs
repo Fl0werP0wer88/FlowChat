@@ -136,8 +136,6 @@ public sealed class LoggingPipelineBehaviour<TRequest, TResponse>(
     }
 
     private static string ResolveErrorTypeTag(ErrorType errorType) =>
-        errorType == ErrorType.ConcurencyConflict
-            ? "concurrency_conflict"
-            : errorType.Name.ToLowerInvariant();
+        errorType.Name.ToLowerInvariant();
 }
 

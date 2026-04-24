@@ -5,8 +5,8 @@ public record DomainError : IDomainError
     public static DomainError Conflict(string? message = "The data provided conflicts with existing data.") =>
         new(message ?? "The data provided conflicts with existing data.", ErrorType.Conflict);
 
-    public static DomainError ConcurencyConflict(string? message = "The data was modified by another operation.") =>
-        new(message ?? "The data was modified by another operation.", ErrorType.ConcurencyConflict, isTransient: true);
+    public static DomainError ConcurrencyConflict(string? message = "The data was modified by another operation.") =>
+        new(message ?? "The data was modified by another operation.", ErrorType.ConcurrencyConflict, isTransient: true);
 
     public static DomainError NotFound(string? message = "The requested item could not be found.", bool isTransient = false) =>
         new(message ?? "The requested item could not be found.", ErrorType.NotFound, isTransient: isTransient);

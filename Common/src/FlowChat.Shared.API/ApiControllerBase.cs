@@ -20,7 +20,7 @@ public abstract class ApiControllerBase : ControllerBase
         _errorHandlers = new Dictionary<ErrorType, Func<string?, IEnumerable<string>?, bool, ObjectResult>>
         {
             { ErrorType.Conflict, ConflictResponse },
-            { ErrorType.ConcurencyConflict, ConcurrencyConflictResponse },
+            { ErrorType.ConcurrencyConflict, ConcurrencyConflictResponse },
             { ErrorType.NotFound, NotFoundResponse },
             { ErrorType.BadRequest, BadRequestResponse },
             { ErrorType.Validation, ValidationResponse },
