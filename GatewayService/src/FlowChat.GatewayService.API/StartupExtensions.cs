@@ -1,6 +1,7 @@
 using System.Text;
 using FlowChat.GatewayService.Api.Configuration.Settings;
 using FlowChat.GatewayService.Api.Observability;
+using FlowChat.GatewayService.Api.Services;
 using FlowChat.Shared.API;
 using FlowChat.Shared.Infrastructure.Configuration;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -24,6 +25,7 @@ public static class StartupExtensions
         var settingsProvider = new AppSettingsProvider(builder.Configuration);
         var jwtSettings = settingsProvider.GetSection<JwtSettingsSection>();
         var clientSettings = settingsProvider.GetSection<GatewayClientSettingsSection>();
+        var servicesSettings = settingsProvider.GetSection<GatewayServicesSettingsSection>();
 
         ValidateJwtSettingsSection(jwtSettings);
 
@@ -131,6 +133,19 @@ public static class StartupExtensions
         builder.Services
             .AddReverseProxy()
             .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
+
+        builder.Services.AddHttpContextAccessor();
+        builder.Services.AddTransient<BearerTokenForwardingHandler>();
+
+        builder.Services
+            .AddHttpClient<ISocialGraphServiceClient, SocialGraphServiceClient>(client =>
+                client.BaseAddress = new Uri(servicesSettings.SocialGraphServiceBaseUrl))
+            .AddHttpMessageHandler<BearerTokenForwardingHandler>();
+
+        builder.Services
+            .AddHttpClient<IChatServiceClient, ChatServiceClient>(client =>
+                client.BaseAddress = new Uri(servicesSettings.ChatServiceBaseUrl))
+            .AddHttpMessageHandler<BearerTokenForwardingHandler>();
 
         return builder.Build();
     }
