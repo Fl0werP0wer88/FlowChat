@@ -20,6 +20,26 @@ public sealed class DuetConversationReadRepository(AppDbContext dbContext) : IDu
         return entry?.ConversationId.Value;
     }
 
+    public async Task<IReadOnlyDictionary<Guid, Guid>> FindConversationIdsByPartnerIdsAsync(
+        Guid requestingUserId,
+        IEnumerable<Guid> partnerUserIds,
+        CancellationToken cancellationToken = default)
+    {
+        var ids = partnerUserIds.ToList();
+
+        return await dbContext.DuetConversations
+            .AsNoTracking()
+            .Where(x =>
+                (x.FirstUserId == requestingUserId && ids.Contains(x.SecondUserId)) ||
+                (x.SecondUserId == requestingUserId && ids.Contains(x.FirstUserId)))
+            .Select(x => new
+            {
+                PartnerUserId = x.FirstUserId == requestingUserId ? x.SecondUserId : x.FirstUserId,
+                ConversationId = x.ConversationId.Value
+            })
+            .ToDictionaryAsync(x => x.PartnerUserId, x => x.ConversationId, cancellationToken);
+    }
+
     public async Task<DuetConversationDetailDto?> GetByUserIdsAsync(
         Guid requestingUserId,
         Guid partnerUserId,
