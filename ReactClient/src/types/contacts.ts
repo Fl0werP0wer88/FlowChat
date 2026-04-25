@@ -8,4 +8,5 @@ export interface Contact {
   displayName: string;
   email: string | null;
   status: ContactStatus;
+  conversationId: string | null;
 }

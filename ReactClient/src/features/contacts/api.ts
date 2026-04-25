@@ -10,6 +10,8 @@ interface ContactDto {
   DisplayName?: string;
   email?: string | null;
   Email?: string | null;
+  conversationId?: string | null;
+  ConversationId?: string | null;
 }
 
 interface GetContactsResponseDto {
@@ -81,6 +83,7 @@ function mapContact(dto: ContactDto): Contact {
     displayName: dto.displayName ?? dto.DisplayName ?? "Nowy kontakt",
     email: dto.email ?? dto.Email ?? null,
     status: "Invisible",
+    conversationId: dto.conversationId ?? dto.ConversationId ?? null,
   };
 }
 
@@ -127,7 +130,7 @@ export function isEmailLookup(value: string): boolean {
 }
 
 export async function fetchContacts(accessToken: string): Promise<Contact[]> {
-  const response = await getJson<GetContactsResponseDto>("/api/contacts", {
+  const response = await getJson<GetContactsResponseDto>("/api/aggregate/contacts", {
     accessToken,
   });
 
