@@ -9,27 +9,29 @@ public sealed class GetConversationMessagesQueryHandler
     : IQueryHandler<GetConversationMessagesQuery, ConversationMessagesPageDto>
 {
     private readonly IChatMessageReadRepository _chatMessageReadRepository;
-    private readonly IConversationWriteRepository _conversationRepository;
+    private readonly IConversationParticipantReadRepository _participantReadRepository;
 
     public GetConversationMessagesQueryHandler(
         IChatMessageReadRepository chatMessageReadRepository,
-        IConversationWriteRepository conversationRepository)
+        IConversationParticipantReadRepository participantReadRepository)
     {
         _chatMessageReadRepository = chatMessageReadRepository ?? throw new ArgumentNullException(nameof(chatMessageReadRepository));
-        _conversationRepository = conversationRepository ?? throw new ArgumentNullException(nameof(conversationRepository));
+        _participantReadRepository = participantReadRepository ?? throw new ArgumentNullException(nameof(participantReadRepository));
     }
 
     public async Task<FlowChatResult<ConversationMessagesPageDto>> Handle(
         GetConversationMessagesQuery request,
         CancellationToken cancellationToken)
     {
-        var conversation = await _conversationRepository.GetByIdAsync(request.ConversationId, cancellationToken);
-        if (conversation is null)
+        var participantUserIds = await _participantReadRepository.GetParticipantUserIdsAsync(
+            request.ConversationId,
+            cancellationToken);
+        if (participantUserIds is null)
         {
             return FlowChatResult<ConversationMessagesPageDto>.Failure(DomainError.NotFound("Conversation not found."));
         }
 
-        if (!conversation.Participants.Any(participant => participant.UserId == request.RequestingUserId))
+        if (!participantUserIds.Contains(request.RequestingUserId))
         {
             return FlowChatResult<ConversationMessagesPageDto>.Failure(
                 DomainError.Unauthorized("Requesting user is not a participant of this conversation."));

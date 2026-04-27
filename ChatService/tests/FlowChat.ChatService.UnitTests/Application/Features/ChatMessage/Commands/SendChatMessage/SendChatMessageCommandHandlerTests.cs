@@ -1,22 +1,19 @@
 using FlowChat.ChatService.Application.Contracts.Persistence;
 using FlowChat.ChatService.Application.Features.ChatMessage.Commands.SendChatMessage;
 using FlowChat.ChatService.Domain.Entities.ChatMessage.Events;
-using FlowChat.ChatService.Domain.Entities.Conversation;
 using FlowChat.Core.Results;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
-using FlowChat.Shared.Domain.ValueObjects;
 using FluentAssertions;
 using Moq;
 using ChatMessageAggregate = FlowChat.ChatService.Domain.Entities.ChatMessage.ChatMessage;
-using ConversationAggregate = FlowChat.ChatService.Domain.Entities.Conversation.Conversation;
 
 namespace FlowChat.ChatService.UnitTests;
 
 public sealed class SendChatMessageCommandHandlerTests
 {
     private readonly Mock<IChatMessageWriteRepository> _chatMessageRepositoryMock = new();
-    private readonly Mock<IConversationWriteRepository> _conversationRepositoryMock = new();
+    private readonly Mock<IConversationParticipantReadRepository> _participantReadRepositoryMock = new();
     private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
     private readonly Mock<IDomainEventDispatcher> _domainEventDispatcherMock = new();
     private readonly SendChatMessageCommandHandler _handler;
@@ -36,7 +33,7 @@ public sealed class SendChatMessageCommandHandlerTests
 
         _handler = new SendChatMessageCommandHandler(
             _chatMessageRepositoryMock.Object,
-            _conversationRepositoryMock.Object,
+            _participantReadRepositoryMock.Object,
             _unitOfWorkMock.Object,
             _domainEventDispatcherMock.Object);
     }
@@ -46,9 +43,9 @@ public sealed class SendChatMessageCommandHandlerTests
     {
         var command = new SendChatMessageCommand(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "Alice", "Hello");
 
-        _conversationRepositoryMock
-            .Setup(x => x.GetByIdAsync(command.ConversationId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync((ConversationAggregate?)null);
+        _participantReadRepositoryMock
+            .Setup(x => x.GetParticipantUserIdsAsync(command.ConversationId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((IReadOnlyCollection<Guid>?)null);
 
         var result = await _handler.Handle(command, CancellationToken.None);
 
@@ -66,20 +63,12 @@ public sealed class SendChatMessageCommandHandlerTests
         var senderId = Guid.NewGuid();
         var otherUser1 = Guid.NewGuid();
         var otherUser2 = Guid.NewGuid();
-        var conversationId = Id<ConversationAggregate>.New();
-        var command = new SendChatMessageCommand(Guid.NewGuid(), conversationId.Value, senderId, "Alice", "Hello");
-        var conversation = DuetConversation.Restore(
-            conversationId,
-            createdByUserId: otherUser1,
-            participants:
-            [
-                ParticipantUser.Create(Id<ParticipantUser>.New(), conversationId, otherUser1),
-                ParticipantUser.Create(Id<ParticipantUser>.New(), conversationId, otherUser2)
-            ]);
+        var conversationId = Guid.NewGuid();
+        var command = new SendChatMessageCommand(Guid.NewGuid(), conversationId, senderId, "Alice", "Hello");
 
-        _conversationRepositoryMock
-            .Setup(x => x.GetByIdAsync(command.ConversationId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(conversation);
+        _participantReadRepositoryMock
+            .Setup(x => x.GetParticipantUserIdsAsync(command.ConversationId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync([otherUser1, otherUser2]);
 
         var result = await _handler.Handle(command, CancellationToken.None);
 
@@ -96,23 +85,15 @@ public sealed class SendChatMessageCommandHandlerTests
     {
         var senderId = Guid.NewGuid();
         var recipientId = Guid.NewGuid();
-        var conversationId = Id<ConversationAggregate>.New();
-        var command = new SendChatMessageCommand(Guid.NewGuid(), conversationId.Value, senderId, "Alice", "Hello");
-        var conversation = DuetConversation.Restore(
-            conversationId,
-            createdByUserId: senderId,
-            participants:
-            [
-                ParticipantUser.Create(Id<ParticipantUser>.New(), conversationId, senderId),
-                ParticipantUser.Create(Id<ParticipantUser>.New(), conversationId, recipientId)
-            ]);
+        var conversationId = Guid.NewGuid();
+        var command = new SendChatMessageCommand(Guid.NewGuid(), conversationId, senderId, "Alice", "Hello");
 
         ChatMessageAggregate? persistedMessage = null;
         List<IDomainEvent> dispatchedEvents = [];
 
-        _conversationRepositoryMock
-            .Setup(x => x.GetByIdAsync(command.ConversationId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(conversation);
+        _participantReadRepositoryMock
+            .Setup(x => x.GetParticipantUserIdsAsync(command.ConversationId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync([senderId, recipientId]);
 
         _chatMessageRepositoryMock
             .Setup(x => x.AddAsync(It.IsAny<ChatMessageAggregate>(), It.IsAny<CancellationToken>()))
@@ -130,7 +111,7 @@ public sealed class SendChatMessageCommandHandlerTests
         result.Value.Should().NotBeEmpty();
         persistedMessage.Should().NotBeNull();
         result.Value.Should().Be(persistedMessage!.Id.Value);
-        persistedMessage.ConversationId.Value.Should().Be(conversationId.Value);
+        persistedMessage.ConversationId.Value.Should().Be(conversationId);
         persistedMessage.SenderUserId.Should().Be(senderId);
         persistedMessage.RecipientUserIds.Should().BeEquivalentTo(new[] { recipientId });
         dispatchedEvents.Should().ContainSingle()

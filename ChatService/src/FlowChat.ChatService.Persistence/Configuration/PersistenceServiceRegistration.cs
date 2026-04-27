@@ -24,7 +24,8 @@ public static class PersistenceServiceRegistration
             ServiceLifetime.Scoped);
         services.AddScoped<IChatMessageReadRepository, ChatMessageReadRepository>();
         services.AddScoped<IChatMessageWriteRepository, ChatMessageWriteRepository>();
-        services.AddScoped<IConversationWriteRepository, ConversationWriteRepository>();
+        services.AddScoped<IConversationParticipantReadRepository, ConversationParticipantReadRepository>();
+        services.AddScoped<IGroupConversationWriteRepository, GroupConversationWriteRepository>();
         services.AddScoped<IDuetConversationReadRepository, DuetConversationReadRepository>();
         services.AddScoped<IDuetConversationWriteRepository, DuetConversationWriteRepository>();
         services.AddScoped<IUserProfileProjectionWriteRepository, UserProfileProjectionWriteRepository>();

@@ -2,18 +2,17 @@ using FlowChat.ChatService.Application.Contracts.Persistence;
 using FlowChat.ChatService.Domain.Entities.Conversation;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
-using ConversationAggregate = FlowChat.ChatService.Domain.Entities.Conversation.Conversation;
 
 namespace FlowChat.ChatService.Application.Features.Conversation.Commands.CreateGroupConversation;
 
 public sealed class CreateGroupConversationCommandHandler
     : CommandHandlerBase<CreateGroupConversationCommand, Guid>
 {
-    private readonly IConversationWriteRepository _conversationRepository;
-    private ConversationAggregate? _conversation;
+    private readonly IGroupConversationWriteRepository _conversationRepository;
+    private GroupConversation? _conversation;
 
     public CreateGroupConversationCommandHandler(
-        IConversationWriteRepository conversationRepository,
+        IGroupConversationWriteRepository conversationRepository,
         IUnitOfWork unitOfWork,
         IDomainEventDispatcher domainEventDispatcher)
         : base(domainEventDispatcher, unitOfWork)

@@ -3,21 +3,18 @@ using FlowChat.ChatService.Application.Features.Conversation.Dtos;
 using FlowChat.ChatService.Domain.Entities.Conversation;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
-using ConversationAggregate = FlowChat.ChatService.Domain.Entities.Conversation.Conversation;
 
 namespace FlowChat.ChatService.Application.Features.Conversation.Commands.CreateDuetConversation;
 
 public sealed class CreateDuetConversationCommandHandler
     : CommandHandlerBase<CreateDuetConversationCommand, CreateDuetConversationResult>
 {
-    private readonly IConversationWriteRepository _conversationRepository;
     private readonly IDuetConversationReadRepository _duetConversationReadRepository;
     private readonly IDuetConversationWriteRepository _duetConversationWriteRepository;
     private readonly IUserProfileProjectionReadRepository _profileReadRepository;
-    private ConversationAggregate? _newConversation;
+    private DuetConversation? _newConversation;
 
     public CreateDuetConversationCommandHandler(
-        IConversationWriteRepository conversationRepository,
         IDuetConversationReadRepository duetConversationReadRepository,
         IDuetConversationWriteRepository duetConversationWriteRepository,
         IUserProfileProjectionReadRepository profileReadRepository,
@@ -25,7 +22,6 @@ public sealed class CreateDuetConversationCommandHandler
         IDomainEventDispatcher domainEventDispatcher)
         : base(domainEventDispatcher, unitOfWork)
     {
-        _conversationRepository = conversationRepository ?? throw new ArgumentNullException(nameof(conversationRepository));
         _duetConversationReadRepository = duetConversationReadRepository ?? throw new ArgumentNullException(nameof(duetConversationReadRepository));
         _duetConversationWriteRepository = duetConversationWriteRepository ?? throw new ArgumentNullException(nameof(duetConversationWriteRepository));
         _profileReadRepository = profileReadRepository ?? throw new ArgumentNullException(nameof(profileReadRepository));
@@ -61,12 +57,8 @@ public sealed class CreateDuetConversationCommandHandler
             createdByUserId: request.RequestingUserId,
             partnerUserId: request.PartnerUserId);
 
-        await _conversationRepository.AddAsync(_newConversation, cancellationToken);
-
         await _duetConversationWriteRepository.AddAsync(
-            request.RequestingUserId,
-            request.PartnerUserId,
-            _newConversation.Id.Value,
+            _newConversation,
             cancellationToken);
 
         IReadOnlyCollection<Guid> participantUserIds = [request.RequestingUserId, request.PartnerUserId];

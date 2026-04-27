@@ -9,41 +9,42 @@ public sealed class SendChatMessageCommandHandler
     : CommandHandlerBase<SendChatMessageCommand, Guid>
 {
     private readonly IChatMessageWriteRepository _chatMessageRepository;
-    private readonly IConversationWriteRepository _conversationRepository;
+    private readonly IConversationParticipantReadRepository _participantReadRepository;
     private ChatMessageAggregate? _chatMessage;
 
     public SendChatMessageCommandHandler(
         IChatMessageWriteRepository chatMessageRepository,
-        IConversationWriteRepository conversationRepository,
+        IConversationParticipantReadRepository participantReadRepository,
         IUnitOfWork unitOfWork,
         IDomainEventDispatcher domainEventDispatcher)
         : base(domainEventDispatcher, unitOfWork)
     {
         _chatMessageRepository = chatMessageRepository ?? throw new ArgumentNullException(nameof(chatMessageRepository));
-        _conversationRepository = conversationRepository ?? throw new ArgumentNullException(nameof(conversationRepository));
+        _participantReadRepository = participantReadRepository ?? throw new ArgumentNullException(nameof(participantReadRepository));
     }
 
     protected override async Task<FlowChatResult<Guid>> ExecuteAsync(
         SendChatMessageCommand request,
         CancellationToken cancellationToken)
     {
-        var conversation = await _conversationRepository.GetByIdAsync(request.ConversationId, cancellationToken);
+        var participantUserIds = await _participantReadRepository.GetParticipantUserIdsAsync(
+            request.ConversationId,
+            cancellationToken);
 
-        if (conversation is null)
+        if (participantUserIds is null)
             return FlowChatResult<Guid>.Failure(DomainError.NotFound("Conversation not found."));
 
-        if (!conversation.Participants.Any(p => p.UserId == request.SenderUserId))
+        if (!participantUserIds.Contains(request.SenderUserId))
             return FlowChatResult<Guid>.Failure(DomainError.Unauthorized("Sender is not a participant of this conversation."));
 
-        var recipientUserIds = conversation.Participants
-            .Select(p => p.UserId)
+        var recipientUserIds = participantUserIds
             .Where(id => id != request.SenderUserId && id != Guid.Empty)
             .Distinct()
             .ToArray();
 
         _chatMessage = ChatMessageAggregate.Create(
             Id<ChatMessageAggregate>.FromGuid(request.Id),
-            conversation.Id,
+            Id<FlowChat.ChatService.Domain.Entities.Conversation.Conversation>.FromGuid(request.ConversationId),
             request.SenderUserId,
             request.SenderDisplayName!.Trim(),
             request.Text!.Trim(),

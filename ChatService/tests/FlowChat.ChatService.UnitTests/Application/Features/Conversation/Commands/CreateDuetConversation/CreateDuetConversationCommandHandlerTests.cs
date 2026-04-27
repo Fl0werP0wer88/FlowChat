@@ -14,7 +14,6 @@ namespace FlowChat.ChatService.UnitTests;
 
 public sealed class CreateDuetConversationCommandHandlerTests
 {
-    private readonly Mock<IConversationWriteRepository> _conversationWriteRepositoryMock = new();
     private readonly Mock<IDuetConversationReadRepository> _duetConversationReadRepositoryMock = new();
     private readonly Mock<IDuetConversationWriteRepository> _duetConversationWriteRepositoryMock = new();
     private readonly Mock<IUserProfileProjectionReadRepository> _userProfileProjectionReadRepositoryMock = new();
@@ -36,7 +35,6 @@ public sealed class CreateDuetConversationCommandHandlerTests
             .Returns(Task.CompletedTask);
 
         _handler = new CreateDuetConversationCommandHandler(
-            _conversationWriteRepositoryMock.Object,
             _duetConversationReadRepositoryMock.Object,
             _duetConversationWriteRepositoryMock.Object,
             _userProfileProjectionReadRepositoryMock.Object,
@@ -72,8 +70,10 @@ public sealed class CreateDuetConversationCommandHandlerTests
         _duetConversationReadRepositoryMock.Verify(
             x => x.FindConversationIdAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<CancellationToken>()),
             Times.Never);
-        _conversationWriteRepositoryMock.Verify(
-            x => x.AddAsync(It.IsAny<ConversationAggregate>(), It.IsAny<CancellationToken>()),
+        _duetConversationWriteRepositoryMock.Verify(
+            x => x.AddAsync(
+                It.IsAny<DuetConversation>(),
+                It.IsAny<CancellationToken>()),
             Times.Never);
         _userProfileProjectionReadRepositoryMock.Verify(
             x => x.GetByIdsAsync(It.IsAny<IEnumerable<Guid>>(), It.IsAny<CancellationToken>()),
@@ -98,8 +98,10 @@ public sealed class CreateDuetConversationCommandHandlerTests
         result.IsFailure.Should().BeTrue();
         result.Error.ErrorType.Should().Be(ErrorType.NotFound);
         result.Error.ErrorMessage.Should().Be("Conversation not found.");
-        _conversationWriteRepositoryMock.Verify(
-            x => x.AddAsync(It.IsAny<ConversationAggregate>(), It.IsAny<CancellationToken>()),
+        _duetConversationWriteRepositoryMock.Verify(
+            x => x.AddAsync(
+                It.IsAny<DuetConversation>(),
+                It.IsAny<CancellationToken>()),
             Times.Never);
         _userProfileProjectionReadRepositoryMock.Verify(
             x => x.GetByIdsAsync(It.IsAny<IEnumerable<Guid>>(), It.IsAny<CancellationToken>()),
@@ -119,10 +121,12 @@ public sealed class CreateDuetConversationCommandHandlerTests
         _duetConversationReadRepositoryMock
             .Setup(x => x.FindConversationIdAsync(command.RequestingUserId, command.PartnerUserId, It.IsAny<CancellationToken>()))
             .ReturnsAsync((Guid?)null);
-        _conversationWriteRepositoryMock
-            .Setup(x => x.AddAsync(It.IsAny<ConversationAggregate>(), It.IsAny<CancellationToken>()))
-            .Callback<ConversationAggregate, CancellationToken>((conversation, _) => persistedConversation = conversation)
-            .ReturnsAsync((ConversationAggregate conversation, CancellationToken _) => conversation);
+        _duetConversationWriteRepositoryMock
+            .Setup(x => x.AddAsync(
+                It.IsAny<DuetConversation>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<DuetConversation, CancellationToken>((conversation, _) => persistedConversation = conversation)
+            .ReturnsAsync((DuetConversation conversation, CancellationToken _) => conversation);
         _userProfileProjectionReadRepositoryMock
             .Setup(x => x.GetByIdsAsync(It.IsAny<IEnumerable<Guid>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(
@@ -148,7 +152,9 @@ public sealed class CreateDuetConversationCommandHandlerTests
         dispatchedEvents.Should().ContainSingle(
             x => x is AggregateStateChangedDomainEvent<ConversationAggregate, ConversationSnapshot>);
         _duetConversationWriteRepositoryMock.Verify(
-            x => x.AddAsync(command.RequestingUserId, command.PartnerUserId, persistedConversation.Id.Value, It.IsAny<CancellationToken>()),
+            x => x.AddAsync(
+                It.IsAny<DuetConversation>(),
+                It.IsAny<CancellationToken>()),
             Times.Once);
     }
 }

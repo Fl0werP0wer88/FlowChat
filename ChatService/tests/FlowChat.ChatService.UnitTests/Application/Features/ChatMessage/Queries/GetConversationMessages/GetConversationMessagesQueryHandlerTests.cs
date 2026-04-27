@@ -1,26 +1,23 @@
 using FlowChat.ChatService.Application.Contracts.Persistence;
 using FlowChat.ChatService.Application.Features.ChatMessage.Dtos;
 using FlowChat.ChatService.Application.Features.ChatMessage.Queries.GetConversationMessages;
-using FlowChat.ChatService.Domain.Entities.Conversation;
-using FlowChat.Core.Results;
 using FlowChat.Shared.Domain;
 using FluentAssertions;
 using Moq;
-using ConversationAggregate = FlowChat.ChatService.Domain.Entities.Conversation.Conversation;
 
 namespace FlowChat.ChatService.UnitTests.Application.Features.ChatMessage.Queries.GetConversationMessages;
 
 public sealed class GetConversationMessagesQueryHandlerTests
 {
     private readonly Mock<IChatMessageReadRepository> _chatMessageReadRepositoryMock = new();
-    private readonly Mock<IConversationWriteRepository> _conversationRepositoryMock = new();
+    private readonly Mock<IConversationParticipantReadRepository> _participantReadRepositoryMock = new();
     private readonly GetConversationMessagesQueryHandler _handler;
 
     public GetConversationMessagesQueryHandlerTests()
     {
         _handler = new GetConversationMessagesQueryHandler(
             _chatMessageReadRepositoryMock.Object,
-            _conversationRepositoryMock.Object);
+            _participantReadRepositoryMock.Object);
     }
 
     [Fact]
@@ -33,9 +30,9 @@ public sealed class GetConversationMessagesQueryHandlerTests
             null,
             null);
 
-        _conversationRepositoryMock
-            .Setup(x => x.GetByIdAsync(query.ConversationId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync((ConversationAggregate?)null);
+        _participantReadRepositoryMock
+            .Setup(x => x.GetParticipantUserIdsAsync(query.ConversationId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((IReadOnlyCollection<Guid>?)null);
 
         var result = await _handler.Handle(query, CancellationToken.None);
 
@@ -57,25 +54,17 @@ public sealed class GetConversationMessagesQueryHandlerTests
     {
         var requestingUserId = Guid.NewGuid();
         var participantUserId = Guid.NewGuid();
-        var conversationId = Id<ConversationAggregate>.New();
+        var conversationId = Guid.NewGuid();
         var query = new GetConversationMessagesQuery(
-            conversationId.Value,
+            conversationId,
             requestingUserId,
             50,
             null,
             null);
-        var conversation = DuetConversation.Restore(
-            conversationId,
-            createdByUserId: participantUserId,
-            participants:
-            [
-                ParticipantUser.Create(Id<ParticipantUser>.New(), conversationId, participantUserId),
-                ParticipantUser.Create(Id<ParticipantUser>.New(), conversationId, Guid.NewGuid())
-            ]);
 
-        _conversationRepositoryMock
-            .Setup(x => x.GetByIdAsync(query.ConversationId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(conversation);
+        _participantReadRepositoryMock
+            .Setup(x => x.GetParticipantUserIdsAsync(query.ConversationId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync([participantUserId, Guid.NewGuid()]);
 
         var result = await _handler.Handle(query, CancellationToken.None);
 
@@ -97,28 +86,20 @@ public sealed class GetConversationMessagesQueryHandlerTests
     {
         var requestingUserId = Guid.NewGuid();
         var otherUserId = Guid.NewGuid();
-        var conversationId = Id<ConversationAggregate>.New();
+        var conversationId = Guid.NewGuid();
         var beforeSentAtUtc = new DateTimeOffset(2026, 4, 24, 10, 0, 0, TimeSpan.Zero);
         var beforeMessageId = Guid.NewGuid();
         var query = new GetConversationMessagesQuery(
-            conversationId.Value,
+            conversationId,
             requestingUserId,
             25,
             beforeSentAtUtc,
             beforeMessageId);
-        var conversation = DuetConversation.Restore(
-            conversationId,
-            createdByUserId: requestingUserId,
-            participants:
-            [
-                ParticipantUser.Create(Id<ParticipantUser>.New(), conversationId, requestingUserId),
-                ParticipantUser.Create(Id<ParticipantUser>.New(), conversationId, otherUserId)
-            ]);
         var expectedPage = new ConversationMessagesPageDto(
             [
                 new ChatMessageDto(
                     Guid.NewGuid(),
-                    conversationId.Value,
+                    conversationId,
                     requestingUserId,
                     "Alice",
                     "Hello",
@@ -128,9 +109,9 @@ public sealed class GetConversationMessagesQueryHandlerTests
             null,
             false);
 
-        _conversationRepositoryMock
-            .Setup(x => x.GetByIdAsync(query.ConversationId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(conversation);
+        _participantReadRepositoryMock
+            .Setup(x => x.GetParticipantUserIdsAsync(query.ConversationId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync([requestingUserId, otherUserId]);
 
         _chatMessageReadRepositoryMock
             .Setup(x => x.GetPageBeforeAsync(

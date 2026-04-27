@@ -49,4 +49,11 @@ public sealed class DuetConversation : Conversation
             static (id, type, name, createdByUserId, participants) =>
                 new DuetConversation(id, type, name, createdByUserId, participants));
     }
+
+    public (Guid FirstUserId, Guid SecondUserId) GetParticipantPair()
+    {
+        var participantUserIds = Participants.Select(participant => participant.UserId).ToArray();
+
+        return (participantUserIds[0], participantUserIds[1]);
+    }
 }

@@ -9,7 +9,7 @@ namespace FlowChat.ChatService.IntegrationTests.Persistence;
 public sealed class PersistenceServiceRegistrationTests
 {
     [Fact]
-    public void AddApiPersistenceServices_RegistersDuetConversationReadRepository()
+    public void AddApiPersistenceServices_RegistersConversationRepositories()
     {
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
@@ -25,8 +25,14 @@ public sealed class PersistenceServiceRegistrationTests
         using var provider = services.BuildServiceProvider();
         using var scope = provider.CreateScope();
 
-        var repository = scope.ServiceProvider.GetService<IDuetConversationReadRepository>();
+        var duetReadRepository = scope.ServiceProvider.GetService<IDuetConversationReadRepository>();
+        var duetWriteRepository = scope.ServiceProvider.GetService<IDuetConversationWriteRepository>();
+        var groupWriteRepository = scope.ServiceProvider.GetService<IGroupConversationWriteRepository>();
+        var participantReadRepository = scope.ServiceProvider.GetService<IConversationParticipantReadRepository>();
 
-        repository.Should().NotBeNull();
+        duetReadRepository.Should().NotBeNull();
+        duetWriteRepository.Should().NotBeNull();
+        groupWriteRepository.Should().NotBeNull();
+        participantReadRepository.Should().NotBeNull();
     }
 }
