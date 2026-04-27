@@ -1,8 +1,8 @@
 using FlowChat.Core.Contracts;
 
-namespace FlowChat.ChatService.Api.Features.Conversation.Public.GetOrCreateDuetConversation;
+namespace FlowChat.ChatService.Api.Features.Conversation.Public.CreateDuetConversation;
 
-public sealed record GetOrCreateDuetConversationResponse(
+public sealed record CreateDuetConversationResponse(
     Guid ConversationId,
     IReadOnlyCollection<ParticipantResponse> Participants) : IServiceOutput;
 

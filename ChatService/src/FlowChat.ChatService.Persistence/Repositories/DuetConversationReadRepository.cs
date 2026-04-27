@@ -70,10 +70,6 @@ public sealed class DuetConversationReadRepository(AppDbContext dbContext) : IDu
         }
 
         var conversationId = rows[0].ConversationId;
-        if (rows.Any(x => x.ConversationId != conversationId))
-        {
-            return null;
-        }
 
         var participants = rows.ToDictionary(
             x => x.UserId,

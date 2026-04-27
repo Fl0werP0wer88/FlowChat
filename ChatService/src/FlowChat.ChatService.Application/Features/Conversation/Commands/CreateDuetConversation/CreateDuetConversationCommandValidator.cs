@@ -1,11 +1,11 @@
 using FluentValidation;
 
-namespace FlowChat.ChatService.Application.Features.Conversation.Commands.GetOrCreateDuetConversation;
+namespace FlowChat.ChatService.Application.Features.Conversation.Commands.CreateDuetConversation;
 
-public sealed class GetOrCreateDuetConversationCommandValidator
-    : AbstractValidator<GetOrCreateDuetConversationCommand>
+public sealed class CreateDuetConversationCommandValidator
+    : AbstractValidator<CreateDuetConversationCommand>
 {
-    public GetOrCreateDuetConversationCommandValidator()
+    public CreateDuetConversationCommandValidator()
     {
         RuleFor(x => x.RequestingUserId)
             .NotEmpty();

@@ -4,10 +4,10 @@ using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
 using ConversationAggregate = FlowChat.ChatService.Domain.Entities.Conversation.Conversation;
 
-namespace FlowChat.ChatService.Application.Features.Conversation.Commands.GetOrCreateDuetConversation;
+namespace FlowChat.ChatService.Application.Features.Conversation.Commands.CreateDuetConversation;
 
-public sealed class GetOrCreateDuetConversationCommandHandler
-    : CommandHandlerBase<GetOrCreateDuetConversationCommand, DuetConversationDetailDto>
+public sealed class CreateDuetConversationCommandHandler
+    : CommandHandlerBase<CreateDuetConversationCommand, CreateDuetConversationResult>
 {
     private readonly IConversationWriteRepository _conversationRepository;
     private readonly IDuetConversationReadRepository _duetConversationReadRepository;
@@ -15,7 +15,7 @@ public sealed class GetOrCreateDuetConversationCommandHandler
     private readonly IUserProfileProjectionReadRepository _profileReadRepository;
     private ConversationAggregate? _newConversation;
 
-    public GetOrCreateDuetConversationCommandHandler(
+    public CreateDuetConversationCommandHandler(
         IConversationWriteRepository conversationRepository,
         IDuetConversationReadRepository duetConversationReadRepository,
         IDuetConversationWriteRepository duetConversationWriteRepository,
@@ -30,18 +30,19 @@ public sealed class GetOrCreateDuetConversationCommandHandler
         _profileReadRepository = profileReadRepository ?? throw new ArgumentNullException(nameof(profileReadRepository));
     }
 
-    protected override async Task<FlowChatResult<DuetConversationDetailDto>> ExecuteAsync(
-        GetOrCreateDuetConversationCommand request,
+    protected override async Task<FlowChatResult<CreateDuetConversationResult>> ExecuteAsync(
+        CreateDuetConversationCommand request,
         CancellationToken cancellationToken)
     {
-        var existing = await _duetConversationReadRepository.GetByUserIdsAsync(
+        var existingConversation = await _duetConversationReadRepository.GetByUserIdsAsync(
             request.RequestingUserId,
             request.PartnerUserId,
             cancellationToken);
 
-        if (existing is not null)
+        if (existingConversation is not null)
         {
-            return FlowChatResult<DuetConversationDetailDto>.Success(existing);
+            return FlowChatResult<CreateDuetConversationResult>.Success(
+                new CreateDuetConversationResult(existingConversation, WasCreated: false));
         }
 
         var existingConversationId = await _duetConversationReadRepository.FindConversationIdAsync(
@@ -51,12 +52,14 @@ public sealed class GetOrCreateDuetConversationCommandHandler
 
         if (existingConversationId.HasValue)
         {
-            return FlowChatResult<DuetConversationDetailDto>.Failure(
+            return FlowChatResult<CreateDuetConversationResult>.Failure(
                 DomainError.NotFound("Conversation not found."));
         }
 
+        var conversationId = Id<ConversationAggregate>.New();
+
         _newConversation = ConversationAggregate.Create(
-            Id<ConversationAggregate>.FromGuid(request.Id),
+            conversationId,
             isGroup: false,
             createdByUserId: request.RequestingUserId,
             participantUserIds: [request.RequestingUserId, request.PartnerUserId],
@@ -86,10 +89,12 @@ public sealed class GetOrCreateDuetConversationCommandHandler
             })
             .ToList();
 
-        return FlowChatResult<DuetConversationDetailDto>.Success(
-            new DuetConversationDetailDto(_newConversation.Id.Value, participantDtos));
+        return FlowChatResult<CreateDuetConversationResult>.Success(
+            new CreateDuetConversationResult(
+                new DuetConversationDetailDto(_newConversation.Id.Value, participantDtos),
+                WasCreated: true));
     }
 
-    protected override IAggregateRoot? GetAggregateRoot(FlowChatResult<DuetConversationDetailDto> result) =>
-        result.IsSuccess ? _newConversation : null;
+    protected override IAggregateRoot? GetAggregateRoot(FlowChatResult<CreateDuetConversationResult> result) =>
+        result.IsSuccess && result.Value.WasCreated ? _newConversation : null;
 }
