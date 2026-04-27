@@ -1,4 +1,5 @@
 using FlowChat.ChatService.Application.Contracts.Persistence;
+using FlowChat.ChatService.Domain.Entities.Conversation;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
 using ConversationAggregate = FlowChat.ChatService.Domain.Entities.Conversation.Conversation;
@@ -30,7 +31,7 @@ public sealed class CreateConversationCommandHandler
         CreateConversationCommand request,
         CancellationToken cancellationToken)
     {
-        if (!request.IsGroup)
+        if (request.Type == ConversationType.Duet)
         {
             var participants = request.ParticipantUserIds.ToList();
             var userId1 = participants[0];
@@ -45,14 +46,14 @@ public sealed class CreateConversationCommandHandler
 
         _conversation = ConversationAggregate.Create(
             Id<ConversationAggregate>.FromGuid(request.Id),
-            request.IsGroup,
+            request.Type,
             request.CreatedByUserId,
             request.ParticipantUserIds,
             request.Name);
 
         await _conversationRepository.AddAsync(_conversation, cancellationToken);
 
-        if (!request.IsGroup)
+        if (request.Type == ConversationType.Duet)
         {
             var participants = request.ParticipantUserIds.ToList();
             await _duetConversationWriteRepository.AddAsync(

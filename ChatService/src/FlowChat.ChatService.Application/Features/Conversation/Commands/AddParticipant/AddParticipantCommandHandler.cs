@@ -1,4 +1,5 @@
 using FlowChat.ChatService.Application.Contracts.Persistence;
+using FlowChat.ChatService.Domain.Entities.Conversation;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
 using MediatR;
@@ -29,7 +30,7 @@ public sealed class AddParticipantCommandHandler
         if (_conversation is null)
             return FlowChatResult<Unit>.Failure(DomainError.NotFound("Conversation not found."));
 
-        if (!_conversation.IsGroup)
+        if (_conversation.Type != ConversationType.Group)
             return FlowChatResult<Unit>.Failure(DomainError.BadRequest("Cannot add participants to a one-on-one conversation."));
 
         if (_conversation.Participants.Any(p => p.UserId == request.ParticipantUserId))

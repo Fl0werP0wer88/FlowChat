@@ -81,7 +81,7 @@ public sealed class ChatMessageReadRepositoryTests
     private static Conversation CreateConversation(Guid senderId, Guid recipientId) =>
         Conversation.Create(
             Id<Conversation>.New(),
-            isGroup: false,
+            type: ConversationType.Duet,
             createdByUserId: senderId,
             participantUserIds: [senderId, recipientId]);
 

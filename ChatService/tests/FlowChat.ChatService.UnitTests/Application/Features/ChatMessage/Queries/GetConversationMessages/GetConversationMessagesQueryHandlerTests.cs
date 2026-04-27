@@ -66,7 +66,7 @@ public sealed class GetConversationMessagesQueryHandlerTests
             null);
         var conversation = ConversationAggregate.Restore(
             conversationId,
-            isGroup: false,
+            type: ConversationType.Duet,
             name: null,
             createdByUserId: participantUserId,
             participants:
@@ -110,7 +110,7 @@ public sealed class GetConversationMessagesQueryHandlerTests
             beforeMessageId);
         var conversation = ConversationAggregate.Restore(
             conversationId,
-            isGroup: false,
+            type: ConversationType.Duet,
             name: null,
             createdByUserId: requestingUserId,
             participants:

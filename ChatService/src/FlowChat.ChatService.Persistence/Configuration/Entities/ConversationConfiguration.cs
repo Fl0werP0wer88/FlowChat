@@ -16,7 +16,7 @@ public sealed class ConversationConfiguration : IEntityTypeConfiguration<Convers
         builder.Property(x => x.Id)
             .HasConversion(x => x.Value, x => Id<Conversation>.FromGuid(x));
 
-        builder.Property(x => x.IsGroup)
+        builder.Property(x => x.Type)
             .IsRequired();
 
         builder.Property(x => x.Name)

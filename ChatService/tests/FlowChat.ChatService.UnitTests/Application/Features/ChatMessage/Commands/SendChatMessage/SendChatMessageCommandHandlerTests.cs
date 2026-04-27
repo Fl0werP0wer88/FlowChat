@@ -70,7 +70,7 @@ public sealed class SendChatMessageCommandHandlerTests
         var command = new SendChatMessageCommand(Guid.NewGuid(), conversationId.Value, senderId, "Alice", "Hello");
         var conversation = ConversationAggregate.Restore(
             conversationId,
-            isGroup: false,
+            type: ConversationType.Duet,
             name: null,
             createdByUserId: otherUser1,
             participants:
@@ -102,7 +102,7 @@ public sealed class SendChatMessageCommandHandlerTests
         var command = new SendChatMessageCommand(Guid.NewGuid(), conversationId.Value, senderId, "Alice", "Hello");
         var conversation = ConversationAggregate.Restore(
             conversationId,
-            isGroup: false,
+            type: ConversationType.Duet,
             name: null,
             createdByUserId: senderId,
             participants:

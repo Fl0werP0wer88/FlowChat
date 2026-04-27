@@ -7,7 +7,7 @@ namespace FlowChat.ChatService.Domain.Entities.Conversation;
 
 public sealed class Conversation : AggregateRootBase<Conversation>
 {
-    public bool IsGroup { get; private set; }
+    public ConversationType Type { get; private set; }
     public string? Name { get; private set; }
     public Guid CreatedByUserId { get; private set; }
 
@@ -17,43 +17,43 @@ public sealed class Conversation : AggregateRootBase<Conversation>
     // Required by EF Core — scalar-only constructor so EF can bind properties without the navigation collection
     private Conversation(
         Id<Conversation> id,
-        bool isGroup,
+        ConversationType type,
         string? name,
         Guid createdByUserId) : base(id)
     {
-        IsGroup = isGroup;
+        Type = type;
         Name = name?.Trim();
         CreatedByUserId = createdByUserId;
     }
 
     private Conversation(
         Id<Conversation> id,
-        bool isGroup,
+        ConversationType type,
         string? name,
         Guid createdByUserId,
-        List<ParticipantUser> participants) : this(id, isGroup, name, createdByUserId)
+        List<ParticipantUser> participants) : this(id, type, name, createdByUserId)
     {
         _participants = participants;
     }
 
     public static Conversation Create(
         Id<Conversation> id,
-        bool isGroup,
+        ConversationType type,
         Guid createdByUserId,
         IEnumerable<Guid> participantUserIds,
         string? name = null)
     {
         ArgumentNullException.ThrowIfNull(id);
-        ValidateInvariants(isGroup, name, createdByUserId);
+        ValidateInvariants(type, name, createdByUserId);
 
         var conversationId = id;
-        var participants = BuildParticipants(participantUserIds, isGroup, conversationId);
+        var participants = BuildParticipants(participantUserIds, type, conversationId);
 
-        var conversation = new Conversation(conversationId, isGroup, name, createdByUserId, participants);
+        var conversation = new Conversation(conversationId, type, name, createdByUserId, participants);
 
         conversation.AddDomainEvent(new ConversationCreatedDomainEvent(
             conversation.Id,
-            conversation.IsGroup,
+            conversation.Type,
             conversation.Name,
             conversation.CreatedByUserId,
             [ .. conversation.Participants.Select(p => p.UserId)]));
@@ -62,7 +62,7 @@ public sealed class Conversation : AggregateRootBase<Conversation>
             ConversationConstants.ConversationAggregateTypeName,
             () => new ConversationSnapshot(
                 conversation.Id,
-                conversation.IsGroup,
+                conversation.Type,
                 conversation.Name,
                 conversation.CreatedByUserId,
                 [ .. conversation.Participants.Select(p => p.UserId)]));
@@ -72,17 +72,17 @@ public sealed class Conversation : AggregateRootBase<Conversation>
 
     public static Conversation Restore(
         Id<Conversation> id,
-        bool isGroup,
+        ConversationType type,
         string? name,
         Guid createdByUserId,
         IEnumerable<ParticipantUser> participants)
     {
-        return new Conversation(id, isGroup, name, createdByUserId, [.. participants]);
+        return new Conversation(id, type, name, createdByUserId, [.. participants]);
     }
 
     public void AddParticipant(Guid participantUserId)
     {
-        if (!IsGroup)
+        if (Type != ConversationType.Group)
             throw new InvalidOperationException("Cannot add participants to a one-on-one conversation.");
 
         if (participantUserId == Guid.Empty)
@@ -99,24 +99,27 @@ public sealed class Conversation : AggregateRootBase<Conversation>
             ConversationConstants.ConversationAggregateTypeName,
             () => new ConversationSnapshot(
                 Id,
-                IsGroup,
+                Type,
                 Name,
                 CreatedByUserId,
                 [ .. Participants.Select(p => p.UserId)]));
     }
 
-    private static void ValidateInvariants(bool isGroup, string? name, Guid createdByUserId)
+    private static void ValidateInvariants(ConversationType type, string? name, Guid createdByUserId)
     {
         if (createdByUserId == Guid.Empty)
             throw new ArgumentException("CreatedByUserId is required.", nameof(createdByUserId));
 
-        if (isGroup && string.IsNullOrWhiteSpace(name))
+        if (!Enum.IsDefined(type))
+            throw new ArgumentException("Conversation type is invalid.", nameof(type));
+
+        if (type == ConversationType.Group && string.IsNullOrWhiteSpace(name))
             throw new ArgumentException("Group conversations must have a name.", nameof(name));
     }
 
     private static List<ParticipantUser> BuildParticipants(
         IEnumerable<Guid> participantUserIds,
-        bool isGroup,
+        ConversationType type,
         Id<Conversation> conversationId)
     {
         ArgumentNullException.ThrowIfNull(participantUserIds);
@@ -126,10 +129,10 @@ public sealed class Conversation : AggregateRootBase<Conversation>
             .Distinct()
             .ToList();
 
-        if (!isGroup && uniqueIds.Count != 2)
+        if (type == ConversationType.Duet && uniqueIds.Count != 2)
             throw new InvalidOperationException("One-on-one conversations must have exactly two participants.");
 
-        if (isGroup && uniqueIds.Count < 2)
+        if (type == ConversationType.Group && uniqueIds.Count < 2)
             throw new InvalidOperationException("Group conversations must have at least two participants.");
 
         return [.. uniqueIds.Select(userId => ParticipantUser.Create(Id<ParticipantUser>.New(), conversationId, userId))];
@@ -138,7 +141,7 @@ public sealed class Conversation : AggregateRootBase<Conversation>
 
 public record ConversationSnapshot(
     Id<Conversation> Id,
-    bool IsGroup,
+    ConversationType Type,
     string? Name,
     Guid CreatedByUserId,
     IReadOnlyCollection<Guid> ParticipantUserIds);

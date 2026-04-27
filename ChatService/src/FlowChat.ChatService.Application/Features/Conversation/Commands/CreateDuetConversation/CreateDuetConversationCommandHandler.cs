@@ -1,5 +1,6 @@
 using FlowChat.ChatService.Application.Contracts.Persistence;
 using FlowChat.ChatService.Application.Features.Conversation.Dtos;
+using FlowChat.ChatService.Domain.Entities.Conversation;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
 using ConversationAggregate = FlowChat.ChatService.Domain.Entities.Conversation.Conversation;
@@ -60,7 +61,7 @@ public sealed class CreateDuetConversationCommandHandler
 
         _newConversation = ConversationAggregate.Create(
             conversationId,
-            isGroup: false,
+            type: ConversationType.Duet,
             createdByUserId: request.RequestingUserId,
             participantUserIds: [request.RequestingUserId, request.PartnerUserId],
             name: null);

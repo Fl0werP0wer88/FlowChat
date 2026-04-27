@@ -23,7 +23,7 @@ public sealed class DuetConversationReadRepositoryTests
         var partnerUserId = Guid.NewGuid();
         var conversation = Conversation.Create(
             Id<Conversation>.New(),
-            isGroup: false,
+            type: ConversationType.Duet,
             createdByUserId: requestingUserId,
             participantUserIds: [requestingUserId, partnerUserId]);
 
@@ -63,7 +63,7 @@ public sealed class DuetConversationReadRepositoryTests
         var partnerUserId = Guid.NewGuid();
         var conversation = Conversation.Create(
             Id<Conversation>.New(),
-            isGroup: false,
+            type: ConversationType.Duet,
             createdByUserId: requestingUserId,
             participantUserIds: [requestingUserId, partnerUserId]);
 

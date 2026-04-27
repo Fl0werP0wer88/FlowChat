@@ -1,4 +1,5 @@
 using FluentValidation;
+using FlowChat.ChatService.Domain.Entities.Conversation;
 
 namespace FlowChat.ChatService.Application.Features.Conversation.Commands.CreateConversation;
 
@@ -14,7 +15,11 @@ public sealed class CreateConversationCommandValidator : AbstractValidator<Creat
             .Must(ids => ids is not null && ids.Any(id => id != Guid.Empty))
             .WithMessage("ParticipantUserIds must contain at least one valid user id.");
 
-        When(command => command.IsGroup, () =>
+        RuleFor(command => command.Type)
+            .IsInEnum()
+            .WithMessage("Conversation type is invalid.");
+
+        When(command => command.Type == ConversationType.Group, () =>
         {
             RuleFor(command => command.Name)
                 .Must(name => !string.IsNullOrWhiteSpace(name))
