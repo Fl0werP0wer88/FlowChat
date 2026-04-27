@@ -5,7 +5,7 @@ using FlowChat.Shared.Domain.ValueObjects;
 
 namespace FlowChat.ChatService.Domain.Entities.Conversation;
 
-public sealed class Conversation : AggregateRootBase<Conversation>
+public abstract class Conversation : AggregateRootBase<Conversation>
 {
     public ConversationType Type { get; private set; }
     public string? Name { get; private set; }
@@ -15,7 +15,7 @@ public sealed class Conversation : AggregateRootBase<Conversation>
     public IReadOnlyCollection<ParticipantUser> Participants => _participants.AsReadOnly();
 
     // Required by EF Core — scalar-only constructor so EF can bind properties without the navigation collection
-    private Conversation(
+    protected Conversation(
         Id<Conversation> id,
         ConversationType type,
         string? name,
@@ -26,7 +26,7 @@ public sealed class Conversation : AggregateRootBase<Conversation>
         CreatedByUserId = createdByUserId;
     }
 
-    private Conversation(
+    protected Conversation(
         Id<Conversation> id,
         ConversationType type,
         string? name,
@@ -36,20 +36,23 @@ public sealed class Conversation : AggregateRootBase<Conversation>
         _participants = participants;
     }
 
-    public static Conversation Create(
+    protected static TConversation CreateCore<TConversation>(
         Id<Conversation> id,
         ConversationType type,
         Guid createdByUserId,
         IEnumerable<Guid> participantUserIds,
-        string? name = null)
+        string? name,
+        Func<Id<Conversation>, ConversationType, string?, Guid, List<ParticipantUser>, TConversation> factory)
+        where TConversation : Conversation
     {
         ArgumentNullException.ThrowIfNull(id);
+        ArgumentNullException.ThrowIfNull(factory);
         ValidateInvariants(type, name, createdByUserId);
 
         var conversationId = id;
         var participants = BuildParticipants(participantUserIds, type, conversationId);
 
-        var conversation = new Conversation(conversationId, type, name, createdByUserId, participants);
+        var conversation = factory(conversationId, type, name, createdByUserId, participants);
 
         conversation.AddDomainEvent(new ConversationCreatedDomainEvent(
             conversation.Id,
@@ -70,17 +73,21 @@ public sealed class Conversation : AggregateRootBase<Conversation>
         return conversation;
     }
 
-    public static Conversation Restore(
+    protected static TConversation RestoreCore<TConversation>(
         Id<Conversation> id,
         ConversationType type,
         string? name,
         Guid createdByUserId,
-        IEnumerable<ParticipantUser> participants)
+        IEnumerable<ParticipantUser> participants,
+        Func<Id<Conversation>, ConversationType, string?, Guid, List<ParticipantUser>, TConversation> factory)
+        where TConversation : Conversation
     {
-        return new Conversation(id, type, name, createdByUserId, [.. participants]);
+        ArgumentNullException.ThrowIfNull(factory);
+
+        return factory(id, type, name, createdByUserId, [.. participants]);
     }
 
-    public void AddParticipant(Guid participantUserId)
+    protected void AddParticipantCore(Guid participantUserId)
     {
         if (Type != ConversationType.Group)
             throw new InvalidOperationException("Cannot add participants to a one-on-one conversation.");

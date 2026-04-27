@@ -30,15 +30,15 @@ public sealed class AddParticipantCommandHandler
         if (_conversation is null)
             return FlowChatResult<Unit>.Failure(DomainError.NotFound("Conversation not found."));
 
-        if (_conversation.Type != ConversationType.Group)
+        if (_conversation is not GroupConversation groupConversation)
             return FlowChatResult<Unit>.Failure(DomainError.BadRequest("Cannot add participants to a one-on-one conversation."));
 
-        if (_conversation.Participants.Any(p => p.UserId == request.ParticipantUserId))
+        if (groupConversation.Participants.Any(p => p.UserId == request.ParticipantUserId))
             return FlowChatResult<Unit>.Failure(DomainError.Conflict("User is already a participant in this conversation."));
 
-        _conversation.AddParticipant(request.ParticipantUserId);
+        groupConversation.AddParticipant(request.ParticipantUserId);
 
-        await _conversationRepository.UpdateAsync(_conversation, cancellationToken);
+        await _conversationRepository.UpdateAsync(groupConversation, cancellationToken);
 
         return FlowChatResult<Unit>.Success(Unit.Value);
     }

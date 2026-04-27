@@ -3,12 +3,13 @@ using FlowChat.ChatService.Persistence.ReadModels;
 using FlowChat.Shared.Domain;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using DuetConversationReadModel = FlowChat.ChatService.Persistence.ReadModels.DuetConversation;
 
 namespace FlowChat.ChatService.Persistence.Configuration.Entities;
 
-public sealed class DuetConversationConfiguration : IEntityTypeConfiguration<DuetConversation>
+public sealed class DuetConversationConfiguration : IEntityTypeConfiguration<DuetConversationReadModel>
 {
-    public void Configure(EntityTypeBuilder<DuetConversation> builder)
+    public void Configure(EntityTypeBuilder<DuetConversationReadModel> builder)
     {
         builder.ToTable("DuetConversations");
         builder.HasKey(x => new { x.FirstUserId, x.SecondUserId });

@@ -68,10 +68,8 @@ public sealed class SendChatMessageCommandHandlerTests
         var otherUser2 = Guid.NewGuid();
         var conversationId = Id<ConversationAggregate>.New();
         var command = new SendChatMessageCommand(Guid.NewGuid(), conversationId.Value, senderId, "Alice", "Hello");
-        var conversation = ConversationAggregate.Restore(
+        var conversation = DuetConversation.Restore(
             conversationId,
-            type: ConversationType.Duet,
-            name: null,
             createdByUserId: otherUser1,
             participants:
             [
@@ -100,10 +98,8 @@ public sealed class SendChatMessageCommandHandlerTests
         var recipientId = Guid.NewGuid();
         var conversationId = Id<ConversationAggregate>.New();
         var command = new SendChatMessageCommand(Guid.NewGuid(), conversationId.Value, senderId, "Alice", "Hello");
-        var conversation = ConversationAggregate.Restore(
+        var conversation = DuetConversation.Restore(
             conversationId,
-            type: ConversationType.Duet,
-            name: null,
             createdByUserId: senderId,
             participants:
             [

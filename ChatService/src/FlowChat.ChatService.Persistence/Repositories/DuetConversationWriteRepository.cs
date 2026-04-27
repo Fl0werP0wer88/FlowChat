@@ -2,6 +2,7 @@ using FlowChat.ChatService.Application.Contracts.Persistence;
 using FlowChat.ChatService.Domain.Entities.Conversation;
 using FlowChat.ChatService.Persistence.ReadModels;
 using FlowChat.Shared.Domain;
+using DuetConversationReadModel = FlowChat.ChatService.Persistence.ReadModels.DuetConversation;
 
 namespace FlowChat.ChatService.Persistence.Repositories;
 
@@ -11,7 +12,7 @@ public sealed class DuetConversationWriteRepository(AppDbContext dbContext) : ID
     {
         var (first, second) = DuetConversationUserPair.Normalize(userId1, userId2);
 
-        dbContext.DuetConversations.Add(new DuetConversation
+        dbContext.DuetConversations.Add(new DuetConversationReadModel
         {
             FirstUserId = first,
             SecondUserId = second,

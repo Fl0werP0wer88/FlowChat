@@ -57,14 +57,9 @@ public sealed class CreateDuetConversationCommandHandler
                 DomainError.NotFound("Conversation not found."));
         }
 
-        var conversationId = Id<ConversationAggregate>.New();
-
-        _newConversation = ConversationAggregate.Create(
-            conversationId,
-            type: ConversationType.Duet,
+        _newConversation = DuetConversation.Create(
             createdByUserId: request.RequestingUserId,
-            participantUserIds: [request.RequestingUserId, request.PartnerUserId],
-            name: null);
+            partnerUserId: request.PartnerUserId);
 
         await _conversationRepository.AddAsync(_newConversation, cancellationToken);
 

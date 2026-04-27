@@ -19,6 +19,10 @@ public sealed class ConversationConfiguration : IEntityTypeConfiguration<Convers
         builder.Property(x => x.Type)
             .IsRequired();
 
+        builder.HasDiscriminator(x => x.Type)
+            .HasValue<DuetConversation>(ConversationType.Duet)
+            .HasValue<GroupConversation>(ConversationType.Group);
+
         builder.Property(x => x.Name)
             .HasMaxLength(200);
 

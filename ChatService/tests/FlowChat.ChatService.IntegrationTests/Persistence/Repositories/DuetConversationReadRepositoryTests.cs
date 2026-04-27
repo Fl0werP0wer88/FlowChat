@@ -8,6 +8,7 @@ using FlowChat.Shared.Persistance.Auditing;
 using FluentAssertions;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using DuetConversationReadModel = FlowChat.ChatService.Persistence.ReadModels.DuetConversation;
 
 namespace FlowChat.ChatService.IntegrationTests.Persistence.Repositories;
 
@@ -21,11 +22,9 @@ public sealed class DuetConversationReadRepositoryTests
 
         var requestingUserId = Guid.NewGuid();
         var partnerUserId = Guid.NewGuid();
-        var conversation = Conversation.Create(
-            Id<Conversation>.New(),
-            type: ConversationType.Duet,
+        var conversation = FlowChat.ChatService.Domain.Entities.Conversation.DuetConversation.Create(
             createdByUserId: requestingUserId,
-            participantUserIds: [requestingUserId, partnerUserId]);
+            partnerUserId: partnerUserId);
 
         await using (var seedContext = CreateDbContext(connection))
         {
@@ -61,11 +60,9 @@ public sealed class DuetConversationReadRepositoryTests
 
         var requestingUserId = Guid.NewGuid();
         var partnerUserId = Guid.NewGuid();
-        var conversation = Conversation.Create(
-            Id<Conversation>.New(),
-            type: ConversationType.Duet,
+        var conversation = FlowChat.ChatService.Domain.Entities.Conversation.DuetConversation.Create(
             createdByUserId: requestingUserId,
-            participantUserIds: [requestingUserId, partnerUserId]);
+            partnerUserId: partnerUserId);
 
         await using (var seedContext = CreateDbContext(connection))
         {
@@ -120,11 +117,11 @@ public sealed class DuetConversationReadRepositoryTests
         result.Should().BeNull();
     }
 
-    private static DuetConversation CreateDuetConversation(Guid userId1, Guid userId2, Guid conversationId)
+    private static DuetConversationReadModel CreateDuetConversation(Guid userId1, Guid userId2, Guid conversationId)
     {
         var (first, second) = Normalize(userId1, userId2);
 
-        return new DuetConversation
+        return new DuetConversationReadModel
         {
             FirstUserId = first,
             SecondUserId = second,

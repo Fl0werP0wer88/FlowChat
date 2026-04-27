@@ -79,11 +79,9 @@ public sealed class ChatMessageReadRepositoryTests
     }
 
     private static Conversation CreateConversation(Guid senderId, Guid recipientId) =>
-        Conversation.Create(
-            Id<Conversation>.New(),
-            type: ConversationType.Duet,
+        FlowChat.ChatService.Domain.Entities.Conversation.DuetConversation.Create(
             createdByUserId: senderId,
-            participantUserIds: [senderId, recipientId]);
+            partnerUserId: recipientId);
 
     private static ChatMessage CreateMessage(
         Id<Conversation> conversationId,
