@@ -1,0 +1,150 @@
+using System.Data.Common;
+using FluentAssertions;
+using FlowChat.Core.Results;
+using FlowChat.Shared.Domain;
+using Microsoft.EntityFrameworkCore;
+using Moq;
+
+namespace FlowChat.Shared.Application.UnitTests;
+
+public sealed class UpsertCommandHandlerBaseTests
+{
+    [Fact]
+    public async Task Handle_WhenCreateSucceeds_ReturnsCreatedValueWithoutLookup()
+    {
+        var createdId = Guid.NewGuid();
+        var handler = new TestUpsertCommandHandler(
+            new Mock<IDomainEventDispatcher>().Object,
+            CreateSuccessfulUnitOfWorkMock().Object,
+            lookups: [],
+            createAsync: (_, _) => Task.FromResult(FlowChatResult<Guid>.Success(createdId)));
+
+        var result = await handler.Handle(new TestUpsertCommand(), CancellationToken.None);
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Value.Should().Be(createdId);
+        result.Value.WasCreated.Should().BeTrue();
+        handler.CreateCallCount.Should().Be(1);
+        handler.LookupCallCount.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task Handle_WhenUniqueViolationOccursDuringTransaction_ReturnsExistingValue()
+    {
+        var existingId = Guid.NewGuid();
+        var uniqueViolation = CreateDbUpdateException("23505");
+        var handler = new TestUpsertCommandHandler(
+            new Mock<IDomainEventDispatcher>().Object,
+            CreateFailingUnitOfWorkMock(uniqueViolation).Object,
+            lookups: [(true, existingId)],
+            createAsync: (_, _) => Task.FromResult(FlowChatResult<Guid>.Success(Guid.NewGuid())));
+
+        var result = await handler.Handle(new TestUpsertCommand(), CancellationToken.None);
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Value.Should().Be(existingId);
+        result.Value.WasCreated.Should().BeFalse();
+        handler.CreateCallCount.Should().Be(1);
+        handler.LookupCallCount.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task Handle_WhenUniqueViolationOccursButResourceStillDoesNotExist_RethrowsException()
+    {
+        var uniqueViolation = CreateDbUpdateException("23505");
+        var handler = new TestUpsertCommandHandler(
+            new Mock<IDomainEventDispatcher>().Object,
+            CreateFailingUnitOfWorkMock(uniqueViolation).Object,
+            lookups: [(false, default)],
+            createAsync: (_, _) => Task.FromResult(FlowChatResult<Guid>.Success(Guid.NewGuid())));
+
+        var action = async () => await handler.Handle(new TestUpsertCommand(), CancellationToken.None);
+
+        var exception = await action.Should().ThrowAsync<DbUpdateException>();
+        exception.Which.Should().BeSameAs(uniqueViolation);
+    }
+
+    private static Mock<IUnitOfWork> CreateSuccessfulUnitOfWorkMock()
+    {
+        var unitOfWorkMock = new Mock<IUnitOfWork>();
+        unitOfWorkMock
+            .Setup(x => x.ExecuteInTransactionAsync(
+                It.IsAny<Func<CancellationToken, Task<FlowChatResult<UpsertResult<Guid>>>>>(),
+                It.IsAny<CancellationToken>()))
+            .Returns<Func<CancellationToken, Task<FlowChatResult<UpsertResult<Guid>>>>, CancellationToken>(
+                (operation, cancellationToken) => operation(cancellationToken));
+
+        return unitOfWorkMock;
+    }
+
+    private static Mock<IUnitOfWork> CreateFailingUnitOfWorkMock(DbUpdateException exception)
+    {
+        var unitOfWorkMock = new Mock<IUnitOfWork>();
+        unitOfWorkMock
+            .Setup(x => x.ExecuteInTransactionAsync(
+                It.IsAny<Func<CancellationToken, Task<FlowChatResult<UpsertResult<Guid>>>>>(),
+                It.IsAny<CancellationToken>()))
+            .Returns<Func<CancellationToken, Task<FlowChatResult<UpsertResult<Guid>>>>, CancellationToken>(
+                async (operation, cancellationToken) =>
+                {
+                    await operation(cancellationToken);
+                    throw exception;
+                });
+
+        return unitOfWorkMock;
+    }
+
+    private static DbUpdateException CreateDbUpdateException(string sqlState)
+    {
+        return new DbUpdateException("Update failed.", new TestDbException(sqlState));
+    }
+
+    private sealed record TestUpsertCommand : ICommand<UpsertResult<Guid>>;
+
+    private sealed class TestUpsertCommandHandler : UpsertCommandHandlerBase<TestUpsertCommand, Guid>
+    {
+        private readonly Queue<(bool Found, Guid Value)> _lookups;
+        private readonly Func<TestUpsertCommand, CancellationToken, Task<FlowChatResult<Guid>>> _createAsync;
+
+        public TestUpsertCommandHandler(
+            IDomainEventDispatcher domainEventDispatcher,
+            IUnitOfWork unitOfWork,
+            IEnumerable<(bool Found, Guid Value)> lookups,
+            Func<TestUpsertCommand, CancellationToken, Task<FlowChatResult<Guid>>> createAsync)
+            : base(domainEventDispatcher, unitOfWork)
+        {
+            _lookups = new Queue<(bool Found, Guid Value)>(lookups);
+            _createAsync = createAsync;
+        }
+
+        public int CreateCallCount { get; private set; }
+
+        public int LookupCallCount { get; private set; }
+
+        protected override Task<(bool Found, Guid Value)> TryGetExistingAsync(
+            TestUpsertCommand request,
+            CancellationToken cancellationToken)
+        {
+            LookupCallCount++;
+            return Task.FromResult(_lookups.Dequeue());
+        }
+
+        protected override Task<FlowChatResult<Guid>> CreateAsync(
+            TestUpsertCommand request,
+            CancellationToken cancellationToken)
+        {
+            CreateCallCount++;
+            return _createAsync(request, cancellationToken);
+        }
+
+        protected override IAggregateRoot? GetCreatedAggregateRoot(UpsertResult<Guid> result)
+        {
+            return null;
+        }
+    }
+
+    private sealed class TestDbException(string sqlState) : DbException("Database exception")
+    {
+        public override string? SqlState => sqlState;
+    }
+}
