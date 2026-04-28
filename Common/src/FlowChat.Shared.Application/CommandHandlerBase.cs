@@ -1,6 +1,7 @@
 using FlowChat.Core.Results;
 using FlowChat.Shared.Domain;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using System.Diagnostics;
 using System.Runtime.ExceptionServices;
 
@@ -47,6 +48,10 @@ public abstract class CommandHandlerBase<TCommand, TResponse> : ICommandHandler<
         {
             return exception.Result;
         }
+        catch (DbUpdateException exception)
+        {
+            return await HandleDbUpdateExceptionAsync(request, exception, cancellationToken);
+        }
         catch (Exception exception)
         {
             return await HandleUnexpectedExceptionAsync(request, exception, cancellationToken);
@@ -56,6 +61,14 @@ public abstract class CommandHandlerBase<TCommand, TResponse> : ICommandHandler<
     protected abstract Task<FlowChatResult<TResponse>> ExecuteAsync(TCommand request, CancellationToken cancellationToken);
 
     protected abstract IAggregateRoot? GetAggregateRoot(FlowChatResult<TResponse> result);
+
+    protected virtual Task<FlowChatResult<TResponse>> HandleDbUpdateExceptionAsync(
+        TCommand request,
+        DbUpdateException exception,
+        CancellationToken cancellationToken)
+    {
+        return HandleUnexpectedExceptionAsync(request, exception, cancellationToken);
+    }
 
     protected virtual Task<FlowChatResult<TResponse>> HandleUnexpectedExceptionAsync(
         TCommand request,

@@ -1,6 +1,7 @@
 using FluentAssertions;
 using FlowChat.Core.Results;
 using FlowChat.Shared.Domain;
+using Microsoft.EntityFrameworkCore;
 using Moq;
 
 namespace FlowChat.Shared.Application.UnitTests;
@@ -36,7 +37,7 @@ public sealed class CommandHandlerBaseTests
             domainEventDispatcherMock.Object,
             unitOfWorkMock.Object,
             (_, _) => Task.FromException<FlowChatResult<Guid>>(expectedException),
-            (_, exception, _) =>
+            handleUnexpectedExceptionAsync: (_, exception, _) =>
             {
                 exception.Should().BeSameAs(expectedException);
                 return Task.FromResult(expectedResult);
@@ -47,6 +48,30 @@ public sealed class CommandHandlerBaseTests
         result.IsFailure.Should().BeTrue();
         result.Error.ErrorType.Should().Be(ErrorType.Unexpected);
         result.Error.ErrorMessage.Should().Be("Handled");
+    }
+
+    [Fact]
+    public async Task Handle_WhenDbUpdateExceptionIsThrown_UsesDbUpdateExceptionOverrideResult()
+    {
+        var unitOfWorkMock = CreateUnitOfWorkMock();
+        var domainEventDispatcherMock = new Mock<IDomainEventDispatcher>();
+        var expectedException = new DbUpdateException("boom");
+        var expectedResult = FlowChatResult<Guid>.Failure(DomainError.UnExpected("Handled db update"));
+        var handler = new TestCommandHandler(
+            domainEventDispatcherMock.Object,
+            unitOfWorkMock.Object,
+            (_, _) => Task.FromException<FlowChatResult<Guid>>(expectedException),
+            handleDbUpdateExceptionAsync: (_, exception, _) =>
+            {
+                exception.Should().BeSameAs(expectedException);
+                return Task.FromResult(expectedResult);
+            });
+
+        var result = await handler.Handle(new TestCommand(), CancellationToken.None);
+
+        result.IsFailure.Should().BeTrue();
+        result.Error.ErrorType.Should().Be(ErrorType.Unexpected);
+        result.Error.ErrorMessage.Should().Be("Handled db update");
     }
 
     private static Mock<IUnitOfWork> CreateUnitOfWorkMock()
@@ -67,16 +92,19 @@ public sealed class CommandHandlerBaseTests
     private sealed class TestCommandHandler : CommandHandlerBase<TestCommand, Guid>
     {
         private readonly Func<TestCommand, CancellationToken, Task<FlowChatResult<Guid>>> _executeAsync;
+        private readonly Func<TestCommand, DbUpdateException, CancellationToken, Task<FlowChatResult<Guid>>>? _handleDbUpdateExceptionAsync;
         private readonly Func<TestCommand, Exception, CancellationToken, Task<FlowChatResult<Guid>>>? _handleUnexpectedExceptionAsync;
 
         public TestCommandHandler(
             IDomainEventDispatcher domainEventDispatcher,
             IUnitOfWork unitOfWork,
             Func<TestCommand, CancellationToken, Task<FlowChatResult<Guid>>> executeAsync,
+            Func<TestCommand, DbUpdateException, CancellationToken, Task<FlowChatResult<Guid>>>? handleDbUpdateExceptionAsync = null,
             Func<TestCommand, Exception, CancellationToken, Task<FlowChatResult<Guid>>>? handleUnexpectedExceptionAsync = null)
             : base(domainEventDispatcher, unitOfWork)
         {
             _executeAsync = executeAsync;
+            _handleDbUpdateExceptionAsync = handleDbUpdateExceptionAsync;
             _handleUnexpectedExceptionAsync = handleUnexpectedExceptionAsync;
         }
 
@@ -88,6 +116,16 @@ public sealed class CommandHandlerBaseTests
         protected override IAggregateRoot? GetAggregateRoot(FlowChatResult<Guid> result)
         {
             return null;
+        }
+
+        protected override Task<FlowChatResult<Guid>> HandleDbUpdateExceptionAsync(
+            TestCommand request,
+            DbUpdateException exception,
+            CancellationToken cancellationToken)
+        {
+            return _handleDbUpdateExceptionAsync is null
+                ? base.HandleDbUpdateExceptionAsync(request, exception, cancellationToken)
+                : _handleDbUpdateExceptionAsync(request, exception, cancellationToken);
         }
 
         protected override Task<FlowChatResult<Guid>> HandleUnexpectedExceptionAsync(

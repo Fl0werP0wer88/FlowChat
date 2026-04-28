@@ -35,21 +35,20 @@ public abstract class UpsertCommandHandlerBase<TCommand, TValue>
             : null;
     }
 
-    protected override async Task<FlowChatResult<UpsertResult<TValue>>> HandleUnexpectedExceptionAsync(
+    protected override async Task<FlowChatResult<UpsertResult<TValue>>> HandleDbUpdateExceptionAsync(
         TCommand request,
-        Exception exception,
+        DbUpdateException exception,
         CancellationToken cancellationToken)
     {
-        if (exception is not DbUpdateException dbUpdateException
-            || !dbUpdateException.IsUniqueConstraintViolation())
+        if (!exception.IsUniqueConstraintViolation())
         {
-            return await base.HandleUnexpectedExceptionAsync(request, exception, cancellationToken);
+            return await base.HandleDbUpdateExceptionAsync(request, exception, cancellationToken);
         }
 
         var existing = await TryGetExistingAsync(request, cancellationToken);
         if (!existing.Found)
         {
-            return await base.HandleUnexpectedExceptionAsync(request, exception, cancellationToken);
+            return await base.HandleDbUpdateExceptionAsync(request, exception, cancellationToken);
         }
 
         return FlowChatResult<UpsertResult<TValue>>.Success(
