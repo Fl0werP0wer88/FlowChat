@@ -20,7 +20,7 @@ public sealed class ConfirmEmailVerificationControllerTests(UserProfileApiFactor
         var (userId, emailId) = await CreateProfileAndGetEmailIdAsync();
 
         // Issue a verification request via the API
-        await _client.PostAsync($"/api/userprofiles/{userId}/emails/{emailId}/verification", content: null);
+        await SendEmailVerificationAsync(userId, emailId);
 
         // Read the nonce from the DB and construct the token
         var token = await BuildTokenFromDbAsync(userId, emailId);
@@ -57,7 +57,7 @@ public sealed class ConfirmEmailVerificationControllerTests(UserProfileApiFactor
     {
         var (userId, emailId) = await CreateProfileAndGetEmailIdAsync();
 
-        await _client.PostAsync($"/api/userprofiles/{userId}/emails/{emailId}/verification", content: null);
+        await SendEmailVerificationAsync(userId, emailId);
         var token = await BuildTokenFromDbAsync(userId, emailId);
 
         // Confirm successfully
@@ -85,13 +85,26 @@ public sealed class ConfirmEmailVerificationControllerTests(UserProfileApiFactor
             Content = JsonContent.Create(request)
         };
         httpRequest.Headers.Add("X-Internal-Api-Key", UserProfileApiFactory.InternalApiKey);
-        await _client.SendAsync(httpRequest);
+        var createResponse = await _client.SendAsync(httpRequest);
+        createResponse.EnsureSuccessStatusCode();
 
-        var profileResponse = await _client.GetAsync($"/api/userprofiles/{userId}");
+        var getProfile = new HttpRequestMessage(HttpMethod.Get, "/api/userprofiles");
+        getProfile.Headers.Add(TestAuthenticationHandler.UserIdHeaderName, userId.ToString("D"));
+        var profileResponse = await _client.SendAsync(getProfile);
+        profileResponse.EnsureSuccessStatusCode();
         var profile = await profileResponse.Content.ReadFromJsonAsync<GetUserProfileResponse>();
         var emailId = profile!.UserProfile.Emails[0].Id;
 
         return (userId, emailId);
+    }
+
+    private async Task SendEmailVerificationAsync(Guid userId, Guid emailId)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Post, $"/api/userprofiles/emails/{emailId}/verification");
+        request.Headers.Add(TestAuthenticationHandler.UserIdHeaderName, userId.ToString("D"));
+
+        var response = await _client.SendAsync(request);
+        response.EnsureSuccessStatusCode();
     }
 
     private async Task<string> BuildTokenFromDbAsync(Guid userId, Guid emailId)
