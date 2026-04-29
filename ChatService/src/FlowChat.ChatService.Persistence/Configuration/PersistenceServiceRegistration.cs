@@ -3,6 +3,7 @@ using FlowChat.ChatService.Application.Contracts.Persistence;
 using FlowChat.ChatService.Persistence.Repositories;
 using FlowChat.Shared.Persistance.Auditing;
 using FlowChat.Shared.Infrastructure.Silverback.Persistence;
+using FlowChat.Shared.Persistance;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -14,6 +15,7 @@ public static class PersistenceServiceRegistration
     public static IServiceCollection AddApiPersistenceServices(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddScoped<EntityBaseSaveChangesInterceptor>();
+        services.AddPostgresDbUpdateExceptionClassifier();
         services.AddScoped<IUnitOfWork, SilverbackEfUnitOfWork<AppDbContext>>();
         services.AddDbContext<AppDbContext>((serviceProvider, options) =>
             options.UseNpgsql(configuration.GetConnectionString("ChatDb"))
@@ -37,6 +39,7 @@ public static class PersistenceServiceRegistration
     public static IServiceCollection AddWorkerPersistenceServices(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddScoped<EntityBaseSaveChangesInterceptor>();
+        services.AddPostgresDbUpdateExceptionClassifier();
         services.AddDbContext<AppDbContext>((serviceProvider, options) =>
             options.UseNpgsql(configuration.GetConnectionString("ChatDb"))
                 .AddInterceptors(serviceProvider.GetRequiredService<EntityBaseSaveChangesInterceptor>()));

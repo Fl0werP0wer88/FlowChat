@@ -1,4 +1,3 @@
-using System.Data.Common;
 using FluentAssertions;
 using FlowChat.Core.Results;
 using FlowChat.Shared.Domain;
@@ -13,9 +12,11 @@ public sealed class UpsertCommandHandlerBaseTests
     public async Task Handle_WhenCreateSucceeds_ReturnsCreatedValueWithoutLookup()
     {
         var createdId = Guid.NewGuid();
+        var classifierMock = CreateClassifierMock(isExpectedUniqueConstraintViolation: false);
         var handler = new TestUpsertCommandHandler(
             new Mock<IDomainEventDispatcher>().Object,
             CreateSuccessfulUnitOfWorkMock().Object,
+            classifierMock.Object,
             lookups: [],
             createAsync: (_, _) => Task.FromResult(FlowChatResult<Guid>.Success(createdId)));
 
@@ -26,16 +27,23 @@ public sealed class UpsertCommandHandlerBaseTests
         result.Value.WasCreated.Should().BeTrue();
         handler.CreateCallCount.Should().Be(1);
         handler.LookupCallCount.Should().Be(0);
+        classifierMock.Verify(
+            x => x.IsExpectedUniqueConstraintViolation(
+                It.IsAny<DbUpdateException>(),
+                It.IsAny<IReadOnlyCollection<string>>()),
+            Times.Never);
     }
 
     [Fact]
     public async Task Handle_WhenUniqueViolationOccursDuringTransaction_ReturnsExistingValue()
     {
         var existingId = Guid.NewGuid();
-        var uniqueViolation = CreateDbUpdateException("23505");
+        var uniqueViolation = CreateDbUpdateException();
+        var classifierMock = CreateClassifierMock(isExpectedUniqueConstraintViolation: true);
         var handler = new TestUpsertCommandHandler(
             new Mock<IDomainEventDispatcher>().Object,
             CreateFailingUnitOfWorkMock(uniqueViolation).Object,
+            classifierMock.Object,
             lookups: [(true, existingId)],
             createAsync: (_, _) => Task.FromResult(FlowChatResult<Guid>.Success(Guid.NewGuid())));
 
@@ -46,15 +54,22 @@ public sealed class UpsertCommandHandlerBaseTests
         result.Value.WasCreated.Should().BeFalse();
         handler.CreateCallCount.Should().Be(1);
         handler.LookupCallCount.Should().Be(1);
+        classifierMock.Verify(
+            x => x.IsExpectedUniqueConstraintViolation(
+                uniqueViolation,
+                It.Is<IReadOnlyCollection<string>>(constraintNames => constraintNames.Count == 0)),
+            Times.Once);
     }
 
     [Fact]
     public async Task Handle_WhenUniqueViolationOccursButResourceStillDoesNotExist_RethrowsException()
     {
-        var uniqueViolation = CreateDbUpdateException("23505");
+        var uniqueViolation = CreateDbUpdateException();
+        var classifierMock = CreateClassifierMock(isExpectedUniqueConstraintViolation: true);
         var handler = new TestUpsertCommandHandler(
             new Mock<IDomainEventDispatcher>().Object,
             CreateFailingUnitOfWorkMock(uniqueViolation).Object,
+            classifierMock.Object,
             lookups: [(false, default)],
             createAsync: (_, _) => Task.FromResult(FlowChatResult<Guid>.Success(Guid.NewGuid())));
 
@@ -62,6 +77,25 @@ public sealed class UpsertCommandHandlerBaseTests
 
         var exception = await action.Should().ThrowAsync<DbUpdateException>();
         exception.Which.Should().BeSameAs(uniqueViolation);
+    }
+
+    [Fact]
+    public async Task Handle_WhenDbUpdateExceptionIsNotExpectedUniqueViolation_RethrowsExceptionWithoutLookup()
+    {
+        var dbUpdateException = CreateDbUpdateException();
+        var classifierMock = CreateClassifierMock(isExpectedUniqueConstraintViolation: false);
+        var handler = new TestUpsertCommandHandler(
+            new Mock<IDomainEventDispatcher>().Object,
+            CreateFailingUnitOfWorkMock(dbUpdateException).Object,
+            classifierMock.Object,
+            lookups: [],
+            createAsync: (_, _) => Task.FromResult(FlowChatResult<Guid>.Success(Guid.NewGuid())));
+
+        var action = async () => await handler.Handle(new TestUpsertCommand(), CancellationToken.None);
+
+        var exception = await action.Should().ThrowAsync<DbUpdateException>();
+        exception.Which.Should().BeSameAs(dbUpdateException);
+        handler.LookupCallCount.Should().Be(0);
     }
 
     private static Mock<IUnitOfWork> CreateSuccessfulUnitOfWorkMock()
@@ -94,9 +128,21 @@ public sealed class UpsertCommandHandlerBaseTests
         return unitOfWorkMock;
     }
 
-    private static DbUpdateException CreateDbUpdateException(string sqlState)
+    private static Mock<IDbUpdateExceptionClassifier> CreateClassifierMock(bool isExpectedUniqueConstraintViolation)
     {
-        return new DbUpdateException("Update failed.", new TestDbException(sqlState));
+        var classifierMock = new Mock<IDbUpdateExceptionClassifier>();
+        classifierMock
+            .Setup(x => x.IsExpectedUniqueConstraintViolation(
+                It.IsAny<DbUpdateException>(),
+                It.IsAny<IReadOnlyCollection<string>>()))
+            .Returns(isExpectedUniqueConstraintViolation);
+
+        return classifierMock;
+    }
+
+    private static DbUpdateException CreateDbUpdateException()
+    {
+        return new DbUpdateException("Update failed.", new InvalidOperationException("boom"));
     }
 
     private sealed record TestUpsertCommand : ICommand<UpsertResult<Guid>>;
@@ -109,9 +155,10 @@ public sealed class UpsertCommandHandlerBaseTests
         public TestUpsertCommandHandler(
             IDomainEventDispatcher domainEventDispatcher,
             IUnitOfWork unitOfWork,
+            IDbUpdateExceptionClassifier dbUpdateExceptionClassifier,
             IEnumerable<(bool Found, Guid Value)> lookups,
             Func<TestUpsertCommand, CancellationToken, Task<FlowChatResult<Guid>>> createAsync)
-            : base(domainEventDispatcher, unitOfWork)
+            : base(domainEventDispatcher, unitOfWork, dbUpdateExceptionClassifier)
         {
             _lookups = new Queue<(bool Found, Guid Value)>(lookups);
             _createAsync = createAsync;
@@ -141,10 +188,5 @@ public sealed class UpsertCommandHandlerBaseTests
         {
             return null;
         }
-    }
-
-    private sealed class TestDbException(string sqlState) : DbException("Database exception")
-    {
-        public override string? SqlState => sqlState;
     }
 }

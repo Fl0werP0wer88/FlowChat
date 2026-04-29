@@ -10,11 +10,16 @@ public abstract class UpsertCommandHandlerBase<TCommand, TValue>
     where TCommand : ICommand<UpsertResult<TValue>>, IRequest<FlowChatResult<UpsertResult<TValue>>>
     where TValue : notnull
 {
+    private readonly IDbUpdateExceptionClassifier _dbUpdateExceptionClassifier;
+
     protected UpsertCommandHandlerBase(
         IDomainEventDispatcher domainEventDispatcher,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        IDbUpdateExceptionClassifier dbUpdateExceptionClassifier)
         : base(domainEventDispatcher, unitOfWork)
     {
+        _dbUpdateExceptionClassifier = dbUpdateExceptionClassifier
+            ?? throw new ArgumentNullException(nameof(dbUpdateExceptionClassifier));
     }
 
     protected sealed override async Task<FlowChatResult<UpsertResult<TValue>>> ExecuteAsync(
@@ -40,7 +45,9 @@ public abstract class UpsertCommandHandlerBase<TCommand, TValue>
         DbUpdateException exception,
         CancellationToken cancellationToken)
     {
-        if (!exception.IsUniqueConstraintViolation())
+        if (!_dbUpdateExceptionClassifier.IsExpectedUniqueConstraintViolation(
+                exception,
+                GetExpectedUniqueConstraintNames(request)))
         {
             return await base.HandleDbUpdateExceptionAsync(request, exception, cancellationToken);
         }
@@ -64,4 +71,6 @@ public abstract class UpsertCommandHandlerBase<TCommand, TValue>
         CancellationToken cancellationToken);
 
     protected abstract IAggregateRoot? GetCreatedAggregateRoot(UpsertResult<TValue> result);
+
+    protected virtual IReadOnlyCollection<string> GetExpectedUniqueConstraintNames(TCommand request) => [];
 }

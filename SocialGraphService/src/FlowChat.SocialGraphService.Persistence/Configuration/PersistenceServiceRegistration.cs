@@ -2,6 +2,7 @@ using FlowChat.Shared.Application;
 using FlowChat.Shared.Infrastructure.Silverback.Persistence;
 using FlowChat.SocialGraphService.Application.Contracts.Persistence;
 using FlowChat.SocialGraphService.Persistence.Repositories;
+using FlowChat.Shared.Persistance;
 using FlowChat.Shared.Persistance.Auditing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -16,6 +17,7 @@ public static class PersistenceServiceRegistration
         IConfiguration configuration)
     {
         services.AddScoped<EntityBaseSaveChangesInterceptor>();
+        services.AddPostgresDbUpdateExceptionClassifier();
         services.AddDbContext<AppDbContext>((serviceProvider, options) =>
             options.UseNpgsql(configuration.GetConnectionString("SocialGraphDb"))
                 .AddInterceptors(serviceProvider.GetRequiredService<EntityBaseSaveChangesInterceptor>()));

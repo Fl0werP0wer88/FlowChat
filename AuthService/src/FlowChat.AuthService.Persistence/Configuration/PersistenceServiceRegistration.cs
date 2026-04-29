@@ -1,6 +1,7 @@
 using FlowChat.Shared.Application;
 using FlowChat.AuthService.Application.Contracts.Persistence;
 using FlowChat.Shared.Infrastructure.Silverback.Persistence;
+using FlowChat.Shared.Persistance;
 using FlowChat.Shared.Persistance.Auditing;
 using FlowChat.AuthService.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -15,6 +16,7 @@ public static class PersistenceServiceRegistration
                             this IServiceCollection services, IConfiguration configuration)
     {
         services.AddScoped<EntityBaseSaveChangesInterceptor>();
+        services.AddPostgresDbUpdateExceptionClassifier();
         services.AddScoped<IUnitOfWork, SilverbackEfUnitOfWork<AppDbContext>>();
 
         services.AddDbContext<AppDbContext>((serviceProvider, options) =>
@@ -34,6 +36,7 @@ public static class PersistenceServiceRegistration
                             this IServiceCollection services, IConfiguration configuration)
     {
         services.AddScoped<EntityBaseSaveChangesInterceptor>();
+        services.AddPostgresDbUpdateExceptionClassifier();
         services.AddDbContext<AppDbContext>((serviceProvider, options) =>
             options.UseNpgsql(configuration.GetConnectionString("AuthDb"))
                 .AddInterceptors(serviceProvider.GetRequiredService<EntityBaseSaveChangesInterceptor>()));
