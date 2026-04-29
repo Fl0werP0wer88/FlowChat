@@ -4,14 +4,15 @@ using Npgsql;
 
 namespace FlowChat.Shared.Persistance;
 
-public sealed class PostgresDbUpdateExceptionClassifier : IDbUpdateExceptionClassifier
+public sealed class PostgresDbUpdateExceptionClassifier(PostgresDbUpdateExceptionClassifierOptions options)
+    : IDbUpdateExceptionClassifier
 {
-    public bool IsExpectedUniqueConstraintViolation(
+    public bool IsExpectedIdempotencyConflict(
         DbUpdateException exception,
-        IReadOnlyCollection<string> expectedConstraintNames)
+        string idempotencyConflictKey)
     {
         ArgumentNullException.ThrowIfNull(exception);
-        ArgumentNullException.ThrowIfNull(expectedConstraintNames);
+        ArgumentException.ThrowIfNullOrWhiteSpace(idempotencyConflictKey);
 
         if (exception.InnerException is not PostgresException postgresException
             || postgresException.SqlState != PostgresErrorCodes.UniqueViolation)
@@ -19,7 +20,9 @@ public sealed class PostgresDbUpdateExceptionClassifier : IDbUpdateExceptionClas
             return false;
         }
 
-        return expectedConstraintNames.Count == 0
-            || expectedConstraintNames.Contains(postgresException.ConstraintName, StringComparer.Ordinal);
+        return options.UniqueConstraintNamesByIdempotencyConflictKey.TryGetValue(
+                idempotencyConflictKey,
+                out var constraintNames)
+            && constraintNames.Contains(postgresException.ConstraintName, StringComparer.Ordinal);
     }
 }

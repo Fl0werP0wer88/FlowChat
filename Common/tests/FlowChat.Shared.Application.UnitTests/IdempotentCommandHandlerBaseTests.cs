@@ -28,9 +28,9 @@ public sealed class IdempotentCommandHandlerBaseTests
         handler.ExecuteCommandCallCount.Should().Be(1);
         handler.LookupCallCount.Should().Be(0);
         classifierMock.Verify(
-            x => x.IsExpectedUniqueConstraintViolation(
+            x => x.IsExpectedIdempotencyConflict(
                 It.IsAny<DbUpdateException>(),
-                It.IsAny<IReadOnlyCollection<string>>()),
+                It.IsAny<string>()),
             Times.Never);
     }
 
@@ -55,9 +55,9 @@ public sealed class IdempotentCommandHandlerBaseTests
         handler.ExecuteCommandCallCount.Should().Be(1);
         handler.LookupCallCount.Should().Be(1);
         classifierMock.Verify(
-            x => x.IsExpectedUniqueConstraintViolation(
+            x => x.IsExpectedIdempotencyConflict(
                 uniqueViolation,
-                It.Is<IReadOnlyCollection<string>>(constraintNames => constraintNames.Count == 0)),
+                typeof(TestIdempotentCommand).FullName!),
             Times.Once);
     }
 
@@ -99,7 +99,7 @@ public sealed class IdempotentCommandHandlerBaseTests
     }
 
     [Fact]
-    public async Task Handle_WhenUniqueViolationOccurs_PassesExpectedConstraintNamesToClassifier()
+    public async Task Handle_WhenUniqueViolationOccurs_PassesIdempotencyConflictKeyToClassifier()
     {
         var uniqueViolation = CreateDbUpdateException();
         var classifierMock = CreateClassifierMock(isExpectedUniqueConstraintViolation: true);
@@ -109,16 +109,14 @@ public sealed class IdempotentCommandHandlerBaseTests
             classifierMock.Object,
             lookups: [(true, Guid.NewGuid())],
             executeCommandAsync: (_, _) => Task.FromResult(FlowChatResult<Guid>.Success(Guid.NewGuid())),
-            expectedConstraintNames: ["ux_idempotency_keys_key"]);
+            idempotencyConflictKey: "chat.send-message");
 
         await handler.Handle(new TestIdempotentCommand(), CancellationToken.None);
 
         classifierMock.Verify(
-            x => x.IsExpectedUniqueConstraintViolation(
+            x => x.IsExpectedIdempotencyConflict(
                 uniqueViolation,
-                It.Is<IReadOnlyCollection<string>>(constraintNames =>
-                    constraintNames.Count == 1
-                    && constraintNames.Contains("ux_idempotency_keys_key"))),
+                "chat.send-message"),
             Times.Once);
     }
 
@@ -156,9 +154,9 @@ public sealed class IdempotentCommandHandlerBaseTests
     {
         var classifierMock = new Mock<IDbUpdateExceptionClassifier>();
         classifierMock
-            .Setup(x => x.IsExpectedUniqueConstraintViolation(
+            .Setup(x => x.IsExpectedIdempotencyConflict(
                 It.IsAny<DbUpdateException>(),
-                It.IsAny<IReadOnlyCollection<string>>()))
+                It.IsAny<string>()))
             .Returns(isExpectedUniqueConstraintViolation);
 
         return classifierMock;
@@ -183,19 +181,19 @@ public sealed class IdempotentCommandHandlerBaseTests
             IDbUpdateExceptionClassifier dbUpdateExceptionClassifier,
             IEnumerable<(bool Found, Guid Value)> lookups,
             Func<TestIdempotentCommand, CancellationToken, Task<FlowChatResult<Guid>>> executeCommandAsync,
-            IReadOnlyCollection<string>? expectedConstraintNames = null)
+            string? idempotencyConflictKey = null)
             : base(domainEventDispatcher, unitOfWork, dbUpdateExceptionClassifier)
         {
             _lookups = new Queue<(bool Found, Guid Value)>(lookups);
             _executeCommandAsync = executeCommandAsync;
-            ExpectedConstraintNames = expectedConstraintNames ?? [];
+            IdempotencyConflictKey = idempotencyConflictKey;
         }
 
         public int ExecuteCommandCallCount { get; private set; }
 
         public int LookupCallCount { get; private set; }
 
-        private IReadOnlyCollection<string> ExpectedConstraintNames { get; }
+        private string? IdempotencyConflictKey { get; }
 
         protected override Task<(bool Found, Guid Value)> TryGetExistingResponseAsync(
             TestIdempotentCommand request,
@@ -218,9 +216,9 @@ public sealed class IdempotentCommandHandlerBaseTests
             return null;
         }
 
-        protected override IReadOnlyCollection<string> GetExpectedUniqueConstraintNames(TestIdempotentCommand request)
+        protected override string GetIdempotencyConflictKey(TestIdempotentCommand request)
         {
-            return ExpectedConstraintNames;
+            return IdempotencyConflictKey ?? base.GetIdempotencyConflictKey(request);
         }
     }
 }

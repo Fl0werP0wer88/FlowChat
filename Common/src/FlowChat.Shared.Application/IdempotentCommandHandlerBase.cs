@@ -45,9 +45,9 @@ public abstract class IdempotentCommandHandlerBase<TCommand, TValue>
         DbUpdateException exception,
         CancellationToken cancellationToken)
     {
-        if (!_dbUpdateExceptionClassifier.IsExpectedUniqueConstraintViolation(
+        if (!_dbUpdateExceptionClassifier.IsExpectedIdempotencyConflict(
                 exception,
-                GetExpectedUniqueConstraintNames(request)))
+                GetIdempotencyConflictKey(request)))
         {
             return await base.HandleDbUpdateExceptionAsync(request, exception, cancellationToken);
         }
@@ -72,5 +72,8 @@ public abstract class IdempotentCommandHandlerBase<TCommand, TValue>
 
     protected abstract IAggregateRoot? GetExecutedAggregateRoot(IdempotentCommandResult<TValue> result);
 
-    protected virtual IReadOnlyCollection<string> GetExpectedUniqueConstraintNames(TCommand request) => [];
+    protected virtual string GetIdempotencyConflictKey(TCommand request)
+    {
+        return typeof(TCommand).FullName ?? typeof(TCommand).Name;
+    }
 }

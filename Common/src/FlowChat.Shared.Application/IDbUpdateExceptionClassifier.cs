@@ -4,7 +4,7 @@ namespace FlowChat.Shared.Application;
 
 public interface IDbUpdateExceptionClassifier
 {
-    bool IsExpectedUniqueConstraintViolation(
+    bool IsExpectedIdempotencyConflict(
         DbUpdateException exception,
-        IReadOnlyCollection<string> expectedConstraintNames);
+        string idempotencyConflictKey);
 }
