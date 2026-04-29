@@ -1,4 +1,3 @@
-using System.Text;
 using FlowChat.GatewayService.Api.Configuration.Settings;
 using FlowChat.GatewayService.Api.Observability;
 using FlowChat.GatewayService.Api.Services;
@@ -6,7 +5,6 @@ using FlowChat.Shared.API;
 using FlowChat.Shared.Infrastructure.Configuration;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using OpenTelemetry.Instrumentation.AspNetCore;
 
@@ -23,34 +21,16 @@ public static class StartupExtensions
         builder.Services.Configure<AspNetCoreTraceInstrumentationOptions>(GatewayTraceEnrichment.Configure);
 
         var settingsProvider = new AppSettingsProvider(builder.Configuration);
-        var jwtSettings = settingsProvider.GetSection<JwtSettingsSection>();
         var clientSettings = settingsProvider.GetSection<GatewayClientSettingsSection>();
         var servicesSettings = settingsProvider.GetSection<GatewayServicesSettingsSection>();
-
-        ValidateJwtSettingsSection(jwtSettings);
 
         builder.Services.Configure<GatewayCatalogSettingsSection>(
             builder.Configuration.GetSection(new GatewayCatalogSettingsSection().SectionName));
 
-        builder.Services
-            .AddAuthentication(options =>
+        builder.Services.AddFlowChatJwtAuthentication(
+            builder.Configuration,
+            configureJwtBearer: options =>
             {
-                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-            })
-            .AddJwtBearer(options =>
-            {
-                options.TokenValidationParameters = new TokenValidationParameters
-                {
-                    ValidateIssuer = true,
-                    ValidateAudience = true,
-                    ValidateLifetime = true,
-                    ValidateIssuerSigningKey = true,
-                    ValidIssuer = jwtSettings.Issuer,
-                    ValidAudience = jwtSettings.Audience,
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Key)),
-                    ClockSkew = TimeSpan.Zero
-                };
                 options.Events = new JwtBearerEvents
                 {
                     OnMessageReceived = context =>
@@ -66,18 +46,17 @@ public static class StartupExtensions
                         return Task.CompletedTask;
                     }
                 };
+            },
+            configureAuthorization: options =>
+            {
+                options.AddPolicy(
+                    AuthenticatedUserPolicyName,
+                    policy => policy.RequireAuthenticatedUser());
+
+                options.FallbackPolicy = new AuthorizationPolicyBuilder()
+                    .RequireAuthenticatedUser()
+                    .Build();
             });
-
-        builder.Services.AddAuthorization(options =>
-        {
-            options.AddPolicy(
-                AuthenticatedUserPolicyName,
-                policy => policy.RequireAuthenticatedUser());
-
-            options.FallbackPolicy = new AuthorizationPolicyBuilder()
-                .RequireAuthenticatedUser()
-                .Build();
-        });
 
         builder.Services.AddCors(options =>
         {
@@ -98,8 +77,7 @@ public static class StartupExtensions
 
         builder.Services.AddControllers();
         builder.Services.AddEndpointsApiExplorer();
-        builder.Services.AddSwaggerGen(options =>
-        {
+        builder.Services.AddFlowChatSwaggerWithBearer(options =>
             options.SwaggerDoc(
                 "v1",
                 new OpenApiInfo
@@ -107,28 +85,7 @@ public static class StartupExtensions
                     Title = "FlowChat GatewayService API",
                     Version = "v1",
                     Description = "Direct endpoints exposed by the FlowChat gateway."
-                });
-
-            options.AddSecurityDefinition(
-                "Bearer",
-                new OpenApiSecurityScheme
-                {
-                    Name = "Authorization",
-                    Type = SecuritySchemeType.Http,
-                    Scheme = "bearer",
-                    BearerFormat = "JWT",
-                    In = ParameterLocation.Header,
-                    Description = "Paste the JWT access token without the 'Bearer ' prefix."
-                });
-
-            options.AddSecurityRequirement(document => new OpenApiSecurityRequirement
-            {
-                {
-                    new OpenApiSecuritySchemeReference("Bearer", document, null),
-                    new List<string>()
-                }
-            });
-        });
+                }));
 
         builder.Services
             .AddReverseProxy()
@@ -173,23 +130,5 @@ public static class StartupExtensions
         app.MapReverseProxy();
 
         return app;
-    }
-
-    private static void ValidateJwtSettingsSection(JwtSettingsSection jwtSettings)
-    {
-        if (string.IsNullOrWhiteSpace(jwtSettings.Key))
-        {
-            throw new InvalidOperationException("Missing configuration value: JwtSettingsSection:Key.");
-        }
-
-        if (string.IsNullOrWhiteSpace(jwtSettings.Issuer))
-        {
-            throw new InvalidOperationException("Missing configuration value: JwtSettingsSection:Issuer.");
-        }
-
-        if (string.IsNullOrWhiteSpace(jwtSettings.Audience))
-        {
-            throw new InvalidOperationException("Missing configuration value: JwtSettingsSection:Audience.");
-        }
     }
 }

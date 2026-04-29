@@ -1,3 +1,4 @@
+using FlowChat.Shared.API.Configuration.Settings;
 using FlowChat.Shared.Infrastructure.Configuration;
 using FlowChat.SocialGraphService.Infrastructure.Configuration.Settings;
 using FluentAssertions;

@@ -1,6 +1,6 @@
 using FlowChat.Core.Contracts;
 
-namespace FlowChat.ChatService.Infrastructure.Configuration.Settings;
+namespace FlowChat.Shared.API.Configuration.Settings;
 
 public sealed class JwtSettingsSection : SettingsSectionBase
 {

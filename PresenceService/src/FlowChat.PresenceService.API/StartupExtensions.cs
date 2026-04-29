@@ -1,16 +1,10 @@
-using System.Text;
 using System.Text.Json.Serialization;
 using FlowChat.PresenceService.Application;
 using FlowChat.PresenceService.Infrastructure;
-using FlowChat.PresenceService.Infrastructure.Configuration.Settings;
 using FlowChat.PresenceService.Infrastructure.Kafka;
 using FlowChat.PresenceService.Persistence;
 using FlowChat.Shared.API;
-using FlowChat.Shared.Infrastructure.Configuration;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi;
 
 namespace FlowChat.PresenceService.API;
 
@@ -18,56 +12,16 @@ public static class StartupExtensions
 {
     public static WebApplication ConfigureServices(this WebApplicationBuilder builder)
     {
-        var settingsProvider = new AppSettingsProvider(builder.Configuration);
-        var jwtSettings = settingsProvider.GetSection<JwtSettingsSection>();
-
         builder.Services.AddApiApplicationServices();
         builder.Services.AddInfrastructureServices(builder.Configuration);
         builder.Services.AddPersistenceServices(builder.Configuration);
         builder.Services.AddApiSilverbackMessaging(builder.Configuration);
         builder.AddFlowChatOpenTelemetry(typeof(ApplicationServiceRegistration).Assembly);
 
-        builder.Services
-            .AddAuthentication(options =>
-            {
-                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-            })
-            .AddJwtBearer(options =>
-            {
-                options.TokenValidationParameters = new TokenValidationParameters
-                {
-                    ValidateIssuer = true,
-                    ValidateAudience = true,
-                    ValidateLifetime = true,
-                    ValidateIssuerSigningKey = true,
-                    ValidIssuer = jwtSettings.Issuer,
-                    ValidAudience = jwtSettings.Audience,
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Key)),
-                    ClockSkew = TimeSpan.Zero
-                };
-            });
-        builder.Services.AddAuthorization();
+        builder.Services.AddFlowChatJwtAuthentication(builder.Configuration);
         builder.Services.AddControllers()
             .AddJsonOptions(options => options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
-        builder.Services.AddSwaggerGen(options =>
-        {
-            options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-            {
-                Name = "Authorization",
-                Type = SecuritySchemeType.Http,
-                Scheme = "bearer",
-                BearerFormat = "JWT",
-                In = ParameterLocation.Header
-            });
-            options.AddSecurityRequirement(document => new OpenApiSecurityRequirement
-            {
-                {
-                    new OpenApiSecuritySchemeReference("Bearer", document, null),
-                    new List<string>()
-                }
-            });
-        });
+        builder.Services.AddFlowChatSwaggerWithBearer();
 
         return builder.Build();
     }

@@ -1,4 +1,3 @@
-using System.Text;
 using System.Text.Json.Serialization;
 using FlowChat.RealtimeService.Api.Realtime;
 using FlowChat.RealtimeService.Application;
@@ -9,7 +8,6 @@ using FlowChat.RealtimeService.Infrastructure.Kafka;
 using FlowChat.Shared.API;
 using FlowChat.Shared.Infrastructure.Configuration;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
 
 namespace FlowChat.RealtimeService.Api;
 
@@ -18,7 +16,6 @@ public static class StartupExtensions
     public static WebApplication ConfigureServices(this WebApplicationBuilder builder)
     {
         var settingsProvider = new AppSettingsProvider(builder.Configuration);
-        var jwtSettings = settingsProvider.GetSection<JwtSettingsSection>();
         var realtimeConnectionsSettings = settingsProvider.GetSection<RealtimeConnectionsSettingsSection>();
         realtimeConnectionsSettings.RedisConnectionString =
             builder.Configuration.GetConnectionString(RealtimeConnectionsSettingsSection.RedisConnectionStringName)
@@ -27,24 +24,6 @@ public static class StartupExtensions
             settingsProvider.GetSection<RealtimeConnectionRegisteredProducerSettingsSection>();
         var realtimeConnectionUnregisteredProducerOptions =
             settingsProvider.GetSection<RealtimeConnectionUnregisteredProducerSettingsSection>();
-        var jwtKey = jwtSettings.Key;
-        var jwtIssuer = jwtSettings.Issuer;
-        var jwtAudience = jwtSettings.Audience;
-
-        if (string.IsNullOrWhiteSpace(jwtKey))
-        {
-            throw new InvalidOperationException("Missing configuration value: JwtSettingsSection:Key.");
-        }
-
-        if (string.IsNullOrWhiteSpace(jwtIssuer))
-        {
-            throw new InvalidOperationException("Missing configuration value: JwtSettingsSection:Issuer.");
-        }
-
-        if (string.IsNullOrWhiteSpace(jwtAudience))
-        {
-            throw new InvalidOperationException("Missing configuration value: JwtSettingsSection:Audience.");
-        }
 
         if (string.IsNullOrWhiteSpace(realtimeConnectionsSettings.RedisConnectionString))
         {
@@ -86,25 +65,10 @@ public static class StartupExtensions
         builder.Services.AddScoped<IRealtimeClientDispatcher, SignalRRealtimeClientDispatcher>();
         builder.AddFlowChatOpenTelemetry(typeof(ApplicationServiceRegistration).Assembly);
 
-        builder.Services
-            .AddAuthentication(options =>
+        builder.Services.AddFlowChatJwtAuthentication(
+            builder.Configuration,
+            configureJwtBearer: options =>
             {
-                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-            })
-            .AddJwtBearer(options =>
-            {
-                options.TokenValidationParameters = new TokenValidationParameters
-                {
-                    ValidateIssuer = true,
-                    ValidateAudience = true,
-                    ValidateLifetime = true,
-                    ValidateIssuerSigningKey = true,
-                    ValidIssuer = jwtIssuer,
-                    ValidAudience = jwtAudience,
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
-                    ClockSkew = TimeSpan.Zero
-                };
                 options.Events = new JwtBearerEvents
                 {
                     OnMessageReceived = context =>
@@ -120,14 +84,13 @@ public static class StartupExtensions
                     }
                 };
             });
-        builder.Services.AddAuthorization();
         builder.Services.AddSignalR()
             .AddJsonProtocol(options =>
                 options.PayloadSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
         builder.Services.AddControllers()
             .AddJsonOptions(options =>
                 options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
-        builder.Services.AddSwaggerGen();
+        builder.Services.AddFlowChatSwaggerWithBearer();
 
         return builder.Build();
     }
