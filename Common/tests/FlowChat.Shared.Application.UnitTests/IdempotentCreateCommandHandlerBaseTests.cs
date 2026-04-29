@@ -6,21 +6,21 @@ using Moq;
 
 namespace FlowChat.Shared.Application.UnitTests;
 
-public sealed class UpsertCommandHandlerBaseTests
+public sealed class IdempotentCreateCommandHandlerBaseTests
 {
     [Fact]
     public async Task Handle_WhenCreateSucceeds_ReturnsCreatedValueWithoutLookup()
     {
         var createdId = Guid.NewGuid();
         var classifierMock = CreateClassifierMock(isExpectedUniqueConstraintViolation: false);
-        var handler = new TestUpsertCommandHandler(
+        var handler = new TestIdempotentCreateCommandHandler(
             new Mock<IDomainEventDispatcher>().Object,
             CreateSuccessfulUnitOfWorkMock().Object,
             classifierMock.Object,
             lookups: [],
             createAsync: (_, _) => Task.FromResult(FlowChatResult<Guid>.Success(createdId)));
 
-        var result = await handler.Handle(new TestUpsertCommand(), CancellationToken.None);
+        var result = await handler.Handle(new TestIdempotentCreateCommand(), CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
         result.Value.Value.Should().Be(createdId);
@@ -40,14 +40,14 @@ public sealed class UpsertCommandHandlerBaseTests
         var existingId = Guid.NewGuid();
         var uniqueViolation = CreateDbUpdateException();
         var classifierMock = CreateClassifierMock(isExpectedUniqueConstraintViolation: true);
-        var handler = new TestUpsertCommandHandler(
+        var handler = new TestIdempotentCreateCommandHandler(
             new Mock<IDomainEventDispatcher>().Object,
             CreateFailingUnitOfWorkMock(uniqueViolation).Object,
             classifierMock.Object,
             lookups: [(true, existingId)],
             createAsync: (_, _) => Task.FromResult(FlowChatResult<Guid>.Success(Guid.NewGuid())));
 
-        var result = await handler.Handle(new TestUpsertCommand(), CancellationToken.None);
+        var result = await handler.Handle(new TestIdempotentCreateCommand(), CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
         result.Value.Value.Should().Be(existingId);
@@ -66,14 +66,14 @@ public sealed class UpsertCommandHandlerBaseTests
     {
         var uniqueViolation = CreateDbUpdateException();
         var classifierMock = CreateClassifierMock(isExpectedUniqueConstraintViolation: true);
-        var handler = new TestUpsertCommandHandler(
+        var handler = new TestIdempotentCreateCommandHandler(
             new Mock<IDomainEventDispatcher>().Object,
             CreateFailingUnitOfWorkMock(uniqueViolation).Object,
             classifierMock.Object,
             lookups: [(false, default)],
             createAsync: (_, _) => Task.FromResult(FlowChatResult<Guid>.Success(Guid.NewGuid())));
 
-        var action = async () => await handler.Handle(new TestUpsertCommand(), CancellationToken.None);
+        var action = async () => await handler.Handle(new TestIdempotentCreateCommand(), CancellationToken.None);
 
         var exception = await action.Should().ThrowAsync<DbUpdateException>();
         exception.Which.Should().BeSameAs(uniqueViolation);
@@ -84,14 +84,14 @@ public sealed class UpsertCommandHandlerBaseTests
     {
         var dbUpdateException = CreateDbUpdateException();
         var classifierMock = CreateClassifierMock(isExpectedUniqueConstraintViolation: false);
-        var handler = new TestUpsertCommandHandler(
+        var handler = new TestIdempotentCreateCommandHandler(
             new Mock<IDomainEventDispatcher>().Object,
             CreateFailingUnitOfWorkMock(dbUpdateException).Object,
             classifierMock.Object,
             lookups: [],
             createAsync: (_, _) => Task.FromResult(FlowChatResult<Guid>.Success(Guid.NewGuid())));
 
-        var action = async () => await handler.Handle(new TestUpsertCommand(), CancellationToken.None);
+        var action = async () => await handler.Handle(new TestIdempotentCreateCommand(), CancellationToken.None);
 
         var exception = await action.Should().ThrowAsync<DbUpdateException>();
         exception.Which.Should().BeSameAs(dbUpdateException);
@@ -103,9 +103,9 @@ public sealed class UpsertCommandHandlerBaseTests
         var unitOfWorkMock = new Mock<IUnitOfWork>();
         unitOfWorkMock
             .Setup(x => x.ExecuteInTransactionAsync(
-                It.IsAny<Func<CancellationToken, Task<FlowChatResult<UpsertResult<Guid>>>>>(),
+                It.IsAny<Func<CancellationToken, Task<FlowChatResult<IdempotentCreateResult<Guid>>>>>(),
                 It.IsAny<CancellationToken>()))
-            .Returns<Func<CancellationToken, Task<FlowChatResult<UpsertResult<Guid>>>>, CancellationToken>(
+            .Returns<Func<CancellationToken, Task<FlowChatResult<IdempotentCreateResult<Guid>>>>, CancellationToken>(
                 (operation, cancellationToken) => operation(cancellationToken));
 
         return unitOfWorkMock;
@@ -116,9 +116,9 @@ public sealed class UpsertCommandHandlerBaseTests
         var unitOfWorkMock = new Mock<IUnitOfWork>();
         unitOfWorkMock
             .Setup(x => x.ExecuteInTransactionAsync(
-                It.IsAny<Func<CancellationToken, Task<FlowChatResult<UpsertResult<Guid>>>>>(),
+                It.IsAny<Func<CancellationToken, Task<FlowChatResult<IdempotentCreateResult<Guid>>>>>(),
                 It.IsAny<CancellationToken>()))
-            .Returns<Func<CancellationToken, Task<FlowChatResult<UpsertResult<Guid>>>>, CancellationToken>(
+            .Returns<Func<CancellationToken, Task<FlowChatResult<IdempotentCreateResult<Guid>>>>, CancellationToken>(
                 async (operation, cancellationToken) =>
                 {
                     await operation(cancellationToken);
@@ -145,19 +145,20 @@ public sealed class UpsertCommandHandlerBaseTests
         return new DbUpdateException("Update failed.", new InvalidOperationException("boom"));
     }
 
-    private sealed record TestUpsertCommand : ICommand<UpsertResult<Guid>>;
+    private sealed record TestIdempotentCreateCommand : ICommand<IdempotentCreateResult<Guid>>;
 
-    private sealed class TestUpsertCommandHandler : UpsertCommandHandlerBase<TestUpsertCommand, Guid>
+    private sealed class TestIdempotentCreateCommandHandler
+        : IdempotentCreateCommandHandlerBase<TestIdempotentCreateCommand, Guid>
     {
         private readonly Queue<(bool Found, Guid Value)> _lookups;
-        private readonly Func<TestUpsertCommand, CancellationToken, Task<FlowChatResult<Guid>>> _createAsync;
+        private readonly Func<TestIdempotentCreateCommand, CancellationToken, Task<FlowChatResult<Guid>>> _createAsync;
 
-        public TestUpsertCommandHandler(
+        public TestIdempotentCreateCommandHandler(
             IDomainEventDispatcher domainEventDispatcher,
             IUnitOfWork unitOfWork,
             IDbUpdateExceptionClassifier dbUpdateExceptionClassifier,
             IEnumerable<(bool Found, Guid Value)> lookups,
-            Func<TestUpsertCommand, CancellationToken, Task<FlowChatResult<Guid>>> createAsync)
+            Func<TestIdempotentCreateCommand, CancellationToken, Task<FlowChatResult<Guid>>> createAsync)
             : base(domainEventDispatcher, unitOfWork, dbUpdateExceptionClassifier)
         {
             _lookups = new Queue<(bool Found, Guid Value)>(lookups);
@@ -169,7 +170,7 @@ public sealed class UpsertCommandHandlerBaseTests
         public int LookupCallCount { get; private set; }
 
         protected override Task<(bool Found, Guid Value)> TryGetExistingAsync(
-            TestUpsertCommand request,
+            TestIdempotentCreateCommand request,
             CancellationToken cancellationToken)
         {
             LookupCallCount++;
@@ -177,14 +178,14 @@ public sealed class UpsertCommandHandlerBaseTests
         }
 
         protected override Task<FlowChatResult<Guid>> CreateAsync(
-            TestUpsertCommand request,
+            TestIdempotentCreateCommand request,
             CancellationToken cancellationToken)
         {
             CreateCallCount++;
             return _createAsync(request, cancellationToken);
         }
 
-        protected override IAggregateRoot? GetCreatedAggregateRoot(UpsertResult<Guid> result)
+        protected override IAggregateRoot? GetCreatedAggregateRoot(IdempotentCreateResult<Guid> result)
         {
             return null;
         }

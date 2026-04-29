@@ -5,14 +5,14 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FlowChat.Shared.Application;
 
-public abstract class UpsertCommandHandlerBase<TCommand, TValue>
-    : CommandHandlerBase<TCommand, UpsertResult<TValue>>
-    where TCommand : ICommand<UpsertResult<TValue>>, IRequest<FlowChatResult<UpsertResult<TValue>>>
+public abstract class IdempotentCreateCommandHandlerBase<TCommand, TValue>
+    : CommandHandlerBase<TCommand, IdempotentCreateResult<TValue>>
+    where TCommand : ICommand<IdempotentCreateResult<TValue>>, IRequest<FlowChatResult<IdempotentCreateResult<TValue>>>
     where TValue : notnull
 {
     private readonly IDbUpdateExceptionClassifier _dbUpdateExceptionClassifier;
 
-    protected UpsertCommandHandlerBase(
+    protected IdempotentCreateCommandHandlerBase(
         IDomainEventDispatcher domainEventDispatcher,
         IUnitOfWork unitOfWork,
         IDbUpdateExceptionClassifier dbUpdateExceptionClassifier)
@@ -22,25 +22,25 @@ public abstract class UpsertCommandHandlerBase<TCommand, TValue>
             ?? throw new ArgumentNullException(nameof(dbUpdateExceptionClassifier));
     }
 
-    protected sealed override async Task<FlowChatResult<UpsertResult<TValue>>> ExecuteAsync(
+    protected sealed override async Task<FlowChatResult<IdempotentCreateResult<TValue>>> ExecuteAsync(
         TCommand request,
         CancellationToken cancellationToken)
     {
         var created = await CreateAsync(request, cancellationToken);
         return created.IsSuccess
-            ? FlowChatResult<UpsertResult<TValue>>.Success(
-                new UpsertResult<TValue>(created.Value, WasCreated: true))
-            : FlowChatResult<UpsertResult<TValue>>.Failure(created.Error);
+            ? FlowChatResult<IdempotentCreateResult<TValue>>.Success(
+                new IdempotentCreateResult<TValue>(created.Value, WasCreated: true))
+            : FlowChatResult<IdempotentCreateResult<TValue>>.Failure(created.Error);
     }
 
-    protected sealed override IAggregateRoot? GetAggregateRoot(FlowChatResult<UpsertResult<TValue>> result)
+    protected sealed override IAggregateRoot? GetAggregateRoot(FlowChatResult<IdempotentCreateResult<TValue>> result)
     {
         return result.IsSuccess && result.Value.WasCreated
             ? GetCreatedAggregateRoot(result.Value)
             : null;
     }
 
-    protected override async Task<FlowChatResult<UpsertResult<TValue>>> HandleDbUpdateExceptionAsync(
+    protected override async Task<FlowChatResult<IdempotentCreateResult<TValue>>> HandleDbUpdateExceptionAsync(
         TCommand request,
         DbUpdateException exception,
         CancellationToken cancellationToken)
@@ -58,8 +58,8 @@ public abstract class UpsertCommandHandlerBase<TCommand, TValue>
             return await base.HandleDbUpdateExceptionAsync(request, exception, cancellationToken);
         }
 
-        return FlowChatResult<UpsertResult<TValue>>.Success(
-            new UpsertResult<TValue>(existing.Value, WasCreated: false));
+        return FlowChatResult<IdempotentCreateResult<TValue>>.Success(
+            new IdempotentCreateResult<TValue>(existing.Value, WasCreated: false));
     }
 
     protected abstract Task<(bool Found, TValue Value)> TryGetExistingAsync(
@@ -70,7 +70,7 @@ public abstract class UpsertCommandHandlerBase<TCommand, TValue>
         TCommand request,
         CancellationToken cancellationToken);
 
-    protected abstract IAggregateRoot? GetCreatedAggregateRoot(UpsertResult<TValue> result);
+    protected abstract IAggregateRoot? GetCreatedAggregateRoot(IdempotentCreateResult<TValue> result);
 
     protected virtual IReadOnlyCollection<string> GetExpectedUniqueConstraintNames(TCommand request) => [];
 }
