@@ -6,26 +6,26 @@ using Moq;
 
 namespace FlowChat.Shared.Application.UnitTests;
 
-public sealed class IdempotentCreateCommandHandlerBaseTests
+public sealed class IdempotentCommandHandlerBaseTests
 {
     [Fact]
-    public async Task Handle_WhenCreateSucceeds_ReturnsCreatedValueWithoutLookup()
+    public async Task Handle_WhenCommandSucceeds_ReturnsExecutedValueWithoutLookup()
     {
         var createdId = Guid.NewGuid();
         var classifierMock = CreateClassifierMock(isExpectedUniqueConstraintViolation: false);
-        var handler = new TestIdempotentCreateCommandHandler(
+        var handler = new TestIdempotentCommandHandler(
             new Mock<IDomainEventDispatcher>().Object,
             CreateSuccessfulUnitOfWorkMock().Object,
             classifierMock.Object,
             lookups: [],
-            createAsync: (_, _) => Task.FromResult(FlowChatResult<Guid>.Success(createdId)));
+            executeCommandAsync: (_, _) => Task.FromResult(FlowChatResult<Guid>.Success(createdId)));
 
-        var result = await handler.Handle(new TestIdempotentCreateCommand(), CancellationToken.None);
+        var result = await handler.Handle(new TestIdempotentCommand(), CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
         result.Value.Value.Should().Be(createdId);
-        result.Value.WasCreated.Should().BeTrue();
-        handler.CreateCallCount.Should().Be(1);
+        result.Value.WasAlreadyProcessed.Should().BeFalse();
+        handler.ExecuteCommandCallCount.Should().Be(1);
         handler.LookupCallCount.Should().Be(0);
         classifierMock.Verify(
             x => x.IsExpectedUniqueConstraintViolation(
@@ -40,19 +40,19 @@ public sealed class IdempotentCreateCommandHandlerBaseTests
         var existingId = Guid.NewGuid();
         var uniqueViolation = CreateDbUpdateException();
         var classifierMock = CreateClassifierMock(isExpectedUniqueConstraintViolation: true);
-        var handler = new TestIdempotentCreateCommandHandler(
+        var handler = new TestIdempotentCommandHandler(
             new Mock<IDomainEventDispatcher>().Object,
             CreateFailingUnitOfWorkMock(uniqueViolation).Object,
             classifierMock.Object,
             lookups: [(true, existingId)],
-            createAsync: (_, _) => Task.FromResult(FlowChatResult<Guid>.Success(Guid.NewGuid())));
+            executeCommandAsync: (_, _) => Task.FromResult(FlowChatResult<Guid>.Success(Guid.NewGuid())));
 
-        var result = await handler.Handle(new TestIdempotentCreateCommand(), CancellationToken.None);
+        var result = await handler.Handle(new TestIdempotentCommand(), CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
         result.Value.Value.Should().Be(existingId);
-        result.Value.WasCreated.Should().BeFalse();
-        handler.CreateCallCount.Should().Be(1);
+        result.Value.WasAlreadyProcessed.Should().BeTrue();
+        handler.ExecuteCommandCallCount.Should().Be(1);
         handler.LookupCallCount.Should().Be(1);
         classifierMock.Verify(
             x => x.IsExpectedUniqueConstraintViolation(
@@ -66,14 +66,14 @@ public sealed class IdempotentCreateCommandHandlerBaseTests
     {
         var uniqueViolation = CreateDbUpdateException();
         var classifierMock = CreateClassifierMock(isExpectedUniqueConstraintViolation: true);
-        var handler = new TestIdempotentCreateCommandHandler(
+        var handler = new TestIdempotentCommandHandler(
             new Mock<IDomainEventDispatcher>().Object,
             CreateFailingUnitOfWorkMock(uniqueViolation).Object,
             classifierMock.Object,
             lookups: [(false, default)],
-            createAsync: (_, _) => Task.FromResult(FlowChatResult<Guid>.Success(Guid.NewGuid())));
+            executeCommandAsync: (_, _) => Task.FromResult(FlowChatResult<Guid>.Success(Guid.NewGuid())));
 
-        var action = async () => await handler.Handle(new TestIdempotentCreateCommand(), CancellationToken.None);
+        var action = async () => await handler.Handle(new TestIdempotentCommand(), CancellationToken.None);
 
         var exception = await action.Should().ThrowAsync<DbUpdateException>();
         exception.Which.Should().BeSameAs(uniqueViolation);
@@ -84,18 +84,42 @@ public sealed class IdempotentCreateCommandHandlerBaseTests
     {
         var dbUpdateException = CreateDbUpdateException();
         var classifierMock = CreateClassifierMock(isExpectedUniqueConstraintViolation: false);
-        var handler = new TestIdempotentCreateCommandHandler(
+        var handler = new TestIdempotentCommandHandler(
             new Mock<IDomainEventDispatcher>().Object,
             CreateFailingUnitOfWorkMock(dbUpdateException).Object,
             classifierMock.Object,
             lookups: [],
-            createAsync: (_, _) => Task.FromResult(FlowChatResult<Guid>.Success(Guid.NewGuid())));
+            executeCommandAsync: (_, _) => Task.FromResult(FlowChatResult<Guid>.Success(Guid.NewGuid())));
 
-        var action = async () => await handler.Handle(new TestIdempotentCreateCommand(), CancellationToken.None);
+        var action = async () => await handler.Handle(new TestIdempotentCommand(), CancellationToken.None);
 
         var exception = await action.Should().ThrowAsync<DbUpdateException>();
         exception.Which.Should().BeSameAs(dbUpdateException);
         handler.LookupCallCount.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task Handle_WhenUniqueViolationOccurs_PassesExpectedConstraintNamesToClassifier()
+    {
+        var uniqueViolation = CreateDbUpdateException();
+        var classifierMock = CreateClassifierMock(isExpectedUniqueConstraintViolation: true);
+        var handler = new TestIdempotentCommandHandler(
+            new Mock<IDomainEventDispatcher>().Object,
+            CreateFailingUnitOfWorkMock(uniqueViolation).Object,
+            classifierMock.Object,
+            lookups: [(true, Guid.NewGuid())],
+            executeCommandAsync: (_, _) => Task.FromResult(FlowChatResult<Guid>.Success(Guid.NewGuid())),
+            expectedConstraintNames: ["ux_idempotency_keys_key"]);
+
+        await handler.Handle(new TestIdempotentCommand(), CancellationToken.None);
+
+        classifierMock.Verify(
+            x => x.IsExpectedUniqueConstraintViolation(
+                uniqueViolation,
+                It.Is<IReadOnlyCollection<string>>(constraintNames =>
+                    constraintNames.Count == 1
+                    && constraintNames.Contains("ux_idempotency_keys_key"))),
+            Times.Once);
     }
 
     private static Mock<IUnitOfWork> CreateSuccessfulUnitOfWorkMock()
@@ -103,9 +127,9 @@ public sealed class IdempotentCreateCommandHandlerBaseTests
         var unitOfWorkMock = new Mock<IUnitOfWork>();
         unitOfWorkMock
             .Setup(x => x.ExecuteInTransactionAsync(
-                It.IsAny<Func<CancellationToken, Task<FlowChatResult<IdempotentCreateResult<Guid>>>>>(),
+                It.IsAny<Func<CancellationToken, Task<FlowChatResult<IdempotentCommandResult<Guid>>>>>(),
                 It.IsAny<CancellationToken>()))
-            .Returns<Func<CancellationToken, Task<FlowChatResult<IdempotentCreateResult<Guid>>>>, CancellationToken>(
+            .Returns<Func<CancellationToken, Task<FlowChatResult<IdempotentCommandResult<Guid>>>>, CancellationToken>(
                 (operation, cancellationToken) => operation(cancellationToken));
 
         return unitOfWorkMock;
@@ -116,9 +140,9 @@ public sealed class IdempotentCreateCommandHandlerBaseTests
         var unitOfWorkMock = new Mock<IUnitOfWork>();
         unitOfWorkMock
             .Setup(x => x.ExecuteInTransactionAsync(
-                It.IsAny<Func<CancellationToken, Task<FlowChatResult<IdempotentCreateResult<Guid>>>>>(),
+                It.IsAny<Func<CancellationToken, Task<FlowChatResult<IdempotentCommandResult<Guid>>>>>(),
                 It.IsAny<CancellationToken>()))
-            .Returns<Func<CancellationToken, Task<FlowChatResult<IdempotentCreateResult<Guid>>>>, CancellationToken>(
+            .Returns<Func<CancellationToken, Task<FlowChatResult<IdempotentCommandResult<Guid>>>>, CancellationToken>(
                 async (operation, cancellationToken) =>
                 {
                     await operation(cancellationToken);
@@ -145,49 +169,58 @@ public sealed class IdempotentCreateCommandHandlerBaseTests
         return new DbUpdateException("Update failed.", new InvalidOperationException("boom"));
     }
 
-    private sealed record TestIdempotentCreateCommand : ICommand<IdempotentCreateResult<Guid>>;
+    private sealed record TestIdempotentCommand : ICommand<IdempotentCommandResult<Guid>>;
 
-    private sealed class TestIdempotentCreateCommandHandler
-        : IdempotentCreateCommandHandlerBase<TestIdempotentCreateCommand, Guid>
+    private sealed class TestIdempotentCommandHandler
+        : IdempotentCommandHandlerBase<TestIdempotentCommand, Guid>
     {
         private readonly Queue<(bool Found, Guid Value)> _lookups;
-        private readonly Func<TestIdempotentCreateCommand, CancellationToken, Task<FlowChatResult<Guid>>> _createAsync;
+        private readonly Func<TestIdempotentCommand, CancellationToken, Task<FlowChatResult<Guid>>> _executeCommandAsync;
 
-        public TestIdempotentCreateCommandHandler(
+        public TestIdempotentCommandHandler(
             IDomainEventDispatcher domainEventDispatcher,
             IUnitOfWork unitOfWork,
             IDbUpdateExceptionClassifier dbUpdateExceptionClassifier,
             IEnumerable<(bool Found, Guid Value)> lookups,
-            Func<TestIdempotentCreateCommand, CancellationToken, Task<FlowChatResult<Guid>>> createAsync)
+            Func<TestIdempotentCommand, CancellationToken, Task<FlowChatResult<Guid>>> executeCommandAsync,
+            IReadOnlyCollection<string>? expectedConstraintNames = null)
             : base(domainEventDispatcher, unitOfWork, dbUpdateExceptionClassifier)
         {
             _lookups = new Queue<(bool Found, Guid Value)>(lookups);
-            _createAsync = createAsync;
+            _executeCommandAsync = executeCommandAsync;
+            ExpectedConstraintNames = expectedConstraintNames ?? [];
         }
 
-        public int CreateCallCount { get; private set; }
+        public int ExecuteCommandCallCount { get; private set; }
 
         public int LookupCallCount { get; private set; }
 
-        protected override Task<(bool Found, Guid Value)> TryGetExistingAsync(
-            TestIdempotentCreateCommand request,
+        private IReadOnlyCollection<string> ExpectedConstraintNames { get; }
+
+        protected override Task<(bool Found, Guid Value)> TryGetExistingResponseAsync(
+            TestIdempotentCommand request,
             CancellationToken cancellationToken)
         {
             LookupCallCount++;
             return Task.FromResult(_lookups.Dequeue());
         }
 
-        protected override Task<FlowChatResult<Guid>> CreateAsync(
-            TestIdempotentCreateCommand request,
+        protected override Task<FlowChatResult<Guid>> ExecuteCommandAsync(
+            TestIdempotentCommand request,
             CancellationToken cancellationToken)
         {
-            CreateCallCount++;
-            return _createAsync(request, cancellationToken);
+            ExecuteCommandCallCount++;
+            return _executeCommandAsync(request, cancellationToken);
         }
 
-        protected override IAggregateRoot? GetCreatedAggregateRoot(IdempotentCreateResult<Guid> result)
+        protected override IAggregateRoot? GetExecutedAggregateRoot(IdempotentCommandResult<Guid> result)
         {
             return null;
+        }
+
+        protected override IReadOnlyCollection<string> GetExpectedUniqueConstraintNames(TestIdempotentCommand request)
+        {
+            return ExpectedConstraintNames;
         }
     }
 }
