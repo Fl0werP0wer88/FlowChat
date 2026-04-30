@@ -7,6 +7,7 @@ param(
     [string]$UserProfileBaseUrl = 'https://localhost:7148',
     [string]$UserProfileConfirmRoute = 'api/userprofiles/email-verification/confirm',
     [int]$ActivationDelaySeconds = 10,
+    [switch]$RegisterOnly,
     [switch]$DryRun
 )
 
@@ -353,6 +354,12 @@ if ($failedCount -gt 0) {
         ForEach-Object {
             Write-Host "- $($_.FriendlyUserId) <$($_.Email)> :: $($_.Error)"
         }
+}
+
+if ($RegisterOnly) {
+    Write-Host ''
+    Write-Host 'RegisterOnly enabled. Skipping email activation; accounts should remain unconfirmed.'
+    return
 }
 
 Write-Host ''
