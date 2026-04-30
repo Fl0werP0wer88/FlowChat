@@ -2,7 +2,7 @@ using FlowChat.Core.Domain;
 
 namespace FlowChat.Core.Messaging.PresenceService.Events;
 
-public sealed class PresenceStatusChangedIntegrationEvent : IntegrationEvent
+public sealed record PresenceStatusChangedIntegrationEvent : IntegrationEvent
 {
     public Guid UserId { get; init; }
     public PresenceStatus Status { get; init; }

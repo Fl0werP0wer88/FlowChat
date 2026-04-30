@@ -1,6 +1,6 @@
 namespace FlowChat.Core.Messaging.AuthService.Events;
 
-public sealed class PhoneNumberConfirmedIntegrationEvent : IntegrationEvent
+public sealed record PhoneNumberConfirmedIntegrationEvent : IntegrationEvent
 {
     public Guid UserId { get; init; }
 

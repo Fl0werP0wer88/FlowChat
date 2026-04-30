@@ -44,5 +44,5 @@ public sealed class SilverbackEventPublisherTests
         exception.Message.Should().Contain("Kafka producer options");
     }
 
-    private sealed class TestIntegrationEvent : IntegrationEvent;
+    private sealed record TestIntegrationEvent : IntegrationEvent;
 }

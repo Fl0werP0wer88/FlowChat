@@ -1,6 +1,6 @@
 namespace FlowChat.Core.Messaging.RealtimeService.Events;
 
-public sealed class RealtimeConnectionUnregisteredIntegrationEvent : IntegrationEvent
+public sealed record RealtimeConnectionUnregisteredIntegrationEvent : IntegrationEvent
 {
     public Guid UserId { get; init; }
     public required string ConnectionId { get; init; }

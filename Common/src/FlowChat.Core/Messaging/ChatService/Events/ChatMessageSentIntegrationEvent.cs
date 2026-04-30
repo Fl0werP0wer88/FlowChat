@@ -1,6 +1,6 @@
 namespace FlowChat.Core.Messaging.ChatService.Events;
 
-public sealed class ChatMessageSentIntegrationEvent : IntegrationEvent
+public sealed record ChatMessageSentIntegrationEvent : IntegrationEvent
 {
     public Guid MessageId { get; init; }
     public Guid ConversationId { get; init; }
