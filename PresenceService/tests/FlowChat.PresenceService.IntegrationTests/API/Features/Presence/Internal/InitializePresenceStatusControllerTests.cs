@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using FlowChat.Core.Domain;
 using FlowChat.Core.Messaging.PresenceService.Events;
+using FlowChat.PresenceService.Persistence.Entities;
 
 namespace FlowChat.PresenceService.IntegrationTests.API.Features.Presence.Internal;
 
@@ -16,6 +17,21 @@ public sealed class InitializePresenceStatusControllerTests(PresenceApiFactory f
         factory.EventPublisher.Clear();
 
         var userId = Guid.NewGuid();
+        var observerUserId = Guid.NewGuid();
+        await factory.WithDbContextAsync(async db =>
+        {
+            await db.ContactObserverProjections.AddAsync(new ContactObserverProjectionEntity
+            {
+                ObservedUserId = userId,
+                ObserverUserId = observerUserId,
+                CreatedBy = "test",
+                CreatedAtUtc = DateTimeOffset.UtcNow,
+                LastModifiedBy = "test",
+                LastModifiedAtUtc = DateTimeOffset.UtcNow
+            });
+            await db.SaveChangesAsync();
+        });
+
         var request = new HttpRequestMessage(HttpMethod.Post, "/internal/presence/status/initialize")
         {
             Content = JsonContent.Create(new { UserId = userId })
@@ -33,7 +49,29 @@ public sealed class InitializePresenceStatusControllerTests(PresenceApiFactory f
         var publishedEvent = factory.EventPublisher.PublishedOfType<PresenceStatusChangedIntegrationEvent>().Should().ContainSingle().Subject;
         publishedEvent.UserId.Should().Be(userId);
         publishedEvent.Status.Should().Be(PresenceStatus.Active);
-        publishedEvent.RecipientUserIds.Should().BeEmpty();
+        publishedEvent.RecipientUserIds.Should().BeEquivalentTo([observerUserId]);
+    }
+
+    [Fact]
+    public async Task Initialize_WhenUserHasNoObservers_StoresActiveStatusWithoutPublishingEvent()
+    {
+        factory.EventPublisher.Clear();
+
+        var userId = Guid.NewGuid();
+        var request = new HttpRequestMessage(HttpMethod.Post, "/internal/presence/status/initialize")
+        {
+            Content = JsonContent.Create(new { UserId = userId })
+        };
+        request.Headers.Add("X-Internal-Api-Key", PresenceApiFactory.InternalApiKey);
+
+        var response = await _client.SendAsync(request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.Accepted);
+
+        var storedStatus = await factory.PresenceStatusStore.GetAsync(userId, CancellationToken.None);
+        storedStatus.Should().NotBeNull();
+        storedStatus!.Status.Should().Be(PresenceStatus.Active);
+        factory.EventPublisher.PublishedOfType<PresenceStatusChangedIntegrationEvent>().Should().BeEmpty();
     }
 
     [Fact]

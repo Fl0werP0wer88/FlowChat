@@ -1,9 +1,7 @@
 using FlowChat.Core.Domain;
-using FlowChat.Core.Messaging;
-using FlowChat.Core.Messaging.PresenceService.Events;
 using FlowChat.PresenceService.Application.Contracts.Infrastructure;
-using FlowChat.PresenceService.Application.Contracts.Persistence;
 using FlowChat.PresenceService.Application.Features.Presence;
+using FlowChat.PresenceService.Application.Features.Presence.Eventing.ApplicationEvents.PresenceStatusChanged;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
 using MediatR;
@@ -11,9 +9,8 @@ using MediatR;
 namespace FlowChat.PresenceService.Application.Features.Presence.Commands.DeletePresenceStatus;
 
 public sealed class DeletePresenceStatusCommandHandler(
-    IContactObserverProjectionReadRepository contactObserverProjectionReadRepository,
     IPresenceStatusStore presenceStatusStore,
-    IOutboxIntegrationEventPublisher integrationEventPublisher,
+    IMediator mediator,
     IUnitOfWork unitOfWork,
     IDomainEventDispatcher domainEventDispatcher)
     : CommandHandlerBase<DeletePresenceStatusCommand, Unit>(domainEventDispatcher, unitOfWork)
@@ -31,25 +28,14 @@ public sealed class DeletePresenceStatusCommandHandler(
             return FlowChatResult<Unit>.Success(Unit.Value);
         }
 
-        var recipients = await contactObserverProjectionReadRepository.GetObserverUserIdsAsync(
-            request.UserId,
-            cancellationToken);
-        var integrationEvent = new PresenceStatusChangedIntegrationEvent
-        {
-            UserId = request.UserId,
-            Status = PresenceStatus.Invisible,
-            ChangedAtUtc = DateTimeOffset.UtcNow,
-            RecipientUserIds = recipients
-                .Where(recipientUserId => recipientUserId != Guid.Empty)
-                .Distinct()
-                .ToList()
-        };
+        var changedAtUtc = DateTimeOffset.UtcNow;
 
         await presenceStatusStore.DeleteAsync(request.UserId, cancellationToken);
-        await integrationEventPublisher.Publish(
-            new IntegrationEventEnvelope<PresenceStatusChangedIntegrationEvent>(
-                integrationEvent,
-                request.UserId.ToString("D")),
+        await mediator.Publish(
+            new PresenceStatusChangedApplicationEvent(
+                request.UserId,
+                PresenceStatus.Invisible,
+                changedAtUtc),
             cancellationToken);
         _previousStatus = null;
 

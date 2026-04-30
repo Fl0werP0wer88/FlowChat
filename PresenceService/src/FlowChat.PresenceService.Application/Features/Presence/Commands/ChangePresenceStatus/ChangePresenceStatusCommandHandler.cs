@@ -1,9 +1,8 @@
 using FlowChat.Core.Domain;
-using FlowChat.Core.Messaging;
-using FlowChat.Core.Messaging.PresenceService.Events;
 using FlowChat.Core.Results;
 using FlowChat.PresenceService.Application.Contracts.Infrastructure;
 using FlowChat.PresenceService.Application.Contracts.Persistence;
+using FlowChat.PresenceService.Application.Features.Presence.Eventing.ApplicationEvents.PresenceStatusChanged;
 using FlowChat.PresenceService.Domain.Entities.UserPresencePreferences;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
@@ -12,10 +11,9 @@ using MediatR;
 namespace FlowChat.PresenceService.Application.Features.Presence.Commands.ChangePresenceStatus;
 
 public sealed class ChangePresenceStatusCommandHandler(
-    IContactObserverProjectionReadRepository contactObserverProjectionReadRepository,
     IPresenceStatusStore presenceStatusStore,
-    IOutboxIntegrationEventPublisher integrationEventPublisher,
     IUserPresencePreferencesWriteRepository userPresencePreferencesWriteRepository,
+    IMediator mediator,
     IUnitOfWork unitOfWork,
     IDomainEventDispatcher domainEventDispatcher)
     : CommandHandlerBase<ChangePresenceStatusCommand, Unit>(domainEventDispatcher, unitOfWork)
@@ -32,14 +30,7 @@ public sealed class ChangePresenceStatusCommandHandler(
             return FlowChatResult<Unit>.Success(Unit.Value);
         }
 
-        var recipients = await contactObserverProjectionReadRepository.GetObserverUserIdsAsync(
-            request.UserId,
-            cancellationToken);
         var changedAtUtc = DateTimeOffset.UtcNow;
-        var recipientUserIds = recipients
-            .Where(recipientUserId => recipientUserId != Guid.Empty)
-            .Distinct()
-            .ToList();
 
         // Busy / Invisible are manual choices — persist so they survive reconnect
         if (request.Status is PresenceStatus.Busy or PresenceStatus.Invisible)
@@ -78,22 +69,12 @@ public sealed class ChangePresenceStatusCommandHandler(
             changedAtUtc,
             cancellationToken);
 
-        if (recipientUserIds.Count > 0)
-        {
-            var integrationEvent = new PresenceStatusChangedIntegrationEvent
-            {
-                UserId = request.UserId,
-                Status = request.Status,
-                ChangedAtUtc = changedAtUtc,
-                RecipientUserIds = recipientUserIds
-            };
-
-            await integrationEventPublisher.Publish(
-                new IntegrationEventEnvelope<PresenceStatusChangedIntegrationEvent>(
-                    integrationEvent,
-                    request.UserId.ToString("D")),
-                cancellationToken);
-        }
+        await mediator.Publish(
+            new PresenceStatusChangedApplicationEvent(
+                request.UserId,
+                request.Status,
+                changedAtUtc),
+            cancellationToken);
 
         return FlowChatResult<Unit>.Success(Unit.Value);
     }

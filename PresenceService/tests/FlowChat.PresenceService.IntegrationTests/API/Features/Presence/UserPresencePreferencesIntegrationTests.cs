@@ -4,6 +4,7 @@ using FlowChat.Core.Domain;
 using FlowChat.Core.Messaging.PresenceService.Events;
 using FlowChat.PresenceService.Domain.Entities.UserPresencePreferences;
 using FlowChat.PresenceService.Persistence;
+using FlowChat.PresenceService.Persistence.Entities;
 using FlowChat.Shared.Domain;
 
 namespace FlowChat.PresenceService.IntegrationTests.API.Features.Presence;
@@ -79,6 +80,20 @@ public sealed class UserPresencePreferencesIntegrationTests(PresenceApiFactory f
         factory.EventPublisher.Clear();
 
         var userId = Guid.NewGuid();
+        var observerUserId = Guid.NewGuid();
+        await factory.WithDbContextAsync(async db =>
+        {
+            await db.ContactObserverProjections.AddAsync(new ContactObserverProjectionEntity
+            {
+                ObservedUserId = userId,
+                ObserverUserId = observerUserId,
+                CreatedBy = "test",
+                CreatedAtUtc = DateTimeOffset.UtcNow,
+                LastModifiedBy = "test",
+                LastModifiedAtUtc = DateTimeOffset.UtcNow
+            });
+            await db.SaveChangesAsync();
+        });
 
         // Set the manual preference via ChangePresenceStatus
         var setRequest = new HttpRequestMessage(HttpMethod.Put, "/api/presence/status")
@@ -112,5 +127,6 @@ public sealed class UserPresencePreferencesIntegrationTests(PresenceApiFactory f
             .Should().ContainSingle().Subject;
         publishedEvent.UserId.Should().Be(userId);
         publishedEvent.Status.Should().Be(preferredStatus);
+        publishedEvent.RecipientUserIds.Should().BeEquivalentTo([observerUserId]);
     }
 }

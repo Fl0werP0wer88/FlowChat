@@ -1,9 +1,8 @@
 using FlowChat.Core.Domain;
-using FlowChat.Core.Messaging;
-using FlowChat.Core.Messaging.PresenceService.Events;
 using FlowChat.PresenceService.Application.Contracts.Infrastructure;
 using FlowChat.PresenceService.Application.Contracts.Persistence;
 using FlowChat.PresenceService.Application.Features.Presence;
+using FlowChat.PresenceService.Application.Features.Presence.Eventing.ApplicationEvents.PresenceStatusChanged;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
 using MediatR;
@@ -11,10 +10,9 @@ using MediatR;
 namespace FlowChat.PresenceService.Application.Features.Presence.Commands.InitializePresenceStatus;
 
 public sealed class InitializePresenceStatusCommandHandler(
-    IContactObserverProjectionReadRepository contactObserverProjectionReadRepository,
     IPresenceStatusStore presenceStatusStore,
-    IOutboxIntegrationEventPublisher integrationEventPublisher,
     IUserPresencePreferencesReadRepository userPresencePreferencesReadRepository,
+    IMediator mediator,
     IUnitOfWork unitOfWork,
     IDomainEventDispatcher domainEventDispatcher)
     : CommandHandlerBase<InitializePresenceStatusCommand, Unit>(domainEventDispatcher, unitOfWork)
@@ -31,35 +29,22 @@ public sealed class InitializePresenceStatusCommandHandler(
             return FlowChatResult<Unit>.Success(Unit.Value);
         }
 
-        var recipients = await contactObserverProjectionReadRepository.GetObserverUserIdsAsync(
-            request.UserId,
-            cancellationToken);
         var changedAtUtc = DateTimeOffset.UtcNow;
 
         // Restore any saved manual preference (Busy/Invisible); default to Active otherwise
         var preference = await userPresencePreferencesReadRepository.FindPreferredStatusAsync(request.UserId, cancellationToken);
         var statusToSet = preference ?? PresenceStatus.Active;
 
-        var integrationEvent = new PresenceStatusChangedIntegrationEvent
-        {
-            UserId = request.UserId,
-            Status = statusToSet,
-            ChangedAtUtc = changedAtUtc,
-            RecipientUserIds = recipients
-                .Where(recipientUserId => recipientUserId != Guid.Empty)
-                .Distinct()
-                .ToList()
-        };
-
         await presenceStatusStore.SetAsync(
             request.UserId,
-            integrationEvent.Status,
-            integrationEvent.ChangedAtUtc,
+            statusToSet,
+            changedAtUtc,
             cancellationToken);
-        await integrationEventPublisher.Publish(
-            new IntegrationEventEnvelope<PresenceStatusChangedIntegrationEvent>(
-                integrationEvent,
-                request.UserId.ToString("D")),
+        await mediator.Publish(
+            new PresenceStatusChangedApplicationEvent(
+                request.UserId,
+                statusToSet,
+                changedAtUtc),
             cancellationToken);
         _previousStatus = null;
 

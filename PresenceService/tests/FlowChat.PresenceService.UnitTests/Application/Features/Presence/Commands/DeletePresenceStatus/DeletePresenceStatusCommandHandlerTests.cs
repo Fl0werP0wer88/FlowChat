@@ -1,11 +1,9 @@
 using AutoFixture;
 using FlowChat.Core.Domain;
-using FlowChat.Core.Messaging;
-using FlowChat.Core.Messaging.PresenceService.Events;
 using FlowChat.PresenceService.Application.Contracts.Infrastructure;
-using FlowChat.PresenceService.Application.Contracts.Persistence;
 using FlowChat.PresenceService.Application.Features.Presence;
 using FlowChat.PresenceService.Application.Features.Presence.Commands.DeletePresenceStatus;
+using FlowChat.PresenceService.Application.Features.Presence.Eventing.ApplicationEvents.PresenceStatusChanged;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
 using FluentAssertions;
@@ -17,9 +15,8 @@ namespace FlowChat.PresenceService.UnitTests;
 public sealed class DeletePresenceStatusCommandHandlerTests
 {
     private readonly IFixture _fixture = new Fixture();
-    private readonly Mock<IContactObserverProjectionReadRepository> _readRepositoryMock = new();
     private readonly Mock<IPresenceStatusStore> _presenceStatusStoreMock = new();
-    private readonly Mock<IOutboxIntegrationEventPublisher> _integrationEventPublisherMock = new();
+    private readonly Mock<IMediator> _mediatorMock = new();
     private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
     private readonly Mock<IDomainEventDispatcher> _domainEventDispatcherMock = new();
     private readonly DeletePresenceStatusCommandHandler _handler;
@@ -35,11 +32,13 @@ public sealed class DeletePresenceStatusCommandHandlerTests
         _domainEventDispatcherMock
             .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<IDomainEvent>>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
+        _mediatorMock
+            .Setup(x => x.Publish(It.IsAny<PresenceStatusChangedApplicationEvent>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
 
         _handler = new DeletePresenceStatusCommandHandler(
-            _readRepositoryMock.Object,
             _presenceStatusStoreMock.Object,
-            _integrationEventPublisherMock.Object,
+            _mediatorMock.Object,
             _unitOfWorkMock.Object,
             _domainEventDispatcherMock.Object);
     }
@@ -60,27 +59,23 @@ public sealed class DeletePresenceStatusCommandHandlerTests
         _presenceStatusStoreMock.Verify(
             x => x.DeleteAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()),
             Times.Never);
-        _integrationEventPublisherMock.Verify(
-            x => x.Publish(It.IsAny<IntegrationEventEnvelope<PresenceStatusChangedIntegrationEvent>>(), It.IsAny<CancellationToken>()),
+        _mediatorMock.Verify(
+            x => x.Publish(It.IsAny<PresenceStatusChangedApplicationEvent>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
     [Fact]
-    public async Task Handle_WhenPresenceExists_DeletesPresenceAndPublishesInvisibleEvent()
+    public async Task Handle_WhenPresenceExists_DeletesPresenceAndPublishesInvisibleApplicationEvent()
     {
         var userId = _fixture.Create<Guid>();
-        var observerUserId = _fixture.Create<Guid>();
-        IntegrationEventEnvelope<PresenceStatusChangedIntegrationEvent>? capturedEnvelope = null;
+        PresenceStatusChangedApplicationEvent? capturedNotification = null;
 
         _presenceStatusStoreMock
             .Setup(x => x.GetAsync(userId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new PresenceStatusSnapshot(userId, PresenceStatus.Busy, DateTimeOffset.UtcNow.AddMinutes(-10)));
-        _readRepositoryMock
-            .Setup(x => x.GetObserverUserIdsAsync(userId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync([observerUserId, Guid.Empty, observerUserId]);
-        _integrationEventPublisherMock
-            .Setup(x => x.Publish(It.IsAny<IntegrationEventEnvelope<PresenceStatusChangedIntegrationEvent>>(), It.IsAny<CancellationToken>()))
-            .Callback<IntegrationEventEnvelope<PresenceStatusChangedIntegrationEvent>, CancellationToken>((envelope, _) => capturedEnvelope = envelope)
+        _mediatorMock
+            .Setup(x => x.Publish(It.IsAny<PresenceStatusChangedApplicationEvent>(), It.IsAny<CancellationToken>()))
+            .Callback<PresenceStatusChangedApplicationEvent, CancellationToken>((notification, _) => capturedNotification = notification)
             .Returns(Task.CompletedTask);
 
         var result = await _handler.Handle(
@@ -91,11 +86,38 @@ public sealed class DeletePresenceStatusCommandHandlerTests
         _presenceStatusStoreMock.Verify(
             x => x.DeleteAsync(userId, It.IsAny<CancellationToken>()),
             Times.Once);
-        capturedEnvelope.Should().NotBeNull();
-        capturedEnvelope!.KafkaKey.Should().Be(userId.ToString("D"));
-        var capturedEvent = capturedEnvelope.Payload;
-        capturedEvent.UserId.Should().Be(userId);
-        capturedEvent.Status.Should().Be(PresenceStatus.Invisible);
-        capturedEvent.RecipientUserIds.Should().BeEquivalentTo([observerUserId]);
+        capturedNotification.Should().NotBeNull();
+        capturedNotification!.UserId.Should().Be(userId);
+        capturedNotification.Status.Should().Be(PresenceStatus.Invisible);
+    }
+
+    [Fact]
+    public async Task Handle_WhenApplicationEventPublishFails_RestoresPreviousStatusAndReturnsFailure()
+    {
+        var userId = _fixture.Create<Guid>();
+        var previousStatus = new PresenceStatusSnapshot(
+            userId,
+            PresenceStatus.Active,
+            DateTimeOffset.UtcNow.AddMinutes(-5));
+
+        _presenceStatusStoreMock
+            .Setup(x => x.GetAsync(userId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(previousStatus);
+        _mediatorMock
+            .Setup(x => x.Publish(It.IsAny<PresenceStatusChangedApplicationEvent>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("publish failed"));
+
+        var result = await _handler.Handle(
+            new DeletePresenceStatusCommand(userId),
+            CancellationToken.None);
+
+        result.IsFailure.Should().BeTrue();
+        result.Error.ErrorMessage.Should().Be("Failed to delete presence status.");
+        _presenceStatusStoreMock.Verify(
+            x => x.DeleteAsync(userId, It.IsAny<CancellationToken>()),
+            Times.Once);
+        _presenceStatusStoreMock.Verify(
+            x => x.SetAsync(userId, previousStatus.Status, previousStatus.ChangedAtUtc, It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 }
