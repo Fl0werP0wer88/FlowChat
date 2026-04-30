@@ -64,12 +64,10 @@ public static class OutboxPublisherServiceRegistration
                     .AddProducer(producer => producer
                         .Produce<UserProfileCreatedIntegrationEvent>("user-profile-created", endpoint => endpoint
                             .ProduceTo(createdProducerOptions.Topic)
-                            .SetKafkaKey(message => message?.UserProfileId)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())))
                     .AddProducer(producer => producer
                         .Produce<UserEmailConfirmedIntegrationEvent>("user-email-confirmed", endpoint => endpoint
                             .ProduceTo(emailConfirmedProducerOptions.Topic)
-                            .SetKafkaKey(message => message?.UserProfileId)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())))
                     .AddProducer(producer => producer
                         .Produce<EmailVerificationRequestIntegrationEvent>("email-verification-requested", endpoint => endpoint
@@ -78,7 +76,6 @@ public static class OutboxPublisherServiceRegistration
                     .AddProducer(producer => producer
                         .Produce<UserProfileChangedIntegrationEvent>("user-profile-state-changed", endpoint => endpoint
                             .ProduceTo(stateChangedProducerOptions.Topic)
-                            .SetKafkaKey(message => message?.UserProfileId)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())));
             });
 

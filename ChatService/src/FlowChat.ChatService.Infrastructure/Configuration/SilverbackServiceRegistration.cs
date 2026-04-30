@@ -37,7 +37,6 @@ public static class SilverbackServiceRegistration
                     .AddProducer(producer => producer
                         .Produce<ChatMessageSentIntegrationEvent>("chat-message-sent", endpoint => endpoint
                             .ProduceTo(producerOptions.Topic)
-                            .SetKafkaKey(message => message?.ConversationId)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())
                             .StoreToOutbox(outbox => outbox.UseEntityFramework<AppDbContext>())));
             });

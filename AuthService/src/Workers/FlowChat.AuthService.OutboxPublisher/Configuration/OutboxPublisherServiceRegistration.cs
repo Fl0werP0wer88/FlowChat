@@ -69,17 +69,14 @@ public static class OutboxPublisherServiceRegistration
                     .AddProducer(producer => producer
                         .Produce<AccountRegisteredIntegrationEvent>("auth-account-registered", endpoint => endpoint
                             .ProduceTo(accountRegisteredOptions.Topic)
-                            .SetKafkaKey(message => message?.UserId)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())))
                     .AddProducer(producer => producer
                         .Produce<AccountConfirmedIntegrationEvent>("auth-account-confirmed", endpoint => endpoint
                             .ProduceTo(accountConfirmedOptions.Topic)
-                            .SetKafkaKey(message => message?.UserId)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())))
                     .AddProducer(producer => producer
                         .Produce<PhoneNumberConfirmedIntegrationEvent>("auth-user-phone-confirmed", endpoint => endpoint
                             .ProduceTo(phoneNumberConfirmedOptions.Topic)
-                            .SetKafkaKey(message => message?.UserId)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())));
             });
 

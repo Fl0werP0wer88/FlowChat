@@ -41,13 +41,11 @@ public static class SilverbackServiceRegistration
                     .AddProducer(producer => producer
                         .Produce<UserProfileCreatedIntegrationEvent>("user-profile-created", endpoint => endpoint
                             .ProduceTo(createdProducerOptions.Topic)
-                            .SetKafkaKey(message => message?.UserProfileId)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())
                             .StoreToOutbox(outbox => outbox.UseEntityFramework<AppDbContext>())))
                     .AddProducer(producer => producer
                         .Produce<UserEmailConfirmedIntegrationEvent>("user-email-confirmed", endpoint => endpoint
                             .ProduceTo(emailConfirmedProducerOptions.Topic)
-                            .SetKafkaKey(message => message?.UserProfileId)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())
                             .StoreToOutbox(outbox => outbox.UseEntityFramework<AppDbContext>())))
                     .AddProducer(producer => producer
@@ -58,7 +56,6 @@ public static class SilverbackServiceRegistration
                     .AddProducer(producer => producer
                         .Produce<UserProfileChangedIntegrationEvent>("user-profile-state-changed", endpoint => endpoint
                             .ProduceTo(stateChangedProducerOptions.Topic)
-                            .SetKafkaKey(message => message?.UserProfileId)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())
                             .StoreToOutbox(outbox => outbox.UseEntityFramework<AppDbContext>())));
             });
