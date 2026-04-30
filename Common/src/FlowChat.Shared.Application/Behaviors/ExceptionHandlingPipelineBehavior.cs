@@ -97,6 +97,15 @@ public sealed class ExceptionHandlingPipelineBehavior<TRequest, TResponse>
             var domainError = DomainError.UnExpected("An unexpected error occurred.", isTransient);
             return TResponse.Failure(domainError);
         }
+        catch (OperationCanceledException exception)
+        {
+            Activity.Current?.SetStatus(ActivityStatusCode.Error, "request_canceled");
+            Activity.Current?.AddException(exception);
+            Activity.Current?.SetTag("error.type", "canceled");
+
+            var domainError = DomainError.BadRequest("The request was canceled.");
+            return TResponse.Failure(domainError);
+        }
         catch (Exception exception)
         {
             Activity.Current?.SetStatus(ActivityStatusCode.Error, "unexpected");

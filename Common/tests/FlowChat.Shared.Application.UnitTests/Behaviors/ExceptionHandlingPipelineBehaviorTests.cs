@@ -63,6 +63,28 @@ public sealed class ExceptionHandlingPipelineBehaviorTests
         activity.Events.Should().Contain(x => x.Name == "exception");
     }
 
+    [Fact]
+    public async Task Handle_WhenOperationCanceledExceptionIsThrown_ReturnsBadRequestFailure()
+    {
+        var behavior = new ExceptionHandlingPipelineBehavior<TestRequest, FlowChatResult<Guid>>();
+        var exception = new OperationCanceledException("The request timed out.");
+        using var activity = new Activity("test").Start();
+
+        var result = await behavior.Handle(
+            new TestRequest(),
+            _ => Task.FromException<FlowChatResult<Guid>>(exception),
+            CancellationToken.None);
+
+        result.IsFailure.Should().BeTrue();
+        result.Error.ErrorType.Should().Be(ErrorType.BadRequest);
+        result.Error.ErrorMessage.Should().Be("The request was canceled.");
+
+        activity.Status.Should().Be(ActivityStatusCode.Error);
+        activity.StatusDescription.Should().Be("request_canceled");
+        activity.GetTagItem("error.type").Should().Be("canceled");
+        activity.Events.Should().Contain(x => x.Name == "exception");
+    }
+
     private sealed record TestRequest : IRequest<FlowChatResult<Guid>>;
 
     private sealed class TestDbException(bool isTransient, string? sqlState = null) : DbException("Database exception")
