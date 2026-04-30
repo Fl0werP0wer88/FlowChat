@@ -10,4 +10,10 @@ public sealed class ContactAddedDomainEventHandler(
     IMapper mapper)
     : MappedDomainEventHandlerBase<ContactAddedDomainEvent, ContactAddedIntegrationEvent>(
         integrationEventPublisher,
-        mapper);
+        mapper)
+{
+    protected override string ResolveKafkaKey(
+        ContactAddedDomainEvent notification,
+        ContactAddedIntegrationEvent integrationEvent) =>
+        notification.AggregateId.ToString();
+}

@@ -28,7 +28,7 @@ public sealed class UserProfileCreatedDomainEventHandlerTests
             .CreateMapper();
 
         _publisherMock
-            .Setup(x => x.Publish(It.IsAny<UserProfileCreatedIntegrationEvent>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.Publish(It.IsAny<IntegrationEventEnvelope<UserProfileCreatedIntegrationEvent>>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         _issuerMock
@@ -58,17 +58,18 @@ public sealed class UserProfileCreatedDomainEventHandlerTests
             "Doe",
             "FlowChat");
 
-        UserProfileCreatedIntegrationEvent? capturedEvent = null;
+        IntegrationEventEnvelope<UserProfileCreatedIntegrationEvent>? capturedEnvelope = null;
         _publisherMock
-            .Setup(x => x.Publish(It.IsAny<UserProfileCreatedIntegrationEvent>(), It.IsAny<CancellationToken>()))
-            .Callback<UserProfileCreatedIntegrationEvent, CancellationToken>((evt, _) => capturedEvent = evt)
+            .Setup(x => x.Publish(It.IsAny<IntegrationEventEnvelope<UserProfileCreatedIntegrationEvent>>(), It.IsAny<CancellationToken>()))
+            .Callback<IntegrationEventEnvelope<UserProfileCreatedIntegrationEvent>, CancellationToken>((envelope, _) => capturedEnvelope = envelope)
             .Returns(Task.CompletedTask);
 
         await handler.Handle(domainEvent, CancellationToken.None);
 
-        capturedEvent.Should().NotBeNull();
-        capturedEvent!.UserProfileId.Should().Be(userProfileId.Value);
-        capturedEvent.Key.Should().Be(userProfileId.Value.ToString());
+        capturedEnvelope.Should().NotBeNull();
+        capturedEnvelope!.KafkaKey.Should().Be(userProfileId.Value.ToString());
+        var capturedEvent = capturedEnvelope.Payload;
+        capturedEvent.UserProfileId.Should().Be(userProfileId.Value);
         capturedEvent.FriendlyUserId.Should().Be("jdoe");
         capturedEvent.MainEmail.Address.Should().Be("john@example.com");
         capturedEvent.MainEmail.IsConfirmed.Should().BeFalse();
@@ -106,16 +107,17 @@ public sealed class UserProfileCreatedDomainEventHandlerTests
             true,
             null);
 
-        UserProfileCreatedIntegrationEvent? capturedEvent = null;
+        IntegrationEventEnvelope<UserProfileCreatedIntegrationEvent>? capturedEnvelope = null;
         _publisherMock
-            .Setup(x => x.Publish(It.IsAny<UserProfileCreatedIntegrationEvent>(), It.IsAny<CancellationToken>()))
-            .Callback<UserProfileCreatedIntegrationEvent, CancellationToken>((evt, _) => capturedEvent = evt)
+            .Setup(x => x.Publish(It.IsAny<IntegrationEventEnvelope<UserProfileCreatedIntegrationEvent>>(), It.IsAny<CancellationToken>()))
+            .Callback<IntegrationEventEnvelope<UserProfileCreatedIntegrationEvent>, CancellationToken>((envelope, _) => capturedEnvelope = envelope)
             .Returns(Task.CompletedTask);
 
         await handler.Handle(domainEvent, CancellationToken.None);
 
-        capturedEvent.Should().NotBeNull();
-        capturedEvent!.MainEmail.Should().NotBeNull();
+        capturedEnvelope.Should().NotBeNull();
+        var capturedEvent = capturedEnvelope!.Payload;
+        capturedEvent.MainEmail.Should().NotBeNull();
         capturedEvent.MainEmail.Address.Should().Be("john@example.com");
         capturedEvent!.MainPhone.Should().BeNull();
     }

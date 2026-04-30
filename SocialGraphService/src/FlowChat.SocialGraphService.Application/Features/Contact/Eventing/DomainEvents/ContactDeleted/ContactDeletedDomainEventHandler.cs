@@ -10,4 +10,10 @@ public sealed class ContactDeletedDomainEventHandler(
     IMapper mapper)
     : MappedDomainEventHandlerBase<ContactDeletedDomainEvent, ContactDeletedIntegrationEvent>(
         integrationEventPublisher,
-        mapper);
+        mapper)
+{
+    protected override string ResolveKafkaKey(
+        ContactDeletedDomainEvent notification,
+        ContactDeletedIntegrationEvent integrationEvent) =>
+        notification.AggregateId.ToString();
+}

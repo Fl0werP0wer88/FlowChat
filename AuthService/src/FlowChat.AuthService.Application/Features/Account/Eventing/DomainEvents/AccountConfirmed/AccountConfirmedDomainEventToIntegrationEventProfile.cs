@@ -9,7 +9,6 @@ public sealed class AccountConfirmedDomainEventToIntegrationEventProfile : Profi
     public AccountConfirmedDomainEventToIntegrationEventProfile()
     {
         CreateMap<AccountConfirmedDomainEvent, AccountConfirmedIntegrationEvent>()
-            .ForMember(destination => destination.Key, options => options.MapFrom(source => source.AccountId.Value.ToString()))
             .ForMember(destination => destination.UserId, options => options.MapFrom(source => source.AccountId.Value));
     }
 }

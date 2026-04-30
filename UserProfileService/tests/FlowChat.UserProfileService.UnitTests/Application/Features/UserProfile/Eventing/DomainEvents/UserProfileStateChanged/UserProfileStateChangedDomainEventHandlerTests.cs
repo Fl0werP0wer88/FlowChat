@@ -23,7 +23,7 @@ public sealed class UserProfileStateChangedDomainEventHandlerTests
             .CreateMapper();
 
         _publisherMock
-            .Setup(x => x.Publish(It.IsAny<UserProfileChangedIntegrationEvent>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.Publish(It.IsAny<IntegrationEventEnvelope<UserProfileChangedIntegrationEvent>>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
     }
 
@@ -73,17 +73,18 @@ public sealed class UserProfileStateChangedDomainEventHandlerTests
                 ]
             });
 
-        UserProfileChangedIntegrationEvent? capturedEvent = null;
+        IntegrationEventEnvelope<UserProfileChangedIntegrationEvent>? capturedEnvelope = null;
         _publisherMock
-            .Setup(x => x.Publish(It.IsAny<UserProfileChangedIntegrationEvent>(), It.IsAny<CancellationToken>()))
-            .Callback<UserProfileChangedIntegrationEvent, CancellationToken>((evt, _) => capturedEvent = evt)
+            .Setup(x => x.Publish(It.IsAny<IntegrationEventEnvelope<UserProfileChangedIntegrationEvent>>(), It.IsAny<CancellationToken>()))
+            .Callback<IntegrationEventEnvelope<UserProfileChangedIntegrationEvent>, CancellationToken>((envelope, _) => capturedEnvelope = envelope)
             .Returns(Task.CompletedTask);
 
         await handler.Handle(domainEvent, CancellationToken.None);
 
-        capturedEvent.Should().NotBeNull();
-        capturedEvent!.UserProfileId.Should().Be(userProfileId.Value);
-        capturedEvent.Key.Should().Be(userProfileId.Value.ToString());
+        capturedEnvelope.Should().NotBeNull();
+        capturedEnvelope!.KafkaKey.Should().Be(userProfileId.Value.ToString());
+        var capturedEvent = capturedEnvelope.Payload;
+        capturedEvent.UserProfileId.Should().Be(userProfileId.Value);
         capturedEvent.FriendlyUserId.Should().Be("jdoe");
         capturedEvent.MainEmail.Should().NotBeNull();
         capturedEvent.MainEmail!.Address.Should().Be("john@example.com");

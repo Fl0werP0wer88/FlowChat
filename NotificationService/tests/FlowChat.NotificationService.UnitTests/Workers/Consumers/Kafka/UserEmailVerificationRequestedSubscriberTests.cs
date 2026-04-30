@@ -29,6 +29,7 @@ public sealed class UserEmailVerificationRequestedSubscriberTests
     {
         ProcessUserEmailVerificationRequestedRequest? capturedRequest = null;
         var userId = _fixture.Create<Guid>();
+        var verificationRequestId = _fixture.Create<Guid>();
 
         _apiClientMock
             .Setup(x => x.ProcessUserEmailVerificationRequestedAsync(
@@ -40,7 +41,7 @@ public sealed class UserEmailVerificationRequestedSubscriberTests
         await _subscriber.HandleAsync(
             new EmailVerificationRequestIntegrationEvent
             {
-                Key = "request-123",
+                VerificationRequestId = verificationRequestId,
                 UserId = userId,
                 UserEmail = " john.doe@flowchat.local ",
                 ConfirmationLink = " https://localhost/confirm "
@@ -53,7 +54,7 @@ public sealed class UserEmailVerificationRequestedSubscriberTests
         capturedRequest.UserName.Should().Be("john.doe");
         capturedRequest.DisplayName.Should().Be("john.doe");
         capturedRequest.ConfirmationLink.Should().Be("https://localhost/confirm");
-        capturedRequest.SourceMessageKey.Should().Be("request-123");
+        capturedRequest.SourceMessageKey.Should().Be(verificationRequestId.ToString("D"));
     }
 
     [Fact]

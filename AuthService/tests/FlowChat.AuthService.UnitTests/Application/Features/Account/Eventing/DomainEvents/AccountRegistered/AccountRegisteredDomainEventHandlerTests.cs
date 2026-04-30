@@ -2,6 +2,7 @@ using AutoMapper;
 using FlowChat.AuthService.Application.Features.Account.Eventing.DomainEvents.AccountRegistered;
 using FlowChat.AuthService.Domain.Entities.Account;
 using FlowChat.AuthService.Domain.Entities.Account.Events;
+using FlowChat.Core.Messaging;
 using FlowChat.Core.Messaging.AuthService.Events;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
@@ -30,17 +31,19 @@ public sealed class AccountRegisteredDomainEventHandlerTests
             "Flower",
             "Power",
             "FlowChat");
-        AccountRegisteredIntegrationEvent? capturedEvent = null;
+        IntegrationEventEnvelope<AccountRegisteredIntegrationEvent>? capturedEnvelope = null;
 
         _publisherMock
-            .Setup(x => x.Publish(It.IsAny<AccountRegisteredIntegrationEvent>(), It.IsAny<CancellationToken>()))
-            .Callback<AccountRegisteredIntegrationEvent, CancellationToken>((integrationEvent, _) => capturedEvent = integrationEvent)
+            .Setup(x => x.Publish(It.IsAny<IntegrationEventEnvelope<AccountRegisteredIntegrationEvent>>(), It.IsAny<CancellationToken>()))
+            .Callback<IntegrationEventEnvelope<AccountRegisteredIntegrationEvent>, CancellationToken>((envelope, _) => capturedEnvelope = envelope)
             .Returns(Task.CompletedTask);
 
         await handler.Handle(domainEvent, CancellationToken.None);
 
-        capturedEvent.Should().NotBeNull();
-        capturedEvent!.FriendlyUserId.Should().Be("flower");
+        capturedEnvelope.Should().NotBeNull();
+        capturedEnvelope!.KafkaKey.Should().Be(domainEvent.AccountId.Value.ToString());
+        var capturedEvent = capturedEnvelope.Payload;
+        capturedEvent.FriendlyUserId.Should().Be("flower");
         capturedEvent.Email.Should().Be("flower@example.com");
         capturedEvent.FirstName.Should().Be("Flower");
         capturedEvent.LastName.Should().Be("Power");

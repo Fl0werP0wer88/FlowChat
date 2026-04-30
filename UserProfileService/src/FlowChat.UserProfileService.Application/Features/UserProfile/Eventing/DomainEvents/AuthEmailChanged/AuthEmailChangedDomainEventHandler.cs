@@ -14,4 +14,9 @@ public sealed class AuthEmailChangedDomainEventHandler
         : base(integrationEventPublisher, mapper)
     {
     }
+
+    protected override string ResolveKafkaKey(
+        AuthEmailChangedDomainEvent notification,
+        AuthEmailChangedIntegrationEvent integrationEvent) =>
+        notification.UserProfileId.Value.ToString();
 }

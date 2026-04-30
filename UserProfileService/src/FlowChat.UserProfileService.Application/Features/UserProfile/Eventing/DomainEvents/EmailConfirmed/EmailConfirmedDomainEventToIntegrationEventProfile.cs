@@ -9,7 +9,6 @@ public sealed class EmailConfirmedDomainEventToIntegrationEventProfile : Profile
     public EmailConfirmedDomainEventToIntegrationEventProfile()
     {
         CreateMap<EmailConfirmedDomainEvent, UserEmailConfirmedIntegrationEvent>()
-            .ForMember(destination => destination.Key, options => options.MapFrom(source => source.UserProfileId.Value.ToString()))
             .ForMember(destination => destination.UserProfileId, options => options.MapFrom(source => source.UserProfileId.Value))
             .ForMember(destination => destination.EmailId, options => options.MapFrom(source => source.EmailId.Value))
             .ForMember(destination => destination.Email, options => options.MapFrom(source => new FlowChat.Core.Messaging.UserProfileService.Events.Email

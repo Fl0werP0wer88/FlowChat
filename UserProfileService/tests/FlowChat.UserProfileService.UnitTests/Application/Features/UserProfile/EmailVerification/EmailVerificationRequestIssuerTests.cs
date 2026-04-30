@@ -28,7 +28,7 @@ public sealed class EmailVerificationRequestIssuerTests
             .Returns<string>(token => $"https://frontend.flowchat.local/email-verification?token={token}");
 
         _publisherMock
-            .Setup(x => x.Publish(It.IsAny<EmailVerificationRequestIntegrationEvent>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.Publish(It.IsAny<IntegrationEventEnvelope<EmailVerificationRequestIntegrationEvent>>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         _repositoryMock
@@ -72,10 +72,10 @@ public sealed class EmailVerificationRequestIssuerTests
             .Callback<EmailVerificationTokenPayload>(p => capturedPayload = p)
             .Returns("protected-token");
 
-        EmailVerificationRequestIntegrationEvent? capturedEvent = null;
+        IntegrationEventEnvelope<EmailVerificationRequestIntegrationEvent>? capturedEnvelope = null;
         _publisherMock
-            .Setup(x => x.Publish(It.IsAny<EmailVerificationRequestIntegrationEvent>(), It.IsAny<CancellationToken>()))
-            .Callback<EmailVerificationRequestIntegrationEvent, CancellationToken>((evt, _) => capturedEvent = evt)
+            .Setup(x => x.Publish(It.IsAny<IntegrationEventEnvelope<EmailVerificationRequestIntegrationEvent>>(), It.IsAny<CancellationToken>()))
+            .Callback<IntegrationEventEnvelope<EmailVerificationRequestIntegrationEvent>, CancellationToken>((envelope, _) => capturedEnvelope = envelope)
             .Returns(Task.CompletedTask);
 
         var sut = new EmailVerificationRequestIssuer(
@@ -95,8 +95,10 @@ public sealed class EmailVerificationRequestIssuerTests
         capturedPayload.EmailId.Should().Be(emailId);
         capturedPayload.Nonce.Should().Be(result.Nonce);
 
-        capturedEvent.Should().NotBeNull();
-        capturedEvent!.Key.Should().Be(result.Id.Value.ToString());
+        capturedEnvelope.Should().NotBeNull();
+        capturedEnvelope!.KafkaKey.Should().Be(result.Id.Value.ToString());
+        var capturedEvent = capturedEnvelope.Payload;
+        capturedEvent.VerificationRequestId.Should().Be(result.Id.Value);
         capturedEvent.UserId.Should().Be(userProfileId);
         capturedEvent.UserEmail.Should().Be("john@example.com");
         capturedEvent.ConfirmationLink.Should().Be("https://frontend.flowchat.local/email-verification?token=protected-token");

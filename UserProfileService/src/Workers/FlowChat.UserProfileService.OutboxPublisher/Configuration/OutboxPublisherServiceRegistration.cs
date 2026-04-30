@@ -74,7 +74,6 @@ public static class OutboxPublisherServiceRegistration
                     .AddProducer(producer => producer
                         .Produce<EmailVerificationRequestIntegrationEvent>("email-verification-requested", endpoint => endpoint
                             .ProduceTo(emailVerificationRequestedProducerOptions.Topic)
-                            .SetKafkaKey(message => message?.Key)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())))
                     .AddProducer(producer => producer
                         .Produce<UserProfileChangedIntegrationEvent>("user-profile-state-changed", endpoint => endpoint

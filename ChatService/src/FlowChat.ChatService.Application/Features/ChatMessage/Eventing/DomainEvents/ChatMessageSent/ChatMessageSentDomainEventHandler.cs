@@ -14,5 +14,10 @@ public sealed class ChatMessageSentDomainEventHandler
         : base(integrationEventPublisher, mapper)
     {
     }
+
+    protected override string ResolveKafkaKey(
+        ChatMessageSentDomainEvent notification,
+        ChatMessageSentIntegrationEvent integrationEvent) =>
+        notification.ConversationId.ToString();
 }
 

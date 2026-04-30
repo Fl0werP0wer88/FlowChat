@@ -27,7 +27,7 @@ public sealed class AuthEmailChangedDomainEventHandlerTests
             .CreateMapper();
 
         _publisherMock
-            .Setup(x => x.Publish(It.IsAny<AuthEmailChangedIntegrationEvent>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.Publish(It.IsAny<IntegrationEventEnvelope<AuthEmailChangedIntegrationEvent>>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
     }
 
@@ -37,28 +37,28 @@ public sealed class AuthEmailChangedDomainEventHandlerTests
         var handler = new AuthEmailChangedDomainEventHandler(_publisherMock.Object, _mapper);
         var userProfileId = Id<UserProfile>.New();
         var emailId = Id<DomainEmail>.New();
-        AuthEmailChangedIntegrationEvent? capturedEvent = null;
+        IntegrationEventEnvelope<AuthEmailChangedIntegrationEvent>? capturedEnvelope = null;
         var domainEvent = new AuthEmailChangedDomainEvent(
             userProfileId,
             emailId,
             EmailAddress.Create("john@example.com"));
 
         _publisherMock
-            .Setup(x => x.Publish(It.IsAny<AuthEmailChangedIntegrationEvent>(), It.IsAny<CancellationToken>()))
-            .Callback<AuthEmailChangedIntegrationEvent, CancellationToken>((evt, _) => capturedEvent = evt)
+            .Setup(x => x.Publish(It.IsAny<IntegrationEventEnvelope<AuthEmailChangedIntegrationEvent>>(), It.IsAny<CancellationToken>()))
+            .Callback<IntegrationEventEnvelope<AuthEmailChangedIntegrationEvent>, CancellationToken>((envelope, _) => capturedEnvelope = envelope)
             .Returns(Task.CompletedTask);
 
         await handler.Handle(domainEvent, CancellationToken.None);
 
         _publisherMock.Verify(x => x.Publish(
-            It.IsAny<AuthEmailChangedIntegrationEvent>(),
+            It.IsAny<IntegrationEventEnvelope<AuthEmailChangedIntegrationEvent>>(),
             It.IsAny<CancellationToken>()), Times.Once);
 
-        capturedEvent.Should().NotBeNull();
-        var integrationEvent = capturedEvent!;
+        capturedEnvelope.Should().NotBeNull();
+        var integrationEvent = capturedEnvelope!.Payload;
         integrationEvent.UserProfileId.Should().Be(userProfileId.Value);
         integrationEvent.EmailId.Should().Be(emailId.Value);
         integrationEvent.EmailAddress.Should().Be("john@example.com");
-        integrationEvent.Key.Should().Be(userProfileId.Value.ToString());
+        capturedEnvelope.KafkaKey.Should().Be(userProfileId.Value.ToString());
     }
 }

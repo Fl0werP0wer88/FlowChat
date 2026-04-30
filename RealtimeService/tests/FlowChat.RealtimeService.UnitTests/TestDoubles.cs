@@ -228,7 +228,7 @@ internal sealed class RecordingIntegrationEventPublisher : IDirectEventPublisher
     public IReadOnlyList<IntegrationEvent> Published => _published.AsReadOnly();
     public Exception? PublishException { get; set; }
 
-    public Task Publish<TEvent>(TEvent message, CancellationToken cancellationToken)
+    public Task Publish<TEvent>(IntegrationEventEnvelope<TEvent> message, CancellationToken cancellationToken)
         where TEvent : IntegrationEvent
     {
         if (PublishException is not null)
@@ -236,7 +236,7 @@ internal sealed class RecordingIntegrationEventPublisher : IDirectEventPublisher
             throw PublishException;
         }
 
-        _published.Add(message);
+        _published.Add(message.Payload);
         return Task.CompletedTask;
     }
 }

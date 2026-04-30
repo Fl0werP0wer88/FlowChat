@@ -55,12 +55,10 @@ public static class OutboxPublisherServiceRegistration
                     .AddProducer(producer => producer
                         .Produce<ContactAddedIntegrationEvent>("social-graph-contact-added", endpoint => endpoint
                             .ProduceTo(contactAddedOptions.Topic)
-                            .SetKafkaKey(message => message?.Key)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())))
                     .AddProducer(producer => producer
                         .Produce<ContactDeletedIntegrationEvent>("social-graph-contact-deleted", endpoint => endpoint
                             .ProduceTo(contactDeletedOptions.Topic)
-                            .SetKafkaKey(message => message?.Key)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())));
             });
 

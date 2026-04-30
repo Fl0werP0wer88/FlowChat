@@ -30,12 +30,10 @@ public static class SilverbackServiceRegistration
                 .AddProducer(producer => producer
                     .Produce<RealtimeConnectionRegisteredIntegrationEvent>("realtime-connection-registered", endpoint => endpoint
                         .ProduceTo(registeredProducerOptions.Topic)
-                        .SetKafkaKey(message => message?.Key)
                         .SerializeAsJson(serializer => serializer.SetTypeHeader())))
                 .AddProducer(producer => producer
                     .Produce<RealtimeConnectionUnregisteredIntegrationEvent>("realtime-connection-unregistered", endpoint => endpoint
                         .ProduceTo(unregisteredProducerOptions.Topic)
-                        .SetKafkaKey(message => message?.Key)
                         .SerializeAsJson(serializer => serializer.SetTypeHeader()))));
 
         return services;

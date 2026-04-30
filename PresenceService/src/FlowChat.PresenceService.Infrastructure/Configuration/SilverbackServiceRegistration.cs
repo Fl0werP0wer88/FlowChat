@@ -32,7 +32,6 @@ public static class SilverbackServiceRegistration
                 .AddProducer(producer => producer
                     .Produce<PresenceStatusChangedIntegrationEvent>("presence-status-changed", endpoint => endpoint
                         .ProduceTo(producerOptions.Topic)
-                        .SetKafkaKey(message => message?.Key)
                         .SerializeAsJson(serializer => serializer.SetTypeHeader())
                         .StoreToOutbox(outbox => outbox.UseEntityFramework<AppDbContext>()))));
 

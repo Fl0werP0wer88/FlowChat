@@ -9,10 +9,10 @@ public sealed class RecordingIntegrationEventPublisher : IOutboxIntegrationEvent
 
     public IReadOnlyList<IntegrationEvent> Published => _published.AsReadOnly();
 
-    public Task Publish<TEvent>(TEvent message, CancellationToken cancellationToken)
+    public Task Publish<TEvent>(IntegrationEventEnvelope<TEvent> message, CancellationToken cancellationToken)
         where TEvent : IntegrationEvent
     {
-        _published.Add(message);
+        _published.Add(message.Payload);
         return Task.CompletedTask;
     }
 

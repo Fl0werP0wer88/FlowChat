@@ -11,7 +11,6 @@ public sealed class UserProfileStateChangedDomainEventToIntegrationEventProfile 
     public UserProfileStateChangedDomainEventToIntegrationEventProfile()
     {
         CreateMap<AggregateStateChangedDomainEvent<DomainUserProfile, UserProfileState>, UserProfileChangedIntegrationEvent>()
-            .ForMember(destination => destination.Key, options => options.MapFrom(source => source.AggregateId.ToString()))
             .ForMember(destination => destination.UserProfileId, options => options.MapFrom(source => source.AggregateState.Id))
             .ForMember(destination => destination.FriendlyUserId, options => options.MapFrom(source => source.AggregateState.FriendlyUserId))
             .ForMember(destination => destination.FirstName, options => options.MapFrom(source => source.AggregateState.FirstName))

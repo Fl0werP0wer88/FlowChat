@@ -18,5 +18,10 @@ public sealed class UserProfileStateChangedDomainEventHandler
         : base(integrationEventPublisher, mapper)
     {
     }
+
+    protected override string ResolveKafkaKey(
+        AggregateStateChangedDomainEvent<DomainUserProfile, UserProfileState> notification,
+        UserProfileChangedIntegrationEvent integrationEvent) =>
+        notification.AggregateId.ToString();
 }
 

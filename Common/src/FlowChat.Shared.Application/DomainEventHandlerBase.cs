@@ -17,13 +17,20 @@ public abstract class DomainEventHandlerBase<TDomainEvent, TIntegrationEvent> : 
 
     public async Task Handle(TDomainEvent notification, CancellationToken cancellationToken)
     {
+        var integrationEvent = MapToIntegrationEvent(notification);
+        var envelope = new IntegrationEventEnvelope<TIntegrationEvent>(
+            integrationEvent,
+            ResolveKafkaKey(notification, integrationEvent));
+
         await _integrationEventPublisher.Publish(
-            MapToIntegrationEvent(notification),
+            envelope,
             cancellationToken);
         await ExecuteAsync(notification, cancellationToken);
     }
 
     protected abstract TIntegrationEvent MapToIntegrationEvent(TDomainEvent notification);
+
+    protected abstract string ResolveKafkaKey(TDomainEvent notification, TIntegrationEvent integrationEvent);
 
     protected abstract Task ExecuteAsync(TDomainEvent notification, CancellationToken cancellationToken);
 }

@@ -27,19 +27,12 @@ public sealed class FlowChatSilverbackEventPublisher : IOutboxIntegrationEventPu
         _settingsProvider = settingsProvider ?? throw new ArgumentNullException(nameof(settingsProvider));
     }
 
-    public Task Publish<TEvent>(TEvent message, CancellationToken cancellationToken)
+    public Task Publish<TEvent>(IntegrationEventEnvelope<TEvent> message, CancellationToken cancellationToken)
             where TEvent : IntegrationEvent
     {
         ArgumentNullException.ThrowIfNull(message);
         cancellationToken.ThrowIfCancellationRequested();
-
-        if (string.IsNullOrWhiteSpace(message.Key))
-        {
-            throw new InvalidOperationException(
-                $"Integration event '{typeof(TEvent).FullName}' does not contain a Kafka key.");
-        }
-
-        return PublishAsync(new IntegrationEventEnvelope<TEvent>(message, message.Key), cancellationToken);
+        return PublishAsync(message, cancellationToken);
     }
 
     private async Task PublishAsync<TEvent>(IntegrationEventEnvelope<TEvent> message, CancellationToken cancellationToken)

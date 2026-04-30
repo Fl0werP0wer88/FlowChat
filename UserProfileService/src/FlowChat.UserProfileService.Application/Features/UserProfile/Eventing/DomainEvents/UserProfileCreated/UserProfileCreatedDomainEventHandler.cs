@@ -16,6 +16,11 @@ public sealed class UserProfileCreatedDomainEventHandler(
 {
     private readonly IEmailVerificationRequestIssuer _emailVerificationRequestIssuer = emailVerificationRequestIssuer;
 
+    protected override string ResolveKafkaKey(
+        UserProfileCreatedDomainEvent notification,
+        UserProfileCreatedIntegrationEvent integrationEvent) =>
+        notification.UserProfileId.Value.ToString();
+
     protected override Task ExecuteAsync(
         UserProfileCreatedDomainEvent notification,
         CancellationToken cancellationToken)

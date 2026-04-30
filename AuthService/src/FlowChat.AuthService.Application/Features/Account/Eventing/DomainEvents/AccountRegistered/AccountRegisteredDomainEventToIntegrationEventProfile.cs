@@ -9,7 +9,6 @@ public sealed class AccountRegisteredDomainEventToIntegrationEventProfile : Prof
     public AccountRegisteredDomainEventToIntegrationEventProfile()
     {
         CreateMap<AccountRegisteredDomainEvent, AccountRegisteredIntegrationEvent>()
-            .ForMember(destination => destination.Key, options => options.MapFrom(source => source.AccountId.Value.ToString()))
             .ForMember(destination => destination.UserId, options => options.MapFrom(source => source.AccountId.Value))
             .ForMember(destination => destination.Email, options => options.MapFrom(source => source.Email.Value))
             .ForMember(destination => destination.FriendlyUserId, options => options.MapFrom(source => source.FriendlyUserId))

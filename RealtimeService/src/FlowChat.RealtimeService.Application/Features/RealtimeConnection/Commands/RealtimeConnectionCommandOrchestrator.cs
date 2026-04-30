@@ -1,4 +1,5 @@
 using CSharpFunctionalExtensions;
+using FlowChat.Core.Messaging;
 using FlowChat.Core.Messaging.RealtimeService.Events;
 using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
 using FlowChat.Shared.Application;
@@ -34,14 +35,15 @@ internal sealed class RealtimeConnectionCommandOrchestrator(
             var mutation = await _realtimeConnectionRegistry.RegisterAsync(userId, connectionId, cancellationToken);
 
             await _integrationEventPublisher.Publish(
-                new RealtimeConnectionRegisteredIntegrationEvent
-                {
-                    Key = mutation.UserId.ToString("D"),
-                    UserId = mutation.UserId,
-                    ConnectionId = mutation.ConnectionId,
-                    ActiveConnectionCount = mutation.ActiveConnectionCount,
-                    OccurredAtUtc = mutation.OccurredAtUtc
-                },
+                new IntegrationEventEnvelope<RealtimeConnectionRegisteredIntegrationEvent>(
+                    new RealtimeConnectionRegisteredIntegrationEvent
+                    {
+                        UserId = mutation.UserId,
+                        ConnectionId = mutation.ConnectionId,
+                        ActiveConnectionCount = mutation.ActiveConnectionCount,
+                        OccurredAtUtc = mutation.OccurredAtUtc
+                    },
+                    mutation.UserId.ToString("D")),
                 cancellationToken);
 
             return FlowChatResult<Unit>.Success(Unit.Value);
@@ -76,14 +78,15 @@ internal sealed class RealtimeConnectionCommandOrchestrator(
         try
         {
             await _integrationEventPublisher.Publish(
-                new RealtimeConnectionUnregisteredIntegrationEvent
-                {
-                    Key = mutation.UserId.ToString("D"),
-                    UserId = mutation.UserId,
-                    ConnectionId = mutation.ConnectionId,
-                    ActiveConnectionCount = mutation.ActiveConnectionCount,
-                    OccurredAtUtc = mutation.OccurredAtUtc
-                },
+                new IntegrationEventEnvelope<RealtimeConnectionUnregisteredIntegrationEvent>(
+                    new RealtimeConnectionUnregisteredIntegrationEvent
+                    {
+                        UserId = mutation.UserId,
+                        ConnectionId = mutation.ConnectionId,
+                        ActiveConnectionCount = mutation.ActiveConnectionCount,
+                        OccurredAtUtc = mutation.OccurredAtUtc
+                    },
+                    mutation.UserId.ToString("D")),
                 cancellationToken);
         }
         catch (Exception exception)

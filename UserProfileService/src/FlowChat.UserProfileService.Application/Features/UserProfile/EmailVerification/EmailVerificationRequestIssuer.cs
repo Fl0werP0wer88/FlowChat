@@ -1,3 +1,4 @@
+using FlowChat.Core.Messaging;
 using FlowChat.Core.Messaging.AuthService.Events;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
@@ -52,13 +53,15 @@ public sealed class EmailVerificationRequestIssuer(
         var confirmationLink = _emailVerificationLinkBuilder.BuildEmailVerificationLink(token);
 
         await _integrationEventPublisher.Publish(
-            new EmailVerificationRequestIntegrationEvent
-            {
-                Key = verificationRequest.Id.Value.ToString(),
-                UserId = userProfileId,
-                UserEmail = emailAddress,
-                ConfirmationLink = confirmationLink
-            },
+            new IntegrationEventEnvelope<EmailVerificationRequestIntegrationEvent>(
+                new EmailVerificationRequestIntegrationEvent
+                {
+                    VerificationRequestId = verificationRequest.Id.Value,
+                    UserId = userProfileId,
+                    UserEmail = emailAddress,
+                    ConfirmationLink = confirmationLink
+                },
+                verificationRequest.Id.Value.ToString()),
             cancellationToken);
 
         return verificationRequest;

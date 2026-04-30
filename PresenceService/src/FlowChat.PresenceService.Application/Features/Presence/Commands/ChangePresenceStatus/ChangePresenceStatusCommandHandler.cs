@@ -1,4 +1,5 @@
 using FlowChat.Core.Domain;
+using FlowChat.Core.Messaging;
 using FlowChat.Core.Messaging.PresenceService.Events;
 using FlowChat.Core.Results;
 using FlowChat.PresenceService.Application.Contracts.Infrastructure;
@@ -37,7 +38,6 @@ public sealed class ChangePresenceStatusCommandHandler(
         var changedAtUtc = DateTimeOffset.UtcNow;
         var integrationEvent = new PresenceStatusChangedIntegrationEvent
         {
-            Key = request.UserId.ToString("D"),
             UserId = request.UserId,
             Status = request.Status,
             ChangedAtUtc = changedAtUtc,
@@ -83,7 +83,11 @@ public sealed class ChangePresenceStatusCommandHandler(
             integrationEvent.Status,
             integrationEvent.ChangedAtUtc,
             cancellationToken);
-        await integrationEventPublisher.Publish(integrationEvent, cancellationToken);
+        await integrationEventPublisher.Publish(
+            new IntegrationEventEnvelope<PresenceStatusChangedIntegrationEvent>(
+                integrationEvent,
+                request.UserId.ToString("D")),
+            cancellationToken);
 
         return FlowChatResult<Unit>.Success(Unit.Value);
     }

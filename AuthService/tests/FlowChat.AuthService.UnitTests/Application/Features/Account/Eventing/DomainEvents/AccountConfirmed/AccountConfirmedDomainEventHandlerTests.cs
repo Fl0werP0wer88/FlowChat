@@ -2,6 +2,7 @@ using AutoMapper;
 using FlowChat.AuthService.Application.Features.Account.Eventing.DomainEvents.AccountConfirmed;
 using FlowChat.AuthService.Domain.Entities.Account;
 using FlowChat.AuthService.Domain.Entities.Account.Events;
+using FlowChat.Core.Messaging;
 using FlowChat.Core.Messaging.AuthService.Events;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
@@ -23,16 +24,17 @@ public sealed class AccountConfirmedDomainEventHandlerTests
     {
         var handler = new AccountConfirmedDomainEventHandler(_publisherMock.Object, _mapper);
         var domainEvent = new AccountConfirmedDomainEvent(Id<Account>.New());
-        AccountConfirmedIntegrationEvent? capturedEvent = null;
+        IntegrationEventEnvelope<AccountConfirmedIntegrationEvent>? capturedEnvelope = null;
 
         _publisherMock
-            .Setup(x => x.Publish(It.IsAny<AccountConfirmedIntegrationEvent>(), It.IsAny<CancellationToken>()))
-            .Callback<AccountConfirmedIntegrationEvent, CancellationToken>((integrationEvent, _) => capturedEvent = integrationEvent)
+            .Setup(x => x.Publish(It.IsAny<IntegrationEventEnvelope<AccountConfirmedIntegrationEvent>>(), It.IsAny<CancellationToken>()))
+            .Callback<IntegrationEventEnvelope<AccountConfirmedIntegrationEvent>, CancellationToken>((envelope, _) => capturedEnvelope = envelope)
             .Returns(Task.CompletedTask);
 
         await handler.Handle(domainEvent, CancellationToken.None);
 
-        capturedEvent.Should().NotBeNull();
-        capturedEvent!.UserId.Should().Be(domainEvent.AccountId.Value);
+        capturedEnvelope.Should().NotBeNull();
+        capturedEnvelope!.KafkaKey.Should().Be(domainEvent.AccountId.Value.ToString());
+        capturedEnvelope.Payload.UserId.Should().Be(domainEvent.AccountId.Value);
     }
 }

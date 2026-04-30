@@ -14,5 +14,10 @@ public sealed class AccountConfirmedDomainEventHandler
         : base(integrationEventPublisher, mapper)
     {
     }
+
+    protected override string ResolveKafkaKey(
+        AccountConfirmedDomainEvent notification,
+        AccountConfirmedIntegrationEvent integrationEvent) =>
+        notification.AccountId.Value.ToString();
 }
 

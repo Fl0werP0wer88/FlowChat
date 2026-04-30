@@ -9,7 +9,6 @@ public sealed class ChatMessageSentDomainEventToIntegrationEventProfile : Profil
     public ChatMessageSentDomainEventToIntegrationEventProfile()
     {
         CreateMap<ChatMessageSentDomainEvent, ChatMessageSentIntegrationEvent>()
-            .ForMember(destination => destination.Key, options => options.MapFrom(source => source.ConversationId.ToString()))
             .ForMember(destination => destination.SentAtUtc, options => options.MapFrom(source => source.SentAtUtc.Value))
             .ForMember(destination => destination.RecipientUserIds, options => options.MapFrom(source => source.RecipientUserIds.ToList()));
     }

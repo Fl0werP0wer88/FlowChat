@@ -1,5 +1,6 @@
 using AutoFixture;
 using FlowChat.Core.Domain;
+using FlowChat.Core.Messaging;
 using FlowChat.Core.Messaging.PresenceService.Events;
 using FlowChat.PresenceService.Application.Contracts.Infrastructure;
 using FlowChat.PresenceService.Application.Contracts.Persistence;
@@ -62,7 +63,7 @@ public sealed class InitializePresenceStatusCommandHandlerTests
             x => x.SetAsync(It.IsAny<Guid>(), It.IsAny<PresenceStatus>(), It.IsAny<DateTimeOffset>(), It.IsAny<CancellationToken>()),
             Times.Never);
         _integrationEventPublisherMock.Verify(
-            x => x.Publish(It.IsAny<PresenceStatusChangedIntegrationEvent>(), It.IsAny<CancellationToken>()),
+            x => x.Publish(It.IsAny<IntegrationEventEnvelope<PresenceStatusChangedIntegrationEvent>>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
@@ -71,7 +72,7 @@ public sealed class InitializePresenceStatusCommandHandlerTests
     {
         var userId = _fixture.Create<Guid>();
         var observerUserId = _fixture.Create<Guid>();
-        PresenceStatusChangedIntegrationEvent? capturedEvent = null;
+        IntegrationEventEnvelope<PresenceStatusChangedIntegrationEvent>? capturedEnvelope = null;
 
         _presenceStatusStoreMock
             .Setup(x => x.GetAsync(userId, It.IsAny<CancellationToken>()))
@@ -80,8 +81,8 @@ public sealed class InitializePresenceStatusCommandHandlerTests
             .Setup(x => x.GetObserverUserIdsAsync(userId, It.IsAny<CancellationToken>()))
             .ReturnsAsync([observerUserId, Guid.Empty, observerUserId]);
         _integrationEventPublisherMock
-            .Setup(x => x.Publish(It.IsAny<PresenceStatusChangedIntegrationEvent>(), It.IsAny<CancellationToken>()))
-            .Callback<PresenceStatusChangedIntegrationEvent, CancellationToken>((integrationEvent, _) => capturedEvent = integrationEvent)
+            .Setup(x => x.Publish(It.IsAny<IntegrationEventEnvelope<PresenceStatusChangedIntegrationEvent>>(), It.IsAny<CancellationToken>()))
+            .Callback<IntegrationEventEnvelope<PresenceStatusChangedIntegrationEvent>, CancellationToken>((envelope, _) => capturedEnvelope = envelope)
             .Returns(Task.CompletedTask);
 
         var result = await _handler.Handle(
@@ -89,8 +90,10 @@ public sealed class InitializePresenceStatusCommandHandlerTests
             CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
-        capturedEvent.Should().NotBeNull();
-        capturedEvent!.UserId.Should().Be(userId);
+        capturedEnvelope.Should().NotBeNull();
+        capturedEnvelope!.KafkaKey.Should().Be(userId.ToString("D"));
+        var capturedEvent = capturedEnvelope.Payload;
+        capturedEvent.UserId.Should().Be(userId);
         capturedEvent.Status.Should().Be(PresenceStatus.Active);
         capturedEvent.RecipientUserIds.Should().BeEquivalentTo([observerUserId]);
         _presenceStatusStoreMock.Verify(
@@ -110,7 +113,7 @@ public sealed class InitializePresenceStatusCommandHandlerTests
             .Setup(x => x.GetObserverUserIdsAsync(userId, It.IsAny<CancellationToken>()))
             .ReturnsAsync([]);
         _integrationEventPublisherMock
-            .Setup(x => x.Publish(It.IsAny<PresenceStatusChangedIntegrationEvent>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.Publish(It.IsAny<IntegrationEventEnvelope<PresenceStatusChangedIntegrationEvent>>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("outbox failure"));
 
         var result = await _handler.Handle(
@@ -133,7 +136,7 @@ public sealed class InitializePresenceStatusCommandHandlerTests
     public async Task Handle_WhenPreferenceExists_RestoresPreferredStatus(PresenceStatus preferredStatus)
     {
         var userId = _fixture.Create<Guid>();
-        PresenceStatusChangedIntegrationEvent? capturedEvent = null;
+        IntegrationEventEnvelope<PresenceStatusChangedIntegrationEvent>? capturedEnvelope = null;
 
         _presenceStatusStoreMock
             .Setup(x => x.GetAsync(userId, It.IsAny<CancellationToken>()))
@@ -145,8 +148,8 @@ public sealed class InitializePresenceStatusCommandHandlerTests
             .Setup(x => x.GetObserverUserIdsAsync(userId, It.IsAny<CancellationToken>()))
             .ReturnsAsync([]);
         _integrationEventPublisherMock
-            .Setup(x => x.Publish(It.IsAny<PresenceStatusChangedIntegrationEvent>(), It.IsAny<CancellationToken>()))
-            .Callback<PresenceStatusChangedIntegrationEvent, CancellationToken>((integrationEvent, _) => capturedEvent = integrationEvent)
+            .Setup(x => x.Publish(It.IsAny<IntegrationEventEnvelope<PresenceStatusChangedIntegrationEvent>>(), It.IsAny<CancellationToken>()))
+            .Callback<IntegrationEventEnvelope<PresenceStatusChangedIntegrationEvent>, CancellationToken>((envelope, _) => capturedEnvelope = envelope)
             .Returns(Task.CompletedTask);
 
         var result = await _handler.Handle(
@@ -154,8 +157,10 @@ public sealed class InitializePresenceStatusCommandHandlerTests
             CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
-        capturedEvent.Should().NotBeNull();
-        capturedEvent!.Status.Should().Be(preferredStatus);
+        capturedEnvelope.Should().NotBeNull();
+        capturedEnvelope!.KafkaKey.Should().Be(userId.ToString("D"));
+        var capturedEvent = capturedEnvelope.Payload;
+        capturedEvent.Status.Should().Be(preferredStatus);
         _presenceStatusStoreMock.Verify(
             x => x.SetAsync(userId, preferredStatus, capturedEvent.ChangedAtUtc, It.IsAny<CancellationToken>()),
             Times.Once);
@@ -165,7 +170,7 @@ public sealed class InitializePresenceStatusCommandHandlerTests
     public async Task Handle_WhenNoPreference_UsesActiveStatus()
     {
         var userId = _fixture.Create<Guid>();
-        PresenceStatusChangedIntegrationEvent? capturedEvent = null;
+        IntegrationEventEnvelope<PresenceStatusChangedIntegrationEvent>? capturedEnvelope = null;
 
         _presenceStatusStoreMock
             .Setup(x => x.GetAsync(userId, It.IsAny<CancellationToken>()))
@@ -177,8 +182,8 @@ public sealed class InitializePresenceStatusCommandHandlerTests
             .Setup(x => x.GetObserverUserIdsAsync(userId, It.IsAny<CancellationToken>()))
             .ReturnsAsync([]);
         _integrationEventPublisherMock
-            .Setup(x => x.Publish(It.IsAny<PresenceStatusChangedIntegrationEvent>(), It.IsAny<CancellationToken>()))
-            .Callback<PresenceStatusChangedIntegrationEvent, CancellationToken>((integrationEvent, _) => capturedEvent = integrationEvent)
+            .Setup(x => x.Publish(It.IsAny<IntegrationEventEnvelope<PresenceStatusChangedIntegrationEvent>>(), It.IsAny<CancellationToken>()))
+            .Callback<IntegrationEventEnvelope<PresenceStatusChangedIntegrationEvent>, CancellationToken>((envelope, _) => capturedEnvelope = envelope)
             .Returns(Task.CompletedTask);
 
         var result = await _handler.Handle(
@@ -186,7 +191,10 @@ public sealed class InitializePresenceStatusCommandHandlerTests
             CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
-        capturedEvent!.Status.Should().Be(PresenceStatus.Active);
+        capturedEnvelope.Should().NotBeNull();
+        capturedEnvelope!.KafkaKey.Should().Be(userId.ToString("D"));
+        var capturedEvent = capturedEnvelope.Payload;
+        capturedEvent.Status.Should().Be(PresenceStatus.Active);
         _presenceStatusStoreMock.Verify(
             x => x.SetAsync(userId, PresenceStatus.Active, capturedEvent.ChangedAtUtc, It.IsAny<CancellationToken>()),
             Times.Once);

@@ -9,7 +9,6 @@ public sealed class ContactAddedDomainEventToIntegrationEventProfile : Profile
     public ContactAddedDomainEventToIntegrationEventProfile()
     {
         CreateMap<ContactAddedDomainEvent, ContactAddedIntegrationEvent>()
-            .ForMember(destination => destination.Key, options => options.MapFrom(source => source.AggregateId.ToString()))
             .ForMember(destination => destination.OwnerUserId, options => options.MapFrom(source => source.OwnerUserId))
             .ForMember(destination => destination.ContactUserId, options => options.MapFrom(source => source.ContactUserId));
     }

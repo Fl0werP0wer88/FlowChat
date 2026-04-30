@@ -38,7 +38,6 @@ public sealed class ContactAddedSubscriberTests
         await _subscriber.HandleAsync(
             new ContactAddedIntegrationEvent
             {
-                Key = _fixture.Create<string>(),
                 OwnerUserId = ownerUserId,
                 ContactUserId = contactUserId
             },
@@ -78,7 +77,6 @@ public sealed class ContactDeletedSubscriberTests
         await _subscriber.HandleAsync(
             new ContactDeletedIntegrationEvent
             {
-                Key = _fixture.Create<string>(),
                 OwnerUserId = ownerUserId,
                 ContactUserId = contactUserId
             },

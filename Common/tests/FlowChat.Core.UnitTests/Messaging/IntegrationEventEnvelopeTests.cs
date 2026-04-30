@@ -12,9 +12,9 @@ public sealed class IntegrationEventEnvelopeTests
     [Fact]
     public void Constructor_PopulatesOnlyExpectedBusinessHeaders()
     {
+        var kafkaKey = _fixture.Create<Guid>().ToString("D");
         var payload = new UserProfileCreatedIntegrationEvent
         {
-            Key = _fixture.Create<Guid>().ToString("D"),
             UserProfileId = _fixture.Create<Guid>(),
             FriendlyUserId = "jdoe",
             MainEmail = new UserProfileEmail
@@ -25,7 +25,7 @@ public sealed class IntegrationEventEnvelopeTests
             }
         };
 
-        var envelope = new IntegrationEventEnvelope<UserProfileCreatedIntegrationEvent>(payload, payload.Key!);
+        var envelope = new IntegrationEventEnvelope<UserProfileCreatedIntegrationEvent>(payload, kafkaKey);
 
         envelope.Headers.Should().HaveCount(5);
         envelope.Headers.OrderBy(static header => header.Key).Should().SatisfyRespectively(

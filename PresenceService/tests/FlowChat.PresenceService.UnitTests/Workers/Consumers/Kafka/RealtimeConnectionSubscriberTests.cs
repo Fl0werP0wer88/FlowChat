@@ -38,7 +38,6 @@ public sealed class RealtimeConnectionRegisteredSubscriberTests
         await _subscriber.HandleAsync(
             new RealtimeConnectionRegisteredIntegrationEvent
             {
-                Key = userId.ToString("D"),
                 UserId = userId,
                 ConnectionId = "connection-1",
                 ActiveConnectionCount = 1,
@@ -56,7 +55,6 @@ public sealed class RealtimeConnectionRegisteredSubscriberTests
         await _subscriber.HandleAsync(
             new RealtimeConnectionRegisteredIntegrationEvent
             {
-                Key = _fixture.Create<Guid>().ToString("D"),
                 UserId = _fixture.Create<Guid>(),
                 ConnectionId = "connection-2",
                 ActiveConnectionCount = 2,
@@ -75,7 +73,6 @@ public sealed class RealtimeConnectionRegisteredSubscriberTests
         var act = () => _subscriber.HandleAsync(
             new RealtimeConnectionRegisteredIntegrationEvent
             {
-                Key = _fixture.Create<Guid>().ToString("D"),
                 UserId = Guid.Empty,
                 ConnectionId = "connection-3",
                 ActiveConnectionCount = 1,
@@ -117,7 +114,6 @@ public sealed class RealtimeConnectionUnregisteredSubscriberTests
         await _subscriber.HandleAsync(
             new RealtimeConnectionUnregisteredIntegrationEvent
             {
-                Key = userId.ToString("D"),
                 UserId = userId,
                 ConnectionId = "connection-4",
                 ActiveConnectionCount = 0,
@@ -135,7 +131,6 @@ public sealed class RealtimeConnectionUnregisteredSubscriberTests
         await _subscriber.HandleAsync(
             new RealtimeConnectionUnregisteredIntegrationEvent
             {
-                Key = _fixture.Create<Guid>().ToString("D"),
                 UserId = _fixture.Create<Guid>(),
                 ConnectionId = "connection-5",
                 ActiveConnectionCount = 1,
@@ -154,7 +149,6 @@ public sealed class RealtimeConnectionUnregisteredSubscriberTests
         var act = () => _subscriber.HandleAsync(
             new RealtimeConnectionUnregisteredIntegrationEvent
             {
-                Key = _fixture.Create<Guid>().ToString("D"),
                 UserId = _fixture.Create<Guid>(),
                 ConnectionId = string.Empty,
                 ActiveConnectionCount = 0,

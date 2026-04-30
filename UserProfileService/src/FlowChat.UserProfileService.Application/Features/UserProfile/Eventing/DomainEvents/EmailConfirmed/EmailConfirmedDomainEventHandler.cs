@@ -14,4 +14,9 @@ public sealed class EmailConfirmedDomainEventHandler
         : base(integrationEventPublisher, mapper)
     {
     }
+
+    protected override string ResolveKafkaKey(
+        EmailConfirmedDomainEvent notification,
+        UserEmailConfirmedIntegrationEvent integrationEvent) =>
+        notification.UserProfileId.Value.ToString();
 }

@@ -12,7 +12,7 @@ namespace FlowChat.Shared.Infrastructure.UnitTests.Silverback.Kafka;
 public sealed class SilverbackEventPublisherTests
 {
     [Fact]
-    public async Task PublishToOutboxAsync_WhenEventKeyIsMissing_ThrowsInvalidOperationException()
+    public async Task PublishToOutboxAsync_WhenEnvelopeIsNull_ThrowsArgumentNullException()
     {
         var services = new ServiceCollection().BuildServiceProvider();
         var publisher = new FlowChatSilverbackEventPublisher(
@@ -21,12 +21,10 @@ public sealed class SilverbackEventPublisherTests
             NullLogger<FlowChatSilverbackEventPublisher>.Instance,
             Mock.Of<ISettingsProvider>());
 
-        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+        await Assert.ThrowsAsync<ArgumentNullException>(() =>
             publisher.Publish(
-                new TestIntegrationEvent(),
+                (IntegrationEventEnvelope<TestIntegrationEvent>)null!,
                 CancellationToken.None));
-
-        exception.Message.Should().Contain("does not contain a Kafka key");
     }
 
     [Fact]
@@ -41,7 +39,9 @@ public sealed class SilverbackEventPublisherTests
 
         var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
             publisher.Publish(
-                new TestIntegrationEvent { Key = "user-1" },
+                new IntegrationEventEnvelope<TestIntegrationEvent>(
+                    new TestIntegrationEvent(),
+                    "user-1"),
                 CancellationToken.None));
 
         exception.Message.Should().Contain("Kafka producer options");
