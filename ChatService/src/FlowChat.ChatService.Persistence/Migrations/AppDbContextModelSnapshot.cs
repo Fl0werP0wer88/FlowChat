@@ -115,6 +115,10 @@ namespace FlowChat.ChatService.Persistence.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Conversations", (string)null);
+
+                    b.HasDiscriminator<int>("Type");
+
+                    b.UseTphMappingStrategy();
                 });
 
             modelBuilder.Entity("FlowChat.ChatService.Domain.Entities.Conversation.ParticipantUser", b =>
@@ -238,6 +242,20 @@ namespace FlowChat.ChatService.Persistence.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("SilverbackOutboxMessages");
+                });
+
+            modelBuilder.Entity("FlowChat.ChatService.Domain.Entities.Conversation.DuetConversation", b =>
+                {
+                    b.HasBaseType("FlowChat.ChatService.Domain.Entities.Conversation.Conversation");
+
+                    b.HasDiscriminator().HasValue(1);
+                });
+
+            modelBuilder.Entity("FlowChat.ChatService.Domain.Entities.Conversation.GroupConversation", b =>
+                {
+                    b.HasBaseType("FlowChat.ChatService.Domain.Entities.Conversation.Conversation");
+
+                    b.HasDiscriminator().HasValue(2);
                 });
 
             modelBuilder.Entity("FlowChat.ChatService.Domain.Entities.ChatMessage.ChatMessage", b =>

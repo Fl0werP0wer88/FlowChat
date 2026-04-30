@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FlowChat.ChatService.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260423093942_InitialCreate")]
+    [Migration("20260430142659_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -96,9 +96,6 @@ namespace FlowChat.ChatService.Persistence.Migrations
                     b.Property<Guid>("CreatedByUserId")
                         .HasColumnType("uuid");
 
-                    b.Property<bool>("IsGroup")
-                        .HasColumnType("boolean");
-
                     b.Property<DateTimeOffset>("LastModifiedAtUtc")
                         .HasColumnType("timestamp with time zone");
 
@@ -111,6 +108,9 @@ namespace FlowChat.ChatService.Persistence.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
+                    b.Property<int>("Type")
+                        .HasColumnType("integer");
+
                     b.Property<int>("Version")
                         .IsConcurrencyToken()
                         .HasColumnType("integer");
@@ -118,6 +118,10 @@ namespace FlowChat.ChatService.Persistence.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Conversations", (string)null);
+
+                    b.HasDiscriminator<int>("Type");
+
+                    b.UseTphMappingStrategy();
                 });
 
             modelBuilder.Entity("FlowChat.ChatService.Domain.Entities.Conversation.ParticipantUser", b =>
@@ -241,6 +245,20 @@ namespace FlowChat.ChatService.Persistence.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("SilverbackOutboxMessages");
+                });
+
+            modelBuilder.Entity("FlowChat.ChatService.Domain.Entities.Conversation.DuetConversation", b =>
+                {
+                    b.HasBaseType("FlowChat.ChatService.Domain.Entities.Conversation.Conversation");
+
+                    b.HasDiscriminator().HasValue(1);
+                });
+
+            modelBuilder.Entity("FlowChat.ChatService.Domain.Entities.Conversation.GroupConversation", b =>
+                {
+                    b.HasBaseType("FlowChat.ChatService.Domain.Entities.Conversation.Conversation");
+
+                    b.HasDiscriminator().HasValue(2);
                 });
 
             modelBuilder.Entity("FlowChat.ChatService.Domain.Entities.ChatMessage.ChatMessage", b =>
