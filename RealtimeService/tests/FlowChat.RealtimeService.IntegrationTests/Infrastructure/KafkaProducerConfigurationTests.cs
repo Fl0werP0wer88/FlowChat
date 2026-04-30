@@ -77,6 +77,22 @@ public sealed class KafkaProducerConfigurationTests
         unregisteredOptions.Topic.Should().Be("dev.flowchat.realtime.connection.v1");
     }
 
+    [Fact]
+    public void DevelopmentSettings_PresenceInternalApiKeyMatchesPresenceService()
+    {
+        var realtimeConfiguration = new ConfigurationBuilder()
+            .AddJsonFile(GetRepositoryPath("RealtimeService/src/FlowChat.RealtimeService.API/appsettings.json"))
+            .AddJsonFile(GetRepositoryPath("RealtimeService/src/FlowChat.RealtimeService.API/appsettings.Development.json"))
+            .Build();
+        var presenceConfiguration = new ConfigurationBuilder()
+            .AddJsonFile(GetRepositoryPath("PresenceService/src/FlowChat.PresenceService.API/appsettings.json"))
+            .AddJsonFile(GetRepositoryPath("PresenceService/src/FlowChat.PresenceService.API/appsettings.Development.json"))
+            .Build();
+
+        realtimeConfiguration["PresenceService:InternalApiKey"]
+            .Should().Be(presenceConfiguration["FlowChat:InternalApi:ApiKey"]);
+    }
+
     private static string GetRepositoryPath(string relativePath)
     {
         var currentDirectory = new DirectoryInfo(AppContext.BaseDirectory);
