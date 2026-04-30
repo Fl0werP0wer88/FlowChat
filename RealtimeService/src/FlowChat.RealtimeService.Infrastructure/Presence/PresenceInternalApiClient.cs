@@ -1,4 +1,6 @@
 using System.Net.Http.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using FlowChat.Core.Domain;
 using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
 
@@ -10,6 +12,7 @@ internal sealed class PresenceInternalApiClient(IHttpClientFactory httpClientFac
     private const string RefreshPath = "/internal/presence/status/refresh";
     private const string ContactStatusesPath = "/internal/presence/contacts/{0}/statuses";
     private const string UserPreferencesPath = "/internal/presence/preferences/{0}";
+    private static readonly JsonSerializerOptions JsonOptions = CreateJsonOptions();
 
     private readonly IHttpClientFactory _httpClientFactory = httpClientFactory
         ?? throw new ArgumentNullException(nameof(httpClientFactory));
@@ -36,7 +39,9 @@ internal sealed class PresenceInternalApiClient(IHttpClientFactory httpClientFac
             string.Format(ContactStatusesPath, userId.ToString("D")),
             cancellationToken);
         response.EnsureSuccessStatusCode();
-        var result = await response.Content.ReadFromJsonAsync<IReadOnlyCollection<ContactPresenceStatusDto>>(cancellationToken);
+        var result = await response.Content.ReadFromJsonAsync<IReadOnlyCollection<ContactPresenceStatusDto>>(
+            JsonOptions,
+            cancellationToken);
         return result ?? [];
     }
 
@@ -49,10 +54,19 @@ internal sealed class PresenceInternalApiClient(IHttpClientFactory httpClientFac
             string.Format(UserPreferencesPath, userId.ToString("D")),
             cancellationToken);
         response.EnsureSuccessStatusCode();
-        var result = await response.Content.ReadFromJsonAsync<UserPresencePreferencesResponse>(cancellationToken);
+        var result = await response.Content.ReadFromJsonAsync<UserPresencePreferencesResponse>(
+            JsonOptions,
+            cancellationToken);
         return result?.PreferredStatus;
     }
 
     // Local record matching PresenceService's UserPresencePreferencesInternalResponse shape
     private sealed record UserPresencePreferencesResponse(PresenceStatus? PreferredStatus);
+
+    private static JsonSerializerOptions CreateJsonOptions()
+    {
+        var options = new JsonSerializerOptions(JsonSerializerDefaults.Web);
+        options.Converters.Add(new JsonStringEnumConverter());
+        return options;
+    }
 }
