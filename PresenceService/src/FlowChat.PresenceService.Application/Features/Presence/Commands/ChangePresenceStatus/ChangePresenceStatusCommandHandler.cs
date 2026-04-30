@@ -36,16 +36,10 @@ public sealed class ChangePresenceStatusCommandHandler(
             request.UserId,
             cancellationToken);
         var changedAtUtc = DateTimeOffset.UtcNow;
-        var integrationEvent = new PresenceStatusChangedIntegrationEvent
-        {
-            UserId = request.UserId,
-            Status = request.Status,
-            ChangedAtUtc = changedAtUtc,
-            RecipientUserIds = recipients
-                .Where(recipientUserId => recipientUserId != Guid.Empty)
-                .Distinct()
-                .ToList()
-        };
+        var recipientUserIds = recipients
+            .Where(recipientUserId => recipientUserId != Guid.Empty)
+            .Distinct()
+            .ToList();
 
         // Busy / Invisible are manual choices — persist so they survive reconnect
         if (request.Status is PresenceStatus.Busy or PresenceStatus.Invisible)
@@ -80,14 +74,26 @@ public sealed class ChangePresenceStatusCommandHandler(
 
         await presenceStatusStore.SetAsync(
             request.UserId,
-            integrationEvent.Status,
-            integrationEvent.ChangedAtUtc,
+            request.Status,
+            changedAtUtc,
             cancellationToken);
-        await integrationEventPublisher.Publish(
-            new IntegrationEventEnvelope<PresenceStatusChangedIntegrationEvent>(
-                integrationEvent,
-                request.UserId.ToString("D")),
-            cancellationToken);
+
+        if (recipientUserIds.Count > 0)
+        {
+            var integrationEvent = new PresenceStatusChangedIntegrationEvent
+            {
+                UserId = request.UserId,
+                Status = request.Status,
+                ChangedAtUtc = changedAtUtc,
+                RecipientUserIds = recipientUserIds
+            };
+
+            await integrationEventPublisher.Publish(
+                new IntegrationEventEnvelope<PresenceStatusChangedIntegrationEvent>(
+                    integrationEvent,
+                    request.UserId.ToString("D")),
+                cancellationToken);
+        }
 
         return FlowChatResult<Unit>.Success(Unit.Value);
     }

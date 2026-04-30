@@ -94,6 +94,32 @@ public sealed class ChangePresenceStatusCommandHandlerTests
     }
 
     [Fact]
+    public async Task Handle_WhenStatusChangesWithoutRecipients_StoresStatusWithoutPublishing()
+    {
+        var userId = _fixture.Create<Guid>();
+        var previous = new PresenceStatusSnapshot(userId, PresenceStatus.Active, DateTimeOffset.UtcNow.AddMinutes(-5));
+
+        _presenceStatusStoreMock
+            .Setup(x => x.GetAsync(userId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(previous);
+        _readRepositoryMock
+            .Setup(x => x.GetObserverUserIdsAsync(userId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync([Guid.Empty, Guid.Empty]);
+
+        var result = await _handler.Handle(
+            new ChangePresenceStatusCommand(userId, PresenceStatus.AFK),
+            CancellationToken.None);
+
+        result.IsSuccess.Should().BeTrue();
+        _presenceStatusStoreMock.Verify(
+            x => x.SetAsync(userId, PresenceStatus.AFK, It.IsAny<DateTimeOffset>(), It.IsAny<CancellationToken>()),
+            Times.Once);
+        _integrationEventPublisherMock.Verify(
+            x => x.Publish(It.IsAny<IntegrationEventEnvelope<PresenceStatusChangedIntegrationEvent>>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Fact]
     public async Task Handle_WhenStatusIsUnchanged_ReturnsSuccessWithoutPublishing()
     {
         var userId = _fixture.Create<Guid>();
