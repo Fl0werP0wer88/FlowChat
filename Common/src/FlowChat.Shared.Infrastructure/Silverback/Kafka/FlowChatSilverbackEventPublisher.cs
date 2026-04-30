@@ -13,18 +13,15 @@ public sealed class FlowChatSilverbackEventPublisher : IOutboxIntegrationEventPu
     private readonly IServiceProvider _serviceProvider;
     private readonly IPublisher _publisher;
     private readonly ILogger<FlowChatSilverbackEventPublisher> _logger;
-    private readonly ISettingsProvider _settingsProvider;
 
     public FlowChatSilverbackEventPublisher(
         IServiceProvider serviceProvider,
         IPublisher publisher,
-        ILogger<FlowChatSilverbackEventPublisher> logger,
-        ISettingsProvider settingsProvider)
+        ILogger<FlowChatSilverbackEventPublisher> logger)
     {
         _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
         _publisher = publisher ?? throw new ArgumentNullException(nameof(publisher));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _settingsProvider = settingsProvider ?? throw new ArgumentNullException(nameof(settingsProvider));
     }
 
     public Task Publish<TEvent>(IntegrationEventEnvelope<TEvent> message, CancellationToken cancellationToken)
