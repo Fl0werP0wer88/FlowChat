@@ -31,9 +31,11 @@ public abstract class SubscriberBase<TIntegrationEvent>(ILogger logger)
         try
         {
             await ExecuteAsync(message, cancellationToken);
+            Activity.Current?.SetTag("flowchat.subscriber.result", "success");
         }
         catch (NonTransientException exception)
         {
+            Activity.Current?.SetTag("flowchat.subscriber.result", "non_transient_failure");
             Logger.LogInformation(
                 exception,
                 "Skipping {EventType} in {SubscriberName}. Reason: {Reason}",
@@ -45,6 +47,7 @@ public abstract class SubscriberBase<TIntegrationEvent>(ILogger logger)
         }
         catch (Exception exception)
         {
+            Activity.Current?.SetTag("flowchat.subscriber.result", "transient_failure");
             Logger.LogWarning(
                 exception,
                 "Transient failure while handling {EventType} in {SubscriberName}.",
