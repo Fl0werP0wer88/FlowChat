@@ -1,4 +1,6 @@
+using System.Diagnostics;
 using FlowChat.Core.Exceptions;
+using FlowChat.Core.Messaging;
 using Microsoft.Extensions.Logging;
 using Silverback.Messaging.Messages;
 using Silverback.Messaging.Subscribers;
@@ -20,12 +22,11 @@ public abstract class SubscriberBase<TIntegrationEvent>(ILogger logger)
             ? "retry"
             : "main";
 
-        Logger.LogTrace(
-            "Handling {EventType} in {SubscriberName} from {DeliveryKind} topic {SourceTopic}.",
-            GetEventTypeName(message),
-            GetType().Name,
-            deliveryKind,
-            sourceTopic);
+        Activity.Current?.SetTag("flowchat.subscriber.event_type", GetEventTypeName(message));
+        Activity.Current?.SetTag("flowchat.subscriber.name", GetType().Name);
+        Activity.Current?.SetTag("flowchat.subscriber.delivery_kind", deliveryKind);
+        Activity.Current?.SetTag("flowchat.subscriber.source_topic", sourceTopic);
+        Activity.Current?.SetTag("flowchat.subscriber.message_id", envelope.Headers.GetValue(IntegrationMessageHeaders.EventId));
 
         try
         {

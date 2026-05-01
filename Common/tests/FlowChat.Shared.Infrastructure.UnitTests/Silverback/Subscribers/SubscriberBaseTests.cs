@@ -1,4 +1,6 @@
+using System.Diagnostics;
 using FlowChat.Core.Exceptions;
+using FlowChat.Core.Messaging;
 using FlowChat.Shared.Infrastructure.Silverback.Subscribers;
 using FluentAssertions;
 using Confluent.Kafka;
@@ -61,10 +63,11 @@ public sealed class SubscriberBaseTests
     [Theory]
     [InlineData("dev.flowchat.user-profile.user-profile.v1", "main")]
     [InlineData("dev.flowchat.user-profile.user-profile.v1.retry", "retry")]
-    public async Task HandleAsync_WhenExecuteStarts_LogsSourceTopicAtTrace(
+    public async Task HandleAsync_WhenExecuteStarts_SetsActivityTagsWithEventContext(
         string sourceTopic,
         string expectedDeliveryKind)
     {
+        using var activity = new Activity("test").Start();
         var loggerMock = new Mock<ILogger<TestSubscriber>>();
         var subscriber = new TestSubscriber(
             loggerMock.Object,
@@ -72,10 +75,12 @@ public sealed class SubscriberBaseTests
 
         await subscriber.HandleAsync(CreateEnvelope(new TestIntegrationEvent(), sourceTopic), CancellationToken.None);
 
-        VerifyLog(
-            loggerMock,
-            LogLevel.Trace,
-            $"Handling TestIntegrationEvent in TestSubscriber from {expectedDeliveryKind} topic {sourceTopic}.");
+        activity.Tags.Should()
+            .Contain(new KeyValuePair<string, string?>("flowchat.subscriber.event_type", "TestIntegrationEvent"))
+            .And.Contain(new KeyValuePair<string, string?>("flowchat.subscriber.name", "TestSubscriber"))
+            .And.Contain(new KeyValuePair<string, string?>("flowchat.subscriber.delivery_kind", expectedDeliveryKind))
+            .And.Contain(new KeyValuePair<string, string?>("flowchat.subscriber.source_topic", sourceTopic))
+            .And.Contain(new KeyValuePair<string, string?>("flowchat.subscriber.message_id", "test-message-id"));
     }
 
     private static IInboundEnvelope<TestIntegrationEvent> CreateEnvelope(
@@ -83,7 +88,11 @@ public sealed class SubscriberBaseTests
         string sourceTopic = "dev.flowchat.test.v1")
     {
         var envelopeMock = new Mock<IInboundEnvelope<TestIntegrationEvent>>();
+        var headers = new MessageHeaderCollection(1);
+        headers.Add(IntegrationMessageHeaders.EventId, "test-message-id");
+
         envelopeMock.SetupGet(envelope => envelope.Message).Returns(message);
+        envelopeMock.SetupGet(envelope => envelope.Headers).Returns(headers);
         envelopeMock
             .SetupGet(envelope => envelope.Endpoint)
             .Returns(new KafkaConsumerEndpoint(
