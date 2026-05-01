@@ -12,6 +12,31 @@ namespace FlowChat.Shared.Application.UnitTests.Behaviors;
 public sealed class ExceptionHandlingPipelineBehaviorTests
 {
     [Fact]
+    public async Task Handle_WhenDbUpdateConcurrencyExceptionIsThrown_ReturnsUnexpectedFailureAndMarksActivity()
+    {
+        var behavior = new ExceptionHandlingPipelineBehavior<TestRequest, FlowChatResult<Guid>>();
+        var exception = new DbUpdateConcurrencyException("Row version mismatch.");
+        using var activity = new Activity("test").Start();
+
+        var result = await behavior.Handle(
+            new TestRequest(),
+            _ => Task.FromException<FlowChatResult<Guid>>(exception),
+            CancellationToken.None);
+
+        result.IsFailure.Should().BeTrue();
+        result.Error.ErrorType.Should().Be(ErrorType.Unexpected);
+        result.Error.ErrorMessage.Should().Be("An unexpected error occurred.");
+
+        activity.Status.Should().Be(ActivityStatusCode.Error);
+        activity.StatusDescription.Should().Be("db_concurrency_failed");
+        activity.GetTagItem("error.type").Should().Be("db_concurrency");
+        activity.GetTagItem("db.exception.transient").Should().Be(false);
+        activity.GetTagItem("db.exception.type").Should().Be(nameof(DbUpdateConcurrencyException));
+        activity.GetTagItem("db.concurrency.entry_count").Should().Be(0);
+        activity.Events.Should().Contain(x => x.Name == "exception");
+    }
+
+    [Fact]
     public async Task Handle_WhenDbUpdateExceptionIsThrownWithTransientInnerException_ReturnsTransientUnexpectedFailure()
     {
         var behavior = new ExceptionHandlingPipelineBehavior<TestRequest, FlowChatResult<Guid>>();

@@ -61,6 +61,13 @@ public sealed class ExceptionHandlingPipelineBehavior<TRequest, TResponse>
         }
         catch (DbUpdateConcurrencyException exception)
         {
+            Activity.Current?.SetStatus(ActivityStatusCode.Error, "db_concurrency_failed");
+            Activity.Current?.AddException(exception);
+            Activity.Current?.SetTag("error.type", "db_concurrency");
+            Activity.Current?.SetTag("db.exception.transient", false);
+            Activity.Current?.SetTag("db.exception.type", exception.GetType().Name);
+            Activity.Current?.SetTag("db.concurrency.entry_count", exception.Entries.Count);
+
             foreach (var entry in exception.Entries)
             {
                 var databaseValues = await entry.GetDatabaseValuesAsync(cancellationToken);
