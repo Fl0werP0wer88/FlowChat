@@ -47,7 +47,7 @@ public sealed class UserEmailConfirmedSubscriberTests
             }
         };
 
-        await _subscriber.HandleAsync(message, CancellationToken.None);
+        await _subscriber.HandleAsync(message.ToInboundEnvelope(), CancellationToken.None);
 
         capturedRequest.Should().NotBeNull();
         capturedRequest!.EmailAddress.Should().Be(emailAddress);
@@ -67,7 +67,7 @@ public sealed class UserEmailConfirmedSubscriberTests
             }
         };
 
-        await _subscriber.HandleAsync(message, CancellationToken.None);
+        await _subscriber.HandleAsync(message.ToInboundEnvelope(), CancellationToken.None);
 
         _internalApiClientMock.Verify(
             x => x.ConfirmEmailAsync(It.IsAny<AuthEmailConfirmationRequest>(), It.IsAny<CancellationToken>()),
@@ -88,7 +88,7 @@ public sealed class UserEmailConfirmedSubscriberTests
             }
         };
 
-        var act = () => _subscriber.HandleAsync(message, CancellationToken.None);
+        var act = () => _subscriber.HandleAsync(message.ToInboundEnvelope(), CancellationToken.None);
 
         await act.Should().ThrowAsync<NonTransientException>()
             .WithMessage("*Email.Address*");
@@ -112,7 +112,7 @@ public sealed class UserEmailConfirmedSubscriberTests
             .Setup(x => x.ConfirmEmailAsync(It.IsAny<AuthEmailConfirmationRequest>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new NonTransientException("boom"));
 
-        var act = () => _subscriber.HandleAsync(message, CancellationToken.None);
+        var act = () => _subscriber.HandleAsync(message.ToInboundEnvelope(), CancellationToken.None);
 
         await act.Should().ThrowAsync<NonTransientException>()
             .WithMessage("boom");
@@ -138,7 +138,7 @@ public sealed class UserEmailConfirmedSubscriberTests
             .Setup(x => x.ConfirmEmailAsync(It.IsAny<AuthEmailConfirmationRequest>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new HttpRequestException("boom"));
 
-        var act = () => _subscriber.HandleAsync(message, CancellationToken.None);
+        var act = () => _subscriber.HandleAsync(message.ToInboundEnvelope(), CancellationToken.None);
 
         await act.Should().ThrowAsync<HttpRequestException>()
             .WithMessage("boom");

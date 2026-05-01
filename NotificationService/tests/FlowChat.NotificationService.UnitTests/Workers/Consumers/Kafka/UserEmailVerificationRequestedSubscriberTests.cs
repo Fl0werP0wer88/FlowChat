@@ -45,7 +45,7 @@ public sealed class UserEmailVerificationRequestedSubscriberTests
                 UserId = userId,
                 UserEmail = " john.doe@flowchat.local ",
                 ConfirmationLink = " https://localhost/confirm "
-            },
+            }.ToInboundEnvelope(),
             CancellationToken.None);
 
         capturedRequest.Should().NotBeNull();
@@ -66,7 +66,7 @@ public sealed class UserEmailVerificationRequestedSubscriberTests
                 UserId = _fixture.Create<Guid>(),
                 UserEmail = " ",
                 ConfirmationLink = "https://localhost/confirm"
-            },
+            }.ToInboundEnvelope(),
             CancellationToken.None);
 
         await act.Should().ThrowAsync<NonTransientException>();
@@ -86,7 +86,7 @@ public sealed class UserEmailVerificationRequestedSubscriberTests
                 UserId = _fixture.Create<Guid>(),
                 UserEmail = "john.doe@flowchat.local",
                 ConfirmationLink = " "
-            },
+            }.ToInboundEnvelope(),
             CancellationToken.None);
 
         await act.Should().ThrowAsync<NonTransientException>();

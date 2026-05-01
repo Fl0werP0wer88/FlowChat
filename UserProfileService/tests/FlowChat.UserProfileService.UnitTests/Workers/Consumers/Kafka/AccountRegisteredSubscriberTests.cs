@@ -40,7 +40,7 @@ public sealed class AccountRegisteredSubscriberTests
             Organization = " FlowChat "
         };
 
-        await subscriber.HandleAsync(message, CancellationToken.None);
+        await subscriber.HandleAsync(message.ToInboundEnvelope(), CancellationToken.None);
 
         capturedRequest.Should().NotBeNull();
         capturedRequest!.Should().BeOfType<CreateInitialUserProfileRequest>();
@@ -66,7 +66,7 @@ public sealed class AccountRegisteredSubscriberTests
                     UserId = Guid.NewGuid(),
                     FriendlyUserId = "   ",
                     Email = "test@example.com"
-                },
+                }.ToInboundEnvelope(),
                 CancellationToken.None));
 
         exception.Message.Should().Contain("FriendlyUserId");
@@ -90,7 +90,7 @@ public sealed class AccountRegisteredSubscriberTests
             Email = "john@example.com"
         };
 
-        await subscriber.HandleAsync(message, CancellationToken.None);
+        await subscriber.HandleAsync(message.ToInboundEnvelope(), CancellationToken.None);
 
         capturedRequest.Should().NotBeNull();
         capturedRequest!.Email.Should().Be("john@example.com");
@@ -113,7 +113,7 @@ public sealed class AccountRegisteredSubscriberTests
                 UserId = Guid.NewGuid(),
                 FriendlyUserId = "jdoe",
                 Email = "john@example.com"
-            },
+            }.ToInboundEnvelope(),
             CancellationToken.None);
 
         capturedRequest.Should().NotBeNull();

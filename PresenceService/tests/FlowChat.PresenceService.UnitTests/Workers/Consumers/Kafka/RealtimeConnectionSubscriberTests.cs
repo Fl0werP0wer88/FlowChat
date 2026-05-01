@@ -42,7 +42,7 @@ public sealed class RealtimeConnectionRegisteredSubscriberTests
                 ConnectionId = "connection-1",
                 ActiveConnectionCount = 1,
                 OccurredAtUtc = DateTimeOffset.UtcNow
-            },
+            }.ToInboundEnvelope(),
             CancellationToken.None);
 
         capturedRequest.Should().NotBeNull();
@@ -59,7 +59,7 @@ public sealed class RealtimeConnectionRegisteredSubscriberTests
                 ConnectionId = "connection-2",
                 ActiveConnectionCount = 2,
                 OccurredAtUtc = DateTimeOffset.UtcNow
-            },
+            }.ToInboundEnvelope(),
             CancellationToken.None);
 
         _apiClientMock.Verify(
@@ -77,7 +77,7 @@ public sealed class RealtimeConnectionRegisteredSubscriberTests
                 ConnectionId = "connection-3",
                 ActiveConnectionCount = 1,
                 OccurredAtUtc = DateTimeOffset.UtcNow
-            },
+            }.ToInboundEnvelope(),
             CancellationToken.None);
 
         await act.Should().ThrowAsync<NonTransientException>();
@@ -118,7 +118,7 @@ public sealed class RealtimeConnectionUnregisteredSubscriberTests
                 ConnectionId = "connection-4",
                 ActiveConnectionCount = 0,
                 OccurredAtUtc = DateTimeOffset.UtcNow
-            },
+            }.ToInboundEnvelope(),
             CancellationToken.None);
 
         capturedRequest.Should().NotBeNull();
@@ -135,7 +135,7 @@ public sealed class RealtimeConnectionUnregisteredSubscriberTests
                 ConnectionId = "connection-5",
                 ActiveConnectionCount = 1,
                 OccurredAtUtc = DateTimeOffset.UtcNow
-            },
+            }.ToInboundEnvelope(),
             CancellationToken.None);
 
         _apiClientMock.Verify(
@@ -153,7 +153,7 @@ public sealed class RealtimeConnectionUnregisteredSubscriberTests
                 ConnectionId = string.Empty,
                 ActiveConnectionCount = 0,
                 OccurredAtUtc = DateTimeOffset.UtcNow
-            },
+            }.ToInboundEnvelope(),
             CancellationToken.None);
 
         await act.Should().ThrowAsync<NonTransientException>();

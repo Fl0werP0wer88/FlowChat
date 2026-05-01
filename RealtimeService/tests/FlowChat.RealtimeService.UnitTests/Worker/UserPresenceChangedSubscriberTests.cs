@@ -42,7 +42,7 @@ public sealed class UserPresenceChangedSubscriberTests
                 Status = PresenceStatus.AFK,
                 ChangedAtUtc = new DateTimeOffset(2026, 3, 17, 10, 15, 0, TimeSpan.Zero),
                 RecipientUserIds = [_fixture.Create<Guid>()]
-            },
+            }.ToInboundEnvelope(),
             CancellationToken.None);
 
         capturedRequest.Should().NotBeNull();
@@ -58,7 +58,7 @@ public sealed class UserPresenceChangedSubscriberTests
                 UserId = _fixture.Create<Guid>(),
                 Status = (PresenceStatus)999,
                 RecipientUserIds = [_fixture.Create<Guid>()]
-            },
+            }.ToInboundEnvelope(),
             CancellationToken.None);
 
         await act.Should().ThrowAsync<NonTransientException>();

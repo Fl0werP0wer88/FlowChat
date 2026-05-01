@@ -45,7 +45,7 @@ public sealed class ChatMessageSentSubscriberTests
                 Text = " Hi there ",
                 SentAtUtc = new DateTimeOffset(2026, 3, 17, 10, 0, 0, TimeSpan.Zero),
                 RecipientUserIds = [recipientUserId, recipientUserId]
-            },
+            }.ToInboundEnvelope(),
             CancellationToken.None);
 
         capturedRequest.Should().NotBeNull();
@@ -66,7 +66,7 @@ public sealed class ChatMessageSentSubscriberTests
                 SenderDisplayName = "Jane Doe",
                 Text = "Hi there",
                 RecipientUserIds = [_fixture.Create<Guid>()]
-            },
+            }.ToInboundEnvelope(),
             CancellationToken.None);
 
         await act.Should().ThrowAsync<NonTransientException>();

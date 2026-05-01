@@ -59,7 +59,7 @@ public sealed class UserProfileCreatedSubscriberTests
                 Bio = " hello ",
                 IsActive = true,
                 LastSeenAtUtc = new DateTimeOffset(2026, 3, 11, 10, 0, 0, TimeSpan.Zero)
-            },
+            }.ToInboundEnvelope(),
             CancellationToken.None);
 
         capturedRequest.Should().NotBeNull();
@@ -92,7 +92,7 @@ public sealed class UserProfileCreatedSubscriberTests
                     IsConfirmed = false,
                     IsVisible = true
                 }
-            },
+            }.ToInboundEnvelope(),
             CancellationToken.None);
 
         await act.Should().ThrowAsync<NonTransientException>();
@@ -144,7 +144,7 @@ public sealed class UserProfileStateChangedSubscriberTests
                 Bio = "updated",
                 IsActive = false,
                 LastSeenAtUtc = null
-            },
+            }.ToInboundEnvelope(),
             CancellationToken.None);
 
         capturedRequest.Should().NotBeNull();

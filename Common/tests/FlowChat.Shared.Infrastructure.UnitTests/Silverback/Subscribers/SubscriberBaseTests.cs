@@ -1,8 +1,12 @@
 using FlowChat.Core.Exceptions;
 using FlowChat.Shared.Infrastructure.Silverback.Subscribers;
 using FluentAssertions;
+using Confluent.Kafka;
 using Microsoft.Extensions.Logging;
 using Moq;
+using Silverback.Messaging;
+using Silverback.Messaging.Configuration.Kafka;
+using Silverback.Messaging.Messages;
 
 namespace FlowChat.Shared.Infrastructure.UnitTests.Silverback.Subscribers;
 
@@ -16,7 +20,7 @@ public sealed class SubscriberBaseTests
             loggerMock.Object,
             (_, _) => throw new NonTransientException("boom"));
 
-        var act = () => subscriber.HandleAsync(new TestIntegrationEvent(), CancellationToken.None);
+        var act = () => subscriber.HandleAsync(CreateEnvelope(new TestIntegrationEvent()), CancellationToken.None);
 
         await act.Should().ThrowAsync<NonTransientException>()
             .WithMessage("boom");
@@ -32,7 +36,7 @@ public sealed class SubscriberBaseTests
             loggerMock.Object,
             (_, _) => throw new InvalidOperationException("boom"));
 
-        var act = () => subscriber.HandleAsync(new TestIntegrationEvent(), CancellationToken.None);
+        var act = () => subscriber.HandleAsync(CreateEnvelope(new TestIntegrationEvent()), CancellationToken.None);
 
         await act.Should().ThrowAsync<InvalidOperationException>()
             .WithMessage("boom");
@@ -48,10 +52,46 @@ public sealed class SubscriberBaseTests
             loggerMock.Object,
             (_, _) => Task.CompletedTask);
 
-        await subscriber.HandleAsync(new TestIntegrationEvent(), CancellationToken.None);
+        await subscriber.HandleAsync(CreateEnvelope(new TestIntegrationEvent()), CancellationToken.None);
 
         VerifyNoLog(loggerMock, LogLevel.Information);
         VerifyNoLog(loggerMock, LogLevel.Warning);
+    }
+
+    [Theory]
+    [InlineData("dev.flowchat.user-profile.user-profile.v1", "main")]
+    [InlineData("dev.flowchat.user-profile.user-profile.v1.retry", "retry")]
+    public async Task HandleAsync_WhenExecuteStarts_LogsSourceTopicAtTrace(
+        string sourceTopic,
+        string expectedDeliveryKind)
+    {
+        var loggerMock = new Mock<ILogger<TestSubscriber>>();
+        var subscriber = new TestSubscriber(
+            loggerMock.Object,
+            (_, _) => Task.CompletedTask);
+
+        await subscriber.HandleAsync(CreateEnvelope(new TestIntegrationEvent(), sourceTopic), CancellationToken.None);
+
+        VerifyLog(
+            loggerMock,
+            LogLevel.Trace,
+            $"Handling TestIntegrationEvent in TestSubscriber from {expectedDeliveryKind} topic {sourceTopic}.");
+    }
+
+    private static IInboundEnvelope<TestIntegrationEvent> CreateEnvelope(
+        TestIntegrationEvent message,
+        string sourceTopic = "dev.flowchat.test.v1")
+    {
+        var envelopeMock = new Mock<IInboundEnvelope<TestIntegrationEvent>>();
+        envelopeMock.SetupGet(envelope => envelope.Message).Returns(message);
+        envelopeMock
+            .SetupGet(envelope => envelope.Endpoint)
+            .Returns(new KafkaConsumerEndpoint(
+                sourceTopic,
+                Partition.Any,
+                new KafkaConsumerEndpointConfiguration()));
+
+        return envelopeMock.Object;
     }
 
     private static void VerifyLog(Mock<ILogger<TestSubscriber>> loggerMock, LogLevel expectedLogLevel, string expectedMessage)

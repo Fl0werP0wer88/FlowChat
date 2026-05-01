@@ -43,7 +43,7 @@ public sealed class AuthEmailChangedSubscriberTests
             EmailAddress = "john@example.com"
         };
 
-        await _subscriber.HandleAsync(message, CancellationToken.None);
+        await _subscriber.HandleAsync(message.ToInboundEnvelope(), CancellationToken.None);
 
         capturedRequest.Should().NotBeNull();
         capturedRequest!.UserId.Should().Be(userId);
@@ -60,7 +60,7 @@ public sealed class AuthEmailChangedSubscriberTests
             EmailAddress = "john@example.com"
         };
 
-        var act = () => _subscriber.HandleAsync(message, CancellationToken.None);
+        var act = () => _subscriber.HandleAsync(message.ToInboundEnvelope(), CancellationToken.None);
 
         await act.Should().ThrowAsync<NonTransientException>()
             .WithMessage("*UserProfileId*");
@@ -76,7 +76,7 @@ public sealed class AuthEmailChangedSubscriberTests
             EmailAddress = "   "
         };
 
-        var act = () => _subscriber.HandleAsync(message, CancellationToken.None);
+        var act = () => _subscriber.HandleAsync(message.ToInboundEnvelope(), CancellationToken.None);
 
         await act.Should().ThrowAsync<NonTransientException>()
             .WithMessage("*EmailAddress*");

@@ -40,7 +40,7 @@ public sealed class ContactAddedSubscriberTests
             {
                 OwnerUserId = ownerUserId,
                 ContactUserId = contactUserId
-            },
+            }.ToInboundEnvelope(),
             CancellationToken.None);
 
         capturedRequest.Should().NotBeNull();
@@ -79,7 +79,7 @@ public sealed class ContactDeletedSubscriberTests
             {
                 OwnerUserId = ownerUserId,
                 ContactUserId = contactUserId
-            },
+            }.ToInboundEnvelope(),
             CancellationToken.None);
 
         capturedRequest.Should().NotBeNull();
