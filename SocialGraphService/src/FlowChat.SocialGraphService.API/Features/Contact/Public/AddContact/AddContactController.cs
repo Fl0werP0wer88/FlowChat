@@ -18,7 +18,8 @@ public sealed class AddContactController : ApiControllerBase
         _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
     }
 
-    [HttpPost]
+    [HttpPut]
+    [ProducesResponseType(typeof(AddContactResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(AddContactResponse), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Add(
@@ -39,8 +40,14 @@ public sealed class AddContactController : ApiControllerBase
                 request.Email),
             cancellationToken);
 
-        return result.IsSuccess
-            ? StatusCode(StatusCodes.Status201Created, new AddContactResponse(result.Value))
-            : HandleError(result.Error);
+        if (!result.IsSuccess)
+        {
+            return HandleError(result.Error);
+        }
+
+        var response = new AddContactResponse(result.Value.Value);
+        return result.Value.WasAlreadyProcessed
+            ? Ok(response)
+            : StatusCode(StatusCodes.Status201Created, response);
     }
 }

@@ -81,7 +81,7 @@ public sealed class SetMainPhoneControllerTests(UserProfileApiFactory factory)
     {
         var userId = await CreateProfileAsync();
 
-        var addFirst = new HttpRequestMessage(HttpMethod.Post, "/api/userprofiles/phones")
+        var addFirst = new HttpRequestMessage(HttpMethod.Put, "/api/userprofiles/phones")
         {
             Content = JsonContent.Create(new { PhoneId = Guid.NewGuid(), Number = "+48100200300" })
         };
@@ -89,7 +89,7 @@ public sealed class SetMainPhoneControllerTests(UserProfileApiFactory factory)
         var firstPhoneResponse = await _client.SendAsync(addFirst);
         var firstPhone = await firstPhoneResponse.Content.ReadFromJsonAsync<AddPhoneResponse>();
 
-        var addSecond = new HttpRequestMessage(HttpMethod.Post, "/api/userprofiles/phones")
+        var addSecond = new HttpRequestMessage(HttpMethod.Put, "/api/userprofiles/phones")
         {
             Content = JsonContent.Create(new { PhoneId = Guid.NewGuid(), Number = "+48400500600" })
         };

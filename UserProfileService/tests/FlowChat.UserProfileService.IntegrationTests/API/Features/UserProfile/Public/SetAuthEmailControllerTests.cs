@@ -111,7 +111,7 @@ public sealed class SetAuthEmailControllerTests(UserProfileApiFactory factory)
     {
         var (userId, _) = await CreateProfileAndGetFirstEmailAsync();
 
-        var addEmail = new HttpRequestMessage(HttpMethod.Post, "/api/userprofiles/emails")
+        var addEmail = new HttpRequestMessage(HttpMethod.Put, "/api/userprofiles/emails")
         {
             Content = JsonContent.Create(new { Address = $"authsecond_{userId:N}@example.com" })
         };

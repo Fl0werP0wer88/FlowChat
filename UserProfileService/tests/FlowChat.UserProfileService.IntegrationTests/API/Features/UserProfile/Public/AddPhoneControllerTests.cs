@@ -10,11 +10,11 @@ public sealed class AddPhoneControllerTests(UserProfileApiFactory factory)
     private readonly HttpClient _client = factory.CreateClient();
 
     [Fact]
-    public async Task AddPhone_WithValidRequest_Returns200WithPhoneId()
+    public async Task AddPhone_WithValidRequest_Returns201WithPhoneId()
     {
         var userId = await CreateUserProfileAsync();
 
-        var request = new HttpRequestMessage(HttpMethod.Post, "/api/userprofiles/phones")
+        var request = new HttpRequestMessage(HttpMethod.Put, "/api/userprofiles/phones")
         {
             Content = JsonContent.Create(new { PhoneId = Guid.NewGuid(), Number = "+48123456789" })
         };
@@ -22,7 +22,7 @@ public sealed class AddPhoneControllerTests(UserProfileApiFactory factory)
 
         var response = await _client.SendAsync(request);
 
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        response.StatusCode.Should().Be(HttpStatusCode.Created);
         var body = await response.Content.ReadFromJsonAsync<AddPhoneResponse>();
         body.Should().NotBeNull();
         body!.PhoneId.Should().NotBeEmpty();
@@ -31,7 +31,7 @@ public sealed class AddPhoneControllerTests(UserProfileApiFactory factory)
     [Fact]
     public async Task AddPhone_WhenProfileNotFound_Returns404NotFound()
     {
-        var request = new HttpRequestMessage(HttpMethod.Post, "/api/userprofiles/phones")
+        var request = new HttpRequestMessage(HttpMethod.Put, "/api/userprofiles/phones")
         {
             Content = JsonContent.Create(new { Number = "+48123456789" })
         };
@@ -47,7 +47,7 @@ public sealed class AddPhoneControllerTests(UserProfileApiFactory factory)
     {
         var userId = await CreateUserProfileAsync();
 
-        var request = new HttpRequestMessage(HttpMethod.Post, "/api/userprofiles/phones")
+        var request = new HttpRequestMessage(HttpMethod.Put, "/api/userprofiles/phones")
         {
             Content = JsonContent.Create(new { PhoneId = Guid.NewGuid(), Number = (string?)null })
         };
@@ -64,14 +64,14 @@ public sealed class AddPhoneControllerTests(UserProfileApiFactory factory)
         var userId = await CreateUserProfileAsync();
         var phoneNumber = "+48500100200";
 
-        var addFirst = new HttpRequestMessage(HttpMethod.Post, "/api/userprofiles/phones")
+        var addFirst = new HttpRequestMessage(HttpMethod.Put, "/api/userprofiles/phones")
         {
             Content = JsonContent.Create(new { PhoneId = Guid.NewGuid(), Number = phoneNumber })
         };
         addFirst.Headers.Add(TestAuthenticationHandler.UserIdHeaderName, userId.ToString("D"));
         await _client.SendAsync(addFirst);
 
-        var addSecond = new HttpRequestMessage(HttpMethod.Post, "/api/userprofiles/phones")
+        var addSecond = new HttpRequestMessage(HttpMethod.Put, "/api/userprofiles/phones")
         {
             Content = JsonContent.Create(new { PhoneId = Guid.NewGuid(), Number = phoneNumber })
         };

@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using AutoFixture;
+using FlowChat.Core.Results;
 using FlowChat.Shared.Domain;
 using FlowChat.SocialGraphService.Api.Features.Contact.Public.AddContact;
 using FlowChat.SocialGraphService.Application.Features.Contact.Commands.AddContact;
@@ -33,7 +34,8 @@ public sealed class AddContactControllerTests
                     command.FriendlyUserId == null &&
                     command.Email == null),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(FlowChatResult<Guid>.Success(contactId));
+            .ReturnsAsync(FlowChatResult<IdempotentCommandResult<Guid>>.Success(
+                new IdempotentCommandResult<Guid>(contactId, WasAlreadyProcessed: false)));
 
         var controller = SetupController(new AddContactController(_mediatorMock.Object), ownerUserId);
 
@@ -48,11 +50,34 @@ public sealed class AddContactControllerTests
     }
 
     [Fact]
+    public async Task Add_WhenCommandWasAlreadyProcessed_ReturnsOkResponse()
+    {
+        var ownerUserId = _fixture.Create<Guid>();
+        var contactId = _fixture.Create<Guid>();
+
+        _mediatorMock
+            .Setup(x => x.Send(It.IsAny<AddContactCommand>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(FlowChatResult<IdempotentCommandResult<Guid>>.Success(
+                new IdempotentCommandResult<Guid>(contactId, WasAlreadyProcessed: true)));
+
+        var controller = SetupController(new AddContactController(_mediatorMock.Object), ownerUserId);
+
+        var result = await controller.Add(
+            new AddContactRequest { FriendlyUserId = "jdoe" },
+            CancellationToken.None);
+
+        var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
+        var response = okResult.Value.Should().BeOfType<AddContactResponse>().Subject;
+        response.ContactId.Should().Be(contactId);
+    }
+
+    [Fact]
     public async Task Add_WhenCommandFails_ReturnsProblemDetails()
     {
         _mediatorMock
             .Setup(x => x.Send(It.IsAny<AddContactCommand>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(FlowChatResult<Guid>.Failure(DomainError.Conflict("Contact already exists.")));
+            .ReturnsAsync(FlowChatResult<IdempotentCommandResult<Guid>>.Failure(
+                DomainError.Conflict("Contact already exists.")));
 
         var controller = SetupController(new AddContactController(_mediatorMock.Object), _fixture.Create<Guid>());
 

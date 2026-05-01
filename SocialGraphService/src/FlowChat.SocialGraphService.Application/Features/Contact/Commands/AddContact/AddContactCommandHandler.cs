@@ -1,4 +1,5 @@
 using FlowChat.Shared.Application;
+using FlowChat.Core.Results;
 using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
 using FlowChat.SocialGraphService.Application.Contracts.Persistence;
@@ -7,7 +8,7 @@ using ContactAggregate = FlowChat.SocialGraphService.Domain.Entities.Contact.Con
 
 namespace FlowChat.SocialGraphService.Application.Features.Contact.Commands.AddContact;
 
-public sealed class AddContactCommandHandler : CommandHandlerBase<AddContactCommand, Guid>
+public sealed class AddContactCommandHandler : IdempotentCommandHandlerBase<AddContactCommand, Guid>
 {
     private readonly IContactWriteRepository _contactWriteRepository;
     private readonly IUserProfileProjectionReadRepository _userProfileProjectionReadRepository;
@@ -17,13 +18,28 @@ public sealed class AddContactCommandHandler : CommandHandlerBase<AddContactComm
         IContactWriteRepository contactWriteRepository,
         IUserProfileProjectionReadRepository userProfileProjectionReadRepository,
         IUnitOfWork unitOfWork,
-        IDomainEventDispatcher domainEventDispatcher) : base(domainEventDispatcher, unitOfWork)
+        IDomainEventDispatcher domainEventDispatcher,
+        IDbUpdateExceptionClassifier dbUpdateExceptionClassifier)
+        : base(domainEventDispatcher, unitOfWork, dbUpdateExceptionClassifier)
     {
         _contactWriteRepository = contactWriteRepository;
         _userProfileProjectionReadRepository = userProfileProjectionReadRepository;
     }
 
-    protected override async Task<FlowChatResult<Guid>> ExecuteAsync(
+    protected override async Task<(bool Found, Guid Value)> TryGetExistingResponseAsync(
+        AddContactCommand request,
+        CancellationToken cancellationToken)
+    {
+        var contact = await _contactWriteRepository.GetByIdAsync(request.Id, cancellationToken);
+        if (contact is null || contact.OwnerUserId != request.OwnerUserId)
+        {
+            return (false, default);
+        }
+
+        return (true, contact.Id.Value);
+    }
+
+    protected override async Task<FlowChatResult<Guid>> ExecuteCommandAsync(
         AddContactCommand request,
         CancellationToken cancellationToken)
     {
@@ -63,8 +79,11 @@ public sealed class AddContactCommandHandler : CommandHandlerBase<AddContactComm
         return FlowChatResult<Guid>.Success(_contact.Id.Value);
     }
 
-    protected override IAggregateRoot? GetAggregateRoot(FlowChatResult<Guid> result) =>
-        result.IsSuccess ? _contact : null;
+    protected override IAggregateRoot? GetExecutedAggregateRoot(IdempotentCommandResult<Guid> result) =>
+        _contact;
+
+    protected override string GetIdempotencyConflictKey(AddContactCommand request) =>
+        AddContactCommand.IdempotencyConflictKey;
 
     private async Task<UserProfileProjectionDto?> GetUserProfileProjectionAsync(
         AddContactCommand request,

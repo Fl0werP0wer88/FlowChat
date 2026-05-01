@@ -1,4 +1,4 @@
-import { postForm, postJson } from "../../api/httpClient";
+import { postForm, putJson } from "../../api/httpClient";
 import type {
   AuthSession,
   AuthTokenResponseDto,
@@ -94,5 +94,5 @@ export async function registerUser(values: RegisterFormValues): Promise<void> {
     organization: values.organization.trim() || undefined,
   };
 
-  await postJson<unknown, RegisterPayload>("/api/users", payload);
+  await putJson<unknown, RegisterPayload>("/api/users", payload);
 }

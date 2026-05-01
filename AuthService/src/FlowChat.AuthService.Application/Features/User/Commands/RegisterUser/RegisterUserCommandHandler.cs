@@ -1,6 +1,7 @@
 using FlowChat.Shared.Application;
 using FlowChat.AuthService.Application.Contracts.Infrastructure;
 using FlowChat.AuthService.Application.Contracts.Persistence;
+using FlowChat.Core.Results;
 using FlowChat.AuthService.Domain.Entities.Account;
 using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
@@ -8,7 +9,8 @@ using DomainAccount = FlowChat.AuthService.Domain.Entities.Account.Account;
 
 namespace FlowChat.AuthService.Application.Features.User.Commands.RegisterUser;
 
-public class RegisterUserCommandHandler : CommandHandlerBase<RegisterUserCommand, RegisterUserCommandResponse>
+public class RegisterUserCommandHandler
+    : IdempotentCommandHandlerBase<RegisterUserCommand, RegisterUserCommandResponse>
 {
     private readonly IAccountRepository _accountRepository;
     private readonly IPasswordHashingService _passwordHashingService;
@@ -18,13 +20,32 @@ public class RegisterUserCommandHandler : CommandHandlerBase<RegisterUserCommand
         IAccountRepository accountRepository,
         IPasswordHashingService passwordHashingService,
         IUnitOfWork unitOfWork,
-        IDomainEventDispatcher domainEventDispatcher) : base(domainEventDispatcher, unitOfWork)
+        IDomainEventDispatcher domainEventDispatcher,
+        IDbUpdateExceptionClassifier dbUpdateExceptionClassifier)
+        : base(domainEventDispatcher, unitOfWork, dbUpdateExceptionClassifier)
     {
         _accountRepository = accountRepository;
         _passwordHashingService = passwordHashingService;
     }
 
-    protected override async Task<FlowChatResult<RegisterUserCommandResponse>> ExecuteAsync(RegisterUserCommand request, CancellationToken cancellationToken)
+    protected override async Task<(bool Found, RegisterUserCommandResponse Value)> TryGetExistingResponseAsync(
+        RegisterUserCommand request,
+        CancellationToken cancellationToken)
+    {
+        var account = await _accountRepository.GetByIdAsync(request.Id, cancellationToken);
+        if (account is null
+            || account.FriendlyUserId.Value != FriendlyUserId.Create(request.FriendlyUserId).Value
+            || account.Email.Value != EmailAddress.Create(request.Email).Value)
+        {
+            return (false, default!);
+        }
+
+        return (true, new RegisterUserCommandResponse { Id = account.Id.Value });
+    }
+
+    protected override async Task<FlowChatResult<RegisterUserCommandResponse>> ExecuteCommandAsync(
+        RegisterUserCommand request,
+        CancellationToken cancellationToken)
     {
         var emailAddress = EmailAddress.Create(request.Email);
         if (await _accountRepository.GetByEmailAsync(emailAddress, cancellationToken) is not null)
@@ -58,9 +79,10 @@ public class RegisterUserCommandHandler : CommandHandlerBase<RegisterUserCommand
             });
     }
 
-    protected override IAggregateRoot? GetAggregateRoot(FlowChatResult<RegisterUserCommandResponse> result)
-    {
-        return _account;
-    }
+    protected override IAggregateRoot? GetExecutedAggregateRoot(IdempotentCommandResult<RegisterUserCommandResponse> result) =>
+        _account;
+
+    protected override string GetIdempotencyConflictKey(RegisterUserCommand request) =>
+        RegisterUserCommand.IdempotencyConflictKey;
 }
 

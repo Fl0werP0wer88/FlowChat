@@ -1,4 +1,4 @@
-import { getJson, postJson } from "../../api/httpClient";
+import { getJson, putJson } from "../../api/httpClient";
 import type { Contact } from "../../types/contacts";
 
 interface ContactDto {
@@ -149,7 +149,7 @@ export async function addContact(
       : { friendlyUserId: trimmedLookupValue }),
   };
 
-  const response = await postJson<AddContactResponseDto, AddContactPayload>("/api/contacts", payload, {
+  const response = await putJson<AddContactResponseDto, AddContactPayload>("/api/contacts", payload, {
     accessToken,
   });
 
@@ -165,7 +165,7 @@ export async function addContactByUserId(
     userId,
   };
 
-  const response = await postJson<AddContactResponseDto, typeof payload>("/api/contacts", payload, {
+  const response = await putJson<AddContactResponseDto, typeof payload>("/api/contacts", payload, {
     accessToken,
   });
 

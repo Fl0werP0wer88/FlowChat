@@ -10,11 +10,11 @@ public sealed class AddEmailControllerTests(UserProfileApiFactory factory)
     private readonly HttpClient _client = factory.CreateClient();
 
     [Fact]
-    public async Task AddEmail_WithValidRequest_Returns200WithEmailId()
+    public async Task AddEmail_WithValidRequest_Returns201WithEmailId()
     {
         var userId = await CreateUserProfileAsync();
 
-        var request = new HttpRequestMessage(HttpMethod.Post, "/api/userprofiles/emails")
+        var request = new HttpRequestMessage(HttpMethod.Put, "/api/userprofiles/emails")
         {
             Content = JsonContent.Create(new { EmailId = Guid.NewGuid(), Address = $"new_{userId:N}@example.com" })
         };
@@ -22,7 +22,7 @@ public sealed class AddEmailControllerTests(UserProfileApiFactory factory)
 
         var response = await _client.SendAsync(request);
 
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        response.StatusCode.Should().Be(HttpStatusCode.Created);
         var body = await response.Content.ReadFromJsonAsync<AddEmailResponse>();
         body.Should().NotBeNull();
         body!.EmailId.Should().NotBeEmpty();
@@ -31,7 +31,7 @@ public sealed class AddEmailControllerTests(UserProfileApiFactory factory)
     [Fact]
     public async Task AddEmail_WhenProfileNotFound_Returns404NotFound()
     {
-        var request = new HttpRequestMessage(HttpMethod.Post, "/api/userprofiles/emails")
+        var request = new HttpRequestMessage(HttpMethod.Put, "/api/userprofiles/emails")
         {
             Content = JsonContent.Create(new { Address = "any@example.com" })
         };
@@ -48,14 +48,14 @@ public sealed class AddEmailControllerTests(UserProfileApiFactory factory)
         var userId = await CreateUserProfileAsync();
         var duplicateEmail = $"dup_{userId:N}@example.com";
 
-        var addFirst = new HttpRequestMessage(HttpMethod.Post, "/api/userprofiles/emails")
+        var addFirst = new HttpRequestMessage(HttpMethod.Put, "/api/userprofiles/emails")
         {
             Content = JsonContent.Create(new { EmailId = Guid.NewGuid(), Address = duplicateEmail })
         };
         addFirst.Headers.Add(TestAuthenticationHandler.UserIdHeaderName, userId.ToString("D"));
         await _client.SendAsync(addFirst);
 
-        var addSecond = new HttpRequestMessage(HttpMethod.Post, "/api/userprofiles/emails")
+        var addSecond = new HttpRequestMessage(HttpMethod.Put, "/api/userprofiles/emails")
         {
             Content = JsonContent.Create(new { EmailId = Guid.NewGuid(), Address = duplicateEmail })
         };
@@ -70,7 +70,7 @@ public sealed class AddEmailControllerTests(UserProfileApiFactory factory)
     {
         var userId = await CreateUserProfileAsync();
 
-        var request = new HttpRequestMessage(HttpMethod.Post, "/api/userprofiles/emails")
+        var request = new HttpRequestMessage(HttpMethod.Put, "/api/userprofiles/emails")
         {
             Content = JsonContent.Create(new { EmailId = Guid.NewGuid(), Address = "not-a-valid-email" })
         };
@@ -86,7 +86,7 @@ public sealed class AddEmailControllerTests(UserProfileApiFactory factory)
     {
         var userId = await CreateUserProfileAsync();
 
-        var request = new HttpRequestMessage(HttpMethod.Post, "/api/userprofiles/emails")
+        var request = new HttpRequestMessage(HttpMethod.Put, "/api/userprofiles/emails")
         {
             Content = JsonContent.Create(new { EmailId = Guid.NewGuid(), Address = (string?)null })
         };

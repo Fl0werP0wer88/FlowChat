@@ -81,7 +81,7 @@ public sealed class SetMainEmailControllerTests(UserProfileApiFactory factory)
         var profile = await profileResponse.Content.ReadFromJsonAsync<GetUserProfileResponse>();
         var firstEmailId = profile!.UserProfile.Emails[0].Id;
 
-        var addEmail = new HttpRequestMessage(HttpMethod.Post, "/api/userprofiles/emails")
+        var addEmail = new HttpRequestMessage(HttpMethod.Put, "/api/userprofiles/emails")
         {
             Content = JsonContent.Create(new { Address = $"second_{userId:N}@example.com" })
         };

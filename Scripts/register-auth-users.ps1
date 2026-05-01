@@ -302,7 +302,7 @@ for ($index = 0; $index -lt $users.Count; $index++) {
 
     try {
         $response = Invoke-RestMethod `
-            -Method Post `
+            -Method Put `
             -Uri $registerUserUri `
             -ContentType 'application/json' `
             -Body $payload

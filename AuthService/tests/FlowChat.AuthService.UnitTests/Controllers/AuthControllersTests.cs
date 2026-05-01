@@ -8,6 +8,7 @@ using FlowChat.AuthService.Application.Features.User.Commands.ChangeAuthEmail;
 using FlowChat.AuthService.Application.Features.User.Commands.RegisterUser;
 using FlowChat.AuthService.Infrastructure.Configuration.Settings;
 using FlowChat.Core.Contracts;
+using FlowChat.Core.Results;
 using FluentAssertions;
 using MediatR;
 using Microsoft.AspNetCore.Http;
@@ -21,12 +22,45 @@ namespace FlowChat.AuthService.UnitTests;
 public sealed class AuthControllersTests
 {
     [Fact]
-    public async Task RegisterUserController_WhenMediatorReturnsSuccess_ReturnsOk()
+    public async Task RegisterUserController_WhenMediatorReturnsSuccess_ReturnsCreated()
     {
         var mediatorMock = new Mock<IMediator>();
         mediatorMock
             .Setup(x => x.Send(It.IsAny<RegisterUserCommand>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(FlowChatResult<RegisterUserCommandResponse>.Success(new RegisterUserCommandResponse { Id = Guid.NewGuid() }));
+            .ReturnsAsync(FlowChatResult<IdempotentCommandResult<RegisterUserCommandResponse>>.Success(
+                new IdempotentCommandResult<RegisterUserCommandResponse>(
+                    new RegisterUserCommandResponse { Id = Guid.NewGuid() },
+                    WasAlreadyProcessed: false)));
+
+        var controller = CreateController(new RegisterUserController(mediatorMock.Object, CreateMapper()));
+
+        var result = await controller.Create(
+            new RegisterUserRequest
+            {
+                Id = Guid.NewGuid(),
+                FriendlyUserId = "flower",
+                Email = "flower@example.com",
+                Password = "P@ssw0rd!",
+                FirstName = "Flower",
+                LastName = "Power",
+                Organization = "FlowChat"
+            },
+            CancellationToken.None);
+
+        var created = result.Should().BeOfType<ObjectResult>().Subject;
+        created.StatusCode.Should().Be(StatusCodes.Status201Created);
+    }
+
+    [Fact]
+    public async Task RegisterUserController_WhenMediatorReturnsAlreadyProcessed_ReturnsOk()
+    {
+        var mediatorMock = new Mock<IMediator>();
+        mediatorMock
+            .Setup(x => x.Send(It.IsAny<RegisterUserCommand>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(FlowChatResult<IdempotentCommandResult<RegisterUserCommandResponse>>.Success(
+                new IdempotentCommandResult<RegisterUserCommandResponse>(
+                    new RegisterUserCommandResponse { Id = Guid.NewGuid() },
+                    WasAlreadyProcessed: true)));
 
         var controller = CreateController(new RegisterUserController(mediatorMock.Object, CreateMapper()));
 

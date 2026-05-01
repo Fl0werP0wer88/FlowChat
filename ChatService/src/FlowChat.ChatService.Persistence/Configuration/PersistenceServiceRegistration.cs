@@ -1,5 +1,6 @@
 using FlowChat.Shared.Application;
 using FlowChat.ChatService.Application.Contracts.Persistence;
+using FlowChat.ChatService.Application.Features.ChatMessage.Commands.SendChatMessage;
 using FlowChat.ChatService.Persistence.Repositories;
 using FlowChat.Shared.Persistance.Auditing;
 using FlowChat.Shared.Infrastructure.Silverback.Persistence;
@@ -15,7 +16,11 @@ public static class PersistenceServiceRegistration
     public static IServiceCollection AddApiPersistenceServices(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddScoped<EntityBaseSaveChangesInterceptor>();
-        services.AddPostgresDbUpdateExceptionClassifier();
+        services.AddPostgresDbUpdateExceptionClassifier(options =>
+        {
+            options.UniqueConstraintNamesByIdempotencyConflictKey[SendChatMessageCommand.IdempotencyConflictKey] =
+                ["PK_ChatMessages"];
+        });
         services.AddScoped<IUnitOfWork, SilverbackEfUnitOfWork<AppDbContext>>();
         services.AddDbContext<AppDbContext>((serviceProvider, options) =>
             options.UseNpgsql(configuration.GetConnectionString("ChatDb"))

@@ -18,7 +18,8 @@ public sealed class SendChatMessageController : ApiControllerBase
         _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
     }
 
-    [HttpPost]
+    [HttpPut]
+    [ProducesResponseType(typeof(SendChatMessageResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(SendChatMessageResponse), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
@@ -43,8 +44,14 @@ public sealed class SendChatMessageController : ApiControllerBase
                 request.Text),
             cancellationToken);
 
-        return result.IsSuccess
-            ? StatusCode(StatusCodes.Status201Created, new SendChatMessageResponse(result.Value))
-            : HandleError(result.Error);
+        if (!result.IsSuccess)
+        {
+            return HandleError(result.Error);
+        }
+
+        var response = new SendChatMessageResponse(result.Value.Value);
+        return result.Value.WasAlreadyProcessed
+            ? Ok(response)
+            : StatusCode(StatusCodes.Status201Created, response);
     }
 }

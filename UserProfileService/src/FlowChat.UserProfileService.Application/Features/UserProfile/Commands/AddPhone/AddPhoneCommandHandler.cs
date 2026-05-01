@@ -1,4 +1,5 @@
 using FlowChat.Shared.Application;
+using FlowChat.Core.Results;
 using FlowChat.Shared.Domain;
 using FlowChat.UserProfileService.Application.Contracts.Persistence;
 using FlowChat.UserProfileService.Domain.Entities.EmailVerificationRequest;
@@ -9,7 +10,7 @@ using UserProfileAggregate = FlowChat.UserProfileService.Domain.Entities.UserPro
 namespace FlowChat.UserProfileService.Application.Features.UserProfile.Commands.AddPhone;
 
 public sealed class AddPhoneCommandHandler
-    : CommandHandlerBase<AddPhoneCommand, Guid>
+    : IdempotentCommandHandlerBase<AddPhoneCommand, Guid>
 {
     private readonly IUserProfileWriteRepository _userProfileRepository;
     private UserProfileAggregate? _userProfile;
@@ -17,12 +18,26 @@ public sealed class AddPhoneCommandHandler
     public AddPhoneCommandHandler(
         IUserProfileWriteRepository userProfileRepository,
         IUnitOfWork unitOfWork,
-        IDomainEventDispatcher domainEventDispatcher) : base(domainEventDispatcher, unitOfWork)
+        IDomainEventDispatcher domainEventDispatcher,
+        IDbUpdateExceptionClassifier dbUpdateExceptionClassifier)
+        : base(domainEventDispatcher, unitOfWork, dbUpdateExceptionClassifier)
     {
         _userProfileRepository = userProfileRepository;
     }
 
-    protected override async Task<FlowChatResult<Guid>> ExecuteAsync(
+    protected override async Task<(bool Found, Guid Value)> TryGetExistingResponseAsync(
+        AddPhoneCommand request,
+        CancellationToken cancellationToken)
+    {
+        var userProfile = await _userProfileRepository.GetByIdAsync(request.UserId, cancellationToken);
+        var phone = userProfile?.Phones.FirstOrDefault(x => x.Id.Value == request.PhoneId);
+
+        return phone is null
+            ? (false, default)
+            : (true, phone.Id.Value);
+    }
+
+    protected override async Task<FlowChatResult<Guid>> ExecuteCommandAsync(
         AddPhoneCommand request,
         CancellationToken cancellationToken)
     {
@@ -47,9 +62,10 @@ public sealed class AddPhoneCommandHandler
         return FlowChatResult<Guid>.Success(phone.Id.Value);
     }
 
-    protected override IAggregateRoot? GetAggregateRoot(FlowChatResult<Guid> result)
-    {
-        return result.IsSuccess ? _userProfile : null;
-    }
+    protected override IAggregateRoot? GetExecutedAggregateRoot(IdempotentCommandResult<Guid> result) =>
+        _userProfile;
+
+    protected override string GetIdempotencyConflictKey(AddPhoneCommand request) =>
+        AddPhoneCommand.IdempotencyConflictKey;
 }
 

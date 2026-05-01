@@ -1,5 +1,6 @@
 using FlowChat.Shared.Application;
 using FlowChat.AuthService.Application.Contracts.Persistence;
+using FlowChat.AuthService.Application.Features.User.Commands.RegisterUser;
 using FlowChat.Shared.Infrastructure.Silverback.Persistence;
 using FlowChat.Shared.Persistance;
 using FlowChat.Shared.Persistance.Auditing;
@@ -16,7 +17,11 @@ public static class PersistenceServiceRegistration
                             this IServiceCollection services, IConfiguration configuration)
     {
         services.AddScoped<EntityBaseSaveChangesInterceptor>();
-        services.AddPostgresDbUpdateExceptionClassifier();
+        services.AddPostgresDbUpdateExceptionClassifier(options =>
+        {
+            options.UniqueConstraintNamesByIdempotencyConflictKey[RegisterUserCommand.IdempotencyConflictKey] =
+                ["PK_Accounts"];
+        });
         services.AddScoped<IUnitOfWork, SilverbackEfUnitOfWork<AppDbContext>>();
 
         services.AddDbContext<AppDbContext>((serviceProvider, options) =>

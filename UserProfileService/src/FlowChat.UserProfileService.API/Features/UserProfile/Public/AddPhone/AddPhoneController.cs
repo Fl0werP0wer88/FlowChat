@@ -18,8 +18,9 @@ public sealed class AddPhoneController : ApiControllerBase
         _mediator = mediator;
     }
 
-    [HttpPost("phones")]
+    [HttpPut("phones")]
     [ProducesResponseType(typeof(AddPhoneResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(AddPhoneResponse), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
@@ -36,8 +37,14 @@ public sealed class AddPhoneController : ApiControllerBase
 
         var result = await _mediator.Send(new AddPhoneCommand(userId, request.PhoneId, request.Number), cancellationToken);
 
-        return result.IsSuccess
-            ? Ok(new AddPhoneResponse(result.Value))
-            : HandleError(result.Error);
+        if (!result.IsSuccess)
+        {
+            return HandleError(result.Error);
+        }
+
+        var response = new AddPhoneResponse(result.Value.Value);
+        return result.Value.WasAlreadyProcessed
+            ? Ok(response)
+            : StatusCode(StatusCodes.Status201Created, response);
     }
 }

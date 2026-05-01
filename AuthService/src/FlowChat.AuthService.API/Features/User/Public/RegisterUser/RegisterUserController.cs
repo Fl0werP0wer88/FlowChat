@@ -19,8 +19,9 @@ public sealed class RegisterUserController : ApiControllerBase
         _mapper = mapper;
     }
 
-    [HttpPost]
+    [HttpPut]
     [ProducesResponseType(typeof(RegisterUserResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(RegisterUserResponse), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
@@ -29,9 +30,15 @@ public sealed class RegisterUserController : ApiControllerBase
         var command = _mapper.Map<RegisterUserCommand>(request);
         var response = await _mediator.Send(command, cancellationToken);
 
-        return response.IsSuccess
-            ? Ok(_mapper.Map<RegisterUserResponse>(response.Value))
-            : HandleError(response.Error);
+        if (!response.IsSuccess)
+        {
+            return HandleError(response.Error);
+        }
+
+        var body = _mapper.Map<RegisterUserResponse>(response.Value.Value);
+        return response.Value.WasAlreadyProcessed
+            ? Ok(body)
+            : StatusCode(StatusCodes.Status201Created, body);
     }
 }
 
