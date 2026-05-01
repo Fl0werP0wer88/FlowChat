@@ -15,7 +15,8 @@
     }
   }
 
-  9. Pamiętać że RealTimeService robi routing dzieki wpisom adresów instancji w settings . Docolowo raczej tak nie bedzie . Przy depoyowaniu na ks trzeba bedzie to przerobić.
+  9. Pamiętać że RealTimeService robi routing dzieki wpisom adresów instancji w settings . Docolowo raczej tak nie bedzie . Przy depoyowaniu na k8s trzeba bedzie to przerobić.
 
 10. jest literówka w nazwie projektu w common Persistance. Powinno być Persistence. zrobic rename
 11. Ustalić politykę EnableRetryOnFailure dla transakcji UOW. Wypdałoby żeby np. concurrency error były re-tryowane.
+12. REtry topicki (I może nawet DLQ) nir mogą być per IntegrationEvent a raczej minimalnie per konsumujący serwis. W przeciwnym razie jak jest kilku konsumentów i  jeden wrzuci na topic retry to wtedy wszystkie będą re-procesowały event.
