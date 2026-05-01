@@ -1,3 +1,4 @@
+using FlowChat.Core.Results;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
@@ -8,6 +9,7 @@ using FlowChat.UserProfileService.Application.Features.UserProfile.EmailVerifica
 using FlowChat.UserProfileService.Domain.Entities.EmailVerificationRequest;
 using FlowChat.UserProfileService.Domain.Entities.UserProfile;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 
 namespace FlowChat.UserProfileService.UnitTests;
 
@@ -36,11 +38,16 @@ public sealed class ConfirmEmailVerificationCommandHandlerTests
             .Setup(x => x.GetByNonceAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((EmailVerificationRequest?)null);
 
+        _verificationRequestRepositoryMock
+            .Setup(x => x.GetConfirmationStateByNonceAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((EmailVerificationConfirmationState?)null);
+
         _unitOfWorkMock
             .Setup(x => x.ExecuteInTransactionAsync(
-                It.IsAny<Func<CancellationToken, Task<FlowChatResult<Unit>>>>(),
+                It.IsAny<Func<CancellationToken, Task<FlowChatResult<IdempotentCommandResult<Unit>>>>>(),
                 It.IsAny<CancellationToken>()))
-            .Returns<Func<CancellationToken, Task<FlowChatResult<Unit>>>, CancellationToken>((op, ct) => op(ct));
+            .Returns<Func<CancellationToken, Task<FlowChatResult<IdempotentCommandResult<Unit>>>>, CancellationToken>(
+                (op, ct) => op(ct));
 
         _handler = new ConfirmEmailVerificationCommandHandler(
             _userProfileRepositoryMock.Object,
@@ -50,7 +57,7 @@ public sealed class ConfirmEmailVerificationCommandHandlerTests
             _dispatcherMock.Object);
     }
 
-    private async Task<FlowChatResult<Unit>> SendAsync(ConfirmEmailVerificationCommand command)
+    private async Task<FlowChatResult<IdempotentCommandResult<Unit>>> SendAsync(ConfirmEmailVerificationCommand command)
     {
         var validator = new ConfirmEmailVerificationCommandValidator();
         var validationResult = await validator.ValidateAsync(command);
@@ -58,7 +65,7 @@ public sealed class ConfirmEmailVerificationCommandHandlerTests
         if (!validationResult.IsValid)
         {
             var errors = validationResult.Errors.Select(e => e.ErrorMessage).ToList();
-            return FlowChatResult<Unit>.Failure(DomainError.Validation(errors: errors));
+            return FlowChatResult<IdempotentCommandResult<Unit>>.Failure(DomainError.Validation(errors: errors));
         }
 
         return await _handler.Handle(command, CancellationToken.None);
@@ -99,7 +106,8 @@ public sealed class ConfirmEmailVerificationCommandHandlerTests
         var result = await SendAsync(new ConfirmEmailVerificationCommand("valid-token"));
 
         result.IsSuccess.Should().BeTrue();
-        result.Value.Should().Be(Unit.Value);
+        result.Value.Value.Should().Be(Unit.Value);
+        result.Value.WasAlreadyProcessed.Should().BeFalse();
         email.IsConfirmed.Should().BeTrue();
         verificationRequest.ConsumedAtUtc.Should().NotBeNull();
     }
@@ -117,10 +125,12 @@ public sealed class ConfirmEmailVerificationCommandHandlerTests
     }
 
     [Fact]
-    public async Task Handle_WithConsumedRequest_ReturnsValidationFailure()
+    public async Task Handle_WithConsumedRequestAndConfirmedEmail_ReturnsSuccess()
     {
         var profile = CreateUserProfile("john@example.com");
         var email = profile.Emails.Should().ContainSingle().Subject;
+        profile.ConfirmEmail(email.Id);
+        profile.ClearEvents();
         var verificationRequest = EmailVerificationRequest.Create(
             Id<EmailVerificationRequest>.New(),
             profile.Id,
@@ -138,7 +148,44 @@ public sealed class ConfirmEmailVerificationCommandHandlerTests
             .Setup(x => x.GetByNonceAsync("used-nonce", It.IsAny<CancellationToken>()))
             .ReturnsAsync(verificationRequest);
 
+        _userProfileRepositoryMock
+            .Setup(x => x.GetByIdAsync(profile.Id.Value, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(profile);
+
         var result = await SendAsync(new ConfirmEmailVerificationCommand("used-token"));
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Value.Should().Be(Unit.Value);
+        result.Value.WasAlreadyProcessed.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task Handle_WithConsumedRequestAndUnconfirmedEmail_ReturnsValidationFailure()
+    {
+        var profile = CreateUserProfile("john@example.com");
+        var email = profile.Emails.Should().ContainSingle().Subject;
+        var verificationRequest = EmailVerificationRequest.Create(
+            Id<EmailVerificationRequest>.New(),
+            profile.Id,
+            email.Id,
+            "used-unconfirmed-nonce",
+            DateTimeOffset.UtcNow.AddHours(24));
+        verificationRequest.Consume(DateTimeOffset.UtcNow);
+
+        var payload = new EmailVerificationTokenPayload(profile.Id.Value, email.Id.Value, verificationRequest.Nonce);
+        _tokenProtectorMock
+            .Setup(x => x.TryUnprotect("used-unconfirmed-token", out payload))
+            .Returns(true);
+
+        _verificationRequestRepositoryMock
+            .Setup(x => x.GetByNonceAsync("used-unconfirmed-nonce", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(verificationRequest);
+
+        _userProfileRepositoryMock
+            .Setup(x => x.GetByIdAsync(profile.Id.Value, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(profile);
+
+        var result = await SendAsync(new ConfirmEmailVerificationCommand("used-unconfirmed-token"));
 
         result.IsFailure.Should().BeTrue();
         result.Error.ErrorType.Should().Be(ErrorType.Validation);
@@ -201,5 +248,56 @@ public sealed class ConfirmEmailVerificationCommandHandlerTests
         result.IsFailure.Should().BeTrue();
         result.Error.ErrorType.Should().Be(ErrorType.Validation);
         result.Error.ErrorMessage.Should().Be("Email verification link is invalid or has expired.");
+    }
+
+    [Fact]
+    public async Task Handle_WhenConcurrencyConflictButEmailWasConfirmedBySameToken_ReturnsSuccess()
+    {
+        var profile = CreateUserProfile("john@example.com");
+        var email = profile.Emails.Should().ContainSingle().Subject;
+        var verificationRequest = EmailVerificationRequest.Create(
+            Id<EmailVerificationRequest>.New(),
+            profile.Id,
+            email.Id,
+            "concurrency-nonce",
+            DateTimeOffset.UtcNow.AddHours(24));
+
+        var payload = new EmailVerificationTokenPayload(profile.Id.Value, email.Id.Value, verificationRequest.Nonce);
+        _tokenProtectorMock
+            .Setup(x => x.TryUnprotect("concurrency-token", out payload))
+            .Returns(true);
+
+        _verificationRequestRepositoryMock
+            .Setup(x => x.GetByNonceAsync("concurrency-nonce", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(verificationRequest);
+
+        _verificationRequestRepositoryMock
+            .Setup(x => x.GetConfirmationStateByNonceAsync("concurrency-nonce", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new EmailVerificationConfirmationState(
+                profile.Id.Value,
+                email.Id.Value,
+                InvalidatedAtUtc: null,
+                ConsumedAtUtc: UtcDateTimeOffset.UtcNow,
+                EmailIsConfirmed: true));
+
+        _userProfileRepositoryMock
+            .Setup(x => x.GetByIdAsync(profile.Id.Value, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(profile);
+
+        _unitOfWorkMock
+            .Setup(x => x.ExecuteInTransactionAsync(
+                It.IsAny<Func<CancellationToken, Task<FlowChatResult<IdempotentCommandResult<Unit>>>>>(),
+                It.IsAny<CancellationToken>()))
+            .Returns<Func<CancellationToken, Task<FlowChatResult<IdempotentCommandResult<Unit>>>>, CancellationToken>(async (op, ct) =>
+            {
+                await op(ct);
+                throw new DbUpdateConcurrencyException("Concurrency conflict.");
+            });
+
+        var result = await SendAsync(new ConfirmEmailVerificationCommand("concurrency-token"));
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Value.Should().Be(Unit.Value);
+        result.Value.WasAlreadyProcessed.Should().BeTrue();
     }
 }

@@ -1,16 +1,19 @@
+using FlowChat.Core.Results;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
 using FlowChat.UserProfileService.Application.Contracts.Infrastructure;
 using FlowChat.UserProfileService.Application.Contracts.Persistence;
+using FlowChat.UserProfileService.Application.Features.UserProfile.EmailVerification;
 using FlowChat.UserProfileService.Domain.Entities.EmailVerificationRequest;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using UserProfileAggregate = FlowChat.UserProfileService.Domain.Entities.UserProfile.UserProfile;
 
 namespace FlowChat.UserProfileService.Application.Features.UserProfile.Commands.ConfirmEmailVerification;
 
 public sealed class ConfirmEmailVerificationCommandHandler
-    : CommandHandlerBase<ConfirmEmailVerificationCommand, Unit>
+    : CommandHandlerBase<ConfirmEmailVerificationCommand, IdempotentCommandResult<Unit>>
 {
     // Single generic message for all token failure cases — prevents callers from probing
     // whether a token exists, has been consumed, or belongs to a different user.
@@ -33,13 +36,13 @@ public sealed class ConfirmEmailVerificationCommandHandler
         _emailVerificationTokenProtector = emailVerificationTokenProtector;
     }
 
-    protected override async Task<FlowChatResult<Unit>> ExecuteAsync(
+    protected override async Task<FlowChatResult<IdempotentCommandResult<Unit>>> ExecuteAsync(
         ConfirmEmailVerificationCommand request,
         CancellationToken cancellationToken)
     {
         if (!_emailVerificationTokenProtector.TryUnprotect(request.Token, out var payload) || payload is null)
         {
-            return FlowChatResult<Unit>.Failure(DomainError.Validation(InvalidTokenMessage));
+            return ValidationFailure();
         }
 
         var verificationRequest = await _emailVerificationRequestWriteRepository
@@ -51,36 +54,96 @@ public sealed class ConfirmEmailVerificationCommandHandler
             || verificationRequest.UserProfileId.Value != payload.UserProfileId
             || verificationRequest.EmailId.Value != payload.EmailId)
         {
-            return FlowChatResult<Unit>.Failure(DomainError.Validation(InvalidTokenMessage));
+            return ValidationFailure();
         }
 
         var nowUtc = UtcDateTimeOffset.UtcNow;
-        if (!verificationRequest.IsActive(nowUtc))
+        if (verificationRequest.InvalidatedAtUtc is not null)
         {
-            return FlowChatResult<Unit>.Failure(DomainError.Validation(InvalidTokenMessage));
+            return ValidationFailure();
+        }
+
+        if (verificationRequest.ConsumedAtUtc is null && verificationRequest.IsExpired(nowUtc))
+        {
+            return ValidationFailure();
         }
 
         _userProfile = await _userProfileWriteRepository.GetByIdAsync(payload.UserProfileId, cancellationToken);
         if (_userProfile is null)
         {
-            return FlowChatResult<Unit>.Failure(DomainError.NotFound($"User profile '{payload.UserProfileId}' was not found."));
+            return FlowChatResult<IdempotentCommandResult<Unit>>.Failure(
+                DomainError.NotFound($"User profile '{payload.UserProfileId}' was not found."));
         }
 
         var email = _userProfile.Emails.FirstOrDefault(x => x.Id.Value == payload.EmailId);
         if (email is null)
         {
-            return FlowChatResult<Unit>.Failure(
+            return FlowChatResult<IdempotentCommandResult<Unit>>.Failure(
                 DomainError.NotFound($"Email '{payload.EmailId}' was not found for user profile '{payload.UserProfileId}'."));
+        }
+
+        if (verificationRequest.ConsumedAtUtc is not null)
+        {
+            return email.IsConfirmed
+                ? Success(wasAlreadyProcessed: true)
+                : ValidationFailure();
         }
 
         _userProfile.ConfirmEmail(email.Id);
         verificationRequest.Consume(nowUtc);
 
-        return FlowChatResult<Unit>.Success(Unit.Value);
+        return Success(wasAlreadyProcessed: false);
     }
 
-    protected override IAggregateRoot? GetAggregateRoot(FlowChatResult<Unit> result)
+    protected override async Task<FlowChatResult<IdempotentCommandResult<Unit>>> HandleDbUpdateExceptionAsync(
+        ConfirmEmailVerificationCommand request,
+        DbUpdateException exception,
+        CancellationToken cancellationToken)
     {
-        return result.IsSuccess ? _userProfile : null;
+        if (exception is not DbUpdateConcurrencyException
+            || !_emailVerificationTokenProtector.TryUnprotect(request.Token, out var payload)
+            || payload is null)
+        {
+            return await base.HandleDbUpdateExceptionAsync(request, exception, cancellationToken);
+        }
+
+        var confirmationState = await _emailVerificationRequestWriteRepository
+            .GetConfirmationStateByNonceAsync(payload.Nonce, cancellationToken);
+
+        if (IsConfirmedBySameToken(payload, confirmationState))
+        {
+            return Success(wasAlreadyProcessed: true);
+        }
+
+        return await base.HandleDbUpdateExceptionAsync(request, exception, cancellationToken);
+    }
+
+    protected override IAggregateRoot? GetAggregateRoot(FlowChatResult<IdempotentCommandResult<Unit>> result)
+    {
+        return result.IsSuccess && !result.Value.WasAlreadyProcessed ? _userProfile : null;
+    }
+
+    private static bool IsConfirmedBySameToken(
+        EmailVerificationTokenPayload payload,
+        EmailVerificationConfirmationState? confirmationState)
+    {
+        return confirmationState is not null
+            && confirmationState.UserProfileId == payload.UserProfileId
+            && confirmationState.EmailId == payload.EmailId
+            && confirmationState.InvalidatedAtUtc is null
+            && confirmationState.ConsumedAtUtc is not null
+            && confirmationState.EmailIsConfirmed;
+    }
+
+    private static FlowChatResult<IdempotentCommandResult<Unit>> Success(bool wasAlreadyProcessed)
+    {
+        return FlowChatResult<IdempotentCommandResult<Unit>>.Success(
+            new IdempotentCommandResult<Unit>(Unit.Value, wasAlreadyProcessed));
+    }
+
+    private static FlowChatResult<IdempotentCommandResult<Unit>> ValidationFailure()
+    {
+        return FlowChatResult<IdempotentCommandResult<Unit>>.Failure(
+            DomainError.Validation(InvalidTokenMessage));
     }
 }

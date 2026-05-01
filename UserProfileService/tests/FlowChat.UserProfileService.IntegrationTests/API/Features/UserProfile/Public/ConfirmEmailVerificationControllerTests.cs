@@ -53,7 +53,7 @@ public sealed class ConfirmEmailVerificationControllerTests(UserProfileApiFactor
     }
 
     [Fact]
-    public async Task ConfirmEmailVerification_WithAlreadyConsumedToken_Returns400BadRequest()
+    public async Task ConfirmEmailVerification_WithAlreadyConsumedToken_Returns200Ok()
     {
         var (userId, emailId) = await CreateProfileAndGetEmailIdAsync();
 
@@ -68,7 +68,7 @@ public sealed class ConfirmEmailVerificationControllerTests(UserProfileApiFactor
             "/api/userprofiles/email-verification/confirm",
             new { Token = token });
 
-        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
     private async Task<(Guid UserId, Guid EmailId)> CreateProfileAndGetEmailIdAsync()

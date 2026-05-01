@@ -45,4 +45,25 @@ public sealed class EmailVerificationRequestWriteRepository(AppDbContext dbConte
                 x => x.Nonce == nonce,
                 cancellationToken);
     }
+
+    public async Task<EmailVerificationConfirmationState?> GetConfirmationStateByNonceAsync(
+        string nonce,
+        CancellationToken cancellationToken = default)
+    {
+        return await _dbContext.EmailVerificationRequests
+            .AsNoTracking()
+            .Join(
+                _dbContext.Emails.AsNoTracking(),
+                request => request.EmailId,
+                email => email.Id,
+                (request, email) => new { Request = request, Email = email })
+            .Where(x => x.Request.Nonce == nonce)
+            .Select(x => new EmailVerificationConfirmationState(
+                x.Request.UserProfileId.Value,
+                x.Request.EmailId.Value,
+                x.Request.InvalidatedAtUtc,
+                x.Request.ConsumedAtUtc,
+                x.Email.IsConfirmed))
+            .FirstOrDefaultAsync(cancellationToken);
+    }
 }

@@ -17,6 +17,7 @@ public sealed class ConfirmEmailVerificationController : ApiControllerBase
     }
 
     [HttpPost("confirm")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
@@ -27,8 +28,13 @@ public sealed class ConfirmEmailVerificationController : ApiControllerBase
     {
         var result = await _mediator.Send(new ConfirmEmailVerificationCommand(request.Token), cancellationToken);
 
-        return result.IsSuccess
-            ? NoContent()
-            : HandleError(result.Error);
+        if (result.IsFailure)
+        {
+            return HandleError(result.Error);
+        }
+
+        return result.Value.WasAlreadyProcessed
+            ? Ok()
+            : NoContent();
     }
 }
