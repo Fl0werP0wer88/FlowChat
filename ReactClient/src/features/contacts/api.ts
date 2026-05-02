@@ -12,6 +12,8 @@ interface ContactDto {
   Email?: string | null;
   conversationId?: string | null;
   ConversationId?: string | null;
+  status?: Contact["status"];
+  Status?: Contact["status"];
 }
 
 interface GetContactsResponseDto {
@@ -82,7 +84,7 @@ function mapContact(dto: ContactDto): Contact {
     userId,
     displayName: dto.displayName ?? dto.DisplayName ?? "Nowy kontakt",
     email: dto.email ?? dto.Email ?? null,
-    status: "Invisible",
+    status: dto.status ?? dto.Status ?? "Invisible",
     conversationId: dto.conversationId ?? dto.ConversationId ?? null,
   };
 }

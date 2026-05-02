@@ -1,4 +1,5 @@
 using FlowChat.Core.Contracts;
+using FlowChat.Core.Domain;
 
 namespace FlowChat.GatewayService.Api.Models;
 
@@ -11,4 +12,6 @@ public sealed record ContactWithConversationDto(
     string? PhoneNumber,
     string? Email,
     bool IsBlocked,
-    Guid? ConversationId) : IServiceOutput;
+    Guid? ConversationId,
+    PresenceStatus Status,
+    DateTimeOffset PresenceChangedAtUtc) : IServiceOutput;

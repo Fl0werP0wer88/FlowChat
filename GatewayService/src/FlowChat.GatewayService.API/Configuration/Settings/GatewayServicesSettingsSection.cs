@@ -9,4 +9,8 @@ public sealed class GatewayServicesSettingsSection : SettingsSectionBase
     public string SocialGraphServiceBaseUrl { get; set; } = string.Empty;
 
     public string ChatServiceBaseUrl { get; set; } = string.Empty;
+
+    public string PresenceServiceBaseUrl { get; set; } = string.Empty;
+
+    public string PresenceServiceInternalApiKey { get; set; } = string.Empty;
 }

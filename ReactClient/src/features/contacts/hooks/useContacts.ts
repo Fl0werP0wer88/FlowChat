@@ -62,7 +62,7 @@ export function useContacts(accessToken: string): UseContactsResult {
   const applyStatusesToContacts = (loadedContacts: Contact[], statuses: ContactPresenceMap = presenceStatusesRef.current) =>
     loadedContacts.map((contact) => ({
       ...contact,
-      status: statuses[contact.userId] ?? "Invisible",
+      status: statuses[contact.userId] ?? contact.status ?? "Invisible",
     }));
 
   useEffect(() => {

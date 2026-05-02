@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using FlowChat.GatewayService.Api.Configuration.Settings;
 using FlowChat.GatewayService.Api.Observability;
 using FlowChat.GatewayService.Api.Services;
@@ -75,7 +76,8 @@ public static class StartupExtensions
                 });
         });
 
-        builder.Services.AddControllers();
+        builder.Services.AddControllers()
+            .AddJsonOptions(options => options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddFlowChatSwaggerWithBearer(options =>
             options.SwaggerDoc(
@@ -103,6 +105,18 @@ public static class StartupExtensions
             .AddHttpClient<IChatServiceClient, ChatServiceClient>(client =>
                 client.BaseAddress = new Uri(servicesSettings.ChatServiceBaseUrl))
             .AddHttpMessageHandler<BearerTokenForwardingHandler>();
+
+        builder.Services
+            .AddHttpClient<IPresenceServiceClient, PresenceServiceClient>(client =>
+            {
+                client.BaseAddress = new Uri(servicesSettings.PresenceServiceBaseUrl);
+                if (!string.IsNullOrWhiteSpace(servicesSettings.PresenceServiceInternalApiKey))
+                {
+                    client.DefaultRequestHeaders.Add(
+                        PresenceServiceClient.ApiKeyHeaderName,
+                        servicesSettings.PresenceServiceInternalApiKey);
+                }
+            });
 
         return builder.Build();
     }
