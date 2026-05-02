@@ -53,8 +53,8 @@ public sealed class UserEmailConfirmedConsumerConfigurationTests
         consumerOptions!.GroupId.Should().Be("auth-service");
         consumerOptions.RetryGroupId.Should().Be("auth-service-retry");
         consumerOptions.Topic.Should().Be("dev.flowchat.user-profile.user-profile.v1");
-        consumerOptions.RetryTopic.Should().Be("dev.flowchat.user-profile.user-profile.v1.retry");
-        consumerOptions.DeadLetterTopic.Should().Be("dev.flowchat.user-profile.user-profile.v1.dlq");
+        consumerOptions.RetryTopic.Should().Be("dev.flowchat.user-profile.user-profile.v1.auth-service.retry");
+        consumerOptions.DeadLetterTopic.Should().Be("dev.flowchat.user-profile.user-profile.v1.auth-service.dlq");
     }
 
     [Fact]
@@ -92,8 +92,8 @@ public sealed class UserEmailConfirmedConsumerConfigurationTests
                 ["Kafka:UserEmailConfirmedConsumer:GroupId"] = "auth-service",
                 ["Kafka:UserEmailConfirmedConsumer:RetryGroupId"] = "auth-service-retry",
                 ["Kafka:UserEmailConfirmedConsumer:Topic"] = "dev.flowchat.user-profile.user-profile.v1",
-                ["Kafka:UserEmailConfirmedConsumer:RetryTopic"] = "dev.flowchat.user-profile.user-profile.v1.retry",
-                ["Kafka:UserEmailConfirmedConsumer:DeadLetterTopic"] = "dev.flowchat.user-profile.user-profile.v1.dlq",
+                ["Kafka:UserEmailConfirmedConsumer:RetryTopic"] = "dev.flowchat.user-profile.user-profile.v1.auth-service.retry",
+                ["Kafka:UserEmailConfirmedConsumer:DeadLetterTopic"] = "dev.flowchat.user-profile.user-profile.v1.auth-service.dlq",
                 ["Kafka:UserEmailConfirmedConsumer:MaxRetryCount"] = "5",
                 ["Kafka:UserEmailConfirmedConsumer:RetryBaseDelaySeconds"] = "5",
                 ["Kafka:UserEmailConfirmedConsumer:RetryMaxDelaySeconds"] = "300",

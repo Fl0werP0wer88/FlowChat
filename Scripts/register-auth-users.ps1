@@ -3,7 +3,8 @@ param(
     [string]$BaseUrl = 'https://localhost:7236',
     [string]$Route = 'api/users',
     [string]$NotificationBaseUrl = 'https://localhost:7206',
-    [string]$NotificationRoute = 'api/notifications',
+    [string]$NotificationRoute = 'internal/notifications/recent',
+    [string]$NotificationApiKey = 'dev-notification-internal-key',
     [string]$UserProfileBaseUrl = 'https://localhost:7148',
     [string]$UserProfileConfirmRoute = 'api/userprofiles/email-verification/confirm',
     [int]$ActivationDelaySeconds = 10,
@@ -205,7 +206,8 @@ function Invoke-CurlRequest {
         [string]$Method,
         [Parameter(Mandatory = $true)]
         [string]$Uri,
-        [string]$Body
+        [string]$Body,
+        [hashtable]$Headers = @{}
     )
 
     $curlArgs = @(
@@ -228,6 +230,13 @@ function Invoke-CurlRequest {
             'Content-Type: application/json',
             '--data',
             $Body
+        )
+    }
+
+    foreach ($header in $Headers.GetEnumerator()) {
+        $curlArgs += @(
+            '--header',
+            ('{0}: {1}' -f $header.Key, $header.Value)
         )
     }
 
@@ -367,7 +376,10 @@ Write-Host "Waiting $ActivationDelaySeconds seconds before fetching notification
 Start-Sleep -Seconds $ActivationDelaySeconds
 
 try {
-    $notificationsHttpResponse = Invoke-CurlRequest -Method GET -Uri $notificationsUri
+    $notificationsHttpResponse = Invoke-CurlRequest `
+        -Method GET `
+        -Uri $notificationsUri `
+        -Headers @{ 'X-Internal-Api-Key' = $NotificationApiKey }
     if ($notificationsHttpResponse.StatusCode -lt 200 -or $notificationsHttpResponse.StatusCode -ge 300) {
         throw "Notification API returned HTTP $($notificationsHttpResponse.StatusCode). Body: $($notificationsHttpResponse.Body)"
     }

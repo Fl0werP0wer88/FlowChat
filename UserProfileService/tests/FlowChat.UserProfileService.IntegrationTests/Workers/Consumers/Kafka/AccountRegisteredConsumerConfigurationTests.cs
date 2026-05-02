@@ -22,8 +22,8 @@ public sealed class AccountRegisteredConsumerConfigurationTests
                 ["Kafka:AccountRegisteredConsumer:GroupId"] = "userprofile-service",
                 ["Kafka:AccountRegisteredConsumer:RetryGroupId"] = "userprofile-service-retry",
                 ["Kafka:AccountRegisteredConsumer:Topic"] = "dev.flowchat.identity.user.v1",
-                ["Kafka:AccountRegisteredConsumer:RetryTopic"] = "dev.flowchat.identity.user.v1.retry",
-                ["Kafka:AccountRegisteredConsumer:DeadLetterTopic"] = "dev.flowchat.identity.user.v1.dlq",
+                ["Kafka:AccountRegisteredConsumer:RetryTopic"] = "dev.flowchat.identity.user.v1.userprofile-service.retry",
+                ["Kafka:AccountRegisteredConsumer:DeadLetterTopic"] = "dev.flowchat.identity.user.v1.userprofile-service.dlq",
                 ["Kafka:AccountRegisteredConsumer:MaxRetryCount"] = "5",
                 ["Kafka:AccountRegisteredConsumer:RetryBaseDelaySeconds"] = "5",
                 ["Kafka:AccountRegisteredConsumer:RetryMaxDelaySeconds"] = "300",
@@ -63,8 +63,8 @@ public sealed class AccountRegisteredConsumerConfigurationTests
         consumerOptions!.GroupId.Should().Be("userprofile-service");
         consumerOptions.RetryGroupId.Should().Be("userprofile-service-retry");
         consumerOptions.Topic.Should().Be("dev.flowchat.identity.user.v1");
-        consumerOptions.RetryTopic.Should().Be("dev.flowchat.identity.user.v1.retry");
-        consumerOptions.DeadLetterTopic.Should().Be("dev.flowchat.identity.user.v1.dlq");
+        consumerOptions.RetryTopic.Should().Be("dev.flowchat.identity.user.v1.userprofile-service.retry");
+        consumerOptions.DeadLetterTopic.Should().Be("dev.flowchat.identity.user.v1.userprofile-service.dlq");
     }
 
     private static string GetRepositoryPath(string relativePath)
@@ -97,8 +97,8 @@ public sealed class AccountRegisteredConsumerConfigurationTests
                 ["Kafka:AccountRegisteredConsumer:GroupId"] = "userprofile-service",
                 ["Kafka:AccountRegisteredConsumer:RetryGroupId"] = "userprofile-service-retry",
                 ["Kafka:AccountRegisteredConsumer:Topic"] = "dev.flowchat.identity.user.v1",
-                ["Kafka:AccountRegisteredConsumer:RetryTopic"] = "dev.flowchat.identity.user.v1.retry",
-                ["Kafka:AccountRegisteredConsumer:DeadLetterTopic"] = "dev.flowchat.identity.user.v1.dlq",
+                ["Kafka:AccountRegisteredConsumer:RetryTopic"] = "dev.flowchat.identity.user.v1.userprofile-service.retry",
+                ["Kafka:AccountRegisteredConsumer:DeadLetterTopic"] = "dev.flowchat.identity.user.v1.userprofile-service.dlq",
                 ["Kafka:AccountRegisteredConsumer:MaxRetryCount"] = "5",
                 ["Kafka:AccountRegisteredConsumer:RetryBaseDelaySeconds"] = "5",
                 ["Kafka:AccountRegisteredConsumer:RetryMaxDelaySeconds"] = "300",

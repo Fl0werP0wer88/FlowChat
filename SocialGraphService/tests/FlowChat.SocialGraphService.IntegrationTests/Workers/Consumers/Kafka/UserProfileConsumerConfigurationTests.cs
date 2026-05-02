@@ -53,8 +53,8 @@ public sealed class UserProfileConsumerConfigurationTests
         consumerOptions!.GroupId.Should().Be("socialgraph-service");
         consumerOptions.RetryGroupId.Should().Be("socialgraph-service-retry");
         consumerOptions.Topic.Should().Be("dev.flowchat.user-profile.user-profile.v1");
-        consumerOptions.RetryTopic.Should().Be("dev.flowchat.user-profile.user-profile.v1.retry");
-        consumerOptions.DeadLetterTopic.Should().Be("dev.flowchat.user-profile.user-profile.v1.dlq");
+        consumerOptions.RetryTopic.Should().Be("dev.flowchat.user-profile.user-profile.v1.socialgraph-service.retry");
+        consumerOptions.DeadLetterTopic.Should().Be("dev.flowchat.user-profile.user-profile.v1.socialgraph-service.dlq");
     }
 
     [Fact]
@@ -92,8 +92,8 @@ public sealed class UserProfileConsumerConfigurationTests
                 ["Kafka:UserProfileConsumer:GroupId"] = "socialgraph-service",
                 ["Kafka:UserProfileConsumer:RetryGroupId"] = "socialgraph-service-retry",
                 ["Kafka:UserProfileConsumer:Topic"] = "dev.flowchat.user-profile.user-profile.v1",
-                ["Kafka:UserProfileConsumer:RetryTopic"] = "dev.flowchat.user-profile.user-profile.v1.retry",
-                ["Kafka:UserProfileConsumer:DeadLetterTopic"] = "dev.flowchat.user-profile.user-profile.v1.dlq",
+                ["Kafka:UserProfileConsumer:RetryTopic"] = "dev.flowchat.user-profile.user-profile.v1.socialgraph-service.retry",
+                ["Kafka:UserProfileConsumer:DeadLetterTopic"] = "dev.flowchat.user-profile.user-profile.v1.socialgraph-service.dlq",
                 ["Kafka:UserProfileConsumer:MaxRetryCount"] = "5",
                 ["Kafka:UserProfileConsumer:RetryBaseDelaySeconds"] = "5",
                 ["Kafka:UserProfileConsumer:RetryMaxDelaySeconds"] = "300",
