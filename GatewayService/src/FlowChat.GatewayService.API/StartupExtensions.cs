@@ -133,6 +133,7 @@ public static class StartupExtensions
             {
                 options.SwaggerEndpoint("/swagger/v1/swagger.json", "FlowChat GatewayService API v1");
             });
+            app.LogSwaggerEndpointOnStarted();
         }
 
         app.UseHttpsRedirection();

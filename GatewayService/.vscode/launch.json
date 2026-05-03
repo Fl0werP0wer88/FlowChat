@@ -12,11 +12,7 @@
         "ASPNETCORE_ENVIRONMENT": "Development"
       },
       "stopAtEntry": false,
-      "console": "integratedTerminal",
-      "serverReadyAction": {
-        "action": "openExternally",
-        "pattern": "\\bNow listening on:\\s+(https?://\\S+)"
-      }
+      "console": "integratedTerminal"
     },
     {
       "name": "GatewayService API (No Build)",
@@ -28,11 +24,7 @@
         "ASPNETCORE_ENVIRONMENT": "Development"
       },
       "stopAtEntry": false,
-      "console": "integratedTerminal",
-      "serverReadyAction": {
-        "action": "openExternally",
-        "pattern": "\\bNow listening on:\\s+(https?://\\S+)"
-      }
+      "console": "integratedTerminal"
     }
   ]
 }

@@ -11,11 +11,6 @@
       "cwd": "${workspaceFolder}/src/FlowChat.AuthService.API",
       "stopAtEntry": false,
       "console": "integratedTerminal",
-      "serverReadyAction": {
-        "action": "openExternally",
-        "pattern": "\\bNow listening on:\\s+(https?://\\S+)",
-        "uriFormat": "%s/swagger"
-      },
       "env": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
@@ -29,11 +24,6 @@
       "cwd": "${workspaceFolder}/src/FlowChat.AuthService.API",
       "stopAtEntry": false,
       "console": "integratedTerminal",
-      "serverReadyAction": {
-        "action": "openExternally",
-        "pattern": "\\bNow listening on:\\s+(https?://\\S+)",
-        "uriFormat": "%s/swagger"
-      },
       "env": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }

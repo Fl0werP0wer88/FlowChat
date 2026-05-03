@@ -34,6 +34,7 @@ public static class StartupExtensions
         {
             app.UseSwagger();
             app.UseSwaggerUI();
+            app.LogSwaggerEndpointOnStarted();
         }
 
         app.UseHttpsRedirection();
