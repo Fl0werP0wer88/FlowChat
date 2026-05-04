@@ -46,8 +46,8 @@ public sealed class StartupExtensionsTests
         var connectionRegistry = app.Services.GetRequiredService<IRealtimeConnectionRegistry>();
         var connectionStore = app.Services.GetRequiredService<IConnectionStore>();
         var userConnectionsStore = app.Services.GetRequiredService<IUserConnectionsStore>();
-        var routingTopologyStore = app.Services.GetRequiredService<IRealtimeRoutingTopologyStore>();
-        var routingTopologyReader = app.Services.GetRequiredService<IRealtimeRoutingTopologyReader>();
+        var userInstanceRoutingStore = app.Services.GetRequiredService<IUserInstanceRoutingStore>();
+        var userInstanceRoutingReader = app.Services.GetRequiredService<IUserInstanceRoutingReader>();
         var hostedServices = app.Services.GetServices<IHostedService>().ToList();
         var optionsMonitor = app.Services.GetRequiredService<IOptionsMonitor<JwtBearerOptions>>();
         var options = optionsMonitor.Get(JwtBearerDefaults.AuthenticationScheme);
@@ -67,8 +67,8 @@ public sealed class StartupExtensionsTests
         connectionRegistry.Should().NotBeNull();
         connectionStore.Should().NotBeNull();
         userConnectionsStore.Should().NotBeNull();
-        routingTopologyStore.Should().NotBeNull();
-        routingTopologyReader.Should().NotBeNull();
+        userInstanceRoutingStore.Should().NotBeNull();
+        userInstanceRoutingReader.Should().NotBeNull();
         hostedServices.Should().Contain(service => service.GetType().Name == "RealtimeConnectionRefreshBackgroundService");
         messageContext.Token.Should().Be("test-token");
     }

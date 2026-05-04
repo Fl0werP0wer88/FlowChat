@@ -39,14 +39,14 @@ public sealed class ConsumersConfigurationTests : IAsyncLifetime
         var consumerCollection = serviceProvider.GetRequiredService<IConsumerCollection>();
         var chatSubscriber = scope.ServiceProvider.GetRequiredService<ChatMessageSentSubscriber>();
         var presenceSubscriber = scope.ServiceProvider.GetRequiredService<UserPresenceChangedSubscriber>();
-        var routingTopologyReader = serviceProvider.GetRequiredService<IRealtimeRoutingTopologyReader>();
+        var userInstanceRoutingReader = serviceProvider.GetRequiredService<IUserInstanceRoutingReader>();
         var eventRouter = scope.ServiceProvider.GetRequiredService<IRealtimeEventRouter>();
         var internalApiClient = scope.ServiceProvider.GetRequiredService<IRealtimeInternalApiClient>();
 
         consumerCollection.Should().NotBeNull();
         chatSubscriber.Should().NotBeNull();
         presenceSubscriber.Should().NotBeNull();
-        routingTopologyReader.Should().NotBeNull();
+        userInstanceRoutingReader.Should().NotBeNull();
         eventRouter.Should().NotBeNull();
         internalApiClient.Should().NotBeNull();
     }
@@ -76,7 +76,7 @@ public sealed class ConsumersConfigurationTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task AddConsumers_RoutingTopologyReader_ReadsInstanceIdsFromRedis()
+    public async Task AddConsumers_UserInstanceRoutingReader_ReadsInstanceIdsFromRedis()
     {
         var configuration = CreateConfiguration();
 
@@ -93,7 +93,7 @@ public sealed class ConsumersConfigurationTests : IAsyncLifetime
         await database.SetAddAsync(RealtimeRoutingKeys.GetUserInstancesKey("flowchat:test", userId), "instance-a");
         await database.SetAddAsync(RealtimeRoutingKeys.GetUserInstancesKey("flowchat:test", userId), "instance-b");
 
-        var reader = serviceProvider.GetRequiredService<IRealtimeRoutingTopologyReader>();
+        var reader = serviceProvider.GetRequiredService<IUserInstanceRoutingReader>();
 
         var result = await reader.GetInstanceIdsByUserAsync([userId], CancellationToken.None);
 

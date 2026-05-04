@@ -4,10 +4,10 @@ using StackExchange.Redis;
 
 namespace FlowChat.RealtimeService.Routing;
 
-public sealed class RedisRealtimeRoutingTopologyStore(
+public sealed class RedisUserInstanceRoutingStore(
     IRedisTransactionContext redisTransactionContext,
     RealtimeRoutingSettingsSection settings)
-    : IRealtimeRoutingTopologyStore, IRealtimeRoutingTopologyReader
+    : IUserInstanceRoutingStore, IUserInstanceRoutingReader
 {
     // The routing read-model is split across a SET and HASH so reads stay cheap while unregister can still distinguish
     // "last connection on this instance" from "one of many connections on this instance"

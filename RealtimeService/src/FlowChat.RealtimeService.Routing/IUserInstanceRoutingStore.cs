@@ -1,6 +1,6 @@
 namespace FlowChat.RealtimeService.Routing;
 
-public interface IRealtimeRoutingTopologyStore
+public interface IUserInstanceRoutingStore
 {
     Task AddConnectionAsync(Guid userId, string instanceId);
 

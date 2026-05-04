@@ -11,7 +11,7 @@ namespace FlowChat.RealtimeService.Infrastructure.RealtimeConnections;
 internal sealed class RealtimeConnectionRegistry(
     IConnectionStore connectionStore,
     IUserConnectionsStore userConnectionsStore,
-    IRealtimeRoutingTopologyStore routingTopologyStore,
+    IUserInstanceRoutingStore userInstanceRoutingStore,
     IUnitOfWork unitOfWork,
     IActiveConnectionsTracker activeConnectionsTracker,
     RealtimeConnectionsSettingsSection settings) : IRealtimeConnectionRegistry
@@ -20,8 +20,8 @@ internal sealed class RealtimeConnectionRegistry(
         ?? throw new ArgumentNullException(nameof(connectionStore));
     private readonly IUserConnectionsStore _userConnectionsStore = userConnectionsStore
         ?? throw new ArgumentNullException(nameof(userConnectionsStore));
-    private readonly IRealtimeRoutingTopologyStore _routingTopologyStore = routingTopologyStore
-        ?? throw new ArgumentNullException(nameof(routingTopologyStore));
+    private readonly IUserInstanceRoutingStore _userInstanceRoutingStore = userInstanceRoutingStore
+        ?? throw new ArgumentNullException(nameof(userInstanceRoutingStore));
     private readonly IUnitOfWork _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
     private readonly IActiveConnectionsTracker _activeConnectionsTracker = activeConnectionsTracker
         ?? throw new ArgumentNullException(nameof(activeConnectionsTracker));
@@ -40,7 +40,7 @@ internal sealed class RealtimeConnectionRegistry(
         {
             await _connectionStore.UpsertAsync(userId, connectionId, nowUtc, nowUtc);
             await _userConnectionsStore.AddConnectionAsync(userId, connectionId);
-            await _routingTopologyStore.AddConnectionAsync(userId, _settings.InstanceId);
+            await _userInstanceRoutingStore.AddConnectionAsync(userId, _settings.InstanceId);
 
             return 0;
         }, cancellationToken);
@@ -88,7 +88,7 @@ internal sealed class RealtimeConnectionRegistry(
 
             await _userConnectionsStore.RemoveConnectionAsync(userId, connectionId);
             await _connectionStore.DeleteAsync(connectionId);
-            await _routingTopologyStore.RemoveConnectionAsync(userId, _settings.InstanceId);
+            await _userInstanceRoutingStore.RemoveConnectionAsync(userId, _settings.InstanceId);
             var activeConnectionCount = await _userConnectionsStore.GetConnectionCountAsync(userId);
 
             if (activeConnectionCount == 0)
@@ -133,7 +133,7 @@ internal sealed class RealtimeConnectionRegistry(
                 connection => _userConnectionsStore.RefreshTtlAsync(connection.UserId));
         var routingExpireTasks = activeConnections
             .DistinctBy(static connection => connection.UserId)
-            .Select(connection => _routingTopologyStore.RefreshTtlAsync(connection.UserId))
+            .Select(connection => _userInstanceRoutingStore.RefreshTtlAsync(connection.UserId))
             .ToArray();
 
         await Task.WhenAll(connectionExpireTasks.Values.Cast<Task>()

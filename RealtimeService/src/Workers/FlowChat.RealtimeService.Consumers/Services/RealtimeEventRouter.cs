@@ -4,13 +4,13 @@ using FlowChat.RealtimeService.Routing;
 namespace FlowChat.RealtimeService.Consumers.Services;
 
 public sealed class RealtimeEventRouter(
-    IRealtimeRoutingTopologyReader routingTopologyReader,
+    IUserInstanceRoutingReader userInstanceRoutingReader,
     IRealtimeInstanceAddressResolver instanceAddressResolver,
     IRealtimeInternalApiClient realtimeInternalApiClient)
     : IRealtimeEventRouter
 {
-    private readonly IRealtimeRoutingTopologyReader _routingTopologyReader = routingTopologyReader
-        ?? throw new ArgumentNullException(nameof(routingTopologyReader));
+    private readonly IUserInstanceRoutingReader _userInstanceRoutingReader = userInstanceRoutingReader
+        ?? throw new ArgumentNullException(nameof(userInstanceRoutingReader));
     private readonly IRealtimeInstanceAddressResolver _instanceAddressResolver = instanceAddressResolver
         ?? throw new ArgumentNullException(nameof(instanceAddressResolver));
     private readonly IRealtimeInternalApiClient _realtimeInternalApiClient = realtimeInternalApiClient
@@ -63,7 +63,7 @@ public sealed class RealtimeEventRouter(
             return [];
         }
 
-        var instanceIdsByUser = await _routingTopologyReader.GetInstanceIdsByUserAsync(filteredRecipientIds, cancellationToken);
+        var instanceIdsByUser = await _userInstanceRoutingReader.GetInstanceIdsByUserAsync(filteredRecipientIds, cancellationToken);
         Dictionary<string, HashSet<Guid>> recipientsByInstance = new(StringComparer.Ordinal);
 
         foreach (var (userId, instanceIds) in instanceIdsByUser)

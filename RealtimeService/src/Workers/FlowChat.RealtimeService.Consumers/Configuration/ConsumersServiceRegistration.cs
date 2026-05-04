@@ -60,7 +60,7 @@ public static class ConsumersServiceRegistration
         });
         services.TryAddSingleton<RedisUnitOfWork>();
         services.TryAddSingleton<IRedisTransactionContext>(sp => sp.GetRequiredService<RedisUnitOfWork>());
-        services.TryAddSingleton<IRealtimeRoutingTopologyReader, RedisRealtimeRoutingTopologyStore>();
+        services.TryAddSingleton<IUserInstanceRoutingReader, RedisUserInstanceRoutingStore>();
         services.AddScoped<IRealtimeEventRouter, RealtimeEventRouter>();
 
         services.AddSilverback()

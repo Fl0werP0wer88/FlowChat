@@ -1,4 +1,4 @@
-﻿using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
+using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
 using FlowChat.RealtimeService.Infrastructure;
 using FlowChat.RealtimeService.Routing;
 using Microsoft.Extensions.Configuration;
@@ -133,18 +133,18 @@ public sealed class RealtimeConnectionRegistryTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task RoutingTopologyReader_ReturnsActiveInstanceIdsPerUser()
+    public async Task UserInstanceRoutingReader_ReturnsActiveInstanceIdsPerUser()
     {
         using var serviceProvider = BuildServiceProvider();
         var registry = serviceProvider.GetRequiredService<IRealtimeConnectionRegistry>();
-        var topologyReader = serviceProvider.GetRequiredService<IRealtimeRoutingTopologyReader>();
+        var userInstanceRoutingReader = serviceProvider.GetRequiredService<IUserInstanceRoutingReader>();
         var userWithConnections = Guid.NewGuid();
         var userWithoutConnections = Guid.NewGuid();
 
         await registry.RegisterAsync(userWithConnections, "connection-routing-a", CancellationToken.None);
         await registry.RegisterAsync(userWithConnections, "connection-routing-b", CancellationToken.None);
 
-        var result = await topologyReader.GetInstanceIdsByUserAsync(
+        var result = await userInstanceRoutingReader.GetInstanceIdsByUserAsync(
             [Guid.Empty, userWithConnections, userWithConnections, userWithoutConnections],
             CancellationToken.None);
 

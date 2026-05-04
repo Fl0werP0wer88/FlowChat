@@ -78,7 +78,7 @@ internal sealed class CapturingRealtimeEventRouter : IRealtimeEventRouter
     }
 }
 
-internal sealed class StubRealtimeRoutingTopologyReader : IRealtimeRoutingTopologyReader
+internal sealed class StubUserInstanceRoutingReader : IUserInstanceRoutingReader
 {
     public IReadOnlyDictionary<Guid, IReadOnlyCollection<string>> Result { get; set; } =
         new Dictionary<Guid, IReadOnlyCollection<string>>();

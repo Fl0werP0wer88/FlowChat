@@ -11,7 +11,7 @@ namespace FlowChat.RealtimeService.UnitTests;
 public sealed class RealtimeEventRouterTests
 {
     private readonly IFixture _fixture = new Fixture();
-    private readonly Mock<IRealtimeRoutingTopologyReader> _topologyReaderMock = new();
+    private readonly Mock<IUserInstanceRoutingReader> _userInstanceRoutingReaderMock = new();
     private readonly Mock<IRealtimeInstanceAddressResolver> _addressResolverMock = new();
     private readonly Mock<IRealtimeInternalApiClient> _internalApiClientMock = new();
 
@@ -32,7 +32,7 @@ public sealed class RealtimeEventRouterTests
         };
         List<(Uri BaseAddress, PublishMessageRequest Request)> calls = [];
 
-        _topologyReaderMock
+        _userInstanceRoutingReaderMock
             .Setup(x => x.GetInstanceIdsByUserAsync(It.IsAny<IReadOnlyCollection<Guid>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new Dictionary<Guid, IReadOnlyCollection<string>>
             {
@@ -64,7 +64,7 @@ public sealed class RealtimeEventRouterTests
     [Fact]
     public async Task PublishPresenceChangeAsync_WhenRecipientsOffline_DoesNotCallInternalApi()
     {
-        _topologyReaderMock
+        _userInstanceRoutingReaderMock
             .Setup(x => x.GetInstanceIdsByUserAsync(It.IsAny<IReadOnlyCollection<Guid>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new Dictionary<Guid, IReadOnlyCollection<string>>());
 
@@ -89,7 +89,7 @@ public sealed class RealtimeEventRouterTests
     public async Task PublishMessageAsync_WhenInstanceAddressMissing_ThrowsInvalidOperationException()
     {
         var userId = _fixture.Create<Guid>();
-        _topologyReaderMock
+        _userInstanceRoutingReaderMock
             .Setup(x => x.GetInstanceIdsByUserAsync(It.IsAny<IReadOnlyCollection<Guid>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new Dictionary<Guid, IReadOnlyCollection<string>>
             {
@@ -120,7 +120,7 @@ public sealed class RealtimeEventRouterTests
 
     private RealtimeEventRouter CreateRouter() =>
         new(
-            _topologyReaderMock.Object,
+            _userInstanceRoutingReaderMock.Object,
             _addressResolverMock.Object,
             _internalApiClientMock.Object);
 }
