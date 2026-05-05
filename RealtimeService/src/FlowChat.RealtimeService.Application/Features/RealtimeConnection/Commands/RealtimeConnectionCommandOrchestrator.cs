@@ -85,6 +85,7 @@ internal sealed class RealtimeConnectionCommandOrchestrator(
                         UserId = mutation.UserId,
                         ConnectionId = mutation.ConnectionId,
                         ActiveConnectionCount = mutation.ActiveConnectionCount,
+                        IsLastConnectionForUser = mutation.IsLastConnectionForUser,
                         OccurredAtUtc = mutation.OccurredAtUtc
                     },
                     mutation.UserId.ToString("D")),

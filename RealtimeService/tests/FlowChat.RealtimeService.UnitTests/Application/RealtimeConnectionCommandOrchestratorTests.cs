@@ -28,7 +28,7 @@ public sealed class RealtimeConnectionCommandOrchestratorTests
     public async Task RegisterAsync_WhenFirstConnection_PublishesRegisteredEvent()
     {
         var userId = _fixture.Create<Guid>();
-        var mutation = new RealtimeConnectionMutationResult(userId, "connection-1", 1, true, DateTimeOffset.UtcNow);
+        var mutation = new RealtimeConnectionMutationResult(userId, "connection-1", 1, true, false, DateTimeOffset.UtcNow);
 
         _registryMock
             .Setup(x => x.RegisterAsync(userId, "connection-1", It.IsAny<CancellationToken>()))
@@ -52,7 +52,7 @@ public sealed class RealtimeConnectionCommandOrchestratorTests
 
         _registryMock
             .Setup(x => x.RegisterAsync(userId, "connection-2", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new RealtimeConnectionMutationResult(userId, "connection-2", 3, false, DateTimeOffset.UtcNow));
+            .ReturnsAsync(new RealtimeConnectionMutationResult(userId, "connection-2", 3, false, false, DateTimeOffset.UtcNow));
 
         var result = await _orchestrator.RegisterAsync(userId, "connection-2", CancellationToken.None);
 
@@ -71,7 +71,7 @@ public sealed class RealtimeConnectionCommandOrchestratorTests
 
         _registryMock
             .Setup(x => x.RegisterAsync(userId, "connection-3", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new RealtimeConnectionMutationResult(userId, "connection-3", 1, true, DateTimeOffset.UtcNow));
+            .ReturnsAsync(new RealtimeConnectionMutationResult(userId, "connection-3", 1, true, false, DateTimeOffset.UtcNow));
         _registryMock
             .Setup(x => x.UnregisterAsync("connection-3", It.IsAny<CancellationToken>()))
             .ReturnsAsync((RealtimeConnectionMutationResult?)null);
@@ -114,14 +114,33 @@ public sealed class RealtimeConnectionCommandOrchestratorTests
 
         _registryMock
             .Setup(x => x.UnregisterAsync("connection-4", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new RealtimeConnectionMutationResult(userId, "connection-4", 0, false, DateTimeOffset.UtcNow));
+            .ReturnsAsync(new RealtimeConnectionMutationResult(userId, "connection-4", 0, false, true, DateTimeOffset.UtcNow));
 
         var result = await _orchestrator.UnregisterAsync("connection-4", CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
-        _eventPublisher.Published.Should().ContainSingle()
-            .Which.Should().BeOfType<RealtimeConnectionUnregisteredIntegrationEvent>()
-            .Which.ActiveConnectionCount.Should().Be(0);
+        var integrationEvent = _eventPublisher.Published.Should().ContainSingle().Subject
+            .Should().BeOfType<RealtimeConnectionUnregisteredIntegrationEvent>().Subject;
+        integrationEvent.ActiveConnectionCount.Should().Be(0);
+        integrationEvent.IsLastConnectionForUser.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task UnregisterAsync_WhenActiveConnectionsRemain_PublishesCurrentCountAndLastConnectionFlag()
+    {
+        var userId = _fixture.Create<Guid>();
+
+        _registryMock
+            .Setup(x => x.UnregisterAsync("connection-remains", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new RealtimeConnectionMutationResult(userId, "connection-remains", 1, false, false, DateTimeOffset.UtcNow));
+
+        var result = await _orchestrator.UnregisterAsync("connection-remains", CancellationToken.None);
+
+        result.IsSuccess.Should().BeTrue();
+        var integrationEvent = _eventPublisher.Published.Should().ContainSingle().Subject
+            .Should().BeOfType<RealtimeConnectionUnregisteredIntegrationEvent>().Subject;
+        integrationEvent.ActiveConnectionCount.Should().Be(1);
+        integrationEvent.IsLastConnectionForUser.Should().BeFalse();
     }
 
     [Fact]
@@ -145,7 +164,7 @@ public sealed class RealtimeConnectionCommandOrchestratorTests
 
         _registryMock
             .Setup(x => x.UnregisterAsync("connection-5", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new RealtimeConnectionMutationResult(userId, "connection-5", 0, false, DateTimeOffset.UtcNow));
+            .ReturnsAsync(new RealtimeConnectionMutationResult(userId, "connection-5", 0, false, true, DateTimeOffset.UtcNow));
 
         var result = await _orchestrator.UnregisterAsync("connection-5", CancellationToken.None);
 

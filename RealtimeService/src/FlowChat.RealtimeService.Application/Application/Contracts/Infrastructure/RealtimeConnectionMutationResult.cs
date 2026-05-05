@@ -5,4 +5,5 @@ public sealed record RealtimeConnectionMutationResult(
     string ConnectionId,
     int ActiveConnectionCount,
     bool IsFirstConnectionForUser,
+    bool IsLastConnectionForUser,
     DateTimeOffset OccurredAtUtc);

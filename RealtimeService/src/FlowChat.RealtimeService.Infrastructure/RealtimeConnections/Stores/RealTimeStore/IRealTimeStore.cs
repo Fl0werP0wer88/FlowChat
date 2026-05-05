@@ -9,4 +9,11 @@ internal interface IRealTimeStore
         string connectionId,
         DateTimeOffset nowUtc,
         CancellationToken cancellationToken);
+
+    Task<RealtimeConnectionMutationResult?> UnregisterConnectionAsync(
+        Guid userId,
+        string connectionId,
+        string instanceId,
+        DateTimeOffset nowUtc,
+        CancellationToken cancellationToken);
 }

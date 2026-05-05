@@ -60,6 +60,7 @@ public sealed class RealtimeConnectionRegistryTests : IAsyncLifetime
 
         result.Should().NotBeNull();
         result!.ActiveConnectionCount.Should().Be(1);
+        result.IsLastConnectionForUser.Should().BeFalse();
         (await database.SetMembersAsync($"flowchat:test:user-instances:{userId:D}"))
             .Should().ContainSingle(value => value == "test-instance");
         (await database.HashGetAsync($"flowchat:test:user-instance-counts:{userId:D}", "test-instance"))
@@ -80,10 +81,57 @@ public sealed class RealtimeConnectionRegistryTests : IAsyncLifetime
 
         result.Should().NotBeNull();
         result!.ActiveConnectionCount.Should().Be(0);
+        result.IsLastConnectionForUser.Should().BeTrue();
         (await database.KeyExistsAsync("flowchat:test:connections:connection-2")).Should().BeFalse();
         (await database.SetLengthAsync(userSetKey)).Should().Be(0);
         (await database.KeyExistsAsync($"flowchat:test:user-instances:{userId:D}")).Should().BeFalse();
         (await database.KeyExistsAsync($"flowchat:test:user-instance-counts:{userId:D}")).Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task UnregisterAsync_WhenConnectionIsUnregisteredAgain_DoesNotDecrementRoutingCountAgain()
+    {
+        using var serviceProvider = BuildServiceProvider();
+        var registry = serviceProvider.GetRequiredService<IRealtimeConnectionRegistry>();
+        var database = serviceProvider.GetRequiredService<IConnectionMultiplexer>().GetDatabase();
+        var userId = Guid.NewGuid();
+
+        await registry.RegisterAsync(userId, "connection-duplicate-unregister-a", CancellationToken.None);
+        await registry.RegisterAsync(userId, "connection-duplicate-unregister-b", CancellationToken.None);
+
+        var firstResult = await registry.UnregisterAsync("connection-duplicate-unregister-a", CancellationToken.None);
+        var secondResult = await registry.UnregisterAsync("connection-duplicate-unregister-a", CancellationToken.None);
+
+        firstResult.Should().NotBeNull();
+        firstResult!.ActiveConnectionCount.Should().Be(1);
+        firstResult.IsLastConnectionForUser.Should().BeFalse();
+        secondResult.Should().BeNull();
+        (await database.HashGetAsync($"flowchat:test:user-instance-counts:{userId:D}", "test-instance"))
+            .Should().Be("1");
+    }
+
+    [Fact]
+    public async Task UnregisterAsync_WhenConnectionsAreUnregisteredConcurrently_ReturnsSingleLastConnection()
+    {
+        using var serviceProvider = BuildServiceProvider();
+        var registry = serviceProvider.GetRequiredService<IRealtimeConnectionRegistry>();
+        var userId = Guid.NewGuid();
+        var connectionIds = Enumerable
+            .Range(1, 5)
+            .Select(index => $"connection-concurrent-unregister-{index}")
+            .ToArray();
+
+        foreach (var connectionId in connectionIds)
+        {
+            await registry.RegisterAsync(userId, connectionId, CancellationToken.None);
+        }
+
+        var results = await Task.WhenAll(connectionIds
+            .Select(connectionId => registry.UnregisterAsync(connectionId, CancellationToken.None)));
+
+        results.Should().NotContainNulls();
+        results.Should().ContainSingle(result => result!.IsLastConnectionForUser);
+        results.Should().OnlyContain(result => result!.ActiveConnectionCount >= 0);
     }
 
     [Fact]

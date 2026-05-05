@@ -46,6 +46,39 @@ internal sealed class RealTimeStore(
         return { activeConnectionCount, isFirstConnectionForUser }
         """;
 
+    private const string UnregisterConnectionScript = """
+        local removed = redis.call('SREM', KEYS[2], ARGV[1])
+        redis.call('DEL', KEYS[1])
+
+        local activeConnectionCount = redis.call('SCARD', KEYS[2])
+        if activeConnectionCount == 0 then
+            redis.call('DEL', KEYS[2])
+        end
+
+        local isLastConnectionForUser = 0
+        if removed == 1 then
+            local instanceConnectionCount = redis.call('HINCRBY', KEYS[4], ARGV[2], -1)
+            if instanceConnectionCount <= 0 then
+                redis.call('HDEL', KEYS[4], ARGV[2])
+                redis.call('SREM', KEYS[3], ARGV[2])
+            end
+
+            if redis.call('HLEN', KEYS[4]) == 0 then
+                redis.call('DEL', KEYS[4])
+            end
+
+            if redis.call('SCARD', KEYS[3]) == 0 then
+                redis.call('DEL', KEYS[3])
+            end
+
+            if activeConnectionCount == 0 then
+                isLastConnectionForUser = 1
+            end
+        end
+
+        return { activeConnectionCount, isLastConnectionForUser, removed }
+        """;
+
     private readonly IConnectionMultiplexer _connectionMultiplexer = connectionMultiplexer
         ?? throw new ArgumentNullException(nameof(connectionMultiplexer));
     private readonly RealtimeConnectionsSettingsSection _settings = settings ?? throw new ArgumentNullException(nameof(settings));
@@ -93,6 +126,58 @@ internal sealed class RealTimeStore(
             connectionId,
             activeConnectionCount,
             isFirstConnectionForUser,
+            false,
+            nowUtc);
+    }
+
+    public async Task<RealtimeConnectionMutationResult?> UnregisterConnectionAsync(
+        Guid userId,
+        string connectionId,
+        string instanceId,
+        DateTimeOffset nowUtc,
+        CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        ArgumentOutOfRangeException.ThrowIfEqual(userId, Guid.Empty);
+        ArgumentException.ThrowIfNullOrWhiteSpace(connectionId);
+        ArgumentException.ThrowIfNullOrWhiteSpace(instanceId);
+
+        var database = _connectionMultiplexer.GetDatabase();
+        var redisResult = await database.ScriptEvaluateAsync(
+            UnregisterConnectionScript,
+            [
+                RedisKeys.GetConnectionKey(_settings.KeyPrefix, connectionId),
+                RedisKeys.GetUserConnectionsKey(_settings.KeyPrefix, userId),
+                RedisKeys.GetUserInstancesKey(_settings.KeyPrefix, userId),
+                RedisKeys.GetUserInstanceCountsKey(_settings.KeyPrefix, userId)
+            ],
+            [
+                connectionId,
+                instanceId
+            ]);
+
+        var scriptResult = (RedisResult[])redisResult!;
+        if (scriptResult.Length != 3)
+        {
+            throw new InvalidOperationException("Redis unregistration script returned an unexpected result.");
+        }
+
+        var wasRemoved = (long)scriptResult[2] == 1;
+        if (!wasRemoved)
+        {
+            return null;
+        }
+
+        var activeConnectionCount = checked((int)(long)scriptResult[0]);
+        var isLastConnectionForUser = (long)scriptResult[1] == 1;
+
+        return new RealtimeConnectionMutationResult(
+            userId,
+            connectionId,
+            activeConnectionCount,
+            false,
+            isLastConnectionForUser,
             nowUtc);
     }
 }

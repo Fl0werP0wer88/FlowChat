@@ -120,6 +120,7 @@ public sealed class RealtimeConnectionUnregisteredSubscriberTests
                 UserId = userId,
                 ConnectionId = "connection-4",
                 ActiveConnectionCount = 0,
+                IsLastConnectionForUser = true,
                 OccurredAtUtc = DateTimeOffset.UtcNow
             }.ToInboundEnvelope(),
             CancellationToken.None);
@@ -129,14 +130,15 @@ public sealed class RealtimeConnectionUnregisteredSubscriberTests
     }
 
     [Fact]
-    public async Task HandleAsync_WhenActiveConnectionsRemain_DoesNotDeletePresence()
+    public async Task HandleAsync_WhenNotLastConnectionForUser_DoesNotDeletePresence()
     {
         await _subscriber.HandleAsync(
             new RealtimeConnectionUnregisteredIntegrationEvent
             {
                 UserId = _fixture.Create<Guid>(),
                 ConnectionId = "connection-5",
-                ActiveConnectionCount = 1,
+                ActiveConnectionCount = 0,
+                IsLastConnectionForUser = false,
                 OccurredAtUtc = DateTimeOffset.UtcNow
             }.ToInboundEnvelope(),
             CancellationToken.None);
@@ -155,6 +157,7 @@ public sealed class RealtimeConnectionUnregisteredSubscriberTests
                 UserId = _fixture.Create<Guid>(),
                 ConnectionId = string.Empty,
                 ActiveConnectionCount = 0,
+                IsLastConnectionForUser = true,
                 OccurredAtUtc = DateTimeOffset.UtcNow
             }.ToInboundEnvelope(),
             CancellationToken.None);

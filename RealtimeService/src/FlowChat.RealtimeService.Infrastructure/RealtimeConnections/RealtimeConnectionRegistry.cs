@@ -65,29 +65,12 @@ internal sealed class RealtimeConnectionRegistry(
                 userId = storedUserId.Value;
             }
 
-            var connectionExists = await _connectionStore.ExistsAsync(connectionId);
-            var connectionInUserSet = await _userConnectionsStore.ContainsConnectionAsync(userId, connectionId);
-            if (!connectionExists && !connectionInUserSet)
-            {
-                return null;
-            }
-
-            await _userConnectionsStore.RemoveConnectionAsync(userId, connectionId);
-            await _connectionStore.DeleteAsync(connectionId);
-            await _userInstanceRoutingStore.RemoveConnectionAsync(userId, _settings.InstanceId);
-            var activeConnectionCount = await _userConnectionsStore.GetConnectionCountAsync(userId);
-
-            if (activeConnectionCount == 0)
-            {
-                await _userConnectionsStore.DeleteIfEmptyAsync(userId);
-            }
-
-            return new RealtimeConnectionMutationResult(
+            return await _realTimeStore.UnregisterConnectionAsync(
                 userId,
                 connectionId,
-                activeConnectionCount,
-                false,
-                DateTimeOffset.UtcNow);
+                _settings.InstanceId,
+                DateTimeOffset.UtcNow,
+                cancellationToken);
         }
         finally
         {
