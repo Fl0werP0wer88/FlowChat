@@ -65,10 +65,10 @@ internal sealed class RealTimeStore(
         var redisResult = await database.ScriptEvaluateAsync(
             RegisterConnectionScript,
             [
-                GetConnectionKey(connectionId),
-                GetUserConnectionsKey(userId),
-                RealtimeRoutingKeys.GetUserInstancesKey(_settings.KeyPrefix, userId),
-                RealtimeRoutingKeys.GetUserInstanceCountsKey(_settings.KeyPrefix, userId)
+                RedisKeys.GetConnectionKey(_settings.KeyPrefix, connectionId),
+                RedisKeys.GetUserConnectionsKey(_settings.KeyPrefix, userId),
+                RedisKeys.GetUserInstancesKey(_settings.KeyPrefix, userId),
+                RedisKeys.GetUserInstanceCountsKey(_settings.KeyPrefix, userId)
             ],
             [
                 userId.ToString("D"),
@@ -95,8 +95,4 @@ internal sealed class RealTimeStore(
             isFirstConnectionForUser,
             nowUtc);
     }
-
-    private string GetConnectionKey(string connectionId) => $"{_settings.KeyPrefix}:connections:{connectionId}";
-
-    private string GetUserConnectionsKey(Guid userId) => $"{_settings.KeyPrefix}:user-connections:{userId:D}";
 }

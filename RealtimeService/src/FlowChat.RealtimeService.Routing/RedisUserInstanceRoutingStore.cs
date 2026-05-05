@@ -39,8 +39,8 @@ public sealed class RedisUserInstanceRoutingStore(
         ArgumentException.ThrowIfNullOrWhiteSpace(instanceId);
 
         var database = _redisTransactionContext.GetActiveDatabase();
-        var userInstancesKey = RealtimeRoutingKeys.GetUserInstancesKey(_settings.KeyPrefix, userId);
-        var userInstanceCountsKey = RealtimeRoutingKeys.GetUserInstanceCountsKey(_settings.KeyPrefix, userId);
+        var userInstancesKey = RedisKeys.GetUserInstancesKey(_settings.KeyPrefix, userId);
+        var userInstanceCountsKey = RedisKeys.GetUserInstanceCountsKey(_settings.KeyPrefix, userId);
         var incrementTask = database.HashIncrementAsync(userInstanceCountsKey, instanceId, 1);
         var addTask = database.SetAddAsync(userInstancesKey, instanceId);
         var userInstancesExpireTask = database.KeyExpireAsync(userInstancesKey, _settings.ConnectionTtl);
@@ -58,8 +58,8 @@ public sealed class RedisUserInstanceRoutingStore(
         await _redisTransactionContext.GetActiveDatabase().ScriptEvaluateAsync(
             RemoveConnectionScript,
             [
-                RealtimeRoutingKeys.GetUserInstancesKey(_settings.KeyPrefix, userId),
-                RealtimeRoutingKeys.GetUserInstanceCountsKey(_settings.KeyPrefix, userId)
+                RedisKeys.GetUserInstancesKey(_settings.KeyPrefix, userId),
+                RedisKeys.GetUserInstanceCountsKey(_settings.KeyPrefix, userId)
             ],
             [instanceId]);
     }
@@ -83,7 +83,7 @@ public sealed class RedisUserInstanceRoutingStore(
         var database = _redisTransactionContext.GetActiveDatabase();
         var instanceTasks = filteredUserIds.ToDictionary(
             userId => userId,
-            userId => database.SetMembersAsync(RealtimeRoutingKeys.GetUserInstancesKey(_settings.KeyPrefix, userId)));
+            userId => database.SetMembersAsync(RedisKeys.GetUserInstancesKey(_settings.KeyPrefix, userId)));
 
         await Task.WhenAll(instanceTasks.Values.Cast<Task>());
 
@@ -115,10 +115,10 @@ public sealed class RedisUserInstanceRoutingStore(
 
         var database = _redisTransactionContext.GetActiveDatabase();
         var userInstancesExpireTask = database.KeyExpireAsync(
-            RealtimeRoutingKeys.GetUserInstancesKey(_settings.KeyPrefix, userId),
+            RedisKeys.GetUserInstancesKey(_settings.KeyPrefix, userId),
             _settings.ConnectionTtl);
         var userInstanceCountsExpireTask = database.KeyExpireAsync(
-            RealtimeRoutingKeys.GetUserInstanceCountsKey(_settings.KeyPrefix, userId),
+            RedisKeys.GetUserInstanceCountsKey(_settings.KeyPrefix, userId),
             _settings.ConnectionTtl);
 
         return CompleteWriteAsync(database, userInstancesExpireTask, userInstanceCountsExpireTask);

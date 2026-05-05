@@ -90,8 +90,8 @@ public sealed class ConsumersConfigurationTests : IAsyncLifetime
 
         var userId = Guid.NewGuid();
         var database = serviceProvider.GetRequiredService<IConnectionMultiplexer>().GetDatabase();
-        await database.SetAddAsync(RealtimeRoutingKeys.GetUserInstancesKey("flowchat:test", userId), "instance-a");
-        await database.SetAddAsync(RealtimeRoutingKeys.GetUserInstancesKey("flowchat:test", userId), "instance-b");
+        await database.SetAddAsync(RedisKeys.GetUserInstancesKey("flowchat:test", userId), "instance-a");
+        await database.SetAddAsync(RedisKeys.GetUserInstancesKey("flowchat:test", userId), "instance-b");
 
         var reader = serviceProvider.GetRequiredService<IUserInstanceRoutingReader>();
 

@@ -1,4 +1,5 @@
 using FlowChat.RealtimeService.Infrastructure.Configuration.Settings;
+using FlowChat.RealtimeService.Routing;
 using FlowChat.Shared.Infrastructure.Redis;
 using StackExchange.Redis;
 
@@ -18,7 +19,7 @@ internal sealed class RedisUserConnectionsStore(
         ArgumentException.ThrowIfNullOrWhiteSpace(connectionId);
 
         var database = _redisTransactionContext.GetActiveDatabase();
-        var userConnectionsKey = GetUserConnectionsKey(userId);
+        var userConnectionsKey = RedisKeys.GetUserConnectionsKey(_settings.KeyPrefix, userId);
         var addTask = database.SetAddAsync(userConnectionsKey, connectionId);
         var expireTask = database.KeyExpireAsync(userConnectionsKey, _settings.ConnectionTtl);
 
@@ -31,7 +32,7 @@ internal sealed class RedisUserConnectionsStore(
         ArgumentException.ThrowIfNullOrWhiteSpace(connectionId);
 
         return _redisTransactionContext.GetActiveDatabase()
-            .SetContainsAsync(GetUserConnectionsKey(userId), connectionId);
+            .SetContainsAsync(RedisKeys.GetUserConnectionsKey(_settings.KeyPrefix, userId), connectionId);
     }
 
     public Task RemoveConnectionAsync(Guid userId, string connectionId)
@@ -40,7 +41,7 @@ internal sealed class RedisUserConnectionsStore(
         ArgumentException.ThrowIfNullOrWhiteSpace(connectionId);
 
         var database = _redisTransactionContext.GetActiveDatabase();
-        var removeTask = database.SetRemoveAsync(GetUserConnectionsKey(userId), connectionId);
+        var removeTask = database.SetRemoveAsync(RedisKeys.GetUserConnectionsKey(_settings.KeyPrefix, userId), connectionId);
 
         return CompleteWriteAsync(database, removeTask);
     }
@@ -50,7 +51,7 @@ internal sealed class RedisUserConnectionsStore(
         ArgumentOutOfRangeException.ThrowIfEqual(userId, Guid.Empty);
 
         return checked((int)await _redisTransactionContext.GetActiveDatabase()
-            .SetLengthAsync(GetUserConnectionsKey(userId)));
+            .SetLengthAsync(RedisKeys.GetUserConnectionsKey(_settings.KeyPrefix, userId)));
     }
 
     public async Task DeleteIfEmptyAsync(Guid userId)
@@ -63,7 +64,7 @@ internal sealed class RedisUserConnectionsStore(
         }
 
         var database = _redisTransactionContext.GetActiveDatabase();
-        var deleteTask = database.KeyDeleteAsync(GetUserConnectionsKey(userId));
+        var deleteTask = database.KeyDeleteAsync(RedisKeys.GetUserConnectionsKey(_settings.KeyPrefix, userId));
 
         await CompleteWriteAsync(database, deleteTask);
     }
@@ -73,10 +74,8 @@ internal sealed class RedisUserConnectionsStore(
         ArgumentOutOfRangeException.ThrowIfEqual(userId, Guid.Empty);
 
         return _redisTransactionContext.GetActiveDatabase()
-            .KeyExpireAsync(GetUserConnectionsKey(userId), _settings.ConnectionTtl);
+            .KeyExpireAsync(RedisKeys.GetUserConnectionsKey(_settings.KeyPrefix, userId), _settings.ConnectionTtl);
     }
-
-    private string GetUserConnectionsKey(Guid userId) => $"{_settings.KeyPrefix}:user-connections:{userId:D}";
 
     private static Task CompleteWriteAsync(IDatabaseAsync database, params Task[] operations) =>
         database is ITransaction ? Task.CompletedTask : Task.WhenAll(operations);

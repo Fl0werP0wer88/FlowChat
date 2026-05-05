@@ -1,4 +1,5 @@
 using FlowChat.RealtimeService.Infrastructure.Configuration.Settings;
+using FlowChat.RealtimeService.Routing;
 using FlowChat.Shared.Infrastructure.Redis;
 using StackExchange.Redis;
 
@@ -27,7 +28,7 @@ internal sealed class RedisConnectionStore(
         ArgumentException.ThrowIfNullOrWhiteSpace(connectionId);
 
         var database = _redisTransactionContext.GetActiveDatabase();
-        var connectionKey = GetConnectionKey(connectionId);
+        var connectionKey = RedisKeys.GetConnectionKey(_settings.KeyPrefix, connectionId);
         var hashSetTask = database.HashSetAsync(connectionKey,
         [
             new HashEntry(HashFields.UserId, userId.ToString()),
@@ -46,7 +47,7 @@ internal sealed class RedisConnectionStore(
         ArgumentException.ThrowIfNullOrWhiteSpace(connectionId);
 
         var userIdValue = await _redisTransactionContext.GetActiveDatabase()
-            .HashGetAsync(GetConnectionKey(connectionId), HashFields.UserId);
+            .HashGetAsync(RedisKeys.GetConnectionKey(_settings.KeyPrefix, connectionId), HashFields.UserId);
         if (userIdValue.IsNullOrEmpty || !Guid.TryParse(userIdValue.ToString(), out var userId) || userId == Guid.Empty)
         {
             return null;
@@ -59,7 +60,8 @@ internal sealed class RedisConnectionStore(
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(connectionId);
 
-        return _redisTransactionContext.GetActiveDatabase().KeyExistsAsync(GetConnectionKey(connectionId));
+        return _redisTransactionContext.GetActiveDatabase()
+            .KeyExistsAsync(RedisKeys.GetConnectionKey(_settings.KeyPrefix, connectionId));
     }
 
     public Task DeleteAsync(string connectionId)
@@ -67,7 +69,7 @@ internal sealed class RedisConnectionStore(
         ArgumentException.ThrowIfNullOrWhiteSpace(connectionId);
 
         var database = _redisTransactionContext.GetActiveDatabase();
-        var deleteTask = database.KeyDeleteAsync(GetConnectionKey(connectionId));
+        var deleteTask = database.KeyDeleteAsync(RedisKeys.GetConnectionKey(_settings.KeyPrefix, connectionId));
 
         return CompleteWriteAsync(database, deleteTask);
     }
@@ -77,10 +79,8 @@ internal sealed class RedisConnectionStore(
         ArgumentException.ThrowIfNullOrWhiteSpace(connectionId);
 
         return _redisTransactionContext.GetActiveDatabase()
-            .KeyExpireAsync(GetConnectionKey(connectionId), _settings.ConnectionTtl);
+            .KeyExpireAsync(RedisKeys.GetConnectionKey(_settings.KeyPrefix, connectionId), _settings.ConnectionTtl);
     }
-
-    private string GetConnectionKey(string connectionId) => $"{_settings.KeyPrefix}:connections:{connectionId}";
 
     private static Task CompleteWriteAsync(IDatabaseAsync database, params Task[] operations) =>
         database is ITransaction ? Task.CompletedTask : Task.WhenAll(operations);
