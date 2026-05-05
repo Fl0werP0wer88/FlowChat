@@ -200,6 +200,7 @@ internal sealed class CapturingRealtimeConnectionRegistry : IRealtimeConnectionR
             userId,
             connectionId,
             1,
+            true,
             DateTimeOffset.UtcNow));
     }
 

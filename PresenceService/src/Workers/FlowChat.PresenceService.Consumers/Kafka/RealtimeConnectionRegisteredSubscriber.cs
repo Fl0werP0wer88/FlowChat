@@ -16,7 +16,7 @@ public sealed class RealtimeConnectionRegisteredSubscriber(
         CancellationToken cancellationToken)
     {
         Validate(message);
-        if (message.ActiveConnectionCount != 1)
+        if (!message.IsFirstConnectionForUser)
         {
             return;
         }

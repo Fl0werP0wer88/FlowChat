@@ -34,6 +34,7 @@ public sealed class RealtimeConnectionRegistryTests : IAsyncLifetime
         var userInstanceCounts = await database.HashGetAllAsync($"flowchat:test:user-instance-counts:{userId:D}");
 
         result.ActiveConnectionCount.Should().Be(1);
+        result.IsFirstConnectionForUser.Should().BeTrue();
         connectionEntries.Should().Contain(entry => entry.Name == "userId" && entry.Value == userId.ToString());
         connectionEntries.Should().Contain(entry => entry.Name == "connectionId" && entry.Value == "connection-1");
         connectionEntries.Should().Contain(entry => entry.Name == "instanceId" && entry.Value == "test-instance");
@@ -130,6 +131,39 @@ public sealed class RealtimeConnectionRegistryTests : IAsyncLifetime
         var result = await registry.RegisterAsync(userId, "connection-b", CancellationToken.None);
 
         result.ActiveConnectionCount.Should().Be(2);
+        result.IsFirstConnectionForUser.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task RegisterAsync_WhenConnectionIsRegisteredAgain_DoesNotIncrementRoutingCount()
+    {
+        using var serviceProvider = BuildServiceProvider();
+        var registry = serviceProvider.GetRequiredService<IRealtimeConnectionRegistry>();
+        var database = serviceProvider.GetRequiredService<IConnectionMultiplexer>().GetDatabase();
+        var userId = Guid.NewGuid();
+
+        await registry.RegisterAsync(userId, "connection-duplicate", CancellationToken.None);
+        var result = await registry.RegisterAsync(userId, "connection-duplicate", CancellationToken.None);
+
+        result.ActiveConnectionCount.Should().Be(1);
+        result.IsFirstConnectionForUser.Should().BeFalse();
+        (await database.HashGetAsync($"flowchat:test:user-instance-counts:{userId:D}", "test-instance"))
+            .Should().Be("1");
+    }
+
+    [Fact]
+    public async Task RegisterAsync_WhenConnectionsAreRegisteredConcurrently_ReturnsSingleFirstConnection()
+    {
+        using var serviceProvider = BuildServiceProvider();
+        var registry = serviceProvider.GetRequiredService<IRealtimeConnectionRegistry>();
+        var userId = Guid.NewGuid();
+
+        var results = await Task.WhenAll(Enumerable
+            .Range(1, 5)
+            .Select(index => registry.RegisterAsync(userId, $"connection-concurrent-{index}", CancellationToken.None)));
+
+        results.Should().ContainSingle(result => result.IsFirstConnectionForUser);
+        results.Should().OnlyContain(result => result.ActiveConnectionCount >= 1);
     }
 
     [Fact]

@@ -5,5 +5,6 @@ public sealed record RealtimeConnectionRegisteredIntegrationEvent : IntegrationE
     public Guid UserId { get; init; }
     public required string ConnectionId { get; init; }
     public int ActiveConnectionCount { get; init; }
+    public bool IsFirstConnectionForUser { get; init; }
     public DateTimeOffset OccurredAtUtc { get; init; }
 }

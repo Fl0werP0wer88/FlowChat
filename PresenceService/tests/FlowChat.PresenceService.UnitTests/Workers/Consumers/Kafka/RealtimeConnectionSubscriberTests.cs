@@ -41,6 +41,7 @@ public sealed class RealtimeConnectionRegisteredSubscriberTests
                 UserId = userId,
                 ConnectionId = "connection-1",
                 ActiveConnectionCount = 1,
+                IsFirstConnectionForUser = true,
                 OccurredAtUtc = DateTimeOffset.UtcNow
             }.ToInboundEnvelope(),
             CancellationToken.None);
@@ -50,14 +51,15 @@ public sealed class RealtimeConnectionRegisteredSubscriberTests
     }
 
     [Fact]
-    public async Task HandleAsync_WhenConnectionCountIsGreaterThanOne_DoesNotInitializePresence()
+    public async Task HandleAsync_WhenNotFirstConnectionForUser_DoesNotInitializePresence()
     {
         await _subscriber.HandleAsync(
             new RealtimeConnectionRegisteredIntegrationEvent
             {
                 UserId = _fixture.Create<Guid>(),
                 ConnectionId = "connection-2",
-                ActiveConnectionCount = 2,
+                ActiveConnectionCount = 1,
+                IsFirstConnectionForUser = false,
                 OccurredAtUtc = DateTimeOffset.UtcNow
             }.ToInboundEnvelope(),
             CancellationToken.None);
@@ -76,6 +78,7 @@ public sealed class RealtimeConnectionRegisteredSubscriberTests
                 UserId = Guid.Empty,
                 ConnectionId = "connection-3",
                 ActiveConnectionCount = 1,
+                IsFirstConnectionForUser = true,
                 OccurredAtUtc = DateTimeOffset.UtcNow
             }.ToInboundEnvelope(),
             CancellationToken.None);
