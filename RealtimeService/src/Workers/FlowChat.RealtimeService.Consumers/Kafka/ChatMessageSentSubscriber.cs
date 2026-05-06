@@ -7,7 +7,7 @@ using FlowChat.RealtimeService.Consumers.Services;
 namespace FlowChat.RealtimeService.Consumers.Kafka;
 
 public sealed class ChatMessageSentSubscriber(
-    IRealtimeEventRouter realtimeEventRouter,
+    IRealtimeInternalApiClient realtimeInternalApiClient,
     ILogger<ChatMessageSentSubscriber> logger)
     : SubscriberBase<ChatMessageSentIntegrationEvent>(logger)
 {
@@ -31,7 +31,7 @@ public sealed class ChatMessageSentSubscriber(
                 .ToArray()
         };
 
-        await realtimeEventRouter.PublishMessageAsync(request, cancellationToken);
+        await realtimeInternalApiClient.PublishMessageAsync(request, cancellationToken);
     }
 
     private static void Validate(ChatMessageSentIntegrationEvent message)

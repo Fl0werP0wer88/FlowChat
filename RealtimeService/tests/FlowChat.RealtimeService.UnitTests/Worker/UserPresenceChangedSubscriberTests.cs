@@ -3,7 +3,6 @@ using FlowChat.Core.Domain;
 using FlowChat.Core.Exceptions;
 using FlowChat.Core.Messaging.PresenceService.Events;
 using FlowChat.RealtimeService.Consumers.Kafka;
-using FlowChat.RealtimeService.Consumers.Configuration.Settings;
 using FlowChat.RealtimeService.Consumers.Realtime.Contracts;
 using FlowChat.RealtimeService.Consumers.Services;
 using FluentAssertions;
@@ -15,22 +14,22 @@ namespace FlowChat.RealtimeService.UnitTests;
 public sealed class UserPresenceChangedSubscriberTests
 {
     private readonly IFixture _fixture = new Fixture();
-    private readonly Mock<IRealtimeEventRouter> _eventRouterMock = new();
+    private readonly Mock<IRealtimeInternalApiClient> _internalApiClientMock = new();
     private readonly UserPresenceChangedSubscriber _subscriber;
 
     public UserPresenceChangedSubscriberTests()
     {
         _subscriber = new UserPresenceChangedSubscriber(
-            _eventRouterMock.Object,
+            _internalApiClientMock.Object,
             NullLogger<UserPresenceChangedSubscriber>.Instance);
     }
 
     [Fact]
-    public async Task HandleAsync_ForwardsNormalizedPresenceRequestToRouter()
+    public async Task HandleAsync_ForwardsNormalizedPresenceRequestToInternalApiClient()
     {
         PublishPresenceChangeRequest? capturedRequest = null;
 
-        _eventRouterMock
+        _internalApiClientMock
             .Setup(x => x.PublishPresenceChangeAsync(It.IsAny<PublishPresenceChangeRequest>(), It.IsAny<CancellationToken>()))
             .Callback<PublishPresenceChangeRequest, CancellationToken>((request, _) => capturedRequest = request)
             .Returns(Task.CompletedTask);
@@ -62,7 +61,7 @@ public sealed class UserPresenceChangedSubscriberTests
             CancellationToken.None);
 
         await act.Should().ThrowAsync<NonTransientException>();
-        _eventRouterMock.Verify(
+        _internalApiClientMock.Verify(
             x => x.PublishPresenceChangeAsync(It.IsAny<PublishPresenceChangeRequest>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }

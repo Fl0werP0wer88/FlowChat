@@ -36,31 +36,6 @@ internal sealed class CapturingRealtimeClientDispatcher : IRealtimeClientDispatc
 
 internal sealed class CapturingRealtimeInternalApiClient : IRealtimeInternalApiClient
 {
-    public Uri? LastMessageBaseAddress { get; private set; }
-    public Uri? LastPresenceBaseAddress { get; private set; }
-    public PublishMessageRequest? LastPublishMessageRequest { get; private set; }
-    public PublishPresenceChangeRequest? LastPublishPresenceChangeRequest { get; private set; }
-
-    public Task PublishMessageAsync(Uri baseAddress, PublishMessageRequest request, CancellationToken cancellationToken)
-    {
-        LastMessageBaseAddress = baseAddress;
-        LastPublishMessageRequest = request;
-        return Task.CompletedTask;
-    }
-
-    public Task PublishPresenceChangeAsync(
-        Uri baseAddress,
-        PublishPresenceChangeRequest request,
-        CancellationToken cancellationToken)
-    {
-        LastPresenceBaseAddress = baseAddress;
-        LastPublishPresenceChangeRequest = request;
-        return Task.CompletedTask;
-    }
-}
-
-internal sealed class CapturingRealtimeEventRouter : IRealtimeEventRouter
-{
     public PublishMessageRequest? LastPublishMessageRequest { get; private set; }
     public PublishPresenceChangeRequest? LastPublishPresenceChangeRequest { get; private set; }
 
@@ -70,9 +45,29 @@ internal sealed class CapturingRealtimeEventRouter : IRealtimeEventRouter
         return Task.CompletedTask;
     }
 
-    public Task PublishPresenceChangeAsync(PublishPresenceChangeRequest request, CancellationToken cancellationToken)
+    public Task PublishPresenceChangeAsync(
+        PublishPresenceChangeRequest request,
+        CancellationToken cancellationToken)
     {
         LastPublishPresenceChangeRequest = request;
+        return Task.CompletedTask;
+    }
+}
+
+internal sealed class CapturingRealtimeEventRouter : FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure.IRealtimeEventRouter
+{
+    public ChatMessageNotification? LastMessageNotification { get; private set; }
+    public PresenceChangedNotification? LastPresenceNotification { get; private set; }
+
+    public Task RouteMessageAsync(ChatMessageNotification notification, CancellationToken cancellationToken)
+    {
+        LastMessageNotification = notification;
+        return Task.CompletedTask;
+    }
+
+    public Task RoutePresenceChangeAsync(PresenceChangedNotification notification, CancellationToken cancellationToken)
+    {
+        LastPresenceNotification = notification;
         return Task.CompletedTask;
     }
 }

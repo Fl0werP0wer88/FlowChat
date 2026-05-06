@@ -7,7 +7,7 @@ using FlowChat.RealtimeService.Consumers.Services;
 namespace FlowChat.RealtimeService.Consumers.Kafka;
 
 public sealed class UserPresenceChangedSubscriber(
-    IRealtimeEventRouter realtimeEventRouter,
+    IRealtimeInternalApiClient realtimeInternalApiClient,
     ILogger<UserPresenceChangedSubscriber> logger)
     : SubscriberBase<PresenceStatusChangedIntegrationEvent>(logger)
 {
@@ -28,7 +28,7 @@ public sealed class UserPresenceChangedSubscriber(
                 .ToArray()
         };
 
-        await realtimeEventRouter.PublishPresenceChangeAsync(request, cancellationToken);
+        await realtimeInternalApiClient.PublishPresenceChangeAsync(request, cancellationToken);
     }
 
     private static void Validate(PresenceStatusChangedIntegrationEvent message)

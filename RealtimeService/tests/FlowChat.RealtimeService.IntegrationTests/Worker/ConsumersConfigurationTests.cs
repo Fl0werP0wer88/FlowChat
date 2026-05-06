@@ -1,27 +1,15 @@
 using FlowChat.RealtimeService.Consumers;
 using FlowChat.RealtimeService.Consumers.Kafka;
-using FlowChat.RealtimeService.Consumers.Configuration.Settings;
 using FlowChat.RealtimeService.Consumers.Services;
-using FlowChat.RealtimeService.Redis.RealtimeConnections;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using StackExchange.Redis;
 using Silverback.Messaging.Broker;
-using Testcontainers.Redis;
 
 namespace FlowChat.RealtimeService.UnitTests;
 
-public sealed class ConsumersConfigurationTests : IAsyncLifetime
+public sealed class ConsumersConfigurationTests
 {
-    private readonly RedisContainer _redisContainer = new RedisBuilder()
-        .WithImage("redis:7-alpine")
-        .Build();
-
-    public Task InitializeAsync() => _redisContainer.StartAsync();
-
-    public Task DisposeAsync() => _redisContainer.DisposeAsync().AsTask();
-
     [Fact]
     public async Task AddConsumers_RegistersConsumerInfrastructure()
     {
@@ -39,20 +27,16 @@ public sealed class ConsumersConfigurationTests : IAsyncLifetime
         var consumerCollection = serviceProvider.GetRequiredService<IConsumerCollection>();
         var chatSubscriber = scope.ServiceProvider.GetRequiredService<ChatMessageSentSubscriber>();
         var presenceSubscriber = scope.ServiceProvider.GetRequiredService<UserPresenceChangedSubscriber>();
-        var userInstanceRoutingReader = serviceProvider.GetRequiredService<IUserInstanceRoutingReader>();
-        var eventRouter = scope.ServiceProvider.GetRequiredService<IRealtimeEventRouter>();
         var internalApiClient = scope.ServiceProvider.GetRequiredService<IRealtimeInternalApiClient>();
 
         consumerCollection.Should().NotBeNull();
         chatSubscriber.Should().NotBeNull();
         presenceSubscriber.Should().NotBeNull();
-        userInstanceRoutingReader.Should().NotBeNull();
-        eventRouter.Should().NotBeNull();
         internalApiClient.Should().NotBeNull();
     }
 
     [Fact]
-    public async Task AddConsumers_RegistersRealtimeInternalApiNamedClientWithApiKeyHeader()
+    public async Task AddConsumers_RegistersRealtimeInternalApiNamedClientWithBaseAddressAndApiKeyHeader()
     {
         var configuration = CreateConfiguration();
 
@@ -70,47 +54,18 @@ public sealed class ConsumersConfigurationTests : IAsyncLifetime
             .CreateClient(RealtimeInternalApiClient.HttpClientName);
 
         internalApiClient.Should().NotBeNull();
-        httpClient.BaseAddress.Should().BeNull();
+        httpClient.BaseAddress.Should().Be(new Uri("http://localhost:5215"));
         httpClient.DefaultRequestHeaders.GetValues(RealtimeInternalApiClient.ApiKeyHeaderName).Single()
             .Should().Be("worker-key");
     }
 
-    [Fact]
-    public async Task AddConsumers_UserInstanceRoutingReader_ReadsInstanceIdsFromRedis()
-    {
-        var configuration = CreateConfiguration();
-
-        var services = new ServiceCollection();
-        services.AddSingleton<IConfiguration>(configuration);
-        services.AddOptions();
-        services.AddLogging();
-        services.AddConsumers(configuration);
-
-        await using var serviceProvider = services.BuildServiceProvider();
-
-        var userId = Guid.NewGuid();
-        var database = serviceProvider.GetRequiredService<IConnectionMultiplexer>().GetDatabase();
-        await database.SetAddAsync(RedisKeys.GetUserInstancesKey("flowchat:test", userId), "instance-a");
-        await database.SetAddAsync(RedisKeys.GetUserInstancesKey("flowchat:test", userId), "instance-b");
-
-        var reader = serviceProvider.GetRequiredService<IUserInstanceRoutingReader>();
-
-        var result = await reader.GetInstanceIdsByUserAsync([userId], CancellationToken.None);
-
-        result.Should().ContainKey(userId);
-        result[userId].Should().BeEquivalentTo(["instance-a", "instance-b"]);
-    }
-
-    private IConfiguration CreateConfiguration()
+    private static IConfiguration CreateConfiguration()
     {
         return new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
                 ["RealtimeApi:ApiKey"] = "worker-key",
-                ["RealtimeApi:Instances:instance-a"] = "http://localhost:5215",
-                ["RealtimeApi:Instances:instance-b"] = "http://localhost:5216",
-                ["ConnectionStrings:Redis"] = _redisContainer.GetConnectionString(),
-                ["RealtimeRouting:KeyPrefix"] = "flowchat:test",
+                ["RealtimeApi:BaseUrl"] = "http://localhost:5215",
                 ["Kafka:ChatMessageSentConsumer:BootstrapServers"] = "localhost:9092",
                 ["Kafka:ChatMessageSentConsumer:GroupId"] = "realtime-service",
                 ["Kafka:ChatMessageSentConsumer:RetryGroupId"] = "realtime-service-retry",

@@ -4,6 +4,7 @@ using FlowChat.RealtimeService.Infrastructure.Configuration.Settings;
 using FlowChat.RealtimeService.Infrastructure.Presence;
 using FlowChat.RealtimeService.Infrastructure.RealtimeConnections;
 using FlowChat.RealtimeService.Infrastructure.RealtimeConnections.ConnectionsTracker;
+using FlowChat.RealtimeService.Infrastructure.Routing;
 using FlowChat.RealtimeService.Redis.Configuration.Settings;
 using FlowChat.RealtimeService.Redis.RealtimeConnections;
 using FlowChat.Shared.Application;
@@ -45,8 +46,11 @@ public static class InfrastructureServiceRegistration
         services.TryAddSingleton<IRealtimeConnectionRedisRepository>(sp => sp.GetRequiredService<RealtimeConnectionRedisRepository>());
         services.TryAddSingleton<IUserInstanceRoutingReader>(sp => sp.GetRequiredService<RealtimeConnectionRedisRepository>());
         services.TryAddSingleton<IRealtimeConnectionRegistry, RealtimeConnectionRegistry>();
+        services.TryAddSingleton(sp => sp.GetRequiredService<ISettingsProvider>().GetSection<RealtimeInstancesSettingsSection>());
+        services.TryAddSingleton<IRealtimeInstanceAddressResolver, ConfiguredRealtimeInstanceAddressResolver>();
 
         services.TryAddSingleton(sp => sp.GetRequiredService<ISettingsProvider>().GetSection<PresenceServiceSettingsSection>());
+        services.TryAddSingleton(sp => sp.GetRequiredService<ISettingsProvider>().GetSection<InternalApiSettingsSection>());
         services.AddHttpClient(PresenceInternalApiClient.HttpClientName, (sp, client) =>
         {
             var settings = sp.GetRequiredService<PresenceServiceSettingsSection>();
@@ -62,6 +66,20 @@ public static class InfrastructureServiceRegistration
             }
         });
         services.TryAddSingleton<IPresenceInternalApiClient, PresenceInternalApiClient>();
+        services.AddHttpClient(RealtimeInstanceInternalApiClient.HttpClientName, (sp, client) =>
+        {
+            var settings = sp.GetRequiredService<InternalApiSettingsSection>();
+            client.DefaultRequestHeaders.Remove(RealtimeInstanceInternalApiClient.ApiKeyHeaderName);
+
+            if (!string.IsNullOrWhiteSpace(settings.ApiKey))
+            {
+                client.DefaultRequestHeaders.Add(RealtimeInstanceInternalApiClient.ApiKeyHeaderName, settings.ApiKey);
+            }
+        });
+        services.TryAddSingleton<IRealtimeInstanceInternalApiClient>(sp =>
+            new RealtimeInstanceInternalApiClient(
+                sp.GetRequiredService<IHttpClientFactory>().CreateClient(RealtimeInstanceInternalApiClient.HttpClientName)));
+        services.AddScoped<IRealtimeEventRouter, RealtimeEventRouter>();
 
         services.AddHostedService<RealtimeConnectionRefreshBackgroundService>();
 

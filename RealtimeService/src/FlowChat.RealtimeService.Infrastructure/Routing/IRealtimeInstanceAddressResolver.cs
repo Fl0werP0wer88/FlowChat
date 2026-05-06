@@ -1,4 +1,4 @@
-namespace FlowChat.RealtimeService.Consumers.Services;
+namespace FlowChat.RealtimeService.Infrastructure.Routing;
 
 public interface IRealtimeInstanceAddressResolver
 {

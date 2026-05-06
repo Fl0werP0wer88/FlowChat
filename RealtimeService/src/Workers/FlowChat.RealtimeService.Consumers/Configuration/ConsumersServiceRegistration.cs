@@ -3,8 +3,6 @@ using FlowChat.Core.Contracts;
 using FlowChat.RealtimeService.Consumers.Configuration.Settings;
 using FlowChat.RealtimeService.Consumers.Kafka;
 using FlowChat.RealtimeService.Consumers.Services;
-using FlowChat.RealtimeService.Redis.Configuration.Settings;
-using FlowChat.RealtimeService.Redis.RealtimeConnections;
 using FlowChat.Shared.Infrastructure.Configuration;
 using FlowChat.Shared.Infrastructure.Silverback.Behaviors;
 using FlowChat.Shared.Infrastructure.Silverback.Kafka;
@@ -13,7 +11,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Silverback.Configuration;
 using Silverback.Messaging.Configuration;
-using StackExchange.Redis;
 
 namespace FlowChat.RealtimeService.Consumers;
 
@@ -27,22 +24,6 @@ public static class ConsumersServiceRegistration
 
         var settingsProvider = new AppSettingsProvider(configuration);
         services.TryAddSingleton(sp => sp.GetRequiredService<ISettingsProvider>().GetSection<RealtimeApiSettingsSection>());
-        services.TryAddSingleton(sp =>
-        {
-            var settings = sp.GetRequiredService<ISettingsProvider>().GetSection<RealtimeRoutingSettingsSection>();
-            settings.RedisConnectionString = configuration.GetConnectionString(RealtimeRoutingSettingsSection.RedisConnectionStringName)
-                ?? settings.RedisConnectionString;
-            return settings;
-        });
-        services.TryAddSingleton(sp =>
-        {
-            var settings = sp.GetRequiredService<RealtimeRoutingSettingsSection>();
-            return new RealtimeConnectionsSettingsSection
-            {
-                RedisConnectionString = settings.RedisConnectionString,
-                KeyPrefix = settings.KeyPrefix
-            };
-        });
 
         var chatMessageSentConsumerOptions = settingsProvider.GetSection<ChatMessageSentConsumerSettingsSection>();
         var presenceStatusChangedConsumerOptions = settingsProvider.GetSection<PresenceStatusChangedConsumerSettingsSection>();
@@ -52,6 +33,12 @@ public static class ConsumersServiceRegistration
             var realtimeApiSettings = serviceProvider
                 .GetRequiredService<ISettingsProvider>()
                 .GetSection<RealtimeApiSettingsSection>();
+            if (!Uri.TryCreate(realtimeApiSettings.BaseUrl, UriKind.Absolute, out var baseAddress))
+            {
+                throw new InvalidOperationException("RealtimeApi:BaseUrl must be an absolute URI.");
+            }
+
+            httpClient.BaseAddress = baseAddress;
             httpClient.DefaultRequestHeaders.Remove(RealtimeInternalApiClient.ApiKeyHeaderName);
 
             if (!string.IsNullOrWhiteSpace(realtimeApiSettings.ApiKey))
@@ -64,17 +51,6 @@ public static class ConsumersServiceRegistration
                 serviceProvider
                     .GetRequiredService<IHttpClientFactory>()
                     .CreateClient(RealtimeInternalApiClient.HttpClientName)));
-        services.TryAddSingleton<IRealtimeInstanceAddressResolver, ConfiguredRealtimeInstanceAddressResolver>();
-        services.TryAddSingleton<IConnectionMultiplexer>(sp =>
-        {
-            var options = ConfigurationOptions.Parse(sp.GetRequiredService<RealtimeConnectionsSettingsSection>().RedisConnectionString);
-            options.AbortOnConnectFail = false;
-
-            return ConnectionMultiplexer.Connect(options);
-        });
-        services.TryAddSingleton<RealtimeConnectionRedisRepository>();
-        services.TryAddSingleton<IUserInstanceRoutingReader>(sp => sp.GetRequiredService<RealtimeConnectionRedisRepository>());
-        services.AddScoped<IRealtimeEventRouter, RealtimeEventRouter>();
 
         services.AddSilverback()
             .AddSingletonBrokerBehavior<CustomSpanAttributesProducerBehavior>()

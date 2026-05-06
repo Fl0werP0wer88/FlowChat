@@ -8,5 +8,5 @@ public sealed class RealtimeApiSettingsSection : SettingsSectionBase
 
     public string ApiKey { get; set; } = string.Empty;
 
-    public Dictionary<string, string> Instances { get; set; } = new(StringComparer.Ordinal);
+    public string BaseUrl { get; set; } = string.Empty;
 }

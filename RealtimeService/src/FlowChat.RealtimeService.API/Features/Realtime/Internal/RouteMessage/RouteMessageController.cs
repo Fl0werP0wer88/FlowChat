@@ -1,28 +1,28 @@
 using FlowChat.Core.Contracts;
-using FlowChat.Shared.API;
-using FlowChat.RealtimeService.Application.Features.Message.Commands.PublishMessage;
+using FlowChat.RealtimeService.Application.Features.Message.Commands.RouteMessage;
 using FlowChat.RealtimeService.Infrastructure.Configuration.Settings;
+using FlowChat.Shared.API;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
-namespace FlowChat.RealtimeService.Api.Features.Realtime.Internal.PublishMessage;
+namespace FlowChat.RealtimeService.Api.Features.Realtime.Internal.RouteMessage;
 
 [ApiController]
 [ApiExplorerSettings(IgnoreApi = true)]
 [Route("internal/realtime")]
-public sealed class PublishMessageController : ApiControllerBase
+public sealed class RouteMessageController : ApiControllerBase
 {
     private readonly IMediator _mediator;
 
-    public PublishMessageController(IMediator mediator, ISettingsProvider settingsProvider)
+    public RouteMessageController(IMediator mediator, ISettingsProvider settingsProvider)
         : base(() => settingsProvider.GetSection<InternalApiSettingsSection>().ApiKey)
     {
         _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
         ArgumentNullException.ThrowIfNull(settingsProvider);
     }
 
-    [HttpPost("messages/direct")]
-    public async Task<IActionResult> Publish([FromBody] PublishMessageRequest request, CancellationToken cancellationToken)
+    [HttpPost("messages")]
+    public async Task<IActionResult> Publish([FromBody] RouteMessageRequest request, CancellationToken cancellationToken)
     {
         if (!HasValidInternalApiKey())
         {
@@ -30,7 +30,7 @@ public sealed class PublishMessageController : ApiControllerBase
         }
 
         var result = await _mediator.Send(
-            new PublishMessageCommand(
+            new RouteMessageCommand(
                 request.MessageId,
                 request.ConversationId,
                 request.SenderUserId,

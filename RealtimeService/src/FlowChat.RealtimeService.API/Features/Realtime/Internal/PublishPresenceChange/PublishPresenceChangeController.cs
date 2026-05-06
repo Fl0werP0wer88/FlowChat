@@ -21,7 +21,7 @@ public sealed class PublishPresenceChangeController : ApiControllerBase
         ArgumentNullException.ThrowIfNull(settingsProvider);
     }
 
-    [HttpPost("presence")]
+    [HttpPost("presence/direct")]
     public async Task<IActionResult> Publish([FromBody] PublishPresenceChangeRequest request, CancellationToken cancellationToken)
     {
         if (!HasValidInternalApiKey())
@@ -42,4 +42,3 @@ public sealed class PublishPresenceChangeController : ApiControllerBase
             : HandleError(result.Error);
     }
 }
-

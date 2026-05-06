@@ -1,5 +1,4 @@
 using FlowChat.RealtimeService.Consumers.Configuration.Settings;
-using FlowChat.RealtimeService.Redis.Configuration.Settings;
 using FlowChat.Shared.Infrastructure.Configuration;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
@@ -21,9 +20,7 @@ public sealed class WorkerSettingsManagerTests
                 ["Kafka:PresenceStatusChangedConsumer:RetryGroupId"] = "realtime-service-retry",
                 ["Kafka:PresenceStatusChangedConsumer:Topic"] = "presence-topic",
                 ["RealtimeApi:ApiKey"] = "worker-key",
-                ["RealtimeApi:Instances:instance-a"] = "http://localhost:5215",
-                ["RealtimeRouting:RedisConnectionString"] = "localhost:6379,password=secret",
-                ["RealtimeRouting:KeyPrefix"] = "flowchat:test"
+                ["RealtimeApi:BaseUrl"] = "http://localhost:5215"
             })
             .Build();
 
@@ -35,10 +32,7 @@ public sealed class WorkerSettingsManagerTests
         settingsProvider.GetSection<PresenceStatusChangedConsumerSettingsSection>().Topic.Should().Be("presence-topic");
         settingsProvider.GetSection<PresenceStatusChangedConsumerSettingsSection>().RetryGroupId.Should().Be("realtime-service-retry");
         settingsProvider.GetSection<RealtimeApiSettingsSection>().ApiKey.Should().Be("worker-key");
-        settingsProvider.GetSection<RealtimeApiSettingsSection>().Instances.Should().ContainKey("instance-a")
-            .WhoseValue.Should().Be("http://localhost:5215");
-        settingsProvider.GetSection<RealtimeRoutingSettingsSection>().RedisConnectionString.Should().Be("localhost:6379,password=secret");
-        settingsProvider.GetSection<RealtimeRoutingSettingsSection>().KeyPrefix.Should().Be("flowchat:test");
+        settingsProvider.GetSection<RealtimeApiSettingsSection>().BaseUrl.Should().Be("http://localhost:5215");
     }
 
     [Theory]
@@ -59,21 +53,14 @@ public sealed class WorkerSettingsManagerTests
         var realtimeApiSettings = configuration
             .GetSection(new RealtimeApiSettingsSection().SectionName)
             .Get<RealtimeApiSettingsSection>();
-        var realtimeRoutingSettings = configuration
-            .GetSection(new RealtimeRoutingSettingsSection().SectionName)
-            .Get<RealtimeRoutingSettingsSection>();
 
         chatMessageOptions.Should().NotBeNull();
         presenceOptions.Should().NotBeNull();
         realtimeApiSettings.Should().NotBeNull();
-        realtimeRoutingSettings.Should().NotBeNull();
         chatMessageOptions!.Topic.Should().Be("dev.flowchat.chat.message.v1");
         chatMessageOptions.RetryGroupId.Should().Be("realtime-service-retry");
         presenceOptions!.Topic.Should().Be("dev.flowchat.presence.presence");
         presenceOptions.RetryGroupId.Should().Be("realtime-service-retry");
-        realtimeApiSettings!.Instances.Should().ContainKey("flowchat-realtime-local");
-        realtimeRoutingSettings!.KeyPrefix.Should().Be("flowchat:realtime");
-        configuration.GetConnectionString(RealtimeRoutingSettingsSection.RedisConnectionStringName)
-            .Should().Be("localhost:6379,user=default,password=flowchat_redis_pw");
+        realtimeApiSettings!.BaseUrl.Should().Be("http://localhost:5215");
     }
 }

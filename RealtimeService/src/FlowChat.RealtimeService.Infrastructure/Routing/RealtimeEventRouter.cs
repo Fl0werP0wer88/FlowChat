@@ -1,43 +1,59 @@
-using FlowChat.RealtimeService.Consumers.Realtime.Contracts;
+using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
+using FlowChat.RealtimeService.Redis.Configuration.Settings;
 using FlowChat.RealtimeService.Redis.RealtimeConnections;
 
-namespace FlowChat.RealtimeService.Consumers.Services;
+namespace FlowChat.RealtimeService.Infrastructure.Routing;
 
 public sealed class RealtimeEventRouter(
     IUserInstanceRoutingReader userInstanceRoutingReader,
     IRealtimeInstanceAddressResolver instanceAddressResolver,
-    IRealtimeInternalApiClient realtimeInternalApiClient)
+    IRealtimeInstanceInternalApiClient realtimeInstanceInternalApiClient,
+    IRealtimeClientDispatcher realtimeClientDispatcher,
+    RealtimeConnectionsSettingsSection realtimeConnectionsSettings)
     : IRealtimeEventRouter
 {
     private readonly IUserInstanceRoutingReader _userInstanceRoutingReader = userInstanceRoutingReader
         ?? throw new ArgumentNullException(nameof(userInstanceRoutingReader));
     private readonly IRealtimeInstanceAddressResolver _instanceAddressResolver = instanceAddressResolver
         ?? throw new ArgumentNullException(nameof(instanceAddressResolver));
-    private readonly IRealtimeInternalApiClient _realtimeInternalApiClient = realtimeInternalApiClient
-        ?? throw new ArgumentNullException(nameof(realtimeInternalApiClient));
+    private readonly IRealtimeInstanceInternalApiClient _realtimeInstanceInternalApiClient = realtimeInstanceInternalApiClient
+        ?? throw new ArgumentNullException(nameof(realtimeInstanceInternalApiClient));
+    private readonly IRealtimeClientDispatcher _realtimeClientDispatcher = realtimeClientDispatcher
+        ?? throw new ArgumentNullException(nameof(realtimeClientDispatcher));
+    private readonly string _ownInstanceId = realtimeConnectionsSettings?.InstanceId
+        ?? throw new ArgumentNullException(nameof(realtimeConnectionsSettings));
 
-    public Task PublishMessageAsync(PublishMessageRequest request, CancellationToken cancellationToken) =>
+    public Task RouteMessageAsync(ChatMessageNotification notification, CancellationToken cancellationToken) =>
         RouteAsync(
-            request.RecipientUserIds,
+            notification.RecipientUserIds,
             cancellationToken,
-            routedRecipients => _realtimeInternalApiClient.PublishMessageAsync(
+            localRecipients => _realtimeClientDispatcher.ReceiveMessageAsync(
+                notification with { RecipientUserIds = localRecipients },
+                cancellationToken),
+            routedRecipients => _realtimeInstanceInternalApiClient.PublishMessageAsync(
                 _instanceAddressResolver.Resolve(routedRecipients.InstanceId),
-                CloneMessageRequest(request, routedRecipients.UserIds),
+                notification,
+                routedRecipients.UserIds,
                 cancellationToken));
 
-    public Task PublishPresenceChangeAsync(PublishPresenceChangeRequest request, CancellationToken cancellationToken) =>
+    public Task RoutePresenceChangeAsync(PresenceChangedNotification notification, CancellationToken cancellationToken) =>
         RouteAsync(
-            request.RecipientUserIds,
+            notification.RecipientUserIds,
             cancellationToken,
-            routedRecipients => _realtimeInternalApiClient.PublishPresenceChangeAsync(
+            localRecipients => _realtimeClientDispatcher.PresenceChangedAsync(
+                notification with { RecipientUserIds = localRecipients },
+                cancellationToken),
+            routedRecipients => _realtimeInstanceInternalApiClient.PublishPresenceChangeAsync(
                 _instanceAddressResolver.Resolve(routedRecipients.InstanceId),
-                ClonePresenceChangeRequest(request, routedRecipients.UserIds),
+                notification,
+                routedRecipients.UserIds,
                 cancellationToken));
 
     private async Task RouteAsync(
         IReadOnlyCollection<Guid> recipientUserIds,
         CancellationToken cancellationToken,
-        Func<RoutedRecipients, Task> publishAsync)
+        Func<IReadOnlyCollection<Guid>, Task> dispatchLocalAsync,
+        Func<RoutedRecipients, Task> publishRemoteAsync)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
@@ -47,7 +63,15 @@ public sealed class RealtimeEventRouter(
             return;
         }
 
-        await Task.WhenAll(recipientsByInstance.Select(publishAsync));
+        List<Task> tasks = [];
+        foreach (var routedRecipients in recipientsByInstance)
+        {
+            tasks.Add(string.Equals(routedRecipients.InstanceId, _ownInstanceId, StringComparison.Ordinal)
+                ? dispatchLocalAsync(routedRecipients.UserIds)
+                : publishRemoteAsync(routedRecipients));
+        }
+
+        await Task.WhenAll(tasks);
     }
 
     private async Task<IReadOnlyCollection<RoutedRecipients>> GetRecipientsByInstanceAsync(
@@ -86,29 +110,6 @@ public sealed class RealtimeEventRouter(
             .Select(pair => new RoutedRecipients(pair.Key, pair.Value.ToArray()))
             .ToArray();
     }
-
-    private static PublishMessageRequest CloneMessageRequest(PublishMessageRequest request, IReadOnlyCollection<Guid> recipientUserIds) =>
-        new()
-        {
-            MessageId = request.MessageId,
-            ConversationId = request.ConversationId,
-            SenderUserId = request.SenderUserId,
-            SenderDisplayName = request.SenderDisplayName,
-            Text = request.Text,
-            SentAtUtc = request.SentAtUtc,
-            RecipientUserIds = recipientUserIds
-        };
-
-    private static PublishPresenceChangeRequest ClonePresenceChangeRequest(
-        PublishPresenceChangeRequest request,
-        IReadOnlyCollection<Guid> recipientUserIds) =>
-        new()
-        {
-            UserId = request.UserId,
-            Status = request.Status,
-            ChangedAtUtc = request.ChangedAtUtc,
-            RecipientUserIds = recipientUserIds
-        };
 
     private sealed record RoutedRecipients(string InstanceId, IReadOnlyCollection<Guid> UserIds);
 }
