@@ -1,12 +1,11 @@
 import { useEffect, useEffectEvent, useRef, useState } from "react";
-import { changePresenceStatus } from "../api";
-import type { ManualUserStatus, PresencePreferencesEvent, UserStatus } from "../../../types/realtime";
+import { changePresenceStatus, fetchPresencePreferences } from "../api";
+import type { ManualUserStatus, UserStatus } from "../../../types/realtime";
 
 const afkTimeoutMs = 2 * 60 * 1000;
 const mouseActivityEvents: Array<keyof WindowEventMap> = ["mousemove", "mousedown", "wheel"];
 
 interface UsePresenceStatusResult {
-  applyPresencePreferences: (payload: PresencePreferencesEvent) => void;
   changeManualPresenceStatus: (status: ManualUserStatus) => Promise<void>;
   currentStatus: UserStatus;
   errorMessage: string | null;
@@ -81,8 +80,8 @@ export function usePresenceStatus(accessToken: string | null): UsePresenceStatus
     }
   });
 
-  const applyPresencePreferences = useEffectEvent((payload: PresencePreferencesEvent) => {
-    const nextPreferredStatus = payload.preferredStatus ?? null;
+  const applyPresencePreferences = useEffectEvent((preferredStatus: UserStatus | null) => {
+    const nextPreferredStatus = preferredStatus;
     const nextCurrentStatus = nextPreferredStatus ?? "Active";
 
     clearAfkTimeout();
@@ -128,6 +127,23 @@ export function usePresenceStatus(accessToken: string | null): UsePresenceStatus
       return;
     }
 
+    let isActive = true;
+
+    const loadPresencePreferences = async () => {
+      try {
+        const preferences = await fetchPresencePreferences(accessToken);
+        if (isActive && !isStatusUpdateInFlightRef.current) {
+          applyPresencePreferences(preferences);
+        }
+      } catch (error) {
+        if (isActive) {
+          setErrorMessage(resolveErrorMessage(error));
+        }
+      }
+    };
+
+    void loadPresencePreferences();
+
     const unsubscribe = mouseActivityEvents.map((eventName) => {
       const handler = () => {
         handleMouseActivity();
@@ -138,6 +154,7 @@ export function usePresenceStatus(accessToken: string | null): UsePresenceStatus
     });
 
     return () => {
+      isActive = false;
       clearAfkTimeout();
       unsubscribe.forEach((dispose) => dispose());
     };
@@ -160,7 +177,6 @@ export function usePresenceStatus(accessToken: string | null): UsePresenceStatus
   }, [accessToken, clearAfkTimeout, currentStatus, isAfkEnabled, performStatusChange]);
 
   return {
-    applyPresencePreferences,
     changeManualPresenceStatus,
     currentStatus,
     errorMessage,

@@ -1,57 +1,50 @@
 using System.Net;
-using System.Text;
-using FlowChat.Core.Domain;
-using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
+using System.Text.Json;
 using FlowChat.RealtimeService.Infrastructure.Presence;
 using FluentAssertions;
 using Moq;
-using Moq.Protected;
 
 namespace FlowChat.RealtimeService.UnitTests;
 
 public sealed class PresenceInternalApiClientTests
 {
     [Fact]
-    public async Task GetUserPresencePreferencesAsync_WhenPreferredStatusIsStringEnum_ReturnsStatus()
+    public async Task InitializePresenceStatusAsync_SendsInitializeRequestWithUserId()
     {
         var userId = Guid.NewGuid();
-        var client = CreateClient("""{"preferredStatus":"Busy"}""");
+        var handler = new CapturingHttpMessageHandler((_, _) => Task.FromResult(new HttpResponseMessage(HttpStatusCode.Accepted)));
+        var client = CreateClient(handler);
 
-        var result = await client.GetUserPresencePreferencesAsync(userId, CancellationToken.None);
+        await client.InitializePresenceStatusAsync(userId, CancellationToken.None);
 
-        result.Should().Be(PresenceStatus.Busy);
+        handler.LastRequest.Should().NotBeNull();
+        handler.LastRequest!.Method.Should().Be(HttpMethod.Post);
+        handler.LastRequest.RequestUri!.PathAndQuery.Should().Be("/internal/presence/status/initialize");
+        using var document = JsonDocument.Parse(handler.LastRequestBody!);
+        document.RootElement.GetProperty("userId").GetGuid().Should().Be(userId);
     }
 
     [Fact]
-    public async Task GetContactPresenceStatusesAsync_WhenStatusIsStringEnum_ReturnsStatuses()
+    public async Task RefreshPresenceStatusAsync_SendsRefreshRequestWithUserIds()
     {
         var userId = Guid.NewGuid();
-        var contactUserId = Guid.NewGuid();
-        var changedAtUtc = new DateTimeOffset(2026, 4, 30, 10, 15, 0, TimeSpan.Zero);
-        var client = CreateClient(
-            $$"""[{"userId":"{{contactUserId:D}}","status":"AFK","changedAtUtc":"{{changedAtUtc:O}}"}]""");
+        var handler = new CapturingHttpMessageHandler((_, _) => Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)));
+        var client = CreateClient(handler);
 
-        var result = await client.GetContactPresenceStatusesAsync(userId, CancellationToken.None);
+        await client.RefreshPresenceStatusAsync([userId], CancellationToken.None);
 
-        result.Should().ContainSingle()
-            .Which.Should().Be(new ContactPresenceStatusDto(contactUserId, PresenceStatus.AFK, changedAtUtc));
+        handler.LastRequest.Should().NotBeNull();
+        handler.LastRequest!.Method.Should().Be(HttpMethod.Post);
+        handler.LastRequest.RequestUri!.PathAndQuery.Should().Be("/internal/presence/status/refresh");
+        using var document = JsonDocument.Parse(handler.LastRequestBody!);
+        document.RootElement.GetProperty("userIds").EnumerateArray()
+            .Should().ContainSingle()
+            .Which.GetGuid().Should().Be(userId);
     }
 
-    private static PresenceInternalApiClient CreateClient(string responseBody)
+    private static PresenceInternalApiClient CreateClient(HttpMessageHandler handler)
     {
-        var handlerMock = new Mock<HttpMessageHandler>();
-        handlerMock
-            .Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>())
-            .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StringContent(responseBody, Encoding.UTF8, "application/json")
-            });
-
-        var httpClient = new HttpClient(handlerMock.Object)
+        var httpClient = new HttpClient(handler)
         {
             BaseAddress = new Uri("http://localhost:5216")
         };

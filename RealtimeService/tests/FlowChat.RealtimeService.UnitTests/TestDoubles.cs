@@ -91,7 +91,10 @@ internal sealed class StubUserInstanceRoutingReader : IUserInstanceRoutingReader
 
 internal sealed class CapturingMediator : IMediator
 {
+    private readonly List<object> _sentRequests = [];
+
     public object? LastSentRequest { get; private set; }
+    public IReadOnlyList<object> SentRequests => _sentRequests.AsReadOnly();
     public FlowChatResult<Unit> SendUnitResult { get; set; } = FlowChatResult<Unit>.Success(Unit.Value);
     public Exception? SendException { get; set; }
 
@@ -105,6 +108,7 @@ internal sealed class CapturingMediator : IMediator
         where TRequest : IRequest
     {
         LastSentRequest = request;
+        _sentRequests.Add(request!);
         return Task.CompletedTask;
     }
 
@@ -116,6 +120,7 @@ internal sealed class CapturingMediator : IMediator
         }
 
         LastSentRequest = request;
+        _sentRequests.Add(request);
         if (typeof(TResponse) == typeof(FlowChatResult<Unit>))
         {
             return Task.FromResult((TResponse)(object)SendUnitResult);
@@ -127,6 +132,7 @@ internal sealed class CapturingMediator : IMediator
     public Task<object?> Send(object request, CancellationToken cancellationToken = default)
     {
         LastSentRequest = request;
+        _sentRequests.Add(request);
         return Task.FromResult<object?>(null);
     }
 
@@ -146,10 +152,14 @@ internal sealed class CapturingHttpMessageHandler(Func<HttpRequestMessage, Cance
         responseFactory ?? throw new ArgumentNullException(nameof(responseFactory));
 
     public HttpRequestMessage? LastRequest { get; private set; }
+    public string? LastRequestBody { get; private set; }
 
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
         LastRequest = request;
+        LastRequestBody = request.Content is null
+            ? null
+            : await request.Content.ReadAsStringAsync(cancellationToken);
         return await _responseFactory(request, cancellationToken);
     }
 }

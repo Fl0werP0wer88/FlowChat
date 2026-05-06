@@ -34,8 +34,6 @@ public sealed class StartupExtensionsTests
             ["RealtimeApi:ApiKey"] = "worker-key",
             ["ConnectionStrings:Redis"] = "localhost:6379,password=secret",
             ["RealtimeConnections:InstanceId"] = "realtime-instance",
-            ["Kafka:RealtimeConnectionRegisteredProducer:BootstrapServers"] = "localhost:9092",
-            ["Kafka:RealtimeConnectionRegisteredProducer:Topic"] = "dev.flowchat.realtime.connection.v1",
             ["Kafka:RealtimeConnectionUnregisteredProducer:BootstrapServers"] = "localhost:9092",
             ["Kafka:RealtimeConnectionUnregisteredProducer:Topic"] = "dev.flowchat.realtime.connection.v1"
         });

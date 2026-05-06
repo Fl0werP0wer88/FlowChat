@@ -19,9 +19,7 @@ export function ChatFeature({ accessToken, userLogin, onLogout }: ChatFeaturePro
   const realtime = useRealtimeConnection({
     accessToken,
     onPresenceChanged: contacts.applyPresenceChanged,
-    onReceiveContactPresenceStatuses: contacts.initializePresenceStatuses,
     onReceiveMessage: chat.receiveRealtimeMessage,
-    onReceivePresencePreferences: presence.applyPresencePreferences,
   });
 
   return (

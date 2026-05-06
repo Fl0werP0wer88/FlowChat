@@ -62,8 +62,6 @@ public static class InfrastructureServiceRegistration
         services.TryAddSingleton<IUserInstanceRoutingStore>(sp => sp.GetRequiredService<RedisUserInstanceRoutingStore>());
         services.TryAddSingleton<IUserInstanceRoutingReader>(sp => sp.GetRequiredService<RedisUserInstanceRoutingStore>());
         services.TryAddSingleton<IRealtimeConnectionRegistry, RealtimeConnectionRegistry>();
-        services.AddScoped<IKafkaProducerSettingsSection<FlowChat.Core.Messaging.RealtimeService.Events.RealtimeConnectionRegisteredIntegrationEvent>>(sp =>
-            sp.GetRequiredService<ISettingsProvider>().GetSection<RealtimeConnectionRegisteredProducerSettingsSection>());
         services.AddScoped<IKafkaProducerSettingsSection<FlowChat.Core.Messaging.RealtimeService.Events.RealtimeConnectionUnregisteredIntegrationEvent>>(sp =>
             sp.GetRequiredService<ISettingsProvider>().GetSection<RealtimeConnectionUnregisteredProducerSettingsSection>());
         services.AddScoped<IDirectEventPublisher, FlowChatSilverbackEventPublisher>();

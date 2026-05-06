@@ -1,9 +1,7 @@
 import { HubConnectionBuilder, LogLevel } from "@microsoft/signalr";
 import { useEffect, useEffectEvent, useState } from "react";
 import type {
-  ContactPresenceStatusesEvent,
   PresenceChangedEvent,
-  PresencePreferencesEvent,
   RealtimeChatMessage,
   RealtimeConnectionStatus,
 } from "../types/realtime";
@@ -11,9 +9,7 @@ import { chatHubUrl } from "./config";
 
 interface UseRealtimeConnectionOptions {
   accessToken: string | null;
-  onReceiveContactPresenceStatuses?: (payload: ContactPresenceStatusesEvent) => void;
   onReceiveMessage?: (payload: RealtimeChatMessage) => void;
-  onReceivePresencePreferences?: (payload: PresencePreferencesEvent) => void;
   onPresenceChanged?: (payload: PresenceChangedEvent) => void;
 }
 
@@ -27,9 +23,7 @@ function resolveErrorMessage(error: unknown): string | null {
 
 export function useRealtimeConnection({
   accessToken,
-  onReceiveContactPresenceStatuses,
   onReceiveMessage,
-  onReceivePresencePreferences,
   onPresenceChanged,
 }: UseRealtimeConnectionOptions) {
   const [status, setStatus] = useState<RealtimeConnectionStatus>("idle");
@@ -37,14 +31,6 @@ export function useRealtimeConnection({
 
   const handleReceiveMessage = useEffectEvent((payload: RealtimeChatMessage) => {
     onReceiveMessage?.(payload);
-  });
-
-  const handleReceiveContactPresenceStatuses = useEffectEvent((payload: ContactPresenceStatusesEvent) => {
-    onReceiveContactPresenceStatuses?.(payload);
-  });
-
-  const handleReceivePresencePreferences = useEffectEvent((payload: PresencePreferencesEvent) => {
-    onReceivePresencePreferences?.(payload);
   });
 
   const handlePresenceChanged = useEffectEvent((payload: PresenceChangedEvent) => {
@@ -71,18 +57,6 @@ export function useRealtimeConnection({
     connection.on("ReceiveMessage", (payload: RealtimeChatMessage) => {
       if (!isDisposed) {
         handleReceiveMessage(payload);
-      }
-    });
-
-    connection.on("ReceiveContactPresenceStatuses", (payload: ContactPresenceStatusesEvent) => {
-      if (!isDisposed) {
-        handleReceiveContactPresenceStatuses(payload);
-      }
-    });
-
-    connection.on("ReceivePresencePreferences", (payload: PresencePreferencesEvent) => {
-      if (!isDisposed) {
-        handleReceivePresencePreferences(payload);
       }
     });
 
@@ -147,8 +121,6 @@ export function useRealtimeConnection({
       isDisposed = true;
       shouldStopAfterStart = true;
       connection.off("ReceiveMessage");
-      connection.off("ReceiveContactPresenceStatuses");
-      connection.off("ReceivePresencePreferences");
       connection.off("PresenceChanged");
       void startPromise.finally(() => connection.stop().catch(() => undefined));
     };

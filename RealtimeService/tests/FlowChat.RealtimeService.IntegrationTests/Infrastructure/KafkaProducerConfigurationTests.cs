@@ -23,8 +23,6 @@ public sealed class KafkaProducerConfigurationTests
                 ["RealtimeConnections:RefreshInterval"] = "00:00:30",
                 ["PresenceService:BaseUrl"] = "http://localhost:5098",
                 ["PresenceService:InternalApiKey"] = "internal-key",
-                ["Kafka:RealtimeConnectionRegisteredProducer:BootstrapServers"] = "broker:9092",
-                ["Kafka:RealtimeConnectionRegisteredProducer:Topic"] = "registered-topic",
                 ["Kafka:RealtimeConnectionUnregisteredProducer:BootstrapServers"] = "broker:9092",
                 ["Kafka:RealtimeConnectionUnregisteredProducer:Topic"] = "unregistered-topic"
             })
@@ -38,18 +36,12 @@ public sealed class KafkaProducerConfigurationTests
         using var serviceProvider = services.BuildServiceProvider();
 
         var settingsProvider = serviceProvider.GetRequiredService<ISettingsProvider>();
-        var registeredOptions = settingsProvider.GetSection<RealtimeConnectionRegisteredProducerSettingsSection>();
         var unregisteredOptions = settingsProvider.GetSection<RealtimeConnectionUnregisteredProducerSettingsSection>();
-        var typedRegisteredOptions = serviceProvider
-            .GetRequiredService<IKafkaProducerSettingsSection<RealtimeConnectionRegisteredIntegrationEvent>>();
         var typedUnregisteredOptions = serviceProvider
             .GetRequiredService<IKafkaProducerSettingsSection<RealtimeConnectionUnregisteredIntegrationEvent>>();
 
-        registeredOptions.BootstrapServers.Should().Be("broker:9092");
-        registeredOptions.Topic.Should().Be("registered-topic");
         unregisteredOptions.BootstrapServers.Should().Be("broker:9092");
         unregisteredOptions.Topic.Should().Be("unregistered-topic");
-        typedRegisteredOptions.Topic.Should().Be("registered-topic");
         typedUnregisteredOptions.Topic.Should().Be("unregistered-topic");
     }
 
@@ -62,17 +54,11 @@ public sealed class KafkaProducerConfigurationTests
             .AddJsonFile(GetRepositoryPath(relativePath))
             .Build();
 
-        var registeredOptions = configuration
-            .GetSection(new RealtimeConnectionRegisteredProducerSettingsSection().SectionName)
-            .Get<RealtimeConnectionRegisteredProducerSettingsSection>();
         var unregisteredOptions = configuration
             .GetSection(new RealtimeConnectionUnregisteredProducerSettingsSection().SectionName)
             .Get<RealtimeConnectionUnregisteredProducerSettingsSection>();
 
-        registeredOptions.Should().NotBeNull();
         unregisteredOptions.Should().NotBeNull();
-        registeredOptions!.BootstrapServers.Should().Be("localhost:9092");
-        registeredOptions.Topic.Should().Be("dev.flowchat.realtime.connection.v1");
         unregisteredOptions!.BootstrapServers.Should().Be("localhost:9092");
         unregisteredOptions.Topic.Should().Be("dev.flowchat.realtime.connection.v1");
     }

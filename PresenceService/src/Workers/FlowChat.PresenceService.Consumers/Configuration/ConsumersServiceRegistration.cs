@@ -93,7 +93,6 @@ public static class ConsumersServiceRegistration
             })
             .AddScopedSubscriber<ContactAddedSubscriber>()
             .AddScopedSubscriber<ContactDeletedSubscriber>()
-            .AddScopedSubscriber<RealtimeConnectionRegisteredSubscriber>()
             .AddScopedSubscriber<RealtimeConnectionUnregisteredSubscriber>();
 
         return services;

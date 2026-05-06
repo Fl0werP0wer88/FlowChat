@@ -49,13 +49,13 @@ public sealed class ChatHubTests
     }
 
     [Fact]
-    public async Task OnConnectedAsync_WhenUserIdPresent_FetchesContactPresenceStatuses()
+    public async Task OnConnectedAsync_WhenUserIdPresent_InitializesPresenceStatus()
     {
         var userId = Guid.NewGuid();
         var presenceClientMock = new Mock<IPresenceInternalApiClient>();
         presenceClientMock
-            .Setup(x => x.GetContactPresenceStatusesAsync(userId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync([]);
+            .Setup(x => x.InitializePresenceStatusAsync(userId, It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
 
         var hub = CreateHub(
             new CapturingMediator(),
@@ -66,28 +66,35 @@ public sealed class ChatHubTests
         await hub.OnConnectedAsync();
 
         presenceClientMock.Verify(
-            x => x.GetContactPresenceStatusesAsync(userId, It.IsAny<CancellationToken>()),
+            x => x.InitializePresenceStatusAsync(userId, It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
     [Fact]
-    public async Task OnConnectedAsync_WhenPresenceServiceFails_DoesNotAbortConnection()
+    public async Task OnConnectedAsync_WhenPresenceInitializationFails_AbortsConnectionAndUnregisters()
     {
         var userId = Guid.NewGuid();
+        var mediator = new CapturingMediator();
+        var groups = new CapturingGroupManager();
         var presenceClientMock = new Mock<IPresenceInternalApiClient>();
         presenceClientMock
-            .Setup(x => x.GetContactPresenceStatusesAsync(userId, It.IsAny<CancellationToken>()))
+            .Setup(x => x.InitializePresenceStatusAsync(userId, It.IsAny<CancellationToken>()))
             .ThrowsAsync(new HttpRequestException("PresenceService unavailable"));
 
         var hub = CreateHub(
-            new CapturingMediator(),
+            mediator,
             new TestHubCallerContext("connection-1", CreatePrincipal(userId)),
-            new CapturingGroupManager(),
+            groups,
             presenceClientMock);
 
         await hub.OnConnectedAsync();
 
-        GetContext(hub).AbortCalled.Should().BeFalse();
+        GetContext(hub).AbortCalled.Should().BeTrue();
+        groups.RemovedConnections.Should().ContainSingle()
+            .Which.Should().Be(("connection-1", GroupNames.ForUser(userId)));
+        mediator.SentRequests.OfType<UnregisterRealtimeConnectionCommand>()
+            .Should().ContainSingle()
+            .Which.ConnectionId.Should().Be("connection-1");
     }
 
     [Fact]
@@ -148,8 +155,8 @@ public sealed class ChatHubTests
         {
             presenceClientMock = new Mock<IPresenceInternalApiClient>();
             presenceClientMock
-                .Setup(x => x.GetContactPresenceStatusesAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync([]);
+                .Setup(x => x.InitializePresenceStatusAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+                .Returns(Task.CompletedTask);
         }
 
         var hub = new ChatHub(logger.Object, mediator, presenceClientMock.Object);

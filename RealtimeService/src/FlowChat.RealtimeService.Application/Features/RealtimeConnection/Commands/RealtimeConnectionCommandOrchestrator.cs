@@ -32,20 +32,7 @@ internal sealed class RealtimeConnectionCommandOrchestrator(
     {
         try
         {
-            var mutation = await _realtimeConnectionRegistry.RegisterAsync(userId, connectionId, cancellationToken);
-
-            await _integrationEventPublisher.Publish(
-                new IntegrationEventEnvelope<RealtimeConnectionRegisteredIntegrationEvent>(
-                    new RealtimeConnectionRegisteredIntegrationEvent
-                    {
-                        UserId = mutation.UserId,
-                        ConnectionId = mutation.ConnectionId,
-                        ActiveConnectionCount = mutation.ActiveConnectionCount,
-                        IsFirstConnectionForUser = mutation.IsFirstConnectionForUser,
-                        OccurredAtUtc = mutation.OccurredAtUtc
-                    },
-                    mutation.UserId.ToString("D")),
-                cancellationToken);
+            await _realtimeConnectionRegistry.RegisterAsync(userId, connectionId, cancellationToken);
 
             return FlowChatResult<Unit>.Success(Unit.Value);
         }

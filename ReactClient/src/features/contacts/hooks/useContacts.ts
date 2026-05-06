@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { Contact } from "../../../types/contacts";
-import type { ContactPresenceStatusesEvent, PresenceChangedEvent } from "../../../types/realtime";
+import type { PresenceChangedEvent } from "../../../types/realtime";
 import { addContact, addContactByUserId, fetchContacts, searchUsers } from "../api";
 import type { SearchUserResult, SearchUsersCriteria } from "../api";
 
@@ -18,7 +18,6 @@ interface UseContactsResult {
   addContactByUserId: (userId: string) => Promise<boolean>;
   clearNotice: () => void;
   applyPresenceChanged: (payload: PresenceChangedEvent) => void;
-  initializePresenceStatuses: (statuses: ContactPresenceStatusesEvent) => void;
   searchUsers: (criteria: SearchUsersCriteria, signal?: AbortSignal) => Promise<SearchUserResult[]>;
 }
 
@@ -112,16 +111,6 @@ export function useContacts(accessToken: string): UseContactsResult {
       isActive = false;
     };
   }, [accessToken, ownerUserId]);
-
-  const initializePresenceStatuses = (statuses: ContactPresenceStatusesEvent) => {
-    const nextPresenceStatuses = statuses.reduce<ContactPresenceMap>((current, status) => {
-      current[status.userId] = status.status;
-      return current;
-    }, {});
-
-    presenceStatusesRef.current = nextPresenceStatuses;
-    setContacts((current) => applyStatusesToContacts(current, nextPresenceStatuses));
-  };
 
   const applyPresenceChanged = (payload: PresenceChangedEvent) => {
     presenceStatusesRef.current = {
@@ -228,7 +217,6 @@ export function useContacts(accessToken: string): UseContactsResult {
     addContactByUserId: addContactByUserIdAction,
     applyPresenceChanged,
     clearNotice,
-    initializePresenceStatuses,
     searchUsers: searchUsersAction,
   };
 }

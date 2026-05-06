@@ -25,7 +25,7 @@ public sealed class RealtimeConnectionCommandOrchestratorTests
     }
 
     [Fact]
-    public async Task RegisterAsync_WhenFirstConnection_PublishesRegisteredEvent()
+    public async Task RegisterAsync_WhenConnectionRegistered_ReturnsSuccessWithoutPublishingEvent()
     {
         var userId = _fixture.Create<Guid>();
         var mutation = new RealtimeConnectionMutationResult(userId, "connection-1", 1, true, false, DateTimeOffset.UtcNow);
@@ -37,41 +37,17 @@ public sealed class RealtimeConnectionCommandOrchestratorTests
         var result = await _orchestrator.RegisterAsync(userId, "connection-1", CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
-        var integrationEvent = _eventPublisher.Published.Should().ContainSingle().Subject
-            .Should().BeOfType<RealtimeConnectionRegisteredIntegrationEvent>().Subject;
-        integrationEvent.UserId.Should().Be(userId);
-        integrationEvent.ConnectionId.Should().Be("connection-1");
-        integrationEvent.ActiveConnectionCount.Should().Be(1);
-        integrationEvent.IsFirstConnectionForUser.Should().BeTrue();
+        _eventPublisher.Published.Should().BeEmpty();
     }
 
     [Fact]
-    public async Task RegisterAsync_WhenAdditionalConnection_PublishesCurrentCountAndFirstConnectionFlag()
+    public async Task RegisterAsync_WhenRegistryFails_CompensatesByUnregisteringAndReturnsFailure()
     {
         var userId = _fixture.Create<Guid>();
-
-        _registryMock
-            .Setup(x => x.RegisterAsync(userId, "connection-2", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new RealtimeConnectionMutationResult(userId, "connection-2", 3, false, false, DateTimeOffset.UtcNow));
-
-        var result = await _orchestrator.RegisterAsync(userId, "connection-2", CancellationToken.None);
-
-        result.IsSuccess.Should().BeTrue();
-        var integrationEvent = _eventPublisher.Published.Should().ContainSingle().Subject
-            .Should().BeOfType<RealtimeConnectionRegisteredIntegrationEvent>().Subject;
-        integrationEvent.ActiveConnectionCount.Should().Be(3);
-        integrationEvent.IsFirstConnectionForUser.Should().BeFalse();
-    }
-
-    [Fact]
-    public async Task RegisterAsync_WhenPublishFails_CompensatesByUnregisteringAndReturnsFailure()
-    {
-        var userId = _fixture.Create<Guid>();
-        _eventPublisher.PublishException = new InvalidOperationException("kafka unavailable");
 
         _registryMock
             .Setup(x => x.RegisterAsync(userId, "connection-3", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new RealtimeConnectionMutationResult(userId, "connection-3", 1, true, false, DateTimeOffset.UtcNow));
+            .ThrowsAsync(new InvalidOperationException("redis unavailable"));
         _registryMock
             .Setup(x => x.UnregisterAsync("connection-3", It.IsAny<CancellationToken>()))
             .ReturnsAsync((RealtimeConnectionMutationResult?)null);

@@ -16,21 +16,13 @@ public static class SilverbackServiceRegistration
         IConfiguration configuration)
     {
         var settingsProvider = new AppSettingsProvider(configuration);
-        var registeredProducerOptions = settingsProvider.GetSection<RealtimeConnectionRegisteredProducerSettingsSection>();
         var unregisteredProducerOptions = settingsProvider.GetSection<RealtimeConnectionUnregisteredProducerSettingsSection>();
-        var bootstrapServers = !string.IsNullOrWhiteSpace(registeredProducerOptions.BootstrapServers)
-            ? registeredProducerOptions.BootstrapServers
-            : unregisteredProducerOptions.BootstrapServers;
 
         services.AddSilverback()
             .AddSingletonBrokerBehavior<CustomSpanAttributesProducerBehavior>()
             .WithConnectionToMessageBroker(options => options.AddKafka())
             .AddKafkaClients(clients => clients
-                .WithBootstrapServers(bootstrapServers)
-                .AddProducer(producer => producer
-                    .Produce<RealtimeConnectionRegisteredIntegrationEvent>("realtime-connection-registered", endpoint => endpoint
-                        .ProduceTo(registeredProducerOptions.Topic)
-                        .SerializeAsJson(serializer => serializer.SetTypeHeader())))
+                .WithBootstrapServers(unregisteredProducerOptions.BootstrapServers)
                 .AddProducer(producer => producer
                     .Produce<RealtimeConnectionUnregisteredIntegrationEvent>("realtime-connection-unregistered", endpoint => endpoint
                         .ProduceTo(unregisteredProducerOptions.Topic)

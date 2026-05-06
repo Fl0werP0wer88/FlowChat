@@ -16,12 +16,6 @@ export interface PresenceChangedEvent {
   changedAtUtc: string;
 }
 
-export type ContactPresenceStatusesEvent = PresenceChangedEvent[];
-
-export interface PresencePreferencesEvent {
-  preferredStatus: UserStatus | null;
-}
-
 export type RealtimeConnectionStatus =
   | "idle"
   | "connecting"

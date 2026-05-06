@@ -32,6 +32,7 @@ public sealed class ChatHub(
         }
 
         var addedToGroup = false;
+        var registeredConnection = false;
         try
         {
             await Groups.AddToGroupAsync(Context.ConnectionId, GroupNames.ForUser(userId.Value));
@@ -52,50 +53,19 @@ public sealed class ChatHub(
                 return;
             }
 
+            registeredConnection = true;
+            await _presenceInternalApiClient.InitializePresenceStatusAsync(userId.Value, Context.ConnectionAborted);
             await base.OnConnectedAsync();
-
-            try
-            {
-                // Fetch contact statuses and own preferences in parallel
-                var contactStatusesTask = _presenceInternalApiClient.GetContactPresenceStatusesAsync(
-                    userId.Value,
-                    Context.ConnectionAborted);
-                var preferencesTask = _presenceInternalApiClient.GetUserPresencePreferencesAsync(
-                    userId.Value,
-                    Context.ConnectionAborted);
-
-                await Task.WhenAll(contactStatusesTask, preferencesTask);
-
-                if (contactStatusesTask.Result.Count > 0)
-                {
-                    await Clients.Caller.ReceiveContactPresenceStatuses(
-                        contactStatusesTask.Result.Select(static s => new PresenceDto
-                        {
-                            UserId = s.UserId,
-                            Status = s.Status,
-                            ChangedAtUtc = s.ChangedAtUtc
-                        }).ToArray());
-                }
-
-                await Clients.Caller.ReceivePresencePreferences(
-                    new PresencePreferencesDto { PreferredStatus = preferencesTask.Result });
-            }
-            catch (Exception exception)
-            {
-                // Best-effort: presence push failure must not abort a valid connection
-                _logger.LogWarning(exception,
-                    "Failed to push initial presence data for connection {ConnectionId}.", Context.ConnectionId);
-            }
         }
         catch (OperationCanceledException) when (Context.ConnectionAborted.IsCancellationRequested)
         {
-            await CleanupFailedConnectionAsync(userId.Value, addedToGroup);
+            await CleanupFailedConnectionAsync(userId.Value, addedToGroup, registeredConnection);
             Context.Abort();
         }
         catch (Exception exception)
         {
             _logger.LogError(exception, "Failed to register realtime connection {ConnectionId} for user {UserId}.", Context.ConnectionId, userId.Value);
-            await CleanupFailedConnectionAsync(userId.Value, addedToGroup);
+            await CleanupFailedConnectionAsync(userId.Value, addedToGroup, registeredConnection);
             Context.Abort();
         }
     }
@@ -131,8 +101,22 @@ public sealed class ChatHub(
         return Guid.TryParse(value, out var userId) ? userId : null;
     }
 
-    private async Task CleanupFailedConnectionAsync(Guid userId, bool addedToGroup)
+    private async Task CleanupFailedConnectionAsync(Guid userId, bool addedToGroup, bool registeredConnection = false)
     {
+        if (registeredConnection)
+        {
+            try
+            {
+                await _mediator.Send(
+                    new UnregisterRealtimeConnectionCommand(Context.ConnectionId),
+                    CancellationToken.None);
+            }
+            catch (Exception exception)
+            {
+                _logger.LogWarning(exception, "Failed to unregister realtime connection {ConnectionId} after connection failure.", Context.ConnectionId);
+            }
+        }
+
         try
         {
             if (!addedToGroup)

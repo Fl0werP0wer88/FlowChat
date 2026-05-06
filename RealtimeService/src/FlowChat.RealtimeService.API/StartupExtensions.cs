@@ -20,8 +20,6 @@ public static class StartupExtensions
         realtimeConnectionsSettings.RedisConnectionString =
             builder.Configuration.GetConnectionString(RealtimeConnectionsSettingsSection.RedisConnectionStringName)
             ?? realtimeConnectionsSettings.RedisConnectionString;
-        var realtimeConnectionRegisteredProducerOptions =
-            settingsProvider.GetSection<RealtimeConnectionRegisteredProducerSettingsSection>();
         var realtimeConnectionUnregisteredProducerOptions =
             settingsProvider.GetSection<RealtimeConnectionUnregisteredProducerSettingsSection>();
 
@@ -50,10 +48,6 @@ public static class StartupExtensions
             throw new InvalidOperationException("RealtimeConnections:RefreshInterval must be smaller than RealtimeConnections:ConnectionTtl.");
         }
 
-        ValidateKafkaProducerOptions(
-            realtimeConnectionRegisteredProducerOptions.SectionName,
-            realtimeConnectionRegisteredProducerOptions.BootstrapServers,
-            realtimeConnectionRegisteredProducerOptions.Topic);
         ValidateKafkaProducerOptions(
             realtimeConnectionUnregisteredProducerOptions.SectionName,
             realtimeConnectionUnregisteredProducerOptions.BootstrapServers,
