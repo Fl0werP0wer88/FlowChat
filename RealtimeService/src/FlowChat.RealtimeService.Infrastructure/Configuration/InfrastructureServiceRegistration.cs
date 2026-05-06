@@ -12,7 +12,6 @@ using FlowChat.RealtimeService.Routing.Configuration.Settings;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Infrastructure.Configuration;
 using FlowChat.Shared.Infrastructure.Redis;
-using FlowChat.Shared.Infrastructure.Silverback.Kafka;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -62,9 +61,6 @@ public static class InfrastructureServiceRegistration
         services.TryAddSingleton<IUserInstanceRoutingStore>(sp => sp.GetRequiredService<RedisUserInstanceRoutingStore>());
         services.TryAddSingleton<IUserInstanceRoutingReader>(sp => sp.GetRequiredService<RedisUserInstanceRoutingStore>());
         services.TryAddSingleton<IRealtimeConnectionRegistry, RealtimeConnectionRegistry>();
-        services.AddScoped<IKafkaProducerSettingsSection<FlowChat.Core.Messaging.RealtimeService.Events.RealtimeConnectionUnregisteredIntegrationEvent>>(sp =>
-            sp.GetRequiredService<ISettingsProvider>().GetSection<RealtimeConnectionUnregisteredProducerSettingsSection>());
-        services.AddScoped<IDirectEventPublisher, FlowChatSilverbackEventPublisher>();
 
         services.TryAddSingleton(sp => sp.GetRequiredService<ISettingsProvider>().GetSection<PresenceServiceSettingsSection>());
         services.AddHttpClient(PresenceInternalApiClient.HttpClientName, (sp, client) =>

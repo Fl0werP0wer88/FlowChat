@@ -1,6 +1,4 @@
 using CSharpFunctionalExtensions;
-using FlowChat.Core.Messaging;
-using FlowChat.Core.Messaging.RealtimeService.Events;
 using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
@@ -18,13 +16,13 @@ public interface IRealtimeConnectionCommandOrchestrator
 
 internal sealed class RealtimeConnectionCommandOrchestrator(
     IRealtimeConnectionRegistry realtimeConnectionRegistry,
-    IDirectEventPublisher integrationEventPublisher,
+    IPresenceInternalApiClient presenceInternalApiClient,
     ILogger<RealtimeConnectionCommandOrchestrator> logger) : IRealtimeConnectionCommandOrchestrator
 {
     private readonly IRealtimeConnectionRegistry _realtimeConnectionRegistry = realtimeConnectionRegistry
         ?? throw new ArgumentNullException(nameof(realtimeConnectionRegistry));
-    private readonly IDirectEventPublisher _integrationEventPublisher = integrationEventPublisher
-        ?? throw new ArgumentNullException(nameof(integrationEventPublisher));
+    private readonly IPresenceInternalApiClient _presenceInternalApiClient = presenceInternalApiClient
+        ?? throw new ArgumentNullException(nameof(presenceInternalApiClient));
     private readonly ILogger<RealtimeConnectionCommandOrchestrator> _logger = logger
         ?? throw new ArgumentNullException(nameof(logger));
 
@@ -63,31 +61,26 @@ internal sealed class RealtimeConnectionCommandOrchestrator(
             return FlowChatResult<Unit>.Success(Unit.Value);
         }
 
+        if (!mutation.IsLastConnectionForUser)
+        {
+            return FlowChatResult<Unit>.Success(Unit.Value);
+        }
+
         try
         {
-            await _integrationEventPublisher.Publish(
-                new IntegrationEventEnvelope<RealtimeConnectionUnregisteredIntegrationEvent>(
-                    new RealtimeConnectionUnregisteredIntegrationEvent
-                    {
-                        UserId = mutation.UserId,
-                        ConnectionId = mutation.ConnectionId,
-                        ActiveConnectionCount = mutation.ActiveConnectionCount,
-                        IsLastConnectionForUser = mutation.IsLastConnectionForUser,
-                        OccurredAtUtc = mutation.OccurredAtUtc
-                    },
-                    mutation.UserId.ToString("D")),
-                cancellationToken);
+            await _presenceInternalApiClient.DeletePresenceStatusAsync(mutation.UserId, cancellationToken);
+            return FlowChatResult<Unit>.Success(Unit.Value);
         }
         catch (Exception exception)
         {
             _logger.LogError(
                 exception,
-                "Failed to publish realtime connection unregistered event for user {UserId} and connection {ConnectionId}.",
+                "Failed to delete presence status for user {UserId} after unregistering realtime connection {ConnectionId}.",
                 mutation.UserId,
                 mutation.ConnectionId);
-        }
 
-        return FlowChatResult<Unit>.Success(Unit.Value);
+            return FlowChatResult<Unit>.Failure(DomainError.UnExpected("Failed to delete presence status."));
+        }
     }
 
     private async Task TryCompensateRegistrationAsync(string connectionId)

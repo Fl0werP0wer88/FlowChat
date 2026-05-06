@@ -33,9 +33,7 @@ public sealed class StartupExtensionsTests
             ["FlowChat:InternalApi:ApiKey"] = "internal-key",
             ["RealtimeApi:ApiKey"] = "worker-key",
             ["ConnectionStrings:Redis"] = "localhost:6379,password=secret",
-            ["RealtimeConnections:InstanceId"] = "realtime-instance",
-            ["Kafka:RealtimeConnectionUnregisteredProducer:BootstrapServers"] = "localhost:9092",
-            ["Kafka:RealtimeConnectionUnregisteredProducer:Topic"] = "dev.flowchat.realtime.connection.v1"
+            ["RealtimeConnections:InstanceId"] = "realtime-instance"
         });
 
         var app = builder.ConfigureServices();

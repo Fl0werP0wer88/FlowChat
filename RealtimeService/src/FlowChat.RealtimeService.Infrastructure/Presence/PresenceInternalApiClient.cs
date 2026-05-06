@@ -7,6 +7,7 @@ internal sealed class PresenceInternalApiClient(IHttpClientFactory httpClientFac
 {
     public const string HttpClientName = nameof(PresenceInternalApiClient);
     private const string InitializePath = "/internal/presence/status/initialize";
+    private const string DeletePath = "/internal/presence/status/delete";
     private const string RefreshPath = "/internal/presence/status/refresh";
 
     private readonly IHttpClientFactory _httpClientFactory = httpClientFactory
@@ -16,6 +17,17 @@ internal sealed class PresenceInternalApiClient(IHttpClientFactory httpClientFac
     {
         using var client = _httpClientFactory.CreateClient(HttpClientName);
         using var message = new HttpRequestMessage(HttpMethod.Post, InitializePath)
+        {
+            Content = JsonContent.Create(new { userId })
+        };
+        using var response = await client.SendAsync(message, cancellationToken);
+        response.EnsureSuccessStatusCode();
+    }
+
+    public async Task DeletePresenceStatusAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        using var client = _httpClientFactory.CreateClient(HttpClientName);
+        using var message = new HttpRequestMessage(HttpMethod.Delete, DeletePath)
         {
             Content = JsonContent.Create(new { userId })
         };

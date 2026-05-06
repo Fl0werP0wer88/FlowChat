@@ -2,7 +2,6 @@ using System.Net;
 using System.Net.Http;
 using System.Security.Claims;
 using CSharpFunctionalExtensions;
-using FlowChat.Core.Messaging;
 using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
 using FlowChat.RealtimeService.Api.Realtime;
 using FlowChat.RealtimeService.Routing;
@@ -229,26 +228,6 @@ internal sealed class CapturingRealtimeConnectionRegistry : IRealtimeConnectionR
     public Task RefreshAsync(IReadOnlyCollection<RealtimeConnectionRefreshEntry> connections, CancellationToken cancellationToken)
     {
         LastRefreshedConnections = connections;
-        return Task.CompletedTask;
-    }
-}
-
-internal sealed class RecordingIntegrationEventPublisher : IDirectEventPublisher
-{
-    private readonly List<IntegrationEvent> _published = [];
-
-    public IReadOnlyList<IntegrationEvent> Published => _published.AsReadOnly();
-    public Exception? PublishException { get; set; }
-
-    public Task Publish<TEvent>(IntegrationEventEnvelope<TEvent> message, CancellationToken cancellationToken)
-        where TEvent : IntegrationEvent
-    {
-        if (PublishException is not null)
-        {
-            throw PublishException;
-        }
-
-        _published.Add(message.Payload);
         return Task.CompletedTask;
     }
 }

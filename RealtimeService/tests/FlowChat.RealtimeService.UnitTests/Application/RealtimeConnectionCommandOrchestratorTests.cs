@@ -1,5 +1,4 @@
 using AutoFixture;
-using FlowChat.Core.Messaging.RealtimeService.Events;
 using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
 using FlowChat.RealtimeService.Application.Features.RealtimeConnection.Commands;
 using FlowChat.Shared.Domain;
@@ -13,14 +12,14 @@ public sealed class RealtimeConnectionCommandOrchestratorTests
 {
     private readonly IFixture _fixture = new Fixture();
     private readonly Mock<IRealtimeConnectionRegistry> _registryMock = new();
-    private readonly RecordingIntegrationEventPublisher _eventPublisher = new();
+    private readonly Mock<IPresenceInternalApiClient> _presenceInternalApiClientMock = new();
     private readonly RealtimeConnectionCommandOrchestrator _orchestrator;
 
     public RealtimeConnectionCommandOrchestratorTests()
     {
         _orchestrator = new RealtimeConnectionCommandOrchestrator(
             _registryMock.Object,
-            _eventPublisher,
+            _presenceInternalApiClientMock.Object,
             NullLogger<RealtimeConnectionCommandOrchestrator>.Instance);
     }
 
@@ -37,7 +36,9 @@ public sealed class RealtimeConnectionCommandOrchestratorTests
         var result = await _orchestrator.RegisterAsync(userId, "connection-1", CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
-        _eventPublisher.Published.Should().BeEmpty();
+        _presenceInternalApiClientMock.Verify(
+            x => x.DeletePresenceStatusAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()),
+            Times.Never);
     }
 
     [Fact]
@@ -84,7 +85,7 @@ public sealed class RealtimeConnectionCommandOrchestratorTests
     }
 
     [Fact]
-    public async Task UnregisterAsync_WhenLastConnection_PublishesUnregisteredEvent()
+    public async Task UnregisterAsync_WhenLastConnection_DeletesPresenceStatus()
     {
         var userId = _fixture.Create<Guid>();
 
@@ -95,14 +96,13 @@ public sealed class RealtimeConnectionCommandOrchestratorTests
         var result = await _orchestrator.UnregisterAsync("connection-4", CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
-        var integrationEvent = _eventPublisher.Published.Should().ContainSingle().Subject
-            .Should().BeOfType<RealtimeConnectionUnregisteredIntegrationEvent>().Subject;
-        integrationEvent.ActiveConnectionCount.Should().Be(0);
-        integrationEvent.IsLastConnectionForUser.Should().BeTrue();
+        _presenceInternalApiClientMock.Verify(
+            x => x.DeletePresenceStatusAsync(userId, It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 
     [Fact]
-    public async Task UnregisterAsync_WhenActiveConnectionsRemain_PublishesCurrentCountAndLastConnectionFlag()
+    public async Task UnregisterAsync_WhenActiveConnectionsRemain_DoesNotDeletePresenceStatus()
     {
         var userId = _fixture.Create<Guid>();
 
@@ -113,14 +113,13 @@ public sealed class RealtimeConnectionCommandOrchestratorTests
         var result = await _orchestrator.UnregisterAsync("connection-remains", CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
-        var integrationEvent = _eventPublisher.Published.Should().ContainSingle().Subject
-            .Should().BeOfType<RealtimeConnectionUnregisteredIntegrationEvent>().Subject;
-        integrationEvent.ActiveConnectionCount.Should().Be(1);
-        integrationEvent.IsLastConnectionForUser.Should().BeFalse();
+        _presenceInternalApiClientMock.Verify(
+            x => x.DeletePresenceStatusAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()),
+            Times.Never);
     }
 
     [Fact]
-    public async Task UnregisterAsync_WhenConnectionMissing_DoesNotPublish()
+    public async Task UnregisterAsync_WhenConnectionMissing_DoesNotDeletePresenceStatus()
     {
         _registryMock
             .Setup(x => x.UnregisterAsync("missing-connection", It.IsAny<CancellationToken>()))
@@ -129,21 +128,26 @@ public sealed class RealtimeConnectionCommandOrchestratorTests
         var result = await _orchestrator.UnregisterAsync("missing-connection", CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
-        _eventPublisher.Published.Should().BeEmpty();
+        _presenceInternalApiClientMock.Verify(
+            x => x.DeletePresenceStatusAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()),
+            Times.Never);
     }
 
     [Fact]
-    public async Task UnregisterAsync_WhenPublishFails_ReturnsSuccess()
+    public async Task UnregisterAsync_WhenPresenceDeleteFails_ReturnsFailure()
     {
         var userId = _fixture.Create<Guid>();
-        _eventPublisher.PublishException = new InvalidOperationException("kafka unavailable");
 
         _registryMock
             .Setup(x => x.UnregisterAsync("connection-5", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new RealtimeConnectionMutationResult(userId, "connection-5", 0, false, true, DateTimeOffset.UtcNow));
+        _presenceInternalApiClientMock
+            .Setup(x => x.DeletePresenceStatusAsync(userId, It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new HttpRequestException("PresenceService unavailable"));
 
         var result = await _orchestrator.UnregisterAsync("connection-5", CancellationToken.None);
 
-        result.IsSuccess.Should().BeTrue();
+        result.IsFailure.Should().BeTrue();
+        result.Error.ErrorType.Should().Be(ErrorType.Unexpected);
     }
 }

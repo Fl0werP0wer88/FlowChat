@@ -4,7 +4,6 @@ using FlowChat.RealtimeService.Application;
 using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
 using FlowChat.RealtimeService.Infrastructure;
 using FlowChat.RealtimeService.Infrastructure.Configuration.Settings;
-using FlowChat.RealtimeService.Infrastructure.Kafka;
 using FlowChat.Shared.API;
 using FlowChat.Shared.Infrastructure.Configuration;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -20,8 +19,6 @@ public static class StartupExtensions
         realtimeConnectionsSettings.RedisConnectionString =
             builder.Configuration.GetConnectionString(RealtimeConnectionsSettingsSection.RedisConnectionStringName)
             ?? realtimeConnectionsSettings.RedisConnectionString;
-        var realtimeConnectionUnregisteredProducerOptions =
-            settingsProvider.GetSection<RealtimeConnectionUnregisteredProducerSettingsSection>();
 
         if (string.IsNullOrWhiteSpace(realtimeConnectionsSettings.RedisConnectionString))
         {
@@ -48,14 +45,8 @@ public static class StartupExtensions
             throw new InvalidOperationException("RealtimeConnections:RefreshInterval must be smaller than RealtimeConnections:ConnectionTtl.");
         }
 
-        ValidateKafkaProducerOptions(
-            realtimeConnectionUnregisteredProducerOptions.SectionName,
-            realtimeConnectionUnregisteredProducerOptions.BootstrapServers,
-            realtimeConnectionUnregisteredProducerOptions.Topic);
-
         builder.Services.AddApiApplicationServices();
         builder.Services.AddInfrastructureServices(builder.Configuration);
-        builder.Services.AddApiSilverbackMessaging(builder.Configuration);
         builder.Services.AddScoped<IRealtimeClientDispatcher, SignalRRealtimeClientDispatcher>();
         builder.AddFlowChatOpenTelemetry(typeof(ApplicationServiceRegistration).Assembly);
 
@@ -107,19 +98,6 @@ public static class StartupExtensions
         app.MapHub<ChatHub>("/hubs/chat").RequireAuthorization();
 
         return app;
-    }
-
-    private static void ValidateKafkaProducerOptions(string sectionName, string bootstrapServers, string topic)
-    {
-        if (string.IsNullOrWhiteSpace(bootstrapServers))
-        {
-            throw new InvalidOperationException($"Missing configuration value: {sectionName}:BootstrapServers.");
-        }
-
-        if (string.IsNullOrWhiteSpace(topic))
-        {
-            throw new InvalidOperationException($"Missing configuration value: {sectionName}:Topic.");
-        }
     }
 }
 

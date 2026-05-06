@@ -25,6 +25,22 @@ public sealed class PresenceInternalApiClientTests
     }
 
     [Fact]
+    public async Task DeletePresenceStatusAsync_SendsDeleteRequestWithUserId()
+    {
+        var userId = Guid.NewGuid();
+        var handler = new CapturingHttpMessageHandler((_, _) => Task.FromResult(new HttpResponseMessage(HttpStatusCode.Accepted)));
+        var client = CreateClient(handler);
+
+        await client.DeletePresenceStatusAsync(userId, CancellationToken.None);
+
+        handler.LastRequest.Should().NotBeNull();
+        handler.LastRequest!.Method.Should().Be(HttpMethod.Delete);
+        handler.LastRequest.RequestUri!.PathAndQuery.Should().Be("/internal/presence/status/delete");
+        using var document = JsonDocument.Parse(handler.LastRequestBody!);
+        document.RootElement.GetProperty("userId").GetGuid().Should().Be(userId);
+    }
+
+    [Fact]
     public async Task RefreshPresenceStatusAsync_SendsRefreshRequestWithUserIds()
     {
         var userId = Guid.NewGuid();
