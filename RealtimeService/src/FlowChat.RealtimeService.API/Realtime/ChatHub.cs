@@ -69,7 +69,7 @@ public sealed class ChatHub(
                 if (contactStatusesTask.Result.Count > 0)
                 {
                     await Clients.Caller.ReceiveContactPresenceStatuses(
-                        contactStatusesTask.Result.Select(static s => new PresenceChangedNotificationDto
+                        contactStatusesTask.Result.Select(static s => new PresenceDto
                         {
                             UserId = s.UserId,
                             Status = s.Status,

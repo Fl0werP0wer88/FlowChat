@@ -36,7 +36,7 @@ public sealed class SignalRRealtimeClientDispatcher(IHubContext<ChatHub, IRealti
             return Task.CompletedTask;
         }
 
-        return _hubContext.Clients.Groups(groups).PresenceChanged(new PresenceChangedNotificationDto
+        return _hubContext.Clients.Groups(groups).PresenceChanged(new PresenceDto
         {
             UserId = notification.UserId,
             Status = notification.Status,

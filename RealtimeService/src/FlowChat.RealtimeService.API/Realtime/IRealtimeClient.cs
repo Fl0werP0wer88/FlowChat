@@ -4,9 +4,9 @@ public interface IRealtimeClient
 {
     Task ReceiveMessage(ChatMessageNotificationDto payload);
 
-    Task PresenceChanged(PresenceChangedNotificationDto payload);
+    Task PresenceChanged(PresenceDto payload);
 
-    Task ReceiveContactPresenceStatuses(IReadOnlyCollection<PresenceChangedNotificationDto> statuses);
+    Task ReceiveContactPresenceStatuses(IReadOnlyCollection<PresenceDto> statuses);
 
     Task ReceivePresencePreferences(PresencePreferencesDto preferences);
 }
