@@ -1,3 +1,4 @@
+using System.Net;
 using System.Text.Json;
 using FlowChat.Core.Exceptions;
 using FlowChat.Core.Http;
@@ -24,7 +25,7 @@ public abstract class ConsumerHttpClientBase(HttpClient httpClient)
             ? null
             : await response.Content.ReadAsStringAsync(cancellationToken);
 
-        if (HasTransientProblemDetails(body))
+        if (HasTransientProblemDetails(body) || IsTransientStatusCode(response))
         {
             response.EnsureSuccessStatusCode();
         }
@@ -42,6 +43,12 @@ public abstract class ConsumerHttpClientBase(HttpClient httpClient)
 
         return $"{ClientDisplayName} returned {(int)response.StatusCode} {response.ReasonPhrase}{suffix}";
     }
+
+    private static bool IsTransientStatusCode(HttpResponseMessage response) =>
+        response.StatusCode is HttpStatusCode.ServiceUnavailable
+            or HttpStatusCode.TooManyRequests
+            or HttpStatusCode.BadGateway
+            or HttpStatusCode.GatewayTimeout;
 
     private static bool HasTransientProblemDetails(string? body)
     {
