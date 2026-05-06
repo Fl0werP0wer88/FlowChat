@@ -1,13 +1,12 @@
 using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
 using FlowChat.RealtimeService.Redis.Configuration.Settings;
-using FlowChat.RealtimeService.Redis.Routing;
 using StackExchange.Redis;
 
 namespace FlowChat.RealtimeService.Redis.RealtimeConnections;
 
 public sealed class RealtimeConnectionRedisRepository(
     IConnectionMultiplexer connectionMultiplexer,
-    RealtimeConnectionsSettingsSection settings) : IRealtimeConnectionRedisRepository
+    RealtimeConnectionsSettingsSection settings) : IRealtimeConnectionRedisRepository, IUserInstanceRoutingReader
 {
     private const string RegisterConnectionScript = """
         redis.call(
@@ -124,6 +123,66 @@ public sealed class RealtimeConnectionRedisRepository(
 
         return _connectionMultiplexer.GetDatabase()
             .KeyExpireAsync(RedisKeys.GetUserConnectionsKey(_settings.KeyPrefix, userId), _settings.ConnectionTtl);
+    }
+
+    public async Task<IReadOnlyDictionary<Guid, IReadOnlyCollection<string>>> GetInstanceIdsByUserAsync(
+        IReadOnlyCollection<Guid> userIds,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(userIds);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var filteredUserIds = userIds
+            .Where(static userId => userId != Guid.Empty)
+            .Distinct()
+            .ToArray();
+        if (filteredUserIds.Length == 0)
+        {
+            return new Dictionary<Guid, IReadOnlyCollection<string>>();
+        }
+
+        var database = _connectionMultiplexer.GetDatabase();
+        var instanceTasks = filteredUserIds.ToDictionary(
+            userId => userId,
+            userId => database.SetMembersAsync(RedisKeys.GetUserInstancesKey(_settings.KeyPrefix, userId)));
+
+        await Task.WhenAll(instanceTasks.Values.Cast<Task>());
+
+        Dictionary<Guid, IReadOnlyCollection<string>> instancesByUser = [];
+        foreach (var (userId, task) in instanceTasks)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var instanceIds = task.Result
+                .Select(static value => value.ToString())
+                .Where(static instanceId => !string.IsNullOrWhiteSpace(instanceId))
+                .Distinct(StringComparer.Ordinal)
+                .ToArray();
+
+            if (instanceIds.Length == 0)
+            {
+                continue;
+            }
+
+            instancesByUser[userId] = instanceIds;
+        }
+
+        return instancesByUser;
+    }
+
+    public Task RefreshUserInstancesTtlAsync(Guid userId)
+    {
+        ArgumentOutOfRangeException.ThrowIfEqual(userId, Guid.Empty);
+
+        var database = _connectionMultiplexer.GetDatabase();
+        var userInstancesExpireTask = database.KeyExpireAsync(
+            RedisKeys.GetUserInstancesKey(_settings.KeyPrefix, userId),
+            _settings.ConnectionTtl);
+        var userInstanceCountsExpireTask = database.KeyExpireAsync(
+            RedisKeys.GetUserInstanceCountsKey(_settings.KeyPrefix, userId),
+            _settings.ConnectionTtl);
+
+        return Task.WhenAll(userInstancesExpireTask, userInstanceCountsExpireTask);
     }
 
     public async Task<RealtimeConnectionMutationResult> RegisterConnectionAsync(

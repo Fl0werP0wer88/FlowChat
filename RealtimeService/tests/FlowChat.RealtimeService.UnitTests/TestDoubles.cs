@@ -4,7 +4,7 @@ using System.Security.Claims;
 using CSharpFunctionalExtensions;
 using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
 using FlowChat.RealtimeService.Api.Realtime;
-using FlowChat.RealtimeService.Redis.Routing;
+using FlowChat.RealtimeService.Redis.RealtimeConnections;
 using FlowChat.Shared.Domain;
 using FlowChat.Shared.Application;
 using FlowChat.RealtimeService.Consumers.Realtime.Contracts;

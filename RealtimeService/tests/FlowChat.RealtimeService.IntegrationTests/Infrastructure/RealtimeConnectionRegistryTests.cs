@@ -1,6 +1,6 @@
 using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
 using FlowChat.RealtimeService.Infrastructure;
-using FlowChat.RealtimeService.Redis.Routing;
+using FlowChat.RealtimeService.Redis.RealtimeConnections;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using StackExchange.Redis;

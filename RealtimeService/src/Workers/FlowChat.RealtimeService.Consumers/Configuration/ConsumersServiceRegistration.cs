@@ -4,9 +4,8 @@ using FlowChat.RealtimeService.Consumers.Configuration.Settings;
 using FlowChat.RealtimeService.Consumers.Kafka;
 using FlowChat.RealtimeService.Consumers.Services;
 using FlowChat.RealtimeService.Redis.Configuration.Settings;
-using FlowChat.RealtimeService.Redis.Routing;
+using FlowChat.RealtimeService.Redis.RealtimeConnections;
 using FlowChat.Shared.Infrastructure.Configuration;
-using FlowChat.Shared.Infrastructure.Redis;
 using FlowChat.Shared.Infrastructure.Silverback.Behaviors;
 using FlowChat.Shared.Infrastructure.Silverback.Kafka;
 using Microsoft.Extensions.Configuration;
@@ -29,6 +28,16 @@ public static class ConsumersServiceRegistration
         var settingsProvider = new AppSettingsProvider(configuration);
         services.TryAddSingleton(sp => sp.GetRequiredService<ISettingsProvider>().GetSection<RealtimeApiSettingsSection>());
         services.TryAddSingleton(sp => sp.GetRequiredService<ISettingsProvider>().GetSection<RealtimeRoutingSettingsSection>());
+        services.TryAddSingleton(sp =>
+        {
+            var settings = sp.GetRequiredService<RealtimeRoutingSettingsSection>();
+            return new RealtimeConnectionsSettingsSection
+            {
+                RedisConnectionString = settings.RedisConnectionString,
+                KeyPrefix = settings.KeyPrefix,
+                ConnectionTtl = settings.ConnectionTtl
+            };
+        });
 
         var chatMessageSentConsumerOptions = settingsProvider.GetSection<ChatMessageSentConsumerSettingsSection>();
         var presenceStatusChangedConsumerOptions = settingsProvider.GetSection<PresenceStatusChangedConsumerSettingsSection>();
@@ -58,9 +67,8 @@ public static class ConsumersServiceRegistration
 
             return ConnectionMultiplexer.Connect(options);
         });
-        services.TryAddSingleton<RedisUnitOfWork>();
-        services.TryAddSingleton<IRedisTransactionContext>(sp => sp.GetRequiredService<RedisUnitOfWork>());
-        services.TryAddSingleton<IUserInstanceRoutingReader, UserInstanceRoutingRedisRepository>();
+        services.TryAddSingleton<RealtimeConnectionRedisRepository>();
+        services.TryAddSingleton<IUserInstanceRoutingReader>(sp => sp.GetRequiredService<RealtimeConnectionRedisRepository>());
         services.AddScoped<IRealtimeEventRouter, RealtimeEventRouter>();
 
         services.AddSilverback()

@@ -3,7 +3,6 @@ using FlowChat.RealtimeService.Api.Realtime;
 using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
 using FlowChat.RealtimeService.Infrastructure.RealtimeConnections;
 using FlowChat.RealtimeService.Redis.RealtimeConnections;
-using FlowChat.RealtimeService.Redis.Routing;
 using FluentAssertions;
 using MediatR;
 using Microsoft.AspNetCore.Authentication;
@@ -40,7 +39,6 @@ public sealed class StartupExtensionsTests
         var mediator = app.Services.GetRequiredService<IMediator>();
         var connectionRegistry = app.Services.GetRequiredService<IRealtimeConnectionRegistry>();
         var realtimeConnectionRedisRepository = app.Services.GetRequiredService<IRealtimeConnectionRedisRepository>();
-        var userInstanceRoutingRedisRepository = app.Services.GetRequiredService<IUserInstanceRoutingRedisRepository>();
         var userInstanceRoutingReader = app.Services.GetRequiredService<IUserInstanceRoutingReader>();
         var hostedServices = app.Services.GetServices<IHostedService>().ToList();
         var optionsMonitor = app.Services.GetRequiredService<IOptionsMonitor<JwtBearerOptions>>();
@@ -60,7 +58,6 @@ public sealed class StartupExtensionsTests
         mediator.Should().NotBeNull();
         connectionRegistry.Should().NotBeNull();
         realtimeConnectionRedisRepository.Should().NotBeNull();
-        userInstanceRoutingRedisRepository.Should().NotBeNull();
         userInstanceRoutingReader.Should().NotBeNull();
         hostedServices.Should().Contain(service => service.GetType().Name == "RealtimeConnectionRefreshBackgroundService");
         messageContext.Token.Should().Be("test-token");

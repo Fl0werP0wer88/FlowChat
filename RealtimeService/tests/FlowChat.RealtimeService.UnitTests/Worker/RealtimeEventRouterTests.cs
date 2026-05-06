@@ -2,7 +2,7 @@ using AutoFixture;
 using FlowChat.Core.Domain;
 using FlowChat.RealtimeService.Consumers.Realtime.Contracts;
 using FlowChat.RealtimeService.Consumers.Services;
-using FlowChat.RealtimeService.Redis.Routing;
+using FlowChat.RealtimeService.Redis.RealtimeConnections;
 using FluentAssertions;
 using Moq;
 

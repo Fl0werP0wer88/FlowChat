@@ -1,5 +1,5 @@
 using FlowChat.RealtimeService.Consumers.Realtime.Contracts;
-using FlowChat.RealtimeService.Redis.Routing;
+using FlowChat.RealtimeService.Redis.RealtimeConnections;
 
 namespace FlowChat.RealtimeService.Consumers.Services;
 
