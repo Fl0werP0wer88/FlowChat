@@ -73,5 +73,7 @@ public sealed class WorkerSettingsManagerTests
         presenceOptions.RetryGroupId.Should().Be("realtime-service-retry");
         realtimeApiSettings!.Instances.Should().ContainKey("flowchat-realtime-local");
         realtimeRoutingSettings!.KeyPrefix.Should().Be("flowchat:realtime");
+        configuration.GetConnectionString(RealtimeRoutingSettingsSection.RedisConnectionStringName)
+            .Should().Be("localhost:6379,user=default,password=flowchat_redis_pw");
     }
 }

@@ -27,15 +27,20 @@ public static class ConsumersServiceRegistration
 
         var settingsProvider = new AppSettingsProvider(configuration);
         services.TryAddSingleton(sp => sp.GetRequiredService<ISettingsProvider>().GetSection<RealtimeApiSettingsSection>());
-        services.TryAddSingleton(sp => sp.GetRequiredService<ISettingsProvider>().GetSection<RealtimeRoutingSettingsSection>());
+        services.TryAddSingleton(sp =>
+        {
+            var settings = sp.GetRequiredService<ISettingsProvider>().GetSection<RealtimeRoutingSettingsSection>();
+            settings.RedisConnectionString = configuration.GetConnectionString(RealtimeRoutingSettingsSection.RedisConnectionStringName)
+                ?? settings.RedisConnectionString;
+            return settings;
+        });
         services.TryAddSingleton(sp =>
         {
             var settings = sp.GetRequiredService<RealtimeRoutingSettingsSection>();
             return new RealtimeConnectionsSettingsSection
             {
                 RedisConnectionString = settings.RedisConnectionString,
-                KeyPrefix = settings.KeyPrefix,
-                ConnectionTtl = settings.ConnectionTtl
+                KeyPrefix = settings.KeyPrefix
             };
         });
 
@@ -62,7 +67,7 @@ public static class ConsumersServiceRegistration
         services.TryAddSingleton<IRealtimeInstanceAddressResolver, ConfiguredRealtimeInstanceAddressResolver>();
         services.TryAddSingleton<IConnectionMultiplexer>(sp =>
         {
-            var options = ConfigurationOptions.Parse(sp.GetRequiredService<RealtimeRoutingSettingsSection>().RedisConnectionString);
+            var options = ConfigurationOptions.Parse(sp.GetRequiredService<RealtimeConnectionsSettingsSection>().RedisConnectionString);
             options.AbortOnConnectFail = false;
 
             return ConnectionMultiplexer.Connect(options);

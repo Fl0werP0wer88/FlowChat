@@ -109,7 +109,7 @@ public sealed class ConsumersConfigurationTests : IAsyncLifetime
                 ["RealtimeApi:ApiKey"] = "worker-key",
                 ["RealtimeApi:Instances:instance-a"] = "http://localhost:5215",
                 ["RealtimeApi:Instances:instance-b"] = "http://localhost:5216",
-                ["RealtimeRouting:RedisConnectionString"] = _redisContainer.GetConnectionString(),
+                ["ConnectionStrings:Redis"] = _redisContainer.GetConnectionString(),
                 ["RealtimeRouting:KeyPrefix"] = "flowchat:test",
                 ["Kafka:ChatMessageSentConsumer:BootstrapServers"] = "localhost:9092",
                 ["Kafka:ChatMessageSentConsumer:GroupId"] = "realtime-service",
