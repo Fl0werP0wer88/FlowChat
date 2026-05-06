@@ -3,11 +3,11 @@ using FlowChat.RealtimeService.Infrastructure.Configuration.Settings;
 using FlowChat.RealtimeService.Routing;
 using StackExchange.Redis;
 
-namespace FlowChat.RealtimeService.Infrastructure.RealtimeConnections.Stores.RealTimeStore;
+namespace FlowChat.RealtimeService.Infrastructure.RealtimeConnections.Stores;
 
-internal sealed class RealTimeStore(
+internal sealed class RedisRealtimeConnectionStore(
     IConnectionMultiplexer connectionMultiplexer,
-    RealtimeConnectionsSettingsSection settings) : IRealTimeStore
+    RealtimeConnectionsSettingsSection settings) : IRedisRealtimeConnectionStore
 {
     private const string RegisterConnectionScript = """
         redis.call(
@@ -79,9 +79,52 @@ internal sealed class RealTimeStore(
         return { activeConnectionCount, isLastConnectionForUser, removed }
         """;
 
+    private static class HashFields
+    {
+        public const string UserId = "userId";
+    }
+
     private readonly IConnectionMultiplexer _connectionMultiplexer = connectionMultiplexer
         ?? throw new ArgumentNullException(nameof(connectionMultiplexer));
     private readonly RealtimeConnectionsSettingsSection _settings = settings ?? throw new ArgumentNullException(nameof(settings));
+
+    public async Task<Guid?> GetConnectionUserIdAsync(string connectionId)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(connectionId);
+
+        var userIdValue = await _connectionMultiplexer.GetDatabase()
+            .HashGetAsync(RedisKeys.GetConnectionKey(_settings.KeyPrefix, connectionId), HashFields.UserId);
+        if (userIdValue.IsNullOrEmpty || !Guid.TryParse(userIdValue.ToString(), out var userId) || userId == Guid.Empty)
+        {
+            return null;
+        }
+
+        return userId;
+    }
+
+    public Task DeleteConnectionAsync(string connectionId)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(connectionId);
+
+        return _connectionMultiplexer.GetDatabase()
+            .KeyDeleteAsync(RedisKeys.GetConnectionKey(_settings.KeyPrefix, connectionId));
+    }
+
+    public Task<bool> RefreshConnectionTtlAsync(string connectionId)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(connectionId);
+
+        return _connectionMultiplexer.GetDatabase()
+            .KeyExpireAsync(RedisKeys.GetConnectionKey(_settings.KeyPrefix, connectionId), _settings.ConnectionTtl);
+    }
+
+    public Task<bool> RefreshUserConnectionsTtlAsync(Guid userId)
+    {
+        ArgumentOutOfRangeException.ThrowIfEqual(userId, Guid.Empty);
+
+        return _connectionMultiplexer.GetDatabase()
+            .KeyExpireAsync(RedisKeys.GetUserConnectionsKey(_settings.KeyPrefix, userId), _settings.ConnectionTtl);
+    }
 
     public async Task<RealtimeConnectionMutationResult> RegisterConnectionAsync(
         Guid userId,

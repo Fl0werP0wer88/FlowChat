@@ -1,9 +1,17 @@
 using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
 
-namespace FlowChat.RealtimeService.Infrastructure.RealtimeConnections.Stores.RealTimeStore;
+namespace FlowChat.RealtimeService.Infrastructure.RealtimeConnections.Stores;
 
-internal interface IRealTimeStore
+internal interface IRedisRealtimeConnectionStore
 {
+    Task<Guid?> GetConnectionUserIdAsync(string connectionId);
+
+    Task DeleteConnectionAsync(string connectionId);
+
+    Task<bool> RefreshConnectionTtlAsync(string connectionId);
+
+    Task<bool> RefreshUserConnectionsTtlAsync(Guid userId);
+
     Task<RealtimeConnectionMutationResult> RegisterConnectionAsync(
         Guid userId,
         string connectionId,

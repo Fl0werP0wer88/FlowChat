@@ -4,9 +4,7 @@ using FlowChat.RealtimeService.Infrastructure.Configuration.Settings;
 using FlowChat.RealtimeService.Infrastructure.Presence;
 using FlowChat.RealtimeService.Infrastructure.RealtimeConnections;
 using FlowChat.RealtimeService.Infrastructure.RealtimeConnections.ConnectionsTracker;
-using FlowChat.RealtimeService.Infrastructure.RealtimeConnections.Stores.ConnectionStore;
-using FlowChat.RealtimeService.Infrastructure.RealtimeConnections.Stores.RealTimeStore;
-using FlowChat.RealtimeService.Infrastructure.RealtimeConnections.Stores.UserConnectionStore;
+using FlowChat.RealtimeService.Infrastructure.RealtimeConnections.Stores;
 using FlowChat.RealtimeService.Routing;
 using FlowChat.RealtimeService.Routing.Configuration.Settings;
 using FlowChat.Shared.Application;
@@ -44,9 +42,7 @@ public static class InfrastructureServiceRegistration
         services.TryAddSingleton<IUnitOfWork>(sp => sp.GetRequiredService<RedisUnitOfWork>());
         services.TryAddSingleton<IRedisTransactionContext>(sp => sp.GetRequiredService<RedisUnitOfWork>());
         services.TryAddSingleton<IActiveConnectionsTracker, InMemoryActiveConnectionsTracker>();
-        services.TryAddSingleton<IConnectionStore, RedisConnectionStore>();
-        services.TryAddSingleton<IUserConnectionsStore, RedisUserConnectionsStore>();
-        services.TryAddSingleton<IRealTimeStore, RealTimeStore>();
+        services.TryAddSingleton<IRedisRealtimeConnectionStore, RedisRealtimeConnectionStore>();
         services.TryAddSingleton(sp =>
         {
             var settings = sp.GetRequiredService<RealtimeConnectionsSettingsSection>();
