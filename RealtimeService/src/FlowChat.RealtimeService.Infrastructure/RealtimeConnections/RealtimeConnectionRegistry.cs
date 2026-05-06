@@ -1,21 +1,21 @@
 using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
-using FlowChat.RealtimeService.Infrastructure.Configuration.Settings;
 using FlowChat.RealtimeService.Infrastructure.RealtimeConnections.ConnectionsTracker;
-using FlowChat.RealtimeService.Infrastructure.RealtimeConnections.Stores;
-using FlowChat.RealtimeService.Routing;
+using FlowChat.RealtimeService.Redis.Configuration.Settings;
+using FlowChat.RealtimeService.Redis.RealtimeConnections;
+using FlowChat.RealtimeService.Redis.Routing;
 
 namespace FlowChat.RealtimeService.Infrastructure.RealtimeConnections;
 
 internal sealed class RealtimeConnectionRegistry(
-    IRedisRealtimeConnectionStore redisRealtimeConnectionStore,
-    IUserInstanceRoutingStore userInstanceRoutingStore,
+    IRealtimeConnectionRedisRepository realtimeConnectionRedisRepository,
+    IUserInstanceRoutingRedisRepository userInstanceRoutingRedisRepository,
     IActiveConnectionsTracker activeConnectionsTracker,
     RealtimeConnectionsSettingsSection settings) : IRealtimeConnectionRegistry
 {
-    private readonly IRedisRealtimeConnectionStore _redisRealtimeConnectionStore = redisRealtimeConnectionStore
-        ?? throw new ArgumentNullException(nameof(redisRealtimeConnectionStore));
-    private readonly IUserInstanceRoutingStore _userInstanceRoutingStore = userInstanceRoutingStore
-        ?? throw new ArgumentNullException(nameof(userInstanceRoutingStore));
+    private readonly IRealtimeConnectionRedisRepository _realtimeConnectionRedisRepository = realtimeConnectionRedisRepository
+        ?? throw new ArgumentNullException(nameof(realtimeConnectionRedisRepository));
+    private readonly IUserInstanceRoutingRedisRepository _userInstanceRoutingRedisRepository = userInstanceRoutingRedisRepository
+        ?? throw new ArgumentNullException(nameof(userInstanceRoutingRedisRepository));
     private readonly IActiveConnectionsTracker _activeConnectionsTracker = activeConnectionsTracker
         ?? throw new ArgumentNullException(nameof(activeConnectionsTracker));
     private readonly RealtimeConnectionsSettingsSection _settings = settings ?? throw new ArgumentNullException(nameof(settings));
@@ -28,7 +28,7 @@ internal sealed class RealtimeConnectionRegistry(
         ArgumentException.ThrowIfNullOrWhiteSpace(connectionId);
 
         var nowUtc = DateTimeOffset.UtcNow;
-        var result = await _redisRealtimeConnectionStore.RegisterConnectionAsync(userId, connectionId, nowUtc, cancellationToken);
+        var result = await _realtimeConnectionRedisRepository.RegisterConnectionAsync(userId, connectionId, nowUtc, cancellationToken);
 
         _activeConnectionsTracker.Track(userId, connectionId);
         return result;
@@ -48,17 +48,17 @@ internal sealed class RealtimeConnectionRegistry(
             }
             else
             {
-                var storedUserId = await _redisRealtimeConnectionStore.GetConnectionUserIdAsync(connectionId);
+                var storedUserId = await _realtimeConnectionRedisRepository.GetConnectionUserIdAsync(connectionId);
                 if (!storedUserId.HasValue || storedUserId.Value == Guid.Empty)
                 {
-                    await _redisRealtimeConnectionStore.DeleteConnectionAsync(connectionId);
+                    await _realtimeConnectionRedisRepository.DeleteConnectionAsync(connectionId);
                     return null;
                 }
 
                 userId = storedUserId.Value;
             }
 
-            return await _redisRealtimeConnectionStore.UnregisterConnectionAsync(
+            return await _realtimeConnectionRedisRepository.UnregisterConnectionAsync(
                 userId,
                 connectionId,
                 _settings.InstanceId,
@@ -86,17 +86,17 @@ internal sealed class RealtimeConnectionRegistry(
 
         var connectionExpireTasks = activeConnections.ToDictionary(
             static connection => connection.ConnectionId,
-            connection => _redisRealtimeConnectionStore.RefreshConnectionTtlAsync(connection.ConnectionId),
+            connection => _realtimeConnectionRedisRepository.RefreshConnectionTtlAsync(connection.ConnectionId),
             StringComparer.Ordinal);
 
         var userSetExpireTasks = activeConnections
             .DistinctBy(static connection => connection.UserId)
             .ToDictionary(
                 static connection => connection.UserId,
-                connection => _redisRealtimeConnectionStore.RefreshUserConnectionsTtlAsync(connection.UserId));
+                connection => _realtimeConnectionRedisRepository.RefreshUserConnectionsTtlAsync(connection.UserId));
         var routingExpireTasks = activeConnections
             .DistinctBy(static connection => connection.UserId)
-            .Select(connection => _userInstanceRoutingStore.RefreshTtlAsync(connection.UserId))
+            .Select(connection => _userInstanceRoutingRedisRepository.RefreshTtlAsync(connection.UserId))
             .ToArray();
 
         await Task.WhenAll(connectionExpireTasks.Values.Cast<Task>()

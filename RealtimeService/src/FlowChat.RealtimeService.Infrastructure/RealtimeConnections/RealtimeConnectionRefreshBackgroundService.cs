@@ -1,6 +1,6 @@
 using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
-using FlowChat.RealtimeService.Infrastructure.Configuration.Settings;
 using FlowChat.RealtimeService.Infrastructure.RealtimeConnections.ConnectionsTracker;
+using FlowChat.RealtimeService.Redis.Configuration.Settings;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 

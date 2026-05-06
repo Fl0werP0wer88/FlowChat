@@ -1,13 +1,13 @@
 using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
-using FlowChat.RealtimeService.Infrastructure.Configuration.Settings;
-using FlowChat.RealtimeService.Routing;
+using FlowChat.RealtimeService.Redis.Configuration.Settings;
+using FlowChat.RealtimeService.Redis.Routing;
 using StackExchange.Redis;
 
-namespace FlowChat.RealtimeService.Infrastructure.RealtimeConnections.Stores;
+namespace FlowChat.RealtimeService.Redis.RealtimeConnections;
 
-internal sealed class RedisRealtimeConnectionStore(
+public sealed class RealtimeConnectionRedisRepository(
     IConnectionMultiplexer connectionMultiplexer,
-    RealtimeConnectionsSettingsSection settings) : IRedisRealtimeConnectionStore
+    RealtimeConnectionsSettingsSection settings) : IRealtimeConnectionRedisRepository
 {
     private const string RegisterConnectionScript = """
         redis.call(

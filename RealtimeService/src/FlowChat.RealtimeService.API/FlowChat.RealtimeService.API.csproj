@@ -4,6 +4,7 @@
     <ProjectReference Include="..\..\..\Common\src\FlowChat.Shared.API\FlowChat.Shared.API.csproj" />
     <ProjectReference Include="..\FlowChat.RealtimeService.Infrastructure\FlowChat.RealtimeService.Infrastructure.csproj" />
     <ProjectReference Include="..\FlowChat.RealtimeService.Application\FlowChat.RealtimeService.Application.csproj" />
+    <ProjectReference Include="..\FlowChat.RealtimeService.Redis\FlowChat.RealtimeService.Redis.csproj" />
   </ItemGroup>
 
   <PropertyGroup>

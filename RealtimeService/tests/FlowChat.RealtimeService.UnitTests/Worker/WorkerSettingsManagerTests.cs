@@ -1,5 +1,5 @@
 using FlowChat.RealtimeService.Consumers.Configuration.Settings;
-using FlowChat.RealtimeService.Routing.Configuration.Settings;
+using FlowChat.RealtimeService.Redis.Configuration.Settings;
 using FlowChat.Shared.Infrastructure.Configuration;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;

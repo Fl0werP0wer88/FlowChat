@@ -1,8 +1,8 @@
 using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
 
-namespace FlowChat.RealtimeService.Infrastructure.RealtimeConnections.Stores;
+namespace FlowChat.RealtimeService.Redis.RealtimeConnections;
 
-internal interface IRedisRealtimeConnectionStore
+public interface IRealtimeConnectionRedisRepository
 {
     Task<Guid?> GetConnectionUserIdAsync(string connectionId);
 

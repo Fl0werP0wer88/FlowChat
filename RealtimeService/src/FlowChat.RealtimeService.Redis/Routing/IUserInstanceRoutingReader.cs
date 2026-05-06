@@ -1,4 +1,4 @@
-namespace FlowChat.RealtimeService.Routing;
+namespace FlowChat.RealtimeService.Redis.Routing;
 
 public interface IUserInstanceRoutingReader
 {

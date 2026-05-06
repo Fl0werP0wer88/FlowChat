@@ -4,9 +4,9 @@ using FlowChat.RealtimeService.Infrastructure.Configuration.Settings;
 using FlowChat.RealtimeService.Infrastructure.Presence;
 using FlowChat.RealtimeService.Infrastructure.RealtimeConnections;
 using FlowChat.RealtimeService.Infrastructure.RealtimeConnections.ConnectionsTracker;
-using FlowChat.RealtimeService.Infrastructure.RealtimeConnections.Stores;
-using FlowChat.RealtimeService.Routing;
-using FlowChat.RealtimeService.Routing.Configuration.Settings;
+using FlowChat.RealtimeService.Redis.Configuration.Settings;
+using FlowChat.RealtimeService.Redis.RealtimeConnections;
+using FlowChat.RealtimeService.Redis.Routing;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Infrastructure.Configuration;
 using FlowChat.Shared.Infrastructure.Redis;
@@ -42,7 +42,7 @@ public static class InfrastructureServiceRegistration
         services.TryAddSingleton<IUnitOfWork>(sp => sp.GetRequiredService<RedisUnitOfWork>());
         services.TryAddSingleton<IRedisTransactionContext>(sp => sp.GetRequiredService<RedisUnitOfWork>());
         services.TryAddSingleton<IActiveConnectionsTracker, InMemoryActiveConnectionsTracker>();
-        services.TryAddSingleton<IRedisRealtimeConnectionStore, RedisRealtimeConnectionStore>();
+        services.TryAddSingleton<IRealtimeConnectionRedisRepository, RealtimeConnectionRedisRepository>();
         services.TryAddSingleton(sp =>
         {
             var settings = sp.GetRequiredService<RealtimeConnectionsSettingsSection>();
@@ -53,9 +53,9 @@ public static class InfrastructureServiceRegistration
                 ConnectionTtl = settings.ConnectionTtl
             };
         });
-        services.TryAddSingleton<RedisUserInstanceRoutingStore>();
-        services.TryAddSingleton<IUserInstanceRoutingStore>(sp => sp.GetRequiredService<RedisUserInstanceRoutingStore>());
-        services.TryAddSingleton<IUserInstanceRoutingReader>(sp => sp.GetRequiredService<RedisUserInstanceRoutingStore>());
+        services.TryAddSingleton<UserInstanceRoutingRedisRepository>();
+        services.TryAddSingleton<IUserInstanceRoutingRedisRepository>(sp => sp.GetRequiredService<UserInstanceRoutingRedisRepository>());
+        services.TryAddSingleton<IUserInstanceRoutingReader>(sp => sp.GetRequiredService<UserInstanceRoutingRedisRepository>());
         services.TryAddSingleton<IRealtimeConnectionRegistry, RealtimeConnectionRegistry>();
 
         services.TryAddSingleton(sp => sp.GetRequiredService<ISettingsProvider>().GetSection<PresenceServiceSettingsSection>());

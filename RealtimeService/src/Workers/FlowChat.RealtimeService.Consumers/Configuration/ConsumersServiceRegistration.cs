@@ -3,8 +3,8 @@ using FlowChat.Core.Contracts;
 using FlowChat.RealtimeService.Consumers.Configuration.Settings;
 using FlowChat.RealtimeService.Consumers.Kafka;
 using FlowChat.RealtimeService.Consumers.Services;
-using FlowChat.RealtimeService.Routing;
-using FlowChat.RealtimeService.Routing.Configuration.Settings;
+using FlowChat.RealtimeService.Redis.Configuration.Settings;
+using FlowChat.RealtimeService.Redis.Routing;
 using FlowChat.Shared.Infrastructure.Configuration;
 using FlowChat.Shared.Infrastructure.Redis;
 using FlowChat.Shared.Infrastructure.Silverback.Behaviors;
@@ -60,7 +60,7 @@ public static class ConsumersServiceRegistration
         });
         services.TryAddSingleton<RedisUnitOfWork>();
         services.TryAddSingleton<IRedisTransactionContext>(sp => sp.GetRequiredService<RedisUnitOfWork>());
-        services.TryAddSingleton<IUserInstanceRoutingReader, RedisUserInstanceRoutingStore>();
+        services.TryAddSingleton<IUserInstanceRoutingReader, UserInstanceRoutingRedisRepository>();
         services.AddScoped<IRealtimeEventRouter, RealtimeEventRouter>();
 
         services.AddSilverback()

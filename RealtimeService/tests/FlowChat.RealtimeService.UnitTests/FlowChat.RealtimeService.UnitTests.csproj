@@ -28,6 +28,7 @@
     <ProjectReference Include="..\..\src\FlowChat.RealtimeService.Application\FlowChat.RealtimeService.Application.csproj" />
     <ProjectReference Include="..\..\src\FlowChat.RealtimeService.Domain\FlowChat.RealtimeService.Domain.csproj" />
     <ProjectReference Include="..\..\src\FlowChat.RealtimeService.Infrastructure\FlowChat.RealtimeService.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\FlowChat.RealtimeService.Redis\FlowChat.RealtimeService.Redis.csproj" />
     <ProjectReference Include="..\..\src\Workers\FlowChat.RealtimeService.Consumers\FlowChat.RealtimeService.Consumers.csproj" />
   </ItemGroup>
 

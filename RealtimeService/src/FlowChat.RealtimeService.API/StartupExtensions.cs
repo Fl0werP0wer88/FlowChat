@@ -3,7 +3,7 @@ using FlowChat.RealtimeService.Api.Realtime;
 using FlowChat.RealtimeService.Application;
 using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
 using FlowChat.RealtimeService.Infrastructure;
-using FlowChat.RealtimeService.Infrastructure.Configuration.Settings;
+using FlowChat.RealtimeService.Redis.Configuration.Settings;
 using FlowChat.Shared.API;
 using FlowChat.Shared.Infrastructure.Configuration;
 using Microsoft.AspNetCore.Authentication.JwtBearer;

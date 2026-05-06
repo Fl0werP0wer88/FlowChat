@@ -1,13 +1,13 @@
-using FlowChat.RealtimeService.Routing.Configuration.Settings;
+using FlowChat.RealtimeService.Redis.Configuration.Settings;
 using FlowChat.Shared.Infrastructure.Redis;
 using StackExchange.Redis;
 
-namespace FlowChat.RealtimeService.Routing;
+namespace FlowChat.RealtimeService.Redis.Routing;
 
-public sealed class RedisUserInstanceRoutingStore(
+public sealed class UserInstanceRoutingRedisRepository(
     IRedisTransactionContext redisTransactionContext,
     RealtimeRoutingSettingsSection settings)
-    : IUserInstanceRoutingStore, IUserInstanceRoutingReader
+    : IUserInstanceRoutingRedisRepository, IUserInstanceRoutingReader
 {
     private readonly IRedisTransactionContext _redisTransactionContext = redisTransactionContext
         ?? throw new ArgumentNullException(nameof(redisTransactionContext));

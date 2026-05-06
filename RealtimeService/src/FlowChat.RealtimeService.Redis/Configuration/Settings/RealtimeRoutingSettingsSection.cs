@@ -1,6 +1,6 @@
 using FlowChat.Core.Contracts;
 
-namespace FlowChat.RealtimeService.Routing.Configuration.Settings;
+namespace FlowChat.RealtimeService.Redis.Configuration.Settings;
 
 public sealed class RealtimeRoutingSettingsSection : SettingsSectionBase
 {

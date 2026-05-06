@@ -2,7 +2,7 @@ using FlowChat.RealtimeService.Consumers;
 using FlowChat.RealtimeService.Consumers.Kafka;
 using FlowChat.RealtimeService.Consumers.Configuration.Settings;
 using FlowChat.RealtimeService.Consumers.Services;
-using FlowChat.RealtimeService.Routing;
+using FlowChat.RealtimeService.Redis.Routing;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
