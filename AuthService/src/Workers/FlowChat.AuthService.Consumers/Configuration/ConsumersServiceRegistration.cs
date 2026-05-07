@@ -25,7 +25,7 @@ public static class ConsumersServiceRegistration
 
         services.AddOptions<AuthApiSettingsSection>()
             .BindConfiguration(new AuthApiSettingsSection().SectionName);
-        services.AddHttpClient(AuthInternalApiClient.HttpClientName, (serviceProvider, httpClient) =>
+        services.AddHttpClient<IAuthInternalApiClient, AuthInternalApiClient>((serviceProvider, httpClient) =>
         {
             var apiSettings = serviceProvider.GetRequiredService<IOptions<AuthApiSettingsSection>>().Value;
             if (!Uri.TryCreate(apiSettings.BaseUrl, UriKind.Absolute, out var baseAddress))
@@ -41,11 +41,6 @@ public static class ConsumersServiceRegistration
                 httpClient.DefaultRequestHeaders.Add(AuthInternalApiClient.ApiKeyHeaderName, apiSettings.ApiKey);
             }
         });
-        services.AddScoped<IAuthInternalApiClient>(serviceProvider =>
-            new AuthInternalApiClient(
-                serviceProvider
-                    .GetRequiredService<IHttpClientFactory>()
-                    .CreateClient(AuthInternalApiClient.HttpClientName)));
 
         services.AddSilverback()
             .AddSingletonBrokerBehavior<CustomSpanAttributesProducerBehavior>()

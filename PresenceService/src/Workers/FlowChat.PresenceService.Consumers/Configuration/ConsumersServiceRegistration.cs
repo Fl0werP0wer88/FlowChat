@@ -25,7 +25,7 @@ public static class ConsumersServiceRegistration
 
         services.AddOptions<PresenceApiSettingsSection>()
             .BindConfiguration(new PresenceApiSettingsSection().SectionName);
-        services.AddHttpClient(PresenceInternalApiClient.HttpClientName, (serviceProvider, httpClient) =>
+        services.AddHttpClient<IPresenceInternalApiClient, PresenceInternalApiClient>((serviceProvider, httpClient) =>
         {
             var apiSettings = serviceProvider.GetRequiredService<IOptions<PresenceApiSettingsSection>>().Value;
             if (!Uri.TryCreate(apiSettings.BaseUrl, UriKind.Absolute, out var baseAddress))
@@ -41,10 +41,6 @@ public static class ConsumersServiceRegistration
                 httpClient.DefaultRequestHeaders.Add(PresenceInternalApiClient.ApiKeyHeaderName, apiSettings.ApiKey);
             }
         });
-        services.AddScoped<IPresenceInternalApiClient>(serviceProvider =>
-            new PresenceInternalApiClient(
-                serviceProvider.GetRequiredService<IHttpClientFactory>()
-                    .CreateClient(PresenceInternalApiClient.HttpClientName)));
 
         services.AddSilverback()
             .AddSingletonBrokerBehavior<CustomSpanAttributesProducerBehavior>()

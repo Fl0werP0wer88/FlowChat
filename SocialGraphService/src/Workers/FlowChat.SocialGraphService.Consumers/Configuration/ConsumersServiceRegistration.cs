@@ -25,7 +25,7 @@ public static class ConsumersServiceRegistration
 
         services.AddOptions<SocialGraphApiSettingsSection>()
             .BindConfiguration(new SocialGraphApiSettingsSection().SectionName);
-        services.AddHttpClient(SocialGraphInternalApiClient.HttpClientName, (serviceProvider, httpClient) =>
+        services.AddHttpClient<ISocialGraphInternalApiClient, SocialGraphInternalApiClient>((serviceProvider, httpClient) =>
         {
             var apiSettings = serviceProvider.GetRequiredService<IOptions<SocialGraphApiSettingsSection>>().Value;
             if (!Uri.TryCreate(apiSettings.BaseUrl, UriKind.Absolute, out var baseAddress))
@@ -41,11 +41,6 @@ public static class ConsumersServiceRegistration
                 httpClient.DefaultRequestHeaders.Add(SocialGraphInternalApiClient.ApiKeyHeaderName, apiSettings.ApiKey);
             }
         });
-        services.AddScoped<ISocialGraphInternalApiClient>(serviceProvider =>
-            new SocialGraphInternalApiClient(
-                serviceProvider
-                    .GetRequiredService<IHttpClientFactory>()
-                    .CreateClient(SocialGraphInternalApiClient.HttpClientName)));
 
         services.AddSilverback()
             .AddSingletonBrokerBehavior<CustomSpanAttributesProducerBehavior>()

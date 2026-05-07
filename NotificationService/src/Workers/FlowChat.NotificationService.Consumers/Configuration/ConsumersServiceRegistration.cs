@@ -25,7 +25,7 @@ public static class ConsumersServiceRegistration
 
         services.AddOptions<NotificationApiSettingsSection>()
             .BindConfiguration(new NotificationApiSettingsSection().SectionName);
-        services.AddHttpClient(NotificationInternalApiClient.HttpClientName, (serviceProvider, httpClient) =>
+        services.AddHttpClient<INotificationInternalApiClient, NotificationInternalApiClient>((serviceProvider, httpClient) =>
         {
             var apiSettings = serviceProvider.GetRequiredService<IOptions<NotificationApiSettingsSection>>().Value;
             if (!Uri.TryCreate(apiSettings.BaseUrl, UriKind.Absolute, out var baseAddress))
@@ -41,11 +41,6 @@ public static class ConsumersServiceRegistration
                 httpClient.DefaultRequestHeaders.Add(NotificationInternalApiClient.ApiKeyHeaderName, apiSettings.ApiKey);
             }
         });
-        services.AddScoped<INotificationInternalApiClient>(serviceProvider =>
-            new NotificationInternalApiClient(
-                serviceProvider
-                    .GetRequiredService<IHttpClientFactory>()
-                    .CreateClient(NotificationInternalApiClient.HttpClientName)));
 
         services.AddSilverback()
             .AddSingletonBrokerBehavior<CustomSpanAttributesProducerBehavior>()

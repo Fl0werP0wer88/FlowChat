@@ -26,7 +26,7 @@ public static class ConsumersServiceRegistration
         services.AddOptions<ChatApiSettingsSection>()
             .BindConfiguration(new ChatApiSettingsSection().SectionName);
 
-        services.AddHttpClient(ChatInternalApiClient.HttpClientName, (serviceProvider, httpClient) =>
+        services.AddHttpClient<IChatInternalApiClient, ChatInternalApiClient>((serviceProvider, httpClient) =>
         {
             var apiSettings = serviceProvider.GetRequiredService<IOptions<ChatApiSettingsSection>>().Value;
             if (!Uri.TryCreate(apiSettings.BaseUrl, UriKind.Absolute, out var baseAddress))
@@ -42,12 +42,6 @@ public static class ConsumersServiceRegistration
                 httpClient.DefaultRequestHeaders.Add(ChatInternalApiClient.ApiKeyHeaderName, apiSettings.ApiKey);
             }
         });
-
-        services.AddScoped<IChatInternalApiClient>(serviceProvider =>
-            new ChatInternalApiClient(
-                serviceProvider
-                    .GetRequiredService<IHttpClientFactory>()
-                    .CreateClient(ChatInternalApiClient.HttpClientName)));
 
         services.AddSilverback()
             .AddSingletonBrokerBehavior<CustomSpanAttributesProducerBehavior>()
