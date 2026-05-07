@@ -45,6 +45,17 @@ public abstract class SubscriberBase<TIntegrationEvent>(ILogger logger)
 
             throw;
         }
+        catch (TransientException exception)
+        {
+            Activity.Current?.SetTag("flowchat.subscriber.result", "transient_failure");
+            Logger.LogWarning(
+                exception,
+                "Transient failure while handling {EventType} in {SubscriberName}.",
+                GetEventTypeName(message),
+                GetType().Name);
+
+            throw;
+        }
         catch (Exception exception)
         {
             Activity.Current?.SetTag("flowchat.subscriber.result", "transient_failure");

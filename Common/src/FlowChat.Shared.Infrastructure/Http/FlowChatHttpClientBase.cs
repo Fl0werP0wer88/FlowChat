@@ -62,12 +62,25 @@ public abstract class FlowChatHttpClientBase(HttpClient httpClient)
             ? null
             : await response.Content.ReadAsStringAsync(cancellationToken);
 
-        if (HasTransientProblemDetails(body) || IsTransientStatusCode(response))
+        HttpRequestException inner;
+        try
         {
             response.EnsureSuccessStatusCode();
+            return;
+        }
+        catch (HttpRequestException ex)
+        {
+            inner = ex;
         }
 
-        throw new NonTransientException(BuildFailureMessage(response, body));
+        var message = BuildFailureMessage(response, body);
+
+        if (HasTransientProblemDetails(body) || IsTransientStatusCode(response))
+        {
+            throw new TransientException(message, inner);
+        }
+
+        throw new NonTransientException(message, inner);
     }
 
     private static bool IsTransientStatusCode(HttpResponseMessage response) =>
