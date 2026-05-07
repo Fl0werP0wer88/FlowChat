@@ -2,11 +2,11 @@ using FlowChat.Core.Contracts;
 
 namespace FlowChat.SocialGraphService.OutboxPublisher.Configuration.Settings;
 
-public sealed class ContactDeletedProducerSettingsSection : SettingsSectionBase
+public sealed class ContactDeletedProducerSettingsSection : ProducerSettingsSectionBase
 {
     public override string SectionName => "Kafka:ContactDeletedProducer";
 
-    public string BootstrapServers { get; set; } = "localhost:9092";
+    public override string BootstrapServers { get; set; } = "localhost:9092";
 
-    public string Topic { get; set; } = "dev.flowchat.social-graph.contact";
+    public override string Topic { get; set; } = "dev.flowchat.social-graph.contact";
 }

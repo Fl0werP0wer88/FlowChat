@@ -3,11 +3,11 @@ using FlowChat.Core.Contracts;
 
 namespace FlowChat.UserProfileService.Infrastructure.Configuration.Settings;
 
-public sealed class UserProfileCreatedProducerSettingsSection : SettingsSectionBase, IKafkaProducerSettingsSection<UserProfileCreatedIntegrationEvent>
+public sealed class UserProfileCreatedProducerSettingsSection : ProducerSettingsSectionBase, IKafkaProducerSettingsSection<UserProfileCreatedIntegrationEvent>
 {
     public override string SectionName => "Kafka:UserProfileCreatedProducer";
 
-    public string BootstrapServers { get; set; } = "localhost:9092";
+    public override string BootstrapServers { get; set; } = "localhost:9092";
 
-    public string Topic { get; set; } = "dev.flowchat.user-profile.user-profile.v1";
+    public override string Topic { get; set; } = "dev.flowchat.user-profile.user-profile.v1";
 }
