@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using FlowChat.Core.Exceptions;
 using FlowChat.Core.Http;
 
@@ -11,6 +12,11 @@ public abstract class ConsumerHttpClientBase(HttpClient httpClient)
     private readonly HttpClient _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
 
     protected virtual string ClientDisplayName => "Consumer API";
+
+    protected virtual JsonSerializerOptions JsonOptions { get; } = new JsonSerializerOptions(JsonSerializerDefaults.Web)
+    {
+        Converters = { new JsonStringEnumConverter() }
+    };
 
     protected async Task SendAsync(
         HttpRequestMessage request,
@@ -30,22 +36,7 @@ public abstract class ConsumerHttpClientBase(HttpClient httpClient)
         using var response = await _httpClient.SendAsync(request, cancellationToken);
         if (response.IsSuccessStatusCode)
         {
-            return await response.Content.ReadFromJsonAsync<TResponse>(cancellationToken);
-        }
-
-        await ThrowForErrorAsync(response, cancellationToken);
-        return default;
-    }
-
-    protected async Task<TResponse?> SendAsync<TResponse>(
-        HttpRequestMessage request,
-        JsonSerializerOptions jsonOptions,
-        CancellationToken cancellationToken)
-    {
-        using var response = await _httpClient.SendAsync(request, cancellationToken);
-        if (response.IsSuccessStatusCode)
-        {
-            return await response.Content.ReadFromJsonAsync<TResponse>(jsonOptions, cancellationToken);
+            return await response.Content.ReadFromJsonAsync<TResponse>(JsonOptions, cancellationToken);
         }
 
         await ThrowForErrorAsync(response, cancellationToken);
