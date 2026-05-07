@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Http.Json;
 using System.Text.Json;
 using FlowChat.Core.Exceptions;
 using FlowChat.Core.Http;
@@ -16,21 +17,39 @@ public abstract class ConsumerHttpClientBase(HttpClient httpClient)
         CancellationToken cancellationToken)
     {
         using var response = await _httpClient.SendAsync(request, cancellationToken);
+        if (!response.IsSuccessStatusCode)
+        {
+            await ThrowForErrorAsync(response, cancellationToken);
+        }
+    }
+
+    protected async Task<TResponse?> SendAsync<TResponse>(
+        HttpRequestMessage request,
+        CancellationToken cancellationToken)
+    {
+        using var response = await _httpClient.SendAsync(request, cancellationToken);
         if (response.IsSuccessStatusCode)
         {
-            return;
+            return await response.Content.ReadFromJsonAsync<TResponse>(cancellationToken);
         }
 
-        var body = response.Content is null
-            ? null
-            : await response.Content.ReadAsStringAsync(cancellationToken);
+        await ThrowForErrorAsync(response, cancellationToken);
+        return default;
+    }
 
-        if (HasTransientProblemDetails(body) || IsTransientStatusCode(response))
+    protected async Task<TResponse?> SendAsync<TResponse>(
+        HttpRequestMessage request,
+        JsonSerializerOptions jsonOptions,
+        CancellationToken cancellationToken)
+    {
+        using var response = await _httpClient.SendAsync(request, cancellationToken);
+        if (response.IsSuccessStatusCode)
         {
-            response.EnsureSuccessStatusCode();
+            return await response.Content.ReadFromJsonAsync<TResponse>(jsonOptions, cancellationToken);
         }
 
-        throw new NonTransientException(BuildFailureMessage(response, body));
+        await ThrowForErrorAsync(response, cancellationToken);
+        return default;
     }
 
     protected string BuildFailureMessage(
@@ -42,6 +61,20 @@ public abstract class ConsumerHttpClientBase(HttpClient httpClient)
             : $": {body.Trim()}";
 
         return $"{ClientDisplayName} returned {(int)response.StatusCode} {response.ReasonPhrase}{suffix}";
+    }
+
+    private async Task ThrowForErrorAsync(HttpResponseMessage response, CancellationToken cancellationToken)
+    {
+        var body = response.Content is null
+            ? null
+            : await response.Content.ReadAsStringAsync(cancellationToken);
+
+        if (HasTransientProblemDetails(body) || IsTransientStatusCode(response))
+        {
+            response.EnsureSuccessStatusCode();
+        }
+
+        throw new NonTransientException(BuildFailureMessage(response, body));
     }
 
     private static bool IsTransientStatusCode(HttpResponseMessage response) =>

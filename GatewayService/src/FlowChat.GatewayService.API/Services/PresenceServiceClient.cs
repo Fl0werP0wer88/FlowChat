@@ -1,16 +1,20 @@
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using FlowChat.Shared.Infrastructure.Http;
 
 namespace FlowChat.GatewayService.Api.Services;
 
-internal sealed class PresenceServiceClient(HttpClient httpClient) : IPresenceServiceClient
+internal sealed class PresenceServiceClient(HttpClient httpClient)
+    : ConsumerHttpClientBase(httpClient), IPresenceServiceClient
 {
     public const string ApiKeyHeaderName = "X-Internal-Api-Key";
     private const string BatchStatusesPath = "internal/presence/statuses/batch";
     private static readonly JsonSerializerOptions JsonOptions = CreateJsonOptions();
 
     private sealed record PresenceStatusesClientRequest(IReadOnlyCollection<Guid> UserIds);
+
+    protected override string ClientDisplayName => "Presence Service";
 
     public async Task<IReadOnlyDictionary<Guid, ContactPresenceStatusClientDto>> GetPresenceStatusesAsync(
         IReadOnlyCollection<Guid> userIds,
@@ -21,14 +25,13 @@ internal sealed class PresenceServiceClient(HttpClient httpClient) : IPresenceSe
             return new Dictionary<Guid, ContactPresenceStatusClientDto>();
         }
 
-        using var response = await httpClient.PostAsJsonAsync(
-            BatchStatusesPath,
-            new PresenceStatusesClientRequest(userIds),
-            JsonOptions,
-            cancellationToken);
-        response.EnsureSuccessStatusCode();
+        using var request = new HttpRequestMessage(HttpMethod.Post, BatchStatusesPath)
+        {
+            Content = JsonContent.Create(new PresenceStatusesClientRequest(userIds), options: JsonOptions)
+        };
 
-        var statuses = await response.Content.ReadFromJsonAsync<IReadOnlyCollection<ContactPresenceStatusClientDto>>(
+        var statuses = await SendAsync<IReadOnlyCollection<ContactPresenceStatusClientDto>>(
+            request,
             JsonOptions,
             cancellationToken);
 

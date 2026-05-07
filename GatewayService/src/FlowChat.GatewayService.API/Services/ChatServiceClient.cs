@@ -1,32 +1,27 @@
 using System.Net.Http.Json;
+using FlowChat.Shared.Infrastructure.Http;
 
 namespace FlowChat.GatewayService.Api.Services;
 
-internal sealed class ChatServiceClient : IChatServiceClient
+internal sealed class ChatServiceClient(HttpClient httpClient)
+    : ConsumerHttpClientBase(httpClient), IChatServiceClient
 {
     private sealed record DuetConversationIdsClientRequest(IReadOnlyList<Guid> PartnerUserIds);
 
     private sealed record DuetConversationIdsClientResponse(IReadOnlyDictionary<Guid, Guid> ConversationIds);
 
-    private readonly HttpClient _httpClient;
-
-    public ChatServiceClient(HttpClient httpClient)
-    {
-        _httpClient = httpClient;
-    }
+    protected override string ClientDisplayName => "Chat Service";
 
     public async Task<IReadOnlyDictionary<Guid, Guid>> GetDuetConversationIdsAsync(
         IReadOnlyList<Guid> partnerUserIds,
         CancellationToken cancellationToken)
     {
-        var httpResponse = await _httpClient.PostAsJsonAsync(
-            "api/conversations/duet/batch",
-            new DuetConversationIdsClientRequest(partnerUserIds),
-            cancellationToken);
+        using var request = new HttpRequestMessage(HttpMethod.Post, "api/conversations/duet/batch")
+        {
+            Content = JsonContent.Create(new DuetConversationIdsClientRequest(partnerUserIds))
+        };
 
-        httpResponse.EnsureSuccessStatusCode();
-
-        var response = await httpResponse.Content.ReadFromJsonAsync<DuetConversationIdsClientResponse>(cancellationToken);
+        var response = await SendAsync<DuetConversationIdsClientResponse>(request, cancellationToken);
         return response?.ConversationIds ?? new Dictionary<Guid, Guid>();
     }
 }
