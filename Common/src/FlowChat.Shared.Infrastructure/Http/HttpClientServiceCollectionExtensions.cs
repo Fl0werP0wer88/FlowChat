@@ -8,6 +8,6 @@ public static class HttpClientServiceCollectionExtensions
         this IServiceCollection services,
         Action<IServiceProvider, HttpClient> configure)
         where TInterface : class
-        where TImpl : class, TInterface
+        where TImpl : FlowChatHttpClientBase, TInterface
         => services.AddHttpClient<TInterface, TImpl>(configure);
 }
