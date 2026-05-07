@@ -4,7 +4,7 @@ using FlowChat.Shared.Infrastructure.Http;
 namespace FlowChat.GatewayService.Api.Services;
 
 internal sealed class PresenceServiceClient(HttpClient httpClient)
-    : ConsumerHttpClientBase(httpClient), IPresenceServiceClient
+    : FlowChatHttpClientBase(httpClient), IPresenceServiceClient
 {
     public const string ApiKeyHeaderName = "X-Internal-Api-Key";
     private const string BatchStatusesPath = "internal/presence/statuses/batch";

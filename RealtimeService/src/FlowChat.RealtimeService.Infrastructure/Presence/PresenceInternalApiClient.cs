@@ -5,7 +5,7 @@ using FlowChat.Shared.Infrastructure.Http;
 namespace FlowChat.RealtimeService.Infrastructure.Presence;
 
 internal sealed class PresenceInternalApiClient(HttpClient httpClient)
-    : ConsumerHttpClientBase(httpClient), IPresenceInternalApiClient
+    : FlowChatHttpClientBase(httpClient), IPresenceInternalApiClient
 {
     private const string InitializePath = "/internal/presence/status/initialize";
     private const string DeletePath = "/internal/presence/status/delete";

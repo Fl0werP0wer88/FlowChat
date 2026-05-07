@@ -1,11 +1,11 @@
-using System.Net.Http.Json;
+﻿using System.Net.Http.Json;
 using FlowChat.AuthService.Consumers.AuthApi.Contracts;
 using FlowChat.Shared.Infrastructure.Http;
 
 namespace FlowChat.AuthService.Consumers.Services;
 
 public sealed class AuthInternalApiClient(HttpClient httpClient)
-    : ConsumerHttpClientBase(httpClient), IAuthInternalApiClient
+    : FlowChatHttpClientBase(httpClient), IAuthInternalApiClient
 {
     public const string HttpClientName = nameof(AuthInternalApiClient);
     public const string ApiKeyHeaderName = "X-Internal-Api-Key";
@@ -38,3 +38,4 @@ public sealed class AuthInternalApiClient(HttpClient httpClient)
         await SendAsync(message, cancellationToken);
     }
 }
+

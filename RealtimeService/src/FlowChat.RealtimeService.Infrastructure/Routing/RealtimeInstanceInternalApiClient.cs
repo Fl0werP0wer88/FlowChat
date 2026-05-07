@@ -6,7 +6,7 @@ using FlowChat.Shared.Infrastructure.Http;
 namespace FlowChat.RealtimeService.Infrastructure.Routing;
 
 public sealed class RealtimeInstanceInternalApiClient(HttpClient httpClient)
-    : ConsumerHttpClientBase(httpClient), IRealtimeInstanceInternalApiClient
+    : FlowChatHttpClientBase(httpClient), IRealtimeInstanceInternalApiClient
 {
     public const string ApiKeyHeaderName = "X-Internal-Api-Key";
     private const string ReceiveMessagePath = "/internal/realtime/messages/direct";

@@ -1,11 +1,11 @@
-using System.Net.Http.Json;
+﻿using System.Net.Http.Json;
 using FlowChat.PresenceService.Consumers.Presence.Contracts;
 using FlowChat.Shared.Infrastructure.Http;
 
 namespace FlowChat.PresenceService.Consumers.Services;
 
 public sealed class PresenceInternalApiClient(HttpClient httpClient)
-    : ConsumerHttpClientBase(httpClient), IPresenceInternalApiClient
+    : FlowChatHttpClientBase(httpClient), IPresenceInternalApiClient
 {
     public const string HttpClientName = nameof(PresenceInternalApiClient);
     public const string ApiKeyHeaderName = "X-Internal-Api-Key";
@@ -38,3 +38,4 @@ public sealed class PresenceInternalApiClient(HttpClient httpClient)
         await SendAsync(message, cancellationToken);
     }
 }
+

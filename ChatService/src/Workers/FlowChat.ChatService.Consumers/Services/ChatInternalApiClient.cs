@@ -1,11 +1,11 @@
-using System.Net.Http.Json;
+﻿using System.Net.Http.Json;
 using FlowChat.ChatService.Consumers.ChatService.Contracts;
 using FlowChat.Shared.Infrastructure.Http;
 
 namespace FlowChat.ChatService.Consumers.Services;
 
 public sealed class ChatInternalApiClient(HttpClient httpClient)
-    : ConsumerHttpClientBase(httpClient), IChatInternalApiClient
+    : FlowChatHttpClientBase(httpClient), IChatInternalApiClient
 {
     public const string HttpClientName = nameof(ChatInternalApiClient);
     public const string ApiKeyHeaderName = "X-Internal-Api-Key";
@@ -27,3 +27,4 @@ public sealed class ChatInternalApiClient(HttpClient httpClient)
     private static HttpRequestMessage BuildRequest(HttpMethod method, string path, UserProfileProjectionRequest request) =>
         new(method, path) { Content = JsonContent.Create(request) };
 }
+

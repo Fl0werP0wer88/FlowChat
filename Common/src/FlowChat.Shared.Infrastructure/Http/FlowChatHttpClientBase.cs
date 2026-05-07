@@ -7,7 +7,7 @@ using FlowChat.Core.Http;
 
 namespace FlowChat.Shared.Infrastructure.Http;
 
-public abstract class ConsumerHttpClientBase(HttpClient httpClient)
+public abstract class FlowChatHttpClientBase(HttpClient httpClient)
 {
     private readonly HttpClient _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
 

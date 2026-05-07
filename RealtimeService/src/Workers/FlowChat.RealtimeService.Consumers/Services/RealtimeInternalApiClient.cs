@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Json;
 using FlowChat.Shared.Infrastructure.Http;
 using FlowChat.RealtimeService.Consumers.Realtime.Contracts;
@@ -6,7 +6,7 @@ using FlowChat.RealtimeService.Consumers.Realtime.Contracts;
 namespace FlowChat.RealtimeService.Consumers.Services;
 
 public sealed class RealtimeInternalApiClient(HttpClient httpClient)
-    : ConsumerHttpClientBase(httpClient), IRealtimeInternalApiClient
+    : FlowChatHttpClientBase(httpClient), IRealtimeInternalApiClient
 {
     public const string HttpClientName = nameof(RealtimeInternalApiClient);
     public const string ApiKeyHeaderName = "X-Internal-Api-Key";
@@ -33,3 +33,4 @@ public sealed class RealtimeInternalApiClient(HttpClient httpClient)
         await SendAsync(message, cancellationToken);
     }
 }
+

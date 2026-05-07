@@ -4,7 +4,7 @@ using FlowChat.Shared.Infrastructure.Http;
 namespace FlowChat.GatewayService.Api.Services;
 
 internal sealed class SocialGraphServiceClient(HttpClient httpClient)
-    : ConsumerHttpClientBase(httpClient), ISocialGraphServiceClient
+    : FlowChatHttpClientBase(httpClient), ISocialGraphServiceClient
 {
     private sealed record ContactsClientResponse(IReadOnlyList<ContactClientDto> Contacts);
 

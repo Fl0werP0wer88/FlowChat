@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Json;
 using FlowChat.Core.Exceptions;
 using FlowChat.Core.Http;
@@ -12,7 +12,7 @@ using FluentAssertions;
 
 namespace FlowChat.Shared.Infrastructure.IntegrationTests.Http;
 
-public sealed class ConsumerHttpClientBaseTests
+public sealed class FlowChatHttpClientBaseTests
 {
     [Fact]
     public async Task SendAsync_WhenApiReturnsAccepted_CompletesWithoutException()
@@ -160,7 +160,7 @@ public sealed class ConsumerHttpClientBaseTests
     }
 
     private sealed class TestConsumerHttpClient(HttpClient httpClient)
-        : ConsumerHttpClientBase(httpClient)
+        : FlowChatHttpClientBase(httpClient)
     {
         protected override string ClientDisplayName => "Test Consumer API";
 
@@ -177,3 +177,4 @@ public sealed class ConsumerHttpClientBaseTests
 
     private sealed record PingRequest(string Value);
 }
+

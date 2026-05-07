@@ -4,7 +4,7 @@ using FlowChat.Shared.Infrastructure.Http;
 namespace FlowChat.GatewayService.Api.Services;
 
 internal sealed class ChatServiceClient(HttpClient httpClient)
-    : ConsumerHttpClientBase(httpClient), IChatServiceClient
+    : FlowChatHttpClientBase(httpClient), IChatServiceClient
 {
     private sealed record DuetConversationIdsClientRequest(IReadOnlyList<Guid> PartnerUserIds);
 

@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Json;
 using FlowChat.Shared.Infrastructure.Http;
 using FlowChat.SocialGraphService.Consumers.SocialGraph.Contracts;
@@ -6,7 +6,7 @@ using FlowChat.SocialGraphService.Consumers.SocialGraph.Contracts;
 namespace FlowChat.SocialGraphService.Consumers.Services;
 
 public sealed class SocialGraphInternalApiClient(HttpClient httpClient)
-    : ConsumerHttpClientBase(httpClient), ISocialGraphInternalApiClient
+    : FlowChatHttpClientBase(httpClient), ISocialGraphInternalApiClient
 {
     public const string HttpClientName = nameof(SocialGraphInternalApiClient);
     public const string ApiKeyHeaderName = "X-Internal-Api-Key";
@@ -39,3 +39,4 @@ public sealed class SocialGraphInternalApiClient(HttpClient httpClient)
         await SendAsync(message, cancellationToken);
     }
 }
+

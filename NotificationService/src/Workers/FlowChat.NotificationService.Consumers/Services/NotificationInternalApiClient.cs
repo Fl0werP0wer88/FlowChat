@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Json;
 using FlowChat.Shared.Infrastructure.Http;
 using FlowChat.NotificationService.Consumers.NotificationApi.Contracts;
@@ -6,7 +6,7 @@ using FlowChat.NotificationService.Consumers.NotificationApi.Contracts;
 namespace FlowChat.NotificationService.Consumers.Services;
 
 public sealed class NotificationInternalApiClient(HttpClient httpClient)
-    : ConsumerHttpClientBase(httpClient), INotificationInternalApiClient
+    : FlowChatHttpClientBase(httpClient), INotificationInternalApiClient
 {
     public const string HttpClientName = nameof(NotificationInternalApiClient);
     public const string ApiKeyHeaderName = "X-Internal-Api-Key";
@@ -26,3 +26,4 @@ public sealed class NotificationInternalApiClient(HttpClient httpClient)
         await SendAsync(message, cancellationToken);
     }
 }
+
