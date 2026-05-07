@@ -98,17 +98,17 @@ public static class StartupExtensions
         builder.Services.AddTransient<BearerTokenForwardingHandler>();
 
         builder.Services
-            .AddFlowChatHttpClient<ISocialGraphServiceClient, SocialGraphServiceClient>(client =>
+            .AddFlowChatHttpClient<ISocialGraphServiceClient, SocialGraphServiceClient>((_, client) =>
                 client.BaseAddress = new Uri(servicesSettings.SocialGraphServiceBaseUrl))
             .AddHttpMessageHandler<BearerTokenForwardingHandler>();
 
         builder.Services
-            .AddFlowChatHttpClient<IChatServiceClient, ChatServiceClient>(client =>
+            .AddFlowChatHttpClient<IChatServiceClient, ChatServiceClient>((_, client) =>
                 client.BaseAddress = new Uri(servicesSettings.ChatServiceBaseUrl))
             .AddHttpMessageHandler<BearerTokenForwardingHandler>();
 
         builder.Services
-            .AddFlowChatHttpClient<IPresenceServiceClient, PresenceServiceClient>(client =>
+            .AddFlowChatHttpClient<IPresenceServiceClient, PresenceServiceClient>((_, client) =>
             {
                 client.BaseAddress = new Uri(servicesSettings.PresenceServiceBaseUrl);
                 if (!string.IsNullOrWhiteSpace(servicesSettings.PresenceServiceInternalApiKey))
