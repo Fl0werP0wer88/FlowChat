@@ -1,6 +1,7 @@
 using FlowChat.Core.Contracts;
 using FlowChat.Core.Messaging;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 namespace FlowChat.Shared.Infrastructure.Silverback.Kafka;
 
@@ -13,7 +14,7 @@ public sealed class KafkaProducerSettingsRegistryBuilder
         where TSettings : class, IKafkaProducerSettingsSection<TEvent>, new()
     {
         _factories[typeof(TEvent)] = sp =>
-            sp.GetRequiredService<ISettingsProvider>().GetSection<TSettings>();
+            sp.GetRequiredService<IOptions<TSettings>>().Value;
         return this;
     }
 

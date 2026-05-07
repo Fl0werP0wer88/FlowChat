@@ -1,4 +1,3 @@
-using FlowChat.Core.Contracts;
 using FlowChat.Core.Messaging.AuthService.Events;
 using FlowChat.Core.Messaging.UserProfileService.Events;
 using FlowChat.Shared.Infrastructure.Silverback.Kafka;
@@ -6,6 +5,7 @@ using FlowChat.UserProfileService.Infrastructure;
 using FlowChat.UserProfileService.Infrastructure.Configuration.Settings;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 namespace FlowChat.UserProfileService.IntegrationTests;
 
@@ -37,11 +37,10 @@ public sealed class KafkaProducerConfigurationTests
 
         using var serviceProvider = services.BuildServiceProvider();
 
-        var settingsProvider = serviceProvider.GetRequiredService<ISettingsProvider>();
-        var createdProducerOptions = settingsProvider.GetSection<UserProfileCreatedProducerSettingsSection>();
-        var emailConfirmedProducerOptions = settingsProvider.GetSection<UserEmailConfirmedProducerSettingsSection>();
-        var emailVerificationRequestedProducerOptions = settingsProvider.GetSection<UserEmailVerificationRequestedProducerSettingsSection>();
-        var stateChangedProducerOptions = settingsProvider.GetSection<UserProfileStateChangedProducerSettingsSection>();
+        var createdProducerOptions = serviceProvider.GetRequiredService<IOptions<UserProfileCreatedProducerSettingsSection>>().Value;
+        var emailConfirmedProducerOptions = serviceProvider.GetRequiredService<IOptions<UserEmailConfirmedProducerSettingsSection>>().Value;
+        var emailVerificationRequestedProducerOptions = serviceProvider.GetRequiredService<IOptions<UserEmailVerificationRequestedProducerSettingsSection>>().Value;
+        var stateChangedProducerOptions = serviceProvider.GetRequiredService<IOptions<UserProfileStateChangedProducerSettingsSection>>().Value;
         var registry = serviceProvider.GetRequiredService<KafkaProducerSettingsRegistry>();
         var typedCreatedProducerOptions = registry.Get<UserProfileCreatedIntegrationEvent>();
         var typedEmailConfirmedProducerOptions = registry.Get<UserEmailConfirmedIntegrationEvent>();

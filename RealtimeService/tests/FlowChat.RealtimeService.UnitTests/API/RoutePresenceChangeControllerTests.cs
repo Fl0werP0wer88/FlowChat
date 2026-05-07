@@ -1,5 +1,4 @@
 using AutoFixture;
-using FlowChat.Core.Contracts;
 using FlowChat.Core.Domain;
 using FlowChat.RealtimeService.Api.Features.Realtime.Internal.RoutePresenceChange;
 using FlowChat.RealtimeService.Application.Features.Presence.Commands.RoutePresenceChange;
@@ -9,6 +8,7 @@ using FluentAssertions;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using Moq;
 
 namespace FlowChat.RealtimeService.UnitTests;
@@ -65,12 +65,9 @@ public sealed class RoutePresenceChangeControllerTests
         Mock<IMediator> mediatorMock,
         string? providedApiKey = null)
     {
-        var settingsProviderMock = new Mock<ISettingsProvider>();
-        settingsProviderMock
-            .Setup(x => x.GetSection<InternalApiSettingsSection>())
-            .Returns(new InternalApiSettingsSection { ApiKey = expectedApiKey });
-
-        var controller = new RoutePresenceChangeController(mediatorMock.Object, settingsProviderMock.Object)
+        var controller = new RoutePresenceChangeController(
+            mediatorMock.Object,
+            Options.Create(new InternalApiSettingsSection { ApiKey = expectedApiKey }))
         {
             ControllerContext = new ControllerContext
             {

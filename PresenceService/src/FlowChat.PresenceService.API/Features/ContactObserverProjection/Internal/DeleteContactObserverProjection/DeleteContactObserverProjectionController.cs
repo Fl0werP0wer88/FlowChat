@@ -1,9 +1,9 @@
 using FlowChat.PresenceService.Application.Features.ContactObserverProjections.Commands.DeleteContactObserverProjection;
 using FlowChat.PresenceService.Infrastructure.Configuration.Settings;
-using FlowChat.Core.Contracts;
 using FlowChat.Shared.API;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 
 namespace FlowChat.PresenceService.API.Features.ContactObserverProjection.Internal.DeleteContactObserverProjection;
 
@@ -14,11 +14,11 @@ public sealed class DeleteContactObserverProjectionController : ApiControllerBas
 {
     private readonly IMediator _mediator;
 
-    public DeleteContactObserverProjectionController(IMediator mediator, ISettingsProvider settingsProvider)
-        : base(() => settingsProvider.GetSection<InternalApiSettingsSection>().ApiKey)
+    public DeleteContactObserverProjectionController(IMediator mediator, IOptions<InternalApiSettingsSection> internalApiSettings)
+        : base(() => internalApiSettings.Value.ApiKey)
     {
         _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
-        ArgumentNullException.ThrowIfNull(settingsProvider);
+        ArgumentNullException.ThrowIfNull(internalApiSettings);
     }
 
     [HttpDelete("delete")]

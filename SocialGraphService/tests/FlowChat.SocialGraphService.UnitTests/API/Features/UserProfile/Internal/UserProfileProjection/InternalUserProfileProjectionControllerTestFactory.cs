@@ -1,24 +1,16 @@
-using FlowChat.Core.Contracts;
 using FlowChat.SocialGraphService.Infrastructure.Configuration.Settings;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
-using Moq;
+using Microsoft.Extensions.Options;
 
 namespace FlowChat.SocialGraphService.UnitTests;
 
 internal static class InternalUserProfileProjectionControllerTestFactory
 {
-    public static Mock<ISettingsProvider> CreateApiSettingsManager(string expectedApiKey)
-    {
-        var settingsProviderMock = new Mock<ISettingsProvider>();
-        settingsProviderMock
-            .Setup(x => x.GetSection<InternalApiSettingsSection>())
-            .Returns(new InternalApiSettingsSection { ApiKey = expectedApiKey });
-
-        return settingsProviderMock;
-    }
+    public static IOptions<InternalApiSettingsSection> CreateApiSettings(string expectedApiKey) =>
+        Options.Create(new InternalApiSettingsSection { ApiKey = expectedApiKey });
 
     public static void ConfigureControllerContext(ControllerBase controller, string? providedApiKey = null)
     {

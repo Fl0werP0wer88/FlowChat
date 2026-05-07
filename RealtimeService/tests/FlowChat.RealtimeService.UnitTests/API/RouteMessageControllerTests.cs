@@ -1,5 +1,4 @@
 using AutoFixture;
-using FlowChat.Core.Contracts;
 using FlowChat.RealtimeService.Api.Features.Realtime.Internal.RouteMessage;
 using FlowChat.RealtimeService.Application.Features.Message.Commands.RouteMessage;
 using FlowChat.RealtimeService.Infrastructure.Configuration.Settings;
@@ -8,6 +7,7 @@ using FluentAssertions;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using Moq;
 
 namespace FlowChat.RealtimeService.UnitTests;
@@ -69,12 +69,9 @@ public sealed class RouteMessageControllerTests
         Mock<IMediator> mediatorMock,
         string? providedApiKey = null)
     {
-        var settingsProviderMock = new Mock<ISettingsProvider>();
-        settingsProviderMock
-            .Setup(x => x.GetSection<InternalApiSettingsSection>())
-            .Returns(new InternalApiSettingsSection { ApiKey = expectedApiKey });
-
-        var controller = new RouteMessageController(mediatorMock.Object, settingsProviderMock.Object)
+        var controller = new RouteMessageController(
+            mediatorMock.Object,
+            Options.Create(new InternalApiSettingsSection { ApiKey = expectedApiKey }))
         {
             ControllerContext = new ControllerContext
             {

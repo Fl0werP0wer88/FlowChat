@@ -1,25 +1,18 @@
-using FlowChat.Core.Contracts;
 using FlowChat.UserProfileService.Infrastructure.Configuration.Settings;
 using FlowChat.UserProfileService.Infrastructure.Services;
-using Moq;
+using Microsoft.Extensions.Options;
 
 namespace FlowChat.UserProfileService.UnitTests;
 
 public sealed class EmailVerificationLinkBuilderTests
 {
-    private readonly Mock<ISettingsProvider> _settingsProviderMock = new();
-
     [Fact]
     public void BuildEmailVerificationLink_WhenBaseUrlHasNoQuery_AppendsTokenQueryParameter()
     {
-        _settingsProviderMock
-            .Setup(x => x.GetSection<ConfirmationLinksSettingsSection>())
-            .Returns(new ConfirmationLinksSettingsSection
-            {
-                EmailVerificationBaseUrl = "https://frontend.flowchat.local/verify"
-            });
-
-        var sut = new EmailVerificationLinkBuilder(_settingsProviderMock.Object);
+        var sut = new EmailVerificationLinkBuilder(Options.Create(new ConfirmationLinksSettingsSection
+        {
+            EmailVerificationBaseUrl = "https://frontend.flowchat.local/verify"
+        }));
 
         var result = sut.BuildEmailVerificationLink("token with spaces/+");
 
@@ -29,14 +22,10 @@ public sealed class EmailVerificationLinkBuilderTests
     [Fact]
     public void BuildEmailVerificationLink_WhenBaseUrlAlreadyHasQuery_AppendsTokenWithAmpersand()
     {
-        _settingsProviderMock
-            .Setup(x => x.GetSection<ConfirmationLinksSettingsSection>())
-            .Returns(new ConfirmationLinksSettingsSection
-            {
-                EmailVerificationBaseUrl = "https://frontend.flowchat.local/verify?source=email"
-            });
-
-        var sut = new EmailVerificationLinkBuilder(_settingsProviderMock.Object);
+        var sut = new EmailVerificationLinkBuilder(Options.Create(new ConfirmationLinksSettingsSection
+        {
+            EmailVerificationBaseUrl = "https://frontend.flowchat.local/verify?source=email"
+        }));
 
         var result = sut.BuildEmailVerificationLink("token-123");
 
@@ -46,11 +35,7 @@ public sealed class EmailVerificationLinkBuilderTests
     [Fact]
     public void BuildEmailVerificationLink_WhenBaseUrlIsMissing_ThrowsInvalidOperationException()
     {
-        _settingsProviderMock
-            .Setup(x => x.GetSection<ConfirmationLinksSettingsSection>())
-            .Returns(new ConfirmationLinksSettingsSection());
-
-        var sut = new EmailVerificationLinkBuilder(_settingsProviderMock.Object);
+        var sut = new EmailVerificationLinkBuilder(Options.Create(new ConfirmationLinksSettingsSection()));
 
         var act = () => sut.BuildEmailVerificationLink("token-123");
 

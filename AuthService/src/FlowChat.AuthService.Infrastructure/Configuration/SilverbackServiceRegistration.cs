@@ -1,12 +1,9 @@
 using FlowChat.AuthService.Persistence;
 using FlowChat.AuthService.Infrastructure.Configuration.Settings;
-using FlowChat.Core.Contracts;
 using FlowChat.Core.Messaging.AuthService.Events;
-using FlowChat.Shared.Infrastructure.Configuration;
 using FlowChat.Shared.Infrastructure.Silverback.Behaviors;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using Silverback.Configuration;
 using Silverback.Messaging.Configuration;
 using Silverback.Messaging.Configuration.Kafka;
@@ -19,12 +16,12 @@ public static class SilverbackServiceRegistration
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        services.TryAddSingleton<ISettingsProvider>(new AppSettingsProvider(configuration));
-
-        var settingsProvider = new AppSettingsProvider(configuration);
-        var accountRegisteredOptions = settingsProvider.GetSection<AccountRegisteredProducerSettingsSection>();
-        var accountConfirmedOptions = settingsProvider.GetSection<AccountConfirmedProducerSettingsSection>();
-        var phoneNumberConfirmedOptions = settingsProvider.GetSection<PhoneNumberConfirmedProducerSettingsSection>();
+        var accountRegisteredOptions = configuration.GetSection(new AccountRegisteredProducerSettingsSection().SectionName)
+            .Get<AccountRegisteredProducerSettingsSection>() ?? new AccountRegisteredProducerSettingsSection();
+        var accountConfirmedOptions = configuration.GetSection(new AccountConfirmedProducerSettingsSection().SectionName)
+            .Get<AccountConfirmedProducerSettingsSection>() ?? new AccountConfirmedProducerSettingsSection();
+        var phoneNumberConfirmedOptions = configuration.GetSection(new PhoneNumberConfirmedProducerSettingsSection().SectionName)
+            .Get<PhoneNumberConfirmedProducerSettingsSection>() ?? new PhoneNumberConfirmedProducerSettingsSection();
         var bootstrapServers = !string.IsNullOrWhiteSpace(accountRegisteredOptions.BootstrapServers)
             ? accountRegisteredOptions.BootstrapServers
             : !string.IsNullOrWhiteSpace(accountConfirmedOptions.BootstrapServers)

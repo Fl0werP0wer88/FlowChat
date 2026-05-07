@@ -1,23 +1,23 @@
-using FlowChat.Core.Contracts;
 using FlowChat.NotificationService.Application.Contracts.Infrastructure;
 using FlowChat.NotificationService.Infrastructure.Configuration.Settings;
 using MailKit.Net.Smtp;
 using MailKit.Security;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using MimeKit;
 
 namespace FlowChat.NotificationService.Infrastructure.Services;
 
 public sealed class NotificationSender : INotificationSender
 {
-    private readonly ISettingsProvider _settingsProvider;
+    private readonly IOptions<EmailSettingsSection> _emailSettings;
     private readonly ILogger<NotificationSender> _logger;
 
     public NotificationSender(
-        ISettingsProvider settingsProvider,
+        IOptions<EmailSettingsSection> emailSettings,
         ILogger<NotificationSender> logger)
     {
-        _settingsProvider = settingsProvider;
+        _emailSettings = emailSettings;
         _logger = logger;
     }
 
@@ -27,7 +27,7 @@ public sealed class NotificationSender : INotificationSender
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        var emailSettings = _settingsProvider.GetSection<EmailSettingsSection>();
+        var emailSettings = _emailSettings.Value;
         var smtpHost = emailSettings.SmtpHost;
         var smtpPort = emailSettings.SmtpPort;
         var fromEmail = emailSettings.FromEmail;

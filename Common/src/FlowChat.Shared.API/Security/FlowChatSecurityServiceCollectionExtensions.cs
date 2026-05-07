@@ -1,6 +1,5 @@
 using System.Text;
 using FlowChat.Shared.API.Configuration.Settings;
-using FlowChat.Shared.Infrastructure.Configuration;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Configuration;
@@ -19,8 +18,8 @@ public static class FlowChatSecurityServiceCollectionExtensions
         Action<JwtBearerOptions>? configureJwtBearer = null,
         Action<AuthorizationOptions>? configureAuthorization = null)
     {
-        var settingsProvider = new AppSettingsProvider(configuration);
-        var jwtSettings = settingsProvider.GetSection<JwtSettingsSection>();
+        var jwtSettings = configuration.GetSection(new JwtSettingsSection().SectionName).Get<JwtSettingsSection>()
+            ?? new JwtSettingsSection();
 
         ValidateJwtSettingsSection(jwtSettings);
 

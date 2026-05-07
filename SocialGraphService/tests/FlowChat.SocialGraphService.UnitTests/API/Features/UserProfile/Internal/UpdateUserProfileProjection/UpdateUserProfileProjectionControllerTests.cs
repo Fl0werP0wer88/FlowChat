@@ -108,7 +108,7 @@ public sealed class UpdateUserProfileProjectionControllerTests
     {
         var controller = new UpdateUserProfileProjectionController(
             mediatorMock.Object,
-            InternalUserProfileProjectionControllerTestFactory.CreateApiSettingsManager(expectedApiKey).Object);
+            InternalUserProfileProjectionControllerTestFactory.CreateApiSettings(expectedApiKey));
 
         InternalUserProfileProjectionControllerTestFactory.ConfigureControllerContext(controller, providedApiKey);
         return controller;

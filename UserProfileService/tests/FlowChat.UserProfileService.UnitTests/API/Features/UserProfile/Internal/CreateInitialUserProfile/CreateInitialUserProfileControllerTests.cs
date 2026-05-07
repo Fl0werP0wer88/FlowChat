@@ -1,13 +1,13 @@
 using FlowChat.Shared.Domain;
-using FlowChat.Shared.Infrastructure.Configuration;
 using FlowChat.UserProfileService.Api.Features.UserProfile.Internal.CreateInitialUserProfile;
 using FlowChat.UserProfileService.Application.Features.UserProfile.Commands.CreateInitialUserProfile;
+using FlowChat.UserProfileService.Infrastructure.Configuration.Settings;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
-using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
 
 namespace FlowChat.UserProfileService.UnitTests;
 
@@ -22,17 +22,8 @@ public sealed class CreateInitialUserProfileControllerTests
             .ReturnsAsync(FlowChatResult<Guid>.Success(Guid.NewGuid()));
     }
 
-    private CreateInitialUserProfileController CreateController(string apiKey)
-    {
-        var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                ["FlowChat:InternalApi:ApiKey"] = apiKey
-            })
-            .Build();
-
-        return new CreateInitialUserProfileController(_mediatorMock.Object, new AppSettingsProvider(configuration));
-    }
+    private CreateInitialUserProfileController CreateController(string apiKey) =>
+        new(_mediatorMock.Object, Options.Create(new InternalApiSettingsSection { ApiKey = apiKey }));
 
     private static void SetupHttpContext(CreateInitialUserProfileController controller, string? apiKeyHeader = null)
     {

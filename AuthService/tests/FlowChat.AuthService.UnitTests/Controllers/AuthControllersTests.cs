@@ -7,13 +7,13 @@ using FlowChat.AuthService.Api.Features.User.Internal.ConfirmAuthEmail;
 using FlowChat.AuthService.Application.Features.User.Commands.ChangeAuthEmail;
 using FlowChat.AuthService.Application.Features.User.Commands.RegisterUser;
 using FlowChat.AuthService.Infrastructure.Configuration.Settings;
-using FlowChat.Core.Contracts;
 using FlowChat.Core.Results;
 using FluentAssertions;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
 using Moq;
 using Unit = MediatR.Unit;
 
@@ -104,13 +104,9 @@ public sealed class AuthControllersTests
     public async Task ChangeAuthEmailController_WithMissingApiKey_ReturnsUnauthorized()
     {
         var mediatorMock = new Mock<IMediator>();
-        var settingsProviderMock = new Mock<ISettingsProvider>();
-        settingsProviderMock
-            .Setup(x => x.GetSection<InternalApiSettingsSection>())
-            .Returns(new InternalApiSettingsSection { ApiKey = "expected-key" });
-
         var controller = CreateController(
-            new ChangeAuthEmailController(mediatorMock.Object, settingsProviderMock.Object));
+            new ChangeAuthEmailController(mediatorMock.Object,
+                Options.Create(new InternalApiSettingsSection { ApiKey = "expected-key" })));
 
         var result = await controller.ChangeAuthEmail(
             new ChangeAuthEmailRequest
@@ -127,13 +123,9 @@ public sealed class AuthControllersTests
     public async Task ConfirmAuthEmailController_WithMissingApiKey_ReturnsUnauthorized()
     {
         var mediatorMock = new Mock<IMediator>();
-        var settingsProviderMock = new Mock<ISettingsProvider>();
-        settingsProviderMock
-            .Setup(x => x.GetSection<InternalApiSettingsSection>())
-            .Returns(new InternalApiSettingsSection { ApiKey = "expected-key" });
-
         var controller = CreateController(
-            new ConfirmAuthEmailController(mediatorMock.Object, settingsProviderMock.Object));
+            new ConfirmAuthEmailController(mediatorMock.Object,
+                Options.Create(new InternalApiSettingsSection { ApiKey = "expected-key" })));
 
         var result = await controller.ConfirmEmail(
             new ConfirmAuthEmailRequest { EmailAddress = "flower@example.com" },
@@ -146,11 +138,6 @@ public sealed class AuthControllersTests
     public async Task ChangeAuthEmailController_WithValidApiKey_MapsRequestToCommand()
     {
         var mediatorMock = new Mock<IMediator>();
-        var settingsProviderMock = new Mock<ISettingsProvider>();
-        settingsProviderMock
-            .Setup(x => x.GetSection<InternalApiSettingsSection>())
-            .Returns(new InternalApiSettingsSection { ApiKey = "expected-key" });
-
         ChangeAuthEmailCommand? capturedCommand = null;
         mediatorMock
             .Setup(x => x.Send(It.IsAny<ChangeAuthEmailCommand>(), It.IsAny<CancellationToken>()))
@@ -158,7 +145,8 @@ public sealed class AuthControllersTests
             .ReturnsAsync(FlowChatResult<Unit>.Success(Unit.Value));
 
         var controller = CreateController(
-            new ChangeAuthEmailController(mediatorMock.Object, settingsProviderMock.Object));
+            new ChangeAuthEmailController(mediatorMock.Object,
+                Options.Create(new InternalApiSettingsSection { ApiKey = "expected-key" })));
         controller.Request.Headers["X-Internal-Api-Key"] = "expected-key";
 
         var userId = Guid.NewGuid();

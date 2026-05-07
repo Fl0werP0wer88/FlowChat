@@ -1,9 +1,9 @@
-using FlowChat.Core.Contracts;
 using FlowChat.Shared.API;
 using FlowChat.RealtimeService.Application.Features.Message.Commands.PublishMessage;
 using FlowChat.RealtimeService.Infrastructure.Configuration.Settings;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 
 namespace FlowChat.RealtimeService.Api.Features.Realtime.Internal.PublishMessage;
 
@@ -14,11 +14,11 @@ public sealed class PublishMessageController : ApiControllerBase
 {
     private readonly IMediator _mediator;
 
-    public PublishMessageController(IMediator mediator, ISettingsProvider settingsProvider)
-        : base(() => settingsProvider.GetSection<InternalApiSettingsSection>().ApiKey)
+    public PublishMessageController(IMediator mediator, IOptions<InternalApiSettingsSection> internalApiSettings)
+        : base(() => internalApiSettings.Value.ApiKey)
     {
         _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
-        ArgumentNullException.ThrowIfNull(settingsProvider);
+        ArgumentNullException.ThrowIfNull(internalApiSettings);
     }
 
     [HttpPost("messages/direct")]

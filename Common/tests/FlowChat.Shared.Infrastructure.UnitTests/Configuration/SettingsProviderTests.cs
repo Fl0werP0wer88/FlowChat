@@ -2,13 +2,15 @@ using FlowChat.Core.Contracts;
 using FlowChat.Shared.Infrastructure.Configuration;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 namespace FlowChat.Shared.Infrastructure.UnitTests.Configuration;
 
-public sealed class SettingsProviderTests
+public sealed class AddSettingsSectionsTests
 {
     [Fact]
-    public void GetSection_WhenConfigurationContainsSection_ReturnsBoundSettings()
+    public void AddSettingsSections_WhenConfigurationContainsSection_ReturnsBoundSettings()
     {
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(
@@ -16,19 +18,24 @@ public sealed class SettingsProviderTests
                 new KeyValuePair<string, string?>("FlowChat:ApiUrl", "https://flowchat.test"),
             ])
             .Build();
-        var sut = new AppSettingsProvider(configuration);
 
-        var result = sut.GetSection<TestSettingsSection>();
+        var services = new ServiceCollection();
+        services.AddSettingsSections(configuration, typeof(TestSettingsSection).Assembly);
+        using var sp = services.BuildServiceProvider();
+
+        var result = sp.GetRequiredService<IOptions<TestSettingsSection>>().Value;
 
         result.ApiUrl.Should().Be("https://flowchat.test");
     }
 
     [Fact]
-    public void GetSection_WhenConfigurationDoesNotContainSection_ReturnsDefaultSettings()
+    public void AddSettingsSections_WhenConfigurationDoesNotContainSection_ReturnsDefaultSettings()
     {
-        var sut = new AppSettingsProvider(new ConfigurationBuilder().Build());
+        var services = new ServiceCollection();
+        services.AddSettingsSections(new ConfigurationBuilder().Build(), typeof(TestSettingsSection).Assembly);
+        using var sp = services.BuildServiceProvider();
 
-        var result = sut.GetSection<TestSettingsSection>();
+        var result = sp.GetRequiredService<IOptions<TestSettingsSection>>().Value;
 
         result.ApiUrl.Should().Be("https://localhost:5000");
     }

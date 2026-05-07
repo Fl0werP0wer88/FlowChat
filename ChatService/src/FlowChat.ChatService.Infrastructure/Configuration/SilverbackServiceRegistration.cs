@@ -1,12 +1,9 @@
 using FlowChat.ChatService.Persistence;
 using FlowChat.ChatService.Infrastructure.Configuration.Settings;
-using FlowChat.Core.Contracts;
 using FlowChat.Core.Messaging.ChatService.Events;
-using FlowChat.Shared.Infrastructure.Configuration;
 using FlowChat.Shared.Infrastructure.Silverback.Behaviors;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using Silverback.Configuration;
 using Silverback.Messaging.Configuration;
 using Silverback.Messaging.Configuration.Kafka;
@@ -19,10 +16,8 @@ public static class SilverbackServiceRegistration
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        services.TryAddSingleton<ISettingsProvider>(new AppSettingsProvider(configuration));
-
-        var settingsProvider = new AppSettingsProvider(configuration);
-        var producerOptions = settingsProvider.GetSection<ChatMessageSentProducerSettingsSection>();
+        var producerOptions = configuration.GetSection(new ChatMessageSentProducerSettingsSection().SectionName)
+            .Get<ChatMessageSentProducerSettingsSection>() ?? new ChatMessageSentProducerSettingsSection();
 
         services.AddSilverback()
             .AddSingletonBrokerBehavior<CustomSpanAttributesProducerBehavior>()

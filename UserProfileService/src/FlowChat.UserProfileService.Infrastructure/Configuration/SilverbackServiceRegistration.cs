@@ -1,6 +1,5 @@
 using FlowChat.Core.Messaging.AuthService.Events;
 using FlowChat.Core.Messaging.UserProfileService.Events;
-using FlowChat.Shared.Infrastructure.Configuration;
 using FlowChat.Shared.Infrastructure.Silverback.Behaviors;
 using FlowChat.UserProfileService.Infrastructure.Configuration.Settings;
 using FlowChat.UserProfileService.Persistence;
@@ -18,11 +17,14 @@ public static class SilverbackServiceRegistration
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        var settingsProvider = new AppSettingsProvider(configuration);
-        var createdProducerOptions = settingsProvider.GetSection<UserProfileCreatedProducerSettingsSection>();
-        var emailConfirmedProducerOptions = settingsProvider.GetSection<UserEmailConfirmedProducerSettingsSection>();
-        var emailVerificationRequestedProducerOptions = settingsProvider.GetSection<UserEmailVerificationRequestedProducerSettingsSection>();
-        var stateChangedProducerOptions = settingsProvider.GetSection<UserProfileStateChangedProducerSettingsSection>();
+        var createdProducerOptions = configuration.GetSection(new UserProfileCreatedProducerSettingsSection().SectionName)
+            .Get<UserProfileCreatedProducerSettingsSection>() ?? new UserProfileCreatedProducerSettingsSection();
+        var emailConfirmedProducerOptions = configuration.GetSection(new UserEmailConfirmedProducerSettingsSection().SectionName)
+            .Get<UserEmailConfirmedProducerSettingsSection>() ?? new UserEmailConfirmedProducerSettingsSection();
+        var emailVerificationRequestedProducerOptions = configuration.GetSection(new UserEmailVerificationRequestedProducerSettingsSection().SectionName)
+            .Get<UserEmailVerificationRequestedProducerSettingsSection>() ?? new UserEmailVerificationRequestedProducerSettingsSection();
+        var stateChangedProducerOptions = configuration.GetSection(new UserProfileStateChangedProducerSettingsSection().SectionName)
+            .Get<UserProfileStateChangedProducerSettingsSection>() ?? new UserProfileStateChangedProducerSettingsSection();
         var bootstrapServers = !string.IsNullOrWhiteSpace(createdProducerOptions.BootstrapServers)
             ? createdProducerOptions.BootstrapServers
             : stateChangedProducerOptions.BootstrapServers;

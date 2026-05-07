@@ -5,8 +5,8 @@ using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
 using FlowChat.RealtimeService.Infrastructure;
 using FlowChat.RealtimeService.Redis.Configuration.Settings;
 using FlowChat.Shared.API;
-using FlowChat.Shared.Infrastructure.Configuration;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Extensions.Configuration;
 
 namespace FlowChat.RealtimeService.Api;
 
@@ -14,8 +14,8 @@ public static class StartupExtensions
 {
     public static WebApplication ConfigureServices(this WebApplicationBuilder builder)
     {
-        var settingsProvider = new AppSettingsProvider(builder.Configuration);
-        var realtimeConnectionsSettings = settingsProvider.GetSection<RealtimeConnectionsSettingsSection>();
+        var realtimeConnectionsSettings = builder.Configuration.GetSection(new RealtimeConnectionsSettingsSection().SectionName)
+            .Get<RealtimeConnectionsSettingsSection>() ?? new RealtimeConnectionsSettingsSection();
         realtimeConnectionsSettings.RedisConnectionString =
             builder.Configuration.GetConnectionString(RealtimeConnectionsSettingsSection.RedisConnectionStringName)
             ?? realtimeConnectionsSettings.RedisConnectionString;
@@ -100,4 +100,3 @@ public static class StartupExtensions
         return app;
     }
 }
-

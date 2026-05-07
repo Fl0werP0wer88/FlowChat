@@ -1,14 +1,15 @@
-﻿using FlowChat.Core.Contracts;
 using FlowChat.RealtimeService.Infrastructure;
+using FlowChat.RealtimeService.Infrastructure.Configuration.Settings;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 namespace FlowChat.RealtimeService.IntegrationTests;
 
 public sealed class ApiSettingsManagerTests
 {
     [Fact]
-    public void AddInfrastructureServices_RegistersSettingsProvider()
+    public void AddInfrastructureServices_RegistersSettingsSections()
     {
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
@@ -29,6 +30,6 @@ public sealed class ApiSettingsManagerTests
 
         using var serviceProvider = services.BuildServiceProvider();
 
-        serviceProvider.GetRequiredService<ISettingsProvider>().Should().NotBeNull();
+        serviceProvider.GetRequiredService<IOptions<InternalApiSettingsSection>>().Value.ApiKey.Should().Be("internal-key");
     }
 }

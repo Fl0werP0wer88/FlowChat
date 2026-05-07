@@ -1,9 +1,9 @@
-using FlowChat.Core.Contracts;
 using FlowChat.Shared.API;
 using FlowChat.UserProfileService.Application.Features.UserProfile.Commands.CreateInitialUserProfile;
 using FlowChat.UserProfileService.Infrastructure.Configuration.Settings;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 
 namespace FlowChat.UserProfileService.Api.Features.UserProfile.Internal.CreateInitialUserProfile;
 
@@ -14,11 +14,11 @@ public sealed class CreateInitialUserProfileController : ApiControllerBase
 {
     private readonly IMediator _mediator;
 
-    public CreateInitialUserProfileController(IMediator mediator, ISettingsProvider settingsProvider)
-        : base(() => settingsProvider.GetSection<InternalApiSettingsSection>().ApiKey)
+    public CreateInitialUserProfileController(IMediator mediator, IOptions<InternalApiSettingsSection> internalApiSettings)
+        : base(() => internalApiSettings.Value.ApiKey)
     {
         _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
-        ArgumentNullException.ThrowIfNull(settingsProvider);
+        ArgumentNullException.ThrowIfNull(internalApiSettings);
     }
 
     [HttpPost("initial")]

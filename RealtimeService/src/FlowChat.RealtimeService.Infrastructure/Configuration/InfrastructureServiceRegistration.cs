@@ -1,4 +1,3 @@
-using FlowChat.Core.Contracts;
 using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
 using FlowChat.RealtimeService.Infrastructure.Configuration.Settings;
 using FlowChat.RealtimeService.Infrastructure.Presence;
@@ -12,6 +11,7 @@ using FlowChat.Shared.Infrastructure.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
 using StackExchange.Redis;
 
 namespace FlowChat.RealtimeService.Infrastructure;
@@ -23,14 +23,20 @@ public static class InfrastructureServiceRegistration
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        services.TryAddSingleton<ISettingsProvider>(new AppSettingsProvider(configuration));
-        services.TryAddSingleton(sp =>
+        services.AddSettingsSections(configuration,
+            typeof(InfrastructureServiceRegistration).Assembly,
+            typeof(RealtimeRoutingSettingsSection).Assembly);
+
+        // Override connection string from ConnectionStrings section after appsettings binding
+        services.PostConfigure<RealtimeConnectionsSettingsSection>(settings =>
         {
-            var settings = sp.GetRequiredService<ISettingsProvider>().GetSection<RealtimeConnectionsSettingsSection>();
-            settings.RedisConnectionString = configuration.GetConnectionString(RealtimeConnectionsSettingsSection.RedisConnectionStringName)
-                ?? settings.RedisConnectionString;
-            return settings;
+            var cs = configuration.GetConnectionString(RealtimeConnectionsSettingsSection.RedisConnectionStringName);
+            if (!string.IsNullOrEmpty(cs))
+                settings.RedisConnectionString = cs;
         });
+
+        // Raw type singletons so existing consumers don't need to change
+        services.TryAddSingleton(sp => sp.GetRequiredService<IOptions<RealtimeConnectionsSettingsSection>>().Value);
         services.TryAddSingleton<IConnectionMultiplexer>(sp =>
         {
             var options = ConfigurationOptions.Parse(sp.GetRequiredService<RealtimeConnectionsSettingsSection>().RedisConnectionString);
@@ -44,11 +50,11 @@ public static class InfrastructureServiceRegistration
         services.TryAddSingleton<IRealtimeConnectionRedisRepository>(sp => sp.GetRequiredService<RealtimeConnectionRedisRepository>());
         services.TryAddSingleton<IUserInstanceRoutingReader>(sp => sp.GetRequiredService<RealtimeConnectionRedisRepository>());
         services.TryAddSingleton<IRealtimeConnectionRegistry, RealtimeConnectionRegistry>();
-        services.TryAddSingleton(sp => sp.GetRequiredService<ISettingsProvider>().GetSection<RealtimeInstancesSettingsSection>());
+        services.TryAddSingleton(sp => sp.GetRequiredService<IOptions<RealtimeInstancesSettingsSection>>().Value);
         services.TryAddSingleton<IRealtimeInstanceAddressResolver, ConfiguredRealtimeInstanceAddressResolver>();
 
-        services.TryAddSingleton(sp => sp.GetRequiredService<ISettingsProvider>().GetSection<PresenceServiceSettingsSection>());
-        services.TryAddSingleton(sp => sp.GetRequiredService<ISettingsProvider>().GetSection<InternalApiSettingsSection>());
+        services.TryAddSingleton(sp => sp.GetRequiredService<IOptions<PresenceServiceSettingsSection>>().Value);
+        services.TryAddSingleton(sp => sp.GetRequiredService<IOptions<InternalApiSettingsSection>>().Value);
         services.AddFlowChatHttpClient<IPresenceInternalApiClient, PresenceInternalApiClient>((sp, client) =>
         {
             var settings = sp.GetRequiredService<PresenceServiceSettingsSection>();

@@ -1,5 +1,4 @@
 using Confluent.Kafka;
-using FlowChat.Core.Contracts;
 using FlowChat.RealtimeService.Consumers.Configuration.Settings;
 using FlowChat.RealtimeService.Consumers.Kafka;
 using FlowChat.RealtimeService.Consumers.Services;
@@ -8,7 +7,7 @@ using FlowChat.Shared.Infrastructure.Silverback.Behaviors;
 using FlowChat.Shared.Infrastructure.Silverback.Kafka;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
 using Silverback.Configuration;
 using Silverback.Messaging.Configuration;
 
@@ -20,19 +19,16 @@ public static class ConsumersServiceRegistration
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        services.TryAddSingleton<ISettingsProvider>(new AppSettingsProvider(configuration));
+        services.AddSettingsSections(configuration, typeof(ConsumersServiceRegistration).Assembly);
 
-        var settingsProvider = new AppSettingsProvider(configuration);
-        services.TryAddSingleton(sp => sp.GetRequiredService<ISettingsProvider>().GetSection<RealtimeApiSettingsSection>());
-
-        var chatMessageSentConsumerOptions = settingsProvider.GetSection<ChatMessageSentConsumerSettingsSection>();
-        var presenceStatusChangedConsumerOptions = settingsProvider.GetSection<PresenceStatusChangedConsumerSettingsSection>();
+        var chatMessageSentConsumerOptions = configuration.GetSection(new ChatMessageSentConsumerSettingsSection().SectionName)
+            .Get<ChatMessageSentConsumerSettingsSection>() ?? new ChatMessageSentConsumerSettingsSection();
+        var presenceStatusChangedConsumerOptions = configuration.GetSection(new PresenceStatusChangedConsumerSettingsSection().SectionName)
+            .Get<PresenceStatusChangedConsumerSettingsSection>() ?? new PresenceStatusChangedConsumerSettingsSection();
 
         services.AddHttpClient(RealtimeInternalApiClient.HttpClientName, (serviceProvider, httpClient) =>
         {
-            var realtimeApiSettings = serviceProvider
-                .GetRequiredService<ISettingsProvider>()
-                .GetSection<RealtimeApiSettingsSection>();
+            var realtimeApiSettings = serviceProvider.GetRequiredService<IOptions<RealtimeApiSettingsSection>>().Value;
             if (!Uri.TryCreate(realtimeApiSettings.BaseUrl, UriKind.Absolute, out var baseAddress))
             {
                 throw new InvalidOperationException("RealtimeApi:BaseUrl must be an absolute URI.");

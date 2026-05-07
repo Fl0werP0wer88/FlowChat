@@ -1,4 +1,3 @@
-using FlowChat.Core.Contracts;
 using FlowChat.Core.Messaging.PresenceService.Events;
 using FlowChat.PresenceService.Application.Contracts.Infrastructure;
 using FlowChat.PresenceService.Infrastructure.Configuration.Settings;
@@ -8,6 +7,7 @@ using FlowChat.Shared.Infrastructure.Silverback.Kafka;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
 using StackExchange.Redis;
 
 namespace FlowChat.PresenceService.Infrastructure;
@@ -18,14 +18,18 @@ public static class InfrastructureServiceRegistration
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        services.TryAddSingleton<ISettingsProvider>(new AppSettingsProvider(configuration));
-        services.TryAddSingleton(sp =>
+        services.AddSettingsSections(configuration, typeof(InfrastructureServiceRegistration).Assembly);
+
+        // Override connection string from ConnectionStrings section after appsettings binding
+        services.PostConfigure<PresenceStatusSettingsSection>(settings =>
         {
-            var settings = sp.GetRequiredService<ISettingsProvider>().GetSection<PresenceStatusSettingsSection>();
-            settings.RedisConnectionString = configuration.GetConnectionString(PresenceStatusSettingsSection.RedisConnectionStringName)
-                ?? settings.RedisConnectionString;
-            return settings;
+            var cs = configuration.GetConnectionString(PresenceStatusSettingsSection.RedisConnectionStringName);
+            if (!string.IsNullOrEmpty(cs))
+                settings.RedisConnectionString = cs;
         });
+
+        // Raw type singleton so existing consumers (IConnectionMultiplexer factory etc.) don't need to change
+        services.TryAddSingleton(sp => sp.GetRequiredService<IOptions<PresenceStatusSettingsSection>>().Value);
         services.TryAddSingleton<IConnectionMultiplexer>(sp =>
         {
             var options = ConfigurationOptions.Parse(

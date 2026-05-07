@@ -1,9 +1,9 @@
 using FlowChat.PresenceService.Application.Features.Presence.Queries.GetContactPresenceStatuses;
 using FlowChat.PresenceService.Infrastructure.Configuration.Settings;
-using FlowChat.Core.Contracts;
 using FlowChat.Shared.API;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 
 namespace FlowChat.PresenceService.API.Features.Presence.Internal.GetContactPresenceStatuses;
 
@@ -14,11 +14,11 @@ public sealed class GetContactPresenceStatusesController : ApiControllerBase
 {
     private readonly IMediator _mediator;
 
-    public GetContactPresenceStatusesController(IMediator mediator, ISettingsProvider settingsProvider)
-        : base(() => settingsProvider.GetSection<InternalApiSettingsSection>().ApiKey)
+    public GetContactPresenceStatusesController(IMediator mediator, IOptions<InternalApiSettingsSection> internalApiSettings)
+        : base(() => internalApiSettings.Value.ApiKey)
     {
         _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
-        ArgumentNullException.ThrowIfNull(settingsProvider);
+        ArgumentNullException.ThrowIfNull(internalApiSettings);
     }
 
     [HttpGet("{userId:guid}/statuses")]

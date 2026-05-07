@@ -1,11 +1,9 @@
-using FlowChat.Core.Contracts;
 using FlowChat.Core.Messaging.SocialGraphService.Events;
 using FlowChat.Shared.Infrastructure.Configuration;
 using FlowChat.Shared.Infrastructure.Silverback.Kafka;
 using FlowChat.SocialGraphService.Infrastructure.Configuration.Settings;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace FlowChat.SocialGraphService.Infrastructure;
 
@@ -17,7 +15,7 @@ public static class InfrastructureServiceRegistration
     {
         var infrastructureAssembly = typeof(InfrastructureServiceRegistration).Assembly;
 
-        services.TryAddSingleton<ISettingsProvider>(new AppSettingsProvider(configuration));
+        services.AddSettingsSections(configuration, infrastructureAssembly);
         services.AddFlowChatSilverbackEventPublisher(producer => producer
             .AddProducerSettings<ContactAddedIntegrationEvent, ContactAddedProducerSettingsSection>()
             .AddProducerSettings<ContactDeletedIntegrationEvent, ContactDeletedProducerSettingsSection>());

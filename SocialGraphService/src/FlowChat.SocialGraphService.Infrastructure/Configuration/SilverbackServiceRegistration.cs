@@ -1,5 +1,4 @@
 using FlowChat.Core.Messaging.SocialGraphService.Events;
-using FlowChat.Shared.Infrastructure.Configuration;
 using FlowChat.SocialGraphService.Infrastructure.Configuration.Settings;
 using FlowChat.Shared.Infrastructure.Silverback.Behaviors;
 using FlowChat.SocialGraphService.Persistence;
@@ -17,9 +16,10 @@ public static class SilverbackServiceRegistration
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        var settingsProvider = new AppSettingsProvider(configuration);
-        var contactAddedOptions = settingsProvider.GetSection<ContactAddedProducerSettingsSection>();
-        var contactDeletedOptions = settingsProvider.GetSection<ContactDeletedProducerSettingsSection>();
+        var contactAddedOptions = configuration.GetSection(new ContactAddedProducerSettingsSection().SectionName)
+            .Get<ContactAddedProducerSettingsSection>() ?? new ContactAddedProducerSettingsSection();
+        var contactDeletedOptions = configuration.GetSection(new ContactDeletedProducerSettingsSection().SectionName)
+            .Get<ContactDeletedProducerSettingsSection>() ?? new ContactDeletedProducerSettingsSection();
         var bootstrapServers = !string.IsNullOrWhiteSpace(contactAddedOptions.BootstrapServers)
             ? contactAddedOptions.BootstrapServers
             : contactDeletedOptions.BootstrapServers;

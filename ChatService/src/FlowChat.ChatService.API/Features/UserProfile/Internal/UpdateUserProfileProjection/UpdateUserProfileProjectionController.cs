@@ -1,10 +1,10 @@
 using FlowChat.ChatService.Api.Features.UserProfile.Internal.UserProfileProjection;
 using FlowChat.ChatService.Application.Features.UserProfile.Commands.UpdateUserProfileProjection;
 using FlowChat.ChatService.Infrastructure.Configuration.Settings;
-using FlowChat.Core.Contracts;
 using FlowChat.Shared.API;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 
 namespace FlowChat.ChatService.Api.Features.UserProfile.Internal.UpdateUserProfileProjection;
 
@@ -15,11 +15,11 @@ public sealed class UpdateUserProfileProjectionController : ApiControllerBase
 {
     private readonly IMediator _mediator;
 
-    public UpdateUserProfileProjectionController(IMediator mediator, ISettingsProvider settingsProvider)
-        : base(() => settingsProvider.GetSection<InternalApiSettingsSection>().ApiKey)
+    public UpdateUserProfileProjectionController(IMediator mediator, IOptions<InternalApiSettingsSection> internalApiSettings)
+        : base(() => internalApiSettings.Value.ApiKey)
     {
         _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
-        ArgumentNullException.ThrowIfNull(settingsProvider);
+        ArgumentNullException.ThrowIfNull(internalApiSettings);
     }
 
     [HttpPut]

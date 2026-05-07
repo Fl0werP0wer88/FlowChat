@@ -1,7 +1,7 @@
 using System.Text;
 using FlowChat.AuthService.Infrastructure.Configuration.Settings;
-using FlowChat.Shared.Infrastructure.Configuration;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using OpenIddict.Abstractions;
 
@@ -14,8 +14,8 @@ public static class APIServiceRegistration
                             IConfiguration configuration,
                             IHostEnvironment environment)
     {
-        var settingsProvider = new AppSettingsProvider(configuration);
-        var jwtSettings = settingsProvider.GetSection<JwtSettingsSection>();
+        var jwtSettings = configuration.GetSection(new JwtSettingsSection().SectionName).Get<JwtSettingsSection>()
+            ?? new JwtSettingsSection();
         var jwtKey = jwtSettings.Key;
         var encryptionKeyValue = jwtSettings.EncryptionKey;
         var jwtIssuer = jwtSettings.Issuer;

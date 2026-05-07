@@ -2,13 +2,15 @@ using FlowChat.RealtimeService.Consumers.Configuration.Settings;
 using FlowChat.Shared.Infrastructure.Configuration;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 namespace FlowChat.RealtimeService.UnitTests;
 
 public sealed class WorkerSettingsManagerTests
 {
     [Fact]
-    public void SettingsProvider_ResolvesConsumerSections()
+    public void AddSettingsSections_ResolvesConsumerSections()
     {
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
@@ -24,15 +26,17 @@ public sealed class WorkerSettingsManagerTests
             })
             .Build();
 
-        var settingsProvider = new AppSettingsProvider(configuration);
+        var services = new ServiceCollection();
+        services.AddSettingsSections(configuration, typeof(ChatMessageSentConsumerSettingsSection).Assembly);
+        using var sp = services.BuildServiceProvider();
 
-        settingsProvider.GetSection<ChatMessageSentConsumerSettingsSection>().BootstrapServers.Should().Be("broker:9092");
-        settingsProvider.GetSection<ChatMessageSentConsumerSettingsSection>().Topic.Should().Be("chat-topic");
-        settingsProvider.GetSection<ChatMessageSentConsumerSettingsSection>().RetryGroupId.Should().Be("realtime-service-retry");
-        settingsProvider.GetSection<PresenceStatusChangedConsumerSettingsSection>().Topic.Should().Be("presence-topic");
-        settingsProvider.GetSection<PresenceStatusChangedConsumerSettingsSection>().RetryGroupId.Should().Be("realtime-service-retry");
-        settingsProvider.GetSection<RealtimeApiSettingsSection>().ApiKey.Should().Be("worker-key");
-        settingsProvider.GetSection<RealtimeApiSettingsSection>().BaseUrl.Should().Be("http://localhost:5215");
+        sp.GetRequiredService<IOptions<ChatMessageSentConsumerSettingsSection>>().Value.BootstrapServers.Should().Be("broker:9092");
+        sp.GetRequiredService<IOptions<ChatMessageSentConsumerSettingsSection>>().Value.Topic.Should().Be("chat-topic");
+        sp.GetRequiredService<IOptions<ChatMessageSentConsumerSettingsSection>>().Value.RetryGroupId.Should().Be("realtime-service-retry");
+        sp.GetRequiredService<IOptions<PresenceStatusChangedConsumerSettingsSection>>().Value.Topic.Should().Be("presence-topic");
+        sp.GetRequiredService<IOptions<PresenceStatusChangedConsumerSettingsSection>>().Value.RetryGroupId.Should().Be("realtime-service-retry");
+        sp.GetRequiredService<IOptions<RealtimeApiSettingsSection>>().Value.ApiKey.Should().Be("worker-key");
+        sp.GetRequiredService<IOptions<RealtimeApiSettingsSection>>().Value.BaseUrl.Should().Be("http://localhost:5215");
     }
 
     [Theory]

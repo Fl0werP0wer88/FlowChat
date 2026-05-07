@@ -1,9 +1,9 @@
-using FlowChat.Core.Contracts;
 using FlowChat.RealtimeService.Application.Features.Presence.Commands.RoutePresenceChange;
 using FlowChat.RealtimeService.Infrastructure.Configuration.Settings;
 using FlowChat.Shared.API;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 
 namespace FlowChat.RealtimeService.Api.Features.Realtime.Internal.RoutePresenceChange;
 
@@ -14,11 +14,11 @@ public sealed class RoutePresenceChangeController : ApiControllerBase
 {
     private readonly IMediator _mediator;
 
-    public RoutePresenceChangeController(IMediator mediator, ISettingsProvider settingsProvider)
-        : base(() => settingsProvider.GetSection<InternalApiSettingsSection>().ApiKey)
+    public RoutePresenceChangeController(IMediator mediator, IOptions<InternalApiSettingsSection> internalApiSettings)
+        : base(() => internalApiSettings.Value.ApiKey)
     {
         _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
-        ArgumentNullException.ThrowIfNull(settingsProvider);
+        ArgumentNullException.ThrowIfNull(internalApiSettings);
     }
 
     [HttpPost("presence")]

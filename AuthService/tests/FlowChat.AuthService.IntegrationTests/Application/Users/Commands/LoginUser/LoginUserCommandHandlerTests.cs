@@ -1,7 +1,7 @@
 ﻿using FlowChat.AuthService.Application.Contracts.Infrastructure;
 using FlowChat.AuthService.Application.Features.User.Commands.LoginUser;
+using FlowChat.AuthService.Infrastructure.Configuration.Settings;
 using FlowChat.AuthService.Infrastructure.Services;
-using FlowChat.Shared.Infrastructure.Configuration;
 using FlowChat.AuthService.Persistence;
 using FlowChat.AuthService.Persistence.Repositories;
 using FlowChat.Shared.Application;
@@ -40,14 +40,8 @@ public sealed class LoginUserCommandHandlerTests : IDisposable
         _dbContext.Database.EnsureCreated();
         _accountRepository = new AccountRepository(_dbContext);
 
-        var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                ["JwtSettings:Audience"] = "FlowChat.Client"
-            })
-            .Build();
-
-        var tokenService = new OpenIddictTokenService(new AppSettingsProvider(configuration));
+        var tokenService = new OpenIddictTokenService(
+            Microsoft.Extensions.Options.Options.Create(new JwtSettingsSection { Audience = "FlowChat.Client" }));
         var dispatcherMock = new Mock<IDomainEventDispatcher>();
         dispatcherMock
             .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<IDomainEvent>>(), It.IsAny<CancellationToken>()))

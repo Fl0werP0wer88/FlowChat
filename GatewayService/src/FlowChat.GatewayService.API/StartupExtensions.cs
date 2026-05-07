@@ -22,12 +22,12 @@ public static class StartupExtensions
         builder.AddFlowChatOpenTelemetry();
         builder.Services.Configure<AspNetCoreTraceInstrumentationOptions>(GatewayTraceEnrichment.Configure);
 
-        var settingsProvider = new AppSettingsProvider(builder.Configuration);
-        var clientSettings = settingsProvider.GetSection<GatewayClientSettingsSection>();
-        var servicesSettings = settingsProvider.GetSection<GatewayServicesSettingsSection>();
+        builder.Services.AddSettingsSections(builder.Configuration, typeof(StartupExtensions).Assembly);
 
-        builder.Services.Configure<GatewayCatalogSettingsSection>(
-            builder.Configuration.GetSection(new GatewayCatalogSettingsSection().SectionName));
+        var clientSettings = builder.Configuration.GetSection(new GatewayClientSettingsSection().SectionName)
+            .Get<GatewayClientSettingsSection>() ?? new GatewayClientSettingsSection();
+        var servicesSettings = builder.Configuration.GetSection(new GatewayServicesSettingsSection().SectionName)
+            .Get<GatewayServicesSettingsSection>() ?? new GatewayServicesSettingsSection();
 
         builder.Services.AddFlowChatJwtAuthentication(
             builder.Configuration,

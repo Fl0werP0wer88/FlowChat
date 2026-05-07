@@ -4,6 +4,7 @@ using FlowChat.NotificationService.Infrastructure.Configuration.Settings;
 using FlowChat.Shared.API;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 
 namespace FlowChat.NotificationService.Api.Features.Notification.Internal.GetRecentNotifications;
 
@@ -14,11 +15,11 @@ public sealed class GetRecentNotificationsController : ApiControllerBase
 {
     private readonly IMediator _mediator;
 
-    public GetRecentNotificationsController(IMediator mediator, ISettingsProvider settingsProvider)
-        : base(() => settingsProvider.GetSection<InternalApiSettingsSection>().ApiKey)
+    public GetRecentNotificationsController(IMediator mediator, IOptions<InternalApiSettingsSection> internalApiSettings)
+        : base(() => internalApiSettings.Value.ApiKey)
     {
         _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
-        ArgumentNullException.ThrowIfNull(settingsProvider);
+        ArgumentNullException.ThrowIfNull(internalApiSettings);
     }
 
     [HttpGet("recent")]
