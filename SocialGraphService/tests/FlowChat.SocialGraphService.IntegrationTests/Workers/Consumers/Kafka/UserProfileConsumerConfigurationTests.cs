@@ -73,7 +73,7 @@ public sealed class UserProfileConsumerConfigurationTests
         var internalApiClient = serviceProvider.GetRequiredService<ISocialGraphInternalApiClient>();
         var httpClient = serviceProvider
             .GetRequiredService<IHttpClientFactory>()
-            .CreateClient(SocialGraphInternalApiClient.HttpClientName);
+            .CreateClient(typeof(ISocialGraphInternalApiClient).Name);
 
         internalApiClient.Should().NotBeNull();
         httpClient.BaseAddress.Should().Be(new Uri("https://localhost:7194"));

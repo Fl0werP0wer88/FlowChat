@@ -3,6 +3,7 @@ using FlowChat.NotificationService.Consumers.Configuration.Settings;
 using FlowChat.NotificationService.Consumers.Kafka;
 using FlowChat.NotificationService.Consumers.Services;
 using FlowChat.Shared.Infrastructure.Silverback.Kafka;
+using FlowChat.Shared.Infrastructure.Http;
 using FlowChat.Shared.Infrastructure.Silverback.Behaviors;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -25,7 +26,7 @@ public static class ConsumersServiceRegistration
 
         services.AddOptions<NotificationApiSettingsSection>()
             .BindConfiguration(new NotificationApiSettingsSection().SectionName);
-        services.AddHttpClient<INotificationInternalApiClient, NotificationInternalApiClient>((serviceProvider, httpClient) =>
+        services.AddFlowChatHttpClient<INotificationInternalApiClient, NotificationInternalApiClient>((serviceProvider, httpClient) =>
         {
             var apiSettings = serviceProvider.GetRequiredService<IOptions<NotificationApiSettingsSection>>().Value;
             if (!Uri.TryCreate(apiSettings.BaseUrl, UriKind.Absolute, out var baseAddress))

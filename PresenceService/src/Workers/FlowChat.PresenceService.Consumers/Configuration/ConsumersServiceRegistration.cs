@@ -2,6 +2,7 @@ using Confluent.Kafka;
 using FlowChat.PresenceService.Consumers.Configuration.Settings;
 using FlowChat.PresenceService.Consumers.Kafka;
 using FlowChat.PresenceService.Consumers.Services;
+using FlowChat.Shared.Infrastructure.Http;
 using FlowChat.Shared.Infrastructure.Silverback.Behaviors;
 using FlowChat.Shared.Infrastructure.Silverback.Kafka;
 using Microsoft.Extensions.Configuration;
@@ -25,7 +26,7 @@ public static class ConsumersServiceRegistration
 
         services.AddOptions<PresenceApiSettingsSection>()
             .BindConfiguration(new PresenceApiSettingsSection().SectionName);
-        services.AddHttpClient<IPresenceInternalApiClient, PresenceInternalApiClient>((serviceProvider, httpClient) =>
+        services.AddFlowChatHttpClient<IPresenceInternalApiClient, PresenceInternalApiClient>((serviceProvider, httpClient) =>
         {
             var apiSettings = serviceProvider.GetRequiredService<IOptions<PresenceApiSettingsSection>>().Value;
             if (!Uri.TryCreate(apiSettings.BaseUrl, UriKind.Absolute, out var baseAddress))

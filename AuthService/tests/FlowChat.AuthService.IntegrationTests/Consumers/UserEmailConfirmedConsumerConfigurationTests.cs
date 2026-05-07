@@ -73,7 +73,7 @@ public sealed class UserEmailConfirmedConsumerConfigurationTests
         var internalApiClient = serviceProvider.GetRequiredService<IAuthInternalApiClient>();
         var httpClient = serviceProvider
             .GetRequiredService<IHttpClientFactory>()
-            .CreateClient(AuthInternalApiClient.HttpClientName);
+            .CreateClient(typeof(IAuthInternalApiClient).Name);
 
         internalApiClient.Should().NotBeNull();
         httpClient.BaseAddress.Should().Be(new Uri("https://localhost:7236"));

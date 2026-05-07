@@ -117,7 +117,7 @@ public sealed class AccountRegisteredConsumerConfigurationTests
         var internalApiClient = serviceProvider.GetRequiredService<IUserProfileInternalApiClient>();
         var httpClient = serviceProvider
             .GetRequiredService<IHttpClientFactory>()
-            .CreateClient(UserProfileInternalApiClient.HttpClientName);
+            .CreateClient(typeof(IUserProfileInternalApiClient).Name);
 
         internalApiClient.Should().NotBeNull();
         httpClient.BaseAddress.Should().Be(new Uri("https://localhost:7148"));

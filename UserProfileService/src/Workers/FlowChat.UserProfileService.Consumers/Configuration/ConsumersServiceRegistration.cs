@@ -4,6 +4,7 @@ using FlowChat.UserProfileService.Consumers.Configuration.Settings;
 using FlowChat.UserProfileService.Consumers.Kafka;
 using FlowChat.UserProfileService.Consumers.Services;
 using FlowChat.Shared.Infrastructure.Silverback.Kafka;
+using FlowChat.Shared.Infrastructure.Http;
 using FlowChat.Shared.Infrastructure.Silverback.Behaviors;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -26,7 +27,7 @@ public static class ConsumersServiceRegistration
 
         services.AddOptions<UserProfileApiSettingsSection>()
             .BindConfiguration(new UserProfileApiSettingsSection().SectionName);
-        services.AddHttpClient<IUserProfileInternalApiClient, UserProfileInternalApiClient>((serviceProvider, httpClient) =>
+        services.AddFlowChatHttpClient<IUserProfileInternalApiClient, UserProfileInternalApiClient>((serviceProvider, httpClient) =>
         {
             var apiSettings = serviceProvider.GetRequiredService<IOptions<UserProfileApiSettingsSection>>().Value;
             if (!Uri.TryCreate(apiSettings.BaseUrl, UriKind.Absolute, out var baseAddress))

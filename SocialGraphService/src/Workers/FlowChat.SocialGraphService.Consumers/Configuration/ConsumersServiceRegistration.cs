@@ -3,6 +3,7 @@ using FlowChat.SocialGraphService.Consumers.Configuration.Settings;
 using FlowChat.SocialGraphService.Consumers.Kafka;
 using FlowChat.SocialGraphService.Consumers.Services;
 using FlowChat.Shared.Infrastructure.Silverback.Kafka;
+using FlowChat.Shared.Infrastructure.Http;
 using FlowChat.Shared.Infrastructure.Silverback.Behaviors;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -25,7 +26,7 @@ public static class ConsumersServiceRegistration
 
         services.AddOptions<SocialGraphApiSettingsSection>()
             .BindConfiguration(new SocialGraphApiSettingsSection().SectionName);
-        services.AddHttpClient<ISocialGraphInternalApiClient, SocialGraphInternalApiClient>((serviceProvider, httpClient) =>
+        services.AddFlowChatHttpClient<ISocialGraphInternalApiClient, SocialGraphInternalApiClient>((serviceProvider, httpClient) =>
         {
             var apiSettings = serviceProvider.GetRequiredService<IOptions<SocialGraphApiSettingsSection>>().Value;
             if (!Uri.TryCreate(apiSettings.BaseUrl, UriKind.Absolute, out var baseAddress))

@@ -2,6 +2,7 @@ using Confluent.Kafka;
 using FlowChat.AuthService.Consumers.Configuration.Settings;
 using FlowChat.AuthService.Consumers.Kafka;
 using FlowChat.AuthService.Consumers.Services;
+using FlowChat.Shared.Infrastructure.Http;
 using FlowChat.Shared.Infrastructure.Silverback.Behaviors;
 using FlowChat.Shared.Infrastructure.Silverback.Kafka;
 using Microsoft.Extensions.Configuration;
@@ -25,7 +26,7 @@ public static class ConsumersServiceRegistration
 
         services.AddOptions<AuthApiSettingsSection>()
             .BindConfiguration(new AuthApiSettingsSection().SectionName);
-        services.AddHttpClient<IAuthInternalApiClient, AuthInternalApiClient>((serviceProvider, httpClient) =>
+        services.AddFlowChatHttpClient<IAuthInternalApiClient, AuthInternalApiClient>((serviceProvider, httpClient) =>
         {
             var apiSettings = serviceProvider.GetRequiredService<IOptions<AuthApiSettingsSection>>().Value;
             if (!Uri.TryCreate(apiSettings.BaseUrl, UriKind.Absolute, out var baseAddress))

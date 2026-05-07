@@ -72,7 +72,7 @@ public sealed class NotificationConsumerConfigurationTests
         var internalApiClient = serviceProvider.GetRequiredService<INotificationInternalApiClient>();
         var httpClient = serviceProvider
             .GetRequiredService<IHttpClientFactory>()
-            .CreateClient(NotificationInternalApiClient.HttpClientName);
+            .CreateClient(typeof(INotificationInternalApiClient).Name);
 
         internalApiClient.Should().NotBeNull();
         httpClient.BaseAddress.Should().Be(new Uri("https://localhost:7206"));
