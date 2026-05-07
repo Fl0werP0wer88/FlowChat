@@ -51,7 +51,7 @@ public static class InfrastructureServiceRegistration
 
         services.TryAddSingleton(sp => sp.GetRequiredService<ISettingsProvider>().GetSection<PresenceServiceSettingsSection>());
         services.TryAddSingleton(sp => sp.GetRequiredService<ISettingsProvider>().GetSection<InternalApiSettingsSection>());
-        services.AddHttpClient(PresenceInternalApiClient.HttpClientName, (sp, client) =>
+        services.AddHttpClient<IPresenceInternalApiClient, PresenceInternalApiClient>((sp, client) =>
         {
             var settings = sp.GetRequiredService<PresenceServiceSettingsSection>();
             if (!Uri.TryCreate(settings.BaseUrl, UriKind.Absolute, out var baseAddress))
@@ -65,7 +65,6 @@ public static class InfrastructureServiceRegistration
                 client.DefaultRequestHeaders.Add("X-Internal-Api-Key", settings.InternalApiKey);
             }
         });
-        services.TryAddSingleton<IPresenceInternalApiClient, PresenceInternalApiClient>();
         services.AddHttpClient(RealtimeInstanceInternalApiClient.HttpClientName, (sp, client) =>
         {
             var settings = sp.GetRequiredService<InternalApiSettingsSection>();

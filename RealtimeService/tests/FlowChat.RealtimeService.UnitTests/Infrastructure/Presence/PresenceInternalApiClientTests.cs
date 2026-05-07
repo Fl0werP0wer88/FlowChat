@@ -2,7 +2,6 @@ using System.Net;
 using System.Text.Json;
 using FlowChat.RealtimeService.Infrastructure.Presence;
 using FluentAssertions;
-using Moq;
 
 namespace FlowChat.RealtimeService.UnitTests;
 
@@ -65,11 +64,6 @@ public sealed class PresenceInternalApiClientTests
             BaseAddress = new Uri("http://localhost:5216")
         };
 
-        var factoryMock = new Mock<IHttpClientFactory>();
-        factoryMock
-            .Setup(x => x.CreateClient(PresenceInternalApiClient.HttpClientName))
-            .Returns(httpClient);
-
-        return new PresenceInternalApiClient(factoryMock.Object);
+        return new PresenceInternalApiClient(httpClient);
     }
 }
