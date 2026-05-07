@@ -10,17 +10,9 @@ public sealed class UserProfileProjectionWriteRepository(AppDbContext dbContext)
 {
     private const string ProjectionSource = "user-profile-events";
 
-    public async Task<bool> InsertAsync(UserProfileProjectionDto projection, CancellationToken cancellationToken = default)
+    public async Task InsertAsync(UserProfileProjectionDto projection, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(projection);
-
-        var exists = await dbContext.UserProfileProjections
-            .AnyAsync(x => x.UserId == projection.UserProfileId, cancellationToken);
-
-        if (exists)
-        {
-            return false;
-        }
 
         await dbContext.UserProfileProjections.AddAsync(
             new UserProfileProjection
@@ -32,9 +24,10 @@ public sealed class UserProfileProjectionWriteRepository(AppDbContext dbContext)
                 UpdatedAtUtc = DateTimeOffset.UtcNow
             },
             cancellationToken);
-
-        return true;
     }
+
+    public Task<bool> ExistsAsync(Guid userId, CancellationToken cancellationToken = default) =>
+        dbContext.UserProfileProjections.AnyAsync(x => x.UserId == userId, cancellationToken);
 
     public async Task<bool> UpdateAsync(UserProfileProjectionDto projection, CancellationToken cancellationToken = default)
     {

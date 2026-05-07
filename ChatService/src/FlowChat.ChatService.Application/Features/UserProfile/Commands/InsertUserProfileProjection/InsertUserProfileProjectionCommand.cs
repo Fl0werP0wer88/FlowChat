@@ -1,3 +1,4 @@
+using FlowChat.Core.Results;
 using FlowChat.Shared.Application;
 using MediatR;
 
@@ -7,4 +8,7 @@ public sealed record InsertUserProfileProjectionCommand(
     Guid UserProfileId,
     string? FriendlyUserId,
     string? DisplayName,
-    string? AvatarUrl) : ICommand<Unit>;
+    string? AvatarUrl) : ICommand<IdempotentCommandResult<Unit>>
+{
+    public const string IdempotencyConflictKey = nameof(InsertUserProfileProjectionCommand);
+}
