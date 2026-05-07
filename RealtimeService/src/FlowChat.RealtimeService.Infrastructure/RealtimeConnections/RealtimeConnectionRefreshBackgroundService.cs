@@ -8,6 +8,7 @@ using Microsoft.Extensions.Logging;
 namespace FlowChat.RealtimeService.Infrastructure.RealtimeConnections;
 
 // Keeps Redis connection metadata alive for locally active realtime clients and refreshes their presence lease upstream
+// IServiceScopeFactory is used instead of injecting IPresenceInternalApiClient directly because BackgroundService is a Singleton — resolving a typed HttpClient from a Singleton would prevent handler rotation and risk socket exhaustion
 internal sealed class RealtimeConnectionRefreshBackgroundService(
     IServiceScopeFactory scopeFactory,
     IRealtimeConnectionRegistry realtimeConnectionRegistry,
