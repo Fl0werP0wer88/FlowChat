@@ -8,6 +8,7 @@ using FlowChat.RealtimeService.Infrastructure.Routing;
 using FlowChat.RealtimeService.Redis.Configuration.Settings;
 using FlowChat.RealtimeService.Redis.RealtimeConnections;
 using FlowChat.Shared.Infrastructure.Configuration;
+using FlowChat.Shared.Infrastructure.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -48,7 +49,7 @@ public static class InfrastructureServiceRegistration
 
         services.TryAddSingleton(sp => sp.GetRequiredService<ISettingsProvider>().GetSection<PresenceServiceSettingsSection>());
         services.TryAddSingleton(sp => sp.GetRequiredService<ISettingsProvider>().GetSection<InternalApiSettingsSection>());
-        services.AddHttpClient<IPresenceInternalApiClient, PresenceInternalApiClient>((sp, client) =>
+        services.AddFlowChatHttpClient<IPresenceInternalApiClient, PresenceInternalApiClient>((sp, client) =>
         {
             var settings = sp.GetRequiredService<PresenceServiceSettingsSection>();
             if (!Uri.TryCreate(settings.BaseUrl, UriKind.Absolute, out var baseAddress))
@@ -62,7 +63,7 @@ public static class InfrastructureServiceRegistration
                 client.DefaultRequestHeaders.Add("X-Internal-Api-Key", settings.InternalApiKey);
             }
         });
-        services.AddHttpClient(RealtimeInstanceInternalApiClient.HttpClientName, (sp, client) =>
+        services.AddFlowChatHttpClient<IRealtimeInstanceInternalApiClient, RealtimeInstanceInternalApiClient>((sp, client) =>
         {
             var settings = sp.GetRequiredService<InternalApiSettingsSection>();
             client.DefaultRequestHeaders.Remove(RealtimeInstanceInternalApiClient.ApiKeyHeaderName);
@@ -72,9 +73,6 @@ public static class InfrastructureServiceRegistration
                 client.DefaultRequestHeaders.Add(RealtimeInstanceInternalApiClient.ApiKeyHeaderName, settings.ApiKey);
             }
         });
-        services.AddScoped<IRealtimeInstanceInternalApiClient>(sp =>
-            new RealtimeInstanceInternalApiClient(
-                sp.GetRequiredService<IHttpClientFactory>().CreateClient(RealtimeInstanceInternalApiClient.HttpClientName)));
         services.AddScoped<IRealtimeEventRouter, RealtimeEventRouter>();
 
         services.AddHostedService<RealtimeConnectionRefreshBackgroundService>();
