@@ -4,6 +4,7 @@ using FlowChat.GatewayService.Api.Observability;
 using FlowChat.GatewayService.Api.Services;
 using FlowChat.Shared.API;
 using FlowChat.Shared.Infrastructure.Configuration;
+using FlowChat.Shared.Infrastructure.Http;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.OpenApi;
@@ -97,17 +98,17 @@ public static class StartupExtensions
         builder.Services.AddTransient<BearerTokenForwardingHandler>();
 
         builder.Services
-            .AddHttpClient<ISocialGraphServiceClient, SocialGraphServiceClient>(client =>
+            .AddFlowChatHttpClient<ISocialGraphServiceClient, SocialGraphServiceClient>(client =>
                 client.BaseAddress = new Uri(servicesSettings.SocialGraphServiceBaseUrl))
             .AddHttpMessageHandler<BearerTokenForwardingHandler>();
 
         builder.Services
-            .AddHttpClient<IChatServiceClient, ChatServiceClient>(client =>
+            .AddFlowChatHttpClient<IChatServiceClient, ChatServiceClient>(client =>
                 client.BaseAddress = new Uri(servicesSettings.ChatServiceBaseUrl))
             .AddHttpMessageHandler<BearerTokenForwardingHandler>();
 
         builder.Services
-            .AddHttpClient<IPresenceServiceClient, PresenceServiceClient>(client =>
+            .AddFlowChatHttpClient<IPresenceServiceClient, PresenceServiceClient>(client =>
             {
                 client.BaseAddress = new Uri(servicesSettings.PresenceServiceBaseUrl);
                 if (!string.IsNullOrWhiteSpace(servicesSettings.PresenceServiceInternalApiKey))
