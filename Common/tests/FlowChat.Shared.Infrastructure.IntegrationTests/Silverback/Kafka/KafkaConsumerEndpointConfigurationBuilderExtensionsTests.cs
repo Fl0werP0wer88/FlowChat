@@ -50,13 +50,13 @@ public sealed class KafkaConsumerEndpointConfigurationBuilderExtensionsTests
 
         var deadLetterPolicy = policies[0].Should().BeOfType<MoveMessageErrorPolicy>().Subject;
         deadLetterPolicy.EndpointName.Should().Be(options.DeadLetterTopic);
-        deadLetterPolicy.IncludedExceptions.Should().ContainSingle()
-            .Which.Should().Be(typeof(NonTransientException));
+        deadLetterPolicy.ExcludedExceptions.Should().ContainSingle()
+            .Which.Should().Be(typeof(TransientException));
 
         var retryPolicy = policies[1].Should().BeOfType<MoveMessageErrorPolicy>().Subject;
         retryPolicy.EndpointName.Should().Be(options.RetryTopic);
-        retryPolicy.ExcludedExceptions.Should().ContainSingle()
-            .Which.Should().Be(typeof(NonTransientException));
+        retryPolicy.IncludedExceptions.Should().ContainSingle()
+            .Which.Should().Be(typeof(TransientException));
     }
 
     [Fact]
@@ -84,21 +84,21 @@ public sealed class KafkaConsumerEndpointConfigurationBuilderExtensionsTests
 
         var deadLetterForNonTransient = policies[0].Should().BeOfType<MoveMessageErrorPolicy>().Subject;
         deadLetterForNonTransient.EndpointName.Should().Be(options.DeadLetterTopic);
-        deadLetterForNonTransient.IncludedExceptions.Should().ContainSingle()
-            .Which.Should().Be(typeof(NonTransientException));
+        deadLetterForNonTransient.ExcludedExceptions.Should().ContainSingle()
+            .Which.Should().Be(typeof(TransientException));
 
         var retryPolicy = policies[1].Should().BeOfType<RetryErrorPolicy>().Subject;
         retryPolicy.MaxFailedAttempts.Should().Be(options.MaxRetryCount);
         retryPolicy.InitialDelay.Should().Be(TimeSpan.FromSeconds(options.RetryBaseDelaySeconds));
         retryPolicy.DelayFactor.Should().Be(2);
         retryPolicy.MaxDelay.Should().Be(TimeSpan.FromSeconds(options.RetryMaxDelaySeconds));
-        retryPolicy.ExcludedExceptions.Should().ContainSingle()
-            .Which.Should().Be(typeof(NonTransientException));
+        retryPolicy.IncludedExceptions.Should().ContainSingle()
+            .Which.Should().Be(typeof(TransientException));
 
         var deadLetterFallback = policies[2].Should().BeOfType<MoveMessageErrorPolicy>().Subject;
         deadLetterFallback.EndpointName.Should().Be(options.DeadLetterTopic);
-        deadLetterFallback.ExcludedExceptions.Should().ContainSingle()
-            .Which.Should().Be(typeof(NonTransientException));
+        deadLetterFallback.IncludedExceptions.Should().ContainSingle()
+            .Which.Should().Be(typeof(TransientException));
     }
 
     private static async Task<KafkaConsumerEndpointConfiguration> GetEndpointConfigurationAsync(

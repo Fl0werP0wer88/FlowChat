@@ -12,11 +12,12 @@ public static class KafkaConsumerEndpointConfigurationBuilderExtensions
         ConfigureFlowChatEndpointDefaults(endpoint, options.Topic)
             .OnError(policy =>
             {
+                // Only TransientException is eligible for retry; everything else (including unknown exceptions) goes straight to DLQ.
                 policy.MoveTo(options.DeadLetterTopic, move => move
-                    .ApplyTo<NonTransientException>());
+                    .Exclude<TransientException>());
 
                 policy.MoveTo(options.RetryTopic, move => move
-                    .Exclude<NonTransientException>());
+                    .ApplyTo<TransientException>());
             });
 
     public static KafkaConsumerEndpointConfigurationBuilder<object> ConfigureFlowChatRetryEndpoint(
@@ -26,17 +27,17 @@ public static class KafkaConsumerEndpointConfigurationBuilderExtensions
             .OnError(policy =>
             {
                 policy.MoveTo(options.DeadLetterTopic, move => move
-                    .ApplyTo<NonTransientException>());
+                    .Exclude<TransientException>());
 
                 policy.Retry(retry => retry
                         .WithMaxRetries(options.MaxRetryCount)
-                        .Exclude<NonTransientException>()
+                        .ApplyTo<TransientException>()
                         .WithExponentialDelay(
                             TimeSpan.FromSeconds(options.RetryBaseDelaySeconds),
                             2,
                             TimeSpan.FromSeconds(options.RetryMaxDelaySeconds)))
                     .ThenMoveTo(options.DeadLetterTopic, move => move
-                        .Exclude<NonTransientException>());
+                        .ApplyTo<TransientException>());
             });
 
     public static KafkaConsumerEndpointConfigurationBuilder<object> ConfigureFlowChatEndpointDefaults(
