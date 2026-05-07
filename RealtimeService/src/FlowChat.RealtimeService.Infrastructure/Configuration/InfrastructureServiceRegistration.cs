@@ -51,31 +51,9 @@ public static class InfrastructureServiceRegistration
         services.TryAddSingleton<IRealtimeConnectionRegistry, RealtimeConnectionRegistry>();
         services.TryAddSingleton<IRealtimeInstanceAddressResolver, ConfiguredRealtimeInstanceAddressResolver>();
 
-        services.AddFlowChatHttpClient<IPresenceInternalApiClient, PresenceInternalApiClient>((sp, client) =>
-        {
-            var settings = sp.GetRequiredService<IOptions<PresenceServiceSettingsSection>>().Value;
-            if (!Uri.TryCreate(settings.BaseUrl, UriKind.Absolute, out var baseAddress))
-            {
-                throw new InvalidOperationException("PresenceService:BaseUrl must be an absolute URI.");
-            }
+        services.AddFlowChatHttpClient<IPresenceInternalApiClient, PresenceInternalApiClient, PresenceServiceSettingsSection>();
 
-            client.BaseAddress = baseAddress;
-            if (!string.IsNullOrWhiteSpace(settings.InternalApiKey))
-            {
-                client.DefaultRequestHeaders.Add("X-Internal-Api-Key", settings.InternalApiKey);
-            }
-        });
-
-        services.AddFlowChatHttpClient<IRealtimeInstanceInternalApiClient, RealtimeInstanceInternalApiClient>((sp, client) =>
-        {
-            var settings = sp.GetRequiredService<IOptions<InternalApiSettingsSection>>().Value;
-            client.DefaultRequestHeaders.Remove(RealtimeInstanceInternalApiClient.ApiKeyHeaderName);
-
-            if (!string.IsNullOrWhiteSpace(settings.ApiKey))
-            {
-                client.DefaultRequestHeaders.Add(RealtimeInstanceInternalApiClient.ApiKeyHeaderName, settings.ApiKey);
-            }
-        });
+        services.AddFlowChatHttpClient<IRealtimeInstanceInternalApiClient, RealtimeInstanceInternalApiClient, InternalApiSettingsSection>();
         services.AddScoped<IRealtimeEventRouter, RealtimeEventRouter>();
 
         services.AddHostedService<RealtimeConnectionRefreshBackgroundService>();

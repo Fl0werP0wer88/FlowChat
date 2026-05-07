@@ -25,10 +25,14 @@ public static class HttpClientServiceCollectionExtensions
         return services.AddFlowChatHttpClient<TInterface, TImpl>((sp, client) =>
         {
             var settings = sp.GetRequiredService<IOptions<TSettings>>().Value;
-            if (!Uri.TryCreate(settings.BaseUrl, UriKind.Absolute, out var baseAddress))
-                throw new InvalidOperationException($"{settings.SectionName}:BaseUrl must be an absolute URI.");
 
-            client.BaseAddress = baseAddress;
+            if (!string.IsNullOrWhiteSpace(settings.BaseUrl))
+            {
+                if (!Uri.TryCreate(settings.BaseUrl, UriKind.Absolute, out var baseAddress))
+                    throw new InvalidOperationException($"{settings.SectionName}:BaseUrl must be an absolute URI.");
+                client.BaseAddress = baseAddress;
+            }
+
             client.DefaultRequestHeaders.Remove(FlowChatHttpClientBase.InternalApiKeyHeaderName);
             if (!string.IsNullOrWhiteSpace(settings.ApiKey))
                 client.DefaultRequestHeaders.Add(FlowChatHttpClientBase.InternalApiKeyHeaderName, settings.ApiKey);
