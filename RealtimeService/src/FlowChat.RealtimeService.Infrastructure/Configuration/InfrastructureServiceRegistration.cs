@@ -76,7 +76,7 @@ public static class InfrastructureServiceRegistration
                 client.DefaultRequestHeaders.Add(RealtimeInstanceInternalApiClient.ApiKeyHeaderName, settings.ApiKey);
             }
         });
-        services.TryAddSingleton<IRealtimeInstanceInternalApiClient>(sp =>
+        services.AddScoped<IRealtimeInstanceInternalApiClient>(sp =>
             new RealtimeInstanceInternalApiClient(
                 sp.GetRequiredService<IHttpClientFactory>().CreateClient(RealtimeInstanceInternalApiClient.HttpClientName)));
         services.AddScoped<IRealtimeEventRouter, RealtimeEventRouter>();
