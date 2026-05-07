@@ -1,4 +1,5 @@
 using FlowChat.RealtimeService.Infrastructure.Configuration.Settings;
+using Microsoft.Extensions.Options;
 
 namespace FlowChat.RealtimeService.Infrastructure.Routing;
 
@@ -6,11 +7,11 @@ public sealed class ConfiguredRealtimeInstanceAddressResolver : IRealtimeInstanc
 {
     private readonly IReadOnlyDictionary<string, Uri> _instanceAddresses;
 
-    public ConfiguredRealtimeInstanceAddressResolver(RealtimeInstancesSettingsSection settings)
+    public ConfiguredRealtimeInstanceAddressResolver(IOptions<RealtimeInstancesSettingsSection> settings)
     {
         ArgumentNullException.ThrowIfNull(settings);
 
-        _instanceAddresses = settings.Instances.ToDictionary(
+        _instanceAddresses = settings.Value.Instances.ToDictionary(
             static pair => pair.Key,
             pair =>
             {

@@ -5,6 +5,7 @@ using FlowChat.RealtimeService.Infrastructure.Routing;
 using FlowChat.RealtimeService.Redis.Configuration.Settings;
 using FlowChat.RealtimeService.Redis.RealtimeConnections;
 using FluentAssertions;
+using Microsoft.Extensions.Options;
 using Moq;
 
 namespace FlowChat.RealtimeService.UnitTests;
@@ -132,5 +133,5 @@ public sealed class RealtimeEventRouterTests
             _addressResolverMock.Object,
             _internalApiClientMock.Object,
             _dispatcherMock.Object,
-            new RealtimeConnectionsSettingsSection { InstanceId = "instance-local" });
+            Options.Create(new RealtimeConnectionsSettingsSection { InstanceId = "instance-local" }));
 }

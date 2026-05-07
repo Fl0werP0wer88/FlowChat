@@ -35,11 +35,10 @@ public static class InfrastructureServiceRegistration
                 settings.RedisConnectionString = cs;
         });
 
-        // Raw type singletons so existing consumers don't need to change
-        services.TryAddSingleton(sp => sp.GetRequiredService<IOptions<RealtimeConnectionsSettingsSection>>().Value);
         services.TryAddSingleton<IConnectionMultiplexer>(sp =>
         {
-            var options = ConfigurationOptions.Parse(sp.GetRequiredService<RealtimeConnectionsSettingsSection>().RedisConnectionString);
+            var options = ConfigurationOptions.Parse(
+                sp.GetRequiredService<IOptions<RealtimeConnectionsSettingsSection>>().Value.RedisConnectionString);
             options.AbortOnConnectFail = false;
 
             return ConnectionMultiplexer.Connect(options);
@@ -50,14 +49,11 @@ public static class InfrastructureServiceRegistration
         services.TryAddSingleton<IRealtimeConnectionRedisRepository>(sp => sp.GetRequiredService<RealtimeConnectionRedisRepository>());
         services.TryAddSingleton<IUserInstanceRoutingReader>(sp => sp.GetRequiredService<RealtimeConnectionRedisRepository>());
         services.TryAddSingleton<IRealtimeConnectionRegistry, RealtimeConnectionRegistry>();
-        services.TryAddSingleton(sp => sp.GetRequiredService<IOptions<RealtimeInstancesSettingsSection>>().Value);
         services.TryAddSingleton<IRealtimeInstanceAddressResolver, ConfiguredRealtimeInstanceAddressResolver>();
 
-        services.TryAddSingleton(sp => sp.GetRequiredService<IOptions<PresenceServiceSettingsSection>>().Value);
-        services.TryAddSingleton(sp => sp.GetRequiredService<IOptions<InternalApiSettingsSection>>().Value);
         services.AddFlowChatHttpClient<IPresenceInternalApiClient, PresenceInternalApiClient>((sp, client) =>
         {
-            var settings = sp.GetRequiredService<PresenceServiceSettingsSection>();
+            var settings = sp.GetRequiredService<IOptions<PresenceServiceSettingsSection>>().Value;
             if (!Uri.TryCreate(settings.BaseUrl, UriKind.Absolute, out var baseAddress))
             {
                 throw new InvalidOperationException("PresenceService:BaseUrl must be an absolute URI.");
@@ -71,7 +67,7 @@ public static class InfrastructureServiceRegistration
         });
         services.AddFlowChatHttpClient<IRealtimeInstanceInternalApiClient, RealtimeInstanceInternalApiClient>((sp, client) =>
         {
-            var settings = sp.GetRequiredService<InternalApiSettingsSection>();
+            var settings = sp.GetRequiredService<IOptions<InternalApiSettingsSection>>().Value;
             client.DefaultRequestHeaders.Remove(RealtimeInstanceInternalApiClient.ApiKeyHeaderName);
 
             if (!string.IsNullOrWhiteSpace(settings.ApiKey))

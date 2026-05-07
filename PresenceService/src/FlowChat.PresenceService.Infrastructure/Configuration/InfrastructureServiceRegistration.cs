@@ -28,12 +28,10 @@ public static class InfrastructureServiceRegistration
                 settings.RedisConnectionString = cs;
         });
 
-        // Raw type singleton so existing consumers (IConnectionMultiplexer factory etc.) don't need to change
-        services.TryAddSingleton(sp => sp.GetRequiredService<IOptions<PresenceStatusSettingsSection>>().Value);
         services.TryAddSingleton<IConnectionMultiplexer>(sp =>
         {
             var options = ConfigurationOptions.Parse(
-                sp.GetRequiredService<PresenceStatusSettingsSection>().RedisConnectionString);
+                sp.GetRequiredService<IOptions<PresenceStatusSettingsSection>>().Value.RedisConnectionString);
             options.AbortOnConnectFail = false;
 
             return ConnectionMultiplexer.Connect(options);

@@ -2,19 +2,20 @@ using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
 using FlowChat.RealtimeService.Infrastructure.RealtimeConnections.ConnectionsTracker;
 using FlowChat.RealtimeService.Redis.Configuration.Settings;
 using FlowChat.RealtimeService.Redis.RealtimeConnections;
+using Microsoft.Extensions.Options;
 
 namespace FlowChat.RealtimeService.Infrastructure.RealtimeConnections;
 
 internal sealed class RealtimeConnectionRegistry(
     IRealtimeConnectionRedisRepository realtimeConnectionRedisRepository,
     IActiveConnectionsTracker activeConnectionsTracker,
-    RealtimeConnectionsSettingsSection settings) : IRealtimeConnectionRegistry
+    IOptions<RealtimeConnectionsSettingsSection> settings) : IRealtimeConnectionRegistry
 {
     private readonly IRealtimeConnectionRedisRepository _realtimeConnectionRedisRepository = realtimeConnectionRedisRepository
         ?? throw new ArgumentNullException(nameof(realtimeConnectionRedisRepository));
     private readonly IActiveConnectionsTracker _activeConnectionsTracker = activeConnectionsTracker
         ?? throw new ArgumentNullException(nameof(activeConnectionsTracker));
-    private readonly RealtimeConnectionsSettingsSection _settings = settings ?? throw new ArgumentNullException(nameof(settings));
+    private readonly RealtimeConnectionsSettingsSection _settings = settings?.Value ?? throw new ArgumentNullException(nameof(settings));
 
     public async Task<RealtimeConnectionMutationResult> RegisterAsync(Guid userId, string connectionId, CancellationToken cancellationToken)
     {

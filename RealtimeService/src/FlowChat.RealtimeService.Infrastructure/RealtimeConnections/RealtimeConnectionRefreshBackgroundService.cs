@@ -4,6 +4,7 @@ using FlowChat.RealtimeService.Redis.Configuration.Settings;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace FlowChat.RealtimeService.Infrastructure.RealtimeConnections;
 
@@ -13,7 +14,7 @@ internal sealed class RealtimeConnectionRefreshBackgroundService(
     IServiceScopeFactory scopeFactory,
     IRealtimeConnectionRegistry realtimeConnectionRegistry,
     IActiveConnectionsTracker activeConnectionsTracker,
-    RealtimeConnectionsSettingsSection settings,
+    IOptions<RealtimeConnectionsSettingsSection> settings,
     ILogger<RealtimeConnectionRefreshBackgroundService> logger) : BackgroundService
 {
     private readonly IServiceScopeFactory _scopeFactory = scopeFactory
@@ -22,7 +23,7 @@ internal sealed class RealtimeConnectionRefreshBackgroundService(
         ?? throw new ArgumentNullException(nameof(realtimeConnectionRegistry));
     private readonly IActiveConnectionsTracker _activeConnectionsTracker = activeConnectionsTracker
         ?? throw new ArgumentNullException(nameof(activeConnectionsTracker));
-    private readonly RealtimeConnectionsSettingsSection _settings = settings ?? throw new ArgumentNullException(nameof(settings));
+    private readonly RealtimeConnectionsSettingsSection _settings = settings?.Value ?? throw new ArgumentNullException(nameof(settings));
     private readonly ILogger<RealtimeConnectionRefreshBackgroundService> _logger = logger
         ?? throw new ArgumentNullException(nameof(logger));
 

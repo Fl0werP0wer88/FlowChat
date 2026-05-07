@@ -1,12 +1,13 @@
 using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
 using FlowChat.RealtimeService.Redis.Configuration.Settings;
+using Microsoft.Extensions.Options;
 using StackExchange.Redis;
 
 namespace FlowChat.RealtimeService.Redis.RealtimeConnections;
 
 public sealed class RealtimeConnectionRedisRepository(
     IConnectionMultiplexer connectionMultiplexer,
-    RealtimeConnectionsSettingsSection settings) : IRealtimeConnectionRedisRepository, IUserInstanceRoutingReader
+    IOptions<RealtimeConnectionsSettingsSection> settings) : IRealtimeConnectionRedisRepository, IUserInstanceRoutingReader
 {
     private const string RegisterConnectionScript = """
         redis.call(
@@ -85,7 +86,7 @@ public sealed class RealtimeConnectionRedisRepository(
 
     private readonly IConnectionMultiplexer _connectionMultiplexer = connectionMultiplexer
         ?? throw new ArgumentNullException(nameof(connectionMultiplexer));
-    private readonly RealtimeConnectionsSettingsSection _settings = settings ?? throw new ArgumentNullException(nameof(settings));
+    private readonly RealtimeConnectionsSettingsSection _settings = settings?.Value ?? throw new ArgumentNullException(nameof(settings));
 
     public async Task<Guid?> GetConnectionUserIdAsync(string connectionId)
     {

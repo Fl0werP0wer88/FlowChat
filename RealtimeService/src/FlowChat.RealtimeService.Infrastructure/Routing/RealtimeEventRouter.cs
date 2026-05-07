@@ -1,6 +1,7 @@
 using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
 using FlowChat.RealtimeService.Redis.Configuration.Settings;
 using FlowChat.RealtimeService.Redis.RealtimeConnections;
+using Microsoft.Extensions.Options;
 
 namespace FlowChat.RealtimeService.Infrastructure.Routing;
 
@@ -9,7 +10,7 @@ public sealed class RealtimeEventRouter(
     IRealtimeInstanceAddressResolver instanceAddressResolver,
     IRealtimeInstanceInternalApiClient realtimeInstanceInternalApiClient,
     IRealtimeClientDispatcher realtimeClientDispatcher,
-    RealtimeConnectionsSettingsSection realtimeConnectionsSettings)
+    IOptions<RealtimeConnectionsSettingsSection> realtimeConnectionsSettings)
     : IRealtimeEventRouter
 {
     private readonly IUserInstanceRoutingReader _userInstanceRoutingReader = userInstanceRoutingReader
@@ -20,7 +21,7 @@ public sealed class RealtimeEventRouter(
         ?? throw new ArgumentNullException(nameof(realtimeInstanceInternalApiClient));
     private readonly IRealtimeClientDispatcher _realtimeClientDispatcher = realtimeClientDispatcher
         ?? throw new ArgumentNullException(nameof(realtimeClientDispatcher));
-    private readonly string _ownInstanceId = realtimeConnectionsSettings?.InstanceId
+    private readonly string _ownInstanceId = realtimeConnectionsSettings?.Value.InstanceId
         ?? throw new ArgumentNullException(nameof(realtimeConnectionsSettings));
 
     public Task RouteMessageAsync(ChatMessageNotification notification, CancellationToken cancellationToken) =>
