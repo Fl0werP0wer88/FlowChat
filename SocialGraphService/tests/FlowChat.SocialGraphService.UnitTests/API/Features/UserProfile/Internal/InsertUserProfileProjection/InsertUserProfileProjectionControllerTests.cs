@@ -1,10 +1,12 @@
 using AutoFixture;
+using FlowChat.Core.Results;
 using FlowChat.SocialGraphService.Api.Features.UserProfile.Internal.InsertUserProfileProjection;
 using FlowChat.SocialGraphService.Api.Features.UserProfile.Internal.UserProfileProjection;
 using FlowChat.Shared.Domain;
 using FlowChat.SocialGraphService.Application.Features.UserProfile.Commands.InsertUserProfileProjection;
 using FluentAssertions;
 using MediatR;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 
@@ -32,14 +34,16 @@ public sealed class InsertUserProfileProjectionControllerTests
     }
 
     [Fact]
-    public async Task Insert_WhenApiKeyMatches_SendsCommandAndReturnsAccepted()
+    public async Task Insert_WhenApiKeyMatches_SendsCommandAndReturns201Created()
     {
         InsertUserProfileProjectionCommand? capturedCommand = null;
         var mediatorMock = new Mock<IMediator>();
         mediatorMock
             .Setup(x => x.Send(It.IsAny<InsertUserProfileProjectionCommand>(), It.IsAny<CancellationToken>()))
-            .Callback<IRequest<FlowChatResult<Unit>>, CancellationToken>((request, _) => capturedCommand = (InsertUserProfileProjectionCommand)request)
-            .ReturnsAsync(FlowChatResult<Unit>.Success(Unit.Value));
+            .Callback<IRequest<FlowChatResult<IdempotentCommandResult<Unit>>>, CancellationToken>(
+                (request, _) => capturedCommand = (InsertUserProfileProjectionCommand)request)
+            .ReturnsAsync(FlowChatResult<IdempotentCommandResult<Unit>>.Success(
+                new IdempotentCommandResult<Unit>(Unit.Value, WasAlreadyProcessed: false)));
 
         var controller = CreateController("expected-key", mediatorMock, "expected-key");
 
@@ -54,7 +58,8 @@ public sealed class InsertUserProfileProjectionControllerTests
             },
             CancellationToken.None);
 
-        result.Should().BeOfType<AcceptedResult>();
+        result.Should().BeOfType<StatusCodeResult>()
+            .Which.StatusCode.Should().Be(StatusCodes.Status201Created);
         capturedCommand.Should().NotBeNull();
         capturedCommand!.FriendlyUserId.Should().Be(" jdoe ");
         capturedCommand.MainEmailAddress.Should().Be(" john@example.com ");
@@ -63,12 +68,13 @@ public sealed class InsertUserProfileProjectionControllerTests
     }
 
     [Fact]
-    public async Task Insert_WhenProjectionAlreadyExists_ReturnsConflict()
+    public async Task Insert_WhenProjectionAlreadyProcessed_ReturnsOk()
     {
         var mediatorMock = new Mock<IMediator>();
         mediatorMock
             .Setup(x => x.Send(It.IsAny<InsertUserProfileProjectionCommand>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(FlowChatResult<Unit>.Failure(DomainError.Conflict("User profile projection already exists.")));
+            .ReturnsAsync(FlowChatResult<IdempotentCommandResult<Unit>>.Success(
+                new IdempotentCommandResult<Unit>(Unit.Value, WasAlreadyProcessed: true)));
 
         var controller = CreateController("expected-key", mediatorMock, "expected-key");
 
@@ -80,7 +86,7 @@ public sealed class InsertUserProfileProjectionControllerTests
             },
             CancellationToken.None);
 
-        result.Should().BeOfType<ConflictObjectResult>();
+        result.Should().BeOfType<OkResult>();
     }
 
     [Fact]
@@ -89,7 +95,7 @@ public sealed class InsertUserProfileProjectionControllerTests
         var mediatorMock = new Mock<IMediator>();
         mediatorMock
             .Setup(x => x.Send(It.IsAny<InsertUserProfileProjectionCommand>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(FlowChatResult<Unit>.Failure(
+            .ReturnsAsync(FlowChatResult<IdempotentCommandResult<Unit>>.Failure(
                 DomainError.Validation(errors: ["Payload does not contain valid UserProfileId."])));
 
         var controller = CreateController("expected-key", mediatorMock, "expected-key");

@@ -1,4 +1,5 @@
 using AutoFixture;
+using FlowChat.Core.Results;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
 using FlowChat.SocialGraphService.Application.Contracts.Persistence;
@@ -16,19 +17,21 @@ public sealed class InsertUserProfileProjectionCommandHandlerTests
     private readonly Mock<IUserProfileProjectionWriteRepository> _repositoryMock = new();
     private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
     private readonly Mock<IDomainEventDispatcher> _domainEventDispatcherMock = new();
+    private readonly Mock<IDbUpdateExceptionClassifier> _dbUpdateExceptionClassifierMock = new();
     private readonly InsertUserProfileProjectionCommandHandler _handler;
 
     public InsertUserProfileProjectionCommandHandlerTests()
     {
         _repositoryMock
             .Setup(x => x.InsertAsync(It.IsAny<UserProfileProjectionDto>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true);
+            .Returns(Task.CompletedTask);
 
         _unitOfWorkMock
             .Setup(x => x.ExecuteInTransactionAsync(
-                It.IsAny<Func<CancellationToken, Task<FlowChatResult<Unit>>>>(),
+                It.IsAny<Func<CancellationToken, Task<FlowChatResult<IdempotentCommandResult<Unit>>>>>(),
                 It.IsAny<CancellationToken>()))
-            .Returns<Func<CancellationToken, Task<FlowChatResult<Unit>>>, CancellationToken>((operation, ct) => operation(ct));
+            .Returns<Func<CancellationToken, Task<FlowChatResult<IdempotentCommandResult<Unit>>>>, CancellationToken>(
+                (operation, ct) => operation(ct));
 
         _domainEventDispatcherMock
             .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<IDomainEvent>>(), It.IsAny<CancellationToken>()))
@@ -37,7 +40,8 @@ public sealed class InsertUserProfileProjectionCommandHandlerTests
         _handler = new InsertUserProfileProjectionCommandHandler(
             _repositoryMock.Object,
             _unitOfWorkMock.Object,
-            _domainEventDispatcherMock.Object);
+            _domainEventDispatcherMock.Object,
+            _dbUpdateExceptionClassifierMock.Object);
     }
 
     [Fact]
@@ -47,7 +51,7 @@ public sealed class InsertUserProfileProjectionCommandHandlerTests
         _repositoryMock
             .Setup(x => x.InsertAsync(It.IsAny<UserProfileProjectionDto>(), It.IsAny<CancellationToken>()))
             .Callback<UserProfileProjectionDto, CancellationToken>((projection, _) => capturedProjection = projection)
-            .ReturnsAsync(true);
+            .Returns(Task.CompletedTask);
 
         var command = new InsertUserProfileProjectionCommand(
             _fixture.Create<Guid>(),
@@ -69,7 +73,8 @@ public sealed class InsertUserProfileProjectionCommandHandlerTests
         var result = await SendAsync(command);
 
         result.IsSuccess.Should().BeTrue();
-        result.Value.Should().Be(Unit.Value);
+        result.Value.WasAlreadyProcessed.Should().BeFalse();
+        result.Value.Value.Should().Be(Unit.Value);
         capturedProjection.Should().NotBeNull();
         capturedProjection!.FriendlyUserId.Should().Be("jdoe");
         capturedProjection.MainEmail.Should().NotBeNull();
@@ -85,37 +90,6 @@ public sealed class InsertUserProfileProjectionCommandHandlerTests
         capturedProjection.FirstName.Should().Be("John");
         capturedProjection.LastName.Should().Be("Doe");
         capturedProjection.Organization.Should().Be("FlowChat");
-    }
-
-    [Fact]
-    public async Task Handle_WhenProjectionAlreadyExists_ReturnsConflict()
-    {
-        _repositoryMock
-            .Setup(x => x.InsertAsync(It.IsAny<UserProfileProjectionDto>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(false);
-
-        var command = new InsertUserProfileProjectionCommand(
-            _fixture.Create<Guid>(),
-            "jdoe",
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            true,
-            null);
-
-        var result = await SendAsync(command);
-
-        result.IsFailure.Should().BeTrue();
-        result.Error.ErrorType.Should().Be(ErrorType.Conflict);
-        result.Error.ErrorMessage.Should().Be("User profile projection already exists.");
     }
 
     [Fact]
@@ -150,7 +124,7 @@ public sealed class InsertUserProfileProjectionCommandHandlerTests
             Times.Never);
     }
 
-    private async Task<FlowChatResult<Unit>> SendAsync(InsertUserProfileProjectionCommand command)
+    private async Task<FlowChatResult<IdempotentCommandResult<Unit>>> SendAsync(InsertUserProfileProjectionCommand command)
     {
         var validator = new InsertUserProfileProjectionCommandValidator();
         var validationResult = await validator.ValidateAsync(command);
@@ -158,10 +132,9 @@ public sealed class InsertUserProfileProjectionCommandHandlerTests
         if (!validationResult.IsValid)
         {
             var errors = validationResult.Errors.Select(error => error.ErrorMessage).ToList();
-            return FlowChatResult<Unit>.Failure(DomainError.Validation(errors: errors));
+            return FlowChatResult<IdempotentCommandResult<Unit>>.Failure(DomainError.Validation(errors: errors));
         }
 
         return await _handler.Handle(command, CancellationToken.None);
     }
 }
-

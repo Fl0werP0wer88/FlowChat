@@ -10,7 +10,7 @@ public sealed class CreateInitialUserProfileControllerTests(UserProfileApiFactor
     private readonly HttpClient _client = factory.CreateClient();
 
     [Fact]
-    public async Task CreateInitialUserProfile_WithValidApiKey_Returns202Accepted()
+    public async Task CreateInitialUserProfile_WithValidApiKey_Returns201Created()
     {
         var userId = Guid.NewGuid();
         var request = new
@@ -30,7 +30,7 @@ public sealed class CreateInitialUserProfileControllerTests(UserProfileApiFactor
 
         var response = await _client.SendAsync(httpRequest);
 
-        response.StatusCode.Should().Be(HttpStatusCode.Accepted);
+        response.StatusCode.Should().Be(HttpStatusCode.Created);
     }
 
     [Fact]

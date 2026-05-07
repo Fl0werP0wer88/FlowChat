@@ -11,19 +11,11 @@ public sealed class ContactObserverProjectionWriteRepository(AppDbContext dbCont
     private const string ProjectionSource = "social-graph-contact-events";
     private readonly AppDbContext _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
 
-    public async Task<bool> InsertAsync(
+    public async Task InsertAsync(
         ContactObserverProjectionDto projection,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(projection);
-
-        var exists = await _dbContext.ContactObserverProjections.AnyAsync(
-            x => x.ObservedUserId == projection.ObservedUserId && x.ObserverUserId == projection.ObserverUserId,
-            cancellationToken);
-        if (exists)
-        {
-            return false;
-        }
 
         await _dbContext.ContactObserverProjections.AddAsync(
             new ContactObserverProjectionEntity
@@ -36,9 +28,15 @@ public sealed class ContactObserverProjectionWriteRepository(AppDbContext dbCont
                 LastModifiedAtUtc = projection.LastModifiedAtUtc
             },
             cancellationToken);
-
-        return true;
     }
+
+    public Task<bool> ExistsAsync(
+        Guid observedUserId,
+        Guid observerUserId,
+        CancellationToken cancellationToken = default) =>
+        _dbContext.ContactObserverProjections.AnyAsync(
+            x => x.ObservedUserId == observedUserId && x.ObserverUserId == observerUserId,
+            cancellationToken);
 
     public async Task<bool> DeleteAsync(
         Guid observedUserId,

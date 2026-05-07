@@ -41,9 +41,14 @@ public sealed class CreateInitialUserProfileController : ApiControllerBase
                 request.Organization),
             cancellationToken);
 
-        return result.IsSuccess
-            ? Accepted()
-            : HandleError(result.Error);
+        if (!result.IsSuccess)
+        {
+            return HandleError(result.Error);
+        }
+
+        return result.Value.WasAlreadyProcessed
+            ? Ok()
+            : StatusCode(StatusCodes.Status201Created);
     }
 }
 

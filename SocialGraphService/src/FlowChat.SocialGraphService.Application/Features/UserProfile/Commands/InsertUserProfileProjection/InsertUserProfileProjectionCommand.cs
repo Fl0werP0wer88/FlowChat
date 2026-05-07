@@ -1,3 +1,4 @@
+using FlowChat.Core.Results;
 using FlowChat.Shared.Application;
 using MediatR;
 
@@ -18,4 +19,7 @@ public sealed record InsertUserProfileProjectionCommand(
     string? AvatarUrl,
     string? Bio,
     bool IsActive,
-    DateTimeOffset? LastSeenAtUtc) : ICommand<Unit>;
+    DateTimeOffset? LastSeenAtUtc) : ICommand<IdempotentCommandResult<Unit>>
+{
+    public const string IdempotencyConflictKey = nameof(InsertUserProfileProjectionCommand);
+}

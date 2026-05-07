@@ -10,7 +10,7 @@ namespace FlowChat.SocialGraphService.IntegrationTests.Persistence.Repositories;
 public sealed class UserProfileProjectionWriteRepositoryTests
 {
     [Fact]
-    public async Task InsertAsync_WhenProjectionDoesNotExist_AddsNewEntityAndReturnsTrue()
+    public async Task InsertAsync_WhenProjectionDoesNotExist_AddsNewEntity()
     {
         await using var connection = new SqliteConnection("Data Source=:memory:");
         await connection.OpenAsync();
@@ -41,12 +41,11 @@ public sealed class UserProfileProjectionWriteRepositoryTests
             LastSeenAtUtc = new DateTimeOffset(2026, 4, 1, 10, 30, 0, TimeSpan.Zero)
         };
 
-        var wasInserted = await repository.InsertAsync(projection, CancellationToken.None);
+        await repository.InsertAsync(projection, CancellationToken.None);
         await context.SaveChangesAsync();
 
         var entity = await context.UserProfileProjections.SingleAsync(x => x.UserProfileId == projection.UserProfileId);
 
-        wasInserted.Should().BeTrue();
         entity.FriendlyUserId.Should().Be("jdoe");
         entity.FirstName.Should().Be("John");
         entity.LastName.Should().Be("Doe");
@@ -66,7 +65,7 @@ public sealed class UserProfileProjectionWriteRepositoryTests
     }
 
     [Fact]
-    public async Task InsertAsync_WhenProjectionExists_ReturnsFalseAndLeavesEntityUnchanged()
+    public async Task ExistsAsync_WhenProjectionExists_ReturnsTrue()
     {
         await using var connection = new SqliteConnection("Data Source=:memory:");
         await connection.OpenAsync();
@@ -90,20 +89,23 @@ public sealed class UserProfileProjectionWriteRepositoryTests
 
         await using var context = CreateDbContext(connection);
         var repository = new UserProfileProjectionWriteRepository(context);
-        var projection = new UserProfileProjectionDto
-        {
-            UserProfileId = userProfileId,
-            FriendlyUserId = "new-user",
-            IsActive = true
-        };
 
-        var wasInserted = await repository.InsertAsync(projection, CancellationToken.None);
-        await context.SaveChangesAsync();
+        var exists = await repository.ExistsAsync(userProfileId, CancellationToken.None);
 
-        var entity = await context.UserProfileProjections.SingleAsync(x => x.UserProfileId == userProfileId);
+        exists.Should().BeTrue();
+    }
 
-        wasInserted.Should().BeFalse();
-        entity.FriendlyUserId.Should().Be("existing-user");
+    [Fact]
+    public async Task ExistsAsync_WhenProjectionDoesNotExist_ReturnsFalse()
+    {
+        await using var connection = new SqliteConnection("Data Source=:memory:");
+        await connection.OpenAsync();
+        await using var context = CreateDbContext(connection);
+        var repository = new UserProfileProjectionWriteRepository(context);
+
+        var exists = await repository.ExistsAsync(Guid.NewGuid(), CancellationToken.None);
+
+        exists.Should().BeFalse();
     }
 
     [Fact]

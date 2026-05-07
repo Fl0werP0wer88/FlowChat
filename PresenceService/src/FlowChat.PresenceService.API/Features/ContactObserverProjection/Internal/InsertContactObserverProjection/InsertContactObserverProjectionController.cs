@@ -35,6 +35,13 @@ public sealed class InsertContactObserverProjectionController : ApiControllerBas
             new InsertContactObserverProjectionCommand(request.ObservedUserId, request.ObserverUserId),
             cancellationToken);
 
-        return result.IsSuccess ? Accepted() : HandleError(result.Error);
+        if (!result.IsSuccess)
+        {
+            return HandleError(result.Error);
+        }
+
+        return result.Value.WasAlreadyProcessed
+            ? Ok()
+            : StatusCode(StatusCodes.Status201Created);
     }
 }

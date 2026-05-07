@@ -22,7 +22,7 @@ public sealed class ContactObserverProjectionControllerTests(PresenceApiFactory 
 
         var response = await _client.SendAsync(request);
 
-        response.StatusCode.Should().Be(HttpStatusCode.Accepted);
+        response.StatusCode.Should().Be(HttpStatusCode.Created);
         var exists = await factory.WithDbContextAsync(db => db.ContactObserverProjections.AnyAsync(
             x => x.ObservedUserId == observedUserId && x.ObserverUserId == observerUserId));
         exists.Should().BeTrue();

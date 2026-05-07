@@ -4,7 +4,7 @@ namespace FlowChat.PresenceService.Application.Contracts.Persistence;
 
 public interface IContactObserverProjectionWriteRepository
 {
-    Task<bool> InsertAsync(ContactObserverProjectionDto projection, CancellationToken cancellationToken = default);
-
+    Task InsertAsync(ContactObserverProjectionDto projection, CancellationToken cancellationToken = default);
+    Task<bool> ExistsAsync(Guid observedUserId, Guid observerUserId, CancellationToken cancellationToken = default);
     Task<bool> DeleteAsync(Guid observedUserId, Guid observerUserId, CancellationToken cancellationToken = default);
 }

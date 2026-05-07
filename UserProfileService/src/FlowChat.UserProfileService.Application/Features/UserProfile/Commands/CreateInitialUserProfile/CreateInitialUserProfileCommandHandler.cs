@@ -1,14 +1,14 @@
+using FlowChat.Core.Results;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
 using FlowChat.UserProfileService.Application.Contracts.Persistence;
-using FlowChat.UserProfileService.Domain.Entities.EmailVerificationRequest;
 using UserProfileAggregate = FlowChat.UserProfileService.Domain.Entities.UserProfile.UserProfile;
 
 namespace FlowChat.UserProfileService.Application.Features.UserProfile.Commands.CreateInitialUserProfile;
 
 public sealed class CreateInitialUserProfileCommandHandler
-    : CommandHandlerBase<CreateInitialUserProfileCommand, Guid>
+    : IdempotentCommandHandlerBase<CreateInitialUserProfileCommand, Guid>
 {
     private readonly IUserProfileReadRepository _userProfileReadRepository;
     private readonly IUserProfileWriteRepository _userProfileWriteRepository;
@@ -18,13 +18,15 @@ public sealed class CreateInitialUserProfileCommandHandler
         IUserProfileReadRepository userProfileReadRepository,
         IUserProfileWriteRepository userProfileWriteRepository,
         IUnitOfWork unitOfWork,
-        IDomainEventDispatcher domainEventDispatcher) : base(domainEventDispatcher, unitOfWork)
+        IDomainEventDispatcher domainEventDispatcher,
+        IDbUpdateExceptionClassifier dbUpdateExceptionClassifier)
+        : base(domainEventDispatcher, unitOfWork, dbUpdateExceptionClassifier)
     {
         _userProfileReadRepository = userProfileReadRepository;
         _userProfileWriteRepository = userProfileWriteRepository;
     }
 
-    protected override async Task<FlowChatResult<Guid>> ExecuteAsync(
+    protected override async Task<FlowChatResult<Guid>> ExecuteCommandAsync(
         CreateInitialUserProfileCommand request,
         CancellationToken cancellationToken)
     {
@@ -70,10 +72,18 @@ public sealed class CreateInitialUserProfileCommandHandler
         return FlowChatResult<Guid>.Success(_userProfile.Id.Value);
     }
 
-    protected override IAggregateRoot? GetAggregateRoot(FlowChatResult<Guid> result)
+    protected override async Task<(bool Found, Guid Value)> TryGetExistingResponseAsync(
+        CreateInitialUserProfileCommand request,
+        CancellationToken cancellationToken)
     {
-        return result.IsSuccess ? _userProfile : null;
+        var existing = await _userProfileWriteRepository.GetByIdAsync(request.UserId, cancellationToken);
+        return existing is null ? (false, default) : (true, existing.Id.Value);
     }
+
+    protected override IAggregateRoot? GetExecutedAggregateRoot(IdempotentCommandResult<Guid> result) => _userProfile;
+
+    protected override string GetIdempotencyConflictKey(CreateInitialUserProfileCommand request) =>
+        CreateInitialUserProfileCommand.IdempotencyConflictKey;
 
     private static string? NormalizeOptional(string? value) =>
         string.IsNullOrWhiteSpace(value) ? null : value.Trim();

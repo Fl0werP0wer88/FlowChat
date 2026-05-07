@@ -1,4 +1,5 @@
 using FlowChat.PresenceService.Application.Contracts.Persistence;
+using FlowChat.PresenceService.Application.Features.ContactObserverProjections.Commands.InsertContactObserverProjection;
 using FlowChat.PresenceService.Persistence.Repositories;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Infrastructure.Silverback.Persistence;
@@ -17,7 +18,11 @@ public static class PersistenceServiceRegistration
         IConfiguration configuration)
     {
         services.AddScoped<EntityBaseSaveChangesInterceptor>();
-        services.AddPostgresDbUpdateExceptionClassifier();
+        services.AddPostgresDbUpdateExceptionClassifier(options =>
+        {
+            options.UniqueConstraintNamesByIdempotencyConflictKey[InsertContactObserverProjectionCommand.IdempotencyConflictKey] =
+                ["PK_ContactObserverProjection"];
+        });
         services.AddDbContext<AppDbContext>((serviceProvider, options) =>
             options.UseNpgsql(configuration.GetConnectionString("PresenceDb"))
                 .AddInterceptors(serviceProvider.GetRequiredService<EntityBaseSaveChangesInterceptor>()));

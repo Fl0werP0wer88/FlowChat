@@ -1,3 +1,4 @@
+using FlowChat.Core.Results;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
 using FlowChat.SocialGraphService.Application.Contracts.Persistence;
@@ -7,19 +8,21 @@ using MediatR;
 namespace FlowChat.SocialGraphService.Application.Features.UserProfile.Commands.InsertUserProfileProjection;
 
 public sealed class InsertUserProfileProjectionCommandHandler
-    : CommandHandlerBase<InsertUserProfileProjectionCommand, Unit>
+    : IdempotentCommandHandlerBase<InsertUserProfileProjectionCommand, Unit>
 {
     private readonly IUserProfileProjectionWriteRepository _userProfileProjectionWriteRepository;
 
     public InsertUserProfileProjectionCommandHandler(
         IUserProfileProjectionWriteRepository userProfileProjectionWriteRepository,
         IUnitOfWork unitOfWork,
-        IDomainEventDispatcher domainEventDispatcher) : base(domainEventDispatcher, unitOfWork)
+        IDomainEventDispatcher domainEventDispatcher,
+        IDbUpdateExceptionClassifier dbUpdateExceptionClassifier)
+        : base(domainEventDispatcher, unitOfWork, dbUpdateExceptionClassifier)
     {
         _userProfileProjectionWriteRepository = userProfileProjectionWriteRepository;
     }
 
-    protected override async Task<FlowChatResult<Unit>> ExecuteAsync(
+    protected override async Task<FlowChatResult<Unit>> ExecuteCommandAsync(
         InsertUserProfileProjectionCommand request,
         CancellationToken cancellationToken)
     {
@@ -44,16 +47,23 @@ public sealed class InsertUserProfileProjectionCommandHandler
             LastSeenAtUtc = request.LastSeenAtUtc
         };
 
-        var wasInserted = await _userProfileProjectionWriteRepository.InsertAsync(projection, cancellationToken);
-        if (!wasInserted)
-        {
-            return FlowChatResult<Unit>.Failure(DomainError.Conflict("User profile projection already exists."));
-        }
+        await _userProfileProjectionWriteRepository.InsertAsync(projection, cancellationToken);
 
         return FlowChatResult<Unit>.Success(Unit.Value);
     }
 
-    protected override IAggregateRoot? GetAggregateRoot(FlowChatResult<Unit> result) => null;
+    protected override async Task<(bool Found, Unit Value)> TryGetExistingResponseAsync(
+        InsertUserProfileProjectionCommand request,
+        CancellationToken cancellationToken)
+    {
+        var exists = await _userProfileProjectionWriteRepository.ExistsAsync(request.UserProfileId, cancellationToken);
+        return (exists, Unit.Value);
+    }
+
+    protected override IAggregateRoot? GetExecutedAggregateRoot(IdempotentCommandResult<Unit> result) => null;
+
+    protected override string GetIdempotencyConflictKey(InsertUserProfileProjectionCommand request) =>
+        InsertUserProfileProjectionCommand.IdempotencyConflictKey;
 
     private static string? NormalizeOptional(string? value) =>
         string.IsNullOrWhiteSpace(value) ? null : value.Trim();

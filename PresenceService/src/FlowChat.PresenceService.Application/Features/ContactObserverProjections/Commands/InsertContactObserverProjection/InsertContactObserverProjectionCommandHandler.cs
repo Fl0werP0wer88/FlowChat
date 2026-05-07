@@ -1,3 +1,4 @@
+using FlowChat.Core.Results;
 using FlowChat.PresenceService.Application.Contracts.Persistence;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
@@ -8,10 +9,11 @@ namespace FlowChat.PresenceService.Application.Features.ContactObserverProjectio
 public sealed class InsertContactObserverProjectionCommandHandler(
     IContactObserverProjectionWriteRepository contactObserverProjectionWriteRepository,
     IUnitOfWork unitOfWork,
-    IDomainEventDispatcher domainEventDispatcher)
-    : CommandHandlerBase<InsertContactObserverProjectionCommand, Unit>(domainEventDispatcher, unitOfWork)
+    IDomainEventDispatcher domainEventDispatcher,
+    IDbUpdateExceptionClassifier dbUpdateExceptionClassifier)
+    : IdempotentCommandHandlerBase<InsertContactObserverProjectionCommand, Unit>(domainEventDispatcher, unitOfWork, dbUpdateExceptionClassifier)
 {
-    protected override async Task<FlowChatResult<Unit>> ExecuteAsync(
+    protected override async Task<FlowChatResult<Unit>> ExecuteCommandAsync(
         InsertContactObserverProjectionCommand request,
         CancellationToken cancellationToken)
     {
@@ -30,5 +32,17 @@ public sealed class InsertContactObserverProjectionCommandHandler(
         return FlowChatResult<Unit>.Success(Unit.Value);
     }
 
-    protected override IAggregateRoot? GetAggregateRoot(FlowChatResult<Unit> result) => null;
+    protected override async Task<(bool Found, Unit Value)> TryGetExistingResponseAsync(
+        InsertContactObserverProjectionCommand request,
+        CancellationToken cancellationToken)
+    {
+        var exists = await contactObserverProjectionWriteRepository.ExistsAsync(
+            request.ObservedUserId, request.ObserverUserId, cancellationToken);
+        return (exists, Unit.Value);
+    }
+
+    protected override IAggregateRoot? GetExecutedAggregateRoot(IdempotentCommandResult<Unit> result) => null;
+
+    protected override string GetIdempotencyConflictKey(InsertContactObserverProjectionCommand request) =>
+        InsertContactObserverProjectionCommand.IdempotencyConflictKey;
 }
