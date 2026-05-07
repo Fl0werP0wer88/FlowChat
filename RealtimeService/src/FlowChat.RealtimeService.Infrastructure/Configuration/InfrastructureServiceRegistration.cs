@@ -7,9 +7,7 @@ using FlowChat.RealtimeService.Infrastructure.RealtimeConnections.ConnectionsTra
 using FlowChat.RealtimeService.Infrastructure.Routing;
 using FlowChat.RealtimeService.Redis.Configuration.Settings;
 using FlowChat.RealtimeService.Redis.RealtimeConnections;
-using FlowChat.Shared.Application;
 using FlowChat.Shared.Infrastructure.Configuration;
-using FlowChat.Shared.Infrastructure.Redis;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -39,9 +37,7 @@ public static class InfrastructureServiceRegistration
 
             return ConnectionMultiplexer.Connect(options);
         });
-        services.TryAddSingleton<RedisUnitOfWork>();
-        services.TryAddSingleton<IUnitOfWork>(sp => sp.GetRequiredService<RedisUnitOfWork>());
-        services.TryAddSingleton<IRedisTransactionContext>(sp => sp.GetRequiredService<RedisUnitOfWork>());
+
         services.TryAddSingleton<IActiveConnectionsTracker, InMemoryActiveConnectionsTracker>();
         services.TryAddSingleton<RealtimeConnectionRedisRepository>();
         services.TryAddSingleton<IRealtimeConnectionRedisRepository>(sp => sp.GetRequiredService<RealtimeConnectionRedisRepository>());
