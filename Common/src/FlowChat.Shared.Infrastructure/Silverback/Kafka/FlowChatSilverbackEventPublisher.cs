@@ -1,7 +1,5 @@
-using FlowChat.Core.Contracts;
 using FlowChat.Core.Messaging;
 using FlowChat.Shared.Application;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Silverback.Messaging.Messages;
 using Silverback.Messaging.Publishing;
@@ -10,16 +8,16 @@ namespace FlowChat.Shared.Infrastructure.Silverback.Kafka;
 
 public sealed class FlowChatSilverbackEventPublisher : IOutboxIntegrationEventPublisher, IDirectEventPublisher
 {
-    private readonly IServiceProvider _serviceProvider;
+    private readonly KafkaProducerSettingsRegistry _registry;
     private readonly IPublisher _publisher;
     private readonly ILogger<FlowChatSilverbackEventPublisher> _logger;
 
     public FlowChatSilverbackEventPublisher(
-        IServiceProvider serviceProvider,
+        KafkaProducerSettingsRegistry registry,
         IPublisher publisher,
         ILogger<FlowChatSilverbackEventPublisher> logger)
     {
-        _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
+        _registry = registry ?? throw new ArgumentNullException(nameof(registry));
         _publisher = publisher ?? throw new ArgumentNullException(nameof(publisher));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
@@ -29,7 +27,7 @@ public sealed class FlowChatSilverbackEventPublisher : IOutboxIntegrationEventPu
     {
         cancellationToken.ThrowIfCancellationRequested();
         ArgumentNullException.ThrowIfNull(message);
-        var options = _serviceProvider.GetService<IKafkaProducerSettingsSection<TEvent>>();
+        var options = _registry.Get<TEvent>();
         if (options is null)
         {
             throw new InvalidOperationException(

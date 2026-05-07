@@ -1,6 +1,7 @@
 using FlowChat.Core.Contracts;
 using FlowChat.Core.Messaging.AuthService.Events;
 using FlowChat.Core.Messaging.UserProfileService.Events;
+using FlowChat.Shared.Infrastructure.Silverback.Kafka;
 using FlowChat.UserProfileService.Infrastructure;
 using FlowChat.UserProfileService.Infrastructure.Configuration.Settings;
 using Microsoft.Extensions.Configuration;
@@ -41,14 +42,11 @@ public sealed class KafkaProducerConfigurationTests
         var emailConfirmedProducerOptions = settingsProvider.GetSection<UserEmailConfirmedProducerSettingsSection>();
         var emailVerificationRequestedProducerOptions = settingsProvider.GetSection<UserEmailVerificationRequestedProducerSettingsSection>();
         var stateChangedProducerOptions = settingsProvider.GetSection<UserProfileStateChangedProducerSettingsSection>();
-        var typedCreatedProducerOptions = serviceProvider
-            .GetRequiredService<IKafkaProducerSettingsSection<UserProfileCreatedIntegrationEvent>>();
-        var typedEmailConfirmedProducerOptions = serviceProvider
-            .GetRequiredService<IKafkaProducerSettingsSection<UserEmailConfirmedIntegrationEvent>>();
-        var typedEmailVerificationRequestedProducerOptions = serviceProvider
-            .GetRequiredService<IKafkaProducerSettingsSection<EmailVerificationRequestIntegrationEvent>>();
-        var typedStateChangedProducerOptions = serviceProvider
-            .GetRequiredService<IKafkaProducerSettingsSection<UserProfileChangedIntegrationEvent>>();
+        var registry = serviceProvider.GetRequiredService<KafkaProducerSettingsRegistry>();
+        var typedCreatedProducerOptions = registry.Get<UserProfileCreatedIntegrationEvent>();
+        var typedEmailConfirmedProducerOptions = registry.Get<UserEmailConfirmedIntegrationEvent>();
+        var typedEmailVerificationRequestedProducerOptions = registry.Get<EmailVerificationRequestIntegrationEvent>();
+        var typedStateChangedProducerOptions = registry.Get<UserProfileChangedIntegrationEvent>();
 
         createdProducerOptions.BootstrapServers.Should().Be("broker:9092");
         createdProducerOptions.Topic.Should().Be("user-profile-created-topic");
@@ -58,10 +56,10 @@ public sealed class KafkaProducerConfigurationTests
         emailVerificationRequestedProducerOptions.Topic.Should().Be("user-email-verification-topic");
         stateChangedProducerOptions.BootstrapServers.Should().Be("broker:9092");
         stateChangedProducerOptions.Topic.Should().Be("user-profile-state-topic");
-        typedCreatedProducerOptions.Topic.Should().Be("user-profile-created-topic");
-        typedEmailConfirmedProducerOptions.Topic.Should().Be("user-email-confirmed-topic");
-        typedEmailVerificationRequestedProducerOptions.Topic.Should().Be("user-email-verification-topic");
-        typedStateChangedProducerOptions.Topic.Should().Be("user-profile-state-topic");
+        typedCreatedProducerOptions!.Topic.Should().Be("user-profile-created-topic");
+        typedEmailConfirmedProducerOptions!.Topic.Should().Be("user-email-confirmed-topic");
+        typedEmailVerificationRequestedProducerOptions!.Topic.Should().Be("user-email-verification-topic");
+        typedStateChangedProducerOptions!.Topic.Should().Be("user-profile-state-topic");
     }
 
     [Theory]

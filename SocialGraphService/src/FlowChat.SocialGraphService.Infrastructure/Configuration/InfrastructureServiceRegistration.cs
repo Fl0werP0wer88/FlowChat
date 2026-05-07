@@ -1,6 +1,5 @@
 using FlowChat.Core.Contracts;
 using FlowChat.Core.Messaging.SocialGraphService.Events;
-using FlowChat.Shared.Application;
 using FlowChat.Shared.Infrastructure.Configuration;
 using FlowChat.Shared.Infrastructure.Silverback.Kafka;
 using FlowChat.SocialGraphService.Infrastructure.Configuration.Settings;
@@ -19,11 +18,9 @@ public static class InfrastructureServiceRegistration
         var infrastructureAssembly = typeof(InfrastructureServiceRegistration).Assembly;
 
         services.TryAddSingleton<ISettingsProvider>(new AppSettingsProvider(configuration));
-        services.AddScoped<IKafkaProducerSettingsSection<ContactAddedIntegrationEvent>>(sp =>
-            sp.GetRequiredService<ISettingsProvider>().GetSection<ContactAddedProducerSettingsSection>());
-        services.AddScoped<IKafkaProducerSettingsSection<ContactDeletedIntegrationEvent>>(sp =>
-            sp.GetRequiredService<ISettingsProvider>().GetSection<ContactDeletedProducerSettingsSection>());
-        services.AddScoped<IOutboxIntegrationEventPublisher, FlowChatSilverbackEventPublisher>();
+        services.AddFlowChatSilverbackEventPublisher(producer => producer
+            .AddProducerSettings<ContactAddedIntegrationEvent, ContactAddedProducerSettingsSection>()
+            .AddProducerSettings<ContactDeletedIntegrationEvent, ContactDeletedProducerSettingsSection>());
         services.AddAutoMapper((Action<AutoMapper.IMapperConfigurationExpression>?)null, infrastructureAssembly);
 
         return services;

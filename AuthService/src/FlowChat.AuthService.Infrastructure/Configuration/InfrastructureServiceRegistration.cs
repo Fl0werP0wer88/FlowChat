@@ -1,4 +1,3 @@
-using FlowChat.Shared.Application;
 using FlowChat.AuthService.Application.Contracts.Infrastructure;
 using FlowChat.AuthService.Infrastructure.Configuration.Settings;
 using FlowChat.AuthService.Infrastructure.Services;
@@ -20,13 +19,10 @@ public static class InfrastructureServiceRegistration
 
         services.AddScoped<IPasswordHashingService, PasswordHashingService>();
         services.AddScoped<IOpenIddictTokenService, OpenIddictTokenService>();
-        services.AddScoped<IKafkaProducerSettingsSection<AccountRegisteredIntegrationEvent>>(sp =>
-            sp.GetRequiredService<ISettingsProvider>().GetSection<AccountRegisteredProducerSettingsSection>());
-        services.AddScoped<IKafkaProducerSettingsSection<AccountConfirmedIntegrationEvent>>(sp =>
-            sp.GetRequiredService<ISettingsProvider>().GetSection<AccountConfirmedProducerSettingsSection>());
-        services.AddScoped<IKafkaProducerSettingsSection<PhoneNumberConfirmedIntegrationEvent>>(sp =>
-            sp.GetRequiredService<ISettingsProvider>().GetSection<PhoneNumberConfirmedProducerSettingsSection>());
-        services.AddScoped<IOutboxIntegrationEventPublisher, FlowChatSilverbackEventPublisher>();
+        services.AddFlowChatSilverbackEventPublisher(producer => producer
+            .AddProducerSettings<AccountRegisteredIntegrationEvent, AccountRegisteredProducerSettingsSection>()
+            .AddProducerSettings<AccountConfirmedIntegrationEvent, AccountConfirmedProducerSettingsSection>()
+            .AddProducerSettings<PhoneNumberConfirmedIntegrationEvent, PhoneNumberConfirmedProducerSettingsSection>());
 
         return services;
     }

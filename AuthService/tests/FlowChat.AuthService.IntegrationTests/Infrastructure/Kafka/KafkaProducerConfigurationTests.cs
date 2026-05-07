@@ -2,6 +2,7 @@ using FlowChat.AuthService.Infrastructure;
 using FlowChat.AuthService.Infrastructure.Configuration.Settings;
 using FlowChat.Core.Contracts;
 using FlowChat.Core.Messaging.AuthService.Events;
+using FlowChat.Shared.Infrastructure.Silverback.Kafka;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -38,12 +39,10 @@ public sealed class KafkaProducerConfigurationTests
         var accountRegisteredOptions = settingsProvider.GetSection<AccountRegisteredProducerSettingsSection>();
         var accountConfirmedOptions = settingsProvider.GetSection<AccountConfirmedProducerSettingsSection>();
         var phoneNumberConfirmedOptions = settingsProvider.GetSection<PhoneNumberConfirmedProducerSettingsSection>();
-        var typedAccountRegisteredOptions = serviceProvider
-            .GetRequiredService<IKafkaProducerSettingsSection<AccountRegisteredIntegrationEvent>>();
-        var typedAccountConfirmedOptions = serviceProvider
-            .GetRequiredService<IKafkaProducerSettingsSection<AccountConfirmedIntegrationEvent>>();
-        var typedPhoneNumberConfirmedOptions = serviceProvider
-            .GetRequiredService<IKafkaProducerSettingsSection<PhoneNumberConfirmedIntegrationEvent>>();
+        var registry = serviceProvider.GetRequiredService<KafkaProducerSettingsRegistry>();
+        var typedAccountRegisteredOptions = registry.Get<AccountRegisteredIntegrationEvent>();
+        var typedAccountConfirmedOptions = registry.Get<AccountConfirmedIntegrationEvent>();
+        var typedPhoneNumberConfirmedOptions = registry.Get<PhoneNumberConfirmedIntegrationEvent>();
 
         accountRegisteredOptions.BootstrapServers.Should().Be("broker:9092");
         accountRegisteredOptions.Topic.Should().Be("user-created-topic");
@@ -51,9 +50,9 @@ public sealed class KafkaProducerConfigurationTests
         accountConfirmedOptions.Topic.Should().Be("account-confirmed-topic");
         phoneNumberConfirmedOptions.BootstrapServers.Should().Be("broker:9092");
         phoneNumberConfirmedOptions.Topic.Should().Be("phone-number-confirmed-topic");
-        typedAccountRegisteredOptions.Topic.Should().Be("user-created-topic");
-        typedAccountConfirmedOptions.Topic.Should().Be("account-confirmed-topic");
-        typedPhoneNumberConfirmedOptions.Topic.Should().Be("phone-number-confirmed-topic");
+        typedAccountRegisteredOptions!.Topic.Should().Be("user-created-topic");
+        typedAccountConfirmedOptions!.Topic.Should().Be("account-confirmed-topic");
+        typedPhoneNumberConfirmedOptions!.Topic.Should().Be("phone-number-confirmed-topic");
     }
 
     [Theory]

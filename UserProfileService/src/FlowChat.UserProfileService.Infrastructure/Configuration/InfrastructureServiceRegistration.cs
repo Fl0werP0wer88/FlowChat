@@ -1,7 +1,6 @@
 using FlowChat.Core.Contracts;
 using FlowChat.Core.Messaging.AuthService.Events;
 using FlowChat.Core.Messaging.UserProfileService.Events;
-using FlowChat.Shared.Application;
 using FlowChat.Shared.Infrastructure.Configuration;
 using FlowChat.Shared.Infrastructure.Silverback.Kafka;
 using FlowChat.UserProfileService.Application.Contracts.Infrastructure;
@@ -20,17 +19,13 @@ public static class InfrastructureServiceRegistration
         IConfiguration configuration)
     {
         services.TryAddSingleton<ISettingsProvider>(new AppSettingsProvider(configuration));
-        services.AddScoped<IKafkaProducerSettingsSection<UserProfileCreatedIntegrationEvent>>(sp =>
-            sp.GetRequiredService<ISettingsProvider>().GetSection<UserProfileCreatedProducerSettingsSection>());
-        services.AddScoped<IKafkaProducerSettingsSection<UserEmailConfirmedIntegrationEvent>>(sp =>
-            sp.GetRequiredService<ISettingsProvider>().GetSection<UserEmailConfirmedProducerSettingsSection>());
-        services.AddScoped<IKafkaProducerSettingsSection<EmailVerificationRequestIntegrationEvent>>(sp =>
-            sp.GetRequiredService<ISettingsProvider>().GetSection<UserEmailVerificationRequestedProducerSettingsSection>());
-        services.AddScoped<IKafkaProducerSettingsSection<UserProfileChangedIntegrationEvent>>(sp =>
-            sp.GetRequiredService<ISettingsProvider>().GetSection<UserProfileStateChangedProducerSettingsSection>());
+        services.AddFlowChatSilverbackEventPublisher(producer => producer
+            .AddProducerSettings<UserProfileCreatedIntegrationEvent, UserProfileCreatedProducerSettingsSection>()
+            .AddProducerSettings<UserEmailConfirmedIntegrationEvent, UserEmailConfirmedProducerSettingsSection>()
+            .AddProducerSettings<EmailVerificationRequestIntegrationEvent, UserEmailVerificationRequestedProducerSettingsSection>()
+            .AddProducerSettings<UserProfileChangedIntegrationEvent, UserProfileStateChangedProducerSettingsSection>());
         services.AddScoped<IEmailVerificationLinkBuilder, EmailVerificationLinkBuilder>();
         services.AddScoped<IEmailVerificationTokenProtector, EmailVerificationTokenProtector>();
-        services.AddScoped<IOutboxIntegrationEventPublisher, FlowChatSilverbackEventPublisher>();
 
         return services;
     }

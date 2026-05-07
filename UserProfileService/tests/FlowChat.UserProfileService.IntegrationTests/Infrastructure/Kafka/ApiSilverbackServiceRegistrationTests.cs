@@ -1,8 +1,7 @@
-using FlowChat.Core.Contracts;
 using FlowChat.Core.Messaging.AuthService.Events;
 using FlowChat.Shared.Application;
+using FlowChat.Shared.Infrastructure.Silverback.Kafka;
 using FlowChat.UserProfileService.Infrastructure;
-using FlowChat.UserProfileService.Infrastructure.Configuration.Settings;
 using FlowChat.UserProfileService.Infrastructure.Kafka;
 using FlowChat.UserProfileService.Persistence;
 using Microsoft.Extensions.Configuration;
@@ -40,11 +39,11 @@ public sealed class ApiSilverbackServiceRegistrationTests
 
         var publisher = serviceProvider.GetRequiredService<IPublisher>();
         var integrationEventPublisher = serviceProvider.GetRequiredService<IOutboxIntegrationEventPublisher>();
-        var emailVerificationOptions = serviceProvider
-            .GetRequiredService<IKafkaProducerSettingsSection<EmailVerificationRequestIntegrationEvent>>();
+        var registry = serviceProvider.GetRequiredService<KafkaProducerSettingsRegistry>();
+        var emailVerificationOptions = registry.Get<EmailVerificationRequestIntegrationEvent>();
 
         publisher.Should().NotBeNull();
         integrationEventPublisher.Should().NotBeNull();
-        emailVerificationOptions.Topic.Should().Be("dev.flowchat.notification.email.v1");
+        emailVerificationOptions!.Topic.Should().Be("dev.flowchat.notification.email.v1");
     }
 }
