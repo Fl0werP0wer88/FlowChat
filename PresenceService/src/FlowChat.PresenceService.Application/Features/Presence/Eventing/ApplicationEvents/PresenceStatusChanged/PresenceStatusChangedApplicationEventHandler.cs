@@ -37,7 +37,7 @@ public sealed class PresenceStatusChangedApplicationEventHandler(
             RecipientUserIds = recipientUserIds
         };
 
-        await integrationEventPublisher.Publish(
+        await integrationEventPublisher.PublishAsync(
             new IntegrationEventEnvelope<PresenceStatusChangedIntegrationEvent>(
                 integrationEvent,
                 notification.UserId.ToString("D")),

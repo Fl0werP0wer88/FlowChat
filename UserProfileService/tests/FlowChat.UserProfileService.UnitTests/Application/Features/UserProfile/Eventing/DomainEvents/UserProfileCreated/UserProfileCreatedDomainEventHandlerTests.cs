@@ -28,7 +28,7 @@ public sealed class UserProfileCreatedDomainEventHandlerTests
             .CreateMapper();
 
         _publisherMock
-            .Setup(x => x.Publish(It.IsAny<IntegrationEventEnvelope<UserProfileCreatedIntegrationEvent>>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.PublishAsync(It.IsAny<IntegrationEventEnvelope<UserProfileCreatedIntegrationEvent>>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         _issuerMock
@@ -60,7 +60,7 @@ public sealed class UserProfileCreatedDomainEventHandlerTests
 
         IntegrationEventEnvelope<UserProfileCreatedIntegrationEvent>? capturedEnvelope = null;
         _publisherMock
-            .Setup(x => x.Publish(It.IsAny<IntegrationEventEnvelope<UserProfileCreatedIntegrationEvent>>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.PublishAsync(It.IsAny<IntegrationEventEnvelope<UserProfileCreatedIntegrationEvent>>(), It.IsAny<CancellationToken>()))
             .Callback<IntegrationEventEnvelope<UserProfileCreatedIntegrationEvent>, CancellationToken>((envelope, _) => capturedEnvelope = envelope)
             .Returns(Task.CompletedTask);
 
@@ -109,7 +109,7 @@ public sealed class UserProfileCreatedDomainEventHandlerTests
 
         IntegrationEventEnvelope<UserProfileCreatedIntegrationEvent>? capturedEnvelope = null;
         _publisherMock
-            .Setup(x => x.Publish(It.IsAny<IntegrationEventEnvelope<UserProfileCreatedIntegrationEvent>>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.PublishAsync(It.IsAny<IntegrationEventEnvelope<UserProfileCreatedIntegrationEvent>>(), It.IsAny<CancellationToken>()))
             .Callback<IntegrationEventEnvelope<UserProfileCreatedIntegrationEvent>, CancellationToken>((envelope, _) => capturedEnvelope = envelope)
             .Returns(Task.CompletedTask);
 

@@ -28,7 +28,7 @@ public sealed class EmailVerificationRequestIssuerTests
             .Returns<string>(token => $"https://frontend.flowchat.local/email-verification?token={token}");
 
         _publisherMock
-            .Setup(x => x.Publish(It.IsAny<IntegrationEventEnvelope<EmailVerificationRequestIntegrationEvent>>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.PublishAsync(It.IsAny<IntegrationEventEnvelope<EmailVerificationRequestIntegrationEvent>>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         _repositoryMock
@@ -74,7 +74,7 @@ public sealed class EmailVerificationRequestIssuerTests
 
         IntegrationEventEnvelope<EmailVerificationRequestIntegrationEvent>? capturedEnvelope = null;
         _publisherMock
-            .Setup(x => x.Publish(It.IsAny<IntegrationEventEnvelope<EmailVerificationRequestIntegrationEvent>>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.PublishAsync(It.IsAny<IntegrationEventEnvelope<EmailVerificationRequestIntegrationEvent>>(), It.IsAny<CancellationToken>()))
             .Callback<IntegrationEventEnvelope<EmailVerificationRequestIntegrationEvent>, CancellationToken>((envelope, _) => capturedEnvelope = envelope)
             .Returns(Task.CompletedTask);
 

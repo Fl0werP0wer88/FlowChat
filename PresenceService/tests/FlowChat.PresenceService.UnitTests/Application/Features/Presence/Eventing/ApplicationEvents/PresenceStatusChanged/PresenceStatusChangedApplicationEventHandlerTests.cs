@@ -37,7 +37,7 @@ public sealed class PresenceStatusChangedApplicationEventHandlerTests
             .Setup(x => x.GetObserverUserIdsAsync(userId, It.IsAny<CancellationToken>()))
             .ReturnsAsync([recipient1, Guid.Empty, recipient1, recipient2]);
         _integrationEventPublisherMock
-            .Setup(x => x.Publish(It.IsAny<IntegrationEventEnvelope<PresenceStatusChangedIntegrationEvent>>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.PublishAsync(It.IsAny<IntegrationEventEnvelope<PresenceStatusChangedIntegrationEvent>>(), It.IsAny<CancellationToken>()))
             .Callback<IntegrationEventEnvelope<PresenceStatusChangedIntegrationEvent>, CancellationToken>((envelope, _) => capturedEnvelope = envelope)
             .Returns(Task.CompletedTask);
 
@@ -68,7 +68,7 @@ public sealed class PresenceStatusChangedApplicationEventHandlerTests
             CancellationToken.None);
 
         _integrationEventPublisherMock.Verify(
-            x => x.Publish(It.IsAny<IntegrationEventEnvelope<PresenceStatusChangedIntegrationEvent>>(), It.IsAny<CancellationToken>()),
+            x => x.PublishAsync(It.IsAny<IntegrationEventEnvelope<PresenceStatusChangedIntegrationEvent>>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
@@ -86,7 +86,7 @@ public sealed class PresenceStatusChangedApplicationEventHandlerTests
             CancellationToken.None);
 
         _integrationEventPublisherMock.Verify(
-            x => x.Publish(It.IsAny<IntegrationEventEnvelope<PresenceStatusChangedIntegrationEvent>>(), It.IsAny<CancellationToken>()),
+            x => x.PublishAsync(It.IsAny<IntegrationEventEnvelope<PresenceStatusChangedIntegrationEvent>>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 }

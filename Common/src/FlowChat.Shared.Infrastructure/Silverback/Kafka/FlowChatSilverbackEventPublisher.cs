@@ -24,15 +24,7 @@ public sealed class FlowChatSilverbackEventPublisher : IOutboxIntegrationEventPu
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public Task Publish<TEvent>(IntegrationEventEnvelope<TEvent> message, CancellationToken cancellationToken)
-            where TEvent : IntegrationEvent
-    {
-        ArgumentNullException.ThrowIfNull(message);
-        cancellationToken.ThrowIfCancellationRequested();
-        return PublishAsync(message, cancellationToken);
-    }
-
-    private async Task PublishAsync<TEvent>(IntegrationEventEnvelope<TEvent> message, CancellationToken cancellationToken)
+    public async Task PublishAsync<TEvent>(IntegrationEventEnvelope<TEvent> message, CancellationToken cancellationToken)
             where TEvent : IntegrationEvent
     {
         cancellationToken.ThrowIfCancellationRequested();

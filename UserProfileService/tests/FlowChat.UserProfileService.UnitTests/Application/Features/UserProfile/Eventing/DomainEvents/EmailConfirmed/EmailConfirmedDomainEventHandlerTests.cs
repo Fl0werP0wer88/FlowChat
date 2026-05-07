@@ -26,7 +26,7 @@ public sealed class EmailConfirmedDomainEventHandlerTests
             .CreateMapper();
 
         _publisherMock
-            .Setup(x => x.Publish(It.IsAny<IntegrationEventEnvelope<UserEmailConfirmedIntegrationEvent>>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.PublishAsync(It.IsAny<IntegrationEventEnvelope<UserEmailConfirmedIntegrationEvent>>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
     }
 
@@ -44,13 +44,13 @@ public sealed class EmailConfirmedDomainEventHandlerTests
             isAuth: true);
 
         _publisherMock
-            .Setup(x => x.Publish(It.IsAny<IntegrationEventEnvelope<UserEmailConfirmedIntegrationEvent>>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.PublishAsync(It.IsAny<IntegrationEventEnvelope<UserEmailConfirmedIntegrationEvent>>(), It.IsAny<CancellationToken>()))
             .Callback<IntegrationEventEnvelope<UserEmailConfirmedIntegrationEvent>, CancellationToken>((envelope, _) => capturedEnvelope = envelope)
             .Returns(Task.CompletedTask);
 
         await handler.Handle(domainEvent, CancellationToken.None);
 
-        _publisherMock.Verify(x => x.Publish(
+        _publisherMock.Verify(x => x.PublishAsync(
             It.IsAny<IntegrationEventEnvelope<UserEmailConfirmedIntegrationEvent>>(),
             It.IsAny<CancellationToken>()), Times.Once);
 
@@ -77,7 +77,7 @@ public sealed class EmailConfirmedDomainEventHandlerTests
 
         IntegrationEventEnvelope<UserEmailConfirmedIntegrationEvent>? capturedEnvelope = null;
         _publisherMock
-            .Setup(x => x.Publish(It.IsAny<IntegrationEventEnvelope<UserEmailConfirmedIntegrationEvent>>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.PublishAsync(It.IsAny<IntegrationEventEnvelope<UserEmailConfirmedIntegrationEvent>>(), It.IsAny<CancellationToken>()))
             .Callback<IntegrationEventEnvelope<UserEmailConfirmedIntegrationEvent>, CancellationToken>((envelope, _) => capturedEnvelope = envelope)
             .Returns(Task.CompletedTask);
 

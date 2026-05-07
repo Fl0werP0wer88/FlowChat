@@ -23,7 +23,7 @@ public sealed class UserProfileStateChangedDomainEventHandlerTests
             .CreateMapper();
 
         _publisherMock
-            .Setup(x => x.Publish(It.IsAny<IntegrationEventEnvelope<UserProfileChangedIntegrationEvent>>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.PublishAsync(It.IsAny<IntegrationEventEnvelope<UserProfileChangedIntegrationEvent>>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
     }
 
@@ -75,7 +75,7 @@ public sealed class UserProfileStateChangedDomainEventHandlerTests
 
         IntegrationEventEnvelope<UserProfileChangedIntegrationEvent>? capturedEnvelope = null;
         _publisherMock
-            .Setup(x => x.Publish(It.IsAny<IntegrationEventEnvelope<UserProfileChangedIntegrationEvent>>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.PublishAsync(It.IsAny<IntegrationEventEnvelope<UserProfileChangedIntegrationEvent>>(), It.IsAny<CancellationToken>()))
             .Callback<IntegrationEventEnvelope<UserProfileChangedIntegrationEvent>, CancellationToken>((envelope, _) => capturedEnvelope = envelope)
             .Returns(Task.CompletedTask);
 

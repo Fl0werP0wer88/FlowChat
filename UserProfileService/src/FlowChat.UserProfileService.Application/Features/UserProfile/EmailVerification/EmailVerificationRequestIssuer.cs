@@ -52,7 +52,7 @@ public sealed class EmailVerificationRequestIssuer(
             new EmailVerificationTokenPayload(userProfileId, emailId, verificationRequest.Nonce));
         var confirmationLink = _emailVerificationLinkBuilder.BuildEmailVerificationLink(token);
 
-        await _integrationEventPublisher.Publish(
+        await _integrationEventPublisher.PublishAsync(
             new IntegrationEventEnvelope<EmailVerificationRequestIntegrationEvent>(
                 new EmailVerificationRequestIntegrationEvent
                 {

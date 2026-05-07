@@ -27,7 +27,7 @@ public sealed class AuthEmailChangedDomainEventHandlerTests
             .CreateMapper();
 
         _publisherMock
-            .Setup(x => x.Publish(It.IsAny<IntegrationEventEnvelope<AuthEmailChangedIntegrationEvent>>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.PublishAsync(It.IsAny<IntegrationEventEnvelope<AuthEmailChangedIntegrationEvent>>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
     }
 
@@ -44,13 +44,13 @@ public sealed class AuthEmailChangedDomainEventHandlerTests
             EmailAddress.Create("john@example.com"));
 
         _publisherMock
-            .Setup(x => x.Publish(It.IsAny<IntegrationEventEnvelope<AuthEmailChangedIntegrationEvent>>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.PublishAsync(It.IsAny<IntegrationEventEnvelope<AuthEmailChangedIntegrationEvent>>(), It.IsAny<CancellationToken>()))
             .Callback<IntegrationEventEnvelope<AuthEmailChangedIntegrationEvent>, CancellationToken>((envelope, _) => capturedEnvelope = envelope)
             .Returns(Task.CompletedTask);
 
         await handler.Handle(domainEvent, CancellationToken.None);
 
-        _publisherMock.Verify(x => x.Publish(
+        _publisherMock.Verify(x => x.PublishAsync(
             It.IsAny<IntegrationEventEnvelope<AuthEmailChangedIntegrationEvent>>(),
             It.IsAny<CancellationToken>()), Times.Once);
 

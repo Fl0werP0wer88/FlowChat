@@ -5,6 +5,6 @@ namespace FlowChat.Shared.Application;
 
 public interface IDirectEventPublisher
 {
-    Task Publish<TEvent>(IntegrationEventEnvelope<TEvent> message, CancellationToken cancellationToken)
+    Task PublishAsync<TEvent>(IntegrationEventEnvelope<TEvent> message, CancellationToken cancellationToken)
             where TEvent : IntegrationEvent;
 }

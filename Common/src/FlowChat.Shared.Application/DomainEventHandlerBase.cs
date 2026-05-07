@@ -22,7 +22,7 @@ public abstract class DomainEventHandlerBase<TDomainEvent, TIntegrationEvent> : 
             integrationEvent,
             ResolveKafkaKey(notification, integrationEvent));
 
-        await _integrationEventPublisher.Publish(
+        await _integrationEventPublisher.PublishAsync(
             envelope,
             cancellationToken);
         await ExecuteAsync(notification, cancellationToken);

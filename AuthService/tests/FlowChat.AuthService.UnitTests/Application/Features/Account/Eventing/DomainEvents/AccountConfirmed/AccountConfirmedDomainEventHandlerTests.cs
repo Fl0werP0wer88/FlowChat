@@ -27,7 +27,7 @@ public sealed class AccountConfirmedDomainEventHandlerTests
         IntegrationEventEnvelope<AccountConfirmedIntegrationEvent>? capturedEnvelope = null;
 
         _publisherMock
-            .Setup(x => x.Publish(It.IsAny<IntegrationEventEnvelope<AccountConfirmedIntegrationEvent>>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.PublishAsync(It.IsAny<IntegrationEventEnvelope<AccountConfirmedIntegrationEvent>>(), It.IsAny<CancellationToken>()))
             .Callback<IntegrationEventEnvelope<AccountConfirmedIntegrationEvent>, CancellationToken>((envelope, _) => capturedEnvelope = envelope)
             .Returns(Task.CompletedTask);
 
