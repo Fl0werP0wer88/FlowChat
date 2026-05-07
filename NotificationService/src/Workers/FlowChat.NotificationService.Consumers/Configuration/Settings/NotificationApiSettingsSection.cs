@@ -2,7 +2,7 @@ using FlowChat.Core.Contracts;
 
 namespace FlowChat.NotificationService.Consumers.Configuration.Settings;
 
-public sealed class NotificationApiSettingsSection : SettingsSectionBase
+public sealed class NotificationApiSettingsSection : SettingsSectionBase, IInternalApiSettingSection
 {
     public override string SectionName => "NotificationApi";
 

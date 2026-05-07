@@ -2,7 +2,7 @@ using FlowChat.Core.Contracts;
 
 namespace FlowChat.PresenceService.Consumers.Configuration.Settings;
 
-public sealed class PresenceApiSettingsSection : SettingsSectionBase
+public sealed class PresenceApiSettingsSection : SettingsSectionBase, IInternalApiSettingSection
 {
     public override string SectionName => "PresenceApi";
 

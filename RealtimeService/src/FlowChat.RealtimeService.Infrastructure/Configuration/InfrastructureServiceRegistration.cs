@@ -65,6 +65,7 @@ public static class InfrastructureServiceRegistration
                 client.DefaultRequestHeaders.Add("X-Internal-Api-Key", settings.InternalApiKey);
             }
         });
+
         services.AddFlowChatHttpClient<IRealtimeInstanceInternalApiClient, RealtimeInstanceInternalApiClient>((sp, client) =>
         {
             var settings = sp.GetRequiredService<IOptions<InternalApiSettingsSection>>().Value;

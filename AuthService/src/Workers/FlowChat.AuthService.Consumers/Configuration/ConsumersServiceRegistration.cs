@@ -7,7 +7,6 @@ using FlowChat.Shared.Infrastructure.Silverback.Behaviors;
 using FlowChat.Shared.Infrastructure.Silverback.Kafka;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
 using Silverback.Configuration;
 using Silverback.Messaging.Configuration;
 
@@ -24,24 +23,7 @@ public static class ConsumersServiceRegistration
             .Get<UserEmailConfirmedConsumerSettingsSection>()
             ?? new UserEmailConfirmedConsumerSettingsSection();
 
-        services.AddOptions<AuthApiSettingsSection>()
-            .BindConfiguration(new AuthApiSettingsSection().SectionName);
-        services.AddFlowChatHttpClient<IAuthInternalApiClient, AuthInternalApiClient>((serviceProvider, httpClient) =>
-        {
-            var apiSettings = serviceProvider.GetRequiredService<IOptions<AuthApiSettingsSection>>().Value;
-            if (!Uri.TryCreate(apiSettings.BaseUrl, UriKind.Absolute, out var baseAddress))
-            {
-                throw new InvalidOperationException("AuthApi:BaseUrl must be an absolute URI.");
-            }
-
-            httpClient.BaseAddress = baseAddress;
-            httpClient.DefaultRequestHeaders.Remove(AuthInternalApiClient.ApiKeyHeaderName);
-
-            if (!string.IsNullOrWhiteSpace(apiSettings.ApiKey))
-            {
-                httpClient.DefaultRequestHeaders.Add(AuthInternalApiClient.ApiKeyHeaderName, apiSettings.ApiKey);
-            }
-        });
+        services.AddFlowChatHttpClient<IAuthInternalApiClient, AuthInternalApiClient, AuthApiSettingsSection>();
 
         services.AddSilverback()
             .AddSingletonBrokerBehavior<CustomSpanAttributesProducerBehavior>()

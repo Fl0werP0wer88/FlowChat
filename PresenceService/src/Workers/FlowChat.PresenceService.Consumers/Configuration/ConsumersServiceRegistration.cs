@@ -7,7 +7,6 @@ using FlowChat.Shared.Infrastructure.Silverback.Behaviors;
 using FlowChat.Shared.Infrastructure.Silverback.Kafka;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
 using Silverback.Configuration;
 using Silverback.Messaging.Configuration;
 
@@ -24,24 +23,7 @@ public static class ConsumersServiceRegistration
             .Get<SocialGraphContactConsumerSettingsSection>()
             ?? new SocialGraphContactConsumerSettingsSection();
 
-        services.AddOptions<PresenceApiSettingsSection>()
-            .BindConfiguration(new PresenceApiSettingsSection().SectionName);
-        services.AddFlowChatHttpClient<IPresenceInternalApiClient, PresenceInternalApiClient>((serviceProvider, httpClient) =>
-        {
-            var apiSettings = serviceProvider.GetRequiredService<IOptions<PresenceApiSettingsSection>>().Value;
-            if (!Uri.TryCreate(apiSettings.BaseUrl, UriKind.Absolute, out var baseAddress))
-            {
-                throw new InvalidOperationException("PresenceApi:BaseUrl must be an absolute URI.");
-            }
-
-            httpClient.BaseAddress = baseAddress;
-            httpClient.DefaultRequestHeaders.Remove(PresenceInternalApiClient.ApiKeyHeaderName);
-
-            if (!string.IsNullOrWhiteSpace(apiSettings.ApiKey))
-            {
-                httpClient.DefaultRequestHeaders.Add(PresenceInternalApiClient.ApiKeyHeaderName, apiSettings.ApiKey);
-            }
-        });
+        services.AddFlowChatHttpClient<IPresenceInternalApiClient, PresenceInternalApiClient, PresenceApiSettingsSection>();
 
         services.AddSilverback()
             .AddSingletonBrokerBehavior<CustomSpanAttributesProducerBehavior>()

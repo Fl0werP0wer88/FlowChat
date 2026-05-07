@@ -9,6 +9,8 @@ namespace FlowChat.Shared.Infrastructure.Http;
 
 public abstract class FlowChatHttpClientBase(HttpClient httpClient)
 {
+    public const string InternalApiKeyHeaderName = "X-Internal-Api-Key";
+
     private readonly HttpClient _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
 
     protected virtual string ClientDisplayName => "Consumer API";

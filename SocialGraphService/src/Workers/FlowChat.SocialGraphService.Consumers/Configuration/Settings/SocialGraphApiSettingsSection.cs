@@ -2,7 +2,7 @@ using FlowChat.Core.Contracts;
 
 namespace FlowChat.SocialGraphService.Consumers.Configuration.Settings;
 
-public sealed class SocialGraphApiSettingsSection : SettingsSectionBase
+public sealed class SocialGraphApiSettingsSection : SettingsSectionBase, IInternalApiSettingSection
 {
     public override string SectionName => "SocialGraphApi";
 

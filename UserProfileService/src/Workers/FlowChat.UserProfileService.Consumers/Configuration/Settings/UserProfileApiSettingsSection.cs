@@ -2,7 +2,7 @@ using FlowChat.Core.Contracts;
 
 namespace FlowChat.UserProfileService.Consumers.Configuration.Settings;
 
-public sealed class UserProfileApiSettingsSection : SettingsSectionBase
+public sealed class UserProfileApiSettingsSection : SettingsSectionBase, IInternalApiSettingSection
 {
     public override string SectionName => "UserProfileApi";
 

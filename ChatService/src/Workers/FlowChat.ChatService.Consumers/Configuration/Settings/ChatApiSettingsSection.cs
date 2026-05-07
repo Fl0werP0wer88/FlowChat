@@ -2,7 +2,7 @@ using FlowChat.Core.Contracts;
 
 namespace FlowChat.ChatService.Consumers.Configuration.Settings;
 
-public sealed class ChatApiSettingsSection : SettingsSectionBase
+public sealed class ChatApiSettingsSection : SettingsSectionBase, IInternalApiSettingSection
 {
     public override string SectionName => "ChatApi";
 
