@@ -50,6 +50,15 @@ public sealed class ExceptionHandlingPipelineBehavior<TRequest, TResponse>
             var domainError = DomainError.Validation(exception.Message, errors);
             return TResponse.Failure(domainError);
         }
+        catch (TransientException exception)
+        {
+            Activity.Current?.SetStatus(ActivityStatusCode.Error, "transient_failure");
+            Activity.Current?.AddException(exception);
+            Activity.Current?.SetTag("error.type", "transient");
+
+            var domainError = DomainError.UnExpected("An unexpected error occurred.", isTransient: true);
+            return TResponse.Failure(domainError);
+        }
         catch (FlowChatException exception)
         {
             Activity.Current?.SetStatus(ActivityStatusCode.Error, "bad_request");
