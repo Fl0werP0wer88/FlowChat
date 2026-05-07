@@ -19,6 +19,7 @@ namespace FlowChat.RealtimeService.Infrastructure;
 
 public static class InfrastructureServiceRegistration
 {
+    // Most services are Singleton because they either wrap a shared long-lived TCP connection (Redis), hold in-memory state shared across all SignalR connections, or are stateless and safe to reuse — creating them per-request would waste resources without any benefit
     public static IServiceCollection AddInfrastructureServices(
         this IServiceCollection services,
         IConfiguration configuration)
