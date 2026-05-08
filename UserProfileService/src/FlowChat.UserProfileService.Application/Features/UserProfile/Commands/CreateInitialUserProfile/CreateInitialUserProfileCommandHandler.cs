@@ -72,13 +72,10 @@ public sealed class CreateInitialUserProfileCommandHandler
         return FlowChatResult<Guid>.Success(_userProfile.Id.Value);
     }
 
-    protected override async Task<(bool Found, Guid Value)> TryGetExistingResponseAsync(
+    protected override Task<(bool Found, Guid Value)> TryGetExistingResponseAsync(
         CreateInitialUserProfileCommand request,
         CancellationToken cancellationToken)
-    {
-        var existing = await _userProfileWriteRepository.GetByIdAsync(request.UserId, cancellationToken);
-        return existing is null ? (false, default) : (true, existing.Id.Value);
-    }
+        => Task.FromResult((true, request.UserId));
 
     protected override IAggregateRoot? GetExecutedAggregateRoot(IdempotentCommandResult<Guid> result) => _userProfile;
 

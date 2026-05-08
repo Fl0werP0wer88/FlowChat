@@ -52,13 +52,10 @@ public sealed class InsertUserProfileProjectionCommandHandler
         return FlowChatResult<Unit>.Success(Unit.Value);
     }
 
-    protected override async Task<(bool Found, Unit Value)> TryGetExistingResponseAsync(
+    protected override Task<(bool Found, Unit Value)> TryGetExistingResponseAsync(
         InsertUserProfileProjectionCommand request,
         CancellationToken cancellationToken)
-    {
-        var exists = await _userProfileProjectionWriteRepository.ExistsAsync(request.UserProfileId, cancellationToken);
-        return (exists, Unit.Value);
-    }
+        => Task.FromResult((true, Unit.Value));
 
     protected override IAggregateRoot? GetExecutedAggregateRoot(IdempotentCommandResult<Unit> result) => null;
 

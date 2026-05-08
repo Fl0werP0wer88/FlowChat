@@ -42,8 +42,6 @@ public sealed class UserProfileProjectionWriteRepository(AppDbContext dbContext)
             cancellationToken);
     }
 
-    public Task<bool> ExistsAsync(Guid userProfileId, CancellationToken cancellationToken = default) =>
-        _dbContext.UserProfileProjections.AnyAsync(x => x.UserProfileId == userProfileId, cancellationToken);
 
     public async Task<bool> UpdateAsync(UserProfileProjectionDto projection, CancellationToken cancellationToken = default)
     {

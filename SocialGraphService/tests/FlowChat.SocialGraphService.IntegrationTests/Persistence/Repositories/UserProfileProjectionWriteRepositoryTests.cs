@@ -65,50 +65,6 @@ public sealed class UserProfileProjectionWriteRepositoryTests
     }
 
     [Fact]
-    public async Task ExistsAsync_WhenProjectionExists_ReturnsTrue()
-    {
-        await using var connection = new SqliteConnection("Data Source=:memory:");
-        await connection.OpenAsync();
-
-        var userProfileId = Guid.NewGuid();
-
-        await using (var seedContext = CreateDbContext(connection))
-        {
-            seedContext.UserProfileProjections.Add(new UserProfileProjectionEntity
-            {
-                UserProfileId = userProfileId,
-                FriendlyUserId = "existing-user",
-                CreatedBy = "seed",
-                CreatedAtUtc = new DateTimeOffset(2026, 3, 29, 7, 0, 0, TimeSpan.Zero),
-                LastModifiedBy = "seed",
-                LastModifiedAtUtc = new DateTimeOffset(2026, 3, 30, 8, 0, 0, TimeSpan.Zero)
-            });
-
-            await seedContext.SaveChangesAsync();
-        }
-
-        await using var context = CreateDbContext(connection);
-        var repository = new UserProfileProjectionWriteRepository(context);
-
-        var exists = await repository.ExistsAsync(userProfileId, CancellationToken.None);
-
-        exists.Should().BeTrue();
-    }
-
-    [Fact]
-    public async Task ExistsAsync_WhenProjectionDoesNotExist_ReturnsFalse()
-    {
-        await using var connection = new SqliteConnection("Data Source=:memory:");
-        await connection.OpenAsync();
-        await using var context = CreateDbContext(connection);
-        var repository = new UserProfileProjectionWriteRepository(context);
-
-        var exists = await repository.ExistsAsync(Guid.NewGuid(), CancellationToken.None);
-
-        exists.Should().BeFalse();
-    }
-
-    [Fact]
     public async Task UpdateAsync_WhenProjectionExists_UpdatesEntityAndReturnsTrue()
     {
         await using var connection = new SqliteConnection("Data Source=:memory:");

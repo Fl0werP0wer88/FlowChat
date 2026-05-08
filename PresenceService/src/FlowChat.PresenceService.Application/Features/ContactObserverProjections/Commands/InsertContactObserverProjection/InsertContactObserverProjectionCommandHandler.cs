@@ -32,14 +32,10 @@ public sealed class InsertContactObserverProjectionCommandHandler(
         return FlowChatResult<Unit>.Success(Unit.Value);
     }
 
-    protected override async Task<(bool Found, Unit Value)> TryGetExistingResponseAsync(
+    protected override Task<(bool Found, Unit Value)> TryGetExistingResponseAsync(
         InsertContactObserverProjectionCommand request,
         CancellationToken cancellationToken)
-    {
-        var exists = await contactObserverProjectionWriteRepository.ExistsAsync(
-            request.ObservedUserId, request.ObserverUserId, cancellationToken);
-        return (exists, Unit.Value);
-    }
+        => Task.FromResult((true, Unit.Value));
 
     protected override IAggregateRoot? GetExecutedAggregateRoot(IdempotentCommandResult<Unit> result) => null;
 

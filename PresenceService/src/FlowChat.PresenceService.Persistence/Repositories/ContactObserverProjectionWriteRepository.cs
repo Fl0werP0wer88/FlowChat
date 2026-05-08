@@ -30,13 +30,6 @@ public sealed class ContactObserverProjectionWriteRepository(AppDbContext dbCont
             cancellationToken);
     }
 
-    public Task<bool> ExistsAsync(
-        Guid observedUserId,
-        Guid observerUserId,
-        CancellationToken cancellationToken = default) =>
-        _dbContext.ContactObserverProjections.AnyAsync(
-            x => x.ObservedUserId == observedUserId && x.ObserverUserId == observerUserId,
-            cancellationToken);
 
     public async Task<bool> DeleteAsync(
         Guid observedUserId,
