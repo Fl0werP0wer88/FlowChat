@@ -8,4 +8,4 @@ public sealed record ChatMessageDto(
     Guid SenderUserId,
     string SenderDisplayName,
     string Text,
-    DateTimeOffset SentAtUtc) : IDbResponse;
+    DateTimeOffset SentAtUtc) : IDbReadResponse;

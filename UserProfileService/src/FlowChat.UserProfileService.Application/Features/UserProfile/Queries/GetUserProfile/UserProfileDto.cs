@@ -10,4 +10,4 @@ public sealed record UserProfileDto(
     bool IsActive,
     DateTimeOffset? LastSeenAtUtc,
     IReadOnlyList<EmailDto> Emails,
-    IReadOnlyList<PhoneDto> Phones) : IDbResponse;
+    IReadOnlyList<PhoneDto> Phones) : IDbReadResponse;

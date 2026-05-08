@@ -8,7 +8,7 @@ namespace FlowChat.Shared.Persistance;
 
 public abstract class ReadRepositoryBase<TEntity, TDto>(DbContext dbContext) : IReadRepository<TDto>
     where TEntity : class, IEntity<TEntity>
-    where TDto : class, IDbResponse
+    where TDto : class, IDbReadResponse
 {
     protected readonly DbContext DbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
     protected virtual IQueryable<TEntity> Query => DbContext.Set<TEntity>().AsNoTracking();

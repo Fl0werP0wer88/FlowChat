@@ -6,4 +6,4 @@ namespace FlowChat.PresenceService.Application.Features.Presence;
 public sealed record UserPresencePreferencesDto(
     Guid UserId,
     PresenceStatus PreferredStatus,
-    DateTimeOffset LastModifiedAtUtc) : IDbResponse;
+    DateTimeOffset LastModifiedAtUtc) : IDbReadResponse;

@@ -1,3 +1,3 @@
 namespace FlowChat.Core.Contracts;
 
-public interface IDbResponse;
+public interface IDbReadResponse;

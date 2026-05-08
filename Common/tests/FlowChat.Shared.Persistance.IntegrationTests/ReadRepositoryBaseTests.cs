@@ -90,7 +90,7 @@ public sealed class ReadRepositoryBaseTests : IDisposable
         }
     }
 
-    private sealed record TestItemDto(Guid Id, string Name) : IDbResponse;
+    private sealed record TestItemDto(Guid Id, string Name) : IDbReadResponse;
 
     private sealed class TestDbContext(DbContextOptions<TestDbContext> options) : DbContext(options)
     {

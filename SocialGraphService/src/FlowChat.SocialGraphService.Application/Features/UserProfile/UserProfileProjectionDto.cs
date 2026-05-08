@@ -2,7 +2,7 @@ using FlowChat.Core.Contracts;
 
 namespace FlowChat.SocialGraphService.Application.Features.UserProfile;
 
-public sealed class UserProfileProjectionDto : IDbResponse
+public sealed class UserProfileProjectionDto : IDbReadResponse
 {
     public Guid UserProfileId { get; init; }
     public required string FriendlyUserId { get; init; }

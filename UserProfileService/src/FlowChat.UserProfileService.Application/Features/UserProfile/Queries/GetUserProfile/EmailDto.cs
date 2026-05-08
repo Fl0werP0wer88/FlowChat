@@ -7,4 +7,4 @@ public sealed record EmailDto(
     string Address,
     bool IsMain,
     bool IsAuth,
-    bool IsConfirmed) : IDbResponse;
+    bool IsConfirmed) : IDbReadResponse;

@@ -2,7 +2,7 @@ using FlowChat.Core.Contracts;
 
 namespace FlowChat.SocialGraphService.Application.Features.UserProfile;
 
-public sealed class UserProfileProjectionEmailDto : IDbResponse
+public sealed class UserProfileProjectionEmailDto : IDbReadResponse
 {
     public required string Address { get; init; }
     public bool IsConfirmed { get; init; }

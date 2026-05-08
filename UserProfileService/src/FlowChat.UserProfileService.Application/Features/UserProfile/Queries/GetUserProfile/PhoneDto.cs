@@ -5,4 +5,4 @@ namespace FlowChat.UserProfileService.Application.Features.UserProfile.Queries.G
 public sealed record PhoneDto(
     Guid Id,
     string Number,
-    bool IsMain) : IDbResponse;
+    bool IsMain) : IDbReadResponse;

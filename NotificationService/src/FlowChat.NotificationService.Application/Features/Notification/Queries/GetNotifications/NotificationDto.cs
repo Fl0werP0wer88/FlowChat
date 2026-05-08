@@ -15,4 +15,4 @@ public sealed record NotificationDto(
     string? FailureReason,
     string? SourceMessageKey,
     DateTimeOffset? SentAtUtc,
-    DateTimeOffset CreatedDate) : IDbResponse;
+    DateTimeOffset CreatedDate) : IDbReadResponse;

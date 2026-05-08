@@ -11,7 +11,7 @@ public sealed record EmailVerificationConfirmationState(
     Guid EmailId,
     UtcDateTimeOffset? InvalidatedAtUtc,
     UtcDateTimeOffset? ConsumedAtUtc,
-    bool EmailIsConfirmed) : IDbResponse;
+    bool EmailIsConfirmed) : IDbReadResponse;
 
 public interface IEmailVerificationRequestWriteRepository : IWriteRepository<EmailVerificationRequest>
 {
