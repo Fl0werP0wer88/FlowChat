@@ -8,7 +8,7 @@ namespace FlowChat.ChatService.Api.Features.Conversation.Public.CreateGroupConve
 
 [ApiController]
 [Authorize]
-[Route("api/conversations")]
+[Route("api/conversations/group")]
 public sealed class CreateGroupConversationController : ApiControllerBase
 {
     private readonly IMediator _mediator;
