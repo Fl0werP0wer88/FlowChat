@@ -1,10 +1,10 @@
-using FlowChat.ChatService.Application.Features.Conversation.Dtos;
+using FlowChat.ChatService.Application.Features.UserProfile;
 
 namespace FlowChat.ChatService.Application.Contracts.Persistence;
 
 public interface IUserProfileProjectionReadRepository
 {
-    Task<IReadOnlyList<ConversationParticipantDto>> GetByIdsAsync(
+    Task<IReadOnlyList<UserProfileConversationParticipantDto>> GetByIdsAsync(
         IEnumerable<Guid> userIds,
         CancellationToken cancellationToken = default);
 }

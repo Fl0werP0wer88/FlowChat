@@ -1,6 +1,7 @@
 using FlowChat.ChatService.Application.Contracts.Persistence;
 using FlowChat.ChatService.Application.Features.Conversation.Commands.CreateDuetConversation;
 using FlowChat.ChatService.Application.Features.Conversation.Dtos;
+using FlowChat.ChatService.Application.Features.UserProfile;
 using FlowChat.ChatService.Domain.Entities.Conversation;
 using FlowChat.ChatService.Domain.Entities.Conversation.Events;
 using FlowChat.Core.Results;
@@ -60,8 +61,8 @@ public sealed class CreateDuetConversationCommandHandlerTests
             .Setup(x => x.GetByIdsAsync(It.IsAny<IEnumerable<Guid>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(
             [
-                new ConversationParticipantDto(command.PartnerUserId, "Partner", "partner.png", command.PartnerUserId),
-                new ConversationParticipantDto(command.RequestingUserId, "Requester", "requester.png", command.RequestingUserId)
+                new UserProfileConversationParticipantDto(command.PartnerUserId, "Partner", "partner.png"),
+                new UserProfileConversationParticipantDto(command.RequestingUserId, "Requester", "requester.png")
             ]);
         _domainEventDispatcherMock
             .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<IDomainEvent>>(), It.IsAny<CancellationToken>()))

@@ -1,5 +1,5 @@
 using FlowChat.ChatService.Application.Contracts.Persistence;
-using FlowChat.ChatService.Application.Features.Conversation.Dtos;
+using FlowChat.ChatService.Application.Features.UserProfile;
 using Microsoft.EntityFrameworkCore;
 
 namespace FlowChat.ChatService.Persistence.Repositories;
@@ -13,7 +13,7 @@ public sealed class UserProfileProjectionReadRepository : IUserProfileProjection
         _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
     }
 
-    public async Task<IReadOnlyList<ConversationParticipantDto>> GetByIdsAsync(
+    public async Task<IReadOnlyList<UserProfileConversationParticipantDto>> GetByIdsAsync(
         IEnumerable<Guid> userIds,
         CancellationToken cancellationToken = default)
     {
@@ -22,11 +22,10 @@ public sealed class UserProfileProjectionReadRepository : IUserProfileProjection
         return await _dbContext.UserProfileProjections
             .AsNoTracking()
             .Where(x => ids.Contains(x.UserId))
-            .Select(x => new ConversationParticipantDto(
+            .Select(x => new UserProfileConversationParticipantDto(
                 x.UserId,
                 x.DisplayName,
-                x.AvatarUrl,
-                x.UserId))
+                x.AvatarUrl))
             .ToListAsync(cancellationToken);
     }
 }

@@ -1,5 +1,6 @@
 using FlowChat.ChatService.Application.Contracts.Persistence;
 using FlowChat.ChatService.Application.Features.Conversation.Dtos;
+using FlowChat.ChatService.Application.Features.UserProfile;
 using FlowChat.ChatService.Domain.Entities.Conversation;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
@@ -56,7 +57,7 @@ public sealed class CreateDuetConversationCommandHandler
 
     private static ConversationParticipantDto BuildParticipantDto(
         ParticipantUser participant,
-        ConversationParticipantDto? profile)
+        UserProfileConversationParticipantDto? profile)
     {
         return new ConversationParticipantDto(
             participant.UserId,
