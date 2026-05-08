@@ -126,8 +126,8 @@ public sealed class CreateDuetConversationControllerTests
         new(
             conversationId,
             [
-                new ConversationParticipantDto(requestingUserId, "Requester", "requester.png", "requester"),
-                new ConversationParticipantDto(partnerUserId, "Partner", "partner.png", "partner")
+                new ConversationParticipantDto(requestingUserId, "Requester", "requester.png", requestingUserId),
+                new ConversationParticipantDto(partnerUserId, "Partner", "partner.png", partnerUserId)
             ]);
 
     private sealed class TestProblemDetailsFactory : ProblemDetailsFactory

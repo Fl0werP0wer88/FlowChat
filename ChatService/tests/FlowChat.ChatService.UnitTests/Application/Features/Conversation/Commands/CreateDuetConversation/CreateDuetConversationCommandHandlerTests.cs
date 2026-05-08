@@ -60,8 +60,8 @@ public sealed class CreateDuetConversationCommandHandlerTests
             .Setup(x => x.GetByIdsAsync(It.IsAny<IEnumerable<Guid>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(
             [
-                new ConversationParticipantDto(command.PartnerUserId, "Partner", "partner.png", "partner"),
-                new ConversationParticipantDto(command.RequestingUserId, "Requester", "requester.png", "requester")
+                new ConversationParticipantDto(command.PartnerUserId, "Partner", "partner.png", command.PartnerUserId),
+                new ConversationParticipantDto(command.RequestingUserId, "Requester", "requester.png", command.RequestingUserId)
             ]);
         _domainEventDispatcherMock
             .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<IDomainEvent>>(), It.IsAny<CancellationToken>()))
@@ -75,7 +75,7 @@ public sealed class CreateDuetConversationCommandHandlerTests
         persistedConversation.Should().NotBeNull();
         result.Value.Value.ConversationId.Should().Be(persistedConversation!.Id.Value);
         result.Value.Value.Participants.Select(x => x.UserId).Should().Equal(command.RequestingUserId, command.PartnerUserId);
-        result.Value.Value.Participants.Select(x => x.FriendlyUserId).Should().Equal("requester", "partner");
+        result.Value.Value.Participants.Select(x => x.ParticipantUserId).Should().Equal(command.RequestingUserId, command.PartnerUserId);
         dispatchedEvents.Should().ContainSingle(x => x is ConversationCreatedDomainEvent);
         dispatchedEvents.Should().ContainSingle(
             x => x is AggregateStateChangedDomainEvent<ConversationAggregate, ConversationSnapshot>);
@@ -91,8 +91,8 @@ public sealed class CreateDuetConversationCommandHandlerTests
         var existingDto = new DuetConversationDetailDto(
             Guid.NewGuid(),
             [
-                new ConversationParticipantDto(command.RequestingUserId, "Requester", "requester.png", "requester"),
-                new ConversationParticipantDto(command.PartnerUserId, "Partner", "partner.png", "partner")
+                new ConversationParticipantDto(command.RequestingUserId, "Requester", "requester.png", command.RequestingUserId),
+                new ConversationParticipantDto(command.PartnerUserId, "Partner", "partner.png", command.PartnerUserId)
             ]);
         List<IDomainEvent> dispatchedEvents = [];
 

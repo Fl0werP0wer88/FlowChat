@@ -47,7 +47,7 @@ public sealed class DuetConversationReadRepositoryTests
         result.ConversationId.Should().Be(conversation.Id.Value);
         participants.Should().HaveCount(2);
         participants.Select(x => x.UserId).Should().Equal(requestingUserId, partnerUserId);
-        participants.Select(x => x.FriendlyUserId).Should().Equal("requester", "partner");
+        participants.Select(x => x.ParticipantUserId).Should().Equal(requestingUserId, partnerUserId);
         participants.Select(x => x.DisplayName).Should().Equal("Requester", "Partner");
         participants.Select(x => x.AvatarUrl).Should().Equal("requester.png", "partner.png");
     }
@@ -84,7 +84,7 @@ public sealed class DuetConversationReadRepositoryTests
         participants[1].UserId.Should().Be(partnerUserId);
         participants[1].DisplayName.Should().BeNull();
         participants[1].AvatarUrl.Should().BeNull();
-        participants[1].FriendlyUserId.Should().BeEmpty();
+        participants[1].ParticipantUserId.Should().Be(partnerUserId);
     }
 
     [Fact]

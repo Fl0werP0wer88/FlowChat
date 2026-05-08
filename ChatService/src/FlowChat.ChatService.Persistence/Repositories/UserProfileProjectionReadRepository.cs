@@ -26,7 +26,7 @@ public sealed class UserProfileProjectionReadRepository : IUserProfileProjection
                 x.UserId,
                 x.DisplayName,
                 x.AvatarUrl,
-                x.FriendlyUserId))
+                x.UserId))
             .ToListAsync(cancellationToken);
     }
 }
