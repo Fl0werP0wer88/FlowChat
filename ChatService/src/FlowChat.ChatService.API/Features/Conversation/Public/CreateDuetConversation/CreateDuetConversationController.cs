@@ -41,13 +41,13 @@ public sealed class CreateDuetConversationController : ApiControllerBase
         if (!result.IsSuccess)
             return HandleError(result.Error);
 
-        var conversation = result.Value.Conversation;
+        var conversation = result.Value.Value;
         var response = new CreateDuetConversationResponse(
             conversation.ConversationId,
             [.. conversation.Participants.Select(p => new ParticipantResponse(
                 p.UserId, p.DisplayName, p.AvatarUrl, p.FriendlyUserId))]);
 
-        return result.Value.WasCreated
+        return !result.Value.WasAlreadyProcessed
             ? StatusCode(StatusCodes.Status201Created, response)
             : Ok(response);
     }

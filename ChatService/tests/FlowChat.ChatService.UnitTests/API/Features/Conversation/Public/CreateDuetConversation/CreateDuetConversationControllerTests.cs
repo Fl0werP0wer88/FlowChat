@@ -49,8 +49,8 @@ public sealed class CreateDuetConversationControllerTests
         _mediatorMock
             .Setup(x => x.Send(It.IsAny<CreateDuetConversationCommand>(), It.IsAny<CancellationToken>()))
             .Callback<object, CancellationToken>((command, _) => capturedCommand = (CreateDuetConversationCommand)command)
-            .ReturnsAsync(FlowChatResult<CreateDuetConversationResult>.Success(
-                new CreateDuetConversationResult(conversation, WasCreated: true)));
+            .ReturnsAsync(FlowChatResult<IdempotentCommandResult<DuetConversationDetailDto>>.Success(
+                new IdempotentCommandResult<DuetConversationDetailDto>(conversation, WasAlreadyProcessed: false)));
 
         var controller = CreateController(requestingUserId);
 
@@ -76,8 +76,8 @@ public sealed class CreateDuetConversationControllerTests
 
         _mediatorMock
             .Setup(x => x.Send(It.IsAny<CreateDuetConversationCommand>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(FlowChatResult<CreateDuetConversationResult>.Success(
-                new CreateDuetConversationResult(conversation, WasCreated: false)));
+            .ReturnsAsync(FlowChatResult<IdempotentCommandResult<DuetConversationDetailDto>>.Success(
+                new IdempotentCommandResult<DuetConversationDetailDto>(conversation, WasAlreadyProcessed: true)));
 
         var controller = CreateController(requestingUserId);
 
@@ -94,7 +94,7 @@ public sealed class CreateDuetConversationControllerTests
     {
         _mediatorMock
             .Setup(x => x.Send(It.IsAny<CreateDuetConversationCommand>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(FlowChatResult<CreateDuetConversationResult>.Failure(
+            .ReturnsAsync(FlowChatResult<IdempotentCommandResult<DuetConversationDetailDto>>.Failure(
                 DomainError.NotFound("Conversation not found.")));
 
         var controller = CreateController(Guid.NewGuid());

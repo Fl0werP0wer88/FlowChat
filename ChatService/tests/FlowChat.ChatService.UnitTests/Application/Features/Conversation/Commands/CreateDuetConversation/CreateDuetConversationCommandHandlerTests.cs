@@ -7,10 +7,11 @@ using FlowChat.Core.Results;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
 using FluentAssertions;
+using Microsoft.EntityFrameworkCore;
 using Moq;
 using ConversationAggregate = FlowChat.ChatService.Domain.Entities.Conversation.Conversation;
 
-namespace FlowChat.ChatService.UnitTests;
+namespace FlowChat.ChatService.UnitTests.Application.Features.Conversation.Commands.CreateDuetConversation;
 
 public sealed class CreateDuetConversationCommandHandlerTests
 {
@@ -19,15 +20,16 @@ public sealed class CreateDuetConversationCommandHandlerTests
     private readonly Mock<IUserProfileProjectionReadRepository> _userProfileProjectionReadRepositoryMock = new();
     private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
     private readonly Mock<IDomainEventDispatcher> _domainEventDispatcherMock = new();
+    private readonly Mock<IDbUpdateExceptionClassifier> _dbUpdateExceptionClassifierMock = new();
     private readonly CreateDuetConversationCommandHandler _handler;
 
     public CreateDuetConversationCommandHandlerTests()
     {
         _unitOfWorkMock
             .Setup(x => x.ExecuteInTransactionAsync(
-                It.IsAny<Func<CancellationToken, Task<FlowChatResult<CreateDuetConversationResult>>>>(),
+                It.IsAny<Func<CancellationToken, Task<FlowChatResult<IdempotentCommandResult<DuetConversationDetailDto>>>>>(),
                 It.IsAny<CancellationToken>()))
-            .Returns<Func<CancellationToken, Task<FlowChatResult<CreateDuetConversationResult>>>, CancellationToken>(
+            .Returns<Func<CancellationToken, Task<FlowChatResult<IdempotentCommandResult<DuetConversationDetailDto>>>>, CancellationToken>(
                 (operation, ct) => operation(ct));
 
         _domainEventDispatcherMock
@@ -39,43 +41,8 @@ public sealed class CreateDuetConversationCommandHandlerTests
             _duetConversationWriteRepositoryMock.Object,
             _userProfileProjectionReadRepositoryMock.Object,
             _unitOfWorkMock.Object,
-            _domainEventDispatcherMock.Object);
-    }
-
-    [Fact]
-    public async Task Handle_WhenDuetConversationAlreadyExists_ReturnsExistingConversation()
-    {
-        var command = new CreateDuetConversationCommand(Guid.NewGuid(), Guid.NewGuid());
-        var existingConversation = new DuetConversationDetailDto(
-            Guid.NewGuid(),
-            [
-                new ConversationParticipantDto(command.RequestingUserId, "Requester", "requester.png", "requester"),
-                new ConversationParticipantDto(command.PartnerUserId, "Partner", "partner.png", "partner")
-            ]);
-        List<IDomainEvent> dispatchedEvents = [];
-
-        _duetConversationReadRepositoryMock
-            .Setup(x => x.GetByUserIdsAsync(command.RequestingUserId, command.PartnerUserId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(existingConversation);
-        _domainEventDispatcherMock
-            .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<IDomainEvent>>(), It.IsAny<CancellationToken>()))
-            .Callback<IEnumerable<IDomainEvent>, CancellationToken>((events, _) => dispatchedEvents.AddRange(events))
-            .Returns(Task.CompletedTask);
-
-        var result = await _handler.Handle(command, CancellationToken.None);
-
-        result.IsSuccess.Should().BeTrue();
-        result.Value.WasCreated.Should().BeFalse();
-        result.Value.Conversation.Should().Be(existingConversation);
-        _duetConversationWriteRepositoryMock.Verify(
-            x => x.AddAsync(
-                It.IsAny<DuetConversation>(),
-                It.IsAny<CancellationToken>()),
-            Times.Never);
-        _userProfileProjectionReadRepositoryMock.Verify(
-            x => x.GetByIdsAsync(It.IsAny<IEnumerable<Guid>>(), It.IsAny<CancellationToken>()),
-            Times.Never);
-        dispatchedEvents.Should().BeEmpty();
+            _domainEventDispatcherMock.Object,
+            _dbUpdateExceptionClassifierMock.Object);
     }
 
     [Fact]
@@ -85,15 +52,10 @@ public sealed class CreateDuetConversationCommandHandlerTests
         ConversationAggregate? persistedConversation = null;
         List<IDomainEvent> dispatchedEvents = [];
 
-        _duetConversationReadRepositoryMock
-            .Setup(x => x.GetByUserIdsAsync(command.RequestingUserId, command.PartnerUserId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync((DuetConversationDetailDto?)null);
         _duetConversationWriteRepositoryMock
-            .Setup(x => x.AddAsync(
-                It.IsAny<DuetConversation>(),
-                It.IsAny<CancellationToken>()))
-            .Callback<DuetConversation, CancellationToken>((conversation, _) => persistedConversation = conversation)
-            .ReturnsAsync((DuetConversation conversation, CancellationToken _) => conversation);
+            .Setup(x => x.AddAsync(It.IsAny<DuetConversation>(), It.IsAny<CancellationToken>()))
+            .Callback<DuetConversation, CancellationToken>((c, _) => persistedConversation = c)
+            .ReturnsAsync((DuetConversation c, CancellationToken _) => c);
         _userProfileProjectionReadRepositoryMock
             .Setup(x => x.GetByIdsAsync(It.IsAny<IEnumerable<Guid>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(
@@ -109,19 +71,53 @@ public sealed class CreateDuetConversationCommandHandlerTests
         var result = await _handler.Handle(command, CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
-        result.Value.WasCreated.Should().BeTrue();
+        result.Value.WasAlreadyProcessed.Should().BeFalse();
         persistedConversation.Should().NotBeNull();
-        persistedConversation!.Id.Value.Should().NotBeEmpty();
-        result.Value.Conversation.ConversationId.Should().Be(persistedConversation!.Id.Value);
-        result.Value.Conversation.Participants.Select(x => x.UserId).Should().Equal(command.RequestingUserId, command.PartnerUserId);
-        result.Value.Conversation.Participants.Select(x => x.FriendlyUserId).Should().Equal("requester", "partner");
+        result.Value.Value.ConversationId.Should().Be(persistedConversation!.Id.Value);
+        result.Value.Value.Participants.Select(x => x.UserId).Should().Equal(command.RequestingUserId, command.PartnerUserId);
+        result.Value.Value.Participants.Select(x => x.FriendlyUserId).Should().Equal("requester", "partner");
         dispatchedEvents.Should().ContainSingle(x => x is ConversationCreatedDomainEvent);
         dispatchedEvents.Should().ContainSingle(
             x => x is AggregateStateChangedDomainEvent<ConversationAggregate, ConversationSnapshot>);
         _duetConversationWriteRepositoryMock.Verify(
-            x => x.AddAsync(
-                It.IsAny<DuetConversation>(),
-                It.IsAny<CancellationToken>()),
+            x => x.AddAsync(It.IsAny<DuetConversation>(), It.IsAny<CancellationToken>()),
             Times.Once);
+    }
+
+    [Fact]
+    public async Task Handle_WhenConversationAlreadyExistsViaDuplicateKeyException_ReturnsExistingConversationWithoutDispatchingEvents()
+    {
+        var command = new CreateDuetConversationCommand(Guid.NewGuid(), Guid.NewGuid());
+        var existingDto = new DuetConversationDetailDto(
+            Guid.NewGuid(),
+            [
+                new ConversationParticipantDto(command.RequestingUserId, "Requester", "requester.png", "requester"),
+                new ConversationParticipantDto(command.PartnerUserId, "Partner", "partner.png", "partner")
+            ]);
+        List<IDomainEvent> dispatchedEvents = [];
+
+        _duetConversationWriteRepositoryMock
+            .Setup(x => x.AddAsync(It.IsAny<DuetConversation>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new DbUpdateException("duplicate"));
+        _dbUpdateExceptionClassifierMock
+            .Setup(x => x.IsExpectedIdempotencyConflict(It.IsAny<DbUpdateException>(), CreateDuetConversationCommand.IdempotencyConflictKey))
+            .Returns(true);
+        _duetConversationReadRepositoryMock
+            .Setup(x => x.GetByUserIdsAsync(command.RequestingUserId, command.PartnerUserId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(existingDto);
+        _domainEventDispatcherMock
+            .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<IDomainEvent>>(), It.IsAny<CancellationToken>()))
+            .Callback<IEnumerable<IDomainEvent>, CancellationToken>((events, _) => dispatchedEvents.AddRange(events))
+            .Returns(Task.CompletedTask);
+
+        var result = await _handler.Handle(command, CancellationToken.None);
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value.WasAlreadyProcessed.Should().BeTrue();
+        result.Value.Value.Should().Be(existingDto);
+        dispatchedEvents.Should().BeEmpty();
+        _userProfileProjectionReadRepositoryMock.Verify(
+            x => x.GetByIdsAsync(It.IsAny<IEnumerable<Guid>>(), It.IsAny<CancellationToken>()),
+            Times.Never);
     }
 }
