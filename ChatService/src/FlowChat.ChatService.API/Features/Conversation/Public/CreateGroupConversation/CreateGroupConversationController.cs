@@ -20,6 +20,7 @@ public sealed class CreateGroupConversationController : ApiControllerBase
 
     [HttpPost]
     [ProducesResponseType(typeof(CreateGroupConversationResponse), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(CreateGroupConversationResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
@@ -34,13 +35,20 @@ public sealed class CreateGroupConversationController : ApiControllerBase
 
         var result = await _mediator.Send(
             new CreateGroupConversationCommand(
+                request.ConversationId,
                 userId,
                 request.ParticipantUserIds,
                 request.Name),
             cancellationToken);
 
-        return result.IsSuccess
-            ? StatusCode(StatusCodes.Status201Created, new CreateGroupConversationResponse(result.Value))
-            : HandleError(result.Error);
+        if (!result.IsSuccess)
+        {
+            return HandleError(result.Error);
+        }
+
+        var response = new CreateGroupConversationResponse(result.Value.Value);
+        return result.Value.WasAlreadyProcessed
+            ? Ok(response)
+            : StatusCode(StatusCodes.Status201Created, response);
     }
 }

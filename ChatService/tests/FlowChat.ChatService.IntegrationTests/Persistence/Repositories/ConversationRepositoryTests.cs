@@ -1,5 +1,6 @@
 using FlowChat.ChatService.Domain.Entities.Conversation;
 using FlowChat.ChatService.Persistence;
+using FlowChat.Shared.Domain;
 using FlowChat.ChatService.Persistence.Repositories;
 using FlowChat.Shared.Persistance.Auditing;
 using FluentAssertions;
@@ -18,7 +19,7 @@ public sealed class ConversationRepositoryTests
 
         var createdByUserId = Guid.NewGuid();
         var memberUserId = Guid.NewGuid();
-        var groupConversation = GroupConversation.Create(createdByUserId, [createdByUserId, memberUserId], "Friends");
+        var groupConversation = GroupConversation.Create(Id<Conversation>.New(), createdByUserId, [createdByUserId, memberUserId], "Friends");
         var duetConversation = DuetConversation.Create(createdByUserId, Guid.NewGuid());
 
         await using (var seedContext = CreateDbContext(connection))

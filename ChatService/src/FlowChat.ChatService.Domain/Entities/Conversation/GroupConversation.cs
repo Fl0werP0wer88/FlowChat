@@ -22,12 +22,13 @@ public sealed class GroupConversation : Conversation
     }
 
     public static GroupConversation Create(
+        Id<Conversation> id,
         Guid createdByUserId,
         IEnumerable<Guid> participantUserIds,
         string name)
     {
         return CreateCore(
-            Id<Conversation>.New(),
+            id,
             ConversationType.Group,
             createdByUserId,
             participantUserIds,
