@@ -15,7 +15,7 @@ public sealed class UserProfileProjectionWriteRepository(AppDbContext dbContext)
         ArgumentNullException.ThrowIfNull(projection);
 
         await dbContext.UserProfileProjections.AddAsync(
-            new UserProfileProjection
+            new UserProfileProjectionEntity
             {
                 UserId = projection.UserProfileId,
                 FriendlyUserId = projection.FriendlyUserId,

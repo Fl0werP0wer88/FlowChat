@@ -15,7 +15,7 @@ public sealed class DuetConversationWriteRepository(AppDbContext dbContext) : ID
 
         await dbContext.Set<DuetConversationAggregate>().AddAsync(conversation, cancellationToken);
 
-        dbContext.DuetConversations.Add(new DuetConversationLookup
+        dbContext.DuetConversations.Add(new DuetConversationLookupEntity
         {
             FirstUserId = first,
             SecondUserId = second,

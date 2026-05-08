@@ -4,11 +4,11 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace FlowChat.ChatService.Persistence.Configuration.Entities;
 
-public sealed class UserProfileProjectionConfiguration : IEntityTypeConfiguration<UserProfileProjection>
+public sealed class UserProfileProjectionEntityConfiguration : IEntityTypeConfiguration<UserProfileProjectionEntity>
 {
-    public void Configure(EntityTypeBuilder<UserProfileProjection> builder)
+    public void Configure(EntityTypeBuilder<UserProfileProjectionEntity> builder)
     {
-        builder.ToTable("UserProfileProjections");
+        builder.ToTable("UserProfileProjectionEntitys");
         builder.HasKey(x => x.UserId);
 
         builder.Property(x => x.UserId)

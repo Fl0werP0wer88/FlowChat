@@ -3,7 +3,7 @@ using FlowChat.Shared.Domain;
 
 namespace FlowChat.ChatService.Persistence.Entities;
 
-public sealed class DuetConversationLookup
+public sealed class DuetConversationLookupEntity
 {
     public Guid FirstUserId { get; set; }
     public Guid SecondUserId { get; set; }

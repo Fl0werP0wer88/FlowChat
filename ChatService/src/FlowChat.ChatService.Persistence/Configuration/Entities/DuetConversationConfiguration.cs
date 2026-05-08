@@ -6,9 +6,9 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace FlowChat.ChatService.Persistence.Configuration.Entities;
 
-public sealed class DuetConversationConfiguration : IEntityTypeConfiguration<DuetConversationLookup>
+public sealed class DuetConversationConfiguration : IEntityTypeConfiguration<DuetConversationLookupEntity>
 {
-    public void Configure(EntityTypeBuilder<DuetConversationLookup> builder)
+    public void Configure(EntityTypeBuilder<DuetConversationLookupEntity> builder)
     {
         builder.ToTable("DuetConversations");
         builder.HasKey(x => new { x.FirstUserId, x.SecondUserId });

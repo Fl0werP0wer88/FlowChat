@@ -26,8 +26,8 @@ public sealed class AppDbContext : DbContext
     public DbSet<ChatMessage> ChatMessages => Set<ChatMessage>();
     public DbSet<Conversation> Conversations => Set<Conversation>();
     public DbSet<SilverbackOutboxMessage> SilverbackOutboxMessages => Set<SilverbackOutboxMessage>();
-    public DbSet<UserProfileProjection> UserProfileProjections => Set<UserProfileProjection>();
-    public DbSet<DuetConversationLookup> DuetConversations => Set<DuetConversationLookup>();
+    public DbSet<UserProfileProjectionEntity> UserProfileProjections => Set<UserProfileProjectionEntity>();
+    public DbSet<DuetConversationLookupEntity> DuetConversations => Set<DuetConversationLookupEntity>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

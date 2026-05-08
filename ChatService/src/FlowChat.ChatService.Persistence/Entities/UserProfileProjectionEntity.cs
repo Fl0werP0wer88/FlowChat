@@ -1,6 +1,6 @@
 namespace FlowChat.ChatService.Persistence.Entities;
 
-public sealed class UserProfileProjection
+public sealed class UserProfileProjectionEntity
 {
     public Guid UserId { get; set; }
     public string FriendlyUserId { get; set; } = string.Empty;

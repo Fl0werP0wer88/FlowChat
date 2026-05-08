@@ -116,11 +116,11 @@ public sealed class DuetConversationReadRepositoryTests
         result.Should().BeNull();
     }
 
-    private static DuetConversationLookup CreateDuetConversation(Guid userId1, Guid userId2, Guid conversationId)
+    private static DuetConversationLookupEntity CreateDuetConversation(Guid userId1, Guid userId2, Guid conversationId)
     {
         var (first, second) = Normalize(userId1, userId2);
 
-        return new DuetConversationLookup
+        return new DuetConversationLookupEntity
         {
             FirstUserId = first,
             SecondUserId = second,
@@ -128,7 +128,7 @@ public sealed class DuetConversationReadRepositoryTests
         };
     }
 
-    private static UserProfileProjection CreateProfile(
+    private static UserProfileProjectionEntity CreateProfile(
         Guid userId,
         string friendlyUserId,
         string? displayName,
