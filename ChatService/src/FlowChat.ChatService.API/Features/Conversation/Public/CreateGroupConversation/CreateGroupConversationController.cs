@@ -46,7 +46,13 @@ public sealed class CreateGroupConversationController : ApiControllerBase
             return HandleError(result.Error);
         }
 
-        var response = new CreateGroupConversationResponse(result.Value.Value);
+        var conversation = result.Value.Value;
+        var response = new CreateGroupConversationResponse(
+            conversation.ConversationId,
+            conversation.Name,
+            [.. conversation.Participants.Select(p => new ParticipantResponse(
+                p.UserId, p.DisplayName, p.AvatarUrl, p.ParticipantUserId))]);
+
         return result.Value.WasAlreadyProcessed
             ? Ok(response)
             : StatusCode(StatusCodes.Status201Created, response);

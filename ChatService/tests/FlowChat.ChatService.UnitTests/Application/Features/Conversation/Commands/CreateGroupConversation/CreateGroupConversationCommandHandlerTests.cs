@@ -1,5 +1,7 @@
 using FlowChat.ChatService.Application.Contracts.Persistence;
 using FlowChat.ChatService.Application.Features.Conversation.Commands.CreateGroupConversation;
+using FlowChat.ChatService.Application.Features.Conversation.Dtos;
+using FlowChat.ChatService.Application.Features.UserProfile;
 using FlowChat.ChatService.Domain.Entities.Conversation.Events;
 using FlowChat.Core.Results;
 using FlowChat.Shared.Application;
@@ -13,7 +15,9 @@ namespace FlowChat.ChatService.UnitTests.Application.Features.Conversation.Comma
 
 public sealed class CreateGroupConversationCommandHandlerTests
 {
-    private readonly Mock<IGroupConversationWriteRepository> _repositoryMock = new();
+    private readonly Mock<IGroupConversationWriteRepository> _writeRepositoryMock = new();
+    private readonly Mock<IGroupConversationReadRepository> _readRepositoryMock = new();
+    private readonly Mock<IUserProfileProjectionReadRepository> _profileReadRepositoryMock = new();
     private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
     private readonly Mock<IDomainEventDispatcher> _domainEventDispatcherMock = new();
     private readonly Mock<IDbUpdateExceptionClassifier> _dbUpdateExceptionClassifierMock = new();
@@ -23,9 +27,9 @@ public sealed class CreateGroupConversationCommandHandlerTests
     {
         _unitOfWorkMock
             .Setup(x => x.ExecuteInTransactionAsync(
-                It.IsAny<Func<CancellationToken, Task<FlowChatResult<IdempotentCommandResult<Guid>>>>>(),
+                It.IsAny<Func<CancellationToken, Task<FlowChatResult<IdempotentCommandResult<GroupConversationDetailDto>>>>>(),
                 It.IsAny<CancellationToken>()))
-            .Returns<Func<CancellationToken, Task<FlowChatResult<IdempotentCommandResult<Guid>>>>, CancellationToken>(
+            .Returns<Func<CancellationToken, Task<FlowChatResult<IdempotentCommandResult<GroupConversationDetailDto>>>>, CancellationToken>(
                 (operation, ct) => operation(ct));
 
         _domainEventDispatcherMock
@@ -33,14 +37,16 @@ public sealed class CreateGroupConversationCommandHandlerTests
             .Returns(Task.CompletedTask);
 
         _handler = new CreateGroupConversationCommandHandler(
-            _repositoryMock.Object,
+            _writeRepositoryMock.Object,
+            _readRepositoryMock.Object,
+            _profileReadRepositoryMock.Object,
             _unitOfWorkMock.Object,
             _domainEventDispatcherMock.Object,
             _dbUpdateExceptionClassifierMock.Object);
     }
 
     [Fact]
-    public async Task Handle_ValidRequest_ReturnsSuccessAndDispatchesConversationCreatedEvent()
+    public async Task Handle_ValidRequest_ReturnsSuccessWithDetailDtoAndDispatchesEvents()
     {
         var conversationId = Guid.NewGuid();
         var creatorId = Guid.NewGuid();
@@ -50,11 +56,17 @@ public sealed class CreateGroupConversationCommandHandlerTests
         GroupConversation? persisted = null;
         List<IDomainEvent> dispatchedEvents = [];
 
-        _repositoryMock
+        _writeRepositoryMock
             .Setup(x => x.AddAsync(It.IsAny<GroupConversation>(), It.IsAny<CancellationToken>()))
             .Callback<GroupConversation, CancellationToken>((c, _) => persisted = c)
             .ReturnsAsync((GroupConversation c, CancellationToken _) => c);
-
+        _profileReadRepositoryMock
+            .Setup(x => x.GetByIdsAsync(It.IsAny<IEnumerable<Guid>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(
+            [
+                new UserProfileConversationParticipantDto(creatorId, "Creator", "creator.png"),
+                new UserProfileConversationParticipantDto(memberId, "Member", "member.png")
+            ]);
         _domainEventDispatcherMock
             .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<IDomainEvent>>(), It.IsAny<CancellationToken>()))
             .Callback<IEnumerable<IDomainEvent>, CancellationToken>((events, _) => dispatchedEvents.AddRange(events))
@@ -64,32 +76,41 @@ public sealed class CreateGroupConversationCommandHandlerTests
 
         result.IsSuccess.Should().BeTrue();
         result.Value.WasAlreadyProcessed.Should().BeFalse();
-        result.Value.Value.Should().Be(conversationId);
+        result.Value.Value.ConversationId.Should().Be(conversationId);
+        result.Value.Value.Name.Should().Be("Dev Team");
+        result.Value.Value.Participants.Should().HaveCount(2);
+        result.Value.Value.Participants.Select(p => p.UserId).Should().BeEquivalentTo([creatorId, memberId]);
         persisted.Should().NotBeNull();
         persisted!.Id.Value.Should().Be(conversationId);
-        persisted.Name.Should().Be("Dev Team");
-        persisted.CreatedByUserId.Should().Be(creatorId);
-        persisted.Participants.Select(p => p.UserId).Should().BeEquivalentTo([creatorId, memberId]);
         dispatchedEvents.OfType<ConversationCreatedDomainEvent>().Should().ContainSingle();
     }
 
     [Fact]
-    public async Task Handle_WhenConversationIdAlreadyExists_ReturnsExistingResponseWithoutDispatchingEvents()
+    public async Task Handle_WhenConversationIdAlreadyExists_ReturnsExistingDtoWithoutDispatchingEvents()
     {
         var conversationId = Guid.NewGuid();
         var creatorId = Guid.NewGuid();
         var memberId = Guid.NewGuid();
         var command = new CreateGroupConversationCommand(conversationId, creatorId, [creatorId, memberId], "Dev Team");
 
+        var existingDto = new GroupConversationDetailDto(
+            conversationId,
+            "Dev Team",
+            [
+                new ConversationParticipantDto(creatorId, "Creator", "creator.png", creatorId),
+                new ConversationParticipantDto(memberId, "Member", "member.png", memberId)
+            ]);
         List<IDomainEvent> dispatchedEvents = [];
 
-        _repositoryMock
+        _writeRepositoryMock
             .Setup(x => x.AddAsync(It.IsAny<GroupConversation>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new DbUpdateException("duplicate"));
         _dbUpdateExceptionClassifierMock
             .Setup(x => x.IsExpectedIdempotencyConflict(It.IsAny<DbUpdateException>(), CreateGroupConversationCommand.IdempotencyConflictKey))
             .Returns(true);
-
+        _readRepositoryMock
+            .Setup(x => x.GetByIdAsync(conversationId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(existingDto);
         _domainEventDispatcherMock
             .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<IDomainEvent>>(), It.IsAny<CancellationToken>()))
             .Callback<IEnumerable<IDomainEvent>, CancellationToken>((events, _) => dispatchedEvents.AddRange(events))
@@ -99,7 +120,10 @@ public sealed class CreateGroupConversationCommandHandlerTests
 
         result.IsSuccess.Should().BeTrue();
         result.Value.WasAlreadyProcessed.Should().BeTrue();
-        result.Value.Value.Should().Be(conversationId);
+        result.Value.Value.Should().Be(existingDto);
         dispatchedEvents.Should().BeEmpty();
+        _profileReadRepositoryMock.Verify(
+            x => x.GetByIdsAsync(It.IsAny<IEnumerable<Guid>>(), It.IsAny<CancellationToken>()),
+            Times.Never);
     }
 }

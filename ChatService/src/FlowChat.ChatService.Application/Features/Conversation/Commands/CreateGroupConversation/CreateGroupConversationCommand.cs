@@ -1,3 +1,4 @@
+using FlowChat.ChatService.Application.Features.Conversation.Dtos;
 using FlowChat.Core.Results;
 using FlowChat.Shared.Application;
 
@@ -7,7 +8,7 @@ public sealed record CreateGroupConversationCommand(
     Guid ConversationId,
     Guid CreatedByUserId,
     IReadOnlyCollection<Guid> ParticipantUserIds,
-    string Name) : ICommand<IdempotentCommandResult<Guid>>
+    string Name) : ICommand<IdempotentCommandResult<GroupConversationDetailDto>>
 {
     public const string IdempotencyConflictKey = nameof(CreateGroupConversationCommand);
 }
