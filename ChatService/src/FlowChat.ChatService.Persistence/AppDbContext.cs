@@ -1,11 +1,10 @@
 using System.Data.Common;
 using FlowChat.ChatService.Domain.Entities.ChatMessage;
 using FlowChat.ChatService.Domain.Entities.Conversation;
-using FlowChat.ChatService.Persistence.ReadModels;
+using FlowChat.ChatService.Persistence.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Silverback.Messaging.Producing.TransactionalOutbox;
-using DuetConversationReadModel = FlowChat.ChatService.Persistence.ReadModels.DuetConversation;
 
 namespace FlowChat.ChatService.Persistence;
 
@@ -28,7 +27,7 @@ public sealed class AppDbContext : DbContext
     public DbSet<Conversation> Conversations => Set<Conversation>();
     public DbSet<SilverbackOutboxMessage> SilverbackOutboxMessages => Set<SilverbackOutboxMessage>();
     public DbSet<UserProfileProjection> UserProfileProjections => Set<UserProfileProjection>();
-    public DbSet<DuetConversationReadModel> DuetConversations => Set<DuetConversationReadModel>();
+    public DbSet<DuetConversationLookup> DuetConversations => Set<DuetConversationLookup>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

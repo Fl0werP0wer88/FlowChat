@@ -1,4 +1,4 @@
-using FlowChat.ChatService.Persistence.ReadModels;
+using FlowChat.ChatService.Persistence.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 

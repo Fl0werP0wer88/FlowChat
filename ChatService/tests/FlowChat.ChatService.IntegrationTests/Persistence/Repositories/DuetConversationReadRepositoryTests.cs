@@ -1,14 +1,13 @@
 using FlowChat.ChatService.Application.Features.Conversation.Dtos;
 using FlowChat.ChatService.Domain.Entities.Conversation;
 using FlowChat.ChatService.Persistence;
-using FlowChat.ChatService.Persistence.ReadModels;
+using FlowChat.ChatService.Persistence.Entities;
 using FlowChat.ChatService.Persistence.Repositories;
 using FlowChat.Shared.Domain;
 using FlowChat.Shared.Persistance.Auditing;
 using FluentAssertions;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
-using DuetConversationReadModel = FlowChat.ChatService.Persistence.ReadModels.DuetConversation;
 
 namespace FlowChat.ChatService.IntegrationTests.Persistence.Repositories;
 
@@ -117,11 +116,11 @@ public sealed class DuetConversationReadRepositoryTests
         result.Should().BeNull();
     }
 
-    private static DuetConversationReadModel CreateDuetConversation(Guid userId1, Guid userId2, Guid conversationId)
+    private static DuetConversationLookup CreateDuetConversation(Guid userId1, Guid userId2, Guid conversationId)
     {
         var (first, second) = Normalize(userId1, userId2);
 
-        return new DuetConversationReadModel
+        return new DuetConversationLookup
         {
             FirstUserId = first,
             SecondUserId = second,

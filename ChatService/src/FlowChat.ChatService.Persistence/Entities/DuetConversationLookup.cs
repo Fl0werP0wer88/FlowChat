@@ -1,9 +1,9 @@
 using FlowChat.ChatService.Domain.Entities.Conversation;
 using FlowChat.Shared.Domain;
 
-namespace FlowChat.ChatService.Persistence.ReadModels;
+namespace FlowChat.ChatService.Persistence.Entities;
 
-public sealed class DuetConversation
+public sealed class DuetConversationLookup
 {
     public Guid FirstUserId { get; set; }
     public Guid SecondUserId { get; set; }

@@ -1,4 +1,4 @@
-namespace FlowChat.ChatService.Persistence.ReadModels;
+namespace FlowChat.ChatService.Persistence.Entities;
 
 public sealed class UserProfileProjection
 {

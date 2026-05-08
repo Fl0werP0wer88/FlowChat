@@ -1,6 +1,6 @@
 using FlowChat.ChatService.Application.Contracts.Persistence;
+using FlowChat.ChatService.Persistence.Entities;
 using DuetConversationAggregate = FlowChat.ChatService.Domain.Entities.Conversation.DuetConversation;
-using DuetConversationEntity = FlowChat.ChatService.Persistence.ReadModels.DuetConversation;
 
 namespace FlowChat.ChatService.Persistence.Repositories;
 
@@ -15,7 +15,7 @@ public sealed class DuetConversationWriteRepository(AppDbContext dbContext) : ID
 
         await dbContext.Set<DuetConversationAggregate>().AddAsync(conversation, cancellationToken);
 
-        dbContext.DuetConversations.Add(new DuetConversationEntity
+        dbContext.DuetConversations.Add(new DuetConversationLookup
         {
             FirstUserId = first,
             SecondUserId = second,
