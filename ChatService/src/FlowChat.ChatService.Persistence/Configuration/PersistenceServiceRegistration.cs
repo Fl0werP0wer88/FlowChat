@@ -1,6 +1,7 @@
 using FlowChat.Shared.Application;
 using FlowChat.ChatService.Application.Contracts.Persistence;
 using FlowChat.ChatService.Application.Features.ChatMessage.Commands.SendChatMessage;
+using FlowChat.ChatService.Application.Features.Conversation.Commands.AddParticipant;
 using FlowChat.ChatService.Application.Features.Conversation.Commands.CreateDuetConversation;
 using FlowChat.ChatService.Application.Features.Conversation.Commands.CreateGroupConversation;
 using FlowChat.ChatService.Application.Features.UserProfile.Commands.InsertUserProfileProjection;
@@ -29,6 +30,8 @@ public static class PersistenceServiceRegistration
                 ["PK_Conversations"];
             options.UniqueConstraintNamesByIdempotencyConflictKey[CreateDuetConversationCommand.IdempotencyConflictKey] =
                 ["PK_DuetConversations"];
+            options.UniqueConstraintNamesByIdempotencyConflictKey[AddParticipantCommand.IdempotencyConflictKey] =
+                ["IX_ParticipantUsers_ConversationId_UserId"];
         });
         services.AddScoped<IUnitOfWork, SilverbackEfUnitOfWork<AppDbContext>>();
         services.AddDbContext<AppDbContext>((serviceProvider, options) =>

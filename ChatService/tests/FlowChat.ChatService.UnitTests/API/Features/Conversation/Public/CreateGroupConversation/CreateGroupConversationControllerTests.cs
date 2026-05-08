@@ -62,7 +62,10 @@ public sealed class CreateGroupConversationControllerTests
         createdResult.StatusCode.Should().Be(StatusCodes.Status201Created);
         var response = createdResult.Value.Should().BeOfType<CreateGroupConversationResponse>().Subject;
         response.ConversationId.Should().Be(conversationId);
-        capturedCommand.Should().Be(new CreateGroupConversationCommand(conversationId, creatorId, [creatorId, memberId], "Dev Team"));
+        capturedCommand!.ConversationId.Should().Be(conversationId);
+        capturedCommand.CreatedByUserId.Should().Be(creatorId);
+        capturedCommand.Name.Should().Be("Dev Team");
+        capturedCommand.ParticipantUserIds.Should().BeEquivalentTo(new[] { creatorId, memberId });
     }
 
     [Fact]

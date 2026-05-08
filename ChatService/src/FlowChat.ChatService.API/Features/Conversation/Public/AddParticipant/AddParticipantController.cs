@@ -18,9 +18,9 @@ public sealed class AddParticipantController : ApiControllerBase
 
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status202Accepted)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> AddParticipant(
         [FromRoute] Guid conversationId,
@@ -31,8 +31,12 @@ public sealed class AddParticipantController : ApiControllerBase
             new AddParticipantCommand(conversationId, request.ParticipantUserId),
             cancellationToken);
 
-        return result.IsSuccess
+        if (!result.IsSuccess)
+            return HandleError(result.Error);
+
+        // Value=true: newly added. Value=false (or WasAlreadyProcessed): participant already existed.
+        return result.Value.Value
             ? Accepted()
-            : HandleError(result.Error);
+            : Ok();
     }
 }
