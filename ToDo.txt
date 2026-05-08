@@ -20,3 +20,4 @@
 10. jest literówka w nazwie projektu w common Persistance. Powinno być Persistence. zrobic rename
 11. Ustalić politykę EnableRetryOnFailure dla transakcji UOW. Wypdałoby żeby np. concurrency error były re-tryowane.
 12. REtry topicki (I może nawet DLQ) nir mogą być per IntegrationEvent a raczej minimalnie per konsumujący serwis. W przeciwnym razie jak jest kilku konsumentów i  jeden wrzuci na topic retry to wtedy wszystkie będą re-procesowały event.
+13. Rozważyć pozbycie się ReadRepositoryBase i WriteRepositoryBase . One nie daja zbytnio dużo uzysku. Wszystko i tak jest zazwyczaj overridowane
