@@ -45,7 +45,7 @@ public sealed class CreateDuetConversationController : ApiControllerBase
         var response = new CreateDuetConversationResponse(
             conversation.ConversationId,
             [.. conversation.Participants.Select(p => new ParticipantResponse(
-                p.UserId, p.DisplayName, p.AvatarUrl, p.FriendlyUserId))]);
+                p.UserId, p.DisplayName, p.AvatarUrl, p.ParticipantUserId))]);
 
         return !result.Value.WasAlreadyProcessed
             ? StatusCode(StatusCodes.Status201Created, response)

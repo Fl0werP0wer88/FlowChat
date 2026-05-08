@@ -10,4 +10,4 @@ public sealed record ParticipantResponse(
     Guid UserId,
     string? DisplayName,
     string? AvatarUrl,
-    string FriendlyUserId);
+    Guid ParticipantUserId);

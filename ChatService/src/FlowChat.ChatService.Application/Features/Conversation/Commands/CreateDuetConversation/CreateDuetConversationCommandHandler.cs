@@ -50,7 +50,7 @@ public sealed class CreateDuetConversationCommandHandler
                     userId,
                     profile?.DisplayName,
                     profile?.AvatarUrl,
-                    profile?.FriendlyUserId ?? string.Empty);
+                    userId);
             })
             .ToList();
 

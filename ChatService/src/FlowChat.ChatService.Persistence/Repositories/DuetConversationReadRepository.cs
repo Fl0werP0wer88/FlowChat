@@ -60,8 +60,7 @@ public sealed class DuetConversationReadRepository(AppDbContext dbContext) : IDu
                 duet.ConversationId.Value,
                 participant.UserId,
                 profile == null ? null : profile.DisplayName,
-                profile == null ? null : profile.AvatarUrl,
-                profile == null ? null : profile.FriendlyUserId))
+                profile == null ? null : profile.AvatarUrl))
             .ToListAsync(cancellationToken);
 
         if (rows.Count != 2)
@@ -77,7 +76,7 @@ public sealed class DuetConversationReadRepository(AppDbContext dbContext) : IDu
                 x.UserId,
                 x.DisplayName,
                 x.AvatarUrl,
-                x.FriendlyUserId ?? string.Empty));
+                x.UserId));
 
         if (!participants.TryGetValue(requestingUserId, out var requestingParticipant))
         {
@@ -98,6 +97,5 @@ public sealed class DuetConversationReadRepository(AppDbContext dbContext) : IDu
         Guid ConversationId,
         Guid UserId,
         string? DisplayName,
-        string? AvatarUrl,
-        string? FriendlyUserId);
+        string? AvatarUrl);
 }
