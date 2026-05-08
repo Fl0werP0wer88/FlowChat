@@ -37,15 +37,10 @@ public sealed class CreateGroupConversationCommandHandler
         return FlowChatResult<Guid>.Success(_conversation.Id.Value);
     }
 
-    protected override async Task<(bool Found, Guid Value)> TryGetExistingResponseAsync(
+    protected override Task<(bool Found, Guid Value)> TryGetExistingResponseAsync(
         CreateGroupConversationCommand request,
         CancellationToken cancellationToken)
-    {
-        var existing = await _conversationRepository.GetByIdAsync(request.ConversationId, cancellationToken);
-        return existing is not null
-            ? (true, existing.Id.Value)
-            : (false, default);
-    }
+        => Task.FromResult((true, request.ConversationId));
 
     protected override IAggregateRoot? GetExecutedAggregateRoot(IdempotentCommandResult<Guid> result) =>
         _conversation;

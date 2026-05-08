@@ -81,13 +81,6 @@ public sealed class CreateGroupConversationCommandHandlerTests
         var memberId = Guid.NewGuid();
         var command = new CreateGroupConversationCommand(conversationId, creatorId, [creatorId, memberId], "Dev Team");
 
-        var existing = GroupConversation.Create(
-            Id<FlowChat.ChatService.Domain.Entities.Conversation.Conversation>.FromGuid(conversationId),
-            creatorId,
-            [creatorId, memberId],
-            "Dev Team");
-        existing.ClearEvents();
-
         List<IDomainEvent> dispatchedEvents = [];
 
         _repositoryMock
@@ -96,9 +89,6 @@ public sealed class CreateGroupConversationCommandHandlerTests
         _dbUpdateExceptionClassifierMock
             .Setup(x => x.IsExpectedIdempotencyConflict(It.IsAny<DbUpdateException>(), CreateGroupConversationCommand.IdempotencyConflictKey))
             .Returns(true);
-        _repositoryMock
-            .Setup(x => x.GetByIdAsync(conversationId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(existing);
 
         _domainEventDispatcherMock
             .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<IDomainEvent>>(), It.IsAny<CancellationToken>()))
