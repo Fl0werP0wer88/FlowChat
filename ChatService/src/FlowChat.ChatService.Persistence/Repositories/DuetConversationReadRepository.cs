@@ -59,8 +59,12 @@ public sealed class DuetConversationReadRepository(AppDbContext dbContext) : IDu
             select new DuetConversationParticipantRow(
                 duet.ConversationId.Value,
                 participant.UserId,
-                profile == null ? null : profile.DisplayName,
-                profile == null ? null : profile.AvatarUrl))
+                string.IsNullOrEmpty(participant.DisplayName)
+                    ? (profile == null ? null : profile.DisplayName)
+                    : participant.DisplayName,
+                string.IsNullOrEmpty(participant.AvatarUrl)
+                    ? (profile == null ? null : profile.AvatarUrl)
+                    : participant.AvatarUrl))
             .ToListAsync(cancellationToken);
 
         if (rows.Count != 2)
