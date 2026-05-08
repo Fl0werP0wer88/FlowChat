@@ -7,6 +7,8 @@ public sealed class ParticipantUser : EntityBase<ParticipantUser>
 {
     public Id<Conversation> ConversationId { get; private set; }
     public Guid UserId { get; private set; }
+    public string? DisplayedName { get; private set; }
+    public string? AvatarUrl { get; private set; }
     public bool IsBlocked { get; private set; }
     public UtcDateTimeOffset JoinedAtUtc { get; private set; }
 
@@ -14,6 +16,8 @@ public sealed class ParticipantUser : EntityBase<ParticipantUser>
         Id<ParticipantUser> id,
         Id<Conversation> conversationId,
         Guid userId,
+        string? displayedName,
+        string? avatarUrl,
         bool isBlocked,
         UtcDateTimeOffset joinedAtUtc) : base(id)
     {
@@ -24,6 +28,8 @@ public sealed class ParticipantUser : EntityBase<ParticipantUser>
 
         ConversationId = conversationId;
         UserId = userId;
+        DisplayedName = displayedName;
+        AvatarUrl = avatarUrl;
         IsBlocked = isBlocked;
         JoinedAtUtc = joinedAtUtc;
     }
@@ -31,12 +37,16 @@ public sealed class ParticipantUser : EntityBase<ParticipantUser>
     public static ParticipantUser Create(
         Id<ParticipantUser> id,
         Id<Conversation> conversationId,
-        Guid userId)
+        Guid userId,
+        string? displayedName = null,
+        string? avatarUrl = null)
     {
         return new ParticipantUser(
             id,
             conversationId,
             userId,
+            displayedName,
+            avatarUrl,
             isBlocked: false,
             UtcDateTimeOffset.UtcNow);
     }
@@ -45,10 +55,12 @@ public sealed class ParticipantUser : EntityBase<ParticipantUser>
         Id<ParticipantUser> id,
         Id<Conversation> conversationId,
         Guid userId,
+        string? displayedName,
+        string? avatarUrl,
         bool isBlocked,
         UtcDateTimeOffset joinedAtUtc)
     {
-        return new ParticipantUser(id, conversationId, userId, isBlocked, joinedAtUtc);
+        return new ParticipantUser(id, conversationId, userId, displayedName, avatarUrl, isBlocked, joinedAtUtc);
     }
 
     internal void Block()

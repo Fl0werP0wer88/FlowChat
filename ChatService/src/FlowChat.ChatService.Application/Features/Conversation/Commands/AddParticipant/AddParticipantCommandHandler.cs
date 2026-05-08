@@ -40,7 +40,7 @@ public sealed class AddParticipantCommandHandler
         if (_conversation.Participants.Any(p => p.UserId == request.ParticipantUserId))
             return FlowChatResult<Unit>.Failure(DomainError.Conflict("User is already a participant in this conversation."));
 
-        _conversation.AddParticipant(request.ParticipantUserId);
+        _conversation.AddParticipant(request.ParticipantUserId, displayedName: null, avatarUrl: null);
 
         await _conversationRepository.UpdateAsync(_conversation, cancellationToken);
 

@@ -23,6 +23,12 @@ public sealed class ParticipantUserConfiguration : IEntityTypeConfiguration<Part
         builder.Property(x => x.UserId)
             .IsRequired();
 
+        builder.Property(x => x.DisplayedName)
+            .HasMaxLength(256);
+
+        builder.Property(x => x.AvatarUrl)
+            .HasMaxLength(2048);
+
         builder.Property(x => x.IsBlocked)
             .IsRequired();
 

@@ -87,7 +87,7 @@ public abstract class Conversation : AggregateRootBase<Conversation>
         return factory(id, type, name, createdByUserId, [.. participants]);
     }
 
-    protected void AddParticipantCore(Guid participantUserId)
+    protected void AddParticipantCore(Guid participantUserId, string? displayedName, string? avatarUrl)
     {
         if (Type != ConversationType.Group)
             throw new InvalidOperationException("Cannot add participants to a one-on-one conversation.");
@@ -98,7 +98,7 @@ public abstract class Conversation : AggregateRootBase<Conversation>
         if (_participants.Any(p => p.UserId == participantUserId))
             throw new InvalidOperationException("User is already a participant in this conversation.");
 
-        _participants.Add(ParticipantUser.Create(Id<ParticipantUser>.New(), Id, participantUserId));
+        _participants.Add(ParticipantUser.Create(Id<ParticipantUser>.New(), Id, participantUserId, displayedName, avatarUrl));
 
         AddDomainEvent(new ParticipantAddedDomainEvent(Id, participantUserId));
 
