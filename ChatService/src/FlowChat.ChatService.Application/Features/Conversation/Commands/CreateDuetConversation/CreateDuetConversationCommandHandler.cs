@@ -1,5 +1,6 @@
 using FlowChat.ChatService.Application.Contracts.Persistence;
 using FlowChat.ChatService.Application.Features.Conversation.Dtos;
+using FlowChat.ChatService.Domain.Entities.Conversation;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
 using DuetConversationAggregate = FlowChat.ChatService.Domain.Entities.Conversation.DuetConversation;
@@ -38,24 +39,30 @@ public sealed class CreateDuetConversationCommandHandler
 
         await _duetConversationWriteRepository.AddAsync(_newConversation, cancellationToken);
 
-        IReadOnlyCollection<Guid> participantUserIds = [request.RequestingUserId, request.PartnerUserId];
-
+        var participantUserIds = _newConversation.Participants.Select(p => p.UserId).ToList();
         var profiles = await _profileReadRepository.GetByIdsAsync(participantUserIds, cancellationToken);
 
-        var participantDtos = participantUserIds
-            .Select(userId =>
+        var participantDtos = _newConversation.Participants
+            .Select(participant =>
             {
-                var profile = profiles.FirstOrDefault(p => p.UserId == userId);
-                return new ConversationParticipantDto(
-                    userId,
-                    profile?.DisplayName,
-                    profile?.AvatarUrl,
-                    userId);
+                var profile = profiles.FirstOrDefault(p => p.UserId == participant.UserId);
+                return BuildParticipantDto(participant, profile);
             })
             .ToList();
 
         return FlowChatResult<DuetConversationDetailDto>.Success(
             new DuetConversationDetailDto(_newConversation.Id.Value, participantDtos));
+    }
+
+    private static ConversationParticipantDto BuildParticipantDto(
+        ParticipantUser participant,
+        ConversationParticipantDto? profile)
+    {
+        return new ConversationParticipantDto(
+            participant.UserId,
+            string.IsNullOrEmpty(participant.DisplayName) ? profile?.DisplayName : participant.DisplayName,
+            string.IsNullOrEmpty(participant.AvatarUrl) ? profile?.AvatarUrl : participant.AvatarUrl,
+            participant.UserId);
     }
 
     protected override async Task<(bool Found, DuetConversationDetailDto Value)> TryGetExistingResponseAsync(
