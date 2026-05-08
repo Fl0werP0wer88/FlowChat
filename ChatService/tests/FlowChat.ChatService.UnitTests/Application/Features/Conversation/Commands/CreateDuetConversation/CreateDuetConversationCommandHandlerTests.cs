@@ -67,9 +67,6 @@ public sealed class CreateDuetConversationCommandHandlerTests
         result.IsSuccess.Should().BeTrue();
         result.Value.WasCreated.Should().BeFalse();
         result.Value.Conversation.Should().Be(existingConversation);
-        _duetConversationReadRepositoryMock.Verify(
-            x => x.FindConversationIdAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<CancellationToken>()),
-            Times.Never);
         _duetConversationWriteRepositoryMock.Verify(
             x => x.AddAsync(
                 It.IsAny<DuetConversation>(),
@@ -82,33 +79,6 @@ public sealed class CreateDuetConversationCommandHandlerTests
     }
 
     [Fact]
-    public async Task Handle_WhenReadModelIsMissingButDuetEntryExists_ReturnsNotFound()
-    {
-        var command = new CreateDuetConversationCommand(Guid.NewGuid(), Guid.NewGuid());
-
-        _duetConversationReadRepositoryMock
-            .Setup(x => x.GetByUserIdsAsync(command.RequestingUserId, command.PartnerUserId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync((DuetConversationDetailDto?)null);
-        _duetConversationReadRepositoryMock
-            .Setup(x => x.FindConversationIdAsync(command.RequestingUserId, command.PartnerUserId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Guid.NewGuid());
-
-        var result = await _handler.Handle(command, CancellationToken.None);
-
-        result.IsFailure.Should().BeTrue();
-        result.Error.ErrorType.Should().Be(ErrorType.NotFound);
-        result.Error.ErrorMessage.Should().Be("Conversation not found.");
-        _duetConversationWriteRepositoryMock.Verify(
-            x => x.AddAsync(
-                It.IsAny<DuetConversation>(),
-                It.IsAny<CancellationToken>()),
-            Times.Never);
-        _userProfileProjectionReadRepositoryMock.Verify(
-            x => x.GetByIdsAsync(It.IsAny<IEnumerable<Guid>>(), It.IsAny<CancellationToken>()),
-            Times.Never);
-    }
-
-    [Fact]
     public async Task Handle_WhenDuetConversationDoesNotExist_CreatesConversationAndDispatchesDomainEvents()
     {
         var command = new CreateDuetConversationCommand(Guid.NewGuid(), Guid.NewGuid());
@@ -118,9 +88,6 @@ public sealed class CreateDuetConversationCommandHandlerTests
         _duetConversationReadRepositoryMock
             .Setup(x => x.GetByUserIdsAsync(command.RequestingUserId, command.PartnerUserId, It.IsAny<CancellationToken>()))
             .ReturnsAsync((DuetConversationDetailDto?)null);
-        _duetConversationReadRepositoryMock
-            .Setup(x => x.FindConversationIdAsync(command.RequestingUserId, command.PartnerUserId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync((Guid?)null);
         _duetConversationWriteRepositoryMock
             .Setup(x => x.AddAsync(
                 It.IsAny<DuetConversation>(),

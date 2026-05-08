@@ -31,6 +31,7 @@ public sealed class CreateDuetConversationCommandHandler
         CreateDuetConversationCommand request,
         CancellationToken cancellationToken)
     {
+        // Idempotent path: if the projection is ready, return it immediately without creating a duplicate.
         var existingConversation = await _duetConversationReadRepository.GetByUserIdsAsync(
             request.RequestingUserId,
             request.PartnerUserId,
@@ -42,18 +43,7 @@ public sealed class CreateDuetConversationCommandHandler
                 new CreateDuetConversationResult(existingConversation, WasCreated: false));
         }
 
-        var existingConversationId = await _duetConversationReadRepository.FindConversationIdAsync(
-            request.RequestingUserId,
-            request.PartnerUserId,
-            cancellationToken);
-
-        if (existingConversationId.HasValue)
-        {
-            return FlowChatResult<CreateDuetConversationResult>.Failure(
-                DomainError.NotFound("Conversation not found."));
-        }
-
-        _newConversation = DuetConversation.Create(
+_newConversation = DuetConversation.Create(
             createdByUserId: request.RequestingUserId,
             partnerUserId: request.PartnerUserId);
 
