@@ -52,7 +52,7 @@ public sealed class FlowChatHttpClientBaseTests
     }
 
     [Fact]
-    public async Task SendAsync_WhenApiReturnsTransientProblemDetails_ThrowsHttpRequestException()
+    public async Task SendAsync_WhenApiReturnsTransientProblemDetails_ThrowsTransientException()
     {
         using var host = await CreateHostAsync(async context =>
         {
@@ -65,7 +65,7 @@ public sealed class FlowChatHttpClientBaseTests
 
         var client = new TestConsumerHttpClient(host.GetTestClient());
 
-        var exception = await Assert.ThrowsAsync<HttpRequestException>(() =>
+        var exception = await Assert.ThrowsAsync<TransientException>(() =>
             client.SendPingAsync(CancellationToken.None));
 
         exception.Message.Should().Contain("500");

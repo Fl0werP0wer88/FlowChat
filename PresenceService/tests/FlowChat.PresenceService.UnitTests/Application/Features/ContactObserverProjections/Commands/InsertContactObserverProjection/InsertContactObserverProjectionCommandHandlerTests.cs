@@ -1,4 +1,5 @@
 using AutoFixture;
+using FlowChat.Core.Results;
 using FlowChat.PresenceService.Application.Contracts.Persistence;
 using FlowChat.PresenceService.Application.Features.ContactObserverProjections;
 using FlowChat.PresenceService.Application.Features.ContactObserverProjections.Commands.InsertContactObserverProjection;
@@ -22,13 +23,13 @@ public sealed class InsertContactObserverProjectionCommandHandlerTests
     {
         _repositoryMock
             .Setup(x => x.InsertAsync(It.IsAny<ContactObserverProjectionDto>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true);
+            .Returns(Task.CompletedTask);
 
         _unitOfWorkMock
             .Setup(x => x.ExecuteInTransactionAsync(
-                It.IsAny<Func<CancellationToken, Task<FlowChatResult<Unit>>>>(),
+                It.IsAny<Func<CancellationToken, Task<FlowChatResult<IdempotentCommandResult<Unit>>>>>(),
                 It.IsAny<CancellationToken>()))
-            .Returns<Func<CancellationToken, Task<FlowChatResult<Unit>>>, CancellationToken>((operation, ct) => operation(ct));
+            .Returns<Func<CancellationToken, Task<FlowChatResult<IdempotentCommandResult<Unit>>>>, CancellationToken>((operation, ct) => operation(ct));
 
         _domainEventDispatcherMock
             .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<IDomainEvent>>(), It.IsAny<CancellationToken>()))
@@ -37,7 +38,8 @@ public sealed class InsertContactObserverProjectionCommandHandlerTests
         _handler = new InsertContactObserverProjectionCommandHandler(
             _repositoryMock.Object,
             _unitOfWorkMock.Object,
-            _domainEventDispatcherMock.Object);
+            _domainEventDispatcherMock.Object,
+            Mock.Of<IDbUpdateExceptionClassifier>());
     }
 
     [Fact]
@@ -48,7 +50,7 @@ public sealed class InsertContactObserverProjectionCommandHandlerTests
         _repositoryMock
             .Setup(x => x.InsertAsync(It.IsAny<ContactObserverProjectionDto>(), It.IsAny<CancellationToken>()))
             .Callback<ContactObserverProjectionDto, CancellationToken>((projection, _) => capturedProjection = projection)
-            .ReturnsAsync(true);
+            .Returns(Task.CompletedTask);
 
         var observedUserId = _fixture.Create<Guid>();
         var observerUserId = _fixture.Create<Guid>();

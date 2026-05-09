@@ -26,6 +26,7 @@ public sealed class ApiSettingsManagerTests
         var services = new ServiceCollection();
         services.AddOptions();
         services.AddLogging();
+        services.AddSingleton<IConfiguration>(configuration);
         services.AddInfrastructureServices(configuration);
 
         using var serviceProvider = services.BuildServiceProvider();

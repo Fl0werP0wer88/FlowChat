@@ -1,4 +1,5 @@
 using FlowChat.Shared.Domain;
+using FlowChat.Core.Results;
 using FlowChat.UserProfileService.Api.Features.UserProfile.Internal.CreateInitialUserProfile;
 using FlowChat.UserProfileService.Application.Features.UserProfile.Commands.CreateInitialUserProfile;
 using FlowChat.UserProfileService.Infrastructure.Configuration.Settings;
@@ -19,7 +20,8 @@ public sealed class CreateInitialUserProfileControllerTests
     {
         _mediatorMock
             .Setup(x => x.Send(It.IsAny<CreateInitialUserProfileCommand>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(FlowChatResult<Guid>.Success(Guid.NewGuid()));
+            .ReturnsAsync(FlowChatResult<IdempotentCommandResult<Guid>>.Success(
+                new IdempotentCommandResult<Guid>(Guid.NewGuid(), WasAlreadyProcessed: false)));
     }
 
     private CreateInitialUserProfileController CreateController(string apiKey) =>
@@ -64,9 +66,13 @@ public sealed class CreateInitialUserProfileControllerTests
         SetupHttpContext(controller, "expected-key");
         CreateInitialUserProfileCommand? capturedCommand = null;
         _mediatorMock
-            .Setup(x => x.Send(It.IsAny<IRequest<FlowChatResult<Guid>>>(), It.IsAny<CancellationToken>()))
-            .Callback<IRequest<FlowChatResult<Guid>>, CancellationToken>((request, _) => capturedCommand = request as CreateInitialUserProfileCommand)
-            .ReturnsAsync(FlowChatResult<Guid>.Success(Guid.NewGuid()));
+            .Setup(x => x.Send(
+                It.IsAny<IRequest<FlowChatResult<IdempotentCommandResult<Guid>>>>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<IRequest<FlowChatResult<IdempotentCommandResult<Guid>>>, CancellationToken>(
+                (request, _) => capturedCommand = request as CreateInitialUserProfileCommand)
+            .ReturnsAsync(FlowChatResult<IdempotentCommandResult<Guid>>.Success(
+                new IdempotentCommandResult<Guid>(Guid.NewGuid(), WasAlreadyProcessed: false)));
 
         var userId = Guid.NewGuid();
 
@@ -81,7 +87,8 @@ public sealed class CreateInitialUserProfileControllerTests
             },
             CancellationToken.None);
 
-        result.Should().BeOfType<AcceptedResult>();
+        result.Should().BeOfType<StatusCodeResult>()
+            .Which.StatusCode.Should().Be(StatusCodes.Status201Created);
         capturedCommand.Should().NotBeNull();
         capturedCommand!.UserId.Should().Be(userId);
         capturedCommand.FriendlyUserId.Should().Be("jdoe");

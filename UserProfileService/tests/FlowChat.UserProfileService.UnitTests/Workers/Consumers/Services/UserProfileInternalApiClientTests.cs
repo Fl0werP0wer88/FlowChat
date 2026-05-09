@@ -71,7 +71,7 @@ public sealed class UserProfileInternalApiClientTests
     }
 
     [Fact]
-    public async Task CreateInitialUserProfileAsync_WhenApiReturnsTransientProblemDetails_ThrowsHttpRequestException()
+    public async Task CreateInitialUserProfileAsync_WhenApiReturnsTransientProblemDetails_ThrowsTransientException()
     {
         var handler = new CapturingHttpMessageHandler((_, _) =>
             Task.FromResult(new HttpResponseMessage(HttpStatusCode.InternalServerError)
@@ -86,7 +86,7 @@ public sealed class UserProfileInternalApiClientTests
             BaseAddress = new Uri("https://localhost:7148")
         });
 
-        var exception = await Assert.ThrowsAsync<HttpRequestException>(() =>
+        var exception = await Assert.ThrowsAsync<TransientException>(() =>
             client.CreateInitialUserProfileAsync(new CreateInitialUserProfileRequest(), CancellationToken.None));
 
         exception.Message.Should().Contain("500");

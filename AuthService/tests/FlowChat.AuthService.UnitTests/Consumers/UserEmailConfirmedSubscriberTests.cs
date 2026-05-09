@@ -121,7 +121,7 @@ public sealed class UserEmailConfirmedSubscriberTests
     }
 
     [Fact]
-    public async Task HandleAsync_WhenInternalApiThrowsUnexpectedException_RethrowsAndLogsWarning()
+    public async Task HandleAsync_WhenInternalApiThrowsTransientException_RethrowsAndLogsWarning()
     {
         var message = new UserEmailConfirmedIntegrationEvent
         {
@@ -136,11 +136,11 @@ public sealed class UserEmailConfirmedSubscriberTests
 
         _internalApiClientMock
             .Setup(x => x.ConfirmEmailAsync(It.IsAny<AuthEmailConfirmationRequest>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new HttpRequestException("boom"));
+            .ThrowsAsync(new TransientException("boom"));
 
         var act = () => _subscriber.HandleAsync(message.ToInboundEnvelope(), CancellationToken.None);
 
-        await act.Should().ThrowAsync<HttpRequestException>()
+        await act.Should().ThrowAsync<TransientException>()
             .WithMessage("boom");
 
         VerifyLog(LogLevel.Warning, "Transient failure while handling UserEmailConfirmedIntegrationEvent in UserEmailConfirmedSubscriber.");

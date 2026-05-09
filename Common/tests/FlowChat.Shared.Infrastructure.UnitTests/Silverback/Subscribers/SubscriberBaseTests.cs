@@ -31,7 +31,7 @@ public sealed class SubscriberBaseTests
     }
 
     [Fact]
-    public async Task HandleAsync_WhenExecuteThrowsUnexpectedException_LogsWarningAndRethrows()
+    public async Task HandleAsync_WhenExecuteThrowsUnexpectedException_LogsErrorAndRethrows()
     {
         var loggerMock = new Mock<ILogger<TestSubscriber>>();
         var subscriber = new TestSubscriber(
@@ -43,7 +43,7 @@ public sealed class SubscriberBaseTests
         await act.Should().ThrowAsync<InvalidOperationException>()
             .WithMessage("boom");
 
-        VerifyLog(loggerMock, LogLevel.Warning, "Transient failure while handling TestIntegrationEvent in TestSubscriber.");
+        VerifyLog(loggerMock, LogLevel.Error, "Unexpected failure while handling TestIntegrationEvent in TestSubscriber.");
     }
 
     [Fact]
