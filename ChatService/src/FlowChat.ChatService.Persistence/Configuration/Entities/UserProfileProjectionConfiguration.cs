@@ -8,7 +8,7 @@ public sealed class UserProfileProjectionEntityConfiguration : IEntityTypeConfig
 {
     public void Configure(EntityTypeBuilder<UserProfileProjectionEntity> builder)
     {
-        builder.ToTable("UserProfileProjectionEntitys");
+        builder.ToTable("UserProfileProjections");
         builder.HasKey(x => x.UserId);
 
         builder.Property(x => x.UserId)

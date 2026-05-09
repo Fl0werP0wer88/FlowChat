@@ -174,7 +174,7 @@ namespace FlowChat.ChatService.Persistence.Migrations
                     b.ToTable("ParticipantUsers", (string)null);
                 });
 
-            modelBuilder.Entity("FlowChat.ChatService.Persistence.ReadModels.DuetConversation", b =>
+            modelBuilder.Entity("FlowChat.ChatService.Persistence.Entities.DuetConversationLookupEntity", b =>
                 {
                     b.Property<Guid>("FirstUserId")
                         .HasColumnType("uuid");
@@ -192,7 +192,7 @@ namespace FlowChat.ChatService.Persistence.Migrations
                     b.ToTable("DuetConversations", (string)null);
                 });
 
-            modelBuilder.Entity("FlowChat.ChatService.Persistence.ReadModels.UserProfileProjection", b =>
+            modelBuilder.Entity("FlowChat.ChatService.Persistence.Entities.UserProfileProjectionEntity", b =>
                 {
                     b.Property<Guid>("UserId")
                         .ValueGeneratedOnAdd()
@@ -284,7 +284,7 @@ namespace FlowChat.ChatService.Persistence.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("FlowChat.ChatService.Persistence.ReadModels.DuetConversation", b =>
+            modelBuilder.Entity("FlowChat.ChatService.Persistence.Entities.DuetConversationLookupEntity", b =>
                 {
                     b.HasOne("FlowChat.ChatService.Domain.Entities.Conversation.Conversation", null)
                         .WithMany()
