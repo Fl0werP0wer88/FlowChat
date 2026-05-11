@@ -2,6 +2,7 @@ import { putJson } from "../../api/httpClient";
 
 interface OpenDuetConversationPayload {
   partnerUserId: string;
+  knownConversationId: string | null;
 }
 
 interface ConversationParticipantDto {
@@ -92,12 +93,16 @@ function mapMessage(dto: ConversationMessageDto): ConversationMessage {
 
 export async function openDuetConversation(
   partnerUserId: string,
+  knownConversationId: string | null,
   accessToken: string,
   signal?: AbortSignal,
 ): Promise<OpenDuetConversationResult> {
   const response = await putJson<OpenDuetConversationResponseDto, OpenDuetConversationPayload>(
     "/api/aggregate/conversations/duet/open",
-    { partnerUserId },
+    {
+      partnerUserId,
+      knownConversationId,
+    },
     {
       accessToken,
       signal,

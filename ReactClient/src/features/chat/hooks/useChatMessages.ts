@@ -102,7 +102,7 @@ export function useChatMessages(accessToken: string) {
     setIsLoadingConversation(true);
 
     try {
-      const result = await openDuetConversation(contact.userId, accessToken);
+      const result = await openDuetConversation(contact.userId, contact.conversationId, accessToken);
       const orderedMessages = [...result.messages].reverse();
 
       setActiveConversationId(result.conversationId);

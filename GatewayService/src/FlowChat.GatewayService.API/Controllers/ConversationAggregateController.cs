@@ -14,10 +14,14 @@ public sealed class ConversationAggregateController : ApiControllerBase
     private const int DefaultMessageLimit = 20;
 
     private readonly IChatServiceClient _chatClient;
+    private readonly ILogger<ConversationAggregateController> _logger;
 
-    public ConversationAggregateController(IChatServiceClient chatClient)
+    public ConversationAggregateController(
+        IChatServiceClient chatClient,
+        ILogger<ConversationAggregateController> logger)
     {
         _chatClient = chatClient ?? throw new ArgumentNullException(nameof(chatClient));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     [HttpPut("duet/open")]
@@ -44,10 +48,15 @@ public sealed class ConversationAggregateController : ApiControllerBase
             });
         }
 
-        var conversation = await _chatClient.GetDuetConversationAsync(
-            request.PartnerUserId,
-            cancellationToken)
-            ?? await _chatClient.CreateDuetConversationAsync(request.PartnerUserId, cancellationToken);
+        var conversation = await GetOrCreateConversationAsync(request.PartnerUserId, cancellationToken);
+        if (request.KnownConversationId.HasValue && request.KnownConversationId.Value != conversation.ConversationId)
+        {
+            _logger.LogInformation(
+                "Client known conversation id {KnownConversationId} differed from Chat Service conversation id {ConversationId} for partner {PartnerUserId}.",
+                request.KnownConversationId.Value,
+                conversation.ConversationId,
+                request.PartnerUserId);
+        }
 
         var messages = await _chatClient.GetConversationMessagesAsync(
             conversation.ConversationId,
@@ -74,4 +83,10 @@ public sealed class ConversationAggregateController : ApiControllerBase
 
         return Ok(response);
     }
+
+    private async Task<DuetConversationClientDto> GetOrCreateConversationAsync(
+        Guid partnerUserId,
+        CancellationToken cancellationToken) =>
+        await _chatClient.GetDuetConversationAsync(partnerUserId, cancellationToken)
+            ?? await _chatClient.CreateDuetConversationAsync(partnerUserId, cancellationToken);
 }
