@@ -48,19 +48,20 @@ public sealed class ConversationAggregateController : ApiControllerBase
             });
         }
 
-        var conversation = await GetOrCreateConversationAsync(request.PartnerUserId, cancellationToken);
-        if (request.KnownConversationId.HasValue && request.KnownConversationId.Value != conversation.ConversationId)
-        {
-            _logger.LogInformation(
-                "Client known conversation id {KnownConversationId} differed from Chat Service conversation id {ConversationId} for partner {PartnerUserId}.",
+        var conversationTask = GetOrCreateConversationAsync(request.PartnerUserId, cancellationToken);
+        var knownMessagesTask = request.KnownConversationId.HasValue
+            ? GetKnownConversationMessagesOrDefaultAsync(
                 request.KnownConversationId.Value,
-                conversation.ConversationId,
-                request.PartnerUserId);
-        }
+                request.PartnerUserId,
+                cancellationToken)
+            : Task.FromResult<ChatMessagesClientDto?>(null);
 
-        var messages = await _chatClient.GetConversationMessagesAsync(
-            conversation.ConversationId,
-            DefaultMessageLimit,
+        var conversation = await conversationTask;
+        var messages = await ResolveMessagesAsync(
+            conversation,
+            request.KnownConversationId,
+            knownMessagesTask,
+            request.PartnerUserId,
             cancellationToken);
 
         var response = new OpenDuetConversationResponse(
@@ -89,4 +90,62 @@ public sealed class ConversationAggregateController : ApiControllerBase
         CancellationToken cancellationToken) =>
         await _chatClient.GetDuetConversationAsync(partnerUserId, cancellationToken)
             ?? await _chatClient.CreateDuetConversationAsync(partnerUserId, cancellationToken);
+
+    private async Task<ChatMessagesClientDto> ResolveMessagesAsync(
+        DuetConversationClientDto conversation,
+        Guid? knownConversationId,
+        Task<ChatMessagesClientDto?> knownMessagesTask,
+        Guid partnerUserId,
+        CancellationToken cancellationToken)
+    {
+        if (knownConversationId.HasValue)
+        {
+            var knownMessages = await knownMessagesTask;
+            if (knownConversationId.Value == conversation.ConversationId && knownMessages is not null)
+            {
+                return knownMessages;
+            }
+
+            if (knownConversationId.Value != conversation.ConversationId)
+            {
+                _logger.LogInformation(
+                    "Client known conversation id {KnownConversationId} differed from Chat Service conversation id {ConversationId} for partner {PartnerUserId}.",
+                    knownConversationId.Value,
+                    conversation.ConversationId,
+                    partnerUserId);
+            }
+        }
+
+        return await _chatClient.GetConversationMessagesAsync(
+            conversation.ConversationId,
+            DefaultMessageLimit,
+            cancellationToken);
+    }
+
+    private async Task<ChatMessagesClientDto?> GetKnownConversationMessagesOrDefaultAsync(
+        Guid knownConversationId,
+        Guid partnerUserId,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await _chatClient.GetConversationMessagesAsync(
+                knownConversationId,
+                DefaultMessageLimit,
+                cancellationToken);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception exception)
+        {
+            _logger.LogInformation(
+                exception,
+                "Failed to prefetch messages for client known conversation id {KnownConversationId} and partner {PartnerUserId}. Falling back to Chat Service conversation lookup.",
+                knownConversationId,
+                partnerUserId);
+            return null;
+        }
+    }
 }
