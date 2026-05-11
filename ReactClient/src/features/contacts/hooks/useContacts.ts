@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { Contact } from "../../../types/contacts";
 import type { PresenceChangedEvent } from "../../../types/realtime";
+import { resolveOwnerUserId } from "../../../utils/authUtils";
 import { addContact, addContactByUserId, fetchContacts, searchUsers } from "../api";
 import type { SearchUserResult, SearchUsersCriteria } from "../api";
 
@@ -18,33 +19,11 @@ interface UseContactsResult {
   addContactByUserId: (userId: string) => Promise<boolean>;
   clearNotice: () => void;
   applyPresenceChanged: (payload: PresenceChangedEvent) => void;
+  updateContactConversationId: (contactUserId: string, conversationId: string) => void;
   searchUsers: (criteria: SearchUsersCriteria, signal?: AbortSignal) => Promise<SearchUserResult[]>;
 }
 
 type ContactPresenceMap = Record<string, Contact["status"]>;
-
-function decodeJwtPayload(accessToken: string): Record<string, unknown> | null {
-  const [, payload] = accessToken.split(".");
-  if (!payload) {
-    return null;
-  }
-
-  try {
-    const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
-    const paddedBase64 = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), "=");
-    const binary = atob(paddedBase64);
-    const bytes = Uint8Array.from(binary, (character) => character.charCodeAt(0));
-    return JSON.parse(new TextDecoder().decode(bytes)) as Record<string, unknown>;
-  } catch {
-    return null;
-  }
-}
-
-function resolveOwnerUserId(accessToken: string): string | null {
-  const payload = decodeJwtPayload(accessToken);
-  const subject = payload?.sub;
-  return typeof subject === "string" && subject.trim().length > 0 ? subject : null;
-}
 
 export function useContacts(accessToken: string): UseContactsResult {
   const [contacts, setContacts] = useState<Contact[]>([]);
@@ -124,6 +103,18 @@ export function useContacts(accessToken: string): UseContactsResult {
           ? {
             ...contact,
             status: payload.status,
+          }
+          : contact
+      ));
+  };
+
+  const updateContactConversationId = (contactUserId: string, conversationId: string) => {
+    setContacts((current) =>
+      current.map((contact) =>
+        contact.userId === contactUserId
+          ? {
+            ...contact,
+            conversationId,
           }
           : contact
       ));
@@ -217,6 +208,7 @@ export function useContacts(accessToken: string): UseContactsResult {
     addContactByUserId: addContactByUserIdAction,
     applyPresenceChanged,
     clearNotice,
+    updateContactConversationId,
     searchUsers: searchUsersAction,
   };
 }

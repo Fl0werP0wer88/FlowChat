@@ -5,6 +5,7 @@ import type { ManualUserStatus, UserStatus } from "../../../types/realtime";
 import type { SearchUserResult, SearchUsersCriteria } from "../api";
 
 interface ContactsPanelProps {
+  activeContactId: string | null;
   addContactNotice: { kind: "error" | "info"; message: string; } | null;
   contacts: Contact[];
   currentUserStatus: UserStatus;
@@ -14,6 +15,7 @@ interface ContactsPanelProps {
   onAddContact: (lookupValue: string) => Promise<boolean>;
   onAddContactByUserId: (userId: string) => Promise<boolean>;
   onChangePresenceStatus: (status: ManualUserStatus) => Promise<void>;
+  onContactClick: (contact: Contact) => void;
   onClearNotice: () => void;
   onSearchUsers: (criteria: SearchUsersCriteria, signal?: AbortSignal) => Promise<SearchUserResult[]>;
   presenceNotice: string | null;
@@ -22,6 +24,7 @@ interface ContactsPanelProps {
 const presenceOptions: ManualUserStatus[] = ["Active", "Busy", "Invisible"];
 
 export function ContactsPanel({
+  activeContactId,
   addContactNotice,
   contacts,
   currentUserStatus,
@@ -31,6 +34,7 @@ export function ContactsPanel({
   onAddContact,
   onAddContactByUserId,
   onChangePresenceStatus,
+  onContactClick,
   onClearNotice,
   onSearchUsers,
   presenceNotice,
@@ -243,13 +247,20 @@ export function ContactsPanel({
             <ul className="contacts-panel__list">
               {contacts.map((contact) => (
                 <li key={contact.id}>
-                  <span className={`status-dot status-${contact.status}`} />
-                  <span className="contacts-panel__contact-copy">
-                    <span className="contacts-panel__contact-name">{contact.displayName}</span>
-                    {contact.email
-                      ? <span className="contacts-panel__contact-email">{contact.email}</span>
-                      : null}
-                  </span>
+                  <button
+                    aria-current={activeContactId === contact.id ? "true" : undefined}
+                    className="contacts-panel__contact-button"
+                    onClick={() => onContactClick(contact)}
+                    type="button"
+                  >
+                    <span className={`status-dot status-${contact.status}`} />
+                    <span className="contacts-panel__contact-copy">
+                      <span className="contacts-panel__contact-name">{contact.displayName}</span>
+                      {contact.email
+                        ? <span className="contacts-panel__contact-email">{contact.email}</span>
+                        : null}
+                    </span>
+                  </button>
                 </li>
               ))}
             </ul>

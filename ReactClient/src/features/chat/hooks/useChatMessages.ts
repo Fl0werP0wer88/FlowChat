@@ -1,62 +1,84 @@
 import type { KeyboardEvent } from "react";
 import { useState } from "react";
 import type { ChatMessage, MessageSender } from "../../../types/chat";
+import type { Contact } from "../../../types/contacts";
 import type { RealtimeChatMessage } from "../../../types/realtime";
+import { resolveOwnerUserId } from "../../../utils/authUtils";
+import { openDuetConversation } from "../api";
+import type { ConversationMessage } from "../api";
 
 function createMessage(
   sender: MessageSender,
   text: string,
   createdAt = new Date().toISOString(),
   id: string = crypto.randomUUID(),
+  conversationId: string | null = null,
+  senderUserId: string | null = null,
+  senderDisplayName: string | null = null,
 ): ChatMessage {
   return {
     id,
+    conversationId,
+    senderUserId,
+    senderDisplayName,
     sender,
     text,
     createdAt,
   };
 }
 
-export function useChatMessages() {
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    createMessage("system", "Witaj w FlowChat. Po uruchomieniu backendu tutaj pojawi sie historia rozmow."),
-  ]);
-  const [draft, setDraft] = useState("");
+function mapConversationMessage(message: ConversationMessage, ownerUserId: string | null): ChatMessage {
+  const sender = ownerUserId && message.senderUserId === ownerUserId ? "me" : "other";
 
-  const appendMessage = (sender: MessageSender, text: string) => {
-    setMessages((current) => [...current, createMessage(sender, text)]);
-  };
+  return createMessage(
+    sender,
+    message.text,
+    message.sentAtUtc,
+    message.id,
+    message.conversationId,
+    message.senderUserId,
+    message.senderDisplayName,
+  );
+}
+
+export function useChatMessages(accessToken: string) {
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [draft, setDraft] = useState("");
+  const [activeContact, setActiveContact] = useState<Contact | null>(null);
+  const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
+  const [conversationError, setConversationError] = useState<string | null>(null);
+  const [isLoadingConversation, setIsLoadingConversation] = useState(false);
+  const ownerUserId = resolveOwnerUserId(accessToken);
 
   const receiveRealtimeMessage = (payload: RealtimeChatMessage) => {
+    if (payload.conversationId !== activeConversationId) {
+      return;
+    }
+
     setMessages((current) => {
       if (current.some((message) => message.id === payload.messageId)) {
         return current;
       }
 
+      const sender = ownerUserId && payload.senderUserId === ownerUserId ? "me" : "other";
+
       return [
         ...current,
         createMessage(
-          "other",
-          `${payload.senderDisplayName}: ${payload.text}`,
+          sender,
+          payload.text,
           payload.sentAtUtc,
           payload.messageId,
+          payload.conversationId,
+          payload.senderUserId,
+          payload.senderDisplayName,
         ),
       ];
     });
   };
 
   const sendDraft = () => {
-    const trimmedDraft = draft.trim();
-    if (!trimmedDraft) {
-      return;
-    }
-
-    appendMessage("me", trimmedDraft);
     setDraft("");
-
-    setTimeout(() => {
-      appendMessage("system", "Echo: backend chat endpoint nie jest jeszcze podpiety.");
-    }, 200);
   };
 
   const handleDraftKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
@@ -66,12 +88,51 @@ export function useChatMessages() {
     }
   };
 
+  const openContactConversation = async (
+    contact: Contact,
+    onConversationOpened?: (contactUserId: string, conversationId: string) => void,
+  ) => {
+    if (!accessToken || !ownerUserId) {
+      setConversationError("Brakuje aktywnej sesji potrzebnej do otwarcia rozmowy.");
+      return;
+    }
+
+    setActiveContact(contact);
+    setConversationError(null);
+    setIsLoadingConversation(true);
+
+    try {
+      const result = await openDuetConversation(contact.userId, accessToken);
+      const orderedMessages = [...result.messages].reverse();
+
+      setActiveConversationId(result.conversationId);
+      setActiveContact({
+        ...contact,
+        conversationId: result.conversationId,
+      });
+      setMessages(orderedMessages.map((message) => mapConversationMessage(message, ownerUserId)));
+      onConversationOpened?.(contact.userId, result.conversationId);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Nie udalo sie otworzyc rozmowy.";
+      setConversationError(message);
+      setMessages([]);
+      setActiveConversationId(null);
+    } finally {
+      setIsLoadingConversation(false);
+    }
+  };
+
   return {
     messages,
     draft,
+    activeContact,
+    activeConversationId,
+    conversationError,
+    isLoadingConversation,
     setDraft,
     sendDraft,
     handleDraftKeyDown,
     receiveRealtimeMessage,
+    openContactConversation,
   };
 }

@@ -14,7 +14,7 @@ interface ChatFeatureProps {
 
 export function ChatFeature({ accessToken, userLogin, onLogout }: ChatFeatureProps) {
   const contacts = useContacts(accessToken);
-  const chat = useChatMessages();
+  const chat = useChatMessages(accessToken);
   const presence = usePresenceStatus(accessToken);
   const realtime = useRealtimeConnection({
     accessToken,
@@ -27,6 +27,10 @@ export function ChatFeature({ accessToken, userLogin, onLogout }: ChatFeaturePro
       header={<ChatHeader userLogin={userLogin} realtimeStatus={realtime.status} onLogout={onLogout} />}
       conversation={
         <ConversationPanel
+          activeContact={chat.activeContact}
+          activeConversationId={chat.activeConversationId}
+          conversationError={chat.conversationError}
+          isLoadingConversation={chat.isLoadingConversation}
           messages={chat.messages}
           draft={chat.draft}
           onDraftChange={chat.setDraft}
@@ -38,6 +42,7 @@ export function ChatFeature({ accessToken, userLogin, onLogout }: ChatFeaturePro
         <ContactsPanel
           addContactNotice={contacts.notice}
           contacts={contacts.contacts}
+          activeContactId={chat.activeContact?.id ?? null}
           currentUserStatus={presence.currentStatus}
           isAddingContact={contacts.isAddingContact}
           isChangingPresenceStatus={presence.isUpdatingStatus}
@@ -45,6 +50,7 @@ export function ChatFeature({ accessToken, userLogin, onLogout }: ChatFeaturePro
           onAddContact={contacts.addContactByLookup}
           onAddContactByUserId={contacts.addContactByUserId}
           onChangePresenceStatus={presence.changeManualPresenceStatus}
+          onContactClick={(contact) => void chat.openContactConversation(contact, contacts.updateContactConversationId)}
           onClearNotice={contacts.clearNotice}
           onSearchUsers={contacts.searchUsers}
           presenceNotice={presence.errorMessage}
