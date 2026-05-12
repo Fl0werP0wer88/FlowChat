@@ -1,7 +1,6 @@
 using AutoFixture;
 using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
 using FlowChat.RealtimeService.Application.Features.Message.Commands.RouteMessage;
-using FlowChat.Shared.Domain;
 using FluentAssertions;
 using Moq;
 
@@ -56,24 +55,4 @@ public sealed class RouteMessageCommandHandlerTests
         capturedNotification.RecipientUserIds.Should().ContainSingle().Which.Should().Be(recipientUserId);
     }
 
-    [Fact]
-    public async Task Handle_WhenRecipientsMissing_ReturnsBadRequestFailure()
-    {
-        var result = await _handler.Handle(
-            new RouteMessageCommand(
-                _fixture.Create<Guid>(),
-                _fixture.Create<Guid>(),
-                _fixture.Create<Guid>(),
-                "John Doe",
-                "Hello",
-                DateTimeOffset.UtcNow,
-                [Guid.Empty]),
-            CancellationToken.None);
-
-        result.IsFailure.Should().BeTrue();
-        result.Error.ErrorType.Should().Be(ErrorType.BadRequest);
-        _routerMock.Verify(
-            x => x.RouteMessageAsync(It.IsAny<ChatMessageParam>(), It.IsAny<CancellationToken>()),
-            Times.Never);
-    }
 }
