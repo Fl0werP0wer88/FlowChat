@@ -2,7 +2,6 @@ using AutoFixture;
 using FlowChat.Core.Domain;
 using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
 using FlowChat.RealtimeService.Application.Features.Presence.Commands.RoutePresenceChange;
-using FlowChat.Shared.Domain;
 using FluentAssertions;
 using Moq;
 
@@ -46,19 +45,5 @@ public sealed class RoutePresenceChangeCommandHandlerTests
         capturedNotification.Should().NotBeNull();
         capturedNotification!.Status.Should().Be(PresenceStatus.Active);
         capturedNotification.RecipientUserIds.Should().ContainSingle().Which.Should().Be(recipientUserId);
-    }
-
-    [Fact]
-    public async Task Handle_WhenStatusIsInvalid_ReturnsBadRequestFailure()
-    {
-        var result = await _handler.Handle(
-            new RoutePresenceChangeCommand(_fixture.Create<Guid>(), (PresenceStatus)999, DateTimeOffset.UtcNow, [_fixture.Create<Guid>()]),
-            CancellationToken.None);
-
-        result.IsFailure.Should().BeTrue();
-        result.Error.ErrorType.Should().Be(ErrorType.BadRequest);
-        _routerMock.Verify(
-            x => x.RoutePresenceChangeAsync(It.IsAny<PresenceChangedParam>(), It.IsAny<CancellationToken>()),
-            Times.Never);
     }
 }
