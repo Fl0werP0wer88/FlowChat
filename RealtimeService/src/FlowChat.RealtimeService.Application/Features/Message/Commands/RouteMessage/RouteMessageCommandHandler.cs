@@ -59,6 +59,7 @@ public sealed class RouteMessageCommandHandler(
             request.SentAtUtc,
             recipientUserIds);
 
+        // ToDo: Maybe parallelize this with compensation if RouteMessageAsync fails.
         await _realtimeEventRouter.RouteMessageAsync(notification, cancellationToken);
         await _chatServiceInternalApiClient.MarkMessageProcessedAsync(request.MessageId, request.ConversationId, cancellationToken);
 
