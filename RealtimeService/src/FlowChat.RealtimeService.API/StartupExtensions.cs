@@ -1,7 +1,7 @@
 using System.Text.Json.Serialization;
 using FlowChat.RealtimeService.Api.Realtime;
 using FlowChat.RealtimeService.Application;
-using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
+using FlowChat.RealtimeService.Application.Contracts.Infrastructure;
 using FlowChat.RealtimeService.Infrastructure;
 using FlowChat.RealtimeService.Redis.Configuration.Settings;
 using FlowChat.Shared.API;

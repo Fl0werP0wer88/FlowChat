@@ -1,5 +1,5 @@
 using System.Security.Claims;
-using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
+using FlowChat.RealtimeService.Application.Contracts.Infrastructure;
 using FlowChat.RealtimeService.Application.Features.RealtimeConnection.Commands.RegisterRealtimeConnection;
 using FlowChat.RealtimeService.Application.Features.RealtimeConnection.Commands.UnregisterRealtimeConnection;
 using MediatR;

@@ -1,6 +1,6 @@
 using FlowChat.RealtimeService.Api;
 using FlowChat.RealtimeService.Api.Realtime;
-using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
+using FlowChat.RealtimeService.Application.Contracts.Infrastructure;
 using FlowChat.RealtimeService.Infrastructure.RealtimeConnections;
 using FlowChat.RealtimeService.Redis.RealtimeConnections;
 using FluentAssertions;

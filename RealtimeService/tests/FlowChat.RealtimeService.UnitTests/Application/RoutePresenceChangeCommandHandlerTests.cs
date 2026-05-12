@@ -1,6 +1,6 @@
 using AutoFixture;
 using FlowChat.Core.Domain;
-using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
+using FlowChat.RealtimeService.Application.Contracts.Infrastructure;
 using FlowChat.RealtimeService.Application.Features.Presence.Commands.RoutePresenceChange;
 using FluentAssertions;
 using Moq;

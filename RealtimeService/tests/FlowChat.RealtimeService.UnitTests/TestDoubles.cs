@@ -2,7 +2,7 @@ using System.Net;
 using System.Net.Http;
 using System.Security.Claims;
 using CSharpFunctionalExtensions;
-using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
+using FlowChat.RealtimeService.Application.Contracts.Infrastructure;
 using FlowChat.RealtimeService.Api.Realtime;
 using FlowChat.RealtimeService.Redis.RealtimeConnections;
 using FlowChat.Shared.Domain;
@@ -54,7 +54,7 @@ internal sealed class CapturingRealtimeInternalApiClient : IRealtimeInternalApiC
     }
 }
 
-internal sealed class CapturingRealtimeEventRouter : FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure.IRealtimeEventRouter
+internal sealed class CapturingRealtimeEventRouter : IRealtimeEventRouter
 {
     public ChatMessageParam? LastMessageNotification { get; private set; }
     public PresenceChangedParam? LastPresenceNotification { get; private set; }

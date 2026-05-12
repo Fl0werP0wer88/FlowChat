@@ -1,4 +1,4 @@
-namespace FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
+namespace FlowChat.RealtimeService.Application.Contracts.Infrastructure;
 
 public interface IRealtimeClientDispatcher
 {

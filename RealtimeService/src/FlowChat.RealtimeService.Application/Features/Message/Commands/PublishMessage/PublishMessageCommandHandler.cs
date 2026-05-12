@@ -1,6 +1,6 @@
 using CSharpFunctionalExtensions;
 using FlowChat.Shared.Application;
-using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
+using FlowChat.RealtimeService.Application.Contracts.Infrastructure;
 using MediatR;
 
 namespace FlowChat.RealtimeService.Application.Features.Message.Commands.PublishMessage;

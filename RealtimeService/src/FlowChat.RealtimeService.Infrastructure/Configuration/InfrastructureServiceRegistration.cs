@@ -1,4 +1,4 @@
-using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
+using FlowChat.RealtimeService.Application.Contracts.Infrastructure;
 using FlowChat.RealtimeService.Infrastructure.ChatService;
 using FlowChat.RealtimeService.Infrastructure.Configuration.Settings;
 using FlowChat.RealtimeService.Infrastructure.Presence;

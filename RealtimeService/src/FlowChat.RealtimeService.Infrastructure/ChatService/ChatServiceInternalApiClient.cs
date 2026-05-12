@@ -1,5 +1,5 @@
 using System.Net.Http.Json;
-using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
+using FlowChat.RealtimeService.Application.Contracts.Infrastructure;
 using FlowChat.Shared.Infrastructure.Http;
 
 namespace FlowChat.RealtimeService.Infrastructure.ChatService;

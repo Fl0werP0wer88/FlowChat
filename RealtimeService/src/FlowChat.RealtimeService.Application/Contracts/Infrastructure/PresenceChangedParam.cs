@@ -1,6 +1,6 @@
 using FlowChat.Core.Domain;
 
-namespace FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
+namespace FlowChat.RealtimeService.Application.Contracts.Infrastructure;
 
 public sealed record PresenceChangedParam(
     Guid UserId,

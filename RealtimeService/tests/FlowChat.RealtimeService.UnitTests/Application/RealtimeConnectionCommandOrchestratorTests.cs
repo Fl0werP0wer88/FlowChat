@@ -1,5 +1,5 @@
 using AutoFixture;
-using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
+using FlowChat.RealtimeService.Application.Contracts.Infrastructure;
 using FlowChat.RealtimeService.Application.Features.RealtimeConnection.Commands;
 using FlowChat.Shared.Domain;
 using FluentAssertions;

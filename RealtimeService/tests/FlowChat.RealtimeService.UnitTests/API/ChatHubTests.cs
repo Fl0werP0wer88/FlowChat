@@ -2,7 +2,7 @@ using System.Reflection;
 using System.Security.Claims;
 using FlowChat.Core.Domain;
 using FlowChat.RealtimeService.Api.Realtime;
-using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
+using FlowChat.RealtimeService.Application.Contracts.Infrastructure;
 using FlowChat.RealtimeService.Application.Features.RealtimeConnection.Commands.RegisterRealtimeConnection;
 using FlowChat.RealtimeService.Application.Features.RealtimeConnection.Commands.UnregisterRealtimeConnection;
 using FlowChat.Shared.Domain;

@@ -1,4 +1,4 @@
-using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
+using FlowChat.RealtimeService.Application.Contracts.Infrastructure;
 
 namespace FlowChat.RealtimeService.Infrastructure.RealtimeConnections.ConnectionsTracker;
 
