@@ -2,7 +2,7 @@ namespace FlowChat.RealtimeService.Application.Application.Contracts.Infrastruct
 
 public interface IRealtimeEventRouter
 {
-    Task RouteMessageAsync(ChatMessageNotification notification, CancellationToken cancellationToken);
+    Task RouteMessageAsync(ChatMessageParam notification, CancellationToken cancellationToken);
 
-    Task RoutePresenceChangeAsync(PresenceChangedNotification notification, CancellationToken cancellationToken);
+    Task RoutePresenceChangeAsync(PresenceChangedParam notification, CancellationToken cancellationToken);
 }

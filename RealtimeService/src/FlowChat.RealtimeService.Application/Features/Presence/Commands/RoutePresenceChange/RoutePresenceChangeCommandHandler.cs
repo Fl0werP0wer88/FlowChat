@@ -33,7 +33,7 @@ public sealed class RoutePresenceChangeCommandHandler(IRealtimeEventRouter realt
                 DomainError.BadRequest("RecipientUserIds must contain at least one valid user id."));
         }
 
-        var notification = new PresenceChangedNotification(
+        var notification = new PresenceChangedParam(
             request.UserId,
             request.Status,
             request.ChangedAtUtc,

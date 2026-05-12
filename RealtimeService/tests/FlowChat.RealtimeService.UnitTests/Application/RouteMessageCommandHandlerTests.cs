@@ -17,7 +17,7 @@ public sealed class RouteMessageCommandHandlerTests
     public RouteMessageCommandHandlerTests()
     {
         _routerMock
-            .Setup(x => x.RouteMessageAsync(It.IsAny<ChatMessageNotification>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.RouteMessageAsync(It.IsAny<ChatMessageParam>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         _chatServiceApiClientMock
@@ -30,12 +30,12 @@ public sealed class RouteMessageCommandHandlerTests
     [Fact]
     public async Task Handle_MapsNotificationAndRoutesToRecipients()
     {
-        ChatMessageNotification? capturedNotification = null;
+        ChatMessageParam? capturedNotification = null;
         var recipientUserId = _fixture.Create<Guid>();
 
         _routerMock
-            .Setup(x => x.RouteMessageAsync(It.IsAny<ChatMessageNotification>(), It.IsAny<CancellationToken>()))
-            .Callback<ChatMessageNotification, CancellationToken>((notification, _) => capturedNotification = notification)
+            .Setup(x => x.RouteMessageAsync(It.IsAny<ChatMessageParam>(), It.IsAny<CancellationToken>()))
+            .Callback<ChatMessageParam, CancellationToken>((notification, _) => capturedNotification = notification)
             .Returns(Task.CompletedTask);
 
         var result = await _handler.Handle(
@@ -73,7 +73,7 @@ public sealed class RouteMessageCommandHandlerTests
         result.IsFailure.Should().BeTrue();
         result.Error.ErrorType.Should().Be(ErrorType.BadRequest);
         _routerMock.Verify(
-            x => x.RouteMessageAsync(It.IsAny<ChatMessageNotification>(), It.IsAny<CancellationToken>()),
+            x => x.RouteMessageAsync(It.IsAny<ChatMessageParam>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 }

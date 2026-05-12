@@ -9,7 +9,7 @@ public sealed class SignalRRealtimeClientDispatcher(IHubContext<ChatHub, IRealti
     private readonly IHubContext<ChatHub, IRealtimeClient> _hubContext = hubContext
         ?? throw new ArgumentNullException(nameof(hubContext));
 
-    public Task ReceiveMessageAsync(ChatMessageNotification notification, CancellationToken cancellationToken)
+    public Task ReceiveMessageAsync(ChatMessageParam notification, CancellationToken cancellationToken)
     {
         var groups = GetRecipientGroups(notification.RecipientUserIds);
         if (groups.Length == 0)
@@ -28,7 +28,7 @@ public sealed class SignalRRealtimeClientDispatcher(IHubContext<ChatHub, IRealti
         });
     }
 
-    public Task PresenceChangedAsync(PresenceChangedNotification notification, CancellationToken cancellationToken)
+    public Task PresenceChangedAsync(PresenceChangedParam notification, CancellationToken cancellationToken)
     {
         var groups = GetRecipientGroups(notification.RecipientUserIds);
         if (groups.Length == 0)

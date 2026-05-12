@@ -6,11 +6,11 @@ public interface IRealtimeInstanceInternalApiClient
 {
     Task PublishMessageAsync(
         Uri baseAddress,
-        ChatMessageNotification notification,
+        ChatMessageParam notification,
         CancellationToken cancellationToken);
 
     Task PublishPresenceChangeAsync(
         Uri baseAddress,
-        PresenceChangedNotification notification,
+        PresenceChangedParam notification,
         CancellationToken cancellationToken);
 }

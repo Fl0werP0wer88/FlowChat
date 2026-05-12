@@ -23,7 +23,7 @@ public sealed class RealtimeEventRouterTests
     {
         var localUser = _fixture.Create<Guid>();
         var remoteUser = _fixture.Create<Guid>();
-        var notification = new ChatMessageNotification(
+        var notification = new ChatMessageParam(
             _fixture.Create<Guid>(),
             _fixture.Create<Guid>(),
             _fixture.Create<Guid>(),
@@ -43,16 +43,16 @@ public sealed class RealtimeEventRouterTests
             });
         _addressResolverMock.Setup(x => x.Resolve("instance-remote")).Returns(new Uri("http://instance-remote"));
         _dispatcherMock
-            .Setup(x => x.ReceiveMessageAsync(It.IsAny<ChatMessageNotification>(), It.IsAny<CancellationToken>()))
-            .Callback<ChatMessageNotification, CancellationToken>((routedNotification, _) =>
+            .Setup(x => x.ReceiveMessageAsync(It.IsAny<ChatMessageParam>(), It.IsAny<CancellationToken>()))
+            .Callback<ChatMessageParam, CancellationToken>((routedNotification, _) =>
                 localRecipients = routedNotification.RecipientUserIds)
             .Returns(Task.CompletedTask);
         _internalApiClientMock
             .Setup(x => x.PublishMessageAsync(
                 It.IsAny<Uri>(),
-                It.IsAny<ChatMessageNotification>(),
+                It.IsAny<ChatMessageParam>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<Uri, ChatMessageNotification, CancellationToken>((baseAddress, routedNotification, _) =>
+            .Callback<Uri, ChatMessageParam, CancellationToken>((baseAddress, routedNotification, _) =>
                 remoteCalls.Add((baseAddress, routedNotification.RecipientUserIds)))
             .Returns(Task.CompletedTask);
 
@@ -76,7 +76,7 @@ public sealed class RealtimeEventRouterTests
         var router = CreateRouter();
 
         await router.RoutePresenceChangeAsync(
-            new PresenceChangedNotification(
+            new PresenceChangedParam(
                 _fixture.Create<Guid>(),
                 PresenceStatus.Active,
                 DateTimeOffset.UtcNow,
@@ -84,12 +84,12 @@ public sealed class RealtimeEventRouterTests
             CancellationToken.None);
 
         _dispatcherMock.Verify(
-            x => x.PresenceChangedAsync(It.IsAny<PresenceChangedNotification>(), It.IsAny<CancellationToken>()),
+            x => x.PresenceChangedAsync(It.IsAny<PresenceChangedParam>(), It.IsAny<CancellationToken>()),
             Times.Never);
         _internalApiClientMock.Verify(
             x => x.PublishPresenceChangeAsync(
                 It.IsAny<Uri>(),
-                It.IsAny<PresenceChangedNotification>(),
+                It.IsAny<PresenceChangedParam>(),
                 It.IsAny<CancellationToken>()),
             Times.Never);
     }
@@ -111,7 +111,7 @@ public sealed class RealtimeEventRouterTests
         var router = CreateRouter();
 
         var act = () => router.RouteMessageAsync(
-            new ChatMessageNotification(
+            new ChatMessageParam(
                 _fixture.Create<Guid>(),
                 _fixture.Create<Guid>(),
                 _fixture.Create<Guid>(),

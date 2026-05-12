@@ -17,7 +17,7 @@ public sealed class PublishPresenceChangeCommandHandlerTests
     public PublishPresenceChangeCommandHandlerTests()
     {
         _dispatcherMock
-            .Setup(x => x.PresenceChangedAsync(It.IsAny<PresenceChangedNotification>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.PresenceChangedAsync(It.IsAny<PresenceChangedParam>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         _handler = new PublishPresenceChangeCommandHandler(_dispatcherMock.Object);
@@ -26,12 +26,12 @@ public sealed class PublishPresenceChangeCommandHandlerTests
     [Fact]
     public async Task Handle_NormalizesStatusAndDispatches()
     {
-        PresenceChangedNotification? capturedNotification = null;
+        PresenceChangedParam? capturedNotification = null;
         var recipientUserId = _fixture.Create<Guid>();
 
         _dispatcherMock
-            .Setup(x => x.PresenceChangedAsync(It.IsAny<PresenceChangedNotification>(), It.IsAny<CancellationToken>()))
-            .Callback<PresenceChangedNotification, CancellationToken>((notification, _) => capturedNotification = notification)
+            .Setup(x => x.PresenceChangedAsync(It.IsAny<PresenceChangedParam>(), It.IsAny<CancellationToken>()))
+            .Callback<PresenceChangedParam, CancellationToken>((notification, _) => capturedNotification = notification)
             .Returns(Task.CompletedTask);
 
         var result = await _handler.Handle(
@@ -58,7 +58,7 @@ public sealed class PublishPresenceChangeCommandHandlerTests
         result.IsFailure.Should().BeTrue();
         result.Error.ErrorType.Should().Be(ErrorType.BadRequest);
         _dispatcherMock.Verify(
-            x => x.PresenceChangedAsync(It.IsAny<PresenceChangedNotification>(), It.IsAny<CancellationToken>()),
+            x => x.PresenceChangedAsync(It.IsAny<PresenceChangedParam>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 }

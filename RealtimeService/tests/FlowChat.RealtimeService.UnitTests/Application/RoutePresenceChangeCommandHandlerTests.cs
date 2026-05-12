@@ -17,7 +17,7 @@ public sealed class RoutePresenceChangeCommandHandlerTests
     public RoutePresenceChangeCommandHandlerTests()
     {
         _routerMock
-            .Setup(x => x.RoutePresenceChangeAsync(It.IsAny<PresenceChangedNotification>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.RoutePresenceChangeAsync(It.IsAny<PresenceChangedParam>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         _handler = new RoutePresenceChangeCommandHandler(_routerMock.Object);
@@ -26,12 +26,12 @@ public sealed class RoutePresenceChangeCommandHandlerTests
     [Fact]
     public async Task Handle_NormalizesStatusAndRoutes()
     {
-        PresenceChangedNotification? capturedNotification = null;
+        PresenceChangedParam? capturedNotification = null;
         var recipientUserId = _fixture.Create<Guid>();
 
         _routerMock
-            .Setup(x => x.RoutePresenceChangeAsync(It.IsAny<PresenceChangedNotification>(), It.IsAny<CancellationToken>()))
-            .Callback<PresenceChangedNotification, CancellationToken>((notification, _) => capturedNotification = notification)
+            .Setup(x => x.RoutePresenceChangeAsync(It.IsAny<PresenceChangedParam>(), It.IsAny<CancellationToken>()))
+            .Callback<PresenceChangedParam, CancellationToken>((notification, _) => capturedNotification = notification)
             .Returns(Task.CompletedTask);
 
         var result = await _handler.Handle(
@@ -58,7 +58,7 @@ public sealed class RoutePresenceChangeCommandHandlerTests
         result.IsFailure.Should().BeTrue();
         result.Error.ErrorType.Should().Be(ErrorType.BadRequest);
         _routerMock.Verify(
-            x => x.RoutePresenceChangeAsync(It.IsAny<PresenceChangedNotification>(), It.IsAny<CancellationToken>()),
+            x => x.RoutePresenceChangeAsync(It.IsAny<PresenceChangedParam>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 }

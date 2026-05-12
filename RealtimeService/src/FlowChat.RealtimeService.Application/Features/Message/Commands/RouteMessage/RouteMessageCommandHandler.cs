@@ -50,7 +50,7 @@ public sealed class RouteMessageCommandHandler(
                 DomainError.BadRequest("RecipientUserIds must contain at least one valid user id."));
         }
 
-        var notification = new ChatMessageNotification(
+        var notification = new ChatMessageParam(
             request.MessageId,
             request.ConversationId,
             request.SenderUserId,

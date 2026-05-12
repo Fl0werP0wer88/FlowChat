@@ -16,7 +16,7 @@ public sealed class PublishMessageCommandHandlerTests
     public PublishMessageCommandHandlerTests()
     {
         _dispatcherMock
-            .Setup(x => x.ReceiveMessageAsync(It.IsAny<ChatMessageNotification>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.ReceiveMessageAsync(It.IsAny<ChatMessageParam>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         _handler = new PublishMessageCommandHandler(_dispatcherMock.Object);
@@ -25,12 +25,12 @@ public sealed class PublishMessageCommandHandlerTests
     [Fact]
     public async Task Handle_MapsNotificationAndDispatchesToRecipients()
     {
-        ChatMessageNotification? capturedNotification = null;
+        ChatMessageParam? capturedNotification = null;
         var recipientUserId = _fixture.Create<Guid>();
 
         _dispatcherMock
-            .Setup(x => x.ReceiveMessageAsync(It.IsAny<ChatMessageNotification>(), It.IsAny<CancellationToken>()))
-            .Callback<ChatMessageNotification, CancellationToken>((notification, _) => capturedNotification = notification)
+            .Setup(x => x.ReceiveMessageAsync(It.IsAny<ChatMessageParam>(), It.IsAny<CancellationToken>()))
+            .Callback<ChatMessageParam, CancellationToken>((notification, _) => capturedNotification = notification)
             .Returns(Task.CompletedTask);
 
         var result = await _handler.Handle(
@@ -68,7 +68,7 @@ public sealed class PublishMessageCommandHandlerTests
         result.IsFailure.Should().BeTrue();
         result.Error.ErrorType.Should().Be(ErrorType.BadRequest);
         _dispatcherMock.Verify(
-            x => x.ReceiveMessageAsync(It.IsAny<ChatMessageNotification>(), It.IsAny<CancellationToken>()),
+            x => x.ReceiveMessageAsync(It.IsAny<ChatMessageParam>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 }

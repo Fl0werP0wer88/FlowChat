@@ -2,7 +2,7 @@ namespace FlowChat.RealtimeService.Application.Application.Contracts.Infrastruct
 
 public interface IRealtimeClientDispatcher
 {
-    Task ReceiveMessageAsync(ChatMessageNotification notification, CancellationToken cancellationToken);
+    Task ReceiveMessageAsync(ChatMessageParam notification, CancellationToken cancellationToken);
 
-    Task PresenceChangedAsync(PresenceChangedNotification notification, CancellationToken cancellationToken);
+    Task PresenceChangedAsync(PresenceChangedParam notification, CancellationToken cancellationToken);
 }

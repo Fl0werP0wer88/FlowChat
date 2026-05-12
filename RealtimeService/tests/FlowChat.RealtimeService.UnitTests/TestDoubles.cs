@@ -18,16 +18,16 @@ namespace FlowChat.RealtimeService.UnitTests;
 
 internal sealed class CapturingRealtimeClientDispatcher : IRealtimeClientDispatcher
 {
-    public ChatMessageNotification? LastMessageNotification { get; private set; }
-    public PresenceChangedNotification? LastPresenceNotification { get; private set; }
+    public ChatMessageParam? LastMessageNotification { get; private set; }
+    public PresenceChangedParam? LastPresenceNotification { get; private set; }
 
-    public Task ReceiveMessageAsync(ChatMessageNotification notification, CancellationToken cancellationToken)
+    public Task ReceiveMessageAsync(ChatMessageParam notification, CancellationToken cancellationToken)
     {
         LastMessageNotification = notification;
         return Task.CompletedTask;
     }
 
-    public Task PresenceChangedAsync(PresenceChangedNotification notification, CancellationToken cancellationToken)
+    public Task PresenceChangedAsync(PresenceChangedParam notification, CancellationToken cancellationToken)
     {
         LastPresenceNotification = notification;
         return Task.CompletedTask;
@@ -56,16 +56,16 @@ internal sealed class CapturingRealtimeInternalApiClient : IRealtimeInternalApiC
 
 internal sealed class CapturingRealtimeEventRouter : FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure.IRealtimeEventRouter
 {
-    public ChatMessageNotification? LastMessageNotification { get; private set; }
-    public PresenceChangedNotification? LastPresenceNotification { get; private set; }
+    public ChatMessageParam? LastMessageNotification { get; private set; }
+    public PresenceChangedParam? LastPresenceNotification { get; private set; }
 
-    public Task RouteMessageAsync(ChatMessageNotification notification, CancellationToken cancellationToken)
+    public Task RouteMessageAsync(ChatMessageParam notification, CancellationToken cancellationToken)
     {
         LastMessageNotification = notification;
         return Task.CompletedTask;
     }
 
-    public Task RoutePresenceChangeAsync(PresenceChangedNotification notification, CancellationToken cancellationToken)
+    public Task RoutePresenceChangeAsync(PresenceChangedParam notification, CancellationToken cancellationToken)
     {
         LastPresenceNotification = notification;
         return Task.CompletedTask;

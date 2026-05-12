@@ -24,7 +24,7 @@ public sealed class RealtimeEventRouter(
     private readonly string _ownInstanceId = realtimeConnectionsSettings?.Value.InstanceId
         ?? throw new ArgumentNullException(nameof(realtimeConnectionsSettings));
 
-    public Task RouteMessageAsync(ChatMessageNotification notification, CancellationToken cancellationToken) =>
+    public Task RouteMessageAsync(ChatMessageParam notification, CancellationToken cancellationToken) =>
         RouteAsync(
             notification.RecipientUserIds,
             localRecipients => _realtimeClientDispatcher.ReceiveMessageAsync(
@@ -36,7 +36,7 @@ public sealed class RealtimeEventRouter(
                 cancellationToken),
             cancellationToken);
 
-    public Task RoutePresenceChangeAsync(PresenceChangedNotification notification, CancellationToken cancellationToken) =>
+    public Task RoutePresenceChangeAsync(PresenceChangedParam notification, CancellationToken cancellationToken) =>
         RouteAsync(
             notification.RecipientUserIds,
             localRecipients => _realtimeClientDispatcher.PresenceChangedAsync(

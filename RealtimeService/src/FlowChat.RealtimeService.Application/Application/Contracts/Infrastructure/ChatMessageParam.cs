@@ -1,6 +1,6 @@
 namespace FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
 
-public sealed record ChatMessageNotification(
+public sealed record ChatMessageParam(
     Guid MessageId,
     Guid ConversationId,
     Guid SenderUserId,

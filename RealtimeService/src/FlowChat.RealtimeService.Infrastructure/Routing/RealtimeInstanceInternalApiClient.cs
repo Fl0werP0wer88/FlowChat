@@ -16,7 +16,7 @@ public sealed class RealtimeInstanceInternalApiClient(HttpClient httpClient)
 
     public Task PublishMessageAsync(
         Uri baseAddress,
-        ChatMessageNotification notification,
+        ChatMessageParam notification,
         CancellationToken cancellationToken) =>
         PostAsync(
             baseAddress,
@@ -33,7 +33,7 @@ public sealed class RealtimeInstanceInternalApiClient(HttpClient httpClient)
 
     public Task PublishPresenceChangeAsync(
         Uri baseAddress,
-        PresenceChangedNotification notification,
+        PresenceChangedParam notification,
         CancellationToken cancellationToken) =>
         PostAsync(
             baseAddress,
