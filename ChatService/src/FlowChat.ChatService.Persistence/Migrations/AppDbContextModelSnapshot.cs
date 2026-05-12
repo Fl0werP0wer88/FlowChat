@@ -38,6 +38,11 @@ namespace FlowChat.ChatService.Persistence.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
 
+                    b.Property<int>("DeliveryStatus")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
+
                     b.Property<DateTimeOffset>("LastModifiedAtUtc")
                         .HasColumnType("timestamp with time zone");
 
@@ -50,13 +55,6 @@ namespace FlowChat.ChatService.Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("uuid[]");
 
-                    b.Property<int>("DeliveryStatus")
-                        .HasDefaultValue(0)
-                        .HasColumnType("integer");
-
-                    b.Property<long?>("SequenceNum")
-                        .HasColumnType("bigint");
-
                     b.Property<string>("SenderDisplayName")
                         .IsRequired()
                         .HasMaxLength(120)
@@ -67,6 +65,9 @@ namespace FlowChat.ChatService.Persistence.Migrations
 
                     b.Property<DateTimeOffset>("SentAtUtc")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<long?>("SequenceNum")
+                        .HasColumnType("bigint");
 
                     b.Property<string>("Text")
                         .IsRequired()

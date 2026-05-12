@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FlowChat.ChatService.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260508152300_AddParticipantUserProfileFields")]
-    partial class AddParticipantUserProfileFields
+    [Migration("20260512104030_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -41,6 +41,11 @@ namespace FlowChat.ChatService.Persistence.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
 
+                    b.Property<int>("DeliveryStatus")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
+
                     b.Property<DateTimeOffset>("LastModifiedAtUtc")
                         .HasColumnType("timestamp with time zone");
 
@@ -63,6 +68,9 @@ namespace FlowChat.ChatService.Persistence.Migrations
 
                     b.Property<DateTimeOffset>("SentAtUtc")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<long?>("SequenceNum")
+                        .HasColumnType("bigint");
 
                     b.Property<string>("Text")
                         .IsRequired()
@@ -144,7 +152,7 @@ namespace FlowChat.ChatService.Persistence.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
 
-                    b.Property<string>("DisplayedName")
+                    b.Property<string>("DisplayName")
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
 
@@ -177,7 +185,7 @@ namespace FlowChat.ChatService.Persistence.Migrations
                     b.ToTable("ParticipantUsers", (string)null);
                 });
 
-            modelBuilder.Entity("FlowChat.ChatService.Persistence.ReadModels.DuetConversation", b =>
+            modelBuilder.Entity("FlowChat.ChatService.Persistence.Entities.DuetConversationLookupEntity", b =>
                 {
                     b.Property<Guid>("FirstUserId")
                         .HasColumnType("uuid");
@@ -195,7 +203,7 @@ namespace FlowChat.ChatService.Persistence.Migrations
                     b.ToTable("DuetConversations", (string)null);
                 });
 
-            modelBuilder.Entity("FlowChat.ChatService.Persistence.ReadModels.UserProfileProjection", b =>
+            modelBuilder.Entity("FlowChat.ChatService.Persistence.Entities.UserProfileProjectionEntity", b =>
                 {
                     b.Property<Guid>("UserId")
                         .ValueGeneratedOnAdd()
@@ -287,7 +295,7 @@ namespace FlowChat.ChatService.Persistence.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("FlowChat.ChatService.Persistence.ReadModels.DuetConversation", b =>
+            modelBuilder.Entity("FlowChat.ChatService.Persistence.Entities.DuetConversationLookupEntity", b =>
                 {
                     b.HasOne("FlowChat.ChatService.Domain.Entities.Conversation.Conversation", null)
                         .WithMany()
