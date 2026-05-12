@@ -13,6 +13,8 @@ public sealed class ChatMessage : AggregateRootBase<ChatMessage>
     public string Text { get; private set; }
     public UtcDateTimeOffset SentAtUtc { get; private set; } = UtcDateTimeOffset.UtcNow;
     public Guid[] RecipientUserIds { get; private set; }
+    public long? SequenceNum { get; private set; }
+    public DeliveryStatus DeliveryStatus { get; private set; } = DeliveryStatus.Pending;
 
     private ChatMessage(
         Id<ChatMessage> id,
@@ -72,6 +74,15 @@ public sealed class ChatMessage : AggregateRootBase<ChatMessage>
                 chatMessage.RecipientUserIds));
 
         return chatMessage;
+    }
+
+    public void MarkAsProcessed(long sequenceNum)
+    {
+        if (SequenceNum.HasValue)
+            return;
+
+        SequenceNum = sequenceNum;
+        DeliveryStatus = DeliveryStatus.Processed;
     }
 
     private static Guid[] NormalizeRecipientUserIds(IEnumerable<Guid> recipientUserIds)

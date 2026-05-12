@@ -40,6 +40,12 @@ public sealed class ChatMessageConfiguration : IEntityTypeConfiguration<ChatMess
             .HasColumnType("uuid[]")
             .IsRequired();
 
+        builder.Property(x => x.SequenceNum);
+
+        builder.Property(x => x.DeliveryStatus)
+            .HasDefaultValue(DeliveryStatus.Pending)
+            .IsRequired();
+
         builder.Property(x => x.Version)
             .IsConcurrencyToken();
 

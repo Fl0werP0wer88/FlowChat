@@ -6,11 +6,15 @@ using MediatR;
 
 namespace FlowChat.RealtimeService.Application.Features.Message.Commands.RouteMessage;
 
-public sealed class RouteMessageCommandHandler(IRealtimeEventRouter realtimeEventRouter)
+public sealed class RouteMessageCommandHandler(
+    IRealtimeEventRouter realtimeEventRouter,
+    IChatServiceInternalApiClient chatServiceInternalApiClient)
     : ICommandHandler<RouteMessageCommand, Unit>
 {
     private readonly IRealtimeEventRouter _realtimeEventRouter = realtimeEventRouter
         ?? throw new ArgumentNullException(nameof(realtimeEventRouter));
+    private readonly IChatServiceInternalApiClient _chatServiceInternalApiClient = chatServiceInternalApiClient
+        ?? throw new ArgumentNullException(nameof(chatServiceInternalApiClient));
 
     public async Task<FlowChatResult<Unit>> Handle(RouteMessageCommand request, CancellationToken cancellationToken)
     {
@@ -56,6 +60,7 @@ public sealed class RouteMessageCommandHandler(IRealtimeEventRouter realtimeEven
             recipientUserIds);
 
         await _realtimeEventRouter.RouteMessageAsync(notification, cancellationToken);
+        await _chatServiceInternalApiClient.MarkMessageProcessedAsync(request.MessageId, request.ConversationId, cancellationToken);
 
         return FlowChatResult<Unit>.Success(Unit.Value);
     }

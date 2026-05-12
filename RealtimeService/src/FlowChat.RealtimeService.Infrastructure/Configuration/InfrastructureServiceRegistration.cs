@@ -1,4 +1,5 @@
 using FlowChat.RealtimeService.Application.Application.Contracts.Infrastructure;
+using FlowChat.RealtimeService.Infrastructure.ChatService;
 using FlowChat.RealtimeService.Infrastructure.Configuration.Settings;
 using FlowChat.RealtimeService.Infrastructure.Presence;
 using FlowChat.RealtimeService.Infrastructure.RealtimeConnections;
@@ -52,6 +53,7 @@ public static class InfrastructureServiceRegistration
         services.TryAddSingleton<IRealtimeInstanceAddressResolver, ConfiguredRealtimeInstanceAddressResolver>();
 
         services.AddFlowChatHttpClient<IPresenceInternalApiClient, PresenceInternalApiClient, PresenceServiceSettingsSection>();
+        services.AddFlowChatHttpClient<IChatServiceInternalApiClient, ChatServiceInternalApiClient, ChatServiceSettingsSection>();
 
         services.AddFlowChatHttpClient<IRealtimeInstanceInternalApiClient, RealtimeInstanceInternalApiClient, InternalApiSettingsSection>();
         services.AddScoped<IRealtimeEventRouter, RealtimeEventRouter>();

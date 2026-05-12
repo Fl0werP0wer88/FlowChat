@@ -11,6 +11,7 @@ public sealed class RouteMessageCommandHandlerTests
 {
     private readonly IFixture _fixture = new Fixture();
     private readonly Mock<IRealtimeEventRouter> _routerMock = new();
+    private readonly Mock<IChatServiceInternalApiClient> _chatServiceApiClientMock = new();
     private readonly RouteMessageCommandHandler _handler;
 
     public RouteMessageCommandHandlerTests()
@@ -19,7 +20,11 @@ public sealed class RouteMessageCommandHandlerTests
             .Setup(x => x.RouteMessageAsync(It.IsAny<ChatMessageNotification>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
-        _handler = new RouteMessageCommandHandler(_routerMock.Object);
+        _chatServiceApiClientMock
+            .Setup(x => x.MarkMessageProcessedAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        _handler = new RouteMessageCommandHandler(_routerMock.Object, _chatServiceApiClientMock.Object);
     }
 
     [Fact]

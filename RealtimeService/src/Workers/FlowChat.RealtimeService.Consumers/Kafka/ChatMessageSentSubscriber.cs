@@ -1,8 +1,8 @@
 using FlowChat.Core.Exceptions;
 using FlowChat.Core.Messaging.ChatService.Events;
-using FlowChat.Shared.Infrastructure.Silverback.Subscribers;
 using FlowChat.RealtimeService.Consumers.Realtime.Contracts;
 using FlowChat.RealtimeService.Consumers.Services;
+using FlowChat.Shared.Infrastructure.Silverback.Subscribers;
 
 namespace FlowChat.RealtimeService.Consumers.Kafka;
 

@@ -50,6 +50,13 @@ namespace FlowChat.ChatService.Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("uuid[]");
 
+                    b.Property<int>("DeliveryStatus")
+                        .HasDefaultValue(0)
+                        .HasColumnType("integer");
+
+                    b.Property<long?>("SequenceNum")
+                        .HasColumnType("bigint");
+
                     b.Property<string>("SenderDisplayName")
                         .IsRequired()
                         .HasMaxLength(120)
