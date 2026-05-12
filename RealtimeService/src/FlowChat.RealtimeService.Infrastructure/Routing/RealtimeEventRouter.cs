@@ -27,34 +27,34 @@ public sealed class RealtimeEventRouter(
     public Task RouteMessageAsync(ChatMessageNotification notification, CancellationToken cancellationToken) =>
         RouteAsync(
             notification.RecipientUserIds,
-            cancellationToken,
             localRecipients => _realtimeClientDispatcher.ReceiveMessageAsync(
                 notification with { RecipientUserIds = localRecipients },
                 cancellationToken),
-            routedRecipients => _realtimeInstanceInternalApiClient.PublishMessageAsync(
-                _instanceAddressResolver.Resolve(routedRecipients.InstanceId),
+            (instanceUrl, userIds) => _realtimeInstanceInternalApiClient.PublishMessageAsync(
+                instanceUrl,
                 notification,
-                routedRecipients.UserIds,
-                cancellationToken));
+                userIds,
+                cancellationToken),
+            cancellationToken);
 
     public Task RoutePresenceChangeAsync(PresenceChangedNotification notification, CancellationToken cancellationToken) =>
         RouteAsync(
             notification.RecipientUserIds,
-            cancellationToken,
             localRecipients => _realtimeClientDispatcher.PresenceChangedAsync(
                 notification with { RecipientUserIds = localRecipients },
                 cancellationToken),
-            routedRecipients => _realtimeInstanceInternalApiClient.PublishPresenceChangeAsync(
-                _instanceAddressResolver.Resolve(routedRecipients.InstanceId),
+            (instanceUrl, userIds) => _realtimeInstanceInternalApiClient.PublishPresenceChangeAsync(
+                instanceUrl,
                 notification,
-                routedRecipients.UserIds,
-                cancellationToken));
+                userIds,
+                cancellationToken),
+            cancellationToken);
 
     private async Task RouteAsync(
         IReadOnlyCollection<Guid> recipientUserIds,
-        CancellationToken cancellationToken,
         Func<IReadOnlyCollection<Guid>, Task> dispatchLocalAsync,
-        Func<RoutedRecipients, Task> publishRemoteAsync)
+        Func<Uri, IReadOnlyCollection<Guid>, Task> publishRemoteAsync,
+        CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
@@ -67,9 +67,15 @@ public sealed class RealtimeEventRouter(
         List<Task> tasks = [];
         foreach (var routedRecipients in recipientsByInstance)
         {
-            tasks.Add(string.Equals(routedRecipients.InstanceId, _ownInstanceId, StringComparison.Ordinal)
-                ? dispatchLocalAsync(routedRecipients.UserIds)
-                : publishRemoteAsync(routedRecipients));
+            if (string.Equals(routedRecipients.InstanceId, _ownInstanceId, StringComparison.Ordinal))
+            {
+                tasks.Add(dispatchLocalAsync(routedRecipients.UserIds));
+            }
+            else
+            {
+                var instanceUrl = _instanceAddressResolver.Resolve(routedRecipients.InstanceId);
+                tasks.Add(publishRemoteAsync(instanceUrl, routedRecipients.UserIds));
+            }
         }
 
         await Task.WhenAll(tasks);
