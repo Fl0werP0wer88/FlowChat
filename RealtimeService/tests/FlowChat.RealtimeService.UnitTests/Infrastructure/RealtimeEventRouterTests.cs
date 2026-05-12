@@ -51,10 +51,9 @@ public sealed class RealtimeEventRouterTests
             .Setup(x => x.PublishMessageAsync(
                 It.IsAny<Uri>(),
                 It.IsAny<ChatMessageNotification>(),
-                It.IsAny<IReadOnlyCollection<Guid>>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<Uri, ChatMessageNotification, IReadOnlyCollection<Guid>, CancellationToken>((baseAddress, _, recipients, _) =>
-                remoteCalls.Add((baseAddress, recipients)))
+            .Callback<Uri, ChatMessageNotification, CancellationToken>((baseAddress, routedNotification, _) =>
+                remoteCalls.Add((baseAddress, routedNotification.RecipientUserIds)))
             .Returns(Task.CompletedTask);
 
         var router = CreateRouter();
@@ -91,7 +90,6 @@ public sealed class RealtimeEventRouterTests
             x => x.PublishPresenceChangeAsync(
                 It.IsAny<Uri>(),
                 It.IsAny<PresenceChangedNotification>(),
-                It.IsAny<IReadOnlyCollection<Guid>>(),
                 It.IsAny<CancellationToken>()),
             Times.Never);
     }

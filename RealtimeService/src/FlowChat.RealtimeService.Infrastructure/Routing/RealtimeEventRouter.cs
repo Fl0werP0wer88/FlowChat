@@ -32,8 +32,7 @@ public sealed class RealtimeEventRouter(
                 cancellationToken),
             (instanceUrl, userIds) => _realtimeInstanceInternalApiClient.PublishMessageAsync(
                 instanceUrl,
-                notification,
-                userIds,
+                notification with { RecipientUserIds = userIds },
                 cancellationToken),
             cancellationToken);
 
@@ -45,8 +44,7 @@ public sealed class RealtimeEventRouter(
                 cancellationToken),
             (instanceUrl, userIds) => _realtimeInstanceInternalApiClient.PublishPresenceChangeAsync(
                 instanceUrl,
-                notification,
-                userIds,
+                notification with { RecipientUserIds = userIds },
                 cancellationToken),
             cancellationToken);
 

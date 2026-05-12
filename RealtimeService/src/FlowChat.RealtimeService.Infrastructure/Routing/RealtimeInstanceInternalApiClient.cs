@@ -17,7 +17,6 @@ public sealed class RealtimeInstanceInternalApiClient(HttpClient httpClient)
     public Task PublishMessageAsync(
         Uri baseAddress,
         ChatMessageNotification notification,
-        IReadOnlyCollection<Guid> recipientUserIds,
         CancellationToken cancellationToken) =>
         PostAsync(
             baseAddress,
@@ -29,13 +28,12 @@ public sealed class RealtimeInstanceInternalApiClient(HttpClient httpClient)
                 notification.SenderDisplayName,
                 notification.Text,
                 notification.SentAtUtc,
-                recipientUserIds),
+                notification.RecipientUserIds),
             cancellationToken);
 
     public Task PublishPresenceChangeAsync(
         Uri baseAddress,
         PresenceChangedNotification notification,
-        IReadOnlyCollection<Guid> recipientUserIds,
         CancellationToken cancellationToken) =>
         PostAsync(
             baseAddress,
@@ -44,7 +42,7 @@ public sealed class RealtimeInstanceInternalApiClient(HttpClient httpClient)
                 notification.UserId,
                 notification.Status,
                 notification.ChangedAtUtc,
-                recipientUserIds),
+                notification.RecipientUserIds),
             cancellationToken);
 
     private async Task PostAsync<TRequest>(Uri baseAddress, string path, TRequest request, CancellationToken cancellationToken)
