@@ -14,7 +14,7 @@ interface ChatFeatureProps {
 
 export function ChatFeature({ accessToken, userLogin, onLogout }: ChatFeatureProps) {
   const contacts = useContacts(accessToken);
-  const chat = useChatMessages(accessToken);
+  const chat = useChatMessages(accessToken, userLogin);
   const presence = usePresenceStatus(accessToken);
   const realtime = useRealtimeConnection({
     accessToken,
@@ -31,6 +31,8 @@ export function ChatFeature({ accessToken, userLogin, onLogout }: ChatFeaturePro
           activeConversationId={chat.activeConversationId}
           conversationError={chat.conversationError}
           isLoadingConversation={chat.isLoadingConversation}
+          isSendingMessage={chat.isSendingMessage}
+          sendError={chat.sendError}
           messages={chat.messages}
           draft={chat.draft}
           onDraftChange={chat.setDraft}

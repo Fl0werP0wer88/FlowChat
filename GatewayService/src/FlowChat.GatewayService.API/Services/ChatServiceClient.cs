@@ -73,4 +73,5 @@ internal sealed class ChatServiceClient(HttpClient httpClient)
         var response = await SendAsync<ChatMessagesClientDto>(request, cancellationToken);
         return response ?? new ChatMessagesClientDto([], null, null, false);
     }
+
 }

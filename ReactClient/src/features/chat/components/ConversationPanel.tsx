@@ -10,11 +10,13 @@ interface ConversationPanelProps {
   activeConversationId: string | null;
   conversationError: string | null;
   isLoadingConversation: boolean;
+  isSendingMessage: boolean;
+  sendError: string | null;
   messages: ChatMessage[];
   draft: string;
   onDraftChange: (value: string) => void;
   onDraftKeyDown: (event: KeyboardEvent<HTMLTextAreaElement>) => void;
-  onSendDraft: () => void;
+  onSendDraft: () => Promise<void>;
 }
 
 export function ConversationPanel({
@@ -22,13 +24,16 @@ export function ConversationPanel({
   activeConversationId,
   conversationError,
   isLoadingConversation,
+  isSendingMessage,
+  sendError,
   messages,
   draft,
   onDraftChange,
   onDraftKeyDown,
   onSendDraft,
 }: ConversationPanelProps) {
-  const isComposerDisabled = true;
+  const isComposerDisabled = !activeConversationId || isLoadingConversation || isSendingMessage;
+  const isSendDisabled = isComposerDisabled || draft.trim().length === 0;
 
   return (
     <div className="conversation-panel">
@@ -70,16 +75,19 @@ export function ConversationPanel({
       </div>
 
       <div className="composer">
+        {sendError
+          ? <p className="alert alert-error composer__error">{sendError}</p>
+          : null}
         <TextArea
           value={draft}
           onChange={(event) => onDraftChange(event.target.value)}
           onKeyDown={onDraftKeyDown}
           rows={2}
-          placeholder={activeConversationId ? "Wysylanie wiadomosci bedzie podpiete w kolejnym kroku" : "Wybierz kontakt, aby rozpoczac rozmowe"}
+          placeholder={activeConversationId ? "Napisz wiadomosc..." : "Wybierz kontakt, aby rozpoczac rozmowe"}
           disabled={isComposerDisabled}
         />
-        <Button type="button" onClick={onSendDraft} disabled={isComposerDisabled}>
-          Wyslij
+        <Button type="button" onClick={() => void onSendDraft()} disabled={isSendDisabled}>
+          {isSendingMessage ? "Wysylanie..." : "Wyslij"}
         </Button>
       </div>
     </div>

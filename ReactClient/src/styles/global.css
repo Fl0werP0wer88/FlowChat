@@ -426,6 +426,10 @@ body {
   padding: 0.7rem;
 }
 
+.composer__error {
+  grid-column: 1 / -1;
+}
+
 .contacts-panel {
   border: 1px solid var(--border);
   border-radius: 0.9rem;

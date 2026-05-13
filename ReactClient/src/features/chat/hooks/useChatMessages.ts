@@ -4,7 +4,7 @@ import type { ChatMessage, MessageSender } from "../../../types/chat";
 import type { Contact } from "../../../types/contacts";
 import type { RealtimeChatMessage } from "../../../types/realtime";
 import { resolveOwnerUserId } from "../../../utils/authUtils";
-import { openDuetConversation } from "../api";
+import { openDuetConversation, sendChatMessage } from "../api";
 import type { ConversationMessage } from "../api";
 
 function createMessage(
@@ -41,13 +41,15 @@ function mapConversationMessage(message: ConversationMessage, ownerUserId: strin
   );
 }
 
-export function useChatMessages(accessToken: string) {
+export function useChatMessages(accessToken: string, userLogin: string) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [draft, setDraft] = useState("");
   const [activeContact, setActiveContact] = useState<Contact | null>(null);
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
   const [conversationError, setConversationError] = useState<string | null>(null);
   const [isLoadingConversation, setIsLoadingConversation] = useState(false);
+  const [isSendingMessage, setIsSendingMessage] = useState(false);
+  const [sendError, setSendError] = useState<string | null>(null);
   const ownerUserId = resolveOwnerUserId(accessToken);
 
   const receiveRealtimeMessage = (payload: RealtimeChatMessage) => {
@@ -77,14 +79,59 @@ export function useChatMessages(accessToken: string) {
     });
   };
 
-  const sendDraft = () => {
-    setDraft("");
+  const sendDraft = async () => {
+    const text = draft.trim();
+    if (!text || !activeConversationId || !accessToken || !ownerUserId || isSendingMessage) {
+      return;
+    }
+
+    const messageId = crypto.randomUUID();
+    const sentAtUtc = new Date().toISOString();
+    setIsSendingMessage(true);
+    setSendError(null);
+
+    try {
+      const result = await sendChatMessage(
+        {
+          id: messageId,
+          conversationId: activeConversationId,
+          senderDisplayName: userLogin,
+          text,
+        },
+        accessToken,
+      );
+
+      setMessages((current) => {
+        if (current.some((message) => message.id === result.messageId)) {
+          return current;
+        }
+
+        return [
+          ...current,
+          createMessage(
+            "me",
+            text,
+            sentAtUtc,
+            result.messageId,
+            activeConversationId,
+            ownerUserId,
+            userLogin,
+          ),
+        ];
+      });
+      setDraft("");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Nie udalo sie wyslac wiadomosci.";
+      setSendError(message);
+    } finally {
+      setIsSendingMessage(false);
+    }
   };
 
   const handleDraftKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
     if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault();
-      sendDraft();
+      void sendDraft();
     }
   };
 
@@ -99,6 +146,7 @@ export function useChatMessages(accessToken: string) {
 
     setActiveContact(contact);
     setConversationError(null);
+    setSendError(null);
     setIsLoadingConversation(true);
 
     try {
@@ -129,6 +177,8 @@ export function useChatMessages(accessToken: string) {
     activeConversationId,
     conversationError,
     isLoadingConversation,
+    isSendingMessage,
+    sendError,
     setDraft,
     sendDraft,
     handleDraftKeyDown,

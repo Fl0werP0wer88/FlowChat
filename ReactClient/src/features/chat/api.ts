@@ -5,6 +5,18 @@ interface OpenDuetConversationPayload {
   knownConversationId: string | null;
 }
 
+interface SendChatMessagePayload {
+  id: string;
+  conversationId: string;
+  senderDisplayName: string;
+  text: string;
+}
+
+interface SendChatMessageResponseDto {
+  messageId?: string;
+  MessageId?: string;
+}
+
 interface ConversationParticipantDto {
   userId?: string;
   UserId?: string;
@@ -71,6 +83,10 @@ export interface OpenDuetConversationResult {
   hasMore: boolean;
 }
 
+export interface SendChatMessageResult {
+  messageId: string;
+}
+
 function mapParticipant(dto: ConversationParticipantDto): ConversationParticipant {
   return {
     userId: dto.userId ?? dto.UserId ?? "",
@@ -116,5 +132,24 @@ export async function openDuetConversation(
     nextBeforeSentAtUtc: response.nextBeforeSentAtUtc ?? response.NextBeforeSentAtUtc ?? null,
     nextBeforeMessageId: response.nextBeforeMessageId ?? response.NextBeforeMessageId ?? null,
     hasMore: response.hasMore ?? response.HasMore ?? false,
+  };
+}
+
+export async function sendChatMessage(
+  payload: SendChatMessagePayload,
+  accessToken: string,
+  signal?: AbortSignal,
+): Promise<SendChatMessageResult> {
+  const response = await putJson<SendChatMessageResponseDto, SendChatMessagePayload>(
+    "/api/chat/messages",
+    payload,
+    {
+      accessToken,
+      signal,
+    },
+  );
+
+  return {
+    messageId: response.messageId ?? response.MessageId ?? payload.id,
   };
 }
