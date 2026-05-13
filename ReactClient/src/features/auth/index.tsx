@@ -1,15 +1,23 @@
+import { useNavigate } from "react-router-dom";
 import { AuthTemplate } from "../../components/templates/AuthTemplate";
-import type { AuthSession } from "../../types/auth";
+import type { AuthMode, AuthSession } from "../../types/auth";
 import { LoginForm } from "./components/LoginForm";
 import { RegisterForm } from "./components/RegisterForm";
 import { useAuthFlow } from "./hooks/useAuthFlow";
 
 interface AuthFeatureProps {
+  mode: AuthMode;
   onLoginSuccess: (session: AuthSession) => void;
 }
 
-export function AuthFeature({ onLoginSuccess }: AuthFeatureProps) {
-  const auth = useAuthFlow({ onLoginSuccess });
+export function AuthFeature({ mode, onLoginSuccess }: AuthFeatureProps) {
+  const navigate = useNavigate();
+  const auth = useAuthFlow({
+    mode,
+    onLoginSuccess,
+    onSwitchToLogin: () => navigate("/login"),
+    onSwitchToRegister: () => navigate("/register"),
+  });
 
   if (auth.mode === "login") {
     return (

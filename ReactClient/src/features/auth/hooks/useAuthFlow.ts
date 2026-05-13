@@ -4,7 +4,10 @@ import type { AuthMode, AuthNotice, AuthSession, LoginFormValues, RegisterFormVa
 import { loginUser, registerUser } from "../api";
 
 interface UseAuthFlowOptions {
+  mode: AuthMode;
   onLoginSuccess: (session: AuthSession) => void;
+  onSwitchToLogin: () => void;
+  onSwitchToRegister: () => void;
 }
 
 const emptyLoginFormValues: LoginFormValues = {
@@ -21,8 +24,7 @@ const emptyRegisterFormValues: RegisterFormValues = {
   organization: "",
 };
 
-export function useAuthFlow({ onLoginSuccess }: UseAuthFlowOptions) {
-  const [mode, setMode] = useState<AuthMode>("login");
+export function useAuthFlow({ mode, onLoginSuccess, onSwitchToLogin, onSwitchToRegister }: UseAuthFlowOptions) {
   const [pending, setPending] = useState(false);
   const [notice, setNotice] = useState<AuthNotice | null>(null);
   const [loginValues, setLoginValues] = useState<LoginFormValues>(emptyLoginFormValues);
@@ -34,12 +36,12 @@ export function useAuthFlow({ onLoginSuccess }: UseAuthFlowOptions) {
 
   const switchToLogin = () => {
     clearNotice();
-    setMode("login");
+    onSwitchToLogin();
   };
 
   const switchToRegister = () => {
     clearNotice();
-    setMode("register");
+    onSwitchToRegister();
   };
 
   const updateLoginValue = (field: keyof LoginFormValues, value: string) => {
@@ -90,8 +92,8 @@ export function useAuthFlow({ onLoginSuccess }: UseAuthFlowOptions) {
         password: "",
       }));
       setRegisterValues(emptyRegisterFormValues);
-      setMode("login");
       setNotice({ kind: "info", message: "Konto utworzone. Potwierdz email, a potem zaloguj sie." });
+      onSwitchToLogin();
     } catch (error) {
       const message = error instanceof Error ? error.message : "Nie udalo sie utworzyc konta.";
       setNotice({ kind: "error", message });

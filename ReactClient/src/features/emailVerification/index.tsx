@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "../../components/atoms/Button";
 import { AlertMessage } from "../../components/molecules/AlertMessage";
 import { AuthTemplate } from "../../components/templates/AuthTemplate";
@@ -12,6 +13,7 @@ interface EmailVerificationFeatureProps {
 }
 
 export function EmailVerificationFeature({ token }: EmailVerificationFeatureProps) {
+  const navigate = useNavigate();
   const [status, setStatus] = useState<VerificationStatus>(token ? "pending" : "error");
   const [notice, setNotice] = useState<AuthNotice | null>(
     token
@@ -55,7 +57,7 @@ export function EmailVerificationFeature({ token }: EmailVerificationFeatureProp
   }, [attempt, token]);
 
   const navigateToLogin = () => {
-    window.location.assign("/");
+    navigate("/login");
   };
 
   const retryConfirmation = () => {
