@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import { ChatHeader } from "../../components/organisms/ChatHeader";
 import { ChatTemplate } from "../../components/templates/ChatTemplate";
 import { useRealtimeConnection } from "../../realtime/useRealtimeConnection";
@@ -7,12 +8,15 @@ import { usePresenceStatus } from "../presence/hooks/usePresenceStatus";
 import { ConversationPanel } from "./components/ConversationPanel";
 import { useChatMessages } from "./hooks/useChatMessages";
 
-interface ChatFeatureProps {
-  onLogout: () => void;
-}
-
-export function ChatFeature({ onLogout }: ChatFeatureProps) {
+export function ChatFeature() {
   const userLogin = useAuthStore((s) => s.login) ?? "Uzytkownik";
+  const signOut = useAuthStore((s) => s.signOut);
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    signOut();
+    navigate("/login", { replace: true });
+  };
 
   const contacts = useContacts();
   const chat = useChatMessages();
@@ -24,7 +28,7 @@ export function ChatFeature({ onLogout }: ChatFeatureProps) {
 
   return (
     <ChatTemplate
-      header={<ChatHeader userLogin={userLogin} realtimeStatus={realtime.status} onLogout={onLogout} />}
+      header={<ChatHeader userLogin={userLogin} realtimeStatus={realtime.status} onLogout={handleLogout} />}
       conversation={
         <ConversationPanel
           activeContact={chat.activeContact}

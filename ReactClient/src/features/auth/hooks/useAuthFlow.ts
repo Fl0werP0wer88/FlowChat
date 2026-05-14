@@ -1,11 +1,12 @@
 import type { FormEvent } from "react";
 import { useState } from "react";
-import type { AuthMode, AuthNotice, AuthSession, LoginFormValues, RegisterFormValues } from "../../../types/auth";
+import { useNavigate } from "react-router-dom";
+import { useAuthStore } from "../../../store/authStore";
+import type { AuthMode, AuthNotice, LoginFormValues, RegisterFormValues } from "../../../types/auth";
 import { loginUser, registerUser } from "../api";
 
 interface UseAuthFlowOptions {
   mode: AuthMode;
-  onLoginSuccess: (session: AuthSession) => void;
   onSwitchToLogin: () => void;
   onSwitchToRegister: () => void;
 }
@@ -24,7 +25,9 @@ const emptyRegisterFormValues: RegisterFormValues = {
   organization: "",
 };
 
-export function useAuthFlow({ mode, onLoginSuccess, onSwitchToLogin, onSwitchToRegister }: UseAuthFlowOptions) {
+export function useAuthFlow({ mode, onSwitchToLogin, onSwitchToRegister }: UseAuthFlowOptions) {
+  const signIn = useAuthStore((s) => s.signIn);
+  const navigate = useNavigate();
   const [pending, setPending] = useState(false);
   const [notice, setNotice] = useState<AuthNotice | null>(null);
   const [loginValues, setLoginValues] = useState<LoginFormValues>(emptyLoginFormValues);
@@ -65,7 +68,8 @@ export function useAuthFlow({ mode, onLoginSuccess, onSwitchToLogin, onSwitchToR
 
     try {
       const session = await loginUser(loginValues);
-      onLoginSuccess(session);
+      signIn(session);
+      navigate("/chat", { replace: true });
       setLoginValues((current) => ({
         ...current,
         password: "",
