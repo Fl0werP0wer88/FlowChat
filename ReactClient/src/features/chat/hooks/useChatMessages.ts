@@ -1,5 +1,6 @@
 import type { KeyboardEvent } from "react";
 import { useState } from "react";
+import { useAuthStore } from "../../../store/authStore";
 import type { ChatMessage, MessageSender } from "../../../types/chat";
 import type { Contact } from "../../../types/contacts";
 import type { RealtimeChatMessage } from "../../../types/realtime";
@@ -41,7 +42,9 @@ function mapConversationMessage(message: ConversationMessage, ownerUserId: strin
   );
 }
 
-export function useChatMessages(accessToken: string, userLogin: string) {
+export function useChatMessages() {
+  const accessToken = useAuthStore((s) => s.accessToken) ?? "";
+  const userLogin = useAuthStore((s) => s.login) ?? "Uzytkownik";
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [draft, setDraft] = useState("");
   const [activeContact, setActiveContact] = useState<Contact | null>(null);

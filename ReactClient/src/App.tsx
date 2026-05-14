@@ -2,9 +2,10 @@ import { Navigate, Route, Routes, useLocation, useNavigate, useSearchParams } fr
 import { AuthFeature } from "./features/auth";
 import { ChatFeature } from "./features/chat";
 import { EmailVerificationFeature } from "./features/emailVerification";
-import { useSessionState } from "./hooks/useSessionState";
+import { useSessionRefresher } from "./hooks/useSessionRefresher";
 import { AppBackgroundLayout } from "./layouts/AppBackgroundLayout";
-import type { AuthMode, AuthSession } from "./types/auth";
+import { useAuthStore } from "./store/authStore";
+import type { AuthSession } from "./types/auth";
 
 interface RootRedirectProps {
   isAuthenticated: boolean;
@@ -16,7 +17,7 @@ function RootRedirect({ isAuthenticated }: RootRedirectProps) {
 
 interface AuthRouteProps {
   isAuthenticated: boolean;
-  mode: AuthMode;
+  mode: "login" | "register";
   onLoginSuccess: (session: AuthSession) => void;
 }
 
@@ -29,26 +30,18 @@ function AuthRoute({ isAuthenticated, mode, onLoginSuccess }: AuthRouteProps) {
 }
 
 interface ChatRouteProps {
-  accessToken: string | null;
   isAuthenticated: boolean;
   onLogout: () => void;
-  userLogin: string | null;
 }
 
-function ChatRoute({ accessToken, isAuthenticated, onLogout, userLogin }: ChatRouteProps) {
+function ChatRoute({ isAuthenticated, onLogout }: ChatRouteProps) {
   const location = useLocation();
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace state={{ from: location.pathname }} />;
   }
 
-  return (
-    <ChatFeature
-      accessToken={accessToken ?? ""}
-      userLogin={userLogin ?? "Uzytkownik"}
-      onLogout={onLogout}
-    />
-  );
+  return <ChatFeature onLogout={onLogout} />;
 }
 
 function EmailVerificationRoute() {
@@ -58,7 +51,11 @@ function EmailVerificationRoute() {
 }
 
 export default function App() {
-  const { session, isAuthenticated, signIn, signOut } = useSessionState();
+  useSessionRefresher();
+
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const signIn = useAuthStore((s) => s.signIn);
+  const signOut = useAuthStore((s) => s.signOut);
   const navigate = useNavigate();
 
   const handleLoginSuccess = (nextSession: AuthSession) => {
@@ -86,14 +83,7 @@ export default function App() {
         <Route path="/email-verification" element={<EmailVerificationRoute />} />
         <Route
           path="/chat"
-          element={(
-            <ChatRoute
-              accessToken={session.accessToken}
-              isAuthenticated={isAuthenticated}
-              userLogin={session.login}
-              onLogout={handleLogout}
-            />
-          )}
+          element={<ChatRoute isAuthenticated={isAuthenticated} onLogout={handleLogout} />}
         />
         <Route path="*" element={<RootRedirect isAuthenticated={isAuthenticated} />} />
       </Routes>

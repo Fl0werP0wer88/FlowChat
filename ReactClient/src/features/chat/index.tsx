@@ -1,23 +1,23 @@
 import { ChatHeader } from "../../components/organisms/ChatHeader";
 import { ChatTemplate } from "../../components/templates/ChatTemplate";
 import { useRealtimeConnection } from "../../realtime/useRealtimeConnection";
+import { useAuthStore } from "../../store/authStore";
 import { ContactsPanel, useContacts } from "../contacts";
 import { usePresenceStatus } from "../presence/hooks/usePresenceStatus";
 import { ConversationPanel } from "./components/ConversationPanel";
 import { useChatMessages } from "./hooks/useChatMessages";
 
 interface ChatFeatureProps {
-  accessToken: string;
-  userLogin: string;
   onLogout: () => void;
 }
 
-export function ChatFeature({ accessToken, userLogin, onLogout }: ChatFeatureProps) {
-  const contacts = useContacts(accessToken);
-  const chat = useChatMessages(accessToken, userLogin);
-  const presence = usePresenceStatus(accessToken);
+export function ChatFeature({ onLogout }: ChatFeatureProps) {
+  const userLogin = useAuthStore((s) => s.login) ?? "Uzytkownik";
+
+  const contacts = useContacts();
+  const chat = useChatMessages();
+  const presence = usePresenceStatus();
   const realtime = useRealtimeConnection({
-    accessToken,
     onPresenceChanged: contacts.applyPresenceChanged,
     onReceiveMessage: chat.receiveRealtimeMessage,
   });

@@ -1,5 +1,6 @@
 import { HubConnectionBuilder, LogLevel } from "@microsoft/signalr";
 import { useEffect, useEffectEvent, useState } from "react";
+import { useAuthStore } from "../store/authStore";
 import type {
   PresenceChangedEvent,
   RealtimeChatMessage,
@@ -8,7 +9,6 @@ import type {
 import { chatHubUrl } from "./config";
 
 interface UseRealtimeConnectionOptions {
-  accessToken: string | null;
   onReceiveMessage?: (payload: RealtimeChatMessage) => void;
   onPresenceChanged?: (payload: PresenceChangedEvent) => void;
 }
@@ -22,10 +22,10 @@ function resolveErrorMessage(error: unknown): string | null {
 }
 
 export function useRealtimeConnection({
-  accessToken,
   onReceiveMessage,
   onPresenceChanged,
 }: UseRealtimeConnectionOptions) {
+  const accessToken = useAuthStore((s) => s.accessToken);
   const [status, setStatus] = useState<RealtimeConnectionStatus>("idle");
   const [lastError, setLastError] = useState<string | null>(null);
 
@@ -48,7 +48,8 @@ export function useRealtimeConnection({
     let shouldStopAfterStart = false;
     const connection = new HubConnectionBuilder()
       .withUrl(chatHubUrl, {
-        accessTokenFactory: () => accessToken,
+        // getState() ensures the factory always returns the latest token (e.g. after a silent refresh)
+        accessTokenFactory: () => useAuthStore.getState().accessToken ?? "",
       })
       .withAutomaticReconnect()
       .configureLogging(LogLevel.Warning)

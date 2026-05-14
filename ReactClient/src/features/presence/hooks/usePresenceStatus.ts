@@ -1,4 +1,5 @@
 import { useEffect, useEffectEvent, useRef, useState } from "react";
+import { useAuthStore } from "../../../store/authStore";
 import { changePresenceStatus, fetchPresencePreferences } from "../api";
 import type { ManualUserStatus, UserStatus } from "../../../types/realtime";
 
@@ -17,7 +18,8 @@ function resolveErrorMessage(error: unknown): string {
   return error instanceof Error ? error.message : "Nie udalo sie zaktualizowac statusu Presence.";
 }
 
-export function usePresenceStatus(accessToken: string | null): UsePresenceStatusResult {
+export function usePresenceStatus(): UsePresenceStatusResult {
+  const accessToken = useAuthStore((s) => s.accessToken);
   const [preferredStatus, setPreferredStatus] = useState<UserStatus | null>(null);
   const [currentStatus, setCurrentStatus] = useState<UserStatus>("Active");
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);

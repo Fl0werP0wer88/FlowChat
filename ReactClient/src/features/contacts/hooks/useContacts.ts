@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useAuthStore } from "../../../store/authStore";
 import type { Contact } from "../../../types/contacts";
 import type { PresenceChangedEvent } from "../../../types/realtime";
 import { resolveOwnerUserId } from "../../../utils/authUtils";
@@ -25,7 +26,8 @@ interface UseContactsResult {
 
 type ContactPresenceMap = Record<string, Contact["status"]>;
 
-export function useContacts(accessToken: string): UseContactsResult {
+export function useContacts(): UseContactsResult {
+  const accessToken = useAuthStore((s) => s.accessToken) ?? "";
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [isLoadingContacts, setIsLoadingContacts] = useState(false);
   const [isAddingContact, setIsAddingContact] = useState(false);
