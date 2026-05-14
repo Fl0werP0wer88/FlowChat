@@ -6,20 +6,14 @@ import { useSessionRefresher } from "./hooks/useSessionRefresher";
 import { AppBackgroundLayout } from "./layouts/AppBackgroundLayout";
 import { useAuthStore } from "./store/authStore";
 
-interface RootRedirectProps {
-  isAuthenticated: boolean;
-}
-
-function RootRedirect({ isAuthenticated }: RootRedirectProps) {
+function RootRedirect() {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   return <Navigate to={isAuthenticated ? "/chat" : "/login"} replace />;
 }
 
-interface AuthRouteProps {
-  isAuthenticated: boolean;
-  mode: "login" | "register";
-}
+function AuthRoute({ mode }: { mode: "login" | "register" }) {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
-function AuthRoute({ isAuthenticated, mode }: AuthRouteProps) {
   if (isAuthenticated) {
     return <Navigate to="/chat" replace />;
   }
@@ -27,11 +21,8 @@ function AuthRoute({ isAuthenticated, mode }: AuthRouteProps) {
   return <AuthFeature mode={mode} />;
 }
 
-interface ChatRouteProps {
-  isAuthenticated: boolean;
-}
-
-function ChatRoute({ isAuthenticated }: ChatRouteProps) {
+function ChatRoute() {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const location = useLocation();
 
   if (!isAuthenticated) {
@@ -43,24 +34,21 @@ function ChatRoute({ isAuthenticated }: ChatRouteProps) {
 
 function EmailVerificationRoute() {
   const [searchParams] = useSearchParams();
-
   return <EmailVerificationFeature token={searchParams.get("token")} />;
 }
 
 export default function App() {
   useSessionRefresher();
 
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
-
   return (
     <AppBackgroundLayout>
       <Routes>
-        <Route path="/" element={<RootRedirect isAuthenticated={isAuthenticated} />} />
-        <Route path="/login" element={<AuthRoute isAuthenticated={isAuthenticated} mode="login" />} />
-        <Route path="/register" element={<AuthRoute isAuthenticated={isAuthenticated} mode="register" />} />
+        <Route path="/" element={<RootRedirect />} />
+        <Route path="/login" element={<AuthRoute mode="login" />} />
+        <Route path="/register" element={<AuthRoute mode="register" />} />
         <Route path="/email-verification" element={<EmailVerificationRoute />} />
-        <Route path="/chat" element={<ChatRoute isAuthenticated={isAuthenticated} />} />
-        <Route path="*" element={<RootRedirect isAuthenticated={isAuthenticated} />} />
+        <Route path="/chat" element={<ChatRoute />} />
+        <Route path="*" element={<RootRedirect />} />
       </Routes>
     </AppBackgroundLayout>
   );
