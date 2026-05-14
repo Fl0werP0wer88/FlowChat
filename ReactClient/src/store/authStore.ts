@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { refreshUserSession } from "../features/auth/api";
+import { logoutUser, refreshUserSession } from "../features/auth/api";
 import {
   clearStoredSession,
   loadStoredSession,
@@ -15,8 +15,6 @@ const emptySession: StoredSession = {
   accessToken: null,
   login: null,
   expiresAtUtc: null,
-  refreshToken: null,
-  refreshTokenExpiresAtUtc: null,
 };
 
 interface AuthStore extends StoredSession {
@@ -36,8 +34,6 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       accessToken: session.accessToken,
       login: session.login,
       expiresAtUtc: session.expiresAtUtc,
-      refreshToken: session.refreshToken,
-      refreshTokenExpiresAtUtc: session.refreshTokenExpiresAtUtc,
       isAuthenticated: true,
     });
   },
@@ -45,6 +41,8 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   signOut: () => {
     clearStoredSession();
     set({ ...emptySession, isAuthenticated: false });
+    // Best-effort — clears the HttpOnly refresh token cookie on the server
+    logoutUser().catch(() => undefined);
   },
 
   refreshSession: async (): Promise<AuthSession | null> => {
@@ -52,31 +50,19 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       return refreshPromise;
     }
 
-    const { accessToken, refreshToken, login, refreshTokenExpiresAtUtc } = get();
+    const { accessToken, login } = get();
 
-    if (!accessToken || !refreshToken || !login) {
+    if (!accessToken || !login) {
       get().signOut();
       return null;
     }
 
-    if (refreshTokenExpiresAtUtc) {
-      const expiration = Date.parse(refreshTokenExpiresAtUtc);
-      if (!Number.isNaN(expiration) && expiration <= Date.now()) {
-        get().signOut();
-        return null;
-      }
-    }
-
     const capturedAccessToken = accessToken;
-    const capturedRefreshToken = refreshToken;
 
-    refreshPromise = refreshUserSession({ accessToken, refreshToken, login })
+    refreshPromise = refreshUserSession(login)
       .then((nextSession) => {
         const current = get();
-        if (
-          current.accessToken !== capturedAccessToken
-          || current.refreshToken !== capturedRefreshToken
-        ) {
+        if (current.accessToken !== capturedAccessToken) {
           return null;
         }
 
@@ -85,10 +71,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       })
       .catch(() => {
         const current = get();
-        if (
-          current.accessToken === capturedAccessToken
-          && current.refreshToken === capturedRefreshToken
-        ) {
+        if (current.accessToken === capturedAccessToken) {
           get().signOut();
         }
 

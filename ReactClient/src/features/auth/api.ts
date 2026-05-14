@@ -8,12 +8,6 @@ import type {
   RegisterFormValues,
 } from "../../types/auth";
 
-interface LoginPayload {
-  grant_type: string;
-  username: string;
-  password: string;
-}
-
 interface RegisterPayload {
   id: string;
   email: string;
@@ -22,11 +16,6 @@ interface RegisterPayload {
   firstName?: string;
   lastName?: string;
   organization?: string;
-}
-
-interface RefreshTokenPayload {
-  grant_type: string;
-  refresh_token: string;
 }
 
 function resolveExpiresAtUtc(response: AuthTokenResponseDto): string | null {
@@ -48,17 +37,10 @@ function mapToAuthSession(response: AuthTokenResponseDto, login: string): AuthSe
     throw new Error("Authentication response does not contain access token.");
   }
 
-  const refreshToken = response.refresh_token ?? response.refreshToken ?? response.RefreshToken;
-  if (!refreshToken) {
-    throw new Error("Authentication response does not contain refresh token.");
-  }
-
   return {
     accessToken,
     login,
     expiresAtUtc: resolveExpiresAtUtc(response),
-    refreshToken,
-    refreshTokenExpiresAtUtc: response.refreshTokenExpiresAtUtc ?? response.RefreshTokenExpiresAtUtc ?? null,
   };
 }
 
@@ -72,15 +54,18 @@ export async function loginUser(values: LoginFormValues): Promise<AuthSession> {
   return mapToAuthSession(response, values.login.trim());
 }
 
-export async function refreshUserSession(
-  session: Pick<AuthSession, "accessToken" | "refreshToken" | "login">,
-): Promise<AuthSession> {
+export async function refreshUserSession(login: string): Promise<AuthSession> {
+  // refresh_token is sent automatically as an HttpOnly cookie
   const response = await postForm<RefreshTokenResponseDto>("/api/users/refresh-token", {
     grant_type: "refresh_token",
-    refresh_token: session.refreshToken,
   });
 
-  return mapToAuthSession(response, session.login);
+  return mapToAuthSession(response, login);
+}
+
+export async function logoutUser(): Promise<void> {
+  // Asks the server to clear the HttpOnly refresh token cookie
+  await postForm<unknown>("/api/users/logout", {});
 }
 
 export async function registerUser(values: RegisterFormValues): Promise<void> {

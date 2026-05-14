@@ -1,4 +1,5 @@
 using System.Text;
+using FlowChat.AuthService.API.Features.User.Public.RefreshTokenCookie;
 using FlowChat.AuthService.Infrastructure.Configuration.Settings;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Configuration;
@@ -41,6 +42,7 @@ public static class APIServiceRegistration
             throw new InvalidOperationException("Missing configuration value: JwtSettingsSection:Audience.");
         }
 
+        services.AddHttpContextAccessor();
         services.AddDataProtection();
 
         services.AddAuthentication(options =>
@@ -106,6 +108,9 @@ public static class APIServiceRegistration
                 }
 
                 options.DisableAccessTokenEncryption();
+
+                options.AddEventHandler(SetRefreshTokenCookieHandler.Descriptor);
+                options.AddEventHandler(ReadRefreshTokenFromCookieHandler.Descriptor);
 
                 options.UseAspNetCore()
                     .EnableTokenEndpointPassthrough();

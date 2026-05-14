@@ -75,6 +75,7 @@ export async function postJson<TResponse, TRequest extends object>(
     method: "POST",
     headers: createHeaders("application/json", options.accessToken),
     body: JSON.stringify(payload),
+    credentials: "include",
     signal: options.signal,
   });
 
@@ -97,6 +98,7 @@ export async function putJson<TResponse, TRequest extends object>(
     method: "PUT",
     headers: createHeaders("application/json", options.accessToken),
     body: JSON.stringify(payload),
+    credentials: "include",
     signal: options.signal,
   });
 
@@ -119,6 +121,7 @@ export async function postForm<TResponse>(
     method: "POST",
     headers: createHeaders("application/x-www-form-urlencoded", options.accessToken),
     body: new URLSearchParams(payload),
+    credentials: "include",
     signal: options.signal,
   });
 
@@ -139,6 +142,7 @@ export async function getJson<TResponse>(
   const response = await fetch(`${apiBaseUrl}${path}`, {
     method: "GET",
     headers: createHeaders(null, options.accessToken),
+    credentials: "include",
     signal: options.signal,
   });
 
