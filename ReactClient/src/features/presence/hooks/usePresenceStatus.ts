@@ -1,3 +1,4 @@
+import { useQuery } from "@tanstack/react-query";
 import { useEffect, useEffectEvent, useRef, useState } from "react";
 import { useAuthStore } from "../../../store/authStore";
 import { changePresenceStatus, fetchPresencePreferences } from "../api";
@@ -20,8 +21,8 @@ function resolveErrorMessage(error: unknown): string {
 
 export function usePresenceStatus(): UsePresenceStatusResult {
   const accessToken = useAuthStore((s) => s.accessToken);
-  const [preferredStatus, setPreferredStatus] = useState<UserStatus | null>(null);
   const [currentStatus, setCurrentStatus] = useState<UserStatus>("Active");
+  const [preferredStatus, setPreferredStatus] = useState<UserStatus | null>(null);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isAfkEnabled, setIsAfkEnabled] = useState(true);
@@ -30,6 +31,13 @@ export function usePresenceStatus(): UsePresenceStatusResult {
   const preferredStatusRef = useRef<UserStatus | null>(null);
   const isAfkEnabledRef = useRef(true);
   const isStatusUpdateInFlightRef = useRef(false);
+
+  const { data: preferences } = useQuery({
+    queryKey: ["presencePreferences"],
+    queryFn: () => fetchPresencePreferences(accessToken!),
+    enabled: Boolean(accessToken),
+    staleTime: Infinity,
+  });
 
   const clearAfkTimeout = useEffectEvent(() => {
     if (afkTimeoutRef.current !== null) {
@@ -119,6 +127,15 @@ export function usePresenceStatus(): UsePresenceStatusResult {
     }, afkTimeoutMs);
   });
 
+  // Apply fetched preferences when they arrive
+  useEffect(() => {
+    if (!preferences || isStatusUpdateInFlightRef.current) {
+      return;
+    }
+
+    applyPresencePreferences(preferences);
+  }, [preferences]);
+
   useEffect(() => {
     if (!accessToken) {
       clearAfkTimeout();
@@ -129,34 +146,13 @@ export function usePresenceStatus(): UsePresenceStatusResult {
       return;
     }
 
-    let isActive = true;
-
-    const loadPresencePreferences = async () => {
-      try {
-        const preferences = await fetchPresencePreferences(accessToken);
-        if (isActive && !isStatusUpdateInFlightRef.current) {
-          applyPresencePreferences(preferences);
-        }
-      } catch (error) {
-        if (isActive) {
-          setErrorMessage(resolveErrorMessage(error));
-        }
-      }
-    };
-
-    void loadPresencePreferences();
-
     const unsubscribe = mouseActivityEvents.map((eventName) => {
-      const handler = () => {
-        handleMouseActivity();
-      };
-
+      const handler = () => handleMouseActivity();
       window.addEventListener(eventName, handler, { passive: true });
       return () => window.removeEventListener(eventName, handler);
     });
 
     return () => {
-      isActive = false;
       clearAfkTimeout();
       unsubscribe.forEach((dispose) => dispose());
     };

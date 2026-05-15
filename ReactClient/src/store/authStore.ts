@@ -1,11 +1,7 @@
 import { create } from "zustand";
+import { queryClient } from "../api/queryClient";
 import { logoutUser, refreshUserSession } from "../features/auth/api";
-import {
-  clearStoredSession,
-  loadStoredSession,
-  type StoredSession,
-  storeSession,
-} from "../services/sessionStorage";
+import { clearStoredSession, loadStoredSession, type StoredSession, storeSession } from "../services/sessionStorage";
 import type { AuthSession } from "../types/auth";
 
 // Deduplication outside the store — not reactive state, just a mutex for the async refresh call
@@ -41,6 +37,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   signOut: () => {
     clearStoredSession();
     set({ ...emptySession, isAuthenticated: false });
+    queryClient.clear();
     // Best-effort — clears the HttpOnly refresh token cookie on the server
     logoutUser().catch(() => undefined);
   },

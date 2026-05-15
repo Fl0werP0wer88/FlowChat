@@ -1,5 +1,6 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { KeyboardEvent } from "react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAuthStore } from "../../../store/authStore";
 import type { ChatMessage, MessageSender } from "../../../types/chat";
 import type { Contact } from "../../../types/contacts";
@@ -7,6 +8,11 @@ import type { RealtimeChatMessage } from "../../../types/realtime";
 import { resolveOwnerUserId } from "../../../utils/authUtils";
 import { openDuetConversation, sendChatMessage } from "../api";
 import type { ConversationMessage } from "../api";
+
+interface ConversationCacheEntry {
+  conversationId: string;
+  messages: ChatMessage[];
+}
 
 function createMessage(
   sender: MessageSender,
@@ -17,20 +23,11 @@ function createMessage(
   senderUserId: string | null = null,
   senderDisplayName: string | null = null,
 ): ChatMessage {
-  return {
-    id,
-    conversationId,
-    senderUserId,
-    senderDisplayName,
-    sender,
-    text,
-    createdAt,
-  };
+  return { id, conversationId, senderUserId, senderDisplayName, sender, text, createdAt };
 }
 
 function mapConversationMessage(message: ConversationMessage, ownerUserId: string | null): ChatMessage {
   const sender = ownerUserId && message.senderUserId === ownerUserId ? "me" : "other";
-
   return createMessage(
     sender,
     message.text,
@@ -45,89 +42,159 @@ function mapConversationMessage(message: ConversationMessage, ownerUserId: strin
 export function useChatMessages() {
   const accessToken = useAuthStore((s) => s.accessToken) ?? "";
   const userLogin = useAuthStore((s) => s.login) ?? "Uzytkownik";
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const ownerUserId = resolveOwnerUserId(accessToken);
+  const queryClient = useQueryClient();
+
   const [draft, setDraft] = useState("");
   const [activeContact, setActiveContact] = useState<Contact | null>(null);
-  const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
-  const [conversationError, setConversationError] = useState<string | null>(null);
-  const [isLoadingConversation, setIsLoadingConversation] = useState(false);
-  const [isSendingMessage, setIsSendingMessage] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
-  const ownerUserId = resolveOwnerUserId(accessToken);
 
-  const receiveRealtimeMessage = (payload: RealtimeChatMessage) => {
-    if (payload.conversationId !== activeConversationId) {
+  // Stores the callback supplied per-call to openContactConversation, fired once when query resolves
+  const onConversationOpenedRef = useRef<((contactUserId: string, conversationId: string) => void) | null>(null);
+  const lastNotifiedKeyRef = useRef<string | null>(null);
+
+  const {
+    data: conversationData,
+    isLoading: isLoadingConversation,
+    error: conversationQueryError,
+  } = useQuery<ConversationCacheEntry>({
+    queryKey: ["conversation", activeContact?.userId],
+    queryFn: async ({ signal }) => {
+      const result = await openDuetConversation(
+        activeContact!.userId,
+        activeContact!.conversationId,
+        accessToken,
+        signal,
+      );
+      const orderedMessages = [...result.messages].reverse();
+      return {
+        conversationId: result.conversationId,
+        messages: orderedMessages.map((msg) => mapConversationMessage(msg, ownerUserId)),
+      };
+    },
+    enabled: Boolean(activeContact && accessToken),
+    // Conversations are kept fresh via realtime events — disable background refetching
+    staleTime: Infinity,
+    gcTime: 5 * 60 * 1000,
+  });
+
+  useEffect(() => {
+    if (!conversationData || !activeContact) {
       return;
     }
 
-    setMessages((current) => {
-      if (current.some((message) => message.id === payload.messageId)) {
-        return current;
-      }
+    const key = `${activeContact.userId}:${conversationData.conversationId}`;
+    if (key === lastNotifiedKeyRef.current) {
+      return;
+    }
 
-      const sender = ownerUserId && payload.senderUserId === ownerUserId ? "me" : "other";
+    lastNotifiedKeyRef.current = key;
+    onConversationOpenedRef.current?.(activeContact.userId, conversationData.conversationId);
+    onConversationOpenedRef.current = null;
+  }, [conversationData, activeContact]);
 
-      return [
-        ...current,
-        createMessage(
-          sender,
-          payload.text,
-          payload.sentAtUtc,
-          payload.messageId,
-          payload.conversationId,
-          payload.senderUserId,
-          payload.senderDisplayName,
-        ),
-      ];
-    });
+  const sendMessageMutation = useMutation({
+    mutationFn: ({
+      messageId,
+      conversationId,
+      text,
+      senderDisplayName,
+    }: {
+      messageId: string;
+      conversationId: string;
+      text: string;
+      senderDisplayName: string;
+      sentAtUtc: string;
+    }) => sendChatMessage({ id: messageId, conversationId, senderDisplayName, text }, accessToken),
+    onSuccess: (result, variables) => {
+      queryClient.setQueryData<ConversationCacheEntry>(
+        ["conversation", activeContact?.userId],
+        (current) => {
+          if (!current) {
+            return current;
+          }
+
+          if (current.messages.some((m) => m.id === result.messageId)) {
+            return current;
+          }
+
+          return {
+            ...current,
+            messages: [
+              ...current.messages,
+              createMessage(
+                "me",
+                variables.text,
+                variables.sentAtUtc,
+                result.messageId,
+                variables.conversationId,
+                ownerUserId,
+                userLogin,
+              ),
+            ],
+          };
+        },
+      );
+    },
+    onError: (error) => {
+      const message = error instanceof Error ? error.message : "Nie udalo sie wyslac wiadomosci.";
+      setSendError(message);
+    },
+  });
+
+  const receiveRealtimeMessage = (payload: RealtimeChatMessage) => {
+    if (!conversationData || payload.conversationId !== conversationData.conversationId) {
+      return;
+    }
+
+    queryClient.setQueryData<ConversationCacheEntry>(
+      ["conversation", activeContact?.userId],
+      (current) => {
+        if (!current) {
+          return current;
+        }
+
+        if (current.messages.some((m) => m.id === payload.messageId)) {
+          return current;
+        }
+
+        const sender = ownerUserId && payload.senderUserId === ownerUserId ? "me" : "other";
+        return {
+          ...current,
+          messages: [
+            ...current.messages,
+            createMessage(
+              sender,
+              payload.text,
+              payload.sentAtUtc,
+              payload.messageId,
+              payload.conversationId,
+              payload.senderUserId,
+              payload.senderDisplayName,
+            ),
+          ],
+        };
+      },
+    );
   };
 
   const sendDraft = async () => {
     const text = draft.trim();
-    if (!text || !activeConversationId || !accessToken || !ownerUserId || isSendingMessage) {
+    const conversationId = conversationData?.conversationId;
+
+    if (!text || !conversationId || !accessToken || !ownerUserId || sendMessageMutation.isPending) {
       return;
     }
 
     const messageId = crypto.randomUUID();
     const sentAtUtc = new Date().toISOString();
-    setIsSendingMessage(true);
     setSendError(null);
 
     try {
-      const result = await sendChatMessage(
-        {
-          id: messageId,
-          conversationId: activeConversationId,
-          senderDisplayName: userLogin,
-          text,
-        },
-        accessToken,
-      );
-
-      setMessages((current) => {
-        if (current.some((message) => message.id === result.messageId)) {
-          return current;
-        }
-
-        return [
-          ...current,
-          createMessage(
-            "me",
-            text,
-            sentAtUtc,
-            result.messageId,
-            activeConversationId,
-            ownerUserId,
-            userLogin,
-          ),
-        ];
-      });
+      await sendMessageMutation.mutateAsync({ messageId, conversationId, text, senderDisplayName: userLogin, sentAtUtc });
       setDraft("");
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Nie udalo sie wyslac wiadomosci.";
-      setSendError(message);
-    } finally {
-      setIsSendingMessage(false);
+    } catch {
+      // error is handled in onError
     }
   };
 
@@ -138,49 +205,26 @@ export function useChatMessages() {
     }
   };
 
-  const openContactConversation = async (
+  const openContactConversation = (
     contact: Contact,
     onConversationOpened?: (contactUserId: string, conversationId: string) => void,
   ) => {
-    if (!accessToken || !ownerUserId) {
-      setConversationError("Brakuje aktywnej sesji potrzebnej do otwarcia rozmowy.");
-      return;
-    }
-
-    setActiveContact(contact);
-    setConversationError(null);
+    onConversationOpenedRef.current = onConversationOpened ?? null;
     setSendError(null);
-    setIsLoadingConversation(true);
-
-    try {
-      const result = await openDuetConversation(contact.userId, contact.conversationId, accessToken);
-      const orderedMessages = [...result.messages].reverse();
-
-      setActiveConversationId(result.conversationId);
-      setActiveContact({
-        ...contact,
-        conversationId: result.conversationId,
-      });
-      setMessages(orderedMessages.map((message) => mapConversationMessage(message, ownerUserId)));
-      onConversationOpened?.(contact.userId, result.conversationId);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Nie udalo sie otworzyc rozmowy.";
-      setConversationError(message);
-      setMessages([]);
-      setActiveConversationId(null);
-    } finally {
-      setIsLoadingConversation(false);
-    }
+    setActiveContact(contact);
   };
 
+  const conversationError =
+    conversationQueryError instanceof Error ? conversationQueryError.message : null;
+
   return {
-    messages,
+    messages: conversationData?.messages ?? [],
     draft,
     activeContact,
-    activeConversationId,
+    activeConversationId: conversationData?.conversationId ?? null,
     conversationError,
     isLoadingConversation,
-    isSendingMessage,
+    isSendingMessage: sendMessageMutation.isPending,
     sendError,
     setDraft,
     sendDraft,

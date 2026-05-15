@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 import { useAuthStore } from "../../../store/authStore";
 import type { Contact } from "../../../types/contacts";
 import type { PresenceChangedEvent } from "../../../types/realtime";
@@ -24,103 +25,43 @@ interface UseContactsResult {
   searchUsers: (criteria: SearchUsersCriteria, signal?: AbortSignal) => Promise<SearchUserResult[]>;
 }
 
-type ContactPresenceMap = Record<string, Contact["status"]>;
-
 export function useContacts(): UseContactsResult {
   const accessToken = useAuthStore((s) => s.accessToken) ?? "";
-  const [contacts, setContacts] = useState<Contact[]>([]);
-  const [isLoadingContacts, setIsLoadingContacts] = useState(false);
-  const [isAddingContact, setIsAddingContact] = useState(false);
-  const [notice, setNotice] = useState<ContactsNotice | null>(null);
-  const presenceStatusesRef = useRef<ContactPresenceMap>({});
   const ownerUserId = resolveOwnerUserId(accessToken);
+  const queryClient = useQueryClient();
+  const [notice, setNotice] = useState<ContactsNotice | null>(null);
 
-  const clearNotice = () => {
-    setNotice(null);
-  };
+  const clearNotice = () => setNotice(null);
 
-  const applyStatusesToContacts = (loadedContacts: Contact[], statuses: ContactPresenceMap = presenceStatusesRef.current) =>
-    loadedContacts.map((contact) => ({
-      ...contact,
-      status: statuses[contact.userId] ?? contact.status ?? "Invisible",
-    }));
+  const { data: contacts = [], isLoading: isLoadingContacts } = useQuery({
+    queryKey: ["contacts"],
+    queryFn: () => fetchContacts(accessToken),
+    enabled: Boolean(accessToken && ownerUserId),
+  });
 
-  useEffect(() => {
-    let isActive = true;
+  const addContactMutation = useMutation({
+    mutationFn: (lookupValue: string) => addContact(lookupValue, accessToken),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["contacts"] });
+      setNotice({ kind: "info", message: "Kontakt zostal dodany." });
+    },
+    onError: (error) => {
+      const message = error instanceof Error ? error.message : "Nie udalo sie dodac kontaktu.";
+      setNotice({ kind: "error", message });
+    },
+  });
 
-    async function loadContacts() {
-      if (!accessToken || !ownerUserId) {
-        if (isActive) {
-          setContacts([]);
-          presenceStatusesRef.current = {};
-          setNotice({
-            kind: "error",
-            message: "Nie udalo sie odczytac identyfikatora uzytkownika z sesji.",
-          });
-        }
-        return;
-      }
-
-      if (isActive) {
-        setIsLoadingContacts(true);
-      }
-
-      try {
-        const loadedContacts = await fetchContacts(accessToken);
-        if (!isActive) {
-          return;
-        }
-
-        setContacts(applyStatusesToContacts(loadedContacts));
-      } catch (error) {
-        if (!isActive) {
-          return;
-        }
-
-        const message = error instanceof Error ? error.message : "Nie udalo sie pobrac kontaktow.";
-        setNotice({ kind: "error", message });
-      } finally {
-        if (isActive) {
-          setIsLoadingContacts(false);
-        }
-      }
-    }
-
-    void loadContacts();
-
-    return () => {
-      isActive = false;
-    };
-  }, [accessToken, ownerUserId]);
-
-  const applyPresenceChanged = (payload: PresenceChangedEvent) => {
-    presenceStatusesRef.current = {
-      ...presenceStatusesRef.current,
-      [payload.userId]: payload.status,
-    };
-
-    setContacts((current) =>
-      current.map((contact) =>
-        contact.userId === payload.userId
-          ? {
-            ...contact,
-            status: payload.status,
-          }
-          : contact
-      ));
-  };
-
-  const updateContactConversationId = (contactUserId: string, conversationId: string) => {
-    setContacts((current) =>
-      current.map((contact) =>
-        contact.userId === contactUserId
-          ? {
-            ...contact,
-            conversationId,
-          }
-          : contact
-      ));
-  };
+  const addContactByUserIdMutation = useMutation({
+    mutationFn: (userId: string) => addContactByUserId(userId, accessToken),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["contacts"] });
+      setNotice({ kind: "info", message: "Kontakt zostal dodany." });
+    },
+    onError: (error) => {
+      const message = error instanceof Error ? error.message : "Nie udalo sie dodac kontaktu.";
+      setNotice({ kind: "error", message });
+    },
+  });
 
   const addContactByLookup = async (lookupValue: string): Promise<boolean> => {
     const trimmedLookupValue = lookupValue.trim();
@@ -131,28 +72,17 @@ export function useContacts(): UseContactsResult {
     }
 
     if (!accessToken || !ownerUserId) {
-      setNotice({
-        kind: "error",
-        message: "Brakuje aktywnej sesji potrzebnej do dodania kontaktu.",
-      });
+      setNotice({ kind: "error", message: "Brakuje aktywnej sesji potrzebnej do dodania kontaktu." });
       return false;
     }
 
-    setIsAddingContact(true);
     setNotice(null);
 
     try {
-      await addContact(trimmedLookupValue, accessToken);
-      const loadedContacts = await fetchContacts(accessToken);
-      setContacts(applyStatusesToContacts(loadedContacts));
-      setNotice({ kind: "info", message: "Kontakt zostal dodany." });
+      await addContactMutation.mutateAsync(trimmedLookupValue);
       return true;
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Nie udalo sie dodac kontaktu.";
-      setNotice({ kind: "error", message });
+    } catch {
       return false;
-    } finally {
-      setIsAddingContact(false);
     }
   };
 
@@ -165,29 +95,34 @@ export function useContacts(): UseContactsResult {
     }
 
     if (!accessToken || !ownerUserId) {
-      setNotice({
-        kind: "error",
-        message: "Brakuje aktywnej sesji potrzebnej do dodania kontaktu.",
-      });
+      setNotice({ kind: "error", message: "Brakuje aktywnej sesji potrzebnej do dodania kontaktu." });
       return false;
     }
 
-    setIsAddingContact(true);
     setNotice(null);
 
     try {
-      await addContactByUserId(trimmedUserId, accessToken);
-      const loadedContacts = await fetchContacts(accessToken);
-      setContacts(applyStatusesToContacts(loadedContacts));
-      setNotice({ kind: "info", message: "Kontakt zostal dodany." });
+      await addContactByUserIdMutation.mutateAsync(trimmedUserId);
       return true;
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Nie udalo sie dodac kontaktu.";
-      setNotice({ kind: "error", message });
+    } catch {
       return false;
-    } finally {
-      setIsAddingContact(false);
     }
+  };
+
+  const applyPresenceChanged = (payload: PresenceChangedEvent) => {
+    queryClient.setQueryData<Contact[]>(["contacts"], (current = []) =>
+      current.map((contact) =>
+        contact.userId === payload.userId ? { ...contact, status: payload.status } : contact
+      )
+    );
+  };
+
+  const updateContactConversationId = (contactUserId: string, conversationId: string) => {
+    queryClient.setQueryData<Contact[]>(["contacts"], (current = []) =>
+      current.map((contact) =>
+        contact.userId === contactUserId ? { ...contact, conversationId } : contact
+      )
+    );
   };
 
   const searchUsersAction = async (
@@ -198,12 +133,12 @@ export function useContacts(): UseContactsResult {
       throw new Error("Brakuje aktywnej sesji potrzebnej do wyszukiwania uzytkownikow.");
     }
 
-    return await searchUsers(criteria, accessToken, signal);
+    return searchUsers(criteria, accessToken, signal);
   };
 
   return {
     contacts,
-    isAddingContact,
+    isAddingContact: addContactMutation.isPending || addContactByUserIdMutation.isPending,
     isLoadingContacts,
     notice,
     addContactByLookup,
