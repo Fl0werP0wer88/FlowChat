@@ -1,10 +1,10 @@
-import { useMutation } from "@tanstack/react-query";
 import type { FormEvent } from "react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../../store/authStore";
 import type { AuthMode, AuthNotice, LoginFormValues, RegisterFormValues } from "../../../types/auth";
-import { loginUser, registerUser } from "../api";
+import { useLoginMutation } from "../queries/useLoginMutation";
+import { useRegisterMutation } from "../queries/useRegisterMutation";
 
 interface UseAuthFlowOptions {
   mode: AuthMode;
@@ -53,22 +53,17 @@ export function useAuthFlow({ mode, onSwitchToLogin, onSwitchToRegister }: UseAu
     setRegisterValues((current) => ({ ...current, [field]: value }));
   };
 
-  const loginMutation = useMutation({
-    mutationFn: () => loginUser(loginValues),
+  const loginMutation = useLoginMutation({
     onSuccess: (session) => {
       signIn(session);
       setLoginValues((current) => ({ ...current, password: "" }));
       setNotice({ kind: "info", message: "Zalogowano poprawnie." });
       navigate("/chat", { replace: true });
     },
-    onError: (error) => {
-      const message = error instanceof Error ? error.message : "Nie udalo sie zalogowac.";
-      setNotice({ kind: "error", message });
-    },
+    onError: (message) => setNotice({ kind: "error", message }),
   });
 
-  const registerMutation = useMutation({
-    mutationFn: () => registerUser(registerValues),
+  const registerMutation = useRegisterMutation({
     onSuccess: () => {
       setLoginValues((current) => ({
         ...current,
@@ -79,22 +74,19 @@ export function useAuthFlow({ mode, onSwitchToLogin, onSwitchToRegister }: UseAu
       setNotice({ kind: "info", message: "Konto utworzone. Potwierdz email, a potem zaloguj sie." });
       onSwitchToLogin();
     },
-    onError: (error) => {
-      const message = error instanceof Error ? error.message : "Nie udalo sie utworzyc konta.";
-      setNotice({ kind: "error", message });
-    },
+    onError: (message) => setNotice({ kind: "error", message }),
   });
 
   const submitLogin = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     clearNotice();
-    loginMutation.mutate();
+    loginMutation.mutate(loginValues);
   };
 
   const submitRegister = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     clearNotice();
-    registerMutation.mutate();
+    registerMutation.mutate(registerValues);
   };
 
   return {

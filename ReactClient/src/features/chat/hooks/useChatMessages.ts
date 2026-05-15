@@ -1,43 +1,14 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import type { KeyboardEvent } from "react";
 import { useEffect, useRef, useState } from "react";
 import { useAuthStore } from "../../../store/authStore";
-import type { ChatMessage, MessageSender } from "../../../types/chat";
 import type { Contact } from "../../../types/contacts";
 import type { RealtimeChatMessage } from "../../../types/realtime";
 import { resolveOwnerUserId } from "../../../utils/authUtils";
-import { openDuetConversation, sendChatMessage } from "../api";
-import type { ConversationMessage } from "../api";
-
-interface ConversationCacheEntry {
-  conversationId: string;
-  messages: ChatMessage[];
-}
-
-function createMessage(
-  sender: MessageSender,
-  text: string,
-  createdAt = new Date().toISOString(),
-  id: string = crypto.randomUUID(),
-  conversationId: string | null = null,
-  senderUserId: string | null = null,
-  senderDisplayName: string | null = null,
-): ChatMessage {
-  return { id, conversationId, senderUserId, senderDisplayName, sender, text, createdAt };
-}
-
-function mapConversationMessage(message: ConversationMessage, ownerUserId: string | null): ChatMessage {
-  const sender = ownerUserId && message.senderUserId === ownerUserId ? "me" : "other";
-  return createMessage(
-    sender,
-    message.text,
-    message.sentAtUtc,
-    message.id,
-    message.conversationId,
-    message.senderUserId,
-    message.senderDisplayName,
-  );
-}
+import type { ConversationCacheEntry } from "../queries/conversationCache";
+import { createMessage } from "../queries/conversationCache";
+import { useConversationQuery } from "../queries/useConversationQuery";
+import { useSendMessageMutation } from "../queries/useSendMessageMutation";
 
 export function useChatMessages() {
   const accessToken = useAuthStore((s) => s.accessToken) ?? "";
@@ -57,26 +28,7 @@ export function useChatMessages() {
     data: conversationData,
     isLoading: isLoadingConversation,
     error: conversationQueryError,
-  } = useQuery<ConversationCacheEntry>({
-    queryKey: ["conversation", activeContact?.userId],
-    queryFn: async ({ signal }) => {
-      const result = await openDuetConversation(
-        activeContact!.userId,
-        activeContact!.conversationId,
-        accessToken,
-        signal,
-      );
-      const orderedMessages = [...result.messages].reverse();
-      return {
-        conversationId: result.conversationId,
-        messages: orderedMessages.map((msg) => mapConversationMessage(msg, ownerUserId)),
-      };
-    },
-    enabled: Boolean(activeContact && accessToken),
-    // Conversations are kept fresh via realtime events — disable background refetching
-    staleTime: Infinity,
-    gcTime: 5 * 60 * 1000,
-  });
+  } = useConversationQuery(activeContact, accessToken, ownerUserId);
 
   useEffect(() => {
     if (!conversationData || !activeContact) {
@@ -93,53 +45,12 @@ export function useChatMessages() {
     onConversationOpenedRef.current = null;
   }, [conversationData, activeContact]);
 
-  const sendMessageMutation = useMutation({
-    mutationFn: ({
-      messageId,
-      conversationId,
-      text,
-      senderDisplayName,
-    }: {
-      messageId: string;
-      conversationId: string;
-      text: string;
-      senderDisplayName: string;
-      sentAtUtc: string;
-    }) => sendChatMessage({ id: messageId, conversationId, senderDisplayName, text }, accessToken),
-    onSuccess: (result, variables) => {
-      queryClient.setQueryData<ConversationCacheEntry>(
-        ["conversation", activeContact?.userId],
-        (current) => {
-          if (!current) {
-            return current;
-          }
-
-          if (current.messages.some((m) => m.id === result.messageId)) {
-            return current;
-          }
-
-          return {
-            ...current,
-            messages: [
-              ...current.messages,
-              createMessage(
-                "me",
-                variables.text,
-                variables.sentAtUtc,
-                result.messageId,
-                variables.conversationId,
-                ownerUserId,
-                userLogin,
-              ),
-            ],
-          };
-        },
-      );
-    },
-    onError: (error) => {
-      const message = error instanceof Error ? error.message : "Nie udalo sie wyslac wiadomosci.";
-      setSendError(message);
-    },
+  const sendMessageMutation = useSendMessageMutation({
+    accessToken,
+    activeContactUserId: activeContact?.userId,
+    ownerUserId,
+    userLogin,
+    onError: setSendError,
   });
 
   const receiveRealtimeMessage = (payload: RealtimeChatMessage) => {

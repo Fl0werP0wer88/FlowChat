@@ -1,8 +1,8 @@
-import { useQuery } from "@tanstack/react-query";
 import { useEffect, useEffectEvent, useRef, useState } from "react";
 import { useAuthStore } from "../../../store/authStore";
-import { changePresenceStatus, fetchPresencePreferences } from "../api";
+import { changePresenceStatus } from "../api";
 import type { ManualUserStatus, UserStatus } from "../../../types/realtime";
+import { usePresencePreferencesQuery } from "../queries/usePresencePreferencesQuery";
 
 const afkTimeoutMs = 2 * 60 * 1000;
 const mouseActivityEvents: Array<keyof WindowEventMap> = ["mousemove", "mousedown", "wheel"];
@@ -32,12 +32,7 @@ export function usePresenceStatus(): UsePresenceStatusResult {
   const isAfkEnabledRef = useRef(true);
   const isStatusUpdateInFlightRef = useRef(false);
 
-  const { data: preferences } = useQuery({
-    queryKey: ["presencePreferences"],
-    queryFn: () => fetchPresencePreferences(accessToken!),
-    enabled: Boolean(accessToken),
-    staleTime: Infinity,
-  });
+  const { data: preferences } = usePresencePreferencesQuery(accessToken);
 
   const clearAfkTimeout = useEffectEvent(() => {
     if (afkTimeoutRef.current !== null) {

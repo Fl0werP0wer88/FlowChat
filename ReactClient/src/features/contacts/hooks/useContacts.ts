@@ -1,11 +1,14 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useAuthStore } from "../../../store/authStore";
 import type { Contact } from "../../../types/contacts";
 import type { PresenceChangedEvent } from "../../../types/realtime";
 import { resolveOwnerUserId } from "../../../utils/authUtils";
-import { addContact, addContactByUserId, fetchContacts, searchUsers } from "../api";
 import type { SearchUserResult, SearchUsersCriteria } from "../api";
+import { searchUsers } from "../api";
+import { useAddContactByUserIdMutation } from "../queries/useAddContactByUserIdMutation";
+import { useAddContactMutation } from "../queries/useAddContactMutation";
+import { useContactsQuery } from "../queries/useContactsQuery";
 
 interface ContactsNotice {
   kind: "error" | "info";
@@ -33,35 +36,18 @@ export function useContacts(): UseContactsResult {
 
   const clearNotice = () => setNotice(null);
 
-  const { data: contacts = [], isLoading: isLoadingContacts } = useQuery({
-    queryKey: ["contacts"],
-    queryFn: () => fetchContacts(accessToken),
-    enabled: Boolean(accessToken && ownerUserId),
-  });
+  const noticeCallbacks = {
+    onSuccess: () => setNotice({ kind: "info", message: "Kontakt zostal dodany." }),
+    onError: (message: string) => setNotice({ kind: "error", message }),
+  };
 
-  const addContactMutation = useMutation({
-    mutationFn: (lookupValue: string) => addContact(lookupValue, accessToken),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["contacts"] });
-      setNotice({ kind: "info", message: "Kontakt zostal dodany." });
-    },
-    onError: (error) => {
-      const message = error instanceof Error ? error.message : "Nie udalo sie dodac kontaktu.";
-      setNotice({ kind: "error", message });
-    },
-  });
+  const { data: contacts = [], isLoading: isLoadingContacts } = useContactsQuery(
+    accessToken,
+    Boolean(accessToken && ownerUserId),
+  );
 
-  const addContactByUserIdMutation = useMutation({
-    mutationFn: (userId: string) => addContactByUserId(userId, accessToken),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["contacts"] });
-      setNotice({ kind: "info", message: "Kontakt zostal dodany." });
-    },
-    onError: (error) => {
-      const message = error instanceof Error ? error.message : "Nie udalo sie dodac kontaktu.";
-      setNotice({ kind: "error", message });
-    },
-  });
+  const addContactMutation = useAddContactMutation(accessToken, noticeCallbacks);
+  const addContactByUserIdMutation = useAddContactByUserIdMutation(accessToken, noticeCallbacks);
 
   const addContactByLookup = async (lookupValue: string): Promise<boolean> => {
     const trimmedLookupValue = lookupValue.trim();
