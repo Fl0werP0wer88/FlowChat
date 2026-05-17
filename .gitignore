@@ -8,6 +8,7 @@ artifacts/
 # Visual Studio / VS Code / Rider
 .vs/
 .idea/
+*.lscache
 
 # Claude Code
 .claude/
