@@ -26,6 +26,6 @@ export function useConversationQuery(
     enabled: Boolean(activeContact && accessToken),
     // Conversations are kept fresh via realtime events — disable background refetching
     staleTime: Infinity,
-    gcTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
   });
 }
