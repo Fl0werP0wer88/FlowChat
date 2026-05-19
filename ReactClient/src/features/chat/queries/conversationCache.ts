@@ -9,13 +9,13 @@ export interface ConversationCacheEntry {
 export function createMessage(
   sender: MessageSender,
   text: string,
-  createdAt = new Date().toISOString(),
+  sentAtUtc = new Date().toISOString(),
   id: string = crypto.randomUUID(),
   conversationId: string | null = null,
   senderUserId: string | null = null,
   senderDisplayName: string | null = null,
 ): ChatMessage {
-  return { id, conversationId, senderUserId, senderDisplayName, sender, text, createdAt };
+  return { id, conversationId, senderUserId, senderDisplayName, sender, text, sentAtUtc };
 }
 
 export function mapConversationMessage(

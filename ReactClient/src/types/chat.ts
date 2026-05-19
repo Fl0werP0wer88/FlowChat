@@ -7,5 +7,5 @@ export interface ChatMessage {
   senderDisplayName: string | null;
   sender: MessageSender;
   text: string;
-  createdAt: string;
+  sentAtUtc: string;
 }

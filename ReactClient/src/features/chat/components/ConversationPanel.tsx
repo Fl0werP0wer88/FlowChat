@@ -69,7 +69,7 @@ export function ConversationPanel({
                 ? <strong>{message.senderDisplayName}</strong>
                 : null}
               <p>{message.text}</p>
-              <time>{formatLocalTime(message.createdAt)}</time>
+              <time>{formatLocalTime(message.sentAtUtc)}</time>
             </article>
           ))}
       </div>
