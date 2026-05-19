@@ -6,7 +6,7 @@ import type { Contact } from "../../../types/contacts";
 import type { RealtimeChatMessage } from "../../../types/realtime";
 import { resolveOwnerUserId } from "../../../utils/authUtils";
 import type { ConversationCacheEntry } from "../queries/conversationCache";
-import { createMessage } from "../queries/conversationCache";
+import { createMessage, sortMessages } from "../queries/conversationCache";
 import { useConversationQuery } from "../queries/useConversationQuery";
 import { useSendMessageMutation } from "../queries/useSendMessageMutation";
 
@@ -72,7 +72,7 @@ export function useChatMessages() {
         const sender = ownerUserId && payload.senderUserId === ownerUserId ? "me" : "other";
         return {
           ...current,
-          messages: [
+          messages: sortMessages([
             ...current.messages,
             createMessage(
               sender,
@@ -83,7 +83,7 @@ export function useChatMessages() {
               payload.senderUserId,
               payload.senderDisplayName,
             ),
-          ],
+          ]),
         };
       },
     );

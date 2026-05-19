@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { sendChatMessage } from "../api";
-import { type ConversationCacheEntry, createMessage } from "./conversationCache";
+import { type ConversationCacheEntry, createMessage, sortMessages } from "./conversationCache";
 
 interface SendMessageVariables {
   messageId: string;
@@ -43,7 +43,7 @@ export function useSendMessageMutation({
 
           return {
             ...current,
-            messages: [
+            messages: sortMessages([
               ...current.messages,
               createMessage(
                 "me",
@@ -54,7 +54,7 @@ export function useSendMessageMutation({
                 ownerUserId,
                 userLogin,
               ),
-            ],
+            ]),
           };
         },
       );

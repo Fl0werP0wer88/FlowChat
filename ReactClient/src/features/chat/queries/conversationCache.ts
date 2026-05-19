@@ -18,6 +18,10 @@ export function createMessage(
   return { id, conversationId, senderUserId, senderDisplayName, sender, text, sentAtUtc };
 }
 
+export function sortMessages(messages: ChatMessage[]): ChatMessage[] {
+  return [...messages].sort((a, b) => a.sentAtUtc.localeCompare(b.sentAtUtc));
+}
+
 export function mapConversationMessage(
   message: ConversationMessage,
   ownerUserId: string | null,
