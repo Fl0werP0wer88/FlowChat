@@ -19,6 +19,7 @@ public sealed class PublishMessageCommandValidatorTests
             "John Doe",
             "Hello",
             DateTimeOffset.UtcNow,
+            DateTimeOffset.UtcNow,
             [_fixture.Create<Guid>()]);
 
         var result = _validator.Validate(command);
@@ -35,6 +36,7 @@ public sealed class PublishMessageCommandValidatorTests
             Guid.Empty,
             "John Doe",
             "Hello",
+            DateTimeOffset.UtcNow,
             DateTimeOffset.UtcNow,
             [_fixture.Create<Guid>()]);
 
@@ -58,6 +60,7 @@ public sealed class PublishMessageCommandValidatorTests
             value,
             "Hello",
             DateTimeOffset.UtcNow,
+            DateTimeOffset.UtcNow,
             [_fixture.Create<Guid>()]);
 
         var result = _validator.Validate(command);
@@ -79,6 +82,7 @@ public sealed class PublishMessageCommandValidatorTests
             "John Doe",
             value,
             DateTimeOffset.UtcNow,
+            DateTimeOffset.UtcNow,
             [_fixture.Create<Guid>()]);
 
         var result = _validator.Validate(command);
@@ -97,6 +101,7 @@ public sealed class PublishMessageCommandValidatorTests
             "John Doe",
             "Hello",
             DateTimeOffset.UtcNow,
+            DateTimeOffset.UtcNow,
             [Guid.Empty, Guid.Empty]);
 
         var result = _validator.Validate(command);
@@ -114,6 +119,7 @@ public sealed class PublishMessageCommandValidatorTests
             _fixture.Create<Guid>(),
             "John Doe",
             "Hello",
+            DateTimeOffset.UtcNow,
             DateTimeOffset.UtcNow,
             []);
 

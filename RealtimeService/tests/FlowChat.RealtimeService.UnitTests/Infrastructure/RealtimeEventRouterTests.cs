@@ -23,6 +23,7 @@ public sealed class RealtimeEventRouterTests
     {
         var localUser = _fixture.Create<Guid>();
         var remoteUser = _fixture.Create<Guid>();
+        var deliveredAtUtc = new DateTimeOffset(2026, 5, 19, 12, 0, 0, TimeSpan.Zero);
         var notification = new ChatMessageParam(
             _fixture.Create<Guid>(),
             _fixture.Create<Guid>(),
@@ -30,9 +31,11 @@ public sealed class RealtimeEventRouterTests
             "Jane",
             "Hello",
             DateTimeOffset.UtcNow,
+            deliveredAtUtc,
             [localUser, remoteUser]);
         IReadOnlyCollection<Guid>? localRecipients = null;
-        List<(Uri BaseAddress, IReadOnlyCollection<Guid> Recipients)> remoteCalls = [];
+        DateTimeOffset? localDeliveredAtUtc = null;
+        List<(Uri BaseAddress, IReadOnlyCollection<Guid> Recipients, DateTimeOffset DeliveredAtUtc)> remoteCalls = [];
 
         _userInstanceRoutingReaderMock
             .Setup(x => x.GetInstanceIdsByUserAsync(It.IsAny<IReadOnlyCollection<Guid>>(), It.IsAny<CancellationToken>()))
@@ -45,7 +48,10 @@ public sealed class RealtimeEventRouterTests
         _dispatcherMock
             .Setup(x => x.ReceiveMessageAsync(It.IsAny<ChatMessageParam>(), It.IsAny<CancellationToken>()))
             .Callback<ChatMessageParam, CancellationToken>((routedNotification, _) =>
-                localRecipients = routedNotification.RecipientUserIds)
+            {
+                localRecipients = routedNotification.RecipientUserIds;
+                localDeliveredAtUtc = routedNotification.DeliveredAtUtc;
+            })
             .Returns(Task.CompletedTask);
         _internalApiClientMock
             .Setup(x => x.PublishMessageAsync(
@@ -53,7 +59,7 @@ public sealed class RealtimeEventRouterTests
                 It.IsAny<ChatMessageParam>(),
                 It.IsAny<CancellationToken>()))
             .Callback<Uri, ChatMessageParam, CancellationToken>((baseAddress, routedNotification, _) =>
-                remoteCalls.Add((baseAddress, routedNotification.RecipientUserIds)))
+                remoteCalls.Add((baseAddress, routedNotification.RecipientUserIds, routedNotification.DeliveredAtUtc)))
             .Returns(Task.CompletedTask);
 
         var router = CreateRouter();
@@ -61,9 +67,11 @@ public sealed class RealtimeEventRouterTests
         await router.RouteMessageAsync(notification, CancellationToken.None);
 
         localRecipients.Should().BeEquivalentTo([localUser]);
+        localDeliveredAtUtc.Should().Be(deliveredAtUtc);
         remoteCalls.Should().ContainSingle();
         remoteCalls.Single().BaseAddress.Should().Be(new Uri("http://instance-remote"));
         remoteCalls.Single().Recipients.Should().BeEquivalentTo([remoteUser]);
+        remoteCalls.Single().DeliveredAtUtc.Should().Be(deliveredAtUtc);
     }
 
     [Fact]
@@ -117,6 +125,7 @@ public sealed class RealtimeEventRouterTests
                 _fixture.Create<Guid>(),
                 "Jane",
                 "Hello",
+                DateTimeOffset.UtcNow,
                 DateTimeOffset.UtcNow,
                 [userId]),
             CancellationToken.None);

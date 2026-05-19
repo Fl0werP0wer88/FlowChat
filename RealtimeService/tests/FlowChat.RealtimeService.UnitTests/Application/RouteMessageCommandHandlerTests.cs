@@ -71,8 +71,10 @@ public sealed class RouteMessageCommandHandlerTests
         capturedNotification!.SenderDisplayName.Should().Be("John Doe");
         capturedNotification.Text.Should().Be("Hello there");
         capturedNotification.RecipientUserIds.Should().ContainSingle().Which.Should().Be(recipientUserId);
+        capturedNotification.DeliveredAtUtc.Offset.Should().Be(TimeSpan.Zero);
         deliveredAtUtc.Should().NotBeNull();
         deliveredAtUtc!.Value.Offset.Should().Be(TimeSpan.Zero);
+        capturedNotification.DeliveredAtUtc.Should().Be(deliveredAtUtc.Value);
         deliveredAtUtc.Value.Should().BeOnOrAfter(beforeHandleUtc);
         deliveredAtUtc.Value.Should().BeOnOrBefore(afterHandleUtc);
         _chatServiceApiClientMock.Verify(

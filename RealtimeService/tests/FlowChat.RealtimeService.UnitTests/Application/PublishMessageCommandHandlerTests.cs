@@ -26,6 +26,7 @@ public sealed class PublishMessageCommandHandlerTests
     {
         ChatMessageParam? capturedNotification = null;
         var recipientUserId = _fixture.Create<Guid>();
+        var deliveredAtUtc = new DateTimeOffset(2026, 5, 19, 12, 0, 0, TimeSpan.Zero);
 
         _dispatcherMock
             .Setup(x => x.ReceiveMessageAsync(It.IsAny<ChatMessageParam>(), It.IsAny<CancellationToken>()))
@@ -40,6 +41,7 @@ public sealed class PublishMessageCommandHandlerTests
                 " John Doe ",
                 " Hello there ",
                 new DateTimeOffset(2026, 3, 17, 12, 0, 0, TimeSpan.Zero),
+                deliveredAtUtc,
                 [recipientUserId, recipientUserId, Guid.Empty]),
             CancellationToken.None);
 
@@ -47,6 +49,7 @@ public sealed class PublishMessageCommandHandlerTests
         capturedNotification.Should().NotBeNull();
         capturedNotification!.SenderDisplayName.Should().Be("John Doe");
         capturedNotification.Text.Should().Be("Hello there");
+        capturedNotification.DeliveredAtUtc.Should().Be(deliveredAtUtc);
         capturedNotification.RecipientUserIds.Should().ContainSingle().Which.Should().Be(recipientUserId);
     }
 }
