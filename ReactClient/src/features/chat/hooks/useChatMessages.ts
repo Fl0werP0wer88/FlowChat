@@ -1,12 +1,13 @@
 import { useQueryClient } from "@tanstack/react-query";
 import type { KeyboardEvent } from "react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useAuthStore } from "../../../store/authStore";
 import type { Contact } from "../../../types/contacts";
 import type { RealtimeChatMessage } from "../../../types/realtime";
 import { resolveOwnerUserId } from "../../../utils/authUtils";
+import { getConversationMessages } from "../api";
 import type { ConversationCacheEntry } from "../queries/conversationCache";
-import { createMessage, sortMessages } from "../queries/conversationCache";
+import { createMessage, mapConversationMessage, sortMessages } from "../queries/conversationCache";
 import { useConversationQuery } from "../queries/useConversationQuery";
 import { useSendMessageMutation } from "../queries/useSendMessageMutation";
 
@@ -19,10 +20,13 @@ export function useChatMessages() {
   const [draft, setDraft] = useState("");
   const [activeContact, setActiveContact] = useState<Contact | null>(null);
   const [sendError, setSendError] = useState<string | null>(null);
+  const [olderMessagesError, setOlderMessagesError] = useState<string | null>(null);
+  const [isLoadingOlderMessages, setIsLoadingOlderMessages] = useState(false);
 
   // Stores the callback supplied per-call to openContactConversation, fired once when query resolves
   const onConversationOpenedRef = useRef<((contactUserId: string, conversationId: string) => void) | null>(null);
   const lastNotifiedKeyRef = useRef<string | null>(null);
+  const isLoadingOlderMessagesRef = useRef(false);
 
   const {
     data: conversationData,
@@ -52,6 +56,59 @@ export function useChatMessages() {
     userLogin,
     onError: setSendError,
   });
+
+  const loadOlderMessages = useCallback(async () => {
+    if (!activeContact || !accessToken || isLoadingOlderMessagesRef.current) {
+      return;
+    }
+
+    const current = queryClient.getQueryData<ConversationCacheEntry>(["conversation", activeContact.userId]);
+    if (!current?.hasMore || !current.nextBeforeSentAtUtc || !current.nextBeforeMessageId) {
+      return;
+    }
+
+    isLoadingOlderMessagesRef.current = true;
+    setIsLoadingOlderMessages(true);
+    setOlderMessagesError(null);
+
+    try {
+      const result = await getConversationMessages(
+        current.conversationId,
+        {
+          beforeSentAtUtc: current.nextBeforeSentAtUtc,
+          beforeMessageId: current.nextBeforeMessageId,
+        },
+        accessToken,
+      );
+
+      queryClient.setQueryData<ConversationCacheEntry>(
+        ["conversation", activeContact.userId],
+        (cached) => {
+          if (!cached) {
+            return cached;
+          }
+
+          const existingIds = new Set(cached.messages.map((message) => message.id));
+          const olderMessages = result.messages
+            .map((message) => mapConversationMessage(message, ownerUserId))
+            .filter((message) => !existingIds.has(message.id));
+
+          return {
+            ...cached,
+            messages: sortMessages([...olderMessages, ...cached.messages]),
+            nextBeforeSentAtUtc: result.nextBeforeSentAtUtc,
+            nextBeforeMessageId: result.nextBeforeMessageId,
+            hasMore: result.hasMore,
+          };
+        },
+      );
+    } catch (error) {
+      setOlderMessagesError(error instanceof Error ? error.message : "Nie udalo sie pobrac starszych wiadomosci.");
+    } finally {
+      isLoadingOlderMessagesRef.current = false;
+      setIsLoadingOlderMessages(false);
+    }
+  }, [accessToken, activeContact, ownerUserId, queryClient]);
 
   const receiveRealtimeMessage = (payload: RealtimeChatMessage) => {
     if (!conversationData || payload.conversationId !== conversationData.conversationId) {
@@ -121,6 +178,7 @@ export function useChatMessages() {
   ) => {
     onConversationOpenedRef.current = onConversationOpened ?? null;
     setSendError(null);
+    setOlderMessagesError(null);
     setActiveContact(contact);
   };
 
@@ -136,8 +194,12 @@ export function useChatMessages() {
     isLoadingConversation,
     isSendingMessage: sendMessageMutation.isPending,
     sendError,
+    hasOlderMessages: conversationData?.hasMore ?? false,
+    isLoadingOlderMessages,
+    olderMessagesError,
     setDraft,
     sendDraft,
+    loadOlderMessages,
     handleDraftKeyDown,
     receiveRealtimeMessage,
     openContactConversation,

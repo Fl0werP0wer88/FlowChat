@@ -4,6 +4,9 @@ import type { ConversationMessage } from "../api";
 export interface ConversationCacheEntry {
   conversationId: string;
   messages: ChatMessage[];
+  nextBeforeSentAtUtc: string | null;
+  nextBeforeMessageId: string | null;
+  hasMore: boolean;
 }
 
 export function createMessage(

@@ -36,12 +36,16 @@ export function ChatFeature() {
           conversationError={chat.conversationError}
           isLoadingConversation={chat.isLoadingConversation}
           isSendingMessage={chat.isSendingMessage}
+          hasOlderMessages={chat.hasOlderMessages}
+          isLoadingOlderMessages={chat.isLoadingOlderMessages}
           sendError={chat.sendError}
+          olderMessagesError={chat.olderMessagesError}
           messages={chat.messages}
           draft={chat.draft}
           onDraftChange={chat.setDraft}
           onDraftKeyDown={chat.handleDraftKeyDown}
           onSendDraft={chat.sendDraft}
+          onLoadOlderMessages={chat.loadOlderMessages}
         />
       }
       sidebar={

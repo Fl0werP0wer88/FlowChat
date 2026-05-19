@@ -21,6 +21,9 @@ export function useConversationQuery(
       return {
         conversationId: result.conversationId,
         messages: orderedMessages.map((msg) => mapConversationMessage(msg, ownerUserId)),
+        nextBeforeSentAtUtc: result.nextBeforeSentAtUtc,
+        nextBeforeMessageId: result.nextBeforeMessageId,
+        hasMore: result.hasMore,
       };
     },
     enabled: Boolean(activeContact && accessToken),

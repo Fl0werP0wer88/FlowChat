@@ -1,4 +1,4 @@
-import { putJson } from "../../api/httpClient";
+import { getJson, putJson } from "../../api/httpClient";
 
 interface OpenDuetConversationPayload {
   partnerUserId: string;
@@ -90,6 +90,24 @@ export interface SendChatMessageResult {
   sentAtUtc: string;
 }
 
+interface GetConversationMessagesResponseDto {
+  items?: ConversationMessageDto[];
+  Items?: ConversationMessageDto[];
+  nextBeforeSentAtUtc?: string | null;
+  NextBeforeSentAtUtc?: string | null;
+  nextBeforeMessageId?: string | null;
+  NextBeforeMessageId?: string | null;
+  hasMore?: boolean;
+  HasMore?: boolean;
+}
+
+export interface ConversationMessagesResult {
+  messages: ConversationMessage[];
+  nextBeforeSentAtUtc: string | null;
+  nextBeforeMessageId: string | null;
+  hasMore: boolean;
+}
+
 function mapParticipant(dto: ConversationParticipantDto): ConversationParticipant {
   return {
     userId: dto.userId ?? dto.UserId ?? "",
@@ -132,6 +150,35 @@ export async function openDuetConversation(
     conversationId: response.conversationId ?? response.ConversationId ?? "",
     participants: (response.participants ?? response.Participants ?? []).map(mapParticipant),
     messages: (response.messages ?? response.Messages ?? []).map(mapMessage),
+    nextBeforeSentAtUtc: response.nextBeforeSentAtUtc ?? response.NextBeforeSentAtUtc ?? null,
+    nextBeforeMessageId: response.nextBeforeMessageId ?? response.NextBeforeMessageId ?? null,
+    hasMore: response.hasMore ?? response.HasMore ?? false,
+  };
+}
+
+export async function getConversationMessages(
+  conversationId: string,
+  cursor: { beforeSentAtUtc: string | null; beforeMessageId: string | null },
+  accessToken: string,
+  signal?: AbortSignal,
+): Promise<ConversationMessagesResult> {
+  const params = new URLSearchParams({ limit: "10" });
+
+  if (cursor.beforeSentAtUtc && cursor.beforeMessageId) {
+    params.set("beforeSentAtUtc", cursor.beforeSentAtUtc);
+    params.set("beforeMessageId", cursor.beforeMessageId);
+  }
+
+  const response = await getJson<GetConversationMessagesResponseDto>(
+    `/api/chat/conversations/${encodeURIComponent(conversationId)}/messages?${params.toString()}`,
+    {
+      accessToken,
+      signal,
+    },
+  );
+
+  return {
+    messages: (response.items ?? response.Items ?? []).map(mapMessage),
     nextBeforeSentAtUtc: response.nextBeforeSentAtUtc ?? response.NextBeforeSentAtUtc ?? null,
     nextBeforeMessageId: response.nextBeforeMessageId ?? response.NextBeforeMessageId ?? null,
     hasMore: response.hasMore ?? response.HasMore ?? false,
