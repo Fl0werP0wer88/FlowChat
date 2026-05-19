@@ -7,4 +7,5 @@ public sealed record ChatMessageParam(
     string SenderDisplayName,
     string Text,
     DateTimeOffset SentAtUtc,
+    DateTimeOffset DeliveredAtUtc,
     IReadOnlyCollection<Guid> RecipientUserIds);

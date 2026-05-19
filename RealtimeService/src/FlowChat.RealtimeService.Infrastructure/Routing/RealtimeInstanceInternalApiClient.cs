@@ -28,6 +28,7 @@ public sealed class RealtimeInstanceInternalApiClient(HttpClient httpClient)
                 notification.SenderDisplayName,
                 notification.Text,
                 notification.SentAtUtc,
+                notification.DeliveredAtUtc,
                 notification.RecipientUserIds),
             cancellationToken);
 
@@ -64,6 +65,7 @@ public sealed class RealtimeInstanceInternalApiClient(HttpClient httpClient)
         string SenderDisplayName,
         string Text,
         DateTimeOffset SentAtUtc,
+        DateTimeOffset DeliveredAtUtc,
         IReadOnlyCollection<Guid> RecipientUserIds);
 
     private sealed record PublishPresenceChangeRequest(

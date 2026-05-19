@@ -8,4 +8,5 @@ public sealed class ChatMessageNotificationDto
     public required string SenderDisplayName { get; init; }
     public required string Text { get; init; }
     public DateTimeOffset SentAtUtc { get; init; }
+    public DateTimeOffset DeliveredAtUtc { get; init; }
 }

@@ -22,6 +22,7 @@ public sealed class PublishMessageCommandHandler(IRealtimeClientDispatcher realt
             request.SenderDisplayName!.Trim(),
             request.Text!.Trim(),
             request.SentAtUtc,
+            request.DeliveredAtUtc,
             recipientUserIds);
 
         await _realtimeClientDispatcher.ReceiveMessageAsync(notification, cancellationToken);

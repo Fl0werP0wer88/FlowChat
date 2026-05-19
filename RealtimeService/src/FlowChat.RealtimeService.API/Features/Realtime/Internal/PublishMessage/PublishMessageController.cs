@@ -37,6 +37,7 @@ public sealed class PublishMessageController : ApiControllerBase
                 request.SenderDisplayName,
                 request.Text,
                 request.SentAtUtc,
+                request.DeliveredAtUtc,
                 request.RecipientUserIds),
             cancellationToken);
 

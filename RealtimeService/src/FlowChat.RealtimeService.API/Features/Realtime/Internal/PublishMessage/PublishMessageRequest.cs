@@ -10,5 +10,6 @@ public sealed class PublishMessageRequest : IServiceInput
     public string? SenderDisplayName { get; init; }
     public string? Text { get; init; }
     public DateTimeOffset SentAtUtc { get; init; }
+    public DateTimeOffset DeliveredAtUtc { get; init; }
     public IReadOnlyCollection<Guid> RecipientUserIds { get; init; } = [];
 }

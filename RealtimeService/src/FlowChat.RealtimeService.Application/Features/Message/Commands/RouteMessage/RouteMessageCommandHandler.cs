@@ -18,6 +18,7 @@ public sealed class RouteMessageCommandHandler(
     public async Task<FlowChatResult<Unit>> Handle(RouteMessageCommand request, CancellationToken cancellationToken)
     {
         var recipientUserIds = NormalizeRecipientUserIds(request.RecipientUserIds);
+        var deliveredAtUtc = DateTimeOffset.UtcNow;
 
         var notification = new ChatMessageParam(
             request.MessageId,
@@ -26,6 +27,7 @@ public sealed class RouteMessageCommandHandler(
             request.SenderDisplayName!.Trim(),
             request.Text!.Trim(),
             request.SentAtUtc,
+            deliveredAtUtc,
             recipientUserIds);
 
         // ToDo: Maybe parallelize this with cancellation or compensation if RouteMessageAsync fails.
@@ -33,7 +35,7 @@ public sealed class RouteMessageCommandHandler(
         await _chatServiceInternalApiClient.MarkChatMessageAsDeliveredAsync(
             request.MessageId,
             request.ConversationId,
-            DateTimeOffset.UtcNow,
+            deliveredAtUtc,
             cancellationToken);
 
         return FlowChatResult<Unit>.Success(Unit.Value);
