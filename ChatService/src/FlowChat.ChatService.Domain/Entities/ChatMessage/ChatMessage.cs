@@ -76,13 +76,13 @@ public sealed class ChatMessage : AggregateRootBase<ChatMessage>
         return chatMessage;
     }
 
-    public void MarkAsProcessed(long sequenceNum)
+    public void MarkAsDelivered(long sequenceNum)
     {
         if (SequenceNum.HasValue)
             return;
 
         SequenceNum = sequenceNum;
-        DeliveryStatus = DeliveryStatus.Processed;
+        DeliveryStatus = DeliveryStatus.Delivered;
     }
 
     private static Guid[] NormalizeRecipientUserIds(IEnumerable<Guid> recipientUserIds)

@@ -30,7 +30,7 @@ public sealed class RouteMessageCommandHandler(
 
         // ToDo: Maybe parallelize this with cancellation or compensation if RouteMessageAsync fails.
         await _realtimeEventRouter.RouteMessageAsync(notification, cancellationToken);
-        await _chatServiceInternalApiClient.MarkMessageProcessedAsync(request.MessageId, request.ConversationId, cancellationToken);
+        await _chatServiceInternalApiClient.MarkChatMessageAsDeliveredAsync(request.MessageId, request.ConversationId, cancellationToken);
 
         return FlowChatResult<Unit>.Success(Unit.Value);
     }

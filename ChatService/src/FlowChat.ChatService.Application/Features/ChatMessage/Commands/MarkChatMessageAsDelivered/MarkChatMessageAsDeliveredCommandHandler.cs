@@ -4,16 +4,16 @@ using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
 using MediatR;
 
-namespace FlowChat.ChatService.Application.Features.ChatMessage.Commands.ProcessChatMessage;
+namespace FlowChat.ChatService.Application.Features.ChatMessage.Commands.MarkChatMessageAsDelivered;
 
-public sealed class ProcessChatMessageCommandHandler(
+public sealed class MarkChatMessageAsDeliveredCommandHandler(
     IChatMessageWriteRepository chatMessageRepository,
     IUnitOfWork unitOfWork,
     IDomainEventDispatcher domainEventDispatcher)
-    : CommandHandlerBase<ProcessChatMessageCommand, Unit>(domainEventDispatcher, unitOfWork)
+    : CommandHandlerBase<MarkChatMessageAsDeliveredCommand, Unit>(domainEventDispatcher, unitOfWork)
 {
     protected override async Task<FlowChatResult<Unit>> ExecuteAsync(
-        ProcessChatMessageCommand request,
+        MarkChatMessageAsDeliveredCommand request,
         CancellationToken cancellationToken)
     {
         var message = await chatMessageRepository.GetByIdAsync(request.MessageId, cancellationToken);
@@ -24,7 +24,7 @@ public sealed class ProcessChatMessageCommandHandler(
             return FlowChatResult<Unit>.Success(Unit.Value);
 
         var maxSequenceNum = await chatMessageRepository.GetMaxSequenceNumAsync(request.ConversationId, cancellationToken);
-        message.MarkAsProcessed(maxSequenceNum.GetValueOrDefault() + 1);
+        message.MarkAsDelivered(maxSequenceNum.GetValueOrDefault() + 1);
 
         return FlowChatResult<Unit>.Success(Unit.Value);
     }

@@ -20,7 +20,7 @@ public sealed class RouteMessageCommandHandlerTests
             .Returns(Task.CompletedTask);
 
         _chatServiceApiClientMock
-            .Setup(x => x.MarkMessageProcessedAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.MarkChatMessageAsDeliveredAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         _handler = new RouteMessageCommandHandler(_routerMock.Object, _chatServiceApiClientMock.Object);
