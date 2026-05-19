@@ -5,4 +5,5 @@ namespace FlowChat.ChatService.Api.Features.ChatMessage.Internal.MarkChatMessage
 public sealed class MarkChatMessageAsDeliveredRequest : IServiceInput
 {
     public Guid ConversationId { get; init; }
+    public DateTimeOffset DeliveredAtUtc { get; init; }
 }

@@ -12,6 +12,7 @@ public sealed class ChatMessage : AggregateRootBase<ChatMessage>
     public string SenderDisplayName { get; private set; }
     public string Text { get; private set; }
     public UtcDateTimeOffset SentAtUtc { get; private set; } = UtcDateTimeOffset.UtcNow;
+    public UtcDateTimeOffset? DeliveredAtUtc { get; private set; }
     public Guid[] RecipientUserIds { get; private set; }
     public long? SequenceNum { get; private set; }
     public DeliveryStatus DeliveryStatus { get; private set; } = DeliveryStatus.Pending;
@@ -76,12 +77,15 @@ public sealed class ChatMessage : AggregateRootBase<ChatMessage>
         return chatMessage;
     }
 
-    public void MarkAsDelivered(long sequenceNum)
+    public void MarkAsDelivered(long sequenceNum, UtcDateTimeOffset deliveredAtUtc)
     {
+        ArgumentNullException.ThrowIfNull(deliveredAtUtc);
+
         if (SequenceNum.HasValue)
             return;
 
         SequenceNum = sequenceNum;
+        DeliveredAtUtc = deliveredAtUtc;
         DeliveryStatus = DeliveryStatus.Delivered;
     }
 

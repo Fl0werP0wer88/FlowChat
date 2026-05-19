@@ -36,6 +36,9 @@ public sealed class ChatMessageConfiguration : IEntityTypeConfiguration<ChatMess
             .HasUtcDateTimeOffsetConversion()
             .IsRequired();
 
+        builder.Property(x => x.DeliveredAtUtc)
+            .HasNullableUtcDateTimeOffsetConversion();
+
         builder.Property(x => x.RecipientUserIds)
             .HasColumnType("uuid[]")
             .IsRequired();

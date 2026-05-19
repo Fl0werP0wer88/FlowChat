@@ -9,13 +9,17 @@ internal sealed class ChatServiceInternalApiClient(HttpClient httpClient)
 {
     protected override string ClientDisplayName => "Chat Service";
 
-    public async Task MarkChatMessageAsDeliveredAsync(Guid messageId, Guid conversationId, CancellationToken cancellationToken)
+    public async Task MarkChatMessageAsDeliveredAsync(
+        Guid messageId,
+        Guid conversationId,
+        DateTimeOffset deliveredAtUtc,
+        CancellationToken cancellationToken)
     {
         using var request = new HttpRequestMessage(
             HttpMethod.Patch,
             $"/internal/messages/{messageId}/delivery")
         {
-            Content = JsonContent.Create(new { ConversationId = conversationId })
+            Content = JsonContent.Create(new { ConversationId = conversationId, DeliveredAtUtc = deliveredAtUtc })
         };
         await SendAsync(request, cancellationToken);
     }

@@ -5,4 +5,5 @@ namespace FlowChat.ChatService.Application.Features.ChatMessage.Commands.MarkCha
 
 public sealed record MarkChatMessageAsDeliveredCommand(
     Guid MessageId,
-    Guid ConversationId) : ICommand<Unit>;
+    Guid ConversationId,
+    DateTimeOffset DeliveredAtUtc) : ICommand<Unit>;

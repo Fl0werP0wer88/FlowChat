@@ -2,6 +2,7 @@ using FlowChat.ChatService.Application.Contracts.Persistence;
 using FlowChat.Core.Results;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
+using FlowChat.Shared.Domain.ValueObjects;
 using MediatR;
 
 namespace FlowChat.ChatService.Application.Features.ChatMessage.Commands.MarkChatMessageAsDelivered;
@@ -24,7 +25,9 @@ public sealed class MarkChatMessageAsDeliveredCommandHandler(
             return FlowChatResult<Unit>.Success(Unit.Value);
 
         var maxSequenceNum = await chatMessageRepository.GetMaxSequenceNumAsync(request.ConversationId, cancellationToken);
-        message.MarkAsDelivered(maxSequenceNum.GetValueOrDefault() + 1);
+        message.MarkAsDelivered(
+            maxSequenceNum.GetValueOrDefault() + 1,
+            UtcDateTimeOffset.Create(request.DeliveredAtUtc));
 
         return FlowChatResult<Unit>.Success(Unit.Value);
     }
