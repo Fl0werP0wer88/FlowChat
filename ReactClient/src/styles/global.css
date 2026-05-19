@@ -254,7 +254,8 @@ body {
 
 .chat-shell {
   width: min(74rem, 100%);
-  min-height: min(48rem, 88vh);
+  height: min(48rem, 88vh);
+  min-height: 0;
   border-radius: 1rem;
   border: 1px solid var(--border);
   background: color-mix(in srgb, var(--card) 94%, transparent);
@@ -343,6 +344,7 @@ body {
   display: grid;
   grid-template-rows: auto 1fr auto;
   min-height: 0;
+  overflow: hidden;
 }
 
 .conversation-panel__header {
@@ -376,7 +378,9 @@ body {
 }
 
 .history {
+  min-height: 0;
   overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 0.9rem;
   display: grid;
   gap: 0.7rem;

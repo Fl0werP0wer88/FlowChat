@@ -1,4 +1,4 @@
-import type { KeyboardEvent } from "react";
+import { useEffect, useRef, type KeyboardEvent } from "react";
 import { Button } from "../../../components/atoms/Button";
 import { TextArea } from "../../../components/atoms/TextArea";
 import type { ChatMessage } from "../../../types/chat";
@@ -32,8 +32,13 @@ export function ConversationPanel({
   onDraftKeyDown,
   onSendDraft,
 }: ConversationPanelProps) {
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const isComposerDisabled = !activeConversationId || isLoadingConversation || isSendingMessage;
   const isSendDisabled = isComposerDisabled || draft.trim().length === 0;
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ block: "end" });
+  }, [messages.length]);
 
   return (
     <div className="conversation-panel">
@@ -72,6 +77,7 @@ export function ConversationPanel({
               <time>{formatLocalTime(message.sentAtUtc)}</time>
             </article>
           ))}
+        <div ref={messagesEndRef} />
       </div>
 
       <div className="composer">
