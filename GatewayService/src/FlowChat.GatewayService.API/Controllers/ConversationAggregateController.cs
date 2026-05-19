@@ -11,7 +11,7 @@ namespace FlowChat.GatewayService.Api.Controllers;
 [Route("api/aggregate/conversations")]
 public sealed class ConversationAggregateController : ApiControllerBase
 {
-    private const int DefaultMessageLimit = 20;
+    private const int DefaultMessageLimit = 10;
 
     private readonly IChatServiceClient _chatClient;
     private readonly ILogger<ConversationAggregateController> _logger;
