@@ -98,11 +98,10 @@ export function useChatMessages() {
     }
 
     const messageId = crypto.randomUUID();
-    const sentAtUtc = new Date().toISOString();
     setSendError(null);
 
     try {
-      await sendMessageMutation.mutateAsync({ messageId, conversationId, text, senderDisplayName: userLogin, sentAtUtc });
+      await sendMessageMutation.mutateAsync({ messageId, conversationId, text, senderDisplayName: userLogin });
       setDraft("");
     } catch {
       // error is handled in onError

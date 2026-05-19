@@ -7,7 +7,7 @@ using ChatMessageAggregate = FlowChat.ChatService.Domain.Entities.ChatMessage.Ch
 namespace FlowChat.ChatService.Application.Features.ChatMessage.Commands.SendChatMessage;
 
 public sealed class SendChatMessageCommandHandler
-    : IdempotentCommandHandlerBase<SendChatMessageCommand, Guid>
+    : IdempotentCommandHandlerBase<SendChatMessageCommand, SendChatMessageCommandResult>
 {
     private readonly IChatMessageWriteRepository _chatMessageRepository;
     private readonly IConversationParticipantReadRepository _participantReadRepository;
@@ -25,7 +25,7 @@ public sealed class SendChatMessageCommandHandler
         _participantReadRepository = participantReadRepository ?? throw new ArgumentNullException(nameof(participantReadRepository));
     }
 
-    protected override async Task<(bool Found, Guid Value)> TryGetExistingResponseAsync(
+    protected override async Task<(bool Found, SendChatMessageCommandResult Value)> TryGetExistingResponseAsync(
         SendChatMessageCommand request,
         CancellationToken cancellationToken)
     {
@@ -34,13 +34,13 @@ public sealed class SendChatMessageCommandHandler
             || message.ConversationId.Value != request.ConversationId
             || message.SenderUserId != request.SenderUserId)
         {
-            return (false, default);
+            return (false, default!);
         }
 
-        return (true, message.Id.Value);
+        return (true, new SendChatMessageCommandResult(message.Id.Value, message.SentAtUtc.Value));
     }
 
-    protected override async Task<FlowChatResult<Guid>> ExecuteCommandAsync(
+    protected override async Task<FlowChatResult<SendChatMessageCommandResult>> ExecuteCommandAsync(
         SendChatMessageCommand request,
         CancellationToken cancellationToken)
     {
@@ -49,10 +49,10 @@ public sealed class SendChatMessageCommandHandler
             cancellationToken);
 
         if (participantUserIds is null)
-            return FlowChatResult<Guid>.Failure(DomainError.NotFound("Conversation not found."));
+            return FlowChatResult<SendChatMessageCommandResult>.Failure(DomainError.NotFound("Conversation not found."));
 
         if (!participantUserIds.Contains(request.SenderUserId))
-            return FlowChatResult<Guid>.Failure(DomainError.Unauthorized("Sender is not a participant of this conversation."));
+            return FlowChatResult<SendChatMessageCommandResult>.Failure(DomainError.Unauthorized("Sender is not a participant of this conversation."));
 
         var recipientUserIds = participantUserIds
             .Where(id => id != request.SenderUserId && id != Guid.Empty)
@@ -69,10 +69,11 @@ public sealed class SendChatMessageCommandHandler
 
         await _chatMessageRepository.AddAsync(_chatMessage, cancellationToken);
 
-        return FlowChatResult<Guid>.Success(_chatMessage.Id.Value);
+        return FlowChatResult<SendChatMessageCommandResult>.Success(
+            new SendChatMessageCommandResult(_chatMessage.Id.Value, _chatMessage.SentAtUtc.Value));
     }
 
-    protected override IAggregateRoot? GetExecutedAggregateRoot(IdempotentCommandResult<Guid> result) =>
+    protected override IAggregateRoot? GetExecutedAggregateRoot(IdempotentCommandResult<SendChatMessageCommandResult> result) =>
         _chatMessage;
 
     protected override string GetIdempotencyConflictKey(SendChatMessageCommand request) =>

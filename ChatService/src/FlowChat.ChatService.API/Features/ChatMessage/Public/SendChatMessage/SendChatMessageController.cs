@@ -49,7 +49,7 @@ public sealed class SendChatMessageController : ApiControllerBase
             return HandleError(result.Error);
         }
 
-        var response = new SendChatMessageResponse(result.Value.Value);
+        var response = new SendChatMessageResponse(result.Value.Value.MessageId, result.Value.Value.SentAtUtc);
         return result.Value.WasAlreadyProcessed
             ? Ok(response)
             : StatusCode(StatusCodes.Status201Created, response);

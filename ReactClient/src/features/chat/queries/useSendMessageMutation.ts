@@ -7,7 +7,6 @@ interface SendMessageVariables {
   conversationId: string;
   text: string;
   senderDisplayName: string;
-  sentAtUtc: string;
 }
 
 interface UseSendMessageMutationOptions {
@@ -49,7 +48,7 @@ export function useSendMessageMutation({
               createMessage(
                 "me",
                 variables.text,
-                variables.sentAtUtc,
+                result.sentAtUtc,
                 result.messageId,
                 variables.conversationId,
                 ownerUserId,

@@ -8,7 +8,7 @@ public sealed record SendChatMessageCommand(
     Guid ConversationId,
     Guid SenderUserId,
     string? SenderDisplayName,
-    string? Text) : ICommand<IdempotentCommandResult<Guid>>
+    string? Text) : ICommand<IdempotentCommandResult<SendChatMessageCommandResult>>
 {
     public const string IdempotencyConflictKey = nameof(SendChatMessageCommand);
 }

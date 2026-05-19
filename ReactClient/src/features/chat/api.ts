@@ -15,6 +15,8 @@ interface SendChatMessagePayload {
 interface SendChatMessageResponseDto {
   messageId?: string;
   MessageId?: string;
+  sentAtUtc?: string;
+  SentAtUtc?: string;
 }
 
 interface ConversationParticipantDto {
@@ -85,6 +87,7 @@ export interface OpenDuetConversationResult {
 
 export interface SendChatMessageResult {
   messageId: string;
+  sentAtUtc: string;
 }
 
 function mapParticipant(dto: ConversationParticipantDto): ConversationParticipant {
@@ -151,5 +154,6 @@ export async function sendChatMessage(
 
   return {
     messageId: response.messageId ?? response.MessageId ?? payload.id,
+    sentAtUtc: response.sentAtUtc ?? response.SentAtUtc ?? new Date().toISOString(),
   };
 }

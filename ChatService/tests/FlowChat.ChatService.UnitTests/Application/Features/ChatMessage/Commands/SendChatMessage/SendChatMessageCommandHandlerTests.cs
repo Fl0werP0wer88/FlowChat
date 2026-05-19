@@ -24,9 +24,9 @@ public sealed class SendChatMessageCommandHandlerTests
     {
         _unitOfWorkMock
             .Setup(x => x.ExecuteInTransactionAsync(
-                It.IsAny<Func<CancellationToken, Task<FlowChatResult<IdempotentCommandResult<Guid>>>>>(),
+                It.IsAny<Func<CancellationToken, Task<FlowChatResult<IdempotentCommandResult<SendChatMessageCommandResult>>>>>(),
                 It.IsAny<CancellationToken>()))
-            .Returns<Func<CancellationToken, Task<FlowChatResult<IdempotentCommandResult<Guid>>>>, CancellationToken>(
+            .Returns<Func<CancellationToken, Task<FlowChatResult<IdempotentCommandResult<SendChatMessageCommandResult>>>>, CancellationToken>(
                 (operation, ct) => operation(ct));
 
         _domainEventDispatcherMock
@@ -112,9 +112,10 @@ public sealed class SendChatMessageCommandHandlerTests
 
         result.IsSuccess.Should().BeTrue();
         result.Value.WasAlreadyProcessed.Should().BeFalse();
-        result.Value.Value.Should().NotBeEmpty();
+        result.Value.Value.MessageId.Should().NotBeEmpty();
         persistedMessage.Should().NotBeNull();
-        result.Value.Value.Should().Be(persistedMessage!.Id.Value);
+        result.Value.Value.MessageId.Should().Be(persistedMessage!.Id.Value);
+        result.Value.Value.SentAtUtc.Should().BeCloseTo(DateTimeOffset.UtcNow, TimeSpan.FromSeconds(5));
         persistedMessage.ConversationId.Value.Should().Be(conversationId);
         persistedMessage.SenderUserId.Should().Be(senderId);
         persistedMessage.RecipientUserIds.Should().BeEquivalentTo(new[] { recipientId });
@@ -161,7 +162,8 @@ public sealed class SendChatMessageCommandHandlerTests
 
         result.IsSuccess.Should().BeTrue();
         result.Value.WasAlreadyProcessed.Should().BeTrue();
-        result.Value.Value.Should().Be(command.Id);
+        result.Value.Value.MessageId.Should().Be(command.Id);
+        result.Value.Value.SentAtUtc.Should().Be(existingMessage.SentAtUtc.Value);
         dispatchedEvents.Should().BeEmpty();
     }
 }
