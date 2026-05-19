@@ -12,12 +12,10 @@ public sealed class UserPresencePreferencesWriteRepository(AppDbContext dbContex
     private readonly AppDbContext _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
 
     public override async Task<UserPresencePreferences?> GetByIdAsync(
-        Guid id,
+        Id<UserPresencePreferences> id,
         CancellationToken cancellationToken = default)
     {
-        var typedId = Id<UserPresencePreferences>.FromGuid(id);
-
         return await _dbContext.UserPresencePreferences
-            .FirstOrDefaultAsync(x => x.Id == typedId, cancellationToken);
+            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
     }
 }

@@ -19,7 +19,7 @@ public sealed class UpdateProfileCommandHandlerTests
     public UpdateProfileCommandHandlerTests()
     {
         _writeRepositoryMock
-            .Setup(x => x.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.GetByIdAsync(It.IsAny<Id<UserProfile>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((UserProfile?)null);
 
         _unitOfWorkMock

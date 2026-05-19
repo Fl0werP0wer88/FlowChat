@@ -9,10 +9,10 @@ public class WriteRepositoryBase<TEntity>(DbContext dbContext) : IWriteRepositor
 {
     protected readonly DbContext DbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
 
-    public virtual async Task<TEntity?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    public virtual async Task<TEntity?> GetByIdAsync(Id<TEntity> id, CancellationToken cancellationToken = default)
     {
         return await DbContext.Set<TEntity>()
-            .FirstOrDefaultAsync(x => x.Id.Value == id, cancellationToken);
+            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
     }
 
     public virtual async Task<TEntity> AddAsync(TEntity entity, CancellationToken cancellationToken = default)

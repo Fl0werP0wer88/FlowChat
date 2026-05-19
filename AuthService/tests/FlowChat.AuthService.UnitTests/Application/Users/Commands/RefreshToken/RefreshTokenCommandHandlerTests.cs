@@ -75,7 +75,7 @@ public sealed class RefreshTokenCommandHandlerTests
     public async Task Handle_WhenAccountIsMissing_ReturnsUnauthorized()
     {
         _accountRepositoryMock
-            .Setup(x => x.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.GetByIdAsync(It.IsAny<Id<Account>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((Account?)null);
 
         var result = await _handler.Handle(

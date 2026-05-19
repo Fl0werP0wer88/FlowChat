@@ -27,16 +27,13 @@ public sealed class AccountRepository : IAccountRepository
         SetNormalizedProperties(entry, account);
     }
 
-    public async Task<Account?> GetByIdAsync(Guid accountId, CancellationToken cancellationToken)
+    public async Task<Account?> GetByIdAsync(Id<Account> accountId, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        var typedId = Id<Account>.FromGuid(accountId);
-        var entity = await _dbContext.Accounts
+        return await _dbContext.Accounts
             .AsNoTracking()
-            .FirstOrDefaultAsync(x => x.Id == typedId, cancellationToken);
-
-        return entity;
+            .FirstOrDefaultAsync(x => x.Id == accountId, cancellationToken);
     }
 
     public async Task<Account?> GetByEmailAsync(EmailAddress emailAddress, CancellationToken cancellationToken)

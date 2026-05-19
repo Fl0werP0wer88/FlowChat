@@ -12,14 +12,12 @@ public sealed class UserProfileWriteRepository(AppDbContext dbContext)
 {
     private readonly AppDbContext _dbContext = dbContext;
 
-    public override async Task<UserProfile?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    public override async Task<UserProfile?> GetByIdAsync(Id<UserProfile> id, CancellationToken cancellationToken = default)
     {
-        var typedId = Id<UserProfile>.FromGuid(id);
-
         return await _dbContext.UserProfiles
             .Include(x => x.Emails)
             .Include(x => x.Phones)
-            .FirstOrDefaultAsync(x => x.Id == typedId, cancellationToken);
+            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
     }
 }
 
