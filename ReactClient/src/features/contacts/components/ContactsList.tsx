@@ -53,11 +53,11 @@ export function ContactsList({
       <div className="contacts-panel__list-toolbar">
         <button
           aria-label="Dodaj kontakt"
-          className="contacts-panel__icon-button"
+          className="contacts-panel__icon-button contacts-panel__add-contact-button"
           onClick={onAddContactClick}
           type="button"
         >
-          <span aria-hidden="true" className="material-symbols-rounded">add_box</span>
+          <span aria-hidden="true" className="material-symbols-rounded">person_add</span>
         </button>
       </div>
 
