@@ -20,10 +20,7 @@ export function ConversationSettings({
   return (
     <section className="conversation-settings" aria-label="Ustawienia rozmowy">
       <div className="conversation-settings__intro">
-        <div>
-          <p className="eyebrow">Ustawienia</p>
-          <h3>{activeContact.displayName}</h3>
-        </div>
+        <p className="eyebrow">Ustawienia</p>
       </div>
 
       <button
