@@ -1,4 +1,4 @@
-import { getJson, putJson } from "../../api/httpClient";
+import { getJson, putJson } from "../../../api/httpClient";
 
 interface OpenDuetConversationPayload {
   partnerUserId: string;

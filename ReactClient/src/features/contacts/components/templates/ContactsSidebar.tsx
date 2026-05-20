@@ -1,8 +1,8 @@
 import { useState } from "react";
 import type { Contact } from "../../../../types/contacts";
 import type { ManualUserStatus, UserStatus } from "../../../../types/realtime";
-import type { GroupConversation } from "../../../groupConversations";
-import { GroupConversationsList } from "../../../groupConversations";
+import type { GroupConversation } from "../../../conversations/group";
+import { GroupConversationsList } from "../../../conversations/group";
 import type { SearchUserResult, SearchUsersCriteria } from "../../api";
 import { ContactsSidebarHeader } from "../molecules/ContactsSidebarHeader";
 import { ContactSearch } from "../organisms/ContactSearch";

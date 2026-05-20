@@ -1,6 +1,6 @@
 import type { KeyboardEvent } from "react";
-import type { ChatMessage } from "../../../types/chat";
-import type { Contact } from "../../../types/contacts";
+import type { ChatMessage } from "../../../../types/chat";
+import type { Contact } from "../../../../types/contacts";
 import { ConversationBody } from "./ConversationBody";
 import { ConversationFooter } from "./ConversationFooter";
 import { ConversationHeader } from "./ConversationHeader";

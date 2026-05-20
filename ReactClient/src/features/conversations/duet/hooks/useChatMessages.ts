@@ -1,10 +1,10 @@
 import { useQueryClient } from "@tanstack/react-query";
 import type { KeyboardEvent } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useAuthStore } from "../../../store/authStore";
-import type { Contact } from "../../../types/contacts";
-import type { RealtimeChatMessage } from "../../../types/realtime";
-import { resolveOwnerUserId } from "../../../utils/authUtils";
+import { useAuthStore } from "../../../../store/authStore";
+import type { Contact } from "../../../../types/contacts";
+import type { RealtimeChatMessage } from "../../../../types/realtime";
+import { resolveOwnerUserId } from "../../../../utils/authUtils";
 import { getConversationMessages } from "../api";
 import type { ConversationCacheEntry } from "../queries/conversationCache";
 import { createMessage, mapConversationMessage, sortMessages } from "../queries/conversationCache";

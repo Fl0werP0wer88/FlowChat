@@ -1,6 +1,6 @@
 import type { KeyboardEvent } from "react";
-import { Button } from "../../../components/atoms/Button";
-import { TextArea } from "../../../components/atoms/TextArea";
+import { Button } from "../../../../components/atoms/Button";
+import { TextArea } from "../../../../components/atoms/TextArea";
 
 interface ConversationFooterProps {
   activeConversationId: string | null;

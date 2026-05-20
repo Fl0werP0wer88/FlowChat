@@ -1,11 +1,11 @@
 import { useNavigate } from "react-router-dom";
-import { ChatHeader } from "../../components/organisms/ChatHeader";
-import { ChatTemplate } from "../../components/templates/ChatTemplate";
-import { useRealtimeConnection } from "../../realtime/useRealtimeConnection";
-import { useAuthStore } from "../../store/authStore";
-import { ContactsSidebar, useContacts } from "../contacts";
-import { useGroupConversations } from "../groupConversations";
-import { usePresenceStatus } from "../presence/hooks/usePresenceStatus";
+import { ChatHeader } from "../../../components/organisms/ChatHeader";
+import { ChatTemplate } from "../../../components/templates/ChatTemplate";
+import { useRealtimeConnection } from "../../../realtime/useRealtimeConnection";
+import { useAuthStore } from "../../../store/authStore";
+import { ContactsSidebar, useContacts } from "../../contacts";
+import { useGroupConversations } from "../group";
+import { usePresenceStatus } from "../../presence/hooks/usePresenceStatus";
 import { ConversationPanel } from "./components/ConversationPanel";
 import { useChatMessages } from "./hooks/useChatMessages";
 

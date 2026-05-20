@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { Virtuoso, type VirtuosoHandle } from "react-virtuoso";
-import { Spinner } from "../../../components/atoms/Spinner";
-import { useMinDuration } from "../../../hooks/useMinDuration";
-import type { ChatMessage } from "../../../types/chat";
-import type { Contact } from "../../../types/contacts";
-import { formatLocalTime } from "../../../utils/dateUtils";
+import { Spinner } from "../../../../components/atoms/Spinner";
+import { useMinDuration } from "../../../../hooks/useMinDuration";
+import type { ChatMessage } from "../../../../types/chat";
+import type { Contact } from "../../../../types/contacts";
+import { formatLocalTime } from "../../../../utils/dateUtils";
 
 interface ConversationBodyProps {
   activeContact: Contact | null;

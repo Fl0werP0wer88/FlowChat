@@ -1,4 +1,4 @@
-import { getJson } from "../../api/httpClient";
+import { getJson } from "../../../api/httpClient";
 
 interface GroupConversationSummaryDto {
   conversationId?: string;

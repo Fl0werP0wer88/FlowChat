@@ -1,4 +1,4 @@
-import type { ChatMessage, MessageSender } from "../../../types/chat";
+import type { ChatMessage, MessageSender } from "../../../../types/chat";
 import type { ConversationMessage } from "../api";
 
 export interface ConversationCacheEntry {

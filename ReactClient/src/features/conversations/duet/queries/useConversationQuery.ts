@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import type { Contact } from "../../../types/contacts";
+import type { Contact } from "../../../../types/contacts";
 import { openDuetConversation } from "../api";
 import { type ConversationCacheEntry, mapConversationMessage } from "./conversationCache";
 
