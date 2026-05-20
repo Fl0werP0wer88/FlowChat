@@ -1,14 +1,13 @@
 import { useState } from "react";
-import type { Contact } from "../../../../types/contacts";
-import type { ManualUserStatus, UserStatus } from "../../../../types/realtime";
-import type { GroupConversation } from "../../../conversations/group";
-import { GroupConversationsList } from "../../../conversations/group";
-import type { SearchUserResult, SearchUsersCriteria } from "../../api";
-import { ContactsSidebarHeader } from "../molecules/ContactsSidebarHeader";
-import { ContactSearch } from "../organisms/ContactSearch";
-import { ContactsList } from "../organisms/ContactsList";
+import type { Contact } from "../../../types/contacts";
+import type { ManualUserStatus, UserStatus } from "../../../types/realtime";
+import type { GroupConversation } from "../../conversations/group";
+import { GroupConversationsList } from "../../conversations/group";
+import type { SearchUserResult, SearchUsersCriteria } from "../../contacts";
+import { ContactsList, ContactSearch } from "../../contacts";
+import { SidebarHeader } from "./SidebarHeader";
 
-interface ContactsSidebarProps {
+interface SidebarProps {
   activeContactId: string | null;
   activeGroupConversationId: string | null;
   addContactNotice: { kind: "error" | "info"; message: string; } | null;
@@ -29,7 +28,7 @@ interface ContactsSidebarProps {
   presenceNotice: string | null;
 }
 
-export function ContactsSidebar({
+export function Sidebar({
   activeContactId,
   activeGroupConversationId,
   addContactNotice,
@@ -48,7 +47,7 @@ export function ContactsSidebar({
   onGroupConversationClick,
   onSearchUsers,
   presenceNotice,
-}: ContactsSidebarProps) {
+}: SidebarProps) {
   const [isContactSearchOpen, setIsContactSearchOpen] = useState(false);
 
   const openContactSearch = () => {
@@ -59,7 +58,7 @@ export function ContactsSidebar({
   return (
     <aside className={`contacts-panel ${isContactSearchOpen ? "contacts-panel--composer-open" : ""}`}>
       <div className="contacts-panel__main">
-        <ContactsSidebarHeader
+        <SidebarHeader
           currentUserStatus={currentUserStatus}
           isChangingPresenceStatus={isChangingPresenceStatus}
           onChangePresenceStatus={onChangePresenceStatus}
