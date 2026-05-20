@@ -85,6 +85,69 @@ public sealed class ConversationAggregateController : ApiControllerBase
         return Ok(response);
     }
 
+    [HttpPut("group/open")]
+    [ProducesResponseType(typeof(OpenGroupConversationResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> OpenGroupConversation(
+        [FromBody] OpenGroupConversationRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (!TryGetCurrentUserId(out _))
+        {
+            return Unauthorized();
+        }
+
+        if (request.ConversationId == Guid.Empty)
+        {
+            return BadRequest(new ProblemDetails
+            {
+                Title = "Invalid conversation id.",
+                Detail = "ConversationId is required.",
+                Status = StatusCodes.Status400BadRequest
+            });
+        }
+
+        var conversation = await _chatClient.GetGroupConversationAsync(request.ConversationId, cancellationToken);
+        if (conversation is null)
+        {
+            return NotFound(new ProblemDetails
+            {
+                Title = "Group conversation not found.",
+                Detail = "The requested group conversation does not exist.",
+                Status = StatusCodes.Status404NotFound
+            });
+        }
+
+        var messages = await _chatClient.GetConversationMessagesAsync(
+            request.ConversationId,
+            DefaultMessageLimit,
+            cancellationToken);
+
+        var response = new OpenGroupConversationResponse(
+            conversation.ConversationId,
+            conversation.Name,
+            [.. conversation.Participants.Select(p => new ConversationParticipantDto(
+                p.UserId,
+                p.DisplayName,
+                p.AvatarUrl,
+                p.ParticipantUserId))],
+            [.. messages.Items.Select(message => new ConversationMessageDto(
+                message.Id,
+                message.ConversationId,
+                message.SenderUserId,
+                message.SenderDisplayName,
+                message.Text,
+                message.SentAtUtc))],
+            messages.NextBeforeSentAtUtc,
+            messages.NextBeforeMessageId,
+            messages.HasMore);
+
+        return Ok(response);
+    }
+
     private async Task<DuetConversationClientDto> GetOrCreateConversationAsync(
         Guid partnerUserId,
         CancellationToken cancellationToken) =>

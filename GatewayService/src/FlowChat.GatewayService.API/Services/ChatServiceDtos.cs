@@ -4,6 +4,11 @@ public sealed record DuetConversationClientDto(
     Guid ConversationId,
     IReadOnlyCollection<ConversationParticipantClientDto> Participants);
 
+public sealed record GroupConversationClientDto(
+    Guid ConversationId,
+    string Name,
+    IReadOnlyCollection<ConversationParticipantClientDto> Participants);
+
 public sealed record ConversationParticipantClientDto(
     Guid UserId,
     string? DisplayName,

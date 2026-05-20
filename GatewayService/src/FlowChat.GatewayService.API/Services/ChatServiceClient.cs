@@ -61,6 +61,24 @@ internal sealed class ChatServiceClient(HttpClient httpClient)
         return response?.ConversationIds ?? new Dictionary<Guid, Guid>();
     }
 
+    public async Task<GroupConversationClientDto?> GetGroupConversationAsync(
+        Guid conversationId,
+        CancellationToken cancellationToken)
+    {
+        using var request = new HttpRequestMessage(
+            HttpMethod.Get,
+            $"api/conversations/group/{conversationId}");
+
+        using var response = await _httpClient.SendAsync(request, cancellationToken);
+        if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            return null;
+        }
+
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadFromJsonAsync<GroupConversationClientDto>(JsonOptions, cancellationToken);
+    }
+
     public async Task<ChatMessagesClientDto> GetConversationMessagesAsync(
         Guid conversationId,
         int limit,
