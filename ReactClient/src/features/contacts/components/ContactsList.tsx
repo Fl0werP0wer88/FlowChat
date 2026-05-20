@@ -1,4 +1,5 @@
 import type { Contact } from "../../../types/contacts";
+import { ContactListItem } from "./ContactListItem";
 
 interface ContactsListProps {
   activeContactId: string | null;
@@ -27,22 +28,12 @@ export function ContactsList({
     return (
       <ul className="contacts-panel__list">
         {contacts.map((contact) => (
-          <li key={contact.id}>
-            <button
-              aria-current={activeContactId === contact.id ? "true" : undefined}
-              className="contacts-panel__contact-button"
-              onClick={() => onContactClick(contact)}
-              type="button"
-            >
-              <span className={`status-dot status-${contact.status}`} />
-              <span className="contacts-panel__contact-copy">
-                <span className="contacts-panel__contact-name">{contact.displayName}</span>
-                {contact.email
-                  ? <span className="contacts-panel__contact-email">{contact.email}</span>
-                  : null}
-              </span>
-            </button>
-          </li>
+          <ContactListItem
+            contact={contact}
+            isActive={activeContactId === contact.id}
+            key={contact.id}
+            onClick={onContactClick}
+          />
         ))}
       </ul>
     );
