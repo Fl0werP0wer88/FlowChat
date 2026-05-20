@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { KeyboardEventHandler } from "react";
-import type { SearchUserResult, SearchUsersCriteria } from "../api";
+import type { SearchUserResult, SearchUsersCriteria } from "../../api";
 
 interface ContactSearchProps {
   addContactNotice: { kind: "error" | "info"; message: string; } | null;

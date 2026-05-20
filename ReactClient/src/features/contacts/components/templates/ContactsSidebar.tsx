@@ -1,12 +1,12 @@
 import { useState } from "react";
-import type { Contact } from "../../../types/contacts";
-import type { ManualUserStatus, UserStatus } from "../../../types/realtime";
-import type { SearchUserResult, SearchUsersCriteria } from "../api";
-import { ContactSearch } from "./ContactSearch";
-import { ContactsList } from "./ContactsList";
-import { SidebarHeader } from "./SidebarHeader";
+import type { Contact } from "../../../../types/contacts";
+import type { ManualUserStatus, UserStatus } from "../../../../types/realtime";
+import type { SearchUserResult, SearchUsersCriteria } from "../../api";
+import { ContactsSidebarHeader } from "../molecules/ContactsSidebarHeader";
+import { ContactSearch } from "../organisms/ContactSearch";
+import { ContactsList } from "../organisms/ContactsList";
 
-interface SidebarBodyProps {
+interface ContactsSidebarProps {
   activeContactId: string | null;
   addContactNotice: { kind: "error" | "info"; message: string; } | null;
   contacts: Contact[];
@@ -23,7 +23,7 @@ interface SidebarBodyProps {
   presenceNotice: string | null;
 }
 
-export function SidebarBody({
+export function ContactsSidebar({
   activeContactId,
   addContactNotice,
   contacts,
@@ -38,7 +38,7 @@ export function SidebarBody({
   onClearNotice,
   onSearchUsers,
   presenceNotice,
-}: SidebarBodyProps) {
+}: ContactsSidebarProps) {
   const [isContactSearchOpen, setIsContactSearchOpen] = useState(false);
 
   const openContactSearch = () => {
@@ -49,7 +49,7 @@ export function SidebarBody({
   return (
     <aside className={`contacts-panel ${isContactSearchOpen ? "contacts-panel--composer-open" : ""}`}>
       <div className="contacts-panel__main">
-        <SidebarHeader
+        <ContactsSidebarHeader
           currentUserStatus={currentUserStatus}
           isChangingPresenceStatus={isChangingPresenceStatus}
           onChangePresenceStatus={onChangePresenceStatus}

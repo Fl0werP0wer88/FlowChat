@@ -1,2 +1,2 @@
-export { SidebarBody } from "./components/SidebarBody";
+export { ContactsSidebar } from "./components/templates/ContactsSidebar";
 export { useContacts } from "./hooks/useContacts";

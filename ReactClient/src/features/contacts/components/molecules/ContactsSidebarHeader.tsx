@@ -1,6 +1,6 @@
-import type { ManualUserStatus, UserStatus } from "../../../types/realtime";
+import type { ManualUserStatus, UserStatus } from "../../../../types/realtime";
 
-interface SidebarHeaderProps {
+interface ContactsSidebarHeaderProps {
   currentUserStatus: UserStatus;
   isChangingPresenceStatus: boolean;
   onChangePresenceStatus: (status: ManualUserStatus) => Promise<void>;
@@ -8,11 +8,11 @@ interface SidebarHeaderProps {
 
 const presenceOptions: ManualUserStatus[] = ["Active", "Busy", "Invisible"];
 
-export function SidebarHeader({
+export function ContactsSidebarHeader({
   currentUserStatus,
   isChangingPresenceStatus,
   onChangePresenceStatus,
-}: SidebarHeaderProps) {
+}: ContactsSidebarHeaderProps) {
   const handlePresenceStatusChange = async (value: string) => {
     if (value === "AFK") {
       return;

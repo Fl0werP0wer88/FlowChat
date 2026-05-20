@@ -1,5 +1,5 @@
-import type { Contact } from "../../../types/contacts";
-import { ContactListItem } from "./ContactListItem";
+import type { Contact } from "../../../../types/contacts";
+import { ContactListItem } from "../molecules/ContactListItem";
 
 interface ContactsListProps {
   activeContactId: string | null;
