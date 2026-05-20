@@ -1,4 +1,4 @@
-import { getJson, putJson } from "../../../api/httpClient";
+import { getJson, postJson, putJson } from "../../../api/httpClient";
 
 interface OpenDuetConversationPayload {
   partnerUserId: string;
@@ -10,6 +10,20 @@ interface SendChatMessagePayload {
   conversationId: string;
   senderDisplayName: string;
   text: string;
+}
+
+interface CopyDuetAsGroupPayload {
+  newGroupConversationId: string;
+  partnerUserId: string;
+}
+
+interface CopyDuetAsGroupResponseDto {
+  conversationId?: string;
+  ConversationId?: string;
+  name?: string;
+  Name?: string;
+  participants?: ConversationParticipantDto[];
+  Participants?: ConversationParticipantDto[];
 }
 
 interface SendChatMessageResponseDto {
@@ -88,6 +102,12 @@ export interface OpenDuetConversationResult {
 export interface SendChatMessageResult {
   messageId: string;
   sentAtUtc: string;
+}
+
+export interface CopyDuetAsGroupResult {
+  conversationId: string;
+  name: string;
+  participants: ConversationParticipant[];
 }
 
 interface GetConversationMessagesResponseDto {
@@ -202,5 +222,30 @@ export async function sendChatMessage(
   return {
     messageId: response.messageId ?? response.MessageId ?? payload.id,
     sentAtUtc: response.sentAtUtc ?? response.SentAtUtc ?? new Date().toISOString(),
+  };
+}
+
+export async function copyDuetAsGroup(
+  partnerUserId: string,
+  accessToken: string,
+  signal?: AbortSignal,
+): Promise<CopyDuetAsGroupResult> {
+  const newGroupConversationId = crypto.randomUUID();
+  const response = await postJson<CopyDuetAsGroupResponseDto, CopyDuetAsGroupPayload>(
+    "/api/conversations/duet/copy-as-group",
+    {
+      newGroupConversationId,
+      partnerUserId,
+    },
+    {
+      accessToken,
+      signal,
+    },
+  );
+
+  return {
+    conversationId: response.conversationId ?? response.ConversationId ?? newGroupConversationId,
+    name: response.name ?? response.Name ?? "",
+    participants: (response.participants ?? response.Participants ?? []).map(mapParticipant),
   };
 }

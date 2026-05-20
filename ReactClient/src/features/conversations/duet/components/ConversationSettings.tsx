@@ -2,11 +2,15 @@ import type { Contact } from "../../../../types/contacts";
 
 interface ConversationSettingsProps {
   activeContact: Contact | null;
+  createGroupNotice: { kind: "error" | "info"; message: string } | null;
+  isCreatingGroup: boolean;
   onCreateGroupClick?: () => void;
 }
 
 export function ConversationSettings({
   activeContact,
+  createGroupNotice,
+  isCreatingGroup,
   onCreateGroupClick,
 }: ConversationSettingsProps) {
   if (!activeContact) {
@@ -25,15 +29,24 @@ export function ConversationSettings({
 
       <button
         className="conversation-settings__action"
+        disabled={isCreatingGroup}
         onClick={onCreateGroupClick}
         type="button"
       >
         <span>
-          <strong>Stwórz grupę</strong>
+          <strong>{isCreatingGroup ? "Tworzenie..." : "Stwórz grupę"}</strong>
           <span className="conversation-settings__hint">Rozpocznij rozmowę grupową z tym kontaktem</span>
         </span>
         <span aria-hidden="true" className="material-symbols-rounded">group_add</span>
       </button>
+
+      {createGroupNotice
+        ? (
+          <p className={`alert ${createGroupNotice.kind === "error" ? "alert-error" : "alert-info"}`}>
+            {createGroupNotice.message}
+          </p>
+        )
+        : null}
 
       {activeContact.email
         ? (

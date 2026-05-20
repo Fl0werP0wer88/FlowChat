@@ -1,11 +1,13 @@
 import type { KeyboardEvent } from "react";
 import { useEffect, useState } from "react";
+import { useAuthStore } from "../../../../store/authStore";
 import type { ChatMessage } from "../../../../types/chat";
 import type { Contact } from "../../../../types/contacts";
 import { ConversationBody } from "./ConversationBody";
 import { ConversationFooter } from "./ConversationFooter";
 import { ConversationHeader } from "./ConversationHeader";
 import { ConversationSettings } from "./ConversationSettings";
+import { useCopyDuetAsGroupMutation } from "../queries/useCopyDuetAsGroupMutation";
 
 interface ConversationPanelProps {
   activeContact: Contact | null;
@@ -42,13 +44,34 @@ export function ConversationPanel({
   onSendDraft,
   onLoadOlderMessages,
 }: ConversationPanelProps) {
+  const accessToken = useAuthStore((s) => s.accessToken) ?? "";
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [createGroupNotice, setCreateGroupNotice] = useState<{ kind: "error" | "info"; message: string } | null>(null);
   const isComposerDisabled = !activeConversationId || isLoadingConversation || isSendingMessage;
   const isSendDisabled = isComposerDisabled || draft.trim().length === 0;
+  const copyDuetAsGroupMutation = useCopyDuetAsGroupMutation(accessToken, {
+    onSuccess: () => setCreateGroupNotice({ kind: "info", message: "Grupa została utworzona." }),
+    onError: (message) => setCreateGroupNotice({ kind: "error", message }),
+  });
 
   useEffect(() => {
     setIsSettingsOpen(false);
-  }, [activeConversationId]);
+    setCreateGroupNotice(null);
+  }, [activeConversationId, activeContact?.userId]);
+
+  const handleCreateGroupClick = async () => {
+    if (!activeContact || copyDuetAsGroupMutation.isPending) {
+      return;
+    }
+
+    setCreateGroupNotice(null);
+
+    try {
+      await copyDuetAsGroupMutation.mutateAsync(activeContact.userId);
+    } catch {
+      // error is handled in onError
+    }
+  };
 
   return (
     <div className="conversation-panel">
@@ -58,7 +81,14 @@ export function ConversationPanel({
         onTuneClick={() => setIsSettingsOpen((current) => !current)}
       />
       {isSettingsOpen
-        ? <ConversationSettings activeContact={activeContact} />
+        ? (
+          <ConversationSettings
+            activeContact={activeContact}
+            createGroupNotice={createGroupNotice}
+            isCreatingGroup={copyDuetAsGroupMutation.isPending}
+            onCreateGroupClick={() => void handleCreateGroupClick()}
+          />
+        )
         : (
           <ConversationBody
             activeContact={activeContact}
