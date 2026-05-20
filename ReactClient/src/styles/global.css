@@ -490,13 +490,12 @@ body {
 
 .contacts-panel__tabs {
   display: flex;
-  gap: 0.35rem;
 }
 
 .contacts-panel__tab {
   flex: 1;
   border: 1px solid var(--border);
-  border-radius: 0.6rem;
+  border-radius: 0;
   background: transparent;
   color: var(--muted);
   font: inherit;
@@ -505,6 +504,15 @@ body {
   padding: 0.4rem 0.75rem;
   cursor: pointer;
   transition: border-color 140ms ease, color 140ms ease, background 140ms ease;
+}
+
+.contacts-panel__tab:first-child {
+  border-radius: 0.6rem 0 0 0.6rem;
+}
+
+.contacts-panel__tab:last-child {
+  border-radius: 0 0.6rem 0.6rem 0;
+  margin-left: -1px;
 }
 
 .contacts-panel__tab:hover {
@@ -517,6 +525,8 @@ body {
   background: color-mix(in srgb, var(--accent) 10%, white);
   color: var(--accent);
   font-weight: 600;
+  z-index: 1;
+  position: relative;
 }
 
 .contacts-panel__presence-control {
