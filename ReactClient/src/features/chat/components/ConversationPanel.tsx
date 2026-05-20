@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
-import { Virtuoso } from "react-virtuoso";
+import { Virtuoso, type VirtuosoHandle } from "react-virtuoso";
 import { Button } from "../../../components/atoms/Button";
 import { TextArea } from "../../../components/atoms/TextArea";
 import type { ChatMessage } from "../../../types/chat";
@@ -46,6 +46,7 @@ export function ConversationPanel({
   const isComposerDisabled = !activeConversationId || isLoadingConversation || isSendingMessage;
   const isSendDisabled = isComposerDisabled || draft.trim().length === 0;
 
+  const virtuosoRef = useRef<VirtuosoHandle>(null);
   const [firstItemIndex, setFirstItemIndex] = useState(START_INDEX);
   const messagesLengthRef = useRef(messages.length);
 
@@ -88,9 +89,11 @@ export function ConversationPanel({
         : messages.length === 0
         ? <p className="conversation-panel__empty history">Brak wiadomosci w tej rozmowie.</p>
         : <Virtuoso
+            ref={virtuosoRef}
             className="history"
             data={messages}
             firstItemIndex={firstItemIndex}
+            initialTopMostItemIndex={messages.length - 1}
             followOutput={activeConversationId ? "smooth" : false}
             startReached={hasOlderMessages && !isLoadingOlderMessages
               ? () => void onLoadOlderMessages()
