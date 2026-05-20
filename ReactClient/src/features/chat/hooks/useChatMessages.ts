@@ -11,14 +11,13 @@ import { createMessage, mapConversationMessage, sortMessages } from "../queries/
 import { useConversationQuery } from "../queries/useConversationQuery";
 import { useSendMessageMutation } from "../queries/useSendMessageMutation";
 
-export function useChatMessages() {
+export function useChatMessages(activeContact: Contact | null) {
   const accessToken = useAuthStore((s) => s.accessToken) ?? "";
   const userLogin = useAuthStore((s) => s.login) ?? "Uzytkownik";
   const ownerUserId = resolveOwnerUserId(accessToken);
   const queryClient = useQueryClient();
 
   const [draft, setDraft] = useState("");
-  const [activeContact, setActiveContact] = useState<Contact | null>(null);
   const [sendError, setSendError] = useState<string | null>(null);
   const [olderMessagesError, setOlderMessagesError] = useState<string | null>(null);
   const [isLoadingOlderMessages, setIsLoadingOlderMessages] = useState(false);
@@ -173,13 +172,12 @@ export function useChatMessages() {
   };
 
   const openContactConversation = (
-    contact: Contact,
+    _contact: Contact,
     onConversationOpened?: (contactUserId: string, conversationId: string) => void,
   ) => {
     onConversationOpenedRef.current = onConversationOpened ?? null;
     setSendError(null);
     setOlderMessagesError(null);
-    setActiveContact(contact);
   };
 
   const conversationError =
@@ -188,7 +186,6 @@ export function useChatMessages() {
   return {
     messages: conversationData?.messages ?? [],
     draft,
-    activeContact,
     activeConversationId: conversationData?.conversationId ?? null,
     conversationError,
     isLoadingConversation,

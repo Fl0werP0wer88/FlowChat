@@ -1,5 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useAuthStore } from "../../../store/authStore";
 import type { Contact } from "../../../types/contacts";
 import type { PresenceChangedEvent } from "../../../types/realtime";
@@ -17,11 +17,13 @@ interface ContactsNotice {
 
 interface UseContactsResult {
   contacts: Contact[];
+  activeContact: Contact | null;
   isAddingContact: boolean;
   isLoadingContacts: boolean;
   notice: ContactsNotice | null;
   addContactByLookup: (lookupValue: string) => Promise<boolean>;
   addContactByUserId: (userId: string) => Promise<boolean>;
+  selectContact: (contact: Contact) => void;
   clearNotice: () => void;
   applyPresenceChanged: (payload: PresenceChangedEvent) => void;
   updateContactConversationId: (contactUserId: string, conversationId: string) => void;
@@ -33,6 +35,7 @@ export function useContacts(): UseContactsResult {
   const ownerUserId = resolveOwnerUserId(accessToken);
   const queryClient = useQueryClient();
   const [notice, setNotice] = useState<ContactsNotice | null>(null);
+  const [activeContactId, setActiveContactId] = useState<string | null>(null);
 
   const clearNotice = () => setNotice(null);
 
@@ -44,6 +47,10 @@ export function useContacts(): UseContactsResult {
   const { data: contacts = [], isLoading: isLoadingContacts } = useContactsQuery(
     accessToken,
     Boolean(accessToken && ownerUserId),
+  );
+  const activeContact = useMemo(
+    () => contacts.find((contact) => contact.id === activeContactId) ?? null,
+    [activeContactId, contacts],
   );
 
   const addContactMutation = useAddContactMutation(accessToken, noticeCallbacks);
@@ -111,6 +118,10 @@ export function useContacts(): UseContactsResult {
     );
   };
 
+  const selectContact = (contact: Contact) => {
+    setActiveContactId(contact.id);
+  };
+
   const searchUsersAction = async (
     criteria: SearchUsersCriteria,
     signal?: AbortSignal,
@@ -124,11 +135,13 @@ export function useContacts(): UseContactsResult {
 
   return {
     contacts,
+    activeContact,
     isAddingContact: addContactMutation.isPending || addContactByUserIdMutation.isPending,
     isLoadingContacts,
     notice,
     addContactByLookup,
     addContactByUserId: addContactByUserIdAction,
+    selectContact,
     applyPresenceChanged,
     clearNotice,
     updateContactConversationId,

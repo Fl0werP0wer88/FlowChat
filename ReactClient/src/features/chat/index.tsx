@@ -19,7 +19,7 @@ export function ChatFeature() {
   };
 
   const contacts = useContacts();
-  const chat = useChatMessages();
+  const chat = useChatMessages(contacts.activeContact);
   const presence = usePresenceStatus();
   const realtime = useRealtimeConnection({
     onPresenceChanged: contacts.applyPresenceChanged,
@@ -31,7 +31,7 @@ export function ChatFeature() {
       header={<ChatHeader userLogin={userLogin} realtimeStatus={realtime.status} onLogout={handleLogout} />}
       conversation={
         <ConversationPanel
-          activeContact={chat.activeContact}
+          activeContact={contacts.activeContact}
           activeConversationId={chat.activeConversationId}
           conversationError={chat.conversationError}
           isLoadingConversation={chat.isLoadingConversation}
@@ -52,7 +52,7 @@ export function ChatFeature() {
         <ContactsPanel
           addContactNotice={contacts.notice}
           contacts={contacts.contacts}
-          activeContactId={chat.activeContact?.id ?? null}
+          activeContactId={contacts.activeContact?.id ?? null}
           currentUserStatus={presence.currentStatus}
           isAddingContact={contacts.isAddingContact}
           isChangingPresenceStatus={presence.isUpdatingStatus}
@@ -60,7 +60,10 @@ export function ChatFeature() {
           onAddContact={contacts.addContactByLookup}
           onAddContactByUserId={contacts.addContactByUserId}
           onChangePresenceStatus={presence.changeManualPresenceStatus}
-          onContactClick={(contact) => void chat.openContactConversation(contact, contacts.updateContactConversationId)}
+          onContactClick={(contact) => {
+            contacts.selectContact(contact);
+            chat.openContactConversation(contact, contacts.updateContactConversationId);
+          }}
           onClearNotice={contacts.clearNotice}
           onSearchUsers={contacts.searchUsers}
           presenceNotice={presence.errorMessage}
