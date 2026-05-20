@@ -572,6 +572,16 @@ body {
   font-size: 0.92rem;
 }
 
+.contacts-panel__contacts {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.contacts-panel__list-toolbar {
+  display: flex;
+  justify-content: flex-end;
+}
+
 .contacts-panel__list {
   margin: 0;
   padding: 0;

@@ -3,7 +3,7 @@ import { ChatHeader } from "../../components/organisms/ChatHeader";
 import { ChatTemplate } from "../../components/templates/ChatTemplate";
 import { useRealtimeConnection } from "../../realtime/useRealtimeConnection";
 import { useAuthStore } from "../../store/authStore";
-import { ContactsPanel, useContacts } from "../contacts";
+import { SidebarBody, useContacts } from "../contacts";
 import { usePresenceStatus } from "../presence/hooks/usePresenceStatus";
 import { ConversationPanel } from "./components/ConversationPanel";
 import { useChatMessages } from "./hooks/useChatMessages";
@@ -49,7 +49,7 @@ export function ChatFeature() {
         />
       }
       sidebar={
-        <ContactsPanel
+        <SidebarBody
           addContactNotice={contacts.notice}
           contacts={contacts.contacts}
           activeContactId={contacts.activeContact?.id ?? null}
