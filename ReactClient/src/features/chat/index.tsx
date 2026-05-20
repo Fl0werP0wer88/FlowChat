@@ -5,7 +5,7 @@ import { useRealtimeConnection } from "../../realtime/useRealtimeConnection";
 import { useAuthStore } from "../../store/authStore";
 import { useContacts } from "../contacts";
 import { Sidebar } from "./components/Sidebar";
-import { useGroupConversations } from "../conversations/group";
+import { useGroupConversations } from "../groups";
 import { usePresenceStatus } from "../presence/hooks/usePresenceStatus";
 import { ConversationPanel, useChatMessages } from "../conversations/duet";
 

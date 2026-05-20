@@ -1,5 +1,5 @@
-import { useAuthStore } from "../../../../store/authStore";
-import { resolveOwnerUserId } from "../../../../utils/authUtils";
+import { useAuthStore } from "../../../store/authStore";
+import { resolveOwnerUserId } from "../../../utils/authUtils";
 import type { GroupConversation } from "../api";
 import { useGroupConversationsQuery } from "../queries/useGroupConversationsQuery";
 

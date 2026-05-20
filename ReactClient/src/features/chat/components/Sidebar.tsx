@@ -1,8 +1,8 @@
 import { useState } from "react";
 import type { Contact } from "../../../types/contacts";
 import type { ManualUserStatus, UserStatus } from "../../../types/realtime";
-import type { GroupConversation } from "../../conversations/group";
-import { GroupConversationsList } from "../../conversations/group";
+import type { GroupConversation } from "../../groups";
+import { GroupConversationsList } from "../../groups";
 import type { SearchUserResult, SearchUsersCriteria } from "../../contacts";
 import { ContactsList, ContactSearch } from "../../contacts";
 import { SidebarHeader } from "./SidebarHeader";
