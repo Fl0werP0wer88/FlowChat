@@ -6,6 +6,8 @@ import { GroupConversationsList } from "../../conversations/group";
 import type { SearchUserResult, SearchUsersCriteria } from "../../contacts";
 import { ContactsList, ContactSearch } from "../../contacts";
 import { SidebarHeader } from "./SidebarHeader";
+import type { SidebarTab } from "./SidebarHeader";
+
 
 interface SidebarProps {
   activeContactId: string | null;
@@ -48,6 +50,7 @@ export function Sidebar({
   onSearchUsers,
   presenceNotice,
 }: SidebarProps) {
+  const [activeTab, setActiveTab] = useState<SidebarTab>("contacts");
   const [isContactSearchOpen, setIsContactSearchOpen] = useState(false);
 
   const openContactSearch = () => {
@@ -59,9 +62,11 @@ export function Sidebar({
     <aside className={`contacts-panel ${isContactSearchOpen ? "contacts-panel--composer-open" : ""}`}>
       <div className="contacts-panel__main">
         <SidebarHeader
+          activeTab={activeTab}
           currentUserStatus={currentUserStatus}
           isChangingPresenceStatus={isChangingPresenceStatus}
           onChangePresenceStatus={onChangePresenceStatus}
+          onTabChange={setActiveTab}
         />
 
         {presenceNotice
@@ -76,20 +81,24 @@ export function Sidebar({
           )
           : null}
 
-        <ContactsList
-          activeContactId={activeContactId}
-          contacts={contacts}
-          isLoadingContacts={isLoadingContacts}
-          onAddContactClick={openContactSearch}
-          onContactClick={onContactClick}
-        />
-
-        <GroupConversationsList
-          activeGroupConversationId={activeGroupConversationId}
-          groupConversations={groupConversations}
-          isLoading={isLoadingGroupConversations}
-          onGroupConversationClick={onGroupConversationClick}
-        />
+        {activeTab === "contacts"
+          ? (
+            <ContactsList
+              activeContactId={activeContactId}
+              contacts={contacts}
+              isLoadingContacts={isLoadingContacts}
+              onAddContactClick={openContactSearch}
+              onContactClick={onContactClick}
+            />
+          )
+          : (
+            <GroupConversationsList
+              activeGroupConversationId={activeGroupConversationId}
+              groupConversations={groupConversations}
+              isLoading={isLoadingGroupConversations}
+              onGroupConversationClick={onGroupConversationClick}
+            />
+          )}
       </div>
 
       <ContactSearch
