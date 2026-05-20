@@ -1,6 +1,6 @@
 import { Navigate, Route, Routes, useLocation, useSearchParams } from "react-router-dom";
 import { AuthFeature } from "./features/auth";
-import { ChatFeature } from "./features/conversations/duet";
+import { ChatFeature } from "./features/chat";
 import { EmailVerificationFeature } from "./features/emailVerification";
 import { useSessionRefresher } from "./hooks/useSessionRefresher";
 import { AppBackgroundLayout } from "./layouts/AppBackgroundLayout";
