@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { Virtuoso, type VirtuosoHandle } from "react-virtuoso";
 import { Button } from "../../../components/atoms/Button";
+import { Spinner } from "../../../components/atoms/Spinner";
 import { TextArea } from "../../../components/atoms/TextArea";
+import { useMinDuration } from "../../../hooks/useMinDuration";
 import type { ChatMessage } from "../../../types/chat";
 import type { Contact } from "../../../types/contacts";
 import { formatLocalTime } from "../../../utils/dateUtils";
@@ -43,6 +45,7 @@ export function ConversationPanel({
   onSendDraft,
   onLoadOlderMessages,
 }: ConversationPanelProps) {
+  const showOlderMessagesSpinner = useMinDuration(isLoadingOlderMessages, 500);
   const isComposerDisabled = !activeConversationId || isLoadingConversation || isSendingMessage;
   const isSendDisabled = isComposerDisabled || draft.trim().length === 0;
 
@@ -99,8 +102,8 @@ export function ConversationPanel({
               ? () => void onLoadOlderMessages()
               : undefined}
             components={{
-              Header: () => isLoadingOlderMessages
-                ? <p className="history__status">Ladowanie starszych wiadomosci...</p>
+              Header: () => showOlderMessagesSpinner
+                ? <div className="history__status"><Spinner /></div>
                 : olderMessagesError
                 ? <p className="alert alert-error history__status">{olderMessagesError}</p>
                 : null,
