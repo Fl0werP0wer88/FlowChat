@@ -1,4 +1,5 @@
-import { useEffect, useLayoutEffect, useRef, type KeyboardEvent } from "react";
+import { useEffect, useRef, useState, type KeyboardEvent } from "react";
+import { Virtuoso } from "react-virtuoso";
 import { Button } from "../../../components/atoms/Button";
 import { TextArea } from "../../../components/atoms/TextArea";
 import type { ChatMessage } from "../../../types/chat";
@@ -23,6 +24,8 @@ interface ConversationPanelProps {
   onLoadOlderMessages: () => Promise<void>;
 }
 
+const START_INDEX = 100_000;
+
 export function ConversationPanel({
   activeContact,
   activeConversationId,
@@ -40,94 +43,29 @@ export function ConversationPanel({
   onSendDraft,
   onLoadOlderMessages,
 }: ConversationPanelProps) {
-  const historyRef = useRef<HTMLDivElement | null>(null);
-  const messagesEndRef = useRef<HTMLDivElement | null>(null);
-  const olderScrollSnapshotRef = useRef<{ scrollHeight: number; scrollTop: number } | null>(null);
-  const previousConversationIdRef = useRef<string | null>(null);
-  const previousLastMessageIdRef = useRef<string | null>(null);
-  const isNearBottomRef = useRef(true);
-  const isRequestingOlderMessagesRef = useRef(false);
   const isComposerDisabled = !activeConversationId || isLoadingConversation || isSendingMessage;
   const isSendDisabled = isComposerDisabled || draft.trim().length === 0;
-  const lastMessageId = messages.at(-1)?.id ?? null;
 
-  useLayoutEffect(() => {
-    const history = historyRef.current;
-    const olderSnapshot = olderScrollSnapshotRef.current;
-
-    if (history && olderSnapshot) {
-      history.scrollTop = olderSnapshot.scrollTop + (history.scrollHeight - olderSnapshot.scrollHeight);
-      isNearBottomRef.current = history.scrollHeight - history.scrollTop - history.clientHeight < 80;
-      olderScrollSnapshotRef.current = null;
-      isRequestingOlderMessagesRef.current = false;
-      previousConversationIdRef.current = activeConversationId;
-      previousLastMessageIdRef.current = lastMessageId;
-      return;
-    }
-
-    const previousConversationId = previousConversationIdRef.current;
-    const previousLastMessageId = previousLastMessageIdRef.current;
-    const isOpeningConversation = activeConversationId && activeConversationId !== previousConversationId;
-    const hasNewBottomMessage = lastMessageId && lastMessageId !== previousLastMessageId;
-    const isNearBottom = isNearBottomRef.current;
-
-    if (isOpeningConversation || (hasNewBottomMessage && isNearBottom)) {
-      messagesEndRef.current?.scrollIntoView({ block: "end" });
-      isNearBottomRef.current = true;
-    }
-
-    previousConversationIdRef.current = activeConversationId;
-    previousLastMessageIdRef.current = lastMessageId;
-  }, [activeConversationId, lastMessageId, messages.length]);
+  const [firstItemIndex, setFirstItemIndex] = useState(START_INDEX);
+  const messagesLengthRef = useRef(messages.length);
 
   useEffect(() => {
-    if (!activeConversationId) {
-      previousConversationIdRef.current = null;
-      previousLastMessageIdRef.current = null;
-      olderScrollSnapshotRef.current = null;
-      isNearBottomRef.current = true;
-      isRequestingOlderMessagesRef.current = false;
-    }
+    setFirstItemIndex(START_INDEX);
+    messagesLengthRef.current = messages.length;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeConversationId]);
 
-  const handleHistoryScroll = () => {
-    const history = historyRef.current;
-    if (history) {
-      isNearBottomRef.current = history.scrollHeight - history.scrollTop - history.clientHeight < 80;
-    }
-
-    if (
-      !history
-      || history.scrollTop > 48
-      || !hasOlderMessages
-      || isLoadingOlderMessages
-      || isRequestingOlderMessagesRef.current
-    ) {
+  useEffect(() => {
+    if (isLoadingOlderMessages) {
+      messagesLengthRef.current = messages.length;
       return;
     }
-
-    isRequestingOlderMessagesRef.current = true;
-    olderScrollSnapshotRef.current = {
-      scrollHeight: history.scrollHeight,
-      scrollTop: history.scrollTop,
-    };
-
-    void onLoadOlderMessages().finally(() => {
-      requestAnimationFrame(() => {
-        const snapshot = olderScrollSnapshotRef.current;
-        const currentHistory = historyRef.current;
-        if (!snapshot || !currentHistory) {
-          isRequestingOlderMessagesRef.current = false;
-          return;
-        }
-
-        currentHistory.scrollTop = snapshot.scrollTop + (currentHistory.scrollHeight - snapshot.scrollHeight);
-        isNearBottomRef.current = currentHistory.scrollHeight - currentHistory.scrollTop - currentHistory.clientHeight < 80;
-        olderScrollSnapshotRef.current = null;
-        isRequestingOlderMessagesRef.current = false;
-      });
-    });
-  };
+    const prepended = messages.length - messagesLengthRef.current;
+    if (prepended > 0) {
+      setFirstItemIndex((prev) => prev - prepended);
+      messagesLengthRef.current = messages.length;
+    }
+  }, [isLoadingOlderMessages, messages.length]);
 
   return (
     <div className="conversation-panel">
@@ -141,24 +79,31 @@ export function ConversationPanel({
           : null}
       </header>
 
-      <div className="history" ref={historyRef} onScroll={handleHistoryScroll}>
-        {!activeContact
-          ? <p className="conversation-panel__empty">Kliknij kontakt, zeby otworzyc rozmowe.</p>
-          : isLoadingConversation
-          ? <p className="conversation-panel__empty">Ladowanie rozmowy...</p>
-          : conversationError
-          ? <p className="alert alert-error">{conversationError}</p>
-          : messages.length === 0
-          ? <p className="conversation-panel__empty">Brak wiadomosci w tej rozmowie.</p>
-          : <>
-            {isLoadingOlderMessages
-              ? <p className="history__status">Ladowanie starszych wiadomosci...</p>
-              : olderMessagesError
-              ? <p className="alert alert-error history__status">{olderMessagesError}</p>
-              : null}
-            {messages.map((message) => (
+      {!activeContact
+        ? <p className="conversation-panel__empty history">Kliknij kontakt, zeby otworzyc rozmowe.</p>
+        : isLoadingConversation
+        ? <p className="conversation-panel__empty history">Ladowanie rozmowy...</p>
+        : conversationError
+        ? <p className="alert alert-error history">{conversationError}</p>
+        : messages.length === 0
+        ? <p className="conversation-panel__empty history">Brak wiadomosci w tej rozmowie.</p>
+        : <Virtuoso
+            className="history"
+            data={messages}
+            firstItemIndex={firstItemIndex}
+            followOutput={activeConversationId ? "smooth" : false}
+            startReached={hasOlderMessages && !isLoadingOlderMessages
+              ? () => void onLoadOlderMessages()
+              : undefined}
+            components={{
+              Header: () => isLoadingOlderMessages
+                ? <p className="history__status">Ladowanie starszych wiadomosci...</p>
+                : olderMessagesError
+                ? <p className="alert alert-error history__status">{olderMessagesError}</p>
+                : null,
+            }}
+            itemContent={(_index: number, message: ChatMessage) => (
               <article
-                key={message.id}
                 className={message.sender === "me"
                   ? "message message-me"
                   : message.sender === "other"
@@ -171,10 +116,8 @@ export function ConversationPanel({
                 <p>{message.text}</p>
                 <time>{formatLocalTime(message.sentAtUtc)}</time>
               </article>
-            ))}
-          </>}
-        <div ref={messagesEndRef} />
-      </div>
+            )}
+          />}
 
       <div className="composer">
         {sendError
