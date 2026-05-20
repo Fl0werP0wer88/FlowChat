@@ -7,4 +7,8 @@ public interface IGroupConversationReadRepository
     Task<GroupConversationDetailDto?> GetByIdAsync(
         Guid conversationId,
         CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyCollection<GroupConversationSummaryDto>> GetByParticipantUserIdAsync(
+        Guid participantUserId,
+        CancellationToken cancellationToken = default);
 }

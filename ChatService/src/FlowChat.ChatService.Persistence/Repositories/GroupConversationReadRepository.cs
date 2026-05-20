@@ -43,6 +43,21 @@ public sealed class GroupConversationReadRepository(AppDbContext dbContext) : IG
         return new GroupConversationDetailDto(rows[0].ConversationId, rows[0].Name!, participants);
     }
 
+    public async Task<IReadOnlyCollection<GroupConversationSummaryDto>> GetByParticipantUserIdAsync(
+        Guid participantUserId,
+        CancellationToken cancellationToken = default)
+    {
+        return await (
+            from conversation in dbContext.Conversations.AsNoTracking()
+            where conversation.Type == ConversationType.Group
+                  && conversation.Participants.Any(p => p.UserId == participantUserId)
+            select new GroupConversationSummaryDto(
+                conversation.Id.Value,
+                conversation.Name!,
+                conversation.Participants.Count))
+            .ToListAsync(cancellationToken);
+    }
+
     private sealed record GroupConversationParticipantRow(
         Guid ConversationId,
         string? Name,

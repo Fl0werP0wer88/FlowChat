@@ -4,6 +4,7 @@ import { ChatTemplate } from "../../components/templates/ChatTemplate";
 import { useRealtimeConnection } from "../../realtime/useRealtimeConnection";
 import { useAuthStore } from "../../store/authStore";
 import { ContactsSidebar, useContacts } from "../contacts";
+import { useGroupConversations } from "../groupConversations";
 import { usePresenceStatus } from "../presence/hooks/usePresenceStatus";
 import { ConversationPanel } from "./components/ConversationPanel";
 import { useChatMessages } from "./hooks/useChatMessages";
@@ -21,6 +22,7 @@ export function ChatFeature() {
   const contacts = useContacts();
   const chat = useChatMessages(contacts.activeContact);
   const presence = usePresenceStatus();
+  const groupConversations = useGroupConversations();
   const realtime = useRealtimeConnection({
     onPresenceChanged: contacts.applyPresenceChanged,
     onReceiveMessage: chat.receiveRealtimeMessage,
@@ -60,11 +62,15 @@ export function ChatFeature() {
           onAddContact={contacts.addContactByLookup}
           onAddContactByUserId={contacts.addContactByUserId}
           onChangePresenceStatus={presence.changeManualPresenceStatus}
+          activeGroupConversationId={null}
+          groupConversations={groupConversations.groupConversations}
+          isLoadingGroupConversations={groupConversations.isLoadingGroupConversations}
           onContactClick={(contact) => {
             contacts.selectContact(contact);
             chat.openContactConversation(contact, contacts.updateContactConversationId);
           }}
           onClearNotice={contacts.clearNotice}
+          onGroupConversationClick={() => { /* placeholder */ }}
           onSearchUsers={contacts.searchUsers}
           presenceNotice={presence.errorMessage}
         />
