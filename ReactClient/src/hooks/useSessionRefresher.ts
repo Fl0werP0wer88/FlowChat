@@ -7,8 +7,6 @@ const minimumRefreshDelayMs = 1_000;
 export function useSessionRefresher() {
   const accessToken = useAuthStore((s) => s.accessToken);
   const expiresAtUtc = useAuthStore((s) => s.expiresAtUtc);
-  const refreshToken = useAuthStore((s) => s.refreshToken);
-  const refreshTokenExpiresAtUtc = useAuthStore((s) => s.refreshTokenExpiresAtUtc);
   const refreshSession = useAuthStore((s) => s.refreshSession);
 
   useEffect(() => {
@@ -29,5 +27,5 @@ export function useSessionRefresher() {
     const delay = Math.max(expiration - Date.now() - refreshLeadTimeMs, minimumRefreshDelayMs);
     const id = window.setTimeout(() => void refreshSession(), delay);
     return () => window.clearTimeout(id);
-  }, [accessToken, expiresAtUtc, refreshToken, refreshTokenExpiresAtUtc, refreshSession]);
+  }, [accessToken, expiresAtUtc, refreshSession]);
 }
