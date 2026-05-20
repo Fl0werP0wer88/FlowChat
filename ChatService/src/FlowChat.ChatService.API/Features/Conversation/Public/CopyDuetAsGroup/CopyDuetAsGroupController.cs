@@ -20,6 +20,7 @@ public sealed class CopyDuetAsGroupController : ApiControllerBase
 
     [HttpPost]
     [ProducesResponseType(typeof(CopyDuetAsGroupResponse), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(CopyDuetAsGroupResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
@@ -34,19 +35,21 @@ public sealed class CopyDuetAsGroupController : ApiControllerBase
         }
 
         var result = await _mediator.Send(
-            new CreateGroupFromDuetCommand(userId, request.PartnerUserId),
+            new CreateGroupFromDuetCommand(request.NewGroupConversationId, userId, request.PartnerUserId),
             cancellationToken);
 
         if (!result.IsSuccess)
             return HandleError(result.Error);
 
-        var conversation = result.Value;
+        var conversation = result.Value.Value;
         var response = new CopyDuetAsGroupResponse(
             conversation.ConversationId,
             conversation.Name,
             [.. conversation.Participants.Select(p => new ParticipantResponse(
                 p.UserId, p.DisplayName, p.AvatarUrl, p.ParticipantUserId))]);
 
-        return StatusCode(StatusCodes.Status201Created, response);
+        return result.Value.WasAlreadyProcessed
+            ? Ok(response)
+            : StatusCode(StatusCodes.Status201Created, response);
     }
 }

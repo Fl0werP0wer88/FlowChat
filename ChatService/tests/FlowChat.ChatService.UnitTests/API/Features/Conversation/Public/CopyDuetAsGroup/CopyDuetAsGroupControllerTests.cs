@@ -3,6 +3,7 @@ using FlowChat.ChatService.Api.Features.Conversation.Public.CopyDuetAsGroup;
 using FlowChat.ChatService.Application.Features.Conversation.Commands.CreateGroupFromDuet;
 using FlowChat.ChatService.Application.Features.Conversation.Dtos;
 using FlowChat.Core.Results;
+using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
 using FluentAssertions;
 using MediatR;
@@ -36,14 +37,13 @@ public sealed class CopyDuetAsGroupControllerTests
     }
 
     [Fact]
-    public async Task CopyDuetAsGroup_WhenAuthenticated_Returns201WithResponse()
+    public async Task CopyDuetAsGroup_WhenConversationWasCreated_Returns201()
     {
         var userId = Guid.NewGuid();
         var partnerUserId = Guid.NewGuid();
         var conversationId = Guid.NewGuid();
         var dto = new GroupConversationDetailDto(
-            conversationId,
-            "Alice/Bob",
+            conversationId, "Alice/Bob",
             [
                 new ConversationParticipantDto(userId, "Alice", null, userId),
                 new ConversationParticipantDto(partnerUserId, "Bob", null, partnerUserId)
@@ -51,10 +51,11 @@ public sealed class CopyDuetAsGroupControllerTests
 
         _mediatorMock
             .Setup(x => x.Send(It.IsAny<CreateGroupFromDuetCommand>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(FlowChatResult<GroupConversationDetailDto>.Success(dto));
+            .ReturnsAsync(FlowChatResult<IdempotentCommandResult<GroupConversationDetailDto>>.Success(
+                new IdempotentCommandResult<GroupConversationDetailDto>(dto, WasAlreadyProcessed: false)));
 
         var controller = CreateController(userId);
-        var request = new CopyDuetAsGroupRequest { PartnerUserId = partnerUserId };
+        var request = new CopyDuetAsGroupRequest { NewGroupConversationId = conversationId, PartnerUserId = partnerUserId };
 
         var actionResult = await controller.CopyDuetAsGroup(request, CancellationToken.None);
 
@@ -67,12 +68,40 @@ public sealed class CopyDuetAsGroupControllerTests
     }
 
     [Fact]
+    public async Task CopyDuetAsGroup_WhenConversationAlreadyExists_Returns200()
+    {
+        var userId = Guid.NewGuid();
+        var partnerUserId = Guid.NewGuid();
+        var conversationId = Guid.NewGuid();
+        var dto = new GroupConversationDetailDto(
+            conversationId, "Alice/Bob",
+            [
+                new ConversationParticipantDto(userId, "Alice", null, userId),
+                new ConversationParticipantDto(partnerUserId, "Bob", null, partnerUserId)
+            ]);
+
+        _mediatorMock
+            .Setup(x => x.Send(It.IsAny<CreateGroupFromDuetCommand>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(FlowChatResult<IdempotentCommandResult<GroupConversationDetailDto>>.Success(
+                new IdempotentCommandResult<GroupConversationDetailDto>(dto, WasAlreadyProcessed: true)));
+
+        var controller = CreateController(userId);
+        var request = new CopyDuetAsGroupRequest { NewGroupConversationId = conversationId, PartnerUserId = partnerUserId };
+
+        var actionResult = await controller.CopyDuetAsGroup(request, CancellationToken.None);
+
+        var okResult = actionResult.Should().BeOfType<OkObjectResult>().Subject;
+        var response = okResult.Value.Should().BeOfType<CopyDuetAsGroupResponse>().Subject;
+        response.ConversationId.Should().Be(conversationId);
+    }
+
+    [Fact]
     public async Task CopyDuetAsGroup_WhenNotAuthenticated_Returns401()
     {
         var controller = CreateController();
 
         var actionResult = await controller.CopyDuetAsGroup(
-            new CopyDuetAsGroupRequest { PartnerUserId = Guid.NewGuid() },
+            new CopyDuetAsGroupRequest { NewGroupConversationId = Guid.NewGuid(), PartnerUserId = Guid.NewGuid() },
             CancellationToken.None);
 
         actionResult.Should().BeOfType<UnauthorizedResult>();
@@ -83,13 +112,13 @@ public sealed class CopyDuetAsGroupControllerTests
     {
         _mediatorMock
             .Setup(x => x.Send(It.IsAny<CreateGroupFromDuetCommand>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(FlowChatResult<GroupConversationDetailDto>.Failure(
+            .ReturnsAsync(FlowChatResult<IdempotentCommandResult<GroupConversationDetailDto>>.Failure(
                 DomainError.NotFound("Duet conversation not found.")));
 
         var controller = CreateController(Guid.NewGuid());
 
         var actionResult = await controller.CopyDuetAsGroup(
-            new CopyDuetAsGroupRequest { PartnerUserId = Guid.NewGuid() },
+            new CopyDuetAsGroupRequest { NewGroupConversationId = Guid.NewGuid(), PartnerUserId = Guid.NewGuid() },
             CancellationToken.None);
 
         var notFoundResult = actionResult.Should().BeOfType<NotFoundObjectResult>().Subject;
@@ -101,21 +130,25 @@ public sealed class CopyDuetAsGroupControllerTests
     {
         var userId = Guid.NewGuid();
         var partnerUserId = Guid.NewGuid();
+        var conversationId = Guid.NewGuid();
         CreateGroupFromDuetCommand? capturedCommand = null;
 
         _mediatorMock
             .Setup(x => x.Send(It.IsAny<CreateGroupFromDuetCommand>(), It.IsAny<CancellationToken>()))
             .Callback<object, CancellationToken>((cmd, _) => capturedCommand = (CreateGroupFromDuetCommand)cmd)
-            .ReturnsAsync(FlowChatResult<GroupConversationDetailDto>.Success(
-                new GroupConversationDetailDto(Guid.NewGuid(), "Alice/Bob", [])));
+            .ReturnsAsync(FlowChatResult<IdempotentCommandResult<GroupConversationDetailDto>>.Success(
+                new IdempotentCommandResult<GroupConversationDetailDto>(
+                    new GroupConversationDetailDto(conversationId, "Alice/Bob", []),
+                    WasAlreadyProcessed: false)));
 
         var controller = CreateController(userId);
         await controller.CopyDuetAsGroup(
-            new CopyDuetAsGroupRequest { PartnerUserId = partnerUserId },
+            new CopyDuetAsGroupRequest { NewGroupConversationId = conversationId, PartnerUserId = partnerUserId },
             CancellationToken.None);
 
         capturedCommand.Should().NotBeNull();
-        capturedCommand!.RequestingUserId.Should().Be(userId);
+        capturedCommand!.NewGroupConversationId.Should().Be(conversationId);
+        capturedCommand.RequestingUserId.Should().Be(userId);
         capturedCommand.PartnerUserId.Should().Be(partnerUserId);
     }
 

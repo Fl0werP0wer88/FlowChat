@@ -4,6 +4,7 @@ using FlowChat.ChatService.Application.Features.ChatMessage.Commands.SendChatMes
 using FlowChat.ChatService.Application.Features.Conversation.Commands.AddParticipant;
 using FlowChat.ChatService.Application.Features.Conversation.Commands.CreateDuetConversation;
 using FlowChat.ChatService.Application.Features.Conversation.Commands.CreateGroupConversation;
+using FlowChat.ChatService.Application.Features.Conversation.Commands.CreateGroupFromDuet;
 using FlowChat.ChatService.Application.Features.UserProfile.Commands.InsertUserProfileProjection;
 using FlowChat.ChatService.Persistence.Repositories;
 using FlowChat.Shared.Persistance.Auditing;
@@ -27,6 +28,8 @@ public static class PersistenceServiceRegistration
             options.UniqueConstraintNamesByIdempotencyConflictKey[InsertUserProfileProjectionCommand.IdempotencyConflictKey] =
                 ["PK_UserProfileProjections"];
             options.UniqueConstraintNamesByIdempotencyConflictKey[CreateGroupConversationCommand.IdempotencyConflictKey] =
+                ["PK_Conversations"];
+            options.UniqueConstraintNamesByIdempotencyConflictKey[CreateGroupFromDuetCommand.IdempotencyConflictKey] =
                 ["PK_Conversations"];
             options.UniqueConstraintNamesByIdempotencyConflictKey[CreateDuetConversationCommand.IdempotencyConflictKey] =
                 ["PK_DuetConversations"];
