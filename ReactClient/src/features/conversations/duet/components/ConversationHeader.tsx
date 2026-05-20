@@ -2,11 +2,13 @@ import type { Contact } from "../../../../types/contacts";
 
 interface ConversationHeaderProps {
   activeContact: Contact | null;
+  isSettingsOpen?: boolean;
   onTuneClick?: () => void;
 }
 
 export function ConversationHeader({
   activeContact,
+  isSettingsOpen = false,
   onTuneClick,
 }: ConversationHeaderProps) {
   return (
@@ -20,8 +22,11 @@ export function ConversationHeader({
           ? <span className={`conversation-panel__status status-${activeContact.status}`}>{activeContact.status}</span>
           : null}
         <button
+          aria-pressed={isSettingsOpen}
           aria-label="Ustawienia rozmowy"
-          className="conversation-panel__tune-button"
+          className={isSettingsOpen
+            ? "conversation-panel__tune-button conversation-panel__tune-button--active"
+            : "conversation-panel__tune-button"}
           onClick={onTuneClick}
           type="button"
         >

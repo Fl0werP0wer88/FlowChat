@@ -1,9 +1,11 @@
 import type { KeyboardEvent } from "react";
+import { useEffect, useState } from "react";
 import type { ChatMessage } from "../../../../types/chat";
 import type { Contact } from "../../../../types/contacts";
 import { ConversationBody } from "./ConversationBody";
 import { ConversationFooter } from "./ConversationFooter";
 import { ConversationHeader } from "./ConversationHeader";
+import { ConversationSettings } from "./ConversationSettings";
 
 interface ConversationPanelProps {
   activeContact: Contact | null;
@@ -40,23 +42,36 @@ export function ConversationPanel({
   onSendDraft,
   onLoadOlderMessages,
 }: ConversationPanelProps) {
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const isComposerDisabled = !activeConversationId || isLoadingConversation || isSendingMessage;
   const isSendDisabled = isComposerDisabled || draft.trim().length === 0;
 
+  useEffect(() => {
+    setIsSettingsOpen(false);
+  }, [activeConversationId]);
+
   return (
     <div className="conversation-panel">
-      <ConversationHeader activeContact={activeContact} />
-      <ConversationBody
+      <ConversationHeader
         activeContact={activeContact}
-        activeConversationId={activeConversationId}
-        conversationError={conversationError}
-        isLoadingConversation={isLoadingConversation}
-        hasOlderMessages={hasOlderMessages}
-        isLoadingOlderMessages={isLoadingOlderMessages}
-        olderMessagesError={olderMessagesError}
-        messages={messages}
-        onLoadOlderMessages={onLoadOlderMessages}
+        isSettingsOpen={isSettingsOpen}
+        onTuneClick={() => setIsSettingsOpen((current) => !current)}
       />
+      {isSettingsOpen
+        ? <ConversationSettings activeContact={activeContact} />
+        : (
+          <ConversationBody
+            activeContact={activeContact}
+            activeConversationId={activeConversationId}
+            conversationError={conversationError}
+            isLoadingConversation={isLoadingConversation}
+            hasOlderMessages={hasOlderMessages}
+            isLoadingOlderMessages={isLoadingOlderMessages}
+            olderMessagesError={olderMessagesError}
+            messages={messages}
+            onLoadOlderMessages={onLoadOlderMessages}
+          />
+        )}
       <ConversationFooter
         activeConversationId={activeConversationId}
         draft={draft}
