@@ -5,7 +5,6 @@ namespace FlowChat.UserProfileService.Application.Contracts.Persistence;
 
 public interface IUserProfileReadRepository : IReadRepository<UserProfileDto>
 {
-    Task<IReadOnlyList<UserProfileDto>> GetActiveAsync(CancellationToken cancellationToken = default);
     Task<IReadOnlyList<UserProfileDto>> SearchAsync(
         string? firstName,
         string? lastName,

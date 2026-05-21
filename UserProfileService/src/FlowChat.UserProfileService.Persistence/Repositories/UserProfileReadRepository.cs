@@ -29,18 +29,6 @@ public sealed class UserProfileReadRepository(AppDbContext dbContext) : IUserPro
         return entities.Select(MapToDto).ToList();
     }
 
-    public async Task<IReadOnlyList<UserProfileDto>> GetActiveAsync(CancellationToken cancellationToken = default)
-    {
-        var entities = await Query()
-            .Where(x => x.IsActive)
-            .OrderBy(x => x.LastName)
-            .ThenBy(x => x.FirstName)
-            .ThenBy(x => EF.Property<string>(x, nameof(UserProfile.FriendlyUserId)))
-            .ToListAsync(cancellationToken);
-
-        return entities.Select(MapToDto).ToList();
-    }
-
     public async Task<IReadOnlyList<UserProfileDto>> SearchAsync(
         string? firstName,
         string? lastName,

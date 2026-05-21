@@ -146,41 +146,6 @@ public sealed class UserProfileReadRepositoryTests
     }
 
     [Fact]
-    public async Task GetActiveAsync_ReturnsOnlyActiveProfilesOrderedByDerivedLabelThenFriendlyUserId()
-    {
-        await using var connection = new SqliteConnection("Data Source=:memory:");
-        await connection.OpenAsync();
-
-        await using (var seedContext = CreateDbContext(connection))
-        {
-            seedContext.UserProfiles.Add(UserProfile.Create(
-                Id<UserProfile>.New(),
-                "zoe",
-                EmailAddress.Create("zoe@example.com"),
-                firstName: "Alex"));
-            seedContext.UserProfiles.Add(UserProfile.Create(
-                Id<UserProfile>.New(),
-                "adam",
-                EmailAddress.Create("adam@example.com"),
-                firstName: "Alex"));
-            seedContext.UserProfiles.Add(UserProfile.Create(
-                Id<UserProfile>.New(),
-                "hidden",
-                EmailAddress.Create("hidden@example.com"),
-                isActive: false));
-
-            await seedContext.SaveChangesAsync();
-        }
-
-        await using var readContext = CreateDbContext(connection);
-        var repository = new UserProfileReadRepository(readContext);
-
-        var result = await repository.GetActiveAsync(CancellationToken.None);
-
-        result.Select(profile => profile.FriendlyUserId).Should().Equal("adam", "zoe");
-    }
-
-    [Fact]
     public async Task FriendlyUserIdExistsAsync_WhenExcludedUserMatchesFoundProfile_ReturnsFalse()
     {
         await using var connection = new SqliteConnection("Data Source=:memory:");
