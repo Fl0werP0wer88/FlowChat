@@ -4,9 +4,9 @@ import { useAuthStore } from "../../../store/authStore";
 import { isEmailLookup, searchUsers, type SearchUserResult, type SearchUsersCriteria } from "../api";
 
 interface UserSearchProps {
-  addContactNotice: { kind: "error" | "info"; message: string; } | null;
   isOpen: boolean;
   isUserProcessDisabled?: boolean;
+  notification?: { kind: "error" | "info"; message: string; } | null;
   onClearNotice: () => void;
   onClose: () => void;
   onProcessUserByEmail: (email: string) => Promise<boolean>;
@@ -15,9 +15,9 @@ interface UserSearchProps {
 }
 
 export function UserSearch({
-  addContactNotice,
   isOpen,
   isUserProcessDisabled = false,
+  notification = null,
   onClearNotice,
   onClose,
   onProcessUserByEmail,
@@ -211,10 +211,10 @@ export function UserSearch({
         />
       </div>
 
-      {addContactNotice
+      {notification
         ? (
-          <p className={`alert ${addContactNotice.kind === "error" ? "alert-error" : "alert-info"}`}>
-            {addContactNotice.message}
+          <p className={`alert ${notification.kind === "error" ? "alert-error" : "alert-info"}`}>
+            {notification.message}
           </p>
         )
         : null}

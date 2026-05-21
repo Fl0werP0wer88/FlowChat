@@ -102,9 +102,9 @@ export function Sidebar({
       </div>
 
       <UserSearch
-        addContactNotice={addContactNotice}
         isOpen={isUserSearchOpen}
         isUserProcessDisabled={isUserProcessDisabled}
+        notification={addContactNotice}
         onClearNotice={onClearNotice}
         onClose={() => setIsUserSearchOpen(false)}
         onProcessUserByEmail={onProcessUserByEmail}
