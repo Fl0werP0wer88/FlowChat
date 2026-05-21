@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { KeyboardEventHandler } from "react";
-import { isEmailLookup, type SearchUserResult, type SearchUsersCriteria } from "../../contacts/api";
+import { useAuthStore } from "../../../store/authStore";
+import { isEmailLookup, searchUsers, type SearchUserResult, type SearchUsersCriteria } from "../api";
 
 interface UserSearchProps {
   addContactNotice: { kind: "error" | "info"; message: string; } | null;
@@ -11,7 +12,6 @@ interface UserSearchProps {
   onProcessUserByEmail: (email: string) => Promise<boolean>;
   onProcessUserByFriendlyId: (friendlyUserId: string) => Promise<boolean>;
   onProcessUserById: (userId: string) => Promise<boolean>;
-  onSearchUsers: (criteria: SearchUsersCriteria, signal?: AbortSignal) => Promise<SearchUserResult[]>;
 }
 
 export function UserSearch({
@@ -23,8 +23,8 @@ export function UserSearch({
   onProcessUserByEmail,
   onProcessUserByFriendlyId,
   onProcessUserById,
-  onSearchUsers,
 }: UserSearchProps) {
+  const accessToken = useAuthStore((s) => s.accessToken) ?? "";
   const [isSearchExpanded, setIsSearchExpanded] = useState(false);
   const [emailOrFriendlyId, setEmailOrFriendlyId] = useState("");
   const [searchCriteria, setSearchCriteria] = useState<SearchUsersCriteria>({
@@ -65,7 +65,14 @@ export function UserSearch({
       setIsSearchingUsers(true);
       setSearchNotice(null);
 
-      void onSearchUsers(searchCriteria, abortController.signal)
+      if (!accessToken) {
+        setSearchResults([]);
+        setSearchNotice("Brakuje aktywnej sesji potrzebnej do wyszukiwania uzytkownikow.");
+        setIsSearchingUsers(false);
+        return;
+      }
+
+      void searchUsers(searchCriteria, accessToken, abortController.signal)
         .then((results) => {
           setSearchResults(results);
           if (results.length === 0) {
@@ -92,7 +99,7 @@ export function UserSearch({
       abortController.abort();
       window.clearTimeout(timeoutId);
     };
-  }, [isOpen, isSearchExpanded, onSearchUsers, searchCriteria]);
+  }, [accessToken, isOpen, isSearchExpanded, searchCriteria]);
 
   const resetSearch = () => {
     setIsSearchExpanded(false);

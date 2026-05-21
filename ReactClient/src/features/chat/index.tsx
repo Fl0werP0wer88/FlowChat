@@ -115,7 +115,6 @@ export function ChatFeature() {
           onProcessUserByEmail={contacts.addContactByEmail}
           onProcessUserByFriendlyId={contacts.addContactByFriendlyId}
           onProcessUserById={contacts.addContactByUserId}
-          onSearchUsers={contacts.searchUsers}
           presenceNotice={presence.errorMessage}
         />
       }

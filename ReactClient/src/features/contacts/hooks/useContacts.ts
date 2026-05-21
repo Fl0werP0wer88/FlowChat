@@ -4,8 +4,6 @@ import { useAuthStore } from "../../../store/authStore";
 import type { Contact } from "../../../types/contacts";
 import type { PresenceChangedEvent } from "../../../types/realtime";
 import { resolveOwnerUserId } from "../../../utils/authUtils";
-import type { SearchUserResult, SearchUsersCriteria } from "../api";
-import { searchUsers } from "../api";
 import { useAddContactByUserIdMutation } from "../queries/useAddContactByUserIdMutation";
 import { useAddContactMutation } from "../queries/useAddContactMutation";
 import { useContactsQuery } from "../queries/useContactsQuery";
@@ -28,7 +26,6 @@ interface UseContactsResult {
   clearNotice: () => void;
   applyPresenceChanged: (payload: PresenceChangedEvent) => void;
   updateContactConversationId: (contactUserId: string, conversationId: string) => void;
-  searchUsers: (criteria: SearchUsersCriteria, signal?: AbortSignal) => Promise<SearchUserResult[]>;
 }
 
 export function useContacts(): UseContactsResult {
@@ -146,17 +143,6 @@ export function useContacts(): UseContactsResult {
     setActiveContactId(contact.id);
   };
 
-  const searchUsersAction = async (
-    criteria: SearchUsersCriteria,
-    signal?: AbortSignal,
-  ): Promise<SearchUserResult[]> => {
-    if (!accessToken || !ownerUserId) {
-      throw new Error("Brakuje aktywnej sesji potrzebnej do wyszukiwania uzytkownikow.");
-    }
-
-    return searchUsers(criteria, accessToken, signal);
-  };
-
   return {
     contacts,
     activeContact,
@@ -170,6 +156,5 @@ export function useContacts(): UseContactsResult {
     applyPresenceChanged,
     clearNotice,
     updateContactConversationId,
-    searchUsers: searchUsersAction,
   };
 }

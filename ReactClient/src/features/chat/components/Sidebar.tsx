@@ -3,7 +3,6 @@ import type { Contact } from "../../../types/contacts";
 import type { ManualUserStatus, UserStatus } from "../../../types/realtime";
 import type { GroupConversation } from "../../groups";
 import { GroupConversationsList } from "../../groups";
-import type { SearchUserResult, SearchUsersCriteria } from "../../contacts";
 import { ContactsList } from "../../contacts";
 import { UserSearch } from "../../users";
 import { SidebarHeader } from "./SidebarHeader";
@@ -28,7 +27,6 @@ interface SidebarProps {
   onProcessUserByEmail: (email: string) => Promise<boolean>;
   onProcessUserByFriendlyId: (friendlyUserId: string) => Promise<boolean>;
   onProcessUserById: (userId: string) => Promise<boolean>;
-  onSearchUsers: (criteria: SearchUsersCriteria, signal?: AbortSignal) => Promise<SearchUserResult[]>;
   presenceNotice: string | null;
 }
 
@@ -50,7 +48,6 @@ export function Sidebar({
   onProcessUserByEmail,
   onProcessUserByFriendlyId,
   onProcessUserById,
-  onSearchUsers,
   presenceNotice,
 }: SidebarProps) {
   const [activeTab, setActiveTab] = useState<SidebarTab>("contacts");
@@ -113,7 +110,6 @@ export function Sidebar({
         onProcessUserByEmail={onProcessUserByEmail}
         onProcessUserByFriendlyId={onProcessUserByFriendlyId}
         onProcessUserById={onProcessUserById}
-        onSearchUsers={onSearchUsers}
       />
     </aside>
   );
