@@ -1,9 +1,11 @@
 import type { KeyboardEvent } from "react";
+import { useEffect, useState } from "react";
 import type { ChatMessage } from "../../../../types/chat";
 import type { GroupConversation } from "../../../groups";
 import { ConversationBody } from "../../components/ConversationBody";
 import { ConversationFooter } from "../../components/ConversationFooter";
 import { GroupConversationHeader } from "./GroupConversationHeader";
+import { GroupConversationSettings } from "./GroupConversationSettings";
 
 interface GroupConversationPanelProps {
   activeGroupConversation: GroupConversation | null;
@@ -42,27 +44,43 @@ export function GroupConversationPanel({
   onSendDraft,
   onLoadOlderMessages,
 }: GroupConversationPanelProps) {
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const isComposerDisabled = !activeConversationId || isLoadingConversation || isSendingMessage;
   const isSendDisabled = isComposerDisabled || draft.trim().length === 0;
+
+  useEffect(() => {
+    setIsSettingsOpen(false);
+  }, [activeConversationId, activeGroupConversation?.conversationId]);
 
   return (
     <div className="conversation-panel">
       <GroupConversationHeader
         activeGroupConversation={activeGroupConversation}
         activeConversationName={activeConversationName}
+        isSettingsOpen={isSettingsOpen}
+        onTuneClick={() => setIsSettingsOpen((current) => !current)}
       />
-      <ConversationBody
-        activeConversationId={activeConversationId}
-        conversationError={conversationError}
-        emptySelectionMessage="Kliknij grupe, zeby otworzyc rozmowe."
-        hasActiveConversation={Boolean(activeGroupConversation)}
-        isLoadingConversation={isLoadingConversation}
-        hasOlderMessages={hasOlderMessages}
-        isLoadingOlderMessages={isLoadingOlderMessages}
-        olderMessagesError={olderMessagesError}
-        messages={messages}
-        onLoadOlderMessages={onLoadOlderMessages}
-      />
+      {isSettingsOpen
+        ? (
+          <GroupConversationSettings
+            activeGroupConversation={activeGroupConversation}
+            activeConversationName={activeConversationName}
+          />
+        )
+        : (
+          <ConversationBody
+            activeConversationId={activeConversationId}
+            conversationError={conversationError}
+            emptySelectionMessage="Kliknij grupe, zeby otworzyc rozmowe."
+            hasActiveConversation={Boolean(activeGroupConversation)}
+            isLoadingConversation={isLoadingConversation}
+            hasOlderMessages={hasOlderMessages}
+            isLoadingOlderMessages={isLoadingOlderMessages}
+            olderMessagesError={olderMessagesError}
+            messages={messages}
+            onLoadOlderMessages={onLoadOlderMessages}
+          />
+        )}
       <ConversationFooter
         activeConversationId={activeConversationId}
         draft={draft}
