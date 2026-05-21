@@ -9,7 +9,7 @@ import { Sidebar } from "./components/Sidebar";
 import type { GroupConversation } from "../groups";
 import { useGroupConversations } from "../groups";
 import { usePresenceStatus } from "../presence/hooks/usePresenceStatus";
-import { ConversationPanel, useChatMessages } from "../conversations/duet";
+import { DuetConversationPanel, useChatMessages } from "../conversations/duet";
 import { GroupConversationPanel, useGroupChatMessages } from "../conversations/group";
 
 type ActiveConversationMode = "duet" | "group";
@@ -67,7 +67,7 @@ export function ChatFeature() {
             />
           )
           : (
-            <ConversationPanel
+            <DuetConversationPanel
               activeContact={activeDuetContact}
               activeConversationId={chat.activeConversationId}
               conversationError={chat.conversationError}

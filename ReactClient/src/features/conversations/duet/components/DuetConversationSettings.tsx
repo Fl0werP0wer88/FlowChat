@@ -1,18 +1,18 @@
 import type { Contact } from "../../../../types/contacts";
 
-interface ConversationSettingsProps {
+interface DuetConversationSettingsProps {
   activeContact: Contact | null;
   createGroupNotice: { kind: "error" | "info"; message: string } | null;
   isCreatingGroup: boolean;
   onCreateGroupClick?: () => void;
 }
 
-export function ConversationSettings({
+export function DuetConversationSettings({
   activeContact,
   createGroupNotice,
   isCreatingGroup,
   onCreateGroupClick,
-}: ConversationSettingsProps) {
+}: DuetConversationSettingsProps) {
   if (!activeContact) {
     return (
       <section className="conversation-settings">

@@ -1,16 +1,16 @@
 import type { Contact } from "../../../../types/contacts";
 
-interface ConversationHeaderProps {
+interface DuetConversationHeaderProps {
   activeContact: Contact | null;
   isSettingsOpen?: boolean;
   onTuneClick?: () => void;
 }
 
-export function ConversationHeader({
+export function DuetConversationHeader({
   activeContact,
   isSettingsOpen = false,
   onTuneClick,
-}: ConversationHeaderProps) {
+}: DuetConversationHeaderProps) {
   return (
     <header className="conversation-panel__header">
       <div>

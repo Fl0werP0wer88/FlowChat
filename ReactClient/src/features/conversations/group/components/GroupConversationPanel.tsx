@@ -1,8 +1,8 @@
 import type { KeyboardEvent } from "react";
 import type { ChatMessage } from "../../../../types/chat";
 import type { GroupConversation } from "../../../groups";
-import { ConversationBody } from "../../duet/components/ConversationBody";
-import { ConversationFooter } from "../../duet/components/ConversationFooter";
+import { ConversationBody } from "../../components/ConversationBody";
+import { ConversationFooter } from "../../components/ConversationFooter";
 import { GroupConversationHeader } from "./GroupConversationHeader";
 
 interface GroupConversationPanelProps {

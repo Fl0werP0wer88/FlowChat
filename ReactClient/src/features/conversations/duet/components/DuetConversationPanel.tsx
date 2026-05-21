@@ -3,13 +3,13 @@ import { useEffect, useState } from "react";
 import { useAuthStore } from "../../../../store/authStore";
 import type { ChatMessage } from "../../../../types/chat";
 import type { Contact } from "../../../../types/contacts";
-import { ConversationBody } from "./ConversationBody";
-import { ConversationFooter } from "./ConversationFooter";
-import { ConversationHeader } from "./ConversationHeader";
-import { ConversationSettings } from "./ConversationSettings";
+import { ConversationBody } from "../../components/ConversationBody";
+import { ConversationFooter } from "../../components/ConversationFooter";
+import { DuetConversationHeader } from "./DuetConversationHeader";
+import { DuetConversationSettings } from "./DuetConversationSettings";
 import { useCopyDuetAsGroupMutation } from "../queries/useCopyDuetAsGroupMutation";
 
-interface ConversationPanelProps {
+interface DuetConversationPanelProps {
   activeContact: Contact | null;
   activeConversationId: string | null;
   conversationError: string | null;
@@ -27,7 +27,7 @@ interface ConversationPanelProps {
   onLoadOlderMessages: () => Promise<void>;
 }
 
-export function ConversationPanel({
+export function DuetConversationPanel({
   activeContact,
   activeConversationId,
   conversationError,
@@ -43,7 +43,7 @@ export function ConversationPanel({
   onDraftKeyDown,
   onSendDraft,
   onLoadOlderMessages,
-}: ConversationPanelProps) {
+}: DuetConversationPanelProps) {
   const accessToken = useAuthStore((s) => s.accessToken) ?? "";
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [createGroupNotice, setCreateGroupNotice] = useState<{ kind: "error" | "info"; message: string } | null>(null);
@@ -75,14 +75,14 @@ export function ConversationPanel({
 
   return (
     <div className="conversation-panel">
-      <ConversationHeader
+      <DuetConversationHeader
         activeContact={activeContact}
         isSettingsOpen={isSettingsOpen}
         onTuneClick={() => setIsSettingsOpen((current) => !current)}
       />
       {isSettingsOpen
         ? (
-          <ConversationSettings
+          <DuetConversationSettings
             activeContact={activeContact}
             createGroupNotice={createGroupNotice}
             isCreatingGroup={copyDuetAsGroupMutation.isPending}
