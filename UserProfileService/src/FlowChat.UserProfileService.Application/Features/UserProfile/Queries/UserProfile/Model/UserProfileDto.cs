@@ -37,8 +37,6 @@ public sealed record UserProfileDto : IDbReadResponse
     public string? Bio { get; init; }
     public bool IsActive { get; init; }
     public DateTimeOffset? LastSeenAtUtc { get; init; }
-    public EmailDto? MainEmail { get; init; }
-    public PhoneDto? MainPhone { get; init; }
     public IReadOnlyList<EmailDto> Emails { get; init; } = [];
     public IReadOnlyList<PhoneDto> Phones { get; init; } = [];
 }

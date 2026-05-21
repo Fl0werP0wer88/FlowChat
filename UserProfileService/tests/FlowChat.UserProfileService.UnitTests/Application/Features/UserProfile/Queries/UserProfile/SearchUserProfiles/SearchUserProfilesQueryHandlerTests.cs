@@ -30,18 +30,26 @@ public sealed class SearchUserProfilesQueryHandlerTests
                 FirstName = "Jane",
                 LastName = "Doe",
                 Organization = "FlowChat",
-                MainEmail = new EmailDto
-                {
-                    Address = "jane@example.com",
-                    IsConfirmed = true,
-                    IsVisible = true
-                },
-                MainPhone = new PhoneDto
-                {
-                    Number = "+48123123123",
-                    IsConfirmed = true,
-                    IsVisible = true
-                },
+                Emails =
+                [
+                    new EmailDto
+                    {
+                        Address = "jane@example.com",
+                        IsMain = true,
+                        IsConfirmed = true,
+                        IsVisible = true
+                    }
+                ],
+                Phones =
+                [
+                    new PhoneDto
+                    {
+                        Number = "+48123123123",
+                        IsMain = true,
+                        IsConfirmed = true,
+                        IsVisible = true
+                    }
+                ],
                 IsActive = true,
                 LastSeenAtUtc = _fixture.Create<DateTimeOffset>()
             }

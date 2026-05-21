@@ -134,27 +134,12 @@ public sealed class UserProfileReadRepository(AppDbContext dbContext) : IUserPro
             entity.Bio,
             entity.IsActive,
             entity.LastSeenAtUtc?.Value,
-            entity.Emails
-                .Select(email => new EmailDto(
-                    email.Id.Value,
-                    email.Address.Value,
-                    email.IsMain,
-                    email.IsAuth,
-                    email.IsConfirmed))
-                .ToList(),
-            entity.Phones
-                .Select(phone => new PhoneDto(
-                    phone.Id.Value,
-                    phone.Number.Value,
-                    phone.IsMain))
-                .ToList());
+            MapEmails(entity),
+            MapPhones(entity));
     }
 
     private static UserProfileDto MapToSearchDto(UserProfile entity)
     {
-        var mainEmail = entity.Emails.FirstOrDefault(email => email.IsMain);
-        var mainPhone = entity.Phones.FirstOrDefault(phone => phone.IsMain);
-
         return new UserProfileDto
         {
             Id = entity.Id.Value,
@@ -162,31 +147,41 @@ public sealed class UserProfileReadRepository(AppDbContext dbContext) : IUserPro
             FirstName = entity.FirstName,
             LastName = entity.LastName,
             Organization = entity.Organization,
-            MainEmail = mainEmail is null
-                ? null
-                : new EmailDto
-                {
-                    Id = mainEmail.Id.Value,
-                    Address = mainEmail.Address.Value,
-                    IsMain = mainEmail.IsMain,
-                    IsAuth = mainEmail.IsAuth,
-                    IsConfirmed = mainEmail.IsConfirmed,
-                    IsVisible = mainEmail.IsVisible
-                },
-            MainPhone = mainPhone is null
-                ? null
-                : new PhoneDto
-                {
-                    Id = mainPhone.Id.Value,
-                    Number = mainPhone.Number.Value,
-                    IsMain = mainPhone.IsMain,
-                    IsConfirmed = mainPhone.IsConfirmed,
-                    IsVisible = mainPhone.IsVisible
-                },
             AvatarUrl = entity.AvatarUrl,
             Bio = entity.Bio,
             IsActive = entity.IsActive,
-            LastSeenAtUtc = entity.LastSeenAtUtc?.Value
+            LastSeenAtUtc = entity.LastSeenAtUtc?.Value,
+            Emails = MapEmails(entity),
+            Phones = MapPhones(entity)
         };
+    }
+
+    private static IReadOnlyList<EmailDto> MapEmails(UserProfile entity)
+    {
+        return entity.Emails
+            .Select(email => new EmailDto
+            {
+                Id = email.Id.Value,
+                Address = email.Address.Value,
+                IsMain = email.IsMain,
+                IsAuth = email.IsAuth,
+                IsConfirmed = email.IsConfirmed,
+                IsVisible = email.IsVisible
+            })
+            .ToList();
+    }
+
+    private static IReadOnlyList<PhoneDto> MapPhones(UserProfile entity)
+    {
+        return entity.Phones
+            .Select(phone => new PhoneDto
+            {
+                Id = phone.Id.Value,
+                Number = phone.Number.Value,
+                IsMain = phone.IsMain,
+                IsConfirmed = phone.IsConfirmed,
+                IsVisible = phone.IsVisible
+            })
+            .ToList();
     }
 }

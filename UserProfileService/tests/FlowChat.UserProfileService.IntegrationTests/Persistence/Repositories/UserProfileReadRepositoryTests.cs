@@ -60,18 +60,14 @@ public sealed class UserProfileReadRepositoryTests
         result[0].FirstName.Should().Be("Jane");
         result[0].LastName.Should().Be("Doe");
         result[0].Organization.Should().Be("FlowChat");
-        result[0].MainEmail.Should().BeEquivalentTo(new
-        {
-            Address = "jane@example.com",
-            IsConfirmed = false,
-            IsVisible = true
-        });
-        result[0].MainPhone.Should().BeEquivalentTo(new
-        {
-            Number = "+48123123123",
-            IsConfirmed = false,
-            IsVisible = true
-        });
+        result[0].Emails.Should().ContainSingle(email => email.Address == "jane@example.com"
+            && email.IsMain
+            && !email.IsConfirmed
+            && email.IsVisible);
+        result[0].Phones.Should().ContainSingle(phone => phone.Number == "+48123123123"
+            && phone.IsMain
+            && !phone.IsConfirmed
+            && phone.IsVisible);
         result[0].AvatarUrl.Should().Be("https://cdn.example/jane.png");
         result[0].Bio.Should().Be("about Jane");
         result[0].IsActive.Should().BeTrue();
