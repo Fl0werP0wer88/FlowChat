@@ -5,8 +5,8 @@ import { isEmailLookup, searchUsers, type SearchUserResult, type SearchUsersCrit
 
 interface UserSearchProps {
   addContactNotice: { kind: "error" | "info"; message: string; } | null;
-  isAddingContact: boolean;
   isOpen: boolean;
+  isUserProcessDisabled?: boolean;
   onClearNotice: () => void;
   onClose: () => void;
   onProcessUserByEmail: (email: string) => Promise<boolean>;
@@ -16,8 +16,8 @@ interface UserSearchProps {
 
 export function UserSearch({
   addContactNotice,
-  isAddingContact,
   isOpen,
+  isUserProcessDisabled = false,
   onClearNotice,
   onClose,
   onProcessUserByEmail,
@@ -193,7 +193,7 @@ export function UserSearch({
         <button
           aria-label="Dodaj kontakt z podanej wartosci"
           className="contacts-composer__search-button"
-          disabled={isAddingContact}
+          disabled={isUserProcessDisabled}
           onClick={() => void submitLookup()}
           type="button"
         >
@@ -201,7 +201,7 @@ export function UserSearch({
         </button>
         <input
           className="contacts-composer__input"
-          disabled={isAddingContact}
+          disabled={isUserProcessDisabled}
           onChange={(event) => setEmailOrFriendlyId(event.target.value)}
           onKeyDown={(event) => void handleLookupKeyDown(event)}
           placeholder="User Id or email"
@@ -264,7 +264,7 @@ export function UserSearch({
                   <li key={result.userProfileId}>
                     <button
                       className="contacts-composer__result"
-                      disabled={isAddingContact}
+                      disabled={isUserProcessDisabled}
                       onClick={() => void handleSearchResultClick(result.userProfileId)}
                       type="button"
                     >

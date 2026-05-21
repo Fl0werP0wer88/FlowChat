@@ -16,10 +16,10 @@ interface SidebarProps {
   contacts: Contact[];
   currentUserStatus: UserStatus;
   groupConversations: GroupConversation[];
-  isAddingContact: boolean;
   isChangingPresenceStatus: boolean;
   isLoadingContacts: boolean;
   isLoadingGroupConversations: boolean;
+  isUserProcessDisabled: boolean;
   onChangePresenceStatus: (status: ManualUserStatus) => Promise<void>;
   onContactClick: (contact: Contact) => void;
   onClearNotice: () => void;
@@ -37,10 +37,10 @@ export function Sidebar({
   contacts,
   currentUserStatus,
   groupConversations,
-  isAddingContact,
   isChangingPresenceStatus,
   isLoadingContacts,
   isLoadingGroupConversations,
+  isUserProcessDisabled,
   onChangePresenceStatus,
   onContactClick,
   onClearNotice,
@@ -103,8 +103,8 @@ export function Sidebar({
 
       <UserSearch
         addContactNotice={addContactNotice}
-        isAddingContact={isAddingContact}
         isOpen={isUserSearchOpen}
+        isUserProcessDisabled={isUserProcessDisabled}
         onClearNotice={onClearNotice}
         onClose={() => setIsUserSearchOpen(false)}
         onProcessUserByEmail={onProcessUserByEmail}
