@@ -56,7 +56,7 @@ public sealed class UserProfileReadRepositoryTests
 
         result.Should().HaveCount(2);
         result.Select(profile => profile.FriendlyUserId).Should().Equal("jdoe", "jdoe2");
-        result[0].UserProfileId.Should().NotBeEmpty();
+        result[0].Id.Should().NotBeEmpty();
         result[0].FirstName.Should().Be("Jane");
         result[0].LastName.Should().Be("Doe");
         result[0].Organization.Should().Be("FlowChat");

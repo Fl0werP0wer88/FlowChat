@@ -25,7 +25,7 @@ public sealed class SearchUserProfilesQueryHandlerTests
         [
             new UserProfileDto
             {
-                UserProfileId = _fixture.Create<Guid>(),
+                Id = _fixture.Create<Guid>(),
                 FriendlyUserId = "jdoe",
                 FirstName = "Jane",
                 LastName = "Doe",

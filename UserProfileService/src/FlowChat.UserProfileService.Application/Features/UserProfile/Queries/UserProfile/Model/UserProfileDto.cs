@@ -4,8 +4,6 @@ namespace FlowChat.UserProfileService.Application.Features.UserProfile.Queries.U
 
 public sealed record UserProfileDto : IDbReadResponse
 {
-    private Guid _id;
-
     public UserProfileDto()
     {
     }
@@ -20,7 +18,7 @@ public sealed record UserProfileDto : IDbReadResponse
         IReadOnlyList<EmailDto> emails,
         IReadOnlyList<PhoneDto> phones)
     {
-        _id = id;
+        Id = id;
         FriendlyUserId = friendlyUserId;
         AvatarUrl = avatarUrl;
         Bio = bio;
@@ -30,18 +28,7 @@ public sealed record UserProfileDto : IDbReadResponse
         Phones = phones;
     }
 
-    public Guid Id
-    {
-        get => _id;
-        init => _id = value;
-    }
-
-    public Guid UserProfileId
-    {
-        get => _id;
-        init => _id = value;
-    }
-
+    public Guid Id { get; init; }
     public string FriendlyUserId { get; init; } = string.Empty;
     public string? FirstName { get; init; }
     public string? LastName { get; init; }

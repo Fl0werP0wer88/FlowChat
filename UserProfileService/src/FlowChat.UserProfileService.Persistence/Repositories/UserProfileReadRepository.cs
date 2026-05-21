@@ -157,7 +157,7 @@ public sealed class UserProfileReadRepository(AppDbContext dbContext) : IUserPro
 
         return new UserProfileDto
         {
-            UserProfileId = entity.Id.Value,
+            Id = entity.Id.Value,
             FriendlyUserId = entity.FriendlyUserId.Value,
             FirstName = entity.FirstName,
             LastName = entity.LastName,
