@@ -4,8 +4,8 @@ import { useAuthStore } from "../../../store/authStore";
 import { isEmailLookup, searchUsers, type SearchUserResult, type SearchUsersCriteria } from "../api";
 
 interface UserSearchProps {
+  isDisabled?: boolean;
   isOpen: boolean;
-  isUserProcessDisabled?: boolean;
   notification?: { kind: "error" | "info"; message: string; } | null;
   onClearNotice: () => void;
   onClose: () => void;
@@ -15,8 +15,8 @@ interface UserSearchProps {
 }
 
 export function UserSearch({
+  isDisabled = false,
   isOpen,
-  isUserProcessDisabled = false,
   notification = null,
   onClearNotice,
   onClose,
@@ -193,7 +193,7 @@ export function UserSearch({
         <button
           aria-label="Dodaj kontakt z podanej wartosci"
           className="contacts-composer__search-button"
-          disabled={isUserProcessDisabled}
+          disabled={isDisabled}
           onClick={() => void submitLookup()}
           type="button"
         >
@@ -201,7 +201,7 @@ export function UserSearch({
         </button>
         <input
           className="contacts-composer__input"
-          disabled={isUserProcessDisabled}
+          disabled={isDisabled}
           onChange={(event) => setEmailOrFriendlyId(event.target.value)}
           onKeyDown={(event) => void handleLookupKeyDown(event)}
           placeholder="User Id or email"
@@ -264,7 +264,7 @@ export function UserSearch({
                   <li key={result.userProfileId}>
                     <button
                       className="contacts-composer__result"
-                      disabled={isUserProcessDisabled}
+                      disabled={isDisabled}
                       onClick={() => void handleSearchResultClick(result.userProfileId)}
                       type="button"
                     >

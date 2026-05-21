@@ -102,8 +102,8 @@ export function Sidebar({
       </div>
 
       <UserSearch
+        isDisabled={isUserProcessDisabled}
         isOpen={isUserSearchOpen}
-        isUserProcessDisabled={isUserProcessDisabled}
         notification={addContactNotice}
         onClearNotice={onClearNotice}
         onClose={() => setIsUserSearchOpen(false)}
