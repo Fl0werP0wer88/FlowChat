@@ -95,7 +95,7 @@ export function ChatFeature() {
           isAddingContact={contacts.isAddingContact}
           isChangingPresenceStatus={presence.isUpdatingStatus}
           isLoadingContacts={contacts.isLoadingContacts}
-          onAddContact={contacts.addContactByLookup}
+          onAddContact={contacts.addContactByEmailOrFriendlyId}
           onAddContactByUserId={contacts.addContactByUserId}
           onChangePresenceStatus={presence.changeManualPresenceStatus}
           activeGroupConversationId={

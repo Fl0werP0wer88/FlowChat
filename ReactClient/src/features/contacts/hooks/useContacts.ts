@@ -21,7 +21,7 @@ interface UseContactsResult {
   isAddingContact: boolean;
   isLoadingContacts: boolean;
   notice: ContactsNotice | null;
-  addContactByLookup: (lookupValue: string) => Promise<boolean>;
+  addContactByEmailOrFriendlyId: (emailOrFriendlyId: string) => Promise<boolean>;
   addContactByUserId: (userId: string) => Promise<boolean>;
   selectContact: (contact: Contact) => void;
   clearNotice: () => void;
@@ -56,10 +56,10 @@ export function useContacts(): UseContactsResult {
   const addContactMutation = useAddContactMutation(accessToken, noticeCallbacks);
   const addContactByUserIdMutation = useAddContactByUserIdMutation(accessToken, noticeCallbacks);
 
-  const addContactByLookup = async (lookupValue: string): Promise<boolean> => {
-    const trimmedLookupValue = lookupValue.trim();
+  const addContactByEmailOrFriendlyId = async (emailOrFriendlyId: string): Promise<boolean> => {
+    const trimmedEmailOrFriendlyId = emailOrFriendlyId.trim();
 
-    if (!trimmedLookupValue) {
+    if (!trimmedEmailOrFriendlyId) {
       setNotice({ kind: "error", message: "Wpisz User Id albo email." });
       return false;
     }
@@ -72,7 +72,7 @@ export function useContacts(): UseContactsResult {
     setNotice(null);
 
     try {
-      await addContactMutation.mutateAsync(trimmedLookupValue);
+      await addContactMutation.mutateAsync(trimmedEmailOrFriendlyId);
       return true;
     } catch {
       return false;
@@ -139,7 +139,7 @@ export function useContacts(): UseContactsResult {
     isAddingContact: addContactMutation.isPending || addContactByUserIdMutation.isPending,
     isLoadingContacts,
     notice,
-    addContactByLookup,
+    addContactByEmailOrFriendlyId,
     addContactByUserId: addContactByUserIdAction,
     selectContact,
     applyPresenceChanged,

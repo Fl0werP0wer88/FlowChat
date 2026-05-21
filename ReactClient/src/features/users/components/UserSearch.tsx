@@ -6,7 +6,7 @@ interface UserSearchProps {
   addContactNotice: { kind: "error" | "info"; message: string; } | null;
   isAddingContact: boolean;
   isOpen: boolean;
-  onAddContact: (lookupValue: string) => Promise<boolean>;
+  onAddContact: (emailOrFriendlyId: string) => Promise<boolean>;
   onAddContactByUserId: (userId: string) => Promise<boolean>;
   onClearNotice: () => void;
   onClose: () => void;
@@ -24,7 +24,7 @@ export function UserSearch({
   onSearchUsers,
 }: UserSearchProps) {
   const [isSearchExpanded, setIsSearchExpanded] = useState(false);
-  const [lookupValue, setLookupValue] = useState("");
+  const [emailOrFriendlyId, setEmailOrFriendlyId] = useState("");
   const [searchCriteria, setSearchCriteria] = useState<SearchUsersCriteria>({
     firstName: "",
     lastName: "",
@@ -94,7 +94,7 @@ export function UserSearch({
 
   const resetSearch = () => {
     setIsSearchExpanded(false);
-    setLookupValue("");
+    setEmailOrFriendlyId("");
     setSearchCriteria({
       firstName: "",
       lastName: "",
@@ -111,7 +111,7 @@ export function UserSearch({
   };
 
   const submitLookup = async () => {
-    const wasAdded = await onAddContact(lookupValue);
+    const wasAdded = await onAddContact(emailOrFriendlyId);
     if (wasAdded) {
       resetSearch();
       onClose();
@@ -189,12 +189,12 @@ export function UserSearch({
         <input
           className="contacts-composer__input"
           disabled={isAddingContact}
-          onChange={(event) => setLookupValue(event.target.value)}
+          onChange={(event) => setEmailOrFriendlyId(event.target.value)}
           onKeyDown={(event) => void handleLookupKeyDown(event)}
           placeholder="User Id or email"
           ref={inputRef}
           type="text"
-          value={lookupValue}
+          value={emailOrFriendlyId}
         />
       </div>
 

@@ -10,7 +10,7 @@ export function useAddContactMutation(accessToken: string, callbacks: UseAddCont
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (lookupValue: string) => addContact(lookupValue, accessToken),
+    mutationFn: (emailOrFriendlyId: string) => addContact(emailOrFriendlyId, accessToken),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["contacts"] });
       callbacks.onSuccess();

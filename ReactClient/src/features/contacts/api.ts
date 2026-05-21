@@ -140,15 +140,15 @@ export async function fetchContacts(accessToken: string): Promise<Contact[]> {
 }
 
 export async function addContact(
-  lookupValue: string,
+  emailOrFriendlyId: string,
   accessToken: string,
 ): Promise<string | null> {
-  const trimmedLookupValue = lookupValue.trim();
+  const trimmedEmailOrFriendlyId = emailOrFriendlyId.trim();
   const payload: AddContactPayload = {
     id: crypto.randomUUID(),
-    ...(isEmailLookup(trimmedLookupValue)
-      ? { email: trimmedLookupValue }
-      : { friendlyUserId: trimmedLookupValue }),
+    ...(isEmailLookup(trimmedEmailOrFriendlyId)
+      ? { email: trimmedEmailOrFriendlyId }
+      : { friendlyUserId: trimmedEmailOrFriendlyId }),
   };
 
   const response = await putJson<AddContactResponseDto, AddContactPayload>("/api/contacts", payload, {

@@ -21,7 +21,7 @@ interface SidebarProps {
   isChangingPresenceStatus: boolean;
   isLoadingContacts: boolean;
   isLoadingGroupConversations: boolean;
-  onAddContact: (lookupValue: string) => Promise<boolean>;
+  onAddContact: (emailOrFriendlyId: string) => Promise<boolean>;
   onAddContactByUserId: (userId: string) => Promise<boolean>;
   onChangePresenceStatus: (status: ManualUserStatus) => Promise<void>;
   onContactClick: (contact: Contact) => void;
