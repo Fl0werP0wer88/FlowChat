@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import type { KeyboardEventHandler } from "react";
-import type { SearchUserResult, SearchUsersCriteria } from "../../api";
+import type { SearchUserResult, SearchUsersCriteria } from "../../contacts/api";
 
-interface ContactSearchProps {
+interface UserSearchProps {
   addContactNotice: { kind: "error" | "info"; message: string; } | null;
   isAddingContact: boolean;
   isOpen: boolean;
@@ -13,7 +13,7 @@ interface ContactSearchProps {
   onSearchUsers: (criteria: SearchUsersCriteria, signal?: AbortSignal) => Promise<SearchUserResult[]>;
 }
 
-export function ContactSearch({
+export function UserSearch({
   addContactNotice,
   isAddingContact,
   isOpen,
@@ -22,7 +22,7 @@ export function ContactSearch({
   onClearNotice,
   onClose,
   onSearchUsers,
-}: ContactSearchProps) {
+}: UserSearchProps) {
   const [isSearchExpanded, setIsSearchExpanded] = useState(false);
   const [lookupValue, setLookupValue] = useState("");
   const [searchCriteria, setSearchCriteria] = useState<SearchUsersCriteria>({

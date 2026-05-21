@@ -4,7 +4,8 @@ import type { ManualUserStatus, UserStatus } from "../../../types/realtime";
 import type { GroupConversation } from "../../groups";
 import { GroupConversationsList } from "../../groups";
 import type { SearchUserResult, SearchUsersCriteria } from "../../contacts";
-import { ContactsList, ContactSearch } from "../../contacts";
+import { ContactsList } from "../../contacts";
+import { UserSearch } from "../../users";
 import { SidebarHeader } from "./SidebarHeader";
 import type { SidebarTab } from "./SidebarHeader";
 
@@ -51,15 +52,15 @@ export function Sidebar({
   presenceNotice,
 }: SidebarProps) {
   const [activeTab, setActiveTab] = useState<SidebarTab>("contacts");
-  const [isContactSearchOpen, setIsContactSearchOpen] = useState(false);
+  const [isUserSearchOpen, setIsUserSearchOpen] = useState(false);
 
-  const openContactSearch = () => {
-    setIsContactSearchOpen(true);
+  const openUserSearch = () => {
+    setIsUserSearchOpen(true);
     onClearNotice();
   };
 
   return (
-    <aside className={`contacts-panel ${isContactSearchOpen ? "contacts-panel--composer-open" : ""}`}>
+    <aside className={`contacts-panel ${isUserSearchOpen ? "contacts-panel--composer-open" : ""}`}>
       <div className="contacts-panel__main">
         <SidebarHeader
           activeTab={activeTab}
@@ -73,7 +74,7 @@ export function Sidebar({
           ? <p className="alert alert-error">{presenceNotice}</p>
           : null}
 
-        {addContactNotice && !isContactSearchOpen
+        {addContactNotice && !isUserSearchOpen
           ? (
             <p className={`alert ${addContactNotice.kind === "error" ? "alert-error" : "alert-info"}`}>
               {addContactNotice.message}
@@ -87,7 +88,7 @@ export function Sidebar({
               activeContactId={activeContactId}
               contacts={contacts}
               isLoadingContacts={isLoadingContacts}
-              onAddContactClick={openContactSearch}
+              onAddContactClick={openUserSearch}
               onContactClick={onContactClick}
             />
           )
@@ -101,14 +102,14 @@ export function Sidebar({
           )}
       </div>
 
-      <ContactSearch
+      <UserSearch
         addContactNotice={addContactNotice}
         isAddingContact={isAddingContact}
-        isOpen={isContactSearchOpen}
+        isOpen={isUserSearchOpen}
         onAddContact={onAddContact}
         onAddContactByUserId={onAddContactByUserId}
         onClearNotice={onClearNotice}
-        onClose={() => setIsContactSearchOpen(false)}
+        onClose={() => setIsUserSearchOpen(false)}
         onSearchUsers={onSearchUsers}
       />
     </aside>
