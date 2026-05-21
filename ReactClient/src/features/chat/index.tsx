@@ -95,8 +95,6 @@ export function ChatFeature() {
           isAddingContact={contacts.isAddingContact}
           isChangingPresenceStatus={presence.isUpdatingStatus}
           isLoadingContacts={contacts.isLoadingContacts}
-          onAddContact={contacts.addContactByEmailOrFriendlyId}
-          onAddContactByUserId={contacts.addContactByUserId}
           onChangePresenceStatus={presence.changeManualPresenceStatus}
           activeGroupConversationId={
             activeConversationMode === "group" ? activeGroupConversation?.conversationId ?? null : null
@@ -114,6 +112,9 @@ export function ChatFeature() {
             setActiveGroupConversation(conversation);
             groupChat.openGroupConversation();
           }}
+          onProcessUserByEmail={contacts.addContactByEmail}
+          onProcessUserByFriendlyId={contacts.addContactByFriendlyId}
+          onProcessUserById={contacts.addContactByUserId}
           onSearchUsers={contacts.searchUsers}
           presenceNotice={presence.errorMessage}
         />

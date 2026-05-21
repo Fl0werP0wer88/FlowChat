@@ -21,12 +21,13 @@ interface SidebarProps {
   isChangingPresenceStatus: boolean;
   isLoadingContacts: boolean;
   isLoadingGroupConversations: boolean;
-  onAddContact: (emailOrFriendlyId: string) => Promise<boolean>;
-  onAddContactByUserId: (userId: string) => Promise<boolean>;
   onChangePresenceStatus: (status: ManualUserStatus) => Promise<void>;
   onContactClick: (contact: Contact) => void;
   onClearNotice: () => void;
   onGroupConversationClick: (conversation: GroupConversation) => void;
+  onProcessUserByEmail: (email: string) => Promise<boolean>;
+  onProcessUserByFriendlyId: (friendlyUserId: string) => Promise<boolean>;
+  onProcessUserById: (userId: string) => Promise<boolean>;
   onSearchUsers: (criteria: SearchUsersCriteria, signal?: AbortSignal) => Promise<SearchUserResult[]>;
   presenceNotice: string | null;
 }
@@ -42,12 +43,13 @@ export function Sidebar({
   isChangingPresenceStatus,
   isLoadingContacts,
   isLoadingGroupConversations,
-  onAddContact,
-  onAddContactByUserId,
   onChangePresenceStatus,
   onContactClick,
   onClearNotice,
   onGroupConversationClick,
+  onProcessUserByEmail,
+  onProcessUserByFriendlyId,
+  onProcessUserById,
   onSearchUsers,
   presenceNotice,
 }: SidebarProps) {
@@ -106,10 +108,11 @@ export function Sidebar({
         addContactNotice={addContactNotice}
         isAddingContact={isAddingContact}
         isOpen={isUserSearchOpen}
-        onAddContact={onAddContact}
-        onAddContactByUserId={onAddContactByUserId}
         onClearNotice={onClearNotice}
         onClose={() => setIsUserSearchOpen(false)}
+        onProcessUserByEmail={onProcessUserByEmail}
+        onProcessUserByFriendlyId={onProcessUserByFriendlyId}
+        onProcessUserById={onProcessUserById}
         onSearchUsers={onSearchUsers}
       />
     </aside>

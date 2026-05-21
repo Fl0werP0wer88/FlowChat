@@ -21,7 +21,8 @@ interface UseContactsResult {
   isAddingContact: boolean;
   isLoadingContacts: boolean;
   notice: ContactsNotice | null;
-  addContactByEmailOrFriendlyId: (emailOrFriendlyId: string) => Promise<boolean>;
+  addContactByEmail: (email: string) => Promise<boolean>;
+  addContactByFriendlyId: (friendlyUserId: string) => Promise<boolean>;
   addContactByUserId: (userId: string) => Promise<boolean>;
   selectContact: (contact: Contact) => void;
   clearNotice: () => void;
@@ -56,11 +57,11 @@ export function useContacts(): UseContactsResult {
   const addContactMutation = useAddContactMutation(accessToken, noticeCallbacks);
   const addContactByUserIdMutation = useAddContactByUserIdMutation(accessToken, noticeCallbacks);
 
-  const addContactByEmailOrFriendlyId = async (emailOrFriendlyId: string): Promise<boolean> => {
-    const trimmedEmailOrFriendlyId = emailOrFriendlyId.trim();
+  const addContactByEmail = async (email: string): Promise<boolean> => {
+    const trimmedEmail = email.trim();
 
-    if (!trimmedEmailOrFriendlyId) {
-      setNotice({ kind: "error", message: "Wpisz User Id albo email." });
+    if (!trimmedEmail) {
+      setNotice({ kind: "error", message: "Wpisz email uzytkownika." });
       return false;
     }
 
@@ -72,7 +73,30 @@ export function useContacts(): UseContactsResult {
     setNotice(null);
 
     try {
-      await addContactMutation.mutateAsync(trimmedEmailOrFriendlyId);
+      await addContactMutation.mutateAsync(trimmedEmail);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  const addContactByFriendlyId = async (friendlyUserId: string): Promise<boolean> => {
+    const trimmedFriendlyUserId = friendlyUserId.trim();
+
+    if (!trimmedFriendlyUserId) {
+      setNotice({ kind: "error", message: "Wpisz User Id uzytkownika." });
+      return false;
+    }
+
+    if (!accessToken || !ownerUserId) {
+      setNotice({ kind: "error", message: "Brakuje aktywnej sesji potrzebnej do dodania kontaktu." });
+      return false;
+    }
+
+    setNotice(null);
+
+    try {
+      await addContactMutation.mutateAsync(trimmedFriendlyUserId);
       return true;
     } catch {
       return false;
@@ -139,7 +163,8 @@ export function useContacts(): UseContactsResult {
     isAddingContact: addContactMutation.isPending || addContactByUserIdMutation.isPending,
     isLoadingContacts,
     notice,
-    addContactByEmailOrFriendlyId,
+    addContactByEmail,
+    addContactByFriendlyId,
     addContactByUserId: addContactByUserIdAction,
     selectContact,
     applyPresenceChanged,

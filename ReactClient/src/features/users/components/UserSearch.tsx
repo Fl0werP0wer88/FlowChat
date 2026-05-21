@@ -1,15 +1,16 @@
 import { useEffect, useRef, useState } from "react";
 import type { KeyboardEventHandler } from "react";
-import type { SearchUserResult, SearchUsersCriteria } from "../../contacts/api";
+import { isEmailLookup, type SearchUserResult, type SearchUsersCriteria } from "../../contacts/api";
 
 interface UserSearchProps {
   addContactNotice: { kind: "error" | "info"; message: string; } | null;
   isAddingContact: boolean;
   isOpen: boolean;
-  onAddContact: (emailOrFriendlyId: string) => Promise<boolean>;
-  onAddContactByUserId: (userId: string) => Promise<boolean>;
   onClearNotice: () => void;
   onClose: () => void;
+  onProcessUserByEmail: (email: string) => Promise<boolean>;
+  onProcessUserByFriendlyId: (friendlyUserId: string) => Promise<boolean>;
+  onProcessUserById: (userId: string) => Promise<boolean>;
   onSearchUsers: (criteria: SearchUsersCriteria, signal?: AbortSignal) => Promise<SearchUserResult[]>;
 }
 
@@ -17,10 +18,11 @@ export function UserSearch({
   addContactNotice,
   isAddingContact,
   isOpen,
-  onAddContact,
-  onAddContactByUserId,
   onClearNotice,
   onClose,
+  onProcessUserByEmail,
+  onProcessUserByFriendlyId,
+  onProcessUserById,
   onSearchUsers,
 }: UserSearchProps) {
   const [isSearchExpanded, setIsSearchExpanded] = useState(false);
@@ -111,7 +113,11 @@ export function UserSearch({
   };
 
   const submitLookup = async () => {
-    const wasAdded = await onAddContact(emailOrFriendlyId);
+    const trimmedEmailOrFriendlyId = emailOrFriendlyId.trim();
+    const wasAdded = isEmailLookup(trimmedEmailOrFriendlyId)
+      ? await onProcessUserByEmail(trimmedEmailOrFriendlyId)
+      : await onProcessUserByFriendlyId(trimmedEmailOrFriendlyId);
+
     if (wasAdded) {
       resetSearch();
       onClose();
@@ -155,7 +161,7 @@ export function UserSearch({
   };
 
   const handleSearchResultClick = async (userProfileId: string) => {
-    const wasAdded = await onAddContactByUserId(userProfileId);
+    const wasAdded = await onProcessUserById(userProfileId);
     if (wasAdded) {
       resetSearch();
       onClose();
