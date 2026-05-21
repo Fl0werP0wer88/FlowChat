@@ -1,8 +1,7 @@
 using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
 using FlowChat.UserProfileService.Application.Contracts.Persistence;
-using FlowChat.UserProfileService.Application.Features.UserProfile.Queries.UserProfile.GetUserProfile;
-using FlowChat.UserProfileService.Application.Features.UserProfile.Queries.UserProfile.SearchUserProfiles;
+using FlowChat.UserProfileService.Application.Features.UserProfile.Queries.UserProfile.Model;
 using FlowChat.UserProfileService.Domain.Entities.EmailVerificationRequest;
 using FlowChat.UserProfileService.Domain.Entities.UserProfile;
 using Microsoft.EntityFrameworkCore;
@@ -42,7 +41,7 @@ public sealed class UserProfileReadRepository(AppDbContext dbContext) : IUserPro
         return entities.Select(MapToDto).ToList();
     }
 
-    public async Task<IReadOnlyList<SearchUserProfileDto>> SearchAsync(
+    public async Task<IReadOnlyList<UserProfileDto>> SearchAsync(
         string? firstName,
         string? lastName,
         string? organization,
@@ -151,12 +150,12 @@ public sealed class UserProfileReadRepository(AppDbContext dbContext) : IUserPro
                 .ToList());
     }
 
-    private static SearchUserProfileDto MapToSearchDto(UserProfile entity)
+    private static UserProfileDto MapToSearchDto(UserProfile entity)
     {
         var mainEmail = entity.Emails.FirstOrDefault(email => email.IsMain);
         var mainPhone = entity.Phones.FirstOrDefault(phone => phone.IsMain);
 
-        return new SearchUserProfileDto
+        return new UserProfileDto
         {
             UserProfileId = entity.Id.Value,
             FriendlyUserId = entity.FriendlyUserId.Value,
@@ -165,17 +164,22 @@ public sealed class UserProfileReadRepository(AppDbContext dbContext) : IUserPro
             Organization = entity.Organization,
             MainEmail = mainEmail is null
                 ? null
-                : new SearchUserProfileEmailDto
+                : new EmailDto
                 {
+                    Id = mainEmail.Id.Value,
                     Address = mainEmail.Address.Value,
+                    IsMain = mainEmail.IsMain,
+                    IsAuth = mainEmail.IsAuth,
                     IsConfirmed = mainEmail.IsConfirmed,
                     IsVisible = mainEmail.IsVisible
                 },
             MainPhone = mainPhone is null
                 ? null
-                : new SearchUserProfilePhoneDto
+                : new PhoneDto
                 {
+                    Id = mainPhone.Id.Value,
                     Number = mainPhone.Number.Value,
+                    IsMain = mainPhone.IsMain,
                     IsConfirmed = mainPhone.IsConfirmed,
                     IsVisible = mainPhone.IsVisible
                 },

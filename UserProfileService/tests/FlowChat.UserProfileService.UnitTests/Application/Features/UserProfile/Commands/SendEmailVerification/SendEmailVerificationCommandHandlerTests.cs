@@ -4,7 +4,7 @@ using FlowChat.Shared.Domain.ValueObjects;
 using FlowChat.UserProfileService.Application.Contracts.Persistence;
 using FlowChat.UserProfileService.Application.Features.UserProfile.Commands.SendEmailVerification;
 using FlowChat.UserProfileService.Application.Features.UserProfile.EmailVerification.Interfaces;
-using FlowChat.UserProfileService.Application.Features.UserProfile.Queries.UserProfile.GetUserProfile;
+using FlowChat.UserProfileService.Application.Features.UserProfile.Queries.UserProfile.Model;
 using FlowChat.UserProfileService.Domain.Entities.EmailVerificationRequest;
 using FlowChat.UserProfileService.Domain.Entities.UserProfile;
 

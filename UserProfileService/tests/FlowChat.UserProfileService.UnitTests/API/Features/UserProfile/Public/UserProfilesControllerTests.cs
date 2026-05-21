@@ -6,6 +6,7 @@ using FlowChat.UserProfileService.Api.Features.UserProfile.Public.AddPhone;
 using FlowChat.UserProfileService.Api.Features.UserProfile.Public.GetUserProfile;
 using FlowChat.UserProfileService.Application.Features.UserProfile.Commands.AddEmail;
 using FlowChat.UserProfileService.Application.Features.UserProfile.Commands.AddPhone;
+using FlowChat.UserProfileService.Application.Features.UserProfile.Queries.UserProfile.Model;
 using FlowChat.UserProfileService.Application.Features.UserProfile.Queries.UserProfile.GetUserProfile;
 using MediatR;
 using Microsoft.AspNetCore.Http;

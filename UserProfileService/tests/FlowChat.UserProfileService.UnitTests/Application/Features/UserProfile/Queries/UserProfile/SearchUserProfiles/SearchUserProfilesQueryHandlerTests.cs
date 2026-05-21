@@ -1,5 +1,6 @@
 using AutoFixture;
 using FlowChat.UserProfileService.Application.Contracts.Persistence;
+using FlowChat.UserProfileService.Application.Features.UserProfile.Queries.UserProfile.Model;
 using FlowChat.UserProfileService.Application.Features.UserProfile.Queries.UserProfile.SearchUserProfiles;
 using FluentAssertions;
 using Moq;
@@ -20,22 +21,22 @@ public sealed class SearchUserProfilesQueryHandlerTests
     [Fact]
     public async Task Handle_WhenMatchingProfilesExist_ReturnsSuccessWithTrimmedSearchArguments()
     {
-        IReadOnlyList<SearchUserProfileDto> expectedUserProfiles =
+        IReadOnlyList<UserProfileDto> expectedUserProfiles =
         [
-            new SearchUserProfileDto
+            new UserProfileDto
             {
                 UserProfileId = _fixture.Create<Guid>(),
                 FriendlyUserId = "jdoe",
                 FirstName = "Jane",
                 LastName = "Doe",
                 Organization = "FlowChat",
-                MainEmail = new SearchUserProfileEmailDto
+                MainEmail = new EmailDto
                 {
                     Address = "jane@example.com",
                     IsConfirmed = true,
                     IsVisible = true
                 },
-                MainPhone = new SearchUserProfilePhoneDto
+                MainPhone = new PhoneDto
                 {
                     Number = "+48123123123",
                     IsConfirmed = true,

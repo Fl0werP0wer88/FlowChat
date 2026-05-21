@@ -1,6 +1,7 @@
 using AutoFixture;
 using FlowChat.Shared.Domain;
 using FlowChat.UserProfileService.Api.Features.UserProfile.Public.SearchUserProfiles;
+using FlowChat.UserProfileService.Application.Features.UserProfile.Queries.UserProfile.Model;
 using FlowChat.UserProfileService.Application.Features.UserProfile.Queries.UserProfile.SearchUserProfiles;
 using FluentAssertions;
 using MediatR;
@@ -32,22 +33,22 @@ public sealed class SearchUserProfilesControllerTests
     [Fact]
     public async Task Search_WhenQuerySucceeds_ReturnsOkResponse()
     {
-        IReadOnlyList<SearchUserProfileDto> userProfiles =
+        IReadOnlyList<UserProfileDto> userProfiles =
         [
-            new SearchUserProfileDto
+            new UserProfileDto
             {
                 UserProfileId = _fixture.Create<Guid>(),
                 FriendlyUserId = "jdoe",
                 FirstName = "Jane",
                 LastName = "Doe",
                 Organization = "FlowChat",
-                MainEmail = new SearchUserProfileEmailDto
+                MainEmail = new EmailDto
                 {
                     Address = "jane@example.com",
                     IsConfirmed = true,
                     IsVisible = true
                 },
-                MainPhone = new SearchUserProfilePhoneDto
+                MainPhone = new PhoneDto
                 {
                     Number = "+48123123123",
                     IsConfirmed = true,
@@ -65,7 +66,7 @@ public sealed class SearchUserProfilesControllerTests
                     query.LastName == null &&
                     query.Organization == null),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(FlowChatResult<IReadOnlyList<SearchUserProfileDto>>.Success(userProfiles));
+            .ReturnsAsync(FlowChatResult<IReadOnlyList<UserProfileDto>>.Success(userProfiles));
 
         var controller = SetupController(new SearchUserProfilesController(_mediatorMock.Object));
 
@@ -86,7 +87,7 @@ public sealed class SearchUserProfilesControllerTests
     {
         _mediatorMock
             .Setup(x => x.Send(It.IsAny<SearchUserProfilesQuery>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(FlowChatResult<IReadOnlyList<SearchUserProfileDto>>.Failure(
+            .ReturnsAsync(FlowChatResult<IReadOnlyList<UserProfileDto>>.Failure(
                 DomainError.Validation(errors: ["Query must contain at least one search criterion."])));
 
         var controller = SetupController(new SearchUserProfilesController(_mediatorMock.Object));

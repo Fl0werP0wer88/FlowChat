@@ -1,13 +1,12 @@
 using FlowChat.Shared.Application;
-using FlowChat.UserProfileService.Application.Features.UserProfile.Queries.UserProfile.GetUserProfile;
-using FlowChat.UserProfileService.Application.Features.UserProfile.Queries.UserProfile.SearchUserProfiles;
+using FlowChat.UserProfileService.Application.Features.UserProfile.Queries.UserProfile.Model;
 
 namespace FlowChat.UserProfileService.Application.Contracts.Persistence;
 
 public interface IUserProfileReadRepository : IReadRepository<UserProfileDto>
 {
     Task<IReadOnlyList<UserProfileDto>> GetActiveAsync(CancellationToken cancellationToken = default);
-    Task<IReadOnlyList<SearchUserProfileDto>> SearchAsync(
+    Task<IReadOnlyList<UserProfileDto>> SearchAsync(
         string? firstName,
         string? lastName,
         string? organization,

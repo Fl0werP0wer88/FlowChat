@@ -1,11 +1,12 @@
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
 using FlowChat.UserProfileService.Application.Contracts.Persistence;
+using FlowChat.UserProfileService.Application.Features.UserProfile.Queries.UserProfile.Model;
 
 namespace FlowChat.UserProfileService.Application.Features.UserProfile.Queries.UserProfile.SearchUserProfiles;
 
 public sealed class SearchUserProfilesQueryHandler
-    : IQueryHandler<SearchUserProfilesQuery, IReadOnlyList<SearchUserProfileDto>>
+    : IQueryHandler<SearchUserProfilesQuery, IReadOnlyList<UserProfileDto>>
 {
     private readonly IUserProfileReadRepository _userProfileReadRepository;
 
@@ -14,7 +15,7 @@ public sealed class SearchUserProfilesQueryHandler
         _userProfileReadRepository = userProfileReadRepository;
     }
 
-    public async Task<FlowChatResult<IReadOnlyList<SearchUserProfileDto>>> Handle(
+    public async Task<FlowChatResult<IReadOnlyList<UserProfileDto>>> Handle(
         SearchUserProfilesQuery request,
         CancellationToken cancellationToken)
     {
@@ -24,7 +25,7 @@ public sealed class SearchUserProfilesQueryHandler
             Normalize(request.Organization),
             cancellationToken);
 
-        return FlowChatResult<IReadOnlyList<SearchUserProfileDto>>.Success(userProfiles);
+        return FlowChatResult<IReadOnlyList<UserProfileDto>>.Success(userProfiles);
     }
 
     private static string? Normalize(string? value) =>
