@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { KeyboardEventHandler } from "react";
 import { useAuthStore } from "../../../store/authStore";
-import { isEmailLookup, searchUsers, type SearchUserResult, type SearchUsersCriteria } from "../api";
+import { searchUsers, type SearchUserResult, type SearchUsersCriteria } from "../api";
 
 interface UserSearchProps {
   isDisabled?: boolean;
@@ -9,9 +9,7 @@ interface UserSearchProps {
   notification?: { kind: "error" | "info"; message: string; } | null;
   onClearNotice: () => void;
   onClose: () => void;
-  onProcessUserByEmail: (email: string) => Promise<boolean>;
-  onProcessUserByFriendlyId: (friendlyUserId: string) => Promise<boolean>;
-  onProcessUserById: (userId: string) => Promise<boolean>;
+  onProcessUser: (user: SearchUserResult) => Promise<boolean>;
 }
 
 export function UserSearch({
@@ -20,9 +18,7 @@ export function UserSearch({
   notification = null,
   onClearNotice,
   onClose,
-  onProcessUserByEmail,
-  onProcessUserByFriendlyId,
-  onProcessUserById,
+  onProcessUser,
 }: UserSearchProps) {
   const accessToken = useAuthStore((s) => s.accessToken) ?? "";
   const [isSearchExpanded, setIsSearchExpanded] = useState(false);
@@ -120,10 +116,14 @@ export function UserSearch({
   };
 
   const submitLookup = async () => {
-    const trimmedEmailOrFriendlyId = emailOrFriendlyId.trim();
-    const wasAdded = isEmailLookup(trimmedEmailOrFriendlyId)
-      ? await onProcessUserByEmail(trimmedEmailOrFriendlyId)
-      : await onProcessUserByFriendlyId(trimmedEmailOrFriendlyId);
+    const wasAdded = await onProcessUser({
+      userProfileId: "",
+      friendlyUserId: emailOrFriendlyId.trim(),
+      displayName: "",
+      firstName: null,
+      lastName: null,
+      organization: null,
+    });
 
     if (wasAdded) {
       resetSearch();
@@ -167,8 +167,8 @@ export function UserSearch({
     }));
   };
 
-  const handleSearchResultClick = async (userProfileId: string) => {
-    const wasAdded = await onProcessUserById(userProfileId);
+  const handleSearchResultClick = async (result: SearchUserResult) => {
+    const wasAdded = await onProcessUser(result);
     if (wasAdded) {
       resetSearch();
       onClose();
@@ -265,7 +265,7 @@ export function UserSearch({
                     <button
                       className="contacts-composer__result"
                       disabled={isDisabled}
-                      onClick={() => void handleSearchResultClick(result.userProfileId)}
+                      onClick={() => void handleSearchResultClick(result)}
                       type="button"
                     >
                       <span className="contacts-composer__result-copy">

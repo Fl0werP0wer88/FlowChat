@@ -4,6 +4,7 @@ import { useAuthStore } from "../../../store/authStore";
 import type { Contact } from "../../../types/contacts";
 import type { PresenceChangedEvent } from "../../../types/realtime";
 import { resolveOwnerUserId } from "../../../utils/authUtils";
+import type { SearchUserResult } from "../../users/api";
 import { useAddContactByUserIdMutation } from "../queries/useAddContactByUserIdMutation";
 import { useAddContactMutation } from "../queries/useAddContactMutation";
 import { useContactsQuery } from "../queries/useContactsQuery";
@@ -19,9 +20,7 @@ interface UseContactsResult {
   isAddingContact: boolean;
   isLoadingContacts: boolean;
   notice: ContactsNotice | null;
-  addContactByEmail: (email: string) => Promise<boolean>;
-  addContactByFriendlyId: (friendlyUserId: string) => Promise<boolean>;
-  addContactByUserId: (userId: string) => Promise<boolean>;
+  addContact: (user: SearchUserResult) => Promise<boolean>;
   selectContact: (contact: Contact) => void;
   clearNotice: () => void;
   applyPresenceChanged: (payload: PresenceChangedEvent) => void;
@@ -54,14 +53,7 @@ export function useContacts(): UseContactsResult {
   const addContactMutation = useAddContactMutation(accessToken, noticeCallbacks);
   const addContactByUserIdMutation = useAddContactByUserIdMutation(accessToken, noticeCallbacks);
 
-  const addContactByEmail = async (email: string): Promise<boolean> => {
-    const trimmedEmail = email.trim();
-
-    if (!trimmedEmail) {
-      setNotice({ kind: "error", message: "Wpisz email uzytkownika." });
-      return false;
-    }
-
+  const addContact = async (user: SearchUserResult): Promise<boolean> => {
     if (!accessToken || !ownerUserId) {
       setNotice({ kind: "error", message: "Brakuje aktywnej sesji potrzebnej do dodania kontaktu." });
       return false;
@@ -70,53 +62,16 @@ export function useContacts(): UseContactsResult {
     setNotice(null);
 
     try {
-      await addContactMutation.mutateAsync(trimmedEmail);
-      return true;
-    } catch {
-      return false;
-    }
-  };
-
-  const addContactByFriendlyId = async (friendlyUserId: string): Promise<boolean> => {
-    const trimmedFriendlyUserId = friendlyUserId.trim();
-
-    if (!trimmedFriendlyUserId) {
-      setNotice({ kind: "error", message: "Wpisz User Id uzytkownika." });
-      return false;
-    }
-
-    if (!accessToken || !ownerUserId) {
-      setNotice({ kind: "error", message: "Brakuje aktywnej sesji potrzebnej do dodania kontaktu." });
-      return false;
-    }
-
-    setNotice(null);
-
-    try {
-      await addContactMutation.mutateAsync(trimmedFriendlyUserId);
-      return true;
-    } catch {
-      return false;
-    }
-  };
-
-  const addContactByUserIdAction = async (userId: string): Promise<boolean> => {
-    const trimmedUserId = userId.trim();
-
-    if (!trimmedUserId) {
-      setNotice({ kind: "error", message: "Brakuje identyfikatora uzytkownika." });
-      return false;
-    }
-
-    if (!accessToken || !ownerUserId) {
-      setNotice({ kind: "error", message: "Brakuje aktywnej sesji potrzebnej do dodania kontaktu." });
-      return false;
-    }
-
-    setNotice(null);
-
-    try {
-      await addContactByUserIdMutation.mutateAsync(trimmedUserId);
+      if (user.userProfileId) {
+        await addContactByUserIdMutation.mutateAsync(user.userProfileId);
+      } else {
+        const value = user.friendlyUserId.trim();
+        if (!value) {
+          setNotice({ kind: "error", message: "Wpisz email lub User Id uzytkownika." });
+          return false;
+        }
+        await addContactMutation.mutateAsync(value);
+      }
       return true;
     } catch {
       return false;
@@ -149,9 +104,7 @@ export function useContacts(): UseContactsResult {
     isAddingContact: addContactMutation.isPending || addContactByUserIdMutation.isPending,
     isLoadingContacts,
     notice,
-    addContactByEmail,
-    addContactByFriendlyId,
-    addContactByUserId: addContactByUserIdAction,
+    addContact,
     selectContact,
     applyPresenceChanged,
     clearNotice,

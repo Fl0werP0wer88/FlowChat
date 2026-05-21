@@ -5,12 +5,12 @@ import { ChatTemplate } from "../../components/templates/ChatTemplate";
 import { useRealtimeConnection } from "../../realtime/useRealtimeConnection";
 import { useAuthStore } from "../../store/authStore";
 import { useContacts } from "../contacts";
-import { Sidebar } from "./components/Sidebar";
+import { DuetConversationPanel, useChatMessages } from "../conversations/duet";
+import { GroupConversationPanel, useGroupChatMessages } from "../conversations/group";
 import type { GroupConversation } from "../groups";
 import { useGroupConversations } from "../groups";
 import { usePresenceStatus } from "../presence/hooks/usePresenceStatus";
-import { DuetConversationPanel, useChatMessages } from "../conversations/duet";
-import { GroupConversationPanel, useGroupChatMessages } from "../conversations/group";
+import { Sidebar } from "./components/Sidebar";
 
 type ActiveConversationMode = "duet" | "group";
 
@@ -44,48 +44,46 @@ export function ChatFeature() {
   return (
     <ChatTemplate
       header={<ChatHeader userLogin={userLogin} realtimeStatus={realtime.status} onLogout={handleLogout} />}
-      conversation={
-        activeConversationMode === "group"
-          ? (
-            <GroupConversationPanel
-              activeGroupConversation={activeGroup}
-              activeConversationId={groupChat.activeConversationId}
-              activeConversationName={groupChat.activeConversationName}
-              conversationError={groupChat.conversationError}
-              isLoadingConversation={groupChat.isLoadingConversation}
-              isSendingMessage={groupChat.isSendingMessage}
-              hasOlderMessages={groupChat.hasOlderMessages}
-              isLoadingOlderMessages={groupChat.isLoadingOlderMessages}
-              sendError={groupChat.sendError}
-              olderMessagesError={groupChat.olderMessagesError}
-              messages={groupChat.messages}
-              draft={groupChat.draft}
-              onDraftChange={groupChat.setDraft}
-              onDraftKeyDown={groupChat.handleDraftKeyDown}
-              onSendDraft={groupChat.sendDraft}
-              onLoadOlderMessages={groupChat.loadOlderMessages}
-            />
-          )
-          : (
-            <DuetConversationPanel
-              activeContact={activeDuetContact}
-              activeConversationId={chat.activeConversationId}
-              conversationError={chat.conversationError}
-              isLoadingConversation={chat.isLoadingConversation}
-              isSendingMessage={chat.isSendingMessage}
-              hasOlderMessages={chat.hasOlderMessages}
-              isLoadingOlderMessages={chat.isLoadingOlderMessages}
-              sendError={chat.sendError}
-              olderMessagesError={chat.olderMessagesError}
-              messages={chat.messages}
-              draft={chat.draft}
-              onDraftChange={chat.setDraft}
-              onDraftKeyDown={chat.handleDraftKeyDown}
-              onSendDraft={chat.sendDraft}
-              onLoadOlderMessages={chat.loadOlderMessages}
-            />
-          )
-      }
+      conversation={activeConversationMode === "group"
+        ? (
+          <GroupConversationPanel
+            activeGroupConversation={activeGroup}
+            activeConversationId={groupChat.activeConversationId}
+            activeConversationName={groupChat.activeConversationName}
+            conversationError={groupChat.conversationError}
+            isLoadingConversation={groupChat.isLoadingConversation}
+            isSendingMessage={groupChat.isSendingMessage}
+            hasOlderMessages={groupChat.hasOlderMessages}
+            isLoadingOlderMessages={groupChat.isLoadingOlderMessages}
+            sendError={groupChat.sendError}
+            olderMessagesError={groupChat.olderMessagesError}
+            messages={groupChat.messages}
+            draft={groupChat.draft}
+            onDraftChange={groupChat.setDraft}
+            onDraftKeyDown={groupChat.handleDraftKeyDown}
+            onSendDraft={groupChat.sendDraft}
+            onLoadOlderMessages={groupChat.loadOlderMessages}
+          />
+        )
+        : (
+          <DuetConversationPanel
+            activeContact={activeDuetContact}
+            activeConversationId={chat.activeConversationId}
+            conversationError={chat.conversationError}
+            isLoadingConversation={chat.isLoadingConversation}
+            isSendingMessage={chat.isSendingMessage}
+            hasOlderMessages={chat.hasOlderMessages}
+            isLoadingOlderMessages={chat.isLoadingOlderMessages}
+            sendError={chat.sendError}
+            olderMessagesError={chat.olderMessagesError}
+            messages={chat.messages}
+            draft={chat.draft}
+            onDraftChange={chat.setDraft}
+            onDraftKeyDown={chat.handleDraftKeyDown}
+            onSendDraft={chat.sendDraft}
+            onLoadOlderMessages={chat.loadOlderMessages}
+          />
+        )}
       sidebar={
         <Sidebar
           addContactNotice={contacts.notice}
@@ -96,9 +94,9 @@ export function ChatFeature() {
           isLoadingContacts={contacts.isLoadingContacts}
           isUserProcessDisabled={contacts.isAddingContact}
           onChangePresenceStatus={presence.changeManualPresenceStatus}
-          activeGroupConversationId={
-            activeConversationMode === "group" ? activeGroupConversation?.conversationId ?? null : null
-          }
+          activeGroupConversationId={activeConversationMode === "group"
+            ? activeGroupConversation?.conversationId ?? null
+            : null}
           groupConversations={groupConversations.groupConversations}
           isLoadingGroupConversations={groupConversations.isLoadingGroupConversations}
           onContactClick={(contact) => {
@@ -112,9 +110,7 @@ export function ChatFeature() {
             setActiveGroupConversation(conversation);
             groupChat.openGroupConversation();
           }}
-          onProcessUserByEmail={contacts.addContactByEmail}
-          onProcessUserByFriendlyId={contacts.addContactByFriendlyId}
-          onProcessUserById={contacts.addContactByUserId}
+          onProcessUser={contacts.addContact}
           presenceNotice={presence.errorMessage}
         />
       }

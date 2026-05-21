@@ -7,6 +7,7 @@ import { ContactsList } from "../../contacts";
 import { UserSearch } from "../../users";
 import { SidebarHeader } from "./SidebarHeader";
 import type { SidebarTab } from "./SidebarHeader";
+import type { SearchUserResult } from "../../users/api";
 
 
 interface SidebarProps {
@@ -24,9 +25,7 @@ interface SidebarProps {
   onContactClick: (contact: Contact) => void;
   onClearNotice: () => void;
   onGroupConversationClick: (conversation: GroupConversation) => void;
-  onProcessUserByEmail: (email: string) => Promise<boolean>;
-  onProcessUserByFriendlyId: (friendlyUserId: string) => Promise<boolean>;
-  onProcessUserById: (userId: string) => Promise<boolean>;
+  onProcessUser: (user: SearchUserResult) => Promise<boolean>;
   presenceNotice: string | null;
 }
 
@@ -45,9 +44,7 @@ export function Sidebar({
   onContactClick,
   onClearNotice,
   onGroupConversationClick,
-  onProcessUserByEmail,
-  onProcessUserByFriendlyId,
-  onProcessUserById,
+  onProcessUser,
   presenceNotice,
 }: SidebarProps) {
   const [activeTab, setActiveTab] = useState<SidebarTab>("contacts");
@@ -107,9 +104,7 @@ export function Sidebar({
         notification={addContactNotice}
         onClearNotice={onClearNotice}
         onClose={() => setIsUserSearchOpen(false)}
-        onProcessUserByEmail={onProcessUserByEmail}
-        onProcessUserByFriendlyId={onProcessUserByFriendlyId}
-        onProcessUserById={onProcessUserById}
+        onProcessUser={onProcessUser}
       />
     </aside>
   );
