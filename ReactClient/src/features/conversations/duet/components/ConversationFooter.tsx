@@ -5,6 +5,7 @@ import { TextArea } from "../../../../components/atoms/TextArea";
 interface ConversationFooterProps {
   activeConversationId: string | null;
   draft: string;
+  emptyPlaceholder?: string;
   isComposerDisabled: boolean;
   isSendDisabled: boolean;
   isSendingMessage: boolean;
@@ -17,6 +18,7 @@ interface ConversationFooterProps {
 export function ConversationFooter({
   activeConversationId,
   draft,
+  emptyPlaceholder = "Wybierz kontakt, aby rozpoczac rozmowe",
   isComposerDisabled,
   isSendDisabled,
   isSendingMessage,
@@ -35,7 +37,7 @@ export function ConversationFooter({
         onChange={(event) => onDraftChange(event.target.value)}
         onKeyDown={onDraftKeyDown}
         rows={2}
-        placeholder={activeConversationId ? "Napisz wiadomosc..." : "Wybierz kontakt, aby rozpoczac rozmowe"}
+        placeholder={activeConversationId ? "Napisz wiadomosc..." : emptyPlaceholder}
         disabled={isComposerDisabled}
       />
       <Button type="button" onClick={() => void onSendDraft()} disabled={isSendDisabled}>

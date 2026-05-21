@@ -3,13 +3,13 @@ import { Virtuoso, type VirtuosoHandle } from "react-virtuoso";
 import { Spinner } from "../../../../components/atoms/Spinner";
 import { useMinDuration } from "../../../../hooks/useMinDuration";
 import type { ChatMessage } from "../../../../types/chat";
-import type { Contact } from "../../../../types/contacts";
 import { formatLocalTime } from "../../../../utils/dateUtils";
 
 interface ConversationBodyProps {
-  activeContact: Contact | null;
   activeConversationId: string | null;
   conversationError: string | null;
+  emptySelectionMessage?: string;
+  hasActiveConversation: boolean;
   isLoadingConversation: boolean;
   hasOlderMessages: boolean;
   isLoadingOlderMessages: boolean;
@@ -21,9 +21,10 @@ interface ConversationBodyProps {
 const START_INDEX = 100_000;
 
 export function ConversationBody({
-  activeContact,
   activeConversationId,
   conversationError,
+  emptySelectionMessage = "Kliknij kontakt, zeby otworzyc rozmowe.",
+  hasActiveConversation,
   isLoadingConversation,
   hasOlderMessages,
   isLoadingOlderMessages,
@@ -55,8 +56,8 @@ export function ConversationBody({
     }
   }, [isLoadingOlderMessages, messages.length]);
 
-  if (!activeContact) {
-    return <p className="conversation-panel__empty history">Kliknij kontakt, zeby otworzyc rozmowe.</p>;
+  if (!hasActiveConversation) {
+    return <p className="conversation-panel__empty history">{emptySelectionMessage}</p>;
   }
 
   if (isLoadingConversation) {

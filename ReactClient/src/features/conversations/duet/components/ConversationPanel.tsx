@@ -91,9 +91,9 @@ export function ConversationPanel({
         )
         : (
           <ConversationBody
-            activeContact={activeContact}
             activeConversationId={activeConversationId}
             conversationError={conversationError}
+            hasActiveConversation={Boolean(activeContact)}
             isLoadingConversation={isLoadingConversation}
             hasOlderMessages={hasOlderMessages}
             isLoadingOlderMessages={isLoadingOlderMessages}
