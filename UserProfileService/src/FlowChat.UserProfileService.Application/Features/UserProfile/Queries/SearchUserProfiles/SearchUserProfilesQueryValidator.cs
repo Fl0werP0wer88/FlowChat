@@ -1,10 +1,10 @@
 using FluentValidation;
 
-namespace FlowChat.SocialGraphService.Application.Features.UserProfile.Queries.SearchUserProfileProjections;
+namespace FlowChat.UserProfileService.Application.Features.UserProfile.Queries.SearchUserProfiles;
 
-public sealed class SearchUserProfileProjectionsQueryValidator : AbstractValidator<SearchUserProfileProjectionsQuery>
+public sealed class SearchUserProfilesQueryValidator : AbstractValidator<SearchUserProfilesQuery>
 {
-    public SearchUserProfileProjectionsQueryValidator()
+    public SearchUserProfilesQueryValidator()
     {
         RuleFor(query => query.FirstName)
             .MaximumLength(100)
@@ -26,7 +26,7 @@ public sealed class SearchUserProfileProjectionsQueryValidator : AbstractValidat
             .WithMessage("Query must contain at least one search criterion.");
     }
 
-    private static bool HasAtLeastOneCriterion(SearchUserProfileProjectionsQuery query) =>
+    private static bool HasAtLeastOneCriterion(SearchUserProfilesQuery query) =>
         !string.IsNullOrWhiteSpace(query.FirstName) ||
         !string.IsNullOrWhiteSpace(query.LastName) ||
         !string.IsNullOrWhiteSpace(query.Organization);

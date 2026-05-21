@@ -80,41 +80,6 @@ public sealed class UserProfileProjectionReadRepository(AppDbContext dbContext) 
             .FirstOrDefaultAsync(cancellationToken);
     }
 
-    public async Task<IReadOnlyList<UserProfileProjectionDto>> SearchAsync(
-        string? firstName,
-        string? lastName,
-        string? organization,
-        CancellationToken cancellationToken = default)
-    {
-        var query = _dbContext.UserProfileProjections
-            .AsNoTracking()
-            .AsQueryable();
-
-        if (!string.IsNullOrWhiteSpace(firstName))
-        {
-            var firstNamePattern = $"{firstName}%";
-            query = query.Where(entity => entity.FirstName != null && EF.Functions.Like(entity.FirstName, firstNamePattern));
-        }
-
-        if (!string.IsNullOrWhiteSpace(lastName))
-        {
-            var lastNamePattern = $"{lastName}%";
-            query = query.Where(entity => entity.LastName != null && EF.Functions.Like(entity.LastName, lastNamePattern));
-        }
-
-        if (!string.IsNullOrWhiteSpace(organization))
-        {
-            var organizationPattern = $"{organization}%";
-            query = query.Where(entity => entity.Organization != null && EF.Functions.Like(entity.Organization, organizationPattern));
-        }
-
-        return await query
-            .OrderBy(entity => entity.LastName ?? string.Empty)
-            .ThenBy(entity => entity.FirstName ?? string.Empty)
-            .ThenBy(entity => entity.FriendlyUserId)
-            .Select(Projection)
-            .ToListAsync(cancellationToken);
-    }
 }
 
 

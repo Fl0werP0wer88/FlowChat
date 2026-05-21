@@ -1,11 +1,11 @@
-using FlowChat.SocialGraphService.Application.Features.UserProfile.Queries.SearchUserProfileProjections;
+using FlowChat.UserProfileService.Application.Features.UserProfile.Queries.SearchUserProfiles;
 using FluentAssertions;
 
-namespace FlowChat.SocialGraphService.UnitTests;
+namespace FlowChat.UserProfileService.UnitTests;
 
-public sealed class SearchUserProfileProjectionsQueryValidatorTests
+public sealed class SearchUserProfilesQueryValidatorTests
 {
-    private readonly SearchUserProfileProjectionsQueryValidator _validator = new();
+    private readonly SearchUserProfilesQueryValidator _validator = new();
 
     [Fact]
     public async Task Validate_WhenQueryIsValid_ReturnsValid()
@@ -18,7 +18,7 @@ public sealed class SearchUserProfileProjectionsQueryValidatorTests
     [Fact]
     public async Task Validate_WhenOnlyFirstNameIsProvided_ReturnsValid()
     {
-        var result = await _validator.ValidateAsync(new SearchUserProfileProjectionsQuery("Jane", null, null));
+        var result = await _validator.ValidateAsync(new SearchUserProfilesQuery("Jane", null, null));
 
         result.IsValid.Should().BeTrue();
     }
@@ -26,7 +26,7 @@ public sealed class SearchUserProfileProjectionsQueryValidatorTests
     [Fact]
     public async Task Validate_WhenOnlyLastNameIsProvided_ReturnsValid()
     {
-        var result = await _validator.ValidateAsync(new SearchUserProfileProjectionsQuery(null, "Doe", null));
+        var result = await _validator.ValidateAsync(new SearchUserProfilesQuery(null, "Doe", null));
 
         result.IsValid.Should().BeTrue();
     }
@@ -34,7 +34,7 @@ public sealed class SearchUserProfileProjectionsQueryValidatorTests
     [Fact]
     public async Task Validate_WhenOnlyOrganizationIsProvided_ReturnsValid()
     {
-        var result = await _validator.ValidateAsync(new SearchUserProfileProjectionsQuery(null, null, "FlowChat"));
+        var result = await _validator.ValidateAsync(new SearchUserProfilesQuery(null, null, "FlowChat"));
 
         result.IsValid.Should().BeTrue();
     }
@@ -48,7 +48,7 @@ public sealed class SearchUserProfileProjectionsQueryValidatorTests
         string? lastName,
         string? organization)
     {
-        var result = await _validator.ValidateAsync(new SearchUserProfileProjectionsQuery(firstName, lastName, organization));
+        var result = await _validator.ValidateAsync(new SearchUserProfilesQuery(firstName, lastName, organization));
 
         result.IsValid.Should().BeFalse();
         result.Errors.Should().ContainSingle(error => error.ErrorMessage == "Query must contain at least one search criterion.");
@@ -81,6 +81,6 @@ public sealed class SearchUserProfileProjectionsQueryValidatorTests
         result.Errors.Should().ContainSingle(error => error.ErrorMessage == "Query LastName cannot be longer than 100 characters.");
     }
 
-    private static SearchUserProfileProjectionsQuery CreateValidQuery() =>
+    private static SearchUserProfilesQuery CreateValidQuery() =>
         new("Jane", "Doe", "FlowChat");
 }

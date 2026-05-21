@@ -13,6 +13,114 @@ namespace FlowChat.UserProfileService.IntegrationTests.Persistence.Repositories;
 public sealed class UserProfileReadRepositoryTests
 {
     [Fact]
+    public async Task SearchAsync_WhenProfilesMatchAllPrefixes_ReturnsMatchingRowsWithPreservedResponseShape()
+    {
+        await using var connection = new SqliteConnection("Data Source=:memory:");
+        await connection.OpenAsync();
+
+        await using (var seedContext = CreateDbContext(connection))
+        {
+            seedContext.UserProfiles.AddRange(
+                UserProfile.Create(
+                    Id<UserProfile>.New(),
+                    "jdoe",
+                    EmailAddress.Create("jane@example.com"),
+                    PhoneNumber.Create("+48123123123"),
+                    avatarUrl: "https://cdn.example/jane.png",
+                    bio: "about Jane",
+                    firstName: "Jane",
+                    lastName: "Doe",
+                    organization: "FlowChat"),
+                UserProfile.Create(
+                    Id<UserProfile>.New(),
+                    "jdoe2",
+                    EmailAddress.Create("janet@example.com"),
+                    firstName: "Janet",
+                    lastName: "Doe",
+                    organization: "FlowLab"),
+                UserProfile.Create(
+                    Id<UserProfile>.New(),
+                    "jwrong",
+                    EmailAddress.Create("wrong@example.com"),
+                    firstName: "Jane",
+                    lastName: "Smith",
+                    organization: "FlowChat"));
+
+            await seedContext.SaveChangesAsync();
+        }
+
+        await using var readContext = CreateDbContext(connection);
+        var repository = new UserProfileReadRepository(readContext);
+
+        var result = await repository.SearchAsync("Jan", "Do", "Flow", CancellationToken.None);
+
+        result.Should().HaveCount(2);
+        result.Select(profile => profile.FriendlyUserId).Should().Equal("jdoe", "jdoe2");
+        result[0].UserProfileId.Should().NotBeEmpty();
+        result[0].FirstName.Should().Be("Jane");
+        result[0].LastName.Should().Be("Doe");
+        result[0].Organization.Should().Be("FlowChat");
+        result[0].MainEmail.Should().BeEquivalentTo(new
+        {
+            Address = "jane@example.com",
+            IsConfirmed = false,
+            IsVisible = true
+        });
+        result[0].MainPhone.Should().BeEquivalentTo(new
+        {
+            Number = "+48123123123",
+            IsConfirmed = false,
+            IsVisible = true
+        });
+        result[0].AvatarUrl.Should().Be("https://cdn.example/jane.png");
+        result[0].Bio.Should().Be("about Jane");
+        result[0].IsActive.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task SearchAsync_WhenCriterionIsNullOrEmpty_IgnoresThatFilter()
+    {
+        await using var connection = new SqliteConnection("Data Source=:memory:");
+        await connection.OpenAsync();
+
+        await using (var seedContext = CreateDbContext(connection))
+        {
+            seedContext.UserProfiles.AddRange(
+                UserProfile.Create(
+                    Id<UserProfile>.New(),
+                    "jdoe",
+                    EmailAddress.Create("jane@example.com"),
+                    firstName: "Jane",
+                    lastName: "Doe",
+                    organization: "FlowChat"),
+                UserProfile.Create(
+                    Id<UserProfile>.New(),
+                    "jdoe2",
+                    EmailAddress.Create("janet@example.com"),
+                    firstName: "Janet",
+                    lastName: "Doe",
+                    organization: "FlowLab"),
+                UserProfile.Create(
+                    Id<UserProfile>.New(),
+                    "jother",
+                    EmailAddress.Create("other@example.com"),
+                    firstName: "Jane",
+                    lastName: "Other",
+                    organization: "FlowChat"));
+
+            await seedContext.SaveChangesAsync();
+        }
+
+        await using var readContext = CreateDbContext(connection);
+        var repository = new UserProfileReadRepository(readContext);
+
+        var result = await repository.SearchAsync(null, "Do", "Flow", CancellationToken.None);
+
+        result.Should().HaveCount(2);
+        result.Select(profile => profile.FriendlyUserId).Should().Equal("jdoe", "jdoe2");
+    }
+
+    [Fact]
     public async Task GetByFriendlyUserIdAsync_WhenFriendlyUserIdHasDifferentCasing_ReturnsProjectedProfile()
     {
         await using var connection = new SqliteConnection("Data Source=:memory:");

@@ -6,7 +6,7 @@ interface SearchUsersRequest {
   organization?: string;
 }
 
-interface UserProfileProjectionDto {
+interface UserProfileSearchDto {
   userProfileId?: string;
   UserProfileId?: string;
   friendlyUserId?: string;
@@ -20,8 +20,8 @@ interface UserProfileProjectionDto {
 }
 
 interface SearchUsersResponseDto {
-  userProfiles?: UserProfileProjectionDto[];
-  UserProfiles?: UserProfileProjectionDto[];
+  userProfiles?: UserProfileSearchDto[];
+  UserProfiles?: UserProfileSearchDto[];
 }
 
 export interface SearchUsersCriteria {
@@ -58,7 +58,7 @@ function buildQueryString(parameters: SearchUsersRequest): string {
   return serialized.length > 0 ? `?${serialized}` : "";
 }
 
-function buildSearchUserDisplayName(dto: UserProfileProjectionDto): string {
+function buildSearchUserDisplayName(dto: UserProfileSearchDto): string {
   const firstName = (dto.firstName ?? dto.FirstName ?? "").trim();
   const lastName = (dto.lastName ?? dto.LastName ?? "").trim();
   const displayName = `${firstName} ${lastName}`.trim();
@@ -66,7 +66,7 @@ function buildSearchUserDisplayName(dto: UserProfileProjectionDto): string {
   return displayName || "Nieznany uzytkownik";
 }
 
-function mapSearchUserResult(dto: UserProfileProjectionDto): SearchUserResult {
+function mapSearchUserResult(dto: UserProfileSearchDto): SearchUserResult {
   return {
     userProfileId: dto.userProfileId ?? dto.UserProfileId ?? crypto.randomUUID(),
     friendlyUserId: dto.friendlyUserId ?? dto.FriendlyUserId ?? "",
@@ -93,7 +93,7 @@ export async function searchUsers(
   };
 
   const response = await getJson<SearchUsersResponseDto>(
-    `/api/userprofiles/projections/socialgraph/search${buildQueryString(normalizedCriteria)}`,
+    `/api/userprofiles/search${buildQueryString(normalizedCriteria)}`,
     {
       accessToken,
       signal,

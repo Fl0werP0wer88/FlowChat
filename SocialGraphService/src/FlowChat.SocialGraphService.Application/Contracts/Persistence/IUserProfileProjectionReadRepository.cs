@@ -7,11 +7,5 @@ public interface IUserProfileProjectionReadRepository
     Task<UserProfileProjectionDto?> GetByUserProfileIdAsync(Guid userProfileId, CancellationToken cancellationToken = default);
     Task<UserProfileProjectionDto?> GetByFriendlyUserIdAsync(string friendlyUserId, CancellationToken cancellationToken = default);
     Task<UserProfileProjectionDto?> GetByEmailAsync(string email, CancellationToken cancellationToken = default);
-
-    Task<IReadOnlyList<UserProfileProjectionDto>> SearchAsync(
-        string? firstName,
-        string? lastName,
-        string? organization,
-        CancellationToken cancellationToken = default);
 }
 

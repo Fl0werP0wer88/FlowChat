@@ -2,6 +2,7 @@ using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
 using FlowChat.UserProfileService.Application.Contracts.Persistence;
 using FlowChat.UserProfileService.Application.Features.UserProfile.Queries.GetUserProfile;
+using FlowChat.UserProfileService.Application.Features.UserProfile.Queries.SearchUserProfiles;
 using FlowChat.UserProfileService.Domain.Entities.EmailVerificationRequest;
 using FlowChat.UserProfileService.Domain.Entities.UserProfile;
 using Microsoft.EntityFrameworkCore;
@@ -39,6 +40,41 @@ public sealed class UserProfileReadRepository(AppDbContext dbContext) : IUserPro
             .ToListAsync(cancellationToken);
 
         return entities.Select(MapToDto).ToList();
+    }
+
+    public async Task<IReadOnlyList<SearchUserProfileDto>> SearchAsync(
+        string? firstName,
+        string? lastName,
+        string? organization,
+        CancellationToken cancellationToken = default)
+    {
+        var query = Query();
+
+        if (!string.IsNullOrWhiteSpace(firstName))
+        {
+            var firstNamePattern = $"{firstName}%";
+            query = query.Where(entity => entity.FirstName != null && EF.Functions.Like(entity.FirstName, firstNamePattern));
+        }
+
+        if (!string.IsNullOrWhiteSpace(lastName))
+        {
+            var lastNamePattern = $"{lastName}%";
+            query = query.Where(entity => entity.LastName != null && EF.Functions.Like(entity.LastName, lastNamePattern));
+        }
+
+        if (!string.IsNullOrWhiteSpace(organization))
+        {
+            var organizationPattern = $"{organization}%";
+            query = query.Where(entity => entity.Organization != null && EF.Functions.Like(entity.Organization, organizationPattern));
+        }
+
+        var entities = await query
+            .OrderBy(entity => entity.LastName ?? string.Empty)
+            .ThenBy(entity => entity.FirstName ?? string.Empty)
+            .ThenBy(entity => EF.Property<string>(entity, nameof(UserProfile.FriendlyUserId)))
+            .ToListAsync(cancellationToken);
+
+        return entities.Select(MapToSearchDto).ToList();
     }
 
     public async Task<UserProfileDto?> GetByFriendlyUserIdAsync(string friendlyUserId, CancellationToken cancellationToken = default)
@@ -113,5 +149,40 @@ public sealed class UserProfileReadRepository(AppDbContext dbContext) : IUserPro
                     phone.Number.Value,
                     phone.IsMain))
                 .ToList());
+    }
+
+    private static SearchUserProfileDto MapToSearchDto(UserProfile entity)
+    {
+        var mainEmail = entity.Emails.FirstOrDefault(email => email.IsMain);
+        var mainPhone = entity.Phones.FirstOrDefault(phone => phone.IsMain);
+
+        return new SearchUserProfileDto
+        {
+            UserProfileId = entity.Id.Value,
+            FriendlyUserId = entity.FriendlyUserId.Value,
+            FirstName = entity.FirstName,
+            LastName = entity.LastName,
+            Organization = entity.Organization,
+            MainEmail = mainEmail is null
+                ? null
+                : new SearchUserProfileEmailDto
+                {
+                    Address = mainEmail.Address.Value,
+                    IsConfirmed = mainEmail.IsConfirmed,
+                    IsVisible = mainEmail.IsVisible
+                },
+            MainPhone = mainPhone is null
+                ? null
+                : new SearchUserProfilePhoneDto
+                {
+                    Number = mainPhone.Number.Value,
+                    IsConfirmed = mainPhone.IsConfirmed,
+                    IsVisible = mainPhone.IsVisible
+                },
+            AvatarUrl = entity.AvatarUrl,
+            Bio = entity.Bio,
+            IsActive = entity.IsActive,
+            LastSeenAtUtc = entity.LastSeenAtUtc?.Value
+        };
     }
 }

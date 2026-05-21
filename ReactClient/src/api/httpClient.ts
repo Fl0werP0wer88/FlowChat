@@ -1,6 +1,5 @@
 const apiBaseUrl = (
   import.meta.env.VITE_GATEWAY_API_URL
-    ?? import.meta.env.VITE_AUTH_API_URL
     ?? "https://localhost:7270"
 ).replace(/\/+$/, "");
 
