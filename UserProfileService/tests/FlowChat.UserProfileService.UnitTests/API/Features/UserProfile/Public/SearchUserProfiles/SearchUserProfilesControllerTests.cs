@@ -35,36 +35,18 @@ public sealed class SearchUserProfilesControllerTests
     {
         IReadOnlyList<UserProfileDto> userProfiles =
         [
-            new UserProfileDto
-            {
-                Id = _fixture.Create<Guid>(),
-                FriendlyUserId = "jdoe",
-                FirstName = "Jane",
-                LastName = "Doe",
-                Organization = "FlowChat",
-                Emails =
-                [
-                    new EmailDto
-                    {
-                        Address = "jane@example.com",
-                        IsMain = true,
-                        IsConfirmed = true,
-                        IsVisible = true
-                    }
-                ],
-                Phones =
-                [
-                    new PhoneDto
-                    {
-                        Number = "+48123123123",
-                        IsMain = true,
-                        IsConfirmed = true,
-                        IsVisible = true
-                    }
-                ],
-                IsActive = true,
-                LastSeenAtUtc = _fixture.Create<DateTimeOffset>()
-            }
+            new UserProfileDto(
+                _fixture.Create<Guid>(),
+                "jdoe",
+                "Jane",
+                "Doe",
+                "FlowChat",
+                null,
+                null,
+                true,
+                _fixture.Create<DateTimeOffset>(),
+                [new EmailDto(Guid.NewGuid(), "jane@example.com", true, false, true, true)],
+                [new PhoneDto(Guid.NewGuid(), "+48123123123", true, true, true)])
         ];
 
         _mediatorMock

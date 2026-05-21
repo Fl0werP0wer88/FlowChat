@@ -62,9 +62,12 @@ public sealed class SendEmailVerificationCommandHandlerTests
             "jdoe",
             null,
             null,
+            null,
+            null,
+            null,
             true,
             null,
-            [new EmailDto(Guid.NewGuid(), EmailAddress.Create(email).Value, true, true, isConfirmed)],
+            [new EmailDto(Guid.NewGuid(), EmailAddress.Create(email).Value, true, true, isConfirmed, true)],
             []);
 
     [Fact]

@@ -25,12 +25,15 @@ public sealed class GetUserProfileQueryHandlerTests
         var expectedProfile = new UserProfileDto(
             userId,
             "jdoe",
+            null,
+            null,
+            null,
             "https://cdn.example/avatar.png",
             "about me",
             true,
             new DateTimeOffset(2026, 4, 1, 8, 0, 0, TimeSpan.Zero),
-            [new EmailDto(Guid.NewGuid(), "john@example.com", true, true, false)],
-            [new PhoneDto(Guid.NewGuid(), "+48123123123", true)]);
+            [new EmailDto(Guid.NewGuid(), "john@example.com", true, true, false, true)],
+            [new PhoneDto(Guid.NewGuid(), "+48123123123", true, false, true)]);
 
         _readRepositoryMock
             .Setup(x => x.GetByIdAsync(userId, It.IsAny<CancellationToken>()))

@@ -73,7 +73,7 @@ public sealed class UserProfileReadRepository(AppDbContext dbContext) : IUserPro
             .ThenBy(entity => EF.Property<string>(entity, nameof(UserProfile.FriendlyUserId)))
             .ToListAsync(cancellationToken);
 
-        return entities.Select(MapToSearchDto).ToList();
+        return entities.Select(MapToDto).ToList();
     }
 
     public async Task<UserProfileDto?> GetByFriendlyUserIdAsync(string friendlyUserId, CancellationToken cancellationToken = default)
@@ -130,6 +130,9 @@ public sealed class UserProfileReadRepository(AppDbContext dbContext) : IUserPro
         return new UserProfileDto(
             entity.Id.Value,
             entity.FriendlyUserId.Value,
+            entity.FirstName,
+            entity.LastName,
+            entity.Organization,
             entity.AvatarUrl,
             entity.Bio,
             entity.IsActive,
@@ -138,50 +141,28 @@ public sealed class UserProfileReadRepository(AppDbContext dbContext) : IUserPro
             MapPhones(entity));
     }
 
-    private static UserProfileDto MapToSearchDto(UserProfile entity)
-    {
-        return new UserProfileDto
-        {
-            Id = entity.Id.Value,
-            FriendlyUserId = entity.FriendlyUserId.Value,
-            FirstName = entity.FirstName,
-            LastName = entity.LastName,
-            Organization = entity.Organization,
-            AvatarUrl = entity.AvatarUrl,
-            Bio = entity.Bio,
-            IsActive = entity.IsActive,
-            LastSeenAtUtc = entity.LastSeenAtUtc?.Value,
-            Emails = MapEmails(entity),
-            Phones = MapPhones(entity)
-        };
-    }
-
     private static IReadOnlyList<EmailDto> MapEmails(UserProfile entity)
     {
         return entity.Emails
-            .Select(email => new EmailDto
-            {
-                Id = email.Id.Value,
-                Address = email.Address.Value,
-                IsMain = email.IsMain,
-                IsAuth = email.IsAuth,
-                IsConfirmed = email.IsConfirmed,
-                IsVisible = email.IsVisible
-            })
+            .Select(email => new EmailDto(
+                email.Id.Value,
+                email.Address.Value,
+                email.IsMain,
+                email.IsAuth,
+                email.IsConfirmed,
+                email.IsVisible))
             .ToList();
     }
 
     private static IReadOnlyList<PhoneDto> MapPhones(UserProfile entity)
     {
         return entity.Phones
-            .Select(phone => new PhoneDto
-            {
-                Id = phone.Id.Value,
-                Number = phone.Number.Value,
-                IsMain = phone.IsMain,
-                IsConfirmed = phone.IsConfirmed,
-                IsVisible = phone.IsVisible
-            })
+            .Select(phone => new PhoneDto(
+                phone.Id.Value,
+                phone.Number.Value,
+                phone.IsMain,
+                phone.IsConfirmed,
+                phone.IsVisible))
             .ToList();
     }
 }
