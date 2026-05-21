@@ -23,9 +23,9 @@ public static class StartupExtensions
         builder.Services.AddApiSilverbackMessaging(builder.Configuration);
         builder.AddFlowChatOpenTelemetry(typeof(ApplicationServiceRegistration).Assembly);
 
+        builder.Services.AddFlowChatJwtAuthentication(builder.Configuration);
         builder.Services.AddControllers();
-
-        builder.Services.AddSwaggerGen();
+        builder.Services.AddFlowChatSwaggerWithBearer();
 
         return builder.Build();
     }
@@ -41,6 +41,8 @@ public static class StartupExtensions
         }
 
         app.UseHttpsRedirection();
+        app.UseAuthentication();
+        app.UseAuthorization();
         app.MapControllers();
         return app;
     }
