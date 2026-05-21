@@ -7,21 +7,16 @@ interface SearchUsersRequest {
 }
 
 interface UserProfileSearchDto {
-  userProfileId?: string;
-  UserProfileId?: string;
-  friendlyUserId?: string;
-  FriendlyUserId?: string;
+  id: string;
+  friendlyUserId: string;
   firstName?: string | null;
-  FirstName?: string | null;
   lastName?: string | null;
-  LastName?: string | null;
   organization?: string | null;
-  Organization?: string | null;
+  avatarUrl?: string | null;
 }
 
 interface SearchUsersResponseDto {
-  userProfiles?: UserProfileSearchDto[];
-  UserProfiles?: UserProfileSearchDto[];
+  userProfiles: UserProfileSearchDto[];
 }
 
 export interface SearchUsersCriteria {
@@ -59,8 +54,8 @@ function buildQueryString(parameters: SearchUsersRequest): string {
 }
 
 function buildSearchUserDisplayName(dto: UserProfileSearchDto): string {
-  const firstName = (dto.firstName ?? dto.FirstName ?? "").trim();
-  const lastName = (dto.lastName ?? dto.LastName ?? "").trim();
+  const firstName = (dto.firstName ?? "").trim();
+  const lastName = (dto.lastName ?? "").trim();
   const displayName = `${firstName} ${lastName}`.trim();
 
   return displayName || "Nieznany uzytkownik";
@@ -68,12 +63,12 @@ function buildSearchUserDisplayName(dto: UserProfileSearchDto): string {
 
 function mapSearchUserResult(dto: UserProfileSearchDto): SearchUserResult {
   return {
-    userProfileId: dto.userProfileId ?? dto.UserProfileId ?? crypto.randomUUID(),
-    friendlyUserId: dto.friendlyUserId ?? dto.FriendlyUserId ?? "",
+    userProfileId: dto.id,
+    friendlyUserId: dto.friendlyUserId,
     displayName: buildSearchUserDisplayName(dto),
-    firstName: dto.firstName ?? dto.FirstName ?? null,
-    lastName: dto.lastName ?? dto.LastName ?? null,
-    organization: dto.organization ?? dto.Organization ?? null,
+    firstName: dto.firstName ?? null,
+    lastName: dto.lastName ?? null,
+    organization: dto.organization ?? null,
   };
 }
 
@@ -100,6 +95,5 @@ export async function searchUsers(
     },
   );
 
-  const results = response.userProfiles ?? response.UserProfiles ?? [];
-  return results.map(mapSearchUserResult);
+  return response.userProfiles.map(mapSearchUserResult);
 }
