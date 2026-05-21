@@ -1,7 +1,7 @@
 using AutoFixture;
 using FlowChat.Shared.Domain;
 using FlowChat.UserProfileService.Api.Features.UserProfile.Public.SearchUserProfiles;
-using FlowChat.UserProfileService.Application.Features.UserProfile.Queries.SearchUserProfiles;
+using FlowChat.UserProfileService.Application.Features.UserProfile.Queries.UserProfile.SearchUserProfiles;
 using FluentAssertions;
 using MediatR;
 using Microsoft.AspNetCore.Http;

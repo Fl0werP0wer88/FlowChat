@@ -1,6 +1,6 @@
 using FlowChat.Core.Contracts;
 
-namespace FlowChat.UserProfileService.Application.Features.UserProfile.Queries.SearchUserProfiles;
+namespace FlowChat.UserProfileService.Application.Features.UserProfile.Queries.UserProfile.SearchUserProfiles;
 
 public sealed class SearchUserProfileEmailDto : IDbReadResponse
 {

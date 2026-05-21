@@ -1,6 +1,6 @@
 using FlowChat.Shared.Application;
-using FlowChat.UserProfileService.Application.Features.UserProfile.Queries.GetUserProfile;
-using FlowChat.UserProfileService.Application.Features.UserProfile.Queries.SearchUserProfiles;
+using FlowChat.UserProfileService.Application.Features.UserProfile.Queries.UserProfile.GetUserProfile;
+using FlowChat.UserProfileService.Application.Features.UserProfile.Queries.UserProfile.SearchUserProfiles;
 
 namespace FlowChat.UserProfileService.Application.Contracts.Persistence;
 

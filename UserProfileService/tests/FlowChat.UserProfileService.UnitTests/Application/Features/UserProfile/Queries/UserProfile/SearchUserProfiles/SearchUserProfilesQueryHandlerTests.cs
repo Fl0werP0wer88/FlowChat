@@ -1,6 +1,6 @@
 using AutoFixture;
 using FlowChat.UserProfileService.Application.Contracts.Persistence;
-using FlowChat.UserProfileService.Application.Features.UserProfile.Queries.SearchUserProfiles;
+using FlowChat.UserProfileService.Application.Features.UserProfile.Queries.UserProfile.SearchUserProfiles;
 using FluentAssertions;
 using Moq;
 

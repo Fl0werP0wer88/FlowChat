@@ -1,5 +1,5 @@
 using FlowChat.Shared.API;
-using FlowChat.UserProfileService.Application.Features.UserProfile.Queries.GetUserProfile;
+using FlowChat.UserProfileService.Application.Features.UserProfile.Queries.UserProfile.GetUserProfile;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

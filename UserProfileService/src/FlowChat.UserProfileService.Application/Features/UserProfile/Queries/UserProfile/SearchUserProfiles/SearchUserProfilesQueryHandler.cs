@@ -2,7 +2,7 @@ using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
 using FlowChat.UserProfileService.Application.Contracts.Persistence;
 
-namespace FlowChat.UserProfileService.Application.Features.UserProfile.Queries.SearchUserProfiles;
+namespace FlowChat.UserProfileService.Application.Features.UserProfile.Queries.UserProfile.SearchUserProfiles;
 
 public sealed class SearchUserProfilesQueryHandler
     : IQueryHandler<SearchUserProfilesQuery, IReadOnlyList<SearchUserProfileDto>>

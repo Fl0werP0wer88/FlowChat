@@ -1,7 +1,7 @@
 using AutoFixture;
 using FlowChat.Shared.Domain;
 using FlowChat.UserProfileService.Application.Contracts.Persistence;
-using FlowChat.UserProfileService.Application.Features.UserProfile.Queries.GetUserProfile;
+using FlowChat.UserProfileService.Application.Features.UserProfile.Queries.UserProfile.GetUserProfile;
 using Moq;
 
 namespace FlowChat.UserProfileService.UnitTests;
