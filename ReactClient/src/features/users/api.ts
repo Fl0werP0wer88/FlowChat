@@ -19,6 +19,10 @@ interface SearchUsersResponseDto {
   userProfiles: UserProfileSearchDto[];
 }
 
+interface GetUserProfileResponseDto {
+  userProfile: UserProfileSearchDto;
+}
+
 export interface SearchUsersCriteria {
   firstName: string;
   lastName: string;
@@ -96,4 +100,20 @@ export async function searchUsers(
   );
 
   return response.userProfiles.map(mapSearchUserResult);
+}
+
+export async function getUserProfile(
+  userProfileId: string,
+  accessToken: string,
+  signal?: AbortSignal,
+): Promise<SearchUserResult> {
+  const response = await getJson<GetUserProfileResponseDto>(
+    `/api/userprofiles/${encodeURIComponent(userProfileId)}`,
+    {
+      accessToken,
+      signal,
+    },
+  );
+
+  return mapSearchUserResult(response.userProfile);
 }

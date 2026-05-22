@@ -88,7 +88,7 @@ public sealed class ConfirmEmailVerificationControllerTests(UserProfileApiFactor
         var createResponse = await _client.SendAsync(httpRequest);
         createResponse.EnsureSuccessStatusCode();
 
-        var getProfile = new HttpRequestMessage(HttpMethod.Get, "/api/userprofiles");
+        var getProfile = new HttpRequestMessage(HttpMethod.Get, $"/api/userprofiles/{userId:D}");
         getProfile.Headers.Add(TestAuthenticationHandler.UserIdHeaderName, userId.ToString("D"));
         var profileResponse = await _client.SendAsync(getProfile);
         profileResponse.EnsureSuccessStatusCode();

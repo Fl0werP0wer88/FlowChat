@@ -95,7 +95,7 @@ public sealed class SendEmailVerificationControllerTests(UserProfileApiFactory f
     {
         var userId = await CreateProfileAsync();
 
-        var getProfile = new HttpRequestMessage(HttpMethod.Get, "/api/userprofiles");
+        var getProfile = new HttpRequestMessage(HttpMethod.Get, $"/api/userprofiles/{userId:D}");
         getProfile.Headers.Add(TestAuthenticationHandler.UserIdHeaderName, userId.ToString("D"));
         var profileResponse = await _client.SendAsync(getProfile);
         var profile = await profileResponse.Content.ReadFromJsonAsync<GetUserProfileResponse>();

@@ -75,7 +75,7 @@ public sealed class SetMainEmailControllerTests(UserProfileApiFactory factory)
         httpRequest.Headers.Add("X-Internal-Api-Key", UserProfileApiFactory.InternalApiKey);
         await _client.SendAsync(httpRequest);
 
-        var getProfile = new HttpRequestMessage(HttpMethod.Get, "/api/userprofiles");
+        var getProfile = new HttpRequestMessage(HttpMethod.Get, $"/api/userprofiles/{userId:D}");
         getProfile.Headers.Add(TestAuthenticationHandler.UserIdHeaderName, userId.ToString("D"));
         var profileResponse = await _client.SendAsync(getProfile);
         var profile = await profileResponse.Content.ReadFromJsonAsync<GetUserProfileResponse>();

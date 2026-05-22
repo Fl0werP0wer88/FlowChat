@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { KeyboardEventHandler } from "react";
 import { useAuthStore } from "../../../store/authStore";
-import { searchUsers, type SearchUserResult, type SearchUsersCriteria } from "../api";
+import { getUserProfile, searchUsers, type SearchUserResult, type SearchUsersCriteria } from "../api";
 
 interface UserSearchProps {
   isDisabled?: boolean;
@@ -30,6 +30,7 @@ export function UserSearch({
   });
   const [searchResults, setSearchResults] = useState<SearchUserResult[]>([]);
   const [isSearchingUsers, setIsSearchingUsers] = useState(false);
+  const [processingUserProfileId, setProcessingUserProfileId] = useState<string | null>(null);
   const [searchNotice, setSearchNotice] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const firstNameInputRef = useRef<HTMLInputElement>(null);
@@ -115,19 +116,39 @@ export function UserSearch({
     onClose();
   };
 
+  const isGuidLookup = (value: string): boolean =>
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value.trim());
+
   const submitLookup = async () => {
-    const wasAdded = await onProcessUser({
+    const trimmedLookup = emailOrFriendlyId.trim();
+    let user: SearchUserResult = {
       userProfileId: "",
-      friendlyUserId: emailOrFriendlyId.trim(),
+      friendlyUserId: trimmedLookup,
       displayName: "",
       firstName: null,
       lastName: null,
       organization: null,
-    });
+    };
 
-    if (wasAdded) {
-      resetSearch();
-      onClose();
+    try {
+      if (isGuidLookup(trimmedLookup)) {
+        if (!accessToken) {
+          setSearchNotice("Brakuje aktywnej sesji potrzebnej do pobrania profilu uzytkownika.");
+          return;
+        }
+
+        user = await getUserProfile(trimmedLookup, accessToken);
+      }
+
+      const wasAdded = await onProcessUser(user);
+
+      if (wasAdded) {
+        resetSearch();
+        onClose();
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Nie udalo sie pobrac profilu uzytkownika.";
+      setSearchNotice(message);
     }
   };
 
@@ -168,10 +189,26 @@ export function UserSearch({
   };
 
   const handleSearchResultClick = async (result: SearchUserResult) => {
-    const wasAdded = await onProcessUser(result);
-    if (wasAdded) {
-      resetSearch();
-      onClose();
+    if (!accessToken) {
+      setSearchNotice("Brakuje aktywnej sesji potrzebnej do pobrania profilu uzytkownika.");
+      return;
+    }
+
+    setProcessingUserProfileId(result.userProfileId);
+    setSearchNotice(null);
+
+    try {
+      const userProfile = await getUserProfile(result.userProfileId, accessToken);
+      const wasAdded = await onProcessUser(userProfile);
+      if (wasAdded) {
+        resetSearch();
+        onClose();
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Nie udalo sie pobrac profilu uzytkownika.";
+      setSearchNotice(message);
+    } finally {
+      setProcessingUserProfileId(null);
     }
   };
 
@@ -264,7 +301,7 @@ export function UserSearch({
                   <li key={result.userProfileId}>
                     <button
                       className="contacts-composer__result"
-                      disabled={isDisabled}
+                      disabled={isDisabled || processingUserProfileId !== null}
                       onClick={() => void handleSearchResultClick(result)}
                       type="button"
                     >
@@ -275,7 +312,9 @@ export function UserSearch({
                           ? <span>{result.organization}</span>
                           : null}
                       </span>
-                      <span aria-hidden="true" className="material-symbols-rounded">person_add</span>
+                      <span aria-hidden="true" className="material-symbols-rounded">
+                        {processingUserProfileId === result.userProfileId ? "progress_activity" : "person_add"}
+                      </span>
                     </button>
                   </li>
                 ))}

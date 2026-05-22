@@ -8,6 +8,8 @@ using FlowChat.UserProfileService.Application.Features.UserProfile.Commands.AddE
 using FlowChat.UserProfileService.Application.Features.UserProfile.Commands.AddPhone;
 using FlowChat.UserProfileService.Application.Features.UserProfile.Queries.UserProfile.Model;
 using FlowChat.UserProfileService.Application.Features.UserProfile.Queries.UserProfile.GetUserProfile;
+using FlowChat.UserProfileService.Application.Features.UserProfile.Queries.UserProfile.GetUserProfileByEmail;
+using FlowChat.UserProfileService.Application.Features.UserProfile.Queries.UserProfile.GetUserProfileByFriendlyUserId;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -125,9 +127,9 @@ public sealed class UserProfilesControllerTests
             .ReturnsAsync(FlowChatResult<UserProfileDto>.Failure(
                 DomainError.NotFound($"User profile '{userId}' was not found.")));
 
-        var controller = SetupController(new UserProfilesController(_mediatorMock.Object), userId);
+        var controller = SetupController(new UserProfilesController(_mediatorMock.Object));
 
-        var result = await controller.GetById(CancellationToken.None);
+        var result = await controller.GetById(userId, CancellationToken.None);
 
         var notFound = result.Should().BeOfType<NotFoundObjectResult>().Subject;
         var problemDetails = notFound.Value.Should().BeOfType<ProblemDetails>().Subject;
@@ -159,9 +161,9 @@ public sealed class UserProfilesControllerTests
             .Setup(x => x.Send(It.IsAny<GetUserProfileQuery>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(FlowChatResult<UserProfileDto>.Success(dto));
 
-        var controller = SetupController(new UserProfilesController(_mediatorMock.Object), userId);
+        var controller = SetupController(new UserProfilesController(_mediatorMock.Object));
 
-        var result = await controller.GetById(CancellationToken.None);
+        var result = await controller.GetById(userId, CancellationToken.None);
 
         var ok = result.Should().BeOfType<OkObjectResult>().Subject;
         var response = ok.Value.Should().BeOfType<GetUserProfileResponse>().Subject;
@@ -169,13 +171,73 @@ public sealed class UserProfilesControllerTests
     }
 
     [Fact]
-    public async Task GetById_ReturnsUnauthorized_WhenNoClaimPresent()
+    public async Task GetByEmail_ReturnsOk_WhenProfileFound()
     {
+        var userId = Guid.NewGuid();
+        var dto = new UserProfileDto(userId, "jdoe", null, null, null, null, null, true, null, [], []);
+        _mediatorMock
+            .Setup(x => x.Send(It.IsAny<GetUserProfileByEmailQuery>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(FlowChatResult<UserProfileDto>.Success(dto));
+
         var controller = SetupController(new UserProfilesController(_mediatorMock.Object));
 
-        var result = await controller.GetById(CancellationToken.None);
+        var result = await controller.GetByEmail("jdoe@example.com", CancellationToken.None);
 
-        result.Should().BeOfType<UnauthorizedResult>();
+        var ok = result.Should().BeOfType<OkObjectResult>().Subject;
+        var response = ok.Value.Should().BeOfType<GetUserProfileResponse>().Subject;
+        response.UserProfile.Should().BeEquivalentTo(dto);
+    }
+
+    [Fact]
+    public async Task GetByEmail_ReturnsProblemDetails_WhenProfileIsMissing()
+    {
+        _mediatorMock
+            .Setup(x => x.Send(It.IsAny<GetUserProfileByEmailQuery>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(FlowChatResult<UserProfileDto>.Failure(
+                DomainError.NotFound("User profile with email 'jdoe@example.com' was not found.")));
+
+        var controller = SetupController(new UserProfilesController(_mediatorMock.Object));
+
+        var result = await controller.GetByEmail("jdoe@example.com", CancellationToken.None);
+
+        var notFound = result.Should().BeOfType<NotFoundObjectResult>().Subject;
+        var problemDetails = notFound.Value.Should().BeOfType<ProblemDetails>().Subject;
+        problemDetails.Status.Should().Be(StatusCodes.Status404NotFound);
+    }
+
+    [Fact]
+    public async Task GetByFriendlyUserId_ReturnsOk_WhenProfileFound()
+    {
+        var userId = Guid.NewGuid();
+        var dto = new UserProfileDto(userId, "jdoe", null, null, null, null, null, true, null, [], []);
+        _mediatorMock
+            .Setup(x => x.Send(It.IsAny<GetUserProfileByFriendlyUserIdQuery>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(FlowChatResult<UserProfileDto>.Success(dto));
+
+        var controller = SetupController(new UserProfilesController(_mediatorMock.Object));
+
+        var result = await controller.GetByFriendlyUserId("jdoe", CancellationToken.None);
+
+        var ok = result.Should().BeOfType<OkObjectResult>().Subject;
+        var response = ok.Value.Should().BeOfType<GetUserProfileResponse>().Subject;
+        response.UserProfile.Should().BeEquivalentTo(dto);
+    }
+
+    [Fact]
+    public async Task GetByFriendlyUserId_ReturnsProblemDetails_WhenProfileIsMissing()
+    {
+        _mediatorMock
+            .Setup(x => x.Send(It.IsAny<GetUserProfileByFriendlyUserIdQuery>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(FlowChatResult<UserProfileDto>.Failure(
+                DomainError.NotFound("User profile with friendly user ID 'jdoe' was not found.")));
+
+        var controller = SetupController(new UserProfilesController(_mediatorMock.Object));
+
+        var result = await controller.GetByFriendlyUserId("jdoe", CancellationToken.None);
+
+        var notFound = result.Should().BeOfType<NotFoundObjectResult>().Subject;
+        var problemDetails = notFound.Value.Should().BeOfType<ProblemDetails>().Subject;
+        problemDetails.Status.Should().Be(StatusCodes.Status404NotFound);
     }
 
     private sealed class SingleServiceProvider(object service) : IServiceProvider

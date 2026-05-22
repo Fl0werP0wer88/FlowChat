@@ -64,6 +64,21 @@ public sealed class UserProfileReadRepository(AppDbContext dbContext) : IUserPro
         return entities.Select(MapToDto).ToList();
     }
 
+    public async Task<UserProfileDto?> GetByEmailAsync(string email, CancellationToken cancellationToken = default)
+    {
+        if (!EmailAddress.TryCreate(email, out var normalizedEmail))
+        {
+            return null;
+        }
+
+        var entity = await Query()
+            .FirstOrDefaultAsync(
+                x => x.Emails.Any(e => e.Address == normalizedEmail),
+                cancellationToken);
+
+        return entity is null ? null : MapToDto(entity);
+    }
+
     public async Task<UserProfileDto?> GetByFriendlyUserIdAsync(string friendlyUserId, CancellationToken cancellationToken = default)
     {
         if (!FriendlyUserId.TryCreate(friendlyUserId, out var normalizedFriendlyUserId))

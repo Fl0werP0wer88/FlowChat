@@ -14,8 +14,8 @@ public sealed class GetUserProfileControllerTests(UserProfileApiFactory factory)
     {
         var userId = await CreateUserProfileAsync();
 
-        var request = new HttpRequestMessage(HttpMethod.Get, "/api/userprofiles");
-        request.Headers.Add(TestAuthenticationHandler.UserIdHeaderName, userId.ToString("D"));
+        var request = new HttpRequestMessage(HttpMethod.Get, $"/api/userprofiles/{userId:D}");
+        request.Headers.Add(TestAuthenticationHandler.UserIdHeaderName, Guid.NewGuid().ToString("D"));
 
         var response = await _client.SendAsync(request);
 
@@ -30,7 +30,63 @@ public sealed class GetUserProfileControllerTests(UserProfileApiFactory factory)
     [Fact]
     public async Task GetById_WhenProfileDoesNotExist_Returns404NotFound()
     {
-        var request = new HttpRequestMessage(HttpMethod.Get, "/api/userprofiles");
+        var request = new HttpRequestMessage(HttpMethod.Get, $"/api/userprofiles/{Guid.NewGuid():D}");
+        request.Headers.Add(TestAuthenticationHandler.UserIdHeaderName, Guid.NewGuid().ToString("D"));
+
+        var response = await _client.SendAsync(request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task GetByEmail_WhenProfileExists_Returns200WithProfileData()
+    {
+        var (userId, email) = await CreateUserProfileWithEmailAsync();
+
+        var request = new HttpRequestMessage(HttpMethod.Get, $"/api/userprofiles/by-email?email={Uri.EscapeDataString(email)}");
+        request.Headers.Add(TestAuthenticationHandler.UserIdHeaderName, Guid.NewGuid().ToString("D"));
+
+        var response = await _client.SendAsync(request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var body = await response.Content.ReadFromJsonAsync<GetUserProfileResponse>();
+        body.Should().NotBeNull();
+        body!.UserProfile.Id.Should().Be(userId);
+        body.UserProfile.Emails.Should().Contain(e => e.Address == email);
+    }
+
+    [Fact]
+    public async Task GetByEmail_WhenProfileDoesNotExist_Returns404NotFound()
+    {
+        var request = new HttpRequestMessage(HttpMethod.Get, "/api/userprofiles/by-email?email=nonexistent@example.com");
+        request.Headers.Add(TestAuthenticationHandler.UserIdHeaderName, Guid.NewGuid().ToString("D"));
+
+        var response = await _client.SendAsync(request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task GetByFriendlyUserId_WhenProfileExists_Returns200WithProfileData()
+    {
+        var (userId, _, friendlyUserId) = await CreateUserProfileWithFriendlyIdAsync();
+
+        var request = new HttpRequestMessage(HttpMethod.Get, $"/api/userprofiles/by-friendly-id/{friendlyUserId}");
+        request.Headers.Add(TestAuthenticationHandler.UserIdHeaderName, Guid.NewGuid().ToString("D"));
+
+        var response = await _client.SendAsync(request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var body = await response.Content.ReadFromJsonAsync<GetUserProfileResponse>();
+        body.Should().NotBeNull();
+        body!.UserProfile.Id.Should().Be(userId);
+        body.UserProfile.FriendlyUserId.Should().Be(friendlyUserId);
+    }
+
+    [Fact]
+    public async Task GetByFriendlyUserId_WhenProfileDoesNotExist_Returns404NotFound()
+    {
+        var request = new HttpRequestMessage(HttpMethod.Get, "/api/userprofiles/by-friendly-id/nonexistent-user");
         request.Headers.Add(TestAuthenticationHandler.UserIdHeaderName, Guid.NewGuid().ToString("D"));
 
         var response = await _client.SendAsync(request);
@@ -40,20 +96,45 @@ public sealed class GetUserProfileControllerTests(UserProfileApiFactory factory)
 
     private async Task<Guid> CreateUserProfileAsync()
     {
+        var (userId, _, _) = await CreateUserProfileWithFriendlyIdAsync();
+        return userId;
+    }
+
+    private async Task<(Guid UserId, string Email)> CreateUserProfileWithEmailAsync()
+    {
         var userId = Guid.NewGuid();
-        var request = new
-        {
-            UserId = userId,
-            FriendlyUserId = $"getuser-{userId:N}",
-            Email = $"gettest_{userId:N}@example.com"
-        };
+        var email = $"gettest_{userId:N}@example.com";
         var httpRequest = new HttpRequestMessage(HttpMethod.Post, "/internal/userprofiles/initial")
         {
-            Content = JsonContent.Create(request)
+            Content = JsonContent.Create(new
+            {
+                UserId = userId,
+                FriendlyUserId = $"getuser-{userId:N}",
+                Email = email
+            })
         };
         httpRequest.Headers.Add("X-Internal-Api-Key", UserProfileApiFactory.InternalApiKey);
         await _client.SendAsync(httpRequest);
-        return userId;
+        return (userId, email);
+    }
+
+    private async Task<(Guid UserId, string Email, string FriendlyUserId)> CreateUserProfileWithFriendlyIdAsync()
+    {
+        var userId = Guid.NewGuid();
+        var email = $"gettest_{userId:N}@example.com";
+        var friendlyUserId = $"getuser-{userId:N}";
+        var httpRequest = new HttpRequestMessage(HttpMethod.Post, "/internal/userprofiles/initial")
+        {
+            Content = JsonContent.Create(new
+            {
+                UserId = userId,
+                FriendlyUserId = friendlyUserId,
+                Email = email
+            })
+        };
+        httpRequest.Headers.Add("X-Internal-Api-Key", UserProfileApiFactory.InternalApiKey);
+        await _client.SendAsync(httpRequest);
+        return (userId, email, friendlyUserId);
     }
 
     private sealed record GetUserProfileResponse(UserProfileDto UserProfile);
