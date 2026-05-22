@@ -1,6 +1,6 @@
 import { getJson, putJson } from "../../api/httpClient";
 import type { Contact } from "../../types/contacts";
-import { isEmailLookup } from "../users/api";
+import { isEmail } from "../../utils/stringUtils";
 
 interface ContactDto {
   id?: string;
@@ -66,7 +66,7 @@ export async function addContact(
   const trimmedEmailOrFriendlyId = emailOrFriendlyId.trim();
   const payload: AddContactPayload = {
     id: crypto.randomUUID(),
-    ...(isEmailLookup(trimmedEmailOrFriendlyId)
+    ...(isEmail(trimmedEmailOrFriendlyId)
       ? { email: trimmedEmailOrFriendlyId }
       : { friendlyUserId: trimmedEmailOrFriendlyId }),
   };
