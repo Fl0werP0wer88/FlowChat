@@ -594,10 +594,10 @@ body {
 }
 
 .contacts-panel__main {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 0.8rem;
-  min-height: 100%;
-  align-content: start;
+  height: 100%;
   transition: transform 220ms ease, opacity 220ms ease;
 }
 
@@ -746,8 +746,12 @@ body {
 }
 
 .contacts-panel__contacts {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 0.55rem;
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
 }
 
 .contacts-panel__list-toolbar {
