@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import type { KeyboardEventHandler } from "react";
 import { useAuthStore } from "../../../store/authStore";
-import { getUserProfileByEmail, getUserProfileByFriendlyUserId, getUserProfileById, isEmailLookup, searchUsers, type SearchUserResult, type SearchUsersCriteria } from "../api";
+import { isEmail } from "../../../utils/stringUtils";
+import { getUserProfileByEmail, getUserProfileByFriendlyUserId, getUserProfileById, searchUsers, type SearchUserResult, type SearchUsersCriteria } from "../api";
 
 interface UserSearchProps {
   isDisabled?: boolean;
@@ -128,7 +129,7 @@ export function UserSearch({
     }
 
     try {
-      const user = isEmailLookup(trimmedLookup)
+      const user = isEmail(trimmedLookup)
         ? await getUserProfileByEmail(trimmedLookup, accessToken)
         : await getUserProfileByFriendlyUserId(trimmedLookup, accessToken);
 

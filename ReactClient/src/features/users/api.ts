@@ -76,9 +76,6 @@ function mapSearchUserResult(dto: UserProfileSearchDto): SearchUserResult {
   };
 }
 
-export function isEmailLookup(value: string): boolean {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
-}
 
 export async function searchUsers(
   criteria: SearchUsersCriteria,
