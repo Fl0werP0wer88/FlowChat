@@ -117,3 +117,35 @@ export async function getUserProfileById(
 
   return mapSearchUserResult(response.userProfile);
 }
+
+export async function getUserProfileByEmail(
+  email: string,
+  accessToken: string,
+  signal?: AbortSignal,
+): Promise<SearchUserResult> {
+  const response = await getJson<GetUserProfileResponseDto>(
+    `/api/userprofiles/by-email?email=${encodeURIComponent(email)}`,
+    {
+      accessToken,
+      signal,
+    },
+  );
+
+  return mapSearchUserResult(response.userProfile);
+}
+
+export async function getUserProfileByFriendlyUserId(
+  friendlyUserId: string,
+  accessToken: string,
+  signal?: AbortSignal,
+): Promise<SearchUserResult> {
+  const response = await getJson<GetUserProfileResponseDto>(
+    `/api/userprofiles/by-friendly-id/${encodeURIComponent(friendlyUserId)}`,
+    {
+      accessToken,
+      signal,
+    },
+  );
+
+  return mapSearchUserResult(response.userProfile);
+}

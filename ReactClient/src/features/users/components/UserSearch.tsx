@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { KeyboardEventHandler } from "react";
 import { useAuthStore } from "../../../store/authStore";
-import { getUserProfileById, searchUsers, type SearchUserResult, type SearchUsersCriteria } from "../api";
+import { getUserProfileByEmail, getUserProfileByFriendlyUserId, getUserProfileById, isEmailLookup, searchUsers, type SearchUserResult, type SearchUsersCriteria } from "../api";
 
 interface UserSearchProps {
   isDisabled?: boolean;
@@ -116,29 +116,21 @@ export function UserSearch({
     onClose();
   };
 
-  const isGuidLookup = (value: string): boolean =>
-    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value.trim());
-
   const submitLookup = async () => {
     const trimmedLookup = emailOrFriendlyId.trim();
-    let user: SearchUserResult = {
-      userProfileId: "",
-      friendlyUserId: trimmedLookup,
-      displayName: "",
-      firstName: null,
-      lastName: null,
-      organization: null,
-    };
+    if (!trimmedLookup) {
+      return;
+    }
+
+    if (!accessToken) {
+      setSearchNotice("Brakuje aktywnej sesji potrzebnej do pobrania profilu uzytkownika.");
+      return;
+    }
 
     try {
-      if (isGuidLookup(trimmedLookup)) {
-        if (!accessToken) {
-          setSearchNotice("Brakuje aktywnej sesji potrzebnej do pobrania profilu uzytkownika.");
-          return;
-        }
-
-        user = await getUserProfileById(trimmedLookup, accessToken);
-      }
+      const user = isEmailLookup(trimmedLookup)
+        ? await getUserProfileByEmail(trimmedLookup, accessToken)
+        : await getUserProfileByFriendlyUserId(trimmedLookup, accessToken);
 
       const wasAdded = await onProcessUser(user);
 
