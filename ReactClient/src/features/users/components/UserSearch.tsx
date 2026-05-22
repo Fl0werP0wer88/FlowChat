@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { KeyboardEventHandler } from "react";
 import { useAuthStore } from "../../../store/authStore";
-import { getUserProfile, searchUsers, type SearchUserResult, type SearchUsersCriteria } from "../api";
+import { getUserProfileById, searchUsers, type SearchUserResult, type SearchUsersCriteria } from "../api";
 
 interface UserSearchProps {
   isDisabled?: boolean;
@@ -137,7 +137,7 @@ export function UserSearch({
           return;
         }
 
-        user = await getUserProfile(trimmedLookup, accessToken);
+        user = await getUserProfileById(trimmedLookup, accessToken);
       }
 
       const wasAdded = await onProcessUser(user);
@@ -198,7 +198,7 @@ export function UserSearch({
     setSearchNotice(null);
 
     try {
-      const userProfile = await getUserProfile(result.userProfileId, accessToken);
+      const userProfile = await getUserProfileById(result.userProfileId, accessToken);
       const wasAdded = await onProcessUser(userProfile);
       if (wasAdded) {
         resetSearch();

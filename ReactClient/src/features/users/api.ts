@@ -102,7 +102,7 @@ export async function searchUsers(
   return response.userProfiles.map(mapSearchUserResult);
 }
 
-export async function getUserProfile(
+export async function getUserProfileById(
   userProfileId: string,
   accessToken: string,
   signal?: AbortSignal,
