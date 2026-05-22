@@ -730,6 +730,7 @@ body {
 .contacts-panel__add-contact-button {
   width: 100%;
   min-height: 2.65rem;
+  margin-top: 2px;
   border: 1px solid color-mix(in srgb, var(--accent) 26%, var(--border) 74%);
   border-radius: 0.7rem;
   display: inline-flex;
@@ -757,6 +758,10 @@ body {
 .contacts-panel__list-toolbar {
   display: flex;
   justify-content: flex-end;
+  position: sticky;
+  top: 0;
+  background: #fbfcff;
+  z-index: 1;
 }
 
 .contacts-panel__list {
