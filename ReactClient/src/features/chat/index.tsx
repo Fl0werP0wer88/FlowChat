@@ -86,7 +86,6 @@ export function ChatFeature() {
         )}
       sidebar={
         <Sidebar
-          addContactNotice={contacts.notice}
           contacts={contacts.contacts}
           activeContactId={activeConversationMode === "duet" ? contacts.activeContact?.id ?? null : null}
           currentUserStatus={presence.currentStatus}
@@ -104,7 +103,6 @@ export function ChatFeature() {
             contacts.selectContact(contact);
             chat.openContactConversation(contact, contacts.updateContactConversationId);
           }}
-          onClearNotice={contacts.clearNotice}
           onGroupConversationClick={(conversation) => {
             setActiveConversationMode("group");
             setActiveGroupConversation(conversation);

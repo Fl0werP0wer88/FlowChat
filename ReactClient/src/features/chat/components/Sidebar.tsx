@@ -13,7 +13,6 @@ import type { SearchUserResult } from "../../users/api";
 interface SidebarProps {
   activeContactId: string | null;
   activeGroupConversationId: string | null;
-  addContactNotice: { kind: "error" | "info"; message: string; } | null;
   contacts: Contact[];
   currentUserStatus: UserStatus;
   groupConversations: GroupConversation[];
@@ -23,16 +22,14 @@ interface SidebarProps {
   isUserProcessDisabled: boolean;
   onChangePresenceStatus: (status: ManualUserStatus) => Promise<void>;
   onContactClick: (contact: Contact) => void;
-  onClearNotice: () => void;
   onGroupConversationClick: (conversation: GroupConversation) => void;
-  onProcessUser: (user: SearchUserResult) => Promise<boolean>;
+  onProcessUser: (user: SearchUserResult) => Promise<{ kind: "error" | "info"; message: string }>;
   presenceNotice: string | null;
 }
 
 export function Sidebar({
   activeContactId,
   activeGroupConversationId,
-  addContactNotice,
   contacts,
   currentUserStatus,
   groupConversations,
@@ -42,7 +39,6 @@ export function Sidebar({
   isUserProcessDisabled,
   onChangePresenceStatus,
   onContactClick,
-  onClearNotice,
   onGroupConversationClick,
   onProcessUser,
   presenceNotice,
@@ -52,7 +48,6 @@ export function Sidebar({
 
   const openUserSearch = () => {
     setIsUserSearchOpen(true);
-    onClearNotice();
   };
 
   return (
@@ -70,13 +65,6 @@ export function Sidebar({
           ? <p className="alert alert-error">{presenceNotice}</p>
           : null}
 
-        {addContactNotice && !isUserSearchOpen
-          ? (
-            <p className={`alert ${addContactNotice.kind === "error" ? "alert-error" : "alert-info"}`}>
-              {addContactNotice.message}
-            </p>
-          )
-          : null}
 
         {activeTab === "contacts"
           ? (
@@ -101,8 +89,6 @@ export function Sidebar({
       <UserSearch
         isDisabled={isUserProcessDisabled}
         isOpen={isUserSearchOpen}
-        notification={addContactNotice}
-        onClearNotice={onClearNotice}
         onClose={() => setIsUserSearchOpen(false)}
         onProcessUser={onProcessUser}
       />

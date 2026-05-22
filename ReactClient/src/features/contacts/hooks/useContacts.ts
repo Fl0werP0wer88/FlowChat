@@ -9,37 +9,26 @@ import { useAddContactByUserIdMutation } from "../queries/useAddContactByUserIdM
 import { useAddContactMutation } from "../queries/useAddContactMutation";
 import { useContactsQuery } from "../queries/useContactsQuery";
 
-interface ContactsNotice {
-  kind: "error" | "info";
-  message: string;
-}
+type ContactNotification = { kind: "error" | "info"; message: string };
 
 interface UseContactsResult {
   contacts: Contact[];
   activeContact: Contact | null;
   isAddingContact: boolean;
   isLoadingContacts: boolean;
-  notice: ContactsNotice | null;
-  addContact: (user: SearchUserResult) => Promise<boolean>;
+  addContact: (user: SearchUserResult) => Promise<ContactNotification>;
   selectContact: (contact: Contact) => void;
-  clearNotice: () => void;
   applyPresenceChanged: (payload: PresenceChangedEvent) => void;
   updateContactConversationId: (contactUserId: string, conversationId: string) => void;
 }
+
+const noopCallbacks = { onSuccess: () => {}, onError: (_message: string) => {} };
 
 export function useContacts(): UseContactsResult {
   const accessToken = useAuthStore((s) => s.accessToken) ?? "";
   const ownerUserId = resolveOwnerUserId(accessToken);
   const queryClient = useQueryClient();
-  const [notice, setNotice] = useState<ContactsNotice | null>(null);
   const [activeContactId, setActiveContactId] = useState<string | null>(null);
-
-  const clearNotice = () => setNotice(null);
-
-  const noticeCallbacks = {
-    onSuccess: () => setNotice({ kind: "info", message: "Kontakt zostal dodany." }),
-    onError: (message: string) => setNotice({ kind: "error", message }),
-  };
 
   const { data: contacts = [], isLoading: isLoadingContacts } = useContactsQuery(
     accessToken,
@@ -50,16 +39,13 @@ export function useContacts(): UseContactsResult {
     [activeContactId, contacts],
   );
 
-  const addContactMutation = useAddContactMutation(accessToken, noticeCallbacks);
-  const addContactByUserIdMutation = useAddContactByUserIdMutation(accessToken, noticeCallbacks);
+  const addContactMutation = useAddContactMutation(accessToken, noopCallbacks);
+  const addContactByUserIdMutation = useAddContactByUserIdMutation(accessToken, noopCallbacks);
 
-  const addContact = async (user: SearchUserResult): Promise<boolean> => {
+  const addContact = async (user: SearchUserResult): Promise<ContactNotification> => {
     if (!accessToken || !ownerUserId) {
-      setNotice({ kind: "error", message: "Brakuje aktywnej sesji potrzebnej do dodania kontaktu." });
-      return false;
+      return { kind: "error", message: "Brakuje aktywnej sesji potrzebnej do dodania kontaktu." };
     }
-
-    setNotice(null);
 
     try {
       if (user.userProfileId) {
@@ -67,14 +53,14 @@ export function useContacts(): UseContactsResult {
       } else {
         const value = user.friendlyUserId.trim();
         if (!value) {
-          setNotice({ kind: "error", message: "Wpisz email lub User Id uzytkownika." });
-          return false;
+          return { kind: "error", message: "Wpisz email lub User Id uzytkownika." };
         }
         await addContactMutation.mutateAsync(value);
       }
-      return true;
-    } catch {
-      return false;
+      return { kind: "info", message: "Kontakt zostal dodany." };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Nie udalo sie dodac kontaktu.";
+      return { kind: "error", message };
     }
   };
 
@@ -103,11 +89,9 @@ export function useContacts(): UseContactsResult {
     activeContact,
     isAddingContact: addContactMutation.isPending || addContactByUserIdMutation.isPending,
     isLoadingContacts,
-    notice,
     addContact,
     selectContact,
     applyPresenceChanged,
-    clearNotice,
     updateContactConversationId,
   };
 }

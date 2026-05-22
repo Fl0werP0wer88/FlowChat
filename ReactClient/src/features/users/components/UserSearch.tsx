@@ -4,20 +4,18 @@ import { useAuthStore } from "../../../store/authStore";
 import { isEmail } from "../../../utils/stringUtils";
 import { getUserProfileByEmail, getUserProfileByFriendlyUserId, getUserProfileById, searchUsers, type SearchUserResult, type SearchUsersCriteria } from "../api";
 
+type ProcessUserNotification = { kind: "error" | "info"; message: string };
+
 interface UserSearchProps {
   isDisabled?: boolean;
   isOpen: boolean;
-  notification?: { kind: "error" | "info"; message: string; } | null;
-  onClearNotice: () => void;
   onClose: () => void;
-  onProcessUser: (user: SearchUserResult) => Promise<boolean>;
+  onProcessUser: (user: SearchUserResult) => Promise<ProcessUserNotification>;
 }
 
 export function UserSearch({
   isDisabled = false,
   isOpen,
-  notification = null,
-  onClearNotice,
   onClose,
   onProcessUser,
 }: UserSearchProps) {
@@ -33,6 +31,7 @@ export function UserSearch({
   const [isSearchingUsers, setIsSearchingUsers] = useState(false);
   const [processingUserProfileId, setProcessingUserProfileId] = useState<string | null>(null);
   const [searchNotice, setSearchNotice] = useState<string | null>(null);
+  const [processNotice, setProcessNotice] = useState<ProcessUserNotification | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const firstNameInputRef = useRef<HTMLInputElement>(null);
 
@@ -109,11 +108,11 @@ export function UserSearch({
     });
     setSearchResults([]);
     setSearchNotice(null);
+    setProcessNotice(null);
   };
 
   const closeSearch = () => {
     resetSearch();
-    onClearNotice();
     onClose();
   };
 
@@ -133,12 +132,7 @@ export function UserSearch({
         ? await getUserProfileByEmail(trimmedLookup, accessToken)
         : await getUserProfileByFriendlyUserId(trimmedLookup, accessToken);
 
-      const wasAdded = await onProcessUser(user);
-
-      if (wasAdded) {
-        resetSearch();
-        onClose();
-      }
+      setProcessNotice(await onProcessUser(user));
     } catch (error) {
       const message = error instanceof Error ? error.message : "Nie udalo sie pobrac profilu uzytkownika.";
       setSearchNotice(message);
@@ -192,11 +186,7 @@ export function UserSearch({
 
     try {
       const userProfile = await getUserProfileById(result.userProfileId, accessToken);
-      const wasAdded = await onProcessUser(userProfile);
-      if (wasAdded) {
-        resetSearch();
-        onClose();
-      }
+      setProcessNotice(await onProcessUser(userProfile));
     } catch (error) {
       const message = error instanceof Error ? error.message : "Nie udalo sie pobrac profilu uzytkownika.";
       setSearchNotice(message);
@@ -241,10 +231,10 @@ export function UserSearch({
         />
       </div>
 
-      {notification
+      {processNotice
         ? (
-          <p className={`alert ${notification.kind === "error" ? "alert-error" : "alert-info"}`}>
-            {notification.message}
+          <p className={`alert ${processNotice.kind === "error" ? "alert-error" : "alert-info"}`}>
+            {processNotice.message}
           </p>
         )
         : null}
