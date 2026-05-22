@@ -7,14 +7,12 @@ import { getUserProfileByEmail, getUserProfileByFriendlyUserId, getUserProfileBy
 type ProcessUserNotification = { kind: "error" | "info"; message: string };
 
 interface UserSearchProps {
-  isDisabled?: boolean;
   isOpen: boolean;
   onClose: () => void;
   onProcessUser: (user: SearchUserResult) => Promise<ProcessUserNotification>;
 }
 
 export function UserSearch({
-  isDisabled = false,
   isOpen,
   onClose,
   onProcessUser,
@@ -29,6 +27,7 @@ export function UserSearch({
   });
   const [searchResults, setSearchResults] = useState<SearchUserResult[]>([]);
   const [isSearchingUsers, setIsSearchingUsers] = useState(false);
+  const [isLookupProcessing, setIsLookupProcessing] = useState(false);
   const [processingUserProfileId, setProcessingUserProfileId] = useState<string | null>(null);
   const [searchNotice, setSearchNotice] = useState<string | null>(null);
   const [processNotice, setProcessNotice] = useState<ProcessUserNotification | null>(null);
@@ -109,6 +108,7 @@ export function UserSearch({
     setSearchResults([]);
     setSearchNotice(null);
     setProcessNotice(null);
+    setIsLookupProcessing(false);
   };
 
   const closeSearch = () => {
@@ -127,6 +127,7 @@ export function UserSearch({
       return;
     }
 
+    setIsLookupProcessing(true);
     try {
       const user = isEmail(trimmedLookup)
         ? await getUserProfileByEmail(trimmedLookup, accessToken)
@@ -136,6 +137,8 @@ export function UserSearch({
     } catch (error) {
       const message = error instanceof Error ? error.message : "Nie udalo sie pobrac profilu uzytkownika.";
       setSearchNotice(message);
+    } finally {
+      setIsLookupProcessing(false);
     }
   };
 
@@ -213,7 +216,7 @@ export function UserSearch({
         <button
           aria-label="Dodaj kontakt z podanej wartosci"
           className="contacts-composer__search-button"
-          disabled={isDisabled}
+          disabled={isLookupProcessing}
           onClick={() => void submitLookup()}
           type="button"
         >
@@ -221,7 +224,7 @@ export function UserSearch({
         </button>
         <input
           className="contacts-composer__input"
-          disabled={isDisabled}
+          disabled={isLookupProcessing}
           onChange={(event) => setEmailOrFriendlyId(event.target.value)}
           onKeyDown={(event) => void handleLookupKeyDown(event)}
           placeholder="User Id or email"
@@ -284,7 +287,7 @@ export function UserSearch({
                   <li key={result.userProfileId}>
                     <button
                       className="contacts-composer__result"
-                      disabled={isDisabled || processingUserProfileId !== null}
+                      disabled={processingUserProfileId !== null}
                       onClick={() => void handleSearchResultClick(result)}
                       type="button"
                     >

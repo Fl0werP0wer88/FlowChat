@@ -19,7 +19,6 @@ interface SidebarProps {
   isChangingPresenceStatus: boolean;
   isLoadingContacts: boolean;
   isLoadingGroupConversations: boolean;
-  isUserProcessDisabled: boolean;
   onChangePresenceStatus: (status: ManualUserStatus) => Promise<void>;
   onContactClick: (contact: Contact) => void;
   onGroupConversationClick: (conversation: GroupConversation) => void;
@@ -36,7 +35,6 @@ export function Sidebar({
   isChangingPresenceStatus,
   isLoadingContacts,
   isLoadingGroupConversations,
-  isUserProcessDisabled,
   onChangePresenceStatus,
   onContactClick,
   onGroupConversationClick,
@@ -87,7 +85,6 @@ export function Sidebar({
       </div>
 
       <UserSearch
-        isDisabled={isUserProcessDisabled}
         isOpen={isUserSearchOpen}
         onClose={() => setIsUserSearchOpen(false)}
         onProcessUser={onProcessUser}

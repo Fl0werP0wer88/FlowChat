@@ -91,7 +91,6 @@ export function ChatFeature() {
           currentUserStatus={presence.currentStatus}
           isChangingPresenceStatus={presence.isUpdatingStatus}
           isLoadingContacts={contacts.isLoadingContacts}
-          isUserProcessDisabled={contacts.isAddingContact}
           onChangePresenceStatus={presence.changeManualPresenceStatus}
           activeGroupConversationId={activeConversationMode === "group"
             ? activeGroupConversation?.conversationId ?? null

@@ -14,7 +14,6 @@ type ContactNotification = { kind: "error" | "info"; message: string };
 interface UseContactsResult {
   contacts: Contact[];
   activeContact: Contact | null;
-  isAddingContact: boolean;
   isLoadingContacts: boolean;
   addContact: (user: SearchUserResult) => Promise<ContactNotification>;
   selectContact: (contact: Contact) => void;
@@ -87,7 +86,6 @@ export function useContacts(): UseContactsResult {
   return {
     contacts,
     activeContact,
-    isAddingContact: addContactMutation.isPending || addContactByUserIdMutation.isPending,
     isLoadingContacts,
     addContact,
     selectContact,
