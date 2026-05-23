@@ -1,5 +1,6 @@
 using FlowChat.Shared.Application;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace FlowChat.Shared.Persistance;
 
@@ -23,6 +24,7 @@ public class EfUnitOfWork<TDbContext>(TDbContext dbContext) : IUnitOfWork
         return await strategy.ExecuteAsync(async () =>
         {
             await using var transaction = await DbContext.Database.BeginTransactionAsync(cancellationToken);
+            EnrichTransaction(transaction);
 
             try
             {
@@ -36,8 +38,16 @@ public class EfUnitOfWork<TDbContext>(TDbContext dbContext) : IUnitOfWork
                 await transaction.RollbackAsync(cancellationToken);
                 throw;
             }
+            finally
+            {
+                OnFinally();
+            }
         });
     }
+
+    protected virtual void EnrichTransaction(IDbContextTransaction transaction) { }
+
+    protected virtual void OnFinally() { }
 
     public void Dispose() => DbContext.Dispose();
 }

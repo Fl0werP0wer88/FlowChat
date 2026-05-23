@@ -12,39 +12,11 @@ public sealed class SilverbackEfUnitOfWork<TDbContext>(
     : EfUnitOfWork<TDbContext>(dbContext)
     where TDbContext : DbContext
 {
-    public override async Task<T> ExecuteInTransactionAsync<T>(
-        Func<CancellationToken, Task<T>> operation,
-        CancellationToken cancellationToken)
-    {
-        ArgumentNullException.ThrowIfNull(operation);
-        cancellationToken.ThrowIfCancellationRequested();
+    // Silverback must share the EF transaction so business data and the outbox commit atomically
+    protected override void EnrichTransaction(IDbContextTransaction transaction) =>
+        silverbackContext.EnlistDbTransaction(transaction.GetDbTransaction(), ownTransaction: false);
 
-        var strategy = DbContext.Database.CreateExecutionStrategy();
-
-        return await strategy.ExecuteAsync(async () =>
-        {
-            await using var transaction = await DbContext.Database.BeginTransactionAsync(cancellationToken);
-
-            // Silverback must share the EF transaction so business data and the outbox commit atomically
-            silverbackContext.EnlistDbTransaction(transaction.GetDbTransaction(), ownTransaction: false);
-
-            try
-            {
-                var result = await operation(cancellationToken);
-                await DbContext.SaveChangesAsync(cancellationToken);
-                await transaction.CommitAsync(cancellationToken);
-                return result;
-            }
-            catch
-            {
-                await transaction.RollbackAsync(cancellationToken);
-                throw;
-            }
-            finally
-            {
-                // Clear the storage transaction even after failures so the scoped context is reusable
-                silverbackContext.ClearStorageTransaction();
-            }
-        });
-    }
+    // Clear the storage transaction even after failures so the scoped context is reusable
+    protected override void OnFinally() =>
+        silverbackContext.ClearStorageTransaction();
 }
