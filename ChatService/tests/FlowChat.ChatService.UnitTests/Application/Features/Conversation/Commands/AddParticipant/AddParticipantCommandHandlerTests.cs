@@ -26,9 +26,16 @@ public sealed class AddParticipantCommandHandlerTests
         _unitOfWorkMock
             .Setup(x => x.ExecuteInTransactionAsync(
                 It.IsAny<Func<CancellationToken, Task<FlowChatResult<IdempotentCommandResult<bool>>>>>(),
+                It.IsAny<Func<FlowChatResult<IdempotentCommandResult<bool>>, CancellationToken, Task<FlowChatResult<IdempotentCommandResult<bool>>>>>(),
                 It.IsAny<CancellationToken>()))
-            .Returns<Func<CancellationToken, Task<FlowChatResult<IdempotentCommandResult<bool>>>>, CancellationToken>(
-                (operation, ct) => operation(ct));
+            .Returns<
+                Func<CancellationToken, Task<FlowChatResult<IdempotentCommandResult<bool>>>>,
+                Func<FlowChatResult<IdempotentCommandResult<bool>>, CancellationToken, Task<FlowChatResult<IdempotentCommandResult<bool>>>>,
+                CancellationToken>(async (operation, beforeCommitOperation, ct) =>
+                {
+                    var result = await operation(ct);
+                    return await beforeCommitOperation(result, ct);
+                });
 
         _domainEventDispatcherMock
             .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<IDomainEvent>>(), It.IsAny<CancellationToken>()))
@@ -237,3 +244,4 @@ public sealed class AddParticipantCommandHandlerTests
         result.Error.ErrorType.Should().Be(ErrorType.NotFound);
     }
 }
+

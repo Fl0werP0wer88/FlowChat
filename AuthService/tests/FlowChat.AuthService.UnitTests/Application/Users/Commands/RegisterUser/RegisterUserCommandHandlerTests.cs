@@ -27,9 +27,16 @@ public sealed class RegisterUserCommandHandlerTests
         _unitOfWorkMock
             .Setup(x => x.ExecuteInTransactionAsync(
                 It.IsAny<Func<CancellationToken, Task<FlowChatResult<IdempotentCommandResult<RegisterUserCommandResponse>>>>>(),
+                It.IsAny<Func<FlowChatResult<IdempotentCommandResult<RegisterUserCommandResponse>>, CancellationToken, Task<FlowChatResult<IdempotentCommandResult<RegisterUserCommandResponse>>>>>(),
                 It.IsAny<CancellationToken>()))
-            .Returns<Func<CancellationToken, Task<FlowChatResult<IdempotentCommandResult<RegisterUserCommandResponse>>>>, CancellationToken>(
-                (operation, ct) => operation(ct));
+            .Returns<
+                Func<CancellationToken, Task<FlowChatResult<IdempotentCommandResult<RegisterUserCommandResponse>>>>,
+                Func<FlowChatResult<IdempotentCommandResult<RegisterUserCommandResponse>>, CancellationToken, Task<FlowChatResult<IdempotentCommandResult<RegisterUserCommandResponse>>>>,
+                CancellationToken>(async (operation, beforeCommitOperation, ct) =>
+                {
+                    var result = await operation(ct);
+                    return await beforeCommitOperation(result, ct);
+                });
 
         _domainEventDispatcherMock
             .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<IDomainEvent>>(), It.IsAny<CancellationToken>()))
@@ -176,3 +183,4 @@ public sealed class RegisterUserCommandHandlerTests
             Organization = "FlowChat"
         };
 }
+

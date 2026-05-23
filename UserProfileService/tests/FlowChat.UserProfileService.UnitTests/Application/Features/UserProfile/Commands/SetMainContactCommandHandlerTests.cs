@@ -27,8 +27,16 @@ public sealed class SetMainContactCommandHandlerTests
         _unitOfWorkMock
             .Setup(x => x.ExecuteInTransactionAsync(
                 It.IsAny<Func<CancellationToken, Task<FlowChatResult<Guid>>>>(),
+                It.IsAny<Func<FlowChatResult<Guid>, CancellationToken, Task<FlowChatResult<Guid>>>>(),
                 It.IsAny<CancellationToken>()))
-            .Returns<Func<CancellationToken, Task<FlowChatResult<Guid>>>, CancellationToken>((op, ct) => op(ct));
+            .Returns<
+                Func<CancellationToken, Task<FlowChatResult<Guid>>>,
+                Func<FlowChatResult<Guid>, CancellationToken, Task<FlowChatResult<Guid>>>,
+                CancellationToken>(async (operation, beforeCommitOperation, ct) =>
+                {
+                    var result = await operation(ct);
+                    return await beforeCommitOperation(result, ct);
+                });
 
         _emailHandler = new SetMainEmailCommandHandler(
             _writeRepositoryMock.Object,
@@ -269,3 +277,4 @@ public sealed class SetMainContactCommandHandlerTests
         result.Error.Errors.Should().Equal("UserId is required.", "PhoneId is required.");
     }
 }
+

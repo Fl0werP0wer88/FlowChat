@@ -45,9 +45,16 @@ public sealed class ConfirmEmailVerificationCommandHandlerTests
         _unitOfWorkMock
             .Setup(x => x.ExecuteInTransactionAsync(
                 It.IsAny<Func<CancellationToken, Task<FlowChatResult<IdempotentCommandResult<Unit>>>>>(),
+                It.IsAny<Func<FlowChatResult<IdempotentCommandResult<Unit>>, CancellationToken, Task<FlowChatResult<IdempotentCommandResult<Unit>>>>>(),
                 It.IsAny<CancellationToken>()))
-            .Returns<Func<CancellationToken, Task<FlowChatResult<IdempotentCommandResult<Unit>>>>, CancellationToken>(
-                (op, ct) => op(ct));
+            .Returns<
+                Func<CancellationToken, Task<FlowChatResult<IdempotentCommandResult<Unit>>>>,
+                Func<FlowChatResult<IdempotentCommandResult<Unit>>, CancellationToken, Task<FlowChatResult<IdempotentCommandResult<Unit>>>>,
+                CancellationToken>(async (operation, beforeCommitOperation, ct) =>
+                {
+                    var result = await operation(ct);
+                    return await beforeCommitOperation(result, ct);
+                });
 
         _handler = new ConfirmEmailVerificationCommandHandler(
             _userProfileRepositoryMock.Object,
@@ -287,8 +294,12 @@ public sealed class ConfirmEmailVerificationCommandHandlerTests
         _unitOfWorkMock
             .Setup(x => x.ExecuteInTransactionAsync(
                 It.IsAny<Func<CancellationToken, Task<FlowChatResult<IdempotentCommandResult<Unit>>>>>(),
+                It.IsAny<Func<FlowChatResult<IdempotentCommandResult<Unit>>, CancellationToken, Task<FlowChatResult<IdempotentCommandResult<Unit>>>>>(),
                 It.IsAny<CancellationToken>()))
-            .Returns<Func<CancellationToken, Task<FlowChatResult<IdempotentCommandResult<Unit>>>>, CancellationToken>(async (op, ct) =>
+            .Returns<
+                Func<CancellationToken, Task<FlowChatResult<IdempotentCommandResult<Unit>>>>,
+                Func<FlowChatResult<IdempotentCommandResult<Unit>>, CancellationToken, Task<FlowChatResult<IdempotentCommandResult<Unit>>>>,
+                CancellationToken>(async (op, _, ct) =>
             {
                 await op(ct);
                 throw new DbUpdateConcurrencyException("Concurrency conflict.");
@@ -301,3 +312,4 @@ public sealed class ConfirmEmailVerificationCommandHandlerTests
         result.Value.WasAlreadyProcessed.Should().BeTrue();
     }
 }
+

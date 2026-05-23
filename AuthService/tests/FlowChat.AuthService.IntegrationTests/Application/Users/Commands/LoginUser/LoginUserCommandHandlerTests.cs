@@ -1,4 +1,4 @@
-﻿using FlowChat.AuthService.Application.Contracts.Infrastructure;
+using FlowChat.AuthService.Application.Contracts.Infrastructure;
 using FlowChat.AuthService.Application.Features.User.Commands.LoginUser;
 using FlowChat.AuthService.Infrastructure.Configuration.Settings;
 using FlowChat.AuthService.Infrastructure.Services;
@@ -96,3 +96,4 @@ public sealed class LoginUserCommandHandlerTests : IDisposable
         result.Value.Grant.Principal.FindFirst(OpenIddict.Abstractions.OpenIddictConstants.Claims.PreferredUsername)!.Value.Should().Be("flower");
     }
 }
+

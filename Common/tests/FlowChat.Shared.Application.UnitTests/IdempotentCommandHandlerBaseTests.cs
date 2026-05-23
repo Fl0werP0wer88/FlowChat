@@ -126,9 +126,16 @@ public sealed class IdempotentCommandHandlerBaseTests
         unitOfWorkMock
             .Setup(x => x.ExecuteInTransactionAsync(
                 It.IsAny<Func<CancellationToken, Task<FlowChatResult<IdempotentCommandResult<Guid>>>>>(),
+                It.IsAny<Func<FlowChatResult<IdempotentCommandResult<Guid>>, CancellationToken, Task<FlowChatResult<IdempotentCommandResult<Guid>>>>>(),
                 It.IsAny<CancellationToken>()))
-            .Returns<Func<CancellationToken, Task<FlowChatResult<IdempotentCommandResult<Guid>>>>, CancellationToken>(
-                (operation, cancellationToken) => operation(cancellationToken));
+            .Returns<
+                Func<CancellationToken, Task<FlowChatResult<IdempotentCommandResult<Guid>>>>,
+                Func<FlowChatResult<IdempotentCommandResult<Guid>>, CancellationToken, Task<FlowChatResult<IdempotentCommandResult<Guid>>>>,
+                CancellationToken>(async (operation, beforeCommitOperation, cancellationToken) =>
+                {
+                    var result = await operation(cancellationToken);
+                    return await beforeCommitOperation(result, cancellationToken);
+                });
 
         return unitOfWorkMock;
     }
@@ -139,11 +146,16 @@ public sealed class IdempotentCommandHandlerBaseTests
         unitOfWorkMock
             .Setup(x => x.ExecuteInTransactionAsync(
                 It.IsAny<Func<CancellationToken, Task<FlowChatResult<IdempotentCommandResult<Guid>>>>>(),
+                It.IsAny<Func<FlowChatResult<IdempotentCommandResult<Guid>>, CancellationToken, Task<FlowChatResult<IdempotentCommandResult<Guid>>>>>(),
                 It.IsAny<CancellationToken>()))
-            .Returns<Func<CancellationToken, Task<FlowChatResult<IdempotentCommandResult<Guid>>>>, CancellationToken>(
-                async (operation, cancellationToken) =>
+            .Returns<
+                Func<CancellationToken, Task<FlowChatResult<IdempotentCommandResult<Guid>>>>,
+                Func<FlowChatResult<IdempotentCommandResult<Guid>>, CancellationToken, Task<FlowChatResult<IdempotentCommandResult<Guid>>>>,
+                CancellationToken>(
+                async (operation, beforeCommitOperation, cancellationToken) =>
                 {
-                    await operation(cancellationToken);
+                    var result = await operation(cancellationToken);
+                    await beforeCommitOperation(result, cancellationToken);
                     throw exception;
                 });
 
@@ -222,3 +234,4 @@ public sealed class IdempotentCommandHandlerBaseTests
         }
     }
 }
+

@@ -26,23 +26,26 @@ public abstract class CommandHandlerBase<TCommand, TResponse> : ICommandHandler<
     {
         try
         {
-            return await _unitOfWork.ExecuteInTransactionAsync(async token =>
-            {
-                var operationResult = await ExecuteAsync(request, token);
-                if (!operationResult.IsSuccess)
+            return await _unitOfWork.ExecuteInTransactionAsync(
+                async token =>
                 {
-                    throw new CommandFailedException(operationResult);
-                }
+                    var operationResult = await ExecuteAsync(request, token);
+                    if (!operationResult.IsSuccess)
+                    {
+                        throw new CommandFailedException(operationResult);
+                    }
 
-                var aggregateRoot = GetAggregateRoot(operationResult);
-                if (aggregateRoot is not null)
-                {
-                    var domainEvents = aggregateRoot.PopDomainEvents();
-                    await DispatchDomainEventsAsync(domainEvents, token);
-                }
+                    var aggregateRoot = GetAggregateRoot(operationResult);
+                    if (aggregateRoot is not null)
+                    {
+                        var domainEvents = aggregateRoot.PopDomainEvents();
+                        await DispatchDomainEventsAsync(domainEvents, token);
+                    }
 
-                return operationResult;
-            }, cancellationToken);
+                    return operationResult;
+                },
+                HandleResultBeforeCommit,
+                cancellationToken);
         }
         catch (CommandFailedException exception)
         {
@@ -61,6 +64,13 @@ public abstract class CommandHandlerBase<TCommand, TResponse> : ICommandHandler<
     protected abstract Task<FlowChatResult<TResponse>> ExecuteAsync(TCommand request, CancellationToken cancellationToken);
 
     protected abstract IAggregateRoot? GetAggregateRoot(FlowChatResult<TResponse> result);
+
+    protected virtual Task<FlowChatResult<TResponse>> HandleResultBeforeCommit(
+        FlowChatResult<TResponse> result,
+        CancellationToken cancellationToken)
+    {
+        return Task.FromResult(result);
+    }
 
     protected virtual Task<FlowChatResult<TResponse>> HandleDbUpdateExceptionAsync(
         TCommand request,

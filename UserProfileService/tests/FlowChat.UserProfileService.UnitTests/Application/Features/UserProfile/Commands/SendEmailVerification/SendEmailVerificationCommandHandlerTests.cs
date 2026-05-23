@@ -32,8 +32,16 @@ public sealed class SendEmailVerificationCommandHandlerTests
         _unitOfWorkMock
             .Setup(x => x.ExecuteInTransactionAsync(
                 It.IsAny<Func<CancellationToken, Task<FlowChatResult<Guid>>>>(),
+                It.IsAny<Func<FlowChatResult<Guid>, CancellationToken, Task<FlowChatResult<Guid>>>>(),
                 It.IsAny<CancellationToken>()))
-            .Returns<Func<CancellationToken, Task<FlowChatResult<Guid>>>, CancellationToken>((op, ct) => op(ct));
+            .Returns<
+                Func<CancellationToken, Task<FlowChatResult<Guid>>>,
+                Func<FlowChatResult<Guid>, CancellationToken, Task<FlowChatResult<Guid>>>,
+                CancellationToken>(async (operation, beforeCommitOperation, ct) =>
+                {
+                    var result = await operation(ct);
+                    return await beforeCommitOperation(result, ct);
+                });
 
         _handler = new SendEmailVerificationCommandHandler(
             _readRepositoryMock.Object,
@@ -150,3 +158,4 @@ public sealed class SendEmailVerificationCommandHandlerTests
         _issuerMock.Verify(x => x.IssueAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 }
+

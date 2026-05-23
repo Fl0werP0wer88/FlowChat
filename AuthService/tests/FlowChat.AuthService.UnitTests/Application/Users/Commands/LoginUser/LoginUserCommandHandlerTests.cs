@@ -133,3 +133,4 @@ public sealed class LoginUserCommandHandlerTests
         _accountRepositoryMock.Verify(x => x.UpdateAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 }
+

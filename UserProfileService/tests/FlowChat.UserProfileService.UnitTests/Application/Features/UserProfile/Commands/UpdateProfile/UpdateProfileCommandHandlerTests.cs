@@ -25,8 +25,16 @@ public sealed class UpdateProfileCommandHandlerTests
         _unitOfWorkMock
             .Setup(x => x.ExecuteInTransactionAsync(
                 It.IsAny<Func<CancellationToken, Task<FlowChatResult<Guid>>>>(),
+                It.IsAny<Func<FlowChatResult<Guid>, CancellationToken, Task<FlowChatResult<Guid>>>>(),
                 It.IsAny<CancellationToken>()))
-            .Returns<Func<CancellationToken, Task<FlowChatResult<Guid>>>, CancellationToken>((operation, ct) => operation(ct));
+            .Returns<
+                Func<CancellationToken, Task<FlowChatResult<Guid>>>,
+                Func<FlowChatResult<Guid>, CancellationToken, Task<FlowChatResult<Guid>>>,
+                CancellationToken>(async (operation, beforeCommitOperation, ct) =>
+                {
+                    var result = await operation(ct);
+                    return await beforeCommitOperation(result, ct);
+                });
 
         _handler = new UpdateProfileCommandHandler(
             _writeRepositoryMock.Object,
@@ -132,3 +140,4 @@ public sealed class UpdateProfileCommandHandlerTests
         return profile;
     }
 }
+

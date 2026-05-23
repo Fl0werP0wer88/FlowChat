@@ -25,8 +25,16 @@ public sealed class RefreshTokenCommandHandlerTests
         _unitOfWorkMock
             .Setup(x => x.ExecuteInTransactionAsync(
                 It.IsAny<Func<CancellationToken, Task<FlowChatResult<RefreshTokenCommandResponse>>>>(),
+                It.IsAny<Func<FlowChatResult<RefreshTokenCommandResponse>, CancellationToken, Task<FlowChatResult<RefreshTokenCommandResponse>>>>(),
                 It.IsAny<CancellationToken>()))
-            .Returns<Func<CancellationToken, Task<FlowChatResult<RefreshTokenCommandResponse>>>, CancellationToken>((operation, ct) => operation(ct));
+            .Returns<
+                Func<CancellationToken, Task<FlowChatResult<RefreshTokenCommandResponse>>>,
+                Func<FlowChatResult<RefreshTokenCommandResponse>, CancellationToken, Task<FlowChatResult<RefreshTokenCommandResponse>>>,
+                CancellationToken>(async (operation, beforeCommitOperation, ct) =>
+                {
+                    var result = await operation(ct);
+                    return await beforeCommitOperation(result, ct);
+                });
 
         _domainEventDispatcherMock
             .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<IDomainEvent>>(), It.IsAny<CancellationToken>()))
@@ -90,3 +98,4 @@ public sealed class RefreshTokenCommandHandlerTests
         result.Error.ErrorType.Should().Be(ErrorType.Unauthorized);
     }
 }
+

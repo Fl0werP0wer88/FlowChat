@@ -29,9 +29,16 @@ public sealed class CreateDuetConversationCommandHandlerTests
         _unitOfWorkMock
             .Setup(x => x.ExecuteInTransactionAsync(
                 It.IsAny<Func<CancellationToken, Task<FlowChatResult<IdempotentCommandResult<DuetConversationDetailDto>>>>>(),
+                It.IsAny<Func<FlowChatResult<IdempotentCommandResult<DuetConversationDetailDto>>, CancellationToken, Task<FlowChatResult<IdempotentCommandResult<DuetConversationDetailDto>>>>>(),
                 It.IsAny<CancellationToken>()))
-            .Returns<Func<CancellationToken, Task<FlowChatResult<IdempotentCommandResult<DuetConversationDetailDto>>>>, CancellationToken>(
-                (operation, ct) => operation(ct));
+            .Returns<
+                Func<CancellationToken, Task<FlowChatResult<IdempotentCommandResult<DuetConversationDetailDto>>>>,
+                Func<FlowChatResult<IdempotentCommandResult<DuetConversationDetailDto>>, CancellationToken, Task<FlowChatResult<IdempotentCommandResult<DuetConversationDetailDto>>>>,
+                CancellationToken>(async (operation, beforeCommitOperation, ct) =>
+                {
+                    var result = await operation(ct);
+                    return await beforeCommitOperation(result, ct);
+                });
 
         _domainEventDispatcherMock
             .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<IDomainEvent>>(), It.IsAny<CancellationToken>()))
@@ -122,3 +129,4 @@ public sealed class CreateDuetConversationCommandHandlerTests
             Times.Never);
     }
 }
+

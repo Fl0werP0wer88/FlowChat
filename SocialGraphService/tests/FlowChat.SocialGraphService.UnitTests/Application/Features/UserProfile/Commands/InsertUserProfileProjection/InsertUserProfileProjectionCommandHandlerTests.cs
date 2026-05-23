@@ -29,9 +29,16 @@ public sealed class InsertUserProfileProjectionCommandHandlerTests
         _unitOfWorkMock
             .Setup(x => x.ExecuteInTransactionAsync(
                 It.IsAny<Func<CancellationToken, Task<FlowChatResult<IdempotentCommandResult<Unit>>>>>(),
+                It.IsAny<Func<FlowChatResult<IdempotentCommandResult<Unit>>, CancellationToken, Task<FlowChatResult<IdempotentCommandResult<Unit>>>>>(),
                 It.IsAny<CancellationToken>()))
-            .Returns<Func<CancellationToken, Task<FlowChatResult<IdempotentCommandResult<Unit>>>>, CancellationToken>(
-                (operation, ct) => operation(ct));
+            .Returns<
+                Func<CancellationToken, Task<FlowChatResult<IdempotentCommandResult<Unit>>>>,
+                Func<FlowChatResult<IdempotentCommandResult<Unit>>, CancellationToken, Task<FlowChatResult<IdempotentCommandResult<Unit>>>>,
+                CancellationToken>(async (operation, beforeCommitOperation, ct) =>
+                {
+                    var result = await operation(ct);
+                    return await beforeCommitOperation(result, ct);
+                });
 
         _domainEventDispatcherMock
             .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<IDomainEvent>>(), It.IsAny<CancellationToken>()))
@@ -138,3 +145,4 @@ public sealed class InsertUserProfileProjectionCommandHandlerTests
         return await _handler.Handle(command, CancellationToken.None);
     }
 }
+
