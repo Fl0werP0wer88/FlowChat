@@ -24,10 +24,11 @@ public sealed class AddParticipantControllerTests
         };
 
     [Fact]
-    public async Task AddParticipant_WhenParticipantNewlyAdded_Returns202Accepted()
+    public async Task AddParticipant_WhenParticipantsNewlyAdded_Returns202Accepted()
     {
         var conversationId = Guid.NewGuid();
-        var participantId = Guid.NewGuid();
+        var participantId1 = Guid.NewGuid();
+        var participantId2 = Guid.NewGuid();
         AddParticipantCommand? capturedCommand = null;
 
         _mediatorMock
@@ -40,15 +41,17 @@ public sealed class AddParticipantControllerTests
 
         var actionResult = await controller.AddParticipant(
             conversationId,
-            new AddParticipantRequest { ParticipantUserId = participantId },
+            new AddParticipantRequest { ParticipantUserIds = [participantId1, participantId2] },
             CancellationToken.None);
 
         actionResult.Should().BeOfType<AcceptedResult>();
-        capturedCommand.Should().Be(new AddParticipantCommand(conversationId, participantId));
+        capturedCommand.Should().NotBeNull();
+        capturedCommand!.ConversationId.Should().Be(conversationId);
+        capturedCommand.ParticipantUserIds.Should().BeEquivalentTo([participantId1, participantId2]);
     }
 
     [Fact]
-    public async Task AddParticipant_WhenParticipantAlreadyExists_Returns200Ok()
+    public async Task AddParticipant_WhenAllParticipantsAlreadyExist_Returns200Ok()
     {
         var conversationId = Guid.NewGuid();
 
@@ -59,7 +62,7 @@ public sealed class AddParticipantControllerTests
 
         var actionResult = await CreateController().AddParticipant(
             conversationId,
-            new AddParticipantRequest { ParticipantUserId = Guid.NewGuid() },
+            new AddParticipantRequest { ParticipantUserIds = [Guid.NewGuid()] },
             CancellationToken.None);
 
         actionResult.Should().BeOfType<OkResult>();
@@ -75,7 +78,7 @@ public sealed class AddParticipantControllerTests
 
         var actionResult = await CreateController().AddParticipant(
             Guid.NewGuid(),
-            new AddParticipantRequest { ParticipantUserId = Guid.NewGuid() },
+            new AddParticipantRequest { ParticipantUserIds = [Guid.NewGuid()] },
             CancellationToken.None);
 
         actionResult.Should().BeOfType<OkResult>();
@@ -91,7 +94,7 @@ public sealed class AddParticipantControllerTests
 
         var actionResult = await CreateController().AddParticipant(
             Guid.NewGuid(),
-            new AddParticipantRequest { ParticipantUserId = Guid.NewGuid() },
+            new AddParticipantRequest { ParticipantUserIds = [Guid.NewGuid()] },
             CancellationToken.None);
 
         actionResult.Should().BeOfType<NotFoundObjectResult>()
@@ -108,7 +111,7 @@ public sealed class AddParticipantControllerTests
 
         var actionResult = await CreateController().AddParticipant(
             Guid.NewGuid(),
-            new AddParticipantRequest { ParticipantUserId = Guid.NewGuid() },
+            new AddParticipantRequest { ParticipantUserIds = [Guid.NewGuid()] },
             CancellationToken.None);
 
         actionResult.Should().BeOfType<BadRequestObjectResult>()

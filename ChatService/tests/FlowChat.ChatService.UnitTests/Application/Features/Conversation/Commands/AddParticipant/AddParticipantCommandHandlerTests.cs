@@ -10,12 +10,12 @@ using Microsoft.EntityFrameworkCore;
 using Moq;
 using ConversationAggregate = FlowChat.ChatService.Domain.Entities.Conversation.Conversation;
 
+
 namespace FlowChat.ChatService.UnitTests.Application.Features.Conversation.Commands.AddParticipant;
 
 public sealed class AddParticipantCommandHandlerTests
 {
     private readonly Mock<IGroupConversationWriteRepository> _conversationRepositoryMock = new();
-    private readonly Mock<IConversationParticipantReadRepository> _participantReadRepositoryMock = new();
     private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
     private readonly Mock<IDomainEventDispatcher> _domainEventDispatcherMock = new();
     private readonly Mock<IDbUpdateExceptionClassifier> _dbUpdateExceptionClassifierMock = new();
@@ -36,7 +36,6 @@ public sealed class AddParticipantCommandHandlerTests
 
         _handler = new AddParticipantCommandHandler(
             _conversationRepositoryMock.Object,
-            _participantReadRepositoryMock.Object,
             _unitOfWorkMock.Object,
             _domainEventDispatcherMock.Object,
             _dbUpdateExceptionClassifierMock.Object);
@@ -49,7 +48,7 @@ public sealed class AddParticipantCommandHandlerTests
         var existingMemberId = Guid.NewGuid();
         var newMemberId = Guid.NewGuid();
         var conversationId = Guid.NewGuid();
-        var command = new AddParticipantCommand(conversationId, newMemberId);
+        var command = new AddParticipantCommand(conversationId, [newMemberId]);
 
         var conversation = GroupConversation.Create(
             Id<ConversationAggregate>.FromGuid(conversationId),
@@ -80,12 +79,83 @@ public sealed class AddParticipantCommandHandlerTests
     }
 
     [Fact]
-    public async Task Handle_WhenParticipantAlreadyInConversation_ReturnsSuccessWithoutDispatchingEvents()
+    public async Task Handle_MultipleNewParticipants_AddsAllAndDispatchesEventsForEach()
+    {
+        var creatorId = Guid.NewGuid();
+        var newMemberId1 = Guid.NewGuid();
+        var newMemberId2 = Guid.NewGuid();
+        var conversationId = Guid.NewGuid();
+        var command = new AddParticipantCommand(conversationId, [newMemberId1, newMemberId2]);
+
+        var conversation = GroupConversation.Create(
+            Id<ConversationAggregate>.FromGuid(conversationId),
+            creatorId,
+            [creatorId, Guid.NewGuid()],
+            "Dev Team");
+        conversation.ClearEvents();
+
+        List<IDomainEvent> dispatchedEvents = [];
+
+        _conversationRepositoryMock
+            .Setup(x => x.GetByIdAsync(conversationId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(conversation);
+        _domainEventDispatcherMock
+            .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<IDomainEvent>>(), It.IsAny<CancellationToken>()))
+            .Callback<IEnumerable<IDomainEvent>, CancellationToken>((events, _) => dispatchedEvents.AddRange(events))
+            .Returns(Task.CompletedTask);
+
+        var result = await _handler.Handle(command, CancellationToken.None);
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Value.Should().BeTrue();
+        conversation.Participants.Should().Contain(p => p.UserId == newMemberId1);
+        conversation.Participants.Should().Contain(p => p.UserId == newMemberId2);
+        dispatchedEvents.OfType<ParticipantAddedDomainEvent>().Should().HaveCount(2);
+        _conversationRepositoryMock.Verify(x => x.UpdateAsync(conversation, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task Handle_MixedParticipants_AddsOnlyNewOnesAndReturnsTrue()
+    {
+        var creatorId = Guid.NewGuid();
+        var existingMemberId = Guid.NewGuid();
+        var newMemberId = Guid.NewGuid();
+        var conversationId = Guid.NewGuid();
+        var command = new AddParticipantCommand(conversationId, [existingMemberId, newMemberId]);
+
+        var conversation = GroupConversation.Create(
+            Id<ConversationAggregate>.FromGuid(conversationId),
+            creatorId,
+            [creatorId, existingMemberId],
+            "Dev Team");
+        conversation.ClearEvents();
+
+        List<IDomainEvent> dispatchedEvents = [];
+
+        _conversationRepositoryMock
+            .Setup(x => x.GetByIdAsync(conversationId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(conversation);
+        _domainEventDispatcherMock
+            .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<IDomainEvent>>(), It.IsAny<CancellationToken>()))
+            .Callback<IEnumerable<IDomainEvent>, CancellationToken>((events, _) => dispatchedEvents.AddRange(events))
+            .Returns(Task.CompletedTask);
+
+        var result = await _handler.Handle(command, CancellationToken.None);
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Value.Should().BeTrue();
+        dispatchedEvents.OfType<ParticipantAddedDomainEvent>().Should().ContainSingle()
+            .Which.ParticipantUserId.Should().Be(newMemberId);
+        _conversationRepositoryMock.Verify(x => x.UpdateAsync(conversation, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task Handle_WhenAllParticipantsAlreadyInConversation_ReturnsSuccessWithoutDispatchingEvents()
     {
         var creatorId = Guid.NewGuid();
         var existingMemberId = Guid.NewGuid();
         var conversationId = Guid.NewGuid();
-        var command = new AddParticipantCommand(conversationId, existingMemberId);
+        var command = new AddParticipantCommand(conversationId, [existingMemberId]);
 
         var conversation = GroupConversation.Create(
             Id<ConversationAggregate>.FromGuid(conversationId),
@@ -118,7 +188,7 @@ public sealed class AddParticipantCommandHandlerTests
     {
         var conversationId = Guid.NewGuid();
         var participantId = Guid.NewGuid();
-        var command = new AddParticipantCommand(conversationId, participantId);
+        var command = new AddParticipantCommand(conversationId, [participantId]);
 
         var conversation = GroupConversation.Create(
             Id<ConversationAggregate>.FromGuid(conversationId),
@@ -155,37 +225,15 @@ public sealed class AddParticipantCommandHandlerTests
     public async Task Handle_WhenGroupConversationNotFound_ReturnsNotFound()
     {
         var conversationId = Guid.NewGuid();
-        var command = new AddParticipantCommand(conversationId, Guid.NewGuid());
+        var command = new AddParticipantCommand(conversationId, [Guid.NewGuid()]);
 
         _conversationRepositoryMock
             .Setup(x => x.GetByIdAsync(conversationId, It.IsAny<CancellationToken>()))
             .ReturnsAsync((GroupConversation?)null);
-        _participantReadRepositoryMock
-            .Setup(x => x.GetParticipantUserIdsAsync(conversationId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync((IReadOnlyCollection<Guid>?)null);
 
         var result = await _handler.Handle(command, CancellationToken.None);
 
         result.IsFailure.Should().BeTrue();
         result.Error.ErrorType.Should().Be(ErrorType.NotFound);
-    }
-
-    [Fact]
-    public async Task Handle_WhenConversationIsDuet_ReturnsBadRequest()
-    {
-        var conversationId = Guid.NewGuid();
-        var command = new AddParticipantCommand(conversationId, Guid.NewGuid());
-
-        _conversationRepositoryMock
-            .Setup(x => x.GetByIdAsync(conversationId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync((GroupConversation?)null);
-        _participantReadRepositoryMock
-            .Setup(x => x.GetParticipantUserIdsAsync(conversationId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync([Guid.NewGuid(), Guid.NewGuid()]);
-
-        var result = await _handler.Handle(command, CancellationToken.None);
-
-        result.IsFailure.Should().BeTrue();
-        result.Error.ErrorType.Should().Be(ErrorType.BadRequest);
     }
 }

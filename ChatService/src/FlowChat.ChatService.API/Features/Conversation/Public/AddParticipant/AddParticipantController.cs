@@ -28,13 +28,13 @@ public sealed class AddParticipantController : ApiControllerBase
         CancellationToken cancellationToken)
     {
         var result = await _mediator.Send(
-            new AddParticipantCommand(conversationId, request.ParticipantUserId),
+            new AddParticipantCommand(conversationId, request.ParticipantUserIds),
             cancellationToken);
 
         if (!result.IsSuccess)
             return HandleError(result.Error);
 
-        // Value=true: newly added. Value=false (or WasAlreadyProcessed): participant already existed.
+        // Value=true: at least one participant newly added. Value=false: all were already members.
         return result.Value.Value
             ? Accepted()
             : Ok();

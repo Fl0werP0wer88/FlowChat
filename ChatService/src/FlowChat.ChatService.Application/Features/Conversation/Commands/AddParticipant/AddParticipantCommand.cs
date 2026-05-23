@@ -5,7 +5,7 @@ namespace FlowChat.ChatService.Application.Features.Conversation.Commands.AddPar
 
 public sealed record AddParticipantCommand(
     Guid ConversationId,
-    Guid ParticipantUserId) : ICommand<IdempotentCommandResult<bool>>
+    IReadOnlyList<Guid> ParticipantUserIds) : ICommand<IdempotentCommandResult<bool>>
 {
     public const string IdempotencyConflictKey = nameof(AddParticipantCommand);
 }

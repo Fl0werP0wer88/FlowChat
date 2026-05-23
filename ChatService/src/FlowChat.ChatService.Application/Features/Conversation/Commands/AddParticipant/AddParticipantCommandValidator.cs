@@ -10,8 +10,12 @@ public sealed class AddParticipantCommandValidator : AbstractValidator<AddPartic
             .NotEmpty()
             .WithMessage("ConversationId is required.");
 
-        RuleFor(command => command.ParticipantUserId)
+        RuleFor(command => command.ParticipantUserIds)
             .NotEmpty()
-            .WithMessage("ParticipantUserId is required.");
+            .WithMessage("At least one ParticipantUserId is required.");
+
+        RuleForEach(command => command.ParticipantUserIds)
+            .NotEmpty()
+            .WithMessage("Each ParticipantUserId must be a non-empty GUID.");
     }
 }

@@ -4,5 +4,5 @@ namespace FlowChat.ChatService.Api.Features.Conversation.Public.AddParticipant;
 
 public sealed class AddParticipantRequest : IServiceInput
 {
-    public Guid ParticipantUserId { get; init; }
+    public IReadOnlyList<Guid> ParticipantUserIds { get; init; } = [];
 }

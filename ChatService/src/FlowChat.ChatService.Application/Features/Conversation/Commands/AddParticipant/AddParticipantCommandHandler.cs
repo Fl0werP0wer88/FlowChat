@@ -8,41 +8,41 @@ namespace FlowChat.ChatService.Application.Features.Conversation.Commands.AddPar
 public sealed class AddParticipantCommandHandler
     : IdempotentCommandHandlerBase<AddParticipantCommand, bool>
 {
-    private readonly IGroupConversationWriteRepository _conversationRepository;
-    private readonly IConversationParticipantReadRepository _participantReadRepository;
+    private readonly IGroupConversationWriteRepository _groupConversationRepository;
     private GroupConversation? _conversation;
 
     public AddParticipantCommandHandler(
-        IGroupConversationWriteRepository conversationRepository,
-        IConversationParticipantReadRepository participantReadRepository,
+        IGroupConversationWriteRepository groupConversationRepository,
         IUnitOfWork unitOfWork,
         IDomainEventDispatcher domainEventDispatcher,
         IDbUpdateExceptionClassifier dbUpdateExceptionClassifier)
         : base(domainEventDispatcher, unitOfWork, dbUpdateExceptionClassifier)
     {
-        _conversationRepository = conversationRepository ?? throw new ArgumentNullException(nameof(conversationRepository));
-        _participantReadRepository = participantReadRepository ?? throw new ArgumentNullException(nameof(participantReadRepository));
+        _groupConversationRepository = groupConversationRepository ?? throw new ArgumentNullException(nameof(groupConversationRepository));
     }
 
     protected override async Task<FlowChatResult<bool>> ExecuteCommandAsync(
         AddParticipantCommand request,
         CancellationToken cancellationToken)
     {
-        _conversation = await _conversationRepository.GetByIdAsync(request.ConversationId, cancellationToken);
+        _conversation = await _groupConversationRepository.GetByIdAsync(request.ConversationId, cancellationToken);
         if (_conversation is null)
+            return FlowChatResult<bool>.Failure(DomainError.NotFound("Conversation not found."));
+
+        var anyAdded = false;
+        foreach (var participantUserId in request.ParticipantUserIds)
         {
-            var participants = await _participantReadRepository.GetParticipantUserIdsAsync(request.ConversationId, cancellationToken);
-            return participants is null
-                ? FlowChatResult<bool>.Failure(DomainError.NotFound("Conversation not found."))
-                : FlowChatResult<bool>.Failure(DomainError.BadRequest("Cannot add participants to a one-on-one conversation."));
+            if (_conversation.Participants.Any(p => p.UserId == participantUserId))
+                continue;
+
+            _conversation.AddParticipant(participantUserId, displayName: null, avatarUrl: null);
+            anyAdded = true;
         }
 
-        if (_conversation.Participants.Any(p => p.UserId == request.ParticipantUserId))
+        if (!anyAdded)
             return FlowChatResult<bool>.Success(false);
 
-        _conversation.AddParticipant(request.ParticipantUserId, displayName: null, avatarUrl: null);
-
-        await _conversationRepository.UpdateAsync(_conversation, cancellationToken);
+        await _groupConversationRepository.UpdateAsync(_conversation, cancellationToken);
 
         return FlowChatResult<bool>.Success(true);
     }
