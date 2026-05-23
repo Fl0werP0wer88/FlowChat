@@ -14,9 +14,19 @@ public class EfUnitOfWork<TDbContext>(TDbContext dbContext) : IUnitOfWork
 
     public virtual async Task<T> ExecuteInTransactionAsync<T>(
         Func<CancellationToken, Task<T>> operation,
+        CancellationToken cancellationToken) =>
+        await ExecuteInTransactionAsync(
+            operation,
+            static (result, _) => Task.FromResult(result),
+            cancellationToken);
+
+    public virtual async Task<T> ExecuteInTransactionAsync<T>(
+        Func<CancellationToken, Task<T>> operation,
+        Func<T, CancellationToken, Task<T>> beforeCommitOperation,
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(operation);
+        ArgumentNullException.ThrowIfNull(beforeCommitOperation);
         cancellationToken.ThrowIfCancellationRequested();
 
         var strategy = DbContext.Database.CreateExecutionStrategy();
@@ -30,6 +40,7 @@ public class EfUnitOfWork<TDbContext>(TDbContext dbContext) : IUnitOfWork
             {
                 var result = await operation(cancellationToken);
                 await DbContext.SaveChangesAsync(cancellationToken);
+                result = await beforeCommitOperation(result, cancellationToken);
                 await transaction.CommitAsync(cancellationToken);
                 return result;
             }

@@ -37,6 +37,38 @@ public sealed class SilverbackEfUnitOfWorkTests
     }
 
     [Fact]
+    public async Task ExecuteInTransactionAsync_WithBeforeCommitOperation_ReturnsBeforeCommitResult()
+    {
+        await using var connection = new SqliteConnection("Data Source=:memory:");
+        await connection.OpenAsync();
+
+        var silverbackContext = new TestSilverbackContext();
+        await using var dbContext = CreateDbContext(connection);
+        var unitOfWork = new SilverbackEfUnitOfWork<TestDbContext>(dbContext, silverbackContext);
+
+        var result = await unitOfWork.ExecuteInTransactionAsync(
+            async token =>
+            {
+                await dbContext.Records.AddAsync(new TestRecord { Name = "gamma" }, token);
+
+                return 42;
+            },
+            async (operationResult, token) =>
+            {
+                operationResult.Should().Be(42);
+                silverbackContext.GetStorageTransaction().Should().NotBeNull();
+                (await dbContext.Records.CountAsync(token)).Should().Be(1);
+
+                return 84;
+            },
+            CancellationToken.None);
+
+        result.Should().Be(84);
+        silverbackContext.GetStorageTransaction().Should().BeNull();
+        (await dbContext.Records.SingleAsync()).Name.Should().Be("gamma");
+    }
+
+    [Fact]
     public async Task ExecuteInTransactionAsync_WhenOperationThrows_RollsBackAndClearsStorageTransaction()
     {
         await using var connection = new SqliteConnection("Data Source=:memory:");
@@ -59,6 +91,33 @@ public sealed class SilverbackEfUnitOfWorkTests
 
         await act.Should().ThrowAsync<InvalidOperationException>()
             .WithMessage("boom");
+
+        silverbackContext.GetStorageTransaction().Should().BeNull();
+        (await dbContext.Records.CountAsync()).Should().Be(0);
+    }
+
+    [Fact]
+    public async Task ExecuteInTransactionAsync_WhenBeforeCommitOperationThrows_RollsBackAndClearsStorageTransaction()
+    {
+        await using var connection = new SqliteConnection("Data Source=:memory:");
+        await connection.OpenAsync();
+
+        var silverbackContext = new TestSilverbackContext();
+        await using var dbContext = CreateDbContext(connection);
+        var unitOfWork = new SilverbackEfUnitOfWork<TestDbContext>(dbContext, silverbackContext);
+
+        var act = () => unitOfWork.ExecuteInTransactionAsync(
+            async token =>
+            {
+                await dbContext.Records.AddAsync(new TestRecord { Name = "delta" }, token);
+
+                return 42;
+            },
+            (_, _) => throw new InvalidOperationException("before commit failed"),
+            CancellationToken.None);
+
+        await act.Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage("before commit failed");
 
         silverbackContext.GetStorageTransaction().Should().BeNull();
         (await dbContext.Records.CountAsync()).Should().Be(0);
