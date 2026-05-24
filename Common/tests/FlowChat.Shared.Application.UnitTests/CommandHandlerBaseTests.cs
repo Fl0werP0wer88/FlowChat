@@ -152,12 +152,12 @@ public sealed class CommandHandlerBaseTests
             return null;
         }
 
-        protected override Task<FlowChatResult<Guid>> HandleResultBeforeCommit(
+        protected override Task<FlowChatResult<Guid>> AfterCommitHook(
             FlowChatResult<Guid> result,
             CancellationToken cancellationToken)
         {
             return _handleResultBeforeCommitAsync is null
-                ? base.HandleResultBeforeCommit(result, cancellationToken)
+                ? base.AfterCommitHook(result, cancellationToken)
                 : _handleResultBeforeCommitAsync(result, cancellationToken);
         }
 
