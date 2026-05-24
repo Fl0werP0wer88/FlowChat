@@ -26,11 +26,13 @@ public sealed class RefreshTokenCommandHandlerTests
             .Setup(x => x.ExecuteInTransactionAsync(
                 It.IsAny<Func<CancellationToken, Task<FlowChatResult<RefreshTokenCommandResponse>>>>(),
                 It.IsAny<Func<FlowChatResult<RefreshTokenCommandResponse>, CancellationToken, Task<FlowChatResult<RefreshTokenCommandResponse>>>>(),
+                It.IsAny<Func<Exception, CancellationToken, Task>>(),
                 It.IsAny<CancellationToken>()))
             .Returns<
                 Func<CancellationToken, Task<FlowChatResult<RefreshTokenCommandResponse>>>,
                 Func<FlowChatResult<RefreshTokenCommandResponse>, CancellationToken, Task<FlowChatResult<RefreshTokenCommandResponse>>>,
-                CancellationToken>(async (operation, beforeCommitOperation, ct) =>
+                Func<Exception, CancellationToken, Task>,
+                CancellationToken>(async (operation, beforeCommitOperation, _, ct) =>
                 {
                     var result = await operation(ct);
                     return await beforeCommitOperation(result, ct);

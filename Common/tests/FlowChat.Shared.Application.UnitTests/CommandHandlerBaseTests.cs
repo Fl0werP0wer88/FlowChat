@@ -98,21 +98,66 @@ public sealed class CommandHandlerBaseTests
         result.Value.Should().Be(beforeCommitResult.Value);
     }
 
-    private static Mock<IUnitOfWork> CreateUnitOfWorkMock()
+    [Fact]
+    public async Task Handle_WhenTransactionRollsBack_RunsBeforeRollbackHook()
+    {
+        var expectedException = new DbUpdateException("boom");
+        var unitOfWorkMock = CreateUnitOfWorkMock(exceptionAfterBeforeCommit: expectedException);
+        var domainEventDispatcherMock = new Mock<IDomainEventDispatcher>();
+        var operationResult = FlowChatResult<Guid>.Success(Guid.NewGuid());
+        var hookWasCalled = false;
+        var handler = new TestCommandHandler(
+            domainEventDispatcherMock.Object,
+            unitOfWorkMock.Object,
+            (_, _) => Task.FromResult(operationResult),
+            handleBeforeRollback: (request, exception) =>
+            {
+                request.Should().NotBeNull();
+                exception.Should().BeSameAs(expectedException);
+                hookWasCalled = true;
+            },
+            handleDbUpdateExceptionAsync: (_, _, _) =>
+                Task.FromResult(FlowChatResult<Guid>.Failure(DomainError.UnExpected("Handled rollback"))));
+
+        var result = await handler.Handle(new TestCommand(), CancellationToken.None);
+
+        result.IsFailure.Should().BeTrue();
+        result.Error.ErrorMessage.Should().Be("Handled rollback");
+        hookWasCalled.Should().BeTrue();
+    }
+
+    private static Mock<IUnitOfWork> CreateUnitOfWorkMock(Exception? exceptionAfterBeforeCommit = null)
     {
         var unitOfWorkMock = new Mock<IUnitOfWork>();
         unitOfWorkMock
             .Setup(x => x.ExecuteInTransactionAsync(
                 It.IsAny<Func<CancellationToken, Task<FlowChatResult<Guid>>>>(),
                 It.IsAny<Func<FlowChatResult<Guid>, CancellationToken, Task<FlowChatResult<Guid>>>>(),
+                It.IsAny<Func<Exception, CancellationToken, Task>>(),
                 It.IsAny<CancellationToken>()))
             .Returns<
                 Func<CancellationToken, Task<FlowChatResult<Guid>>>,
                 Func<FlowChatResult<Guid>, CancellationToken, Task<FlowChatResult<Guid>>>,
-                CancellationToken>(async (operation, beforeCommitOperation, cancellationToken) =>
+                Func<Exception, CancellationToken, Task>,
+                CancellationToken>(async (operation, beforeCommitOperation, beforeRollbackHook, cancellationToken) =>
                 {
-                    var result = await operation(cancellationToken);
-                    return await beforeCommitOperation(result, cancellationToken);
+                    try
+                    {
+                        var result = await operation(cancellationToken);
+                        result = await beforeCommitOperation(result, cancellationToken);
+
+                        if (exceptionAfterBeforeCommit is not null)
+                        {
+                            throw exceptionAfterBeforeCommit;
+                        }
+
+                        return result;
+                    }
+                    catch (Exception exception)
+                    {
+                        await beforeRollbackHook(exception, cancellationToken);
+                        throw;
+                    }
                 });
 
         return unitOfWorkMock;
@@ -124,6 +169,7 @@ public sealed class CommandHandlerBaseTests
     {
         private readonly Func<TestCommand, CancellationToken, Task<FlowChatResult<Guid>>> _executeAsync;
         private readonly Func<FlowChatResult<Guid>, CancellationToken, Task<FlowChatResult<Guid>>>? _handleResultBeforeCommitAsync;
+        private readonly Action<TestCommand, Exception>? _handleBeforeRollback;
         private readonly Func<TestCommand, DbUpdateException, CancellationToken, Task<FlowChatResult<Guid>>>? _handleDbUpdateExceptionAsync;
         private readonly Func<TestCommand, Exception, CancellationToken, Task<FlowChatResult<Guid>>>? _handleUnexpectedExceptionAsync;
 
@@ -132,12 +178,14 @@ public sealed class CommandHandlerBaseTests
             IUnitOfWork unitOfWork,
             Func<TestCommand, CancellationToken, Task<FlowChatResult<Guid>>> executeAsync,
             Func<FlowChatResult<Guid>, CancellationToken, Task<FlowChatResult<Guid>>>? handleResultBeforeCommitAsync = null,
+            Action<TestCommand, Exception>? handleBeforeRollback = null,
             Func<TestCommand, DbUpdateException, CancellationToken, Task<FlowChatResult<Guid>>>? handleDbUpdateExceptionAsync = null,
             Func<TestCommand, Exception, CancellationToken, Task<FlowChatResult<Guid>>>? handleUnexpectedExceptionAsync = null)
             : base(domainEventDispatcher, unitOfWork)
         {
             _executeAsync = executeAsync;
             _handleResultBeforeCommitAsync = handleResultBeforeCommitAsync;
+            _handleBeforeRollback = handleBeforeRollback;
             _handleDbUpdateExceptionAsync = handleDbUpdateExceptionAsync;
             _handleUnexpectedExceptionAsync = handleUnexpectedExceptionAsync;
         }
@@ -159,6 +207,17 @@ public sealed class CommandHandlerBaseTests
             return _handleResultBeforeCommitAsync is null
                 ? base.BetweenSaveAndComittHook(result, cancellationToken)
                 : _handleResultBeforeCommitAsync(result, cancellationToken);
+        }
+
+        protected override void BeforeRollbackHook(TestCommand request, Exception exception)
+        {
+            if (_handleBeforeRollback is null)
+            {
+                base.BeforeRollbackHook(request, exception);
+                return;
+            }
+
+            _handleBeforeRollback(request, exception);
         }
 
         protected override Task<FlowChatResult<Guid>> OnDbUpdateExceptionAfterRollbackHook(

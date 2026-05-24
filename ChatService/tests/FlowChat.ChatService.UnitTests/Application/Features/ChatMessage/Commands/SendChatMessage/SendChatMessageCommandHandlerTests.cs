@@ -26,11 +26,13 @@ public sealed class SendChatMessageCommandHandlerTests
             .Setup(x => x.ExecuteInTransactionAsync(
                 It.IsAny<Func<CancellationToken, Task<FlowChatResult<IdempotentCommandResult<SendChatMessageCommandResult>>>>>(),
                 It.IsAny<Func<FlowChatResult<IdempotentCommandResult<SendChatMessageCommandResult>>, CancellationToken, Task<FlowChatResult<IdempotentCommandResult<SendChatMessageCommandResult>>>>>(),
+                It.IsAny<Func<Exception, CancellationToken, Task>>(),
                 It.IsAny<CancellationToken>()))
             .Returns<
                 Func<CancellationToken, Task<FlowChatResult<IdempotentCommandResult<SendChatMessageCommandResult>>>>,
                 Func<FlowChatResult<IdempotentCommandResult<SendChatMessageCommandResult>>, CancellationToken, Task<FlowChatResult<IdempotentCommandResult<SendChatMessageCommandResult>>>>,
-                CancellationToken>(async (operation, beforeCommitOperation, ct) =>
+                Func<Exception, CancellationToken, Task>,
+                CancellationToken>(async (operation, beforeCommitOperation, _, ct) =>
                 {
                     var result = await operation(ct);
                     return await beforeCommitOperation(result, ct);

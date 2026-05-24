@@ -27,11 +27,13 @@ public sealed class AddParticipantCommandHandlerTests
             .Setup(x => x.ExecuteInTransactionAsync(
                 It.IsAny<Func<CancellationToken, Task<FlowChatResult<IdempotentCommandResult<bool>>>>>(),
                 It.IsAny<Func<FlowChatResult<IdempotentCommandResult<bool>>, CancellationToken, Task<FlowChatResult<IdempotentCommandResult<bool>>>>>(),
+                It.IsAny<Func<Exception, CancellationToken, Task>>(),
                 It.IsAny<CancellationToken>()))
             .Returns<
                 Func<CancellationToken, Task<FlowChatResult<IdempotentCommandResult<bool>>>>,
                 Func<FlowChatResult<IdempotentCommandResult<bool>>, CancellationToken, Task<FlowChatResult<IdempotentCommandResult<bool>>>>,
-                CancellationToken>(async (operation, beforeCommitOperation, ct) =>
+                Func<Exception, CancellationToken, Task>,
+                CancellationToken>(async (operation, beforeCommitOperation, _, ct) =>
                 {
                     var result = await operation(ct);
                     return await beforeCommitOperation(result, ct);

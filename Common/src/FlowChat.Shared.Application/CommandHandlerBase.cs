@@ -45,6 +45,11 @@ public abstract class CommandHandlerBase<TCommand, TResponse> : ICommandHandler<
                     return operationResult;
                 },
                 BetweenSaveAndComittHook,
+                (exception, _) =>
+                {
+                    BeforeRollbackHook(request, exception);
+                    return Task.CompletedTask;
+                },
                 cancellationToken);
         }
         catch (CommandFailedException exception)
@@ -71,6 +76,10 @@ public abstract class CommandHandlerBase<TCommand, TResponse> : ICommandHandler<
         CancellationToken cancellationToken)
     {
         return Task.FromResult(result);
+    }
+
+    protected virtual void BeforeRollbackHook(TCommand request, Exception exception)
+    {
     }
 
     protected virtual Task<FlowChatResult<TResponse>> OnDbUpdateExceptionAfterRollbackHook(
