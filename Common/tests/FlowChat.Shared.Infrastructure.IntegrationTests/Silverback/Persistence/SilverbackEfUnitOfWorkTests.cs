@@ -123,6 +123,73 @@ public sealed class SilverbackEfUnitOfWorkTests
         (await dbContext.Records.CountAsync()).Should().Be(0);
     }
 
+    [Fact]
+    public async Task ExecuteInTransactionAsync_WhenBeforeCommitOperationThrows_RunsBeforeRollbackHookBeforeRollback()
+    {
+        await using var connection = new SqliteConnection("Data Source=:memory:");
+        await connection.OpenAsync();
+
+        var silverbackContext = new TestSilverbackContext();
+        await using var dbContext = CreateDbContext(connection);
+        var unitOfWork = new SilverbackEfUnitOfWork<TestDbContext>(dbContext, silverbackContext);
+        var hookWasCalled = false;
+
+        var act = () => unitOfWork.ExecuteInTransactionAsync<int>(
+            async token =>
+            {
+                await dbContext.Records.AddAsync(new TestRecord { Name = "epsilon" }, token);
+
+                return 42;
+            },
+            static (_, _) => throw new InvalidOperationException("before commit failed"),
+            async (exception, token) =>
+            {
+                exception.Should().BeOfType<InvalidOperationException>();
+                (await dbContext.Records.CountAsync(token)).Should().Be(1);
+                hookWasCalled = true;
+            },
+            CancellationToken.None);
+
+        await act.Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage("before commit failed");
+
+        hookWasCalled.Should().BeTrue();
+        silverbackContext.GetStorageTransaction().Should().BeNull();
+        (await dbContext.Records.CountAsync()).Should().Be(0);
+    }
+
+    [Fact]
+    public async Task ExecuteInTransactionAsync_WhenOperationSucceeds_DoesNotRunBeforeRollbackHook()
+    {
+        await using var connection = new SqliteConnection("Data Source=:memory:");
+        await connection.OpenAsync();
+
+        var silverbackContext = new TestSilverbackContext();
+        await using var dbContext = CreateDbContext(connection);
+        var unitOfWork = new SilverbackEfUnitOfWork<TestDbContext>(dbContext, silverbackContext);
+        var hookWasCalled = false;
+
+        var result = await unitOfWork.ExecuteInTransactionAsync(
+            async token =>
+            {
+                await dbContext.Records.AddAsync(new TestRecord { Name = "zeta" }, token);
+
+                return 42;
+            },
+            static (operationResult, _) => Task.FromResult(operationResult),
+            (_, _) =>
+            {
+                hookWasCalled = true;
+                return Task.CompletedTask;
+            },
+            CancellationToken.None);
+
+        result.Should().Be(42);
+        hookWasCalled.Should().BeFalse();
+        silverbackContext.GetStorageTransaction().Should().BeNull();
+        (await dbContext.Records.SingleAsync()).Name.Should().Be("zeta");
+    }
+
     private static TestDbContext CreateDbContext(SqliteConnection connection)
     {
         var options = new DbContextOptionsBuilder<TestDbContext>()

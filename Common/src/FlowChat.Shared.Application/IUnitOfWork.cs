@@ -8,5 +8,10 @@ public interface IUnitOfWork : IDisposable
         Func<CancellationToken, Task<T>> operation,
         Func<T, CancellationToken, Task<T>> beforeCommitOperation,
         CancellationToken cancellationToken);
+    Task<T> ExecuteInTransactionAsync<T>(
+        Func<CancellationToken, Task<T>> operation,
+        Func<T, CancellationToken, Task<T>> beforeCommitOperation,
+        Func<Exception, CancellationToken, Task> beforeRollbackHook,
+        CancellationToken cancellationToken);
 }
 

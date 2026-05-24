@@ -18,15 +18,28 @@ public class EfUnitOfWork<TDbContext>(TDbContext dbContext) : IUnitOfWork
         await ExecuteInTransactionAsync(
             beforeSaveOperation,
             static (result, _) => Task.FromResult(result),
+            static (_, _) => Task.CompletedTask,
             cancellationToken);
 
     public virtual async Task<T> ExecuteInTransactionAsync<T>(
         Func<CancellationToken, Task<T>> beforeSaveOperation,
         Func<T, CancellationToken, Task<T>> beforeCommitOperation,
+        CancellationToken cancellationToken) =>
+        await ExecuteInTransactionAsync(
+            beforeSaveOperation,
+            beforeCommitOperation,
+            static (_, _) => Task.CompletedTask,
+            cancellationToken);
+
+    public virtual async Task<T> ExecuteInTransactionAsync<T>(
+        Func<CancellationToken, Task<T>> beforeSaveOperation,
+        Func<T, CancellationToken, Task<T>> beforeCommitOperation,
+        Func<Exception, CancellationToken, Task> beforeRollbackHook,
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(beforeSaveOperation);
         ArgumentNullException.ThrowIfNull(beforeCommitOperation);
+        ArgumentNullException.ThrowIfNull(beforeRollbackHook);
         cancellationToken.ThrowIfCancellationRequested();
 
         var strategy = DbContext.Database.CreateExecutionStrategy();
@@ -44,8 +57,9 @@ public class EfUnitOfWork<TDbContext>(TDbContext dbContext) : IUnitOfWork
                 await transaction.CommitAsync(cancellationToken);
                 return result;
             }
-            catch
+            catch (Exception exception)
             {
+                await beforeRollbackHook(exception, cancellationToken);
                 await transaction.RollbackAsync(cancellationToken);
                 throw;
             }
