@@ -13,19 +13,19 @@ public class EfUnitOfWork<TDbContext>(TDbContext dbContext) : IUnitOfWork
         await DbContext.SaveChangesAsync(cancellationToken);
 
     public virtual async Task<T> ExecuteInTransactionAsync<T>(
-        Func<CancellationToken, Task<T>> operation,
+        Func<CancellationToken, Task<T>> beforeSaveOperation,
         CancellationToken cancellationToken) =>
         await ExecuteInTransactionAsync(
-            operation,
+            beforeSaveOperation,
             static (result, _) => Task.FromResult(result),
             cancellationToken);
 
     public virtual async Task<T> ExecuteInTransactionAsync<T>(
-        Func<CancellationToken, Task<T>> operation,
+        Func<CancellationToken, Task<T>> beforeSaveOperation,
         Func<T, CancellationToken, Task<T>> beforeCommitOperation,
         CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(operation);
+        ArgumentNullException.ThrowIfNull(beforeSaveOperation);
         ArgumentNullException.ThrowIfNull(beforeCommitOperation);
         cancellationToken.ThrowIfCancellationRequested();
 
@@ -38,7 +38,7 @@ public class EfUnitOfWork<TDbContext>(TDbContext dbContext) : IUnitOfWork
 
             try
             {
-                var result = await operation(cancellationToken);
+                var result = await beforeSaveOperation(cancellationToken);
                 await DbContext.SaveChangesAsync(cancellationToken);
                 result = await beforeCommitOperation(result, cancellationToken);
                 await transaction.CommitAsync(cancellationToken);
