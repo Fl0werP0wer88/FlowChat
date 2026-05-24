@@ -24,16 +24,6 @@ public class EfUnitOfWork<TDbContext>(TDbContext dbContext) : IUnitOfWork
     public virtual async Task<T> ExecuteInTransactionAsync<T>(
         Func<CancellationToken, Task<T>> beforeSaveOperation,
         Func<T, CancellationToken, Task<T>> beforeCommitOperation,
-        CancellationToken cancellationToken) =>
-        await ExecuteInTransactionAsync(
-            beforeSaveOperation,
-            beforeCommitOperation,
-            static (_, _) => Task.CompletedTask,
-            cancellationToken);
-
-    public virtual async Task<T> ExecuteInTransactionAsync<T>(
-        Func<CancellationToken, Task<T>> beforeSaveOperation,
-        Func<T, CancellationToken, Task<T>> beforeCommitOperation,
         Func<Exception, CancellationToken, Task> beforeRollbackHook,
         CancellationToken cancellationToken)
     {

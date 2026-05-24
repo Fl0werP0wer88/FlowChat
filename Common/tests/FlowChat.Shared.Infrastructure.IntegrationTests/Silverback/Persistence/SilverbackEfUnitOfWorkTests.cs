@@ -61,6 +61,7 @@ public sealed class SilverbackEfUnitOfWorkTests
 
                 return 84;
             },
+            static (_, _) => Task.CompletedTask,
             CancellationToken.None);
 
         result.Should().Be(84);
@@ -114,6 +115,7 @@ public sealed class SilverbackEfUnitOfWorkTests
                 return 42;
             },
             (_, _) => throw new InvalidOperationException("before commit failed"),
+            static (_, _) => Task.CompletedTask,
             CancellationToken.None);
 
         await act.Should().ThrowAsync<InvalidOperationException>()
