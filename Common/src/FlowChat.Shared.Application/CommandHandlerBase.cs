@@ -44,7 +44,7 @@ public abstract class CommandHandlerBase<TCommand, TResponse> : ICommandHandler<
 
                     return operationResult;
                 },
-                AfterCommitHook,
+                BetweenSaveAndComittHook,
                 cancellationToken);
         }
         catch (CommandFailedException exception)
@@ -65,7 +65,7 @@ public abstract class CommandHandlerBase<TCommand, TResponse> : ICommandHandler<
 
     protected abstract IAggregateRoot? GetAggregateRoot(FlowChatResult<TResponse> result);
 
-    protected virtual Task<FlowChatResult<TResponse>> AfterCommitHook(
+    protected virtual Task<FlowChatResult<TResponse>> BetweenSaveAndComittHook(
         FlowChatResult<TResponse> result,
         CancellationToken cancellationToken)
     {
