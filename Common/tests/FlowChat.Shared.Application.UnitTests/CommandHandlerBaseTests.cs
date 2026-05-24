@@ -161,13 +161,13 @@ public sealed class CommandHandlerBaseTests
                 : _handleResultBeforeCommitAsync(result, cancellationToken);
         }
 
-        protected override Task<FlowChatResult<Guid>> HandleDbUpdateExceptionAsync(
+        protected override Task<FlowChatResult<Guid>> OnDbUpdateExceptionAfterRollbackHook(
             TestCommand request,
             DbUpdateException exception,
             CancellationToken cancellationToken)
         {
             return _handleDbUpdateExceptionAsync is null
-                ? base.HandleDbUpdateExceptionAsync(request, exception, cancellationToken)
+                ? base.OnDbUpdateExceptionAfterRollbackHook(request, exception, cancellationToken)
                 : _handleDbUpdateExceptionAsync(request, exception, cancellationToken);
         }
 

@@ -95,7 +95,7 @@ public sealed class ConfirmEmailVerificationCommandHandler
         return Success(wasAlreadyProcessed: false);
     }
 
-    protected override async Task<FlowChatResult<IdempotentCommandResult<Unit>>> HandleDbUpdateExceptionAsync(
+    protected override async Task<FlowChatResult<IdempotentCommandResult<Unit>>> OnDbUpdateExceptionAfterRollbackHook(
         ConfirmEmailVerificationCommand request,
         DbUpdateException exception,
         CancellationToken cancellationToken)
@@ -104,7 +104,7 @@ public sealed class ConfirmEmailVerificationCommandHandler
             || !_emailVerificationTokenProtector.TryUnprotect(request.Token, out var payload)
             || payload is null)
         {
-            return await base.HandleDbUpdateExceptionAsync(request, exception, cancellationToken);
+            return await base.OnDbUpdateExceptionAfterRollbackHook(request, exception, cancellationToken);
         }
 
         var confirmationState = await _emailVerificationRequestWriteRepository
@@ -115,7 +115,7 @@ public sealed class ConfirmEmailVerificationCommandHandler
             return Success(wasAlreadyProcessed: true);
         }
 
-        return await base.HandleDbUpdateExceptionAsync(request, exception, cancellationToken);
+        return await base.OnDbUpdateExceptionAfterRollbackHook(request, exception, cancellationToken);
     }
 
     protected override IAggregateRoot? GetAggregateRoot(FlowChatResult<IdempotentCommandResult<Unit>> result)

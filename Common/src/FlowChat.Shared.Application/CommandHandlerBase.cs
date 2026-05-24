@@ -53,7 +53,8 @@ public abstract class CommandHandlerBase<TCommand, TResponse> : ICommandHandler<
         }
         catch (DbUpdateException exception)
         {
-            return await HandleDbUpdateExceptionAsync(request, exception, cancellationToken);
+            // Keep this outside the unit of work so EF execution strategies can finish all retries before application-specific recovery runs
+            return await OnDbUpdateExceptionAfterRollbackHook(request, exception, cancellationToken);
         }
         catch (Exception exception)
         {
@@ -72,7 +73,7 @@ public abstract class CommandHandlerBase<TCommand, TResponse> : ICommandHandler<
         return Task.FromResult(result);
     }
 
-    protected virtual Task<FlowChatResult<TResponse>> HandleDbUpdateExceptionAsync(
+    protected virtual Task<FlowChatResult<TResponse>> OnDbUpdateExceptionAfterRollbackHook(
         TCommand request,
         DbUpdateException exception,
         CancellationToken cancellationToken)

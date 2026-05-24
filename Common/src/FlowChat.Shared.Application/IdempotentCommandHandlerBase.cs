@@ -40,7 +40,7 @@ public abstract class IdempotentCommandHandlerBase<TCommand, TValue>
             : null;
     }
 
-    protected override async Task<FlowChatResult<IdempotentCommandResult<TValue>>> HandleDbUpdateExceptionAsync(
+    protected override async Task<FlowChatResult<IdempotentCommandResult<TValue>>> OnDbUpdateExceptionAfterRollbackHook(
         TCommand request,
         DbUpdateException exception,
         CancellationToken cancellationToken)
@@ -49,13 +49,13 @@ public abstract class IdempotentCommandHandlerBase<TCommand, TValue>
                 exception,
                 GetIdempotencyConflictKey(request)))
         {
-            return await base.HandleDbUpdateExceptionAsync(request, exception, cancellationToken);
+            return await base.OnDbUpdateExceptionAfterRollbackHook(request, exception, cancellationToken);
         }
 
         var existing = await TryGetExistingResponseAsync(request, cancellationToken);
         if (!existing.Found)
         {
-            return await base.HandleDbUpdateExceptionAsync(request, exception, cancellationToken);
+            return await base.OnDbUpdateExceptionAfterRollbackHook(request, exception, cancellationToken);
         }
 
         return FlowChatResult<IdempotentCommandResult<TValue>>.Success(
