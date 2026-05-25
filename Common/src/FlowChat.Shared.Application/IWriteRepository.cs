@@ -2,12 +2,8 @@ using FlowChat.Shared.Domain;
 
 namespace FlowChat.Shared.Application;
 
-public interface IWriteRepository<TEntity> where TEntity : class, IEntity<TEntity>, IAggregateRoot
+public interface IWriteRepository<TAggregate> : IWriteRepository<TAggregate, TAggregate> where TAggregate : class, IEntity<TAggregate>, IAggregateRoot
 {
-    Task<TEntity?> GetByIdAsync(Id<TEntity> id, CancellationToken cancellationToken = default);
-    Task<TEntity> AddAsync(TEntity entity, CancellationToken cancellationToken = default);
-    Task UpdateAsync(TEntity entity, CancellationToken cancellationToken = default);
-    Task DeleteAsync(TEntity entity, CancellationToken cancellationToken = default);
 }
 
 public interface IWriteRepository<TAggregate, TEntity>
