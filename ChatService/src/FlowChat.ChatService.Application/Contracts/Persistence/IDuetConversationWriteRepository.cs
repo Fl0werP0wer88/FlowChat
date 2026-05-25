@@ -1,10 +1,6 @@
 using FlowChat.ChatService.Domain.Entities.Conversation;
+using FlowChat.Shared.Application;
 
 namespace FlowChat.ChatService.Application.Contracts.Persistence;
 
-public interface IDuetConversationWriteRepository
-{
-    Task<DuetConversation> AddAsync(
-        DuetConversation conversation,
-        CancellationToken cancellationToken = default);
-}
+public interface IDuetConversationWriteRepository : IWriteRepository<DuetConversation, Conversation>;
