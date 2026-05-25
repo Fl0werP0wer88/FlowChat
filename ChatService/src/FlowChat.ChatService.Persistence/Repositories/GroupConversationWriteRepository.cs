@@ -10,11 +10,12 @@ public sealed class GroupConversationWriteRepository(AppDbContext dbContext)
     : WriteRepositoryBase<GroupConversation, Conversation>(dbContext), IGroupConversationWriteRepository
 {
     // Eagerly loads participants required by all handlers that mutate group state
-    public override async Task<GroupConversation?> GetByIdAsync(Id<Conversation> id, CancellationToken cancellationToken = default)
+    public override async Task<GroupConversation?> GetByIdAsync(Id<GroupConversation> id, CancellationToken cancellationToken = default)
     {
+        var conversationId = Id<Conversation>.FromId(id);
         return await DbContext.Set<GroupConversation>()
             .Include(x => x.Participants)
-            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+            .FirstOrDefaultAsync(x => x.Id == conversationId, cancellationToken);
     }
 }
 

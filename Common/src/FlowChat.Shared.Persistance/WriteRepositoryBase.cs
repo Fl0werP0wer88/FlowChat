@@ -6,15 +6,16 @@ namespace FlowChat.Shared.Persistance;
 
 public class WriteRepositoryBase<TAggregate, TEntity>(DbContext dbContext)
     : IWriteRepository<TAggregate, TEntity>
-    where TEntity : class, IEntity<TEntity>, IAggregateRoot
-    where TAggregate : class, TEntity
+    where TEntity : class, IEntity<TEntity>
+    where TAggregate : class, TEntity, IAggregateRoot
 {
     protected readonly DbContext DbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
 
-    public virtual async Task<TAggregate?> GetByIdAsync(Id<TEntity> id, CancellationToken cancellationToken = default)
+    public virtual async Task<TAggregate?> GetByIdAsync(Id<TAggregate> id, CancellationToken cancellationToken = default)
     {
+        var entityId = Id<TEntity>.FromId(id);
         return await DbContext.Set<TAggregate>()
-            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+            .FirstOrDefaultAsync(x => x.Id == entityId, cancellationToken);
     }
 
     public virtual async Task<TAggregate> AddAsync(TAggregate aggregate, CancellationToken cancellationToken = default)
@@ -36,6 +37,6 @@ public class WriteRepositoryBase<TAggregate, TEntity>(DbContext dbContext)
     }
 }
 
-public class WriteRepositoryBase<TEntity>(DbContext dbContext)
-    : WriteRepositoryBase<TEntity, TEntity>(dbContext), IWriteRepository<TEntity>
-    where TEntity : class, IEntity<TEntity>, IAggregateRoot;
+public class WriteRepositoryBase<TAggregate>(DbContext dbContext)
+    : WriteRepositoryBase<TAggregate, TAggregate>(dbContext), IWriteRepository<TAggregate>
+    where TAggregate : class, IEntity<TAggregate>, IAggregateRoot;
