@@ -42,14 +42,8 @@ public abstract class IdempotentCommandHandlerBase<TCommand, TValue>
 
                     if (IsCommandFirstSucessfullRun(operationResult))
                     {
-                        var aggregateRoot = GetAggregateRoot();
-                        if (aggregateRoot is not null)
-                        {
-                            var domainEvents = aggregateRoot.PopDomainEvents();
-                            await DispatchDomainEventsAsync(domainEvents, token);
-                        }
+                        await DispatchDomainEventsAsync(token);
                     }
-
 
                     return operationResult;
                 },
@@ -83,9 +77,8 @@ public abstract class IdempotentCommandHandlerBase<TCommand, TValue>
 
     private bool IsCommandFirstSucessfullRun(FlowChatResult<IdempotentCommandResult<TValue>> result)
     {
-        return result.IsSuccess && !result.Value.WasAlreadyProcessed
-            // ? GetAggregateRoot()
-            // : null;
+        return result.IsSuccess && !result.Value.WasAlreadyProcessed;
+
     }
 
     protected abstract IAggregateRoot? GetAggregateRoot();
@@ -121,8 +114,17 @@ public abstract class IdempotentCommandHandlerBase<TCommand, TValue>
         throw new UnreachableException();
     }
 
-    protected Task DispatchDomainEventsAsync(IEnumerable<IDomainEvent> domainEvents, CancellationToken cancellationToken)
+    protected Task DispatchDomainEventsAsync(CancellationToken cancellationToken)
     {
+        var aggregateRoot = GetAggregateRoot();
+
+        if (aggregateRoot is null)
+        {
+            return Task.CompletedTask;
+        }
+
+        var domainEvents = aggregateRoot.PopDomainEvents();
+
         if (domainEvents is null)
         {
             return Task.CompletedTask;
