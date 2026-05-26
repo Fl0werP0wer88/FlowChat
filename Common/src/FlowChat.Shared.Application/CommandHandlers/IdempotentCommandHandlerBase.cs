@@ -40,12 +40,16 @@ public abstract class IdempotentCommandHandlerBase<TCommand, TValue>
                         throw new CommandFailedException(operationResult);
                     }
 
-                    var aggregateRoot = GetExecutedAggregateRoot(operationResult);
-                    if (aggregateRoot is not null)
+                    if (IsCommandFirstSucessfullRun(operationResult))
                     {
-                        var domainEvents = aggregateRoot.PopDomainEvents();
-                        await DispatchDomainEventsAsync(domainEvents, token);
+                        var aggregateRoot = GetAggregateRoot();
+                        if (aggregateRoot is not null)
+                        {
+                            var domainEvents = aggregateRoot.PopDomainEvents();
+                            await DispatchDomainEventsAsync(domainEvents, token);
+                        }
                     }
+
 
                     return operationResult;
                 },
@@ -77,11 +81,11 @@ public abstract class IdempotentCommandHandlerBase<TCommand, TValue>
             : FlowChatResult<IdempotentCommandResult<TValue>>.Failure(executed.Error);
     }
 
-    private IAggregateRoot? GetExecutedAggregateRoot(FlowChatResult<IdempotentCommandResult<TValue>> result)
+    private bool IsCommandFirstSucessfullRun(FlowChatResult<IdempotentCommandResult<TValue>> result)
     {
         return result.IsSuccess && !result.Value.WasAlreadyProcessed
-            ? GetAggregateRoot()
-            : null;
+            // ? GetAggregateRoot()
+            // : null;
     }
 
     protected abstract IAggregateRoot? GetAggregateRoot();
