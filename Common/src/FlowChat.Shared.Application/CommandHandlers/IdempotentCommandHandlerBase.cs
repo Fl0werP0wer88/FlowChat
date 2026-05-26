@@ -86,11 +86,11 @@ public abstract class IdempotentCommandHandlerBase<TCommand, TValue>
     private IAggregateRoot? GetExecutedAggregateRoot(FlowChatResult<IdempotentCommandResult<TValue>> result)
     {
         return result.IsSuccess && !result.Value.WasAlreadyProcessed
-            ? GetAggregateRoot(result.Value)
+            ? GetAggregateRoot()
             : null;
     }
 
-    protected abstract IAggregateRoot? GetAggregateRoot(IdempotentCommandResult<TValue> result);
+    protected abstract IAggregateRoot? GetAggregateRoot();
 
     protected virtual Task<FlowChatResult<IdempotentCommandResult<TValue>>> BetweenSaveAndComittHook(
         FlowChatResult<IdempotentCommandResult<TValue>> result,

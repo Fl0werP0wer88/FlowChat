@@ -77,7 +77,7 @@ public sealed class CreateInitialUserProfileCommandHandler
         CancellationToken cancellationToken)
         => Task.FromResult((true, request.UserId));
 
-    protected override IAggregateRoot? GetAggregateRoot(IdempotentCommandResult<Guid> result) => _userProfile;
+    protected override IAggregateRoot? GetAggregateRoot() => _userProfile;
 
     protected override string GetIdempotencyConflictKey(CreateInitialUserProfileCommand request) =>
         CreateInitialUserProfileCommand.IdempotencyConflictKey;

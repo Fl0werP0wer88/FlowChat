@@ -69,7 +69,7 @@ public sealed class CreateGroupConversationCommandHandler
             : (false, default!);
     }
 
-    protected override IAggregateRoot? GetAggregateRoot(IdempotentCommandResult<GroupConversationDetailDto> result) =>
+    protected override IAggregateRoot? GetAggregateRoot() =>
         _conversation;
 
     protected override string GetIdempotencyConflictKey(CreateGroupConversationCommand request) =>

@@ -91,7 +91,7 @@ public sealed class CreateGroupFromDuetCommandHandler
             : (false, default!);
     }
 
-    protected override IAggregateRoot? GetAggregateRoot(IdempotentCommandResult<GroupConversationDetailDto> result) =>
+    protected override IAggregateRoot? GetAggregateRoot() =>
         _conversation;
 
     protected override string GetIdempotencyConflictKey(CreateGroupFromDuetCommand request) =>

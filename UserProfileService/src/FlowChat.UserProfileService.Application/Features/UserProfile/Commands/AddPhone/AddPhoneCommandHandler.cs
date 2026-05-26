@@ -62,7 +62,7 @@ public sealed class AddPhoneCommandHandler
         return FlowChatResult<Guid>.Success(phone.Id.Value);
     }
 
-    protected override IAggregateRoot? GetAggregateRoot(IdempotentCommandResult<Guid> result) =>
+    protected override IAggregateRoot? GetAggregateRoot() =>
         _userProfile;
 
     protected override string GetIdempotencyConflictKey(AddPhoneCommand request) =>

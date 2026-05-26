@@ -52,9 +52,8 @@ public sealed class AddParticipantCommandHandler
         CancellationToken cancellationToken)
         => Task.FromResult((true, false));
 
-    // Dispatch domain events only when participant was newly added (Value = true).
-    protected override IAggregateRoot? GetAggregateRoot(IdempotentCommandResult<bool> result) =>
-        result.Value ? _conversation : null;
+    protected override IAggregateRoot? GetAggregateRoot() =>
+        _conversation;
 
     protected override string GetIdempotencyConflictKey(AddParticipantCommand request) =>
         AddParticipantCommand.IdempotencyConflictKey;
