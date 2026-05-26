@@ -12,7 +12,7 @@ public sealed class PostgresDbUpdateExceptionClassifierTests
         var classifier = CreateClassifier("chat.send-message", ["ux_messages_id"]);
         var exception = CreateDbUpdateException(PostgresErrorCodes.UniqueViolation, "ux_messages_id");
 
-        var result = classifier.IsExpectedIdempotencyConflict(exception, "chat.send-message");
+        var result = classifier.IsIdempotencyConflict(exception, "chat.send-message");
 
         result.Should().BeTrue();
     }
@@ -23,7 +23,7 @@ public sealed class PostgresDbUpdateExceptionClassifierTests
         var classifier = CreateClassifier("chat.send-message", ["ux_messages_id"]);
         var exception = CreateDbUpdateException(PostgresErrorCodes.UniqueViolation, "ux_messages_email");
 
-        var result = classifier.IsExpectedIdempotencyConflict(exception, "chat.send-message");
+        var result = classifier.IsIdempotencyConflict(exception, "chat.send-message");
 
         result.Should().BeFalse();
     }
@@ -34,7 +34,7 @@ public sealed class PostgresDbUpdateExceptionClassifierTests
         var classifier = CreateClassifier("chat.send-message", ["ux_messages_id"]);
         var exception = CreateDbUpdateException(PostgresErrorCodes.UniqueViolation, "ux_messages_id");
 
-        var result = classifier.IsExpectedIdempotencyConflict(exception, "chat.create-room");
+        var result = classifier.IsIdempotencyConflict(exception, "chat.create-room");
 
         result.Should().BeFalse();
     }
@@ -45,7 +45,7 @@ public sealed class PostgresDbUpdateExceptionClassifierTests
         var classifier = CreateClassifier("chat.send-message", ["ux_messages_id"]);
         var exception = CreateDbUpdateException(PostgresErrorCodes.SerializationFailure, "ux_messages_id");
 
-        var result = classifier.IsExpectedIdempotencyConflict(exception, "chat.send-message");
+        var result = classifier.IsIdempotencyConflict(exception, "chat.send-message");
 
         result.Should().BeFalse();
     }
@@ -56,7 +56,7 @@ public sealed class PostgresDbUpdateExceptionClassifierTests
         var classifier = CreateClassifier("chat.send-message", ["ux_messages_id"]);
         var exception = new DbUpdateException("Update failed.", new InvalidOperationException("boom"));
 
-        var result = classifier.IsExpectedIdempotencyConflict(exception, "chat.send-message");
+        var result = classifier.IsIdempotencyConflict(exception, "chat.send-message");
 
         result.Should().BeFalse();
     }

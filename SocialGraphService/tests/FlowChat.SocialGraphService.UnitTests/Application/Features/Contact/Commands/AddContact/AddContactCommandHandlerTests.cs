@@ -321,7 +321,7 @@ public sealed class AddContactCommandHandlerTests
             .Setup(x => x.AddAsync(It.IsAny<Contact>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new DbUpdateException("duplicate"));
         _dbUpdateExceptionClassifierMock
-            .Setup(x => x.IsExpectedIdempotencyConflict(It.IsAny<DbUpdateException>(), AddContactCommand.IdempotencyConflictKey))
+            .Setup(x => x.IsIdempotencyConflict(It.IsAny<DbUpdateException>(), AddContactCommand.IdempotencyConflictKey))
             .Returns(true);
         _contactWriteRepositoryMock
             .Setup(x => x.GetByIdAsync(command.Id, It.IsAny<CancellationToken>()))

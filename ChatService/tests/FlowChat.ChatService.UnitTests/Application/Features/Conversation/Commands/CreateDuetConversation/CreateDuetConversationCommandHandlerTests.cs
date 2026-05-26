@@ -110,7 +110,7 @@ public sealed class CreateDuetConversationCommandHandlerTests
             .Setup(x => x.AddAsync(It.IsAny<DuetConversation>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new DbUpdateException("duplicate"));
         _dbUpdateExceptionClassifierMock
-            .Setup(x => x.IsExpectedIdempotencyConflict(It.IsAny<DbUpdateException>(), CreateDuetConversationCommand.IdempotencyConflictKey))
+            .Setup(x => x.IsIdempotencyConflict(It.IsAny<DbUpdateException>(), CreateDuetConversationCommand.IdempotencyConflictKey))
             .Returns(true);
         _duetConversationReadRepositoryMock
             .Setup(x => x.GetByUserIdsAsync(command.RequestingUserId, command.PartnerUserId, It.IsAny<CancellationToken>()))

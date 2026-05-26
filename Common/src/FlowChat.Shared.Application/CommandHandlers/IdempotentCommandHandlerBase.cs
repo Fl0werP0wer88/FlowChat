@@ -87,7 +87,7 @@ public abstract class IdempotentCommandHandlerBase<TCommand, TValue>
         DbUpdateException exception,
         CancellationToken cancellationToken)
     {
-        if (!_dbUpdateExceptionClassifier.IsExpectedIdempotencyConflict(
+        if (!_dbUpdateExceptionClassifier.IsIdempotencyConflict(
                 exception,
                 GetIdempotencyConflictKey(request)))
         {

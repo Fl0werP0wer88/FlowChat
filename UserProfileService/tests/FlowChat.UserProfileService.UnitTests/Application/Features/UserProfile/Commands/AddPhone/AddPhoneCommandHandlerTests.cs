@@ -163,7 +163,7 @@ public sealed class AddPhoneCommandHandlerTests
             .Setup(x => x.GetByIdAsync(profile.Id.Value, It.IsAny<CancellationToken>()))
             .ReturnsAsync(profile);
         _dbUpdateExceptionClassifierMock
-            .Setup(x => x.IsExpectedIdempotencyConflict(It.IsAny<DbUpdateException>(), AddPhoneCommand.IdempotencyConflictKey))
+            .Setup(x => x.IsIdempotencyConflict(It.IsAny<DbUpdateException>(), AddPhoneCommand.IdempotencyConflictKey))
             .Returns(true);
         _dispatcherMock
             .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<IDomainEvent>>(), It.IsAny<CancellationToken>()))

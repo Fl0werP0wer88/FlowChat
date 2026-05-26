@@ -215,7 +215,7 @@ public sealed class AddParticipantCommandHandlerTests
             .Setup(x => x.UpdateAsync(It.IsAny<GroupConversation>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new DbUpdateException("duplicate"));
         _dbUpdateExceptionClassifierMock
-            .Setup(x => x.IsExpectedIdempotencyConflict(It.IsAny<DbUpdateException>(), AddParticipantCommand.IdempotencyConflictKey))
+            .Setup(x => x.IsIdempotencyConflict(It.IsAny<DbUpdateException>(), AddParticipantCommand.IdempotencyConflictKey))
             .Returns(true);
         _domainEventDispatcherMock
             .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<IDomainEvent>>(), It.IsAny<CancellationToken>()))

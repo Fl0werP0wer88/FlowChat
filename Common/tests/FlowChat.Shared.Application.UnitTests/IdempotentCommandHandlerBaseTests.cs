@@ -28,7 +28,7 @@ public sealed class IdempotentCommandHandlerBaseTests
         handler.ExecuteCommandCallCount.Should().Be(1);
         handler.LookupCallCount.Should().Be(0);
         classifierMock.Verify(
-            x => x.IsExpectedIdempotencyConflict(
+            x => x.IsIdempotencyConflict(
                 It.IsAny<DbUpdateException>(),
                 It.IsAny<string>()),
             Times.Never);
@@ -55,7 +55,7 @@ public sealed class IdempotentCommandHandlerBaseTests
         handler.ExecuteCommandCallCount.Should().Be(1);
         handler.LookupCallCount.Should().Be(1);
         classifierMock.Verify(
-            x => x.IsExpectedIdempotencyConflict(
+            x => x.IsIdempotencyConflict(
                 uniqueViolation,
                 typeof(TestIdempotentCommand).FullName!),
             Times.Once);
@@ -114,7 +114,7 @@ public sealed class IdempotentCommandHandlerBaseTests
         await handler.Handle(new TestIdempotentCommand(), CancellationToken.None);
 
         classifierMock.Verify(
-            x => x.IsExpectedIdempotencyConflict(
+            x => x.IsIdempotencyConflict(
                 uniqueViolation,
                 "chat.send-message"),
             Times.Once);
@@ -156,7 +156,7 @@ public sealed class IdempotentCommandHandlerBaseTests
     {
         var classifierMock = new Mock<IDbUpdateExceptionClassifier>();
         classifierMock
-            .Setup(x => x.IsExpectedIdempotencyConflict(
+            .Setup(x => x.IsIdempotencyConflict(
                 It.IsAny<DbUpdateException>(),
                 It.IsAny<string>()))
             .Returns(isExpectedUniqueConstraintViolation);

@@ -156,7 +156,7 @@ public sealed class SendChatMessageCommandHandlerTests
             .Setup(x => x.AddAsync(It.IsAny<ChatMessageAggregate>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new DbUpdateException("duplicate"));
         _dbUpdateExceptionClassifierMock
-            .Setup(x => x.IsExpectedIdempotencyConflict(It.IsAny<DbUpdateException>(), SendChatMessageCommand.IdempotencyConflictKey))
+            .Setup(x => x.IsIdempotencyConflict(It.IsAny<DbUpdateException>(), SendChatMessageCommand.IdempotencyConflictKey))
             .Returns(true);
         _chatMessageRepositoryMock
             .Setup(x => x.GetByIdAsync(command.Id, It.IsAny<CancellationToken>()))

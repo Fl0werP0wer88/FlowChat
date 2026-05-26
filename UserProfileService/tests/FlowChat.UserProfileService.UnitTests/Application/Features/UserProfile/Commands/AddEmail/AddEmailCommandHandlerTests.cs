@@ -176,7 +176,7 @@ public sealed class AddEmailCommandHandlerTests
             .Setup(x => x.EmailAddressExistsAsync("secondary@example.com", It.IsAny<CancellationToken>()))
             .ReturnsAsync(false);
         _dbUpdateExceptionClassifierMock
-            .Setup(x => x.IsExpectedIdempotencyConflict(It.IsAny<DbUpdateException>(), AddEmailCommand.IdempotencyConflictKey))
+            .Setup(x => x.IsIdempotencyConflict(It.IsAny<DbUpdateException>(), AddEmailCommand.IdempotencyConflictKey))
             .Returns(true);
         _dispatcherMock
             .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<IDomainEvent>>(), It.IsAny<CancellationToken>()))

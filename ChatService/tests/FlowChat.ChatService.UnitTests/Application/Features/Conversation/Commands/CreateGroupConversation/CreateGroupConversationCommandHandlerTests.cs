@@ -115,7 +115,7 @@ public sealed class CreateGroupConversationCommandHandlerTests
             .Setup(x => x.AddAsync(It.IsAny<GroupConversation>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new DbUpdateException("duplicate"));
         _dbUpdateExceptionClassifierMock
-            .Setup(x => x.IsExpectedIdempotencyConflict(It.IsAny<DbUpdateException>(), CreateGroupConversationCommand.IdempotencyConflictKey))
+            .Setup(x => x.IsIdempotencyConflict(It.IsAny<DbUpdateException>(), CreateGroupConversationCommand.IdempotencyConflictKey))
             .Returns(true);
         _readRepositoryMock
             .Setup(x => x.GetByIdAsync(conversationId, It.IsAny<CancellationToken>()))

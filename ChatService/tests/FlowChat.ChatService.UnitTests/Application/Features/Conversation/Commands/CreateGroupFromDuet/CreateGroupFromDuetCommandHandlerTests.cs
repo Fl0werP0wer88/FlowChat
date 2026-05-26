@@ -196,7 +196,7 @@ public sealed class CreateGroupFromDuetCommandHandlerTests
             .Setup(x => x.AddAsync(It.IsAny<GroupConversation>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new DbUpdateException("duplicate"));
         _dbUpdateExceptionClassifierMock
-            .Setup(x => x.IsExpectedIdempotencyConflict(It.IsAny<DbUpdateException>(), CreateGroupFromDuetCommand.IdempotencyConflictKey))
+            .Setup(x => x.IsIdempotencyConflict(It.IsAny<DbUpdateException>(), CreateGroupFromDuetCommand.IdempotencyConflictKey))
             .Returns(true);
         _groupReadRepositoryMock
             .Setup(x => x.GetByIdAsync(conversationId, It.IsAny<CancellationToken>()))

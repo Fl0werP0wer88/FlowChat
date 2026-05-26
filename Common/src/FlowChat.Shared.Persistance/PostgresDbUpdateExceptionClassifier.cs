@@ -7,7 +7,7 @@ namespace FlowChat.Shared.Persistance;
 public sealed class PostgresDbUpdateExceptionClassifier(PostgresDbUpdateExceptionClassifierOptions options)
     : IDbUpdateExceptionClassifier
 {
-    public bool IsExpectedIdempotencyConflict(
+    public bool IsIdempotencyConflict(
         DbUpdateException exception,
         string idempotencyConflictKey)
     {

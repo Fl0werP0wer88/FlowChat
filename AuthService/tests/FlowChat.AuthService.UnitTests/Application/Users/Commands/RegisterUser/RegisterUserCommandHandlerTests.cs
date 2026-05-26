@@ -135,7 +135,7 @@ public sealed class RegisterUserCommandHandlerTests
             .Setup(x => x.CreateAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new DbUpdateException("duplicate"));
         _dbUpdateExceptionClassifierMock
-            .Setup(x => x.IsExpectedIdempotencyConflict(It.IsAny<DbUpdateException>(), RegisterUserCommand.IdempotencyConflictKey))
+            .Setup(x => x.IsIdempotencyConflict(It.IsAny<DbUpdateException>(), RegisterUserCommand.IdempotencyConflictKey))
             .Returns(true);
         _accountRepositoryMock
             .Setup(x => x.GetByIdAsync(command.Id, It.IsAny<CancellationToken>()))
