@@ -26,29 +26,24 @@ public abstract class CommandHandlerBase<TCommand, TResponse> : ICommandHandler<
     {
         try
         {
-            return await _unitOfWork.ExecuteInTransactionAsync(
+            return await _unitOfWork.ExecuteCommandInTransactionAsync(
                 async token =>
                 {
                     var operationResult = await ExecuteAsync(request, token);
-                    if (!operationResult.IsSuccess)
-                    {
-                        throw new CommandFailedException(operationResult);
-                    }
 
-                    var aggregateRoot = GetAggregateRoot(operationResult);
-                    if (aggregateRoot is not null)
+                    if (operationResult.IsSuccess)
                     {
-                        var domainEvents = aggregateRoot.PopDomainEvents();
-                        await DispatchDomainEventsAsync(domainEvents, token);
+                        var aggregateRoot = GetAggregateRoot(operationResult);
+                        if (aggregateRoot is not null)
+                        {
+                            var domainEvents = aggregateRoot.PopDomainEvents();
+                            await DispatchDomainEventsAsync(domainEvents, token);
+                        }
                     }
 
                     return operationResult;
                 },
                 cancellationToken);
-        }
-        catch (CommandFailedException exception)
-        {
-            return exception.Result;
         }
         catch (DbUpdateException exception)
         {
@@ -92,8 +87,4 @@ public abstract class CommandHandlerBase<TCommand, TResponse> : ICommandHandler<
         return _domainEventDispatcher.DispatchAsync(domainEvents, cancellationToken);
     }
 
-    private sealed class CommandFailedException(FlowChatResult<TResponse> result) : Exception
-    {
-        public FlowChatResult<TResponse> Result { get; } = result;
-    }
 }

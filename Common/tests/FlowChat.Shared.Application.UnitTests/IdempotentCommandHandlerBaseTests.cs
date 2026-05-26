@@ -124,7 +124,7 @@ public sealed class IdempotentCommandHandlerBaseTests
     {
         var unitOfWorkMock = new Mock<IUnitOfWork>();
         unitOfWorkMock
-            .Setup(x => x.ExecuteInTransactionAsync(
+            .Setup(x => x.ExecuteCommandInTransactionAsync(
                 It.IsAny<Func<CancellationToken, Task<FlowChatResult<IdempotentCommandResult<Guid>>>>>(),
                 It.IsAny<CancellationToken>()))
             .Returns<
@@ -138,7 +138,7 @@ public sealed class IdempotentCommandHandlerBaseTests
     {
         var unitOfWorkMock = new Mock<IUnitOfWork>();
         unitOfWorkMock
-            .Setup(x => x.ExecuteInTransactionAsync(
+            .Setup(x => x.ExecuteCommandInTransactionAsync(
                 It.IsAny<Func<CancellationToken, Task<FlowChatResult<IdempotentCommandResult<Guid>>>>>(),
                 It.IsAny<CancellationToken>()))
             .Returns<
