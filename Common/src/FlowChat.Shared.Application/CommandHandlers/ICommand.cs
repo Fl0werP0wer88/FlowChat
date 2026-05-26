@@ -16,4 +16,3 @@ public interface ICommand<TResponse> : IRequestBase, IRequest<FlowChatResult<TRe
 public interface ICommand : IRequestBase, IRequest<Result<Unit>>
 {
 }
-

@@ -14,4 +14,3 @@ public interface ICommandHandler<TRequest> : IRequestHandler<TRequest, Result<Un
     where TRequest : ICommand
 {
 }
-
