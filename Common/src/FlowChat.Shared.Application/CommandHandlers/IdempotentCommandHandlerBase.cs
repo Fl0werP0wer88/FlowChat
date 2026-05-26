@@ -49,12 +49,6 @@ public abstract class IdempotentCommandHandlerBase<TCommand, TValue>
 
                     return operationResult;
                 },
-                BetweenSaveAndComittHook,
-                (exception, _) =>
-                {
-                    BeforeRollbackHook(request, exception);
-                    return Task.CompletedTask;
-                },
                 cancellationToken);
         }
         catch (CommandFailedException exception)
@@ -91,17 +85,6 @@ public abstract class IdempotentCommandHandlerBase<TCommand, TValue>
     }
 
     protected abstract IAggregateRoot? GetAggregateRoot();
-
-    protected virtual Task<FlowChatResult<IdempotentCommandResult<TValue>>> BetweenSaveAndComittHook(
-        FlowChatResult<IdempotentCommandResult<TValue>> result,
-        CancellationToken cancellationToken)
-    {
-        return Task.FromResult(result);
-    }
-
-    protected virtual void BeforeRollbackHook(TCommand request, Exception exception)
-    {
-    }
 
     protected virtual async Task<FlowChatResult<IdempotentCommandResult<TValue>>> OnDbUpdateExceptionAfterRollbackHook(
         TCommand request,

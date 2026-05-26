@@ -126,18 +126,10 @@ public sealed class IdempotentCommandHandlerBaseTests
         unitOfWorkMock
             .Setup(x => x.ExecuteInTransactionAsync(
                 It.IsAny<Func<CancellationToken, Task<FlowChatResult<IdempotentCommandResult<Guid>>>>>(),
-                It.IsAny<Func<FlowChatResult<IdempotentCommandResult<Guid>>, CancellationToken, Task<FlowChatResult<IdempotentCommandResult<Guid>>>>>(),
-                It.IsAny<Func<Exception, CancellationToken, Task>>(),
                 It.IsAny<CancellationToken>()))
             .Returns<
                 Func<CancellationToken, Task<FlowChatResult<IdempotentCommandResult<Guid>>>>,
-                Func<FlowChatResult<IdempotentCommandResult<Guid>>, CancellationToken, Task<FlowChatResult<IdempotentCommandResult<Guid>>>>,
-                Func<Exception, CancellationToken, Task>,
-                CancellationToken>(async (operation, beforeCommitOperation, _, cancellationToken) =>
-                {
-                    var result = await operation(cancellationToken);
-                    return await beforeCommitOperation(result, cancellationToken);
-                });
+                CancellationToken>((operation, cancellationToken) => operation(cancellationToken));
 
         return unitOfWorkMock;
     }
@@ -148,27 +140,13 @@ public sealed class IdempotentCommandHandlerBaseTests
         unitOfWorkMock
             .Setup(x => x.ExecuteInTransactionAsync(
                 It.IsAny<Func<CancellationToken, Task<FlowChatResult<IdempotentCommandResult<Guid>>>>>(),
-                It.IsAny<Func<FlowChatResult<IdempotentCommandResult<Guid>>, CancellationToken, Task<FlowChatResult<IdempotentCommandResult<Guid>>>>>(),
-                It.IsAny<Func<Exception, CancellationToken, Task>>(),
                 It.IsAny<CancellationToken>()))
             .Returns<
                 Func<CancellationToken, Task<FlowChatResult<IdempotentCommandResult<Guid>>>>,
-                Func<FlowChatResult<IdempotentCommandResult<Guid>>, CancellationToken, Task<FlowChatResult<IdempotentCommandResult<Guid>>>>,
-                Func<Exception, CancellationToken, Task>,
-                CancellationToken>(
-                async (operation, beforeCommitOperation, beforeRollbackHook, cancellationToken) =>
+                CancellationToken>(async (operation, cancellationToken) =>
                 {
-                    try
-                    {
-                        var result = await operation(cancellationToken);
-                        await beforeCommitOperation(result, cancellationToken);
-                        throw exception;
-                    }
-                    catch (Exception rollbackException)
-                    {
-                        await beforeRollbackHook(rollbackException, cancellationToken);
-                        throw;
-                    }
+                    await operation(cancellationToken);
+                    throw exception;
                 });
 
         return unitOfWorkMock;
