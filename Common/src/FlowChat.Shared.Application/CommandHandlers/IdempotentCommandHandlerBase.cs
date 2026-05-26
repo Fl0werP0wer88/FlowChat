@@ -34,7 +34,7 @@ public abstract class IdempotentCommandHandlerBase<TCommand, TValue>
             return await _unitOfWork.ExecuteInTransactionAsync(
                 async token =>
                 {
-                    var operationResult = await ExecuteAsync(request, token);
+                    var operationResult = await ProcessRequest(request, token);
                     if (!operationResult.IsSuccess)
                     {
                         throw new CommandFailedException(operationResult);
@@ -64,7 +64,7 @@ public abstract class IdempotentCommandHandlerBase<TCommand, TValue>
         }
     }
 
-    private async Task<FlowChatResult<IdempotentCommandResult<TValue>>> ExecuteAsync(
+    private async Task<FlowChatResult<IdempotentCommandResult<TValue>>> ProcessRequest(
         TCommand request,
         CancellationToken cancellationToken)
     {
@@ -78,7 +78,6 @@ public abstract class IdempotentCommandHandlerBase<TCommand, TValue>
     private bool IsCommandFirstSucessfullRun(FlowChatResult<IdempotentCommandResult<TValue>> result)
     {
         return result.IsSuccess && !result.Value.WasAlreadyProcessed;
-
     }
 
     protected abstract IAggregateRoot? GetAggregateRoot();
