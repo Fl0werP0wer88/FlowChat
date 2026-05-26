@@ -40,10 +40,7 @@ public abstract class IdempotentCommandHandlerBase<TCommand, TValue>
                         throw new CommandFailedException(operationResult);
                     }
 
-                    if (IsCommandFirstSucessfullRun(operationResult))
-                    {
-                        await DispatchDomainEventsAsync(token);
-                    }
+                    await DispatchDomainEventsAsync(token);
 
                     return operationResult;
                 },
@@ -73,11 +70,6 @@ public abstract class IdempotentCommandHandlerBase<TCommand, TValue>
             ? FlowChatResult<IdempotentCommandResult<TValue>>.Success(
                 new IdempotentCommandResult<TValue>(executed.Value, WasAlreadyProcessed: false))
             : FlowChatResult<IdempotentCommandResult<TValue>>.Failure(executed.Error);
-    }
-
-    private bool IsCommandFirstSucessfullRun(FlowChatResult<IdempotentCommandResult<TValue>> result)
-    {
-        return result.IsSuccess && !result.Value.WasAlreadyProcessed;
     }
 
     protected abstract IAggregateRoot? GetAggregateRoot();
