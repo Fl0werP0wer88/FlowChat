@@ -34,15 +34,17 @@ public abstract class IdempotentCommandHandlerBase<TCommand, TValue>
             return await _unitOfWork.ExecuteInTransactionAsync(
                 async token =>
                 {
-                    var operationResult = await ProcessRequest(request, token);
-                    if (!operationResult.IsSuccess)
+                    var baseResult = await ExecuteCommandAsync(request, cancellationToken);
+                    var idempotentResult = await BuildResponse(baseResult);
+                    if (!idempotentResult.IsSuccess)
                     {
-                        throw new CommandFailedException(operationResult);
+                        //Im throwing exception here to trigger transaction rollback and catch it outside of the unit of work. This allows any retries from EF execution strategy to happen before we attempt to recover from the failure.
+                        throw new CommandFailedException(idempotentResult);
                     }
 
                     await DispatchDomainEventsAsync(token);
 
-                    return operationResult;
+                    return idempotentResult;
                 },
                 cancellationToken);
         }
@@ -61,11 +63,8 @@ public abstract class IdempotentCommandHandlerBase<TCommand, TValue>
         }
     }
 
-    private async Task<FlowChatResult<IdempotentCommandResult<TValue>>> ProcessRequest(
-        TCommand request,
-        CancellationToken cancellationToken)
+    private async Task<FlowChatResult<IdempotentCommandResult<TValue>>> BuildResponse(FlowChatResult<TValue> executed)
     {
-        var executed = await ExecuteCommandAsync(request, cancellationToken);
         return executed.IsSuccess
             ? FlowChatResult<IdempotentCommandResult<TValue>>.Success(
                 new IdempotentCommandResult<TValue>(executed.Value, WasAlreadyProcessed: false))
