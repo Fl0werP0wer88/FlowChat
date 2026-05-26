@@ -69,7 +69,7 @@ public abstract class CommandHandlerBase<TCommand, TResponse> : ICommandHandler<
 
     protected abstract Task<FlowChatResult<TResponse>> ExecuteAsync(TCommand request, CancellationToken cancellationToken);
 
-    protected abstract IAggregateRoot? GetAggregateRoot(FlowChatResult<TResponse> result);
+    protected virtual IAggregateRoot? GetAggregateRoot(FlowChatResult<TResponse> result) => null;
 
     protected virtual Task<FlowChatResult<TResponse>> BetweenSaveAndComittHook(
         FlowChatResult<TResponse> result,

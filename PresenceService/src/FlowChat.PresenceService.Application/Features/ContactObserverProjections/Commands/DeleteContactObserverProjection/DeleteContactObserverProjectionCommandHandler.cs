@@ -23,5 +23,4 @@ public sealed class DeleteContactObserverProjectionCommandHandler(
         return FlowChatResult<Unit>.Success(Unit.Value);
     }
 
-    protected override IAggregateRoot? GetAggregateRoot(FlowChatResult<Unit> result) => null;
 }

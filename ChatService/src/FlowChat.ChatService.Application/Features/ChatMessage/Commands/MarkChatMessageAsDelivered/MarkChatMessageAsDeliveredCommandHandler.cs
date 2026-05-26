@@ -32,5 +32,4 @@ public sealed class MarkChatMessageAsDeliveredCommandHandler(
         return FlowChatResult<Unit>.Success(Unit.Value);
     }
 
-    protected override IAggregateRoot? GetAggregateRoot(FlowChatResult<Unit> result) => null;
 }

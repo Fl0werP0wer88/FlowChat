@@ -42,8 +42,6 @@ public sealed class DeletePresenceStatusCommandHandler(
         return FlowChatResult<Unit>.Success(Unit.Value);
     }
 
-    protected override IAggregateRoot? GetAggregateRoot(FlowChatResult<Unit> result) => null;
-
     protected override async Task<FlowChatResult<Unit>> HandleUnexpectedExceptionAsync(
         DeletePresenceStatusCommand request,
         Exception exception,

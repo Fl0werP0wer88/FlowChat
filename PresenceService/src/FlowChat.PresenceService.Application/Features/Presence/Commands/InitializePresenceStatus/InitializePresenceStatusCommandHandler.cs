@@ -51,8 +51,6 @@ public sealed class InitializePresenceStatusCommandHandler(
         return FlowChatResult<Unit>.Success(Unit.Value);
     }
 
-    protected override IAggregateRoot? GetAggregateRoot(FlowChatResult<Unit> result) => null;
-
     protected override async Task<FlowChatResult<Unit>> HandleUnexpectedExceptionAsync(
         InitializePresenceStatusCommand request,
         Exception exception,

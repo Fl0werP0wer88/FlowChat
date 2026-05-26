@@ -57,8 +57,6 @@ public sealed class InsertUserProfileProjectionCommandHandler
         CancellationToken cancellationToken)
         => Task.FromResult((true, Unit.Value));
 
-    protected override IAggregateRoot? GetExecutedAggregateRoot(IdempotentCommandResult<Unit> result) => null;
-
     protected override string GetIdempotencyConflictKey(InsertUserProfileProjectionCommand request) =>
         InsertUserProfileProjectionCommand.IdempotencyConflictKey;
 

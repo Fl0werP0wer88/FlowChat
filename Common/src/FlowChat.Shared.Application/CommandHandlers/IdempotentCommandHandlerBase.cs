@@ -70,7 +70,7 @@ public abstract class IdempotentCommandHandlerBase<TCommand, TValue>
         TCommand request,
         CancellationToken cancellationToken);
 
-    protected abstract IAggregateRoot? GetExecutedAggregateRoot(IdempotentCommandResult<TValue> result);
+    protected virtual IAggregateRoot? GetExecutedAggregateRoot(IdempotentCommandResult<TValue> result) => null;
 
     protected virtual string GetIdempotencyConflictKey(TCommand request)
     {

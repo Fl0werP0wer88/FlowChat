@@ -1,7 +1,6 @@
 using FlowChat.ChatService.Application.Contracts.Persistence;
 using FlowChat.Core.Results;
 using FlowChat.Shared.Application;
-using FlowChat.Shared.Domain;
 using MediatR;
 
 namespace FlowChat.ChatService.Application.Features.UserProfile.Commands.InsertUserProfileProjection;
@@ -34,8 +33,6 @@ public sealed class InsertUserProfileProjectionCommandHandler(
         InsertUserProfileProjectionCommand request,
         CancellationToken cancellationToken)
         => Task.FromResult((true, Unit.Value));
-
-    protected override IAggregateRoot? GetExecutedAggregateRoot(IdempotentCommandResult<Unit> result) => null;
 
     protected override string GetIdempotencyConflictKey(InsertUserProfileProjectionCommand request) =>
         InsertUserProfileProjectionCommand.IdempotencyConflictKey;
