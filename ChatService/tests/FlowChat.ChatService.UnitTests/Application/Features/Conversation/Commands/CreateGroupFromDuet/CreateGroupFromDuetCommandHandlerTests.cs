@@ -28,18 +28,9 @@ public sealed class CreateGroupFromDuetCommandHandlerTests
         _unitOfWorkMock
             .Setup(x => x.ExecuteInTransactionAsync(
                 It.IsAny<Func<CancellationToken, Task<FlowChatResult<IdempotentCommandResult<GroupConversationDetailDto>>>>>(),
-                It.IsAny<Func<FlowChatResult<IdempotentCommandResult<GroupConversationDetailDto>>, CancellationToken, Task<FlowChatResult<IdempotentCommandResult<GroupConversationDetailDto>>>>>(),
-                It.IsAny<Func<Exception, CancellationToken, Task>>(),
                 It.IsAny<CancellationToken>()))
-            .Returns<
-                Func<CancellationToken, Task<FlowChatResult<IdempotentCommandResult<GroupConversationDetailDto>>>>,
-                Func<FlowChatResult<IdempotentCommandResult<GroupConversationDetailDto>>, CancellationToken, Task<FlowChatResult<IdempotentCommandResult<GroupConversationDetailDto>>>>,
-                Func<Exception, CancellationToken, Task>,
-                CancellationToken>(async (operation, beforeCommitOperation, _, ct) =>
-                {
-                    var result = await operation(ct);
-                    return await beforeCommitOperation(result, ct);
-                });
+            .Returns<Func<CancellationToken, Task<FlowChatResult<IdempotentCommandResult<GroupConversationDetailDto>>>>, CancellationToken>(
+                (operation, ct) => operation(ct));
 
         _domainEventDispatcherMock
             .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<IDomainEvent>>(), It.IsAny<CancellationToken>()))

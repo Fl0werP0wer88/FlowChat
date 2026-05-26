@@ -14,23 +14,10 @@ public class EfUnitOfWork<TDbContext>(TDbContext dbContext) : IUnitOfWork
         await DbContext.SaveChangesAsync(cancellationToken);
 
     public virtual async Task<T> ExecuteInTransactionAsync<T>(
-        Func<CancellationToken, Task<T>> beforeSaveOperation,
-        CancellationToken cancellationToken) =>
-        await ExecuteInTransactionAsync(
-            beforeSaveOperation,
-            static (result, _) => Task.FromResult(result),
-            static (_, _) => Task.CompletedTask,
-            cancellationToken);
-
-    public virtual async Task<T> ExecuteInTransactionAsync<T>(
-        Func<CancellationToken, Task<T>> beforeSaveOperation,
-        Func<T, CancellationToken, Task<T>> beforeCommitOperation,
-        Func<Exception, CancellationToken, Task> beforeRollbackHook,
+        Func<CancellationToken, Task<T>> operation,
         CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(beforeSaveOperation);
-        ArgumentNullException.ThrowIfNull(beforeCommitOperation);
-        ArgumentNullException.ThrowIfNull(beforeRollbackHook);
+        ArgumentNullException.ThrowIfNull(operation);
         cancellationToken.ThrowIfCancellationRequested();
 
         var strategy = DbContext.Database.CreateExecutionStrategy();
@@ -42,15 +29,13 @@ public class EfUnitOfWork<TDbContext>(TDbContext dbContext) : IUnitOfWork
 
             try
             {
-                var result = await beforeSaveOperation(cancellationToken);
+                var result = await operation(cancellationToken);
                 await DbContext.SaveChangesAsync(cancellationToken);
-                result = await beforeCommitOperation(result, cancellationToken);
                 await transaction.CommitAsync(cancellationToken);
                 return result;
             }
-            catch (Exception exception)
+            catch
             {
-                await beforeRollbackHook(exception, cancellationToken);
                 await transaction.RollbackAsync(cancellationToken);
                 throw;
             }

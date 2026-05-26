@@ -27,18 +27,9 @@ public sealed class RegisterUserCommandHandlerTests
         _unitOfWorkMock
             .Setup(x => x.ExecuteInTransactionAsync(
                 It.IsAny<Func<CancellationToken, Task<FlowChatResult<IdempotentCommandResult<RegisterUserCommandResponse>>>>>(),
-                It.IsAny<Func<FlowChatResult<IdempotentCommandResult<RegisterUserCommandResponse>>, CancellationToken, Task<FlowChatResult<IdempotentCommandResult<RegisterUserCommandResponse>>>>>(),
-                It.IsAny<Func<Exception, CancellationToken, Task>>(),
                 It.IsAny<CancellationToken>()))
-            .Returns<
-                Func<CancellationToken, Task<FlowChatResult<IdempotentCommandResult<RegisterUserCommandResponse>>>>,
-                Func<FlowChatResult<IdempotentCommandResult<RegisterUserCommandResponse>>, CancellationToken, Task<FlowChatResult<IdempotentCommandResult<RegisterUserCommandResponse>>>>,
-                Func<Exception, CancellationToken, Task>,
-                CancellationToken>(async (operation, beforeCommitOperation, _, ct) =>
-                {
-                    var result = await operation(ct);
-                    return await beforeCommitOperation(result, ct);
-                });
+            .Returns<Func<CancellationToken, Task<FlowChatResult<IdempotentCommandResult<RegisterUserCommandResponse>>>>, CancellationToken>(
+                (operation, ct) => operation(ct));
 
         _domainEventDispatcherMock
             .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<IDomainEvent>>(), It.IsAny<CancellationToken>()))

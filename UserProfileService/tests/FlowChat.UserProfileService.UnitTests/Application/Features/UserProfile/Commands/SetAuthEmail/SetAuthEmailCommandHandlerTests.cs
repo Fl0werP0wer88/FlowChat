@@ -27,18 +27,9 @@ public sealed class SetAuthEmailCommandHandlerTests
         _unitOfWorkMock
             .Setup(x => x.ExecuteInTransactionAsync(
                 It.IsAny<Func<CancellationToken, Task<FlowChatResult<Guid>>>>(),
-                It.IsAny<Func<FlowChatResult<Guid>, CancellationToken, Task<FlowChatResult<Guid>>>>(),
-                It.IsAny<Func<Exception, CancellationToken, Task>>(),
                 It.IsAny<CancellationToken>()))
-            .Returns<
-                Func<CancellationToken, Task<FlowChatResult<Guid>>>,
-                Func<FlowChatResult<Guid>, CancellationToken, Task<FlowChatResult<Guid>>>,
-                Func<Exception, CancellationToken, Task>,
-                CancellationToken>(async (operation, beforeCommitOperation, _, ct) =>
-                {
-                    var result = await operation(ct);
-                    return await beforeCommitOperation(result, ct);
-                });
+            .Returns<Func<CancellationToken, Task<FlowChatResult<Guid>>>, CancellationToken>(
+                (operation, ct) => operation(ct));
 
         _handler = new SetAuthEmailCommandHandler(
             _writeRepositoryMock.Object,
