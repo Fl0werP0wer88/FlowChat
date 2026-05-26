@@ -79,7 +79,7 @@ public sealed class AddContactCommandHandler : IdempotentCommandHandlerBase<AddC
         return FlowChatResult<Guid>.Success(_contact.Id.Value);
     }
 
-    protected override IAggregateRoot? GetExecutedAggregateRoot(IdempotentCommandResult<Guid> result) =>
+    protected override IAggregateRoot? GetAggregateRoot(IdempotentCommandResult<Guid> result) =>
         _contact;
 
     protected override string GetIdempotencyConflictKey(AddContactCommand request) =>

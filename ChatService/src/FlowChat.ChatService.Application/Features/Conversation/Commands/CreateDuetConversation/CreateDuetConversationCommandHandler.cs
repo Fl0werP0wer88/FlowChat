@@ -80,7 +80,7 @@ public sealed class CreateDuetConversationCommandHandler
             : (false, default!);
     }
 
-    protected override IAggregateRoot? GetExecutedAggregateRoot(IdempotentCommandResult<DuetConversationDetailDto> result) =>
+    protected override IAggregateRoot? GetAggregateRoot(IdempotentCommandResult<DuetConversationDetailDto> result) =>
         _newConversation;
 
     protected override string GetIdempotencyConflictKey(CreateDuetConversationCommand request) =>

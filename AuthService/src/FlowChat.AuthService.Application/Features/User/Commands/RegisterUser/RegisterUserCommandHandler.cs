@@ -79,7 +79,7 @@ public class RegisterUserCommandHandler
             });
     }
 
-    protected override IAggregateRoot? GetExecutedAggregateRoot(IdempotentCommandResult<RegisterUserCommandResponse> result) =>
+    protected override IAggregateRoot? GetAggregateRoot(IdempotentCommandResult<RegisterUserCommandResponse> result) =>
         _account;
 
     protected override string GetIdempotencyConflictKey(RegisterUserCommand request) =>

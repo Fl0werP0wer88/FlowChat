@@ -73,7 +73,7 @@ public sealed class SendChatMessageCommandHandler
             new SendChatMessageCommandResult(_chatMessage.Id.Value, _chatMessage.SentAtUtc.Value));
     }
 
-    protected override IAggregateRoot? GetExecutedAggregateRoot(IdempotentCommandResult<SendChatMessageCommandResult> result) =>
+    protected override IAggregateRoot? GetAggregateRoot(IdempotentCommandResult<SendChatMessageCommandResult> result) =>
         _chatMessage;
 
     protected override string GetIdempotencyConflictKey(SendChatMessageCommand request) =>

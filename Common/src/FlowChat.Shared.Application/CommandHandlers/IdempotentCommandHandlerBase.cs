@@ -2,27 +2,77 @@ using FlowChat.Core.Results;
 using FlowChat.Shared.Domain;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using System.Diagnostics;
+using System.Runtime.ExceptionServices;
 
 namespace FlowChat.Shared.Application;
 
 public abstract class IdempotentCommandHandlerBase<TCommand, TValue>
-    : CommandHandlerBase<TCommand, IdempotentCommandResult<TValue>>
+    : ICommandHandler<TCommand, IdempotentCommandResult<TValue>>
     where TCommand : ICommand<IdempotentCommandResult<TValue>>, IRequest<FlowChatResult<IdempotentCommandResult<TValue>>>
     where TValue : notnull
 {
+    private readonly IDomainEventDispatcher _domainEventDispatcher;
+    private readonly IUnitOfWork _unitOfWork;
     private readonly IDbUpdateExceptionClassifier _dbUpdateExceptionClassifier;
 
     protected IdempotentCommandHandlerBase(
         IDomainEventDispatcher domainEventDispatcher,
         IUnitOfWork unitOfWork,
         IDbUpdateExceptionClassifier dbUpdateExceptionClassifier)
-        : base(domainEventDispatcher, unitOfWork)
     {
+        _domainEventDispatcher = domainEventDispatcher;
+        _unitOfWork = unitOfWork;
         _dbUpdateExceptionClassifier = dbUpdateExceptionClassifier
             ?? throw new ArgumentNullException(nameof(dbUpdateExceptionClassifier));
     }
 
-    protected sealed override async Task<FlowChatResult<IdempotentCommandResult<TValue>>> ExecuteAsync(
+    public async Task<FlowChatResult<IdempotentCommandResult<TValue>>> Handle(TCommand request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await _unitOfWork.ExecuteInTransactionAsync(
+                async token =>
+                {
+                    var operationResult = await ExecuteAsync(request, token);
+                    if (!operationResult.IsSuccess)
+                    {
+                        throw new CommandFailedException(operationResult);
+                    }
+
+                    var aggregateRoot = GetExecutedAggregateRoot(operationResult);
+                    if (aggregateRoot is not null)
+                    {
+                        var domainEvents = aggregateRoot.PopDomainEvents();
+                        await DispatchDomainEventsAsync(domainEvents, token);
+                    }
+
+                    return operationResult;
+                },
+                BetweenSaveAndComittHook,
+                (exception, _) =>
+                {
+                    BeforeRollbackHook(request, exception);
+                    return Task.CompletedTask;
+                },
+                cancellationToken);
+        }
+        catch (CommandFailedException exception)
+        {
+            return exception.Result;
+        }
+        catch (DbUpdateException exception)
+        {
+            // Keep this outside the unit of work so EF execution strategies can finish all retries before application-specific recovery runs
+            return await OnDbUpdateExceptionAfterRollbackHook(request, exception, cancellationToken);
+        }
+        catch (Exception exception)
+        {
+            return await HandleUnexpectedExceptionAsync(request, exception, cancellationToken);
+        }
+    }
+
+    private async Task<FlowChatResult<IdempotentCommandResult<TValue>>> ExecuteAsync(
         TCommand request,
         CancellationToken cancellationToken)
     {
@@ -33,14 +83,27 @@ public abstract class IdempotentCommandHandlerBase<TCommand, TValue>
             : FlowChatResult<IdempotentCommandResult<TValue>>.Failure(executed.Error);
     }
 
-    protected sealed override IAggregateRoot? GetAggregateRoot(FlowChatResult<IdempotentCommandResult<TValue>> result)
+    private IAggregateRoot? GetExecutedAggregateRoot(FlowChatResult<IdempotentCommandResult<TValue>> result)
     {
         return result.IsSuccess && !result.Value.WasAlreadyProcessed
-            ? GetExecutedAggregateRoot(result.Value)
+            ? GetAggregateRoot(result.Value)
             : null;
     }
 
-    protected override async Task<FlowChatResult<IdempotentCommandResult<TValue>>> OnDbUpdateExceptionAfterRollbackHook(
+    protected abstract IAggregateRoot? GetAggregateRoot(IdempotentCommandResult<TValue> result);
+
+    protected virtual Task<FlowChatResult<IdempotentCommandResult<TValue>>> BetweenSaveAndComittHook(
+        FlowChatResult<IdempotentCommandResult<TValue>> result,
+        CancellationToken cancellationToken)
+    {
+        return Task.FromResult(result);
+    }
+
+    protected virtual void BeforeRollbackHook(TCommand request, Exception exception)
+    {
+    }
+
+    protected virtual async Task<FlowChatResult<IdempotentCommandResult<TValue>>> OnDbUpdateExceptionAfterRollbackHook(
         TCommand request,
         DbUpdateException exception,
         CancellationToken cancellationToken)
@@ -49,17 +112,36 @@ public abstract class IdempotentCommandHandlerBase<TCommand, TValue>
                 exception,
                 GetIdempotencyConflictKey(request)))
         {
-            return await base.OnDbUpdateExceptionAfterRollbackHook(request, exception, cancellationToken);
+            return await HandleUnexpectedExceptionAsync(request, exception, cancellationToken);
         }
 
         var existing = await TryGetExistingResponseAsync(request, cancellationToken);
         if (!existing.Found)
         {
-            return await base.OnDbUpdateExceptionAfterRollbackHook(request, exception, cancellationToken);
+            return await HandleUnexpectedExceptionAsync(request, exception, cancellationToken);
         }
 
         return FlowChatResult<IdempotentCommandResult<TValue>>.Success(
             new IdempotentCommandResult<TValue>(existing.Value, WasAlreadyProcessed: true));
+    }
+
+    protected virtual Task<FlowChatResult<IdempotentCommandResult<TValue>>> HandleUnexpectedExceptionAsync(
+        TCommand request,
+        Exception exception,
+        CancellationToken cancellationToken)
+    {
+        ExceptionDispatchInfo.Capture(exception).Throw();
+        throw new UnreachableException();
+    }
+
+    protected Task DispatchDomainEventsAsync(IEnumerable<IDomainEvent> domainEvents, CancellationToken cancellationToken)
+    {
+        if (domainEvents is null)
+        {
+            return Task.CompletedTask;
+        }
+
+        return _domainEventDispatcher.DispatchAsync(domainEvents, cancellationToken);
     }
 
     protected abstract Task<(bool Found, TValue Value)> TryGetExistingResponseAsync(
@@ -70,10 +152,13 @@ public abstract class IdempotentCommandHandlerBase<TCommand, TValue>
         TCommand request,
         CancellationToken cancellationToken);
 
-    protected virtual IAggregateRoot? GetExecutedAggregateRoot(IdempotentCommandResult<TValue> result) => null;
-
     protected virtual string GetIdempotencyConflictKey(TCommand request)
     {
         return typeof(TCommand).FullName ?? typeof(TCommand).Name;
+    }
+
+    private sealed class CommandFailedException(FlowChatResult<IdempotentCommandResult<TValue>> result) : Exception
+    {
+        public FlowChatResult<IdempotentCommandResult<TValue>> Result { get; } = result;
     }
 }

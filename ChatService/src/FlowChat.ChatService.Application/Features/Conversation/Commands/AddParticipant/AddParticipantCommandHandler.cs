@@ -53,7 +53,7 @@ public sealed class AddParticipantCommandHandler
         => Task.FromResult((true, false));
 
     // Dispatch domain events only when participant was newly added (Value = true).
-    protected override IAggregateRoot? GetExecutedAggregateRoot(IdempotentCommandResult<bool> result) =>
+    protected override IAggregateRoot? GetAggregateRoot(IdempotentCommandResult<bool> result) =>
         result.Value ? _conversation : null;
 
     protected override string GetIdempotencyConflictKey(AddParticipantCommand request) =>

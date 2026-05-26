@@ -65,7 +65,7 @@ public sealed class AddEmailCommandHandler
         return FlowChatResult<Guid>.Success(email.Id.Value);
     }
 
-    protected override IAggregateRoot? GetExecutedAggregateRoot(IdempotentCommandResult<Guid> result) =>
+    protected override IAggregateRoot? GetAggregateRoot(IdempotentCommandResult<Guid> result) =>
         _userProfile;
 
     protected override string GetIdempotencyConflictKey(AddEmailCommand request) =>

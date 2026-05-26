@@ -235,7 +235,7 @@ public sealed class IdempotentCommandHandlerBaseTests
             return _executeCommandAsync(request, cancellationToken);
         }
 
-        protected override IAggregateRoot? GetExecutedAggregateRoot(IdempotentCommandResult<Guid> result)
+        protected override IAggregateRoot? GetAggregateRoot(IdempotentCommandResult<Guid> result)
         {
             return null;
         }
