@@ -3,6 +3,7 @@ using FlowChat.AuthService.Application.Contracts.Infrastructure;
 using FlowChat.AuthService.Application.Contracts.Persistence;
 using FlowChat.AuthService.Application.Features.User.Models;
 using FlowChat.Shared.Domain;
+using AccountAggregate = FlowChat.AuthService.Domain.Entities.Account.Account;
 
 namespace FlowChat.AuthService.Application.Features.User.Commands.RefreshToken;
 
@@ -21,10 +22,12 @@ public sealed class RefreshTokenCommandHandler : CommandHandlerBase<RefreshToken
         _openIddictTokenService = openIddictTokenService;
     }
 
+    private AccountAggregate? _account;
+
     protected override async Task<FlowChatResult<RefreshTokenCommandResponse>> ExecuteAsync(RefreshTokenCommand request, CancellationToken cancellationToken)
     {
-        var account = await _accountRepository.GetByIdAsync(request.AccountId, cancellationToken);
-        if (account is null || !account.IsEmailConfirmed)
+        _account = await _accountRepository.GetByIdAsync(request.AccountId, cancellationToken);
+        if (_account is null || !_account.IsEmailConfirmed)
         {
             return FlowChatResult<RefreshTokenCommandResponse>.Failure(
                 DomainError.Unauthorized("User not found or account is not confirmed."));
@@ -32,9 +35,9 @@ public sealed class RefreshTokenCommandHandler : CommandHandlerBase<RefreshToken
 
         var authenticatedAccount = new AuthenticatedAccount
         {
-            Id = account.Id.Value,
-            FriendlyUserId = account.FriendlyUserId.Value,
-            Email = account.Email.Value,
+            Id = _account.Id.Value,
+            FriendlyUserId = _account.FriendlyUserId.Value,
+            Email = _account.Email.Value,
             Roles = []
         };
 
@@ -50,6 +53,6 @@ public sealed class RefreshTokenCommandHandler : CommandHandlerBase<RefreshToken
 
     protected override IAggregateRoot? GetAggregateRoot(FlowChatResult<RefreshTokenCommandResponse> result)
     {
-        return null;
+        return _account;
     }
 }
