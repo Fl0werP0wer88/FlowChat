@@ -60,7 +60,7 @@ public abstract class IdempotentCommandHandlerBase<TCommand, TValue>
         }
         catch (Exception exception)
         {
-            return await HandleUnexpectedExceptionAsync(request, exception, cancellationToken);
+            return await HandleUnexpectedExceptionAsync(exception);
         }
     }
 
@@ -91,23 +91,21 @@ public abstract class IdempotentCommandHandlerBase<TCommand, TValue>
                 exception,
                 GetIdempotencyConflictKey(request)))
         {
-            return await HandleUnexpectedExceptionAsync(request, exception, cancellationToken);
+            return await HandleUnexpectedExceptionAsync(exception);
         }
 
         var existing = await TryGetExistingResponseAsync(request, cancellationToken);
         if (!existing.Found)
         {
-            return await HandleUnexpectedExceptionAsync(request, exception, cancellationToken);
+            return await HandleUnexpectedExceptionAsync(exception);
         }
 
         return FlowChatResult<IdempotentCommandResult<TValue>>.Success(
             new IdempotentCommandResult<TValue>(existing.Value, WasAlreadyProcessed: true));
     }
 
-    protected virtual Task<FlowChatResult<IdempotentCommandResult<TValue>>> HandleUnexpectedExceptionAsync(
-        TCommand request,
-        Exception exception,
-        CancellationToken cancellationToken)
+    private static Task<FlowChatResult<IdempotentCommandResult<TValue>>> HandleUnexpectedExceptionAsync(
+        Exception exception)
     {
         ExceptionDispatchInfo.Capture(exception).Throw();
         throw new UnreachableException();
