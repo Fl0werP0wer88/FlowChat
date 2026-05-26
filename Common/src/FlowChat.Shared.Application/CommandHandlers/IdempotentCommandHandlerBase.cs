@@ -71,7 +71,10 @@ public abstract class IdempotentCommandHandlerBase<TCommand, TValue>
             : FlowChatResult<IdempotentCommandResult<TValue>>.Failure(executed.Error);
     }
 
-    protected abstract IAggregateRoot? GetAggregateRoot();
+    protected virtual IAggregateRoot? GetAggregateRoot()
+    {
+        return null;
+    }
 
     protected virtual async Task<FlowChatResult<IdempotentCommandResult<TValue>>> OnDbUpdateExceptionAfterRollbackHook(
         TCommand request,
