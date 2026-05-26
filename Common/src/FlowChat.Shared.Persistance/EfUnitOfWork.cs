@@ -1,3 +1,4 @@
+using FlowChat.Core.Results;
 using FlowChat.Shared.Application;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
@@ -50,6 +51,49 @@ public class EfUnitOfWork<TDbContext>(TDbContext dbContext) : IUnitOfWork
             catch (Exception exception)
             {
                 await beforeRollbackHook(exception, cancellationToken);
+                await transaction.RollbackAsync(cancellationToken);
+                throw;
+            }
+            finally
+            {
+                OnFinally();
+            }
+        });
+    }
+
+    public virtual async Task<FlowChatResult<T>> ExecuteCommandInTransactionAsync<T>(
+        Func<CancellationToken, Task<FlowChatResult<T>>> operation,
+        CancellationToken cancellationToken)
+        where T : notnull
+    {
+        ArgumentNullException.ThrowIfNull(operation);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var strategy = DbContext.Database.CreateExecutionStrategy();
+
+        return await strategy.ExecuteAsync(async () =>
+        {
+            await using var transaction = await DbContext.Database.BeginTransactionAsync(cancellationToken);
+            EnrichTransaction(transaction);
+
+            try
+            {
+                var result = await operation(cancellationToken);
+
+                if (result.IsSuccess)
+                {
+                    await DbContext.SaveChangesAsync(cancellationToken);
+                    await transaction.CommitAsync(cancellationToken);
+                }
+                else
+                {
+                    await transaction.RollbackAsync(cancellationToken);
+                }
+
+                return result;
+            }
+            catch
+            {
                 await transaction.RollbackAsync(cancellationToken);
                 throw;
             }

@@ -1,3 +1,5 @@
+using FlowChat.Core.Results;
+
 namespace FlowChat.Shared.Application;
 
 public interface IUnitOfWork : IDisposable
@@ -9,5 +11,9 @@ public interface IUnitOfWork : IDisposable
         Func<T, CancellationToken, Task<T>> beforeCommitOperation,
         Func<Exception, CancellationToken, Task> beforeRollbackHook,
         CancellationToken cancellationToken);
+    Task<FlowChatResult<T>> ExecuteCommandInTransactionAsync<T>(
+        Func<CancellationToken, Task<FlowChatResult<T>>> operation,
+        CancellationToken cancellationToken)
+        where T : notnull;
 }
 

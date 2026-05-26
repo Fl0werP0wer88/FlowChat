@@ -22,22 +22,9 @@ public abstract class TransactionalCommandHandlerBase<TCommand, TValue>
     {
         try
         {
-            return await _unitOfWork.ExecuteInTransactionAsync(
-                async token =>
-                {
-                    var result = await ExecuteCommandAsync(request, token);
-                    if (!result.IsSuccess)
-                    {
-                        throw new CommandFailedException(result);
-                    }
-
-                    return result;
-                },
+            return await _unitOfWork.ExecuteCommandInTransactionAsync(
+                token => ExecuteCommandAsync(request, token),
                 cancellationToken);
-        }
-        catch (CommandFailedException exception)
-        {
-            return exception.Result;
         }
         catch (DbUpdateException exception)
         {
@@ -66,10 +53,5 @@ public abstract class TransactionalCommandHandlerBase<TCommand, TValue>
     {
         ExceptionDispatchInfo.Capture(exception).Throw();
         throw new UnreachableException();
-    }
-
-    private sealed class CommandFailedException(FlowChatResult<TValue> result) : Exception
-    {
-        public FlowChatResult<TValue> Result { get; } = result;
     }
 }
