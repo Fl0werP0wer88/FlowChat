@@ -9,8 +9,6 @@ namespace FlowChat.ChatService.Persistence.BulkUpsert;
 public sealed class UserProfileProjectionBulkUpsertExecutor(AppDbContext dbContext)
     : IBulkUpsertExecutor<UserProfileProjectionDto>
 {
-    private const string ProjectionSource = "user-profile-events";
-
     public async Task<FlowChatResult<BulkUpsertCommandResult>> UpsertAsync(
         IReadOnlyCollection<UserProfileProjectionDto> items,
         CancellationToken cancellationToken)
@@ -29,9 +27,9 @@ public sealed class UserProfileProjectionBulkUpsertExecutor(AppDbContext dbConte
             FriendlyUserId = item.FriendlyUserId,
             DisplayName = item.DisplayName,
             AvatarUrl = item.AvatarUrl,
-            CreatedBy = ProjectionSource,
+            CreatedBy = item.Source,
             CreatedAtUtc = now,
-            LastModifiedBy = ProjectionSource,
+            LastModifiedBy = item.Source,
             LastModifiedAtUtc = now
         }).ToList();
 

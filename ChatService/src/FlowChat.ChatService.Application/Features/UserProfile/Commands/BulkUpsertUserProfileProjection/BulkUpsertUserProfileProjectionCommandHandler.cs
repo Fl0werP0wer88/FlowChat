@@ -18,7 +18,8 @@ public sealed class BulkUpsertUserProfileProjectionCommandHandler(
             UserProfileId = item.UserProfileId,
             FriendlyUserId = item.FriendlyUserId!.Trim(),
             DisplayName = NormalizeOptional(item.DisplayName),
-            AvatarUrl = NormalizeOptional(item.AvatarUrl)
+            AvatarUrl = NormalizeOptional(item.AvatarUrl),
+            Source = item.Source!.Trim()
         };
     }
 

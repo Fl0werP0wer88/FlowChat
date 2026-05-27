@@ -44,7 +44,8 @@ public sealed class UserProfileProjectionBulkUpsertExecutorTests : IDisposable
                     UserProfileId = userProfileId,
                     FriendlyUserId = "jdoe",
                     DisplayName = "John",
-                    AvatarUrl = "https://avatar"
+                    AvatarUrl = "https://avatar",
+                    Source = "consumer"
                 }
             ],
             CancellationToken.None);
@@ -53,9 +54,9 @@ public sealed class UserProfileProjectionBulkUpsertExecutorTests : IDisposable
         var entity = await _dbContext.UserProfileProjections.SingleAsync();
         entity.UserId.Should().Be(userProfileId);
         entity.DisplayName.Should().Be("John");
-        entity.CreatedBy.Should().Be("user-profile-events");
+        entity.CreatedBy.Should().Be("consumer");
         entity.CreatedAtUtc.Should().NotBe(default);
-        entity.LastModifiedBy.Should().Be("user-profile-events");
+        entity.LastModifiedBy.Should().Be("consumer");
         entity.LastModifiedAtUtc.Should().NotBe(default);
     }
 
@@ -69,7 +70,8 @@ public sealed class UserProfileProjectionBulkUpsertExecutorTests : IDisposable
                 {
                     UserProfileId = userProfileId,
                     FriendlyUserId = "jdoe",
-                    DisplayName = "Before"
+                    DisplayName = "Before",
+                    Source = "initial-consumer"
                 }
             ],
             CancellationToken.None);
@@ -85,7 +87,8 @@ public sealed class UserProfileProjectionBulkUpsertExecutorTests : IDisposable
                 {
                     UserProfileId = userProfileId,
                     FriendlyUserId = "jdoe2",
-                    DisplayName = "After"
+                    DisplayName = "After",
+                    Source = "updater-consumer"
                 }
             ],
             CancellationToken.None);
@@ -93,6 +96,7 @@ public sealed class UserProfileProjectionBulkUpsertExecutorTests : IDisposable
         var entity = await _dbContext.UserProfileProjections.SingleAsync();
         entity.FriendlyUserId.Should().Be("jdoe2");
         entity.DisplayName.Should().Be("After");
+        entity.LastModifiedBy.Should().Be("updater-consumer");
         entity.LastModifiedAtUtc.Should().BeAfter(firstCreatedAtUtc);
     }
 }

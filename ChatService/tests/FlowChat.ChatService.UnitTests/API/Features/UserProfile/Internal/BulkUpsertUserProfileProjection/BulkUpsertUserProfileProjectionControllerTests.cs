@@ -54,7 +54,8 @@ public sealed class BulkUpsertUserProfileProjectionControllerTests
                         UserProfileId = userProfileId,
                         FriendlyUserId = " user-1 ",
                         DisplayName = " User One ",
-                        AvatarUrl = " https://example.com/avatar.png "
+                        AvatarUrl = " https://example.com/avatar.png ",
+                        Source = "consumer"
                     }
                 ]
             },
@@ -70,7 +71,8 @@ public sealed class BulkUpsertUserProfileProjectionControllerTests
                 userProfileId,
                 " user-1 ",
                 " User One ",
-                " https://example.com/avatar.png "));
+                " https://example.com/avatar.png ",
+                "consumer"));
     }
 
     [Fact]

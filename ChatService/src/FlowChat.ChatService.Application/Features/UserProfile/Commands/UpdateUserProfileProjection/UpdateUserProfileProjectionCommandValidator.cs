@@ -14,5 +14,8 @@ public sealed class UpdateUserProfileProjectionCommandValidator : AbstractValida
             .Must(value => !string.IsNullOrWhiteSpace(value))
             .WithMessage("Payload does not contain valid FriendlyUserId.");
 
+        RuleFor(command => command.Source)
+            .Must(value => !string.IsNullOrWhiteSpace(value))
+            .WithMessage("Payload does not contain valid Source.");
     }
 }

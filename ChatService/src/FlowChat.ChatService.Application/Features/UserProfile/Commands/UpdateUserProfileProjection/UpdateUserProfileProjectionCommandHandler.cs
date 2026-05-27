@@ -20,7 +20,8 @@ public sealed class UpdateUserProfileProjectionCommandHandler(
             UserProfileId = request.UserProfileId,
             FriendlyUserId = request.FriendlyUserId!.Trim(),
             DisplayName = NormalizeOptional(request.DisplayName),
-            AvatarUrl = NormalizeOptional(request.AvatarUrl)
+            AvatarUrl = NormalizeOptional(request.AvatarUrl),
+            Source = request.Source!.Trim()
         };
 
         var wasUpdated = await userProfileProjectionWriteRepository.UpdateAsync(projection, cancellationToken);

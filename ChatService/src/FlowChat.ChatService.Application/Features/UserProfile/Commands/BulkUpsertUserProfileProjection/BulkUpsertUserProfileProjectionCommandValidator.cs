@@ -22,6 +22,9 @@ public sealed class BulkUpsertUserProfileProjectionCommandValidator
                     .Must(value => !string.IsNullOrWhiteSpace(value))
                     .WithMessage("Payload does not contain valid FriendlyUserId.");
 
+                item.RuleFor(x => x.Source)
+                    .Must(value => !string.IsNullOrWhiteSpace(value))
+                    .WithMessage("Payload does not contain valid Source.");
             });
 
         RuleFor(command => command.Items)

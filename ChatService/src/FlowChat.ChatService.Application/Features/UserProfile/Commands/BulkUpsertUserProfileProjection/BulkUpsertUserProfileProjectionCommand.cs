@@ -10,4 +10,5 @@ public sealed record BulkUpsertUserProfileProjectionCommandItem(
     Guid UserProfileId,
     string? FriendlyUserId,
     string? DisplayName,
-    string? AvatarUrl);
+    string? AvatarUrl,
+    string? Source);

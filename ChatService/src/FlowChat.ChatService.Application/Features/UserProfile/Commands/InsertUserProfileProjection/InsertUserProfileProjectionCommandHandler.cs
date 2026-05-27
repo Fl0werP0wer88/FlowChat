@@ -21,7 +21,8 @@ public sealed class InsertUserProfileProjectionCommandHandler(
             UserProfileId = request.UserProfileId,
             FriendlyUserId = request.FriendlyUserId!.Trim(),
             DisplayName = NormalizeOptional(request.DisplayName),
-            AvatarUrl = NormalizeOptional(request.AvatarUrl)
+            AvatarUrl = NormalizeOptional(request.AvatarUrl),
+            Source = request.Source!.Trim()
         };
 
         await userProfileProjectionWriteRepository.InsertAsync(projection, cancellationToken);

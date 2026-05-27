@@ -8,8 +8,6 @@ namespace FlowChat.ChatService.Persistence.Repositories;
 public sealed class UserProfileProjectionWriteRepository(AppDbContext dbContext)
     : IUserProfileProjectionWriteRepository
 {
-    private const string ProjectionSource = "user-profile-events";
-
     public async Task InsertAsync(UserProfileProjectionDto projection, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(projection);
@@ -23,9 +21,9 @@ public sealed class UserProfileProjectionWriteRepository(AppDbContext dbContext)
                 FriendlyUserId = projection.FriendlyUserId,
                 DisplayName = projection.DisplayName,
                 AvatarUrl = projection.AvatarUrl,
-                CreatedBy = ProjectionSource,
+                CreatedBy = projection.Source,
                 CreatedAtUtc = now,
-                LastModifiedBy = ProjectionSource,
+                LastModifiedBy = projection.Source,
                 LastModifiedAtUtc = now
             },
             cancellationToken);
@@ -46,7 +44,7 @@ public sealed class UserProfileProjectionWriteRepository(AppDbContext dbContext)
         entity.FriendlyUserId = projection.FriendlyUserId;
         entity.DisplayName = projection.DisplayName;
         entity.AvatarUrl = projection.AvatarUrl;
-        entity.LastModifiedBy = ProjectionSource;
+        entity.LastModifiedBy = projection.Source;
         entity.LastModifiedAtUtc = DateTimeOffset.UtcNow;
 
         return true;

@@ -24,8 +24,8 @@ public sealed class BulkUpsertUserProfileProjectionCommandHandlerTests
         var result = await handler.Handle(
             new BulkUpsertUserProfileProjectionCommand(
                 [
-                    new BulkUpsertUserProfileProjectionCommandItem(Guid.NewGuid(), " jdoe ", " John ", " https://avatar "),
-                    new BulkUpsertUserProfileProjectionCommandItem(Guid.NewGuid(), "asmith", " ", null)
+                    new BulkUpsertUserProfileProjectionCommandItem(Guid.NewGuid(), " jdoe ", " John ", " https://avatar ", " consumer "),
+                    new BulkUpsertUserProfileProjectionCommandItem(Guid.NewGuid(), "asmith", " ", null, "consumer")
                 ]),
             CancellationToken.None);
 
@@ -35,6 +35,7 @@ public sealed class BulkUpsertUserProfileProjectionCommandHandlerTests
         capturedItems!.First().FriendlyUserId.Should().Be("jdoe");
         capturedItems.First().DisplayName.Should().Be("John");
         capturedItems.First().AvatarUrl.Should().Be("https://avatar");
+        capturedItems.First().Source.Should().Be("consumer");
         capturedItems.Last().DisplayName.Should().BeNull();
     }
 
@@ -47,8 +48,8 @@ public sealed class BulkUpsertUserProfileProjectionCommandHandlerTests
         var result = await validator.ValidateAsync(
             new BulkUpsertUserProfileProjectionCommand(
                 [
-                    new BulkUpsertUserProfileProjectionCommandItem(userProfileId, "jdoe", null, null),
-                    new BulkUpsertUserProfileProjectionCommandItem(userProfileId, "john", null, null)
+                    new BulkUpsertUserProfileProjectionCommandItem(userProfileId, "jdoe", null, null, "consumer"),
+                    new BulkUpsertUserProfileProjectionCommandItem(userProfileId, "john", null, null, "consumer")
                 ]));
 
         result.IsValid.Should().BeFalse();
