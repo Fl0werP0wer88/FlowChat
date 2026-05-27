@@ -27,12 +27,12 @@ public sealed class UserProfileCreatedSubscriberTests
     [Fact]
     public async Task HandleAsync_WhenProfileCreatedEventArrives_InsertsNormalizedProjection()
     {
-        UserProfileProjectionRequest? capturedRequest = null;
+        BulkUpsertUserProfileProjectionRequest? capturedRequest = null;
         var userProfileId = _fixture.Create<Guid>();
 
         _apiClientMock
-            .Setup(x => x.InsertUserProfileProjectionAsync(It.IsAny<UserProfileProjectionRequest>(), It.IsAny<CancellationToken>()))
-            .Callback<UserProfileProjectionRequest, CancellationToken>((request, _) => capturedRequest = request)
+            .Setup(x => x.BulkUpsertUserProfileProjectionAsync(It.IsAny<BulkUpsertUserProfileProjectionRequest>(), It.IsAny<CancellationToken>()))
+            .Callback<BulkUpsertUserProfileProjectionRequest, CancellationToken>((request, _) => capturedRequest = request)
             .Returns(Task.CompletedTask);
 
         await _subscriber.HandleAsync(
@@ -63,19 +63,20 @@ public sealed class UserProfileCreatedSubscriberTests
             CancellationToken.None);
 
         capturedRequest.Should().NotBeNull();
-        capturedRequest!.UserProfileId.Should().Be(userProfileId);
-        capturedRequest.FriendlyUserId.Should().Be("john.doe");
-        capturedRequest.FirstName.Should().Be("John");
-        capturedRequest.LastName.Should().Be("Doe");
-        capturedRequest.Organization.Should().Be("FlowChat");
-        capturedRequest.MainEmailAddress.Should().Be("john@flowchat.local");
-        capturedRequest.MainEmailIsConfirmed.Should().BeFalse();
-        capturedRequest.MainEmailIsVisible.Should().BeTrue();
-        capturedRequest.MainPhoneNumber.Should().Be("+48123123123");
-        capturedRequest.MainPhoneIsConfirmed.Should().BeFalse();
-        capturedRequest.MainPhoneIsVisible.Should().BeTrue();
-        capturedRequest.AvatarUrl.Should().Be("https://cdn.example/avatar.png");
-        capturedRequest.Bio.Should().Be("hello");
+        var item = capturedRequest!.Items.Should().ContainSingle().Subject;
+        item.UserProfileId.Should().Be(userProfileId);
+        item.FriendlyUserId.Should().Be("john.doe");
+        item.FirstName.Should().Be("John");
+        item.LastName.Should().Be("Doe");
+        item.Organization.Should().Be("FlowChat");
+        item.MainEmailAddress.Should().Be("john@flowchat.local");
+        item.MainEmailIsConfirmed.Should().BeFalse();
+        item.MainEmailIsVisible.Should().BeTrue();
+        item.MainPhoneNumber.Should().Be("+48123123123");
+        item.MainPhoneIsConfirmed.Should().BeFalse();
+        item.MainPhoneIsVisible.Should().BeTrue();
+        item.AvatarUrl.Should().Be("https://cdn.example/avatar.png");
+        item.Bio.Should().Be("hello");
     }
 
     [Fact]
@@ -97,7 +98,7 @@ public sealed class UserProfileCreatedSubscriberTests
 
         await act.Should().ThrowAsync<NonTransientException>();
         _apiClientMock.Verify(
-            x => x.InsertUserProfileProjectionAsync(It.IsAny<UserProfileProjectionRequest>(), It.IsAny<CancellationToken>()),
+            x => x.BulkUpsertUserProfileProjectionAsync(It.IsAny<BulkUpsertUserProfileProjectionRequest>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 }
@@ -118,11 +119,11 @@ public sealed class UserProfileStateChangedSubscriberTests
     [Fact]
     public async Task HandleAsync_WhenStateChangedEventArrives_UpdatesProjection()
     {
-        UserProfileProjectionRequest? capturedRequest = null;
+        BulkUpsertUserProfileProjectionRequest? capturedRequest = null;
 
         _apiClientMock
-            .Setup(x => x.UpdateUserProfileProjectionAsync(It.IsAny<UserProfileProjectionRequest>(), It.IsAny<CancellationToken>()))
-            .Callback<UserProfileProjectionRequest, CancellationToken>((request, _) => capturedRequest = request)
+            .Setup(x => x.BulkUpsertUserProfileProjectionAsync(It.IsAny<BulkUpsertUserProfileProjectionRequest>(), It.IsAny<CancellationToken>()))
+            .Callback<BulkUpsertUserProfileProjectionRequest, CancellationToken>((request, _) => capturedRequest = request)
             .Returns(Task.CompletedTask);
 
         await _subscriber.HandleAsync(
@@ -148,14 +149,15 @@ public sealed class UserProfileStateChangedSubscriberTests
             CancellationToken.None);
 
         capturedRequest.Should().NotBeNull();
-        capturedRequest!.FriendlyUserId.Should().Be("jane.doe");
-        capturedRequest.FirstName.Should().Be("Jane");
-        capturedRequest.LastName.Should().Be("Doe");
-        capturedRequest.Organization.Should().Be("FlowChat");
-        capturedRequest.IsActive.Should().BeFalse();
-        capturedRequest.MainEmailAddress.Should().BeNull();
-        capturedRequest.MainPhoneNumber.Should().Be("123456");
-        capturedRequest.MainPhoneIsConfirmed.Should().BeTrue();
-        capturedRequest.MainPhoneIsVisible.Should().BeTrue();
+        var item = capturedRequest!.Items.Should().ContainSingle().Subject;
+        item.FriendlyUserId.Should().Be("jane.doe");
+        item.FirstName.Should().Be("Jane");
+        item.LastName.Should().Be("Doe");
+        item.Organization.Should().Be("FlowChat");
+        item.IsActive.Should().BeFalse();
+        item.MainEmailAddress.Should().BeNull();
+        item.MainPhoneNumber.Should().Be("123456");
+        item.MainPhoneIsConfirmed.Should().BeTrue();
+        item.MainPhoneIsVisible.Should().BeTrue();
     }
 }

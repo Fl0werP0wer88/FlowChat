@@ -15,10 +15,10 @@ internal static class UserProfileSubscriberHelper
         string eventType,
         CancellationToken cancellationToken)
     {
-        await socialGraphInternalApiClient.InsertUserProfileProjectionAsync(request, cancellationToken);
+        await socialGraphInternalApiClient.BulkUpsertUserProfileProjectionAsync(CreateBulkUpsertRequest(request), cancellationToken);
 
         logger.LogInformation(
-            "Inserted user profile projection for profile {UserProfileId} from {EventType}.",
+            "Upserted user profile projection for profile {UserProfileId} from {EventType}.",
             request.UserProfileId,
             eventType);
     }
@@ -30,10 +30,10 @@ internal static class UserProfileSubscriberHelper
         string eventType,
         CancellationToken cancellationToken)
     {
-        await socialGraphInternalApiClient.UpdateUserProfileProjectionAsync(request, cancellationToken);
+        await socialGraphInternalApiClient.BulkUpsertUserProfileProjectionAsync(CreateBulkUpsertRequest(request), cancellationToken);
 
         logger.LogInformation(
-            "Updated user profile projection for profile {UserProfileId} from {EventType}.",
+            "Upserted user profile projection for profile {UserProfileId} from {EventType}.",
             request.UserProfileId,
             eventType);
     }
@@ -95,4 +95,7 @@ internal static class UserProfileSubscriberHelper
 
     private static string? NormalizeOptional(string? value) =>
         string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+
+    private static BulkUpsertUserProfileProjectionRequest CreateBulkUpsertRequest(UserProfileProjectionRequest request) =>
+        new() { Items = [request] };
 }

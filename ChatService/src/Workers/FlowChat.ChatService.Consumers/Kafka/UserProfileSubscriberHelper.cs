@@ -17,10 +17,10 @@ internal static class UserProfileSubscriberHelper
         string eventType,
         CancellationToken cancellationToken)
     {
-        await apiClient.InsertUserProfileProjectionAsync(request, cancellationToken);
+        await apiClient.BulkUpsertUserProfileProjectionAsync(CreateBulkUpsertRequest(request), cancellationToken);
 
         logger.LogInformation(
-            "Inserted user profile projection for user {UserId} from {EventType}.",
+            "Upserted user profile projection for user {UserId} from {EventType}.",
             request.UserProfileId,
             eventType);
     }
@@ -32,10 +32,10 @@ internal static class UserProfileSubscriberHelper
         string eventType,
         CancellationToken cancellationToken)
     {
-        await apiClient.UpdateUserProfileProjectionAsync(request, cancellationToken);
+        await apiClient.BulkUpsertUserProfileProjectionAsync(CreateBulkUpsertRequest(request), cancellationToken);
 
         logger.LogInformation(
-            "Updated user profile projection for user {UserId} from {EventType}.",
+            "Upserted user profile projection for user {UserId} from {EventType}.",
             request.UserProfileId,
             eventType);
     }
@@ -88,6 +88,9 @@ internal static class UserProfileSubscriberHelper
 
     private static string? NormalizeOptional(string? value) =>
         string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+
+    private static BulkUpsertUserProfileProjectionRequest CreateBulkUpsertRequest(UserProfileProjectionRequest request) =>
+        new() { Items = [request] };
 
     private static string? ComputeDisplayName(string? firstName, string? lastName)
     {

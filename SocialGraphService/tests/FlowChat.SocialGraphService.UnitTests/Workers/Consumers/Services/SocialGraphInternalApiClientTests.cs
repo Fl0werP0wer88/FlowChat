@@ -15,7 +15,7 @@ public sealed class SocialGraphInternalApiClientTests
     private readonly IFixture _fixture = new Fixture();
 
     [Fact]
-    public async Task InsertUserProfileProjectionAsync_PostsToExpectedEndpointWithApiKey()
+    public async Task BulkUpsertUserProfileProjectionAsync_PostsToExpectedEndpointWithApiKey()
     {
         string? requestBody = null;
         HttpRequestMessage? sentRequest = null;
@@ -41,35 +41,42 @@ public sealed class SocialGraphInternalApiClientTests
 
         var client = new SocialGraphInternalApiClient(httpClient);
 
-        await client.InsertUserProfileProjectionAsync(
-            new UserProfileProjectionRequest
+        await client.BulkUpsertUserProfileProjectionAsync(
+            new BulkUpsertUserProfileProjectionRequest
             {
-                UserProfileId = _fixture.Create<Guid>(),
-                FriendlyUserId = "jdoe",
-                MainEmailAddress = "jdoe@example.com",
-                MainEmailIsConfirmed = true,
-                MainEmailIsVisible = true
+                Items =
+                [
+                    new UserProfileProjectionRequest
+                    {
+                        UserProfileId = _fixture.Create<Guid>(),
+                        FriendlyUserId = "jdoe",
+                        MainEmailAddress = "jdoe@example.com",
+                        MainEmailIsConfirmed = true,
+                        MainEmailIsVisible = true
+                    }
+                ]
             },
             CancellationToken.None);
 
         sentRequest.Should().NotBeNull();
         sentRequest!.Method.Should().Be(HttpMethod.Post);
-        sentRequest.RequestUri!.ToString().Should().Be("https://localhost:7194/internal/userprofiles/projection/insert");
+        sentRequest.RequestUri!.ToString().Should().Be("https://localhost:7194/internal/userprofiles/projection/bulk-upsert");
         sentRequest.Headers.GetValues(SocialGraphInternalApiClient.ApiKeyHeaderName).Single().Should().Be("internal-key");
 
-        var payload = JsonSerializer.Deserialize<UserProfileProjectionRequest>(
+        var payload = JsonSerializer.Deserialize<BulkUpsertUserProfileProjectionRequest>(
             requestBody!,
             new JsonSerializerOptions(JsonSerializerDefaults.Web));
 
         payload.Should().NotBeNull();
-        payload!.FriendlyUserId.Should().Be("jdoe");
-        payload.MainEmailAddress.Should().Be("jdoe@example.com");
-        payload.MainEmailIsConfirmed.Should().BeTrue();
-        payload.MainEmailIsVisible.Should().BeTrue();
+        var item = payload!.Items.Should().ContainSingle().Subject;
+        item.FriendlyUserId.Should().Be("jdoe");
+        item.MainEmailAddress.Should().Be("jdoe@example.com");
+        item.MainEmailIsConfirmed.Should().BeTrue();
+        item.MainEmailIsVisible.Should().BeTrue();
     }
 
     [Fact]
-    public async Task UpdateUserProfileProjectionAsync_WhenApiReturnsBadRequest_ThrowsNonTransientException()
+    public async Task BulkUpsertUserProfileProjectionAsync_WhenApiReturnsBadRequest_ThrowsNonTransientException()
     {
         var handlerMock = new Mock<HttpMessageHandler>();
         handlerMock
@@ -88,7 +95,7 @@ public sealed class SocialGraphInternalApiClientTests
             BaseAddress = new Uri("https://localhost:7194")
         });
 
-        var act = () => client.UpdateUserProfileProjectionAsync(new UserProfileProjectionRequest(), CancellationToken.None);
+        var act = () => client.BulkUpsertUserProfileProjectionAsync(new BulkUpsertUserProfileProjectionRequest(), CancellationToken.None);
 
         await act.Should().ThrowAsync<NonTransientException>()
             .WithMessage("*400*");

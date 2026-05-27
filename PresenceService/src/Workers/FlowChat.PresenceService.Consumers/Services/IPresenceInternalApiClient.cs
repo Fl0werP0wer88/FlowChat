@@ -4,8 +4,8 @@ namespace FlowChat.PresenceService.Consumers.Services;
 
 public interface IPresenceInternalApiClient
 {
-    Task InsertContactObserverProjectionAsync(
-        ContactObserverProjectionRequest request,
+    Task BulkUpsertContactObserverProjectionAsync(
+        BulkUpsertContactObserverProjectionRequest request,
         CancellationToken cancellationToken);
 
     Task DeleteContactObserverProjectionAsync(

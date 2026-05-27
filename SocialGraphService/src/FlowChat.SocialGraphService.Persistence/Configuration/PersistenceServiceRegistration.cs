@@ -2,7 +2,6 @@ using FlowChat.Shared.Application;
 using FlowChat.Shared.Infrastructure.Silverback.Persistence;
 using FlowChat.SocialGraphService.Application.Features.Contact.Commands.AddContact;
 using FlowChat.SocialGraphService.Application.Features.UserProfile;
-using FlowChat.SocialGraphService.Application.Features.UserProfile.Commands.InsertUserProfileProjection;
 using FlowChat.SocialGraphService.Application.Contracts.Persistence;
 using FlowChat.SocialGraphService.Persistence.BulkUpsert;
 using FlowChat.SocialGraphService.Persistence.Repositories;
@@ -25,8 +24,6 @@ public static class PersistenceServiceRegistration
         {
             options.UniqueConstraintNamesByIdempotencyConflictKey[AddContactCommand.IdempotencyConflictKey] =
                 ["PK_Contacts"];
-            options.UniqueConstraintNamesByIdempotencyConflictKey[InsertUserProfileProjectionCommand.IdempotencyConflictKey] =
-                ["PK_UserProfileProjection"];
         });
         services.AddDbContext<AppDbContext>((serviceProvider, options) =>
             options.UseNpgsql(configuration.GetConnectionString("SocialGraphDb"))
@@ -35,7 +32,6 @@ public static class PersistenceServiceRegistration
         services.AddScoped<IContactWriteRepository, ContactWriteRepository>();
         services.AddScoped<IContactReadRepository, ContactReadRepository>();
         services.AddScoped<IUserProfileProjectionReadRepository, UserProfileProjectionReadRepository>();
-        services.AddScoped<IUserProfileProjectionWriteRepository, UserProfileProjectionWriteRepository>();
         services.AddScoped<IBulkUpsertExecutor<UserProfileProjectionDto>, UserProfileProjectionBulkUpsertExecutor>();
         services.AddScoped<IUnitOfWork, SilverbackEfUnitOfWork<AppDbContext>>();
 

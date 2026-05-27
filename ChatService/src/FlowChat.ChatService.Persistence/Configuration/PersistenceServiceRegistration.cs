@@ -5,7 +5,6 @@ using FlowChat.ChatService.Application.Features.Conversation.Commands.AddPartici
 using FlowChat.ChatService.Application.Features.Conversation.Commands.CreateDuetConversation;
 using FlowChat.ChatService.Application.Features.Conversation.Commands.CreateGroupConversation;
 using FlowChat.ChatService.Application.Features.Conversation.Commands.CreateGroupFromDuet;
-using FlowChat.ChatService.Application.Features.UserProfile.Commands.InsertUserProfileProjection;
 using FlowChat.ChatService.Application.Features.UserProfile;
 using FlowChat.ChatService.Persistence.BulkUpsert;
 using FlowChat.ChatService.Persistence.Repositories;
@@ -27,8 +26,6 @@ public static class PersistenceServiceRegistration
         {
             options.UniqueConstraintNamesByIdempotencyConflictKey[SendChatMessageCommand.IdempotencyConflictKey] =
                 ["PK_ChatMessages"];
-            options.UniqueConstraintNamesByIdempotencyConflictKey[InsertUserProfileProjectionCommand.IdempotencyConflictKey] =
-                ["PK_UserProfileProjections"];
             options.UniqueConstraintNamesByIdempotencyConflictKey[CreateGroupConversationCommand.IdempotencyConflictKey] =
                 ["PK_Conversations"];
             options.UniqueConstraintNamesByIdempotencyConflictKey[CreateGroupFromDuetCommand.IdempotencyConflictKey] =
@@ -53,7 +50,6 @@ public static class PersistenceServiceRegistration
         services.AddScoped<IGroupConversationReadRepository, GroupConversationReadRepository>();
         services.AddScoped<IDuetConversationReadRepository, DuetConversationReadRepository>();
         services.AddScoped<IDuetConversationWriteRepository, DuetConversationWriteRepository>();
-        services.AddScoped<IUserProfileProjectionWriteRepository, UserProfileProjectionWriteRepository>();
         services.AddScoped<IUserProfileProjectionReadRepository, UserProfileProjectionReadRepository>();
         services.AddScoped<IBulkUpsertExecutor<UserProfileProjectionDto>, UserProfileProjectionBulkUpsertExecutor>();
 

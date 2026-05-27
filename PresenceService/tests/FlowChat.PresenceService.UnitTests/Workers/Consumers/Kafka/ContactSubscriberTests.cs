@@ -26,13 +26,13 @@ public sealed class ContactAddedSubscriberTests
     [Fact]
     public async Task HandleAsync_WhenContactAdded_InsertsContactObserverProjection()
     {
-        ContactObserverProjectionRequest? capturedRequest = null;
+        BulkUpsertContactObserverProjectionRequest? capturedRequest = null;
         var ownerUserId = _fixture.Create<Guid>();
         var contactUserId = _fixture.Create<Guid>();
 
         _apiClientMock
-            .Setup(x => x.InsertContactObserverProjectionAsync(It.IsAny<ContactObserverProjectionRequest>(), It.IsAny<CancellationToken>()))
-            .Callback<ContactObserverProjectionRequest, CancellationToken>((request, _) => capturedRequest = request)
+            .Setup(x => x.BulkUpsertContactObserverProjectionAsync(It.IsAny<BulkUpsertContactObserverProjectionRequest>(), It.IsAny<CancellationToken>()))
+            .Callback<BulkUpsertContactObserverProjectionRequest, CancellationToken>((request, _) => capturedRequest = request)
             .Returns(Task.CompletedTask);
 
         await _subscriber.HandleAsync(
@@ -44,8 +44,9 @@ public sealed class ContactAddedSubscriberTests
             CancellationToken.None);
 
         capturedRequest.Should().NotBeNull();
-        capturedRequest!.ObservedUserId.Should().Be(contactUserId);
-        capturedRequest.ObserverUserId.Should().Be(ownerUserId);
+        var item = capturedRequest!.Items.Should().ContainSingle().Subject;
+        item.ObservedUserId.Should().Be(contactUserId);
+        item.ObserverUserId.Should().Be(ownerUserId);
     }
 }
 

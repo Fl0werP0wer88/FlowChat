@@ -9,22 +9,16 @@ public sealed class ChatInternalApiClient(HttpClient httpClient)
 {
     public const string HttpClientName = nameof(ChatInternalApiClient);
     public const string ApiKeyHeaderName = "X-Internal-Api-Key";
-    private const string InsertPath = "/internal/userprofiles/projection/insert";
-    private const string UpdatePath = "/internal/userprofiles/projection/update";
+    private const string BulkUpsertPath = "/internal/userprofiles/projection/bulk-upsert";
 
     protected override string ClientDisplayName => "Chat API";
 
-    public Task InsertUserProfileProjectionAsync(
-        UserProfileProjectionRequest request,
+    public Task BulkUpsertUserProfileProjectionAsync(
+        BulkUpsertUserProfileProjectionRequest request,
         CancellationToken cancellationToken)
-        => SendAsync(BuildRequest(HttpMethod.Post, InsertPath, request), cancellationToken);
+        => SendAsync(BuildRequest(HttpMethod.Post, BulkUpsertPath, request), cancellationToken);
 
-    public Task UpdateUserProfileProjectionAsync(
-        UserProfileProjectionRequest request,
-        CancellationToken cancellationToken)
-        => SendAsync(BuildRequest(HttpMethod.Put, UpdatePath, request), cancellationToken);
-
-    private static HttpRequestMessage BuildRequest(HttpMethod method, string path, UserProfileProjectionRequest request) =>
+    private static HttpRequestMessage BuildRequest(HttpMethod method, string path, BulkUpsertUserProfileProjectionRequest request) =>
         new(method, path) { Content = JsonContent.Create(request) };
 }
 

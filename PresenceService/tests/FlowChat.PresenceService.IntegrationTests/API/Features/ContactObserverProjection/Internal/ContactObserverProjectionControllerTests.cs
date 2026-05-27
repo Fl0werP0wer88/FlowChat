@@ -10,19 +10,25 @@ public sealed class ContactObserverProjectionControllerTests(PresenceApiFactory 
     private readonly HttpClient _client = factory.CreateClient();
 
     [Fact]
-    public async Task Insert_WithValidInternalApiKey_PersistsProjection()
+    public async Task BulkUpsert_WithValidInternalApiKey_PersistsProjection()
     {
         var observedUserId = Guid.NewGuid();
         var observerUserId = Guid.NewGuid();
-        var request = new HttpRequestMessage(HttpMethod.Post, "/internal/presence/contact-observers/insert")
+        var request = new HttpRequestMessage(HttpMethod.Post, "/internal/presence/contact-observers/bulk-upsert")
         {
-            Content = JsonContent.Create(new { ObservedUserId = observedUserId, ObserverUserId = observerUserId })
+            Content = JsonContent.Create(new
+            {
+                Items = new[]
+                {
+                    new { ObservedUserId = observedUserId, ObserverUserId = observerUserId }
+                }
+            })
         };
         request.Headers.Add("X-Internal-Api-Key", PresenceApiFactory.InternalApiKey);
 
         var response = await _client.SendAsync(request);
 
-        response.StatusCode.Should().Be(HttpStatusCode.Created);
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
         var exists = await factory.WithDbContextAsync(db => db.ContactObserverProjections.AnyAsync(
             x => x.ObservedUserId == observedUserId && x.ObserverUserId == observerUserId));
         exists.Should().BeTrue();

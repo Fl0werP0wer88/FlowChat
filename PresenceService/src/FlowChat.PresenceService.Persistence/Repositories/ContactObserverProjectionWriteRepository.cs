@@ -1,6 +1,4 @@
 using FlowChat.PresenceService.Application.Contracts.Persistence;
-using FlowChat.PresenceService.Application.Features.ContactObserverProjections;
-using FlowChat.PresenceService.Persistence.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace FlowChat.PresenceService.Persistence.Repositories;
@@ -8,28 +6,7 @@ namespace FlowChat.PresenceService.Persistence.Repositories;
 public sealed class ContactObserverProjectionWriteRepository(AppDbContext dbContext)
     : IContactObserverProjectionWriteRepository
 {
-    private const string ProjectionSource = "social-graph-contact-events";
     private readonly AppDbContext _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
-
-    public async Task InsertAsync(
-        ContactObserverProjectionDto projection,
-        CancellationToken cancellationToken = default)
-    {
-        ArgumentNullException.ThrowIfNull(projection);
-
-        await _dbContext.ContactObserverProjections.AddAsync(
-            new ContactObserverProjectionEntity
-            {
-                ObservedUserId = projection.ObservedUserId,
-                ObserverUserId = projection.ObserverUserId,
-                CreatedBy = ProjectionSource,
-                CreatedAtUtc = projection.CreatedAtUtc,
-                LastModifiedBy = ProjectionSource,
-                LastModifiedAtUtc = projection.LastModifiedAtUtc
-            },
-            cancellationToken);
-    }
-
 
     public async Task<bool> DeleteAsync(
         Guid observedUserId,

@@ -24,7 +24,7 @@ public sealed class DeleteContactObserverProjectionCommandHandlerTests
             .ReturnsAsync(false);
 
         _unitOfWorkMock
-            .Setup(x => x.ExecuteInTransactionAsync(
+            .Setup(x => x.ExecuteCommandInTransactionAsync(
                 It.IsAny<Func<CancellationToken, Task<FlowChatResult<Unit>>>>(),
                 It.IsAny<CancellationToken>()))
             .Returns<Func<CancellationToken, Task<FlowChatResult<Unit>>>, CancellationToken>(

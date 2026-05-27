@@ -9,15 +9,15 @@ public sealed class PresenceInternalApiClient(HttpClient httpClient)
 {
     public const string HttpClientName = nameof(PresenceInternalApiClient);
     public const string ApiKeyHeaderName = "X-Internal-Api-Key";
-    private const string InsertPath = "/internal/presence/contact-observers/insert";
+    private const string BulkUpsertPath = "/internal/presence/contact-observers/bulk-upsert";
     private const string DeletePath = "/internal/presence/contact-observers/delete";
 
     protected override string ClientDisplayName => "Presence API";
 
-    public Task InsertContactObserverProjectionAsync(
-        ContactObserverProjectionRequest request,
+    public Task BulkUpsertContactObserverProjectionAsync(
+        BulkUpsertContactObserverProjectionRequest request,
         CancellationToken cancellationToken) =>
-        SendContactObserverProjectionAsync(HttpMethod.Post, InsertPath, request, cancellationToken);
+        SendContactObserverProjectionAsync(HttpMethod.Post, BulkUpsertPath, request, cancellationToken);
 
     public Task DeleteContactObserverProjectionAsync(
         ContactObserverProjectionRequest request,
@@ -27,7 +27,7 @@ public sealed class PresenceInternalApiClient(HttpClient httpClient)
     private async Task SendContactObserverProjectionAsync(
         HttpMethod method,
         string path,
-        ContactObserverProjectionRequest request,
+        object request,
         CancellationToken cancellationToken)
     {
         using var message = new HttpRequestMessage(method, path)

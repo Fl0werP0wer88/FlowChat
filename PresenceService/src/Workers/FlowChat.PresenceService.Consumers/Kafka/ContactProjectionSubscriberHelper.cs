@@ -25,7 +25,9 @@ internal static class ContactProjectionSubscriberHelper
             request.ObservedUserId,
             request.ObserverUserId);
 
-        await presenceInternalApiClient.InsertContactObserverProjectionAsync(request, cancellationToken);
+        await presenceInternalApiClient.BulkUpsertContactObserverProjectionAsync(
+            new BulkUpsertContactObserverProjectionRequest { Items = [request] },
+            cancellationToken);
     }
 
     public static async Task DeleteAsync(
