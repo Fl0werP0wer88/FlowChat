@@ -1,8 +1,7 @@
 using FlowChat.ChatService.Consumers.ChatService.Contracts;
-using FlowChat.ChatService.Consumers.Services;
 using FlowChat.Core.Exceptions;
+using FlowChat.Core.Messaging;
 using FlowChat.Core.Messaging.UserProfileService.Events;
-using Microsoft.Extensions.Logging;
 
 namespace FlowChat.ChatService.Consumers.Kafka;
 
@@ -10,35 +9,17 @@ internal static class UserProfileSubscriberHelper
 {
     private const string ProjectionSource = "user-profile-events";
 
-    public static async Task InsertAsync(
-        IChatInternalApiClient apiClient,
-        ILogger logger,
-        UserProfileProjectionRequest request,
-        string eventType,
-        CancellationToken cancellationToken)
-    {
-        await apiClient.BulkUpsertUserProfileProjectionAsync(CreateBulkUpsertRequest(request), cancellationToken);
+    public static UserProfileProjectionRequest? Map(IntegrationEvent message) =>
+        message switch
+        {
+            UserProfileCreatedIntegrationEvent created => Map(created),
+            UserProfileChangedIntegrationEvent changed => Map(changed),
+            _ => null
+        };
 
-        logger.LogInformation(
-            "Upserted user profile projection for user {UserId} from {EventType}.",
-            request.UserProfileId,
-            eventType);
-    }
-
-    public static async Task UpdateAsync(
-        IChatInternalApiClient apiClient,
-        ILogger logger,
-        UserProfileProjectionRequest request,
-        string eventType,
-        CancellationToken cancellationToken)
-    {
-        await apiClient.BulkUpsertUserProfileProjectionAsync(CreateBulkUpsertRequest(request), cancellationToken);
-
-        logger.LogInformation(
-            "Upserted user profile projection for user {UserId} from {EventType}.",
-            request.UserProfileId,
-            eventType);
-    }
+    public static BulkUpsertUserProfileProjectionRequest CreateBulkUpsertRequest(
+        IReadOnlyCollection<UserProfileProjectionRequest> items) =>
+        new() { Items = KeepLastItemPerUserProfile(items) };
 
     public static UserProfileProjectionRequest Map(UserProfileCreatedIntegrationEvent message) =>
         Map(
@@ -89,8 +70,18 @@ internal static class UserProfileSubscriberHelper
     private static string? NormalizeOptional(string? value) =>
         string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 
-    private static BulkUpsertUserProfileProjectionRequest CreateBulkUpsertRequest(UserProfileProjectionRequest request) =>
-        new() { Items = [request] };
+    private static IReadOnlyCollection<UserProfileProjectionRequest> KeepLastItemPerUserProfile(
+        IReadOnlyCollection<UserProfileProjectionRequest> items)
+    {
+        // Kafka batch can contain multiple events for one profile, while the bulk endpoint rejects duplicate keys
+        return items
+            .Select((item, index) => new { item, index })
+            .GroupBy(x => x.item.UserProfileId)
+            .Select(group => group.Last())
+            .OrderBy(x => x.index)
+            .Select(x => x.item)
+            .ToArray();
+    }
 
     private static string? ComputeDisplayName(string? firstName, string? lastName)
     {
