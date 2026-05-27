@@ -12,7 +12,6 @@ public sealed class BulkUpsertUserProfileProjectionCommandHandlerTests
     [Fact]
     public async Task Handle_WhenCommandIsValid_UpsertsNormalizedProjections()
     {
-        var now = DateTimeOffset.UtcNow;
         IReadOnlyCollection<UserProfileProjectionDto>? capturedItems = null;
         var unitOfWorkMock = CreateUnitOfWorkMock();
         var executorMock = new Mock<IBulkUpsertExecutor<UserProfileProjectionDto>>();
@@ -25,24 +24,8 @@ public sealed class BulkUpsertUserProfileProjectionCommandHandlerTests
         var result = await handler.Handle(
             new BulkUpsertUserProfileProjectionCommand(
                 [
-                    new BulkUpsertUserProfileProjectionCommandItem(
-                        Guid.NewGuid(),
-                        " jdoe ",
-                        " John ",
-                        " https://avatar ",
-                        " source ",
-                        now,
-                        " source ",
-                        now),
-                    new BulkUpsertUserProfileProjectionCommandItem(
-                        Guid.NewGuid(),
-                        "asmith",
-                        " ",
-                        null,
-                        "source",
-                        now,
-                        "source",
-                        now)
+                    new BulkUpsertUserProfileProjectionCommandItem(Guid.NewGuid(), " jdoe ", " John ", " https://avatar "),
+                    new BulkUpsertUserProfileProjectionCommandItem(Guid.NewGuid(), "asmith", " ", null)
                 ]),
             CancellationToken.None);
 
@@ -52,10 +35,6 @@ public sealed class BulkUpsertUserProfileProjectionCommandHandlerTests
         capturedItems!.First().FriendlyUserId.Should().Be("jdoe");
         capturedItems.First().DisplayName.Should().Be("John");
         capturedItems.First().AvatarUrl.Should().Be("https://avatar");
-        capturedItems.First().CreatedBy.Should().Be("source");
-        capturedItems.First().CreatedAtUtc.Should().Be(now);
-        capturedItems.First().LastModifiedBy.Should().Be("source");
-        capturedItems.First().LastModifiedAtUtc.Should().Be(now);
         capturedItems.Last().DisplayName.Should().BeNull();
     }
 
@@ -63,14 +42,13 @@ public sealed class BulkUpsertUserProfileProjectionCommandHandlerTests
     public async Task Validate_WhenDuplicateUserProfileIds_ReturnsValidationError()
     {
         var userProfileId = Guid.NewGuid();
-        var now = DateTimeOffset.UtcNow;
         var validator = new BulkUpsertUserProfileProjectionCommandValidator();
 
         var result = await validator.ValidateAsync(
             new BulkUpsertUserProfileProjectionCommand(
                 [
-                    new BulkUpsertUserProfileProjectionCommandItem(userProfileId, "jdoe", null, null, "source", now, "source", now),
-                    new BulkUpsertUserProfileProjectionCommandItem(userProfileId, "john", null, null, "source", now, "source", now)
+                    new BulkUpsertUserProfileProjectionCommandItem(userProfileId, "jdoe", null, null),
+                    new BulkUpsertUserProfileProjectionCommandItem(userProfileId, "john", null, null)
                 ]));
 
         result.IsValid.Should().BeFalse();

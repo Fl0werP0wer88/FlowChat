@@ -9,6 +9,8 @@ namespace FlowChat.ChatService.Persistence.BulkUpsert;
 public sealed class UserProfileProjectionBulkUpsertExecutor(AppDbContext dbContext)
     : IBulkUpsertExecutor<UserProfileProjectionDto>
 {
+    private const string ProjectionSource = "user-profile-events";
+
     public async Task<FlowChatResult<BulkUpsertCommandResult>> UpsertAsync(
         IReadOnlyCollection<UserProfileProjectionDto> items,
         CancellationToken cancellationToken)
@@ -20,19 +22,30 @@ public sealed class UserProfileProjectionBulkUpsertExecutor(AppDbContext dbConte
             return FlowChatResult<BulkUpsertCommandResult>.Success(BulkUpsertCommandResult.Empty);
         }
 
+        var now = DateTimeOffset.UtcNow;
         var entities = items.Select(item => new UserProfileProjectionEntity
         {
             UserId = item.UserProfileId,
             FriendlyUserId = item.FriendlyUserId,
             DisplayName = item.DisplayName,
             AvatarUrl = item.AvatarUrl,
-            CreatedBy = item.CreatedBy,
-            CreatedAtUtc = item.CreatedAtUtc,
-            LastModifiedBy = item.LastModifiedBy,
-            LastModifiedAtUtc = item.LastModifiedAtUtc
+            CreatedBy = ProjectionSource,
+            CreatedAtUtc = now,
+            LastModifiedBy = ProjectionSource,
+            LastModifiedAtUtc = now
         }).ToList();
 
-        await dbContext.BulkInsertOrUpdateAsync(entities, cancellationToken: cancellationToken);
+        await dbContext.BulkInsertOrUpdateAsync(
+            entities,
+            new BulkConfig
+            {
+                PropertiesToExcludeOnUpdate =
+                [
+                    nameof(UserProfileProjectionEntity.CreatedBy),
+                    nameof(UserProfileProjectionEntity.CreatedAtUtc)
+                ]
+            },
+            cancellationToken: cancellationToken);
 
         return FlowChatResult<BulkUpsertCommandResult>.Success(
             BulkUpsertCommandResult.FromRequestedCount(items.Count));

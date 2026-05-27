@@ -22,21 +22,6 @@ public sealed class BulkUpsertUserProfileProjectionCommandValidator
                     .Must(value => !string.IsNullOrWhiteSpace(value))
                     .WithMessage("Payload does not contain valid FriendlyUserId.");
 
-                item.RuleFor(x => x.CreatedBy)
-                    .Must(value => !string.IsNullOrWhiteSpace(value))
-                    .WithMessage("Payload does not contain valid CreatedBy.");
-
-                item.RuleFor(x => x.CreatedAtUtc)
-                    .NotEmpty()
-                    .WithMessage("Payload does not contain valid CreatedAtUtc.");
-
-                item.RuleFor(x => x.LastModifiedBy)
-                    .Must(value => !string.IsNullOrWhiteSpace(value))
-                    .WithMessage("Payload does not contain valid LastModifiedBy.");
-
-                item.RuleFor(x => x.LastModifiedAtUtc)
-                    .NotEmpty()
-                    .WithMessage("Payload does not contain valid LastModifiedAtUtc.");
             });
 
         RuleFor(command => command.Items)

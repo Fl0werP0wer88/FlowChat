@@ -37,11 +37,7 @@ public sealed class InsertUserProfileProjectionController : ApiControllerBase
                 request.UserProfileId,
                 request.FriendlyUserId,
                 request.DisplayName,
-                request.AvatarUrl,
-                request.CreatedBy,
-                request.CreatedAtUtc,
-                request.LastModifiedBy,
-                request.LastModifiedAtUtc),
+                request.AvatarUrl),
             cancellationToken);
 
         if (!result.IsSuccess)

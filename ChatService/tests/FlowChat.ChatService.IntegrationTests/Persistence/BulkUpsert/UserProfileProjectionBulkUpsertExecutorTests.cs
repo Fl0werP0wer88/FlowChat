@@ -37,8 +37,6 @@ public sealed class UserProfileProjectionBulkUpsertExecutorTests : IDisposable
     public async Task UpsertAsync_WhenProjectionDoesNotExist_InsertsProjection()
     {
         var userProfileId = Guid.NewGuid();
-        var now = DateTimeOffset.UtcNow;
-
         var result = await _executor.UpsertAsync(
             [
                 new UserProfileProjectionDto
@@ -46,11 +44,7 @@ public sealed class UserProfileProjectionBulkUpsertExecutorTests : IDisposable
                     UserProfileId = userProfileId,
                     FriendlyUserId = "jdoe",
                     DisplayName = "John",
-                    AvatarUrl = "https://avatar",
-                    CreatedBy = "source",
-                    CreatedAtUtc = now,
-                    LastModifiedBy = "source",
-                    LastModifiedAtUtc = now
+                    AvatarUrl = "https://avatar"
                 }
             ],
             CancellationToken.None);
@@ -59,42 +53,39 @@ public sealed class UserProfileProjectionBulkUpsertExecutorTests : IDisposable
         var entity = await _dbContext.UserProfileProjections.SingleAsync();
         entity.UserId.Should().Be(userProfileId);
         entity.DisplayName.Should().Be("John");
-        entity.CreatedAtUtc.Should().Be(now);
-        entity.LastModifiedAtUtc.Should().Be(now);
+        entity.CreatedBy.Should().Be("user-profile-events");
+        entity.CreatedAtUtc.Should().NotBe(default);
+        entity.LastModifiedBy.Should().Be("user-profile-events");
+        entity.LastModifiedAtUtc.Should().NotBe(default);
     }
 
     [Fact]
     public async Task UpsertAsync_WhenProjectionExists_UpdatesProjection()
     {
         var userProfileId = Guid.NewGuid();
-        var createdAtUtc = DateTimeOffset.UtcNow.AddMinutes(-5);
-        var updatedAtUtc = DateTimeOffset.UtcNow;
         await _executor.UpsertAsync(
             [
                 new UserProfileProjectionDto
                 {
                     UserProfileId = userProfileId,
                     FriendlyUserId = "jdoe",
-                    DisplayName = "Before",
-                    CreatedBy = "source",
-                    CreatedAtUtc = createdAtUtc,
-                    LastModifiedBy = "source",
-                    LastModifiedAtUtc = createdAtUtc
+                    DisplayName = "Before"
                 }
             ],
             CancellationToken.None);
+        var firstCreatedAtUtc = await _dbContext.UserProfileProjections
+            .Where(x => x.UserId == userProfileId)
+            .Select(x => x.CreatedAtUtc)
+            .SingleAsync();
 
+        await Task.Delay(10);
         await _executor.UpsertAsync(
             [
                 new UserProfileProjectionDto
                 {
                     UserProfileId = userProfileId,
                     FriendlyUserId = "jdoe2",
-                    DisplayName = "After",
-                    CreatedBy = "source",
-                    CreatedAtUtc = updatedAtUtc,
-                    LastModifiedBy = "source",
-                    LastModifiedAtUtc = updatedAtUtc
+                    DisplayName = "After"
                 }
             ],
             CancellationToken.None);
@@ -102,7 +93,6 @@ public sealed class UserProfileProjectionBulkUpsertExecutorTests : IDisposable
         var entity = await _dbContext.UserProfileProjections.SingleAsync();
         entity.FriendlyUserId.Should().Be("jdoe2");
         entity.DisplayName.Should().Be("After");
-        entity.CreatedAtUtc.Should().Be(updatedAtUtc);
-        entity.LastModifiedAtUtc.Should().Be(updatedAtUtc);
+        entity.LastModifiedAtUtc.Should().BeAfter(firstCreatedAtUtc);
     }
 }

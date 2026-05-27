@@ -8,8 +8,6 @@ namespace FlowChat.ChatService.Consumers.Kafka;
 
 internal static class UserProfileSubscriberHelper
 {
-    private const string ProjectionSource = "user-profile-events";
-
     public static async Task InsertAsync(
         IChatInternalApiClient apiClient,
         ILogger logger,
@@ -63,18 +61,12 @@ internal static class UserProfileSubscriberHelper
         string? lastName,
         string? avatarUrl)
     {
-        var now = DateTimeOffset.UtcNow;
-
         return new UserProfileProjectionRequest
         {
             UserProfileId = ResolveUserId(userProfileId),
             FriendlyUserId = NormalizeRequired(friendlyUserId, nameof(friendlyUserId)),
             DisplayName = ComputeDisplayName(firstName, lastName),
-            AvatarUrl = NormalizeOptional(avatarUrl),
-            CreatedBy = ProjectionSource,
-            CreatedAtUtc = now,
-            LastModifiedBy = ProjectionSource,
-            LastModifiedAtUtc = now
+            AvatarUrl = NormalizeOptional(avatarUrl)
         };
     }
 
