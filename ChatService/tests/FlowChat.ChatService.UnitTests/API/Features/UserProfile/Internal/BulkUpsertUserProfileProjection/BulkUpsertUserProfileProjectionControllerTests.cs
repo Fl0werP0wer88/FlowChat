@@ -36,6 +36,7 @@ public sealed class BulkUpsertUserProfileProjectionControllerTests
     {
         BulkUpsertUserProfileProjectionCommand? capturedCommand = null;
         var userProfileId = Guid.NewGuid();
+        var now = DateTimeOffset.UtcNow;
         var mediatorMock = new Mock<IMediator>();
         mediatorMock
             .Setup(x => x.Send(It.IsAny<BulkUpsertUserProfileProjectionCommand>(), It.IsAny<CancellationToken>()))
@@ -54,7 +55,11 @@ public sealed class BulkUpsertUserProfileProjectionControllerTests
                         UserProfileId = userProfileId,
                         FriendlyUserId = " user-1 ",
                         DisplayName = " User One ",
-                        AvatarUrl = " https://example.com/avatar.png "
+                        AvatarUrl = " https://example.com/avatar.png ",
+                        CreatedBy = "source",
+                        CreatedAtUtc = now,
+                        LastModifiedBy = "source",
+                        LastModifiedAtUtc = now
                     }
                 ]
             },
@@ -70,7 +75,11 @@ public sealed class BulkUpsertUserProfileProjectionControllerTests
                 userProfileId,
                 " user-1 ",
                 " User One ",
-                " https://example.com/avatar.png "));
+                " https://example.com/avatar.png ",
+                "source",
+                now,
+                "source",
+                now));
     }
 
     [Fact]

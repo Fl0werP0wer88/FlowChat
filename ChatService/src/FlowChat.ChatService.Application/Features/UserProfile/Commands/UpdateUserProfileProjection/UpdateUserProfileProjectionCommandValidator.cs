@@ -13,5 +13,21 @@ public sealed class UpdateUserProfileProjectionCommandValidator : AbstractValida
         RuleFor(command => command.FriendlyUserId)
             .Must(value => !string.IsNullOrWhiteSpace(value))
             .WithMessage("Payload does not contain valid FriendlyUserId.");
+
+        RuleFor(command => command.CreatedBy)
+            .Must(value => !string.IsNullOrWhiteSpace(value))
+            .WithMessage("Payload does not contain valid CreatedBy.");
+
+        RuleFor(command => command.CreatedAtUtc)
+            .NotEmpty()
+            .WithMessage("Payload does not contain valid CreatedAtUtc.");
+
+        RuleFor(command => command.LastModifiedBy)
+            .Must(value => !string.IsNullOrWhiteSpace(value))
+            .WithMessage("Payload does not contain valid LastModifiedBy.");
+
+        RuleFor(command => command.LastModifiedAtUtc)
+            .NotEmpty()
+            .WithMessage("Payload does not contain valid LastModifiedAtUtc.");
     }
 }

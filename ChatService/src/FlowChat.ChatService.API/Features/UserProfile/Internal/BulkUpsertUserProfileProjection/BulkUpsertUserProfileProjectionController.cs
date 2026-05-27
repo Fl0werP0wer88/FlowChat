@@ -39,7 +39,11 @@ public sealed class BulkUpsertUserProfileProjectionController : ApiControllerBas
                     item.UserProfileId,
                     item.FriendlyUserId,
                     item.DisplayName,
-                    item.AvatarUrl)).ToArray()),
+                    item.AvatarUrl,
+                    item.CreatedBy,
+                    item.CreatedAtUtc,
+                    item.LastModifiedBy,
+                    item.LastModifiedAtUtc)).ToArray()),
             cancellationToken);
 
         if (!result.IsSuccess)

@@ -8,8 +8,6 @@ namespace FlowChat.ChatService.Persistence.Repositories;
 public sealed class UserProfileProjectionWriteRepository(AppDbContext dbContext)
     : IUserProfileProjectionWriteRepository
 {
-    private const string ProjectionSource = "user-profile-events";
-
     public async Task InsertAsync(UserProfileProjectionDto projection, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(projection);
@@ -21,11 +19,13 @@ public sealed class UserProfileProjectionWriteRepository(AppDbContext dbContext)
                 FriendlyUserId = projection.FriendlyUserId,
                 DisplayName = projection.DisplayName,
                 AvatarUrl = projection.AvatarUrl,
-                UpdatedAtUtc = DateTimeOffset.UtcNow
+                CreatedBy = projection.CreatedBy,
+                CreatedAtUtc = projection.CreatedAtUtc,
+                LastModifiedBy = projection.LastModifiedBy,
+                LastModifiedAtUtc = projection.LastModifiedAtUtc
             },
             cancellationToken);
     }
-
 
     public async Task<bool> UpdateAsync(UserProfileProjectionDto projection, CancellationToken cancellationToken = default)
     {
@@ -42,7 +42,10 @@ public sealed class UserProfileProjectionWriteRepository(AppDbContext dbContext)
         entity.FriendlyUserId = projection.FriendlyUserId;
         entity.DisplayName = projection.DisplayName;
         entity.AvatarUrl = projection.AvatarUrl;
-        entity.UpdatedAtUtc = DateTimeOffset.UtcNow;
+        entity.CreatedBy = projection.CreatedBy;
+        entity.CreatedAtUtc = projection.CreatedAtUtc;
+        entity.LastModifiedBy = projection.LastModifiedBy;
+        entity.LastModifiedAtUtc = projection.LastModifiedAtUtc;
 
         return true;
     }

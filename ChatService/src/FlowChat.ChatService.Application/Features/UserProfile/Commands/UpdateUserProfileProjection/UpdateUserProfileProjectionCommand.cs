@@ -7,4 +7,8 @@ public sealed record UpdateUserProfileProjectionCommand(
     Guid UserProfileId,
     string? FriendlyUserId,
     string? DisplayName,
-    string? AvatarUrl) : ICommand<Unit>;
+    string? AvatarUrl,
+    string? CreatedBy,
+    DateTimeOffset CreatedAtUtc,
+    string? LastModifiedBy,
+    DateTimeOffset LastModifiedAtUtc) : ICommand<Unit>;

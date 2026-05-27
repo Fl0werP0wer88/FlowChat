@@ -139,7 +139,10 @@ public sealed class DuetConversationReadRepositoryTests
             FriendlyUserId = friendlyUserId,
             DisplayName = displayName,
             AvatarUrl = avatarUrl,
-            UpdatedAtUtc = new DateTimeOffset(2026, 4, 21, 10, 0, 0, TimeSpan.Zero)
+            CreatedBy = "test",
+            CreatedAtUtc = new DateTimeOffset(2026, 4, 21, 10, 0, 0, TimeSpan.Zero),
+            LastModifiedBy = "test",
+            LastModifiedAtUtc = new DateTimeOffset(2026, 4, 21, 10, 0, 0, TimeSpan.Zero)
         };
 
     private static (Guid First, Guid Second) Normalize(Guid userId1, Guid userId2) =>

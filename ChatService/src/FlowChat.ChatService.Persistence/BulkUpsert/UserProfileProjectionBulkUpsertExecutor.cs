@@ -20,14 +20,16 @@ public sealed class UserProfileProjectionBulkUpsertExecutor(AppDbContext dbConte
             return FlowChatResult<BulkUpsertCommandResult>.Success(BulkUpsertCommandResult.Empty);
         }
 
-        var now = DateTimeOffset.UtcNow;
         var entities = items.Select(item => new UserProfileProjectionEntity
         {
             UserId = item.UserProfileId,
             FriendlyUserId = item.FriendlyUserId,
             DisplayName = item.DisplayName,
             AvatarUrl = item.AvatarUrl,
-            UpdatedAtUtc = now
+            CreatedBy = item.CreatedBy,
+            CreatedAtUtc = item.CreatedAtUtc,
+            LastModifiedBy = item.LastModifiedBy,
+            LastModifiedAtUtc = item.LastModifiedAtUtc
         }).ToList();
 
         await dbContext.BulkInsertOrUpdateAsync(entities, cancellationToken: cancellationToken);

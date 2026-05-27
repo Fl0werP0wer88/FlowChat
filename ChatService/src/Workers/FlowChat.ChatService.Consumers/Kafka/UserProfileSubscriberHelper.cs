@@ -8,6 +8,8 @@ namespace FlowChat.ChatService.Consumers.Kafka;
 
 internal static class UserProfileSubscriberHelper
 {
+    private const string ProjectionSource = "user-profile-events";
+
     public static async Task InsertAsync(
         IChatInternalApiClient apiClient,
         ILogger logger,
@@ -39,22 +41,42 @@ internal static class UserProfileSubscriberHelper
     }
 
     public static UserProfileProjectionRequest Map(UserProfileCreatedIntegrationEvent message) =>
-        new()
-        {
-            UserProfileId = ResolveUserId(message.UserProfileId),
-            FriendlyUserId = NormalizeRequired(message.FriendlyUserId, nameof(message.FriendlyUserId)),
-            DisplayName = ComputeDisplayName(message.FirstName, message.LastName),
-            AvatarUrl = NormalizeOptional(message.AvatarUrl)
-        };
+        Map(
+            message.UserProfileId,
+            message.FriendlyUserId,
+            message.FirstName,
+            message.LastName,
+            message.AvatarUrl);
 
     public static UserProfileProjectionRequest Map(UserProfileChangedIntegrationEvent message) =>
-        new()
+        Map(
+            message.UserProfileId,
+            message.FriendlyUserId,
+            message.FirstName,
+            message.LastName,
+            message.AvatarUrl);
+
+    private static UserProfileProjectionRequest Map(
+        Guid userProfileId,
+        string friendlyUserId,
+        string? firstName,
+        string? lastName,
+        string? avatarUrl)
+    {
+        var now = DateTimeOffset.UtcNow;
+
+        return new UserProfileProjectionRequest
         {
-            UserProfileId = ResolveUserId(message.UserProfileId),
-            FriendlyUserId = NormalizeRequired(message.FriendlyUserId, nameof(message.FriendlyUserId)),
-            DisplayName = ComputeDisplayName(message.FirstName, message.LastName),
-            AvatarUrl = NormalizeOptional(message.AvatarUrl)
+            UserProfileId = ResolveUserId(userProfileId),
+            FriendlyUserId = NormalizeRequired(friendlyUserId, nameof(friendlyUserId)),
+            DisplayName = ComputeDisplayName(firstName, lastName),
+            AvatarUrl = NormalizeOptional(avatarUrl),
+            CreatedBy = ProjectionSource,
+            CreatedAtUtc = now,
+            LastModifiedBy = ProjectionSource,
+            LastModifiedAtUtc = now
         };
+    }
 
     private static Guid ResolveUserId(Guid userId) =>
         userId != Guid.Empty

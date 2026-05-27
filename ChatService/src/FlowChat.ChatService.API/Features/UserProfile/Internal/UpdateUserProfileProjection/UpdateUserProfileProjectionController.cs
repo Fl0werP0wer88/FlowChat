@@ -37,7 +37,11 @@ public sealed class UpdateUserProfileProjectionController : ApiControllerBase
                 request.UserProfileId,
                 request.FriendlyUserId,
                 request.DisplayName,
-                request.AvatarUrl),
+                request.AvatarUrl,
+                request.CreatedBy,
+                request.CreatedAtUtc,
+                request.LastModifiedBy,
+                request.LastModifiedAtUtc),
             cancellationToken);
 
         return result.IsSuccess

@@ -8,7 +8,11 @@ public sealed record InsertUserProfileProjectionCommand(
     Guid UserProfileId,
     string? FriendlyUserId,
     string? DisplayName,
-    string? AvatarUrl) : ICommand<IdempotentCommandResult<Unit>>
+    string? AvatarUrl,
+    string? CreatedBy,
+    DateTimeOffset CreatedAtUtc,
+    string? LastModifiedBy,
+    DateTimeOffset LastModifiedAtUtc) : ICommand<IdempotentCommandResult<Unit>>
 {
     public const string IdempotencyConflictKey = nameof(InsertUserProfileProjectionCommand);
 }
