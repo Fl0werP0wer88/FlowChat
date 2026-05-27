@@ -70,6 +70,31 @@ public sealed class BulkUpsertCommandHandlerBaseTests
         result.Error.ErrorMessage.Should().Contain("bulk conflict");
     }
 
+    [Fact]
+    public async Task Handle_WhenCommandItemsNeedMapping_MapsItemsBeforeBulkUpsert()
+    {
+        var commandItems = new[]
+        {
+            new TestBulkCommandItem(Guid.NewGuid(), "Alpha"),
+            new TestBulkCommandItem(Guid.NewGuid(), "Beta")
+        };
+        IReadOnlyCollection<TestBulkMappedItem>? capturedItems = null;
+        var unitOfWorkMock = CreateUnitOfWorkMock();
+        var bulkUpsertExecutorMock = new Mock<IBulkUpsertExecutor<TestBulkMappedItem>>();
+        bulkUpsertExecutorMock
+            .Setup(x => x.UpsertAsync(It.IsAny<IReadOnlyCollection<TestBulkMappedItem>>(), It.IsAny<CancellationToken>()))
+            .Callback<IReadOnlyCollection<TestBulkMappedItem>, CancellationToken>((items, _) => capturedItems = items)
+            .ReturnsAsync(FlowChatResult<BulkUpsertCommandResult>.Success(
+                BulkUpsertCommandResult.FromRequestedCount(commandItems.Length)));
+        var handler = new TestMappedBulkUpsertCommandHandler(unitOfWorkMock.Object, bulkUpsertExecutorMock.Object);
+
+        var result = await handler.Handle(new TestMappedBulkUpsertCommand(commandItems), CancellationToken.None);
+
+        result.IsSuccess.Should().BeTrue();
+        capturedItems.Should().NotBeNull();
+        capturedItems!.Select(x => x.Name).Should().BeEquivalentTo(["ALPHA", "BETA"]);
+    }
+
     private static Mock<IUnitOfWork> CreateUnitOfWorkMock()
     {
         var unitOfWorkMock = new Mock<IUnitOfWork>();
@@ -89,6 +114,13 @@ public sealed class BulkUpsertCommandHandlerBaseTests
 
     public sealed record TestBulkItem(Guid Id);
 
+    public sealed record TestMappedBulkUpsertCommand(IReadOnlyCollection<TestBulkCommandItem> Items)
+        : IBulkUpsertCommand<TestBulkCommandItem>;
+
+    public sealed record TestBulkCommandItem(Guid Id, string Name);
+
+    public sealed record TestBulkMappedItem(Guid Id, string Name);
+
     private sealed class TestBulkUpsertCommandHandler
         : BulkUpsertCommandHandlerBase<TestBulkUpsertCommand, TestBulkItem>
     {
@@ -97,6 +129,22 @@ public sealed class BulkUpsertCommandHandlerBaseTests
             IBulkUpsertExecutor<TestBulkItem> bulkUpsertExecutor)
             : base(unitOfWork, bulkUpsertExecutor)
         {
+        }
+    }
+
+    private sealed class TestMappedBulkUpsertCommandHandler
+        : BulkUpsertCommandHandlerBase<TestMappedBulkUpsertCommand, TestBulkCommandItem, TestBulkMappedItem>
+    {
+        public TestMappedBulkUpsertCommandHandler(
+            IUnitOfWork unitOfWork,
+            IBulkUpsertExecutor<TestBulkMappedItem> bulkUpsertExecutor)
+            : base(unitOfWork, bulkUpsertExecutor)
+        {
+        }
+
+        protected override TestBulkMappedItem MapItem(TestBulkCommandItem item)
+        {
+            return new TestBulkMappedItem(item.Id, item.Name.ToUpperInvariant());
         }
     }
 }

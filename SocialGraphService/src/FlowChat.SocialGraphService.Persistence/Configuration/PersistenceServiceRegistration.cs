@@ -1,8 +1,10 @@
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Infrastructure.Silverback.Persistence;
 using FlowChat.SocialGraphService.Application.Features.Contact.Commands.AddContact;
+using FlowChat.SocialGraphService.Application.Features.UserProfile;
 using FlowChat.SocialGraphService.Application.Features.UserProfile.Commands.InsertUserProfileProjection;
 using FlowChat.SocialGraphService.Application.Contracts.Persistence;
+using FlowChat.SocialGraphService.Persistence.BulkUpsert;
 using FlowChat.SocialGraphService.Persistence.Repositories;
 using FlowChat.Shared.Persistance;
 using FlowChat.Shared.Persistance.Auditing;
@@ -34,6 +36,7 @@ public static class PersistenceServiceRegistration
         services.AddScoped<IContactReadRepository, ContactReadRepository>();
         services.AddScoped<IUserProfileProjectionReadRepository, UserProfileProjectionReadRepository>();
         services.AddScoped<IUserProfileProjectionWriteRepository, UserProfileProjectionWriteRepository>();
+        services.AddScoped<IBulkUpsertExecutor<UserProfileProjectionDto>, UserProfileProjectionBulkUpsertExecutor>();
         services.AddScoped<IUnitOfWork, SilverbackEfUnitOfWork<AppDbContext>>();
 
         return services;

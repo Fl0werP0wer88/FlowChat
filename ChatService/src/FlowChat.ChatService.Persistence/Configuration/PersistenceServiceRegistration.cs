@@ -6,6 +6,8 @@ using FlowChat.ChatService.Application.Features.Conversation.Commands.CreateDuet
 using FlowChat.ChatService.Application.Features.Conversation.Commands.CreateGroupConversation;
 using FlowChat.ChatService.Application.Features.Conversation.Commands.CreateGroupFromDuet;
 using FlowChat.ChatService.Application.Features.UserProfile.Commands.InsertUserProfileProjection;
+using FlowChat.ChatService.Application.Features.UserProfile;
+using FlowChat.ChatService.Persistence.BulkUpsert;
 using FlowChat.ChatService.Persistence.Repositories;
 using FlowChat.Shared.Persistance.Auditing;
 using FlowChat.Shared.Infrastructure.Silverback.Persistence;
@@ -53,6 +55,7 @@ public static class PersistenceServiceRegistration
         services.AddScoped<IDuetConversationWriteRepository, DuetConversationWriteRepository>();
         services.AddScoped<IUserProfileProjectionWriteRepository, UserProfileProjectionWriteRepository>();
         services.AddScoped<IUserProfileProjectionReadRepository, UserProfileProjectionReadRepository>();
+        services.AddScoped<IBulkUpsertExecutor<UserProfileProjectionDto>, UserProfileProjectionBulkUpsertExecutor>();
 
         return services;
     }
