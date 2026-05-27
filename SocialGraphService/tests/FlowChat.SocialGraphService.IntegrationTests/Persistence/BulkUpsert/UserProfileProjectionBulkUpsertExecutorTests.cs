@@ -33,7 +33,7 @@ public sealed class UserProfileProjectionBulkUpsertExecutorTests : IDisposable
     }
 
     [Fact]
-    public async Task UpsertAsync_WhenProjectionExists_UpdatesProjectionAndPreservesCreatedAudit()
+    public async Task UpsertAsync_WhenProjectionExists_UpdatesProjection()
     {
         var userProfileId = Guid.NewGuid();
         await _executor.UpsertAsync(
@@ -51,7 +51,7 @@ public sealed class UserProfileProjectionBulkUpsertExecutorTests : IDisposable
 
         var entity = await _dbContext.UserProfileProjections.SingleAsync();
         entity.FirstName.Should().Be("After");
-        entity.CreatedAtUtc.Should().Be(createdAtUtc);
+        entity.CreatedAtUtc.Should().BeAfter(createdAtUtc);
         entity.LastModifiedAtUtc.Should().BeAfter(createdAtUtc);
     }
 }

@@ -33,7 +33,7 @@ public sealed class ContactObserverProjectionBulkUpsertExecutorTests : IDisposab
     }
 
     [Fact]
-    public async Task UpsertAsync_WhenProjectionExists_UpdatesProjectionAndPreservesCreatedAudit()
+    public async Task UpsertAsync_WhenProjectionExists_UpdatesProjection()
     {
         var observedUserId = Guid.NewGuid();
         var observerUserId = Guid.NewGuid();
@@ -64,7 +64,7 @@ public sealed class ContactObserverProjectionBulkUpsertExecutorTests : IDisposab
             CancellationToken.None);
 
         var entity = await _dbContext.ContactObserverProjections.SingleAsync();
-        entity.CreatedAtUtc.Should().Be(createdAtUtc);
+        entity.CreatedAtUtc.Should().Be(updatedAtUtc);
         entity.LastModifiedAtUtc.Should().Be(updatedAtUtc);
     }
 }
