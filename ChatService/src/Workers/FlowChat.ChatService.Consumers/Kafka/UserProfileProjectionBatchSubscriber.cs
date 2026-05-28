@@ -20,7 +20,7 @@ public sealed class UserProfileProjectionBatchSubscriber(
 
         await foreach (var message in messages.WithCancellation(cancellationToken))
         {
-            var item = UserProfileSubscriberHelper.Map(message, mapper);
+            var item = UserProfileSubscriberHelper.MapAndFilterEvents(message, mapper);
             if (item is null)
             {
                 logger.LogDebug(

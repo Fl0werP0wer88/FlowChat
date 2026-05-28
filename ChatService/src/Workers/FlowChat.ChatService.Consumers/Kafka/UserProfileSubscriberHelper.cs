@@ -8,7 +8,7 @@ namespace FlowChat.ChatService.Consumers.Kafka;
 
 internal static class UserProfileSubscriberHelper
 {
-    public static UserProfileProjectionRequest? Map(IntegrationEvent message, IMapper mapper)
+    public static UserProfileProjectionRequest? MapAndFilterEvents(IntegrationEvent message, IMapper mapper)
     {
         ArgumentNullException.ThrowIfNull(mapper);
 
