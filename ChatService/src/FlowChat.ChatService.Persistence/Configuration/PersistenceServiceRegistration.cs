@@ -52,6 +52,7 @@ public static class PersistenceServiceRegistration
         services.AddScoped<IDuetConversationWriteRepository, DuetConversationWriteRepository>();
         services.AddScoped<IUserProfileProjectionReadRepository, UserProfileProjectionReadRepository>();
         services.AddScoped<IBulkUpsertExecutor<UserProfileProjectionDto>, UserProfileProjectionBulkUpsertExecutor>();
+        services.AddScoped<IBulkRepository<UserProfileProjectionDto>, UserProfileProjectionBulkRepository>();
 
         return services;
     }
