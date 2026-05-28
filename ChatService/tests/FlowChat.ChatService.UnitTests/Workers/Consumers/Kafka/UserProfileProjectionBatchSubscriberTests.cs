@@ -76,14 +76,16 @@ public sealed class UserProfileProjectionBatchSubscriberTests
         var createdItem = capturedRequest.Items.Should().ContainSingle(x => x.UserProfileId == createdUserProfileId).Subject;
         createdItem.Value.Should().NotBeNull();
         createdItem.Value!.FriendlyUserId.Should().Be("john.doe");
-        createdItem.Value.DisplayName.Should().Be("John Doe");
+        createdItem.Value.FirstName.Should().Be("John");
+        createdItem.Value.LastName.Should().Be("Doe");
         createdItem.Value.AvatarUrl.Should().Be("https://cdn.example/john.png");
         createdItem.Value.Source.Should().Be("user-profile-events");
 
         var changedItem = capturedRequest.Items.Should().ContainSingle(x => x.UserProfileId == changedUserProfileId).Subject;
         changedItem.Value.Should().NotBeNull();
         changedItem.Value!.FriendlyUserId.Should().Be("jane.doe");
-        changedItem.Value.DisplayName.Should().Be("Jane");
+        changedItem.Value.FirstName.Should().Be("Jane");
+        changedItem.Value.LastName.Should().BeNull();
         changedItem.Value.AvatarUrl.Should().BeNull();
         changedItem.Value.Source.Should().Be("user-profile-events");
     }
@@ -187,7 +189,8 @@ public sealed class UserProfileProjectionBatchSubscriberTests
         item.UserProfileId.Should().Be(userProfileId);
         item.Value.Should().NotBeNull();
         item.Value!.FriendlyUserId.Should().Be("johnny.doe");
-        item.Value.DisplayName.Should().Be("Johnny Doe");
+        item.Value.FirstName.Should().Be("Johnny");
+        item.Value.LastName.Should().Be("Doe");
         item.Value.AvatarUrl.Should().Be("https://cdn.example/john-changed.png");
     }
 

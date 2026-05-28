@@ -19,13 +19,22 @@ public sealed class UserProfileProjectionReadRepository : IUserProfileProjection
     {
         var ids = userIds.ToList();
 
-        return await _dbContext.UserProfileProjections
+        return (await _dbContext.UserProfileProjections
             .AsNoTracking()
             .Where(x => ids.Contains(x.UserId))
+            .Select(x => new { x.UserId, x.FirstName, x.LastName, x.AvatarUrl })
+            .ToListAsync(cancellationToken))
             .Select(x => new UserProfileConversationParticipantDto(
                 x.UserId,
-                x.DisplayName,
+                ComputeDisplayName(x.FirstName, x.LastName),
                 x.AvatarUrl))
-            .ToListAsync(cancellationToken);
+            .ToList();
+    }
+
+    private static string? ComputeDisplayName(string? firstName, string? lastName)
+    {
+        var parts = ((string?[]) [firstName, lastName]).Where(p => !string.IsNullOrEmpty(p));
+        var name = string.Join(" ", parts);
+        return string.IsNullOrEmpty(name) ? null : name;
     }
 }

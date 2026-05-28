@@ -25,7 +25,8 @@ public sealed class UserProfileProjectionBulkUpsertExecutor(AppDbContext dbConte
         {
             UserId = item.UserProfileId,
             FriendlyUserId = item.FriendlyUserId,
-            DisplayName = item.DisplayName,
+            FirstName = item.FirstName,
+            LastName = item.LastName,
             AvatarUrl = item.AvatarUrl,
             CreatedBy = item.Source,
             CreatedAtUtc = now,

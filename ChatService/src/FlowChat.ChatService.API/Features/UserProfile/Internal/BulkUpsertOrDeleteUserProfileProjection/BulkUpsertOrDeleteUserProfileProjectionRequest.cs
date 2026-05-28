@@ -16,7 +16,8 @@ public sealed class BulkUpsertOrDeleteUserProfileProjectionRequestItem : IServic
 public sealed class BulkUpsertOrDeleteUserProfileProjectionRequestValue : IServiceInput
 {
     public string FriendlyUserId { get; init; } = string.Empty;
-    public string? DisplayName { get; init; }
+    public string? FirstName { get; init; }
+    public string? LastName { get; init; }
     public string? AvatarUrl { get; init; }
     public string Source { get; init; } = string.Empty;
 }

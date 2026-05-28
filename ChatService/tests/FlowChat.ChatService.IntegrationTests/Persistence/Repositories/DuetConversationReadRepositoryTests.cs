@@ -30,8 +30,8 @@ public sealed class DuetConversationReadRepositoryTests
             seedContext.Conversations.Add(conversation);
             seedContext.DuetConversations.Add(CreateDuetConversation(requestingUserId, partnerUserId, conversation.Id.Value));
             seedContext.UserProfileProjections.AddRange(
-                CreateProfile(requestingUserId, "requester", "Requester", "requester.png"),
-                CreateProfile(partnerUserId, "partner", "Partner", "partner.png"));
+                CreateProfile(requestingUserId, "requester", firstName: "Requester", avatarUrl: "requester.png"),
+                CreateProfile(partnerUserId, "partner", firstName: "Partner", avatarUrl: "partner.png"));
 
             await seedContext.SaveChangesAsync();
         }
@@ -67,7 +67,7 @@ public sealed class DuetConversationReadRepositoryTests
         {
             seedContext.Conversations.Add(conversation);
             seedContext.DuetConversations.Add(CreateDuetConversation(requestingUserId, partnerUserId, conversation.Id.Value));
-            seedContext.UserProfileProjections.Add(CreateProfile(requestingUserId, "requester", "Requester", "requester.png"));
+            seedContext.UserProfileProjections.Add(CreateProfile(requestingUserId, "requester", firstName: "Requester", avatarUrl: "requester.png"));
 
             await seedContext.SaveChangesAsync();
         }
@@ -131,13 +131,15 @@ public sealed class DuetConversationReadRepositoryTests
     private static UserProfileProjectionEntity CreateProfile(
         Guid userId,
         string friendlyUserId,
-        string? displayName,
-        string? avatarUrl) =>
+        string? firstName = null,
+        string? lastName = null,
+        string? avatarUrl = null) =>
         new()
         {
             UserId = userId,
             FriendlyUserId = friendlyUserId,
-            DisplayName = displayName,
+            FirstName = firstName,
+            LastName = lastName,
             AvatarUrl = avatarUrl,
             CreatedBy = "test",
             CreatedAtUtc = new DateTimeOffset(2026, 4, 21, 10, 0, 0, TimeSpan.Zero),

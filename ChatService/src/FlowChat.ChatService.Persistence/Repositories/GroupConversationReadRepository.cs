@@ -14,24 +14,37 @@ public sealed class GroupConversationReadRepository(AppDbContext dbContext) : IG
     {
         var convId = Id<Conversation>.FromGuid(conversationId);
 
-        var rows = await (
+        var rawRows = await (
             from conversation in dbContext.Conversations.AsNoTracking()
             where conversation.Id == convId && conversation.Type == ConversationType.Group
             from participant in conversation.Participants
             join profile in dbContext.UserProfileProjections.AsNoTracking()
                 on participant.UserId equals profile.UserId into profileGroup
             from profile in profileGroup.DefaultIfEmpty()
-            select new GroupConversationParticipantRow(
-                conversation.Id.Value,
-                conversation.Name,
+            select new
+            {
+                ConversationId = conversation.Id.Value,
+                ConversationName = conversation.Name,
                 participant.UserId,
-                string.IsNullOrEmpty(participant.DisplayName)
-                    ? (profile == null ? null : profile.DisplayName)
-                    : participant.DisplayName,
-                string.IsNullOrEmpty(participant.AvatarUrl)
-                    ? (profile == null ? null : profile.AvatarUrl)
-                    : participant.AvatarUrl))
+                ParticipantDisplayName = participant.DisplayName,
+                ProfileFirstName = (string?) profile.FirstName,
+                ProfileLastName = (string?) profile.LastName,
+                ParticipantAvatarUrl = participant.AvatarUrl,
+                ProfileAvatarUrl = (string?) profile.AvatarUrl
+            })
             .ToListAsync(cancellationToken);
+
+        var rows = rawRows.Select(r => new GroupConversationParticipantRow(
+            r.ConversationId,
+            r.ConversationName,
+            r.UserId,
+            string.IsNullOrEmpty(r.ParticipantDisplayName)
+                ? ComputeDisplayName(r.ProfileFirstName, r.ProfileLastName)
+                : r.ParticipantDisplayName,
+            string.IsNullOrEmpty(r.ParticipantAvatarUrl)
+                ? r.ProfileAvatarUrl
+                : r.ParticipantAvatarUrl))
+            .ToList();
 
         if (rows.Count == 0)
             return null;
@@ -56,6 +69,13 @@ public sealed class GroupConversationReadRepository(AppDbContext dbContext) : IG
                 conversation.Name!,
                 conversation.Participants.Count))
             .ToListAsync(cancellationToken);
+    }
+
+    private static string? ComputeDisplayName(string? firstName, string? lastName)
+    {
+        var parts = ((string?[]) [firstName, lastName]).Where(p => !string.IsNullOrEmpty(p));
+        var name = string.Join(" ", parts);
+        return string.IsNullOrEmpty(name) ? null : name;
     }
 
     private sealed record GroupConversationParticipantRow(

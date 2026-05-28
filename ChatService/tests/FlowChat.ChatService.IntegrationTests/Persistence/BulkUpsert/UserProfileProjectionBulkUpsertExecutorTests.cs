@@ -43,7 +43,7 @@ public sealed class UserProfileProjectionBulkUpsertExecutorTests : IDisposable
                 {
                     UserProfileId = userProfileId,
                     FriendlyUserId = "jdoe",
-                    DisplayName = "John",
+                    FirstName = "John",
                     AvatarUrl = "https://avatar",
                     Source = "consumer"
                 }
@@ -53,7 +53,8 @@ public sealed class UserProfileProjectionBulkUpsertExecutorTests : IDisposable
         result.IsSuccess.Should().BeTrue();
         var entity = await _dbContext.UserProfileProjections.SingleAsync();
         entity.UserId.Should().Be(userProfileId);
-        entity.DisplayName.Should().Be("John");
+        entity.FirstName.Should().Be("John");
+        entity.LastName.Should().BeNull();
         entity.CreatedBy.Should().Be("consumer");
         entity.CreatedAtUtc.Should().NotBe(default);
         entity.LastModifiedBy.Should().Be("consumer");
@@ -70,7 +71,7 @@ public sealed class UserProfileProjectionBulkUpsertExecutorTests : IDisposable
                 {
                     UserProfileId = userProfileId,
                     FriendlyUserId = "jdoe",
-                    DisplayName = "Before",
+                    FirstName = "Before",
                     Source = "initial-consumer"
                 }
             ],
@@ -87,7 +88,8 @@ public sealed class UserProfileProjectionBulkUpsertExecutorTests : IDisposable
                 {
                     UserProfileId = userProfileId,
                     FriendlyUserId = "jdoe2",
-                    DisplayName = "After",
+                    FirstName = "After",
+                    LastName = "Updated",
                     Source = "updater-consumer"
                 }
             ],
@@ -95,7 +97,8 @@ public sealed class UserProfileProjectionBulkUpsertExecutorTests : IDisposable
 
         var entity = await _dbContext.UserProfileProjections.SingleAsync();
         entity.FriendlyUserId.Should().Be("jdoe2");
-        entity.DisplayName.Should().Be("After");
+        entity.FirstName.Should().Be("After");
+        entity.LastName.Should().Be("Updated");
         entity.LastModifiedBy.Should().Be("updater-consumer");
         entity.LastModifiedAtUtc.Should().BeAfter(firstCreatedAtUtc);
     }

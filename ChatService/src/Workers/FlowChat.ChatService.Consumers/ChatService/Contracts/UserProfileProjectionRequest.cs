@@ -6,7 +6,8 @@ public sealed class UserProfileProjectionRequest : IConsumerOutput
 {
     public Guid UserProfileId { get; set; }
     public string FriendlyUserId { get; set; } = string.Empty;
-    public string? DisplayName { get; set; }
+    public string? FirstName { get; set; }
+    public string? LastName { get; set; }
     public string? AvatarUrl { get; set; }
     public string Source { get; set; } = string.Empty;
 }

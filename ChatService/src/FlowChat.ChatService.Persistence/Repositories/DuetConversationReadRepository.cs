@@ -47,7 +47,7 @@ public sealed class DuetConversationReadRepository(AppDbContext dbContext) : IDu
     {
         var (first, second) = DuetConversationUserPair.Normalize(requestingUserId, partnerUserId);
 
-        var rows = await (
+        var rawRows = await (
             from duet in dbContext.DuetConversations.AsNoTracking()
             where duet.FirstUserId == first && duet.SecondUserId == second
             from conversation in dbContext.Conversations.AsNoTracking()
@@ -56,16 +56,28 @@ public sealed class DuetConversationReadRepository(AppDbContext dbContext) : IDu
             join profile in dbContext.UserProfileProjections.AsNoTracking()
                 on participant.UserId equals profile.UserId into profileGroup
             from profile in profileGroup.DefaultIfEmpty()
-            select new DuetConversationParticipantRow(
-                duet.ConversationId.Value,
+            select new
+            {
+                ConversationId = duet.ConversationId.Value,
                 participant.UserId,
-                string.IsNullOrEmpty(participant.DisplayName)
-                    ? (profile == null ? null : profile.DisplayName)
-                    : participant.DisplayName,
-                string.IsNullOrEmpty(participant.AvatarUrl)
-                    ? (profile == null ? null : profile.AvatarUrl)
-                    : participant.AvatarUrl))
+                ParticipantDisplayName = participant.DisplayName,
+                ProfileFirstName = (string?) profile.FirstName,
+                ProfileLastName = (string?) profile.LastName,
+                ParticipantAvatarUrl = participant.AvatarUrl,
+                ProfileAvatarUrl = (string?) profile.AvatarUrl
+            })
             .ToListAsync(cancellationToken);
+
+        var rows = rawRows.Select(r => new DuetConversationParticipantRow(
+            r.ConversationId,
+            r.UserId,
+            string.IsNullOrEmpty(r.ParticipantDisplayName)
+                ? ComputeDisplayName(r.ProfileFirstName, r.ProfileLastName)
+                : r.ParticipantDisplayName,
+            string.IsNullOrEmpty(r.ParticipantAvatarUrl)
+                ? r.ProfileAvatarUrl
+                : r.ParticipantAvatarUrl))
+            .ToList();
 
         if (rows.Count != 2)
         {
@@ -95,6 +107,13 @@ public sealed class DuetConversationReadRepository(AppDbContext dbContext) : IDu
         return new DuetConversationDetailDto(
             conversationId,
             [requestingParticipant, partnerParticipant]);
+    }
+
+    private static string? ComputeDisplayName(string? firstName, string? lastName)
+    {
+        var parts = ((string?[]) [firstName, lastName]).Where(p => !string.IsNullOrEmpty(p));
+        var name = string.Join(" ", parts);
+        return string.IsNullOrEmpty(name) ? null : name;
     }
 
     private sealed record DuetConversationParticipantRow(

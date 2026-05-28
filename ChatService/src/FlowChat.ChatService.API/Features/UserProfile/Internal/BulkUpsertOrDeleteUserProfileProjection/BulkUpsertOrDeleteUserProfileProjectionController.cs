@@ -44,7 +44,8 @@ public sealed class BulkUpsertOrDeleteUserProfileProjectionController : ApiContr
                 {
                     UserProfileId = item.UserProfileId,
                     FriendlyUserId = item.Value.FriendlyUserId,
-                    DisplayName = item.Value.DisplayName,
+                    FirstName = item.Value.FirstName,
+                    LastName = item.Value.LastName,
                     AvatarUrl = item.Value.AvatarUrl,
                     Source = item.Value.Source
                 }))

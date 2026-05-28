@@ -14,14 +14,16 @@ public sealed class UserProfileProjectionRequestProfile : Profile
         CreateMap<UserProfileCreatedIntegrationEvent, UserProfileProjectionRequest>()
             .ForMember(destination => destination.UserProfileId, options => options.MapFrom(source => ResolveUserId(source.UserProfileId)))
             .ForMember(destination => destination.FriendlyUserId, options => options.MapFrom(source => NormalizeRequired(source.FriendlyUserId, nameof(source.FriendlyUserId))))
-            .ForMember(destination => destination.DisplayName, options => options.MapFrom(source => ComputeDisplayName(source.FirstName, source.LastName)))
+            .ForMember(destination => destination.FirstName, options => options.MapFrom(source => NormalizeOptional(source.FirstName)))
+            .ForMember(destination => destination.LastName, options => options.MapFrom(source => NormalizeOptional(source.LastName)))
             .ForMember(destination => destination.AvatarUrl, options => options.MapFrom(source => NormalizeOptional(source.AvatarUrl)))
             .ForMember(destination => destination.Source, options => options.MapFrom(_ => ProjectionSource));
 
         CreateMap<UserProfileChangedIntegrationEvent, UserProfileProjectionRequest>()
             .ForMember(destination => destination.UserProfileId, options => options.MapFrom(source => ResolveUserId(source.UserProfileId)))
             .ForMember(destination => destination.FriendlyUserId, options => options.MapFrom(source => NormalizeRequired(source.FriendlyUserId, nameof(source.FriendlyUserId))))
-            .ForMember(destination => destination.DisplayName, options => options.MapFrom(source => ComputeDisplayName(source.FirstName, source.LastName)))
+            .ForMember(destination => destination.FirstName, options => options.MapFrom(source => NormalizeOptional(source.FirstName)))
+            .ForMember(destination => destination.LastName, options => options.MapFrom(source => NormalizeOptional(source.LastName)))
             .ForMember(destination => destination.AvatarUrl, options => options.MapFrom(source => NormalizeOptional(source.AvatarUrl)))
             .ForMember(destination => destination.Source, options => options.MapFrom(_ => ProjectionSource));
     }
@@ -41,12 +43,4 @@ public sealed class UserProfileProjectionRequestProfile : Profile
 
     private static string? NormalizeOptional(string? value) =>
         string.IsNullOrWhiteSpace(value) ? null : value.Trim();
-
-    private static string? ComputeDisplayName(string? firstName, string? lastName)
-    {
-        var parts = new[] { firstName?.Trim(), lastName?.Trim() }
-            .Where(p => !string.IsNullOrEmpty(p));
-        var name = string.Join(" ", parts);
-        return string.IsNullOrEmpty(name) ? null : name;
-    }
 }
