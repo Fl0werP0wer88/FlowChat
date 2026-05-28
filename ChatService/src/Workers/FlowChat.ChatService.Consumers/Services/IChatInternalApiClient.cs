@@ -4,7 +4,7 @@ namespace FlowChat.ChatService.Consumers.Services;
 
 public interface IChatInternalApiClient
 {
-    Task BulkUpsertUserProfileProjectionAsync(
-        BulkUpsertUserProfileProjectionRequest request,
+    Task BulkUpsertOrDeleteUserProfileProjectionAsync(
+        BulkUpsertOrDeleteUserProfileProjectionRequest request,
         CancellationToken cancellationToken);
 }

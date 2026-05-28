@@ -16,7 +16,7 @@ public sealed class UserProfileProjectionBatchSubscriber(
         IAsyncEnumerable<IntegrationEvent> messages,
         CancellationToken cancellationToken)
     {
-        var items = new List<UserProfileProjectionRequest>();
+        var items = new List<BulkUpsertOrDeleteUserProfileProjectionRequestItem>();
 
         await foreach (var message in messages.WithCancellation(cancellationToken))
         {
@@ -38,12 +38,12 @@ public sealed class UserProfileProjectionBatchSubscriber(
             return;
         }
 
-        await apiClient.BulkUpsertUserProfileProjectionAsync(
-            UserProfileSubscriberHelper.CreateBulkUpsertRequest(items),
+        await apiClient.BulkUpsertOrDeleteUserProfileProjectionAsync(
+            UserProfileSubscriberHelper.CreateBulkUpsertOrDeleteRequest(items),
             cancellationToken);
 
         logger.LogInformation(
-            "Upserted {Count} user profile projections from Kafka batch.",
+            "Processed {Count} user profile projection events from Kafka batch.",
             items.Count);
     }
 }

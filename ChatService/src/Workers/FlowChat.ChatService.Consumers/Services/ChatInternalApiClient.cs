@@ -1,4 +1,4 @@
-﻿using System.Net.Http.Json;
+using System.Net.Http.Json;
 using FlowChat.ChatService.Consumers.ChatService.Contracts;
 using FlowChat.Shared.Infrastructure.Http;
 
@@ -9,16 +9,15 @@ public sealed class ChatInternalApiClient(HttpClient httpClient)
 {
     public const string HttpClientName = nameof(ChatInternalApiClient);
     public const string ApiKeyHeaderName = "X-Internal-Api-Key";
-    private const string BulkUpsertPath = "/internal/userprofiles/projection/bulk-upsert";
+    private const string BulkUpsertOrDeletePath = "/internal/userprofiles/projection/bulk-upsert-or-delete";
 
     protected override string ClientDisplayName => "Chat API";
 
-    public Task BulkUpsertUserProfileProjectionAsync(
-        BulkUpsertUserProfileProjectionRequest request,
+    public Task BulkUpsertOrDeleteUserProfileProjectionAsync(
+        BulkUpsertOrDeleteUserProfileProjectionRequest request,
         CancellationToken cancellationToken)
-        => SendAsync(BuildRequest(HttpMethod.Post, BulkUpsertPath, request), cancellationToken);
+        => SendAsync(BuildRequest(HttpMethod.Post, BulkUpsertOrDeletePath, request), cancellationToken);
 
-    private static HttpRequestMessage BuildRequest(HttpMethod method, string path, BulkUpsertUserProfileProjectionRequest request) =>
+    private static HttpRequestMessage BuildRequest(HttpMethod method, string path, BulkUpsertOrDeleteUserProfileProjectionRequest request) =>
         new(method, path) { Content = JsonContent.Create(request) };
 }
-

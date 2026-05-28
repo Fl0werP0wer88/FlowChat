@@ -31,17 +31,17 @@ public sealed class UserProfileProjectionBatchSubscriberTests
     }
 
     [Fact]
-    public async Task HandleAsync_WhenCreatedAndChangedEventsArrive_SendsSingleBulkUpsertRequest()
+    public async Task HandleAsync_WhenCreatedAndChangedEventsArrive_SendsSingleBulkRequest()
     {
-        BulkUpsertUserProfileProjectionRequest? capturedRequest = null;
+        BulkUpsertOrDeleteUserProfileProjectionRequest? capturedRequest = null;
         var createdUserProfileId = Guid.NewGuid();
         var changedUserProfileId = Guid.NewGuid();
 
         _apiClientMock
-            .Setup(x => x.BulkUpsertUserProfileProjectionAsync(
-                It.IsAny<BulkUpsertUserProfileProjectionRequest>(),
+            .Setup(x => x.BulkUpsertOrDeleteUserProfileProjectionAsync(
+                It.IsAny<BulkUpsertOrDeleteUserProfileProjectionRequest>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<BulkUpsertUserProfileProjectionRequest, CancellationToken>((request, _) => capturedRequest = request)
+            .Callback<BulkUpsertOrDeleteUserProfileProjectionRequest, CancellationToken>((request, _) => capturedRequest = request)
             .Returns(Task.CompletedTask);
 
         await _subscriber.HandleAsync(
@@ -74,29 +74,86 @@ public sealed class UserProfileProjectionBatchSubscriberTests
         capturedRequest!.Items.Should().HaveCount(2);
 
         var createdItem = capturedRequest.Items.Should().ContainSingle(x => x.UserProfileId == createdUserProfileId).Subject;
-        createdItem.FriendlyUserId.Should().Be("john.doe");
-        createdItem.DisplayName.Should().Be("John Doe");
-        createdItem.AvatarUrl.Should().Be("https://cdn.example/john.png");
-        createdItem.Source.Should().Be("user-profile-events");
+        createdItem.Value.Should().NotBeNull();
+        createdItem.Value!.FriendlyUserId.Should().Be("john.doe");
+        createdItem.Value.DisplayName.Should().Be("John Doe");
+        createdItem.Value.AvatarUrl.Should().Be("https://cdn.example/john.png");
+        createdItem.Value.Source.Should().Be("user-profile-events");
 
         var changedItem = capturedRequest.Items.Should().ContainSingle(x => x.UserProfileId == changedUserProfileId).Subject;
-        changedItem.FriendlyUserId.Should().Be("jane.doe");
-        changedItem.DisplayName.Should().Be("Jane");
-        changedItem.AvatarUrl.Should().BeNull();
-        changedItem.Source.Should().Be("user-profile-events");
+        changedItem.Value.Should().NotBeNull();
+        changedItem.Value!.FriendlyUserId.Should().Be("jane.doe");
+        changedItem.Value.DisplayName.Should().Be("Jane");
+        changedItem.Value.AvatarUrl.Should().BeNull();
+        changedItem.Value.Source.Should().Be("user-profile-events");
     }
 
     [Fact]
-    public async Task HandleAsync_WhenBatchContainsDuplicateUserProfileId_SendsLastMappedItem()
+    public async Task HandleAsync_WhenDeletedEventArrives_SendsItemWithNullValue()
     {
-        BulkUpsertUserProfileProjectionRequest? capturedRequest = null;
+        BulkUpsertOrDeleteUserProfileProjectionRequest? capturedRequest = null;
+        var deletedUserProfileId = Guid.NewGuid();
+
+        _apiClientMock
+            .Setup(x => x.BulkUpsertOrDeleteUserProfileProjectionAsync(
+                It.IsAny<BulkUpsertOrDeleteUserProfileProjectionRequest>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<BulkUpsertOrDeleteUserProfileProjectionRequest, CancellationToken>((request, _) => capturedRequest = request)
+            .Returns(Task.CompletedTask);
+
+        await _subscriber.HandleAsync(
+            ToAsyncEnumerable(
+                new UserProfileDeletedIntegrationEvent { UserProfileId = deletedUserProfileId }),
+            CancellationToken.None);
+
+        capturedRequest.Should().NotBeNull();
+        var item = capturedRequest!.Items.Should().ContainSingle().Subject;
+        item.UserProfileId.Should().Be(deletedUserProfileId);
+        item.Value.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task HandleAsync_WhenBatchContainsMixedUpsertAndDeleteEvents_SendsAllItems()
+    {
+        BulkUpsertOrDeleteUserProfileProjectionRequest? capturedRequest = null;
+        var upsertedUserProfileId = Guid.NewGuid();
+        var deletedUserProfileId = Guid.NewGuid();
+
+        _apiClientMock
+            .Setup(x => x.BulkUpsertOrDeleteUserProfileProjectionAsync(
+                It.IsAny<BulkUpsertOrDeleteUserProfileProjectionRequest>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<BulkUpsertOrDeleteUserProfileProjectionRequest, CancellationToken>((request, _) => capturedRequest = request)
+            .Returns(Task.CompletedTask);
+
+        await _subscriber.HandleAsync(
+            ToAsyncEnumerable(
+                new UserProfileCreatedIntegrationEvent
+                {
+                    UserProfileId = upsertedUserProfileId,
+                    FriendlyUserId = "john.doe",
+                    MainEmail = new UserProfileEmail { Address = "john@flowchat.local", IsConfirmed = true, IsVisible = true }
+                },
+                new UserProfileDeletedIntegrationEvent { UserProfileId = deletedUserProfileId }),
+            CancellationToken.None);
+
+        capturedRequest.Should().NotBeNull();
+        capturedRequest!.Items.Should().HaveCount(2);
+        capturedRequest.Items.Should().ContainSingle(x => x.UserProfileId == upsertedUserProfileId && x.Value != null);
+        capturedRequest.Items.Should().ContainSingle(x => x.UserProfileId == deletedUserProfileId && x.Value == null);
+    }
+
+    [Fact]
+    public async Task HandleAsync_WhenBatchContainsDuplicateUserProfileId_SendsLastItem()
+    {
+        BulkUpsertOrDeleteUserProfileProjectionRequest? capturedRequest = null;
         var userProfileId = Guid.NewGuid();
 
         _apiClientMock
-            .Setup(x => x.BulkUpsertUserProfileProjectionAsync(
-                It.IsAny<BulkUpsertUserProfileProjectionRequest>(),
+            .Setup(x => x.BulkUpsertOrDeleteUserProfileProjectionAsync(
+                It.IsAny<BulkUpsertOrDeleteUserProfileProjectionRequest>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<BulkUpsertUserProfileProjectionRequest, CancellationToken>((request, _) => capturedRequest = request)
+            .Callback<BulkUpsertOrDeleteUserProfileProjectionRequest, CancellationToken>((request, _) => capturedRequest = request)
             .Returns(Task.CompletedTask);
 
         await _subscriber.HandleAsync(
@@ -128,9 +185,40 @@ public sealed class UserProfileProjectionBatchSubscriberTests
         capturedRequest.Should().NotBeNull();
         var item = capturedRequest!.Items.Should().ContainSingle().Subject;
         item.UserProfileId.Should().Be(userProfileId);
-        item.FriendlyUserId.Should().Be("johnny.doe");
-        item.DisplayName.Should().Be("Johnny Doe");
-        item.AvatarUrl.Should().Be("https://cdn.example/john-changed.png");
+        item.Value.Should().NotBeNull();
+        item.Value!.FriendlyUserId.Should().Be("johnny.doe");
+        item.Value.DisplayName.Should().Be("Johnny Doe");
+        item.Value.AvatarUrl.Should().Be("https://cdn.example/john-changed.png");
+    }
+
+    [Fact]
+    public async Task HandleAsync_WhenUpsertFollowedByDeleteForSameProfile_SendsDeleteItem()
+    {
+        BulkUpsertOrDeleteUserProfileProjectionRequest? capturedRequest = null;
+        var userProfileId = Guid.NewGuid();
+
+        _apiClientMock
+            .Setup(x => x.BulkUpsertOrDeleteUserProfileProjectionAsync(
+                It.IsAny<BulkUpsertOrDeleteUserProfileProjectionRequest>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<BulkUpsertOrDeleteUserProfileProjectionRequest, CancellationToken>((request, _) => capturedRequest = request)
+            .Returns(Task.CompletedTask);
+
+        await _subscriber.HandleAsync(
+            ToAsyncEnumerable(
+                new UserProfileCreatedIntegrationEvent
+                {
+                    UserProfileId = userProfileId,
+                    FriendlyUserId = "john.doe",
+                    MainEmail = new UserProfileEmail { Address = "john@flowchat.local", IsConfirmed = true, IsVisible = true }
+                },
+                new UserProfileDeletedIntegrationEvent { UserProfileId = userProfileId }),
+            CancellationToken.None);
+
+        capturedRequest.Should().NotBeNull();
+        var item = capturedRequest!.Items.Should().ContainSingle().Subject;
+        item.UserProfileId.Should().Be(userProfileId);
+        item.Value.Should().BeNull();
     }
 
     [Fact]
@@ -139,8 +227,8 @@ public sealed class UserProfileProjectionBatchSubscriberTests
         await _subscriber.HandleAsync(ToAsyncEnumerable(), CancellationToken.None);
 
         _apiClientMock.Verify(
-            x => x.BulkUpsertUserProfileProjectionAsync(
-                It.IsAny<BulkUpsertUserProfileProjectionRequest>(),
+            x => x.BulkUpsertOrDeleteUserProfileProjectionAsync(
+                It.IsAny<BulkUpsertOrDeleteUserProfileProjectionRequest>(),
                 It.IsAny<CancellationToken>()),
             Times.Never);
     }
@@ -151,8 +239,8 @@ public sealed class UserProfileProjectionBatchSubscriberTests
         await _subscriber.HandleAsync(ToAsyncEnumerable(new UnsupportedIntegrationEvent()), CancellationToken.None);
 
         _apiClientMock.Verify(
-            x => x.BulkUpsertUserProfileProjectionAsync(
-                It.IsAny<BulkUpsertUserProfileProjectionRequest>(),
+            x => x.BulkUpsertOrDeleteUserProfileProjectionAsync(
+                It.IsAny<BulkUpsertOrDeleteUserProfileProjectionRequest>(),
                 It.IsAny<CancellationToken>()),
             Times.Never);
     }
@@ -182,8 +270,8 @@ public sealed class UserProfileProjectionBatchSubscriberTests
 
         await act.Should().ThrowAsync<NonTransientException>();
         _apiClientMock.Verify(
-            x => x.BulkUpsertUserProfileProjectionAsync(
-                It.IsAny<BulkUpsertUserProfileProjectionRequest>(),
+            x => x.BulkUpsertOrDeleteUserProfileProjectionAsync(
+                It.IsAny<BulkUpsertOrDeleteUserProfileProjectionRequest>(),
                 It.IsAny<CancellationToken>()),
             Times.Never);
     }
