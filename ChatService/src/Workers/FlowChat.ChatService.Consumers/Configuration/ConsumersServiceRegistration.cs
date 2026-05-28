@@ -18,11 +18,13 @@ public static class ConsumersServiceRegistration
         this IServiceCollection services,
         IConfiguration configuration)
     {
+        var consumersAssembly = typeof(ConsumersServiceRegistration).Assembly;
         var consumerOptions = configuration
             .GetSection(new UserProfileConsumerSettingsSection().SectionName)
             .Get<UserProfileConsumerSettingsSection>()
             ?? new UserProfileConsumerSettingsSection();
 
+        services.AddAutoMapper((Action<AutoMapper.IMapperConfigurationExpression>?)null, consumersAssembly);
         services.AddFlowChatHttpClient<IChatInternalApiClient, ChatInternalApiClient, ChatApiSettingsSection>();
 
         services.AddSilverback()

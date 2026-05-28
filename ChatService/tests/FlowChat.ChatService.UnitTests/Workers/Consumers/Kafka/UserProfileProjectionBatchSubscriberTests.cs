@@ -1,3 +1,4 @@
+using AutoMapper;
 using FlowChat.ChatService.Consumers.ChatService.Contracts;
 using FlowChat.ChatService.Consumers.Kafka;
 using FlowChat.ChatService.Consumers.Services;
@@ -12,13 +13,20 @@ namespace FlowChat.ChatService.UnitTests.Workers.Consumers.Kafka;
 
 public sealed class UserProfileProjectionBatchSubscriberTests
 {
+    private readonly IMapper _mapper;
     private readonly Mock<IChatInternalApiClient> _apiClientMock = new();
     private readonly UserProfileProjectionBatchSubscriber _subscriber;
 
     public UserProfileProjectionBatchSubscriberTests()
     {
+        _mapper = new MapperConfiguration(
+                configuration => configuration.AddProfile<UserProfileProjectionRequestProfile>(),
+                NullLoggerFactory.Instance)
+            .CreateMapper();
+
         _subscriber = new UserProfileProjectionBatchSubscriber(
             _apiClientMock.Object,
+            _mapper,
             NullLogger<UserProfileProjectionBatchSubscriber>.Instance);
     }
 

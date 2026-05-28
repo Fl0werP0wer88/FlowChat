@@ -1,3 +1,4 @@
+using AutoMapper;
 using FlowChat.ChatService.Consumers.ChatService.Contracts;
 using FlowChat.ChatService.Consumers.Services;
 using FlowChat.Core.Messaging;
@@ -7,6 +8,7 @@ namespace FlowChat.ChatService.Consumers.Kafka;
 
 public sealed class UserProfileProjectionBatchSubscriber(
     IChatInternalApiClient apiClient,
+    IMapper mapper,
     ILogger<UserProfileProjectionBatchSubscriber> logger)
 {
     [Subscribe]
@@ -18,7 +20,7 @@ public sealed class UserProfileProjectionBatchSubscriber(
 
         await foreach (var message in messages.WithCancellation(cancellationToken))
         {
-            var item = UserProfileSubscriberHelper.Map(message);
+            var item = UserProfileSubscriberHelper.Map(message, mapper);
             if (item is null)
             {
                 logger.LogDebug(

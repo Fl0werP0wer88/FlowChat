@@ -15,6 +15,7 @@
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.3" />
     <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.3" />
     <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.3" />
+    <PackageReference Include="AutoMapper" Version="16.1.1" />
     <PackageReference Include="Silverback.Integration.Kafka" Version="5.0.0" />
   </ItemGroup>
 </Project>
