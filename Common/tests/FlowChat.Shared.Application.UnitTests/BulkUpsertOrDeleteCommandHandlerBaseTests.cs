@@ -12,8 +12,8 @@ public sealed class BulkUpsertOrDeleteCommandHandlerBaseTests
     {
         var items = new[]
         {
-            new TestCommandItem(Id<TestValue>.New(), new TestValue(Guid.NewGuid(), "Alpha")),
-            new TestCommandItem(Id<TestValue>.New(), new TestValue(Guid.NewGuid(), "Beta"))
+            new BulkCommandItem<TestValue>(Id<TestValue>.New(), new TestValue(Guid.NewGuid(), "Alpha")),
+            new BulkCommandItem<TestValue>(Id<TestValue>.New(), new TestValue(Guid.NewGuid(), "Beta"))
         };
         var unitOfWorkMock = CreateUnitOfWorkMock();
         var executorMock = new Mock<IBulkExecutor<TestValue>>();
@@ -36,8 +36,8 @@ public sealed class BulkUpsertOrDeleteCommandHandlerBaseTests
     {
         var items = new[]
         {
-            new TestCommandItem(Id<TestValue>.New(), null),
-            new TestCommandItem(Id<TestValue>.New(), null)
+            new BulkCommandItem<TestValue>(Id<TestValue>.New(), null),
+            new BulkCommandItem<TestValue>(Id<TestValue>.New(), null)
         };
         var unitOfWorkMock = CreateUnitOfWorkMock();
         var executorMock = new Mock<IBulkExecutor<TestValue>>();
@@ -63,8 +63,8 @@ public sealed class BulkUpsertOrDeleteCommandHandlerBaseTests
         var upsertValue = new TestValue(Guid.NewGuid(), "Alpha");
         var items = new[]
         {
-            new TestCommandItem(upsertId, upsertValue),
-            new TestCommandItem(deleteId, null)
+            new BulkCommandItem<TestValue>(upsertId, upsertValue),
+            new BulkCommandItem<TestValue>(deleteId, null)
         };
         IReadOnlyCollection<TestValue>? capturedUpserts = null;
         IReadOnlyCollection<Id<TestValue>>? capturedDeleteIds = null;
@@ -110,8 +110,8 @@ public sealed class BulkUpsertOrDeleteCommandHandlerBaseTests
     {
         var items = new[]
         {
-            new TestCommandItem(Id<TestValue>.New(), new TestValue(Guid.NewGuid(), "Alpha")),
-            new TestCommandItem(Id<TestValue>.New(), null)
+            new BulkCommandItem<TestValue>(Id<TestValue>.New(), new TestValue(Guid.NewGuid(), "Alpha")),
+            new BulkCommandItem<TestValue>(Id<TestValue>.New(), null)
         };
         var failure = FlowChatResult<int>.Failure(DomainError.Conflict("upsert failed"));
         var unitOfWorkMock = CreateUnitOfWorkMock();
@@ -132,7 +132,7 @@ public sealed class BulkUpsertOrDeleteCommandHandlerBaseTests
     [Fact]
     public async Task Handle_WhenDeleteFails_ReturnsFailure()
     {
-        var items = new[] { new TestCommandItem(Id<TestValue>.New(), null) };
+        var items = new[] { new BulkCommandItem<TestValue>(Id<TestValue>.New(), null) };
         var failure = FlowChatResult<int>.Failure(DomainError.Conflict("delete failed"));
         var unitOfWorkMock = CreateUnitOfWorkMock();
         var executorMock = new Mock<IBulkExecutor<TestValue>>();
@@ -151,7 +151,7 @@ public sealed class BulkUpsertOrDeleteCommandHandlerBaseTests
     [Fact]
     public async Task Handle_ExecutesInsideTransaction()
     {
-        var items = new[] { new TestCommandItem(Id<TestValue>.New(), new TestValue(Guid.NewGuid(), "A")) };
+        var items = new[] { new BulkCommandItem<TestValue>(Id<TestValue>.New(), new TestValue(Guid.NewGuid(), "A")) };
         var unitOfWorkMock = CreateUnitOfWorkMock();
         var executorMock = new Mock<IBulkExecutor<TestValue>>();
         executorMock
@@ -183,13 +183,10 @@ public sealed class BulkUpsertOrDeleteCommandHandlerBaseTests
 
     public sealed record TestValue(Guid Id, string Name);
 
-    public sealed record TestCommandItem(Id<TestValue> EntityId, TestValue? Value)
-        : IBulkCommandItem<TestValue>;
+    public sealed record TestCommand(IReadOnlyCollection<BulkCommandItem<TestValue>> Items)
+        : IBulkUpsertOrDeleteCommand<TestValue>;
 
-    public sealed record TestCommand(IReadOnlyCollection<TestCommandItem> Items)
-        : IBulkUpsertOrDeleteCommand<TestCommandItem, TestValue>;
-
-    private sealed class TestHandler : BulkUpsertOrDeleteCommandHandlerBase<TestCommand, TestCommandItem, TestValue>
+    private sealed class TestHandler : BulkUpsertOrDeleteCommandHandlerBase<TestCommand, TestValue>
     {
         public TestHandler(IUnitOfWork unitOfWork, IBulkExecutor<TestValue> bulkExecutor)
             : base(unitOfWork, bulkExecutor)

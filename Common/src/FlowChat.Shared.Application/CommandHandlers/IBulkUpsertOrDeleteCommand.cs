@@ -1,8 +1,7 @@
 namespace FlowChat.Shared.Application;
 
-public interface IBulkUpsertOrDeleteCommand<TItem, TValue> : ICommand<BulkUpsertOrDeleteCommandResult>
-    where TItem : IBulkCommandItem<TValue>
+public interface IBulkUpsertOrDeleteCommand<TValue> : ICommand<BulkUpsertOrDeleteCommandResult>
     where TValue : class
 {
-    IReadOnlyCollection<TItem> Items { get; }
+    IReadOnlyCollection<BulkCommandItem<TValue>> Items { get; }
 }

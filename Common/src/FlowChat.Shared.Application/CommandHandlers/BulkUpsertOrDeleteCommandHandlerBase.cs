@@ -1,9 +1,8 @@
 namespace FlowChat.Shared.Application;
 
-public abstract class BulkUpsertOrDeleteCommandHandlerBase<TCommand, TCommandItem, TValue>
+public abstract class BulkUpsertOrDeleteCommandHandlerBase<TCommand, TValue>
     : TransactionalCommandHandlerBase<TCommand, BulkUpsertOrDeleteCommandResult>
-    where TCommand : IBulkUpsertOrDeleteCommand<TCommandItem, TValue>
-    where TCommandItem : IBulkCommandItem<TValue>
+    where TCommand : IBulkUpsertOrDeleteCommand<TValue>
     where TValue : class
 {
     private readonly IBulkExecutor<TValue> _bulkExecutor;
@@ -50,5 +49,5 @@ public abstract class BulkUpsertOrDeleteCommandHandlerBase<TCommand, TCommandIte
             new BulkUpsertOrDeleteCommandResult(items.Count, upsertedCount, deletedCount));
     }
 
-    protected virtual IReadOnlyCollection<TCommandItem> GetItems(TCommand request) => request.Items;
+    protected virtual IReadOnlyCollection<BulkCommandItem<TValue>> GetItems(TCommand request) => request.Items;
 }
