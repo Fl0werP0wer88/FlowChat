@@ -1,10 +1,8 @@
-using MediatR;
-
 namespace FlowChat.Shared.Application;
 
 public abstract class BulkUpsertOrDeleteCommandHandlerBase<TCommand, TCommandItem, TValue>
     : TransactionalCommandHandlerBase<TCommand, BulkUpsertOrDeleteCommandResult>
-    where TCommand : IBulkUpsertOrDeleteCommand<TCommandItem, TValue>, IRequest<FlowChatResult<BulkUpsertOrDeleteCommandResult>>
+    where TCommand : IBulkUpsertOrDeleteCommand<TCommandItem, TValue>
     where TCommandItem : IBulkCommandItem<TValue>
     where TValue : class
 {
