@@ -1,6 +1,10 @@
+using FlowChat.Shared.Domain;
+
 namespace FlowChat.Shared.Application;
 
-public interface IBulkCommandItem
+public interface IBulkCommandItem<TValue>
+    where TValue : class
 {
-    bool MarkedForDeletion { get; }
+    Id<TValue> EntityId { get; }
+    TValue? Value { get; }
 }

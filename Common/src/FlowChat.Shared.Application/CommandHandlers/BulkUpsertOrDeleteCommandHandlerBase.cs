@@ -1,19 +1,18 @@
-using FlowChat.Core.Results;
 using MediatR;
 
 namespace FlowChat.Shared.Application;
 
-public abstract class BulkUpsertOrDeleteCommandHandlerBase<TCommand, TCommandItem, TExecutorItem>
+public abstract class BulkUpsertOrDeleteCommandHandlerBase<TCommand, TCommandItem, TValue>
     : TransactionalCommandHandlerBase<TCommand, BulkUpsertOrDeleteCommandResult>
-    where TCommand : IBulkUpsertOrDeleteCommand<TCommandItem>, IRequest<FlowChatResult<BulkUpsertOrDeleteCommandResult>>
-    where TCommandItem : IBulkCommandItem
-    where TExecutorItem : notnull
+    where TCommand : IBulkUpsertOrDeleteCommand<TCommandItem, TValue>, IRequest<FlowChatResult<BulkUpsertOrDeleteCommandResult>>
+    where TCommandItem : IBulkCommandItem<TValue>
+    where TValue : class
 {
-    private readonly IBulkExecutor<TExecutorItem> _bulkExecutor;
+    private readonly IBulkExecutor<TValue> _bulkExecutor;
 
     protected BulkUpsertOrDeleteCommandHandlerBase(
         IUnitOfWork unitOfWork,
-        IBulkExecutor<TExecutorItem> bulkExecutor)
+        IBulkExecutor<TValue> bulkExecutor)
         : base(unitOfWork)
     {
         _bulkExecutor = bulkExecutor ?? throw new ArgumentNullException(nameof(bulkExecutor));
@@ -27,8 +26,8 @@ public abstract class BulkUpsertOrDeleteCommandHandlerBase<TCommand, TCommandIte
         if (items.Count == 0)
             return FlowChatResult<BulkUpsertOrDeleteCommandResult>.Success(BulkUpsertOrDeleteCommandResult.Empty);
 
-        var upsertItems = items.Where(i => !i.MarkedForDeletion).Select(MapItem).ToArray();
-        var deleteItems = items.Where(i => i.MarkedForDeletion).Select(MapItem).ToArray();
+        var upsertItems = items.Where(i => i.Value is not null).Select(i => i.Value!).ToArray();
+        var deleteIds = items.Where(i => i.Value is null).Select(i => i.EntityId).ToArray();
 
         int upsertedCount = 0;
         int deletedCount = 0;
@@ -41,9 +40,9 @@ public abstract class BulkUpsertOrDeleteCommandHandlerBase<TCommand, TCommandIte
             upsertedCount = upsertResult.Value;
         }
 
-        if (deleteItems.Length > 0)
+        if (deleteIds.Length > 0)
         {
-            var deleteResult = await _bulkExecutor.DeleteAsync(deleteItems, cancellationToken);
+            var deleteResult = await _bulkExecutor.DeleteAsync(deleteIds, cancellationToken);
             if (deleteResult.IsFailure)
                 return FlowChatResult<BulkUpsertOrDeleteCommandResult>.Failure(deleteResult.Error);
             deletedCount = deleteResult.Value;
@@ -54,21 +53,4 @@ public abstract class BulkUpsertOrDeleteCommandHandlerBase<TCommand, TCommandIte
     }
 
     protected virtual IReadOnlyCollection<TCommandItem> GetItems(TCommand request) => request.Items;
-
-    protected abstract TExecutorItem MapItem(TCommandItem item);
-}
-
-public abstract class BulkUpsertOrDeleteCommandHandlerBase<TCommand, TItem>
-    : BulkUpsertOrDeleteCommandHandlerBase<TCommand, TItem, TItem>
-    where TCommand : IBulkUpsertOrDeleteCommand<TItem>, IRequest<FlowChatResult<BulkUpsertOrDeleteCommandResult>>
-    where TItem : IBulkCommandItem
-{
-    protected BulkUpsertOrDeleteCommandHandlerBase(
-        IUnitOfWork unitOfWork,
-        IBulkExecutor<TItem> bulkExecutor)
-        : base(unitOfWork, bulkExecutor)
-    {
-    }
-
-    protected override TItem MapItem(TItem item) => item;
 }
