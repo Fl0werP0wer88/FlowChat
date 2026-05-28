@@ -297,6 +297,11 @@ public class UserProfile : AggregateRootBase<UserProfile>
         MarkUserProfileProjectionChanged();
     }
 
+    public void Delete()
+    {
+        AddDomainEvent(new UserProfileDeletedDomainEvent(Id));
+    }
+
     private UserProfileState CreateState()
     {
         return new UserProfileState
