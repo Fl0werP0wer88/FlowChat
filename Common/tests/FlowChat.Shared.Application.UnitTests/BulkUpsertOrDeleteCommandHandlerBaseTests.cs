@@ -16,9 +16,9 @@ public sealed class BulkUpsertOrDeleteCommandHandlerBaseTests
             new BulkCommandItem<TestValue>(Id<TestValue>.New(), new TestValue(Guid.NewGuid(), "Beta"))
         };
         var unitOfWorkMock = CreateUnitOfWorkMock();
-        var executorMock = new Mock<IBulkExecutor<TestValue>>();
+        var executorMock = new Mock<IBulkRepository<TestValue>>();
         executorMock
-            .Setup(x => x.UpsertAsync(It.IsAny<IReadOnlyCollection<TestValue>>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.BulkUpsertAsync(It.IsAny<IReadOnlyCollection<TestValue>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(FlowChatResult<int>.Success(items.Length));
         var handler = new TestHandler(unitOfWorkMock.Object, executorMock.Object);
 
@@ -27,8 +27,8 @@ public sealed class BulkUpsertOrDeleteCommandHandlerBaseTests
         result.IsSuccess.Should().BeTrue();
         result.Value.UpsertedCount.Should().Be(items.Length);
         result.Value.DeletedCount.Should().Be(0);
-        executorMock.Verify(x => x.UpsertAsync(It.IsAny<IReadOnlyCollection<TestValue>>(), It.IsAny<CancellationToken>()), Times.Once);
-        executorMock.Verify(x => x.DeleteAsync(It.IsAny<IReadOnlyCollection<Id<TestValue>>>(), It.IsAny<CancellationToken>()), Times.Never);
+        executorMock.Verify(x => x.BulkUpsertAsync(It.IsAny<IReadOnlyCollection<TestValue>>(), It.IsAny<CancellationToken>()), Times.Once);
+        executorMock.Verify(x => x.BulkDeleteAsync(It.IsAny<IReadOnlyCollection<Id<TestValue>>>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -40,9 +40,9 @@ public sealed class BulkUpsertOrDeleteCommandHandlerBaseTests
             new BulkCommandItem<TestValue>(Id<TestValue>.New(), null)
         };
         var unitOfWorkMock = CreateUnitOfWorkMock();
-        var executorMock = new Mock<IBulkExecutor<TestValue>>();
+        var executorMock = new Mock<IBulkRepository<TestValue>>();
         executorMock
-            .Setup(x => x.DeleteAsync(It.IsAny<IReadOnlyCollection<Id<TestValue>>>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.BulkDeleteAsync(It.IsAny<IReadOnlyCollection<Id<TestValue>>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(FlowChatResult<int>.Success(items.Length));
         var handler = new TestHandler(unitOfWorkMock.Object, executorMock.Object);
 
@@ -51,8 +51,8 @@ public sealed class BulkUpsertOrDeleteCommandHandlerBaseTests
         result.IsSuccess.Should().BeTrue();
         result.Value.UpsertedCount.Should().Be(0);
         result.Value.DeletedCount.Should().Be(items.Length);
-        executorMock.Verify(x => x.UpsertAsync(It.IsAny<IReadOnlyCollection<TestValue>>(), It.IsAny<CancellationToken>()), Times.Never);
-        executorMock.Verify(x => x.DeleteAsync(It.IsAny<IReadOnlyCollection<Id<TestValue>>>(), It.IsAny<CancellationToken>()), Times.Once);
+        executorMock.Verify(x => x.BulkUpsertAsync(It.IsAny<IReadOnlyCollection<TestValue>>(), It.IsAny<CancellationToken>()), Times.Never);
+        executorMock.Verify(x => x.BulkDeleteAsync(It.IsAny<IReadOnlyCollection<Id<TestValue>>>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -69,13 +69,13 @@ public sealed class BulkUpsertOrDeleteCommandHandlerBaseTests
         IReadOnlyCollection<TestValue>? capturedUpserts = null;
         IReadOnlyCollection<Id<TestValue>>? capturedDeleteIds = null;
         var unitOfWorkMock = CreateUnitOfWorkMock();
-        var executorMock = new Mock<IBulkExecutor<TestValue>>();
+        var executorMock = new Mock<IBulkRepository<TestValue>>();
         executorMock
-            .Setup(x => x.UpsertAsync(It.IsAny<IReadOnlyCollection<TestValue>>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.BulkUpsertAsync(It.IsAny<IReadOnlyCollection<TestValue>>(), It.IsAny<CancellationToken>()))
             .Callback<IReadOnlyCollection<TestValue>, CancellationToken>((i, _) => capturedUpserts = i)
             .ReturnsAsync(FlowChatResult<int>.Success(1));
         executorMock
-            .Setup(x => x.DeleteAsync(It.IsAny<IReadOnlyCollection<Id<TestValue>>>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.BulkDeleteAsync(It.IsAny<IReadOnlyCollection<Id<TestValue>>>(), It.IsAny<CancellationToken>()))
             .Callback<IReadOnlyCollection<Id<TestValue>>, CancellationToken>((i, _) => capturedDeleteIds = i)
             .ReturnsAsync(FlowChatResult<int>.Success(1));
         var handler = new TestHandler(unitOfWorkMock.Object, executorMock.Object);
@@ -94,15 +94,15 @@ public sealed class BulkUpsertOrDeleteCommandHandlerBaseTests
     public async Task Handle_WhenNoItems_ReturnsEmptyResultWithoutCallingExecutor()
     {
         var unitOfWorkMock = CreateUnitOfWorkMock();
-        var executorMock = new Mock<IBulkExecutor<TestValue>>();
+        var executorMock = new Mock<IBulkRepository<TestValue>>();
         var handler = new TestHandler(unitOfWorkMock.Object, executorMock.Object);
 
         var result = await handler.Handle(new TestCommand([]), CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().Be(BulkUpsertOrDeleteCommandResult.Empty);
-        executorMock.Verify(x => x.UpsertAsync(It.IsAny<IReadOnlyCollection<TestValue>>(), It.IsAny<CancellationToken>()), Times.Never);
-        executorMock.Verify(x => x.DeleteAsync(It.IsAny<IReadOnlyCollection<Id<TestValue>>>(), It.IsAny<CancellationToken>()), Times.Never);
+        executorMock.Verify(x => x.BulkUpsertAsync(It.IsAny<IReadOnlyCollection<TestValue>>(), It.IsAny<CancellationToken>()), Times.Never);
+        executorMock.Verify(x => x.BulkDeleteAsync(It.IsAny<IReadOnlyCollection<Id<TestValue>>>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -115,9 +115,9 @@ public sealed class BulkUpsertOrDeleteCommandHandlerBaseTests
         };
         var failure = FlowChatResult<int>.Failure(DomainError.Conflict("upsert failed"));
         var unitOfWorkMock = CreateUnitOfWorkMock();
-        var executorMock = new Mock<IBulkExecutor<TestValue>>();
+        var executorMock = new Mock<IBulkRepository<TestValue>>();
         executorMock
-            .Setup(x => x.UpsertAsync(It.IsAny<IReadOnlyCollection<TestValue>>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.BulkUpsertAsync(It.IsAny<IReadOnlyCollection<TestValue>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(failure);
         var handler = new TestHandler(unitOfWorkMock.Object, executorMock.Object);
 
@@ -126,7 +126,7 @@ public sealed class BulkUpsertOrDeleteCommandHandlerBaseTests
         result.IsFailure.Should().BeTrue();
         result.Error.ErrorType.Should().Be(ErrorType.Conflict);
         result.Error.ErrorMessage.Should().Contain("upsert failed");
-        executorMock.Verify(x => x.DeleteAsync(It.IsAny<IReadOnlyCollection<Id<TestValue>>>(), It.IsAny<CancellationToken>()), Times.Never);
+        executorMock.Verify(x => x.BulkDeleteAsync(It.IsAny<IReadOnlyCollection<Id<TestValue>>>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -135,9 +135,9 @@ public sealed class BulkUpsertOrDeleteCommandHandlerBaseTests
         var items = new[] { new BulkCommandItem<TestValue>(Id<TestValue>.New(), null) };
         var failure = FlowChatResult<int>.Failure(DomainError.Conflict("delete failed"));
         var unitOfWorkMock = CreateUnitOfWorkMock();
-        var executorMock = new Mock<IBulkExecutor<TestValue>>();
+        var executorMock = new Mock<IBulkRepository<TestValue>>();
         executorMock
-            .Setup(x => x.DeleteAsync(It.IsAny<IReadOnlyCollection<Id<TestValue>>>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.BulkDeleteAsync(It.IsAny<IReadOnlyCollection<Id<TestValue>>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(failure);
         var handler = new TestHandler(unitOfWorkMock.Object, executorMock.Object);
 
@@ -153,9 +153,9 @@ public sealed class BulkUpsertOrDeleteCommandHandlerBaseTests
     {
         var items = new[] { new BulkCommandItem<TestValue>(Id<TestValue>.New(), new TestValue(Guid.NewGuid(), "A")) };
         var unitOfWorkMock = CreateUnitOfWorkMock();
-        var executorMock = new Mock<IBulkExecutor<TestValue>>();
+        var executorMock = new Mock<IBulkRepository<TestValue>>();
         executorMock
-            .Setup(x => x.UpsertAsync(It.IsAny<IReadOnlyCollection<TestValue>>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.BulkUpsertAsync(It.IsAny<IReadOnlyCollection<TestValue>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(FlowChatResult<int>.Success(1));
         var handler = new TestHandler(unitOfWorkMock.Object, executorMock.Object);
 
@@ -188,8 +188,8 @@ public sealed class BulkUpsertOrDeleteCommandHandlerBaseTests
 
     private sealed class TestHandler : BulkUpsertOrDeleteCommandHandlerBase<TestCommand, TestValue>
     {
-        public TestHandler(IUnitOfWork unitOfWork, IBulkExecutor<TestValue> bulkExecutor)
-            : base(unitOfWork, bulkExecutor)
+        public TestHandler(IUnitOfWork unitOfWork, IBulkRepository<TestValue> bulkRepository)
+            : base(unitOfWork, bulkRepository)
         {
         }
     }

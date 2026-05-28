@@ -5,14 +5,14 @@ public abstract class BulkUpsertOrDeleteCommandHandlerBase<TCommand, TValue>
     where TCommand : IBulkUpsertOrDeleteCommand<TValue>
     where TValue : class
 {
-    private readonly IBulkExecutor<TValue> _bulkExecutor;
+    private readonly IBulkRepository<TValue> _bulkRepository;
 
     protected BulkUpsertOrDeleteCommandHandlerBase(
         IUnitOfWork unitOfWork,
-        IBulkExecutor<TValue> bulkExecutor)
+        IBulkRepository<TValue> bulkRepository)
         : base(unitOfWork)
     {
-        _bulkExecutor = bulkExecutor ?? throw new ArgumentNullException(nameof(bulkExecutor));
+        _bulkRepository = bulkRepository ?? throw new ArgumentNullException(nameof(bulkRepository));
     }
 
     protected override async Task<FlowChatResult<BulkUpsertOrDeleteCommandResult>> ExecuteCommandAsync(
@@ -31,7 +31,7 @@ public abstract class BulkUpsertOrDeleteCommandHandlerBase<TCommand, TValue>
 
         if (upsertItems.Length > 0)
         {
-            var upsertResult = await _bulkExecutor.UpsertAsync(upsertItems, cancellationToken);
+            var upsertResult = await _bulkRepository.BulkUpsertAsync(upsertItems, cancellationToken);
             if (upsertResult.IsFailure)
                 return FlowChatResult<BulkUpsertOrDeleteCommandResult>.Failure(upsertResult.Error);
             upsertedCount = upsertResult.Value;
@@ -39,7 +39,7 @@ public abstract class BulkUpsertOrDeleteCommandHandlerBase<TCommand, TValue>
 
         if (deleteIds.Length > 0)
         {
-            var deleteResult = await _bulkExecutor.DeleteAsync(deleteIds, cancellationToken);
+            var deleteResult = await _bulkRepository.BulkDeleteAsync(deleteIds, cancellationToken);
             if (deleteResult.IsFailure)
                 return FlowChatResult<BulkUpsertOrDeleteCommandResult>.Failure(deleteResult.Error);
             deletedCount = deleteResult.Value;

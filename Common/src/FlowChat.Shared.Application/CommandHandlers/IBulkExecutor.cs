@@ -2,8 +2,8 @@ using FlowChat.Shared.Domain;
 
 namespace FlowChat.Shared.Application;
 
-public interface IBulkExecutor<TValue>
+public interface IBulkRepository<TValue>
 {
-    Task<FlowChatResult<int>> UpsertAsync(IReadOnlyCollection<TValue> items, CancellationToken cancellationToken);
-    Task<FlowChatResult<int>> DeleteAsync(IReadOnlyCollection<Id<TValue>> ids, CancellationToken cancellationToken);
+    Task<FlowChatResult<int>> BulkUpsertAsync(IReadOnlyCollection<TValue> items, CancellationToken cancellationToken);
+    Task<FlowChatResult<int>> BulkDeleteAsync(IReadOnlyCollection<Id<TValue>> ids, CancellationToken cancellationToken);
 }
