@@ -43,7 +43,7 @@ public sealed class ConfirmEmailVerificationCommandHandlerTests
             .ReturnsAsync((EmailVerificationConfirmationState?)null);
 
         _unitOfWorkMock
-            .Setup(x => x.ExecuteInTransactionAsync(
+            .Setup(x => x.ExecuteCommandInTransactionAsync(
                 It.IsAny<Func<CancellationToken, Task<FlowChatResult<IdempotentCommandResult<Unit>>>>>(),
                 It.IsAny<CancellationToken>()))
             .Returns<Func<CancellationToken, Task<FlowChatResult<IdempotentCommandResult<Unit>>>>, CancellationToken>(
@@ -285,7 +285,7 @@ public sealed class ConfirmEmailVerificationCommandHandlerTests
             .ReturnsAsync(profile);
 
         _unitOfWorkMock
-            .Setup(x => x.ExecuteInTransactionAsync(
+            .Setup(x => x.ExecuteCommandInTransactionAsync(
                 It.IsAny<Func<CancellationToken, Task<FlowChatResult<IdempotentCommandResult<Unit>>>>>(),
                 It.IsAny<CancellationToken>()))
             .Returns<Func<CancellationToken, Task<FlowChatResult<IdempotentCommandResult<Unit>>>>, CancellationToken>(
