@@ -31,7 +31,9 @@ public abstract class UpsertOrDeleteStatus(string name, int value)
     public static readonly UpsertOrDeleteStatus Updated = new UpdatedEnum();
     public static readonly UpsertOrDeleteStatus Inserted = new InsertedEnum();
     public static readonly UpsertOrDeleteStatus Deleted = new DeletedEnum();
-    public static readonly UpsertOrDeleteStatus Failed = new TransientFailEnum();
+    public static readonly UpsertOrDeleteStatus TransientFailure = new TransientFailEnum();
+    public static readonly UpsertOrDeleteStatus NonTransientFailure = new NonTransientFailEnum();
+
     public abstract bool IsFailure { get; }
     public abstract bool? IsTransient { get; }
 
