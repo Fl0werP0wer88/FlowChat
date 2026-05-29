@@ -79,9 +79,6 @@ public sealed class UserEmailVerificationRequestedCommandHandler
         return FlowChatResult<Unit>.Success(Unit.Value);
     }
 
-    protected override IAggregateRoot? GetAggregateRoot(FlowChatResult<Unit> result)
-    {
-        return result.IsSuccess ? _notification : null;
-    }
+    protected override IAggregateRoot? GetAggregateRoot() => _notification;
 }
 

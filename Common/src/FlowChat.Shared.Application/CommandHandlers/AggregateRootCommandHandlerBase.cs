@@ -33,7 +33,7 @@ public abstract class AggregateRootCommandHandlerBase<TCommand, TResponse> : ICo
 
                     if (operationResult.IsSuccess)
                     {
-                        var aggregateRoot = GetAggregateRoot(operationResult);
+                        var aggregateRoot = GetAggregateRoot();
                         if (aggregateRoot is not null)
                         {
                             aggregateRoot.IncrementVersion();
@@ -59,7 +59,7 @@ public abstract class AggregateRootCommandHandlerBase<TCommand, TResponse> : ICo
 
     protected abstract Task<FlowChatResult<TResponse>> ExecuteAsync(TCommand request, CancellationToken cancellationToken);
 
-    protected virtual IAggregateRoot? GetAggregateRoot(FlowChatResult<TResponse> result) => null;
+    protected virtual IAggregateRoot? GetAggregateRoot() => null;
 
     protected virtual Task<FlowChatResult<TResponse>> OnDbUpdateExceptionAfterRollbackHook(
         TCommand request,

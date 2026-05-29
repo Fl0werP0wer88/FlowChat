@@ -34,8 +34,5 @@ public sealed class DeleteProfileCommandHandler : AggregateRootCommandHandlerBas
         return FlowChatResult<Guid>.Success(_userProfile.Id.Value);
     }
 
-    protected override IAggregateRoot? GetAggregateRoot(FlowChatResult<Guid> result)
-    {
-        return result.IsSuccess ? _userProfile : null;
-    }
+    protected override IAggregateRoot? GetAggregateRoot() => _userProfile;
 }

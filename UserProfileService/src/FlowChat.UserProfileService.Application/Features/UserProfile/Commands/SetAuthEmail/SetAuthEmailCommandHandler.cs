@@ -50,8 +50,5 @@ public sealed class SetAuthEmailCommandHandler
         return FlowChatResult<Guid>.Success(email.Id.Value);
     }
 
-    protected override IAggregateRoot? GetAggregateRoot(FlowChatResult<Guid> result)
-    {
-        return result.IsSuccess ? _userProfile : null;
-    }
+    protected override IAggregateRoot? GetAggregateRoot() => _userProfile;
 }

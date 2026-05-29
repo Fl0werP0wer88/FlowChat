@@ -65,8 +65,5 @@ public sealed class ChangeAuthEmailCommandHandler : AggregateRootCommandHandlerB
         return FlowChatResult<Unit>.Success(Unit.Value);
     }
 
-    protected override IAggregateRoot? GetAggregateRoot(FlowChatResult<Unit> result)
-    {
-        return result.IsSuccess ? _account : null;
-    }
+    protected override IAggregateRoot? GetAggregateRoot() => _account;
 }

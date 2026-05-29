@@ -39,6 +39,6 @@ public sealed class DeleteContactCommandHandler : AggregateRootCommandHandlerBas
         return FlowChatResult<MediatR.Unit>.Success(MediatR.Unit.Value);
     }
 
-    protected override IAggregateRoot? GetAggregateRoot(FlowChatResult<MediatR.Unit> result) =>
-        result.IsSuccess ? _contact : null;
+    protected override IAggregateRoot? GetAggregateRoot() =>
+        _contact;
 }

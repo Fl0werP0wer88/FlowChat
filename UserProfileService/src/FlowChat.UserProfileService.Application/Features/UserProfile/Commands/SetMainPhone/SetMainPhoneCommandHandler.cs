@@ -51,9 +51,6 @@ public sealed class SetMainPhoneCommandHandler
         return FlowChatResult<Guid>.Success(phone.Id.Value);
     }
 
-    protected override IAggregateRoot? GetAggregateRoot(FlowChatResult<Guid> result)
-    {
-        return result.IsSuccess ? _userProfile : null;
-    }
+    protected override IAggregateRoot? GetAggregateRoot() => _userProfile;
 }
 

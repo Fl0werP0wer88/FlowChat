@@ -50,8 +50,5 @@ public sealed class ConfirmAuthEmailCommandHandler : AggregateRootCommandHandler
         return FlowChatResult<Unit>.Success(Unit.Value);
     }
 
-    protected override IAggregateRoot? GetAggregateRoot(FlowChatResult<Unit> result)
-    {
-        return _account;
-    }
+    protected override IAggregateRoot? GetAggregateRoot() => _account;
 }

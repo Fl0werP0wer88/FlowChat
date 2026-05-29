@@ -118,10 +118,7 @@ public sealed class ConfirmEmailVerificationCommandHandler
         return await base.OnDbUpdateExceptionAfterRollbackHook(request, exception, cancellationToken);
     }
 
-    protected override IAggregateRoot? GetAggregateRoot(FlowChatResult<IdempotentCommandResult<Unit>> result)
-    {
-        return result.IsSuccess && !result.Value.WasAlreadyProcessed ? _userProfile : null;
-    }
+    protected override IAggregateRoot? GetAggregateRoot() => _userProfile;
 
     private static bool IsConfirmedBySameToken(
         EmailVerificationTokenPayload payload,

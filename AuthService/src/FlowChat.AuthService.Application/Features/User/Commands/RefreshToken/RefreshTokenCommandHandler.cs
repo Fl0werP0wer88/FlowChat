@@ -51,8 +51,5 @@ public sealed class RefreshTokenCommandHandler : AggregateRootCommandHandlerBase
             });
     }
 
-    protected override IAggregateRoot? GetAggregateRoot(FlowChatResult<RefreshTokenCommandResponse> result)
-    {
-        return _account;
-    }
+    protected override IAggregateRoot? GetAggregateRoot() => _account;
 }

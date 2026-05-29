@@ -113,7 +113,7 @@ public sealed class CommandHandlerBaseTests
             return _executeAsync(request, cancellationToken);
         }
 
-        protected override IAggregateRoot? GetAggregateRoot(FlowChatResult<Guid> result)
+        protected override IAggregateRoot? GetAggregateRoot()
         {
             return null;
         }
