@@ -41,8 +41,8 @@ public abstract class AggregateRootCommandHandlerBaseV2<TCommand, TResponse, TSn
 
                         if (aggregateRoot is not null)
                         {
-                            var snapshot = _mapper.Map<TSnapshot>(aggregateRoot);
                             aggregateRoot.IncrementVersion();
+                            var snapshot = _mapper.Map<TSnapshot>(aggregateRoot);
                             var domainEvents = aggregateRoot.PopDomainEvents();
                             await DispatchDomainEventsAsync(domainEvents, token);
                         }
