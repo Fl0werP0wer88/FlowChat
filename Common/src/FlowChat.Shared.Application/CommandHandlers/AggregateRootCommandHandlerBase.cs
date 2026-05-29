@@ -36,6 +36,7 @@ public abstract class AggregateRootCommandHandlerBase<TCommand, TResponse> : ICo
                         var aggregateRoot = GetAggregateRoot(operationResult);
                         if (aggregateRoot is not null)
                         {
+                            aggregateRoot.IncrementVersion();
                             var domainEvents = aggregateRoot.PopDomainEvents();
                             await DispatchDomainEventsAsync(domainEvents, token);
                         }

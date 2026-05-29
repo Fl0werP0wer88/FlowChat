@@ -107,7 +107,7 @@ public abstract class IdempotentCommandHandlerBase<TCommand, TValue>
         {
             return Task.CompletedTask;
         }
-
+        aggregateRoot.IncrementVersion();
         var domainEvents = aggregateRoot.PopDomainEvents();
 
         if (domainEvents is null)
