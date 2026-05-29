@@ -121,5 +121,9 @@ public sealed class FlowChatDomainEventDispatcherTests
         {
             return _additionalEvents;
         }
+
+        public void IncrementVersion()
+        {
+        }
     }
 }
