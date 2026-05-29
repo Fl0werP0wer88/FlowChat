@@ -23,7 +23,7 @@ public abstract class TransactionalCommandHandlerBase<TCommand, TValue>
         try
         {
             return await _unitOfWork.ExecuteCommandInTransactionAsync(
-                token => ExecuteCommandAsync(request, token),
+                token => HandleInTransactionAsync(request, token),
                 cancellationToken);
         }
         catch (DbUpdateException exception)
@@ -37,7 +37,7 @@ public abstract class TransactionalCommandHandlerBase<TCommand, TValue>
         }
     }
 
-    protected abstract Task<FlowChatResult<TValue>> ExecuteCommandAsync(
+    protected abstract Task<FlowChatResult<TValue>> HandleInTransactionAsync(
         TCommand request,
         CancellationToken cancellationToken);
 

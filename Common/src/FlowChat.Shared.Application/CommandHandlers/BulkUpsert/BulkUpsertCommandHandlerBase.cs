@@ -20,7 +20,7 @@ public abstract class BulkUpsertCommandHandlerBase<TCommand, TCommandItem, TUpse
             ?? throw new ArgumentNullException(nameof(bulkUpsertExecutor));
     }
 
-    protected override Task<FlowChatResult<BulkUpsertCommandResult>> ExecuteCommandAsync(
+    protected override Task<FlowChatResult<BulkUpsertCommandResult>> HandleInTransactionAsync(
         TCommand request,
         CancellationToken cancellationToken)
     {

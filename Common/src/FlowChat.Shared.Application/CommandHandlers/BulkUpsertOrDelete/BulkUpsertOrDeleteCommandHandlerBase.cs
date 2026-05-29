@@ -15,7 +15,7 @@ public abstract class BulkUpsertOrDeleteCommandHandlerBase<TCommand, TValue>
         _bulkRepository = bulkRepository ?? throw new ArgumentNullException(nameof(bulkRepository));
     }
 
-    protected override async Task<FlowChatResult<BulkUpsertOrDeleteCommandResult>> ExecuteCommandAsync(
+    protected override async Task<FlowChatResult<BulkUpsertOrDeleteCommandResult>> HandleInTransactionAsync(
         TCommand request,
         CancellationToken cancellationToken)
     {

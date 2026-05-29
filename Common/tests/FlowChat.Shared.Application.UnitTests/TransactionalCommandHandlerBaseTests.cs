@@ -125,7 +125,7 @@ public sealed class TransactionalCommandHandlerBaseTests
             _onDbUpdateException = onDbUpdateException;
         }
 
-        protected override Task<FlowChatResult<Guid>> ExecuteCommandAsync(
+        protected override Task<FlowChatResult<Guid>> HandleInTransactionAsync(
             TestTransactionalCommand request,
             CancellationToken cancellationToken)
             => _executeAsync(request, cancellationToken);
