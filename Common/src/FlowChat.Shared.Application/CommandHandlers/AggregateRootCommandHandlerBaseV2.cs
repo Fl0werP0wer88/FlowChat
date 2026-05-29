@@ -1,3 +1,4 @@
+using AutoMapper;
 using FlowChat.Core.Results;
 using FlowChat.Shared.Domain;
 using MediatR;
@@ -7,19 +8,22 @@ using System.Runtime.ExceptionServices;
 
 namespace FlowChat.Shared.Application;
 
-public abstract class AggregateRootCommandHandlerBaseV2<TCommand, TResponse> : ICommandHandler<TCommand, TResponse>
+public abstract class AggregateRootCommandHandlerBaseV2<TCommand, TResponse, TSnapshot> : ICommandHandler<TCommand, TResponse>
     where TCommand : ICommand<TResponse>, IRequest<FlowChatResult<TResponse>>
     where TResponse : notnull
 {
     private readonly IDomainEventDispatcher _domainEventDispatcher;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IMapper _mapper;
 
     protected AggregateRootCommandHandlerBaseV2(
         IDomainEventDispatcher domainEventDispatcher,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        IMapper mapper)
     {
         _domainEventDispatcher = domainEventDispatcher;
         _unitOfWork = unitOfWork;
+        _mapper = mapper;
     }
 
     public async Task<FlowChatResult<TResponse>> Handle(TCommand request, CancellationToken cancellationToken)
@@ -34,8 +38,10 @@ public abstract class AggregateRootCommandHandlerBaseV2<TCommand, TResponse> : I
                     if (operationResult.IsSuccess)
                     {
                         var aggregateRoot = GetAggregateRoot();
+
                         if (aggregateRoot is not null)
                         {
+                            var snapshot = _mapper.Map<TSnapshot>(aggregateRoot);
                             aggregateRoot.IncrementVersion();
                             var domainEvents = aggregateRoot.PopDomainEvents();
                             await DispatchDomainEventsAsync(domainEvents, token);
