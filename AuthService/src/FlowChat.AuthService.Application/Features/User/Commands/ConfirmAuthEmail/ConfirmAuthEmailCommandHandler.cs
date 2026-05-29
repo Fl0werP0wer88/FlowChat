@@ -8,7 +8,7 @@ using DomainAccount = FlowChat.AuthService.Domain.Entities.Account.Account;
 
 namespace FlowChat.AuthService.Application.Features.User.Commands.ConfirmAuthEmail;
 
-public sealed class ConfirmAuthEmailCommandHandler : CommandHandlerBase<ConfirmAuthEmailCommand, Unit>
+public sealed class ConfirmAuthEmailCommandHandler : AggregateRootCommandHandlerBase<ConfirmAuthEmailCommand, Unit>
 {
     private readonly IAccountRepository _accountRepository;
     private DomainAccount? _account;

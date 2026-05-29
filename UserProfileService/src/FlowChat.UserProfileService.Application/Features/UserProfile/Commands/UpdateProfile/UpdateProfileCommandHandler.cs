@@ -7,7 +7,7 @@ using UserProfileAggregate = FlowChat.UserProfileService.Domain.Entities.UserPro
 namespace FlowChat.UserProfileService.Application.Features.UserProfile.Commands.UpdateProfile;
 
 public sealed class UpdateProfileCommandHandler
-    : CommandHandlerBase<UpdateProfileCommand, Guid>
+    : AggregateRootCommandHandlerBase<UpdateProfileCommand, Guid>
 {
     private readonly IUserProfileWriteRepository _userProfileRepository;
     private UserProfileAggregate? _userProfile;

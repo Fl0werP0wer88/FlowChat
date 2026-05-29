@@ -5,7 +5,7 @@ using ContactAggregate = FlowChat.SocialGraphService.Domain.Entities.Contact.Con
 
 namespace FlowChat.SocialGraphService.Application.Features.Contact.Commands.DeleteContact;
 
-public sealed class DeleteContactCommandHandler : CommandHandlerBase<DeleteContactCommand, MediatR.Unit>
+public sealed class DeleteContactCommandHandler : AggregateRootCommandHandlerBase<DeleteContactCommand, MediatR.Unit>
 {
     private readonly IContactWriteRepository _contactWriteRepository;
     private ContactAggregate? _contact;

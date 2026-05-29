@@ -13,7 +13,7 @@ using UserProfileAggregate = FlowChat.UserProfileService.Domain.Entities.UserPro
 namespace FlowChat.UserProfileService.Application.Features.UserProfile.Commands.ConfirmEmailVerification;
 
 public sealed class ConfirmEmailVerificationCommandHandler
-    : CommandHandlerBase<ConfirmEmailVerificationCommand, IdempotentCommandResult<Unit>>
+    : AggregateRootCommandHandlerBase<ConfirmEmailVerificationCommand, IdempotentCommandResult<Unit>>
 {
     // Single generic message for all token failure cases — prevents callers from probing
     // whether a token exists, has been consumed, or belongs to a different user.

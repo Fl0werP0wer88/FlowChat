@@ -89,7 +89,7 @@ public sealed class CommandHandlerBaseTests
 
     private sealed record TestCommand : ICommand<Guid>;
 
-    private sealed class TestCommandHandler : CommandHandlerBase<TestCommand, Guid>
+    private sealed class TestCommandHandler : AggregateRootCommandHandlerBase<TestCommand, Guid>
     {
         private readonly Func<TestCommand, CancellationToken, Task<FlowChatResult<Guid>>> _executeAsync;
         private readonly Func<TestCommand, DbUpdateException, CancellationToken, Task<FlowChatResult<Guid>>>? _handleDbUpdateExceptionAsync;

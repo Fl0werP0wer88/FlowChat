@@ -9,7 +9,7 @@ public sealed class DeleteContactObserverProjectionCommandHandler(
     IContactObserverProjectionWriteRepository contactObserverProjectionWriteRepository,
     IUnitOfWork unitOfWork,
     IDomainEventDispatcher domainEventDispatcher)
-    : CommandHandlerBase<DeleteContactObserverProjectionCommand, Unit>(domainEventDispatcher, unitOfWork)
+    : AggregateRootCommandHandlerBase<DeleteContactObserverProjectionCommand, Unit>(domainEventDispatcher, unitOfWork)
 {
     protected override async Task<FlowChatResult<Unit>> ExecuteAsync(
         DeleteContactObserverProjectionCommand request,

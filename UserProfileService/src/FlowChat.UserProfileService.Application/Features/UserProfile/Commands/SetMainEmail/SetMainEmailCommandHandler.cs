@@ -8,7 +8,7 @@ using UserProfileAggregate = FlowChat.UserProfileService.Domain.Entities.UserPro
 namespace FlowChat.UserProfileService.Application.Features.UserProfile.Commands.SetMainEmail;
 
 public sealed class SetMainEmailCommandHandler
-    : CommandHandlerBase<SetMainEmailCommand, Guid>
+    : AggregateRootCommandHandlerBase<SetMainEmailCommand, Guid>
 {
     private const string EmailMustBeConfirmedMessageTemplate = "Email '{0}' must be confirmed before it can be set as the main email.";
 

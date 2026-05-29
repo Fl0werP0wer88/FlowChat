@@ -10,7 +10,7 @@ using NotificationEntity = FlowChat.NotificationService.Domain.Entities.Notifica
 namespace FlowChat.NotificationService.Application.Features.Notification.Commands.UserEmailVerificationRequested;
 
 public sealed class UserEmailVerificationRequestedCommandHandler
-    : CommandHandlerBase<UserEmailVerificationRequestedCommand, Unit>
+    : AggregateRootCommandHandlerBase<UserEmailVerificationRequestedCommand, Unit>
 {
     private readonly INotificationReadRepository _notificationReadRepository;
     private readonly INotificationWriteRepository _notificationWriteRepository;

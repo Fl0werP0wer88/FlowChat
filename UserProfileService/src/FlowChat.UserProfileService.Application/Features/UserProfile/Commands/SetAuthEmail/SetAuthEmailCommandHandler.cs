@@ -7,7 +7,7 @@ using UserProfileAggregate = FlowChat.UserProfileService.Domain.Entities.UserPro
 namespace FlowChat.UserProfileService.Application.Features.UserProfile.Commands.SetAuthEmail;
 
 public sealed class SetAuthEmailCommandHandler
-    : CommandHandlerBase<SetAuthEmailCommand, Guid>
+    : AggregateRootCommandHandlerBase<SetAuthEmailCommand, Guid>
 {
     private const string EmailMustBeConfirmedMessageTemplate = "Email '{0}' must be confirmed before it can be set as the auth email.";
 

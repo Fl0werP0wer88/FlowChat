@@ -6,7 +6,7 @@ using FlowChat.UserProfileService.Application.Features.UserProfile.EmailVerifica
 namespace FlowChat.UserProfileService.Application.Features.UserProfile.Commands.SendEmailVerification;
 
 public sealed class SendEmailVerificationCommandHandler
-    : CommandHandlerBase<SendEmailVerificationCommand, Guid>
+    : AggregateRootCommandHandlerBase<SendEmailVerificationCommand, Guid>
 {
     private readonly IUserProfileReadRepository _userProfileReadRepository;
     private readonly IEmailVerificationRequestIssuer _emailVerificationRequestIssuer;

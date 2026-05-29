@@ -15,7 +15,7 @@ public sealed class InitializePresenceStatusCommandHandler(
     IMediator mediator,
     IUnitOfWork unitOfWork,
     IDomainEventDispatcher domainEventDispatcher)
-    : CommandHandlerBase<InitializePresenceStatusCommand, Unit>(domainEventDispatcher, unitOfWork)
+    : AggregateRootCommandHandlerBase<InitializePresenceStatusCommand, Unit>(domainEventDispatcher, unitOfWork)
 {
     private PresenceStatusSnapshot? _previousStatus;
 

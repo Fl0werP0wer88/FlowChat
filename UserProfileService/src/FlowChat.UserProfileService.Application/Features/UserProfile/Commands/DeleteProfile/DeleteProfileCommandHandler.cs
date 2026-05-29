@@ -5,7 +5,7 @@ using UserProfileAggregate = FlowChat.UserProfileService.Domain.Entities.UserPro
 
 namespace FlowChat.UserProfileService.Application.Features.UserProfile.Commands.DeleteProfile;
 
-public sealed class DeleteProfileCommandHandler : CommandHandlerBase<DeleteProfileCommand, Guid>
+public sealed class DeleteProfileCommandHandler : AggregateRootCommandHandlerBase<DeleteProfileCommand, Guid>
 {
     private readonly IUserProfileWriteRepository _userProfileRepository;
     private UserProfileAggregate? _userProfile;

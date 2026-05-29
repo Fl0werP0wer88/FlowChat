@@ -9,7 +9,7 @@ using DomainAccount = FlowChat.AuthService.Domain.Entities.Account.Account;
 
 namespace FlowChat.AuthService.Application.Features.User.Commands.ChangeAuthEmail;
 
-public sealed class ChangeAuthEmailCommandHandler : CommandHandlerBase<ChangeAuthEmailCommand, Unit>
+public sealed class ChangeAuthEmailCommandHandler : AggregateRootCommandHandlerBase<ChangeAuthEmailCommand, Unit>
 {
     private readonly IAccountRepository _accountRepository;
     private readonly IPasswordHashingService _passwordHashingService;

@@ -11,7 +11,7 @@ public sealed class MarkChatMessageAsDeliveredCommandHandler(
     IChatMessageWriteRepository chatMessageRepository,
     IUnitOfWork unitOfWork,
     IDomainEventDispatcher domainEventDispatcher)
-    : CommandHandlerBase<MarkChatMessageAsDeliveredCommand, Unit>(domainEventDispatcher, unitOfWork)
+    : AggregateRootCommandHandlerBase<MarkChatMessageAsDeliveredCommand, Unit>(domainEventDispatcher, unitOfWork)
 {
     protected override async Task<FlowChatResult<Unit>> ExecuteAsync(
         MarkChatMessageAsDeliveredCommand request,

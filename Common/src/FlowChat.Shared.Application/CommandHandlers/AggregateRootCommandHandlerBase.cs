@@ -7,14 +7,14 @@ using System.Runtime.ExceptionServices;
 
 namespace FlowChat.Shared.Application;
 
-public abstract class CommandHandlerBase<TCommand, TResponse> : ICommandHandler<TCommand, TResponse>
+public abstract class AggregateRootCommandHandlerBase<TCommand, TResponse> : ICommandHandler<TCommand, TResponse>
     where TCommand : ICommand<TResponse>, IRequest<FlowChatResult<TResponse>>
     where TResponse : notnull
 {
     private readonly IDomainEventDispatcher _domainEventDispatcher;
     private readonly IUnitOfWork _unitOfWork;
 
-    protected CommandHandlerBase(
+    protected AggregateRootCommandHandlerBase(
         IDomainEventDispatcher domainEventDispatcher,
         IUnitOfWork unitOfWork)
     {

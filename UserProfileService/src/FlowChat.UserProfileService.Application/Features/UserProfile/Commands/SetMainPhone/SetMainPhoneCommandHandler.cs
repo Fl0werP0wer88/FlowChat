@@ -8,7 +8,7 @@ using UserProfileAggregate = FlowChat.UserProfileService.Domain.Entities.UserPro
 namespace FlowChat.UserProfileService.Application.Features.UserProfile.Commands.SetMainPhone;
 
 public sealed class SetMainPhoneCommandHandler
-    : CommandHandlerBase<SetMainPhoneCommand, Guid>
+    : AggregateRootCommandHandlerBase<SetMainPhoneCommand, Guid>
 {
     private const string PhoneMustBeConfirmedMessageTemplate = "Phone '{0}' must be confirmed before it can be set as the main phone.";
 

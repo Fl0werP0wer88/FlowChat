@@ -7,7 +7,7 @@ using AccountAggregate = FlowChat.AuthService.Domain.Entities.Account.Account;
 
 namespace FlowChat.AuthService.Application.Features.User.Commands.RefreshToken;
 
-public sealed class RefreshTokenCommandHandler : CommandHandlerBase<RefreshTokenCommand, RefreshTokenCommandResponse>
+public sealed class RefreshTokenCommandHandler : AggregateRootCommandHandlerBase<RefreshTokenCommand, RefreshTokenCommandResponse>
 {
     private readonly IAccountRepository _accountRepository;
     private readonly IOpenIddictTokenService _openIddictTokenService;
