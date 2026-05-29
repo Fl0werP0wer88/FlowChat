@@ -1,9 +1,9 @@
-using MediatR;
+using FlowChat.Core.Messaging;
 using FlowChat.Shared.Domain.ValueObjects;
 
 namespace FlowChat.Shared.Domain;
 
-public interface IDomainEvent : INotification
+public interface IDomainEvent : ILocalEvent
 {
     int Version { get; }
 
