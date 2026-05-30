@@ -46,9 +46,7 @@ public sealed class CreateInitialUserProfileController : ApiControllerBase
             return HandleError(result.Error);
         }
 
-        return result.Value.WasAlreadyProcessed
-            ? Ok()
-            : StatusCode(StatusCodes.Status201Created);
+        return StatusCode(StatusCodes.Status201Created);
     }
 }
 

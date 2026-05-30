@@ -10,7 +10,7 @@ using UserProfileAggregate = FlowChat.UserProfileService.Domain.Entities.UserPro
 namespace FlowChat.UserProfileService.Application.Features.UserProfile.Commands.AddPhone;
 
 public sealed class AddPhoneCommandHandler
-    : IdempotentCommandHandlerBase<AddPhoneCommand, Guid>
+    : AggregateRootCommandHandlerBase<AddPhoneCommand, Guid>
 {
     private readonly IUserProfileWriteRepository _userProfileRepository;
     private UserProfileAggregate? _userProfile;
@@ -18,26 +18,13 @@ public sealed class AddPhoneCommandHandler
     public AddPhoneCommandHandler(
         IUserProfileWriteRepository userProfileRepository,
         IUnitOfWork unitOfWork,
-        ILocalEventDispatcher domainEventDispatcher,
-        IDbUpdateExceptionClassifier dbUpdateExceptionClassifier)
-        : base(domainEventDispatcher, unitOfWork, dbUpdateExceptionClassifier)
+        ILocalEventDispatcher domainEventDispatcher)
+        : base(domainEventDispatcher, unitOfWork)
     {
         _userProfileRepository = userProfileRepository;
     }
 
-    protected override async Task<(bool Found, Guid Value)> TryGetExistingResponseAsync(
-        AddPhoneCommand request,
-        CancellationToken cancellationToken)
-    {
-        var userProfile = await _userProfileRepository.GetByIdAsync(request.UserId, cancellationToken);
-        var phone = userProfile?.Phones.FirstOrDefault(x => x.Id.Value == request.PhoneId);
-
-        return phone is null
-            ? (false, default)
-            : (true, phone.Id.Value);
-    }
-
-    protected override async Task<FlowChatResult<Guid>> ExecuteCommandAsync(
+    protected override async Task<FlowChatResult<Guid>> ExecuteAsync(
         AddPhoneCommand request,
         CancellationToken cancellationToken)
     {
@@ -64,8 +51,5 @@ public sealed class AddPhoneCommandHandler
 
     protected override IAggregateRoot? GetAggregateRoot() =>
         _userProfile;
-
-    protected override string GetIdempotencyConflictKey(AddPhoneCommand request) =>
-        AddPhoneCommand.IdempotencyConflictKey;
 }
 

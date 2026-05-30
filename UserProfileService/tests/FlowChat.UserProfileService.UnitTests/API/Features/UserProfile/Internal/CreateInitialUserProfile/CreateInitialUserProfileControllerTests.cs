@@ -20,8 +20,7 @@ public sealed class CreateInitialUserProfileControllerTests
     {
         _mediatorMock
             .Setup(x => x.Send(It.IsAny<CreateInitialUserProfileCommand>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(FlowChatResult<IdempotentCommandResult<Guid>>.Success(
-                new IdempotentCommandResult<Guid>(Guid.NewGuid(), WasAlreadyProcessed: false)));
+            .ReturnsAsync(FlowChatResult<Guid>.Success(Guid.NewGuid()));
     }
 
     private CreateInitialUserProfileController CreateController(string apiKey) =>
@@ -67,12 +66,11 @@ public sealed class CreateInitialUserProfileControllerTests
         CreateInitialUserProfileCommand? capturedCommand = null;
         _mediatorMock
             .Setup(x => x.Send(
-                It.IsAny<IRequest<FlowChatResult<IdempotentCommandResult<Guid>>>>(),
+                It.IsAny<IRequest<FlowChatResult<Guid>>>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<IRequest<FlowChatResult<IdempotentCommandResult<Guid>>>, CancellationToken>(
+            .Callback<IRequest<FlowChatResult<Guid>>, CancellationToken>(
                 (request, _) => capturedCommand = request as CreateInitialUserProfileCommand)
-            .ReturnsAsync(FlowChatResult<IdempotentCommandResult<Guid>>.Success(
-                new IdempotentCommandResult<Guid>(Guid.NewGuid(), WasAlreadyProcessed: false)));
+            .ReturnsAsync(FlowChatResult<Guid>.Success(Guid.NewGuid()));
 
         var userId = Guid.NewGuid();
 

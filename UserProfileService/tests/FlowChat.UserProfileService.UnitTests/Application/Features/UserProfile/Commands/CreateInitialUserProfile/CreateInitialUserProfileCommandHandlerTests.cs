@@ -1,4 +1,5 @@
 using AutoFixture;
+using FlowChat.Core.Messaging;
 using FlowChat.Core.Results;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
@@ -38,21 +39,20 @@ public sealed class CreateInitialUserProfileCommandHandlerTests
 
         _unitOfWorkMock
             .Setup(x => x.ExecuteCommandInTransactionAsync(
-                It.IsAny<Func<CancellationToken, Task<FlowChatResult<IdempotentCommandResult<Guid>>>>>(),
+                It.IsAny<Func<CancellationToken, Task<FlowChatResult<Guid>>>>(),
                 It.IsAny<CancellationToken>()))
-            .Returns<Func<CancellationToken, Task<FlowChatResult<IdempotentCommandResult<Guid>>>>, CancellationToken>(
+            .Returns<Func<CancellationToken, Task<FlowChatResult<Guid>>>, CancellationToken>(
                 (operation, ct) => operation(ct));
 
         _handler = new CreateInitialUserProfileCommandHandler(
             _readRepositoryMock.Object,
             _writeRepositoryMock.Object,
             _unitOfWorkMock.Object,
-            _dispatcherMock.Object,
-            Mock.Of<IDbUpdateExceptionClassifier>());
+            _dispatcherMock.Object);
     }
 
     // Runs validator then handler — mirrors the production MediatR pipeline
-    private async Task<FlowChatResult<IdempotentCommandResult<Guid>>> SendAsync(CreateInitialUserProfileCommand command)
+    private async Task<FlowChatResult<Guid>> SendAsync(CreateInitialUserProfileCommand command)
     {
         var validator = new CreateInitialUserProfileCommandValidator();
         var validationResult = await validator.ValidateAsync(command);
@@ -60,7 +60,7 @@ public sealed class CreateInitialUserProfileCommandHandlerTests
         if (!validationResult.IsValid)
         {
             var errors = validationResult.Errors.Select(e => e.ErrorMessage).ToList();
-            return FlowChatResult<IdempotentCommandResult<Guid>>.Failure(DomainError.Validation(errors: errors));
+            return FlowChatResult<Guid>.Failure(DomainError.Validation(errors: errors));
         }
 
         return await _handler.Handle(command, CancellationToken.None);
@@ -86,7 +86,7 @@ public sealed class CreateInitialUserProfileCommandHandlerTests
                 " FlowChat "));
 
         result.IsSuccess.Should().BeTrue();
-        result.Value.Value.Should().Be(userId);
+        result.Value.Should().Be(userId);
         capturedProfile.Should().NotBeNull();
         capturedProfile.Emails.Should().ContainSingle()
             .Which.Should().Match<Email>(e => e.Address.Value == "john@example.com" && e.IsMain && e.IsAuth && e.IsVisible);
@@ -246,8 +246,8 @@ public sealed class CreateInitialUserProfileCommandHandlerTests
             .ReturnsAsync((UserProfile entity, CancellationToken _) => entity);
 
         _dispatcherMock
-            .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<IDomainEvent>>(), It.IsAny<CancellationToken>()))
-            .Callback<IEnumerable<IDomainEvent>, CancellationToken>((events, _) => dispatchedEvents.AddRange(events))
+            .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<ILocalEvent>>(), It.IsAny<CancellationToken>()))
+            .Callback<IEnumerable<ILocalEvent>, CancellationToken>((events, _) => dispatchedEvents.AddRange(events.OfType<IDomainEvent>()))
             .Returns(Task.CompletedTask);
 
         var result = await SendAsync(

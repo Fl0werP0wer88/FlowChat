@@ -1,3 +1,4 @@
+using FlowChat.Core.Messaging;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
@@ -92,8 +93,8 @@ public sealed class SetMainContactCommandHandlerTests
 
         List<IDomainEvent> dispatchedEvents = [];
         _dispatcherMock
-            .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<IDomainEvent>>(), It.IsAny<CancellationToken>()))
-            .Callback<IEnumerable<IDomainEvent>, CancellationToken>((events, _) => dispatchedEvents.AddRange(events))
+            .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<ILocalEvent>>(), It.IsAny<CancellationToken>()))
+            .Callback<IEnumerable<ILocalEvent>, CancellationToken>((events, _) => dispatchedEvents.AddRange(events.OfType<IDomainEvent>()))
             .Returns(Task.CompletedTask);
 
         var result = await SendAsync(new SetMainEmailCommand(profile.Id.Value, secondEmail.Id.Value));
@@ -187,8 +188,8 @@ public sealed class SetMainContactCommandHandlerTests
 
         List<IDomainEvent> dispatchedEvents = [];
         _dispatcherMock
-            .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<IDomainEvent>>(), It.IsAny<CancellationToken>()))
-            .Callback<IEnumerable<IDomainEvent>, CancellationToken>((events, _) => dispatchedEvents.AddRange(events))
+            .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<ILocalEvent>>(), It.IsAny<CancellationToken>()))
+            .Callback<IEnumerable<ILocalEvent>, CancellationToken>((events, _) => dispatchedEvents.AddRange(events.OfType<IDomainEvent>()))
             .Returns(Task.CompletedTask);
 
         var result = await SendAsync(new SetMainPhoneCommand(profile.Id.Value, secondPhone.Id.Value));
