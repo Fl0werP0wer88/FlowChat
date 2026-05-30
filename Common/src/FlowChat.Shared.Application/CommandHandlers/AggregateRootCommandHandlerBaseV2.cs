@@ -18,11 +18,11 @@ public abstract class AggregateRootCommandHandlerBaseV2<TCommand, TResponse, TSn
     private readonly IMapper _mapper;
 
     protected AggregateRootCommandHandlerBaseV2(
-        ILocalEventDispatcher domainEventDispatcher,
+        ILocalEventDispatcher localEventsDispatcher,
         IUnitOfWork unitOfWork,
         IMapper mapper)
     {
-        _localEventsDispatcher = domainEventDispatcher;
+        _localEventsDispatcher = localEventsDispatcher;
         _unitOfWork = unitOfWork;
         _mapper = mapper;
     }
