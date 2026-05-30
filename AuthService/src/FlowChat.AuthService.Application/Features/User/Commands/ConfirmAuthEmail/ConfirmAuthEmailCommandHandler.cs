@@ -15,7 +15,7 @@ public sealed class ConfirmAuthEmailCommandHandler : AggregateRootCommandHandler
 
     public ConfirmAuthEmailCommandHandler(
         IAccountRepository accountRepository,
-        IDomainEventDispatcher domainEventDispatcher,
+        ILocalEventDispatcher domainEventDispatcher,
         IUnitOfWork unitOfWork) : base(domainEventDispatcher, unitOfWork)
     {
         _accountRepository = accountRepository;

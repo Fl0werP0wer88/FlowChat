@@ -19,7 +19,7 @@ public sealed class CreateGroupFromDuetCommandHandlerTests
     private readonly Mock<IGroupConversationReadRepository> _groupReadRepositoryMock = new();
     private readonly Mock<IUserProfileProjectionReadRepository> _profileReadRepositoryMock = new();
     private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
-    private readonly Mock<IDomainEventDispatcher> _domainEventDispatcherMock = new();
+    private readonly Mock<ILocalEventDispatcher> _domainEventDispatcherMock = new();
     private readonly Mock<IDbUpdateExceptionClassifier> _dbUpdateExceptionClassifierMock = new();
     private readonly CreateGroupFromDuetCommandHandler _handler;
 

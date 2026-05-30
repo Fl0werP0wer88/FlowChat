@@ -20,7 +20,7 @@ public sealed class InitializePresenceStatusCommandHandlerTests
     private readonly Mock<IUserPresencePreferencesReadRepository> _preferencesReadRepositoryMock = new();
     private readonly Mock<IMediator> _mediatorMock = new();
     private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
-    private readonly Mock<IDomainEventDispatcher> _domainEventDispatcherMock = new();
+    private readonly Mock<ILocalEventDispatcher> _domainEventDispatcherMock = new();
     private readonly InitializePresenceStatusCommandHandler _handler;
 
     public InitializePresenceStatusCommandHandlerTests()

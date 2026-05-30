@@ -18,7 +18,7 @@ public sealed class CreateInitialUserProfileCommandHandler
         IUserProfileReadRepository userProfileReadRepository,
         IUserProfileWriteRepository userProfileWriteRepository,
         IUnitOfWork unitOfWork,
-        IDomainEventDispatcher domainEventDispatcher,
+        ILocalEventDispatcher domainEventDispatcher,
         IDbUpdateExceptionClassifier dbUpdateExceptionClassifier)
         : base(domainEventDispatcher, unitOfWork, dbUpdateExceptionClassifier)
     {

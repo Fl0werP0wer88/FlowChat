@@ -10,7 +10,7 @@ namespace FlowChat.ChatService.Application.Features.ChatMessage.Commands.MarkCha
 public sealed class MarkChatMessageAsDeliveredCommandHandler(
     IChatMessageWriteRepository chatMessageRepository,
     IUnitOfWork unitOfWork,
-    IDomainEventDispatcher domainEventDispatcher)
+    ILocalEventDispatcher domainEventDispatcher)
     : AggregateRootCommandHandlerBase<MarkChatMessageAsDeliveredCommand, Unit>(domainEventDispatcher, unitOfWork)
 {
     protected override async Task<FlowChatResult<Unit>> ExecuteAsync(

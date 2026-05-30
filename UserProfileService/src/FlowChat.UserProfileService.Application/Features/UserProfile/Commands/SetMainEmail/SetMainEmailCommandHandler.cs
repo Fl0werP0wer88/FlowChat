@@ -18,7 +18,7 @@ public sealed class SetMainEmailCommandHandler
     public SetMainEmailCommandHandler(
         IUserProfileWriteRepository userProfileRepository,
         IUnitOfWork unitOfWork,
-        IDomainEventDispatcher domainEventDispatcher) : base(domainEventDispatcher, unitOfWork)
+        ILocalEventDispatcher domainEventDispatcher) : base(domainEventDispatcher, unitOfWork)
     {
         _userProfileRepository = userProfileRepository;
     }

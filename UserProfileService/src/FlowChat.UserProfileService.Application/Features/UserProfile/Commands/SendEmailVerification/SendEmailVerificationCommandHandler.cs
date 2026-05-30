@@ -15,7 +15,7 @@ public sealed class SendEmailVerificationCommandHandler
         IUserProfileReadRepository userProfileReadRepository,
         IEmailVerificationRequestIssuer emailVerificationRequestIssuer,
         IUnitOfWork unitOfWork,
-        IDomainEventDispatcher domainEventDispatcher) : base(domainEventDispatcher, unitOfWork)
+        ILocalEventDispatcher domainEventDispatcher) : base(domainEventDispatcher, unitOfWork)
     {
         _userProfileReadRepository = userProfileReadRepository;
         _emailVerificationRequestIssuer = emailVerificationRequestIssuer;

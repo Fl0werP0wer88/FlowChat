@@ -21,7 +21,7 @@ public sealed class CreateDuetConversationCommandHandler
         IDuetConversationWriteRepository duetConversationWriteRepository,
         IUserProfileProjectionReadRepository profileReadRepository,
         IUnitOfWork unitOfWork,
-        IDomainEventDispatcher domainEventDispatcher,
+        ILocalEventDispatcher domainEventDispatcher,
         IDbUpdateExceptionClassifier dbUpdateExceptionClassifier)
         : base(domainEventDispatcher, unitOfWork, dbUpdateExceptionClassifier)
     {

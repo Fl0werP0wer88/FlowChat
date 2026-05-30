@@ -13,7 +13,7 @@ public abstract class IdempotentCommandHandlerBase<TCommand, TValue>
     private readonly IDbUpdateExceptionClassifier _dbUpdateExceptionClassifier;
 
     protected IdempotentCommandHandlerBase(
-        IDomainEventDispatcher domainEventDispatcher,
+        ILocalEventDispatcher domainEventDispatcher,
         IUnitOfWork unitOfWork,
         IDbUpdateExceptionClassifier dbUpdateExceptionClassifier)
         : base(domainEventDispatcher, unitOfWork)

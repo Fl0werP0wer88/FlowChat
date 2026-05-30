@@ -13,7 +13,7 @@ public sealed class DeleteContactCommandHandler : AggregateRootCommandHandlerBas
     public DeleteContactCommandHandler(
         IContactWriteRepository contactWriteRepository,
         IUnitOfWork unitOfWork,
-        IDomainEventDispatcher domainEventDispatcher)
+        ILocalEventDispatcher domainEventDispatcher)
         : base(domainEventDispatcher, unitOfWork)
     {
         _contactWriteRepository = contactWriteRepository ?? throw new ArgumentNullException(nameof(contactWriteRepository));

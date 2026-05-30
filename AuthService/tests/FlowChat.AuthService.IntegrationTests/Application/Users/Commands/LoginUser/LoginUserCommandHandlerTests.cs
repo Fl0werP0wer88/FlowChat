@@ -42,7 +42,7 @@ public sealed class LoginUserCommandHandlerTests : IDisposable
 
         var tokenService = new OpenIddictTokenService(
             Microsoft.Extensions.Options.Options.Create(new JwtSettingsSection { Audience = "FlowChat.Client" }));
-        var dispatcherMock = new Mock<IDomainEventDispatcher>();
+        var dispatcherMock = new Mock<ILocalEventDispatcher>();
         dispatcherMock
             .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<IDomainEvent>>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);

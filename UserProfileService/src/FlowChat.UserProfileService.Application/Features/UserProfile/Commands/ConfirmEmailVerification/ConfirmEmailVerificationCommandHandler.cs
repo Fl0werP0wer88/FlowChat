@@ -29,7 +29,7 @@ public sealed class ConfirmEmailVerificationCommandHandler
         IEmailVerificationRequestWriteRepository emailVerificationRequestWriteRepository,
         IEmailVerificationTokenProtector emailVerificationTokenProtector,
         IUnitOfWork unitOfWork,
-        IDomainEventDispatcher domainEventDispatcher) : base(domainEventDispatcher, unitOfWork)
+        ILocalEventDispatcher domainEventDispatcher) : base(domainEventDispatcher, unitOfWork)
     {
         _userProfileWriteRepository = userProfileWriteRepository;
         _emailVerificationRequestWriteRepository = emailVerificationRequestWriteRepository;

@@ -12,7 +12,7 @@ public sealed class DeletePresenceStatusCommandHandler(
     IPresenceStatusStore presenceStatusStore,
     IMediator mediator,
     IUnitOfWork unitOfWork,
-    IDomainEventDispatcher domainEventDispatcher)
+    ILocalEventDispatcher domainEventDispatcher)
     : AggregateRootCommandHandlerBase<DeletePresenceStatusCommand, Unit>(domainEventDispatcher, unitOfWork)
 {
     private PresenceStatusSnapshot? _previousStatus;

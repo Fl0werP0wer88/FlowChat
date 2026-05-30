@@ -16,7 +16,7 @@ public sealed class SendChatMessageCommandHandlerTests
     private readonly Mock<IChatMessageWriteRepository> _chatMessageRepositoryMock = new();
     private readonly Mock<IConversationParticipantReadRepository> _participantReadRepositoryMock = new();
     private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
-    private readonly Mock<IDomainEventDispatcher> _domainEventDispatcherMock = new();
+    private readonly Mock<ILocalEventDispatcher> _domainEventDispatcherMock = new();
     private readonly Mock<IDbUpdateExceptionClassifier> _dbUpdateExceptionClassifierMock = new();
     private readonly SendChatMessageCommandHandler _handler;
 

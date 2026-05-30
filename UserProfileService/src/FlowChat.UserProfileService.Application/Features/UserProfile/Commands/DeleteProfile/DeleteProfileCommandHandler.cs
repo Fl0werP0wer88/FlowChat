@@ -13,7 +13,7 @@ public sealed class DeleteProfileCommandHandler : AggregateRootCommandHandlerBas
     public DeleteProfileCommandHandler(
         IUserProfileWriteRepository userProfileRepository,
         IUnitOfWork unitOfWork,
-        IDomainEventDispatcher domainEventDispatcher) : base(domainEventDispatcher, unitOfWork)
+        ILocalEventDispatcher domainEventDispatcher) : base(domainEventDispatcher, unitOfWork)
     {
         _userProfileRepository = userProfileRepository;
     }

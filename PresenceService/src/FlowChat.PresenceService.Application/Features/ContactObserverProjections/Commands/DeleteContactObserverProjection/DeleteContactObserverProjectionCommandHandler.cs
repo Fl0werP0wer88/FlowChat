@@ -8,7 +8,7 @@ namespace FlowChat.PresenceService.Application.Features.ContactObserverProjectio
 public sealed class DeleteContactObserverProjectionCommandHandler(
     IContactObserverProjectionWriteRepository contactObserverProjectionWriteRepository,
     IUnitOfWork unitOfWork,
-    IDomainEventDispatcher domainEventDispatcher)
+    ILocalEventDispatcher domainEventDispatcher)
     : AggregateRootCommandHandlerBase<DeleteContactObserverProjectionCommand, Unit>(domainEventDispatcher, unitOfWork)
 {
     protected override async Task<FlowChatResult<Unit>> ExecuteAsync(

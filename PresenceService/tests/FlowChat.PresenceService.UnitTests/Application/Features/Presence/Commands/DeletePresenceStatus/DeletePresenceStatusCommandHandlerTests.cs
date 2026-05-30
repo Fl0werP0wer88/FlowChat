@@ -18,7 +18,7 @@ public sealed class DeletePresenceStatusCommandHandlerTests
     private readonly Mock<IPresenceStatusStore> _presenceStatusStoreMock = new();
     private readonly Mock<IMediator> _mediatorMock = new();
     private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
-    private readonly Mock<IDomainEventDispatcher> _domainEventDispatcherMock = new();
+    private readonly Mock<ILocalEventDispatcher> _domainEventDispatcherMock = new();
     private readonly DeletePresenceStatusCommandHandler _handler;
 
     public DeletePresenceStatusCommandHandlerTests()

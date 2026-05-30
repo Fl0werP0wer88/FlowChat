@@ -12,12 +12,12 @@ public abstract class AggregateRootCommandHandlerBaseV2<TCommand, TResponse, TSn
     where TCommand : ICommand<TResponse>, IRequest<FlowChatResult<TResponse>>
     where TResponse : notnull
 {
-    private readonly IDomainEventDispatcher _domainEventDispatcher;
+    private readonly ILocalEventDispatcher _domainEventDispatcher;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
 
     protected AggregateRootCommandHandlerBaseV2(
-        IDomainEventDispatcher domainEventDispatcher,
+        ILocalEventDispatcher domainEventDispatcher,
         IUnitOfWork unitOfWork,
         IMapper mapper)
     {

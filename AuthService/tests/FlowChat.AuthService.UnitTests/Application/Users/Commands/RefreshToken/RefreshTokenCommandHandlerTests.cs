@@ -16,7 +16,7 @@ public sealed class RefreshTokenCommandHandlerTests
 {
     private readonly Mock<IAccountRepository> _accountRepositoryMock = new();
     private readonly Mock<IOpenIddictTokenService> _openIddictTokenServiceMock = new();
-    private readonly Mock<IDomainEventDispatcher> _domainEventDispatcherMock = new();
+    private readonly Mock<ILocalEventDispatcher> _domainEventDispatcherMock = new();
     private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
     private readonly RefreshTokenCommandHandler _handler;
 

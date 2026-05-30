@@ -20,7 +20,7 @@ public static class ApplicationServiceRegistration
             cfg.AddFlowChatBehaviors();
         });
         services.AddAutoMapper((Action<AutoMapper.IMapperConfigurationExpression>?)null, applicationAssembly);
-        services.AddScoped<IDomainEventDispatcher, LocalEventDispatcher>();
+        services.AddScoped<ILocalEventDispatcher, LocalEventDispatcher>();
         services.AddScoped<IEmailVerificationRequestIssuer, EmailVerificationRequestIssuer>();
 
         return services;
@@ -37,7 +37,7 @@ public static class ApplicationServiceRegistration
             cfg.AddFlowChatBehaviors();
         });
         services.AddAutoMapper((Action<AutoMapper.IMapperConfigurationExpression>?)null, consumerAssembly);
-        services.AddScoped<IDomainEventDispatcher, LocalEventDispatcher>();
+        services.AddScoped<ILocalEventDispatcher, LocalEventDispatcher>();
         services.AddScoped<IEmailVerificationRequestIssuer, EmailVerificationRequestIssuer>();
 
         return services;

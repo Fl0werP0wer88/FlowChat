@@ -18,7 +18,7 @@ public sealed class AddContactCommandHandler : IdempotentCommandHandlerBase<AddC
         IContactWriteRepository contactWriteRepository,
         IUserProfileProjectionReadRepository userProfileProjectionReadRepository,
         IUnitOfWork unitOfWork,
-        IDomainEventDispatcher domainEventDispatcher,
+        ILocalEventDispatcher domainEventDispatcher,
         IDbUpdateExceptionClassifier dbUpdateExceptionClassifier)
         : base(domainEventDispatcher, unitOfWork, dbUpdateExceptionClassifier)
     {

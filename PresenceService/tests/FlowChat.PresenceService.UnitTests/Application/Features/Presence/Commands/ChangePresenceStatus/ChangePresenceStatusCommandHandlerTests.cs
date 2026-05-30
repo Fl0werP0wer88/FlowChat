@@ -22,7 +22,7 @@ public sealed class ChangePresenceStatusCommandHandlerTests
     private readonly Mock<IUserPresencePreferencesWriteRepository> _preferencesWriteRepositoryMock = new();
     private readonly Mock<IMediator> _mediatorMock = new();
     private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
-    private readonly Mock<IDomainEventDispatcher> _domainEventDispatcherMock = new();
+    private readonly Mock<ILocalEventDispatcher> _domainEventDispatcherMock = new();
     private readonly ChangePresenceStatusCommandHandler _handler;
 
     public ChangePresenceStatusCommandHandlerTests()

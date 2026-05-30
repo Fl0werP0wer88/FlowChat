@@ -3,7 +3,7 @@ using FlowChat.Shared.Domain;
 
 namespace FlowChat.Shared.Application;
 
-public interface IDomainEventDispatcher
+public interface ILocalEventDispatcher
 {
     Task DispatchAsync(IEnumerable<ILocalEvent> domainEvents, CancellationToken cancellationToken = default);
 }

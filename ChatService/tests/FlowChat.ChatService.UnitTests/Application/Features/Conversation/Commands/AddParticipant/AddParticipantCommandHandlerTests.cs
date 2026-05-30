@@ -17,7 +17,7 @@ public sealed class AddParticipantCommandHandlerTests
 {
     private readonly Mock<IGroupConversationWriteRepository> _conversationRepositoryMock = new();
     private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
-    private readonly Mock<IDomainEventDispatcher> _domainEventDispatcherMock = new();
+    private readonly Mock<ILocalEventDispatcher> _domainEventDispatcherMock = new();
     private readonly Mock<IDbUpdateExceptionClassifier> _dbUpdateExceptionClassifierMock = new();
     private readonly AddParticipantCommandHandler _handler;
 

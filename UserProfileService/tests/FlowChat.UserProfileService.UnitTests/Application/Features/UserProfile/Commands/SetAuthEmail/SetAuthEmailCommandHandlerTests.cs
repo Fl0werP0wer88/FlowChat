@@ -15,7 +15,7 @@ public sealed class SetAuthEmailCommandHandlerTests
 {
     private readonly Mock<IUserProfileWriteRepository> _writeRepositoryMock = new();
     private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
-    private readonly Mock<IDomainEventDispatcher> _dispatcherMock = new();
+    private readonly Mock<ILocalEventDispatcher> _dispatcherMock = new();
     private readonly SetAuthEmailCommandHandler _handler;
 
     public SetAuthEmailCommandHandlerTests()

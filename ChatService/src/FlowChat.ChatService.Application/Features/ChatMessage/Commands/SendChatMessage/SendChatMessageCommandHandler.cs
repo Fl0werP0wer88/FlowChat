@@ -17,7 +17,7 @@ public sealed class SendChatMessageCommandHandler
         IChatMessageWriteRepository chatMessageRepository,
         IConversationParticipantReadRepository participantReadRepository,
         IUnitOfWork unitOfWork,
-        IDomainEventDispatcher domainEventDispatcher,
+        ILocalEventDispatcher domainEventDispatcher,
         IDbUpdateExceptionClassifier dbUpdateExceptionClassifier)
         : base(domainEventDispatcher, unitOfWork, dbUpdateExceptionClassifier)
     {

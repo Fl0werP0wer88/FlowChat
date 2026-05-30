@@ -20,7 +20,7 @@ public sealed class CreateDuetConversationCommandHandlerTests
     private readonly Mock<IDuetConversationWriteRepository> _duetConversationWriteRepositoryMock = new();
     private readonly Mock<IUserProfileProjectionReadRepository> _userProfileProjectionReadRepositoryMock = new();
     private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
-    private readonly Mock<IDomainEventDispatcher> _domainEventDispatcherMock = new();
+    private readonly Mock<ILocalEventDispatcher> _domainEventDispatcherMock = new();
     private readonly Mock<IDbUpdateExceptionClassifier> _dbUpdateExceptionClassifierMock = new();
     private readonly CreateDuetConversationCommandHandler _handler;
 

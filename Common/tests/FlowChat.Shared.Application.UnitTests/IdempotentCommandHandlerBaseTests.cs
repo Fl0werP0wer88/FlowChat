@@ -14,7 +14,7 @@ public sealed class IdempotentCommandHandlerBaseTests
         var createdId = Guid.NewGuid();
         var classifierMock = CreateClassifierMock(isExpectedUniqueConstraintViolation: false);
         var handler = new TestIdempotentCommandHandler(
-            new Mock<IDomainEventDispatcher>().Object,
+            new Mock<ILocalEventDispatcher>().Object,
             CreateSuccessfulUnitOfWorkMock().Object,
             classifierMock.Object,
             lookups: [],
@@ -41,7 +41,7 @@ public sealed class IdempotentCommandHandlerBaseTests
         var uniqueViolation = CreateDbUpdateException();
         var classifierMock = CreateClassifierMock(isExpectedUniqueConstraintViolation: true);
         var handler = new TestIdempotentCommandHandler(
-            new Mock<IDomainEventDispatcher>().Object,
+            new Mock<ILocalEventDispatcher>().Object,
             CreateFailingUnitOfWorkMock(uniqueViolation).Object,
             classifierMock.Object,
             lookups: [(true, existingId)],
@@ -67,7 +67,7 @@ public sealed class IdempotentCommandHandlerBaseTests
         var uniqueViolation = CreateDbUpdateException();
         var classifierMock = CreateClassifierMock(isExpectedUniqueConstraintViolation: true);
         var handler = new TestIdempotentCommandHandler(
-            new Mock<IDomainEventDispatcher>().Object,
+            new Mock<ILocalEventDispatcher>().Object,
             CreateFailingUnitOfWorkMock(uniqueViolation).Object,
             classifierMock.Object,
             lookups: [(false, default)],
@@ -85,7 +85,7 @@ public sealed class IdempotentCommandHandlerBaseTests
         var dbUpdateException = CreateDbUpdateException();
         var classifierMock = CreateClassifierMock(isExpectedUniqueConstraintViolation: false);
         var handler = new TestIdempotentCommandHandler(
-            new Mock<IDomainEventDispatcher>().Object,
+            new Mock<ILocalEventDispatcher>().Object,
             CreateFailingUnitOfWorkMock(dbUpdateException).Object,
             classifierMock.Object,
             lookups: [],
@@ -104,7 +104,7 @@ public sealed class IdempotentCommandHandlerBaseTests
         var uniqueViolation = CreateDbUpdateException();
         var classifierMock = CreateClassifierMock(isExpectedUniqueConstraintViolation: true);
         var handler = new TestIdempotentCommandHandler(
-            new Mock<IDomainEventDispatcher>().Object,
+            new Mock<ILocalEventDispatcher>().Object,
             CreateFailingUnitOfWorkMock(uniqueViolation).Object,
             classifierMock.Object,
             lookups: [(true, Guid.NewGuid())],
@@ -178,7 +178,7 @@ public sealed class IdempotentCommandHandlerBaseTests
         private readonly Func<TestIdempotentCommand, CancellationToken, Task<FlowChatResult<Guid>>> _executeCommandAsync;
 
         public TestIdempotentCommandHandler(
-            IDomainEventDispatcher domainEventDispatcher,
+            ILocalEventDispatcher domainEventDispatcher,
             IUnitOfWork unitOfWork,
             IDbUpdateExceptionClassifier dbUpdateExceptionClassifier,
             IEnumerable<(bool Found, Guid Value)> lookups,

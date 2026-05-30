@@ -17,7 +17,7 @@ public sealed class LoginUserCommandHandlerTests
     private readonly Mock<IAccountRepository> _accountRepositoryMock = new();
     private readonly Mock<IPasswordHashingService> _passwordHashingServiceMock = new();
     private readonly Mock<IOpenIddictTokenService> _openIddictTokenServiceMock = new();
-    private readonly Mock<IDomainEventDispatcher> _domainEventDispatcherMock = new();
+    private readonly Mock<ILocalEventDispatcher> _domainEventDispatcherMock = new();
     private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
     private readonly LoginUserCommandHandler _handler;
 

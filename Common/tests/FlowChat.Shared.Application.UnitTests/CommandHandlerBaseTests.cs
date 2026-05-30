@@ -12,7 +12,7 @@ public sealed class CommandHandlerBaseTests
     public async Task Handle_WhenUnexpectedExceptionIsThrown_RethrowsByDefault()
     {
         var unitOfWorkMock = CreateUnitOfWorkMock();
-        var domainEventDispatcherMock = new Mock<IDomainEventDispatcher>();
+        var domainEventDispatcherMock = new Mock<ILocalEventDispatcher>();
         var expectedException = new InvalidOperationException("boom");
         var handler = new TestCommandHandler(
             domainEventDispatcherMock.Object,
@@ -30,7 +30,7 @@ public sealed class CommandHandlerBaseTests
     public async Task Handle_WhenUnexpectedExceptionIsThrown_UsesOverrideResult()
     {
         var unitOfWorkMock = CreateUnitOfWorkMock();
-        var domainEventDispatcherMock = new Mock<IDomainEventDispatcher>();
+        var domainEventDispatcherMock = new Mock<ILocalEventDispatcher>();
         var expectedException = new InvalidOperationException("boom");
         var expectedResult = FlowChatResult<Guid>.Failure(DomainError.UnExpected("Handled"));
         var handler = new TestCommandHandler(
@@ -54,7 +54,7 @@ public sealed class CommandHandlerBaseTests
     public async Task Handle_WhenDbUpdateExceptionIsThrown_UsesDbUpdateExceptionOverrideResult()
     {
         var unitOfWorkMock = CreateUnitOfWorkMock();
-        var domainEventDispatcherMock = new Mock<IDomainEventDispatcher>();
+        var domainEventDispatcherMock = new Mock<ILocalEventDispatcher>();
         var expectedException = new DbUpdateException("boom");
         var expectedResult = FlowChatResult<Guid>.Failure(DomainError.UnExpected("Handled db update"));
         var handler = new TestCommandHandler(
@@ -96,7 +96,7 @@ public sealed class CommandHandlerBaseTests
         private readonly Func<TestCommand, Exception, CancellationToken, Task<FlowChatResult<Guid>>>? _handleUnexpectedExceptionAsync;
 
         public TestCommandHandler(
-            IDomainEventDispatcher domainEventDispatcher,
+            ILocalEventDispatcher domainEventDispatcher,
             IUnitOfWork unitOfWork,
             Func<TestCommand, CancellationToken, Task<FlowChatResult<Guid>>> executeAsync,
             Func<TestCommand, DbUpdateException, CancellationToken, Task<FlowChatResult<Guid>>>? handleDbUpdateExceptionAsync = null,

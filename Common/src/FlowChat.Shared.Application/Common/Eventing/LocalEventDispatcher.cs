@@ -4,7 +4,7 @@ using MediatR;
 
 namespace FlowChat.Shared.Application.Common.Eventing;
 
-public sealed class LocalEventDispatcher(IMediator mediator) : IDomainEventDispatcher
+public sealed class LocalEventDispatcher(IMediator mediator) : ILocalEventDispatcher
 {
     private readonly IMediator _mediator = mediator;
 

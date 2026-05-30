@@ -15,7 +15,7 @@ public sealed class SendEmailVerificationCommandHandlerTests
     private readonly Mock<IUserProfileReadRepository> _readRepositoryMock = new();
     private readonly Mock<IEmailVerificationRequestIssuer> _issuerMock = new();
     private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
-    private readonly Mock<IDomainEventDispatcher> _dispatcherMock = new();
+    private readonly Mock<ILocalEventDispatcher> _dispatcherMock = new();
     private readonly SendEmailVerificationCommandHandler _handler;
 
     public SendEmailVerificationCommandHandlerTests()

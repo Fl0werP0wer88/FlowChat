@@ -15,7 +15,7 @@ public sealed class DeleteContactCommandHandlerTests
     private readonly IFixture _fixture = new Fixture();
     private readonly Mock<IContactWriteRepository> _contactWriteRepositoryMock = new();
     private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
-    private readonly Mock<IDomainEventDispatcher> _domainEventDispatcherMock = new();
+    private readonly Mock<ILocalEventDispatcher> _domainEventDispatcherMock = new();
     private readonly DeleteContactCommandHandler _handler;
 
     public DeleteContactCommandHandlerTests()

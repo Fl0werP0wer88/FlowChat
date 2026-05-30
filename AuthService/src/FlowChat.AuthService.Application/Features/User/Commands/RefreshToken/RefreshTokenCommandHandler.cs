@@ -15,7 +15,7 @@ public sealed class RefreshTokenCommandHandler : AggregateRootCommandHandlerBase
     public RefreshTokenCommandHandler(
         IAccountRepository accountRepository,
         IOpenIddictTokenService openIddictTokenService,
-        IDomainEventDispatcher domainEventDispatcher,
+        ILocalEventDispatcher domainEventDispatcher,
         IUnitOfWork unitOfWork) : base(domainEventDispatcher, unitOfWork)
     {
         _accountRepository = accountRepository;

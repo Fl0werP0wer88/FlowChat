@@ -20,7 +20,7 @@ public class RegisterUserCommandHandler
         IAccountRepository accountRepository,
         IPasswordHashingService passwordHashingService,
         IUnitOfWork unitOfWork,
-        IDomainEventDispatcher domainEventDispatcher,
+        ILocalEventDispatcher domainEventDispatcher,
         IDbUpdateExceptionClassifier dbUpdateExceptionClassifier)
         : base(domainEventDispatcher, unitOfWork, dbUpdateExceptionClassifier)
     {

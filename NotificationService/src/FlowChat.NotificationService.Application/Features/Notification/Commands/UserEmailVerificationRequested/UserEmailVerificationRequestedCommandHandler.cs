@@ -22,7 +22,7 @@ public sealed class UserEmailVerificationRequestedCommandHandler
         INotificationWriteRepository notificationWriteRepository,
         INotificationSender notificationSender,
         IUnitOfWork unitOfWork,
-        IDomainEventDispatcher domainEventDispatcher) : base(domainEventDispatcher, unitOfWork)
+        ILocalEventDispatcher domainEventDispatcher) : base(domainEventDispatcher, unitOfWork)
     {
         _notificationReadRepository = notificationReadRepository;
         _notificationWriteRepository = notificationWriteRepository;

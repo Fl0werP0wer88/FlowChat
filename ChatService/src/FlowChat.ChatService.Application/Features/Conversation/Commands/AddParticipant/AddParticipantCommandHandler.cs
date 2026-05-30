@@ -14,7 +14,7 @@ public sealed class AddParticipantCommandHandler
     public AddParticipantCommandHandler(
         IGroupConversationWriteRepository groupConversationRepository,
         IUnitOfWork unitOfWork,
-        IDomainEventDispatcher domainEventDispatcher,
+        ILocalEventDispatcher domainEventDispatcher,
         IDbUpdateExceptionClassifier dbUpdateExceptionClassifier)
         : base(domainEventDispatcher, unitOfWork, dbUpdateExceptionClassifier)
     {

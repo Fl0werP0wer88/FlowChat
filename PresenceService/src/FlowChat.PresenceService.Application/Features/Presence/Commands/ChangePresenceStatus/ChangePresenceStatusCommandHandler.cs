@@ -15,7 +15,7 @@ public sealed class ChangePresenceStatusCommandHandler(
     IUserPresencePreferencesWriteRepository userPresencePreferencesWriteRepository,
     IMediator mediator,
     IUnitOfWork unitOfWork,
-    IDomainEventDispatcher domainEventDispatcher)
+    ILocalEventDispatcher domainEventDispatcher)
     : AggregateRootCommandHandlerBase<ChangePresenceStatusCommand, Unit>(domainEventDispatcher, unitOfWork)
 {
     private PresenceStatusSnapshot? _previousStatus;

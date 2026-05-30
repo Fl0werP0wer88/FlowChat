@@ -19,7 +19,7 @@ public sealed class HandleUserEmailVerificationRequestedNotificationCommandHandl
     private readonly Mock<INotificationWriteRepository> _writeRepositoryMock = new();
     private readonly Mock<INotificationSender> _notificationSenderMock = new();
     private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
-    private readonly Mock<IDomainEventDispatcher> _domainEventDispatcherMock = new();
+    private readonly Mock<ILocalEventDispatcher> _domainEventDispatcherMock = new();
     private readonly UserEmailVerificationRequestedCommandHandler _handler;
 
     public HandleUserEmailVerificationRequestedNotificationCommandHandlerTests()

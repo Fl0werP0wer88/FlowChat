@@ -18,7 +18,7 @@ public sealed class ChangeAuthEmailCommandHandler : AggregateRootCommandHandlerB
     public ChangeAuthEmailCommandHandler(
         IAccountRepository accountRepository,
         IPasswordHashingService passwordHashingService,
-        IDomainEventDispatcher domainEventDispatcher,
+        ILocalEventDispatcher domainEventDispatcher,
         IUnitOfWork unitOfWork) : base(domainEventDispatcher, unitOfWork)
     {
         _accountRepository = accountRepository;
