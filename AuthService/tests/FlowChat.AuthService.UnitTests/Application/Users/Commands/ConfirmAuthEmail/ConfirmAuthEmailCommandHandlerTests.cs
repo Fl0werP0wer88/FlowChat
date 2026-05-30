@@ -2,6 +2,7 @@ using FlowChat.AuthService.Application.Contracts.Persistence;
 using FlowChat.AuthService.Application.Features.User.Commands.ConfirmAuthEmail;
 using FlowChat.AuthService.Domain.Entities.Account;
 using FlowChat.AuthService.Domain.Entities.Account.Events;
+using FlowChat.Core.Messaging;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
@@ -28,7 +29,7 @@ public sealed class ConfirmAuthEmailCommandHandlerTests
                 (operation, ct) => operation(ct));
 
         _domainEventDispatcherMock
-            .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<IDomainEvent>>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<ILocalEvent>>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         _handler = new ConfirmAuthEmailCommandHandler(
@@ -48,8 +49,8 @@ public sealed class ConfirmAuthEmailCommandHandlerTests
             .Setup(x => x.GetByEmailAsync(emailAddress, It.IsAny<CancellationToken>()))
             .ReturnsAsync(account);
         _domainEventDispatcherMock
-            .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<IDomainEvent>>(), It.IsAny<CancellationToken>()))
-            .Callback<IEnumerable<IDomainEvent>, CancellationToken>((events, _) => dispatchedEvents.AddRange(events))
+            .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<ILocalEvent>>(), It.IsAny<CancellationToken>()))
+            .Callback<IEnumerable<ILocalEvent>, CancellationToken>((events, _) => dispatchedEvents.AddRange(events.OfType<IDomainEvent>()))
             .Returns(Task.CompletedTask);
 
         var result = await _handler.Handle(new ConfirmAuthEmailCommand { EmailAddress = "flower@example.com" }, CancellationToken.None);

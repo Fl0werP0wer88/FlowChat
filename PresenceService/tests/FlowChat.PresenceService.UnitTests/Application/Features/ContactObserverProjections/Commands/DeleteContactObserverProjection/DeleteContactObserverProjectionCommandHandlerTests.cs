@@ -1,4 +1,5 @@
 using AutoFixture;
+using FlowChat.Core.Messaging;
 using FlowChat.PresenceService.Application.Contracts.Persistence;
 using FlowChat.PresenceService.Application.Features.ContactObserverProjections.Commands.DeleteContactObserverProjection;
 using FlowChat.Shared.Application;
@@ -31,7 +32,7 @@ public sealed class DeleteContactObserverProjectionCommandHandlerTests
                 (operation, ct) => operation(ct));
 
         _domainEventDispatcherMock
-            .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<IDomainEvent>>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<ILocalEvent>>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         _handler = new DeleteContactObserverProjectionCommandHandler(

@@ -8,7 +8,7 @@ using ContactAggregate = FlowChat.SocialGraphService.Domain.Entities.Contact.Con
 
 namespace FlowChat.SocialGraphService.Application.Features.Contact.Commands.AddContact;
 
-public sealed class AddContactCommandHandler : IdempotentCommandHandlerBase<AddContactCommand, Guid>
+public sealed class AddContactCommandHandler : AggregateRootCommandHandlerBase<AddContactCommand, Guid>
 {
     private readonly IContactWriteRepository _contactWriteRepository;
     private readonly IUserProfileProjectionReadRepository _userProfileProjectionReadRepository;
@@ -18,28 +18,14 @@ public sealed class AddContactCommandHandler : IdempotentCommandHandlerBase<AddC
         IContactWriteRepository contactWriteRepository,
         IUserProfileProjectionReadRepository userProfileProjectionReadRepository,
         IUnitOfWork unitOfWork,
-        ILocalEventDispatcher domainEventDispatcher,
-        IDbUpdateExceptionClassifier dbUpdateExceptionClassifier)
-        : base(domainEventDispatcher, unitOfWork, dbUpdateExceptionClassifier)
+        ILocalEventDispatcher domainEventDispatcher)
+        : base(domainEventDispatcher, unitOfWork)
     {
         _contactWriteRepository = contactWriteRepository;
         _userProfileProjectionReadRepository = userProfileProjectionReadRepository;
     }
 
-    protected override async Task<(bool Found, Guid Value)> TryGetExistingResponseAsync(
-        AddContactCommand request,
-        CancellationToken cancellationToken)
-    {
-        var contact = await _contactWriteRepository.GetByIdAsync(request.Id, cancellationToken);
-        if (contact is null || contact.OwnerUserId != request.OwnerUserId)
-        {
-            return (false, default);
-        }
-
-        return (true, contact.Id.Value);
-    }
-
-    protected override async Task<FlowChatResult<Guid>> ExecuteCommandAsync(
+    protected override async Task<FlowChatResult<Guid>> ExecuteAsync(
         AddContactCommand request,
         CancellationToken cancellationToken)
     {
@@ -81,9 +67,6 @@ public sealed class AddContactCommandHandler : IdempotentCommandHandlerBase<AddC
 
     protected override IAggregateRoot? GetAggregateRoot() =>
         _contact;
-
-    protected override string GetIdempotencyConflictKey(AddContactCommand request) =>
-        AddContactCommand.IdempotencyConflictKey;
 
     private async Task<UserProfileProjectionDto?> GetUserProfileProjectionAsync(
         AddContactCommand request,

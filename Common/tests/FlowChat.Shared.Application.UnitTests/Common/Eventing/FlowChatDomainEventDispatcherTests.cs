@@ -1,4 +1,5 @@
 using FlowChat.Shared.Application.Common.Eventing;
+using FlowChat.Core.Messaging;
 using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
 using FluentAssertions;
@@ -33,7 +34,7 @@ public sealed class FlowChatDomainEventDispatcherTests
         await _dispatcher.DispatchAsync([domainEvent], CancellationToken.None);
 
         _mediatorMock.Verify(
-            x => x.Publish(It.Is<IDomainEvent>(e => ReferenceEquals(e, domainEvent)), It.IsAny<CancellationToken>()),
+            x => x.Publish(It.Is<ILocalEvent>(e => ReferenceEquals(e, domainEvent)), It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -83,7 +84,7 @@ public sealed class FlowChatDomainEventDispatcherTests
         await _dispatcher.DispatchAsync([domainEvent], CancellationToken.None);
 
         _mediatorMock.Verify(
-            x => x.Publish(It.Is<IDomainEvent>(e => ReferenceEquals(e, domainEvent)), It.IsAny<CancellationToken>()),
+            x => x.Publish(It.Is<ILocalEvent>(e => ReferenceEquals(e, domainEvent)), It.IsAny<CancellationToken>()),
             Times.Once);
     }
 

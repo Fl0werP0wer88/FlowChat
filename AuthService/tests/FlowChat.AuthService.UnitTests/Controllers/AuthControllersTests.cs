@@ -27,10 +27,8 @@ public sealed class AuthControllersTests
         var mediatorMock = new Mock<IMediator>();
         mediatorMock
             .Setup(x => x.Send(It.IsAny<RegisterUserCommand>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(FlowChatResult<IdempotentCommandResult<RegisterUserCommandResponse>>.Success(
-                new IdempotentCommandResult<RegisterUserCommandResponse>(
-                    new RegisterUserCommandResponse { Id = Guid.NewGuid() },
-                    WasAlreadyProcessed: false)));
+            .ReturnsAsync(FlowChatResult<RegisterUserCommandResponse>.Success(
+                new RegisterUserCommandResponse { Id = Guid.NewGuid() }));
 
         var controller = CreateController(new RegisterUserController(mediatorMock.Object, CreateMapper()));
 
@@ -49,35 +47,6 @@ public sealed class AuthControllersTests
 
         var created = result.Should().BeOfType<ObjectResult>().Subject;
         created.StatusCode.Should().Be(StatusCodes.Status201Created);
-    }
-
-    [Fact]
-    public async Task RegisterUserController_WhenMediatorReturnsAlreadyProcessed_ReturnsOk()
-    {
-        var mediatorMock = new Mock<IMediator>();
-        mediatorMock
-            .Setup(x => x.Send(It.IsAny<RegisterUserCommand>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(FlowChatResult<IdempotentCommandResult<RegisterUserCommandResponse>>.Success(
-                new IdempotentCommandResult<RegisterUserCommandResponse>(
-                    new RegisterUserCommandResponse { Id = Guid.NewGuid() },
-                    WasAlreadyProcessed: true)));
-
-        var controller = CreateController(new RegisterUserController(mediatorMock.Object, CreateMapper()));
-
-        var result = await controller.Create(
-            new RegisterUserRequest
-            {
-                Id = Guid.NewGuid(),
-                FriendlyUserId = "flower",
-                Email = "flower@example.com",
-                Password = "P@ssw0rd!",
-                FirstName = "Flower",
-                LastName = "Power",
-                Organization = "FlowChat"
-            },
-            CancellationToken.None);
-
-        result.Should().BeOfType<OkObjectResult>();
     }
 
     [Fact]

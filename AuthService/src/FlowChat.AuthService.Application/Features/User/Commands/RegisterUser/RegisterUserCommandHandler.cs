@@ -10,7 +10,7 @@ using DomainAccount = FlowChat.AuthService.Domain.Entities.Account.Account;
 namespace FlowChat.AuthService.Application.Features.User.Commands.RegisterUser;
 
 public class RegisterUserCommandHandler
-    : IdempotentCommandHandlerBase<RegisterUserCommand, RegisterUserCommandResponse>
+    : AggregateRootCommandHandlerBase<RegisterUserCommand, RegisterUserCommandResponse>
 {
     private readonly IAccountRepository _accountRepository;
     private readonly IPasswordHashingService _passwordHashingService;
@@ -20,30 +20,14 @@ public class RegisterUserCommandHandler
         IAccountRepository accountRepository,
         IPasswordHashingService passwordHashingService,
         IUnitOfWork unitOfWork,
-        ILocalEventDispatcher domainEventDispatcher,
-        IDbUpdateExceptionClassifier dbUpdateExceptionClassifier)
-        : base(domainEventDispatcher, unitOfWork, dbUpdateExceptionClassifier)
+        ILocalEventDispatcher domainEventDispatcher)
+        : base(domainEventDispatcher, unitOfWork)
     {
         _accountRepository = accountRepository;
         _passwordHashingService = passwordHashingService;
     }
 
-    protected override async Task<(bool Found, RegisterUserCommandResponse Value)> TryGetExistingResponseAsync(
-        RegisterUserCommand request,
-        CancellationToken cancellationToken)
-    {
-        var account = await _accountRepository.GetByIdAsync(request.Id, cancellationToken);
-        if (account is null
-            || account.FriendlyUserId.Value != FriendlyUserId.Create(request.FriendlyUserId).Value
-            || account.Email.Value != EmailAddress.Create(request.Email).Value)
-        {
-            return (false, default!);
-        }
-
-        return (true, new RegisterUserCommandResponse { Id = account.Id.Value });
-    }
-
-    protected override async Task<FlowChatResult<RegisterUserCommandResponse>> ExecuteCommandAsync(
+    protected override async Task<FlowChatResult<RegisterUserCommandResponse>> ExecuteAsync(
         RegisterUserCommand request,
         CancellationToken cancellationToken)
     {
@@ -81,8 +65,5 @@ public class RegisterUserCommandHandler
 
     protected override IAggregateRoot? GetAggregateRoot() =>
         _account;
-
-    protected override string GetIdempotencyConflictKey(RegisterUserCommand request) =>
-        RegisterUserCommand.IdempotencyConflictKey;
 }
 

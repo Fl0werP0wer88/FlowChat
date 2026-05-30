@@ -4,6 +4,7 @@ using FlowChat.AuthService.Infrastructure.Configuration.Settings;
 using FlowChat.AuthService.Infrastructure.Services;
 using FlowChat.AuthService.Persistence;
 using FlowChat.AuthService.Persistence.Repositories;
+using FlowChat.Core.Messaging;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
@@ -44,7 +45,7 @@ public sealed class LoginUserCommandHandlerTests : IDisposable
             Microsoft.Extensions.Options.Options.Create(new JwtSettingsSection { Audience = "FlowChat.Client" }));
         var dispatcherMock = new Mock<ILocalEventDispatcher>();
         dispatcherMock
-            .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<IDomainEvent>>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<ILocalEvent>>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         var unitOfWorkMock = new Mock<IUnitOfWork>();

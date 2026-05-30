@@ -19,7 +19,6 @@ public sealed class AddContactController : ApiControllerBase
     }
 
     [HttpPut]
-    [ProducesResponseType(typeof(AddContactResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(AddContactResponse), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Add(
@@ -45,9 +44,7 @@ public sealed class AddContactController : ApiControllerBase
             return HandleError(result.Error);
         }
 
-        var response = new AddContactResponse(result.Value.Value);
-        return result.Value.WasAlreadyProcessed
-            ? Ok(response)
-            : StatusCode(StatusCodes.Status201Created, response);
+        var response = new AddContactResponse(result.Value);
+        return StatusCode(StatusCodes.Status201Created, response);
     }
 }

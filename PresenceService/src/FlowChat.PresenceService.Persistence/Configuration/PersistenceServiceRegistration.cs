@@ -4,7 +4,6 @@ using FlowChat.PresenceService.Persistence.BulkUpsert;
 using FlowChat.PresenceService.Persistence.Repositories;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Infrastructure.Silverback.Persistence;
-using FlowChat.Shared.Persistance;
 using FlowChat.Shared.Persistance.Auditing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -19,7 +18,6 @@ public static class PersistenceServiceRegistration
         IConfiguration configuration)
     {
         services.AddScoped<EntityBaseSaveChangesInterceptor>();
-        services.AddPostgresDbUpdateExceptionClassifier();
         services.AddDbContext<AppDbContext>((serviceProvider, options) =>
             options.UseNpgsql(configuration.GetConnectionString("PresenceDb"))
                 .AddInterceptors(serviceProvider.GetRequiredService<EntityBaseSaveChangesInterceptor>()));
