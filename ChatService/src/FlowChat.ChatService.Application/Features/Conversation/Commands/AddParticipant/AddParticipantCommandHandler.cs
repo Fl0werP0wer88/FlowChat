@@ -6,7 +6,7 @@ using GroupConversation = FlowChat.ChatService.Domain.Entities.Conversation.Grou
 namespace FlowChat.ChatService.Application.Features.Conversation.Commands.AddParticipant;
 
 public sealed class AddParticipantCommandHandler
-    : IdempotentCommandHandlerBase<AddParticipantCommand, bool>
+    : AggregateRootCommandHandlerBase<AddParticipantCommand, bool>
 {
     private readonly IGroupConversationWriteRepository _groupConversationRepository;
     private GroupConversation? _conversation;
@@ -14,14 +14,13 @@ public sealed class AddParticipantCommandHandler
     public AddParticipantCommandHandler(
         IGroupConversationWriteRepository groupConversationRepository,
         IUnitOfWork unitOfWork,
-        ILocalEventDispatcher domainEventDispatcher,
-        IDbUpdateExceptionClassifier dbUpdateExceptionClassifier)
-        : base(domainEventDispatcher, unitOfWork, dbUpdateExceptionClassifier)
+        ILocalEventDispatcher domainEventDispatcher)
+        : base(domainEventDispatcher, unitOfWork)
     {
         _groupConversationRepository = groupConversationRepository ?? throw new ArgumentNullException(nameof(groupConversationRepository));
     }
 
-    protected override async Task<FlowChatResult<bool>> ExecuteCommandAsync(
+    protected override async Task<FlowChatResult<bool>> ExecuteAsync(
         AddParticipantCommand request,
         CancellationToken cancellationToken)
     {
@@ -47,14 +46,6 @@ public sealed class AddParticipantCommandHandler
         return FlowChatResult<bool>.Success(true);
     }
 
-    protected override Task<(bool Found, bool Value)> TryGetExistingResponseAsync(
-        AddParticipantCommand request,
-        CancellationToken cancellationToken)
-        => Task.FromResult((true, false));
-
     protected override IAggregateRoot? GetAggregateRoot() =>
         _conversation;
-
-    protected override string GetIdempotencyConflictKey(AddParticipantCommand request) =>
-        AddParticipantCommand.IdempotencyConflictKey;
 }

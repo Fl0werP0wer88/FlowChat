@@ -10,28 +10,24 @@ using ParticipantUser = FlowChat.ChatService.Domain.Entities.Conversation.Partic
 namespace FlowChat.ChatService.Application.Features.Conversation.Commands.CreateGroupConversation;
 
 public sealed class CreateGroupConversationCommandHandler
-    : IdempotentCommandHandlerBase<CreateGroupConversationCommand, GroupConversationDetailDto>
+    : AggregateRootCommandHandlerBase<CreateGroupConversationCommand, GroupConversationDetailDto>
 {
     private readonly IGroupConversationWriteRepository _conversationWriteRepository;
-    private readonly IGroupConversationReadRepository _conversationReadRepository;
     private readonly IUserProfileProjectionReadRepository _profileReadRepository;
     private GroupConversationAggregate? _conversation;
 
     public CreateGroupConversationCommandHandler(
         IGroupConversationWriteRepository conversationWriteRepository,
-        IGroupConversationReadRepository conversationReadRepository,
         IUserProfileProjectionReadRepository profileReadRepository,
         IUnitOfWork unitOfWork,
-        ILocalEventDispatcher domainEventDispatcher,
-        IDbUpdateExceptionClassifier dbUpdateExceptionClassifier)
-        : base(domainEventDispatcher, unitOfWork, dbUpdateExceptionClassifier)
+        ILocalEventDispatcher domainEventDispatcher)
+        : base(domainEventDispatcher, unitOfWork)
     {
         _conversationWriteRepository = conversationWriteRepository ?? throw new ArgumentNullException(nameof(conversationWriteRepository));
-        _conversationReadRepository = conversationReadRepository ?? throw new ArgumentNullException(nameof(conversationReadRepository));
         _profileReadRepository = profileReadRepository ?? throw new ArgumentNullException(nameof(profileReadRepository));
     }
 
-    protected override async Task<FlowChatResult<GroupConversationDetailDto>> ExecuteCommandAsync(
+    protected override async Task<FlowChatResult<GroupConversationDetailDto>> ExecuteAsync(
         CreateGroupConversationCommand request,
         CancellationToken cancellationToken)
     {
@@ -58,22 +54,8 @@ public sealed class CreateGroupConversationCommandHandler
             new GroupConversationDetailDto(_conversation.Id.Value, _conversation.Name!, participantDtos));
     }
 
-    protected override async Task<(bool Found, GroupConversationDetailDto Value)> TryGetExistingResponseAsync(
-        CreateGroupConversationCommand request,
-        CancellationToken cancellationToken)
-    {
-        var existing = await _conversationReadRepository.GetByIdAsync(request.ConversationId, cancellationToken);
-
-        return existing is not null
-            ? (true, existing)
-            : (false, default!);
-    }
-
     protected override IAggregateRoot? GetAggregateRoot() =>
         _conversation;
-
-    protected override string GetIdempotencyConflictKey(CreateGroupConversationCommand request) =>
-        CreateGroupConversationCommand.IdempotencyConflictKey;
 
     private static ConversationParticipantDto BuildParticipantDto(
         ParticipantUser participant,

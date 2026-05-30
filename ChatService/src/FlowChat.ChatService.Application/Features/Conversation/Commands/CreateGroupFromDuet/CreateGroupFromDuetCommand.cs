@@ -6,7 +6,4 @@ namespace FlowChat.ChatService.Application.Features.Conversation.Commands.Create
 public sealed record CreateGroupFromDuetCommand(
     Guid NewGroupConversationId,
     Guid RequestingUserId,
-    Guid PartnerUserId) : ICommand<IdempotentCommandResult<GroupConversationDetailDto>>
-{
-    public const string IdempotencyConflictKey = nameof(CreateGroupFromDuetCommand);
-}
+    Guid PartnerUserId) : ICommand<GroupConversationDetailDto>;

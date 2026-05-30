@@ -35,7 +35,7 @@ public sealed class AddParticipantController : ApiControllerBase
             return HandleError(result.Error);
 
         // Value=true: at least one participant newly added. Value=false: all were already members.
-        return result.Value.Value
+        return result.Value
             ? Accepted()
             : Ok();
     }

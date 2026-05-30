@@ -11,31 +11,27 @@ using ParticipantUser = FlowChat.ChatService.Domain.Entities.Conversation.Partic
 namespace FlowChat.ChatService.Application.Features.Conversation.Commands.CreateGroupFromDuet;
 
 public sealed class CreateGroupFromDuetCommandHandler
-    : IdempotentCommandHandlerBase<CreateGroupFromDuetCommand, GroupConversationDetailDto>
+    : AggregateRootCommandHandlerBase<CreateGroupFromDuetCommand, GroupConversationDetailDto>
 {
     private readonly IDuetConversationReadRepository _duetReadRepository;
     private readonly IGroupConversationWriteRepository _groupWriteRepository;
-    private readonly IGroupConversationReadRepository _groupReadRepository;
     private readonly IUserProfileProjectionReadRepository _profileReadRepository;
     private GroupConversationAggregate? _conversation;
 
     public CreateGroupFromDuetCommandHandler(
         IDuetConversationReadRepository duetReadRepository,
         IGroupConversationWriteRepository groupWriteRepository,
-        IGroupConversationReadRepository groupReadRepository,
         IUserProfileProjectionReadRepository profileReadRepository,
         IUnitOfWork unitOfWork,
-        ILocalEventDispatcher domainEventDispatcher,
-        IDbUpdateExceptionClassifier dbUpdateExceptionClassifier)
-        : base(domainEventDispatcher, unitOfWork, dbUpdateExceptionClassifier)
+        ILocalEventDispatcher domainEventDispatcher)
+        : base(domainEventDispatcher, unitOfWork)
     {
         _duetReadRepository = duetReadRepository ?? throw new ArgumentNullException(nameof(duetReadRepository));
         _groupWriteRepository = groupWriteRepository ?? throw new ArgumentNullException(nameof(groupWriteRepository));
-        _groupReadRepository = groupReadRepository ?? throw new ArgumentNullException(nameof(groupReadRepository));
         _profileReadRepository = profileReadRepository ?? throw new ArgumentNullException(nameof(profileReadRepository));
     }
 
-    protected override async Task<FlowChatResult<GroupConversationDetailDto>> ExecuteCommandAsync(
+    protected override async Task<FlowChatResult<GroupConversationDetailDto>> ExecuteAsync(
         CreateGroupFromDuetCommand request,
         CancellationToken cancellationToken)
     {
@@ -81,21 +77,8 @@ public sealed class CreateGroupFromDuetCommandHandler
             new GroupConversationDetailDto(_conversation.Id.Value, _conversation.Name!, participantDtos));
     }
 
-    protected override async Task<(bool Found, GroupConversationDetailDto Value)> TryGetExistingResponseAsync(
-        CreateGroupFromDuetCommand request,
-        CancellationToken cancellationToken)
-    {
-        var existing = await _groupReadRepository.GetByIdAsync(request.NewGroupConversationId, cancellationToken);
-        return existing is not null
-            ? (true, existing)
-            : (false, default!);
-    }
-
     protected override IAggregateRoot? GetAggregateRoot() =>
         _conversation;
-
-    protected override string GetIdempotencyConflictKey(CreateGroupFromDuetCommand request) =>
-        CreateGroupFromDuetCommand.IdempotencyConflictKey;
 
     private static ConversationParticipantDto BuildParticipantDto(
         ParticipantUser participant,

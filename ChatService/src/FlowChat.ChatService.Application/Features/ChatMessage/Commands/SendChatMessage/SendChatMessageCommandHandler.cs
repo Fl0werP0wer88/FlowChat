@@ -7,7 +7,7 @@ using ChatMessageAggregate = FlowChat.ChatService.Domain.Entities.ChatMessage.Ch
 namespace FlowChat.ChatService.Application.Features.ChatMessage.Commands.SendChatMessage;
 
 public sealed class SendChatMessageCommandHandler
-    : IdempotentCommandHandlerBase<SendChatMessageCommand, SendChatMessageCommandResult>
+    : AggregateRootCommandHandlerBase<SendChatMessageCommand, SendChatMessageCommandResult>
 {
     private readonly IChatMessageWriteRepository _chatMessageRepository;
     private readonly IConversationParticipantReadRepository _participantReadRepository;
@@ -17,30 +17,14 @@ public sealed class SendChatMessageCommandHandler
         IChatMessageWriteRepository chatMessageRepository,
         IConversationParticipantReadRepository participantReadRepository,
         IUnitOfWork unitOfWork,
-        ILocalEventDispatcher domainEventDispatcher,
-        IDbUpdateExceptionClassifier dbUpdateExceptionClassifier)
-        : base(domainEventDispatcher, unitOfWork, dbUpdateExceptionClassifier)
+        ILocalEventDispatcher domainEventDispatcher)
+        : base(domainEventDispatcher, unitOfWork)
     {
         _chatMessageRepository = chatMessageRepository ?? throw new ArgumentNullException(nameof(chatMessageRepository));
         _participantReadRepository = participantReadRepository ?? throw new ArgumentNullException(nameof(participantReadRepository));
     }
 
-    protected override async Task<(bool Found, SendChatMessageCommandResult Value)> TryGetExistingResponseAsync(
-        SendChatMessageCommand request,
-        CancellationToken cancellationToken)
-    {
-        var message = await _chatMessageRepository.GetByIdAsync(request.Id, cancellationToken);
-        if (message is null
-            || message.ConversationId.Value != request.ConversationId
-            || message.SenderUserId != request.SenderUserId)
-        {
-            return (false, default!);
-        }
-
-        return (true, new SendChatMessageCommandResult(message.Id.Value, message.SentAtUtc.Value));
-    }
-
-    protected override async Task<FlowChatResult<SendChatMessageCommandResult>> ExecuteCommandAsync(
+    protected override async Task<FlowChatResult<SendChatMessageCommandResult>> ExecuteAsync(
         SendChatMessageCommand request,
         CancellationToken cancellationToken)
     {
@@ -75,7 +59,4 @@ public sealed class SendChatMessageCommandHandler
 
     protected override IAggregateRoot? GetAggregateRoot() =>
         _chatMessage;
-
-    protected override string GetIdempotencyConflictKey(SendChatMessageCommand request) =>
-        SendChatMessageCommand.IdempotencyConflictKey;
 }

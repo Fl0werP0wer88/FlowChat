@@ -34,8 +34,7 @@ public sealed class AddParticipantControllerTests
         _mediatorMock
             .Setup(x => x.Send(It.IsAny<AddParticipantCommand>(), It.IsAny<CancellationToken>()))
             .Callback<object, CancellationToken>((cmd, _) => capturedCommand = (AddParticipantCommand)cmd)
-            .ReturnsAsync(FlowChatResult<IdempotentCommandResult<bool>>.Success(
-                new IdempotentCommandResult<bool>(true, WasAlreadyProcessed: false)));
+            .ReturnsAsync(FlowChatResult<bool>.Success(true));
 
         var controller = CreateController();
 
@@ -57,27 +56,10 @@ public sealed class AddParticipantControllerTests
 
         _mediatorMock
             .Setup(x => x.Send(It.IsAny<AddParticipantCommand>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(FlowChatResult<IdempotentCommandResult<bool>>.Success(
-                new IdempotentCommandResult<bool>(false, WasAlreadyProcessed: false)));
+            .ReturnsAsync(FlowChatResult<bool>.Success(false));
 
         var actionResult = await CreateController().AddParticipant(
             conversationId,
-            new AddParticipantRequest { ParticipantUserIds = [Guid.NewGuid()] },
-            CancellationToken.None);
-
-        actionResult.Should().BeOfType<OkResult>();
-    }
-
-    [Fact]
-    public async Task AddParticipant_WhenRaceConditionDetected_Returns200Ok()
-    {
-        _mediatorMock
-            .Setup(x => x.Send(It.IsAny<AddParticipantCommand>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(FlowChatResult<IdempotentCommandResult<bool>>.Success(
-                new IdempotentCommandResult<bool>(false, WasAlreadyProcessed: true)));
-
-        var actionResult = await CreateController().AddParticipant(
-            Guid.NewGuid(),
             new AddParticipantRequest { ParticipantUserIds = [Guid.NewGuid()] },
             CancellationToken.None);
 
@@ -89,7 +71,7 @@ public sealed class AddParticipantControllerTests
     {
         _mediatorMock
             .Setup(x => x.Send(It.IsAny<AddParticipantCommand>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(FlowChatResult<IdempotentCommandResult<bool>>.Failure(
+            .ReturnsAsync(FlowChatResult<bool>.Failure(
                 DomainError.NotFound("Conversation not found.")));
 
         var actionResult = await CreateController().AddParticipant(
@@ -106,7 +88,7 @@ public sealed class AddParticipantControllerTests
     {
         _mediatorMock
             .Setup(x => x.Send(It.IsAny<AddParticipantCommand>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(FlowChatResult<IdempotentCommandResult<bool>>.Failure(
+            .ReturnsAsync(FlowChatResult<bool>.Failure(
                 DomainError.BadRequest("Cannot add participants to a one-on-one conversation.")));
 
         var actionResult = await CreateController().AddParticipant(

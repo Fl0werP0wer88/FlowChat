@@ -2,11 +2,11 @@ using FlowChat.ChatService.Application.Contracts.Persistence;
 using FlowChat.ChatService.Application.Features.Conversation.Commands.AddParticipant;
 using FlowChat.ChatService.Domain.Entities.Conversation;
 using FlowChat.ChatService.Domain.Entities.Conversation.Events;
+using FlowChat.Core.Messaging;
 using FlowChat.Core.Results;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
 using FluentAssertions;
-using Microsoft.EntityFrameworkCore;
 using Moq;
 using ConversationAggregate = FlowChat.ChatService.Domain.Entities.Conversation.Conversation;
 
@@ -18,27 +18,25 @@ public sealed class AddParticipantCommandHandlerTests
     private readonly Mock<IGroupConversationWriteRepository> _conversationRepositoryMock = new();
     private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
     private readonly Mock<ILocalEventDispatcher> _domainEventDispatcherMock = new();
-    private readonly Mock<IDbUpdateExceptionClassifier> _dbUpdateExceptionClassifierMock = new();
     private readonly AddParticipantCommandHandler _handler;
 
     public AddParticipantCommandHandlerTests()
     {
         _unitOfWorkMock
             .Setup(x => x.ExecuteCommandInTransactionAsync(
-                It.IsAny<Func<CancellationToken, Task<FlowChatResult<IdempotentCommandResult<bool>>>>>(),
+                It.IsAny<Func<CancellationToken, Task<FlowChatResult<bool>>>>(),
                 It.IsAny<CancellationToken>()))
-            .Returns<Func<CancellationToken, Task<FlowChatResult<IdempotentCommandResult<bool>>>>, CancellationToken>(
+            .Returns<Func<CancellationToken, Task<FlowChatResult<bool>>>, CancellationToken>(
                 (operation, ct) => operation(ct));
 
         _domainEventDispatcherMock
-            .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<IDomainEvent>>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<ILocalEvent>>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         _handler = new AddParticipantCommandHandler(
             _conversationRepositoryMock.Object,
             _unitOfWorkMock.Object,
-            _domainEventDispatcherMock.Object,
-            _dbUpdateExceptionClassifierMock.Object);
+            _domainEventDispatcherMock.Object);
     }
 
     [Fact]
@@ -63,15 +61,14 @@ public sealed class AddParticipantCommandHandlerTests
             .Setup(x => x.GetByIdAsync(conversationId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(conversation);
         _domainEventDispatcherMock
-            .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<IDomainEvent>>(), It.IsAny<CancellationToken>()))
-            .Callback<IEnumerable<IDomainEvent>, CancellationToken>((events, _) => dispatchedEvents.AddRange(events))
+            .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<ILocalEvent>>(), It.IsAny<CancellationToken>()))
+            .Callback<IEnumerable<ILocalEvent>, CancellationToken>((events, _) => dispatchedEvents.AddRange(events.OfType<IDomainEvent>()))
             .Returns(Task.CompletedTask);
 
         var result = await _handler.Handle(command, CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
-        result.Value.Value.Should().BeTrue();
-        result.Value.WasAlreadyProcessed.Should().BeFalse();
+        result.Value.Should().BeTrue();
         conversation.Participants.Should().Contain(p => p.UserId == newMemberId);
         dispatchedEvents.OfType<ParticipantAddedDomainEvent>().Should().ContainSingle()
             .Which.ParticipantUserId.Should().Be(newMemberId);
@@ -100,14 +97,14 @@ public sealed class AddParticipantCommandHandlerTests
             .Setup(x => x.GetByIdAsync(conversationId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(conversation);
         _domainEventDispatcherMock
-            .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<IDomainEvent>>(), It.IsAny<CancellationToken>()))
-            .Callback<IEnumerable<IDomainEvent>, CancellationToken>((events, _) => dispatchedEvents.AddRange(events))
+            .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<ILocalEvent>>(), It.IsAny<CancellationToken>()))
+            .Callback<IEnumerable<ILocalEvent>, CancellationToken>((events, _) => dispatchedEvents.AddRange(events.OfType<IDomainEvent>()))
             .Returns(Task.CompletedTask);
 
         var result = await _handler.Handle(command, CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
-        result.Value.Value.Should().BeTrue();
+        result.Value.Should().BeTrue();
         conversation.Participants.Should().Contain(p => p.UserId == newMemberId1);
         conversation.Participants.Should().Contain(p => p.UserId == newMemberId2);
         dispatchedEvents.OfType<ParticipantAddedDomainEvent>().Should().HaveCount(2);
@@ -136,14 +133,14 @@ public sealed class AddParticipantCommandHandlerTests
             .Setup(x => x.GetByIdAsync(conversationId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(conversation);
         _domainEventDispatcherMock
-            .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<IDomainEvent>>(), It.IsAny<CancellationToken>()))
-            .Callback<IEnumerable<IDomainEvent>, CancellationToken>((events, _) => dispatchedEvents.AddRange(events))
+            .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<ILocalEvent>>(), It.IsAny<CancellationToken>()))
+            .Callback<IEnumerable<ILocalEvent>, CancellationToken>((events, _) => dispatchedEvents.AddRange(events.OfType<IDomainEvent>()))
             .Returns(Task.CompletedTask);
 
         var result = await _handler.Handle(command, CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
-        result.Value.Value.Should().BeTrue();
+        result.Value.Should().BeTrue();
         dispatchedEvents.OfType<ParticipantAddedDomainEvent>().Should().ContainSingle()
             .Which.ParticipantUserId.Should().Be(newMemberId);
         _conversationRepositoryMock.Verify(x => x.UpdateAsync(conversation, It.IsAny<CancellationToken>()), Times.Once);
@@ -170,55 +167,16 @@ public sealed class AddParticipantCommandHandlerTests
             .Setup(x => x.GetByIdAsync(conversationId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(conversation);
         _domainEventDispatcherMock
-            .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<IDomainEvent>>(), It.IsAny<CancellationToken>()))
-            .Callback<IEnumerable<IDomainEvent>, CancellationToken>((events, _) => dispatchedEvents.AddRange(events))
+            .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<ILocalEvent>>(), It.IsAny<CancellationToken>()))
+            .Callback<IEnumerable<ILocalEvent>, CancellationToken>((events, _) => dispatchedEvents.AddRange(events.OfType<IDomainEvent>()))
             .Returns(Task.CompletedTask);
 
         var result = await _handler.Handle(command, CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
-        result.Value.Value.Should().BeFalse();
-        result.Value.WasAlreadyProcessed.Should().BeFalse();
+        result.Value.Should().BeFalse();
         dispatchedEvents.Should().BeEmpty();
         _conversationRepositoryMock.Verify(x => x.UpdateAsync(It.IsAny<GroupConversation>(), It.IsAny<CancellationToken>()), Times.Never);
-    }
-
-    [Fact]
-    public async Task Handle_WhenRaceConditionCausesDbConflict_ReturnsAlreadyProcessed()
-    {
-        var conversationId = Guid.NewGuid();
-        var participantId = Guid.NewGuid();
-        var command = new AddParticipantCommand(conversationId, [participantId]);
-
-        var conversation = GroupConversation.Create(
-            Id<ConversationAggregate>.FromGuid(conversationId),
-            Guid.NewGuid(),
-            [Guid.NewGuid(), Guid.NewGuid()],
-            "Dev Team");
-        conversation.ClearEvents();
-
-        List<IDomainEvent> dispatchedEvents = [];
-
-        _conversationRepositoryMock
-            .Setup(x => x.GetByIdAsync(conversationId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(conversation);
-        _conversationRepositoryMock
-            .Setup(x => x.UpdateAsync(It.IsAny<GroupConversation>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new DbUpdateException("duplicate"));
-        _dbUpdateExceptionClassifierMock
-            .Setup(x => x.IsIdempotencyConflict(It.IsAny<DbUpdateException>(), AddParticipantCommand.IdempotencyConflictKey))
-            .Returns(true);
-        _domainEventDispatcherMock
-            .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<IDomainEvent>>(), It.IsAny<CancellationToken>()))
-            .Callback<IEnumerable<IDomainEvent>, CancellationToken>((events, _) => dispatchedEvents.AddRange(events))
-            .Returns(Task.CompletedTask);
-
-        var result = await _handler.Handle(command, CancellationToken.None);
-
-        result.IsSuccess.Should().BeTrue();
-        result.Value.Value.Should().BeFalse();
-        result.Value.WasAlreadyProcessed.Should().BeTrue();
-        dispatchedEvents.Should().BeEmpty();
     }
 
     [Fact]
