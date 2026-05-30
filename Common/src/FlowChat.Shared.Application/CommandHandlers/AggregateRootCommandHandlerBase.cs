@@ -1,3 +1,4 @@
+using FlowChat.Core.Messaging;
 using FlowChat.Core.Results;
 using FlowChat.Shared.Domain;
 using MediatR;
@@ -78,7 +79,7 @@ public abstract class AggregateRootCommandHandlerBase<TCommand, TResponse> : ICo
         throw new UnreachableException();
     }
 
-    protected Task DispatchLocalEventsAsync(IEnumerable<IDomainEvent> domainEvents, CancellationToken cancellationToken)
+    protected Task DispatchLocalEventsAsync(IEnumerable<ILocalEvent> domainEvents, CancellationToken cancellationToken)
     {
         if (domainEvents is null)
         {
