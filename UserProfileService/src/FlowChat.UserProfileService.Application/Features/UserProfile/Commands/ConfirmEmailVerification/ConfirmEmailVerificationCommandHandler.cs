@@ -95,16 +95,16 @@ public sealed class ConfirmEmailVerificationCommandHandler
         return Success(wasAlreadyProcessed: false);
     }
 
-    protected override async Task<FlowChatResult<IdempotentCommandResult<Unit>>> OnDbUpdateExceptionAfterRollbackHook(
+    protected override async Task<FlowChatResult<IdempotentCommandResult<Unit>>> HandleUnexpectedExceptionAsync(
         ConfirmEmailVerificationCommand request,
-        DbUpdateException exception,
+        Exception exception,
         CancellationToken cancellationToken)
     {
         if (exception is not DbUpdateConcurrencyException
             || !_emailVerificationTokenProtector.TryUnprotect(request.Token, out var payload)
             || payload is null)
         {
-            return await base.OnDbUpdateExceptionAfterRollbackHook(request, exception, cancellationToken);
+            return await base.HandleUnexpectedExceptionAsync(request, exception, cancellationToken);
         }
 
         var confirmationState = await _emailVerificationRequestWriteRepository
@@ -115,7 +115,7 @@ public sealed class ConfirmEmailVerificationCommandHandler
             return Success(wasAlreadyProcessed: true);
         }
 
-        return await base.OnDbUpdateExceptionAfterRollbackHook(request, exception, cancellationToken);
+        return await base.HandleUnexpectedExceptionAsync(request, exception, cancellationToken);
     }
 
     protected override IAggregateRoot? GetAggregateRoot() => _userProfile;

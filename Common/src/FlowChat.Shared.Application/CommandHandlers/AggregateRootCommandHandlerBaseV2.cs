@@ -3,7 +3,6 @@ using FlowChat.Core.Messaging;
 using FlowChat.Core.Results;
 using FlowChat.Shared.Domain;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
 using System.Diagnostics;
 using System.Runtime.ExceptionServices;
 
@@ -58,11 +57,6 @@ public abstract class AggregateRootCommandHandlerBaseV2<TCommand, TResponse, TSn
                 },
                 cancellationToken);
         }
-        catch (DbUpdateException exception)
-        {
-            // Keep this outside the unit of work so EF execution strategies can finish all retries before application-specific recovery runs
-            return await OnDbUpdateExceptionAfterRollbackHook(request, exception, cancellationToken);
-        }
         catch (Exception exception)
         {
             return await HandleUnexpectedExceptionAsync(request, exception, cancellationToken);
@@ -72,14 +66,6 @@ public abstract class AggregateRootCommandHandlerBaseV2<TCommand, TResponse, TSn
     protected abstract Task<FlowChatResult<TResponse>> ExecuteAsync(TCommand request, CancellationToken cancellationToken);
 
     protected virtual IAggregateRoot? GetAggregateRoot() => null;
-
-    protected virtual Task<FlowChatResult<TResponse>> OnDbUpdateExceptionAfterRollbackHook(
-        TCommand request,
-        DbUpdateException exception,
-        CancellationToken cancellationToken)
-    {
-        return HandleUnexpectedExceptionAsync(request, exception, cancellationToken);
-    }
 
     protected virtual Task<FlowChatResult<TResponse>> HandleUnexpectedExceptionAsync(
         TCommand request,

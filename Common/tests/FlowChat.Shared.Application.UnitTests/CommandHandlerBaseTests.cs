@@ -51,7 +51,7 @@ public sealed class CommandHandlerBaseTests
     }
 
     [Fact]
-    public async Task Handle_WhenDbUpdateExceptionIsThrown_UsesDbUpdateExceptionOverrideResult()
+    public async Task Handle_WhenDbUpdateExceptionIsThrown_UsesUnexpectedExceptionOverrideResult()
     {
         var unitOfWorkMock = CreateUnitOfWorkMock();
         var domainEventDispatcherMock = new Mock<ILocalEventDispatcher>();
@@ -61,7 +61,7 @@ public sealed class CommandHandlerBaseTests
             domainEventDispatcherMock.Object,
             unitOfWorkMock.Object,
             (_, _) => Task.FromException<FlowChatResult<Guid>>(expectedException),
-            handleDbUpdateExceptionAsync: (_, exception, _) =>
+            handleUnexpectedExceptionAsync: (_, exception, _) =>
             {
                 exception.Should().BeSameAs(expectedException);
                 return Task.FromResult(expectedResult);
@@ -92,19 +92,16 @@ public sealed class CommandHandlerBaseTests
     private sealed class TestCommandHandler : AggregateRootCommandHandlerBase<TestCommand, Guid>
     {
         private readonly Func<TestCommand, CancellationToken, Task<FlowChatResult<Guid>>> _executeAsync;
-        private readonly Func<TestCommand, DbUpdateException, CancellationToken, Task<FlowChatResult<Guid>>>? _handleDbUpdateExceptionAsync;
         private readonly Func<TestCommand, Exception, CancellationToken, Task<FlowChatResult<Guid>>>? _handleUnexpectedExceptionAsync;
 
         public TestCommandHandler(
             ILocalEventDispatcher domainEventDispatcher,
             IUnitOfWork unitOfWork,
             Func<TestCommand, CancellationToken, Task<FlowChatResult<Guid>>> executeAsync,
-            Func<TestCommand, DbUpdateException, CancellationToken, Task<FlowChatResult<Guid>>>? handleDbUpdateExceptionAsync = null,
             Func<TestCommand, Exception, CancellationToken, Task<FlowChatResult<Guid>>>? handleUnexpectedExceptionAsync = null)
             : base(domainEventDispatcher, unitOfWork)
         {
             _executeAsync = executeAsync;
-            _handleDbUpdateExceptionAsync = handleDbUpdateExceptionAsync;
             _handleUnexpectedExceptionAsync = handleUnexpectedExceptionAsync;
         }
 
@@ -116,16 +113,6 @@ public sealed class CommandHandlerBaseTests
         protected override IAggregateRoot? GetAggregateRoot()
         {
             return null;
-        }
-
-        protected override Task<FlowChatResult<Guid>> OnDbUpdateExceptionAfterRollbackHook(
-            TestCommand request,
-            DbUpdateException exception,
-            CancellationToken cancellationToken)
-        {
-            return _handleDbUpdateExceptionAsync is null
-                ? base.OnDbUpdateExceptionAfterRollbackHook(request, exception, cancellationToken)
-                : _handleDbUpdateExceptionAsync(request, exception, cancellationToken);
         }
 
         protected override Task<FlowChatResult<Guid>> HandleUnexpectedExceptionAsync(
