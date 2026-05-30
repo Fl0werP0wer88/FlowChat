@@ -38,7 +38,7 @@ public abstract class AggregateRootCommandHandlerBase<TCommand, TResponse> : ICo
                         {
                             aggregateRoot.IncrementVersion();
                             var domainEvents = aggregateRoot.PopDomainEvents();
-                            await DispatchDomainEventsAsync(domainEvents, token);
+                            await DispatchLocalEventsAsync(domainEvents, token);
                         }
                     }
 
@@ -78,7 +78,7 @@ public abstract class AggregateRootCommandHandlerBase<TCommand, TResponse> : ICo
         throw new UnreachableException();
     }
 
-    protected Task DispatchDomainEventsAsync(IEnumerable<IDomainEvent> domainEvents, CancellationToken cancellationToken)
+    protected Task DispatchLocalEventsAsync(IEnumerable<IDomainEvent> domainEvents, CancellationToken cancellationToken)
     {
         if (domainEvents is null)
         {

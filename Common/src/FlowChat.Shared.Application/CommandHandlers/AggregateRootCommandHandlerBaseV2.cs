@@ -44,7 +44,7 @@ public abstract class AggregateRootCommandHandlerBaseV2<TCommand, TResponse, TSn
                             aggregateRoot.IncrementVersion();
                             var snapshot = _mapper.Map<TSnapshot>(aggregateRoot);
                             var domainEvents = aggregateRoot.PopDomainEvents();
-                            await DispatchDomainEventsAsync(domainEvents, token);
+                            await DispatchLocalEventsAsync(domainEvents, token);
                         }
                     }
 
@@ -84,7 +84,7 @@ public abstract class AggregateRootCommandHandlerBaseV2<TCommand, TResponse, TSn
         throw new UnreachableException();
     }
 
-    protected Task DispatchDomainEventsAsync(IEnumerable<IDomainEvent> domainEvents, CancellationToken cancellationToken)
+    protected Task DispatchLocalEventsAsync(IEnumerable<IDomainEvent> domainEvents, CancellationToken cancellationToken)
     {
         if (domainEvents is null)
         {
