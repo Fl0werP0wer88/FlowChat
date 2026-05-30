@@ -33,7 +33,7 @@ public abstract class TransactionalCommandHandlerBase<TCommand, TValue>
         }
         catch (Exception exception)
         {
-            return await HandleUnexpectedExceptionAsync(exception);
+            return await HandleUnexpectedExceptionAsync(request, exception, cancellationToken);
         }
     }
 
@@ -46,10 +46,13 @@ public abstract class TransactionalCommandHandlerBase<TCommand, TValue>
         DbUpdateException exception,
         CancellationToken cancellationToken)
     {
-        return HandleUnexpectedExceptionAsync(exception);
+        return HandleUnexpectedExceptionAsync(request, exception, cancellationToken);
     }
 
-    private static Task<FlowChatResult<TValue>> HandleUnexpectedExceptionAsync(Exception exception)
+    protected virtual Task<FlowChatResult<TValue>> HandleUnexpectedExceptionAsync(
+        TCommand request,
+        Exception exception,
+        CancellationToken cancellationToken)
     {
         ExceptionDispatchInfo.Capture(exception).Throw();
         throw new UnreachableException();

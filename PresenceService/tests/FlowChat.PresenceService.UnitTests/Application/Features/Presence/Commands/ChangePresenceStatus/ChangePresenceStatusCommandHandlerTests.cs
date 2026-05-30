@@ -1,6 +1,5 @@
 using AutoFixture;
 using FlowChat.Core.Domain;
-using FlowChat.Core.Messaging;
 using FlowChat.Core.Results;
 using FlowChat.PresenceService.Application.Contracts.Infrastructure;
 using FlowChat.PresenceService.Application.Contracts.Persistence;
@@ -23,7 +22,6 @@ public sealed class ChangePresenceStatusCommandHandlerTests
     private readonly Mock<IUserPresencePreferencesWriteRepository> _preferencesWriteRepositoryMock = new();
     private readonly Mock<IMediator> _mediatorMock = new();
     private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
-    private readonly Mock<ILocalEventDispatcher> _domainEventDispatcherMock = new();
     private readonly ChangePresenceStatusCommandHandler _handler;
 
     public ChangePresenceStatusCommandHandlerTests()
@@ -35,9 +33,6 @@ public sealed class ChangePresenceStatusCommandHandlerTests
             .Returns<Func<CancellationToken, Task<FlowChatResult<Unit>>>, CancellationToken>(
                 (operation, ct) => operation(ct));
 
-        _domainEventDispatcherMock
-            .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<ILocalEvent>>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
         _mediatorMock
             .Setup(x => x.Publish(It.IsAny<PresenceStatusChangedApplicationEvent>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
@@ -55,8 +50,7 @@ public sealed class ChangePresenceStatusCommandHandlerTests
             _presenceStatusStoreMock.Object,
             _preferencesWriteRepositoryMock.Object,
             _mediatorMock.Object,
-            _unitOfWorkMock.Object,
-            _domainEventDispatcherMock.Object);
+            _unitOfWorkMock.Object);
     }
 
     [Fact]

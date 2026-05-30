@@ -14,13 +14,12 @@ public sealed class ChangePresenceStatusCommandHandler(
     IPresenceStatusStore presenceStatusStore,
     IUserPresencePreferencesWriteRepository userPresencePreferencesWriteRepository,
     IMediator mediator,
-    IUnitOfWork unitOfWork,
-    ILocalEventDispatcher domainEventDispatcher)
-    : AggregateRootCommandHandlerBase<ChangePresenceStatusCommand, Unit>(domainEventDispatcher, unitOfWork)
+    IUnitOfWork unitOfWork)
+    : TransactionalCommandHandlerBase<ChangePresenceStatusCommand, Unit>(unitOfWork)
 {
     private PresenceStatusSnapshot? _previousStatus;
 
-    protected override async Task<FlowChatResult<Unit>> ExecuteAsync(
+    protected override async Task<FlowChatResult<Unit>> HandleInTransactionAsync(
         ChangePresenceStatusCommand request,
         CancellationToken cancellationToken)
     {
@@ -79,6 +78,7 @@ public sealed class ChangePresenceStatusCommandHandler(
         return FlowChatResult<Unit>.Success(Unit.Value);
     }
 
+    //ToDo: we will be providin idempotendy in deifferent way than on command handlers. Remmeber to remove.
     protected override async Task<FlowChatResult<Unit>> HandleUnexpectedExceptionAsync(
         ChangePresenceStatusCommand request,
         Exception exception,

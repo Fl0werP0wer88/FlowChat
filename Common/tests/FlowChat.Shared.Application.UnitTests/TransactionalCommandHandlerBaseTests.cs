@@ -55,6 +55,22 @@ public sealed class TransactionalCommandHandlerBaseTests
     }
 
     [Fact]
+    public async Task Handle_WhenUnexpectedExceptionIsThrown_DelegatesToOverride()
+    {
+        var expectedResult = FlowChatResult<Guid>.Failure(DomainError.UnExpected("Handled unexpected"));
+        var unitOfWorkMock = CreateUnitOfWorkMock();
+        var handler = new TestTransactionalCommandHandler(
+            unitOfWorkMock.Object,
+            (_, _) => Task.FromException<FlowChatResult<Guid>>(new InvalidOperationException("boom")),
+            onUnexpectedException: (_, _, _) => Task.FromResult(expectedResult));
+
+        var result = await handler.Handle(new TestTransactionalCommand(), CancellationToken.None);
+
+        result.IsFailure.Should().BeTrue();
+        result.Error.ErrorMessage.Should().Be("Handled unexpected");
+    }
+
+    [Fact]
     public async Task Handle_WhenDbUpdateExceptionIsThrown_DelegatesToOverride()
     {
         var dbUpdateException = new DbUpdateException("db error");
@@ -114,15 +130,18 @@ public sealed class TransactionalCommandHandlerBaseTests
     {
         private readonly Func<TestTransactionalCommand, CancellationToken, Task<FlowChatResult<Guid>>> _executeAsync;
         private readonly Func<TestTransactionalCommand, DbUpdateException, CancellationToken, Task<FlowChatResult<Guid>>>? _onDbUpdateException;
+        private readonly Func<TestTransactionalCommand, Exception, CancellationToken, Task<FlowChatResult<Guid>>>? _onUnexpectedException;
 
         public TestTransactionalCommandHandler(
             IUnitOfWork unitOfWork,
             Func<TestTransactionalCommand, CancellationToken, Task<FlowChatResult<Guid>>> executeAsync,
-            Func<TestTransactionalCommand, DbUpdateException, CancellationToken, Task<FlowChatResult<Guid>>>? onDbUpdateException = null)
+            Func<TestTransactionalCommand, DbUpdateException, CancellationToken, Task<FlowChatResult<Guid>>>? onDbUpdateException = null,
+            Func<TestTransactionalCommand, Exception, CancellationToken, Task<FlowChatResult<Guid>>>? onUnexpectedException = null)
             : base(unitOfWork)
         {
             _executeAsync = executeAsync;
             _onDbUpdateException = onDbUpdateException;
+            _onUnexpectedException = onUnexpectedException;
         }
 
         protected override Task<FlowChatResult<Guid>> HandleInTransactionAsync(
@@ -137,5 +156,13 @@ public sealed class TransactionalCommandHandlerBaseTests
             => _onDbUpdateException is null
                 ? base.OnDbUpdateExceptionAfterRollbackAsync(request, exception, cancellationToken)
                 : _onDbUpdateException(request, exception, cancellationToken);
+
+        protected override Task<FlowChatResult<Guid>> HandleUnexpectedExceptionAsync(
+            TestTransactionalCommand request,
+            Exception exception,
+            CancellationToken cancellationToken)
+            => _onUnexpectedException is null
+                ? base.HandleUnexpectedExceptionAsync(request, exception, cancellationToken)
+                : _onUnexpectedException(request, exception, cancellationToken);
     }
 }
