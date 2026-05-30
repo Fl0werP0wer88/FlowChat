@@ -12,7 +12,7 @@ public abstract class AggregateRootCommandHandlerBaseV2<TCommand, TResponse, TSn
     where TCommand : ICommand<TResponse>, IRequest<FlowChatResult<TResponse>>
     where TResponse : notnull
 {
-    private readonly ILocalEventDispatcher _domainEventDispatcher;
+    private readonly ILocalEventDispatcher _localEventsDispatcher;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
 
@@ -21,7 +21,7 @@ public abstract class AggregateRootCommandHandlerBaseV2<TCommand, TResponse, TSn
         IUnitOfWork unitOfWork,
         IMapper mapper)
     {
-        _domainEventDispatcher = domainEventDispatcher;
+        _localEventsDispatcher = domainEventDispatcher;
         _unitOfWork = unitOfWork;
         _mapper = mapper;
     }
@@ -91,6 +91,6 @@ public abstract class AggregateRootCommandHandlerBaseV2<TCommand, TResponse, TSn
             return Task.CompletedTask;
         }
 
-        return _domainEventDispatcher.DispatchAsync(domainEvents, cancellationToken);
+        return _localEventsDispatcher.DispatchAsync(domainEvents, cancellationToken);
     }
 }
