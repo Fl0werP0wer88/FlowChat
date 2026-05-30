@@ -1,6 +1,5 @@
 using FlowChat.Core.Results;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
 using System.Diagnostics;
 using System.Runtime.ExceptionServices;
 
@@ -26,11 +25,6 @@ public abstract class TransactionalCommandHandlerBase<TCommand, TValue>
                 token => HandleInTransactionAsync(request, token),
                 cancellationToken);
         }
-        catch (DbUpdateException exception)
-        {
-            // Keep this outside the unit of work so EF execution strategies can finish all retries before application-specific recovery runs
-            return await OnDbUpdateExceptionAfterRollbackAsync(request, exception, cancellationToken);
-        }
         catch (Exception exception)
         {
             return await HandleUnexpectedExceptionAsync(request, exception, cancellationToken);
@@ -40,14 +34,6 @@ public abstract class TransactionalCommandHandlerBase<TCommand, TValue>
     protected abstract Task<FlowChatResult<TValue>> HandleInTransactionAsync(
         TCommand request,
         CancellationToken cancellationToken);
-
-    protected virtual Task<FlowChatResult<TValue>> OnDbUpdateExceptionAfterRollbackAsync(
-        TCommand request,
-        DbUpdateException exception,
-        CancellationToken cancellationToken)
-    {
-        return HandleUnexpectedExceptionAsync(request, exception, cancellationToken);
-    }
 
     protected virtual Task<FlowChatResult<TValue>> HandleUnexpectedExceptionAsync(
         TCommand request,
