@@ -17,7 +17,7 @@ public static class ApplicationServiceRegistration
             cfg.RegisterServicesFromAssemblies(AppDomain.CurrentDomain.GetAssemblies());
             cfg.AddFlowChatBehaviors();
         });
-        services.AddScoped<IDomainEventDispatcher, FlowChatDomainEventDispatcher>();
+        services.AddScoped<IDomainEventDispatcher, LocalEventDispatcher>();
 
         return services;
     }

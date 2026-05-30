@@ -10,11 +10,11 @@ namespace FlowChat.Shared.Application.UnitTests.Common.Eventing;
 public sealed class FlowChatDomainEventDispatcherTests
 {
     private readonly Mock<IMediator> _mediatorMock = new();
-    private readonly FlowChatDomainEventDispatcher _dispatcher;
+    private readonly LocalEventDispatcher _dispatcher;
 
     public FlowChatDomainEventDispatcherTests()
     {
-        _dispatcher = new FlowChatDomainEventDispatcher(_mediatorMock.Object);
+        _dispatcher = new LocalEventDispatcher(_mediatorMock.Object);
     }
 
     [Fact]

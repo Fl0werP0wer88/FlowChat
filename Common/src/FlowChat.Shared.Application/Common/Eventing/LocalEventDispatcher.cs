@@ -1,15 +1,16 @@
+using FlowChat.Core.Messaging;
 using FlowChat.Shared.Domain;
 using MediatR;
 
 namespace FlowChat.Shared.Application.Common.Eventing;
 
-public sealed class FlowChatDomainEventDispatcher(IMediator mediator) : IDomainEventDispatcher
+public sealed class LocalEventDispatcher(IMediator mediator) : IDomainEventDispatcher
 {
     private readonly IMediator _mediator = mediator;
 
-    public async Task DispatchAsync(IEnumerable<IDomainEvent> initialEvents, CancellationToken cancellationToken = default)
+    public async Task DispatchAsync(IEnumerable<ILocalEvent> initialEvents, CancellationToken cancellationToken = default)
     {
-        var eventQueue = new Queue<IDomainEvent>(initialEvents);
+        var eventQueue = new Queue<ILocalEvent>(initialEvents);
 
         while (eventQueue.Count > 0)
         {

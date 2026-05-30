@@ -17,7 +17,7 @@ public static class ApplicationServiceRegistration
             cfg.AddFlowChatBehaviors();
         });
         services.AddAutoMapper((Action<AutoMapper.IMapperConfigurationExpression>?)null, applicationAssembly);
-        services.AddScoped<IDomainEventDispatcher, FlowChatDomainEventDispatcher>();
+        services.AddScoped<IDomainEventDispatcher, LocalEventDispatcher>();
 
         return services;
     }
