@@ -2,65 +2,44 @@ using FlowChat.Core.Messaging;
 using FlowChat.Core.Results;
 using FlowChat.Shared.Domain;
 using MediatR;
-using System.Diagnostics;
-using System.Runtime.ExceptionServices;
 
 namespace FlowChat.Shared.Application;
 
-public abstract class AggregateRootCommandHandlerBase<TCommand, TResponse> : ICommandHandler<TCommand, TResponse>
+public abstract class AggregateRootCommandHandlerBase<TCommand, TResponse>
+    : TransactionalCommandHandlerBase<TCommand, TResponse>
     where TCommand : ICommand<TResponse>, IRequest<FlowChatResult<TResponse>>
     where TResponse : notnull
 {
-    private readonly ILocalEventDispatcher _localEvenstDispatcher;
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly ILocalEventDispatcher _localEventsDispatcher;
 
     protected AggregateRootCommandHandlerBase(
         ILocalEventDispatcher domainEventDispatcher,
         IUnitOfWork unitOfWork)
+        : base(unitOfWork)
     {
-        _localEvenstDispatcher = domainEventDispatcher;
-        _unitOfWork = unitOfWork;
+        _localEventsDispatcher = domainEventDispatcher;
     }
 
-    public async Task<FlowChatResult<TResponse>> Handle(TCommand request, CancellationToken cancellationToken)
+    protected override async Task<FlowChatResult<TResponse>> HandleInTransactionAsync(
+        TCommand request,
+        CancellationToken cancellationToken)
     {
-        try
-        {
-            return await _unitOfWork.ExecuteCommandInTransactionAsync(
-                async token =>
-                {
-                    var operationResult = await ExecuteAsync(request, token);
+        var operationResult = await ExecuteAsync(request, cancellationToken);
 
-                    if (operationResult.IsSuccess)
-                    {
-                        var aggregateRoot = GetAggregateRoot();
-                        aggregateRoot.IncrementVersion();
-                        var domainEvents = aggregateRoot.PopDomainEvents();
-                        await DispatchLocalEventsAsync(domainEvents, token);
-                    }
-
-                    return operationResult;
-                },
-                cancellationToken);
-        }
-        catch (Exception exception)
+        if (operationResult.IsSuccess)
         {
-            return await HandleUnexpectedExceptionAsync(request, exception, cancellationToken);
+            var aggregateRoot = GetAggregateRoot();
+            aggregateRoot.IncrementVersion();
+            var domainEvents = aggregateRoot.PopDomainEvents();
+            await DispatchLocalEventsAsync(domainEvents, cancellationToken);
         }
+
+        return operationResult;
     }
 
     protected abstract Task<FlowChatResult<TResponse>> ExecuteAsync(TCommand request, CancellationToken cancellationToken);
 
     protected abstract IAggregateRoot GetAggregateRoot();
-
-    protected virtual Task<FlowChatResult<TResponse>> HandleUnexpectedExceptionAsync(
-        TCommand request,
-        Exception exception,
-        CancellationToken cancellationToken)
-    {
-        ExceptionDispatchInfo.Capture(exception).Throw();
-        throw new UnreachableException();
-    }
 
     protected Task DispatchLocalEventsAsync(IEnumerable<ILocalEvent> domainEvents, CancellationToken cancellationToken)
     {
@@ -69,7 +48,7 @@ public abstract class AggregateRootCommandHandlerBase<TCommand, TResponse> : ICo
             return Task.CompletedTask;
         }
 
-        return _localEvenstDispatcher.DispatchAsync(domainEvents, cancellationToken);
+        return _localEventsDispatcher.DispatchAsync(domainEvents, cancellationToken);
     }
 
 }
