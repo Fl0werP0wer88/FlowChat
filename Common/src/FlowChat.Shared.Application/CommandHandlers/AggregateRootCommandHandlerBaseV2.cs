@@ -8,22 +8,23 @@ using System.Runtime.ExceptionServices;
 
 namespace FlowChat.Shared.Application;
 
-public abstract class AggregateRootCommandHandlerBaseV2<TCommand, TResponse, TSnapshot> : ICommandHandler<TCommand, TResponse>
+public abstract class AggregateRootCommandHandlerBaseV2<TCommand, TResponse, TAggregate> : ICommandHandler<TCommand, TResponse>
     where TCommand : ICommand<TResponse>, IRequest<FlowChatResult<TResponse>>
     where TResponse : notnull
+    where TAggregate : class, IAggregateRoot
 {
     private readonly ILocalEventDispatcher _localEventsDispatcher;
     private readonly IUnitOfWork _unitOfWork;
-    private readonly IMapper _mapper;
+    IEnumerable<IAggregatePostProcessor<TCommand, TAggregate>> _postProcessors;
 
     protected AggregateRootCommandHandlerBaseV2(
         ILocalEventDispatcher localEventsDispatcher,
         IUnitOfWork unitOfWork,
-        IMapper mapper)
+        IEnumerable<IAggregatePostProcessor<TCommand, TAggregate>> postProcessors)
     {
         _localEventsDispatcher = localEventsDispatcher;
         _unitOfWork = unitOfWork;
-        _mapper = mapper;
+        _postProcessors = postProcessors;
     }
 
     public async Task<FlowChatResult<TResponse>> Handle(TCommand request, CancellationToken cancellationToken)
@@ -42,14 +43,19 @@ public abstract class AggregateRootCommandHandlerBaseV2<TCommand, TResponse, TSn
                         if (aggregateRoot is not null)
                         {
                             aggregateRoot.IncrementVersion();
-                            var snapshot = _mapper.Map<TSnapshot>(aggregateRoot);
-                            var snapshotEvent = new SnapshotApplicationEvent<TSnapshot>(snapshot);
+                            // var snapshot = _mapper.Map<TSnapshot>(aggregateRoot);
+                            // var snapshotEvent = new SnapshotApplicationEvent<TSnapshot>(snapshot);
                             var domainEvents = aggregateRoot.PopDomainEvents();
                             var localEvents = domainEvents
-                                .Cast<ILocalEvent>()
-                                .Append(snapshotEvent);
+                                .Cast<ILocalEvent>();
+                            // .Append(snapshotEvent);
 
                             await DispatchLocalEventsAsync(localEvents, token);
+
+                            foreach (var processor in _postProcessors)
+                            {
+                                await processor.ProcessAsync(request, aggregateRoot, cancellationToken);
+                            }
                         }
                     }
 
@@ -65,7 +71,7 @@ public abstract class AggregateRootCommandHandlerBaseV2<TCommand, TResponse, TSn
 
     protected abstract Task<FlowChatResult<TResponse>> ExecuteAsync(TCommand request, CancellationToken cancellationToken);
 
-    protected virtual IAggregateRoot? GetAggregateRoot() => null;
+    protected virtual TAggregate? GetAggregateRoot() => null;
 
     protected virtual Task<FlowChatResult<TResponse>> HandleUnexpectedExceptionAsync(
         TCommand request,
@@ -85,4 +91,13 @@ public abstract class AggregateRootCommandHandlerBaseV2<TCommand, TResponse, TSn
 
         return _localEventsDispatcher.DispatchAsync(domainEvents, cancellationToken);
     }
+}
+
+
+public interface IAggregatePostProcessor<TCommand, TAggregate>
+{
+    Task ProcessAsync(
+        TCommand command,
+        TAggregate aggregate,
+        CancellationToken cancellationToken);
 }
