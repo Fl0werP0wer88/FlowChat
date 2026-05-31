@@ -1,23 +1,41 @@
 using FluentAssertions;
 using FlowChat.Core.Results;
 using FlowChat.Shared.Domain;
-using Microsoft.EntityFrameworkCore;
-using Moq;
 
 namespace FlowChat.Shared.Application.UnitTests;
 
 public sealed class CommandHandlerBaseTests
 {
     [Fact]
+    public async Task Handle_WhenCommandSucceeds_ReturnsSuccessResult()
+    {
+        var expected = FlowChatResult<Guid>.Success(Guid.NewGuid());
+        var handler = new TestCommandHandler((_, _) => Task.FromResult(expected));
+
+        var result = await handler.Handle(new TestCommand(), CancellationToken.None);
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().Be(expected.Value);
+    }
+
+    [Fact]
+    public async Task Handle_WhenCommandFails_ReturnsFailureResultWithoutThrowing()
+    {
+        var failure = FlowChatResult<Guid>.Failure(DomainError.Conflict("already exists"));
+        var handler = new TestCommandHandler((_, _) => Task.FromResult(failure));
+
+        var result = await handler.Handle(new TestCommand(), CancellationToken.None);
+
+        result.IsFailure.Should().BeTrue();
+        result.Error.ErrorType.Should().Be(ErrorType.Conflict);
+        result.Error.ErrorMessage.Should().Contain("already exists");
+    }
+
+    [Fact]
     public async Task Handle_WhenUnexpectedExceptionIsThrown_RethrowsByDefault()
     {
-        var unitOfWorkMock = CreateUnitOfWorkMock();
-        var domainEventDispatcherMock = new Mock<ILocalEventDispatcher>();
         var expectedException = new InvalidOperationException("boom");
-        var handler = new TestCommandHandler(
-            domainEventDispatcherMock.Object,
-            unitOfWorkMock.Object,
-            (_, _) => Task.FromException<FlowChatResult<Guid>>(expectedException));
+        var handler = new TestCommandHandler((_, _) => Task.FromException<FlowChatResult<Guid>>(expectedException));
 
         var action = async () => await handler.Handle(new TestCommand(), CancellationToken.None);
 
@@ -29,13 +47,9 @@ public sealed class CommandHandlerBaseTests
     [Fact]
     public async Task Handle_WhenUnexpectedExceptionIsThrown_UsesOverrideResult()
     {
-        var unitOfWorkMock = CreateUnitOfWorkMock();
-        var domainEventDispatcherMock = new Mock<ILocalEventDispatcher>();
         var expectedException = new InvalidOperationException("boom");
         var expectedResult = FlowChatResult<Guid>.Failure(DomainError.UnExpected("Handled"));
         var handler = new TestCommandHandler(
-            domainEventDispatcherMock.Object,
-            unitOfWorkMock.Object,
             (_, _) => Task.FromException<FlowChatResult<Guid>>(expectedException),
             handleUnexpectedExceptionAsync: (_, exception, _) =>
             {
@@ -50,70 +64,23 @@ public sealed class CommandHandlerBaseTests
         result.Error.ErrorMessage.Should().Be("Handled");
     }
 
-    [Fact]
-    public async Task Handle_WhenDbUpdateExceptionIsThrown_UsesUnexpectedExceptionOverrideResult()
-    {
-        var unitOfWorkMock = CreateUnitOfWorkMock();
-        var domainEventDispatcherMock = new Mock<ILocalEventDispatcher>();
-        var expectedException = new DbUpdateException("boom");
-        var expectedResult = FlowChatResult<Guid>.Failure(DomainError.UnExpected("Handled db update"));
-        var handler = new TestCommandHandler(
-            domainEventDispatcherMock.Object,
-            unitOfWorkMock.Object,
-            (_, _) => Task.FromException<FlowChatResult<Guid>>(expectedException),
-            handleUnexpectedExceptionAsync: (_, exception, _) =>
-            {
-                exception.Should().BeSameAs(expectedException);
-                return Task.FromResult(expectedResult);
-            });
-
-        var result = await handler.Handle(new TestCommand(), CancellationToken.None);
-
-        result.IsFailure.Should().BeTrue();
-        result.Error.ErrorType.Should().Be(ErrorType.Unexpected);
-        result.Error.ErrorMessage.Should().Be("Handled db update");
-    }
-
-    private static Mock<IUnitOfWork> CreateUnitOfWorkMock()
-    {
-        var unitOfWorkMock = new Mock<IUnitOfWork>();
-        unitOfWorkMock
-            .Setup(x => x.ExecuteCommandInTransactionAsync(
-                It.IsAny<Func<CancellationToken, Task<FlowChatResult<Guid>>>>(),
-                It.IsAny<CancellationToken>()))
-            .Returns<Func<CancellationToken, Task<FlowChatResult<Guid>>>, CancellationToken>(
-                (operation, cancellationToken) => operation(cancellationToken));
-
-        return unitOfWorkMock;
-    }
-
     private sealed record TestCommand : ICommand<Guid>;
 
-    private sealed class TestCommandHandler : AggregateRootCommandHandlerBase<TestCommand, Guid>
+    private sealed class TestCommandHandler : CommandHandlerBase<TestCommand, Guid>
     {
         private readonly Func<TestCommand, CancellationToken, Task<FlowChatResult<Guid>>> _executeAsync;
         private readonly Func<TestCommand, Exception, CancellationToken, Task<FlowChatResult<Guid>>>? _handleUnexpectedExceptionAsync;
 
         public TestCommandHandler(
-            ILocalEventDispatcher domainEventDispatcher,
-            IUnitOfWork unitOfWork,
             Func<TestCommand, CancellationToken, Task<FlowChatResult<Guid>>> executeAsync,
             Func<TestCommand, Exception, CancellationToken, Task<FlowChatResult<Guid>>>? handleUnexpectedExceptionAsync = null)
-            : base(domainEventDispatcher, unitOfWork)
         {
             _executeAsync = executeAsync;
             _handleUnexpectedExceptionAsync = handleUnexpectedExceptionAsync;
         }
 
-        protected override Task<FlowChatResult<Guid>> ExecuteAsync(TestCommand request, CancellationToken cancellationToken)
-        {
-            return _executeAsync(request, cancellationToken);
-        }
-
-        protected override IAggregateRoot GetAggregateRoot()
-        {
-            throw new InvalidOperationException("Aggregate root instance is not available.");
-        }
+        protected override Task<FlowChatResult<Guid>> HandleCommandAsync(TestCommand request, CancellationToken cancellationToken)
+            => _executeAsync(request, cancellationToken);
 
         protected override Task<FlowChatResult<Guid>> HandleUnexpectedExceptionAsync(
             TestCommand request,
