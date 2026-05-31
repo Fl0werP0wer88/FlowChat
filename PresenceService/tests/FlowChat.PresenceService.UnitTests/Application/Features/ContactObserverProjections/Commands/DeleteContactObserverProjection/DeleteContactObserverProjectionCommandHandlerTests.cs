@@ -1,9 +1,7 @@
 using AutoFixture;
-using FlowChat.Core.Messaging;
 using FlowChat.PresenceService.Application.Contracts.Persistence;
 using FlowChat.PresenceService.Application.Features.ContactObserverProjections.Commands.DeleteContactObserverProjection;
 using FlowChat.Shared.Application;
-using FlowChat.Shared.Domain;
 using FluentAssertions;
 using MediatR;
 using Moq;
@@ -15,7 +13,6 @@ public sealed class DeleteContactObserverProjectionCommandHandlerTests
     private readonly IFixture _fixture = new Fixture();
     private readonly Mock<IContactObserverProjectionWriteRepository> _repositoryMock = new();
     private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
-    private readonly Mock<ILocalEventDispatcher> _domainEventDispatcherMock = new();
     private readonly DeleteContactObserverProjectionCommandHandler _handler;
 
     public DeleteContactObserverProjectionCommandHandlerTests()
@@ -31,14 +28,9 @@ public sealed class DeleteContactObserverProjectionCommandHandlerTests
             .Returns<Func<CancellationToken, Task<FlowChatResult<Unit>>>, CancellationToken>(
                 (operation, ct) => operation(ct));
 
-        _domainEventDispatcherMock
-            .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<ILocalEvent>>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-
         _handler = new DeleteContactObserverProjectionCommandHandler(
             _repositoryMock.Object,
-            _unitOfWorkMock.Object,
-            _domainEventDispatcherMock.Object);
+            _unitOfWorkMock.Object);
     }
 
     [Fact]

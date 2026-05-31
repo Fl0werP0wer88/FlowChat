@@ -1,17 +1,15 @@
 using FlowChat.PresenceService.Application.Contracts.Persistence;
 using FlowChat.Shared.Application;
-using FlowChat.Shared.Domain;
 using MediatR;
 
 namespace FlowChat.PresenceService.Application.Features.ContactObserverProjections.Commands.DeleteContactObserverProjection;
 
 public sealed class DeleteContactObserverProjectionCommandHandler(
     IContactObserverProjectionWriteRepository contactObserverProjectionWriteRepository,
-    IUnitOfWork unitOfWork,
-    ILocalEventDispatcher domainEventDispatcher)
-    : AggregateRootCommandHandlerBase<DeleteContactObserverProjectionCommand, Unit>(domainEventDispatcher, unitOfWork)
+    IUnitOfWork unitOfWork)
+    : TransactionalCommandHandlerBase<DeleteContactObserverProjectionCommand, Unit>(unitOfWork)
 {
-    protected override async Task<FlowChatResult<Unit>> ExecuteAsync(
+    protected override async Task<FlowChatResult<Unit>> HandleInTransactionAsync(
         DeleteContactObserverProjectionCommand request,
         CancellationToken cancellationToken)
     {
@@ -22,5 +20,4 @@ public sealed class DeleteContactObserverProjectionCommandHandler(
 
         return FlowChatResult<Unit>.Success(Unit.Value);
     }
-
 }
