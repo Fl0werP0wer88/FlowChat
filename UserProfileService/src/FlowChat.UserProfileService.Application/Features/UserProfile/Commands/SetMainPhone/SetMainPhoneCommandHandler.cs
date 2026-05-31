@@ -51,6 +51,6 @@ public sealed class SetMainPhoneCommandHandler
         return FlowChatResult<Guid>.Success(phone.Id.Value);
     }
 
-    protected override IAggregateRoot? GetAggregateRoot() => _userProfile;
+    protected override IAggregateRoot GetAggregateRoot() =>
+        _userProfile ?? throw new InvalidOperationException("Aggregate root instance is not available.");
 }
-

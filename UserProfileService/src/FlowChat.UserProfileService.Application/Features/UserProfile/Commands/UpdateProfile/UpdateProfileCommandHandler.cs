@@ -41,5 +41,6 @@ public sealed class UpdateProfileCommandHandler
         return FlowChatResult<Guid>.Success(_userProfile.Id.Value);
     }
 
-    protected override IAggregateRoot? GetAggregateRoot() => _userProfile;
+    protected override IAggregateRoot GetAggregateRoot() =>
+        _userProfile ?? throw new InvalidOperationException("Aggregate root instance is not available.");
 }

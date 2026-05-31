@@ -34,12 +34,9 @@ public abstract class AggregateRootCommandHandlerBase<TCommand, TResponse> : ICo
                     if (operationResult.IsSuccess)
                     {
                         var aggregateRoot = GetAggregateRoot();
-                        if (aggregateRoot is not null)
-                        {
-                            aggregateRoot.IncrementVersion();
-                            var domainEvents = aggregateRoot.PopDomainEvents();
-                            await DispatchLocalEventsAsync(domainEvents, token);
-                        }
+                        aggregateRoot.IncrementVersion();
+                        var domainEvents = aggregateRoot.PopDomainEvents();
+                        await DispatchLocalEventsAsync(domainEvents, token);
                     }
 
                     return operationResult;
@@ -54,7 +51,7 @@ public abstract class AggregateRootCommandHandlerBase<TCommand, TResponse> : ICo
 
     protected abstract Task<FlowChatResult<TResponse>> ExecuteAsync(TCommand request, CancellationToken cancellationToken);
 
-    protected virtual IAggregateRoot? GetAggregateRoot() => null;
+    protected abstract IAggregateRoot GetAggregateRoot();
 
     protected virtual Task<FlowChatResult<TResponse>> HandleUnexpectedExceptionAsync(
         TCommand request,

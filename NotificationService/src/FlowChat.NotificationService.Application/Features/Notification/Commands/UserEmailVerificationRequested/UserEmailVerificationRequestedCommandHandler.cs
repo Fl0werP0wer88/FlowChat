@@ -65,6 +65,6 @@ public sealed class UserEmailVerificationRequestedCommandHandler
         return FlowChatResult<Unit>.Success(Unit.Value);
     }
 
-    protected override IAggregateRoot? GetAggregateRoot() => _notification;
+    protected override IAggregateRoot GetAggregateRoot() =>
+        _notification ?? throw new InvalidOperationException("Aggregate root instance is not available.");
 }
-

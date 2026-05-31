@@ -62,6 +62,6 @@ public sealed class CreateDuetConversationCommandHandler
             participant.UserId);
     }
 
-    protected override IAggregateRoot? GetAggregateRoot() =>
-        _newConversation;
+    protected override IAggregateRoot GetAggregateRoot() =>
+        _newConversation ?? throw new InvalidOperationException("Aggregate root instance is not available.");
 }

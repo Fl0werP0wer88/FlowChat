@@ -77,8 +77,8 @@ public sealed class CreateGroupFromDuetCommandHandler
             new GroupConversationDetailDto(_conversation.Id.Value, _conversation.Name!, participantDtos));
     }
 
-    protected override IAggregateRoot? GetAggregateRoot() =>
-        _conversation;
+    protected override IAggregateRoot GetAggregateRoot() =>
+        _conversation ?? throw new InvalidOperationException("Aggregate root instance is not available.");
 
     private static ConversationParticipantDto BuildParticipantDto(
         ParticipantUser participant,

@@ -51,5 +51,6 @@ public sealed class RefreshTokenCommandHandler : AggregateRootCommandHandlerBase
             });
     }
 
-    protected override IAggregateRoot? GetAggregateRoot() => _account;
+    protected override IAggregateRoot GetAggregateRoot() =>
+        _account ?? throw new InvalidOperationException("Aggregate root instance is not available.");
 }

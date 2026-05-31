@@ -46,6 +46,6 @@ public sealed class AddParticipantCommandHandler
         return FlowChatResult<bool>.Success(true);
     }
 
-    protected override IAggregateRoot? GetAggregateRoot() =>
-        _conversation;
+    protected override IAggregateRoot GetAggregateRoot() =>
+        _conversation ?? throw new InvalidOperationException("Aggregate root instance is not available.");
 }

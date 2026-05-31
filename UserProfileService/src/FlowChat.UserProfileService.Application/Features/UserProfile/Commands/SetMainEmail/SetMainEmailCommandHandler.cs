@@ -51,6 +51,6 @@ public sealed class SetMainEmailCommandHandler
         return FlowChatResult<Guid>.Success(email.Id.Value);
     }
 
-    protected override IAggregateRoot? GetAggregateRoot() => _userProfile;
+    protected override IAggregateRoot GetAggregateRoot() =>
+        _userProfile ?? throw new InvalidOperationException("Aggregate root instance is not available.");
 }
-

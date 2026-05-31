@@ -39,6 +39,6 @@ public sealed class DeleteContactCommandHandler : AggregateRootCommandHandlerBas
         return FlowChatResult<MediatR.Unit>.Success(MediatR.Unit.Value);
     }
 
-    protected override IAggregateRoot? GetAggregateRoot() =>
-        _contact;
+    protected override IAggregateRoot GetAggregateRoot() =>
+        _contact ?? throw new InvalidOperationException("Aggregate root instance is not available.");
 }

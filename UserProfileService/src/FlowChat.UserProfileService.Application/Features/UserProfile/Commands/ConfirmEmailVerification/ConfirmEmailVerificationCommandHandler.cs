@@ -118,7 +118,8 @@ public sealed class ConfirmEmailVerificationCommandHandler
         return await base.HandleUnexpectedExceptionAsync(request, exception, cancellationToken);
     }
 
-    protected override IAggregateRoot? GetAggregateRoot() => _userProfile;
+    protected override IAggregateRoot GetAggregateRoot() =>
+        _userProfile ?? throw new InvalidOperationException("Aggregate root instance is not available.");
 
     private static bool IsConfirmedBySameToken(
         EmailVerificationTokenPayload payload,

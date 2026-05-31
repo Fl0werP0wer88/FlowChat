@@ -73,6 +73,7 @@ public sealed class SendEmailVerificationCommandHandler
         return FlowChatResult<Guid>.Success(verificationRequest.Id.Value);
     }
 
-    protected override IAggregateRoot? GetAggregateRoot() => _process;
+    protected override IAggregateRoot GetAggregateRoot() =>
+        _process ?? throw new InvalidOperationException("Aggregate root instance is not available.");
 
 }

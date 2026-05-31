@@ -110,9 +110,9 @@ public sealed class CommandHandlerBaseTests
             return _executeAsync(request, cancellationToken);
         }
 
-        protected override IAggregateRoot? GetAggregateRoot()
+        protected override IAggregateRoot GetAggregateRoot()
         {
-            return null;
+            throw new InvalidOperationException("Aggregate root instance is not available.");
         }
 
         protected override Task<FlowChatResult<Guid>> HandleUnexpectedExceptionAsync(

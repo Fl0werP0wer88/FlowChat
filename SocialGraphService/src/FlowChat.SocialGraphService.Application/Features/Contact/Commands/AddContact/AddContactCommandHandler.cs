@@ -65,8 +65,8 @@ public sealed class AddContactCommandHandler : AggregateRootCommandHandlerBase<A
         return FlowChatResult<Guid>.Success(_contact.Id.Value);
     }
 
-    protected override IAggregateRoot? GetAggregateRoot() =>
-        _contact;
+    protected override IAggregateRoot GetAggregateRoot() =>
+        _contact ?? throw new InvalidOperationException("Aggregate root instance is not available.");
 
     private async Task<UserProfileProjectionDto?> GetUserProfileProjectionAsync(
         AddContactCommand request,

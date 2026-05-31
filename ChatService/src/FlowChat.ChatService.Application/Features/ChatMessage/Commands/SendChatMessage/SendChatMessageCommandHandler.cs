@@ -57,6 +57,6 @@ public sealed class SendChatMessageCommandHandler
             new SendChatMessageCommandResult(_chatMessage.Id.Value, _chatMessage.SentAtUtc.Value));
     }
 
-    protected override IAggregateRoot? GetAggregateRoot() =>
-        _chatMessage;
+    protected override IAggregateRoot GetAggregateRoot() =>
+        _chatMessage ?? throw new InvalidOperationException("Aggregate root instance is not available.");
 }
