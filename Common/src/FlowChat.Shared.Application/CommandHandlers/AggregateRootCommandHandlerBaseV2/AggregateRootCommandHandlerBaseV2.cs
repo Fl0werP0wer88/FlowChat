@@ -50,9 +50,10 @@ public abstract class AggregateRootCommandHandlerBaseV2<TCommand, TResponse, TAg
 
             await DispatchLocalEventsAsync(localEvents, cancellationToken);
 
+            var projectionOperationType = GetProjectionOperationType(request, aggregateRoot);
             foreach (var processor in _beforeSaveProcessors)
             {
-                await processor.ProcessAsync(request, aggregateRoot, ProjectionOperationType, cancellationToken);
+                await processor.ProcessAsync(request, aggregateRoot, projectionOperationType, cancellationToken);
             }
         }
 
@@ -62,6 +63,9 @@ public abstract class AggregateRootCommandHandlerBaseV2<TCommand, TResponse, TAg
     protected abstract Task<FlowChatResult<TResponse>> ExecuteAsync(TCommand request, CancellationToken cancellationToken);
 
     protected abstract TAggregate GetAggregateRoot();
+
+    protected virtual OperationTypes GetProjectionOperationType(TCommand request, TAggregate aggregateRoot) =>
+        ProjectionOperationType;
 
     protected Task DispatchLocalEventsAsync(IEnumerable<ILocalEvent> domainEvents, CancellationToken cancellationToken)
     {

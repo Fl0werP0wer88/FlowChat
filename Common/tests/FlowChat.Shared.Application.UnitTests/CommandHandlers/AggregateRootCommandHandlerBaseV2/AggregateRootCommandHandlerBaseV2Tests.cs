@@ -81,6 +81,74 @@ public sealed class AggregateRootCommandHandlerBaseV2Tests
         callOrder.Should().Equal("events", "processor");
     }
 
+    [Fact]
+    public async Task Handle_WhenUpsertCommandCreatesAggregate_PassesCreatedOperationTypeToBeforeSaveProcessor()
+    {
+        var aggregate = new TestAggregate(Guid.NewGuid());
+        var command = new TestCommand();
+        var unitOfWorkMock = CreateUnitOfWorkMock();
+        var localEventDispatcherMock = new Mock<ILocalEventDispatcher>();
+        OperationTypes? capturedOperationType = null;
+        var processorMock = new Mock<IAggregateBeforeSaveProcessor<TestCommand, TestAggregate>>();
+        processorMock
+            .Setup(x => x.ProcessAsync(
+                It.IsAny<TestCommand>(),
+                It.IsAny<TestAggregate>(),
+                It.IsAny<OperationTypes>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<TestCommand, TestAggregate, OperationTypes, CancellationToken>(
+                (_, _, operationType, _) => capturedOperationType = operationType)
+            .Returns(Task.CompletedTask);
+        var handler = new TestUpsertCommandHandler(
+            aggregate,
+            wasAggregateCreated: true,
+            unitOfWorkMock.Object,
+            localEventDispatcherMock.Object,
+            [processorMock.Object]);
+
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        result.IsSuccess.Should().BeTrue();
+        capturedOperationType.Should().Be(OperationTypes.Created);
+        processorMock.Verify(
+            x => x.ProcessAsync(command, aggregate, OperationTypes.Created, It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task Handle_WhenUpsertCommandUpdatesAggregate_PassesUpdatedOperationTypeToBeforeSaveProcessor()
+    {
+        var aggregate = new TestAggregate(Guid.NewGuid());
+        var command = new TestCommand();
+        var unitOfWorkMock = CreateUnitOfWorkMock();
+        var localEventDispatcherMock = new Mock<ILocalEventDispatcher>();
+        OperationTypes? capturedOperationType = null;
+        var processorMock = new Mock<IAggregateBeforeSaveProcessor<TestCommand, TestAggregate>>();
+        processorMock
+            .Setup(x => x.ProcessAsync(
+                It.IsAny<TestCommand>(),
+                It.IsAny<TestAggregate>(),
+                It.IsAny<OperationTypes>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<TestCommand, TestAggregate, OperationTypes, CancellationToken>(
+                (_, _, operationType, _) => capturedOperationType = operationType)
+            .Returns(Task.CompletedTask);
+        var handler = new TestUpsertCommandHandler(
+            aggregate,
+            wasAggregateCreated: false,
+            unitOfWorkMock.Object,
+            localEventDispatcherMock.Object,
+            [processorMock.Object]);
+
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        result.IsSuccess.Should().BeTrue();
+        capturedOperationType.Should().Be(OperationTypes.Updated);
+        processorMock.Verify(
+            x => x.ProcessAsync(command, aggregate, OperationTypes.Updated, It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
     private static ICommandHandler<TestCommand, Guid> CreateHandler(
         OperationTypes operationType,
         TestAggregate aggregate,
@@ -207,6 +275,34 @@ public sealed class AggregateRootCommandHandlerBaseV2Tests
         {
             _aggregate = aggregate;
         }
+
+        protected override Task<FlowChatResult<Guid>> ExecuteAsync(
+            TestCommand request,
+            CancellationToken cancellationToken)
+            => Task.FromResult(FlowChatResult<Guid>.Success(_aggregate.Id.Value));
+
+        protected override TestAggregate GetAggregateRoot() => _aggregate;
+    }
+
+    private sealed class TestUpsertCommandHandler
+        : AggregateRootUpsertCommandHandlerBaseV2<TestCommand, Guid, TestAggregate>
+    {
+        private readonly TestAggregate _aggregate;
+        private readonly bool _wasAggregateCreated;
+
+        public TestUpsertCommandHandler(
+            TestAggregate aggregate,
+            bool wasAggregateCreated,
+            IUnitOfWork unitOfWork,
+            ILocalEventDispatcher localEventsDispatcher,
+            IEnumerable<IAggregateBeforeSaveProcessor<TestCommand, TestAggregate>> beforeSaveProcessors)
+            : base(localEventsDispatcher, unitOfWork, beforeSaveProcessors)
+        {
+            _aggregate = aggregate;
+            _wasAggregateCreated = wasAggregateCreated;
+        }
+
+        protected override bool WasAggregateCreated => _wasAggregateCreated;
 
         protected override Task<FlowChatResult<Guid>> ExecuteAsync(
             TestCommand request,

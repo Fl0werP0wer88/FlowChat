@@ -1,4 +1,6 @@
 using FlowChat.Shared.Application;
+using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2;
+using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2.BeforeSaveProcessors;
 using FlowChat.Shared.Domain;
 using FlowChat.UserProfileService.Application.Contracts.Persistence;
 using FlowChat.UserProfileService.Application.Features.UserProfile.EmailVerification.Interfaces;
@@ -9,19 +11,22 @@ using DomainUserProfile = FlowChat.UserProfileService.Domain.Entities.UserProfil
 namespace FlowChat.UserProfileService.Application.Features.UserProfile.Commands.SendEmailVerification;
 
 public sealed class SendEmailVerificationCommandHandler
-    : AggregateRootCommandHandlerBase<SendEmailVerificationCommand, Guid>
+    : AggregateRootUpsertCommandHandlerBaseV2<SendEmailVerificationCommand, Guid, EmailVerificationProcess>
 {
     private readonly IUserProfileReadRepository _userProfileReadRepository;
     private readonly IEmailVerificationProcessWriteRepository _emailVerificationProcessWriteRepository;
     private readonly IEmailVerificationRequestIssuer _emailVerificationRequestIssuer;
     private EmailVerificationProcess? _process;
+    private bool _wasProcessCreated;
 
     public SendEmailVerificationCommandHandler(
         IUserProfileReadRepository userProfileReadRepository,
         IEmailVerificationProcessWriteRepository emailVerificationProcessWriteRepository,
         IEmailVerificationRequestIssuer emailVerificationRequestIssuer,
         IUnitOfWork unitOfWork,
-        ILocalEventDispatcher domainEventDispatcher) : base(domainEventDispatcher, unitOfWork)
+        ILocalEventDispatcher domainEventDispatcher,
+        IEnumerable<IAggregateBeforeSaveProcessor<SendEmailVerificationCommand, EmailVerificationProcess>> beforeSaveProcessors)
+        : base(domainEventDispatcher, unitOfWork, beforeSaveProcessors)
     {
         _userProfileReadRepository = userProfileReadRepository;
         _emailVerificationProcessWriteRepository = emailVerificationProcessWriteRepository;
@@ -53,9 +58,11 @@ public sealed class SendEmailVerificationCommandHandler
 
         _process = await _emailVerificationProcessWriteRepository
             .GetByEmailIdAsync(email.Id, cancellationToken);
+        _wasProcessCreated = false;
 
         if (_process is null)
         {
+            _wasProcessCreated = true;
             _process = EmailVerificationProcess.Create(
                 Id<DomainUserProfile>.FromGuid(userProfile.Id),
                 Id<DomainEmail>.FromGuid(email.Id));
@@ -73,7 +80,8 @@ public sealed class SendEmailVerificationCommandHandler
         return FlowChatResult<Guid>.Success(verificationRequest.Id.Value);
     }
 
-    protected override IAggregateRoot GetAggregateRoot() =>
+    protected override EmailVerificationProcess GetAggregateRoot() =>
         _process ?? throw new InvalidOperationException("Aggregate root instance is not available.");
 
+    protected override bool WasAggregateCreated => _wasProcessCreated;
 }

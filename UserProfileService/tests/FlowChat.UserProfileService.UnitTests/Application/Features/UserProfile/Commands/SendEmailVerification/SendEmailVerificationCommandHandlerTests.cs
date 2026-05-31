@@ -1,4 +1,5 @@
 using FlowChat.Shared.Application;
+using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2.BeforeSaveProcessors;
 using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
 using FlowChat.UserProfileService.Application.Contracts.Persistence;
@@ -56,7 +57,8 @@ public sealed class SendEmailVerificationCommandHandlerTests
             _verificationProcessRepositoryMock.Object,
             _issuerMock.Object,
             _unitOfWorkMock.Object,
-            _dispatcherMock.Object);
+            _dispatcherMock.Object,
+            Array.Empty<IAggregateBeforeSaveProcessor<SendEmailVerificationCommand, EmailVerificationProcess>>());
     }
 
     private async Task<FlowChatResult<Guid>> SendAsync(SendEmailVerificationCommand command)
