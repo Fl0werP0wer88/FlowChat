@@ -14,6 +14,7 @@ namespace FlowChat.UserProfileService.UnitTests;
 public sealed class SendEmailVerificationCommandHandlerTests
 {
     private readonly Mock<IUserProfileReadRepository> _readRepositoryMock = new();
+    private readonly Mock<IEmailVerificationProcessWriteRepository> _verificationProcessRepositoryMock = new();
     private readonly Mock<IEmailVerificationRequestIssuer> _issuerMock = new();
     private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
     private readonly Mock<ILocalEventDispatcher> _dispatcherMock = new();
@@ -25,9 +26,22 @@ public sealed class SendEmailVerificationCommandHandlerTests
             .Setup(x => x.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((UserProfileDto?)null);
 
+        _verificationProcessRepositoryMock
+            .Setup(x => x.GetByEmailIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((EmailVerificationProcess?)null);
+
+        _verificationProcessRepositoryMock
+            .Setup(x => x.AddAsync(It.IsAny<EmailVerificationProcess>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((EmailVerificationProcess entity, CancellationToken _) => entity);
+
         _issuerMock
-            .Setup(x => x.IssueAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((Guid userProfileId, Guid emailId, string emailAddress, CancellationToken _) =>
+            .Setup(x => x.IssueAsync(
+                It.IsAny<EmailVerificationProcess>(),
+                It.IsAny<Guid>(),
+                It.IsAny<Guid>(),
+                It.IsAny<string>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync((EmailVerificationProcess _, Guid userProfileId, Guid emailId, string _, CancellationToken _) =>
                 CreateRequest(userProfileId, emailId));
 
         _unitOfWorkMock
@@ -39,6 +53,7 @@ public sealed class SendEmailVerificationCommandHandlerTests
 
         _handler = new SendEmailVerificationCommandHandler(
             _readRepositoryMock.Object,
+            _verificationProcessRepositoryMock.Object,
             _issuerMock.Object,
             _unitOfWorkMock.Object,
             _dispatcherMock.Object);
@@ -84,9 +99,23 @@ public sealed class SendEmailVerificationCommandHandlerTests
             .ReturnsAsync(dto);
 
         EmailVerificationRequest? issuedRequest = null;
+        EmailVerificationProcess? addedProcess = null;
+        EmailVerificationProcess? issuedProcess = null;
+
+        _verificationProcessRepositoryMock
+            .Setup(x => x.AddAsync(It.IsAny<EmailVerificationProcess>(), It.IsAny<CancellationToken>()))
+            .Callback<EmailVerificationProcess, CancellationToken>((process, _) => addedProcess = process)
+            .ReturnsAsync((EmailVerificationProcess entity, CancellationToken _) => entity);
+
         _issuerMock
-            .Setup(x => x.IssueAsync(profileId, emailId, "john@example.com", It.IsAny<CancellationToken>()))
-            .ReturnsAsync((Guid upId, Guid eId, string _, CancellationToken _) =>
+            .Setup(x => x.IssueAsync(
+                It.IsAny<EmailVerificationProcess>(),
+                profileId,
+                emailId,
+                "john@example.com",
+                It.IsAny<CancellationToken>()))
+            .Callback<EmailVerificationProcess, Guid, Guid, string, CancellationToken>((process, _, _, _, _) => issuedProcess = process)
+            .ReturnsAsync((EmailVerificationProcess _, Guid upId, Guid eId, string _, CancellationToken _) =>
             {
                 issuedRequest = CreateRequest(upId, eId);
                 return issuedRequest;
@@ -96,8 +125,56 @@ public sealed class SendEmailVerificationCommandHandlerTests
 
         result.IsSuccess.Should().BeTrue();
         issuedRequest.Should().NotBeNull();
+        addedProcess.Should().NotBeNull();
+        addedProcess!.Id.Value.Should().Be(emailId);
+        issuedProcess.Should().BeSameAs(addedProcess);
         result.Value.Should().Be(issuedRequest!.Id.Value);
-        _issuerMock.Verify(x => x.IssueAsync(profileId, emailId, "john@example.com", It.IsAny<CancellationToken>()), Times.Once);
+        _verificationProcessRepositoryMock.Verify(x => x.GetByEmailIdAsync(emailId, It.IsAny<CancellationToken>()), Times.Once);
+        _verificationProcessRepositoryMock.Verify(x => x.AddAsync(It.IsAny<EmailVerificationProcess>(), It.IsAny<CancellationToken>()), Times.Once);
+        _issuerMock.Verify(x => x.IssueAsync(
+            It.IsAny<EmailVerificationProcess>(),
+            profileId,
+            emailId,
+            "john@example.com",
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task Handle_WithExistingProcess_PassesExistingProcessToIssuer()
+    {
+        var profileId = Guid.NewGuid();
+        var dto = CreateUserProfileDto(profileId, "john@example.com");
+        var emailId = dto.Emails[0].Id;
+        var process = EmailVerificationProcess.Create(
+            Id<UserProfile>.FromGuid(profileId),
+            Id<Email>.FromGuid(emailId));
+
+        _readRepositoryMock
+            .Setup(x => x.GetByIdAsync(profileId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(dto);
+
+        _verificationProcessRepositoryMock
+            .Setup(x => x.GetByEmailIdAsync(emailId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(process);
+
+        EmailVerificationProcess? issuedProcess = null;
+        _issuerMock
+            .Setup(x => x.IssueAsync(
+                process,
+                profileId,
+                emailId,
+                "john@example.com",
+                It.IsAny<CancellationToken>()))
+            .Callback<EmailVerificationProcess, Guid, Guid, string, CancellationToken>((capturedProcess, _, _, _, _) => issuedProcess = capturedProcess)
+            .ReturnsAsync((EmailVerificationProcess _, Guid upId, Guid eId, string _, CancellationToken _) =>
+                CreateRequest(upId, eId));
+
+        var result = await SendAsync(new SendEmailVerificationCommand(profileId, emailId));
+
+        result.IsSuccess.Should().BeTrue();
+        issuedProcess.Should().BeSameAs(process);
+        _verificationProcessRepositoryMock.Verify(x => x.GetByEmailIdAsync(emailId, It.IsAny<CancellationToken>()), Times.Once);
+        _verificationProcessRepositoryMock.Verify(x => x.AddAsync(It.IsAny<EmailVerificationProcess>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -116,7 +193,12 @@ public sealed class SendEmailVerificationCommandHandlerTests
         result.IsFailure.Should().BeTrue();
         result.Error.ErrorType.Should().Be(ErrorType.Validation);
         result.Error.ErrorMessage.Should().Be($"Email 'john@example.com' is already confirmed.");
-        _issuerMock.Verify(x => x.IssueAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        _issuerMock.Verify(x => x.IssueAsync(
+            It.IsAny<EmailVerificationProcess>(),
+            It.IsAny<Guid>(),
+            It.IsAny<Guid>(),
+            It.IsAny<string>(),
+            It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -131,7 +213,12 @@ public sealed class SendEmailVerificationCommandHandlerTests
 
         result.IsFailure.Should().BeTrue();
         result.Error.ErrorType.Should().Be(ErrorType.NotFound);
-        _issuerMock.Verify(x => x.IssueAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        _issuerMock.Verify(x => x.IssueAsync(
+            It.IsAny<EmailVerificationProcess>(),
+            It.IsAny<Guid>(),
+            It.IsAny<Guid>(),
+            It.IsAny<string>(),
+            It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -149,7 +236,12 @@ public sealed class SendEmailVerificationCommandHandlerTests
 
         result.IsFailure.Should().BeTrue();
         result.Error.ErrorType.Should().Be(ErrorType.NotFound);
-        _issuerMock.Verify(x => x.IssueAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        _issuerMock.Verify(x => x.IssueAsync(
+            It.IsAny<EmailVerificationProcess>(),
+            It.IsAny<Guid>(),
+            It.IsAny<Guid>(),
+            It.IsAny<string>(),
+            It.IsAny<CancellationToken>()), Times.Never);
     }
 
     private static EmailVerificationRequest CreateRequest(Guid userProfileId, Guid emailId)

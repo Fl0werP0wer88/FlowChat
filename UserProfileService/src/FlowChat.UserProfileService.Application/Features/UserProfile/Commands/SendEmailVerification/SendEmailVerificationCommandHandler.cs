@@ -2,6 +2,9 @@ using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
 using FlowChat.UserProfileService.Application.Contracts.Persistence;
 using FlowChat.UserProfileService.Application.Features.UserProfile.EmailVerification.Interfaces;
+using FlowChat.UserProfileService.Domain.Entities.EmailVerificationProcess;
+using DomainEmail = FlowChat.UserProfileService.Domain.Entities.UserProfile.Email;
+using DomainUserProfile = FlowChat.UserProfileService.Domain.Entities.UserProfile.UserProfile;
 
 namespace FlowChat.UserProfileService.Application.Features.UserProfile.Commands.SendEmailVerification;
 
@@ -9,15 +12,18 @@ public sealed class SendEmailVerificationCommandHandler
     : AggregateRootCommandHandlerBase<SendEmailVerificationCommand, Guid>
 {
     private readonly IUserProfileReadRepository _userProfileReadRepository;
+    private readonly IEmailVerificationProcessWriteRepository _emailVerificationProcessWriteRepository;
     private readonly IEmailVerificationRequestIssuer _emailVerificationRequestIssuer;
 
     public SendEmailVerificationCommandHandler(
         IUserProfileReadRepository userProfileReadRepository,
+        IEmailVerificationProcessWriteRepository emailVerificationProcessWriteRepository,
         IEmailVerificationRequestIssuer emailVerificationRequestIssuer,
         IUnitOfWork unitOfWork,
         ILocalEventDispatcher domainEventDispatcher) : base(domainEventDispatcher, unitOfWork)
     {
         _userProfileReadRepository = userProfileReadRepository;
+        _emailVerificationProcessWriteRepository = emailVerificationProcessWriteRepository;
         _emailVerificationRequestIssuer = emailVerificationRequestIssuer;
     }
 
@@ -44,7 +50,20 @@ public sealed class SendEmailVerificationCommandHandler
                 DomainError.Validation($"Email '{email.Address}' is already confirmed."));
         }
 
+        var process = await _emailVerificationProcessWriteRepository
+            .GetByEmailIdAsync(email.Id, cancellationToken);
+
+        if (process is null)
+        {
+            process = EmailVerificationProcess.Create(
+                Id<DomainUserProfile>.FromGuid(userProfile.Id),
+                Id<DomainEmail>.FromGuid(email.Id));
+
+            await _emailVerificationProcessWriteRepository.AddAsync(process, cancellationToken);
+        }
+
         var verificationRequest = await _emailVerificationRequestIssuer.IssueAsync(
+            process,
             userProfile.Id,
             email.Id,
             email.Address,
