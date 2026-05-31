@@ -12,19 +12,16 @@ namespace FlowChat.NotificationService.Application.Features.Notification.Command
 public sealed class UserEmailVerificationRequestedCommandHandler
     : AggregateRootCommandHandlerBase<UserEmailVerificationRequestedCommand, Unit>
 {
-    private readonly INotificationReadRepository _notificationReadRepository;
     private readonly INotificationWriteRepository _notificationWriteRepository;
     private readonly INotificationSender _notificationSender;
     private NotificationEntity? _notification;
 
     public UserEmailVerificationRequestedCommandHandler(
-        INotificationReadRepository notificationReadRepository,
         INotificationWriteRepository notificationWriteRepository,
         INotificationSender notificationSender,
         IUnitOfWork unitOfWork,
         ILocalEventDispatcher domainEventDispatcher) : base(domainEventDispatcher, unitOfWork)
     {
-        _notificationReadRepository = notificationReadRepository;
         _notificationWriteRepository = notificationWriteRepository;
         _notificationSender = notificationSender;
     }
@@ -38,18 +35,6 @@ public sealed class UserEmailVerificationRequestedCommandHandler
             : request.DisplayName.Trim();
         var emailAddress = EmailAddress.Create(request.Email);
         var notificationBody = $"Hello {displayName}, please confirm your email by clicking the link: {request.ConfirmationLink.Trim()}";
-
-        //ToDo remove idempotency checks from command handlers and move to pipeline behavior. Afther that 
-        // I should be able to make result of GetAggregateRoot() non nullable and remove all null checks for aggregate root in base command handler.
-        // sent for this source message key, succeed without resending to avoid duplicate emails.
-        var alreadyExists = await _notificationReadRepository.ExistsBySourceMessageKeyAsync(
-            request.SourceMessageKey ?? string.Empty,
-            cancellationToken);
-
-        if (alreadyExists)
-        {
-            return FlowChatResult<Unit>.Success(Unit.Value);
-        }
 
         _notification = NotificationEntity.CreateEmailVerification(
             Id<NotificationEntity>.New(),

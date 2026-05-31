@@ -15,7 +15,6 @@ namespace FlowChat.NotificationService.UnitTests;
 public sealed class HandleUserEmailVerificationRequestedNotificationCommandHandlerTests
 {
     private readonly IFixture _fixture = new Fixture();
-    private readonly Mock<INotificationReadRepository> _readRepositoryMock = new();
     private readonly Mock<INotificationWriteRepository> _writeRepositoryMock = new();
     private readonly Mock<INotificationSender> _notificationSenderMock = new();
     private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
@@ -24,16 +23,12 @@ public sealed class HandleUserEmailVerificationRequestedNotificationCommandHandl
 
     public HandleUserEmailVerificationRequestedNotificationCommandHandlerTests()
     {
-        _readRepositoryMock
-            .Setup(x => x.ExistsBySourceMessageKeyAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(false);
-
         _writeRepositoryMock
             .Setup(x => x.AddAsync(It.IsAny<Notification>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((Notification notification, CancellationToken _) => notification);
 
         _unitOfWorkMock
-            .Setup(x => x.ExecuteInTransactionAsync(
+            .Setup(x => x.ExecuteCommandInTransactionAsync(
                 It.IsAny<Func<CancellationToken, Task<FlowChatResult<Unit>>>>(),
                 It.IsAny<CancellationToken>()))
             .Returns<Func<CancellationToken, Task<FlowChatResult<Unit>>>, CancellationToken>(
@@ -44,7 +39,6 @@ public sealed class HandleUserEmailVerificationRequestedNotificationCommandHandl
             .Returns(Task.CompletedTask);
 
         _handler = new UserEmailVerificationRequestedCommandHandler(
-            _readRepositoryMock.Object,
             _writeRepositoryMock.Object,
             _notificationSenderMock.Object,
             _unitOfWorkMock.Object,
@@ -100,32 +94,6 @@ public sealed class HandleUserEmailVerificationRequestedNotificationCommandHandl
         sendRequest.Should().NotBeNull();
         savedNotification.Body.Should().Be(sendRequest!.Body);
         sendRequest!.Body.Should().Contain(command.ConfirmationLink);
-    }
-
-    [Fact]
-    public async Task Handle_WhenSourceMessageKeyAlreadyExists_DoesNotCreateDuplicate()
-    {
-        _readRepositoryMock
-            .Setup(x => x.ExistsBySourceMessageKeyAsync("message-key-2", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true);
-
-        var command = new UserEmailVerificationRequestedCommand(
-            _fixture.Create<Guid>(),
-            "existing@flowchat.local",
-            "existing-user",
-            "Existing",
-            "https://flowchat.local/confirm?userId=2&token=def",
-            "message-key-2");
-
-        var result = await SendAsync(command);
-
-        result.IsSuccess.Should().BeTrue();
-        _notificationSenderMock.Verify(
-            x => x.SendAsync(It.IsAny<NotificationSendRequest>(), It.IsAny<CancellationToken>()),
-            Times.Never);
-        _writeRepositoryMock.Verify(
-            x => x.AddAsync(It.IsAny<Notification>(), It.IsAny<CancellationToken>()),
-            Times.Never);
     }
 
     [Fact]
