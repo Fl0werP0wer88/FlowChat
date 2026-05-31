@@ -13,13 +13,12 @@ public sealed class InitializePresenceStatusCommandHandler(
     IPresenceStatusStore presenceStatusStore,
     IUserPresencePreferencesReadRepository userPresencePreferencesReadRepository,
     IMediator mediator,
-    IUnitOfWork unitOfWork,
-    ILocalEventDispatcher domainEventDispatcher)
-    : AggregateRootCommandHandlerBase<InitializePresenceStatusCommand, Unit>(domainEventDispatcher, unitOfWork)
+    IUnitOfWork unitOfWork)
+    : TransactionalCommandHandlerBase<InitializePresenceStatusCommand, Unit>(unitOfWork)
 {
     private PresenceStatusSnapshot? _previousStatus;
 
-    protected override async Task<FlowChatResult<Unit>> ExecuteAsync(
+    protected override async Task<FlowChatResult<Unit>> HandleInTransactionAsync(
         InitializePresenceStatusCommand request,
         CancellationToken cancellationToken)
     {

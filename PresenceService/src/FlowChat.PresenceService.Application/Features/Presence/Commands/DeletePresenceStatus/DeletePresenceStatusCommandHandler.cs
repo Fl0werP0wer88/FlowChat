@@ -11,13 +11,12 @@ namespace FlowChat.PresenceService.Application.Features.Presence.Commands.Delete
 public sealed class DeletePresenceStatusCommandHandler(
     IPresenceStatusStore presenceStatusStore,
     IMediator mediator,
-    IUnitOfWork unitOfWork,
-    ILocalEventDispatcher domainEventDispatcher)
-    : AggregateRootCommandHandlerBase<DeletePresenceStatusCommand, Unit>(domainEventDispatcher, unitOfWork)
+    IUnitOfWork unitOfWork)
+    : TransactionalCommandHandlerBase<DeletePresenceStatusCommand, Unit>(unitOfWork)
 {
     private PresenceStatusSnapshot? _previousStatus;
 
-    protected override async Task<FlowChatResult<Unit>> ExecuteAsync(
+    protected override async Task<FlowChatResult<Unit>> HandleInTransactionAsync(
         DeletePresenceStatusCommand request,
         CancellationToken cancellationToken)
     {
