@@ -39,7 +39,8 @@ public sealed class UserEmailVerificationRequestedCommandHandler
         var emailAddress = EmailAddress.Create(request.Email);
         var notificationBody = $"Hello {displayName}, please confirm your email by clicking the link: {request.ConfirmationLink.Trim()}";
 
-        // Idempotency guard: Kafka may redeliver the same message. If a notification was already
+        //ToDo remove idempotency checks from command handlers and move to pipeline behavior. Afther that 
+        // I should be able to make result of GetAggregateRoot() non nullable and remove all null checks for aggregate root in base command handler.
         // sent for this source message key, succeed without resending to avoid duplicate emails.
         var alreadyExists = await _notificationReadRepository.ExistsBySourceMessageKeyAsync(
             request.SourceMessageKey ?? string.Empty,
