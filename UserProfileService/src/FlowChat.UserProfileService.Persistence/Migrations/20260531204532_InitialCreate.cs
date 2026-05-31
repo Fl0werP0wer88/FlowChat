@@ -123,16 +123,45 @@ namespace FlowChat.UserProfileService.Persistence.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "EmailVerificationRequests",
+                name: "EmailVerificationProcesses",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     UserProfileId = table.Column<Guid>(type: "uuid", nullable: false),
                     EmailId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Version = table.Column<int>(type: "integer", nullable: false),
+                    CreatedBy = table.Column<string>(type: "text", nullable: false),
+                    CreatedAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    LastModifiedBy = table.Column<string>(type: "text", nullable: false),
+                    LastModifiedAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_EmailVerificationProcesses", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_EmailVerificationProcesses_Emails_EmailId",
+                        column: x => x.EmailId,
+                        principalTable: "Emails",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_EmailVerificationProcesses_UserProfiles_UserProfileId",
+                        column: x => x.UserProfileId,
+                        principalTable: "UserProfiles",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "EmailVerificationRequests",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
                     Nonce = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
                     ExpiresAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     InvalidatedAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     ConsumedAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    EmailVerificationProcessId = table.Column<Guid>(type: "uuid", nullable: false),
                     Version = table.Column<int>(type: "integer", nullable: false),
                     CreatedBy = table.Column<string>(type: "text", nullable: false),
                     CreatedAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
@@ -143,15 +172,9 @@ namespace FlowChat.UserProfileService.Persistence.Migrations
                 {
                     table.PrimaryKey("PK_EmailVerificationRequests", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_EmailVerificationRequests_Emails_EmailId",
-                        column: x => x.EmailId,
-                        principalTable: "Emails",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_EmailVerificationRequests_UserProfiles_UserProfileId",
-                        column: x => x.UserProfileId,
-                        principalTable: "UserProfiles",
+                        name: "FK_EmailVerificationRequests_EmailVerificationProcesses_EmailV~",
+                        column: x => x.EmailVerificationProcessId,
+                        principalTable: "EmailVerificationProcesses",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -170,14 +193,20 @@ namespace FlowChat.UserProfileService.Persistence.Migrations
                 filter: "\"IsAuth\" = TRUE");
 
             migrationBuilder.CreateIndex(
-                name: "ix_email_verification_request_email_id",
-                table: "EmailVerificationRequests",
-                column: "EmailId");
+                name: "IX_EmailVerificationProcesses_UserProfileId",
+                table: "EmailVerificationProcesses",
+                column: "UserProfileId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_EmailVerificationRequests_UserProfileId",
+                name: "uq_email_verification_process_email_id",
+                table: "EmailVerificationProcesses",
+                column: "EmailId",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "ix_email_verification_request_process_id",
                 table: "EmailVerificationRequests",
-                column: "UserProfileId");
+                column: "EmailVerificationProcessId");
 
             migrationBuilder.CreateIndex(
                 name: "uq_email_verification_request_nonce",
@@ -212,6 +241,9 @@ namespace FlowChat.UserProfileService.Persistence.Migrations
 
             migrationBuilder.DropTable(
                 name: "SilverbackOutboxMessages");
+
+            migrationBuilder.DropTable(
+                name: "EmailVerificationProcesses");
 
             migrationBuilder.DropTable(
                 name: "Emails");

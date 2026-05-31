@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FlowChat.ChatService.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260527100556_RenameUserProfileProjectionAuditFields")]
-    partial class RenameUserProfileProjectionAuditFields
+    [Migration("20260531204441_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -224,9 +224,9 @@ namespace FlowChat.ChatService.Persistence.Migrations
                         .HasMaxLength(128)
                         .HasColumnType("character varying(128)");
 
-                    b.Property<string>("DisplayName")
-                        .HasMaxLength(256)
-                        .HasColumnType("character varying(256)");
+                    b.Property<string>("FirstName")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.Property<string>("FriendlyUserId")
                         .IsRequired()
@@ -240,6 +240,10 @@ namespace FlowChat.ChatService.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(128)
                         .HasColumnType("character varying(128)");
+
+                    b.Property<string>("LastName")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.HasKey("UserId");
 
