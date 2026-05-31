@@ -1,12 +1,13 @@
 using AutoMapper;
 using FlowChat.Core.Messaging;
 using FlowChat.Core.Results;
+using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
 using MediatR;
 using System.Diagnostics;
 using System.Runtime.ExceptionServices;
 
-namespace FlowChat.Shared.Application;
+namespace FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2.BeforeSaveProcessors;
 
 public abstract class AggregateRootCommandHandlerBaseV2<TCommand, TResponse, TAggregate> : ICommandHandler<TCommand, TResponse>
     where TCommand : ICommand<TResponse>, IRequest<FlowChatResult<TResponse>>
@@ -15,16 +16,16 @@ public abstract class AggregateRootCommandHandlerBaseV2<TCommand, TResponse, TAg
 {
     private readonly ILocalEventDispatcher _localEventsDispatcher;
     private readonly IUnitOfWork _unitOfWork;
-    IEnumerable<IAggregatePostProcessor<TCommand, TAggregate>> _postProcessors;
+    IEnumerable<IAggregateBeforeSaveProcessor<TCommand, TAggregate>> _beforeSaveProcessors;
 
     protected AggregateRootCommandHandlerBaseV2(
         ILocalEventDispatcher localEventsDispatcher,
         IUnitOfWork unitOfWork,
-        IEnumerable<IAggregatePostProcessor<TCommand, TAggregate>> postProcessors)
+        IEnumerable<IAggregateBeforeSaveProcessor<TCommand, TAggregate>> beforeSaveProcessors)
     {
         _localEventsDispatcher = localEventsDispatcher;
         _unitOfWork = unitOfWork;
-        _postProcessors = postProcessors;
+        _beforeSaveProcessors = beforeSaveProcessors;
     }
 
     public async Task<FlowChatResult<TResponse>> Handle(TCommand request, CancellationToken cancellationToken)
@@ -52,7 +53,7 @@ public abstract class AggregateRootCommandHandlerBaseV2<TCommand, TResponse, TAg
 
                             await DispatchLocalEventsAsync(localEvents, token);
 
-                            foreach (var processor in _postProcessors)
+                            foreach (var processor in _beforeSaveProcessors)
                             {
                                 await processor.ProcessAsync(request, aggregateRoot, cancellationToken);
                             }
@@ -91,13 +92,4 @@ public abstract class AggregateRootCommandHandlerBaseV2<TCommand, TResponse, TAg
 
         return _localEventsDispatcher.DispatchAsync(domainEvents, cancellationToken);
     }
-}
-
-
-public interface IAggregatePostProcessor<TCommand, TAggregate>
-{
-    Task ProcessAsync(
-        TCommand command,
-        TAggregate aggregate,
-        CancellationToken cancellationToken);
 }
