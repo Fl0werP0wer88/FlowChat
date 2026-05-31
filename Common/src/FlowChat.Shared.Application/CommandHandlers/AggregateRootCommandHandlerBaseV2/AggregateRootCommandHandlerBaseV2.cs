@@ -45,22 +45,19 @@ public abstract class AggregateRootCommandHandlerBaseV2<TCommand, TResponse, TAg
                     {
                         var aggregateRoot = GetAggregateRoot();
 
-                        if (aggregateRoot is not null)
+                        aggregateRoot.IncrementVersion();
+                        // var snapshot = _mapper.Map<TSnapshot>(aggregateRoot);
+                        // var snapshotEvent = new SnapshotApplicationEvent<TSnapshot>(snapshot);
+                        var domainEvents = aggregateRoot.PopDomainEvents();
+                        var localEvents = domainEvents
+                            .Cast<ILocalEvent>();
+                        // .Append(snapshotEvent);
+
+                        await DispatchLocalEventsAsync(localEvents, token);
+
+                        foreach (var processor in _beforeSaveProcessors)
                         {
-                            aggregateRoot.IncrementVersion();
-                            // var snapshot = _mapper.Map<TSnapshot>(aggregateRoot);
-                            // var snapshotEvent = new SnapshotApplicationEvent<TSnapshot>(snapshot);
-                            var domainEvents = aggregateRoot.PopDomainEvents();
-                            var localEvents = domainEvents
-                                .Cast<ILocalEvent>();
-                            // .Append(snapshotEvent);
-
-                            await DispatchLocalEventsAsync(localEvents, token);
-
-                            foreach (var processor in _beforeSaveProcessors)
-                            {
-                                await processor.ProcessAsync(request, aggregateRoot, ProjectionOperationType, token);
-                            }
+                            await processor.ProcessAsync(request, aggregateRoot, ProjectionOperationType, token);
                         }
                     }
 
@@ -76,7 +73,7 @@ public abstract class AggregateRootCommandHandlerBaseV2<TCommand, TResponse, TAg
 
     protected abstract Task<FlowChatResult<TResponse>> ExecuteAsync(TCommand request, CancellationToken cancellationToken);
 
-    protected virtual TAggregate? GetAggregateRoot() => null;
+    protected abstract TAggregate GetAggregateRoot();
 
     protected virtual Task<FlowChatResult<TResponse>> HandleUnexpectedExceptionAsync(
         TCommand request,

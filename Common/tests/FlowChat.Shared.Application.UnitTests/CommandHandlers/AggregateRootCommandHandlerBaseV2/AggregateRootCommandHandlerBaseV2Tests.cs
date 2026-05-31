@@ -167,7 +167,7 @@ public sealed class AggregateRootCommandHandlerBaseV2Tests
             CancellationToken cancellationToken)
             => Task.FromResult(FlowChatResult<Guid>.Success(_aggregate.Id.Value));
 
-        protected override TestAggregate? GetAggregateRoot() => _aggregate;
+        protected override TestAggregate GetAggregateRoot() => _aggregate;
     }
 
     private sealed class TestUpdateCommandHandler
@@ -190,7 +190,7 @@ public sealed class AggregateRootCommandHandlerBaseV2Tests
             CancellationToken cancellationToken)
             => Task.FromResult(FlowChatResult<Guid>.Success(_aggregate.Id.Value));
 
-        protected override TestAggregate? GetAggregateRoot() => _aggregate;
+        protected override TestAggregate GetAggregateRoot() => _aggregate;
     }
 
     private sealed class TestDeleteCommandHandler
@@ -213,6 +213,6 @@ public sealed class AggregateRootCommandHandlerBaseV2Tests
             CancellationToken cancellationToken)
             => Task.FromResult(FlowChatResult<Guid>.Success(_aggregate.Id.Value));
 
-        protected override TestAggregate? GetAggregateRoot() => _aggregate;
+        protected override TestAggregate GetAggregateRoot() => _aggregate;
     }
 }
