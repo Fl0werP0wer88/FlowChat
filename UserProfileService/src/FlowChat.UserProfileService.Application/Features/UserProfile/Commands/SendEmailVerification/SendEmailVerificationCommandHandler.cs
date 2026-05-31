@@ -14,6 +14,7 @@ public sealed class SendEmailVerificationCommandHandler
     private readonly IUserProfileReadRepository _userProfileReadRepository;
     private readonly IEmailVerificationProcessWriteRepository _emailVerificationProcessWriteRepository;
     private readonly IEmailVerificationRequestIssuer _emailVerificationRequestIssuer;
+    private EmailVerificationProcess? _process;
 
     public SendEmailVerificationCommandHandler(
         IUserProfileReadRepository userProfileReadRepository,
@@ -50,20 +51,20 @@ public sealed class SendEmailVerificationCommandHandler
                 DomainError.Validation($"Email '{email.Address}' is already confirmed."));
         }
 
-        var process = await _emailVerificationProcessWriteRepository
+        _process = await _emailVerificationProcessWriteRepository
             .GetByEmailIdAsync(email.Id, cancellationToken);
 
-        if (process is null)
+        if (_process is null)
         {
-            process = EmailVerificationProcess.Create(
+            _process = EmailVerificationProcess.Create(
                 Id<DomainUserProfile>.FromGuid(userProfile.Id),
                 Id<DomainEmail>.FromGuid(email.Id));
 
-            await _emailVerificationProcessWriteRepository.AddAsync(process, cancellationToken);
+            await _emailVerificationProcessWriteRepository.AddAsync(_process, cancellationToken);
         }
 
         var verificationRequest = await _emailVerificationRequestIssuer.IssueAsync(
-            process,
+            _process,
             userProfile.Id,
             email.Id,
             email.Address,
@@ -71,5 +72,7 @@ public sealed class SendEmailVerificationCommandHandler
 
         return FlowChatResult<Guid>.Success(verificationRequest.Id.Value);
     }
+
+    protected override IAggregateRoot? GetAggregateRoot() => _process;
 
 }
