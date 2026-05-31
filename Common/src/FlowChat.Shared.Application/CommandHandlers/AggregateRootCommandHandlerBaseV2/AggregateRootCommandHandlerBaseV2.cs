@@ -2,12 +2,13 @@ using AutoMapper;
 using FlowChat.Core.Messaging;
 using FlowChat.Core.Results;
 using FlowChat.Shared.Application;
+using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2.BeforeSaveProcessors;
 using FlowChat.Shared.Domain;
 using MediatR;
 using System.Diagnostics;
 using System.Runtime.ExceptionServices;
 
-namespace FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2.BeforeSaveProcessors;
+namespace FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2;
 
 public abstract class AggregateRootCommandHandlerBaseV2<TCommand, TResponse, TAggregate> : ICommandHandler<TCommand, TResponse>
     where TCommand : ICommand<TResponse>, IRequest<FlowChatResult<TResponse>>

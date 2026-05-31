@@ -1,4 +1,4 @@
-namespace FlowChat.Shared.Application;
+namespace FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2.BeforeSaveProcessors;
 
 public interface IAggregateBeforeSaveProcessor<TCommand, TAggregate>
 {
