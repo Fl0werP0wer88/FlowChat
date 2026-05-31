@@ -9,8 +9,11 @@ namespace FlowChat.Shared.Application.UnitTests.CommandHandlers.AggregateRootCom
 
 public sealed class PublishProjectionIntegrationEventProcessorTests
 {
-    [Fact]
-    public async Task ProcessAsync_WhenCalled_PublishesMappedProjectionIntegrationEvent()
+    [Theory]
+    [InlineData(OperationTypes.Created)]
+    [InlineData(OperationTypes.Updated)]
+    [InlineData(OperationTypes.Deleted)]
+    public async Task ProcessAsync_WhenCalled_PublishesMappedProjectionIntegrationEvent(OperationTypes operationType)
     {
         var aggregateId = Guid.NewGuid();
         var aggregate = new TestAggregate(aggregateId, "Alpha");
@@ -41,7 +44,7 @@ public sealed class PublishProjectionIntegrationEventProcessorTests
             mapperMock.Object,
             integrationEventPublisherMock.Object);
 
-        await processor.ProcessAsync(command, aggregate, cancellationToken);
+        await processor.ProcessAsync(command, aggregate, operationType, cancellationToken);
 
         mapperMock.Verify(x => x.Map<TestReadModel>(aggregate), Times.Once);
         integrationEventPublisherMock.Verify(
@@ -51,7 +54,7 @@ public sealed class PublishProjectionIntegrationEventProcessorTests
             Times.Once);
         capturedEnvelope.Should().NotBeNull();
         capturedEnvelope!.KafkaKey.Should().Be(aggregateId.ToString("D"));
-        capturedEnvelope.Payload.Operation.Should().Be(OperationTypes.Updated);
+        capturedEnvelope.Payload.Operation.Should().Be(operationType);
         capturedEnvelope.Payload.Value.Should().Be(readModel);
         capturedCancellationToken.Should().Be(cancellationToken);
     }

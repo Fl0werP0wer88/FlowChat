@@ -1,4 +1,3 @@
-using AutoMapper;
 using FlowChat.Core.Messaging;
 using FlowChat.Core.Results;
 using FlowChat.Shared.Application;
@@ -17,16 +16,20 @@ public abstract class AggregateRootCommandHandlerBaseV2<TCommand, TResponse, TAg
 {
     private readonly ILocalEventDispatcher _localEventsDispatcher;
     private readonly IUnitOfWork _unitOfWork;
-    IEnumerable<IAggregateBeforeSaveProcessor<TCommand, TAggregate>> _beforeSaveProcessors;
+    private readonly IEnumerable<IAggregateBeforeSaveProcessor<TCommand, TAggregate>> _beforeSaveProcessors;
+
+    protected OperationTypes ProjectionOperationType { get; }
 
     protected AggregateRootCommandHandlerBaseV2(
         ILocalEventDispatcher localEventsDispatcher,
         IUnitOfWork unitOfWork,
-        IEnumerable<IAggregateBeforeSaveProcessor<TCommand, TAggregate>> beforeSaveProcessors)
+        IEnumerable<IAggregateBeforeSaveProcessor<TCommand, TAggregate>> beforeSaveProcessors,
+        OperationTypes projectionOperationType)
     {
         _localEventsDispatcher = localEventsDispatcher;
         _unitOfWork = unitOfWork;
         _beforeSaveProcessors = beforeSaveProcessors;
+        ProjectionOperationType = projectionOperationType;
     }
 
     public async Task<FlowChatResult<TResponse>> Handle(TCommand request, CancellationToken cancellationToken)
@@ -56,7 +59,7 @@ public abstract class AggregateRootCommandHandlerBaseV2<TCommand, TResponse, TAg
 
                             foreach (var processor in _beforeSaveProcessors)
                             {
-                                await processor.ProcessAsync(request, aggregateRoot, cancellationToken);
+                                await processor.ProcessAsync(request, aggregateRoot, ProjectionOperationType, token);
                             }
                         }
                     }

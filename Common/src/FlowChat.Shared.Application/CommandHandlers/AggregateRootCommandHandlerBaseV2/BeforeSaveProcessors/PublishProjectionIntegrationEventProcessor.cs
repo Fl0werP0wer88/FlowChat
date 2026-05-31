@@ -24,13 +24,14 @@ public class PublishProjectionIntegrationEventProcessor<TCommand, TAggregate, TT
     public async Task ProcessAsync(
         TCommand command,
         TAggregate aggregate,
+        OperationTypes operationType,
         CancellationToken cancellationToken)
     {
         var readModel = _mapper.Map<TTargetReadModel>(aggregate);
         var integrationEvent = new ProjectionIntegrationEvent<TTargetReadModel>
         {
             Value = readModel,
-            Operation = OperationTypes.Updated
+            Operation = operationType
         };
         var envelope = new IntegrationEventEnvelope<ProjectionIntegrationEvent<TTargetReadModel>>(
             integrationEvent,
