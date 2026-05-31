@@ -16,18 +16,14 @@ public abstract class AggregateRootCommandHandlerBaseV2<TCommand, TResponse, TAg
     private readonly ILocalEventDispatcher _localEventsDispatcher;
     private readonly IEnumerable<IAggregateBeforeSaveProcessor<TCommand, TAggregate>> _beforeSaveProcessors;
 
-    protected OperationTypes ProjectionOperationType { get; }
-
     protected AggregateRootCommandHandlerBaseV2(
         ILocalEventDispatcher localEventsDispatcher,
         IUnitOfWork unitOfWork,
-        IEnumerable<IAggregateBeforeSaveProcessor<TCommand, TAggregate>> beforeSaveProcessors,
-        OperationTypes projectionOperationType)
+        IEnumerable<IAggregateBeforeSaveProcessor<TCommand, TAggregate>> beforeSaveProcessors)
         : base(unitOfWork)
     {
         _localEventsDispatcher = localEventsDispatcher;
         _beforeSaveProcessors = beforeSaveProcessors;
-        ProjectionOperationType = projectionOperationType;
     }
 
     protected override async Task<FlowChatResult<TResponse>> HandleInTransactionAsync(
@@ -64,8 +60,7 @@ public abstract class AggregateRootCommandHandlerBaseV2<TCommand, TResponse, TAg
 
     protected abstract TAggregate GetAggregateRoot();
 
-    protected virtual OperationTypes GetProjectionOperationType(TCommand request, TAggregate aggregateRoot) =>
-        ProjectionOperationType;
+    protected abstract OperationTypes GetProjectionOperationType(TCommand request, TAggregate aggregateRoot);
 
     protected Task DispatchLocalEventsAsync(IEnumerable<ILocalEvent> domainEvents, CancellationToken cancellationToken)
     {
