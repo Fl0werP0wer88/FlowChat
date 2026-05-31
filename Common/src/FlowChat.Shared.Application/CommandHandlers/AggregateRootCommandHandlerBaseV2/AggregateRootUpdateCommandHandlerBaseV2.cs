@@ -20,6 +20,6 @@ public abstract class AggregateRootUpdateCommandHandlerBaseV2<TCommand, TRespons
     {
     }
 
-    protected override OperationTypes GetProjectionOperationType(TCommand request, TAggregate aggregateRoot) =>
-        OperationTypes.Updated;
+    protected override OperationType GetProjectionOperationType(TCommand request, TAggregate aggregateRoot) =>
+        OperationType.Updated;
 }

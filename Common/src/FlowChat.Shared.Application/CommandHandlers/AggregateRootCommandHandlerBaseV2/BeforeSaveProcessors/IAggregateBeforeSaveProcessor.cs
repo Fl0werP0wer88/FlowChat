@@ -7,6 +7,6 @@ public interface IAggregateBeforeSaveProcessor<TCommand, TAggregate>
     Task ProcessAsync(
         TCommand command,
         TAggregate aggregate,
-        OperationTypes operationType,
+        OperationType operationType,
         CancellationToken cancellationToken);
 }

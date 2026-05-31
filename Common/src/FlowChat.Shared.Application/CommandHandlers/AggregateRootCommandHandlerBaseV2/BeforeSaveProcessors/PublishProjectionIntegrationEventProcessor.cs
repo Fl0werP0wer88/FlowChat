@@ -24,7 +24,7 @@ public class PublishProjectionIntegrationEventProcessor<TCommand, TAggregate, TT
     public async Task ProcessAsync(
         TCommand command,
         TAggregate aggregate,
-        OperationTypes operationType,
+        OperationType operationType,
         CancellationToken cancellationToken)
     {
         var readModel = _mapper.Map<TTargetReadModel>(aggregate);

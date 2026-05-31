@@ -10,10 +10,10 @@ namespace FlowChat.Shared.Application.UnitTests.CommandHandlers.AggregateRootCom
 public sealed class PublishProjectionIntegrationEventProcessorTests
 {
     [Theory]
-    [InlineData(OperationTypes.Created)]
-    [InlineData(OperationTypes.Updated)]
-    [InlineData(OperationTypes.Deleted)]
-    public async Task ProcessAsync_WhenCalled_PublishesMappedProjectionIntegrationEvent(OperationTypes operationType)
+    [InlineData(OperationType.Created)]
+    [InlineData(OperationType.Updated)]
+    [InlineData(OperationType.Deleted)]
+    public async Task ProcessAsync_WhenCalled_PublishesMappedProjectionIntegrationEvent(OperationType operationType)
     {
         var aggregateId = Guid.NewGuid();
         var aggregate = new TestAggregate(aggregateId, "Alpha");

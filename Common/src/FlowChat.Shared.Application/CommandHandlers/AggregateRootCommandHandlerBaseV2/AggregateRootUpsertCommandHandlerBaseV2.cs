@@ -22,6 +22,6 @@ public abstract class AggregateRootUpsertCommandHandlerBaseV2<TCommand, TRespons
 
     protected abstract bool WasAggregateCreated { get; }
 
-    protected override OperationTypes GetProjectionOperationType(TCommand request, TAggregate aggregateRoot) =>
-        WasAggregateCreated ? OperationTypes.Created : OperationTypes.Updated;
+    protected override OperationType GetProjectionOperationType(TCommand request, TAggregate aggregateRoot) =>
+        WasAggregateCreated ? OperationType.Created : OperationType.Updated;
 }

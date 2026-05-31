@@ -12,24 +12,24 @@ namespace FlowChat.Shared.Application.UnitTests.CommandHandlers.AggregateRootCom
 public sealed class AggregateRootCommandHandlerBaseV2Tests
 {
     [Theory]
-    [InlineData(OperationTypes.Created)]
-    [InlineData(OperationTypes.Updated)]
-    [InlineData(OperationTypes.Deleted)]
-    public async Task Handle_WhenCommandSucceeds_PassesOperationTypeToBeforeSaveProcessor(OperationTypes expectedOperationType)
+    [InlineData(OperationType.Created)]
+    [InlineData(OperationType.Updated)]
+    [InlineData(OperationType.Deleted)]
+    public async Task Handle_WhenCommandSucceeds_PassesOperationTypeToBeforeSaveProcessor(OperationType expectedOperationType)
     {
         var aggregate = new TestAggregate(Guid.NewGuid());
         var command = new TestCommand();
         var unitOfWorkMock = CreateUnitOfWorkMock();
         var localEventDispatcherMock = new Mock<ILocalEventDispatcher>();
-        OperationTypes? capturedOperationType = null;
+        OperationType? capturedOperationType = null;
         var processorMock = new Mock<IAggregateBeforeSaveProcessor<TestCommand, TestAggregate>>();
         processorMock
             .Setup(x => x.ProcessAsync(
                 It.IsAny<TestCommand>(),
                 It.IsAny<TestAggregate>(),
-                It.IsAny<OperationTypes>(),
+                It.IsAny<OperationType>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<TestCommand, TestAggregate, OperationTypes, CancellationToken>(
+            .Callback<TestCommand, TestAggregate, OperationType, CancellationToken>(
                 (_, _, operationType, _) => capturedOperationType = operationType)
             .Returns(Task.CompletedTask);
         var handler = CreateHandler(
@@ -65,7 +65,7 @@ public sealed class AggregateRootCommandHandlerBaseV2Tests
             .Setup(x => x.ProcessAsync(
                 It.IsAny<TestCommand>(),
                 It.IsAny<TestAggregate>(),
-                It.IsAny<OperationTypes>(),
+                It.IsAny<OperationType>(),
                 It.IsAny<CancellationToken>()))
             .Callback(() => callOrder.Add("processor"))
             .Returns(Task.CompletedTask);
@@ -88,15 +88,15 @@ public sealed class AggregateRootCommandHandlerBaseV2Tests
         var command = new TestCommand();
         var unitOfWorkMock = CreateUnitOfWorkMock();
         var localEventDispatcherMock = new Mock<ILocalEventDispatcher>();
-        OperationTypes? capturedOperationType = null;
+        OperationType? capturedOperationType = null;
         var processorMock = new Mock<IAggregateBeforeSaveProcessor<TestCommand, TestAggregate>>();
         processorMock
             .Setup(x => x.ProcessAsync(
                 It.IsAny<TestCommand>(),
                 It.IsAny<TestAggregate>(),
-                It.IsAny<OperationTypes>(),
+                It.IsAny<OperationType>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<TestCommand, TestAggregate, OperationTypes, CancellationToken>(
+            .Callback<TestCommand, TestAggregate, OperationType, CancellationToken>(
                 (_, _, operationType, _) => capturedOperationType = operationType)
             .Returns(Task.CompletedTask);
         var handler = new TestUpsertCommandHandler(
@@ -109,9 +109,9 @@ public sealed class AggregateRootCommandHandlerBaseV2Tests
         var result = await handler.Handle(command, CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
-        capturedOperationType.Should().Be(OperationTypes.Created);
+        capturedOperationType.Should().Be(OperationType.Created);
         processorMock.Verify(
-            x => x.ProcessAsync(command, aggregate, OperationTypes.Created, It.IsAny<CancellationToken>()),
+            x => x.ProcessAsync(command, aggregate, OperationType.Created, It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -122,15 +122,15 @@ public sealed class AggregateRootCommandHandlerBaseV2Tests
         var command = new TestCommand();
         var unitOfWorkMock = CreateUnitOfWorkMock();
         var localEventDispatcherMock = new Mock<ILocalEventDispatcher>();
-        OperationTypes? capturedOperationType = null;
+        OperationType? capturedOperationType = null;
         var processorMock = new Mock<IAggregateBeforeSaveProcessor<TestCommand, TestAggregate>>();
         processorMock
             .Setup(x => x.ProcessAsync(
                 It.IsAny<TestCommand>(),
                 It.IsAny<TestAggregate>(),
-                It.IsAny<OperationTypes>(),
+                It.IsAny<OperationType>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<TestCommand, TestAggregate, OperationTypes, CancellationToken>(
+            .Callback<TestCommand, TestAggregate, OperationType, CancellationToken>(
                 (_, _, operationType, _) => capturedOperationType = operationType)
             .Returns(Task.CompletedTask);
         var handler = new TestUpsertCommandHandler(
@@ -143,14 +143,14 @@ public sealed class AggregateRootCommandHandlerBaseV2Tests
         var result = await handler.Handle(command, CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
-        capturedOperationType.Should().Be(OperationTypes.Updated);
+        capturedOperationType.Should().Be(OperationType.Updated);
         processorMock.Verify(
-            x => x.ProcessAsync(command, aggregate, OperationTypes.Updated, It.IsAny<CancellationToken>()),
+            x => x.ProcessAsync(command, aggregate, OperationType.Updated, It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
     private static ICommandHandler<TestCommand, Guid> CreateHandler(
-        OperationTypes operationType,
+        OperationType operationType,
         TestAggregate aggregate,
         IUnitOfWork unitOfWork,
         ILocalEventDispatcher localEventDispatcher,
@@ -158,17 +158,17 @@ public sealed class AggregateRootCommandHandlerBaseV2Tests
     {
         return operationType switch
         {
-            OperationTypes.Created => new TestInsertCommandHandler(
+            OperationType.Created => new TestInsertCommandHandler(
                 aggregate,
                 unitOfWork,
                 localEventDispatcher,
                 beforeSaveProcessors),
-            OperationTypes.Updated => new TestUpdateCommandHandler(
+            OperationType.Updated => new TestUpdateCommandHandler(
                 aggregate,
                 unitOfWork,
                 localEventDispatcher,
                 beforeSaveProcessors),
-            OperationTypes.Deleted => new TestDeleteCommandHandler(
+            OperationType.Deleted => new TestDeleteCommandHandler(
                 aggregate,
                 unitOfWork,
                 localEventDispatcher,

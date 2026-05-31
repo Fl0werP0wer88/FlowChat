@@ -1,6 +1,6 @@
 namespace FlowChat.Core.Messaging;
 
-public enum OperationTypes
+public enum OperationType
 {
     Created,
     Updated,

@@ -60,7 +60,7 @@ public abstract class AggregateRootCommandHandlerBaseV2<TCommand, TResponse, TAg
 
     protected abstract TAggregate GetAggregateRoot();
 
-    protected abstract OperationTypes GetProjectionOperationType(TCommand request, TAggregate aggregateRoot);
+    protected abstract OperationType GetProjectionOperationType(TCommand request, TAggregate aggregateRoot);
 
     protected Task DispatchLocalEventsAsync(IEnumerable<ILocalEvent> domainEvents, CancellationToken cancellationToken)
     {
