@@ -4,8 +4,6 @@ using FlowChat.AuthService.Application.Contracts.Persistence;
 using FlowChat.AuthService.Application.Features.User.Commands.RefreshToken;
 using FlowChat.AuthService.Application.Features.User.Models;
 using FlowChat.AuthService.Domain.Entities.Account;
-using FlowChat.Core.Messaging;
-using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
 using FluentAssertions;
@@ -17,28 +15,13 @@ public sealed class RefreshTokenCommandHandlerTests
 {
     private readonly Mock<IAccountRepository> _accountRepositoryMock = new();
     private readonly Mock<IOpenIddictTokenService> _openIddictTokenServiceMock = new();
-    private readonly Mock<ILocalEventDispatcher> _domainEventDispatcherMock = new();
-    private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
     private readonly RefreshTokenCommandHandler _handler;
 
     public RefreshTokenCommandHandlerTests()
     {
-        _unitOfWorkMock
-            .Setup(x => x.ExecuteCommandInTransactionAsync(
-                It.IsAny<Func<CancellationToken, Task<FlowChatResult<RefreshTokenCommandResponse>>>>(),
-                It.IsAny<CancellationToken>()))
-            .Returns<Func<CancellationToken, Task<FlowChatResult<RefreshTokenCommandResponse>>>, CancellationToken>(
-                (operation, ct) => operation(ct));
-
-        _domainEventDispatcherMock
-            .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<ILocalEvent>>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-
         _handler = new RefreshTokenCommandHandler(
             _accountRepositoryMock.Object,
-            _openIddictTokenServiceMock.Object,
-            _domainEventDispatcherMock.Object,
-            _unitOfWorkMock.Object);
+            _openIddictTokenServiceMock.Object);
     }
 
     [Fact]
@@ -71,6 +54,7 @@ public sealed class RefreshTokenCommandHandlerTests
 
         result.IsSuccess.Should().BeTrue();
         result.Value.Grant.Principal.Should().BeSameAs(principal);
+        _accountRepositoryMock.Verify(x => x.UpdateAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]

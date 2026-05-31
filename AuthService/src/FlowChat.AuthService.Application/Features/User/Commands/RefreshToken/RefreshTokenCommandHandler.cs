@@ -3,31 +3,26 @@ using FlowChat.AuthService.Application.Contracts.Infrastructure;
 using FlowChat.AuthService.Application.Contracts.Persistence;
 using FlowChat.AuthService.Application.Features.User.Models;
 using FlowChat.Shared.Domain;
-using AccountAggregate = FlowChat.AuthService.Domain.Entities.Account.Account;
 
 namespace FlowChat.AuthService.Application.Features.User.Commands.RefreshToken;
 
-public sealed class RefreshTokenCommandHandler : AggregateRootCommandHandlerBase<RefreshTokenCommand, RefreshTokenCommandResponse>
+public sealed class RefreshTokenCommandHandler : CommandHandlerBase<RefreshTokenCommand, RefreshTokenCommandResponse>
 {
     private readonly IAccountRepository _accountRepository;
     private readonly IOpenIddictTokenService _openIddictTokenService;
 
     public RefreshTokenCommandHandler(
         IAccountRepository accountRepository,
-        IOpenIddictTokenService openIddictTokenService,
-        ILocalEventDispatcher domainEventDispatcher,
-        IUnitOfWork unitOfWork) : base(domainEventDispatcher, unitOfWork)
+        IOpenIddictTokenService openIddictTokenService)
     {
         _accountRepository = accountRepository;
         _openIddictTokenService = openIddictTokenService;
     }
 
-    private AccountAggregate? _account;
-
-    protected override async Task<FlowChatResult<RefreshTokenCommandResponse>> ExecuteAsync(RefreshTokenCommand request, CancellationToken cancellationToken)
+    protected override async Task<FlowChatResult<RefreshTokenCommandResponse>> HandleCommandAsync(RefreshTokenCommand request, CancellationToken cancellationToken)
     {
-        _account = await _accountRepository.GetByIdAsync(request.AccountId, cancellationToken);
-        if (_account is null || !_account.IsEmailConfirmed)
+        var account = await _accountRepository.GetByIdAsync(request.AccountId, cancellationToken);
+        if (account is null || !account.IsEmailConfirmed)
         {
             return FlowChatResult<RefreshTokenCommandResponse>.Failure(
                 DomainError.Unauthorized("User not found or account is not confirmed."));
@@ -35,9 +30,9 @@ public sealed class RefreshTokenCommandHandler : AggregateRootCommandHandlerBase
 
         var authenticatedAccount = new AuthenticatedAccount
         {
-            Id = _account.Id.Value,
-            FriendlyUserId = _account.FriendlyUserId.Value,
-            Email = _account.Email.Value,
+            Id = account.Id.Value,
+            FriendlyUserId = account.FriendlyUserId.Value,
+            Email = account.Email.Value,
             Roles = []
         };
 
@@ -50,7 +45,4 @@ public sealed class RefreshTokenCommandHandler : AggregateRootCommandHandlerBase
                 }
             });
     }
-
-    protected override IAggregateRoot GetAggregateRoot() =>
-        _account ?? throw new InvalidOperationException("Aggregate root instance is not available.");
 }
