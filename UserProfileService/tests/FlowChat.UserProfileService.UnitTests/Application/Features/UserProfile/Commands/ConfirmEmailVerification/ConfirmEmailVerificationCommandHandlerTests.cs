@@ -6,6 +6,7 @@ using FlowChat.UserProfileService.Application.Contracts.Infrastructure;
 using FlowChat.UserProfileService.Application.Contracts.Persistence;
 using FlowChat.UserProfileService.Application.Features.UserProfile.Commands.ConfirmEmailVerification;
 using FlowChat.UserProfileService.Application.Features.UserProfile.EmailVerification;
+using FlowChat.UserProfileService.Domain.Entities.EmailVerificationProcess;
 using FlowChat.UserProfileService.Domain.Entities.EmailVerificationRequest;
 using FlowChat.UserProfileService.Domain.Entities.UserProfile;
 using MediatR;
@@ -16,7 +17,7 @@ namespace FlowChat.UserProfileService.UnitTests;
 public sealed class ConfirmEmailVerificationCommandHandlerTests
 {
     private readonly Mock<IUserProfileWriteRepository> _userProfileRepositoryMock = new();
-    private readonly Mock<IEmailVerificationRequestWriteRepository> _verificationRequestRepositoryMock = new();
+    private readonly Mock<IEmailVerificationProcessWriteRepository> _verificationProcessRepositoryMock = new();
     private readonly Mock<IEmailVerificationTokenProtector> _tokenProtectorMock = new();
     private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
     private readonly Mock<ILocalEventDispatcher> _dispatcherMock = new();
@@ -34,11 +35,11 @@ public sealed class ConfirmEmailVerificationCommandHandlerTests
             .Setup(x => x.GetByIdAsync(It.IsAny<Id<UserProfile>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((UserProfile?)null);
 
-        _verificationRequestRepositoryMock
+        _verificationProcessRepositoryMock
             .Setup(x => x.GetByNonceAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((EmailVerificationRequest?)null);
+            .ReturnsAsync((EmailVerificationProcess?)null);
 
-        _verificationRequestRepositoryMock
+        _verificationProcessRepositoryMock
             .Setup(x => x.GetConfirmationStateByNonceAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((EmailVerificationConfirmationState?)null);
 
@@ -51,7 +52,7 @@ public sealed class ConfirmEmailVerificationCommandHandlerTests
 
         _handler = new ConfirmEmailVerificationCommandHandler(
             _userProfileRepositoryMock.Object,
-            _verificationRequestRepositoryMock.Object,
+            _verificationProcessRepositoryMock.Object,
             _tokenProtectorMock.Object,
             _unitOfWorkMock.Object,
             _dispatcherMock.Object);
@@ -78,26 +79,31 @@ public sealed class ConfirmEmailVerificationCommandHandlerTests
         return userProfile;
     }
 
+    private static EmailVerificationProcess CreateProcess(Id<UserProfile> userProfileId, Id<Email> emailId)
+    {
+        return EmailVerificationProcess.Create(userProfileId, emailId);
+    }
+
     [Fact]
     public async Task Handle_WithValidToken_ConfirmsEmailAndConsumesRequest()
     {
         var profile = CreateUserProfile("john@example.com");
         var email = profile.Emails.Should().ContainSingle().Subject;
-        var verificationRequest = EmailVerificationRequest.Create(
+        var process = CreateProcess(profile.Id, email.Id);
+        var verificationRequest = process.IssueRequest(
             Id<EmailVerificationRequest>.New(),
-            profile.Id,
-            email.Id,
             "valid-nonce",
-            DateTimeOffset.UtcNow.AddHours(24));
+            DateTimeOffset.UtcNow.AddHours(24),
+            DateTimeOffset.UtcNow);
 
         var payload = new EmailVerificationTokenPayload(profile.Id.Value, email.Id.Value, verificationRequest.Nonce);
         _tokenProtectorMock
             .Setup(x => x.TryUnprotect("valid-token", out payload))
             .Returns(true);
 
-        _verificationRequestRepositoryMock
+        _verificationProcessRepositoryMock
             .Setup(x => x.GetByNonceAsync("valid-nonce", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(verificationRequest);
+            .ReturnsAsync(process);
 
         _userProfileRepositoryMock
             .Setup(x => x.GetByIdAsync(profile.Id.Value, It.IsAny<CancellationToken>()))
@@ -131,22 +137,22 @@ public sealed class ConfirmEmailVerificationCommandHandlerTests
         var email = profile.Emails.Should().ContainSingle().Subject;
         profile.ConfirmEmail(email.Id);
         profile.ClearEvents();
-        var verificationRequest = EmailVerificationRequest.Create(
+        var process = CreateProcess(profile.Id, email.Id);
+        var verificationRequest = process.IssueRequest(
             Id<EmailVerificationRequest>.New(),
-            profile.Id,
-            email.Id,
             "used-nonce",
-            DateTimeOffset.UtcNow.AddHours(24));
-        verificationRequest.Consume(DateTimeOffset.UtcNow);
+            DateTimeOffset.UtcNow.AddHours(24),
+            DateTimeOffset.UtcNow);
+        process.ConsumeRequest(verificationRequest.Nonce, DateTimeOffset.UtcNow);
 
         var payload = new EmailVerificationTokenPayload(profile.Id.Value, email.Id.Value, verificationRequest.Nonce);
         _tokenProtectorMock
             .Setup(x => x.TryUnprotect("used-token", out payload))
             .Returns(true);
 
-        _verificationRequestRepositoryMock
+        _verificationProcessRepositoryMock
             .Setup(x => x.GetByNonceAsync("used-nonce", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(verificationRequest);
+            .ReturnsAsync(process);
 
         _userProfileRepositoryMock
             .Setup(x => x.GetByIdAsync(profile.Id.Value, It.IsAny<CancellationToken>()))
@@ -164,22 +170,22 @@ public sealed class ConfirmEmailVerificationCommandHandlerTests
     {
         var profile = CreateUserProfile("john@example.com");
         var email = profile.Emails.Should().ContainSingle().Subject;
-        var verificationRequest = EmailVerificationRequest.Create(
+        var process = CreateProcess(profile.Id, email.Id);
+        var verificationRequest = process.IssueRequest(
             Id<EmailVerificationRequest>.New(),
-            profile.Id,
-            email.Id,
             "used-unconfirmed-nonce",
-            DateTimeOffset.UtcNow.AddHours(24));
-        verificationRequest.Consume(DateTimeOffset.UtcNow);
+            DateTimeOffset.UtcNow.AddHours(24),
+            DateTimeOffset.UtcNow);
+        process.ConsumeRequest(verificationRequest.Nonce, DateTimeOffset.UtcNow);
 
         var payload = new EmailVerificationTokenPayload(profile.Id.Value, email.Id.Value, verificationRequest.Nonce);
         _tokenProtectorMock
             .Setup(x => x.TryUnprotect("used-unconfirmed-token", out payload))
             .Returns(true);
 
-        _verificationRequestRepositoryMock
+        _verificationProcessRepositoryMock
             .Setup(x => x.GetByNonceAsync("used-unconfirmed-nonce", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(verificationRequest);
+            .ReturnsAsync(process);
 
         _userProfileRepositoryMock
             .Setup(x => x.GetByIdAsync(profile.Id.Value, It.IsAny<CancellationToken>()))
@@ -197,21 +203,21 @@ public sealed class ConfirmEmailVerificationCommandHandlerTests
     {
         var userProfileId = Guid.NewGuid();
         var emailId = Guid.NewGuid();
-        var verificationRequest = EmailVerificationRequest.Create(
+        var process = CreateProcess(Id<UserProfile>.FromGuid(userProfileId), Id<Email>.FromGuid(emailId));
+        var verificationRequest = process.IssueRequest(
             Id<EmailVerificationRequest>.New(),
-            Id<UserProfile>.FromGuid(userProfileId),
-            Id<Email>.FromGuid(emailId),
             "missing-profile-nonce",
-            DateTimeOffset.UtcNow.AddHours(24));
+            DateTimeOffset.UtcNow.AddHours(24),
+            DateTimeOffset.UtcNow);
 
         var payload = new EmailVerificationTokenPayload(userProfileId, emailId, verificationRequest.Nonce);
         _tokenProtectorMock
             .Setup(x => x.TryUnprotect("valid-token", out payload))
             .Returns(true);
 
-        _verificationRequestRepositoryMock
+        _verificationProcessRepositoryMock
             .Setup(x => x.GetByNonceAsync("missing-profile-nonce", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(verificationRequest);
+            .ReturnsAsync(process);
 
         // userProfileRepositoryMock returns null by default
 
@@ -227,21 +233,21 @@ public sealed class ConfirmEmailVerificationCommandHandlerTests
     {
         var profile = CreateUserProfile("john@example.com");
         var email = profile.Emails.Should().ContainSingle().Subject;
-        var verificationRequest = EmailVerificationRequest.Create(
+        var process = CreateProcess(profile.Id, email.Id);
+        var verificationRequest = process.IssueRequest(
             Id<EmailVerificationRequest>.New(),
-            profile.Id,
-            email.Id,
             "expired-nonce",
-            DateTimeOffset.UtcNow.AddHours(-1)); // already expired
+            DateTimeOffset.UtcNow.AddHours(-1),
+            DateTimeOffset.UtcNow);
 
         var payload = new EmailVerificationTokenPayload(profile.Id.Value, email.Id.Value, verificationRequest.Nonce);
         _tokenProtectorMock
             .Setup(x => x.TryUnprotect("expired-token", out payload))
             .Returns(true);
 
-        _verificationRequestRepositoryMock
+        _verificationProcessRepositoryMock
             .Setup(x => x.GetByNonceAsync("expired-nonce", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(verificationRequest);
+            .ReturnsAsync(process);
 
         var result = await SendAsync(new ConfirmEmailVerificationCommand("expired-token"));
 
@@ -255,23 +261,23 @@ public sealed class ConfirmEmailVerificationCommandHandlerTests
     {
         var profile = CreateUserProfile("john@example.com");
         var email = profile.Emails.Should().ContainSingle().Subject;
-        var verificationRequest = EmailVerificationRequest.Create(
+        var process = CreateProcess(profile.Id, email.Id);
+        var verificationRequest = process.IssueRequest(
             Id<EmailVerificationRequest>.New(),
-            profile.Id,
-            email.Id,
             "concurrency-nonce",
-            DateTimeOffset.UtcNow.AddHours(24));
+            DateTimeOffset.UtcNow.AddHours(24),
+            DateTimeOffset.UtcNow);
 
         var payload = new EmailVerificationTokenPayload(profile.Id.Value, email.Id.Value, verificationRequest.Nonce);
         _tokenProtectorMock
             .Setup(x => x.TryUnprotect("concurrency-token", out payload))
             .Returns(true);
 
-        _verificationRequestRepositoryMock
+        _verificationProcessRepositoryMock
             .Setup(x => x.GetByNonceAsync("concurrency-nonce", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(verificationRequest);
+            .ReturnsAsync(process);
 
-        _verificationRequestRepositoryMock
+        _verificationProcessRepositoryMock
             .Setup(x => x.GetConfirmationStateByNonceAsync("concurrency-nonce", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new EmailVerificationConfirmationState(
                 profile.Id.Value,

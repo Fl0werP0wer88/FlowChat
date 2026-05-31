@@ -2,6 +2,7 @@ using FlowChat.UserProfileService.Application.Features.UserProfile.Eventing.Doma
 using FlowChat.UserProfileService.Application.Features.UserProfile.EmailVerification.Interfaces;
 using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
+using FlowChat.UserProfileService.Domain.Entities.EmailVerificationProcess;
 using FlowChat.UserProfileService.Domain.Entities.EmailVerificationRequest;
 using FlowChat.UserProfileService.Domain.Entities.UserProfile;
 using FlowChat.UserProfileService.Domain.Entities.UserProfile.Events;
@@ -17,7 +18,13 @@ public sealed class EmailAddedDomainEventHandlerTests
         _issuerMock
             .Setup(x => x.IssueAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((Guid userProfileId, Guid emailId, string _, CancellationToken _) =>
-                EmailVerificationRequest.Create(Id<EmailVerificationRequest>.New(), userProfileId, emailId, Guid.NewGuid().ToString("N"), DateTimeOffset.UtcNow.AddHours(24)));
+                EmailVerificationProcess
+                    .Create(Id<UserProfile>.FromGuid(userProfileId), Id<Email>.FromGuid(emailId))
+                    .IssueRequest(
+                        Id<EmailVerificationRequest>.New(),
+                        Guid.NewGuid().ToString("N"),
+                        DateTimeOffset.UtcNow.AddHours(24),
+                        DateTimeOffset.UtcNow));
     }
 
     [Fact]

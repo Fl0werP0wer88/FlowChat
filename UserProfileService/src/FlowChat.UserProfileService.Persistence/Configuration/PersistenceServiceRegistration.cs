@@ -27,7 +27,7 @@ public static class PersistenceServiceRegistration
         services.AddScoped<IUnitOfWork, SilverbackEfUnitOfWork<AppDbContext>>();
         services.AddScoped<IUserProfileReadRepository, UserProfileReadRepository>();
         services.AddScoped<IUserProfileWriteRepository, UserProfileWriteRepository>();
-        services.AddScoped<IEmailVerificationRequestWriteRepository, EmailVerificationRequestWriteRepository>();
+        services.AddScoped<IEmailVerificationProcessWriteRepository, EmailVerificationProcessWriteRepository>();
 
         return services;
     }

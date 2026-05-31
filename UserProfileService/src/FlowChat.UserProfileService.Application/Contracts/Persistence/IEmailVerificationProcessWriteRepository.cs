@@ -1,8 +1,7 @@
-using FlowChat.Shared.Application;
 using FlowChat.Core.Contracts;
+using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain.ValueObjects;
-using FlowChat.UserProfileService.Domain.Entities.EmailVerificationRequest;
-using FlowChat.UserProfileService.Domain.Entities.UserProfile;
+using FlowChat.UserProfileService.Domain.Entities.EmailVerificationProcess;
 
 namespace FlowChat.UserProfileService.Application.Contracts.Persistence;
 
@@ -13,13 +12,13 @@ public sealed record EmailVerificationConfirmationState(
     UtcDateTimeOffset? ConsumedAtUtc,
     bool EmailIsConfirmed) : IDbReadResponse;
 
-public interface IEmailVerificationRequestWriteRepository : IWriteRepository<EmailVerificationRequest>
+public interface IEmailVerificationProcessWriteRepository : IWriteRepository<EmailVerificationProcess>
 {
-    Task<IReadOnlyList<EmailVerificationRequest>> GetActiveByEmailIdAsync(
+    Task<EmailVerificationProcess?> GetByEmailIdAsync(
         Guid emailId,
         CancellationToken cancellationToken = default);
 
-    Task<EmailVerificationRequest?> GetByNonceAsync(
+    Task<EmailVerificationProcess?> GetByNonceAsync(
         string nonce,
         CancellationToken cancellationToken = default);
 

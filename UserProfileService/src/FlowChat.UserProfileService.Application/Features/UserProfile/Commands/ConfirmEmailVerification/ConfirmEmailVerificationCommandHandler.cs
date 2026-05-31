@@ -5,7 +5,6 @@ using FlowChat.Shared.Domain.ValueObjects;
 using FlowChat.UserProfileService.Application.Contracts.Infrastructure;
 using FlowChat.UserProfileService.Application.Contracts.Persistence;
 using FlowChat.UserProfileService.Application.Features.UserProfile.EmailVerification;
-using FlowChat.UserProfileService.Domain.Entities.EmailVerificationRequest;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using UserProfileAggregate = FlowChat.UserProfileService.Domain.Entities.UserProfile.UserProfile;
@@ -20,19 +19,19 @@ public sealed class ConfirmEmailVerificationCommandHandler
     private const string InvalidTokenMessage = "Email verification link is invalid or has expired.";
 
     private readonly IUserProfileWriteRepository _userProfileWriteRepository;
-    private readonly IEmailVerificationRequestWriteRepository _emailVerificationRequestWriteRepository;
+    private readonly IEmailVerificationProcessWriteRepository _emailVerificationProcessWriteRepository;
     private readonly IEmailVerificationTokenProtector _emailVerificationTokenProtector;
     private UserProfileAggregate? _userProfile;
 
     public ConfirmEmailVerificationCommandHandler(
         IUserProfileWriteRepository userProfileWriteRepository,
-        IEmailVerificationRequestWriteRepository emailVerificationRequestWriteRepository,
+        IEmailVerificationProcessWriteRepository emailVerificationProcessWriteRepository,
         IEmailVerificationTokenProtector emailVerificationTokenProtector,
         IUnitOfWork unitOfWork,
         ILocalEventDispatcher domainEventDispatcher) : base(domainEventDispatcher, unitOfWork)
     {
         _userProfileWriteRepository = userProfileWriteRepository;
-        _emailVerificationRequestWriteRepository = emailVerificationRequestWriteRepository;
+        _emailVerificationProcessWriteRepository = emailVerificationProcessWriteRepository;
         _emailVerificationTokenProtector = emailVerificationTokenProtector;
     }
 
@@ -45,14 +44,15 @@ public sealed class ConfirmEmailVerificationCommandHandler
             return ValidationFailure();
         }
 
-        var verificationRequest = await _emailVerificationRequestWriteRepository
+        var process = await _emailVerificationProcessWriteRepository
             .GetByNonceAsync(payload.Nonce, cancellationToken);
 
         // Validate IDs from the payload against the stored request before checking IsActive —
         // a tampered token that maps to a real nonce but wrong IDs must be rejected early.
-        if (verificationRequest is null
-            || verificationRequest.UserProfileId.Value != payload.UserProfileId
-            || verificationRequest.EmailId.Value != payload.EmailId)
+        if (process is null
+            || process.UserProfileId.Value != payload.UserProfileId
+            || process.EmailId.Value != payload.EmailId
+            || !process.TryGetRequestByNonce(payload.Nonce, out var verificationRequest))
         {
             return ValidationFailure();
         }
@@ -90,7 +90,7 @@ public sealed class ConfirmEmailVerificationCommandHandler
         }
 
         _userProfile.ConfirmEmail(email.Id);
-        verificationRequest.Consume(nowUtc);
+        process.ConsumeRequest(payload.Nonce, nowUtc);
 
         return Success(wasAlreadyProcessed: false);
     }
@@ -107,7 +107,7 @@ public sealed class ConfirmEmailVerificationCommandHandler
             return await base.HandleUnexpectedExceptionAsync(request, exception, cancellationToken);
         }
 
-        var confirmationState = await _emailVerificationRequestWriteRepository
+        var confirmationState = await _emailVerificationProcessWriteRepository
             .GetConfirmationStateByNonceAsync(payload.Nonce, cancellationToken);
 
         if (IsConfirmedBySameToken(payload, confirmationState))

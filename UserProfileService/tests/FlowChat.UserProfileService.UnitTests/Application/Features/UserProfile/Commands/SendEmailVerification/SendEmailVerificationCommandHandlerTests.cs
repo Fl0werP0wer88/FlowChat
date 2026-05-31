@@ -5,6 +5,7 @@ using FlowChat.UserProfileService.Application.Contracts.Persistence;
 using FlowChat.UserProfileService.Application.Features.UserProfile.Commands.SendEmailVerification;
 using FlowChat.UserProfileService.Application.Features.UserProfile.EmailVerification.Interfaces;
 using FlowChat.UserProfileService.Application.Features.UserProfile.Queries.UserProfile.Model;
+using FlowChat.UserProfileService.Domain.Entities.EmailVerificationProcess;
 using FlowChat.UserProfileService.Domain.Entities.EmailVerificationRequest;
 using FlowChat.UserProfileService.Domain.Entities.UserProfile;
 
@@ -27,7 +28,7 @@ public sealed class SendEmailVerificationCommandHandlerTests
         _issuerMock
             .Setup(x => x.IssueAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((Guid userProfileId, Guid emailId, string emailAddress, CancellationToken _) =>
-                EmailVerificationRequest.Create(Id<EmailVerificationRequest>.New(), userProfileId, emailId, Guid.NewGuid().ToString("N"), DateTimeOffset.UtcNow.AddHours(24)));
+                CreateRequest(userProfileId, emailId));
 
         _unitOfWorkMock
             .Setup(x => x.ExecuteCommandInTransactionAsync(
@@ -87,7 +88,7 @@ public sealed class SendEmailVerificationCommandHandlerTests
             .Setup(x => x.IssueAsync(profileId, emailId, "john@example.com", It.IsAny<CancellationToken>()))
             .ReturnsAsync((Guid upId, Guid eId, string _, CancellationToken _) =>
             {
-                issuedRequest = EmailVerificationRequest.Create(Id<EmailVerificationRequest>.New(), upId, eId, Guid.NewGuid().ToString("N"), DateTimeOffset.UtcNow.AddHours(24));
+                issuedRequest = CreateRequest(upId, eId);
                 return issuedRequest;
             });
 
@@ -149,6 +150,17 @@ public sealed class SendEmailVerificationCommandHandlerTests
         result.IsFailure.Should().BeTrue();
         result.Error.ErrorType.Should().Be(ErrorType.NotFound);
         _issuerMock.Verify(x => x.IssueAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    private static EmailVerificationRequest CreateRequest(Guid userProfileId, Guid emailId)
+    {
+        return EmailVerificationProcess
+            .Create(Id<UserProfile>.FromGuid(userProfileId), Id<Email>.FromGuid(emailId))
+            .IssueRequest(
+                Id<EmailVerificationRequest>.New(),
+                Guid.NewGuid().ToString("N"),
+                DateTimeOffset.UtcNow.AddHours(24),
+                DateTimeOffset.UtcNow);
     }
 }
 
