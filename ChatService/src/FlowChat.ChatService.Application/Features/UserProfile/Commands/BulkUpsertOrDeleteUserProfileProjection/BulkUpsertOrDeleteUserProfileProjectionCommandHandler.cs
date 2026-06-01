@@ -17,14 +17,15 @@ public sealed class BulkUpsertOrDeleteUserProfileProjectionCommandHandler
         _bulkRepository = bulkRepository ?? throw new ArgumentNullException(nameof(bulkRepository));
     }
 
-    protected override Task<FlowChatResult<Unit>> HandleInTransactionAsync(
+    protected override async Task<FlowChatResult<Unit>> HandleInTransactionAsync(
         BulkUpsertOrDeleteUserProfileProjectionCommand request,
         CancellationToken cancellationToken)
     {
         if (request.Items.Count == 0)
-            return Task.FromResult(FlowChatResult<Unit>.Success(Unit.Value));
+            return FlowChatResult<Unit>.Success(Unit.Value);
 
-        return _bulkRepository.BulkUpsertOrSoftDeleteAsync(request.Items, cancellationToken);
+        await _bulkRepository.BulkUpsertOrSoftDeleteAsync(request.Items, cancellationToken);
+
+        return FlowChatResult<Unit>.Success(Unit.Value);
     }
 }
-

@@ -3,9 +3,6 @@ using FlowChat.ChatService.Application.Contracts.Persistence;
 using FlowChat.ChatService.Application.Features.UserProfile;
 using FlowChat.ChatService.Application.Features.UserProfile.Commands.BulkUpsertOrDeleteUserProfileProjection;
 using FlowChat.ChatService.Persistence.Entities;
-using FlowChat.Core.Results;
-using FlowChat.Shared.Application;
-using MediatR;
 
 namespace FlowChat.ChatService.Persistence.BulkUpsert;
 
@@ -14,7 +11,7 @@ public sealed class UserProfileProjectionBulkRepository(AppDbContext dbContext)
 {
     private const string TombstoneSource = "user-profile-projection";
 
-    public async Task<FlowChatResult<Unit>> BulkUpsertOrSoftDeleteAsync(
+    public async Task BulkUpsertOrSoftDeleteAsync(
         IReadOnlyCollection<UserProfileProjectionCommandItem> items,
         CancellationToken cancellationToken)
     {
@@ -35,8 +32,6 @@ public sealed class UserProfileProjectionBulkRepository(AppDbContext dbContext)
                 ]
             },
             cancellationToken: cancellationToken);
-
-        return FlowChatResult<Unit>.Success(Unit.Value);
     }
 
     private static UserProfileReadModelEntity CreateEntity(
