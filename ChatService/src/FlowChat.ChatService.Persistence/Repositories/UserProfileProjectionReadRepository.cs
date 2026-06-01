@@ -21,7 +21,7 @@ public sealed class UserProfileProjectionReadRepository : IUserProfileProjection
 
         return (await _dbContext.UserProfileProjections
             .AsNoTracking()
-            .Where(x => ids.Contains(x.UserId))
+            .Where(x => ids.Contains(x.UserId) && !x.IsDeleted)
             .Select(x => new { x.UserId, x.FirstName, x.LastName, x.AvatarUrl })
             .ToListAsync(cancellationToken))
             .Select(x => new UserProfileConversationParticipantDto(

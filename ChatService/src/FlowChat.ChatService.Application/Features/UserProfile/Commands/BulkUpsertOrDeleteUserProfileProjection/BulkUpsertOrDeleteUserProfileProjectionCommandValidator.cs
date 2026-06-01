@@ -15,6 +15,10 @@ public sealed class BulkUpsertOrDeleteUserProfileProjectionCommandValidator
         RuleForEach(command => command.Items)
             .ChildRules(item =>
             {
+                item.RuleFor(x => x.SourceVersion)
+                    .GreaterThan(0)
+                    .WithMessage("Item does not contain a valid SourceVersion.");
+
                 item.When(i => i.Value is not null, () =>
                 {
                     item.RuleFor(x => x.Value!.FriendlyUserId)

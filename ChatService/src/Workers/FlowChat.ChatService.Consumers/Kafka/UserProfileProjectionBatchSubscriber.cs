@@ -2,6 +2,7 @@ using AutoMapper;
 using FlowChat.ChatService.Consumers.ChatService.Contracts;
 using FlowChat.ChatService.Consumers.Services;
 using FlowChat.Core.Messaging;
+using FlowChat.Core.Messaging.UserProfileService.ReadModels;
 using Silverback.Messaging.Subscribers;
 
 namespace FlowChat.ChatService.Consumers.Kafka;
@@ -13,23 +14,14 @@ public sealed class UserProfileProjectionBatchSubscriber(
 {
     [Subscribe]
     public async Task HandleAsync(
-        IAsyncEnumerable<IntegrationEvent> messages,
+        IAsyncEnumerable<ProjectionIntegrationEvent<UserProfileReadModel>> messages,
         CancellationToken cancellationToken)
     {
         var items = new List<BulkUpsertOrDeleteUserProfileProjectionRequestItem>();
 
         await foreach (var message in messages.WithCancellation(cancellationToken))
         {
-            var item = UserProfileSubscriberHelper.MapAndFilterEvents(message, mapper);
-            if (item is null)
-            {
-                logger.LogDebug(
-                    "Skipping unsupported user profile projection event {EventType}.",
-                    message.GetType().Name);
-                continue;
-            }
-
-            items.Add(item);
+            items.Add(UserProfileSubscriberHelper.MapProjectionEvent(message, mapper));
         }
 
         if (items.Count == 0)

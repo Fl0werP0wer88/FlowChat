@@ -10,5 +10,6 @@ public sealed class BulkUpsertOrDeleteUserProfileProjectionRequest : IConsumerOu
 public sealed class BulkUpsertOrDeleteUserProfileProjectionRequestItem
 {
     public Guid UserProfileId { get; init; }
+    public int SourceVersion { get; init; }
     public UserProfileProjectionRequest? Value { get; init; }
 }

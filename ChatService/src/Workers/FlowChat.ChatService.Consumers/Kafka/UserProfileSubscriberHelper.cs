@@ -2,36 +2,36 @@ using AutoMapper;
 using FlowChat.ChatService.Consumers.ChatService.Contracts;
 using FlowChat.Core.Exceptions;
 using FlowChat.Core.Messaging;
-using FlowChat.Core.Messaging.UserProfileService.Events;
+using FlowChat.Core.Messaging.UserProfileService.ReadModels;
 
 namespace FlowChat.ChatService.Consumers.Kafka;
 
 internal static class UserProfileSubscriberHelper
 {
-    public static BulkUpsertOrDeleteUserProfileProjectionRequestItem? MapAndFilterEvents(IntegrationEvent message, IMapper mapper)
+    public static BulkUpsertOrDeleteUserProfileProjectionRequestItem MapProjectionEvent(
+        ProjectionIntegrationEvent<UserProfileReadModel> message,
+        IMapper mapper)
     {
+        ArgumentNullException.ThrowIfNull(message);
         ArgumentNullException.ThrowIfNull(mapper);
+
+        if (message.Version <= 0)
+            throw new NonTransientException("Payload does not contain valid SourceVersion.");
+
+        var userProfileId = ResolveUserId(message.Value.UserProfileId);
 
         try
         {
-            return message switch
+            return message.Operation switch
             {
-                UserProfileCreatedIntegrationEvent created => new BulkUpsertOrDeleteUserProfileProjectionRequestItem
+                OperationType.Created or OperationType.Updated => CreateUpsertItem(message, mapper, userProfileId),
+                OperationType.Deleted => new BulkUpsertOrDeleteUserProfileProjectionRequestItem
                 {
-                    UserProfileId = created.UserProfileId,
-                    Value = mapper.Map<UserProfileProjectionRequest>(created)
-                },
-                UserProfileChangedIntegrationEvent changed => new BulkUpsertOrDeleteUserProfileProjectionRequestItem
-                {
-                    UserProfileId = changed.UserProfileId,
-                    Value = mapper.Map<UserProfileProjectionRequest>(changed)
-                },
-                UserProfileDeletedIntegrationEvent deleted => new BulkUpsertOrDeleteUserProfileProjectionRequestItem
-                {
-                    UserProfileId = deleted.UserProfileId,
+                    UserProfileId = userProfileId,
+                    SourceVersion = message.Version,
                     Value = null
                 },
-                _ => null
+                _ => throw new NonTransientException($"Unsupported user profile projection operation {message.Operation}.")
             };
         }
         catch (AutoMapperMappingException exception) when (exception.InnerException is NonTransientException nonTransientException)
@@ -51,9 +51,33 @@ internal static class UserProfileSubscriberHelper
         return items
             .Select((item, index) => new { item, index })
             .GroupBy(x => x.item.UserProfileId)
-            .Select(group => group.Last())
+            .Select(group => group
+                .OrderBy(x => x.item.SourceVersion)
+                .ThenBy(x => x.index)
+                .Last())
             .OrderBy(x => x.index)
             .Select(x => x.item)
             .ToArray();
+    }
+
+    private static Guid ResolveUserId(Guid userId) =>
+        userId != Guid.Empty
+            ? userId
+            : throw new NonTransientException("Payload does not contain valid UserProfileId.");
+
+    private static BulkUpsertOrDeleteUserProfileProjectionRequestItem CreateUpsertItem(
+        ProjectionIntegrationEvent<UserProfileReadModel> message,
+        IMapper mapper,
+        Guid userProfileId)
+    {
+        var value = mapper.Map<UserProfileProjectionRequest>(message.Value);
+        value.SourceVersion = message.Version;
+
+        return new BulkUpsertOrDeleteUserProfileProjectionRequestItem
+        {
+            UserProfileId = userProfileId,
+            SourceVersion = message.Version,
+            Value = value
+        };
     }
 }

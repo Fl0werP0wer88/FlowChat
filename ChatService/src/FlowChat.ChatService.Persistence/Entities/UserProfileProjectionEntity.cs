@@ -7,6 +7,8 @@ public sealed class UserProfileProjectionEntity
     public string? FirstName { get; set; }
     public string? LastName { get; set; }
     public string? AvatarUrl { get; set; }
+    public int SourceVersion { get; set; }
+    public bool IsDeleted { get; set; }
     public string CreatedBy { get; set; } = string.Empty;
     public DateTimeOffset CreatedAtUtc { get; set; }
     public string LastModifiedBy { get; set; } = string.Empty;

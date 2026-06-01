@@ -1,30 +1,23 @@
 using AutoMapper;
 using FlowChat.ChatService.Consumers.ChatService.Contracts;
 using FlowChat.Core.Exceptions;
-using FlowChat.Core.Messaging.UserProfileService.Events;
+using FlowChat.Core.Messaging.UserProfileService.ReadModels;
 
 namespace FlowChat.ChatService.Consumers.Kafka;
 
 public sealed class UserProfileProjectionRequestProfile : Profile
 {
-    private const string ProjectionSource = "user-profile-events";
+    private const string ProjectionSource = "user-profile-projection";
 
     public UserProfileProjectionRequestProfile()
     {
-        CreateMap<UserProfileCreatedIntegrationEvent, UserProfileProjectionRequest>()
+        CreateMap<UserProfileReadModel, UserProfileProjectionRequest>()
             .ForMember(destination => destination.UserProfileId, options => options.MapFrom(source => ResolveUserId(source.UserProfileId)))
             .ForMember(destination => destination.FriendlyUserId, options => options.MapFrom(source => NormalizeRequired(source.FriendlyUserId, nameof(source.FriendlyUserId))))
             .ForMember(destination => destination.FirstName, options => options.MapFrom(source => NormalizeOptional(source.FirstName)))
             .ForMember(destination => destination.LastName, options => options.MapFrom(source => NormalizeOptional(source.LastName)))
             .ForMember(destination => destination.AvatarUrl, options => options.MapFrom(source => NormalizeOptional(source.AvatarUrl)))
-            .ForMember(destination => destination.Source, options => options.MapFrom(_ => ProjectionSource));
-
-        CreateMap<UserProfileChangedIntegrationEvent, UserProfileProjectionRequest>()
-            .ForMember(destination => destination.UserProfileId, options => options.MapFrom(source => ResolveUserId(source.UserProfileId)))
-            .ForMember(destination => destination.FriendlyUserId, options => options.MapFrom(source => NormalizeRequired(source.FriendlyUserId, nameof(source.FriendlyUserId))))
-            .ForMember(destination => destination.FirstName, options => options.MapFrom(source => NormalizeOptional(source.FirstName)))
-            .ForMember(destination => destination.LastName, options => options.MapFrom(source => NormalizeOptional(source.LastName)))
-            .ForMember(destination => destination.AvatarUrl, options => options.MapFrom(source => NormalizeOptional(source.AvatarUrl)))
+            .ForMember(destination => destination.SourceVersion, options => options.Ignore())
             .ForMember(destination => destination.Source, options => options.MapFrom(_ => ProjectionSource));
     }
 

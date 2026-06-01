@@ -1,37 +1,32 @@
 using EFCore.BulkExtensions;
+using FlowChat.ChatService.Application.Contracts.Persistence;
 using FlowChat.ChatService.Application.Features.UserProfile;
+using FlowChat.ChatService.Application.Features.UserProfile.Commands.BulkUpsertOrDeleteUserProfileProjection;
 using FlowChat.ChatService.Persistence.Entities;
 using FlowChat.Core.Results;
 using FlowChat.Shared.Application;
-using FlowChat.Shared.Domain;
 
 namespace FlowChat.ChatService.Persistence.BulkUpsert;
 
 public sealed class UserProfileProjectionBulkRepository(AppDbContext dbContext)
-    : IBulkRepository<UserProfileProjectionDto>
+    : IUserProfileProjectionBulkRepository
 {
-    public async Task<FlowChatResult<int>> BulkUpsertAsync(
-        IReadOnlyCollection<UserProfileProjectionDto> items,
+    private const string TombstoneSource = "user-profile-projection";
+
+    public async Task<FlowChatResult<BulkUpsertOrDeleteCommandResult>> BulkUpsertOrDeleteAsync(
+        IReadOnlyCollection<UserProfileProjectionCommandItem> items,
         CancellationToken cancellationToken)
     {
         var now = DateTimeOffset.UtcNow;
-        var entities = items.Select(item => new UserProfileProjectionEntity
-        {
-            UserId = item.UserProfileId,
-            FriendlyUserId = item.FriendlyUserId,
-            FirstName = item.FirstName,
-            LastName = item.LastName,
-            AvatarUrl = item.AvatarUrl,
-            CreatedBy = item.Source,
-            CreatedAtUtc = now,
-            LastModifiedBy = item.Source,
-            LastModifiedAtUtc = now
-        }).ToList();
+        var entities = items.Select(item => CreateEntity(item, now)).ToList();
 
         await dbContext.BulkInsertOrUpdateAsync(
             entities,
             new BulkConfig
             {
+                UpdateByProperties = [nameof(UserProfileProjectionEntity.UserId)],
+                OnConflictUpdateWhereSql = (existing, inserted) =>
+                    $"{inserted}.\"SourceVersion\" > {existing}.\"SourceVersion\"",
                 PropertiesToExcludeOnUpdate =
                 [
                     nameof(UserProfileProjectionEntity.CreatedBy),
@@ -40,21 +35,51 @@ public sealed class UserProfileProjectionBulkRepository(AppDbContext dbContext)
             },
             cancellationToken: cancellationToken);
 
-        return FlowChatResult<int>.Success(items.Count);
+        var upsertedCount = items.Count(item => item.Value is not null);
+        var deletedCount = items.Count(item => item.Value is null);
+
+        return FlowChatResult<BulkUpsertOrDeleteCommandResult>.Success(
+            new BulkUpsertOrDeleteCommandResult(items.Count, upsertedCount, deletedCount));
     }
 
-    public async Task<FlowChatResult<int>> BulkDeleteAsync(
-        IReadOnlyCollection<Id<UserProfileProjectionDto>> ids,
-        CancellationToken cancellationToken)
-    {
-        var guids = ids.Select(id => id.Value).ToList();
+    private static UserProfileProjectionEntity CreateEntity(
+        UserProfileProjectionCommandItem item,
+        DateTimeOffset now) =>
+        item.Value is null
+            ? CreateTombstoneEntity(item, now)
+            : CreateUpsertEntity(item.Value, item.SourceVersion, now);
 
-        var entities = dbContext.UserProfileProjections
-            .Where(e => guids.Contains(e.UserId))
-            .ToList();
+    private static UserProfileProjectionEntity CreateUpsertEntity(
+        UserProfileProjectionDto item,
+        int sourceVersion,
+        DateTimeOffset now) =>
+        new()
+        {
+            UserId = item.UserProfileId,
+            FriendlyUserId = item.FriendlyUserId,
+            FirstName = item.FirstName,
+            LastName = item.LastName,
+            AvatarUrl = item.AvatarUrl,
+            SourceVersion = sourceVersion,
+            IsDeleted = false,
+            CreatedBy = item.Source,
+            CreatedAtUtc = now,
+            LastModifiedBy = item.Source,
+            LastModifiedAtUtc = now
+        };
 
-        await dbContext.BulkDeleteAsync(entities, cancellationToken: cancellationToken);
-
-        return FlowChatResult<int>.Success(ids.Count);
-    }
+    private static UserProfileProjectionEntity CreateTombstoneEntity(
+        UserProfileProjectionCommandItem item,
+        DateTimeOffset now) =>
+        new()
+        {
+            UserId = item.EntityId.Value,
+            FriendlyUserId = string.Empty,
+            SourceVersion = item.SourceVersion,
+            IsDeleted = true,
+            CreatedBy = TombstoneSource,
+            CreatedAtUtc = now,
+            LastModifiedBy = TombstoneSource,
+            LastModifiedAtUtc = now
+        };
 }

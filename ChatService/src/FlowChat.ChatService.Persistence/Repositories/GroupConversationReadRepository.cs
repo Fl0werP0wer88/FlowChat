@@ -19,6 +19,7 @@ public sealed class GroupConversationReadRepository(AppDbContext dbContext) : IG
             where conversation.Id == convId && conversation.Type == ConversationType.Group
             from participant in conversation.Participants
             join profile in dbContext.UserProfileProjections.AsNoTracking()
+                    .Where(x => !x.IsDeleted)
                 on participant.UserId equals profile.UserId into profileGroup
             from profile in profileGroup.DefaultIfEmpty()
             select new

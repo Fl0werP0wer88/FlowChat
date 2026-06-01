@@ -7,5 +7,6 @@ public sealed class UserProfileProjectionDto
     public string? FirstName { get; set; }
     public string? LastName { get; set; }
     public string? AvatarUrl { get; set; }
+    public int SourceVersion { get; set; }
     public string Source { get; set; } = string.Empty;
 }

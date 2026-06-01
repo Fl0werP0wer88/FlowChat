@@ -1,6 +1,5 @@
 using FlowChat.Shared.Application;
 using FlowChat.ChatService.Application.Contracts.Persistence;
-using FlowChat.ChatService.Application.Features.UserProfile;
 using FlowChat.ChatService.Persistence.BulkUpsert;
 using FlowChat.ChatService.Persistence.Repositories;
 using FlowChat.Shared.Persistance.Auditing;
@@ -32,8 +31,7 @@ public static class PersistenceServiceRegistration
         services.AddScoped<IDuetConversationReadRepository, DuetConversationReadRepository>();
         services.AddScoped<IDuetConversationWriteRepository, DuetConversationWriteRepository>();
         services.AddScoped<IUserProfileProjectionReadRepository, UserProfileProjectionReadRepository>();
-        services.AddScoped<IBulkUpsertExecutor<UserProfileProjectionDto>, UserProfileProjectionBulkUpsertExecutor>();
-        services.AddScoped<IBulkRepository<UserProfileProjectionDto>, UserProfileProjectionBulkRepository>();
+        services.AddScoped<IUserProfileProjectionBulkRepository, UserProfileProjectionBulkRepository>();
 
         return services;
     }

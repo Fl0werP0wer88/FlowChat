@@ -27,6 +27,12 @@ public sealed class UserProfileProjectionEntityConfiguration : IEntityTypeConfig
         builder.Property(x => x.AvatarUrl)
             .HasMaxLength(2048);
 
+        builder.Property(x => x.SourceVersion)
+            .IsRequired();
+
+        builder.Property(x => x.IsDeleted)
+            .IsRequired();
+
         builder.Property(x => x.CreatedBy)
             .HasMaxLength(128)
             .IsRequired();

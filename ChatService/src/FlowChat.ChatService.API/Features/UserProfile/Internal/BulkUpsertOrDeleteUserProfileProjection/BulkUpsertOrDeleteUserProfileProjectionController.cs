@@ -38,7 +38,7 @@ public sealed class BulkUpsertOrDeleteUserProfileProjectionController : ApiContr
             return BadRequest("All items must have a valid UserProfileId.");
 
         var items = request.Items
-            .Select(item => new BulkCommandItem<UserProfileProjectionDto>(
+            .Select(item => new UserProfileProjectionCommandItem(
                 Id<UserProfileProjectionDto>.FromGuid(item.UserProfileId),
                 item.Value is null ? null : new UserProfileProjectionDto
                 {
@@ -47,8 +47,10 @@ public sealed class BulkUpsertOrDeleteUserProfileProjectionController : ApiContr
                     FirstName = item.Value.FirstName,
                     LastName = item.Value.LastName,
                     AvatarUrl = item.Value.AvatarUrl,
+                    SourceVersion = item.SourceVersion,
                     Source = item.Value.Source
-                }))
+                },
+                item.SourceVersion))
             .ToArray();
 
         var result = await _mediator.Send(

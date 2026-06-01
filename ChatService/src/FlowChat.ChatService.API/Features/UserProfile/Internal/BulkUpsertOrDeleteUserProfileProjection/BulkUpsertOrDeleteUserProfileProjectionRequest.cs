@@ -10,6 +10,7 @@ public sealed class BulkUpsertOrDeleteUserProfileProjectionRequest : IServiceInp
 public sealed class BulkUpsertOrDeleteUserProfileProjectionRequestItem : IServiceInput
 {
     public Guid UserProfileId { get; init; }
+    public int SourceVersion { get; init; }
     public BulkUpsertOrDeleteUserProfileProjectionRequestValue? Value { get; init; }
 }
 
