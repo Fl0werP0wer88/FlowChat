@@ -20,6 +20,6 @@ public abstract class AggregateRootDeleteCommandHandlerBaseV2<TCommand, TRespons
     {
     }
 
-    protected override OperationType GetProjectionOperationType(TCommand request, TAggregate aggregateRoot) =>
-        OperationType.Deleted;
+    protected override AggregateState GetAggregateState(TCommand request, TAggregate aggregateRoot) =>
+        AggregateState.Deleted;
 }

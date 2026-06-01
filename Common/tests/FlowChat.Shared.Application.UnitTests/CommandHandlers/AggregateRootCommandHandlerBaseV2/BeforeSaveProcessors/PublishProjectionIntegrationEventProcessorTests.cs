@@ -10,10 +10,12 @@ namespace FlowChat.Shared.Application.UnitTests.CommandHandlers.AggregateRootCom
 public sealed class PublishProjectionIntegrationEventProcessorTests
 {
     [Theory]
-    [InlineData(OperationType.Created)]
-    [InlineData(OperationType.Updated)]
-    [InlineData(OperationType.Deleted)]
-    public async Task ProcessAsync_WhenCalled_PublishesMappedProjectionIntegrationEvent(OperationType operationType)
+    [InlineData(AggregateState.Created, OperationType.Created)]
+    [InlineData(AggregateState.Updated, OperationType.Updated)]
+    [InlineData(AggregateState.Deleted, OperationType.Deleted)]
+    public async Task ProcessAsync_WhenCalled_PublishesMappedProjectionIntegrationEvent(
+        AggregateState aggregateState,
+        OperationType expectedOperationType)
     {
         var aggregateId = Guid.NewGuid();
         var aggregate = new TestAggregate(aggregateId, "Alpha");
@@ -44,7 +46,7 @@ public sealed class PublishProjectionIntegrationEventProcessorTests
             mapperMock.Object,
             integrationEventPublisherMock.Object);
 
-        await processor.ProcessAsync(command, aggregate, operationType, cancellationToken);
+        await processor.ProcessAsync(command, aggregate, aggregateState, cancellationToken);
 
         mapperMock.Verify(x => x.Map<TestReadModel>(aggregate), Times.Once);
         integrationEventPublisherMock.Verify(
@@ -54,9 +56,32 @@ public sealed class PublishProjectionIntegrationEventProcessorTests
             Times.Once);
         capturedEnvelope.Should().NotBeNull();
         capturedEnvelope!.KafkaKey.Should().Be(aggregateId.ToString("D"));
-        capturedEnvelope.Payload.Operation.Should().Be(operationType);
+        capturedEnvelope.Payload.Operation.Should().Be(expectedOperationType);
         capturedEnvelope.Payload.Value.Should().Be(readModel);
         capturedCancellationToken.Should().Be(cancellationToken);
+    }
+
+    [Fact]
+    public async Task ProcessAsync_WhenAggregateStateIsUnchanged_ThrowsInvalidOperationException()
+    {
+        var aggregate = new TestAggregate(Guid.NewGuid(), "Alpha");
+        var command = new TestCommand();
+        var mapperMock = new Mock<IMapper>();
+        var integrationEventPublisherMock = new Mock<IOutboxIntegrationEventPublisher>();
+        var processor = new PublishProjectionIntegrationEventProcessor<TestCommand, TestAggregate, TestReadModel>(
+            mapperMock.Object,
+            integrationEventPublisherMock.Object);
+
+        var act = () => processor.ProcessAsync(command, aggregate, AggregateState.Unchanged, CancellationToken.None);
+
+        await act.Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage("Unchanged aggregate state must not be processed as a projection operation.");
+        mapperMock.Verify(x => x.Map<TestReadModel>(It.IsAny<TestAggregate>()), Times.Never);
+        integrationEventPublisherMock.Verify(
+            x => x.PublishAsync(
+                It.IsAny<IntegrationEventEnvelope<ProjectionIntegrationEvent<TestReadModel>>>(),
+                It.IsAny<CancellationToken>()),
+            Times.Never);
     }
 
     private sealed record TestCommand;

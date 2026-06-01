@@ -2,6 +2,8 @@ using FlowChat.AuthService.Application.Contracts.Infrastructure;
 using FlowChat.AuthService.Application.Contracts.Persistence;
 using FlowChat.AuthService.Domain.Entities.Account;
 using FlowChat.Shared.Application;
+using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2;
+using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2.BeforeSaveProcessors;
 using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
 using MediatR;
@@ -9,17 +11,21 @@ using DomainAccount = FlowChat.AuthService.Domain.Entities.Account.Account;
 
 namespace FlowChat.AuthService.Application.Features.User.Commands.ChangeAuthEmail;
 
-public sealed class ChangeAuthEmailCommandHandler : AggregateRootCommandHandlerBase<ChangeAuthEmailCommand, Unit>
+public sealed class ChangeAuthEmailCommandHandler
+    : AggregateRootUpdateCommandHandlerBaseV2<ChangeAuthEmailCommand, Unit, DomainAccount>
 {
     private readonly IAccountRepository _accountRepository;
     private readonly IPasswordHashingService _passwordHashingService;
     private DomainAccount? _account;
+    private bool _emailChanged;
 
     public ChangeAuthEmailCommandHandler(
         IAccountRepository accountRepository,
         IPasswordHashingService passwordHashingService,
         ILocalEventDispatcher domainEventDispatcher,
-        IUnitOfWork unitOfWork) : base(domainEventDispatcher, unitOfWork)
+        IUnitOfWork unitOfWork,
+        IEnumerable<IAggregateBeforeSaveProcessor<ChangeAuthEmailCommand, DomainAccount>> beforeSaveProcessors)
+        : base(domainEventDispatcher, unitOfWork, beforeSaveProcessors)
     {
         _accountRepository = accountRepository;
         _passwordHashingService = passwordHashingService;
@@ -50,6 +56,7 @@ public sealed class ChangeAuthEmailCommandHandler : AggregateRootCommandHandlerB
 
         if (_account.Email == emailAddress)
         {
+            _emailChanged = false;
             return FlowChatResult<Unit>.Success(Unit.Value);
         }
 
@@ -60,11 +67,15 @@ public sealed class ChangeAuthEmailCommandHandler : AggregateRootCommandHandlerB
         }
 
         _account.ChangeAuthEmail(emailAddress, _passwordHashingService.GenerateSecurityStamp());
+        _emailChanged = true;
         await _accountRepository.UpdateAsync(_account, cancellationToken);
 
         return FlowChatResult<Unit>.Success(Unit.Value);
     }
 
-    protected override IAggregateRoot GetAggregateRoot() =>
+    protected override DomainAccount GetAggregateRoot() =>
         _account ?? throw new InvalidOperationException("Aggregate root instance is not available.");
+
+    protected override AggregateState GetAggregateState(ChangeAuthEmailCommand request, DomainAccount aggregateRoot) =>
+        _emailChanged ? AggregateState.Updated : AggregateState.Unchanged;
 }

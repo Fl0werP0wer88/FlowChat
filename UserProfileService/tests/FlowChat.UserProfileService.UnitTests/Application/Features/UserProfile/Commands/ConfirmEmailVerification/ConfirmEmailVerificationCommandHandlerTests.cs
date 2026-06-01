@@ -1,5 +1,7 @@
 using FlowChat.Core.Results;
+using FlowChat.Core.Messaging;
 using FlowChat.Shared.Application;
+using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2.BeforeSaveProcessors;
 using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
 using FlowChat.UserProfileService.Application.Contracts.Infrastructure;
@@ -21,6 +23,7 @@ public sealed class ConfirmEmailVerificationCommandHandlerTests
     private readonly Mock<IEmailVerificationTokenProtector> _tokenProtectorMock = new();
     private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
     private readonly Mock<ILocalEventDispatcher> _dispatcherMock = new();
+    private readonly Mock<IAggregateBeforeSaveProcessor<ConfirmEmailVerificationCommand, UserProfile>> _beforeSaveProcessorMock = new();
     private readonly ConfirmEmailVerificationCommandHandler _handler;
 
     public ConfirmEmailVerificationCommandHandlerTests()
@@ -50,12 +53,25 @@ public sealed class ConfirmEmailVerificationCommandHandlerTests
             .Returns<Func<CancellationToken, Task<FlowChatResult<IdempotentCommandResult<Unit>>>>, CancellationToken>(
                 (operation, ct) => operation(ct));
 
+        _dispatcherMock
+            .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<ILocalEvent>>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        _beforeSaveProcessorMock
+            .Setup(x => x.ProcessAsync(
+                It.IsAny<ConfirmEmailVerificationCommand>(),
+                It.IsAny<UserProfile>(),
+                It.IsAny<AggregateState>(),
+                It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
         _handler = new ConfirmEmailVerificationCommandHandler(
             _userProfileRepositoryMock.Object,
             _verificationProcessRepositoryMock.Object,
             _tokenProtectorMock.Object,
             _unitOfWorkMock.Object,
-            _dispatcherMock.Object);
+            _dispatcherMock.Object,
+            [_beforeSaveProcessorMock.Object]);
     }
 
     private async Task<FlowChatResult<IdempotentCommandResult<Unit>>> SendAsync(ConfirmEmailVerificationCommand command)
@@ -163,6 +179,16 @@ public sealed class ConfirmEmailVerificationCommandHandlerTests
         result.IsSuccess.Should().BeTrue();
         result.Value.Value.Should().Be(Unit.Value);
         result.Value.WasAlreadyProcessed.Should().BeTrue();
+        _dispatcherMock.Verify(
+            x => x.DispatchAsync(It.IsAny<IEnumerable<ILocalEvent>>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+        _beforeSaveProcessorMock.Verify(
+            x => x.ProcessAsync(
+                It.IsAny<ConfirmEmailVerificationCommand>(),
+                It.IsAny<UserProfile>(),
+                It.IsAny<AggregateState>(),
+                It.IsAny<CancellationToken>()),
+            Times.Never);
     }
 
     [Fact]

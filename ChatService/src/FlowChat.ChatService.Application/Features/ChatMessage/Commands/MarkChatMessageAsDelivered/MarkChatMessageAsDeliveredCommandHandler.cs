@@ -1,6 +1,8 @@
 using FlowChat.ChatService.Application.Contracts.Persistence;
 using FlowChat.Core.Results;
 using FlowChat.Shared.Application;
+using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2;
+using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2.BeforeSaveProcessors;
 using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
 using MediatR;
@@ -11,10 +13,15 @@ namespace FlowChat.ChatService.Application.Features.ChatMessage.Commands.MarkCha
 public sealed class MarkChatMessageAsDeliveredCommandHandler(
     IChatMessageWriteRepository chatMessageRepository,
     IUnitOfWork unitOfWork,
-    ILocalEventDispatcher domainEventDispatcher)
-    : AggregateRootCommandHandlerBase<MarkChatMessageAsDeliveredCommand, Unit>(domainEventDispatcher, unitOfWork)
+    ILocalEventDispatcher domainEventDispatcher,
+    IEnumerable<IAggregateBeforeSaveProcessor<MarkChatMessageAsDeliveredCommand, ChatMessageAggregate>> beforeSaveProcessors)
+    : AggregateRootUpdateCommandHandlerBaseV2<MarkChatMessageAsDeliveredCommand, Unit, ChatMessageAggregate>(
+        domainEventDispatcher,
+        unitOfWork,
+        beforeSaveProcessors)
 {
     private ChatMessageAggregate? _message;
+    private bool _messageChanged;
 
     protected override async Task<FlowChatResult<Unit>> ExecuteAsync(
         MarkChatMessageAsDeliveredCommand request,
@@ -25,15 +32,22 @@ public sealed class MarkChatMessageAsDeliveredCommandHandler(
             return FlowChatResult<Unit>.Failure(DomainError.NotFound("Chat message not found."));
 
         if (_message.SequenceNum.HasValue)
+        {
+            _messageChanged = false;
             return FlowChatResult<Unit>.Success(Unit.Value);
+        }
 
         var maxSequenceNum = await chatMessageRepository.GetMaxSequenceNumAsync(request.ConversationId, cancellationToken);
         _message.MarkAsDelivered(
             maxSequenceNum.GetValueOrDefault() + 1,
             UtcDateTimeOffset.Create(request.DeliveredAtUtc));
+        _messageChanged = true;
 
         return FlowChatResult<Unit>.Success(Unit.Value);
     }
 
-    protected override IAggregateRoot GetAggregateRoot() => _message ?? throw new InvalidOperationException("Aggregate root instance is not available.");
+    protected override ChatMessageAggregate GetAggregateRoot() => _message ?? throw new InvalidOperationException("Aggregate root instance is not available.");
+
+    protected override AggregateState GetAggregateState(MarkChatMessageAsDeliveredCommand request, ChatMessageAggregate aggregateRoot) =>
+        _messageChanged ? AggregateState.Updated : AggregateState.Unchanged;
 }

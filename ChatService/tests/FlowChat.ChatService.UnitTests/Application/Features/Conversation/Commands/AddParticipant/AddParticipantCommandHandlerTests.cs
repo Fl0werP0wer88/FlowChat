@@ -5,6 +5,7 @@ using FlowChat.ChatService.Domain.Entities.Conversation.Events;
 using FlowChat.Core.Messaging;
 using FlowChat.Core.Results;
 using FlowChat.Shared.Application;
+using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2.BeforeSaveProcessors;
 using FlowChat.Shared.Domain;
 using FluentAssertions;
 using Moq;
@@ -18,6 +19,7 @@ public sealed class AddParticipantCommandHandlerTests
     private readonly Mock<IGroupConversationWriteRepository> _conversationRepositoryMock = new();
     private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
     private readonly Mock<ILocalEventDispatcher> _domainEventDispatcherMock = new();
+    private readonly Mock<IAggregateBeforeSaveProcessor<AddParticipantCommand, GroupConversation>> _beforeSaveProcessorMock = new();
     private readonly AddParticipantCommandHandler _handler;
 
     public AddParticipantCommandHandlerTests()
@@ -33,10 +35,19 @@ public sealed class AddParticipantCommandHandlerTests
             .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<ILocalEvent>>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
+        _beforeSaveProcessorMock
+            .Setup(x => x.ProcessAsync(
+                It.IsAny<AddParticipantCommand>(),
+                It.IsAny<GroupConversation>(),
+                It.IsAny<AggregateState>(),
+                It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
         _handler = new AddParticipantCommandHandler(
             _conversationRepositoryMock.Object,
             _unitOfWorkMock.Object,
-            _domainEventDispatcherMock.Object);
+            _domainEventDispatcherMock.Object,
+            [_beforeSaveProcessorMock.Object]);
     }
 
     [Fact]
@@ -177,6 +188,16 @@ public sealed class AddParticipantCommandHandlerTests
         result.Value.Should().BeFalse();
         dispatchedEvents.Should().BeEmpty();
         _conversationRepositoryMock.Verify(x => x.UpdateAsync(It.IsAny<GroupConversation>(), It.IsAny<CancellationToken>()), Times.Never);
+        _domainEventDispatcherMock.Verify(
+            x => x.DispatchAsync(It.IsAny<IEnumerable<ILocalEvent>>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+        _beforeSaveProcessorMock.Verify(
+            x => x.ProcessAsync(
+                It.IsAny<AddParticipantCommand>(),
+                It.IsAny<GroupConversation>(),
+                It.IsAny<AggregateState>(),
+                It.IsAny<CancellationToken>()),
+            Times.Never);
     }
 
     [Fact]

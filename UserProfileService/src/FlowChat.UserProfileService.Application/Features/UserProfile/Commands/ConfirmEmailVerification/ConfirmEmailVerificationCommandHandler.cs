@@ -1,5 +1,7 @@
 using FlowChat.Core.Results;
 using FlowChat.Shared.Application;
+using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2;
+using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2.BeforeSaveProcessors;
 using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
 using FlowChat.UserProfileService.Application.Contracts.Infrastructure;
@@ -12,7 +14,7 @@ using UserProfileAggregate = FlowChat.UserProfileService.Domain.Entities.UserPro
 namespace FlowChat.UserProfileService.Application.Features.UserProfile.Commands.ConfirmEmailVerification;
 
 public sealed class ConfirmEmailVerificationCommandHandler
-    : AggregateRootCommandHandlerBase<ConfirmEmailVerificationCommand, IdempotentCommandResult<Unit>>
+    : AggregateRootUpdateCommandHandlerBaseV2<ConfirmEmailVerificationCommand, IdempotentCommandResult<Unit>, UserProfileAggregate>
 {
     // Single generic message for all token failure cases — prevents callers from probing
     // whether a token exists, has been consumed, or belongs to a different user.
@@ -22,13 +24,16 @@ public sealed class ConfirmEmailVerificationCommandHandler
     private readonly IEmailVerificationProcessWriteRepository _emailVerificationProcessWriteRepository;
     private readonly IEmailVerificationTokenProtector _emailVerificationTokenProtector;
     private UserProfileAggregate? _userProfile;
+    private bool _emailConfirmed;
 
     public ConfirmEmailVerificationCommandHandler(
         IUserProfileWriteRepository userProfileWriteRepository,
         IEmailVerificationProcessWriteRepository emailVerificationProcessWriteRepository,
         IEmailVerificationTokenProtector emailVerificationTokenProtector,
         IUnitOfWork unitOfWork,
-        ILocalEventDispatcher domainEventDispatcher) : base(domainEventDispatcher, unitOfWork)
+        ILocalEventDispatcher domainEventDispatcher,
+        IEnumerable<IAggregateBeforeSaveProcessor<ConfirmEmailVerificationCommand, UserProfileAggregate>> beforeSaveProcessors)
+        : base(domainEventDispatcher, unitOfWork, beforeSaveProcessors)
     {
         _userProfileWriteRepository = userProfileWriteRepository;
         _emailVerificationProcessWriteRepository = emailVerificationProcessWriteRepository;
@@ -39,6 +44,8 @@ public sealed class ConfirmEmailVerificationCommandHandler
         ConfirmEmailVerificationCommand request,
         CancellationToken cancellationToken)
     {
+        _emailConfirmed = false;
+
         if (!_emailVerificationTokenProtector.TryUnprotect(request.Token, out var payload) || payload is null)
         {
             return ValidationFailure();
@@ -91,6 +98,7 @@ public sealed class ConfirmEmailVerificationCommandHandler
 
         _userProfile.ConfirmEmail(email.Id);
         process.ConsumeRequest(payload.Nonce, nowUtc);
+        _emailConfirmed = true;
 
         return Success(wasAlreadyProcessed: false);
     }
@@ -118,8 +126,11 @@ public sealed class ConfirmEmailVerificationCommandHandler
         return await base.HandleUnexpectedExceptionAsync(request, exception, cancellationToken);
     }
 
-    protected override IAggregateRoot GetAggregateRoot() =>
+    protected override UserProfileAggregate GetAggregateRoot() =>
         _userProfile ?? throw new InvalidOperationException("Aggregate root instance is not available.");
+
+    protected override AggregateState GetAggregateState(ConfirmEmailVerificationCommand request, UserProfileAggregate aggregateRoot) =>
+        _emailConfirmed ? AggregateState.Updated : AggregateState.Unchanged;
 
     private static bool IsConfirmedBySameToken(
         EmailVerificationTokenPayload payload,

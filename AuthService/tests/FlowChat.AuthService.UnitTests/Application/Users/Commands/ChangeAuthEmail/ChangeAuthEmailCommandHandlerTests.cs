@@ -4,6 +4,7 @@ using FlowChat.AuthService.Application.Features.User.Commands.ChangeAuthEmail;
 using FlowChat.AuthService.Domain.Entities.Account;
 using FlowChat.Core.Messaging;
 using FlowChat.Shared.Application;
+using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2.BeforeSaveProcessors;
 using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
 using FluentAssertions;
@@ -18,6 +19,7 @@ public sealed class ChangeAuthEmailCommandHandlerTests
     private readonly Mock<IPasswordHashingService> _passwordHashingServiceMock = new();
     private readonly Mock<ILocalEventDispatcher> _domainEventDispatcherMock = new();
     private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
+    private readonly Mock<IAggregateBeforeSaveProcessor<ChangeAuthEmailCommand, Account>> _beforeSaveProcessorMock = new();
     private readonly ChangeAuthEmailCommandHandler _handler;
 
     public ChangeAuthEmailCommandHandlerTests()
@@ -37,11 +39,20 @@ public sealed class ChangeAuthEmailCommandHandlerTests
             .Setup(x => x.GenerateSecurityStamp())
             .Returns("new-security-stamp");
 
+        _beforeSaveProcessorMock
+            .Setup(x => x.ProcessAsync(
+                It.IsAny<ChangeAuthEmailCommand>(),
+                It.IsAny<Account>(),
+                It.IsAny<AggregateState>(),
+                It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
         _handler = new ChangeAuthEmailCommandHandler(
             _accountRepositoryMock.Object,
             _passwordHashingServiceMock.Object,
             _domainEventDispatcherMock.Object,
-            _unitOfWorkMock.Object);
+            _unitOfWorkMock.Object,
+            [_beforeSaveProcessorMock.Object]);
     }
 
     [Fact]
@@ -130,6 +141,16 @@ public sealed class ChangeAuthEmailCommandHandlerTests
         result.IsSuccess.Should().BeTrue();
         _passwordHashingServiceMock.Verify(x => x.GenerateSecurityStamp(), Times.Never);
         _accountRepositoryMock.Verify(x => x.UpdateAsync(It.IsAny<Account>(), It.IsAny<CancellationToken>()), Times.Never);
+        _domainEventDispatcherMock.Verify(
+            x => x.DispatchAsync(It.IsAny<IEnumerable<ILocalEvent>>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+        _beforeSaveProcessorMock.Verify(
+            x => x.ProcessAsync(
+                It.IsAny<ChangeAuthEmailCommand>(),
+                It.IsAny<Account>(),
+                It.IsAny<AggregateState>(),
+                It.IsAny<CancellationToken>()),
+            Times.Never);
     }
 
     [Fact]

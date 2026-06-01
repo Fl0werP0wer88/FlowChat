@@ -24,9 +24,10 @@ public class PublishProjectionIntegrationEventProcessor<TCommand, TAggregate, TT
     public async Task ProcessAsync(
         TCommand command,
         TAggregate aggregate,
-        OperationType operationType,
+        AggregateState aggregateState,
         CancellationToken cancellationToken)
     {
+        var operationType = MapOperationType(aggregateState);
         var readModel = _mapper.Map<TTargetReadModel>(aggregate);
         var integrationEvent = new ProjectionIntegrationEvent<TTargetReadModel>
         {
@@ -38,5 +39,18 @@ public class PublishProjectionIntegrationEventProcessor<TCommand, TAggregate, TT
             aggregate.Id.Value.ToString("D"));
 
         await _integrationEventPublisher.PublishAsync(envelope, cancellationToken);
+    }
+
+    private static OperationType MapOperationType(AggregateState aggregateState)
+    {
+        return aggregateState switch
+        {
+            AggregateState.Created => OperationType.Created,
+            AggregateState.Updated => OperationType.Updated,
+            AggregateState.Deleted => OperationType.Deleted,
+            AggregateState.Unchanged => throw new InvalidOperationException(
+                "Unchanged aggregate state must not be processed as a projection operation."),
+            _ => throw new ArgumentOutOfRangeException(nameof(aggregateState), aggregateState, null)
+        };
     }
 }

@@ -36,6 +36,12 @@ public abstract class AggregateRootCommandHandlerBaseV2<TCommand, TResponse, TAg
         {
             var aggregateRoot = GetAggregateRoot();
 
+            var aggregateState = GetAggregateState(request, aggregateRoot);
+            if (aggregateState == AggregateState.Unchanged)
+            {
+                return operationResult;
+            }
+
             aggregateRoot.IncrementVersion();
             // var snapshot = _mapper.Map<TSnapshot>(aggregateRoot);
             // var snapshotEvent = new SnapshotApplicationEvent<TSnapshot>(snapshot);
@@ -46,10 +52,9 @@ public abstract class AggregateRootCommandHandlerBaseV2<TCommand, TResponse, TAg
 
             await DispatchLocalEventsAsync(localEvents, cancellationToken);
 
-            var projectionOperationType = GetProjectionOperationType(request, aggregateRoot);
             foreach (var processor in _beforeSaveProcessors)
             {
-                await processor.ProcessAsync(request, aggregateRoot, projectionOperationType, cancellationToken);
+                await processor.ProcessAsync(request, aggregateRoot, aggregateState, cancellationToken);
             }
         }
 
@@ -60,7 +65,7 @@ public abstract class AggregateRootCommandHandlerBaseV2<TCommand, TResponse, TAg
 
     protected abstract TAggregate GetAggregateRoot();
 
-    protected abstract OperationType GetProjectionOperationType(TCommand request, TAggregate aggregateRoot);
+    protected abstract AggregateState GetAggregateState(TCommand request, TAggregate aggregateRoot);
 
     protected Task DispatchLocalEventsAsync(IEnumerable<ILocalEvent> domainEvents, CancellationToken cancellationToken)
     {
