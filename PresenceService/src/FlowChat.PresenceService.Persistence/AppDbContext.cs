@@ -22,7 +22,7 @@ public sealed class AppDbContext : DbContext
     {
     }
 
-    public DbSet<ContactObserverProjectionEntity> ContactObserverProjections => Set<ContactObserverProjectionEntity>();
+    public DbSet<ContactObserverReadModelEntity> ContactObserverProjections => Set<ContactObserverReadModelEntity>();
     public DbSet<UserPresencePreferences> UserPresencePreferences => Set<UserPresencePreferences>();
     public DbSet<SilverbackOutboxMessage> SilverbackOutboxMessages => Set<SilverbackOutboxMessage>();
 

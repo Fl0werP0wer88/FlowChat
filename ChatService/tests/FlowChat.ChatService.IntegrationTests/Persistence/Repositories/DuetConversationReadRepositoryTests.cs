@@ -128,7 +128,7 @@ public sealed class DuetConversationReadRepositoryTests
         };
     }
 
-    private static UserProfileProjectionEntity CreateProfile(
+    private static UserProfileReadModelEntity CreateProfile(
         Guid userId,
         string friendlyUserId,
         string? firstName = null,

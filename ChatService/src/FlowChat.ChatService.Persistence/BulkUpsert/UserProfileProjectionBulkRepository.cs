@@ -25,13 +25,13 @@ public sealed class UserProfileProjectionBulkRepository(AppDbContext dbContext)
             entities,
             new BulkConfig
             {
-                UpdateByProperties = [nameof(UserProfileProjectionEntity.UserId)],
+                UpdateByProperties = [nameof(UserProfileReadModelEntity.UserId)],
                 OnConflictUpdateWhereSql = (existing, inserted) =>
                     $"{inserted}.\"SourceVersion\" > {existing}.\"SourceVersion\"",
                 PropertiesToExcludeOnUpdate =
                 [
-                    nameof(UserProfileProjectionEntity.CreatedBy),
-                    nameof(UserProfileProjectionEntity.CreatedAtUtc)
+                    nameof(UserProfileReadModelEntity.CreatedBy),
+                    nameof(UserProfileReadModelEntity.CreatedAtUtc)
                 ]
             },
             cancellationToken: cancellationToken);
@@ -39,14 +39,14 @@ public sealed class UserProfileProjectionBulkRepository(AppDbContext dbContext)
         return FlowChatResult<Unit>.Success(Unit.Value);
     }
 
-    private static UserProfileProjectionEntity CreateEntity(
+    private static UserProfileReadModelEntity CreateEntity(
         UserProfileProjectionCommandItem item,
         DateTimeOffset now) =>
         item.Value is null
             ? CreateTombstoneEntity(item, now)
             : CreateUpsertEntity(item.Value, item.SourceVersion, now);
 
-    private static UserProfileProjectionEntity CreateUpsertEntity(
+    private static UserProfileReadModelEntity CreateUpsertEntity(
         UserProfileProjectionDto item,
         int sourceVersion,
         DateTimeOffset now) =>
@@ -65,7 +65,7 @@ public sealed class UserProfileProjectionBulkRepository(AppDbContext dbContext)
             LastModifiedAtUtc = now
         };
 
-    private static UserProfileProjectionEntity CreateTombstoneEntity(
+    private static UserProfileReadModelEntity CreateTombstoneEntity(
         UserProfileProjectionCommandItem item,
         DateTimeOffset now) =>
         new()

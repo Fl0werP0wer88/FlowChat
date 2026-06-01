@@ -23,7 +23,7 @@ public sealed class UserProfileProjectionBulkUpsertExecutor(AppDbContext dbConte
         }
 
         var now = DateTimeOffset.UtcNow;
-        var entities = items.Select(item => new UserProfileProjectionEntity
+        var entities = items.Select(item => new UserProfileReadModelEntity
         {
             UserProfileId = item.UserProfileId,
             FriendlyUserId = item.FriendlyUserId,
@@ -52,8 +52,8 @@ public sealed class UserProfileProjectionBulkUpsertExecutor(AppDbContext dbConte
             {
                 PropertiesToExcludeOnUpdate =
                 [
-                    nameof(UserProfileProjectionEntity.CreatedBy),
-                    nameof(UserProfileProjectionEntity.CreatedAtUtc)
+                    nameof(UserProfileReadModelEntity.CreatedBy),
+                    nameof(UserProfileReadModelEntity.CreatedAtUtc)
                 ]
             },
             cancellationToken: cancellationToken);

@@ -4,11 +4,11 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace FlowChat.PresenceService.Persistence.Configuration.Entities;
 
-public sealed class ContactObserverProjectionConfiguration : IEntityTypeConfiguration<ContactObserverProjectionEntity>
+public sealed class ContactObserverProjectionConfiguration : IEntityTypeConfiguration<ContactObserverReadModelEntity>
 {
-    public void Configure(EntityTypeBuilder<ContactObserverProjectionEntity> builder)
+    public void Configure(EntityTypeBuilder<ContactObserverReadModelEntity> builder)
     {
-        builder.ToTable("ContactObserverProjection", tableBuilder =>
+        builder.ToTable("ContactObserverReadModel", tableBuilder =>
         {
             tableBuilder.HasCheckConstraint(
                 "chk_contact_observer_projection_different_users",

@@ -22,7 +22,7 @@ public sealed class ContactObserverProjectionBulkUpsertExecutor(AppDbContext dbC
             return FlowChatResult<BulkUpsertCommandResult>.Success(BulkUpsertCommandResult.Empty);
         }
 
-        var entities = items.Select(item => new ContactObserverProjectionEntity
+        var entities = items.Select(item => new ContactObserverReadModelEntity
         {
             ObservedUserId = item.ObservedUserId,
             ObserverUserId = item.ObserverUserId,
@@ -38,8 +38,8 @@ public sealed class ContactObserverProjectionBulkUpsertExecutor(AppDbContext dbC
             {
                 PropertiesToExcludeOnUpdate =
                 [
-                    nameof(ContactObserverProjectionEntity.CreatedBy),
-                    nameof(ContactObserverProjectionEntity.CreatedAtUtc)
+                    nameof(ContactObserverReadModelEntity.CreatedBy),
+                    nameof(ContactObserverReadModelEntity.CreatedAtUtc)
                 ]
             },
             cancellationToken: cancellationToken);

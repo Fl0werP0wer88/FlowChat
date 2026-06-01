@@ -20,7 +20,7 @@ public sealed class InitializePresenceStatusControllerTests(PresenceApiFactory f
         var observerUserId = Guid.NewGuid();
         await factory.WithDbContextAsync(async db =>
         {
-            await db.ContactObserverProjections.AddAsync(new ContactObserverProjectionEntity
+            await db.ContactObserverProjections.AddAsync(new ContactObserverReadModelEntity
             {
                 ObservedUserId = userId,
                 ObserverUserId = observerUserId,

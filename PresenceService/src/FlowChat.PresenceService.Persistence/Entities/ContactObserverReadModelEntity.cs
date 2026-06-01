@@ -1,6 +1,6 @@
 namespace FlowChat.PresenceService.Persistence.Entities;
 
-public sealed class ContactObserverProjectionEntity
+public sealed class ContactObserverReadModelEntity
 {
     public Guid ObservedUserId { get; set; }
     public Guid ObserverUserId { get; set; }

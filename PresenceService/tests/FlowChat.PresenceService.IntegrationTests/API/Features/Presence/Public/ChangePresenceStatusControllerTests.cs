@@ -21,7 +21,7 @@ public sealed class ChangePresenceStatusControllerTests(PresenceApiFactory facto
 
         await factory.WithDbContextAsync(async db =>
         {
-            await db.ContactObserverProjections.AddAsync(new ContactObserverProjectionEntity
+            await db.ContactObserverProjections.AddAsync(new ContactObserverReadModelEntity
             {
                 ObservedUserId = userId,
                 ObserverUserId = observerUserId,

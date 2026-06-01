@@ -42,7 +42,7 @@ public sealed class ContactObserverProjectionControllerTests(PresenceApiFactory 
 
         await factory.WithDbContextAsync(async db =>
         {
-            await db.ContactObserverProjections.AddAsync(new PresenceService.Persistence.Entities.ContactObserverProjectionEntity
+            await db.ContactObserverProjections.AddAsync(new PresenceService.Persistence.Entities.ContactObserverReadModelEntity
             {
                 ObservedUserId = observedUserId,
                 ObserverUserId = observerUserId,
