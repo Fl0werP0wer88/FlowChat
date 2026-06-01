@@ -6,7 +6,7 @@ namespace FlowChat.ChatService.Application.Contracts.Persistence;
 
 public interface IUserProfileProjectionBulkRepository
 {
-    Task<FlowChatResult<Unit>> BulkUpsertOrDeleteAsync(
+    Task<FlowChatResult<Unit>> BulkUpsertOrSoftDeleteAsync(
         IReadOnlyCollection<UserProfileProjectionCommandItem> items,
         CancellationToken cancellationToken);
 }

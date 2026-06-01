@@ -43,7 +43,7 @@ public sealed class UserProfileProjectionBulkRepositoryTests : IDisposable
     {
         var userProfileId = Guid.NewGuid();
 
-        var result = await _repository.BulkUpsertOrDeleteAsync(
+        var result = await _repository.BulkUpsertOrSoftDeleteAsync(
             [CreateUpsertItem(userProfileId, 1, friendlyUserId: "jdoe", firstName: "John", avatarUrl: "https://avatar")],
             CancellationToken.None);
         await _dbContext.SaveChangesAsync();
@@ -178,7 +178,7 @@ public sealed class UserProfileProjectionBulkRepositoryTests : IDisposable
 
     private async Task<FlowChatResult<Unit>> SaveAsync(UserProfileProjectionCommandItem item)
     {
-        var result = await _repository.BulkUpsertOrDeleteAsync([item], CancellationToken.None);
+        var result = await _repository.BulkUpsertOrSoftDeleteAsync([item], CancellationToken.None);
         await _dbContext.SaveChangesAsync();
         return result;
     }

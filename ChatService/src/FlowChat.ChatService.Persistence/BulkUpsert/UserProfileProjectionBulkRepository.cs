@@ -14,7 +14,7 @@ public sealed class UserProfileProjectionBulkRepository(AppDbContext dbContext)
 {
     private const string TombstoneSource = "user-profile-projection";
 
-    public async Task<FlowChatResult<Unit>> BulkUpsertOrDeleteAsync(
+    public async Task<FlowChatResult<Unit>> BulkUpsertOrSoftDeleteAsync(
         IReadOnlyCollection<UserProfileProjectionCommandItem> items,
         CancellationToken cancellationToken)
     {

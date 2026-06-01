@@ -24,7 +24,7 @@ public sealed class BulkUpsertOrDeleteUserProfileProjectionCommandHandler
         if (request.Items.Count == 0)
             return Task.FromResult(FlowChatResult<Unit>.Success(Unit.Value));
 
-        return _bulkRepository.BulkUpsertOrDeleteAsync(request.Items, cancellationToken);
+        return _bulkRepository.BulkUpsertOrSoftDeleteAsync(request.Items, cancellationToken);
     }
 }
 
