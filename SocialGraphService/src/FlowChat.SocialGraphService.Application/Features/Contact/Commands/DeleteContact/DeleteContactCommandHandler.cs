@@ -1,11 +1,14 @@
 using FlowChat.Shared.Application;
+using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2;
+using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2.BeforeSaveProcessors;
 using FlowChat.Shared.Domain;
 using FlowChat.SocialGraphService.Application.Contracts.Persistence;
 using ContactAggregate = FlowChat.SocialGraphService.Domain.Entities.Contact.Contact;
 
 namespace FlowChat.SocialGraphService.Application.Features.Contact.Commands.DeleteContact;
 
-public sealed class DeleteContactCommandHandler : AggregateRootCommandHandlerBase<DeleteContactCommand, MediatR.Unit>
+public sealed class DeleteContactCommandHandler
+    : AggregateRootDeleteCommandHandlerBaseV2<DeleteContactCommand, MediatR.Unit, ContactAggregate>
 {
     private readonly IContactWriteRepository _contactWriteRepository;
     private ContactAggregate? _contact;
@@ -13,8 +16,9 @@ public sealed class DeleteContactCommandHandler : AggregateRootCommandHandlerBas
     public DeleteContactCommandHandler(
         IContactWriteRepository contactWriteRepository,
         IUnitOfWork unitOfWork,
-        ILocalEventDispatcher domainEventDispatcher)
-        : base(domainEventDispatcher, unitOfWork)
+        ILocalEventDispatcher domainEventDispatcher,
+        IEnumerable<IAggregateBeforeSaveProcessor<DeleteContactCommand, ContactAggregate>> beforeSaveProcessors)
+        : base(domainEventDispatcher, unitOfWork, beforeSaveProcessors)
     {
         _contactWriteRepository = contactWriteRepository ?? throw new ArgumentNullException(nameof(contactWriteRepository));
     }
@@ -39,6 +43,6 @@ public sealed class DeleteContactCommandHandler : AggregateRootCommandHandlerBas
         return FlowChatResult<MediatR.Unit>.Success(MediatR.Unit.Value);
     }
 
-    protected override IAggregateRoot GetAggregateRoot() =>
+    protected override ContactAggregate GetAggregateRoot() =>
         _contact ?? throw new InvalidOperationException("Aggregate root instance is not available.");
 }

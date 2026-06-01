@@ -3,6 +3,8 @@ using FlowChat.ChatService.Application.Features.Conversation.Dtos;
 using FlowChat.ChatService.Application.Features.UserProfile;
 using FlowChat.Core.Results;
 using FlowChat.Shared.Application;
+using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2;
+using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2.BeforeSaveProcessors;
 using FlowChat.Shared.Domain;
 using GroupConversationAggregate = FlowChat.ChatService.Domain.Entities.Conversation.GroupConversation;
 using ConversationAggregate = FlowChat.ChatService.Domain.Entities.Conversation.Conversation;
@@ -11,7 +13,7 @@ using ParticipantUser = FlowChat.ChatService.Domain.Entities.Conversation.Partic
 namespace FlowChat.ChatService.Application.Features.Conversation.Commands.CreateGroupFromDuet;
 
 public sealed class CreateGroupFromDuetCommandHandler
-    : AggregateRootCommandHandlerBase<CreateGroupFromDuetCommand, GroupConversationDetailDto>
+    : AggregateRootInsertCommandHandlerBaseV2<CreateGroupFromDuetCommand, GroupConversationDetailDto, GroupConversationAggregate>
 {
     private readonly IDuetConversationReadRepository _duetReadRepository;
     private readonly IGroupConversationWriteRepository _groupWriteRepository;
@@ -23,8 +25,9 @@ public sealed class CreateGroupFromDuetCommandHandler
         IGroupConversationWriteRepository groupWriteRepository,
         IUserProfileProjectionReadRepository profileReadRepository,
         IUnitOfWork unitOfWork,
-        ILocalEventDispatcher domainEventDispatcher)
-        : base(domainEventDispatcher, unitOfWork)
+        ILocalEventDispatcher domainEventDispatcher,
+        IEnumerable<IAggregateBeforeSaveProcessor<CreateGroupFromDuetCommand, GroupConversationAggregate>> beforeSaveProcessors)
+        : base(domainEventDispatcher, unitOfWork, beforeSaveProcessors)
     {
         _duetReadRepository = duetReadRepository ?? throw new ArgumentNullException(nameof(duetReadRepository));
         _groupWriteRepository = groupWriteRepository ?? throw new ArgumentNullException(nameof(groupWriteRepository));
@@ -77,7 +80,7 @@ public sealed class CreateGroupFromDuetCommandHandler
             new GroupConversationDetailDto(_conversation.Id.Value, _conversation.Name!, participantDtos));
     }
 
-    protected override IAggregateRoot GetAggregateRoot() =>
+    protected override GroupConversationAggregate GetAggregateRoot() =>
         _conversation ?? throw new InvalidOperationException("Aggregate root instance is not available.");
 
     private static ConversationParticipantDto BuildParticipantDto(

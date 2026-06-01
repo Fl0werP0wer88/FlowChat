@@ -1,4 +1,6 @@
 using FlowChat.Shared.Application;
+using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2;
+using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2.BeforeSaveProcessors;
 using FlowChat.ChatService.Application.Contracts.Persistence;
 using FlowChat.Core.Results;
 using FlowChat.Shared.Domain;
@@ -7,7 +9,7 @@ using ChatMessageAggregate = FlowChat.ChatService.Domain.Entities.ChatMessage.Ch
 namespace FlowChat.ChatService.Application.Features.ChatMessage.Commands.SendChatMessage;
 
 public sealed class SendChatMessageCommandHandler
-    : AggregateRootCommandHandlerBase<SendChatMessageCommand, SendChatMessageCommandResult>
+    : AggregateRootInsertCommandHandlerBaseV2<SendChatMessageCommand, SendChatMessageCommandResult, ChatMessageAggregate>
 {
     private readonly IChatMessageWriteRepository _chatMessageRepository;
     private readonly IConversationParticipantReadRepository _participantReadRepository;
@@ -17,8 +19,9 @@ public sealed class SendChatMessageCommandHandler
         IChatMessageWriteRepository chatMessageRepository,
         IConversationParticipantReadRepository participantReadRepository,
         IUnitOfWork unitOfWork,
-        ILocalEventDispatcher domainEventDispatcher)
-        : base(domainEventDispatcher, unitOfWork)
+        ILocalEventDispatcher domainEventDispatcher,
+        IEnumerable<IAggregateBeforeSaveProcessor<SendChatMessageCommand, ChatMessageAggregate>> beforeSaveProcessors)
+        : base(domainEventDispatcher, unitOfWork, beforeSaveProcessors)
     {
         _chatMessageRepository = chatMessageRepository ?? throw new ArgumentNullException(nameof(chatMessageRepository));
         _participantReadRepository = participantReadRepository ?? throw new ArgumentNullException(nameof(participantReadRepository));
@@ -57,6 +60,6 @@ public sealed class SendChatMessageCommandHandler
             new SendChatMessageCommandResult(_chatMessage.Id.Value, _chatMessage.SentAtUtc.Value));
     }
 
-    protected override IAggregateRoot GetAggregateRoot() =>
+    protected override ChatMessageAggregate GetAggregateRoot() =>
         _chatMessage ?? throw new InvalidOperationException("Aggregate root instance is not available.");
 }

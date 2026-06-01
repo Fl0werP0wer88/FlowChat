@@ -41,7 +41,8 @@ public sealed class AddEmailCommandHandlerTests
             _readRepositoryMock.Object,
             _writeRepositoryMock.Object,
             _unitOfWorkMock.Object,
-            _dispatcherMock.Object);
+            _dispatcherMock.Object,
+            []);
     }
 
     private async Task<FlowChatResult<Guid>> SendAsync(AddEmailCommand command)

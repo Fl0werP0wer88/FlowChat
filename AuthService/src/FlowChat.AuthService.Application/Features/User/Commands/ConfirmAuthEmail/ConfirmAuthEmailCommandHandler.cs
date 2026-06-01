@@ -1,5 +1,7 @@
 using FlowChat.AuthService.Application.Contracts.Persistence;
 using FlowChat.Shared.Application;
+using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2;
+using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2.BeforeSaveProcessors;
 using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
 using FlowChat.AuthService.Domain.Entities.Account;
@@ -8,7 +10,8 @@ using DomainAccount = FlowChat.AuthService.Domain.Entities.Account.Account;
 
 namespace FlowChat.AuthService.Application.Features.User.Commands.ConfirmAuthEmail;
 
-public sealed class ConfirmAuthEmailCommandHandler : AggregateRootCommandHandlerBase<ConfirmAuthEmailCommand, Unit>
+public sealed class ConfirmAuthEmailCommandHandler
+    : AggregateRootUpdateCommandHandlerBaseV2<ConfirmAuthEmailCommand, Unit, DomainAccount>
 {
     private readonly IAccountRepository _accountRepository;
     private DomainAccount? _account;
@@ -16,7 +19,9 @@ public sealed class ConfirmAuthEmailCommandHandler : AggregateRootCommandHandler
     public ConfirmAuthEmailCommandHandler(
         IAccountRepository accountRepository,
         ILocalEventDispatcher domainEventDispatcher,
-        IUnitOfWork unitOfWork) : base(domainEventDispatcher, unitOfWork)
+        IUnitOfWork unitOfWork,
+        IEnumerable<IAggregateBeforeSaveProcessor<ConfirmAuthEmailCommand, DomainAccount>> beforeSaveProcessors)
+        : base(domainEventDispatcher, unitOfWork, beforeSaveProcessors)
     {
         _accountRepository = accountRepository;
     }
@@ -50,6 +55,6 @@ public sealed class ConfirmAuthEmailCommandHandler : AggregateRootCommandHandler
         return FlowChatResult<Unit>.Success(Unit.Value);
     }
 
-    protected override IAggregateRoot GetAggregateRoot() =>
+    protected override DomainAccount GetAggregateRoot() =>
         _account ?? throw new InvalidOperationException("Aggregate root instance is not available.");
 }

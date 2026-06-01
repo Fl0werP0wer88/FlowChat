@@ -1,4 +1,6 @@
 using FlowChat.Shared.Application;
+using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2;
+using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2.BeforeSaveProcessors;
 using FlowChat.Shared.Domain;
 using FlowChat.UserProfileService.Application.Contracts.Persistence;
 using FlowChat.UserProfileService.Domain.Entities.EmailVerificationRequest;
@@ -8,17 +10,20 @@ using UserProfileAggregate = FlowChat.UserProfileService.Domain.Entities.UserPro
 namespace FlowChat.UserProfileService.Application.Features.UserProfile.Commands.SetMainEmail;
 
 public sealed class SetMainEmailCommandHandler
-    : AggregateRootCommandHandlerBase<SetMainEmailCommand, Guid>
+    : AggregateRootUpdateCommandHandlerBaseV2<SetMainEmailCommand, Guid, UserProfileAggregate>
 {
     private const string EmailMustBeConfirmedMessageTemplate = "Email '{0}' must be confirmed before it can be set as the main email.";
 
     private readonly IUserProfileWriteRepository _userProfileRepository;
     private UserProfileAggregate? _userProfile;
+    private bool _mainEmailChanged;
 
     public SetMainEmailCommandHandler(
         IUserProfileWriteRepository userProfileRepository,
         IUnitOfWork unitOfWork,
-        ILocalEventDispatcher domainEventDispatcher) : base(domainEventDispatcher, unitOfWork)
+        ILocalEventDispatcher domainEventDispatcher,
+        IEnumerable<IAggregateBeforeSaveProcessor<SetMainEmailCommand, UserProfileAggregate>> beforeSaveProcessors)
+        : base(domainEventDispatcher, unitOfWork, beforeSaveProcessors)
     {
         _userProfileRepository = userProfileRepository;
     }
@@ -46,11 +51,15 @@ public sealed class SetMainEmailCommandHandler
                 DomainError.Validation(string.Format(EmailMustBeConfirmedMessageTemplate, email.Address.Value)));
         }
 
+        _mainEmailChanged = !email.IsMain;
         _userProfile.SetMainEmail(email.Id);
 
         return FlowChatResult<Guid>.Success(email.Id.Value);
     }
 
-    protected override IAggregateRoot GetAggregateRoot() =>
+    protected override UserProfileAggregate GetAggregateRoot() =>
         _userProfile ?? throw new InvalidOperationException("Aggregate root instance is not available.");
+
+    protected override AggregateState GetAggregateState(SetMainEmailCommand request, UserProfileAggregate aggregateRoot) =>
+        _mainEmailChanged ? AggregateState.Updated : AggregateState.Unchanged;
 }

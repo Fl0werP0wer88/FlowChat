@@ -36,7 +36,8 @@ public sealed class SendChatMessageCommandHandlerTests
             _chatMessageRepositoryMock.Object,
             _participantReadRepositoryMock.Object,
             _unitOfWorkMock.Object,
-            _domainEventDispatcherMock.Object);
+            _domainEventDispatcherMock.Object,
+            []);
     }
 
     [Fact]

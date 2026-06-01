@@ -39,7 +39,8 @@ public sealed class CreateDuetConversationCommandHandlerTests
             _duetConversationWriteRepositoryMock.Object,
             _userProfileProjectionReadRepositoryMock.Object,
             _unitOfWorkMock.Object,
-            _domainEventDispatcherMock.Object);
+            _domainEventDispatcherMock.Object,
+            []);
     }
 
     [Fact]

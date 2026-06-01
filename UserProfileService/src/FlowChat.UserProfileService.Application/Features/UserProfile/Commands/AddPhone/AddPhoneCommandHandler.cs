@@ -1,4 +1,6 @@
 using FlowChat.Shared.Application;
+using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2;
+using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2.BeforeSaveProcessors;
 using FlowChat.Core.Results;
 using FlowChat.Shared.Domain;
 using FlowChat.UserProfileService.Application.Contracts.Persistence;
@@ -10,7 +12,7 @@ using UserProfileAggregate = FlowChat.UserProfileService.Domain.Entities.UserPro
 namespace FlowChat.UserProfileService.Application.Features.UserProfile.Commands.AddPhone;
 
 public sealed class AddPhoneCommandHandler
-    : AggregateRootCommandHandlerBase<AddPhoneCommand, Guid>
+    : AggregateRootUpdateCommandHandlerBaseV2<AddPhoneCommand, Guid, UserProfileAggregate>
 {
     private readonly IUserProfileWriteRepository _userProfileRepository;
     private UserProfileAggregate? _userProfile;
@@ -18,8 +20,9 @@ public sealed class AddPhoneCommandHandler
     public AddPhoneCommandHandler(
         IUserProfileWriteRepository userProfileRepository,
         IUnitOfWork unitOfWork,
-        ILocalEventDispatcher domainEventDispatcher)
-        : base(domainEventDispatcher, unitOfWork)
+        ILocalEventDispatcher domainEventDispatcher,
+        IEnumerable<IAggregateBeforeSaveProcessor<AddPhoneCommand, UserProfileAggregate>> beforeSaveProcessors)
+        : base(domainEventDispatcher, unitOfWork, beforeSaveProcessors)
     {
         _userProfileRepository = userProfileRepository;
     }
@@ -49,6 +52,6 @@ public sealed class AddPhoneCommandHandler
         return FlowChatResult<Guid>.Success(phone.Id.Value);
     }
 
-    protected override IAggregateRoot GetAggregateRoot() =>
+    protected override UserProfileAggregate GetAggregateRoot() =>
         _userProfile ?? throw new InvalidOperationException("Aggregate root instance is not available.");
 }

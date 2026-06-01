@@ -41,7 +41,8 @@ public sealed class RegisterUserCommandHandlerTests
             _accountRepositoryMock.Object,
             _passwordHashingServiceMock.Object,
             _unitOfWorkMock.Object,
-            _domainEventDispatcherMock.Object);
+            _domainEventDispatcherMock.Object,
+            []);
     }
 
     [Fact]

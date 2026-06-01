@@ -1,5 +1,7 @@
 using FlowChat.Core.Results;
 using FlowChat.Shared.Application;
+using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2;
+using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2.BeforeSaveProcessors;
 using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
 using FlowChat.UserProfileService.Application.Contracts.Persistence;
@@ -8,7 +10,7 @@ using UserProfileAggregate = FlowChat.UserProfileService.Domain.Entities.UserPro
 namespace FlowChat.UserProfileService.Application.Features.UserProfile.Commands.CreateInitialUserProfile;
 
 public sealed class CreateInitialUserProfileCommandHandler
-    : AggregateRootCommandHandlerBase<CreateInitialUserProfileCommand, Guid>
+    : AggregateRootInsertCommandHandlerBaseV2<CreateInitialUserProfileCommand, Guid, UserProfileAggregate>
 {
     private readonly IUserProfileReadRepository _userProfileReadRepository;
     private readonly IUserProfileWriteRepository _userProfileWriteRepository;
@@ -18,8 +20,9 @@ public sealed class CreateInitialUserProfileCommandHandler
         IUserProfileReadRepository userProfileReadRepository,
         IUserProfileWriteRepository userProfileWriteRepository,
         IUnitOfWork unitOfWork,
-        ILocalEventDispatcher domainEventDispatcher)
-        : base(domainEventDispatcher, unitOfWork)
+        ILocalEventDispatcher domainEventDispatcher,
+        IEnumerable<IAggregateBeforeSaveProcessor<CreateInitialUserProfileCommand, UserProfileAggregate>> beforeSaveProcessors)
+        : base(domainEventDispatcher, unitOfWork, beforeSaveProcessors)
     {
         _userProfileReadRepository = userProfileReadRepository;
         _userProfileWriteRepository = userProfileWriteRepository;
@@ -71,7 +74,7 @@ public sealed class CreateInitialUserProfileCommandHandler
         return FlowChatResult<Guid>.Success(_userProfile.Id.Value);
     }
 
-    protected override IAggregateRoot GetAggregateRoot() =>
+    protected override UserProfileAggregate GetAggregateRoot() =>
         _userProfile ?? throw new InvalidOperationException("Aggregate root instance is not available.");
 
     private static string? NormalizeOptional(string? value) =>

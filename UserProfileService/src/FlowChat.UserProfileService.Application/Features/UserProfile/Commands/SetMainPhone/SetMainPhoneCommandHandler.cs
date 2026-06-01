@@ -1,4 +1,6 @@
 using FlowChat.Shared.Application;
+using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2;
+using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2.BeforeSaveProcessors;
 using FlowChat.Shared.Domain;
 using FlowChat.UserProfileService.Application.Contracts.Persistence;
 using FlowChat.UserProfileService.Domain.Entities.EmailVerificationRequest;
@@ -8,17 +10,20 @@ using UserProfileAggregate = FlowChat.UserProfileService.Domain.Entities.UserPro
 namespace FlowChat.UserProfileService.Application.Features.UserProfile.Commands.SetMainPhone;
 
 public sealed class SetMainPhoneCommandHandler
-    : AggregateRootCommandHandlerBase<SetMainPhoneCommand, Guid>
+    : AggregateRootUpdateCommandHandlerBaseV2<SetMainPhoneCommand, Guid, UserProfileAggregate>
 {
     private const string PhoneMustBeConfirmedMessageTemplate = "Phone '{0}' must be confirmed before it can be set as the main phone.";
 
     private readonly IUserProfileWriteRepository _userProfileRepository;
     private UserProfileAggregate? _userProfile;
+    private bool _mainPhoneChanged;
 
     public SetMainPhoneCommandHandler(
         IUserProfileWriteRepository userProfileRepository,
         IUnitOfWork unitOfWork,
-        ILocalEventDispatcher domainEventDispatcher) : base(domainEventDispatcher, unitOfWork)
+        ILocalEventDispatcher domainEventDispatcher,
+        IEnumerable<IAggregateBeforeSaveProcessor<SetMainPhoneCommand, UserProfileAggregate>> beforeSaveProcessors)
+        : base(domainEventDispatcher, unitOfWork, beforeSaveProcessors)
     {
         _userProfileRepository = userProfileRepository;
     }
@@ -46,11 +51,15 @@ public sealed class SetMainPhoneCommandHandler
                 DomainError.Validation(string.Format(PhoneMustBeConfirmedMessageTemplate, phone.Number.Value)));
         }
 
+        _mainPhoneChanged = !phone.IsMain;
         _userProfile.SetMainPhone(phone.Id);
 
         return FlowChatResult<Guid>.Success(phone.Id.Value);
     }
 
-    protected override IAggregateRoot GetAggregateRoot() =>
+    protected override UserProfileAggregate GetAggregateRoot() =>
         _userProfile ?? throw new InvalidOperationException("Aggregate root instance is not available.");
+
+    protected override AggregateState GetAggregateState(SetMainPhoneCommand request, UserProfileAggregate aggregateRoot) =>
+        _mainPhoneChanged ? AggregateState.Updated : AggregateState.Unchanged;
 }

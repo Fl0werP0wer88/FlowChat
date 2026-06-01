@@ -3,13 +3,15 @@ using FlowChat.ChatService.Application.Features.Conversation.Dtos;
 using FlowChat.ChatService.Application.Features.UserProfile;
 using FlowChat.ChatService.Domain.Entities.Conversation;
 using FlowChat.Shared.Application;
+using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2;
+using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2.BeforeSaveProcessors;
 using FlowChat.Shared.Domain;
 using DuetConversationAggregate = FlowChat.ChatService.Domain.Entities.Conversation.DuetConversation;
 
 namespace FlowChat.ChatService.Application.Features.Conversation.Commands.CreateDuetConversation;
 
 public sealed class CreateDuetConversationCommandHandler
-    : AggregateRootCommandHandlerBase<CreateDuetConversationCommand, DuetConversationDetailDto>
+    : AggregateRootInsertCommandHandlerBaseV2<CreateDuetConversationCommand, DuetConversationDetailDto, DuetConversationAggregate>
 {
     private readonly IDuetConversationWriteRepository _duetConversationWriteRepository;
     private readonly IUserProfileProjectionReadRepository _profileReadRepository;
@@ -19,8 +21,9 @@ public sealed class CreateDuetConversationCommandHandler
         IDuetConversationWriteRepository duetConversationWriteRepository,
         IUserProfileProjectionReadRepository profileReadRepository,
         IUnitOfWork unitOfWork,
-        ILocalEventDispatcher domainEventDispatcher)
-        : base(domainEventDispatcher, unitOfWork)
+        ILocalEventDispatcher domainEventDispatcher,
+        IEnumerable<IAggregateBeforeSaveProcessor<CreateDuetConversationCommand, DuetConversationAggregate>> beforeSaveProcessors)
+        : base(domainEventDispatcher, unitOfWork, beforeSaveProcessors)
     {
         _duetConversationWriteRepository = duetConversationWriteRepository ?? throw new ArgumentNullException(nameof(duetConversationWriteRepository));
         _profileReadRepository = profileReadRepository ?? throw new ArgumentNullException(nameof(profileReadRepository));
@@ -62,6 +65,6 @@ public sealed class CreateDuetConversationCommandHandler
             participant.UserId);
     }
 
-    protected override IAggregateRoot GetAggregateRoot() =>
+    protected override DuetConversationAggregate GetAggregateRoot() =>
         _newConversation ?? throw new InvalidOperationException("Aggregate root instance is not available.");
 }

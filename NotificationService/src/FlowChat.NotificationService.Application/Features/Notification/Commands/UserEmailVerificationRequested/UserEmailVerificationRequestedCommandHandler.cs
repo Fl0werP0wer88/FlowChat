@@ -1,4 +1,6 @@
 using FlowChat.Shared.Application;
+using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2;
+using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2.BeforeSaveProcessors;
 using FlowChat.NotificationService.Application.Contracts.Infrastructure;
 using FlowChat.NotificationService.Application.Contracts.Persistence;
 using FlowChat.NotificationService.Domain.Enums;
@@ -10,7 +12,7 @@ using NotificationEntity = FlowChat.NotificationService.Domain.Entities.Notifica
 namespace FlowChat.NotificationService.Application.Features.Notification.Commands.UserEmailVerificationRequested;
 
 public sealed class UserEmailVerificationRequestedCommandHandler
-    : AggregateRootCommandHandlerBase<UserEmailVerificationRequestedCommand, Unit>
+    : AggregateRootInsertCommandHandlerBaseV2<UserEmailVerificationRequestedCommand, Unit, NotificationEntity>
 {
     private readonly INotificationWriteRepository _notificationWriteRepository;
     private readonly INotificationSender _notificationSender;
@@ -20,7 +22,9 @@ public sealed class UserEmailVerificationRequestedCommandHandler
         INotificationWriteRepository notificationWriteRepository,
         INotificationSender notificationSender,
         IUnitOfWork unitOfWork,
-        ILocalEventDispatcher domainEventDispatcher) : base(domainEventDispatcher, unitOfWork)
+        ILocalEventDispatcher domainEventDispatcher,
+        IEnumerable<IAggregateBeforeSaveProcessor<UserEmailVerificationRequestedCommand, NotificationEntity>> beforeSaveProcessors)
+        : base(domainEventDispatcher, unitOfWork, beforeSaveProcessors)
     {
         _notificationWriteRepository = notificationWriteRepository;
         _notificationSender = notificationSender;
@@ -65,6 +69,6 @@ public sealed class UserEmailVerificationRequestedCommandHandler
         return FlowChatResult<Unit>.Success(Unit.Value);
     }
 
-    protected override IAggregateRoot GetAggregateRoot() =>
+    protected override NotificationEntity GetAggregateRoot() =>
         _notification ?? throw new InvalidOperationException("Aggregate root instance is not available.");
 }

@@ -48,7 +48,8 @@ public sealed class CreateInitialUserProfileCommandHandlerTests
             _readRepositoryMock.Object,
             _writeRepositoryMock.Object,
             _unitOfWorkMock.Object,
-            _dispatcherMock.Object);
+            _dispatcherMock.Object,
+            []);
     }
 
     // Runs validator then handler — mirrors the production MediatR pipeline

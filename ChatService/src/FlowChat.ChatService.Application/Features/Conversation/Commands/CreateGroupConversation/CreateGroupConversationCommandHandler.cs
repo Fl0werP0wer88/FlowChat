@@ -2,6 +2,8 @@ using FlowChat.ChatService.Application.Contracts.Persistence;
 using FlowChat.ChatService.Application.Features.Conversation.Dtos;
 using FlowChat.ChatService.Application.Features.UserProfile;
 using FlowChat.Shared.Application;
+using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2;
+using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2.BeforeSaveProcessors;
 using FlowChat.Shared.Domain;
 using GroupConversationAggregate = FlowChat.ChatService.Domain.Entities.Conversation.GroupConversation;
 using ConversationAggregate = FlowChat.ChatService.Domain.Entities.Conversation.Conversation;
@@ -10,7 +12,7 @@ using ParticipantUser = FlowChat.ChatService.Domain.Entities.Conversation.Partic
 namespace FlowChat.ChatService.Application.Features.Conversation.Commands.CreateGroupConversation;
 
 public sealed class CreateGroupConversationCommandHandler
-    : AggregateRootCommandHandlerBase<CreateGroupConversationCommand, GroupConversationDetailDto>
+    : AggregateRootInsertCommandHandlerBaseV2<CreateGroupConversationCommand, GroupConversationDetailDto, GroupConversationAggregate>
 {
     private readonly IGroupConversationWriteRepository _conversationWriteRepository;
     private readonly IUserProfileProjectionReadRepository _profileReadRepository;
@@ -20,8 +22,9 @@ public sealed class CreateGroupConversationCommandHandler
         IGroupConversationWriteRepository conversationWriteRepository,
         IUserProfileProjectionReadRepository profileReadRepository,
         IUnitOfWork unitOfWork,
-        ILocalEventDispatcher domainEventDispatcher)
-        : base(domainEventDispatcher, unitOfWork)
+        ILocalEventDispatcher domainEventDispatcher,
+        IEnumerable<IAggregateBeforeSaveProcessor<CreateGroupConversationCommand, GroupConversationAggregate>> beforeSaveProcessors)
+        : base(domainEventDispatcher, unitOfWork, beforeSaveProcessors)
     {
         _conversationWriteRepository = conversationWriteRepository ?? throw new ArgumentNullException(nameof(conversationWriteRepository));
         _profileReadRepository = profileReadRepository ?? throw new ArgumentNullException(nameof(profileReadRepository));
@@ -54,7 +57,7 @@ public sealed class CreateGroupConversationCommandHandler
             new GroupConversationDetailDto(_conversation.Id.Value, _conversation.Name!, participantDtos));
     }
 
-    protected override IAggregateRoot GetAggregateRoot() =>
+    protected override GroupConversationAggregate GetAggregateRoot() =>
         _conversation ?? throw new InvalidOperationException("Aggregate root instance is not available.");
 
     private static ConversationParticipantDto BuildParticipantDto(

@@ -35,7 +35,8 @@ public sealed class AddPhoneCommandHandlerTests
         _handler = new AddPhoneCommandHandler(
             _writeRepositoryMock.Object,
             _unitOfWorkMock.Object,
-            _dispatcherMock.Object);
+            _dispatcherMock.Object,
+            []);
     }
 
     private async Task<FlowChatResult<Guid>> SendAsync(AddPhoneCommand command)

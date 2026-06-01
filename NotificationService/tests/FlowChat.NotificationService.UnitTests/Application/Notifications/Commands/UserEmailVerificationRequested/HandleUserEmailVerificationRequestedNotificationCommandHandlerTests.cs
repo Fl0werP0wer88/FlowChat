@@ -42,7 +42,8 @@ public sealed class HandleUserEmailVerificationRequestedNotificationCommandHandl
             _writeRepositoryMock.Object,
             _notificationSenderMock.Object,
             _unitOfWorkMock.Object,
-            _domainEventDispatcherMock.Object);
+            _domainEventDispatcherMock.Object,
+            []);
     }
 
     private async Task<FlowChatResult<Unit>> SendAsync(UserEmailVerificationRequestedCommand command)

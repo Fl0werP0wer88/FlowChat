@@ -38,7 +38,8 @@ public sealed class CreateGroupConversationCommandHandlerTests
             _writeRepositoryMock.Object,
             _profileReadRepositoryMock.Object,
             _unitOfWorkMock.Object,
-            _domainEventDispatcherMock.Object);
+            _domainEventDispatcherMock.Object,
+            []);
     }
 
     [Fact]

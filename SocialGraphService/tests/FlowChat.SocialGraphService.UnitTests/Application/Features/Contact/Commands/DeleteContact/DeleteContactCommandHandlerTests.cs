@@ -35,7 +35,8 @@ public sealed class DeleteContactCommandHandlerTests
         _handler = new DeleteContactCommandHandler(
             _contactWriteRepositoryMock.Object,
             _unitOfWorkMock.Object,
-            _domainEventDispatcherMock.Object);
+            _domainEventDispatcherMock.Object,
+            []);
     }
 
     [Fact]

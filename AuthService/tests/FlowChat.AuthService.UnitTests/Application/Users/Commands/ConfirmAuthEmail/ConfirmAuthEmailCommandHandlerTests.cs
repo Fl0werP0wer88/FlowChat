@@ -35,7 +35,8 @@ public sealed class ConfirmAuthEmailCommandHandlerTests
         _handler = new ConfirmAuthEmailCommandHandler(
             _accountRepositoryMock.Object,
             _domainEventDispatcherMock.Object,
-            _unitOfWorkMock.Object);
+            _unitOfWorkMock.Object,
+            []);
     }
 
     [Fact]

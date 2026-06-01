@@ -46,7 +46,8 @@ public sealed class AddContactCommandHandlerTests
             _contactWriteRepositoryMock.Object,
             _userProfileProjectionReadRepositoryMock.Object,
             _unitOfWorkMock.Object,
-            _domainEventDispatcherMock.Object);
+            _domainEventDispatcherMock.Object,
+            []);
     }
 
     [Fact]

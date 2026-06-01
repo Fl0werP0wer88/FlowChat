@@ -1,4 +1,6 @@
 using FlowChat.Shared.Application;
+using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2;
+using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2.BeforeSaveProcessors;
 using FlowChat.Core.Results;
 using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
@@ -10,7 +12,7 @@ using UserProfileAggregate = FlowChat.UserProfileService.Domain.Entities.UserPro
 namespace FlowChat.UserProfileService.Application.Features.UserProfile.Commands.AddEmail;
 
 public sealed class AddEmailCommandHandler
-    : AggregateRootCommandHandlerBase<AddEmailCommand, Guid>
+    : AggregateRootUpdateCommandHandlerBaseV2<AddEmailCommand, Guid, UserProfileAggregate>
 {
     private readonly IUserProfileReadRepository _userProfileReadRepository;
     private readonly IUserProfileWriteRepository _userProfileRepository;
@@ -20,8 +22,9 @@ public sealed class AddEmailCommandHandler
         IUserProfileReadRepository userProfileReadRepository,
         IUserProfileWriteRepository userProfileRepository,
         IUnitOfWork unitOfWork,
-        ILocalEventDispatcher domainEventDispatcher)
-        : base(domainEventDispatcher, unitOfWork)
+        ILocalEventDispatcher domainEventDispatcher,
+        IEnumerable<IAggregateBeforeSaveProcessor<AddEmailCommand, UserProfileAggregate>> beforeSaveProcessors)
+        : base(domainEventDispatcher, unitOfWork, beforeSaveProcessors)
     {
         _userProfileReadRepository = userProfileReadRepository;
         _userProfileRepository = userProfileRepository;
@@ -52,6 +55,6 @@ public sealed class AddEmailCommandHandler
         return FlowChatResult<Guid>.Success(email.Id.Value);
     }
 
-    protected override IAggregateRoot GetAggregateRoot() =>
+    protected override UserProfileAggregate GetAggregateRoot() =>
         _userProfile ?? throw new InvalidOperationException("Aggregate root instance is not available.");
 }

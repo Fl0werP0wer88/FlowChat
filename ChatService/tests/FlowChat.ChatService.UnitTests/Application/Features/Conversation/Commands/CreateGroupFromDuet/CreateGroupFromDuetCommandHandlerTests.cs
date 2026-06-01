@@ -47,7 +47,8 @@ public sealed class CreateGroupFromDuetCommandHandlerTests
             _groupWriteRepositoryMock.Object,
             _profileReadRepositoryMock.Object,
             _unitOfWorkMock.Object,
-            _domainEventDispatcherMock.Object);
+            _domainEventDispatcherMock.Object,
+            []);
     }
 
     [Fact]

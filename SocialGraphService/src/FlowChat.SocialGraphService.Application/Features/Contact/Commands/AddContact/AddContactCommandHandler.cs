@@ -1,4 +1,6 @@
 using FlowChat.Shared.Application;
+using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2;
+using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2.BeforeSaveProcessors;
 using FlowChat.Core.Results;
 using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
@@ -8,7 +10,8 @@ using ContactAggregate = FlowChat.SocialGraphService.Domain.Entities.Contact.Con
 
 namespace FlowChat.SocialGraphService.Application.Features.Contact.Commands.AddContact;
 
-public sealed class AddContactCommandHandler : AggregateRootCommandHandlerBase<AddContactCommand, Guid>
+public sealed class AddContactCommandHandler
+    : AggregateRootInsertCommandHandlerBaseV2<AddContactCommand, Guid, ContactAggregate>
 {
     private readonly IContactWriteRepository _contactWriteRepository;
     private readonly IUserProfileProjectionReadRepository _userProfileProjectionReadRepository;
@@ -18,8 +21,9 @@ public sealed class AddContactCommandHandler : AggregateRootCommandHandlerBase<A
         IContactWriteRepository contactWriteRepository,
         IUserProfileProjectionReadRepository userProfileProjectionReadRepository,
         IUnitOfWork unitOfWork,
-        ILocalEventDispatcher domainEventDispatcher)
-        : base(domainEventDispatcher, unitOfWork)
+        ILocalEventDispatcher domainEventDispatcher,
+        IEnumerable<IAggregateBeforeSaveProcessor<AddContactCommand, ContactAggregate>> beforeSaveProcessors)
+        : base(domainEventDispatcher, unitOfWork, beforeSaveProcessors)
     {
         _contactWriteRepository = contactWriteRepository;
         _userProfileProjectionReadRepository = userProfileProjectionReadRepository;
@@ -65,7 +69,7 @@ public sealed class AddContactCommandHandler : AggregateRootCommandHandlerBase<A
         return FlowChatResult<Guid>.Success(_contact.Id.Value);
     }
 
-    protected override IAggregateRoot GetAggregateRoot() =>
+    protected override ContactAggregate GetAggregateRoot() =>
         _contact ?? throw new InvalidOperationException("Aggregate root instance is not available.");
 
     private async Task<UserProfileProjectionDto?> GetUserProfileProjectionAsync(
