@@ -32,7 +32,8 @@ public class PublishProjectionIntegrationEventProcessor<TCommand, TAggregate, TT
         var integrationEvent = new ProjectionIntegrationEvent<TTargetReadModel>
         {
             Value = readModel,
-            Operation = operationType
+            Operation = operationType,
+            Version = aggregate.Version
         };
         var envelope = new IntegrationEventEnvelope<ProjectionIntegrationEvent<TTargetReadModel>>(
             integrationEvent,

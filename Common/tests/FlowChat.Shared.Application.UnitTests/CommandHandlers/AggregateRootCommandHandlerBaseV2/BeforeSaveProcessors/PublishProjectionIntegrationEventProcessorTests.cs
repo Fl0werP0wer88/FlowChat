@@ -19,6 +19,7 @@ public sealed class PublishProjectionIntegrationEventProcessorTests
     {
         var aggregateId = Guid.NewGuid();
         var aggregate = new TestAggregate(aggregateId, "Alpha");
+        aggregate.IncrementVersion();
         var command = new TestCommand();
         var readModel = new TestReadModel(aggregateId, "Alpha");
         using var cancellationTokenSource = new CancellationTokenSource();
@@ -57,6 +58,7 @@ public sealed class PublishProjectionIntegrationEventProcessorTests
         capturedEnvelope.Should().NotBeNull();
         capturedEnvelope!.KafkaKey.Should().Be(aggregateId.ToString("D"));
         capturedEnvelope.Payload.Operation.Should().Be(expectedOperationType);
+        capturedEnvelope.Payload.Version.Should().Be(aggregate.Version);
         capturedEnvelope.Payload.Value.Should().Be(readModel);
         capturedCancellationToken.Should().Be(cancellationToken);
     }
