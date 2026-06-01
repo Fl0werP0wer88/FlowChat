@@ -36,9 +36,6 @@ public sealed class ParticipantUserConfiguration : IEntityTypeConfiguration<Part
             .HasUtcDateTimeOffsetConversion()
             .IsRequired();
 
-        builder.Property(x => x.Version)
-            .IsConcurrencyToken();
-
         builder.Property(x => x.CreatedBy)
             .HasMaxLength(256)
             .IsRequired();

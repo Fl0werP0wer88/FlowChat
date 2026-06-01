@@ -27,9 +27,6 @@ public class EmailConfiguration : IEntityTypeConfiguration<Email>
             .HasMaxLength(256)
             .IsRequired();
 
-        builder.Property(x => x.Version)
-            .IsConcurrencyToken();
-
         builder.Property(x => x.IsMain)
             .HasDefaultValue(false)
             .IsRequired();

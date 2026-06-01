@@ -43,9 +43,11 @@ public sealed class WriteRepositoryBaseConcurrencyTests : IDisposable
             .FirstAsync(x => x.Id == entityId);
 
         entityInContext1.Rename("from-context-1");
+        entityInContext1.IncrementVersion();
         await context1.SaveChangesAsync();
 
         entityInContext2.Rename("from-context-2");
+        entityInContext2.IncrementVersion();
 
         var act = () => context2.SaveChangesAsync();
 
@@ -65,11 +67,13 @@ public sealed class WriteRepositoryBaseConcurrencyTests : IDisposable
         entity.Version.Should().Be(1);
 
         entity.Rename("v2");
+        entity.IncrementVersion();
         await context.SaveChangesAsync();
 
         entity.Version.Should().Be(2);
 
         entity.Rename("v3");
+        entity.IncrementVersion();
         await context.SaveChangesAsync();
 
         entity.Version.Should().Be(3);
@@ -86,6 +90,7 @@ public sealed class WriteRepositoryBaseConcurrencyTests : IDisposable
         await context1.SaveChangesAsync();
 
         entity.Rename("updated");
+        entity.IncrementVersion();
         await context1.SaveChangesAsync();
 
         var entityId = Id<TestAggregate>.FromGuid(entity.Id.Value);

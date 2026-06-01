@@ -5,6 +5,8 @@ public abstract class AggregateRootBase<TDomainEntity> : EntityBase<TDomainEntit
 {
     private readonly List<IDomainEvent> _domainEvents = [];
 
+    public int Version { get; private set; } = 1;
+
     public IReadOnlyCollection<IDomainEvent> DomainEvents => _domainEvents.AsReadOnly();
 
     protected AggregateRootBase(Id<TDomainEntity> id) : base(id)
@@ -16,6 +18,11 @@ public abstract class AggregateRootBase<TDomainEntity> : EntityBase<TDomainEntit
         var events = _domainEvents.ToList();
         ClearEvents();
         return events;
+    }
+
+    public void IncrementVersion()
+    {
+        Version++;
     }
 
     protected void AddDomainEvent(IDomainEvent domainEvent)
