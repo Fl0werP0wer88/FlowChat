@@ -1,6 +1,7 @@
 using FluentAssertions;
 using FlowChat.Core.Results;
 using FlowChat.Shared.Domain;
+using MediatR;
 using Moq;
 
 namespace FlowChat.Shared.Application.UnitTests;
@@ -25,8 +26,7 @@ public sealed class BulkUpsertOrDeleteCommandHandlerBaseTests
         var result = await handler.Handle(new TestCommand(items), CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
-        result.Value.UpsertedCount.Should().Be(items.Length);
-        result.Value.DeletedCount.Should().Be(0);
+        result.Value.Should().Be(Unit.Value);
         executorMock.Verify(x => x.BulkUpsertAsync(It.IsAny<IReadOnlyCollection<TestValue>>(), It.IsAny<CancellationToken>()), Times.Once);
         executorMock.Verify(x => x.BulkDeleteAsync(It.IsAny<IReadOnlyCollection<Id<TestValue>>>(), It.IsAny<CancellationToken>()), Times.Never);
     }
@@ -49,8 +49,7 @@ public sealed class BulkUpsertOrDeleteCommandHandlerBaseTests
         var result = await handler.Handle(new TestCommand(items), CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
-        result.Value.UpsertedCount.Should().Be(0);
-        result.Value.DeletedCount.Should().Be(items.Length);
+        result.Value.Should().Be(Unit.Value);
         executorMock.Verify(x => x.BulkUpsertAsync(It.IsAny<IReadOnlyCollection<TestValue>>(), It.IsAny<CancellationToken>()), Times.Never);
         executorMock.Verify(x => x.BulkDeleteAsync(It.IsAny<IReadOnlyCollection<Id<TestValue>>>(), It.IsAny<CancellationToken>()), Times.Once);
     }
@@ -83,9 +82,7 @@ public sealed class BulkUpsertOrDeleteCommandHandlerBaseTests
         var result = await handler.Handle(new TestCommand(items), CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
-        result.Value.RequestedCount.Should().Be(2);
-        result.Value.UpsertedCount.Should().Be(1);
-        result.Value.DeletedCount.Should().Be(1);
+        result.Value.Should().Be(Unit.Value);
         capturedUpserts.Should().ContainSingle().Which.Should().Be(upsertValue);
         capturedDeleteIds.Should().ContainSingle().Which.Should().Be(deleteId);
     }
@@ -100,7 +97,7 @@ public sealed class BulkUpsertOrDeleteCommandHandlerBaseTests
         var result = await handler.Handle(new TestCommand([]), CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
-        result.Value.Should().Be(BulkUpsertOrDeleteCommandResult.Empty);
+        result.Value.Should().Be(Unit.Value);
         executorMock.Verify(x => x.BulkUpsertAsync(It.IsAny<IReadOnlyCollection<TestValue>>(), It.IsAny<CancellationToken>()), Times.Never);
         executorMock.Verify(x => x.BulkDeleteAsync(It.IsAny<IReadOnlyCollection<Id<TestValue>>>(), It.IsAny<CancellationToken>()), Times.Never);
     }
@@ -163,7 +160,7 @@ public sealed class BulkUpsertOrDeleteCommandHandlerBaseTests
 
         unitOfWorkMock.Verify(
             x => x.ExecuteCommandInTransactionAsync(
-                It.IsAny<Func<CancellationToken, Task<FlowChatResult<BulkUpsertOrDeleteCommandResult>>>>(),
+                It.IsAny<Func<CancellationToken, Task<FlowChatResult<Unit>>>>(),
                 It.IsAny<CancellationToken>()),
             Times.Once);
     }
@@ -173,10 +170,10 @@ public sealed class BulkUpsertOrDeleteCommandHandlerBaseTests
         var mock = new Mock<IUnitOfWork>();
         mock
             .Setup(x => x.ExecuteCommandInTransactionAsync(
-                It.IsAny<Func<CancellationToken, Task<FlowChatResult<BulkUpsertOrDeleteCommandResult>>>>(),
+                It.IsAny<Func<CancellationToken, Task<FlowChatResult<Unit>>>>(),
                 It.IsAny<CancellationToken>()))
             .Returns<
-                Func<CancellationToken, Task<FlowChatResult<BulkUpsertOrDeleteCommandResult>>>,
+                Func<CancellationToken, Task<FlowChatResult<Unit>>>,
                 CancellationToken>((operation, ct) => operation(ct));
         return mock;
     }

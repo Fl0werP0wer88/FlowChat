@@ -6,6 +6,7 @@ using FlowChat.Core.Results;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
 using FluentAssertions;
+using MediatR;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 
@@ -48,7 +49,7 @@ public sealed class UserProfileProjectionBulkRepositoryTests : IDisposable
         await _dbContext.SaveChangesAsync();
 
         result.IsSuccess.Should().BeTrue();
-        result.Value.UpsertedCount.Should().Be(1);
+        result.Value.Should().Be(Unit.Value);
 
         var entity = await _dbContext.UserProfileProjections.SingleAsync();
         entity.UserId.Should().Be(userProfileId);
@@ -81,7 +82,8 @@ public sealed class UserProfileProjectionBulkRepositoryTests : IDisposable
             lastName: "Updated",
             source: "updater-consumer"));
 
-        result.Value.UpsertedCount.Should().Be(1);
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().Be(Unit.Value);
 
         var entity = await _dbContext.UserProfileProjections.SingleAsync();
         entity.FriendlyUserId.Should().Be("jdoe2");
@@ -103,7 +105,8 @@ public sealed class UserProfileProjectionBulkRepositoryTests : IDisposable
 
         var result = await SaveAsync(CreateUpsertItem(userProfileId, incomingVersion, friendlyUserId: "stale", firstName: "Stale"));
 
-        result.Value.UpsertedCount.Should().Be(1);
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().Be(Unit.Value);
         var entity = await _dbContext.UserProfileProjections.SingleAsync();
         entity.FriendlyUserId.Should().Be("current");
         entity.FirstName.Should().Be("Current");
@@ -118,7 +121,8 @@ public sealed class UserProfileProjectionBulkRepositoryTests : IDisposable
 
         var result = await SaveAsync(CreateDeleteItem(userProfileId, 2));
 
-        result.Value.DeletedCount.Should().Be(1);
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().Be(Unit.Value);
         var entity = await _dbContext.UserProfileProjections.SingleAsync();
         entity.SourceVersion.Should().Be(2);
         entity.IsDeleted.Should().BeTrue();
@@ -131,7 +135,8 @@ public sealed class UserProfileProjectionBulkRepositoryTests : IDisposable
 
         var result = await SaveAsync(CreateDeleteItem(userProfileId, 3));
 
-        result.Value.DeletedCount.Should().Be(1);
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().Be(Unit.Value);
         var entity = await _dbContext.UserProfileProjections.SingleAsync();
         entity.UserId.Should().Be(userProfileId);
         entity.FriendlyUserId.Should().BeEmpty();
@@ -147,7 +152,8 @@ public sealed class UserProfileProjectionBulkRepositoryTests : IDisposable
 
         var result = await SaveAsync(CreateUpsertItem(userProfileId, 4, friendlyUserId: "restored", firstName: "Restored"));
 
-        result.Value.UpsertedCount.Should().Be(1);
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().Be(Unit.Value);
         var entity = await _dbContext.UserProfileProjections.SingleAsync();
         entity.FriendlyUserId.Should().Be("restored");
         entity.FirstName.Should().Be("Restored");
@@ -163,13 +169,14 @@ public sealed class UserProfileProjectionBulkRepositoryTests : IDisposable
 
         var result = await SaveAsync(CreateUpsertItem(userProfileId, 2, friendlyUserId: "stale", firstName: "Stale"));
 
-        result.Value.UpsertedCount.Should().Be(1);
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().Be(Unit.Value);
         var entity = await _dbContext.UserProfileProjections.SingleAsync();
         entity.SourceVersion.Should().Be(3);
         entity.IsDeleted.Should().BeTrue();
     }
 
-    private async Task<FlowChatResult<BulkUpsertOrDeleteCommandResult>> SaveAsync(UserProfileProjectionCommandItem item)
+    private async Task<FlowChatResult<Unit>> SaveAsync(UserProfileProjectionCommandItem item)
     {
         var result = await _repository.BulkUpsertOrDeleteAsync([item], CancellationToken.None);
         await _dbContext.SaveChangesAsync();

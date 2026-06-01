@@ -60,9 +60,6 @@ public sealed class BulkUpsertOrDeleteUserProfileProjectionController : ApiContr
         if (!result.IsSuccess)
             return HandleError(result.Error);
 
-        return Ok(new BulkUpsertOrDeleteUserProfileProjectionResponse(
-            result.Value.RequestedCount,
-            result.Value.UpsertedCount,
-            result.Value.DeletedCount));
+        return NoContent();
     }
 }

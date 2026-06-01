@@ -1,11 +1,12 @@
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
+using MediatR;
 
 namespace FlowChat.ChatService.Application.Features.UserProfile.Commands.BulkUpsertOrDeleteUserProfileProjection;
 
 public sealed record BulkUpsertOrDeleteUserProfileProjectionCommand(
     IReadOnlyCollection<UserProfileProjectionCommandItem> Items)
-    : ICommand<BulkUpsertOrDeleteCommandResult>;
+    : ICommand<Unit>;
 
 public sealed record UserProfileProjectionCommandItem(
     Id<UserProfileProjectionDto> EntityId,
