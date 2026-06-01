@@ -1,4 +1,6 @@
+using FlowChat.Core.Messaging;
 using FlowChat.Core.Messaging.AuthService.Events;
+using FlowChat.Core.Messaging.UserProfileService.ReadModels;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Infrastructure.Silverback.Kafka;
 using FlowChat.UserProfileService.Infrastructure;
@@ -24,7 +26,9 @@ public sealed class ApiSilverbackServiceRegistrationTests
                 ["Kafka:UserEmailVerificationRequestedProducer:BootstrapServers"] = "localhost:9092",
                 ["Kafka:UserEmailVerificationRequestedProducer:Topic"] = "dev.flowchat.notification.email.v1",
                 ["Kafka:UserProfileStateChangedProducer:BootstrapServers"] = "localhost:9092",
-                ["Kafka:UserProfileStateChangedProducer:Topic"] = "dev.flowchat.user-profile.user-profile.v1"
+                ["Kafka:UserProfileStateChangedProducer:Topic"] = "dev.flowchat.user-profile.user-profile.v1",
+                ["Kafka:UserProfileProjectionProducer:BootstrapServers"] = "localhost:9092",
+                ["Kafka:UserProfileProjectionProducer:Topic"] = "dev.flowchat.user-profile.user-profile.v1"
             })
             .Build();
 
@@ -41,9 +45,11 @@ public sealed class ApiSilverbackServiceRegistrationTests
         var integrationEventPublisher = serviceProvider.GetRequiredService<IOutboxIntegrationEventPublisher>();
         var registry = serviceProvider.GetRequiredService<KafkaProducerSettingsRegistry>();
         var emailVerificationOptions = registry.Get<EmailVerificationRequestIntegrationEvent>();
+        var projectionOptions = registry.Get<ProjectionIntegrationEvent<UserProfileReadModel>>();
 
         publisher.Should().NotBeNull();
         integrationEventPublisher.Should().NotBeNull();
         emailVerificationOptions!.Topic.Should().Be("dev.flowchat.notification.email.v1");
+        projectionOptions!.Topic.Should().Be("dev.flowchat.user-profile.user-profile.v1");
     }
 }

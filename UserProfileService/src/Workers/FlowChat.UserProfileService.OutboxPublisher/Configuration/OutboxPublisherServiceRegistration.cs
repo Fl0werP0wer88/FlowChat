@@ -1,5 +1,7 @@
+using FlowChat.Core.Messaging;
 using FlowChat.Core.Messaging.AuthService.Events;
 using FlowChat.Core.Messaging.UserProfileService.Events;
+using FlowChat.Core.Messaging.UserProfileService.ReadModels;
 using FlowChat.UserProfileService.OutboxPublisher.Configuration.Settings;
 using FlowChat.UserProfileService.Persistence;
 using FlowChat.Shared.Infrastructure.Silverback.Behaviors;
@@ -33,6 +35,10 @@ public static class OutboxPublisherServiceRegistration
             .GetSection(new UserProfileStateChangedProducerSettingsSection().SectionName)
             .Get<UserProfileStateChangedProducerSettingsSection>()
             ?? new UserProfileStateChangedProducerSettingsSection();
+        var projectionProducerOptions = configuration
+            .GetSection(new UserProfileProjectionProducerSettingsSection().SectionName)
+            .Get<UserProfileProjectionProducerSettingsSection>()
+            ?? new UserProfileProjectionProducerSettingsSection();
         var outboxOptions = configuration
             .GetSection(new OutboxPublisherRuntimeSettingsSection().SectionName)
             .Get<OutboxPublisherRuntimeSettingsSection>()
@@ -76,6 +82,10 @@ public static class OutboxPublisherServiceRegistration
                     .AddProducer(producer => producer
                         .Produce<UserProfileChangedIntegrationEvent>("user-profile-state-changed", endpoint => endpoint
                             .ProduceTo(stateChangedProducerOptions.Topic)
+                            .SerializeAsJson(serializer => serializer.SetTypeHeader())))
+                    .AddProducer(producer => producer
+                        .Produce<ProjectionIntegrationEvent<UserProfileReadModel>>("user-profile-projection", endpoint => endpoint
+                            .ProduceTo(projectionProducerOptions.Topic)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())));
             });
 

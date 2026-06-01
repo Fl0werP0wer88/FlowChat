@@ -1,5 +1,7 @@
+using FlowChat.Core.Messaging;
 using FlowChat.Core.Messaging.AuthService.Events;
 using FlowChat.Core.Messaging.UserProfileService.Events;
+using FlowChat.Core.Messaging.UserProfileService.ReadModels;
 using FlowChat.Shared.Infrastructure.Silverback.Behaviors;
 using FlowChat.UserProfileService.Infrastructure.Configuration.Settings;
 using FlowChat.UserProfileService.Persistence;
@@ -25,6 +27,8 @@ public static class SilverbackServiceRegistration
             .Get<UserEmailVerificationRequestedProducerSettingsSection>() ?? new UserEmailVerificationRequestedProducerSettingsSection();
         var stateChangedProducerOptions = configuration.GetSection(new UserProfileStateChangedProducerSettingsSection().SectionName)
             .Get<UserProfileStateChangedProducerSettingsSection>() ?? new UserProfileStateChangedProducerSettingsSection();
+        var projectionProducerOptions = configuration.GetSection(new UserProfileProjectionProducerSettingsSection().SectionName)
+            .Get<UserProfileProjectionProducerSettingsSection>() ?? new UserProfileProjectionProducerSettingsSection();
         var bootstrapServers = !string.IsNullOrWhiteSpace(createdProducerOptions.BootstrapServers)
             ? createdProducerOptions.BootstrapServers
             : stateChangedProducerOptions.BootstrapServers;
@@ -58,6 +62,11 @@ public static class SilverbackServiceRegistration
                     .AddProducer(producer => producer
                         .Produce<UserProfileChangedIntegrationEvent>("user-profile-state-changed", endpoint => endpoint
                             .ProduceTo(stateChangedProducerOptions.Topic)
+                            .SerializeAsJson(serializer => serializer.SetTypeHeader())
+                            .StoreToOutbox(outbox => outbox.UseEntityFramework<AppDbContext>())))
+                    .AddProducer(producer => producer
+                        .Produce<ProjectionIntegrationEvent<UserProfileReadModel>>("user-profile-projection", endpoint => endpoint
+                            .ProduceTo(projectionProducerOptions.Topic)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())
                             .StoreToOutbox(outbox => outbox.UseEntityFramework<AppDbContext>())));
             });

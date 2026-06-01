@@ -1,5 +1,7 @@
+using FlowChat.Core.Messaging;
 using FlowChat.Core.Messaging.AuthService.Events;
 using FlowChat.Core.Messaging.UserProfileService.Events;
+using FlowChat.Core.Messaging.UserProfileService.ReadModels;
 using FlowChat.Shared.Infrastructure.Silverback.Kafka;
 using FlowChat.UserProfileService.Infrastructure;
 using FlowChat.UserProfileService.Infrastructure.Configuration.Settings;
@@ -26,7 +28,9 @@ public sealed class KafkaProducerConfigurationTests
                 ["Kafka:UserEmailVerificationRequestedProducer:BootstrapServers"] = "broker:9092",
                 ["Kafka:UserEmailVerificationRequestedProducer:Topic"] = "user-email-verification-topic",
                 ["Kafka:UserProfileStateChangedProducer:BootstrapServers"] = "broker:9092",
-                ["Kafka:UserProfileStateChangedProducer:Topic"] = "user-profile-state-topic"
+                ["Kafka:UserProfileStateChangedProducer:Topic"] = "user-profile-state-topic",
+                ["Kafka:UserProfileProjectionProducer:BootstrapServers"] = "broker:9092",
+                ["Kafka:UserProfileProjectionProducer:Topic"] = "user-profile-projection-topic"
             })
             .Build();
 
@@ -41,11 +45,13 @@ public sealed class KafkaProducerConfigurationTests
         var emailConfirmedProducerOptions = serviceProvider.GetRequiredService<IOptions<UserEmailConfirmedProducerSettingsSection>>().Value;
         var emailVerificationRequestedProducerOptions = serviceProvider.GetRequiredService<IOptions<UserEmailVerificationRequestedProducerSettingsSection>>().Value;
         var stateChangedProducerOptions = serviceProvider.GetRequiredService<IOptions<UserProfileStateChangedProducerSettingsSection>>().Value;
+        var projectionProducerOptions = serviceProvider.GetRequiredService<IOptions<UserProfileProjectionProducerSettingsSection>>().Value;
         var registry = serviceProvider.GetRequiredService<KafkaProducerSettingsRegistry>();
         var typedCreatedProducerOptions = registry.Get<UserProfileCreatedIntegrationEvent>();
         var typedEmailConfirmedProducerOptions = registry.Get<UserEmailConfirmedIntegrationEvent>();
         var typedEmailVerificationRequestedProducerOptions = registry.Get<EmailVerificationRequestIntegrationEvent>();
         var typedStateChangedProducerOptions = registry.Get<UserProfileChangedIntegrationEvent>();
+        var typedProjectionProducerOptions = registry.Get<ProjectionIntegrationEvent<UserProfileReadModel>>();
 
         createdProducerOptions.BootstrapServers.Should().Be("broker:9092");
         createdProducerOptions.Topic.Should().Be("user-profile-created-topic");
@@ -55,10 +61,13 @@ public sealed class KafkaProducerConfigurationTests
         emailVerificationRequestedProducerOptions.Topic.Should().Be("user-email-verification-topic");
         stateChangedProducerOptions.BootstrapServers.Should().Be("broker:9092");
         stateChangedProducerOptions.Topic.Should().Be("user-profile-state-topic");
+        projectionProducerOptions.BootstrapServers.Should().Be("broker:9092");
+        projectionProducerOptions.Topic.Should().Be("user-profile-projection-topic");
         typedCreatedProducerOptions!.Topic.Should().Be("user-profile-created-topic");
         typedEmailConfirmedProducerOptions!.Topic.Should().Be("user-email-confirmed-topic");
         typedEmailVerificationRequestedProducerOptions!.Topic.Should().Be("user-email-verification-topic");
         typedStateChangedProducerOptions!.Topic.Should().Be("user-profile-state-topic");
+        typedProjectionProducerOptions!.Topic.Should().Be("user-profile-projection-topic");
     }
 
     [Theory]
@@ -84,15 +93,20 @@ public sealed class KafkaProducerConfigurationTests
         var stateChangedProducerOptions = configuration
             .GetSection(new UserProfileStateChangedProducerSettingsSection().SectionName)
             .Get<UserProfileStateChangedProducerSettingsSection>();
+        var projectionProducerOptions = configuration
+            .GetSection(new UserProfileProjectionProducerSettingsSection().SectionName)
+            .Get<UserProfileProjectionProducerSettingsSection>();
 
         producerOptions.Should().NotBeNull();
         emailConfirmedProducerOptions.Should().NotBeNull();
         emailVerificationRequestedProducerOptions.Should().NotBeNull();
         stateChangedProducerOptions.Should().NotBeNull();
+        projectionProducerOptions.Should().NotBeNull();
         producerOptions!.Topic.Should().Be("dev.flowchat.user-profile.user-profile.v1");
         emailConfirmedProducerOptions!.Topic.Should().Be("dev.flowchat.user-profile.user-profile.v1");
         emailVerificationRequestedProducerOptions!.Topic.Should().Be("dev.flowchat.notification.email.v1");
         stateChangedProducerOptions!.Topic.Should().Be("dev.flowchat.user-profile.user-profile.v1");
+        projectionProducerOptions!.Topic.Should().Be("dev.flowchat.user-profile.user-profile.v1");
     }
 
     private static string GetRepositoryPath(string relativePath)
