@@ -47,6 +47,10 @@ namespace FlowChat.UserProfileService.Persistence.Migrations
                     b.Property<Guid>("UserProfileId")
                         .HasColumnType("uuid");
 
+                    b.Property<int>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
 
                     b.HasIndex("EmailId")
@@ -208,10 +212,6 @@ namespace FlowChat.UserProfileService.Persistence.Migrations
 
                     b.Property<Guid>("UserProfileId")
                         .HasColumnType("uuid");
-
-                    b.Property<int>("Version")
-                        .IsConcurrencyToken()
-                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
