@@ -55,7 +55,7 @@ namespace FlowChat.SocialGraphService.Persistence.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "UserProfileProjection",
+                name: "UserProfileReadModel",
                 columns: table => new
                 {
                     UserProfileId = table.Column<Guid>(type: "uuid", nullable: false),
@@ -80,7 +80,7 @@ namespace FlowChat.SocialGraphService.Persistence.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_UserProfileProjection", x => x.UserProfileId);
+                    table.PrimaryKey("PK_UserProfileReadModel", x => x.UserProfileId);
                 });
 
             migrationBuilder.CreateIndex(
@@ -91,7 +91,7 @@ namespace FlowChat.SocialGraphService.Persistence.Migrations
 
             migrationBuilder.CreateIndex(
                 name: "ix_user_profile_projection_friendly_user_id",
-                table: "UserProfileProjection",
+                table: "UserProfileReadModel",
                 column: "FriendlyUserId");
         }
 
@@ -105,7 +105,7 @@ namespace FlowChat.SocialGraphService.Persistence.Migrations
                 name: "SilverbackOutboxMessages");
 
             migrationBuilder.DropTable(
-                name: "UserProfileProjection");
+                name: "UserProfileReadModel");
         }
     }
 }

@@ -56,7 +56,7 @@ namespace FlowChat.PresenceService.Persistence.Migrations
                     b.ToTable("UserPresencePreferences", (string)null);
                 });
 
-            modelBuilder.Entity("FlowChat.PresenceService.Persistence.Entities.ContactObserverProjectionEntity", b =>
+            modelBuilder.Entity("FlowChat.PresenceService.Persistence.Entities.ContactObserverReadModelEntity", b =>
                 {
                     b.Property<Guid>("ObservedUserId")
                         .HasColumnType("uuid");
@@ -85,7 +85,7 @@ namespace FlowChat.PresenceService.Persistence.Migrations
                     b.HasIndex("ObservedUserId")
                         .HasDatabaseName("ix_contact_observer_projection_observed_user_id");
 
-                    b.ToTable("ContactObserverProjection", null, t =>
+                    b.ToTable("ContactObserverReadModel", null, t =>
                         {
                             t.HasCheckConstraint("chk_contact_observer_projection_different_users", "\"ObservedUserId\" <> \"ObserverUserId\"");
                         });

@@ -13,7 +13,7 @@ namespace FlowChat.PresenceService.Persistence.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
-                name: "ContactObserverProjection",
+                name: "ContactObserverReadModel",
                 columns: table => new
                 {
                     ObservedUserId = table.Column<Guid>(type: "uuid", nullable: false),
@@ -25,7 +25,7 @@ namespace FlowChat.PresenceService.Persistence.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_ContactObserverProjection", x => new { x.ObservedUserId, x.ObserverUserId });
+                    table.PrimaryKey("PK_ContactObserverReadModel", x => new { x.ObservedUserId, x.ObserverUserId });
                     table.CheckConstraint("chk_contact_observer_projection_different_users", "\"ObservedUserId\" <> \"ObserverUserId\"");
                 });
 
@@ -65,7 +65,7 @@ namespace FlowChat.PresenceService.Persistence.Migrations
 
             migrationBuilder.CreateIndex(
                 name: "ix_contact_observer_projection_observed_user_id",
-                table: "ContactObserverProjection",
+                table: "ContactObserverReadModel",
                 column: "ObservedUserId");
         }
 
@@ -73,7 +73,7 @@ namespace FlowChat.PresenceService.Persistence.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "ContactObserverProjection");
+                name: "ContactObserverReadModel");
 
             migrationBuilder.DropTable(
                 name: "SilverbackOutboxMessages");

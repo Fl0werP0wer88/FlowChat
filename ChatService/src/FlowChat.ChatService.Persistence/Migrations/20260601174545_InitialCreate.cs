@@ -49,7 +49,7 @@ namespace FlowChat.ChatService.Persistence.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "UserProfileProjections",
+                name: "UserProfileReadModel",
                 columns: table => new
                 {
                     UserId = table.Column<Guid>(type: "uuid", nullable: false),
@@ -57,6 +57,8 @@ namespace FlowChat.ChatService.Persistence.Migrations
                     FirstName = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
                     LastName = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
                     AvatarUrl = table.Column<string>(type: "character varying(2048)", maxLength: 2048, nullable: true),
+                    SourceVersion = table.Column<int>(type: "integer", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
                     CreatedBy = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: false),
                     CreatedAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     LastModifiedBy = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: false),
@@ -64,7 +66,7 @@ namespace FlowChat.ChatService.Persistence.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_UserProfileProjections", x => x.UserId);
+                    table.PrimaryKey("PK_UserProfileReadModel", x => x.UserId);
                 });
 
             migrationBuilder.CreateTable(
@@ -177,7 +179,7 @@ namespace FlowChat.ChatService.Persistence.Migrations
                 name: "SilverbackOutboxMessages");
 
             migrationBuilder.DropTable(
-                name: "UserProfileProjections");
+                name: "UserProfileReadModel");
 
             migrationBuilder.DropTable(
                 name: "Conversations");

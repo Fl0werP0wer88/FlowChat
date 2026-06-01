@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FlowChat.ChatService.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260601082608_InitialCreate")]
+    [Migration("20260601174545_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -202,7 +202,7 @@ namespace FlowChat.ChatService.Persistence.Migrations
                     b.ToTable("DuetConversations", (string)null);
                 });
 
-            modelBuilder.Entity("FlowChat.ChatService.Persistence.Entities.UserProfileProjectionEntity", b =>
+            modelBuilder.Entity("FlowChat.ChatService.Persistence.Entities.UserProfileReadModelEntity", b =>
                 {
                     b.Property<Guid>("UserId")
                         .ValueGeneratedOnAdd()
@@ -229,6 +229,9 @@ namespace FlowChat.ChatService.Persistence.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
                     b.Property<DateTimeOffset>("LastModifiedAtUtc")
                         .HasColumnType("timestamp with time zone");
 
@@ -241,9 +244,12 @@ namespace FlowChat.ChatService.Persistence.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
+                    b.Property<int>("SourceVersion")
+                        .HasColumnType("integer");
+
                     b.HasKey("UserId");
 
-                    b.ToTable("UserProfileProjections", (string)null);
+                    b.ToTable("UserProfileReadModel", (string)null);
                 });
 
             modelBuilder.Entity("Silverback.Messaging.Producing.TransactionalOutbox.SilverbackOutboxMessage", b =>

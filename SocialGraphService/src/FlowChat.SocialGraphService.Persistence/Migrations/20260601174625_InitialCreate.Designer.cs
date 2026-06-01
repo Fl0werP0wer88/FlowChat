@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FlowChat.SocialGraphService.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260601082646_InitialCreate")]
+    [Migration("20260601174625_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -94,7 +94,7 @@ namespace FlowChat.SocialGraphService.Persistence.Migrations
                         });
                 });
 
-            modelBuilder.Entity("FlowChat.SocialGraphService.Persistence.Entities.UserProfileProjectionEntity", b =>
+            modelBuilder.Entity("FlowChat.SocialGraphService.Persistence.Entities.UserProfileReadModelEntity", b =>
                 {
                     b.Property<Guid>("UserProfileId")
                         .ValueGeneratedOnAdd()
@@ -174,7 +174,7 @@ namespace FlowChat.SocialGraphService.Persistence.Migrations
                     b.HasIndex("FriendlyUserId")
                         .HasDatabaseName("ix_user_profile_projection_friendly_user_id");
 
-                    b.ToTable("UserProfileProjection", (string)null);
+                    b.ToTable("UserProfileReadModel", (string)null);
                 });
 
             modelBuilder.Entity("Silverback.Messaging.Producing.TransactionalOutbox.SilverbackOutboxMessage", b =>

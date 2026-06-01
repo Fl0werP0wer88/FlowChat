@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FlowChat.PresenceService.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260601082633_InitialCreate")]
+    [Migration("20260601174612_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -59,7 +59,7 @@ namespace FlowChat.PresenceService.Persistence.Migrations
                     b.ToTable("UserPresencePreferences", (string)null);
                 });
 
-            modelBuilder.Entity("FlowChat.PresenceService.Persistence.Entities.ContactObserverProjectionEntity", b =>
+            modelBuilder.Entity("FlowChat.PresenceService.Persistence.Entities.ContactObserverReadModelEntity", b =>
                 {
                     b.Property<Guid>("ObservedUserId")
                         .HasColumnType("uuid");
@@ -88,7 +88,7 @@ namespace FlowChat.PresenceService.Persistence.Migrations
                     b.HasIndex("ObservedUserId")
                         .HasDatabaseName("ix_contact_observer_projection_observed_user_id");
 
-                    b.ToTable("ContactObserverProjection", null, t =>
+                    b.ToTable("ContactObserverReadModel", null, t =>
                         {
                             t.HasCheckConstraint("chk_contact_observer_projection_different_users", "\"ObservedUserId\" <> \"ObserverUserId\"");
                         });

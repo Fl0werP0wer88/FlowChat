@@ -199,7 +199,7 @@ namespace FlowChat.ChatService.Persistence.Migrations
                     b.ToTable("DuetConversations", (string)null);
                 });
 
-            modelBuilder.Entity("FlowChat.ChatService.Persistence.Entities.UserProfileProjectionEntity", b =>
+            modelBuilder.Entity("FlowChat.ChatService.Persistence.Entities.UserProfileReadModelEntity", b =>
                 {
                     b.Property<Guid>("UserId")
                         .ValueGeneratedOnAdd()
@@ -246,7 +246,7 @@ namespace FlowChat.ChatService.Persistence.Migrations
 
                     b.HasKey("UserId");
 
-                    b.ToTable("UserProfileProjections", (string)null);
+                    b.ToTable("UserProfileReadModel", (string)null);
                 });
 
             modelBuilder.Entity("Silverback.Messaging.Producing.TransactionalOutbox.SilverbackOutboxMessage", b =>
