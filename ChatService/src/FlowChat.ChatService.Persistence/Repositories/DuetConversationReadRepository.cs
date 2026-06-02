@@ -47,41 +47,38 @@ public sealed class DuetConversationReadRepository(AppDbContext dbContext) : IDu
     {
         var (first, second) = DuetConversationUserPair.Normalize(requestingUserId, partnerUserId);
 
-        var participantRows = await (
-            from duet in dbContext.DuetConversations.AsNoTracking()
+        var rawRows = await (
+            from duet in dbContext.DuetConversationReads.AsNoTracking()
             where duet.FirstUserId == first && duet.SecondUserId == second
-            from conversation in dbContext.Conversations.AsNoTracking()
-                .Where(x => x.Id == duet.ConversationId)
-            from participant in conversation.Participants
+            join conversation in dbContext.ConversationReads.AsNoTracking()
+                on duet.ConversationId equals conversation.Id
+            join participant in dbContext.ParticipantUserReads.AsNoTracking()
+                on conversation.Id equals participant.ConversationId
+            join profile in dbContext.UserProfileProjections.AsNoTracking()
+                    .Where(x => !x.IsDeleted)
+                on participant.UserId equals profile.UserId into profileGroup
+            from profile in profileGroup.DefaultIfEmpty()
             select new
             {
-                ConversationId = duet.ConversationId.Value,
-                UserId = participant.UserId.Value,
+                ConversationId = conversation.Id,
+                participant.UserId,
                 ParticipantDisplayName = participant.DisplayName,
                 ParticipantAvatarUrl = participant.AvatarUrl,
+                ProfileFirstName = (string?) profile.FirstName,
+                ProfileLastName = (string?) profile.LastName,
+                ProfileAvatarUrl = (string?) profile.AvatarUrl
             })
             .ToListAsync(cancellationToken);
 
-        var userIds = participantRows.Select(x => x.UserId).ToList();
-        var profiles = await dbContext.UserProfileProjections
-            .AsNoTracking()
-            .Where(x => !x.IsDeleted && userIds.Contains(x.UserId))
-            .ToDictionaryAsync(x => x.UserId, cancellationToken);
-
-        var rows = participantRows.Select(r =>
-        {
-            profiles.TryGetValue(r.UserId, out var profile);
-
-            return new DuetConversationParticipantRow(
-            r.ConversationId,
-            r.UserId,
-            string.IsNullOrEmpty(r.ParticipantDisplayName)
-                ? ComputeDisplayName(profile?.FirstName, profile?.LastName)
-                : r.ParticipantDisplayName,
-            string.IsNullOrEmpty(r.ParticipantAvatarUrl)
-                ? profile?.AvatarUrl
-                : r.ParticipantAvatarUrl);
-        })
+        var rows = rawRows.Select(r => new DuetConversationParticipantRow(
+                r.ConversationId,
+                r.UserId,
+                string.IsNullOrEmpty(r.ParticipantDisplayName)
+                    ? ComputeDisplayName(r.ProfileFirstName, r.ProfileLastName)
+                    : r.ParticipantDisplayName,
+                string.IsNullOrEmpty(r.ParticipantAvatarUrl)
+                    ? r.ProfileAvatarUrl
+                    : r.ParticipantAvatarUrl))
             .ToList();
 
         if (rows.Count != 2)

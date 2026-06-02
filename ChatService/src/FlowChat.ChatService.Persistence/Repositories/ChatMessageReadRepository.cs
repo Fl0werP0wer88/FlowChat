@@ -1,9 +1,6 @@
 using FlowChat.ChatService.Application.Contracts.Persistence;
 using FlowChat.ChatService.Application.Features.ChatMessage.Dtos;
-using FlowChat.ChatService.Domain.Entities.ChatMessage;
-using FlowChat.ChatService.Domain.Entities.Conversation;
-using FlowChat.Shared.Domain;
-using FlowChat.Shared.Domain.ValueObjects;
+using FlowChat.ChatService.Persistence.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace FlowChat.ChatService.Persistence.Repositories;
@@ -17,23 +14,21 @@ public sealed class ChatMessageReadRepository(AppDbContext dbContext) : IChatMes
         Guid? beforeMessageId,
         CancellationToken cancellationToken = default)
     {
-        var typedConversationId = Id<Conversation>.FromGuid(conversationId);
-        var query = dbContext.ChatMessages
+        var query = dbContext.ChatMessageReads
             .AsNoTracking()
-            .Where(message => message.ConversationId == typedConversationId);
+            .Where(message => message.ConversationId == conversationId);
 
-        List<ChatMessage> rows;
+        List<ChatMessageReadEntity> rows;
         if (beforeSentAtUtc.HasValue && beforeMessageId.HasValue)
         {
-            var beforeUtc = UtcDateTimeOffset.Create(beforeSentAtUtc.Value);
-            var typedBeforeMessageId = Id<ChatMessage>.FromGuid(beforeMessageId.Value);
+            var beforeUtc = beforeSentAtUtc.Value.ToUniversalTime();
             var sameTimestampRows = await query
                 .Where(message => message.SentAtUtc == beforeUtc)
                 .ToListAsync(cancellationToken);
 
             rows = sameTimestampRows
-                .Where(message => message.Id.Value.CompareTo(typedBeforeMessageId.Value) < 0)
-                .OrderByDescending(message => message.Id.Value)
+                .Where(message => message.Id.CompareTo(beforeMessageId.Value) < 0)
+                .OrderByDescending(message => message.Id)
                 .Take(limit + 1)
                 .ToList();
 
@@ -53,7 +48,7 @@ public sealed class ChatMessageReadRepository(AppDbContext dbContext) : IChatMes
         {
             if (beforeSentAtUtc.HasValue)
             {
-                var beforeUtc = UtcDateTimeOffset.Create(beforeSentAtUtc.Value);
+                var beforeUtc = beforeSentAtUtc.Value.ToUniversalTime();
                 query = query.Where(message => message.SentAtUtc < beforeUtc);
             }
 
@@ -79,12 +74,12 @@ public sealed class ChatMessageReadRepository(AppDbContext dbContext) : IChatMes
             hasMore);
     }
 
-    private static ChatMessageDto MapToDto(ChatMessage message) =>
+    private static ChatMessageDto MapToDto(ChatMessageReadEntity message) =>
         new(
-            message.Id.Value,
-            message.ConversationId.Value,
-            message.SenderUserId.Value,
+            message.Id,
+            message.ConversationId,
+            message.SenderUserId,
             message.SenderDisplayName,
             message.Text,
-            message.SentAtUtc.Value);
+            message.SentAtUtc);
 }

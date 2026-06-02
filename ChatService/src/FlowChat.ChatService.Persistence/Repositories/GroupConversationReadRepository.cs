@@ -1,32 +1,31 @@
 using FlowChat.ChatService.Application.Contracts.Persistence;
 using FlowChat.ChatService.Application.Features.Conversation.Dtos;
-using FlowChat.ChatService.Domain.Entities.Conversation;
-using FlowChat.Shared.Domain;
 using Microsoft.EntityFrameworkCore;
 
 namespace FlowChat.ChatService.Persistence.Repositories;
 
 public sealed class GroupConversationReadRepository(AppDbContext dbContext) : IGroupConversationReadRepository
 {
+    private const int GroupConversationType = 2;
+
     public async Task<GroupConversationDetailDto?> GetByIdAsync(
         Guid conversationId,
         CancellationToken cancellationToken = default)
     {
-        var convId = Id<Conversation>.FromGuid(conversationId);
-
         var rawRows = await (
-            from conversation in dbContext.Conversations.AsNoTracking()
-            where conversation.Id == convId && conversation.Type == ConversationType.Group
-            from participant in conversation.Participants
+            from conversation in dbContext.ConversationReads.AsNoTracking()
+            where conversation.Id == conversationId && conversation.Type == GroupConversationType
+            join participant in dbContext.ParticipantUserReads.AsNoTracking()
+                on conversation.Id equals participant.ConversationId
             join profile in dbContext.UserProfileProjections.AsNoTracking()
                     .Where(x => !x.IsDeleted)
-                on participant.UserId.Value equals profile.UserId into profileGroup
+                on participant.UserId equals profile.UserId into profileGroup
             from profile in profileGroup.DefaultIfEmpty()
             select new
             {
-                ConversationId = conversation.Id.Value,
+                ConversationId = conversation.Id,
                 ConversationName = conversation.Name,
-                UserId = participant.UserId.Value,
+                participant.UserId,
                 ParticipantDisplayName = participant.DisplayName,
                 ProfileFirstName = (string?) profile.FirstName,
                 ProfileLastName = (string?) profile.LastName,
@@ -62,13 +61,15 @@ public sealed class GroupConversationReadRepository(AppDbContext dbContext) : IG
         CancellationToken cancellationToken = default)
     {
         return await (
-            from conversation in dbContext.Conversations.AsNoTracking()
-            where conversation.Type == ConversationType.Group
-                  && conversation.Participants.Any(p => p.UserId.Value == participantUserId)
+            from conversation in dbContext.ConversationReads.AsNoTracking()
+            join participant in dbContext.ParticipantUserReads.AsNoTracking()
+                on conversation.Id equals participant.ConversationId
+            where conversation.Type == GroupConversationType
+                  && participant.UserId == participantUserId
             select new GroupConversationSummaryDto(
-                conversation.Id.Value,
+                conversation.Id,
                 conversation.Name!,
-                conversation.Participants.Count))
+                dbContext.ParticipantUserReads.Count(x => x.ConversationId == conversation.Id)))
             .ToListAsync(cancellationToken);
     }
 

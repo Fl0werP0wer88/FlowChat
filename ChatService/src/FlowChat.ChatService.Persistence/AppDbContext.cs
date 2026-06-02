@@ -28,6 +28,10 @@ public sealed class AppDbContext : DbContext
     public DbSet<SilverbackOutboxMessage> SilverbackOutboxMessages => Set<SilverbackOutboxMessage>();
     public DbSet<UserProfileReadModelEntity> UserProfileProjections => Set<UserProfileReadModelEntity>();
     public DbSet<DuetConversationLookupEntity> DuetConversations => Set<DuetConversationLookupEntity>();
+    public DbSet<ConversationReadEntity> ConversationReads => Set<ConversationReadEntity>();
+    public DbSet<ParticipantUserReadEntity> ParticipantUserReads => Set<ParticipantUserReadEntity>();
+    public DbSet<ChatMessageReadEntity> ChatMessageReads => Set<ChatMessageReadEntity>();
+    public DbSet<DuetConversationReadEntity> DuetConversationReads => Set<DuetConversationReadEntity>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
