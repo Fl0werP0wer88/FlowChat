@@ -1,6 +1,8 @@
+using FlowChat.Shared.Persistance;
+
 namespace FlowChat.SocialGraphService.Persistence.Entities;
 
-public sealed class ContactReadEntity
+public sealed class ContactReadEntity : ReadEntityBase
 {
     public Guid Id { get; init; }
     public Guid OwnerUserId { get; init; }

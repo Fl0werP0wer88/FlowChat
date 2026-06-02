@@ -76,6 +76,14 @@ Each service follows **Clean Architecture**:
 
 Domain events are dispatched via `IDomainEventDispatcher` and mapped to integration events published to Kafka.
 
+### Read repositories
+- Read repositories must not query or project from Domain aggregates/entities/value objects; the read side is persistence-only
+- Use dedicated persistence read entities in `{Service}.Persistence/Entities`, mapped to existing tables/views with simple column types (`Guid`, `string`, enums, `DateTimeOffset`, etc.)
+- Read entities inherit from `FlowChat.Shared.Persistance.ReadEntityBase`, never from Domain `EntityBase<T>`, `IEntity<T>`, `IAuditableEntity`, or auditable persistence `EntityBase`
+- Keep read entities free of domain behavior, typed domain IDs, domain value objects, and domain event logic
+- Keep write repositories on Domain aggregates; this rule applies to read repositories and read-side EF projections only
+- Map read entities to DTO/read models inside read repositories or projection helpers, preserving public Application/API contracts
+
 ### API and Application boundaries
 - Controllers do not call repositories or persistence services directly
 - A controller's role is limited to HTTP concerns: reading the request, authorization/authentication, invoking the appropriate command/query through MediatR, and mapping HTTP DTOs and responses

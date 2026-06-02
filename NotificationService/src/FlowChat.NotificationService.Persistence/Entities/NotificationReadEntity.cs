@@ -1,8 +1,9 @@
 using FlowChat.NotificationService.Domain.Enums;
+using FlowChat.Shared.Persistance;
 
 namespace FlowChat.NotificationService.Persistence.Entities;
 
-public sealed class NotificationReadEntity
+public sealed class NotificationReadEntity : ReadEntityBase
 {
     public Guid Id { get; init; }
     public Guid UserId { get; init; }

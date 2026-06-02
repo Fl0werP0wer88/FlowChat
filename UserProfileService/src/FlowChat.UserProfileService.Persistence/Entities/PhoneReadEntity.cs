@@ -1,6 +1,8 @@
+using FlowChat.Shared.Persistance;
+
 namespace FlowChat.UserProfileService.Persistence.Entities;
 
-public sealed class PhoneReadEntity
+public sealed class PhoneReadEntity : ReadEntityBase
 {
     public Guid Id { get; init; }
     public Guid UserProfileId { get; init; }

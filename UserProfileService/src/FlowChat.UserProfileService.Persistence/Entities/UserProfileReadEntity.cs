@@ -1,6 +1,8 @@
+using FlowChat.Shared.Persistance;
+
 namespace FlowChat.UserProfileService.Persistence.Entities;
 
-public sealed class UserProfileReadEntity
+public sealed class UserProfileReadEntity : ReadEntityBase
 {
     public Guid Id { get; init; }
     public string UserName { get; init; } = string.Empty;

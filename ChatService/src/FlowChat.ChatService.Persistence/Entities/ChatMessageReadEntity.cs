@@ -1,6 +1,8 @@
+using FlowChat.Shared.Persistance;
+
 namespace FlowChat.ChatService.Persistence.Entities;
 
-public sealed class ChatMessageReadEntity
+public sealed class ChatMessageReadEntity : ReadEntityBase
 {
     public Guid Id { get; init; }
     public Guid ConversationId { get; init; }
