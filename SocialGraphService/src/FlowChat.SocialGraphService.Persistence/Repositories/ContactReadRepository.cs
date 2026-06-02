@@ -1,39 +1,50 @@
-using FlowChat.Shared.Persistance;
 using FlowChat.SocialGraphService.Application.Contracts.Persistence;
 using FlowChat.SocialGraphService.Application.Features.Contact.Queries.GetContactsForUser;
-using FlowChat.SocialGraphService.Domain.Entities.Contact;
+using FlowChat.SocialGraphService.Persistence.Entities;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 
 namespace FlowChat.SocialGraphService.Persistence.Repositories;
 
-public sealed class ContactReadRepository(AppDbContext dbContext)
-    : ReadRepositoryBase<Contact, ContactDto>(dbContext), IContactReadRepository
+public sealed class ContactReadRepository(AppDbContext dbContext) : IContactReadRepository
 {
-    private static readonly Expression<Func<Contact, ContactDto>> ContactDtoProjection = x => new(
-        x.Id.Value,
-        x.OwnerUserId.Value,
-        x.ContactUserId.Value,
+    private static readonly Expression<Func<ContactReadEntity, ContactDto>> ContactDtoProjection = x => new(
+        x.Id,
+        x.OwnerUserId,
+        x.ContactUserId,
         x.DisplayName,
         x.FirstName,
         x.LastName,
-        x.PhoneNumber == null ? null : x.PhoneNumber.Value,
-        x.EmailAddress == null ? null : x.EmailAddress.Value,
+        x.PhoneNumber,
+        x.EmailAddress,
         x.IsBlocked);
 
-    protected override Expression<Func<Contact, ContactDto>> MapToDto => ContactDtoProjection;
+    public async Task<ContactDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        return await Query()
+            .Where(x => x.Id == id)
+            .Select(ContactDtoProjection)
+            .FirstOrDefaultAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<ContactDto>> GetAllAsync(CancellationToken cancellationToken = default)
+    {
+        return await Query()
+            .Select(ContactDtoProjection)
+            .ToListAsync(cancellationToken);
+    }
 
     public async Task<IReadOnlyList<ContactDto>> GetForUserAsync(
         Guid userId,
         CancellationToken cancellationToken = default)
     {
-        var query = Query
-            .Where(x => x.OwnerUserId.Value == userId);
-
-        return await query
+        return await Query()
+            .Where(x => x.OwnerUserId == userId)
             .OrderByDescending(x => x.CreatedAtUtc)
-            .Select(MapToDto)
+            .Select(ContactDtoProjection)
             .ToListAsync(cancellationToken);
     }
+
+    private IQueryable<ContactReadEntity> Query() => dbContext.ContactReads.AsNoTracking();
 }
 

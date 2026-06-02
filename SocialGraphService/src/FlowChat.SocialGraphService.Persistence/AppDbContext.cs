@@ -23,6 +23,7 @@ public class AppDbContext : DbContext
     }
 
     public DbSet<Contact> Contacts { get; set; }
+    public DbSet<ContactReadEntity> ContactReads { get; set; }
     public DbSet<UserProfileReadModelEntity> UserProfileProjections { get; set; }
     public DbSet<SilverbackOutboxMessage> SilverbackOutboxMessages => Set<SilverbackOutboxMessage>();
 

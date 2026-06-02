@@ -24,6 +24,7 @@ public sealed class AppDbContext : DbContext
 
     public DbSet<ContactObserverReadModelEntity> ContactObserverProjections => Set<ContactObserverReadModelEntity>();
     public DbSet<UserPresencePreferences> UserPresencePreferences => Set<UserPresencePreferences>();
+    public DbSet<UserPresencePreferencesReadEntity> UserPresencePreferenceReads => Set<UserPresencePreferencesReadEntity>();
     public DbSet<SilverbackOutboxMessage> SilverbackOutboxMessages => Set<SilverbackOutboxMessage>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

@@ -1,6 +1,7 @@
 using System.Data.Common;
 using FlowChat.UserProfileService.Domain.Entities.EmailVerificationProcess;
 using FlowChat.UserProfileService.Domain.Entities.UserProfile;
+using FlowChat.UserProfileService.Persistence.Entities;
 using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -26,6 +27,9 @@ public class AppDbContext : DbContext, IDataProtectionKeyContext
     public DbSet<UserProfile> UserProfiles { get; set; }
     public DbSet<Email> Emails { get; set; }
     public DbSet<Phone> Phones { get; set; }
+    public DbSet<UserProfileReadEntity> UserProfileReads { get; set; }
+    public DbSet<EmailReadEntity> EmailReads { get; set; }
+    public DbSet<PhoneReadEntity> PhoneReads { get; set; }
     public DbSet<EmailVerificationProcess> EmailVerificationProcesses { get; set; }
     public DbSet<DataProtectionKey> DataProtectionKeys { get; set; } = null!;
     public DbSet<SilverbackOutboxMessage> SilverbackOutboxMessages => Set<SilverbackOutboxMessage>();
