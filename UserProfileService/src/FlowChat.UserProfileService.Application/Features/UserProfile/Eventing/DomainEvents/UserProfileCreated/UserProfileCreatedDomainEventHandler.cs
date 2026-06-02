@@ -1,5 +1,3 @@
-using AutoMapper;
-using FlowChat.Core.Messaging.UserProfileService.Events;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
 using FlowChat.UserProfileService.Application.Contracts.Persistence;
@@ -12,27 +10,18 @@ using DomainUserProfile = FlowChat.UserProfileService.Domain.Entities.UserProfil
 namespace FlowChat.UserProfileService.Application.Features.UserProfile.Eventing.DomainEvents.UserProfileCreated;
 
 public sealed class UserProfileCreatedDomainEventHandler(
-    IOutboxIntegrationEventPublisher integrationEventPublisher,
-    IMapper mapper,
     IEmailVerificationProcessWriteRepository emailVerificationProcessWriteRepository,
     IEmailVerificationRequestIssuer emailVerificationRequestIssuer)
-    : MappedDomainEventHandlerBase<UserProfileCreatedDomainEvent, UserProfileCreatedIntegrationEvent>(
-        integrationEventPublisher,
-        mapper)
+    : DomainEventHandlerBase<UserProfileCreatedDomainEvent>
 {
     private readonly IEmailVerificationProcessWriteRepository _emailVerificationProcessWriteRepository = emailVerificationProcessWriteRepository;
     private readonly IEmailVerificationRequestIssuer _emailVerificationRequestIssuer = emailVerificationRequestIssuer;
-
-    protected override string ResolveKafkaKey(
-        UserProfileCreatedDomainEvent notification,
-        UserProfileCreatedIntegrationEvent integrationEvent) =>
-        notification.UserProfileId.Value.ToString();
 
     protected override async Task ExecuteAsync(
         UserProfileCreatedDomainEvent notification,
         CancellationToken cancellationToken)
     {
-        // Issuing the verification request is a side effect of profile creation — done here
+        // Issuing the verification request is a side effect of profile creation, done here
         // rather than in the command handler so the domain event is the single source of truth
         // for triggering the verification flow (including replays).
         var process = await _emailVerificationProcessWriteRepository

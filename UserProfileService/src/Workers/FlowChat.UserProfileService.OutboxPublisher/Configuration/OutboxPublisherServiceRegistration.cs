@@ -19,10 +19,6 @@ public static class OutboxPublisherServiceRegistration
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        var createdProducerOptions = configuration
-            .GetSection(new UserProfileCreatedProducerSettingsSection().SectionName)
-            .Get<UserProfileCreatedProducerSettingsSection>()
-            ?? new UserProfileCreatedProducerSettingsSection();
         var emailConfirmedProducerOptions = configuration
             .GetSection(new UserEmailConfirmedProducerSettingsSection().SectionName)
             .Get<UserEmailConfirmedProducerSettingsSection>()
@@ -31,10 +27,6 @@ public static class OutboxPublisherServiceRegistration
             .GetSection(new UserEmailVerificationRequestedProducerSettingsSection().SectionName)
             .Get<UserEmailVerificationRequestedProducerSettingsSection>()
             ?? new UserEmailVerificationRequestedProducerSettingsSection();
-        var stateChangedProducerOptions = configuration
-            .GetSection(new UserProfileStateChangedProducerSettingsSection().SectionName)
-            .Get<UserProfileStateChangedProducerSettingsSection>()
-            ?? new UserProfileStateChangedProducerSettingsSection();
         var projectionProducerOptions = configuration
             .GetSection(new UserProfileProjectionProducerSettingsSection().SectionName)
             .Get<UserProfileProjectionProducerSettingsSection>()
@@ -43,9 +35,9 @@ public static class OutboxPublisherServiceRegistration
             .GetSection(new OutboxPublisherRuntimeSettingsSection().SectionName)
             .Get<OutboxPublisherRuntimeSettingsSection>()
             ?? new OutboxPublisherRuntimeSettingsSection();
-        var bootstrapServers = !string.IsNullOrWhiteSpace(createdProducerOptions.BootstrapServers)
-            ? createdProducerOptions.BootstrapServers
-            : stateChangedProducerOptions.BootstrapServers;
+        var bootstrapServers = !string.IsNullOrWhiteSpace(emailConfirmedProducerOptions.BootstrapServers)
+            ? emailConfirmedProducerOptions.BootstrapServers
+            : projectionProducerOptions.BootstrapServers;
 
         services.AddSilverback()
             .AddSingletonBrokerBehavior<CustomSpanAttributesProducerBehavior>()
@@ -68,20 +60,12 @@ public static class OutboxPublisherServiceRegistration
                 clients
                     .WithBootstrapServers(bootstrapServers)
                     .AddProducer(producer => producer
-                        .Produce<UserProfileCreatedIntegrationEvent>("user-profile-created", endpoint => endpoint
-                            .ProduceTo(createdProducerOptions.Topic)
-                            .SerializeAsJson(serializer => serializer.SetTypeHeader())))
-                    .AddProducer(producer => producer
                         .Produce<UserEmailConfirmedIntegrationEvent>("user-email-confirmed", endpoint => endpoint
                             .ProduceTo(emailConfirmedProducerOptions.Topic)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())))
                     .AddProducer(producer => producer
                         .Produce<EmailVerificationRequestIntegrationEvent>("email-verification-requested", endpoint => endpoint
                             .ProduceTo(emailVerificationRequestedProducerOptions.Topic)
-                            .SerializeAsJson(serializer => serializer.SetTypeHeader())))
-                    .AddProducer(producer => producer
-                        .Produce<UserProfileChangedIntegrationEvent>("user-profile-state-changed", endpoint => endpoint
-                            .ProduceTo(stateChangedProducerOptions.Topic)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())))
                     .AddProducer(producer => producer
                         .Produce<ProjectionIntegrationEvent<UserProfileReadModel>>("user-profile-projection", endpoint => endpoint

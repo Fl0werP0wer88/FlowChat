@@ -19,19 +19,15 @@ public static class SilverbackServiceRegistration
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        var createdProducerOptions = configuration.GetSection(new UserProfileCreatedProducerSettingsSection().SectionName)
-            .Get<UserProfileCreatedProducerSettingsSection>() ?? new UserProfileCreatedProducerSettingsSection();
         var emailConfirmedProducerOptions = configuration.GetSection(new UserEmailConfirmedProducerSettingsSection().SectionName)
             .Get<UserEmailConfirmedProducerSettingsSection>() ?? new UserEmailConfirmedProducerSettingsSection();
         var emailVerificationRequestedProducerOptions = configuration.GetSection(new UserEmailVerificationRequestedProducerSettingsSection().SectionName)
             .Get<UserEmailVerificationRequestedProducerSettingsSection>() ?? new UserEmailVerificationRequestedProducerSettingsSection();
-        var stateChangedProducerOptions = configuration.GetSection(new UserProfileStateChangedProducerSettingsSection().SectionName)
-            .Get<UserProfileStateChangedProducerSettingsSection>() ?? new UserProfileStateChangedProducerSettingsSection();
         var projectionProducerOptions = configuration.GetSection(new UserProfileProjectionProducerSettingsSection().SectionName)
             .Get<UserProfileProjectionProducerSettingsSection>() ?? new UserProfileProjectionProducerSettingsSection();
-        var bootstrapServers = !string.IsNullOrWhiteSpace(createdProducerOptions.BootstrapServers)
-            ? createdProducerOptions.BootstrapServers
-            : stateChangedProducerOptions.BootstrapServers;
+        var bootstrapServers = !string.IsNullOrWhiteSpace(emailConfirmedProducerOptions.BootstrapServers)
+            ? emailConfirmedProducerOptions.BootstrapServers
+            : projectionProducerOptions.BootstrapServers;
 
         services.AddSilverback()
             .AddSingletonBrokerBehavior<CustomSpanAttributesProducerBehavior>()
@@ -45,11 +41,6 @@ public static class SilverbackServiceRegistration
                 clients
                     .WithBootstrapServers(bootstrapServers)
                     .AddProducer(producer => producer
-                        .Produce<UserProfileCreatedIntegrationEvent>("user-profile-created", endpoint => endpoint
-                            .ProduceTo(createdProducerOptions.Topic)
-                            .SerializeAsJson(serializer => serializer.SetTypeHeader())
-                            .StoreToOutbox(outbox => outbox.UseEntityFramework<AppDbContext>())))
-                    .AddProducer(producer => producer
                         .Produce<UserEmailConfirmedIntegrationEvent>("user-email-confirmed", endpoint => endpoint
                             .ProduceTo(emailConfirmedProducerOptions.Topic)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())
@@ -57,11 +48,6 @@ public static class SilverbackServiceRegistration
                     .AddProducer(producer => producer
                         .Produce<EmailVerificationRequestIntegrationEvent>("email-verification-requested", endpoint => endpoint
                             .ProduceTo(emailVerificationRequestedProducerOptions.Topic)
-                            .SerializeAsJson(serializer => serializer.SetTypeHeader())
-                            .StoreToOutbox(outbox => outbox.UseEntityFramework<AppDbContext>())))
-                    .AddProducer(producer => producer
-                        .Produce<UserProfileChangedIntegrationEvent>("user-profile-state-changed", endpoint => endpoint
-                            .ProduceTo(stateChangedProducerOptions.Topic)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())
                             .StoreToOutbox(outbox => outbox.UseEntityFramework<AppDbContext>())))
                     .AddProducer(producer => producer

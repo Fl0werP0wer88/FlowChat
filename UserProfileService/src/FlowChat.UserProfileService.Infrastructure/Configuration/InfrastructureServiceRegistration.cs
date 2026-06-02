@@ -20,10 +20,8 @@ public static class InfrastructureServiceRegistration
     {
         services.AddSettingsSections(configuration, typeof(InfrastructureServiceRegistration).Assembly);
         services.AddFlowChatSilverbackEventPublisher(producer => producer
-            .AddProducerSettings<UserProfileCreatedIntegrationEvent, UserProfileCreatedProducerSettingsSection>()
             .AddProducerSettings<UserEmailConfirmedIntegrationEvent, UserEmailConfirmedProducerSettingsSection>()
             .AddProducerSettings<EmailVerificationRequestIntegrationEvent, UserEmailVerificationRequestedProducerSettingsSection>()
-            .AddProducerSettings<UserProfileChangedIntegrationEvent, UserProfileStateChangedProducerSettingsSection>()
             .AddProducerSettings<ProjectionIntegrationEvent<UserProfileReadModel>, UserProfileProjectionProducerSettingsSection>());
         services.AddScoped<IEmailVerificationLinkBuilder, EmailVerificationLinkBuilder>();
         services.AddScoped<IEmailVerificationTokenProtector, EmailVerificationTokenProtector>();

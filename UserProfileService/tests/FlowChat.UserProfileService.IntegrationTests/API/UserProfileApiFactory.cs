@@ -37,14 +37,12 @@ public sealed class UserProfileApiFactory : WebApplicationFactory<CreateInitialU
             {
                 ["FlowChat:InternalApi:ApiKey"] = InternalApiKey,
                 ["ConnectionStrings:UserProfileDb"] = "Host=localhost;Database=test",
-                ["Kafka:UserProfileCreatedProducer:BootstrapServers"] = "localhost:9092",
-                ["Kafka:UserProfileCreatedProducer:Topic"] = "test.user-profile-created",
                 ["Kafka:UserEmailConfirmedProducer:BootstrapServers"] = "localhost:9092",
                 ["Kafka:UserEmailConfirmedProducer:Topic"] = "test.user-email-confirmed",
                 ["Kafka:UserEmailVerificationRequestedProducer:BootstrapServers"] = "localhost:9092",
                 ["Kafka:UserEmailVerificationRequestedProducer:Topic"] = "test.email-verification",
-                ["Kafka:UserProfileStateChangedProducer:BootstrapServers"] = "localhost:9092",
-                ["Kafka:UserProfileStateChangedProducer:Topic"] = "test.user-profile-state",
+                ["Kafka:UserProfileProjectionProducer:BootstrapServers"] = "localhost:9092",
+                ["Kafka:UserProfileProjectionProducer:Topic"] = "test.user-profile-projection",
                 ["ConfirmationLinks:EmailVerificationBaseUrl"] = "https://test.example.com/verify",
                 ["ApiUrl"] = "https://localhost"
             });
