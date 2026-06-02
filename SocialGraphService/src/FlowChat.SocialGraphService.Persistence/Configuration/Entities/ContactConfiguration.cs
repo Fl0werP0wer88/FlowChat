@@ -4,6 +4,7 @@ using FlowChat.Shared.Persistance;
 using FlowChat.SocialGraphService.Domain.Entities.Contact;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using UserProfileMarker = FlowChat.SocialGraphService.Domain.Entities.UserProfiles.UserProfile;
 
 namespace FlowChat.SocialGraphService.Persistence.Configuration.Entities;
 
@@ -19,6 +20,12 @@ public class ContactConfiguration : IEntityTypeConfiguration<Contact>
 
         builder.Property(x => x.Id)
             .HasConversion(x => x.Value, x => Id<Contact>.FromGuid(x));
+
+        builder.Property(x => x.OwnerUserId)
+            .HasConversion(x => x.Value, x => Id<UserProfileMarker>.FromGuid(x));
+
+        builder.Property(x => x.ContactUserId)
+            .HasConversion(x => x.Value, x => Id<UserProfileMarker>.FromGuid(x));
 
         builder.Property(x => x.IsBlocked)
             .HasDefaultValue(false)

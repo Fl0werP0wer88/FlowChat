@@ -7,6 +7,7 @@ using FlowChat.Shared.Domain.ValueObjects;
 using FlowChat.SocialGraphService.Application.Contracts.Persistence;
 using FlowChat.SocialGraphService.Application.Features.UserProfile;
 using ContactAggregate = FlowChat.SocialGraphService.Domain.Entities.Contact.Contact;
+using UserProfileMarker = FlowChat.SocialGraphService.Domain.Entities.UserProfiles.UserProfile;
 
 namespace FlowChat.SocialGraphService.Application.Features.Contact.Commands.AddContact;
 
@@ -39,14 +40,17 @@ public sealed class AddContactCommandHandler
             return FlowChatResult<Guid>.Failure(DomainError.NotFound("User profile projection was not found."));
         }
 
-        if (projection.UserProfileId == request.OwnerUserId)
+        var ownerUserId = Id<UserProfileMarker>.FromGuid(request.OwnerUserId);
+        var contactUserId = Id<UserProfileMarker>.FromGuid(projection.UserProfileId);
+
+        if (contactUserId == ownerUserId)
         {
             return FlowChatResult<Guid>.Failure(DomainError.BadRequest("OwnerUserId and ContactUserId must be different."));
         }
 
         var contactAlreadyExists = await _contactWriteRepository.ExistsAsync(
-            request.OwnerUserId,
-            projection.UserProfileId,
+            ownerUserId,
+            contactUserId,
             cancellationToken);
 
         if (contactAlreadyExists)
@@ -56,8 +60,8 @@ public sealed class AddContactCommandHandler
 
         _contact = ContactAggregate.Create(
             Id<ContactAggregate>.FromGuid(request.Id),
-            request.OwnerUserId,
-            projection.UserProfileId,
+            ownerUserId,
+            contactUserId,
             CreateDisplayName(projection),
             projection.FirstName,
             projection.LastName,

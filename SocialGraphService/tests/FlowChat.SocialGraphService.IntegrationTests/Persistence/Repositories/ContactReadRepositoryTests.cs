@@ -5,6 +5,7 @@ using FlowChat.SocialGraphService.Domain.Entities.Contact;
 using FlowChat.SocialGraphService.Persistence;
 using FlowChat.SocialGraphService.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
+using UserProfileMarker = FlowChat.SocialGraphService.Domain.Entities.UserProfiles.UserProfile;
 
 namespace FlowChat.SocialGraphService.IntegrationTests.Persistence.Repositories;
 
@@ -15,7 +16,8 @@ public sealed class ContactReadRepositoryTests
     {
         var databaseName = Guid.NewGuid().ToString();
         var ownerUserId = Guid.NewGuid();
-        var anotherOwnerUserId = Guid.NewGuid();
+        var ownerProfileId = Id<UserProfileMarker>.FromGuid(ownerUserId);
+        var anotherOwnerUserId = Id<UserProfileMarker>.New();
         Guid newerContactId;
         Guid olderContactId;
 
@@ -23,8 +25,8 @@ public sealed class ContactReadRepositoryTests
         {
             var olderContact = Contact.Create(
                 Id<Contact>.New(),
-                ownerUserId,
-                Guid.NewGuid(),
+                ownerProfileId,
+                Id<UserProfileMarker>.New(),
                 "Older Contact",
                 "Older",
                 "Person",
@@ -35,15 +37,15 @@ public sealed class ContactReadRepositoryTests
 
             var newerContact = Contact.Create(
                 Id<Contact>.New(),
-                ownerUserId,
-                Guid.NewGuid(),
+                ownerProfileId,
+                Id<UserProfileMarker>.New(),
                 "Newer Contact",
                 isBlocked: true);
 
             var ignoredContact = Contact.Create(
                 Id<Contact>.New(),
                 anotherOwnerUserId,
-                Guid.NewGuid(),
+                Id<UserProfileMarker>.New(),
                 "Ignored Contact");
 
             olderContactId = olderContact.Id.Value;

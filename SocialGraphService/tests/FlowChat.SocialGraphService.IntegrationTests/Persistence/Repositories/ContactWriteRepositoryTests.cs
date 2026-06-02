@@ -5,6 +5,7 @@ using FlowChat.SocialGraphService.Persistence;
 using FlowChat.SocialGraphService.Persistence.Repositories;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using UserProfileMarker = FlowChat.SocialGraphService.Domain.Entities.UserProfiles.UserProfile;
 
 namespace FlowChat.SocialGraphService.IntegrationTests.Persistence.Repositories;
 
@@ -16,8 +17,8 @@ public sealed class ContactWriteRepositoryTests
         await using var connection = new SqliteConnection("Data Source=:memory:");
         await connection.OpenAsync();
 
-        var ownerUserId = Guid.NewGuid();
-        var contactUserId = Guid.NewGuid();
+        var ownerUserId = Id<UserProfileMarker>.New();
+        var contactUserId = Id<UserProfileMarker>.New();
 
         await using (var seedContext = CreateDbContext(connection))
         {
@@ -42,7 +43,7 @@ public sealed class ContactWriteRepositoryTests
         await using var context = CreateDbContext(connection);
         var repository = new ContactWriteRepository(context);
 
-        var result = await repository.ExistsAsync(Guid.NewGuid(), Guid.NewGuid(), CancellationToken.None);
+        var result = await repository.ExistsAsync(Id<UserProfileMarker>.New(), Id<UserProfileMarker>.New(), CancellationToken.None);
 
         result.Should().BeFalse();
     }

@@ -9,7 +9,7 @@ public sealed class ContactDeletedDomainEventToIntegrationEventProfile : Profile
     public ContactDeletedDomainEventToIntegrationEventProfile()
     {
         CreateMap<ContactDeletedDomainEvent, ContactDeletedIntegrationEvent>()
-            .ForMember(destination => destination.OwnerUserId, options => options.MapFrom(source => source.OwnerUserId))
-            .ForMember(destination => destination.ContactUserId, options => options.MapFrom(source => source.ContactUserId));
+            .ForMember(destination => destination.OwnerUserId, options => options.MapFrom(source => source.OwnerUserId.Value))
+            .ForMember(destination => destination.ContactUserId, options => options.MapFrom(source => source.ContactUserId.Value));
     }
 }

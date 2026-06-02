@@ -8,6 +8,7 @@ using FlowChat.SocialGraphService.Domain.Entities.Contact;
 using FluentAssertions;
 using MediatR;
 using Moq;
+using UserProfileMarker = FlowChat.SocialGraphService.Domain.Entities.UserProfiles.UserProfile;
 
 namespace FlowChat.SocialGraphService.UnitTests;
 
@@ -42,13 +43,13 @@ public sealed class DeleteContactCommandHandlerTests
     [Fact]
     public async Task Handle_WhenContactExists_DeletesContactAndReturnsSuccess()
     {
-        var contact = Contact.Rehydrate(Guid.NewGuid(), Guid.NewGuid(), "John Doe");
+        var contact = Contact.Rehydrate(Id<UserProfileMarker>.New(), Id<UserProfileMarker>.New(), "John Doe");
         _contactWriteRepositoryMock
             .Setup(x => x.GetByOwnerAndContactAsync(contact.OwnerUserId, contact.ContactUserId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(contact);
 
         var result = await _handler.Handle(
-            new DeleteContactCommand(contact.OwnerUserId, contact.ContactUserId),
+            new DeleteContactCommand(contact.OwnerUserId.Value, contact.ContactUserId.Value),
             CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
@@ -65,7 +66,10 @@ public sealed class DeleteContactCommandHandlerTests
         var contactUserId = _fixture.Create<Guid>();
 
         _contactWriteRepositoryMock
-            .Setup(x => x.GetByOwnerAndContactAsync(ownerUserId, contactUserId, It.IsAny<CancellationToken>()))
+            .Setup(x => x.GetByOwnerAndContactAsync(
+                Id<UserProfileMarker>.FromGuid(ownerUserId),
+                Id<UserProfileMarker>.FromGuid(contactUserId),
+                It.IsAny<CancellationToken>()))
             .ReturnsAsync((Contact?)null);
 
         var result = await _handler.Handle(

@@ -2,6 +2,7 @@ using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
 using FlowChat.SocialGraphService.Domain.Entities.Contact;
 using FluentAssertions;
+using UserProfileMarker = FlowChat.SocialGraphService.Domain.Entities.UserProfiles.UserProfile;
 
 namespace FlowChat.SocialGraphService.UnitTests;
 
@@ -12,7 +13,7 @@ public sealed class TypedDomainIdsTests
     {
         var id = Id<Contact>.New();
 
-        var contact = Contact.Create(id, Guid.NewGuid(), Guid.NewGuid(), "user-login");
+        var contact = Contact.Create(id, Id<UserProfileMarker>.New(), Id<UserProfileMarker>.New(), "user-login");
 
         contact.Id.Should().Be(id);
         contact.Id.Value.Should().Be(id.Value);
@@ -23,7 +24,7 @@ public sealed class TypedDomainIdsTests
     {
         var id = Guid.NewGuid();
 
-        var contact = Contact.Create(id, Guid.NewGuid(), Guid.NewGuid(), "user-login");
+        var contact = Contact.Create(id, Id<UserProfileMarker>.New(), Id<UserProfileMarker>.New(), "user-login");
 
         contact.Id.Value.Should().Be(id);
     }
@@ -33,8 +34,8 @@ public sealed class TypedDomainIdsTests
     {
         var contact = Contact.Create(
             Id<Contact>.New(),
-            Guid.NewGuid(),
-            Guid.NewGuid(),
+            Id<UserProfileMarker>.New(),
+            Id<UserProfileMarker>.New(),
             "jkowalski",
             "Jan",
             "Kowalski",
@@ -53,8 +54,8 @@ public sealed class TypedDomainIdsTests
     {
         var contact = Contact.Create(
             Id<Contact>.New(),
-            Guid.NewGuid(),
-            Guid.NewGuid(),
+            Id<UserProfileMarker>.New(),
+            Id<UserProfileMarker>.New(),
             "user-login");
 
         contact.FirstName.Should().BeNull();
@@ -68,8 +69,8 @@ public sealed class TypedDomainIdsTests
     {
         var contact = Contact.Create(
             Id<Contact>.New(),
-            Guid.NewGuid(),
-            Guid.NewGuid(),
+            Id<UserProfileMarker>.New(),
+            Id<UserProfileMarker>.New(),
             "user-login");
 
         contact.Id.Value.Should().NotBe(Guid.Empty);
@@ -79,8 +80,8 @@ public sealed class TypedDomainIdsTests
     public void Contact_Rehydrate_DoesNotEmitDomainEvents()
     {
         var contact = Contact.Rehydrate(
-            Guid.NewGuid(),
-            Guid.NewGuid(),
+            Id<UserProfileMarker>.New(),
+            Id<UserProfileMarker>.New(),
             "user-login",
             id: Id<Contact>.New());
 
@@ -92,8 +93,8 @@ public sealed class TypedDomainIdsTests
     {
         var act = () => Contact.Create(
             Id<Contact>.New(),
-            Guid.NewGuid(),
-            Guid.NewGuid(),
+            Id<UserProfileMarker>.New(),
+            Id<UserProfileMarker>.New(),
             string.Empty);
 
         act.Should().Throw<ArgumentException>();

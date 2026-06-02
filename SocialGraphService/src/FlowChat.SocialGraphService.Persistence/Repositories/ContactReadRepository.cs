@@ -12,8 +12,8 @@ public sealed class ContactReadRepository(AppDbContext dbContext)
 {
     private static readonly Expression<Func<Contact, ContactDto>> ContactDtoProjection = x => new(
         x.Id.Value,
-        x.OwnerUserId,
-        x.ContactUserId,
+        x.OwnerUserId.Value,
+        x.ContactUserId.Value,
         x.DisplayName,
         x.FirstName,
         x.LastName,
@@ -28,7 +28,7 @@ public sealed class ContactReadRepository(AppDbContext dbContext)
         CancellationToken cancellationToken = default)
     {
         var query = Query
-            .Where(x => x.OwnerUserId == userId);
+            .Where(x => x.OwnerUserId.Value == userId);
 
         return await query
             .OrderByDescending(x => x.CreatedAtUtc)

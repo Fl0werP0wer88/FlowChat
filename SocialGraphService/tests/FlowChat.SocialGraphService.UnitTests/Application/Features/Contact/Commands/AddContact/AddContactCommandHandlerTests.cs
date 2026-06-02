@@ -9,6 +9,7 @@ using FlowChat.SocialGraphService.Application.Features.UserProfile;
 using FlowChat.SocialGraphService.Domain.Entities.Contact;
 using FluentAssertions;
 using Moq;
+using UserProfileMarker = FlowChat.SocialGraphService.Domain.Entities.UserProfiles.UserProfile;
 
 namespace FlowChat.SocialGraphService.UnitTests;
 
@@ -24,7 +25,7 @@ public sealed class AddContactCommandHandlerTests
     public AddContactCommandHandlerTests()
     {
         _contactWriteRepositoryMock
-            .Setup(x => x.ExistsAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.ExistsAsync(It.IsAny<Id<UserProfileMarker>>(), It.IsAny<Id<UserProfileMarker>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(false);
 
         _contactWriteRepositoryMock
@@ -94,8 +95,8 @@ public sealed class AddContactCommandHandlerTests
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().NotBeEmpty();
         capturedContact.Should().NotBeNull();
-        capturedContact!.OwnerUserId.Should().Be(ownerUserId);
-        capturedContact.ContactUserId.Should().Be(contactUserId);
+        capturedContact!.OwnerUserId.Value.Should().Be(ownerUserId);
+        capturedContact.ContactUserId.Value.Should().Be(contactUserId);
         capturedContact.DisplayName.Should().Be("Jane Doe");
         capturedContact.FirstName.Should().Be("Jane");
         capturedContact.LastName.Should().Be("Doe");
@@ -209,7 +210,10 @@ public sealed class AddContactCommandHandlerTests
             });
 
         _contactWriteRepositoryMock
-            .Setup(x => x.ExistsAsync(ownerUserId, projectionUserId, It.IsAny<CancellationToken>()))
+            .Setup(x => x.ExistsAsync(
+                Id<UserProfileMarker>.FromGuid(ownerUserId),
+                Id<UserProfileMarker>.FromGuid(projectionUserId),
+                It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
         var result = await _handler.Handle(

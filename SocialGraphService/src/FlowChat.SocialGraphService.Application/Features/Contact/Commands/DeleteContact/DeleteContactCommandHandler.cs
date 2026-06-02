@@ -4,6 +4,7 @@ using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBas
 using FlowChat.Shared.Domain;
 using FlowChat.SocialGraphService.Application.Contracts.Persistence;
 using ContactAggregate = FlowChat.SocialGraphService.Domain.Entities.Contact.Contact;
+using UserProfileMarker = FlowChat.SocialGraphService.Domain.Entities.UserProfiles.UserProfile;
 
 namespace FlowChat.SocialGraphService.Application.Features.Contact.Commands.DeleteContact;
 
@@ -28,8 +29,8 @@ public sealed class DeleteContactCommandHandler
         CancellationToken cancellationToken)
     {
         _contact = await _contactWriteRepository.GetByOwnerAndContactAsync(
-            request.OwnerUserId,
-            request.ContactUserId,
+            Id<UserProfileMarker>.FromGuid(request.OwnerUserId),
+            Id<UserProfileMarker>.FromGuid(request.ContactUserId),
             cancellationToken);
 
         if (_contact is null)
