@@ -19,4 +19,6 @@ public sealed class UserProfileProjectionRequest : IConsumerOutput
     public string? Bio { get; set; }
     public bool IsActive { get; set; }
     public DateTimeOffset? LastSeenAtUtc { get; set; }
+    public int SourceVersion { get; set; }
+    public string Source { get; set; } = string.Empty;
 }

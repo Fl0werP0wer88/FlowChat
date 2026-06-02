@@ -127,6 +127,9 @@ namespace FlowChat.SocialGraphService.Persistence.Migrations
                         .HasColumnType("boolean")
                         .HasDefaultValue(true);
 
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
                     b.Property<DateTimeOffset>("LastModifiedAtUtc")
                         .HasColumnType("timestamp with time zone");
 
@@ -165,6 +168,9 @@ namespace FlowChat.SocialGraphService.Persistence.Migrations
                     b.Property<string>("Organization")
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
+
+                    b.Property<int>("SourceVersion")
+                        .HasColumnType("integer");
 
                     b.HasKey("UserProfileId");
 

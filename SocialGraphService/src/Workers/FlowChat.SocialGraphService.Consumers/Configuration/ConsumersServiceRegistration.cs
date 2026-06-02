@@ -18,11 +18,13 @@ public static class ConsumersServiceRegistration
         this IServiceCollection services,
         IConfiguration configuration)
     {
+        var consumersAssembly = typeof(ConsumersServiceRegistration).Assembly;
         var consumerOptions = configuration
             .GetSection(new UserProfileConsumerSettingsSection().SectionName)
             .Get<UserProfileConsumerSettingsSection>()
             ?? new UserProfileConsumerSettingsSection();
 
+        services.AddAutoMapper((Action<AutoMapper.IMapperConfigurationExpression>?)null, consumersAssembly);
         services.AddFlowChatHttpClient<ISocialGraphInternalApiClient, SocialGraphInternalApiClient, SocialGraphApiSettingsSection>();
 
         services.AddSilverback()
@@ -36,11 +38,19 @@ public static class ConsumersServiceRegistration
                     .AddConsumer(consumer => consumer
                         .WithGroupId(consumerOptions.GroupId)
                         .WithAutoOffsetReset(ParseAutoOffsetReset(consumerOptions.AutoOffsetReset))
-                        .Consume(endpoint => endpoint.ConfigureFlowChatMainEndpoint(consumerOptions)))
+                        .Consume(endpoint => endpoint
+                            .ConfigureFlowChatMainEndpoint(consumerOptions)
+                            .EnableBatchProcessing(
+                                consumerOptions.BatchSize,
+                                TimeSpan.FromMilliseconds(consumerOptions.BatchMaxWaitTimeMilliseconds))))
                     .AddConsumer(consumer => consumer
                         .WithGroupId(consumerOptions.RetryGroupId)
                         .WithAutoOffsetReset(ParseAutoOffsetReset(consumerOptions.AutoOffsetReset))
-                        .Consume(endpoint => endpoint.ConfigureFlowChatRetryEndpoint(consumerOptions)))
+                        .Consume(endpoint => endpoint
+                            .ConfigureFlowChatRetryEndpoint(consumerOptions)
+                            .EnableBatchProcessing(
+                                consumerOptions.BatchSize,
+                                TimeSpan.FromMilliseconds(consumerOptions.BatchMaxWaitTimeMilliseconds))))
                     .AddProducer(producer => producer
                         .Produce(endpoint => endpoint
                             .ProduceTo(consumerOptions.RetryTopic)
@@ -50,8 +60,7 @@ public static class ConsumersServiceRegistration
                             .ProduceTo(consumerOptions.DeadLetterTopic)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())));
             })
-            .AddScopedSubscriber<UserProfileCreatedSubscriber>()
-            .AddScopedSubscriber<UserProfileStateChangedSubscriber>();
+            .AddScopedSubscriber<UserProfileProjectionBatchSubscriber>();
 
         return services;
     }

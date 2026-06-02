@@ -1,101 +1,83 @@
+using AutoMapper;
 using FlowChat.Core.Exceptions;
-using FlowChat.Core.Messaging.UserProfileService.Events;
-using FlowChat.SocialGraphService.Consumers.Services;
+using FlowChat.Core.Messaging;
+using FlowChat.Core.Messaging.UserProfileService.ReadModels;
 using FlowChat.SocialGraphService.Consumers.SocialGraph.Contracts;
-using Microsoft.Extensions.Logging;
 
 namespace FlowChat.SocialGraphService.Consumers.Kafka;
 
 internal static class UserProfileSubscriberHelper
 {
-    public static async Task InsertAsync(
-        ISocialGraphInternalApiClient socialGraphInternalApiClient,
-        ILogger logger,
-        UserProfileProjectionRequest request,
-        string eventType,
-        CancellationToken cancellationToken)
+    public static BulkUpsertOrDeleteUserProfileProjectionRequestItem MapProjectionEvent(
+        ProjectionIntegrationEvent<UserProfileReadModel> message,
+        IMapper mapper)
     {
-        await socialGraphInternalApiClient.BulkUpsertUserProfileProjectionAsync(CreateBulkUpsertRequest(request), cancellationToken);
+        ArgumentNullException.ThrowIfNull(message);
+        ArgumentNullException.ThrowIfNull(mapper);
 
-        logger.LogInformation(
-            "Upserted user profile projection for profile {UserProfileId} from {EventType}.",
-            request.UserProfileId,
-            eventType);
+        if (message.Version <= 0)
+            throw new NonTransientException("Payload does not contain valid SourceVersion.");
+
+        var userProfileId = ResolveUserProfileId(message.Value.UserProfileId);
+
+        try
+        {
+            return message.Operation switch
+            {
+                OperationType.Created or OperationType.Updated => CreateUpsertItem(message, mapper, userProfileId),
+                OperationType.Deleted => new BulkUpsertOrDeleteUserProfileProjectionRequestItem
+                {
+                    UserProfileId = userProfileId,
+                    SourceVersion = message.Version,
+                    Value = null
+                },
+                _ => throw new NonTransientException($"Unsupported user profile projection operation {message.Operation}.")
+            };
+        }
+        catch (AutoMapperMappingException exception) when (exception.InnerException is NonTransientException nonTransientException)
+        {
+            throw nonTransientException;
+        }
     }
 
-    public static async Task UpdateAsync(
-        ISocialGraphInternalApiClient socialGraphInternalApiClient,
-        ILogger logger,
-        UserProfileProjectionRequest request,
-        string eventType,
-        CancellationToken cancellationToken)
+    public static BulkUpsertOrDeleteUserProfileProjectionRequest CreateBulkUpsertOrDeleteRequest(
+        IReadOnlyCollection<BulkUpsertOrDeleteUserProfileProjectionRequestItem> items) =>
+        new() { Items = KeepLastItemPerUserProfile(items) };
+
+    private static IReadOnlyCollection<BulkUpsertOrDeleteUserProfileProjectionRequestItem> KeepLastItemPerUserProfile(
+        IReadOnlyCollection<BulkUpsertOrDeleteUserProfileProjectionRequestItem> items)
     {
-        await socialGraphInternalApiClient.BulkUpsertUserProfileProjectionAsync(CreateBulkUpsertRequest(request), cancellationToken);
-
-        logger.LogInformation(
-            "Upserted user profile projection for profile {UserProfileId} from {EventType}.",
-            request.UserProfileId,
-            eventType);
+        // Kafka batch can contain multiple events for one profile, while the bulk endpoint rejects duplicate keys
+        return items
+            .Select((item, index) => new { item, index })
+            .GroupBy(x => x.item.UserProfileId)
+            .Select(group => group
+                .OrderBy(x => x.item.SourceVersion)
+                .ThenBy(x => x.index)
+                .Last())
+            .OrderBy(x => x.index)
+            .Select(x => x.item)
+            .ToArray();
     }
-
-    public static UserProfileProjectionRequest Map(UserProfileCreatedIntegrationEvent message) =>
-        new()
-        {
-            UserProfileId = ResolveUserProfileId(message.UserProfileId),
-            FriendlyUserId = NormalizeRequired(message.FriendlyUserId, nameof(message.FriendlyUserId)),
-            FirstName = NormalizeOptional(message.FirstName),
-            LastName = NormalizeOptional(message.LastName),
-            Organization = NormalizeOptional(message.Organization),
-            MainEmailAddress = NormalizeOptional(message.MainEmail.Address),
-            MainEmailIsConfirmed = message.MainEmail.IsConfirmed,
-            MainEmailIsVisible = message.MainEmail.IsVisible,
-            MainPhoneNumber = NormalizeOptional(message.MainPhone?.Number),
-            MainPhoneIsConfirmed = message.MainPhone?.IsConfirmed,
-            MainPhoneIsVisible = message.MainPhone?.IsVisible,
-            AvatarUrl = NormalizeOptional(message.AvatarUrl),
-            Bio = NormalizeOptional(message.Bio),
-            IsActive = message.IsActive,
-            LastSeenAtUtc = message.LastSeenAtUtc
-        };
-
-    public static UserProfileProjectionRequest Map(UserProfileChangedIntegrationEvent message) =>
-        new()
-        {
-            UserProfileId = ResolveUserProfileId(message.UserProfileId),
-            FriendlyUserId = NormalizeRequired(message.FriendlyUserId, nameof(message.FriendlyUserId)),
-            FirstName = NormalizeOptional(message.FirstName),
-            LastName = NormalizeOptional(message.LastName),
-            Organization = NormalizeOptional(message.Organization),
-            MainEmailAddress = NormalizeOptional(message.MainEmail?.Address),
-            MainEmailIsConfirmed = message.MainEmail?.IsConfirmed,
-            MainEmailIsVisible = message.MainEmail?.IsVisible,
-            MainPhoneNumber = NormalizeOptional(message.MainPhone?.Number),
-            MainPhoneIsConfirmed = message.MainPhone?.IsConfirmed,
-            MainPhoneIsVisible = message.MainPhone?.IsVisible,
-            AvatarUrl = NormalizeOptional(message.AvatarUrl),
-            Bio = NormalizeOptional(message.Bio),
-            IsActive = message.IsActive,
-            LastSeenAtUtc = message.LastSeenAtUtc
-        };
 
     private static Guid ResolveUserProfileId(Guid userProfileId) =>
         userProfileId != Guid.Empty
             ? userProfileId
             : throw new NonTransientException("Payload does not contain valid UserProfileId.");
 
-    private static string NormalizeRequired(string value, string fieldName)
+    private static BulkUpsertOrDeleteUserProfileProjectionRequestItem CreateUpsertItem(
+        ProjectionIntegrationEvent<UserProfileReadModel> message,
+        IMapper mapper,
+        Guid userProfileId)
     {
-        if (string.IsNullOrWhiteSpace(value))
+        var value = mapper.Map<UserProfileProjectionRequest>(message.Value);
+        value.SourceVersion = message.Version;
+
+        return new BulkUpsertOrDeleteUserProfileProjectionRequestItem
         {
-            throw new NonTransientException($"Payload does not contain valid {fieldName}.");
-        }
-
-        return value.Trim();
+            UserProfileId = userProfileId,
+            SourceVersion = message.Version,
+            Value = value
+        };
     }
-
-    private static string? NormalizeOptional(string? value) =>
-        string.IsNullOrWhiteSpace(value) ? null : value.Trim();
-
-    private static BulkUpsertUserProfileProjectionRequest CreateBulkUpsertRequest(UserProfileProjectionRequest request) =>
-        new() { Items = [request] };
 }

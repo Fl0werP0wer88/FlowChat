@@ -49,6 +49,12 @@ public sealed class UserProfileProjectionConfiguration : IEntityTypeConfiguratio
             .HasDefaultValue(true)
             .IsRequired();
 
+        builder.Property(x => x.SourceVersion)
+            .IsRequired();
+
+        builder.Property(x => x.IsDeleted)
+            .IsRequired();
+
         builder.Property(x => x.CreatedBy)
             .HasMaxLength(256)
             .IsRequired();

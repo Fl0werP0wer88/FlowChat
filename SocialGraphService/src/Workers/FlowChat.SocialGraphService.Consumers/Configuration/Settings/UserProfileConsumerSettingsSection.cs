@@ -18,4 +18,6 @@ public sealed class UserProfileConsumerSettingsSection : SettingsSectionBase, IR
     public int RetryBaseDelaySeconds { get; set; } = 5;
     public int RetryMaxDelaySeconds { get; set; } = 300;
     public string AutoOffsetReset { get; set; } = "Earliest";
+    public int BatchSize { get; set; } = 100;
+    public int BatchMaxWaitTimeMilliseconds { get; set; } = 1000;
 }

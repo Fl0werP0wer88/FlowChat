@@ -15,7 +15,7 @@ public sealed class SocialGraphInternalApiClientTests
     private readonly IFixture _fixture = new Fixture();
 
     [Fact]
-    public async Task BulkUpsertUserProfileProjectionAsync_PostsToExpectedEndpointWithApiKey()
+    public async Task BulkUpsertOrDeleteUserProfileProjectionAsync_PostsToExpectedEndpointWithApiKey()
     {
         string? requestBody = null;
         HttpRequestMessage? sentRequest = null;
@@ -41,18 +41,23 @@ public sealed class SocialGraphInternalApiClientTests
 
         var client = new SocialGraphInternalApiClient(httpClient);
 
-        await client.BulkUpsertUserProfileProjectionAsync(
-            new BulkUpsertUserProfileProjectionRequest
+        await client.BulkUpsertOrDeleteUserProfileProjectionAsync(
+            new BulkUpsertOrDeleteUserProfileProjectionRequest
             {
                 Items =
                 [
-                    new UserProfileProjectionRequest
+                    new BulkUpsertOrDeleteUserProfileProjectionRequestItem
                     {
                         UserProfileId = _fixture.Create<Guid>(),
-                        FriendlyUserId = "jdoe",
-                        MainEmailAddress = "jdoe@example.com",
-                        MainEmailIsConfirmed = true,
-                        MainEmailIsVisible = true
+                        SourceVersion = 7,
+                        Value = new UserProfileProjectionRequest
+                        {
+                            FriendlyUserId = "jdoe",
+                            MainEmailAddress = "jdoe@example.com",
+                            MainEmailIsConfirmed = true,
+                            MainEmailIsVisible = true,
+                            Source = "user-profile-projection"
+                        }
                     }
                 ]
             },
@@ -60,23 +65,25 @@ public sealed class SocialGraphInternalApiClientTests
 
         sentRequest.Should().NotBeNull();
         sentRequest!.Method.Should().Be(HttpMethod.Post);
-        sentRequest.RequestUri!.ToString().Should().Be("https://localhost:7194/internal/userprofiles/projection/bulk-upsert");
+        sentRequest.RequestUri!.ToString().Should().Be("https://localhost:7194/internal/userprofiles/projection/bulk-upsert-or-delete");
         sentRequest.Headers.GetValues(SocialGraphInternalApiClient.ApiKeyHeaderName).Single().Should().Be("internal-key");
 
-        var payload = JsonSerializer.Deserialize<BulkUpsertUserProfileProjectionRequest>(
+        var payload = JsonSerializer.Deserialize<BulkUpsertOrDeleteUserProfileProjectionRequest>(
             requestBody!,
             new JsonSerializerOptions(JsonSerializerDefaults.Web));
 
         payload.Should().NotBeNull();
         var item = payload!.Items.Should().ContainSingle().Subject;
-        item.FriendlyUserId.Should().Be("jdoe");
-        item.MainEmailAddress.Should().Be("jdoe@example.com");
-        item.MainEmailIsConfirmed.Should().BeTrue();
-        item.MainEmailIsVisible.Should().BeTrue();
+        item.SourceVersion.Should().Be(7);
+        item.Value.Should().NotBeNull();
+        item.Value!.FriendlyUserId.Should().Be("jdoe");
+        item.Value.MainEmailAddress.Should().Be("jdoe@example.com");
+        item.Value.MainEmailIsConfirmed.Should().BeTrue();
+        item.Value.MainEmailIsVisible.Should().BeTrue();
     }
 
     [Fact]
-    public async Task BulkUpsertUserProfileProjectionAsync_WhenApiReturnsBadRequest_ThrowsNonTransientException()
+    public async Task BulkUpsertOrDeleteUserProfileProjectionAsync_WhenApiReturnsBadRequest_ThrowsNonTransientException()
     {
         var handlerMock = new Mock<HttpMessageHandler>();
         handlerMock
@@ -95,7 +102,7 @@ public sealed class SocialGraphInternalApiClientTests
             BaseAddress = new Uri("https://localhost:7194")
         });
 
-        var act = () => client.BulkUpsertUserProfileProjectionAsync(new BulkUpsertUserProfileProjectionRequest(), CancellationToken.None);
+        var act = () => client.BulkUpsertOrDeleteUserProfileProjectionAsync(new BulkUpsertOrDeleteUserProfileProjectionRequest(), CancellationToken.None);
 
         await act.Should().ThrowAsync<NonTransientException>()
             .WithMessage("*400*");

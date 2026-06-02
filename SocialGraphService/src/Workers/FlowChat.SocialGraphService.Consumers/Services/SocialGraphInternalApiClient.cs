@@ -10,19 +10,19 @@ public sealed class SocialGraphInternalApiClient(HttpClient httpClient)
 {
     public const string HttpClientName = nameof(SocialGraphInternalApiClient);
     public const string ApiKeyHeaderName = "X-Internal-Api-Key";
-    private const string BulkUpsertUserProfileProjectionPath = "/internal/userprofiles/projection/bulk-upsert";
+    private const string BulkUpsertOrDeleteUserProfileProjectionPath = "/internal/userprofiles/projection/bulk-upsert-or-delete";
 
     protected override string ClientDisplayName => "SocialGraph API";
 
-    public Task BulkUpsertUserProfileProjectionAsync(
-        BulkUpsertUserProfileProjectionRequest request,
+    public Task BulkUpsertOrDeleteUserProfileProjectionAsync(
+        BulkUpsertOrDeleteUserProfileProjectionRequest request,
         CancellationToken cancellationToken)
-        => SendUserProfileProjectionAsync(HttpMethod.Post, BulkUpsertUserProfileProjectionPath, request, cancellationToken);
+        => SendUserProfileProjectionAsync(HttpMethod.Post, BulkUpsertOrDeleteUserProfileProjectionPath, request, cancellationToken);
 
     private async Task SendUserProfileProjectionAsync(
         HttpMethod method,
         string path,
-        BulkUpsertUserProfileProjectionRequest request,
+        BulkUpsertOrDeleteUserProfileProjectionRequest request,
         CancellationToken cancellationToken)
     {
         using var message = new HttpRequestMessage(method, path)

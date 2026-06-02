@@ -39,14 +39,18 @@ public sealed class UserProfileProjectionReadRepository(AppDbContext dbContext) 
         LastSeenAtUtc = entity.LastSeenAtUtc
     };
 
+    private IQueryable<UserProfileReadModelEntity> ActiveProjections =>
+        _dbContext.UserProfileProjections
+            .AsNoTracking()
+            .Where(entity => !entity.IsDeleted);
+
     public async Task<UserProfileProjectionDto?> GetByUserProfileIdAsync(
         Guid userProfileId,
         CancellationToken cancellationToken = default)
     {
         ArgumentOutOfRangeException.ThrowIfEqual(userProfileId, Guid.Empty);
 
-        return await _dbContext.UserProfileProjections
-            .AsNoTracking()
+        return await ActiveProjections
             .Where(entity => entity.UserProfileId == userProfileId)
             .Select(Projection)
             .FirstOrDefaultAsync(cancellationToken);
@@ -58,8 +62,7 @@ public sealed class UserProfileProjectionReadRepository(AppDbContext dbContext) 
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(friendlyUserId);
 
-        return await _dbContext.UserProfileProjections
-            .AsNoTracking()
+        return await ActiveProjections
             .Where(entity => entity.FriendlyUserId == friendlyUserId)
             .Select(Projection)
             .FirstOrDefaultAsync(cancellationToken);
@@ -73,8 +76,7 @@ public sealed class UserProfileProjectionReadRepository(AppDbContext dbContext) 
 
         var normalizedEmail = email.Trim().ToLowerInvariant();
 
-        return await _dbContext.UserProfileProjections
-            .AsNoTracking()
+        return await ActiveProjections
             .Where(entity => entity.MainEmail != null && entity.MainEmail.ToLower() == normalizedEmail)
             .Select(Projection)
             .FirstOrDefaultAsync(cancellationToken);

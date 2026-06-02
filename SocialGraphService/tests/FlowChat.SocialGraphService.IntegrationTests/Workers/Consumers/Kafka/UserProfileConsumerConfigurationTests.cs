@@ -26,13 +26,11 @@ public sealed class UserProfileConsumerConfigurationTests
         await using var scope = serviceProvider.CreateAsyncScope();
 
         var consumerCollection = serviceProvider.GetRequiredService<IConsumerCollection>();
-        var createdSubscriber = scope.ServiceProvider.GetRequiredService<UserProfileCreatedSubscriber>();
-        var stateChangedSubscriber = scope.ServiceProvider.GetRequiredService<UserProfileStateChangedSubscriber>();
+        var projectionBatchSubscriber = scope.ServiceProvider.GetRequiredService<UserProfileProjectionBatchSubscriber>();
         var internalApiClient = scope.ServiceProvider.GetRequiredService<ISocialGraphInternalApiClient>();
 
         consumerCollection.Should().NotBeNull();
-        createdSubscriber.Should().NotBeNull();
-        stateChangedSubscriber.Should().NotBeNull();
+        projectionBatchSubscriber.Should().NotBeNull();
         internalApiClient.Should().NotBeNull();
     }
 
@@ -97,7 +95,9 @@ public sealed class UserProfileConsumerConfigurationTests
                 ["Kafka:UserProfileConsumer:MaxRetryCount"] = "5",
                 ["Kafka:UserProfileConsumer:RetryBaseDelaySeconds"] = "5",
                 ["Kafka:UserProfileConsumer:RetryMaxDelaySeconds"] = "300",
-                ["Kafka:UserProfileConsumer:AutoOffsetReset"] = "Earliest"
+                ["Kafka:UserProfileConsumer:AutoOffsetReset"] = "Earliest",
+                ["Kafka:UserProfileConsumer:BatchSize"] = "100",
+                ["Kafka:UserProfileConsumer:BatchMaxWaitTimeMilliseconds"] = "1000"
             })
             .Build();
     }
