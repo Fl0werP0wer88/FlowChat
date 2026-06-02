@@ -9,6 +9,7 @@ using FlowChat.Shared.Domain;
 using GroupConversationAggregate = FlowChat.ChatService.Domain.Entities.Conversation.GroupConversation;
 using ConversationAggregate = FlowChat.ChatService.Domain.Entities.Conversation.Conversation;
 using ParticipantUser = FlowChat.ChatService.Domain.Entities.Conversation.ParticipantUser;
+using UserProfileMarker = FlowChat.ChatService.Domain.Entities.UserProfiles.UserProfile;
 
 namespace FlowChat.ChatService.Application.Features.Conversation.Commands.CreateGroupFromDuet;
 
@@ -59,19 +60,22 @@ public sealed class CreateGroupFromDuetCommandHandler
 
         _conversation = GroupConversationAggregate.Create(
             Id<ConversationAggregate>.FromGuid(request.NewGroupConversationId),
-            request.RequestingUserId,
-            [request.RequestingUserId, request.PartnerUserId],
+            Id<UserProfileMarker>.FromGuid(request.RequestingUserId),
+            [
+                Id<UserProfileMarker>.FromGuid(request.RequestingUserId),
+                Id<UserProfileMarker>.FromGuid(request.PartnerUserId)
+            ],
             $"{user1Name}/{user2Name}");
 
         await _groupWriteRepository.AddAsync(_conversation, cancellationToken);
 
-        var participantUserIds = _conversation.Participants.Select(p => p.UserId).ToList();
+        var participantUserIds = _conversation.Participants.Select(p => p.UserId.Value).ToList();
         var profiles = await _profileReadRepository.GetByIdsAsync(participantUserIds, cancellationToken);
 
         var participantDtos = _conversation.Participants
             .Select(participant =>
             {
-                var profile = profiles.FirstOrDefault(p => p.UserId == participant.UserId);
+                var profile = profiles.FirstOrDefault(p => p.UserId == participant.UserId.Value);
                 return BuildParticipantDto(participant, profile);
             })
             .ToList();
@@ -88,9 +92,9 @@ public sealed class CreateGroupFromDuetCommandHandler
         UserProfileConversationParticipantDto? profile)
     {
         return new ConversationParticipantDto(
-            participant.UserId,
+            participant.UserId.Value,
             string.IsNullOrEmpty(participant.DisplayName) ? profile?.DisplayName : participant.DisplayName,
             string.IsNullOrEmpty(participant.AvatarUrl) ? profile?.AvatarUrl : participant.AvatarUrl,
-            participant.UserId);
+            participant.UserId.Value);
     }
 }

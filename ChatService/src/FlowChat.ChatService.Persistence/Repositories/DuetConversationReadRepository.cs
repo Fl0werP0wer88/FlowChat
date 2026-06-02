@@ -47,37 +47,41 @@ public sealed class DuetConversationReadRepository(AppDbContext dbContext) : IDu
     {
         var (first, second) = DuetConversationUserPair.Normalize(requestingUserId, partnerUserId);
 
-        var rawRows = await (
+        var participantRows = await (
             from duet in dbContext.DuetConversations.AsNoTracking()
             where duet.FirstUserId == first && duet.SecondUserId == second
             from conversation in dbContext.Conversations.AsNoTracking()
                 .Where(x => x.Id == duet.ConversationId)
             from participant in conversation.Participants
-            join profile in dbContext.UserProfileProjections.AsNoTracking()
-                    .Where(x => !x.IsDeleted)
-                on participant.UserId equals profile.UserId into profileGroup
-            from profile in profileGroup.DefaultIfEmpty()
             select new
             {
                 ConversationId = duet.ConversationId.Value,
-                participant.UserId,
+                UserId = participant.UserId.Value,
                 ParticipantDisplayName = participant.DisplayName,
-                ProfileFirstName = (string?) profile.FirstName,
-                ProfileLastName = (string?) profile.LastName,
                 ParticipantAvatarUrl = participant.AvatarUrl,
-                ProfileAvatarUrl = (string?) profile.AvatarUrl
             })
             .ToListAsync(cancellationToken);
 
-        var rows = rawRows.Select(r => new DuetConversationParticipantRow(
+        var userIds = participantRows.Select(x => x.UserId).ToList();
+        var profiles = await dbContext.UserProfileProjections
+            .AsNoTracking()
+            .Where(x => !x.IsDeleted && userIds.Contains(x.UserId))
+            .ToDictionaryAsync(x => x.UserId, cancellationToken);
+
+        var rows = participantRows.Select(r =>
+        {
+            profiles.TryGetValue(r.UserId, out var profile);
+
+            return new DuetConversationParticipantRow(
             r.ConversationId,
             r.UserId,
             string.IsNullOrEmpty(r.ParticipantDisplayName)
-                ? ComputeDisplayName(r.ProfileFirstName, r.ProfileLastName)
+                ? ComputeDisplayName(profile?.FirstName, profile?.LastName)
                 : r.ParticipantDisplayName,
             string.IsNullOrEmpty(r.ParticipantAvatarUrl)
-                ? r.ProfileAvatarUrl
-                : r.ParticipantAvatarUrl))
+                ? profile?.AvatarUrl
+                : r.ParticipantAvatarUrl);
+        })
             .ToList();
 
         if (rows.Count != 2)

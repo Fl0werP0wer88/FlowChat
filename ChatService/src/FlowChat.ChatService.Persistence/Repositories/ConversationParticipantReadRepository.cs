@@ -18,6 +18,6 @@ public sealed class ConversationParticipantReadRepository(AppDbContext dbContext
             .Include(conversation => conversation.Participants)
             .FirstOrDefaultAsync(conversation => conversation.Id == typedConversationId, cancellationToken);
 
-        return conversation?.Participants.Select(participant => participant.UserId).ToList();
+        return conversation?.Participants.Select(participant => participant.UserId.Value).ToList();
     }
 }

@@ -4,6 +4,7 @@ using FlowChat.Shared.Domain;
 using FlowChat.Shared.Persistance;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using UserProfileMarker = FlowChat.ChatService.Domain.Entities.UserProfiles.UserProfile;
 
 namespace FlowChat.ChatService.Persistence.Configuration.Entities;
 
@@ -22,6 +23,7 @@ public sealed class ChatMessageConfiguration : IEntityTypeConfiguration<ChatMess
             .IsRequired();
 
         builder.Property(x => x.SenderUserId)
+            .HasConversion(x => x.Value, x => Id<UserProfileMarker>.FromGuid(x))
             .IsRequired();
 
         builder.Property(x => x.SenderDisplayName)
@@ -39,7 +41,10 @@ public sealed class ChatMessageConfiguration : IEntityTypeConfiguration<ChatMess
         builder.Property(x => x.DeliveredAtUtc)
             .HasNullableUtcDateTimeOffsetConversion();
 
-        builder.Property(x => x.RecipientUserIds)
+        builder.Ignore(x => x.RecipientUserIds);
+
+        builder.Property<Guid[]>("_recipientUserIds")
+            .HasColumnName("RecipientUserIds")
             .HasColumnType("uuid[]")
             .IsRequired();
 

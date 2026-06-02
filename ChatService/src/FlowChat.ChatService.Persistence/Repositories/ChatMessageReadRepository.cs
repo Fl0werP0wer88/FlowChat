@@ -83,7 +83,7 @@ public sealed class ChatMessageReadRepository(AppDbContext dbContext) : IChatMes
         new(
             message.Id.Value,
             message.ConversationId.Value,
-            message.SenderUserId,
+            message.SenderUserId.Value,
             message.SenderDisplayName,
             message.Text,
             message.SentAtUtc.Value);

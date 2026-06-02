@@ -48,7 +48,7 @@ public sealed class NotificationConfigurationTests : IDisposable
         var reloaded = await _dbContext.Notifications.FindAsync(notification.Id);
 
         reloaded.Should().NotBeNull();
-        reloaded!.UserId.Should().Be(userId);
+        reloaded!.UserId.Value.Should().Be(userId);
         reloaded.Email.Value.Should().Be("config-test@example.com");
         reloaded.DisplayName.Should().Be("Config Test User");
         reloaded.Body.Should().Be("Confirm your email by clicking the provided link");

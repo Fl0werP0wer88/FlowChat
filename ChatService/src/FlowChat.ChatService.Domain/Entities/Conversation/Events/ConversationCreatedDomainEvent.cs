@@ -1,5 +1,6 @@
 using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
+using UserProfileMarker = FlowChat.ChatService.Domain.Entities.UserProfiles.UserProfile;
 
 namespace FlowChat.ChatService.Domain.Entities.Conversation.Events;
 
@@ -7,13 +8,13 @@ public sealed class ConversationCreatedDomainEvent(
     Id<Conversation> aggregateId,
     ConversationType type,
     string? name,
-    Guid createdByUserId,
-    IReadOnlyCollection<Guid> participantUserIds,
+    Id<UserProfileMarker> createdByUserId,
+    IReadOnlyCollection<Id<UserProfileMarker>> participantUserIds,
     UtcDateTimeOffset? occurredOnUtc = null) : BaseConversationDomainEvent(aggregateId, occurredOnUtc)
 {
     public Guid ConversationId { get; } = aggregateId.Value;
     public ConversationType Type { get; } = type;
     public string? Name { get; } = name;
-    public Guid CreatedByUserId { get; } = createdByUserId;
-    public IReadOnlyCollection<Guid> ParticipantUserIds { get; } = participantUserIds;
+    public Id<UserProfileMarker> CreatedByUserId { get; } = createdByUserId;
+    public IReadOnlyCollection<Id<UserProfileMarker>> ParticipantUserIds { get; } = participantUserIds;
 }

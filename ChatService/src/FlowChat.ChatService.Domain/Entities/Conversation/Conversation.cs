@@ -2,6 +2,7 @@ using FlowChat.ChatService.Domain.Entities.Conversation.Constants;
 using FlowChat.ChatService.Domain.Entities.Conversation.Events;
 using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
+using UserProfileMarker = FlowChat.ChatService.Domain.Entities.UserProfiles.UserProfile;
 
 namespace FlowChat.ChatService.Domain.Entities.Conversation;
 
@@ -9,7 +10,7 @@ public abstract class Conversation : AggregateRootBase<Conversation>
 {
     public ConversationType Type { get; private set; }
     public string? Name { get; private set; }
-    public Guid CreatedByUserId { get; private set; }
+    public Id<UserProfileMarker> CreatedByUserId { get; private set; }
 
     private readonly List<ParticipantUser> _participants = [];
     public IReadOnlyCollection<ParticipantUser> Participants => _participants.AsReadOnly();
@@ -19,7 +20,7 @@ public abstract class Conversation : AggregateRootBase<Conversation>
         Id<Conversation> id,
         ConversationType type,
         string? name,
-        Guid createdByUserId) : base(id)
+        Id<UserProfileMarker> createdByUserId) : base(id)
     {
         Type = type;
         Name = name?.Trim();
@@ -30,7 +31,7 @@ public abstract class Conversation : AggregateRootBase<Conversation>
         Id<Conversation> id,
         ConversationType type,
         string? name,
-        Guid createdByUserId,
+        Id<UserProfileMarker> createdByUserId,
         List<ParticipantUser> participants) : this(id, type, name, createdByUserId)
     {
         _participants = participants;
@@ -39,10 +40,10 @@ public abstract class Conversation : AggregateRootBase<Conversation>
     protected static TConversation CreateCore<TConversation>(
         Id<Conversation> id,
         ConversationType type,
-        Guid createdByUserId,
-        IEnumerable<Guid> participantUserIds,
+        Id<UserProfileMarker> createdByUserId,
+        IEnumerable<Id<UserProfileMarker>> participantUserIds,
         string? name,
-        Func<Id<Conversation>, ConversationType, string?, Guid, List<ParticipantUser>, TConversation> factory)
+        Func<Id<Conversation>, ConversationType, string?, Id<UserProfileMarker>, List<ParticipantUser>, TConversation> factory)
         where TConversation : Conversation
     {
         ArgumentNullException.ThrowIfNull(id);
@@ -77,9 +78,9 @@ public abstract class Conversation : AggregateRootBase<Conversation>
         Id<Conversation> id,
         ConversationType type,
         string? name,
-        Guid createdByUserId,
+        Id<UserProfileMarker> createdByUserId,
         IEnumerable<ParticipantUser> participants,
-        Func<Id<Conversation>, ConversationType, string?, Guid, List<ParticipantUser>, TConversation> factory)
+        Func<Id<Conversation>, ConversationType, string?, Id<UserProfileMarker>, List<ParticipantUser>, TConversation> factory)
         where TConversation : Conversation
     {
         ArgumentNullException.ThrowIfNull(factory);
@@ -87,13 +88,12 @@ public abstract class Conversation : AggregateRootBase<Conversation>
         return factory(id, type, name, createdByUserId, [.. participants]);
     }
 
-    protected void AddParticipantCore(Guid participantUserId, string? displayName, string? avatarUrl)
+    protected void AddParticipantCore(Id<UserProfileMarker> participantUserId, string? displayName, string? avatarUrl)
     {
         if (Type != ConversationType.Group)
             throw new InvalidOperationException("Cannot add participants to a one-on-one conversation.");
 
-        if (participantUserId == Guid.Empty)
-            throw new ArgumentException("ParticipantUserId is required.", nameof(participantUserId));
+        ArgumentNullException.ThrowIfNull(participantUserId);
 
         if (_participants.Any(p => p.UserId == participantUserId))
             throw new InvalidOperationException("User is already a participant in this conversation.");
@@ -112,10 +112,9 @@ public abstract class Conversation : AggregateRootBase<Conversation>
                 [ .. Participants.Select(p => p.UserId)]));
     }
 
-    private static void ValidateInvariants(ConversationType type, string? name, Guid createdByUserId)
+    private static void ValidateInvariants(ConversationType type, string? name, Id<UserProfileMarker> createdByUserId)
     {
-        if (createdByUserId == Guid.Empty)
-            throw new ArgumentException("CreatedByUserId is required.", nameof(createdByUserId));
+        ArgumentNullException.ThrowIfNull(createdByUserId);
 
         if (!Enum.IsDefined(type))
             throw new ArgumentException("Conversation type is invalid.", nameof(type));
@@ -125,14 +124,14 @@ public abstract class Conversation : AggregateRootBase<Conversation>
     }
 
     private static List<ParticipantUser> BuildParticipants(
-        IEnumerable<Guid> participantUserIds,
+        IEnumerable<Id<UserProfileMarker>> participantUserIds,
         ConversationType type,
         Id<Conversation> conversationId)
     {
         ArgumentNullException.ThrowIfNull(participantUserIds);
 
         var uniqueIds = participantUserIds
-            .Where(id => id != Guid.Empty)
+            .Where(id => id is not null)
             .Distinct()
             .ToList();
 
@@ -150,5 +149,5 @@ public record ConversationSnapshot(
     Id<Conversation> Id,
     ConversationType Type,
     string? Name,
-    Guid CreatedByUserId,
-    IReadOnlyCollection<Guid> ParticipantUserIds);
+    Id<UserProfileMarker> CreatedByUserId,
+    IReadOnlyCollection<Id<UserProfileMarker>> ParticipantUserIds);

@@ -7,6 +7,7 @@ using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBas
 using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2.BeforeSaveProcessors;
 using FlowChat.Shared.Domain;
 using DuetConversationAggregate = FlowChat.ChatService.Domain.Entities.Conversation.DuetConversation;
+using UserProfileMarker = FlowChat.ChatService.Domain.Entities.UserProfiles.UserProfile;
 
 namespace FlowChat.ChatService.Application.Features.Conversation.Commands.CreateDuetConversation;
 
@@ -34,18 +35,18 @@ public sealed class CreateDuetConversationCommandHandler
         CancellationToken cancellationToken)
     {
         _newConversation = DuetConversationAggregate.Create(
-            createdByUserId: request.RequestingUserId,
-            partnerUserId: request.PartnerUserId);
+            createdByUserId: Id<UserProfileMarker>.FromGuid(request.RequestingUserId),
+            partnerUserId: Id<UserProfileMarker>.FromGuid(request.PartnerUserId));
 
         await _duetConversationWriteRepository.AddAsync(_newConversation, cancellationToken);
 
-        var participantUserIds = _newConversation.Participants.Select(p => p.UserId).ToList();
+        var participantUserIds = _newConversation.Participants.Select(p => p.UserId.Value).ToList();
         var profiles = await _profileReadRepository.GetByIdsAsync(participantUserIds, cancellationToken);
 
         var participantDtos = _newConversation.Participants
             .Select(participant =>
             {
-                var profile = profiles.FirstOrDefault(p => p.UserId == participant.UserId);
+                var profile = profiles.FirstOrDefault(p => p.UserId == participant.UserId.Value);
                 return BuildParticipantDto(participant, profile);
             })
             .ToList();
@@ -59,10 +60,10 @@ public sealed class CreateDuetConversationCommandHandler
         UserProfileConversationParticipantDto? profile)
     {
         return new ConversationParticipantDto(
-            participant.UserId,
+            participant.UserId.Value,
             string.IsNullOrEmpty(participant.DisplayName) ? profile?.DisplayName : participant.DisplayName,
             string.IsNullOrEmpty(participant.AvatarUrl) ? profile?.AvatarUrl : participant.AvatarUrl,
-            participant.UserId);
+            participant.UserId.Value);
     }
 
     protected override DuetConversationAggregate GetAggregateRoot() =>

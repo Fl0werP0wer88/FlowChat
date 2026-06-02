@@ -20,13 +20,13 @@ public sealed class GroupConversationReadRepository(AppDbContext dbContext) : IG
             from participant in conversation.Participants
             join profile in dbContext.UserProfileProjections.AsNoTracking()
                     .Where(x => !x.IsDeleted)
-                on participant.UserId equals profile.UserId into profileGroup
+                on participant.UserId.Value equals profile.UserId into profileGroup
             from profile in profileGroup.DefaultIfEmpty()
             select new
             {
                 ConversationId = conversation.Id.Value,
                 ConversationName = conversation.Name,
-                participant.UserId,
+                UserId = participant.UserId.Value,
                 ParticipantDisplayName = participant.DisplayName,
                 ProfileFirstName = (string?) profile.FirstName,
                 ProfileLastName = (string?) profile.LastName,
@@ -64,7 +64,7 @@ public sealed class GroupConversationReadRepository(AppDbContext dbContext) : IG
         return await (
             from conversation in dbContext.Conversations.AsNoTracking()
             where conversation.Type == ConversationType.Group
-                  && conversation.Participants.Any(p => p.UserId == participantUserId)
+                  && conversation.Participants.Any(p => p.UserId.Value == participantUserId)
             select new GroupConversationSummaryDto(
                 conversation.Id.Value,
                 conversation.Name!,

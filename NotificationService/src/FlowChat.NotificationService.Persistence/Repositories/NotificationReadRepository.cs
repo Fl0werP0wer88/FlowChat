@@ -13,7 +13,7 @@ public sealed class NotificationReadRepository(AppDbContext dbContext)
 {
     private static readonly Expression<Func<Notification, NotificationDto>> NotificationDtoProjection = x => new(
         x.Id.Value,
-        x.UserId,
+        x.UserId.Value,
         x.Email.Value,
         x.DisplayName,
         x.Body,
@@ -33,7 +33,7 @@ public sealed class NotificationReadRepository(AppDbContext dbContext)
         CancellationToken cancellationToken = default)
     {
         return await DbContext.Set<Notification>().AnyAsync(
-            x => x.UserId == userId && x.Type == type,
+            x => x.UserId.Value == userId && x.Type == type,
             cancellationToken);
     }
 
@@ -58,7 +58,7 @@ public sealed class NotificationReadRepository(AppDbContext dbContext)
         CancellationToken cancellationToken = default)
     {
         return await Query
-            .Where(x => x.UserId == userId)
+            .Where(x => x.UserId.Value == userId)
             .OrderByDescending(x => x.CreatedAtUtc)
             .ThenByDescending(x => x.SentAtUtc)
             .Select(MapToDto)

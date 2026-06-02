@@ -4,6 +4,7 @@ using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBas
 using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2.BeforeSaveProcessors;
 using FlowChat.Shared.Domain;
 using GroupConversation = FlowChat.ChatService.Domain.Entities.Conversation.GroupConversation;
+using UserProfileMarker = FlowChat.ChatService.Domain.Entities.UserProfiles.UserProfile;
 
 namespace FlowChat.ChatService.Application.Features.Conversation.Commands.AddParticipant;
 
@@ -35,10 +36,12 @@ public sealed class AddParticipantCommandHandler
         var anyAdded = false;
         foreach (var participantUserId in request.ParticipantUserIds)
         {
-            if (_conversation.Participants.Any(p => p.UserId == participantUserId))
+            var typedParticipantUserId = Id<UserProfileMarker>.FromGuid(participantUserId);
+
+            if (_conversation.Participants.Any(p => p.UserId == typedParticipantUserId))
                 continue;
 
-            _conversation.AddParticipant(participantUserId, displayName: null, avatarUrl: null);
+            _conversation.AddParticipant(typedParticipantUserId, displayName: null, avatarUrl: null);
             anyAdded = true;
         }
 

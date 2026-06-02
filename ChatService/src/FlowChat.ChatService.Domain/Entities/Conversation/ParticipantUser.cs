@@ -1,12 +1,13 @@
 using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
+using UserProfileMarker = FlowChat.ChatService.Domain.Entities.UserProfiles.UserProfile;
 
 namespace FlowChat.ChatService.Domain.Entities.Conversation;
 
 public sealed class ParticipantUser : EntityBase<ParticipantUser>
 {
     public Id<Conversation> ConversationId { get; private set; }
-    public Guid UserId { get; private set; }
+    public Id<UserProfileMarker> UserId { get; private set; }
     public string? DisplayName { get; private set; }
     public string? AvatarUrl { get; private set; }
     public bool IsBlocked { get; private set; }
@@ -15,16 +16,14 @@ public sealed class ParticipantUser : EntityBase<ParticipantUser>
     private ParticipantUser(
         Id<ParticipantUser> id,
         Id<Conversation> conversationId,
-        Guid userId,
+        Id<UserProfileMarker> userId,
         string? displayName,
         string? avatarUrl,
         bool isBlocked,
         UtcDateTimeOffset joinedAtUtc) : base(id)
     {
         ArgumentNullException.ThrowIfNull(conversationId);
-
-        if (userId == Guid.Empty)
-            throw new ArgumentException("UserId is required.", nameof(userId));
+        ArgumentNullException.ThrowIfNull(userId);
 
         ConversationId = conversationId;
         UserId = userId;
@@ -37,7 +36,7 @@ public sealed class ParticipantUser : EntityBase<ParticipantUser>
     public static ParticipantUser Create(
         Id<ParticipantUser> id,
         Id<Conversation> conversationId,
-        Guid userId,
+        Id<UserProfileMarker> userId,
         string? displayName = null,
         string? avatarUrl = null)
     {
@@ -54,7 +53,7 @@ public sealed class ParticipantUser : EntityBase<ParticipantUser>
     public static ParticipantUser Restore(
         Id<ParticipantUser> id,
         Id<Conversation> conversationId,
-        Guid userId,
+        Id<UserProfileMarker> userId,
         string? displayName,
         string? avatarUrl,
         bool isBlocked,

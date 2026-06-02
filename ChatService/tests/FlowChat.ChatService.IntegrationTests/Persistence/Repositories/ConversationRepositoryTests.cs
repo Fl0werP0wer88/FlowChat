@@ -36,7 +36,7 @@ public sealed class ConversationRepositoryTests
 
         result.Should().NotBeNull();
         result!.Id.Should().Be(groupConversation.Id);
-        result.Participants.Select(participant => participant.UserId)
+        result.Participants.Select(participant => participant.UserId.Value)
             .Should().BeEquivalentTo([createdByUserId, memberUserId]);
         duetResult.Should().BeNull();
     }
@@ -61,7 +61,7 @@ public sealed class ConversationRepositoryTests
             .SingleAsync(x => x.Id == conversation.Id);
         var persistedMapping = await context.DuetConversations.SingleAsync();
 
-        persistedConversation.Participants.Select(participant => participant.UserId)
+        persistedConversation.Participants.Select(participant => participant.UserId.Value)
             .Should().BeEquivalentTo([requestingUserId, partnerUserId]);
         persistedMapping.ConversationId.Should().Be(conversation.Id);
     }

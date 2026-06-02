@@ -13,7 +13,7 @@ public sealed class DuetConversationWriteRepository(AppDbContext dbContext)
         CancellationToken cancellationToken = default)
     {
         var (userId1, userId2) = conversation.GetParticipantPair();
-        var (first, second) = DuetConversationUserPair.Normalize(userId1, userId2);
+        var (first, second) = DuetConversationUserPair.Normalize(userId1.Value, userId2.Value);
 
         await DbContext.Set<DuetConversation>().AddAsync(conversation, cancellationToken);
 

@@ -8,6 +8,7 @@ using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
 using MediatR;
 using NotificationEntity = FlowChat.NotificationService.Domain.Entities.Notification.Notification;
+using UserProfileMarker = FlowChat.NotificationService.Domain.Entities.UserProfiles.UserProfile;
 
 namespace FlowChat.NotificationService.Application.Features.Notification.Commands.UserEmailVerificationRequested;
 
@@ -42,7 +43,7 @@ public sealed class UserEmailVerificationRequestedCommandHandler
 
         _notification = NotificationEntity.CreateEmailVerification(
             Id<NotificationEntity>.New(),
-            request.UserId,
+            Id<UserProfileMarker>.FromGuid(request.UserId),
             emailAddress,
             displayName,
             notificationBody,

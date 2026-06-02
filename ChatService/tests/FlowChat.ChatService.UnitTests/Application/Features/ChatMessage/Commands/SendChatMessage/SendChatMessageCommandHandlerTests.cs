@@ -115,8 +115,8 @@ public sealed class SendChatMessageCommandHandlerTests
         result.Value.MessageId.Should().Be(persistedMessage!.Id.Value);
         result.Value.SentAtUtc.Should().BeCloseTo(DateTimeOffset.UtcNow, TimeSpan.FromSeconds(5));
         persistedMessage.ConversationId.Value.Should().Be(conversationId);
-        persistedMessage.SenderUserId.Should().Be(senderId);
-        persistedMessage.RecipientUserIds.Should().BeEquivalentTo(new[] { recipientId });
+        persistedMessage.SenderUserId.Value.Should().Be(senderId);
+        persistedMessage.RecipientUserIds.Select(x => x.Value).Should().BeEquivalentTo([recipientId]);
         dispatchedEvents.Should().ContainSingle()
             .Which.Should().BeOfType<ChatMessageSentDomainEvent>();
     }

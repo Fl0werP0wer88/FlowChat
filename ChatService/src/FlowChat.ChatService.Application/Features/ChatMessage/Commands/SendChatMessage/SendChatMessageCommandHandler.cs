@@ -5,6 +5,7 @@ using FlowChat.ChatService.Application.Contracts.Persistence;
 using FlowChat.Core.Results;
 using FlowChat.Shared.Domain;
 using ChatMessageAggregate = FlowChat.ChatService.Domain.Entities.ChatMessage.ChatMessage;
+using UserProfileMarker = FlowChat.ChatService.Domain.Entities.UserProfiles.UserProfile;
 
 namespace FlowChat.ChatService.Application.Features.ChatMessage.Commands.SendChatMessage;
 
@@ -49,10 +50,10 @@ public sealed class SendChatMessageCommandHandler
         _chatMessage = ChatMessageAggregate.Create(
             Id<ChatMessageAggregate>.FromGuid(request.Id),
             Id<FlowChat.ChatService.Domain.Entities.Conversation.Conversation>.FromGuid(request.ConversationId),
-            request.SenderUserId,
+            Id<UserProfileMarker>.FromGuid(request.SenderUserId),
             request.SenderDisplayName!.Trim(),
             request.Text!.Trim(),
-            recipientUserIds);
+            recipientUserIds.Select(Id<UserProfileMarker>.FromGuid));
 
         await _chatMessageRepository.AddAsync(_chatMessage, cancellationToken);
 
