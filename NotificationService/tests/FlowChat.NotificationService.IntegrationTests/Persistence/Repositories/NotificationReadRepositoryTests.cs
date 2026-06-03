@@ -29,7 +29,8 @@ public sealed class NotificationReadRepositoryTests : IDisposable
     private async Task<NotificationReadEntity> SeedNotificationAsync(
         Guid? userId = null,
         NotificationType type = NotificationType.EmailVerification,
-        string? sourceMessageKey = null)
+        string? sourceMessageKey = null,
+        DateTimeOffset? deletedAt = null)
     {
         var notification = new NotificationReadEntity
         {
@@ -41,7 +42,8 @@ public sealed class NotificationReadRepositoryTests : IDisposable
             Type = type,
             Status = NotificationStatus.Pending,
             SourceMessageKey = sourceMessageKey,
-            CreatedAtUtc = DateTimeOffset.UtcNow
+            CreatedAtUtc = DateTimeOffset.UtcNow,
+            DeletedAt = deletedAt
         };
 
         _dbContext.NotificationReads.Add(notification);
@@ -156,6 +158,17 @@ public sealed class NotificationReadRepositoryTests : IDisposable
         var result = await _repository.GetRecentAsync();
 
         result.Should().HaveCount(2);
+    }
+
+    [Fact]
+    public async Task GetRecentAsync_WhenNotificationIsDeleted_DoesNotReturnDeletedNotification()
+    {
+        await SeedNotificationAsync();
+        await SeedNotificationAsync(deletedAt: new DateTimeOffset(2026, 4, 24, 12, 0, 0, TimeSpan.Zero));
+
+        var result = await _repository.GetRecentAsync();
+
+        result.Should().ContainSingle();
     }
 
     [Fact]

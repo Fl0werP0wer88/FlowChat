@@ -52,6 +52,8 @@ public sealed class ParticipantUserConfiguration : IEntityTypeConfiguration<Part
         builder.Property(x => x.LastModifiedAtUtc)
             .HasUtcDateTimeOffsetConversion();
 
+        builder.Property<DateTimeOffset?>("DeletedAt");
+
         builder.HasIndex(x => new { x.ConversationId, x.UserId })
             .IsUnique();
     }

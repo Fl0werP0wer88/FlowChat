@@ -1,10 +1,11 @@
 using FlowChat.ChatService.Application.Contracts.Persistence;
 using FlowChat.ChatService.Application.Features.Conversation.Dtos;
+using FlowChat.Shared.Persistance;
 using Microsoft.EntityFrameworkCore;
 
 namespace FlowChat.ChatService.Persistence.Repositories;
 
-public sealed class DuetConversationReadRepository(AppDbContext dbContext) : IDuetConversationReadRepository
+public sealed class DuetConversationReadRepository(AppDbContext dbContext) : ReadRepositoryBase, IDuetConversationReadRepository
 {
     public async Task<Guid?> FindConversationIdAsync(
         Guid userId1,
@@ -48,11 +49,11 @@ public sealed class DuetConversationReadRepository(AppDbContext dbContext) : IDu
         var (first, second) = DuetConversationUserPair.Normalize(requestingUserId, partnerUserId);
 
         var rawRows = await (
-            from duet in dbContext.DuetConversationReads.AsNoTracking()
+            from duet in Active(dbContext.DuetConversationReads)
             where duet.FirstUserId == first && duet.SecondUserId == second
-            join conversation in dbContext.ConversationReads.AsNoTracking()
+            join conversation in Active(dbContext.ConversationReads)
                 on duet.ConversationId equals conversation.Id
-            join participant in dbContext.ParticipantUserReads.AsNoTracking()
+            join participant in Active(dbContext.ParticipantUserReads)
                 on conversation.Id equals participant.ConversationId
             join profile in dbContext.UserProfileProjections.AsNoTracking()
                     .Where(x => !x.IsDeleted)

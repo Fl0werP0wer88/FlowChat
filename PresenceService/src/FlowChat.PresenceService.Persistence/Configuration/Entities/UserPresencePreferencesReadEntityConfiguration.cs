@@ -13,5 +13,7 @@ public sealed class UserPresencePreferencesReadEntityConfiguration : IEntityType
 
         builder.Property(x => x.UserId)
             .HasColumnName("UserId");
+
+        builder.Property(x => x.DeletedAt);
     }
 }

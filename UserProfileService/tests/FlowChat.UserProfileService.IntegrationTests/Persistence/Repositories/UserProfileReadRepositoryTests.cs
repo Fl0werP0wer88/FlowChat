@@ -117,6 +117,42 @@ public sealed class UserProfileReadRepositoryTests
     }
 
     [Fact]
+    public async Task SearchAsync_WhenProfileIsDeleted_DoesNotReturnDeletedProfile()
+    {
+        await using var connection = new SqliteConnection("Data Source=:memory:");
+        await connection.OpenAsync();
+
+        await using (var seedContext = CreateDbContext(connection))
+        {
+            var activeProfile = UserProfile.Create(
+                Id<UserProfile>.New(),
+                "jdoe",
+                EmailAddress.Create("jane@example.com"),
+                firstName: "Jane",
+                lastName: "Doe");
+
+            var deletedProfile = UserProfile.Create(
+                Id<UserProfile>.New(),
+                "jdeleted",
+                EmailAddress.Create("deleted@example.com"),
+                firstName: "Jane",
+                lastName: "Deleted");
+            deletedProfile.Delete(UtcDateTimeOffset.Create(new DateTimeOffset(2026, 4, 24, 12, 0, 0, TimeSpan.Zero)));
+
+            seedContext.UserProfiles.AddRange(activeProfile, deletedProfile);
+            await seedContext.SaveChangesAsync();
+        }
+
+        await using var readContext = CreateDbContext(connection);
+        var repository = new UserProfileReadRepository(readContext);
+
+        var result = await repository.SearchAsync("Jane", null, null, CancellationToken.None);
+
+        result.Should().ContainSingle();
+        result[0].FriendlyUserId.Should().Be("jdoe");
+    }
+
+    [Fact]
     public async Task GetByFriendlyUserIdAsync_WhenFriendlyUserIdHasDifferentCasing_ReturnsProjectedProfile()
     {
         await using var connection = new SqliteConnection("Data Source=:memory:");
@@ -195,6 +231,36 @@ public sealed class UserProfileReadRepositoryTests
         var result = await repository.EmailAddressExistsAsync(" john@example.com ", CancellationToken.None);
 
         result.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task EmailAddressExistsAsync_WhenEmailIsDeleted_ReturnsFalse()
+    {
+        await using var connection = new SqliteConnection("Data Source=:memory:");
+        await connection.OpenAsync();
+
+        await using (var seedContext = CreateDbContext(connection))
+        {
+            var profile = UserProfile.Create(
+                Id<UserProfile>.New(),
+                "jdoe",
+                EmailAddress.Create("john@example.com"));
+
+            seedContext.UserProfiles.Add(profile);
+            await seedContext.SaveChangesAsync();
+
+            var email = profile.Emails.Single();
+            seedContext.Entry(email).Property<DateTimeOffset?>("DeletedAt").CurrentValue =
+                new DateTimeOffset(2026, 4, 24, 12, 0, 0, TimeSpan.Zero);
+            await seedContext.SaveChangesAsync();
+        }
+
+        await using var readContext = CreateDbContext(connection);
+        var repository = new UserProfileReadRepository(readContext);
+
+        var result = await repository.EmailAddressExistsAsync(" john@example.com ", CancellationToken.None);
+
+        result.Should().BeFalse();
     }
 
     private static AppDbContext CreateDbContext(SqliteConnection connection)

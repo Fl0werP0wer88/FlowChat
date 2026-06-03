@@ -14,5 +14,6 @@ public sealed class DuetConversationReadEntityConfiguration : IEntityTypeConfigu
         builder.Property(x => x.FirstUserId);
         builder.Property(x => x.SecondUserId);
         builder.Property(x => x.ConversationId);
+        builder.Property(x => x.DeletedAt);
     }
 }

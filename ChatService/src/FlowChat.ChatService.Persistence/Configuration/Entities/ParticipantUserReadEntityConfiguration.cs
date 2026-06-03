@@ -16,5 +16,6 @@ public sealed class ParticipantUserReadEntityConfiguration : IEntityTypeConfigur
         builder.Property(x => x.UserId);
         builder.Property(x => x.DisplayName);
         builder.Property(x => x.AvatarUrl);
+        builder.Property(x => x.DeletedAt);
     }
 }

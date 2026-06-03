@@ -49,6 +49,8 @@ public class EmailConfiguration : IEntityTypeConfiguration<Email>
         builder.Property(x => x.LastModifiedAtUtc)
             .HasUtcDateTimeOffsetConversion();
 
+        builder.Property<DateTimeOffset?>("DeletedAt");
+
         builder.HasIndex(x => x.Address)
             .IsUnique()
             .HasDatabaseName("uq_email_address");

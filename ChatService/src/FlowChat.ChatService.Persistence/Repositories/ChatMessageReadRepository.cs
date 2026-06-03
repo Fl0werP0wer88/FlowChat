@@ -1,11 +1,12 @@
 using FlowChat.ChatService.Application.Contracts.Persistence;
 using FlowChat.ChatService.Application.Features.ChatMessage.Dtos;
 using FlowChat.ChatService.Persistence.Entities;
+using FlowChat.Shared.Persistance;
 using Microsoft.EntityFrameworkCore;
 
 namespace FlowChat.ChatService.Persistence.Repositories;
 
-public sealed class ChatMessageReadRepository(AppDbContext dbContext) : IChatMessageReadRepository
+public sealed class ChatMessageReadRepository(AppDbContext dbContext) : ReadRepositoryBase, IChatMessageReadRepository
 {
     public async Task<ConversationMessagesPageDto> GetPageBeforeAsync(
         Guid conversationId,
@@ -14,8 +15,7 @@ public sealed class ChatMessageReadRepository(AppDbContext dbContext) : IChatMes
         Guid? beforeMessageId,
         CancellationToken cancellationToken = default)
     {
-        var query = dbContext.ChatMessageReads
-            .AsNoTracking()
+        var query = Active(dbContext.ChatMessageReads)
             .Where(message => message.ConversationId == conversationId);
 
         List<ChatMessageReadEntity> rows;

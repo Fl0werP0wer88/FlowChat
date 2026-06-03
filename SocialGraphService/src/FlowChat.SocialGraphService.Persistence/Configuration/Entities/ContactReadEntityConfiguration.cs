@@ -10,5 +10,7 @@ public sealed class ContactReadEntityConfiguration : IEntityTypeConfiguration<Co
     {
         builder.HasKey(x => x.Id);
         builder.ToView("Contacts");
+
+        builder.Property(x => x.DeletedAt);
     }
 }

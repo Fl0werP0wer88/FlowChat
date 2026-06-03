@@ -1,4 +1,5 @@
 using FlowChat.Shared.Domain.ValueObjects;
+using FlowChat.Shared.Persistance;
 using FlowChat.UserProfileService.Application.Contracts.Persistence;
 using FlowChat.UserProfileService.Application.Features.UserProfile.Queries.UserProfile.Model;
 using FlowChat.UserProfileService.Persistence.Entities;
@@ -6,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FlowChat.UserProfileService.Persistence.Repositories;
 
-public sealed class UserProfileReadRepository(AppDbContext dbContext) : IUserProfileReadRepository
+public sealed class UserProfileReadRepository(AppDbContext dbContext) : ReadRepositoryBase, IUserProfileReadRepository
 {
     public async Task<UserProfileDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
@@ -66,8 +67,7 @@ public sealed class UserProfileReadRepository(AppDbContext dbContext) : IUserPro
             return null;
         }
 
-        var userProfileId = await dbContext.EmailReads
-            .AsNoTracking()
+        var userProfileId = await Active(dbContext.EmailReads)
             .Where(x => x.Address == normalizedEmail.Value)
             .Select(x => (Guid?)x.UserProfileId)
             .FirstOrDefaultAsync(cancellationToken);
@@ -92,8 +92,7 @@ public sealed class UserProfileReadRepository(AppDbContext dbContext) : IUserPro
     {
         var normalizedEmailAddress = EmailAddress.Create(emailAddress);
 
-        return await dbContext.EmailReads
-            .AsNoTracking()
+        return await Active(dbContext.EmailReads)
             .AnyAsync(x => x.Address == normalizedEmailAddress.Value, cancellationToken);
     }
 
@@ -116,7 +115,7 @@ public sealed class UserProfileReadRepository(AppDbContext dbContext) : IUserPro
 
     private IQueryable<UserProfileReadEntity> Query()
     {
-        return dbContext.UserProfileReads.AsNoTracking();
+        return Active(dbContext.UserProfileReads);
     }
 
     private async Task<IReadOnlyList<UserProfileDto>> MapToDtosAsync(
@@ -152,8 +151,7 @@ public sealed class UserProfileReadRepository(AppDbContext dbContext) : IUserPro
         IReadOnlyCollection<Guid> userProfileIds,
         CancellationToken cancellationToken)
     {
-        return (await dbContext.EmailReads
-                .AsNoTracking()
+        return (await Active(dbContext.EmailReads)
                 .Where(email => userProfileIds.Contains(email.UserProfileId))
                 .Select(email => new
                 {
@@ -175,8 +173,7 @@ public sealed class UserProfileReadRepository(AppDbContext dbContext) : IUserPro
         IReadOnlyCollection<Guid> userProfileIds,
         CancellationToken cancellationToken)
     {
-        return (await dbContext.PhoneReads
-                .AsNoTracking()
+        return (await Active(dbContext.PhoneReads)
                 .Where(phone => userProfileIds.Contains(phone.UserProfileId))
                 .Select(phone => new
                 {

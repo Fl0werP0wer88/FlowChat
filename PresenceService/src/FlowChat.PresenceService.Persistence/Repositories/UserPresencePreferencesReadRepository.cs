@@ -2,12 +2,13 @@ using FlowChat.Core.Domain;
 using FlowChat.PresenceService.Application.Contracts.Persistence;
 using FlowChat.PresenceService.Application.Features.Presence;
 using FlowChat.PresenceService.Persistence.Entities;
+using FlowChat.Shared.Persistance;
 using Microsoft.EntityFrameworkCore;
 
 namespace FlowChat.PresenceService.Persistence.Repositories;
 
 public sealed class UserPresencePreferencesReadRepository(AppDbContext dbContext)
-    : IUserPresencePreferencesReadRepository
+    : ReadRepositoryBase, IUserPresencePreferencesReadRepository
 {
     private readonly AppDbContext _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
 
@@ -40,8 +41,7 @@ public sealed class UserPresencePreferencesReadRepository(AppDbContext dbContext
 
     private IQueryable<UserPresencePreferencesReadEntity> Query()
     {
-        return _dbContext.UserPresencePreferenceReads
-            .AsNoTracking();
+        return Active(_dbContext.UserPresencePreferenceReads);
     }
 
     private static UserPresencePreferencesDto MapToDto(UserPresencePreferencesReadEntity entity)

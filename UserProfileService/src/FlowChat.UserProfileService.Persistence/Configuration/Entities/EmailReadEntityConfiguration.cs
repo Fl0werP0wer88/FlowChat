@@ -10,5 +10,7 @@ public sealed class EmailReadEntityConfiguration : IEntityTypeConfiguration<Emai
     {
         builder.HasKey(x => x.Id);
         builder.ToView("Emails");
+
+        builder.Property(x => x.DeletedAt);
     }
 }

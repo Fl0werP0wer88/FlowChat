@@ -13,5 +13,7 @@ public sealed class UserProfileReadEntityConfiguration : IEntityTypeConfiguratio
 
         builder.Property(x => x.UserName)
             .HasColumnName("UserName");
+
+        builder.Property(x => x.DeletedAt);
     }
 }

@@ -11,6 +11,8 @@ public sealed class NotificationReadEntityConfiguration : IEntityTypeConfigurati
         builder.HasKey(x => x.Id);
         builder.ToView("Notifications");
 
+        builder.Property(x => x.DeletedAt);
+
         builder.Property(x => x.Type)
             .HasConversion<string>();
 

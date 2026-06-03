@@ -1,12 +1,13 @@
 using FlowChat.SocialGraphService.Application.Contracts.Persistence;
 using FlowChat.SocialGraphService.Application.Features.Contact.Queries.GetContactsForUser;
 using FlowChat.SocialGraphService.Persistence.Entities;
+using FlowChat.Shared.Persistance;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 
 namespace FlowChat.SocialGraphService.Persistence.Repositories;
 
-public sealed class ContactReadRepository(AppDbContext dbContext) : IContactReadRepository
+public sealed class ContactReadRepository(AppDbContext dbContext) : ReadRepositoryBase, IContactReadRepository
 {
     private static readonly Expression<Func<ContactReadEntity, ContactDto>> ContactDtoProjection = x => new(
         x.Id,
@@ -45,6 +46,5 @@ public sealed class ContactReadRepository(AppDbContext dbContext) : IContactRead
             .ToListAsync(cancellationToken);
     }
 
-    private IQueryable<ContactReadEntity> Query() => dbContext.ContactReads.AsNoTracking();
+    private IQueryable<ContactReadEntity> Query() => Active(dbContext.ContactReads);
 }
-

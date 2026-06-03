@@ -2,12 +2,13 @@ using FlowChat.NotificationService.Application.Contracts.Persistence;
 using FlowChat.NotificationService.Application.Features.Notification.Queries.GetNotifications;
 using FlowChat.NotificationService.Domain.Enums;
 using FlowChat.NotificationService.Persistence.Entities;
+using FlowChat.Shared.Persistance;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 
 namespace FlowChat.NotificationService.Persistence.Repositories;
 
-public sealed class NotificationReadRepository(AppDbContext dbContext) : INotificationReadRepository
+public sealed class NotificationReadRepository(AppDbContext dbContext) : ReadRepositoryBase, INotificationReadRepository
 {
     private static readonly Expression<Func<NotificationReadEntity, NotificationDto>> NotificationDtoProjection = x => new(
         x.Id,
@@ -85,6 +86,5 @@ public sealed class NotificationReadRepository(AppDbContext dbContext) : INotifi
             .ToListAsync(cancellationToken);
     }
 
-    private IQueryable<NotificationReadEntity> Query() => dbContext.NotificationReads.AsNoTracking();
+    private IQueryable<NotificationReadEntity> Query() => Active(dbContext.NotificationReads);
 }
-

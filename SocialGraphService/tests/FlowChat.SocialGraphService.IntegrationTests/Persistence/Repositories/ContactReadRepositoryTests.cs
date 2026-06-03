@@ -48,6 +48,15 @@ public sealed class ContactReadRepositoryTests
                     ContactUserId = Guid.NewGuid(),
                     DisplayName = "Ignored Contact",
                     CreatedAtUtc = new DateTimeOffset(2026, 4, 24, 10, 0, 0, TimeSpan.Zero)
+                },
+                new ContactReadEntity
+                {
+                    Id = Guid.NewGuid(),
+                    OwnerUserId = ownerUserId,
+                    ContactUserId = Guid.NewGuid(),
+                    DisplayName = "Deleted Contact",
+                    CreatedAtUtc = new DateTimeOffset(2026, 4, 24, 11, 0, 0, TimeSpan.Zero),
+                    DeletedAt = new DateTimeOffset(2026, 4, 24, 12, 0, 0, TimeSpan.Zero)
                 });
             await seedContext.SaveChangesAsync();
         }

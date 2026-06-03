@@ -1,10 +1,11 @@
 using FlowChat.ChatService.Application.Contracts.Persistence;
 using FlowChat.ChatService.Application.Features.Conversation.Dtos;
+using FlowChat.Shared.Persistance;
 using Microsoft.EntityFrameworkCore;
 
 namespace FlowChat.ChatService.Persistence.Repositories;
 
-public sealed class GroupConversationReadRepository(AppDbContext dbContext) : IGroupConversationReadRepository
+public sealed class GroupConversationReadRepository(AppDbContext dbContext) : ReadRepositoryBase, IGroupConversationReadRepository
 {
     private const int GroupConversationType = 2;
 
@@ -13,9 +14,9 @@ public sealed class GroupConversationReadRepository(AppDbContext dbContext) : IG
         CancellationToken cancellationToken = default)
     {
         var rawRows = await (
-            from conversation in dbContext.ConversationReads.AsNoTracking()
+            from conversation in Active(dbContext.ConversationReads)
             where conversation.Id == conversationId && conversation.Type == GroupConversationType
-            join participant in dbContext.ParticipantUserReads.AsNoTracking()
+            join participant in Active(dbContext.ParticipantUserReads)
                 on conversation.Id equals participant.ConversationId
             join profile in dbContext.UserProfileProjections.AsNoTracking()
                     .Where(x => !x.IsDeleted)
@@ -60,16 +61,18 @@ public sealed class GroupConversationReadRepository(AppDbContext dbContext) : IG
         Guid participantUserId,
         CancellationToken cancellationToken = default)
     {
+        var activeParticipants = Active(dbContext.ParticipantUserReads);
+
         return await (
-            from conversation in dbContext.ConversationReads.AsNoTracking()
-            join participant in dbContext.ParticipantUserReads.AsNoTracking()
+            from conversation in Active(dbContext.ConversationReads)
+            join participant in activeParticipants
                 on conversation.Id equals participant.ConversationId
             where conversation.Type == GroupConversationType
                   && participant.UserId == participantUserId
             select new GroupConversationSummaryDto(
                 conversation.Id,
                 conversation.Name!,
-                dbContext.ParticipantUserReads.Count(x => x.ConversationId == conversation.Id)))
+                activeParticipants.Count(x => x.ConversationId == conversation.Id)))
             .ToListAsync(cancellationToken);
     }
 

@@ -10,5 +10,7 @@ public sealed class PhoneReadEntityConfiguration : IEntityTypeConfiguration<Phon
     {
         builder.HasKey(x => x.Id);
         builder.ToView("Phones");
+
+        builder.Property(x => x.DeletedAt);
     }
 }

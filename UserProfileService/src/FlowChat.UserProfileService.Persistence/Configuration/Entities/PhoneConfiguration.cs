@@ -45,6 +45,8 @@ public class PhoneConfiguration : IEntityTypeConfiguration<Phone>
         builder.Property(x => x.LastModifiedAtUtc)
             .HasUtcDateTimeOffsetConversion();
 
+        builder.Property<DateTimeOffset?>("DeletedAt");
+
         builder.HasIndex(x => new { x.UserProfileId, x.Number })
             .IsUnique()
             .HasDatabaseName("uq_phone_user_profile_number");

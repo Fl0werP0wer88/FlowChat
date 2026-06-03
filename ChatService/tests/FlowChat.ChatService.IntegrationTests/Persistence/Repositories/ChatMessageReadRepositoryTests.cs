@@ -18,11 +18,13 @@ public sealed class ChatMessageReadRepositoryTests
         var oldest = CreateMessage(conversationId, senderId, "Oldest", 8);
         var middle = CreateMessage(conversationId, recipientId, "Middle", 9);
         var newest = CreateMessage(conversationId, senderId, "Newest", 10);
+        var deleted = CreateMessage(conversationId, senderId, "Deleted", 11);
+        deleted.DeletedAt = new DateTimeOffset(2026, 4, 24, 12, 0, 0, TimeSpan.Zero);
         var databaseName = Guid.NewGuid().ToString();
 
         await using (var seedContext = CreateDbContext(databaseName))
         {
-            seedContext.ChatMessageReads.AddRange(oldest, middle, newest);
+            seedContext.ChatMessageReads.AddRange(oldest, middle, newest, deleted);
             await seedContext.SaveChangesAsync();
         }
 
