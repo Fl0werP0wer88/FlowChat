@@ -121,6 +121,9 @@ public sealed class WriteRepositoryBaseConcurrencyTests : IDisposable
             var utcDateTimeOffsetConverter = new ValueConverter<UtcDateTimeOffset, DateTimeOffset>(
                 value => value.Value,
                 value => UtcDateTimeOffset.Create(value));
+            var nullableUtcDateTimeOffsetConverter = new ValueConverter<UtcDateTimeOffset?, DateTimeOffset?>(
+                value => value == null ? null : value.Value,
+                value => value == null ? null : UtcDateTimeOffset.Create(value.Value));
 
             modelBuilder.Entity<TestAggregate>(b =>
             {
@@ -131,6 +134,8 @@ public sealed class WriteRepositoryBaseConcurrencyTests : IDisposable
                 b.Property(x => x.Version).IsConcurrencyToken();
                 b.Property(x => x.CreatedAtUtc).HasConversion(utcDateTimeOffsetConverter);
                 b.Property(x => x.LastModifiedAtUtc).HasConversion(utcDateTimeOffsetConverter);
+                b.Property(x => x.DeletedAt).HasConversion(nullableUtcDateTimeOffsetConverter);
+                b.Ignore(x => x.IsDeleted);
             });
         }
     }

@@ -1,6 +1,6 @@
 namespace FlowChat.Shared.Domain;
 
-public interface IAggregateRoot : IVersionedEntity
+public interface IAggregateRoot : IVersionedEntity, ISoftDeletable
 {
     IReadOnlyCollection<IDomainEvent> DomainEvents { get; }
 

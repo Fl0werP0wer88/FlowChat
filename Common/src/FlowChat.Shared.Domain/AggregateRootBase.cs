@@ -1,3 +1,5 @@
+using FlowChat.Shared.Domain.ValueObjects;
+
 namespace FlowChat.Shared.Domain;
 
 public abstract class AggregateRootBase<TDomainEntity> : EntityBase<TDomainEntity>, IAggregateRoot
@@ -6,6 +8,8 @@ public abstract class AggregateRootBase<TDomainEntity> : EntityBase<TDomainEntit
     private readonly List<IDomainEvent> _domainEvents = [];
 
     public int Version { get; private set; } = 1;
+    public UtcDateTimeOffset? DeletedAt { get; private set; }
+    public bool IsDeleted => DeletedAt is not null;
 
     public IReadOnlyCollection<IDomainEvent> DomainEvents => _domainEvents.AsReadOnly();
 
@@ -23,6 +27,18 @@ public abstract class AggregateRootBase<TDomainEntity> : EntityBase<TDomainEntit
     public void IncrementVersion()
     {
         Version++;
+    }
+
+    public void Delete(UtcDateTimeOffset deletedAt)
+    {
+        ArgumentNullException.ThrowIfNull(deletedAt);
+
+        if (DeletedAt is not null)
+        {
+            return;
+        }
+
+        DeletedAt = deletedAt;
     }
 
     protected void AddDomainEvent(IDomainEvent domainEvent)

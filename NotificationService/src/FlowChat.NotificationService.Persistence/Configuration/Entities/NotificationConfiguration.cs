@@ -65,6 +65,10 @@ public sealed class NotificationConfiguration : IEntityTypeConfiguration<Notific
         builder.Property(x => x.SentAtUtc)
             .HasNullableUtcDateTimeOffsetConversion();
 
+        builder.Property(x => x.DeletedAt)
+            .HasNullableUtcDateTimeOffsetConversion();
+
+        builder.Ignore(x => x.IsDeleted);
         builder.Ignore(x => x.DomainEvents);
 
         builder.HasIndex(x => x.UserId);

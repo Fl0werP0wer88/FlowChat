@@ -36,7 +36,11 @@ public sealed class UserPresencePreferencesConfiguration : IEntityTypeConfigurat
         builder.Property(x => x.LastModifiedAtUtc)
             .HasUtcDateTimeOffsetConversion();
 
+        builder.Property(x => x.DeletedAt)
+            .HasNullableUtcDateTimeOffsetConversion();
+
         builder.Ignore(x => x.UserId);
+        builder.Ignore(x => x.IsDeleted);
         builder.Ignore(x => x.DomainEvents);
     }
 }

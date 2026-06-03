@@ -70,6 +70,10 @@ public class ContactConfiguration : IEntityTypeConfiguration<Contact>
         builder.Property(x => x.LastModifiedAtUtc)
             .HasUtcDateTimeOffsetConversion();
 
+        builder.Property(x => x.DeletedAt)
+            .HasNullableUtcDateTimeOffsetConversion();
+
+        builder.Ignore(x => x.IsDeleted);
         builder.Ignore(x => x.DomainEvents);
 
         builder.HasIndex(x => new { x.OwnerUserId, x.ContactUserId })
