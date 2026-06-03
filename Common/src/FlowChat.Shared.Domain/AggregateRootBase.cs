@@ -31,27 +31,6 @@ public abstract class AggregateRootBase<TDomainEntity> : EntityBase<TDomainEntit
         _domainEvents.Add(domainEvent);
     }
 
-    protected void MarkAggregateStateChanged<TSnapshot>(string aggregateType, Func<TSnapshot> snapshotFactory)
-    {
-        ArgumentException.ThrowIfNullOrWhiteSpace(aggregateType);
-        ArgumentNullException.ThrowIfNull(snapshotFactory);
-
-        // Replace any existing snapshot event for this aggregate so only the latest state
-        // is published per transaction — multiple mutations in one operation emit one snapshot.
-        var existingEvent = _domainEvents.FirstOrDefault(
-            domainEvent => domainEvent is IAggregateStateChangedDomainEvent && domainEvent.AggregateId == Id.Value);
-
-        if (existingEvent is not null)
-        {
-            _domainEvents.Remove(existingEvent);
-        }
-
-        _domainEvents.Add(new AggregateStateChangedDomainEvent<TDomainEntity, TSnapshot>(
-            Id,
-            aggregateType,
-            snapshotFactory()));
-    }
-
     protected void RemoveDomainEvent(IDomainEvent domainEvent)
     {
         ArgumentNullException.ThrowIfNull(domainEvent);

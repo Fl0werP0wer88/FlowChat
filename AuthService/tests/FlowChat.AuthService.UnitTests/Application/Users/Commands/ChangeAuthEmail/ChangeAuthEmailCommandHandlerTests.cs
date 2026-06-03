@@ -59,18 +59,12 @@ public sealed class ChangeAuthEmailCommandHandlerTests
     public async Task Handle_WhenAccountExists_ChangesEmailAndRotatesSecurityStamp()
     {
         var account = Account.Restore(Guid.NewGuid(), "flower", EmailAddress.Create("flower@example.com"), "hash", "stamp", 0, true);
-        List<IDomainEvent> dispatchedEvents = [];
-
         _accountRepositoryMock
             .Setup(x => x.GetByIdAsync(account.Id.Value, It.IsAny<CancellationToken>()))
             .ReturnsAsync(account);
         _accountRepositoryMock
             .Setup(x => x.GetByEmailAsync(EmailAddress.Create("new@example.com"), It.IsAny<CancellationToken>()))
             .ReturnsAsync((Account?)null);
-        _domainEventDispatcherMock
-            .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<ILocalEvent>>(), It.IsAny<CancellationToken>()))
-            .Callback<IEnumerable<ILocalEvent>, CancellationToken>((events, _) => dispatchedEvents.AddRange(events.OfType<IDomainEvent>()))
-            .Returns(Task.CompletedTask);
 
         var result = await _handler.Handle(
             new ChangeAuthEmailCommand
@@ -84,15 +78,13 @@ public sealed class ChangeAuthEmailCommandHandlerTests
         account.Email.Should().Be(EmailAddress.Create("new@example.com"));
         account.SecurityStamp.Should().Be("new-security-stamp");
         account.IsEmailConfirmed.Should().BeTrue();
-        dispatchedEvents.Should().ContainSingle()
-            .Which.Should().BeOfType<AggregateStateChangedDomainEvent<Account, AccountSnapshot>>().Subject
-            .AggregateState.Should().Be(new AccountSnapshot(
-                account.Id.Value,
-                account.FriendlyUserId.Value,
-                "new@example.com",
-                "new-security-stamp",
-                0,
-                true));
+        _beforeSaveProcessorMock.Verify(
+            x => x.ProcessAsync(
+                It.IsAny<ChangeAuthEmailCommand>(),
+                account,
+                AggregateState.Updated,
+                It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 
     [Fact]

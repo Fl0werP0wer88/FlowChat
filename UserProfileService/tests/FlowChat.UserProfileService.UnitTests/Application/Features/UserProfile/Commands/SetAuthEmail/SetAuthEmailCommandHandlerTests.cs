@@ -80,7 +80,13 @@ public sealed class SetAuthEmailCommandHandlerTests
                 x.UserProfileId == profile.Id &&
                 x.EmailId == secondaryEmail.Id &&
                 x.Address == secondaryEmail.Address);
-        dispatchedEvents.OfType<AggregateStateChangedDomainEvent<UserProfile, UserProfileState>>().Should().BeEmpty();
+        _beforeSaveProcessorMock.Verify(
+            x => x.ProcessAsync(
+                It.IsAny<SetAuthEmailCommand>(),
+                profile,
+                AggregateState.Updated,
+                It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 
     [Fact]

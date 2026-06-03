@@ -7,7 +7,6 @@ using FlowChat.UserProfileService.Application.Contracts.Persistence;
 using FlowChat.UserProfileService.Application.Features.UserProfile.Commands.AddPhone;
 using FlowChat.UserProfileService.Domain.Entities.EmailVerificationRequest;
 using FlowChat.UserProfileService.Domain.Entities.UserProfile;
-using FlowChat.UserProfileService.Domain.Entities.UserProfile.Events;
 
 namespace FlowChat.UserProfileService.UnitTests;
 
@@ -120,7 +119,7 @@ public sealed class AddPhoneCommandHandlerTests
     }
 
     [Fact]
-    public async Task Handle_WithValidNumber_DispatchesDomainEvent()
+    public async Task Handle_WithValidNumber_DispatchesNoDomainEvents()
     {
         var profile = CreateProfile();
         _writeRepositoryMock
@@ -136,7 +135,7 @@ public sealed class AddPhoneCommandHandlerTests
         var result = await SendAsync(new AddPhoneCommand(profile.Id.Value, Guid.NewGuid(), "+48123123123"));
 
         result.IsSuccess.Should().BeTrue();
-        dispatchedEvents.Should().NotBeEmpty();
+        dispatchedEvents.Should().BeEmpty();
     }
 
 }

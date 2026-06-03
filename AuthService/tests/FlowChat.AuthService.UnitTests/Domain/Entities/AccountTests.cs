@@ -8,7 +8,7 @@ namespace FlowChat.AuthService.UnitTests;
 public sealed class AccountTests
 {
     [Fact]
-    public void Create_WithValidData_InitializesStateAndEmitsRegistrationAndSnapshotEvents()
+    public void Create_WithValidData_InitializesStateAndEmitsRegistrationEvent()
     {
         var account = Account.Create(
             Id<Account>.New(),
@@ -27,25 +27,16 @@ public sealed class AccountTests
         account.AccessFailedCount.Should().Be(0);
         account.IsEmailConfirmed.Should().BeFalse();
 
-        account.DomainEvents.OfType<AccountRegisteredDomainEvent>().Should().ContainSingle()
-            .Which.Should().Match<AccountRegisteredDomainEvent>(x =>
+        account.DomainEvents.Should().ContainSingle()
+            .Which.Should().BeOfType<AccountRegisteredDomainEvent>().Subject.Should().Match<AccountRegisteredDomainEvent>(x =>
                 x.FriendlyUserId == "flower"
                 && x.FirstName == "Flower"
                 && x.LastName == "Power"
                 && x.Organization == "FlowChat");
-
-        account.DomainEvents.OfType<AggregateStateChangedDomainEvent<Account, AccountSnapshot>>().Should().ContainSingle()
-            .Which.AggregateState.Should().Be(new AccountSnapshot(
-                account.Id.Value,
-                "flower",
-                "flower@example.com",
-                "security-stamp",
-                0,
-                false));
     }
 
     [Fact]
-    public void ConfirmEmail_WhenEmailNotConfirmed_MarksConfirmedAndEmitsAccountConfirmedAndSnapshotEvents()
+    public void ConfirmEmail_WhenEmailNotConfirmed_MarksConfirmedAndEmitsAccountConfirmedEvent()
     {
         var account = Account.Restore(
             Guid.NewGuid(),
@@ -60,12 +51,10 @@ public sealed class AccountTests
 
         account.IsEmailConfirmed.Should().BeTrue();
         account.DomainEvents.OfType<AccountConfirmedDomainEvent>().Should().ContainSingle();
-        account.DomainEvents.OfType<AggregateStateChangedDomainEvent<Account, AccountSnapshot>>().Should().ContainSingle()
-            .Which.AggregateState.IsEmailConfirmed.Should().BeTrue();
     }
 
     [Fact]
-    public void ChangeAuthEmail_WhenEmailChanges_UpdatesEmailAndSecurityStampAndSnapshot()
+    public void ChangeAuthEmail_WhenEmailChanges_UpdatesEmailAndSecurityStamp()
     {
         var account = Account.Restore(
             Guid.NewGuid(),
@@ -81,18 +70,11 @@ public sealed class AccountTests
         account.Email.Should().Be(EmailAddress.Create("new@example.com"));
         account.SecurityStamp.Should().Be("new-stamp");
         account.IsEmailConfirmed.Should().BeTrue();
-        account.DomainEvents.OfType<AggregateStateChangedDomainEvent<Account, AccountSnapshot>>().Should().ContainSingle()
-            .Which.AggregateState.Should().Be(new AccountSnapshot(
-                account.Id.Value,
-                "flower",
-                "new@example.com",
-                "new-stamp",
-                0,
-                true));
+        account.DomainEvents.Should().BeEmpty();
     }
 
     [Fact]
-    public void RecordFailedLogin_IncrementsFailedCountAndUpdatesSnapshot()
+    public void RecordFailedLogin_IncrementsFailedCount()
     {
         var account = Account.Restore(
             Guid.NewGuid(),
@@ -106,12 +88,11 @@ public sealed class AccountTests
         account.RecordFailedLogin();
 
         account.AccessFailedCount.Should().Be(1);
-        account.DomainEvents.OfType<AggregateStateChangedDomainEvent<Account, AccountSnapshot>>().Should().ContainSingle()
-            .Which.AggregateState.AccessFailedCount.Should().Be(1);
+        account.DomainEvents.Should().BeEmpty();
     }
 
     [Fact]
-    public void ResetFailedLogins_WhenCountIsPositive_ResetsFailedCountAndUpdatesSnapshot()
+    public void ResetFailedLogins_WhenCountIsPositive_ResetsFailedCount()
     {
         var account = Account.Restore(
             Guid.NewGuid(),
@@ -125,12 +106,11 @@ public sealed class AccountTests
         account.ResetFailedLogins();
 
         account.AccessFailedCount.Should().Be(0);
-        account.DomainEvents.OfType<AggregateStateChangedDomainEvent<Account, AccountSnapshot>>().Should().ContainSingle()
-            .Which.AggregateState.AccessFailedCount.Should().Be(0);
+        account.DomainEvents.Should().BeEmpty();
     }
 
     [Fact]
-    public void RotateSecurityStamp_ChangesStampAndUpdatesSnapshot()
+    public void RotateSecurityStamp_ChangesStamp()
     {
         var account = Account.Restore(
             Guid.NewGuid(),
@@ -144,7 +124,6 @@ public sealed class AccountTests
         account.RotateSecurityStamp("new-stamp");
 
         account.SecurityStamp.Should().Be("new-stamp");
-        account.DomainEvents.OfType<AggregateStateChangedDomainEvent<Account, AccountSnapshot>>().Should().ContainSingle()
-            .Which.AggregateState.SecurityStamp.Should().Be("new-stamp");
+        account.DomainEvents.Should().BeEmpty();
     }
 }

@@ -43,12 +43,9 @@ public abstract class AggregateRootCommandHandlerBaseV2<TCommand, TResponse, TAg
             }
 
             aggregateRoot.IncrementVersion();
-            // var snapshot = _mapper.Map<TSnapshot>(aggregateRoot);
-            // var snapshotEvent = new SnapshotApplicationEvent<TSnapshot>(snapshot);
             var domainEvents = aggregateRoot.PopDomainEvents();
             var localEvents = domainEvents
                 .Cast<ILocalEvent>();
-            // .Append(snapshotEvent);
 
             await DispatchLocalEventsAsync(localEvents, cancellationToken);
 

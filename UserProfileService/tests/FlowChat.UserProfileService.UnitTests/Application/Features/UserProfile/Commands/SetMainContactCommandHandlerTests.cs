@@ -129,14 +129,13 @@ public sealed class SetMainContactCommandHandlerTests
         emailChangedEvent.EmailId.Should().Be(secondEmail.Id);
         emailChangedEvent.Address.Should().Be(secondEmail.Address);
 
-        var stateChangedEvent = dispatchedEvents
-            .OfType<AggregateStateChangedDomainEvent<UserProfile, UserProfileState>>()
-            .Should().ContainSingle().Subject;
-        stateChangedEvent.AggregateState.Emails.Should().ContainSingle(x =>
-            x.Id == secondEmail.Id.Value &&
-            x.Address == secondEmail.Address.Value &&
-            x.IsMain &&
-            x.IsConfirmed);
+        _emailBeforeSaveProcessorMock.Verify(
+            x => x.ProcessAsync(
+                It.IsAny<SetMainEmailCommand>(),
+                profile,
+                AggregateState.Updated,
+                It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 
     [Fact]
@@ -252,13 +251,13 @@ public sealed class SetMainContactCommandHandlerTests
         phoneChangedEvent.PhoneId.Should().Be(secondPhone.Id);
         phoneChangedEvent.Number.Should().Be(secondPhone.Number);
 
-        var stateChangedEvent = dispatchedEvents
-            .OfType<AggregateStateChangedDomainEvent<UserProfile, UserProfileState>>()
-            .Should().ContainSingle().Subject;
-        stateChangedEvent.AggregateState.Phones.Should().ContainSingle(x =>
-            x.Id == secondPhone.Id.Value &&
-            x.Number == secondPhone.Number.Value &&
-            x.IsMain);
+        _phoneBeforeSaveProcessorMock.Verify(
+            x => x.ProcessAsync(
+                It.IsAny<SetMainPhoneCommand>(),
+                profile,
+                AggregateState.Updated,
+                It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 
     [Fact]

@@ -48,18 +48,12 @@ public sealed class UpdateProfileCommandHandlerTests
     }
 
     [Fact]
-    public async Task Handle_WhenProfileExists_UpdatesAggregateAndDispatchesAggregateStateChangedEvent()
+    public async Task Handle_WhenProfileExists_UpdatesAggregateAndProcessesProjectionChange()
     {
         var profile = CreateUserProfile();
         _writeRepositoryMock
             .Setup(x => x.GetByIdAsync(profile.Id.Value, It.IsAny<CancellationToken>()))
             .ReturnsAsync(profile);
-
-        List<IDomainEvent> dispatchedEvents = [];
-        _dispatcherMock
-            .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<ILocalEvent>>(), It.IsAny<CancellationToken>()))
-            .Callback<IEnumerable<ILocalEvent>, CancellationToken>((events, _) => dispatchedEvents.AddRange(events.OfType<IDomainEvent>()))
-            .Returns(Task.CompletedTask);
 
         var result = await SendAsync(new UpdateProfileCommand(
             profile.Id.Value,
@@ -78,16 +72,13 @@ public sealed class UpdateProfileCommandHandlerTests
         profile.AvatarUrl.Should().Be("https://cdn.example/avatar.png");
         profile.Bio.Should().Be("about me");
         profile.IsActive.Should().BeFalse();
-
-        var stateChangedEvent = dispatchedEvents
-            .OfType<AggregateStateChangedDomainEvent<UserProfile, UserProfileState>>()
-            .Should().ContainSingle().Subject;
-        stateChangedEvent.AggregateState.FirstName.Should().Be("John");
-        stateChangedEvent.AggregateState.LastName.Should().Be("Doe");
-        stateChangedEvent.AggregateState.Organization.Should().Be("FlowChat");
-        stateChangedEvent.AggregateState.AvatarUrl.Should().Be("https://cdn.example/avatar.png");
-        stateChangedEvent.AggregateState.Bio.Should().Be("about me");
-        stateChangedEvent.AggregateState.IsActive.Should().BeFalse();
+        _beforeSaveProcessorMock.Verify(
+            x => x.ProcessAsync(
+                It.IsAny<UpdateProfileCommand>(),
+                profile,
+                AggregateState.Updated,
+                It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 
     [Fact]

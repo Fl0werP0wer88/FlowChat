@@ -101,7 +101,7 @@ Domain events are dispatched via `IDomainEventDispatcher` and mapped to integrat
 - In `Application/Features/{Aggregate}/`, event-related files live under `Eventing/`
 - `Eventing/` contains two subfolders: `DomainEvents/` and `ApplicationEvents/`
 - Keep `ApplicationEvents/` present even when it is temporarily empty
-- Under `DomainEvents/`, create one folder per event named after the event/handler stem without the `DomainEventHandler` suffix, for example `UserProfileCreated/` or `UserProfileStateChanged/`
+- Under `DomainEvents/`, create one folder per event named after the event/handler stem without the `DomainEventHandler` suffix, for example `UserProfileCreated/` or `EmailConfirmed/`
 - Store files that belong only to that event inside its folder, such as the `*DomainEventHandler` and any dedicated AutoMapper `Profile` used to map that event to an integration event
 - Split event-to-integration-event AutoMapper mappings into separate profiles per event instead of using one aggregate-wide profile
 - Keep only truly shared eventing infrastructure in `Common/Eventing`, such as base handler classes or reusable abstractions
@@ -130,7 +130,6 @@ The project uses tactical DDD. All domain logic lives in the `Domain` layer. The
 
 ### Domain events
 - Raised inside the aggregate via `AddDomainEvent(...)` as a result of a state change — never from outside
-- `AggregateStateChangedDomainEvent<TAggregate, TSnapshot>` is a special event that carries a snapshot of the aggregate state; call `MarkAggregateStateChanged(...)` after every state-changing operation — it is automatically deduplicated (only the latest snapshot is kept per operation)
 
 ### Domain invariants
 - Enforce inside the entity/aggregate — throw `ArgumentException` for invalid input, `InvalidOperationException` for violated business rules
@@ -181,7 +180,6 @@ The project uses tactical DDD. All domain logic lives in the `Domain` layer. The
   - Always verify `FlowChatResult<T>` explicitly — check `IsSuccess`/`IsFailure` and the returned value or error, not just what was passed to a mock
   - Command/query handler tests should capture and assert dispatched domain events, not just the return value
   - Domain tests should assert domain events via `entity.DomainEvents.OfType<T>()`
-  - Assert `AggregateStateChangedDomainEvent<TAggregate, TSnapshot>` where applicable
   - Do not assert domain events after `Restore(...)` — it intentionally raises none
 
 - **Layer-specific expectations**:

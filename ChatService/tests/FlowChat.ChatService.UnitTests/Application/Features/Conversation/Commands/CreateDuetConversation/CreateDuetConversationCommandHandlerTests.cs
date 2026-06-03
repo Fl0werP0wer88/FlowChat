@@ -10,7 +10,6 @@ using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
 using FluentAssertions;
 using Moq;
-using ConversationAggregate = FlowChat.ChatService.Domain.Entities.Conversation.Conversation;
 
 namespace FlowChat.ChatService.UnitTests.Application.Features.Conversation.Commands.CreateDuetConversation;
 
@@ -47,7 +46,7 @@ public sealed class CreateDuetConversationCommandHandlerTests
     public async Task Handle_WhenDuetConversationDoesNotExist_CreatesConversationAndDispatchesDomainEvents()
     {
         var command = new CreateDuetConversationCommand(Guid.NewGuid(), Guid.NewGuid());
-        ConversationAggregate? persistedConversation = null;
+        DuetConversation? persistedConversation = null;
         List<IDomainEvent> dispatchedEvents = [];
 
         _duetConversationWriteRepositoryMock
@@ -74,8 +73,6 @@ public sealed class CreateDuetConversationCommandHandlerTests
         result.Value.Participants.Select(x => x.UserId).Should().Equal(command.RequestingUserId, command.PartnerUserId);
         result.Value.Participants.Select(x => x.ParticipantUserId).Should().Equal(command.RequestingUserId, command.PartnerUserId);
         dispatchedEvents.Should().ContainSingle(x => x is ConversationCreatedDomainEvent);
-        dispatchedEvents.Should().ContainSingle(
-            x => x is AggregateStateChangedDomainEvent<ConversationAggregate, ConversationSnapshot>);
         _duetConversationWriteRepositoryMock.Verify(
             x => x.AddAsync(It.IsAny<DuetConversation>(), It.IsAny<CancellationToken>()),
             Times.Once);

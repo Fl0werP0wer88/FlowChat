@@ -1,4 +1,3 @@
-using FlowChat.ChatService.Domain.Entities.Conversation.Constants;
 using FlowChat.ChatService.Domain.Entities.Conversation.Events;
 using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
@@ -62,15 +61,6 @@ public abstract class Conversation : AggregateRootBase<Conversation>
             conversation.CreatedByUserId,
             [ .. conversation.Participants.Select(p => p.UserId)]));
 
-        conversation.MarkAggregateStateChanged(
-            ConversationConstants.ConversationAggregateTypeName,
-            () => new ConversationSnapshot(
-                conversation.Id,
-                conversation.Type,
-                conversation.Name,
-                conversation.CreatedByUserId,
-                [ .. conversation.Participants.Select(p => p.UserId)]));
-
         return conversation;
     }
 
@@ -101,15 +91,6 @@ public abstract class Conversation : AggregateRootBase<Conversation>
         _participants.Add(ParticipantUser.Create(Id<ParticipantUser>.New(), Id, participantUserId, displayName, avatarUrl));
 
         AddDomainEvent(new ParticipantAddedDomainEvent(Id, participantUserId));
-
-        MarkAggregateStateChanged(
-            ConversationConstants.ConversationAggregateTypeName,
-            () => new ConversationSnapshot(
-                Id,
-                Type,
-                Name,
-                CreatedByUserId,
-                [ .. Participants.Select(p => p.UserId)]));
     }
 
     private static void ValidateInvariants(ConversationType type, string? name, Id<UserProfileMarker> createdByUserId)
@@ -144,10 +125,3 @@ public abstract class Conversation : AggregateRootBase<Conversation>
         return [.. uniqueIds.Select(userId => ParticipantUser.Create(Id<ParticipantUser>.New(), conversationId, userId))];
     }
 }
-
-public record ConversationSnapshot(
-    Id<Conversation> Id,
-    ConversationType Type,
-    string? Name,
-    Id<UserProfileMarker> CreatedByUserId,
-    IReadOnlyCollection<Id<UserProfileMarker>> ParticipantUserIds);
