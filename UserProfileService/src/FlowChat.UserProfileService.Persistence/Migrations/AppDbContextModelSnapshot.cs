@@ -130,6 +130,9 @@ namespace FlowChat.UserProfileService.Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<bool>("IsAuth")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
@@ -185,6 +188,9 @@ namespace FlowChat.UserProfileService.Persistence.Migrations
                     b.Property<string>("CreatedBy")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<bool>("IsConfirmed")
                         .ValueGeneratedOnAdd()
@@ -303,6 +309,9 @@ namespace FlowChat.UserProfileService.Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<bool>("IsAuth")
                         .HasColumnType("boolean");
 
@@ -329,6 +338,9 @@ namespace FlowChat.UserProfileService.Persistence.Migrations
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<bool>("IsConfirmed")
                         .HasColumnType("boolean");
@@ -363,6 +375,9 @@ namespace FlowChat.UserProfileService.Persistence.Migrations
 
                     b.Property<string>("Bio")
                         .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("FirstName")
                         .HasColumnType("text");

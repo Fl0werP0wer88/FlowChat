@@ -59,7 +59,7 @@ namespace FlowChat.ChatService.Persistence.Migrations
                     LastName = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
                     AvatarUrl = table.Column<string>(type: "character varying(2048)", maxLength: 2048, nullable: true),
                     SourceVersion = table.Column<int>(type: "integer", nullable: false),
-                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
+                    DeletedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     CreatedBy = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: false),
                     CreatedAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     LastModifiedBy = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: false),
@@ -108,7 +108,8 @@ namespace FlowChat.ChatService.Persistence.Migrations
                 {
                     FirstUserId = table.Column<Guid>(type: "uuid", nullable: false),
                     SecondUserId = table.Column<Guid>(type: "uuid", nullable: false),
-                    ConversationId = table.Column<Guid>(type: "uuid", nullable: false)
+                    ConversationId = table.Column<Guid>(type: "uuid", nullable: false),
+                    DeletedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -132,6 +133,7 @@ namespace FlowChat.ChatService.Persistence.Migrations
                     AvatarUrl = table.Column<string>(type: "character varying(2048)", maxLength: 2048, nullable: true),
                     IsBlocked = table.Column<bool>(type: "boolean", nullable: false),
                     JoinedAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    DeletedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     CreatedBy = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
                     CreatedAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     LastModifiedBy = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),

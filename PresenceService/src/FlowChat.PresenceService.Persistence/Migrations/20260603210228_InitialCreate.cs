@@ -18,6 +18,7 @@ namespace FlowChat.PresenceService.Persistence.Migrations
                 {
                     ObservedUserId = table.Column<Guid>(type: "uuid", nullable: false),
                     ObserverUserId = table.Column<Guid>(type: "uuid", nullable: false),
+                    DeletedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     CreatedBy = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
                     CreatedAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     LastModifiedBy = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
