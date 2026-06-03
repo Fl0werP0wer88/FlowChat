@@ -29,6 +29,8 @@ public sealed class ContactObserverProjectionConfiguration : IEntityTypeConfigur
 
         builder.Property(x => x.LastModifiedAtUtc);
 
+        builder.Property(x => x.DeletedAt);
+
         builder.HasIndex(x => x.ObservedUserId)
             .HasDatabaseName("ix_contact_observer_projection_observed_user_id");
     }

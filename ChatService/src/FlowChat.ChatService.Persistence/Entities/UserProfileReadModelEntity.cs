@@ -2,7 +2,7 @@ using FlowChat.Shared.Persistance;
 
 namespace FlowChat.ChatService.Persistence.Entities;
 
-public sealed class UserProfileReadModelEntity : EntityBase
+public sealed class UserProfileReadModelEntity : AuditableReadEntityBase
 {
     public Guid UserId { get; set; }
     public string FriendlyUserId { get; set; } = string.Empty;
@@ -10,5 +10,4 @@ public sealed class UserProfileReadModelEntity : EntityBase
     public string? LastName { get; set; }
     public string? AvatarUrl { get; set; }
     public int SourceVersion { get; set; }
-    public DateTimeOffset? DeletedAt { get; set; }
 }

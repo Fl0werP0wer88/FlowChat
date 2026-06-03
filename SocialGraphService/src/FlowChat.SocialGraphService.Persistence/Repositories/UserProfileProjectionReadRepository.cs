@@ -1,12 +1,14 @@
 using FlowChat.SocialGraphService.Application.Contracts.Persistence;
 using FlowChat.SocialGraphService.Application.Features.UserProfile;
 using FlowChat.SocialGraphService.Persistence.Entities;
+using FlowChat.Shared.Persistance;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 
 namespace FlowChat.SocialGraphService.Persistence.Repositories;
 
-public sealed class UserProfileProjectionReadRepository(AppDbContext dbContext) : IUserProfileProjectionReadRepository
+public sealed class UserProfileProjectionReadRepository(AppDbContext dbContext)
+    : ReadRepositoryBase, IUserProfileProjectionReadRepository
 {
     private readonly AppDbContext _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
 
@@ -40,9 +42,7 @@ public sealed class UserProfileProjectionReadRepository(AppDbContext dbContext) 
     };
 
     private IQueryable<UserProfileReadModelEntity> ActiveProjections =>
-        _dbContext.UserProfileProjections
-            .AsNoTracking()
-            .Where(entity => entity.DeletedAt == null);
+        Active(_dbContext.UserProfileProjections);
 
     public async Task<UserProfileProjectionDto?> GetByUserProfileIdAsync(
         Guid userProfileId,
