@@ -67,7 +67,14 @@ public sealed class DuetConversationReadRepositoryTests
         {
             seedContext.Conversations.Add(conversation);
             seedContext.DuetConversations.Add(CreateDuetConversation(requestingUserId, partnerUserId, conversation.Id.Value));
-            seedContext.UserProfileProjections.Add(CreateProfile(requestingUserId, "requester", firstName: "Requester", avatarUrl: "requester.png"));
+            seedContext.UserProfileProjections.AddRange(
+                CreateProfile(requestingUserId, "requester", firstName: "Requester", avatarUrl: "requester.png"),
+                CreateProfile(
+                    partnerUserId,
+                    "deleted-partner",
+                    firstName: "Deleted",
+                    avatarUrl: "deleted.png",
+                    deletedAt: new DateTimeOffset(2026, 4, 24, 12, 0, 0, TimeSpan.Zero)));
 
             await seedContext.SaveChangesAsync();
         }
@@ -133,7 +140,8 @@ public sealed class DuetConversationReadRepositoryTests
         string friendlyUserId,
         string? firstName = null,
         string? lastName = null,
-        string? avatarUrl = null) =>
+        string? avatarUrl = null,
+        DateTimeOffset? deletedAt = null) =>
         new()
         {
             UserId = userId,
@@ -141,6 +149,7 @@ public sealed class DuetConversationReadRepositoryTests
             FirstName = firstName,
             LastName = lastName,
             AvatarUrl = avatarUrl,
+            DeletedAt = deletedAt,
             CreatedBy = "test",
             CreatedAtUtc = new DateTimeOffset(2026, 4, 21, 10, 0, 0, TimeSpan.Zero),
             LastModifiedBy = "test",

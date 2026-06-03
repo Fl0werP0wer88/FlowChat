@@ -30,8 +30,7 @@ public sealed class UserProfileReadModelEntityConfiguration : IEntityTypeConfigu
         builder.Property(x => x.SourceVersion)
             .IsRequired();
 
-        builder.Property(x => x.IsDeleted)
-            .IsRequired();
+        builder.Property(x => x.DeletedAt);
 
         builder.Property(x => x.CreatedBy)
             .HasMaxLength(128)

@@ -56,7 +56,7 @@ public sealed class DuetConversationReadRepository(AppDbContext dbContext) : Rea
             join participant in Active(dbContext.ParticipantUserReads)
                 on conversation.Id equals participant.ConversationId
             join profile in dbContext.UserProfileProjections.AsNoTracking()
-                    .Where(x => !x.IsDeleted)
+                    .Where(x => x.DeletedAt == null)
                 on participant.UserId equals profile.UserId into profileGroup
             from profile in profileGroup.DefaultIfEmpty()
             select new

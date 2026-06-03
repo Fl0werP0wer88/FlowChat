@@ -42,7 +42,7 @@ public sealed class UserProfileProjectionReadRepository(AppDbContext dbContext) 
     private IQueryable<UserProfileReadModelEntity> ActiveProjections =>
         _dbContext.UserProfileProjections
             .AsNoTracking()
-            .Where(entity => !entity.IsDeleted);
+            .Where(entity => entity.DeletedAt == null);
 
     public async Task<UserProfileProjectionDto?> GetByUserProfileIdAsync(
         Guid userProfileId,

@@ -52,8 +52,7 @@ public sealed class UserProfileProjectionConfiguration : IEntityTypeConfiguratio
         builder.Property(x => x.SourceVersion)
             .IsRequired();
 
-        builder.Property(x => x.IsDeleted)
-            .IsRequired();
+        builder.Property(x => x.DeletedAt);
 
         builder.Property(x => x.CreatedBy)
             .HasMaxLength(256)

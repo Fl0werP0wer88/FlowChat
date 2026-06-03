@@ -122,7 +122,7 @@ public sealed class UserProfileProjectionReadRepositoryTests
             MainEmailIsVisible = mainEmail == null ? null : true,
             IsActive = true,
             SourceVersion = 1,
-            IsDeleted = isDeleted,
+            DeletedAt = isDeleted ? new DateTimeOffset(2026, 4, 24, 12, 0, 0, TimeSpan.Zero) : null,
             CreatedBy = "seed",
             CreatedAtUtc = new DateTimeOffset(2026, 4, 6, 8, 0, 0, TimeSpan.Zero),
             LastModifiedBy = "seed",

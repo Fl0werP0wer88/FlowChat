@@ -10,5 +10,5 @@ public sealed class UserProfileReadModelEntity : EntityBase
     public string? LastName { get; set; }
     public string? AvatarUrl { get; set; }
     public int SourceVersion { get; set; }
-    public bool IsDeleted { get; set; }
+    public DateTimeOffset? DeletedAt { get; set; }
 }

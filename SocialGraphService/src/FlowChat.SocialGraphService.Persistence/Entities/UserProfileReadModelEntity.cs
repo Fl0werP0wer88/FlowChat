@@ -20,5 +20,5 @@ public sealed class UserProfileReadModelEntity : EntityBase
     public bool IsActive { get; set; }
     public DateTimeOffset? LastSeenAtUtc { get; set; }
     public int SourceVersion { get; set; }
-    public bool IsDeleted { get; set; }
+    public DateTimeOffset? DeletedAt { get; set; }
 }

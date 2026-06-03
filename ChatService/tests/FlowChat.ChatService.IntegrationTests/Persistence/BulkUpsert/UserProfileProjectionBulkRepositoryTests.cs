@@ -50,7 +50,7 @@ public sealed class UserProfileProjectionBulkRepositoryTests : IDisposable
         entity.FirstName.Should().Be("John");
         entity.LastName.Should().BeNull();
         entity.SourceVersion.Should().Be(1);
-        entity.IsDeleted.Should().BeFalse();
+        entity.DeletedAt.Should().BeNull();
         entity.CreatedBy.Should().Be("consumer");
         entity.CreatedAtUtc.Should().NotBe(default);
         entity.LastModifiedBy.Should().Be("consumer");
@@ -81,7 +81,7 @@ public sealed class UserProfileProjectionBulkRepositoryTests : IDisposable
         entity.FirstName.Should().Be("After");
         entity.LastName.Should().Be("Updated");
         entity.SourceVersion.Should().Be(2);
-        entity.IsDeleted.Should().BeFalse();
+        entity.DeletedAt.Should().BeNull();
         entity.LastModifiedBy.Should().Be("updater-consumer");
         entity.LastModifiedAtUtc.Should().BeAfter(firstCreatedAtUtc);
     }
@@ -112,7 +112,7 @@ public sealed class UserProfileProjectionBulkRepositoryTests : IDisposable
 
         var entity = await _dbContext.UserProfileProjections.SingleAsync();
         entity.SourceVersion.Should().Be(2);
-        entity.IsDeleted.Should().BeTrue();
+        entity.DeletedAt.Should().NotBeNull();
     }
 
     [Fact]
@@ -126,7 +126,7 @@ public sealed class UserProfileProjectionBulkRepositoryTests : IDisposable
         entity.UserId.Should().Be(userProfileId);
         entity.FriendlyUserId.Should().BeEmpty();
         entity.SourceVersion.Should().Be(3);
-        entity.IsDeleted.Should().BeTrue();
+        entity.DeletedAt.Should().NotBeNull();
     }
 
     [Fact]
@@ -141,7 +141,7 @@ public sealed class UserProfileProjectionBulkRepositoryTests : IDisposable
         entity.FriendlyUserId.Should().Be("restored");
         entity.FirstName.Should().Be("Restored");
         entity.SourceVersion.Should().Be(4);
-        entity.IsDeleted.Should().BeFalse();
+        entity.DeletedAt.Should().BeNull();
     }
 
     [Fact]
@@ -154,7 +154,7 @@ public sealed class UserProfileProjectionBulkRepositoryTests : IDisposable
 
         var entity = await _dbContext.UserProfileProjections.SingleAsync();
         entity.SourceVersion.Should().Be(3);
-        entity.IsDeleted.Should().BeTrue();
+        entity.DeletedAt.Should().NotBeNull();
     }
 
     private async Task SaveAsync(UserProfileProjectionCommandItem item)
