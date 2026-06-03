@@ -1,5 +1,6 @@
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
+using FlowChat.Shared.Domain.ValueObjects;
 using Microsoft.EntityFrameworkCore;
 
 namespace FlowChat.Shared.Persistance;
@@ -24,15 +25,9 @@ public class WriteRepositoryBase<TAggregate, TEntity>(DbContext dbContext)
         return aggregate;
     }
 
-    public virtual Task UpdateAsync(TAggregate aggregate, CancellationToken cancellationToken = default)
-    {
-        DbContext.Set<TAggregate>().Update(aggregate);
-        return Task.CompletedTask;
-    }
-
     public virtual Task DeleteAsync(TAggregate aggregate, CancellationToken cancellationToken = default)
     {
-        DbContext.Set<TAggregate>().Remove(aggregate);
+        aggregate.Delete(UtcDateTimeOffset.UtcNow);
         return Task.CompletedTask;
     }
 }

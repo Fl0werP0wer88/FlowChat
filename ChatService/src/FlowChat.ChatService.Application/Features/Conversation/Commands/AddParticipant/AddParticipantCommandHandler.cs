@@ -52,7 +52,6 @@ public sealed class AddParticipantCommandHandler
         }
 
         _participantsChanged = true;
-        await _groupConversationRepository.UpdateAsync(_conversation, cancellationToken);
 
         return FlowChatResult<bool>.Success(true);
     }

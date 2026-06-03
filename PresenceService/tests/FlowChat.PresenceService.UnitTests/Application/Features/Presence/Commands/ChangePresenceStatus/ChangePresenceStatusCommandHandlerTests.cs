@@ -40,9 +40,6 @@ public sealed class ChangePresenceStatusCommandHandlerTests
             .Setup(x => x.AddAsync(It.IsAny<UserPresencePreferences>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((UserPresencePreferences entity, CancellationToken _) => entity);
         _preferencesWriteRepositoryMock
-            .Setup(x => x.UpdateAsync(It.IsAny<UserPresencePreferences>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-        _preferencesWriteRepositoryMock
             .Setup(x => x.DeleteAsync(It.IsAny<UserPresencePreferences>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 

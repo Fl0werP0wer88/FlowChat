@@ -46,7 +46,6 @@ public sealed class ChangePresenceStatusCommandHandler(
             else
             {
                 preferences.SetPreferredStatus(request.Status);
-                await userPresencePreferencesWriteRepository.UpdateAsync(preferences, cancellationToken);
             }
         }
         else if (request.Status == PresenceStatus.Active)

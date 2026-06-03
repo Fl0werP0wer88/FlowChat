@@ -90,17 +90,16 @@ public sealed class NotificationWriteRepositoryTests : IDisposable
         found.Should().BeNull();
     }
 
-    // --- UpdateAsync ---
+    // --- tracked update ---
 
     [Fact]
-    public async Task UpdateAsync_WithChangedState_PersistsChanges()
+    public async Task SaveChangesAsync_WithChangedTrackedState_PersistsChanges()
     {
         var notification = CreateNotification();
         await _repository.AddAsync(notification);
         await _dbContext.SaveChangesAsync();
 
         notification.MarkSent("provider-id-abc");
-        await _repository.UpdateAsync(notification);
         await _dbContext.SaveChangesAsync();
 
         var updated = await _dbContext.Notifications.FindAsync(notification.Id);
@@ -111,7 +110,7 @@ public sealed class NotificationWriteRepositoryTests : IDisposable
     // --- DeleteAsync ---
 
     [Fact]
-    public async Task DeleteAsync_WithExistingEntity_RemovesFromDatabase()
+    public async Task DeleteAsync_WithExistingEntity_MarksEntityAsDeleted()
     {
         var notification = CreateNotification();
         await _repository.AddAsync(notification);
@@ -121,6 +120,8 @@ public sealed class NotificationWriteRepositoryTests : IDisposable
         await _dbContext.SaveChangesAsync();
 
         var deleted = await _dbContext.Notifications.FindAsync(notification.Id);
-        deleted.Should().BeNull();
+        deleted.Should().NotBeNull();
+        deleted!.DeletedAt.Should().NotBeNull();
+        deleted.IsDeleted.Should().BeTrue();
     }
 }

@@ -24,7 +24,7 @@ public sealed class WriteRepositoryBaseConcurrencyTests : IDisposable
     }
 
     [Fact]
-    public async Task UpdateAsync_ConcurrentModification_ThrowsDbUpdateConcurrencyException()
+    public async Task SaveChangesAsync_ConcurrentModification_ThrowsDbUpdateConcurrencyException()
     {
         using var context1 = CreateDbContext();
         context1.Database.EnsureCreated();
@@ -55,7 +55,7 @@ public sealed class WriteRepositoryBaseConcurrencyTests : IDisposable
     }
 
     [Fact]
-    public async Task UpdateAsync_SequentialModifications_SucceedsAndIncrementsVersion()
+    public async Task SaveChangesAsync_SequentialModifications_SucceedsAndIncrementsVersion()
     {
         using var context = CreateDbContext();
         context.Database.EnsureCreated();
@@ -80,7 +80,7 @@ public sealed class WriteRepositoryBaseConcurrencyTests : IDisposable
     }
 
     [Fact]
-    public async Task UpdateAsync_VersionPersistedToDatabase_ReloadsCorrectly()
+    public async Task SaveChangesAsync_VersionPersistedToDatabase_ReloadsCorrectly()
     {
         using var context1 = CreateDbContext();
         context1.Database.EnsureCreated();
@@ -100,6 +100,52 @@ public sealed class WriteRepositoryBaseConcurrencyTests : IDisposable
             .FirstAsync(x => x.Id == entityId);
 
         reloaded.Version.Should().Be(2);
+    }
+
+    [Fact]
+    public async Task DeleteAsync_WithExistingEntity_MarksEntityAsDeleted()
+    {
+        using var context = CreateDbContext();
+        context.Database.EnsureCreated();
+
+        var entity = TestAggregate.Create("to-delete");
+        var repository = new WriteRepositoryBase<TestAggregate>(context);
+        await repository.AddAsync(entity);
+        await context.SaveChangesAsync();
+
+        await repository.DeleteAsync(entity);
+        await context.SaveChangesAsync();
+
+        var entityId = Id<TestAggregate>.FromGuid(entity.Id.Value);
+        var deleted = await context.TestAggregates
+            .FirstAsync(x => x.Id == entityId);
+
+        deleted.DeletedAt.Should().NotBeNull();
+        deleted.IsDeleted.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task DeleteAsync_WhenEntityAlreadyDeleted_DoesNotOverwriteDeletedAt()
+    {
+        using var context = CreateDbContext();
+        context.Database.EnsureCreated();
+
+        var deletedAt = UtcDateTimeOffset.Create(new DateTimeOffset(2026, 1, 1, 12, 0, 0, TimeSpan.Zero));
+        var entity = TestAggregate.Create("already-deleted");
+        entity.Delete(deletedAt);
+
+        var repository = new WriteRepositoryBase<TestAggregate>(context);
+        await repository.AddAsync(entity);
+        await context.SaveChangesAsync();
+
+        await repository.DeleteAsync(entity);
+        await context.SaveChangesAsync();
+
+        var entityId = Id<TestAggregate>.FromGuid(entity.Id.Value);
+        var deleted = await context.TestAggregates
+            .FirstAsync(x => x.Id == entityId);
+
+        deleted.DeletedAt.Should().Be(deletedAt);
     }
 
     private TestDbContext CreateDbContext()

@@ -83,7 +83,6 @@ public sealed class AddParticipantCommandHandlerTests
         conversation.Participants.Should().Contain(p => p.UserId.Value == newMemberId);
         dispatchedEvents.OfType<ParticipantAddedDomainEvent>().Should().ContainSingle()
             .Which.ParticipantUserId.Value.Should().Be(newMemberId);
-        _conversationRepositoryMock.Verify(x => x.UpdateAsync(conversation, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -119,7 +118,6 @@ public sealed class AddParticipantCommandHandlerTests
         conversation.Participants.Should().Contain(p => p.UserId.Value == newMemberId1);
         conversation.Participants.Should().Contain(p => p.UserId.Value == newMemberId2);
         dispatchedEvents.OfType<ParticipantAddedDomainEvent>().Should().HaveCount(2);
-        _conversationRepositoryMock.Verify(x => x.UpdateAsync(conversation, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -154,7 +152,6 @@ public sealed class AddParticipantCommandHandlerTests
         result.Value.Should().BeTrue();
         dispatchedEvents.OfType<ParticipantAddedDomainEvent>().Should().ContainSingle()
             .Which.ParticipantUserId.Value.Should().Be(newMemberId);
-        _conversationRepositoryMock.Verify(x => x.UpdateAsync(conversation, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -187,7 +184,6 @@ public sealed class AddParticipantCommandHandlerTests
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().BeFalse();
         dispatchedEvents.Should().BeEmpty();
-        _conversationRepositoryMock.Verify(x => x.UpdateAsync(It.IsAny<GroupConversation>(), It.IsAny<CancellationToken>()), Times.Never);
         _domainEventDispatcherMock.Verify(
             x => x.DispatchAsync(It.IsAny<IEnumerable<ILocalEvent>>(), It.IsAny<CancellationToken>()),
             Times.Never);
