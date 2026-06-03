@@ -36,6 +36,8 @@ public sealed class ContactObserverProjectionBulkUpsertExecutor(AppDbContext dbC
             entities,
             new BulkConfig
             {
+                // flowchat_app has CRUD-only access; regular helper tables require CREATE on the public schema
+                UseTempDB = true,
                 PropertiesToExcludeOnUpdate =
                 [
                     nameof(ContactObserverReadModelEntity.CreatedBy),

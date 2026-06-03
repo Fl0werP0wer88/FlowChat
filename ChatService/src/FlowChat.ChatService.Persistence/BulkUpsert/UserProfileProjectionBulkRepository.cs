@@ -22,6 +22,8 @@ public sealed class UserProfileProjectionBulkRepository(AppDbContext dbContext)
             entities,
             new BulkConfig
             {
+                // flowchat_app has CRUD-only access; regular helper tables require CREATE on the public schema
+                UseTempDB = true,
                 UpdateByProperties = [nameof(UserProfileReadModelEntity.UserId)],
                 OnConflictUpdateWhereSql = (existing, inserted) =>
                     $"{inserted}.\"SourceVersion\" > {existing}.\"SourceVersion\"",

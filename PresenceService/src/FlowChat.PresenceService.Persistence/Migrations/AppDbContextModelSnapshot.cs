@@ -91,6 +91,25 @@ namespace FlowChat.PresenceService.Persistence.Migrations
                         });
                 });
 
+            modelBuilder.Entity("FlowChat.PresenceService.Persistence.Entities.UserPresencePreferencesReadEntity", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("UserId");
+
+                    b.Property<DateTimeOffset>("LastModifiedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("PreferredStatus")
+                        .HasColumnType("integer");
+
+                    b.HasKey("UserId");
+
+                    b.ToTable((string)null);
+
+                    b.ToView("UserPresencePreferences", (string)null);
+                });
+
             modelBuilder.Entity("Silverback.Messaging.Producing.TransactionalOutbox.SilverbackOutboxMessage", b =>
                 {
                     b.Property<long>("Id")
