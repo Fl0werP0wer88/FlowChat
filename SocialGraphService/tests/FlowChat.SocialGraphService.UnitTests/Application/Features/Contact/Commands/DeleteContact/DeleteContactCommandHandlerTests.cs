@@ -55,7 +55,7 @@ public sealed class DeleteContactCommandHandlerTests
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().Be(Unit.Value);
         _contactWriteRepositoryMock.Verify(
-            x => x.DeleteAsync(contact, It.IsAny<CancellationToken>()),
+            x => x.SoftDeleteAsync(contact, It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -79,7 +79,7 @@ public sealed class DeleteContactCommandHandlerTests
         result.IsFailure.Should().BeTrue();
         result.Error.ErrorType.Should().Be(ErrorType.NotFound);
         _contactWriteRepositoryMock.Verify(
-            x => x.DeleteAsync(It.IsAny<Contact>(), It.IsAny<CancellationToken>()),
+            x => x.SoftDeleteAsync(It.IsAny<Contact>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 }

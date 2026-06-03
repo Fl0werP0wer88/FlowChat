@@ -113,7 +113,7 @@ public sealed class WriteRepositoryBaseConcurrencyTests : IDisposable
         await repository.AddAsync(entity);
         await context.SaveChangesAsync();
 
-        await repository.DeleteAsync(entity);
+        await repository.SoftDeleteAsync(entity);
         await context.SaveChangesAsync();
 
         var entityId = Id<TestAggregate>.FromGuid(entity.Id.Value);
@@ -138,7 +138,7 @@ public sealed class WriteRepositoryBaseConcurrencyTests : IDisposable
         await repository.AddAsync(entity);
         await context.SaveChangesAsync();
 
-        await repository.DeleteAsync(entity);
+        await repository.SoftDeleteAsync(entity);
         await context.SaveChangesAsync();
 
         var entityId = Id<TestAggregate>.FromGuid(entity.Id.Value);

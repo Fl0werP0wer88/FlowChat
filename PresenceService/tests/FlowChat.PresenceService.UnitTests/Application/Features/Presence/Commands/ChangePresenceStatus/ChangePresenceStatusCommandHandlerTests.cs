@@ -40,7 +40,7 @@ public sealed class ChangePresenceStatusCommandHandlerTests
             .Setup(x => x.AddAsync(It.IsAny<UserPresencePreferences>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((UserPresencePreferences entity, CancellationToken _) => entity);
         _preferencesWriteRepositoryMock
-            .Setup(x => x.DeleteAsync(It.IsAny<UserPresencePreferences>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.SoftDeleteAsync(It.IsAny<UserPresencePreferences>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         _handler = new ChangePresenceStatusCommandHandler(
@@ -175,7 +175,7 @@ public sealed class ChangePresenceStatusCommandHandlerTests
                 It.IsAny<CancellationToken>()),
             Times.Once);
         _preferencesWriteRepositoryMock.Verify(
-            x => x.DeleteAsync(It.IsAny<UserPresencePreferences>(), It.IsAny<CancellationToken>()),
+            x => x.SoftDeleteAsync(It.IsAny<UserPresencePreferences>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
@@ -197,7 +197,7 @@ public sealed class ChangePresenceStatusCommandHandlerTests
 
         result.IsSuccess.Should().BeTrue();
         _preferencesWriteRepositoryMock.Verify(
-            x => x.DeleteAsync(
+            x => x.SoftDeleteAsync(
                 It.Is<UserPresencePreferences>(preferences => preferences.UserId == userId),
                 It.IsAny<CancellationToken>()),
             Times.Once);
@@ -224,7 +224,7 @@ public sealed class ChangePresenceStatusCommandHandlerTests
             x => x.AddAsync(It.IsAny<UserPresencePreferences>(), It.IsAny<CancellationToken>()),
             Times.Never);
         _preferencesWriteRepositoryMock.Verify(
-            x => x.DeleteAsync(It.IsAny<UserPresencePreferences>(), It.IsAny<CancellationToken>()),
+            x => x.SoftDeleteAsync(It.IsAny<UserPresencePreferences>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 

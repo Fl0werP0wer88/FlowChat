@@ -25,7 +25,7 @@ public class WriteRepositoryBase<TAggregate, TEntity>(DbContext dbContext)
         return aggregate;
     }
 
-    public virtual Task DeleteAsync(TAggregate aggregate, CancellationToken cancellationToken = default)
+    public virtual Task SoftDeleteAsync(TAggregate aggregate, CancellationToken cancellationToken = default)
     {
         aggregate.Delete(UtcDateTimeOffset.UtcNow);
         return Task.CompletedTask;

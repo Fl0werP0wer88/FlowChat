@@ -56,7 +56,7 @@ public sealed class ChangePresenceStatusCommandHandler(
                 cancellationToken);
             if (preferences is not null)
             {
-                await userPresencePreferencesWriteRepository.DeleteAsync(preferences, cancellationToken);
+                await userPresencePreferencesWriteRepository.SoftDeleteAsync(preferences, cancellationToken);
             }
         }
         // AFK is automatic — leave any saved preference unchanged

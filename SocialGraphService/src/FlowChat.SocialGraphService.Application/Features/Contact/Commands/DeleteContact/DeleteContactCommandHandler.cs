@@ -39,7 +39,7 @@ public sealed class DeleteContactCommandHandler
         }
 
         _contact.MarkDeleted();
-        await _contactWriteRepository.DeleteAsync(_contact, cancellationToken);
+        await _contactWriteRepository.SoftDeleteAsync(_contact, cancellationToken);
 
         return FlowChatResult<MediatR.Unit>.Success(MediatR.Unit.Value);
     }

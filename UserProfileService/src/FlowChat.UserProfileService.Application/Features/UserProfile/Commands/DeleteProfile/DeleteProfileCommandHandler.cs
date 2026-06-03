@@ -34,7 +34,7 @@ public sealed class DeleteProfileCommandHandler
         }
 
         _userProfile.Delete();
-        await _userProfileRepository.DeleteAsync(_userProfile, cancellationToken);
+        await _userProfileRepository.SoftDeleteAsync(_userProfile, cancellationToken);
 
         return FlowChatResult<Guid>.Success(_userProfile.Id.Value);
     }

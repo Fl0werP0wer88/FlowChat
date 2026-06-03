@@ -12,5 +12,5 @@ public interface IWriteRepository<TAggregate, TEntity>
 {
     Task<TAggregate?> GetByIdAsync(Id<TAggregate> id, CancellationToken cancellationToken = default);
     Task<TAggregate> AddAsync(TAggregate aggregate, CancellationToken cancellationToken = default);
-    Task DeleteAsync(TAggregate aggregate, CancellationToken cancellationToken = default);
+    Task SoftDeleteAsync(TAggregate aggregate, CancellationToken cancellationToken = default);
 }

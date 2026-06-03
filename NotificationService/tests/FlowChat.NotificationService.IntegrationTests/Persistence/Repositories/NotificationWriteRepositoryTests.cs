@@ -116,7 +116,7 @@ public sealed class NotificationWriteRepositoryTests : IDisposable
         await _repository.AddAsync(notification);
         await _dbContext.SaveChangesAsync();
 
-        await _repository.DeleteAsync(notification);
+        await _repository.SoftDeleteAsync(notification);
         await _dbContext.SaveChangesAsync();
 
         var deleted = await _dbContext.Notifications.FindAsync(notification.Id);
