@@ -1,49 +1,32 @@
-using EFCore.BulkExtensions;
 using FlowChat.ChatService.Application.Contracts.Persistence;
 using FlowChat.ChatService.Application.Features.UserProfile;
 using FlowChat.ChatService.Application.Features.UserProfile.Commands.BulkUpsertOrDeleteUserProfileProjection;
 using FlowChat.ChatService.Persistence.Entities;
+using FlowChat.Shared.Persistance.BulkUpsert;
 
 namespace FlowChat.ChatService.Persistence.BulkUpsert;
 
 public sealed class UserProfileProjectionBulkRepository(AppDbContext dbContext)
-    : IUserProfileProjectionBulkRepository
+    : ProjectionBulkRepositoryBase<AppDbContext, UserProfileProjectionCommandItem, UserProfileProjectionDto, UserProfileReadModelEntity>(dbContext),
+        IUserProfileProjectionBulkRepository
 {
     private const string TombstoneSource = "user-profile-projection";
 
-    public async Task BulkUpsertOrSoftDeleteAsync(
+    public Task BulkUpsertOrSoftDeleteAsync(
         IReadOnlyCollection<UserProfileProjectionCommandItem> items,
-        CancellationToken cancellationToken)
-    {
-        var now = DateTimeOffset.UtcNow;
-        var entities = items.Select(item => CreateEntity(item, now)).ToList();
+        CancellationToken cancellationToken) =>
+        BulkUpsertProjectionAsync(
+            items,
+            [nameof(UserProfileReadModelEntity.UserId)],
+            cancellationToken);
 
-        await dbContext.BulkInsertOrUpdateAsync(
-            entities,
-            new BulkConfig
-            {
-                // flowchat_app has CRUD-only access; regular helper tables require CREATE on the public schema
-                UseTempDB = true,
-                UpdateByProperties = [nameof(UserProfileReadModelEntity.UserId)],
-                OnConflictUpdateWhereSql = (existing, inserted) =>
-                    $"{inserted}.\"SourceVersion\" > {existing}.\"SourceVersion\"",
-                PropertiesToExcludeOnUpdate =
-                [
-                    nameof(UserProfileReadModelEntity.CreatedBy),
-                    nameof(UserProfileReadModelEntity.CreatedAtUtc)
-                ]
-            },
-            cancellationToken: cancellationToken);
-    }
+    protected override UserProfileProjectionDto? GetValue(UserProfileProjectionCommandItem item) =>
+        item.Value;
 
-    private static UserProfileReadModelEntity CreateEntity(
-        UserProfileProjectionCommandItem item,
-        DateTimeOffset now) =>
-        item.Value is null
-            ? CreateTombstoneEntity(item, now)
-            : CreateUpsertEntity(item.Value, item.SourceVersion, now);
+    protected override int GetSourceVersion(UserProfileProjectionCommandItem item) =>
+        item.SourceVersion;
 
-    private static UserProfileReadModelEntity CreateUpsertEntity(
+    protected override UserProfileReadModelEntity CreateUpsertEntity(
         UserProfileProjectionDto item,
         int sourceVersion,
         DateTimeOffset now) =>
@@ -62,7 +45,7 @@ public sealed class UserProfileProjectionBulkRepository(AppDbContext dbContext)
             LastModifiedAtUtc = now
         };
 
-    private static UserProfileReadModelEntity CreateTombstoneEntity(
+    protected override UserProfileReadModelEntity CreateTombstoneEntity(
         UserProfileProjectionCommandItem item,
         DateTimeOffset now) =>
         new()

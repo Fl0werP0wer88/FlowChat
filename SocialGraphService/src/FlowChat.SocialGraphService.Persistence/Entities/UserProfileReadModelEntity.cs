@@ -2,7 +2,7 @@ using FlowChat.Shared.Persistance;
 
 namespace FlowChat.SocialGraphService.Persistence.Entities;
 
-public sealed class UserProfileReadModelEntity : AuditableReadEntityBase
+public sealed class UserProfileReadModelEntity : ReadModelEntityBase
 {
     public Guid UserProfileId { get; set; }
     public string FriendlyUserId { get; set; } = string.Empty;
@@ -19,5 +19,4 @@ public sealed class UserProfileReadModelEntity : AuditableReadEntityBase
     public string? Bio { get; set; }
     public bool IsActive { get; set; }
     public DateTimeOffset? LastSeenAtUtc { get; set; }
-    public int SourceVersion { get; set; }
 }
