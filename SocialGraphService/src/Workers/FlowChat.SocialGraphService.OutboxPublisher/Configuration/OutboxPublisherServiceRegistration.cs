@@ -1,4 +1,5 @@
-using FlowChat.Core.Messaging.SocialGraphService.Events;
+using FlowChat.Core.Messaging;
+using FlowChat.Core.Messaging.SocialGraphService.ReadModels;
 using FlowChat.Shared.Infrastructure.Silverback.Behaviors;
 using FlowChat.SocialGraphService.OutboxPublisher.Configuration.Settings;
 using FlowChat.SocialGraphService.Persistence;
@@ -16,21 +17,14 @@ public static class OutboxPublisherServiceRegistration
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        var contactAddedOptions = configuration
-            .GetSection(new ContactAddedProducerSettingsSection().SectionName)
-            .Get<ContactAddedProducerSettingsSection>()
-            ?? new ContactAddedProducerSettingsSection();
-        var contactDeletedOptions = configuration
-            .GetSection(new ContactDeletedProducerSettingsSection().SectionName)
-            .Get<ContactDeletedProducerSettingsSection>()
-            ?? new ContactDeletedProducerSettingsSection();
+        var contactProjectionOptions = configuration
+            .GetSection(new ContactProjectionProducerSettingsSection().SectionName)
+            .Get<ContactProjectionProducerSettingsSection>()
+            ?? new ContactProjectionProducerSettingsSection();
         var outboxOptions = configuration
             .GetSection(new OutboxPublisherRuntimeSettingsSection().SectionName)
             .Get<OutboxPublisherRuntimeSettingsSection>()
             ?? new OutboxPublisherRuntimeSettingsSection();
-        var bootstrapServers = !string.IsNullOrWhiteSpace(contactAddedOptions.BootstrapServers)
-            ? contactAddedOptions.BootstrapServers
-            : contactDeletedOptions.BootstrapServers;
 
         services.AddSilverback()
             .AddSingletonBrokerBehavior<CustomSpanAttributesProducerBehavior>()
@@ -51,14 +45,10 @@ public static class OutboxPublisherServiceRegistration
             .AddKafkaClients(clients =>
             {
                 clients
-                    .WithBootstrapServers(bootstrapServers)
+                    .WithBootstrapServers(contactProjectionOptions.BootstrapServers)
                     .AddProducer(producer => producer
-                        .Produce<ContactAddedIntegrationEvent>("social-graph-contact-added", endpoint => endpoint
-                            .ProduceTo(contactAddedOptions.Topic)
-                            .SerializeAsJson(serializer => serializer.SetTypeHeader())))
-                    .AddProducer(producer => producer
-                        .Produce<ContactDeletedIntegrationEvent>("social-graph-contact-deleted", endpoint => endpoint
-                            .ProduceTo(contactDeletedOptions.Topic)
+                        .Produce<ProjectionIntegrationEvent<ContactReadModel>>("social-graph-contact-projection", endpoint => endpoint
+                            .ProduceTo(contactProjectionOptions.Topic)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())));
             });
 

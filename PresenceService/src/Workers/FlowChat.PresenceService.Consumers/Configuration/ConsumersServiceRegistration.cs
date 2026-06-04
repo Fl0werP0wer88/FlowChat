@@ -36,11 +36,19 @@ public static class ConsumersServiceRegistration
                     .AddConsumer(consumer => consumer
                         .WithGroupId(contactOptions.GroupId)
                         .WithAutoOffsetReset(ParseAutoOffsetReset(contactOptions.AutoOffsetReset))
-                        .Consume(endpoint => endpoint.ConfigureFlowChatMainEndpoint(contactOptions)))
+                        .Consume(endpoint => endpoint
+                            .ConfigureFlowChatMainEndpoint(contactOptions)
+                            .EnableBatchProcessing(
+                                contactOptions.BatchSize,
+                                TimeSpan.FromMilliseconds(contactOptions.BatchMaxWaitTimeMilliseconds))))
                     .AddConsumer(consumer => consumer
                         .WithGroupId(contactOptions.RetryGroupId)
                         .WithAutoOffsetReset(ParseAutoOffsetReset(contactOptions.AutoOffsetReset))
-                        .Consume(endpoint => endpoint.ConfigureFlowChatRetryEndpoint(contactOptions)))
+                        .Consume(endpoint => endpoint
+                            .ConfigureFlowChatRetryEndpoint(contactOptions)
+                            .EnableBatchProcessing(
+                                contactOptions.BatchSize,
+                                TimeSpan.FromMilliseconds(contactOptions.BatchMaxWaitTimeMilliseconds))))
                     .AddProducer(producer => producer
                         .Produce(endpoint => endpoint
                             .ProduceTo(contactOptions.RetryTopic)
@@ -50,8 +58,7 @@ public static class ConsumersServiceRegistration
                             .ProduceTo(contactOptions.DeadLetterTopic)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())));
             })
-            .AddScopedSubscriber<ContactAddedSubscriber>()
-            .AddScopedSubscriber<ContactDeletedSubscriber>();
+            .AddScopedSubscriber<ContactProjectionBatchSubscriber>();
 
         return services;
     }

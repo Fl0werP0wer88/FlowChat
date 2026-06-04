@@ -1,3 +1,5 @@
+using FlowChat.Core.Messaging;
+using FlowChat.Core.Messaging.SocialGraphService.ReadModels;
 using FlowChat.PresenceService.Consumers.Presence.Contracts;
 using FlowChat.PresenceService.Consumers.Services;
 
@@ -5,41 +7,50 @@ namespace FlowChat.PresenceService.Consumers.Kafka;
 
 internal static class ContactProjectionSubscriberHelper
 {
-    public static ContactObserverProjectionRequest Map(Guid ownerUserId, Guid contactUserId) =>
+    public static ContactObserverProjectionRequest Map(ContactReadModel value) =>
         new()
         {
-            ObservedUserId = contactUserId,
-            ObserverUserId = ownerUserId
+            ObservedUserId = value.ContactUserId,
+            ObserverUserId = value.OwnerUserId
         };
 
-    public static async Task InsertAsync(
+    public static async Task FlushUpsertsAsync(
         IPresenceInternalApiClient presenceInternalApiClient,
         ILogger logger,
-        ContactObserverProjectionRequest request,
-        string eventName,
+        List<ProjectionIntegrationEvent<ContactReadModel>> pendingUpserts,
         CancellationToken cancellationToken)
     {
-        logger.LogInformation(
-            "Applying {EventName} to PresenceService for observed user {ObservedUserId} and observer {ObserverUserId}.",
-            eventName,
-            request.ObservedUserId,
-            request.ObserverUserId);
+        if (pendingUpserts.Count == 0)
+        {
+            return;
+        }
 
-        await presenceInternalApiClient.BulkUpsertContactObserverProjectionAsync(
-            new BulkUpsertContactObserverProjectionRequest { Items = [request] },
-            cancellationToken);
+        var request = new BulkUpsertContactObserverProjectionRequest
+        {
+            Items = pendingUpserts
+                .Select(message => Map(message.Value))
+                .ToArray()
+        };
+
+        await presenceInternalApiClient.BulkUpsertContactObserverProjectionAsync(request, cancellationToken);
+
+        logger.LogInformation(
+            "Applied {Count} contact projection upserts to PresenceService.",
+            request.Items.Count);
+
+        pendingUpserts.Clear();
     }
 
     public static async Task DeleteAsync(
         IPresenceInternalApiClient presenceInternalApiClient,
         ILogger logger,
-        ContactObserverProjectionRequest request,
-        string eventName,
+        ProjectionIntegrationEvent<ContactReadModel> message,
         CancellationToken cancellationToken)
     {
+        var request = Map(message.Value);
+
         logger.LogInformation(
-            "Applying {EventName} to PresenceService for observed user {ObservedUserId} and observer {ObserverUserId}.",
-            eventName,
+            "Applying contact projection delete to PresenceService for observed user {ObservedUserId} and observer {ObserverUserId}.",
             request.ObservedUserId,
             request.ObserverUserId);
 

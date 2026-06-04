@@ -1,4 +1,5 @@
-using FlowChat.Core.Messaging.SocialGraphService.Events;
+using FlowChat.Core.Messaging;
+using FlowChat.Core.Messaging.SocialGraphService.ReadModels;
 using FlowChat.SocialGraphService.Infrastructure.Configuration.Settings;
 using FlowChat.Shared.Infrastructure.Silverback.Behaviors;
 using FlowChat.SocialGraphService.Persistence;
@@ -16,13 +17,8 @@ public static class SilverbackServiceRegistration
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        var contactAddedOptions = configuration.GetSection(new ContactAddedProducerSettingsSection().SectionName)
-            .Get<ContactAddedProducerSettingsSection>() ?? new ContactAddedProducerSettingsSection();
-        var contactDeletedOptions = configuration.GetSection(new ContactDeletedProducerSettingsSection().SectionName)
-            .Get<ContactDeletedProducerSettingsSection>() ?? new ContactDeletedProducerSettingsSection();
-        var bootstrapServers = !string.IsNullOrWhiteSpace(contactAddedOptions.BootstrapServers)
-            ? contactAddedOptions.BootstrapServers
-            : contactDeletedOptions.BootstrapServers;
+        var contactProjectionOptions = configuration.GetSection(new ContactProjectionProducerSettingsSection().SectionName)
+            .Get<ContactProjectionProducerSettingsSection>() ?? new ContactProjectionProducerSettingsSection();
 
         services.AddSilverback()
             .AddSingletonBrokerBehavior<CustomSpanAttributesProducerBehavior>()
@@ -34,15 +30,10 @@ public static class SilverbackServiceRegistration
             .AddKafkaClients(clients =>
             {
                 clients
-                    .WithBootstrapServers(bootstrapServers)
+                    .WithBootstrapServers(contactProjectionOptions.BootstrapServers)
                     .AddProducer(producer => producer
-                        .Produce<ContactAddedIntegrationEvent>("social-graph-contact-added", endpoint => endpoint
-                            .ProduceTo(contactAddedOptions.Topic)
-                            .SerializeAsJson(serializer => serializer.SetTypeHeader())
-                            .StoreToOutbox(outbox => outbox.UseEntityFramework<AppDbContext>())))
-                    .AddProducer(producer => producer
-                        .Produce<ContactDeletedIntegrationEvent>("social-graph-contact-deleted", endpoint => endpoint
-                            .ProduceTo(contactDeletedOptions.Topic)
+                        .Produce<ProjectionIntegrationEvent<ContactReadModel>>("social-graph-contact-projection", endpoint => endpoint
+                            .ProduceTo(contactProjectionOptions.Topic)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())
                             .StoreToOutbox(outbox => outbox.UseEntityFramework<AppDbContext>())));
             });
