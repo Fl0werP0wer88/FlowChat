@@ -10,17 +10,23 @@ public sealed class ContactObserverProjectionControllerTests(PresenceApiFactory 
     private readonly HttpClient _client = factory.CreateClient();
 
     [Fact]
-    public async Task BulkUpsert_WithValidInternalApiKey_PersistsProjection()
+    public async Task BulkUpsertOrDelete_WithValidInternalApiKey_PersistsProjection()
     {
         var observedUserId = Guid.NewGuid();
         var observerUserId = Guid.NewGuid();
-        var request = new HttpRequestMessage(HttpMethod.Post, "/internal/presence/contact-observers/bulk-upsert")
+        var request = new HttpRequestMessage(HttpMethod.Post, "/internal/presence/contact-observers/projection/bulk-upsert-or-delete")
         {
             Content = JsonContent.Create(new
             {
                 Items = new[]
                 {
-                    new { ObservedUserId = observedUserId, ObserverUserId = observerUserId }
+                    new
+                    {
+                        ObservedUserId = observedUserId,
+                        ObserverUserId = observerUserId,
+                        SourceVersion = 1,
+                        Value = new { Source = "integration-test" }
+                    }
                 }
             })
         };
@@ -28,14 +34,17 @@ public sealed class ContactObserverProjectionControllerTests(PresenceApiFactory 
 
         var response = await _client.SendAsync(request);
 
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        response.StatusCode.Should().Be(HttpStatusCode.NoContent);
         var exists = await factory.WithDbContextAsync(db => db.ContactObserverProjections.AnyAsync(
-            x => x.ObservedUserId == observedUserId && x.ObserverUserId == observerUserId));
+            x => x.ObservedUserId == observedUserId &&
+                 x.ObserverUserId == observerUserId &&
+                 x.SourceVersion == 1 &&
+                 x.DeletedAt == null));
         exists.Should().BeTrue();
     }
 
     [Fact]
-    public async Task Delete_WithValidInternalApiKey_RemovesProjectionAndIsIdempotent()
+    public async Task BulkUpsertOrDelete_WithDeleteItem_MarksProjectionAsDeleted()
     {
         var observedUserId = Guid.NewGuid();
         var observerUserId = Guid.NewGuid();
@@ -46,6 +55,7 @@ public sealed class ContactObserverProjectionControllerTests(PresenceApiFactory 
             {
                 ObservedUserId = observedUserId,
                 ObserverUserId = observerUserId,
+                SourceVersion = 1,
                 CreatedBy = "test",
                 CreatedAtUtc = DateTimeOffset.UtcNow,
                 LastModifiedBy = "test",
@@ -54,17 +64,30 @@ public sealed class ContactObserverProjectionControllerTests(PresenceApiFactory 
             await db.SaveChangesAsync();
         });
 
-        var request = new HttpRequestMessage(HttpMethod.Delete, "/internal/presence/contact-observers/delete")
+        var request = new HttpRequestMessage(HttpMethod.Post, "/internal/presence/contact-observers/projection/bulk-upsert-or-delete")
         {
-            Content = JsonContent.Create(new { ObservedUserId = observedUserId, ObserverUserId = observerUserId })
+            Content = JsonContent.Create(new
+            {
+                Items = new[]
+                {
+                    new
+                    {
+                        ObservedUserId = observedUserId,
+                        ObserverUserId = observerUserId,
+                        SourceVersion = 2,
+                        Value = (object?)null
+                    }
+                }
+            })
         };
         request.Headers.Add("X-Internal-Api-Key", PresenceApiFactory.InternalApiKey);
 
         var response = await _client.SendAsync(request);
 
-        response.StatusCode.Should().Be(HttpStatusCode.Accepted);
-        var exists = await factory.WithDbContextAsync(db => db.ContactObserverProjections.AnyAsync(
+        response.StatusCode.Should().Be(HttpStatusCode.NoContent);
+        var projection = await factory.WithDbContextAsync(db => db.ContactObserverProjections.SingleAsync(
             x => x.ObservedUserId == observedUserId && x.ObserverUserId == observerUserId));
-        exists.Should().BeFalse();
+        projection.SourceVersion.Should().Be(2);
+        projection.DeletedAt.Should().NotBeNull();
     }
 }

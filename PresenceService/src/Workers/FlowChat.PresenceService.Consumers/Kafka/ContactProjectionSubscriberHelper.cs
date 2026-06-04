@@ -1,59 +1,66 @@
 using FlowChat.Core.Messaging;
 using FlowChat.Core.Messaging.SocialGraphService.ReadModels;
+using FlowChat.Core.Exceptions;
 using FlowChat.PresenceService.Consumers.Presence.Contracts;
-using FlowChat.PresenceService.Consumers.Services;
 
 namespace FlowChat.PresenceService.Consumers.Kafka;
 
 internal static class ContactProjectionSubscriberHelper
 {
-    public static ContactObserverProjectionRequest Map(ContactReadModel value) =>
-        new()
-        {
-            ObservedUserId = value.ContactUserId,
-            ObserverUserId = value.OwnerUserId
-        };
+    private const string ProjectionSource = "social-graph-contact-events";
 
-    public static async Task FlushUpsertsAsync(
-        IPresenceInternalApiClient presenceInternalApiClient,
-        ILogger logger,
-        List<ProjectionIntegrationEvent<ContactReadModel>> pendingUpserts,
-        CancellationToken cancellationToken)
+    public static BulkUpsertOrDeleteUserContactProjectionRequestItem MapProjectionEvent(
+        ProjectionIntegrationEvent<ContactReadModel> message)
     {
-        if (pendingUpserts.Count == 0)
-        {
-            return;
-        }
+        ArgumentNullException.ThrowIfNull(message);
 
-        var request = new BulkUpsertContactObserverProjectionRequest
+        if (message.Version <= 0)
+            throw new NonTransientException("Payload does not contain valid SourceVersion.");
+
+        var observedUserId = ResolveUserId(message.Value.ContactUserId, nameof(message.Value.ContactUserId));
+        var observerUserId = ResolveUserId(message.Value.OwnerUserId, nameof(message.Value.OwnerUserId));
+
+        return message.Operation switch
         {
-            Items = pendingUpserts
-                .Select(message => Map(message.Value))
-                .ToArray()
+            OperationType.Created or OperationType.Updated => new BulkUpsertOrDeleteUserContactProjectionRequestItem
+            {
+                ObservedUserId = observedUserId,
+                ObserverUserId = observerUserId,
+                SourceVersion = message.Version,
+                Value = new UserContactProjectionRequest { Source = ProjectionSource }
+            },
+            OperationType.Deleted => new BulkUpsertOrDeleteUserContactProjectionRequestItem
+            {
+                ObservedUserId = observedUserId,
+                ObserverUserId = observerUserId,
+                SourceVersion = message.Version,
+                Value = null
+            },
+            _ => throw new NonTransientException($"Unsupported contact projection operation {message.Operation}.")
         };
-
-        await presenceInternalApiClient.BulkUpsertContactObserverProjectionAsync(request, cancellationToken);
-
-        logger.LogInformation(
-            "Applied {Count} contact projection upserts to PresenceService.",
-            request.Items.Count);
-
-        pendingUpserts.Clear();
     }
 
-    public static async Task DeleteAsync(
-        IPresenceInternalApiClient presenceInternalApiClient,
-        ILogger logger,
-        ProjectionIntegrationEvent<ContactReadModel> message,
-        CancellationToken cancellationToken)
+    public static BulkUpsertOrDeleteUserContactProjectionRequest CreateBulkUpsertOrDeleteRequest(
+        IReadOnlyCollection<BulkUpsertOrDeleteUserContactProjectionRequestItem> items) =>
+        new() { Items = KeepLastItemPerContactObserver(items) };
+
+    private static IReadOnlyCollection<BulkUpsertOrDeleteUserContactProjectionRequestItem> KeepLastItemPerContactObserver(
+        IReadOnlyCollection<BulkUpsertOrDeleteUserContactProjectionRequestItem> items)
     {
-        var request = Map(message.Value);
-
-        logger.LogInformation(
-            "Applying contact projection delete to PresenceService for observed user {ObservedUserId} and observer {ObserverUserId}.",
-            request.ObservedUserId,
-            request.ObserverUserId);
-
-        await presenceInternalApiClient.DeleteContactObserverProjectionAsync(request, cancellationToken);
+        return items
+            .Select((item, index) => new { item, index })
+            .GroupBy(x => new { x.item.ObservedUserId, x.item.ObserverUserId })
+            .Select(group => group
+                .OrderBy(x => x.item.SourceVersion)
+                .ThenBy(x => x.index)
+                .Last())
+            .OrderBy(x => x.index)
+            .Select(x => x.item)
+            .ToArray();
     }
+
+    private static Guid ResolveUserId(Guid userId, string fieldName) =>
+        userId != Guid.Empty
+            ? userId
+            : throw new NonTransientException($"Payload does not contain valid {fieldName}.");
 }

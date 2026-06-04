@@ -1,5 +1,4 @@
 using FlowChat.PresenceService.Application.Contracts.Persistence;
-using FlowChat.PresenceService.Application.Features.ContactObserverProjections;
 using FlowChat.PresenceService.Persistence.BulkUpsert;
 using FlowChat.PresenceService.Persistence.Repositories;
 using FlowChat.Shared.Application;
@@ -27,8 +26,7 @@ public static class PersistenceServiceRegistration
             ServiceLifetime.Scoped);
 
         services.AddScoped<IContactObserverProjectionReadRepository, ContactObserverProjectionReadRepository>();
-        services.AddScoped<IContactObserverProjectionWriteRepository, ContactObserverProjectionWriteRepository>();
-        services.AddScoped<IBulkUpsertExecutor<ContactObserverProjectionDto>, ContactObserverProjectionBulkUpsertExecutor>();
+        services.AddScoped<IContactObserverProjectionBulkRepository, ContactObserverProjectionBulkRepository>();
         services.AddScoped<IUserPresencePreferencesReadRepository, UserPresencePreferencesReadRepository>();
         services.AddScoped<IUserPresencePreferencesWriteRepository, UserPresencePreferencesWriteRepository>();
         services.AddScoped<IUnitOfWork, SilverbackEfUnitOfWork<AppDbContext>>();

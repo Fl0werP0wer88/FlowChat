@@ -86,6 +86,9 @@ namespace FlowChat.PresenceService.Persistence.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
 
+                    b.Property<int>("SourceVersion")
+                        .HasColumnType("integer");
+
                     b.HasKey("ObservedUserId", "ObserverUserId");
 
                     b.HasIndex("ObservedUserId")

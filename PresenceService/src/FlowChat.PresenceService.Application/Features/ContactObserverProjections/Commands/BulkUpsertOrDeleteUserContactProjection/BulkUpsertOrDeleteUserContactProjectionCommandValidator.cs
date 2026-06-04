@@ -1,11 +1,11 @@
 using FluentValidation;
 
-namespace FlowChat.PresenceService.Application.Features.ContactObserverProjections.Commands.BulkUpsertContactObserverProjection;
+namespace FlowChat.PresenceService.Application.Features.ContactObserverProjections.Commands.BulkUpsertOrDeleteUserContactProjection;
 
-public sealed class BulkUpsertContactObserverProjectionCommandValidator
-    : AbstractValidator<BulkUpsertContactObserverProjectionCommand>
+public sealed class BulkUpsertOrDeleteUserContactProjectionCommandValidator
+    : AbstractValidator<BulkUpsertOrDeleteUserContactProjectionCommand>
 {
-    public BulkUpsertContactObserverProjectionCommandValidator()
+    public BulkUpsertOrDeleteUserContactProjectionCommandValidator()
     {
         RuleFor(command => command.Items)
             .NotEmpty()
@@ -16,9 +16,19 @@ public sealed class BulkUpsertContactObserverProjectionCommandValidator
             {
                 item.RuleFor(x => x.ObservedUserId).NotEmpty();
                 item.RuleFor(x => x.ObserverUserId).NotEmpty();
+                item.RuleFor(x => x.SourceVersion)
+                    .GreaterThan(0)
+                    .WithMessage("Item does not contain a valid SourceVersion.");
                 item.RuleFor(x => x)
                     .Must(x => x.ObservedUserId != x.ObserverUserId)
                     .WithMessage("ObservedUserId and ObserverUserId must be different.");
+
+                item.When(i => i.Value is not null, () =>
+                {
+                    item.RuleFor(x => x.Value!.Source)
+                        .Must(value => !string.IsNullOrWhiteSpace(value))
+                        .WithMessage("Upsert item does not contain a valid Source.");
+                });
             });
 
         RuleFor(command => command.Items)
