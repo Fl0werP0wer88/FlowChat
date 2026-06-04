@@ -259,6 +259,7 @@ public sealed class UserProfileProjectionBatchSubscriberTests
         DateTimeOffset? lastSeenAtUtc = null) =>
         new()
         {
+            SourceAggregateId = userProfileId,
             Operation = operation,
             Version = version,
             Value = new UserProfileReadModel

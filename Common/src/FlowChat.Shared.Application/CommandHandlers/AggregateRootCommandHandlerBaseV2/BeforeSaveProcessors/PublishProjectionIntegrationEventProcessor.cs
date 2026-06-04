@@ -31,6 +31,7 @@ public class PublishProjectionIntegrationEventProcessor<TCommand, TAggregate, TT
         var readModel = _mapper.Map<TTargetReadModel>(aggregate);
         var integrationEvent = new ProjectionIntegrationEvent<TTargetReadModel>
         {
+            SourceAggregateId = aggregate.Id.Value,
             Value = readModel,
             Operation = operationType,
             Version = aggregate.Version

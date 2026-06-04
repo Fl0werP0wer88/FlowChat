@@ -194,6 +194,7 @@ public sealed class UserProfileProjectionBatchSubscriberTests
         string? avatarUrl = null) =>
         new()
         {
+            SourceAggregateId = userProfileId,
             Operation = operation,
             Version = version,
             Value = new UserProfileReadModel
