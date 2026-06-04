@@ -23,12 +23,6 @@ public sealed class ContactObserverProjectionBulkRepository(AppDbContext dbConte
             ],
             cancellationToken);
 
-    protected override ContactObserverProjectionDto? GetValue(UserContactProjectionCommandItem item) =>
-        item.Value;
-
-    protected override int GetSourceVersion(UserContactProjectionCommandItem item) =>
-        item.SourceVersion;
-
     protected override ContactObserverReadModelEntity CreateUpsertEntity(
         ContactObserverProjectionDto item,
         int sourceVersion,

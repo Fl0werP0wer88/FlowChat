@@ -5,10 +5,11 @@ namespace FlowChat.PresenceService.Application.Features.ContactObserverProjectio
 
 public sealed record BulkUpsertOrDeleteUserContactProjectionCommand(
     IReadOnlyCollection<UserContactProjectionCommandItem> Items)
-    : ICommand<Unit>;
+    : IProjectionBulkCommand<UserContactProjectionCommandItem>;
 
 public sealed record UserContactProjectionCommandItem(
     Guid ObservedUserId,
     Guid ObserverUserId,
     ContactObserverProjectionDto? Value,
-    int SourceVersion);
+    int SourceVersion)
+    : IProjectionCommandItem<ContactObserverProjectionDto>;

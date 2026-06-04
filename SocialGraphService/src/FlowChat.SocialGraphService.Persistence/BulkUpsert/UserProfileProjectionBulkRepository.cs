@@ -20,12 +20,6 @@ public sealed class UserProfileProjectionBulkRepository(AppDbContext dbContext)
             [nameof(UserProfileReadModelEntity.UserProfileId)],
             cancellationToken);
 
-    protected override UserProfileProjectionDto? GetValue(UserProfileProjectionCommandItem item) =>
-        item.Value;
-
-    protected override int GetSourceVersion(UserProfileProjectionCommandItem item) =>
-        item.SourceVersion;
-
     protected override UserProfileReadModelEntity CreateUpsertEntity(
         UserProfileProjectionDto item,
         int sourceVersion,

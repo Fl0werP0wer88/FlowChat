@@ -1,11 +1,12 @@
 using EFCore.BulkExtensions;
+using FlowChat.Shared.Application;
 using Microsoft.EntityFrameworkCore;
 
 namespace FlowChat.Shared.Persistance.BulkUpsert;
 
 public abstract class ProjectionBulkRepositoryBase<TDbContext, TItem, TValue, TEntity>(TDbContext dbContext)
     where TDbContext : DbContext
-    where TItem : notnull
+    where TItem : IProjectionCommandItem<TValue>
     where TValue : class
     where TEntity : ReadModelEntityBase
 {
@@ -44,10 +45,6 @@ public abstract class ProjectionBulkRepositoryBase<TDbContext, TItem, TValue, TE
             cancellationToken: cancellationToken);
     }
 
-    protected abstract TValue? GetValue(TItem item);
-
-    protected abstract int GetSourceVersion(TItem item);
-
     protected abstract TEntity CreateUpsertEntity(
         TValue item,
         int sourceVersion,
@@ -61,10 +58,10 @@ public abstract class ProjectionBulkRepositoryBase<TDbContext, TItem, TValue, TE
         TItem item,
         DateTimeOffset now)
     {
-        var value = GetValue(item);
+        var value = item.Value;
 
         return value is null
             ? CreateTombstoneEntity(item, now)
-            : CreateUpsertEntity(value, GetSourceVersion(item), now);
+            : CreateUpsertEntity(value, item.SourceVersion, now);
     }
 }

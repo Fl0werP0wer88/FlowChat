@@ -6,9 +6,10 @@ namespace FlowChat.ChatService.Application.Features.UserProfile.Commands.BulkUps
 
 public sealed record BulkUpsertOrDeleteUserProfileProjectionCommand(
     IReadOnlyCollection<UserProfileProjectionCommandItem> Items)
-    : ICommand<Unit>;
+    : IProjectionBulkCommand<UserProfileProjectionCommandItem>;
 
 public sealed record UserProfileProjectionCommandItem(
     Id<UserProfileProjectionDto> EntityId,
     UserProfileProjectionDto? Value,
-    int SourceVersion);
+    int SourceVersion)
+    : IProjectionCommandItem<UserProfileProjectionDto>;
