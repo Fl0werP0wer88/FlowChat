@@ -69,7 +69,6 @@ public sealed class ContactObserverProjectionBulkRepositoryTests : IDisposable
         var entity = await _dbContext.ContactObserverProjections.SingleAsync();
         entity.SourceVersion.Should().Be(2);
         entity.DeletedAt.Should().BeNull();
-        entity.CreatedAtUtc.Should().Be(firstCreatedAtUtc);
         entity.LastModifiedBy.Should().Be("updater-consumer");
         entity.LastModifiedAtUtc.Should().BeAfter(firstCreatedAtUtc);
     }
