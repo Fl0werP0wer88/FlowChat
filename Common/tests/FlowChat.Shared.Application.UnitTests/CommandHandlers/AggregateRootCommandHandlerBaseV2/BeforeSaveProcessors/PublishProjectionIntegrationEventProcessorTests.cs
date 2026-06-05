@@ -59,7 +59,7 @@ public sealed class PublishProjectionIntegrationEventProcessorTests
         capturedEnvelope!.KafkaKey.Should().Be(aggregateId.ToString("D"));
         capturedEnvelope.Payload.SourceAggregateId.Should().Be(aggregateId);
         capturedEnvelope.Payload.Operation.Should().Be(expectedOperationType);
-        capturedEnvelope.Payload.Version.Should().Be(aggregate.Version);
+        capturedEnvelope.Payload.SourceAggregateVersion.Should().Be(aggregate.Version);
         capturedEnvelope.Payload.Value.Should().Be(readModel);
         capturedCancellationToken.Should().Be(cancellationToken);
     }

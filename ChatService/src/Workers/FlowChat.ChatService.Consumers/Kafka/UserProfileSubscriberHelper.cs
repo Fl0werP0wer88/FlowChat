@@ -15,7 +15,7 @@ internal static class UserProfileSubscriberHelper
         ArgumentNullException.ThrowIfNull(message);
         ArgumentNullException.ThrowIfNull(mapper);
 
-        if (message.Version <= 0)
+        if (message.SourceAggregateVersion <= 0)
             throw new NonTransientException("Payload does not contain valid SourceVersion.");
 
         try
@@ -64,12 +64,12 @@ internal static class UserProfileSubscriberHelper
     {
         var userProfileId = ResolveUserId(message.Value.UserProfileId, nameof(message.Value.UserProfileId));
         var value = mapper.Map<UserProfileProjectionRequest>(message.Value);
-        value.SourceVersion = message.Version;
+        value.SourceVersion = message.SourceAggregateVersion;
 
         return new BulkUpsertOrDeleteUserProfileProjectionRequestItem
         {
             UserProfileId = userProfileId,
-            SourceVersion = message.Version,
+            SourceVersion = message.SourceAggregateVersion,
             Value = value
         };
     }
@@ -82,7 +82,7 @@ internal static class UserProfileSubscriberHelper
         return new BulkUpsertOrDeleteUserProfileProjectionRequestItem
         {
             UserProfileId = userProfileId,
-            SourceVersion = message.Version,
+            SourceVersion = message.SourceAggregateVersion,
             Value = null
         };
     }

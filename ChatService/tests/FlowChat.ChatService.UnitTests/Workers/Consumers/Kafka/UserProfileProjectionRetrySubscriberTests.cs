@@ -111,7 +111,7 @@ public sealed class UserProfileProjectionRetrySubscriberTests
         {
             SourceAggregateId = sourceAggregateId ?? userProfileId,
             Operation = operation,
-            Version = version,
+            SourceAggregateVersion = version,
             Value = new UserProfileReadModel
             {
                 UserProfileId = userProfileId,

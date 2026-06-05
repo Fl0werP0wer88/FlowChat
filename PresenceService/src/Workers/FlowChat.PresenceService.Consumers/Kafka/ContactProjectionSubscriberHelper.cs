@@ -14,7 +14,7 @@ internal static class ContactProjectionSubscriberHelper
     {
         ArgumentNullException.ThrowIfNull(message);
 
-        if (message.Version <= 0)
+        if (message.SourceAggregateVersion <= 0)
             throw new NonTransientException("Payload does not contain valid SourceVersion.");
 
         var observedUserId = ResolveUserId(message.Value.ContactUserId, nameof(message.Value.ContactUserId));
@@ -26,14 +26,14 @@ internal static class ContactProjectionSubscriberHelper
             {
                 ObservedUserId = observedUserId,
                 ObserverUserId = observerUserId,
-                SourceVersion = message.Version,
+                SourceVersion = message.SourceAggregateVersion,
                 Value = new UserContactProjectionRequest { Source = ProjectionSource }
             },
             OperationType.Deleted => new BulkUpsertOrDeleteUserContactProjectionRequestItem
             {
                 ObservedUserId = observedUserId,
                 ObserverUserId = observerUserId,
-                SourceVersion = message.Version,
+                SourceVersion = message.SourceAggregateVersion,
                 Value = null
             },
             _ => throw new NonTransientException($"Unsupported contact projection operation {message.Operation}.")

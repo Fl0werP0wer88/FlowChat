@@ -101,7 +101,7 @@ public sealed class ContactProjectionRetrySubscriberTests
         {
             SourceAggregateId = _fixture.Create<Guid>(),
             Operation = operation,
-            Version = version,
+            SourceAggregateVersion = version,
             Value = new ContactReadModel
             {
                 ContactId = _fixture.Create<Guid>(),

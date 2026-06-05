@@ -187,7 +187,7 @@ public sealed class ContactProjectionBatchSubscriberTests
         {
             SourceAggregateId = _fixture.Create<Guid>(),
             Operation = operation,
-            Version = version,
+            SourceAggregateVersion = version,
             Value = new ContactReadModel
             {
                 ContactId = _fixture.Create<Guid>(),

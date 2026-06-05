@@ -281,7 +281,7 @@ public sealed class UserProfileProjectionBatchSubscriberTests
         {
             SourceAggregateId = sourceAggregateId ?? userProfileId,
             Operation = operation,
-            Version = version,
+            SourceAggregateVersion = version,
             Value = new UserProfileReadModel
             {
                 UserProfileId = userProfileId,
