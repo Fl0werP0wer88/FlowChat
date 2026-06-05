@@ -14,6 +14,9 @@ namespace FlowChat.PresenceService.Consumers;
 
 public static class ConsumersServiceRegistration
 {
+    internal const string ContactMainConsumerName = "contact-main";
+    internal const string ContactRetryConsumerName = "contact-retry";
+
     public static IServiceCollection AddConsumers(
         this IServiceCollection services,
         IConfiguration configuration)
@@ -33,7 +36,7 @@ public static class ConsumersServiceRegistration
             {
                 clients
                     .WithBootstrapServers(contactOptions.BootstrapServers)
-                    .AddConsumer(consumer => consumer
+                    .AddConsumer(ContactMainConsumerName, consumer => consumer
                         .WithGroupId(contactOptions.GroupId)
                         .WithAutoOffsetReset(ParseAutoOffsetReset(contactOptions.AutoOffsetReset))
                         .Consume(endpoint => endpoint
@@ -41,14 +44,11 @@ public static class ConsumersServiceRegistration
                             .EnableBatchProcessing(
                                 contactOptions.BatchSize,
                                 TimeSpan.FromMilliseconds(contactOptions.BatchMaxWaitTimeMilliseconds))))
-                    .AddConsumer(consumer => consumer
+                    .AddConsumer(ContactRetryConsumerName, consumer => consumer
                         .WithGroupId(contactOptions.RetryGroupId)
                         .WithAutoOffsetReset(ParseAutoOffsetReset(contactOptions.AutoOffsetReset))
                         .Consume(endpoint => endpoint
-                            .ConfigureFlowChatRetryEndpoint(contactOptions)
-                            .EnableBatchProcessing(
-                                contactOptions.BatchSize,
-                                TimeSpan.FromMilliseconds(contactOptions.BatchMaxWaitTimeMilliseconds))))
+                            .ConfigureFlowChatRetryEndpoint(contactOptions)))
                     .AddProducer(producer => producer
                         .Produce(endpoint => endpoint
                             .ProduceTo(contactOptions.RetryTopic)
@@ -58,7 +58,8 @@ public static class ConsumersServiceRegistration
                             .ProduceTo(contactOptions.DeadLetterTopic)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())));
             })
-            .AddScopedSubscriber<ContactProjectionBatchSubscriber>();
+            .AddScopedSubscriber<ContactProjectionBatchSubscriber>()
+            .AddScopedSubscriber<ContactProjectionRetrySubscriber>();
 
         return services;
     }

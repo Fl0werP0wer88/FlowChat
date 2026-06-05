@@ -11,6 +11,7 @@ public sealed class ContactProjectionBatchSubscriber(
     ILogger<ContactProjectionBatchSubscriber> logger)
 {
     [Subscribe]
+    [ConsumerNameFilter(ConsumersServiceRegistration.ContactMainConsumerName)]
     public async Task HandleAsync(
         IAsyncEnumerable<ProjectionIntegrationEvent<ContactReadModel>> messages,
         CancellationToken cancellationToken)

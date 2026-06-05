@@ -1,11 +1,14 @@
+using Confluent.Kafka;
 using FlowChat.SocialGraphService.Consumers;
 using FlowChat.SocialGraphService.Consumers.Kafka;
 using FlowChat.SocialGraphService.Consumers.Configuration.Settings;
 using FlowChat.SocialGraphService.Consumers.Services;
+using FlowChat.Shared.Infrastructure.Silverback.Kafka;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Silverback.Messaging.Broker;
+using Silverback.Messaging.Configuration.Kafka;
 
 namespace FlowChat.SocialGraphService.UnitTests;
 
@@ -27,11 +30,32 @@ public sealed class UserProfileConsumerConfigurationTests
 
         var consumerCollection = serviceProvider.GetRequiredService<IConsumerCollection>();
         var projectionBatchSubscriber = scope.ServiceProvider.GetRequiredService<UserProfileProjectionBatchSubscriber>();
+        var projectionRetrySubscriber = scope.ServiceProvider.GetRequiredService<UserProfileProjectionRetrySubscriber>();
         var internalApiClient = scope.ServiceProvider.GetRequiredService<ISocialGraphInternalApiClient>();
 
         consumerCollection.Should().NotBeNull();
         projectionBatchSubscriber.Should().NotBeNull();
+        projectionRetrySubscriber.Should().NotBeNull();
         internalApiClient.Should().NotBeNull();
+    }
+
+    [Fact]
+    public async Task AddConsumers_ConfiguresBatchProcessingOnlyForMainConsumer()
+    {
+        var options = CreateConfiguration()
+            .GetSection(new UserProfileConsumerSettingsSection().SectionName)
+            .Get<UserProfileConsumerSettingsSection>()!;
+
+        var mainEndpoint = await GetEndpointConfigurationAsync(endpoint => endpoint
+            .ConfigureFlowChatMainEndpoint(options)
+            .EnableBatchProcessing(
+                options.BatchSize,
+                TimeSpan.FromMilliseconds(options.BatchMaxWaitTimeMilliseconds)));
+        var retryEndpoint = await GetEndpointConfigurationAsync(endpoint =>
+            endpoint.ConfigureFlowChatRetryEndpoint(options));
+
+        mainEndpoint.Batch.Should().NotBeNull();
+        retryEndpoint.Batch.Should().BeNull();
     }
 
     [Theory]
@@ -100,6 +124,22 @@ public sealed class UserProfileConsumerConfigurationTests
                 ["Kafka:UserProfileConsumer:BatchMaxWaitTimeMilliseconds"] = "1000"
             })
             .Build();
+    }
+
+    private static async Task<KafkaConsumerEndpointConfiguration> GetEndpointConfigurationAsync(
+        Func<KafkaConsumerEndpointConfigurationBuilder<object>, KafkaConsumerEndpointConfigurationBuilder<object>> configureEndpoint)
+    {
+        await using var serviceProvider = new ServiceCollection().BuildServiceProvider();
+        var builder = new KafkaConsumerConfigurationBuilder(serviceProvider)
+            .WithBootstrapServers("localhost:9092")
+            .WithGroupId("test-group")
+            .WithAutoOffsetReset(AutoOffsetReset.Earliest)
+            .Consume(endpoint => configureEndpoint(endpoint));
+
+        var configuration = builder.Build();
+
+        return configuration.Endpoints.Should().ContainSingle()
+            .Which.Should().BeOfType<KafkaConsumerEndpointConfiguration>().Subject;
     }
 
     private static string GetRepositoryPath(string relativePath)

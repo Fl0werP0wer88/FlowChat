@@ -14,6 +14,9 @@ namespace FlowChat.SocialGraphService.Consumers;
 
 public static class ConsumersServiceRegistration
 {
+    internal const string UserProfileMainConsumerName = "user-profile-main";
+    internal const string UserProfileRetryConsumerName = "user-profile-retry";
+
     public static IServiceCollection AddConsumers(
         this IServiceCollection services,
         IConfiguration configuration)
@@ -35,7 +38,7 @@ public static class ConsumersServiceRegistration
             {
                 clients
                     .WithBootstrapServers(consumerOptions.BootstrapServers)
-                    .AddConsumer(consumer => consumer
+                    .AddConsumer(UserProfileMainConsumerName, consumer => consumer
                         .WithGroupId(consumerOptions.GroupId)
                         .WithAutoOffsetReset(ParseAutoOffsetReset(consumerOptions.AutoOffsetReset))
                         .Consume(endpoint => endpoint
@@ -43,14 +46,11 @@ public static class ConsumersServiceRegistration
                             .EnableBatchProcessing(
                                 consumerOptions.BatchSize,
                                 TimeSpan.FromMilliseconds(consumerOptions.BatchMaxWaitTimeMilliseconds))))
-                    .AddConsumer(consumer => consumer
+                    .AddConsumer(UserProfileRetryConsumerName, consumer => consumer
                         .WithGroupId(consumerOptions.RetryGroupId)
                         .WithAutoOffsetReset(ParseAutoOffsetReset(consumerOptions.AutoOffsetReset))
                         .Consume(endpoint => endpoint
-                            .ConfigureFlowChatRetryEndpoint(consumerOptions)
-                            .EnableBatchProcessing(
-                                consumerOptions.BatchSize,
-                                TimeSpan.FromMilliseconds(consumerOptions.BatchMaxWaitTimeMilliseconds))))
+                            .ConfigureFlowChatRetryEndpoint(consumerOptions)))
                     .AddProducer(producer => producer
                         .Produce(endpoint => endpoint
                             .ProduceTo(consumerOptions.RetryTopic)
@@ -60,7 +60,8 @@ public static class ConsumersServiceRegistration
                             .ProduceTo(consumerOptions.DeadLetterTopic)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())));
             })
-            .AddScopedSubscriber<UserProfileProjectionBatchSubscriber>();
+            .AddScopedSubscriber<UserProfileProjectionBatchSubscriber>()
+            .AddScopedSubscriber<UserProfileProjectionRetrySubscriber>();
 
         return services;
     }

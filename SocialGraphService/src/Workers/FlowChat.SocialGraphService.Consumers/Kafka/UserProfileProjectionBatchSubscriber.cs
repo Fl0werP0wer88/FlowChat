@@ -13,6 +13,7 @@ public sealed class UserProfileProjectionBatchSubscriber(
     ILogger<UserProfileProjectionBatchSubscriber> logger)
 {
     [Subscribe]
+    [ConsumerNameFilter(ConsumersServiceRegistration.UserProfileMainConsumerName)]
     public async Task HandleAsync(
         IAsyncEnumerable<ProjectionIntegrationEvent<UserProfileReadModel>> messages,
         CancellationToken cancellationToken)
