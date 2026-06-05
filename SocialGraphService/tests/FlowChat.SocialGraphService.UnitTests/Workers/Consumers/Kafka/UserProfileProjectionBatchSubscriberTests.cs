@@ -132,6 +132,25 @@ public sealed class UserProfileProjectionBatchSubscriberTests
     }
 
     [Fact]
+    public async Task HandleAsync_WhenDeletedProjectionEventHasEmptyBodyId_UsesSourceAggregateId()
+    {
+        BulkUpsertOrDeleteUserProfileProjectionRequest? capturedRequest = null;
+        var deletedUserProfileId = Guid.NewGuid();
+
+        SetupCaptureRequest(request => capturedRequest = request);
+
+        await _subscriber.HandleAsync(
+            ToAsyncEnumerable(CreateProjectionEvent(Guid.Empty, OperationType.Deleted, 4, sourceAggregateId: deletedUserProfileId)),
+            CancellationToken.None);
+
+        capturedRequest.Should().NotBeNull();
+        var item = capturedRequest!.Items.Should().ContainSingle().Subject;
+        item.UserProfileId.Should().Be(deletedUserProfileId);
+        item.SourceVersion.Should().Be(4);
+        item.Value.Should().BeNull();
+    }
+
+    [Fact]
     public async Task HandleAsync_WhenBatchContainsDuplicateUserProfileId_SendsHighestVersionItem()
     {
         BulkUpsertOrDeleteUserProfileProjectionRequest? capturedRequest = null;
@@ -256,10 +275,11 @@ public sealed class UserProfileProjectionBatchSubscriberTests
         string? avatarUrl = null,
         string? bio = null,
         bool isActive = true,
-        DateTimeOffset? lastSeenAtUtc = null) =>
+        DateTimeOffset? lastSeenAtUtc = null,
+        Guid? sourceAggregateId = null) =>
         new()
         {
-            SourceAggregateId = userProfileId,
+            SourceAggregateId = sourceAggregateId ?? userProfileId,
             Operation = operation,
             Version = version,
             Value = new UserProfileReadModel

@@ -18,19 +18,12 @@ internal static class UserProfileSubscriberHelper
         if (message.Version <= 0)
             throw new NonTransientException("Payload does not contain valid SourceVersion.");
 
-        var userProfileId = ResolveUserProfileId(message.Value.UserProfileId);
-
         try
         {
             return message.Operation switch
             {
-                OperationType.Created or OperationType.Updated => CreateUpsertItem(message, mapper, userProfileId),
-                OperationType.Deleted => new BulkUpsertOrDeleteUserProfileProjectionRequestItem
-                {
-                    UserProfileId = userProfileId,
-                    SourceVersion = message.Version,
-                    Value = null
-                },
+                OperationType.Created or OperationType.Updated => CreateUpsertItem(message, mapper),
+                OperationType.Deleted => CreateDeleteItem(message),
                 _ => throw new NonTransientException($"Unsupported user profile projection operation {message.Operation}.")
             };
         }
@@ -60,16 +53,16 @@ internal static class UserProfileSubscriberHelper
             .ToArray();
     }
 
-    private static Guid ResolveUserProfileId(Guid userProfileId) =>
+    private static Guid ResolveUserProfileId(Guid userProfileId, string fieldName) =>
         userProfileId != Guid.Empty
             ? userProfileId
-            : throw new NonTransientException("Payload does not contain valid UserProfileId.");
+            : throw new NonTransientException($"Payload does not contain valid {fieldName}.");
 
     private static BulkUpsertOrDeleteUserProfileProjectionRequestItem CreateUpsertItem(
         ProjectionIntegrationEvent<UserProfileReadModel> message,
-        IMapper mapper,
-        Guid userProfileId)
+        IMapper mapper)
     {
+        var userProfileId = ResolveUserProfileId(message.Value.UserProfileId, nameof(message.Value.UserProfileId));
         var value = mapper.Map<UserProfileProjectionRequest>(message.Value);
         value.SourceVersion = message.Version;
 
@@ -78,6 +71,19 @@ internal static class UserProfileSubscriberHelper
             UserProfileId = userProfileId,
             SourceVersion = message.Version,
             Value = value
+        };
+    }
+
+    private static BulkUpsertOrDeleteUserProfileProjectionRequestItem CreateDeleteItem(
+        ProjectionIntegrationEvent<UserProfileReadModel> message)
+    {
+        var userProfileId = ResolveUserProfileId(message.SourceAggregateId, nameof(message.SourceAggregateId));
+
+        return new BulkUpsertOrDeleteUserProfileProjectionRequestItem
+        {
+            UserProfileId = userProfileId,
+            SourceVersion = message.Version,
+            Value = null
         };
     }
 }
