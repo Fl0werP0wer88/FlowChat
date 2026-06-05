@@ -3,6 +3,7 @@ using FlowChat.Core.Results;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2.BeforeSaveProcessors;
 using FlowChat.Shared.Domain;
+using FlowChat.Shared.Domain.ValueObjects;
 using MediatR;
 
 namespace FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2;
@@ -48,6 +49,7 @@ public abstract class AggregateRootCommandHandlerBaseV2<TCommand, TResponse, TAg
                 .Cast<ILocalEvent>();
 
             await DispatchLocalEventsAsync(localEvents, cancellationToken);
+            ApplyAuditInfo(aggregateRoot, aggregateState);
 
             foreach (var processor in _beforeSaveProcessors)
             {
@@ -63,6 +65,30 @@ public abstract class AggregateRootCommandHandlerBaseV2<TCommand, TResponse, TAg
     protected abstract TAggregate GetAggregateRoot();
 
     protected abstract AggregateState GetAggregateState(TCommand request, TAggregate aggregateRoot);
+
+    private static void ApplyAuditInfo(TAggregate aggregateRoot, AggregateState aggregateState)
+    {
+        const string SystemActor = "system";
+
+        switch (aggregateState)
+        {
+            case AggregateState.Created:
+                aggregateRoot.SetCreated(SystemActor);
+                aggregateRoot.SetUpdated(SystemActor);
+                break;
+            case AggregateState.Updated:
+                aggregateRoot.SetUpdated(SystemActor);
+                break;
+            case AggregateState.Deleted:
+                aggregateRoot.SetUpdated(SystemActor);
+                aggregateRoot.Delete(UtcDateTimeOffset.UtcNow);
+                break;
+            case AggregateState.Unchanged:
+                break;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(aggregateState), aggregateState, null);
+        }
+    }
 
     protected Task DispatchLocalEventsAsync(IEnumerable<ILocalEvent> domainEvents, CancellationToken cancellationToken)
     {

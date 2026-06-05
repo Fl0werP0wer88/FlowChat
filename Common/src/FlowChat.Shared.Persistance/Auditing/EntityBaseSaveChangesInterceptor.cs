@@ -37,11 +37,23 @@ public sealed class EntityBaseSaveChangesInterceptor : SaveChangesInterceptor
             switch (entry.State)
             {
                 case EntityState.Added:
-                    entry.Entity.SetCreated(SystemActor);
-                    entry.Entity.SetUpdated(SystemActor);
+                    if (entry.Entity.CreatedAtUtc is null)
+                    {
+                        entry.Entity.SetCreated(SystemActor);
+                    }
+
+                    if (entry.Entity.LastModifiedAtUtc is null)
+                    {
+                        entry.Entity.SetUpdated(SystemActor);
+                    }
+
                     break;
                 case EntityState.Modified:
-                    entry.Entity.SetUpdated(SystemActor);
+                    if (!entry.Property(nameof(IAuditableEntity.LastModifiedAtUtc)).IsModified)
+                    {
+                        entry.Entity.SetUpdated(SystemActor);
+                    }
+
                     break;
             }
         }

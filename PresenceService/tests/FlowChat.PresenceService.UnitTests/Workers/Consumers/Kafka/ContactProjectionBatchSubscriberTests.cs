@@ -186,6 +186,11 @@ public sealed class ContactProjectionBatchSubscriberTests
         new()
         {
             SourceAggregateId = _fixture.Create<Guid>(),
+            SourceAggregateCreatedAtUtc = new DateTimeOffset(2026, 6, 5, 10, 0, 0, TimeSpan.Zero),
+            SourceAggregateModifiedAtUtc = new DateTimeOffset(2026, 6, 5, 10, 5, 0, TimeSpan.Zero),
+            SourceAggregateDeletedAt = operation == OperationType.Deleted
+                ? new DateTimeOffset(2026, 6, 5, 10, 10, 0, TimeSpan.Zero)
+                : null,
             Operation = operation,
             SourceAggregateVersion = version,
             Value = new ContactReadModel

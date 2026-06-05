@@ -32,6 +32,9 @@ public class PublishProjectionIntegrationEventProcessor<TCommand, TAggregate, TT
         var integrationEvent = new ProjectionIntegrationEvent<TTargetReadModel>
         {
             SourceAggregateId = aggregate.Id.Value,
+            SourceAggregateCreatedAtUtc = aggregate.CreatedAtUtc.Value,
+            SourceAggregateModifiedAtUtc = aggregate.LastModifiedAtUtc.Value,
+            SourceAggregateDeletedAt = aggregate.DeletedAt?.Value,
             Value = readModel,
             Operation = operationType,
             SourceAggregateVersion = aggregate.Version

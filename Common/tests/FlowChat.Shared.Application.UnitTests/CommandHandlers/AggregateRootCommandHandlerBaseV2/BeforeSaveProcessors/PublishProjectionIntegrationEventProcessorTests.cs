@@ -3,6 +3,7 @@ using FluentAssertions;
 using FlowChat.Core.Messaging;
 using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2.BeforeSaveProcessors;
 using FlowChat.Shared.Domain;
+using FlowChat.Shared.Domain.ValueObjects;
 using Moq;
 
 namespace FlowChat.Shared.Application.UnitTests.CommandHandlers.AggregateRootCommandHandlerBaseV2.BeforeSaveProcessors;
@@ -19,6 +20,12 @@ public sealed class PublishProjectionIntegrationEventProcessorTests
     {
         var aggregateId = Guid.NewGuid();
         var aggregate = new TestAggregate(aggregateId, "Alpha");
+        aggregate.SetCreated("system");
+        aggregate.SetUpdated("system");
+        if (aggregateState == AggregateState.Deleted)
+        {
+            aggregate.Delete(UtcDateTimeOffset.UtcNow);
+        }
         aggregate.IncrementVersion();
         var command = new TestCommand();
         var readModel = new TestReadModel(aggregateId, "Alpha");
@@ -58,6 +65,9 @@ public sealed class PublishProjectionIntegrationEventProcessorTests
         capturedEnvelope.Should().NotBeNull();
         capturedEnvelope!.KafkaKey.Should().Be(aggregateId.ToString("D"));
         capturedEnvelope.Payload.SourceAggregateId.Should().Be(aggregateId);
+        capturedEnvelope.Payload.SourceAggregateCreatedAtUtc.Should().Be(aggregate.CreatedAtUtc.Value);
+        capturedEnvelope.Payload.SourceAggregateModifiedAtUtc.Should().Be(aggregate.LastModifiedAtUtc.Value);
+        capturedEnvelope.Payload.SourceAggregateDeletedAt.Should().Be(aggregate.DeletedAt?.Value);
         capturedEnvelope.Payload.Operation.Should().Be(expectedOperationType);
         capturedEnvelope.Payload.SourceAggregateVersion.Should().Be(aggregate.Version);
         capturedEnvelope.Payload.Value.Should().Be(readModel);

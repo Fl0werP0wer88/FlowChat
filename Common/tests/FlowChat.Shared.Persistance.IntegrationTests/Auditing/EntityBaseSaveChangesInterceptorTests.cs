@@ -49,6 +49,24 @@ public sealed class EntityBaseSaveChangesInterceptorTests
     }
 
     [Fact]
+    public async Task SavingChanges_ForModifiedEntityWithPreSetLastModifiedFields_DoesNotOverwriteLastModifiedFields()
+    {
+        await using var dbContext = CreateDbContext();
+        var entity = TestEntity.Create("before");
+        dbContext.TestEntities.Add(entity);
+        await dbContext.SaveChangesAsync();
+
+        entity.Rename("after");
+        entity.SetUpdated("handler");
+        var expectedLastModifiedAtUtc = entity.LastModifiedAtUtc;
+
+        await dbContext.SaveChangesAsync();
+
+        entity.LastModifiedBy.Should().Be("handler");
+        entity.LastModifiedAtUtc.Should().Be(expectedLastModifiedAtUtc);
+    }
+
+    [Fact]
     public async Task SavingChanges_IgnoresEntitiesThatDoNotDeriveFromEntityBase()
     {
         await using var dbContext = CreateDbContext();
