@@ -7,7 +7,7 @@ using FlowChat.PresenceService.Domain.Entities.UserPresencePreferences;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
 using MediatR;
-
+//Todo: I think that i will have to revork PresenceStatus Logic. Now operationa are not atomic. 
 namespace FlowChat.PresenceService.Application.Features.Presence.Commands.ChangePresenceStatus;
 
 public sealed class ChangePresenceStatusCommandHandler(
