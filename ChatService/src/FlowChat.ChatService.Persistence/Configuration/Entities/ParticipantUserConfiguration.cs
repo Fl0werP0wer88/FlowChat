@@ -38,20 +38,6 @@ public sealed class ParticipantUserConfiguration : IEntityTypeConfiguration<Part
             .HasUtcDateTimeOffsetConversion()
             .IsRequired();
 
-        builder.Property(x => x.CreatedBy)
-            .HasMaxLength(256)
-            .IsRequired();
-
-        builder.Property(x => x.CreatedAtUtc)
-            .HasUtcDateTimeOffsetConversion();
-
-        builder.Property(x => x.LastModifiedBy)
-            .HasMaxLength(256)
-            .IsRequired();
-
-        builder.Property(x => x.LastModifiedAtUtc)
-            .HasUtcDateTimeOffsetConversion();
-
         builder.Property<DateTimeOffset?>("DeletedAt");
 
         builder.HasIndex(x => new { x.ConversationId, x.UserId })

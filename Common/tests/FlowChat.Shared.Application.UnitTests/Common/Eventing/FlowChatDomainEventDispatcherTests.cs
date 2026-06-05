@@ -111,10 +111,26 @@ public sealed class FlowChatDomainEventDispatcherTests
         public UtcDateTimeOffset OccurredOnUtc { get; } = UtcDateTimeOffset.UtcNow;
         public Guid AggregateId { get; } = Guid.NewGuid();
         public string? TraceInfo => null;
+        public string CreatedBy { get; private set; } = string.Empty;
+        public UtcDateTimeOffset CreatedAtUtc { get; private set; } = UtcDateTimeOffset.UtcNow;
+        public string LastModifiedBy { get; private set; } = string.Empty;
+        public UtcDateTimeOffset LastModifiedAtUtc { get; private set; } = UtcDateTimeOffset.UtcNow;
         public UtcDateTimeOffset? DeletedAt { get; private set; }
         public bool IsDeleted => DeletedAt is not null;
 
         public IReadOnlyCollection<IDomainEvent> DomainEvents => _additionalEvents;
+
+        public void SetCreated(string createdBy)
+        {
+            CreatedBy = createdBy;
+            CreatedAtUtc = UtcDateTimeOffset.UtcNow;
+        }
+
+        public void SetUpdated(string lastModifiedBy)
+        {
+            LastModifiedBy = lastModifiedBy;
+            LastModifiedAtUtc = UtcDateTimeOffset.UtcNow;
+        }
 
         public void Delete(UtcDateTimeOffset deletedAt)
         {

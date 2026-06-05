@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FlowChat.PresenceService.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260603210228_InitialCreate")]
+    [Migration("20260605171625_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -88,6 +88,9 @@ namespace FlowChat.PresenceService.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
+
+                    b.Property<int>("SourceVersion")
+                        .HasColumnType("integer");
 
                     b.HasKey("ObservedUserId", "ObserverUserId");
 

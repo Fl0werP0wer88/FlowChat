@@ -99,7 +99,7 @@ public sealed class EntityBaseSaveChangesInterceptorTests : IDisposable
     }
 
     [Fact]
-    public async Task SavingChangesAsync_WhenChildEntityAdded_SetsAuditFieldsOnChildToo()
+    public async Task SavingChangesAsync_WhenChildEntityAdded_SetsAuditFieldsOnAggregateOnly()
     {
         using var scope = _serviceProvider.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -112,8 +112,7 @@ public sealed class EntityBaseSaveChangesInterceptorTests : IDisposable
         db.UserProfiles.Add(profile);
         await db.SaveChangesAsync();
 
-        var initialEmail = profile.Emails[0];
-        initialEmail.CreatedBy.Should().Be("system");
-        initialEmail.LastModifiedBy.Should().Be("system");
+        profile.CreatedBy.Should().Be("system");
+        profile.LastModifiedBy.Should().Be("system");
     }
 }

@@ -90,11 +90,14 @@ public sealed class EntityBaseSaveChangesInterceptorTests
                 entity.Property(x => x.Id).HasConversion(idConverter);
                 entity.Property(x => x.CreatedAtUtc).HasConversion(utcDateTimeOffsetConverter);
                 entity.Property(x => x.LastModifiedAtUtc).HasConversion(utcDateTimeOffsetConverter);
+                entity.Ignore(x => x.DeletedAt);
+                entity.Ignore(x => x.DomainEvents);
+                entity.Ignore(x => x.IsDeleted);
             });
         }
     }
 
-    private sealed class TestEntity : EntityBase<TestEntity>
+    private sealed class TestEntity : AggregateRootBase<TestEntity>
     {
         private TestEntity()
             : base(Id<TestEntity>.New())

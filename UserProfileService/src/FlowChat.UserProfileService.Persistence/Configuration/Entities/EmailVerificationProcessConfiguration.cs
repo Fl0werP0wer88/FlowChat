@@ -93,12 +93,6 @@ public sealed class EmailVerificationRequestConfiguration : IEntityTypeConfigura
         builder.Property(x => x.ConsumedAtUtc)
             .HasNullableUtcDateTimeOffsetConversion();
 
-        builder.Property(x => x.CreatedAtUtc)
-            .HasUtcDateTimeOffsetConversion();
-
-        builder.Property(x => x.LastModifiedAtUtc)
-            .HasUtcDateTimeOffsetConversion();
-
         builder.HasIndex(x => x.Nonce)
             .IsUnique()
             .HasDatabaseName("uq_email_verification_request_nonce");

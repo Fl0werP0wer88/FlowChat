@@ -7,6 +7,10 @@ public abstract class AggregateRootBase<TDomainEntity> : EntityBase<TDomainEntit
 {
     private readonly List<IDomainEvent> _domainEvents = [];
 
+    public string CreatedBy { get; private set; } = string.Empty;
+    public UtcDateTimeOffset CreatedAtUtc { get; private set; } = null!;
+    public string LastModifiedBy { get; private set; } = string.Empty;
+    public UtcDateTimeOffset LastModifiedAtUtc { get; private set; } = null!;
     public int Version { get; private set; } = 1;
     public UtcDateTimeOffset? DeletedAt { get; private set; }
     public bool IsDeleted => DeletedAt is not null;
@@ -27,6 +31,22 @@ public abstract class AggregateRootBase<TDomainEntity> : EntityBase<TDomainEntit
     public void IncrementVersion()
     {
         Version++;
+    }
+
+    public void SetCreated(string createdBy)
+    {
+        ArgumentNullException.ThrowIfNull(createdBy);
+
+        CreatedBy = createdBy;
+        CreatedAtUtc = UtcDateTimeOffset.UtcNow;
+    }
+
+    public void SetUpdated(string lastModifiedBy)
+    {
+        ArgumentNullException.ThrowIfNull(lastModifiedBy);
+
+        LastModifiedBy = lastModifiedBy;
+        LastModifiedAtUtc = UtcDateTimeOffset.UtcNow;
     }
 
     public void Delete(UtcDateTimeOffset deletedAt)
