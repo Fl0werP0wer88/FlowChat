@@ -1,21 +1,19 @@
 using FlowChat.PresenceService.Application.Contracts.Infrastructure;
+using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
 using MediatR;
 
 namespace FlowChat.PresenceService.Application.Features.Presence.Commands.RefreshPresenceStatus;
 
 public sealed class RefreshPresenceStatusCommandHandler(IPresenceStatusStore presenceStatusStore)
-    : IRequestHandler<RefreshPresenceStatusCommand, FlowChatResult<Unit>>
+    : CommandHandlerBase<RefreshPresenceStatusCommand, Unit>
 {
-    private readonly IPresenceStatusStore _presenceStatusStore = presenceStatusStore
-        ?? throw new ArgumentNullException(nameof(presenceStatusStore));
-
-    public async Task<FlowChatResult<Unit>> Handle(
+    protected override async Task<FlowChatResult<Unit>> HandleCommandAsync(
         RefreshPresenceStatusCommand request,
         CancellationToken cancellationToken)
     {
         var refreshTasks = request.UserIds
-            .Select(userId => _presenceStatusStore.RefreshTtlAsync(userId, cancellationToken));
+            .Select(userId => presenceStatusStore.RefreshTtlAsync(userId, cancellationToken));
 
         await Task.WhenAll(refreshTasks);
 
