@@ -1,25 +1,23 @@
 using FlowChat.Core.Domain;
 using FlowChat.Core.Results;
 using FlowChat.PresenceService.Application.Contracts.Infrastructure;
-using FlowChat.PresenceService.Application.Contracts.Persistence;
+using FlowChat.PresenceService.Application.Features.Presence.Commands.ChangeUserPresencePreferences;
+using FlowChat.PresenceService.Application.Features.Presence.Commands.SoftDeleteUserPresencePreferences;
 using FlowChat.PresenceService.Application.Features.Presence.Eventing.ApplicationEvents.PresenceStatusChanged;
-using FlowChat.PresenceService.Domain.Entities.UserPresencePreferences;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
 using MediatR;
-//Todo: I think that i will have to revork PresenceStatus Logic. Now operationa are not atomic. 
+
 namespace FlowChat.PresenceService.Application.Features.Presence.Commands.ChangePresenceStatus;
 
 public sealed class ChangePresenceStatusCommandHandler(
     IPresenceStatusStore presenceStatusStore,
-    IUserPresencePreferencesWriteRepository userPresencePreferencesWriteRepository,
-    IMediator mediator,
-    IUnitOfWork unitOfWork)
-    : TransactionalCommandHandlerBase<ChangePresenceStatusCommand, Unit>(unitOfWork)
+    IMediator mediator)
+    : CommandHandlerBase<ChangePresenceStatusCommand, Unit>
 {
     private PresenceStatusSnapshot? _previousStatus;
 
-    protected override async Task<FlowChatResult<Unit>> HandleInTransactionAsync(
+    protected override async Task<FlowChatResult<Unit>> HandleCommandAsync(
         ChangePresenceStatusCommand request,
         CancellationToken cancellationToken)
     {
@@ -30,36 +28,6 @@ public sealed class ChangePresenceStatusCommandHandler(
         }
 
         var changedAtUtc = DateTimeOffset.UtcNow;
-
-        // Busy / Invisible are manual choices — persist so they survive reconnect
-        if (request.Status is PresenceStatus.Busy or PresenceStatus.Invisible)
-        {
-            var preferences = await userPresencePreferencesWriteRepository.GetByIdAsync(
-                request.UserId,
-                cancellationToken);
-            if (preferences is null)
-            {
-                await userPresencePreferencesWriteRepository.AddAsync(
-                    UserPresencePreferences.Create(request.UserId, request.Status),
-                    cancellationToken);
-            }
-            else
-            {
-                preferences.SetPreferredStatus(request.Status);
-            }
-        }
-        else if (request.Status == PresenceStatus.Active)
-        {
-            // User explicitly came back online — clear any saved override
-            var preferences = await userPresencePreferencesWriteRepository.GetByIdAsync(
-                request.UserId,
-                cancellationToken);
-            if (preferences is not null)
-            {
-                await userPresencePreferencesWriteRepository.SoftDeleteAsync(preferences, cancellationToken);
-            }
-        }
-        // AFK is automatic — leave any saved preference unchanged
 
         await presenceStatusStore.SetAsync(
             request.UserId,
@@ -74,10 +42,25 @@ public sealed class ChangePresenceStatusCommandHandler(
                 changedAtUtc),
             cancellationToken);
 
+        // Busy / Invisible are manual choices — persist so they survive reconnect
+        if (request.Status is PresenceStatus.Busy or PresenceStatus.Invisible)
+        {
+            await mediator.Send(
+                new ChangeUserPresencePreferencesCommand(request.UserId, request.Status),
+                cancellationToken);
+        }
+        else if (request.Status == PresenceStatus.Active)
+        {
+            // User explicitly came back online — clear any saved override
+            await mediator.Send(
+                new SoftDeleteUserPresencePreferencesCommand(request.UserId),
+                cancellationToken);
+        }
+        // AFK is automatic — leave any saved preference unchanged
+
         return FlowChatResult<Unit>.Success(Unit.Value);
     }
 
-    //ToDo: we will be providin idempotendy in deifferent way than on command handlers. Remmeber to remove.
     protected override async Task<FlowChatResult<Unit>> HandleUnexpectedExceptionAsync(
         ChangePresenceStatusCommand request,
         Exception exception,

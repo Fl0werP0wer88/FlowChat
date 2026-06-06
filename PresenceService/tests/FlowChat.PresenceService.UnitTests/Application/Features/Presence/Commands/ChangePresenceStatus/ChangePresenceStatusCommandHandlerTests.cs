@@ -2,13 +2,12 @@ using AutoFixture;
 using FlowChat.Core.Domain;
 using FlowChat.Core.Results;
 using FlowChat.PresenceService.Application.Contracts.Infrastructure;
-using FlowChat.PresenceService.Application.Contracts.Persistence;
+using FlowChat.Shared.Domain;
 using FlowChat.PresenceService.Application.Features.Presence;
 using FlowChat.PresenceService.Application.Features.Presence.Commands.ChangePresenceStatus;
+using FlowChat.PresenceService.Application.Features.Presence.Commands.ChangeUserPresencePreferences;
+using FlowChat.PresenceService.Application.Features.Presence.Commands.SoftDeleteUserPresencePreferences;
 using FlowChat.PresenceService.Application.Features.Presence.Eventing.ApplicationEvents.PresenceStatusChanged;
-using FlowChat.PresenceService.Domain.Entities.UserPresencePreferences;
-using FlowChat.Shared.Application;
-using FlowChat.Shared.Domain;
 using FluentAssertions;
 using MediatR;
 using Moq;
@@ -19,35 +18,24 @@ public sealed class ChangePresenceStatusCommandHandlerTests
 {
     private readonly IFixture _fixture = new Fixture();
     private readonly Mock<IPresenceStatusStore> _presenceStatusStoreMock = new();
-    private readonly Mock<IUserPresencePreferencesWriteRepository> _preferencesWriteRepositoryMock = new();
     private readonly Mock<IMediator> _mediatorMock = new();
-    private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
     private readonly ChangePresenceStatusCommandHandler _handler;
 
     public ChangePresenceStatusCommandHandlerTests()
     {
-        _unitOfWorkMock
-            .Setup(x => x.ExecuteCommandInTransactionAsync(
-                It.IsAny<Func<CancellationToken, Task<FlowChatResult<Unit>>>>(),
-                It.IsAny<CancellationToken>()))
-            .Returns<Func<CancellationToken, Task<FlowChatResult<Unit>>>, CancellationToken>(
-                (operation, ct) => operation(ct));
-
         _mediatorMock
             .Setup(x => x.Publish(It.IsAny<PresenceStatusChangedApplicationEvent>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
-        _preferencesWriteRepositoryMock
-            .Setup(x => x.AddAsync(It.IsAny<UserPresencePreferences>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((UserPresencePreferences entity, CancellationToken _) => entity);
-        _preferencesWriteRepositoryMock
-            .Setup(x => x.SoftDeleteAsync(It.IsAny<UserPresencePreferences>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
+        _mediatorMock
+            .Setup(x => x.Send(It.IsAny<ChangeUserPresencePreferencesCommand>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(FlowChatResult<Unit>.Success(Unit.Value));
+        _mediatorMock
+            .Setup(x => x.Send(It.IsAny<SoftDeleteUserPresencePreferencesCommand>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(FlowChatResult<Unit>.Success(Unit.Value));
 
         _handler = new ChangePresenceStatusCommandHandler(
             _presenceStatusStoreMock.Object,
-            _preferencesWriteRepositoryMock.Object,
-            _mediatorMock.Object,
-            _unitOfWorkMock.Object);
+            _mediatorMock.Object);
     }
 
     [Fact]
@@ -155,7 +143,7 @@ public sealed class ChangePresenceStatusCommandHandlerTests
     [Theory]
     [InlineData(PresenceStatus.Busy)]
     [InlineData(PresenceStatus.Invisible)]
-    public async Task Handle_WithManualStatus_UpsertsPreference(PresenceStatus status)
+    public async Task Handle_WithManualStatus_DispatchesChangeUserPresencePreferencesCommand(PresenceStatus status)
     {
         var userId = _fixture.Create<Guid>();
 
@@ -168,46 +156,42 @@ public sealed class ChangePresenceStatusCommandHandlerTests
             CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
-        _preferencesWriteRepositoryMock.Verify(
-            x => x.AddAsync(
-                It.Is<UserPresencePreferences>(
-                    preferences => preferences.UserId == userId && preferences.PreferredStatus == status),
+        _mediatorMock.Verify(
+            x => x.Send(
+                It.Is<ChangeUserPresencePreferencesCommand>(cmd => cmd.UserId == userId && cmd.Status == status),
                 It.IsAny<CancellationToken>()),
             Times.Once);
-        _preferencesWriteRepositoryMock.Verify(
-            x => x.SoftDeleteAsync(It.IsAny<UserPresencePreferences>(), It.IsAny<CancellationToken>()),
+        _mediatorMock.Verify(
+            x => x.Send(It.IsAny<SoftDeleteUserPresencePreferencesCommand>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
     [Fact]
-    public async Task Handle_WithActiveStatus_DeletesPreference()
+    public async Task Handle_WithActiveStatus_DispatchesSoftDeleteUserPresencePreferencesCommand()
     {
         var userId = _fixture.Create<Guid>();
 
         _presenceStatusStoreMock
             .Setup(x => x.GetAsync(userId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new PresenceStatusSnapshot(userId, PresenceStatus.Busy, DateTimeOffset.UtcNow));
-        _preferencesWriteRepositoryMock
-            .Setup(x => x.GetByIdAsync(userId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(UserPresencePreferences.Create(userId, PresenceStatus.Busy));
 
         var result = await _handler.Handle(
             new ChangePresenceStatusCommand(userId, PresenceStatus.Active),
             CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
-        _preferencesWriteRepositoryMock.Verify(
-            x => x.SoftDeleteAsync(
-                It.Is<UserPresencePreferences>(preferences => preferences.UserId == userId),
+        _mediatorMock.Verify(
+            x => x.Send(
+                It.Is<SoftDeleteUserPresencePreferencesCommand>(cmd => cmd.UserId == userId),
                 It.IsAny<CancellationToken>()),
             Times.Once);
-        _preferencesWriteRepositoryMock.Verify(
-            x => x.AddAsync(It.IsAny<UserPresencePreferences>(), It.IsAny<CancellationToken>()),
+        _mediatorMock.Verify(
+            x => x.Send(It.IsAny<ChangeUserPresencePreferencesCommand>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
     [Fact]
-    public async Task Handle_WithAFKStatus_DoesNotTouchPreference()
+    public async Task Handle_WithAFKStatus_DoesNotDispatchPreferenceCommands()
     {
         var userId = _fixture.Create<Guid>();
 
@@ -220,11 +204,11 @@ public sealed class ChangePresenceStatusCommandHandlerTests
             CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
-        _preferencesWriteRepositoryMock.Verify(
-            x => x.AddAsync(It.IsAny<UserPresencePreferences>(), It.IsAny<CancellationToken>()),
+        _mediatorMock.Verify(
+            x => x.Send(It.IsAny<ChangeUserPresencePreferencesCommand>(), It.IsAny<CancellationToken>()),
             Times.Never);
-        _preferencesWriteRepositoryMock.Verify(
-            x => x.SoftDeleteAsync(It.IsAny<UserPresencePreferences>(), It.IsAny<CancellationToken>()),
+        _mediatorMock.Verify(
+            x => x.Send(It.IsAny<SoftDeleteUserPresencePreferencesCommand>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
@@ -247,14 +231,11 @@ public sealed class ChangePresenceStatusCommandHandlerTests
             .Setup(x => x.SetAsync(userId, previousStatus.Status, previousStatus.ChangedAtUtc, It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("rollback failed"));
 
-        var act = async () => await _handler.Handle(
+        var result = await _handler.Handle(
             new ChangePresenceStatusCommand(userId, PresenceStatus.Busy),
             CancellationToken.None);
-
-        var result = await act();
 
         result.IsFailure.Should().BeTrue();
         result.Error.ErrorType.Should().Be(ErrorType.Unexpected);
     }
 }
-
