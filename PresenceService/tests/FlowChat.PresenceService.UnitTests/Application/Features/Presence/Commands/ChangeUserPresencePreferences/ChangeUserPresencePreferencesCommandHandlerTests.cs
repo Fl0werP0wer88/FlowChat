@@ -5,6 +5,8 @@ using FlowChat.PresenceService.Application.Contracts.Persistence;
 using FlowChat.PresenceService.Application.Features.Presence.Commands.ChangeUserPresencePreferences;
 using FlowChat.PresenceService.Domain.Entities.UserPresencePreferences;
 using FlowChat.Shared.Application;
+using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2.BeforeSaveProcessors;
+using FlowChat.Shared.Domain;
 using FluentAssertions;
 using MediatR;
 using Moq;
@@ -16,6 +18,7 @@ public sealed class ChangeUserPresencePreferencesCommandHandlerTests
     private readonly IFixture _fixture = new Fixture();
     private readonly Mock<IUserPresencePreferencesWriteRepository> _repositoryMock = new();
     private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
+    private readonly Mock<ILocalEventDispatcher> _dispatcherMock = new();
     private readonly ChangeUserPresencePreferencesCommandHandler _handler;
 
     public ChangeUserPresencePreferencesCommandHandlerTests()
@@ -33,7 +36,9 @@ public sealed class ChangeUserPresencePreferencesCommandHandlerTests
 
         _handler = new ChangeUserPresencePreferencesCommandHandler(
             _repositoryMock.Object,
-            _unitOfWorkMock.Object);
+            _unitOfWorkMock.Object,
+            _dispatcherMock.Object,
+            Array.Empty<IAggregateBeforeSaveProcessor<ChangeUserPresencePreferencesCommand, UserPresencePreferences>>());
     }
 
     [Theory]
