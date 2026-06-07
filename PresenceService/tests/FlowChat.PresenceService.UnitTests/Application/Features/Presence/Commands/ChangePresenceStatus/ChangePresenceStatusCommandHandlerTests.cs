@@ -6,7 +6,6 @@ using FlowChat.Shared.Domain;
 using FlowChat.PresenceService.Application.Features.Presence;
 using FlowChat.PresenceService.Application.Features.Presence.Commands.ChangePresenceStatus;
 using FlowChat.PresenceService.Application.Features.Presence.Commands.ChangeUserPresencePreferences;
-using FlowChat.PresenceService.Application.Features.Presence.Commands.SoftDeleteUserPresencePreferences;
 using FlowChat.PresenceService.Application.Features.Presence.Eventing.ApplicationEvents.PresenceStatusChanged;
 using FluentAssertions;
 using MediatR;
@@ -28,9 +27,6 @@ public sealed class ChangePresenceStatusCommandHandlerTests
             .Returns(Task.CompletedTask);
         _mediatorMock
             .Setup(x => x.Send(It.IsAny<ChangeUserPresencePreferencesCommand>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(FlowChatResult<Unit>.Success(Unit.Value));
-        _mediatorMock
-            .Setup(x => x.Send(It.IsAny<SoftDeleteUserPresencePreferencesCommand>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(FlowChatResult<Unit>.Success(Unit.Value));
 
         _handler = new ChangePresenceStatusCommandHandler(
@@ -141,15 +137,17 @@ public sealed class ChangePresenceStatusCommandHandlerTests
     }
 
     [Theory]
+    [InlineData(PresenceStatus.Active)]
     [InlineData(PresenceStatus.Busy)]
     [InlineData(PresenceStatus.Invisible)]
-    public async Task Handle_WithManualStatus_DispatchesChangeUserPresencePreferencesCommand(PresenceStatus status)
+    public async Task Handle_WithExplicitStatus_DispatchesChangeUserPresencePreferencesCommand(PresenceStatus status)
     {
         var userId = _fixture.Create<Guid>();
+        var previousStatus = status == PresenceStatus.Active ? PresenceStatus.Busy : PresenceStatus.Active;
 
         _presenceStatusStoreMock
             .Setup(x => x.GetAsync(userId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new PresenceStatusSnapshot(userId, PresenceStatus.Active, DateTimeOffset.UtcNow));
+            .ReturnsAsync(new PresenceStatusSnapshot(userId, previousStatus, DateTimeOffset.UtcNow));
 
         var result = await _handler.Handle(
             new ChangePresenceStatusCommand(userId, status),
@@ -161,33 +159,6 @@ public sealed class ChangePresenceStatusCommandHandlerTests
                 It.Is<ChangeUserPresencePreferencesCommand>(cmd => cmd.UserId == userId && cmd.Status == status),
                 It.IsAny<CancellationToken>()),
             Times.Once);
-        _mediatorMock.Verify(
-            x => x.Send(It.IsAny<SoftDeleteUserPresencePreferencesCommand>(), It.IsAny<CancellationToken>()),
-            Times.Never);
-    }
-
-    [Fact]
-    public async Task Handle_WithActiveStatus_DispatchesSoftDeleteUserPresencePreferencesCommand()
-    {
-        var userId = _fixture.Create<Guid>();
-
-        _presenceStatusStoreMock
-            .Setup(x => x.GetAsync(userId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new PresenceStatusSnapshot(userId, PresenceStatus.Busy, DateTimeOffset.UtcNow));
-
-        var result = await _handler.Handle(
-            new ChangePresenceStatusCommand(userId, PresenceStatus.Active),
-            CancellationToken.None);
-
-        result.IsSuccess.Should().BeTrue();
-        _mediatorMock.Verify(
-            x => x.Send(
-                It.Is<SoftDeleteUserPresencePreferencesCommand>(cmd => cmd.UserId == userId),
-                It.IsAny<CancellationToken>()),
-            Times.Once);
-        _mediatorMock.Verify(
-            x => x.Send(It.IsAny<ChangeUserPresencePreferencesCommand>(), It.IsAny<CancellationToken>()),
-            Times.Never);
     }
 
     [Fact]
@@ -206,9 +177,6 @@ public sealed class ChangePresenceStatusCommandHandlerTests
         result.IsSuccess.Should().BeTrue();
         _mediatorMock.Verify(
             x => x.Send(It.IsAny<ChangeUserPresencePreferencesCommand>(), It.IsAny<CancellationToken>()),
-            Times.Never);
-        _mediatorMock.Verify(
-            x => x.Send(It.IsAny<SoftDeleteUserPresencePreferencesCommand>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 

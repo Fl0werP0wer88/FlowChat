@@ -30,7 +30,7 @@ public sealed class InitializePresenceStatusCommandHandler(
 
         var changedAtUtc = DateTimeOffset.UtcNow;
 
-        // Restore any saved manual preference (Busy/Invisible); default to Active otherwise
+        // Restore the user's saved default startup status; fall back to Active when none was ever set
         var preference = await userPresencePreferencesReadRepository.FindPreferredStatusAsync(request.UserId, cancellationToken);
         var statusToSet = preference ?? PresenceStatus.Active;
 

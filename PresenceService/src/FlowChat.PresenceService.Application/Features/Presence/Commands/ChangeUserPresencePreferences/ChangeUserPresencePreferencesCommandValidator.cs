@@ -12,7 +12,7 @@ public sealed class ChangeUserPresencePreferencesCommandValidator
             .NotEmpty();
 
         RuleFor(x => x.Status)
-            .Must(status => status is PresenceStatus.Busy or PresenceStatus.Invisible)
-            .WithMessage("Only manual presence statuses (Busy, Invisible) can be saved as preferences.");
+            .Must(status => status is PresenceStatus.Active or PresenceStatus.Busy or PresenceStatus.Invisible)
+            .WithMessage("AFK cannot be saved as a default startup status.");
     }
 }

@@ -95,11 +95,7 @@ export function usePresenceStatus(): UsePresenceStatusResult {
   });
 
   const changeManualPresenceStatus = useEffectEvent(async (status: ManualUserStatus) => {
-    await performStatusChange(
-      status,
-      status === "Active" ? null : status,
-      status === "Active",
-    );
+    await performStatusChange(status, status, status === "Active");
   });
 
   const handleMouseActivity = useEffectEvent(() => {

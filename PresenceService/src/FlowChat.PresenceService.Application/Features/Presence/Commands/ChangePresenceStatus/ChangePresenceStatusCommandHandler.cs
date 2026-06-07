@@ -2,7 +2,6 @@ using FlowChat.Core.Domain;
 using FlowChat.Core.Results;
 using FlowChat.PresenceService.Application.Contracts.Infrastructure;
 using FlowChat.PresenceService.Application.Features.Presence.Commands.ChangeUserPresencePreferences;
-using FlowChat.PresenceService.Application.Features.Presence.Commands.SoftDeleteUserPresencePreferences;
 using FlowChat.PresenceService.Application.Features.Presence.Eventing.ApplicationEvents.PresenceStatusChanged;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
@@ -42,18 +41,11 @@ public sealed class ChangePresenceStatusCommandHandler(
                 changedAtUtc),
             cancellationToken);
 
-        // Busy / Invisible are manual choices — persist so they survive reconnect
-        if (request.Status is PresenceStatus.Busy or PresenceStatus.Invisible)
+        // Active / Busy / Invisible are explicit choices — persist as the default startup status
+        if (request.Status is PresenceStatus.Active or PresenceStatus.Busy or PresenceStatus.Invisible)
         {
             await mediator.Send(
                 new ChangeUserPresencePreferencesCommand(request.UserId, request.Status),
-                cancellationToken);
-        }
-        else if (request.Status == PresenceStatus.Active)
-        {
-            // User explicitly came back online — clear any saved override
-            await mediator.Send(
-                new SoftDeleteUserPresencePreferencesCommand(request.UserId),
                 cancellationToken);
         }
         // AFK is automatic — leave any saved preference unchanged

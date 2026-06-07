@@ -15,9 +15,10 @@ public sealed class UserPresencePreferencesIntegrationTests(PresenceApiFactory f
     private readonly HttpClient _client = factory.CreateClient();
 
     [Theory]
+    [InlineData(PresenceStatus.Active)]
     [InlineData(PresenceStatus.Busy)]
     [InlineData(PresenceStatus.Invisible)]
-    public async Task ChangeStatus_ToManualStatus_PersistsPreference(PresenceStatus status)
+    public async Task ChangeStatus_ToExplicitStatus_PersistsPreference(PresenceStatus status)
     {
         var userId = Guid.NewGuid();
 
@@ -41,7 +42,7 @@ public sealed class UserPresencePreferencesIntegrationTests(PresenceApiFactory f
     }
 
     [Fact]
-    public async Task ChangeStatus_ToActive_MarksPreferenceAsDeleted()
+    public async Task ChangeStatus_FromManualStatusToActive_UpdatesPreferenceToActive()
     {
         var userId = Guid.NewGuid();
 
@@ -63,15 +64,15 @@ public sealed class UserPresencePreferencesIntegrationTests(PresenceApiFactory f
 
         response.StatusCode.Should().Be(HttpStatusCode.Accepted);
 
-        var deletedPreference = await factory.WithDbContextAsync(async db =>
+        var preference = await factory.WithDbContextAsync(async db =>
         {
             var entity = await db.UserPresencePreferences.FindAsync(Id<UserPresencePreferences>.FromGuid(userId));
             return entity;
         });
 
-        deletedPreference.Should().NotBeNull();
-        deletedPreference!.DeletedAt.Should().NotBeNull();
-        deletedPreference.IsDeleted.Should().BeTrue();
+        preference.Should().NotBeNull();
+        preference!.IsDeleted.Should().BeFalse();
+        preference.PreferredStatus.Should().Be(PresenceStatus.Active);
     }
 
     [Theory]

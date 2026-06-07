@@ -42,6 +42,7 @@ public sealed class ChangeUserPresencePreferencesCommandHandlerTests
     }
 
     [Theory]
+    [InlineData(PresenceStatus.Active)]
     [InlineData(PresenceStatus.Busy)]
     [InlineData(PresenceStatus.Invisible)]
     public async Task Handle_WhenNoPreferenceExists_CreatesNewPreference(PresenceStatus status)
@@ -65,6 +66,7 @@ public sealed class ChangeUserPresencePreferencesCommandHandlerTests
     }
 
     [Theory]
+    [InlineData(PresenceStatus.Active)]
     [InlineData(PresenceStatus.Busy)]
     [InlineData(PresenceStatus.Invisible)]
     public async Task Handle_WhenPreferenceExists_UpdatesExistingPreference(PresenceStatus status)

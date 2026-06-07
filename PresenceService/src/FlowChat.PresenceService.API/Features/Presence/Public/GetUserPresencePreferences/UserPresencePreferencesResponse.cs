@@ -5,6 +5,6 @@ namespace FlowChat.PresenceService.API.Features.Presence.Public.GetUserPresenceP
 
 public sealed class UserPresencePreferencesResponse : IServiceOutput
 {
-    /// <summary>The user's saved manual preference. Null means no preference — Active is used on connect.</summary>
+    /// <summary>The user's saved default startup status. Null means it was never set — Active is used on connect.</summary>
     public PresenceStatus? PreferredStatus { get; init; }
 }
