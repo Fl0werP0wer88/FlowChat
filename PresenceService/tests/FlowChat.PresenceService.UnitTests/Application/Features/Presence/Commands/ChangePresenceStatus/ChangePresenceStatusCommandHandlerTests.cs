@@ -162,6 +162,25 @@ public sealed class ChangePresenceStatusCommandHandlerTests
     }
 
     [Fact]
+    public async Task Handle_WhenRecoveringFromAFKToActive_DoesNotDispatchChangeUserPresencePreferencesCommand()
+    {
+        var userId = _fixture.Create<Guid>();
+
+        _presenceStatusStoreMock
+            .Setup(x => x.GetAsync(userId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new PresenceStatusSnapshot(userId, PresenceStatus.AFK, DateTimeOffset.UtcNow));
+
+        var result = await _handler.Handle(
+            new ChangePresenceStatusCommand(userId, PresenceStatus.Active),
+            CancellationToken.None);
+
+        result.IsSuccess.Should().BeTrue();
+        _mediatorMock.Verify(
+            x => x.Send(It.IsAny<ChangeUserPresencePreferencesCommand>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Fact]
     public async Task Handle_WithAFKStatus_DoesNotDispatchPreferenceCommands()
     {
         var userId = _fixture.Create<Guid>();

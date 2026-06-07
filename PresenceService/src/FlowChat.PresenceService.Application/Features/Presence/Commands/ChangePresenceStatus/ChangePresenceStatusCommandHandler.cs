@@ -41,8 +41,11 @@ public sealed class ChangePresenceStatusCommandHandler(
                 changedAtUtc),
             cancellationToken);
 
+        // Waking up from AFK to Active happens automatically — it is not an explicit choice and must not overwrite the saved preference
+        var isAutomaticAfkRecovery = _previousStatus?.Status == PresenceStatus.AFK && request.Status == PresenceStatus.Active;
+
         // Active / Busy / Invisible are explicit choices — persist as the default startup status
-        if (request.Status is PresenceStatus.Active or PresenceStatus.Busy or PresenceStatus.Invisible)
+        if (!isAutomaticAfkRecovery && request.Status is PresenceStatus.Active or PresenceStatus.Busy or PresenceStatus.Invisible)
         {
             await mediator.Send(
                 new ChangeUserPresencePreferencesCommand(request.UserId, request.Status),
