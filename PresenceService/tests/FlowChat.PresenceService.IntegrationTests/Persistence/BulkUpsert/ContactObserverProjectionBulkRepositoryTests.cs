@@ -1,3 +1,4 @@
+using FlowChat.Core.Exceptions;
 using FlowChat.PresenceService.Application.Features.ContactObserverProjections;
 using FlowChat.PresenceService.Application.Features.ContactObserverProjections.Commands.BulkUpsertOrDeleteUserContactProjection;
 using FlowChat.PresenceService.Persistence;
@@ -133,6 +134,16 @@ public sealed class ContactObserverProjectionBulkRepositoryTests : IDisposable
         var entity = await _dbContext.ContactObserverProjections.SingleAsync();
         entity.SourceVersion.Should().Be(3);
         entity.DeletedAt.Should().NotBeNull();
+    }
+
+    [Fact]
+    public async Task BulkUpsertOrDeleteAsync_WhenItemViolatesCheckConstraint_ThrowsIsolableException()
+    {
+        var userId = Guid.NewGuid();
+
+        var act = () => SaveAsync(CreateUpsertItem(userId, userId, 1));
+
+        await act.Should().ThrowAsync<IsolableException>();
     }
 
     private async Task SaveAsync(UserContactProjectionCommandItem item)

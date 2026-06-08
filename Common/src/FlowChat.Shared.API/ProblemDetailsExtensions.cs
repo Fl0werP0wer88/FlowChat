@@ -83,14 +83,16 @@ public static class ProblemDetailsExtensions
         HttpContext context,
         string? details = null,
         IEnumerable<string>? errors = null,
-        bool isTransient = false) =>
+        bool isTransient = false,
+        bool isIsolable = false) =>
         CreateProblemDetailsWith(
             detailsFactory,
             StatusCodes.Status500InternalServerError,
             context,
             details,
             errors,
-            isTransient);
+            isTransient,
+            isIsolable: isIsolable);
 
     private static ProblemDetails CreateProblemDetailsWith(
         ProblemDetailsFactory detailsFactory,
@@ -99,7 +101,8 @@ public static class ProblemDetailsExtensions
         string? message = null,
         IEnumerable<string>? errors = null,
         bool isTransient = false,
-        string? errorTag = null)
+        string? errorTag = null,
+        bool isIsolable = false)
     {
         ProblemDetails problemDetails;
 
@@ -124,6 +127,7 @@ public static class ProblemDetailsExtensions
         }
 
         problemDetails.Extensions[ProblemDetailsExtensionNames.IsTransient] = isTransient;
+        problemDetails.Extensions[ProblemDetailsExtensionNames.IsIsolable] = isIsolable;
 
         return problemDetails;
     }

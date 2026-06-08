@@ -4,6 +4,8 @@ public interface IDomainError
 {
     public bool IsTransient { get; }
 
+    public bool IsIsolable { get; }
+
     string? ErrorMessage { get; }
 
     ErrorType ErrorType { get; }

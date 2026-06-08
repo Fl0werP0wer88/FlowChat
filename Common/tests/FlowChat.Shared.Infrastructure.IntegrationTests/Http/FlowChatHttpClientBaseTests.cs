@@ -72,6 +72,26 @@ public sealed class FlowChatHttpClientBaseTests
     }
 
     [Fact]
+    public async Task SendAsync_WhenApiReturnsIsolableProblemDetails_ThrowsIsolableException()
+    {
+        using var host = await CreateHostAsync(async context =>
+        {
+            context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+            context.Response.ContentType = "application/problem+json";
+            await context.Response.WriteAsync(
+                $$"""{"detail":"invalid data","{{ProblemDetailsExtensionNames.IsTransient}}":false,"{{ProblemDetailsExtensionNames.IsIsolable}}":true}""",
+                context.RequestAborted);
+        });
+
+        var client = new TestConsumerHttpClient(host.GetTestClient());
+
+        var exception = await Assert.ThrowsAsync<IsolableException>(() =>
+            client.SendPingAsync(CancellationToken.None));
+
+        exception.Message.Should().Contain("500");
+    }
+
+    [Fact]
     public async Task SendAsync_WhenApiReturnsProblemDetailsWithFalseTransientFlag_ThrowsNonTransientException()
     {
         using var host = await CreateHostAsync(async context =>

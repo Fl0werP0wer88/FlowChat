@@ -24,13 +24,17 @@ public abstract class ApiControllerBase : ControllerBase
             { ErrorType.NotFound, NotFoundResponse },
             { ErrorType.BadRequest, BadRequestResponse },
             { ErrorType.Validation, ValidationResponse },
-            { ErrorType.Unauthorized, UnauthorizedResponse },
-            { ErrorType.Unexpected, UnexpectedResponse }
+            { ErrorType.Unauthorized, UnauthorizedResponse }
         };
     }
 
     protected ObjectResult HandleError(IDomainError error)
     {
+        if (error.ErrorType == ErrorType.Unexpected)
+        {
+            return UnexpectedResponse(error.ErrorMessage, error.Errors, error.IsTransient, error.IsIsolable);
+        }
+
         if (_errorHandlers.TryGetValue(error.ErrorType, out var handler))
         {
             return handler(error.ErrorMessage, error.Errors, error.IsTransient);
@@ -99,9 +103,10 @@ public abstract class ApiControllerBase : ControllerBase
     protected ObjectResult UnexpectedResponse(
         string? details = null,
         IEnumerable<string>? errors = null,
-        bool isTransient = false) =>
+        bool isTransient = false,
+        bool isIsolable = false) =>
         StatusCode(
             StatusCodes.Status500InternalServerError,
-            ProblemDetailsFactory.CreateUnexpected(HttpContext, details, errors, isTransient));
+            ProblemDetailsFactory.CreateUnexpected(HttpContext, details, errors, isTransient, isIsolable));
 }
 

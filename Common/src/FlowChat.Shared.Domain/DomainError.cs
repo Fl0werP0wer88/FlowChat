@@ -14,21 +14,24 @@ public record DomainError : IDomainError
     public static DomainError Validation(string? message = "Validation Failed.", List<string>? errors = null) =>
         new(message ?? "Validation Failed.", ErrorType.Validation, errors);
 
-    public static DomainError UnExpected(string? message = "Unexpected error happened.", bool isTransient = false) =>
-        new(message ?? "Something when wrong.", ErrorType.Unexpected, isTransient: isTransient);
+    public static DomainError UnExpected(string? message = "Unexpected error happened.", bool isTransient = false, bool isIsolable = false) =>
+        new(message ?? "Something when wrong.", ErrorType.Unexpected, isTransient: isTransient, isIsolable: isIsolable);
 
     public static DomainError Unauthorized(string? message = "Unauthorized.") =>
         new(message ?? "Unauthorized.", ErrorType.Unauthorized);
 
-    private DomainError(string? message, ErrorType errorType, List<string>? errors = null, bool isTransient = false)
+    private DomainError(string? message, ErrorType errorType, List<string>? errors = null, bool isTransient = false, bool isIsolable = false)
     {
         ErrorMessage = message;
         ErrorType = errorType;
         Errors = errors ?? [];
         IsTransient = isTransient;
+        IsIsolable = isIsolable;
     }
 
     public bool IsTransient { get; init; }
+
+    public bool IsIsolable { get; init; }
 
     public string? ErrorMessage { get; init; }
 

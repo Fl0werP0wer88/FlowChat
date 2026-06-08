@@ -56,6 +56,18 @@ public abstract class SubscriberBase<TIntegrationEvent>(ILogger logger)
 
             throw;
         }
+        catch (IsolableException exception)
+        {
+            Activity.Current?.SetTag("flowchat.subscriber.result", "isolable_failure");
+            Logger.LogInformation(
+                exception,
+                "Isolable failure while handling {EventType} in {SubscriberName}. Reason: {Reason}",
+                GetEventTypeName(message),
+                GetType().Name,
+                exception.Message);
+
+            throw;
+        }
         catch (Exception exception)
         {
             Activity.Current?.SetTag("flowchat.subscriber.result", "unknown_failure");

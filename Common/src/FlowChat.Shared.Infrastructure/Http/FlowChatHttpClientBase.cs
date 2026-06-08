@@ -80,6 +80,11 @@ public abstract class FlowChatHttpClientBase(HttpClient httpClient)
             throw new TransientException(message, inner);
         }
 
+        if (HasIsolableProblemDetails(body))
+        {
+            throw new IsolableException(message, inner);
+        }
+
         throw new NonTransientException(message, inner);
     }
 
@@ -89,7 +94,13 @@ public abstract class FlowChatHttpClientBase(HttpClient httpClient)
             or HttpStatusCode.BadGateway
             or HttpStatusCode.GatewayTimeout;
 
-    private static bool HasTransientProblemDetails(string? body)
+    private static bool HasTransientProblemDetails(string? body) =>
+        HasProblemDetailsFlag(body, ProblemDetailsExtensionNames.IsTransient);
+
+    private static bool HasIsolableProblemDetails(string? body) =>
+        HasProblemDetailsFlag(body, ProblemDetailsExtensionNames.IsIsolable);
+
+    private static bool HasProblemDetailsFlag(string? body, string extensionName)
     {
         if (string.IsNullOrWhiteSpace(body))
         {
@@ -100,8 +111,8 @@ public abstract class FlowChatHttpClientBase(HttpClient httpClient)
         {
             using var document = JsonDocument.Parse(body);
             return document.RootElement.ValueKind == JsonValueKind.Object
-                && document.RootElement.TryGetProperty(ProblemDetailsExtensionNames.IsTransient, out var isTransientProperty)
-                && isTransientProperty.ValueKind == JsonValueKind.True;
+                && document.RootElement.TryGetProperty(extensionName, out var flagProperty)
+                && flagProperty.ValueKind == JsonValueKind.True;
         }
         catch (JsonException)
         {
