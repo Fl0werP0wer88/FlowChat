@@ -58,8 +58,7 @@ public sealed class UserProfileProjectionConfiguration : IEntityTypeConfiguratio
         builder.Property(x => x.SourceLastModifiedAtUtc)
             .IsRequired();
 
-        builder.Property(x => x.SourceDeletedAtUtc)
-            .IsRequired();
+        builder.Property(x => x.SourceDeletedAtUtc);
 
         builder.Property(x => x.DeletedAt);
 
