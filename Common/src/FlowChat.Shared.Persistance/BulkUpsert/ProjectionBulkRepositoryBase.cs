@@ -35,12 +35,7 @@ public abstract class ProjectionBulkRepositoryBase<TDbContext, TItem, TValue, TE
                 UseTempDB = true,
                 UpdateByProperties = updateByProperties.ToList(),
                 OnConflictUpdateWhereSql = (existing, inserted) =>
-                    $"{inserted}.\"{nameof(ReadModelEntityBase.SourceVersion)}\" > {existing}.\"{nameof(ReadModelEntityBase.SourceVersion)}\"",
-                PropertiesToExcludeOnUpdate =
-                [
-                    nameof(AuditableReadEntityBase.CreatedBy),
-                    nameof(AuditableReadEntityBase.CreatedAtUtc)
-                ]
+                    $"{inserted}.\"{nameof(ReadModelEntityBase.SourceVersion)}\" > {existing}.\"{nameof(ReadModelEntityBase.SourceVersion)}\""
             },
             cancellationToken: cancellationToken);
     }
@@ -50,8 +45,7 @@ public abstract class ProjectionBulkRepositoryBase<TDbContext, TItem, TValue, TE
         int sourceVersion,
         DateTimeOffset sourceCreatedAtUtc,
         DateTimeOffset sourceLastModifiedAtUtc,
-        DateTimeOffset? sourceDeletedAtUtc,
-        DateTimeOffset now);
+        DateTimeOffset? sourceDeletedAtUtc);
 
     protected abstract TEntity CreateTombstoneEntity(
         TItem item,
@@ -70,7 +64,6 @@ public abstract class ProjectionBulkRepositoryBase<TDbContext, TItem, TValue, TE
                 item.SourceVersion,
                 item.SourceCreatedAtUtc,
                 item.SourceLastModifiedAtUtc,
-                item.SourceDeletedAtUtc,
-                now);
+                item.SourceDeletedAtUtc);
     }
 }

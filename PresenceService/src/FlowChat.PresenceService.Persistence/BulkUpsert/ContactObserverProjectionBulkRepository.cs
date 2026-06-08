@@ -10,8 +10,6 @@ public sealed class ContactObserverProjectionBulkRepository(AppDbContext dbConte
     : ProjectionBulkRepositoryBase<AppDbContext, UserContactProjectionCommandItem, ContactObserverProjectionDto, ContactObserverReadModelEntity>(dbContext),
         IContactObserverProjectionBulkRepository
 {
-    private const string TombstoneSource = "social-graph-contact-events";
-
     public Task BulkUpsertOrSoftDeleteAsync(
         IReadOnlyCollection<UserContactProjectionCommandItem> items,
         CancellationToken cancellationToken) =>
@@ -28,8 +26,7 @@ public sealed class ContactObserverProjectionBulkRepository(AppDbContext dbConte
         int sourceVersion,
         DateTimeOffset sourceCreatedAtUtc,
         DateTimeOffset sourceLastModifiedAtUtc,
-        DateTimeOffset? sourceDeletedAtUtc,
-        DateTimeOffset now) =>
+        DateTimeOffset? sourceDeletedAtUtc) =>
         new()
         {
             ObservedUserId = item.ObservedUserId,
@@ -37,11 +34,7 @@ public sealed class ContactObserverProjectionBulkRepository(AppDbContext dbConte
             SourceVersion = sourceVersion,
             SourceCreatedAtUtc = sourceCreatedAtUtc,
             SourceLastModifiedAtUtc = sourceLastModifiedAtUtc,
-            SourceDeletedAtUtc = sourceDeletedAtUtc,
-            CreatedBy = item.Source,
-            CreatedAtUtc = now,
-            LastModifiedBy = item.Source,
-            LastModifiedAtUtc = now
+            SourceDeletedAtUtc = sourceDeletedAtUtc
         };
 
     protected override ContactObserverReadModelEntity CreateTombstoneEntity(
@@ -54,10 +47,6 @@ public sealed class ContactObserverProjectionBulkRepository(AppDbContext dbConte
             SourceVersion = item.SourceVersion,
             SourceCreatedAtUtc = item.SourceCreatedAtUtc,
             SourceLastModifiedAtUtc = item.SourceLastModifiedAtUtc,
-            SourceDeletedAtUtc = item.SourceDeletedAtUtc ?? now,
-            CreatedBy = TombstoneSource,
-            CreatedAtUtc = now,
-            LastModifiedBy = TombstoneSource,
-            LastModifiedAtUtc = now
+            SourceDeletedAtUtc = item.SourceDeletedAtUtc ?? now
         };
 }

@@ -55,11 +55,7 @@ public sealed class ContactObserverProjectionControllerTests(PresenceApiFactory 
             {
                 ObservedUserId = observedUserId,
                 ObserverUserId = observerUserId,
-                SourceVersion = 1,
-                CreatedBy = "test",
-                CreatedAtUtc = DateTimeOffset.UtcNow,
-                LastModifiedBy = "test",
-                LastModifiedAtUtc = DateTimeOffset.UtcNow
+                SourceVersion = 1
             });
             await db.SaveChangesAsync();
         });

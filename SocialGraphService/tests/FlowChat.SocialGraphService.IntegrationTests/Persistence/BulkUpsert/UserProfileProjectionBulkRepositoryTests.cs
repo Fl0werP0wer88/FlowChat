@@ -49,10 +49,6 @@ public sealed class UserProfileProjectionBulkRepositoryTests : IDisposable
         entity.AvatarUrl.Should().Be("https://avatar");
         entity.SourceVersion.Should().Be(1);
         entity.DeletedAt.Should().BeNull();
-        entity.CreatedBy.Should().Be("consumer");
-        entity.CreatedAtUtc.Should().NotBe(default);
-        entity.LastModifiedBy.Should().Be("consumer");
-        entity.LastModifiedAtUtc.Should().NotBe(default);
     }
 
     [Fact]
@@ -60,10 +56,6 @@ public sealed class UserProfileProjectionBulkRepositoryTests : IDisposable
     {
         var userProfileId = Guid.NewGuid();
         await SaveAsync(CreateUpsertItem(userProfileId, 1, friendlyUserId: "jdoe", firstName: "Before"));
-        var firstCreatedAtUtc = await _dbContext.UserProfileProjections
-            .Where(x => x.UserProfileId == userProfileId)
-            .Select(x => x.CreatedAtUtc)
-            .SingleAsync();
 
         await Task.Delay(10);
         await SaveAsync(CreateUpsertItem(
@@ -80,8 +72,6 @@ public sealed class UserProfileProjectionBulkRepositoryTests : IDisposable
         entity.LastName.Should().Be("Updated");
         entity.SourceVersion.Should().Be(2);
         entity.DeletedAt.Should().BeNull();
-        entity.LastModifiedBy.Should().Be("updater-consumer");
-        entity.LastModifiedAtUtc.Should().BeAfter(firstCreatedAtUtc);
     }
 
     [Theory]

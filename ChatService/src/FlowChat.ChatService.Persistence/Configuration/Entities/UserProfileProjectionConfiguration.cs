@@ -1,4 +1,5 @@
 using FlowChat.ChatService.Persistence.Entities;
+using FlowChat.Shared.Persistance;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -38,20 +39,7 @@ public sealed class UserProfileReadModelEntityConfiguration : IEntityTypeConfigu
 
         builder.Property(x => x.SourceDeletedAtUtc);
 
-        builder.Property(x => x.DeletedAt);
-
-        builder.Property(x => x.CreatedBy)
-            .HasMaxLength(128)
-            .IsRequired();
-
-        builder.Property(x => x.CreatedAtUtc)
-            .IsRequired();
-
-        builder.Property(x => x.LastModifiedBy)
-            .HasMaxLength(128)
-            .IsRequired();
-
-        builder.Property(x => x.LastModifiedAtUtc)
-            .IsRequired();
+        builder.Property(x => x.DeletedAt)
+            .HasComputedColumnSql($"\"{nameof(ReadModelEntityBase.SourceDeletedAtUtc)}\"", stored: true);
     }
 }

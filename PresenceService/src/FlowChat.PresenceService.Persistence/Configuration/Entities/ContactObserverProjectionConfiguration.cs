@@ -1,4 +1,5 @@
 using FlowChat.PresenceService.Persistence.Entities;
+using FlowChat.Shared.Persistance;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -27,19 +28,8 @@ public sealed class ContactObserverProjectionConfiguration : IEntityTypeConfigur
 
         builder.Property(x => x.SourceDeletedAtUtc);
 
-        builder.Property(x => x.CreatedBy)
-            .HasMaxLength(256)
-            .IsRequired();
-
-        builder.Property(x => x.CreatedAtUtc);
-
-        builder.Property(x => x.LastModifiedBy)
-            .HasMaxLength(256)
-            .IsRequired();
-
-        builder.Property(x => x.LastModifiedAtUtc);
-
-        builder.Property(x => x.DeletedAt);
+        builder.Property(x => x.DeletedAt)
+            .HasComputedColumnSql($"\"{nameof(ReadModelEntityBase.SourceDeletedAtUtc)}\"", stored: true);
 
         builder.HasIndex(x => x.ObservedUserId)
             .HasDatabaseName("ix_contact_observer_projection_observed_user_id");

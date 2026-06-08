@@ -23,11 +23,7 @@ public sealed class DeletePresenceStatusControllerTests(PresenceApiFactory facto
             await db.ContactObserverProjections.AddAsync(new ContactObserverReadModelEntity
             {
                 ObservedUserId = userId,
-                ObserverUserId = observerUserId,
-                CreatedBy = "test",
-                CreatedAtUtc = DateTimeOffset.UtcNow,
-                LastModifiedBy = "test",
-                LastModifiedAtUtc = DateTimeOffset.UtcNow
+                ObserverUserId = observerUserId
             });
             await db.SaveChangesAsync();
         });

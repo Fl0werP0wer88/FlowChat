@@ -10,8 +10,6 @@ public sealed class UserProfileProjectionBulkRepository(AppDbContext dbContext)
     : ProjectionBulkRepositoryBase<AppDbContext, UserProfileProjectionCommandItem, UserProfileProjectionDto, UserProfileReadModelEntity>(dbContext),
         IUserProfileProjectionBulkRepository
 {
-    private const string TombstoneSource = "user-profile-projection";
-
     public Task BulkUpsertOrSoftDeleteAsync(
         IReadOnlyCollection<UserProfileProjectionCommandItem> items,
         CancellationToken cancellationToken) =>
@@ -25,8 +23,7 @@ public sealed class UserProfileProjectionBulkRepository(AppDbContext dbContext)
         int sourceVersion,
         DateTimeOffset sourceCreatedAtUtc,
         DateTimeOffset sourceLastModifiedAtUtc,
-        DateTimeOffset? sourceDeletedAtUtc,
-        DateTimeOffset now) =>
+        DateTimeOffset? sourceDeletedAtUtc) =>
         new()
         {
             UserId = item.UserProfileId,
@@ -37,11 +34,7 @@ public sealed class UserProfileProjectionBulkRepository(AppDbContext dbContext)
             SourceVersion = sourceVersion,
             SourceCreatedAtUtc = sourceCreatedAtUtc,
             SourceLastModifiedAtUtc = sourceLastModifiedAtUtc,
-            SourceDeletedAtUtc = sourceDeletedAtUtc,
-            CreatedBy = item.Source,
-            CreatedAtUtc = now,
-            LastModifiedBy = item.Source,
-            LastModifiedAtUtc = now
+            SourceDeletedAtUtc = sourceDeletedAtUtc
         };
 
     protected override UserProfileReadModelEntity CreateTombstoneEntity(
@@ -54,10 +47,6 @@ public sealed class UserProfileProjectionBulkRepository(AppDbContext dbContext)
             SourceVersion = item.SourceVersion,
             SourceCreatedAtUtc = item.SourceCreatedAtUtc,
             SourceLastModifiedAtUtc = item.SourceLastModifiedAtUtc,
-            SourceDeletedAtUtc = item.SourceDeletedAtUtc ?? now,
-            CreatedBy = TombstoneSource,
-            CreatedAtUtc = now,
-            LastModifiedBy = TombstoneSource,
-            LastModifiedAtUtc = now
+            SourceDeletedAtUtc = item.SourceDeletedAtUtc ?? now
         };
 }

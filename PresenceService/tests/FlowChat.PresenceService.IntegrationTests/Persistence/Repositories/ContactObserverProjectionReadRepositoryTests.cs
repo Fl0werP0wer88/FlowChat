@@ -76,11 +76,7 @@ public sealed class ContactObserverProjectionReadRepositoryTests
         {
             ObservedUserId = observedUserId,
             ObserverUserId = observerUserId,
-            CreatedBy = "test",
-            CreatedAtUtc = new DateTimeOffset(2026, 4, 24, 10, 0, 0, TimeSpan.Zero),
-            LastModifiedBy = "test",
-            LastModifiedAtUtc = new DateTimeOffset(2026, 4, 24, 10, 0, 0, TimeSpan.Zero),
-            DeletedAt = deletedAt
+            SourceDeletedAtUtc = deletedAt
         };
 
     private static AppDbContext CreateDbContext(SqliteConnection connection)

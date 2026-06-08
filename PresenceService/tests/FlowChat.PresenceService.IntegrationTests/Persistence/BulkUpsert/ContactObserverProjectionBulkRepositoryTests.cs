@@ -46,10 +46,6 @@ public sealed class ContactObserverProjectionBulkRepositoryTests : IDisposable
         entity.ObserverUserId.Should().Be(observerUserId);
         entity.SourceVersion.Should().Be(1);
         entity.DeletedAt.Should().BeNull();
-        entity.CreatedBy.Should().Be("consumer");
-        entity.CreatedAtUtc.Should().NotBe(default);
-        entity.LastModifiedBy.Should().Be("consumer");
-        entity.LastModifiedAtUtc.Should().NotBe(default);
     }
 
     [Fact]
@@ -58,10 +54,6 @@ public sealed class ContactObserverProjectionBulkRepositoryTests : IDisposable
         var observedUserId = Guid.NewGuid();
         var observerUserId = Guid.NewGuid();
         await SaveAsync(CreateUpsertItem(observedUserId, observerUserId, 1));
-        var firstCreatedAtUtc = await _dbContext.ContactObserverProjections
-            .Where(x => x.ObservedUserId == observedUserId && x.ObserverUserId == observerUserId)
-            .Select(x => x.CreatedAtUtc)
-            .SingleAsync();
 
         await Task.Delay(10);
         await SaveAsync(CreateUpsertItem(observedUserId, observerUserId, 2, "updater-consumer"));
@@ -69,8 +61,6 @@ public sealed class ContactObserverProjectionBulkRepositoryTests : IDisposable
         var entity = await _dbContext.ContactObserverProjections.SingleAsync();
         entity.SourceVersion.Should().Be(2);
         entity.DeletedAt.Should().BeNull();
-        entity.LastModifiedBy.Should().Be("updater-consumer");
-        entity.LastModifiedAtUtc.Should().BeAfter(firstCreatedAtUtc);
     }
 
     [Theory]
@@ -86,7 +76,6 @@ public sealed class ContactObserverProjectionBulkRepositoryTests : IDisposable
 
         var entity = await _dbContext.ContactObserverProjections.SingleAsync();
         entity.SourceVersion.Should().Be(2);
-        entity.LastModifiedBy.Should().Be("consumer");
     }
 
     [Fact]
