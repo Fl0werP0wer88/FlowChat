@@ -74,12 +74,11 @@ namespace FlowChat.SocialGraphService.Persistence.Migrations
                     Bio = table.Column<string>(type: "character varying(2000)", maxLength: 2000, nullable: true),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true),
                     LastSeenAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
-                    DeletedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
-                    CreatedBy = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
-                    CreatedAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    LastModifiedBy = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
-                    LastModifiedAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    SourceVersion = table.Column<int>(type: "integer", nullable: false)
+                    SourceVersion = table.Column<int>(type: "integer", nullable: false),
+                    SourceCreatedAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    SourceLastModifiedAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    SourceDeletedAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    DeletedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true, computedColumnSql: "\"SourceDeletedAtUtc\"", stored: true)
                 },
                 constraints: table =>
                 {

@@ -58,12 +58,11 @@ namespace FlowChat.ChatService.Persistence.Migrations
                     FirstName = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
                     LastName = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
                     AvatarUrl = table.Column<string>(type: "character varying(2048)", maxLength: 2048, nullable: true),
-                    DeletedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
-                    CreatedBy = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: false),
-                    CreatedAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    LastModifiedBy = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: false),
-                    LastModifiedAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    SourceVersion = table.Column<int>(type: "integer", nullable: false)
+                    SourceVersion = table.Column<int>(type: "integer", nullable: false),
+                    SourceCreatedAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    SourceLastModifiedAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    SourceDeletedAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    DeletedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true, computedColumnSql: "\"SourceDeletedAtUtc\"", stored: true)
                 },
                 constraints: table =>
                 {
