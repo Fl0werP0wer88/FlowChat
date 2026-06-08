@@ -61,6 +61,7 @@ public sealed class UserProfileProjectionConfiguration : IEntityTypeConfiguratio
 
         builder.Property(x => x.SourceDeletedAtUtc);
 
+        // Generated column mirroring SourceDeletedAtUtc so ReadRepositoryBase.Active's DeletedAt == null filter is translatable to SQL without a redundant write path
         builder.Property(x => x.DeletedAt)
             .HasComputedColumnSql($"\"{nameof(ReadModelEntityBase.SourceDeletedAtUtc)}\"", stored: true);
 
