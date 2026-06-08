@@ -1,0 +1,16 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/FlowChat.HarnessService.API/FlowChat.HarnessService.API.csproj" />
+    <Project Path="src/FlowChat.HarnessService.Application/FlowChat.HarnessService.Application.csproj" />
+    <Project Path="src/FlowChat.HarnessService.Persistence/FlowChat.HarnessService.Persistence.csproj" />
+  </Folder>
+  <Folder Name="/src/Workers/">
+    <Project Path="src/Workers/FlowChat.HarnessService.Consumers/FlowChat.HarnessService.Consumers.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/FlowChat.HarnessService.AATs/FlowChat.HarnessService.AATs.csproj" />
+  </Folder>
+  <Project Path="../Common/src/FlowChat.Shared.API/FlowChat.Shared.API.csproj" />
+  <Project Path="../Common/src/FlowChat.Shared.Application/FlowChat.Shared.Application.csproj" />
+  <Project Path="../Common/src/FlowChat.Shared.Infrastructure/FlowChat.Shared.Infrastructure.csproj" />
+</Solution>

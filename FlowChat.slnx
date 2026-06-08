@@ -138,6 +138,18 @@
   <Folder Name="/GatewayService/src/">
     <Project Path="GatewayService/src/FlowChat.GatewayService.API/FlowChat.GatewayService.API.csproj" />
   </Folder>
+  <Folder Name="/HarnessService/" />
+  <Folder Name="/HarnessService/src/">
+    <Project Path="HarnessService/src/FlowChat.HarnessService.API/FlowChat.HarnessService.API.csproj" />
+    <Project Path="HarnessService/src/FlowChat.HarnessService.Application/FlowChat.HarnessService.Application.csproj" />
+    <Project Path="HarnessService/src/FlowChat.HarnessService.Persistence/FlowChat.HarnessService.Persistence.csproj" />
+  </Folder>
+  <Folder Name="/HarnessService/src/Workers/">
+    <Project Path="HarnessService/src/Workers/FlowChat.HarnessService.Consumers/FlowChat.HarnessService.Consumers.csproj" />
+  </Folder>
+  <Folder Name="/HarnessService/tests/">
+    <Project Path="HarnessService/tests/FlowChat.HarnessService.AATs/FlowChat.HarnessService.AATs.csproj" />
+  </Folder>
   <Folder Name="/ReactClient/" />
 </Solution>
 

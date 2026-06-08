@@ -60,6 +60,7 @@ FlowChat is a microservices-based chat application built with .NET 10. Services 
 - **RealtimeService** — SignalR real-time connections
 - **SocialGraphService** — friends/followers graph
 - **UserProfileService** — user profiles
+- **HarnessService** — dev-only general-purpose test harness for AAT-testing cross-cutting infrastructure patterns (projection pipeline, Kafka retry/DLQ isolation, etc.); located in `HarnessService/`
 
 ### Dev Infrastructure (Docker)
 Located in `Scripts/`: PostgreSQL, Kafka, MailHog, Observability stack.

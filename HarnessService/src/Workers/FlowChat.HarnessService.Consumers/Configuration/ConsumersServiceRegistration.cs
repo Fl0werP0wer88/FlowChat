@@ -1,0 +1,71 @@
+using Confluent.Kafka;
+using FlowChat.HarnessService.Consumers.Configuration.Settings;
+using FlowChat.HarnessService.Consumers.Kafka.Projections;
+using FlowChat.HarnessService.Consumers.Services;
+using FlowChat.Shared.Infrastructure.Http;
+using FlowChat.Shared.Infrastructure.Silverback.Behaviors;
+using FlowChat.Shared.Infrastructure.Silverback.Kafka;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Silverback.Configuration;
+using Silverback.Messaging.Configuration;
+
+namespace FlowChat.HarnessService.Consumers;
+
+public static class ConsumersServiceRegistration
+{
+    internal const string ProjectionMainConsumerName = "projection-main";
+    internal const string ProjectionRetryConsumerName = "projection-retry";
+
+    public static IServiceCollection AddConsumers(
+        this IServiceCollection services,
+        IConfiguration configuration)
+    {
+        var projectionOptions = configuration
+            .GetSection(new ProjectionConsumerSettingsSection().SectionName)
+            .Get<ProjectionConsumerSettingsSection>()
+            ?? new ProjectionConsumerSettingsSection();
+
+        services.AddFlowChatHttpClient<IHarnessApiClient, HarnessApiClient, HarnessApiSettingsSection>();
+
+        services.AddSilverback()
+            .AddSingletonBrokerBehavior<CustomSpanAttributesProducerBehavior>()
+            .AddSingletonBrokerBehavior<CustomSpanAttributesConsumerBehavior>()
+            .WithConnectionToMessageBroker(options => options.AddKafka())
+            .AddKafkaClients(clients =>
+            {
+                clients
+                    .WithBootstrapServers(projectionOptions.BootstrapServers)
+                    .AddConsumer(ProjectionMainConsumerName, consumer => consumer
+                        .WithGroupId(projectionOptions.GroupId)
+                        .WithAutoOffsetReset(ParseAutoOffsetReset(projectionOptions.AutoOffsetReset))
+                        .Consume(endpoint => endpoint
+                            .ConfigureFlowChatMainEndpoint(projectionOptions)
+                            .EnableBatchProcessing(
+                                projectionOptions.BatchSize,
+                                TimeSpan.FromMilliseconds(projectionOptions.BatchMaxWaitTimeMilliseconds))))
+                    .AddConsumer(ProjectionRetryConsumerName, consumer => consumer
+                        .WithGroupId(projectionOptions.RetryGroupId)
+                        .WithAutoOffsetReset(ParseAutoOffsetReset(projectionOptions.AutoOffsetReset))
+                        .Consume(endpoint => endpoint
+                            .ConfigureFlowChatRetryEndpoint(projectionOptions)))
+                    .AddProducer(producer => producer
+                        .Produce(endpoint => endpoint
+                            .ProduceTo(projectionOptions.RetryTopic)
+                            .SerializeAsJson(serializer => serializer.SetTypeHeader())))
+                    .AddProducer(producer => producer
+                        .Produce(endpoint => endpoint
+                            .ProduceTo(projectionOptions.DeadLetterTopic)
+                            .SerializeAsJson(serializer => serializer.SetTypeHeader())));
+            })
+            .AddScopedSubscriber<ProjectionBatchSubscriber>()
+            .AddScopedSubscriber<ProjectionRetrySubscriber>();
+
+        return services;
+    }
+
+    private static AutoOffsetReset ParseAutoOffsetReset(string value) =>
+        Enum.TryParse<AutoOffsetReset>(value, true, out var parsed)
+            ? parsed
+            : AutoOffsetReset.Earliest;
+}
