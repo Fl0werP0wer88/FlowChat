@@ -56,7 +56,7 @@ public sealed class ExceptionHandlingPipelineBehavior<TRequest, TResponse>
             Activity.Current?.AddException(exception);
             Activity.Current?.SetTag("error.type", "transient");
 
-            var domainError = DomainError.UnExpected("An unexpected error occurred.", isTransient: true);
+            var domainError = DomainError.UnExpected("An unexpected error occurred.", FailureKind.Transient);
             return TResponse.Failure(domainError);
         }
         catch (IsolableException exception)
@@ -65,7 +65,7 @@ public sealed class ExceptionHandlingPipelineBehavior<TRequest, TResponse>
             Activity.Current?.AddException(exception);
             Activity.Current?.SetTag("error.type", "isolable");
 
-            var domainError = DomainError.UnExpected(exception.Message, isTransient: false, isIsolable: true);
+            var domainError = DomainError.UnExpected(exception.Message, FailureKind.Isolable);
             return TResponse.Failure(domainError);
         }
         catch (FlowChatException exception)
@@ -119,7 +119,7 @@ public sealed class ExceptionHandlingPipelineBehavior<TRequest, TResponse>
                 Activity.Current?.SetTag("db.exception.sql_state", dbException.SqlState);
             }
 
-            var domainError = DomainError.UnExpected("An unexpected error occurred.", isTransient);
+            var domainError = DomainError.UnExpected("An unexpected error occurred.", isTransient ? FailureKind.Transient : FailureKind.None);
             return TResponse.Failure(domainError);
         }
         catch (OperationCanceledException exception)

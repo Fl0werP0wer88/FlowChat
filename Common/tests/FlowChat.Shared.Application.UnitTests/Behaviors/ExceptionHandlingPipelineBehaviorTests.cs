@@ -52,7 +52,7 @@ public sealed class ExceptionHandlingPipelineBehaviorTests
         result.IsFailure.Should().BeTrue();
         result.Error.ErrorType.Should().Be(ErrorType.Unexpected);
         result.Error.ErrorMessage.Should().Be("An unexpected error occurred.");
-        result.Error.IsTransient.Should().BeTrue();
+        result.Error.FailureKind.Should().Be(FailureKind.Transient);
 
         activity.Status.Should().Be(ActivityStatusCode.Error);
         activity.StatusDescription.Should().Be("db_update_failed");
@@ -78,7 +78,7 @@ public sealed class ExceptionHandlingPipelineBehaviorTests
         result.IsFailure.Should().BeTrue();
         result.Error.ErrorType.Should().Be(ErrorType.Unexpected);
         result.Error.ErrorMessage.Should().Be("An unexpected error occurred.");
-        result.Error.IsTransient.Should().BeFalse();
+        result.Error.FailureKind.Should().Be(FailureKind.None);
 
         activity.Status.Should().Be(ActivityStatusCode.Error);
         activity.StatusDescription.Should().Be("db_update_failed");
@@ -104,8 +104,7 @@ public sealed class ExceptionHandlingPipelineBehaviorTests
         result.IsFailure.Should().BeTrue();
         result.Error.ErrorType.Should().Be(ErrorType.Unexpected);
         result.Error.ErrorMessage.Should().Be(exception.Message);
-        result.Error.IsTransient.Should().BeFalse();
-        result.Error.IsIsolable.Should().BeTrue();
+        result.Error.FailureKind.Should().Be(FailureKind.Isolable);
 
         activity.Status.Should().Be(ActivityStatusCode.Error);
         activity.StatusDescription.Should().Be("isolable_failure");

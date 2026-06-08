@@ -35,8 +35,8 @@ public sealed class ApiControllerBaseTests
         objectResult.StatusCode.Should().Be(expectedStatusCode);
         problemDetails.Status.Should().Be(expectedStatusCode);
         problemDetails.Detail.Should().Be(error.ErrorMessage);
-        problemDetails.Extensions.Should().ContainKey(ProblemDetailsExtensionNames.IsTransient);
-        problemDetails.Extensions[ProblemDetailsExtensionNames.IsTransient].Should().Be(error.IsTransient);
+        problemDetails.Extensions.Should().ContainKey(ProblemDetailsExtensionNames.FailureKind);
+        problemDetails.Extensions[ProblemDetailsExtensionNames.FailureKind].Should().Be(error.FailureKind.ToString());
     }
 
     [Fact]

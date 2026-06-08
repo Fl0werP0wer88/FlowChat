@@ -1,5 +1,6 @@
 using System.Text;
 using FlowChat.Core.Http;
+using FlowChat.Shared.Domain;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
@@ -13,86 +14,84 @@ public static class ProblemDetailsExtensions
         HttpContext context,
         string? details = null,
         IEnumerable<string>? errors = null,
-        bool isTransient = false) =>
+        FailureKind failureKind = FailureKind.None) =>
         CreateProblemDetailsWith(
             detailsFactory,
             StatusCodes.Status404NotFound,
             context,
             details,
             errors,
-            isTransient);
+            failureKind);
 
     public static ProblemDetails CreateBadRequest(
         this ProblemDetailsFactory detailsFactory,
         HttpContext context,
         string? details = null,
         IEnumerable<string>? errors = null,
-        bool isTransient = false) =>
+        FailureKind failureKind = FailureKind.None) =>
         CreateProblemDetailsWith(
             detailsFactory,
             StatusCodes.Status400BadRequest,
             context,
             details,
             errors,
-            isTransient);
+            failureKind);
 
     public static ProblemDetails CreateConflict(
         this ProblemDetailsFactory detailsFactory,
         HttpContext context,
         string? details = null,
         IEnumerable<string>? errors = null,
-        bool isTransient = false) =>
+        FailureKind failureKind = FailureKind.None) =>
         CreateProblemDetailsWith(
             detailsFactory,
             StatusCodes.Status409Conflict,
             context,
             details,
             errors,
-            isTransient);
+            failureKind);
 
     public static ProblemDetails CreateValidation(
         this ProblemDetailsFactory detailsFactory,
         HttpContext context,
         string? details = null,
         IEnumerable<string>? errors = null,
-        bool isTransient = false) =>
+        FailureKind failureKind = FailureKind.None) =>
         CreateProblemDetailsWith(
             detailsFactory,
             StatusCodes.Status400BadRequest,
             context,
             details,
             errors,
-            isTransient);
+            failureKind);
 
     public static ProblemDetails CreateUnauthorized(
         this ProblemDetailsFactory detailsFactory,
         HttpContext context,
         string? details = null,
         IEnumerable<string>? errors = null,
-        bool isTransient = false) =>
+        FailureKind failureKind = FailureKind.None) =>
         CreateProblemDetailsWith(
             detailsFactory,
             StatusCodes.Status401Unauthorized,
             context,
             details,
             errors,
-            isTransient);
+            failureKind);
 
     public static ProblemDetails CreateUnexpected(
         this ProblemDetailsFactory detailsFactory,
         HttpContext context,
         string? details = null,
         IEnumerable<string>? errors = null,
-        bool isTransient = false,
-        bool isIsolable = false) =>
+        FailureKind failureKind = FailureKind.None) =>
         CreateProblemDetailsWith(
             detailsFactory,
             StatusCodes.Status500InternalServerError,
             context,
             details,
             errors,
-            isTransient,
-            isIsolable: isIsolable);
+            failureKind);
 
     private static ProblemDetails CreateProblemDetailsWith(
         ProblemDetailsFactory detailsFactory,
@@ -100,9 +99,8 @@ public static class ProblemDetailsExtensions
         HttpContext context,
         string? message = null,
         IEnumerable<string>? errors = null,
-        bool isTransient = false,
-        string? errorTag = null,
-        bool isIsolable = false)
+        FailureKind failureKind = FailureKind.None,
+        string? errorTag = null)
     {
         ProblemDetails problemDetails;
 
@@ -126,8 +124,7 @@ public static class ProblemDetailsExtensions
             problemDetails.Extensions["error"] = errorTag;
         }
 
-        problemDetails.Extensions[ProblemDetailsExtensionNames.IsTransient] = isTransient;
-        problemDetails.Extensions[ProblemDetailsExtensionNames.IsIsolable] = isIsolable;
+        problemDetails.Extensions[ProblemDetailsExtensionNames.FailureKind] = failureKind.ToString();
 
         return problemDetails;
     }

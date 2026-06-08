@@ -77,7 +77,7 @@ public sealed class UserProfileInternalApiClientTests
             Task.FromResult(new HttpResponseMessage(HttpStatusCode.InternalServerError)
             {
                 Content = new StringContent(
-                    $$"""{"detail":"conflict","{{ProblemDetailsExtensionNames.IsTransient}}":true}""",
+                    $$"""{"detail":"conflict","{{ProblemDetailsExtensionNames.FailureKind}}":"Transient"}""",
                     Encoding.UTF8,
                     "application/problem+json")
             }));

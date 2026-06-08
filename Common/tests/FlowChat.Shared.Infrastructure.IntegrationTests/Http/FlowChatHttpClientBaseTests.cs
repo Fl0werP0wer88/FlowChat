@@ -59,7 +59,7 @@ public sealed class FlowChatHttpClientBaseTests
             context.Response.StatusCode = StatusCodes.Status500InternalServerError;
             context.Response.ContentType = "application/problem+json";
             await context.Response.WriteAsync(
-                $$"""{"detail":"conflict","{{ProblemDetailsExtensionNames.IsTransient}}":true}""",
+                $$"""{"detail":"conflict","{{ProblemDetailsExtensionNames.FailureKind}}":"Transient"}""",
                 context.RequestAborted);
         });
 
@@ -79,7 +79,7 @@ public sealed class FlowChatHttpClientBaseTests
             context.Response.StatusCode = StatusCodes.Status500InternalServerError;
             context.Response.ContentType = "application/problem+json";
             await context.Response.WriteAsync(
-                $$"""{"detail":"invalid data","{{ProblemDetailsExtensionNames.IsTransient}}":false,"{{ProblemDetailsExtensionNames.IsIsolable}}":true}""",
+                $$"""{"detail":"invalid data","{{ProblemDetailsExtensionNames.FailureKind}}":"Isolable"}""",
                 context.RequestAborted);
         });
 
@@ -99,7 +99,7 @@ public sealed class FlowChatHttpClientBaseTests
             context.Response.StatusCode = StatusCodes.Status409Conflict;
             context.Response.ContentType = "application/problem+json";
             await context.Response.WriteAsync(
-                $$"""{"detail":"conflict","{{ProblemDetailsExtensionNames.IsTransient}}":false}""",
+                $$"""{"detail":"conflict","{{ProblemDetailsExtensionNames.FailureKind}}":"None"}""",
                 context.RequestAborted);
         });
 
@@ -109,7 +109,7 @@ public sealed class FlowChatHttpClientBaseTests
             client.SendPingAsync(CancellationToken.None));
 
         exception.Message.Should().Be(
-            $$"""Test Consumer API returned 409 Conflict: {"detail":"conflict","{{ProblemDetailsExtensionNames.IsTransient}}":false}""");
+            $$"""Test Consumer API returned 409 Conflict: {"detail":"conflict","{{ProblemDetailsExtensionNames.FailureKind}}":"None"}""");
     }
 
     [Fact]

@@ -8,7 +8,7 @@ namespace FlowChat.Shared.API;
 public abstract class ApiControllerBase : ControllerBase
 {
     private const string InternalApiKeyHeaderName = "X-Internal-Api-Key";
-    private readonly Dictionary<ErrorType, Func<string?, IEnumerable<string>?, bool, ObjectResult>> _errorHandlers;
+    private readonly Dictionary<ErrorType, Func<string?, IEnumerable<string>?, FailureKind, ObjectResult>> _errorHandlers;
     private readonly Func<string?>? _internalApiKeyAccessor;
 
     protected ApiControllerBase() : this(null)
@@ -18,7 +18,7 @@ public abstract class ApiControllerBase : ControllerBase
     protected ApiControllerBase(Func<string?>? internalApiKeyAccessor)
     {
         _internalApiKeyAccessor = internalApiKeyAccessor;
-        _errorHandlers = new Dictionary<ErrorType, Func<string?, IEnumerable<string>?, bool, ObjectResult>>
+        _errorHandlers = new Dictionary<ErrorType, Func<string?, IEnumerable<string>?, FailureKind, ObjectResult>>
         {
             { ErrorType.Conflict, ConflictResponse },
             { ErrorType.NotFound, NotFoundResponse },
@@ -32,12 +32,12 @@ public abstract class ApiControllerBase : ControllerBase
     {
         if (error.ErrorType == ErrorType.Unexpected)
         {
-            return UnexpectedResponse(error.ErrorMessage, error.Errors, error.IsTransient, error.IsIsolable);
+            return UnexpectedResponse(error.ErrorMessage, error.Errors, error.FailureKind);
         }
 
         if (_errorHandlers.TryGetValue(error.ErrorType, out var handler))
         {
-            return handler(error.ErrorMessage, error.Errors, error.IsTransient);
+            return handler(error.ErrorMessage, error.Errors, error.FailureKind);
         }
 
         throw new InvalidOperationException($"Unsupported error type: {error.ErrorType}");
@@ -73,40 +73,39 @@ public abstract class ApiControllerBase : ControllerBase
     protected ObjectResult NotFoundResponse(
         string? details = null,
         IEnumerable<string>? errors = null,
-        bool isTransient = false) =>
-        NotFound(ProblemDetailsFactory.CreateNotFound(HttpContext, details, errors, isTransient));
+        FailureKind failureKind = FailureKind.None) =>
+        NotFound(ProblemDetailsFactory.CreateNotFound(HttpContext, details, errors, failureKind));
 
     protected ObjectResult BadRequestResponse(
         string? details = null,
         IEnumerable<string>? errors = null,
-        bool isTransient = false) =>
-        BadRequest(ProblemDetailsFactory.CreateBadRequest(HttpContext, details, errors, isTransient));
+        FailureKind failureKind = FailureKind.None) =>
+        BadRequest(ProblemDetailsFactory.CreateBadRequest(HttpContext, details, errors, failureKind));
 
     protected ObjectResult ConflictResponse(
         string? details = null,
         IEnumerable<string>? errors = null,
-        bool isTransient = false) =>
-        Conflict(ProblemDetailsFactory.CreateConflict(HttpContext, details, errors, isTransient));
+        FailureKind failureKind = FailureKind.None) =>
+        Conflict(ProblemDetailsFactory.CreateConflict(HttpContext, details, errors, failureKind));
 
     protected ObjectResult ValidationResponse(
         string? details = null,
         IEnumerable<string>? errors = null,
-        bool isTransient = false) =>
-        BadRequest(ProblemDetailsFactory.CreateValidation(HttpContext, details, errors, isTransient));
+        FailureKind failureKind = FailureKind.None) =>
+        BadRequest(ProblemDetailsFactory.CreateValidation(HttpContext, details, errors, failureKind));
 
     protected ObjectResult UnauthorizedResponse(
         string? details = null,
         IEnumerable<string>? errors = null,
-        bool isTransient = false) =>
-        Unauthorized(ProblemDetailsFactory.CreateUnauthorized(HttpContext, details, errors, isTransient));
+        FailureKind failureKind = FailureKind.None) =>
+        Unauthorized(ProblemDetailsFactory.CreateUnauthorized(HttpContext, details, errors, failureKind));
 
     protected ObjectResult UnexpectedResponse(
         string? details = null,
         IEnumerable<string>? errors = null,
-        bool isTransient = false,
-        bool isIsolable = false) =>
+        FailureKind failureKind = FailureKind.None) =>
         StatusCode(
             StatusCodes.Status500InternalServerError,
-            ProblemDetailsFactory.CreateUnexpected(HttpContext, details, errors, isTransient, isIsolable));
+            ProblemDetailsFactory.CreateUnexpected(HttpContext, details, errors, failureKind));
 }
 
