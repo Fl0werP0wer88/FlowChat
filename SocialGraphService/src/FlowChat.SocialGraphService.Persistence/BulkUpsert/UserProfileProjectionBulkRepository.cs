@@ -47,7 +47,7 @@ public sealed class UserProfileProjectionBulkRepository(AppDbContext dbContext)
             SourceVersion = sourceVersion,
             SourceCreatedAtUtc = sourceCreatedAtUtc,
             SourceLastModifiedAtUtc = sourceLastModifiedAtUtc,
-            SourceDeletedAtUtc = sourceDeletedAtUtc ?? default,
+            SourceDeletedAtUtc = sourceDeletedAtUtc,
             CreatedBy = item.Source,
             CreatedAtUtc = now,
             LastModifiedBy = item.Source,

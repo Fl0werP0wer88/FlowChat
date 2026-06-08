@@ -37,7 +37,7 @@ public sealed class ContactObserverProjectionBulkRepository(AppDbContext dbConte
             SourceVersion = sourceVersion,
             SourceCreatedAtUtc = sourceCreatedAtUtc,
             SourceLastModifiedAtUtc = sourceLastModifiedAtUtc,
-            SourceDeletedAtUtc = sourceDeletedAtUtc ?? default,
+            SourceDeletedAtUtc = sourceDeletedAtUtc,
             CreatedBy = item.Source,
             CreatedAtUtc = now,
             LastModifiedBy = item.Source,
