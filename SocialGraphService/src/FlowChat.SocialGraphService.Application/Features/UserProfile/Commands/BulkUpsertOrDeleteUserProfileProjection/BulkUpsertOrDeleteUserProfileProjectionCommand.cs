@@ -11,5 +11,8 @@ public sealed record BulkUpsertOrDeleteUserProfileProjectionCommand(
 public sealed record UserProfileProjectionCommandItem(
     Id<UserProfileProjectionDto> EntityId,
     UserProfileProjectionDto? Value,
-    int SourceVersion)
+    int SourceVersion,
+    DateTimeOffset SourceCreatedAtUtc,
+    DateTimeOffset SourceLastModifiedAtUtc,
+    DateTimeOffset? SourceDeletedAtUtc)
     : IProjectionCommandItem<UserProfileProjectionDto>;

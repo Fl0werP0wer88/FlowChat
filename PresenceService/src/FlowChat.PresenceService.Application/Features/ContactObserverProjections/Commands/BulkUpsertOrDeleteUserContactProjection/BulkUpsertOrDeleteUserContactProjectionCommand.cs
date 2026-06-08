@@ -11,5 +11,8 @@ public sealed record UserContactProjectionCommandItem(
     Guid ObservedUserId,
     Guid ObserverUserId,
     ContactObserverProjectionDto? Value,
-    int SourceVersion)
+    int SourceVersion,
+    DateTimeOffset SourceCreatedAtUtc,
+    DateTimeOffset SourceLastModifiedAtUtc,
+    DateTimeOffset? SourceDeletedAtUtc)
     : IProjectionCommandItem<ContactObserverProjectionDto>;

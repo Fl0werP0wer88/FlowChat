@@ -182,8 +182,17 @@ public sealed class UserProfileProjectionBulkRepositoryTests : IDisposable
                 SourceVersion = sourceVersion,
                 Source = source
             },
-            sourceVersion);
+            sourceVersion,
+            DateTimeOffset.UtcNow,
+            DateTimeOffset.UtcNow,
+            null);
 
     private static UserProfileProjectionCommandItem CreateDeleteItem(Guid userProfileId, int sourceVersion) =>
-        new(Id<UserProfileProjectionDto>.FromGuid(userProfileId), null, sourceVersion);
+        new(
+            Id<UserProfileProjectionDto>.FromGuid(userProfileId),
+            null,
+            sourceVersion,
+            DateTimeOffset.UtcNow,
+            DateTimeOffset.UtcNow,
+            DateTimeOffset.UtcNow);
 }

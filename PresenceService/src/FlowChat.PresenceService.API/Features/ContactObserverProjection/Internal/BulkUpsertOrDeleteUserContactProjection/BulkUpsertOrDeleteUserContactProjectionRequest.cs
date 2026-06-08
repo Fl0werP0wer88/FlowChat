@@ -11,6 +11,9 @@ public sealed class BulkUpsertOrDeleteUserContactProjectionRequestItem : IServic
     public Guid ObservedUserId { get; init; }
     public Guid ObserverUserId { get; init; }
     public int SourceVersion { get; init; }
+    public DateTimeOffset SourceCreatedAtUtc { get; init; }
+    public DateTimeOffset SourceLastModifiedAtUtc { get; init; }
+    public DateTimeOffset? SourceDeletedAtUtc { get; init; }
     public BulkUpsertOrDeleteUserContactProjectionRequestValue? Value { get; init; }
 }
 

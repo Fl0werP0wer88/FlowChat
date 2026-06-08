@@ -27,6 +27,9 @@ internal static class ContactProjectionSubscriberHelper
                 ObservedUserId = observedUserId,
                 ObserverUserId = observerUserId,
                 SourceVersion = message.SourceAggregateVersion,
+                SourceCreatedAtUtc = message.SourceAggregateCreatedAtUtc,
+                SourceLastModifiedAtUtc = message.SourceAggregateModifiedAtUtc,
+                SourceDeletedAtUtc = message.SourceAggregateDeletedAt,
                 Value = new UserContactProjectionRequest { Source = ProjectionSource }
             },
             OperationType.Deleted => new BulkUpsertOrDeleteUserContactProjectionRequestItem
@@ -34,6 +37,9 @@ internal static class ContactProjectionSubscriberHelper
                 ObservedUserId = observedUserId,
                 ObserverUserId = observerUserId,
                 SourceVersion = message.SourceAggregateVersion,
+                SourceCreatedAtUtc = message.SourceAggregateCreatedAtUtc,
+                SourceLastModifiedAtUtc = message.SourceAggregateModifiedAtUtc,
+                SourceDeletedAtUtc = message.SourceAggregateDeletedAt,
                 Value = null
             },
             _ => throw new NonTransientException($"Unsupported contact projection operation {message.Operation}.")

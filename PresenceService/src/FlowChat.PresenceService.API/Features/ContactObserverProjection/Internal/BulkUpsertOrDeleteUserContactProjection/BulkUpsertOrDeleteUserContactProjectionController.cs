@@ -50,7 +50,10 @@ public sealed class BulkUpsertOrDeleteUserContactProjectionController : ApiContr
                     SourceVersion = item.SourceVersion,
                     Source = item.Value.Source
                 },
-                item.SourceVersion))
+                item.SourceVersion,
+                item.SourceCreatedAtUtc,
+                item.SourceLastModifiedAtUtc,
+                item.SourceDeletedAtUtc))
             .ToArray();
 
         var result = await _mediator.Send(

@@ -11,6 +11,9 @@ public sealed class BulkUpsertOrDeleteUserProfileProjectionRequestItem : IServic
 {
     public Guid UserProfileId { get; init; }
     public int SourceVersion { get; init; }
+    public DateTimeOffset SourceCreatedAtUtc { get; init; }
+    public DateTimeOffset SourceLastModifiedAtUtc { get; init; }
+    public DateTimeOffset? SourceDeletedAtUtc { get; init; }
     public BulkUpsertOrDeleteUserProfileProjectionRequestValue? Value { get; init; }
 }
 

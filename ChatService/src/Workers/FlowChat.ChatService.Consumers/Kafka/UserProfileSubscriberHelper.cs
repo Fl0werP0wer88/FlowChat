@@ -70,6 +70,9 @@ internal static class UserProfileSubscriberHelper
         {
             UserProfileId = userProfileId,
             SourceVersion = message.SourceAggregateVersion,
+            SourceCreatedAtUtc = message.SourceAggregateCreatedAtUtc,
+            SourceLastModifiedAtUtc = message.SourceAggregateModifiedAtUtc,
+            SourceDeletedAtUtc = message.SourceAggregateDeletedAt,
             Value = value
         };
     }
@@ -83,6 +86,9 @@ internal static class UserProfileSubscriberHelper
         {
             UserProfileId = userProfileId,
             SourceVersion = message.SourceAggregateVersion,
+            SourceCreatedAtUtc = message.SourceAggregateCreatedAtUtc,
+            SourceLastModifiedAtUtc = message.SourceAggregateModifiedAtUtc,
+            SourceDeletedAtUtc = message.SourceAggregateDeletedAt,
             Value = null
         };
     }

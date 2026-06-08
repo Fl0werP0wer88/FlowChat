@@ -48,6 +48,9 @@ public abstract class ProjectionBulkRepositoryBase<TDbContext, TItem, TValue, TE
     protected abstract TEntity CreateUpsertEntity(
         TValue item,
         int sourceVersion,
+        DateTimeOffset sourceCreatedAtUtc,
+        DateTimeOffset sourceLastModifiedAtUtc,
+        DateTimeOffset? sourceDeletedAtUtc,
         DateTimeOffset now);
 
     protected abstract TEntity CreateTombstoneEntity(
@@ -62,6 +65,12 @@ public abstract class ProjectionBulkRepositoryBase<TDbContext, TItem, TValue, TE
 
         return value is null
             ? CreateTombstoneEntity(item, now)
-            : CreateUpsertEntity(value, item.SourceVersion, now);
+            : CreateUpsertEntity(
+                value,
+                item.SourceVersion,
+                item.SourceCreatedAtUtc,
+                item.SourceLastModifiedAtUtc,
+                item.SourceDeletedAtUtc,
+                now);
     }
 }

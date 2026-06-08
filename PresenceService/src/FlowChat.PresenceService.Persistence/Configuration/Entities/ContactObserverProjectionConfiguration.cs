@@ -19,6 +19,15 @@ public sealed class ContactObserverProjectionConfiguration : IEntityTypeConfigur
 
         builder.Property(x => x.SourceVersion);
 
+        builder.Property(x => x.SourceCreatedAtUtc)
+            .IsRequired();
+
+        builder.Property(x => x.SourceLastModifiedAtUtc)
+            .IsRequired();
+
+        builder.Property(x => x.SourceDeletedAtUtc)
+            .IsRequired();
+
         builder.Property(x => x.CreatedBy)
             .HasMaxLength(256)
             .IsRequired();

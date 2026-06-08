@@ -5,4 +5,7 @@ public interface IProjectionCommandItem<TValue>
 {
     TValue? Value { get; }
     int SourceVersion { get; }
+    DateTimeOffset SourceCreatedAtUtc { get; }
+    DateTimeOffset SourceLastModifiedAtUtc { get; }
+    DateTimeOffset? SourceDeletedAtUtc { get; }
 }

@@ -26,13 +26,18 @@ public sealed class ContactObserverProjectionBulkRepository(AppDbContext dbConte
     protected override ContactObserverReadModelEntity CreateUpsertEntity(
         ContactObserverProjectionDto item,
         int sourceVersion,
+        DateTimeOffset sourceCreatedAtUtc,
+        DateTimeOffset sourceLastModifiedAtUtc,
+        DateTimeOffset? sourceDeletedAtUtc,
         DateTimeOffset now) =>
         new()
         {
             ObservedUserId = item.ObservedUserId,
             ObserverUserId = item.ObserverUserId,
             SourceVersion = sourceVersion,
-            DeletedAt = null,
+            SourceCreatedAtUtc = sourceCreatedAtUtc,
+            SourceLastModifiedAtUtc = sourceLastModifiedAtUtc,
+            SourceDeletedAtUtc = sourceDeletedAtUtc ?? default,
             CreatedBy = item.Source,
             CreatedAtUtc = now,
             LastModifiedBy = item.Source,
@@ -47,7 +52,9 @@ public sealed class ContactObserverProjectionBulkRepository(AppDbContext dbConte
             ObservedUserId = item.ObservedUserId,
             ObserverUserId = item.ObserverUserId,
             SourceVersion = item.SourceVersion,
-            DeletedAt = now,
+            SourceCreatedAtUtc = item.SourceCreatedAtUtc,
+            SourceLastModifiedAtUtc = item.SourceLastModifiedAtUtc,
+            SourceDeletedAtUtc = item.SourceDeletedAtUtc ?? now,
             CreatedBy = TombstoneSource,
             CreatedAtUtc = now,
             LastModifiedBy = TombstoneSource,

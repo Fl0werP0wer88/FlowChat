@@ -116,7 +116,10 @@ public sealed class BulkUpsertOrDeleteUserProfileProjectionCommandHandlerTests
                 SourceVersion = sourceVersion,
                 Source = source
             },
-            sourceVersion);
+            sourceVersion,
+            DateTimeOffset.UtcNow,
+            DateTimeOffset.UtcNow,
+            null);
 
     private static Mock<IUnitOfWork> CreateUnitOfWorkMock()
     {

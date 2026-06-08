@@ -30,6 +30,15 @@ public sealed class UserProfileReadModelEntityConfiguration : IEntityTypeConfigu
         builder.Property(x => x.SourceVersion)
             .IsRequired();
 
+        builder.Property(x => x.SourceCreatedAtUtc)
+            .IsRequired();
+
+        builder.Property(x => x.SourceLastModifiedAtUtc)
+            .IsRequired();
+
+        builder.Property(x => x.SourceDeletedAtUtc)
+            .IsRequired();
+
         builder.Property(x => x.DeletedAt);
 
         builder.Property(x => x.CreatedBy)

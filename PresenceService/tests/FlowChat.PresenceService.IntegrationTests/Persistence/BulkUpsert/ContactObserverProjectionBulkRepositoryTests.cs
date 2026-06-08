@@ -168,11 +168,21 @@ public sealed class ContactObserverProjectionBulkRepositoryTests : IDisposable
                 SourceVersion = sourceVersion,
                 Source = source
             },
-            sourceVersion);
+            sourceVersion,
+            DateTimeOffset.UtcNow,
+            DateTimeOffset.UtcNow,
+            null);
 
     private static UserContactProjectionCommandItem CreateDeleteItem(
         Guid observedUserId,
         Guid observerUserId,
         int sourceVersion) =>
-        new(observedUserId, observerUserId, null, sourceVersion);
+        new(
+            observedUserId,
+            observerUserId,
+            null,
+            sourceVersion,
+            DateTimeOffset.UtcNow,
+            DateTimeOffset.UtcNow,
+            DateTimeOffset.UtcNow);
 }

@@ -99,7 +99,10 @@ public sealed class BulkUpsertOrDeleteUserContactProjectionCommandHandlerTests
                         Guid.NewGuid(),
                         Guid.NewGuid(),
                         new ContactObserverProjectionDto { Source = " " },
-                        1)
+                        1,
+                        DateTimeOffset.UtcNow,
+                        DateTimeOffset.UtcNow,
+                        null)
                 ]));
 
         result.IsValid.Should().BeFalse();
@@ -121,13 +124,23 @@ public sealed class BulkUpsertOrDeleteUserContactProjectionCommandHandlerTests
                 SourceVersion = sourceVersion,
                 Source = source
             },
-            sourceVersion);
+            sourceVersion,
+            DateTimeOffset.UtcNow,
+            DateTimeOffset.UtcNow,
+            null);
 
     private static UserContactProjectionCommandItem CreateDeleteItem(
         Guid observedUserId,
         Guid observerUserId,
         int sourceVersion) =>
-        new(observedUserId, observerUserId, null, sourceVersion);
+        new(
+            observedUserId,
+            observerUserId,
+            null,
+            sourceVersion,
+            DateTimeOffset.UtcNow,
+            DateTimeOffset.UtcNow,
+            DateTimeOffset.UtcNow);
 
     private static Mock<IUnitOfWork> CreateUnitOfWorkMock()
     {

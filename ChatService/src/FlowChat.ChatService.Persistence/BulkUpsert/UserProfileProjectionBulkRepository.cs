@@ -23,6 +23,9 @@ public sealed class UserProfileProjectionBulkRepository(AppDbContext dbContext)
     protected override UserProfileReadModelEntity CreateUpsertEntity(
         UserProfileProjectionDto item,
         int sourceVersion,
+        DateTimeOffset sourceCreatedAtUtc,
+        DateTimeOffset sourceLastModifiedAtUtc,
+        DateTimeOffset? sourceDeletedAtUtc,
         DateTimeOffset now) =>
         new()
         {
@@ -32,7 +35,9 @@ public sealed class UserProfileProjectionBulkRepository(AppDbContext dbContext)
             LastName = item.LastName,
             AvatarUrl = item.AvatarUrl,
             SourceVersion = sourceVersion,
-            DeletedAt = null,
+            SourceCreatedAtUtc = sourceCreatedAtUtc,
+            SourceLastModifiedAtUtc = sourceLastModifiedAtUtc,
+            SourceDeletedAtUtc = sourceDeletedAtUtc ?? default,
             CreatedBy = item.Source,
             CreatedAtUtc = now,
             LastModifiedBy = item.Source,
@@ -47,7 +52,9 @@ public sealed class UserProfileProjectionBulkRepository(AppDbContext dbContext)
             UserId = item.EntityId.Value,
             FriendlyUserId = string.Empty,
             SourceVersion = item.SourceVersion,
-            DeletedAt = now,
+            SourceCreatedAtUtc = item.SourceCreatedAtUtc,
+            SourceLastModifiedAtUtc = item.SourceLastModifiedAtUtc,
+            SourceDeletedAtUtc = item.SourceDeletedAtUtc ?? now,
             CreatedBy = TombstoneSource,
             CreatedAtUtc = now,
             LastModifiedBy = TombstoneSource,
