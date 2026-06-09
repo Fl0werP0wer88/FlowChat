@@ -33,49 +33,13 @@ public sealed class ProjectionBatchSubscriber(
             return;
         }
 
-        try
-        {
-            await harnessApiClient.BulkUpsertProjectionAsync(
-                new BulkUpsertProjectionRequest { Items = items },
-                cancellationToken);
+        await harnessApiClient.BulkUpsertProjectionAsync(
+            new BulkUpsertProjectionRequest { Items = items },
+            cancellationToken);
 
-            logger.LogInformation(
-                "Processed {Count} projection events from Kafka batch.",
-                items.Count);
-        }
-        catch (IsolableException)
-        {
-            // Silverback's MoveMessageErrorPolicy cannot route batch-sequence messages to the retry
-            // topic — it warns and discards them. Fall back to per-item processing so that valid
-            // items are still projected and only the isolable item is dropped.
-            await ProcessItemsIndividuallyAsync(items, cancellationToken);
-        }
-    }
-
-    private async Task ProcessItemsIndividuallyAsync(
-        IReadOnlyCollection<BulkUpsertProjectionRequestItem> items,
-        CancellationToken cancellationToken)
-    {
-        logger.LogWarning(
-            "Batch upsert failed with IsolableException; retrying {Count} items individually.",
+        logger.LogInformation(
+            "Processed {Count} projection events from Kafka batch.",
             items.Count);
-
-        foreach (var item in items)
-        {
-            try
-            {
-                await harnessApiClient.BulkUpsertProjectionAsync(
-                    new BulkUpsertProjectionRequest { Items = [item] },
-                    cancellationToken);
-            }
-            catch (IsolableException ex)
-            {
-                logger.LogError(
-                    ex,
-                    "Projection item {Id} failed per-item retry and will be skipped.",
-                    item.Id);
-            }
-        }
     }
 
     private static BulkUpsertProjectionRequestItem MapEvent(
