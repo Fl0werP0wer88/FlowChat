@@ -1,21 +1,50 @@
-using System.Text.Json;
-using Confluent.Kafka;
 using FlowChat.Core.Messaging;
 using FlowChat.HarnessService.Consumers.Projections.Models;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Silverback.Configuration;
+using Silverback.Messaging.Configuration;
+using Silverback.Messaging.Publishing;
 
 namespace FlowChat.HarnessService.AATs.Infrastructure;
 
+/// <summary>
+/// Publishes test messages to Kafka via a minimal Silverback producer host so that messages carry
+/// the x-message-type header that the consumer's WithOptionalMessageTypeHeader deserializer needs
+/// to route them to the correct subscriber.
+/// </summary>
 public sealed class KafkaTestPublisher : IAsyncDisposable
 {
-    private readonly IProducer<Null, string> _producer;
+    private IHost? _host;
+    private readonly string _bootstrapServers;
     private readonly string _topic;
 
     public KafkaTestPublisher(string bootstrapServers, string topic)
     {
+        _bootstrapServers = bootstrapServers;
         _topic = topic;
-        _producer = new ProducerBuilder<Null, string>(
-            new ProducerConfig { BootstrapServers = bootstrapServers })
-            .Build();
+    }
+
+    public async Task InitializeAsync()
+    {
+        var builder = Host.CreateApplicationBuilder();
+
+        builder.Services.Replace(ServiceDescriptor.Singleton<IHostLifetime, NoOpHostLifetime>());
+        builder.Logging.SetMinimumLevel(Microsoft.Extensions.Logging.LogLevel.Warning);
+
+        builder.Services.AddSilverback()
+            .WithConnectionToMessageBroker(options => options.AddKafka())
+            .AddKafkaClients(clients =>
+                clients.WithBootstrapServers(_bootstrapServers)
+                    .AddProducer(producer => producer
+                        .Produce<ProjectionIntegrationEvent<ProjectionTestReadModel>>(endpoint => endpoint
+                            .ProduceTo(_topic)
+                            .SerializeAsJson(serializer => serializer.SetTypeHeader()))));
+
+        _host = builder.Build();
+        await _host.StartAsync();
     }
 
     public async Task PublishAsync(
@@ -25,8 +54,9 @@ public sealed class KafkaTestPublisher : IAsyncDisposable
         OperationType operation = OperationType.Created,
         CancellationToken cancellationToken = default)
     {
+        var publisher = _host!.Services.GetRequiredService<IPublisher>();
         var now = DateTimeOffset.UtcNow;
-        var @event = new ProjectionIntegrationEvent<ProjectionTestReadModel>
+        await publisher.PublishAsync(new ProjectionIntegrationEvent<ProjectionTestReadModel>
         {
             SourceAggregateId = id,
             SourceAggregateCreatedAtUtc = now,
@@ -35,19 +65,15 @@ public sealed class KafkaTestPublisher : IAsyncDisposable
             Value = new ProjectionTestReadModel { Payload = payload },
             Operation = operation,
             SourceAggregateVersion = version
-        };
-
-        var json = JsonSerializer.Serialize(@event);
-        await _producer.ProduceAsync(
-            _topic,
-            new Message<Null, string> { Value = json },
-            cancellationToken);
+        }, cancellationToken);
     }
 
-    public ValueTask DisposeAsync()
+    public async ValueTask DisposeAsync()
     {
-        _producer.Flush(TimeSpan.FromSeconds(5));
-        _producer.Dispose();
-        return ValueTask.CompletedTask;
+        if (_host is not null)
+        {
+            await _host.StopAsync();
+            _host.Dispose();
+        }
     }
 }

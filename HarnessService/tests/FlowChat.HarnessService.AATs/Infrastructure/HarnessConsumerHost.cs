@@ -1,6 +1,9 @@
 using FlowChat.HarnessService.Consumers;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 namespace FlowChat.HarnessService.AATs.Infrastructure;
 
@@ -55,8 +58,28 @@ public sealed class HarnessConsumerHost : IAsyncLifetime
 
         builder.Services.AddConsumers(builder.Configuration);
 
+        builder.Services.Configure<HostOptions>(opts =>
+            opts.BackgroundServiceExceptionBehavior = BackgroundServiceExceptionBehavior.Ignore);
+
+        // Replace ConsoleLifetime (which reacts to Ctrl+C / SIGTERM) with a no-op lifetime so the
+        // test process's signal handling cannot inadvertently stop the in-process consumer host.
+        builder.Services.Replace(ServiceDescriptor.Singleton<IHostLifetime, NoOpHostLifetime>());
+
+        builder.Logging.SetMinimumLevel(LogLevel.Warning);
+        builder.Logging.AddFilter("FlowChat.HarnessService", LogLevel.Debug);
+        builder.Logging.AddFilter("Silverback.Messaging.Consuming", LogLevel.Debug);
+
         _host = builder.Build();
+
+        var lifetime = _host.Services.GetRequiredService<IHostApplicationLifetime>();
+        lifetime.ApplicationStopping.Register(() =>
+            Console.Error.WriteLine($"\n=== CONSUMER HOST STOPPING — caller stack:\n{Environment.StackTrace}\n===\n"));
+
         await _host.StartAsync();
+
+        // Allow time for Kafka partition assignment to complete so that messages published immediately
+        // after InitializeAsync returns are not missed due to AutoOffsetReset=Latest race condition.
+        await Task.Delay(TimeSpan.FromSeconds(5));
     }
 
     public async Task DisposeAsync()

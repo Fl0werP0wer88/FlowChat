@@ -16,7 +16,7 @@ public sealed class ProjectionHappyPathAATTests : IAsyncLifetime
     private const string Topic = "test.flowchat.harness.projection.events";
     private const string RetryTopic = "test.flowchat.harness.projection.events.retry";
     private const string DlqTopic = "test.flowchat.harness.projection.events.dlq";
-    private const string ApiBaseUrl = "https://localhost:7300";
+    private const string ApiBaseUrl = "http://localhost:5085";
     private const string ApiKey = "FLOWCHAT_DEVELOPMENT_INTERNAL_API_KEY_CHANGE_ME";
 
     private HarnessConsumerHost _consumerHost = null!;
@@ -27,6 +27,7 @@ public sealed class ProjectionHappyPathAATTests : IAsyncLifetime
         _consumerHost = new HarnessConsumerHost(ApiBaseUrl, ApiKey, BootstrapServers, Topic, RetryTopic, DlqTopic);
         await _consumerHost.InitializeAsync();
         _publisher = new KafkaTestPublisher(BootstrapServers, Topic);
+        await _publisher.InitializeAsync();
     }
 
     public async Task DisposeAsync()
