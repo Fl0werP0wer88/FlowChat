@@ -1,5 +1,3 @@
-using FlowChat.Core.Exceptions;
-using FlowChat.Shared.Domain;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Http;
@@ -37,14 +35,9 @@ public sealed class GlobalExceptionHandlingMiddleware(
 
             var problemDetailsFactory = context.RequestServices.GetRequiredService<ProblemDetailsFactory>();
 
-            // Preserve the IsolableException category across the HTTP boundary so consumers can route
-            // the message to per-item retry instead of treating it as a permanent failure.
-            var failureKind = exception is IsolableException ? FailureKind.Isolable : FailureKind.None;
-
             var problemDetails = problemDetailsFactory.CreateUnexpected(
                 context,
-                details: "An unexpected error occurred.",
-                failureKind: failureKind);
+                details: "An unexpected error occurred.");
 
             context.Response.Clear();
             context.Response.StatusCode = problemDetails.Status ?? StatusCodes.Status500InternalServerError;

@@ -1,6 +1,4 @@
 using System.Text.Json;
-using FlowChat.Core.Exceptions;
-using FlowChat.Core.Http;
 using FluentAssertions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
@@ -39,28 +37,6 @@ public sealed class GlobalExceptionHandlingMiddlewareTests
         var errorLog = logger.Entries.Should().ContainSingle(entry => entry.LogLevel == LogLevel.Error).Subject;
         errorLog.Message.Should().Contain("Unhandled exception while processing POST /test. TraceId: trace-123");
         errorLog.Exception.Should().BeOfType<InvalidOperationException>();
-    }
-
-    [Fact]
-    public async Task InvokeAsync_ReturnsIsolableFailureKind_WhenDownstreamThrowsIsolableException()
-    {
-        var logger = new TestLogger<GlobalExceptionHandlingMiddleware>();
-        var middleware = new GlobalExceptionHandlingMiddleware(
-            _ => throw new IsolableException("bad batch item"),
-            logger);
-        var context = CreateHttpContext();
-
-        await middleware.InvokeAsync(context);
-
-        context.Response.Body.Position = 0;
-        var responseBody = await new StreamReader(context.Response.Body).ReadToEndAsync();
-        using var document = JsonDocument.Parse(responseBody);
-
-        context.Response.StatusCode.Should().Be(StatusCodes.Status500InternalServerError);
-        document.RootElement
-            .GetProperty(ProblemDetailsExtensionNames.FailureKind)
-            .GetString()
-            .Should().Be("Isolable");
     }
 
     [Fact]
