@@ -6,4 +6,9 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Common\src\FlowChat.Shared.Domain\FlowChat.Shared.Domain.csproj" />
+  </ItemGroup>
+
 </Project>
+

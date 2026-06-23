@@ -1,4 +1,4 @@
-<Solution>
+﻿<Solution>
   <Folder Name="/src/">
     <Project Path="src/FlowChat.ChatService.API/FlowChat.ChatService.API.csproj" />
     <Project Path="src/FlowChat.ChatService.Application/FlowChat.ChatService.Application.csproj" />
@@ -6,8 +6,18 @@
     <Project Path="src/FlowChat.ChatService.Infrastructure/FlowChat.ChatService.Infrastructure.csproj" />
     <Project Path="src/FlowChat.ChatService.Persistence/FlowChat.ChatService.Persistence.csproj" />
   </Folder>
+  <Folder Name="/src/Workers/">
+    <Project Path="src/Workers/FlowChat.ChatService.Consumers/FlowChat.ChatService.Consumers.csproj" />
+    <Project Path="src/Workers/FlowChat.ChatService.OutboxPublisher/FlowChat.ChatService.OutboxPublisher.csproj" />
+  </Folder>
   <Folder Name="/tests/">
-    <Project Path="tests/FlowChat.ChatService.AATs/FlowChat.ChatService.AATs.csproj" />
+    <Project Path="tests/FlowChat.ChatService.IntegrationTests/FlowChat.ChatService.IntegrationTests.csproj" />
     <Project Path="tests/FlowChat.ChatService.UnitTests/FlowChat.ChatService.UnitTests.csproj" />
   </Folder>
+  <Project Path="../Common/src/FlowChat.Shared.API/FlowChat.Shared.API.csproj" />
+  <Project Path="../Common/src/FlowChat.Shared.Application/FlowChat.Shared.Application.csproj" />
+  <Project Path="../Common/src/FlowChat.Shared.Domain/FlowChat.Shared.Domain.csproj" />
+  <Project Path="../Common/src/FlowChat.Shared.Infrastructure/FlowChat.Shared.Infrastructure.csproj" />
 </Solution>
+
+

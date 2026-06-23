@@ -1,0 +1,51 @@
+using FlowChat.Shared.API;
+using FlowChat.UserProfileService.Application.Features.UserProfile.Commands.UpdateProfile;
+using MediatR;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+
+namespace FlowChat.UserProfileService.Api.Features.UserProfile.Public.UpdateProfile;
+
+[ApiController]
+[Authorize]
+[Route("api/userprofiles")]
+public sealed class UpdateProfileController : ApiControllerBase
+{
+    private readonly IMediator _mediator;
+
+    public UpdateProfileController(IMediator mediator)
+    {
+        _mediator = mediator;
+    }
+
+    [HttpPut]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> UpdateProfile(
+        [FromBody] UpdateProfileRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (!TryGetCurrentUserId(out var userId))
+        {
+            return Unauthorized();
+        }
+
+        var result = await _mediator.Send(
+            new UpdateProfileCommand(
+                userId,
+                request.FirstName,
+                request.LastName,
+                request.Organization,
+                request.AvatarUrl,
+                request.Bio,
+                request.IsActive),
+            cancellationToken);
+
+        return result.IsSuccess
+            ? NoContent()
+            : HandleError(result.Error);
+    }
+}

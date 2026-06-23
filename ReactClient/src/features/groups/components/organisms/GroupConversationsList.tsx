@@ -1,0 +1,48 @@
+import type { GroupConversation } from "../../api";
+import { GroupConversationListItem } from "../molecules/GroupConversationListItem";
+
+interface GroupConversationsListProps {
+  activeGroupConversationId: string | null;
+  groupConversations: GroupConversation[];
+  isLoading: boolean;
+  onGroupConversationClick: (conversation: GroupConversation) => void;
+}
+
+export function GroupConversationsList({
+  activeGroupConversationId,
+  groupConversations,
+  isLoading,
+  onGroupConversationClick,
+}: GroupConversationsListProps) {
+  const renderContent = () => {
+    if (isLoading) {
+      return <p className="contacts-panel__status">Ladowanie grup...</p>;
+    }
+
+    if (groupConversations.length === 0) {
+      return <p className="contacts-panel__status">Nie nalezysz do zadnej grupy.</p>;
+    }
+
+    return (
+      <ul className="contacts-panel__list">
+        {groupConversations.map((conversation) => (
+          <GroupConversationListItem
+            conversation={conversation}
+            isActive={activeGroupConversationId === conversation.conversationId}
+            key={conversation.conversationId}
+            onClick={onGroupConversationClick}
+          />
+        ))}
+      </ul>
+    );
+  };
+
+  return (
+    <div className="contacts-panel__contacts">
+      <div className="contacts-panel__list-toolbar">
+        <span className="contacts-panel__section-label">Grupy</span>
+      </div>
+      {renderContent()}
+    </div>
+  );
+}

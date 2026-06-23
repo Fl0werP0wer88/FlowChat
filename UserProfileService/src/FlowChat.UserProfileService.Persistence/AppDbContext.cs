@@ -1,41 +1,42 @@
-﻿using FlowChat.UserProfileService.Domain.Entities;
-using FlowChat.UserProfileService.Domain.Common;
+using System.Data.Common;
+using FlowChat.UserProfileService.Domain.Entities.EmailVerificationRequest;
+using FlowChat.UserProfileService.Domain.Entities.UserProfile;
+using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Silverback.Messaging.Producing.TransactionalOutbox;
 
 namespace FlowChat.UserProfileService.Persistence;
 
-public class AppDbContext : DbContext
+public class AppDbContext : DbContext, IDataProtectionKeyContext
 {
+    [ActivatorUtilitiesConstructor]
     public AppDbContext(DbContextOptions<AppDbContext> options)
     : base(options)
     {
     }
 
-    public DbSet<Product> Products { get; set; }
+    public AppDbContext(DbConnection connection)
+        : base(new DbContextOptionsBuilder<AppDbContext>()
+            .UseNpgsql(connection)
+            .Options)
+    {
+    }
+
+    public DbSet<UserProfile> UserProfiles { get; set; }
+    public DbSet<Email> Emails { get; set; }
+    public DbSet<Phone> Phones { get; set; }
+    public DbSet<EmailVerificationRequest> EmailVerificationRequests { get; set; }
+    public DbSet<DataProtectionKey> DataProtectionKeys { get; set; } = null!;
+    public DbSet<SilverbackOutboxMessage> SilverbackOutboxMessages => Set<SilverbackOutboxMessage>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         //Setting default schema for tables creation.
-        modelBuilder.HasDefaultSchema("FlowChat");
+        // modelBuilder.HasDefaultSchema("FlowChat");
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
+        modelBuilder.Entity<DataProtectionKey>().ToTable("DataProtectionKeys");
         base.OnModelCreating(modelBuilder);
-    }
-	
-	public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = new CancellationToken())
-    {
-        foreach (var entry in ChangeTracker.Entries<AuditableEntity>())
-        {
-            switch (entry.State)
-            {
-                case EntityState.Added:
-                    entry.Entity.CreatedDate = DateTime.UtcNow;
-                    break;
-                case EntityState.Modified:
-                    entry.Entity.LastModifiedDate = DateTime.UtcNow;
-                    break;
-            }
-        }
-
-        return base.SaveChangesAsync(cancellationToken);
     }
 }
 

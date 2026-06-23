@@ -1,41 +1,37 @@
-﻿using FlowChat.ChatService.Domain.Entities;
-using FlowChat.ChatService.Domain.Common;
+using System.Data.Common;
+using FlowChat.ChatService.Domain.Entities.ChatMessage;
+using FlowChat.ChatService.Domain.Entities.Conversation;
+using FlowChat.ChatService.Persistence.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Silverback.Messaging.Producing.TransactionalOutbox;
 
 namespace FlowChat.ChatService.Persistence;
 
-public class AppDbContext : DbContext
+public sealed class AppDbContext : DbContext
 {
+    [ActivatorUtilitiesConstructor]
     public AppDbContext(DbContextOptions<AppDbContext> options)
-    : base(options)
+        : base(options)
     {
     }
 
-    public DbSet<Product> Products { get; set; }
+    public AppDbContext(DbConnection connection)
+        : base(new DbContextOptionsBuilder<AppDbContext>()
+            .UseNpgsql(connection)
+            .Options)
+    {
+    }
+
+    public DbSet<ChatMessage> ChatMessages => Set<ChatMessage>();
+    public DbSet<Conversation> Conversations => Set<Conversation>();
+    public DbSet<SilverbackOutboxMessage> SilverbackOutboxMessages => Set<SilverbackOutboxMessage>();
+    public DbSet<UserProfileProjectionEntity> UserProfileProjections => Set<UserProfileProjectionEntity>();
+    public DbSet<DuetConversationLookupEntity> DuetConversations => Set<DuetConversationLookupEntity>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        //Setting default schema for tables creation.
-        modelBuilder.HasDefaultSchema("FlowChat");
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
         base.OnModelCreating(modelBuilder);
     }
-	
-	public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = new CancellationToken())
-    {
-        foreach (var entry in ChangeTracker.Entries<AuditableEntity>())
-        {
-            switch (entry.State)
-            {
-                case EntityState.Added:
-                    entry.Entity.CreatedDate = DateTime.UtcNow;
-                    break;
-                case EntityState.Modified:
-                    entry.Entity.LastModifiedDate = DateTime.UtcNow;
-                    break;
-            }
-        }
-
-        return base.SaveChangesAsync(cancellationToken);
-    }
 }
-

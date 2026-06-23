@@ -1,0 +1,21 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/FlowChat.Shared.API/FlowChat.Shared.API.csproj" />
+    <Project Path="src/FlowChat.Shared.Application/FlowChat.Shared.Application.csproj" />
+    <Project Path="src/FlowChat.Core/FlowChat.Core.csproj" />
+    <Project Path="src/FlowChat.Shared.Domain/FlowChat.Shared.Domain.csproj" />
+    <Project Path="src/FlowChat.Shared.Persistance/FlowChat.Shared.Persistance.csproj" />
+    <Project Path="src/FlowChat.Shared.Infrastructure/FlowChat.Shared.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/FlowChat.Core.UnitTests/FlowChat.Core.UnitTests.csproj" />
+    <Project Path="tests/FlowChat.Shared.API.IntegrationTests/FlowChat.Shared.API.IntegrationTests.csproj" />
+    <Project Path="tests/FlowChat.Shared.API.UnitTests/FlowChat.Shared.API.UnitTests.csproj" />
+    <Project Path="tests/FlowChat.Shared.Application.UnitTests/FlowChat.Shared.Application.UnitTests.csproj" />
+    <Project Path="tests/FlowChat.Shared.Domain.UnitTests/FlowChat.Shared.Domain.UnitTests.csproj" />
+    <Project Path="tests/FlowChat.Shared.Infrastructure.IntegrationTests/FlowChat.Shared.Infrastructure.IntegrationTests.csproj" />
+    <Project Path="tests/FlowChat.Shared.Infrastructure.UnitTests/FlowChat.Shared.Infrastructure.UnitTests.csproj" />
+    <Project Path="tests/FlowChat.Shared.Persistance.IntegrationTests/FlowChat.Shared.Persistance.IntegrationTests.csproj" />
+    <Project Path="tests/FlowChat.Shared.Persistance.UnitTests/FlowChat.Shared.Persistance.UnitTests.csproj" />
+  </Folder>
+</Solution>

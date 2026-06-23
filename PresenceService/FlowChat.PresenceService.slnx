@@ -1,0 +1,21 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/FlowChat.PresenceService.API/FlowChat.PresenceService.API.csproj" />
+    <Project Path="src/FlowChat.PresenceService.Application/FlowChat.PresenceService.Application.csproj" />
+    <Project Path="src/FlowChat.PresenceService.Domain/FlowChat.PresenceService.Domain.csproj" />
+    <Project Path="src/FlowChat.PresenceService.Infrastructure/FlowChat.PresenceService.Infrastructure.csproj" />
+    <Project Path="src/FlowChat.PresenceService.Persistence/FlowChat.PresenceService.Persistence.csproj" />
+  </Folder>
+  <Folder Name="/src/Workers/">
+    <Project Path="src/Workers/FlowChat.PresenceService.Consumers/FlowChat.PresenceService.Consumers.csproj" />
+    <Project Path="src/Workers/FlowChat.PresenceService.OutboxPublisher/FlowChat.PresenceService.OutboxPublisher.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/FlowChat.PresenceService.AATs/FlowChat.PresenceService.AATs.csproj" />
+    <Project Path="tests/FlowChat.PresenceService.IntegrationTests/FlowChat.PresenceService.IntegrationTests.csproj" />
+    <Project Path="tests/FlowChat.PresenceService.UnitTests/FlowChat.PresenceService.UnitTests.csproj" />
+  </Folder>
+  <Project Path="../Common/src/FlowChat.Shared.API/FlowChat.Shared.API.csproj" />
+  <Project Path="../Common/src/FlowChat.Shared.Application/FlowChat.Shared.Application.csproj" />
+  <Project Path="../Common/src/FlowChat.Shared.Infrastructure/FlowChat.Shared.Infrastructure.csproj" />
+</Solution>

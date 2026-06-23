@@ -1,0 +1,88 @@
+using FlowChat.Shared.Application;
+using FlowChat.AuthService.Application.Contracts.Infrastructure;
+using FlowChat.AuthService.Application.Contracts.Persistence;
+using FlowChat.Core.Results;
+using FlowChat.AuthService.Domain.Entities.Account;
+using FlowChat.Shared.Domain;
+using FlowChat.Shared.Domain.ValueObjects;
+using DomainAccount = FlowChat.AuthService.Domain.Entities.Account.Account;
+
+namespace FlowChat.AuthService.Application.Features.User.Commands.RegisterUser;
+
+public class RegisterUserCommandHandler
+    : IdempotentCommandHandlerBase<RegisterUserCommand, RegisterUserCommandResponse>
+{
+    private readonly IAccountRepository _accountRepository;
+    private readonly IPasswordHashingService _passwordHashingService;
+    private DomainAccount? _account;
+
+    public RegisterUserCommandHandler(
+        IAccountRepository accountRepository,
+        IPasswordHashingService passwordHashingService,
+        IUnitOfWork unitOfWork,
+        IDomainEventDispatcher domainEventDispatcher,
+        IDbUpdateExceptionClassifier dbUpdateExceptionClassifier)
+        : base(domainEventDispatcher, unitOfWork, dbUpdateExceptionClassifier)
+    {
+        _accountRepository = accountRepository;
+        _passwordHashingService = passwordHashingService;
+    }
+
+    protected override async Task<(bool Found, RegisterUserCommandResponse Value)> TryGetExistingResponseAsync(
+        RegisterUserCommand request,
+        CancellationToken cancellationToken)
+    {
+        var account = await _accountRepository.GetByIdAsync(request.Id, cancellationToken);
+        if (account is null
+            || account.FriendlyUserId.Value != FriendlyUserId.Create(request.FriendlyUserId).Value
+            || account.Email.Value != EmailAddress.Create(request.Email).Value)
+        {
+            return (false, default!);
+        }
+
+        return (true, new RegisterUserCommandResponse { Id = account.Id.Value });
+    }
+
+    protected override async Task<FlowChatResult<RegisterUserCommandResponse>> ExecuteCommandAsync(
+        RegisterUserCommand request,
+        CancellationToken cancellationToken)
+    {
+        var emailAddress = EmailAddress.Create(request.Email);
+        if (await _accountRepository.GetByEmailAsync(emailAddress, cancellationToken) is not null)
+        {
+            return FlowChatResult<RegisterUserCommandResponse>.Failure(
+                DomainError.Conflict("Account with the provided email already exists."));
+        }
+
+        if (await _accountRepository.GetByFriendlyUserIdAsync(request.FriendlyUserId, cancellationToken) is not null)
+        {
+            return FlowChatResult<RegisterUserCommandResponse>.Failure(
+                DomainError.Conflict("Account with the provided friendly user id already exists."));
+        }
+
+        _account = DomainAccount.Create(
+            Id<DomainAccount>.FromGuid(request.Id),
+            request.FriendlyUserId,
+            emailAddress,
+            _passwordHashingService.HashPassword(request.Password),
+            _passwordHashingService.GenerateSecurityStamp(),
+            request.FirstName,
+            request.LastName,
+            request.Organization);
+
+        await _accountRepository.CreateAsync(_account, cancellationToken);
+
+        return FlowChatResult<RegisterUserCommandResponse>.Success(
+            new RegisterUserCommandResponse
+            {
+                Id = _account.Id.Value
+            });
+    }
+
+    protected override IAggregateRoot? GetExecutedAggregateRoot(IdempotentCommandResult<RegisterUserCommandResponse> result) =>
+        _account;
+
+    protected override string GetIdempotencyConflictKey(RegisterUserCommand request) =>
+        RegisterUserCommand.IdempotencyConflictKey;
+}
+

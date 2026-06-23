@@ -1,0 +1,260 @@
+#requires -Version 5.1
+
+function Get-TopicDefinitions {
+  return @(
+    @{
+      name = "dev.flowchat.identity.user.v1"
+      partitions = 1
+      rf = 1
+      config = @{
+        "cleanup.policy" = "delete"
+        "retention.ms" = "2419200000"
+      }
+    },
+    @{
+      name = "dev.flowchat.identity.user.v1.userprofile-service.retry"
+      partitions = 1
+      rf = 1
+      config = @{
+        "cleanup.policy" = "delete"
+        "retention.ms" = "3600000"
+      }
+    },
+    @{
+      name = "dev.flowchat.identity.user.v1.userprofile-service.dlq"
+      partitions = 1
+      rf = 1
+      config = @{
+        "cleanup.policy" = "delete"
+        "retention.ms" = "1209600000"
+      }
+    },
+    @{
+      name = "dev.flowchat.user-profile.user-profile.v1"
+      partitions = 1
+      rf = 1
+      config = @{
+        "min.insync.replicas" = "1"
+        "cleanup.policy" = "delete"
+        "retention.ms" = "2419200000"
+      }
+    },
+    @{
+      name = "dev.flowchat.user-profile.user-profile.v1.auth-service.retry"
+      partitions = 1
+      rf = 1
+      config = @{
+        "cleanup.policy" = "delete"
+        "retention.ms" = "3600000"
+      }
+    },
+    @{
+      name = "dev.flowchat.user-profile.user-profile.v1.auth-service.dlq"
+      partitions = 1
+      rf = 1
+      config = @{
+        "cleanup.policy" = "delete"
+        "retention.ms" = "1209600000"
+      }
+    },
+    @{
+      name = "dev.flowchat.user-profile.user-profile.v1.chat-service.retry"
+      partitions = 1
+      rf = 1
+      config = @{
+        "cleanup.policy" = "delete"
+        "retention.ms" = "3600000"
+      }
+    },
+    @{
+      name = "dev.flowchat.user-profile.user-profile.v1.chat-service.dlq"
+      partitions = 1
+      rf = 1
+      config = @{
+        "cleanup.policy" = "delete"
+        "retention.ms" = "1209600000"
+      }
+    },
+    @{
+      name = "dev.flowchat.user-profile.user-profile.v1.socialgraph-service.retry"
+      partitions = 1
+      rf = 1
+      config = @{
+        "cleanup.policy" = "delete"
+        "retention.ms" = "3600000"
+      }
+    },
+    @{
+      name = "dev.flowchat.user-profile.user-profile.v1.socialgraph-service.dlq"
+      partitions = 1
+      rf = 1
+      config = @{
+        "cleanup.policy" = "delete"
+        "retention.ms" = "1209600000"
+      }
+    },
+    @{
+      name = "dev.flowchat.notification.email.v1"
+      partitions = 1
+      rf = 1
+      config = @{
+        "cleanup.policy" = "delete"
+        "retention.ms" = "2419200000"
+      }
+    },
+    @{
+      name = "dev.flowchat.notification.email.v1.notification-service.retry"
+      partitions = 1
+      rf = 1
+      config = @{
+        "cleanup.policy" = "delete"
+        "retention.ms" = "3600000"
+      }
+    },
+    @{
+      name = "dev.flowchat.notification.email.v1.notification-service.dlq"
+      partitions = 1
+      rf = 1
+      config = @{
+        "cleanup.policy" = "delete"
+        "retention.ms" = "1209600000"
+      }
+    },
+    @{
+      name = "dev.flowchat.chat.message.v1"
+      partitions = 1
+      rf = 1
+      config = @{
+        "cleanup.policy" = "delete"
+        "retention.ms" = "2419200000"
+      }
+    },
+    @{
+      name = "dev.flowchat.chat.message.v1.realtime-service.retry"
+      partitions = 1
+      rf = 1
+      config = @{
+        "cleanup.policy" = "delete"
+        "retention.ms" = "3600000"
+      }
+    },
+    @{
+      name = "dev.flowchat.chat.message.v1.realtime-service.dlq"
+      partitions = 1
+      rf = 1
+      config = @{
+        "cleanup.policy" = "delete"
+        "retention.ms" = "1209600000"
+      }
+    },
+    @{
+      name = "dev.flowchat.presence.presence"
+      partitions = 1
+      rf = 1
+      config = @{
+        "cleanup.policy" = "delete"
+        "retention.ms" = "2419200000"
+      }
+    },
+    @{
+      name = "dev.flowchat.presence.presence.realtime-service.retry"
+      partitions = 1
+      rf = 1
+      config = @{
+        "cleanup.policy" = "delete"
+        "retention.ms" = "3600000"
+      }
+    },
+    @{
+      name = "dev.flowchat.presence.presence.realtime-service.dlq"
+      partitions = 1
+      rf = 1
+      config = @{
+        "cleanup.policy" = "delete"
+        "retention.ms" = "1209600000"
+      }
+    },
+    @{
+      name = "dev.flowchat.social-graph.contact"
+      partitions = 1
+      rf = 1
+      config = @{
+        "cleanup.policy" = "delete"
+        "retention.ms" = "2419200000"
+      }
+    },
+    @{
+      name = "dev.flowchat.social-graph.contact.presence-service.retry"
+      partitions = 1
+      rf = 1
+      config = @{
+        "cleanup.policy" = "delete"
+        "retention.ms" = "3600000"
+      }
+    },
+    @{
+      name = "dev.flowchat.social-graph.contact.presence-service.dlq"
+      partitions = 1
+      rf = 1
+      config = @{
+        "cleanup.policy" = "delete"
+        "retention.ms" = "1209600000"
+      }
+    },
+    @{
+      name = "dev.flowchat.realtime.connection.v1"
+      partitions = 1
+      rf = 1
+      config = @{
+        "cleanup.policy" = "delete"
+        "retention.ms" = "2419200000"
+      }
+    },
+    @{
+      name = "dev.flowchat.realtime.connection.v1.presence-service.retry"
+      partitions = 1
+      rf = 1
+      config = @{
+        "cleanup.policy" = "delete"
+        "retention.ms" = "3600000"
+      }
+    },
+    @{
+      name = "dev.flowchat.realtime.connection.v1.presence-service.dlq"
+      partitions = 1
+      rf = 1
+      config = @{
+        "cleanup.policy" = "delete"
+        "retention.ms" = "1209600000"
+      }
+    }
+  )
+}
+
+function Get-LegacyTopicNames {
+  return @(
+    "dev.flowchat.presence.presence-status-changed.v1",
+    "dev.flowchat.presence.presence-status-changed.v1.retry",
+    "dev.flowchat.presence.presence-status-changed.v1.dlq",
+    "dev.flowchat.social-graph.contact-added.v1",
+    "dev.flowchat.social-graph.contact-added.v1.retry",
+    "dev.flowchat.social-graph.contact-added.v1.dlq",
+    "dev.flowchat.social-graph.contact-deleted.v1",
+    "dev.flowchat.social-graph.contact-deleted.v1.retry",
+    "dev.flowchat.social-graph.contact-deleted.v1.dlq",
+    "dev.flowchat.identity.user.v1.retry",
+    "dev.flowchat.identity.user.v1.dlq",
+    "dev.flowchat.user-profile.user-profile.v1.retry",
+    "dev.flowchat.user-profile.user-profile.v1.dlq",
+    "dev.flowchat.notification.email.v1.retry",
+    "dev.flowchat.notification.email.v1.dlq",
+    "dev.flowchat.chat.message.v1.retry",
+    "dev.flowchat.chat.message.v1.dlq",
+    "dev.flowchat.presence.presence.retry",
+    "dev.flowchat.presence.presence.dlq",
+    "dev.flowchat.social-graph.contact.retry",
+    "dev.flowchat.social-graph.contact.dlq",
+    "dev.flowchat.realtime.connection.v1.retry",
+    "dev.flowchat.realtime.connection.v1.dlq"
+  )
+}

@@ -1,0 +1,97 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "AuthService API",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build: AuthService API",
+      "program": "${workspaceFolder}/src/FlowChat.AuthService.API/bin/Debug/net10.0/FlowChat.AuthService.API.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/src/FlowChat.AuthService.API",
+      "stopAtEntry": false,
+      "console": "integratedTerminal",
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    },
+    {
+      "name": "AuthService API (No Build)",
+      "type": "coreclr",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/FlowChat.AuthService.API/bin/Debug/net10.0/FlowChat.AuthService.API.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/src/FlowChat.AuthService.API",
+      "stopAtEntry": false,
+      "console": "integratedTerminal",
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    },
+    {
+      "name": "AuthService OutboxPublisher",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build: AuthService OutboxPublisher",
+      "program": "${workspaceFolder}/src/Workers/FlowChat.AuthService.OutboxPublisher/bin/Debug/net10.0/FlowChat.AuthService.OutboxPublisher.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/src/Workers/FlowChat.AuthService.OutboxPublisher",
+      "stopAtEntry": false,
+      "console": "integratedTerminal",
+      "env": {
+        "DOTNET_ENVIRONMENT": "Development"
+      }
+    },
+    {
+      "name": "AuthService OutboxPublisher (No Build)",
+      "type": "coreclr",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/Workers/FlowChat.AuthService.OutboxPublisher/bin/Debug/net10.0/FlowChat.AuthService.OutboxPublisher.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/src/Workers/FlowChat.AuthService.OutboxPublisher",
+      "stopAtEntry": false,
+      "console": "integratedTerminal",
+      "env": {
+        "DOTNET_ENVIRONMENT": "Development"
+      }
+    },
+    {
+      "name": "AuthService Consumers",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build: AuthService Consumers",
+      "program": "${workspaceFolder}/src/Workers/FlowChat.AuthService.Consumers/bin/Debug/net10.0/FlowChat.AuthService.Consumers.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/src/Workers/FlowChat.AuthService.Consumers",
+      "stopAtEntry": false,
+      "console": "integratedTerminal",
+      "env": {
+        "DOTNET_ENVIRONMENT": "Development"
+      }
+    },
+    {
+      "name": "AuthService Consumers (No Build)",
+      "type": "coreclr",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/Workers/FlowChat.AuthService.Consumers/bin/Debug/net10.0/FlowChat.AuthService.Consumers.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/src/Workers/FlowChat.AuthService.Consumers",
+      "stopAtEntry": false,
+      "console": "integratedTerminal",
+      "env": {
+        "DOTNET_ENVIRONMENT": "Development"
+      }
+    }
+  ],
+  "compounds": [
+    {
+      "name": "AuthService",
+        "configurations": [
+        "AuthService API",
+        "AuthService OutboxPublisher",
+        "AuthService Consumers"
+      ],
+      "stopAll": true
+    }
+  ]
+}

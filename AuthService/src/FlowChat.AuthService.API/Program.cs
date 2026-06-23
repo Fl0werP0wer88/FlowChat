@@ -1,9 +1,30 @@
 using FlowChat.AuthService.Api;
 
-var builder = WebApplication.CreateBuilder(args);
+WebApplication? app = null;
 
-var app = builder.ConfigureServices().ConfigurePipeline();
+try
+{
+    var builder = WebApplication.CreateBuilder(args);
 
-await app.ResetDatabaseAsync();
+    app = builder.ConfigureServices().ConfigurePipeline();
 
-app.Run();
+    if (app.Environment.IsDevelopment())
+    {
+        await app.MigrateDatabaseAsync();
+    }
+
+    await app.RunAsync();
+}
+catch (Exception exception)
+{
+    if (app is not null)
+    {
+        app.Logger.LogCritical(exception, "AuthService API terminated unexpectedly.");
+    }
+    else
+    {
+        Console.Error.WriteLine($"Fatal startup error in AuthService API: {exception}");
+    }
+
+    throw;
+}

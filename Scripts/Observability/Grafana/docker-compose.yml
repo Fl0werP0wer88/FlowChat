@@ -1,0 +1,28 @@
+services:
+  grafana:
+    image: grafana/grafana:12.3.1
+    container_name: flowchat-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+      GF_METRICS_ENABLED: "true"
+    volumes:
+      - ./Grafana/provisioning:/etc/grafana/provisioning:ro
+      - flowchat_grafana_data:/var/lib/grafana
+    networks:
+      flowchat-observability:
+        aliases:
+          - flowchat-grafana
+    restart: unless-stopped
+
+volumes:
+  flowchat_grafana_data:
+
+networks:
+  flowchat-observability:
+    external: true
+    name: flowchat-observability

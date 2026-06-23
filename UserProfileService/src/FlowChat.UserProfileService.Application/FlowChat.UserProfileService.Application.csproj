@@ -1,11 +1,13 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <ProjectReference Include="..\..\..\Common\src\FlowChat.Core\FlowChat.Core.csproj" />
+    <ProjectReference Include="..\..\..\Common\src\FlowChat.Shared.Application\FlowChat.Shared.Application.csproj" />
     <ProjectReference Include="..\FlowChat.UserProfileService.Domain\FlowChat.UserProfileService.Domain.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="AutoMapper" Version="16.0.0" />
+    <PackageReference Include="AutoMapper" Version="16.1.1" />
     <PackageReference Include="MediatR" Version="14.0.0" />
     <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.3" />
   </ItemGroup>
@@ -17,3 +19,4 @@
   </PropertyGroup>
 
 </Project>
+

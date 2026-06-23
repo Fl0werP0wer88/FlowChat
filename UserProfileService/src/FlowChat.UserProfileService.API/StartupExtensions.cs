@@ -1,6 +1,10 @@
-﻿using FlowChat.UserProfileService.Application;
+using FlowChat.Shared.API;
+using FlowChat.UserProfileService.Application;
+using FlowChat.UserProfileService.Infrastructure.Configuration.Settings;
 using FlowChat.UserProfileService.Infrastructure;
+using FlowChat.UserProfileService.Infrastructure.Kafka;
 using FlowChat.UserProfileService.Persistence;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
 
@@ -10,59 +14,49 @@ public static class StartupExtensions
 {
     public static WebApplication ConfigureServices(this WebApplicationBuilder builder)
     {
-        builder.Services.AddApplicationServices();
+        builder.Services.AddApiApplicationServices();
         builder.Services.AddInfrastructureServices(builder.Configuration);
         builder.Services.AddPersistenceServices(builder.Configuration);
+        builder.Services.AddDataProtection()
+            .PersistKeysToDbContext<AppDbContext>()
+            .SetApplicationName("FlowChat.UserProfileService");
+        builder.Services.AddApiSilverbackMessaging(builder.Configuration);
+        builder.AddFlowChatOpenTelemetry(typeof(ApplicationServiceRegistration).Assembly);
 
+        builder.Services.AddFlowChatJwtAuthentication(builder.Configuration);
         builder.Services.AddControllers();
-
-        builder.Services.AddCors(
-            options => options.AddPolicy(
-                "open",
-                policy => policy.WithOrigins([builder.Configuration["ApiUrl"] ?? "https://localhost:5000",
-                    builder.Configuration["BlazorUrl"] ?? "https://localhost:5010"])
-        .AllowAnyMethod()
-        .SetIsOriginAllowed(pol => true)
-        .AllowAnyHeader()
-        .AllowCredentials()));
-
-        builder.Services.AddSwaggerGen();
+        builder.Services.AddFlowChatSwaggerWithBearer();
 
         return builder.Build();
     }
 
     public static WebApplication ConfigurePipeline(this WebApplication app)
     {
-        app.UseCors("open");
+        app.UseFlowChatGlobalExceptionHandling();
         if (app.Environment.IsDevelopment())
         {
             app.UseSwagger();
             app.UseSwaggerUI();
+            app.LogSwaggerEndpointOnStarted();
         }
 
         app.UseHttpsRedirection();
+        app.UseAuthentication();
+        app.UseAuthorization();
         app.MapControllers();
-        return app; 
+        return app;
     }
 
-    public static async Task ResetDatabaseAsync(this WebApplication app)
+    public static async Task MigrateDatabaseAsync(this WebApplication app)
     {
-        using var scope = app.Services.CreateScope();
-
-        try
+        if (!app.Environment.IsDevelopment())
         {
-            var context = scope.ServiceProvider.GetService<AppDbContext>();
+            return;
+        }
 
-            if (context != null)
-            {
-                await context.Database.EnsureDeletedAsync();
-                await context.Database.MigrateAsync();
-            }
-        }
-        catch (Exception)
-        {
-            // logowanie dodamy pozniej
-        }
+        await using var context = new AppDbContextFactory().CreateDbContext([]);
+        await context.Database.MigrateAsync();
     }
 }
+
 

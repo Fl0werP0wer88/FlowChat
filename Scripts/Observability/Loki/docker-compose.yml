@@ -1,0 +1,24 @@
+services:
+  loki:
+    image: grafana/loki:3.6.3
+    container_name: flowchat-loki
+    command:
+      - -config.file=/etc/loki/loki-config.yml
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./Loki/loki-config.yml:/etc/loki/loki-config.yml:ro
+      - flowchat_loki_data:/loki
+    networks:
+      flowchat-observability:
+        aliases:
+          - flowchat-loki
+    restart: unless-stopped
+
+volumes:
+  flowchat_loki_data:
+
+networks:
+  flowchat-observability:
+    external: true
+    name: flowchat-observability

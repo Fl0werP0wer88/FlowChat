@@ -1,0 +1,145 @@
+using FlowChat.Shared.Application;
+using FlowChat.Core.Results;
+using FlowChat.Shared.Domain;
+using FlowChat.Shared.Domain.ValueObjects;
+using FlowChat.SocialGraphService.Application.Contracts.Persistence;
+using FlowChat.SocialGraphService.Application.Features.UserProfile;
+using ContactAggregate = FlowChat.SocialGraphService.Domain.Entities.Contact.Contact;
+
+namespace FlowChat.SocialGraphService.Application.Features.Contact.Commands.AddContact;
+
+public sealed class AddContactCommandHandler : IdempotentCommandHandlerBase<AddContactCommand, Guid>
+{
+    private readonly IContactWriteRepository _contactWriteRepository;
+    private readonly IUserProfileProjectionReadRepository _userProfileProjectionReadRepository;
+    private ContactAggregate? _contact;
+
+    public AddContactCommandHandler(
+        IContactWriteRepository contactWriteRepository,
+        IUserProfileProjectionReadRepository userProfileProjectionReadRepository,
+        IUnitOfWork unitOfWork,
+        IDomainEventDispatcher domainEventDispatcher,
+        IDbUpdateExceptionClassifier dbUpdateExceptionClassifier)
+        : base(domainEventDispatcher, unitOfWork, dbUpdateExceptionClassifier)
+    {
+        _contactWriteRepository = contactWriteRepository;
+        _userProfileProjectionReadRepository = userProfileProjectionReadRepository;
+    }
+
+    protected override async Task<(bool Found, Guid Value)> TryGetExistingResponseAsync(
+        AddContactCommand request,
+        CancellationToken cancellationToken)
+    {
+        var contact = await _contactWriteRepository.GetByIdAsync(request.Id, cancellationToken);
+        if (contact is null || contact.OwnerUserId != request.OwnerUserId)
+        {
+            return (false, default);
+        }
+
+        return (true, contact.Id.Value);
+    }
+
+    protected override async Task<FlowChatResult<Guid>> ExecuteCommandAsync(
+        AddContactCommand request,
+        CancellationToken cancellationToken)
+    {
+        var projection = await GetUserProfileProjectionAsync(request, cancellationToken);
+        if (projection is null)
+        {
+            return FlowChatResult<Guid>.Failure(DomainError.NotFound("User profile projection was not found."));
+        }
+
+        if (projection.UserProfileId == request.OwnerUserId)
+        {
+            return FlowChatResult<Guid>.Failure(DomainError.BadRequest("OwnerUserId and ContactUserId must be different."));
+        }
+
+        var contactAlreadyExists = await _contactWriteRepository.ExistsAsync(
+            request.OwnerUserId,
+            projection.UserProfileId,
+            cancellationToken);
+
+        if (contactAlreadyExists)
+        {
+            return FlowChatResult<Guid>.Failure(DomainError.Conflict("Contact already exists."));
+        }
+
+        _contact = ContactAggregate.Create(
+            Id<ContactAggregate>.FromGuid(request.Id),
+            request.OwnerUserId,
+            projection.UserProfileId,
+            CreateDisplayName(projection),
+            projection.FirstName,
+            projection.LastName,
+            CreatePhoneNumber(projection),
+            CreateEmailAddress(projection));
+
+        await _contactWriteRepository.AddAsync(_contact, cancellationToken);
+
+        return FlowChatResult<Guid>.Success(_contact.Id.Value);
+    }
+
+    protected override IAggregateRoot? GetExecutedAggregateRoot(IdempotentCommandResult<Guid> result) =>
+        _contact;
+
+    protected override string GetIdempotencyConflictKey(AddContactCommand request) =>
+        AddContactCommand.IdempotencyConflictKey;
+
+    private async Task<UserProfileProjectionDto?> GetUserProfileProjectionAsync(
+        AddContactCommand request,
+        CancellationToken cancellationToken)
+    {
+        if (request.UserId.HasValue)
+        {
+            return await _userProfileProjectionReadRepository.GetByUserProfileIdAsync(
+                request.UserId.Value,
+                cancellationToken);
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.FriendlyUserId))
+        {
+            return await _userProfileProjectionReadRepository.GetByFriendlyUserIdAsync(
+                request.FriendlyUserId.Trim(),
+                cancellationToken);
+        }
+
+        return await _userProfileProjectionReadRepository.GetByEmailAsync(
+            EmailAddress.Create(request.Email!).Value,
+            cancellationToken);
+    }
+
+    private static EmailAddress? CreateEmailAddress(UserProfileProjectionDto projection)
+    {
+        if (!EmailAddress.TryCreate(projection.MainEmail?.Address, out var emailAddress))
+        {
+            return null;
+        }
+
+        return emailAddress;
+    }
+
+    private static PhoneNumber? CreatePhoneNumber(UserProfileProjectionDto projection)
+    {
+        if (!PhoneNumber.TryCreate(projection.MainPhone?.Number, out var phoneNumber))
+        {
+            return null;
+        }
+
+        return phoneNumber;
+    }
+
+    private static string CreateDisplayName(UserProfileProjectionDto projection)
+    {
+        var firstName = NormalizeOptional(projection.FirstName);
+        var lastName = NormalizeOptional(projection.LastName);
+        var displayName = $"{firstName} {lastName}".Trim();
+
+        return string.IsNullOrWhiteSpace(displayName)
+            ? projection.FriendlyUserId
+            : displayName;
+    }
+
+    private static string? NormalizeOptional(string? value) =>
+        string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+}
+

@@ -1,0 +1,55 @@
+using AutoFixture;
+using FlowChat.RealtimeService.Application.Contracts.Infrastructure;
+using FlowChat.RealtimeService.Application.Features.Message.Commands.PublishMessage;
+using FluentAssertions;
+using Moq;
+
+namespace FlowChat.RealtimeService.UnitTests;
+
+public sealed class PublishMessageCommandHandlerTests
+{
+    private readonly IFixture _fixture = new Fixture();
+    private readonly Mock<IRealtimeClientDispatcher> _dispatcherMock = new();
+    private readonly PublishMessageCommandHandler _handler;
+
+    public PublishMessageCommandHandlerTests()
+    {
+        _dispatcherMock
+            .Setup(x => x.ReceiveMessageAsync(It.IsAny<ChatMessageParam>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        _handler = new PublishMessageCommandHandler(_dispatcherMock.Object);
+    }
+
+    [Fact]
+    public async Task Handle_MapsNotificationAndDispatchesToRecipients()
+    {
+        ChatMessageParam? capturedNotification = null;
+        var recipientUserId = _fixture.Create<Guid>();
+        var deliveredAtUtc = new DateTimeOffset(2026, 5, 19, 12, 0, 0, TimeSpan.Zero);
+
+        _dispatcherMock
+            .Setup(x => x.ReceiveMessageAsync(It.IsAny<ChatMessageParam>(), It.IsAny<CancellationToken>()))
+            .Callback<ChatMessageParam, CancellationToken>((notification, _) => capturedNotification = notification)
+            .Returns(Task.CompletedTask);
+
+        var result = await _handler.Handle(
+            new PublishMessageCommand(
+                _fixture.Create<Guid>(),
+                _fixture.Create<Guid>(),
+                _fixture.Create<Guid>(),
+                " John Doe ",
+                " Hello there ",
+                new DateTimeOffset(2026, 3, 17, 12, 0, 0, TimeSpan.Zero),
+                deliveredAtUtc,
+                [recipientUserId, recipientUserId, Guid.Empty]),
+            CancellationToken.None);
+
+        result.IsSuccess.Should().BeTrue();
+        capturedNotification.Should().NotBeNull();
+        capturedNotification!.SenderDisplayName.Should().Be("John Doe");
+        capturedNotification.Text.Should().Be("Hello there");
+        capturedNotification.DeliveredAtUtc.Should().Be(deliveredAtUtc);
+        capturedNotification.RecipientUserIds.Should().ContainSingle().Which.Should().Be(recipientUserId);
+    }
+}

@@ -2,12 +2,22 @@
 
   <ItemGroup>
     <ProjectReference Include="..\FlowChat.ChatService.Application\FlowChat.ChatService.Application.csproj" />
+    <ProjectReference Include="..\..\..\Common\src\FlowChat.Core\FlowChat.Core.csproj" />
+    <ProjectReference Include="..\..\..\Common\src\FlowChat.Shared.Infrastructure\FlowChat.Shared.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\Common\src\FlowChat.Shared.Persistance\FlowChat.Shared.Persistance.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.3" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.3">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
     <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.3" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.0" />
+    <PackageReference Include="Silverback.Integration.Kafka" Version="5.0.0" />
+    <PackageReference Include="Silverback.Storage.EntityFramework" Version="5.0.0" />
+    <PackageReference Include="Silverback.Storage.PostgreSql" Version="5.0.0" />
   </ItemGroup>
 
   <PropertyGroup>
@@ -17,3 +27,4 @@
   </PropertyGroup>
 
 </Project>
+

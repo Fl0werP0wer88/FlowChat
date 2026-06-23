@@ -1,0 +1,6 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/FlowChat.GatewayService.API/FlowChat.GatewayService.API.csproj" />
+  </Folder>
+  <Project Path="../Common/src/FlowChat.Shared.API/FlowChat.Shared.API.csproj" />
+</Solution>

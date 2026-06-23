@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Common\src\FlowChat.Shared.Application\FlowChat.Shared.Application.csproj" />
+    <ProjectReference Include="..\..\..\Common\src\FlowChat.Shared.Domain\FlowChat.Shared.Domain.csproj" />
+    <ProjectReference Include="..\FlowChat.NotificationService.Domain\FlowChat.NotificationService.Domain.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MediatR" Version="14.0.0" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+</Project>
+

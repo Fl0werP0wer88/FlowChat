@@ -1,6 +1,30 @@
-var builder = WebApplication.CreateBuilder(args);
-var app = builder.Build();
+using FlowChat.ChatService.Api;
 
-app.MapGet("/", () => "Hello World!");
+WebApplication? app = null;
 
-app.Run();
+try
+{
+    var builder = WebApplication.CreateBuilder(args);
+
+    app = builder.ConfigureServices().ConfigurePipeline();
+
+    if (app.Environment.IsDevelopment())
+    {
+        await app.MigrateDatabaseAsync();
+    }
+
+    await app.RunAsync();
+}
+catch (Exception exception)
+{
+    if (app is not null)
+    {
+        app.Logger.LogCritical(exception, "ChatService API terminated unexpectedly.");
+    }
+    else
+    {
+        Console.Error.WriteLine($"Fatal startup error in ChatService API: {exception}");
+    }
+
+    throw;
+}

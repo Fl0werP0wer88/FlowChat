@@ -1,0 +1,69 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "RealtimeService API",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build: RealtimeService API",
+      "program": "${workspaceFolder}/src/FlowChat.RealtimeService.API/bin/Debug/net10.0/FlowChat.RealtimeService.API.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/src/FlowChat.RealtimeService.API",
+      "stopAtEntry": false,
+      "console": "integratedTerminal",
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    },
+    {
+      "name": "RealtimeService API (No Build)",
+      "type": "coreclr",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/FlowChat.RealtimeService.API/bin/Debug/net10.0/FlowChat.RealtimeService.API.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/src/FlowChat.RealtimeService.API",
+      "stopAtEntry": false,
+      "console": "integratedTerminal",
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    },
+    {
+      "name": "RealtimeService Consumers",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build: RealtimeService Consumers",
+      "program": "${workspaceFolder}/src/Workers/FlowChat.RealtimeService.Consumers/bin/Debug/net10.0/FlowChat.RealtimeService.Consumers.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/src/Workers/FlowChat.RealtimeService.Consumers",
+      "stopAtEntry": false,
+      "console": "integratedTerminal",
+      "env": {
+        "DOTNET_ENVIRONMENT": "Development"
+      }
+    },
+    {
+      "name": "RealtimeService Consumers (No Build)",
+      "type": "coreclr",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/Workers/FlowChat.RealtimeService.Consumers/bin/Debug/net10.0/FlowChat.RealtimeService.Consumers.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/src/Workers/FlowChat.RealtimeService.Consumers",
+      "stopAtEntry": false,
+      "console": "integratedTerminal",
+      "env": {
+        "DOTNET_ENVIRONMENT": "Development"
+      }
+    }
+  ],
+  "compounds": [
+    {
+      "name": "RealtimeService",
+      "configurations": [
+        "RealtimeService API",
+        "RealtimeService Consumers"
+      ],
+      "stopAll": true
+    }
+  ]
+}

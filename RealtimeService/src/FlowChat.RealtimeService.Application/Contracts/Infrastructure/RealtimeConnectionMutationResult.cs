@@ -1,0 +1,9 @@
+namespace FlowChat.RealtimeService.Application.Contracts.Infrastructure;
+
+public sealed record RealtimeConnectionMutationResult(
+    Guid UserId,
+    string ConnectionId,
+    int ActiveConnectionCount,
+    bool IsFirstConnectionForUser,
+    bool IsLastConnectionForUser,
+    DateTimeOffset OccurredAtUtc);

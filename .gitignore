@@ -3,11 +3,20 @@
 [Oo]bj/
 out/
 artifacts/
+.artifacts/
 
 # Visual Studio / VS Code / Rider
 .vs/
-.vscode/
 .idea/
+*.lscache
+
+# Claude Code
+.claude/
+.codex/
+.claude/worktrees/
+.codex-temp/
+.codex/worktrees/
+.codex/testgen/
 *.sln.iml
 
 # User-specific files
@@ -23,9 +32,13 @@ artifacts/
 *.cache
 project.lock.json
 project.fragment.lock.json
+.dotnet/
+.dotnet-cli/
+.dotnet-home/
+.nuget/
 
 # Test artifacts
-TestResults/
+**/TestResults/
 *.trx
 *.coverage
 *.coveragexml
@@ -33,10 +46,15 @@ TestResults/
 # Logs
 *.log
 
+# Frontend artifacts
+node_modules/
+dist/
+
 # Local-only config
 **/appsettings.Local.json
 **/appsettings.*.local.json
 secrets.json
+Scripts/Infisical/.env
 
 # OS files
 .DS_Store

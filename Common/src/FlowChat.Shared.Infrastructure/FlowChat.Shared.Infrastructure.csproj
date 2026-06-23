@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\FlowChat.Core\FlowChat.Core.csproj" />
+    <ProjectReference Include="..\FlowChat.Shared.Application\FlowChat.Shared.Application.csproj" />
+    <ProjectReference Include="..\FlowChat.Shared.Persistance\FlowChat.Shared.Persistance.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="10.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.3" />
+    <PackageReference Include="Silverback.Integration.Kafka" Version="5.0.0" />
+    <PackageReference Include="Silverback.Storage.Relational" Version="5.0.0" />
+    <PackageReference Include="StackExchange.Redis" Version="2.10.1" />
+  </ItemGroup>
+</Project>

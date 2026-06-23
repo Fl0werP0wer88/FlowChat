@@ -1,0 +1,97 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "UserProfileService API",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build: UserProfileService API",
+      "program": "${workspaceFolder}/src/FlowChat.UserProfileService.API/bin/Debug/net10.0/FlowChat.UserProfileService.API.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/src/FlowChat.UserProfileService.API",
+      "stopAtEntry": false,
+      "console": "integratedTerminal",
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    },
+    {
+      "name": "UserProfileService API (No Build)",
+      "type": "coreclr",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/FlowChat.UserProfileService.API/bin/Debug/net10.0/FlowChat.UserProfileService.API.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/src/FlowChat.UserProfileService.API",
+      "stopAtEntry": false,
+      "console": "integratedTerminal",
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    },
+    {
+      "name": "UserProfileService Consumers",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build: UserProfileService Consumers",
+      "program": "${workspaceFolder}/src/Workers/FlowChat.UserProfileService.Consumers/bin/Debug/net10.0/FlowChat.UserProfileService.Consumers.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/src/Workers/FlowChat.UserProfileService.Consumers",
+      "stopAtEntry": false,
+      "console": "integratedTerminal",
+      "env": {
+        "DOTNET_ENVIRONMENT": "Development"
+      }
+    },
+    {
+      "name": "UserProfileService Consumers (No Build)",
+      "type": "coreclr",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/Workers/FlowChat.UserProfileService.Consumers/bin/Debug/net10.0/FlowChat.UserProfileService.Consumers.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/src/Workers/FlowChat.UserProfileService.Consumers",
+      "stopAtEntry": false,
+      "console": "integratedTerminal",
+      "env": {
+        "DOTNET_ENVIRONMENT": "Development"
+      }
+    },
+    {
+      "name": "UserProfileService OutboxPublisher",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build: UserProfileService OutboxPublisher",
+      "program": "${workspaceFolder}/src/Workers/FlowChat.UserProfileService.OutboxPublisher/bin/Debug/net10.0/FlowChat.UserProfileService.OutboxPublisher.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/src/Workers/FlowChat.UserProfileService.OutboxPublisher",
+      "stopAtEntry": false,
+      "console": "integratedTerminal",
+      "env": {
+        "DOTNET_ENVIRONMENT": "Development"
+      }
+    },
+    {
+      "name": "UserProfileService OutboxPublisher (No Build)",
+      "type": "coreclr",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/Workers/FlowChat.UserProfileService.OutboxPublisher/bin/Debug/net10.0/FlowChat.UserProfileService.OutboxPublisher.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/src/Workers/FlowChat.UserProfileService.OutboxPublisher",
+      "stopAtEntry": false,
+      "console": "integratedTerminal",
+      "env": {
+        "DOTNET_ENVIRONMENT": "Development"
+      }
+    }
+  ],
+  "compounds": [
+    {
+      "name": "UserProfileService",
+      "configurations": [
+        "UserProfileService API",
+        "UserProfileService Consumers",
+        "UserProfileService OutboxPublisher"
+      ],
+      "stopAll": true
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+﻿<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/FlowChat.NotificationService.API/FlowChat.NotificationService.API.csproj" />
+    <Project Path="src/FlowChat.NotificationService.Application/FlowChat.NotificationService.Application.csproj" />
+    <Project Path="src/FlowChat.NotificationService.Domain/FlowChat.NotificationService.Domain.csproj" />
+    <Project Path="src/FlowChat.NotificationService.Infrastructure/FlowChat.NotificationService.Infrastructure.csproj" />
+    <Project Path="src/FlowChat.NotificationService.Persistence/FlowChat.NotificationService.Persistence.csproj" />
+  </Folder>
+  <Folder Name="/src/Workers/">
+    <Project Path="src/Workers/FlowChat.NotificationService.Consumers/FlowChat.NotificationService.Consumers.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/FlowChat.NotificationService.AATs/FlowChat.NotificationService.AATs.csproj" />
+    <Project Path="tests/FlowChat.NotificationService.IntegrationTests/FlowChat.NotificationService.IntegrationTests.csproj" />
+    <Project Path="tests/FlowChat.NotificationService.UnitTests/FlowChat.NotificationService.UnitTests.csproj" />
+  </Folder>
+  <Project Path="../Common/src/FlowChat.Shared.API/FlowChat.Shared.API.csproj" />
+  <Project Path="../Common/src/FlowChat.Shared.Application/FlowChat.Shared.Application.csproj" />
+  <Project Path="../Common/src/FlowChat.Shared.Infrastructure/FlowChat.Shared.Infrastructure.csproj" />
+</Solution>
+
+

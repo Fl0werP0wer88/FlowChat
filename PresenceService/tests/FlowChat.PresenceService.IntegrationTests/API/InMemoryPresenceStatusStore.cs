@@ -1,0 +1,54 @@
+using FlowChat.Core.Domain;
+using FlowChat.PresenceService.Application.Contracts.Infrastructure;
+using FlowChat.PresenceService.Application.Features.Presence;
+
+namespace FlowChat.PresenceService.IntegrationTests.API;
+
+public sealed class InMemoryPresenceStatusStore : IPresenceStatusStore
+{
+    private readonly Dictionary<Guid, PresenceStatusSnapshot> _values = [];
+
+    public Task<PresenceStatusSnapshot?> GetAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        _values.TryGetValue(userId, out var value);
+        return Task.FromResult(value);
+    }
+
+    public Task SetAsync(Guid userId, PresenceStatus status, DateTimeOffset changedAtUtc, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        _values[userId] = new PresenceStatusSnapshot(userId, status, changedAtUtc);
+        return Task.CompletedTask;
+    }
+
+    public Task DeleteAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        _values.Remove(userId);
+        return Task.CompletedTask;
+    }
+
+    public Task<bool> RefreshTtlAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        return Task.FromResult(_values.ContainsKey(userId));
+    }
+
+    public Task<IReadOnlyDictionary<Guid, PresenceStatusSnapshot>> GetManyAsync(
+        IReadOnlyCollection<Guid> userIds,
+        CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        var result = new Dictionary<Guid, PresenceStatusSnapshot>();
+        foreach (var id in userIds)
+        {
+            if (_values.TryGetValue(id, out var snapshot))
+            {
+                result[id] = snapshot;
+            }
+        }
+
+        return Task.FromResult<IReadOnlyDictionary<Guid, PresenceStatusSnapshot>>(result);
+    }
+}

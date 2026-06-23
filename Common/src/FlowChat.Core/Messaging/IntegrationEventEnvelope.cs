@@ -1,0 +1,70 @@
+using System.Text;
+
+namespace FlowChat.Core.Messaging;
+
+public class IntegrationEventEnvelope<TEvent> where TEvent : IntegrationEvent
+{
+    public string KafkaKey { get; }
+    public TEvent Payload { get; }
+    public Dictionary<string, string> Headers { get; } = new Dictionary<string, string>();
+
+
+    public IntegrationEventEnvelope(TEvent payload, string kafkaKey)
+    {
+        ArgumentNullException.ThrowIfNull(payload);
+        if (string.IsNullOrWhiteSpace(kafkaKey))
+        {
+            throw new ArgumentException("Kafka key cannot be null or empty.", nameof(kafkaKey));
+        }
+
+        var messageId = Guid.NewGuid();
+        var occurredOnUtc = DateTimeOffset.UtcNow;
+        var messageType = typeof(TEvent);
+        KafkaKey = kafkaKey;
+        Payload = payload;
+        Headers.Add(IntegrationMessageHeaders.EventId, messageId.ToString("D"));
+        Headers.Add(IntegrationMessageHeaders.OccurredOnUtc, occurredOnUtc.ToString("O"));
+        Headers.Add(IntegrationMessageHeaders.EventVersion, "1");
+        Headers.Add(IntegrationMessageHeaders.EventType, messageType.Name);
+        Headers.Add(IntegrationMessageHeaders.Source, ResolveSource(messageType));
+    }
+
+    private static string ResolveSource(Type eventType)
+    {
+        var namespaceParts = eventType.Namespace?.Split('.', StringSplitOptions.RemoveEmptyEntries);
+        if (namespaceParts is null || namespaceParts.Length == 0)
+        {
+            return "unknown";
+        }
+
+        var messagingIndex = Array.IndexOf(namespaceParts, "Messaging");
+        if (messagingIndex >= 0 && messagingIndex + 1 < namespaceParts.Length)
+        {
+            return ToKebabCase(namespaceParts[messagingIndex + 1]);
+        }
+
+        return ToKebabCase(namespaceParts[^1]);
+    }
+
+    private static string ToKebabCase(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return "unknown";
+        }
+
+        var builder = new StringBuilder(value.Length + 4);
+        for (var index = 0; index < value.Length; index++)
+        {
+            var character = value[index];
+            if (char.IsUpper(character) && index > 0)
+            {
+                builder.Append('-');
+            }
+
+            builder.Append(char.ToLowerInvariant(character));
+        }
+
+        return builder.ToString();
+    }
+}

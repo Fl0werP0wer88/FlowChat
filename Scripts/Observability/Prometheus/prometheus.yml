@@ -1,0 +1,64 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: prometheus
+    static_configs:
+      - targets:
+          - flowchat-prometheus:9090
+
+  - job_name: alloy
+    static_configs:
+      - targets:
+          - flowchat-alloy:12345
+
+  - job_name: loki
+    static_configs:
+      - targets:
+          - flowchat-loki:3100
+
+  - job_name: tempo
+    static_configs:
+      - targets:
+          - flowchat-tempo:3200
+
+  - job_name: grafana
+    metrics_path: /metrics
+    static_configs:
+      - targets:
+          - flowchat-grafana:3000
+
+  # FlowChat application scrape templates.
+  # Enable these only after a given service exposes /metrics.
+  #
+  # - job_name: flowchat-authservice-api
+  #   metrics_path: /metrics
+  #   static_configs:
+  #     - targets:
+  #         - host.docker.internal:5234
+  #
+  # - job_name: flowchat-userprofileservice-api
+  #   metrics_path: /metrics
+  #   static_configs:
+  #     - targets:
+  #         - host.docker.internal:5054
+  #
+  # - job_name: flowchat-socialgraphservice-api
+  #   metrics_path: /metrics
+  #   static_configs:
+  #     - targets:
+  #         - host.docker.internal:5094
+  #
+  # - job_name: flowchat-notificationservice-api
+  #   metrics_path: /metrics
+  #   static_configs:
+  #     - targets:
+  #         - host.docker.internal:5206
+  #
+  # - job_name: flowchat-chatservice-api
+  #   metrics_path: /metrics
+  #   static_configs:
+  #     - targets:
+  #         - host.docker.internal:5117
+  #

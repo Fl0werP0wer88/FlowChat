@@ -1,0 +1,38 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "ReactClient",
+      "type": "pwa-chrome",
+      "request": "launch",
+      "preLaunchTask": "dev: ReactClient",
+      "url": "http://localhost:5173",
+      "webRoot": "${workspaceFolder}",
+      "skipFiles": [
+        "${workspaceFolder}/node_modules/**/*.js",
+        "${workspaceFolder}/node_modules/**/*.ts",
+        "<node_internals>/**"
+      ],
+      "presentation": {
+        "hidden": false,
+        "group": "react-client"
+      }
+    },
+    {
+      "name": "ReactClient (No Build)",
+      "type": "pwa-chrome",
+      "request": "launch",
+      "url": "http://localhost:5173",
+      "webRoot": "${workspaceFolder}",
+      "skipFiles": [
+        "${workspaceFolder}/node_modules/**/*.js",
+        "${workspaceFolder}/node_modules/**/*.ts",
+        "<node_internals>/**"
+      ],
+      "presentation": {
+        "hidden": false,
+        "group": "react-client"
+      }
+    }
+  ]
+}

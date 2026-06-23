@@ -1,0 +1,24 @@
+services:
+  tempo:
+    image: grafana/tempo:2.9.0
+    container_name: flowchat-tempo
+    command:
+      - -config.file=/etc/tempo/tempo.yml
+    ports:
+      - "3200:3200"
+    volumes:
+      - ./Tempo/tempo.yml:/etc/tempo/tempo.yml:ro
+      - flowchat_tempo_data:/var/tempo
+    networks:
+      flowchat-observability:
+        aliases:
+          - flowchat-tempo
+    restart: unless-stopped
+
+volumes:
+  flowchat_tempo_data:
+
+networks:
+  flowchat-observability:
+    external: true
+    name: flowchat-observability

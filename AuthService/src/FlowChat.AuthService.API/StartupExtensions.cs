@@ -1,7 +1,12 @@
-﻿using FlowChat.AuthService.Application;
+using FlowChat.Shared.API;
+using FlowChat.AuthService.Application;
+using FlowChat.AuthService.Infrastructure.Configuration.Settings;
 using FlowChat.AuthService.Infrastructure;
+using FlowChat.AuthService.Infrastructure.Kafka;
 using FlowChat.AuthService.Persistence;
+using AutoMapper;
 using Microsoft.EntityFrameworkCore;
+
 namespace FlowChat.AuthService.Api;
 
 public static class StartupExtensions
@@ -11,21 +16,16 @@ public static class StartupExtensions
         builder.Services
         .AddApplicationServices()
         .AddInfrastructureServices(builder.Configuration)
-        .AddPersistenceServices(builder.Configuration)
-        .AddAPIServices(builder.Configuration);
+        .AddAPIPersistenceServices(builder.Configuration)
+        .AddApiSilverbackMessaging(builder.Configuration)
+        .AddAPIServices(builder.Configuration, builder.Environment);
+        builder.Services.AddAutoMapper(
+            (Action<AutoMapper.IMapperConfigurationExpression>?)null,
+            typeof(StartupExtensions).Assembly);
+        builder.AddFlowChatOpenTelemetry(typeof(ApplicationServiceRegistration).Assembly);
 
 
         builder.Services.AddControllers();
-
-        builder.Services.AddCors(
-            options => options.AddPolicy(
-                "open",
-                policy => policy.WithOrigins([builder.Configuration["ApiUrl"] ?? "https://localhost:5000",
-                    builder.Configuration["BlazorUrl"] ?? "https://localhost:5010"])
-        .AllowAnyMethod()
-        .SetIsOriginAllowed(pol => true)
-        .AllowAnyHeader()
-        .AllowCredentials()));
 
         builder.Services.AddSwaggerGen();
 
@@ -34,38 +34,31 @@ public static class StartupExtensions
 
     public static WebApplication ConfigurePipeline(this WebApplication app)
     {
-        app.UseCors("open");
+        app.UseFlowChatGlobalExceptionHandling();
         if (app.Environment.IsDevelopment())
         {
             app.UseSwagger();
             app.UseSwaggerUI();
+            app.LogSwaggerEndpointOnStarted();
         }
 
         app.UseHttpsRedirection();
         app.UseAuthentication();
         app.UseAuthorization();
         app.MapControllers();
-        return app; 
+        return app;
     }
 
-    public static async Task ResetDatabaseAsync(this WebApplication app)
+    public static async Task MigrateDatabaseAsync(this WebApplication app)
     {
-        using var scope = app.Services.CreateScope();
-
-        try
+        if (!app.Environment.IsDevelopment())
         {
-            var context = scope.ServiceProvider.GetService<AppDbContext>();
+            return;
+        }
 
-            if (context != null)
-            {
-                await context.Database.EnsureDeletedAsync();
-                await context.Database.MigrateAsync();
-            }
-        }
-        catch (Exception)
-        {
-            // logowanie dodamy pozniej
-        }
+        await using var context = new AppDbContextFactory().CreateDbContext([]);
+        await context.Database.MigrateAsync();
     }
 }
+
 

@@ -1,0 +1,69 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "NotificationService API",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build: NotificationService API",
+      "program": "${workspaceFolder}/src/FlowChat.NotificationService.API/bin/Debug/net10.0/FlowChat.NotificationService.API.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/src/FlowChat.NotificationService.API",
+      "stopAtEntry": false,
+      "console": "integratedTerminal",
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    },
+    {
+      "name": "NotificationService API (No Build)",
+      "type": "coreclr",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/FlowChat.NotificationService.API/bin/Debug/net10.0/FlowChat.NotificationService.API.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/src/FlowChat.NotificationService.API",
+      "stopAtEntry": false,
+      "console": "integratedTerminal",
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    },
+    {
+      "name": "NotificationService Consumers",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build: NotificationService Consumers",
+      "program": "${workspaceFolder}/src/Workers/FlowChat.NotificationService.Consumers/bin/Debug/net10.0/FlowChat.NotificationService.Consumers.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/src/Workers/FlowChat.NotificationService.Consumers",
+      "stopAtEntry": false,
+      "console": "integratedTerminal",
+      "env": {
+        "DOTNET_ENVIRONMENT": "Development"
+      }
+    },
+    {
+      "name": "NotificationService Consumers (No Build)",
+      "type": "coreclr",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/Workers/FlowChat.NotificationService.Consumers/bin/Debug/net10.0/FlowChat.NotificationService.Consumers.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/src/Workers/FlowChat.NotificationService.Consumers",
+      "stopAtEntry": false,
+      "console": "integratedTerminal",
+      "env": {
+        "DOTNET_ENVIRONMENT": "Development"
+      }
+    }
+  ],
+  "compounds": [
+    {
+      "name": "NotificationService",
+      "configurations": [
+        "NotificationService API",
+        "NotificationService Consumers"
+      ],
+      "stopAll": true
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+
+
+1. Tutaj owner user Id powinien raczej btc brany z JWT a nie przekazywany jako parametr (Inaczej inni uzytkownicy beda mogli dodawac kontakty komus innemu): C:\GithubRepos\FlowChat\SocialGraphService\src\FlowChat.SocialGraphService.API\Features\Contact\Public\AddContact\AddContactRequest.cs
+2. Tutaj: C:\GithubRepos\FlowChat\SocialGraphService\src\FlowChat.SocialGraphService.API\Features\Contact\Public\DeleteContact\DeleteContactController.cs Mozna by chyba usowac po ContacId tylko trzeba by sprawdzac czy faktycznie kontakt nalezy do usuwajacego uzytkownika.
+3. Kazac GPT poszukac requestow w ktorych UserId nie jest brany z JWT i popoprawiać.
+4. Przemianować ContacAdded na ContactCreated
+5. Trzeba się zastanowić czy ChangePresenceStatusCommandHandler powinien bezpośrednio publikować PresenceStatusChangedIntegrationEvent czy moze dorzucic jakis posredni ApplicationEvent.
+6. CleanupFailedConnectionAsync na ChatHub powinna czyscic tez redisa i lokalny cache.
+7. Ten event na razie jest bez sensu bo jest nieuzywany: C:\GithubRepos\FlowChat\Common\src\FlowChat.Core\Messaging\AuthService\Events\PhoneNumberConfirmedIntegrationEvent.cs
+8. Ustawic domyslny logging silverbacka na wszystkich workerach na:   "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.Hosting.Lifetime": "Information",
+      "Silverback": "Warning"
+    }
+  }
+
+  9. Pamiętać że RealTimeService robi routing dzieki wpisom adresów instancji w settings . Docolowo raczej tak nie bedzie . Przy depoyowaniu na k8s trzeba bedzie to przerobić.
+
+10. jest literówka w nazwie projektu w common Persistance. Powinno być Persistence. zrobic rename
+11. Ustalić politykę EnableRetryOnFailure dla transakcji UOW. Wypdałoby żeby np. concurrency error były re-tryowane.
+12. REtry topicki (I może nawet DLQ) nir mogą być per IntegrationEvent a raczej minimalnie per konsumujący serwis. W przeciwnym razie jak jest kilku konsumentów i  jeden wrzuci na topic retry to wtedy wszystkie będą re-procesowały event.
+13. Rozważyć pozbycie się ReadRepositoryBase i WriteRepositoryBase . One nie daja zbytnio dużo uzysku. Wszystko i tak jest zazwyczaj overridowane
+14. Niektore REadREpo pobierają cały agreagat i dopiero mapuja, to raczej bez sensu. Niech pobieraja z bazy tylko te dane ktore potrzebują. 

@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <NoWarn>$(NoWarn);NU1902</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AutoFixture" Version="4.18.1" />
+    <PackageReference Include="coverlet.collector" Version="6.0.4" />
+    <PackageReference Include="FluentAssertions" Version="8.3.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="Moq" Version="4.20.72" />
+    <PackageReference Include="Testcontainers.Redis" Version="4.8.1" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Common\src\FlowChat.Core\FlowChat.Core.csproj" />
+    <ProjectReference Include="..\..\src\FlowChat.RealtimeService.API\FlowChat.RealtimeService.API.csproj" />
+    <ProjectReference Include="..\..\src\FlowChat.RealtimeService.Application\FlowChat.RealtimeService.Application.csproj" />
+    <ProjectReference Include="..\..\src\FlowChat.RealtimeService.Domain\FlowChat.RealtimeService.Domain.csproj" />
+    <ProjectReference Include="..\..\src\FlowChat.RealtimeService.Infrastructure\FlowChat.RealtimeService.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\FlowChat.RealtimeService.Redis\FlowChat.RealtimeService.Redis.csproj" />
+    <ProjectReference Include="..\..\src\Workers\FlowChat.RealtimeService.Consumers\FlowChat.RealtimeService.Consumers.csproj" />
+  </ItemGroup>
+
+</Project>

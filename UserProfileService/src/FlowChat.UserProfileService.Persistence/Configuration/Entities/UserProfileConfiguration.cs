@@ -1,0 +1,85 @@
+using FlowChat.Shared.Domain;
+using FlowChat.Shared.Domain.ValueObjects;
+using FlowChat.Shared.Persistance;
+using FlowChat.UserProfileService.Domain.Entities.EmailVerificationRequest;
+using FlowChat.UserProfileService.Domain.Entities.UserProfile;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+
+namespace FlowChat.UserProfileService.Persistence.Configuration.Entities;
+
+public class UserProfileConfiguration : IEntityTypeConfiguration<UserProfile>
+{
+    public void Configure(EntityTypeBuilder<UserProfile> builder)
+    {
+        builder.ToTable("UserProfiles");
+        builder.HasKey(x => x.Id);
+
+        builder.Property(x => x.Id)
+            .HasConversion(x => x.Value, x => Id<UserProfile>.FromGuid(x));
+
+        builder.Property(x => x.FriendlyUserId)
+            .HasConversion(x => x.Value, x => FriendlyUserId.Create(x))
+            .HasColumnName("UserName")
+            .HasMaxLength(FriendlyUserId.MaxLength)
+            .IsRequired();
+
+        builder.Property(x => x.FirstName)
+            .HasMaxLength(100);
+
+        builder.Property(x => x.LastName)
+            .HasMaxLength(100);
+
+        builder.Property(x => x.Organization)
+            .HasMaxLength(200);
+
+        builder.Property(x => x.AvatarUrl)
+            .HasMaxLength(500);
+
+        builder.Property(x => x.Bio)
+            .HasMaxLength(500);
+
+        builder.Property(x => x.Version)
+            .IsConcurrencyToken();
+
+        builder.Property(x => x.CreatedBy)
+            .HasMaxLength(256)
+            .IsRequired();
+
+        builder.Property(x => x.CreatedAtUtc)
+            .HasUtcDateTimeOffsetConversion();
+
+        builder.Property(x => x.LastModifiedBy)
+            .HasMaxLength(256)
+            .IsRequired();
+
+        builder.Property(x => x.LastModifiedAtUtc)
+            .HasUtcDateTimeOffsetConversion();
+
+        builder.Property(x => x.LastSeenAtUtc)
+            .HasNullableUtcDateTimeOffsetConversion();
+
+        builder.Ignore(x => x.DomainEvents);
+
+        builder.HasIndex(x => x.FriendlyUserId)
+            .HasDatabaseName("IX_UserProfiles_UserName")
+            .IsUnique();
+
+        builder.HasMany(x => x.Emails)
+            .WithOne()
+            .HasForeignKey(x => x.UserProfileId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasMany(x => x.Phones)
+            .WithOne()
+            .HasForeignKey(x => x.UserProfileId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Navigation(x => x.Emails)
+            .UsePropertyAccessMode(PropertyAccessMode.Field);
+
+        builder.Navigation(x => x.Phones)
+            .UsePropertyAccessMode(PropertyAccessMode.Field);
+    }
+}
+

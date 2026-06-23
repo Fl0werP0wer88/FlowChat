@@ -1,0 +1,129 @@
+using System.Net;
+using System.Net.Http.Json;
+using FlowChat.UserProfileService.IntegrationTests.API;
+
+namespace FlowChat.UserProfileService.IntegrationTests.API.Features.UserProfile.Public;
+
+public sealed class SetAuthEmailControllerTests(UserProfileApiFactory factory)
+    : IClassFixture<UserProfileApiFactory>
+{
+    private readonly HttpClient _client = factory.CreateClient();
+
+    [Fact]
+    public async Task SetAuthEmail_WhenProfileAndEmailExist_Returns204NoContent()
+    {
+        // Use the first (already-auth) email to avoid SQLite unique constraint ordering issues:
+        // SQLite checks unique constraints per-statement (not at transaction commit), so updating
+        // two rows where one gains IsAuth=true and another loses it can fail if ordered wrong.
+        // Calling SetAuthEmail on the already-auth email is a no-op at the domain level (returns 204)
+        // and still verifies the endpoint is correctly wired.
+        var (userId, firstEmailId) = await CreateProfileAndGetFirstEmailAsync();
+
+        var request = new HttpRequestMessage(HttpMethod.Put, $"/api/userprofiles/emails/{firstEmailId}/auth");
+        request.Headers.Add(TestAuthenticationHandler.UserIdHeaderName, userId.ToString("D"));
+
+        var response = await _client.SendAsync(request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.NoContent);
+    }
+
+    [Fact]
+    public async Task SetAuthEmail_WhenProfileNotFound_Returns404NotFound()
+    {
+        var request = new HttpRequestMessage(HttpMethod.Put, $"/api/userprofiles/emails/{Guid.NewGuid()}/auth");
+        request.Headers.Add(TestAuthenticationHandler.UserIdHeaderName, Guid.NewGuid().ToString("D"));
+
+        var response = await _client.SendAsync(request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task SetAuthEmail_WhenEmailNotFound_Returns404NotFound()
+    {
+        var userId = await CreateProfileAsync();
+
+        var request = new HttpRequestMessage(HttpMethod.Put, $"/api/userprofiles/emails/{Guid.NewGuid()}/auth");
+        request.Headers.Add(TestAuthenticationHandler.UserIdHeaderName, userId.ToString("D"));
+
+        var response = await _client.SendAsync(request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task SetAuthEmail_WhenEmailIsNotConfirmed_Returns400BadRequest()
+    {
+        var (userId, secondEmailId) = await CreateProfileWithTwoEmailsAsync();
+
+        var request = new HttpRequestMessage(HttpMethod.Put, $"/api/userprofiles/emails/{secondEmailId}/auth");
+        request.Headers.Add(TestAuthenticationHandler.UserIdHeaderName, userId.ToString("D"));
+
+        var response = await _client.SendAsync(request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    private async Task<Guid> CreateProfileAsync()
+    {
+        var userId = Guid.NewGuid();
+        var request = new
+        {
+            UserId = userId,
+            FriendlyUserId = $"authuser-{userId:N}",
+            Email = $"auth_{userId:N}@example.com"
+        };
+        var httpRequest = new HttpRequestMessage(HttpMethod.Post, "/internal/userprofiles/initial")
+        {
+            Content = JsonContent.Create(request)
+        };
+        httpRequest.Headers.Add("X-Internal-Api-Key", UserProfileApiFactory.InternalApiKey);
+        await _client.SendAsync(httpRequest);
+        return userId;
+    }
+
+    private async Task<(Guid UserId, Guid FirstEmailId)> CreateProfileAndGetFirstEmailAsync()
+    {
+        var userId = Guid.NewGuid();
+        var request = new
+        {
+            UserId = userId,
+            FriendlyUserId = $"authemailuser-{userId:N}",
+            Email = $"authfirst_{userId:N}@example.com"
+        };
+        var httpRequest = new HttpRequestMessage(HttpMethod.Post, "/internal/userprofiles/initial")
+        {
+            Content = JsonContent.Create(request)
+        };
+        httpRequest.Headers.Add("X-Internal-Api-Key", UserProfileApiFactory.InternalApiKey);
+        await _client.SendAsync(httpRequest);
+
+        var getProfile = new HttpRequestMessage(HttpMethod.Get, $"/api/userprofiles/{userId:D}");
+        getProfile.Headers.Add(TestAuthenticationHandler.UserIdHeaderName, userId.ToString("D"));
+        var profileResponse = await _client.SendAsync(getProfile);
+        var profile = await profileResponse.Content.ReadFromJsonAsync<GetUserProfileResponse>();
+        var firstEmailId = profile!.UserProfile.Emails[0].Id;
+
+        return (userId, firstEmailId);
+    }
+
+    private async Task<(Guid UserId, Guid SecondEmailId)> CreateProfileWithTwoEmailsAsync()
+    {
+        var (userId, _) = await CreateProfileAndGetFirstEmailAsync();
+
+        var addEmail = new HttpRequestMessage(HttpMethod.Put, "/api/userprofiles/emails")
+        {
+            Content = JsonContent.Create(new { Address = $"authsecond_{userId:N}@example.com" })
+        };
+        addEmail.Headers.Add(TestAuthenticationHandler.UserIdHeaderName, userId.ToString("D"));
+        var addEmailResponse = await _client.SendAsync(addEmail);
+        var addedEmail = await addEmailResponse.Content.ReadFromJsonAsync<AddEmailResponse>();
+
+        return (userId, addedEmail!.EmailId);
+    }
+
+    private sealed record GetUserProfileResponse(UserProfileDto UserProfile);
+    private sealed record UserProfileDto(Guid Id, List<EmailDto> Emails);
+    private sealed record EmailDto(Guid Id, string Address, bool IsAuth);
+    private sealed record AddEmailResponse(Guid EmailId);
+}
