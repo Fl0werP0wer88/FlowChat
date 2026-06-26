@@ -73,7 +73,7 @@ public sealed class HarnessConsumerHost : IAsyncLifetime
 
         var lifetime = _host.Services.GetRequiredService<IHostApplicationLifetime>();
         lifetime.ApplicationStopping.Register(() =>
-            Console.Error.WriteLine($"\n=== CONSUMER HOST STOPPING — caller stack:\n{Environment.StackTrace}\n===\n"));
+            Console.Error.WriteLine($"\n=== CONSUMER HOST STOPPING - caller stack:\n{Environment.StackTrace}\n===\n"));
 
         await _host.StartAsync();
 

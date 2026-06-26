@@ -1,35 +1,42 @@
-using FlowChat.Core.Messaging;
 using FlowChat.HarnessService.AATs.Infrastructure;
 using FluentAssertions;
 
 namespace FlowChat.HarnessService.AATs.Features.Projections;
 
 /// <summary>
-/// Requires running dev stack (Kafka + PostgreSQL) and both HarnessService API and Consumers.
+/// Requires running dev stack (Kafka + PostgreSQL).
 /// Run with: dotnet test --filter Category=AAT
 /// </summary>
+[Collection(HarnessAATCollectionFixture.CollectionName)]
 [Trait("Category", "AAT")]
 public sealed class ProjectionIsolationAATTests : IAsyncLifetime
 {
-    private const string ConnectionString = "Host=localhost;Port=5432;Database=flowchat_harness_db;Username=flowchat_app;Password=flowchat_app_pw;";
-    private const string BootstrapServers = "localhost:9092";
-    private const string Topic = "test.flowchat.harness.projection.events";
-    private const string RetryTopic = "test.flowchat.harness.projection.events.retry";
-    private const string DlqTopic = "test.flowchat.harness.projection.events.dlq";
-    private const string ApiBaseUrl = "http://localhost:5085";
-    private const string ApiKey = "FLOWCHAT_DEVELOPMENT_INTERNAL_API_KEY_CHANGE_ME";
-
-    // One char over the varchar(100) database constraint — deterministic IsolableException trigger
+    // One char over the varchar(100) database constraint - deterministic IsolableException trigger
     private const string OverlongPayload = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
 
+    private readonly HarnessAATCollectionFixture _fixture;
     private HarnessConsumerHost _consumerHost = null!;
     private KafkaTestPublisher _publisher = null!;
 
+    public ProjectionIsolationAATTests(HarnessAATCollectionFixture fixture)
+    {
+        _fixture = fixture;
+    }
+
     public async Task InitializeAsync()
     {
-        _consumerHost = new HarnessConsumerHost(ApiBaseUrl, ApiKey, BootstrapServers, Topic, RetryTopic, DlqTopic);
+        _consumerHost = new HarnessConsumerHost(
+            _fixture.ApiBaseUrl,
+            HarnessAATCollectionFixture.ApiKey,
+            HarnessAATCollectionFixture.BootstrapServers,
+            HarnessAATCollectionFixture.Topic,
+            HarnessAATCollectionFixture.RetryTopic,
+            HarnessAATCollectionFixture.DeadLetterTopic);
         await _consumerHost.InitializeAsync();
-        _publisher = new KafkaTestPublisher(BootstrapServers, Topic);
+
+        _publisher = new KafkaTestPublisher(
+            HarnessAATCollectionFixture.BootstrapServers,
+            HarnessAATCollectionFixture.Topic);
         await _publisher.InitializeAsync();
     }
 
@@ -53,7 +60,7 @@ public sealed class ProjectionIsolationAATTests : IAsyncLifetime
         // Wait for the two good items to be projected (proves the batch was processed
         // and individual retry succeeded for valid items)
         var goodRows = await DbPoller.WaitForRowsAsync(
-            ConnectionString,
+            HarnessAATCollectionFixture.ConnectionString,
             [id1, id3],
             timeout: TimeSpan.FromSeconds(60));
 
@@ -61,7 +68,9 @@ public sealed class ProjectionIsolationAATTests : IAsyncLifetime
         goodRows.Should().Contain(r => r.Id == id1 && r.Payload == "valid-payload-1");
         goodRows.Should().Contain(r => r.Id == id3 && r.Payload == "valid-payload-3");
 
-        var badItemInDb = await DbPoller.RowExistsAsync(ConnectionString, id2);
+        var badItemInDb = await DbPoller.RowExistsAsync(
+            HarnessAATCollectionFixture.ConnectionString,
+            id2);
         badItemInDb.Should().BeFalse("the overlong payload violates varchar(100) and must be routed to DLQ");
     }
 
@@ -73,7 +82,10 @@ public sealed class ProjectionIsolationAATTests : IAsyncLifetime
         await _publisher.PublishAsync(id, "v3-payload", version: 3);
 
         // Wait until version 3 is projected before sending stale version
-        await DbPoller.WaitForRowsAsync(ConnectionString, [id], timeout: TimeSpan.FromSeconds(30));
+        await DbPoller.WaitForRowsAsync(
+            HarnessAATCollectionFixture.ConnectionString,
+            [id],
+            timeout: TimeSpan.FromSeconds(30));
 
         await _publisher.PublishAsync(id, "v1-payload", version: 1);
 
@@ -81,7 +93,7 @@ public sealed class ProjectionIsolationAATTests : IAsyncLifetime
         await Task.Delay(TimeSpan.FromSeconds(5));
 
         var rows = await DbPoller.WaitForRowsAsync(
-            ConnectionString,
+            HarnessAATCollectionFixture.ConnectionString,
             [id],
             timeout: TimeSpan.FromSeconds(30));
 

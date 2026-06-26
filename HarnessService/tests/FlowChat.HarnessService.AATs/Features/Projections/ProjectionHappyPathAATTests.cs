@@ -5,28 +5,36 @@ using FluentAssertions;
 namespace FlowChat.HarnessService.AATs.Features.Projections;
 
 /// <summary>
-/// Requires running dev stack (Kafka + PostgreSQL) and both HarnessService API and Consumers.
+/// Requires running dev stack (Kafka + PostgreSQL).
 /// Run with: dotnet test --filter Category=AAT
 /// </summary>
+[Collection(HarnessAATCollectionFixture.CollectionName)]
 [Trait("Category", "AAT")]
 public sealed class ProjectionHappyPathAATTests : IAsyncLifetime
 {
-    private const string ConnectionString = "Host=localhost;Port=5432;Database=flowchat_harness_db;Username=flowchat_app;Password=flowchat_app_pw;";
-    private const string BootstrapServers = "localhost:9092";
-    private const string Topic = "test.flowchat.harness.projection.events";
-    private const string RetryTopic = "test.flowchat.harness.projection.events.retry";
-    private const string DlqTopic = "test.flowchat.harness.projection.events.dlq";
-    private const string ApiBaseUrl = "http://localhost:5085";
-    private const string ApiKey = "FLOWCHAT_DEVELOPMENT_INTERNAL_API_KEY_CHANGE_ME";
-
+    private readonly HarnessAATCollectionFixture _fixture;
     private HarnessConsumerHost _consumerHost = null!;
     private KafkaTestPublisher _publisher = null!;
 
+    public ProjectionHappyPathAATTests(HarnessAATCollectionFixture fixture)
+    {
+        _fixture = fixture;
+    }
+
     public async Task InitializeAsync()
     {
-        _consumerHost = new HarnessConsumerHost(ApiBaseUrl, ApiKey, BootstrapServers, Topic, RetryTopic, DlqTopic);
+        _consumerHost = new HarnessConsumerHost(
+            _fixture.ApiBaseUrl,
+            HarnessAATCollectionFixture.ApiKey,
+            HarnessAATCollectionFixture.BootstrapServers,
+            HarnessAATCollectionFixture.Topic,
+            HarnessAATCollectionFixture.RetryTopic,
+            HarnessAATCollectionFixture.DeadLetterTopic);
         await _consumerHost.InitializeAsync();
-        _publisher = new KafkaTestPublisher(BootstrapServers, Topic);
+
+        _publisher = new KafkaTestPublisher(
+            HarnessAATCollectionFixture.BootstrapServers,
+            HarnessAATCollectionFixture.Topic);
         await _publisher.InitializeAsync();
     }
 
@@ -45,7 +53,7 @@ public sealed class ProjectionHappyPathAATTests : IAsyncLifetime
         await _publisher.PublishAsync(id, payload, version: 1);
 
         var rows = await DbPoller.WaitForRowsAsync(
-            ConnectionString,
+            HarnessAATCollectionFixture.ConnectionString,
             [id],
             timeout: TimeSpan.FromSeconds(30));
 
@@ -67,7 +75,7 @@ public sealed class ProjectionHappyPathAATTests : IAsyncLifetime
         }
 
         var rows = await DbPoller.WaitForRowsAsync(
-            ConnectionString,
+            HarnessAATCollectionFixture.ConnectionString,
             ids,
             timeout: TimeSpan.FromSeconds(30));
 
@@ -87,7 +95,7 @@ public sealed class ProjectionHappyPathAATTests : IAsyncLifetime
         await Task.Delay(TimeSpan.FromSeconds(5));
 
         var rows = await DbPoller.WaitForRowsAsync(
-            ConnectionString,
+            HarnessAATCollectionFixture.ConnectionString,
             [id],
             timeout: TimeSpan.FromSeconds(30));
 
@@ -107,7 +115,7 @@ public sealed class ProjectionHappyPathAATTests : IAsyncLifetime
         await Task.Delay(TimeSpan.FromSeconds(5));
 
         var rows = await DbPoller.WaitForRowsAsync(
-            ConnectionString,
+            HarnessAATCollectionFixture.ConnectionString,
             [id],
             timeout: TimeSpan.FromSeconds(30));
 
