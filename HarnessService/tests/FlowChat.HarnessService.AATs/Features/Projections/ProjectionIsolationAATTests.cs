@@ -72,6 +72,17 @@ public sealed class ProjectionIsolationAATTests : IAsyncLifetime
             HarnessAATCollectionFixture.ConnectionString,
             id2);
         badItemInDb.Should().BeFalse("the overlong payload violates varchar(100) and must be routed to DLQ");
+
+        var dlqMessage = await KafkaDlqPoller.WaitForMessageAsync(
+            HarnessAATCollectionFixture.BootstrapServers,
+            HarnessAATCollectionFixture.DeadLetterTopic,
+            id2,
+            timeout: TimeSpan.FromSeconds(60));
+
+        dlqMessage.Should().NotBeNull("the bad projection item must be physically moved to the DLQ topic");
+        dlqMessage!.SourceAggregateId.Should().Be(id2);
+        dlqMessage.SourceAggregateVersion.Should().Be(1);
+        dlqMessage.Value.Payload.Should().Be(OverlongPayload);
     }
 
     [Fact]
