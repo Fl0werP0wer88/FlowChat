@@ -1,6 +1,8 @@
 using Confluent.Kafka;
+using FlowChat.Core.Messaging;
 using FlowChat.HarnessService.Consumers.Configuration.Settings;
 using FlowChat.HarnessService.Consumers.Kafka.Projections;
+using FlowChat.HarnessService.Consumers.Projections.Models;
 using FlowChat.HarnessService.Consumers.Services;
 using FlowChat.Shared.Infrastructure.Http;
 using FlowChat.Shared.Infrastructure.Silverback.Behaviors;
@@ -11,6 +13,10 @@ using Silverback.Configuration;
 using Silverback.Messaging.Configuration;
 
 namespace FlowChat.HarnessService.Consumers;
+
+// Registers the DLQ producer so MoveMessageErrorPolicy can find it by topic name,
+// without exposing it to IPublisher routing for ProjectionIntegrationEvent<T>.
+file sealed record DlqSentinel;
 
 public static class ConsumersServiceRegistration
 {
@@ -50,11 +56,11 @@ public static class ConsumersServiceRegistration
                         .Consume(endpoint => endpoint
                             .ConfigureFlowChatRetryEndpoint(projectionOptions)))
                     .AddProducer(producer => producer
-                        .Produce(endpoint => endpoint
+                        .Produce<ProjectionIntegrationEvent<ProjectionTestReadModel>>(endpoint => endpoint
                             .ProduceTo(projectionOptions.RetryTopic)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())))
                     .AddProducer(producer => producer
-                        .Produce(endpoint => endpoint
+                        .Produce<DlqSentinel>(endpoint => endpoint
                             .ProduceTo(projectionOptions.DeadLetterTopic)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())));
             })
