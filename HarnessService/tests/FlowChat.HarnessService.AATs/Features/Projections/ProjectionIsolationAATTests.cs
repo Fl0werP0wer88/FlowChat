@@ -14,20 +14,17 @@ public sealed class ProjectionIsolationAATTests : IAsyncLifetime
     // One char over the varchar(100) database constraint - deterministic IsolableException trigger
     private const string OverlongPayload = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
 
-    private readonly HarnessAATCollectionFixture _fixture;
     private HarnessConsumerHost _consumerHost = null!;
     private KafkaTestPublisher _publisher = null!;
 
     public ProjectionIsolationAATTests(HarnessAATCollectionFixture fixture)
     {
-        _fixture = fixture;
     }
 
     public async Task InitializeAsync()
     {
         _consumerHost = new HarnessConsumerHost(
-            _fixture.ApiBaseUrl,
-            HarnessAATCollectionFixture.ApiKey,
+            HarnessAATCollectionFixture.ConnectionString,
             HarnessAATCollectionFixture.BootstrapServers,
             HarnessAATCollectionFixture.Topic,
             HarnessAATCollectionFixture.RetryTopic,

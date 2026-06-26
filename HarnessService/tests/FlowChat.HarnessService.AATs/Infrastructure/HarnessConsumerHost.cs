@@ -11,23 +11,20 @@ public sealed class HarnessConsumerHost : IAsyncLifetime
 {
     private IHost? _host;
 
-    private readonly string _apiBaseUrl;
-    private readonly string _apiKey;
+    private readonly string _connectionString;
     private readonly string _bootstrapServers;
     private readonly string _topic;
     private readonly string _retryTopic;
     private readonly string _deadLetterTopic;
 
     public HarnessConsumerHost(
-        string apiBaseUrl,
-        string apiKey,
+        string connectionString,
         string bootstrapServers,
         string topic,
         string retryTopic,
         string deadLetterTopic)
     {
-        _apiBaseUrl = apiBaseUrl;
-        _apiKey = apiKey;
+        _connectionString = connectionString;
         _bootstrapServers = bootstrapServers;
         _topic = topic;
         _retryTopic = retryTopic;
@@ -40,8 +37,7 @@ public sealed class HarnessConsumerHost : IAsyncLifetime
 
         builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?>
         {
-            ["HarnessApi:BaseUrl"] = _apiBaseUrl,
-            ["HarnessApi:ApiKey"] = _apiKey,
+            ["ConnectionStrings:HarnessDb"] = _connectionString,
             ["Kafka:ProjectionConsumer:BootstrapServers"] = _bootstrapServers,
             ["Kafka:ProjectionConsumer:Topic"] = _topic,
             ["Kafka:ProjectionConsumer:RetryTopic"] = _retryTopic,

@@ -6,7 +6,7 @@ namespace FlowChat.HarnessService.Application;
 
 public static class ApplicationServiceRegistration
 {
-    public static IServiceCollection AddApiApplicationServices(this IServiceCollection services)
+    public static IServiceCollection AddApplicationServices(this IServiceCollection services)
     {
         var applicationAssembly = typeof(ApplicationServiceRegistration).Assembly;
 

@@ -1,15 +1,17 @@
 using FlowChat.Core.Exceptions;
 using FlowChat.Core.Messaging;
+using FlowChat.HarnessService.Application.Features.Projections;
+using FlowChat.HarnessService.Application.Features.Projections.Commands.BulkUpsert;
 using FlowChat.HarnessService.Consumers.Projections.Models;
-using FlowChat.HarnessService.Consumers.Services;
-using FlowChat.HarnessService.Consumers.Services.Projections.Contracts;
-using Silverback.Messaging.Publishing;
+using FlowChat.Shared.Domain;
+using MediatR;
 using Silverback.Messaging.Subscribers;
+using IPublisher = Silverback.Messaging.Publishing.IPublisher;
 
 namespace FlowChat.HarnessService.Consumers.Kafka.Projections;
 
 public sealed class ProjectionBatchSubscriber(
-    IHarnessApiClient harnessApiClient,
+    IMediator mediator,
     IPublisher publisher,
     ILogger<ProjectionBatchSubscriber> logger)
 {
@@ -19,7 +21,7 @@ public sealed class ProjectionBatchSubscriber(
         IAsyncEnumerable<ProjectionIntegrationEvent<ProjectionTestReadModel>> messages,
         CancellationToken cancellationToken)
     {
-        var items = new List<BulkUpsertProjectionRequestItem>();
+        var items = new List<ProjectionCommandItem>();
         var originalMessages = new List<ProjectionIntegrationEvent<ProjectionTestReadModel>>();
 
         await foreach (var message in messages.WithCancellation(cancellationToken))
@@ -37,20 +39,20 @@ public sealed class ProjectionBatchSubscriber(
             return;
         }
 
-        try
-        {
-            await harnessApiClient.BulkUpsertProjectionAsync(
-                new BulkUpsertProjectionRequest { Items = items },
-                cancellationToken);
+        var result = await mediator.Send(new BulkUpsertProjectionCommand(items), cancellationToken);
 
-            logger.LogInformation("Processed {Count} projection events from Kafka batch.", items.Count);
-        }
-        catch (IsolableException)
+        if (result.IsSuccess)
         {
-            // Silverback's MoveMessageErrorPolicy cannot move BatchSequence messages to retry topic.
-            // Republish each original event manually so the retry subscriber processes them one by one.
-            await RepublishToRetryAsync(originalMessages, cancellationToken);
+            logger.LogInformation("Processed {Count} projection events from Kafka batch.", items.Count);
+            return;
         }
+
+        if (result.Error.FailureKind != FailureKind.Isolable)
+            throw new NonTransientException(result.Error.ErrorMessage ?? "Bulk upsert failed.");
+
+        // Silverback's MoveMessageErrorPolicy cannot move BatchSequence messages to retry topic.
+        // Republish each original event manually so the retry subscriber processes them one by one.
+        await RepublishToRetryAsync(originalMessages, cancellationToken);
     }
 
     private async Task RepublishToRetryAsync(
@@ -58,7 +60,7 @@ public sealed class ProjectionBatchSubscriber(
         CancellationToken cancellationToken)
     {
         logger.LogWarning(
-            "Batch upsert failed with IsolableException; republishing {Count} events to retry topic.",
+            "Batch upsert failed with an isolable error; republishing {Count} events to retry topic.",
             messages.Count);
 
         foreach (var message in messages)
@@ -67,15 +69,15 @@ public sealed class ProjectionBatchSubscriber(
         }
     }
 
-    private static BulkUpsertProjectionRequestItem MapEvent(
+    private static ProjectionCommandItem MapEvent(
         ProjectionIntegrationEvent<ProjectionTestReadModel> message) =>
-        new()
-        {
-            Id = message.SourceAggregateId,
-            Payload = message.Operation == OperationType.Deleted ? null : message.Value.Payload,
-            SourceVersion = message.SourceAggregateVersion,
-            SourceCreatedAtUtc = message.SourceAggregateCreatedAtUtc,
-            SourceLastModifiedAtUtc = message.SourceAggregateModifiedAtUtc,
-            SourceDeletedAtUtc = message.SourceAggregateDeletedAt
-        };
+        new(
+            message.SourceAggregateId,
+            message.Operation == OperationType.Deleted
+                ? null
+                : new ProjectionTestDto { Id = message.SourceAggregateId, Payload = message.Value.Payload },
+            message.SourceAggregateVersion,
+            message.SourceAggregateCreatedAtUtc,
+            message.SourceAggregateModifiedAtUtc,
+            message.SourceAggregateDeletedAt);
 }

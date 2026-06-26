@@ -12,20 +12,17 @@ namespace FlowChat.HarnessService.AATs.Features.Projections;
 [Trait("Category", "AAT")]
 public sealed class ProjectionHappyPathAATTests : IAsyncLifetime
 {
-    private readonly HarnessAATCollectionFixture _fixture;
     private HarnessConsumerHost _consumerHost = null!;
     private KafkaTestPublisher _publisher = null!;
 
     public ProjectionHappyPathAATTests(HarnessAATCollectionFixture fixture)
     {
-        _fixture = fixture;
     }
 
     public async Task InitializeAsync()
     {
         _consumerHost = new HarnessConsumerHost(
-            _fixture.ApiBaseUrl,
-            HarnessAATCollectionFixture.ApiKey,
+            HarnessAATCollectionFixture.ConnectionString,
             HarnessAATCollectionFixture.BootstrapServers,
             HarnessAATCollectionFixture.Topic,
             HarnessAATCollectionFixture.RetryTopic,

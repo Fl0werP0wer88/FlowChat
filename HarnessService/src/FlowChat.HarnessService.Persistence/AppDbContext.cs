@@ -2,6 +2,7 @@ using System.Data.Common;
 using FlowChat.HarnessService.Persistence.Entities.Projections;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Silverback.Messaging.Consuming.KafkaOffsetStore;
 
 namespace FlowChat.HarnessService.Persistence;
 
@@ -21,6 +22,8 @@ public sealed class AppDbContext : DbContext
     }
 
     public DbSet<ProjectionTestEntity> ProjectionTests => Set<ProjectionTestEntity>();
+
+    public DbSet<SilverbackStoredOffset> SilverbackStoredOffsets => Set<SilverbackStoredOffset>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

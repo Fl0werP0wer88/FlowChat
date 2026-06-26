@@ -1,10 +1,10 @@
 using Confluent.Kafka;
 using FlowChat.Core.Messaging;
+using FlowChat.HarnessService.Application;
 using FlowChat.HarnessService.Consumers.Configuration.Settings;
 using FlowChat.HarnessService.Consumers.Kafka.Projections;
 using FlowChat.HarnessService.Consumers.Projections.Models;
-using FlowChat.HarnessService.Consumers.Services;
-using FlowChat.Shared.Infrastructure.Http;
+using FlowChat.HarnessService.Persistence;
 using FlowChat.Shared.Infrastructure.Silverback.Behaviors;
 using FlowChat.Shared.Infrastructure.Silverback.Kafka;
 using Microsoft.Extensions.Configuration;
@@ -32,12 +32,15 @@ public static class ConsumersServiceRegistration
             .Get<ProjectionConsumerSettingsSection>()
             ?? new ProjectionConsumerSettingsSection();
 
-        services.AddFlowChatHttpClient<IHarnessApiClient, HarnessApiClient, HarnessApiSettingsSection>();
+        services.AddApplicationServices();
+        services.AddConsumerPersistenceServices(configuration);
 
         services.AddSilverback()
             .AddSingletonBrokerBehavior<CustomSpanAttributesProducerBehavior>()
             .AddSingletonBrokerBehavior<CustomSpanAttributesConsumerBehavior>()
-            .WithConnectionToMessageBroker(options => options.AddKafka())
+            .WithConnectionToMessageBroker(options => options
+                .AddKafka()
+                .AddEntityFrameworkKafkaOffsetStore())
             .AddKafkaClients(clients =>
             {
                 clients
@@ -45,6 +48,7 @@ public static class ConsumersServiceRegistration
                     .AddConsumer(ProjectionMainConsumerName, consumer => consumer
                         .WithGroupId(projectionOptions.GroupId)
                         .WithAutoOffsetReset(ParseAutoOffsetReset(projectionOptions.AutoOffsetReset))
+                        .StoreOffsetsClientSide(store => store.UseEntityFramework<AppDbContext>())
                         .Consume(endpoint => endpoint
                             .ConfigureFlowChatMainEndpoint(projectionOptions)
                             .EnableBatchProcessing(
@@ -53,6 +57,7 @@ public static class ConsumersServiceRegistration
                     .AddConsumer(ProjectionRetryConsumerName, consumer => consumer
                         .WithGroupId(projectionOptions.RetryGroupId)
                         .WithAutoOffsetReset(ParseAutoOffsetReset(projectionOptions.AutoOffsetReset))
+                        .StoreOffsetsClientSide(store => store.UseEntityFramework<AppDbContext>())
                         .Consume(endpoint => endpoint
                             .ConfigureFlowChatRetryEndpoint(projectionOptions)))
                     .AddProducer(producer => producer

@@ -1,14 +1,16 @@
 using FlowChat.Core.Exceptions;
 using FlowChat.Core.Messaging;
+using FlowChat.HarnessService.Application.Features.Projections;
+using FlowChat.HarnessService.Application.Features.Projections.Commands.BulkUpsert;
 using FlowChat.HarnessService.Consumers.Projections.Models;
-using FlowChat.HarnessService.Consumers.Services;
-using FlowChat.HarnessService.Consumers.Services.Projections.Contracts;
+using FlowChat.Shared.Domain;
+using MediatR;
 using Silverback.Messaging.Subscribers;
 
 namespace FlowChat.HarnessService.Consumers.Kafka.Projections;
 
 public sealed class ProjectionRetrySubscriber(
-    IHarnessApiClient harnessApiClient,
+    IMediator mediator,
     ILogger<ProjectionRetrySubscriber> logger)
 {
     [Subscribe]
@@ -20,19 +22,27 @@ public sealed class ProjectionRetrySubscriber(
         if (message.SourceAggregateVersion <= 0)
             throw new NonTransientException("Payload does not contain valid SourceVersion.");
 
-        var item = new BulkUpsertProjectionRequestItem
-        {
-            Id = message.SourceAggregateId,
-            Payload = message.Operation == OperationType.Deleted ? null : message.Value.Payload,
-            SourceVersion = message.SourceAggregateVersion,
-            SourceCreatedAtUtc = message.SourceAggregateCreatedAtUtc,
-            SourceLastModifiedAtUtc = message.SourceAggregateModifiedAtUtc,
-            SourceDeletedAtUtc = message.SourceAggregateDeletedAt
-        };
+        var item = new ProjectionCommandItem(
+            message.SourceAggregateId,
+            message.Operation == OperationType.Deleted
+                ? null
+                : new ProjectionTestDto { Id = message.SourceAggregateId, Payload = message.Value.Payload },
+            message.SourceAggregateVersion,
+            message.SourceAggregateCreatedAtUtc,
+            message.SourceAggregateModifiedAtUtc,
+            message.SourceAggregateDeletedAt);
 
-        await harnessApiClient.BulkUpsertProjectionAsync(
-            new BulkUpsertProjectionRequest { Items = [item] },
-            cancellationToken);
+        var result = await mediator.Send(new BulkUpsertProjectionCommand([item]), cancellationToken);
+
+        if (!result.IsSuccess)
+        {
+            // Preserve the existing contract: Silverback's MoveMessageErrorPolicy on the retry
+            // endpoint routes isolable failures to the DLQ based on a thrown IsolableException.
+            if (result.Error.FailureKind == FailureKind.Isolable)
+                throw new IsolableException(result.Error.ErrorMessage ?? "Bulk upsert failed.");
+
+            throw new NonTransientException(result.Error.ErrorMessage ?? "Bulk upsert failed.");
+        }
 
         logger.LogInformation(
             "Processed projection event {Id} from Kafka retry topic.",
