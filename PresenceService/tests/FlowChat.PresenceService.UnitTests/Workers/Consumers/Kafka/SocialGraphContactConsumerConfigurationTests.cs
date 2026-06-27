@@ -1,8 +1,9 @@
 using Confluent.Kafka;
+using FlowChat.PresenceService.Application.Contracts.Persistence;
 using FlowChat.PresenceService.Consumers;
 using FlowChat.PresenceService.Consumers.Configuration.Settings;
 using FlowChat.PresenceService.Consumers.Kafka;
-using FlowChat.PresenceService.Consumers.Services;
+using FlowChat.Shared.Application;
 using FlowChat.Shared.Infrastructure.Silverback.Kafka;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
@@ -31,12 +32,14 @@ public sealed class SocialGraphContactConsumerConfigurationTests
         var consumerCollection = serviceProvider.GetRequiredService<IConsumerCollection>();
         var batchSubscriber = scope.ServiceProvider.GetRequiredService<ContactProjectionBatchSubscriber>();
         var retrySubscriber = scope.ServiceProvider.GetRequiredService<ContactProjectionRetrySubscriber>();
-        var internalApiClient = scope.ServiceProvider.GetRequiredService<IPresenceInternalApiClient>();
+        var bulkRepository = scope.ServiceProvider.GetRequiredService<IContactObserverProjectionBulkRepository>();
+        var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
 
         consumerCollection.Should().NotBeNull();
         batchSubscriber.Should().NotBeNull();
         retrySubscriber.Should().NotBeNull();
-        internalApiClient.Should().NotBeNull();
+        bulkRepository.Should().NotBeNull();
+        unitOfWork.Should().NotBeNull();
     }
 
     [Fact]
@@ -84,8 +87,7 @@ public sealed class SocialGraphContactConsumerConfigurationTests
         return new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["PresenceApi:BaseUrl"] = "https://localhost:7198",
-                ["PresenceApi:ApiKey"] = "worker-key",
+                ["ConnectionStrings:PresenceDb"] = "Host=localhost;Database=flowchat_presence;Username=flowchat;Password=flowchat",
                 ["Kafka:SocialGraphContactConsumer:BootstrapServers"] = "localhost:9092",
                 ["Kafka:SocialGraphContactConsumer:GroupId"] = "presence-service",
                 ["Kafka:SocialGraphContactConsumer:RetryGroupId"] = "presence-service-social-graph-contact-retry",

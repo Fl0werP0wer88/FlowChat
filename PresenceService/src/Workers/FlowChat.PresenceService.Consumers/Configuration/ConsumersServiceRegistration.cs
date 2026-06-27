@@ -1,8 +1,8 @@
 using Confluent.Kafka;
+using FlowChat.PresenceService.Application;
 using FlowChat.PresenceService.Consumers.Configuration.Settings;
 using FlowChat.PresenceService.Consumers.Kafka;
-using FlowChat.PresenceService.Consumers.Services;
-using FlowChat.Shared.Infrastructure.Http;
+using FlowChat.PresenceService.Persistence;
 using FlowChat.Shared.Infrastructure.Silverback.Behaviors;
 using FlowChat.Shared.Infrastructure.Silverback.Kafka;
 using Microsoft.Extensions.Configuration;
@@ -26,7 +26,8 @@ public static class ConsumersServiceRegistration
             .Get<SocialGraphContactConsumerSettingsSection>()
             ?? new SocialGraphContactConsumerSettingsSection();
 
-        services.AddFlowChatHttpClient<IPresenceInternalApiClient, PresenceInternalApiClient, PresenceApiSettingsSection>();
+        services.AddWorkerApplicationServices();
+        services.AddPersistenceServices(configuration);
 
         services.AddSilverback()
             .AddSingletonBrokerBehavior<CustomSpanAttributesProducerBehavior>()

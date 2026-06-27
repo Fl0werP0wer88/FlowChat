@@ -1,7 +1,8 @@
+using FlowChat.PresenceService.Application.Features.ContactObserverProjections;
+using FlowChat.PresenceService.Application.Features.ContactObserverProjections.Commands.BulkUpsertOrDeleteUserContactProjection;
 using FlowChat.Core.Messaging;
 using FlowChat.Core.Messaging.SocialGraphService.ReadModels;
 using FlowChat.Core.Exceptions;
-using FlowChat.PresenceService.Consumers.Presence.Contracts;
 
 namespace FlowChat.PresenceService.Consumers.Kafka;
 
@@ -9,7 +10,7 @@ internal static class ContactProjectionSubscriberHelper
 {
     private const string ProjectionSource = "social-graph-contact-events";
 
-    public static BulkUpsertOrDeleteUserContactProjectionRequestItem MapProjectionEvent(
+    public static UserContactProjectionCommandItem MapProjectionEvent(
         ProjectionIntegrationEvent<ContactReadModel> message)
     {
         ArgumentNullException.ThrowIfNull(message);
@@ -22,36 +23,33 @@ internal static class ContactProjectionSubscriberHelper
 
         return message.Operation switch
         {
-            OperationType.Created or OperationType.Updated => new BulkUpsertOrDeleteUserContactProjectionRequestItem
-            {
-                ObservedUserId = observedUserId,
-                ObserverUserId = observerUserId,
-                SourceVersion = message.SourceAggregateVersion,
-                SourceCreatedAtUtc = message.SourceAggregateCreatedAtUtc,
-                SourceLastModifiedAtUtc = message.SourceAggregateModifiedAtUtc,
-                SourceDeletedAtUtc = message.SourceAggregateDeletedAt,
-                Value = new UserContactProjectionRequest { Source = ProjectionSource }
-            },
-            OperationType.Deleted => new BulkUpsertOrDeleteUserContactProjectionRequestItem
-            {
-                ObservedUserId = observedUserId,
-                ObserverUserId = observerUserId,
-                SourceVersion = message.SourceAggregateVersion,
-                SourceCreatedAtUtc = message.SourceAggregateCreatedAtUtc,
-                SourceLastModifiedAtUtc = message.SourceAggregateModifiedAtUtc,
-                SourceDeletedAtUtc = message.SourceAggregateDeletedAt,
-                Value = null
-            },
+            OperationType.Created or OperationType.Updated => new UserContactProjectionCommandItem(
+                observedUserId,
+                observerUserId,
+                new ContactObserverProjectionDto
+                {
+                    ObservedUserId = observedUserId,
+                    ObserverUserId = observerUserId,
+                    Source = ProjectionSource
+                },
+                message.SourceAggregateVersion,
+                message.SourceAggregateCreatedAtUtc,
+                message.SourceAggregateModifiedAtUtc,
+                message.SourceAggregateDeletedAt),
+            OperationType.Deleted => new UserContactProjectionCommandItem(
+                observedUserId,
+                observerUserId,
+                null,
+                message.SourceAggregateVersion,
+                message.SourceAggregateCreatedAtUtc,
+                message.SourceAggregateModifiedAtUtc,
+                message.SourceAggregateDeletedAt),
             _ => throw new NonTransientException($"Unsupported contact projection operation {message.Operation}.")
         };
     }
 
-    public static BulkUpsertOrDeleteUserContactProjectionRequest CreateBulkUpsertOrDeleteRequest(
-        IReadOnlyCollection<BulkUpsertOrDeleteUserContactProjectionRequestItem> items) =>
-        new() { Items = KeepLastItemPerContactObserver(items) };
-
-    private static IReadOnlyCollection<BulkUpsertOrDeleteUserContactProjectionRequestItem> KeepLastItemPerContactObserver(
-        IReadOnlyCollection<BulkUpsertOrDeleteUserContactProjectionRequestItem> items)
+    public static IReadOnlyCollection<UserContactProjectionCommandItem> KeepLastItemPerContactObserver(
+        IReadOnlyCollection<UserContactProjectionCommandItem> items)
     {
         return items
             .Select((item, index) => new { item, index })
