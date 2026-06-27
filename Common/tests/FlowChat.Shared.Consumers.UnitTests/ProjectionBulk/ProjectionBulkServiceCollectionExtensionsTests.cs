@@ -6,7 +6,9 @@ using FluentAssertions;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Silverback.Configuration;
+using IPublisher = Silverback.Messaging.Publishing.IPublisher;
 
 namespace FlowChat.Shared.Consumers.UnitTests.ProjectionBulk;
 
@@ -56,10 +58,8 @@ public sealed class ProjectionBulkServiceCollectionExtensionsTests
                     "projection-main",
                     "projection-retry");
 
-        using var provider = services.BuildServiceProvider();
-
-        provider.GetServices<TestBatchSubscriber>().Should().ContainSingle();
-        provider.GetServices<TestRetrySubscriber>().Should().ContainSingle();
+        services.Should().ContainSingle(descriptor => descriptor.ServiceType == typeof(TestBatchSubscriber));
+        services.Should().ContainSingle(descriptor => descriptor.ServiceType == typeof(TestRetrySubscriber));
     }
 
     [Fact]
@@ -155,9 +155,25 @@ public sealed class ProjectionBulkServiceCollectionExtensionsTests
             operation(cancellationToken);
     }
 
-    private sealed class TestBatchSubscriber;
+    private sealed class TestBatchSubscriber(
+        IMediator mediator,
+        IPublisher publisher,
+        IProjectionCommandItemFactory<TestReadModel, TestProjectionItem> itemFactory,
+        ILogger<TestBatchSubscriber> logger)
+        : ProjectionBatchSubscriberBase<TestReadModel, TestProjectionItem>(
+            mediator,
+            publisher,
+            itemFactory,
+            logger);
 
-    private sealed class TestRetrySubscriber;
+    private sealed class TestRetrySubscriber(
+        IMediator mediator,
+        IProjectionCommandItemFactory<TestReadModel, TestProjectionItem> itemFactory,
+        ILogger<TestRetrySubscriber> logger)
+        : ProjectionRetrySubscriberBase<TestReadModel, TestProjectionItem>(
+            mediator,
+            itemFactory,
+            logger);
 
     private sealed record TestProjectionItem(Guid Id);
 

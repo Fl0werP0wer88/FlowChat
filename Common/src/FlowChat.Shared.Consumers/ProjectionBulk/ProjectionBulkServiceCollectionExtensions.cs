@@ -53,8 +53,8 @@ public static class ProjectionBulkServiceCollectionExtensions
         where TReadModel : class
         where TItem : notnull
         where TItemFactory : class, IProjectionCommandItemFactory<TReadModel, TItem>
-        where TBatchSubscriber : class
-        where TRetrySubscriber : class
+        where TBatchSubscriber : ProjectionBatchSubscriberBase<TReadModel, TItem>
+        where TRetrySubscriber : ProjectionRetrySubscriberBase<TReadModel, TItem>
     {
         ArgumentNullException.ThrowIfNull(builder);
         ArgumentNullException.ThrowIfNull(options);
