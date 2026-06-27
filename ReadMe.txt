@@ -50,7 +50,7 @@ Components:
          IsolableException  -> FailureKind.Isolable
          Other              -> FailureKind.None
 
-  5. ProjectionBulkRepositoryBase (Common/src/FlowChat.Shared.Persistance/BulkUpsert)
+  5. ProjectionBulkRepositoryBase (Common/src/FlowChat.Shared.Persistance/ProjectionBulk)
      - Executes a single atomic BulkInsertOrUpdateAsync (EFCore.BulkExtensions) for the entire batch
      - Uses "update where SourceVersion > existing.SourceVersion" to make upserts idempotent:
        an older/duplicate event never overwrites a newer projection row
