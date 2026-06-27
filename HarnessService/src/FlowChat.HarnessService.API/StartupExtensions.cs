@@ -1,6 +1,7 @@
 using System.Text.Json.Serialization;
 using FlowChat.HarnessService.Application;
 using FlowChat.HarnessService.API.Configuration;
+using FlowChat.HarnessService.Infrastructure;
 using FlowChat.HarnessService.Persistence;
 using FlowChat.Shared.API;
 using Microsoft.EntityFrameworkCore;
@@ -13,6 +14,7 @@ public static class StartupExtensions
     {
         builder.Services.AddApplicationServices();
         builder.Services.AddApiPersistenceServices(builder.Configuration);
+        builder.Services.AddApiInfrastructureServices();
         builder.Services.AddApiSettings(builder.Configuration);
         builder.AddFlowChatOpenTelemetry(typeof(ApplicationServiceRegistration).Assembly);
 

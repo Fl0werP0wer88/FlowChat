@@ -5,6 +5,7 @@
     <ProjectReference Include="..\..\..\..\Common\src\FlowChat.Shared.API\FlowChat.Shared.API.csproj" />
     <ProjectReference Include="..\..\..\..\Common\src\FlowChat.Shared.Infrastructure\FlowChat.Shared.Infrastructure.csproj" />
     <ProjectReference Include="..\..\FlowChat.HarnessService.Application\FlowChat.HarnessService.Application.csproj" />
+    <ProjectReference Include="..\..\FlowChat.HarnessService.Infrastructure\FlowChat.HarnessService.Infrastructure.csproj" />
     <ProjectReference Include="..\..\FlowChat.HarnessService.Persistence\FlowChat.HarnessService.Persistence.csproj" />
   </ItemGroup>
 

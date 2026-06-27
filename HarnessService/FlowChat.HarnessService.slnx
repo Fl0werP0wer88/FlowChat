@@ -2,6 +2,7 @@
   <Folder Name="/src/">
     <Project Path="src/FlowChat.HarnessService.API/FlowChat.HarnessService.API.csproj" />
     <Project Path="src/FlowChat.HarnessService.Application/FlowChat.HarnessService.Application.csproj" />
+    <Project Path="src/FlowChat.HarnessService.Infrastructure/FlowChat.HarnessService.Infrastructure.csproj" />
     <Project Path="src/FlowChat.HarnessService.Persistence/FlowChat.HarnessService.Persistence.csproj" />
   </Folder>
   <Folder Name="/src/Workers/">

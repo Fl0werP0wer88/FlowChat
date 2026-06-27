@@ -4,6 +4,7 @@ using FlowChat.HarnessService.Application;
 using FlowChat.HarnessService.Consumers.Configuration.Settings;
 using FlowChat.HarnessService.Consumers.Kafka.Projections;
 using FlowChat.HarnessService.Consumers.Projections.Models;
+using FlowChat.HarnessService.Infrastructure;
 using FlowChat.HarnessService.Persistence;
 using FlowChat.Shared.Infrastructure.Silverback.Behaviors;
 using FlowChat.Shared.Infrastructure.Silverback.Kafka;
@@ -34,6 +35,7 @@ public static class ConsumersServiceRegistration
 
         services.AddApplicationServices();
         services.AddConsumerPersistenceServices(configuration);
+        services.AddConsumerInfrastructureServices();
 
         services.AddSilverback()
             .AddSingletonBrokerBehavior<CustomSpanAttributesProducerBehavior>()

@@ -142,6 +142,7 @@
   <Folder Name="/HarnessService/src/">
     <Project Path="HarnessService/src/FlowChat.HarnessService.API/FlowChat.HarnessService.API.csproj" />
     <Project Path="HarnessService/src/FlowChat.HarnessService.Application/FlowChat.HarnessService.Application.csproj" />
+    <Project Path="HarnessService/src/FlowChat.HarnessService.Infrastructure/FlowChat.HarnessService.Infrastructure.csproj" />
     <Project Path="HarnessService/src/FlowChat.HarnessService.Persistence/FlowChat.HarnessService.Persistence.csproj" />
   </Folder>
   <Folder Name="/HarnessService/src/Workers/">
