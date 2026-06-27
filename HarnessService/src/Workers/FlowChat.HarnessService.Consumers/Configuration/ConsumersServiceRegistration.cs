@@ -1,25 +1,17 @@
-using Confluent.Kafka;
-using FlowChat.Core.Messaging;
 using FlowChat.HarnessService.Application;
+using FlowChat.HarnessService.Application.Features.Projections.Commands.BulkUpsert;
 using FlowChat.HarnessService.Consumers.Configuration.Settings;
 using FlowChat.HarnessService.Consumers.Kafka.Projections;
 using FlowChat.HarnessService.Consumers.Projections.Models;
 using FlowChat.HarnessService.Infrastructure;
 using FlowChat.HarnessService.Persistence;
-using FlowChat.HarnessService.Application.Features.Projections.Commands.BulkUpsert;
 using FlowChat.Shared.Consumers.ProjectionBulk;
 using FlowChat.Shared.Infrastructure.Silverback.Behaviors;
-using FlowChat.Shared.Infrastructure.Silverback.Kafka;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Silverback.Configuration;
-using Silverback.Messaging.Configuration;
 
 namespace FlowChat.HarnessService.Consumers;
-
-// Registers the DLQ producer so MoveMessageErrorPolicy can find it by topic name,
-// without exposing it to IPublisher routing for ProjectionIntegrationEvent<T>.
-file sealed record DlqSentinel;
 
 public static class ConsumersServiceRegistration
 {
@@ -38,52 +30,21 @@ public static class ConsumersServiceRegistration
         services.AddApplicationServices();
         services.AddConsumerPersistenceServices(configuration);
         services.AddConsumerInfrastructureServices();
-        services.AddScoped<
-            IProjectionCommandItemFactory<ProjectionTestReadModel, ProjectionCommandItem>,
-            ProjectionTestCommandItemFactory>();
 
         services.AddSilverback()
             .AddSingletonBrokerBehavior<CustomSpanAttributesProducerBehavior>()
             .AddSingletonBrokerBehavior<CustomSpanAttributesConsumerBehavior>()
-            .WithConnectionToMessageBroker(options => options
-                .AddKafka()
-                .AddEntityFrameworkKafkaOffsetStore())
-            .AddKafkaClients(clients =>
-            {
-                clients
-                    .WithBootstrapServers(projectionOptions.BootstrapServers)
-                    .AddConsumer(ProjectionMainConsumerName, consumer => consumer
-                        .WithGroupId(projectionOptions.GroupId)
-                        .WithAutoOffsetReset(ParseAutoOffsetReset(projectionOptions.AutoOffsetReset))
-                        .StoreOffsetsClientSide(store => store.UseEntityFramework<AppDbContext>())
-                        .Consume(endpoint => endpoint
-                            .ConfigureFlowChatMainEndpoint(projectionOptions)
-                            .EnableBatchProcessing(
-                                projectionOptions.BatchSize,
-                                TimeSpan.FromMilliseconds(projectionOptions.BatchMaxWaitTimeMilliseconds))))
-                    .AddConsumer(ProjectionRetryConsumerName, consumer => consumer
-                        .WithGroupId(projectionOptions.RetryGroupId)
-                        .WithAutoOffsetReset(ParseAutoOffsetReset(projectionOptions.AutoOffsetReset))
-                        .StoreOffsetsClientSide(store => store.UseEntityFramework<AppDbContext>())
-                        .Consume(endpoint => endpoint
-                            .ConfigureFlowChatRetryEndpoint(projectionOptions)))
-                    .AddProducer(producer => producer
-                        .Produce<ProjectionIntegrationEvent<ProjectionTestReadModel>>(endpoint => endpoint
-                            .ProduceTo(projectionOptions.RetryTopic)
-                            .SerializeAsJson(serializer => serializer.SetTypeHeader())))
-                    .AddProducer(producer => producer
-                        .Produce<DlqSentinel>(endpoint => endpoint
-                            .ProduceTo(projectionOptions.DeadLetterTopic)
-                            .SerializeAsJson(serializer => serializer.SetTypeHeader())));
-            })
-            .AddScopedSubscriber<ProjectionBatchSubscriber>()
-            .AddScopedSubscriber<ProjectionRetrySubscriber>();
+            .AddProjectionBulkConsumer<
+                AppDbContext,
+                ProjectionTestReadModel,
+                ProjectionCommandItem,
+                ProjectionTestCommandItemFactory,
+                ProjectionBatchSubscriber,
+                ProjectionRetrySubscriber>(
+                    projectionOptions,
+                    ProjectionMainConsumerName,
+                    ProjectionRetryConsumerName);
 
         return services;
     }
-
-    private static AutoOffsetReset ParseAutoOffsetReset(string value) =>
-        Enum.TryParse<AutoOffsetReset>(value, true, out var parsed)
-            ? parsed
-            : AutoOffsetReset.Earliest;
 }

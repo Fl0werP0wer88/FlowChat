@@ -1,9 +1,9 @@
 using FlowChat.Core.Contracts;
-using FlowChat.Shared.Infrastructure.Silverback.Kafka;
+using FlowChat.Shared.Consumers.ProjectionBulk;
 
 namespace FlowChat.HarnessService.Consumers.Configuration.Settings;
 
-public sealed class ProjectionConsumerSettingsSection : SettingsSectionBase, IRetryableKafkaConsumerSettingsSection
+public sealed class ProjectionConsumerSettingsSection : SettingsSectionBase, IProjectionBulkConsumerSettingsSection
 {
     public override string SectionName => "Kafka:ProjectionConsumer";
 
