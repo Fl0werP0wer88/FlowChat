@@ -1,5 +1,5 @@
 using AutoMapper;
-using FlowChat.ChatService.Consumers.ChatService.Contracts;
+using FlowChat.ChatService.Application.Features.UserProfile;
 using FlowChat.Core.Exceptions;
 using FlowChat.Core.Messaging.UserProfileService.ReadModels;
 
@@ -11,7 +11,7 @@ public sealed class UserProfileProjectionRequestProfile : Profile
 
     public UserProfileProjectionRequestProfile()
     {
-        CreateMap<UserProfileReadModel, UserProfileProjectionRequest>()
+        CreateMap<UserProfileReadModel, UserProfileProjectionDto>()
             .ForMember(destination => destination.UserProfileId, options => options.MapFrom(source => ResolveUserId(source.UserProfileId)))
             .ForMember(destination => destination.FriendlyUserId, options => options.MapFrom(source => NormalizeRequired(source.FriendlyUserId, nameof(source.FriendlyUserId))))
             .ForMember(destination => destination.FirstName, options => options.MapFrom(source => NormalizeOptional(source.FirstName)))

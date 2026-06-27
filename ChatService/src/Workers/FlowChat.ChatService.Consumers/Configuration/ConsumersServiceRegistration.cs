@@ -1,8 +1,8 @@
 using Confluent.Kafka;
+using FlowChat.ChatService.Application;
 using FlowChat.ChatService.Consumers.Configuration.Settings;
 using FlowChat.ChatService.Consumers.Kafka;
-using FlowChat.ChatService.Consumers.Services;
-using FlowChat.Shared.Infrastructure.Http;
+using FlowChat.ChatService.Persistence;
 using FlowChat.Shared.Infrastructure.Silverback.Behaviors;
 using FlowChat.Shared.Infrastructure.Silverback.Kafka;
 using Microsoft.Extensions.Configuration;
@@ -27,8 +27,9 @@ public static class ConsumersServiceRegistration
             .Get<UserProfileConsumerSettingsSection>()
             ?? new UserProfileConsumerSettingsSection();
 
+        services.AddApplicationServices();
+        services.AddWorkerPersistenceServices(configuration);
         services.AddAutoMapper((Action<AutoMapper.IMapperConfigurationExpression>?)null, consumersAssembly);
-        services.AddFlowChatHttpClient<IChatInternalApiClient, ChatInternalApiClient, ChatApiSettingsSection>();
 
         services.AddSilverback()
             .AddSingletonBrokerBehavior<CustomSpanAttributesProducerBehavior>()

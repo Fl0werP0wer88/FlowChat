@@ -39,6 +39,7 @@ public static class PersistenceServiceRegistration
     public static IServiceCollection AddWorkerPersistenceServices(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddScoped<EntityBaseSaveChangesInterceptor>();
+        services.AddScoped<IUnitOfWork, SilverbackEfUnitOfWork<AppDbContext>>();
         services.AddDbContext<AppDbContext>((serviceProvider, options) =>
             options.UseNpgsql(configuration.GetConnectionString("ChatDb"))
                 .AddInterceptors(serviceProvider.GetRequiredService<EntityBaseSaveChangesInterceptor>()));
@@ -46,6 +47,7 @@ public static class PersistenceServiceRegistration
             (serviceProvider, options) => options.UseNpgsql(configuration.GetConnectionString("ChatDb"))
                 .AddInterceptors(serviceProvider.GetRequiredService<EntityBaseSaveChangesInterceptor>()),
             ServiceLifetime.Scoped);
+        services.AddScoped<IUserProfileProjectionBulkRepository, UserProfileProjectionBulkRepository>();
 
         return services;
     }

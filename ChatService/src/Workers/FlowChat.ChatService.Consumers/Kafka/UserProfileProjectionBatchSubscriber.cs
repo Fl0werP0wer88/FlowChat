@@ -1,14 +1,18 @@
 using AutoMapper;
-using FlowChat.ChatService.Consumers.ChatService.Contracts;
-using FlowChat.ChatService.Consumers.Services;
+using FlowChat.ChatService.Application.Features.UserProfile.Commands.BulkUpsertOrDeleteUserProfileProjection;
+using FlowChat.Core.Exceptions;
 using FlowChat.Core.Messaging;
 using FlowChat.Core.Messaging.UserProfileService.ReadModels;
+using FlowChat.Shared.Domain;
+using MediatR;
 using Silverback.Messaging.Subscribers;
+using IPublisher = Silverback.Messaging.Publishing.IPublisher;
 
 namespace FlowChat.ChatService.Consumers.Kafka;
 
 public sealed class UserProfileProjectionBatchSubscriber(
-    IChatInternalApiClient apiClient,
+    IMediator mediator,
+    IPublisher publisher,
     IMapper mapper,
     ILogger<UserProfileProjectionBatchSubscriber> logger)
 {
@@ -18,10 +22,12 @@ public sealed class UserProfileProjectionBatchSubscriber(
         IAsyncEnumerable<ProjectionIntegrationEvent<UserProfileReadModel>> messages,
         CancellationToken cancellationToken)
     {
-        var items = new List<BulkUpsertOrDeleteUserProfileProjectionRequestItem>();
+        var items = new List<UserProfileProjectionCommandItem>();
+        var originalMessages = new List<ProjectionIntegrationEvent<UserProfileReadModel>>();
 
         await foreach (var message in messages.WithCancellation(cancellationToken))
         {
+            originalMessages.Add(message);
             items.Add(UserProfileSubscriberHelper.MapProjectionEvent(message, mapper));
         }
 
@@ -31,12 +37,29 @@ public sealed class UserProfileProjectionBatchSubscriber(
             return;
         }
 
-        await apiClient.BulkUpsertOrDeleteUserProfileProjectionAsync(
-            UserProfileSubscriberHelper.CreateBulkUpsertOrDeleteRequest(items),
+        var deduplicatedItems = UserProfileSubscriberHelper.KeepLastItemPerUserProfile(items);
+        var result = await mediator.Send(
+            new BulkUpsertOrDeleteUserProfileProjectionCommand(deduplicatedItems),
             cancellationToken);
 
-        logger.LogInformation(
-            "Processed {Count} user profile projection events from Kafka batch.",
-            items.Count);
+        if (result.IsSuccess)
+        {
+            logger.LogInformation(
+                "Processed {Count} user profile projection events from Kafka batch.",
+                deduplicatedItems.Count);
+            return;
+        }
+
+        if (result.Error.FailureKind != FailureKind.Isolable)
+            throw new NonTransientException(result.Error.ErrorMessage ?? "Bulk upsert failed.");
+
+        logger.LogWarning(
+            "User profile projection batch failed with an isolable error; republishing {Count} events to retry topic.",
+            originalMessages.Count);
+
+        foreach (var message in originalMessages)
+        {
+            await publisher.PublishAsync(message, cancellationToken);
+        }
     }
 }
