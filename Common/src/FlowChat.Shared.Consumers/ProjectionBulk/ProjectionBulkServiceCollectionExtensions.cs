@@ -8,6 +8,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Silverback.Configuration;
 using Silverback.Messaging.Configuration;
+using Silverback.Messaging.Subscribers;
+using Silverback.Messaging.Subscribers.Subscriptions;
 
 namespace FlowChat.Shared.Consumers.ProjectionBulk;
 
@@ -44,7 +46,7 @@ public static class ProjectionBulkServiceCollectionExtensions
         return builder;
     }
 
-    public static SilverbackBuilder AddProjectionBulkConsumer<TDbContext, TReadModel, TItem, TItemFactory, TBatchSubscriber, TRetrySubscriber>(
+    public static SilverbackBuilder AddProjectionBulkConsumer<TDbContext, TReadModel, TItem, TItemFactory>(
         this SilverbackBuilder builder,
         IProjectionBulkConsumerSettingsSection options,
         string mainConsumerName,
@@ -53,8 +55,6 @@ public static class ProjectionBulkServiceCollectionExtensions
         where TReadModel : class
         where TItem : notnull
         where TItemFactory : class, IProjectionCommandItemFactory<TReadModel, TItem>
-        where TBatchSubscriber : ProjectionBatchSubscriberBase<TReadModel, TItem>
-        where TRetrySubscriber : ProjectionRetrySubscriberBase<TReadModel, TItem>
     {
         ArgumentNullException.ThrowIfNull(builder);
         ArgumentNullException.ThrowIfNull(options);
@@ -95,8 +95,16 @@ public static class ProjectionBulkServiceCollectionExtensions
                             .ProduceTo(options.DeadLetterTopic)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())));
             })
-            .AddScopedSubscriber<TBatchSubscriber>()
-            .AddScopedSubscriber<TRetrySubscriber>();
+            .AddScopedSubscriber<ProjectionBatchSubscriber<TReadModel, TItem>>(
+                new TypeSubscriptionOptions
+                {
+                    Filters = [new ConsumerNameFilterAttribute(mainConsumerName)]
+                })
+            .AddScopedSubscriber<ProjectionRetrySubscriber<TReadModel, TItem>>(
+                new TypeSubscriptionOptions
+                {
+                    Filters = [new ConsumerNameFilterAttribute(retryConsumerName)]
+                });
     }
 
     private static AutoOffsetReset ParseAutoOffsetReset(string value) =>

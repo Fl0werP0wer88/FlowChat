@@ -6,9 +6,7 @@ using FluentAssertions;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using Silverback.Configuration;
-using IPublisher = Silverback.Messaging.Publishing.IPublisher;
 
 namespace FlowChat.Shared.Consumers.UnitTests.ProjectionBulk;
 
@@ -25,9 +23,7 @@ public sealed class ProjectionBulkServiceCollectionExtensionsTests
                 TestDbContext,
                 TestReadModel,
                 TestProjectionItem,
-                TestProjectionCommandItemFactory,
-                TestBatchSubscriber,
-                TestRetrySubscriber>(
+                TestProjectionCommandItemFactory>(
                     new TestProjectionBulkConsumerSettingsSection(),
                     "projection-main",
                     "projection-retry");
@@ -51,15 +47,15 @@ public sealed class ProjectionBulkServiceCollectionExtensionsTests
                 TestDbContext,
                 TestReadModel,
                 TestProjectionItem,
-                TestProjectionCommandItemFactory,
-                TestBatchSubscriber,
-                TestRetrySubscriber>(
+                TestProjectionCommandItemFactory>(
                     new TestProjectionBulkConsumerSettingsSection(),
                     "projection-main",
                     "projection-retry");
 
-        services.Should().ContainSingle(descriptor => descriptor.ServiceType == typeof(TestBatchSubscriber));
-        services.Should().ContainSingle(descriptor => descriptor.ServiceType == typeof(TestRetrySubscriber));
+        services.Should().ContainSingle(descriptor =>
+            descriptor.ServiceType == typeof(ProjectionBatchSubscriber<TestReadModel, TestProjectionItem>));
+        services.Should().ContainSingle(descriptor =>
+            descriptor.ServiceType == typeof(ProjectionRetrySubscriber<TestReadModel, TestProjectionItem>));
     }
 
     [Fact]
@@ -154,26 +150,6 @@ public sealed class ProjectionBulkServiceCollectionExtensionsTests
             where T : notnull =>
             operation(cancellationToken);
     }
-
-    private sealed class TestBatchSubscriber(
-        IMediator mediator,
-        IPublisher publisher,
-        IProjectionCommandItemFactory<TestReadModel, TestProjectionItem> itemFactory,
-        ILogger<TestBatchSubscriber> logger)
-        : ProjectionBatchSubscriberBase<TestReadModel, TestProjectionItem>(
-            mediator,
-            publisher,
-            itemFactory,
-            logger);
-
-    private sealed class TestRetrySubscriber(
-        IMediator mediator,
-        IProjectionCommandItemFactory<TestReadModel, TestProjectionItem> itemFactory,
-        ILogger<TestRetrySubscriber> logger)
-        : ProjectionRetrySubscriberBase<TestReadModel, TestProjectionItem>(
-            mediator,
-            itemFactory,
-            logger);
 
     private sealed record TestProjectionItem(Guid Id);
 

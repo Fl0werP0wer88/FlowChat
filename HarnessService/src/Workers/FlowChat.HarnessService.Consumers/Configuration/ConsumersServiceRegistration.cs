@@ -47,9 +47,7 @@ public static class ConsumersServiceRegistration
                 AppDbContext,
                 ProjectionTestReadModel,
                 ProjectionCommandItem,
-                ProjectionTestCommandItemFactory,
-                ProjectionBatchSubscriber,
-                ProjectionRetrySubscriber>(
+                ProjectionTestCommandItemFactory>(
                     projectionOptions,
                     ProjectionMainConsumerName,
                     ProjectionRetryConsumerName);
