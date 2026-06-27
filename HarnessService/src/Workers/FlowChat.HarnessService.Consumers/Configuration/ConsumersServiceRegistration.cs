@@ -1,9 +1,10 @@
 using FlowChat.HarnessService.Application;
-using FlowChat.HarnessService.Application.Contracts.Persistence;
+using FlowChat.HarnessService.Application.Features.Projections;
 using FlowChat.HarnessService.Application.Features.Projections.Commands.BulkUpsert;
 using FlowChat.HarnessService.Consumers.Configuration.Settings;
 using FlowChat.HarnessService.Consumers.Kafka.Projections;
 using FlowChat.HarnessService.Consumers.Projections.Models;
+using FlowChat.HarnessService.Persistence.Entities.Projections;
 using FlowChat.HarnessService.Infrastructure;
 using FlowChat.HarnessService.Persistence;
 using FlowChat.HarnessService.Persistence.BulkUpsert.Projections;
@@ -42,12 +43,12 @@ public static class ConsumersServiceRegistration
                 ProjectionRetryConsumerName,
                 bulkBuilder => bulkBuilder
                     .AddRepository<
+                        AppDbContext,
                         ProjectionCommandItem,
-                        IProjectionTestBulkRepository,
-                        ProjectionTestBulkRepository>()
-                    .AddCommandHandler<
-                        ProjectionCommandItem,
-                        IProjectionTestBulkRepository>()
+                        ProjectionTestDto,
+                        ProjectionTestEntity,
+                        ProjectionTestBulkEntityFactory>()
+                    .AddCommandHandler<ProjectionCommandItem>()
                     .AddConsumer<
                         AppDbContext,
                         ProjectionTestReadModel,

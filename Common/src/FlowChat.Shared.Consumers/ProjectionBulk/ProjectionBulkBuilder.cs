@@ -3,6 +3,8 @@ using FlowChat.Core.Messaging;
 using FlowChat.Core.Results;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Infrastructure.Silverback.Kafka;
+using FlowChat.Shared.Persistance;
+using FlowChat.Shared.Persistance.ProjectionBulk;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -19,19 +21,26 @@ public sealed class ProjectionBulkBuilder(
     string mainConsumerName,
     string retryConsumerName)
 {
-    public ProjectionBulkBuilder AddRepository<TItem, TRepository, TImplementation>()
-        where TItem : notnull
-        where TRepository : class, IProjectionBulkRepository<TItem>
-        where TImplementation : class, TRepository
+    public ProjectionBulkBuilder AddRepository<TDbContext, TItem, TValue, TEntity, TEntityFactory>()
+        where TDbContext : DbContext
+        where TItem : notnull, IProjectionCommandItem<TValue>
+        where TValue : class
+        where TEntity : ReadModelEntityBase
+        where TEntityFactory : class, IProjectionBulkEntityFactory<TItem, TValue, TEntity>
     {
-        silverbackBuilder.Services.AddScoped<TRepository, TImplementation>();
+        silverbackBuilder.Services.AddScoped<TEntityFactory>();
+        silverbackBuilder.Services.AddScoped<
+            IProjectionBulkEntityFactory<TItem, TValue, TEntity>,
+            TEntityFactory>();
+        silverbackBuilder.Services.AddScoped<
+            IProjectionBulkRepository<TItem>,
+            ProjectionBulkRepository<TDbContext, TItem, TValue, TEntity, TEntityFactory>>();
 
         return this;
     }
 
-    public ProjectionBulkBuilder AddCommandHandler<TItem, TRepository>()
+    public ProjectionBulkBuilder AddCommandHandler<TItem>()
         where TItem : notnull
-        where TRepository : class, IProjectionBulkRepository<TItem>
     {
         silverbackBuilder.Services.AddScoped<IProjectionOffsetStore, SilverbackProjectionOffsetStore>();
         silverbackBuilder.Services.AddScoped<
@@ -39,7 +48,7 @@ public sealed class ProjectionBulkBuilder(
             ProjectionBulkCommandHandlerBaseV2<
                 ProjectionBulkCommand<TItem>,
                 TItem,
-                TRepository>>();
+                IProjectionBulkRepository<TItem>>>();
 
         return this;
     }

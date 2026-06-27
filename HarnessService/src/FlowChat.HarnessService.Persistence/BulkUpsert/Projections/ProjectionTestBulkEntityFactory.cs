@@ -1,4 +1,3 @@
-using FlowChat.HarnessService.Application.Contracts.Persistence;
 using FlowChat.HarnessService.Application.Features.Projections;
 using FlowChat.HarnessService.Application.Features.Projections.Commands.BulkUpsert;
 using FlowChat.HarnessService.Persistence.Entities.Projections;
@@ -6,19 +5,12 @@ using FlowChat.Shared.Persistance.ProjectionBulk;
 
 namespace FlowChat.HarnessService.Persistence.BulkUpsert.Projections;
 
-public sealed class ProjectionTestBulkRepository(AppDbContext dbContext)
-    : ProjectionBulkRepositoryBase<AppDbContext, ProjectionCommandItem, ProjectionTestDto, ProjectionTestEntity>(dbContext),
-        IProjectionTestBulkRepository
+public sealed class ProjectionTestBulkEntityFactory
+    : IProjectionBulkEntityFactory<ProjectionCommandItem, ProjectionTestDto, ProjectionTestEntity>
 {
-    public Task BulkUpsertOrSoftDeleteAsync(
-        IReadOnlyCollection<ProjectionCommandItem> items,
-        CancellationToken cancellationToken) =>
-        BulkUpsertProjectionAsync(
-            items,
-            [nameof(ProjectionTestEntity.Id)],
-            cancellationToken);
+    public IReadOnlyList<string> UpdateByProperties { get; } = [nameof(ProjectionTestEntity.Id)];
 
-    protected override ProjectionTestEntity CreateUpsertEntity(
+    public ProjectionTestEntity CreateUpsertEntity(
         ProjectionTestDto value,
         int sourceVersion,
         DateTimeOffset sourceCreatedAtUtc,
@@ -34,7 +26,7 @@ public sealed class ProjectionTestBulkRepository(AppDbContext dbContext)
             SourceDeletedAtUtc = sourceDeletedAtUtc
         };
 
-    protected override ProjectionTestEntity CreateTombstoneEntity(
+    public ProjectionTestEntity CreateTombstoneEntity(
         ProjectionCommandItem item,
         DateTimeOffset now) =>
         new()
