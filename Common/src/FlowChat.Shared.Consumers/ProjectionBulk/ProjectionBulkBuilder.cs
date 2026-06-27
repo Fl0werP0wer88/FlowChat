@@ -1,6 +1,15 @@
+using Confluent.Kafka;
+using FlowChat.Core.Messaging;
+using FlowChat.Core.Results;
 using FlowChat.Shared.Application;
+using FlowChat.Shared.Infrastructure.Silverback.Kafka;
+using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Silverback.Configuration;
+using Silverback.Messaging.Configuration;
+using Silverback.Messaging.Subscribers;
+using Silverback.Messaging.Subscribers.Subscriptions;
 
 namespace FlowChat.Shared.Consumers.ProjectionBulk;
 
@@ -15,7 +24,7 @@ public sealed class ProjectionBulkBuilder(
         where TRepository : class, IProjectionBulkRepository<TItem>
         where TImplementation : class, TRepository
     {
-        silverbackBuilder.AddProjectionBulkRepository<TItem, TRepository, TImplementation>();
+        silverbackBuilder.Services.AddScoped<TRepository, TImplementation>();
 
         return this;
     }
@@ -24,7 +33,13 @@ public sealed class ProjectionBulkBuilder(
         where TItem : notnull
         where TRepository : class, IProjectionBulkRepository<TItem>
     {
-        silverbackBuilder.AddProjectionBulkCommandHandler<TItem, TRepository>();
+        silverbackBuilder.Services.AddScoped<IProjectionOffsetStore, SilverbackProjectionOffsetStore>();
+        silverbackBuilder.Services.AddScoped<
+            IRequestHandler<ProjectionBulkCommand<TItem>, FlowChatResult<Unit>>,
+            ProjectionBulkCommandHandlerBaseV2<
+                ProjectionBulkCommand<TItem>,
+                TItem,
+                TRepository>>();
 
         return this;
     }
@@ -35,11 +50,56 @@ public sealed class ProjectionBulkBuilder(
         where TItem : notnull
         where TItemFactory : class, IProjectionCommandItemFactory<TReadModel, TItem>
     {
-        silverbackBuilder.AddProjectionBulkConsumer<TDbContext, TReadModel, TItem, TItemFactory>(
-            options,
-            mainConsumerName,
-            retryConsumerName);
+        silverbackBuilder.Services.AddScoped<IProjectionCommandItemFactory<TReadModel, TItem>, TItemFactory>();
+
+        silverbackBuilder
+            .WithConnectionToMessageBroker(broker => broker
+                .AddKafka()
+                .AddEntityFrameworkKafkaOffsetStore())
+            .AddKafkaClients(clients =>
+            {
+                clients
+                    .WithBootstrapServers(options.BootstrapServers)
+                    .AddConsumer(mainConsumerName, consumer => consumer
+                        .WithGroupId(options.GroupId)
+                        .WithAutoOffsetReset(ParseAutoOffsetReset(options.AutoOffsetReset))
+                        .StoreOffsetsClientSide(store => store.UseEntityFramework<TDbContext>())
+                        .Consume(endpoint => endpoint
+                            .ConfigureFlowChatMainEndpoint(options)
+                            .EnableBatchProcessing(
+                                options.BatchSize,
+                                TimeSpan.FromMilliseconds(options.BatchMaxWaitTimeMilliseconds))))
+                    .AddConsumer(retryConsumerName, consumer => consumer
+                        .WithGroupId(options.RetryGroupId)
+                        .WithAutoOffsetReset(ParseAutoOffsetReset(options.AutoOffsetReset))
+                        .StoreOffsetsClientSide(store => store.UseEntityFramework<TDbContext>())
+                        .Consume(endpoint => endpoint
+                            .ConfigureFlowChatRetryEndpoint(options)))
+                    .AddProducer(producer => producer
+                        .Produce<ProjectionIntegrationEvent<TReadModel>>(endpoint => endpoint
+                            .ProduceTo(options.RetryTopic)
+                            .SerializeAsJson(serializer => serializer.SetTypeHeader())))
+                    .AddProducer(producer => producer
+                        .Produce<ProjectionBulkDeadLetterSentinel>(endpoint => endpoint
+                            .ProduceTo(options.DeadLetterTopic)
+                            .SerializeAsJson(serializer => serializer.SetTypeHeader())));
+            })
+            .AddScopedSubscriber<ProjectionBatchSubscriber<TReadModel, TItem>>(
+                new TypeSubscriptionOptions
+                {
+                    Filters = [new ConsumerNameFilterAttribute(mainConsumerName)]
+                })
+            .AddScopedSubscriber<ProjectionRetrySubscriber<TReadModel, TItem>>(
+                new TypeSubscriptionOptions
+                {
+                    Filters = [new ConsumerNameFilterAttribute(retryConsumerName)]
+                });
 
         return this;
     }
+
+    private static AutoOffsetReset ParseAutoOffsetReset(string value) =>
+        Enum.TryParse<AutoOffsetReset>(value, true, out var parsed)
+            ? parsed
+            : AutoOffsetReset.Earliest;
 }

@@ -13,20 +13,21 @@ namespace FlowChat.Shared.Consumers.UnitTests.ProjectionBulk;
 public sealed class ProjectionBulkServiceCollectionExtensionsTests
 {
     [Fact]
-    public void AddProjectionBulkConsumer_RegistersProjectionCommandItemFactory()
+    public void AddProjectionBulk_RegistersProjectionCommandItemFactory()
     {
         var services = new ServiceCollection();
 
         services
             .AddSilverback()
-            .AddProjectionBulkConsumer<
-                TestDbContext,
-                TestReadModel,
-                TestProjectionItem,
-                TestProjectionCommandItemFactory>(
-                    new TestProjectionBulkConsumerSettingsSection(),
-                    "projection-main",
-                    "projection-retry");
+            .AddProjectionBulk(
+                new TestProjectionBulkConsumerSettingsSection(),
+                "projection-main",
+                "projection-retry",
+                bulkBuilder => bulkBuilder.AddConsumer<
+                    TestDbContext,
+                    TestReadModel,
+                    TestProjectionItem,
+                    TestProjectionCommandItemFactory>());
 
         using var provider = services.BuildServiceProvider();
 
@@ -37,20 +38,21 @@ public sealed class ProjectionBulkServiceCollectionExtensionsTests
     }
 
     [Fact]
-    public void AddProjectionBulkConsumer_RegistersSubscriberWrappers()
+    public void AddProjectionBulk_RegistersSubscriberWrappers()
     {
         var services = new ServiceCollection();
 
         services
             .AddSilverback()
-            .AddProjectionBulkConsumer<
-                TestDbContext,
-                TestReadModel,
-                TestProjectionItem,
-                TestProjectionCommandItemFactory>(
-                    new TestProjectionBulkConsumerSettingsSection(),
-                    "projection-main",
-                    "projection-retry");
+            .AddProjectionBulk(
+                new TestProjectionBulkConsumerSettingsSection(),
+                "projection-main",
+                "projection-retry",
+                bulkBuilder => bulkBuilder.AddConsumer<
+                    TestDbContext,
+                    TestReadModel,
+                    TestProjectionItem,
+                    TestProjectionCommandItemFactory>());
 
         services.Should().ContainSingle(descriptor =>
             descriptor.ServiceType == typeof(ProjectionBatchSubscriber<TestReadModel, TestProjectionItem>));
@@ -95,7 +97,7 @@ public sealed class ProjectionBulkServiceCollectionExtensionsTests
     }
 
     [Fact]
-    public void AddProjectionBulkCommandHandler_RegistersProjectionBulkCommandHandler()
+    public void AddProjectionBulk_RegistersProjectionBulkCommandHandler()
     {
         var services = new ServiceCollection();
         services.AddScoped<IUnitOfWork, TestUnitOfWork>();
@@ -103,9 +105,13 @@ public sealed class ProjectionBulkServiceCollectionExtensionsTests
 
         services
             .AddSilverback()
-            .AddProjectionBulkCommandHandler<
-                TestProjectionItem,
-                ITestProjectionBulkRepository>();
+            .AddProjectionBulk(
+                new TestProjectionBulkConsumerSettingsSection(),
+                "projection-main",
+                "projection-retry",
+                bulkBuilder => bulkBuilder.AddCommandHandler<
+                    TestProjectionItem,
+                    ITestProjectionBulkRepository>());
 
         services.Should().ContainSingle(descriptor =>
             descriptor.ServiceType == typeof(IProjectionOffsetStore)
@@ -120,16 +126,20 @@ public sealed class ProjectionBulkServiceCollectionExtensionsTests
     }
 
     [Fact]
-    public void AddProjectionBulkRepository_RegistersProjectionBulkRepository()
+    public void AddProjectionBulk_RegistersProjectionBulkRepository()
     {
         var services = new ServiceCollection();
 
         services
             .AddSilverback()
-            .AddProjectionBulkRepository<
-                TestProjectionItem,
-                ITestProjectionBulkRepository,
-                TestProjectionBulkRepository>();
+            .AddProjectionBulk(
+                new TestProjectionBulkConsumerSettingsSection(),
+                "projection-main",
+                "projection-retry",
+                bulkBuilder => bulkBuilder.AddRepository<
+                    TestProjectionItem,
+                    ITestProjectionBulkRepository,
+                    TestProjectionBulkRepository>());
 
         using var provider = services.BuildServiceProvider();
 
