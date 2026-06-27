@@ -2,7 +2,7 @@ using FlowChat.SocialGraphService.Application.Contracts.Persistence;
 using FlowChat.SocialGraphService.Application.Features.UserProfile;
 using FlowChat.SocialGraphService.Application.Features.UserProfile.Commands.BulkUpsertOrDeleteUserProfileProjection;
 using FlowChat.SocialGraphService.Persistence.Entities;
-using FlowChat.Shared.Persistance.BulkUpsert;
+using FlowChat.Shared.Persistance.ProjectionBulk;
 
 namespace FlowChat.SocialGraphService.Persistence.BulkUpsert;
 

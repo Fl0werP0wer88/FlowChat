@@ -4,7 +4,7 @@ using FlowChat.Core.Exceptions;
 using FlowChat.Shared.Application;
 using Microsoft.EntityFrameworkCore;
 
-namespace FlowChat.Shared.Persistance.BulkUpsert;
+namespace FlowChat.Shared.Persistance.ProjectionBulk;
 
 public abstract class ProjectionBulkRepositoryBase<TDbContext, TItem, TValue, TEntity>(TDbContext dbContext)
     where TDbContext : DbContext

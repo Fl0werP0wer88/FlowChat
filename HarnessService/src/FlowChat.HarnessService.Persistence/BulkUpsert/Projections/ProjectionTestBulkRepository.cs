@@ -2,7 +2,7 @@ using FlowChat.HarnessService.Application.Contracts.Persistence;
 using FlowChat.HarnessService.Application.Features.Projections;
 using FlowChat.HarnessService.Application.Features.Projections.Commands.BulkUpsert;
 using FlowChat.HarnessService.Persistence.Entities.Projections;
-using FlowChat.Shared.Persistance.BulkUpsert;
+using FlowChat.Shared.Persistance.ProjectionBulk;
 
 namespace FlowChat.HarnessService.Persistence.BulkUpsert.Projections;
 

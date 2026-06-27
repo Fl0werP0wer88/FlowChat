@@ -2,7 +2,7 @@ using FlowChat.PresenceService.Application.Contracts.Persistence;
 using FlowChat.PresenceService.Application.Features.ContactObserverProjections;
 using FlowChat.PresenceService.Application.Features.ContactObserverProjections.Commands.BulkUpsertOrDeleteUserContactProjection;
 using FlowChat.PresenceService.Persistence.Entities;
-using FlowChat.Shared.Persistance.BulkUpsert;
+using FlowChat.Shared.Persistance.ProjectionBulk;
 
 namespace FlowChat.PresenceService.Persistence.BulkUpsert;
 

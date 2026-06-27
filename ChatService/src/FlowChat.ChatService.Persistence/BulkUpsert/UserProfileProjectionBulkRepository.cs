@@ -2,7 +2,7 @@ using FlowChat.ChatService.Application.Contracts.Persistence;
 using FlowChat.ChatService.Application.Features.UserProfile;
 using FlowChat.ChatService.Application.Features.UserProfile.Commands.BulkUpsertOrDeleteUserProfileProjection;
 using FlowChat.ChatService.Persistence.Entities;
-using FlowChat.Shared.Persistance.BulkUpsert;
+using FlowChat.Shared.Persistance.ProjectionBulk;
 
 namespace FlowChat.ChatService.Persistence.BulkUpsert;
 
