@@ -13,7 +13,38 @@ namespace FlowChat.Shared.Consumers.ProjectionBulk;
 
 public static class ProjectionBulkServiceCollectionExtensions
 {
-    public static SilverbackBuilder AddProjectionBulkConsumer<TDbContext, TReadModel, TItem, TItemFactory, TRepository, TOffsetStore, TBatchSubscriber, TRetrySubscriber>(
+    public static SilverbackBuilder AddProjectionBulkRepository<TItem, TRepository, TImplementation>(
+        this SilverbackBuilder builder)
+        where TItem : notnull
+        where TRepository : class, IProjectionBulkRepository<TItem>
+        where TImplementation : class, TRepository
+    {
+        ArgumentNullException.ThrowIfNull(builder);
+
+        builder.Services.AddScoped<TRepository, TImplementation>();
+
+        return builder;
+    }
+
+    public static SilverbackBuilder AddProjectionBulkCommandHandler<TItem, TRepository>(
+        this SilverbackBuilder builder)
+        where TItem : notnull
+        where TRepository : class, IProjectionBulkRepository<TItem>
+    {
+        ArgumentNullException.ThrowIfNull(builder);
+
+        builder.Services.AddScoped<IProjectionOffsetStore, SilverbackProjectionOffsetStore>();
+        builder.Services.AddScoped<
+            IRequestHandler<ProjectionBulkCommand<TItem>, FlowChatResult<Unit>>,
+            ProjectionBulkCommandHandlerBaseV2<
+                ProjectionBulkCommand<TItem>,
+                TItem,
+                TRepository>>();
+
+        return builder;
+    }
+
+    public static SilverbackBuilder AddProjectionBulkConsumer<TDbContext, TReadModel, TItem, TItemFactory, TBatchSubscriber, TRetrySubscriber>(
         this SilverbackBuilder builder,
         IProjectionBulkConsumerSettingsSection options,
         string mainConsumerName,
@@ -22,8 +53,6 @@ public static class ProjectionBulkServiceCollectionExtensions
         where TReadModel : class
         where TItem : notnull
         where TItemFactory : class, IProjectionCommandItemFactory<TReadModel, TItem>
-        where TRepository : IProjectionBulkRepository<TItem>
-        where TOffsetStore : IProjectionOffsetStore
         where TBatchSubscriber : class
         where TRetrySubscriber : class
     {
@@ -33,13 +62,6 @@ public static class ProjectionBulkServiceCollectionExtensions
         ArgumentException.ThrowIfNullOrWhiteSpace(retryConsumerName);
 
         builder.Services.AddScoped<IProjectionCommandItemFactory<TReadModel, TItem>, TItemFactory>();
-        builder.Services.AddScoped<
-            IRequestHandler<ProjectionBulkCommand<TItem>, FlowChatResult<Unit>>,
-            ProjectionBulkCommandHandlerBaseV2<
-                ProjectionBulkCommand<TItem>,
-                TItem,
-                TRepository,
-                TOffsetStore>>();
 
         return builder
             .WithConnectionToMessageBroker(broker => broker

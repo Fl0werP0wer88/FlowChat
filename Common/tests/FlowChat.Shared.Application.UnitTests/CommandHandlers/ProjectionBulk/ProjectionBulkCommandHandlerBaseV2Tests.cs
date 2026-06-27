@@ -18,8 +18,7 @@ public sealed class ProjectionBulkCommandHandlerBaseV2Tests
         var handler = new ProjectionBulkCommandHandlerBaseV2<
             ProjectionBulkCommand<TestProjectionItem>,
             TestProjectionItem,
-            IProjectionBulkRepository<TestProjectionItem>,
-            IProjectionOffsetStore>(
+            IProjectionBulkRepository<TestProjectionItem>>(
             unitOfWorkMock.Object,
             repositoryMock.Object,
             offsetStoreMock.Object);
@@ -54,8 +53,7 @@ public sealed class ProjectionBulkCommandHandlerBaseV2Tests
         var handler = new ProjectionBulkCommandHandlerBaseV2<
             ProjectionBulkCommand<TestProjectionItem>,
             TestProjectionItem,
-            IProjectionBulkRepository<TestProjectionItem>,
-            IProjectionOffsetStore>(
+            IProjectionBulkRepository<TestProjectionItem>>(
             unitOfWorkMock.Object,
             repositoryMock.Object,
             offsetStoreMock.Object);

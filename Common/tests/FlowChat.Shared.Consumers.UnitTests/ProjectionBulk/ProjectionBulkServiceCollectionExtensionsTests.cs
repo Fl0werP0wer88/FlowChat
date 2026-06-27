@@ -24,8 +24,6 @@ public sealed class ProjectionBulkServiceCollectionExtensionsTests
                 TestReadModel,
                 TestProjectionItem,
                 TestProjectionCommandItemFactory,
-                ITestProjectionBulkRepository,
-                ITestProjectionOffsetStore,
                 TestBatchSubscriber,
                 TestRetrySubscriber>(
                     new TestProjectionBulkConsumerSettingsSection(),
@@ -52,8 +50,6 @@ public sealed class ProjectionBulkServiceCollectionExtensionsTests
                 TestReadModel,
                 TestProjectionItem,
                 TestProjectionCommandItemFactory,
-                ITestProjectionBulkRepository,
-                ITestProjectionOffsetStore,
                 TestBatchSubscriber,
                 TestRetrySubscriber>(
                     new TestProjectionBulkConsumerSettingsSection(),
@@ -67,38 +63,48 @@ public sealed class ProjectionBulkServiceCollectionExtensionsTests
     }
 
     [Fact]
-    public void AddProjectionBulkConsumer_RegistersProjectionBulkCommandHandler()
+    public void AddProjectionBulkCommandHandler_RegistersProjectionBulkCommandHandler()
     {
         var services = new ServiceCollection();
         services.AddScoped<IUnitOfWork, TestUnitOfWork>();
         services.AddScoped<ITestProjectionBulkRepository, TestProjectionBulkRepository>();
-        services.AddScoped<ITestProjectionOffsetStore, TestProjectionOffsetStore>();
 
         services
             .AddSilverback()
-            .AddProjectionBulkConsumer<
-                TestDbContext,
-                TestReadModel,
+            .AddProjectionBulkCommandHandler<
                 TestProjectionItem,
-                TestProjectionCommandItemFactory,
+                ITestProjectionBulkRepository>();
+
+        services.Should().ContainSingle(descriptor =>
+            descriptor.ServiceType == typeof(IProjectionOffsetStore)
+            && descriptor.ImplementationType == typeof(SilverbackProjectionOffsetStore));
+
+        services.Should().ContainSingle(descriptor =>
+            descriptor.ServiceType == typeof(IRequestHandler<ProjectionBulkCommand<TestProjectionItem>, FlowChatResult<Unit>>)
+            && descriptor.ImplementationType == typeof(ProjectionBulkCommandHandlerBaseV2<
+                ProjectionBulkCommand<TestProjectionItem>,
+                TestProjectionItem,
+                ITestProjectionBulkRepository>));
+    }
+
+    [Fact]
+    public void AddProjectionBulkRepository_RegistersProjectionBulkRepository()
+    {
+        var services = new ServiceCollection();
+
+        services
+            .AddSilverback()
+            .AddProjectionBulkRepository<
+                TestProjectionItem,
                 ITestProjectionBulkRepository,
-                ITestProjectionOffsetStore,
-                TestBatchSubscriber,
-                TestRetrySubscriber>(
-                    new TestProjectionBulkConsumerSettingsSection(),
-                    "projection-main",
-                    "projection-retry");
+                TestProjectionBulkRepository>();
 
         using var provider = services.BuildServiceProvider();
 
         provider
-            .GetRequiredService<IRequestHandler<ProjectionBulkCommand<TestProjectionItem>, FlowChatResult<Unit>>>()
+            .GetRequiredService<ITestProjectionBulkRepository>()
             .Should()
-            .BeOfType<ProjectionBulkCommandHandlerBaseV2<
-                ProjectionBulkCommand<TestProjectionItem>,
-                TestProjectionItem,
-                ITestProjectionBulkRepository,
-                ITestProjectionOffsetStore>>();
+            .BeOfType<TestProjectionBulkRepository>();
     }
 
     [Fact]
@@ -125,14 +131,6 @@ public sealed class ProjectionBulkServiceCollectionExtensionsTests
         public Task BulkUpsertOrSoftDeleteAsync(
             IReadOnlyCollection<TestProjectionItem> items,
             CancellationToken cancellationToken) =>
-            Task.CompletedTask;
-    }
-
-    private interface ITestProjectionOffsetStore : IProjectionOffsetStore;
-
-    private sealed class TestProjectionOffsetStore : ITestProjectionOffsetStore
-    {
-        public Task CommitConsumedOffsetsAsync(CancellationToken cancellationToken) =>
             Task.CompletedTask;
     }
 

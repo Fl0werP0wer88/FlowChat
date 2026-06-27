@@ -34,7 +34,6 @@ public static class PersistenceServiceRegistration
     {
         services.AddCommonPersistenceServices(configuration);
 
-        services.AddScoped<IProjectionTestBulkRepository, ProjectionTestBulkRepository>();
         services.AddScoped<IUnitOfWork, SilverbackEfUnitOfWork<AppDbContext>>();
 
         return services;

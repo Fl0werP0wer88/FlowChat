@@ -3,20 +3,19 @@ using MediatR;
 
 namespace FlowChat.Shared.Application;
 
-public class ProjectionBulkCommandHandlerBaseV2<TCommand, TItem, TRepository, TOffsetStore>
+public class ProjectionBulkCommandHandlerBaseV2<TCommand, TItem, TRepository>
     : TransactionalCommandHandlerBase<TCommand, Unit>
     where TCommand : IProjectionBulkCommand<TItem>
     where TItem : notnull
     where TRepository : IProjectionBulkRepository<TItem>
-    where TOffsetStore : IProjectionOffsetStore
 {
     private readonly TRepository _bulkRepository;
-    private readonly TOffsetStore _offsetStore;
+    private readonly IProjectionOffsetStore _offsetStore;
 
     public ProjectionBulkCommandHandlerBaseV2(
         IUnitOfWork unitOfWork,
         TRepository bulkRepository,
-        TOffsetStore offsetStore)
+        IProjectionOffsetStore offsetStore)
         : base(unitOfWork)
     {
         _bulkRepository = bulkRepository ?? throw new ArgumentNullException(nameof(bulkRepository));

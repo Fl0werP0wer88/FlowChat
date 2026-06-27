@@ -1,5 +1,4 @@
 using FlowChat.HarnessService.Application;
-using FlowChat.HarnessService.Application.Contracts.Infrastructure;
 using FlowChat.HarnessService.Application.Contracts.Persistence;
 using FlowChat.HarnessService.Application.Features.Projections.Commands.BulkUpsert;
 using FlowChat.HarnessService.Consumers.Configuration.Settings;
@@ -7,6 +6,7 @@ using FlowChat.HarnessService.Consumers.Kafka.Projections;
 using FlowChat.HarnessService.Consumers.Projections.Models;
 using FlowChat.HarnessService.Infrastructure;
 using FlowChat.HarnessService.Persistence;
+using FlowChat.HarnessService.Persistence.BulkUpsert.Projections;
 using FlowChat.Shared.Consumers.ProjectionBulk;
 using FlowChat.Shared.Infrastructure.Silverback.Behaviors;
 using Microsoft.Extensions.Configuration;
@@ -36,13 +36,18 @@ public static class ConsumersServiceRegistration
         services.AddSilverback()
             .AddSingletonBrokerBehavior<CustomSpanAttributesProducerBehavior>()
             .AddSingletonBrokerBehavior<CustomSpanAttributesConsumerBehavior>()
+            .AddProjectionBulkRepository<
+                ProjectionCommandItem,
+                IProjectionTestBulkRepository,
+                ProjectionTestBulkRepository>()
+            .AddProjectionBulkCommandHandler<
+                ProjectionCommandItem,
+                IProjectionTestBulkRepository>()
             .AddProjectionBulkConsumer<
                 AppDbContext,
                 ProjectionTestReadModel,
                 ProjectionCommandItem,
                 ProjectionTestCommandItemFactory,
-                IProjectionTestBulkRepository,
-                IConsumerOffsetStore,
                 ProjectionBatchSubscriber,
                 ProjectionRetrySubscriber>(
                     projectionOptions,
