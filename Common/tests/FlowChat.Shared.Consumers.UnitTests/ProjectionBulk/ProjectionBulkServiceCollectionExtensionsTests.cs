@@ -1,6 +1,9 @@
 using FlowChat.Core.Messaging;
+using FlowChat.Core.Results;
+using FlowChat.Shared.Application;
 using FlowChat.Shared.Consumers.ProjectionBulk;
 using FluentAssertions;
+using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Silverback.Configuration;
@@ -21,6 +24,8 @@ public sealed class ProjectionBulkServiceCollectionExtensionsTests
                 TestReadModel,
                 TestProjectionItem,
                 TestProjectionCommandItemFactory,
+                ITestProjectionBulkRepository,
+                ITestProjectionOffsetStore,
                 TestBatchSubscriber,
                 TestRetrySubscriber>(
                     new TestProjectionBulkConsumerSettingsSection(),
@@ -47,6 +52,8 @@ public sealed class ProjectionBulkServiceCollectionExtensionsTests
                 TestReadModel,
                 TestProjectionItem,
                 TestProjectionCommandItemFactory,
+                ITestProjectionBulkRepository,
+                ITestProjectionOffsetStore,
                 TestBatchSubscriber,
                 TestRetrySubscriber>(
                     new TestProjectionBulkConsumerSettingsSection(),
@@ -57,6 +64,41 @@ public sealed class ProjectionBulkServiceCollectionExtensionsTests
 
         provider.GetServices<TestBatchSubscriber>().Should().ContainSingle();
         provider.GetServices<TestRetrySubscriber>().Should().ContainSingle();
+    }
+
+    [Fact]
+    public void AddProjectionBulkConsumer_RegistersProjectionBulkCommandHandler()
+    {
+        var services = new ServiceCollection();
+        services.AddScoped<IUnitOfWork, TestUnitOfWork>();
+        services.AddScoped<ITestProjectionBulkRepository, TestProjectionBulkRepository>();
+        services.AddScoped<ITestProjectionOffsetStore, TestProjectionOffsetStore>();
+
+        services
+            .AddSilverback()
+            .AddProjectionBulkConsumer<
+                TestDbContext,
+                TestReadModel,
+                TestProjectionItem,
+                TestProjectionCommandItemFactory,
+                ITestProjectionBulkRepository,
+                ITestProjectionOffsetStore,
+                TestBatchSubscriber,
+                TestRetrySubscriber>(
+                    new TestProjectionBulkConsumerSettingsSection(),
+                    "projection-main",
+                    "projection-retry");
+
+        using var provider = services.BuildServiceProvider();
+
+        provider
+            .GetRequiredService<IRequestHandler<ProjectionBulkCommand<TestProjectionItem>, FlowChatResult<Unit>>>()
+            .Should()
+            .BeOfType<ProjectionBulkCommandHandlerBaseV2<
+                ProjectionBulkCommand<TestProjectionItem>,
+                TestProjectionItem,
+                ITestProjectionBulkRepository,
+                ITestProjectionOffsetStore>>();
     }
 
     [Fact]
@@ -74,6 +116,45 @@ public sealed class ProjectionBulkServiceCollectionExtensionsTests
     {
         public TestProjectionItem MapItem(ProjectionIntegrationEvent<TestReadModel> message) =>
             new(message.SourceAggregateId);
+    }
+
+    private interface ITestProjectionBulkRepository : IProjectionBulkRepository<TestProjectionItem>;
+
+    private sealed class TestProjectionBulkRepository : ITestProjectionBulkRepository
+    {
+        public Task BulkUpsertOrSoftDeleteAsync(
+            IReadOnlyCollection<TestProjectionItem> items,
+            CancellationToken cancellationToken) =>
+            Task.CompletedTask;
+    }
+
+    private interface ITestProjectionOffsetStore : IProjectionOffsetStore;
+
+    private sealed class TestProjectionOffsetStore : ITestProjectionOffsetStore
+    {
+        public Task CommitConsumedOffsetsAsync(CancellationToken cancellationToken) =>
+            Task.CompletedTask;
+    }
+
+    private sealed class TestUnitOfWork : IUnitOfWork
+    {
+        public void Dispose()
+        {
+        }
+
+        public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default) =>
+            Task.FromResult(0);
+
+        public Task<T> ExecuteInTransactionAsync<T>(
+            Func<CancellationToken, Task<T>> operation,
+            CancellationToken cancellationToken) =>
+            operation(cancellationToken);
+
+        public Task<FlowChatResult<T>> ExecuteCommandInTransactionAsync<T>(
+            Func<CancellationToken, Task<FlowChatResult<T>>> operation,
+            CancellationToken cancellationToken)
+            where T : notnull =>
+            operation(cancellationToken);
     }
 
     private sealed class TestBatchSubscriber;

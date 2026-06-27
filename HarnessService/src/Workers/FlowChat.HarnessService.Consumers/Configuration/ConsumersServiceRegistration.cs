@@ -1,4 +1,6 @@
 using FlowChat.HarnessService.Application;
+using FlowChat.HarnessService.Application.Contracts.Infrastructure;
+using FlowChat.HarnessService.Application.Contracts.Persistence;
 using FlowChat.HarnessService.Application.Features.Projections.Commands.BulkUpsert;
 using FlowChat.HarnessService.Consumers.Configuration.Settings;
 using FlowChat.HarnessService.Consumers.Kafka.Projections;
@@ -39,6 +41,8 @@ public static class ConsumersServiceRegistration
                 ProjectionTestReadModel,
                 ProjectionCommandItem,
                 ProjectionTestCommandItemFactory,
+                IProjectionTestBulkRepository,
+                IConsumerOffsetStore,
                 ProjectionBatchSubscriber,
                 ProjectionRetrySubscriber>(
                     projectionOptions,

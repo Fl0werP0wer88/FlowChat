@@ -15,7 +15,11 @@ public sealed class ProjectionBulkCommandHandlerBaseV2Tests
         var unitOfWorkMock = CreateUnitOfWorkMock(executionOrder);
         var repositoryMock = new Mock<IProjectionBulkRepository<TestProjectionItem>>();
         var offsetStoreMock = new Mock<IProjectionOffsetStore>();
-        var handler = new TestProjectionBulkCommandHandler(
+        var handler = new ProjectionBulkCommandHandlerBaseV2<
+            ProjectionBulkCommand<TestProjectionItem>,
+            TestProjectionItem,
+            IProjectionBulkRepository<TestProjectionItem>,
+            IProjectionOffsetStore>(
             unitOfWorkMock.Object,
             repositoryMock.Object,
             offsetStoreMock.Object);
@@ -47,7 +51,11 @@ public sealed class ProjectionBulkCommandHandlerBaseV2Tests
         var unitOfWorkMock = CreateUnitOfWorkMock();
         var repositoryMock = new Mock<IProjectionBulkRepository<TestProjectionItem>>();
         var offsetStoreMock = new Mock<IProjectionOffsetStore>();
-        var handler = new TestProjectionBulkCommandHandler(
+        var handler = new ProjectionBulkCommandHandlerBaseV2<
+            ProjectionBulkCommand<TestProjectionItem>,
+            TestProjectionItem,
+            IProjectionBulkRepository<TestProjectionItem>,
+            IProjectionOffsetStore>(
             unitOfWorkMock.Object,
             repositoryMock.Object,
             offsetStoreMock.Object);
@@ -85,20 +93,4 @@ public sealed class ProjectionBulkCommandHandlerBaseV2Tests
     }
 
     public sealed record TestProjectionItem(Guid Id);
-
-    private sealed class TestProjectionBulkCommandHandler
-        : ProjectionBulkCommandHandlerBaseV2<
-            ProjectionBulkCommand<TestProjectionItem>,
-            TestProjectionItem,
-            IProjectionBulkRepository<TestProjectionItem>,
-            IProjectionOffsetStore>
-    {
-        public TestProjectionBulkCommandHandler(
-            IUnitOfWork unitOfWork,
-            IProjectionBulkRepository<TestProjectionItem> bulkRepository,
-            IProjectionOffsetStore offsetStore)
-            : base(unitOfWork, bulkRepository, offsetStore)
-        {
-        }
-    }
 }

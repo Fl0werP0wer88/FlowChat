@@ -1,6 +1,9 @@
 using Confluent.Kafka;
 using FlowChat.Core.Messaging;
+using FlowChat.Core.Results;
+using FlowChat.Shared.Application;
 using FlowChat.Shared.Infrastructure.Silverback.Kafka;
+using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Silverback.Configuration;
@@ -10,7 +13,7 @@ namespace FlowChat.Shared.Consumers.ProjectionBulk;
 
 public static class ProjectionBulkServiceCollectionExtensions
 {
-    public static SilverbackBuilder AddProjectionBulkConsumer<TDbContext, TReadModel, TItem, TItemFactory, TBatchSubscriber, TRetrySubscriber>(
+    public static SilverbackBuilder AddProjectionBulkConsumer<TDbContext, TReadModel, TItem, TItemFactory, TRepository, TOffsetStore, TBatchSubscriber, TRetrySubscriber>(
         this SilverbackBuilder builder,
         IProjectionBulkConsumerSettingsSection options,
         string mainConsumerName,
@@ -19,6 +22,8 @@ public static class ProjectionBulkServiceCollectionExtensions
         where TReadModel : class
         where TItem : notnull
         where TItemFactory : class, IProjectionCommandItemFactory<TReadModel, TItem>
+        where TRepository : IProjectionBulkRepository<TItem>
+        where TOffsetStore : IProjectionOffsetStore
         where TBatchSubscriber : class
         where TRetrySubscriber : class
     {
@@ -28,6 +33,13 @@ public static class ProjectionBulkServiceCollectionExtensions
         ArgumentException.ThrowIfNullOrWhiteSpace(retryConsumerName);
 
         builder.Services.AddScoped<IProjectionCommandItemFactory<TReadModel, TItem>, TItemFactory>();
+        builder.Services.AddScoped<
+            IRequestHandler<ProjectionBulkCommand<TItem>, FlowChatResult<Unit>>,
+            ProjectionBulkCommandHandlerBaseV2<
+                ProjectionBulkCommand<TItem>,
+                TItem,
+                TRepository,
+                TOffsetStore>>();
 
         return builder
             .WithConnectionToMessageBroker(broker => broker
