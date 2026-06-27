@@ -1,9 +1,9 @@
 using Confluent.Kafka;
+using FlowChat.SocialGraphService.Application;
 using FlowChat.SocialGraphService.Consumers.Configuration.Settings;
 using FlowChat.SocialGraphService.Consumers.Kafka;
-using FlowChat.SocialGraphService.Consumers.Services;
+using FlowChat.SocialGraphService.Persistence;
 using FlowChat.Shared.Infrastructure.Silverback.Kafka;
-using FlowChat.Shared.Infrastructure.Http;
 using FlowChat.Shared.Infrastructure.Silverback.Behaviors;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -27,8 +27,9 @@ public static class ConsumersServiceRegistration
             .Get<UserProfileConsumerSettingsSection>()
             ?? new UserProfileConsumerSettingsSection();
 
+        services.AddWorkerApplicationServices();
+        services.AddPersistenceServices(configuration);
         services.AddAutoMapper((Action<AutoMapper.IMapperConfigurationExpression>?)null, consumersAssembly);
-        services.AddFlowChatHttpClient<ISocialGraphInternalApiClient, SocialGraphInternalApiClient, SocialGraphApiSettingsSection>();
 
         services.AddSilverback()
             .AddSingletonBrokerBehavior<CustomSpanAttributesProducerBehavior>()

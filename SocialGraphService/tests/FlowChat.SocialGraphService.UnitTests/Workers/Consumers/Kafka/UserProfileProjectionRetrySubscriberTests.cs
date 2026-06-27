@@ -2,10 +2,12 @@ using AutoMapper;
 using FlowChat.Core.Exceptions;
 using FlowChat.Core.Messaging;
 using FlowChat.Core.Messaging.UserProfileService.ReadModels;
+using FlowChat.Core.Results;
+using FlowChat.Shared.Domain;
+using FlowChat.SocialGraphService.Application.Features.UserProfile.Commands.BulkUpsertOrDeleteUserProfileProjection;
 using FlowChat.SocialGraphService.Consumers.Kafka;
-using FlowChat.SocialGraphService.Consumers.Services;
-using FlowChat.SocialGraphService.Consumers.SocialGraph.Contracts;
 using FluentAssertions;
+using MediatR;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 
@@ -14,7 +16,7 @@ namespace FlowChat.SocialGraphService.UnitTests;
 public sealed class UserProfileProjectionRetrySubscriberTests
 {
     private readonly IMapper _mapper;
-    private readonly Mock<ISocialGraphInternalApiClient> _apiClientMock = new();
+    private readonly Mock<IMediator> _mediatorMock = new();
     private readonly UserProfileProjectionRetrySubscriber _subscriber;
 
     public UserProfileProjectionRetrySubscriberTests()
@@ -24,27 +26,33 @@ public sealed class UserProfileProjectionRetrySubscriberTests
                 NullLoggerFactory.Instance)
             .CreateMapper();
 
+        _mediatorMock
+            .Setup(x => x.Send(
+                It.IsAny<BulkUpsertOrDeleteUserProfileProjectionCommand>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(FlowChatResult<Unit>.Success(Unit.Value));
+
         _subscriber = new UserProfileProjectionRetrySubscriber(
-            _apiClientMock.Object,
+            _mediatorMock.Object,
             _mapper,
             NullLogger<UserProfileProjectionRetrySubscriber>.Instance);
     }
 
     [Fact]
-    public async Task HandleAsync_WhenCreatedProjectionEventArrives_SendsSingleItemBulkRequest()
+    public async Task HandleAsync_WhenCreatedProjectionEventArrives_SendsSingleItemBulkCommand()
     {
-        BulkUpsertOrDeleteUserProfileProjectionRequest? capturedRequest = null;
+        BulkUpsertOrDeleteUserProfileProjectionCommand? capturedCommand = null;
         var userProfileId = Guid.NewGuid();
 
-        SetupCaptureRequest(request => capturedRequest = request);
+        SetupCaptureCommand(command => capturedCommand = command);
 
         await _subscriber.HandleAsync(
             CreateProjectionEvent(userProfileId, OperationType.Created, 7, friendlyUserId: " john.doe ", firstName: " John "),
             CancellationToken.None);
 
-        capturedRequest.Should().NotBeNull();
-        var item = capturedRequest!.Items.Should().ContainSingle().Subject;
-        item.UserProfileId.Should().Be(userProfileId);
+        capturedCommand.Should().NotBeNull();
+        var item = capturedCommand!.Items.Should().ContainSingle().Subject;
+        item.EntityId.Value.Should().Be(userProfileId);
         item.SourceVersion.Should().Be(7);
         item.Value.Should().NotBeNull();
         item.Value!.FriendlyUserId.Should().Be("john.doe");
@@ -56,45 +64,62 @@ public sealed class UserProfileProjectionRetrySubscriberTests
     [Fact]
     public async Task HandleAsync_WhenDeletedProjectionEventArrives_SendsSingleDeleteItem()
     {
-        BulkUpsertOrDeleteUserProfileProjectionRequest? capturedRequest = null;
+        BulkUpsertOrDeleteUserProfileProjectionCommand? capturedCommand = null;
         var userProfileId = Guid.NewGuid();
 
-        SetupCaptureRequest(request => capturedRequest = request);
+        SetupCaptureCommand(command => capturedCommand = command);
 
         await _subscriber.HandleAsync(
             CreateProjectionEvent(Guid.Empty, OperationType.Deleted, 4, sourceAggregateId: userProfileId),
             CancellationToken.None);
 
-        capturedRequest.Should().NotBeNull();
-        var item = capturedRequest!.Items.Should().ContainSingle().Subject;
-        item.UserProfileId.Should().Be(userProfileId);
+        capturedCommand.Should().NotBeNull();
+        var item = capturedCommand!.Items.Should().ContainSingle().Subject;
+        item.EntityId.Value.Should().Be(userProfileId);
         item.SourceVersion.Should().Be(4);
         item.Value.Should().BeNull();
     }
 
     [Fact]
-    public async Task HandleAsync_WhenProjectionEventIsInvalid_ThrowsAndDoesNotCallApi()
+    public async Task HandleAsync_WhenProjectionEventIsInvalid_ThrowsAndDoesNotSendCommand()
     {
         var act = () => _subscriber.HandleAsync(
             CreateProjectionEvent(Guid.Empty, OperationType.Updated, 2),
             CancellationToken.None);
 
         await act.Should().ThrowAsync<NonTransientException>();
-        _apiClientMock.Verify(
-            x => x.BulkUpsertOrDeleteUserProfileProjectionAsync(
-                It.IsAny<BulkUpsertOrDeleteUserProfileProjectionRequest>(),
+        _mediatorMock.Verify(
+            x => x.Send(
+                It.IsAny<BulkUpsertOrDeleteUserProfileProjectionCommand>(),
                 It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
-    private void SetupCaptureRequest(Action<BulkUpsertOrDeleteUserProfileProjectionRequest> capture)
+    [Fact]
+    public async Task HandleAsync_WhenCommandFailsWithIsolableFailure_ThrowsIsolableException()
     {
-        _apiClientMock
-            .Setup(x => x.BulkUpsertOrDeleteUserProfileProjectionAsync(
-                It.IsAny<BulkUpsertOrDeleteUserProfileProjectionRequest>(),
+        _mediatorMock
+            .Setup(x => x.Send(
+                It.IsAny<BulkUpsertOrDeleteUserProfileProjectionCommand>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<BulkUpsertOrDeleteUserProfileProjectionRequest, CancellationToken>((request, _) => capture(request))
-            .Returns(Task.CompletedTask);
+            .ReturnsAsync(FlowChatResult<Unit>.Failure(DomainError.UnExpected("bulk failed", FailureKind.Isolable)));
+
+        var act = () => _subscriber.HandleAsync(
+            CreateProjectionEvent(Guid.NewGuid(), OperationType.Updated, 3),
+            CancellationToken.None);
+
+        await act.Should().ThrowAsync<IsolableException>()
+            .WithMessage("bulk failed");
+    }
+
+    private void SetupCaptureCommand(Action<BulkUpsertOrDeleteUserProfileProjectionCommand> capture)
+    {
+        _mediatorMock
+            .Setup(x => x.Send(
+                It.IsAny<BulkUpsertOrDeleteUserProfileProjectionCommand>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<object, CancellationToken>((command, _) => capture((BulkUpsertOrDeleteUserProfileProjectionCommand)command))
+            .ReturnsAsync(FlowChatResult<Unit>.Success(Unit.Value));
     }
 
     private static ProjectionIntegrationEvent<UserProfileReadModel> CreateProjectionEvent(

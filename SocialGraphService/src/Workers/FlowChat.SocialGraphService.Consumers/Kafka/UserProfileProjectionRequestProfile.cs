@@ -1,7 +1,8 @@
 using AutoMapper;
 using FlowChat.Core.Exceptions;
+using FlowChat.Core.Messaging.UserProfileService.Events;
 using FlowChat.Core.Messaging.UserProfileService.ReadModels;
-using FlowChat.SocialGraphService.Consumers.SocialGraph.Contracts;
+using FlowChat.SocialGraphService.Application.Features.UserProfile;
 
 namespace FlowChat.SocialGraphService.Consumers.Kafka;
 
@@ -11,21 +12,17 @@ public sealed class UserProfileProjectionRequestProfile : Profile
 
     public UserProfileProjectionRequestProfile()
     {
-        CreateMap<UserProfileReadModel, UserProfileProjectionRequest>()
+        CreateMap<UserProfileReadModel, UserProfileProjectionDto>()
             .ForMember(destination => destination.UserProfileId, options => options.MapFrom(source => ResolveUserProfileId(source.UserProfileId)))
             .ForMember(destination => destination.FriendlyUserId, options => options.MapFrom(source => NormalizeRequired(source.FriendlyUserId, nameof(source.FriendlyUserId))))
             .ForMember(destination => destination.FirstName, options => options.MapFrom(source => NormalizeOptional(source.FirstName)))
             .ForMember(destination => destination.LastName, options => options.MapFrom(source => NormalizeOptional(source.LastName)))
             .ForMember(destination => destination.Organization, options => options.MapFrom(source => NormalizeOptional(source.Organization)))
-            .ForMember(destination => destination.MainEmailAddress, options => options.MapFrom(source => NormalizeOptional(source.MainEmail == null ? null : source.MainEmail.Address)))
-            .ForMember(destination => destination.MainEmailIsConfirmed, options => options.MapFrom(source => source.MainEmail == null ? null : (bool?)source.MainEmail.IsConfirmed))
-            .ForMember(destination => destination.MainEmailIsVisible, options => options.MapFrom(source => source.MainEmail == null ? null : (bool?)source.MainEmail.IsVisible))
-            .ForMember(destination => destination.MainPhoneNumber, options => options.MapFrom(source => NormalizeOptional(source.MainPhone == null ? null : source.MainPhone.Number)))
-            .ForMember(destination => destination.MainPhoneIsConfirmed, options => options.MapFrom(source => source.MainPhone == null ? null : (bool?)source.MainPhone.IsConfirmed))
-            .ForMember(destination => destination.MainPhoneIsVisible, options => options.MapFrom(source => source.MainPhone == null ? null : (bool?)source.MainPhone.IsVisible))
+            .ForMember(destination => destination.MainEmail, options => options.MapFrom(source => MapEmail(source.MainEmail)))
+            .ForMember(destination => destination.MainPhone, options => options.MapFrom(source => MapPhone(source.MainPhone)))
             .ForMember(destination => destination.AvatarUrl, options => options.MapFrom(source => NormalizeOptional(source.AvatarUrl)))
             .ForMember(destination => destination.Bio, options => options.MapFrom(source => NormalizeOptional(source.Bio)))
-            .ForMember(destination => destination.SourceVersion, options => options.Ignore())
+            .ForMember(destination => destination.SourceVersion, options => options.MapFrom((_, _, _, context) => (int)context.Items[nameof(UserProfileProjectionDto.SourceVersion)]))
             .ForMember(destination => destination.Source, options => options.MapFrom(_ => ProjectionSource));
     }
 
@@ -44,4 +41,30 @@ public sealed class UserProfileProjectionRequestProfile : Profile
 
     private static string? NormalizeOptional(string? value) =>
         string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+
+    private static UserProfileProjectionEmailDto? MapEmail(UserProfileEmail? email)
+    {
+        var address = NormalizeOptional(email?.Address);
+        return email is null || address is null
+            ? null
+            : new UserProfileProjectionEmailDto
+            {
+                Address = address,
+                IsConfirmed = email.IsConfirmed,
+                IsVisible = email.IsVisible
+            };
+    }
+
+    private static UserProfileProjectionPhoneDto? MapPhone(UserProfilePhone? phone)
+    {
+        var number = NormalizeOptional(phone?.Number);
+        return phone is null || number is null
+            ? null
+            : new UserProfileProjectionPhoneDto
+            {
+                Number = number,
+                IsConfirmed = phone.IsConfirmed,
+                IsVisible = phone.IsVisible
+            };
+    }
 }

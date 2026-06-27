@@ -2,13 +2,15 @@ using AutoMapper;
 using FlowChat.Core.Exceptions;
 using FlowChat.Core.Messaging;
 using FlowChat.Core.Messaging.UserProfileService.ReadModels;
-using FlowChat.SocialGraphService.Consumers.SocialGraph.Contracts;
+using FlowChat.Shared.Domain;
+using FlowChat.SocialGraphService.Application.Features.UserProfile;
+using FlowChat.SocialGraphService.Application.Features.UserProfile.Commands.BulkUpsertOrDeleteUserProfileProjection;
 
 namespace FlowChat.SocialGraphService.Consumers.Kafka;
 
 internal static class UserProfileSubscriberHelper
 {
-    public static BulkUpsertOrDeleteUserProfileProjectionRequestItem MapProjectionEvent(
+    public static UserProfileProjectionCommandItem MapProjectionEvent(
         ProjectionIntegrationEvent<UserProfileReadModel> message,
         IMapper mapper)
     {
@@ -33,17 +35,13 @@ internal static class UserProfileSubscriberHelper
         }
     }
 
-    public static BulkUpsertOrDeleteUserProfileProjectionRequest CreateBulkUpsertOrDeleteRequest(
-        IReadOnlyCollection<BulkUpsertOrDeleteUserProfileProjectionRequestItem> items) =>
-        new() { Items = KeepLastItemPerUserProfile(items) };
-
-    private static IReadOnlyCollection<BulkUpsertOrDeleteUserProfileProjectionRequestItem> KeepLastItemPerUserProfile(
-        IReadOnlyCollection<BulkUpsertOrDeleteUserProfileProjectionRequestItem> items)
+    public static IReadOnlyCollection<UserProfileProjectionCommandItem> KeepLastItemPerUserProfile(
+        IReadOnlyCollection<UserProfileProjectionCommandItem> items)
     {
-        // Kafka batch can contain multiple events for one profile, while the bulk endpoint rejects duplicate keys
+        // Kafka batch can contain multiple events for one profile, while the bulk command rejects duplicate keys
         return items
             .Select((item, index) => new { item, index })
-            .GroupBy(x => x.item.UserProfileId)
+            .GroupBy(x => x.item.EntityId.Value)
             .Select(group => group
                 .OrderBy(x => x.item.SourceVersion)
                 .ThenBy(x => x.index)
@@ -58,38 +56,35 @@ internal static class UserProfileSubscriberHelper
             ? userProfileId
             : throw new NonTransientException($"Payload does not contain valid {fieldName}.");
 
-    private static BulkUpsertOrDeleteUserProfileProjectionRequestItem CreateUpsertItem(
+    private static UserProfileProjectionCommandItem CreateUpsertItem(
         ProjectionIntegrationEvent<UserProfileReadModel> message,
         IMapper mapper)
     {
         var userProfileId = ResolveUserProfileId(message.Value.UserProfileId, nameof(message.Value.UserProfileId));
-        var value = mapper.Map<UserProfileProjectionRequest>(message.Value);
-        value.SourceVersion = message.SourceAggregateVersion;
+        var value = mapper.Map<UserProfileProjectionDto>(
+            message.Value,
+            options => options.Items[nameof(UserProfileProjectionDto.SourceVersion)] = message.SourceAggregateVersion);
 
-        return new BulkUpsertOrDeleteUserProfileProjectionRequestItem
-        {
-            UserProfileId = userProfileId,
-            SourceVersion = message.SourceAggregateVersion,
-            SourceCreatedAtUtc = message.SourceAggregateCreatedAtUtc,
-            SourceLastModifiedAtUtc = message.SourceAggregateModifiedAtUtc,
-            SourceDeletedAtUtc = message.SourceAggregateDeletedAt,
-            Value = value
-        };
+        return new UserProfileProjectionCommandItem(
+            Id<UserProfileProjectionDto>.FromGuid(userProfileId),
+            value,
+            message.SourceAggregateVersion,
+            message.SourceAggregateCreatedAtUtc,
+            message.SourceAggregateModifiedAtUtc,
+            message.SourceAggregateDeletedAt);
     }
 
-    private static BulkUpsertOrDeleteUserProfileProjectionRequestItem CreateDeleteItem(
+    private static UserProfileProjectionCommandItem CreateDeleteItem(
         ProjectionIntegrationEvent<UserProfileReadModel> message)
     {
         var userProfileId = ResolveUserProfileId(message.SourceAggregateId, nameof(message.SourceAggregateId));
 
-        return new BulkUpsertOrDeleteUserProfileProjectionRequestItem
-        {
-            UserProfileId = userProfileId,
-            SourceVersion = message.SourceAggregateVersion,
-            SourceCreatedAtUtc = message.SourceAggregateCreatedAtUtc,
-            SourceLastModifiedAtUtc = message.SourceAggregateModifiedAtUtc,
-            SourceDeletedAtUtc = message.SourceAggregateDeletedAt,
-            Value = null
-        };
+        return new UserProfileProjectionCommandItem(
+            Id<UserProfileProjectionDto>.FromGuid(userProfileId),
+            null,
+            message.SourceAggregateVersion,
+            message.SourceAggregateCreatedAtUtc,
+            message.SourceAggregateModifiedAtUtc,
+            message.SourceAggregateDeletedAt);
     }
 }

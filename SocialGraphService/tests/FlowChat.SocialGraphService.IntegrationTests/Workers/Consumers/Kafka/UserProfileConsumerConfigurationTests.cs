@@ -1,8 +1,9 @@
 using Confluent.Kafka;
+using FlowChat.Shared.Application;
+using FlowChat.SocialGraphService.Application.Contracts.Persistence;
 using FlowChat.SocialGraphService.Consumers;
 using FlowChat.SocialGraphService.Consumers.Kafka;
 using FlowChat.SocialGraphService.Consumers.Configuration.Settings;
-using FlowChat.SocialGraphService.Consumers.Services;
 using FlowChat.Shared.Infrastructure.Silverback.Kafka;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
@@ -31,12 +32,14 @@ public sealed class UserProfileConsumerConfigurationTests
         var consumerCollection = serviceProvider.GetRequiredService<IConsumerCollection>();
         var projectionBatchSubscriber = scope.ServiceProvider.GetRequiredService<UserProfileProjectionBatchSubscriber>();
         var projectionRetrySubscriber = scope.ServiceProvider.GetRequiredService<UserProfileProjectionRetrySubscriber>();
-        var internalApiClient = scope.ServiceProvider.GetRequiredService<ISocialGraphInternalApiClient>();
+        var bulkRepository = scope.ServiceProvider.GetRequiredService<IUserProfileProjectionBulkRepository>();
+        var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
 
         consumerCollection.Should().NotBeNull();
         projectionBatchSubscriber.Should().NotBeNull();
         projectionRetrySubscriber.Should().NotBeNull();
-        internalApiClient.Should().NotBeNull();
+        bulkRepository.Should().NotBeNull();
+        unitOfWork.Should().NotBeNull();
     }
 
     [Fact]
@@ -80,7 +83,7 @@ public sealed class UserProfileConsumerConfigurationTests
     }
 
     [Fact]
-    public async Task AddConsumers_RegistersSocialGraphInternalApiNamedClient()
+    public async Task AddConsumers_DoesNotRegisterHttpClientFactory()
     {
         var configuration = CreateConfiguration();
 
@@ -92,15 +95,7 @@ public sealed class UserProfileConsumerConfigurationTests
 
         await using var serviceProvider = services.BuildServiceProvider();
 
-        var internalApiClient = serviceProvider.GetRequiredService<ISocialGraphInternalApiClient>();
-        var httpClient = serviceProvider
-            .GetRequiredService<IHttpClientFactory>()
-            .CreateClient(typeof(ISocialGraphInternalApiClient).Name);
-
-        internalApiClient.Should().NotBeNull();
-        httpClient.BaseAddress.Should().Be(new Uri("https://localhost:7194"));
-        httpClient.DefaultRequestHeaders.GetValues(SocialGraphInternalApiClient.ApiKeyHeaderName).Single()
-            .Should().Be("worker-key");
+        serviceProvider.GetService<IHttpClientFactory>().Should().BeNull();
     }
 
     private static IConfiguration CreateConfiguration()
@@ -108,8 +103,7 @@ public sealed class UserProfileConsumerConfigurationTests
         return new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["SocialGraphApi:BaseUrl"] = "https://localhost:7194",
-                ["SocialGraphApi:ApiKey"] = "worker-key",
+                ["ConnectionStrings:SocialGraphDb"] = "Host=localhost;Database=flowchat_socialgraph_test;Username=test;Password=test",
                 ["Kafka:UserProfileConsumer:BootstrapServers"] = "localhost:9092",
                 ["Kafka:UserProfileConsumer:GroupId"] = "socialgraph-service",
                 ["Kafka:UserProfileConsumer:RetryGroupId"] = "socialgraph-service-retry",
