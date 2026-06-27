@@ -1,8 +1,10 @@
 using Confluent.Kafka;
+using FlowChat.ChatService.Application.Contracts.Persistence;
 using FlowChat.ChatService.Consumers;
 using FlowChat.ChatService.Consumers.Configuration.Settings;
 using FlowChat.ChatService.Consumers.Kafka;
-using FlowChat.ChatService.Consumers.Services;
+using FlowChat.ChatService.Persistence;
+using FlowChat.Shared.Application;
 using FlowChat.Shared.Infrastructure.Silverback.Kafka;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
@@ -31,12 +33,14 @@ public sealed class UserProfileConsumerConfigurationTests
         var consumerCollection = serviceProvider.GetRequiredService<IConsumerCollection>();
         var batchSubscriber = scope.ServiceProvider.GetRequiredService<UserProfileProjectionBatchSubscriber>();
         var retrySubscriber = scope.ServiceProvider.GetRequiredService<UserProfileProjectionRetrySubscriber>();
-        var internalApiClient = scope.ServiceProvider.GetRequiredService<IChatInternalApiClient>();
+        var bulkRepository = scope.ServiceProvider.GetRequiredService<IUserProfileProjectionBulkRepository>();
+        var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
 
         consumerCollection.Should().NotBeNull();
         batchSubscriber.Should().NotBeNull();
         retrySubscriber.Should().NotBeNull();
-        internalApiClient.Should().NotBeNull();
+        bulkRepository.Should().NotBeNull();
+        unitOfWork.Should().NotBeNull();
     }
 
     [Fact]
@@ -84,8 +88,7 @@ public sealed class UserProfileConsumerConfigurationTests
         return new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["ChatApi:BaseUrl"] = "https://localhost:7254",
-                ["ChatApi:ApiKey"] = "worker-key",
+                ["ConnectionStrings:ChatDb"] = "Host=localhost;Database=flowchat_chat;Username=flowchat;Password=flowchat",
                 ["Kafka:UserProfileConsumer:BootstrapServers"] = "localhost:9092",
                 ["Kafka:UserProfileConsumer:GroupId"] = "chat-service",
                 ["Kafka:UserProfileConsumer:RetryGroupId"] = "chat-service-retry",

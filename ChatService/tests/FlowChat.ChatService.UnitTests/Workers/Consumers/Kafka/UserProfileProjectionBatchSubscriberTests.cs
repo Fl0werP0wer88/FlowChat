@@ -1,20 +1,24 @@
 using AutoMapper;
-using FlowChat.ChatService.Consumers.ChatService.Contracts;
+using FlowChat.ChatService.Application.Features.UserProfile.Commands.BulkUpsertOrDeleteUserProfileProjection;
 using FlowChat.ChatService.Consumers.Kafka;
-using FlowChat.ChatService.Consumers.Services;
 using FlowChat.Core.Exceptions;
 using FlowChat.Core.Messaging;
 using FlowChat.Core.Messaging.UserProfileService.ReadModels;
+using FlowChat.Core.Results;
+using FlowChat.Shared.Domain;
 using FluentAssertions;
+using MediatR;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
+using IPublisher = Silverback.Messaging.Publishing.IPublisher;
 
 namespace FlowChat.ChatService.UnitTests.Workers.Consumers.Kafka;
 
 public sealed class UserProfileProjectionBatchSubscriberTests
 {
     private readonly IMapper _mapper;
-    private readonly Mock<IChatInternalApiClient> _apiClientMock = new();
+    private readonly Mock<IMediator> _mediatorMock = new();
+    private readonly Mock<IPublisher> _publisherMock = new();
     private readonly UserProfileProjectionBatchSubscriber _subscriber;
 
     public UserProfileProjectionBatchSubscriberTests()
@@ -24,20 +28,27 @@ public sealed class UserProfileProjectionBatchSubscriberTests
                 NullLoggerFactory.Instance)
             .CreateMapper();
 
+        _mediatorMock
+            .Setup(x => x.Send(
+                It.IsAny<BulkUpsertOrDeleteUserProfileProjectionCommand>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(FlowChatResult<Unit>.Success(Unit.Value));
+
         _subscriber = new UserProfileProjectionBatchSubscriber(
-            _apiClientMock.Object,
+            _mediatorMock.Object,
+            _publisherMock.Object,
             _mapper,
             NullLogger<UserProfileProjectionBatchSubscriber>.Instance);
     }
 
     [Fact]
-    public async Task HandleAsync_WhenCreatedAndUpdatedProjectionEventsArrive_SendsSingleBulkRequest()
+    public async Task HandleAsync_WhenCreatedAndUpdatedProjectionEventsArrive_SendsSingleBulkCommand()
     {
-        BulkUpsertOrDeleteUserProfileProjectionRequest? capturedRequest = null;
+        BulkUpsertOrDeleteUserProfileProjectionCommand? capturedCommand = null;
         var createdUserProfileId = Guid.NewGuid();
         var updatedUserProfileId = Guid.NewGuid();
 
-        SetupCaptureRequest(request => capturedRequest = request);
+        SetupCaptureCommand(command => capturedCommand = command);
 
         await _subscriber.HandleAsync(
             ToAsyncEnumerable(
@@ -45,10 +56,10 @@ public sealed class UserProfileProjectionBatchSubscriberTests
                 CreateProjectionEvent(updatedUserProfileId, OperationType.Updated, 3, " jane.doe ", " Jane ", null, " ")),
             CancellationToken.None);
 
-        capturedRequest.Should().NotBeNull();
-        capturedRequest!.Items.Should().HaveCount(2);
+        capturedCommand.Should().NotBeNull();
+        capturedCommand!.Items.Should().HaveCount(2);
 
-        var createdItem = capturedRequest.Items.Should().ContainSingle(x => x.UserProfileId == createdUserProfileId).Subject;
+        var createdItem = capturedCommand.Items.Should().ContainSingle(x => x.EntityId.Value == createdUserProfileId).Subject;
         createdItem.SourceVersion.Should().Be(1);
         createdItem.Value.Should().NotBeNull();
         createdItem.Value!.FriendlyUserId.Should().Be("john.doe");
@@ -58,7 +69,7 @@ public sealed class UserProfileProjectionBatchSubscriberTests
         createdItem.Value.SourceVersion.Should().Be(1);
         createdItem.Value.Source.Should().Be("user-profile-projection");
 
-        var updatedItem = capturedRequest.Items.Should().ContainSingle(x => x.UserProfileId == updatedUserProfileId).Subject;
+        var updatedItem = capturedCommand.Items.Should().ContainSingle(x => x.EntityId.Value == updatedUserProfileId).Subject;
         updatedItem.SourceVersion.Should().Be(3);
         updatedItem.Value.Should().NotBeNull();
         updatedItem.Value!.FriendlyUserId.Should().Be("jane.doe");
@@ -71,18 +82,18 @@ public sealed class UserProfileProjectionBatchSubscriberTests
     [Fact]
     public async Task HandleAsync_WhenDeletedProjectionEventArrives_SendsItemWithNullValueAndSourceVersion()
     {
-        BulkUpsertOrDeleteUserProfileProjectionRequest? capturedRequest = null;
+        BulkUpsertOrDeleteUserProfileProjectionCommand? capturedCommand = null;
         var deletedUserProfileId = Guid.NewGuid();
 
-        SetupCaptureRequest(request => capturedRequest = request);
+        SetupCaptureCommand(command => capturedCommand = command);
 
         await _subscriber.HandleAsync(
             ToAsyncEnumerable(CreateProjectionEvent(deletedUserProfileId, OperationType.Deleted, 4)),
             CancellationToken.None);
 
-        capturedRequest.Should().NotBeNull();
-        var item = capturedRequest!.Items.Should().ContainSingle().Subject;
-        item.UserProfileId.Should().Be(deletedUserProfileId);
+        capturedCommand.Should().NotBeNull();
+        var item = capturedCommand!.Items.Should().ContainSingle().Subject;
+        item.EntityId.Value.Should().Be(deletedUserProfileId);
         item.SourceVersion.Should().Be(4);
         item.Value.Should().BeNull();
     }
@@ -90,18 +101,18 @@ public sealed class UserProfileProjectionBatchSubscriberTests
     [Fact]
     public async Task HandleAsync_WhenDeletedProjectionEventHasEmptyBodyId_UsesSourceAggregateId()
     {
-        BulkUpsertOrDeleteUserProfileProjectionRequest? capturedRequest = null;
+        BulkUpsertOrDeleteUserProfileProjectionCommand? capturedCommand = null;
         var deletedUserProfileId = Guid.NewGuid();
 
-        SetupCaptureRequest(request => capturedRequest = request);
+        SetupCaptureCommand(command => capturedCommand = command);
 
         await _subscriber.HandleAsync(
             ToAsyncEnumerable(CreateProjectionEvent(Guid.Empty, OperationType.Deleted, 4, sourceAggregateId: deletedUserProfileId)),
             CancellationToken.None);
 
-        capturedRequest.Should().NotBeNull();
-        var item = capturedRequest!.Items.Should().ContainSingle().Subject;
-        item.UserProfileId.Should().Be(deletedUserProfileId);
+        capturedCommand.Should().NotBeNull();
+        var item = capturedCommand!.Items.Should().ContainSingle().Subject;
+        item.EntityId.Value.Should().Be(deletedUserProfileId);
         item.SourceVersion.Should().Be(4);
         item.Value.Should().BeNull();
     }
@@ -109,10 +120,10 @@ public sealed class UserProfileProjectionBatchSubscriberTests
     [Fact]
     public async Task HandleAsync_WhenBatchContainsDuplicateUserProfileId_SendsHighestVersionItem()
     {
-        BulkUpsertOrDeleteUserProfileProjectionRequest? capturedRequest = null;
+        BulkUpsertOrDeleteUserProfileProjectionCommand? capturedCommand = null;
         var userProfileId = Guid.NewGuid();
 
-        SetupCaptureRequest(request => capturedRequest = request);
+        SetupCaptureCommand(command => capturedCommand = command);
 
         await _subscriber.HandleAsync(
             ToAsyncEnumerable(
@@ -120,9 +131,9 @@ public sealed class UserProfileProjectionBatchSubscriberTests
                 CreateProjectionEvent(userProfileId, OperationType.Updated, 2, "john.doe", "John")),
             CancellationToken.None);
 
-        capturedRequest.Should().NotBeNull();
-        var item = capturedRequest!.Items.Should().ContainSingle().Subject;
-        item.UserProfileId.Should().Be(userProfileId);
+        capturedCommand.Should().NotBeNull();
+        var item = capturedCommand!.Items.Should().ContainSingle().Subject;
+        item.EntityId.Value.Should().Be(userProfileId);
         item.SourceVersion.Should().Be(5);
         item.Value.Should().NotBeNull();
         item.Value!.FriendlyUserId.Should().Be("johnny.doe");
@@ -131,10 +142,10 @@ public sealed class UserProfileProjectionBatchSubscriberTests
     [Fact]
     public async Task HandleAsync_WhenBatchContainsSameVersionDuplicate_SendsLastItem()
     {
-        BulkUpsertOrDeleteUserProfileProjectionRequest? capturedRequest = null;
+        BulkUpsertOrDeleteUserProfileProjectionCommand? capturedCommand = null;
         var userProfileId = Guid.NewGuid();
 
-        SetupCaptureRequest(request => capturedRequest = request);
+        SetupCaptureCommand(command => capturedCommand = command);
 
         await _subscriber.HandleAsync(
             ToAsyncEnumerable(
@@ -142,27 +153,30 @@ public sealed class UserProfileProjectionBatchSubscriberTests
                 CreateProjectionEvent(userProfileId, OperationType.Deleted, 5)),
             CancellationToken.None);
 
-        capturedRequest.Should().NotBeNull();
-        var item = capturedRequest!.Items.Should().ContainSingle().Subject;
-        item.UserProfileId.Should().Be(userProfileId);
+        capturedCommand.Should().NotBeNull();
+        var item = capturedCommand!.Items.Should().ContainSingle().Subject;
+        item.EntityId.Value.Should().Be(userProfileId);
         item.SourceVersion.Should().Be(5);
         item.Value.Should().BeNull();
     }
 
     [Fact]
-    public async Task HandleAsync_WhenBatchIsEmpty_DoesNotCallApi()
+    public async Task HandleAsync_WhenBatchIsEmpty_DoesNotSendCommand()
     {
         await _subscriber.HandleAsync(ToAsyncEnumerable(), CancellationToken.None);
 
-        _apiClientMock.Verify(
-            x => x.BulkUpsertOrDeleteUserProfileProjectionAsync(
-                It.IsAny<BulkUpsertOrDeleteUserProfileProjectionRequest>(),
+        _mediatorMock.Verify(
+            x => x.Send(
+                It.IsAny<BulkUpsertOrDeleteUserProfileProjectionCommand>(),
                 It.IsAny<CancellationToken>()),
+            Times.Never);
+        _publisherMock.Verify(
+            x => x.PublishAsync(It.IsAny<object>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
     [Fact]
-    public async Task HandleAsync_WhenOneEventIsInvalid_ThrowsAndDoesNotCallApi()
+    public async Task HandleAsync_WhenOneEventIsInvalid_ThrowsAndDoesNotSendCommand()
     {
         var act = () => _subscriber.HandleAsync(
             ToAsyncEnumerable(
@@ -171,36 +185,63 @@ public sealed class UserProfileProjectionBatchSubscriberTests
             CancellationToken.None);
 
         await act.Should().ThrowAsync<NonTransientException>();
-        _apiClientMock.Verify(
-            x => x.BulkUpsertOrDeleteUserProfileProjectionAsync(
-                It.IsAny<BulkUpsertOrDeleteUserProfileProjectionRequest>(),
+        _mediatorMock.Verify(
+            x => x.Send(
+                It.IsAny<BulkUpsertOrDeleteUserProfileProjectionCommand>(),
                 It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
     [Fact]
-    public async Task HandleAsync_WhenVersionIsInvalid_ThrowsAndDoesNotCallApi()
+    public async Task HandleAsync_WhenVersionIsInvalid_ThrowsAndDoesNotSendCommand()
     {
         var act = () => _subscriber.HandleAsync(
             ToAsyncEnumerable(CreateProjectionEvent(Guid.NewGuid(), OperationType.Updated, 0)),
             CancellationToken.None);
 
         await act.Should().ThrowAsync<NonTransientException>();
-        _apiClientMock.Verify(
-            x => x.BulkUpsertOrDeleteUserProfileProjectionAsync(
-                It.IsAny<BulkUpsertOrDeleteUserProfileProjectionRequest>(),
+        _mediatorMock.Verify(
+            x => x.Send(
+                It.IsAny<BulkUpsertOrDeleteUserProfileProjectionCommand>(),
                 It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
-    private void SetupCaptureRequest(Action<BulkUpsertOrDeleteUserProfileProjectionRequest> capture)
+    [Fact]
+    public async Task HandleAsync_WhenCommandFailsWithIsolableFailure_PublishesOriginalMessagesToRetry()
     {
-        _apiClientMock
-            .Setup(x => x.BulkUpsertOrDeleteUserProfileProjectionAsync(
-                It.IsAny<BulkUpsertOrDeleteUserProfileProjectionRequest>(),
+        _mediatorMock
+            .Setup(x => x.Send(
+                It.IsAny<BulkUpsertOrDeleteUserProfileProjectionCommand>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<BulkUpsertOrDeleteUserProfileProjectionRequest, CancellationToken>((request, _) => capture(request))
+            .ReturnsAsync(FlowChatResult<Unit>.Failure(DomainError.UnExpected("bulk failed", FailureKind.Isolable)));
+        _publisherMock
+            .Setup(x => x.PublishAsync(It.IsAny<object>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
+        var messages = new[]
+        {
+            CreateProjectionEvent(Guid.NewGuid(), OperationType.Updated, 1),
+            CreateProjectionEvent(Guid.NewGuid(), OperationType.Updated, 2)
+        };
+
+        await _subscriber.HandleAsync(ToAsyncEnumerable(messages), CancellationToken.None);
+
+        foreach (var message in messages)
+        {
+            _publisherMock.Verify(
+                x => x.PublishAsync(message, It.IsAny<CancellationToken>()),
+                Times.Once);
+        }
+    }
+
+    private void SetupCaptureCommand(Action<BulkUpsertOrDeleteUserProfileProjectionCommand> capture)
+    {
+        _mediatorMock
+            .Setup(x => x.Send(
+                It.IsAny<BulkUpsertOrDeleteUserProfileProjectionCommand>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<object, CancellationToken>((command, _) => capture((BulkUpsertOrDeleteUserProfileProjectionCommand)command))
+            .ReturnsAsync(FlowChatResult<Unit>.Success(Unit.Value));
     }
 
     private static ProjectionIntegrationEvent<UserProfileReadModel> CreateProjectionEvent(
