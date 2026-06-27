@@ -10,7 +10,7 @@ public sealed class ProjectionBulkCommandHandlerBaseV2Tests
     [Fact]
     public async Task Handle_WhenCommandHasItems_BulkUpsertsItemsAndCommitsOffsetInTransaction()
     {
-        var command = new TestProjectionBulkCommand([new TestProjectionItem(Guid.NewGuid())]);
+        var command = new ProjectionBulkCommand<TestProjectionItem>([new TestProjectionItem(Guid.NewGuid())]);
         var executionOrder = new List<string>();
         var unitOfWorkMock = CreateUnitOfWorkMock(executionOrder);
         var repositoryMock = new Mock<IProjectionBulkRepository<TestProjectionItem>>();
@@ -43,7 +43,7 @@ public sealed class ProjectionBulkCommandHandlerBaseV2Tests
     [Fact]
     public async Task Handle_WhenCommandHasNoItems_CommitsOffsetAndSkipsBulkUpsert()
     {
-        var command = new TestProjectionBulkCommand([]);
+        var command = new ProjectionBulkCommand<TestProjectionItem>([]);
         var unitOfWorkMock = CreateUnitOfWorkMock();
         var repositoryMock = new Mock<IProjectionBulkRepository<TestProjectionItem>>();
         var offsetStoreMock = new Mock<IProjectionOffsetStore>();
@@ -84,14 +84,11 @@ public sealed class ProjectionBulkCommandHandlerBaseV2Tests
         return unitOfWorkMock;
     }
 
-    public sealed record TestProjectionBulkCommand(IReadOnlyCollection<TestProjectionItem> Items)
-        : IProjectionBulkCommand<TestProjectionItem>;
-
     public sealed record TestProjectionItem(Guid Id);
 
     private sealed class TestProjectionBulkCommandHandler
         : ProjectionBulkCommandHandlerBaseV2<
-            TestProjectionBulkCommand,
+            ProjectionBulkCommand<TestProjectionItem>,
             TestProjectionItem,
             IProjectionBulkRepository<TestProjectionItem>,
             IProjectionOffsetStore>

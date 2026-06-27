@@ -12,7 +12,7 @@ namespace FlowChat.HarnessService.Persistence;
 
 public static class PersistenceServiceRegistration
 {
-    // API no longer runs BulkUpsertProjectionCommand (the Consumer worker calls it in-process now),
+    // API no longer runs projection bulk commands (the Consumer worker calls them in-process now),
     // but MediatR still registers the handler host-wide, so IUnitOfWork/IProjectionTestBulkRepository
     // must stay resolvable here to satisfy DI validation on startup. Plain EfUnitOfWork is enough since
     // the API host never connects to Silverback/Kafka and has no ISilverbackContext to enlist.

@@ -16,7 +16,7 @@ public sealed class ConsumerOffsetStore(ISilverbackContext silverbackContext) : 
         silverbackContext.GetKafkaOffsetStoreScope().StoreOffsetsAsync();
 }
 
-// Registered for the API host, which never runs BulkUpsertProjectionCommand (it has no
+// Registered for the API host, which never runs projection bulk commands (it has no
 // Silverback/Kafka connection, so ISilverbackContext isn't available there).
 public sealed class NullConsumerOffsetStore : IConsumerOffsetStore
 {

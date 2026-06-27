@@ -6,7 +6,7 @@ namespace FlowChat.HarnessService.Application.Features.Projections.Commands.Bulk
 
 public sealed class BulkUpsertProjectionCommandHandler
     : ProjectionBulkCommandHandlerBaseV2<
-        BulkUpsertProjectionCommand,
+        ProjectionBulkCommand<ProjectionCommandItem>,
         ProjectionCommandItem,
         IProjectionTestBulkRepository,
         IConsumerOffsetStore>

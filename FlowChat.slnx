@@ -73,6 +73,7 @@
     <Project Path="Common/src/FlowChat.Shared.Domain/FlowChat.Shared.Domain.csproj" />
     <Project Path="Common/src/FlowChat.Shared.Persistance/FlowChat.Shared.Persistance.csproj" />
     <Project Path="Common/src/FlowChat.Shared.Infrastructure/FlowChat.Shared.Infrastructure.csproj" />
+    <Project Path="Common/src/FlowChat.Shared.Consumers/FlowChat.Shared.Consumers.csproj" />
   </Folder>
   <Folder Name="/Common/tests/">
     <Project Path="Common/tests/FlowChat.Core.UnitTests/FlowChat.Core.UnitTests.csproj" />
@@ -80,6 +81,7 @@
     <Project Path="Common/tests/FlowChat.Shared.API.UnitTests/FlowChat.Shared.API.UnitTests.csproj" />
     <Project Path="Common/tests/FlowChat.Shared.Application.UnitTests/FlowChat.Shared.Application.UnitTests.csproj" />
     <Project Path="Common/tests/FlowChat.Shared.Domain.UnitTests/FlowChat.Shared.Domain.UnitTests.csproj" />
+    <Project Path="Common/tests/FlowChat.Shared.Consumers.UnitTests/FlowChat.Shared.Consumers.UnitTests.csproj" />
     <Project Path="Common/tests/FlowChat.Shared.Infrastructure.IntegrationTests/FlowChat.Shared.Infrastructure.IntegrationTests.csproj" />
     <Project Path="Common/tests/FlowChat.Shared.Infrastructure.UnitTests/FlowChat.Shared.Infrastructure.UnitTests.csproj" />
     <Project Path="Common/tests/FlowChat.Shared.Persistance.IntegrationTests/FlowChat.Shared.Persistance.IntegrationTests.csproj" />

@@ -6,6 +6,8 @@ using FlowChat.HarnessService.Consumers.Kafka.Projections;
 using FlowChat.HarnessService.Consumers.Projections.Models;
 using FlowChat.HarnessService.Infrastructure;
 using FlowChat.HarnessService.Persistence;
+using FlowChat.HarnessService.Application.Features.Projections.Commands.BulkUpsert;
+using FlowChat.Shared.Consumers.ProjectionBulk;
 using FlowChat.Shared.Infrastructure.Silverback.Behaviors;
 using FlowChat.Shared.Infrastructure.Silverback.Kafka;
 using Microsoft.Extensions.Configuration;
@@ -36,6 +38,9 @@ public static class ConsumersServiceRegistration
         services.AddApplicationServices();
         services.AddConsumerPersistenceServices(configuration);
         services.AddConsumerInfrastructureServices();
+        services.AddScoped<
+            IProjectionCommandItemFactory<ProjectionTestReadModel, ProjectionCommandItem>,
+            ProjectionTestCommandItemFactory>();
 
         services.AddSilverback()
             .AddSingletonBrokerBehavior<CustomSpanAttributesProducerBehavior>()
