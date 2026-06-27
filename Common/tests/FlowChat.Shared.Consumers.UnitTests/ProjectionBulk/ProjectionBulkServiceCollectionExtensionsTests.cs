@@ -59,6 +59,42 @@ public sealed class ProjectionBulkServiceCollectionExtensionsTests
     }
 
     [Fact]
+    public void AddProjectionBulk_RegistersConfiguredPipeline()
+    {
+        var services = new ServiceCollection();
+
+        services
+            .AddSilverback()
+            .AddProjectionBulk(
+                new TestProjectionBulkConsumerSettingsSection(),
+                "projection-main",
+                "projection-retry",
+                bulkBuilder => bulkBuilder
+                    .AddRepository<
+                        TestProjectionItem,
+                        ITestProjectionBulkRepository,
+                        TestProjectionBulkRepository>()
+                    .AddCommandHandler<
+                        TestProjectionItem,
+                        ITestProjectionBulkRepository>()
+                    .AddConsumer<
+                        TestDbContext,
+                        TestReadModel,
+                        TestProjectionItem,
+                        TestProjectionCommandItemFactory>());
+
+        services.Should().ContainSingle(descriptor =>
+            descriptor.ServiceType == typeof(ITestProjectionBulkRepository)
+            && descriptor.ImplementationType == typeof(TestProjectionBulkRepository));
+        services.Should().ContainSingle(descriptor =>
+            descriptor.ServiceType == typeof(IRequestHandler<ProjectionBulkCommand<TestProjectionItem>, FlowChatResult<Unit>>));
+        services.Should().ContainSingle(descriptor =>
+            descriptor.ServiceType == typeof(ProjectionBatchSubscriber<TestReadModel, TestProjectionItem>));
+        services.Should().ContainSingle(descriptor =>
+            descriptor.ServiceType == typeof(ProjectionRetrySubscriber<TestReadModel, TestProjectionItem>));
+    }
+
+    [Fact]
     public void AddProjectionBulkCommandHandler_RegistersProjectionBulkCommandHandler()
     {
         var services = new ServiceCollection();

@@ -36,21 +36,23 @@ public static class ConsumersServiceRegistration
         services.AddSilverback()
             .AddSingletonBrokerBehavior<CustomSpanAttributesProducerBehavior>()
             .AddSingletonBrokerBehavior<CustomSpanAttributesConsumerBehavior>()
-            .AddProjectionBulkRepository<
-                ProjectionCommandItem,
-                IProjectionTestBulkRepository,
-                ProjectionTestBulkRepository>()
-            .AddProjectionBulkCommandHandler<
-                ProjectionCommandItem,
-                IProjectionTestBulkRepository>()
-            .AddProjectionBulkConsumer<
-                AppDbContext,
-                ProjectionTestReadModel,
-                ProjectionCommandItem,
-                ProjectionTestCommandItemFactory>(
-                    projectionOptions,
-                    ProjectionMainConsumerName,
-                    ProjectionRetryConsumerName);
+            .AddProjectionBulk(
+                projectionOptions,
+                ProjectionMainConsumerName,
+                ProjectionRetryConsumerName,
+                bulkBuilder => bulkBuilder
+                    .AddRepository<
+                        ProjectionCommandItem,
+                        IProjectionTestBulkRepository,
+                        ProjectionTestBulkRepository>()
+                    .AddCommandHandler<
+                        ProjectionCommandItem,
+                        IProjectionTestBulkRepository>()
+                    .AddConsumer<
+                        AppDbContext,
+                        ProjectionTestReadModel,
+                        ProjectionCommandItem,
+                        ProjectionTestCommandItemFactory>());
 
         return services;
     }
