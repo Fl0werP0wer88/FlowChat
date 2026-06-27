@@ -15,7 +15,7 @@ namespace FlowChat.Shared.Consumers.UnitTests.ProjectionBulk;
 public sealed class ProjectionBulkServiceCollectionExtensionsTests
 {
     [Fact]
-    public void AddProjectionBulk_RegistersProjectionCommandItemFactory()
+    public void AddProjectionBulk_RegistersProjectionValueFactory()
     {
         var services = new ServiceCollection();
 
@@ -28,15 +28,15 @@ public sealed class ProjectionBulkServiceCollectionExtensionsTests
                 bulkBuilder => bulkBuilder.AddConsumer<
                     TestDbContext,
                     TestReadModel,
-                    TestProjectionItem,
-                    TestProjectionCommandItemFactory>());
+                    TestProjectionValue,
+                    TestProjectionValueFactory>());
 
         using var provider = services.BuildServiceProvider();
 
         provider
-            .GetRequiredService<IProjectionCommandItemFactory<TestReadModel, TestProjectionItem>>()
+            .GetRequiredService<IProjectionValueFactory<TestReadModel, TestProjectionValue>>()
             .Should()
-            .BeOfType<TestProjectionCommandItemFactory>();
+            .BeOfType<TestProjectionValueFactory>();
     }
 
     [Fact]
@@ -53,13 +53,13 @@ public sealed class ProjectionBulkServiceCollectionExtensionsTests
                 bulkBuilder => bulkBuilder.AddConsumer<
                     TestDbContext,
                     TestReadModel,
-                    TestProjectionItem,
-                    TestProjectionCommandItemFactory>());
+                    TestProjectionValue,
+                    TestProjectionValueFactory>());
 
         services.Should().ContainSingle(descriptor =>
-            descriptor.ServiceType == typeof(ProjectionBatchSubscriber<TestReadModel, TestProjectionItem>));
+            descriptor.ServiceType == typeof(ProjectionBatchSubscriber<TestReadModel, TestProjectionValue>));
         services.Should().ContainSingle(descriptor =>
-            descriptor.ServiceType == typeof(ProjectionRetrySubscriber<TestReadModel, TestProjectionItem>));
+            descriptor.ServiceType == typeof(ProjectionRetrySubscriber<TestReadModel, TestProjectionValue>));
     }
 
     [Fact]
@@ -76,31 +76,29 @@ public sealed class ProjectionBulkServiceCollectionExtensionsTests
                 bulkBuilder => bulkBuilder
                     .AddRepository<
                         TestDbContext,
-                        TestProjectionItem,
-                        TestProjectionItem,
+                        TestProjectionValue,
                         TestProjectionEntity,
                         TestProjectionBulkEntityFactory>()
-                    .AddCommandHandler<TestProjectionItem>()
+                    .AddCommandHandler<TestProjectionValue>()
                     .AddConsumer<
                         TestDbContext,
                         TestReadModel,
-                        TestProjectionItem,
-                        TestProjectionCommandItemFactory>());
+                        TestProjectionValue,
+                        TestProjectionValueFactory>());
 
         services.Should().ContainSingle(descriptor =>
-            descriptor.ServiceType == typeof(IProjectionBulkRepository<TestProjectionItem>)
+            descriptor.ServiceType == typeof(IProjectionBulkRepository<ProjectionCommandItem<TestProjectionValue>>)
             && descriptor.ImplementationType == typeof(ProjectionBulkRepository<
                 TestDbContext,
-                TestProjectionItem,
-                TestProjectionItem,
+                TestProjectionValue,
                 TestProjectionEntity,
                 TestProjectionBulkEntityFactory>));
         services.Should().ContainSingle(descriptor =>
-            descriptor.ServiceType == typeof(IRequestHandler<ProjectionBulkCommand<TestProjectionItem>, FlowChatResult<Unit>>));
+            descriptor.ServiceType == typeof(IRequestHandler<ProjectionBulkCommand<ProjectionCommandItem<TestProjectionValue>>, FlowChatResult<Unit>>));
         services.Should().ContainSingle(descriptor =>
-            descriptor.ServiceType == typeof(ProjectionBatchSubscriber<TestReadModel, TestProjectionItem>));
+            descriptor.ServiceType == typeof(ProjectionBatchSubscriber<TestReadModel, TestProjectionValue>));
         services.Should().ContainSingle(descriptor =>
-            descriptor.ServiceType == typeof(ProjectionRetrySubscriber<TestReadModel, TestProjectionItem>));
+            descriptor.ServiceType == typeof(ProjectionRetrySubscriber<TestReadModel, TestProjectionValue>));
     }
 
     [Fact]
@@ -108,7 +106,7 @@ public sealed class ProjectionBulkServiceCollectionExtensionsTests
     {
         var services = new ServiceCollection();
         services.AddScoped<IUnitOfWork, TestUnitOfWork>();
-        services.AddScoped<IProjectionBulkRepository<TestProjectionItem>, TestProjectionBulkRepository>();
+        services.AddScoped<IProjectionBulkRepository<ProjectionCommandItem<TestProjectionValue>>, TestProjectionBulkRepository>();
 
         services
             .AddSilverback()
@@ -116,18 +114,18 @@ public sealed class ProjectionBulkServiceCollectionExtensionsTests
                 new TestProjectionBulkConsumerSettingsSection(),
                 "projection-main",
                 "projection-retry",
-                bulkBuilder => bulkBuilder.AddCommandHandler<TestProjectionItem>());
+                bulkBuilder => bulkBuilder.AddCommandHandler<TestProjectionValue>());
 
         services.Should().ContainSingle(descriptor =>
             descriptor.ServiceType == typeof(IProjectionOffsetStore)
             && descriptor.ImplementationType == typeof(SilverbackProjectionOffsetStore));
 
         services.Should().ContainSingle(descriptor =>
-            descriptor.ServiceType == typeof(IRequestHandler<ProjectionBulkCommand<TestProjectionItem>, FlowChatResult<Unit>>)
+            descriptor.ServiceType == typeof(IRequestHandler<ProjectionBulkCommand<ProjectionCommandItem<TestProjectionValue>>, FlowChatResult<Unit>>)
             && descriptor.ImplementationType == typeof(ProjectionBulkCommandHandlerBaseV2<
-                ProjectionBulkCommand<TestProjectionItem>,
-                TestProjectionItem,
-                IProjectionBulkRepository<TestProjectionItem>>));
+                ProjectionBulkCommand<ProjectionCommandItem<TestProjectionValue>>,
+                ProjectionCommandItem<TestProjectionValue>,
+                IProjectionBulkRepository<ProjectionCommandItem<TestProjectionValue>>>));
     }
 
     [Fact]
@@ -143,20 +141,18 @@ public sealed class ProjectionBulkServiceCollectionExtensionsTests
                 "projection-retry",
                 bulkBuilder => bulkBuilder.AddRepository<
                     TestDbContext,
-                    TestProjectionItem,
-                    TestProjectionItem,
+                    TestProjectionValue,
                     TestProjectionEntity,
                     TestProjectionBulkEntityFactory>());
 
         services.Should().ContainSingle(descriptor =>
-            descriptor.ServiceType == typeof(IProjectionBulkEntityFactory<TestProjectionItem, TestProjectionItem, TestProjectionEntity>)
+            descriptor.ServiceType == typeof(IProjectionBulkEntityFactory<TestProjectionValue, TestProjectionEntity>)
             && descriptor.ImplementationType == typeof(TestProjectionBulkEntityFactory));
         services.Should().ContainSingle(descriptor =>
-            descriptor.ServiceType == typeof(IProjectionBulkRepository<TestProjectionItem>)
+            descriptor.ServiceType == typeof(IProjectionBulkRepository<ProjectionCommandItem<TestProjectionValue>>)
             && descriptor.ImplementationType == typeof(ProjectionBulkRepository<
                 TestDbContext,
-                TestProjectionItem,
-                TestProjectionItem,
+                TestProjectionValue,
                 TestProjectionEntity,
                 TestProjectionBulkEntityFactory>));
     }
@@ -171,17 +167,17 @@ public sealed class ProjectionBulkServiceCollectionExtensionsTests
 
     private sealed class TestDbContext : DbContext;
 
-    private sealed class TestProjectionCommandItemFactory
-        : IProjectionCommandItemFactory<TestReadModel, TestProjectionItem>
+    private sealed class TestProjectionValueFactory
+        : IProjectionValueFactory<TestReadModel, TestProjectionValue>
     {
-        public TestProjectionItem MapItem(ProjectionIntegrationEvent<TestReadModel> message) =>
+        public TestProjectionValue MapValue(ProjectionIntegrationEvent<TestReadModel> message) =>
             new(message.SourceAggregateId);
     }
 
-    private sealed class TestProjectionBulkRepository : IProjectionBulkRepository<TestProjectionItem>
+    private sealed class TestProjectionBulkRepository : IProjectionBulkRepository<ProjectionCommandItem<TestProjectionValue>>
     {
         public Task BulkUpsertOrSoftDeleteAsync(
-            IReadOnlyCollection<TestProjectionItem> items,
+            IReadOnlyCollection<ProjectionCommandItem<TestProjectionValue>> items,
             CancellationToken cancellationToken) =>
             Task.CompletedTask;
     }
@@ -207,26 +203,7 @@ public sealed class ProjectionBulkServiceCollectionExtensionsTests
             operation(cancellationToken);
     }
 
-    private sealed record TestProjectionItem(
-        Guid Id,
-        TestProjectionItem? Value,
-        int SourceVersion,
-        DateTimeOffset SourceCreatedAtUtc,
-        DateTimeOffset SourceLastModifiedAtUtc,
-        DateTimeOffset? SourceDeletedAtUtc)
-        : IProjectionCommandItem<TestProjectionItem>
-    {
-        public TestProjectionItem(Guid id)
-            : this(
-                id,
-                null,
-                1,
-                DateTimeOffset.UtcNow,
-                DateTimeOffset.UtcNow,
-                null)
-        {
-        }
-    }
+    private sealed record TestProjectionValue(Guid Id);
 
     private sealed class TestProjectionEntity : ReadModelEntityBase
     {
@@ -234,12 +211,12 @@ public sealed class ProjectionBulkServiceCollectionExtensionsTests
     }
 
     private sealed class TestProjectionBulkEntityFactory
-        : IProjectionBulkEntityFactory<TestProjectionItem, TestProjectionItem, TestProjectionEntity>
+        : IProjectionBulkEntityFactory<TestProjectionValue, TestProjectionEntity>
     {
         public IReadOnlyList<string> UpdateByProperties { get; } = [nameof(TestProjectionEntity.Id)];
 
         public TestProjectionEntity CreateUpsertEntity(
-            TestProjectionItem value,
+            TestProjectionValue value,
             int sourceVersion,
             DateTimeOffset sourceCreatedAtUtc,
             DateTimeOffset sourceLastModifiedAtUtc,
@@ -254,7 +231,7 @@ public sealed class ProjectionBulkServiceCollectionExtensionsTests
             };
 
         public TestProjectionEntity CreateTombstoneEntity(
-            TestProjectionItem item,
+            ProjectionCommandItem<TestProjectionValue> item,
             DateTimeOffset now) =>
             new()
             {

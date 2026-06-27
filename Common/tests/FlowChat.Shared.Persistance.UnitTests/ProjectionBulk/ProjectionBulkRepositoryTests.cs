@@ -18,7 +18,6 @@ public sealed class ProjectionBulkRepositoryTests
         var entityFactory = new TestProjectionBulkEntityFactory();
         var repository = new ProjectionBulkRepository<
             TestDbContext,
-            TestProjectionItem,
             TestProjectionValue,
             TestProjectionEntity,
             TestProjectionBulkEntityFactory>(
@@ -44,16 +43,8 @@ public sealed class ProjectionBulkRepositoryTests
 
     private sealed record TestProjectionValue(Guid Id);
 
-    private sealed record TestProjectionItem(
-        TestProjectionValue? Value,
-        int SourceVersion,
-        DateTimeOffset SourceCreatedAtUtc,
-        DateTimeOffset SourceLastModifiedAtUtc,
-        DateTimeOffset? SourceDeletedAtUtc)
-        : IProjectionCommandItem<TestProjectionValue>;
-
     private sealed class TestProjectionBulkEntityFactory
-        : IProjectionBulkEntityFactory<TestProjectionItem, TestProjectionValue, TestProjectionEntity>
+        : IProjectionBulkEntityFactory<TestProjectionValue, TestProjectionEntity>
     {
         public int CreateUpsertEntityCalls { get; private set; }
 
@@ -81,7 +72,7 @@ public sealed class ProjectionBulkRepositoryTests
         }
 
         public TestProjectionEntity CreateTombstoneEntity(
-            TestProjectionItem item,
+            ProjectionCommandItem<TestProjectionValue> item,
             DateTimeOffset now)
         {
             CreateTombstoneEntityCalls++;

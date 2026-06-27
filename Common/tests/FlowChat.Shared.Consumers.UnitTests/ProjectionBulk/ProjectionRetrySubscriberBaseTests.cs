@@ -17,12 +17,14 @@ public sealed class ProjectionRetrySubscriberBaseTests
     [Fact]
     public async Task HandleAsync_WhenCommandSucceeds_SendsSingleItemCommand()
     {
-        ProjectionBulkCommand<TestProjectionItem>? capturedCommand = null;
+        ProjectionBulkCommand<ProjectionCommandItem<TestProjectionValue>>? capturedCommand = null;
         var mediatorMock = new Mock<IMediator>();
         mediatorMock
-            .Setup(x => x.Send(It.IsAny<ProjectionBulkCommand<TestProjectionItem>>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.Send(
+                It.IsAny<ProjectionBulkCommand<ProjectionCommandItem<TestProjectionValue>>>(),
+                It.IsAny<CancellationToken>()))
             .Callback<IRequest<FlowChatResult<Unit>>, CancellationToken>((command, _) =>
-                capturedCommand = (ProjectionBulkCommand<TestProjectionItem>)command)
+                capturedCommand = (ProjectionBulkCommand<ProjectionCommandItem<TestProjectionValue>>)command)
             .ReturnsAsync(FlowChatResult<Unit>.Success(Unit.Value));
         var subscriber = CreateSubscriber(mediatorMock);
         var message = CreateMessage();
@@ -32,6 +34,27 @@ public sealed class ProjectionRetrySubscriberBaseTests
         capturedCommand.Should().NotBeNull();
         capturedCommand!.Items.Should().ContainSingle()
             .Which.Id.Should().Be(message.SourceAggregateId);
+    }
+
+    [Fact]
+    public async Task HandleAsync_WhenMessageIsDelete_SendsItemWithNullValue()
+    {
+        ProjectionBulkCommand<ProjectionCommandItem<TestProjectionValue>>? capturedCommand = null;
+        var mediatorMock = new Mock<IMediator>();
+        mediatorMock
+            .Setup(x => x.Send(
+                It.IsAny<ProjectionBulkCommand<ProjectionCommandItem<TestProjectionValue>>>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<IRequest<FlowChatResult<Unit>>, CancellationToken>((command, _) =>
+                capturedCommand = (ProjectionBulkCommand<ProjectionCommandItem<TestProjectionValue>>)command)
+            .ReturnsAsync(FlowChatResult<Unit>.Success(Unit.Value));
+        var subscriber = CreateSubscriber(mediatorMock);
+
+        await subscriber.HandleAsync(CreateMessage(operation: OperationType.Deleted), CancellationToken.None);
+
+        capturedCommand.Should().NotBeNull();
+        capturedCommand!.Items.Should().ContainSingle()
+            .Which.Value.Should().BeNull();
     }
 
     [Fact]
@@ -51,7 +74,9 @@ public sealed class ProjectionRetrySubscriberBaseTests
     {
         var mediatorMock = new Mock<IMediator>();
         mediatorMock
-            .Setup(x => x.Send(It.IsAny<ProjectionBulkCommand<TestProjectionItem>>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.Send(
+                It.IsAny<ProjectionBulkCommand<ProjectionCommandItem<TestProjectionValue>>>(),
+                It.IsAny<CancellationToken>()))
             .ReturnsAsync(FlowChatResult<Unit>.Failure(DomainError.UnExpected("bulk failed", FailureKind.Isolable)));
         var subscriber = CreateSubscriber(mediatorMock);
 
@@ -66,7 +91,9 @@ public sealed class ProjectionRetrySubscriberBaseTests
     {
         var mediatorMock = new Mock<IMediator>();
         mediatorMock
-            .Setup(x => x.Send(It.IsAny<ProjectionBulkCommand<TestProjectionItem>>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.Send(
+                It.IsAny<ProjectionBulkCommand<ProjectionCommandItem<TestProjectionValue>>>(),
+                It.IsAny<CancellationToken>()))
             .ReturnsAsync(FlowChatResult<Unit>.Failure(DomainError.UnExpected("bulk failed")));
         var subscriber = CreateSubscriber(mediatorMock);
 
@@ -82,27 +109,30 @@ public sealed class ProjectionRetrySubscriberBaseTests
 
         return new TestRetrySubscriber(
             mediatorMock.Object,
-            new TestProjectionCommandItemFactory(),
+            new TestProjectionValueFactory(),
             NullLogger.Instance);
     }
 
-    private static ProjectionIntegrationEvent<TestReadModel> CreateMessage(int sourceVersion = 1) =>
+    private static ProjectionIntegrationEvent<TestReadModel> CreateMessage(
+        int sourceVersion = 1,
+        OperationType operation = OperationType.Updated) =>
         new()
         {
             SourceAggregateId = Guid.NewGuid(),
             SourceAggregateVersion = sourceVersion,
             SourceAggregateCreatedAtUtc = DateTimeOffset.UtcNow,
             SourceAggregateModifiedAtUtc = DateTimeOffset.UtcNow,
-            Value = new TestReadModel("payload")
+            Value = new TestReadModel("payload"),
+            Operation = operation
         };
 
     private sealed class TestRetrySubscriber(
         IMediator mediator,
-        IProjectionCommandItemFactory<TestReadModel, TestProjectionItem> itemFactory,
+        IProjectionValueFactory<TestReadModel, TestProjectionValue> valueFactory,
         ILogger logger)
-        : ProjectionRetrySubscriberBase<TestReadModel, TestProjectionItem>(
+        : ProjectionRetrySubscriberBase<TestReadModel, TestProjectionValue>(
             mediator,
-            itemFactory,
+            valueFactory,
             logger)
     {
         public Task HandleAsync(
@@ -111,14 +141,14 @@ public sealed class ProjectionRetrySubscriberBaseTests
             HandleRetryAsync(message, cancellationToken);
     }
 
-    private sealed class TestProjectionCommandItemFactory
-        : IProjectionCommandItemFactory<TestReadModel, TestProjectionItem>
+    private sealed class TestProjectionValueFactory
+        : IProjectionValueFactory<TestReadModel, TestProjectionValue>
     {
-        public TestProjectionItem MapItem(ProjectionIntegrationEvent<TestReadModel> message) =>
-            new(message.SourceAggregateId, message.Value.Payload);
+        public TestProjectionValue MapValue(ProjectionIntegrationEvent<TestReadModel> message) =>
+            new(message.Value.Payload);
     }
 
-    private sealed record TestProjectionItem(Guid Id, string Payload);
+    private sealed record TestProjectionValue(string Payload);
 
     private sealed record TestReadModel(string Payload);
 }

@@ -9,3 +9,13 @@ public interface IProjectionCommandItem<TValue>
     DateTimeOffset SourceLastModifiedAtUtc { get; }
     DateTimeOffset? SourceDeletedAtUtc { get; }
 }
+
+public sealed record ProjectionCommandItem<TValue>(
+    Guid Id,
+    TValue? Value,
+    int SourceVersion,
+    DateTimeOffset SourceCreatedAtUtc,
+    DateTimeOffset SourceLastModifiedAtUtc,
+    DateTimeOffset? SourceDeletedAtUtc)
+    : IProjectionCommandItem<TValue>
+    where TValue : class;

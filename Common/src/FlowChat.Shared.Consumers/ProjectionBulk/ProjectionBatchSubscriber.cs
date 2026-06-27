@@ -10,15 +10,15 @@ namespace FlowChat.Shared.Consumers.ProjectionBulk;
 public sealed class ProjectionBatchSubscriber<TReadModel, TItem>(
     IMediator mediator,
     IPublisher publisher,
-    IProjectionCommandItemFactory<TReadModel, TItem> itemFactory,
+    IProjectionValueFactory<TReadModel, TItem> valueFactory,
     ILogger<ProjectionBatchSubscriber<TReadModel, TItem>> logger)
     : ProjectionBatchSubscriberBase<TReadModel, TItem>(
         mediator,
         publisher,
-        itemFactory,
+        valueFactory,
         logger)
     where TReadModel : class
-    where TItem : notnull
+    where TItem : class
 {
     [Subscribe]
     public Task HandleAsync(

@@ -3,19 +3,18 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FlowChat.Shared.Persistance.ProjectionBulk;
 
-public sealed class ProjectionBulkRepository<TDbContext, TItem, TValue, TEntity, TEntityFactory>(
+public sealed class ProjectionBulkRepository<TDbContext, TValue, TEntity, TEntityFactory>(
     TDbContext dbContext,
     TEntityFactory entityFactory)
-    : ProjectionBulkRepositoryBase<TDbContext, TItem, TValue, TEntity>(dbContext),
-        IProjectionBulkRepository<TItem>
+    : ProjectionBulkRepositoryBase<TDbContext, ProjectionCommandItem<TValue>, TValue, TEntity>(dbContext),
+        IProjectionBulkRepository<ProjectionCommandItem<TValue>>
     where TDbContext : DbContext
-    where TItem : notnull, IProjectionCommandItem<TValue>
     where TValue : class
     where TEntity : ReadModelEntityBase
-    where TEntityFactory : IProjectionBulkEntityFactory<TItem, TValue, TEntity>
+    where TEntityFactory : IProjectionBulkEntityFactory<TValue, TEntity>
 {
     public Task BulkUpsertOrSoftDeleteAsync(
-        IReadOnlyCollection<TItem> items,
+        IReadOnlyCollection<ProjectionCommandItem<TValue>> items,
         CancellationToken cancellationToken) =>
         BulkUpsertProjectionAsync(
             items,
@@ -36,7 +35,7 @@ public sealed class ProjectionBulkRepository<TDbContext, TItem, TValue, TEntity,
             sourceDeletedAtUtc);
 
     protected override TEntity CreateTombstoneEntity(
-        TItem item,
+        ProjectionCommandItem<TValue> item,
         DateTimeOffset now) =>
         entityFactory.CreateTombstoneEntity(item, now);
 }

@@ -1,5 +1,4 @@
 using FlowChat.HarnessService.Application.Features.Projections;
-using FlowChat.HarnessService.Application.Features.Projections.Commands.BulkUpsert;
 using FlowChat.HarnessService.Persistence.Entities.Projections;
 using FlowChat.HarnessService.Persistence.BulkUpsert.Projections;
 using FlowChat.Shared.Application;
@@ -27,11 +26,11 @@ public static class PersistenceServiceRegistration
 
         services.AddScoped<ProjectionTestBulkEntityFactory>();
         services.AddScoped<
-            IProjectionBulkEntityFactory<ProjectionCommandItem, ProjectionTestDto, ProjectionTestEntity>,
+            IProjectionBulkEntityFactory<ProjectionTestDto, ProjectionTestEntity>,
             ProjectionTestBulkEntityFactory>();
         services.AddScoped<
-            IProjectionBulkRepository<ProjectionCommandItem>,
-            ProjectionBulkRepository<AppDbContext, ProjectionCommandItem, ProjectionTestDto, ProjectionTestEntity, ProjectionTestBulkEntityFactory>>();
+            IProjectionBulkRepository<ProjectionCommandItem<ProjectionTestDto>>,
+            ProjectionBulkRepository<AppDbContext, ProjectionTestDto, ProjectionTestEntity, ProjectionTestBulkEntityFactory>>();
         services.AddScoped<IUnitOfWork, EfUnitOfWork<AppDbContext>>();
 
         return services;

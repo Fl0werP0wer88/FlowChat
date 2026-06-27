@@ -8,14 +8,14 @@ namespace FlowChat.Shared.Consumers.ProjectionBulk;
 
 public sealed class ProjectionRetrySubscriber<TReadModel, TItem>(
     IMediator mediator,
-    IProjectionCommandItemFactory<TReadModel, TItem> itemFactory,
+    IProjectionValueFactory<TReadModel, TItem> valueFactory,
     ILogger<ProjectionRetrySubscriber<TReadModel, TItem>> logger)
     : ProjectionRetrySubscriberBase<TReadModel, TItem>(
         mediator,
-        itemFactory,
+        valueFactory,
         logger)
     where TReadModel : class
-    where TItem : notnull
+    where TItem : class
 {
     [Subscribe]
     public Task HandleAsync(

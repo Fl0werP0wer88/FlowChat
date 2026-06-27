@@ -1,6 +1,5 @@
 using FlowChat.HarnessService.Application;
 using FlowChat.HarnessService.Application.Features.Projections;
-using FlowChat.HarnessService.Application.Features.Projections.Commands.BulkUpsert;
 using FlowChat.HarnessService.Consumers.Configuration.Settings;
 using FlowChat.HarnessService.Consumers.Kafka.Projections;
 using FlowChat.HarnessService.Consumers.Projections.Models;
@@ -44,16 +43,15 @@ public static class ConsumersServiceRegistration
                 bulkBuilder => bulkBuilder
                     .AddRepository<
                         AppDbContext,
-                        ProjectionCommandItem,
                         ProjectionTestDto,
                         ProjectionTestEntity,
                         ProjectionTestBulkEntityFactory>()
-                    .AddCommandHandler<ProjectionCommandItem>()
+                    .AddCommandHandler<ProjectionTestDto>()
                     .AddConsumer<
                         AppDbContext,
                         ProjectionTestReadModel,
-                        ProjectionCommandItem,
-                        ProjectionTestCommandItemFactory>());
+                        ProjectionTestDto,
+                        ProjectionTestValueFactory>());
 
         return services;
     }

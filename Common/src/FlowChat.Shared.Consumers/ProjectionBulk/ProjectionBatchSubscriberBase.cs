@@ -11,16 +11,16 @@ namespace FlowChat.Shared.Consumers.ProjectionBulk;
 public abstract class ProjectionBatchSubscriberBase<TReadModel, TItem>(
     IMediator mediator,
     IPublisher publisher,
-    IProjectionCommandItemFactory<TReadModel, TItem> itemFactory,
+    IProjectionValueFactory<TReadModel, TItem> valueFactory,
     ILogger logger)
     where TReadModel : class
-    where TItem : notnull
+    where TItem : class
 {
     protected async Task HandleBatchAsync(
         IAsyncEnumerable<ProjectionIntegrationEvent<TReadModel>> messages,
         CancellationToken cancellationToken)
     {
-        var items = new List<TItem>();
+        var items = new List<ProjectionCommandItem<TItem>>();
         var originalMessages = new List<ProjectionIntegrationEvent<TReadModel>>();
 
         await foreach (var message in messages.WithCancellation(cancellationToken))
@@ -28,7 +28,7 @@ public abstract class ProjectionBatchSubscriberBase<TReadModel, TItem>(
             ValidateMessage(message);
 
             originalMessages.Add(message);
-            items.Add(itemFactory.MapItem(message));
+            items.Add(MapItem(message));
         }
 
         if (items.Count == 0)
@@ -37,7 +37,7 @@ public abstract class ProjectionBatchSubscriberBase<TReadModel, TItem>(
             return;
         }
 
-        var result = await mediator.Send(new ProjectionBulkCommand<TItem>(items), cancellationToken);
+        var result = await mediator.Send(new ProjectionBulkCommand<ProjectionCommandItem<TItem>>(items), cancellationToken);
 
         if (result.IsSuccess)
         {
@@ -71,4 +71,15 @@ public abstract class ProjectionBatchSubscriberBase<TReadModel, TItem>(
         if (message.SourceAggregateVersion <= 0)
             throw new NonTransientException("Payload does not contain valid SourceVersion.");
     }
+
+    private ProjectionCommandItem<TItem> MapItem(ProjectionIntegrationEvent<TReadModel> message) =>
+        new(
+            message.SourceAggregateId,
+            message.Operation == OperationType.Deleted
+                ? null
+                : valueFactory.MapValue(message),
+            message.SourceAggregateVersion,
+            message.SourceAggregateCreatedAtUtc,
+            message.SourceAggregateModifiedAtUtc,
+            message.SourceAggregateDeletedAt);
 }

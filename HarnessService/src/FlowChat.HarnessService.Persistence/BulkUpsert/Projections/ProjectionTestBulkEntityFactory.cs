@@ -1,12 +1,12 @@
 using FlowChat.HarnessService.Application.Features.Projections;
-using FlowChat.HarnessService.Application.Features.Projections.Commands.BulkUpsert;
+using FlowChat.Shared.Application;
 using FlowChat.HarnessService.Persistence.Entities.Projections;
 using FlowChat.Shared.Persistance.ProjectionBulk;
 
 namespace FlowChat.HarnessService.Persistence.BulkUpsert.Projections;
 
 public sealed class ProjectionTestBulkEntityFactory
-    : IProjectionBulkEntityFactory<ProjectionCommandItem, ProjectionTestDto, ProjectionTestEntity>
+    : IProjectionBulkEntityFactory<ProjectionTestDto, ProjectionTestEntity>
 {
     public IReadOnlyList<string> UpdateByProperties { get; } = [nameof(ProjectionTestEntity.Id)];
 
@@ -27,7 +27,7 @@ public sealed class ProjectionTestBulkEntityFactory
         };
 
     public ProjectionTestEntity CreateTombstoneEntity(
-        ProjectionCommandItem item,
+        ProjectionCommandItem<ProjectionTestDto> item,
         DateTimeOffset now) =>
         new()
         {

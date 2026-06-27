@@ -9,10 +9,10 @@ namespace FlowChat.Shared.Consumers.ProjectionBulk;
 
 public abstract class ProjectionRetrySubscriberBase<TReadModel, TItem>(
     IMediator mediator,
-    IProjectionCommandItemFactory<TReadModel, TItem> itemFactory,
+    IProjectionValueFactory<TReadModel, TItem> valueFactory,
     ILogger logger)
     where TReadModel : class
-    where TItem : notnull
+    where TItem : class
 {
     protected async Task HandleRetryAsync(
         ProjectionIntegrationEvent<TReadModel> message,
@@ -20,8 +20,8 @@ public abstract class ProjectionRetrySubscriberBase<TReadModel, TItem>(
     {
         ValidateMessage(message);
 
-        var item = itemFactory.MapItem(message);
-        var result = await mediator.Send(new ProjectionBulkCommand<TItem>([item]), cancellationToken);
+        var item = MapItem(message);
+        var result = await mediator.Send(new ProjectionBulkCommand<ProjectionCommandItem<TItem>>([item]), cancellationToken);
 
         if (!result.IsSuccess)
         {
@@ -42,4 +42,15 @@ public abstract class ProjectionRetrySubscriberBase<TReadModel, TItem>(
         if (message.SourceAggregateVersion <= 0)
             throw new NonTransientException("Payload does not contain valid SourceVersion.");
     }
+
+    private ProjectionCommandItem<TItem> MapItem(ProjectionIntegrationEvent<TReadModel> message) =>
+        new(
+            message.SourceAggregateId,
+            message.Operation == OperationType.Deleted
+                ? null
+                : valueFactory.MapValue(message),
+            message.SourceAggregateVersion,
+            message.SourceAggregateCreatedAtUtc,
+            message.SourceAggregateModifiedAtUtc,
+            message.SourceAggregateDeletedAt);
 }

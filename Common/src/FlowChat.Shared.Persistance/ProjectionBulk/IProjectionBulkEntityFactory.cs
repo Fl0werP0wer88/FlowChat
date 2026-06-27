@@ -2,8 +2,7 @@ using FlowChat.Shared.Application;
 
 namespace FlowChat.Shared.Persistance.ProjectionBulk;
 
-public interface IProjectionBulkEntityFactory<TItem, TValue, TEntity>
-    where TItem : notnull, IProjectionCommandItem<TValue>
+public interface IProjectionBulkEntityFactory<TValue, TEntity>
     where TValue : class
     where TEntity : ReadModelEntityBase
 {
@@ -17,6 +16,6 @@ public interface IProjectionBulkEntityFactory<TItem, TValue, TEntity>
         DateTimeOffset? sourceDeletedAtUtc);
 
     TEntity CreateTombstoneEntity(
-        TItem item,
+        ProjectionCommandItem<TValue> item,
         DateTimeOffset now);
 }

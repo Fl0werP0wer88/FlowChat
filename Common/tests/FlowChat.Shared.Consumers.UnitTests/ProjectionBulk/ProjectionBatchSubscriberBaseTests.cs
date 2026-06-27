@@ -25,7 +25,9 @@ public sealed class ProjectionBatchSubscriberBaseTests
         await subscriber.HandleAsync(ToAsyncEnumerable([]), CancellationToken.None);
 
         mediatorMock.Verify(
-            x => x.Send(It.IsAny<ProjectionBulkCommand<TestProjectionItem>>(), It.IsAny<CancellationToken>()),
+            x => x.Send(
+                It.IsAny<ProjectionBulkCommand<ProjectionCommandItem<TestProjectionValue>>>(),
+                It.IsAny<CancellationToken>()),
             Times.Never);
         publisherMock.Verify(
             x => x.PublishAsync(It.IsAny<object>(), It.IsAny<CancellationToken>()),
@@ -47,12 +49,14 @@ public sealed class ProjectionBatchSubscriberBaseTests
     [Fact]
     public async Task HandleAsync_WhenCommandSucceeds_SendsBulkCommand()
     {
-        ProjectionBulkCommand<TestProjectionItem>? capturedCommand = null;
+        ProjectionBulkCommand<ProjectionCommandItem<TestProjectionValue>>? capturedCommand = null;
         var mediatorMock = new Mock<IMediator>();
         mediatorMock
-            .Setup(x => x.Send(It.IsAny<ProjectionBulkCommand<TestProjectionItem>>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.Send(
+                It.IsAny<ProjectionBulkCommand<ProjectionCommandItem<TestProjectionValue>>>(),
+                It.IsAny<CancellationToken>()))
             .Callback<IRequest<FlowChatResult<Unit>>, CancellationToken>((command, _) =>
-                capturedCommand = (ProjectionBulkCommand<TestProjectionItem>)command)
+                capturedCommand = (ProjectionBulkCommand<ProjectionCommandItem<TestProjectionValue>>)command)
             .ReturnsAsync(FlowChatResult<Unit>.Success(Unit.Value));
         var subscriber = CreateSubscriber(mediatorMock);
         var messages = new[] { CreateMessage(), CreateMessage() };
@@ -62,6 +66,29 @@ public sealed class ProjectionBatchSubscriberBaseTests
         capturedCommand.Should().NotBeNull();
         capturedCommand!.Items.Should().HaveCount(2);
         capturedCommand.Items.Select(x => x.Id).Should().Equal(messages.Select(x => x.SourceAggregateId));
+        capturedCommand.Items.Select(x => x.Value!.Payload).Should().Equal(messages.Select(x => x.Value.Payload));
+    }
+
+    [Fact]
+    public async Task HandleAsync_WhenMessageIsDelete_SendsItemWithNullValue()
+    {
+        ProjectionBulkCommand<ProjectionCommandItem<TestProjectionValue>>? capturedCommand = null;
+        var mediatorMock = new Mock<IMediator>();
+        mediatorMock
+            .Setup(x => x.Send(
+                It.IsAny<ProjectionBulkCommand<ProjectionCommandItem<TestProjectionValue>>>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<IRequest<FlowChatResult<Unit>>, CancellationToken>((command, _) =>
+                capturedCommand = (ProjectionBulkCommand<ProjectionCommandItem<TestProjectionValue>>)command)
+            .ReturnsAsync(FlowChatResult<Unit>.Success(Unit.Value));
+        var subscriber = CreateSubscriber(mediatorMock);
+        var message = CreateMessage(operation: OperationType.Deleted);
+
+        await subscriber.HandleAsync(ToAsyncEnumerable([message]), CancellationToken.None);
+
+        capturedCommand.Should().NotBeNull();
+        capturedCommand!.Items.Should().ContainSingle()
+            .Which.Value.Should().BeNull();
     }
 
     [Fact]
@@ -69,7 +96,9 @@ public sealed class ProjectionBatchSubscriberBaseTests
     {
         var mediatorMock = new Mock<IMediator>();
         mediatorMock
-            .Setup(x => x.Send(It.IsAny<ProjectionBulkCommand<TestProjectionItem>>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.Send(
+                It.IsAny<ProjectionBulkCommand<ProjectionCommandItem<TestProjectionValue>>>(),
+                It.IsAny<CancellationToken>()))
             .ReturnsAsync(FlowChatResult<Unit>.Failure(DomainError.UnExpected("bulk failed", FailureKind.Isolable)));
         var publisherMock = new Mock<IPublisher>();
         publisherMock
@@ -93,7 +122,9 @@ public sealed class ProjectionBatchSubscriberBaseTests
     {
         var mediatorMock = new Mock<IMediator>();
         mediatorMock
-            .Setup(x => x.Send(It.IsAny<ProjectionBulkCommand<TestProjectionItem>>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.Send(
+                It.IsAny<ProjectionBulkCommand<ProjectionCommandItem<TestProjectionValue>>>(),
+                It.IsAny<CancellationToken>()))
             .ReturnsAsync(FlowChatResult<Unit>.Failure(DomainError.UnExpected("bulk failed")));
         var subscriber = CreateSubscriber(mediatorMock);
 
@@ -113,18 +144,21 @@ public sealed class ProjectionBatchSubscriberBaseTests
         return new TestBatchSubscriber(
             mediatorMock.Object,
             publisherMock.Object,
-            new TestProjectionCommandItemFactory(),
+            new TestProjectionValueFactory(),
             NullLogger.Instance);
     }
 
-    private static ProjectionIntegrationEvent<TestReadModel> CreateMessage(int sourceVersion = 1) =>
+    private static ProjectionIntegrationEvent<TestReadModel> CreateMessage(
+        int sourceVersion = 1,
+        OperationType operation = OperationType.Updated) =>
         new()
         {
             SourceAggregateId = Guid.NewGuid(),
             SourceAggregateVersion = sourceVersion,
             SourceAggregateCreatedAtUtc = DateTimeOffset.UtcNow,
             SourceAggregateModifiedAtUtc = DateTimeOffset.UtcNow,
-            Value = new TestReadModel("payload")
+            Value = new TestReadModel("payload"),
+            Operation = operation
         };
 
     private static async IAsyncEnumerable<ProjectionIntegrationEvent<TestReadModel>> ToAsyncEnumerable(
@@ -140,12 +174,12 @@ public sealed class ProjectionBatchSubscriberBaseTests
     private sealed class TestBatchSubscriber(
         IMediator mediator,
         IPublisher publisher,
-        IProjectionCommandItemFactory<TestReadModel, TestProjectionItem> itemFactory,
+        IProjectionValueFactory<TestReadModel, TestProjectionValue> valueFactory,
         ILogger logger)
-        : ProjectionBatchSubscriberBase<TestReadModel, TestProjectionItem>(
+        : ProjectionBatchSubscriberBase<TestReadModel, TestProjectionValue>(
             mediator,
             publisher,
-            itemFactory,
+            valueFactory,
             logger)
     {
         public Task HandleAsync(
@@ -154,14 +188,14 @@ public sealed class ProjectionBatchSubscriberBaseTests
             HandleBatchAsync(messages, cancellationToken);
     }
 
-    private sealed class TestProjectionCommandItemFactory
-        : IProjectionCommandItemFactory<TestReadModel, TestProjectionItem>
+    private sealed class TestProjectionValueFactory
+        : IProjectionValueFactory<TestReadModel, TestProjectionValue>
     {
-        public TestProjectionItem MapItem(ProjectionIntegrationEvent<TestReadModel> message) =>
-            new(message.SourceAggregateId, message.Value.Payload);
+        public TestProjectionValue MapValue(ProjectionIntegrationEvent<TestReadModel> message) =>
+            new(message.Value.Payload);
     }
 
-    private sealed record TestProjectionItem(Guid Id, string Payload);
+    private sealed record TestProjectionValue(string Payload);
 
     private sealed record TestReadModel(string Payload);
 }

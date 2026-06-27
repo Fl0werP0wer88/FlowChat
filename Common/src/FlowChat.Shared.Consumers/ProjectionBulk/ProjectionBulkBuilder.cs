@@ -21,45 +21,44 @@ public sealed class ProjectionBulkBuilder(
     string mainConsumerName,
     string retryConsumerName)
 {
-    public ProjectionBulkBuilder AddRepository<TDbContext, TItem, TValue, TEntity, TEntityFactory>()
+    public ProjectionBulkBuilder AddRepository<TDbContext, TValue, TEntity, TEntityFactory>()
         where TDbContext : DbContext
-        where TItem : notnull, IProjectionCommandItem<TValue>
         where TValue : class
         where TEntity : ReadModelEntityBase
-        where TEntityFactory : class, IProjectionBulkEntityFactory<TItem, TValue, TEntity>
+        where TEntityFactory : class, IProjectionBulkEntityFactory<TValue, TEntity>
     {
         silverbackBuilder.Services.AddScoped<TEntityFactory>();
         silverbackBuilder.Services.AddScoped<
-            IProjectionBulkEntityFactory<TItem, TValue, TEntity>,
+            IProjectionBulkEntityFactory<TValue, TEntity>,
             TEntityFactory>();
         silverbackBuilder.Services.AddScoped<
-            IProjectionBulkRepository<TItem>,
-            ProjectionBulkRepository<TDbContext, TItem, TValue, TEntity, TEntityFactory>>();
+            IProjectionBulkRepository<ProjectionCommandItem<TValue>>,
+            ProjectionBulkRepository<TDbContext, TValue, TEntity, TEntityFactory>>();
 
         return this;
     }
 
-    public ProjectionBulkBuilder AddCommandHandler<TItem>()
-        where TItem : notnull
+    public ProjectionBulkBuilder AddCommandHandler<TValue>()
+        where TValue : class
     {
         silverbackBuilder.Services.AddScoped<IProjectionOffsetStore, SilverbackProjectionOffsetStore>();
         silverbackBuilder.Services.AddScoped<
-            IRequestHandler<ProjectionBulkCommand<TItem>, FlowChatResult<Unit>>,
+            IRequestHandler<ProjectionBulkCommand<ProjectionCommandItem<TValue>>, FlowChatResult<Unit>>,
             ProjectionBulkCommandHandlerBaseV2<
-                ProjectionBulkCommand<TItem>,
-                TItem,
-                IProjectionBulkRepository<TItem>>>();
+                ProjectionBulkCommand<ProjectionCommandItem<TValue>>,
+                ProjectionCommandItem<TValue>,
+                IProjectionBulkRepository<ProjectionCommandItem<TValue>>>>();
 
         return this;
     }
 
-    public ProjectionBulkBuilder AddConsumer<TDbContext, TReadModel, TItem, TItemFactory>()
+    public ProjectionBulkBuilder AddConsumer<TDbContext, TReadModel, TValue, TValueFactory>()
         where TDbContext : DbContext
         where TReadModel : class
-        where TItem : notnull
-        where TItemFactory : class, IProjectionCommandItemFactory<TReadModel, TItem>
+        where TValue : class
+        where TValueFactory : class, IProjectionValueFactory<TReadModel, TValue>
     {
-        silverbackBuilder.Services.AddScoped<IProjectionCommandItemFactory<TReadModel, TItem>, TItemFactory>();
+        silverbackBuilder.Services.AddScoped<IProjectionValueFactory<TReadModel, TValue>, TValueFactory>();
 
         silverbackBuilder
             .WithConnectionToMessageBroker(broker => broker
@@ -93,12 +92,12 @@ public sealed class ProjectionBulkBuilder(
                             .ProduceTo(options.DeadLetterTopic)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())));
             })
-            .AddScopedSubscriber<ProjectionBatchSubscriber<TReadModel, TItem>>(
+            .AddScopedSubscriber<ProjectionBatchSubscriber<TReadModel, TValue>>(
                 new TypeSubscriptionOptions
                 {
                     Filters = [new ConsumerNameFilterAttribute(mainConsumerName)]
                 })
-            .AddScopedSubscriber<ProjectionRetrySubscriber<TReadModel, TItem>>(
+            .AddScopedSubscriber<ProjectionRetrySubscriber<TReadModel, TValue>>(
                 new TypeSubscriptionOptions
                 {
                     Filters = [new ConsumerNameFilterAttribute(retryConsumerName)]
