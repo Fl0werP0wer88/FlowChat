@@ -1,10 +1,9 @@
-using FlowChat.Shared.Infrastructure.Silverback.Kafka;
-
 using FlowChat.Core.Contracts;
+using FlowChat.Shared.Consumers.ProjectionBulk;
 
 namespace FlowChat.PresenceService.Consumers.Configuration.Settings;
 
-public sealed class SocialGraphContactConsumerSettingsSection : SettingsSectionBase, IRetryableKafkaConsumerSettingsSection
+public sealed class SocialGraphContactConsumerSettingsSection : SettingsSectionBase, IProjectionBulkConsumerSettingsSection
 {
     public override string SectionName => "Kafka:SocialGraphContactConsumer";
 

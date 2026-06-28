@@ -1,9 +1,11 @@
 using FlowChat.Core.Exceptions;
 using FlowChat.Core.Messaging;
 using FlowChat.PresenceService.Application.Features.ContactObserverProjections;
-using FlowChat.PresenceService.Application.Features.ContactObserverProjections.Commands.BulkUpsertOrDeleteUserContactProjection;
 using FlowChat.PresenceService.Persistence;
-using FlowChat.PresenceService.Persistence.BulkUpsert;
+using FlowChat.PresenceService.Persistence.BulkUpsert.Projections;
+using FlowChat.PresenceService.Persistence.Entities;
+using FlowChat.Shared.Application;
+using FlowChat.Shared.Persistance.ProjectionBulk;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 
@@ -13,7 +15,7 @@ public sealed class ContactObserverProjectionBulkRepositoryTests : IDisposable
 {
     private readonly SqliteConnection _connection;
     private readonly AppDbContext _dbContext;
-    private readonly ContactObserverProjectionBulkRepository _repository;
+    private readonly ProjectionBulkRepository<AppDbContext, ContactObserverProjectionDto, ContactObserverReadModelEntity, ContactObserverProjectionBulkEntityFactory> _repository;
 
     public ContactObserverProjectionBulkRepositoryTests()
     {
@@ -26,7 +28,9 @@ public sealed class ContactObserverProjectionBulkRepositoryTests : IDisposable
 
         _dbContext = new AppDbContext(options);
         _dbContext.Database.EnsureCreated();
-        _repository = new ContactObserverProjectionBulkRepository(_dbContext);
+        _repository = new ProjectionBulkRepository<AppDbContext, ContactObserverProjectionDto, ContactObserverReadModelEntity, ContactObserverProjectionBulkEntityFactory>(
+            _dbContext,
+            new ContactObserverProjectionBulkEntityFactory());
     }
 
     public void Dispose()
@@ -147,14 +151,14 @@ public sealed class ContactObserverProjectionBulkRepositoryTests : IDisposable
         await act.Should().ThrowAsync<IsolableException>();
     }
 
-    private async Task SaveAsync(UserContactProjectionCommandItem item)
+    private async Task SaveAsync(ProjectionCommandItem<ContactObserverProjectionDto> item)
     {
         await _repository.BulkUpsertOrSoftDeleteAsync([item], CancellationToken.None);
         await _dbContext.SaveChangesAsync();
         _dbContext.ChangeTracker.Clear();
     }
 
-    private static UserContactProjectionCommandItem CreateUpsertItem(
+    private static ProjectionCommandItem<ContactObserverProjectionDto> CreateUpsertItem(
         Guid observedUserId,
         Guid observerUserId,
         int sourceVersion,
@@ -173,7 +177,7 @@ public sealed class ContactObserverProjectionBulkRepositoryTests : IDisposable
             DateTimeOffset.UtcNow,
             null);
 
-    private static UserContactProjectionCommandItem CreateDeleteItem(
+    private static ProjectionCommandItem<ContactObserverProjectionDto> CreateDeleteItem(
         Guid observedUserId,
         Guid observerUserId,
         int sourceVersion) =>

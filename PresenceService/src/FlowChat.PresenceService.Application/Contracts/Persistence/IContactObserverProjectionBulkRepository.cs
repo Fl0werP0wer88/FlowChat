@@ -1,7 +1,0 @@
-using FlowChat.PresenceService.Application.Features.ContactObserverProjections.Commands.BulkUpsertOrDeleteUserContactProjection;
-using FlowChat.Shared.Application;
-
-namespace FlowChat.PresenceService.Application.Contracts.Persistence;
-
-public interface IContactObserverProjectionBulkRepository
-    : IProjectionBulkRepository<UserContactProjectionCommandItem>;
