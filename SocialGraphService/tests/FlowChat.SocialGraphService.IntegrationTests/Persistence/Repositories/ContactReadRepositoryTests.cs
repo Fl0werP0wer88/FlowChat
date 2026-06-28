@@ -1,4 +1,3 @@
-using FlowChat.Shared.Persistance.Auditing;
 using FlowChat.SocialGraphService.Persistence;
 using FlowChat.SocialGraphService.Persistence.Entities;
 using FlowChat.SocialGraphService.Persistence.Repositories;
@@ -86,7 +85,6 @@ public sealed class ContactReadRepositoryTests
     {
         var options = new DbContextOptionsBuilder<AppDbContext>()
             .UseInMemoryDatabase(databaseName)
-            .AddInterceptors(new EntityBaseSaveChangesInterceptor())
             .Options;
 
         var context = new AppDbContext(options);

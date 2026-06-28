@@ -74,12 +74,10 @@ public sealed class UserProfileApiFactory : WebApplicationFactory<CreateInitialU
             services.RemoveAll<IDbContextOptionsConfiguration<AppDbContext>>();
 
             services.AddDbContext<AppDbContext>((sp, options) =>
-                options.UseSqlite(_connection)
-                    .AddInterceptors(sp.GetRequiredService<FlowChat.Shared.Persistance.Auditing.EntityBaseSaveChangesInterceptor>()));
+                options.UseSqlite(_connection));
 
             services.AddDbContextFactory<AppDbContext>((sp, options) =>
-                options.UseSqlite(_connection)
-                    .AddInterceptors(sp.GetRequiredService<FlowChat.Shared.Persistance.Auditing.EntityBaseSaveChangesInterceptor>()),
+                options.UseSqlite(_connection),
                 ServiceLifetime.Scoped);
 
             // Replace IOutboxIntegrationEventPublisher with recording stub

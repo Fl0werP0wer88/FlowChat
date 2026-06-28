@@ -1,6 +1,5 @@
 using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
-using FlowChat.Shared.Persistance.Auditing;
 using FlowChat.UserProfileService.Domain.Entities.EmailVerificationProcess;
 using FlowChat.UserProfileService.Domain.Entities.EmailVerificationRequest;
 using FlowChat.UserProfileService.Domain.Entities.UserProfile;
@@ -136,7 +135,6 @@ public sealed class EmailVerificationProcessWriteRepositoryTests
     {
         var options = new DbContextOptionsBuilder<AppDbContext>()
             .UseSqlite(connection)
-            .AddInterceptors(new EntityBaseSaveChangesInterceptor())
             .Options;
 
         var context = new AppDbContext(options);

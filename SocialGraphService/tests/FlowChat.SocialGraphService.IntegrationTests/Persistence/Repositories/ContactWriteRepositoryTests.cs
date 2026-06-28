@@ -1,5 +1,4 @@
 using FlowChat.Shared.Domain;
-using FlowChat.Shared.Persistance.Auditing;
 using FlowChat.SocialGraphService.Domain.Entities.Contact;
 using FlowChat.SocialGraphService.Persistence;
 using FlowChat.SocialGraphService.Persistence.Repositories;
@@ -52,7 +51,6 @@ public sealed class ContactWriteRepositoryTests
     {
         var options = new DbContextOptionsBuilder<AppDbContext>()
             .UseSqlite(connection)
-            .AddInterceptors(new EntityBaseSaveChangesInterceptor())
             .Options;
 
         var context = new AppDbContext(options);

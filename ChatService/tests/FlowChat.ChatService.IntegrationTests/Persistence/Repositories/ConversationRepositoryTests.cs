@@ -2,7 +2,6 @@ using FlowChat.ChatService.Domain.Entities.Conversation;
 using FlowChat.ChatService.Persistence;
 using FlowChat.Shared.Domain;
 using FlowChat.ChatService.Persistence.Repositories;
-using FlowChat.Shared.Persistance.Auditing;
 using FluentAssertions;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
@@ -96,7 +95,6 @@ public sealed class ConversationRepositoryTests
     {
         var options = new DbContextOptionsBuilder<AppDbContext>()
             .UseSqlite(connection)
-            .AddInterceptors(new EntityBaseSaveChangesInterceptor())
             .Options;
 
         var context = new AppDbContext(options);

@@ -1,7 +1,6 @@
 ﻿using FlowChat.PresenceService.API.Features.Presence.Public.ChangePresenceStatus;
 using FlowChat.PresenceService.Application.Contracts.Infrastructure;
 using FlowChat.PresenceService.Persistence;
-using FlowChat.Shared.Persistance.Auditing;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -53,12 +52,10 @@ public sealed class PresenceApiFactory : WebApplicationFactory<ChangePresenceSta
             services.RemoveAll<IDbContextOptionsConfiguration<AppDbContext>>();
 
             services.AddDbContext<AppDbContext>((serviceProvider, options) => options
-                .UseSqlite(_connection)
-                .AddInterceptors(serviceProvider.GetRequiredService<EntityBaseSaveChangesInterceptor>()));
+                .UseSqlite(_connection));
             services.AddDbContextFactory<AppDbContext>(
                 (serviceProvider, options) => options
-                    .UseSqlite(_connection)
-                    .AddInterceptors(serviceProvider.GetRequiredService<EntityBaseSaveChangesInterceptor>()),
+                    .UseSqlite(_connection),
                 ServiceLifetime.Scoped);
 
             services.RemoveAll<IOutboxIntegrationEventPublisher>();
@@ -98,7 +95,6 @@ public sealed class PresenceApiFactory : WebApplicationFactory<ChangePresenceSta
 
         var options = new DbContextOptionsBuilder<AppDbContext>()
             .UseSqlite(_connection)
-            .AddInterceptors(new EntityBaseSaveChangesInterceptor())
             .Options;
 
         await using (var db = new AppDbContext(options))

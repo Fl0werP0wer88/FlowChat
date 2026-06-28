@@ -1,7 +1,6 @@
 using FlowChat.ChatService.Persistence;
 using FlowChat.ChatService.Persistence.Entities;
 using FlowChat.ChatService.Persistence.Repositories;
-using FlowChat.Shared.Persistance.Auditing;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 
@@ -94,7 +93,6 @@ public sealed class ChatMessageReadRepositoryTests
     {
         var options = new DbContextOptionsBuilder<AppDbContext>()
             .UseInMemoryDatabase(databaseName)
-            .AddInterceptors(new EntityBaseSaveChangesInterceptor())
             .Options;
 
         var context = new AppDbContext(options);

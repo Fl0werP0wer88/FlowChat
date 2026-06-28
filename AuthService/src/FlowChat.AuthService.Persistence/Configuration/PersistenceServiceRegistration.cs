@@ -1,7 +1,6 @@
 using FlowChat.Shared.Application;
 using FlowChat.AuthService.Application.Contracts.Persistence;
 using FlowChat.Shared.Infrastructure.Silverback.Persistence;
-using FlowChat.Shared.Persistance.Auditing;
 using FlowChat.AuthService.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -14,15 +13,12 @@ public static class PersistenceServiceRegistration
     public static IServiceCollection AddAPIPersistenceServices(
                             this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddScoped<EntityBaseSaveChangesInterceptor>();
         services.AddScoped<IUnitOfWork, SilverbackEfUnitOfWork<AppDbContext>>();
 
         services.AddDbContext<AppDbContext>((serviceProvider, options) =>
-            options.UseNpgsql(configuration.GetConnectionString("AuthDb"))
-                .AddInterceptors(serviceProvider.GetRequiredService<EntityBaseSaveChangesInterceptor>()));
+            options.UseNpgsql(configuration.GetConnectionString("AuthDb")));
         services.AddDbContextFactory<AppDbContext>(
-            (serviceProvider, options) => options.UseNpgsql(configuration.GetConnectionString("AuthDb"))
-                .AddInterceptors(serviceProvider.GetRequiredService<EntityBaseSaveChangesInterceptor>()),
+            (serviceProvider, options) => options.UseNpgsql(configuration.GetConnectionString("AuthDb")),
             ServiceLifetime.Scoped);
 
         services.AddScoped<IAccountRepository, AccountRepository>();
@@ -33,13 +29,10 @@ public static class PersistenceServiceRegistration
     public static IServiceCollection AddWorkerPersistenceServices(
                             this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddScoped<EntityBaseSaveChangesInterceptor>();
         services.AddDbContext<AppDbContext>((serviceProvider, options) =>
-            options.UseNpgsql(configuration.GetConnectionString("AuthDb"))
-                .AddInterceptors(serviceProvider.GetRequiredService<EntityBaseSaveChangesInterceptor>()));
+            options.UseNpgsql(configuration.GetConnectionString("AuthDb")));
         services.AddDbContextFactory<AppDbContext>(
-            (serviceProvider, options) => options.UseNpgsql(configuration.GetConnectionString("AuthDb"))
-                .AddInterceptors(serviceProvider.GetRequiredService<EntityBaseSaveChangesInterceptor>()),
+            (serviceProvider, options) => options.UseNpgsql(configuration.GetConnectionString("AuthDb")),
             ServiceLifetime.Scoped);
 
         return services;

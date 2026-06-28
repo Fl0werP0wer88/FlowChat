@@ -1,6 +1,5 @@
 using FlowChat.Shared.Domain;
 using FlowChat.Shared.Persistance;
-using FlowChat.Shared.Persistance.Auditing;
 using FlowChat.SocialGraphService.Domain.Entities.Contact;
 using FlowChat.SocialGraphService.Persistence;
 using Microsoft.Data.Sqlite;
@@ -80,7 +79,6 @@ public sealed class UnitOfWorkTests
     {
         var options = new DbContextOptionsBuilder<AppDbContext>()
             .UseSqlite(connection)
-            .AddInterceptors(new EntityBaseSaveChangesInterceptor())
             .Options;
 
         var context = new AppDbContext(options);

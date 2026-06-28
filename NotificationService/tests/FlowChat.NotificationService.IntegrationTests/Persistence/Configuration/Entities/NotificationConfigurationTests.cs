@@ -4,7 +4,6 @@ using FlowChat.NotificationService.Domain.Enums;
 using FlowChat.NotificationService.Persistence;
 using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
-using FlowChat.Shared.Persistance.Auditing;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 
@@ -19,7 +18,6 @@ public sealed class NotificationConfigurationTests : IDisposable
     {
         var options = new DbContextOptionsBuilder<AppDbContext>()
             .UseInMemoryDatabase(_fixture.Create<Guid>().ToString("N"))
-            .AddInterceptors(new EntityBaseSaveChangesInterceptor())
             .Options;
 
         _dbContext = new AppDbContext(options);
