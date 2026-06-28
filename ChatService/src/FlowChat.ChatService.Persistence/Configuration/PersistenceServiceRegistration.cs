@@ -32,7 +32,7 @@ public static class PersistenceServiceRegistration
 
     public static IServiceCollection AddWorkerPersistenceServices(this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddScoped<IUnitOfWork, SilverbackEfUnitOfWork<AppDbContext>>();
+        services.AddScoped<IUnitOfWork, SilverbackKafkaOffsetUnitOfWork<AppDbContext>>();
         services.AddDbContext<AppDbContext>((serviceProvider, options) =>
             options.UseNpgsql(configuration.GetConnectionString("ChatDb")));
         services.AddDbContextFactory<AppDbContext>(

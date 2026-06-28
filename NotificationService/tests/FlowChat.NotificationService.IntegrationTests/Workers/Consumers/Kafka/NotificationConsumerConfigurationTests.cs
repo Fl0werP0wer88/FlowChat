@@ -72,7 +72,7 @@ public sealed class NotificationConsumerConfigurationTests
 
         scope.ServiceProvider.GetRequiredService<IMediator>().Should().NotBeNull();
         scope.ServiceProvider.GetRequiredService<INotificationWriteRepository>().Should().NotBeNull();
-        scope.ServiceProvider.GetRequiredService<IUnitOfWork>().Should().NotBeNull();
+        scope.ServiceProvider.GetRequiredService<IUnitOfWork>().Should().BeAssignableTo<IConsumedOffsetCommitter>();
         scope.ServiceProvider.GetRequiredService<INotificationSender>().Should().NotBeNull();
     }
 

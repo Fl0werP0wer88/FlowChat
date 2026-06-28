@@ -120,10 +120,6 @@ public sealed class ProjectionBulkServiceCollectionExtensionsTests
                 bulkBuilder => bulkBuilder.AddCommandHandler<TestProjectionValue>());
 
         services.Should().ContainSingle(descriptor =>
-            descriptor.ServiceType == typeof(IProjectionOffsetStore)
-            && descriptor.ImplementationType == typeof(SilverbackProjectionOffsetStore));
-
-        services.Should().ContainSingle(descriptor =>
             descriptor.ServiceType == typeof(IRequestHandler<ProjectionBulkCommand<ProjectionCommandItem<TestProjectionValue>>, FlowChatResult<Unit>>)
             && descriptor.ImplementationType == typeof(ProjectionBulkCommandHandlerBaseV2<
                 ProjectionBulkCommand<ProjectionCommandItem<TestProjectionValue>>,

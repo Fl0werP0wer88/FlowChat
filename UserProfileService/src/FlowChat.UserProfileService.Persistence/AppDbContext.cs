@@ -5,6 +5,7 @@ using FlowChat.UserProfileService.Persistence.Entities;
 using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Silverback.Messaging.Consuming.KafkaOffsetStore;
 using Silverback.Messaging.Producing.TransactionalOutbox;
 
 namespace FlowChat.UserProfileService.Persistence;
@@ -33,6 +34,7 @@ public class AppDbContext : DbContext, IDataProtectionKeyContext
     public DbSet<EmailVerificationProcess> EmailVerificationProcesses { get; set; }
     public DbSet<DataProtectionKey> DataProtectionKeys { get; set; } = null!;
     public DbSet<SilverbackOutboxMessage> SilverbackOutboxMessages => Set<SilverbackOutboxMessage>();
+    public DbSet<SilverbackStoredOffset> SilverbackStoredOffsets => Set<SilverbackStoredOffset>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

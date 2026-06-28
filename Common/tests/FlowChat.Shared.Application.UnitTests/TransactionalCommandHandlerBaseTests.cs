@@ -24,6 +24,31 @@ public sealed class TransactionalCommandHandlerBaseTests
     }
 
     [Fact]
+    public async Task Handle_WhenCommandSucceedsAndUnitOfWorkCommitsOffsets_CommitsConsumedOffsetsInsideTransaction()
+    {
+        var executionOrder = new List<string>();
+        var unitOfWorkMock = CreateUnitOfWorkMock(executionOrder: executionOrder);
+        unitOfWorkMock
+            .As<IConsumedOffsetCommitter>()
+            .Setup(x => x.CommitConsumedOffsetsAsync(It.IsAny<CancellationToken>()))
+            .Callback(() => executionOrder.Add("offset"))
+            .Returns(Task.CompletedTask);
+
+        var handler = new TestTransactionalCommandHandler(
+            unitOfWorkMock.Object,
+            (_, _) =>
+            {
+                executionOrder.Add("handler");
+                return Task.FromResult(FlowChatResult<Guid>.Success(Guid.NewGuid()));
+            });
+
+        var result = await handler.Handle(new TestTransactionalCommand(), CancellationToken.None);
+
+        result.IsSuccess.Should().BeTrue();
+        executionOrder.Should().Equal("transaction-start", "handler", "offset", "transaction-end");
+    }
+
+    [Fact]
     public async Task Handle_WhenCommandFails_ReturnsFailureResultWithoutThrowing()
     {
         var failure = FlowChatResult<Guid>.Failure(DomainError.Conflict("already exists"));
@@ -37,6 +62,28 @@ public sealed class TransactionalCommandHandlerBaseTests
         result.IsFailure.Should().BeTrue();
         result.Error.ErrorType.Should().Be(ErrorType.Conflict);
         result.Error.ErrorMessage.Should().Contain("already exists");
+    }
+
+    [Fact]
+    public async Task Handle_WhenCommandFails_DoesNotCommitConsumedOffsets()
+    {
+        var failure = FlowChatResult<Guid>.Failure(DomainError.Conflict("already exists"));
+        var unitOfWorkMock = CreateUnitOfWorkMock();
+        unitOfWorkMock
+            .As<IConsumedOffsetCommitter>()
+            .Setup(x => x.CommitConsumedOffsetsAsync(It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        var handler = new TestTransactionalCommandHandler(
+            unitOfWorkMock.Object,
+            (_, _) => Task.FromResult(failure));
+
+        var result = await handler.Handle(new TestTransactionalCommand(), CancellationToken.None);
+
+        result.IsFailure.Should().BeTrue();
+        unitOfWorkMock
+            .As<IConsumedOffsetCommitter>()
+            .Verify(x => x.CommitConsumedOffsetsAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -106,7 +153,9 @@ public sealed class TransactionalCommandHandlerBaseTests
         exception.Which.Should().BeSameAs(dbUpdateException);
     }
 
-    private static Mock<IUnitOfWork> CreateUnitOfWorkMock(Exception? exceptionToThrow = null)
+    private static Mock<IUnitOfWork> CreateUnitOfWorkMock(
+        Exception? exceptionToThrow = null,
+        List<string>? executionOrder = null)
     {
         var unitOfWorkMock = new Mock<IUnitOfWork>();
         unitOfWorkMock
@@ -116,11 +165,13 @@ public sealed class TransactionalCommandHandlerBaseTests
             .Returns<Func<CancellationToken, Task<FlowChatResult<Guid>>>, CancellationToken>(
                 async (operation, cancellationToken) =>
                 {
+                    executionOrder?.Add("transaction-start");
                     var result = await operation(cancellationToken);
                     if (exceptionToThrow is not null)
                     {
                         throw exceptionToThrow;
                     }
+                    executionOrder?.Add("transaction-end");
                     return result;
                 });
 

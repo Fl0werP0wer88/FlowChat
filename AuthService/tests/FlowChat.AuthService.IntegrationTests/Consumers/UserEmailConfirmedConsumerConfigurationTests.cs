@@ -42,6 +42,7 @@ public sealed class UserEmailConfirmedConsumerConfigurationTests
         mediator.Should().NotBeNull();
         accountRepository.Should().NotBeNull();
         unitOfWork.Should().NotBeNull();
+        unitOfWork.Should().BeAssignableTo<IConsumedOffsetCommitter>();
         passwordHashingService.Should().NotBeNull();
     }
 

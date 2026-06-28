@@ -14,16 +14,39 @@ public static class PersistenceServiceRegistration
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        services.AddDbContext<AppDbContext>((serviceProvider, options) =>
-            options.UseNpgsql(configuration.GetConnectionString("SocialGraphDb")));
-        services.AddDbContextFactory<AppDbContext>(
-            (serviceProvider, options) => options.UseNpgsql(configuration.GetConnectionString("SocialGraphDb")),
-            ServiceLifetime.Scoped);
+        services.AddDbContextServices(configuration);
 
         services.AddScoped<IContactWriteRepository, ContactWriteRepository>();
         services.AddScoped<IContactReadRepository, ContactReadRepository>();
         services.AddScoped<IUserProfileProjectionReadRepository, UserProfileProjectionReadRepository>();
         services.AddScoped<IUnitOfWork, SilverbackEfUnitOfWork<AppDbContext>>();
+
+        return services;
+    }
+
+    public static IServiceCollection AddWorkerPersistenceServices(
+        this IServiceCollection services,
+        IConfiguration configuration)
+    {
+        services.AddDbContextServices(configuration);
+
+        services.AddScoped<IContactWriteRepository, ContactWriteRepository>();
+        services.AddScoped<IContactReadRepository, ContactReadRepository>();
+        services.AddScoped<IUserProfileProjectionReadRepository, UserProfileProjectionReadRepository>();
+        services.AddScoped<IUnitOfWork, SilverbackKafkaOffsetUnitOfWork<AppDbContext>>();
+
+        return services;
+    }
+
+    private static IServiceCollection AddDbContextServices(
+        this IServiceCollection services,
+        IConfiguration configuration)
+    {
+        services.AddDbContext<AppDbContext>((serviceProvider, options) =>
+            options.UseNpgsql(configuration.GetConnectionString("SocialGraphDb")));
+        services.AddDbContextFactory<AppDbContext>(
+            (serviceProvider, options) => options.UseNpgsql(configuration.GetConnectionString("SocialGraphDb")),
+            ServiceLifetime.Scoped);
 
         return services;
     }

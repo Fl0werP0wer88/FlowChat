@@ -35,14 +35,12 @@ public sealed class SocialGraphContactConsumerConfigurationTests
             .GetRequiredService<IProjectionBulkRepository<ProjectionCommandItem<ContactObserverProjectionDto>>>();
         var commandHandler = scope.ServiceProvider
             .GetRequiredService<IRequestHandler<ProjectionBulkCommand<ProjectionCommandItem<ContactObserverProjectionDto>>, FlowChat.Core.Results.FlowChatResult<Unit>>>();
-        var offsetStore = scope.ServiceProvider.GetRequiredService<IProjectionOffsetStore>();
         var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
 
         consumerCollection.Should().NotBeNull();
         bulkRepository.Should().NotBeNull();
         commandHandler.Should().NotBeNull();
-        offsetStore.Should().NotBeNull();
-        unitOfWork.Should().NotBeNull();
+        unitOfWork.Should().BeAssignableTo<IConsumedOffsetCommitter>();
     }
 
     [Fact]

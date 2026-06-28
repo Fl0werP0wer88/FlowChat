@@ -41,7 +41,6 @@ public sealed class ProjectionBulkBuilder(
     public ProjectionBulkBuilder AddCommandHandler<TValue>()
         where TValue : class
     {
-        silverbackBuilder.Services.AddScoped<IProjectionOffsetStore, SilverbackProjectionOffsetStore>();
         silverbackBuilder.Services.AddScoped<
             IRequestHandler<ProjectionBulkCommand<ProjectionCommandItem<TValue>>, FlowChatResult<Unit>>,
             ProjectionBulkCommandHandlerBaseV2<

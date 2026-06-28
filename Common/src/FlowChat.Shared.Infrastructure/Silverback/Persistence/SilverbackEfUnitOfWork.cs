@@ -6,7 +6,8 @@ using Silverback.Storage;
 
 namespace FlowChat.Shared.Infrastructure.Silverback.Persistence;
 
-public sealed class SilverbackEfUnitOfWork<TDbContext>(
+//ToDo: This one suppose to be used on Api not subscriber.Consider naming change.
+public class SilverbackEfUnitOfWork<TDbContext>(
     TDbContext dbContext,
     ISilverbackContext silverbackContext)
     : EfUnitOfWork<TDbContext>(dbContext)

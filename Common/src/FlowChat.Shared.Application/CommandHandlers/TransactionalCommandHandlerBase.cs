@@ -19,7 +19,17 @@ public abstract class TransactionalCommandHandlerBase<TCommand, TValue>
         TCommand request,
         CancellationToken cancellationToken)
         => _unitOfWork.ExecuteCommandInTransactionAsync(
-            token => HandleInTransactionAsync(request, token),
+            async token =>
+            {
+                var result = await HandleInTransactionAsync(request, token);
+
+                if (result.IsSuccess && _unitOfWork is IConsumedOffsetCommitter offsetCommitter)
+                {
+                    await offsetCommitter.CommitConsumedOffsetsAsync(token);
+                }
+
+                return result;
+            },
             cancellationToken);
 
     protected abstract Task<FlowChatResult<TValue>> HandleInTransactionAsync(

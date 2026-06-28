@@ -14,16 +14,39 @@ public static class PersistenceServiceRegistration
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        services.AddDbContext<AppDbContext>((serviceProvider, options) =>
-            options.UseNpgsql(configuration.GetConnectionString("PresenceDb")));
-        services.AddDbContextFactory<AppDbContext>(
-            (serviceProvider, options) => options.UseNpgsql(configuration.GetConnectionString("PresenceDb")),
-            ServiceLifetime.Scoped);
+        services.AddDbContextServices(configuration);
 
         services.AddScoped<IContactObserverProjectionReadRepository, ContactObserverProjectionReadRepository>();
         services.AddScoped<IUserPresencePreferencesReadRepository, UserPresencePreferencesReadRepository>();
         services.AddScoped<IUserPresencePreferencesWriteRepository, UserPresencePreferencesWriteRepository>();
         services.AddScoped<IUnitOfWork, SilverbackEfUnitOfWork<AppDbContext>>();
+
+        return services;
+    }
+
+    public static IServiceCollection AddWorkerPersistenceServices(
+        this IServiceCollection services,
+        IConfiguration configuration)
+    {
+        services.AddDbContextServices(configuration);
+
+        services.AddScoped<IContactObserverProjectionReadRepository, ContactObserverProjectionReadRepository>();
+        services.AddScoped<IUserPresencePreferencesReadRepository, UserPresencePreferencesReadRepository>();
+        services.AddScoped<IUserPresencePreferencesWriteRepository, UserPresencePreferencesWriteRepository>();
+        services.AddScoped<IUnitOfWork, SilverbackKafkaOffsetUnitOfWork<AppDbContext>>();
+
+        return services;
+    }
+
+    private static IServiceCollection AddDbContextServices(
+        this IServiceCollection services,
+        IConfiguration configuration)
+    {
+        services.AddDbContext<AppDbContext>((serviceProvider, options) =>
+            options.UseNpgsql(configuration.GetConnectionString("PresenceDb")));
+        services.AddDbContextFactory<AppDbContext>(
+            (serviceProvider, options) => options.UseNpgsql(configuration.GetConnectionString("PresenceDb")),
+            ServiceLifetime.Scoped);
 
         return services;
     }

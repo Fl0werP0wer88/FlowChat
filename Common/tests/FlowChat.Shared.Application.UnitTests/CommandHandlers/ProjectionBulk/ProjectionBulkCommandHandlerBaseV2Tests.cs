@@ -14,24 +14,24 @@ public sealed class ProjectionBulkCommandHandlerBaseV2Tests
         var executionOrder = new List<string>();
         var unitOfWorkMock = CreateUnitOfWorkMock(executionOrder);
         var repositoryMock = new Mock<IProjectionBulkRepository<TestProjectionItem>>();
-        var offsetStoreMock = new Mock<IProjectionOffsetStore>();
-        var handler = new ProjectionBulkCommandHandlerBaseV2<
-            ProjectionBulkCommand<TestProjectionItem>,
-            TestProjectionItem,
-            IProjectionBulkRepository<TestProjectionItem>>(
-            unitOfWorkMock.Object,
-            repositoryMock.Object,
-            offsetStoreMock.Object);
 
         repositoryMock
             .Setup(x => x.BulkUpsertOrSoftDeleteAsync(command.Items, It.IsAny<CancellationToken>()))
             .Callback(() => executionOrder.Add("bulk"))
             .Returns(Task.CompletedTask);
 
-        offsetStoreMock
+        unitOfWorkMock
+            .As<IConsumedOffsetCommitter>()
             .Setup(x => x.CommitConsumedOffsetsAsync(It.IsAny<CancellationToken>()))
             .Callback(() => executionOrder.Add("offset"))
             .Returns(Task.CompletedTask);
+
+        var handler = new ProjectionBulkCommandHandlerBaseV2<
+            ProjectionBulkCommand<TestProjectionItem>,
+            TestProjectionItem,
+            IProjectionBulkRepository<TestProjectionItem>>(
+            unitOfWorkMock.Object,
+            repositoryMock.Object);
 
         var result = await handler.Handle(command, CancellationToken.None);
 
@@ -40,7 +40,9 @@ public sealed class ProjectionBulkCommandHandlerBaseV2Tests
         repositoryMock.Verify(
             x => x.BulkUpsertOrSoftDeleteAsync(command.Items, It.IsAny<CancellationToken>()),
             Times.Once);
-        offsetStoreMock.Verify(x => x.CommitConsumedOffsetsAsync(It.IsAny<CancellationToken>()), Times.Once);
+        unitOfWorkMock
+            .As<IConsumedOffsetCommitter>()
+            .Verify(x => x.CommitConsumedOffsetsAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -49,18 +51,18 @@ public sealed class ProjectionBulkCommandHandlerBaseV2Tests
         var command = new ProjectionBulkCommand<TestProjectionItem>([]);
         var unitOfWorkMock = CreateUnitOfWorkMock();
         var repositoryMock = new Mock<IProjectionBulkRepository<TestProjectionItem>>();
-        var offsetStoreMock = new Mock<IProjectionOffsetStore>();
+
+        unitOfWorkMock
+            .As<IConsumedOffsetCommitter>()
+            .Setup(x => x.CommitConsumedOffsetsAsync(It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
         var handler = new ProjectionBulkCommandHandlerBaseV2<
             ProjectionBulkCommand<TestProjectionItem>,
             TestProjectionItem,
             IProjectionBulkRepository<TestProjectionItem>>(
             unitOfWorkMock.Object,
-            repositoryMock.Object,
-            offsetStoreMock.Object);
-
-        offsetStoreMock
-            .Setup(x => x.CommitConsumedOffsetsAsync(It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
+            repositoryMock.Object);
 
         var result = await handler.Handle(command, CancellationToken.None);
 
@@ -68,7 +70,9 @@ public sealed class ProjectionBulkCommandHandlerBaseV2Tests
         repositoryMock.Verify(
             x => x.BulkUpsertOrSoftDeleteAsync(It.IsAny<IReadOnlyCollection<TestProjectionItem>>(), It.IsAny<CancellationToken>()),
             Times.Never);
-        offsetStoreMock.Verify(x => x.CommitConsumedOffsetsAsync(It.IsAny<CancellationToken>()), Times.Once);
+        unitOfWorkMock
+            .As<IConsumedOffsetCommitter>()
+            .Verify(x => x.CommitConsumedOffsetsAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     private static Mock<IUnitOfWork> CreateUnitOfWorkMock(List<string>? executionOrder = null)

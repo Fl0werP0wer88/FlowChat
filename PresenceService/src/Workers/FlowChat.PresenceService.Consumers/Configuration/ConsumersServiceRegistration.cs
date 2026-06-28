@@ -30,7 +30,7 @@ public static class ConsumersServiceRegistration
             ?? new SocialGraphContactConsumerSettingsSection();
 
         services.AddWorkerApplicationServices();
-        services.AddPersistenceServices(configuration);
+        services.AddWorkerPersistenceServices(configuration);
         services.AddInfrastructureServices(configuration);
 
         services.AddSilverback()

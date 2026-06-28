@@ -26,7 +26,7 @@ public static class PersistenceServiceRegistration
     {
         services.AddCommonPersistenceServices(configuration);
 
-        services.AddScoped<IUnitOfWork, SilverbackEfUnitOfWork<AppDbContext>>();
+        services.AddScoped<IUnitOfWork, SilverbackKafkaOffsetUnitOfWork<AppDbContext>>();
 
         return services;
     }

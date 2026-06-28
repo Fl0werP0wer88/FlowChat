@@ -34,14 +34,12 @@ public sealed class UserProfileConsumerConfigurationTests
             .GetRequiredService<IProjectionBulkRepository<ProjectionCommandItem<UserProfileProjectionDto>>>();
         var commandHandler = scope.ServiceProvider
             .GetRequiredService<IRequestHandler<ProjectionBulkCommand<ProjectionCommandItem<UserProfileProjectionDto>>, FlowChat.Core.Results.FlowChatResult<Unit>>>();
-        var offsetStore = scope.ServiceProvider.GetRequiredService<IProjectionOffsetStore>();
         var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
 
         consumerCollection.Should().NotBeNull();
         bulkRepository.Should().NotBeNull();
         commandHandler.Should().NotBeNull();
-        offsetStore.Should().NotBeNull();
-        unitOfWork.Should().NotBeNull();
+        unitOfWork.Should().BeAssignableTo<IConsumedOffsetCommitter>();
     }
 
     [Fact]

@@ -31,7 +31,7 @@ public static class ConsumersServiceRegistration
             ?? new UserProfileConsumerSettingsSection();
 
         services.AddWorkerApplicationServices();
-        services.AddPersistenceServices(configuration);
+        services.AddWorkerPersistenceServices(configuration);
         services.AddInfrastructureServices(configuration);
         services.AddAutoMapper((Action<AutoMapper.IMapperConfigurationExpression>?)null, consumersAssembly);
 
