@@ -19,6 +19,10 @@ public static class PersistenceServiceRegistration
         services.AddDbContext<AppDbContext>((serviceProvider, options) =>
             options.UseNpgsql(configuration.GetConnectionString("SocialGraphDb"))
                 .AddInterceptors(serviceProvider.GetRequiredService<EntityBaseSaveChangesInterceptor>()));
+        services.AddDbContextFactory<AppDbContext>(
+            (serviceProvider, options) => options.UseNpgsql(configuration.GetConnectionString("SocialGraphDb"))
+                .AddInterceptors(serviceProvider.GetRequiredService<EntityBaseSaveChangesInterceptor>()),
+            ServiceLifetime.Scoped);
 
         services.AddScoped<IContactWriteRepository, ContactWriteRepository>();
         services.AddScoped<IContactReadRepository, ContactReadRepository>();
