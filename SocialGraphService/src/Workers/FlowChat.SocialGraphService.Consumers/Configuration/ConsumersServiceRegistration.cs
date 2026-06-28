@@ -1,14 +1,16 @@
-using Confluent.Kafka;
-using FlowChat.SocialGraphService.Application;
-using FlowChat.SocialGraphService.Consumers.Configuration.Settings;
-using FlowChat.SocialGraphService.Consumers.Kafka;
-using FlowChat.SocialGraphService.Persistence;
-using FlowChat.Shared.Infrastructure.Silverback.Kafka;
+using FlowChat.Core.Messaging.UserProfileService.ReadModels;
+using FlowChat.Shared.Consumers.ProjectionBulk;
 using FlowChat.Shared.Infrastructure.Silverback.Behaviors;
+using FlowChat.SocialGraphService.Application;
+using FlowChat.SocialGraphService.Application.Features.UserProfile;
+using FlowChat.SocialGraphService.Consumers.Configuration.Settings;
+using FlowChat.SocialGraphService.Consumers.Kafka.Projections;
+using FlowChat.SocialGraphService.Persistence;
+using FlowChat.SocialGraphService.Persistence.BulkUpsert.Projections;
+using FlowChat.SocialGraphService.Persistence.Entities;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Silverback.Configuration;
-using Silverback.Messaging.Configuration;
 
 namespace FlowChat.SocialGraphService.Consumers;
 
@@ -34,43 +36,24 @@ public static class ConsumersServiceRegistration
         services.AddSilverback()
             .AddSingletonBrokerBehavior<CustomSpanAttributesProducerBehavior>()
             .AddSingletonBrokerBehavior<CustomSpanAttributesConsumerBehavior>()
-            .WithConnectionToMessageBroker(options => options.AddKafka())
-            .AddKafkaClients(clients =>
-            {
-                clients
-                    .WithBootstrapServers(consumerOptions.BootstrapServers)
-                    .AddConsumer(UserProfileMainConsumerName, consumer => consumer
-                        .WithGroupId(consumerOptions.GroupId)
-                        .WithAutoOffsetReset(ParseAutoOffsetReset(consumerOptions.AutoOffsetReset))
-                        .Consume(endpoint => endpoint
-                            .ConfigureFlowChatMainEndpoint(consumerOptions)
-                            .EnableBatchProcessing(
-                                consumerOptions.BatchSize,
-                                TimeSpan.FromMilliseconds(consumerOptions.BatchMaxWaitTimeMilliseconds))))
-                    .AddConsumer(UserProfileRetryConsumerName, consumer => consumer
-                        .WithGroupId(consumerOptions.RetryGroupId)
-                        .WithAutoOffsetReset(ParseAutoOffsetReset(consumerOptions.AutoOffsetReset))
-                        .Consume(endpoint => endpoint
-                            .ConfigureFlowChatRetryEndpoint(consumerOptions)))
-                    .AddProducer(producer => producer
-                        .Produce(endpoint => endpoint
-                            .ProduceTo(consumerOptions.RetryTopic)
-                            .SerializeAsJson(serializer => serializer.SetTypeHeader())))
-                    .AddProducer(producer => producer
-                        .Produce(endpoint => endpoint
-                            .ProduceTo(consumerOptions.DeadLetterTopic)
-                            .SerializeAsJson(serializer => serializer.SetTypeHeader())));
-            })
-            .AddScopedSubscriber<UserProfileProjectionBatchSubscriber>()
-            .AddScopedSubscriber<UserProfileProjectionRetrySubscriber>();
+            .AddProjectionBulk(
+                consumerOptions,
+                UserProfileMainConsumerName,
+                UserProfileRetryConsumerName,
+                bulkBuilder => bulkBuilder
+                    .AddRepository<
+                        AppDbContext,
+                        UserProfileProjectionDto,
+                        UserProfileReadModelEntity,
+                        UserProfileProjectionBulkEntityFactory>()
+                    .AddCommandHandler<UserProfileProjectionDto>()
+                    .AddConsumer<
+                        AppDbContext,
+                        UserProfileReadModel,
+                        UserProfileProjectionDto,
+                        Guid,
+                        UserProfileProjectionValueFactory>());
 
         return services;
     }
-
-    private static AutoOffsetReset ParseAutoOffsetReset(string value) =>
-        Enum.TryParse<AutoOffsetReset>(value, true, out var parsed)
-            ? parsed
-            : AutoOffsetReset.Earliest;
 }
-
-

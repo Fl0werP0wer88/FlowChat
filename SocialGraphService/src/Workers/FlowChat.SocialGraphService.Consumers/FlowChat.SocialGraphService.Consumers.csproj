@@ -2,6 +2,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\Common\src\FlowChat.Shared.API\FlowChat.Shared.API.csproj" />
     <ProjectReference Include="..\..\..\..\Common\src\FlowChat.Core\FlowChat.Core.csproj" />
+    <ProjectReference Include="..\..\..\..\Common\src\FlowChat.Shared.Consumers\FlowChat.Shared.Consumers.csproj" />
     <ProjectReference Include="..\..\..\..\Common\src\FlowChat.Shared.Infrastructure\FlowChat.Shared.Infrastructure.csproj" />
     <ProjectReference Include="..\..\FlowChat.SocialGraphService.Application\FlowChat.SocialGraphService.Application.csproj" />
     <ProjectReference Include="..\..\FlowChat.SocialGraphService.Persistence\FlowChat.SocialGraphService.Persistence.csproj" />
@@ -17,6 +18,7 @@
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.3" />
     <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.3" />
     <PackageReference Include="Silverback.Integration.Kafka" Version="5.0.0" />
+    <PackageReference Include="Silverback.Storage.EntityFramework" Version="5.0.0" />
   </ItemGroup>
 </Project>
 
