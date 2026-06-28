@@ -31,7 +31,7 @@ public sealed class ProjectionTestBulkEntityFactory
         DateTimeOffset now) =>
         new()
         {
-            Id = item.Id,
+            Id = item.Value.Id,
             Payload = string.Empty,
             SourceVersion = item.SourceVersion,
             SourceCreatedAtUtc = item.SourceCreatedAtUtc,

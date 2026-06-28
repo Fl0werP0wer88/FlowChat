@@ -1,3 +1,4 @@
+using FlowChat.Core.Messaging;
 using FlowChat.PresenceService.Application.Contracts.Persistence;
 using FlowChat.PresenceService.Application.Features.ContactObserverProjections;
 using FlowChat.PresenceService.Application.Features.ContactObserverProjections.Commands.BulkUpsertOrDeleteUserContactProjection;
@@ -99,6 +100,7 @@ public sealed class BulkUpsertOrDeleteUserContactProjectionCommandHandlerTests
                         Guid.NewGuid(),
                         Guid.NewGuid(),
                         new ContactObserverProjectionDto { Source = " " },
+                        OperationType.Updated,
                         1,
                         DateTimeOffset.UtcNow,
                         DateTimeOffset.UtcNow,
@@ -124,6 +126,7 @@ public sealed class BulkUpsertOrDeleteUserContactProjectionCommandHandlerTests
                 SourceVersion = sourceVersion,
                 Source = source
             },
+            OperationType.Updated,
             sourceVersion,
             DateTimeOffset.UtcNow,
             DateTimeOffset.UtcNow,
@@ -137,6 +140,7 @@ public sealed class BulkUpsertOrDeleteUserContactProjectionCommandHandlerTests
             observedUserId,
             observerUserId,
             null,
+            OperationType.Deleted,
             sourceVersion,
             DateTimeOffset.UtcNow,
             DateTimeOffset.UtcNow,

@@ -1,3 +1,4 @@
+using FlowChat.Core.Messaging;
 using FlowChat.Core.Results;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
@@ -116,6 +117,7 @@ public sealed class BulkUpsertOrDeleteUserProfileProjectionCommandHandlerTests
                 SourceVersion = sourceVersion,
                 Source = source
             },
+            OperationType.Updated,
             sourceVersion,
             DateTimeOffset.UtcNow,
             DateTimeOffset.UtcNow,

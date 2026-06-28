@@ -32,12 +32,13 @@ public sealed class ProjectionRetrySubscriberBaseTests
         await subscriber.HandleAsync(message, CancellationToken.None);
 
         capturedCommand.Should().NotBeNull();
-        capturedCommand!.Items.Should().ContainSingle()
-            .Which.Id.Should().Be(message.SourceAggregateId);
+        var item = capturedCommand!.Items.Should().ContainSingle().Which;
+        item.Value.Payload.Should().Be(message.Value.Payload);
+        item.Operation.Should().Be(message.Operation);
     }
 
     [Fact]
-    public async Task HandleAsync_WhenMessageIsDelete_SendsItemWithNullValue()
+    public async Task HandleAsync_WhenMessageIsDelete_SendsItemWithDeletedOperationAndValue()
     {
         ProjectionBulkCommand<ProjectionCommandItem<TestProjectionValue>>? capturedCommand = null;
         var mediatorMock = new Mock<IMediator>();
@@ -53,8 +54,9 @@ public sealed class ProjectionRetrySubscriberBaseTests
         await subscriber.HandleAsync(CreateMessage(operation: OperationType.Deleted), CancellationToken.None);
 
         capturedCommand.Should().NotBeNull();
-        capturedCommand!.Items.Should().ContainSingle()
-            .Which.Value.Should().BeNull();
+        var item = capturedCommand!.Items.Should().ContainSingle().Which;
+        item.Operation.Should().Be(OperationType.Deleted);
+        item.Value.Payload.Should().Be("payload");
     }
 
     [Fact]

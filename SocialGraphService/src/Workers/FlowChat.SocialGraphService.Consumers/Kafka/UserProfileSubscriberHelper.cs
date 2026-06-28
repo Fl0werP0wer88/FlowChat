@@ -68,6 +68,7 @@ internal static class UserProfileSubscriberHelper
         return new UserProfileProjectionCommandItem(
             Id<UserProfileProjectionDto>.FromGuid(userProfileId),
             value,
+            message.Operation,
             message.SourceAggregateVersion,
             message.SourceAggregateCreatedAtUtc,
             message.SourceAggregateModifiedAtUtc,
@@ -82,6 +83,7 @@ internal static class UserProfileSubscriberHelper
         return new UserProfileProjectionCommandItem(
             Id<UserProfileProjectionDto>.FromGuid(userProfileId),
             null,
+            message.Operation,
             message.SourceAggregateVersion,
             message.SourceAggregateCreatedAtUtc,
             message.SourceAggregateModifiedAtUtc,

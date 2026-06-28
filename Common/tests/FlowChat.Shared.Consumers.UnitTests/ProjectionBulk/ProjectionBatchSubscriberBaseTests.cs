@@ -65,12 +65,12 @@ public sealed class ProjectionBatchSubscriberBaseTests
 
         capturedCommand.Should().NotBeNull();
         capturedCommand!.Items.Should().HaveCount(2);
-        capturedCommand.Items.Select(x => x.Id).Should().Equal(messages.Select(x => x.SourceAggregateId));
-        capturedCommand.Items.Select(x => x.Value!.Payload).Should().Equal(messages.Select(x => x.Value.Payload));
+        capturedCommand.Items.Select(x => x.Value.Payload).Should().Equal(messages.Select(x => x.Value.Payload));
+        capturedCommand.Items.Select(x => x.Operation).Should().Equal(messages.Select(x => x.Operation));
     }
 
     [Fact]
-    public async Task HandleAsync_WhenMessageIsDelete_SendsItemWithNullValue()
+    public async Task HandleAsync_WhenMessageIsDelete_SendsItemWithDeletedOperationAndValue()
     {
         ProjectionBulkCommand<ProjectionCommandItem<TestProjectionValue>>? capturedCommand = null;
         var mediatorMock = new Mock<IMediator>();
@@ -87,8 +87,9 @@ public sealed class ProjectionBatchSubscriberBaseTests
         await subscriber.HandleAsync(ToAsyncEnumerable([message]), CancellationToken.None);
 
         capturedCommand.Should().NotBeNull();
-        capturedCommand!.Items.Should().ContainSingle()
-            .Which.Value.Should().BeNull();
+        var item = capturedCommand!.Items.Should().ContainSingle().Which;
+        item.Operation.Should().Be(OperationType.Deleted);
+        item.Value.Payload.Should().Be(message.Value.Payload);
     }
 
     [Fact]

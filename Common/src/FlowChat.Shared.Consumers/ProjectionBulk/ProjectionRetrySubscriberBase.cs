@@ -45,10 +45,8 @@ public abstract class ProjectionRetrySubscriberBase<TReadModel, TItem>(
 
     private ProjectionCommandItem<TItem> MapItem(ProjectionIntegrationEvent<TReadModel> message) =>
         new(
-            message.SourceAggregateId,
-            message.Operation == OperationType.Deleted
-                ? null
-                : valueFactory.MapValue(message),
+            valueFactory.MapValue(message),
+            message.Operation,
             message.SourceAggregateVersion,
             message.SourceAggregateCreatedAtUtc,
             message.SourceAggregateModifiedAtUtc,

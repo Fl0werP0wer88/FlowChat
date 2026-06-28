@@ -68,16 +68,13 @@ public abstract class ProjectionBulkRepositoryBase<TDbContext, TItem, TValue, TE
     private TEntity CreateEntity(
         TItem item,
         DateTimeOffset now)
-    {
-        var value = item.Value;
-
-        return value is null
+    =>
+        item.Operation == FlowChat.Core.Messaging.OperationType.Deleted
             ? CreateTombstoneEntity(item, now)
             : CreateUpsertEntity(
-                value,
+                item.Value,
                 item.SourceVersion,
                 item.SourceCreatedAtUtc,
                 item.SourceLastModifiedAtUtc,
                 item.SourceDeletedAtUtc);
-    }
 }

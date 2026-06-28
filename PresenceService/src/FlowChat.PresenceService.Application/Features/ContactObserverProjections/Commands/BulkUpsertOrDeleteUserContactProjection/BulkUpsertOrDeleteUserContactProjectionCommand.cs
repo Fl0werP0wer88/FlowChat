@@ -1,3 +1,4 @@
+using FlowChat.Core.Messaging;
 using MediatR;
 using FlowChat.Shared.Application;
 
@@ -11,6 +12,7 @@ public sealed record UserContactProjectionCommandItem(
     Guid ObservedUserId,
     Guid ObserverUserId,
     ContactObserverProjectionDto? Value,
+    OperationType Operation,
     int SourceVersion,
     DateTimeOffset SourceCreatedAtUtc,
     DateTimeOffset SourceLastModifiedAtUtc,

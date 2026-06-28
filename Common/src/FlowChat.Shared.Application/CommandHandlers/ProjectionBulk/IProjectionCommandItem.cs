@@ -1,9 +1,12 @@
+using FlowChat.Core.Messaging;
+
 namespace FlowChat.Shared.Application;
 
 public interface IProjectionCommandItem<TValue>
     where TValue : class
 {
-    TValue? Value { get; }
+    TValue Value { get; }
+    OperationType Operation { get; }
     int SourceVersion { get; }
     DateTimeOffset SourceCreatedAtUtc { get; }
     DateTimeOffset SourceLastModifiedAtUtc { get; }
@@ -11,8 +14,8 @@ public interface IProjectionCommandItem<TValue>
 }
 
 public sealed record ProjectionCommandItem<TValue>(
-    Guid Id,
-    TValue? Value,
+    TValue Value,
+    OperationType Operation,
     int SourceVersion,
     DateTimeOffset SourceCreatedAtUtc,
     DateTimeOffset SourceLastModifiedAtUtc,

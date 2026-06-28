@@ -235,7 +235,7 @@ public sealed class ProjectionBulkServiceCollectionExtensionsTests
             DateTimeOffset now) =>
             new()
             {
-                Id = item.Id,
+                Id = item.Value.Id,
                 SourceVersion = item.SourceVersion,
                 SourceCreatedAtUtc = item.SourceCreatedAtUtc,
                 SourceLastModifiedAtUtc = item.SourceLastModifiedAtUtc,

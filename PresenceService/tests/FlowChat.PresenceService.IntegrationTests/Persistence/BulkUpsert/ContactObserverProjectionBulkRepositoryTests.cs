@@ -1,4 +1,5 @@
 using FlowChat.Core.Exceptions;
+using FlowChat.Core.Messaging;
 using FlowChat.PresenceService.Application.Features.ContactObserverProjections;
 using FlowChat.PresenceService.Application.Features.ContactObserverProjections.Commands.BulkUpsertOrDeleteUserContactProjection;
 using FlowChat.PresenceService.Persistence;
@@ -168,6 +169,7 @@ public sealed class ContactObserverProjectionBulkRepositoryTests : IDisposable
                 SourceVersion = sourceVersion,
                 Source = source
             },
+            OperationType.Updated,
             sourceVersion,
             DateTimeOffset.UtcNow,
             DateTimeOffset.UtcNow,
@@ -181,6 +183,7 @@ public sealed class ContactObserverProjectionBulkRepositoryTests : IDisposable
             observedUserId,
             observerUserId,
             null,
+            OperationType.Deleted,
             sourceVersion,
             DateTimeOffset.UtcNow,
             DateTimeOffset.UtcNow,

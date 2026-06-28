@@ -32,6 +32,7 @@ internal static class ContactProjectionSubscriberHelper
                     ObserverUserId = observerUserId,
                     Source = ProjectionSource
                 },
+                message.Operation,
                 message.SourceAggregateVersion,
                 message.SourceAggregateCreatedAtUtc,
                 message.SourceAggregateModifiedAtUtc,
@@ -40,6 +41,7 @@ internal static class ContactProjectionSubscriberHelper
                 observedUserId,
                 observerUserId,
                 null,
+                message.Operation,
                 message.SourceAggregateVersion,
                 message.SourceAggregateCreatedAtUtc,
                 message.SourceAggregateModifiedAtUtc,

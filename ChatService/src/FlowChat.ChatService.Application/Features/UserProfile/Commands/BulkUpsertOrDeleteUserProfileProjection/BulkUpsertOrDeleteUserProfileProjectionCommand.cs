@@ -1,3 +1,4 @@
+using FlowChat.Core.Messaging;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
 using MediatR;
@@ -11,6 +12,7 @@ public sealed record BulkUpsertOrDeleteUserProfileProjectionCommand(
 public sealed record UserProfileProjectionCommandItem(
     Id<UserProfileProjectionDto> EntityId,
     UserProfileProjectionDto? Value,
+    OperationType Operation,
     int SourceVersion,
     DateTimeOffset SourceCreatedAtUtc,
     DateTimeOffset SourceLastModifiedAtUtc,
