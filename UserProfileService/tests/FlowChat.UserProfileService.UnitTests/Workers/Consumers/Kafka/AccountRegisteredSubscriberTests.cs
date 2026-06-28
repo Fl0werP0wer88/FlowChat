@@ -1,124 +1,144 @@
+using AutoFixture;
 using FlowChat.Core.Exceptions;
 using FlowChat.Core.Messaging.AuthService.Events;
+using FlowChat.Core.Results;
+using FlowChat.Shared.Domain;
+using FlowChat.UserProfileService.Application.Features.UserProfile.Commands.CreateInitialUserProfile;
 using FlowChat.UserProfileService.Consumers.Kafka;
-using FlowChat.UserProfileService.Consumers.Configuration.Settings;
-using FlowChat.UserProfileService.Consumers.Services;
-using FlowChat.UserProfileService.Consumers.UserProfileApi.Contracts;
-using Microsoft.Extensions.Logging.Abstractions;
+using MediatR;
+using Microsoft.Extensions.Logging;
 
 namespace FlowChat.UserProfileService.UnitTests;
 
 public sealed class AccountRegisteredSubscriberTests
 {
-    private readonly Mock<IUserProfileInternalApiClient> _apiClientMock = new();
+    private readonly IFixture _fixture = new Fixture();
+    private readonly Mock<IMediator> _mediatorMock = new();
+    private readonly Mock<ILogger<AccountRegisteredSubscriber>> _loggerMock = new();
+    private readonly AccountRegisteredSubscriber _subscriber;
 
     public AccountRegisteredSubscriberTests()
     {
-        _apiClientMock
-            .Setup(x => x.CreateInitialUserProfileAsync(It.IsAny<CreateInitialUserProfileRequest>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
+        _mediatorMock
+            .Setup(x => x.Send(It.IsAny<CreateInitialUserProfileCommand>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(FlowChatResult<Guid>.Success(Guid.NewGuid()));
+
+        _subscriber = new AccountRegisteredSubscriber(
+            _mediatorMock.Object,
+            _loggerMock.Object);
     }
 
     [Fact]
-    public async Task HandleAsync_MapsEmailAndPhoneToInternalApiRequest()
+    public async Task HandleAsync_WhenPayloadIsValid_MapsRequestToCommand()
     {
-        var userId = Guid.NewGuid();
-        CreateInitialUserProfileRequest? capturedRequest = null;
-        _apiClientMock
-            .Setup(x => x.CreateInitialUserProfileAsync(It.IsAny<CreateInitialUserProfileRequest>(), It.IsAny<CancellationToken>()))
-            .Callback<CreateInitialUserProfileRequest, CancellationToken>((req, _) => capturedRequest = req)
-            .Returns(Task.CompletedTask);
+        var userId = _fixture.Create<Guid>();
+        CreateInitialUserProfileCommand? capturedCommand = null;
 
-        var subscriber = new AccountRegisteredSubscriber(_apiClientMock.Object, NullLogger<AccountRegisteredSubscriber>.Instance);
+        _mediatorMock
+            .Setup(x => x.Send(It.IsAny<CreateInitialUserProfileCommand>(), It.IsAny<CancellationToken>()))
+            .Callback<IRequest<FlowChatResult<Guid>>, CancellationToken>((request, _) =>
+                capturedCommand = (CreateInitialUserProfileCommand)request)
+            .ReturnsAsync(FlowChatResult<Guid>.Success(Guid.NewGuid()));
+
         var message = new AccountRegisteredIntegrationEvent
         {
             UserId = userId,
-            FriendlyUserId = "jdoe",
+            FriendlyUserId = " jdoe ",
             Email = "john@example.com",
             FirstName = " John ",
             LastName = " Doe ",
             Organization = " FlowChat "
         };
 
-        await subscriber.HandleAsync(message.ToInboundEnvelope(), CancellationToken.None);
+        await _subscriber.HandleAsync(message.ToInboundEnvelope(), CancellationToken.None);
 
-        capturedRequest.Should().NotBeNull();
-        capturedRequest!.Should().BeOfType<CreateInitialUserProfileRequest>();
-        capturedRequest.FriendlyUserId.Should().Be("jdoe");
-        capturedRequest.FirstName.Should().Be("John");
-        capturedRequest.LastName.Should().Be("Doe");
-        capturedRequest.Organization.Should().Be("FlowChat");
-        capturedRequest.Email.Should().Be("john@example.com");
-        capturedRequest.UserId.Should().Be(userId);
+        capturedCommand.Should().NotBeNull();
+        capturedCommand!.UserId.Should().Be(userId);
+        capturedCommand.FriendlyUserId.Should().Be("jdoe");
+        capturedCommand.Email.Should().Be("john@example.com");
+        capturedCommand.FirstName.Should().Be("John");
+        capturedCommand.LastName.Should().Be("Doe");
+        capturedCommand.Organization.Should().Be("FlowChat");
     }
 
     [Fact]
     public async Task HandleAsync_WhenFriendlyUserIdIsMissing_ThrowsNonTransientException()
     {
-        var subscriber = new AccountRegisteredSubscriber(
-            _apiClientMock.Object,
-            NullLogger<AccountRegisteredSubscriber>.Instance);
+        var message = new AccountRegisteredIntegrationEvent
+        {
+            UserId = _fixture.Create<Guid>(),
+            FriendlyUserId = "   ",
+            Email = "test@example.com"
+        };
 
-        var exception = await Assert.ThrowsAsync<NonTransientException>(() =>
-            subscriber.HandleAsync(
-                new AccountRegisteredIntegrationEvent
-                {
-                    UserId = Guid.NewGuid(),
-                    FriendlyUserId = "   ",
-                    Email = "test@example.com"
-                }.ToInboundEnvelope(),
-                CancellationToken.None));
+        var act = () => _subscriber.HandleAsync(message.ToInboundEnvelope(), CancellationToken.None);
 
-        exception.Message.Should().Contain("FriendlyUserId");
+        await act.Should().ThrowAsync<NonTransientException>()
+            .WithMessage("*FriendlyUserId*");
     }
 
     [Fact]
-    public async Task HandleAsync_WhenPhoneIsMissing_MapsNullPhone()
+    public async Task HandleAsync_WhenUserIdIsMissing_ThrowsNonTransientException()
     {
-        var userId = Guid.NewGuid();
-        CreateInitialUserProfileRequest? capturedRequest = null;
-        _apiClientMock
-            .Setup(x => x.CreateInitialUserProfileAsync(It.IsAny<CreateInitialUserProfileRequest>(), It.IsAny<CancellationToken>()))
-            .Callback<CreateInitialUserProfileRequest, CancellationToken>((req, _) => capturedRequest = req)
-            .Returns(Task.CompletedTask);
-
-        var subscriber = new AccountRegisteredSubscriber(_apiClientMock.Object, NullLogger<AccountRegisteredSubscriber>.Instance);
         var message = new AccountRegisteredIntegrationEvent
         {
-            UserId = userId,
+            UserId = Guid.Empty,
+            FriendlyUserId = "jdoe",
+            Email = "test@example.com"
+        };
+
+        var act = () => _subscriber.HandleAsync(message.ToInboundEnvelope(), CancellationToken.None);
+
+        await act.Should().ThrowAsync<NonTransientException>()
+            .WithMessage("*UserId*");
+    }
+
+    [Fact]
+    public async Task HandleAsync_WhenOptionalFieldsAreBlank_MapsNullOptionalFields()
+    {
+        CreateInitialUserProfileCommand? capturedCommand = null;
+
+        _mediatorMock
+            .Setup(x => x.Send(It.IsAny<CreateInitialUserProfileCommand>(), It.IsAny<CancellationToken>()))
+            .Callback<IRequest<FlowChatResult<Guid>>, CancellationToken>((request, _) =>
+                capturedCommand = (CreateInitialUserProfileCommand)request)
+            .ReturnsAsync(FlowChatResult<Guid>.Success(Guid.NewGuid()));
+
+        var message = new AccountRegisteredIntegrationEvent
+        {
+            UserId = _fixture.Create<Guid>(),
+            FriendlyUserId = "jdoe",
+            Email = "john@example.com",
+            FirstName = " ",
+            LastName = null,
+            Organization = "\t"
+        };
+
+        await _subscriber.HandleAsync(message.ToInboundEnvelope(), CancellationToken.None);
+
+        capturedCommand.Should().NotBeNull();
+        capturedCommand!.FirstName.Should().BeNull();
+        capturedCommand.LastName.Should().BeNull();
+        capturedCommand.Organization.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task HandleAsync_WhenCommandReturnsFailure_ThrowsNonTransientException()
+    {
+        _mediatorMock
+            .Setup(x => x.Send(It.IsAny<CreateInitialUserProfileCommand>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(FlowChatResult<Guid>.Failure(DomainError.BadRequest("boom")));
+
+        var message = new AccountRegisteredIntegrationEvent
+        {
+            UserId = _fixture.Create<Guid>(),
             FriendlyUserId = "jdoe",
             Email = "john@example.com"
         };
 
-        await subscriber.HandleAsync(message.ToInboundEnvelope(), CancellationToken.None);
+        var act = () => _subscriber.HandleAsync(message.ToInboundEnvelope(), CancellationToken.None);
 
-        capturedRequest.Should().NotBeNull();
-        capturedRequest!.Email.Should().Be("john@example.com");
-    }
-
-    [Fact]
-    public async Task HandleAsync_WhenFirstAndLastNameMissing_FallsBackToFriendlyUserId()
-    {
-        CreateInitialUserProfileRequest? capturedRequest = null;
-        _apiClientMock
-            .Setup(x => x.CreateInitialUserProfileAsync(It.IsAny<CreateInitialUserProfileRequest>(), It.IsAny<CancellationToken>()))
-            .Callback<CreateInitialUserProfileRequest, CancellationToken>((req, _) => capturedRequest = req)
-            .Returns(Task.CompletedTask);
-
-        var subscriber = new AccountRegisteredSubscriber(_apiClientMock.Object, NullLogger<AccountRegisteredSubscriber>.Instance);
-
-        await subscriber.HandleAsync(
-            new AccountRegisteredIntegrationEvent
-            {
-                UserId = Guid.NewGuid(),
-                FriendlyUserId = "jdoe",
-                Email = "john@example.com"
-            }.ToInboundEnvelope(),
-            CancellationToken.None);
-
-        capturedRequest.Should().NotBeNull();
-        capturedRequest!.FriendlyUserId.Should().Be("jdoe");
-        capturedRequest.FirstName.Should().BeNull();
-        capturedRequest.LastName.Should().BeNull();
+        await act.Should().ThrowAsync<NonTransientException>()
+            .WithMessage("boom");
     }
 }

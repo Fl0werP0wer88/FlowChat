@@ -1,10 +1,10 @@
 using Confluent.Kafka;
-using FlowChat.Core.Messaging.AuthService.Events;
+using FlowChat.UserProfileService.Application;
 using FlowChat.UserProfileService.Consumers.Configuration.Settings;
 using FlowChat.UserProfileService.Consumers.Kafka;
-using FlowChat.UserProfileService.Consumers.Services;
+using FlowChat.UserProfileService.Infrastructure;
+using FlowChat.UserProfileService.Persistence;
 using FlowChat.Shared.Infrastructure.Silverback.Kafka;
-using FlowChat.Shared.Infrastructure.Http;
 using FlowChat.Shared.Infrastructure.Silverback.Behaviors;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -24,7 +24,9 @@ public static class ConsumersServiceRegistration
             .Get<AccountRegisteredConsumerSettingsSection>()
             ?? new AccountRegisteredConsumerSettingsSection();
 
-        services.AddFlowChatHttpClient<IUserProfileInternalApiClient, UserProfileInternalApiClient, UserProfileApiSettingsSection>();
+        services.AddWorkerApplicationServices();
+        services.AddInfrastructureServices(configuration);
+        services.AddPersistenceServices(configuration);
 
         services.AddSilverback()
             .AddSingletonBrokerBehavior<CustomSpanAttributesProducerBehavior>()

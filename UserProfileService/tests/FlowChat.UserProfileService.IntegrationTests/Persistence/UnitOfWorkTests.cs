@@ -85,7 +85,18 @@ public sealed class UnitOfWorkTests
             .Options;
 
         var context = new AppDbContext(options);
+        context.SavingChanges += (_, _) => SetAuditFields(context);
         context.Database.EnsureCreated();
         return context;
+    }
+
+    private static void SetAuditFields(AppDbContext context)
+    {
+        foreach (var entry in context.ChangeTracker.Entries<IAuditableEntity>()
+                     .Where(entry => entry.State == EntityState.Added && entry.Entity.CreatedAtUtc is null))
+        {
+            entry.Entity.SetCreated("test");
+            entry.Entity.SetUpdated("test");
+        }
     }
 }

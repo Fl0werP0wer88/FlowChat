@@ -1,6 +1,8 @@
 using FlowChat.Shared.Application;
-using FlowChat.UserProfileService.Api.Features.UserProfile.Internal.CreateInitialUserProfile;
+using FlowChat.UserProfileService.Api.Features.UserProfile.Public.GetUserProfile;
+using FlowChat.UserProfileService.Application.Features.UserProfile.Commands.CreateInitialUserProfile;
 using FlowChat.UserProfileService.Persistence;
+using MediatR;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.DataProtection.Repositories;
@@ -18,11 +20,10 @@ using Microsoft.Extensions.Logging;
 
 namespace FlowChat.UserProfileService.IntegrationTests.API;
 
-// CreateInitialUserProfileController is used as anchor type to unambiguously identify
+// UserProfilesController is used as anchor type to unambiguously identify
 // the API assembly — both the API and the Consumers worker define a top-level Program class.
-public sealed class UserProfileApiFactory : WebApplicationFactory<CreateInitialUserProfileController>, IAsyncLifetime
+public sealed class UserProfileApiFactory : WebApplicationFactory<UserProfilesController>, IAsyncLifetime
 {
-    public const string InternalApiKey = "test-internal-api-key";
     private readonly SqliteConnection _connection = new("DataSource=:memory:");
 
     public RecordingIntegrationEventPublisher EventPublisher { get; } = new();
@@ -35,7 +36,6 @@ public sealed class UserProfileApiFactory : WebApplicationFactory<CreateInitialU
         {
             config.AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["FlowChat:InternalApi:ApiKey"] = InternalApiKey,
                 ["ConnectionStrings:UserProfileDb"] = "Host=localhost;Database=test",
                 ["Kafka:UserEmailConfirmedProducer:BootstrapServers"] = "localhost:9092",
                 ["Kafka:UserEmailConfirmedProducer:Topic"] = "test.user-email-confirmed",
@@ -44,7 +44,7 @@ public sealed class UserProfileApiFactory : WebApplicationFactory<CreateInitialU
                 ["Kafka:UserProfileProjectionProducer:BootstrapServers"] = "localhost:9092",
                 ["Kafka:UserProfileProjectionProducer:Topic"] = "test.user-profile-projection",
                 ["ConfirmationLinks:EmailVerificationBaseUrl"] = "https://test.example.com/verify",
-                ["ApiUrl"] = "https://localhost"
+                ["FlowChat:ApiUrl"] = "https://localhost"
             });
         });
 
@@ -112,6 +112,31 @@ public sealed class UserProfileApiFactory : WebApplicationFactory<CreateInitialU
         using var scope = Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         await action(db);
+    }
+
+    public async Task<Guid> CreateInitialUserProfileAsync(
+        Guid? userId = null,
+        string? friendlyUserId = null,
+        string? email = null,
+        string? firstName = null,
+        string? lastName = null,
+        string? organization = null)
+    {
+        var resolvedUserId = userId ?? Guid.NewGuid();
+        using var scope = Services.CreateScope();
+        var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
+
+        var result = await mediator.Send(
+            new CreateInitialUserProfileCommand(
+                friendlyUserId ?? $"user-{resolvedUserId:N}",
+                email ?? $"initial_{resolvedUserId:N}@example.com",
+                resolvedUserId,
+                firstName,
+                lastName,
+                organization));
+
+        result.IsSuccess.Should().BeTrue(result.IsFailure ? result.Error.ErrorMessage : null);
+        return resolvedUserId;
     }
 
     public async Task InitializeAsync()

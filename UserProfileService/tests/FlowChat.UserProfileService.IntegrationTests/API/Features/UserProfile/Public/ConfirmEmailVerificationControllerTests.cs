@@ -74,19 +74,10 @@ public sealed class ConfirmEmailVerificationControllerTests(UserProfileApiFactor
     private async Task<(Guid UserId, Guid EmailId)> CreateProfileAndGetEmailIdAsync()
     {
         var userId = Guid.NewGuid();
-        var request = new
-        {
-            UserId = userId,
-            FriendlyUserId = $"confirmverif-{userId:N}",
-            Email = $"confirmverif_{userId:N}@example.com"
-        };
-        var httpRequest = new HttpRequestMessage(HttpMethod.Post, "/internal/userprofiles/initial")
-        {
-            Content = JsonContent.Create(request)
-        };
-        httpRequest.Headers.Add("X-Internal-Api-Key", UserProfileApiFactory.InternalApiKey);
-        var createResponse = await _client.SendAsync(httpRequest);
-        createResponse.EnsureSuccessStatusCode();
+        await factory.CreateInitialUserProfileAsync(
+            userId,
+            $"confirmverif-{userId:N}",
+            $"confirmverif_{userId:N}@example.com");
 
         var getProfile = new HttpRequestMessage(HttpMethod.Get, $"/api/userprofiles/{userId:D}");
         getProfile.Headers.Add(TestAuthenticationHandler.UserIdHeaderName, userId.ToString("D"));

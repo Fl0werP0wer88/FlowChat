@@ -76,18 +76,10 @@ public sealed class SendEmailVerificationControllerTests(UserProfileApiFactory f
     private async Task<Guid> CreateProfileAsync()
     {
         var userId = Guid.NewGuid();
-        var request = new
-        {
-            UserId = userId,
-            FriendlyUserId = $"sendverif-{userId:N}",
-            Email = $"sendverif_{userId:N}@example.com"
-        };
-        var httpRequest = new HttpRequestMessage(HttpMethod.Post, "/internal/userprofiles/initial")
-        {
-            Content = JsonContent.Create(request)
-        };
-        httpRequest.Headers.Add("X-Internal-Api-Key", UserProfileApiFactory.InternalApiKey);
-        await _client.SendAsync(httpRequest);
+        await factory.CreateInitialUserProfileAsync(
+            userId,
+            $"sendverif-{userId:N}",
+            $"sendverif_{userId:N}@example.com");
         return userId;
     }
 

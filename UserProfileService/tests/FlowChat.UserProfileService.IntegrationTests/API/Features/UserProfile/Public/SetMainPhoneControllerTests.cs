@@ -62,18 +62,10 @@ public sealed class SetMainPhoneControllerTests(UserProfileApiFactory factory)
     private async Task<Guid> CreateProfileAsync()
     {
         var userId = Guid.NewGuid();
-        var request = new
-        {
-            UserId = userId,
-            FriendlyUserId = $"phonesetuser-{userId:N}",
-            Email = $"setphone_{userId:N}@example.com"
-        };
-        var httpRequest = new HttpRequestMessage(HttpMethod.Post, "/internal/userprofiles/initial")
-        {
-            Content = JsonContent.Create(request)
-        };
-        httpRequest.Headers.Add("X-Internal-Api-Key", UserProfileApiFactory.InternalApiKey);
-        await _client.SendAsync(httpRequest);
+        await factory.CreateInitialUserProfileAsync(
+            userId,
+            $"phonesetuser-{userId:N}",
+            $"setphone_{userId:N}@example.com");
         return userId;
     }
 

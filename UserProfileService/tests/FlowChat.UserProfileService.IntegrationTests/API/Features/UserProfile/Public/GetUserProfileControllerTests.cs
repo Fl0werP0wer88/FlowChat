@@ -104,17 +104,10 @@ public sealed class GetUserProfileControllerTests(UserProfileApiFactory factory)
     {
         var userId = Guid.NewGuid();
         var email = $"gettest_{userId:N}@example.com";
-        var httpRequest = new HttpRequestMessage(HttpMethod.Post, "/internal/userprofiles/initial")
-        {
-            Content = JsonContent.Create(new
-            {
-                UserId = userId,
-                FriendlyUserId = $"getuser-{userId:N}",
-                Email = email
-            })
-        };
-        httpRequest.Headers.Add("X-Internal-Api-Key", UserProfileApiFactory.InternalApiKey);
-        await _client.SendAsync(httpRequest);
+        await factory.CreateInitialUserProfileAsync(
+            userId,
+            $"getuser-{userId:N}",
+            email);
         return (userId, email);
     }
 
@@ -123,17 +116,10 @@ public sealed class GetUserProfileControllerTests(UserProfileApiFactory factory)
         var userId = Guid.NewGuid();
         var email = $"gettest_{userId:N}@example.com";
         var friendlyUserId = $"getuser-{userId:N}";
-        var httpRequest = new HttpRequestMessage(HttpMethod.Post, "/internal/userprofiles/initial")
-        {
-            Content = JsonContent.Create(new
-            {
-                UserId = userId,
-                FriendlyUserId = friendlyUserId,
-                Email = email
-            })
-        };
-        httpRequest.Headers.Add("X-Internal-Api-Key", UserProfileApiFactory.InternalApiKey);
-        await _client.SendAsync(httpRequest);
+        await factory.CreateInitialUserProfileAsync(
+            userId,
+            friendlyUserId,
+            email);
         return (userId, email, friendlyUserId);
     }
 

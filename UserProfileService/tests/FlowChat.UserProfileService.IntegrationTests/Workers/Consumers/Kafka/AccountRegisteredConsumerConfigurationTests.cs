@@ -1,7 +1,10 @@
+using FlowChat.Shared.Application;
+using FlowChat.UserProfileService.Application.Contracts.Infrastructure;
+using FlowChat.UserProfileService.Application.Contracts.Persistence;
 using FlowChat.UserProfileService.Consumers;
 using FlowChat.UserProfileService.Consumers.Kafka;
 using FlowChat.UserProfileService.Consumers.Configuration.Settings;
-using FlowChat.UserProfileService.Consumers.Services;
+using MediatR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Silverback.Messaging.Broker;
@@ -13,23 +16,7 @@ public sealed class AccountRegisteredConsumerConfigurationTests
     [Fact]
     public async Task AddConsumers_RegistersMainAndRetryConsumers()
     {
-        var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                ["UserProfileApi:BaseUrl"] = "https://localhost:7148",
-                ["UserProfileApi:ApiKey"] = "worker-key",
-                ["Kafka:AccountRegisteredConsumer:BootstrapServers"] = "localhost:9092",
-                ["Kafka:AccountRegisteredConsumer:GroupId"] = "userprofile-service",
-                ["Kafka:AccountRegisteredConsumer:RetryGroupId"] = "userprofile-service-retry",
-                ["Kafka:AccountRegisteredConsumer:Topic"] = "dev.flowchat.identity.user.v1",
-                ["Kafka:AccountRegisteredConsumer:RetryTopic"] = "dev.flowchat.identity.user.v1.userprofile-service.retry",
-                ["Kafka:AccountRegisteredConsumer:DeadLetterTopic"] = "dev.flowchat.identity.user.v1.userprofile-service.dlq",
-                ["Kafka:AccountRegisteredConsumer:MaxRetryCount"] = "5",
-                ["Kafka:AccountRegisteredConsumer:RetryBaseDelaySeconds"] = "5",
-                ["Kafka:AccountRegisteredConsumer:RetryMaxDelaySeconds"] = "300",
-                ["Kafka:AccountRegisteredConsumer:AutoOffsetReset"] = "Earliest"
-            })
-            .Build();
+        var configuration = CreateConfiguration();
 
         var services = new ServiceCollection();
         services.AddSingleton<IConfiguration>(configuration);
@@ -86,25 +73,9 @@ public sealed class AccountRegisteredConsumerConfigurationTests
     }
 
     [Fact]
-    public async Task AddConsumers_RegistersUserProfileInternalApiNamedClient()
+    public async Task AddConsumers_RegistersCommandHandlerDependencies()
     {
-        var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                ["UserProfileApi:BaseUrl"] = "https://localhost:7148",
-                ["UserProfileApi:ApiKey"] = "worker-key",
-                ["Kafka:AccountRegisteredConsumer:BootstrapServers"] = "localhost:9092",
-                ["Kafka:AccountRegisteredConsumer:GroupId"] = "userprofile-service",
-                ["Kafka:AccountRegisteredConsumer:RetryGroupId"] = "userprofile-service-retry",
-                ["Kafka:AccountRegisteredConsumer:Topic"] = "dev.flowchat.identity.user.v1",
-                ["Kafka:AccountRegisteredConsumer:RetryTopic"] = "dev.flowchat.identity.user.v1.userprofile-service.retry",
-                ["Kafka:AccountRegisteredConsumer:DeadLetterTopic"] = "dev.flowchat.identity.user.v1.userprofile-service.dlq",
-                ["Kafka:AccountRegisteredConsumer:MaxRetryCount"] = "5",
-                ["Kafka:AccountRegisteredConsumer:RetryBaseDelaySeconds"] = "5",
-                ["Kafka:AccountRegisteredConsumer:RetryMaxDelaySeconds"] = "300",
-                ["Kafka:AccountRegisteredConsumer:AutoOffsetReset"] = "Earliest"
-            })
-            .Build();
+        var configuration = CreateConfiguration();
 
         var services = new ServiceCollection();
         services.AddSingleton<IConfiguration>(configuration);
@@ -114,13 +85,39 @@ public sealed class AccountRegisteredConsumerConfigurationTests
 
         await using var serviceProvider = services.BuildServiceProvider();
 
-        var internalApiClient = serviceProvider.GetRequiredService<IUserProfileInternalApiClient>();
-        var httpClient = serviceProvider
-            .GetRequiredService<IHttpClientFactory>()
-            .CreateClient(typeof(IUserProfileInternalApiClient).Name);
+        using var scope = serviceProvider.CreateScope();
 
-        internalApiClient.Should().NotBeNull();
-        httpClient.BaseAddress.Should().Be(new Uri("https://localhost:7148"));
-        httpClient.DefaultRequestHeaders.GetValues(UserProfileInternalApiClient.ApiKeyHeaderName).Single().Should().Be("worker-key");
+        scope.ServiceProvider.GetRequiredService<IMediator>().Should().NotBeNull();
+        scope.ServiceProvider.GetRequiredService<IUserProfileReadRepository>().Should().NotBeNull();
+        scope.ServiceProvider.GetRequiredService<IUserProfileWriteRepository>().Should().NotBeNull();
+        scope.ServiceProvider.GetRequiredService<IEmailVerificationProcessWriteRepository>().Should().NotBeNull();
+        scope.ServiceProvider.GetRequiredService<IUnitOfWork>().Should().NotBeNull();
+        scope.ServiceProvider.GetRequiredService<IEmailVerificationLinkBuilder>().Should().NotBeNull();
     }
+
+    private static IConfiguration CreateConfiguration() =>
+        new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["ConnectionStrings:UserProfileDb"] = "Host=localhost;Database=test",
+                ["Kafka:AccountRegisteredConsumer:BootstrapServers"] = "localhost:9092",
+                ["Kafka:AccountRegisteredConsumer:GroupId"] = "userprofile-service",
+                ["Kafka:AccountRegisteredConsumer:RetryGroupId"] = "userprofile-service-retry",
+                ["Kafka:AccountRegisteredConsumer:Topic"] = "dev.flowchat.identity.user.v1",
+                ["Kafka:AccountRegisteredConsumer:RetryTopic"] = "dev.flowchat.identity.user.v1.userprofile-service.retry",
+                ["Kafka:AccountRegisteredConsumer:DeadLetterTopic"] = "dev.flowchat.identity.user.v1.userprofile-service.dlq",
+                ["Kafka:AccountRegisteredConsumer:MaxRetryCount"] = "5",
+                ["Kafka:AccountRegisteredConsumer:RetryBaseDelaySeconds"] = "5",
+                ["Kafka:AccountRegisteredConsumer:RetryMaxDelaySeconds"] = "300",
+                ["Kafka:AccountRegisteredConsumer:AutoOffsetReset"] = "Earliest",
+                ["Kafka:UserEmailConfirmedProducer:BootstrapServers"] = "localhost:9092",
+                ["Kafka:UserEmailConfirmedProducer:Topic"] = "test.user-email-confirmed",
+                ["Kafka:UserEmailVerificationRequestedProducer:BootstrapServers"] = "localhost:9092",
+                ["Kafka:UserEmailVerificationRequestedProducer:Topic"] = "test.email-verification",
+                ["Kafka:UserProfileProjectionProducer:BootstrapServers"] = "localhost:9092",
+                ["Kafka:UserProfileProjectionProducer:Topic"] = "test.user-profile-projection",
+                ["ConfirmationLinks:EmailVerificationBaseUrl"] = "https://test.example.com/verify",
+                ["FlowChat:ApiUrl"] = "https://localhost"
+            })
+            .Build();
 }
