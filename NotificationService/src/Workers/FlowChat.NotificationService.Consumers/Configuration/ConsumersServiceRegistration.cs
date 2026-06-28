@@ -1,9 +1,10 @@
 using Confluent.Kafka;
+using FlowChat.NotificationService.Application;
 using FlowChat.NotificationService.Consumers.Configuration.Settings;
 using FlowChat.NotificationService.Consumers.Kafka;
-using FlowChat.NotificationService.Consumers.Services;
+using FlowChat.NotificationService.Infrastructure;
+using FlowChat.NotificationService.Persistence;
 using FlowChat.Shared.Infrastructure.Silverback.Kafka;
-using FlowChat.Shared.Infrastructure.Http;
 using FlowChat.Shared.Infrastructure.Silverback.Behaviors;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -23,7 +24,9 @@ public static class ConsumersServiceRegistration
             .Get<UserEmailVerificationRequestedConsumerSettingsSection>()
             ?? new UserEmailVerificationRequestedConsumerSettingsSection();
 
-        services.AddFlowChatHttpClient<INotificationInternalApiClient, NotificationInternalApiClient, NotificationApiSettingsSection>();
+        services.AddWorkerApplicationServices();
+        services.AddInfrastructureServices(configuration);
+        services.AddPersistenceServices(configuration);
 
         services.AddSilverback()
             .AddSingletonBrokerBehavior<CustomSpanAttributesProducerBehavior>()

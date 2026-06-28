@@ -1,5 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Worker">
   <ItemGroup>
+    <ProjectReference Include="..\..\FlowChat.NotificationService.Application\FlowChat.NotificationService.Application.csproj" />
+    <ProjectReference Include="..\..\FlowChat.NotificationService.Infrastructure\FlowChat.NotificationService.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\FlowChat.NotificationService.Persistence\FlowChat.NotificationService.Persistence.csproj" />
     <ProjectReference Include="..\..\..\..\Common\src\FlowChat.Shared.API\FlowChat.Shared.API.csproj" />
     <ProjectReference Include="..\..\..\..\Common\src\FlowChat.Core\FlowChat.Core.csproj" />
     <ProjectReference Include="..\..\..\..\Common\src\FlowChat.Shared.Infrastructure\FlowChat.Shared.Infrastructure.csproj" />
@@ -13,7 +16,6 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="10.0.3" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.3" />
-    <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.3" />
     <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.3" />
     <PackageReference Include="Silverback.Integration.Kafka" Version="5.0.0" />
   </ItemGroup>

@@ -21,9 +21,20 @@ public sealed class NotificationConfigurationTests : IDisposable
             .Options;
 
         _dbContext = new AppDbContext(options);
+        _dbContext.SavingChanges += (_, _) => SetAuditFields(_dbContext);
     }
 
     public void Dispose() => _dbContext.Dispose();
+
+    private static void SetAuditFields(AppDbContext context)
+    {
+        foreach (var entry in context.ChangeTracker.Entries<IAuditableEntity>()
+                     .Where(entry => entry.State == EntityState.Added && entry.Entity.CreatedAtUtc is null))
+        {
+            entry.Entity.SetCreated("test");
+            entry.Entity.SetUpdated("test");
+        }
+    }
 
     [Fact]
     public async Task NotificationConfiguration_CanPersistAndReloadAllProperties()

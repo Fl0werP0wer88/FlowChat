@@ -1,13 +1,13 @@
 using FlowChat.Core.Exceptions;
 using FlowChat.Core.Messaging.AuthService.Events;
-using FlowChat.NotificationService.Consumers.NotificationApi.Contracts;
-using FlowChat.NotificationService.Consumers.Services;
+using FlowChat.NotificationService.Application.Features.Notification.Commands.UserEmailVerificationRequested;
 using FlowChat.Shared.Infrastructure.Silverback.Subscribers;
+using MediatR;
 
 namespace FlowChat.NotificationService.Consumers.Kafka;
 
 public sealed class UserEmailVerificationRequestedSubscriber(
-    INotificationInternalApiClient notificationInternalApiClient,
+    IMediator mediator,
     ILogger<UserEmailVerificationRequestedSubscriber> logger)
     : SubscriberBase<EmailVerificationRequestIntegrationEvent>(logger)
 {
@@ -36,19 +36,19 @@ public sealed class UserEmailVerificationRequestedSubscriber(
             throw new NonTransientException("Payload does not contain ConfirmationLink.");
         }
 
-        await notificationInternalApiClient.ProcessUserEmailVerificationRequestedAsync(
-            new ProcessUserEmailVerificationRequestedRequest
-            {
-                UserId = message.UserId,
-                Email = message.UserEmail.Trim(),
-                UserName = userName,
-                DisplayName = userName,
-                ConfirmationLink = message.ConfirmationLink.Trim(),
-                SourceMessageKey = message.VerificationRequestId == Guid.Empty
+        var result = await mediator.Send(
+            new UserEmailVerificationRequestedCommand(
+                message.UserId,
+                message.UserEmail.Trim(),
+                userName,
+                userName,
+                message.ConfirmationLink.Trim(),
+                message.VerificationRequestId == Guid.Empty
                     ? message.UserId.ToString()
-                    : message.VerificationRequestId.ToString("D")
-            },
+                    : message.VerificationRequestId.ToString("D")),
             cancellationToken);
+
+        ThrowIfFailure(result);
     }
 
     private static string? ResolveUserName(string? email)

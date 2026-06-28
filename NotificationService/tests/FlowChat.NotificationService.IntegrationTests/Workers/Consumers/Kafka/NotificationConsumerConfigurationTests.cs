@@ -1,9 +1,11 @@
-using System.Collections;
+using FlowChat.NotificationService.Application.Contracts.Infrastructure;
+using FlowChat.NotificationService.Application.Contracts.Persistence;
 using FlowChat.NotificationService.Consumers;
 using FlowChat.NotificationService.Consumers.Kafka;
 using FlowChat.NotificationService.Consumers.Configuration.Settings;
-using FlowChat.NotificationService.Consumers.Services;
+using FlowChat.Shared.Application;
 using FluentAssertions;
+using MediatR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Silverback.Messaging.Broker;
@@ -28,11 +30,9 @@ public sealed class NotificationConsumerConfigurationTests
 
         var consumerCollection = serviceProvider.GetRequiredService<IConsumerCollection>();
         var subscriber = scope.ServiceProvider.GetRequiredService<UserEmailVerificationRequestedSubscriber>();
-        var internalApiClient = scope.ServiceProvider.GetRequiredService<INotificationInternalApiClient>();
 
         consumerCollection.Should().NotBeNull();
         subscriber.Should().NotBeNull();
-        internalApiClient.Should().NotBeNull();
     }
 
     [Theory]
@@ -57,7 +57,7 @@ public sealed class NotificationConsumerConfigurationTests
     }
 
     [Fact]
-    public async Task AddConsumers_RegistersNotificationInternalApiNamedClient()
+    public async Task AddConsumers_RegistersCommandHandlerDependencies()
     {
         var configuration = CreateConfiguration();
 
@@ -68,16 +68,12 @@ public sealed class NotificationConsumerConfigurationTests
         services.AddConsumers(configuration);
 
         await using var serviceProvider = services.BuildServiceProvider();
+        await using var scope = serviceProvider.CreateAsyncScope();
 
-        var internalApiClient = serviceProvider.GetRequiredService<INotificationInternalApiClient>();
-        var httpClient = serviceProvider
-            .GetRequiredService<IHttpClientFactory>()
-            .CreateClient(typeof(INotificationInternalApiClient).Name);
-
-        internalApiClient.Should().NotBeNull();
-        httpClient.BaseAddress.Should().Be(new Uri("https://localhost:7206"));
-        httpClient.DefaultRequestHeaders.GetValues(NotificationInternalApiClient.ApiKeyHeaderName).Single()
-            .Should().Be("worker-key");
+        scope.ServiceProvider.GetRequiredService<IMediator>().Should().NotBeNull();
+        scope.ServiceProvider.GetRequiredService<INotificationWriteRepository>().Should().NotBeNull();
+        scope.ServiceProvider.GetRequiredService<IUnitOfWork>().Should().NotBeNull();
+        scope.ServiceProvider.GetRequiredService<INotificationSender>().Should().NotBeNull();
     }
 
     private static IConfiguration CreateConfiguration()
@@ -85,8 +81,12 @@ public sealed class NotificationConsumerConfigurationTests
         return new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["NotificationApi:BaseUrl"] = "https://localhost:7206",
-                ["NotificationApi:ApiKey"] = "worker-key",
+                ["ConnectionStrings:NotificationDb"] = "Host=localhost;Database=test",
+                ["EmailSettings:SmtpHost"] = "localhost",
+                ["EmailSettings:SmtpPort"] = "1025",
+                ["EmailSettings:EnableSsl"] = "false",
+                ["EmailSettings:FromEmail"] = "noreply@flowchat.local",
+                ["EmailSettings:FromName"] = "FlowChat Notifications",
                 ["Kafka:UserEmailVerificationRequestedConsumer:BootstrapServers"] = "localhost:9092",
                 ["Kafka:UserEmailVerificationRequestedConsumer:GroupId"] = "notification-service",
                 ["Kafka:UserEmailVerificationRequestedConsumer:RetryGroupId"] = "notification-service-retry",

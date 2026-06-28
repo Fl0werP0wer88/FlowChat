@@ -23,6 +23,7 @@ public sealed class NotificationWriteRepositoryTests : IDisposable
             .Options;
 
         _dbContext = new AppDbContext(options);
+        _dbContext.SavingChanges += (_, _) => SetAuditFields(_dbContext);
         _repository = new NotificationWriteRepository(_dbContext);
     }
 
@@ -37,6 +38,16 @@ public sealed class NotificationWriteRepositoryTests : IDisposable
             "Test User",
             "Confirm your email by clicking the provided link",
             sourceMessageKey);
+    }
+
+    private static void SetAuditFields(AppDbContext context)
+    {
+        foreach (var entry in context.ChangeTracker.Entries<IAuditableEntity>()
+                     .Where(entry => entry.State == EntityState.Added && entry.Entity.CreatedAtUtc is null))
+        {
+            entry.Entity.SetCreated("test");
+            entry.Entity.SetUpdated("test");
+        }
     }
 
     // --- AddAsync ---
