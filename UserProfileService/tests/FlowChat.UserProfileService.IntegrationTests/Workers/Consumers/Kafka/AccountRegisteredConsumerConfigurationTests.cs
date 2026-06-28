@@ -93,6 +93,7 @@ public sealed class AccountRegisteredConsumerConfigurationTests
         scope.ServiceProvider.GetRequiredService<IEmailVerificationProcessWriteRepository>().Should().NotBeNull();
         scope.ServiceProvider.GetRequiredService<IUnitOfWork>().Should().NotBeNull();
         scope.ServiceProvider.GetRequiredService<IEmailVerificationLinkBuilder>().Should().NotBeNull();
+        scope.ServiceProvider.GetRequiredService<IEmailVerificationTokenProtector>().Should().NotBeNull();
     }
 
     private static IConfiguration CreateConfiguration() =>

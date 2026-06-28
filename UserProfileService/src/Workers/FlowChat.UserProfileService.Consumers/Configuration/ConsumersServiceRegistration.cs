@@ -6,6 +6,7 @@ using FlowChat.UserProfileService.Infrastructure;
 using FlowChat.UserProfileService.Persistence;
 using FlowChat.Shared.Infrastructure.Silverback.Kafka;
 using FlowChat.Shared.Infrastructure.Silverback.Behaviors;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Silverback.Configuration;
@@ -27,6 +28,9 @@ public static class ConsumersServiceRegistration
         services.AddWorkerApplicationServices();
         services.AddInfrastructureServices(configuration);
         services.AddPersistenceServices(configuration);
+        services.AddDataProtection()
+            .PersistKeysToDbContext<AppDbContext>()
+            .SetApplicationName("FlowChat.UserProfileService");
 
         services.AddSilverback()
             .AddSingletonBrokerBehavior<CustomSpanAttributesProducerBehavior>()

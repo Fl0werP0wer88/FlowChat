@@ -15,6 +15,9 @@ public static class ApplicationServiceRegistration
         services.AddFlowChatValidatorsFromAssembly(applicationAssembly);
         services.AddMediatR(cfg =>
         {
+            cfg.TypeEvaluator = type =>
+                type != typeof(RouteMessageCommandHandler)
+                && type != typeof(RoutePresenceChangeCommandHandler);
             cfg.RegisterServicesFromAssemblies(applicationAssembly);
             cfg.AddFlowChatBehaviors();
         });
