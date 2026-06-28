@@ -9,9 +9,7 @@ public sealed record BulkUpsertOrDeleteUserContactProjectionCommand(
     : IProjectionBulkCommand<UserContactProjectionCommandItem>;
 
 public sealed record UserContactProjectionCommandItem(
-    Guid ObservedUserId,
-    Guid ObserverUserId,
-    ContactObserverProjectionDto? Value,
+    ContactObserverProjectionDto Value,
     OperationType Operation,
     int SourceVersion,
     DateTimeOffset SourceCreatedAtUtc,

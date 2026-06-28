@@ -56,22 +56,20 @@ public sealed class ContactProjectionBatchSubscriberTests
         capturedCommand!.Items.Should().HaveCount(2);
 
         var createdItem = capturedCommand.Items.Should().ContainSingle(x =>
-            x.ObserverUserId == createdOwnerUserId &&
-            x.ObservedUserId == createdContactUserId).Subject;
+            x.Value.ObserverUserId == createdOwnerUserId &&
+            x.Value.ObservedUserId == createdContactUserId).Subject;
         createdItem.SourceVersion.Should().Be(1);
-        createdItem.Value.Should().NotBeNull();
-        createdItem.Value!.Source.Should().Be("social-graph-contact-events");
+        createdItem.Value.Source.Should().Be("social-graph-contact-events");
 
         var updatedItem = capturedCommand.Items.Should().ContainSingle(x =>
-            x.ObserverUserId == updatedOwnerUserId &&
-            x.ObservedUserId == updatedContactUserId).Subject;
+            x.Value.ObserverUserId == updatedOwnerUserId &&
+            x.Value.ObservedUserId == updatedContactUserId).Subject;
         updatedItem.SourceVersion.Should().Be(3);
-        updatedItem.Value.Should().NotBeNull();
-        updatedItem.Value!.Source.Should().Be("social-graph-contact-events");
+        updatedItem.Value.Source.Should().Be("social-graph-contact-events");
     }
 
     [Fact]
-    public async Task HandleAsync_WhenDeletedProjectionEventArrives_SendsItemWithNullValueAndSourceVersion()
+    public async Task HandleAsync_WhenDeletedProjectionEventArrives_SendsItemWithDeletedOperationAndValue()
     {
         BulkUpsertOrDeleteUserContactProjectionCommand? capturedCommand = null;
         var ownerUserId = _fixture.Create<Guid>();
@@ -85,10 +83,11 @@ public sealed class ContactProjectionBatchSubscriberTests
 
         capturedCommand.Should().NotBeNull();
         var item = capturedCommand!.Items.Should().ContainSingle().Subject;
-        item.ObservedUserId.Should().Be(contactUserId);
-        item.ObserverUserId.Should().Be(ownerUserId);
+        item.Value.ObservedUserId.Should().Be(contactUserId);
+        item.Value.ObserverUserId.Should().Be(ownerUserId);
+        item.Operation.Should().Be(OperationType.Deleted);
         item.SourceVersion.Should().Be(4);
-        item.Value.Should().BeNull();
+        item.Value.Source.Should().Be("social-graph-contact-events");
     }
 
     [Fact]
@@ -108,10 +107,10 @@ public sealed class ContactProjectionBatchSubscriberTests
 
         capturedCommand.Should().NotBeNull();
         var item = capturedCommand!.Items.Should().ContainSingle().Subject;
-        item.ObservedUserId.Should().Be(contactUserId);
-        item.ObserverUserId.Should().Be(ownerUserId);
+        item.Value.ObservedUserId.Should().Be(contactUserId);
+        item.Value.ObserverUserId.Should().Be(ownerUserId);
         item.SourceVersion.Should().Be(5);
-        item.Value.Should().NotBeNull();
+        item.Operation.Should().Be(OperationType.Updated);
     }
 
     [Fact]
@@ -132,7 +131,9 @@ public sealed class ContactProjectionBatchSubscriberTests
         capturedCommand.Should().NotBeNull();
         var item = capturedCommand!.Items.Should().ContainSingle().Subject;
         item.SourceVersion.Should().Be(5);
-        item.Value.Should().BeNull();
+        item.Operation.Should().Be(OperationType.Deleted);
+        item.Value.ObservedUserId.Should().Be(contactUserId);
+        item.Value.ObserverUserId.Should().Be(ownerUserId);
     }
 
     [Fact]

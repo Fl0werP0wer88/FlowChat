@@ -34,7 +34,7 @@ public sealed class ContactProjectionRetrySubscriber(
 
         logger.LogInformation(
             "Processed contact projection event {ObservedUserId}/{ObserverUserId} from Kafka retry topic.",
-            item.ObservedUserId,
-            item.ObserverUserId);
+            item.Value.ObservedUserId,
+            item.Value.ObserverUserId);
     }
 }

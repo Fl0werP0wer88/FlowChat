@@ -42,8 +42,8 @@ public sealed class ContactObserverProjectionBulkRepository(AppDbContext dbConte
         DateTimeOffset now) =>
         new()
         {
-            ObservedUserId = item.ObservedUserId,
-            ObserverUserId = item.ObserverUserId,
+            ObservedUserId = item.Value.ObservedUserId,
+            ObserverUserId = item.Value.ObserverUserId,
             SourceVersion = item.SourceVersion,
             SourceCreatedAtUtc = item.SourceCreatedAtUtc,
             SourceLastModifiedAtUtc = item.SourceLastModifiedAtUtc,

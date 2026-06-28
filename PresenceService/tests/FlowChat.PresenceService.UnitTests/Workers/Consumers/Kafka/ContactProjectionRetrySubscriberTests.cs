@@ -47,11 +47,10 @@ public sealed class ContactProjectionRetrySubscriberTests
 
         capturedCommand.Should().NotBeNull();
         var item = capturedCommand!.Items.Should().ContainSingle().Subject;
-        item.ObserverUserId.Should().Be(ownerUserId);
-        item.ObservedUserId.Should().Be(contactUserId);
+        item.Value.ObserverUserId.Should().Be(ownerUserId);
+        item.Value.ObservedUserId.Should().Be(contactUserId);
         item.SourceVersion.Should().Be(7);
-        item.Value.Should().NotBeNull();
-        item.Value!.Source.Should().Be("social-graph-contact-events");
+        item.Value.Source.Should().Be("social-graph-contact-events");
     }
 
     [Fact]
@@ -69,10 +68,11 @@ public sealed class ContactProjectionRetrySubscriberTests
 
         capturedCommand.Should().NotBeNull();
         var item = capturedCommand!.Items.Should().ContainSingle().Subject;
-        item.ObserverUserId.Should().Be(ownerUserId);
-        item.ObservedUserId.Should().Be(contactUserId);
+        item.Value.ObserverUserId.Should().Be(ownerUserId);
+        item.Value.ObservedUserId.Should().Be(contactUserId);
+        item.Operation.Should().Be(OperationType.Deleted);
         item.SourceVersion.Should().Be(4);
-        item.Value.Should().BeNull();
+        item.Value.Source.Should().Be("social-graph-contact-events");
     }
 
     [Fact]

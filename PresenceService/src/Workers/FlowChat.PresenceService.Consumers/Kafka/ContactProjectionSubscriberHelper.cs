@@ -24,8 +24,6 @@ internal static class ContactProjectionSubscriberHelper
         return message.Operation switch
         {
             OperationType.Created or OperationType.Updated => new UserContactProjectionCommandItem(
-                observedUserId,
-                observerUserId,
                 new ContactObserverProjectionDto
                 {
                     ObservedUserId = observedUserId,
@@ -38,9 +36,12 @@ internal static class ContactProjectionSubscriberHelper
                 message.SourceAggregateModifiedAtUtc,
                 message.SourceAggregateDeletedAt),
             OperationType.Deleted => new UserContactProjectionCommandItem(
-                observedUserId,
-                observerUserId,
-                null,
+                new ContactObserverProjectionDto
+                {
+                    ObservedUserId = observedUserId,
+                    ObserverUserId = observerUserId,
+                    Source = ProjectionSource
+                },
                 message.Operation,
                 message.SourceAggregateVersion,
                 message.SourceAggregateCreatedAtUtc,
@@ -55,7 +56,7 @@ internal static class ContactProjectionSubscriberHelper
     {
         return items
             .Select((item, index) => new { item, index })
-            .GroupBy(x => new { x.item.ObservedUserId, x.item.ObserverUserId })
+            .GroupBy(x => new { x.item.Value.ObservedUserId, x.item.Value.ObserverUserId })
             .Select(group => group
                 .OrderBy(x => x.item.SourceVersion)
                 .ThenBy(x => x.index)

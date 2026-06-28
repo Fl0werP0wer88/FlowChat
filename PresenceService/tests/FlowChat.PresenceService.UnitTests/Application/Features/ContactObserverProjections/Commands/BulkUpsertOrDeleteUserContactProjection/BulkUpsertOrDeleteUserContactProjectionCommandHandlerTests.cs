@@ -97,9 +97,12 @@ public sealed class BulkUpsertOrDeleteUserContactProjectionCommandHandlerTests
             new BulkUpsertOrDeleteUserContactProjectionCommand(
                 [
                     new UserContactProjectionCommandItem(
-                        Guid.NewGuid(),
-                        Guid.NewGuid(),
-                        new ContactObserverProjectionDto { Source = " " },
+                        new ContactObserverProjectionDto
+                        {
+                            ObservedUserId = Guid.NewGuid(),
+                            ObserverUserId = Guid.NewGuid(),
+                            Source = " "
+                        },
                         OperationType.Updated,
                         1,
                         DateTimeOffset.UtcNow,
@@ -117,8 +120,6 @@ public sealed class BulkUpsertOrDeleteUserContactProjectionCommandHandlerTests
         int sourceVersion,
         string source = "consumer") =>
         new(
-            observedUserId,
-            observerUserId,
             new ContactObserverProjectionDto
             {
                 ObservedUserId = observedUserId,
@@ -137,9 +138,11 @@ public sealed class BulkUpsertOrDeleteUserContactProjectionCommandHandlerTests
         Guid observerUserId,
         int sourceVersion) =>
         new(
-            observedUserId,
-            observerUserId,
-            null,
+            new ContactObserverProjectionDto
+            {
+                ObservedUserId = observedUserId,
+                ObserverUserId = observerUserId
+            },
             OperationType.Deleted,
             sourceVersion,
             DateTimeOffset.UtcNow,

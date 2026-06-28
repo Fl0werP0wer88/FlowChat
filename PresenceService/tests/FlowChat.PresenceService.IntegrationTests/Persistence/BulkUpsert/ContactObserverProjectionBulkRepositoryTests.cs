@@ -160,8 +160,6 @@ public sealed class ContactObserverProjectionBulkRepositoryTests : IDisposable
         int sourceVersion,
         string source = "consumer") =>
         new(
-            observedUserId,
-            observerUserId,
             new ContactObserverProjectionDto
             {
                 ObservedUserId = observedUserId,
@@ -180,9 +178,11 @@ public sealed class ContactObserverProjectionBulkRepositoryTests : IDisposable
         Guid observerUserId,
         int sourceVersion) =>
         new(
-            observedUserId,
-            observerUserId,
-            null,
+            new ContactObserverProjectionDto
+            {
+                ObservedUserId = observedUserId,
+                ObserverUserId = observerUserId
+            },
             OperationType.Deleted,
             sourceVersion,
             DateTimeOffset.UtcNow,
