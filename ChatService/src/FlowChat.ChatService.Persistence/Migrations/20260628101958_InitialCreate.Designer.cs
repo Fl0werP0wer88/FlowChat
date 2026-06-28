@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FlowChat.ChatService.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260608174704_InitialCreate")]
+    [Migration("20260628101958_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -343,6 +343,27 @@ namespace FlowChat.ChatService.Persistence.Migrations
                     b.HasKey("UserId");
 
                     b.ToTable("UserProfileReadModel", (string)null);
+                });
+
+            modelBuilder.Entity("Silverback.Messaging.Consuming.KafkaOffsetStore.SilverbackStoredOffset", b =>
+                {
+                    b.Property<string>("GroupId")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<string>("Topic")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<int>("Partition")
+                        .HasColumnType("integer");
+
+                    b.Property<long>("Offset")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("GroupId", "Topic", "Partition");
+
+                    b.ToTable("SilverbackStoredOffsets");
                 });
 
             modelBuilder.Entity("Silverback.Messaging.Producing.TransactionalOutbox.SilverbackOutboxMessage", b =>

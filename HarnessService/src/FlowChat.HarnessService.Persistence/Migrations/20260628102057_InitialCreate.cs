@@ -27,6 +27,20 @@ namespace FlowChat.HarnessService.Persistence.Migrations
                 {
                     table.PrimaryKey("PK_ProjectionTests", x => x.Id);
                 });
+
+            migrationBuilder.CreateTable(
+                name: "SilverbackStoredOffsets",
+                columns: table => new
+                {
+                    GroupId = table.Column<string>(type: "character varying(300)", maxLength: 300, nullable: false),
+                    Topic = table.Column<string>(type: "character varying(300)", maxLength: 300, nullable: false),
+                    Partition = table.Column<int>(type: "integer", nullable: false),
+                    Offset = table.Column<long>(type: "bigint", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_SilverbackStoredOffsets", x => new { x.GroupId, x.Topic, x.Partition });
+                });
         }
 
         /// <inheritdoc />
@@ -34,6 +48,9 @@ namespace FlowChat.HarnessService.Persistence.Migrations
         {
             migrationBuilder.DropTable(
                 name: "ProjectionTests");
+
+            migrationBuilder.DropTable(
+                name: "SilverbackStoredOffsets");
         }
     }
 }

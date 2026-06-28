@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FlowChat.SocialGraphService.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260628100959_AddKafkaOffsetStore")]
-    partial class AddKafkaOffsetStore
+    [Migration("20260628102033_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

@@ -6,6 +6,7 @@
     <ProjectReference Include="..\..\..\..\Common\src\FlowChat.Shared.Consumers\FlowChat.Shared.Consumers.csproj" />
     <ProjectReference Include="..\..\..\..\Common\src\FlowChat.Shared.Infrastructure\FlowChat.Shared.Infrastructure.csproj" />
     <ProjectReference Include="..\..\FlowChat.PresenceService.Application\FlowChat.PresenceService.Application.csproj" />
+    <ProjectReference Include="..\..\FlowChat.PresenceService.Infrastructure\FlowChat.PresenceService.Infrastructure.csproj" />
     <ProjectReference Include="..\..\FlowChat.PresenceService.Persistence\FlowChat.PresenceService.Persistence.csproj" />
   </ItemGroup>
 

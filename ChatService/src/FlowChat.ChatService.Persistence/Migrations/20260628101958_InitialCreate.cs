@@ -50,6 +50,20 @@ namespace FlowChat.ChatService.Persistence.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "SilverbackStoredOffsets",
+                columns: table => new
+                {
+                    GroupId = table.Column<string>(type: "character varying(300)", maxLength: 300, nullable: false),
+                    Topic = table.Column<string>(type: "character varying(300)", maxLength: 300, nullable: false),
+                    Partition = table.Column<int>(type: "integer", nullable: false),
+                    Offset = table.Column<long>(type: "bigint", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_SilverbackStoredOffsets", x => new { x.GroupId, x.Topic, x.Partition });
+                });
+
+            migrationBuilder.CreateTable(
                 name: "UserProfileReadModel",
                 columns: table => new
                 {
@@ -176,6 +190,9 @@ namespace FlowChat.ChatService.Persistence.Migrations
 
             migrationBuilder.DropTable(
                 name: "SilverbackOutboxMessages");
+
+            migrationBuilder.DropTable(
+                name: "SilverbackStoredOffsets");
 
             migrationBuilder.DropTable(
                 name: "UserProfileReadModel");

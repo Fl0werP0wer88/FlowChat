@@ -3,6 +3,7 @@ using FlowChat.PresenceService.Application;
 using FlowChat.PresenceService.Application.Features.ContactObserverProjections;
 using FlowChat.PresenceService.Consumers.Configuration.Settings;
 using FlowChat.PresenceService.Consumers.Kafka.Projections;
+using FlowChat.PresenceService.Infrastructure;
 using FlowChat.PresenceService.Persistence;
 using FlowChat.PresenceService.Persistence.BulkUpsert.Projections;
 using FlowChat.PresenceService.Persistence.Entities;
@@ -30,6 +31,7 @@ public static class ConsumersServiceRegistration
 
         services.AddWorkerApplicationServices();
         services.AddPersistenceServices(configuration);
+        services.AddInfrastructureServices(configuration);
 
         services.AddSilverback()
             .AddSingletonBrokerBehavior<CustomSpanAttributesProducerBehavior>()

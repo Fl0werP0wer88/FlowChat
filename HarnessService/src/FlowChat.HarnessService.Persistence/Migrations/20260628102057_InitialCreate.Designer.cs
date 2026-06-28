@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FlowChat.HarnessService.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260608233634_InitialCreate")]
+    [Migration("20260628102057_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -54,6 +54,27 @@ namespace FlowChat.HarnessService.Persistence.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("ProjectionTests", (string)null);
+                });
+
+            modelBuilder.Entity("Silverback.Messaging.Consuming.KafkaOffsetStore.SilverbackStoredOffset", b =>
+                {
+                    b.Property<string>("GroupId")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<string>("Topic")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<int>("Partition")
+                        .HasColumnType("integer");
+
+                    b.Property<long>("Offset")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("GroupId", "Topic", "Partition");
+
+                    b.ToTable("SilverbackStoredOffsets");
                 });
 #pragma warning restore 612, 618
         }
