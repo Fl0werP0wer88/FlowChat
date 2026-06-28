@@ -1,13 +1,13 @@
 using FlowChat.Core.Exceptions;
 using FlowChat.Core.Messaging.ChatService.Events;
-using FlowChat.RealtimeService.Consumers.Realtime.Contracts;
-using FlowChat.RealtimeService.Consumers.Services;
+using FlowChat.RealtimeService.Application.Features.Message.Commands.RouteMessage;
 using FlowChat.Shared.Infrastructure.Silverback.Subscribers;
+using MediatR;
 
 namespace FlowChat.RealtimeService.Consumers.Kafka;
 
 public sealed class ChatMessageSentSubscriber(
-    IRealtimeInternalApiClient realtimeInternalApiClient,
+    IMediator mediator,
     ILogger<ChatMessageSentSubscriber> logger)
     : SubscriberBase<ChatMessageSentIntegrationEvent>(logger)
 {
@@ -17,21 +17,21 @@ public sealed class ChatMessageSentSubscriber(
     {
         Validate(message);
 
-        var request = new PublishMessageRequest
-        {
-            MessageId = message.MessageId,
-            ConversationId = message.ConversationId,
-            SenderUserId = message.SenderUserId,
-            SenderDisplayName = message.SenderDisplayName.Trim(),
-            Text = message.Text.Trim(),
-            SentAtUtc = message.SentAtUtc,
-            RecipientUserIds = message.RecipientUserIds
+        var command = new RouteMessageCommand(
+            message.MessageId,
+            message.ConversationId,
+            message.SenderUserId,
+            message.SenderDisplayName.Trim(),
+            message.Text.Trim(),
+            message.SentAtUtc,
+            message.RecipientUserIds
                 .Where(userId => userId != Guid.Empty)
                 .Distinct()
-                .ToArray()
-        };
+                .ToArray());
 
-        await realtimeInternalApiClient.PublishMessageAsync(request, cancellationToken);
+        var result = await mediator.Send(command, cancellationToken);
+
+        ThrowIfFailure(result);
     }
 
     private static void Validate(ChatMessageSentIntegrationEvent message)

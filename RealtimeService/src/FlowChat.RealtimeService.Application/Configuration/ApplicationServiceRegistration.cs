@@ -1,4 +1,6 @@
 using FlowChat.RealtimeService.Application.Features.RealtimeConnection.Commands;
+using FlowChat.RealtimeService.Application.Features.Message.Commands.RouteMessage;
+using FlowChat.RealtimeService.Application.Features.Presence.Commands.RoutePresenceChange;
 using FlowChat.Shared.Application;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -23,8 +25,18 @@ public static class ApplicationServiceRegistration
 
     public static IServiceCollection AddWorkerApplicationServices(this IServiceCollection services)
     {
-        // The worker forwards Kafka events to the internal realtime API and does not
-        // execute SignalR dispatch handlers locally.
+        var applicationAssembly = typeof(ApplicationServiceRegistration).Assembly;
+
+        services.AddFlowChatValidatorsFromAssembly(applicationAssembly);
+        services.AddMediatR(cfg =>
+        {
+            cfg.TypeEvaluator = type =>
+                type == typeof(RouteMessageCommandHandler)
+                || type == typeof(RoutePresenceChangeCommandHandler);
+            cfg.RegisterServicesFromAssemblies(applicationAssembly);
+            cfg.AddFlowChatBehaviors();
+        });
+
         return services;
     }
 }

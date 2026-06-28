@@ -1,10 +1,15 @@
 using FlowChat.RealtimeService.Consumers;
 using FlowChat.RealtimeService.Consumers.Kafka;
-using FlowChat.RealtimeService.Consumers.Services;
+using FlowChat.RealtimeService.Application.Contracts.Infrastructure;
+using FlowChat.RealtimeService.Consumers.Configuration.Settings;
+using FlowChat.RealtimeService.Infrastructure.Routing;
+using FlowChat.RealtimeService.Redis.RealtimeConnections;
 using FluentAssertions;
+using MediatR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Silverback.Messaging.Broker;
+using StackExchange.Redis;
 
 namespace FlowChat.RealtimeService.UnitTests;
 
@@ -19,6 +24,7 @@ public sealed class ConsumersConfigurationTests
         services.AddSingleton<IConfiguration>(configuration);
         services.AddOptions();
         services.AddLogging();
+        services.AddSingleton(Mock.Of<IConnectionMultiplexer>());
         services.AddConsumers(configuration);
 
         await using var serviceProvider = services.BuildServiceProvider();
@@ -27,16 +33,24 @@ public sealed class ConsumersConfigurationTests
         var consumerCollection = serviceProvider.GetRequiredService<IConsumerCollection>();
         var chatSubscriber = scope.ServiceProvider.GetRequiredService<ChatMessageSentSubscriber>();
         var presenceSubscriber = scope.ServiceProvider.GetRequiredService<UserPresenceChangedSubscriber>();
-        var internalApiClient = scope.ServiceProvider.GetRequiredService<IRealtimeInternalApiClient>();
+        var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
+        var eventRouter = scope.ServiceProvider.GetRequiredService<IRealtimeEventRouter>();
+        var routingReader = scope.ServiceProvider.GetRequiredService<IUserInstanceRoutingReader>();
+        var realtimeInstanceInternalApiClient = scope.ServiceProvider.GetRequiredService<IRealtimeInstanceInternalApiClient>();
+        var chatServiceInternalApiClient = scope.ServiceProvider.GetRequiredService<IChatServiceInternalApiClient>();
 
         consumerCollection.Should().NotBeNull();
         chatSubscriber.Should().NotBeNull();
         presenceSubscriber.Should().NotBeNull();
-        internalApiClient.Should().NotBeNull();
+        mediator.Should().NotBeNull();
+        eventRouter.Should().BeOfType<WorkerRealtimeEventRouter>();
+        routingReader.Should().NotBeNull();
+        realtimeInstanceInternalApiClient.Should().NotBeNull();
+        chatServiceInternalApiClient.Should().NotBeNull();
     }
 
     [Fact]
-    public async Task AddConsumers_RegistersRealtimeInternalApiNamedClientWithBaseAddressAndApiKeyHeader()
+    public async Task AddConsumers_RegistersKafkaConsumerInfrastructure()
     {
         var configuration = CreateConfiguration();
 
@@ -44,19 +58,45 @@ public sealed class ConsumersConfigurationTests
         services.AddSingleton<IConfiguration>(configuration);
         services.AddOptions();
         services.AddLogging();
+        services.AddSingleton(Mock.Of<IConnectionMultiplexer>());
         services.AddConsumers(configuration);
 
         await using var serviceProvider = services.BuildServiceProvider();
 
-        var internalApiClient = serviceProvider.GetRequiredService<IRealtimeInternalApiClient>();
-        var httpClient = serviceProvider
-            .GetRequiredService<IHttpClientFactory>()
-            .CreateClient(RealtimeInternalApiClient.HttpClientName);
+        var consumerCollection = serviceProvider.GetRequiredService<IConsumerCollection>();
 
-        internalApiClient.Should().NotBeNull();
-        httpClient.BaseAddress.Should().Be(new Uri("http://localhost:5215"));
-        httpClient.DefaultRequestHeaders.GetValues(RealtimeInternalApiClient.ApiKeyHeaderName).Single()
-            .Should().Be("worker-key");
+        consumerCollection.Should().NotBeNull();
+    }
+
+    [Theory]
+    [InlineData("RealtimeService/src/Workers/FlowChat.RealtimeService.Consumers/appsettings.json")]
+    [InlineData("RealtimeService/src/Workers/FlowChat.RealtimeService.Consumers/appsettings.Development.json")]
+    public void AppSettingsFiles_ExposeRequiredKafkaConsumerSections(string relativePath)
+    {
+        var configuration = new ConfigurationBuilder()
+            .AddJsonFile(GetRepositoryPath(relativePath))
+            .Build();
+
+        var chatOptions = configuration
+            .GetSection(new ChatMessageSentConsumerSettingsSection().SectionName)
+            .Get<ChatMessageSentConsumerSettingsSection>();
+        var presenceOptions = configuration
+            .GetSection(new PresenceStatusChangedConsumerSettingsSection().SectionName)
+            .Get<PresenceStatusChangedConsumerSettingsSection>();
+
+        chatOptions.Should().NotBeNull();
+        chatOptions!.GroupId.Should().Be("realtime-service");
+        chatOptions.RetryGroupId.Should().Be("realtime-service-retry");
+        chatOptions.Topic.Should().Be("dev.flowchat.chat.message.v1");
+        chatOptions.RetryTopic.Should().Be("dev.flowchat.chat.message.v1.realtime-service.retry");
+        chatOptions.DeadLetterTopic.Should().Be("dev.flowchat.chat.message.v1.realtime-service.dlq");
+
+        presenceOptions.Should().NotBeNull();
+        presenceOptions!.GroupId.Should().Be("realtime-service");
+        presenceOptions.RetryGroupId.Should().Be("realtime-service-retry");
+        presenceOptions.Topic.Should().Be("dev.flowchat.presence.presence");
+        presenceOptions.RetryTopic.Should().Be("dev.flowchat.presence.presence.realtime-service.retry");
+        presenceOptions.DeadLetterTopic.Should().Be("dev.flowchat.presence.presence.realtime-service.dlq");
     }
 
     private static IConfiguration CreateConfiguration()
@@ -64,8 +104,12 @@ public sealed class ConsumersConfigurationTests
         return new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["RealtimeApi:ApiKey"] = "worker-key",
-                ["RealtimeApi:BaseUrl"] = "http://localhost:5215",
+                ["FlowChat:InternalApi:ApiKey"] = "internal-key",
+                ["ConnectionStrings:Redis"] = "localhost:6379,password=secret",
+                ["RealtimeConnections:InstanceId"] = "realtime-consumers",
+                ["RealtimeApi:Instances:realtime-api"] = "http://localhost:5215",
+                ["ChatServiceApi:BaseUrl"] = "http://localhost:5254",
+                ["ChatServiceApi:ApiKey"] = "internal-key",
                 ["Kafka:ChatMessageSentConsumer:BootstrapServers"] = "localhost:9092",
                 ["Kafka:ChatMessageSentConsumer:GroupId"] = "realtime-service",
                 ["Kafka:ChatMessageSentConsumer:RetryGroupId"] = "realtime-service-retry",
@@ -88,5 +132,23 @@ public sealed class ConsumersConfigurationTests
                 ["Kafka:PresenceStatusChangedConsumer:AutoOffsetReset"] = "Earliest"
             })
             .Build();
+    }
+
+    private static string GetRepositoryPath(string relativePath)
+    {
+        var currentDirectory = new DirectoryInfo(AppContext.BaseDirectory);
+
+        while (currentDirectory is not null)
+        {
+            var candidatePath = Path.Combine(currentDirectory.FullName, relativePath);
+            if (File.Exists(candidatePath))
+            {
+                return candidatePath;
+            }
+
+            currentDirectory = currentDirectory.Parent;
+        }
+
+        throw new InvalidOperationException($"Could not locate file '{relativePath}' starting from '{AppContext.BaseDirectory}'.");
     }
 }

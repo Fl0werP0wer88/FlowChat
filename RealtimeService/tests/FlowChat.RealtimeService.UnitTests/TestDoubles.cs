@@ -7,8 +7,6 @@ using FlowChat.RealtimeService.Api.Realtime;
 using FlowChat.RealtimeService.Redis.RealtimeConnections;
 using FlowChat.Shared.Domain;
 using FlowChat.Shared.Application;
-using FlowChat.RealtimeService.Consumers.Realtime.Contracts;
-using FlowChat.RealtimeService.Consumers.Services;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
@@ -30,26 +28,6 @@ internal sealed class CapturingRealtimeClientDispatcher : IRealtimeClientDispatc
     public Task PresenceChangedAsync(PresenceChangedParam notification, CancellationToken cancellationToken)
     {
         LastPresenceNotification = notification;
-        return Task.CompletedTask;
-    }
-}
-
-internal sealed class CapturingRealtimeInternalApiClient : IRealtimeInternalApiClient
-{
-    public PublishMessageRequest? LastPublishMessageRequest { get; private set; }
-    public PublishPresenceChangeRequest? LastPublishPresenceChangeRequest { get; private set; }
-
-    public Task PublishMessageAsync(PublishMessageRequest request, CancellationToken cancellationToken)
-    {
-        LastPublishMessageRequest = request;
-        return Task.CompletedTask;
-    }
-
-    public Task PublishPresenceChangeAsync(
-        PublishPresenceChangeRequest request,
-        CancellationToken cancellationToken)
-    {
-        LastPublishPresenceChangeRequest = request;
         return Task.CompletedTask;
     }
 }
