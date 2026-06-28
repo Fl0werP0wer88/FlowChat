@@ -1,6 +1,5 @@
 using FlowChat.Shared.Application;
 using FlowChat.ChatService.Application.Contracts.Persistence;
-using FlowChat.ChatService.Persistence.BulkUpsert;
 using FlowChat.ChatService.Persistence.Repositories;
 using FlowChat.Shared.Persistance.Auditing;
 using FlowChat.Shared.Infrastructure.Silverback.Persistence;
@@ -31,7 +30,6 @@ public static class PersistenceServiceRegistration
         services.AddScoped<IDuetConversationReadRepository, DuetConversationReadRepository>();
         services.AddScoped<IDuetConversationWriteRepository, DuetConversationWriteRepository>();
         services.AddScoped<IUserProfileProjectionReadRepository, UserProfileProjectionReadRepository>();
-        services.AddScoped<IUserProfileProjectionBulkRepository, UserProfileProjectionBulkRepository>();
 
         return services;
     }
@@ -47,7 +45,6 @@ public static class PersistenceServiceRegistration
             (serviceProvider, options) => options.UseNpgsql(configuration.GetConnectionString("ChatDb"))
                 .AddInterceptors(serviceProvider.GetRequiredService<EntityBaseSaveChangesInterceptor>()),
             ServiceLifetime.Scoped);
-        services.AddScoped<IUserProfileProjectionBulkRepository, UserProfileProjectionBulkRepository>();
 
         return services;
     }

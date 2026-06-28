@@ -1,12 +1,11 @@
 using Confluent.Kafka;
-using FlowChat.ChatService.Application.Contracts.Persistence;
+using FlowChat.ChatService.Application.Features.UserProfile;
 using FlowChat.ChatService.Consumers;
 using FlowChat.ChatService.Consumers.Configuration.Settings;
-using FlowChat.ChatService.Consumers.Kafka;
-using FlowChat.ChatService.Persistence;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Infrastructure.Silverback.Kafka;
 using FluentAssertions;
+using MediatR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Silverback.Messaging.Broker;
@@ -31,15 +30,17 @@ public sealed class UserProfileConsumerConfigurationTests
         await using var scope = serviceProvider.CreateAsyncScope();
 
         var consumerCollection = serviceProvider.GetRequiredService<IConsumerCollection>();
-        var batchSubscriber = scope.ServiceProvider.GetRequiredService<UserProfileProjectionBatchSubscriber>();
-        var retrySubscriber = scope.ServiceProvider.GetRequiredService<UserProfileProjectionRetrySubscriber>();
-        var bulkRepository = scope.ServiceProvider.GetRequiredService<IUserProfileProjectionBulkRepository>();
+        var bulkRepository = scope.ServiceProvider
+            .GetRequiredService<IProjectionBulkRepository<ProjectionCommandItem<UserProfileProjectionDto>>>();
+        var commandHandler = scope.ServiceProvider
+            .GetRequiredService<IRequestHandler<ProjectionBulkCommand<ProjectionCommandItem<UserProfileProjectionDto>>, FlowChat.Core.Results.FlowChatResult<Unit>>>();
+        var offsetStore = scope.ServiceProvider.GetRequiredService<IProjectionOffsetStore>();
         var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
 
         consumerCollection.Should().NotBeNull();
-        batchSubscriber.Should().NotBeNull();
-        retrySubscriber.Should().NotBeNull();
         bulkRepository.Should().NotBeNull();
+        commandHandler.Should().NotBeNull();
+        offsetStore.Should().NotBeNull();
         unitOfWork.Should().NotBeNull();
     }
 

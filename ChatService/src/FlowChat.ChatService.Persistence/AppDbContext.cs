@@ -4,6 +4,7 @@ using FlowChat.ChatService.Domain.Entities.Conversation;
 using FlowChat.ChatService.Persistence.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Silverback.Messaging.Consuming.KafkaOffsetStore;
 using Silverback.Messaging.Producing.TransactionalOutbox;
 
 namespace FlowChat.ChatService.Persistence;
@@ -32,6 +33,7 @@ public sealed class AppDbContext : DbContext
     public DbSet<ParticipantUserReadEntity> ParticipantUserReads => Set<ParticipantUserReadEntity>();
     public DbSet<ChatMessageReadEntity> ChatMessageReads => Set<ChatMessageReadEntity>();
     public DbSet<DuetConversationReadEntity> DuetConversationReads => Set<DuetConversationReadEntity>();
+    public DbSet<SilverbackStoredOffset> SilverbackStoredOffsets => Set<SilverbackStoredOffset>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

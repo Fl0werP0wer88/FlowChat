@@ -1,8 +1,10 @@
 using FlowChat.ChatService.Application.Features.UserProfile;
-using FlowChat.ChatService.Application.Features.UserProfile.Commands.BulkUpsertOrDeleteUserProfileProjection;
 using FlowChat.ChatService.Persistence;
-using FlowChat.ChatService.Persistence.BulkUpsert;
-using FlowChat.Shared.Domain;
+using FlowChat.ChatService.Persistence.BulkUpsert.Projections;
+using FlowChat.ChatService.Persistence.Entities;
+using FlowChat.Core.Messaging;
+using FlowChat.Shared.Application;
+using FlowChat.Shared.Persistance.ProjectionBulk;
 using FluentAssertions;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
@@ -13,7 +15,7 @@ public sealed class UserProfileProjectionBulkRepositoryTests : IDisposable
 {
     private readonly SqliteConnection _connection;
     private readonly AppDbContext _dbContext;
-    private readonly UserProfileProjectionBulkRepository _repository;
+    private readonly ProjectionBulkRepository<AppDbContext, UserProfileProjectionDto, UserProfileReadModelEntity, UserProfileProjectionBulkEntityFactory> _repository;
 
     public UserProfileProjectionBulkRepositoryTests()
     {
@@ -26,7 +28,9 @@ public sealed class UserProfileProjectionBulkRepositoryTests : IDisposable
 
         _dbContext = new AppDbContext(options);
         _dbContext.Database.EnsureCreated();
-        _repository = new UserProfileProjectionBulkRepository(_dbContext);
+        _repository = new ProjectionBulkRepository<AppDbContext, UserProfileProjectionDto, UserProfileReadModelEntity, UserProfileProjectionBulkEntityFactory>(
+            _dbContext,
+            new UserProfileProjectionBulkEntityFactory());
     }
 
     public void Dispose()
@@ -40,10 +44,7 @@ public sealed class UserProfileProjectionBulkRepositoryTests : IDisposable
     {
         var userProfileId = Guid.NewGuid();
 
-        await _repository.BulkUpsertOrSoftDeleteAsync(
-            [CreateUpsertItem(userProfileId, 1, friendlyUserId: "jdoe", firstName: "John", avatarUrl: "https://avatar")],
-            CancellationToken.None);
-        await _dbContext.SaveChangesAsync();
+        await SaveAsync(CreateUpsertItem(userProfileId, 1, friendlyUserId: "jdoe", firstName: "John", avatarUrl: "https://avatar"));
 
         var entity = await _dbContext.UserProfileProjections.SingleAsync();
         entity.UserId.Should().Be(userProfileId);
@@ -147,13 +148,14 @@ public sealed class UserProfileProjectionBulkRepositoryTests : IDisposable
         entity.DeletedAt.Should().NotBeNull();
     }
 
-    private async Task SaveAsync(UserProfileProjectionCommandItem item)
+    private async Task SaveAsync(ProjectionCommandItem<UserProfileProjectionDto> item)
     {
         await _repository.BulkUpsertOrSoftDeleteAsync([item], CancellationToken.None);
         await _dbContext.SaveChangesAsync();
+        _dbContext.ChangeTracker.Clear();
     }
 
-    private static UserProfileProjectionCommandItem CreateUpsertItem(
+    private static ProjectionCommandItem<UserProfileProjectionDto> CreateUpsertItem(
         Guid userProfileId,
         int sourceVersion,
         string friendlyUserId = "jdoe",
@@ -162,7 +164,6 @@ public sealed class UserProfileProjectionBulkRepositoryTests : IDisposable
         string? avatarUrl = null,
         string source = "consumer") =>
         new(
-            Id<UserProfileProjectionDto>.FromGuid(userProfileId),
             new UserProfileProjectionDto
             {
                 UserProfileId = userProfileId,
@@ -173,15 +174,20 @@ public sealed class UserProfileProjectionBulkRepositoryTests : IDisposable
                 SourceVersion = sourceVersion,
                 Source = source
             },
+            OperationType.Updated,
             sourceVersion,
             DateTimeOffset.UtcNow,
             DateTimeOffset.UtcNow,
             null);
 
-    private static UserProfileProjectionCommandItem CreateDeleteItem(Guid userProfileId, int sourceVersion) =>
+    private static ProjectionCommandItem<UserProfileProjectionDto> CreateDeleteItem(Guid userProfileId, int sourceVersion) =>
         new(
-            Id<UserProfileProjectionDto>.FromGuid(userProfileId),
-            null,
+            new UserProfileProjectionDto
+            {
+                UserProfileId = userProfileId,
+                FriendlyUserId = string.Empty
+            },
+            OperationType.Deleted,
             sourceVersion,
             DateTimeOffset.UtcNow,
             DateTimeOffset.UtcNow,
