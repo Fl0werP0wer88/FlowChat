@@ -27,7 +27,6 @@ public static class InfrastructureServiceRegistration
         services.TryAddSingleton<IActiveConnectionsTracker, InMemoryActiveConnectionsTracker>();
         services.TryAddSingleton<IRealtimeConnectionRegistry, RealtimeConnectionRegistry>();
         services.AddFlowChatHttpClient<IPresenceInternalApiClient, PresenceInternalApiClient, PresenceServiceSettingsSection>();
-        services.AddScoped<IRealtimeEventRouter, RealtimeEventRouter>();
         services.AddHostedService<RealtimeConnectionRefreshBackgroundService>();
 
         return services;
