@@ -7,18 +7,19 @@ using IPublisher = Silverback.Messaging.Publishing.IPublisher;
 
 namespace FlowChat.Shared.Consumers.ProjectionBulk;
 
-public sealed class ProjectionBatchSubscriber<TReadModel, TItem>(
+public sealed class ProjectionBatchSubscriber<TReadModel, TItem, TKey>(
     IMediator mediator,
     IPublisher publisher,
-    IProjectionValueFactory<TReadModel, TItem> valueFactory,
-    ILogger<ProjectionBatchSubscriber<TReadModel, TItem>> logger)
-    : ProjectionBatchSubscriberBase<TReadModel, TItem>(
+    IProjectionValueFactory<TReadModel, TItem, TKey> valueFactory,
+    ILogger<ProjectionBatchSubscriber<TReadModel, TItem, TKey>> logger)
+    : ProjectionBatchSubscriberBase<TReadModel, TItem, TKey>(
         mediator,
         publisher,
         valueFactory,
         logger)
     where TReadModel : class
     where TItem : class
+    where TKey : notnull
 {
     [Subscribe]
     public Task HandleAsync(

@@ -52,13 +52,14 @@ public sealed class ProjectionBulkBuilder(
         return this;
     }
 
-    public ProjectionBulkBuilder AddConsumer<TDbContext, TReadModel, TValue, TValueFactory>()
+    public ProjectionBulkBuilder AddConsumer<TDbContext, TReadModel, TValue, TKey, TValueFactory>()
         where TDbContext : DbContext
         where TReadModel : class
         where TValue : class
-        where TValueFactory : class, IProjectionValueFactory<TReadModel, TValue>
+        where TKey : notnull
+        where TValueFactory : class, IProjectionValueFactory<TReadModel, TValue, TKey>
     {
-        silverbackBuilder.Services.AddScoped<IProjectionValueFactory<TReadModel, TValue>, TValueFactory>();
+        silverbackBuilder.Services.AddScoped<IProjectionValueFactory<TReadModel, TValue, TKey>, TValueFactory>();
 
         silverbackBuilder
             .WithConnectionToMessageBroker(broker => broker
@@ -92,12 +93,12 @@ public sealed class ProjectionBulkBuilder(
                             .ProduceTo(options.DeadLetterTopic)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())));
             })
-            .AddScopedSubscriber<ProjectionBatchSubscriber<TReadModel, TValue>>(
+            .AddScopedSubscriber<ProjectionBatchSubscriber<TReadModel, TValue, TKey>>(
                 new TypeSubscriptionOptions
                 {
                     Filters = [new ConsumerNameFilterAttribute(mainConsumerName)]
                 })
-            .AddScopedSubscriber<ProjectionRetrySubscriber<TReadModel, TValue>>(
+            .AddScopedSubscriber<ProjectionRetrySubscriber<TReadModel, TValue, TKey>>(
                 new TypeSubscriptionOptions
                 {
                     Filters = [new ConsumerNameFilterAttribute(retryConsumerName)]

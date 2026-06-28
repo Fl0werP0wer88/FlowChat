@@ -8,13 +8,14 @@ using IPublisher = Silverback.Messaging.Publishing.IPublisher;
 
 namespace FlowChat.Shared.Consumers.ProjectionBulk;
 
-public abstract class ProjectionBatchSubscriberBase<TReadModel, TItem>(
+public abstract class ProjectionBatchSubscriberBase<TReadModel, TItem, TKey>(
     IMediator mediator,
     IPublisher publisher,
-    IProjectionValueFactory<TReadModel, TItem> valueFactory,
+    IProjectionValueFactory<TReadModel, TItem, TKey> valueFactory,
     ILogger logger)
     where TReadModel : class
     where TItem : class
+    where TKey : notnull
 {
     protected async Task HandleBatchAsync(
         IAsyncEnumerable<ProjectionIntegrationEvent<TReadModel>> messages,
@@ -37,11 +38,12 @@ public abstract class ProjectionBatchSubscriberBase<TReadModel, TItem>(
             return;
         }
 
-        var result = await mediator.Send(new ProjectionBulkCommand<ProjectionCommandItem<TItem>>(items), cancellationToken);
+        var deduplicatedItems = Deduplicate(items);
+        var result = await mediator.Send(new ProjectionBulkCommand<ProjectionCommandItem<TItem>>(deduplicatedItems), cancellationToken);
 
         if (result.IsSuccess)
         {
-            logger.LogInformation("Processed {Count} projection events from Kafka batch.", items.Count);
+            logger.LogInformation("Processed {Count} projection events from Kafka batch.", deduplicatedItems.Count);
             return;
         }
 
@@ -71,6 +73,19 @@ public abstract class ProjectionBatchSubscriberBase<TReadModel, TItem>(
         if (message.SourceAggregateVersion <= 0)
             throw new NonTransientException("Payload does not contain valid SourceVersion.");
     }
+
+    private IReadOnlyCollection<ProjectionCommandItem<TItem>> Deduplicate(
+        IReadOnlyCollection<ProjectionCommandItem<TItem>> items) =>
+        items
+            .Select((item, index) => new { item, index })
+            .GroupBy(x => valueFactory.GetDeduplicationKey(x.item.Value))
+            .Select(group => group
+                .OrderBy(x => x.item.SourceVersion)
+                .ThenBy(x => x.index)
+                .Last())
+            .OrderBy(x => x.index)
+            .Select(x => x.item)
+            .ToArray();
 
     private ProjectionCommandItem<TItem> MapItem(ProjectionIntegrationEvent<TReadModel> message) =>
         new(

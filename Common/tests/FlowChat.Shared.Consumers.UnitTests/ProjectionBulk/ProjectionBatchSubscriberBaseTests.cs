@@ -70,6 +70,77 @@ public sealed class ProjectionBatchSubscriberBaseTests
     }
 
     [Fact]
+    public async Task HandleAsync_WhenBatchContainsDuplicateKeys_SendsHighestVersionItem()
+    {
+        ProjectionBulkCommand<ProjectionCommandItem<TestProjectionValue>>? capturedCommand = null;
+        var mediatorMock = CreateCapturingMediator(command => capturedCommand = command);
+        var subscriber = CreateSubscriber(mediatorMock);
+        var key = Guid.NewGuid();
+
+        await subscriber.HandleAsync(
+            ToAsyncEnumerable(
+                [
+                    CreateMessage(key, "older", sourceVersion: 1),
+                    CreateMessage(key, "newer", sourceVersion: 3),
+                    CreateMessage(key, "middle", sourceVersion: 2)
+                ]),
+            CancellationToken.None);
+
+        capturedCommand.Should().NotBeNull();
+        var item = capturedCommand!.Items.Should().ContainSingle().Which;
+        item.SourceVersion.Should().Be(3);
+        item.Value.Payload.Should().Be("newer");
+    }
+
+    [Fact]
+    public async Task HandleAsync_WhenBatchContainsSameVersionDuplicateKeys_SendsLastItem()
+    {
+        ProjectionBulkCommand<ProjectionCommandItem<TestProjectionValue>>? capturedCommand = null;
+        var mediatorMock = CreateCapturingMediator(command => capturedCommand = command);
+        var subscriber = CreateSubscriber(mediatorMock);
+        var key = Guid.NewGuid();
+
+        await subscriber.HandleAsync(
+            ToAsyncEnumerable(
+                [
+                    CreateMessage(key, "first", sourceVersion: 2),
+                    CreateMessage(key, "last", sourceVersion: 2)
+                ]),
+            CancellationToken.None);
+
+        capturedCommand.Should().NotBeNull();
+        var item = capturedCommand!.Items.Should().ContainSingle().Which;
+        item.SourceVersion.Should().Be(2);
+        item.Value.Payload.Should().Be("last");
+    }
+
+    [Fact]
+    public async Task HandleAsync_WhenBatchIsDeduplicated_PreservesSelectedItemOrder()
+    {
+        ProjectionBulkCommand<ProjectionCommandItem<TestProjectionValue>>? capturedCommand = null;
+        var mediatorMock = CreateCapturingMediator(command => capturedCommand = command);
+        var subscriber = CreateSubscriber(mediatorMock);
+        var firstKey = Guid.NewGuid();
+        var secondKey = Guid.NewGuid();
+        var thirdKey = Guid.NewGuid();
+
+        await subscriber.HandleAsync(
+            ToAsyncEnumerable(
+                [
+                    CreateMessage(firstKey, "first-stale", sourceVersion: 1),
+                    CreateMessage(secondKey, "second", sourceVersion: 1),
+                    CreateMessage(firstKey, "first-selected", sourceVersion: 2),
+                    CreateMessage(thirdKey, "third", sourceVersion: 1)
+                ]),
+            CancellationToken.None);
+
+        capturedCommand.Should().NotBeNull();
+        capturedCommand!.Items.Select(x => x.Value.Payload)
+            .Should()
+            .Equal("second", "first-selected", "third");
+    }
+
+    [Fact]
     public async Task HandleAsync_WhenMessageIsDelete_SendsItemWithDeletedOperationAndValue()
     {
         ProjectionBulkCommand<ProjectionCommandItem<TestProjectionValue>>? capturedCommand = null;
@@ -149,16 +220,38 @@ public sealed class ProjectionBatchSubscriberBaseTests
             NullLogger.Instance);
     }
 
+    private static Mock<IMediator> CreateCapturingMediator(
+        Action<ProjectionBulkCommand<ProjectionCommandItem<TestProjectionValue>>> capture)
+    {
+        var mediatorMock = new Mock<IMediator>();
+        mediatorMock
+            .Setup(x => x.Send(
+                It.IsAny<ProjectionBulkCommand<ProjectionCommandItem<TestProjectionValue>>>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<IRequest<FlowChatResult<Unit>>, CancellationToken>((command, _) =>
+                capture((ProjectionBulkCommand<ProjectionCommandItem<TestProjectionValue>>)command))
+            .ReturnsAsync(FlowChatResult<Unit>.Success(Unit.Value));
+
+        return mediatorMock;
+    }
+
     private static ProjectionIntegrationEvent<TestReadModel> CreateMessage(
+        int sourceVersion = 1,
+        OperationType operation = OperationType.Updated) =>
+        CreateMessage(Guid.NewGuid(), "payload", sourceVersion, operation);
+
+    private static ProjectionIntegrationEvent<TestReadModel> CreateMessage(
+        Guid key,
+        string payload,
         int sourceVersion = 1,
         OperationType operation = OperationType.Updated) =>
         new()
         {
-            SourceAggregateId = Guid.NewGuid(),
+            SourceAggregateId = key,
             SourceAggregateVersion = sourceVersion,
             SourceAggregateCreatedAtUtc = DateTimeOffset.UtcNow,
             SourceAggregateModifiedAtUtc = DateTimeOffset.UtcNow,
-            Value = new TestReadModel("payload"),
+            Value = new TestReadModel(key, payload),
             Operation = operation
         };
 
@@ -175,9 +268,9 @@ public sealed class ProjectionBatchSubscriberBaseTests
     private sealed class TestBatchSubscriber(
         IMediator mediator,
         IPublisher publisher,
-        IProjectionValueFactory<TestReadModel, TestProjectionValue> valueFactory,
+        IProjectionValueFactory<TestReadModel, TestProjectionValue, Guid> valueFactory,
         ILogger logger)
-        : ProjectionBatchSubscriberBase<TestReadModel, TestProjectionValue>(
+        : ProjectionBatchSubscriberBase<TestReadModel, TestProjectionValue, Guid>(
             mediator,
             publisher,
             valueFactory,
@@ -190,13 +283,16 @@ public sealed class ProjectionBatchSubscriberBaseTests
     }
 
     private sealed class TestProjectionValueFactory
-        : IProjectionValueFactory<TestReadModel, TestProjectionValue>
+        : IProjectionValueFactory<TestReadModel, TestProjectionValue, Guid>
     {
         public TestProjectionValue MapValue(ProjectionIntegrationEvent<TestReadModel> message) =>
-            new(message.Value.Payload);
+            new(message.Value.Id, message.Value.Payload);
+
+        public Guid GetDeduplicationKey(TestProjectionValue value) =>
+            value.Id;
     }
 
-    private sealed record TestProjectionValue(string Payload);
+    private sealed record TestProjectionValue(Guid Id, string Payload);
 
-    private sealed record TestReadModel(string Payload);
+    private sealed record TestReadModel(Guid Id, string Payload);
 }

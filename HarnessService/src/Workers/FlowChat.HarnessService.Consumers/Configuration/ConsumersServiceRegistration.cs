@@ -48,10 +48,11 @@ public static class ConsumersServiceRegistration
                         ProjectionTestBulkEntityFactory>()
                     .AddCommandHandler<ProjectionTestDto>()
                     .AddConsumer<
-                        AppDbContext,
-                        ProjectionTestReadModel,
-                        ProjectionTestDto,
-                        ProjectionTestValueFactory>());
+                AppDbContext,
+                ProjectionTestReadModel,
+                ProjectionTestDto,
+                Guid,
+                ProjectionTestValueFactory>());
 
         return services;
     }

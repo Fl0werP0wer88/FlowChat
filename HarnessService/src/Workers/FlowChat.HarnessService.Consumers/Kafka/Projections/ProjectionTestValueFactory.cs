@@ -6,9 +6,12 @@ using FlowChat.Shared.Consumers.ProjectionBulk;
 namespace FlowChat.HarnessService.Consumers.Kafka.Projections;
 
 public sealed class ProjectionTestValueFactory
-    : IProjectionValueFactory<ProjectionTestReadModel, ProjectionTestDto>
+    : IProjectionValueFactory<ProjectionTestReadModel, ProjectionTestDto, Guid>
 {
     public ProjectionTestDto MapValue(
         ProjectionIntegrationEvent<ProjectionTestReadModel> message) =>
         new() { Id = message.SourceAggregateId, Payload = message.Value.Payload };
+
+    public Guid GetDeduplicationKey(ProjectionTestDto value) =>
+        value.Id;
 }

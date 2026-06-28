@@ -29,12 +29,13 @@ public sealed class ProjectionBulkServiceCollectionExtensionsTests
                     TestDbContext,
                     TestReadModel,
                     TestProjectionValue,
+                    Guid,
                     TestProjectionValueFactory>());
 
         using var provider = services.BuildServiceProvider();
 
         provider
-            .GetRequiredService<IProjectionValueFactory<TestReadModel, TestProjectionValue>>()
+            .GetRequiredService<IProjectionValueFactory<TestReadModel, TestProjectionValue, Guid>>()
             .Should()
             .BeOfType<TestProjectionValueFactory>();
     }
@@ -54,12 +55,13 @@ public sealed class ProjectionBulkServiceCollectionExtensionsTests
                     TestDbContext,
                     TestReadModel,
                     TestProjectionValue,
+                    Guid,
                     TestProjectionValueFactory>());
 
         services.Should().ContainSingle(descriptor =>
-            descriptor.ServiceType == typeof(ProjectionBatchSubscriber<TestReadModel, TestProjectionValue>));
+            descriptor.ServiceType == typeof(ProjectionBatchSubscriber<TestReadModel, TestProjectionValue, Guid>));
         services.Should().ContainSingle(descriptor =>
-            descriptor.ServiceType == typeof(ProjectionRetrySubscriber<TestReadModel, TestProjectionValue>));
+            descriptor.ServiceType == typeof(ProjectionRetrySubscriber<TestReadModel, TestProjectionValue, Guid>));
     }
 
     [Fact]
@@ -84,6 +86,7 @@ public sealed class ProjectionBulkServiceCollectionExtensionsTests
                         TestDbContext,
                         TestReadModel,
                         TestProjectionValue,
+                        Guid,
                         TestProjectionValueFactory>());
 
         services.Should().ContainSingle(descriptor =>
@@ -96,9 +99,9 @@ public sealed class ProjectionBulkServiceCollectionExtensionsTests
         services.Should().ContainSingle(descriptor =>
             descriptor.ServiceType == typeof(IRequestHandler<ProjectionBulkCommand<ProjectionCommandItem<TestProjectionValue>>, FlowChatResult<Unit>>));
         services.Should().ContainSingle(descriptor =>
-            descriptor.ServiceType == typeof(ProjectionBatchSubscriber<TestReadModel, TestProjectionValue>));
+            descriptor.ServiceType == typeof(ProjectionBatchSubscriber<TestReadModel, TestProjectionValue, Guid>));
         services.Should().ContainSingle(descriptor =>
-            descriptor.ServiceType == typeof(ProjectionRetrySubscriber<TestReadModel, TestProjectionValue>));
+            descriptor.ServiceType == typeof(ProjectionRetrySubscriber<TestReadModel, TestProjectionValue, Guid>));
     }
 
     [Fact]
@@ -168,10 +171,13 @@ public sealed class ProjectionBulkServiceCollectionExtensionsTests
     private sealed class TestDbContext : DbContext;
 
     private sealed class TestProjectionValueFactory
-        : IProjectionValueFactory<TestReadModel, TestProjectionValue>
+        : IProjectionValueFactory<TestReadModel, TestProjectionValue, Guid>
     {
         public TestProjectionValue MapValue(ProjectionIntegrationEvent<TestReadModel> message) =>
             new(message.SourceAggregateId);
+
+        public Guid GetDeduplicationKey(TestProjectionValue value) =>
+            value.Id;
     }
 
     private sealed class TestProjectionBulkRepository : IProjectionBulkRepository<ProjectionCommandItem<TestProjectionValue>>

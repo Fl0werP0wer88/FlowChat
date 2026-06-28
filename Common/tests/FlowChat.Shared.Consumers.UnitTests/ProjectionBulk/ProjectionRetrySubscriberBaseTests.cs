@@ -124,15 +124,15 @@ public sealed class ProjectionRetrySubscriberBaseTests
             SourceAggregateVersion = sourceVersion,
             SourceAggregateCreatedAtUtc = DateTimeOffset.UtcNow,
             SourceAggregateModifiedAtUtc = DateTimeOffset.UtcNow,
-            Value = new TestReadModel("payload"),
+            Value = new TestReadModel(Guid.NewGuid(), "payload"),
             Operation = operation
         };
 
     private sealed class TestRetrySubscriber(
         IMediator mediator,
-        IProjectionValueFactory<TestReadModel, TestProjectionValue> valueFactory,
+        IProjectionValueFactory<TestReadModel, TestProjectionValue, Guid> valueFactory,
         ILogger logger)
-        : ProjectionRetrySubscriberBase<TestReadModel, TestProjectionValue>(
+        : ProjectionRetrySubscriberBase<TestReadModel, TestProjectionValue, Guid>(
             mediator,
             valueFactory,
             logger)
@@ -144,13 +144,16 @@ public sealed class ProjectionRetrySubscriberBaseTests
     }
 
     private sealed class TestProjectionValueFactory
-        : IProjectionValueFactory<TestReadModel, TestProjectionValue>
+        : IProjectionValueFactory<TestReadModel, TestProjectionValue, Guid>
     {
         public TestProjectionValue MapValue(ProjectionIntegrationEvent<TestReadModel> message) =>
-            new(message.Value.Payload);
+            new(message.Value.Id, message.Value.Payload);
+
+        public Guid GetDeduplicationKey(TestProjectionValue value) =>
+            value.Id;
     }
 
-    private sealed record TestProjectionValue(string Payload);
+    private sealed record TestProjectionValue(Guid Id, string Payload);
 
-    private sealed record TestReadModel(string Payload);
+    private sealed record TestReadModel(Guid Id, string Payload);
 }

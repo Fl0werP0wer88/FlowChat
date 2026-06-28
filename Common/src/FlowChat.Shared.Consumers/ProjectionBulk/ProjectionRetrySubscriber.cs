@@ -6,16 +6,17 @@ using Silverback.Messaging.Subscribers;
 
 namespace FlowChat.Shared.Consumers.ProjectionBulk;
 
-public sealed class ProjectionRetrySubscriber<TReadModel, TItem>(
+public sealed class ProjectionRetrySubscriber<TReadModel, TItem, TKey>(
     IMediator mediator,
-    IProjectionValueFactory<TReadModel, TItem> valueFactory,
-    ILogger<ProjectionRetrySubscriber<TReadModel, TItem>> logger)
-    : ProjectionRetrySubscriberBase<TReadModel, TItem>(
+    IProjectionValueFactory<TReadModel, TItem, TKey> valueFactory,
+    ILogger<ProjectionRetrySubscriber<TReadModel, TItem, TKey>> logger)
+    : ProjectionRetrySubscriberBase<TReadModel, TItem, TKey>(
         mediator,
         valueFactory,
         logger)
     where TReadModel : class
     where TItem : class
+    where TKey : notnull
 {
     [Subscribe]
     public Task HandleAsync(

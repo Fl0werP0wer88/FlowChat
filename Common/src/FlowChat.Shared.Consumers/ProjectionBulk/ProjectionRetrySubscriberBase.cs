@@ -7,12 +7,13 @@ using Microsoft.Extensions.Logging;
 
 namespace FlowChat.Shared.Consumers.ProjectionBulk;
 
-public abstract class ProjectionRetrySubscriberBase<TReadModel, TItem>(
+public abstract class ProjectionRetrySubscriberBase<TReadModel, TItem, TKey>(
     IMediator mediator,
-    IProjectionValueFactory<TReadModel, TItem> valueFactory,
+    IProjectionValueFactory<TReadModel, TItem, TKey> valueFactory,
     ILogger logger)
     where TReadModel : class
     where TItem : class
+    where TKey : notnull
 {
     protected async Task HandleRetryAsync(
         ProjectionIntegrationEvent<TReadModel> message,
