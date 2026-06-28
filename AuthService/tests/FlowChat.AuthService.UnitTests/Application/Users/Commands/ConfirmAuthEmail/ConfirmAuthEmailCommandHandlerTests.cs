@@ -76,15 +76,5 @@ public sealed class ConfirmAuthEmailCommandHandlerTests
         result.Error.ErrorType.Should().Be(ErrorType.NotFound);
     }
 
-    [Fact]
-    public async Task Handle_WhenEmailAddressIsInvalid_ReturnsBadRequest()
-    {
-        var result = await _handler.Handle(new ConfirmAuthEmailCommand { EmailAddress = "not-an-email" }, CancellationToken.None);
-
-        result.IsFailure.Should().BeTrue();
-        result.Error.ErrorType.Should().Be(ErrorType.BadRequest);
-        result.Error.ErrorMessage.Should().Be(EmailAddress.InvalidEmailAddressMessage);
-        _accountRepositoryMock.Verify(x => x.GetByEmailAsync(It.IsAny<EmailAddress>(), It.IsAny<CancellationToken>()), Times.Never);
-    }
 }
 

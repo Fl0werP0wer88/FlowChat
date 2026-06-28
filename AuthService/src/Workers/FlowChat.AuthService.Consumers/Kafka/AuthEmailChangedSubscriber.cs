@@ -1,5 +1,4 @@
 using FlowChat.AuthService.Application.Features.User.Commands.ChangeAuthEmail;
-using FlowChat.Core.Exceptions;
 using FlowChat.Core.Messaging.UserProfileService.Events;
 using FlowChat.Shared.Infrastructure.Silverback.Subscribers;
 using MediatR;
@@ -15,22 +14,11 @@ public sealed class AuthEmailChangedSubscriber(
         AuthEmailChangedIntegrationEvent message,
         CancellationToken cancellationToken)
     {
-        if (message.UserProfileId == Guid.Empty)
-        {
-            throw new NonTransientException("Payload does not contain valid UserProfileId.");
-        }
-
-        var emailAddress = message.EmailAddress?.Trim();
-        if (string.IsNullOrWhiteSpace(emailAddress))
-        {
-            throw new NonTransientException("Payload does not contain EmailAddress.");
-        }
-
         var result = await mediator.Send(
             new ChangeAuthEmailCommand
             {
                 UserId = message.UserProfileId,
-                EmailAddress = emailAddress
+                EmailAddress = message.EmailAddress?.Trim() ?? string.Empty
             },
             cancellationToken);
 

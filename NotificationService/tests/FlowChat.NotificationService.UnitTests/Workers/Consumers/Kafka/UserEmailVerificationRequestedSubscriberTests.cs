@@ -92,6 +92,8 @@ public sealed class UserEmailVerificationRequestedSubscriberTests
     [Fact]
     public async Task HandleAsync_WhenUserEmailIsMissing_ThrowsNonTransientException()
     {
+        SetupCommandFailure("Email is required.");
+
         var act = () => _subscriber.HandleAsync(
             new EmailVerificationRequestIntegrationEvent
             {
@@ -102,14 +104,16 @@ public sealed class UserEmailVerificationRequestedSubscriberTests
             CancellationToken.None);
 
         await act.Should().ThrowAsync<NonTransientException>()
-            .WithMessage("*UserEmail*");
+            .WithMessage("*Email*");
 
-        VerifyCommandWasNotSent();
+        VerifyCommandWasSent();
     }
 
     [Fact]
     public async Task HandleAsync_WhenUserEmailLocalPartIsMissing_ThrowsNonTransientException()
     {
+        SetupCommandFailure("UserName is required.");
+
         var act = () => _subscriber.HandleAsync(
             new EmailVerificationRequestIntegrationEvent
             {
@@ -120,14 +124,16 @@ public sealed class UserEmailVerificationRequestedSubscriberTests
             CancellationToken.None);
 
         await act.Should().ThrowAsync<NonTransientException>()
-            .WithMessage("*UserEmail local-part*");
+            .WithMessage("*UserName*");
 
-        VerifyCommandWasNotSent();
+        VerifyCommandWasSent();
     }
 
     [Fact]
     public async Task HandleAsync_WhenUserIdIsMissing_ThrowsNonTransientException()
     {
+        SetupCommandFailure("UserId is required.");
+
         var act = () => _subscriber.HandleAsync(
             new EmailVerificationRequestIntegrationEvent
             {
@@ -140,12 +146,14 @@ public sealed class UserEmailVerificationRequestedSubscriberTests
         await act.Should().ThrowAsync<NonTransientException>()
             .WithMessage("*UserId*");
 
-        VerifyCommandWasNotSent();
+        VerifyCommandWasSent();
     }
 
     [Fact]
     public async Task HandleAsync_WhenConfirmationLinkIsMissing_ThrowsNonTransientException()
     {
+        SetupCommandFailure("ConfirmationLink is required.");
+
         var act = () => _subscriber.HandleAsync(
             new EmailVerificationRequestIntegrationEvent
             {
@@ -158,7 +166,7 @@ public sealed class UserEmailVerificationRequestedSubscriberTests
         await act.Should().ThrowAsync<NonTransientException>()
             .WithMessage("*ConfirmationLink*");
 
-        VerifyCommandWasNotSent();
+        VerifyCommandWasSent();
     }
 
     [Fact]
@@ -181,10 +189,17 @@ public sealed class UserEmailVerificationRequestedSubscriberTests
             .WithMessage("boom");
     }
 
-    private void VerifyCommandWasNotSent()
+    private void SetupCommandFailure(string errorMessage)
+    {
+        _mediatorMock
+            .Setup(x => x.Send(It.IsAny<UserEmailVerificationRequestedCommand>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(FlowChatResult<Unit>.Failure(DomainError.BadRequest(errorMessage)));
+    }
+
+    private void VerifyCommandWasSent()
     {
         _mediatorMock.Verify(
             x => x.Send(It.IsAny<UserEmailVerificationRequestedCommand>(), It.IsAny<CancellationToken>()),
-            Times.Never);
+            Times.Once);
     }
 }

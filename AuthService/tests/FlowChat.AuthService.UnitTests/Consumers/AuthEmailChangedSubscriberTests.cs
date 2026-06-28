@@ -60,6 +60,8 @@ public sealed class AuthEmailChangedSubscriberTests
     [Fact]
     public async Task HandleAsync_WhenUserProfileIdIsMissing_ThrowsNonTransientException()
     {
+        SetupCommandFailure("UserId is required.");
+
         var message = new AuthEmailChangedIntegrationEvent
         {
             UserProfileId = Guid.Empty,
@@ -70,12 +72,16 @@ public sealed class AuthEmailChangedSubscriberTests
         var act = () => _subscriber.HandleAsync(message.ToInboundEnvelope(), CancellationToken.None);
 
         await act.Should().ThrowAsync<NonTransientException>()
-            .WithMessage("*UserProfileId*");
+            .WithMessage("*UserId*");
+
+        VerifyCommandWasSent();
     }
 
     [Fact]
     public async Task HandleAsync_WhenEmailAddressIsMissing_ThrowsNonTransientException()
     {
+        SetupCommandFailure("Email address is required.");
+
         var message = new AuthEmailChangedIntegrationEvent
         {
             UserProfileId = _fixture.Create<Guid>(),
@@ -86,7 +92,9 @@ public sealed class AuthEmailChangedSubscriberTests
         var act = () => _subscriber.HandleAsync(message.ToInboundEnvelope(), CancellationToken.None);
 
         await act.Should().ThrowAsync<NonTransientException>()
-            .WithMessage("*EmailAddress*");
+            .WithMessage("*Email address*");
+
+        VerifyCommandWasSent();
     }
 
     [Fact]
@@ -107,5 +115,19 @@ public sealed class AuthEmailChangedSubscriberTests
 
         await act.Should().ThrowAsync<NonTransientException>()
             .WithMessage("boom");
+    }
+
+    private void SetupCommandFailure(string errorMessage)
+    {
+        _mediatorMock
+            .Setup(x => x.Send(It.IsAny<ChangeAuthEmailCommand>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(FlowChatResult<Unit>.Failure(DomainError.BadRequest(errorMessage)));
+    }
+
+    private void VerifyCommandWasSent()
+    {
+        _mediatorMock.Verify(
+            x => x.Send(It.IsAny<ChangeAuthEmailCommand>(), It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 }

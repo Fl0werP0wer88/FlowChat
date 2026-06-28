@@ -1,4 +1,3 @@
-using FlowChat.Core.Exceptions;
 using FlowChat.Core.Messaging.AuthService.Events;
 using FlowChat.NotificationService.Application.Features.Notification.Commands.UserEmailVerificationRequested;
 using FlowChat.Shared.Infrastructure.Silverback.Subscribers;
@@ -15,34 +14,15 @@ public sealed class UserEmailVerificationRequestedSubscriber(
         EmailVerificationRequestIntegrationEvent message,
         CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(message.UserEmail))
-        {
-            throw new NonTransientException("Payload does not contain UserEmail.");
-        }
-
         var userName = ResolveUserName(message.UserEmail);
-        if (string.IsNullOrWhiteSpace(userName))
-        {
-            throw new NonTransientException("Payload does not contain valid UserEmail local-part.");
-        }
-
-        if (message.UserId == Guid.Empty)
-        {
-            throw new NonTransientException("Payload does not contain valid UserId.");
-        }
-
-        if (string.IsNullOrWhiteSpace(message.ConfirmationLink))
-        {
-            throw new NonTransientException("Payload does not contain ConfirmationLink.");
-        }
 
         var result = await mediator.Send(
             new UserEmailVerificationRequestedCommand(
                 message.UserId,
-                message.UserEmail.Trim(),
-                userName,
-                userName,
-                message.ConfirmationLink.Trim(),
+                message.UserEmail?.Trim() ?? string.Empty,
+                userName ?? string.Empty,
+                userName ?? string.Empty,
+                message.ConfirmationLink?.Trim() ?? string.Empty,
                 message.VerificationRequestId == Guid.Empty
                     ? message.UserId.ToString()
                     : message.VerificationRequestId.ToString("D")),

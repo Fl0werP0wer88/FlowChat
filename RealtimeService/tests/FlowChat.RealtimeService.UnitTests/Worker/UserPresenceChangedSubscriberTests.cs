@@ -65,37 +65,43 @@ public sealed class UserPresenceChangedSubscriberTests
     [Fact]
     public async Task HandleAsync_WhenUserIdMissing_ThrowsNonTransientException()
     {
+        SetupCommandFailure("UserId is required.");
+
         var act = () => _subscriber.HandleAsync(
             CreateValidEvent(userId: Guid.Empty).ToInboundEnvelope(),
             CancellationToken.None);
 
         await act.Should().ThrowAsync<NonTransientException>()
             .WithMessage("*UserId*");
-        VerifyCommandWasNotSent();
+        VerifyCommandWasSent();
     }
 
     [Fact]
     public async Task HandleAsync_WhenStatusUnsupported_ThrowsNonTransientException()
     {
+        SetupCommandFailure("Status must be one of: Active, AFK, Busy, Invisible.");
+
         var act = () => _subscriber.HandleAsync(
             CreateValidEvent(status: (PresenceStatus)999).ToInboundEnvelope(),
             CancellationToken.None);
 
         await act.Should().ThrowAsync<NonTransientException>()
             .WithMessage("*Status*");
-        VerifyCommandWasNotSent();
+        VerifyCommandWasSent();
     }
 
     [Fact]
     public async Task HandleAsync_WhenRecipientUserIdsMissing_ThrowsNonTransientException()
     {
+        SetupCommandFailure("RecipientUserIds must contain at least one valid user id.");
+
         var act = () => _subscriber.HandleAsync(
             CreateValidEvent(recipientUserIds: [Guid.Empty]).ToInboundEnvelope(),
             CancellationToken.None);
 
         await act.Should().ThrowAsync<NonTransientException>()
             .WithMessage("*RecipientUserIds*");
-        VerifyCommandWasNotSent();
+        VerifyCommandWasSent();
     }
 
     [Fact]
@@ -125,10 +131,17 @@ public sealed class UserPresenceChangedSubscriberTests
             RecipientUserIds = (recipientUserIds ?? [_fixture.Create<Guid>()]).ToList()
         };
 
-    private void VerifyCommandWasNotSent()
+    private void SetupCommandFailure(string errorMessage)
+    {
+        _mediatorMock
+            .Setup(x => x.Send(It.IsAny<RoutePresenceChangeCommand>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(FlowChatResult<Unit>.Failure(DomainError.BadRequest(errorMessage)));
+    }
+
+    private void VerifyCommandWasSent()
     {
         _mediatorMock.Verify(
             x => x.Send(It.IsAny<RoutePresenceChangeCommand>(), It.IsAny<CancellationToken>()),
-            Times.Never);
+            Times.Once);
     }
 }

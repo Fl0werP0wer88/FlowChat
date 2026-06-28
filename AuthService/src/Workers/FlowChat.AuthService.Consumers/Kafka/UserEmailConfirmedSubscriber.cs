@@ -20,12 +20,6 @@ public sealed class UserEmailConfirmedSubscriber(
             throw new NonTransientException("Payload does not contain Email.Address.");
         }
 
-        var emailAddress = email.Address.Trim();
-        if (string.IsNullOrWhiteSpace(emailAddress))
-        {
-            throw new NonTransientException("Payload does not contain Email.Address.");
-        }
-
         if (!email.IsAuth)
         {
             Logger.LogDebug(
@@ -38,7 +32,7 @@ public sealed class UserEmailConfirmedSubscriber(
         var result = await mediator.Send(
             new ConfirmAuthEmailCommand
             {
-                EmailAddress = emailAddress
+                EmailAddress = email.Address.Trim()
             },
             cancellationToken);
 

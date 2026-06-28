@@ -64,6 +64,8 @@ public sealed class AccountRegisteredSubscriberTests
     [Fact]
     public async Task HandleAsync_WhenFriendlyUserIdIsMissing_ThrowsNonTransientException()
     {
+        SetupCommandFailure("FriendlyUserId is required.");
+
         var message = new AccountRegisteredIntegrationEvent
         {
             UserId = _fixture.Create<Guid>(),
@@ -75,11 +77,15 @@ public sealed class AccountRegisteredSubscriberTests
 
         await act.Should().ThrowAsync<NonTransientException>()
             .WithMessage("*FriendlyUserId*");
+
+        VerifyCommandWasSent();
     }
 
     [Fact]
     public async Task HandleAsync_WhenUserIdIsMissing_ThrowsNonTransientException()
     {
+        SetupCommandFailure("UserId is required.");
+
         var message = new AccountRegisteredIntegrationEvent
         {
             UserId = Guid.Empty,
@@ -91,6 +97,8 @@ public sealed class AccountRegisteredSubscriberTests
 
         await act.Should().ThrowAsync<NonTransientException>()
             .WithMessage("*UserId*");
+
+        VerifyCommandWasSent();
     }
 
     [Fact]
@@ -140,5 +148,19 @@ public sealed class AccountRegisteredSubscriberTests
 
         await act.Should().ThrowAsync<NonTransientException>()
             .WithMessage("boom");
+    }
+
+    private void SetupCommandFailure(string errorMessage)
+    {
+        _mediatorMock
+            .Setup(x => x.Send(It.IsAny<CreateInitialUserProfileCommand>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(FlowChatResult<Guid>.Failure(DomainError.BadRequest(errorMessage)));
+    }
+
+    private void VerifyCommandWasSent()
+    {
+        _mediatorMock.Verify(
+            x => x.Send(It.IsAny<CreateInitialUserProfileCommand>(), It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 }

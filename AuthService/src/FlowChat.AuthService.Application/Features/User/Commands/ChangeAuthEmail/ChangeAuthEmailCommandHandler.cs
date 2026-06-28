@@ -33,20 +33,7 @@ public sealed class ChangeAuthEmailCommandHandler
 
     protected override async Task<FlowChatResult<Unit>> ExecuteAsync(ChangeAuthEmailCommand request, CancellationToken cancellationToken)
     {
-        if (request.UserId == Guid.Empty)
-        {
-            return FlowChatResult<Unit>.Failure(DomainError.BadRequest("UserId is required."));
-        }
-
-        if (string.IsNullOrWhiteSpace(request.EmailAddress))
-        {
-            return FlowChatResult<Unit>.Failure(DomainError.BadRequest("Email address is required."));
-        }
-
-        if (!EmailAddress.TryCreate(request.EmailAddress, out var emailAddress))
-        {
-            return FlowChatResult<Unit>.Failure(DomainError.BadRequest(EmailAddress.InvalidEmailAddressMessage));
-        }
+        var emailAddress = EmailAddress.Create(request.EmailAddress);
 
         _account = await _accountRepository.GetByIdAsync(request.UserId, cancellationToken);
         if (_account is null)

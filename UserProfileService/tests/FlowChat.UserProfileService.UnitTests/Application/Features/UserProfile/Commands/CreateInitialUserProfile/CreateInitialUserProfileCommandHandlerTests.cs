@@ -180,6 +180,18 @@ public sealed class CreateInitialUserProfileCommandHandlerTests
     }
 
     [Fact]
+    public async Task Handle_WhenUserIdIsEmpty_ReturnsValidationFailure()
+    {
+        var result = await SendAsync(
+            new CreateInitialUserProfileCommand("jdoe", "john@example.com", Guid.Empty));
+
+        result.IsFailure.Should().BeTrue();
+        result.Error.ErrorType.Should().Be(ErrorType.Validation);
+        result.Error.Errors.Should().Equal("UserId is required.");
+        _writeRepositoryMock.Verify(x => x.AddAsync(It.IsAny<UserProfile>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
     public async Task Handle_WithExistingFriendlyUserId_ReturnsConflictFailure()
     {
         _readRepositoryMock

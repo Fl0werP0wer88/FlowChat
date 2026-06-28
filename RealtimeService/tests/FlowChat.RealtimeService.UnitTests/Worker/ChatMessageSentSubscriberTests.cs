@@ -72,73 +72,85 @@ public sealed class ChatMessageSentSubscriberTests
     [Fact]
     public async Task HandleAsync_WhenMessageIdMissing_ThrowsNonTransientException()
     {
+        SetupCommandFailure("MessageId is required.");
+
         var act = () => _subscriber.HandleAsync(
             CreateValidEvent(messageId: Guid.Empty).ToInboundEnvelope(),
             CancellationToken.None);
 
         await act.Should().ThrowAsync<NonTransientException>()
             .WithMessage("*MessageId*");
-        VerifyCommandWasNotSent();
+        VerifyCommandWasSent();
     }
 
     [Fact]
     public async Task HandleAsync_WhenConversationIdMissing_ThrowsNonTransientException()
     {
+        SetupCommandFailure("ConversationId is required.");
+
         var act = () => _subscriber.HandleAsync(
             CreateValidEvent(conversationId: Guid.Empty).ToInboundEnvelope(),
             CancellationToken.None);
 
         await act.Should().ThrowAsync<NonTransientException>()
             .WithMessage("*ConversationId*");
-        VerifyCommandWasNotSent();
+        VerifyCommandWasSent();
     }
 
     [Fact]
     public async Task HandleAsync_WhenSenderUserIdMissing_ThrowsNonTransientException()
     {
+        SetupCommandFailure("SenderUserId is required.");
+
         var act = () => _subscriber.HandleAsync(
             CreateValidEvent(senderUserId: Guid.Empty).ToInboundEnvelope(),
             CancellationToken.None);
 
         await act.Should().ThrowAsync<NonTransientException>()
             .WithMessage("*SenderUserId*");
-        VerifyCommandWasNotSent();
+        VerifyCommandWasSent();
     }
 
     [Fact]
     public async Task HandleAsync_WhenSenderDisplayNameMissing_ThrowsNonTransientException()
     {
+        SetupCommandFailure("SenderDisplayName is required.");
+
         var act = () => _subscriber.HandleAsync(
             CreateValidEvent(senderDisplayName: " ").ToInboundEnvelope(),
             CancellationToken.None);
 
         await act.Should().ThrowAsync<NonTransientException>()
             .WithMessage("*SenderDisplayName*");
-        VerifyCommandWasNotSent();
+        VerifyCommandWasSent();
     }
 
     [Fact]
     public async Task HandleAsync_WhenTextMissing_ThrowsNonTransientException()
     {
+        SetupCommandFailure("Text is required.");
+
         var act = () => _subscriber.HandleAsync(
             CreateValidEvent(text: " ").ToInboundEnvelope(),
             CancellationToken.None);
 
         await act.Should().ThrowAsync<NonTransientException>()
             .WithMessage("*Text*");
-        VerifyCommandWasNotSent();
+        VerifyCommandWasSent();
     }
 
     [Fact]
     public async Task HandleAsync_WhenRecipientUserIdsMissing_ThrowsNonTransientException()
     {
+        SetupCommandFailure("RecipientUserIds must contain at least one valid user id.");
+
         var act = () => _subscriber.HandleAsync(
             CreateValidEvent(recipientUserIds: [Guid.Empty]).ToInboundEnvelope(),
             CancellationToken.None);
 
         await act.Should().ThrowAsync<NonTransientException>()
             .WithMessage("*RecipientUserIds*");
-        VerifyCommandWasNotSent();
+        VerifyCommandWasSent();
     }
 
     [Fact]
@@ -174,10 +186,17 @@ public sealed class ChatMessageSentSubscriberTests
             RecipientUserIds = (recipientUserIds ?? [_fixture.Create<Guid>()]).ToList()
         };
 
-    private void VerifyCommandWasNotSent()
+    private void SetupCommandFailure(string errorMessage)
+    {
+        _mediatorMock
+            .Setup(x => x.Send(It.IsAny<RouteMessageCommand>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(FlowChatResult<Unit>.Failure(DomainError.BadRequest(errorMessage)));
+    }
+
+    private void VerifyCommandWasSent()
     {
         _mediatorMock.Verify(
             x => x.Send(It.IsAny<RouteMessageCommand>(), It.IsAny<CancellationToken>()),
-            Times.Never);
+            Times.Once);
     }
 }

@@ -28,15 +28,7 @@ public sealed class ConfirmAuthEmailCommandHandler
 
     protected override async Task<FlowChatResult<Unit>> ExecuteAsync(ConfirmAuthEmailCommand request, CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(request.EmailAddress))
-        {
-            return FlowChatResult<Unit>.Failure(DomainError.BadRequest("Email address is required."));
-        }
-
-        if (!EmailAddress.TryCreate(request.EmailAddress, out var emailAddress))
-        {
-            return FlowChatResult<Unit>.Failure(DomainError.BadRequest(EmailAddress.InvalidEmailAddressMessage));
-        }
+        var emailAddress = EmailAddress.Create(request.EmailAddress);
 
         _account = await _accountRepository.GetByEmailAsync(emailAddress, cancellationToken);
         if (_account is null)

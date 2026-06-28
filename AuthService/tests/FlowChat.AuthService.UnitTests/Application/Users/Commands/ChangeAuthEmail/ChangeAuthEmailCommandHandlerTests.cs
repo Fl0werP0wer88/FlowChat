@@ -145,19 +145,5 @@ public sealed class ChangeAuthEmailCommandHandlerTests
             Times.Never);
     }
 
-    [Fact]
-    public async Task Handle_WhenUserIdIsEmpty_ReturnsBadRequest()
-    {
-        var result = await _handler.Handle(
-            new ChangeAuthEmailCommand
-            {
-                UserId = Guid.Empty,
-                EmailAddress = "flower@example.com"
-            },
-            CancellationToken.None);
-
-        result.IsFailure.Should().BeTrue();
-        result.Error.ErrorType.Should().Be(ErrorType.BadRequest);
-    }
 }
 

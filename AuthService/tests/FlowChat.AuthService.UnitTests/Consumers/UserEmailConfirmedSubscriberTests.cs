@@ -84,6 +84,10 @@ public sealed class UserEmailConfirmedSubscriberTests
     [Fact]
     public async Task HandleAsync_WhenEmailAddressIsMissing_ThrowsNonTransientException()
     {
+        _mediatorMock
+            .Setup(x => x.Send(It.IsAny<ConfirmAuthEmailCommand>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(FlowChatResult<Unit>.Failure(DomainError.BadRequest("Email address is required.")));
+
         var message = new UserEmailConfirmedIntegrationEvent
         {
             UserProfileId = _fixture.Create<Guid>(),
@@ -98,7 +102,11 @@ public sealed class UserEmailConfirmedSubscriberTests
         var act = () => _subscriber.HandleAsync(message.ToInboundEnvelope(), CancellationToken.None);
 
         await act.Should().ThrowAsync<NonTransientException>()
-            .WithMessage("*Email.Address*");
+            .WithMessage("*Email address*");
+
+        _mediatorMock.Verify(
+            x => x.Send(It.IsAny<ConfirmAuthEmailCommand>(), It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 
     [Fact]
