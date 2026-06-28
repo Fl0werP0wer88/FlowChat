@@ -14,6 +14,8 @@ public sealed class EmailAddedDomainEventHandler(
     IEmailVerificationRequestIssuer emailVerificationRequestIssuer)
     : DomainEventHandlerBase<EmailAddedDomainEvent>
 {
+    private const string SystemActor = "system";
+
     private readonly IEmailVerificationProcessWriteRepository _emailVerificationProcessWriteRepository = emailVerificationProcessWriteRepository;
     private readonly IEmailVerificationRequestIssuer _emailVerificationRequestIssuer = emailVerificationRequestIssuer;
 
@@ -30,7 +32,15 @@ public sealed class EmailAddedDomainEventHandler(
                 Id<DomainUserProfile>.FromGuid(notification.UserProfileId.Value),
                 Id<DomainEmail>.FromGuid(notification.EmailId.Value));
 
+            // Created outside AggregateRootCommandHandlerBaseV2, so audit info must be set explicitly here
+            process.SetCreated(SystemActor);
+            process.SetUpdated(SystemActor);
+
             await _emailVerificationProcessWriteRepository.AddAsync(process, cancellationToken);
+        }
+        else
+        {
+            process.SetUpdated(SystemActor);
         }
 
         await _emailVerificationRequestIssuer.IssueAsync(
