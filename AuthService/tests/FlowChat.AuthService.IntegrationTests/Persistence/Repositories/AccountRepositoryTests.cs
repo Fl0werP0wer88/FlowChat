@@ -40,7 +40,7 @@ public sealed class AccountRepositoryTests : IDisposable
     public async Task CreateAsync_AndGetByEmailAsync_PersistsAndReturnsAccount()
     {
         var emailAddress = EmailAddress.Create("flower@example.com");
-        var account = Account.Create(Id<Account>.New(), "flower", emailAddress, "hash", "stamp");
+        var account = CreatePersistableAccount("flower", emailAddress);
 
         await _sut.CreateAsync(account, CancellationToken.None);
         await _dbContext.SaveChangesAsync();
@@ -56,7 +56,7 @@ public sealed class AccountRepositoryTests : IDisposable
     [Fact]
     public async Task GetByLoginAsync_WithFriendlyUserId_ReturnsMatchingAccount()
     {
-        var account = Account.Create(Id<Account>.New(), "flower", EmailAddress.Create("flower@example.com"), "hash", "stamp");
+        var account = CreatePersistableAccount("flower", EmailAddress.Create("flower@example.com"));
 
         await _sut.CreateAsync(account, CancellationToken.None);
         await _dbContext.SaveChangesAsync();
@@ -70,7 +70,7 @@ public sealed class AccountRepositoryTests : IDisposable
     [Fact]
     public async Task UpdateAsync_PersistsMutableFields()
     {
-        var account = Account.Create(Id<Account>.New(), "flower", EmailAddress.Create("flower@example.com"), "hash", "stamp");
+        var account = CreatePersistableAccount("flower", EmailAddress.Create("flower@example.com"));
 
         await _sut.CreateAsync(account, CancellationToken.None);
         await _dbContext.SaveChangesAsync();
@@ -87,5 +87,14 @@ public sealed class AccountRepositoryTests : IDisposable
         persistedEntity.AccessFailedCount.Should().Be(1);
         persistedEntity.IsEmailConfirmed.Should().BeTrue();
         persistedEntity.SecurityStamp.Should().Be("new-stamp");
+    }
+
+    private static Account CreatePersistableAccount(string friendlyUserId, EmailAddress emailAddress)
+    {
+        var account = Account.Create(Id<Account>.New(), friendlyUserId, emailAddress, "hash", "stamp");
+        account.SetCreated("test");
+        account.SetUpdated("test");
+
+        return account;
     }
 }

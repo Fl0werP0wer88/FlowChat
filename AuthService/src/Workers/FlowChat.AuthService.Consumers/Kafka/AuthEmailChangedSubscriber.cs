@@ -1,13 +1,13 @@
-using FlowChat.AuthService.Consumers.AuthApi.Contracts;
-using FlowChat.AuthService.Consumers.Services;
+using FlowChat.AuthService.Application.Features.User.Commands.ChangeAuthEmail;
 using FlowChat.Core.Exceptions;
 using FlowChat.Core.Messaging.UserProfileService.Events;
 using FlowChat.Shared.Infrastructure.Silverback.Subscribers;
+using MediatR;
 
 namespace FlowChat.AuthService.Consumers.Kafka;
 
 public sealed class AuthEmailChangedSubscriber(
-    IAuthInternalApiClient authInternalApiClient,
+    IMediator mediator,
     ILogger<AuthEmailChangedSubscriber> logger)
     : SubscriberBase<AuthEmailChangedIntegrationEvent>(logger)
 {
@@ -26,12 +26,14 @@ public sealed class AuthEmailChangedSubscriber(
             throw new NonTransientException("Payload does not contain EmailAddress.");
         }
 
-        await authInternalApiClient.ChangeAuthEmailAsync(
-            new AuthEmailChangeRequest
+        var result = await mediator.Send(
+            new ChangeAuthEmailCommand
             {
                 UserId = message.UserProfileId,
                 EmailAddress = emailAddress
             },
             cancellationToken);
+
+        ThrowIfFailure(result);
     }
 }

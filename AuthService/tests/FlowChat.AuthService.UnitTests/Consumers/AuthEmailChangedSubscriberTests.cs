@@ -1,53 +1,60 @@
 using AutoFixture;
-using FlowChat.AuthService.Consumers.AuthApi.Contracts;
+using FlowChat.AuthService.Application.Features.User.Commands.ChangeAuthEmail;
 using FlowChat.AuthService.Consumers.Kafka;
-using FlowChat.AuthService.Consumers.Configuration.Settings;
-using FlowChat.AuthService.Consumers.Services;
 using FlowChat.Core.Exceptions;
 using FlowChat.Core.Messaging.UserProfileService.Events;
+using FlowChat.Core.Results;
+using FlowChat.Shared.Domain;
 using FluentAssertions;
+using MediatR;
 using Microsoft.Extensions.Logging;
 using Moq;
+using Unit = MediatR.Unit;
 
 namespace FlowChat.AuthService.UnitTests;
 
 public sealed class AuthEmailChangedSubscriberTests
 {
     private readonly IFixture _fixture = new Fixture();
-    private readonly Mock<IAuthInternalApiClient> _internalApiClientMock = new();
+    private readonly Mock<IMediator> _mediatorMock = new();
     private readonly Mock<ILogger<AuthEmailChangedSubscriber>> _loggerMock = new();
     private readonly AuthEmailChangedSubscriber _subscriber;
 
     public AuthEmailChangedSubscriberTests()
     {
+        _mediatorMock
+            .Setup(x => x.Send(It.IsAny<ChangeAuthEmailCommand>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(FlowChatResult<Unit>.Success(Unit.Value));
+
         _subscriber = new AuthEmailChangedSubscriber(
-            _internalApiClientMock.Object,
+            _mediatorMock.Object,
             _loggerMock.Object);
     }
 
     [Fact]
-    public async Task HandleAsync_WhenPayloadIsValid_MapsRequestToInternalApi()
+    public async Task HandleAsync_WhenPayloadIsValid_MapsRequestToCommand()
     {
-        AuthEmailChangeRequest? capturedRequest = null;
+        ChangeAuthEmailCommand? capturedCommand = null;
         var userId = _fixture.Create<Guid>();
 
-        _internalApiClientMock
-            .Setup(x => x.ChangeAuthEmailAsync(It.IsAny<AuthEmailChangeRequest>(), It.IsAny<CancellationToken>()))
-            .Callback<AuthEmailChangeRequest, CancellationToken>((request, _) => capturedRequest = request)
-            .Returns(Task.CompletedTask);
+        _mediatorMock
+            .Setup(x => x.Send(It.IsAny<ChangeAuthEmailCommand>(), It.IsAny<CancellationToken>()))
+            .Callback<IRequest<FlowChatResult<Unit>>, CancellationToken>((request, _) =>
+                capturedCommand = (ChangeAuthEmailCommand)request)
+            .ReturnsAsync(FlowChatResult<Unit>.Success(Unit.Value));
 
         var message = new AuthEmailChangedIntegrationEvent
         {
             UserProfileId = userId,
             EmailId = _fixture.Create<Guid>(),
-            EmailAddress = "john@example.com"
+            EmailAddress = " john@example.com "
         };
 
         await _subscriber.HandleAsync(message.ToInboundEnvelope(), CancellationToken.None);
 
-        capturedRequest.Should().NotBeNull();
-        capturedRequest!.UserId.Should().Be(userId);
-        capturedRequest.EmailAddress.Should().Be("john@example.com");
+        capturedCommand.Should().NotBeNull();
+        capturedCommand!.UserId.Should().Be(userId);
+        capturedCommand.EmailAddress.Should().Be("john@example.com");
     }
 
     [Fact]
@@ -80,5 +87,25 @@ public sealed class AuthEmailChangedSubscriberTests
 
         await act.Should().ThrowAsync<NonTransientException>()
             .WithMessage("*EmailAddress*");
+    }
+
+    [Fact]
+    public async Task HandleAsync_WhenCommandReturnsFailure_ThrowsNonTransientException()
+    {
+        _mediatorMock
+            .Setup(x => x.Send(It.IsAny<ChangeAuthEmailCommand>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(FlowChatResult<Unit>.Failure(DomainError.BadRequest("boom")));
+
+        var message = new AuthEmailChangedIntegrationEvent
+        {
+            UserProfileId = _fixture.Create<Guid>(),
+            EmailId = _fixture.Create<Guid>(),
+            EmailAddress = "john@example.com"
+        };
+
+        var act = () => _subscriber.HandleAsync(message.ToInboundEnvelope(), CancellationToken.None);
+
+        await act.Should().ThrowAsync<NonTransientException>()
+            .WithMessage("boom");
     }
 }

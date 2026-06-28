@@ -1,5 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk.Worker">
   <ItemGroup>
+    <ProjectReference Include="..\..\FlowChat.AuthService.Application\FlowChat.AuthService.Application.csproj" />
+    <ProjectReference Include="..\..\FlowChat.AuthService.Infrastructure\FlowChat.AuthService.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\FlowChat.AuthService.Persistence\FlowChat.AuthService.Persistence.csproj" />
     <ProjectReference Include="..\..\..\..\Common\src\FlowChat.Shared.API\FlowChat.Shared.API.csproj" />
     <ProjectReference Include="..\..\..\..\Common\src\FlowChat.Core\FlowChat.Core.csproj" />
     <ProjectReference Include="..\..\..\..\Common\src\FlowChat.Shared.Infrastructure\FlowChat.Shared.Infrastructure.csproj" />

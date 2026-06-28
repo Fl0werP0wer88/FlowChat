@@ -77,6 +77,8 @@ public sealed class LoginUserCommandHandlerTests : IDisposable
             _passwordHashingService.HashPassword("P@ssw0rd!"),
             _passwordHashingService.GenerateSecurityStamp());
         account.ConfirmEmail();
+        account.SetCreated("test");
+        account.SetUpdated("test");
 
         await _accountRepository.CreateAsync(account, CancellationToken.None);
         await _dbContext.SaveChangesAsync();
@@ -95,4 +97,3 @@ public sealed class LoginUserCommandHandlerTests : IDisposable
         result.Value.Grant.Principal.FindFirst(OpenIddict.Abstractions.OpenIddictConstants.Claims.PreferredUsername)!.Value.Should().Be("flower");
     }
 }
-
