@@ -45,6 +45,14 @@ public static class PersistenceServiceRegistration
             (serviceProvider, options) => options.UseNpgsql(configuration.GetConnectionString("ChatDb"))
                 .AddInterceptors(serviceProvider.GetRequiredService<EntityBaseSaveChangesInterceptor>()),
             ServiceLifetime.Scoped);
+        services.AddScoped<IChatMessageReadRepository, ChatMessageReadRepository>();
+        services.AddScoped<IChatMessageWriteRepository, ChatMessageWriteRepository>();
+        services.AddScoped<IConversationParticipantReadRepository, ConversationParticipantReadRepository>();
+        services.AddScoped<IGroupConversationWriteRepository, GroupConversationWriteRepository>();
+        services.AddScoped<IGroupConversationReadRepository, GroupConversationReadRepository>();
+        services.AddScoped<IDuetConversationReadRepository, DuetConversationReadRepository>();
+        services.AddScoped<IDuetConversationWriteRepository, DuetConversationWriteRepository>();
+        services.AddScoped<IUserProfileProjectionReadRepository, UserProfileProjectionReadRepository>();
 
         return services;
     }

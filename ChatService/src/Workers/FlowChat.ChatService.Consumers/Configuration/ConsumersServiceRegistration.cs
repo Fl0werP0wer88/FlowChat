@@ -2,6 +2,7 @@ using FlowChat.ChatService.Application;
 using FlowChat.ChatService.Application.Features.UserProfile;
 using FlowChat.ChatService.Consumers.Configuration.Settings;
 using FlowChat.ChatService.Consumers.Kafka.Projections;
+using FlowChat.ChatService.Infrastructure;
 using FlowChat.ChatService.Persistence;
 using FlowChat.ChatService.Persistence.BulkUpsert.Projections;
 using FlowChat.ChatService.Persistence.Entities;
@@ -31,6 +32,7 @@ public static class ConsumersServiceRegistration
 
         services.AddApplicationServices();
         services.AddWorkerPersistenceServices(configuration);
+        services.AddInfrastructureServices(configuration);
         services.AddAutoMapper((Action<AutoMapper.IMapperConfigurationExpression>?)null, consumersAssembly);
 
         services.AddSilverback()

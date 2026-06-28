@@ -5,6 +5,7 @@ using FlowChat.SocialGraphService.Application;
 using FlowChat.SocialGraphService.Application.Features.UserProfile;
 using FlowChat.SocialGraphService.Consumers.Configuration.Settings;
 using FlowChat.SocialGraphService.Consumers.Kafka.Projections;
+using FlowChat.SocialGraphService.Infrastructure;
 using FlowChat.SocialGraphService.Persistence;
 using FlowChat.SocialGraphService.Persistence.BulkUpsert.Projections;
 using FlowChat.SocialGraphService.Persistence.Entities;
@@ -31,6 +32,7 @@ public static class ConsumersServiceRegistration
 
         services.AddWorkerApplicationServices();
         services.AddPersistenceServices(configuration);
+        services.AddInfrastructureServices(configuration);
         services.AddAutoMapper((Action<AutoMapper.IMapperConfigurationExpression>?)null, consumersAssembly);
 
         services.AddSilverback()
