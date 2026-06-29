@@ -16,18 +16,12 @@ type UsersPickerNotice = { kind: "error" | "info"; message: string };
 
 interface UsersPickerProps {
   confirmLabel?: string;
-  confirmNotice?: UsersPickerNotice | null;
-  isConfirmDisabled?: boolean;
-  isConfirming?: boolean;
   isOpen: boolean;
-  onConfirm: (selectedUsers: SearchUserResult[]) => void;
+  onConfirm: (selectedUsers: SearchUserResult[]) => Promise<void>;
 }
 
 export function UsersPicker({
   confirmLabel = "Wybierz",
-  confirmNotice = null,
-  isConfirmDisabled = false,
-  isConfirming = false,
   isOpen,
   onConfirm,
 }: UsersPickerProps) {
@@ -46,6 +40,8 @@ export function UsersPicker({
   const [searchNotice, setSearchNotice] = useState<string | null>(null);
   const [processNotice, setProcessNotice] = useState<UsersPickerNotice | null>(null);
   const [selectedMembers, setSelectedMembers] = useState<SearchUserResult[]>([]);
+  const [isConfirming, setIsConfirming] = useState(false);
+  const [confirmNotice, setConfirmNotice] = useState<UsersPickerNotice | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const firstNameInputRef = useRef<HTMLInputElement>(null);
 
@@ -72,6 +68,8 @@ export function UsersPicker({
     setProcessNotice(null);
     setIsLookupProcessing(false);
     setSelectedMembers([]);
+    setConfirmNotice(null);
+    setIsConfirming(false);
   }, [isOpen]);
 
   useEffect(() => {
@@ -142,6 +140,19 @@ export function UsersPicker({
 
   const removeMember = (userProfileId: string) => {
     setSelectedMembers((current) => current.filter((member) => member.userProfileId !== userProfileId));
+  };
+
+  const handleConfirm = async () => {
+    setIsConfirming(true);
+    setConfirmNotice(null);
+    try {
+      await onConfirm(selectedMembers);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Nie udalo sie wykonac akcji.";
+      setConfirmNotice({ kind: "error", message });
+    } finally {
+      setIsConfirming(false);
+    }
   };
 
   const submitLookup = async () => {
@@ -228,27 +239,27 @@ export function UsersPicker({
 
   return (
     <div className="users-picker">
-      <div className="users-picker__scroll">
-        {selectedMembers.length > 0
-          ? (
-            <ul className="users-picker__selected-list">
-              {selectedMembers.map((member) => (
-                <li className="users-picker__selected-item" key={member.userProfileId}>
-                  <span>{member.displayName}</span>
-                  <button
-                    aria-label={`Usun ${member.displayName} z listy`}
-                    className="users-picker__remove-button"
-                    onClick={() => removeMember(member.userProfileId)}
-                    type="button"
-                  >
-                    <span aria-hidden="true" className="material-symbols-rounded">person_remove</span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )
-          : null}
+      {selectedMembers.length > 0
+        ? (
+          <ul className="users-picker__selected-list">
+            {selectedMembers.map((member) => (
+              <li className="users-picker__selected-item" key={member.userProfileId}>
+                <span>{member.displayName}</span>
+                <button
+                  aria-label={`Usun ${member.displayName} z listy`}
+                  className="users-picker__remove-button"
+                  onClick={() => removeMember(member.userProfileId)}
+                  type="button"
+                >
+                  <span aria-hidden="true" className="material-symbols-rounded">person_remove</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        )
+        : null}
 
+      <div className="users-picker__scroll">
         <div className="contacts-composer__search">
           <button
             aria-label="Dodaj uzytkownika z podanej wartosci"
@@ -359,10 +370,10 @@ export function UsersPicker({
         : null}
 
       <UsersPickerFooter
-        disabled={selectedMembers.length === 0 || isConfirmDisabled || isConfirming}
+        disabled={selectedMembers.length === 0 || isConfirming}
         isPending={isConfirming}
         label={confirmLabel}
-        onClick={() => onConfirm(selectedMembers)}
+        onClick={() => void handleConfirm()}
       />
     </div>
   );

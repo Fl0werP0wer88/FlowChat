@@ -4,8 +4,6 @@ import type { SearchUserResult } from "../../../users/api";
 import { UsersPicker } from "../../../users";
 import { createGroupConversation } from "../../api";
 
-type GroupBuilderNotice = { kind: "error" | "info"; message: string };
-
 interface GroupBuilderProps {
   isOpen: boolean;
   onClose: () => void;
@@ -17,8 +15,6 @@ export function GroupBuilder({
 }: GroupBuilderProps) {
   const accessToken = useAuthStore((s) => s.accessToken) ?? "";
   const [groupName, setGroupName] = useState("");
-  const [isCreatingGroup, setIsCreatingGroup] = useState(false);
-  const [createNotice, setCreateNotice] = useState<GroupBuilderNotice | null>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -26,36 +22,24 @@ export function GroupBuilder({
     }
 
     setGroupName("");
-    setCreateNotice(null);
-    setIsCreatingGroup(false);
   }, [isOpen]);
 
   const handleCreateGroup = async (selectedMembers: SearchUserResult[]) => {
     const trimmedName = groupName.trim();
-    if (selectedMembers.length === 0 || !trimmedName) {
-      return;
+    if (!trimmedName) {
+      throw new Error("Podaj nazwe grupy.");
     }
 
     if (!accessToken) {
-      setCreateNotice({ kind: "error", message: "Brakuje aktywnej sesji potrzebnej do utworzenia grupy." });
-      return;
+      throw new Error("Brakuje aktywnej sesji potrzebnej do utworzenia grupy.");
     }
 
-    setIsCreatingGroup(true);
-    setCreateNotice(null);
-    try {
-      await createGroupConversation(
-        selectedMembers.map((member) => member.userProfileId),
-        trimmedName,
-        accessToken,
-      );
-      onClose();
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Nie udalo sie utworzyc grupy.";
-      setCreateNotice({ kind: "error", message });
-    } finally {
-      setIsCreatingGroup(false);
-    }
+    await createGroupConversation(
+      selectedMembers.map((member) => member.userProfileId),
+      trimmedName,
+      accessToken,
+    );
+    onClose();
   };
 
   return (
@@ -74,7 +58,6 @@ export function GroupBuilder({
 
       <input
         className="contacts-composer__input group-builder__name-input"
-        disabled={isCreatingGroup}
         onChange={(event) => setGroupName(event.target.value)}
         placeholder="Nazwa grupy"
         type="text"
@@ -83,11 +66,8 @@ export function GroupBuilder({
 
       <UsersPicker
         confirmLabel="Wybierz"
-        confirmNotice={createNotice}
-        isConfirmDisabled={!groupName.trim()}
-        isConfirming={isCreatingGroup}
         isOpen={isOpen}
-        onConfirm={(members) => void handleCreateGroup(members)}
+        onConfirm={handleCreateGroup}
       />
     </div>
   );
