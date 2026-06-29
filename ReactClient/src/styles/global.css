@@ -825,10 +825,11 @@ body {
 .contacts-composer {
   position: absolute;
   inset: 0;
-  padding: 0.95rem 0.9rem;
+  padding: 0.95rem 0.9rem 1.4rem;
   display: grid;
   align-content: start;
   gap: 1rem;
+  overflow-y: auto;
   background:
     radial-gradient(85% 70% at 0% 0%, rgba(124, 227, 199, 0.18), transparent 65%),
     linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(241, 247, 255, 0.98));
@@ -1095,6 +1096,14 @@ body {
 
 .group-builder__remove-button .material-symbols-rounded {
   font-size: 1.05rem;
+}
+
+.group-builder__name-input {
+  width: 100%;
+  border: 1px solid color-mix(in srgb, var(--accent) 26%, var(--border) 74%);
+  border-radius: 0.9rem;
+  background: rgba(255, 255, 255, 0.92);
+  padding: 0.6rem 0.85rem;
 }
 
 .group-builder__create-button {

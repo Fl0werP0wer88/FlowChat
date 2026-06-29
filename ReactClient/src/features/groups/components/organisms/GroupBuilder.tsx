@@ -10,6 +10,7 @@ import {
   type SearchUserResult,
   type SearchUsersCriteria,
 } from "../../../users/api";
+import { createGroupConversation } from "../../api";
 
 type GroupBuilderNotice = { kind: "error" | "info"; message: string };
 
@@ -37,6 +38,9 @@ export function GroupBuilder({
   const [searchNotice, setSearchNotice] = useState<string | null>(null);
   const [processNotice, setProcessNotice] = useState<GroupBuilderNotice | null>(null);
   const [selectedMembers, setSelectedMembers] = useState<SearchUserResult[]>([]);
+  const [groupName, setGroupName] = useState("");
+  const [isCreatingGroup, setIsCreatingGroup] = useState(false);
+  const [createNotice, setCreateNotice] = useState<GroupBuilderNotice | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const firstNameInputRef = useRef<HTMLInputElement>(null);
 
@@ -129,11 +133,42 @@ export function GroupBuilder({
     setProcessNotice(null);
     setIsLookupProcessing(false);
     setSelectedMembers([]);
+    setGroupName("");
+    setCreateNotice(null);
+    setIsCreatingGroup(false);
   };
 
   const closeSearch = () => {
     resetSearch();
     onClose();
+  };
+
+  const handleCreateGroup = async () => {
+    const trimmedName = groupName.trim();
+    if (selectedMembers.length === 0 || !trimmedName) {
+      return;
+    }
+
+    if (!accessToken) {
+      setCreateNotice({ kind: "error", message: "Brakuje aktywnej sesji potrzebnej do utworzenia grupy." });
+      return;
+    }
+
+    setIsCreatingGroup(true);
+    setCreateNotice(null);
+    try {
+      await createGroupConversation(
+        selectedMembers.map((member) => member.userProfileId),
+        trimmedName,
+        accessToken,
+      );
+      closeSearch();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Nie udalo sie utworzyc grupy.";
+      setCreateNotice({ kind: "error", message });
+    } finally {
+      setIsCreatingGroup(false);
+    }
   };
 
   const submitLookup = async () => {
@@ -352,12 +387,32 @@ export function GroupBuilder({
         </div>
       </div>
 
+      <input
+        className="contacts-composer__input group-builder__name-input"
+        disabled={isCreatingGroup}
+        onChange={(event) => setGroupName(event.target.value)}
+        placeholder="Nazwa grupy"
+        type="text"
+        value={groupName}
+      />
+
+      {createNotice
+        ? (
+          <p className={`alert ${createNotice.kind === "error" ? "alert-error" : "alert-info"}`}>
+            {createNotice.message}
+          </p>
+        )
+        : null}
+
       <button
         className="group-builder__create-button"
-        disabled={selectedMembers.length === 0}
+        disabled={selectedMembers.length === 0 || !groupName.trim() || isCreatingGroup}
+        onClick={() => void handleCreateGroup()}
         type="button"
       >
-        <span aria-hidden="true" className="material-symbols-rounded">group_add</span>
+        <span aria-hidden="true" className="material-symbols-rounded">
+          {isCreatingGroup ? "progress_activity" : "group_add"}
+        </span>
         <span>Stworz grupe</span>
       </button>
     </div>
