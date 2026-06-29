@@ -3,8 +3,7 @@ import type { Contact } from "../../../types/contacts";
 import type { ManualUserStatus, UserStatus } from "../../../types/realtime";
 import type { GroupConversation } from "../../groups";
 import { GroupBuilder, GroupConversationsList } from "../../groups";
-import { ContactsList } from "../../contacts";
-import { UserSearch } from "../../users";
+import { ContactsBuilder, ContactsList } from "../../contacts";
 import { SidebarHeader } from "./SidebarHeader";
 import type { SidebarTab } from "./SidebarHeader";
 import type { SearchUserResult } from "../../users/api";
@@ -44,7 +43,7 @@ export function Sidebar({
   const [activeTab, setActiveTab] = useState<SidebarTab>("contacts");
   const [activeComposer, setActiveComposer] = useState<"contacts" | "group" | null>(null);
 
-  const openUserSearch = () => {
+  const openContactsComposer = () => {
     setActiveComposer("contacts");
   };
 
@@ -78,7 +77,7 @@ export function Sidebar({
               activeContactId={activeContactId}
               contacts={contacts}
               isLoadingContacts={isLoadingContacts}
-              onAddContactClick={openUserSearch}
+              onAddContactClick={openContactsComposer}
               onContactClick={onContactClick}
             />
           )
@@ -93,11 +92,12 @@ export function Sidebar({
           )}
       </div>
 
-      <UserSearch
+      <ContactsBuilder
         isOpen={activeComposer === "contacts"}
         onClose={closeComposer}
         onProcessUser={onProcessUser}
       />
+
       <GroupBuilder
         isOpen={activeComposer === "group"}
         onClose={closeComposer}

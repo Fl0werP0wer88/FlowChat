@@ -18,7 +18,7 @@ type UsersPickerNotice = { kind: "error" | "info"; message: string };
 interface UsersPickerProps {
   confirmLabel?: string;
   isOpen: boolean;
-  onConfirm: (selectedUsers: SearchUserResult[]) => Promise<void>;
+  onConfirm: (selectedUsers: SearchUserResult[]) => Promise<UsersPickerNotice | void>;
   singlePick?: boolean;
 }
 
@@ -147,7 +147,10 @@ export function UsersPicker({
     setIsConfirming(true);
     setConfirmNotice(null);
     try {
-      await onConfirm(users);
+      const notice = await onConfirm(users);
+      if (notice) {
+        setConfirmNotice(notice);
+      }
     } catch (error) {
       const message = error instanceof Error ? error.message : "Nie udalo sie wykonac akcji.";
       setConfirmNotice({ kind: "error", message });
