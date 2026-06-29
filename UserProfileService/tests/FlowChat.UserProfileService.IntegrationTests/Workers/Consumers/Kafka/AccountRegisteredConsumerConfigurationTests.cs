@@ -47,11 +47,15 @@ public sealed class AccountRegisteredConsumerConfigurationTests
             .Get<AccountRegisteredConsumerSettingsSection>();
 
         consumerOptions.Should().NotBeNull();
-        consumerOptions!.GroupId.Should().Be("userprofile-service");
+        consumerOptions!.BootstrapServers.Should().Be("localhost:9092");
+        consumerOptions.GroupId.Should().Be("userprofile-service");
         consumerOptions.RetryGroupId.Should().Be("userprofile-service-retry");
         consumerOptions.Topic.Should().Be("dev.flowchat.identity.user.v1");
         consumerOptions.RetryTopic.Should().Be("dev.flowchat.identity.user.v1.userprofile-service.retry");
         consumerOptions.DeadLetterTopic.Should().Be("dev.flowchat.identity.user.v1.userprofile-service.dlq");
+
+        configuration.GetConnectionString("UserProfileDb").Should().Be(
+            "Host=localhost;Port=5432;Database=flowchat_userprofile_db;Username=flowchat_app;Password=flowchat_app_pw;");
     }
 
     private static string GetRepositoryPath(string relativePath)
