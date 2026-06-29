@@ -199,7 +199,7 @@ export function UserSearch({
   };
 
   return (
-    <div className="contacts-composer" aria-hidden={!isOpen}>
+    <div className={`contacts-composer ${isOpen ? "contacts-composer--open" : ""}`} aria-hidden={!isOpen}>
       <div className="contacts-composer__header">
         <button
           aria-label="Wroc do kontaktow"
