@@ -47,6 +47,9 @@ internal static class CommonPersistenceServiceRegistration
     {
         services.AddDbContext<AppDbContext>((serviceProvider, options) =>
             options.UseNpgsql(configuration.GetConnectionString("NotificationDb")));
+        services.AddDbContextFactory<AppDbContext>(
+            (serviceProvider, options) => options.UseNpgsql(configuration.GetConnectionString("NotificationDb")),
+            ServiceLifetime.Scoped);
 
         return services;
     }

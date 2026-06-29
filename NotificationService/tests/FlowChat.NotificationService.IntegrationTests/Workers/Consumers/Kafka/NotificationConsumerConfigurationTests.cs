@@ -3,9 +3,11 @@ using FlowChat.NotificationService.Application.Contracts.Persistence;
 using FlowChat.NotificationService.Consumers;
 using FlowChat.NotificationService.Consumers.Kafka;
 using FlowChat.NotificationService.Consumers.Configuration.Settings;
+using FlowChat.NotificationService.Persistence;
 using FlowChat.Shared.Application;
 using FluentAssertions;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Silverback.Messaging.Broker;
@@ -49,11 +51,14 @@ public sealed class NotificationConsumerConfigurationTests
             .Get<UserEmailVerificationRequestedConsumerSettingsSection>();
 
         consumerOptions.Should().NotBeNull();
-        consumerOptions!.GroupId.Should().Be("notification-service");
+        consumerOptions!.BootstrapServers.Should().Be("localhost:9092");
+        consumerOptions.GroupId.Should().Be("notification-service");
         consumerOptions.RetryGroupId.Should().Be("notification-service-retry");
         consumerOptions.Topic.Should().Be("dev.flowchat.notification.email.v1");
         consumerOptions.RetryTopic.Should().Be("dev.flowchat.notification.email.v1.notification-service.retry");
         consumerOptions.DeadLetterTopic.Should().Be("dev.flowchat.notification.email.v1.notification-service.dlq");
+        configuration.GetConnectionString("NotificationDb").Should().Be(
+            "Host=localhost;Port=5432;Database=flowchat_notification_db;Username=flowchat_app;Password=flowchat_app_pw;");
     }
 
     [Fact]
@@ -71,6 +76,7 @@ public sealed class NotificationConsumerConfigurationTests
         await using var scope = serviceProvider.CreateAsyncScope();
 
         scope.ServiceProvider.GetRequiredService<IMediator>().Should().NotBeNull();
+        scope.ServiceProvider.GetRequiredService<IDbContextFactory<AppDbContext>>().Should().NotBeNull();
         scope.ServiceProvider.GetRequiredService<INotificationWriteRepository>().Should().NotBeNull();
         scope.ServiceProvider.GetRequiredService<IUnitOfWork>().Should().BeAssignableTo<IConsumedOffsetCommitter>();
         scope.ServiceProvider.GetRequiredService<INotificationSender>().Should().NotBeNull();
