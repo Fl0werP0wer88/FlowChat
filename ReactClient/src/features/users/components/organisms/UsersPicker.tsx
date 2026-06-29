@@ -226,7 +226,7 @@ export function UsersPicker({
           <span>Dodaj Uzytkownika</span>
         </div>
 
-        <div className="contacts-composer__search">
+        <div className="field-shell contacts-composer__search">
           <button
             aria-label="Dodaj uzytkownika z podanej wartosci"
             className="contacts-composer__search-button"
@@ -264,7 +264,7 @@ export function UsersPicker({
         <div className="contacts-composer__typeahead contacts-composer__typeahead--open">
           <div className="contacts-composer__typeahead-fields">
             <input
-              className="contacts-composer__typeahead-input"
+              className="field-shell contacts-composer__typeahead-input"
               onChange={(event) => handleSearchFieldChange("firstName", event.target.value)}
               placeholder="First name"
               ref={firstNameInputRef}
@@ -272,14 +272,14 @@ export function UsersPicker({
               value={searchCriteria.firstName}
             />
             <input
-              className="contacts-composer__typeahead-input"
+              className="field-shell contacts-composer__typeahead-input"
               onChange={(event) => handleSearchFieldChange("lastName", event.target.value)}
               placeholder="Last name"
               type="text"
               value={searchCriteria.lastName}
             />
             <input
-              className="contacts-composer__typeahead-input"
+              className="field-shell contacts-composer__typeahead-input"
               onChange={(event) => handleSearchFieldChange("organization", event.target.value)}
               placeholder="Organization"
               type="text"

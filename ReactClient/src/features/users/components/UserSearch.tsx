@@ -212,7 +212,7 @@ export function UserSearch({
         <strong>Nowy kontakt</strong>
       </div>
 
-      <div className="contacts-composer__search">
+      <div className="field-shell contacts-composer__search">
         <button
           aria-label="Dodaj kontakt z podanej wartosci"
           className="contacts-composer__search-button"
@@ -254,7 +254,7 @@ export function UserSearch({
       <div className={`contacts-composer__typeahead ${isSearchExpanded ? "contacts-composer__typeahead--open" : ""}`}>
         <div className="contacts-composer__typeahead-fields">
           <input
-            className="contacts-composer__typeahead-input"
+            className="field-shell contacts-composer__typeahead-input"
             onChange={(event) => handleSearchFieldChange("firstName", event.target.value)}
             placeholder="First name"
             ref={firstNameInputRef}
@@ -262,14 +262,14 @@ export function UserSearch({
             value={searchCriteria.firstName}
           />
           <input
-            className="contacts-composer__typeahead-input"
+            className="field-shell contacts-composer__typeahead-input"
             onChange={(event) => handleSearchFieldChange("lastName", event.target.value)}
             placeholder="Last name"
             type="text"
             value={searchCriteria.lastName}
           />
           <input
-            className="contacts-composer__typeahead-input"
+            className="field-shell contacts-composer__typeahead-input"
             onChange={(event) => handleSearchFieldChange("organization", event.target.value)}
             placeholder="Organization"
             type="text"

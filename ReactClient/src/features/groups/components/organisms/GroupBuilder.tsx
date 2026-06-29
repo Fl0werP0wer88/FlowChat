@@ -57,7 +57,7 @@ export function GroupBuilder({
       </div>
 
       <input
-        className="contacts-composer__input group-builder__name-input"
+        className="field-shell group-builder__name-input"
         onChange={(event) => setGroupName(event.target.value)}
         placeholder="Nazwa grupy"
         type="text"

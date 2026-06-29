@@ -876,21 +876,27 @@ body {
   color: var(--ink);
 }
 
+.field-shell {
+  border: 1px solid color-mix(in srgb, var(--accent) 18%, var(--border) 82%);
+  border-radius: 0.85rem;
+  background: rgba(255, 255, 255, 0.88);
+  padding: 0.72rem 0.85rem;
+  outline: none;
+  transition: border-color 140ms ease, box-shadow 140ms ease;
+}
+
+.field-shell:focus,
+.field-shell:focus-within {
+  border-color: color-mix(in srgb, var(--accent) 60%, #19c37d 40%);
+  box-shadow: 0 0 0 3px rgba(23, 103, 255, 0.12);
+}
+
 .contacts-composer__search {
   display: grid;
   grid-template-columns: auto 1fr;
   align-items: center;
   gap: 0.6rem;
-  border: 1px solid color-mix(in srgb, var(--accent) 18%, var(--border) 82%);
-  border-radius: 0.85rem;
-  background: rgba(255, 255, 255, 0.88);
   padding: 0.45rem 0.75rem;
-  transition: border-color 140ms ease, box-shadow 140ms ease;
-}
-
-.contacts-composer__search:focus-within {
-  border-color: color-mix(in srgb, var(--accent) 60%, #19c37d 40%);
-  box-shadow: 0 0 0 3px rgba(23, 103, 255, 0.12);
 }
 
 .contacts-composer__search-button {
@@ -969,19 +975,12 @@ body {
 }
 
 .contacts-composer__typeahead-input {
-  border: 1px solid color-mix(in srgb, var(--accent) 18%, var(--border) 82%);
-  border-radius: 0.85rem;
-  background: rgba(255, 255, 255, 0.88);
-  padding: 0.72rem 0.85rem;
   font: inherit;
   color: var(--ink);
-  outline: none;
-  transition: border-color 140ms ease, box-shadow 140ms ease, transform 140ms ease;
+  transition: transform 140ms ease;
 }
 
 .contacts-composer__typeahead-input:focus {
-  border-color: color-mix(in srgb, var(--accent) 60%, #19c37d 40%);
-  box-shadow: 0 0 0 3px rgba(23, 103, 255, 0.12);
   transform: translateY(0);
 }
 
@@ -1118,17 +1117,6 @@ body {
 
 .group-builder__name-input {
   width: 100%;
-  border: 1px solid color-mix(in srgb, var(--accent) 18%, var(--border) 82%);
-  border-radius: 0.85rem;
-  background: rgba(255, 255, 255, 0.88);
-  padding: 0.72rem 0.85rem;
-  outline: none;
-  transition: border-color 140ms ease, box-shadow 140ms ease;
-}
-
-.group-builder__name-input:focus {
-  border-color: color-mix(in srgb, var(--accent) 60%, #19c37d 40%);
-  box-shadow: 0 0 0 3px rgba(23, 103, 255, 0.12);
 }
 
 .users-picker {
