@@ -78,7 +78,7 @@ public sealed class CreateGroupConversationCommandHandlerTests
         result.Value.Participants.Select(p => p.UserId).Should().BeEquivalentTo([creatorId, memberId]);
         persisted.Should().NotBeNull();
         persisted!.Id.Value.Should().Be(conversationId);
-        dispatchedEvents.OfType<ConversationCreatedDomainEvent>().Should().ContainSingle();
+        dispatchedEvents.OfType<GroupConversationCreatedDomainEvent>().Should().ContainSingle();
     }
 }
 

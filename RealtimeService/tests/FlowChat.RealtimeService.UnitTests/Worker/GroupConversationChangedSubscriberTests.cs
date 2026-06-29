@@ -2,7 +2,7 @@ using AutoFixture;
 using FlowChat.Core.Exceptions;
 using FlowChat.Core.Messaging.ChatService.Events;
 using FlowChat.Core.Results;
-using FlowChat.RealtimeService.Application.Features.Conversation.Commands.RouteConversationChanged;
+using FlowChat.RealtimeService.Application.Features.Conversation.Commands.RouteGroupConversationChanged;
 using FlowChat.RealtimeService.Consumers.Kafka;
 using FlowChat.Shared.Domain;
 using FluentAssertions;
@@ -13,39 +13,39 @@ using Unit = MediatR.Unit;
 
 namespace FlowChat.RealtimeService.UnitTests;
 
-public sealed class ConversationChangedSubscriberTests
+public sealed class GroupConversationChangedSubscriberTests
 {
     private readonly IFixture _fixture = new Fixture();
     private readonly Mock<IMediator> _mediatorMock = new();
-    private readonly ConversationChangedSubscriber _subscriber;
+    private readonly GroupConversationChangedSubscriber _subscriber;
 
-    public ConversationChangedSubscriberTests()
+    public GroupConversationChangedSubscriberTests()
     {
         _mediatorMock
-            .Setup(x => x.Send(It.IsAny<RouteConversationChangedCommand>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.Send(It.IsAny<RouteGroupConversationChangedCommand>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(FlowChatResult<Unit>.Success(Unit.Value));
 
-        _subscriber = new ConversationChangedSubscriber(
+        _subscriber = new GroupConversationChangedSubscriber(
             _mediatorMock.Object,
-            NullLogger<ConversationChangedSubscriber>.Instance);
+            NullLogger<GroupConversationChangedSubscriber>.Instance);
     }
 
     [Fact]
     public async Task HandleAsync_ForwardsMappedCommandToMediator()
     {
-        RouteConversationChangedCommand? capturedCommand = null;
+        RouteGroupConversationChangedCommand? capturedCommand = null;
         var conversationId = _fixture.Create<Guid>();
         var createdByUserId = _fixture.Create<Guid>();
         var participantUserId = _fixture.Create<Guid>();
 
         _mediatorMock
-            .Setup(x => x.Send(It.IsAny<RouteConversationChangedCommand>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.Send(It.IsAny<RouteGroupConversationChangedCommand>(), It.IsAny<CancellationToken>()))
             .Callback<IRequest<FlowChatResult<Unit>>, CancellationToken>((request, _) =>
-                capturedCommand = (RouteConversationChangedCommand)request)
+                capturedCommand = (RouteGroupConversationChangedCommand)request)
             .ReturnsAsync(FlowChatResult<Unit>.Success(Unit.Value));
 
         await _subscriber.HandleAsync(
-            new ConversationChangedIntegrationEvent
+            new GroupConversationChangedIntegrationEvent
             {
                 ConversationId = conversationId,
                 Type = 2,
@@ -67,7 +67,7 @@ public sealed class ConversationChangedSubscriberTests
     public async Task HandleAsync_WhenCommandReturnsFailure_ThrowsNonTransientException()
     {
         _mediatorMock
-            .Setup(x => x.Send(It.IsAny<RouteConversationChangedCommand>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.Send(It.IsAny<RouteGroupConversationChangedCommand>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(FlowChatResult<Unit>.Failure(DomainError.BadRequest("boom")));
 
         var act = () => _subscriber.HandleAsync(
@@ -78,7 +78,7 @@ public sealed class ConversationChangedSubscriberTests
             .WithMessage("boom");
     }
 
-    private ConversationChangedIntegrationEvent CreateValidEvent() =>
+    private GroupConversationChangedIntegrationEvent CreateValidEvent() =>
         new()
         {
             ConversationId = _fixture.Create<Guid>(),

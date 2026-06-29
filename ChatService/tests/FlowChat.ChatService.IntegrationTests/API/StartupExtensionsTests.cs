@@ -22,8 +22,8 @@ public sealed class StartupExtensionsTests
             ["JwtSettings:Audience"] = "FlowChat.Client",
             ["Kafka:ChatMessageSentProducer:BootstrapServers"] = "localhost:9092",
             ["Kafka:ChatMessageSentProducer:Topic"] = "dev.flowchat.chat.message.v1",
-            ["Kafka:ConversationChangedProducer:BootstrapServers"] = "localhost:9092",
-            ["Kafka:ConversationChangedProducer:Topic"] = "dev.flowchat.chat.conversation.v1",
+            ["Kafka:GroupConversationChangedProducer:BootstrapServers"] = "localhost:9092",
+            ["Kafka:GroupConversationChangedProducer:Topic"] = "dev.flowchat.chat.group-conversation.v1",
             ["ConnectionStrings:ChatDb"] = "Host=localhost;Port=5432;Database=flowchat_chat_test_db;Username=test;Password=test"
         });
 

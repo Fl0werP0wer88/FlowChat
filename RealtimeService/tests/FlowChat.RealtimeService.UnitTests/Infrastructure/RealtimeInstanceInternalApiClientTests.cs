@@ -34,10 +34,10 @@ public sealed class RealtimeInstanceInternalApiClientTests
     }
 
     [Fact]
-    public async Task PublishConversationChangedAsync_SendsPayloadToRemoteInstance()
+    public async Task PublishGroupConversationChangedAsync_SendsPayloadToRemoteInstance()
     {
         var conversationId = Guid.NewGuid();
-        var notification = new ConversationChangedParam(
+        var notification = new GroupConversationChangedParam(
             conversationId,
             2,
             "Dev Team",
@@ -46,11 +46,11 @@ public sealed class RealtimeInstanceInternalApiClientTests
         var handler = new CapturingHttpMessageHandler((_, _) => Task.FromResult(new HttpResponseMessage(HttpStatusCode.Accepted)));
         var client = new RealtimeInstanceInternalApiClient(new HttpClient(handler));
 
-        await client.PublishConversationChangedAsync(new Uri("http://instance-remote"), notification, CancellationToken.None);
+        await client.PublishGroupConversationChangedAsync(new Uri("http://instance-remote"), notification, CancellationToken.None);
 
         handler.LastRequest.Should().NotBeNull();
         handler.LastRequest!.Method.Should().Be(HttpMethod.Post);
-        handler.LastRequest.RequestUri!.ToString().Should().Be("http://instance-remote/internal/realtime/conversations/changed/direct");
+        handler.LastRequest.RequestUri!.ToString().Should().Be("http://instance-remote/internal/realtime/group-conversations/changed/direct");
         using var document = JsonDocument.Parse(handler.LastRequestBody!);
         document.RootElement.GetProperty("conversationId").GetGuid().Should().Be(conversationId);
     }

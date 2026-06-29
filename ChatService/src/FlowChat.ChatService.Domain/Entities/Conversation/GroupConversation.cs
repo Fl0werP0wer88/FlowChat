@@ -1,3 +1,4 @@
+using FlowChat.ChatService.Domain.Entities.Conversation.Events;
 using FlowChat.Shared.Domain;
 using UserProfileMarker = FlowChat.ChatService.Domain.Entities.UserProfiles.UserProfile;
 
@@ -28,7 +29,7 @@ public sealed class GroupConversation : Conversation
         IEnumerable<Id<UserProfileMarker>> participantUserIds,
         string name)
     {
-        return CreateCore(
+        var conversation = CreateCore(
             id,
             ConversationType.Group,
             createdByUserId,
@@ -36,6 +37,15 @@ public sealed class GroupConversation : Conversation
             name,
             static (id, type, name, createdByUserId, participants) =>
                 new GroupConversation(id, type, name, createdByUserId, participants));
+
+        conversation.AddDomainEvent(new GroupConversationCreatedDomainEvent(
+            conversation.Id,
+            conversation.Type,
+            conversation.Name,
+            conversation.CreatedByUserId,
+            [.. conversation.Participants.Select(p => p.UserId)]));
+
+        return conversation;
     }
 
     public static GroupConversation Restore(

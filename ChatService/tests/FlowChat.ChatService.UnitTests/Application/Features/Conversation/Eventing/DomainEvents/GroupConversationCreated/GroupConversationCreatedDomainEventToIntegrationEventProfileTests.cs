@@ -1,5 +1,5 @@
 using AutoMapper;
-using FlowChat.ChatService.Application.Features.Conversation.Eventing.DomainEvents.ConversationCreated;
+using FlowChat.ChatService.Application.Features.Conversation.Eventing.DomainEvents.GroupConversationCreated;
 using FlowChat.ChatService.Domain.Entities.Conversation;
 using FlowChat.ChatService.Domain.Entities.Conversation.Events;
 using FlowChat.ChatService.Domain.Entities.UserProfiles;
@@ -9,15 +9,15 @@ using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
 using ConversationAggregate = FlowChat.ChatService.Domain.Entities.Conversation.Conversation;
 
-namespace FlowChat.ChatService.UnitTests.Application.Features.Conversation.Eventing.DomainEvents.ConversationCreated;
+namespace FlowChat.ChatService.UnitTests.Application.Features.Conversation.Eventing.DomainEvents.GroupConversationCreated;
 
-public sealed class ConversationCreatedDomainEventToIntegrationEventProfileTests
+public sealed class GroupConversationCreatedDomainEventToIntegrationEventProfileTests
 {
     [Fact]
-    public void Map_WhenConversationCreatedDomainEvent_ReturnsIntegrationEvent()
+    public void Map_WhenGroupConversationCreatedDomainEvent_ReturnsIntegrationEvent()
     {
         var configuration = new MapperConfiguration(
-            cfg => cfg.AddProfile<ConversationCreatedDomainEventToIntegrationEventProfile>(),
+            cfg => cfg.AddProfile<GroupConversationCreatedDomainEventToIntegrationEventProfile>(),
             NullLoggerFactory.Instance);
         var mapper = configuration.CreateMapper();
         var conversationId = Id<ConversationAggregate>.New();
@@ -27,14 +27,14 @@ public sealed class ConversationCreatedDomainEventToIntegrationEventProfileTests
             createdByUserId,
             Id<UserProfile>.New()
         };
-        var domainEvent = new ConversationCreatedDomainEvent(
+        var domainEvent = new GroupConversationCreatedDomainEvent(
             conversationId,
             ConversationType.Group,
             "Dev Team",
             createdByUserId,
             participantUserIds);
 
-        var integrationEvent = mapper.Map<ConversationChangedIntegrationEvent>(domainEvent);
+        var integrationEvent = mapper.Map<GroupConversationChangedIntegrationEvent>(domainEvent);
 
         integrationEvent.ConversationId.Should().Be(conversationId.Value);
         integrationEvent.Type.Should().Be((int) ConversationType.Group);

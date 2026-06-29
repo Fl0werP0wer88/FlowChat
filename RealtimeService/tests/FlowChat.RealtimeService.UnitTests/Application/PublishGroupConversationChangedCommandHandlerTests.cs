@@ -1,39 +1,39 @@
 using AutoFixture;
 using FlowChat.RealtimeService.Application.Contracts.Infrastructure;
-using FlowChat.RealtimeService.Application.Features.Conversation.Commands.PublishConversationChanged;
+using FlowChat.RealtimeService.Application.Features.Conversation.Commands.PublishGroupConversationChanged;
 using FluentAssertions;
 using Moq;
 
 namespace FlowChat.RealtimeService.UnitTests;
 
-public sealed class PublishConversationChangedCommandHandlerTests
+public sealed class PublishGroupConversationChangedCommandHandlerTests
 {
     private readonly IFixture _fixture = new Fixture();
     private readonly Mock<IRealtimeClientDispatcher> _dispatcherMock = new();
-    private readonly PublishConversationChangedCommandHandler _handler;
+    private readonly PublishGroupConversationChangedCommandHandler _handler;
 
-    public PublishConversationChangedCommandHandlerTests()
+    public PublishGroupConversationChangedCommandHandlerTests()
     {
         _dispatcherMock
-            .Setup(x => x.ConversationChangedAsync(It.IsAny<ConversationChangedParam>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.GroupConversationChangedAsync(It.IsAny<GroupConversationChangedParam>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
-        _handler = new PublishConversationChangedCommandHandler(_dispatcherMock.Object);
+        _handler = new PublishGroupConversationChangedCommandHandler(_dispatcherMock.Object);
     }
 
     [Fact]
     public async Task Handle_NormalizesParticipantsAndDispatches()
     {
-        ConversationChangedParam? capturedNotification = null;
+        GroupConversationChangedParam? capturedNotification = null;
         var participantUserId = _fixture.Create<Guid>();
 
         _dispatcherMock
-            .Setup(x => x.ConversationChangedAsync(It.IsAny<ConversationChangedParam>(), It.IsAny<CancellationToken>()))
-            .Callback<ConversationChangedParam, CancellationToken>((notification, _) => capturedNotification = notification)
+            .Setup(x => x.GroupConversationChangedAsync(It.IsAny<GroupConversationChangedParam>(), It.IsAny<CancellationToken>()))
+            .Callback<GroupConversationChangedParam, CancellationToken>((notification, _) => capturedNotification = notification)
             .Returns(Task.CompletedTask);
 
         var result = await _handler.Handle(
-            new PublishConversationChangedCommand(
+            new PublishGroupConversationChangedCommand(
                 _fixture.Create<Guid>(),
                 2,
                 " Dev Team ",

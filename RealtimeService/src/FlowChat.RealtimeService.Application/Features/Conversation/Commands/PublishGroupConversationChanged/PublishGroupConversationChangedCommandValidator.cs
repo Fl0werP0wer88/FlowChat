@@ -1,18 +1,18 @@
 using FluentValidation;
 
-namespace FlowChat.RealtimeService.Application.Features.Conversation.Commands.RouteConversationChanged;
+namespace FlowChat.RealtimeService.Application.Features.Conversation.Commands.PublishGroupConversationChanged;
 
-public sealed class RouteConversationChangedCommandValidator : AbstractValidator<RouteConversationChangedCommand>
+public sealed class PublishGroupConversationChangedCommandValidator : AbstractValidator<PublishGroupConversationChangedCommand>
 {
-    public RouteConversationChangedCommandValidator()
+    public PublishGroupConversationChangedCommandValidator()
     {
         RuleFor(command => command.ConversationId)
             .NotEmpty()
             .WithMessage("ConversationId is required.");
 
         RuleFor(command => command.Type)
-            .Must(type => type is 1 or 2)
-            .WithMessage("Type must be one of: Duet, Group.");
+            .Equal(2)
+            .WithMessage("Type must be Group.");
 
         RuleFor(command => command.CreatedByUserId)
             .NotEmpty()

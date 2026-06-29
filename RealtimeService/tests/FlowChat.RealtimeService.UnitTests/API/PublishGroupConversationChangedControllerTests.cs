@@ -1,6 +1,6 @@
 using AutoFixture;
-using FlowChat.RealtimeService.Api.Features.Realtime.Internal.PublishConversationChanged;
-using FlowChat.RealtimeService.Application.Features.Conversation.Commands.PublishConversationChanged;
+using FlowChat.RealtimeService.Api.Features.Realtime.Internal.PublishGroupConversationChanged;
+using FlowChat.RealtimeService.Application.Features.Conversation.Commands.PublishGroupConversationChanged;
 using FlowChat.RealtimeService.Infrastructure.Configuration.Settings;
 using FlowChat.Shared.Domain;
 using FluentAssertions;
@@ -12,24 +12,24 @@ using Moq;
 
 namespace FlowChat.RealtimeService.UnitTests;
 
-public sealed class PublishConversationChangedControllerTests
+public sealed class PublishGroupConversationChangedControllerTests
 {
     private readonly IFixture _fixture = new Fixture();
 
     [Fact]
     public async Task Publish_WhenApiKeyMatches_DispatchesCommand()
     {
-        PublishConversationChangedCommand? capturedCommand = null;
+        PublishGroupConversationChangedCommand? capturedCommand = null;
         var mediatorMock = new Mock<IMediator>();
         mediatorMock
-            .Setup(x => x.Send(It.IsAny<PublishConversationChangedCommand>(), It.IsAny<CancellationToken>()))
-            .Callback<IRequest<FlowChatResult<Unit>>, CancellationToken>((request, _) => capturedCommand = (PublishConversationChangedCommand)request)
+            .Setup(x => x.Send(It.IsAny<PublishGroupConversationChangedCommand>(), It.IsAny<CancellationToken>()))
+            .Callback<IRequest<FlowChatResult<Unit>>, CancellationToken>((request, _) => capturedCommand = (PublishGroupConversationChangedCommand)request)
             .ReturnsAsync(FlowChatResult<Unit>.Success(Unit.Value));
 
         var controller = CreateController("expected-key", mediatorMock, "expected-key");
 
         var result = await controller.Publish(
-            new PublishConversationChangedRequest
+            new PublishGroupConversationChangedRequest
             {
                 ConversationId = _fixture.Create<Guid>(),
                 Type = 2,
@@ -50,7 +50,7 @@ public sealed class PublishConversationChangedControllerTests
         var controller = CreateController("expected-key", new Mock<IMediator>(MockBehavior.Strict));
 
         var result = await controller.Publish(
-            new PublishConversationChangedRequest
+            new PublishGroupConversationChangedRequest
             {
                 ConversationId = _fixture.Create<Guid>(),
                 Type = 2,
@@ -62,12 +62,12 @@ public sealed class PublishConversationChangedControllerTests
         result.Should().BeOfType<UnauthorizedResult>();
     }
 
-    private static PublishConversationChangedController CreateController(
+    private static PublishGroupConversationChangedController CreateController(
         string expectedApiKey,
         Mock<IMediator> mediatorMock,
         string? providedApiKey = null)
     {
-        var controller = new PublishConversationChangedController(
+        var controller = new PublishGroupConversationChangedController(
             mediatorMock.Object,
             Options.Create(new InternalApiSettingsSection { ApiKey = expectedApiKey }))
         {

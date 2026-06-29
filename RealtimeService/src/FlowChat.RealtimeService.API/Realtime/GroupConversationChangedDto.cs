@@ -1,6 +1,6 @@
 namespace FlowChat.RealtimeService.Api.Realtime;
 
-public sealed class ConversationChangedDto
+public sealed class GroupConversationChangedDto
 {
     public Guid ConversationId { get; init; }
     public int Type { get; init; }

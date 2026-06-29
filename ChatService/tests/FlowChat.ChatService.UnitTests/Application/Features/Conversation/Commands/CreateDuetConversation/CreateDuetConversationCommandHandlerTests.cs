@@ -43,7 +43,7 @@ public sealed class CreateDuetConversationCommandHandlerTests
     }
 
     [Fact]
-    public async Task Handle_WhenDuetConversationDoesNotExist_CreatesConversationAndDispatchesDomainEvents()
+    public async Task Handle_WhenDuetConversationDoesNotExist_CreatesConversationWithoutGroupConversationCreatedDomainEvent()
     {
         var command = new CreateDuetConversationCommand(Guid.NewGuid(), Guid.NewGuid());
         DuetConversation? persistedConversation = null;
@@ -72,7 +72,7 @@ public sealed class CreateDuetConversationCommandHandlerTests
         result.Value.ConversationId.Should().Be(persistedConversation!.Id.Value);
         result.Value.Participants.Select(x => x.UserId).Should().Equal(command.RequestingUserId, command.PartnerUserId);
         result.Value.Participants.Select(x => x.ParticipantUserId).Should().Equal(command.RequestingUserId, command.PartnerUserId);
-        dispatchedEvents.Should().ContainSingle(x => x is ConversationCreatedDomainEvent);
+        dispatchedEvents.OfType<GroupConversationCreatedDomainEvent>().Should().BeEmpty();
         _duetConversationWriteRepositoryMock.Verify(
             x => x.AddAsync(It.IsAny<DuetConversation>(), It.IsAny<CancellationToken>()),
             Times.Once);

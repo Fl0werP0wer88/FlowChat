@@ -130,7 +130,7 @@ public sealed class WorkerRealtimeEventRouterTests
     }
 
     [Fact]
-    public async Task RouteConversationChangedAsync_PublishesThroughInstanceInternalApiClient()
+    public async Task RouteGroupConversationChangedAsync_PublishesThroughInstanceInternalApiClient()
     {
         var userId = _fixture.Create<Guid>();
         Uri? calledBaseAddress = null;
@@ -144,11 +144,11 @@ public sealed class WorkerRealtimeEventRouterTests
             });
         _addressResolverMock.Setup(x => x.Resolve("instance-a")).Returns(new Uri("http://instance-a"));
         _internalApiClientMock
-            .Setup(x => x.PublishConversationChangedAsync(
+            .Setup(x => x.PublishGroupConversationChangedAsync(
                 It.IsAny<Uri>(),
-                It.IsAny<ConversationChangedParam>(),
+                It.IsAny<GroupConversationChangedParam>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<Uri, ConversationChangedParam, CancellationToken>((baseAddress, notification, _) =>
+            .Callback<Uri, GroupConversationChangedParam, CancellationToken>((baseAddress, notification, _) =>
             {
                 calledBaseAddress = baseAddress;
                 calledParticipants = notification.ParticipantUserIds;
@@ -157,8 +157,8 @@ public sealed class WorkerRealtimeEventRouterTests
 
         var router = CreateRouter();
 
-        await router.RouteConversationChangedAsync(
-            new ConversationChangedParam(
+        await router.RouteGroupConversationChangedAsync(
+            new GroupConversationChangedParam(
                 _fixture.Create<Guid>(),
                 2,
                 "Dev Team",

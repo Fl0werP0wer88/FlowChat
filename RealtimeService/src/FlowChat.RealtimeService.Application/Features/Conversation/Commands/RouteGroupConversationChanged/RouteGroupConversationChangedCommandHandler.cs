@@ -3,28 +3,28 @@ using FlowChat.RealtimeService.Application.Contracts.Infrastructure;
 using FlowChat.Shared.Application;
 using MediatR;
 
-namespace FlowChat.RealtimeService.Application.Features.Conversation.Commands.RouteConversationChanged;
+namespace FlowChat.RealtimeService.Application.Features.Conversation.Commands.RouteGroupConversationChanged;
 
-public sealed class RouteConversationChangedCommandHandler(IRealtimeEventRouter realtimeEventRouter)
-    : ICommandHandler<RouteConversationChangedCommand, Unit>
+public sealed class RouteGroupConversationChangedCommandHandler(IRealtimeEventRouter realtimeEventRouter)
+    : ICommandHandler<RouteGroupConversationChangedCommand, Unit>
 {
     private readonly IRealtimeEventRouter _realtimeEventRouter = realtimeEventRouter
         ?? throw new ArgumentNullException(nameof(realtimeEventRouter));
 
     public async Task<FlowChatResult<Unit>> Handle(
-        RouteConversationChangedCommand request,
+        RouteGroupConversationChangedCommand request,
         CancellationToken cancellationToken)
     {
         var participantUserIds = NormalizeParticipantUserIds(request.ParticipantUserIds);
 
-        var notification = new ConversationChangedParam(
+        var notification = new GroupConversationChangedParam(
             request.ConversationId,
             request.Type,
             request.Name,
             request.CreatedByUserId,
             participantUserIds);
 
-        await _realtimeEventRouter.RouteConversationChangedAsync(notification, cancellationToken);
+        await _realtimeEventRouter.RouteGroupConversationChangedAsync(notification, cancellationToken);
 
         return FlowChatResult<Unit>.Success(Unit.Value);
     }

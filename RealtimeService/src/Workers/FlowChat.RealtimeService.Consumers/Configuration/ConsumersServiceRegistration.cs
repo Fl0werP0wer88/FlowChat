@@ -25,8 +25,8 @@ public static class ConsumersServiceRegistration
             .Get<ChatMessageSentConsumerSettingsSection>() ?? new ChatMessageSentConsumerSettingsSection();
         var presenceStatusChangedConsumerOptions = configuration.GetSection(new PresenceStatusChangedConsumerSettingsSection().SectionName)
             .Get<PresenceStatusChangedConsumerSettingsSection>() ?? new PresenceStatusChangedConsumerSettingsSection();
-        var conversationChangedConsumerOptions = configuration.GetSection(new ConversationChangedConsumerSettingsSection().SectionName)
-            .Get<ConversationChangedConsumerSettingsSection>() ?? new ConversationChangedConsumerSettingsSection();
+        var groupConversationChangedConsumerOptions = configuration.GetSection(new GroupConversationChangedConsumerSettingsSection().SectionName)
+            .Get<GroupConversationChangedConsumerSettingsSection>() ?? new GroupConversationChangedConsumerSettingsSection();
 
         services.AddConsumerApplicationServices();
         services.AddConsumerInfrastructureServices(configuration);
@@ -38,7 +38,7 @@ public static class ConsumersServiceRegistration
             .AddKafkaClients(clients =>
             {
                 clients
-                    .WithBootstrapServers(ResolveBootstrapServers(chatMessageSentConsumerOptions, presenceStatusChangedConsumerOptions, conversationChangedConsumerOptions))
+                    .WithBootstrapServers(ResolveBootstrapServers(chatMessageSentConsumerOptions, presenceStatusChangedConsumerOptions, groupConversationChangedConsumerOptions))
                     .AddConsumer(consumer => consumer
                         .WithGroupId(chatMessageSentConsumerOptions.GroupId)
                         .WithAutoOffsetReset(ParseAutoOffsetReset(chatMessageSentConsumerOptions.AutoOffsetReset))
@@ -56,13 +56,13 @@ public static class ConsumersServiceRegistration
                         .WithAutoOffsetReset(ParseAutoOffsetReset(presenceStatusChangedConsumerOptions.AutoOffsetReset))
                         .Consume(endpoint => endpoint.ConfigureFlowChatRetryEndpoint(presenceStatusChangedConsumerOptions)))
                     .AddConsumer(consumer => consumer
-                        .WithGroupId(conversationChangedConsumerOptions.GroupId)
-                        .WithAutoOffsetReset(ParseAutoOffsetReset(conversationChangedConsumerOptions.AutoOffsetReset))
-                        .Consume(endpoint => endpoint.ConfigureFlowChatMainEndpoint(conversationChangedConsumerOptions)))
+                        .WithGroupId(groupConversationChangedConsumerOptions.GroupId)
+                        .WithAutoOffsetReset(ParseAutoOffsetReset(groupConversationChangedConsumerOptions.AutoOffsetReset))
+                        .Consume(endpoint => endpoint.ConfigureFlowChatMainEndpoint(groupConversationChangedConsumerOptions)))
                     .AddConsumer(consumer => consumer
-                        .WithGroupId(conversationChangedConsumerOptions.RetryGroupId)
-                        .WithAutoOffsetReset(ParseAutoOffsetReset(conversationChangedConsumerOptions.AutoOffsetReset))
-                        .Consume(endpoint => endpoint.ConfigureFlowChatRetryEndpoint(conversationChangedConsumerOptions)))
+                        .WithGroupId(groupConversationChangedConsumerOptions.RetryGroupId)
+                        .WithAutoOffsetReset(ParseAutoOffsetReset(groupConversationChangedConsumerOptions.AutoOffsetReset))
+                        .Consume(endpoint => endpoint.ConfigureFlowChatRetryEndpoint(groupConversationChangedConsumerOptions)))
                     .AddProducer(producer => producer
                         .Produce(endpoint => endpoint
                             .ProduceTo(chatMessageSentConsumerOptions.RetryTopic)
@@ -81,16 +81,16 @@ public static class ConsumersServiceRegistration
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())))
                     .AddProducer(producer => producer
                         .Produce(endpoint => endpoint
-                            .ProduceTo(conversationChangedConsumerOptions.RetryTopic)
+                            .ProduceTo(groupConversationChangedConsumerOptions.RetryTopic)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())))
                     .AddProducer(producer => producer
                         .Produce(endpoint => endpoint
-                            .ProduceTo(conversationChangedConsumerOptions.DeadLetterTopic)
+                            .ProduceTo(groupConversationChangedConsumerOptions.DeadLetterTopic)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())));
             })
             .AddScopedSubscriber<ChatMessageSentSubscriber>()
             .AddScopedSubscriber<UserPresenceChangedSubscriber>()
-            .AddScopedSubscriber<ConversationChangedSubscriber>();
+            .AddScopedSubscriber<GroupConversationChangedSubscriber>();
 
         return services;
     }
@@ -98,12 +98,12 @@ public static class ConsumersServiceRegistration
     private static string ResolveBootstrapServers(
         ChatMessageSentConsumerSettingsSection chatMessageSentConsumerOptions,
         PresenceStatusChangedConsumerSettingsSection presenceStatusChangedConsumerOptions,
-        ConversationChangedConsumerSettingsSection conversationChangedConsumerOptions) =>
+        GroupConversationChangedConsumerSettingsSection groupConversationChangedConsumerOptions) =>
         !string.IsNullOrWhiteSpace(chatMessageSentConsumerOptions.BootstrapServers)
             ? chatMessageSentConsumerOptions.BootstrapServers
             : !string.IsNullOrWhiteSpace(presenceStatusChangedConsumerOptions.BootstrapServers)
                 ? presenceStatusChangedConsumerOptions.BootstrapServers
-                : conversationChangedConsumerOptions.BootstrapServers;
+                : groupConversationChangedConsumerOptions.BootstrapServers;
 
     private static AutoOffsetReset ParseAutoOffsetReset(string value) =>
         Enum.TryParse<AutoOffsetReset>(value, true, out var parsed)

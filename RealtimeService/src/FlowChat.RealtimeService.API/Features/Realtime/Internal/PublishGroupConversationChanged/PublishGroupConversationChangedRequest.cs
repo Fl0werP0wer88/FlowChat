@@ -1,8 +1,8 @@
 using FlowChat.Core.Contracts;
 
-namespace FlowChat.RealtimeService.Api.Features.Realtime.Internal.PublishConversationChanged;
+namespace FlowChat.RealtimeService.Api.Features.Realtime.Internal.PublishGroupConversationChanged;
 
-public sealed class PublishConversationChangedRequest : IServiceInput
+public sealed class PublishGroupConversationChangedRequest : IServiceInput
 {
     public Guid ConversationId { get; init; }
     public int Type { get; init; }

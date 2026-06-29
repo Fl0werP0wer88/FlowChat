@@ -4,7 +4,7 @@ using UserProfileMarker = FlowChat.ChatService.Domain.Entities.UserProfiles.User
 
 namespace FlowChat.ChatService.Domain.Entities.Conversation.Events;
 
-public sealed class ConversationCreatedDomainEvent(
+public sealed class GroupConversationCreatedDomainEvent(
     Id<Conversation> aggregateId,
     ConversationType type,
     string? name,

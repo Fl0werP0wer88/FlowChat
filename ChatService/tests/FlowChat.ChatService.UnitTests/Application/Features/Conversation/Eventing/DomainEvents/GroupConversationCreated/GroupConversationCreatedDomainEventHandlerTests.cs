@@ -1,5 +1,5 @@
 using AutoMapper;
-using FlowChat.ChatService.Application.Features.Conversation.Eventing.DomainEvents.ConversationCreated;
+using FlowChat.ChatService.Application.Features.Conversation.Eventing.DomainEvents.GroupConversationCreated;
 using FlowChat.ChatService.Domain.Entities.Conversation;
 using FlowChat.ChatService.Domain.Entities.Conversation.Events;
 using FlowChat.ChatService.Domain.Entities.UserProfiles;
@@ -12,25 +12,25 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using ConversationAggregate = FlowChat.ChatService.Domain.Entities.Conversation.Conversation;
 
-namespace FlowChat.ChatService.UnitTests.Application.Features.Conversation.Eventing.DomainEvents.ConversationCreated;
+namespace FlowChat.ChatService.UnitTests.Application.Features.Conversation.Eventing.DomainEvents.GroupConversationCreated;
 
-public sealed class ConversationCreatedDomainEventHandlerTests
+public sealed class GroupConversationCreatedDomainEventHandlerTests
 {
     private readonly Mock<IOutboxIntegrationEventPublisher> _publisherMock = new();
-    private readonly ConversationCreatedDomainEventHandler _handler;
+    private readonly GroupConversationCreatedDomainEventHandler _handler;
 
-    public ConversationCreatedDomainEventHandlerTests()
+    public GroupConversationCreatedDomainEventHandlerTests()
     {
         var mapper = new MapperConfiguration(
-            cfg => cfg.AddProfile<ConversationCreatedDomainEventToIntegrationEventProfile>(),
+            cfg => cfg.AddProfile<GroupConversationCreatedDomainEventToIntegrationEventProfile>(),
             NullLoggerFactory.Instance)
             .CreateMapper();
 
-        _handler = new ConversationCreatedDomainEventHandler(_publisherMock.Object, mapper);
+        _handler = new GroupConversationCreatedDomainEventHandler(_publisherMock.Object, mapper);
     }
 
     [Fact]
-    public async Task Handle_WhenConversationCreatedDomainEvent_PublishesIntegrationEvent()
+    public async Task Handle_WhenGroupConversationCreatedDomainEvent_PublishesIntegrationEvent()
     {
         var conversationId = Id<ConversationAggregate>.New();
         var createdByUserId = Id<UserProfile>.New();
@@ -39,19 +39,19 @@ public sealed class ConversationCreatedDomainEventHandlerTests
             createdByUserId,
             Id<UserProfile>.New()
         };
-        var domainEvent = new ConversationCreatedDomainEvent(
+        var domainEvent = new GroupConversationCreatedDomainEvent(
             conversationId,
-            ConversationType.Duet,
-            null,
+            ConversationType.Group,
+            "Dev Team",
             createdByUserId,
             participantUserIds);
-        IntegrationEventEnvelope<ConversationChangedIntegrationEvent>? publishedEnvelope = null;
+        IntegrationEventEnvelope<GroupConversationChangedIntegrationEvent>? publishedEnvelope = null;
 
         _publisherMock
             .Setup(x => x.PublishAsync(
-                It.IsAny<IntegrationEventEnvelope<ConversationChangedIntegrationEvent>>(),
+                It.IsAny<IntegrationEventEnvelope<GroupConversationChangedIntegrationEvent>>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<IntegrationEventEnvelope<ConversationChangedIntegrationEvent>, CancellationToken>(
+            .Callback<IntegrationEventEnvelope<GroupConversationChangedIntegrationEvent>, CancellationToken>(
                 (envelope, _) => publishedEnvelope = envelope)
             .Returns(Task.CompletedTask);
 
@@ -60,13 +60,13 @@ public sealed class ConversationCreatedDomainEventHandlerTests
         publishedEnvelope.Should().NotBeNull();
         publishedEnvelope!.KafkaKey.Should().Be(conversationId.Value.ToString("D"));
         publishedEnvelope.Payload.ConversationId.Should().Be(conversationId.Value);
-        publishedEnvelope.Payload.Type.Should().Be((int) ConversationType.Duet);
-        publishedEnvelope.Payload.Name.Should().BeNull();
+        publishedEnvelope.Payload.Type.Should().Be((int) ConversationType.Group);
+        publishedEnvelope.Payload.Name.Should().Be("Dev Team");
         publishedEnvelope.Payload.CreatedByUserId.Should().Be(createdByUserId.Value);
         publishedEnvelope.Payload.ParticipantUserIds.Should().Equal(participantUserIds.Select(id => id.Value));
         _publisherMock.Verify(
             x => x.PublishAsync(
-                It.IsAny<IntegrationEventEnvelope<ConversationChangedIntegrationEvent>>(),
+                It.IsAny<IntegrationEventEnvelope<GroupConversationChangedIntegrationEvent>>(),
                 It.IsAny<CancellationToken>()),
             Times.Once);
     }

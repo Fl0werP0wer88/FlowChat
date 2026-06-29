@@ -18,7 +18,7 @@ internal sealed class CapturingRealtimeClientDispatcher : IRealtimeClientDispatc
 {
     public ChatMessageParam? LastMessageNotification { get; private set; }
     public PresenceChangedParam? LastPresenceNotification { get; private set; }
-    public ConversationChangedParam? LastConversationChangedNotification { get; private set; }
+    public GroupConversationChangedParam? LastGroupConversationChangedNotification { get; private set; }
 
     public Task ReceiveMessageAsync(ChatMessageParam notification, CancellationToken cancellationToken)
     {
@@ -32,9 +32,9 @@ internal sealed class CapturingRealtimeClientDispatcher : IRealtimeClientDispatc
         return Task.CompletedTask;
     }
 
-    public Task ConversationChangedAsync(ConversationChangedParam notification, CancellationToken cancellationToken)
+    public Task GroupConversationChangedAsync(GroupConversationChangedParam notification, CancellationToken cancellationToken)
     {
-        LastConversationChangedNotification = notification;
+        LastGroupConversationChangedNotification = notification;
         return Task.CompletedTask;
     }
 }
@@ -43,7 +43,7 @@ internal sealed class CapturingRealtimeEventRouter : IRealtimeEventRouter
 {
     public ChatMessageParam? LastMessageNotification { get; private set; }
     public PresenceChangedParam? LastPresenceNotification { get; private set; }
-    public ConversationChangedParam? LastConversationChangedNotification { get; private set; }
+    public GroupConversationChangedParam? LastGroupConversationChangedNotification { get; private set; }
 
     public Task RouteMessageAsync(ChatMessageParam notification, CancellationToken cancellationToken)
     {
@@ -57,9 +57,9 @@ internal sealed class CapturingRealtimeEventRouter : IRealtimeEventRouter
         return Task.CompletedTask;
     }
 
-    public Task RouteConversationChangedAsync(ConversationChangedParam notification, CancellationToken cancellationToken)
+    public Task RouteGroupConversationChangedAsync(GroupConversationChangedParam notification, CancellationToken cancellationToken)
     {
-        LastConversationChangedNotification = notification;
+        LastGroupConversationChangedNotification = notification;
         return Task.CompletedTask;
     }
 }

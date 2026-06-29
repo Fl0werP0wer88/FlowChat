@@ -14,7 +14,7 @@ public abstract class Conversation : AggregateRootBase<Conversation>
     private readonly List<ParticipantUser> _participants = [];
     public IReadOnlyCollection<ParticipantUser> Participants => _participants.AsReadOnly();
 
-    // Required by EF Core — scalar-only constructor so EF can bind properties without the navigation collection
+    // Required by EF Core: scalar-only constructor so EF can bind properties without the navigation collection.
     protected Conversation(
         Id<Conversation> id,
         ConversationType type,
@@ -52,16 +52,7 @@ public abstract class Conversation : AggregateRootBase<Conversation>
         var conversationId = id;
         var participants = BuildParticipants(participantUserIds, type, conversationId);
 
-        var conversation = factory(conversationId, type, name, createdByUserId, participants);
-
-        conversation.AddDomainEvent(new ConversationCreatedDomainEvent(
-            conversation.Id,
-            conversation.Type,
-            conversation.Name,
-            conversation.CreatedByUserId,
-            [ .. conversation.Participants.Select(p => p.UserId)]));
-
-        return conversation;
+        return factory(conversationId, type, name, createdByUserId, participants);
     }
 
     protected static TConversation RestoreCore<TConversation>(

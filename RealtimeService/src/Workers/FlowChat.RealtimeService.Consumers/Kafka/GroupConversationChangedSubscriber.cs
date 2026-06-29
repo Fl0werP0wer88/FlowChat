@@ -1,20 +1,20 @@
 using FlowChat.Core.Messaging.ChatService.Events;
-using FlowChat.RealtimeService.Application.Features.Conversation.Commands.RouteConversationChanged;
+using FlowChat.RealtimeService.Application.Features.Conversation.Commands.RouteGroupConversationChanged;
 using FlowChat.Shared.Infrastructure.Silverback.Subscribers;
 using MediatR;
 
 namespace FlowChat.RealtimeService.Consumers.Kafka;
 
-public sealed class ConversationChangedSubscriber(
+public sealed class GroupConversationChangedSubscriber(
     IMediator mediator,
-    ILogger<ConversationChangedSubscriber> logger)
-    : SubscriberBase<ConversationChangedIntegrationEvent>(logger)
+    ILogger<GroupConversationChangedSubscriber> logger)
+    : SubscriberBase<GroupConversationChangedIntegrationEvent>(logger)
 {
     protected override async Task ExecuteAsync(
-        ConversationChangedIntegrationEvent message,
+        GroupConversationChangedIntegrationEvent message,
         CancellationToken cancellationToken)
     {
-        var command = new RouteConversationChangedCommand(
+        var command = new RouteGroupConversationChangedCommand(
             message.ConversationId,
             message.Type,
             message.Name,

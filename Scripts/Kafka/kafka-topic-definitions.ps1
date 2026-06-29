@@ -130,7 +130,7 @@ function Get-TopicDefinitions {
       }
     },
     @{
-      name = "dev.flowchat.chat.conversation.v1"
+      name = "dev.flowchat.chat.group-conversation.v1"
       partitions = 1
       rf = 1
       config = @{
@@ -139,7 +139,7 @@ function Get-TopicDefinitions {
       }
     },
     @{
-      name = "dev.flowchat.chat.conversation.v1.realtime-service.retry"
+      name = "dev.flowchat.chat.group-conversation.v1.realtime-service.retry"
       partitions = 1
       rf = 1
       config = @{
@@ -148,7 +148,7 @@ function Get-TopicDefinitions {
       }
     },
     @{
-      name = "dev.flowchat.chat.conversation.v1.realtime-service.dlq"
+      name = "dev.flowchat.chat.group-conversation.v1.realtime-service.dlq"
       partitions = 1
       rf = 1
       config = @{

@@ -33,7 +33,7 @@ public sealed class ConsumersConfigurationTests
         var consumerCollection = serviceProvider.GetRequiredService<IConsumerCollection>();
         var chatSubscriber = scope.ServiceProvider.GetRequiredService<ChatMessageSentSubscriber>();
         var presenceSubscriber = scope.ServiceProvider.GetRequiredService<UserPresenceChangedSubscriber>();
-        var conversationSubscriber = scope.ServiceProvider.GetRequiredService<ConversationChangedSubscriber>();
+        var conversationSubscriber = scope.ServiceProvider.GetRequiredService<GroupConversationChangedSubscriber>();
         var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
         var eventRouter = scope.ServiceProvider.GetRequiredService<IRealtimeEventRouter>();
         var routingReader = scope.ServiceProvider.GetRequiredService<IUserInstanceRoutingReader>();
@@ -86,8 +86,8 @@ public sealed class ConsumersConfigurationTests
             .GetSection(new PresenceStatusChangedConsumerSettingsSection().SectionName)
             .Get<PresenceStatusChangedConsumerSettingsSection>();
         var conversationOptions = configuration
-            .GetSection(new ConversationChangedConsumerSettingsSection().SectionName)
-            .Get<ConversationChangedConsumerSettingsSection>();
+            .GetSection(new GroupConversationChangedConsumerSettingsSection().SectionName)
+            .Get<GroupConversationChangedConsumerSettingsSection>();
 
         chatOptions.Should().NotBeNull();
         chatOptions!.GroupId.Should().Be("realtime-service");
@@ -106,9 +106,9 @@ public sealed class ConsumersConfigurationTests
         conversationOptions.Should().NotBeNull();
         conversationOptions!.GroupId.Should().Be("realtime-service");
         conversationOptions.RetryGroupId.Should().Be("realtime-service-retry");
-        conversationOptions.Topic.Should().Be("dev.flowchat.chat.conversation.v1");
-        conversationOptions.RetryTopic.Should().Be("dev.flowchat.chat.conversation.v1.realtime-service.retry");
-        conversationOptions.DeadLetterTopic.Should().Be("dev.flowchat.chat.conversation.v1.realtime-service.dlq");
+        conversationOptions.Topic.Should().Be("dev.flowchat.chat.group-conversation.v1");
+        conversationOptions.RetryTopic.Should().Be("dev.flowchat.chat.group-conversation.v1.realtime-service.retry");
+        conversationOptions.DeadLetterTopic.Should().Be("dev.flowchat.chat.group-conversation.v1.realtime-service.dlq");
     }
 
     private static IConfiguration CreateConfiguration()
@@ -142,16 +142,16 @@ public sealed class ConsumersConfigurationTests
                 ["Kafka:PresenceStatusChangedConsumer:RetryBaseDelaySeconds"] = "5",
                 ["Kafka:PresenceStatusChangedConsumer:RetryMaxDelaySeconds"] = "300",
                 ["Kafka:PresenceStatusChangedConsumer:AutoOffsetReset"] = "Earliest",
-                ["Kafka:ConversationChangedConsumer:BootstrapServers"] = "localhost:9092",
-                ["Kafka:ConversationChangedConsumer:GroupId"] = "realtime-service",
-                ["Kafka:ConversationChangedConsumer:RetryGroupId"] = "realtime-service-retry",
-                ["Kafka:ConversationChangedConsumer:Topic"] = "dev.flowchat.chat.conversation.v1",
-                ["Kafka:ConversationChangedConsumer:RetryTopic"] = "dev.flowchat.chat.conversation.v1.retry",
-                ["Kafka:ConversationChangedConsumer:DeadLetterTopic"] = "dev.flowchat.chat.conversation.v1.dlq",
-                ["Kafka:ConversationChangedConsumer:MaxRetryCount"] = "5",
-                ["Kafka:ConversationChangedConsumer:RetryBaseDelaySeconds"] = "5",
-                ["Kafka:ConversationChangedConsumer:RetryMaxDelaySeconds"] = "300",
-                ["Kafka:ConversationChangedConsumer:AutoOffsetReset"] = "Earliest"
+                ["Kafka:GroupConversationChangedConsumer:BootstrapServers"] = "localhost:9092",
+                ["Kafka:GroupConversationChangedConsumer:GroupId"] = "realtime-service",
+                ["Kafka:GroupConversationChangedConsumer:RetryGroupId"] = "realtime-service-retry",
+                ["Kafka:GroupConversationChangedConsumer:Topic"] = "dev.flowchat.chat.group-conversation.v1",
+                ["Kafka:GroupConversationChangedConsumer:RetryTopic"] = "dev.flowchat.chat.group-conversation.v1.retry",
+                ["Kafka:GroupConversationChangedConsumer:DeadLetterTopic"] = "dev.flowchat.chat.group-conversation.v1.dlq",
+                ["Kafka:GroupConversationChangedConsumer:MaxRetryCount"] = "5",
+                ["Kafka:GroupConversationChangedConsumer:RetryBaseDelaySeconds"] = "5",
+                ["Kafka:GroupConversationChangedConsumer:RetryMaxDelaySeconds"] = "300",
+                ["Kafka:GroupConversationChangedConsumer:AutoOffsetReset"] = "Earliest"
             })
             .Build();
     }

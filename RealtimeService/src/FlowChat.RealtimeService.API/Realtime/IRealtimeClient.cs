@@ -6,5 +6,5 @@ public interface IRealtimeClient
 
     Task PresenceChanged(PresenceDto payload);
 
-    Task ConversationChanged(ConversationChangedDto payload);
+    Task GroupConversationChanged(GroupConversationChangedDto payload);
 }

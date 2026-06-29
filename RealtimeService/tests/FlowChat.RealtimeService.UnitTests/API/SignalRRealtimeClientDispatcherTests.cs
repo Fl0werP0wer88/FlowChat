@@ -44,15 +44,15 @@ public sealed class SignalRRealtimeClientDispatcherTests
     }
 
     [Fact]
-    public async Task ConversationChangedAsync_SendsConversationChangedToParticipantGroups()
+    public async Task GroupConversationChangedAsync_SendsGroupConversationChangedToParticipantGroups()
     {
         var participantUserId = Guid.NewGuid();
         var conversationId = Guid.NewGuid();
-        ConversationChangedDto? capturedPayload = null;
+        GroupConversationChangedDto? capturedPayload = null;
         var realtimeClientMock = new Mock<IRealtimeClient>();
         realtimeClientMock
-            .Setup(x => x.ConversationChanged(It.IsAny<ConversationChangedDto>()))
-            .Callback<ConversationChangedDto>(payload => capturedPayload = payload)
+            .Setup(x => x.GroupConversationChanged(It.IsAny<GroupConversationChangedDto>()))
+            .Callback<GroupConversationChangedDto>(payload => capturedPayload = payload)
             .Returns(Task.CompletedTask);
         var clientsMock = new Mock<IHubClients<IRealtimeClient>>();
         clientsMock
@@ -62,8 +62,8 @@ public sealed class SignalRRealtimeClientDispatcherTests
         hubContextMock.Setup(x => x.Clients).Returns(clientsMock.Object);
         var dispatcher = new SignalRRealtimeClientDispatcher(hubContextMock.Object);
 
-        await dispatcher.ConversationChangedAsync(
-            new ConversationChangedParam(
+        await dispatcher.GroupConversationChangedAsync(
+            new GroupConversationChangedParam(
                 conversationId,
                 2,
                 "Dev Team",

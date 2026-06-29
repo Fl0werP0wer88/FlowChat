@@ -1,28 +1,28 @@
-using FlowChat.RealtimeService.Application.Features.Conversation.Commands.PublishConversationChanged;
+using FlowChat.RealtimeService.Application.Features.Conversation.Commands.PublishGroupConversationChanged;
 using FlowChat.RealtimeService.Infrastructure.Configuration.Settings;
 using FlowChat.Shared.API;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 
-namespace FlowChat.RealtimeService.Api.Features.Realtime.Internal.PublishConversationChanged;
+namespace FlowChat.RealtimeService.Api.Features.Realtime.Internal.PublishGroupConversationChanged;
 
 [ApiController]
 [ApiExplorerSettings(IgnoreApi = true)]
 [Route("internal/realtime")]
-public sealed class PublishConversationChangedController : ApiControllerBase
+public sealed class PublishGroupConversationChangedController : ApiControllerBase
 {
     private readonly IMediator _mediator;
 
-    public PublishConversationChangedController(IMediator mediator, IOptions<InternalApiSettingsSection> internalApiSettings)
+    public PublishGroupConversationChangedController(IMediator mediator, IOptions<InternalApiSettingsSection> internalApiSettings)
         : base(() => internalApiSettings.Value.ApiKey)
     {
         _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
         ArgumentNullException.ThrowIfNull(internalApiSettings);
     }
 
-    [HttpPost("conversations/changed/direct")]
-    public async Task<IActionResult> Publish([FromBody] PublishConversationChangedRequest request, CancellationToken cancellationToken)
+    [HttpPost("group-conversations/changed/direct")]
+    public async Task<IActionResult> Publish([FromBody] PublishGroupConversationChangedRequest request, CancellationToken cancellationToken)
     {
         if (!HasValidInternalApiKey())
         {
@@ -30,7 +30,7 @@ public sealed class PublishConversationChangedController : ApiControllerBase
         }
 
         var result = await _mediator.Send(
-            new PublishConversationChangedCommand(
+            new PublishGroupConversationChangedCommand(
                 request.ConversationId,
                 request.Type,
                 request.Name,

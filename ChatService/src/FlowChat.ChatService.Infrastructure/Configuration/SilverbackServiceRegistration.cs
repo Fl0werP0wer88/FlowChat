@@ -18,8 +18,8 @@ public static class ApiSilverbackServiceRegistration
     {
         var chatMessageSentProducerOptions = configuration.GetSection(new ChatMessageSentProducerSettingsSection().SectionName)
             .Get<ChatMessageSentProducerSettingsSection>() ?? new ChatMessageSentProducerSettingsSection();
-        var conversationChangedProducerOptions = configuration.GetSection(new ConversationChangedProducerSettingsSection().SectionName)
-            .Get<ConversationChangedProducerSettingsSection>() ?? new ConversationChangedProducerSettingsSection();
+        var groupConversationChangedProducerOptions = configuration.GetSection(new GroupConversationChangedProducerSettingsSection().SectionName)
+            .Get<GroupConversationChangedProducerSettingsSection>() ?? new GroupConversationChangedProducerSettingsSection();
 
         services.AddSilverback()
             .AddSingletonBrokerBehavior<CustomSpanAttributesProducerBehavior>()
@@ -37,8 +37,8 @@ public static class ApiSilverbackServiceRegistration
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())
                             .StoreToOutbox(outbox => outbox.UseEntityFramework<AppDbContext>())))
                     .AddProducer(producer => producer
-                        .Produce<ConversationChangedIntegrationEvent>("conversation-changed", endpoint => endpoint
-                            .ProduceTo(conversationChangedProducerOptions.Topic)
+                        .Produce<GroupConversationChangedIntegrationEvent>("group-conversation-changed", endpoint => endpoint
+                            .ProduceTo(groupConversationChangedProducerOptions.Topic)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())
                             .StoreToOutbox(outbox => outbox.UseEntityFramework<AppDbContext>())));
             });

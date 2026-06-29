@@ -6,5 +6,5 @@ public interface IRealtimeClientDispatcher
 
     Task PresenceChangedAsync(PresenceChangedParam notification, CancellationToken cancellationToken);
 
-    Task ConversationChangedAsync(ConversationChangedParam notification, CancellationToken cancellationToken);
+    Task GroupConversationChangedAsync(GroupConversationChangedParam notification, CancellationToken cancellationToken);
 }
