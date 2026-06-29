@@ -881,8 +881,14 @@ body {
   border-radius: 0.85rem;
   background: rgba(255, 255, 255, 0.88);
   padding: 0.72rem 0.85rem;
+  font: inherit;
+  color: var(--ink);
   outline: none;
   transition: border-color 140ms ease, box-shadow 140ms ease;
+}
+
+.field-shell::placeholder {
+  color: #6b7a8c;
 }
 
 .field-shell:focus,
@@ -975,17 +981,11 @@ body {
 }
 
 .contacts-composer__typeahead-input {
-  font: inherit;
-  color: var(--ink);
   transition: transform 140ms ease;
 }
 
 .contacts-composer__typeahead-input:focus {
   transform: translateY(0);
-}
-
-.contacts-composer__typeahead-input::placeholder {
-  color: #6b7a8c;
 }
 
 .contacts-composer__typeahead-results {
