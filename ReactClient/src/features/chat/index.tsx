@@ -34,6 +34,7 @@ export function ChatFeature() {
   const presence = usePresenceStatus();
   const groupConversations = useGroupConversations();
   const realtime = useRealtimeConnection({
+    onGroupConversationChanged: groupConversations.applyGroupConversationChanged,
     onPresenceChanged: contacts.applyPresenceChanged,
     onReceiveMessage: (payload) => {
       chat.receiveRealtimeMessage(payload);

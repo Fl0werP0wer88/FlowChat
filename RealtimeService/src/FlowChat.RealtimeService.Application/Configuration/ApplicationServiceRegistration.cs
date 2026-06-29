@@ -1,4 +1,5 @@
 using FlowChat.RealtimeService.Application.Features.RealtimeConnection.Commands;
+using FlowChat.RealtimeService.Application.Features.Conversation.Commands.RouteGroupConversationChanged;
 using FlowChat.RealtimeService.Application.Features.Message.Commands.RouteMessage;
 using FlowChat.RealtimeService.Application.Features.Presence.Commands.RoutePresenceChange;
 using FlowChat.Shared.Application;
@@ -17,7 +18,8 @@ public static class ApiApplicationServiceRegistration
         {
             cfg.TypeEvaluator = type =>
                 type != typeof(RouteMessageCommandHandler)
-                && type != typeof(RoutePresenceChangeCommandHandler);
+                && type != typeof(RoutePresenceChangeCommandHandler)
+                && type != typeof(RouteGroupConversationChangedCommandHandler);
             cfg.RegisterServicesFromAssemblies(applicationAssembly);
             cfg.AddFlowChatBehaviors();
         });
@@ -38,7 +40,8 @@ public static class ConsumerApplicationServiceRegistration
         {
             cfg.TypeEvaluator = type =>
                 type == typeof(RouteMessageCommandHandler)
-                || type == typeof(RoutePresenceChangeCommandHandler);
+                || type == typeof(RoutePresenceChangeCommandHandler)
+                || type == typeof(RouteGroupConversationChangedCommandHandler);
             cfg.RegisterServicesFromAssemblies(applicationAssembly);
             cfg.AddFlowChatBehaviors();
         });

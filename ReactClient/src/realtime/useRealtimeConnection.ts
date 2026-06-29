@@ -2,6 +2,7 @@ import { HubConnectionBuilder, LogLevel } from "@microsoft/signalr";
 import { useEffect, useEffectEvent, useState } from "react";
 import { useAuthStore } from "../store/authStore";
 import type {
+  GroupConversationChangedEvent,
   PresenceChangedEvent,
   RealtimeChatMessage,
   RealtimeConnectionStatus,
@@ -11,6 +12,7 @@ import { chatHubUrl } from "./config";
 interface UseRealtimeConnectionOptions {
   onReceiveMessage?: (payload: RealtimeChatMessage) => void;
   onPresenceChanged?: (payload: PresenceChangedEvent) => void;
+  onGroupConversationChanged?: (payload: GroupConversationChangedEvent) => void;
 }
 
 function resolveErrorMessage(error: unknown): string | null {
@@ -24,6 +26,7 @@ function resolveErrorMessage(error: unknown): string | null {
 export function useRealtimeConnection({
   onReceiveMessage,
   onPresenceChanged,
+  onGroupConversationChanged,
 }: UseRealtimeConnectionOptions) {
   const accessToken = useAuthStore((s) => s.accessToken);
   const [status, setStatus] = useState<RealtimeConnectionStatus>("idle");
@@ -35,6 +38,10 @@ export function useRealtimeConnection({
 
   const handlePresenceChanged = useEffectEvent((payload: PresenceChangedEvent) => {
     onPresenceChanged?.(payload);
+  });
+
+  const handleGroupConversationChanged = useEffectEvent((payload: GroupConversationChangedEvent) => {
+    onGroupConversationChanged?.(payload);
   });
 
   useEffect(() => {
@@ -64,6 +71,12 @@ export function useRealtimeConnection({
     connection.on("PresenceChanged", (payload: PresenceChangedEvent) => {
       if (!isDisposed) {
         handlePresenceChanged(payload);
+      }
+    });
+
+    connection.on("GroupConversationChanged", (payload: GroupConversationChangedEvent) => {
+      if (!isDisposed) {
+        handleGroupConversationChanged(payload);
       }
     });
 
@@ -123,6 +136,7 @@ export function useRealtimeConnection({
       shouldStopAfterStart = true;
       connection.off("ReceiveMessage");
       connection.off("PresenceChanged");
+      connection.off("GroupConversationChanged");
       void startPromise.finally(() => connection.stop().catch(() => undefined));
     };
   }, [accessToken]);
