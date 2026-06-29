@@ -26,8 +26,8 @@ public static class ConsumersServiceRegistration
         var presenceStatusChangedConsumerOptions = configuration.GetSection(new PresenceStatusChangedConsumerSettingsSection().SectionName)
             .Get<PresenceStatusChangedConsumerSettingsSection>() ?? new PresenceStatusChangedConsumerSettingsSection();
 
-        services.AddWorkerApplicationServices();
-        services.AddWorkerInfrastructureServices(configuration);
+        services.AddConsumerApplicationServices();
+        services.AddConsumerInfrastructureServices(configuration);
 
         services.AddSilverback()
             .AddSingletonBrokerBehavior<CustomSpanAttributesProducerBehavior>()

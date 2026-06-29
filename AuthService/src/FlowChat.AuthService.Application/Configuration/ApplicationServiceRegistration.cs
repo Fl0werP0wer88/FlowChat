@@ -4,11 +4,23 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace FlowChat.AuthService.Application;
 
-public static class ApplicationServiceRegistration
+public static class ApiApplicationServiceRegistration
 {
-    public static IServiceCollection AddApplicationServices(this IServiceCollection services)
+    public static IServiceCollection AddApiApplicationServices(this IServiceCollection services)
+        => services.AddCommonApplicationServices();
+}
+
+public static class ConsumerApplicationServiceRegistration
+{
+    public static IServiceCollection AddConsumerApplicationServices(this IServiceCollection services)
+        => services.AddCommonApplicationServices();
+}
+
+internal static class CommonApplicationServiceRegistration
+{
+    public static IServiceCollection AddCommonApplicationServices(this IServiceCollection services)
     {
-        var applicationAssembly = typeof(ApplicationServiceRegistration).Assembly;
+        var applicationAssembly = typeof(CommonApplicationServiceRegistration).Assembly;
 
         services.AddAutoMapper((Action<AutoMapper.IMapperConfigurationExpression>?)null, applicationAssembly);
         services.AddFlowChatValidatorsFromAssembly(applicationAssembly);

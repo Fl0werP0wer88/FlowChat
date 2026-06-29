@@ -13,7 +13,7 @@ using Silverback.Messaging.Configuration.Kafka;
 
 namespace FlowChat.UserProfileService.Infrastructure.Kafka;
 
-public static class SilverbackServiceRegistration
+public static class ApiSilverbackServiceRegistration
 {
     public static IServiceCollection AddApiSilverbackMessaging(
         this IServiceCollection services,

@@ -14,15 +14,15 @@ public static class StartupExtensions
     public static WebApplication ConfigureServices(this WebApplicationBuilder builder)
     {
         builder.Services
-        .AddApplicationServices()
-        .AddInfrastructureServices(builder.Configuration)
-        .AddAPIPersistenceServices(builder.Configuration)
+        .AddApiApplicationServices()
+        .AddApiInfrastructureServices(builder.Configuration)
+        .AddApiPersistenceServices(builder.Configuration)
         .AddApiSilverbackMessaging(builder.Configuration)
-        .AddAPIServices(builder.Configuration, builder.Environment);
+        .AddApiServices(builder.Configuration, builder.Environment);
         builder.Services.AddAutoMapper(
             (Action<AutoMapper.IMapperConfigurationExpression>?)null,
             typeof(StartupExtensions).Assembly);
-        builder.AddFlowChatOpenTelemetry(typeof(ApplicationServiceRegistration).Assembly);
+        builder.AddFlowChatOpenTelemetry(typeof(ApiApplicationServiceRegistration).Assembly);
 
 
         builder.Services.AddControllers();

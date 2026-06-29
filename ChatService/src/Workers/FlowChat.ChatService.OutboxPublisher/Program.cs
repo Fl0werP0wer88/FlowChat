@@ -3,7 +3,6 @@ using FlowChat.Shared.API;
 using FlowChat.ChatService.OutboxPublisher;
 using FlowChat.ChatService.OutboxPublisher.Configuration.Settings;
 using FlowChat.ChatService.Persistence;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -15,11 +14,7 @@ try
     var builder = Host.CreateApplicationBuilder(args);
 
     builder.AddFlowChatOpenTelemetry(typeof(OutboxPublisherServiceRegistration).Assembly);
-    builder.Services.AddDbContext<AppDbContext>(options =>
-        options.UseNpgsql(builder.Configuration.GetConnectionString("ChatDb")));
-    builder.Services.AddDbContextFactory<AppDbContext>(
-        options => options.UseNpgsql(builder.Configuration.GetConnectionString("ChatDb")),
-        ServiceLifetime.Scoped);
+    builder.Services.AddOutboxPublisherPersistenceServices(builder.Configuration);
     builder.Services.AddOutboxPublisher(builder.Configuration);
 
     host = builder.Build();

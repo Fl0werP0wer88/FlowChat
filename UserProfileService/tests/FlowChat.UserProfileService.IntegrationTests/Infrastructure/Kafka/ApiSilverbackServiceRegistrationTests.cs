@@ -33,8 +33,8 @@ public sealed class ApiSilverbackServiceRegistrationTests
         var services = new ServiceCollection();
         services.AddOptions();
         services.AddLogging();
-        services.AddInfrastructureServices(configuration);
-        services.AddPersistenceServices(configuration);
+        services.AddApiInfrastructureServices(configuration);
+        services.AddApiPersistenceServices(configuration);
         services.AddApiSilverbackMessaging(configuration);
 
         using var serviceProvider = services.BuildServiceProvider();

@@ -7,7 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace FlowChat.HarnessService.Persistence;
 
-public static class PersistenceServiceRegistration
+public static class ApiPersistenceServiceRegistration
 {
     public static IServiceCollection AddApiPersistenceServices(
         this IServiceCollection services,
@@ -19,7 +19,10 @@ public static class PersistenceServiceRegistration
 
         return services;
     }
+}
 
+public static class ConsumerPersistenceServiceRegistration
+{
     public static IServiceCollection AddConsumerPersistenceServices(
         this IServiceCollection services,
         IConfiguration configuration)
@@ -30,8 +33,11 @@ public static class PersistenceServiceRegistration
 
         return services;
     }
+}
 
-    private static void AddCommonPersistenceServices(
+internal static class CommonPersistenceServiceRegistration
+{
+    public static void AddCommonPersistenceServices(
         this IServiceCollection services,
         IConfiguration configuration)
     {

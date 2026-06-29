@@ -24,9 +24,9 @@ public static class ConsumersServiceRegistration
             .Get<UserEmailVerificationRequestedConsumerSettingsSection>()
             ?? new UserEmailVerificationRequestedConsumerSettingsSection();
 
-        services.AddWorkerApplicationServices();
-        services.AddInfrastructureServices(configuration);
-        services.AddWorkerPersistenceServices(configuration);
+        services.AddConsumerApplicationServices();
+        services.AddConsumerInfrastructureServices(configuration);
+        services.AddConsumerPersistenceServices(configuration);
 
         services.AddSilverback()
             .AddSingletonBrokerBehavior<CustomSpanAttributesProducerBehavior>()

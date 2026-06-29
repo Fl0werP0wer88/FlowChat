@@ -24,9 +24,9 @@ public static class ConsumersServiceRegistration
             .Get<UserEmailConfirmedConsumerSettingsSection>()
             ?? new UserEmailConfirmedConsumerSettingsSection();
 
-        services.AddApplicationServices();
-        services.AddInfrastructureServices(configuration);
-        services.AddWorkerPersistenceServices(configuration);
+        services.AddConsumerApplicationServices();
+        services.AddConsumerInfrastructureServices(configuration);
+        services.AddConsumerPersistenceServices(configuration);
 
         services.AddSilverback()
             .AddSingletonBrokerBehavior<CustomSpanAttributesProducerBehavior>()

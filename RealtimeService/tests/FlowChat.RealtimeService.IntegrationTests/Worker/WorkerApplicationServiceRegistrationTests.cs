@@ -12,14 +12,14 @@ namespace FlowChat.RealtimeService.UnitTests;
 public sealed class WorkerApplicationServiceRegistrationTests
 {
     [Fact]
-    public void AddWorkerApplicationServices_DoesNotRequireRealtimeClientDispatcher()
+    public void AddConsumerApplicationServices_DoesNotRequireRealtimeClientDispatcher()
     {
         var services = new ServiceCollection();
 
         services.AddLogging();
         services.AddScoped(_ => Mock.Of<IRealtimeEventRouter>());
         services.AddScoped(_ => Mock.Of<IChatServiceInternalApiClient>());
-        services.AddWorkerApplicationServices();
+        services.AddConsumerApplicationServices();
 
         using var serviceProvider = services.BuildServiceProvider(new ServiceProviderOptions
         {

@@ -29,9 +29,9 @@ public static class ConsumersServiceRegistration
             .Get<SocialGraphContactConsumerSettingsSection>()
             ?? new SocialGraphContactConsumerSettingsSection();
 
-        services.AddWorkerApplicationServices();
-        services.AddWorkerPersistenceServices(configuration);
-        services.AddInfrastructureServices(configuration);
+        services.AddConsumerApplicationServices();
+        services.AddConsumerPersistenceServices(configuration);
+        services.AddConsumerInfrastructureServices(configuration);
 
         services.AddSilverback()
             .AddSingletonBrokerBehavior<CustomSpanAttributesProducerBehavior>()

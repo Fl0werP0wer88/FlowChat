@@ -46,9 +46,9 @@ public static class StartupExtensions
         }
 
         builder.Services.AddApiApplicationServices();
-        builder.Services.AddInfrastructureServices(builder.Configuration);
+        builder.Services.AddApiInfrastructureServices(builder.Configuration);
         builder.Services.AddScoped<IRealtimeClientDispatcher, SignalRRealtimeClientDispatcher>();
-        builder.AddFlowChatOpenTelemetry(typeof(ApplicationServiceRegistration).Assembly);
+        builder.AddFlowChatOpenTelemetry(typeof(ApiApplicationServiceRegistration).Assembly);
 
         builder.Services.AddFlowChatJwtAuthentication(
             builder.Configuration,

@@ -17,13 +17,13 @@ using StackExchange.Redis;
 
 namespace FlowChat.RealtimeService.Infrastructure;
 
-public static class InfrastructureServiceRegistration
+public static class ApiInfrastructureServiceRegistration
 {
-    public static IServiceCollection AddInfrastructureServices(
+    public static IServiceCollection AddApiInfrastructureServices(
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        services.AddCoreInfrastructureServices(configuration);
+        services.AddCommonInfrastructureServices(configuration);
         services.TryAddSingleton<IActiveConnectionsTracker, InMemoryActiveConnectionsTracker>();
         services.TryAddSingleton<IRealtimeConnectionRegistry, RealtimeConnectionRegistry>();
         services.AddFlowChatHttpClient<IPresenceInternalApiClient, PresenceInternalApiClient, PresenceServiceSettingsSection>();
@@ -31,23 +31,29 @@ public static class InfrastructureServiceRegistration
 
         return services;
     }
+}
 
-    public static IServiceCollection AddWorkerInfrastructureServices(
+public static class ConsumerInfrastructureServiceRegistration
+{
+    public static IServiceCollection AddConsumerInfrastructureServices(
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        services.AddCoreInfrastructureServices(configuration);
+        services.AddCommonInfrastructureServices(configuration);
         services.AddScoped<IRealtimeEventRouter, WorkerRealtimeEventRouter>();
 
         return services;
     }
+}
 
-    private static IServiceCollection AddCoreInfrastructureServices(
+internal static class CommonInfrastructureServiceRegistration
+{
+    public static IServiceCollection AddCommonInfrastructureServices(
         this IServiceCollection services,
         IConfiguration configuration)
     {
         services.AddSettingsSections(configuration,
-            typeof(InfrastructureServiceRegistration).Assembly,
+            typeof(CommonInfrastructureServiceRegistration).Assembly,
             typeof(RealtimeRoutingSettingsSection).Assembly);
 
         services.PostConfigure<RealtimeConnectionsSettingsSection>(settings =>

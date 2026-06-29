@@ -25,9 +25,9 @@ public static class ConsumersServiceRegistration
             .Get<AccountRegisteredConsumerSettingsSection>()
             ?? new AccountRegisteredConsumerSettingsSection();
 
-        services.AddWorkerApplicationServices();
-        services.AddInfrastructureServices(configuration);
-        services.AddWorkerPersistenceServices(configuration);
+        services.AddConsumerApplicationServices();
+        services.AddConsumerInfrastructureServices(configuration);
+        services.AddConsumerPersistenceServices(configuration);
         services.AddDataProtection()
             .PersistKeysToDbContext<AppDbContext>()
             .SetApplicationName("FlowChat.UserProfileService");

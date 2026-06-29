@@ -8,36 +8,51 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace FlowChat.ChatService.Persistence;
 
-public static class PersistenceServiceRegistration
+public static class ApiPersistenceServiceRegistration
 {
     public static IServiceCollection AddApiPersistenceServices(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddScoped<IUnitOfWork, SilverbackEfUnitOfWork<AppDbContext>>();
+        services.AddCommonDbContextServices(configuration);
+        services.AddChatRepositories();
+
+        return services;
+    }
+}
+
+public static class ConsumerPersistenceServiceRegistration
+{
+    public static IServiceCollection AddConsumerPersistenceServices(this IServiceCollection services, IConfiguration configuration)
+    {
+        services.AddScoped<IUnitOfWork, SilverbackKafkaOffsetUnitOfWork<AppDbContext>>();
+        services.AddCommonDbContextServices(configuration);
+        services.AddChatRepositories();
+
+        return services;
+    }
+}
+
+public static class OutboxPublisherPersistenceServiceRegistration
+{
+    public static IServiceCollection AddOutboxPublisherPersistenceServices(this IServiceCollection services, IConfiguration configuration)
+        => services.AddCommonDbContextServices(configuration);
+}
+
+internal static class CommonPersistenceServiceRegistration
+{
+    public static IServiceCollection AddCommonDbContextServices(this IServiceCollection services, IConfiguration configuration)
+    {
         services.AddDbContext<AppDbContext>((serviceProvider, options) =>
             options.UseNpgsql(configuration.GetConnectionString("ChatDb")));
         services.AddDbContextFactory<AppDbContext>(
             (serviceProvider, options) => options.UseNpgsql(configuration.GetConnectionString("ChatDb")),
             ServiceLifetime.Scoped);
-        services.AddScoped<IChatMessageReadRepository, ChatMessageReadRepository>();
-        services.AddScoped<IChatMessageWriteRepository, ChatMessageWriteRepository>();
-        services.AddScoped<IConversationParticipantReadRepository, ConversationParticipantReadRepository>();
-        services.AddScoped<IGroupConversationWriteRepository, GroupConversationWriteRepository>();
-        services.AddScoped<IGroupConversationReadRepository, GroupConversationReadRepository>();
-        services.AddScoped<IDuetConversationReadRepository, DuetConversationReadRepository>();
-        services.AddScoped<IDuetConversationWriteRepository, DuetConversationWriteRepository>();
-        services.AddScoped<IUserProfileProjectionReadRepository, UserProfileProjectionReadRepository>();
 
         return services;
     }
 
-    public static IServiceCollection AddWorkerPersistenceServices(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddChatRepositories(this IServiceCollection services)
     {
-        services.AddScoped<IUnitOfWork, SilverbackKafkaOffsetUnitOfWork<AppDbContext>>();
-        services.AddDbContext<AppDbContext>((serviceProvider, options) =>
-            options.UseNpgsql(configuration.GetConnectionString("ChatDb")));
-        services.AddDbContextFactory<AppDbContext>(
-            (serviceProvider, options) => options.UseNpgsql(configuration.GetConnectionString("ChatDb")),
-            ServiceLifetime.Scoped);
         services.AddScoped<IChatMessageReadRepository, ChatMessageReadRepository>();
         services.AddScoped<IChatMessageWriteRepository, ChatMessageWriteRepository>();
         services.AddScoped<IConversationParticipantReadRepository, ConversationParticipantReadRepository>();

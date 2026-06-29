@@ -20,6 +20,8 @@ public sealed class ConversationRepositoryTests
         var memberUserId = Guid.NewGuid();
         var groupConversation = GroupConversation.Create(Id<Conversation>.New(), createdByUserId, [createdByUserId, memberUserId], "Friends");
         var duetConversation = DuetConversation.Create(createdByUserId, Guid.NewGuid());
+        MarkCreated(groupConversation);
+        MarkCreated(duetConversation);
 
         await using (var seedContext = CreateDbContext(connection))
         {
@@ -50,6 +52,7 @@ public sealed class ConversationRepositoryTests
         var requestingUserId = Guid.NewGuid();
         var partnerUserId = Guid.NewGuid();
         var conversation = DuetConversation.Create(requestingUserId, partnerUserId);
+        MarkCreated(conversation);
         var repository = new DuetConversationWriteRepository(context);
 
         await repository.AddAsync(conversation, CancellationToken.None);
@@ -74,6 +77,7 @@ public sealed class ConversationRepositoryTests
         var requestingUserId = Guid.NewGuid();
         var partnerUserId = Guid.NewGuid();
         var conversation = DuetConversation.Create(requestingUserId, partnerUserId);
+        MarkCreated(conversation);
 
         await using (var seedContext = CreateDbContext(connection))
         {
@@ -100,5 +104,11 @@ public sealed class ConversationRepositoryTests
         var context = new AppDbContext(options);
         context.Database.EnsureCreated();
         return context;
+    }
+
+    private static void MarkCreated(Conversation conversation)
+    {
+        conversation.SetCreated("integration-test");
+        conversation.SetUpdated("integration-test");
     }
 }

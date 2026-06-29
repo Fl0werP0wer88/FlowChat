@@ -4,13 +4,13 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace FlowChat.HarnessService.API.Configuration;
 
-public static class APIServiceRegistration
+public static class ApiServiceRegistration
 {
     public static IServiceCollection AddApiSettings(
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        services.AddSettingsSections(configuration, typeof(APIServiceRegistration).Assembly);
+        services.AddSettingsSections(configuration, typeof(ApiServiceRegistration).Assembly);
         return services;
     }
 }

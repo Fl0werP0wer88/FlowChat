@@ -12,11 +12,11 @@ public static class StartupExtensions
 {
     public static WebApplication ConfigureServices(this WebApplicationBuilder builder)
     {
-        builder.Services.AddApplicationServices();
+        builder.Services.AddApiApplicationServices();
         builder.Services.AddApiPersistenceServices(builder.Configuration);
         builder.Services.AddApiInfrastructureServices();
         builder.Services.AddApiSettings(builder.Configuration);
-        builder.AddFlowChatOpenTelemetry(typeof(ApplicationServiceRegistration).Assembly);
+        builder.AddFlowChatOpenTelemetry(typeof(ApiApplicationServiceRegistration).Assembly);
 
         builder.Services.AddControllers()
             .AddJsonOptions(options => options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));

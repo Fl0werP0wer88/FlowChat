@@ -20,11 +20,11 @@ using DomainUserProfile = FlowChat.UserProfileService.Domain.Entities.UserProfil
 
 namespace FlowChat.UserProfileService.Application;
 
-public static class ApplicationServiceRegistration
+public static class ApiApplicationServiceRegistration
 {
     public static IServiceCollection AddApiApplicationServices(this IServiceCollection services)
     {
-        var applicationAssembly = typeof(ApplicationServiceRegistration).Assembly;
+        var applicationAssembly = typeof(ApiApplicationServiceRegistration).Assembly;
 
         services.AddFlowChatValidatorsFromAssembly(applicationAssembly);
         services.AddMediatR(cfg =>
@@ -39,10 +39,13 @@ public static class ApplicationServiceRegistration
 
         return services;
     }
+}
 
-    public static IServiceCollection AddWorkerApplicationServices(this IServiceCollection services)
+public static class ConsumerApplicationServiceRegistration
+{
+    public static IServiceCollection AddConsumerApplicationServices(this IServiceCollection services)
     {
-        var consumerAssembly = typeof(CreateInitialUserProfileCommandHandler).Assembly;
+        var consumerAssembly = typeof(ConsumerApplicationServiceRegistration).Assembly;
 
         services.AddFlowChatValidatorsFromAssembly(consumerAssembly);
         services.AddMediatR(cfg =>
@@ -57,8 +60,11 @@ public static class ApplicationServiceRegistration
 
         return services;
     }
+}
 
-    private static IServiceCollection AddUserProfileProjectionBeforeSaveProcessors(this IServiceCollection services)
+internal static class CommonApplicationServiceRegistration
+{
+    public static IServiceCollection AddUserProfileProjectionBeforeSaveProcessors(this IServiceCollection services)
     {
         services.AddUserProfileProjectionBeforeSaveProcessor<CreateInitialUserProfileCommand, Guid>();
         services.AddUserProfileProjectionBeforeSaveProcessor<AddEmailCommand, Guid>();

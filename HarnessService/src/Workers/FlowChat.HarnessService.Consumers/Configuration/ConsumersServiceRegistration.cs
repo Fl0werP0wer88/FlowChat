@@ -29,7 +29,7 @@ public static class ConsumersServiceRegistration
             .Get<ProjectionConsumerSettingsSection>()
             ?? new ProjectionConsumerSettingsSection();
 
-        services.AddApplicationServices();
+        services.AddConsumerApplicationServices();
         services.AddConsumerPersistenceServices(configuration);
         services.AddConsumerInfrastructureServices();
 

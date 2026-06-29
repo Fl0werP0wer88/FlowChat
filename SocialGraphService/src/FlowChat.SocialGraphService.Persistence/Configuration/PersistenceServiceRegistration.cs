@@ -8,37 +8,47 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace FlowChat.SocialGraphService.Persistence;
 
-public static class PersistenceServiceRegistration
+public static class ApiPersistenceServiceRegistration
 {
-    public static IServiceCollection AddPersistenceServices(
+    public static IServiceCollection AddApiPersistenceServices(
         this IServiceCollection services,
         IConfiguration configuration)
     {
         services.AddDbContextServices(configuration);
 
-        services.AddScoped<IContactWriteRepository, ContactWriteRepository>();
-        services.AddScoped<IContactReadRepository, ContactReadRepository>();
-        services.AddScoped<IUserProfileProjectionReadRepository, UserProfileProjectionReadRepository>();
+        services.AddSocialGraphRepositories();
         services.AddScoped<IUnitOfWork, SilverbackEfUnitOfWork<AppDbContext>>();
 
         return services;
     }
+}
 
-    public static IServiceCollection AddWorkerPersistenceServices(
+public static class ConsumerPersistenceServiceRegistration
+{
+    public static IServiceCollection AddConsumerPersistenceServices(
         this IServiceCollection services,
         IConfiguration configuration)
     {
         services.AddDbContextServices(configuration);
 
-        services.AddScoped<IContactWriteRepository, ContactWriteRepository>();
-        services.AddScoped<IContactReadRepository, ContactReadRepository>();
-        services.AddScoped<IUserProfileProjectionReadRepository, UserProfileProjectionReadRepository>();
+        services.AddSocialGraphRepositories();
         services.AddScoped<IUnitOfWork, SilverbackKafkaOffsetUnitOfWork<AppDbContext>>();
 
         return services;
     }
+}
 
-    private static IServiceCollection AddDbContextServices(
+public static class OutboxPublisherPersistenceServiceRegistration
+{
+    public static IServiceCollection AddOutboxPublisherPersistenceServices(
+        this IServiceCollection services,
+        IConfiguration configuration)
+        => services.AddDbContextServices(configuration);
+}
+
+internal static class CommonPersistenceServiceRegistration
+{
+    public static IServiceCollection AddDbContextServices(
         this IServiceCollection services,
         IConfiguration configuration)
     {
@@ -47,6 +57,15 @@ public static class PersistenceServiceRegistration
         services.AddDbContextFactory<AppDbContext>(
             (serviceProvider, options) => options.UseNpgsql(configuration.GetConnectionString("SocialGraphDb")),
             ServiceLifetime.Scoped);
+
+        return services;
+    }
+
+    public static IServiceCollection AddSocialGraphRepositories(this IServiceCollection services)
+    {
+        services.AddScoped<IContactWriteRepository, ContactWriteRepository>();
+        services.AddScoped<IContactReadRepository, ContactReadRepository>();
+        services.AddScoped<IUserProfileProjectionReadRepository, UserProfileProjectionReadRepository>();
 
         return services;
     }

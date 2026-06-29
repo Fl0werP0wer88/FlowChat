@@ -21,7 +21,7 @@ public sealed class UnitOfWorkTests
         var contactId = await unitOfWork.ExecuteInTransactionAsync(
             async cancellationToken =>
             {
-                var contact = Contact.Create(Id<Contact>.New(), Id<UserProfileMarker>.New(), Id<UserProfileMarker>.New(), "John Doe");
+                var contact = CreateContact("John Doe");
                 await context.Contacts.AddAsync(contact, cancellationToken);
                 return contact.Id.Value;
             },
@@ -46,7 +46,7 @@ public sealed class UnitOfWorkTests
             async cancellationToken =>
             {
                 await context.Contacts.AddAsync(
-                    Contact.Create(Id<Contact>.New(), Id<UserProfileMarker>.New(), Id<UserProfileMarker>.New(), "John Doe"),
+                    CreateContact("John Doe"),
                     cancellationToken);
 
                 throw new InvalidOperationException("boom");
@@ -67,7 +67,7 @@ public sealed class UnitOfWorkTests
         await using var context = CreateDbContext(connection);
         var unitOfWork = new EfUnitOfWork<AppDbContext>(context);
 
-        context.Contacts.Add(Contact.Create(Id<Contact>.New(), Id<UserProfileMarker>.New(), Id<UserProfileMarker>.New(), "John Doe"));
+        context.Contacts.Add(CreateContact("John Doe"));
 
         var affectedRows = await unitOfWork.SaveChangesAsync(CancellationToken.None);
 
@@ -84,5 +84,14 @@ public sealed class UnitOfWorkTests
         var context = new AppDbContext(options);
         context.Database.EnsureCreated();
         return context;
+    }
+
+    private static Contact CreateContact(string displayName)
+    {
+        var contact = Contact.Create(Id<Contact>.New(), Id<UserProfileMarker>.New(), Id<UserProfileMarker>.New(), displayName);
+        contact.SetCreated("system");
+        contact.SetUpdated("system");
+
+        return contact;
     }
 }

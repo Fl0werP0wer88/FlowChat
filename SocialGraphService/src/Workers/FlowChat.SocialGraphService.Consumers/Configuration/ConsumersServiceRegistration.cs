@@ -30,9 +30,9 @@ public static class ConsumersServiceRegistration
             .Get<UserProfileConsumerSettingsSection>()
             ?? new UserProfileConsumerSettingsSection();
 
-        services.AddWorkerApplicationServices();
-        services.AddWorkerPersistenceServices(configuration);
-        services.AddInfrastructureServices(configuration);
+        services.AddConsumerApplicationServices();
+        services.AddConsumerPersistenceServices(configuration);
+        services.AddConsumerInfrastructureServices(configuration);
         services.AddAutoMapper((Action<AutoMapper.IMapperConfigurationExpression>?)null, consumersAssembly);
 
         services.AddSilverback()

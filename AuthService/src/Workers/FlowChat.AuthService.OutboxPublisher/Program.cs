@@ -4,7 +4,6 @@ using FlowChat.AuthService.OutboxPublisher;
 using FlowChat.AuthService.OutboxPublisher.Configuration.Settings;
 using FlowChat.AuthService.OutboxPublisher.Diagnostics;
 using FlowChat.AuthService.Persistence;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -17,11 +16,7 @@ try
     var builder = Host.CreateApplicationBuilder(args);
 
     builder.AddFlowChatOpenTelemetry(typeof(OutboxPublisherServiceRegistration).Assembly);
-    builder.Services.AddDbContext<AppDbContext>(options =>
-        options.UseNpgsql(builder.Configuration.GetConnectionString("AuthDb")));
-    builder.Services.AddDbContextFactory<AppDbContext>(
-        options => options.UseNpgsql(builder.Configuration.GetConnectionString("AuthDb")),
-        ServiceLifetime.Scoped);
+    builder.Services.AddOutboxPublisherPersistenceServices(builder.Configuration);
     builder.Services.AddSingleton<IAuthDbConnectivityProbe, AuthDbConnectivityProbe>();
     builder.Services.AddSingleton<IKafkaConnectivityProbe, KafkaConnectivityProbe>();
     builder.Services.AddHostedService<OutboxWorkerStartupProbe>();

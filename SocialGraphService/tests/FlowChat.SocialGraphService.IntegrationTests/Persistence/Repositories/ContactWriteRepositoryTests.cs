@@ -21,7 +21,7 @@ public sealed class ContactWriteRepositoryTests
 
         await using (var seedContext = CreateDbContext(connection))
         {
-            seedContext.Contacts.Add(Contact.Create(Id<Contact>.New(), ownerUserId, contactUserId, "Jane Doe"));
+            seedContext.Contacts.Add(CreateContact(ownerUserId, contactUserId, "Jane Doe"));
             await seedContext.SaveChangesAsync();
         }
 
@@ -56,5 +56,17 @@ public sealed class ContactWriteRepositoryTests
         var context = new AppDbContext(options);
         context.Database.EnsureCreated();
         return context;
+    }
+
+    private static Contact CreateContact(
+        Id<UserProfileMarker> ownerUserId,
+        Id<UserProfileMarker> contactUserId,
+        string displayName)
+    {
+        var contact = Contact.Create(Id<Contact>.New(), ownerUserId, contactUserId, displayName);
+        contact.SetCreated("system");
+        contact.SetUpdated("system");
+
+        return contact;
     }
 }

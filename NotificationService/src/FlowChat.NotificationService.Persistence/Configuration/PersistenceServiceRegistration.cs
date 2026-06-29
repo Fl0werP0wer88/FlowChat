@@ -9,39 +9,49 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace FlowChat.NotificationService.Persistence;
 
-public static class PersistenceServiceRegistration
+public static class ApiPersistenceServiceRegistration
 {
-    public static IServiceCollection AddPersistenceServices(
+    public static IServiceCollection AddApiPersistenceServices(
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        AddDbContextServices(services, configuration);
+        services.AddCommonDbContextServices(configuration);
 
         services.AddScoped<IUnitOfWork, EfUnitOfWork<AppDbContext>>();
         services.AddNotificationRepositories();
 
         return services;
     }
+}
 
-    public static IServiceCollection AddWorkerPersistenceServices(
+public static class ConsumerPersistenceServiceRegistration
+{
+    public static IServiceCollection AddConsumerPersistenceServices(
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        AddDbContextServices(services, configuration);
+        services.AddCommonDbContextServices(configuration);
 
         services.AddScoped<IUnitOfWork, SilverbackKafkaOffsetUnitOfWork<AppDbContext>>();
         services.AddNotificationRepositories();
 
         return services;
     }
+}
 
-    private static void AddDbContextServices(IServiceCollection services, IConfiguration configuration)
+internal static class CommonPersistenceServiceRegistration
+{
+    public static IServiceCollection AddCommonDbContextServices(
+        this IServiceCollection services,
+        IConfiguration configuration)
     {
         services.AddDbContext<AppDbContext>((serviceProvider, options) =>
             options.UseNpgsql(configuration.GetConnectionString("NotificationDb")));
+
+        return services;
     }
 
-    private static IServiceCollection AddNotificationRepositories(this IServiceCollection services)
+    public static IServiceCollection AddNotificationRepositories(this IServiceCollection services)
     {
         services.AddScoped<INotificationReadRepository, NotificationReadRepository>();
         services.AddScoped<INotificationWriteRepository, NotificationWriteRepository>();

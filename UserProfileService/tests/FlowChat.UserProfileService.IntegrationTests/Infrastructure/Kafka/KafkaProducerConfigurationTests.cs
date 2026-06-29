@@ -14,7 +14,7 @@ namespace FlowChat.UserProfileService.IntegrationTests;
 public sealed class KafkaProducerConfigurationTests
 {
     [Fact]
-    public void AddInfrastructureServices_ResolvesKafkaProducerOptions_WithoutFallbackToConsumerSection()
+    public void AddApiInfrastructureServices_ResolvesKafkaProducerOptions_WithoutFallbackToConsumerSection()
     {
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
@@ -33,7 +33,7 @@ public sealed class KafkaProducerConfigurationTests
         var services = new ServiceCollection();
         services.AddOptions();
         services.AddLogging();
-        services.AddInfrastructureServices(configuration);
+        services.AddApiInfrastructureServices(configuration);
 
         using var serviceProvider = services.BuildServiceProvider();
 

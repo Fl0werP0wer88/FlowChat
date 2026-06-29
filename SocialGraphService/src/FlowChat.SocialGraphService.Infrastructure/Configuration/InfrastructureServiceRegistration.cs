@@ -8,13 +8,29 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace FlowChat.SocialGraphService.Infrastructure;
 
-public static class InfrastructureServiceRegistration
+public static class ApiInfrastructureServiceRegistration
 {
-    public static IServiceCollection AddInfrastructureServices(
+    public static IServiceCollection AddApiInfrastructureServices(
+        this IServiceCollection services,
+        IConfiguration configuration)
+        => services.AddCommonInfrastructureServices(configuration);
+}
+
+public static class ConsumerInfrastructureServiceRegistration
+{
+    public static IServiceCollection AddConsumerInfrastructureServices(
+        this IServiceCollection services,
+        IConfiguration configuration)
+        => services.AddCommonInfrastructureServices(configuration);
+}
+
+internal static class CommonInfrastructureServiceRegistration
+{
+    public static IServiceCollection AddCommonInfrastructureServices(
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        var infrastructureAssembly = typeof(InfrastructureServiceRegistration).Assembly;
+        var infrastructureAssembly = typeof(CommonInfrastructureServiceRegistration).Assembly;
 
         services.AddSettingsSections(configuration, infrastructureAssembly);
         services.AddFlowChatSilverbackEventPublisher(producer => producer

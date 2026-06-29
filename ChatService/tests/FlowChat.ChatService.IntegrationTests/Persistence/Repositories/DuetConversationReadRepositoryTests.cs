@@ -23,6 +23,7 @@ public sealed class DuetConversationReadRepositoryTests
         var conversation = FlowChat.ChatService.Domain.Entities.Conversation.DuetConversation.Create(
             createdByUserId: requestingUserId,
             partnerUserId: partnerUserId);
+        MarkCreated(conversation);
 
         await using (var seedContext = CreateDbContext(connection))
         {
@@ -61,6 +62,7 @@ public sealed class DuetConversationReadRepositoryTests
         var conversation = FlowChat.ChatService.Domain.Entities.Conversation.DuetConversation.Create(
             createdByUserId: requestingUserId,
             partnerUserId: partnerUserId);
+        MarkCreated(conversation);
 
         await using (var seedContext = CreateDbContext(connection))
         {
@@ -163,5 +165,11 @@ public sealed class DuetConversationReadRepositoryTests
         var context = new AppDbContext(options);
         context.Database.EnsureCreated();
         return context;
+    }
+
+    private static void MarkCreated(Conversation conversation)
+    {
+        conversation.SetCreated("integration-test");
+        conversation.SetUpdated("integration-test");
     }
 }

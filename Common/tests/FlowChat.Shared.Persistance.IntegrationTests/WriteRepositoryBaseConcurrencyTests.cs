@@ -195,7 +195,14 @@ public sealed class WriteRepositoryBaseConcurrencyTests : IDisposable
             Name = name;
         }
 
-        public static TestAggregate Create(string name) => new(name);
+        public static TestAggregate Create(string name)
+        {
+            var aggregate = new TestAggregate(name);
+            aggregate.SetCreated("integration-test");
+            aggregate.SetUpdated("integration-test");
+
+            return aggregate;
+        }
 
         public void Rename(string name)
         {
