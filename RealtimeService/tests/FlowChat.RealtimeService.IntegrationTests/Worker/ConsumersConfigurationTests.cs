@@ -33,6 +33,7 @@ public sealed class ConsumersConfigurationTests
         var consumerCollection = serviceProvider.GetRequiredService<IConsumerCollection>();
         var chatSubscriber = scope.ServiceProvider.GetRequiredService<ChatMessageSentSubscriber>();
         var presenceSubscriber = scope.ServiceProvider.GetRequiredService<UserPresenceChangedSubscriber>();
+        var conversationSubscriber = scope.ServiceProvider.GetRequiredService<ConversationChangedSubscriber>();
         var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
         var eventRouter = scope.ServiceProvider.GetRequiredService<IRealtimeEventRouter>();
         var routingReader = scope.ServiceProvider.GetRequiredService<IUserInstanceRoutingReader>();
@@ -42,6 +43,7 @@ public sealed class ConsumersConfigurationTests
         consumerCollection.Should().NotBeNull();
         chatSubscriber.Should().NotBeNull();
         presenceSubscriber.Should().NotBeNull();
+        conversationSubscriber.Should().NotBeNull();
         mediator.Should().NotBeNull();
         eventRouter.Should().BeOfType<WorkerRealtimeEventRouter>();
         routingReader.Should().NotBeNull();
@@ -83,6 +85,9 @@ public sealed class ConsumersConfigurationTests
         var presenceOptions = configuration
             .GetSection(new PresenceStatusChangedConsumerSettingsSection().SectionName)
             .Get<PresenceStatusChangedConsumerSettingsSection>();
+        var conversationOptions = configuration
+            .GetSection(new ConversationChangedConsumerSettingsSection().SectionName)
+            .Get<ConversationChangedConsumerSettingsSection>();
 
         chatOptions.Should().NotBeNull();
         chatOptions!.GroupId.Should().Be("realtime-service");
@@ -97,6 +102,13 @@ public sealed class ConsumersConfigurationTests
         presenceOptions.Topic.Should().Be("dev.flowchat.presence.presence");
         presenceOptions.RetryTopic.Should().Be("dev.flowchat.presence.presence.realtime-service.retry");
         presenceOptions.DeadLetterTopic.Should().Be("dev.flowchat.presence.presence.realtime-service.dlq");
+
+        conversationOptions.Should().NotBeNull();
+        conversationOptions!.GroupId.Should().Be("realtime-service");
+        conversationOptions.RetryGroupId.Should().Be("realtime-service-retry");
+        conversationOptions.Topic.Should().Be("dev.flowchat.chat.conversation.v1");
+        conversationOptions.RetryTopic.Should().Be("dev.flowchat.chat.conversation.v1.realtime-service.retry");
+        conversationOptions.DeadLetterTopic.Should().Be("dev.flowchat.chat.conversation.v1.realtime-service.dlq");
     }
 
     private static IConfiguration CreateConfiguration()
@@ -129,7 +141,17 @@ public sealed class ConsumersConfigurationTests
                 ["Kafka:PresenceStatusChangedConsumer:MaxRetryCount"] = "5",
                 ["Kafka:PresenceStatusChangedConsumer:RetryBaseDelaySeconds"] = "5",
                 ["Kafka:PresenceStatusChangedConsumer:RetryMaxDelaySeconds"] = "300",
-                ["Kafka:PresenceStatusChangedConsumer:AutoOffsetReset"] = "Earliest"
+                ["Kafka:PresenceStatusChangedConsumer:AutoOffsetReset"] = "Earliest",
+                ["Kafka:ConversationChangedConsumer:BootstrapServers"] = "localhost:9092",
+                ["Kafka:ConversationChangedConsumer:GroupId"] = "realtime-service",
+                ["Kafka:ConversationChangedConsumer:RetryGroupId"] = "realtime-service-retry",
+                ["Kafka:ConversationChangedConsumer:Topic"] = "dev.flowchat.chat.conversation.v1",
+                ["Kafka:ConversationChangedConsumer:RetryTopic"] = "dev.flowchat.chat.conversation.v1.retry",
+                ["Kafka:ConversationChangedConsumer:DeadLetterTopic"] = "dev.flowchat.chat.conversation.v1.dlq",
+                ["Kafka:ConversationChangedConsumer:MaxRetryCount"] = "5",
+                ["Kafka:ConversationChangedConsumer:RetryBaseDelaySeconds"] = "5",
+                ["Kafka:ConversationChangedConsumer:RetryMaxDelaySeconds"] = "300",
+                ["Kafka:ConversationChangedConsumer:AutoOffsetReset"] = "Earliest"
             })
             .Build();
     }

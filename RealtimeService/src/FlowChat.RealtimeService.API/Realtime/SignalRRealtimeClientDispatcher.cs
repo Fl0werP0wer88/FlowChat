@@ -45,6 +45,24 @@ public sealed class SignalRRealtimeClientDispatcher(IHubContext<ChatHub, IRealti
         });
     }
 
+    public Task ConversationChangedAsync(ConversationChangedParam notification, CancellationToken cancellationToken)
+    {
+        var groups = GetRecipientGroups(notification.ParticipantUserIds);
+        if (groups.Length == 0)
+        {
+            return Task.CompletedTask;
+        }
+
+        return _hubContext.Clients.Groups(groups).ConversationChanged(new ConversationChangedDto
+        {
+            ConversationId = notification.ConversationId,
+            Type = notification.Type,
+            Name = notification.Name,
+            CreatedByUserId = notification.CreatedByUserId,
+            ParticipantUserIds = notification.ParticipantUserIds
+        });
+    }
+
     private static string[] GetRecipientGroups(IReadOnlyCollection<Guid> recipientUserIds) =>
         recipientUserIds
             .Where(userId => userId != Guid.Empty)

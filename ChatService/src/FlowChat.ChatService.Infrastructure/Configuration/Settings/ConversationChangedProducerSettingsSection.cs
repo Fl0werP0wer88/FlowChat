@@ -3,9 +3,9 @@ using FlowChat.Core.Messaging.ChatService.Events;
 
 namespace FlowChat.ChatService.Infrastructure.Configuration.Settings;
 
-public sealed class ConversationCreatedProducerSettingsSection : ProducerSettingsSectionBase, IKafkaProducerSettingsSection<ConversationCreatedIntegrationEvent>
+public sealed class ConversationChangedProducerSettingsSection : ProducerSettingsSectionBase, IKafkaProducerSettingsSection<ConversationChangedIntegrationEvent>
 {
-    public override string SectionName => "Kafka:ConversationCreatedProducer";
+    public override string SectionName => "Kafka:ConversationChangedProducer";
 
     public override string BootstrapServers { get; set; } = "localhost:9092";
 

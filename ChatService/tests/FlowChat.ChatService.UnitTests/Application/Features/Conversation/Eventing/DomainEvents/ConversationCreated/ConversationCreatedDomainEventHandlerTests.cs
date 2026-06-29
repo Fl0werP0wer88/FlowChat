@@ -45,13 +45,13 @@ public sealed class ConversationCreatedDomainEventHandlerTests
             null,
             createdByUserId,
             participantUserIds);
-        IntegrationEventEnvelope<ConversationCreatedIntegrationEvent>? publishedEnvelope = null;
+        IntegrationEventEnvelope<ConversationChangedIntegrationEvent>? publishedEnvelope = null;
 
         _publisherMock
             .Setup(x => x.PublishAsync(
-                It.IsAny<IntegrationEventEnvelope<ConversationCreatedIntegrationEvent>>(),
+                It.IsAny<IntegrationEventEnvelope<ConversationChangedIntegrationEvent>>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<IntegrationEventEnvelope<ConversationCreatedIntegrationEvent>, CancellationToken>(
+            .Callback<IntegrationEventEnvelope<ConversationChangedIntegrationEvent>, CancellationToken>(
                 (envelope, _) => publishedEnvelope = envelope)
             .Returns(Task.CompletedTask);
 
@@ -66,7 +66,7 @@ public sealed class ConversationCreatedDomainEventHandlerTests
         publishedEnvelope.Payload.ParticipantUserIds.Should().Equal(participantUserIds.Select(id => id.Value));
         _publisherMock.Verify(
             x => x.PublishAsync(
-                It.IsAny<IntegrationEventEnvelope<ConversationCreatedIntegrationEvent>>(),
+                It.IsAny<IntegrationEventEnvelope<ConversationChangedIntegrationEvent>>(),
                 It.IsAny<CancellationToken>()),
             Times.Once);
     }

@@ -34,7 +34,7 @@ public sealed class ConversationCreatedDomainEventToIntegrationEventProfileTests
             createdByUserId,
             participantUserIds);
 
-        var integrationEvent = mapper.Map<ConversationCreatedIntegrationEvent>(domainEvent);
+        var integrationEvent = mapper.Map<ConversationChangedIntegrationEvent>(domainEvent);
 
         integrationEvent.ConversationId.Should().Be(conversationId.Value);
         integrationEvent.Type.Should().Be((int) ConversationType.Group);

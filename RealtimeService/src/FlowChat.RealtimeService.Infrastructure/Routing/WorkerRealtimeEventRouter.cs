@@ -34,6 +34,15 @@ public sealed class WorkerRealtimeEventRouter(
                 cancellationToken),
             cancellationToken);
 
+    public Task RouteConversationChangedAsync(ConversationChangedParam notification, CancellationToken cancellationToken) =>
+        RouteAsync(
+            notification.ParticipantUserIds,
+            (instanceUrl, userIds) => _realtimeInstanceInternalApiClient.PublishConversationChangedAsync(
+                instanceUrl,
+                notification with { ParticipantUserIds = userIds },
+                cancellationToken),
+            cancellationToken);
+
     private async Task RouteAsync(
         IReadOnlyCollection<Guid> recipientUserIds,
         Func<Uri, IReadOnlyCollection<Guid>, Task> publishAsync,

@@ -13,4 +13,9 @@ public interface IRealtimeInstanceInternalApiClient
         Uri baseAddress,
         PresenceChangedParam notification,
         CancellationToken cancellationToken);
+
+    Task PublishConversationChangedAsync(
+        Uri baseAddress,
+        ConversationChangedParam notification,
+        CancellationToken cancellationToken);
 }

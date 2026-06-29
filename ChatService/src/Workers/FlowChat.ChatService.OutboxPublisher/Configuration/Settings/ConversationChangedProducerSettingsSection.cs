@@ -2,9 +2,9 @@ using FlowChat.Core.Contracts;
 
 namespace FlowChat.ChatService.OutboxPublisher.Configuration.Settings;
 
-public sealed class ConversationCreatedProducerSettingsSection : ProducerSettingsSectionBase
+public sealed class ConversationChangedProducerSettingsSection : ProducerSettingsSectionBase
 {
-    public override string SectionName => "Kafka:ConversationCreatedProducer";
+    public override string SectionName => "Kafka:ConversationChangedProducer";
 
     public override string BootstrapServers { get; set; } = "localhost:9092";
 

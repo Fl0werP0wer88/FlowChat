@@ -48,14 +48,14 @@ static void LogStartupDiagnostics(IHost host)
     var environment = host.Services.GetRequiredService<IHostEnvironment>();
     var configuration = host.Services.GetRequiredService<IConfiguration>();
     var chatMessageSentProducerOptions = host.Services.GetRequiredService<IOptions<ChatMessageSentProducerSettingsSection>>().Value;
-    var conversationCreatedProducerOptions = host.Services.GetRequiredService<IOptions<ConversationCreatedProducerSettingsSection>>().Value;
+    var conversationChangedProducerOptions = host.Services.GetRequiredService<IOptions<ConversationChangedProducerSettingsSection>>().Value;
     var outboxOptions = host.Services.GetRequiredService<IOptions<OutboxPublisherRuntimeSettingsSection>>().Value;
     var chatDbTarget = GetChatDbTarget(configuration.GetConnectionString("ChatDb"));
 
     logger.LogInformation(
         "Starting ChatService outbox publisher in {Environment}. ChatDb target: {Host}:{Port}/{Database}. " +
         "ChatMessageSent Kafka: {ChatMessageBootstrapServers} -> {ChatMessageTopic}. " +
-        "ConversationCreated Kafka: {ConversationBootstrapServers} -> {ConversationTopic}. " +
+        "ConversationChanged Kafka: {ConversationBootstrapServers} -> {ConversationTopic}. " +
         "Outbox worker settings: BatchSize={BatchSize}, PollIntervalSeconds={PollIntervalSeconds}, " +
         "RetryBaseDelaySeconds={RetryBaseDelaySeconds}, MaxRetryDelaySeconds={MaxRetryDelaySeconds}.",
         environment.EnvironmentName,
@@ -64,8 +64,8 @@ static void LogStartupDiagnostics(IHost host)
         chatDbTarget.Database,
         chatMessageSentProducerOptions.BootstrapServers,
         chatMessageSentProducerOptions.Topic,
-        conversationCreatedProducerOptions.BootstrapServers,
-        conversationCreatedProducerOptions.Topic,
+        conversationChangedProducerOptions.BootstrapServers,
+        conversationChangedProducerOptions.Topic,
         outboxOptions.BatchSize,
         outboxOptions.PollIntervalSeconds,
         outboxOptions.RetryBaseDelaySeconds,

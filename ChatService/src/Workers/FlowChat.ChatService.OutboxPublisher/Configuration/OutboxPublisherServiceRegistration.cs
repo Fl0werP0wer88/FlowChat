@@ -24,17 +24,17 @@ public static class OutboxPublisherServiceRegistration
             .GetSection(new ChatMessageSentProducerSettingsSection().SectionName)
             .Get<ChatMessageSentProducerSettingsSection>()
             ?? new ChatMessageSentProducerSettingsSection();
-        var conversationCreatedProducerOptions = configuration
-            .GetSection(new ConversationCreatedProducerSettingsSection().SectionName)
-            .Get<ConversationCreatedProducerSettingsSection>()
-            ?? new ConversationCreatedProducerSettingsSection();
+        var conversationChangedProducerOptions = configuration
+            .GetSection(new ConversationChangedProducerSettingsSection().SectionName)
+            .Get<ConversationChangedProducerSettingsSection>()
+            ?? new ConversationChangedProducerSettingsSection();
 
         services.AddOptions<OutboxPublisherRuntimeSettingsSection>()
             .BindConfiguration(new OutboxPublisherRuntimeSettingsSection().SectionName);
         services.AddOptions<ChatMessageSentProducerSettingsSection>()
             .BindConfiguration(new ChatMessageSentProducerSettingsSection().SectionName);
-        services.AddOptions<ConversationCreatedProducerSettingsSection>()
-            .BindConfiguration(new ConversationCreatedProducerSettingsSection().SectionName);
+        services.AddOptions<ConversationChangedProducerSettingsSection>()
+            .BindConfiguration(new ConversationChangedProducerSettingsSection().SectionName);
 
         services.AddSilverback()
             .AddSingletonBrokerBehavior<CustomSpanAttributesProducerBehavior>()
@@ -60,8 +60,8 @@ public static class OutboxPublisherServiceRegistration
                             .ProduceTo(chatMessageSentProducerOptions.Topic)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())))
                     .AddProducer(producer => producer
-                        .Produce<ConversationCreatedIntegrationEvent>("conversation-created", endpoint => endpoint
-                            .ProduceTo(conversationCreatedProducerOptions.Topic)
+                        .Produce<ConversationChangedIntegrationEvent>("conversation-changed", endpoint => endpoint
+                            .ProduceTo(conversationChangedProducerOptions.Topic)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())));
             });
 

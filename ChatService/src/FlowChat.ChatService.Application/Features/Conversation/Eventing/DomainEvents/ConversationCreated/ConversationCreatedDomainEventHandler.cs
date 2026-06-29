@@ -6,7 +6,7 @@ using FlowChat.Shared.Application;
 namespace FlowChat.ChatService.Application.Features.Conversation.Eventing.DomainEvents.ConversationCreated;
 
 public sealed class ConversationCreatedDomainEventHandler
-    : MappedDomainEventHandlerBase<ConversationCreatedDomainEvent, ConversationCreatedIntegrationEvent>
+    : MappedDomainEventHandlerBase<ConversationCreatedDomainEvent, ConversationChangedIntegrationEvent>
 {
     public ConversationCreatedDomainEventHandler(
         IOutboxIntegrationEventPublisher integrationEventPublisher,
@@ -17,6 +17,6 @@ public sealed class ConversationCreatedDomainEventHandler
 
     protected override string ResolveKafkaKey(
         ConversationCreatedDomainEvent notification,
-        ConversationCreatedIntegrationEvent integrationEvent) =>
+        ConversationChangedIntegrationEvent integrationEvent) =>
         notification.ConversationId.ToString("D");
 }

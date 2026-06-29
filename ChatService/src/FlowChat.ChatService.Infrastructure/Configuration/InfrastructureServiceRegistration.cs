@@ -26,7 +26,7 @@ internal static class CommonInfrastructureServiceRegistration
         services.AddSettingsSections(configuration, typeof(CommonInfrastructureServiceRegistration).Assembly);
         services.AddFlowChatSilverbackEventPublisher(producer => producer
             .AddProducerSettings<ChatMessageSentIntegrationEvent, ChatMessageSentProducerSettingsSection>()
-            .AddProducerSettings<ConversationCreatedIntegrationEvent, ConversationCreatedProducerSettingsSection>());
+            .AddProducerSettings<ConversationChangedIntegrationEvent, ConversationChangedProducerSettingsSection>());
 
         return services;
     }

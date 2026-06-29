@@ -129,6 +129,47 @@ public sealed class WorkerRealtimeEventRouterTests
         calledRecipients.Should().ContainSingle().Which.Should().Be(userId);
     }
 
+    [Fact]
+    public async Task RouteConversationChangedAsync_PublishesThroughInstanceInternalApiClient()
+    {
+        var userId = _fixture.Create<Guid>();
+        Uri? calledBaseAddress = null;
+        IReadOnlyCollection<Guid>? calledParticipants = null;
+
+        _userInstanceRoutingReaderMock
+            .Setup(x => x.GetInstanceIdsByUserAsync(It.IsAny<IReadOnlyCollection<Guid>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<Guid, IReadOnlyCollection<string>>
+            {
+                [userId] = ["instance-a"]
+            });
+        _addressResolverMock.Setup(x => x.Resolve("instance-a")).Returns(new Uri("http://instance-a"));
+        _internalApiClientMock
+            .Setup(x => x.PublishConversationChangedAsync(
+                It.IsAny<Uri>(),
+                It.IsAny<ConversationChangedParam>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<Uri, ConversationChangedParam, CancellationToken>((baseAddress, notification, _) =>
+            {
+                calledBaseAddress = baseAddress;
+                calledParticipants = notification.ParticipantUserIds;
+            })
+            .Returns(Task.CompletedTask);
+
+        var router = CreateRouter();
+
+        await router.RouteConversationChangedAsync(
+            new ConversationChangedParam(
+                _fixture.Create<Guid>(),
+                2,
+                "Dev Team",
+                _fixture.Create<Guid>(),
+                [userId]),
+            CancellationToken.None);
+
+        calledBaseAddress.Should().Be(new Uri("http://instance-a"));
+        calledParticipants.Should().ContainSingle().Which.Should().Be(userId);
+    }
+
     private WorkerRealtimeEventRouter CreateRouter() =>
         new(
             _userInstanceRoutingReaderMock.Object,

@@ -5,4 +5,6 @@ public interface IRealtimeEventRouter
     Task RouteMessageAsync(ChatMessageParam notification, CancellationToken cancellationToken);
 
     Task RoutePresenceChangeAsync(PresenceChangedParam notification, CancellationToken cancellationToken);
+
+    Task RouteConversationChangedAsync(ConversationChangedParam notification, CancellationToken cancellationToken);
 }

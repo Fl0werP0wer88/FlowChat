@@ -8,7 +8,7 @@ public sealed class ConversationCreatedDomainEventToIntegrationEventProfile : Pr
 {
     public ConversationCreatedDomainEventToIntegrationEventProfile()
     {
-        CreateMap<ConversationCreatedDomainEvent, ConversationCreatedIntegrationEvent>()
+        CreateMap<ConversationCreatedDomainEvent, ConversationChangedIntegrationEvent>()
             .ForMember(destination => destination.Type, options => options.MapFrom(source => (int) source.Type))
             .ForMember(destination => destination.CreatedByUserId, options => options.MapFrom(source => source.CreatedByUserId.Value))
             .ForMember(destination => destination.ParticipantUserIds, options => options.MapFrom(source => source.ParticipantUserIds.Select(id => id.Value).ToList()));

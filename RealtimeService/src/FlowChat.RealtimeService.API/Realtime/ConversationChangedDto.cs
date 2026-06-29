@@ -1,6 +1,6 @@
-namespace FlowChat.Core.Messaging.ChatService.Events;
+namespace FlowChat.RealtimeService.Api.Realtime;
 
-public sealed record ConversationCreatedIntegrationEvent : IntegrationEvent
+public sealed class ConversationChangedDto
 {
     public Guid ConversationId { get; init; }
     public int Type { get; init; }
