@@ -25,6 +25,34 @@ public sealed class UserProfileReadRepository(AppDbContext dbContext) : ReadRepo
         return await MapToDtosAsync(entities, cancellationToken);
     }
 
+    public async Task<IReadOnlyList<UserProfileDto>> GetByIdsAsync(
+        IReadOnlyCollection<Guid> ids,
+        CancellationToken cancellationToken = default)
+    {
+        var userProfileIds = ids
+            .Where(id => id != Guid.Empty)
+            .Distinct()
+            .ToArray();
+
+        if (userProfileIds.Length == 0)
+        {
+            return [];
+        }
+
+        var entities = await Query()
+            .Where(entity => userProfileIds.Contains(entity.Id))
+            .ToListAsync(cancellationToken);
+
+        var userProfiles = await MapToDtosAsync(entities, cancellationToken);
+        var order = userProfileIds
+            .Select((id, index) => new { id, index })
+            .ToDictionary(x => x.id, x => x.index);
+
+        return userProfiles
+            .OrderBy(userProfile => order[userProfile.Id])
+            .ToList();
+    }
+
     public async Task<IReadOnlyList<UserProfileDto>> SearchAsync(
         string? firstName,
         string? lastName,
