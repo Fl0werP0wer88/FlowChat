@@ -60,11 +60,14 @@ public sealed class UserEmailConfirmedConsumerConfigurationTests
             .Get<UserEmailConfirmedConsumerSettingsSection>();
 
         consumerOptions.Should().NotBeNull();
-        consumerOptions!.GroupId.Should().Be("auth-service");
+        consumerOptions!.BootstrapServers.Should().Be("localhost:9092");
+        consumerOptions.GroupId.Should().Be("auth-service");
         consumerOptions.RetryGroupId.Should().Be("auth-service-retry");
         consumerOptions.Topic.Should().Be("dev.flowchat.user-profile.user-profile.v1");
         consumerOptions.RetryTopic.Should().Be("dev.flowchat.user-profile.user-profile.v1.auth-service.retry");
         consumerOptions.DeadLetterTopic.Should().Be("dev.flowchat.user-profile.user-profile.v1.auth-service.dlq");
+        configuration.GetConnectionString("AuthDb").Should().Be(
+            "Host=localhost;Port=5432;Database=flowchat_auth_db;Username=flowchat_app;Password=flowchat_app_pw;");
     }
 
     private static IConfiguration CreateConfiguration()
