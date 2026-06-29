@@ -1059,12 +1059,13 @@ body {
 
 .users-picker__selected-list {
   margin: 0;
-  padding: 0;
+  padding: 0 0 0.3rem;
   list-style: none;
-  display: grid;
+  display: flex;
+  flex-wrap: nowrap;
   gap: 0.5rem;
-  max-height: 9rem;
-  overflow-y: auto;
+  overflow-x: auto;
+  overflow-y: hidden;
 }
 
 .users-picker__selected-item {
@@ -1072,6 +1073,8 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 0.6rem;
+  flex-shrink: 0;
+  white-space: nowrap;
   border: 1px solid color-mix(in srgb, var(--accent) 16%, var(--border) 84%);
   border-radius: 0.75rem;
   background: rgba(255, 255, 255, 0.92);
