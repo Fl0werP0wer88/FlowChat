@@ -47,21 +47,25 @@ static void LogStartupDiagnostics(IHost host)
         .CreateLogger("FlowChat.ChatService.OutboxPublisher.Startup");
     var environment = host.Services.GetRequiredService<IHostEnvironment>();
     var configuration = host.Services.GetRequiredService<IConfiguration>();
-    var producerOptions = host.Services.GetRequiredService<IOptions<ChatMessageSentProducerSettingsSection>>().Value;
+    var chatMessageSentProducerOptions = host.Services.GetRequiredService<IOptions<ChatMessageSentProducerSettingsSection>>().Value;
+    var conversationCreatedProducerOptions = host.Services.GetRequiredService<IOptions<ConversationCreatedProducerSettingsSection>>().Value;
     var outboxOptions = host.Services.GetRequiredService<IOptions<OutboxPublisherRuntimeSettingsSection>>().Value;
     var chatDbTarget = GetChatDbTarget(configuration.GetConnectionString("ChatDb"));
 
     logger.LogInformation(
         "Starting ChatService outbox publisher in {Environment}. ChatDb target: {Host}:{Port}/{Database}. " +
-        "ChatMessageSent Kafka: {BootstrapServers} -> {Topic}. " +
+        "ChatMessageSent Kafka: {ChatMessageBootstrapServers} -> {ChatMessageTopic}. " +
+        "ConversationCreated Kafka: {ConversationBootstrapServers} -> {ConversationTopic}. " +
         "Outbox worker settings: BatchSize={BatchSize}, PollIntervalSeconds={PollIntervalSeconds}, " +
         "RetryBaseDelaySeconds={RetryBaseDelaySeconds}, MaxRetryDelaySeconds={MaxRetryDelaySeconds}.",
         environment.EnvironmentName,
         chatDbTarget.Host,
         chatDbTarget.Port,
         chatDbTarget.Database,
-        producerOptions.BootstrapServers,
-        producerOptions.Topic,
+        chatMessageSentProducerOptions.BootstrapServers,
+        chatMessageSentProducerOptions.Topic,
+        conversationCreatedProducerOptions.BootstrapServers,
+        conversationCreatedProducerOptions.Topic,
         outboxOptions.BatchSize,
         outboxOptions.PollIntervalSeconds,
         outboxOptions.RetryBaseDelaySeconds,

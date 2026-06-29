@@ -16,8 +16,10 @@ public static class ApiSilverbackServiceRegistration
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        var producerOptions = configuration.GetSection(new ChatMessageSentProducerSettingsSection().SectionName)
+        var chatMessageSentProducerOptions = configuration.GetSection(new ChatMessageSentProducerSettingsSection().SectionName)
             .Get<ChatMessageSentProducerSettingsSection>() ?? new ChatMessageSentProducerSettingsSection();
+        var conversationCreatedProducerOptions = configuration.GetSection(new ConversationCreatedProducerSettingsSection().SectionName)
+            .Get<ConversationCreatedProducerSettingsSection>() ?? new ConversationCreatedProducerSettingsSection();
 
         services.AddSilverback()
             .AddSingletonBrokerBehavior<CustomSpanAttributesProducerBehavior>()
@@ -28,10 +30,15 @@ public static class ApiSilverbackServiceRegistration
             })
             .AddKafkaClients(clients =>
             {
-                clients.WithBootstrapServers(producerOptions.BootstrapServers)
+                clients.WithBootstrapServers(chatMessageSentProducerOptions.BootstrapServers)
                     .AddProducer(producer => producer
                         .Produce<ChatMessageSentIntegrationEvent>("chat-message-sent", endpoint => endpoint
-                            .ProduceTo(producerOptions.Topic)
+                            .ProduceTo(chatMessageSentProducerOptions.Topic)
+                            .SerializeAsJson(serializer => serializer.SetTypeHeader())
+                            .StoreToOutbox(outbox => outbox.UseEntityFramework<AppDbContext>())))
+                    .AddProducer(producer => producer
+                        .Produce<ConversationCreatedIntegrationEvent>("conversation-created", endpoint => endpoint
+                            .ProduceTo(conversationCreatedProducerOptions.Topic)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())
                             .StoreToOutbox(outbox => outbox.UseEntityFramework<AppDbContext>())));
             });

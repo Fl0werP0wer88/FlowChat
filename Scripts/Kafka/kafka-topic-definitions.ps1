@@ -130,6 +130,15 @@ function Get-TopicDefinitions {
       }
     },
     @{
+      name = "dev.flowchat.chat.conversation.v1"
+      partitions = 1
+      rf = 1
+      config = @{
+        "cleanup.policy" = "delete"
+        "retention.ms" = "2419200000"
+      }
+    },
+    @{
       name = "dev.flowchat.chat.message.v1.realtime-service.retry"
       partitions = 1
       rf = 1
