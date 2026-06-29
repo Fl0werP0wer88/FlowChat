@@ -267,6 +267,15 @@ export function GroupBuilder({
         <strong>Nowa grupa</strong>
       </div>
 
+      <input
+        className="contacts-composer__input group-builder__name-input"
+        disabled={isCreatingGroup}
+        onChange={(event) => setGroupName(event.target.value)}
+        placeholder="Nazwa grupy"
+        type="text"
+        value={groupName}
+      />
+
       {selectedMembers.length > 0
         ? (
           <ul className="group-builder__selected-list">
@@ -386,15 +395,6 @@ export function GroupBuilder({
             : null}
         </div>
       </div>
-
-      <input
-        className="contacts-composer__input group-builder__name-input"
-        disabled={isCreatingGroup}
-        onChange={(event) => setGroupName(event.target.value)}
-        placeholder="Nazwa grupy"
-        type="text"
-        value={groupName}
-      />
 
       {createNotice
         ? (
