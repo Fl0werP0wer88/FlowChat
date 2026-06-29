@@ -227,124 +227,126 @@ export function UsersPicker({
   };
 
   return (
-    <>
-      {selectedMembers.length > 0
-        ? (
-          <ul className="users-picker__selected-list">
-            {selectedMembers.map((member) => (
-              <li className="users-picker__selected-item" key={member.userProfileId}>
-                <span>{member.displayName}</span>
-                <button
-                  aria-label={`Usun ${member.displayName} z listy`}
-                  className="users-picker__remove-button"
-                  onClick={() => removeMember(member.userProfileId)}
-                  type="button"
-                >
-                  <span aria-hidden="true" className="material-symbols-rounded">person_remove</span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        )
-        : null}
+    <div className="users-picker">
+      <div className="users-picker__scroll">
+        {selectedMembers.length > 0
+          ? (
+            <ul className="users-picker__selected-list">
+              {selectedMembers.map((member) => (
+                <li className="users-picker__selected-item" key={member.userProfileId}>
+                  <span>{member.displayName}</span>
+                  <button
+                    aria-label={`Usun ${member.displayName} z listy`}
+                    className="users-picker__remove-button"
+                    onClick={() => removeMember(member.userProfileId)}
+                    type="button"
+                  >
+                    <span aria-hidden="true" className="material-symbols-rounded">person_remove</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )
+          : null}
 
-      <div className="contacts-composer__search">
-        <button
-          aria-label="Dodaj uzytkownika z podanej wartosci"
-          className="contacts-composer__search-button"
-          disabled={isLookupProcessing}
-          onClick={() => void submitLookup()}
-          type="button"
-        >
-          <span aria-hidden="true" className="material-symbols-rounded">person_add</span>
-        </button>
-        <input
-          className="contacts-composer__input"
-          disabled={isLookupProcessing}
-          onChange={(event) => setEmailOrFriendlyId(event.target.value)}
-          onKeyDown={(event) => void handleLookupKeyDown(event)}
-          placeholder="User Id or email"
-          ref={inputRef}
-          type="text"
-          value={emailOrFriendlyId}
-        />
-      </div>
-
-      {processNotice
-        ? (
-          <p className={`alert ${processNotice.kind === "error" ? "alert-error" : "alert-info"}`}>
-            {processNotice.message}
-          </p>
-        )
-        : null}
-
-      <button
-        className={`contacts-composer__action ${isSearchExpanded ? "contacts-composer__action--active" : ""}`}
-        onClick={toggleSearch}
-        type="button"
-      >
-        <span aria-hidden="true" className="material-symbols-rounded">person_search</span>
-        <span>Search User</span>
-      </button>
-
-      <div className={`contacts-composer__typeahead ${isSearchExpanded ? "contacts-composer__typeahead--open" : ""}`}>
-        <div className="contacts-composer__typeahead-fields">
+        <div className="contacts-composer__search">
+          <button
+            aria-label="Dodaj uzytkownika z podanej wartosci"
+            className="contacts-composer__search-button"
+            disabled={isLookupProcessing}
+            onClick={() => void submitLookup()}
+            type="button"
+          >
+            <span aria-hidden="true" className="material-symbols-rounded">person_add</span>
+          </button>
           <input
-            className="contacts-composer__typeahead-input"
-            onChange={(event) => handleSearchFieldChange("firstName", event.target.value)}
-            placeholder="First name"
-            ref={firstNameInputRef}
+            className="contacts-composer__input"
+            disabled={isLookupProcessing}
+            onChange={(event) => setEmailOrFriendlyId(event.target.value)}
+            onKeyDown={(event) => void handleLookupKeyDown(event)}
+            placeholder="User Id or email"
+            ref={inputRef}
             type="text"
-            value={searchCriteria.firstName}
-          />
-          <input
-            className="contacts-composer__typeahead-input"
-            onChange={(event) => handleSearchFieldChange("lastName", event.target.value)}
-            placeholder="Last name"
-            type="text"
-            value={searchCriteria.lastName}
-          />
-          <input
-            className="contacts-composer__typeahead-input"
-            onChange={(event) => handleSearchFieldChange("organization", event.target.value)}
-            placeholder="Organization"
-            type="text"
-            value={searchCriteria.organization}
+            value={emailOrFriendlyId}
           />
         </div>
 
-        <div className="contacts-composer__typeahead-results">
-          {isSearchingUsers
-            ? <p className="contacts-composer__typeahead-status">Szukanie uzytkownikow...</p>
-            : searchResults.length > 0
-            ? (
-              <ul className="contacts-composer__results-list">
-                {searchResults.map((result) => (
-                  <li key={result.userProfileId}>
-                    <button
-                      className="contacts-composer__result"
-                      disabled={processingUserProfileId !== null}
-                      onClick={() => void handleSearchResultClick(result)}
-                      type="button"
-                    >
-                      <span className="contacts-composer__result-copy">
-                        <strong>{result.displayName}</strong>
-                        <span>@{result.friendlyUserId}</span>
-                        {result.organization
-                          ? <span>{result.organization}</span>
-                          : null}
-                      </span>
-                      <span aria-hidden="true" className="material-symbols-rounded">
-                        {processingUserProfileId === result.userProfileId ? "progress_activity" : "person_add"}
-                      </span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )
-            : searchNotice
-            ? <p className="contacts-composer__typeahead-status">{searchNotice}</p>
-            : null}
+        {processNotice
+          ? (
+            <p className={`alert ${processNotice.kind === "error" ? "alert-error" : "alert-info"}`}>
+              {processNotice.message}
+            </p>
+          )
+          : null}
+
+        <button
+          className={`contacts-composer__action ${isSearchExpanded ? "contacts-composer__action--active" : ""}`}
+          onClick={toggleSearch}
+          type="button"
+        >
+          <span aria-hidden="true" className="material-symbols-rounded">person_search</span>
+          <span>Search User</span>
+        </button>
+
+        <div className={`contacts-composer__typeahead ${isSearchExpanded ? "contacts-composer__typeahead--open" : ""}`}>
+          <div className="contacts-composer__typeahead-fields">
+            <input
+              className="contacts-composer__typeahead-input"
+              onChange={(event) => handleSearchFieldChange("firstName", event.target.value)}
+              placeholder="First name"
+              ref={firstNameInputRef}
+              type="text"
+              value={searchCriteria.firstName}
+            />
+            <input
+              className="contacts-composer__typeahead-input"
+              onChange={(event) => handleSearchFieldChange("lastName", event.target.value)}
+              placeholder="Last name"
+              type="text"
+              value={searchCriteria.lastName}
+            />
+            <input
+              className="contacts-composer__typeahead-input"
+              onChange={(event) => handleSearchFieldChange("organization", event.target.value)}
+              placeholder="Organization"
+              type="text"
+              value={searchCriteria.organization}
+            />
+          </div>
+
+          <div className="contacts-composer__typeahead-results">
+            {isSearchingUsers
+              ? <p className="contacts-composer__typeahead-status">Szukanie uzytkownikow...</p>
+              : searchResults.length > 0
+              ? (
+                <ul className="contacts-composer__results-list">
+                  {searchResults.map((result) => (
+                    <li key={result.userProfileId}>
+                      <button
+                        className="contacts-composer__result"
+                        disabled={processingUserProfileId !== null}
+                        onClick={() => void handleSearchResultClick(result)}
+                        type="button"
+                      >
+                        <span className="contacts-composer__result-copy">
+                          <strong>{result.displayName}</strong>
+                          <span>@{result.friendlyUserId}</span>
+                          {result.organization
+                            ? <span>{result.organization}</span>
+                            : null}
+                        </span>
+                        <span aria-hidden="true" className="material-symbols-rounded">
+                          {processingUserProfileId === result.userProfileId ? "progress_activity" : "person_add"}
+                        </span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )
+              : searchNotice
+              ? <p className="contacts-composer__typeahead-status">{searchNotice}</p>
+              : null}
+          </div>
         </div>
       </div>
 
@@ -362,6 +364,6 @@ export function UsersPicker({
         label={confirmLabel}
         onClick={() => onConfirm(selectedMembers)}
       />
-    </>
+    </div>
   );
 }

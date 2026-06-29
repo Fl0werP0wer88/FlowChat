@@ -59,7 +59,7 @@ export function GroupBuilder({
   };
 
   return (
-    <div className={`contacts-composer ${isOpen ? "contacts-composer--open" : ""}`} aria-hidden={!isOpen}>
+    <div className={`contacts-composer group-builder ${isOpen ? "contacts-composer--open" : ""}`} aria-hidden={!isOpen}>
       <div className="contacts-composer__header">
         <button
           aria-label="Wroc do grup"
