@@ -11,6 +11,7 @@ import {
   type SearchUsersCriteria,
 } from "../../api";
 import { UsersPickerFooter } from "../molecules/UsersPickerFooter";
+import { UsersPickerHeader } from "../molecules/UsersPickerHeader";
 
 type UsersPickerNotice = { kind: "error" | "info"; message: string };
 
@@ -239,25 +240,7 @@ export function UsersPicker({
 
   return (
     <div className="users-picker">
-      {selectedMembers.length > 0
-        ? (
-          <ul className="users-picker__selected-list">
-            {selectedMembers.map((member) => (
-              <li className="users-picker__selected-item" key={member.userProfileId}>
-                <span>{member.displayName}</span>
-                <button
-                  aria-label={`Usun ${member.displayName} z listy`}
-                  className="users-picker__remove-button"
-                  onClick={() => removeMember(member.userProfileId)}
-                  type="button"
-                >
-                  <span aria-hidden="true" className="material-symbols-rounded">person_remove</span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        )
-        : null}
+      <UsersPickerHeader onRemoveMember={removeMember} selectedMembers={selectedMembers} />
 
       <div className="users-picker__scroll">
         <div className="contacts-composer__search">
