@@ -244,7 +244,7 @@ export function GroupBuilder({
                   onClick={() => removeMember(member.userProfileId)}
                   type="button"
                 >
-                  <span aria-hidden="true" className="material-symbols-rounded">close</span>
+                  <span aria-hidden="true" className="material-symbols-rounded">person_remove</span>
                 </button>
               </li>
             ))}

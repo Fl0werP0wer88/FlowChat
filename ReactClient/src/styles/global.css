@@ -1073,12 +1073,28 @@ body {
 }
 
 .group-builder__remove-button {
-  width: 1.6rem;
-  height: 1.6rem;
+  width: 1.7rem;
+  height: 1.7rem;
+  border: none;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--card) 86%, var(--accent) 14%);
-  color: var(--ink);
+  background: color-mix(in srgb, #ff5c5c 14%, white);
+  color: #d6334a;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
   flex-shrink: 0;
+  transition: transform 140ms ease, background-color 140ms ease;
+}
+
+.group-builder__remove-button:hover {
+  transform: translateY(-1px);
+  background: color-mix(in srgb, #ff5c5c 24%, white);
+}
+
+.group-builder__remove-button .material-symbols-rounded {
+  font-size: 1.05rem;
 }
 
 .group-builder__create-button {
