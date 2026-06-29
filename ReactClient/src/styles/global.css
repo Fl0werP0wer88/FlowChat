@@ -945,8 +945,9 @@ body {
 }
 
 .contacts-composer__typeahead--open {
-  max-height: 28rem;
+  max-height: 200rem;
   opacity: 1;
+  overflow: visible;
   transform: translateY(0);
 }
 
