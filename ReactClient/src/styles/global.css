@@ -1049,6 +1049,60 @@ body {
   text-overflow: ellipsis;
 }
 
+.group-builder__selected-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.5rem;
+  max-height: 9rem;
+  overflow-y: auto;
+}
+
+.group-builder__selected-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  border: 1px solid color-mix(in srgb, var(--accent) 16%, var(--border) 84%);
+  border-radius: 0.75rem;
+  background: rgba(255, 255, 255, 0.92);
+  padding: 0.45rem 0.6rem;
+  font-size: 0.9rem;
+  color: var(--ink);
+}
+
+.group-builder__remove-button {
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--card) 86%, var(--accent) 14%);
+  color: var(--ink);
+  flex-shrink: 0;
+}
+
+.group-builder__create-button {
+  border: none;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #1ec97e, color-mix(in srgb, var(--accent) 82%, #1ec97e 18%));
+  color: white;
+  font: inherit;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 0.65rem 1rem;
+  cursor: pointer;
+  box-shadow: 0 14px 26px -18px rgba(23, 103, 255, 0.52);
+}
+
+.group-builder__create-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
 .status-dot {
   width: 0.6rem;
   height: 0.6rem;

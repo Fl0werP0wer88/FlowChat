@@ -2,7 +2,7 @@ import { useState } from "react";
 import type { Contact } from "../../../types/contacts";
 import type { ManualUserStatus, UserStatus } from "../../../types/realtime";
 import type { GroupConversation } from "../../groups";
-import { GroupConversationsList } from "../../groups";
+import { GroupBuilder, GroupConversationsList } from "../../groups";
 import { ContactsList } from "../../contacts";
 import { UserSearch } from "../../users";
 import { SidebarHeader } from "./SidebarHeader";
@@ -42,14 +42,22 @@ export function Sidebar({
   presenceNotice,
 }: SidebarProps) {
   const [activeTab, setActiveTab] = useState<SidebarTab>("contacts");
-  const [isUserSearchOpen, setIsUserSearchOpen] = useState(false);
+  const [activeComposer, setActiveComposer] = useState<"contacts" | "group" | null>(null);
 
   const openUserSearch = () => {
-    setIsUserSearchOpen(true);
+    setActiveComposer("contacts");
+  };
+
+  const openGroupBuilder = () => {
+    setActiveComposer("group");
+  };
+
+  const closeComposer = () => {
+    setActiveComposer(null);
   };
 
   return (
-    <aside className={`contacts-panel ${isUserSearchOpen ? "contacts-panel--composer-open" : ""}`}>
+    <aside className={`contacts-panel ${activeComposer ? "contacts-panel--composer-open" : ""}`}>
       <div className="contacts-panel__main">
         <SidebarHeader
           activeTab={activeTab}
@@ -79,15 +87,20 @@ export function Sidebar({
               activeGroupConversationId={activeGroupConversationId}
               groupConversations={groupConversations}
               isLoading={isLoadingGroupConversations}
+              onAddGroupClick={openGroupBuilder}
               onGroupConversationClick={onGroupConversationClick}
             />
           )}
       </div>
 
       <UserSearch
-        isOpen={isUserSearchOpen}
-        onClose={() => setIsUserSearchOpen(false)}
+        isOpen={activeComposer === "contacts"}
+        onClose={closeComposer}
         onProcessUser={onProcessUser}
+      />
+      <GroupBuilder
+        isOpen={activeComposer === "group"}
+        onClose={closeComposer}
       />
     </aside>
   );

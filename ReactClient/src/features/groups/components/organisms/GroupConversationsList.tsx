@@ -5,6 +5,7 @@ interface GroupConversationsListProps {
   activeGroupConversationId: string | null;
   groupConversations: GroupConversation[];
   isLoading: boolean;
+  onAddGroupClick: () => void;
   onGroupConversationClick: (conversation: GroupConversation) => void;
 }
 
@@ -12,6 +13,7 @@ export function GroupConversationsList({
   activeGroupConversationId,
   groupConversations,
   isLoading,
+  onAddGroupClick,
   onGroupConversationClick,
 }: GroupConversationsListProps) {
   const renderContent = () => {
@@ -43,6 +45,7 @@ export function GroupConversationsList({
         <button
           aria-label="Dodaj grupe"
           className="contacts-panel__icon-button contacts-panel__add-contact-button"
+          onClick={onAddGroupClick}
           type="button"
         >
           <span aria-hidden="true" className="material-symbols-rounded">group_add</span>
