@@ -27,7 +27,6 @@ export function UsersPicker({
   onConfirm,
 }: UsersPickerProps) {
   const accessToken = useAuthStore((s) => s.accessToken) ?? "";
-  const [isSearchExpanded, setIsSearchExpanded] = useState(false);
   const [emailOrFriendlyId, setEmailOrFriendlyId] = useState("");
   const [searchCriteria, setSearchCriteria] = useState<SearchUsersCriteria>({
     firstName: "",
@@ -57,7 +56,6 @@ export function UsersPicker({
       return;
     }
 
-    setIsSearchExpanded(false);
     setEmailOrFriendlyId("");
     setSearchCriteria({
       firstName: "",
@@ -74,7 +72,7 @@ export function UsersPicker({
   }, [isOpen]);
 
   useEffect(() => {
-    if (!isOpen || !isSearchExpanded) {
+    if (!isOpen) {
       setSearchResults([]);
       setSearchNotice(null);
       setIsSearchingUsers(false);
@@ -128,7 +126,7 @@ export function UsersPicker({
       abortController.abort();
       window.clearTimeout(timeoutId);
     };
-  }, [accessToken, isOpen, isSearchExpanded, searchCriteria]);
+  }, [accessToken, isOpen, searchCriteria]);
 
   const addMember = (user: SearchUserResult): UsersPickerNotice => {
     if (selectedMembers.some((member) => member.userProfileId === user.userProfileId)) {
@@ -191,26 +189,6 @@ export function UsersPicker({
     await submitLookup();
   };
 
-  const toggleSearch = () => {
-    setIsSearchExpanded((current) => {
-      const next = !current;
-
-      if (!next) {
-        setSearchCriteria({
-          firstName: "",
-          lastName: "",
-          organization: "",
-        });
-        setSearchResults([]);
-        setSearchNotice(null);
-      } else {
-        window.requestAnimationFrame(() => firstNameInputRef.current?.focus());
-      }
-
-      return next;
-    });
-  };
-
   const handleSearchFieldChange = (field: keyof SearchUsersCriteria, value: string) => {
     setSearchCriteria((current) => ({
       ...current,
@@ -243,6 +221,11 @@ export function UsersPicker({
       <UsersPickerHeader onRemoveMember={removeMember} selectedMembers={selectedMembers} />
 
       <div className="users-picker__scroll">
+        <div className="users-picker__search-label">
+          <span aria-hidden="true" className="material-symbols-rounded">person_add</span>
+          <span>Dodaj Uzytkownika</span>
+        </div>
+
         <div className="contacts-composer__search">
           <button
             aria-label="Dodaj uzytkownika z podanej wartosci"
@@ -273,16 +256,12 @@ export function UsersPicker({
           )
           : null}
 
-        <button
-          className={`contacts-composer__action ${isSearchExpanded ? "contacts-composer__action--active" : ""}`}
-          onClick={toggleSearch}
-          type="button"
-        >
+        <div className="users-picker__search-label">
           <span aria-hidden="true" className="material-symbols-rounded">person_search</span>
-          <span>Search User</span>
-        </button>
+          <span>Szukaj uzytkownika</span>
+        </div>
 
-        <div className={`contacts-composer__typeahead ${isSearchExpanded ? "contacts-composer__typeahead--open" : ""}`}>
+        <div className="contacts-composer__typeahead contacts-composer__typeahead--open">
           <div className="contacts-composer__typeahead-fields">
             <input
               className="contacts-composer__typeahead-input"
