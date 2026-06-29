@@ -6,6 +6,7 @@ import {
   getUserProfileByEmail,
   getUserProfileByFriendlyUserId,
   getUserProfileById,
+  getUserProfilesByIds,
   searchUsers,
   type SearchUserResult,
   type SearchUsersCriteria,
@@ -17,6 +18,7 @@ type UsersPickerNotice = { kind: "error" | "info"; message: string };
 
 interface UsersPickerProps {
   confirmLabel?: string;
+  initialUserIds?: string[];
   isOpen: boolean;
   onConfirm: (selectedUsers: SearchUserResult[]) => Promise<UsersPickerNotice | void>;
   singlePick?: boolean;
@@ -24,6 +26,7 @@ interface UsersPickerProps {
 
 export function UsersPicker({
   confirmLabel = "Wybierz",
+  initialUserIds = [],
   isOpen,
   onConfirm,
   singlePick = false,
@@ -46,12 +49,55 @@ export function UsersPicker({
   const [confirmNotice, setConfirmNotice] = useState<UsersPickerNotice | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const firstNameInputRef = useRef<HTMLInputElement>(null);
+  const normalizedInitialUserIdsKey = Array.from(
+    new Set(initialUserIds.map((userId) => userId.trim()).filter((userId) => userId.length > 0)),
+  ).join("|");
 
   useEffect(() => {
     if (isOpen) {
       window.requestAnimationFrame(() => inputRef.current?.focus());
     }
   }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    const normalizedInitialUserIds = normalizedInitialUserIdsKey.split("|").filter((userId) => userId.length > 0);
+
+    if (normalizedInitialUserIds.length === 0) {
+      return;
+    }
+
+    if (!accessToken) {
+      setProcessNotice({
+        kind: "error",
+        message: "Brakuje aktywnej sesji potrzebnej do pobrania wybranych uzytkownikow.",
+      });
+      return;
+    }
+
+    const abortController = new AbortController();
+    setProcessNotice(null);
+
+    void getUserProfilesByIds(normalizedInitialUserIds, accessToken, abortController.signal)
+      .then((users) => {
+        setSelectedMembers(users);
+      })
+      .catch((error) => {
+        if (abortController.signal.aborted) {
+          return;
+        }
+
+        const message = error instanceof Error ? error.message : "Nie udalo sie pobrac wybranych uzytkownikow.";
+        setProcessNotice({ kind: "error", message });
+      });
+
+    return () => {
+      abortController.abort();
+    };
+  }, [accessToken, isOpen, normalizedInitialUserIdsKey]);
 
   useEffect(() => {
     if (isOpen) {
