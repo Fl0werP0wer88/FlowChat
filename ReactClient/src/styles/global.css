@@ -880,17 +880,22 @@ body {
   display: grid;
   grid-template-columns: auto 1fr;
   align-items: center;
-  gap: 0.75rem;
-  border: 1px solid color-mix(in srgb, var(--accent) 42%, #2fca7f 58%);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.92);
-  padding: 0.55rem 0.8rem;
-  box-shadow: 0 12px 28px -24px rgba(23, 103, 255, 0.38);
+  gap: 0.6rem;
+  border: 1px solid color-mix(in srgb, var(--accent) 18%, var(--border) 82%);
+  border-radius: 0.85rem;
+  background: rgba(255, 255, 255, 0.88);
+  padding: 0.45rem 0.75rem;
+  transition: border-color 140ms ease, box-shadow 140ms ease;
+}
+
+.contacts-composer__search:focus-within {
+  border-color: color-mix(in srgb, var(--accent) 60%, #19c37d 40%);
+  box-shadow: 0 0 0 3px rgba(23, 103, 255, 0.12);
 }
 
 .contacts-composer__search-button {
-  width: 2rem;
-  height: 2rem;
+  width: 1.8rem;
+  height: 1.8rem;
   border-radius: 999px;
   color: color-mix(in srgb, var(--accent) 45%, #20bf73 55%);
 }
