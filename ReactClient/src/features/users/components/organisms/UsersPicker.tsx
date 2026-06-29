@@ -19,12 +19,14 @@ interface UsersPickerProps {
   confirmLabel?: string;
   isOpen: boolean;
   onConfirm: (selectedUsers: SearchUserResult[]) => Promise<void>;
+  singlePick?: boolean;
 }
 
 export function UsersPicker({
   confirmLabel = "Wybierz",
   isOpen,
   onConfirm,
+  singlePick = false,
 }: UsersPickerProps) {
   const accessToken = useAuthStore((s) => s.accessToken) ?? "";
   const [emailOrFriendlyId, setEmailOrFriendlyId] = useState("");
@@ -141,11 +143,11 @@ export function UsersPicker({
     setSelectedMembers((current) => current.filter((member) => member.userProfileId !== userProfileId));
   };
 
-  const handleConfirm = async () => {
+  const handleConfirm = async (users: SearchUserResult[]) => {
     setIsConfirming(true);
     setConfirmNotice(null);
     try {
-      await onConfirm(selectedMembers);
+      await onConfirm(users);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Nie udalo sie wykonac akcji.";
       setConfirmNotice({ kind: "error", message });
@@ -171,7 +173,11 @@ export function UsersPicker({
         ? await getUserProfileByEmail(trimmedLookup, accessToken)
         : await getUserProfileByFriendlyUserId(trimmedLookup, accessToken);
 
-      setProcessNotice(addMember(user));
+      if (singlePick) {
+        await handleConfirm([user]);
+      } else {
+        setProcessNotice(addMember(user));
+      }
     } catch (error) {
       const message = error instanceof Error ? error.message : "Nie udalo sie pobrac profilu uzytkownika.";
       setSearchNotice(message);
@@ -207,7 +213,11 @@ export function UsersPicker({
 
     try {
       const userProfile = await getUserProfileById(result.userProfileId, accessToken);
-      setProcessNotice(addMember(userProfile));
+      if (singlePick) {
+        await handleConfirm([userProfile]);
+      } else {
+        setProcessNotice(addMember(userProfile));
+      }
     } catch (error) {
       const message = error instanceof Error ? error.message : "Nie udalo sie pobrac profilu uzytkownika.";
       setSearchNotice(message);
@@ -218,7 +228,7 @@ export function UsersPicker({
 
   return (
     <div className="users-picker">
-      <UsersPickerHeader onRemoveMember={removeMember} selectedMembers={selectedMembers} />
+      {singlePick ? null : <UsersPickerHeader onRemoveMember={removeMember} selectedMembers={selectedMembers} />}
 
       <div className="users-picker__scroll">
         <div className="users-picker__search-label">
@@ -331,12 +341,16 @@ export function UsersPicker({
         )
         : null}
 
-      <UsersPickerFooter
-        disabled={selectedMembers.length === 0 || isConfirming}
-        isPending={isConfirming}
-        label={confirmLabel}
-        onClick={() => void handleConfirm()}
-      />
+      {singlePick
+        ? null
+        : (
+          <UsersPickerFooter
+            disabled={selectedMembers.length === 0 || isConfirming}
+            isPending={isConfirming}
+            label={confirmLabel}
+            onClick={() => void handleConfirm(selectedMembers)}
+          />
+        )}
     </div>
   );
 }
