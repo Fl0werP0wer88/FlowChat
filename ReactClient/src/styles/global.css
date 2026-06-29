@@ -1118,10 +1118,17 @@ body {
 
 .group-builder__name-input {
   width: 100%;
-  border: 1px solid color-mix(in srgb, var(--accent) 26%, var(--border) 74%);
-  border-radius: 0.9rem;
-  background: rgba(255, 255, 255, 0.92);
-  padding: 0.6rem 0.85rem;
+  border: 1px solid color-mix(in srgb, var(--accent) 18%, var(--border) 82%);
+  border-radius: 0.85rem;
+  background: rgba(255, 255, 255, 0.88);
+  padding: 0.72rem 0.85rem;
+  outline: none;
+  transition: border-color 140ms ease, box-shadow 140ms ease;
+}
+
+.group-builder__name-input:focus {
+  border-color: color-mix(in srgb, var(--accent) 60%, #19c37d 40%);
+  box-shadow: 0 0 0 3px rgba(23, 103, 255, 0.12);
 }
 
 .users-picker {
