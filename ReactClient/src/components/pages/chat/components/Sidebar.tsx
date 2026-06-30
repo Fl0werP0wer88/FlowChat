@@ -61,7 +61,7 @@ export function Sidebar({
               activeGroupConversationId={activeGroupConversationId}
               groupConversations={groupConversations}
               isLoading={isLoadingGroupConversations}
-              onAddGroupClick={openGroupBuilder}
+              onAddGroupClick={() => openGroupBuilder()}
               onGroupConversationClick={onGroupConversationClick}
             />
           )}
