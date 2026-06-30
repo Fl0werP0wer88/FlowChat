@@ -4,7 +4,7 @@ import { openDuetConversation } from "../../api/gatewayApi";
 import {
   type ConversationCacheEntry,
   mapConversationMessage,
-} from "../../features/conversations/duet/queries/conversationCache";
+} from "./conversationCache";
 
 export function useConversationQuery(
   activeContact: Contact | null,

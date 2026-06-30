@@ -1,15 +1,16 @@
 import type { KeyboardEvent } from "react";
 import { useEffect, useState } from "react";
 import type { ChatMessage } from "../../../../types/chat";
-import type { Contact } from "../../../../types/contacts";
-import { ConversationBody } from "../../components/ConversationBody";
-import { ConversationFooter } from "../../components/ConversationFooter";
-import { DuetConversationHeader } from "./DuetConversationHeader";
-import { DuetConversationSettings } from "./DuetConversationSettings";
+import type { GroupConversation } from "../../../../api/chatApi";
+import { ConversationBody } from "../../molecules/ConversationBody";
+import { ConversationFooter } from "../../molecules/ConversationFooter";
+import { GroupConversationHeader } from "../../molecules/GroupConversationHeader";
+import { GroupConversationSettings } from "../../molecules/GroupConversationSettings";
 
-interface DuetConversationPanelProps {
-  activeContact: Contact | null;
+interface GroupConversationPanelProps {
+  activeGroupConversation: GroupConversation | null;
   activeConversationId: string | null;
+  activeConversationName: string | null;
   conversationError: string | null;
   isLoadingConversation: boolean;
   isSendingMessage: boolean;
@@ -23,12 +24,12 @@ interface DuetConversationPanelProps {
   onDraftKeyDown: (event: KeyboardEvent<HTMLTextAreaElement>) => void;
   onSendDraft: () => Promise<void>;
   onLoadOlderMessages: () => Promise<void>;
-  onCreateGroupFromDuet: (request: { groupName: string; initialUserIds: string[] }) => void;
 }
 
-export function DuetConversationPanel({
-  activeContact,
+export function GroupConversationPanel({
+  activeGroupConversation,
   activeConversationId,
+  activeConversationName,
   conversationError,
   isLoadingConversation,
   isSendingMessage,
@@ -42,46 +43,36 @@ export function DuetConversationPanel({
   onDraftKeyDown,
   onSendDraft,
   onLoadOlderMessages,
-  onCreateGroupFromDuet,
-}: DuetConversationPanelProps) {
+}: GroupConversationPanelProps) {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const isComposerDisabled = !activeConversationId || isLoadingConversation || isSendingMessage;
   const isSendDisabled = isComposerDisabled || draft.trim().length === 0;
 
   useEffect(() => {
     setIsSettingsOpen(false);
-  }, [activeConversationId, activeContact?.userId]);
-
-  const handleCreateGroupClick = () => {
-    if (!activeContact) {
-      return;
-    }
-
-    onCreateGroupFromDuet({
-      groupName: activeContact.displayName,
-      initialUserIds: [activeContact.userId],
-    });
-  };
+  }, [activeConversationId, activeGroupConversation?.conversationId]);
 
   return (
     <div className="conversation-panel">
-      <DuetConversationHeader
-        activeContact={activeContact}
+      <GroupConversationHeader
+        activeGroupConversation={activeGroupConversation}
+        activeConversationName={activeConversationName}
         isSettingsOpen={isSettingsOpen}
         onTuneClick={() => setIsSettingsOpen((current) => !current)}
       />
       {isSettingsOpen
         ? (
-          <DuetConversationSettings
-            activeContact={activeContact}
-            onCreateGroupClick={handleCreateGroupClick}
+          <GroupConversationSettings
+            activeGroupConversation={activeGroupConversation}
+            activeConversationName={activeConversationName}
           />
         )
         : (
           <ConversationBody
             activeConversationId={activeConversationId}
             conversationError={conversationError}
-            hasActiveConversation={Boolean(activeContact)}
+            emptySelectionMessage="Kliknij grupe, zeby otworzyc rozmowe."
+            hasActiveConversation={Boolean(activeGroupConversation)}
             isLoadingConversation={isLoadingConversation}
             hasOlderMessages={hasOlderMessages}
             isLoadingOlderMessages={isLoadingOlderMessages}
@@ -93,6 +84,7 @@ export function DuetConversationPanel({
       <ConversationFooter
         activeConversationId={activeConversationId}
         draft={draft}
+        emptyPlaceholder="Wybierz grupe, aby rozpoczac rozmowe"
         isComposerDisabled={isComposerDisabled}
         isSendDisabled={isSendDisabled}
         isSendingMessage={isSendingMessage}

@@ -1,4 +1,4 @@
-import type { Contact } from "../../../../types/contacts";
+import type { Contact } from "../../../types/contacts";
 
 interface DuetConversationHeaderProps {
   activeContact: Contact | null;

@@ -6,12 +6,12 @@ import type { Contact } from "../types/contacts";
 import type { RealtimeChatMessage } from "../types/realtime";
 import { resolveOwnerUserId } from "../utils/authUtils";
 import { getConversationMessages } from "../api/chatApi";
-import type { ConversationCacheEntry } from "../features/conversations/duet/queries/conversationCache";
+import type { ConversationCacheEntry } from "./queries/conversationCache";
 import {
   createMessage,
   mapConversationMessage,
   sortMessages,
-} from "../features/conversations/duet/queries/conversationCache";
+} from "./queries/conversationCache";
 import { useSendMessageMutation } from "./mutations/useSendMessageMutation";
 import { useConversationQuery } from "./queries/useConversationQuery";
 
