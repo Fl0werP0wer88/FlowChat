@@ -3,7 +3,7 @@ import { AuthFeature } from "./components/pages/auth";
 import { ChatFeature } from "./components/pages/chat";
 import { EmailVerificationFeature } from "./components/pages/emailVerification";
 import { useSessionRefresher } from "./hooks";
-import { AppBackgroundLayout } from "./layouts/AppBackgroundLayout";
+import { AppBackgroundTemplate } from "./components/templates/AppBackgroundTemplate";
 import { useAuthStore } from "./store/authStore";
 
 function RootRedirect() {
@@ -41,7 +41,7 @@ export default function App() {
   useSessionRefresher();
 
   return (
-    <AppBackgroundLayout>
+    <AppBackgroundTemplate>
       <Routes>
         <Route path="/" element={<RootRedirect />} />
         <Route path="/login" element={<AuthRoute mode="login" />} />
@@ -50,6 +50,6 @@ export default function App() {
         <Route path="/chat" element={<ChatRoute />} />
         <Route path="*" element={<RootRedirect />} />
       </Routes>
-    </AppBackgroundLayout>
+    </AppBackgroundTemplate>
   );
 }
