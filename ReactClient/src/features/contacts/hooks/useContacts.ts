@@ -4,7 +4,7 @@ import { useAuthStore } from "../../../store/authStore";
 import type { Contact } from "../../../types/contacts";
 import type { PresenceChangedEvent } from "../../../types/realtime";
 import { resolveOwnerUserId } from "../../../utils/authUtils";
-import type { SearchUserResult } from "../../users/api";
+import type { SearchUserResult } from "../../../api/userProfileApi";
 import { useAddContactByUserIdMutation } from "../queries/useAddContactByUserIdMutation";
 import { useAddContactMutation } from "../queries/useAddContactMutation";
 import { useContactsQuery } from "../queries/useContactsQuery";

@@ -1,36 +1,33 @@
-import { getJson, postJson, putJson } from "../../../api/httpClient";
+import { getJson, putJson } from "./httpClient";
+import type { Contact } from "../types/contacts";
+
+interface ContactDto {
+  id?: string;
+  Id?: string;
+  contactUserId?: string;
+  ContactUserId?: string;
+  displayName?: string;
+  DisplayName?: string;
+  email?: string | null;
+  Email?: string | null;
+  conversationId?: string | null;
+  ConversationId?: string | null;
+  status?: Contact["status"];
+  Status?: Contact["status"];
+}
+
+interface GetContactsResponseDto {
+  contacts?: ContactDto[];
+  Contacts?: ContactDto[];
+}
 
 interface OpenDuetConversationPayload {
   partnerUserId: string;
   knownConversationId: string | null;
 }
 
-interface SendChatMessagePayload {
-  id: string;
+interface OpenGroupConversationPayload {
   conversationId: string;
-  senderDisplayName: string;
-  text: string;
-}
-
-interface CopyDuetAsGroupPayload {
-  newGroupConversationId: string;
-  partnerUserId: string;
-}
-
-interface CopyDuetAsGroupResponseDto {
-  conversationId?: string;
-  ConversationId?: string;
-  name?: string;
-  Name?: string;
-  participants?: ConversationParticipantDto[];
-  Participants?: ConversationParticipantDto[];
-}
-
-interface SendChatMessageResponseDto {
-  messageId?: string;
-  MessageId?: string;
-  sentAtUtc?: string;
-  SentAtUtc?: string;
 }
 
 interface ConversationParticipantDto {
@@ -74,6 +71,23 @@ interface OpenDuetConversationResponseDto {
   HasMore?: boolean;
 }
 
+interface OpenGroupConversationResponseDto {
+  conversationId?: string;
+  ConversationId?: string;
+  name?: string;
+  Name?: string;
+  participants?: ConversationParticipantDto[];
+  Participants?: ConversationParticipantDto[];
+  messages?: ConversationMessageDto[];
+  Messages?: ConversationMessageDto[];
+  nextBeforeSentAtUtc?: string | null;
+  NextBeforeSentAtUtc?: string | null;
+  nextBeforeMessageId?: string | null;
+  NextBeforeMessageId?: string | null;
+  hasMore?: boolean;
+  HasMore?: boolean;
+}
+
 export interface ConversationParticipant {
   userId: string;
   displayName: string | null;
@@ -99,36 +113,59 @@ export interface OpenDuetConversationResult {
   hasMore: boolean;
 }
 
-export interface SendChatMessageResult {
-  messageId: string;
+export interface GroupConversationParticipant {
+  userId: string;
+  displayName: string | null;
+  avatarUrl: string | null;
+  participantUserId: string;
+}
+
+export interface GroupConversationMessage {
+  id: string;
+  conversationId: string;
+  senderUserId: string;
+  senderDisplayName: string;
+  text: string;
   sentAtUtc: string;
 }
 
-export interface CopyDuetAsGroupResult {
+export interface OpenGroupConversationResult {
   conversationId: string;
   name: string;
-  participants: ConversationParticipant[];
-}
-
-interface GetConversationMessagesResponseDto {
-  items?: ConversationMessageDto[];
-  Items?: ConversationMessageDto[];
-  nextBeforeSentAtUtc?: string | null;
-  NextBeforeSentAtUtc?: string | null;
-  nextBeforeMessageId?: string | null;
-  NextBeforeMessageId?: string | null;
-  hasMore?: boolean;
-  HasMore?: boolean;
-}
-
-export interface ConversationMessagesResult {
-  messages: ConversationMessage[];
+  participants: GroupConversationParticipant[];
+  messages: GroupConversationMessage[];
   nextBeforeSentAtUtc: string | null;
   nextBeforeMessageId: string | null;
   hasMore: boolean;
 }
 
+function resolveContacts(response: GetContactsResponseDto): ContactDto[] {
+  return response.contacts ?? response.Contacts ?? [];
+}
+
+function mapContact(dto: ContactDto): Contact {
+  const userId = dto.contactUserId ?? dto.ContactUserId ?? dto.id ?? dto.Id ?? crypto.randomUUID();
+
+  return {
+    id: dto.id ?? dto.Id ?? crypto.randomUUID(),
+    userId,
+    displayName: dto.displayName ?? dto.DisplayName ?? "Nowy kontakt",
+    email: dto.email ?? dto.Email ?? null,
+    status: dto.status ?? dto.Status ?? "Invisible",
+    conversationId: dto.conversationId ?? dto.ConversationId ?? null,
+  };
+}
+
 function mapParticipant(dto: ConversationParticipantDto): ConversationParticipant {
+  return {
+    userId: dto.userId ?? dto.UserId ?? "",
+    displayName: dto.displayName ?? dto.DisplayName ?? null,
+    avatarUrl: dto.avatarUrl ?? dto.AvatarUrl ?? null,
+    participantUserId: dto.participantUserId ?? dto.ParticipantUserId ?? "",
+  };
+}
+
+function mapGroupParticipant(dto: ConversationParticipantDto): GroupConversationParticipant {
   return {
     userId: dto.userId ?? dto.UserId ?? "",
     displayName: dto.displayName ?? dto.DisplayName ?? null,
@@ -146,6 +183,25 @@ function mapMessage(dto: ConversationMessageDto): ConversationMessage {
     text: dto.text ?? dto.Text ?? "",
     sentAtUtc: dto.sentAtUtc ?? dto.SentAtUtc ?? new Date().toISOString(),
   };
+}
+
+function mapGroupMessage(dto: ConversationMessageDto): GroupConversationMessage {
+  return {
+    id: dto.id ?? dto.Id ?? crypto.randomUUID(),
+    conversationId: dto.conversationId ?? dto.ConversationId ?? "",
+    senderUserId: dto.senderUserId ?? dto.SenderUserId ?? "",
+    senderDisplayName: dto.senderDisplayName ?? dto.SenderDisplayName ?? "",
+    text: dto.text ?? dto.Text ?? "",
+    sentAtUtc: dto.sentAtUtc ?? dto.SentAtUtc ?? new Date().toISOString(),
+  };
+}
+
+export async function fetchContacts(accessToken: string): Promise<Contact[]> {
+  const response = await getJson<GetContactsResponseDto>("/api/aggregate/contacts", {
+    accessToken,
+  });
+
+  return resolveContacts(response).map(mapContact);
 }
 
 export async function openDuetConversation(
@@ -176,21 +232,14 @@ export async function openDuetConversation(
   };
 }
 
-export async function getConversationMessages(
+export async function openGroupConversation(
   conversationId: string,
-  cursor: { beforeSentAtUtc: string | null; beforeMessageId: string | null },
   accessToken: string,
   signal?: AbortSignal,
-): Promise<ConversationMessagesResult> {
-  const params = new URLSearchParams({ limit: "10" });
-
-  if (cursor.beforeSentAtUtc && cursor.beforeMessageId) {
-    params.set("beforeSentAtUtc", cursor.beforeSentAtUtc);
-    params.set("beforeMessageId", cursor.beforeMessageId);
-  }
-
-  const response = await getJson<GetConversationMessagesResponseDto>(
-    `/api/chat/conversations/${encodeURIComponent(conversationId)}/messages?${params.toString()}`,
+): Promise<OpenGroupConversationResult> {
+  const response = await putJson<OpenGroupConversationResponseDto, OpenGroupConversationPayload>(
+    "/api/aggregate/conversations/group/open",
+    { conversationId },
     {
       accessToken,
       signal,
@@ -198,54 +247,12 @@ export async function getConversationMessages(
   );
 
   return {
-    messages: (response.items ?? response.Items ?? []).map(mapMessage),
+    conversationId: response.conversationId ?? response.ConversationId ?? conversationId,
+    name: response.name ?? response.Name ?? "",
+    participants: (response.participants ?? response.Participants ?? []).map(mapGroupParticipant),
+    messages: (response.messages ?? response.Messages ?? []).map(mapGroupMessage),
     nextBeforeSentAtUtc: response.nextBeforeSentAtUtc ?? response.NextBeforeSentAtUtc ?? null,
     nextBeforeMessageId: response.nextBeforeMessageId ?? response.NextBeforeMessageId ?? null,
     hasMore: response.hasMore ?? response.HasMore ?? false,
-  };
-}
-
-export async function sendChatMessage(
-  payload: SendChatMessagePayload,
-  accessToken: string,
-  signal?: AbortSignal,
-): Promise<SendChatMessageResult> {
-  const response = await putJson<SendChatMessageResponseDto, SendChatMessagePayload>(
-    "/api/chat/messages",
-    payload,
-    {
-      accessToken,
-      signal,
-    },
-  );
-
-  return {
-    messageId: response.messageId ?? response.MessageId ?? payload.id,
-    sentAtUtc: response.sentAtUtc ?? response.SentAtUtc ?? new Date().toISOString(),
-  };
-}
-
-export async function copyDuetAsGroup(
-  partnerUserId: string,
-  accessToken: string,
-  signal?: AbortSignal,
-): Promise<CopyDuetAsGroupResult> {
-  const newGroupConversationId = crypto.randomUUID();
-  const response = await postJson<CopyDuetAsGroupResponseDto, CopyDuetAsGroupPayload>(
-    "/api/conversations/duet/copy-as-group",
-    {
-      newGroupConversationId,
-      partnerUserId,
-    },
-    {
-      accessToken,
-      signal,
-    },
-  );
-
-  return {
-    conversationId: response.conversationId ?? response.ConversationId ?? newGroupConversationId,
-    name: response.name ?? response.Name ?? "",
-    participants: (response.participants ?? response.Participants ?? []).map(mapParticipant),
   };
 }

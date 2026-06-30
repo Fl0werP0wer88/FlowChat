@@ -1,4 +1,4 @@
-import { getJson } from "../../api/httpClient";
+import { getJson, postJson } from "./httpClient";
 
 interface SearchUsersRequest {
   firstName?: string;
@@ -25,6 +25,10 @@ interface GetUserProfilesResponseDto {
 
 interface GetUserProfileResponseDto {
   userProfile: UserProfileSearchDto;
+}
+
+interface ConfirmEmailVerificationPayload {
+  token: string;
 }
 
 export interface SearchUsersCriteria {
@@ -79,7 +83,6 @@ function mapSearchUserResult(dto: UserProfileSearchDto): SearchUserResult {
     organization: dto.organization ?? null,
   };
 }
-
 
 export async function searchUsers(
   criteria: SearchUsersCriteria,
@@ -170,4 +173,10 @@ export async function getUserProfileByFriendlyUserId(
   );
 
   return mapSearchUserResult(response.userProfile);
+}
+
+export async function confirmEmailVerification(token: string): Promise<void> {
+  await postJson<unknown, ConfirmEmailVerificationPayload>("/api/userprofiles/email-verification/confirm", {
+    token: token.trim(),
+  });
 }

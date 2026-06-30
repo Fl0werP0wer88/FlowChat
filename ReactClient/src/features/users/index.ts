@@ -1,2 +1,2 @@
 export { UsersPicker } from "./components/organisms/UsersPicker";
-export type { SearchUserResult, SearchUsersCriteria } from "./api";
+export type { SearchUserResult, SearchUsersCriteria } from "../../api/userProfileApi";

@@ -4,7 +4,7 @@ import { Button } from "../../components/UI/atoms/Button";
 import { AlertMessage } from "../../components/UI/molecules/AlertMessage";
 import { AuthTemplate } from "../../components/templates/AuthTemplate";
 import type { AuthNotice } from "../../types/auth";
-import { confirmEmailVerification } from "./api";
+import { confirmEmailVerification } from "../../api/userProfileApi";
 
 type VerificationStatus = "pending" | "success" | "error";
 

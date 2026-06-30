@@ -1,4 +1,4 @@
-import { postForm, putJson } from "../../../api/httpClient";
+import { postForm, putJson } from "./httpClient";
 import type {
   AuthSession,
   AuthTokenResponseDto,
@@ -6,7 +6,7 @@ import type {
   LoginResponseDto,
   RefreshTokenResponseDto,
   RegisterFormValues,
-} from "../../../types/auth";
+} from "../types/auth";
 
 interface RegisterPayload {
   id: string;

@@ -10,7 +10,7 @@ import {
   searchUsers,
   type SearchUserResult,
   type SearchUsersCriteria,
-} from "../../api";
+} from "../../../../api/userProfileApi";
 import { UsersPickerFooter } from "../molecules/UsersPickerFooter";
 import { UsersPickerHeader } from "../molecules/UsersPickerHeader";
 

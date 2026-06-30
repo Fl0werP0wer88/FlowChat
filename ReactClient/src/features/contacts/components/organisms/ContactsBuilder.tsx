@@ -1,4 +1,4 @@
-import type { SearchUserResult } from "../../../users/api";
+import type { SearchUserResult } from "../../../../api/userProfileApi";
 import { UsersPicker } from "../../../users";
 
 interface ContactsBuilderProps {

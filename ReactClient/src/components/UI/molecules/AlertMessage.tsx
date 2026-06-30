@@ -1,4 +1,4 @@
-import type { AuthNotice } from "../../types/auth";
+import type { AuthNotice } from "../../../types/auth";
 
 interface AlertMessageProps {
   notice: AuthNotice | null;

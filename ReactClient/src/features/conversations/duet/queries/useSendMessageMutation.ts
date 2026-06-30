@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { sendChatMessage } from "../api";
+import { sendChatMessage } from "../../../../api/chatApi";
 import { type ConversationCacheEntry, createMessage, sortMessages } from "./conversationCache";
 
 interface SendMessageVariables {

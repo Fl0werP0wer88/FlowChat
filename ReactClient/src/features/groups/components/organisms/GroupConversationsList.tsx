@@ -1,4 +1,4 @@
-import type { GroupConversation } from "../../api";
+import type { GroupConversation } from "../../../../api/chatApi";
 import { GroupConversationListItem } from "../molecules/GroupConversationListItem";
 
 interface GroupConversationsListProps {

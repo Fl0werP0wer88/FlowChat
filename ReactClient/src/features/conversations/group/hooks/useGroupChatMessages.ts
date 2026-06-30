@@ -5,7 +5,7 @@ import { useAuthStore } from "../../../../store/authStore";
 import type { RealtimeChatMessage } from "../../../../types/realtime";
 import { resolveOwnerUserId } from "../../../../utils/authUtils";
 import type { GroupConversation } from "../../../groups";
-import { getGroupConversationMessages } from "../api";
+import { getGroupConversationMessages } from "../../../../api/chatApi";
 import type { GroupConversationCacheEntry } from "../queries/groupConversationCache";
 import {
   createGroupMessage,

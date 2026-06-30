@@ -1,5 +1,5 @@
-import { getJson, putJson } from "../../api/httpClient";
-import type { UserStatus } from "../../types/realtime";
+import { getJson, putJson } from "./httpClient";
+import type { UserStatus } from "../types/realtime";
 
 interface ChangePresenceStatusRequest {
   status: UserStatus;

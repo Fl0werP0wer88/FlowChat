@@ -1,4 +1,4 @@
-import type { SearchUserResult } from "../../api";
+import type { SearchUserResult } from "../../../../api/userProfileApi";
 
 interface UsersPickerHeaderProps {
   onRemoveMember: (userProfileId: string) => void;

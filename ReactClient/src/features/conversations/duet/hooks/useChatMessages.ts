@@ -5,7 +5,7 @@ import { useAuthStore } from "../../../../store/authStore";
 import type { Contact } from "../../../../types/contacts";
 import type { RealtimeChatMessage } from "../../../../types/realtime";
 import { resolveOwnerUserId } from "../../../../utils/authUtils";
-import { getConversationMessages } from "../api";
+import { getConversationMessages } from "../../../../api/chatApi";
 import type { ConversationCacheEntry } from "../queries/conversationCache";
 import { createMessage, mapConversationMessage, sortMessages } from "../queries/conversationCache";
 import { useConversationQuery } from "../queries/useConversationQuery";

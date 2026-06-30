@@ -6,7 +6,7 @@ import { GroupBuilder, GroupConversationsList } from "../../../../features/group
 import { ContactsBuilder, ContactsList } from "../../../../features/contacts";
 import { SidebarHeader } from "./SidebarHeader";
 import type { SidebarTab } from "./SidebarHeader";
-import type { SearchUserResult } from "../../../../features/users/api";
+import type { SearchUserResult } from "../../../../api/userProfileApi";
 
 
 export interface GroupBuilderRequest {

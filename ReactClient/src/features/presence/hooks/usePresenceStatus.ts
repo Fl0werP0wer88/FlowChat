@@ -1,6 +1,6 @@
 import { useEffect, useEffectEvent, useRef, useState } from "react";
 import { useAuthStore } from "../../../store/authStore";
-import { changePresenceStatus } from "../api";
+import { changePresenceStatus } from "../../../api/presenceApi";
 import type { ManualUserStatus, UserStatus } from "../../../types/realtime";
 import { usePresencePreferencesQuery } from "../queries/usePresencePreferencesQuery";
 

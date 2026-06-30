@@ -2,7 +2,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "../../../store/authStore";
 import type { GroupConversationChangedEvent } from "../../../types/realtime";
 import { resolveOwnerUserId } from "../../../utils/authUtils";
-import type { GroupConversation } from "../api";
+import type { GroupConversation } from "../../../api/chatApi";
 import { useGroupConversationsQuery } from "../queries/useGroupConversationsQuery";
 
 export interface UseGroupConversationsResult {
