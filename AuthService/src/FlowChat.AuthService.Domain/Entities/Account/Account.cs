@@ -1,4 +1,3 @@
-using FlowChat.AuthService.Domain.Common.Constants;
 using FlowChat.AuthService.Domain.Entities.Account.Events;
 using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
@@ -61,7 +60,6 @@ public sealed class Account : AggregateRootBase<Account>
             NormalizeOptional(firstName),
             NormalizeOptional(lastName),
             NormalizeOptional(organization)));
-        account.MarkAggregateStateChanged(AggregateTypeNames.Account, account.CreateSnapshot);
 
         return account;
     }
@@ -107,7 +105,6 @@ public sealed class Account : AggregateRootBase<Account>
 
         IsEmailConfirmed = true;
         AddDomainEvent(new AccountConfirmedDomainEvent(Id));
-        MarkAggregateStateChanged(AggregateTypeNames.Account, CreateSnapshot);
     }
 
     public void ChangeAuthEmail(EmailAddress email, string securityStamp)
@@ -128,7 +125,6 @@ public sealed class Account : AggregateRootBase<Account>
     public void RecordFailedLogin()
     {
         AccessFailedCount++;
-        MarkAggregateStateChanged(AggregateTypeNames.Account, CreateSnapshot);
     }
 
     public void ResetFailedLogins()
@@ -140,7 +136,6 @@ public sealed class Account : AggregateRootBase<Account>
         }
 
         AccessFailedCount = 0;
-        MarkAggregateStateChanged(AggregateTypeNames.Account, CreateSnapshot);
     }
 
     public void RotateSecurityStamp(string securityStamp)
@@ -148,18 +143,6 @@ public sealed class Account : AggregateRootBase<Account>
         // A new security stamp invalidates all previously issued tokens that embed the old stamp.
         // Must be called on password change, email change, or explicit sign-out-everywhere.
         SecurityStamp = NormalizeRequired(securityStamp, nameof(securityStamp));
-        MarkAggregateStateChanged(AggregateTypeNames.Account, CreateSnapshot);
-    }
-
-    private AccountSnapshot CreateSnapshot()
-    {
-        return new AccountSnapshot(
-            Id.Value,
-            FriendlyUserId.Value,
-            Email.Value,
-            SecurityStamp,
-            AccessFailedCount,
-            IsEmailConfirmed);
     }
 
     private static string NormalizeRequired(string value, string paramName)

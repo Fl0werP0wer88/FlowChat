@@ -1,8 +1,5 @@
-using FlowChat.Shared.Domain;
-using FlowChat.Shared.Domain.ValueObjects;
-using FlowChat.Shared.Persistance.Auditing;
-using FlowChat.SocialGraphService.Domain.Entities.Contact;
 using FlowChat.SocialGraphService.Persistence;
+using FlowChat.SocialGraphService.Persistence.Entities;
 using FlowChat.SocialGraphService.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
 
@@ -16,40 +13,50 @@ public sealed class ContactReadRepositoryTests
         var databaseName = Guid.NewGuid().ToString();
         var ownerUserId = Guid.NewGuid();
         var anotherOwnerUserId = Guid.NewGuid();
-        Guid newerContactId;
-        Guid olderContactId;
+        var olderContactId = Guid.NewGuid();
+        var newerContactId = Guid.NewGuid();
 
         await using (var seedContext = CreateDbContext(databaseName))
         {
-            var olderContact = Contact.Create(
-                Id<Contact>.New(),
-                ownerUserId,
-                Guid.NewGuid(),
-                "Older Contact",
-                "Older",
-                "Person",
-                PhoneNumber.Create("+48111111111"),
-                EmailAddress.Create("older@example.com"));
-
-            await Task.Delay(20);
-
-            var newerContact = Contact.Create(
-                Id<Contact>.New(),
-                ownerUserId,
-                Guid.NewGuid(),
-                "Newer Contact",
-                isBlocked: true);
-
-            var ignoredContact = Contact.Create(
-                Id<Contact>.New(),
-                anotherOwnerUserId,
-                Guid.NewGuid(),
-                "Ignored Contact");
-
-            olderContactId = olderContact.Id.Value;
-            newerContactId = newerContact.Id.Value;
-
-            seedContext.Contacts.AddRange(olderContact, newerContact, ignoredContact);
+            seedContext.ContactReads.AddRange(
+                new ContactReadEntity
+                {
+                    Id = olderContactId,
+                    OwnerUserId = ownerUserId,
+                    ContactUserId = Guid.NewGuid(),
+                    DisplayName = "Older Contact",
+                    FirstName = "Older",
+                    LastName = "Person",
+                    PhoneNumber = "+48111111111",
+                    EmailAddress = "older@example.com",
+                    CreatedAtUtc = new DateTimeOffset(2026, 4, 24, 8, 0, 0, TimeSpan.Zero)
+                },
+                new ContactReadEntity
+                {
+                    Id = newerContactId,
+                    OwnerUserId = ownerUserId,
+                    ContactUserId = Guid.NewGuid(),
+                    DisplayName = "Newer Contact",
+                    IsBlocked = true,
+                    CreatedAtUtc = new DateTimeOffset(2026, 4, 24, 9, 0, 0, TimeSpan.Zero)
+                },
+                new ContactReadEntity
+                {
+                    Id = Guid.NewGuid(),
+                    OwnerUserId = anotherOwnerUserId,
+                    ContactUserId = Guid.NewGuid(),
+                    DisplayName = "Ignored Contact",
+                    CreatedAtUtc = new DateTimeOffset(2026, 4, 24, 10, 0, 0, TimeSpan.Zero)
+                },
+                new ContactReadEntity
+                {
+                    Id = Guid.NewGuid(),
+                    OwnerUserId = ownerUserId,
+                    ContactUserId = Guid.NewGuid(),
+                    DisplayName = "Deleted Contact",
+                    CreatedAtUtc = new DateTimeOffset(2026, 4, 24, 11, 0, 0, TimeSpan.Zero),
+                    DeletedAt = new DateTimeOffset(2026, 4, 24, 12, 0, 0, TimeSpan.Zero)
+                });
             await seedContext.SaveChangesAsync();
         }
 
@@ -78,7 +85,6 @@ public sealed class ContactReadRepositoryTests
     {
         var options = new DbContextOptionsBuilder<AppDbContext>()
             .UseInMemoryDatabase(databaseName)
-            .AddInterceptors(new EntityBaseSaveChangesInterceptor())
             .Options;
 
         var context = new AppDbContext(options);

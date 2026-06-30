@@ -101,18 +101,10 @@ public sealed class UpdateProfileControllerTests(UserProfileApiFactory factory)
     private async Task<Guid> CreateUserProfileAsync()
     {
         var userId = Guid.NewGuid();
-        var request = new
-        {
-            UserId = userId,
-            FriendlyUserId = $"updateuser-{userId:N}",
-            Email = $"update_{userId:N}@example.com"
-        };
-        var httpRequest = new HttpRequestMessage(HttpMethod.Post, "/internal/userprofiles/initial")
-        {
-            Content = JsonContent.Create(request)
-        };
-        httpRequest.Headers.Add("X-Internal-Api-Key", UserProfileApiFactory.InternalApiKey);
-        await _client.SendAsync(httpRequest);
+        await factory.CreateInitialUserProfileAsync(
+            userId,
+            $"updateuser-{userId:N}",
+            $"update_{userId:N}@example.com");
         return userId;
     }
 }

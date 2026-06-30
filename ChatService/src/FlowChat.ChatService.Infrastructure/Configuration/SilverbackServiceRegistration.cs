@@ -10,14 +10,16 @@ using Silverback.Messaging.Configuration.Kafka;
 
 namespace FlowChat.ChatService.Infrastructure.Kafka;
 
-public static class SilverbackServiceRegistration
+public static class ApiSilverbackServiceRegistration
 {
     public static IServiceCollection AddApiSilverbackMessaging(
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        var producerOptions = configuration.GetSection(new ChatMessageSentProducerSettingsSection().SectionName)
+        var chatMessageSentProducerOptions = configuration.GetSection(new ChatMessageSentProducerSettingsSection().SectionName)
             .Get<ChatMessageSentProducerSettingsSection>() ?? new ChatMessageSentProducerSettingsSection();
+        var groupConversationChangedProducerOptions = configuration.GetSection(new GroupConversationChangedProducerSettingsSection().SectionName)
+            .Get<GroupConversationChangedProducerSettingsSection>() ?? new GroupConversationChangedProducerSettingsSection();
 
         services.AddSilverback()
             .AddSingletonBrokerBehavior<CustomSpanAttributesProducerBehavior>()
@@ -28,10 +30,15 @@ public static class SilverbackServiceRegistration
             })
             .AddKafkaClients(clients =>
             {
-                clients.WithBootstrapServers(producerOptions.BootstrapServers)
+                clients.WithBootstrapServers(chatMessageSentProducerOptions.BootstrapServers)
                     .AddProducer(producer => producer
                         .Produce<ChatMessageSentIntegrationEvent>("chat-message-sent", endpoint => endpoint
-                            .ProduceTo(producerOptions.Topic)
+                            .ProduceTo(chatMessageSentProducerOptions.Topic)
+                            .SerializeAsJson(serializer => serializer.SetTypeHeader())
+                            .StoreToOutbox(outbox => outbox.UseEntityFramework<AppDbContext>())))
+                    .AddProducer(producer => producer
+                        .Produce<GroupConversationChangedIntegrationEvent>("group-conversation-changed", endpoint => endpoint
+                            .ProduceTo(groupConversationChangedProducerOptions.Topic)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())
                             .StoreToOutbox(outbox => outbox.UseEntityFramework<AppDbContext>())));
             });

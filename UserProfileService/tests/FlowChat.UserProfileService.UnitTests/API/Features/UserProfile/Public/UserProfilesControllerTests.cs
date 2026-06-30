@@ -47,8 +47,7 @@ public sealed class UserProfilesControllerTests
         var emailId = Guid.NewGuid();
         _mediatorMock
             .Setup(x => x.Send(It.IsAny<AddEmailCommand>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(FlowChatResult<IdempotentCommandResult<Guid>>.Success(
-                new IdempotentCommandResult<Guid>(emailId, WasAlreadyProcessed: false)));
+            .ReturnsAsync(FlowChatResult<Guid>.Success(emailId));
 
         var controller = SetupController(new AddEmailController(_mediatorMock.Object), userId);
 
@@ -61,33 +60,13 @@ public sealed class UserProfilesControllerTests
     }
 
     [Fact]
-    public async Task AddEmail_ReturnsOk_WhenAlreadyProcessed()
-    {
-        var userId = Guid.NewGuid();
-        var emailId = Guid.NewGuid();
-        _mediatorMock
-            .Setup(x => x.Send(It.IsAny<AddEmailCommand>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(FlowChatResult<IdempotentCommandResult<Guid>>.Success(
-                new IdempotentCommandResult<Guid>(emailId, WasAlreadyProcessed: true)));
-
-        var controller = SetupController(new AddEmailController(_mediatorMock.Object), userId);
-
-        var result = await controller.AddEmail(new AddEmailRequest(Guid.NewGuid(), "john@example.com"), CancellationToken.None);
-
-        var ok = result.Should().BeOfType<OkObjectResult>().Subject;
-        var response = ok.Value.Should().BeOfType<AddEmailResponse>().Subject;
-        response.EmailId.Should().Be(emailId);
-    }
-
-    [Fact]
     public async Task AddPhone_ReturnsCreated_WithNewPhoneId()
     {
         var userId = Guid.NewGuid();
         var phoneId = Guid.NewGuid();
         _mediatorMock
             .Setup(x => x.Send(It.IsAny<AddPhoneCommand>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(FlowChatResult<IdempotentCommandResult<Guid>>.Success(
-                new IdempotentCommandResult<Guid>(phoneId, WasAlreadyProcessed: false)));
+            .ReturnsAsync(FlowChatResult<Guid>.Success(phoneId));
 
         var controller = SetupController(new AddPhoneController(_mediatorMock.Object), userId);
 
@@ -96,25 +75,6 @@ public sealed class UserProfilesControllerTests
         var created = result.Should().BeOfType<ObjectResult>().Subject;
         created.StatusCode.Should().Be(StatusCodes.Status201Created);
         var response = created.Value.Should().BeOfType<AddPhoneResponse>().Subject;
-        response.PhoneId.Should().Be(phoneId);
-    }
-
-    [Fact]
-    public async Task AddPhone_ReturnsOk_WhenAlreadyProcessed()
-    {
-        var userId = Guid.NewGuid();
-        var phoneId = Guid.NewGuid();
-        _mediatorMock
-            .Setup(x => x.Send(It.IsAny<AddPhoneCommand>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(FlowChatResult<IdempotentCommandResult<Guid>>.Success(
-                new IdempotentCommandResult<Guid>(phoneId, WasAlreadyProcessed: true)));
-
-        var controller = SetupController(new AddPhoneController(_mediatorMock.Object), userId);
-
-        var result = await controller.AddPhone(new AddPhoneRequest(Guid.NewGuid(), "+48123123123"), CancellationToken.None);
-
-        var ok = result.Should().BeOfType<OkObjectResult>().Subject;
-        var response = ok.Value.Should().BeOfType<AddPhoneResponse>().Subject;
         response.PhoneId.Should().Be(phoneId);
     }
 
@@ -142,7 +102,7 @@ public sealed class UserProfilesControllerTests
     {
         _mediatorMock
             .Setup(x => x.Send(It.IsAny<AddEmailCommand>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(FlowChatResult<IdempotentCommandResult<Guid>>.Failure(
+            .ReturnsAsync(FlowChatResult<Guid>.Failure(
                 DomainError.Conflict("Email 'john@example.com' is already taken.")));
 
         var controller = SetupController(new AddEmailController(_mediatorMock.Object), Guid.NewGuid());

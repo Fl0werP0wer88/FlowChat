@@ -2,31 +2,32 @@ using FlowChat.Shared.Domain;
 using FlowChat.SocialGraphService.Domain.Entities.Contact;
 using FlowChat.SocialGraphService.Domain.Entities.Contact.Events;
 using FluentAssertions;
+using UserProfileMarker = FlowChat.SocialGraphService.Domain.Entities.UserProfiles.UserProfile;
 
 namespace FlowChat.SocialGraphService.UnitTests;
 
 public sealed class ContactTests
 {
     [Fact]
-    public void Create_WhenOwnerUserIdIsEmpty_ThrowsArgumentOutOfRangeException()
+    public void Create_WhenOwnerUserIdIsEmpty_ThrowsArgumentException()
     {
-        var act = () => Contact.Create(Id<Contact>.New(), Guid.Empty, Guid.NewGuid(), "John Doe");
+        var act = () => Id<UserProfileMarker>.FromGuid(Guid.Empty);
 
-        act.Should().Throw<ArgumentOutOfRangeException>();
+        act.Should().Throw<ArgumentException>();
     }
 
     [Fact]
-    public void Create_WhenContactUserIdIsEmpty_ThrowsArgumentOutOfRangeException()
+    public void Create_WhenContactUserIdIsEmpty_ThrowsArgumentException()
     {
-        var act = () => Contact.Create(Id<Contact>.New(), Guid.NewGuid(), Guid.Empty, "John Doe");
+        var act = () => Id<UserProfileMarker>.FromGuid(Guid.Empty);
 
-        act.Should().Throw<ArgumentOutOfRangeException>();
+        act.Should().Throw<ArgumentException>();
     }
 
     [Fact]
     public void Create_WhenOwnerAndContactUsersAreSame_ThrowsArgumentException()
     {
-        var userId = Guid.NewGuid();
+        var userId = Id<UserProfileMarker>.New();
 
         var act = () => Contact.Create(Id<Contact>.New(), userId, userId, "John Doe");
 
@@ -37,7 +38,7 @@ public sealed class ContactTests
     [Fact]
     public void Create_WhenContactIsCreated_RaisesContactAddedDomainEvent()
     {
-        var contact = Contact.Create(Id<Contact>.New(), Guid.NewGuid(), Guid.NewGuid(), "John Doe");
+        var contact = Contact.Create(Id<Contact>.New(), Id<UserProfileMarker>.New(), Id<UserProfileMarker>.New(), "John Doe");
 
         contact.DomainEvents.OfType<ContactAddedDomainEvent>().Should().ContainSingle();
     }
@@ -45,7 +46,7 @@ public sealed class ContactTests
     [Fact]
     public void MarkDeleted_WhenCalled_RaisesContactDeletedDomainEvent()
     {
-        var contact = Contact.Create(Id<Contact>.New(), Guid.NewGuid(), Guid.NewGuid(), "John Doe");
+        var contact = Contact.Create(Id<Contact>.New(), Id<UserProfileMarker>.New(), Id<UserProfileMarker>.New(), "John Doe");
         contact.PopDomainEvents();
 
         contact.MarkDeleted();

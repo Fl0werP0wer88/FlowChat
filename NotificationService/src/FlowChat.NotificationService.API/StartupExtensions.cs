@@ -12,9 +12,9 @@ public static class StartupExtensions
     public static WebApplication ConfigureServices(this WebApplicationBuilder builder)
     {
         builder.Services.AddApiApplicationServices();
-        builder.Services.AddInfrastructureServices(builder.Configuration);
-        builder.Services.AddPersistenceServices(builder.Configuration);
-        builder.AddFlowChatOpenTelemetry(typeof(ApplicationServiceRegistration).Assembly);
+        builder.Services.AddApiInfrastructureServices(builder.Configuration);
+        builder.Services.AddApiPersistenceServices(builder.Configuration);
+        builder.AddFlowChatOpenTelemetry(typeof(ApiApplicationServiceRegistration).Assembly);
 
         builder.Services.AddFlowChatJwtAuthentication(builder.Configuration);
         builder.Services.AddControllers();

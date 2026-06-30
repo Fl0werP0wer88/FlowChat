@@ -15,9 +15,10 @@ public sealed class UserPresencePreferencesIntegrationTests(PresenceApiFactory f
     private readonly HttpClient _client = factory.CreateClient();
 
     [Theory]
+    [InlineData(PresenceStatus.Active)]
     [InlineData(PresenceStatus.Busy)]
     [InlineData(PresenceStatus.Invisible)]
-    public async Task ChangeStatus_ToManualStatus_PersistsPreference(PresenceStatus status)
+    public async Task ChangeStatus_ToExplicitStatus_PersistsPreference(PresenceStatus status)
     {
         var userId = Guid.NewGuid();
 
@@ -41,7 +42,7 @@ public sealed class UserPresencePreferencesIntegrationTests(PresenceApiFactory f
     }
 
     [Fact]
-    public async Task ChangeStatus_ToActive_DeletesPreference()
+    public async Task ChangeStatus_FromManualStatusToActive_UpdatesPreferenceToActive()
     {
         var userId = Guid.NewGuid();
 
@@ -63,13 +64,15 @@ public sealed class UserPresencePreferencesIntegrationTests(PresenceApiFactory f
 
         response.StatusCode.Should().Be(HttpStatusCode.Accepted);
 
-        var preferredStatus = await factory.WithDbContextAsync(async db =>
+        var preference = await factory.WithDbContextAsync(async db =>
         {
             var entity = await db.UserPresencePreferences.FindAsync(Id<UserPresencePreferences>.FromGuid(userId));
-            return entity?.PreferredStatus;
+            return entity;
         });
 
-        preferredStatus.Should().BeNull();
+        preference.Should().NotBeNull();
+        preference!.IsDeleted.Should().BeFalse();
+        preference.PreferredStatus.Should().Be(PresenceStatus.Active);
     }
 
     [Theory]
@@ -83,14 +86,10 @@ public sealed class UserPresencePreferencesIntegrationTests(PresenceApiFactory f
         var observerUserId = Guid.NewGuid();
         await factory.WithDbContextAsync(async db =>
         {
-            await db.ContactObserverProjections.AddAsync(new ContactObserverProjectionEntity
+            await db.ContactObserverProjections.AddAsync(new ContactObserverReadModelEntity
             {
                 ObservedUserId = userId,
-                ObserverUserId = observerUserId,
-                CreatedBy = "test",
-                CreatedAtUtc = DateTimeOffset.UtcNow,
-                LastModifiedBy = "test",
-                LastModifiedAtUtc = DateTimeOffset.UtcNow
+                ObserverUserId = observerUserId
             });
             await db.SaveChangesAsync();
         });

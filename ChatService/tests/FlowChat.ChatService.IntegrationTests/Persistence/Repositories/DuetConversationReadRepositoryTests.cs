@@ -4,7 +4,6 @@ using FlowChat.ChatService.Persistence;
 using FlowChat.ChatService.Persistence.Entities;
 using FlowChat.ChatService.Persistence.Repositories;
 using FlowChat.Shared.Domain;
-using FlowChat.Shared.Persistance.Auditing;
 using FluentAssertions;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
@@ -24,14 +23,15 @@ public sealed class DuetConversationReadRepositoryTests
         var conversation = FlowChat.ChatService.Domain.Entities.Conversation.DuetConversation.Create(
             createdByUserId: requestingUserId,
             partnerUserId: partnerUserId);
+        MarkCreated(conversation);
 
         await using (var seedContext = CreateDbContext(connection))
         {
             seedContext.Conversations.Add(conversation);
             seedContext.DuetConversations.Add(CreateDuetConversation(requestingUserId, partnerUserId, conversation.Id.Value));
             seedContext.UserProfileProjections.AddRange(
-                CreateProfile(requestingUserId, "requester", "Requester", "requester.png"),
-                CreateProfile(partnerUserId, "partner", "Partner", "partner.png"));
+                CreateProfile(requestingUserId, "requester", firstName: "Requester", avatarUrl: "requester.png"),
+                CreateProfile(partnerUserId, "partner", firstName: "Partner", avatarUrl: "partner.png"));
 
             await seedContext.SaveChangesAsync();
         }
@@ -62,12 +62,20 @@ public sealed class DuetConversationReadRepositoryTests
         var conversation = FlowChat.ChatService.Domain.Entities.Conversation.DuetConversation.Create(
             createdByUserId: requestingUserId,
             partnerUserId: partnerUserId);
+        MarkCreated(conversation);
 
         await using (var seedContext = CreateDbContext(connection))
         {
             seedContext.Conversations.Add(conversation);
             seedContext.DuetConversations.Add(CreateDuetConversation(requestingUserId, partnerUserId, conversation.Id.Value));
-            seedContext.UserProfileProjections.Add(CreateProfile(requestingUserId, "requester", "Requester", "requester.png"));
+            seedContext.UserProfileProjections.AddRange(
+                CreateProfile(requestingUserId, "requester", firstName: "Requester", avatarUrl: "requester.png"),
+                CreateProfile(
+                    partnerUserId,
+                    "deleted-partner",
+                    firstName: "Deleted",
+                    avatarUrl: "deleted.png",
+                    deletedAt: new DateTimeOffset(2026, 4, 24, 12, 0, 0, TimeSpan.Zero)));
 
             await seedContext.SaveChangesAsync();
         }
@@ -128,18 +136,21 @@ public sealed class DuetConversationReadRepositoryTests
         };
     }
 
-    private static UserProfileProjectionEntity CreateProfile(
+    private static UserProfileReadModelEntity CreateProfile(
         Guid userId,
         string friendlyUserId,
-        string? displayName,
-        string? avatarUrl) =>
+        string? firstName = null,
+        string? lastName = null,
+        string? avatarUrl = null,
+        DateTimeOffset? deletedAt = null) =>
         new()
         {
             UserId = userId,
             FriendlyUserId = friendlyUserId,
-            DisplayName = displayName,
+            FirstName = firstName,
+            LastName = lastName,
             AvatarUrl = avatarUrl,
-            UpdatedAtUtc = new DateTimeOffset(2026, 4, 21, 10, 0, 0, TimeSpan.Zero)
+            SourceDeletedAtUtc = deletedAt
         };
 
     private static (Guid First, Guid Second) Normalize(Guid userId1, Guid userId2) =>
@@ -149,11 +160,16 @@ public sealed class DuetConversationReadRepositoryTests
     {
         var options = new DbContextOptionsBuilder<AppDbContext>()
             .UseSqlite(connection)
-            .AddInterceptors(new EntityBaseSaveChangesInterceptor())
             .Options;
 
         var context = new AppDbContext(options);
         context.Database.EnsureCreated();
         return context;
+    }
+
+    private static void MarkCreated(Conversation conversation)
+    {
+        conversation.SetCreated("integration-test");
+        conversation.SetUpdated("integration-test");
     }
 }

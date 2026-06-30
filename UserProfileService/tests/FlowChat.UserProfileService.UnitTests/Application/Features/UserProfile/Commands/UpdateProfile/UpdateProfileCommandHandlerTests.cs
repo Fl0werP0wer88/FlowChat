@@ -1,4 +1,6 @@
+using FlowChat.Core.Messaging;
 using FlowChat.Shared.Application;
+using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2.BeforeSaveProcessors;
 using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
 using FlowChat.UserProfileService.Application.Contracts.Persistence;
@@ -13,7 +15,8 @@ public sealed class UpdateProfileCommandHandlerTests
 {
     private readonly Mock<IUserProfileWriteRepository> _writeRepositoryMock = new();
     private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
-    private readonly Mock<IDomainEventDispatcher> _dispatcherMock = new();
+    private readonly Mock<ILocalEventDispatcher> _dispatcherMock = new();
+    private readonly Mock<IAggregateBeforeSaveProcessor<UpdateProfileCommand, UserProfile>> _beforeSaveProcessorMock = new();
     private readonly UpdateProfileCommandHandler _handler;
 
     public UpdateProfileCommandHandlerTests()
@@ -23,40 +26,34 @@ public sealed class UpdateProfileCommandHandlerTests
             .ReturnsAsync((UserProfile?)null);
 
         _unitOfWorkMock
-            .Setup(x => x.ExecuteInTransactionAsync(
+            .Setup(x => x.ExecuteCommandInTransactionAsync(
                 It.IsAny<Func<CancellationToken, Task<FlowChatResult<Guid>>>>(),
-                It.IsAny<Func<FlowChatResult<Guid>, CancellationToken, Task<FlowChatResult<Guid>>>>(),
-                It.IsAny<Func<Exception, CancellationToken, Task>>(),
                 It.IsAny<CancellationToken>()))
-            .Returns<
-                Func<CancellationToken, Task<FlowChatResult<Guid>>>,
-                Func<FlowChatResult<Guid>, CancellationToken, Task<FlowChatResult<Guid>>>,
-                Func<Exception, CancellationToken, Task>,
-                CancellationToken>(async (operation, beforeCommitOperation, _, ct) =>
-                {
-                    var result = await operation(ct);
-                    return await beforeCommitOperation(result, ct);
-                });
+            .Returns<Func<CancellationToken, Task<FlowChatResult<Guid>>>, CancellationToken>(
+                (operation, ct) => operation(ct));
+
+        _beforeSaveProcessorMock
+            .Setup(x => x.ProcessAsync(
+                It.IsAny<UpdateProfileCommand>(),
+                It.IsAny<UserProfile>(),
+                It.IsAny<AggregateState>(),
+                It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
 
         _handler = new UpdateProfileCommandHandler(
             _writeRepositoryMock.Object,
             _unitOfWorkMock.Object,
-            _dispatcherMock.Object);
+            _dispatcherMock.Object,
+            [_beforeSaveProcessorMock.Object]);
     }
 
     [Fact]
-    public async Task Handle_WhenProfileExists_UpdatesAggregateAndDispatchesAggregateStateChangedEvent()
+    public async Task Handle_WhenProfileExists_UpdatesAggregateAndProcessesProjectionChange()
     {
         var profile = CreateUserProfile();
         _writeRepositoryMock
             .Setup(x => x.GetByIdAsync(profile.Id.Value, It.IsAny<CancellationToken>()))
             .ReturnsAsync(profile);
-
-        List<IDomainEvent> dispatchedEvents = [];
-        _dispatcherMock
-            .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<IDomainEvent>>(), It.IsAny<CancellationToken>()))
-            .Callback<IEnumerable<IDomainEvent>, CancellationToken>((events, _) => dispatchedEvents.AddRange(events))
-            .Returns(Task.CompletedTask);
 
         var result = await SendAsync(new UpdateProfileCommand(
             profile.Id.Value,
@@ -75,16 +72,45 @@ public sealed class UpdateProfileCommandHandlerTests
         profile.AvatarUrl.Should().Be("https://cdn.example/avatar.png");
         profile.Bio.Should().Be("about me");
         profile.IsActive.Should().BeFalse();
+        _beforeSaveProcessorMock.Verify(
+            x => x.ProcessAsync(
+                It.IsAny<UpdateProfileCommand>(),
+                profile,
+                AggregateState.Updated,
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
 
-        var stateChangedEvent = dispatchedEvents
-            .OfType<AggregateStateChangedDomainEvent<UserProfile, UserProfileState>>()
-            .Should().ContainSingle().Subject;
-        stateChangedEvent.AggregateState.FirstName.Should().Be("John");
-        stateChangedEvent.AggregateState.LastName.Should().Be("Doe");
-        stateChangedEvent.AggregateState.Organization.Should().Be("FlowChat");
-        stateChangedEvent.AggregateState.AvatarUrl.Should().Be("https://cdn.example/avatar.png");
-        stateChangedEvent.AggregateState.Bio.Should().Be("about me");
-        stateChangedEvent.AggregateState.IsActive.Should().BeFalse();
+    [Fact]
+    public async Task Handle_WhenProfileDataIsUnchanged_ReturnsSuccessWithoutProcessingAggregateChanges()
+    {
+        var profile = CreateUserProfile();
+        var initialVersion = profile.Version;
+        _writeRepositoryMock
+            .Setup(x => x.GetByIdAsync(profile.Id.Value, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(profile);
+
+        var result = await SendAsync(new UpdateProfileCommand(
+            profile.Id.Value,
+            null,
+            null,
+            null,
+            null,
+            null,
+            true));
+
+        result.IsSuccess.Should().BeTrue();
+        profile.Version.Should().Be(initialVersion);
+        _dispatcherMock.Verify(
+            x => x.DispatchAsync(It.IsAny<IEnumerable<ILocalEvent>>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+        _beforeSaveProcessorMock.Verify(
+            x => x.ProcessAsync(
+                It.IsAny<UpdateProfileCommand>(),
+                It.IsAny<UserProfile>(),
+                It.IsAny<AggregateState>(),
+                It.IsAny<CancellationToken>()),
+            Times.Never);
     }
 
     [Fact]

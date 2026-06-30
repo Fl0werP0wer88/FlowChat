@@ -1,14 +1,18 @@
 using FlowChat.Shared.Application;
+using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2;
+using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2.BeforeSaveProcessors;
 using FlowChat.Core.Results;
 using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
 using FlowChat.SocialGraphService.Application.Contracts.Persistence;
 using FlowChat.SocialGraphService.Application.Features.UserProfile;
 using ContactAggregate = FlowChat.SocialGraphService.Domain.Entities.Contact.Contact;
+using UserProfileMarker = FlowChat.SocialGraphService.Domain.Entities.UserProfiles.UserProfile;
 
 namespace FlowChat.SocialGraphService.Application.Features.Contact.Commands.AddContact;
 
-public sealed class AddContactCommandHandler : IdempotentCommandHandlerBase<AddContactCommand, Guid>
+public sealed class AddContactCommandHandler
+    : AggregateRootInsertCommandHandlerBaseV2<AddContactCommand, Guid, ContactAggregate>
 {
     private readonly IContactWriteRepository _contactWriteRepository;
     private readonly IUserProfileProjectionReadRepository _userProfileProjectionReadRepository;
@@ -18,28 +22,15 @@ public sealed class AddContactCommandHandler : IdempotentCommandHandlerBase<AddC
         IContactWriteRepository contactWriteRepository,
         IUserProfileProjectionReadRepository userProfileProjectionReadRepository,
         IUnitOfWork unitOfWork,
-        IDomainEventDispatcher domainEventDispatcher,
-        IDbUpdateExceptionClassifier dbUpdateExceptionClassifier)
-        : base(domainEventDispatcher, unitOfWork, dbUpdateExceptionClassifier)
+        ILocalEventDispatcher domainEventDispatcher,
+        IEnumerable<IAggregateBeforeSaveProcessor<AddContactCommand, ContactAggregate>> beforeSaveProcessors)
+        : base(domainEventDispatcher, unitOfWork, beforeSaveProcessors)
     {
         _contactWriteRepository = contactWriteRepository;
         _userProfileProjectionReadRepository = userProfileProjectionReadRepository;
     }
 
-    protected override async Task<(bool Found, Guid Value)> TryGetExistingResponseAsync(
-        AddContactCommand request,
-        CancellationToken cancellationToken)
-    {
-        var contact = await _contactWriteRepository.GetByIdAsync(request.Id, cancellationToken);
-        if (contact is null || contact.OwnerUserId != request.OwnerUserId)
-        {
-            return (false, default);
-        }
-
-        return (true, contact.Id.Value);
-    }
-
-    protected override async Task<FlowChatResult<Guid>> ExecuteCommandAsync(
+    protected override async Task<FlowChatResult<Guid>> ExecuteAsync(
         AddContactCommand request,
         CancellationToken cancellationToken)
     {
@@ -49,14 +40,17 @@ public sealed class AddContactCommandHandler : IdempotentCommandHandlerBase<AddC
             return FlowChatResult<Guid>.Failure(DomainError.NotFound("User profile projection was not found."));
         }
 
-        if (projection.UserProfileId == request.OwnerUserId)
+        var ownerUserId = Id<UserProfileMarker>.FromGuid(request.OwnerUserId);
+        var contactUserId = Id<UserProfileMarker>.FromGuid(projection.UserProfileId);
+
+        if (contactUserId == ownerUserId)
         {
             return FlowChatResult<Guid>.Failure(DomainError.BadRequest("OwnerUserId and ContactUserId must be different."));
         }
 
         var contactAlreadyExists = await _contactWriteRepository.ExistsAsync(
-            request.OwnerUserId,
-            projection.UserProfileId,
+            ownerUserId,
+            contactUserId,
             cancellationToken);
 
         if (contactAlreadyExists)
@@ -66,8 +60,8 @@ public sealed class AddContactCommandHandler : IdempotentCommandHandlerBase<AddC
 
         _contact = ContactAggregate.Create(
             Id<ContactAggregate>.FromGuid(request.Id),
-            request.OwnerUserId,
-            projection.UserProfileId,
+            ownerUserId,
+            contactUserId,
             CreateDisplayName(projection),
             projection.FirstName,
             projection.LastName,
@@ -79,11 +73,8 @@ public sealed class AddContactCommandHandler : IdempotentCommandHandlerBase<AddC
         return FlowChatResult<Guid>.Success(_contact.Id.Value);
     }
 
-    protected override IAggregateRoot? GetExecutedAggregateRoot(IdempotentCommandResult<Guid> result) =>
-        _contact;
-
-    protected override string GetIdempotencyConflictKey(AddContactCommand request) =>
-        AddContactCommand.IdempotencyConflictKey;
+    protected override ContactAggregate GetAggregateRoot() =>
+        _contact ?? throw new InvalidOperationException("Aggregate root instance is not available.");
 
     private async Task<UserProfileProjectionDto?> GetUserProfileProjectionAsync(
         AddContactCommand request,

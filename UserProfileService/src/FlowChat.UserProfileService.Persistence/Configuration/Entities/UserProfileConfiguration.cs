@@ -59,6 +59,10 @@ public class UserProfileConfiguration : IEntityTypeConfiguration<UserProfile>
         builder.Property(x => x.LastSeenAtUtc)
             .HasNullableUtcDateTimeOffsetConversion();
 
+        builder.Property(x => x.DeletedAt)
+            .HasNullableUtcDateTimeOffsetConversion();
+
+        builder.Ignore(x => x.IsDeleted);
         builder.Ignore(x => x.DomainEvents);
 
         builder.HasIndex(x => x.FriendlyUserId)

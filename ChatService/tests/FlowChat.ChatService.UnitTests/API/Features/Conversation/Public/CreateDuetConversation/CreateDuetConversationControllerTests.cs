@@ -49,8 +49,7 @@ public sealed class CreateDuetConversationControllerTests
         _mediatorMock
             .Setup(x => x.Send(It.IsAny<CreateDuetConversationCommand>(), It.IsAny<CancellationToken>()))
             .Callback<object, CancellationToken>((command, _) => capturedCommand = (CreateDuetConversationCommand)command)
-            .ReturnsAsync(FlowChatResult<IdempotentCommandResult<DuetConversationDetailDto>>.Success(
-                new IdempotentCommandResult<DuetConversationDetailDto>(conversation, WasAlreadyProcessed: false)));
+            .ReturnsAsync(FlowChatResult<DuetConversationDetailDto>.Success(conversation));
 
         var controller = CreateController(requestingUserId);
 
@@ -65,36 +64,11 @@ public sealed class CreateDuetConversationControllerTests
     }
 
     [Fact]
-    public async Task CreateDuetConversation_WhenConversationAlreadyExists_ReturnsOkResponse()
-    {
-        var request = new CreateDuetConversationRequest
-        {
-            PartnerUserId = Guid.NewGuid()
-        };
-        var requestingUserId = Guid.NewGuid();
-        var conversation = CreateConversationDetail(Guid.NewGuid(), requestingUserId, request.PartnerUserId);
-
-        _mediatorMock
-            .Setup(x => x.Send(It.IsAny<CreateDuetConversationCommand>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(FlowChatResult<IdempotentCommandResult<DuetConversationDetailDto>>.Success(
-                new IdempotentCommandResult<DuetConversationDetailDto>(conversation, WasAlreadyProcessed: true)));
-
-        var controller = CreateController(requestingUserId);
-
-        var actionResult = await controller.CreateDuetConversation(request, CancellationToken.None);
-
-        var okResult = actionResult.Should().BeOfType<OkObjectResult>().Subject;
-        var response = okResult.Value.Should().BeOfType<CreateDuetConversationResponse>().Subject;
-        response.ConversationId.Should().Be(conversation.ConversationId);
-        response.Participants.Select(x => x.UserId).Should().Equal(requestingUserId, request.PartnerUserId);
-    }
-
-    [Fact]
     public async Task CreateDuetConversation_CommandFailure_ReturnsProblemDetails()
     {
         _mediatorMock
             .Setup(x => x.Send(It.IsAny<CreateDuetConversationCommand>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(FlowChatResult<IdempotentCommandResult<DuetConversationDetailDto>>.Failure(
+            .ReturnsAsync(FlowChatResult<DuetConversationDetailDto>.Failure(
                 DomainError.NotFound("Conversation not found.")));
 
         var controller = CreateController(Guid.NewGuid());

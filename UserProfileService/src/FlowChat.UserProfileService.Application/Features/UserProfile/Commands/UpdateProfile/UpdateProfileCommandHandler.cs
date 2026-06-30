@@ -1,4 +1,6 @@
 using FlowChat.Shared.Application;
+using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2;
+using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2.BeforeSaveProcessors;
 using FlowChat.Shared.Domain;
 using FlowChat.UserProfileService.Application.Contracts.Persistence;
 using FlowChat.UserProfileService.Domain.Entities.EmailVerificationRequest;
@@ -7,15 +9,18 @@ using UserProfileAggregate = FlowChat.UserProfileService.Domain.Entities.UserPro
 namespace FlowChat.UserProfileService.Application.Features.UserProfile.Commands.UpdateProfile;
 
 public sealed class UpdateProfileCommandHandler
-    : CommandHandlerBase<UpdateProfileCommand, Guid>
+    : AggregateRootUpdateCommandHandlerBaseV2<UpdateProfileCommand, Guid, UserProfileAggregate>
 {
     private readonly IUserProfileWriteRepository _userProfileRepository;
     private UserProfileAggregate? _userProfile;
+    private bool _profileChanged;
 
     public UpdateProfileCommandHandler(
         IUserProfileWriteRepository userProfileRepository,
         IUnitOfWork unitOfWork,
-        IDomainEventDispatcher domainEventDispatcher) : base(domainEventDispatcher, unitOfWork)
+        ILocalEventDispatcher domainEventDispatcher,
+        IEnumerable<IAggregateBeforeSaveProcessor<UpdateProfileCommand, UserProfileAggregate>> beforeSaveProcessors)
+        : base(domainEventDispatcher, unitOfWork, beforeSaveProcessors)
     {
         _userProfileRepository = userProfileRepository;
     }
@@ -30,6 +35,8 @@ public sealed class UpdateProfileCommandHandler
             return FlowChatResult<Guid>.Failure(DomainError.NotFound($"User profile '{request.UserId}' was not found."));
         }
 
+        _profileChanged = HasProfileChanged(request, _userProfile);
+
         _userProfile.UpdateProfile(
             request.FirstName,
             request.LastName,
@@ -41,8 +48,22 @@ public sealed class UpdateProfileCommandHandler
         return FlowChatResult<Guid>.Success(_userProfile.Id.Value);
     }
 
-    protected override IAggregateRoot? GetAggregateRoot(FlowChatResult<Guid> result)
+    protected override UserProfileAggregate GetAggregateRoot() =>
+        _userProfile ?? throw new InvalidOperationException("Aggregate root instance is not available.");
+
+    protected override AggregateState GetAggregateState(UpdateProfileCommand request, UserProfileAggregate aggregateRoot) =>
+        _profileChanged ? AggregateState.Updated : AggregateState.Unchanged;
+
+    private static bool HasProfileChanged(UpdateProfileCommand request, UserProfileAggregate userProfile)
     {
-        return result.IsSuccess ? _userProfile : null;
+        return userProfile.FirstName != NormalizeOptional(request.FirstName)
+            || userProfile.LastName != NormalizeOptional(request.LastName)
+            || userProfile.Organization != NormalizeOptional(request.Organization)
+            || userProfile.AvatarUrl != NormalizeOptional(request.AvatarUrl)
+            || userProfile.Bio != NormalizeOptional(request.Bio)
+            || userProfile.IsActive != request.IsActive;
     }
+
+    private static string? NormalizeOptional(string? value) =>
+        string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 }

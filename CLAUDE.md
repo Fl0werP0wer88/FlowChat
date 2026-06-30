@@ -45,6 +45,7 @@ After creating a new service folder, treat files like `AuthService/.vscode/*` an
 
 - If the user's message ends with `?`, treat it as a question — answer it, do not make any code changes unless explicitly asked afterwards.
 - If you edit `AGENTS.md` or `CLAUDE.md`, apply the same changes to the other file so both instruction files stay synchronized.
+- When referencing a specific place in code, always include a clickable file-and-line link in addition to the file name and code snippet, so the user can jump directly to that location.
 - If the model needs to create any temporary working files (for example decompiled library output, scratch files, generated investigation artifacts, or similar), create them under the tool-specific temp folder in the repository root: `.codex/temp` for Codex and `.claude/temp` for Claude.
 
 ## Project Overview
@@ -60,6 +61,7 @@ FlowChat is a microservices-based chat application built with .NET 10. Services 
 - **RealtimeService** — SignalR real-time connections
 - **SocialGraphService** — friends/followers graph
 - **UserProfileService** — user profiles
+- **HarnessService** — dev-only general-purpose test harness for AAT-testing cross-cutting infrastructure patterns (projection pipeline, Kafka retry/DLQ isolation, etc.); located in `HarnessService/`
 
 ### Dev Infrastructure (Docker)
 Located in `Scripts/`: PostgreSQL, Kafka, MailHog, Observability stack.
@@ -75,6 +77,14 @@ Each service follows **Clean Architecture**:
 - `Workers` — background workers (e.g. outbox publisher)
 
 Domain events are dispatched via `IDomainEventDispatcher` and mapped to integration events published to Kafka.
+
+### Read repositories
+- Read repositories must not query or project from Domain aggregates/entities/value objects; the read side is persistence-only
+- Use dedicated persistence read entities in `{Service}.Persistence/Entities`, mapped to existing tables/views with simple column types (`Guid`, `string`, enums, `DateTimeOffset`, etc.)
+- Read entities inherit from `FlowChat.Shared.Persistance.ReadEntityBase`, never from Domain `EntityBase<T>`, `IEntity<T>`, `IAuditableEntity`, or auditable persistence `EntityBase`
+- Keep read entities free of domain behavior, typed domain IDs, domain value objects, and domain event logic
+- Keep write repositories on Domain aggregates; this rule applies to read repositories and read-side EF projections only
+- Map read entities to DTO/read models inside read repositories or projection helpers, preserving public Application/API contracts
 
 ### API and Application boundaries
 - Controllers do not call repositories or persistence services directly
@@ -93,7 +103,7 @@ Domain events are dispatched via `IDomainEventDispatcher` and mapped to integrat
 - In `Application/Features/{Aggregate}/`, event-related files live under `Eventing/`
 - `Eventing/` contains two subfolders: `DomainEvents/` and `ApplicationEvents/`
 - Keep `ApplicationEvents/` present even when it is temporarily empty
-- Under `DomainEvents/`, create one folder per event named after the event/handler stem without the `DomainEventHandler` suffix, for example `UserProfileCreated/` or `UserProfileStateChanged/`
+- Under `DomainEvents/`, create one folder per event named after the event/handler stem without the `DomainEventHandler` suffix, for example `UserProfileCreated/` or `EmailConfirmed/`
 - Store files that belong only to that event inside its folder, such as the `*DomainEventHandler` and any dedicated AutoMapper `Profile` used to map that event to an integration event
 - Split event-to-integration-event AutoMapper mappings into separate profiles per event instead of using one aggregate-wide profile
 - Keep only truly shared eventing infrastructure in `Common/Eventing`, such as base handler classes or reusable abstractions
@@ -122,7 +132,6 @@ The project uses tactical DDD. All domain logic lives in the `Domain` layer. The
 
 ### Domain events
 - Raised inside the aggregate via `AddDomainEvent(...)` as a result of a state change — never from outside
-- `AggregateStateChangedDomainEvent<TAggregate, TSnapshot>` is a special event that carries a snapshot of the aggregate state; call `MarkAggregateStateChanged(...)` after every state-changing operation — it is automatically deduplicated (only the latest snapshot is kept per operation)
 
 ### Domain invariants
 - Enforce inside the entity/aggregate — throw `ArgumentException` for invalid input, `InvalidOperationException` for violated business rules
@@ -173,7 +182,6 @@ The project uses tactical DDD. All domain logic lives in the `Domain` layer. The
   - Always verify `FlowChatResult<T>` explicitly — check `IsSuccess`/`IsFailure` and the returned value or error, not just what was passed to a mock
   - Command/query handler tests should capture and assert dispatched domain events, not just the return value
   - Domain tests should assert domain events via `entity.DomainEvents.OfType<T>()`
-  - Assert `AggregateStateChangedDomainEvent<TAggregate, TSnapshot>` where applicable
   - Do not assert domain events after `Restore(...)` — it intentionally raises none
 
 - **Layer-specific expectations**:

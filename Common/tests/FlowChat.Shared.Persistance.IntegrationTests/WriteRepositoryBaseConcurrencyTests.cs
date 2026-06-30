@@ -1,7 +1,6 @@
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
-using FlowChat.Shared.Persistance.Auditing;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
@@ -24,7 +23,7 @@ public sealed class WriteRepositoryBaseConcurrencyTests : IDisposable
     }
 
     [Fact]
-    public async Task UpdateAsync_ConcurrentModification_ThrowsDbUpdateConcurrencyException()
+    public async Task SaveChangesAsync_ConcurrentModification_ThrowsDbUpdateConcurrencyException()
     {
         using var context1 = CreateDbContext();
         context1.Database.EnsureCreated();
@@ -43,9 +42,11 @@ public sealed class WriteRepositoryBaseConcurrencyTests : IDisposable
             .FirstAsync(x => x.Id == entityId);
 
         entityInContext1.Rename("from-context-1");
+        entityInContext1.IncrementVersion();
         await context1.SaveChangesAsync();
 
         entityInContext2.Rename("from-context-2");
+        entityInContext2.IncrementVersion();
 
         var act = () => context2.SaveChangesAsync();
 
@@ -53,7 +54,7 @@ public sealed class WriteRepositoryBaseConcurrencyTests : IDisposable
     }
 
     [Fact]
-    public async Task UpdateAsync_SequentialModifications_SucceedsAndIncrementsVersion()
+    public async Task SaveChangesAsync_SequentialModifications_SucceedsAndIncrementsVersion()
     {
         using var context = CreateDbContext();
         context.Database.EnsureCreated();
@@ -65,18 +66,20 @@ public sealed class WriteRepositoryBaseConcurrencyTests : IDisposable
         entity.Version.Should().Be(1);
 
         entity.Rename("v2");
+        entity.IncrementVersion();
         await context.SaveChangesAsync();
 
         entity.Version.Should().Be(2);
 
         entity.Rename("v3");
+        entity.IncrementVersion();
         await context.SaveChangesAsync();
 
         entity.Version.Should().Be(3);
     }
 
     [Fact]
-    public async Task UpdateAsync_VersionPersistedToDatabase_ReloadsCorrectly()
+    public async Task SaveChangesAsync_VersionPersistedToDatabase_ReloadsCorrectly()
     {
         using var context1 = CreateDbContext();
         context1.Database.EnsureCreated();
@@ -86,6 +89,7 @@ public sealed class WriteRepositoryBaseConcurrencyTests : IDisposable
         await context1.SaveChangesAsync();
 
         entity.Rename("updated");
+        entity.IncrementVersion();
         await context1.SaveChangesAsync();
 
         var entityId = Id<TestAggregate>.FromGuid(entity.Id.Value);
@@ -97,11 +101,56 @@ public sealed class WriteRepositoryBaseConcurrencyTests : IDisposable
         reloaded.Version.Should().Be(2);
     }
 
+    [Fact]
+    public async Task DeleteAsync_WithExistingEntity_MarksEntityAsDeleted()
+    {
+        using var context = CreateDbContext();
+        context.Database.EnsureCreated();
+
+        var entity = TestAggregate.Create("to-delete");
+        var repository = new WriteRepositoryBase<TestAggregate>(context);
+        await repository.AddAsync(entity);
+        await context.SaveChangesAsync();
+
+        await repository.SoftDeleteAsync(entity);
+        await context.SaveChangesAsync();
+
+        var entityId = Id<TestAggregate>.FromGuid(entity.Id.Value);
+        var deleted = await context.TestAggregates
+            .FirstAsync(x => x.Id == entityId);
+
+        deleted.DeletedAt.Should().NotBeNull();
+        deleted.IsDeleted.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task DeleteAsync_WhenEntityAlreadyDeleted_DoesNotOverwriteDeletedAt()
+    {
+        using var context = CreateDbContext();
+        context.Database.EnsureCreated();
+
+        var deletedAt = UtcDateTimeOffset.Create(new DateTimeOffset(2026, 1, 1, 12, 0, 0, TimeSpan.Zero));
+        var entity = TestAggregate.Create("already-deleted");
+        entity.Delete(deletedAt);
+
+        var repository = new WriteRepositoryBase<TestAggregate>(context);
+        await repository.AddAsync(entity);
+        await context.SaveChangesAsync();
+
+        await repository.SoftDeleteAsync(entity);
+        await context.SaveChangesAsync();
+
+        var entityId = Id<TestAggregate>.FromGuid(entity.Id.Value);
+        var deleted = await context.TestAggregates
+            .FirstAsync(x => x.Id == entityId);
+
+        deleted.DeletedAt.Should().Be(deletedAt);
+    }
+
     private TestDbContext CreateDbContext()
     {
         var options = new DbContextOptionsBuilder<TestDbContext>()
             .UseSqlite(_connection)
-            .AddInterceptors(new EntityBaseSaveChangesInterceptor())
             .Options;
 
         return new TestDbContext(options);
@@ -116,6 +165,9 @@ public sealed class WriteRepositoryBaseConcurrencyTests : IDisposable
             var utcDateTimeOffsetConverter = new ValueConverter<UtcDateTimeOffset, DateTimeOffset>(
                 value => value.Value,
                 value => UtcDateTimeOffset.Create(value));
+            var nullableUtcDateTimeOffsetConverter = new ValueConverter<UtcDateTimeOffset?, DateTimeOffset?>(
+                value => value == null ? null : value.Value,
+                value => value == null ? null : UtcDateTimeOffset.Create(value.Value));
 
             modelBuilder.Entity<TestAggregate>(b =>
             {
@@ -126,6 +178,8 @@ public sealed class WriteRepositoryBaseConcurrencyTests : IDisposable
                 b.Property(x => x.Version).IsConcurrencyToken();
                 b.Property(x => x.CreatedAtUtc).HasConversion(utcDateTimeOffsetConverter);
                 b.Property(x => x.LastModifiedAtUtc).HasConversion(utcDateTimeOffsetConverter);
+                b.Property(x => x.DeletedAt).HasConversion(nullableUtcDateTimeOffsetConverter);
+                b.Ignore(x => x.IsDeleted);
             });
         }
     }
@@ -141,7 +195,14 @@ public sealed class WriteRepositoryBaseConcurrencyTests : IDisposable
             Name = name;
         }
 
-        public static TestAggregate Create(string name) => new(name);
+        public static TestAggregate Create(string name)
+        {
+            var aggregate = new TestAggregate(name);
+            aggregate.SetCreated("integration-test");
+            aggregate.SetUpdated("integration-test");
+
+            return aggregate;
+        }
 
         public void Rename(string name)
         {

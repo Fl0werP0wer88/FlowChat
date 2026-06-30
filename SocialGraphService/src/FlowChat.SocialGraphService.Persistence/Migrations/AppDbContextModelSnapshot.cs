@@ -38,6 +38,9 @@ namespace FlowChat.SocialGraphService.Persistence.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
 
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("DisplayName")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -91,7 +94,50 @@ namespace FlowChat.SocialGraphService.Persistence.Migrations
                         });
                 });
 
-            modelBuilder.Entity("FlowChat.SocialGraphService.Persistence.Entities.UserProfileProjectionEntity", b =>
+            modelBuilder.Entity("FlowChat.SocialGraphService.Persistence.Entities.ContactReadEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ContactUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DisplayName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("EmailAddress")
+                        .HasColumnType("text");
+
+                    b.Property<string>("FirstName")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsBlocked")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("LastName")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("OwnerUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("PhoneNumber")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable((string)null);
+
+                    b.ToView("Contacts", (string)null);
+                });
+
+            modelBuilder.Entity("FlowChat.SocialGraphService.Persistence.Entities.UserProfileReadModelEntity", b =>
                 {
                     b.Property<Guid>("UserProfileId")
                         .ValueGeneratedOnAdd()
@@ -105,13 +151,10 @@ namespace FlowChat.SocialGraphService.Persistence.Migrations
                         .HasMaxLength(2000)
                         .HasColumnType("character varying(2000)");
 
-                    b.Property<DateTimeOffset>("CreatedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("CreatedBy")
-                        .IsRequired()
-                        .HasMaxLength(256)
-                        .HasColumnType("character varying(256)");
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("timestamp with time zone")
+                        .HasComputedColumnSql("\"SourceDeletedAtUtc\"", true);
 
                     b.Property<string>("FirstName")
                         .HasMaxLength(100)
@@ -126,14 +169,6 @@ namespace FlowChat.SocialGraphService.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
                         .HasDefaultValue(true);
-
-                    b.Property<DateTimeOffset>("LastModifiedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("LastModifiedBy")
-                        .IsRequired()
-                        .HasMaxLength(256)
-                        .HasColumnType("character varying(256)");
 
                     b.Property<string>("LastName")
                         .HasMaxLength(100)
@@ -166,12 +201,45 @@ namespace FlowChat.SocialGraphService.Persistence.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
+                    b.Property<DateTimeOffset>("SourceCreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset?>("SourceDeletedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset>("SourceLastModifiedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("SourceVersion")
+                        .HasColumnType("integer");
+
                     b.HasKey("UserProfileId");
 
                     b.HasIndex("FriendlyUserId")
                         .HasDatabaseName("ix_user_profile_projection_friendly_user_id");
 
-                    b.ToTable("UserProfileProjection", (string)null);
+                    b.ToTable("UserProfileReadModel", (string)null);
+                });
+
+            modelBuilder.Entity("Silverback.Messaging.Consuming.KafkaOffsetStore.SilverbackStoredOffset", b =>
+                {
+                    b.Property<string>("GroupId")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<string>("Topic")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<int>("Partition")
+                        .HasColumnType("integer");
+
+                    b.Property<long>("Offset")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("GroupId", "Topic", "Partition");
+
+                    b.ToTable("SilverbackStoredOffsets");
                 });
 
             modelBuilder.Entity("Silverback.Messaging.Producing.TransactionalOutbox.SilverbackOutboxMessage", b =>

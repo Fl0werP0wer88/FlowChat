@@ -1,4 +1,6 @@
+using FlowChat.Core.Messaging;
 using FlowChat.Shared.Application;
+using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2.BeforeSaveProcessors;
 using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
 using FlowChat.UserProfileService.Application.Contracts.Persistence;
@@ -15,7 +17,8 @@ public sealed class SetAuthEmailCommandHandlerTests
 {
     private readonly Mock<IUserProfileWriteRepository> _writeRepositoryMock = new();
     private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
-    private readonly Mock<IDomainEventDispatcher> _dispatcherMock = new();
+    private readonly Mock<ILocalEventDispatcher> _dispatcherMock = new();
+    private readonly Mock<IAggregateBeforeSaveProcessor<SetAuthEmailCommand, UserProfile>> _beforeSaveProcessorMock = new();
     private readonly SetAuthEmailCommandHandler _handler;
 
     public SetAuthEmailCommandHandlerTests()
@@ -25,25 +28,25 @@ public sealed class SetAuthEmailCommandHandlerTests
             .ReturnsAsync((UserProfile?)null);
 
         _unitOfWorkMock
-            .Setup(x => x.ExecuteInTransactionAsync(
+            .Setup(x => x.ExecuteCommandInTransactionAsync(
                 It.IsAny<Func<CancellationToken, Task<FlowChatResult<Guid>>>>(),
-                It.IsAny<Func<FlowChatResult<Guid>, CancellationToken, Task<FlowChatResult<Guid>>>>(),
-                It.IsAny<Func<Exception, CancellationToken, Task>>(),
                 It.IsAny<CancellationToken>()))
-            .Returns<
-                Func<CancellationToken, Task<FlowChatResult<Guid>>>,
-                Func<FlowChatResult<Guid>, CancellationToken, Task<FlowChatResult<Guid>>>,
-                Func<Exception, CancellationToken, Task>,
-                CancellationToken>(async (operation, beforeCommitOperation, _, ct) =>
-                {
-                    var result = await operation(ct);
-                    return await beforeCommitOperation(result, ct);
-                });
+            .Returns<Func<CancellationToken, Task<FlowChatResult<Guid>>>, CancellationToken>(
+                (operation, ct) => operation(ct));
+
+        _beforeSaveProcessorMock
+            .Setup(x => x.ProcessAsync(
+                It.IsAny<SetAuthEmailCommand>(),
+                It.IsAny<UserProfile>(),
+                It.IsAny<AggregateState>(),
+                It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
 
         _handler = new SetAuthEmailCommandHandler(
             _writeRepositoryMock.Object,
             _unitOfWorkMock.Object,
-            _dispatcherMock.Object);
+            _dispatcherMock.Object,
+            [_beforeSaveProcessorMock.Object]);
     }
 
     [Fact]
@@ -61,8 +64,8 @@ public sealed class SetAuthEmailCommandHandlerTests
 
         List<IDomainEvent> dispatchedEvents = [];
         _dispatcherMock
-            .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<IDomainEvent>>(), It.IsAny<CancellationToken>()))
-            .Callback<IEnumerable<IDomainEvent>, CancellationToken>((events, _) => dispatchedEvents.AddRange(events))
+            .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<ILocalEvent>>(), It.IsAny<CancellationToken>()))
+            .Callback<IEnumerable<ILocalEvent>, CancellationToken>((events, _) => dispatchedEvents.AddRange(events.OfType<IDomainEvent>()))
             .Returns(Task.CompletedTask);
 
         var result = await SendAsync(new SetAuthEmailCommand(profile.Id.Value, secondaryEmail.Id.Value));
@@ -77,7 +80,41 @@ public sealed class SetAuthEmailCommandHandlerTests
                 x.UserProfileId == profile.Id &&
                 x.EmailId == secondaryEmail.Id &&
                 x.Address == secondaryEmail.Address);
-        dispatchedEvents.OfType<AggregateStateChangedDomainEvent<UserProfile, UserProfileState>>().Should().BeEmpty();
+        _beforeSaveProcessorMock.Verify(
+            x => x.ProcessAsync(
+                It.IsAny<SetAuthEmailCommand>(),
+                profile,
+                AggregateState.Updated,
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task Handle_WhenEmailIsAlreadyAuth_ReturnsSuccessWithoutProcessingAggregateChanges()
+    {
+        var profile = CreateUserProfile();
+        var authEmail = profile.Emails.Should().ContainSingle().Subject;
+        var initialVersion = profile.Version;
+
+        _writeRepositoryMock
+            .Setup(x => x.GetByIdAsync(profile.Id.Value, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(profile);
+
+        var result = await SendAsync(new SetAuthEmailCommand(profile.Id.Value, authEmail.Id.Value));
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().Be(authEmail.Id.Value);
+        profile.Version.Should().Be(initialVersion);
+        _dispatcherMock.Verify(
+            x => x.DispatchAsync(It.IsAny<IEnumerable<ILocalEvent>>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+        _beforeSaveProcessorMock.Verify(
+            x => x.ProcessAsync(
+                It.IsAny<SetAuthEmailCommand>(),
+                It.IsAny<UserProfile>(),
+                It.IsAny<AggregateState>(),
+                It.IsAny<CancellationToken>()),
+            Times.Never);
     }
 
     [Fact]

@@ -1,5 +1,7 @@
 using FlowChat.Core.Results;
 using FlowChat.Shared.Application;
+using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2;
+using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2.BeforeSaveProcessors;
 using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
 using FlowChat.UserProfileService.Application.Contracts.Persistence;
@@ -8,7 +10,7 @@ using UserProfileAggregate = FlowChat.UserProfileService.Domain.Entities.UserPro
 namespace FlowChat.UserProfileService.Application.Features.UserProfile.Commands.CreateInitialUserProfile;
 
 public sealed class CreateInitialUserProfileCommandHandler
-    : IdempotentCommandHandlerBase<CreateInitialUserProfileCommand, Guid>
+    : AggregateRootInsertCommandHandlerBaseV2<CreateInitialUserProfileCommand, Guid, UserProfileAggregate>
 {
     private readonly IUserProfileReadRepository _userProfileReadRepository;
     private readonly IUserProfileWriteRepository _userProfileWriteRepository;
@@ -18,15 +20,15 @@ public sealed class CreateInitialUserProfileCommandHandler
         IUserProfileReadRepository userProfileReadRepository,
         IUserProfileWriteRepository userProfileWriteRepository,
         IUnitOfWork unitOfWork,
-        IDomainEventDispatcher domainEventDispatcher,
-        IDbUpdateExceptionClassifier dbUpdateExceptionClassifier)
-        : base(domainEventDispatcher, unitOfWork, dbUpdateExceptionClassifier)
+        ILocalEventDispatcher domainEventDispatcher,
+        IEnumerable<IAggregateBeforeSaveProcessor<CreateInitialUserProfileCommand, UserProfileAggregate>> beforeSaveProcessors)
+        : base(domainEventDispatcher, unitOfWork, beforeSaveProcessors)
     {
         _userProfileReadRepository = userProfileReadRepository;
         _userProfileWriteRepository = userProfileWriteRepository;
     }
 
-    protected override async Task<FlowChatResult<Guid>> ExecuteCommandAsync(
+    protected override async Task<FlowChatResult<Guid>> ExecuteAsync(
         CreateInitialUserProfileCommand request,
         CancellationToken cancellationToken)
     {
@@ -72,15 +74,8 @@ public sealed class CreateInitialUserProfileCommandHandler
         return FlowChatResult<Guid>.Success(_userProfile.Id.Value);
     }
 
-    protected override Task<(bool Found, Guid Value)> TryGetExistingResponseAsync(
-        CreateInitialUserProfileCommand request,
-        CancellationToken cancellationToken)
-        => Task.FromResult((true, request.UserId));
-
-    protected override IAggregateRoot? GetExecutedAggregateRoot(IdempotentCommandResult<Guid> result) => _userProfile;
-
-    protected override string GetIdempotencyConflictKey(CreateInitialUserProfileCommand request) =>
-        CreateInitialUserProfileCommand.IdempotencyConflictKey;
+    protected override UserProfileAggregate GetAggregateRoot() =>
+        _userProfile ?? throw new InvalidOperationException("Aggregate root instance is not available.");
 
     private static string? NormalizeOptional(string? value) =>
         string.IsNullOrWhiteSpace(value) ? null : value.Trim();

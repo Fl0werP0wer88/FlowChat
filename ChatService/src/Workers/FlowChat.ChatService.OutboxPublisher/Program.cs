@@ -3,7 +3,6 @@ using FlowChat.Shared.API;
 using FlowChat.ChatService.OutboxPublisher;
 using FlowChat.ChatService.OutboxPublisher.Configuration.Settings;
 using FlowChat.ChatService.Persistence;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -15,11 +14,7 @@ try
     var builder = Host.CreateApplicationBuilder(args);
 
     builder.AddFlowChatOpenTelemetry(typeof(OutboxPublisherServiceRegistration).Assembly);
-    builder.Services.AddDbContext<AppDbContext>(options =>
-        options.UseNpgsql(builder.Configuration.GetConnectionString("ChatDb")));
-    builder.Services.AddDbContextFactory<AppDbContext>(
-        options => options.UseNpgsql(builder.Configuration.GetConnectionString("ChatDb")),
-        ServiceLifetime.Scoped);
+    builder.Services.AddOutboxPublisherPersistenceServices(builder.Configuration);
     builder.Services.AddOutboxPublisher(builder.Configuration);
 
     host = builder.Build();
@@ -52,21 +47,25 @@ static void LogStartupDiagnostics(IHost host)
         .CreateLogger("FlowChat.ChatService.OutboxPublisher.Startup");
     var environment = host.Services.GetRequiredService<IHostEnvironment>();
     var configuration = host.Services.GetRequiredService<IConfiguration>();
-    var producerOptions = host.Services.GetRequiredService<IOptions<ChatMessageSentProducerSettingsSection>>().Value;
+    var chatMessageSentProducerOptions = host.Services.GetRequiredService<IOptions<ChatMessageSentProducerSettingsSection>>().Value;
+    var groupConversationChangedProducerOptions = host.Services.GetRequiredService<IOptions<GroupConversationChangedProducerSettingsSection>>().Value;
     var outboxOptions = host.Services.GetRequiredService<IOptions<OutboxPublisherRuntimeSettingsSection>>().Value;
     var chatDbTarget = GetChatDbTarget(configuration.GetConnectionString("ChatDb"));
 
     logger.LogInformation(
         "Starting ChatService outbox publisher in {Environment}. ChatDb target: {Host}:{Port}/{Database}. " +
-        "ChatMessageSent Kafka: {BootstrapServers} -> {Topic}. " +
+        "ChatMessageSent Kafka: {ChatMessageBootstrapServers} -> {ChatMessageTopic}. " +
+        "GroupConversationChanged Kafka: {ConversationBootstrapServers} -> {ConversationTopic}. " +
         "Outbox worker settings: BatchSize={BatchSize}, PollIntervalSeconds={PollIntervalSeconds}, " +
         "RetryBaseDelaySeconds={RetryBaseDelaySeconds}, MaxRetryDelaySeconds={MaxRetryDelaySeconds}.",
         environment.EnvironmentName,
         chatDbTarget.Host,
         chatDbTarget.Port,
         chatDbTarget.Database,
-        producerOptions.BootstrapServers,
-        producerOptions.Topic,
+        chatMessageSentProducerOptions.BootstrapServers,
+        chatMessageSentProducerOptions.Topic,
+        groupConversationChangedProducerOptions.BootstrapServers,
+        groupConversationChangedProducerOptions.Topic,
         outboxOptions.BatchSize,
         outboxOptions.PollIntervalSeconds,
         outboxOptions.RetryBaseDelaySeconds,

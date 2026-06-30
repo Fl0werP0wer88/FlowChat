@@ -1,4 +1,6 @@
 using FlowChat.Shared.Application;
+using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2;
+using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2.BeforeSaveProcessors;
 using FlowChat.AuthService.Application.Contracts.Infrastructure;
 using FlowChat.AuthService.Application.Contracts.Persistence;
 using FlowChat.Core.Results;
@@ -10,7 +12,7 @@ using DomainAccount = FlowChat.AuthService.Domain.Entities.Account.Account;
 namespace FlowChat.AuthService.Application.Features.User.Commands.RegisterUser;
 
 public class RegisterUserCommandHandler
-    : IdempotentCommandHandlerBase<RegisterUserCommand, RegisterUserCommandResponse>
+    : AggregateRootInsertCommandHandlerBaseV2<RegisterUserCommand, RegisterUserCommandResponse, DomainAccount>
 {
     private readonly IAccountRepository _accountRepository;
     private readonly IPasswordHashingService _passwordHashingService;
@@ -20,30 +22,15 @@ public class RegisterUserCommandHandler
         IAccountRepository accountRepository,
         IPasswordHashingService passwordHashingService,
         IUnitOfWork unitOfWork,
-        IDomainEventDispatcher domainEventDispatcher,
-        IDbUpdateExceptionClassifier dbUpdateExceptionClassifier)
-        : base(domainEventDispatcher, unitOfWork, dbUpdateExceptionClassifier)
+        ILocalEventDispatcher domainEventDispatcher,
+        IEnumerable<IAggregateBeforeSaveProcessor<RegisterUserCommand, DomainAccount>> beforeSaveProcessors)
+        : base(domainEventDispatcher, unitOfWork, beforeSaveProcessors)
     {
         _accountRepository = accountRepository;
         _passwordHashingService = passwordHashingService;
     }
 
-    protected override async Task<(bool Found, RegisterUserCommandResponse Value)> TryGetExistingResponseAsync(
-        RegisterUserCommand request,
-        CancellationToken cancellationToken)
-    {
-        var account = await _accountRepository.GetByIdAsync(request.Id, cancellationToken);
-        if (account is null
-            || account.FriendlyUserId.Value != FriendlyUserId.Create(request.FriendlyUserId).Value
-            || account.Email.Value != EmailAddress.Create(request.Email).Value)
-        {
-            return (false, default!);
-        }
-
-        return (true, new RegisterUserCommandResponse { Id = account.Id.Value });
-    }
-
-    protected override async Task<FlowChatResult<RegisterUserCommandResponse>> ExecuteCommandAsync(
+    protected override async Task<FlowChatResult<RegisterUserCommandResponse>> ExecuteAsync(
         RegisterUserCommand request,
         CancellationToken cancellationToken)
     {
@@ -79,10 +66,6 @@ public class RegisterUserCommandHandler
             });
     }
 
-    protected override IAggregateRoot? GetExecutedAggregateRoot(IdempotentCommandResult<RegisterUserCommandResponse> result) =>
-        _account;
-
-    protected override string GetIdempotencyConflictKey(RegisterUserCommand request) =>
-        RegisterUserCommand.IdempotencyConflictKey;
+    protected override DomainAccount GetAggregateRoot() =>
+        _account ?? throw new InvalidOperationException("Aggregate root instance is not available.");
 }
-

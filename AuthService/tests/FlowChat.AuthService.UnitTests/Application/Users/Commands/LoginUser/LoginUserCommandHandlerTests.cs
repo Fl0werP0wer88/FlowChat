@@ -4,6 +4,7 @@ using FlowChat.AuthService.Application.Contracts.Persistence;
 using FlowChat.AuthService.Application.Features.User.Commands.LoginUser;
 using FlowChat.AuthService.Application.Features.User.Models;
 using FlowChat.AuthService.Domain.Entities.Account;
+using FlowChat.Core.Messaging;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
@@ -17,7 +18,7 @@ public sealed class LoginUserCommandHandlerTests
     private readonly Mock<IAccountRepository> _accountRepositoryMock = new();
     private readonly Mock<IPasswordHashingService> _passwordHashingServiceMock = new();
     private readonly Mock<IOpenIddictTokenService> _openIddictTokenServiceMock = new();
-    private readonly Mock<IDomainEventDispatcher> _domainEventDispatcherMock = new();
+    private readonly Mock<ILocalEventDispatcher> _domainEventDispatcherMock = new();
     private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
     private readonly LoginUserCommandHandler _handler;
 
@@ -30,7 +31,7 @@ public sealed class LoginUserCommandHandlerTests
             .Returns<Func<CancellationToken, Task<FlowChatResult<LoginUserCommandResponse>>>, CancellationToken>((operation, ct) => operation(ct));
 
         _domainEventDispatcherMock
-            .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<IDomainEvent>>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<ILocalEvent>>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         _handler = new LoginUserCommandHandler(

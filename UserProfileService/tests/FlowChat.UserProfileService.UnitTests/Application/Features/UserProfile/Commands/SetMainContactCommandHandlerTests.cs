@@ -1,4 +1,6 @@
+using FlowChat.Core.Messaging;
 using FlowChat.Shared.Application;
+using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2.BeforeSaveProcessors;
 using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
 using FlowChat.UserProfileService.Application.Contracts.Persistence;
@@ -14,7 +16,9 @@ public sealed class SetMainContactCommandHandlerTests
 {
     private readonly Mock<IUserProfileWriteRepository> _writeRepositoryMock = new();
     private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
-    private readonly Mock<IDomainEventDispatcher> _dispatcherMock = new();
+    private readonly Mock<ILocalEventDispatcher> _dispatcherMock = new();
+    private readonly Mock<IAggregateBeforeSaveProcessor<SetMainEmailCommand, UserProfile>> _emailBeforeSaveProcessorMock = new();
+    private readonly Mock<IAggregateBeforeSaveProcessor<SetMainPhoneCommand, UserProfile>> _phoneBeforeSaveProcessorMock = new();
     private readonly SetMainEmailCommandHandler _emailHandler;
     private readonly SetMainPhoneCommandHandler _phoneHandler;
 
@@ -25,30 +29,38 @@ public sealed class SetMainContactCommandHandlerTests
             .ReturnsAsync((UserProfile?)null);
 
         _unitOfWorkMock
-            .Setup(x => x.ExecuteInTransactionAsync(
+            .Setup(x => x.ExecuteCommandInTransactionAsync(
                 It.IsAny<Func<CancellationToken, Task<FlowChatResult<Guid>>>>(),
-                It.IsAny<Func<FlowChatResult<Guid>, CancellationToken, Task<FlowChatResult<Guid>>>>(),
-                It.IsAny<Func<Exception, CancellationToken, Task>>(),
                 It.IsAny<CancellationToken>()))
-            .Returns<
-                Func<CancellationToken, Task<FlowChatResult<Guid>>>,
-                Func<FlowChatResult<Guid>, CancellationToken, Task<FlowChatResult<Guid>>>,
-                Func<Exception, CancellationToken, Task>,
-                CancellationToken>(async (operation, beforeCommitOperation, _, ct) =>
-                {
-                    var result = await operation(ct);
-                    return await beforeCommitOperation(result, ct);
-                });
+            .Returns<Func<CancellationToken, Task<FlowChatResult<Guid>>>, CancellationToken>(
+                (operation, ct) => operation(ct));
+
+        _emailBeforeSaveProcessorMock
+            .Setup(x => x.ProcessAsync(
+                It.IsAny<SetMainEmailCommand>(),
+                It.IsAny<UserProfile>(),
+                It.IsAny<AggregateState>(),
+                It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+        _phoneBeforeSaveProcessorMock
+            .Setup(x => x.ProcessAsync(
+                It.IsAny<SetMainPhoneCommand>(),
+                It.IsAny<UserProfile>(),
+                It.IsAny<AggregateState>(),
+                It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
 
         _emailHandler = new SetMainEmailCommandHandler(
             _writeRepositoryMock.Object,
             _unitOfWorkMock.Object,
-            _dispatcherMock.Object);
+            _dispatcherMock.Object,
+            [_emailBeforeSaveProcessorMock.Object]);
 
         _phoneHandler = new SetMainPhoneCommandHandler(
             _writeRepositoryMock.Object,
             _unitOfWorkMock.Object,
-            _dispatcherMock.Object);
+            _dispatcherMock.Object,
+            [_phoneBeforeSaveProcessorMock.Object]);
     }
 
     private async Task<FlowChatResult<Guid>> SendAsync(SetMainEmailCommand command)
@@ -101,8 +113,8 @@ public sealed class SetMainContactCommandHandlerTests
 
         List<IDomainEvent> dispatchedEvents = [];
         _dispatcherMock
-            .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<IDomainEvent>>(), It.IsAny<CancellationToken>()))
-            .Callback<IEnumerable<IDomainEvent>, CancellationToken>((events, _) => dispatchedEvents.AddRange(events))
+            .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<ILocalEvent>>(), It.IsAny<CancellationToken>()))
+            .Callback<IEnumerable<ILocalEvent>, CancellationToken>((events, _) => dispatchedEvents.AddRange(events.OfType<IDomainEvent>()))
             .Returns(Task.CompletedTask);
 
         var result = await SendAsync(new SetMainEmailCommand(profile.Id.Value, secondEmail.Id.Value));
@@ -117,14 +129,13 @@ public sealed class SetMainContactCommandHandlerTests
         emailChangedEvent.EmailId.Should().Be(secondEmail.Id);
         emailChangedEvent.Address.Should().Be(secondEmail.Address);
 
-        var stateChangedEvent = dispatchedEvents
-            .OfType<AggregateStateChangedDomainEvent<UserProfile, UserProfileState>>()
-            .Should().ContainSingle().Subject;
-        stateChangedEvent.AggregateState.Emails.Should().ContainSingle(x =>
-            x.Id == secondEmail.Id.Value &&
-            x.Address == secondEmail.Address.Value &&
-            x.IsMain &&
-            x.IsConfirmed);
+        _emailBeforeSaveProcessorMock.Verify(
+            x => x.ProcessAsync(
+                It.IsAny<SetMainEmailCommand>(),
+                profile,
+                AggregateState.Updated,
+                It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 
     [Fact]
@@ -139,6 +150,34 @@ public sealed class SetMainContactCommandHandlerTests
 
         result.IsFailure.Should().BeTrue();
         result.Error.ErrorType.Should().Be(ErrorType.NotFound);
+    }
+
+    [Fact]
+    public async Task SetMainEmail_WhenEmailIsAlreadyMain_ReturnsSuccessWithoutProcessingAggregateChanges()
+    {
+        var profile = CreateUserProfile();
+        var mainEmail = profile.Emails.Should().ContainSingle().Subject;
+        var initialVersion = profile.Version;
+
+        _writeRepositoryMock
+            .Setup(x => x.GetByIdAsync(profile.Id.Value, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(profile);
+
+        var result = await SendAsync(new SetMainEmailCommand(profile.Id.Value, mainEmail.Id.Value));
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().Be(mainEmail.Id.Value);
+        profile.Version.Should().Be(initialVersion);
+        _dispatcherMock.Verify(
+            x => x.DispatchAsync(It.IsAny<IEnumerable<ILocalEvent>>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+        _emailBeforeSaveProcessorMock.Verify(
+            x => x.ProcessAsync(
+                It.IsAny<SetMainEmailCommand>(),
+                It.IsAny<UserProfile>(),
+                It.IsAny<AggregateState>(),
+                It.IsAny<CancellationToken>()),
+            Times.Never);
     }
 
     [Fact]
@@ -196,8 +235,8 @@ public sealed class SetMainContactCommandHandlerTests
 
         List<IDomainEvent> dispatchedEvents = [];
         _dispatcherMock
-            .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<IDomainEvent>>(), It.IsAny<CancellationToken>()))
-            .Callback<IEnumerable<IDomainEvent>, CancellationToken>((events, _) => dispatchedEvents.AddRange(events))
+            .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<ILocalEvent>>(), It.IsAny<CancellationToken>()))
+            .Callback<IEnumerable<ILocalEvent>, CancellationToken>((events, _) => dispatchedEvents.AddRange(events.OfType<IDomainEvent>()))
             .Returns(Task.CompletedTask);
 
         var result = await SendAsync(new SetMainPhoneCommand(profile.Id.Value, secondPhone.Id.Value));
@@ -212,13 +251,13 @@ public sealed class SetMainContactCommandHandlerTests
         phoneChangedEvent.PhoneId.Should().Be(secondPhone.Id);
         phoneChangedEvent.Number.Should().Be(secondPhone.Number);
 
-        var stateChangedEvent = dispatchedEvents
-            .OfType<AggregateStateChangedDomainEvent<UserProfile, UserProfileState>>()
-            .Should().ContainSingle().Subject;
-        stateChangedEvent.AggregateState.Phones.Should().ContainSingle(x =>
-            x.Id == secondPhone.Id.Value &&
-            x.Number == secondPhone.Number.Value &&
-            x.IsMain);
+        _phoneBeforeSaveProcessorMock.Verify(
+            x => x.ProcessAsync(
+                It.IsAny<SetMainPhoneCommand>(),
+                profile,
+                AggregateState.Updated,
+                It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 
     [Fact]
@@ -236,6 +275,35 @@ public sealed class SetMainContactCommandHandlerTests
 
         result.IsFailure.Should().BeTrue();
         result.Error.ErrorType.Should().Be(ErrorType.NotFound);
+    }
+
+    [Fact]
+    public async Task SetMainPhone_WhenPhoneIsAlreadyMain_ReturnsSuccessWithoutProcessingAggregateChanges()
+    {
+        var profile = CreateUserProfile();
+        var mainPhone = profile.AddPhone(Id<Phone>.New(), PhoneNumber.Create("+48123123123"));
+        profile.ClearEvents();
+        var initialVersion = profile.Version;
+
+        _writeRepositoryMock
+            .Setup(x => x.GetByIdAsync(profile.Id.Value, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(profile);
+
+        var result = await SendAsync(new SetMainPhoneCommand(profile.Id.Value, mainPhone.Id.Value));
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().Be(mainPhone.Id.Value);
+        profile.Version.Should().Be(initialVersion);
+        _dispatcherMock.Verify(
+            x => x.DispatchAsync(It.IsAny<IEnumerable<ILocalEvent>>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+        _phoneBeforeSaveProcessorMock.Verify(
+            x => x.ProcessAsync(
+                It.IsAny<SetMainPhoneCommand>(),
+                It.IsAny<UserProfile>(),
+                It.IsAny<AggregateState>(),
+                It.IsAny<CancellationToken>()),
+            Times.Never);
     }
 
     [Fact]

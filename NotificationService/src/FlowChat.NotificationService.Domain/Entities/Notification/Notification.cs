@@ -1,6 +1,7 @@
 using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
 using FlowChat.NotificationService.Domain.Enums;
+using UserProfileMarker = FlowChat.NotificationService.Domain.Entities.UserProfiles.UserProfile;
 
 namespace FlowChat.NotificationService.Domain.Entities.Notification;
 
@@ -12,7 +13,7 @@ public sealed class Notification : AggregateRootBase<Notification>
 
     private Notification(
         Id<Notification> id,
-        Guid userId,
+        Id<UserProfileMarker> userId,
         EmailAddress email,
         string displayName,
         string body,
@@ -28,7 +29,7 @@ public sealed class Notification : AggregateRootBase<Notification>
         SourceMessageKey = sourceMessageKey;
     }
 
-    public Guid UserId { get; private set; }
+    public Id<UserProfileMarker> UserId { get; private set; } = null!;
     public EmailAddress Email { get; private set; } = null!;
     public string DisplayName { get; private set; } = string.Empty;
     public string Body { get; private set; } = string.Empty;
@@ -41,7 +42,7 @@ public sealed class Notification : AggregateRootBase<Notification>
 
     public static Notification CreateWelcome(
         Id<Notification> id,
-        Guid userId,
+        Id<UserProfileMarker> userId,
         EmailAddress email,
         string displayName,
         string body,
@@ -59,7 +60,7 @@ public sealed class Notification : AggregateRootBase<Notification>
 
     public static Notification CreateEmailVerification(
         Id<Notification> id,
-        Guid userId,
+        Id<UserProfileMarker> userId,
         EmailAddress email,
         string displayName,
         string body,
@@ -77,7 +78,7 @@ public sealed class Notification : AggregateRootBase<Notification>
 
     private static Notification Create(
         Id<Notification> id,
-        Guid userId,
+        Id<UserProfileMarker> userId,
         EmailAddress email,
         string displayName,
         string body,
@@ -86,10 +87,7 @@ public sealed class Notification : AggregateRootBase<Notification>
     {
         ArgumentNullException.ThrowIfNull(id);
 
-        if (userId == Guid.Empty)
-        {
-            throw new InvalidOperationException("UserId is required.");
-        }
+        ArgumentNullException.ThrowIfNull(userId);
 
         ArgumentNullException.ThrowIfNull(email);
 

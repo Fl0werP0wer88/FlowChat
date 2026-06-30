@@ -1,13 +1,11 @@
 import type { KeyboardEvent } from "react";
 import { useEffect, useState } from "react";
-import { useAuthStore } from "../../../../store/authStore";
 import type { ChatMessage } from "../../../../types/chat";
 import type { Contact } from "../../../../types/contacts";
 import { ConversationBody } from "../../components/ConversationBody";
 import { ConversationFooter } from "../../components/ConversationFooter";
 import { DuetConversationHeader } from "./DuetConversationHeader";
 import { DuetConversationSettings } from "./DuetConversationSettings";
-import { useCopyDuetAsGroupMutation } from "../queries/useCopyDuetAsGroupMutation";
 
 interface DuetConversationPanelProps {
   activeContact: Contact | null;
@@ -25,6 +23,7 @@ interface DuetConversationPanelProps {
   onDraftKeyDown: (event: KeyboardEvent<HTMLTextAreaElement>) => void;
   onSendDraft: () => Promise<void>;
   onLoadOlderMessages: () => Promise<void>;
+  onCreateGroupFromDuet: (request: { groupName: string; initialUserIds: string[] }) => void;
 }
 
 export function DuetConversationPanel({
@@ -43,34 +42,25 @@ export function DuetConversationPanel({
   onDraftKeyDown,
   onSendDraft,
   onLoadOlderMessages,
+  onCreateGroupFromDuet,
 }: DuetConversationPanelProps) {
-  const accessToken = useAuthStore((s) => s.accessToken) ?? "";
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [createGroupNotice, setCreateGroupNotice] = useState<{ kind: "error" | "info"; message: string } | null>(null);
   const isComposerDisabled = !activeConversationId || isLoadingConversation || isSendingMessage;
   const isSendDisabled = isComposerDisabled || draft.trim().length === 0;
-  const copyDuetAsGroupMutation = useCopyDuetAsGroupMutation(accessToken, {
-    onSuccess: () => setCreateGroupNotice({ kind: "info", message: "Grupa została utworzona." }),
-    onError: (message) => setCreateGroupNotice({ kind: "error", message }),
-  });
 
   useEffect(() => {
     setIsSettingsOpen(false);
-    setCreateGroupNotice(null);
   }, [activeConversationId, activeContact?.userId]);
 
-  const handleCreateGroupClick = async () => {
-    if (!activeContact || copyDuetAsGroupMutation.isPending) {
+  const handleCreateGroupClick = () => {
+    if (!activeContact) {
       return;
     }
 
-    setCreateGroupNotice(null);
-
-    try {
-      await copyDuetAsGroupMutation.mutateAsync(activeContact.userId);
-    } catch {
-      // error is handled in onError
-    }
+    onCreateGroupFromDuet({
+      groupName: activeContact.displayName,
+      initialUserIds: [activeContact.userId],
+    });
   };
 
   return (
@@ -84,9 +74,7 @@ export function DuetConversationPanel({
         ? (
           <DuetConversationSettings
             activeContact={activeContact}
-            createGroupNotice={createGroupNotice}
-            isCreatingGroup={copyDuetAsGroupMutation.isPending}
-            onCreateGroupClick={() => void handleCreateGroupClick()}
+            onCreateGroupClick={handleCreateGroupClick}
           />
         )
         : (

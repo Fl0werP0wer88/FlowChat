@@ -19,6 +19,8 @@ public sealed class DuetConversationConfiguration : IEntityTypeConfiguration<Due
             .HasConversion(x => x.Value, x => Id<Conversation>.FromGuid(x))
             .IsRequired();
 
+        builder.Property<DateTimeOffset?>("DeletedAt");
+
         builder.HasIndex(x => x.ConversationId);
 
         builder.HasOne<Conversation>()

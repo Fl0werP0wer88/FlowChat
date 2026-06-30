@@ -1,6 +1,6 @@
 namespace FlowChat.Shared.Domain;
 
-public interface IEntity<TDomainEntity> : IAuditableEntity, IVersionedEntity
+public interface IEntity<TDomainEntity>
 {
     Id<TDomainEntity> Id { get; }
 }

@@ -4,7 +4,6 @@ using FlowChat.NotificationService.Persistence;
 using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
 using FlowChat.Shared.Persistance;
-using FlowChat.Shared.Persistance.Auditing;
 using FluentAssertions;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
@@ -24,10 +23,10 @@ public sealed class UnitOfWorkTests : IDisposable
 
         var options = new DbContextOptionsBuilder<AppDbContext>()
             .UseSqlite(_connection)
-            .AddInterceptors(new EntityBaseSaveChangesInterceptor())
             .Options;
 
         _dbContext = new AppDbContext(options);
+        _dbContext.SavingChanges += (_, _) => SetAuditFields(_dbContext);
         _dbContext.Database.EnsureCreated();
         _unitOfWork = new EfUnitOfWork<AppDbContext>(_dbContext);
     }
@@ -46,6 +45,16 @@ public sealed class UnitOfWorkTests : IDisposable
             "Test User",
             "Confirm your email by clicking the provided link",
             null);
+
+    private static void SetAuditFields(AppDbContext context)
+    {
+        foreach (var entry in context.ChangeTracker.Entries<IAuditableEntity>()
+                     .Where(entry => entry.State == EntityState.Added && entry.Entity.CreatedAtUtc is null))
+        {
+            entry.Entity.SetCreated("test");
+            entry.Entity.SetUpdated("test");
+        }
+    }
 
     // --- SaveChangesAsync ---
 

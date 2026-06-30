@@ -1,6 +1,5 @@
 using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
-using FlowChat.UserProfileService.Domain.Entities.UserProfile.Constants;
 using FlowChat.UserProfileService.Domain.Entities.UserProfile.Events;
 
 namespace FlowChat.UserProfileService.Domain.Entities.UserProfile;
@@ -123,11 +122,6 @@ public class UserProfile : AggregateRootBase<UserProfile>
 
         AddDomainEvent(new EmailAddedDomainEvent(Id, email.Id, email.Address));
 
-        if (email.IsMain)
-        {
-            MarkUserProfileProjectionChanged();
-        }
-
         return email;
     }
 
@@ -157,7 +151,6 @@ public class UserProfile : AggregateRootBase<UserProfile>
         }
 
         AddDomainEvent(new MainEmailChangedDomainEvent(Id, targetEmail.Id, targetEmail.Address));
-        MarkUserProfileProjectionChanged();
     }
 
     public void SetAuthEmail(Id<Email> emailId)
@@ -205,11 +198,6 @@ public class UserProfile : AggregateRootBase<UserProfile>
 
         targetEmail.Confirm();
         AddDomainEvent(new EmailConfirmedDomainEvent(Id, targetEmail.Id, targetEmail.Address, targetEmail.IsAuth));
-
-        if (targetEmail.IsMain)
-        {
-            MarkUserProfileProjectionChanged();
-        }
     }
 
     public Phone AddPhone(Id<Phone> id, PhoneNumber number)
@@ -224,11 +212,6 @@ public class UserProfile : AggregateRootBase<UserProfile>
 
         var phone = Phone.Create(id, Id, number, isMain: !_phones.Any());
         _phones.Add(phone);
-
-        if (phone.IsMain)
-        {
-            MarkUserProfileProjectionChanged();
-        }
 
         return phone;
     }
@@ -247,25 +230,12 @@ public class UserProfile : AggregateRootBase<UserProfile>
         var normalizedAvatarUrl = NormalizeOptional(avatarUrl);
         var normalizedBio = NormalizeOptional(bio);
 
-        var hasChanged =
-            FirstName != normalizedFirstName ||
-            LastName != normalizedLastName ||
-            Organization != normalizedOrganization ||
-            AvatarUrl != normalizedAvatarUrl ||
-            Bio != normalizedBio ||
-            IsActive != isActive;
-
         FirstName = normalizedFirstName;
         LastName = normalizedLastName;
         Organization = normalizedOrganization;
         AvatarUrl = normalizedAvatarUrl;
         Bio = normalizedBio;
         IsActive = isActive;
-
-        if (hasChanged)
-        {
-            MarkUserProfileProjectionChanged();
-        }
     }
 
     public void SetMainPhone(Id<Phone> phoneId)
@@ -294,47 +264,11 @@ public class UserProfile : AggregateRootBase<UserProfile>
         }
 
         AddDomainEvent(new MainPhoneChangedDomainEvent(Id, targetPhone.Id, targetPhone.Number));
-        MarkUserProfileProjectionChanged();
     }
 
-    private UserProfileState CreateState()
+    public void Delete()
     {
-        return new UserProfileState
-        {
-            Id = Id.Value,
-            FriendlyUserId = FriendlyUserId.Value,
-            FirstName = FirstName,
-            LastName = LastName,
-            Organization = Organization,
-            AvatarUrl = AvatarUrl,
-            Bio = Bio,
-            IsActive = IsActive,
-            LastSeenAtUtc = LastSeenAtUtc,
-            Emails = _emails.Select(email => new UserProfileEmailState
-            {
-                Id = email.Id.Value,
-                UserProfileId = email.UserProfileId.Value,
-                Address = email.Address.Value,
-                IsMain = email.IsMain,
-                IsAuth = email.IsAuth,
-                IsConfirmed = email.IsConfirmed,
-                IsVisible = email.IsVisible
-            }).ToArray(),
-            Phones = _phones.Select(phone => new UserProfilePhoneState
-            {
-                Id = phone.Id.Value,
-                UserProfileId = phone.UserProfileId.Value,
-                Number = phone.Number.Value,
-                IsMain = phone.IsMain,
-                IsConfirmed = phone.IsConfirmed,
-                IsVisible = phone.IsVisible
-            }).ToArray()
-        };
-    }
-
-    private void MarkUserProfileProjectionChanged()
-    {
-        MarkAggregateStateChanged(UserProfileConstants.UserProfileAggregateTypeName, CreateState);
+        AddDomainEvent(new UserProfileDeletedDomainEvent(Id));
     }
 
     private static string NormalizeRequired(string value, string paramName)

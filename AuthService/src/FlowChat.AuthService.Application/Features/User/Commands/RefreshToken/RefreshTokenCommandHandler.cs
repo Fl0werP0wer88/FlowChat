@@ -13,15 +13,13 @@ public sealed class RefreshTokenCommandHandler : CommandHandlerBase<RefreshToken
 
     public RefreshTokenCommandHandler(
         IAccountRepository accountRepository,
-        IOpenIddictTokenService openIddictTokenService,
-        IDomainEventDispatcher domainEventDispatcher,
-        IUnitOfWork unitOfWork) : base(domainEventDispatcher, unitOfWork)
+        IOpenIddictTokenService openIddictTokenService)
     {
         _accountRepository = accountRepository;
         _openIddictTokenService = openIddictTokenService;
     }
 
-    protected override async Task<FlowChatResult<RefreshTokenCommandResponse>> ExecuteAsync(RefreshTokenCommand request, CancellationToken cancellationToken)
+    protected override async Task<FlowChatResult<RefreshTokenCommandResponse>> HandleCommandAsync(RefreshTokenCommand request, CancellationToken cancellationToken)
     {
         var account = await _accountRepository.GetByIdAsync(request.AccountId, cancellationToken);
         if (account is null || !account.IsEmailConfirmed)
@@ -46,10 +44,5 @@ public sealed class RefreshTokenCommandHandler : CommandHandlerBase<RefreshToken
                     Principal = _openIddictTokenService.CreatePrincipal(authenticatedAccount, request.Scopes)
                 }
             });
-    }
-
-    protected override IAggregateRoot? GetAggregateRoot(FlowChatResult<RefreshTokenCommandResponse> result)
-    {
-        return null;
     }
 }

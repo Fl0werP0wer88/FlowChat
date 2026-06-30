@@ -1,40 +1,47 @@
 using AutoFixture;
-using FlowChat.AuthService.Consumers.AuthApi.Contracts;
+using FlowChat.AuthService.Application.Features.User.Commands.ConfirmAuthEmail;
 using FlowChat.AuthService.Consumers.Kafka;
-using FlowChat.AuthService.Consumers.Configuration.Settings;
-using FlowChat.AuthService.Consumers.Services;
 using FlowChat.Core.Exceptions;
 using FlowChat.Core.Messaging.UserProfileService.Events;
+using FlowChat.Core.Results;
+using FlowChat.Shared.Domain;
 using FluentAssertions;
+using MediatR;
 using Microsoft.Extensions.Logging;
 using Moq;
+using Unit = MediatR.Unit;
 
 namespace FlowChat.AuthService.UnitTests;
 
 public sealed class UserEmailConfirmedSubscriberTests
 {
     private readonly IFixture _fixture = new Fixture();
-    private readonly Mock<IAuthInternalApiClient> _internalApiClientMock = new();
+    private readonly Mock<IMediator> _mediatorMock = new();
     private readonly Mock<ILogger<UserEmailConfirmedSubscriber>> _loggerMock = new();
     private readonly UserEmailConfirmedSubscriber _subscriber;
 
     public UserEmailConfirmedSubscriberTests()
     {
+        _mediatorMock
+            .Setup(x => x.Send(It.IsAny<ConfirmAuthEmailCommand>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(FlowChatResult<Unit>.Success(Unit.Value));
+
         _subscriber = new UserEmailConfirmedSubscriber(
-            _internalApiClientMock.Object,
+            _mediatorMock.Object,
             _loggerMock.Object);
     }
 
     [Fact]
-    public async Task HandleAsync_WhenEmailIsAuth_MapsEmailToInternalApiRequest()
+    public async Task HandleAsync_WhenEmailIsAuth_MapsEmailToCommand()
     {
-        AuthEmailConfirmationRequest? capturedRequest = null;
-        var emailAddress = "john@example.com";
+        ConfirmAuthEmailCommand? capturedCommand = null;
+        var emailAddress = " john@example.com ";
 
-        _internalApiClientMock
-            .Setup(x => x.ConfirmEmailAsync(It.IsAny<AuthEmailConfirmationRequest>(), It.IsAny<CancellationToken>()))
-            .Callback<AuthEmailConfirmationRequest, CancellationToken>((request, _) => capturedRequest = request)
-            .Returns(Task.CompletedTask);
+        _mediatorMock
+            .Setup(x => x.Send(It.IsAny<ConfirmAuthEmailCommand>(), It.IsAny<CancellationToken>()))
+            .Callback<IRequest<FlowChatResult<Unit>>, CancellationToken>((request, _) =>
+                capturedCommand = (ConfirmAuthEmailCommand)request)
+            .ReturnsAsync(FlowChatResult<Unit>.Success(Unit.Value));
 
         var message = new UserEmailConfirmedIntegrationEvent
         {
@@ -49,12 +56,12 @@ public sealed class UserEmailConfirmedSubscriberTests
 
         await _subscriber.HandleAsync(message.ToInboundEnvelope(), CancellationToken.None);
 
-        capturedRequest.Should().NotBeNull();
-        capturedRequest!.EmailAddress.Should().Be(emailAddress);
+        capturedCommand.Should().NotBeNull();
+        capturedCommand!.EmailAddress.Should().Be("john@example.com");
     }
 
     [Fact]
-    public async Task HandleAsync_WhenEmailIsNotAuth_DoesNotCallInternalApi()
+    public async Task HandleAsync_WhenEmailIsNotAuth_DoesNotSendCommand()
     {
         var message = new UserEmailConfirmedIntegrationEvent
         {
@@ -69,14 +76,18 @@ public sealed class UserEmailConfirmedSubscriberTests
 
         await _subscriber.HandleAsync(message.ToInboundEnvelope(), CancellationToken.None);
 
-        _internalApiClientMock.Verify(
-            x => x.ConfirmEmailAsync(It.IsAny<AuthEmailConfirmationRequest>(), It.IsAny<CancellationToken>()),
+        _mediatorMock.Verify(
+            x => x.Send(It.IsAny<ConfirmAuthEmailCommand>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
     [Fact]
     public async Task HandleAsync_WhenEmailAddressIsMissing_ThrowsNonTransientException()
     {
+        _mediatorMock
+            .Setup(x => x.Send(It.IsAny<ConfirmAuthEmailCommand>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(FlowChatResult<Unit>.Failure(DomainError.BadRequest("Email address is required.")));
+
         var message = new UserEmailConfirmedIntegrationEvent
         {
             UserProfileId = _fixture.Create<Guid>(),
@@ -91,11 +102,15 @@ public sealed class UserEmailConfirmedSubscriberTests
         var act = () => _subscriber.HandleAsync(message.ToInboundEnvelope(), CancellationToken.None);
 
         await act.Should().ThrowAsync<NonTransientException>()
-            .WithMessage("*Email.Address*");
+            .WithMessage("*Email address*");
+
+        _mediatorMock.Verify(
+            x => x.Send(It.IsAny<ConfirmAuthEmailCommand>(), It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 
     [Fact]
-    public async Task HandleAsync_WhenInternalApiThrowsNonTransientException_RethrowsAndLogsInformation()
+    public async Task HandleAsync_WhenCommandReturnsFailure_ThrowsNonTransientExceptionAndLogsInformation()
     {
         var message = new UserEmailConfirmedIntegrationEvent
         {
@@ -108,9 +123,9 @@ public sealed class UserEmailConfirmedSubscriberTests
             }
         };
 
-        _internalApiClientMock
-            .Setup(x => x.ConfirmEmailAsync(It.IsAny<AuthEmailConfirmationRequest>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new NonTransientException("boom"));
+        _mediatorMock
+            .Setup(x => x.Send(It.IsAny<ConfirmAuthEmailCommand>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(FlowChatResult<Unit>.Failure(DomainError.BadRequest("boom")));
 
         var act = () => _subscriber.HandleAsync(message.ToInboundEnvelope(), CancellationToken.None);
 
@@ -121,7 +136,7 @@ public sealed class UserEmailConfirmedSubscriberTests
     }
 
     [Fact]
-    public async Task HandleAsync_WhenInternalApiThrowsTransientException_RethrowsAndLogsWarning()
+    public async Task HandleAsync_WhenCommandReturnsTransientFailure_ThrowsTransientExceptionAndLogsWarning()
     {
         var message = new UserEmailConfirmedIntegrationEvent
         {
@@ -134,9 +149,9 @@ public sealed class UserEmailConfirmedSubscriberTests
             }
         };
 
-        _internalApiClientMock
-            .Setup(x => x.ConfirmEmailAsync(It.IsAny<AuthEmailConfirmationRequest>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new TransientException("boom"));
+        _mediatorMock
+            .Setup(x => x.Send(It.IsAny<ConfirmAuthEmailCommand>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(FlowChatResult<Unit>.Failure(DomainError.UnExpected("boom", FailureKind.Transient)));
 
         var act = () => _subscriber.HandleAsync(message.ToInboundEnvelope(), CancellationToken.None);
 

@@ -1,5 +1,7 @@
+using FlowChat.Core.Messaging;
 using FlowChat.Core.Messaging.AuthService.Events;
 using FlowChat.Core.Messaging.UserProfileService.Events;
+using FlowChat.Core.Messaging.UserProfileService.ReadModels;
 using FlowChat.Shared.Infrastructure.Configuration;
 using FlowChat.Shared.Infrastructure.Silverback.Kafka;
 using FlowChat.UserProfileService.Application.Contracts.Infrastructure;
@@ -10,18 +12,33 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace FlowChat.UserProfileService.Infrastructure;
 
-public static class InfrastructureServiceRegistration
+public static class ApiInfrastructureServiceRegistration
 {
-    public static IServiceCollection AddInfrastructureServices(
+    public static IServiceCollection AddApiInfrastructureServices(
+        this IServiceCollection services,
+        IConfiguration configuration)
+        => services.AddCommonInfrastructureServices(configuration);
+}
+
+public static class ConsumerInfrastructureServiceRegistration
+{
+    public static IServiceCollection AddConsumerInfrastructureServices(
+        this IServiceCollection services,
+        IConfiguration configuration)
+        => services.AddCommonInfrastructureServices(configuration);
+}
+
+internal static class CommonInfrastructureServiceRegistration
+{
+    public static IServiceCollection AddCommonInfrastructureServices(
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        services.AddSettingsSections(configuration, typeof(InfrastructureServiceRegistration).Assembly);
+        services.AddSettingsSections(configuration, typeof(CommonInfrastructureServiceRegistration).Assembly);
         services.AddFlowChatSilverbackEventPublisher(producer => producer
-            .AddProducerSettings<UserProfileCreatedIntegrationEvent, UserProfileCreatedProducerSettingsSection>()
             .AddProducerSettings<UserEmailConfirmedIntegrationEvent, UserEmailConfirmedProducerSettingsSection>()
             .AddProducerSettings<EmailVerificationRequestIntegrationEvent, UserEmailVerificationRequestedProducerSettingsSection>()
-            .AddProducerSettings<UserProfileChangedIntegrationEvent, UserProfileStateChangedProducerSettingsSection>());
+            .AddProducerSettings<ProjectionIntegrationEvent<UserProfileReadModel>, UserProfileProjectionProducerSettingsSection>());
         services.AddScoped<IEmailVerificationLinkBuilder, EmailVerificationLinkBuilder>();
         services.AddScoped<IEmailVerificationTokenProtector, EmailVerificationTokenProtector>();
 

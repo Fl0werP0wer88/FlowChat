@@ -29,7 +29,7 @@ public sealed class StartupExtensionsTests
             ["JwtSettings:Issuer"] = "https://localhost:7236/",
             ["JwtSettings:Audience"] = "FlowChat.Client",
             ["FlowChat:InternalApi:ApiKey"] = "internal-key",
-            ["RealtimeApi:ApiKey"] = "worker-key",
+            ["RealtimeApi:Instances:realtime-instance"] = "http://localhost:5215",
             ["ConnectionStrings:Redis"] = "localhost:6379,password=secret",
             ["RealtimeConnections:InstanceId"] = "realtime-instance"
         });

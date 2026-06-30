@@ -5,7 +5,6 @@ using FlowChat.NotificationService.Persistence;
 using FlowChat.NotificationService.Persistence.Repositories;
 using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
-using FlowChat.Shared.Persistance.Auditing;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 
@@ -21,10 +20,10 @@ public sealed class NotificationWriteRepositoryTests : IDisposable
     {
         var options = new DbContextOptionsBuilder<AppDbContext>()
             .UseInMemoryDatabase(_fixture.Create<Guid>().ToString("N"))
-            .AddInterceptors(new EntityBaseSaveChangesInterceptor())
             .Options;
 
         _dbContext = new AppDbContext(options);
+        _dbContext.SavingChanges += (_, _) => SetAuditFields(_dbContext);
         _repository = new NotificationWriteRepository(_dbContext);
     }
 
@@ -39,6 +38,16 @@ public sealed class NotificationWriteRepositoryTests : IDisposable
             "Test User",
             "Confirm your email by clicking the provided link",
             sourceMessageKey);
+    }
+
+    private static void SetAuditFields(AppDbContext context)
+    {
+        foreach (var entry in context.ChangeTracker.Entries<IAuditableEntity>()
+                     .Where(entry => entry.State == EntityState.Added && entry.Entity.CreatedAtUtc is null))
+        {
+            entry.Entity.SetCreated("test");
+            entry.Entity.SetUpdated("test");
+        }
     }
 
     // --- AddAsync ---
@@ -90,17 +99,16 @@ public sealed class NotificationWriteRepositoryTests : IDisposable
         found.Should().BeNull();
     }
 
-    // --- UpdateAsync ---
+    // --- tracked update ---
 
     [Fact]
-    public async Task UpdateAsync_WithChangedState_PersistsChanges()
+    public async Task SaveChangesAsync_WithChangedTrackedState_PersistsChanges()
     {
         var notification = CreateNotification();
         await _repository.AddAsync(notification);
         await _dbContext.SaveChangesAsync();
 
         notification.MarkSent("provider-id-abc");
-        await _repository.UpdateAsync(notification);
         await _dbContext.SaveChangesAsync();
 
         var updated = await _dbContext.Notifications.FindAsync(notification.Id);
@@ -111,16 +119,18 @@ public sealed class NotificationWriteRepositoryTests : IDisposable
     // --- DeleteAsync ---
 
     [Fact]
-    public async Task DeleteAsync_WithExistingEntity_RemovesFromDatabase()
+    public async Task DeleteAsync_WithExistingEntity_MarksEntityAsDeleted()
     {
         var notification = CreateNotification();
         await _repository.AddAsync(notification);
         await _dbContext.SaveChangesAsync();
 
-        await _repository.DeleteAsync(notification);
+        await _repository.SoftDeleteAsync(notification);
         await _dbContext.SaveChangesAsync();
 
         var deleted = await _dbContext.Notifications.FindAsync(notification.Id);
-        deleted.Should().BeNull();
+        deleted.Should().NotBeNull();
+        deleted!.DeletedAt.Should().NotBeNull();
+        deleted.IsDeleted.Should().BeTrue();
     }
 }

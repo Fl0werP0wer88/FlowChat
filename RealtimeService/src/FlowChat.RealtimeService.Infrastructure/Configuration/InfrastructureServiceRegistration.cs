@@ -17,23 +17,52 @@ using StackExchange.Redis;
 
 namespace FlowChat.RealtimeService.Infrastructure;
 
-public static class InfrastructureServiceRegistration
+public static class ApiInfrastructureServiceRegistration
 {
-    // Most services are Singleton because they either wrap a shared long-lived TCP connection (Redis), hold in-memory state shared across all SignalR connections, or are stateless and safe to reuse — creating them per-request would waste resources without any benefit
-    public static IServiceCollection AddInfrastructureServices(
+    public static IServiceCollection AddApiInfrastructureServices(
+        this IServiceCollection services,
+        IConfiguration configuration)
+    {
+        services.AddCommonInfrastructureServices(configuration);
+        services.TryAddSingleton<IActiveConnectionsTracker, InMemoryActiveConnectionsTracker>();
+        services.TryAddSingleton<IRealtimeConnectionRegistry, RealtimeConnectionRegistry>();
+        services.AddFlowChatHttpClient<IPresenceInternalApiClient, PresenceInternalApiClient, PresenceServiceSettingsSection>();
+        services.AddHostedService<RealtimeConnectionRefreshBackgroundService>();
+
+        return services;
+    }
+}
+
+public static class ConsumerInfrastructureServiceRegistration
+{
+    public static IServiceCollection AddConsumerInfrastructureServices(
+        this IServiceCollection services,
+        IConfiguration configuration)
+    {
+        services.AddCommonInfrastructureServices(configuration);
+        services.AddScoped<IRealtimeEventRouter, WorkerRealtimeEventRouter>();
+
+        return services;
+    }
+}
+
+internal static class CommonInfrastructureServiceRegistration
+{
+    public static IServiceCollection AddCommonInfrastructureServices(
         this IServiceCollection services,
         IConfiguration configuration)
     {
         services.AddSettingsSections(configuration,
-            typeof(InfrastructureServiceRegistration).Assembly,
+            typeof(CommonInfrastructureServiceRegistration).Assembly,
             typeof(RealtimeRoutingSettingsSection).Assembly);
 
-        // Override connection string from ConnectionStrings section after appsettings binding
         services.PostConfigure<RealtimeConnectionsSettingsSection>(settings =>
         {
-            var cs = configuration.GetConnectionString(RealtimeConnectionsSettingsSection.RedisConnectionStringName);
-            if (!string.IsNullOrEmpty(cs))
-                settings.RedisConnectionString = cs;
+            var connectionString = configuration.GetConnectionString(RealtimeConnectionsSettingsSection.RedisConnectionStringName);
+            if (!string.IsNullOrEmpty(connectionString))
+            {
+                settings.RedisConnectionString = connectionString;
+            }
         });
 
         services.TryAddSingleton<IConnectionMultiplexer>(sp =>
@@ -45,20 +74,13 @@ public static class InfrastructureServiceRegistration
             return ConnectionMultiplexer.Connect(options);
         });
 
-        services.TryAddSingleton<IActiveConnectionsTracker, InMemoryActiveConnectionsTracker>();
         services.TryAddSingleton<RealtimeConnectionRedisRepository>();
         services.TryAddSingleton<IRealtimeConnectionRedisRepository>(sp => sp.GetRequiredService<RealtimeConnectionRedisRepository>());
         services.TryAddSingleton<IUserInstanceRoutingReader>(sp => sp.GetRequiredService<RealtimeConnectionRedisRepository>());
-        services.TryAddSingleton<IRealtimeConnectionRegistry, RealtimeConnectionRegistry>();
         services.TryAddSingleton<IRealtimeInstanceAddressResolver, ConfiguredRealtimeInstanceAddressResolver>();
 
-        services.AddFlowChatHttpClient<IPresenceInternalApiClient, PresenceInternalApiClient, PresenceServiceSettingsSection>();
         services.AddFlowChatHttpClient<IChatServiceInternalApiClient, ChatServiceInternalApiClient, ChatServiceSettingsSection>();
-
         services.AddFlowChatHttpClient<IRealtimeInstanceInternalApiClient, RealtimeInstanceInternalApiClient, InternalApiSettingsSection>();
-        services.AddScoped<IRealtimeEventRouter, RealtimeEventRouter>();
-
-        services.AddHostedService<RealtimeConnectionRefreshBackgroundService>();
 
         return services;
     }

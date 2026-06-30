@@ -2,7 +2,6 @@ using FlowChat.ChatService.Domain.Entities.Conversation;
 using FlowChat.ChatService.Persistence;
 using FlowChat.Shared.Domain;
 using FlowChat.ChatService.Persistence.Repositories;
-using FlowChat.Shared.Persistance.Auditing;
 using FluentAssertions;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
@@ -21,6 +20,8 @@ public sealed class ConversationRepositoryTests
         var memberUserId = Guid.NewGuid();
         var groupConversation = GroupConversation.Create(Id<Conversation>.New(), createdByUserId, [createdByUserId, memberUserId], "Friends");
         var duetConversation = DuetConversation.Create(createdByUserId, Guid.NewGuid());
+        MarkCreated(groupConversation);
+        MarkCreated(duetConversation);
 
         await using (var seedContext = CreateDbContext(connection))
         {
@@ -36,7 +37,7 @@ public sealed class ConversationRepositoryTests
 
         result.Should().NotBeNull();
         result!.Id.Should().Be(groupConversation.Id);
-        result.Participants.Select(participant => participant.UserId)
+        result.Participants.Select(participant => participant.UserId.Value)
             .Should().BeEquivalentTo([createdByUserId, memberUserId]);
         duetResult.Should().BeNull();
     }
@@ -51,6 +52,7 @@ public sealed class ConversationRepositoryTests
         var requestingUserId = Guid.NewGuid();
         var partnerUserId = Guid.NewGuid();
         var conversation = DuetConversation.Create(requestingUserId, partnerUserId);
+        MarkCreated(conversation);
         var repository = new DuetConversationWriteRepository(context);
 
         await repository.AddAsync(conversation, CancellationToken.None);
@@ -61,7 +63,7 @@ public sealed class ConversationRepositoryTests
             .SingleAsync(x => x.Id == conversation.Id);
         var persistedMapping = await context.DuetConversations.SingleAsync();
 
-        persistedConversation.Participants.Select(participant => participant.UserId)
+        persistedConversation.Participants.Select(participant => participant.UserId.Value)
             .Should().BeEquivalentTo([requestingUserId, partnerUserId]);
         persistedMapping.ConversationId.Should().Be(conversation.Id);
     }
@@ -75,6 +77,7 @@ public sealed class ConversationRepositoryTests
         var requestingUserId = Guid.NewGuid();
         var partnerUserId = Guid.NewGuid();
         var conversation = DuetConversation.Create(requestingUserId, partnerUserId);
+        MarkCreated(conversation);
 
         await using (var seedContext = CreateDbContext(connection))
         {
@@ -96,11 +99,16 @@ public sealed class ConversationRepositoryTests
     {
         var options = new DbContextOptionsBuilder<AppDbContext>()
             .UseSqlite(connection)
-            .AddInterceptors(new EntityBaseSaveChangesInterceptor())
             .Options;
 
         var context = new AppDbContext(options);
         context.Database.EnsureCreated();
         return context;
+    }
+
+    private static void MarkCreated(Conversation conversation)
+    {
+        conversation.SetCreated("integration-test");
+        conversation.SetUpdated("integration-test");
     }
 }

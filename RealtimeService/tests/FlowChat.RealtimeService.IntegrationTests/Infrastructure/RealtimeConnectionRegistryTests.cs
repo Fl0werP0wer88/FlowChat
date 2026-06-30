@@ -255,7 +255,7 @@ public sealed class RealtimeConnectionRegistryTests : IAsyncLifetime
         var services = new ServiceCollection();
         services.AddLogging();
         services.AddOptions();
-        services.AddInfrastructureServices(configuration);
+        services.AddApiInfrastructureServices(configuration);
 
         return services.BuildServiceProvider();
     }

@@ -1,6 +1,7 @@
 using System.Data.Common;
 using System.Diagnostics;
 using FluentAssertions;
+using FlowChat.Core.Exceptions;
 using FlowChat.Core.Results;
 using FlowChat.Shared.Application.Behaviors;
 using FlowChat.Shared.Domain;
@@ -51,7 +52,7 @@ public sealed class ExceptionHandlingPipelineBehaviorTests
         result.IsFailure.Should().BeTrue();
         result.Error.ErrorType.Should().Be(ErrorType.Unexpected);
         result.Error.ErrorMessage.Should().Be("An unexpected error occurred.");
-        result.Error.IsTransient.Should().BeTrue();
+        result.Error.FailureKind.Should().Be(FailureKind.Transient);
 
         activity.Status.Should().Be(ActivityStatusCode.Error);
         activity.StatusDescription.Should().Be("db_update_failed");
@@ -77,7 +78,7 @@ public sealed class ExceptionHandlingPipelineBehaviorTests
         result.IsFailure.Should().BeTrue();
         result.Error.ErrorType.Should().Be(ErrorType.Unexpected);
         result.Error.ErrorMessage.Should().Be("An unexpected error occurred.");
-        result.Error.IsTransient.Should().BeFalse();
+        result.Error.FailureKind.Should().Be(FailureKind.None);
 
         activity.Status.Should().Be(ActivityStatusCode.Error);
         activity.StatusDescription.Should().Be("db_update_failed");
@@ -85,6 +86,29 @@ public sealed class ExceptionHandlingPipelineBehaviorTests
         activity.GetTagItem("db.exception.transient").Should().Be(false);
         activity.GetTagItem("db.exception.type").Should().Be(nameof(DbUpdateException));
         activity.GetTagItem("db.exception.sql_state").Should().BeNull();
+        activity.Events.Should().Contain(x => x.Name == "exception");
+    }
+
+    [Fact]
+    public async Task Handle_WhenIsolableExceptionIsThrown_ReturnsIsolableUnexpectedFailure()
+    {
+        var behavior = new ExceptionHandlingPipelineBehavior<TestRequest, FlowChatResult<Guid>>();
+        var exception = new IsolableException("One or more items in the batch contain invalid data.");
+        using var activity = new Activity("test").Start();
+
+        var result = await behavior.Handle(
+            new TestRequest(),
+            _ => Task.FromException<FlowChatResult<Guid>>(exception),
+            CancellationToken.None);
+
+        result.IsFailure.Should().BeTrue();
+        result.Error.ErrorType.Should().Be(ErrorType.Unexpected);
+        result.Error.ErrorMessage.Should().Be(exception.Message);
+        result.Error.FailureKind.Should().Be(FailureKind.Isolable);
+
+        activity.Status.Should().Be(ActivityStatusCode.Error);
+        activity.StatusDescription.Should().Be("isolable_failure");
+        activity.GetTagItem("error.type").Should().Be("isolable");
         activity.Events.Should().Contain(x => x.Name == "exception");
     }
 

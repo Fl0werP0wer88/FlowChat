@@ -3,7 +3,6 @@ using FlowChat.ChatService.Api.Features.Conversation.Public.CopyDuetAsGroup;
 using FlowChat.ChatService.Application.Features.Conversation.Commands.CreateGroupFromDuet;
 using FlowChat.ChatService.Application.Features.Conversation.Dtos;
 using FlowChat.Core.Results;
-using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
 using FluentAssertions;
 using MediatR;
@@ -51,8 +50,7 @@ public sealed class CopyDuetAsGroupControllerTests
 
         _mediatorMock
             .Setup(x => x.Send(It.IsAny<CreateGroupFromDuetCommand>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(FlowChatResult<IdempotentCommandResult<GroupConversationDetailDto>>.Success(
-                new IdempotentCommandResult<GroupConversationDetailDto>(dto, WasAlreadyProcessed: false)));
+            .ReturnsAsync(FlowChatResult<GroupConversationDetailDto>.Success(dto));
 
         var controller = CreateController(userId);
         var request = new CopyDuetAsGroupRequest { NewGroupConversationId = conversationId, PartnerUserId = partnerUserId };
@@ -65,34 +63,6 @@ public sealed class CopyDuetAsGroupControllerTests
         response.ConversationId.Should().Be(conversationId);
         response.Name.Should().Be("Alice/Bob");
         response.Participants.Should().HaveCount(2);
-    }
-
-    [Fact]
-    public async Task CopyDuetAsGroup_WhenConversationAlreadyExists_Returns200()
-    {
-        var userId = Guid.NewGuid();
-        var partnerUserId = Guid.NewGuid();
-        var conversationId = Guid.NewGuid();
-        var dto = new GroupConversationDetailDto(
-            conversationId, "Alice/Bob",
-            [
-                new ConversationParticipantDto(userId, "Alice", null, userId),
-                new ConversationParticipantDto(partnerUserId, "Bob", null, partnerUserId)
-            ]);
-
-        _mediatorMock
-            .Setup(x => x.Send(It.IsAny<CreateGroupFromDuetCommand>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(FlowChatResult<IdempotentCommandResult<GroupConversationDetailDto>>.Success(
-                new IdempotentCommandResult<GroupConversationDetailDto>(dto, WasAlreadyProcessed: true)));
-
-        var controller = CreateController(userId);
-        var request = new CopyDuetAsGroupRequest { NewGroupConversationId = conversationId, PartnerUserId = partnerUserId };
-
-        var actionResult = await controller.CopyDuetAsGroup(request, CancellationToken.None);
-
-        var okResult = actionResult.Should().BeOfType<OkObjectResult>().Subject;
-        var response = okResult.Value.Should().BeOfType<CopyDuetAsGroupResponse>().Subject;
-        response.ConversationId.Should().Be(conversationId);
     }
 
     [Fact]
@@ -112,7 +82,7 @@ public sealed class CopyDuetAsGroupControllerTests
     {
         _mediatorMock
             .Setup(x => x.Send(It.IsAny<CreateGroupFromDuetCommand>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(FlowChatResult<IdempotentCommandResult<GroupConversationDetailDto>>.Failure(
+            .ReturnsAsync(FlowChatResult<GroupConversationDetailDto>.Failure(
                 DomainError.NotFound("Duet conversation not found.")));
 
         var controller = CreateController(Guid.NewGuid());
@@ -136,10 +106,8 @@ public sealed class CopyDuetAsGroupControllerTests
         _mediatorMock
             .Setup(x => x.Send(It.IsAny<CreateGroupFromDuetCommand>(), It.IsAny<CancellationToken>()))
             .Callback<object, CancellationToken>((cmd, _) => capturedCommand = (CreateGroupFromDuetCommand)cmd)
-            .ReturnsAsync(FlowChatResult<IdempotentCommandResult<GroupConversationDetailDto>>.Success(
-                new IdempotentCommandResult<GroupConversationDetailDto>(
-                    new GroupConversationDetailDto(conversationId, "Alice/Bob", []),
-                    WasAlreadyProcessed: false)));
+            .ReturnsAsync(FlowChatResult<GroupConversationDetailDto>.Success(
+                new GroupConversationDetailDto(conversationId, "Alice/Bob", [])));
 
         var controller = CreateController(userId);
         await controller.CopyDuetAsGroup(

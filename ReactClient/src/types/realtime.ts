@@ -16,6 +16,14 @@ export interface PresenceChangedEvent {
   changedAtUtc: string;
 }
 
+export interface GroupConversationChangedEvent {
+  conversationId: string;
+  type: number;
+  name: string | null;
+  createdByUserId: string;
+  participantUserIds: string[];
+}
+
 export type RealtimeConnectionStatus =
   | "idle"
   | "connecting"

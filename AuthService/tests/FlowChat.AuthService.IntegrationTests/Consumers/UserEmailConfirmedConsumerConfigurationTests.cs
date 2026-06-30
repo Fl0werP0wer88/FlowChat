@@ -1,8 +1,11 @@
 using FlowChat.AuthService.Consumers;
 using FlowChat.AuthService.Consumers.Kafka;
 using FlowChat.AuthService.Consumers.Configuration.Settings;
-using FlowChat.AuthService.Consumers.Services;
+using FlowChat.AuthService.Application.Contracts.Infrastructure;
+using FlowChat.AuthService.Application.Contracts.Persistence;
+using FlowChat.Shared.Application;
 using FluentAssertions;
+using MediatR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Silverback.Messaging.Broker;
@@ -28,12 +31,19 @@ public sealed class UserEmailConfirmedConsumerConfigurationTests
         var consumerCollection = serviceProvider.GetRequiredService<IConsumerCollection>();
         var authEmailChangedSubscriber = scope.ServiceProvider.GetRequiredService<AuthEmailChangedSubscriber>();
         var subscriber = scope.ServiceProvider.GetRequiredService<UserEmailConfirmedSubscriber>();
-        var internalApiClient = scope.ServiceProvider.GetRequiredService<IAuthInternalApiClient>();
+        var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
+        var accountRepository = scope.ServiceProvider.GetRequiredService<IAccountRepository>();
+        var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+        var passwordHashingService = scope.ServiceProvider.GetRequiredService<IPasswordHashingService>();
 
         consumerCollection.Should().NotBeNull();
         authEmailChangedSubscriber.Should().NotBeNull();
         subscriber.Should().NotBeNull();
-        internalApiClient.Should().NotBeNull();
+        mediator.Should().NotBeNull();
+        accountRepository.Should().NotBeNull();
+        unitOfWork.Should().NotBeNull();
+        unitOfWork.Should().BeAssignableTo<IConsumedOffsetCommitter>();
+        passwordHashingService.Should().NotBeNull();
     }
 
     [Theory]
@@ -50,35 +60,14 @@ public sealed class UserEmailConfirmedConsumerConfigurationTests
             .Get<UserEmailConfirmedConsumerSettingsSection>();
 
         consumerOptions.Should().NotBeNull();
-        consumerOptions!.GroupId.Should().Be("auth-service");
+        consumerOptions!.BootstrapServers.Should().Be("localhost:9092");
+        consumerOptions.GroupId.Should().Be("auth-service");
         consumerOptions.RetryGroupId.Should().Be("auth-service-retry");
         consumerOptions.Topic.Should().Be("dev.flowchat.user-profile.user-profile.v1");
         consumerOptions.RetryTopic.Should().Be("dev.flowchat.user-profile.user-profile.v1.auth-service.retry");
         consumerOptions.DeadLetterTopic.Should().Be("dev.flowchat.user-profile.user-profile.v1.auth-service.dlq");
-    }
-
-    [Fact]
-    public async Task AddConsumers_RegistersAuthInternalApiNamedClient()
-    {
-        var configuration = CreateConfiguration();
-
-        var services = new ServiceCollection();
-        services.AddSingleton<IConfiguration>(configuration);
-        services.AddOptions();
-        services.AddLogging();
-        services.AddConsumers(configuration);
-
-        await using var serviceProvider = services.BuildServiceProvider();
-
-        var internalApiClient = serviceProvider.GetRequiredService<IAuthInternalApiClient>();
-        var httpClient = serviceProvider
-            .GetRequiredService<IHttpClientFactory>()
-            .CreateClient(typeof(IAuthInternalApiClient).Name);
-
-        internalApiClient.Should().NotBeNull();
-        httpClient.BaseAddress.Should().Be(new Uri("https://localhost:7236"));
-        httpClient.DefaultRequestHeaders.GetValues(AuthInternalApiClient.ApiKeyHeaderName).Single()
-            .Should().Be("worker-key");
+        configuration.GetConnectionString("AuthDb").Should().Be(
+            "Host=localhost;Port=5432;Database=flowchat_auth_db;Username=flowchat_app;Password=flowchat_app_pw;");
     }
 
     private static IConfiguration CreateConfiguration()
@@ -86,8 +75,7 @@ public sealed class UserEmailConfirmedConsumerConfigurationTests
         return new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["AuthApi:BaseUrl"] = "https://localhost:7236",
-                ["AuthApi:ApiKey"] = "worker-key",
+                ["ConnectionStrings:AuthDb"] = "Host=localhost;Database=auth-test",
                 ["Kafka:UserEmailConfirmedConsumer:BootstrapServers"] = "localhost:9092",
                 ["Kafka:UserEmailConfirmedConsumer:GroupId"] = "auth-service",
                 ["Kafka:UserEmailConfirmedConsumer:RetryGroupId"] = "auth-service-retry",

@@ -1,6 +1,8 @@
 using System.Diagnostics;
 using FlowChat.Core.Exceptions;
 using FlowChat.Core.Messaging;
+using FlowChat.Core.Results;
+using FlowChat.Shared.Domain;
 using Microsoft.Extensions.Logging;
 using Silverback.Messaging.Messages;
 using Silverback.Messaging.Subscribers;
@@ -56,6 +58,18 @@ public abstract class SubscriberBase<TIntegrationEvent>(ILogger logger)
 
             throw;
         }
+        catch (IsolableException exception)
+        {
+            Activity.Current?.SetTag("flowchat.subscriber.result", "isolable_failure");
+            Logger.LogInformation(
+                exception,
+                "Isolable failure while handling {EventType} in {SubscriberName}. Reason: {Reason}",
+                GetEventTypeName(message),
+                GetType().Name,
+                exception.Message);
+
+            throw;
+        }
         catch (Exception exception)
         {
             Activity.Current?.SetTag("flowchat.subscriber.result", "unknown_failure");
@@ -70,6 +84,23 @@ public abstract class SubscriberBase<TIntegrationEvent>(ILogger logger)
     }
 
     protected abstract Task ExecuteAsync(TIntegrationEvent message, CancellationToken cancellationToken);
+
+    protected static void ThrowIfFailure<TValue>(FlowChatResult<TValue> result)
+    {
+        if (result.IsSuccess)
+        {
+            return;
+        }
+
+        var message = result.Error.ErrorMessage ?? "Command failed.";
+
+        throw result.Error.FailureKind switch
+        {
+            FailureKind.Transient => new TransientException(message),
+            FailureKind.Isolable => new IsolableException(message),
+            _ => new NonTransientException(message)
+        };
+    }
 
     private static string GetEventTypeName(TIntegrationEvent message) => typeof(TIntegrationEvent).Name;
 }

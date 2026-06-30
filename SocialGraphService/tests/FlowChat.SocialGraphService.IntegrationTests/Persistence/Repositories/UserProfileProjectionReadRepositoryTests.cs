@@ -79,13 +79,37 @@ public sealed class UserProfileProjectionReadRepositoryTests
         result.MainEmail!.Address.Should().Be("Jane@Example.com");
     }
 
-    private static UserProfileProjectionEntity CreateProjection(
+    [Fact]
+    public async Task GetByUserProfileIdAsync_WhenProjectionIsDeleted_ReturnsNull()
+    {
+        await using var connection = new SqliteConnection("Data Source=:memory:");
+        await connection.OpenAsync();
+
+        var userProfileId = Guid.NewGuid();
+
+        await using (var seedContext = CreateDbContext(connection))
+        {
+            seedContext.UserProfileProjections.Add(
+                CreateProjection("jdoe", "Jane", "Doe", "FlowChat", userProfileId, "jane@example.com", isDeleted: true));
+            await seedContext.SaveChangesAsync();
+        }
+
+        await using var readContext = CreateDbContext(connection);
+        var repository = new UserProfileProjectionReadRepository(readContext);
+
+        var result = await repository.GetByUserProfileIdAsync(userProfileId, CancellationToken.None);
+
+        result.Should().BeNull();
+    }
+
+    private static UserProfileReadModelEntity CreateProjection(
         string friendlyUserId,
         string? firstName,
         string? lastName,
         string? organization,
         Guid? userProfileId = null,
-        string? mainEmail = null) =>
+        string? mainEmail = null,
+        bool isDeleted = false) =>
         new()
         {
             UserProfileId = userProfileId ?? Guid.NewGuid(),
@@ -97,10 +121,8 @@ public sealed class UserProfileProjectionReadRepositoryTests
             MainEmailIsConfirmed = mainEmail == null ? null : false,
             MainEmailIsVisible = mainEmail == null ? null : true,
             IsActive = true,
-            CreatedBy = "seed",
-            CreatedAtUtc = new DateTimeOffset(2026, 4, 6, 8, 0, 0, TimeSpan.Zero),
-            LastModifiedBy = "seed",
-            LastModifiedAtUtc = new DateTimeOffset(2026, 4, 6, 8, 0, 0, TimeSpan.Zero)
+            SourceVersion = 1,
+            SourceDeletedAtUtc = isDeleted ? new DateTimeOffset(2026, 4, 24, 12, 0, 0, TimeSpan.Zero) : null
         };
 
     private static AppDbContext CreateDbContext(SqliteConnection connection)

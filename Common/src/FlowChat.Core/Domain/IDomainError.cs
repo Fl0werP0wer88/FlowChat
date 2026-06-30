@@ -2,7 +2,7 @@ namespace FlowChat.Shared.Domain;
 
 public interface IDomainError
 {
-    public bool IsTransient { get; }
+    public FailureKind FailureKind { get; }
 
     string? ErrorMessage { get; }
 

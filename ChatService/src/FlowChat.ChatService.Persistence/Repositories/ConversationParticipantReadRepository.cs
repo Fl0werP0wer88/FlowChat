@@ -1,23 +1,27 @@
 using FlowChat.ChatService.Application.Contracts.Persistence;
-using FlowChat.ChatService.Domain.Entities.Conversation;
-using FlowChat.Shared.Domain;
+using FlowChat.Shared.Persistance;
 using Microsoft.EntityFrameworkCore;
 
 namespace FlowChat.ChatService.Persistence.Repositories;
 
-public sealed class ConversationParticipantReadRepository(AppDbContext dbContext) : IConversationParticipantReadRepository
+public sealed class ConversationParticipantReadRepository(AppDbContext dbContext)
+    : ReadRepositoryBase, IConversationParticipantReadRepository
 {
     public async Task<IReadOnlyCollection<Guid>?> GetParticipantUserIdsAsync(
         Guid conversationId,
         CancellationToken cancellationToken = default)
     {
-        var typedConversationId = Id<Conversation>.FromGuid(conversationId);
+        var conversationExists = await Active(dbContext.ConversationReads)
+            .AnyAsync(conversation => conversation.Id == conversationId, cancellationToken);
 
-        var conversation = await dbContext.Conversations
-            .AsNoTracking()
-            .Include(conversation => conversation.Participants)
-            .FirstOrDefaultAsync(conversation => conversation.Id == typedConversationId, cancellationToken);
+        if (!conversationExists)
+        {
+            return null;
+        }
 
-        return conversation?.Participants.Select(participant => participant.UserId).ToList();
+        return await Active(dbContext.ParticipantUserReads)
+            .Where(participant => participant.ConversationId == conversationId)
+            .Select(participant => participant.UserId)
+            .ToListAsync(cancellationToken);
     }
 }

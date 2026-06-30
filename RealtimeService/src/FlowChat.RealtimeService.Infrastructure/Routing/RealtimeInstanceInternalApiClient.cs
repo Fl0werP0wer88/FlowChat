@@ -11,6 +11,7 @@ public sealed class RealtimeInstanceInternalApiClient(HttpClient httpClient)
     public const string ApiKeyHeaderName = "X-Internal-Api-Key";
     private const string ReceiveMessagePath = "/internal/realtime/messages/direct";
     private const string PresenceChangedPath = "/internal/realtime/presence/direct";
+    private const string GroupConversationChangedPath = "/internal/realtime/group-conversations/changed/direct";
 
     protected override string ClientDisplayName => "Realtime API";
 
@@ -46,6 +47,21 @@ public sealed class RealtimeInstanceInternalApiClient(HttpClient httpClient)
                 notification.RecipientUserIds),
             cancellationToken);
 
+    public Task PublishGroupConversationChangedAsync(
+        Uri baseAddress,
+        GroupConversationChangedParam notification,
+        CancellationToken cancellationToken) =>
+        PostAsync(
+            baseAddress,
+            GroupConversationChangedPath,
+            new PublishGroupConversationChangedRequest(
+                notification.ConversationId,
+                notification.Type,
+                notification.Name,
+                notification.CreatedByUserId,
+                notification.ParticipantUserIds),
+            cancellationToken);
+
     private async Task PostAsync<TRequest>(Uri baseAddress, string path, TRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(baseAddress);
@@ -73,4 +89,11 @@ public sealed class RealtimeInstanceInternalApiClient(HttpClient httpClient)
         PresenceStatus Status,
         DateTimeOffset ChangedAtUtc,
         IReadOnlyCollection<Guid> RecipientUserIds);
+
+    private sealed record PublishGroupConversationChangedRequest(
+        Guid ConversationId,
+        int Type,
+        string? Name,
+        Guid CreatedByUserId,
+        IReadOnlyCollection<Guid> ParticipantUserIds);
 }

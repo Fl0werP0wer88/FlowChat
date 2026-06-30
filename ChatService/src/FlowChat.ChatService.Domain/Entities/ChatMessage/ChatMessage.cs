@@ -2,36 +2,34 @@ using FlowChat.ChatService.Domain.Entities.ChatMessage.Events;
 using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
 using ConversationAggregate = FlowChat.ChatService.Domain.Entities.Conversation.Conversation;
+using UserProfileMarker = FlowChat.ChatService.Domain.Entities.UserProfiles.UserProfile;
 
 namespace FlowChat.ChatService.Domain.Entities.ChatMessage;
 
 public sealed class ChatMessage : AggregateRootBase<ChatMessage>
 {
     public Id<ConversationAggregate> ConversationId { get; private set; }
-    public Guid SenderUserId { get; private set; }
+    public Id<UserProfileMarker> SenderUserId { get; private set; }
     public string SenderDisplayName { get; private set; }
     public string Text { get; private set; }
     public UtcDateTimeOffset SentAtUtc { get; private set; } = UtcDateTimeOffset.UtcNow;
     public UtcDateTimeOffset? DeliveredAtUtc { get; private set; }
-    public Guid[] RecipientUserIds { get; private set; }
+    private Guid[] _recipientUserIds = [];
+    public IReadOnlyCollection<Id<UserProfileMarker>> RecipientUserIds => [.. _recipientUserIds.Select(Id<UserProfileMarker>.FromGuid)];
     public long? SequenceNum { get; private set; }
     public DeliveryStatus DeliveryStatus { get; private set; } = DeliveryStatus.Pending;
 
     private ChatMessage(
         Id<ChatMessage> id,
         Id<ConversationAggregate> conversationId,
-        Guid senderUserId,
+        Id<UserProfileMarker> senderUserId,
         string senderDisplayName,
         string text,
         UtcDateTimeOffset sentAtUtc,
         Guid[] recipientUserIds) : base(id)
     {
         ArgumentNullException.ThrowIfNull(conversationId);
-
-        if (senderUserId == Guid.Empty)
-        {
-            throw new ArgumentException("SenderUserId is required.", nameof(senderUserId));
-        }
+        ArgumentNullException.ThrowIfNull(senderUserId);
 
         ArgumentException.ThrowIfNullOrWhiteSpace(senderDisplayName);
         ArgumentException.ThrowIfNullOrWhiteSpace(text);
@@ -41,16 +39,16 @@ public sealed class ChatMessage : AggregateRootBase<ChatMessage>
         SenderDisplayName = senderDisplayName.Trim();
         Text = text.Trim();
         SentAtUtc = sentAtUtc;
-        RecipientUserIds = NormalizeRecipientUserIds(recipientUserIds);
+        _recipientUserIds = recipientUserIds;
     }
 
     public static ChatMessage Create(
         Id<ChatMessage> id,
         Id<ConversationAggregate> conversationId,
-        Guid senderUserId,
+        Id<UserProfileMarker> senderUserId,
         string senderDisplayName,
         string text,
-        IEnumerable<Guid> recipientUserIds,
+        IEnumerable<Id<UserProfileMarker>> recipientUserIds,
         UtcDateTimeOffset? sentAtUtc = null)
     {
         ArgumentNullException.ThrowIfNull(id);
@@ -67,7 +65,7 @@ public sealed class ChatMessage : AggregateRootBase<ChatMessage>
         chatMessage.AddDomainEvent(
             new ChatMessageSentDomainEvent(
                 chatMessage.Id,
-                chatMessage.ConversationId.Value,
+                chatMessage.ConversationId,
                 chatMessage.SenderUserId,
                 chatMessage.SenderDisplayName,
                 chatMessage.Text,
@@ -89,15 +87,14 @@ public sealed class ChatMessage : AggregateRootBase<ChatMessage>
         DeliveryStatus = DeliveryStatus.Delivered;
     }
 
-    private static Guid[] NormalizeRecipientUserIds(IEnumerable<Guid> recipientUserIds)
+    private static Guid[] NormalizeRecipientUserIds(IEnumerable<Id<UserProfileMarker>> recipientUserIds)
     {
         ArgumentNullException.ThrowIfNull(recipientUserIds);
 
-        // Guid.Empty is filtered out because callers may pass uninitialized or placeholder IDs.
-        // Deduplication prevents the same user receiving the same message notification multiple times.
         var normalizedRecipientUserIds = recipientUserIds
-            .Where(userId => userId != Guid.Empty)
+            .Where(userId => userId is not null)
             .Distinct()
+            .Select(userId => userId.Value)
             .ToArray();
 
         if (normalizedRecipientUserIds.Length == 0)

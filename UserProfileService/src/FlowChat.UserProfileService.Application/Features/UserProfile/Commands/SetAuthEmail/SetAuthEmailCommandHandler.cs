@@ -1,4 +1,6 @@
 using FlowChat.Shared.Application;
+using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2;
+using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2.BeforeSaveProcessors;
 using FlowChat.Shared.Domain;
 using FlowChat.UserProfileService.Application.Contracts.Persistence;
 using FlowChat.UserProfileService.Domain.Entities.EmailVerificationRequest;
@@ -7,17 +9,20 @@ using UserProfileAggregate = FlowChat.UserProfileService.Domain.Entities.UserPro
 namespace FlowChat.UserProfileService.Application.Features.UserProfile.Commands.SetAuthEmail;
 
 public sealed class SetAuthEmailCommandHandler
-    : CommandHandlerBase<SetAuthEmailCommand, Guid>
+    : AggregateRootUpdateCommandHandlerBaseV2<SetAuthEmailCommand, Guid, UserProfileAggregate>
 {
     private const string EmailMustBeConfirmedMessageTemplate = "Email '{0}' must be confirmed before it can be set as the auth email.";
 
     private readonly IUserProfileWriteRepository _userProfileRepository;
     private UserProfileAggregate? _userProfile;
+    private bool _authEmailChanged;
 
     public SetAuthEmailCommandHandler(
         IUserProfileWriteRepository userProfileRepository,
         IUnitOfWork unitOfWork,
-        IDomainEventDispatcher domainEventDispatcher) : base(domainEventDispatcher, unitOfWork)
+        ILocalEventDispatcher domainEventDispatcher,
+        IEnumerable<IAggregateBeforeSaveProcessor<SetAuthEmailCommand, UserProfileAggregate>> beforeSaveProcessors)
+        : base(domainEventDispatcher, unitOfWork, beforeSaveProcessors)
     {
         _userProfileRepository = userProfileRepository;
     }
@@ -45,13 +50,15 @@ public sealed class SetAuthEmailCommandHandler
                 DomainError.Validation(string.Format(EmailMustBeConfirmedMessageTemplate, email.Address.Value)));
         }
 
+        _authEmailChanged = !email.IsAuth;
         _userProfile.SetAuthEmail(email.Id);
 
         return FlowChatResult<Guid>.Success(email.Id.Value);
     }
 
-    protected override IAggregateRoot? GetAggregateRoot(FlowChatResult<Guid> result)
-    {
-        return result.IsSuccess ? _userProfile : null;
-    }
+    protected override UserProfileAggregate GetAggregateRoot() =>
+        _userProfile ?? throw new InvalidOperationException("Aggregate root instance is not available.");
+
+    protected override AggregateState GetAggregateState(SetAuthEmailCommand request, UserProfileAggregate aggregateRoot) =>
+        _authEmailChanged ? AggregateState.Updated : AggregateState.Unchanged;
 }

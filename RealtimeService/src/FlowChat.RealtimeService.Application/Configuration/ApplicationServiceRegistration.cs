@@ -1,18 +1,25 @@
 using FlowChat.RealtimeService.Application.Features.RealtimeConnection.Commands;
+using FlowChat.RealtimeService.Application.Features.Conversation.Commands.RouteGroupConversationChanged;
+using FlowChat.RealtimeService.Application.Features.Message.Commands.RouteMessage;
+using FlowChat.RealtimeService.Application.Features.Presence.Commands.RoutePresenceChange;
 using FlowChat.Shared.Application;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace FlowChat.RealtimeService.Application;
 
-public static class ApplicationServiceRegistration
+public static class ApiApplicationServiceRegistration
 {
     public static IServiceCollection AddApiApplicationServices(this IServiceCollection services)
     {
-        var applicationAssembly = typeof(ApplicationServiceRegistration).Assembly;
+        var applicationAssembly = typeof(ApiApplicationServiceRegistration).Assembly;
 
         services.AddFlowChatValidatorsFromAssembly(applicationAssembly);
         services.AddMediatR(cfg =>
         {
+            cfg.TypeEvaluator = type =>
+                type != typeof(RouteMessageCommandHandler)
+                && type != typeof(RoutePresenceChangeCommandHandler)
+                && type != typeof(RouteGroupConversationChangedCommandHandler);
             cfg.RegisterServicesFromAssemblies(applicationAssembly);
             cfg.AddFlowChatBehaviors();
         });
@@ -20,11 +27,25 @@ public static class ApplicationServiceRegistration
 
         return services;
     }
+}
 
-    public static IServiceCollection AddWorkerApplicationServices(this IServiceCollection services)
+public static class ConsumerApplicationServiceRegistration
+{
+    public static IServiceCollection AddConsumerApplicationServices(this IServiceCollection services)
     {
-        // The worker forwards Kafka events to the internal realtime API and does not
-        // execute SignalR dispatch handlers locally.
+        var applicationAssembly = typeof(ConsumerApplicationServiceRegistration).Assembly;
+
+        services.AddFlowChatValidatorsFromAssembly(applicationAssembly);
+        services.AddMediatR(cfg =>
+        {
+            cfg.TypeEvaluator = type =>
+                type == typeof(RouteMessageCommandHandler)
+                || type == typeof(RoutePresenceChangeCommandHandler)
+                || type == typeof(RouteGroupConversationChangedCommandHandler);
+            cfg.RegisterServicesFromAssemblies(applicationAssembly);
+            cfg.AddFlowChatBehaviors();
+        });
+
         return services;
     }
 }

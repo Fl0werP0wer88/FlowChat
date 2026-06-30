@@ -1,41 +1,71 @@
 using FlowChat.PresenceService.Application.Contracts.Persistence;
-using FlowChat.PresenceService.Application.Features.ContactObserverProjections.Commands.InsertContactObserverProjection;
 using FlowChat.PresenceService.Persistence.Repositories;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Infrastructure.Silverback.Persistence;
-using FlowChat.Shared.Persistance;
-using FlowChat.Shared.Persistance.Auditing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace FlowChat.PresenceService.Persistence;
 
-public static class PersistenceServiceRegistration
+public static class ApiPersistenceServiceRegistration
 {
-    public static IServiceCollection AddPersistenceServices(
+    public static IServiceCollection AddApiPersistenceServices(
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        services.AddScoped<EntityBaseSaveChangesInterceptor>();
-        services.AddPostgresDbUpdateExceptionClassifier(options =>
-        {
-            options.UniqueConstraintNamesByIdempotencyConflictKey[InsertContactObserverProjectionCommand.IdempotencyConflictKey] =
-                ["PK_ContactObserverProjection"];
-        });
+        services.AddDbContextServices(configuration);
+
+        services.AddPresenceRepositories();
+        services.AddScoped<IUnitOfWork, SilverbackEfUnitOfWork<AppDbContext>>();
+
+        return services;
+    }
+}
+
+public static class ConsumerPersistenceServiceRegistration
+{
+    public static IServiceCollection AddConsumerPersistenceServices(
+        this IServiceCollection services,
+        IConfiguration configuration)
+    {
+        services.AddDbContextServices(configuration);
+
+        services.AddPresenceRepositories();
+        services.AddScoped<IUnitOfWork, SilverbackKafkaOffsetUnitOfWork<AppDbContext>>();
+
+        return services;
+    }
+}
+
+public static class OutboxPublisherPersistenceServiceRegistration
+{
+    public static IServiceCollection AddOutboxPublisherPersistenceServices(
+        this IServiceCollection services,
+        IConfiguration configuration)
+        => services.AddDbContextServices(configuration);
+}
+
+internal static class CommonPersistenceServiceRegistration
+{
+    public static IServiceCollection AddDbContextServices(
+        this IServiceCollection services,
+        IConfiguration configuration)
+    {
         services.AddDbContext<AppDbContext>((serviceProvider, options) =>
-            options.UseNpgsql(configuration.GetConnectionString("PresenceDb"))
-                .AddInterceptors(serviceProvider.GetRequiredService<EntityBaseSaveChangesInterceptor>()));
+            options.UseNpgsql(configuration.GetConnectionString("PresenceDb")));
         services.AddDbContextFactory<AppDbContext>(
-            (serviceProvider, options) => options.UseNpgsql(configuration.GetConnectionString("PresenceDb"))
-                .AddInterceptors(serviceProvider.GetRequiredService<EntityBaseSaveChangesInterceptor>()),
+            (serviceProvider, options) => options.UseNpgsql(configuration.GetConnectionString("PresenceDb")),
             ServiceLifetime.Scoped);
 
+        return services;
+    }
+
+    public static IServiceCollection AddPresenceRepositories(this IServiceCollection services)
+    {
         services.AddScoped<IContactObserverProjectionReadRepository, ContactObserverProjectionReadRepository>();
-        services.AddScoped<IContactObserverProjectionWriteRepository, ContactObserverProjectionWriteRepository>();
         services.AddScoped<IUserPresencePreferencesReadRepository, UserPresencePreferencesReadRepository>();
         services.AddScoped<IUserPresencePreferencesWriteRepository, UserPresencePreferencesWriteRepository>();
-        services.AddScoped<IUnitOfWork, SilverbackEfUnitOfWork<AppDbContext>>();
 
         return services;
     }

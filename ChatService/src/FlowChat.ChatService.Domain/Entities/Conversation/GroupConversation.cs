@@ -1,4 +1,6 @@
+using FlowChat.ChatService.Domain.Entities.Conversation.Events;
 using FlowChat.Shared.Domain;
+using UserProfileMarker = FlowChat.ChatService.Domain.Entities.UserProfiles.UserProfile;
 
 namespace FlowChat.ChatService.Domain.Entities.Conversation;
 
@@ -8,7 +10,7 @@ public sealed class GroupConversation : Conversation
         Id<Conversation> id,
         ConversationType type,
         string? name,
-        Guid createdByUserId) : base(id, type, name, createdByUserId)
+        Id<UserProfileMarker> createdByUserId) : base(id, type, name, createdByUserId)
     {
     }
 
@@ -16,18 +18,18 @@ public sealed class GroupConversation : Conversation
         Id<Conversation> id,
         ConversationType type,
         string? name,
-        Guid createdByUserId,
+        Id<UserProfileMarker> createdByUserId,
         List<ParticipantUser> participants) : base(id, type, name, createdByUserId, participants)
     {
     }
 
     public static GroupConversation Create(
         Id<Conversation> id,
-        Guid createdByUserId,
-        IEnumerable<Guid> participantUserIds,
+        Id<UserProfileMarker> createdByUserId,
+        IEnumerable<Id<UserProfileMarker>> participantUserIds,
         string name)
     {
-        return CreateCore(
+        var conversation = CreateCore(
             id,
             ConversationType.Group,
             createdByUserId,
@@ -35,12 +37,21 @@ public sealed class GroupConversation : Conversation
             name,
             static (id, type, name, createdByUserId, participants) =>
                 new GroupConversation(id, type, name, createdByUserId, participants));
+
+        conversation.AddDomainEvent(new GroupConversationCreatedDomainEvent(
+            conversation.Id,
+            conversation.Type,
+            conversation.Name,
+            conversation.CreatedByUserId,
+            [.. conversation.Participants.Select(p => p.UserId)]));
+
+        return conversation;
     }
 
     public static GroupConversation Restore(
         Id<Conversation> id,
         string name,
-        Guid createdByUserId,
+        Id<UserProfileMarker> createdByUserId,
         IEnumerable<ParticipantUser> participants)
     {
         return RestoreCore(
@@ -53,7 +64,7 @@ public sealed class GroupConversation : Conversation
                 new GroupConversation(id, type, name, createdByUserId, participants));
     }
 
-    public void AddParticipant(Guid participantUserId, string? displayName = null, string? avatarUrl = null)
+    public void AddParticipant(Id<UserProfileMarker> participantUserId, string? displayName = null, string? avatarUrl = null)
     {
         AddParticipantCore(participantUserId, displayName, avatarUrl);
     }

@@ -8,9 +8,9 @@ using OpenIddict.Abstractions;
 
 namespace FlowChat.AuthService.Persistence;
 
-public static class APIServiceRegistration
+public static class ApiServiceRegistration
 {
-    public static IServiceCollection AddAPIServices(
+    public static IServiceCollection AddApiServices(
                             this IServiceCollection services,
                             IConfiguration configuration,
                             IHostEnvironment environment)

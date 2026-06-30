@@ -36,6 +36,9 @@ namespace FlowChat.PresenceService.Persistence.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
 
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<DateTimeOffset>("LastModifiedAtUtc")
                         .HasColumnType("timestamp with time zone");
 
@@ -56,7 +59,7 @@ namespace FlowChat.PresenceService.Persistence.Migrations
                     b.ToTable("UserPresencePreferences", (string)null);
                 });
 
-            modelBuilder.Entity("FlowChat.PresenceService.Persistence.Entities.ContactObserverProjectionEntity", b =>
+            modelBuilder.Entity("FlowChat.PresenceService.Persistence.Entities.ContactObserverReadModelEntity", b =>
                 {
                     b.Property<Guid>("ObservedUserId")
                         .HasColumnType("uuid");
@@ -64,31 +67,75 @@ namespace FlowChat.PresenceService.Persistence.Migrations
                     b.Property<Guid>("ObserverUserId")
                         .HasColumnType("uuid");
 
-                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("timestamp with time zone")
+                        .HasComputedColumnSql("\"SourceDeletedAtUtc\"", true);
+
+                    b.Property<DateTimeOffset>("SourceCreatedAtUtc")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("CreatedBy")
-                        .IsRequired()
-                        .HasMaxLength(256)
-                        .HasColumnType("character varying(256)");
-
-                    b.Property<DateTimeOffset>("LastModifiedAtUtc")
+                    b.Property<DateTimeOffset?>("SourceDeletedAtUtc")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("LastModifiedBy")
-                        .IsRequired()
-                        .HasMaxLength(256)
-                        .HasColumnType("character varying(256)");
+                    b.Property<DateTimeOffset>("SourceLastModifiedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("SourceVersion")
+                        .HasColumnType("integer");
 
                     b.HasKey("ObservedUserId", "ObserverUserId");
 
                     b.HasIndex("ObservedUserId")
                         .HasDatabaseName("ix_contact_observer_projection_observed_user_id");
 
-                    b.ToTable("ContactObserverProjection", null, t =>
+                    b.ToTable("ContactObserverReadModel", null, t =>
                         {
                             t.HasCheckConstraint("chk_contact_observer_projection_different_users", "\"ObservedUserId\" <> \"ObserverUserId\"");
                         });
+                });
+
+            modelBuilder.Entity("FlowChat.PresenceService.Persistence.Entities.UserPresencePreferencesReadEntity", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("UserId");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset>("LastModifiedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("PreferredStatus")
+                        .HasColumnType("integer");
+
+                    b.HasKey("UserId");
+
+                    b.ToTable((string)null);
+
+                    b.ToView("UserPresencePreferences", (string)null);
+                });
+
+            modelBuilder.Entity("Silverback.Messaging.Consuming.KafkaOffsetStore.SilverbackStoredOffset", b =>
+                {
+                    b.Property<string>("GroupId")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<string>("Topic")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<int>("Partition")
+                        .HasColumnType("integer");
+
+                    b.Property<long>("Offset")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("GroupId", "Topic", "Partition");
+
+                    b.ToTable("SilverbackStoredOffsets");
                 });
 
             modelBuilder.Entity("Silverback.Messaging.Producing.TransactionalOutbox.SilverbackOutboxMessage", b =>

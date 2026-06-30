@@ -74,19 +74,10 @@ public sealed class ConfirmEmailVerificationControllerTests(UserProfileApiFactor
     private async Task<(Guid UserId, Guid EmailId)> CreateProfileAndGetEmailIdAsync()
     {
         var userId = Guid.NewGuid();
-        var request = new
-        {
-            UserId = userId,
-            FriendlyUserId = $"confirmverif-{userId:N}",
-            Email = $"confirmverif_{userId:N}@example.com"
-        };
-        var httpRequest = new HttpRequestMessage(HttpMethod.Post, "/internal/userprofiles/initial")
-        {
-            Content = JsonContent.Create(request)
-        };
-        httpRequest.Headers.Add("X-Internal-Api-Key", UserProfileApiFactory.InternalApiKey);
-        var createResponse = await _client.SendAsync(httpRequest);
-        createResponse.EnsureSuccessStatusCode();
+        await factory.CreateInitialUserProfileAsync(
+            userId,
+            $"confirmverif-{userId:N}",
+            $"confirmverif_{userId:N}@example.com");
 
         var getProfile = new HttpRequestMessage(HttpMethod.Get, $"/api/userprofiles/{userId:D}");
         getProfile.Headers.Add(TestAuthenticationHandler.UserIdHeaderName, userId.ToString("D"));
@@ -113,27 +104,18 @@ public sealed class ConfirmEmailVerificationControllerTests(UserProfileApiFactor
         // already issues an earlier request, so we need the latest active one.
         string nonce = await factory.WithDbContextAsync(async db =>
         {
-            var typedUserId = FlowChat.Shared.Domain.Id<FlowChat.UserProfileService.Domain.Entities.UserProfile.UserProfile>.FromGuid(userId);
             var typedEmailId = FlowChat.Shared.Domain.Id<FlowChat.UserProfileService.Domain.Entities.UserProfile.Email>.FromGuid(emailId);
             var nowUtc = UtcDateTimeOffset.UtcNow;
-            var query = db.EmailVerificationRequests
-                .Where(r => r.UserProfileId == typedUserId
-                            && r.EmailId == typedEmailId
-                            && r.InvalidatedAtUtc == null
-                            && r.ConsumedAtUtc == null);
+            var process = await db.EmailVerificationProcesses
+                .Include(x => x.Requests)
+                .SingleAsync(x => x.EmailId == typedEmailId);
 
-            var verificationRequest = string.Equals(
-                db.Database.ProviderName,
-                "Microsoft.EntityFrameworkCore.Sqlite",
-                StringComparison.Ordinal)
-                ? (await query.ToListAsync())
-                    .Where(r => r.ExpiresAtUtc > nowUtc)
-                    .OrderByDescending(r => r.ExpiresAtUtc)
-                    .First()
-                : await query
-                    .Where(r => r.ExpiresAtUtc > nowUtc)
-                    .OrderByDescending(r => r.ExpiresAtUtc)
-                    .FirstAsync();
+            var verificationRequest = process.Requests
+                .Where(r => r.InvalidatedAtUtc == null
+                            && r.ConsumedAtUtc == null
+                            && r.ExpiresAtUtc > nowUtc)
+                .OrderByDescending(r => r.ExpiresAtUtc)
+                .First();
             return verificationRequest.Nonce;
         });
 

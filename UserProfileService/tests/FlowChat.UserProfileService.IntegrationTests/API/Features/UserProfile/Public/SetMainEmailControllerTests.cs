@@ -62,18 +62,10 @@ public sealed class SetMainEmailControllerTests(UserProfileApiFactory factory)
     private async Task<(Guid UserId, Guid FirstEmailId, Guid SecondEmailId)> CreateProfileWithTwoEmailsAsync()
     {
         var userId = Guid.NewGuid();
-        var createRequest = new
-        {
-            UserId = userId,
-            FriendlyUserId = $"mainemailuser-{userId:N}",
-            Email = $"first_{userId:N}@example.com"
-        };
-        var httpRequest = new HttpRequestMessage(HttpMethod.Post, "/internal/userprofiles/initial")
-        {
-            Content = JsonContent.Create(createRequest)
-        };
-        httpRequest.Headers.Add("X-Internal-Api-Key", UserProfileApiFactory.InternalApiKey);
-        await _client.SendAsync(httpRequest);
+        await factory.CreateInitialUserProfileAsync(
+            userId,
+            $"mainemailuser-{userId:N}",
+            $"first_{userId:N}@example.com");
 
         var getProfile = new HttpRequestMessage(HttpMethod.Get, $"/api/userprofiles/{userId:D}");
         getProfile.Headers.Add(TestAuthenticationHandler.UserIdHeaderName, userId.ToString("D"));

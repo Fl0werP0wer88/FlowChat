@@ -4,7 +4,6 @@ using FlowChat.NotificationService.Domain.Enums;
 using FlowChat.NotificationService.Persistence;
 using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
-using FlowChat.Shared.Persistance.Auditing;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 
@@ -19,13 +18,23 @@ public sealed class NotificationConfigurationTests : IDisposable
     {
         var options = new DbContextOptionsBuilder<AppDbContext>()
             .UseInMemoryDatabase(_fixture.Create<Guid>().ToString("N"))
-            .AddInterceptors(new EntityBaseSaveChangesInterceptor())
             .Options;
 
         _dbContext = new AppDbContext(options);
+        _dbContext.SavingChanges += (_, _) => SetAuditFields(_dbContext);
     }
 
     public void Dispose() => _dbContext.Dispose();
+
+    private static void SetAuditFields(AppDbContext context)
+    {
+        foreach (var entry in context.ChangeTracker.Entries<IAuditableEntity>()
+                     .Where(entry => entry.State == EntityState.Added && entry.Entity.CreatedAtUtc is null))
+        {
+            entry.Entity.SetCreated("test");
+            entry.Entity.SetUpdated("test");
+        }
+    }
 
     [Fact]
     public async Task NotificationConfiguration_CanPersistAndReloadAllProperties()
@@ -48,7 +57,7 @@ public sealed class NotificationConfigurationTests : IDisposable
         var reloaded = await _dbContext.Notifications.FindAsync(notification.Id);
 
         reloaded.Should().NotBeNull();
-        reloaded!.UserId.Should().Be(userId);
+        reloaded!.UserId.Value.Should().Be(userId);
         reloaded.Email.Value.Should().Be("config-test@example.com");
         reloaded.DisplayName.Should().Be("Config Test User");
         reloaded.Body.Should().Be("Confirm your email by clicking the provided link");

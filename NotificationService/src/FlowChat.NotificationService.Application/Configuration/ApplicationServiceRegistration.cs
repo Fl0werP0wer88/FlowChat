@@ -4,11 +4,23 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace FlowChat.NotificationService.Application;
 
-public static class ApplicationServiceRegistration
+public static class ApiApplicationServiceRegistration
 {
     public static IServiceCollection AddApiApplicationServices(this IServiceCollection services)
+        => services.AddCommonApplicationServices();
+}
+
+public static class ConsumerApplicationServiceRegistration
+{
+    public static IServiceCollection AddConsumerApplicationServices(this IServiceCollection services)
+        => services.AddCommonApplicationServices();
+}
+
+internal static class CommonApplicationServiceRegistration
+{
+    public static IServiceCollection AddCommonApplicationServices(this IServiceCollection services)
     {
-        var applicationAssembly = typeof(ApplicationServiceRegistration).Assembly;
+        var applicationAssembly = typeof(CommonApplicationServiceRegistration).Assembly;
 
         services.AddFlowChatValidatorsFromAssembly(applicationAssembly);
         services.AddMediatR(cfg =>
@@ -16,22 +28,7 @@ public static class ApplicationServiceRegistration
             cfg.RegisterServicesFromAssemblies(applicationAssembly);
             cfg.AddFlowChatBehaviors();
         });
-        services.AddScoped<IDomainEventDispatcher, FlowChatDomainEventDispatcher>();
-
-        return services;
-    }
-
-    public static IServiceCollection AddWorkerApplicationServices(this IServiceCollection services)
-    {
-        var applicationAssembly = typeof(ApplicationServiceRegistration).Assembly;
-
-        services.AddFlowChatValidatorsFromAssembly(applicationAssembly);
-        services.AddMediatR(cfg =>
-        {
-            cfg.RegisterServicesFromAssemblies(applicationAssembly);
-            cfg.AddFlowChatBehaviors();
-        });
-        services.AddScoped<IDomainEventDispatcher, FlowChatDomainEventDispatcher>();
+        services.AddScoped<ILocalEventDispatcher, LocalEventDispatcher>();
 
         return services;
     }

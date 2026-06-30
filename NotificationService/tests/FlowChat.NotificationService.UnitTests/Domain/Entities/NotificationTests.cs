@@ -22,7 +22,7 @@ public sealed class NotificationTests
             "Verify your email here",
             "key-1");
 
-        notification.UserId.Should().Be(userId);
+        notification.UserId.Value.Should().Be(userId);
         notification.Email.Value.Should().Be("user@example.com");
         notification.DisplayName.Should().Be("John Doe");
         notification.Body.Should().Be("Verify your email here");
@@ -79,7 +79,7 @@ public sealed class NotificationTests
     }
 
     [Fact]
-    public void CreateEmailVerification_WithEmptyUserId_ThrowsInvalidOperationException()
+    public void CreateEmailVerification_WithEmptyUserId_ThrowsArgumentException()
     {
         var act = () => Notification.CreateEmailVerification(
             Id<Notification>.New(),
@@ -89,7 +89,7 @@ public sealed class NotificationTests
             "Verify your email here",
             null);
 
-        act.Should().Throw<InvalidOperationException>().WithMessage("UserId is required.");
+        act.Should().Throw<ArgumentException>().WithMessage("value cannot be empty.*");
     }
 
     [Theory]
@@ -148,7 +148,7 @@ public sealed class NotificationTests
             "Welcome to FlowChat",
             "welcome-key");
 
-        notification.UserId.Should().Be(userId);
+        notification.UserId.Value.Should().Be(userId);
         notification.Body.Should().Be("Welcome to FlowChat");
         notification.Type.Should().Be(NotificationType.Welcome);
         notification.Status.Should().Be(NotificationStatus.Pending);

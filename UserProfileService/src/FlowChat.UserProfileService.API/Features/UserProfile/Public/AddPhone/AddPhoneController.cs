@@ -19,7 +19,6 @@ public sealed class AddPhoneController : ApiControllerBase
     }
 
     [HttpPut("phones")]
-    [ProducesResponseType(typeof(AddPhoneResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(AddPhoneResponse), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
@@ -42,9 +41,7 @@ public sealed class AddPhoneController : ApiControllerBase
             return HandleError(result.Error);
         }
 
-        var response = new AddPhoneResponse(result.Value.Value);
-        return result.Value.WasAlreadyProcessed
-            ? Ok(response)
-            : StatusCode(StatusCodes.Status201Created, response);
+        var response = new AddPhoneResponse(result.Value);
+        return StatusCode(StatusCodes.Status201Created, response);
     }
 }

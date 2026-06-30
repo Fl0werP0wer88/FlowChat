@@ -36,9 +36,9 @@ public sealed class UserPresencePreferences : AggregateRootBase<UserPresencePref
 
     public void SetPreferredStatus(PresenceStatus preferredStatus)
     {
-        if (preferredStatus is not (PresenceStatus.Busy or PresenceStatus.Invisible))
+        if (preferredStatus is not (PresenceStatus.Active or PresenceStatus.Busy or PresenceStatus.Invisible))
         {
-            throw new ArgumentException("Only manual presence statuses can be saved as preferences.", nameof(preferredStatus));
+            throw new ArgumentException("AFK cannot be saved as a default startup status.", nameof(preferredStatus));
         }
 
         PreferredStatus = preferredStatus;

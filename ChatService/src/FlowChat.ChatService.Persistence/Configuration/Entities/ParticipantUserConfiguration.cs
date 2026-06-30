@@ -3,6 +3,7 @@ using FlowChat.Shared.Domain;
 using FlowChat.Shared.Persistance;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using UserProfileMarker = FlowChat.ChatService.Domain.Entities.UserProfiles.UserProfile;
 
 namespace FlowChat.ChatService.Persistence.Configuration.Entities;
 
@@ -21,6 +22,7 @@ public sealed class ParticipantUserConfiguration : IEntityTypeConfiguration<Part
             .IsRequired();
 
         builder.Property(x => x.UserId)
+            .HasConversion(x => x.Value, x => Id<UserProfileMarker>.FromGuid(x))
             .IsRequired();
 
         builder.Property(x => x.DisplayName)
@@ -36,22 +38,7 @@ public sealed class ParticipantUserConfiguration : IEntityTypeConfiguration<Part
             .HasUtcDateTimeOffsetConversion()
             .IsRequired();
 
-        builder.Property(x => x.Version)
-            .IsConcurrencyToken();
-
-        builder.Property(x => x.CreatedBy)
-            .HasMaxLength(256)
-            .IsRequired();
-
-        builder.Property(x => x.CreatedAtUtc)
-            .HasUtcDateTimeOffsetConversion();
-
-        builder.Property(x => x.LastModifiedBy)
-            .HasMaxLength(256)
-            .IsRequired();
-
-        builder.Property(x => x.LastModifiedAtUtc)
-            .HasUtcDateTimeOffsetConversion();
+        builder.Property<DateTimeOffset?>("DeletedAt");
 
         builder.HasIndex(x => new { x.ConversationId, x.UserId })
             .IsUnique();

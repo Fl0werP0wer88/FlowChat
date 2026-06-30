@@ -1,24 +1,20 @@
-using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
+using FlowChat.Shared.Persistance;
 using FlowChat.UserProfileService.Application.Contracts.Persistence;
 using FlowChat.UserProfileService.Application.Features.UserProfile.Queries.UserProfile.Model;
-using FlowChat.UserProfileService.Domain.Entities.EmailVerificationRequest;
-using FlowChat.UserProfileService.Domain.Entities.UserProfile;
+using FlowChat.UserProfileService.Persistence.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace FlowChat.UserProfileService.Persistence.Repositories;
 
-public sealed class UserProfileReadRepository(AppDbContext dbContext) : IUserProfileReadRepository
+public sealed class UserProfileReadRepository(AppDbContext dbContext) : ReadRepositoryBase, IUserProfileReadRepository
 {
-    private readonly AppDbContext _dbContext = dbContext;
-
     public async Task<UserProfileDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        var typedId = Id<UserProfile>.FromGuid(id);
         var entity = await Query()
-            .FirstOrDefaultAsync(x => x.Id == typedId, cancellationToken);
+            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
 
-        return entity is null ? null : MapToDto(entity);
+        return entity is null ? null : await MapToDtoAsync(entity, cancellationToken);
     }
 
     public async Task<IReadOnlyList<UserProfileDto>> GetAllAsync(CancellationToken cancellationToken = default)
@@ -26,7 +22,35 @@ public sealed class UserProfileReadRepository(AppDbContext dbContext) : IUserPro
         var entities = await Query()
             .ToListAsync(cancellationToken);
 
-        return entities.Select(MapToDto).ToList();
+        return await MapToDtosAsync(entities, cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<UserProfileDto>> GetByIdsAsync(
+        IReadOnlyCollection<Guid> ids,
+        CancellationToken cancellationToken = default)
+    {
+        var userProfileIds = ids
+            .Where(id => id != Guid.Empty)
+            .Distinct()
+            .ToArray();
+
+        if (userProfileIds.Length == 0)
+        {
+            return [];
+        }
+
+        var entities = await Query()
+            .Where(entity => userProfileIds.Contains(entity.Id))
+            .ToListAsync(cancellationToken);
+
+        var userProfiles = await MapToDtosAsync(entities, cancellationToken);
+        var order = userProfileIds
+            .Select((id, index) => new { id, index })
+            .ToDictionary(x => x.id, x => x.index);
+
+        return userProfiles
+            .OrderBy(userProfile => order[userProfile.Id])
+            .ToList();
     }
 
     public async Task<IReadOnlyList<UserProfileDto>> SearchAsync(
@@ -58,10 +82,10 @@ public sealed class UserProfileReadRepository(AppDbContext dbContext) : IUserPro
         var entities = await query
             .OrderBy(entity => entity.LastName ?? string.Empty)
             .ThenBy(entity => entity.FirstName ?? string.Empty)
-            .ThenBy(entity => EF.Property<string>(entity, nameof(UserProfile.FriendlyUserId)))
+            .ThenBy(entity => entity.UserName)
             .ToListAsync(cancellationToken);
 
-        return entities.Select(MapToDto).ToList();
+        return await MapToDtosAsync(entities, cancellationToken);
     }
 
     public async Task<UserProfileDto?> GetByEmailAsync(string email, CancellationToken cancellationToken = default)
@@ -71,12 +95,12 @@ public sealed class UserProfileReadRepository(AppDbContext dbContext) : IUserPro
             return null;
         }
 
-        var entity = await Query()
-            .FirstOrDefaultAsync(
-                x => x.Emails.Any(e => e.Address == normalizedEmail),
-                cancellationToken);
+        var userProfileId = await Active(dbContext.EmailReads)
+            .Where(x => x.Address == normalizedEmail.Value)
+            .Select(x => (Guid?)x.UserProfileId)
+            .FirstOrDefaultAsync(cancellationToken);
 
-        return entity is null ? null : MapToDto(entity);
+        return userProfileId is null ? null : await GetByIdAsync(userProfileId.Value, cancellationToken);
     }
 
     public async Task<UserProfileDto?> GetByFriendlyUserIdAsync(string friendlyUserId, CancellationToken cancellationToken = default)
@@ -87,19 +111,17 @@ public sealed class UserProfileReadRepository(AppDbContext dbContext) : IUserPro
         }
 
         var entity = await Query()
-            .FirstOrDefaultAsync(
-                x => x.FriendlyUserId == normalizedFriendlyUserId,
-                cancellationToken);
+            .FirstOrDefaultAsync(x => x.UserName == normalizedFriendlyUserId.Value, cancellationToken);
 
-        return entity is null ? null : MapToDto(entity);
+        return entity is null ? null : await MapToDtoAsync(entity, cancellationToken);
     }
 
     public async Task<bool> EmailAddressExistsAsync(string emailAddress, CancellationToken cancellationToken = default)
     {
         var normalizedEmailAddress = EmailAddress.Create(emailAddress);
 
-        return await _dbContext.Set<Email>()
-            .AnyAsync(x => x.Address == normalizedEmailAddress, cancellationToken);
+        return await Active(dbContext.EmailReads)
+            .AnyAsync(x => x.Address == normalizedEmailAddress.Value, cancellationToken);
     }
 
     public async Task<bool> FriendlyUserIdExistsAsync(
@@ -112,60 +134,106 @@ public sealed class UserProfileReadRepository(AppDbContext dbContext) : IUserPro
             return false;
         }
 
-        return await _dbContext.Set<UserProfile>()
-            .AsNoTracking()
+        return await Query()
             .AnyAsync(
-                x => (!excludedUserId.HasValue || x.Id != Id<UserProfile>.FromGuid(excludedUserId.Value))
-                     && x.FriendlyUserId == normalizedFriendlyUserId,
+                x => (!excludedUserId.HasValue || x.Id != excludedUserId.Value)
+                     && x.UserName == normalizedFriendlyUserId.Value,
                 cancellationToken);
     }
 
-    private IQueryable<UserProfile> Query()
+    private IQueryable<UserProfileReadEntity> Query()
     {
-        return _dbContext.Set<UserProfile>()
-            .AsNoTracking()
-            .Include(x => x.Emails)
-            .Include(x => x.Phones);
+        return Active(dbContext.UserProfileReads);
     }
 
-    private static UserProfileDto MapToDto(UserProfile entity)
+    private async Task<IReadOnlyList<UserProfileDto>> MapToDtosAsync(
+        IReadOnlyCollection<UserProfileReadEntity> entities,
+        CancellationToken cancellationToken)
+    {
+        var ids = entities.Select(x => x.Id).ToArray();
+        var emails = await LoadEmailsAsync(ids, cancellationToken);
+        var phones = await LoadPhonesAsync(ids, cancellationToken);
+
+        return entities
+            .Select(entity => MapToDto(
+                entity,
+                emails.GetValueOrDefault(entity.Id, []),
+                phones.GetValueOrDefault(entity.Id, [])))
+            .ToList();
+    }
+
+    private async Task<UserProfileDto> MapToDtoAsync(
+        UserProfileReadEntity entity,
+        CancellationToken cancellationToken)
+    {
+        var emails = await LoadEmailsAsync([entity.Id], cancellationToken);
+        var phones = await LoadPhonesAsync([entity.Id], cancellationToken);
+
+        return MapToDto(
+            entity,
+            emails.GetValueOrDefault(entity.Id, []),
+            phones.GetValueOrDefault(entity.Id, []));
+    }
+
+    private async Task<Dictionary<Guid, IReadOnlyList<EmailDto>>> LoadEmailsAsync(
+        IReadOnlyCollection<Guid> userProfileIds,
+        CancellationToken cancellationToken)
+    {
+        return (await Active(dbContext.EmailReads)
+                .Where(email => userProfileIds.Contains(email.UserProfileId))
+                .Select(email => new
+                {
+                    email.UserProfileId,
+                    Dto = new EmailDto(
+                        email.Id,
+                        email.Address,
+                        email.IsMain,
+                        email.IsAuth,
+                        email.IsConfirmed,
+                        email.IsVisible)
+                })
+                .ToListAsync(cancellationToken))
+            .GroupBy(x => x.UserProfileId)
+            .ToDictionary(x => x.Key, x => (IReadOnlyList<EmailDto>)x.Select(email => email.Dto).ToList());
+    }
+
+    private async Task<Dictionary<Guid, IReadOnlyList<PhoneDto>>> LoadPhonesAsync(
+        IReadOnlyCollection<Guid> userProfileIds,
+        CancellationToken cancellationToken)
+    {
+        return (await Active(dbContext.PhoneReads)
+                .Where(phone => userProfileIds.Contains(phone.UserProfileId))
+                .Select(phone => new
+                {
+                    phone.UserProfileId,
+                    Dto = new PhoneDto(
+                        phone.Id,
+                        phone.Number,
+                        phone.IsMain,
+                        phone.IsConfirmed,
+                        phone.IsVisible)
+                })
+                .ToListAsync(cancellationToken))
+            .GroupBy(x => x.UserProfileId)
+            .ToDictionary(x => x.Key, x => (IReadOnlyList<PhoneDto>)x.Select(phone => phone.Dto).ToList());
+    }
+
+    private static UserProfileDto MapToDto(
+        UserProfileReadEntity entity,
+        IReadOnlyList<EmailDto> emails,
+        IReadOnlyList<PhoneDto> phones)
     {
         return new UserProfileDto(
-            entity.Id.Value,
-            entity.FriendlyUserId.Value,
+            entity.Id,
+            entity.UserName,
             entity.FirstName,
             entity.LastName,
             entity.Organization,
             entity.AvatarUrl,
             entity.Bio,
             entity.IsActive,
-            entity.LastSeenAtUtc?.Value,
-            MapEmails(entity),
-            MapPhones(entity));
-    }
-
-    private static IReadOnlyList<EmailDto> MapEmails(UserProfile entity)
-    {
-        return entity.Emails
-            .Select(email => new EmailDto(
-                email.Id.Value,
-                email.Address.Value,
-                email.IsMain,
-                email.IsAuth,
-                email.IsConfirmed,
-                email.IsVisible))
-            .ToList();
-    }
-
-    private static IReadOnlyList<PhoneDto> MapPhones(UserProfile entity)
-    {
-        return entity.Phones
-            .Select(phone => new PhoneDto(
-                phone.Id.Value,
-                phone.Number.Value,
-                phone.IsMain,
-                phone.IsConfirmed,
-                phone.IsVisible))
-            .ToList();
+            entity.LastSeenAtUtc,
+            emails,
+            phones);
     }
 }

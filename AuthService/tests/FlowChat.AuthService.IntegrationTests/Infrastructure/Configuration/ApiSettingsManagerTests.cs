@@ -9,7 +9,7 @@ namespace FlowChat.AuthService.IntegrationTests;
 public sealed class ApiSettingsManagerTests
 {
     [Fact]
-    public void AddInfrastructureServices_RegistersSettingsSections()
+    public void AddApiInfrastructureServices_RegistersSettingsSections()
     {
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
@@ -25,7 +25,7 @@ public sealed class ApiSettingsManagerTests
         var services = new ServiceCollection();
         services.AddOptions();
         services.AddLogging();
-        services.AddInfrastructureServices(configuration);
+        services.AddApiInfrastructureServices(configuration);
 
         using var serviceProvider = services.BuildServiceProvider();
 

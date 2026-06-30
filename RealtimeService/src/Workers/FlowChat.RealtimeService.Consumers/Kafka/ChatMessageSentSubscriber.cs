@@ -1,13 +1,12 @@
-using FlowChat.Core.Exceptions;
 using FlowChat.Core.Messaging.ChatService.Events;
-using FlowChat.RealtimeService.Consumers.Realtime.Contracts;
-using FlowChat.RealtimeService.Consumers.Services;
+using FlowChat.RealtimeService.Application.Features.Message.Commands.RouteMessage;
 using FlowChat.Shared.Infrastructure.Silverback.Subscribers;
+using MediatR;
 
 namespace FlowChat.RealtimeService.Consumers.Kafka;
 
 public sealed class ChatMessageSentSubscriber(
-    IRealtimeInternalApiClient realtimeInternalApiClient,
+    IMediator mediator,
     ILogger<ChatMessageSentSubscriber> logger)
     : SubscriberBase<ChatMessageSentIntegrationEvent>(logger)
 {
@@ -15,55 +14,20 @@ public sealed class ChatMessageSentSubscriber(
         ChatMessageSentIntegrationEvent message,
         CancellationToken cancellationToken)
     {
-        Validate(message);
-
-        var request = new PublishMessageRequest
-        {
-            MessageId = message.MessageId,
-            ConversationId = message.ConversationId,
-            SenderUserId = message.SenderUserId,
-            SenderDisplayName = message.SenderDisplayName.Trim(),
-            Text = message.Text.Trim(),
-            SentAtUtc = message.SentAtUtc,
-            RecipientUserIds = message.RecipientUserIds
+        var command = new RouteMessageCommand(
+            message.MessageId,
+            message.ConversationId,
+            message.SenderUserId,
+            message.SenderDisplayName?.Trim(),
+            message.Text?.Trim(),
+            message.SentAtUtc,
+            (message.RecipientUserIds ?? [])
                 .Where(userId => userId != Guid.Empty)
                 .Distinct()
-                .ToArray()
-        };
+                .ToArray());
 
-        await realtimeInternalApiClient.PublishMessageAsync(request, cancellationToken);
-    }
+        var result = await mediator.Send(command, cancellationToken);
 
-    private static void Validate(ChatMessageSentIntegrationEvent message)
-    {
-        if (message.MessageId == Guid.Empty)
-        {
-            throw new NonTransientException("Payload does not contain valid MessageId.");
-        }
-
-        if (message.ConversationId == Guid.Empty)
-        {
-            throw new NonTransientException("Payload does not contain valid ConversationId.");
-        }
-
-        if (message.SenderUserId == Guid.Empty)
-        {
-            throw new NonTransientException("Payload does not contain valid SenderUserId.");
-        }
-
-        if (string.IsNullOrWhiteSpace(message.SenderDisplayName))
-        {
-            throw new NonTransientException("Payload does not contain valid SenderDisplayName.");
-        }
-
-        if (string.IsNullOrWhiteSpace(message.Text))
-        {
-            throw new NonTransientException("Payload does not contain valid Text.");
-        }
-
-        if (message.RecipientUserIds is null || !message.RecipientUserIds.Any(userId => userId != Guid.Empty))
-        {
-            throw new NonTransientException("Payload does not contain valid RecipientUserIds.");
-        }
+        ThrowIfFailure(result);
     }
 }

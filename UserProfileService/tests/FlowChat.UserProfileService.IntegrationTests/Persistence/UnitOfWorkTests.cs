@@ -1,7 +1,6 @@
 using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
 using FlowChat.Shared.Persistance;
-using FlowChat.Shared.Persistance.Auditing;
 using FlowChat.UserProfileService.Domain.Entities.EmailVerificationRequest;
 using FlowChat.UserProfileService.Domain.Entities.UserProfile;
 using FlowChat.UserProfileService.Persistence;
@@ -83,11 +82,21 @@ public sealed class UnitOfWorkTests
     {
         var options = new DbContextOptionsBuilder<AppDbContext>()
             .UseSqlite(connection)
-            .AddInterceptors(new EntityBaseSaveChangesInterceptor())
             .Options;
 
         var context = new AppDbContext(options);
+        context.SavingChanges += (_, _) => SetAuditFields(context);
         context.Database.EnsureCreated();
         return context;
+    }
+
+    private static void SetAuditFields(AppDbContext context)
+    {
+        foreach (var entry in context.ChangeTracker.Entries<IAuditableEntity>()
+                     .Where(entry => entry.State == EntityState.Added && entry.Entity.CreatedAtUtc is null))
+        {
+            entry.Entity.SetCreated("test");
+            entry.Entity.SetUpdated("test");
+        }
     }
 }

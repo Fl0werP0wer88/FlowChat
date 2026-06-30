@@ -4,10 +4,10 @@ using FlowChat.AuthService.Infrastructure.Configuration.Settings;
 using FlowChat.AuthService.Infrastructure.Services;
 using FlowChat.AuthService.Persistence;
 using FlowChat.AuthService.Persistence.Repositories;
+using FlowChat.Core.Messaging;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
-using FlowChat.Shared.Persistance.Auditing;
 using FluentAssertions;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
@@ -33,7 +33,6 @@ public sealed class LoginUserCommandHandlerTests : IDisposable
         var options = new DbContextOptionsBuilder<AppDbContext>()
             .UseSqlite(_connection)
             .UseOpenIddict()
-            .AddInterceptors(new EntityBaseSaveChangesInterceptor())
             .Options;
 
         _dbContext = new AppDbContext(options);
@@ -42,9 +41,9 @@ public sealed class LoginUserCommandHandlerTests : IDisposable
 
         var tokenService = new OpenIddictTokenService(
             Microsoft.Extensions.Options.Options.Create(new JwtSettingsSection { Audience = "FlowChat.Client" }));
-        var dispatcherMock = new Mock<IDomainEventDispatcher>();
+        var dispatcherMock = new Mock<ILocalEventDispatcher>();
         dispatcherMock
-            .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<IDomainEvent>>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<ILocalEvent>>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         var unitOfWorkMock = new Mock<IUnitOfWork>();
@@ -78,6 +77,8 @@ public sealed class LoginUserCommandHandlerTests : IDisposable
             _passwordHashingService.HashPassword("P@ssw0rd!"),
             _passwordHashingService.GenerateSecurityStamp());
         account.ConfirmEmail();
+        account.SetCreated("test");
+        account.SetUpdated("test");
 
         await _accountRepository.CreateAsync(account, CancellationToken.None);
         await _dbContext.SaveChangesAsync();
@@ -96,4 +97,3 @@ public sealed class LoginUserCommandHandlerTests : IDisposable
         result.Value.Grant.Principal.FindFirst(OpenIddict.Abstractions.OpenIddictConstants.Claims.PreferredUsername)!.Value.Should().Be("flower");
     }
 }
-

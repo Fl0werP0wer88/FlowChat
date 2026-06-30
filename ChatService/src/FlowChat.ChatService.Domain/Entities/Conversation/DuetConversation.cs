@@ -1,4 +1,5 @@
 using FlowChat.Shared.Domain;
+using UserProfileMarker = FlowChat.ChatService.Domain.Entities.UserProfiles.UserProfile;
 
 namespace FlowChat.ChatService.Domain.Entities.Conversation;
 
@@ -8,7 +9,7 @@ public sealed class DuetConversation : Conversation
         Id<Conversation> id,
         ConversationType type,
         string? name,
-        Guid createdByUserId) : base(id, type, name, createdByUserId)
+        Id<UserProfileMarker> createdByUserId) : base(id, type, name, createdByUserId)
     {
     }
 
@@ -16,14 +17,14 @@ public sealed class DuetConversation : Conversation
         Id<Conversation> id,
         ConversationType type,
         string? name,
-        Guid createdByUserId,
+        Id<UserProfileMarker> createdByUserId,
         List<ParticipantUser> participants) : base(id, type, name, createdByUserId, participants)
     {
     }
 
     public static DuetConversation Create(
-        Guid createdByUserId,
-        Guid partnerUserId)
+        Id<UserProfileMarker> createdByUserId,
+        Id<UserProfileMarker> partnerUserId)
     {
         return CreateCore(
             Id<Conversation>.New(),
@@ -37,7 +38,7 @@ public sealed class DuetConversation : Conversation
 
     public static DuetConversation Restore(
         Id<Conversation> id,
-        Guid createdByUserId,
+        Id<UserProfileMarker> createdByUserId,
         IEnumerable<ParticipantUser> participants)
     {
         return RestoreCore(
@@ -50,7 +51,7 @@ public sealed class DuetConversation : Conversation
                 new DuetConversation(id, type, name, createdByUserId, participants));
     }
 
-    public (Guid FirstUserId, Guid SecondUserId) GetParticipantPair()
+    public (Id<UserProfileMarker> FirstUserId, Id<UserProfileMarker> SecondUserId) GetParticipantPair()
     {
         var participantUserIds = Participants.Select(participant => participant.UserId).ToArray();
 

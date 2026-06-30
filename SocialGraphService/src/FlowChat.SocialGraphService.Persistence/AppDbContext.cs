@@ -3,6 +3,7 @@ using FlowChat.SocialGraphService.Domain.Entities.Contact;
 using FlowChat.SocialGraphService.Persistence.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Silverback.Messaging.Consuming.KafkaOffsetStore;
 using Silverback.Messaging.Producing.TransactionalOutbox;
 
 namespace FlowChat.SocialGraphService.Persistence;
@@ -23,8 +24,10 @@ public class AppDbContext : DbContext
     }
 
     public DbSet<Contact> Contacts { get; set; }
-    public DbSet<UserProfileProjectionEntity> UserProfileProjections { get; set; }
+    public DbSet<ContactReadEntity> ContactReads { get; set; }
+    public DbSet<UserProfileReadModelEntity> UserProfileProjections { get; set; }
     public DbSet<SilverbackOutboxMessage> SilverbackOutboxMessages => Set<SilverbackOutboxMessage>();
+    public DbSet<SilverbackStoredOffset> SilverbackStoredOffsets => Set<SilverbackStoredOffset>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

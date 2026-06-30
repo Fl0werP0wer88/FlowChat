@@ -1,13 +1,12 @@
-using FlowChat.Core.Exceptions;
 using FlowChat.Core.Messaging.AuthService.Events;
 using FlowChat.Shared.Infrastructure.Silverback.Subscribers;
-using FlowChat.UserProfileService.Consumers.Services;
-using FlowChat.UserProfileService.Consumers.UserProfileApi.Contracts;
+using FlowChat.UserProfileService.Application.Features.UserProfile.Commands.CreateInitialUserProfile;
+using MediatR;
 
 namespace FlowChat.UserProfileService.Consumers.Kafka;
 
 public sealed class AccountRegisteredSubscriber(
-    IUserProfileInternalApiClient userProfileInternalApiClient,
+    IMediator mediator,
     ILogger<AccountRegisteredSubscriber> logger)
     : SubscriberBase<AccountRegisteredIntegrationEvent>(logger)
 {
@@ -15,35 +14,18 @@ public sealed class AccountRegisteredSubscriber(
         AccountRegisteredIntegrationEvent message,
         CancellationToken cancellationToken)
     {
-        var friendlyUserId = message.FriendlyUserId?.Trim();
-        if (string.IsNullOrWhiteSpace(friendlyUserId))
-        {
-            throw new NonTransientException("Payload does not contain FriendlyUserId.");
-        }
-
-        var userId = ResolveUserId(message.UserId);
-        if (!userId.HasValue)
-        {
-            throw new NonTransientException("Payload does not contain valid UserId.");
-        }
-
-        await userProfileInternalApiClient.CreateInitialUserProfileAsync(
-            new CreateInitialUserProfileRequest
-            {
-                FriendlyUserId = friendlyUserId,
-                FirstName = NormalizeOptional(message.FirstName),
-                LastName = NormalizeOptional(message.LastName),
-                Organization = NormalizeOptional(message.Organization),
-                Email = message.Email,
-                UserId = userId.Value
-            },
+        var result = await mediator.Send(
+            new CreateInitialUserProfileCommand(
+                message.FriendlyUserId?.Trim() ?? string.Empty,
+                message.Email?.Trim(),
+                message.UserId,
+                NormalizeOptional(message.FirstName),
+                NormalizeOptional(message.LastName),
+                NormalizeOptional(message.Organization)),
             cancellationToken);
-    }
 
-    private static Guid? ResolveUserId(Guid payloadUserId) =>
-        payloadUserId != Guid.Empty
-            ? payloadUserId
-            : null;
+        ThrowIfFailure(result);
+    }
 
     private static string? NormalizeOptional(string? value) =>
         string.IsNullOrWhiteSpace(value) ? null : value.Trim();

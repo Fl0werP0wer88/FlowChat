@@ -4,6 +4,7 @@ using FlowChat.NotificationService.Domain.Entities.Notification;
 using FlowChat.Shared.Domain.ValueObjects;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using UserProfileMarker = FlowChat.NotificationService.Domain.Entities.UserProfiles.UserProfile;
 
 namespace FlowChat.NotificationService.Persistence.Configuration.Entities;
 
@@ -16,6 +17,10 @@ public sealed class NotificationConfiguration : IEntityTypeConfiguration<Notific
 
         builder.Property(x => x.Id)
             .HasConversion(x => x.Value, x => Id<Notification>.FromGuid(x));
+
+        builder.Property(x => x.UserId)
+            .HasConversion(x => x.Value, x => Id<UserProfileMarker>.FromGuid(x))
+            .IsRequired();
 
         builder.Property(x => x.Email)
             .HasConversion(x => x.Value, x => EmailAddress.Create(x))
@@ -60,6 +65,10 @@ public sealed class NotificationConfiguration : IEntityTypeConfiguration<Notific
         builder.Property(x => x.SentAtUtc)
             .HasNullableUtcDateTimeOffsetConversion();
 
+        builder.Property(x => x.DeletedAt)
+            .HasNullableUtcDateTimeOffsetConversion();
+
+        builder.Ignore(x => x.IsDeleted);
         builder.Ignore(x => x.DomainEvents);
 
         builder.HasIndex(x => x.UserId);

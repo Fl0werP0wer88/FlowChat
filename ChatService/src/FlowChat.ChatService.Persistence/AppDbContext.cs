@@ -4,6 +4,7 @@ using FlowChat.ChatService.Domain.Entities.Conversation;
 using FlowChat.ChatService.Persistence.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Silverback.Messaging.Consuming.KafkaOffsetStore;
 using Silverback.Messaging.Producing.TransactionalOutbox;
 
 namespace FlowChat.ChatService.Persistence;
@@ -26,8 +27,13 @@ public sealed class AppDbContext : DbContext
     public DbSet<ChatMessage> ChatMessages => Set<ChatMessage>();
     public DbSet<Conversation> Conversations => Set<Conversation>();
     public DbSet<SilverbackOutboxMessage> SilverbackOutboxMessages => Set<SilverbackOutboxMessage>();
-    public DbSet<UserProfileProjectionEntity> UserProfileProjections => Set<UserProfileProjectionEntity>();
+    public DbSet<UserProfileReadModelEntity> UserProfileProjections => Set<UserProfileReadModelEntity>();
     public DbSet<DuetConversationLookupEntity> DuetConversations => Set<DuetConversationLookupEntity>();
+    public DbSet<ConversationReadEntity> ConversationReads => Set<ConversationReadEntity>();
+    public DbSet<ParticipantUserReadEntity> ParticipantUserReads => Set<ParticipantUserReadEntity>();
+    public DbSet<ChatMessageReadEntity> ChatMessageReads => Set<ChatMessageReadEntity>();
+    public DbSet<DuetConversationReadEntity> DuetConversationReads => Set<DuetConversationReadEntity>();
+    public DbSet<SilverbackStoredOffset> SilverbackStoredOffsets => Set<SilverbackStoredOffset>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

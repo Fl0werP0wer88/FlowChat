@@ -20,7 +20,6 @@ public sealed class RegisterUserController : ApiControllerBase
     }
 
     [HttpPut]
-    [ProducesResponseType(typeof(RegisterUserResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(RegisterUserResponse), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
@@ -35,10 +34,8 @@ public sealed class RegisterUserController : ApiControllerBase
             return HandleError(response.Error);
         }
 
-        var body = _mapper.Map<RegisterUserResponse>(response.Value.Value);
-        return response.Value.WasAlreadyProcessed
-            ? Ok(body)
-            : StatusCode(StatusCodes.Status201Created, body);
+        var body = _mapper.Map<RegisterUserResponse>(response.Value);
+        return StatusCode(StatusCodes.Status201Created, body);
     }
 }
 

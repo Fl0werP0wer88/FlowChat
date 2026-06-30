@@ -1,13 +1,14 @@
 using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
 using FlowChat.SocialGraphService.Domain.Entities.Contact.Events;
+using UserProfileMarker = FlowChat.SocialGraphService.Domain.Entities.UserProfiles.UserProfile;
 
 namespace FlowChat.SocialGraphService.Domain.Entities.Contact;
 
 public class Contact : AggregateRootBase<Contact>
 {
-    public Guid OwnerUserId { get; }
-    public Guid ContactUserId { get; }
+    public Id<UserProfileMarker> OwnerUserId { get; }
+    public Id<UserProfileMarker> ContactUserId { get; }
     public string? FirstName { get; }
     public string? LastName { get; }
     public string DisplayName { get; }
@@ -17,8 +18,8 @@ public class Contact : AggregateRootBase<Contact>
 
     private Contact(
         Id<Contact> id,
-        Guid ownerUserId,
-        Guid contactUserId,
+        Id<UserProfileMarker> ownerUserId,
+        Id<UserProfileMarker> contactUserId,
         string displayName,
         string? firstName = null,
         string? lastName = null,
@@ -26,8 +27,8 @@ public class Contact : AggregateRootBase<Contact>
         EmailAddress? emailAddress = null,
         bool isBlocked = false) : base(id)
     {
-        ArgumentOutOfRangeException.ThrowIfEqual(ownerUserId, Guid.Empty);
-        ArgumentOutOfRangeException.ThrowIfEqual(contactUserId, Guid.Empty);
+        ArgumentNullException.ThrowIfNull(ownerUserId);
+        ArgumentNullException.ThrowIfNull(contactUserId);
 
         if (ownerUserId == contactUserId)
         {
@@ -49,8 +50,8 @@ public class Contact : AggregateRootBase<Contact>
 
     public static Contact Create(
         Id<Contact> id,
-        Guid ownerUserId,
-        Guid contactUserId,
+        Id<UserProfileMarker> ownerUserId,
+        Id<UserProfileMarker> contactUserId,
         string displayName,
         string? firstName = null,
         string? lastName = null,
@@ -75,8 +76,8 @@ public class Contact : AggregateRootBase<Contact>
     }
 
     public static Contact Rehydrate(
-        Guid ownerUserId,
-        Guid contactUserId,
+        Id<UserProfileMarker> ownerUserId,
+        Id<UserProfileMarker> contactUserId,
         string displayName,
         string? firstName = null,
         string? lastName = null,

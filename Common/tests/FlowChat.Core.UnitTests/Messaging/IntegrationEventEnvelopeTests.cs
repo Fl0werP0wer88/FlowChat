@@ -13,24 +13,23 @@ public sealed class IntegrationEventEnvelopeTests
     public void Constructor_PopulatesOnlyExpectedBusinessHeaders()
     {
         var kafkaKey = _fixture.Create<Guid>().ToString("D");
-        var payload = new UserProfileCreatedIntegrationEvent
+        var payload = new UserEmailConfirmedIntegrationEvent
         {
             UserProfileId = _fixture.Create<Guid>(),
-            FriendlyUserId = "jdoe",
-            MainEmail = new UserProfileEmail
+            EmailId = _fixture.Create<Guid>(),
+            Email = new Email
             {
                 Address = "jdoe@example.com",
-                IsConfirmed = false,
-                IsVisible = true
+                IsAuth = true
             }
         };
 
-        var envelope = new IntegrationEventEnvelope<UserProfileCreatedIntegrationEvent>(payload, kafkaKey);
+        var envelope = new IntegrationEventEnvelope<UserEmailConfirmedIntegrationEvent>(payload, kafkaKey);
 
         envelope.Headers.Should().HaveCount(5);
         envelope.Headers.OrderBy(static header => header.Key).Should().SatisfyRespectively(
             header => AssertHeader(header, IntegrationMessageHeaders.EventId),
-            header => AssertHeader(header, IntegrationMessageHeaders.EventType, nameof(UserProfileCreatedIntegrationEvent)),
+            header => AssertHeader(header, IntegrationMessageHeaders.EventType, nameof(UserEmailConfirmedIntegrationEvent)),
             header => AssertHeader(header, IntegrationMessageHeaders.EventVersion, "1"),
             header => AssertHeader(header, IntegrationMessageHeaders.OccurredOnUtc),
             header => AssertHeader(header, IntegrationMessageHeaders.Source, "user-profile-service"));

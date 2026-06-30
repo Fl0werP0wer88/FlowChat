@@ -19,6 +19,10 @@ interface SearchUsersResponseDto {
   userProfiles: UserProfileSearchDto[];
 }
 
+interface GetUserProfilesResponseDto {
+  userProfiles: UserProfileSearchDto[];
+}
+
 interface GetUserProfileResponseDto {
   userProfile: UserProfileSearchDto;
 }
@@ -113,6 +117,27 @@ export async function getUserProfileById(
   );
 
   return mapSearchUserResult(response.userProfile);
+}
+
+export async function getUserProfilesByIds(
+  userProfileIds: string[],
+  accessToken: string,
+  signal?: AbortSignal,
+): Promise<SearchUserResult[]> {
+  const searchParams = new URLSearchParams();
+  userProfileIds.forEach((userProfileId) => {
+    searchParams.append("userIds", userProfileId);
+  });
+
+  const response = await getJson<GetUserProfilesResponseDto>(
+    `/api/userprofiles/by-ids?${searchParams.toString()}`,
+    {
+      accessToken,
+      signal,
+    },
+  );
+
+  return response.userProfiles.map(mapSearchUserResult);
 }
 
 export async function getUserProfileByEmail(

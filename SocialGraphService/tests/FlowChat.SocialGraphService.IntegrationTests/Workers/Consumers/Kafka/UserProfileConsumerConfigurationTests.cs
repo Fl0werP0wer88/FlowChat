@@ -1,11 +1,15 @@
+using Confluent.Kafka;
+using FlowChat.Shared.Application;
+using FlowChat.SocialGraphService.Application.Features.UserProfile;
 using FlowChat.SocialGraphService.Consumers;
-using FlowChat.SocialGraphService.Consumers.Kafka;
 using FlowChat.SocialGraphService.Consumers.Configuration.Settings;
-using FlowChat.SocialGraphService.Consumers.Services;
+using FlowChat.Shared.Infrastructure.Silverback.Kafka;
 using FluentAssertions;
+using MediatR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Silverback.Messaging.Broker;
+using Silverback.Messaging.Configuration.Kafka;
 
 namespace FlowChat.SocialGraphService.UnitTests;
 
@@ -26,14 +30,35 @@ public sealed class UserProfileConsumerConfigurationTests
         await using var scope = serviceProvider.CreateAsyncScope();
 
         var consumerCollection = serviceProvider.GetRequiredService<IConsumerCollection>();
-        var createdSubscriber = scope.ServiceProvider.GetRequiredService<UserProfileCreatedSubscriber>();
-        var stateChangedSubscriber = scope.ServiceProvider.GetRequiredService<UserProfileStateChangedSubscriber>();
-        var internalApiClient = scope.ServiceProvider.GetRequiredService<ISocialGraphInternalApiClient>();
+        var bulkRepository = scope.ServiceProvider
+            .GetRequiredService<IProjectionBulkRepository<ProjectionCommandItem<UserProfileProjectionDto>>>();
+        var commandHandler = scope.ServiceProvider
+            .GetRequiredService<IRequestHandler<ProjectionBulkCommand<ProjectionCommandItem<UserProfileProjectionDto>>, FlowChat.Core.Results.FlowChatResult<Unit>>>();
+        var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
 
         consumerCollection.Should().NotBeNull();
-        createdSubscriber.Should().NotBeNull();
-        stateChangedSubscriber.Should().NotBeNull();
-        internalApiClient.Should().NotBeNull();
+        bulkRepository.Should().NotBeNull();
+        commandHandler.Should().NotBeNull();
+        unitOfWork.Should().BeAssignableTo<IConsumedOffsetCommitter>();
+    }
+
+    [Fact]
+    public async Task AddConsumers_ConfiguresBatchProcessingOnlyForMainConsumer()
+    {
+        var options = CreateConfiguration()
+            .GetSection(new UserProfileConsumerSettingsSection().SectionName)
+            .Get<UserProfileConsumerSettingsSection>()!;
+
+        var mainEndpoint = await GetEndpointConfigurationAsync(endpoint => endpoint
+            .ConfigureFlowChatMainEndpoint(options)
+            .EnableBatchProcessing(
+                options.BatchSize,
+                TimeSpan.FromMilliseconds(options.BatchMaxWaitTimeMilliseconds)));
+        var retryEndpoint = await GetEndpointConfigurationAsync(endpoint =>
+            endpoint.ConfigureFlowChatRetryEndpoint(options));
+
+        mainEndpoint.Batch.Should().NotBeNull();
+        retryEndpoint.Batch.Should().BeNull();
     }
 
     [Theory]
@@ -58,7 +83,7 @@ public sealed class UserProfileConsumerConfigurationTests
     }
 
     [Fact]
-    public async Task AddConsumers_RegistersSocialGraphInternalApiNamedClient()
+    public async Task AddConsumers_DoesNotRegisterHttpClientFactory()
     {
         var configuration = CreateConfiguration();
 
@@ -70,15 +95,7 @@ public sealed class UserProfileConsumerConfigurationTests
 
         await using var serviceProvider = services.BuildServiceProvider();
 
-        var internalApiClient = serviceProvider.GetRequiredService<ISocialGraphInternalApiClient>();
-        var httpClient = serviceProvider
-            .GetRequiredService<IHttpClientFactory>()
-            .CreateClient(typeof(ISocialGraphInternalApiClient).Name);
-
-        internalApiClient.Should().NotBeNull();
-        httpClient.BaseAddress.Should().Be(new Uri("https://localhost:7194"));
-        httpClient.DefaultRequestHeaders.GetValues(SocialGraphInternalApiClient.ApiKeyHeaderName).Single()
-            .Should().Be("worker-key");
+        serviceProvider.GetService<IHttpClientFactory>().Should().BeNull();
     }
 
     private static IConfiguration CreateConfiguration()
@@ -86,8 +103,7 @@ public sealed class UserProfileConsumerConfigurationTests
         return new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["SocialGraphApi:BaseUrl"] = "https://localhost:7194",
-                ["SocialGraphApi:ApiKey"] = "worker-key",
+                ["ConnectionStrings:SocialGraphDb"] = "Host=localhost;Database=flowchat_socialgraph_test;Username=test;Password=test",
                 ["Kafka:UserProfileConsumer:BootstrapServers"] = "localhost:9092",
                 ["Kafka:UserProfileConsumer:GroupId"] = "socialgraph-service",
                 ["Kafka:UserProfileConsumer:RetryGroupId"] = "socialgraph-service-retry",
@@ -97,9 +113,27 @@ public sealed class UserProfileConsumerConfigurationTests
                 ["Kafka:UserProfileConsumer:MaxRetryCount"] = "5",
                 ["Kafka:UserProfileConsumer:RetryBaseDelaySeconds"] = "5",
                 ["Kafka:UserProfileConsumer:RetryMaxDelaySeconds"] = "300",
-                ["Kafka:UserProfileConsumer:AutoOffsetReset"] = "Earliest"
+                ["Kafka:UserProfileConsumer:AutoOffsetReset"] = "Earliest",
+                ["Kafka:UserProfileConsumer:BatchSize"] = "100",
+                ["Kafka:UserProfileConsumer:BatchMaxWaitTimeMilliseconds"] = "1000"
             })
             .Build();
+    }
+
+    private static async Task<KafkaConsumerEndpointConfiguration> GetEndpointConfigurationAsync(
+        Func<KafkaConsumerEndpointConfigurationBuilder<object>, KafkaConsumerEndpointConfigurationBuilder<object>> configureEndpoint)
+    {
+        await using var serviceProvider = new ServiceCollection().BuildServiceProvider();
+        var builder = new KafkaConsumerConfigurationBuilder(serviceProvider)
+            .WithBootstrapServers("localhost:9092")
+            .WithGroupId("test-group")
+            .WithAutoOffsetReset(AutoOffsetReset.Earliest)
+            .Consume(endpoint => configureEndpoint(endpoint));
+
+        var configuration = builder.Build();
+
+        return configuration.Endpoints.Should().ContainSingle()
+            .Which.Should().BeOfType<KafkaConsumerEndpointConfiguration>().Subject;
     }
 
     private static string GetRepositoryPath(string relativePath)

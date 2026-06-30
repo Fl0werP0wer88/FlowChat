@@ -1,4 +1,6 @@
 using FlowChat.Shared.Application;
+using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2;
+using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2.BeforeSaveProcessors;
 using FlowChat.NotificationService.Application.Contracts.Infrastructure;
 using FlowChat.NotificationService.Application.Contracts.Persistence;
 using FlowChat.NotificationService.Domain.Enums;
@@ -6,25 +8,25 @@ using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
 using MediatR;
 using NotificationEntity = FlowChat.NotificationService.Domain.Entities.Notification.Notification;
+using UserProfileMarker = FlowChat.NotificationService.Domain.Entities.UserProfiles.UserProfile;
 
 namespace FlowChat.NotificationService.Application.Features.Notification.Commands.UserEmailVerificationRequested;
 
 public sealed class UserEmailVerificationRequestedCommandHandler
-    : CommandHandlerBase<UserEmailVerificationRequestedCommand, Unit>
+    : AggregateRootInsertCommandHandlerBaseV2<UserEmailVerificationRequestedCommand, Unit, NotificationEntity>
 {
-    private readonly INotificationReadRepository _notificationReadRepository;
     private readonly INotificationWriteRepository _notificationWriteRepository;
     private readonly INotificationSender _notificationSender;
     private NotificationEntity? _notification;
 
     public UserEmailVerificationRequestedCommandHandler(
-        INotificationReadRepository notificationReadRepository,
         INotificationWriteRepository notificationWriteRepository,
         INotificationSender notificationSender,
         IUnitOfWork unitOfWork,
-        IDomainEventDispatcher domainEventDispatcher) : base(domainEventDispatcher, unitOfWork)
+        ILocalEventDispatcher domainEventDispatcher,
+        IEnumerable<IAggregateBeforeSaveProcessor<UserEmailVerificationRequestedCommand, NotificationEntity>> beforeSaveProcessors)
+        : base(domainEventDispatcher, unitOfWork, beforeSaveProcessors)
     {
-        _notificationReadRepository = notificationReadRepository;
         _notificationWriteRepository = notificationWriteRepository;
         _notificationSender = notificationSender;
     }
@@ -39,20 +41,9 @@ public sealed class UserEmailVerificationRequestedCommandHandler
         var emailAddress = EmailAddress.Create(request.Email);
         var notificationBody = $"Hello {displayName}, please confirm your email by clicking the link: {request.ConfirmationLink.Trim()}";
 
-        // Idempotency guard: Kafka may redeliver the same message. If a notification was already
-        // sent for this source message key, succeed without resending to avoid duplicate emails.
-        var alreadyExists = await _notificationReadRepository.ExistsBySourceMessageKeyAsync(
-            request.SourceMessageKey ?? string.Empty,
-            cancellationToken);
-
-        if (alreadyExists)
-        {
-            return FlowChatResult<Unit>.Success(Unit.Value);
-        }
-
         _notification = NotificationEntity.CreateEmailVerification(
             Id<NotificationEntity>.New(),
-            request.UserId,
+            Id<UserProfileMarker>.FromGuid(request.UserId),
             emailAddress,
             displayName,
             notificationBody,
@@ -79,9 +70,6 @@ public sealed class UserEmailVerificationRequestedCommandHandler
         return FlowChatResult<Unit>.Success(Unit.Value);
     }
 
-    protected override IAggregateRoot? GetAggregateRoot(FlowChatResult<Unit> result)
-    {
-        return result.IsSuccess ? _notification : null;
-    }
+    protected override NotificationEntity GetAggregateRoot() =>
+        _notification ?? throw new InvalidOperationException("Aggregate root instance is not available.");
 }
-

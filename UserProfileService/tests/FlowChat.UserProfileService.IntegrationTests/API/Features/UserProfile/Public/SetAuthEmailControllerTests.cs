@@ -67,36 +67,20 @@ public sealed class SetAuthEmailControllerTests(UserProfileApiFactory factory)
     private async Task<Guid> CreateProfileAsync()
     {
         var userId = Guid.NewGuid();
-        var request = new
-        {
-            UserId = userId,
-            FriendlyUserId = $"authuser-{userId:N}",
-            Email = $"auth_{userId:N}@example.com"
-        };
-        var httpRequest = new HttpRequestMessage(HttpMethod.Post, "/internal/userprofiles/initial")
-        {
-            Content = JsonContent.Create(request)
-        };
-        httpRequest.Headers.Add("X-Internal-Api-Key", UserProfileApiFactory.InternalApiKey);
-        await _client.SendAsync(httpRequest);
+        await factory.CreateInitialUserProfileAsync(
+            userId,
+            $"authuser-{userId:N}",
+            $"auth_{userId:N}@example.com");
         return userId;
     }
 
     private async Task<(Guid UserId, Guid FirstEmailId)> CreateProfileAndGetFirstEmailAsync()
     {
         var userId = Guid.NewGuid();
-        var request = new
-        {
-            UserId = userId,
-            FriendlyUserId = $"authemailuser-{userId:N}",
-            Email = $"authfirst_{userId:N}@example.com"
-        };
-        var httpRequest = new HttpRequestMessage(HttpMethod.Post, "/internal/userprofiles/initial")
-        {
-            Content = JsonContent.Create(request)
-        };
-        httpRequest.Headers.Add("X-Internal-Api-Key", UserProfileApiFactory.InternalApiKey);
-        await _client.SendAsync(httpRequest);
+        await factory.CreateInitialUserProfileAsync(
+            userId,
+            $"authemailuser-{userId:N}",
+            $"authfirst_{userId:N}@example.com");
 
         var getProfile = new HttpRequestMessage(HttpMethod.Get, $"/api/userprofiles/{userId:D}");
         getProfile.Headers.Add(TestAuthenticationHandler.UserIdHeaderName, userId.ToString("D"));

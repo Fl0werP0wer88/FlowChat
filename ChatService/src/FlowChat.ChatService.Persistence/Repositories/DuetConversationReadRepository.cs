@@ -1,10 +1,11 @@
 using FlowChat.ChatService.Application.Contracts.Persistence;
 using FlowChat.ChatService.Application.Features.Conversation.Dtos;
+using FlowChat.Shared.Persistance;
 using Microsoft.EntityFrameworkCore;
 
 namespace FlowChat.ChatService.Persistence.Repositories;
 
-public sealed class DuetConversationReadRepository(AppDbContext dbContext) : IDuetConversationReadRepository
+public sealed class DuetConversationReadRepository(AppDbContext dbContext) : ReadRepositoryBase, IDuetConversationReadRepository
 {
     public async Task<Guid?> FindConversationIdAsync(
         Guid userId1,
@@ -47,25 +48,38 @@ public sealed class DuetConversationReadRepository(AppDbContext dbContext) : IDu
     {
         var (first, second) = DuetConversationUserPair.Normalize(requestingUserId, partnerUserId);
 
-        var rows = await (
-            from duet in dbContext.DuetConversations.AsNoTracking()
+        var rawRows = await (
+            from duet in Active(dbContext.DuetConversationReads)
             where duet.FirstUserId == first && duet.SecondUserId == second
-            from conversation in dbContext.Conversations.AsNoTracking()
-                .Where(x => x.Id == duet.ConversationId)
-            from participant in conversation.Participants
-            join profile in dbContext.UserProfileProjections.AsNoTracking()
+            join conversation in Active(dbContext.ConversationReads)
+                on duet.ConversationId equals conversation.Id
+            join participant in Active(dbContext.ParticipantUserReads)
+                on conversation.Id equals participant.ConversationId
+            join profile in Active(dbContext.UserProfileProjections)
                 on participant.UserId equals profile.UserId into profileGroup
             from profile in profileGroup.DefaultIfEmpty()
-            select new DuetConversationParticipantRow(
-                duet.ConversationId.Value,
+            select new
+            {
+                ConversationId = conversation.Id,
                 participant.UserId,
-                string.IsNullOrEmpty(participant.DisplayName)
-                    ? (profile == null ? null : profile.DisplayName)
-                    : participant.DisplayName,
-                string.IsNullOrEmpty(participant.AvatarUrl)
-                    ? (profile == null ? null : profile.AvatarUrl)
-                    : participant.AvatarUrl))
+                ParticipantDisplayName = participant.DisplayName,
+                ParticipantAvatarUrl = participant.AvatarUrl,
+                ProfileFirstName = (string?) profile.FirstName,
+                ProfileLastName = (string?) profile.LastName,
+                ProfileAvatarUrl = (string?) profile.AvatarUrl
+            })
             .ToListAsync(cancellationToken);
+
+        var rows = rawRows.Select(r => new DuetConversationParticipantRow(
+                r.ConversationId,
+                r.UserId,
+                string.IsNullOrEmpty(r.ParticipantDisplayName)
+                    ? ComputeDisplayName(r.ProfileFirstName, r.ProfileLastName)
+                    : r.ParticipantDisplayName,
+                string.IsNullOrEmpty(r.ParticipantAvatarUrl)
+                    ? r.ProfileAvatarUrl
+                    : r.ParticipantAvatarUrl))
+            .ToList();
 
         if (rows.Count != 2)
         {
@@ -95,6 +109,13 @@ public sealed class DuetConversationReadRepository(AppDbContext dbContext) : IDu
         return new DuetConversationDetailDto(
             conversationId,
             [requestingParticipant, partnerParticipant]);
+    }
+
+    private static string? ComputeDisplayName(string? firstName, string? lastName)
+    {
+        var parts = ((string?[]) [firstName, lastName]).Where(p => !string.IsNullOrEmpty(p));
+        var name = string.Join(" ", parts);
+        return string.IsNullOrEmpty(name) ? null : name;
     }
 
     private sealed record DuetConversationParticipantRow(

@@ -5,4 +5,6 @@ public interface IRealtimeClient
     Task ReceiveMessage(ChatMessageNotificationDto payload);
 
     Task PresenceChanged(PresenceDto payload);
+
+    Task GroupConversationChanged(GroupConversationChangedDto payload);
 }

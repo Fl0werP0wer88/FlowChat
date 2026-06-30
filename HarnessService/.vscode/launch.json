@@ -1,0 +1,71 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "HarnessService API",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build: HarnessService API",
+      "program": "${workspaceFolder}/src/FlowChat.HarnessService.API/bin/Debug/net10.0/FlowChat.HarnessService.API.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/src/FlowChat.HarnessService.API",
+      "stopAtEntry": false,
+      "console": "integratedTerminal",
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "ASPNETCORE_URLS": "https://localhost:7300;http://localhost:5300"
+      }
+    },
+    {
+      "name": "HarnessService API (No Build)",
+      "type": "coreclr",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/FlowChat.HarnessService.API/bin/Debug/net10.0/FlowChat.HarnessService.API.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/src/FlowChat.HarnessService.API",
+      "stopAtEntry": false,
+      "console": "integratedTerminal",
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "ASPNETCORE_URLS": "https://localhost:7300;http://localhost:5300"
+      }
+    },
+    {
+      "name": "HarnessService Consumers",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build: HarnessService Consumers",
+      "program": "${workspaceFolder}/src/Workers/FlowChat.HarnessService.Consumers/bin/Debug/net10.0/FlowChat.HarnessService.Consumers.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/src/Workers/FlowChat.HarnessService.Consumers",
+      "stopAtEntry": false,
+      "console": "integratedTerminal",
+      "env": {
+        "DOTNET_ENVIRONMENT": "Development"
+      }
+    },
+    {
+      "name": "HarnessService Consumers (No Build)",
+      "type": "coreclr",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/Workers/FlowChat.HarnessService.Consumers/bin/Debug/net10.0/FlowChat.HarnessService.Consumers.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/src/Workers/FlowChat.HarnessService.Consumers",
+      "stopAtEntry": false,
+      "console": "integratedTerminal",
+      "env": {
+        "DOTNET_ENVIRONMENT": "Development"
+      }
+    }
+  ],
+  "compounds": [
+    {
+      "name": "HarnessService",
+      "configurations": [
+        "HarnessService API",
+        "HarnessService Consumers"
+      ],
+      "stopAll": true
+    }
+  ]
+}

@@ -58,6 +58,10 @@ public sealed class AccountConfiguration : IEntityTypeConfiguration<Account>
         builder.Property(x => x.LastModifiedAtUtc)
             .HasUtcDateTimeOffsetConversion();
 
+        builder.Property(x => x.DeletedAt)
+            .HasNullableUtcDateTimeOffsetConversion();
+
+        builder.Ignore(x => x.IsDeleted);
         builder.Ignore(x => x.DomainEvents);
 
         builder.HasIndex(NormalizedEmailPropertyName)

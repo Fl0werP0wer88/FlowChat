@@ -1,13 +1,13 @@
 using Confluent.Kafka;
+using FlowChat.RealtimeService.Application;
 using FlowChat.RealtimeService.Consumers.Configuration.Settings;
 using FlowChat.RealtimeService.Consumers.Kafka;
-using FlowChat.RealtimeService.Consumers.Services;
+using FlowChat.RealtimeService.Infrastructure;
 using FlowChat.Shared.Infrastructure.Configuration;
 using FlowChat.Shared.Infrastructure.Silverback.Behaviors;
 using FlowChat.Shared.Infrastructure.Silverback.Kafka;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
 using Silverback.Configuration;
 using Silverback.Messaging.Configuration;
 
@@ -25,28 +25,11 @@ public static class ConsumersServiceRegistration
             .Get<ChatMessageSentConsumerSettingsSection>() ?? new ChatMessageSentConsumerSettingsSection();
         var presenceStatusChangedConsumerOptions = configuration.GetSection(new PresenceStatusChangedConsumerSettingsSection().SectionName)
             .Get<PresenceStatusChangedConsumerSettingsSection>() ?? new PresenceStatusChangedConsumerSettingsSection();
+        var groupConversationChangedConsumerOptions = configuration.GetSection(new GroupConversationChangedConsumerSettingsSection().SectionName)
+            .Get<GroupConversationChangedConsumerSettingsSection>() ?? new GroupConversationChangedConsumerSettingsSection();
 
-        services.AddHttpClient(RealtimeInternalApiClient.HttpClientName, (serviceProvider, httpClient) =>
-        {
-            var realtimeApiSettings = serviceProvider.GetRequiredService<IOptions<RealtimeApiSettingsSection>>().Value;
-            if (!Uri.TryCreate(realtimeApiSettings.BaseUrl, UriKind.Absolute, out var baseAddress))
-            {
-                throw new InvalidOperationException("RealtimeApi:BaseUrl must be an absolute URI.");
-            }
-
-            httpClient.BaseAddress = baseAddress;
-            httpClient.DefaultRequestHeaders.Remove(RealtimeInternalApiClient.ApiKeyHeaderName);
-
-            if (!string.IsNullOrWhiteSpace(realtimeApiSettings.ApiKey))
-            {
-                httpClient.DefaultRequestHeaders.Add(RealtimeInternalApiClient.ApiKeyHeaderName, realtimeApiSettings.ApiKey);
-            }
-        });
-        services.AddScoped<IRealtimeInternalApiClient>(serviceProvider =>
-            new RealtimeInternalApiClient(
-                serviceProvider
-                    .GetRequiredService<IHttpClientFactory>()
-                    .CreateClient(RealtimeInternalApiClient.HttpClientName)));
+        services.AddConsumerApplicationServices();
+        services.AddConsumerInfrastructureServices(configuration);
 
         services.AddSilverback()
             .AddSingletonBrokerBehavior<CustomSpanAttributesProducerBehavior>()
@@ -55,7 +38,7 @@ public static class ConsumersServiceRegistration
             .AddKafkaClients(clients =>
             {
                 clients
-                    .WithBootstrapServers(ResolveBootstrapServers(chatMessageSentConsumerOptions, presenceStatusChangedConsumerOptions))
+                    .WithBootstrapServers(ResolveBootstrapServers(chatMessageSentConsumerOptions, presenceStatusChangedConsumerOptions, groupConversationChangedConsumerOptions))
                     .AddConsumer(consumer => consumer
                         .WithGroupId(chatMessageSentConsumerOptions.GroupId)
                         .WithAutoOffsetReset(ParseAutoOffsetReset(chatMessageSentConsumerOptions.AutoOffsetReset))
@@ -72,6 +55,14 @@ public static class ConsumersServiceRegistration
                         .WithGroupId(presenceStatusChangedConsumerOptions.RetryGroupId)
                         .WithAutoOffsetReset(ParseAutoOffsetReset(presenceStatusChangedConsumerOptions.AutoOffsetReset))
                         .Consume(endpoint => endpoint.ConfigureFlowChatRetryEndpoint(presenceStatusChangedConsumerOptions)))
+                    .AddConsumer(consumer => consumer
+                        .WithGroupId(groupConversationChangedConsumerOptions.GroupId)
+                        .WithAutoOffsetReset(ParseAutoOffsetReset(groupConversationChangedConsumerOptions.AutoOffsetReset))
+                        .Consume(endpoint => endpoint.ConfigureFlowChatMainEndpoint(groupConversationChangedConsumerOptions)))
+                    .AddConsumer(consumer => consumer
+                        .WithGroupId(groupConversationChangedConsumerOptions.RetryGroupId)
+                        .WithAutoOffsetReset(ParseAutoOffsetReset(groupConversationChangedConsumerOptions.AutoOffsetReset))
+                        .Consume(endpoint => endpoint.ConfigureFlowChatRetryEndpoint(groupConversationChangedConsumerOptions)))
                     .AddProducer(producer => producer
                         .Produce(endpoint => endpoint
                             .ProduceTo(chatMessageSentConsumerOptions.RetryTopic)
@@ -87,20 +78,32 @@ public static class ConsumersServiceRegistration
                     .AddProducer(producer => producer
                         .Produce(endpoint => endpoint
                             .ProduceTo(presenceStatusChangedConsumerOptions.DeadLetterTopic)
+                            .SerializeAsJson(serializer => serializer.SetTypeHeader())))
+                    .AddProducer(producer => producer
+                        .Produce(endpoint => endpoint
+                            .ProduceTo(groupConversationChangedConsumerOptions.RetryTopic)
+                            .SerializeAsJson(serializer => serializer.SetTypeHeader())))
+                    .AddProducer(producer => producer
+                        .Produce(endpoint => endpoint
+                            .ProduceTo(groupConversationChangedConsumerOptions.DeadLetterTopic)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())));
             })
             .AddScopedSubscriber<ChatMessageSentSubscriber>()
-            .AddScopedSubscriber<UserPresenceChangedSubscriber>();
+            .AddScopedSubscriber<UserPresenceChangedSubscriber>()
+            .AddScopedSubscriber<GroupConversationChangedSubscriber>();
 
         return services;
     }
 
     private static string ResolveBootstrapServers(
         ChatMessageSentConsumerSettingsSection chatMessageSentConsumerOptions,
-        PresenceStatusChangedConsumerSettingsSection presenceStatusChangedConsumerOptions) =>
+        PresenceStatusChangedConsumerSettingsSection presenceStatusChangedConsumerOptions,
+        GroupConversationChangedConsumerSettingsSection groupConversationChangedConsumerOptions) =>
         !string.IsNullOrWhiteSpace(chatMessageSentConsumerOptions.BootstrapServers)
             ? chatMessageSentConsumerOptions.BootstrapServers
-            : presenceStatusChangedConsumerOptions.BootstrapServers;
+            : !string.IsNullOrWhiteSpace(presenceStatusChangedConsumerOptions.BootstrapServers)
+                ? presenceStatusChangedConsumerOptions.BootstrapServers
+                : groupConversationChangedConsumerOptions.BootstrapServers;
 
     private static AutoOffsetReset ParseAutoOffsetReset(string value) =>
         Enum.TryParse<AutoOffsetReset>(value, true, out var parsed)

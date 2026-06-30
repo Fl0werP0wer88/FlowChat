@@ -5,7 +5,6 @@ using FlowChat.PresenceService.Application.Features.Presence;
 using FlowChat.PresenceService.Application.Features.Presence.Commands.DeletePresenceStatus;
 using FlowChat.PresenceService.Application.Features.Presence.Eventing.ApplicationEvents.PresenceStatusChanged;
 using FlowChat.Shared.Application;
-using FlowChat.Shared.Domain;
 using FluentAssertions;
 using MediatR;
 using Moq;
@@ -18,30 +17,17 @@ public sealed class DeletePresenceStatusCommandHandlerTests
     private readonly Mock<IPresenceStatusStore> _presenceStatusStoreMock = new();
     private readonly Mock<IMediator> _mediatorMock = new();
     private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
-    private readonly Mock<IDomainEventDispatcher> _domainEventDispatcherMock = new();
     private readonly DeletePresenceStatusCommandHandler _handler;
 
     public DeletePresenceStatusCommandHandlerTests()
     {
         _unitOfWorkMock
-            .Setup(x => x.ExecuteInTransactionAsync(
+            .Setup(x => x.ExecuteCommandInTransactionAsync(
                 It.IsAny<Func<CancellationToken, Task<FlowChatResult<Unit>>>>(),
-                It.IsAny<Func<FlowChatResult<Unit>, CancellationToken, Task<FlowChatResult<Unit>>>>(),
-                It.IsAny<Func<Exception, CancellationToken, Task>>(),
                 It.IsAny<CancellationToken>()))
-            .Returns<
-                Func<CancellationToken, Task<FlowChatResult<Unit>>>,
-                Func<FlowChatResult<Unit>, CancellationToken, Task<FlowChatResult<Unit>>>,
-                Func<Exception, CancellationToken, Task>,
-                CancellationToken>(async (operation, beforeCommitOperation, _, ct) =>
-                {
-                    var result = await operation(ct);
-                    return await beforeCommitOperation(result, ct);
-                });
+            .Returns<Func<CancellationToken, Task<FlowChatResult<Unit>>>, CancellationToken>(
+                (operation, ct) => operation(ct));
 
-        _domainEventDispatcherMock
-            .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<IDomainEvent>>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
         _mediatorMock
             .Setup(x => x.Publish(It.IsAny<PresenceStatusChangedApplicationEvent>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
@@ -49,8 +35,7 @@ public sealed class DeletePresenceStatusCommandHandlerTests
         _handler = new DeletePresenceStatusCommandHandler(
             _presenceStatusStoreMock.Object,
             _mediatorMock.Object,
-            _unitOfWorkMock.Object,
-            _domainEventDispatcherMock.Object);
+            _unitOfWorkMock.Object);
     }
 
     [Fact]

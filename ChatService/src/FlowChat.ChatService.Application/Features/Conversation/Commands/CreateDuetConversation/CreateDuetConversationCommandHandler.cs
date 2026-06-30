@@ -3,50 +3,50 @@ using FlowChat.ChatService.Application.Features.Conversation.Dtos;
 using FlowChat.ChatService.Application.Features.UserProfile;
 using FlowChat.ChatService.Domain.Entities.Conversation;
 using FlowChat.Shared.Application;
+using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2;
+using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2.BeforeSaveProcessors;
 using FlowChat.Shared.Domain;
 using DuetConversationAggregate = FlowChat.ChatService.Domain.Entities.Conversation.DuetConversation;
+using UserProfileMarker = FlowChat.ChatService.Domain.Entities.UserProfiles.UserProfile;
 
 namespace FlowChat.ChatService.Application.Features.Conversation.Commands.CreateDuetConversation;
 
 public sealed class CreateDuetConversationCommandHandler
-    : IdempotentCommandHandlerBase<CreateDuetConversationCommand, DuetConversationDetailDto>
+    : AggregateRootInsertCommandHandlerBaseV2<CreateDuetConversationCommand, DuetConversationDetailDto, DuetConversationAggregate>
 {
-    private readonly IDuetConversationReadRepository _duetConversationReadRepository;
     private readonly IDuetConversationWriteRepository _duetConversationWriteRepository;
     private readonly IUserProfileProjectionReadRepository _profileReadRepository;
     private DuetConversationAggregate? _newConversation;
 
     public CreateDuetConversationCommandHandler(
-        IDuetConversationReadRepository duetConversationReadRepository,
         IDuetConversationWriteRepository duetConversationWriteRepository,
         IUserProfileProjectionReadRepository profileReadRepository,
         IUnitOfWork unitOfWork,
-        IDomainEventDispatcher domainEventDispatcher,
-        IDbUpdateExceptionClassifier dbUpdateExceptionClassifier)
-        : base(domainEventDispatcher, unitOfWork, dbUpdateExceptionClassifier)
+        ILocalEventDispatcher domainEventDispatcher,
+        IEnumerable<IAggregateBeforeSaveProcessor<CreateDuetConversationCommand, DuetConversationAggregate>> beforeSaveProcessors)
+        : base(domainEventDispatcher, unitOfWork, beforeSaveProcessors)
     {
-        _duetConversationReadRepository = duetConversationReadRepository ?? throw new ArgumentNullException(nameof(duetConversationReadRepository));
         _duetConversationWriteRepository = duetConversationWriteRepository ?? throw new ArgumentNullException(nameof(duetConversationWriteRepository));
         _profileReadRepository = profileReadRepository ?? throw new ArgumentNullException(nameof(profileReadRepository));
     }
 
-    protected override async Task<FlowChatResult<DuetConversationDetailDto>> ExecuteCommandAsync(
+    protected override async Task<FlowChatResult<DuetConversationDetailDto>> ExecuteAsync(
         CreateDuetConversationCommand request,
         CancellationToken cancellationToken)
     {
         _newConversation = DuetConversationAggregate.Create(
-            createdByUserId: request.RequestingUserId,
-            partnerUserId: request.PartnerUserId);
+            createdByUserId: Id<UserProfileMarker>.FromGuid(request.RequestingUserId),
+            partnerUserId: Id<UserProfileMarker>.FromGuid(request.PartnerUserId));
 
         await _duetConversationWriteRepository.AddAsync(_newConversation, cancellationToken);
 
-        var participantUserIds = _newConversation.Participants.Select(p => p.UserId).ToList();
+        var participantUserIds = _newConversation.Participants.Select(p => p.UserId.Value).ToList();
         var profiles = await _profileReadRepository.GetByIdsAsync(participantUserIds, cancellationToken);
 
         var participantDtos = _newConversation.Participants
             .Select(participant =>
             {
-                var profile = profiles.FirstOrDefault(p => p.UserId == participant.UserId);
+                var profile = profiles.FirstOrDefault(p => p.UserId == participant.UserId.Value);
                 return BuildParticipantDto(participant, profile);
             })
             .ToList();
@@ -60,29 +60,12 @@ public sealed class CreateDuetConversationCommandHandler
         UserProfileConversationParticipantDto? profile)
     {
         return new ConversationParticipantDto(
-            participant.UserId,
+            participant.UserId.Value,
             string.IsNullOrEmpty(participant.DisplayName) ? profile?.DisplayName : participant.DisplayName,
             string.IsNullOrEmpty(participant.AvatarUrl) ? profile?.AvatarUrl : participant.AvatarUrl,
-            participant.UserId);
+            participant.UserId.Value);
     }
 
-    protected override async Task<(bool Found, DuetConversationDetailDto Value)> TryGetExistingResponseAsync(
-        CreateDuetConversationCommand request,
-        CancellationToken cancellationToken)
-    {
-        var existing = await _duetConversationReadRepository.GetByUserIdsAsync(
-            request.RequestingUserId,
-            request.PartnerUserId,
-            cancellationToken);
-
-        return existing is not null
-            ? (true, existing)
-            : (false, default!);
-    }
-
-    protected override IAggregateRoot? GetExecutedAggregateRoot(IdempotentCommandResult<DuetConversationDetailDto> result) =>
-        _newConversation;
-
-    protected override string GetIdempotencyConflictKey(CreateDuetConversationCommand request) =>
-        CreateDuetConversationCommand.IdempotencyConflictKey;
+    protected override DuetConversationAggregate GetAggregateRoot() =>
+        _newConversation ?? throw new InvalidOperationException("Aggregate root instance is not available.");
 }

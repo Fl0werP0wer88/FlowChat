@@ -38,6 +38,9 @@ namespace FlowChat.ChatService.Persistence.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
 
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<DateTimeOffset?>("DeliveredAtUtc")
                         .HasColumnType("timestamp with time zone");
 
@@ -53,10 +56,6 @@ namespace FlowChat.ChatService.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
-
-                    b.PrimitiveCollection<Guid[]>("RecipientUserIds")
-                        .IsRequired()
-                        .HasColumnType("uuid[]");
 
                     b.Property<string>("SenderDisplayName")
                         .IsRequired()
@@ -81,6 +80,11 @@ namespace FlowChat.ChatService.Persistence.Migrations
                         .IsConcurrencyToken()
                         .HasColumnType("integer");
 
+                    b.PrimitiveCollection<Guid[]>("_recipientUserIds")
+                        .IsRequired()
+                        .HasColumnType("uuid[]")
+                        .HasColumnName("RecipientUserIds");
+
                     b.HasKey("Id");
 
                     b.HasIndex("ConversationId", "SentAtUtc");
@@ -103,6 +107,9 @@ namespace FlowChat.ChatService.Persistence.Migrations
 
                     b.Property<Guid>("CreatedByUserId")
                         .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTimeOffset>("LastModifiedAtUtc")
                         .HasColumnType("timestamp with time zone");
@@ -144,13 +151,8 @@ namespace FlowChat.ChatService.Persistence.Migrations
                     b.Property<Guid>("ConversationId")
                         .HasColumnType("uuid");
 
-                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                    b.Property<DateTimeOffset?>("DeletedAt")
                         .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("CreatedBy")
-                        .IsRequired()
-                        .HasMaxLength(256)
-                        .HasColumnType("character varying(256)");
 
                     b.Property<string>("DisplayName")
                         .HasMaxLength(256)
@@ -162,20 +164,8 @@ namespace FlowChat.ChatService.Persistence.Migrations
                     b.Property<DateTimeOffset>("JoinedAtUtc")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<DateTimeOffset>("LastModifiedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("LastModifiedBy")
-                        .IsRequired()
-                        .HasMaxLength(256)
-                        .HasColumnType("character varying(256)");
-
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
-
-                    b.Property<int>("Version")
-                        .IsConcurrencyToken()
-                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -183,6 +173,59 @@ namespace FlowChat.ChatService.Persistence.Migrations
                         .IsUnique();
 
                     b.ToTable("ParticipantUsers", (string)null);
+                });
+
+            modelBuilder.Entity("FlowChat.ChatService.Persistence.Entities.ChatMessageReadEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ConversationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("SenderDisplayName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("SenderUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("SentAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable((string)null);
+
+                    b.ToView("ChatMessages", (string)null);
+                });
+
+            modelBuilder.Entity("FlowChat.ChatService.Persistence.Entities.ConversationReadEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("text");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.ToTable((string)null);
+
+                    b.ToView("Conversations", (string)null);
                 });
 
             modelBuilder.Entity("FlowChat.ChatService.Persistence.Entities.DuetConversationLookupEntity", b =>
@@ -196,6 +239,9 @@ namespace FlowChat.ChatService.Persistence.Migrations
                     b.Property<Guid>("ConversationId")
                         .HasColumnType("uuid");
 
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.HasKey("FirstUserId", "SecondUserId");
 
                     b.HasIndex("ConversationId");
@@ -203,7 +249,55 @@ namespace FlowChat.ChatService.Persistence.Migrations
                     b.ToTable("DuetConversations", (string)null);
                 });
 
-            modelBuilder.Entity("FlowChat.ChatService.Persistence.Entities.UserProfileProjectionEntity", b =>
+            modelBuilder.Entity("FlowChat.ChatService.Persistence.Entities.DuetConversationReadEntity", b =>
+                {
+                    b.Property<Guid>("FirstUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("SecondUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ConversationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("FirstUserId", "SecondUserId");
+
+                    b.ToTable((string)null);
+
+                    b.ToView("DuetConversations", (string)null);
+                });
+
+            modelBuilder.Entity("FlowChat.ChatService.Persistence.Entities.ParticipantUserReadEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AvatarUrl")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("ConversationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DisplayName")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.ToTable((string)null);
+
+                    b.ToView("ParticipantUsers", (string)null);
+                });
+
+            modelBuilder.Entity("FlowChat.ChatService.Persistence.Entities.UserProfileReadModelEntity", b =>
                 {
                     b.Property<Guid>("UserId")
                         .ValueGeneratedOnAdd()
@@ -213,21 +307,60 @@ namespace FlowChat.ChatService.Persistence.Migrations
                         .HasMaxLength(2048)
                         .HasColumnType("character varying(2048)");
 
-                    b.Property<string>("DisplayName")
-                        .HasMaxLength(256)
-                        .HasColumnType("character varying(256)");
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("timestamp with time zone")
+                        .HasComputedColumnSql("\"SourceDeletedAtUtc\"", true);
+
+                    b.Property<string>("FirstName")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.Property<string>("FriendlyUserId")
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
-                    b.Property<DateTimeOffset>("UpdatedAtUtc")
+                    b.Property<string>("LastName")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTimeOffset>("SourceCreatedAtUtc")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset?>("SourceDeletedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset>("SourceLastModifiedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("SourceVersion")
+                        .HasColumnType("integer");
 
                     b.HasKey("UserId");
 
-                    b.ToTable("UserProfileProjections", (string)null);
+                    b.ToTable("UserProfileReadModel", (string)null);
+                });
+
+            modelBuilder.Entity("Silverback.Messaging.Consuming.KafkaOffsetStore.SilverbackStoredOffset", b =>
+                {
+                    b.Property<string>("GroupId")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<string>("Topic")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<int>("Partition")
+                        .HasColumnType("integer");
+
+                    b.Property<long>("Offset")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("GroupId", "Topic", "Partition");
+
+                    b.ToTable("SilverbackStoredOffsets");
                 });
 
             modelBuilder.Entity("Silverback.Messaging.Producing.TransactionalOutbox.SilverbackOutboxMessage", b =>

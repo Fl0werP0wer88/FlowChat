@@ -1,11 +1,11 @@
 using FlowChat.ChatService.Application.Contracts.Persistence;
 using FlowChat.ChatService.Application.Features.ChatMessage.Commands.SendChatMessage;
 using FlowChat.ChatService.Domain.Entities.ChatMessage.Events;
+using FlowChat.Core.Messaging;
 using FlowChat.Core.Results;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
 using FluentAssertions;
-using Microsoft.EntityFrameworkCore;
 using Moq;
 using ChatMessageAggregate = FlowChat.ChatService.Domain.Entities.ChatMessage.ChatMessage;
 
@@ -16,30 +16,20 @@ public sealed class SendChatMessageCommandHandlerTests
     private readonly Mock<IChatMessageWriteRepository> _chatMessageRepositoryMock = new();
     private readonly Mock<IConversationParticipantReadRepository> _participantReadRepositoryMock = new();
     private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
-    private readonly Mock<IDomainEventDispatcher> _domainEventDispatcherMock = new();
-    private readonly Mock<IDbUpdateExceptionClassifier> _dbUpdateExceptionClassifierMock = new();
+    private readonly Mock<ILocalEventDispatcher> _domainEventDispatcherMock = new();
     private readonly SendChatMessageCommandHandler _handler;
 
     public SendChatMessageCommandHandlerTests()
     {
         _unitOfWorkMock
-            .Setup(x => x.ExecuteInTransactionAsync(
-                It.IsAny<Func<CancellationToken, Task<FlowChatResult<IdempotentCommandResult<SendChatMessageCommandResult>>>>>(),
-                It.IsAny<Func<FlowChatResult<IdempotentCommandResult<SendChatMessageCommandResult>>, CancellationToken, Task<FlowChatResult<IdempotentCommandResult<SendChatMessageCommandResult>>>>>(),
-                It.IsAny<Func<Exception, CancellationToken, Task>>(),
+            .Setup(x => x.ExecuteCommandInTransactionAsync(
+                It.IsAny<Func<CancellationToken, Task<FlowChatResult<SendChatMessageCommandResult>>>>(),
                 It.IsAny<CancellationToken>()))
-            .Returns<
-                Func<CancellationToken, Task<FlowChatResult<IdempotentCommandResult<SendChatMessageCommandResult>>>>,
-                Func<FlowChatResult<IdempotentCommandResult<SendChatMessageCommandResult>>, CancellationToken, Task<FlowChatResult<IdempotentCommandResult<SendChatMessageCommandResult>>>>,
-                Func<Exception, CancellationToken, Task>,
-                CancellationToken>(async (operation, beforeCommitOperation, _, ct) =>
-                {
-                    var result = await operation(ct);
-                    return await beforeCommitOperation(result, ct);
-                });
+            .Returns<Func<CancellationToken, Task<FlowChatResult<SendChatMessageCommandResult>>>, CancellationToken>(
+                (operation, ct) => operation(ct));
 
         _domainEventDispatcherMock
-            .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<IDomainEvent>>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<ILocalEvent>>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         _handler = new SendChatMessageCommandHandler(
@@ -47,7 +37,7 @@ public sealed class SendChatMessageCommandHandlerTests
             _participantReadRepositoryMock.Object,
             _unitOfWorkMock.Object,
             _domainEventDispatcherMock.Object,
-            _dbUpdateExceptionClassifierMock.Object);
+            []);
     }
 
     [Fact]
@@ -113,67 +103,23 @@ public sealed class SendChatMessageCommandHandlerTests
             .ReturnsAsync((ChatMessageAggregate msg, CancellationToken _) => msg);
 
         _domainEventDispatcherMock
-            .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<IDomainEvent>>(), It.IsAny<CancellationToken>()))
-            .Callback<IEnumerable<IDomainEvent>, CancellationToken>((events, _) => dispatchedEvents.AddRange(events))
+            .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<ILocalEvent>>(), It.IsAny<CancellationToken>()))
+            .Callback<IEnumerable<ILocalEvent>, CancellationToken>((events, _) => dispatchedEvents.AddRange(events.OfType<IDomainEvent>()))
             .Returns(Task.CompletedTask);
 
         var result = await _handler.Handle(command, CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
-        result.Value.WasAlreadyProcessed.Should().BeFalse();
-        result.Value.Value.MessageId.Should().NotBeEmpty();
+        result.Value.MessageId.Should().NotBeEmpty();
         persistedMessage.Should().NotBeNull();
-        result.Value.Value.MessageId.Should().Be(persistedMessage!.Id.Value);
-        result.Value.Value.SentAtUtc.Should().BeCloseTo(DateTimeOffset.UtcNow, TimeSpan.FromSeconds(5));
+        result.Value.MessageId.Should().Be(persistedMessage!.Id.Value);
+        result.Value.SentAtUtc.Should().BeCloseTo(DateTimeOffset.UtcNow, TimeSpan.FromSeconds(5));
         persistedMessage.ConversationId.Value.Should().Be(conversationId);
-        persistedMessage.SenderUserId.Should().Be(senderId);
-        persistedMessage.RecipientUserIds.Should().BeEquivalentTo(new[] { recipientId });
+        persistedMessage.SenderUserId.Value.Should().Be(senderId);
+        persistedMessage.RecipientUserIds.Select(x => x.Value).Should().BeEquivalentTo([recipientId]);
         dispatchedEvents.Should().ContainSingle()
             .Which.Should().BeOfType<ChatMessageSentDomainEvent>();
     }
 
-    [Fact]
-    public async Task Handle_WhenMessageIdAlreadyExists_ReturnsExistingResponseWithoutDispatchingEvents()
-    {
-        var senderId = Guid.NewGuid();
-        var recipientId = Guid.NewGuid();
-        var conversationId = Guid.NewGuid();
-        var command = new SendChatMessageCommand(Guid.NewGuid(), conversationId, senderId, "Alice", "Hello");
-        var existingMessage = ChatMessageAggregate.Create(
-            Id<ChatMessageAggregate>.FromGuid(command.Id),
-            Id<FlowChat.ChatService.Domain.Entities.Conversation.Conversation>.FromGuid(conversationId),
-            senderId,
-            "Alice",
-            "Hello",
-            [recipientId]);
-        existingMessage.ClearEvents();
-        List<IDomainEvent> dispatchedEvents = [];
-
-        _participantReadRepositoryMock
-            .Setup(x => x.GetParticipantUserIdsAsync(command.ConversationId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync([senderId, recipientId]);
-        _chatMessageRepositoryMock
-            .Setup(x => x.AddAsync(It.IsAny<ChatMessageAggregate>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new DbUpdateException("duplicate"));
-        _dbUpdateExceptionClassifierMock
-            .Setup(x => x.IsExpectedIdempotencyConflict(It.IsAny<DbUpdateException>(), SendChatMessageCommand.IdempotencyConflictKey))
-            .Returns(true);
-        _chatMessageRepositoryMock
-            .Setup(x => x.GetByIdAsync(command.Id, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(existingMessage);
-
-        _domainEventDispatcherMock
-            .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<IDomainEvent>>(), It.IsAny<CancellationToken>()))
-            .Callback<IEnumerable<IDomainEvent>, CancellationToken>((events, _) => dispatchedEvents.AddRange(events))
-            .Returns(Task.CompletedTask);
-
-        var result = await _handler.Handle(command, CancellationToken.None);
-
-        result.IsSuccess.Should().BeTrue();
-        result.Value.WasAlreadyProcessed.Should().BeTrue();
-        result.Value.Value.MessageId.Should().Be(command.Id);
-        result.Value.Value.SentAtUtc.Should().Be(existingMessage.SentAtUtc.Value);
-        dispatchedEvents.Should().BeEmpty();
-    }
 }
 

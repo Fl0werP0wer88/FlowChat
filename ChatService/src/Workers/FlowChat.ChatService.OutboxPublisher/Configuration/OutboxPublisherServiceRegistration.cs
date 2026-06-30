@@ -20,15 +20,21 @@ public static class OutboxPublisherServiceRegistration
             .GetSection(new OutboxPublisherRuntimeSettingsSection().SectionName)
             .Get<OutboxPublisherRuntimeSettingsSection>()
             ?? new OutboxPublisherRuntimeSettingsSection();
-        var producerOptions = configuration
+        var chatMessageSentProducerOptions = configuration
             .GetSection(new ChatMessageSentProducerSettingsSection().SectionName)
             .Get<ChatMessageSentProducerSettingsSection>()
             ?? new ChatMessageSentProducerSettingsSection();
+        var groupConversationChangedProducerOptions = configuration
+            .GetSection(new GroupConversationChangedProducerSettingsSection().SectionName)
+            .Get<GroupConversationChangedProducerSettingsSection>()
+            ?? new GroupConversationChangedProducerSettingsSection();
 
         services.AddOptions<OutboxPublisherRuntimeSettingsSection>()
             .BindConfiguration(new OutboxPublisherRuntimeSettingsSection().SectionName);
         services.AddOptions<ChatMessageSentProducerSettingsSection>()
             .BindConfiguration(new ChatMessageSentProducerSettingsSection().SectionName);
+        services.AddOptions<GroupConversationChangedProducerSettingsSection>()
+            .BindConfiguration(new GroupConversationChangedProducerSettingsSection().SectionName);
 
         services.AddSilverback()
             .AddSingletonBrokerBehavior<CustomSpanAttributesProducerBehavior>()
@@ -48,10 +54,14 @@ public static class OutboxPublisherServiceRegistration
             })
             .AddKafkaClients(clients =>
             {
-                clients.WithBootstrapServers(producerOptions.BootstrapServers)
+                clients.WithBootstrapServers(chatMessageSentProducerOptions.BootstrapServers)
                     .AddProducer(producer => producer
                         .Produce<ChatMessageSentIntegrationEvent>("chat-message-sent", endpoint => endpoint
-                            .ProduceTo(producerOptions.Topic)
+                            .ProduceTo(chatMessageSentProducerOptions.Topic)
+                            .SerializeAsJson(serializer => serializer.SetTypeHeader())))
+                    .AddProducer(producer => producer
+                        .Produce<GroupConversationChangedIntegrationEvent>("group-conversation-changed", endpoint => endpoint
+                            .ProduceTo(groupConversationChangedProducerOptions.Topic)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())));
             });
 

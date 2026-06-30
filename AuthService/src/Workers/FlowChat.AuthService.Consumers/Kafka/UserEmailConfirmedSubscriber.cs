@@ -1,13 +1,13 @@
-using FlowChat.AuthService.Consumers.AuthApi.Contracts;
-using FlowChat.AuthService.Consumers.Services;
+using FlowChat.AuthService.Application.Features.User.Commands.ConfirmAuthEmail;
 using FlowChat.Core.Exceptions;
 using FlowChat.Core.Messaging.UserProfileService.Events;
 using FlowChat.Shared.Infrastructure.Silverback.Subscribers;
+using MediatR;
 
 namespace FlowChat.AuthService.Consumers.Kafka;
 
 public sealed class UserEmailConfirmedSubscriber(
-    IAuthInternalApiClient authInternalApiClient,
+    IMediator mediator,
     ILogger<UserEmailConfirmedSubscriber> logger)
     : SubscriberBase<UserEmailConfirmedIntegrationEvent>(logger)
 {
@@ -16,12 +16,6 @@ public sealed class UserEmailConfirmedSubscriber(
         CancellationToken cancellationToken)
     {
         if (message.Email is not { Address: not null } email)
-        {
-            throw new NonTransientException("Payload does not contain Email.Address.");
-        }
-
-        var emailAddress = email.Address.Trim();
-        if (string.IsNullOrWhiteSpace(emailAddress))
         {
             throw new NonTransientException("Payload does not contain Email.Address.");
         }
@@ -35,11 +29,13 @@ public sealed class UserEmailConfirmedSubscriber(
             return;
         }
 
-        await authInternalApiClient.ConfirmEmailAsync(
-            new AuthEmailConfirmationRequest
+        var result = await mediator.Send(
+            new ConfirmAuthEmailCommand
             {
-                EmailAddress = emailAddress
+                EmailAddress = email.Address.Trim()
             },
             cancellationToken);
+
+        ThrowIfFailure(result);
     }
 }

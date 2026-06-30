@@ -15,14 +15,14 @@ public sealed class LoginUserCommandHandler : ICommandHandler<LoginUserCommand, 
     private readonly IAccountRepository _accountRepository;
     private readonly IPasswordHashingService _passwordHashingService;
     private readonly IOpenIddictTokenService _openIddictTokenService;
-    private readonly IDomainEventDispatcher _domainEventDispatcher;
+    private readonly ILocalEventDispatcher _domainEventDispatcher;
     private readonly IUnitOfWork _unitOfWork;
 
     public LoginUserCommandHandler(
         IAccountRepository accountRepository,
         IPasswordHashingService passwordHashingService,
         IOpenIddictTokenService openIddictTokenService,
-        IDomainEventDispatcher domainEventDispatcher,
+        ILocalEventDispatcher domainEventDispatcher,
         IUnitOfWork unitOfWork)
     {
         _accountRepository = accountRepository;

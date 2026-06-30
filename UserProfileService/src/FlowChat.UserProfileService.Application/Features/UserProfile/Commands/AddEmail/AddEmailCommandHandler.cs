@@ -1,4 +1,6 @@
 using FlowChat.Shared.Application;
+using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2;
+using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2.BeforeSaveProcessors;
 using FlowChat.Core.Results;
 using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
@@ -10,7 +12,7 @@ using UserProfileAggregate = FlowChat.UserProfileService.Domain.Entities.UserPro
 namespace FlowChat.UserProfileService.Application.Features.UserProfile.Commands.AddEmail;
 
 public sealed class AddEmailCommandHandler
-    : IdempotentCommandHandlerBase<AddEmailCommand, Guid>
+    : AggregateRootUpdateCommandHandlerBaseV2<AddEmailCommand, Guid, UserProfileAggregate>
 {
     private readonly IUserProfileReadRepository _userProfileReadRepository;
     private readonly IUserProfileWriteRepository _userProfileRepository;
@@ -20,27 +22,15 @@ public sealed class AddEmailCommandHandler
         IUserProfileReadRepository userProfileReadRepository,
         IUserProfileWriteRepository userProfileRepository,
         IUnitOfWork unitOfWork,
-        IDomainEventDispatcher domainEventDispatcher,
-        IDbUpdateExceptionClassifier dbUpdateExceptionClassifier)
-        : base(domainEventDispatcher, unitOfWork, dbUpdateExceptionClassifier)
+        ILocalEventDispatcher domainEventDispatcher,
+        IEnumerable<IAggregateBeforeSaveProcessor<AddEmailCommand, UserProfileAggregate>> beforeSaveProcessors)
+        : base(domainEventDispatcher, unitOfWork, beforeSaveProcessors)
     {
         _userProfileReadRepository = userProfileReadRepository;
         _userProfileRepository = userProfileRepository;
     }
 
-    protected override async Task<(bool Found, Guid Value)> TryGetExistingResponseAsync(
-        AddEmailCommand request,
-        CancellationToken cancellationToken)
-    {
-        var userProfile = await _userProfileRepository.GetByIdAsync(request.UserId, cancellationToken);
-        var email = userProfile?.Emails.FirstOrDefault(x => x.Id.Value == request.EmailId);
-
-        return email is null
-            ? (false, default)
-            : (true, email.Id.Value);
-    }
-
-    protected override async Task<FlowChatResult<Guid>> ExecuteCommandAsync(
+    protected override async Task<FlowChatResult<Guid>> ExecuteAsync(
         AddEmailCommand request,
         CancellationToken cancellationToken)
     {
@@ -65,9 +55,6 @@ public sealed class AddEmailCommandHandler
         return FlowChatResult<Guid>.Success(email.Id.Value);
     }
 
-    protected override IAggregateRoot? GetExecutedAggregateRoot(IdempotentCommandResult<Guid> result) =>
-        _userProfile;
-
-    protected override string GetIdempotencyConflictKey(AddEmailCommand request) =>
-        AddEmailCommand.IdempotencyConflictKey;
+    protected override UserProfileAggregate GetAggregateRoot() =>
+        _userProfile ?? throw new InvalidOperationException("Aggregate root instance is not available.");
 }

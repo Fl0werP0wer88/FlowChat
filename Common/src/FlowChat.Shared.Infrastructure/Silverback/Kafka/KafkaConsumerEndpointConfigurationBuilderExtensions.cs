@@ -12,12 +12,14 @@ public static class KafkaConsumerEndpointConfigurationBuilderExtensions
         ConfigureFlowChatEndpointDefaults(endpoint, options.Topic)
             .OnError(policy =>
             {
-                // Only TransientException is eligible for retry; everything else (including unknown exceptions) goes straight to DLQ.
+                // Only TransientException and IsolableException are eligible for retry; everything else (including unknown exceptions) goes straight to DLQ.
                 policy.MoveTo(options.DeadLetterTopic, move => move
-                    .Exclude<TransientException>());
+                    .Exclude<TransientException>()
+                    .Exclude<IsolableException>());
 
                 policy.MoveTo(options.RetryTopic, move => move
-                    .ApplyTo<TransientException>());
+                    .ApplyTo<TransientException>()
+                    .ApplyTo<IsolableException>());
             });
 
     public static KafkaConsumerEndpointConfigurationBuilder<object> ConfigureFlowChatRetryEndpoint(
@@ -26,6 +28,9 @@ public static class KafkaConsumerEndpointConfigurationBuilderExtensions
         ConfigureFlowChatEndpointDefaults(endpoint, options.RetryTopic)
             .OnError(policy =>
             {
+                // Deliberately not extended to ApplyTo<IsolableException>: messages are already consumed
+                // one-by-one here, so an isolable failure goes straight to the DLQ on first attempt instead
+                // of wasting backoff retries on data that will never become valid.
                 policy.MoveTo(options.DeadLetterTopic, move => move
                     .Exclude<TransientException>());
 

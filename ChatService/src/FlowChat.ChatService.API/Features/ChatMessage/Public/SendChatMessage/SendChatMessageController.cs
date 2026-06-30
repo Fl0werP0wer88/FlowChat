@@ -19,7 +19,6 @@ public sealed class SendChatMessageController : ApiControllerBase
     }
 
     [HttpPut]
-    [ProducesResponseType(typeof(SendChatMessageResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(SendChatMessageResponse), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
@@ -49,9 +48,7 @@ public sealed class SendChatMessageController : ApiControllerBase
             return HandleError(result.Error);
         }
 
-        var response = new SendChatMessageResponse(result.Value.Value.MessageId, result.Value.Value.SentAtUtc);
-        return result.Value.WasAlreadyProcessed
-            ? Ok(response)
-            : StatusCode(StatusCodes.Status201Created, response);
+        var response = new SendChatMessageResponse(result.Value.MessageId, result.Value.SentAtUtc);
+        return StatusCode(StatusCodes.Status201Created, response);
     }
 }

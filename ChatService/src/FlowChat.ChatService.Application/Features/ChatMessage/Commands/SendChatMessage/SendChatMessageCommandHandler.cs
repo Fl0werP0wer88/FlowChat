@@ -1,13 +1,16 @@
 using FlowChat.Shared.Application;
+using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2;
+using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2.BeforeSaveProcessors;
 using FlowChat.ChatService.Application.Contracts.Persistence;
 using FlowChat.Core.Results;
 using FlowChat.Shared.Domain;
 using ChatMessageAggregate = FlowChat.ChatService.Domain.Entities.ChatMessage.ChatMessage;
+using UserProfileMarker = FlowChat.ChatService.Domain.Entities.UserProfiles.UserProfile;
 
 namespace FlowChat.ChatService.Application.Features.ChatMessage.Commands.SendChatMessage;
 
 public sealed class SendChatMessageCommandHandler
-    : IdempotentCommandHandlerBase<SendChatMessageCommand, SendChatMessageCommandResult>
+    : AggregateRootInsertCommandHandlerBaseV2<SendChatMessageCommand, SendChatMessageCommandResult, ChatMessageAggregate>
 {
     private readonly IChatMessageWriteRepository _chatMessageRepository;
     private readonly IConversationParticipantReadRepository _participantReadRepository;
@@ -17,30 +20,15 @@ public sealed class SendChatMessageCommandHandler
         IChatMessageWriteRepository chatMessageRepository,
         IConversationParticipantReadRepository participantReadRepository,
         IUnitOfWork unitOfWork,
-        IDomainEventDispatcher domainEventDispatcher,
-        IDbUpdateExceptionClassifier dbUpdateExceptionClassifier)
-        : base(domainEventDispatcher, unitOfWork, dbUpdateExceptionClassifier)
+        ILocalEventDispatcher domainEventDispatcher,
+        IEnumerable<IAggregateBeforeSaveProcessor<SendChatMessageCommand, ChatMessageAggregate>> beforeSaveProcessors)
+        : base(domainEventDispatcher, unitOfWork, beforeSaveProcessors)
     {
         _chatMessageRepository = chatMessageRepository ?? throw new ArgumentNullException(nameof(chatMessageRepository));
         _participantReadRepository = participantReadRepository ?? throw new ArgumentNullException(nameof(participantReadRepository));
     }
 
-    protected override async Task<(bool Found, SendChatMessageCommandResult Value)> TryGetExistingResponseAsync(
-        SendChatMessageCommand request,
-        CancellationToken cancellationToken)
-    {
-        var message = await _chatMessageRepository.GetByIdAsync(request.Id, cancellationToken);
-        if (message is null
-            || message.ConversationId.Value != request.ConversationId
-            || message.SenderUserId != request.SenderUserId)
-        {
-            return (false, default!);
-        }
-
-        return (true, new SendChatMessageCommandResult(message.Id.Value, message.SentAtUtc.Value));
-    }
-
-    protected override async Task<FlowChatResult<SendChatMessageCommandResult>> ExecuteCommandAsync(
+    protected override async Task<FlowChatResult<SendChatMessageCommandResult>> ExecuteAsync(
         SendChatMessageCommand request,
         CancellationToken cancellationToken)
     {
@@ -62,10 +50,10 @@ public sealed class SendChatMessageCommandHandler
         _chatMessage = ChatMessageAggregate.Create(
             Id<ChatMessageAggregate>.FromGuid(request.Id),
             Id<FlowChat.ChatService.Domain.Entities.Conversation.Conversation>.FromGuid(request.ConversationId),
-            request.SenderUserId,
+            Id<UserProfileMarker>.FromGuid(request.SenderUserId),
             request.SenderDisplayName!.Trim(),
             request.Text!.Trim(),
-            recipientUserIds);
+            recipientUserIds.Select(Id<UserProfileMarker>.FromGuid));
 
         await _chatMessageRepository.AddAsync(_chatMessage, cancellationToken);
 
@@ -73,9 +61,6 @@ public sealed class SendChatMessageCommandHandler
             new SendChatMessageCommandResult(_chatMessage.Id.Value, _chatMessage.SentAtUtc.Value));
     }
 
-    protected override IAggregateRoot? GetExecutedAggregateRoot(IdempotentCommandResult<SendChatMessageCommandResult> result) =>
-        _chatMessage;
-
-    protected override string GetIdempotencyConflictKey(SendChatMessageCommand request) =>
-        SendChatMessageCommand.IdempotencyConflictKey;
+    protected override ChatMessageAggregate GetAggregateRoot() =>
+        _chatMessage ?? throw new InvalidOperationException("Aggregate root instance is not available.");
 }

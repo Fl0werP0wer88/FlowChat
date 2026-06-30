@@ -34,6 +34,7 @@ public sealed class GlobalExceptionHandlingMiddleware(
             }
 
             var problemDetailsFactory = context.RequestServices.GetRequiredService<ProblemDetailsFactory>();
+
             var problemDetails = problemDetailsFactory.CreateUnexpected(
                 context,
                 details: "An unexpected error occurred.");

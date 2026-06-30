@@ -2,15 +2,11 @@ import type { Contact } from "../../../../types/contacts";
 
 interface DuetConversationSettingsProps {
   activeContact: Contact | null;
-  createGroupNotice: { kind: "error" | "info"; message: string } | null;
-  isCreatingGroup: boolean;
   onCreateGroupClick?: () => void;
 }
 
 export function DuetConversationSettings({
   activeContact,
-  createGroupNotice,
-  isCreatingGroup,
   onCreateGroupClick,
 }: DuetConversationSettingsProps) {
   if (!activeContact) {
@@ -29,24 +25,15 @@ export function DuetConversationSettings({
 
       <button
         className="conversation-settings__action"
-        disabled={isCreatingGroup}
         onClick={onCreateGroupClick}
         type="button"
       >
         <span>
-          <strong>{isCreatingGroup ? "Tworzenie..." : "Stwórz grupę"}</strong>
+          <strong>Stwórz grupę</strong>
           <span className="conversation-settings__hint">Rozpocznij rozmowę grupową z tym kontaktem</span>
         </span>
         <span aria-hidden="true" className="material-symbols-rounded">group_add</span>
       </button>
-
-      {createGroupNotice
-        ? (
-          <p className={`alert ${createGroupNotice.kind === "error" ? "alert-error" : "alert-info"}`}>
-            {createGroupNotice.message}
-          </p>
-        )
-        : null}
 
       {activeContact.email
         ? (

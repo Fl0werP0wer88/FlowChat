@@ -3,6 +3,7 @@ using FlowChat.Shared.Domain;
 using FlowChat.Shared.Persistance;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using UserProfileMarker = FlowChat.ChatService.Domain.Entities.UserProfiles.UserProfile;
 
 namespace FlowChat.ChatService.Persistence.Configuration.Entities;
 
@@ -27,6 +28,7 @@ public sealed class ConversationConfiguration : IEntityTypeConfiguration<Convers
             .HasMaxLength(200);
 
         builder.Property(x => x.CreatedByUserId)
+            .HasConversion(x => x.Value, x => Id<UserProfileMarker>.FromGuid(x))
             .IsRequired();
 
         builder.Property(x => x.Version)
@@ -46,6 +48,10 @@ public sealed class ConversationConfiguration : IEntityTypeConfiguration<Convers
         builder.Property(x => x.LastModifiedAtUtc)
             .HasUtcDateTimeOffsetConversion();
 
+        builder.Property(x => x.DeletedAt)
+            .HasNullableUtcDateTimeOffsetConversion();
+
+        builder.Ignore(x => x.IsDeleted);
         builder.Ignore(x => x.DomainEvents);
 
         builder.HasMany(x => x.Participants)

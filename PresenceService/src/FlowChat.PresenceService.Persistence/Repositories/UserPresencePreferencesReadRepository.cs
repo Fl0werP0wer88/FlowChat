@@ -1,14 +1,14 @@
 using FlowChat.Core.Domain;
 using FlowChat.PresenceService.Application.Contracts.Persistence;
 using FlowChat.PresenceService.Application.Features.Presence;
-using FlowChat.PresenceService.Domain.Entities.UserPresencePreferences;
-using FlowChat.Shared.Domain;
+using FlowChat.PresenceService.Persistence.Entities;
+using FlowChat.Shared.Persistance;
 using Microsoft.EntityFrameworkCore;
 
 namespace FlowChat.PresenceService.Persistence.Repositories;
 
 public sealed class UserPresencePreferencesReadRepository(AppDbContext dbContext)
-    : IUserPresencePreferencesReadRepository
+    : ReadRepositoryBase, IUserPresencePreferencesReadRepository
 {
     private readonly AppDbContext _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
 
@@ -16,9 +16,8 @@ public sealed class UserPresencePreferencesReadRepository(AppDbContext dbContext
         Guid id,
         CancellationToken cancellationToken = default)
     {
-        var typedId = Id<UserPresencePreferences>.FromGuid(id);
         var entity = await Query()
-            .FirstOrDefaultAsync(x => x.Id == typedId, cancellationToken);
+            .FirstOrDefaultAsync(x => x.UserId == id, cancellationToken);
 
         return entity is null ? null : MapToDto(entity);
     }
@@ -40,17 +39,16 @@ public sealed class UserPresencePreferencesReadRepository(AppDbContext dbContext
         return preference?.PreferredStatus;
     }
 
-    private IQueryable<UserPresencePreferences> Query()
+    private IQueryable<UserPresencePreferencesReadEntity> Query()
     {
-        return _dbContext.UserPresencePreferences
-            .AsNoTracking();
+        return Active(_dbContext.UserPresencePreferenceReads);
     }
 
-    private static UserPresencePreferencesDto MapToDto(UserPresencePreferences entity)
+    private static UserPresencePreferencesDto MapToDto(UserPresencePreferencesReadEntity entity)
     {
         return new UserPresencePreferencesDto(
             entity.UserId,
             entity.PreferredStatus,
-            entity.LastModifiedAtUtc.Value);
+            entity.LastModifiedAtUtc);
     }
 }

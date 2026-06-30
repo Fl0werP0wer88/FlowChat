@@ -50,13 +50,13 @@ public sealed class KafkaConsumerEndpointConfigurationBuilderExtensionsTests
 
         var deadLetterPolicy = policies[0].Should().BeOfType<MoveMessageErrorPolicy>().Subject;
         deadLetterPolicy.EndpointName.Should().Be(options.DeadLetterTopic);
-        deadLetterPolicy.ExcludedExceptions.Should().ContainSingle()
-            .Which.Should().Be(typeof(TransientException));
+        deadLetterPolicy.ExcludedExceptions.Should().BeEquivalentTo(
+            [typeof(TransientException), typeof(IsolableException)]);
 
         var retryPolicy = policies[1].Should().BeOfType<MoveMessageErrorPolicy>().Subject;
         retryPolicy.EndpointName.Should().Be(options.RetryTopic);
-        retryPolicy.IncludedExceptions.Should().ContainSingle()
-            .Which.Should().Be(typeof(TransientException));
+        retryPolicy.IncludedExceptions.Should().BeEquivalentTo(
+            [typeof(TransientException), typeof(IsolableException)]);
     }
 
     [Fact]

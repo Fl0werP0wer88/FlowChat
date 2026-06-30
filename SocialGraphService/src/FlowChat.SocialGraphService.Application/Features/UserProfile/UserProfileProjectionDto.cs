@@ -15,4 +15,6 @@ public sealed class UserProfileProjectionDto : IDbReadResponse
     public string? Bio { get; init; }
     public bool IsActive { get; init; }
     public DateTimeOffset? LastSeenAtUtc { get; init; }
+    public int SourceVersion { get; init; }
+    public string Source { get; init; } = string.Empty;
 }

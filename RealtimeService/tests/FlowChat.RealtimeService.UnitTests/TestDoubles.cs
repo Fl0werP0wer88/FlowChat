@@ -7,8 +7,6 @@ using FlowChat.RealtimeService.Api.Realtime;
 using FlowChat.RealtimeService.Redis.RealtimeConnections;
 using FlowChat.Shared.Domain;
 using FlowChat.Shared.Application;
-using FlowChat.RealtimeService.Consumers.Realtime.Contracts;
-using FlowChat.RealtimeService.Consumers.Services;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
@@ -20,6 +18,7 @@ internal sealed class CapturingRealtimeClientDispatcher : IRealtimeClientDispatc
 {
     public ChatMessageParam? LastMessageNotification { get; private set; }
     public PresenceChangedParam? LastPresenceNotification { get; private set; }
+    public GroupConversationChangedParam? LastGroupConversationChangedNotification { get; private set; }
 
     public Task ReceiveMessageAsync(ChatMessageParam notification, CancellationToken cancellationToken)
     {
@@ -32,24 +31,10 @@ internal sealed class CapturingRealtimeClientDispatcher : IRealtimeClientDispatc
         LastPresenceNotification = notification;
         return Task.CompletedTask;
     }
-}
 
-internal sealed class CapturingRealtimeInternalApiClient : IRealtimeInternalApiClient
-{
-    public PublishMessageRequest? LastPublishMessageRequest { get; private set; }
-    public PublishPresenceChangeRequest? LastPublishPresenceChangeRequest { get; private set; }
-
-    public Task PublishMessageAsync(PublishMessageRequest request, CancellationToken cancellationToken)
+    public Task GroupConversationChangedAsync(GroupConversationChangedParam notification, CancellationToken cancellationToken)
     {
-        LastPublishMessageRequest = request;
-        return Task.CompletedTask;
-    }
-
-    public Task PublishPresenceChangeAsync(
-        PublishPresenceChangeRequest request,
-        CancellationToken cancellationToken)
-    {
-        LastPublishPresenceChangeRequest = request;
+        LastGroupConversationChangedNotification = notification;
         return Task.CompletedTask;
     }
 }
@@ -58,6 +43,7 @@ internal sealed class CapturingRealtimeEventRouter : IRealtimeEventRouter
 {
     public ChatMessageParam? LastMessageNotification { get; private set; }
     public PresenceChangedParam? LastPresenceNotification { get; private set; }
+    public GroupConversationChangedParam? LastGroupConversationChangedNotification { get; private set; }
 
     public Task RouteMessageAsync(ChatMessageParam notification, CancellationToken cancellationToken)
     {
@@ -68,6 +54,12 @@ internal sealed class CapturingRealtimeEventRouter : IRealtimeEventRouter
     public Task RoutePresenceChangeAsync(PresenceChangedParam notification, CancellationToken cancellationToken)
     {
         LastPresenceNotification = notification;
+        return Task.CompletedTask;
+    }
+
+    public Task RouteGroupConversationChangedAsync(GroupConversationChangedParam notification, CancellationToken cancellationToken)
+    {
+        LastGroupConversationChangedNotification = notification;
         return Task.CompletedTask;
     }
 }

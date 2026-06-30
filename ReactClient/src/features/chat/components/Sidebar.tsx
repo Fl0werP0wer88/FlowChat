@@ -1,20 +1,31 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Contact } from "../../../types/contacts";
 import type { ManualUserStatus, UserStatus } from "../../../types/realtime";
 import type { GroupConversation } from "../../groups";
-import { GroupConversationsList } from "../../groups";
-import { ContactsList } from "../../contacts";
-import { UserSearch } from "../../users";
+import { GroupBuilder, GroupConversationsList } from "../../groups";
+import { ContactsBuilder, ContactsList } from "../../contacts";
 import { SidebarHeader } from "./SidebarHeader";
 import type { SidebarTab } from "./SidebarHeader";
 import type { SearchUserResult } from "../../users/api";
 
+
+export interface GroupBuilderRequest {
+  groupName?: string;
+  initialUserIds?: string[];
+  requestId: number;
+}
+
+type ActiveComposer =
+  | { type: "contacts" }
+  | { type: "group"; groupName?: string; initialUserIds?: string[] }
+  | null;
 
 interface SidebarProps {
   activeContactId: string | null;
   activeGroupConversationId: string | null;
   contacts: Contact[];
   currentUserStatus: UserStatus;
+  groupBuilderRequest: GroupBuilderRequest | null;
   groupConversations: GroupConversation[];
   isChangingPresenceStatus: boolean;
   isLoadingContacts: boolean;
@@ -31,6 +42,7 @@ export function Sidebar({
   activeGroupConversationId,
   contacts,
   currentUserStatus,
+  groupBuilderRequest,
   groupConversations,
   isChangingPresenceStatus,
   isLoadingContacts,
@@ -42,14 +54,35 @@ export function Sidebar({
   presenceNotice,
 }: SidebarProps) {
   const [activeTab, setActiveTab] = useState<SidebarTab>("contacts");
-  const [isUserSearchOpen, setIsUserSearchOpen] = useState(false);
+  const [activeComposer, setActiveComposer] = useState<ActiveComposer>(null);
 
-  const openUserSearch = () => {
-    setIsUserSearchOpen(true);
+  useEffect(() => {
+    if (!groupBuilderRequest) {
+      return;
+    }
+
+    setActiveTab("groups");
+    setActiveComposer({
+      type: "group",
+      groupName: groupBuilderRequest.groupName,
+      initialUserIds: groupBuilderRequest.initialUserIds,
+    });
+  }, [groupBuilderRequest]);
+
+  const openContactsComposer = () => {
+    setActiveComposer({ type: "contacts" });
+  };
+
+  const openGroupBuilder = () => {
+    setActiveComposer({ type: "group" });
+  };
+
+  const closeComposer = () => {
+    setActiveComposer(null);
   };
 
   return (
-    <aside className={`contacts-panel ${isUserSearchOpen ? "contacts-panel--composer-open" : ""}`}>
+    <aside className={`contacts-panel ${activeComposer ? "contacts-panel--composer-open" : ""}`}>
       <div className="contacts-panel__main">
         <SidebarHeader
           activeTab={activeTab}
@@ -70,7 +103,7 @@ export function Sidebar({
               activeContactId={activeContactId}
               contacts={contacts}
               isLoadingContacts={isLoadingContacts}
-              onAddContactClick={openUserSearch}
+              onAddContactClick={openContactsComposer}
               onContactClick={onContactClick}
             />
           )
@@ -79,15 +112,23 @@ export function Sidebar({
               activeGroupConversationId={activeGroupConversationId}
               groupConversations={groupConversations}
               isLoading={isLoadingGroupConversations}
+              onAddGroupClick={openGroupBuilder}
               onGroupConversationClick={onGroupConversationClick}
             />
           )}
       </div>
 
-      <UserSearch
-        isOpen={isUserSearchOpen}
-        onClose={() => setIsUserSearchOpen(false)}
+      <ContactsBuilder
+        isOpen={activeComposer?.type === "contacts"}
+        onClose={closeComposer}
         onProcessUser={onProcessUser}
+      />
+
+      <GroupBuilder
+        groupName={activeComposer?.type === "group" ? activeComposer.groupName : undefined}
+        initialUserIds={activeComposer?.type === "group" ? activeComposer.initialUserIds : undefined}
+        isOpen={activeComposer?.type === "group"}
+        onClose={closeComposer}
       />
     </aside>
   );

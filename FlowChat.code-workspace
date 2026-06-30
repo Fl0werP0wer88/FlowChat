@@ -21,6 +21,10 @@
                         "path":  "GatewayService"
                     },
                     {
+                        "name":  "HarnessService",
+                        "path":  "HarnessService"
+                    },
+                    {
                         "name":  "NotificationService",
                         "path":  "NotificationService"
                     },
@@ -60,6 +64,7 @@
                                                                                               "FlowChat.NotificationService.Application",
                                                                                               "FlowChat.PresenceService.Application",
                                                                                               "FlowChat.RealtimeService.Application",
+                                                                                              "FlowChat.HarnessService.Application",
                                                                                               "FlowChat.Shared.Application",
                                                                                               "FlowChat.SocialGraphService.Application",
                                                                                               "FlowChat.UserProfileService.Application"
@@ -74,6 +79,7 @@
                                                                                               "FlowChat.AuthService.API",
                                                                                               "FlowChat.ChatService.API",
                                                                                               "FlowChat.GatewayService.API",
+                                                                                              "FlowChat.HarnessService.API",
                                                                                               "FlowChat.NotificationService.API",
                                                                                               "FlowChat.PresenceService.API",
                                                                                               "FlowChat.RealtimeService.API",
@@ -106,6 +112,7 @@
                                                                           "folderNames":  [
                                                                                               "FlowChat.AuthService.Persistence",
                                                                                               "FlowChat.ChatService.Persistence",
+                                                                                              "FlowChat.HarnessService.Persistence",
                                                                                               "FlowChat.NotificationService.Persistence",
                                                                                               "FlowChat.PresenceService.Persistence",
                                                                                               "FlowChat.RealtimeService.Persistence",
@@ -441,6 +448,21 @@
                                          "stopAll":  true
                                      },
                                      {
+                                         "name":  "HarnessService",
+                                         "preLaunchTask":  "build-flowchat",
+                                         "configurations":  [
+                                                                {
+                                                                    "folder":  "HarnessService",
+                                                                    "name":  "HarnessService API (No Build)"
+                                                                },
+                                                                {
+                                                                    "folder":  "HarnessService",
+                                                                    "name":  "HarnessService Consumers (No Build)"
+                                                                }
+                                                            ],
+                                         "stopAll":  true
+                                     },
+                                     {
                                          "name":  "ReactClient",
                                          "configurations":  [
                                                                 {
@@ -481,6 +503,10 @@
                                                                 {
                                                                     "folder":  "GatewayService",
                                                                     "name":  "GatewayService API (No Build)"
+                                                                },
+                                                                {
+                                                                    "folder":  "HarnessService",
+                                                                    "name":  "HarnessService API (No Build)"
                                                                 },
                                                                 {
                                                                     "folder":  "RealtimeService",
@@ -540,6 +566,10 @@
                                                                 {
                                                                     "folder":  "PresenceService",
                                                                     "name":  "PresenceService OutboxPublisher (No Build)"
+                                                                },
+                                                                {
+                                                                    "folder":  "HarnessService",
+                                                                    "name":  "HarnessService Consumers (No Build)"
                                                                 }
                                                             ],
                                          "stopAll":  true
@@ -631,6 +661,14 @@
                                                                 {
                                                                     "folder":  "GatewayService",
                                                                     "name":  "GatewayService API (No Build)"
+                                                                },
+                                                                {
+                                                                    "folder":  "HarnessService",
+                                                                    "name":  "HarnessService API (No Build)"
+                                                                },
+                                                                {
+                                                                    "folder":  "HarnessService",
+                                                                    "name":  "HarnessService Consumers (No Build)"
                                                                 }
                                                             ],
                                          "stopAll":  true

@@ -22,13 +22,10 @@ namespace FlowChat.UserProfileService.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("FlowChat.UserProfileService.Domain.Entities.EmailVerificationRequest.EmailVerificationRequest", b =>
+            modelBuilder.Entity("FlowChat.UserProfileService.Domain.Entities.EmailVerificationProcess.EmailVerificationProcess", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
-
-                    b.Property<DateTimeOffset?>("ConsumedAtUtc")
-                        .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTimeOffset>("CreatedAtUtc")
                         .HasColumnType("timestamp with time zone");
@@ -37,14 +34,11 @@ namespace FlowChat.UserProfileService.Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<Guid>("EmailId")
                         .HasColumnType("uuid");
-
-                    b.Property<DateTimeOffset>("ExpiresAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTimeOffset?>("InvalidatedAtUtc")
-                        .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTimeOffset>("LastModifiedAtUtc")
                         .HasColumnType("timestamp with time zone");
@@ -52,11 +46,6 @@ namespace FlowChat.UserProfileService.Persistence.Migrations
                     b.Property<string>("LastModifiedBy")
                         .IsRequired()
                         .HasColumnType("text");
-
-                    b.Property<string>("Nonce")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)");
 
                     b.Property<Guid>("UserProfileId")
                         .HasColumnType("uuid");
@@ -68,13 +57,44 @@ namespace FlowChat.UserProfileService.Persistence.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("EmailId")
-                        .HasDatabaseName("ix_email_verification_request_email_id");
+                        .IsUnique()
+                        .HasDatabaseName("uq_email_verification_process_email_id");
+
+                    b.HasIndex("UserProfileId");
+
+                    b.ToTable("EmailVerificationProcesses", (string)null);
+                });
+
+            modelBuilder.Entity("FlowChat.UserProfileService.Domain.Entities.EmailVerificationRequest.EmailVerificationRequest", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("ConsumedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("EmailVerificationProcessId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("ExpiresAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset?>("InvalidatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Nonce")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EmailVerificationProcessId")
+                        .HasDatabaseName("ix_email_verification_request_process_id");
 
                     b.HasIndex("Nonce")
                         .IsUnique()
                         .HasDatabaseName("uq_email_verification_request_nonce");
-
-                    b.HasIndex("UserProfileId");
 
                     b.ToTable("EmailVerificationRequests", (string)null);
                 });
@@ -89,12 +109,8 @@ namespace FlowChat.UserProfileService.Persistence.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
 
-                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                    b.Property<DateTimeOffset?>("DeletedAt")
                         .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("CreatedBy")
-                        .IsRequired()
-                        .HasColumnType("text");
 
                     b.Property<bool>("IsAuth")
                         .ValueGeneratedOnAdd()
@@ -116,19 +132,8 @@ namespace FlowChat.UserProfileService.Persistence.Migrations
                         .HasColumnType("boolean")
                         .HasDefaultValue(true);
 
-                    b.Property<DateTimeOffset>("LastModifiedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("LastModifiedBy")
-                        .IsRequired()
-                        .HasColumnType("text");
-
                     b.Property<Guid>("UserProfileId")
                         .HasColumnType("uuid");
-
-                    b.Property<int>("Version")
-                        .IsConcurrencyToken()
-                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -149,12 +154,8 @@ namespace FlowChat.UserProfileService.Persistence.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
 
-                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                    b.Property<DateTimeOffset?>("DeletedAt")
                         .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("CreatedBy")
-                        .IsRequired()
-                        .HasColumnType("text");
 
                     b.Property<bool>("IsConfirmed")
                         .ValueGeneratedOnAdd()
@@ -171,13 +172,6 @@ namespace FlowChat.UserProfileService.Persistence.Migrations
                         .HasColumnType("boolean")
                         .HasDefaultValue(true);
 
-                    b.Property<DateTimeOffset>("LastModifiedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("LastModifiedBy")
-                        .IsRequired()
-                        .HasColumnType("text");
-
                     b.Property<string>("Number")
                         .IsRequired()
                         .HasMaxLength(32)
@@ -185,10 +179,6 @@ namespace FlowChat.UserProfileService.Persistence.Migrations
 
                     b.Property<Guid>("UserProfileId")
                         .HasColumnType("uuid");
-
-                    b.Property<int>("Version")
-                        .IsConcurrencyToken()
-                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -219,6 +209,9 @@ namespace FlowChat.UserProfileService.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("FirstName")
                         .HasMaxLength(100)
@@ -265,6 +258,112 @@ namespace FlowChat.UserProfileService.Persistence.Migrations
                     b.ToTable("UserProfiles", (string)null);
                 });
 
+            modelBuilder.Entity("FlowChat.UserProfileService.Persistence.Entities.EmailReadEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Address")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsAuth")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsConfirmed")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsMain")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsVisible")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("UserProfileId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.ToTable((string)null);
+
+                    b.ToView("Emails", (string)null);
+                });
+
+            modelBuilder.Entity("FlowChat.UserProfileService.Persistence.Entities.PhoneReadEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsConfirmed")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsMain")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsVisible")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Number")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("UserProfileId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.ToTable((string)null);
+
+                    b.ToView("Phones", (string)null);
+                });
+
+            modelBuilder.Entity("FlowChat.UserProfileService.Persistence.Entities.UserProfileReadEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AvatarUrl")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Bio")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("FirstName")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("LastName")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("LastSeenAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Organization")
+                        .HasColumnType("text");
+
+                    b.Property<string>("UserName")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("UserName");
+
+                    b.HasKey("Id");
+
+                    b.ToTable((string)null);
+
+                    b.ToView("UserProfiles", (string)null);
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.DataProtection.EntityFrameworkCore.DataProtectionKey", b =>
                 {
                     b.Property<int>("Id")
@@ -282,6 +381,27 @@ namespace FlowChat.UserProfileService.Persistence.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("DataProtectionKeys", (string)null);
+                });
+
+            modelBuilder.Entity("Silverback.Messaging.Consuming.KafkaOffsetStore.SilverbackStoredOffset", b =>
+                {
+                    b.Property<string>("GroupId")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<string>("Topic")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<int>("Partition")
+                        .HasColumnType("integer");
+
+                    b.Property<long>("Offset")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("GroupId", "Topic", "Partition");
+
+                    b.ToTable("SilverbackStoredOffsets");
                 });
 
             modelBuilder.Entity("Silverback.Messaging.Producing.TransactionalOutbox.SilverbackOutboxMessage", b =>
@@ -317,7 +437,7 @@ namespace FlowChat.UserProfileService.Persistence.Migrations
                     b.ToTable("SilverbackOutboxMessages");
                 });
 
-            modelBuilder.Entity("FlowChat.UserProfileService.Domain.Entities.EmailVerificationRequest.EmailVerificationRequest", b =>
+            modelBuilder.Entity("FlowChat.UserProfileService.Domain.Entities.EmailVerificationProcess.EmailVerificationProcess", b =>
                 {
                     b.HasOne("FlowChat.UserProfileService.Domain.Entities.UserProfile.Email", null)
                         .WithMany()
@@ -328,6 +448,15 @@ namespace FlowChat.UserProfileService.Persistence.Migrations
                     b.HasOne("FlowChat.UserProfileService.Domain.Entities.UserProfile.UserProfile", null)
                         .WithMany()
                         .HasForeignKey("UserProfileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("FlowChat.UserProfileService.Domain.Entities.EmailVerificationRequest.EmailVerificationRequest", b =>
+                {
+                    b.HasOne("FlowChat.UserProfileService.Domain.Entities.EmailVerificationProcess.EmailVerificationProcess", null)
+                        .WithMany("Requests")
+                        .HasForeignKey("EmailVerificationProcessId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
@@ -348,6 +477,11 @@ namespace FlowChat.UserProfileService.Persistence.Migrations
                         .HasForeignKey("UserProfileId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("FlowChat.UserProfileService.Domain.Entities.EmailVerificationProcess.EmailVerificationProcess", b =>
+                {
+                    b.Navigation("Requests");
                 });
 
             modelBuilder.Entity("FlowChat.UserProfileService.Domain.Entities.UserProfile.UserProfile", b =>

@@ -1,8 +1,9 @@
 using Confluent.Kafka;
+using FlowChat.AuthService.Application;
 using FlowChat.AuthService.Consumers.Configuration.Settings;
 using FlowChat.AuthService.Consumers.Kafka;
-using FlowChat.AuthService.Consumers.Services;
-using FlowChat.Shared.Infrastructure.Http;
+using FlowChat.AuthService.Infrastructure;
+using FlowChat.AuthService.Persistence;
 using FlowChat.Shared.Infrastructure.Silverback.Behaviors;
 using FlowChat.Shared.Infrastructure.Silverback.Kafka;
 using Microsoft.Extensions.Configuration;
@@ -23,12 +24,16 @@ public static class ConsumersServiceRegistration
             .Get<UserEmailConfirmedConsumerSettingsSection>()
             ?? new UserEmailConfirmedConsumerSettingsSection();
 
-        services.AddFlowChatHttpClient<IAuthInternalApiClient, AuthInternalApiClient, AuthApiSettingsSection>();
+        services.AddConsumerApplicationServices();
+        services.AddConsumerInfrastructureServices(configuration);
+        services.AddConsumerPersistenceServices(configuration);
 
         services.AddSilverback()
             .AddSingletonBrokerBehavior<CustomSpanAttributesProducerBehavior>()
             .AddSingletonBrokerBehavior<CustomSpanAttributesConsumerBehavior>()
-            .WithConnectionToMessageBroker(options => options.AddKafka())
+            .WithConnectionToMessageBroker(options => options
+                .AddKafka()
+                .AddEntityFrameworkKafkaOffsetStore())
             .AddKafkaClients(clients =>
             {
                 clients
@@ -36,10 +41,12 @@ public static class ConsumersServiceRegistration
                     .AddConsumer(consumer => consumer
                         .WithGroupId(consumerOptions.GroupId)
                         .WithAutoOffsetReset(ParseAutoOffsetReset(consumerOptions.AutoOffsetReset))
+                        .StoreOffsetsClientSide(store => store.UseEntityFramework<AppDbContext>())
                         .Consume(endpoint => endpoint.ConfigureFlowChatMainEndpoint(consumerOptions)))
                     .AddConsumer(consumer => consumer
                         .WithGroupId(consumerOptions.RetryGroupId)
                         .WithAutoOffsetReset(ParseAutoOffsetReset(consumerOptions.AutoOffsetReset))
+                        .StoreOffsetsClientSide(store => store.UseEntityFramework<AppDbContext>())
                         .Consume(endpoint => endpoint.ConfigureFlowChatRetryEndpoint(consumerOptions)))
                     .AddProducer(producer => producer
                         .Produce(endpoint => endpoint

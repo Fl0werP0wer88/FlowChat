@@ -13,13 +13,12 @@ public sealed class InitializePresenceStatusCommandHandler(
     IPresenceStatusStore presenceStatusStore,
     IUserPresencePreferencesReadRepository userPresencePreferencesReadRepository,
     IMediator mediator,
-    IUnitOfWork unitOfWork,
-    IDomainEventDispatcher domainEventDispatcher)
-    : CommandHandlerBase<InitializePresenceStatusCommand, Unit>(domainEventDispatcher, unitOfWork)
+    IUnitOfWork unitOfWork)
+    : TransactionalCommandHandlerBase<InitializePresenceStatusCommand, Unit>(unitOfWork)
 {
     private PresenceStatusSnapshot? _previousStatus;
 
-    protected override async Task<FlowChatResult<Unit>> ExecuteAsync(
+    protected override async Task<FlowChatResult<Unit>> HandleInTransactionAsync(
         InitializePresenceStatusCommand request,
         CancellationToken cancellationToken)
     {
@@ -31,7 +30,7 @@ public sealed class InitializePresenceStatusCommandHandler(
 
         var changedAtUtc = DateTimeOffset.UtcNow;
 
-        // Restore any saved manual preference (Busy/Invisible); default to Active otherwise
+        // Restore the user's saved default startup status; fall back to Active when none was ever set
         var preference = await userPresencePreferencesReadRepository.FindPreferredStatusAsync(request.UserId, cancellationToken);
         var statusToSet = preference ?? PresenceStatus.Active;
 
@@ -50,8 +49,6 @@ public sealed class InitializePresenceStatusCommandHandler(
 
         return FlowChatResult<Unit>.Success(Unit.Value);
     }
-
-    protected override IAggregateRoot? GetAggregateRoot(FlowChatResult<Unit> result) => null;
 
     protected override async Task<FlowChatResult<Unit>> HandleUnexpectedExceptionAsync(
         InitializePresenceStatusCommand request,

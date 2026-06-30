@@ -100,18 +100,10 @@ public sealed class AddEmailControllerTests(UserProfileApiFactory factory)
     private async Task<Guid> CreateUserProfileAsync()
     {
         var userId = Guid.NewGuid();
-        var request = new
-        {
-            UserId = userId,
-            FriendlyUserId = $"emailuser-{userId:N}",
-            Email = $"initial_{userId:N}@example.com"
-        };
-        var httpRequest = new HttpRequestMessage(HttpMethod.Post, "/internal/userprofiles/initial")
-        {
-            Content = JsonContent.Create(request)
-        };
-        httpRequest.Headers.Add("X-Internal-Api-Key", UserProfileApiFactory.InternalApiKey);
-        await _client.SendAsync(httpRequest);
+        await factory.CreateInitialUserProfileAsync(
+            userId,
+            $"emailuser-{userId:N}",
+            $"initial_{userId:N}@example.com");
         return userId;
     }
 

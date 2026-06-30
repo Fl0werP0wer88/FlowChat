@@ -45,6 +45,7 @@ param(
   [string]$SocialGraphDb = "flowchat_socialgraph_db",
   [string]$PresenceDb = "flowchat_presence_db",
   [string]$NotificationDb = "flowchat_notification_db",
+  [string]$HarnessDb = "flowchat_harness_db",
 
   [int]$TimeoutSeconds = 180,
 
@@ -281,7 +282,8 @@ $targetDatabases = @(
   $UserProfileDb,
   $SocialGraphDb,
   $PresenceDb,
-  $NotificationDb
+  $NotificationDb,
+  $HarnessDb
 )
 
 if ($DropDb) {
@@ -313,6 +315,9 @@ Ensure-AppCrudAccess -containerId $containerId -dbName $PresenceDb -owner $Migra
 Ensure-Database -containerId $containerId -dbName $NotificationDb -owner $MigratorUser
 Ensure-AppCrudAccess -containerId $containerId -dbName $NotificationDb -owner $MigratorUser -appRole $AppUser
 
+Ensure-Database -containerId $containerId -dbName $HarnessDb -owner $MigratorUser
+Ensure-AppCrudAccess -containerId $containerId -dbName $HarnessDb -owner $MigratorUser -appRole $AppUser
+
 Write-Step "Done. PostgreSQL is fully initialized ✅"
 Write-Host ""
 Write-Host "Admin user      : $AdminUser"
@@ -324,5 +329,6 @@ Write-Host "UserProfile DB  : $UserProfileDb"
 Write-Host "SocialGraph DB  : $SocialGraphDb"
 Write-Host "Presence DB     : $PresenceDb"
 Write-Host "Notification DB : $NotificationDb"
+Write-Host "Harness DB      : $HarnessDb"
 Write-Host "Host            : localhost"
 Write-Host "Port            : 5432"

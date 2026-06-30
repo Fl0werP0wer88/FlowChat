@@ -1,11 +1,8 @@
 using AutoFixture;
-using FlowChat.NotificationService.Domain.Entities.Notification;
 using FlowChat.NotificationService.Domain.Enums;
 using FlowChat.NotificationService.Persistence;
+using FlowChat.NotificationService.Persistence.Entities;
 using FlowChat.NotificationService.Persistence.Repositories;
-using FlowChat.Shared.Domain;
-using FlowChat.Shared.Domain.ValueObjects;
-using FlowChat.Shared.Persistance.Auditing;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 
@@ -21,7 +18,6 @@ public sealed class NotificationReadRepositoryTests : IDisposable
     {
         var options = new DbContextOptionsBuilder<AppDbContext>()
             .UseInMemoryDatabase(_fixture.Create<Guid>().ToString("N"))
-            .AddInterceptors(new EntityBaseSaveChangesInterceptor())
             .Options;
 
         _dbContext = new AppDbContext(options);
@@ -30,20 +26,27 @@ public sealed class NotificationReadRepositoryTests : IDisposable
 
     public void Dispose() => _dbContext.Dispose();
 
-    private async Task<Notification> SeedNotificationAsync(
+    private async Task<NotificationReadEntity> SeedNotificationAsync(
         Guid? userId = null,
         NotificationType type = NotificationType.EmailVerification,
-        string? sourceMessageKey = null)
+        string? sourceMessageKey = null,
+        DateTimeOffset? deletedAt = null)
     {
-        var notification = Notification.CreateEmailVerification(
-            Id<Notification>.New(),
-            userId ?? _fixture.Create<Guid>(),
-            EmailAddress.Create($"{_fixture.Create<string>()}@example.com"),
-            _fixture.Create<string>(),
-            _fixture.Create<string>(),
-            sourceMessageKey);
+        var notification = new NotificationReadEntity
+        {
+            Id = _fixture.Create<Guid>(),
+            UserId = userId ?? _fixture.Create<Guid>(),
+            Email = $"{_fixture.Create<string>()}@example.com",
+            DisplayName = _fixture.Create<string>(),
+            Body = _fixture.Create<string>(),
+            Type = type,
+            Status = NotificationStatus.Pending,
+            SourceMessageKey = sourceMessageKey,
+            CreatedAtUtc = DateTimeOffset.UtcNow,
+            DeletedAt = deletedAt
+        };
 
-        _dbContext.Notifications.Add(notification);
+        _dbContext.NotificationReads.Add(notification);
         await _dbContext.SaveChangesAsync();
         return notification;
     }
@@ -158,6 +161,17 @@ public sealed class NotificationReadRepositoryTests : IDisposable
     }
 
     [Fact]
+    public async Task GetRecentAsync_WhenNotificationIsDeleted_DoesNotReturnDeletedNotification()
+    {
+        await SeedNotificationAsync();
+        await SeedNotificationAsync(deletedAt: new DateTimeOffset(2026, 4, 24, 12, 0, 0, TimeSpan.Zero));
+
+        var result = await _repository.GetRecentAsync();
+
+        result.Should().ContainSingle();
+    }
+
+    [Fact]
     public async Task GetRecentAsync_WhenNoNotifications_ReturnsEmptyList()
     {
         var result = await _repository.GetRecentAsync();
@@ -169,16 +183,22 @@ public sealed class NotificationReadRepositoryTests : IDisposable
     public async Task GetRecentAsync_MapsAllExpectedFields()
     {
         var userId = _fixture.Create<Guid>();
-        var notification = Notification.CreateEmailVerification(
-            Id<Notification>.New(),
-            userId,
-            EmailAddress.Create("test@example.com"),
-            "Test User",
-            "Confirm your email by clicking the provided link",
-            "map-test-key");
-        notification.MarkSent("provider-msg-123");
+        var notification = new NotificationReadEntity
+        {
+            Id = _fixture.Create<Guid>(),
+            UserId = userId,
+            Email = "test@example.com",
+            DisplayName = "Test User",
+            Body = "Confirm your email by clicking the provided link",
+            Type = NotificationType.EmailVerification,
+            Status = NotificationStatus.Sent,
+            ProviderMessageId = "provider-msg-123",
+            SourceMessageKey = "map-test-key",
+            SentAtUtc = DateTimeOffset.UtcNow,
+            CreatedAtUtc = DateTimeOffset.UtcNow
+        };
 
-        _dbContext.Notifications.Add(notification);
+        _dbContext.NotificationReads.Add(notification);
         await _dbContext.SaveChangesAsync();
 
         var result = await _repository.GetRecentAsync();

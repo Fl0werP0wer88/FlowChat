@@ -20,7 +20,6 @@ public sealed class CreateGroupConversationController : ApiControllerBase
 
     [HttpPost]
     [ProducesResponseType(typeof(CreateGroupConversationResponse), StatusCodes.Status201Created)]
-    [ProducesResponseType(typeof(CreateGroupConversationResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
@@ -46,15 +45,13 @@ public sealed class CreateGroupConversationController : ApiControllerBase
             return HandleError(result.Error);
         }
 
-        var conversation = result.Value.Value;
+        var conversation = result.Value;
         var response = new CreateGroupConversationResponse(
             conversation.ConversationId,
             conversation.Name,
             [.. conversation.Participants.Select(p => new ParticipantResponse(
                 p.UserId, p.DisplayName, p.AvatarUrl, p.ParticipantUserId))]);
 
-        return result.Value.WasAlreadyProcessed
-            ? Ok(response)
-            : StatusCode(StatusCodes.Status201Created, response);
+        return StatusCode(StatusCodes.Status201Created, response);
     }
 }

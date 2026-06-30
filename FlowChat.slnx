@@ -73,6 +73,7 @@
     <Project Path="Common/src/FlowChat.Shared.Domain/FlowChat.Shared.Domain.csproj" />
     <Project Path="Common/src/FlowChat.Shared.Persistance/FlowChat.Shared.Persistance.csproj" />
     <Project Path="Common/src/FlowChat.Shared.Infrastructure/FlowChat.Shared.Infrastructure.csproj" />
+    <Project Path="Common/src/FlowChat.Shared.Consumers/FlowChat.Shared.Consumers.csproj" />
   </Folder>
   <Folder Name="/Common/tests/">
     <Project Path="Common/tests/FlowChat.Core.UnitTests/FlowChat.Core.UnitTests.csproj" />
@@ -80,6 +81,7 @@
     <Project Path="Common/tests/FlowChat.Shared.API.UnitTests/FlowChat.Shared.API.UnitTests.csproj" />
     <Project Path="Common/tests/FlowChat.Shared.Application.UnitTests/FlowChat.Shared.Application.UnitTests.csproj" />
     <Project Path="Common/tests/FlowChat.Shared.Domain.UnitTests/FlowChat.Shared.Domain.UnitTests.csproj" />
+    <Project Path="Common/tests/FlowChat.Shared.Consumers.UnitTests/FlowChat.Shared.Consumers.UnitTests.csproj" />
     <Project Path="Common/tests/FlowChat.Shared.Infrastructure.IntegrationTests/FlowChat.Shared.Infrastructure.IntegrationTests.csproj" />
     <Project Path="Common/tests/FlowChat.Shared.Infrastructure.UnitTests/FlowChat.Shared.Infrastructure.UnitTests.csproj" />
     <Project Path="Common/tests/FlowChat.Shared.Persistance.IntegrationTests/FlowChat.Shared.Persistance.IntegrationTests.csproj" />
@@ -137,6 +139,19 @@
   <Folder Name="/GatewayService/" />
   <Folder Name="/GatewayService/src/">
     <Project Path="GatewayService/src/FlowChat.GatewayService.API/FlowChat.GatewayService.API.csproj" />
+  </Folder>
+  <Folder Name="/HarnessService/" />
+  <Folder Name="/HarnessService/src/">
+    <Project Path="HarnessService/src/FlowChat.HarnessService.API/FlowChat.HarnessService.API.csproj" />
+    <Project Path="HarnessService/src/FlowChat.HarnessService.Application/FlowChat.HarnessService.Application.csproj" />
+    <Project Path="HarnessService/src/FlowChat.HarnessService.Infrastructure/FlowChat.HarnessService.Infrastructure.csproj" />
+    <Project Path="HarnessService/src/FlowChat.HarnessService.Persistence/FlowChat.HarnessService.Persistence.csproj" />
+  </Folder>
+  <Folder Name="/HarnessService/src/Workers/">
+    <Project Path="HarnessService/src/Workers/FlowChat.HarnessService.Consumers/FlowChat.HarnessService.Consumers.csproj" />
+  </Folder>
+  <Folder Name="/HarnessService/tests/">
+    <Project Path="HarnessService/tests/FlowChat.HarnessService.AATs/FlowChat.HarnessService.AATs.csproj" />
   </Folder>
   <Folder Name="/ReactClient/" />
 </Solution>

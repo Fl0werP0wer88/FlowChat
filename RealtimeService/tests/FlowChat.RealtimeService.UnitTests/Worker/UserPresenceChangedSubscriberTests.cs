@@ -2,67 +2,146 @@ using AutoFixture;
 using FlowChat.Core.Domain;
 using FlowChat.Core.Exceptions;
 using FlowChat.Core.Messaging.PresenceService.Events;
+using FlowChat.Core.Results;
+using FlowChat.RealtimeService.Application.Features.Presence.Commands.RoutePresenceChange;
 using FlowChat.RealtimeService.Consumers.Kafka;
-using FlowChat.RealtimeService.Consumers.Realtime.Contracts;
-using FlowChat.RealtimeService.Consumers.Services;
+using FlowChat.Shared.Domain;
 using FluentAssertions;
+using MediatR;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
+using Unit = MediatR.Unit;
 
 namespace FlowChat.RealtimeService.UnitTests;
 
 public sealed class UserPresenceChangedSubscriberTests
 {
     private readonly IFixture _fixture = new Fixture();
-    private readonly Mock<IRealtimeInternalApiClient> _internalApiClientMock = new();
+    private readonly Mock<IMediator> _mediatorMock = new();
     private readonly UserPresenceChangedSubscriber _subscriber;
 
     public UserPresenceChangedSubscriberTests()
     {
+        _mediatorMock
+            .Setup(x => x.Send(It.IsAny<RoutePresenceChangeCommand>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(FlowChatResult<Unit>.Success(Unit.Value));
+
         _subscriber = new UserPresenceChangedSubscriber(
-            _internalApiClientMock.Object,
+            _mediatorMock.Object,
             NullLogger<UserPresenceChangedSubscriber>.Instance);
     }
 
     [Fact]
-    public async Task HandleAsync_ForwardsNormalizedPresenceRequestToInternalApiClient()
+    public async Task HandleAsync_ForwardsMappedCommandToMediator()
     {
-        PublishPresenceChangeRequest? capturedRequest = null;
+        RoutePresenceChangeCommand? capturedCommand = null;
+        var userId = _fixture.Create<Guid>();
+        var recipientUserId = _fixture.Create<Guid>();
+        var changedAtUtc = new DateTimeOffset(2026, 3, 17, 10, 15, 0, TimeSpan.Zero);
 
-        _internalApiClientMock
-            .Setup(x => x.PublishPresenceChangeAsync(It.IsAny<PublishPresenceChangeRequest>(), It.IsAny<CancellationToken>()))
-            .Callback<PublishPresenceChangeRequest, CancellationToken>((request, _) => capturedRequest = request)
-            .Returns(Task.CompletedTask);
+        _mediatorMock
+            .Setup(x => x.Send(It.IsAny<RoutePresenceChangeCommand>(), It.IsAny<CancellationToken>()))
+            .Callback<IRequest<FlowChatResult<Unit>>, CancellationToken>((request, _) =>
+                capturedCommand = (RoutePresenceChangeCommand)request)
+            .ReturnsAsync(FlowChatResult<Unit>.Success(Unit.Value));
 
         await _subscriber.HandleAsync(
             new PresenceStatusChangedIntegrationEvent
             {
-                UserId = _fixture.Create<Guid>(),
+                UserId = userId,
                 Status = PresenceStatus.AFK,
-                ChangedAtUtc = new DateTimeOffset(2026, 3, 17, 10, 15, 0, TimeSpan.Zero),
-                RecipientUserIds = [_fixture.Create<Guid>()]
+                ChangedAtUtc = changedAtUtc,
+                RecipientUserIds = [recipientUserId, recipientUserId, Guid.Empty]
             }.ToInboundEnvelope(),
             CancellationToken.None);
 
-        capturedRequest.Should().NotBeNull();
-        capturedRequest!.Status.Should().Be(PresenceStatus.AFK);
+        capturedCommand.Should().NotBeNull();
+        capturedCommand!.UserId.Should().Be(userId);
+        capturedCommand.Status.Should().Be(PresenceStatus.AFK);
+        capturedCommand.ChangedAtUtc.Should().Be(changedAtUtc);
+        capturedCommand.RecipientUserIds.Should().ContainSingle().Which.Should().Be(recipientUserId);
+    }
+
+    [Fact]
+    public async Task HandleAsync_WhenUserIdMissing_ThrowsNonTransientException()
+    {
+        SetupCommandFailure("UserId is required.");
+
+        var act = () => _subscriber.HandleAsync(
+            CreateValidEvent(userId: Guid.Empty).ToInboundEnvelope(),
+            CancellationToken.None);
+
+        await act.Should().ThrowAsync<NonTransientException>()
+            .WithMessage("*UserId*");
+        VerifyCommandWasSent();
     }
 
     [Fact]
     public async Task HandleAsync_WhenStatusUnsupported_ThrowsNonTransientException()
     {
+        SetupCommandFailure("Status must be one of: Active, AFK, Busy, Invisible.");
+
         var act = () => _subscriber.HandleAsync(
-            new PresenceStatusChangedIntegrationEvent
-            {
-                UserId = _fixture.Create<Guid>(),
-                Status = (PresenceStatus)999,
-                RecipientUserIds = [_fixture.Create<Guid>()]
-            }.ToInboundEnvelope(),
+            CreateValidEvent(status: (PresenceStatus)999).ToInboundEnvelope(),
             CancellationToken.None);
 
-        await act.Should().ThrowAsync<NonTransientException>();
-        _internalApiClientMock.Verify(
-            x => x.PublishPresenceChangeAsync(It.IsAny<PublishPresenceChangeRequest>(), It.IsAny<CancellationToken>()),
-            Times.Never);
+        await act.Should().ThrowAsync<NonTransientException>()
+            .WithMessage("*Status*");
+        VerifyCommandWasSent();
+    }
+
+    [Fact]
+    public async Task HandleAsync_WhenRecipientUserIdsMissing_ThrowsNonTransientException()
+    {
+        SetupCommandFailure("RecipientUserIds must contain at least one valid user id.");
+
+        var act = () => _subscriber.HandleAsync(
+            CreateValidEvent(recipientUserIds: [Guid.Empty]).ToInboundEnvelope(),
+            CancellationToken.None);
+
+        await act.Should().ThrowAsync<NonTransientException>()
+            .WithMessage("*RecipientUserIds*");
+        VerifyCommandWasSent();
+    }
+
+    [Fact]
+    public async Task HandleAsync_WhenCommandReturnsFailure_ThrowsNonTransientException()
+    {
+        _mediatorMock
+            .Setup(x => x.Send(It.IsAny<RoutePresenceChangeCommand>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(FlowChatResult<Unit>.Failure(DomainError.BadRequest("boom")));
+
+        var act = () => _subscriber.HandleAsync(
+            CreateValidEvent().ToInboundEnvelope(),
+            CancellationToken.None);
+
+        await act.Should().ThrowAsync<NonTransientException>()
+            .WithMessage("boom");
+    }
+
+    private PresenceStatusChangedIntegrationEvent CreateValidEvent(
+        Guid? userId = null,
+        PresenceStatus status = PresenceStatus.Active,
+        IReadOnlyCollection<Guid>? recipientUserIds = null) =>
+        new()
+        {
+            UserId = userId ?? _fixture.Create<Guid>(),
+            Status = status,
+            ChangedAtUtc = DateTimeOffset.UtcNow,
+            RecipientUserIds = (recipientUserIds ?? [_fixture.Create<Guid>()]).ToList()
+        };
+
+    private void SetupCommandFailure(string errorMessage)
+    {
+        _mediatorMock
+            .Setup(x => x.Send(It.IsAny<RoutePresenceChangeCommand>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(FlowChatResult<Unit>.Failure(DomainError.BadRequest(errorMessage)));
+    }
+
+    private void VerifyCommandWasSent()
+    {
+        _mediatorMock.Verify(
+            x => x.Send(It.IsAny<RoutePresenceChangeCommand>(), It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 }

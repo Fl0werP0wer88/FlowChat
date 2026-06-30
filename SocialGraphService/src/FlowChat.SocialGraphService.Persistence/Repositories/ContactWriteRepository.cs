@@ -1,14 +1,19 @@
 using FlowChat.Shared.Persistance;
+using FlowChat.Shared.Domain;
 using FlowChat.SocialGraphService.Application.Contracts.Persistence;
 using FlowChat.SocialGraphService.Domain.Entities.Contact;
 using Microsoft.EntityFrameworkCore;
+using UserProfileMarker = FlowChat.SocialGraphService.Domain.Entities.UserProfiles.UserProfile;
 
 namespace FlowChat.SocialGraphService.Persistence.Repositories;
 
 public sealed class ContactWriteRepository(AppDbContext dbContext)
     : WriteRepositoryBase<Contact>(dbContext), IContactWriteRepository
 {
-    public Task<bool> ExistsAsync(Guid ownerUserId, Guid contactUserId, CancellationToken cancellationToken = default)
+    public Task<bool> ExistsAsync(
+        Id<UserProfileMarker> ownerUserId,
+        Id<UserProfileMarker> contactUserId,
+        CancellationToken cancellationToken = default)
     {
         return DbContext.Set<Contact>()
             .AnyAsync(
@@ -17,8 +22,8 @@ public sealed class ContactWriteRepository(AppDbContext dbContext)
     }
 
     public Task<Contact?> GetByOwnerAndContactAsync(
-        Guid ownerUserId,
-        Guid contactUserId,
+        Id<UserProfileMarker> ownerUserId,
+        Id<UserProfileMarker> contactUserId,
         CancellationToken cancellationToken = default)
     {
         return DbContext.Set<Contact>()

@@ -1,5 +1,7 @@
 using FlowChat.AuthService.Application.Contracts.Persistence;
 using FlowChat.Shared.Application;
+using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2;
+using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2.BeforeSaveProcessors;
 using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
 using FlowChat.AuthService.Domain.Entities.Account;
@@ -8,30 +10,25 @@ using DomainAccount = FlowChat.AuthService.Domain.Entities.Account.Account;
 
 namespace FlowChat.AuthService.Application.Features.User.Commands.ConfirmAuthEmail;
 
-public sealed class ConfirmAuthEmailCommandHandler : CommandHandlerBase<ConfirmAuthEmailCommand, Unit>
+public sealed class ConfirmAuthEmailCommandHandler
+    : AggregateRootUpdateCommandHandlerBaseV2<ConfirmAuthEmailCommand, Unit, DomainAccount>
 {
     private readonly IAccountRepository _accountRepository;
     private DomainAccount? _account;
 
     public ConfirmAuthEmailCommandHandler(
         IAccountRepository accountRepository,
-        IDomainEventDispatcher domainEventDispatcher,
-        IUnitOfWork unitOfWork) : base(domainEventDispatcher, unitOfWork)
+        ILocalEventDispatcher domainEventDispatcher,
+        IUnitOfWork unitOfWork,
+        IEnumerable<IAggregateBeforeSaveProcessor<ConfirmAuthEmailCommand, DomainAccount>> beforeSaveProcessors)
+        : base(domainEventDispatcher, unitOfWork, beforeSaveProcessors)
     {
         _accountRepository = accountRepository;
     }
 
     protected override async Task<FlowChatResult<Unit>> ExecuteAsync(ConfirmAuthEmailCommand request, CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(request.EmailAddress))
-        {
-            return FlowChatResult<Unit>.Failure(DomainError.BadRequest("Email address is required."));
-        }
-
-        if (!EmailAddress.TryCreate(request.EmailAddress, out var emailAddress))
-        {
-            return FlowChatResult<Unit>.Failure(DomainError.BadRequest(EmailAddress.InvalidEmailAddressMessage));
-        }
+        var emailAddress = EmailAddress.Create(request.EmailAddress);
 
         _account = await _accountRepository.GetByEmailAsync(emailAddress, cancellationToken);
         if (_account is null)
@@ -50,8 +47,6 @@ public sealed class ConfirmAuthEmailCommandHandler : CommandHandlerBase<ConfirmA
         return FlowChatResult<Unit>.Success(Unit.Value);
     }
 
-    protected override IAggregateRoot? GetAggregateRoot(FlowChatResult<Unit> result)
-    {
-        return _account;
-    }
+    protected override DomainAccount GetAggregateRoot() =>
+        _account ?? throw new InvalidOperationException("Aggregate root instance is not available.");
 }

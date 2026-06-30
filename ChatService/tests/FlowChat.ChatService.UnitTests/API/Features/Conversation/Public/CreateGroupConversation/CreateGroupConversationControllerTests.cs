@@ -59,8 +59,7 @@ public sealed class CreateGroupConversationControllerTests
         _mediatorMock
             .Setup(x => x.Send(It.IsAny<CreateGroupConversationCommand>(), It.IsAny<CancellationToken>()))
             .Callback<object, CancellationToken>((cmd, _) => capturedCommand = (CreateGroupConversationCommand)cmd)
-            .ReturnsAsync(FlowChatResult<IdempotentCommandResult<GroupConversationDetailDto>>.Success(
-                new IdempotentCommandResult<GroupConversationDetailDto>(dto, WasAlreadyProcessed: false)));
+            .ReturnsAsync(FlowChatResult<GroupConversationDetailDto>.Success(dto));
 
         var controller = CreateController(creatorId);
 
@@ -79,47 +78,11 @@ public sealed class CreateGroupConversationControllerTests
     }
 
     [Fact]
-    public async Task CreateGroupConversation_WhenConversationAlreadyExists_Returns200OkWithDetailDto()
-    {
-        var conversationId = Guid.NewGuid();
-        var creatorId = Guid.NewGuid();
-        var memberId = Guid.NewGuid();
-        var request = new CreateGroupConversationRequest
-        {
-            ConversationId = conversationId,
-            ParticipantUserIds = [creatorId, memberId],
-            Name = "Dev Team"
-        };
-        var dto = new GroupConversationDetailDto(
-            conversationId,
-            "Dev Team",
-            [
-                new ConversationParticipantDto(creatorId, "Creator", "creator.png", creatorId),
-                new ConversationParticipantDto(memberId, "Member", "member.png", memberId)
-            ]);
-
-        _mediatorMock
-            .Setup(x => x.Send(It.IsAny<CreateGroupConversationCommand>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(FlowChatResult<IdempotentCommandResult<GroupConversationDetailDto>>.Success(
-                new IdempotentCommandResult<GroupConversationDetailDto>(dto, WasAlreadyProcessed: true)));
-
-        var controller = CreateController(creatorId);
-
-        var actionResult = await controller.CreateGroupConversation(request, CancellationToken.None);
-
-        var okResult = actionResult.Should().BeOfType<OkObjectResult>().Subject;
-        var response = okResult.Value.Should().BeOfType<CreateGroupConversationResponse>().Subject;
-        response.ConversationId.Should().Be(conversationId);
-        response.Name.Should().Be("Dev Team");
-        response.Participants.Should().HaveCount(2);
-    }
-
-    [Fact]
     public async Task CreateGroupConversation_CommandFailure_ReturnsProblemDetails()
     {
         _mediatorMock
             .Setup(x => x.Send(It.IsAny<CreateGroupConversationCommand>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(FlowChatResult<IdempotentCommandResult<GroupConversationDetailDto>>.Failure(
+            .ReturnsAsync(FlowChatResult<GroupConversationDetailDto>.Failure(
                 DomainError.BadRequest("Name is required.")));
 
         var controller = CreateController(Guid.NewGuid());

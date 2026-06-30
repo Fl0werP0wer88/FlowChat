@@ -20,7 +20,6 @@ public sealed class CreateDuetConversationController : ApiControllerBase
 
     [HttpPut]
     [ProducesResponseType(typeof(CreateDuetConversationResponse), StatusCodes.Status201Created)]
-    [ProducesResponseType(typeof(CreateDuetConversationResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
@@ -41,14 +40,12 @@ public sealed class CreateDuetConversationController : ApiControllerBase
         if (!result.IsSuccess)
             return HandleError(result.Error);
 
-        var conversation = result.Value.Value;
+        var conversation = result.Value;
         var response = new CreateDuetConversationResponse(
             conversation.ConversationId,
             [.. conversation.Participants.Select(p => new ParticipantResponse(
                 p.UserId, p.DisplayName, p.AvatarUrl, p.ParticipantUserId))]);
 
-        return !result.Value.WasAlreadyProcessed
-            ? StatusCode(StatusCodes.Status201Created, response)
-            : Ok(response);
+        return StatusCode(StatusCodes.Status201Created, response);
     }
 }

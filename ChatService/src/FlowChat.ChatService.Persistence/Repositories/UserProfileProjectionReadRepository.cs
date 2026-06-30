@@ -1,10 +1,11 @@
 using FlowChat.ChatService.Application.Contracts.Persistence;
 using FlowChat.ChatService.Application.Features.UserProfile;
+using FlowChat.Shared.Persistance;
 using Microsoft.EntityFrameworkCore;
 
 namespace FlowChat.ChatService.Persistence.Repositories;
 
-public sealed class UserProfileProjectionReadRepository : IUserProfileProjectionReadRepository
+public sealed class UserProfileProjectionReadRepository : ReadRepositoryBase, IUserProfileProjectionReadRepository
 {
     private readonly AppDbContext _dbContext;
 
@@ -19,13 +20,21 @@ public sealed class UserProfileProjectionReadRepository : IUserProfileProjection
     {
         var ids = userIds.ToList();
 
-        return await _dbContext.UserProfileProjections
-            .AsNoTracking()
+        return (await Active(_dbContext.UserProfileProjections)
             .Where(x => ids.Contains(x.UserId))
+            .Select(x => new { x.UserId, x.FirstName, x.LastName, x.AvatarUrl })
+            .ToListAsync(cancellationToken))
             .Select(x => new UserProfileConversationParticipantDto(
                 x.UserId,
-                x.DisplayName,
+                ComputeDisplayName(x.FirstName, x.LastName),
                 x.AvatarUrl))
-            .ToListAsync(cancellationToken);
+            .ToList();
+    }
+
+    private static string? ComputeDisplayName(string? firstName, string? lastName)
+    {
+        var parts = ((string?[]) [firstName, lastName]).Where(p => !string.IsNullOrEmpty(p));
+        var name = string.Join(" ", parts);
+        return string.IsNullOrEmpty(name) ? null : name;
     }
 }

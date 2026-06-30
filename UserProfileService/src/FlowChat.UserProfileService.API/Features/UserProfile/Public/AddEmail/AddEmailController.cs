@@ -19,7 +19,6 @@ public sealed class AddEmailController : ApiControllerBase
     }
 
     [HttpPut("emails")]
-    [ProducesResponseType(typeof(AddEmailResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(AddEmailResponse), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
@@ -42,9 +41,7 @@ public sealed class AddEmailController : ApiControllerBase
             return HandleError(result.Error);
         }
 
-        var response = new AddEmailResponse(result.Value.Value);
-        return result.Value.WasAlreadyProcessed
-            ? Ok(response)
-            : StatusCode(StatusCodes.Status201Created, response);
+        var response = new AddEmailResponse(result.Value);
+        return StatusCode(StatusCodes.Status201Created, response);
     }
 }
