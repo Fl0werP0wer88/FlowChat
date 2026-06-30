@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Button } from "../../components/UI/atoms/Button";
-import { AlertMessage } from "../../components/UI/molecules/AlertMessage";
-import { AuthTemplate } from "../../components/templates/AuthTemplate";
-import type { AuthNotice } from "../../types/auth";
-import { confirmEmailVerification } from "../../api/userProfileApi";
+import { Button } from "../../UI/atoms/Button";
+import { AlertMessage } from "../../UI/molecules/AlertMessage";
+import { AuthTemplate } from "../../templates/AuthTemplate";
+import type { AuthNotice } from "../../../types/auth";
+import { confirmEmailVerification } from "../../../api/userProfileApi";
 
 type VerificationStatus = "pending" | "success" | "error";
 

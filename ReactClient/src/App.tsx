@@ -1,7 +1,7 @@
 import { Navigate, Route, Routes, useLocation, useSearchParams } from "react-router-dom";
 import { AuthFeature } from "./components/pages/auth";
 import { ChatFeature } from "./components/pages/chat";
-import { EmailVerificationFeature } from "./features/emailVerification";
+import { EmailVerificationFeature } from "./components/pages/emailVerification";
 import { useSessionRefresher } from "./hooks";
 import { AppBackgroundLayout } from "./layouts/AppBackgroundLayout";
 import { useAuthStore } from "./store/authStore";
