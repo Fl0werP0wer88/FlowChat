@@ -1,5 +1,6 @@
 import { useEffect, useEffectEvent, useRef, useState } from "react";
 import { useAuthStore } from "../store/authStore";
+import { usePresenceStore } from "../store/presenceStore";
 import { changePresenceStatus } from "../api/presenceApi";
 import type { ManualUserStatus, UserStatus } from "../types/realtime";
 import { usePresencePreferencesQuery } from "./queries/usePresencePreferencesQuery";
@@ -9,10 +10,6 @@ const mouseActivityEvents: Array<keyof WindowEventMap> = ["mousemove", "mousedow
 
 interface UsePresenceStatusResult {
   changeManualPresenceStatus: (status: ManualUserStatus) => Promise<void>;
-  currentStatus: UserStatus;
-  errorMessage: string | null;
-  isUpdatingStatus: boolean;
-  preferredStatus: UserStatus | null;
 }
 
 function resolveErrorMessage(error: unknown): string {
@@ -21,10 +18,8 @@ function resolveErrorMessage(error: unknown): string {
 
 export function usePresenceStatus(): UsePresenceStatusResult {
   const accessToken = useAuthStore((s) => s.accessToken);
-  const [currentStatus, setCurrentStatus] = useState<UserStatus>("Active");
-  const [preferredStatus, setPreferredStatus] = useState<UserStatus | null>(null);
-  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const currentStatus = usePresenceStore((s) => s.currentStatus);
+  const { applyPresenceState, setIsUpdatingStatus, setErrorMessage } = usePresenceStore.getState();
   const [isAfkEnabled, setIsAfkEnabled] = useState(true);
   const afkTimeoutRef = useRef<number | null>(null);
   const currentStatusRef = useRef<UserStatus>("Active");
@@ -50,8 +45,7 @@ export function usePresenceStatus(): UsePresenceStatusResult {
     preferredStatusRef.current = nextPreferredStatus;
     isAfkEnabledRef.current = nextIsAfkEnabled;
 
-    setCurrentStatus(nextCurrentStatus);
-    setPreferredStatus(nextPreferredStatus);
+    applyPresenceState(nextCurrentStatus, nextPreferredStatus);
     setIsAfkEnabled(nextIsAfkEnabled);
   });
 
@@ -83,6 +77,7 @@ export function usePresenceStatus(): UsePresenceStatusResult {
       isStatusUpdateInFlightRef.current = false;
       setIsUpdatingStatus(false);
     }
+
   });
 
   const applyPresencePreferences = useEffectEvent((preferredStatus: UserStatus | null) => {
@@ -167,9 +162,5 @@ export function usePresenceStatus(): UsePresenceStatusResult {
 
   return {
     changeManualPresenceStatus,
-    currentStatus,
-    errorMessage,
-    isUpdatingStatus,
-    preferredStatus,
   };
 }

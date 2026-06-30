@@ -1,8 +1,8 @@
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChatHeader } from "../../UI/organisms/ChatHeader";
 import { ChatTemplate } from "../../templates";
 import { useAuthStore } from "../../../store/authStore";
+import { useChatSelectionStore } from "../../../store/chatSelectionStore";
 import {
   useChatMessages,
   useContacts,
@@ -12,19 +12,16 @@ import {
   useRealtimeConnection,
 } from "../../../hooks";
 import { DuetConversationPanel, GroupConversationPanel } from "../../UI/organisms/Conversations";
-import type { GroupConversation } from "../../../api/chatApi";
 import { Sidebar } from "./components/Sidebar";
-import type { GroupBuilderRequest } from "./components/Sidebar";
-
-type ActiveConversationMode = "duet" | "group";
 
 export function ChatFeature() {
   const userLogin = useAuthStore((s) => s.login) ?? "Uzytkownik";
   const signOut = useAuthStore((s) => s.signOut);
   const navigate = useNavigate();
-  const [activeConversationMode, setActiveConversationMode] = useState<ActiveConversationMode>("duet");
-  const [activeGroupConversation, setActiveGroupConversation] = useState<GroupConversation | null>(null);
-  const [groupBuilderRequest, setGroupBuilderRequest] = useState<GroupBuilderRequest | null>(null);
+
+  const activeConversationMode = useChatSelectionStore((s) => s.activeConversationMode);
+  const activeGroupConversation = useChatSelectionStore((s) => s.activeGroupConversation);
+  const { selectDuetContact, selectGroupConversation, openGroupBuilder } = useChatSelectionStore.getState();
 
   const handleLogout = () => {
     signOut();
@@ -38,7 +35,7 @@ export function ChatFeature() {
   const groupChat = useGroupChatMessages(activeGroup);
   const presence = usePresenceStatus();
   const groupConversations = useGroupConversations();
-  const realtime = useRealtimeConnection({
+  useRealtimeConnection({
     onGroupConversationChanged: groupConversations.applyGroupConversationChanged,
     onPresenceChanged: contacts.applyPresenceChanged,
     onReceiveMessage: (payload) => {
@@ -47,16 +44,9 @@ export function ChatFeature() {
     },
   });
 
-  const openGroupBuilderFromDuet = (request: Omit<GroupBuilderRequest, "requestId">) => {
-    setGroupBuilderRequest((current) => ({
-      ...request,
-      requestId: (current?.requestId ?? 0) + 1,
-    }));
-  };
-
   return (
     <ChatTemplate
-      header={<ChatHeader userLogin={userLogin} realtimeStatus={realtime.status} onLogout={handleLogout} />}
+      header={<ChatHeader userLogin={userLogin} onLogout={handleLogout} />}
       conversation={activeConversationMode === "group"
         ? (
           <GroupConversationPanel
@@ -95,35 +85,25 @@ export function ChatFeature() {
             onDraftKeyDown={chat.handleDraftKeyDown}
             onSendDraft={chat.sendDraft}
             onLoadOlderMessages={chat.loadOlderMessages}
-            onCreateGroupFromDuet={openGroupBuilderFromDuet}
+            onCreateGroupFromDuet={(request) => openGroupBuilder(request.groupName, request.initialUserIds)}
           />
         )}
       sidebar={
         <Sidebar
           contacts={contacts.contacts}
-          activeContactId={activeConversationMode === "duet" ? contacts.activeContact?.id ?? null : null}
-          currentUserStatus={presence.currentStatus}
-          groupBuilderRequest={groupBuilderRequest}
-          isChangingPresenceStatus={presence.isUpdatingStatus}
-          isLoadingContacts={contacts.isLoadingContacts}
-          onChangePresenceStatus={presence.changeManualPresenceStatus}
-          activeGroupConversationId={activeConversationMode === "group"
-            ? activeGroupConversation?.conversationId ?? null
-            : null}
           groupConversations={groupConversations.groupConversations}
+          isLoadingContacts={contacts.isLoadingContacts}
           isLoadingGroupConversations={groupConversations.isLoadingGroupConversations}
+          onChangePresenceStatus={presence.changeManualPresenceStatus}
           onContactClick={(contact) => {
-            setActiveConversationMode("duet");
-            contacts.selectContact(contact);
+            selectDuetContact(contact);
             chat.openContactConversation(contact, contacts.updateContactConversationId);
           }}
           onGroupConversationClick={(conversation) => {
-            setActiveConversationMode("group");
-            setActiveGroupConversation(conversation);
+            selectGroupConversation(conversation);
             groupChat.openGroupConversation();
           }}
           onProcessUser={contacts.addContact}
-          presenceNotice={presence.errorMessage}
         />
       }
     />

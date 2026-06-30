@@ -1,24 +1,19 @@
-import type { ManualUserStatus, UserStatus } from "../../../../types/realtime";
-
-export type SidebarTab = "contacts" | "groups";
+import { useChatSelectionStore } from "../../../../store/chatSelectionStore";
+import { usePresenceStore } from "../../../../store/presenceStore";
+import type { ManualUserStatus } from "../../../../types/realtime";
 
 interface SidebarHeaderProps {
-  activeTab: SidebarTab;
-  currentUserStatus: UserStatus;
-  isChangingPresenceStatus: boolean;
   onChangePresenceStatus: (status: ManualUserStatus) => Promise<void>;
-  onTabChange: (tab: SidebarTab) => void;
 }
 
 const presenceOptions: ManualUserStatus[] = ["Active", "Busy", "Invisible"];
 
-export function SidebarHeader({
-  activeTab,
-  currentUserStatus,
-  isChangingPresenceStatus,
-  onChangePresenceStatus,
-  onTabChange,
-}: SidebarHeaderProps) {
+export function SidebarHeader({ onChangePresenceStatus }: SidebarHeaderProps) {
+  const activeTab = useChatSelectionStore((s) => s.activeTab);
+  const setActiveTab = useChatSelectionStore((s) => s.setActiveTab);
+  const currentStatus = usePresenceStore((s) => s.currentStatus);
+  const isUpdatingStatus = usePresenceStore((s) => s.isUpdatingStatus);
+
   const handlePresenceStatusChange = async (value: string) => {
     if (value === "AFK") {
       return;
@@ -34,7 +29,7 @@ export function SidebarHeader({
           <button
             aria-pressed={activeTab === "contacts"}
             className={`contacts-panel__tab${activeTab === "contacts" ? " contacts-panel__tab--active" : ""}`}
-            onClick={() => onTabChange("contacts")}
+            onClick={() => setActiveTab("contacts")}
             type="button"
           >
             Kontakty
@@ -42,7 +37,7 @@ export function SidebarHeader({
           <button
             aria-pressed={activeTab === "groups"}
             className={`contacts-panel__tab${activeTab === "groups" ? " contacts-panel__tab--active" : ""}`}
-            onClick={() => onTabChange("groups")}
+            onClick={() => setActiveTab("groups")}
             type="button"
           >
             Grupy
@@ -53,11 +48,11 @@ export function SidebarHeader({
           <select
             aria-label="Ustaw status Presence"
             className="contacts-panel__presence-select"
-            disabled={isChangingPresenceStatus}
+            disabled={isUpdatingStatus}
             onChange={(event) => void handlePresenceStatusChange(event.target.value)}
-            value={currentUserStatus}
+            value={currentStatus}
           >
-            {currentUserStatus === "AFK"
+            {currentStatus === "AFK"
               ? <option value="AFK">AFK (auto)</option>
               : null}
             {presenceOptions.map((status) => (

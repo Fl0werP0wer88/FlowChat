@@ -1,11 +1,11 @@
 import { HubConnectionBuilder, LogLevel } from "@microsoft/signalr";
-import { useEffect, useEffectEvent, useState } from "react";
+import { useEffect, useEffectEvent } from "react";
 import { useAuthStore } from "../../store/authStore";
+import { useRealtimeStore } from "../../store/realtimeStore";
 import type {
   GroupConversationChangedEvent,
   PresenceChangedEvent,
   RealtimeChatMessage,
-  RealtimeConnectionStatus,
 } from "../../types/realtime";
 import { chatHubUrl } from "./config";
 
@@ -29,8 +29,7 @@ export function useRealtimeConnection({
   onGroupConversationChanged,
 }: UseRealtimeConnectionOptions) {
   const accessToken = useAuthStore((s) => s.accessToken);
-  const [status, setStatus] = useState<RealtimeConnectionStatus>("idle");
-  const [lastError, setLastError] = useState<string | null>(null);
+  const { setStatus, setLastError } = useRealtimeStore.getState();
 
   const handleReceiveMessage = useEffectEvent((payload: RealtimeChatMessage) => {
     onReceiveMessage?.(payload);
@@ -141,8 +140,4 @@ export function useRealtimeConnection({
     };
   }, [accessToken]);
 
-  return {
-    status,
-    lastError,
-  };
 }

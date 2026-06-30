@@ -1,6 +1,7 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useAuthStore } from "../store/authStore";
+import { useChatSelectionStore } from "../store/chatSelectionStore";
 import type { Contact } from "../types/contacts";
 import type { PresenceChangedEvent } from "../types/realtime";
 import { resolveOwnerUserId } from "../utils/authUtils";
@@ -16,7 +17,6 @@ interface UseContactsResult {
   activeContact: Contact | null;
   isLoadingContacts: boolean;
   addContact: (user: SearchUserResult) => Promise<ContactNotification>;
-  selectContact: (contact: Contact) => void;
   applyPresenceChanged: (payload: PresenceChangedEvent) => void;
   updateContactConversationId: (contactUserId: string, conversationId: string) => void;
 }
@@ -27,7 +27,7 @@ export function useContacts(): UseContactsResult {
   const accessToken = useAuthStore((s) => s.accessToken) ?? "";
   const ownerUserId = resolveOwnerUserId(accessToken);
   const queryClient = useQueryClient();
-  const [activeContactId, setActiveContactId] = useState<string | null>(null);
+  const activeContactId = useChatSelectionStore((s) => s.activeContactId);
 
   const { data: contacts = [], isLoading: isLoadingContacts } = useContactsQuery(
     accessToken,
@@ -79,16 +79,11 @@ export function useContacts(): UseContactsResult {
     );
   };
 
-  const selectContact = (contact: Contact) => {
-    setActiveContactId(contact.id);
-  };
-
   return {
     contacts,
     activeContact,
     isLoadingContacts,
     addContact,
-    selectContact,
     applyPresenceChanged,
     updateContactConversationId,
   };

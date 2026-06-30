@@ -1,9 +1,9 @@
+import { useRealtimeStore } from "../../../store/realtimeStore";
 import type { RealtimeConnectionStatus } from "../../../types/realtime";
 import { Button } from "../atoms/Button";
 
 interface ChatHeaderProps {
   userLogin: string;
-  realtimeStatus: RealtimeConnectionStatus;
   onLogout: () => void;
 }
 
@@ -22,7 +22,9 @@ function getRealtimeStatusLabel(status: RealtimeConnectionStatus): string {
   }
 }
 
-export function ChatHeader({ userLogin, realtimeStatus, onLogout }: ChatHeaderProps) {
+export function ChatHeader({ userLogin, onLogout }: ChatHeaderProps) {
+  const realtimeStatus = useRealtimeStore((s) => s.status);
+
   return (
     <header className="chat-header">
       <div className="chat-title-block">
