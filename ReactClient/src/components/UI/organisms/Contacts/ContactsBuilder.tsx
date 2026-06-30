@@ -1,5 +1,5 @@
 import type { SearchUserResult } from "../../../../api/userProfileApi";
-import { UsersPicker } from "../../../../components/UI/organisms/UserPicker";
+import { UsersPicker } from "../UserPicker";
 
 interface ContactsBuilderProps {
   isOpen: boolean;

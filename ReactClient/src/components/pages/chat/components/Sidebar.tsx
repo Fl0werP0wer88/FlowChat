@@ -3,7 +3,7 @@ import type { Contact } from "../../../../types/contacts";
 import type { ManualUserStatus, UserStatus } from "../../../../types/realtime";
 import type { GroupConversation } from "../../../../features/groups";
 import { GroupBuilder, GroupConversationsList } from "../../../../features/groups";
-import { ContactsBuilder, ContactsList } from "../../../../features/contacts";
+import { ContactsBuilder, ContactsList } from "../../../../components/UI/organisms/Contacts";
 import { SidebarHeader } from "./SidebarHeader";
 import type { SidebarTab } from "./SidebarHeader";
 import type { SearchUserResult } from "../../../../api/userProfileApi";
