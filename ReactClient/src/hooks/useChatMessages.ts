@@ -12,8 +12,8 @@ import {
   mapConversationMessage,
   sortMessages,
 } from "../features/conversations/duet/queries/conversationCache";
-import { useConversationQuery } from "../features/conversations/duet/queries/useConversationQuery";
-import { useSendMessageMutation } from "../features/conversations/duet/queries/useSendMessageMutation";
+import { useSendMessageMutation } from "./mutations/useSendMessageMutation";
+import { useConversationQuery } from "./queries/useConversationQuery";
 
 export function useChatMessages(activeContact: Contact | null) {
   const accessToken = useAuthStore((s) => s.accessToken) ?? "";

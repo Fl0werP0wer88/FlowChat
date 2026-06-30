@@ -1,7 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
-import type { Contact } from "../../../../types/contacts";
-import { openDuetConversation } from "../../../../api/gatewayApi";
-import { type ConversationCacheEntry, mapConversationMessage } from "./conversationCache";
+import type { Contact } from "../../types/contacts";
+import { openDuetConversation } from "../../api/gatewayApi";
+import {
+  type ConversationCacheEntry,
+  mapConversationMessage,
+} from "../../features/conversations/duet/queries/conversationCache";
 
 export function useConversationQuery(
   activeContact: Contact | null,

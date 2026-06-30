@@ -12,8 +12,8 @@ import {
   mapGroupConversationMessage,
   sortGroupMessages,
 } from "../features/conversations/group/queries/groupConversationCache";
-import { useGroupConversationQuery } from "../features/conversations/group/queries/useGroupConversationQuery";
-import { useSendGroupMessageMutation } from "../features/conversations/group/queries/useSendGroupMessageMutation";
+import { useSendGroupMessageMutation } from "./mutations/useSendGroupMessageMutation";
+import { useGroupConversationQuery } from "./queries/useGroupConversationQuery";
 
 export function useGroupChatMessages(activeGroupConversation: GroupConversation | null) {
   const accessToken = useAuthStore((s) => s.accessToken) ?? "";

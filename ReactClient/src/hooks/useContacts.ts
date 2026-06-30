@@ -5,9 +5,9 @@ import type { Contact } from "../types/contacts";
 import type { PresenceChangedEvent } from "../types/realtime";
 import { resolveOwnerUserId } from "../utils/authUtils";
 import type { SearchUserResult } from "../api/userProfileApi";
-import { useAddContactByUserIdMutation } from "../features/contacts/queries/useAddContactByUserIdMutation";
-import { useAddContactMutation } from "../features/contacts/queries/useAddContactMutation";
-import { useContactsQuery } from "../features/contacts/queries/useContactsQuery";
+import { useAddContactByUserIdMutation } from "./mutations/useAddContactByUserIdMutation";
+import { useAddContactMutation } from "./mutations/useAddContactMutation";
+import { useContactsQuery } from "./queries/useContactsQuery";
 
 type ContactNotification = { kind: "error" | "info"; message: string };
 

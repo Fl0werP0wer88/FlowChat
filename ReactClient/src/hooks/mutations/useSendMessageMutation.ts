@@ -1,37 +1,41 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { sendGroupChatMessage } from "../../../../api/chatApi";
-import { type GroupConversationCacheEntry, createGroupMessage, sortGroupMessages } from "./groupConversationCache";
+import { sendChatMessage } from "../../api/chatApi";
+import {
+  type ConversationCacheEntry,
+  createMessage,
+  sortMessages,
+} from "../../features/conversations/duet/queries/conversationCache";
 
-interface SendGroupMessageVariables {
+interface SendMessageVariables {
   messageId: string;
   conversationId: string;
   text: string;
   senderDisplayName: string;
 }
 
-interface UseSendGroupMessageMutationOptions {
+interface UseSendMessageMutationOptions {
   accessToken: string;
-  activeGroupConversationId: string | undefined;
+  activeContactUserId: string | undefined;
   ownerUserId: string | null;
   userLogin: string;
   onError: (message: string) => void;
 }
 
-export function useSendGroupMessageMutation({
+export function useSendMessageMutation({
   accessToken,
-  activeGroupConversationId,
+  activeContactUserId,
   ownerUserId,
   userLogin,
   onError,
-}: UseSendGroupMessageMutationOptions) {
+}: UseSendMessageMutationOptions) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ messageId, conversationId, text, senderDisplayName }: SendGroupMessageVariables) =>
-      sendGroupChatMessage({ id: messageId, conversationId, senderDisplayName, text }, accessToken),
+    mutationFn: ({ messageId, conversationId, text, senderDisplayName }: SendMessageVariables) =>
+      sendChatMessage({ id: messageId, conversationId, senderDisplayName, text }, accessToken),
     onSuccess: (result, variables) => {
-      queryClient.setQueryData<GroupConversationCacheEntry>(
-        ["groupConversation", activeGroupConversationId],
+      queryClient.setQueryData<ConversationCacheEntry>(
+        ["conversation", activeContactUserId],
         (current) => {
           if (!current) {
             return current;
@@ -43,9 +47,9 @@ export function useSendGroupMessageMutation({
 
           return {
             ...current,
-            messages: sortGroupMessages([
+            messages: sortMessages([
               ...current.messages,
-              createGroupMessage(
+              createMessage(
                 "me",
                 variables.text,
                 result.sentAtUtc,

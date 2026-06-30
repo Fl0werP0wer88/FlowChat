@@ -1,7 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
-import type { GroupConversation } from "../../../groups";
-import { openGroupConversation } from "../../../../api/gatewayApi";
-import { type GroupConversationCacheEntry, mapGroupConversationMessage } from "./groupConversationCache";
+import type { GroupConversation } from "../../api/chatApi";
+import { openGroupConversation } from "../../api/gatewayApi";
+import {
+  type GroupConversationCacheEntry,
+  mapGroupConversationMessage,
+} from "../../features/conversations/group/queries/groupConversationCache";
 
 export function useGroupConversationQuery(
   activeGroupConversation: GroupConversation | null,
