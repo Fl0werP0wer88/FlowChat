@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "../../../UI/atoms/Button";
 import { AlertMessage } from "../../../UI/molecules/AlertMessage";
-import { AuthTemplate } from "../../../templates/AuthTemplate";
+import { AuthTemplate } from "../../../templates";
 import type { AuthNotice } from "../../../../types/auth";
 import { confirmEmailVerification } from "../../../../api/userProfileApi";
 

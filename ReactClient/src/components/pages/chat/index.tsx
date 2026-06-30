@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChatHeader } from "../../UI/organisms/ChatHeader";
-import { ChatTemplate } from "../../templates/ChatTemplate";
+import { ChatTemplate } from "../../templates";
 import { useRealtimeConnection } from "../../../realtime/useRealtimeConnection";
 import { useAuthStore } from "../../../store/authStore";
 import { useChatMessages, useContacts, useGroupChatMessages, useGroupConversations, usePresenceStatus } from "../../../hooks";

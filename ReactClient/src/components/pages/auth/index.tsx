@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { AuthTemplate } from "../../templates/AuthTemplate";
+import { AuthTemplate } from "../../templates";
 import type { AuthMode } from "../../../types/auth";
 import { LoginForm } from "./components/LoginForm";
 import { RegisterForm } from "./components/RegisterForm";

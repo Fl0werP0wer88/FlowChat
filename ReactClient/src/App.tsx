@@ -3,7 +3,7 @@ import { AuthFeature } from "./components/pages/auth";
 import { ChatFeature } from "./components/pages/chat";
 import { EmailVerificationFeature } from "./components/pages/emailVerification";
 import { useSessionRefresher } from "./hooks";
-import { AppBackgroundTemplate } from "./components/templates/AppBackgroundTemplate";
+import { AppBackgroundTemplate } from "./components/templates";
 import { useAuthStore } from "./store/authStore";
 
 function RootRedirect() {
