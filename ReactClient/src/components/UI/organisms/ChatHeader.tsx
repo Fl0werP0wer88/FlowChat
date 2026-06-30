@@ -1,4 +1,4 @@
-import type { RealtimeConnectionStatus } from "../../types/realtime";
+import type { RealtimeConnectionStatus } from "../../../types/realtime";
 import { Button } from "../atoms/Button";
 
 interface ChatHeaderProps {
