@@ -1,4 +1,4 @@
-import type { ManualUserStatus, UserStatus } from "../../../types/realtime";
+import type { ManualUserStatus, UserStatus } from "../../../../types/realtime";
 
 export type SidebarTab = "contacts" | "groups";
 

@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
-import type { Contact } from "../../../types/contacts";
-import type { ManualUserStatus, UserStatus } from "../../../types/realtime";
-import type { GroupConversation } from "../../groups";
-import { GroupBuilder, GroupConversationsList } from "../../groups";
-import { ContactsBuilder, ContactsList } from "../../contacts";
+import type { Contact } from "../../../../types/contacts";
+import type { ManualUserStatus, UserStatus } from "../../../../types/realtime";
+import type { GroupConversation } from "../../../../features/groups";
+import { GroupBuilder, GroupConversationsList } from "../../../../features/groups";
+import { ContactsBuilder, ContactsList } from "../../../../features/contacts";
 import { SidebarHeader } from "./SidebarHeader";
 import type { SidebarTab } from "./SidebarHeader";
-import type { SearchUserResult } from "../../users/api";
+import type { SearchUserResult } from "../../../../features/users/api";
 
 
 export interface GroupBuilderRequest {

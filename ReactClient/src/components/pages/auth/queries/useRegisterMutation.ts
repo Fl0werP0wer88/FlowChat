@@ -1,5 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
-import type { RegisterFormValues } from "../../../types/auth";
+import type { RegisterFormValues } from "../../../../types/auth";
 import { registerUser } from "../api";
 
 interface UseRegisterMutationCallbacks {

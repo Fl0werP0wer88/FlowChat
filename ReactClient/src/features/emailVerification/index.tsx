@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Button } from "../../components/atoms/Button";
-import { AlertMessage } from "../../components/molecules/AlertMessage";
+import { Button } from "../../components/UI/atoms/Button";
+import { AlertMessage } from "../../components/UI/molecules/AlertMessage";
 import { AuthTemplate } from "../../components/templates/AuthTemplate";
 import type { AuthNotice } from "../../types/auth";
 import { confirmEmailVerification } from "./api";

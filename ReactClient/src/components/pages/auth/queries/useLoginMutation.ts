@@ -1,6 +1,6 @@
 import { useMutation } from "@tanstack/react-query";
-import type { AuthSession } from "../../../types/auth";
-import type { LoginFormValues } from "../../../types/auth";
+import type { AuthSession } from "../../../../types/auth";
+import type { LoginFormValues } from "../../../../types/auth";
 import { loginUser } from "../api";
 
 interface UseLoginMutationCallbacks {

@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
-import { AuthTemplate } from "../../components/templates/AuthTemplate";
-import type { AuthMode } from "../../types/auth";
+import { AuthTemplate } from "../../templates/AuthTemplate";
+import type { AuthMode } from "../../../types/auth";
 import { LoginForm } from "./components/LoginForm";
 import { RegisterForm } from "./components/RegisterForm";
 import { useAuthFlow } from "./hooks/useAuthFlow";

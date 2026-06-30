@@ -1,15 +1,15 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ChatHeader } from "../../components/organisms/ChatHeader";
-import { ChatTemplate } from "../../components/templates/ChatTemplate";
-import { useRealtimeConnection } from "../../realtime/useRealtimeConnection";
-import { useAuthStore } from "../../store/authStore";
-import { useContacts } from "../contacts";
-import { DuetConversationPanel, useChatMessages } from "../conversations/duet";
-import { GroupConversationPanel, useGroupChatMessages } from "../conversations/group";
-import type { GroupConversation } from "../groups";
-import { useGroupConversations } from "../groups";
-import { usePresenceStatus } from "../presence/hooks/usePresenceStatus";
+import { ChatHeader } from "../../UI/organisms/ChatHeader";
+import { ChatTemplate } from "../../templates/ChatTemplate";
+import { useRealtimeConnection } from "../../../realtime/useRealtimeConnection";
+import { useAuthStore } from "../../../store/authStore";
+import { useContacts } from "../../../features/contacts";
+import { DuetConversationPanel, useChatMessages } from "../../../features/conversations/duet";
+import { GroupConversationPanel, useGroupChatMessages } from "../../../features/conversations/group";
+import type { GroupConversation } from "../../../features/groups";
+import { useGroupConversations } from "../../../features/groups";
+import { usePresenceStatus } from "../../../features/presence/hooks/usePresenceStatus";
 import { Sidebar } from "./components/Sidebar";
 import type { GroupBuilderRequest } from "./components/Sidebar";
 

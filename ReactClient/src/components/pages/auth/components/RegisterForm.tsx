@@ -1,9 +1,9 @@
 import type { FormEvent } from "react";
-import { Input } from "../../../components/atoms/Input";
-import { AlertMessage } from "../../../components/molecules/AlertMessage";
-import { FormField } from "../../../components/molecules/FormField";
-import { AuthActions } from "../../../components/organisms/AuthActions";
-import type { AuthNotice, RegisterFormValues } from "../../../types/auth";
+import { Input } from "../../../UI/atoms/Input";
+import { AlertMessage } from "../../../UI/molecules/AlertMessage";
+import { FormField } from "../../../UI/molecules/FormField";
+import { AuthActions } from "../../../UI/organisms/AuthActions";
+import type { AuthNotice, RegisterFormValues } from "../../../../types/auth";
 
 interface RegisterFormProps {
   values: RegisterFormValues;
