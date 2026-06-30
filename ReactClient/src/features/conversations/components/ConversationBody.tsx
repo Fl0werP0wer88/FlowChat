@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Virtuoso, type VirtuosoHandle } from "react-virtuoso";
 import { Spinner } from "../../../components/UI/atoms/Spinner";
-import { useMinDuration } from "../../../hooks/useMinDuration";
+import { useMinDuration } from "../../../hooks";
 import type { ChatMessage } from "../../../types/chat";
 import { formatLocalTime } from "../../../utils/dateUtils";
 

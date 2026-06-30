@@ -4,12 +4,10 @@ import { ChatHeader } from "../../UI/organisms/ChatHeader";
 import { ChatTemplate } from "../../templates/ChatTemplate";
 import { useRealtimeConnection } from "../../../realtime/useRealtimeConnection";
 import { useAuthStore } from "../../../store/authStore";
-import { useContacts } from "../../../features/contacts";
-import { DuetConversationPanel, useChatMessages } from "../../../features/conversations/duet";
-import { GroupConversationPanel, useGroupChatMessages } from "../../../features/conversations/group";
+import { useChatMessages, useContacts, useGroupChatMessages, useGroupConversations, usePresenceStatus } from "../../../hooks";
+import { DuetConversationPanel } from "../../../features/conversations/duet";
+import { GroupConversationPanel } from "../../../features/conversations/group";
 import type { GroupConversation } from "../../../features/groups";
-import { useGroupConversations } from "../../../features/groups";
-import { usePresenceStatus } from "../../../hooks/usePresenceStatus";
 import { Sidebar } from "./components/Sidebar";
 import type { GroupBuilderRequest } from "./components/Sidebar";
 

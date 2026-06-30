@@ -3,7 +3,7 @@ import { AuthTemplate } from "../../templates/AuthTemplate";
 import type { AuthMode } from "../../../types/auth";
 import { LoginForm } from "./components/LoginForm";
 import { RegisterForm } from "./components/RegisterForm";
-import { useAuthFlow } from "../../../hooks/useAuthFlow";
+import { useAuthFlow } from "../../../hooks";
 
 interface AuthFeatureProps {
   mode: AuthMode;

@@ -2,7 +2,7 @@ import { Navigate, Route, Routes, useLocation, useSearchParams } from "react-rou
 import { AuthFeature } from "./components/pages/auth";
 import { ChatFeature } from "./components/pages/chat";
 import { EmailVerificationFeature } from "./features/emailVerification";
-import { useSessionRefresher } from "./hooks/useSessionRefresher";
+import { useSessionRefresher } from "./hooks";
 import { AppBackgroundLayout } from "./layouts/AppBackgroundLayout";
 import { useAuthStore } from "./store/authStore";
 
