@@ -2,9 +2,15 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChatHeader } from "../../UI/organisms/ChatHeader";
 import { ChatTemplate } from "../../templates";
-import { useRealtimeConnection } from "../../../realtime/useRealtimeConnection";
 import { useAuthStore } from "../../../store/authStore";
-import { useChatMessages, useContacts, useGroupChatMessages, useGroupConversations, usePresenceStatus } from "../../../hooks";
+import {
+  useChatMessages,
+  useContacts,
+  useGroupChatMessages,
+  useGroupConversations,
+  usePresenceStatus,
+  useRealtimeConnection,
+} from "../../../hooks";
 import { DuetConversationPanel, GroupConversationPanel } from "../../UI/organisms/Conversations";
 import type { GroupConversation } from "../../../api/chatApi";
 import { Sidebar } from "./components/Sidebar";

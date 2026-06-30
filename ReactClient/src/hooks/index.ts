@@ -6,6 +6,7 @@ export { useGroupConversations } from "./useGroupConversations";
 export { useMinDuration } from "./useMinDuration";
 export { usePresenceStatus } from "./usePresenceStatus";
 export { useSessionRefresher } from "./useSessionRefresher";
+export { useRealtimeConnection } from "./realtime/useRealtimeConnection";
 export { useAddContactByUserIdMutation } from "./mutations/useAddContactByUserIdMutation";
 export { useAddContactMutation } from "./mutations/useAddContactMutation";
 export { useCopyDuetAsGroupMutation } from "./mutations/useCopyDuetAsGroupMutation";

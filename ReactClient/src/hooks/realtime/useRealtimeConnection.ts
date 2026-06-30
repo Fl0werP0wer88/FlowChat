@@ -1,12 +1,12 @@
 import { HubConnectionBuilder, LogLevel } from "@microsoft/signalr";
 import { useEffect, useEffectEvent, useState } from "react";
-import { useAuthStore } from "../store/authStore";
+import { useAuthStore } from "../../store/authStore";
 import type {
   GroupConversationChangedEvent,
   PresenceChangedEvent,
   RealtimeChatMessage,
   RealtimeConnectionStatus,
-} from "../types/realtime";
+} from "../../types/realtime";
 import { chatHubUrl } from "./config";
 
 interface UseRealtimeConnectionOptions {
