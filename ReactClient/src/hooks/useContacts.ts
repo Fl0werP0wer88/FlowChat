@@ -1,5 +1,6 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useMemo } from "react";
+import { toast } from "sonner";
 import { useAuthStore } from "../store/authStore";
 import { useChatSelectionStore } from "../store/chatSelectionStore";
 import type { Contact } from "../types/contacts";
@@ -10,13 +11,11 @@ import { useAddContactByUserIdMutation } from "./mutations/useAddContactByUserId
 import { useAddContactMutation } from "./mutations/useAddContactMutation";
 import { useContactsQuery } from "./queries/useContactsQuery";
 
-type ContactNotification = { kind: "error" | "info"; message: string };
-
 interface UseContactsResult {
   contacts: Contact[];
   activeContact: Contact | null;
   isLoadingContacts: boolean;
-  addContact: (user: SearchUserResult) => Promise<ContactNotification>;
+  addContact: (user: SearchUserResult) => Promise<void>;
   applyPresenceChanged: (payload: PresenceChangedEvent) => void;
   updateContactConversationId: (contactUserId: string, conversationId: string) => void;
 }
@@ -41,9 +40,10 @@ export function useContacts(): UseContactsResult {
   const addContactMutation = useAddContactMutation(accessToken, noopCallbacks);
   const addContactByUserIdMutation = useAddContactByUserIdMutation(accessToken, noopCallbacks);
 
-  const addContact = async (user: SearchUserResult): Promise<ContactNotification> => {
+  const addContact = async (user: SearchUserResult): Promise<void> => {
     if (!accessToken || !ownerUserId) {
-      return { kind: "error", message: "Brakuje aktywnej sesji potrzebnej do dodania kontaktu." };
+      toast.error("Brakuje aktywnej sesji potrzebnej do dodania kontaktu.");
+      return;
     }
 
     try {
@@ -52,14 +52,15 @@ export function useContacts(): UseContactsResult {
       } else {
         const value = user.friendlyUserId.trim();
         if (!value) {
-          return { kind: "error", message: "Wpisz email lub User Id uzytkownika." };
+          toast.error("Wpisz email lub User Id uzytkownika.");
+          return;
         }
         await addContactMutation.mutateAsync(value);
       }
-      return { kind: "info", message: "Kontakt zostal dodany." };
+      toast.success("Kontakt zostal dodany.");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Nie udalo sie dodac kontaktu.";
-      return { kind: "error", message };
+      toast.error(message);
     }
   };
 

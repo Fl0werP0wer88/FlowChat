@@ -1,4 +1,5 @@
 import { Navigate, Route, Routes, useLocation, useSearchParams } from "react-router-dom";
+import { Toaster } from "sonner";
 import { AuthFeature } from "./components/pages/auth";
 import { ChatFeature } from "./components/pages/chat";
 import { EmailVerificationFeature } from "./components/pages/emailVerification";
@@ -42,6 +43,7 @@ export default function App() {
 
   return (
     <AppBackgroundTemplate>
+      <Toaster richColors position="top-right" />
       <Routes>
         <Route path="/" element={<RootRedirect />} />
         <Route path="/login" element={<AuthRoute mode="login" />} />

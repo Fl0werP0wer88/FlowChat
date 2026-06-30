@@ -1,6 +1,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import type { KeyboardEvent } from "react";
 import { useCallback, useRef, useState } from "react";
+import { toast } from "sonner";
 import { useAuthStore } from "../store/authStore";
 import type { RealtimeChatMessage } from "../types/realtime";
 import { resolveOwnerUserId } from "../utils/authUtils";
@@ -22,8 +23,6 @@ export function useGroupChatMessages(activeGroupConversation: GroupConversation 
   const queryClient = useQueryClient();
 
   const [draft, setDraft] = useState("");
-  const [sendError, setSendError] = useState<string | null>(null);
-  const [olderMessagesError, setOlderMessagesError] = useState<string | null>(null);
   const [isLoadingOlderMessages, setIsLoadingOlderMessages] = useState(false);
 
   const isLoadingOlderMessagesRef = useRef(false);
@@ -39,7 +38,7 @@ export function useGroupChatMessages(activeGroupConversation: GroupConversation 
     activeGroupConversationId: activeGroupConversation?.conversationId,
     ownerUserId,
     userLogin,
-    onError: setSendError,
+    onError: (message) => toast.error(message),
   });
 
   const loadOlderMessages = useCallback(async () => {
@@ -57,7 +56,6 @@ export function useGroupChatMessages(activeGroupConversation: GroupConversation 
 
     isLoadingOlderMessagesRef.current = true;
     setIsLoadingOlderMessages(true);
-    setOlderMessagesError(null);
 
     try {
       const result = await getGroupConversationMessages(
@@ -91,7 +89,7 @@ export function useGroupChatMessages(activeGroupConversation: GroupConversation 
         },
       );
     } catch (error) {
-      setOlderMessagesError(error instanceof Error ? error.message : "Nie udalo sie pobrac starszych wiadomosci.");
+      toast.error(error instanceof Error ? error.message : "Nie udalo sie pobrac starszych wiadomosci.");
     } finally {
       isLoadingOlderMessagesRef.current = false;
       setIsLoadingOlderMessages(false);
@@ -143,7 +141,6 @@ export function useGroupChatMessages(activeGroupConversation: GroupConversation 
     }
 
     const messageId = crypto.randomUUID();
-    setSendError(null);
 
     try {
       await sendMessageMutation.mutateAsync({ messageId, conversationId, text, senderDisplayName: userLogin });
@@ -160,26 +157,18 @@ export function useGroupChatMessages(activeGroupConversation: GroupConversation 
     }
   };
 
-  const openGroupConversation = () => {
-    setSendError(null);
-    setOlderMessagesError(null);
-  };
-
-  const conversationError =
-    conversationQueryError instanceof Error ? conversationQueryError.message : null;
+  const openGroupConversation = () => {};
 
   return {
     messages: conversationData?.messages ?? [],
     draft,
     activeConversationId: conversationData?.conversationId ?? null,
     activeConversationName: conversationData?.name ?? activeGroupConversation?.name ?? null,
-    conversationError,
+    hasConversationError: conversationQueryError !== null,
     isLoadingConversation,
     isSendingMessage: sendMessageMutation.isPending,
-    sendError,
     hasOlderMessages: conversationData?.hasMore ?? false,
     isLoadingOlderMessages,
-    olderMessagesError,
     setDraft,
     sendDraft,
     loadOlderMessages,

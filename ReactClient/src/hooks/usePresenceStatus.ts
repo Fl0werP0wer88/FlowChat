@@ -1,4 +1,5 @@
 import { useEffect, useEffectEvent, useRef, useState } from "react";
+import { toast } from "sonner";
 import { useAuthStore } from "../store/authStore";
 import { usePresenceStore } from "../store/presenceStore";
 import { changePresenceStatus } from "../api/presenceApi";
@@ -19,7 +20,7 @@ function resolveErrorMessage(error: unknown): string {
 export function usePresenceStatus(): UsePresenceStatusResult {
   const accessToken = useAuthStore((s) => s.accessToken);
   const currentStatus = usePresenceStore((s) => s.currentStatus);
-  const { applyPresenceState, setIsUpdatingStatus, setErrorMessage } = usePresenceStore.getState();
+  const { applyPresenceState, setIsUpdatingStatus } = usePresenceStore.getState();
   const [isAfkEnabled, setIsAfkEnabled] = useState(true);
   const afkTimeoutRef = useRef<number | null>(null);
   const currentStatusRef = useRef<UserStatus>("Active");
@@ -64,7 +65,6 @@ export function usePresenceStatus(): UsePresenceStatusResult {
 
     clearAfkTimeout();
     applyLocalPresenceState(nextStatus, nextPreferredStatus, nextIsAfkEnabled);
-    setErrorMessage(null);
     setIsUpdatingStatus(true);
     isStatusUpdateInFlightRef.current = true;
 
@@ -72,12 +72,11 @@ export function usePresenceStatus(): UsePresenceStatusResult {
       await changePresenceStatus(nextStatus, accessToken);
     } catch (error) {
       applyLocalPresenceState(previousCurrentStatus, previousPreferredStatus, previousIsAfkEnabled);
-      setErrorMessage(resolveErrorMessage(error));
+      toast.error(resolveErrorMessage(error));
     } finally {
       isStatusUpdateInFlightRef.current = false;
       setIsUpdatingStatus(false);
     }
-
   });
 
   const applyPresencePreferences = useEffectEvent((preferredStatus: UserStatus | null) => {
@@ -86,7 +85,6 @@ export function usePresenceStatus(): UsePresenceStatusResult {
 
     clearAfkTimeout();
     applyLocalPresenceState(nextCurrentStatus, nextPreferredStatus, nextCurrentStatus === "Active");
-    setErrorMessage(null);
   });
 
   const changeManualPresenceStatus = useEffectEvent(async (status: ManualUserStatus) => {
@@ -127,7 +125,6 @@ export function usePresenceStatus(): UsePresenceStatusResult {
       clearAfkTimeout();
       isStatusUpdateInFlightRef.current = false;
       applyLocalPresenceState("Active", null, true);
-      setErrorMessage(null);
       setIsUpdatingStatus(false);
       return;
     }

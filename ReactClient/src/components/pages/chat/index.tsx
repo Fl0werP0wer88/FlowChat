@@ -53,13 +53,11 @@ export function ChatFeature() {
             activeGroupConversation={activeGroup}
             activeConversationId={groupChat.activeConversationId}
             activeConversationName={groupChat.activeConversationName}
-            conversationError={groupChat.conversationError}
+            hasConversationError={groupChat.hasConversationError}
             isLoadingConversation={groupChat.isLoadingConversation}
             isSendingMessage={groupChat.isSendingMessage}
             hasOlderMessages={groupChat.hasOlderMessages}
             isLoadingOlderMessages={groupChat.isLoadingOlderMessages}
-            sendError={groupChat.sendError}
-            olderMessagesError={groupChat.olderMessagesError}
             messages={groupChat.messages}
             draft={groupChat.draft}
             onDraftChange={groupChat.setDraft}
@@ -72,13 +70,11 @@ export function ChatFeature() {
           <DuetConversationPanel
             activeContact={activeDuetContact}
             activeConversationId={chat.activeConversationId}
-            conversationError={chat.conversationError}
+            hasConversationError={chat.hasConversationError}
             isLoadingConversation={chat.isLoadingConversation}
             isSendingMessage={chat.isSendingMessage}
             hasOlderMessages={chat.hasOlderMessages}
             isLoadingOlderMessages={chat.isLoadingOlderMessages}
-            sendError={chat.sendError}
-            olderMessagesError={chat.olderMessagesError}
             messages={chat.messages}
             draft={chat.draft}
             onDraftChange={chat.setDraft}

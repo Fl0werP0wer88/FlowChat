@@ -7,13 +7,12 @@ import { formatLocalTime } from "../../../utils/dateUtils";
 
 interface ConversationBodyProps {
   activeConversationId: string | null;
-  conversationError: string | null;
+  hasConversationError: boolean;
   emptySelectionMessage?: string;
   hasActiveConversation: boolean;
   isLoadingConversation: boolean;
   hasOlderMessages: boolean;
   isLoadingOlderMessages: boolean;
-  olderMessagesError: string | null;
   messages: ChatMessage[];
   onLoadOlderMessages: () => Promise<void>;
 }
@@ -22,13 +21,12 @@ const START_INDEX = 100_000;
 
 export function ConversationBody({
   activeConversationId,
-  conversationError,
+  hasConversationError,
   emptySelectionMessage = "Kliknij kontakt, zeby otworzyc rozmowe.",
   hasActiveConversation,
   isLoadingConversation,
   hasOlderMessages,
   isLoadingOlderMessages,
-  olderMessagesError,
   messages,
   onLoadOlderMessages,
 }: ConversationBodyProps) {
@@ -64,8 +62,8 @@ export function ConversationBody({
     return <p className="conversation-panel__empty history">Ladowanie rozmowy...</p>;
   }
 
-  if (conversationError) {
-    return <p className="alert alert-error history">{conversationError}</p>;
+  if (hasConversationError) {
+    return <p className="conversation-panel__empty history">Nie udalo sie zaladowac rozmowy.</p>;
   }
 
   if (messages.length === 0) {
@@ -86,8 +84,6 @@ export function ConversationBody({
       components={{
         Header: () => showOlderMessagesSpinner
           ? <div className="history__status"><Spinner /></div>
-          : olderMessagesError
-          ? <p className="alert alert-error history__status">{olderMessagesError}</p>
           : null,
       }}
       itemContent={(_index: number, message: ChatMessage) => (

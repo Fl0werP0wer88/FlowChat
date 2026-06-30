@@ -4,7 +4,7 @@ import { UsersPicker } from "../UserPicker";
 interface ContactsBuilderProps {
   isOpen: boolean;
   onClose: () => void;
-  onProcessUser: (user: SearchUserResult) => Promise<{ kind: "error" | "info"; message: string }>;
+  onProcessUser: (user: SearchUserResult) => Promise<void>;
 }
 
 export function ContactsBuilder({

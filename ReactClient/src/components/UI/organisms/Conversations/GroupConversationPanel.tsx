@@ -11,13 +11,11 @@ interface GroupConversationPanelProps {
   activeGroupConversation: GroupConversation | null;
   activeConversationId: string | null;
   activeConversationName: string | null;
-  conversationError: string | null;
+  hasConversationError: boolean;
   isLoadingConversation: boolean;
   isSendingMessage: boolean;
   hasOlderMessages: boolean;
   isLoadingOlderMessages: boolean;
-  sendError: string | null;
-  olderMessagesError: string | null;
   messages: ChatMessage[];
   draft: string;
   onDraftChange: (value: string) => void;
@@ -30,13 +28,11 @@ export function GroupConversationPanel({
   activeGroupConversation,
   activeConversationId,
   activeConversationName,
-  conversationError,
+  hasConversationError,
   isLoadingConversation,
   isSendingMessage,
   hasOlderMessages,
   isLoadingOlderMessages,
-  sendError,
-  olderMessagesError,
   messages,
   draft,
   onDraftChange,
@@ -70,13 +66,12 @@ export function GroupConversationPanel({
         : (
           <ConversationBody
             activeConversationId={activeConversationId}
-            conversationError={conversationError}
+            hasConversationError={hasConversationError}
             emptySelectionMessage="Kliknij grupe, zeby otworzyc rozmowe."
             hasActiveConversation={Boolean(activeGroupConversation)}
             isLoadingConversation={isLoadingConversation}
             hasOlderMessages={hasOlderMessages}
             isLoadingOlderMessages={isLoadingOlderMessages}
-            olderMessagesError={olderMessagesError}
             messages={messages}
             onLoadOlderMessages={onLoadOlderMessages}
           />
@@ -88,7 +83,6 @@ export function GroupConversationPanel({
         isComposerDisabled={isComposerDisabled}
         isSendDisabled={isSendDisabled}
         isSendingMessage={isSendingMessage}
-        sendError={sendError}
         onDraftChange={onDraftChange}
         onDraftKeyDown={onDraftKeyDown}
         onSendDraft={onSendDraft}

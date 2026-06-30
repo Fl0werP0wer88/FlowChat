@@ -1,14 +1,12 @@
 import type { FormEvent } from "react";
 import { Input } from "../../../UI/atoms/Input";
-import { AlertMessage } from "../../../UI/molecules/AlertMessage";
 import { FormField } from "../../../UI/molecules/FormField";
 import { AuthActions } from "../../../UI/organisms/AuthActions";
-import type { AuthNotice, RegisterFormValues } from "../../../../types/auth";
+import type { RegisterFormValues } from "../../../../types/auth";
 
 interface RegisterFormProps {
   values: RegisterFormValues;
   pending: boolean;
-  notice: AuthNotice | null;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
   onFieldChange: (field: keyof RegisterFormValues, value: string) => void;
   onSwitchToLogin: () => void;
@@ -17,7 +15,6 @@ interface RegisterFormProps {
 export function RegisterForm({
   values,
   pending,
-  notice,
   onSubmit,
   onFieldChange,
   onSwitchToLogin,
@@ -83,8 +80,6 @@ export function RegisterForm({
           onChange={(event) => onFieldChange("password", event.target.value)}
         />
       </FormField>
-
-      <AlertMessage notice={notice} />
 
       <AuthActions
         pending={pending}

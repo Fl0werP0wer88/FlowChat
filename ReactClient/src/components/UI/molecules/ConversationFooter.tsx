@@ -9,7 +9,6 @@ interface ConversationFooterProps {
   isComposerDisabled: boolean;
   isSendDisabled: boolean;
   isSendingMessage: boolean;
-  sendError: string | null;
   onDraftChange: (value: string) => void;
   onDraftKeyDown: (event: KeyboardEvent<HTMLTextAreaElement>) => void;
   onSendDraft: () => Promise<void>;
@@ -22,16 +21,12 @@ export function ConversationFooter({
   isComposerDisabled,
   isSendDisabled,
   isSendingMessage,
-  sendError,
   onDraftChange,
   onDraftKeyDown,
   onSendDraft,
 }: ConversationFooterProps) {
   return (
     <div className="composer">
-      {sendError
-        ? <p className="alert alert-error composer__error">{sendError}</p>
-        : null}
       <TextArea
         value={draft}
         onChange={(event) => onDraftChange(event.target.value)}

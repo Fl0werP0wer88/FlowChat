@@ -23,7 +23,6 @@ export function AuthFeature({ mode }: AuthFeatureProps) {
         <LoginForm
           values={auth.loginValues}
           pending={auth.pending}
-          notice={auth.notice}
           onSubmit={auth.submitLogin}
           onFieldChange={auth.updateLoginValue}
           onSwitchToRegister={auth.switchToRegister}
@@ -37,7 +36,6 @@ export function AuthFeature({ mode }: AuthFeatureProps) {
       <RegisterForm
         values={auth.registerValues}
         pending={auth.pending}
-        notice={auth.notice}
         onSubmit={auth.submitRegister}
         onFieldChange={auth.updateRegisterValue}
         onSwitchToLogin={auth.switchToLogin}

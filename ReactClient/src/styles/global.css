@@ -232,25 +232,6 @@ body {
   gap: 0.8rem;
 }
 
-.alert {
-  margin: 0.25rem 0;
-  border-radius: 0.7rem;
-  padding: 0.65rem 0.75rem;
-  font-size: 0.9rem;
-}
-
-.alert-error {
-  background: color-mix(in srgb, #fff 86%, var(--danger));
-  color: #851435;
-  border: 1px solid #f0bccd;
-}
-
-.alert-info {
-  background: color-mix(in srgb, #fff 80%, #88c2db);
-  color: #20465a;
-  border: 1px solid #bbdce9;
-}
-
 .verification-panel {
   display: grid;
   gap: 0.9rem;
@@ -577,10 +558,6 @@ body {
   grid-template-columns: 1fr auto;
   gap: 0.7rem;
   padding: 0.7rem;
-}
-
-.composer__error {
-  grid-column: 1 / -1;
 }
 
 .contacts-panel {

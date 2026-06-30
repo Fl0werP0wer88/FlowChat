@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { KeyboardEventHandler } from "react";
+import { toast } from "sonner";
 import { useAuthStore } from "../../../../store/authStore";
 import { isEmail } from "../../../../utils/stringUtils";
 import {
@@ -14,13 +15,11 @@ import {
 import { UsersPickerFooter } from "../../molecules/UsersPickerFooter";
 import { UsersPickerHeader } from "../../molecules/UsersPickerHeader";
 
-type UsersPickerNotice = { kind: "error" | "info"; message: string };
-
 interface UsersPickerProps {
   confirmLabel?: string;
   initialUserIds?: string[];
   isOpen: boolean;
-  onConfirm: (selectedUsers: SearchUserResult[]) => Promise<UsersPickerNotice | void>;
+  onConfirm: (selectedUsers: SearchUserResult[]) => Promise<void>;
   singlePick?: boolean;
 }
 
@@ -42,11 +41,9 @@ export function UsersPicker({
   const [isSearchingUsers, setIsSearchingUsers] = useState(false);
   const [isLookupProcessing, setIsLookupProcessing] = useState(false);
   const [processingUserProfileId, setProcessingUserProfileId] = useState<string | null>(null);
-  const [searchNotice, setSearchNotice] = useState<string | null>(null);
-  const [processNotice, setProcessNotice] = useState<UsersPickerNotice | null>(null);
+  const [noResultsText, setNoResultsText] = useState<string | null>(null);
   const [selectedMembers, setSelectedMembers] = useState<SearchUserResult[]>([]);
   const [isConfirming, setIsConfirming] = useState(false);
-  const [confirmNotice, setConfirmNotice] = useState<UsersPickerNotice | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const firstNameInputRef = useRef<HTMLInputElement>(null);
   const normalizedInitialUserIdsKey = Array.from(
@@ -71,15 +68,11 @@ export function UsersPicker({
     }
 
     if (!accessToken) {
-      setProcessNotice({
-        kind: "error",
-        message: "Brakuje aktywnej sesji potrzebnej do pobrania wybranych uzytkownikow.",
-      });
+      toast.error("Brakuje aktywnej sesji potrzebnej do pobrania wybranych uzytkownikow.");
       return;
     }
 
     const abortController = new AbortController();
-    setProcessNotice(null);
 
     void getUserProfilesByIds(normalizedInitialUserIds, accessToken, abortController.signal)
       .then((users) => {
@@ -91,7 +84,7 @@ export function UsersPicker({
         }
 
         const message = error instanceof Error ? error.message : "Nie udalo sie pobrac wybranych uzytkownikow.";
-        setProcessNotice({ kind: "error", message });
+        toast.error(message);
       });
 
     return () => {
@@ -111,18 +104,16 @@ export function UsersPicker({
       organization: "",
     });
     setSearchResults([]);
-    setSearchNotice(null);
-    setProcessNotice(null);
+    setNoResultsText(null);
     setIsLookupProcessing(false);
     setSelectedMembers([]);
-    setConfirmNotice(null);
     setIsConfirming(false);
   }, [isOpen]);
 
   useEffect(() => {
     if (!isOpen) {
       setSearchResults([]);
-      setSearchNotice(null);
+      setNoResultsText(null);
       setIsSearchingUsers(false);
       return;
     }
@@ -130,7 +121,7 @@ export function UsersPicker({
     const hasAnyCriteria = Object.values(searchCriteria).some((value) => value.trim().length > 0);
     if (!hasAnyCriteria) {
       setSearchResults([]);
-      setSearchNotice(null);
+      setNoResultsText(null);
       setIsSearchingUsers(false);
       return;
     }
@@ -138,11 +129,11 @@ export function UsersPicker({
     const abortController = new AbortController();
     const timeoutId = window.setTimeout(() => {
       setIsSearchingUsers(true);
-      setSearchNotice(null);
+      setNoResultsText(null);
 
       if (!accessToken) {
         setSearchResults([]);
-        setSearchNotice("Brakuje aktywnej sesji potrzebnej do wyszukiwania uzytkownikow.");
+        toast.error("Brakuje aktywnej sesji potrzebnej do wyszukiwania uzytkownikow.");
         setIsSearchingUsers(false);
         return;
       }
@@ -151,7 +142,7 @@ export function UsersPicker({
         .then((results) => {
           setSearchResults(results);
           if (results.length === 0) {
-            setSearchNotice("Nie znaleziono uzytkownikow dla podanych danych.");
+            setNoResultsText("Nie znaleziono uzytkownikow dla podanych danych.");
           }
         })
         .catch((error) => {
@@ -161,7 +152,7 @@ export function UsersPicker({
 
           const message = error instanceof Error ? error.message : "Nie udalo sie wyszukac uzytkownikow.";
           setSearchResults([]);
-          setSearchNotice(message);
+          toast.error(message);
         })
         .finally(() => {
           if (!abortController.signal.aborted) {
@@ -176,13 +167,14 @@ export function UsersPicker({
     };
   }, [accessToken, isOpen, searchCriteria]);
 
-  const addMember = (user: SearchUserResult): UsersPickerNotice => {
+  const addMember = (user: SearchUserResult) => {
     if (selectedMembers.some((member) => member.userProfileId === user.userProfileId)) {
-      return { kind: "info", message: "Uzytkownik jest juz na liscie." };
+      toast.info("Uzytkownik jest juz na liscie.");
+      return;
     }
 
     setSelectedMembers((current) => [...current, user]);
-    return { kind: "info", message: "Dodano do grupy." };
+    toast.info("Dodano do grupy.");
   };
 
   const removeMember = (userProfileId: string) => {
@@ -191,15 +183,11 @@ export function UsersPicker({
 
   const handleConfirm = async (users: SearchUserResult[]) => {
     setIsConfirming(true);
-    setConfirmNotice(null);
     try {
-      const notice = await onConfirm(users);
-      if (notice) {
-        setConfirmNotice(notice);
-      }
+      await onConfirm(users);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Nie udalo sie wykonac akcji.";
-      setConfirmNotice({ kind: "error", message });
+      toast.error(message);
     } finally {
       setIsConfirming(false);
     }
@@ -212,7 +200,7 @@ export function UsersPicker({
     }
 
     if (!accessToken) {
-      setSearchNotice("Brakuje aktywnej sesji potrzebnej do pobrania profilu uzytkownika.");
+      toast.error("Brakuje aktywnej sesji potrzebnej do pobrania profilu uzytkownika.");
       return;
     }
 
@@ -225,11 +213,11 @@ export function UsersPicker({
       if (singlePick) {
         await handleConfirm([user]);
       } else {
-        setProcessNotice(addMember(user));
+        addMember(user);
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : "Nie udalo sie pobrac profilu uzytkownika.";
-      setSearchNotice(message);
+      toast.error(message);
     } finally {
       setIsLookupProcessing(false);
     }
@@ -253,23 +241,22 @@ export function UsersPicker({
 
   const handleSearchResultClick = async (result: SearchUserResult) => {
     if (!accessToken) {
-      setSearchNotice("Brakuje aktywnej sesji potrzebnej do pobrania profilu uzytkownika.");
+      toast.error("Brakuje aktywnej sesji potrzebnej do pobrania profilu uzytkownika.");
       return;
     }
 
     setProcessingUserProfileId(result.userProfileId);
-    setSearchNotice(null);
 
     try {
       const userProfile = await getUserProfileById(result.userProfileId, accessToken);
       if (singlePick) {
         await handleConfirm([userProfile]);
       } else {
-        setProcessNotice(addMember(userProfile));
+        addMember(userProfile);
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : "Nie udalo sie pobrac profilu uzytkownika.";
-      setSearchNotice(message);
+      toast.error(message);
     } finally {
       setProcessingUserProfileId(null);
     }
@@ -306,14 +293,6 @@ export function UsersPicker({
             value={emailOrFriendlyId}
           />
         </div>
-
-        {processNotice
-          ? (
-            <p className={`alert ${processNotice.kind === "error" ? "alert-error" : "alert-info"}`}>
-              {processNotice.message}
-            </p>
-          )
-          : null}
 
         <div className="users-picker__search-label">
           <span aria-hidden="true" className="material-symbols-rounded">person_search</span>
@@ -375,20 +354,12 @@ export function UsersPicker({
                   ))}
                 </ul>
               )
-              : searchNotice
-              ? <p className="contacts-composer__typeahead-status">{searchNotice}</p>
+              : noResultsText
+              ? <p className="contacts-composer__typeahead-status">{noResultsText}</p>
               : null}
           </div>
         </div>
       </div>
-
-      {confirmNotice
-        ? (
-          <p className={`alert ${confirmNotice.kind === "error" ? "alert-error" : "alert-info"}`}>
-            {confirmNotice.message}
-          </p>
-        )
-        : null}
 
       {singlePick
         ? null

@@ -1,5 +1,4 @@
 import { useChatSelectionStore } from "../../../../store/chatSelectionStore";
-import { usePresenceStore } from "../../../../store/presenceStore";
 import type { Contact } from "../../../../types/contacts";
 import type { ManualUserStatus } from "../../../../types/realtime";
 import type { GroupConversation } from "../../../../api/chatApi";
@@ -16,7 +15,7 @@ interface SidebarProps {
   onChangePresenceStatus: (status: ManualUserStatus) => Promise<void>;
   onContactClick: (contact: Contact) => void;
   onGroupConversationClick: (conversation: GroupConversation) => void;
-  onProcessUser: (user: SearchUserResult) => Promise<{ kind: "error" | "info"; message: string }>;
+  onProcessUser: (user: SearchUserResult) => Promise<void>;
 }
 
 export function Sidebar({
@@ -35,7 +34,6 @@ export function Sidebar({
   const activeConversationMode = useChatSelectionStore((s) => s.activeConversationMode);
   const activeGroupConversation = useChatSelectionStore((s) => s.activeGroupConversation);
   const { openContactsComposer, openGroupBuilder, closeComposer } = useChatSelectionStore.getState();
-  const errorMessage = usePresenceStore((s) => s.errorMessage);
 
   const activeGroupConversationId = activeConversationMode === "group"
     ? activeGroupConversation?.conversationId ?? null
@@ -47,10 +45,6 @@ export function Sidebar({
     <aside className={`contacts-panel ${activeComposer ? "contacts-panel--composer-open" : ""}`}>
       <div className="contacts-panel__main">
         <SidebarHeader onChangePresenceStatus={onChangePresenceStatus} />
-
-        {errorMessage
-          ? <p className="alert alert-error">{errorMessage}</p>
-          : null}
 
         {activeTab === "contacts"
           ? (

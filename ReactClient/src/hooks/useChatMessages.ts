@@ -1,6 +1,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import type { KeyboardEvent } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 import { useAuthStore } from "../store/authStore";
 import type { Contact } from "../types/contacts";
 import type { RealtimeChatMessage } from "../types/realtime";
@@ -22,8 +23,6 @@ export function useChatMessages(activeContact: Contact | null) {
   const queryClient = useQueryClient();
 
   const [draft, setDraft] = useState("");
-  const [sendError, setSendError] = useState<string | null>(null);
-  const [olderMessagesError, setOlderMessagesError] = useState<string | null>(null);
   const [isLoadingOlderMessages, setIsLoadingOlderMessages] = useState(false);
 
   // Stores the callback supplied per-call to openContactConversation, fired once when query resolves
@@ -57,7 +56,7 @@ export function useChatMessages(activeContact: Contact | null) {
     activeContactUserId: activeContact?.userId,
     ownerUserId,
     userLogin,
-    onError: setSendError,
+    onError: (message) => toast.error(message),
   });
 
   const loadOlderMessages = useCallback(async () => {
@@ -72,7 +71,6 @@ export function useChatMessages(activeContact: Contact | null) {
 
     isLoadingOlderMessagesRef.current = true;
     setIsLoadingOlderMessages(true);
-    setOlderMessagesError(null);
 
     try {
       const result = await getConversationMessages(
@@ -106,7 +104,7 @@ export function useChatMessages(activeContact: Contact | null) {
         },
       );
     } catch (error) {
-      setOlderMessagesError(error instanceof Error ? error.message : "Nie udalo sie pobrac starszych wiadomosci.");
+      toast.error(error instanceof Error ? error.message : "Nie udalo sie pobrac starszych wiadomosci.");
     } finally {
       isLoadingOlderMessagesRef.current = false;
       setIsLoadingOlderMessages(false);
@@ -158,7 +156,6 @@ export function useChatMessages(activeContact: Contact | null) {
     }
 
     const messageId = crypto.randomUUID();
-    setSendError(null);
 
     try {
       await sendMessageMutation.mutateAsync({ messageId, conversationId, text, senderDisplayName: userLogin });
@@ -180,24 +177,17 @@ export function useChatMessages(activeContact: Contact | null) {
     onConversationOpened?: (contactUserId: string, conversationId: string) => void,
   ) => {
     onConversationOpenedRef.current = onConversationOpened ?? null;
-    setSendError(null);
-    setOlderMessagesError(null);
   };
-
-  const conversationError =
-    conversationQueryError instanceof Error ? conversationQueryError.message : null;
 
   return {
     messages: conversationData?.messages ?? [],
     draft,
     activeConversationId: conversationData?.conversationId ?? null,
-    conversationError,
+    hasConversationError: conversationQueryError !== null,
     isLoadingConversation,
     isSendingMessage: sendMessageMutation.isPending,
-    sendError,
     hasOlderMessages: conversationData?.hasMore ?? false,
     isLoadingOlderMessages,
-    olderMessagesError,
     setDraft,
     sendDraft,
     loadOlderMessages,

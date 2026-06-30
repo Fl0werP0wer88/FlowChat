@@ -10,13 +10,11 @@ import { DuetConversationSettings } from "../../molecules/DuetConversationSettin
 interface DuetConversationPanelProps {
   activeContact: Contact | null;
   activeConversationId: string | null;
-  conversationError: string | null;
+  hasConversationError: boolean;
   isLoadingConversation: boolean;
   isSendingMessage: boolean;
   hasOlderMessages: boolean;
   isLoadingOlderMessages: boolean;
-  sendError: string | null;
-  olderMessagesError: string | null;
   messages: ChatMessage[];
   draft: string;
   onDraftChange: (value: string) => void;
@@ -29,13 +27,11 @@ interface DuetConversationPanelProps {
 export function DuetConversationPanel({
   activeContact,
   activeConversationId,
-  conversationError,
+  hasConversationError,
   isLoadingConversation,
   isSendingMessage,
   hasOlderMessages,
   isLoadingOlderMessages,
-  sendError,
-  olderMessagesError,
   messages,
   draft,
   onDraftChange,
@@ -80,12 +76,11 @@ export function DuetConversationPanel({
         : (
           <ConversationBody
             activeConversationId={activeConversationId}
-            conversationError={conversationError}
+            hasConversationError={hasConversationError}
             hasActiveConversation={Boolean(activeContact)}
             isLoadingConversation={isLoadingConversation}
             hasOlderMessages={hasOlderMessages}
             isLoadingOlderMessages={isLoadingOlderMessages}
-            olderMessagesError={olderMessagesError}
             messages={messages}
             onLoadOlderMessages={onLoadOlderMessages}
           />
@@ -96,7 +91,6 @@ export function DuetConversationPanel({
         isComposerDisabled={isComposerDisabled}
         isSendDisabled={isSendDisabled}
         isSendingMessage={isSendingMessage}
-        sendError={sendError}
         onDraftChange={onDraftChange}
         onDraftKeyDown={onDraftKeyDown}
         onSendDraft={onSendDraft}
