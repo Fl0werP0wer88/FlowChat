@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import type { Contact } from "../../../../types/contacts";
 import type { ManualUserStatus, UserStatus } from "../../../../types/realtime";
-import type { GroupConversation } from "../../../../features/groups";
-import { GroupBuilder, GroupConversationsList } from "../../../../features/groups";
+import type { GroupConversation } from "../../../../api/chatApi";
+import { GroupBuilder, GroupConversationsList } from "../../../../components/UI/organisms/Groups";
 import { ContactsBuilder, ContactsList } from "../../../../components/UI/organisms/Contacts";
 import { SidebarHeader } from "./SidebarHeader";
 import type { SidebarTab } from "./SidebarHeader";

@@ -1,4 +1,4 @@
-import type { GroupConversation } from "../../../groups";
+import type { GroupConversation } from "../../../../api/chatApi";
 
 interface GroupConversationHeaderProps {
   activeGroupConversation: GroupConversation | null;

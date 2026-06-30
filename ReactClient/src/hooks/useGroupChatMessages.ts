@@ -4,7 +4,7 @@ import { useCallback, useRef, useState } from "react";
 import { useAuthStore } from "../store/authStore";
 import type { RealtimeChatMessage } from "../types/realtime";
 import { resolveOwnerUserId } from "../utils/authUtils";
-import type { GroupConversation } from "../features/groups";
+import type { GroupConversation } from "../api/chatApi";
 import { getGroupConversationMessages } from "../api/chatApi";
 import type { GroupConversationCacheEntry } from "../features/conversations/group/queries/groupConversationCache";
 import {

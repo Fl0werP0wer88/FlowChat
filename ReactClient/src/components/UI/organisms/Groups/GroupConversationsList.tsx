@@ -1,5 +1,5 @@
 import type { GroupConversation } from "../../../../api/chatApi";
-import { GroupConversationListItem } from "../molecules/GroupConversationListItem";
+import { GroupConversationListItem } from "../../molecules/GroupConversationListItem";
 
 interface GroupConversationsListProps {
   activeGroupConversationId: string | null;

@@ -7,7 +7,7 @@ import { useAuthStore } from "../../../store/authStore";
 import { useChatMessages, useContacts, useGroupChatMessages, useGroupConversations, usePresenceStatus } from "../../../hooks";
 import { DuetConversationPanel } from "../../../features/conversations/duet";
 import { GroupConversationPanel } from "../../../features/conversations/group";
-import type { GroupConversation } from "../../../features/groups";
+import type { GroupConversation } from "../../../api/chatApi";
 import { Sidebar } from "./components/Sidebar";
 import type { GroupBuilderRequest } from "./components/Sidebar";
 
