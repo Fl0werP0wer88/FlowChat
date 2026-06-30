@@ -5,11 +5,15 @@ import { UsersPicker } from "../../../users";
 import { createGroupConversation } from "../../api";
 
 interface GroupBuilderProps {
+  groupName?: string;
+  initialUserIds?: string[];
   isOpen: boolean;
   onClose: () => void;
 }
 
 export function GroupBuilder({
+  groupName: initialGroupName = "",
+  initialUserIds = [],
   isOpen,
   onClose,
 }: GroupBuilderProps) {
@@ -18,11 +22,12 @@ export function GroupBuilder({
 
   useEffect(() => {
     if (isOpen) {
+      setGroupName(initialGroupName);
       return;
     }
 
     setGroupName("");
-  }, [isOpen]);
+  }, [initialGroupName, isOpen]);
 
   const handleCreateGroup = async (selectedMembers: SearchUserResult[]) => {
     const trimmedName = groupName.trim();
@@ -66,6 +71,7 @@ export function GroupBuilder({
 
       <UsersPicker
         confirmLabel="Wybierz"
+        initialUserIds={initialUserIds}
         isOpen={isOpen}
         onConfirm={handleCreateGroup}
       />

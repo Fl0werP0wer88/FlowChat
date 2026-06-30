@@ -11,6 +11,7 @@ import type { GroupConversation } from "../groups";
 import { useGroupConversations } from "../groups";
 import { usePresenceStatus } from "../presence/hooks/usePresenceStatus";
 import { Sidebar } from "./components/Sidebar";
+import type { GroupBuilderRequest } from "./components/Sidebar";
 
 type ActiveConversationMode = "duet" | "group";
 
@@ -20,6 +21,7 @@ export function ChatFeature() {
   const navigate = useNavigate();
   const [activeConversationMode, setActiveConversationMode] = useState<ActiveConversationMode>("duet");
   const [activeGroupConversation, setActiveGroupConversation] = useState<GroupConversation | null>(null);
+  const [groupBuilderRequest, setGroupBuilderRequest] = useState<GroupBuilderRequest | null>(null);
 
   const handleLogout = () => {
     signOut();
@@ -41,6 +43,13 @@ export function ChatFeature() {
       groupChat.receiveRealtimeMessage(payload);
     },
   });
+
+  const openGroupBuilderFromDuet = (request: Omit<GroupBuilderRequest, "requestId">) => {
+    setGroupBuilderRequest((current) => ({
+      ...request,
+      requestId: (current?.requestId ?? 0) + 1,
+    }));
+  };
 
   return (
     <ChatTemplate
@@ -83,6 +92,7 @@ export function ChatFeature() {
             onDraftKeyDown={chat.handleDraftKeyDown}
             onSendDraft={chat.sendDraft}
             onLoadOlderMessages={chat.loadOlderMessages}
+            onCreateGroupFromDuet={openGroupBuilderFromDuet}
           />
         )}
       sidebar={
@@ -90,6 +100,7 @@ export function ChatFeature() {
           contacts={contacts.contacts}
           activeContactId={activeConversationMode === "duet" ? contacts.activeContact?.id ?? null : null}
           currentUserStatus={presence.currentStatus}
+          groupBuilderRequest={groupBuilderRequest}
           isChangingPresenceStatus={presence.isUpdatingStatus}
           isLoadingContacts={contacts.isLoadingContacts}
           onChangePresenceStatus={presence.changeManualPresenceStatus}
