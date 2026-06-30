@@ -4,7 +4,7 @@ import { openGroupConversation } from "../../api/gatewayApi";
 import {
   type GroupConversationCacheEntry,
   mapGroupConversationMessage,
-} from "./groupConversationCache";
+} from "../caches/groupConversationCache";
 
 export function useGroupConversationQuery(
   activeGroupConversation: GroupConversation | null,

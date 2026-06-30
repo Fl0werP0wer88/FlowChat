@@ -18,3 +18,15 @@ export { useConversationQuery } from "./queries/useConversationQuery";
 export { useGroupConversationQuery } from "./queries/useGroupConversationQuery";
 export { useGroupConversationsQuery } from "./queries/useGroupConversationsQuery";
 export { usePresencePreferencesQuery } from "./queries/usePresencePreferencesQuery";
+export {
+  createMessage,
+  mapConversationMessage,
+  sortMessages,
+  type ConversationCacheEntry,
+} from "./caches/conversationCache";
+export {
+  createGroupMessage,
+  mapGroupConversationMessage,
+  sortGroupMessages,
+  type GroupConversationCacheEntry,
+} from "./caches/groupConversationCache";

@@ -4,7 +4,7 @@ import {
   type ConversationCacheEntry,
   createMessage,
   sortMessages,
-} from "../queries/conversationCache";
+} from "../caches/conversationCache";
 
 interface SendMessageVariables {
   messageId: string;

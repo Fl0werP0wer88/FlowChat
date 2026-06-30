@@ -6,12 +6,12 @@ import type { RealtimeChatMessage } from "../types/realtime";
 import { resolveOwnerUserId } from "../utils/authUtils";
 import type { GroupConversation } from "../api/chatApi";
 import { getGroupConversationMessages } from "../api/chatApi";
-import type { GroupConversationCacheEntry } from "./queries/groupConversationCache";
+import type { GroupConversationCacheEntry } from "./caches/groupConversationCache";
 import {
   createGroupMessage,
   mapGroupConversationMessage,
   sortGroupMessages,
-} from "./queries/groupConversationCache";
+} from "./caches/groupConversationCache";
 import { useSendGroupMessageMutation } from "./mutations/useSendGroupMessageMutation";
 import { useGroupConversationQuery } from "./queries/useGroupConversationQuery";
 

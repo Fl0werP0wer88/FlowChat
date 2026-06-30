@@ -4,7 +4,7 @@ import {
   type GroupConversationCacheEntry,
   createGroupMessage,
   sortGroupMessages,
-} from "../queries/groupConversationCache";
+} from "../caches/groupConversationCache";
 
 interface SendGroupMessageVariables {
   messageId: string;
