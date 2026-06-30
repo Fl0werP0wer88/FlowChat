@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useAuthStore } from "../../../../store/authStore";
 import type { SearchUserResult } from "../../../../api/userProfileApi";
-import { UsersPicker } from "../../../users";
+import { UsersPicker } from "../../../../components/UI/organisms/UserPicker";
 import { createGroupConversation } from "../../../../api/chatApi";
 
 interface GroupBuilderProps {

@@ -11,8 +11,8 @@ import {
   type SearchUserResult,
   type SearchUsersCriteria,
 } from "../../../../api/userProfileApi";
-import { UsersPickerFooter } from "../molecules/UsersPickerFooter";
-import { UsersPickerHeader } from "../molecules/UsersPickerHeader";
+import { UsersPickerFooter } from "../../molecules/UsersPickerFooter";
+import { UsersPickerHeader } from "../../molecules/UsersPickerHeader";
 
 type UsersPickerNotice = { kind: "error" | "info"; message: string };
 
