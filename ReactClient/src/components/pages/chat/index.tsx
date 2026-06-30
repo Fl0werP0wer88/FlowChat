@@ -9,7 +9,7 @@ import { DuetConversationPanel, useChatMessages } from "../../../features/conver
 import { GroupConversationPanel, useGroupChatMessages } from "../../../features/conversations/group";
 import type { GroupConversation } from "../../../features/groups";
 import { useGroupConversations } from "../../../features/groups";
-import { usePresenceStatus } from "../../../features/presence/hooks/usePresenceStatus";
+import { usePresenceStatus } from "../../../hooks/usePresenceStatus";
 import { Sidebar } from "./components/Sidebar";
 import type { GroupBuilderRequest } from "./components/Sidebar";
 

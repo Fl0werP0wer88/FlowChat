@@ -1,10 +1,10 @@
 import type { FormEvent } from "react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuthStore } from "../../../../store/authStore";
-import type { AuthMode, AuthNotice, LoginFormValues, RegisterFormValues } from "../../../../types/auth";
-import { useLoginMutation } from "../queries/useLoginMutation";
-import { useRegisterMutation } from "../queries/useRegisterMutation";
+import { useAuthStore } from "../store/authStore";
+import type { AuthMode, AuthNotice, LoginFormValues, RegisterFormValues } from "../types/auth";
+import { useLoginMutation } from "../components/pages/auth/queries/useLoginMutation";
+import { useRegisterMutation } from "../components/pages/auth/queries/useRegisterMutation";
 
 interface UseAuthFlowOptions {
   mode: AuthMode;

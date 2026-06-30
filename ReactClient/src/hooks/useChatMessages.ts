@@ -1,21 +1,21 @@
 import { useQueryClient } from "@tanstack/react-query";
 import type { KeyboardEvent } from "react";
-import { useCallback, useRef, useState } from "react";
-import { useAuthStore } from "../../../../store/authStore";
-import type { RealtimeChatMessage } from "../../../../types/realtime";
-import { resolveOwnerUserId } from "../../../../utils/authUtils";
-import type { GroupConversation } from "../../../groups";
-import { getGroupConversationMessages } from "../../../../api/chatApi";
-import type { GroupConversationCacheEntry } from "../queries/groupConversationCache";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useAuthStore } from "../store/authStore";
+import type { Contact } from "../types/contacts";
+import type { RealtimeChatMessage } from "../types/realtime";
+import { resolveOwnerUserId } from "../utils/authUtils";
+import { getConversationMessages } from "../api/chatApi";
+import type { ConversationCacheEntry } from "../features/conversations/duet/queries/conversationCache";
 import {
-  createGroupMessage,
-  mapGroupConversationMessage,
-  sortGroupMessages,
-} from "../queries/groupConversationCache";
-import { useGroupConversationQuery } from "../queries/useGroupConversationQuery";
-import { useSendGroupMessageMutation } from "../queries/useSendGroupMessageMutation";
+  createMessage,
+  mapConversationMessage,
+  sortMessages,
+} from "../features/conversations/duet/queries/conversationCache";
+import { useConversationQuery } from "../features/conversations/duet/queries/useConversationQuery";
+import { useSendMessageMutation } from "../features/conversations/duet/queries/useSendMessageMutation";
 
-export function useGroupChatMessages(activeGroupConversation: GroupConversation | null) {
+export function useChatMessages(activeContact: Contact | null) {
   const accessToken = useAuthStore((s) => s.accessToken) ?? "";
   const userLogin = useAuthStore((s) => s.login) ?? "Uzytkownik";
   const ownerUserId = resolveOwnerUserId(accessToken);
@@ -26,31 +26,46 @@ export function useGroupChatMessages(activeGroupConversation: GroupConversation 
   const [olderMessagesError, setOlderMessagesError] = useState<string | null>(null);
   const [isLoadingOlderMessages, setIsLoadingOlderMessages] = useState(false);
 
+  // Stores the callback supplied per-call to openContactConversation, fired once when query resolves
+  const onConversationOpenedRef = useRef<((contactUserId: string, conversationId: string) => void) | null>(null);
+  const lastNotifiedKeyRef = useRef<string | null>(null);
   const isLoadingOlderMessagesRef = useRef(false);
 
   const {
     data: conversationData,
     isLoading: isLoadingConversation,
     error: conversationQueryError,
-  } = useGroupConversationQuery(activeGroupConversation, accessToken, ownerUserId);
+  } = useConversationQuery(activeContact, accessToken, ownerUserId);
 
-  const sendMessageMutation = useSendGroupMessageMutation({
+  useEffect(() => {
+    if (!conversationData || !activeContact) {
+      return;
+    }
+
+    const key = `${activeContact.userId}:${conversationData.conversationId}`;
+    if (key === lastNotifiedKeyRef.current) {
+      return;
+    }
+
+    lastNotifiedKeyRef.current = key;
+    onConversationOpenedRef.current?.(activeContact.userId, conversationData.conversationId);
+    onConversationOpenedRef.current = null;
+  }, [conversationData, activeContact]);
+
+  const sendMessageMutation = useSendMessageMutation({
     accessToken,
-    activeGroupConversationId: activeGroupConversation?.conversationId,
+    activeContactUserId: activeContact?.userId,
     ownerUserId,
     userLogin,
     onError: setSendError,
   });
 
   const loadOlderMessages = useCallback(async () => {
-    if (!activeGroupConversation || !accessToken || isLoadingOlderMessagesRef.current) {
+    if (!activeContact || !accessToken || isLoadingOlderMessagesRef.current) {
       return;
     }
 
-    const current = queryClient.getQueryData<GroupConversationCacheEntry>([
-      "groupConversation",
-      activeGroupConversation.conversationId,
-    ]);
+    const current = queryClient.getQueryData<ConversationCacheEntry>(["conversation", activeContact.userId]);
     if (!current?.hasMore || !current.nextBeforeSentAtUtc || !current.nextBeforeMessageId) {
       return;
     }
@@ -60,7 +75,7 @@ export function useGroupChatMessages(activeGroupConversation: GroupConversation 
     setOlderMessagesError(null);
 
     try {
-      const result = await getGroupConversationMessages(
+      const result = await getConversationMessages(
         current.conversationId,
         {
           beforeSentAtUtc: current.nextBeforeSentAtUtc,
@@ -69,8 +84,8 @@ export function useGroupChatMessages(activeGroupConversation: GroupConversation 
         accessToken,
       );
 
-      queryClient.setQueryData<GroupConversationCacheEntry>(
-        ["groupConversation", activeGroupConversation.conversationId],
+      queryClient.setQueryData<ConversationCacheEntry>(
+        ["conversation", activeContact.userId],
         (cached) => {
           if (!cached) {
             return cached;
@@ -78,12 +93,12 @@ export function useGroupChatMessages(activeGroupConversation: GroupConversation 
 
           const existingIds = new Set(cached.messages.map((message) => message.id));
           const olderMessages = result.messages
-            .map((message) => mapGroupConversationMessage(message, ownerUserId))
+            .map((message) => mapConversationMessage(message, ownerUserId))
             .filter((message) => !existingIds.has(message.id));
 
           return {
             ...cached,
-            messages: sortGroupMessages([...olderMessages, ...cached.messages]),
+            messages: sortMessages([...olderMessages, ...cached.messages]),
             nextBeforeSentAtUtc: result.nextBeforeSentAtUtc,
             nextBeforeMessageId: result.nextBeforeMessageId,
             hasMore: result.hasMore,
@@ -96,15 +111,15 @@ export function useGroupChatMessages(activeGroupConversation: GroupConversation 
       isLoadingOlderMessagesRef.current = false;
       setIsLoadingOlderMessages(false);
     }
-  }, [accessToken, activeGroupConversation, ownerUserId, queryClient]);
+  }, [accessToken, activeContact, ownerUserId, queryClient]);
 
   const receiveRealtimeMessage = (payload: RealtimeChatMessage) => {
     if (!conversationData || payload.conversationId !== conversationData.conversationId) {
       return;
     }
 
-    queryClient.setQueryData<GroupConversationCacheEntry>(
-      ["groupConversation", activeGroupConversation?.conversationId],
+    queryClient.setQueryData<ConversationCacheEntry>(
+      ["conversation", activeContact?.userId],
       (current) => {
         if (!current) {
           return current;
@@ -117,9 +132,9 @@ export function useGroupChatMessages(activeGroupConversation: GroupConversation 
         const sender = ownerUserId && payload.senderUserId === ownerUserId ? "me" : "other";
         return {
           ...current,
-          messages: sortGroupMessages([
+          messages: sortMessages([
             ...current.messages,
-            createGroupMessage(
+            createMessage(
               sender,
               payload.text,
               payload.sentAtUtc,
@@ -160,7 +175,11 @@ export function useGroupChatMessages(activeGroupConversation: GroupConversation 
     }
   };
 
-  const openGroupConversation = () => {
+  const openContactConversation = (
+    _contact: Contact,
+    onConversationOpened?: (contactUserId: string, conversationId: string) => void,
+  ) => {
+    onConversationOpenedRef.current = onConversationOpened ?? null;
     setSendError(null);
     setOlderMessagesError(null);
   };
@@ -172,7 +191,6 @@ export function useGroupChatMessages(activeGroupConversation: GroupConversation 
     messages: conversationData?.messages ?? [],
     draft,
     activeConversationId: conversationData?.conversationId ?? null,
-    activeConversationName: conversationData?.name ?? activeGroupConversation?.name ?? null,
     conversationError,
     isLoadingConversation,
     isSendingMessage: sendMessageMutation.isPending,
@@ -185,6 +203,6 @@ export function useGroupChatMessages(activeGroupConversation: GroupConversation 
     loadOlderMessages,
     handleDraftKeyDown,
     receiveRealtimeMessage,
-    openGroupConversation,
+    openContactConversation,
   };
 }

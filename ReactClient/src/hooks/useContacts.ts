@@ -1,13 +1,13 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { useAuthStore } from "../../../store/authStore";
-import type { Contact } from "../../../types/contacts";
-import type { PresenceChangedEvent } from "../../../types/realtime";
-import { resolveOwnerUserId } from "../../../utils/authUtils";
-import type { SearchUserResult } from "../../../api/userProfileApi";
-import { useAddContactByUserIdMutation } from "../queries/useAddContactByUserIdMutation";
-import { useAddContactMutation } from "../queries/useAddContactMutation";
-import { useContactsQuery } from "../queries/useContactsQuery";
+import { useAuthStore } from "../store/authStore";
+import type { Contact } from "../types/contacts";
+import type { PresenceChangedEvent } from "../types/realtime";
+import { resolveOwnerUserId } from "../utils/authUtils";
+import type { SearchUserResult } from "../api/userProfileApi";
+import { useAddContactByUserIdMutation } from "../features/contacts/queries/useAddContactByUserIdMutation";
+import { useAddContactMutation } from "../features/contacts/queries/useAddContactMutation";
+import { useContactsQuery } from "../features/contacts/queries/useContactsQuery";
 
 type ContactNotification = { kind: "error" | "info"; message: string };
 

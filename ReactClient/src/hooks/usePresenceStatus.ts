@@ -1,8 +1,8 @@
 import { useEffect, useEffectEvent, useRef, useState } from "react";
-import { useAuthStore } from "../../../store/authStore";
-import { changePresenceStatus } from "../../../api/presenceApi";
-import type { ManualUserStatus, UserStatus } from "../../../types/realtime";
-import { usePresencePreferencesQuery } from "../queries/usePresencePreferencesQuery";
+import { useAuthStore } from "../store/authStore";
+import { changePresenceStatus } from "../api/presenceApi";
+import type { ManualUserStatus, UserStatus } from "../types/realtime";
+import { usePresencePreferencesQuery } from "../features/presence/queries/usePresencePreferencesQuery";
 
 const afkTimeoutMs = 2 * 60 * 1000;
 const mouseActivityEvents: Array<keyof WindowEventMap> = ["mousemove", "mousedown", "wheel"];
