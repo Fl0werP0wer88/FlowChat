@@ -1,5 +1,4 @@
 import type { FormEvent } from "react";
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuthStore } from "../store/authStore";
@@ -11,32 +10,18 @@ interface UseAuthFlowOptions {
   mode: AuthMode;
   onSwitchToLogin: () => void;
   onSwitchToRegister: () => void;
+  onLoginSucceeded: () => void;
+  onRegisterSucceeded: () => void;
 }
 
-const emptyLoginFormValues: LoginFormValues = {
-  login: "",
-  password: "",
-};
-
-const emptyRegisterFormValues: RegisterFormValues = {
-  email: "",
-  friendlyUserId: "",
-  password: "",
-  firstName: "",
-  lastName: "",
-  organization: "",
-};
-
-export function useAuthFlow({ mode, onSwitchToLogin, onSwitchToRegister }: UseAuthFlowOptions) {
+export function useAuthFlow({ mode, onSwitchToLogin, onSwitchToRegister, onLoginSucceeded, onRegisterSucceeded }: UseAuthFlowOptions) {
   const signIn = useAuthStore((s) => s.signIn);
   const navigate = useNavigate();
-  const [loginValues, setLoginValues] = useState<LoginFormValues>(emptyLoginFormValues);
-  const [registerValues, setRegisterValues] = useState<RegisterFormValues>(emptyRegisterFormValues);
 
   const loginMutation = useLoginMutation({
     onSuccess: (session) => {
       signIn(session);
-      setLoginValues((current) => ({ ...current, password: "" }));
+      onLoginSucceeded();
       toast.success("Zalogowano poprawnie.");
       navigate("/chat", { replace: true });
     },
@@ -45,37 +30,26 @@ export function useAuthFlow({ mode, onSwitchToLogin, onSwitchToRegister }: UseAu
 
   const registerMutation = useRegisterMutation({
     onSuccess: () => {
-      setLoginValues((current) => ({
-        ...current,
-        login: registerValues.email.trim(),
-        password: "",
-      }));
-      setRegisterValues(emptyRegisterFormValues);
+      onRegisterSucceeded();
       toast.success("Konto utworzone. Potwierdz email, a potem zaloguj sie.");
       onSwitchToLogin();
     },
     onError: (message) => toast.error(message),
   });
 
-  const submitLogin = (event: FormEvent<HTMLFormElement>) => {
+  const submitLogin = (event: FormEvent<HTMLFormElement>, values: LoginFormValues) => {
     event.preventDefault();
-    loginMutation.mutate(loginValues);
+    loginMutation.mutate(values);
   };
 
-  const submitRegister = (event: FormEvent<HTMLFormElement>) => {
+  const submitRegister = (event: FormEvent<HTMLFormElement>, values: RegisterFormValues) => {
     event.preventDefault();
-    registerMutation.mutate(registerValues);
+    registerMutation.mutate(values);
   };
 
   return {
     mode,
     pending: loginMutation.isPending || registerMutation.isPending,
-    loginValues,
-    registerValues,
-    updateLoginValue: (field: keyof LoginFormValues, value: string) =>
-      setLoginValues((current) => ({ ...current, [field]: value })),
-    updateRegisterValue: (field: keyof RegisterFormValues, value: string) =>
-      setRegisterValues((current) => ({ ...current, [field]: value })),
     switchToLogin: onSwitchToLogin,
     switchToRegister: onSwitchToRegister,
     submitLogin,

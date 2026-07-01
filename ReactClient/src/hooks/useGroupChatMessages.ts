@@ -1,5 +1,4 @@
 import { useQueryClient } from "@tanstack/react-query";
-import type { KeyboardEvent } from "react";
 import { useCallback, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useAuthStore } from "../store/authStore";
@@ -22,7 +21,6 @@ export function useGroupChatMessages(activeGroupConversation: GroupConversation 
   const ownerUserId = resolveOwnerUserId(accessToken);
   const queryClient = useQueryClient();
 
-  const [draft, setDraft] = useState("");
   const [isLoadingOlderMessages, setIsLoadingOlderMessages] = useState(false);
 
   const isLoadingOlderMessagesRef = useRef(false);
@@ -132,28 +130,22 @@ export function useGroupChatMessages(activeGroupConversation: GroupConversation 
     );
   };
 
-  const sendDraft = async () => {
+  const sendDraft = async (draft: string): Promise<boolean> => {
     const text = draft.trim();
     const conversationId = conversationData?.conversationId;
 
     if (!text || !conversationId || !accessToken || !ownerUserId || sendMessageMutation.isPending) {
-      return;
+      return false;
     }
 
     const messageId = crypto.randomUUID();
 
     try {
       await sendMessageMutation.mutateAsync({ messageId, conversationId, text, senderDisplayName: userLogin });
-      setDraft("");
+      return true;
     } catch {
       // error is handled in onError
-    }
-  };
-
-  const handleDraftKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
-    if (event.key === "Enter" && !event.shiftKey) {
-      event.preventDefault();
-      void sendDraft();
+      return false;
     }
   };
 
@@ -161,7 +153,6 @@ export function useGroupChatMessages(activeGroupConversation: GroupConversation 
 
   return {
     messages: conversationData?.messages ?? [],
-    draft,
     activeConversationId: conversationData?.conversationId ?? null,
     activeConversationName: conversationData?.name ?? activeGroupConversation?.name ?? null,
     hasConversationError: conversationQueryError !== null,
@@ -169,10 +160,8 @@ export function useGroupChatMessages(activeGroupConversation: GroupConversation 
     isSendingMessage: sendMessageMutation.isPending,
     hasOlderMessages: conversationData?.hasMore ?? false,
     isLoadingOlderMessages,
-    setDraft,
     sendDraft,
     loadOlderMessages,
-    handleDraftKeyDown,
     receiveRealtimeMessage,
     openGroupConversation,
   };
