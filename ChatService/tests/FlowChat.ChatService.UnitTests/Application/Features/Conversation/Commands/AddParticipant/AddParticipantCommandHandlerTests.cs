@@ -1,7 +1,6 @@
 using FlowChat.ChatService.Application.Contracts.Persistence;
 using FlowChat.ChatService.Application.Features.Conversation.Commands.AddParticipant;
 using FlowChat.ChatService.Domain.Entities.Conversation;
-using FlowChat.ChatService.Domain.Entities.Conversation.Events;
 using FlowChat.Core.Messaging;
 using FlowChat.Core.Results;
 using FlowChat.Shared.Application;
@@ -51,7 +50,7 @@ public sealed class AddParticipantCommandHandlerTests
     }
 
     [Fact]
-    public async Task Handle_ValidRequest_AddsParticipantAndDispatchesEvents()
+    public async Task Handle_ValidRequest_AddsParticipant()
     {
         var creatorId = Guid.NewGuid();
         var existingMemberId = Guid.NewGuid();
@@ -66,27 +65,19 @@ public sealed class AddParticipantCommandHandlerTests
             "Dev Team");
         conversation.ClearEvents();
 
-        List<IDomainEvent> dispatchedEvents = [];
-
         _conversationRepositoryMock
             .Setup(x => x.GetByIdAsync(conversationId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(conversation);
-        _domainEventDispatcherMock
-            .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<ILocalEvent>>(), It.IsAny<CancellationToken>()))
-            .Callback<IEnumerable<ILocalEvent>, CancellationToken>((events, _) => dispatchedEvents.AddRange(events.OfType<IDomainEvent>()))
-            .Returns(Task.CompletedTask);
 
         var result = await _handler.Handle(command, CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().BeTrue();
         conversation.Participants.Should().Contain(p => p.UserId.Value == newMemberId);
-        dispatchedEvents.OfType<ParticipantAddedDomainEvent>().Should().ContainSingle()
-            .Which.ParticipantUserId.Value.Should().Be(newMemberId);
     }
 
     [Fact]
-    public async Task Handle_MultipleNewParticipants_AddsAllAndDispatchesEventsForEach()
+    public async Task Handle_MultipleNewParticipants_AddsAll()
     {
         var creatorId = Guid.NewGuid();
         var newMemberId1 = Guid.NewGuid();
@@ -101,15 +92,9 @@ public sealed class AddParticipantCommandHandlerTests
             "Dev Team");
         conversation.ClearEvents();
 
-        List<IDomainEvent> dispatchedEvents = [];
-
         _conversationRepositoryMock
             .Setup(x => x.GetByIdAsync(conversationId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(conversation);
-        _domainEventDispatcherMock
-            .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<ILocalEvent>>(), It.IsAny<CancellationToken>()))
-            .Callback<IEnumerable<ILocalEvent>, CancellationToken>((events, _) => dispatchedEvents.AddRange(events.OfType<IDomainEvent>()))
-            .Returns(Task.CompletedTask);
 
         var result = await _handler.Handle(command, CancellationToken.None);
 
@@ -117,7 +102,6 @@ public sealed class AddParticipantCommandHandlerTests
         result.Value.Should().BeTrue();
         conversation.Participants.Should().Contain(p => p.UserId.Value == newMemberId1);
         conversation.Participants.Should().Contain(p => p.UserId.Value == newMemberId2);
-        dispatchedEvents.OfType<ParticipantAddedDomainEvent>().Should().HaveCount(2);
     }
 
     [Fact]
@@ -136,22 +120,15 @@ public sealed class AddParticipantCommandHandlerTests
             "Dev Team");
         conversation.ClearEvents();
 
-        List<IDomainEvent> dispatchedEvents = [];
-
         _conversationRepositoryMock
             .Setup(x => x.GetByIdAsync(conversationId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(conversation);
-        _domainEventDispatcherMock
-            .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<ILocalEvent>>(), It.IsAny<CancellationToken>()))
-            .Callback<IEnumerable<ILocalEvent>, CancellationToken>((events, _) => dispatchedEvents.AddRange(events.OfType<IDomainEvent>()))
-            .Returns(Task.CompletedTask);
 
         var result = await _handler.Handle(command, CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().BeTrue();
-        dispatchedEvents.OfType<ParticipantAddedDomainEvent>().Should().ContainSingle()
-            .Which.ParticipantUserId.Value.Should().Be(newMemberId);
+        conversation.Participants.Should().Contain(p => p.UserId.Value == newMemberId);
     }
 
     [Fact]

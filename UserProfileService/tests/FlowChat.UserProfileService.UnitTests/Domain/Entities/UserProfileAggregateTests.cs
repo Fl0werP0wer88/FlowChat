@@ -128,12 +128,6 @@ public sealed class UserProfileAggregateTests
         firstEmail.IsMain.Should().BeFalse();
         secondEmail.IsMain.Should().BeTrue();
         profile.Emails.Should().ContainSingle(x => x.IsMain);
-
-        var emailChangedEvent = profile.DomainEvents.OfType<MainEmailChangedDomainEvent>().Should().ContainSingle().Subject;
-        emailChangedEvent.AggregateId.Should().Be(profile.Id.Value);
-        emailChangedEvent.UserProfileId.Should().Be(profile.Id);
-        emailChangedEvent.EmailId.Should().Be(secondEmail.Id);
-        emailChangedEvent.Address.Should().Be(secondEmail.Address);
     }
 
     [Fact]
@@ -403,12 +397,6 @@ public sealed class UserProfileAggregateTests
         firstPhone.IsMain.Should().BeFalse();
         secondPhone.IsMain.Should().BeTrue();
         profile.Phones.Should().ContainSingle(x => x.IsMain);
-
-        var phoneChangedEvent = profile.DomainEvents.OfType<MainPhoneChangedDomainEvent>().Should().ContainSingle().Subject;
-        phoneChangedEvent.AggregateId.Should().Be(profile.Id.Value);
-        phoneChangedEvent.UserProfileId.Should().Be(profile.Id);
-        phoneChangedEvent.PhoneId.Should().Be(secondPhone.Id);
-        phoneChangedEvent.Number.Should().Be(secondPhone.Number);
     }
 
     [Fact]

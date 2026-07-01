@@ -150,7 +150,6 @@ public class UserProfile : AggregateRootBase<UserProfile>
             email.SetMain(email == targetEmail);
         }
 
-        AddDomainEvent(new MainEmailChangedDomainEvent(Id, targetEmail.Id, targetEmail.Address));
     }
 
     public void SetAuthEmail(Id<Email> emailId)
@@ -263,12 +262,6 @@ public class UserProfile : AggregateRootBase<UserProfile>
             phone.SetMain(phone == targetPhone);
         }
 
-        AddDomainEvent(new MainPhoneChangedDomainEvent(Id, targetPhone.Id, targetPhone.Number));
-    }
-
-    public void Delete()
-    {
-        AddDomainEvent(new UserProfileDeletedDomainEvent(Id));
     }
 
     private static string NormalizeRequired(string value, string paramName)

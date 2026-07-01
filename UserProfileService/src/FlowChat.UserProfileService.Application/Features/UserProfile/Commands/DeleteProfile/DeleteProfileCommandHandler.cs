@@ -33,7 +33,6 @@ public sealed class DeleteProfileCommandHandler
             return FlowChatResult<Guid>.Failure(DomainError.NotFound($"User profile '{request.UserId}' was not found."));
         }
 
-        _userProfile.Delete();
         await _userProfileRepository.SoftDeleteAsync(_userProfile, cancellationToken);
 
         return FlowChatResult<Guid>.Success(_userProfile.Id.Value);

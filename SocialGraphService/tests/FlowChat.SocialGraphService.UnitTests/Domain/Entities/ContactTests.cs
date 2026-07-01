@@ -1,6 +1,5 @@
 using FlowChat.Shared.Domain;
 using FlowChat.SocialGraphService.Domain.Entities.Contact;
-using FlowChat.SocialGraphService.Domain.Entities.Contact.Events;
 using FluentAssertions;
 using UserProfileMarker = FlowChat.SocialGraphService.Domain.Entities.UserProfiles.UserProfile;
 
@@ -35,22 +34,4 @@ public sealed class ContactTests
             .WithMessage("OwnerUserId and ContactUserId must be different.");
     }
 
-    [Fact]
-    public void Create_WhenContactIsCreated_RaisesContactAddedDomainEvent()
-    {
-        var contact = Contact.Create(Id<Contact>.New(), Id<UserProfileMarker>.New(), Id<UserProfileMarker>.New(), "John Doe");
-
-        contact.DomainEvents.OfType<ContactAddedDomainEvent>().Should().ContainSingle();
-    }
-
-    [Fact]
-    public void MarkDeleted_WhenCalled_RaisesContactDeletedDomainEvent()
-    {
-        var contact = Contact.Create(Id<Contact>.New(), Id<UserProfileMarker>.New(), Id<UserProfileMarker>.New(), "John Doe");
-        contact.PopDomainEvents();
-
-        contact.MarkDeleted();
-
-        contact.DomainEvents.OfType<ContactDeletedDomainEvent>().Should().ContainSingle();
-    }
 }

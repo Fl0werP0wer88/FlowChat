@@ -80,8 +80,6 @@ public abstract class Conversation : AggregateRootBase<Conversation>
             throw new InvalidOperationException("User is already a participant in this conversation.");
 
         _participants.Add(ParticipantUser.Create(Id<ParticipantUser>.New(), Id, participantUserId, displayName, avatarUrl));
-
-        AddDomainEvent(new ParticipantAddedDomainEvent(Id, participantUserId));
     }
 
     private static void ValidateInvariants(ConversationType type, string? name, Id<UserProfileMarker> createdByUserId)

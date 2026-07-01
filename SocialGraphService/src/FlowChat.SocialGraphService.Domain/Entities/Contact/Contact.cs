@@ -1,6 +1,5 @@
 using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
-using FlowChat.SocialGraphService.Domain.Entities.Contact.Events;
 using UserProfileMarker = FlowChat.SocialGraphService.Domain.Entities.UserProfiles.UserProfile;
 
 namespace FlowChat.SocialGraphService.Domain.Entities.Contact;
@@ -71,7 +70,6 @@ public class Contact : AggregateRootBase<Contact>
             emailAddress,
             isBlocked);
 
-        contact.AddDomainEvent(new ContactAddedDomainEvent(contact.Id, contact.OwnerUserId, contact.ContactUserId));
         return contact;
     }
 
@@ -87,11 +85,6 @@ public class Contact : AggregateRootBase<Contact>
         Id<Contact>? id = null)
     {
         return new Contact(id ?? Id<Contact>.New(), ownerUserId, contactUserId, displayName, firstName, lastName, phoneNumber, emailAddress, isBlocked);
-    }
-
-    public void MarkDeleted()
-    {
-        AddDomainEvent(new ContactDeletedDomainEvent(Id, OwnerUserId, ContactUserId));
     }
 }
 

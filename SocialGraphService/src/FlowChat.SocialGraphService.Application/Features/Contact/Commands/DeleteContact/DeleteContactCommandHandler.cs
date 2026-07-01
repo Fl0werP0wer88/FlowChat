@@ -38,7 +38,6 @@ public sealed class DeleteContactCommandHandler
             return FlowChatResult<MediatR.Unit>.Failure(DomainError.NotFound("Contact was not found."));
         }
 
-        _contact.MarkDeleted();
         await _contactWriteRepository.SoftDeleteAsync(_contact, cancellationToken);
 
         return FlowChatResult<MediatR.Unit>.Success(MediatR.Unit.Value);
