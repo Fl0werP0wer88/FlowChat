@@ -22,3 +22,4 @@
 12. REtry topicki (I może nawet DLQ) nir mogą być per IntegrationEvent a raczej minimalnie per konsumujący serwis. W przeciwnym razie jak jest kilku konsumentów i  jeden wrzuci na topic retry to wtedy wszystkie będą re-procesowały event.
 13. Rozważyć pozbycie się ReadRepositoryBase i WriteRepositoryBase . One nie daja zbytnio dużo uzysku. Wszystko i tak jest zazwyczaj overridowane
 14. Niektore REadREpo pobierają cały agreagat i dopiero mapuja, to raczej bez sensu. Niech pobieraja z bazy tylko te dane ktore potrzebują. 
+15. Trzeba wyciągnąć pole name z Conversations i przeniesc na Nową tabele GroupConversations.  Ponieważ konwersacja 1:1 nie powinna mieć edytowalnej nazwy.
