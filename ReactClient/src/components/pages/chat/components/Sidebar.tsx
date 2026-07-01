@@ -33,7 +33,7 @@ export function Sidebar({
   const activeContactId = useChatSelectionStore((s) => s.activeContactId);
   const activeConversationMode = useChatSelectionStore((s) => s.activeConversationMode);
   const activeGroupConversation = useChatSelectionStore((s) => s.activeGroupConversation);
-  const { openContactsComposer, openGroupBuilder, closeComposer } = useChatSelectionStore.getState();
+  const { openContactsBuilder, openGroupBuilder, closeComposer } = useChatSelectionStore.getState();
 
   const activeGroupConversationId = activeConversationMode === "group"
     ? activeGroupConversation?.conversationId ?? null
@@ -52,7 +52,7 @@ export function Sidebar({
               activeContactId={contactListActiveContactId}
               contacts={contacts}
               isLoadingContacts={isLoadingContacts}
-              onAddContactClick={openContactsComposer}
+              onAddContactClick={openContactsBuilder}
               onContactClick={onContactClick}
             />
           )

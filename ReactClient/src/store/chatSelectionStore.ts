@@ -19,7 +19,7 @@ interface ChatSelectionStore {
   selectDuetContact: (contact: Contact) => void;
   selectGroupConversation: (conversation: GroupConversation) => void;
   setActiveTab: (tab: SidebarTab) => void;
-  openContactsComposer: () => void;
+  openContactsBuilder: () => void;
   openGroupBuilder: (groupName?: string, initialUserIds?: string[]) => void;
   closeComposer: () => void;
 }
@@ -39,7 +39,7 @@ export const useChatSelectionStore = create<ChatSelectionStore>((set) => ({
 
   setActiveTab: (tab) => set({ activeTab: tab }),
 
-  openContactsComposer: () => set({ activeComposer: { type: "contacts" } }),
+  openContactsBuilder: () => set({ activeComposer: { type: "contacts" } }),
 
   openGroupBuilder: (groupName, initialUserIds) =>
     set({ activeTab: "groups", activeComposer: { type: "group", groupName, initialUserIds } }),
