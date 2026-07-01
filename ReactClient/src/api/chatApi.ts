@@ -14,80 +14,53 @@ interface CopyDuetAsGroupPayload {
 
 interface CopyDuetAsGroupResponseDto {
   conversationId?: string;
-  ConversationId?: string;
   name?: string;
-  Name?: string;
   participants?: ConversationParticipantDto[];
-  Participants?: ConversationParticipantDto[];
 }
 
 interface SendChatMessageResponseDto {
   messageId?: string;
-  MessageId?: string;
   sentAtUtc?: string;
-  SentAtUtc?: string;
 }
 
 interface ConversationParticipantDto {
   userId?: string;
-  UserId?: string;
   displayName?: string | null;
-  DisplayName?: string | null;
   avatarUrl?: string | null;
-  AvatarUrl?: string | null;
   participantUserId?: string;
-  ParticipantUserId?: string;
 }
 
 interface ConversationMessageDto {
   id?: string;
-  Id?: string;
   conversationId?: string;
-  ConversationId?: string;
   senderUserId?: string;
-  SenderUserId?: string;
   senderDisplayName?: string;
-  SenderDisplayName?: string;
   text?: string;
-  Text?: string;
   sentAtUtc?: string;
-  SentAtUtc?: string;
 }
 
 interface GetConversationMessagesResponseDto {
   items?: ConversationMessageDto[];
-  Items?: ConversationMessageDto[];
   nextBeforeSentAtUtc?: string | null;
-  NextBeforeSentAtUtc?: string | null;
   nextBeforeMessageId?: string | null;
-  NextBeforeMessageId?: string | null;
   hasMore?: boolean;
-  HasMore?: boolean;
 }
 
 interface GetGroupConversationMessagesResponseDto {
   items?: ConversationMessageDto[];
-  Items?: ConversationMessageDto[];
   nextBeforeSentAtUtc?: string | null;
-  NextBeforeSentAtUtc?: string | null;
   nextBeforeMessageId?: string | null;
-  NextBeforeMessageId?: string | null;
   hasMore?: boolean;
-  HasMore?: boolean;
 }
 
 interface GroupConversationSummaryDto {
   conversationId?: string;
-  ConversationId?: string;
   name?: string;
-  Name?: string;
   participantCount?: number;
-  ParticipantCount?: number;
 }
 
 interface GetGroupConversationsResponseDto {
   groupConversations?: GroupConversationSummaryDto[];
-  GroupConversations?: GroupConversationSummaryDto[];
 }
 
 interface CreateGroupConversationRequestDto {
@@ -98,9 +71,7 @@ interface CreateGroupConversationRequestDto {
 
 interface CreateGroupConversationResponseDto {
   conversationId?: string;
-  ConversationId?: string;
   name?: string;
-  Name?: string;
 }
 
 export interface ConversationParticipant {
@@ -173,40 +144,40 @@ export interface GroupConversation {
 
 function mapParticipant(dto: ConversationParticipantDto): ConversationParticipant {
   return {
-    userId: dto.userId ?? dto.UserId ?? "",
-    displayName: dto.displayName ?? dto.DisplayName ?? null,
-    avatarUrl: dto.avatarUrl ?? dto.AvatarUrl ?? null,
-    participantUserId: dto.participantUserId ?? dto.ParticipantUserId ?? "",
+    userId: dto.userId ?? "",
+    displayName: dto.displayName ?? null,
+    avatarUrl: dto.avatarUrl ?? null,
+    participantUserId: dto.participantUserId ?? "",
   };
 }
 
 function mapMessage(dto: ConversationMessageDto): ConversationMessage {
   return {
-    id: dto.id ?? dto.Id ?? crypto.randomUUID(),
-    conversationId: dto.conversationId ?? dto.ConversationId ?? "",
-    senderUserId: dto.senderUserId ?? dto.SenderUserId ?? "",
-    senderDisplayName: dto.senderDisplayName ?? dto.SenderDisplayName ?? "",
-    text: dto.text ?? dto.Text ?? "",
-    sentAtUtc: dto.sentAtUtc ?? dto.SentAtUtc ?? new Date().toISOString(),
+    id: dto.id ?? crypto.randomUUID(),
+    conversationId: dto.conversationId ?? "",
+    senderUserId: dto.senderUserId ?? "",
+    senderDisplayName: dto.senderDisplayName ?? "",
+    text: dto.text ?? "",
+    sentAtUtc: dto.sentAtUtc ?? new Date().toISOString(),
   };
 }
 
 function mapGroupMessage(dto: ConversationMessageDto): GroupConversationMessage {
   return {
-    id: dto.id ?? dto.Id ?? crypto.randomUUID(),
-    conversationId: dto.conversationId ?? dto.ConversationId ?? "",
-    senderUserId: dto.senderUserId ?? dto.SenderUserId ?? "",
-    senderDisplayName: dto.senderDisplayName ?? dto.SenderDisplayName ?? "",
-    text: dto.text ?? dto.Text ?? "",
-    sentAtUtc: dto.sentAtUtc ?? dto.SentAtUtc ?? new Date().toISOString(),
+    id: dto.id ?? crypto.randomUUID(),
+    conversationId: dto.conversationId ?? "",
+    senderUserId: dto.senderUserId ?? "",
+    senderDisplayName: dto.senderDisplayName ?? "",
+    text: dto.text ?? "",
+    sentAtUtc: dto.sentAtUtc ?? new Date().toISOString(),
   };
 }
 
 function mapGroupConversation(dto: GroupConversationSummaryDto): GroupConversation {
   return {
-    conversationId: dto.conversationId ?? dto.ConversationId ?? "",
-    name: dto.name ?? dto.Name ?? "",
-    participantCount: dto.participantCount ?? dto.ParticipantCount ?? 0,
+    conversationId: dto.conversationId ?? "",
+    name: dto.name ?? "",
+    participantCount: dto.participantCount ?? 0,
   };
 }
 
@@ -232,10 +203,10 @@ export async function getConversationMessages(
   );
 
   return {
-    messages: (response.items ?? response.Items ?? []).map(mapMessage),
-    nextBeforeSentAtUtc: response.nextBeforeSentAtUtc ?? response.NextBeforeSentAtUtc ?? null,
-    nextBeforeMessageId: response.nextBeforeMessageId ?? response.NextBeforeMessageId ?? null,
-    hasMore: response.hasMore ?? response.HasMore ?? false,
+    messages: (response.items ?? []).map(mapMessage),
+    nextBeforeSentAtUtc: response.nextBeforeSentAtUtc ?? null,
+    nextBeforeMessageId: response.nextBeforeMessageId ?? null,
+    hasMore: response.hasMore ?? false,
   };
 }
 
@@ -254,8 +225,8 @@ export async function sendChatMessage(
   );
 
   return {
-    messageId: response.messageId ?? response.MessageId ?? payload.id,
-    sentAtUtc: response.sentAtUtc ?? response.SentAtUtc ?? new Date().toISOString(),
+    messageId: response.messageId ?? payload.id,
+    sentAtUtc: response.sentAtUtc ?? new Date().toISOString(),
   };
 }
 
@@ -278,9 +249,9 @@ export async function copyDuetAsGroup(
   );
 
   return {
-    conversationId: response.conversationId ?? response.ConversationId ?? newGroupConversationId,
-    name: response.name ?? response.Name ?? "",
-    participants: (response.participants ?? response.Participants ?? []).map(mapParticipant),
+    conversationId: response.conversationId ?? newGroupConversationId,
+    name: response.name ?? "",
+    participants: (response.participants ?? []).map(mapParticipant),
   };
 }
 
@@ -306,10 +277,10 @@ export async function getGroupConversationMessages(
   );
 
   return {
-    messages: (response.items ?? response.Items ?? []).map(mapGroupMessage),
-    nextBeforeSentAtUtc: response.nextBeforeSentAtUtc ?? response.NextBeforeSentAtUtc ?? null,
-    nextBeforeMessageId: response.nextBeforeMessageId ?? response.NextBeforeMessageId ?? null,
-    hasMore: response.hasMore ?? response.HasMore ?? false,
+    messages: (response.items ?? []).map(mapGroupMessage),
+    nextBeforeSentAtUtc: response.nextBeforeSentAtUtc ?? null,
+    nextBeforeMessageId: response.nextBeforeMessageId ?? null,
+    hasMore: response.hasMore ?? false,
   };
 }
 
@@ -328,8 +299,8 @@ export async function sendGroupChatMessage(
   );
 
   return {
-    messageId: response.messageId ?? response.MessageId ?? payload.id,
-    sentAtUtc: response.sentAtUtc ?? response.SentAtUtc ?? new Date().toISOString(),
+    messageId: response.messageId ?? payload.id,
+    sentAtUtc: response.sentAtUtc ?? new Date().toISOString(),
   };
 }
 
@@ -342,7 +313,7 @@ export async function fetchGroupConversations(
     { accessToken, signal },
   );
 
-  const items = response.groupConversations ?? response.GroupConversations ?? [];
+  const items = response.groupConversations ?? [];
   return items.map(mapGroupConversation);
 }
 
@@ -360,8 +331,8 @@ export async function createGroupConversation(
   );
 
   return {
-    conversationId: response.conversationId ?? response.ConversationId ?? conversationId,
-    name: response.name ?? response.Name ?? name,
+    conversationId: response.conversationId ?? conversationId,
+    name: response.name ?? name,
     participantCount: participantUserIds.length,
   };
 }

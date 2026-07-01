@@ -19,7 +19,7 @@ interface RegisterPayload {
 }
 
 function resolveExpiresAtUtc(response: AuthTokenResponseDto): string | null {
-  const explicitExpiration = response.expiresAtUtc ?? response.ExpiresAtUtc ?? null;
+  const explicitExpiration = response.expiresAtUtc ?? null;
   if (explicitExpiration) {
     return explicitExpiration;
   }
@@ -32,7 +32,7 @@ function resolveExpiresAtUtc(response: AuthTokenResponseDto): string | null {
 }
 
 function mapToAuthSession(response: AuthTokenResponseDto, login: string): AuthSession {
-  const accessToken = response.access_token ?? response.accessToken ?? response.AccessToken;
+  const accessToken = response.access_token ?? response.accessToken;
   if (!accessToken) {
     throw new Error("Authentication response does not contain access token.");
   }

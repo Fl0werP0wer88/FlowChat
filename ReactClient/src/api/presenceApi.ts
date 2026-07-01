@@ -7,7 +7,6 @@ interface ChangePresenceStatusRequest {
 
 interface UserPresencePreferencesResponse {
   preferredStatus?: UserStatus | null;
-  PreferredStatus?: UserStatus | null;
 }
 
 export async function fetchPresencePreferences(accessToken: string): Promise<UserStatus | null> {
@@ -15,7 +14,7 @@ export async function fetchPresencePreferences(accessToken: string): Promise<Use
     accessToken,
   });
 
-  return response.preferredStatus ?? response.PreferredStatus ?? null;
+  return response.preferredStatus ?? null;
 }
 
 export async function changePresenceStatus(status: UserStatus, accessToken: string): Promise<void> {

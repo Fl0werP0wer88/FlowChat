@@ -10,7 +10,6 @@ interface AddContactPayload {
 
 interface AddContactResponseDto {
   contactId?: string;
-  ContactId?: string;
 }
 
 export async function addContact(
@@ -29,7 +28,7 @@ export async function addContact(
     accessToken,
   });
 
-  return response.contactId ?? response.ContactId ?? null;
+  return response.contactId ?? null;
 }
 
 export async function addContactByUserId(
@@ -45,5 +44,5 @@ export async function addContactByUserId(
     accessToken,
   });
 
-  return response.contactId ?? response.ContactId ?? null;
+  return response.contactId ?? null;
 }

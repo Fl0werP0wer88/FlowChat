@@ -23,10 +23,8 @@ export interface AuthSession {
 export interface AuthTokenResponseDto {
   access_token?: string;
   accessToken?: string;
-  AccessToken?: string;
   expires_in?: number;
   expiresAtUtc?: string | null;
-  ExpiresAtUtc?: string | null;
   token_type?: string;
   scope?: string;
 }
