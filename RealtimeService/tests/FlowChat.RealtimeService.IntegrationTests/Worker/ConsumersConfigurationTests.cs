@@ -2,6 +2,7 @@ using FlowChat.RealtimeService.Consumers;
 using FlowChat.RealtimeService.Consumers.Kafka;
 using FlowChat.RealtimeService.Application.Contracts.Infrastructure;
 using FlowChat.RealtimeService.Consumers.Configuration.Settings;
+using FlowChat.RealtimeService.Infrastructure.Configuration.Settings;
 using FlowChat.RealtimeService.Infrastructure.Routing;
 using FlowChat.RealtimeService.Redis.RealtimeConnections;
 using FluentAssertions;
@@ -109,6 +110,27 @@ public sealed class ConsumersConfigurationTests
         conversationOptions.Topic.Should().Be("dev.flowchat.chat.group-conversation.v1");
         conversationOptions.RetryTopic.Should().Be("dev.flowchat.chat.group-conversation.v1.realtime-service.retry");
         conversationOptions.DeadLetterTopic.Should().Be("dev.flowchat.chat.group-conversation.v1.realtime-service.dlq");
+    }
+
+    [Fact]
+    public void DevelopmentAppSettings_UseChatServiceInternalApiKey()
+    {
+        var realtimeConsumersConfiguration = new ConfigurationBuilder()
+            .AddJsonFile(GetRepositoryPath("RealtimeService/src/Workers/FlowChat.RealtimeService.Consumers/appsettings.json"))
+            .AddJsonFile(GetRepositoryPath("RealtimeService/src/Workers/FlowChat.RealtimeService.Consumers/appsettings.Development.json"))
+            .Build();
+        var chatServiceApiConfiguration = new ConfigurationBuilder()
+            .AddJsonFile(GetRepositoryPath("ChatService/src/FlowChat.ChatService.API/appsettings.json"))
+            .AddJsonFile(GetRepositoryPath("ChatService/src/FlowChat.ChatService.API/appsettings.Development.json"))
+            .Build();
+
+        var realtimeChatServiceOptions = realtimeConsumersConfiguration
+            .GetSection(new ChatServiceSettingsSection().SectionName)
+            .Get<ChatServiceSettingsSection>();
+        var chatServiceInternalApiKey = chatServiceApiConfiguration["FlowChat:InternalApi:ApiKey"];
+
+        realtimeChatServiceOptions.Should().NotBeNull();
+        realtimeChatServiceOptions!.ApiKey.Should().Be(chatServiceInternalApiKey);
     }
 
     private static IConfiguration CreateConfiguration()
