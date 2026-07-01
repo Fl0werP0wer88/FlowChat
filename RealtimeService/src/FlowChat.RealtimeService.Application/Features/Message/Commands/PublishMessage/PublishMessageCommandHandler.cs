@@ -10,7 +10,7 @@ public sealed class PublishMessageCommandHandler(IRealtimeClientDispatcher realt
 {
     private readonly IRealtimeClientDispatcher _realtimeClientDispatcher = realtimeClientDispatcher
         ?? throw new ArgumentNullException(nameof(realtimeClientDispatcher));
-
+    //Ogólnie z tego co widze to nie bedzie się dało zapenić exactly once delivery po stronie backendu (SignalR nie pozwoli max co mozna zrobic to zapisywac wwpis do jakiegos outboxa i worker niech wysyła do kliena ale to nadal nie bedzie w pełni excatly once). Pamiętać żeby dodać deduplikację po stronie klienta.
     public async Task<FlowChatResult<Unit>> Handle(PublishMessageCommand request, CancellationToken cancellationToken)
     {
         var recipientUserIds = NormalizeRecipientUserIds(request.RecipientUserIds);

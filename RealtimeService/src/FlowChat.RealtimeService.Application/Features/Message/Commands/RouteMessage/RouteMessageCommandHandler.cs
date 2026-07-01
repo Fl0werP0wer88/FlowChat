@@ -31,7 +31,10 @@ public sealed class RouteMessageCommandHandler(
             recipientUserIds);
 
         // ToDo: Maybe parallelize this with cancellation or compensation if RouteMessageAsync fails.
+        //ToDo 2: To wywołanie nie jest idempotentne. Pamiętać koniecznie żeby dodać inbox.
         await _realtimeEventRouter.RouteMessageAsync(notification, cancellationToken);
+
+        //ToDo: To wywołanie nie jest idempotentne. Pamiętać koniecznie żeby dodać inbox po stronie chat service.
         await _chatServiceInternalApiClient.MarkChatMessageAsDeliveredAsync(
             request.MessageId,
             request.ConversationId,
