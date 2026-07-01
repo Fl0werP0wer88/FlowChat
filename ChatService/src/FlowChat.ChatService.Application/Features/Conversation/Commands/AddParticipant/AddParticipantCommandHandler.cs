@@ -12,17 +12,20 @@ public sealed class AddParticipantCommandHandler
     : AggregateRootUpdateCommandHandlerBaseV2<AddParticipantCommand, bool, GroupConversation>
 {
     private readonly IGroupConversationWriteRepository _groupConversationRepository;
+    private readonly IChatMessageWriteRepository _chatMessageRepository;
     private GroupConversation? _conversation;
     private bool _participantsChanged;
 
     public AddParticipantCommandHandler(
         IGroupConversationWriteRepository groupConversationRepository,
+        IChatMessageWriteRepository chatMessageRepository,
         IUnitOfWork unitOfWork,
         ILocalEventDispatcher domainEventDispatcher,
         IEnumerable<IAggregateBeforeSaveProcessor<AddParticipantCommand, GroupConversation>> beforeSaveProcessors)
         : base(domainEventDispatcher, unitOfWork, beforeSaveProcessors)
     {
         _groupConversationRepository = groupConversationRepository ?? throw new ArgumentNullException(nameof(groupConversationRepository));
+        _chatMessageRepository = chatMessageRepository ?? throw new ArgumentNullException(nameof(chatMessageRepository));
     }
 
     protected override async Task<FlowChatResult<bool>> ExecuteAsync(
@@ -33,22 +36,30 @@ public sealed class AddParticipantCommandHandler
         if (_conversation is null)
             return FlowChatResult<bool>.Failure(DomainError.NotFound("Conversation not found."));
 
-        var anyAdded = false;
-        foreach (var participantUserId in request.ParticipantUserIds)
-        {
-            var typedParticipantUserId = Id<UserProfileMarker>.FromGuid(participantUserId);
+        var newParticipantUserIds = request.ParticipantUserIds
+            .Select(Id<UserProfileMarker>.FromGuid)
+            .Distinct()
+            .Where(participantUserId => _conversation.Participants.All(p => p.UserId != participantUserId))
+            .ToList();
 
-            if (_conversation.Participants.Any(p => p.UserId == typedParticipantUserId))
-                continue;
-
-            _conversation.AddParticipant(typedParticipantUserId, displayName: null, avatarUrl: null);
-            anyAdded = true;
-        }
-
-        if (!anyAdded)
+        if (newParticipantUserIds.Count == 0)
         {
             _participantsChanged = false;
             return FlowChatResult<bool>.Success(false);
+        }
+
+        var maxSequenceNum = await _chatMessageRepository.GetMaxSequenceNumAsync(
+            request.ConversationId,
+            cancellationToken);
+        var lastReadMessageSequenceNum = maxSequenceNum.GetValueOrDefault();
+
+        foreach (var participantUserId in newParticipantUserIds)
+        {
+            _conversation.AddParticipant(
+                participantUserId,
+                displayName: null,
+                avatarUrl: null,
+                lastReadMessageSequenceNum);
         }
 
         _participantsChanged = true;

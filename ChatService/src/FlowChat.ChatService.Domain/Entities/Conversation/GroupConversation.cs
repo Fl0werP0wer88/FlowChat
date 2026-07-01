@@ -64,8 +64,12 @@ public sealed class GroupConversation : Conversation
                 new GroupConversation(id, type, name, createdByUserId, participants));
     }
 
-    public void AddParticipant(Id<UserProfileMarker> participantUserId, string? displayName = null, string? avatarUrl = null)
+    public void AddParticipant(
+        Id<UserProfileMarker> participantUserId,
+        string? displayName = null,
+        string? avatarUrl = null,
+        long lastReadMessageSequenceNum = 0)
     {
-        AddParticipantCore(participantUserId, displayName, avatarUrl);
+        AddParticipantCore(participantUserId, displayName, avatarUrl, lastReadMessageSequenceNum);
     }
 }

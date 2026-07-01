@@ -12,6 +12,7 @@ public sealed class ParticipantUser : EntityBase<ParticipantUser>
     public string? AvatarUrl { get; private set; }
     public bool IsBlocked { get; private set; }
     public UtcDateTimeOffset JoinedAtUtc { get; private set; }
+    public long LastReadMessageSequenceNum { get; private set; }
 
     private ParticipantUser(
         Id<ParticipantUser> id,
@@ -20,7 +21,8 @@ public sealed class ParticipantUser : EntityBase<ParticipantUser>
         string? displayName,
         string? avatarUrl,
         bool isBlocked,
-        UtcDateTimeOffset joinedAtUtc) : base(id)
+        UtcDateTimeOffset joinedAtUtc,
+        long lastReadMessageSequenceNum) : base(id)
     {
         ArgumentNullException.ThrowIfNull(conversationId);
         ArgumentNullException.ThrowIfNull(userId);
@@ -31,6 +33,7 @@ public sealed class ParticipantUser : EntityBase<ParticipantUser>
         AvatarUrl = avatarUrl;
         IsBlocked = isBlocked;
         JoinedAtUtc = joinedAtUtc;
+        LastReadMessageSequenceNum = lastReadMessageSequenceNum;
     }
 
     public static ParticipantUser Create(
@@ -38,7 +41,8 @@ public sealed class ParticipantUser : EntityBase<ParticipantUser>
         Id<Conversation> conversationId,
         Id<UserProfileMarker> userId,
         string? displayName = null,
-        string? avatarUrl = null)
+        string? avatarUrl = null,
+        long lastReadMessageSequenceNum = 0)
     {
         return new ParticipantUser(
             id,
@@ -47,7 +51,8 @@ public sealed class ParticipantUser : EntityBase<ParticipantUser>
             displayName,
             avatarUrl,
             isBlocked: false,
-            UtcDateTimeOffset.UtcNow);
+            UtcDateTimeOffset.UtcNow,
+            lastReadMessageSequenceNum);
     }
 
     public static ParticipantUser Restore(
@@ -57,9 +62,18 @@ public sealed class ParticipantUser : EntityBase<ParticipantUser>
         string? displayName,
         string? avatarUrl,
         bool isBlocked,
-        UtcDateTimeOffset joinedAtUtc)
+        UtcDateTimeOffset joinedAtUtc,
+        long lastReadMessageSequenceNum)
     {
-        return new ParticipantUser(id, conversationId, userId, displayName, avatarUrl, isBlocked, joinedAtUtc);
+        return new ParticipantUser(
+            id,
+            conversationId,
+            userId,
+            displayName,
+            avatarUrl,
+            isBlocked,
+            joinedAtUtc,
+            lastReadMessageSequenceNum);
     }
 
     internal void Block()

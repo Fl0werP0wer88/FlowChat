@@ -38,6 +38,9 @@ public sealed class ParticipantUserConfiguration : IEntityTypeConfiguration<Part
             .HasUtcDateTimeOffsetConversion()
             .IsRequired();
 
+        builder.Property(x => x.LastReadMessageSequenceNum)
+            .IsRequired();
+
         builder.Property<DateTimeOffset?>("DeletedAt");
 
         builder.HasIndex(x => new { x.ConversationId, x.UserId })

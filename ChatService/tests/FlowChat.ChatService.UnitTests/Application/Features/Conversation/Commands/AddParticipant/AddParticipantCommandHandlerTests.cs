@@ -16,6 +16,7 @@ namespace FlowChat.ChatService.UnitTests.Application.Features.Conversation.Comma
 public sealed class AddParticipantCommandHandlerTests
 {
     private readonly Mock<IGroupConversationWriteRepository> _conversationRepositoryMock = new();
+    private readonly Mock<IChatMessageWriteRepository> _chatMessageRepositoryMock = new();
     private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
     private readonly Mock<ILocalEventDispatcher> _domainEventDispatcherMock = new();
     private readonly Mock<IAggregateBeforeSaveProcessor<AddParticipantCommand, GroupConversation>> _beforeSaveProcessorMock = new();
@@ -44,6 +45,7 @@ public sealed class AddParticipantCommandHandlerTests
 
         _handler = new AddParticipantCommandHandler(
             _conversationRepositoryMock.Object,
+            _chatMessageRepositoryMock.Object,
             _unitOfWorkMock.Object,
             _domainEventDispatcherMock.Object,
             [_beforeSaveProcessorMock.Object]);
@@ -68,16 +70,21 @@ public sealed class AddParticipantCommandHandlerTests
         _conversationRepositoryMock
             .Setup(x => x.GetByIdAsync(conversationId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(conversation);
+        _chatMessageRepositoryMock
+            .Setup(x => x.GetMaxSequenceNumAsync(conversationId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(42);
 
         var result = await _handler.Handle(command, CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().BeTrue();
-        conversation.Participants.Should().Contain(p => p.UserId.Value == newMemberId);
+        conversation.Participants.Should().ContainSingle(p =>
+            p.UserId.Value == newMemberId &&
+            p.LastReadMessageSequenceNum == 42);
     }
 
     [Fact]
-    public async Task Handle_MultipleNewParticipants_AddsAll()
+    public async Task Handle_MultipleNewParticipants_AddsAllWithSameLastReadMessageSequenceNum()
     {
         var creatorId = Guid.NewGuid();
         var newMemberId1 = Guid.NewGuid();
@@ -95,13 +102,23 @@ public sealed class AddParticipantCommandHandlerTests
         _conversationRepositoryMock
             .Setup(x => x.GetByIdAsync(conversationId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(conversation);
+        _chatMessageRepositoryMock
+            .Setup(x => x.GetMaxSequenceNumAsync(conversationId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(84);
 
         var result = await _handler.Handle(command, CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().BeTrue();
-        conversation.Participants.Should().Contain(p => p.UserId.Value == newMemberId1);
-        conversation.Participants.Should().Contain(p => p.UserId.Value == newMemberId2);
+        conversation.Participants.Should().ContainSingle(p =>
+            p.UserId.Value == newMemberId1 &&
+            p.LastReadMessageSequenceNum == 84);
+        conversation.Participants.Should().ContainSingle(p =>
+            p.UserId.Value == newMemberId2 &&
+            p.LastReadMessageSequenceNum == 84);
+        _chatMessageRepositoryMock.Verify(
+            x => x.GetMaxSequenceNumAsync(conversationId, It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 
     [Fact]
@@ -123,12 +140,49 @@ public sealed class AddParticipantCommandHandlerTests
         _conversationRepositoryMock
             .Setup(x => x.GetByIdAsync(conversationId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(conversation);
+        _chatMessageRepositoryMock
+            .Setup(x => x.GetMaxSequenceNumAsync(conversationId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(21);
 
         var result = await _handler.Handle(command, CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().BeTrue();
-        conversation.Participants.Should().Contain(p => p.UserId.Value == newMemberId);
+        conversation.Participants.Should().ContainSingle(p =>
+            p.UserId.Value == newMemberId &&
+            p.LastReadMessageSequenceNum == 21);
+    }
+
+    [Fact]
+    public async Task Handle_WhenMaxSequenceNumIsMissing_AddsParticipantWithZeroLastReadMessageSequenceNum()
+    {
+        var creatorId = Guid.NewGuid();
+        var existingMemberId = Guid.NewGuid();
+        var newMemberId = Guid.NewGuid();
+        var conversationId = Guid.NewGuid();
+        var command = new AddParticipantCommand(conversationId, [newMemberId]);
+
+        var conversation = GroupConversation.Create(
+            Id<ConversationAggregate>.FromGuid(conversationId),
+            creatorId,
+            [creatorId, existingMemberId],
+            "Dev Team");
+        conversation.ClearEvents();
+
+        _conversationRepositoryMock
+            .Setup(x => x.GetByIdAsync(conversationId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(conversation);
+        _chatMessageRepositoryMock
+            .Setup(x => x.GetMaxSequenceNumAsync(conversationId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((long?)null);
+
+        var result = await _handler.Handle(command, CancellationToken.None);
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().BeTrue();
+        conversation.Participants.Should().ContainSingle(p =>
+            p.UserId.Value == newMemberId &&
+            p.LastReadMessageSequenceNum == 0);
     }
 
     [Fact]
@@ -170,6 +224,9 @@ public sealed class AddParticipantCommandHandlerTests
                 It.IsAny<GroupConversation>(),
                 It.IsAny<AggregateState>(),
                 It.IsAny<CancellationToken>()),
+            Times.Never);
+        _chatMessageRepositoryMock.Verify(
+            x => x.GetMaxSequenceNumAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 

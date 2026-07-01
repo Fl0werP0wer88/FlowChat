@@ -9,4 +9,5 @@ public sealed class ParticipantUserReadEntity : ReadEntityBase
     public Guid UserId { get; init; }
     public string? DisplayName { get; init; }
     public string? AvatarUrl { get; init; }
+    public long LastReadMessageSequenceNum { get; init; }
 }

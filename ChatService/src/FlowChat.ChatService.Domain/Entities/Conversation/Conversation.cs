@@ -69,7 +69,11 @@ public abstract class Conversation : AggregateRootBase<Conversation>
         return factory(id, type, name, createdByUserId, [.. participants]);
     }
 
-    protected void AddParticipantCore(Id<UserProfileMarker> participantUserId, string? displayName, string? avatarUrl)
+    protected void AddParticipantCore(
+        Id<UserProfileMarker> participantUserId,
+        string? displayName,
+        string? avatarUrl,
+        long lastReadMessageSequenceNum)
     {
         if (Type != ConversationType.Group)
             throw new InvalidOperationException("Cannot add participants to a one-on-one conversation.");
@@ -79,7 +83,13 @@ public abstract class Conversation : AggregateRootBase<Conversation>
         if (_participants.Any(p => p.UserId == participantUserId))
             throw new InvalidOperationException("User is already a participant in this conversation.");
 
-        _participants.Add(ParticipantUser.Create(Id<ParticipantUser>.New(), Id, participantUserId, displayName, avatarUrl));
+        _participants.Add(ParticipantUser.Create(
+            Id<ParticipantUser>.New(),
+            Id,
+            participantUserId,
+            displayName,
+            avatarUrl,
+            lastReadMessageSequenceNum));
     }
 
     private static void ValidateInvariants(ConversationType type, string? name, Id<UserProfileMarker> createdByUserId)
