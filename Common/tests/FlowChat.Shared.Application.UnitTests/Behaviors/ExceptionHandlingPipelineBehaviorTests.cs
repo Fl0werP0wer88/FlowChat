@@ -113,6 +113,29 @@ public sealed class ExceptionHandlingPipelineBehaviorTests
     }
 
     [Fact]
+    public async Task Handle_WhenNonTransientExceptionIsThrown_ReturnsNonTransientUnexpectedFailure()
+    {
+        var behavior = new ExceptionHandlingPipelineBehavior<TestRequest, FlowChatResult<Guid>>();
+        var exception = new NonTransientException("The message cannot be processed.");
+        using var activity = new Activity("test").Start();
+
+        var result = await behavior.Handle(
+            new TestRequest(),
+            _ => Task.FromException<FlowChatResult<Guid>>(exception),
+            CancellationToken.None);
+
+        result.IsFailure.Should().BeTrue();
+        result.Error.ErrorType.Should().Be(ErrorType.Unexpected);
+        result.Error.ErrorMessage.Should().Be(exception.Message);
+        result.Error.FailureKind.Should().Be(FailureKind.None);
+
+        activity.Status.Should().Be(ActivityStatusCode.Error);
+        activity.StatusDescription.Should().Be("non_transient_failure");
+        activity.GetTagItem("error.type").Should().Be("non_transient");
+        activity.Events.Should().Contain(x => x.Name == "exception");
+    }
+
+    [Fact]
     public async Task Handle_WhenOperationCanceledExceptionIsThrown_ReturnsBadRequestFailure()
     {
         var behavior = new ExceptionHandlingPipelineBehavior<TestRequest, FlowChatResult<Guid>>();
