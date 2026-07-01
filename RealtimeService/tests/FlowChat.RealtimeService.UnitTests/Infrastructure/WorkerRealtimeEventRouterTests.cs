@@ -51,6 +51,7 @@ public sealed class WorkerRealtimeEventRouterTests
                 _fixture.Create<Guid>(),
                 "Jane",
                 "Hello",
+                42,
                 DateTimeOffset.UtcNow,
                 DateTimeOffset.UtcNow,
                 [firstUser, secondUser, thirdUser, secondUser, Guid.Empty]),

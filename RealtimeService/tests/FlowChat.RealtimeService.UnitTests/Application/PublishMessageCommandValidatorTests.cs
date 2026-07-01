@@ -18,6 +18,7 @@ public sealed class PublishMessageCommandValidatorTests
             _fixture.Create<Guid>(),
             "John Doe",
             "Hello",
+            42,
             DateTimeOffset.UtcNow,
             DateTimeOffset.UtcNow,
             [_fixture.Create<Guid>()]);
@@ -36,6 +37,7 @@ public sealed class PublishMessageCommandValidatorTests
             Guid.Empty,
             "John Doe",
             "Hello",
+            42,
             DateTimeOffset.UtcNow,
             DateTimeOffset.UtcNow,
             [_fixture.Create<Guid>()]);
@@ -59,6 +61,7 @@ public sealed class PublishMessageCommandValidatorTests
             _fixture.Create<Guid>(),
             value,
             "Hello",
+            42,
             DateTimeOffset.UtcNow,
             DateTimeOffset.UtcNow,
             [_fixture.Create<Guid>()]);
@@ -81,6 +84,7 @@ public sealed class PublishMessageCommandValidatorTests
             _fixture.Create<Guid>(),
             "John Doe",
             value,
+            42,
             DateTimeOffset.UtcNow,
             DateTimeOffset.UtcNow,
             [_fixture.Create<Guid>()]);
@@ -100,6 +104,7 @@ public sealed class PublishMessageCommandValidatorTests
             _fixture.Create<Guid>(),
             "John Doe",
             "Hello",
+            42,
             DateTimeOffset.UtcNow,
             DateTimeOffset.UtcNow,
             [Guid.Empty, Guid.Empty]);
@@ -119,6 +124,7 @@ public sealed class PublishMessageCommandValidatorTests
             _fixture.Create<Guid>(),
             "John Doe",
             "Hello",
+            42,
             DateTimeOffset.UtcNow,
             DateTimeOffset.UtcNow,
             []);
@@ -127,5 +133,25 @@ public sealed class PublishMessageCommandValidatorTests
 
         result.IsValid.Should().BeFalse();
         result.Errors.Should().Contain(e => e.PropertyName == "RecipientUserIds");
+    }
+
+    [Fact]
+    public void Validate_NonPositiveSequenceNum_ReturnsValidationError()
+    {
+        var command = new PublishMessageCommand(
+            _fixture.Create<Guid>(),
+            _fixture.Create<Guid>(),
+            _fixture.Create<Guid>(),
+            "John Doe",
+            "Hello",
+            0,
+            DateTimeOffset.UtcNow,
+            DateTimeOffset.UtcNow,
+            [_fixture.Create<Guid>()]);
+
+        var result = _validator.Validate(command);
+
+        result.IsValid.Should().BeFalse();
+        result.Errors.Should().Contain(e => e.PropertyName == "SequenceNum");
     }
 }

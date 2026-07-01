@@ -92,6 +92,10 @@ namespace FlowChat.ChatService.Persistence.Migrations
 
                     b.HasIndex("ConversationId", "SentAtUtc");
 
+                    b.HasIndex("ConversationId", "SequenceNum")
+                        .IsUnique()
+                        .HasFilter("\"SequenceNum\" IS NOT NULL");
+
                     b.ToTable("ChatMessages", (string)null);
                 });
 

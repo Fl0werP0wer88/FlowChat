@@ -7,5 +7,6 @@ export interface ChatMessage {
   senderDisplayName: string | null;
   sender: MessageSender;
   text: string;
+  sequenceNum: number | null;
   sentAtUtc: string;
 }

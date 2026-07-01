@@ -7,6 +7,7 @@ public sealed class ChatMessageNotificationDto
     public Guid SenderUserId { get; init; }
     public required string SenderDisplayName { get; init; }
     public required string Text { get; init; }
+    public long SequenceNum { get; init; }
     public DateTimeOffset SentAtUtc { get; init; }
     public DateTimeOffset DeliveredAtUtc { get; init; }
 }

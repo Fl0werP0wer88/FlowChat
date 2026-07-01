@@ -40,6 +40,7 @@ public sealed class PublishMessageCommandHandlerTests
                 _fixture.Create<Guid>(),
                 " John Doe ",
                 " Hello there ",
+                42,
                 new DateTimeOffset(2026, 3, 17, 12, 0, 0, TimeSpan.Zero),
                 deliveredAtUtc,
                 [recipientUserId, recipientUserId, Guid.Empty]),
@@ -49,6 +50,7 @@ public sealed class PublishMessageCommandHandlerTests
         capturedNotification.Should().NotBeNull();
         capturedNotification!.SenderDisplayName.Should().Be("John Doe");
         capturedNotification.Text.Should().Be("Hello there");
+        capturedNotification.SequenceNum.Should().Be(42);
         capturedNotification.DeliveredAtUtc.Should().Be(deliveredAtUtc);
         capturedNotification.RecipientUserIds.Should().ContainSingle().Which.Should().Be(recipientUserId);
     }

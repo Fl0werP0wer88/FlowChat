@@ -138,6 +138,7 @@ export function useChatMessages(activeContact: Contact | null) {
               payload.conversationId,
               payload.senderUserId,
               payload.senderDisplayName,
+              payload.sequenceNum,
             ),
           ]),
         };

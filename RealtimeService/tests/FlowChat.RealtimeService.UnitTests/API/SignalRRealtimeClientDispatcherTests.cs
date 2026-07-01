@@ -34,12 +34,14 @@ public sealed class SignalRRealtimeClientDispatcherTests
                 Guid.NewGuid(),
                 "Jane",
                 "Hello",
+                42,
                 new DateTimeOffset(2026, 5, 19, 11, 59, 0, TimeSpan.Zero),
                 deliveredAtUtc,
                 [recipientUserId]),
             CancellationToken.None);
 
         capturedPayload.Should().NotBeNull();
+        capturedPayload!.SequenceNum.Should().Be(42);
         capturedPayload!.DeliveredAtUtc.Should().Be(deliveredAtUtc);
     }
 

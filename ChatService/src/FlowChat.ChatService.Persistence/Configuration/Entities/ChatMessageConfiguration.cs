@@ -83,6 +83,10 @@ public sealed class ChatMessageConfiguration : IEntityTypeConfiguration<ChatMess
             .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasIndex(x => new { x.ConversationId, x.SentAtUtc });
+
+        builder.HasIndex(x => new { x.ConversationId, x.SequenceNum })
+            .IsUnique()
+            .HasFilter("\"SequenceNum\" IS NOT NULL");
     }
 }
 

@@ -9,6 +9,7 @@ public sealed record PublishMessageCommand(
     Guid SenderUserId,
     string? SenderDisplayName,
     string? Text,
+    long SequenceNum,
     DateTimeOffset SentAtUtc,
     DateTimeOffset DeliveredAtUtc,
     IReadOnlyCollection<Guid> RecipientUserIds) : ICommand<Unit>;

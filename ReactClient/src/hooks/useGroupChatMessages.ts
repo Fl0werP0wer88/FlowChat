@@ -123,6 +123,7 @@ export function useGroupChatMessages(activeGroupConversation: GroupConversation 
               payload.conversationId,
               payload.senderUserId,
               payload.senderDisplayName,
+              payload.sequenceNum,
             ),
           ]),
         };

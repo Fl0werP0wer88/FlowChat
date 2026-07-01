@@ -1,4 +1,5 @@
 using FlowChat.ChatService.Application.Contracts.Persistence;
+using FlowChat.ChatService.Domain.Entities.ChatMessage;
 using FlowChat.Core.Results;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2;
@@ -31,16 +32,16 @@ public sealed class MarkChatMessageAsDeliveredCommandHandler(
         if (_message is null)
             return FlowChatResult<Unit>.Failure(DomainError.NotFound("Chat message not found."));
 
-        if (_message.SequenceNum.HasValue)
+        if (_message.DeliveryStatus == DeliveryStatus.Delivered)
         {
             _messageChanged = false;
             return FlowChatResult<Unit>.Success(Unit.Value);
         }
 
-        var maxSequenceNum = await chatMessageRepository.GetMaxSequenceNumAsync(request.ConversationId, cancellationToken);
-        _message.MarkAsDelivered(
-            maxSequenceNum.GetValueOrDefault() + 1,
-            UtcDateTimeOffset.Create(request.DeliveredAtUtc));
+        if (!_message.SequenceNum.HasValue)
+            return FlowChatResult<Unit>.Failure(DomainError.BadRequest("Chat message sequence number must be set before marking it as delivered."));
+
+        _message.MarkAsDelivered(UtcDateTimeOffset.Create(request.DeliveredAtUtc));
         _messageChanged = true;
 
         return FlowChatResult<Unit>.Success(Unit.Value);

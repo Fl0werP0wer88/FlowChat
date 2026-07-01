@@ -20,16 +20,41 @@ public sealed class ChatMessageTests
     }
 
     [Fact]
-    public void MarkAsDelivered_WhenNotDelivered_SetsSequenceStatusAndDeliveredAtUtc()
+    public void SetSequenceNumber_WhenNotSequenced_SetsSequenceNumber()
+    {
+        var chatMessage = CreateMessage();
+
+        chatMessage.SetSequenceNumber(42);
+
+        chatMessage.SequenceNum.Should().Be(42);
+        chatMessage.DeliveryStatus.Should().Be(DeliveryStatus.Pending);
+        chatMessage.DeliveredAtUtc.Should().BeNull();
+    }
+
+    [Fact]
+    public void MarkAsDelivered_WhenSequencedAndNotDelivered_SetsStatusAndDeliveredAtUtc()
     {
         var chatMessage = CreateMessage();
         var deliveredAtUtc = UtcDateTimeOffset.Create(new DateTimeOffset(2026, 5, 19, 12, 0, 0, TimeSpan.Zero));
 
-        chatMessage.MarkAsDelivered(42, deliveredAtUtc);
+        chatMessage.SetSequenceNumber(42);
+        chatMessage.MarkAsDelivered(deliveredAtUtc);
 
         chatMessage.SequenceNum.Should().Be(42);
         chatMessage.DeliveryStatus.Should().Be(DeliveryStatus.Delivered);
         chatMessage.DeliveredAtUtc.Should().Be(deliveredAtUtc);
+    }
+
+    [Fact]
+    public void MarkAsDelivered_WhenSequenceNumberIsMissing_ThrowsInvalidOperationException()
+    {
+        var chatMessage = CreateMessage();
+        var deliveredAtUtc = UtcDateTimeOffset.Create(new DateTimeOffset(2026, 5, 19, 12, 0, 0, TimeSpan.Zero));
+
+        var act = () => chatMessage.MarkAsDelivered(deliveredAtUtc);
+
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("*Sequence number*");
     }
 
     private static ChatMessageAggregate CreateMessage() =>

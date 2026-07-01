@@ -36,6 +36,7 @@ public sealed class PublishMessageController : ApiControllerBase
                 request.SenderUserId,
                 request.SenderDisplayName,
                 request.Text,
+                request.SequenceNum,
                 request.SentAtUtc,
                 request.DeliveredAtUtc,
                 request.RecipientUserIds),

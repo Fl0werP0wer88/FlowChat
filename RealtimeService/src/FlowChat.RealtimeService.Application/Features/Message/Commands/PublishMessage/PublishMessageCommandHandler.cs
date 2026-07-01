@@ -21,6 +21,7 @@ public sealed class PublishMessageCommandHandler(IRealtimeClientDispatcher realt
             request.SenderUserId,
             request.SenderDisplayName!.Trim(),
             request.Text!.Trim(),
+            request.SequenceNum,
             request.SentAtUtc,
             request.DeliveredAtUtc,
             recipientUserIds);

@@ -7,6 +7,7 @@ export interface RealtimeChatMessage {
   senderUserId: string;
   senderDisplayName: string;
   text: string;
+  sequenceNum: number;
   sentAtUtc: string;
 }
 

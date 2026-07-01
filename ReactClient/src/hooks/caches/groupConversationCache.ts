@@ -18,8 +18,9 @@ export function createGroupMessage(
   conversationId: string | null = null,
   senderUserId: string | null = null,
   senderDisplayName: string | null = null,
+  sequenceNum: number | null = null,
 ): ChatMessage {
-  return { id, conversationId, senderUserId, senderDisplayName, sender, text, sentAtUtc };
+  return { id, conversationId, senderUserId, senderDisplayName, sender, text, sequenceNum, sentAtUtc };
 }
 
 export function sortGroupMessages(messages: ChatMessage[]): ChatMessage[] {
@@ -39,5 +40,6 @@ export function mapGroupConversationMessage(
     message.conversationId,
     message.senderUserId,
     message.senderDisplayName,
+    null,
   );
 }

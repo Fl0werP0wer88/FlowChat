@@ -28,6 +28,7 @@ public sealed class RealtimeInstanceInternalApiClient(HttpClient httpClient)
                 notification.SenderUserId,
                 notification.SenderDisplayName,
                 notification.Text,
+                notification.SequenceNum,
                 notification.SentAtUtc,
                 notification.DeliveredAtUtc,
                 notification.RecipientUserIds),
@@ -80,6 +81,7 @@ public sealed class RealtimeInstanceInternalApiClient(HttpClient httpClient)
         Guid SenderUserId,
         string SenderDisplayName,
         string Text,
+        long SequenceNum,
         DateTimeOffset SentAtUtc,
         DateTimeOffset DeliveredAtUtc,
         IReadOnlyCollection<Guid> RecipientUserIds);

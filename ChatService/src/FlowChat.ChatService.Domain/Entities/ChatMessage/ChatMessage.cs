@@ -75,14 +75,27 @@ public sealed class ChatMessage : AggregateRootBase<ChatMessage>
         return chatMessage;
     }
 
-    public void MarkAsDelivered(long sequenceNum, UtcDateTimeOffset deliveredAtUtc)
+    public void SetSequenceNumber(long sequenceNum)
     {
-        ArgumentNullException.ThrowIfNull(deliveredAtUtc);
-
         if (SequenceNum.HasValue)
             return;
 
+        if (sequenceNum <= 0)
+            throw new ArgumentException("Sequence number must be greater than zero.", nameof(sequenceNum));
+
         SequenceNum = sequenceNum;
+    }
+
+    public void MarkAsDelivered(UtcDateTimeOffset deliveredAtUtc)
+    {
+        ArgumentNullException.ThrowIfNull(deliveredAtUtc);
+
+        if (!SequenceNum.HasValue)
+            throw new InvalidOperationException("Sequence number must be set before marking a chat message as delivered.");
+
+        if (DeliveryStatus == DeliveryStatus.Delivered)
+            return;
+
         DeliveredAtUtc = deliveredAtUtc;
         DeliveryStatus = DeliveryStatus.Delivered;
     }

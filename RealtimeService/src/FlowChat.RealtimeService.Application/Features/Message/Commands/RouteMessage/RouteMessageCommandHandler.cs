@@ -18,6 +18,10 @@ public sealed class RouteMessageCommandHandler(
     public async Task<FlowChatResult<Unit>> Handle(RouteMessageCommand request, CancellationToken cancellationToken)
     {
         var recipientUserIds = NormalizeRecipientUserIds(request.RecipientUserIds);
+        var sequenceNum = await _chatServiceInternalApiClient.SetChatMessageSequenceNumberAsync(
+            request.MessageId,
+            request.ConversationId,
+            cancellationToken);
         var deliveredAtUtc = DateTimeOffset.UtcNow;
 
         var notification = new ChatMessageParam(
@@ -26,15 +30,15 @@ public sealed class RouteMessageCommandHandler(
             request.SenderUserId,
             request.SenderDisplayName!.Trim(),
             request.Text!.Trim(),
+            sequenceNum,
             request.SentAtUtc,
             deliveredAtUtc,
             recipientUserIds);
 
-        // ToDo: Maybe parallelize this with cancellation or compensation if RouteMessageAsync fails.
-        //ToDo 2: To wywołanie nie jest idempotentne. Pamiętać koniecznie żeby dodać inbox.
+        // TODO: Add a Realtime inbox before treating SignalR dispatch retries as safe
         await _realtimeEventRouter.RouteMessageAsync(notification, cancellationToken);
 
-        //ToDo: To wywołanie nie jest idempotentne. Pamiętać koniecznie żeby dodać inbox po stronie chat service.
+        // TODO: Add ChatService idempotency storage before treating delivery retries as safe
         await _chatServiceInternalApiClient.MarkChatMessageAsDeliveredAsync(
             request.MessageId,
             request.ConversationId,
