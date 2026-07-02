@@ -157,7 +157,26 @@ public sealed class ExceptionHandlingPipelineBehaviorTests
         activity.Events.Should().Contain(x => x.Name == "exception");
     }
 
+    [Fact]
+    public async Task Handle_WhenNonGenericFlowChatResultFails_ReturnsFailureWithoutValue()
+    {
+        var behavior = new ExceptionHandlingPipelineBehavior<NonGenericTestRequest, FlowChatResult>();
+        var exception = new FlowChatException("Invalid request.");
+
+        var result = await behavior.Handle(
+            new NonGenericTestRequest(),
+            _ => Task.FromException<FlowChatResult>(exception),
+            CancellationToken.None);
+
+        result.IsFailure.Should().BeTrue();
+        result.Error.ErrorType.Should().Be(ErrorType.BadRequest);
+        result.Error.ErrorMessage.Should().Be(exception.Message);
+        typeof(FlowChatResult).GetProperty("Value").Should().BeNull();
+    }
+
     private sealed record TestRequest : IRequest<FlowChatResult<Guid>>;
+
+    private sealed record NonGenericTestRequest : IRequest<FlowChatResult>;
 
     private sealed class TestDbException(bool isTransient, string? sqlState = null) : DbException("Database exception")
     {
