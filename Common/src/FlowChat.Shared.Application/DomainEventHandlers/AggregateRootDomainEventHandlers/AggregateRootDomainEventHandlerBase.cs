@@ -1,0 +1,95 @@
+using FlowChat.Core.Messaging;
+using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2.BeforeSaveProcessors;
+using FlowChat.Shared.Application.DomainEventHandlers.Notifications;
+using FlowChat.Shared.Domain;
+using FlowChat.Shared.Domain.ValueObjects;
+
+namespace FlowChat.Shared.Application.DomainEventHandlers.AggregateRootDomainEventHandlers;
+
+public abstract class AggregateRootDomainEventHandlerBase<TNotification, TAggregate>
+    : TransactionalDomainEventHandlerBase<TNotification>
+    where TNotification : IDomainEvent
+    where TAggregate : class, IAggregateRoot
+{
+    private readonly ILocalEventDispatcher _localEventsDispatcher;
+    private readonly IEnumerable<IAggregateBeforeSaveProcessor<TNotification, TAggregate>> _beforeSaveProcessors;
+    private MutationType _mutationType = MutationType.Unchanged;
+
+    protected AggregateRootDomainEventHandlerBase(
+        ILocalEventDispatcher localEventsDispatcher,
+        IUnitOfWork unitOfWork,
+        IEnumerable<IAggregateBeforeSaveProcessor<TNotification, TAggregate>> beforeSaveProcessors)
+        : base(unitOfWork)
+    {
+        _localEventsDispatcher = localEventsDispatcher;
+        _beforeSaveProcessors = beforeSaveProcessors;
+    }
+
+    protected override async Task HandleInTransactionAsync(TNotification notification, CancellationToken cancellationToken)
+    {
+        await ExecuteAsync(notification, cancellationToken);
+
+        var aggregateRoot = GetAggregateRoot();
+
+        if (_mutationType == MutationType.Unchanged)
+        {
+            return;
+        }
+
+        aggregateRoot.IncrementVersion();
+        var domainEvents = aggregateRoot.PopDomainEvents();
+        var localEvents = domainEvents
+            .Cast<ILocalEvent>();
+
+        await DispatchLocalEventsAsync(localEvents, cancellationToken);
+        ApplyAuditInfo(aggregateRoot, _mutationType);
+
+        foreach (var processor in _beforeSaveProcessors)
+        {
+            await processor.ProcessAsync(notification, aggregateRoot, _mutationType, cancellationToken);
+        }
+    }
+
+    protected void SetMutationType(MutationType mutationType)
+    {
+        _mutationType = mutationType;
+    }
+
+    protected abstract Task ExecuteAsync(TNotification notification, CancellationToken cancellationToken);
+
+    protected abstract TAggregate GetAggregateRoot();
+
+    private static void ApplyAuditInfo(TAggregate aggregateRoot, MutationType mutationType)
+    {
+        const string SystemActor = "system";
+
+        switch (mutationType)
+        {
+            case MutationType.Created:
+                aggregateRoot.SetCreated(SystemActor);
+                aggregateRoot.SetUpdated(SystemActor);
+                break;
+            case MutationType.Updated:
+                aggregateRoot.SetUpdated(SystemActor);
+                break;
+            case MutationType.Deleted:
+                aggregateRoot.SetUpdated(SystemActor);
+                aggregateRoot.Delete(UtcDateTimeOffset.UtcNow);
+                break;
+            case MutationType.Unchanged:
+                break;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(mutationType), mutationType, null);
+        }
+    }
+
+    protected Task DispatchLocalEventsAsync(IEnumerable<ILocalEvent> domainEvents, CancellationToken cancellationToken)
+    {
+        if (domainEvents is null)
+        {
+            return Task.CompletedTask;
+        }
+
+        return _localEventsDispatcher.DispatchAsync(domainEvents, cancellationToken);
+    }
+}
