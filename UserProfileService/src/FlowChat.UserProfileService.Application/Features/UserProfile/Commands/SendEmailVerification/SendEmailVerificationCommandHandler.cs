@@ -11,13 +11,12 @@ using DomainUserProfile = FlowChat.UserProfileService.Domain.Entities.UserProfil
 namespace FlowChat.UserProfileService.Application.Features.UserProfile.Commands.SendEmailVerification;
 
 public sealed class SendEmailVerificationCommandHandler
-    : AggregateRootUpsertCommandHandlerBaseV2<SendEmailVerificationCommand, Guid, EmailVerificationProcess>
+    : AggregateRootUpsertCommandHandlerBaseV3<SendEmailVerificationCommand, Guid, EmailVerificationProcess>
 {
     private readonly IUserProfileReadRepository _userProfileReadRepository;
     private readonly IEmailVerificationProcessWriteRepository _emailVerificationProcessWriteRepository;
     private readonly IEmailVerificationRequestIssuer _emailVerificationRequestIssuer;
     private EmailVerificationProcess? _process;
-    private bool _wasProcessCreated;
 
     public SendEmailVerificationCommandHandler(
         IUserProfileReadRepository userProfileReadRepository,
@@ -58,16 +57,19 @@ public sealed class SendEmailVerificationCommandHandler
 
         _process = await _emailVerificationProcessWriteRepository
             .GetByEmailIdAsync(email.Id, cancellationToken);
-        _wasProcessCreated = false;
 
         if (_process is null)
         {
-            _wasProcessCreated = true;
             _process = EmailVerificationProcess.Create(
                 Id<DomainUserProfile>.FromGuid(userProfile.Id),
                 Id<DomainEmail>.FromGuid(email.Id));
 
             await _emailVerificationProcessWriteRepository.AddAsync(_process, cancellationToken);
+            SetInserted();
+        }
+        else
+        {
+            SetUpdated();
         }
 
         var verificationRequest = await _emailVerificationRequestIssuer.IssueAsync(
@@ -82,6 +84,4 @@ public sealed class SendEmailVerificationCommandHandler
 
     protected override EmailVerificationProcess GetAggregateRoot() =>
         _process ?? throw new InvalidOperationException("Aggregate root instance is not available.");
-
-    protected override bool WasAggregateCreated => _wasProcessCreated;
 }

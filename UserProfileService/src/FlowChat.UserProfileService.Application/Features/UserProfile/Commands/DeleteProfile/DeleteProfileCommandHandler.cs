@@ -8,7 +8,7 @@ using UserProfileAggregate = FlowChat.UserProfileService.Domain.Entities.UserPro
 namespace FlowChat.UserProfileService.Application.Features.UserProfile.Commands.DeleteProfile;
 
 public sealed class DeleteProfileCommandHandler
-    : AggregateRootDeleteCommandHandlerBaseV2<DeleteProfileCommand, Guid, UserProfileAggregate>
+    : AggregateRootDeleteCommandHandlerBaseV3<DeleteProfileCommand, Guid, UserProfileAggregate>
 {
     private readonly IUserProfileWriteRepository _userProfileRepository;
     private UserProfileAggregate? _userProfile;
@@ -34,6 +34,7 @@ public sealed class DeleteProfileCommandHandler
         }
 
         await _userProfileRepository.SoftDeleteAsync(_userProfile, cancellationToken);
+        SetDeleted();
 
         return FlowChatResult<Guid>.Success(_userProfile.Id.Value);
     }

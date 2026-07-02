@@ -6,13 +6,13 @@ using MediatR;
 
 namespace FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2;
 
-public abstract class AggregateRootDeleteCommandHandlerBaseV2<TCommand, TResponse, TAggregate>
-    : AggregateRootCommandHandlerBaseV2<TCommand, TResponse, TAggregate>
+public abstract class AggregateRootDeleteCommandHandlerBaseV3<TCommand, TResponse, TAggregate>
+    : AggregateRootCommandHandlerBaseV3<TCommand, TResponse, TAggregate>
     where TCommand : ICommand<TResponse>, IRequest<FlowChatResult<TResponse>>
     where TResponse : notnull
     where TAggregate : class, IAggregateRoot
 {
-    protected AggregateRootDeleteCommandHandlerBaseV2(
+    protected AggregateRootDeleteCommandHandlerBaseV3(
         ILocalEventDispatcher localEventsDispatcher,
         IUnitOfWork unitOfWork,
         IEnumerable<IAggregateBeforeSaveProcessor<TCommand, TAggregate>> beforeSaveProcessors)
@@ -20,6 +20,5 @@ public abstract class AggregateRootDeleteCommandHandlerBaseV2<TCommand, TRespons
     {
     }
 
-    protected override MutationType GetMutationType(TCommand request, TAggregate aggregateRoot) =>
-        MutationType.Deleted;
+    protected void SetDeleted() => SetMutationType(MutationType.Deleted);
 }

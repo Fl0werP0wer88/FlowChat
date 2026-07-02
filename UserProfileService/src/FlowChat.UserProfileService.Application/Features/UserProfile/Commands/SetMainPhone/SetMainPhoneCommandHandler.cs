@@ -10,13 +10,12 @@ using UserProfileAggregate = FlowChat.UserProfileService.Domain.Entities.UserPro
 namespace FlowChat.UserProfileService.Application.Features.UserProfile.Commands.SetMainPhone;
 
 public sealed class SetMainPhoneCommandHandler
-    : AggregateRootUpdateCommandHandlerBaseV2<SetMainPhoneCommand, Guid, UserProfileAggregate>
+    : AggregateRootUpdateCommandHandlerBaseV3<SetMainPhoneCommand, Guid, UserProfileAggregate>
 {
     private const string PhoneMustBeConfirmedMessageTemplate = "Phone '{0}' must be confirmed before it can be set as the main phone.";
 
     private readonly IUserProfileWriteRepository _userProfileRepository;
     private UserProfileAggregate? _userProfile;
-    private bool _mainPhoneChanged;
 
     public SetMainPhoneCommandHandler(
         IUserProfileWriteRepository userProfileRepository,
@@ -51,7 +50,11 @@ public sealed class SetMainPhoneCommandHandler
                 DomainError.Validation(string.Format(PhoneMustBeConfirmedMessageTemplate, phone.Number.Value)));
         }
 
-        _mainPhoneChanged = !phone.IsMain;
+        if (!phone.IsMain)
+        {
+            SetUpdated();
+        }
+
         _userProfile.SetMainPhone(phone.Id);
 
         return FlowChatResult<Guid>.Success(phone.Id.Value);
@@ -59,7 +62,4 @@ public sealed class SetMainPhoneCommandHandler
 
     protected override UserProfileAggregate GetAggregateRoot() =>
         _userProfile ?? throw new InvalidOperationException("Aggregate root instance is not available.");
-
-    protected override MutationType GetMutationType(SetMainPhoneCommand request, UserProfileAggregate aggregateRoot) =>
-        _mainPhoneChanged ? MutationType.Updated : MutationType.Unchanged;
 }

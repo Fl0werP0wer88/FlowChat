@@ -11,7 +11,7 @@ using DomainAccount = FlowChat.AuthService.Domain.Entities.Account.Account;
 namespace FlowChat.AuthService.Application.Features.User.Commands.ConfirmAuthEmail;
 
 public sealed class ConfirmAuthEmailCommandHandler
-    : AggregateRootUpdateCommandHandlerBaseV2<ConfirmAuthEmailCommand, Unit, DomainAccount>
+    : AggregateRootUpdateCommandHandlerBaseV3<ConfirmAuthEmailCommand, Unit, DomainAccount>
 {
     private readonly IAccountRepository _accountRepository;
     private DomainAccount? _account;
@@ -43,6 +43,7 @@ public sealed class ConfirmAuthEmailCommandHandler
 
         _account.ConfirmEmail();
         await _accountRepository.UpdateAsync(_account, cancellationToken);
+        SetUpdated();
 
         return FlowChatResult<Unit>.Success(Unit.Value);
     }

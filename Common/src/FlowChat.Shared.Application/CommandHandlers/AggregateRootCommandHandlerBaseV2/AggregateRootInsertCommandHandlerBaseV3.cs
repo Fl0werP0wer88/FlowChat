@@ -6,13 +6,13 @@ using MediatR;
 
 namespace FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2;
 
-public abstract class AggregateRootUpsertCommandHandlerBaseV2<TCommand, TResponse, TAggregate>
-    : AggregateRootCommandHandlerBaseV2<TCommand, TResponse, TAggregate>
+public abstract class AggregateRootInsertCommandHandlerBaseV3<TCommand, TResponse, TAggregate>
+    : AggregateRootCommandHandlerBaseV3<TCommand, TResponse, TAggregate>
     where TCommand : ICommand<TResponse>, IRequest<FlowChatResult<TResponse>>
     where TResponse : notnull
     where TAggregate : class, IAggregateRoot
 {
-    protected AggregateRootUpsertCommandHandlerBaseV2(
+    protected AggregateRootInsertCommandHandlerBaseV3(
         ILocalEventDispatcher localEventsDispatcher,
         IUnitOfWork unitOfWork,
         IEnumerable<IAggregateBeforeSaveProcessor<TCommand, TAggregate>> beforeSaveProcessors)
@@ -20,8 +20,5 @@ public abstract class AggregateRootUpsertCommandHandlerBaseV2<TCommand, TRespons
     {
     }
 
-    protected abstract bool WasAggregateCreated { get; }
-
-    protected override MutationType GetMutationType(TCommand request, TAggregate aggregateRoot) =>
-        WasAggregateCreated ? MutationType.Created : MutationType.Updated;
+    protected void SetInserted() => SetMutationType(MutationType.Created);
 }

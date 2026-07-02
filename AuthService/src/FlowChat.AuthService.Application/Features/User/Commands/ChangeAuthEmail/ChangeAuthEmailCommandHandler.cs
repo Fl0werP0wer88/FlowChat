@@ -12,12 +12,11 @@ using DomainAccount = FlowChat.AuthService.Domain.Entities.Account.Account;
 namespace FlowChat.AuthService.Application.Features.User.Commands.ChangeAuthEmail;
 
 public sealed class ChangeAuthEmailCommandHandler
-    : AggregateRootUpdateCommandHandlerBaseV2<ChangeAuthEmailCommand, Unit, DomainAccount>
+    : AggregateRootUpdateCommandHandlerBaseV3<ChangeAuthEmailCommand, Unit, DomainAccount>
 {
     private readonly IAccountRepository _accountRepository;
     private readonly IPasswordHashingService _passwordHashingService;
     private DomainAccount? _account;
-    private bool _emailChanged;
 
     public ChangeAuthEmailCommandHandler(
         IAccountRepository accountRepository,
@@ -43,7 +42,6 @@ public sealed class ChangeAuthEmailCommandHandler
 
         if (_account.Email == emailAddress)
         {
-            _emailChanged = false;
             return FlowChatResult<Unit>.Success(Unit.Value);
         }
 
@@ -54,7 +52,7 @@ public sealed class ChangeAuthEmailCommandHandler
         }
 
         _account.ChangeAuthEmail(emailAddress, _passwordHashingService.GenerateSecurityStamp());
-        _emailChanged = true;
+        SetUpdated();
         await _accountRepository.UpdateAsync(_account, cancellationToken);
 
         return FlowChatResult<Unit>.Success(Unit.Value);
@@ -62,7 +60,4 @@ public sealed class ChangeAuthEmailCommandHandler
 
     protected override DomainAccount GetAggregateRoot() =>
         _account ?? throw new InvalidOperationException("Aggregate root instance is not available.");
-
-    protected override MutationType GetMutationType(ChangeAuthEmailCommand request, DomainAccount aggregateRoot) =>
-        _emailChanged ? MutationType.Updated : MutationType.Unchanged;
 }

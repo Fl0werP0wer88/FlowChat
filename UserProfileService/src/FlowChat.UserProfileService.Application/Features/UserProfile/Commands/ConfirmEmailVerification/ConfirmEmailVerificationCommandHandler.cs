@@ -14,7 +14,7 @@ using UserProfileAggregate = FlowChat.UserProfileService.Domain.Entities.UserPro
 namespace FlowChat.UserProfileService.Application.Features.UserProfile.Commands.ConfirmEmailVerification;
 
 public sealed class ConfirmEmailVerificationCommandHandler
-    : AggregateRootUpdateCommandHandlerBaseV2<ConfirmEmailVerificationCommand, IdempotentCommandResult<Unit>, UserProfileAggregate>
+    : AggregateRootUpdateCommandHandlerBaseV3<ConfirmEmailVerificationCommand, IdempotentCommandResult<Unit>, UserProfileAggregate>
 {
     // Single generic message for all token failure cases — prevents callers from probing
     // whether a token exists, has been consumed, or belongs to a different user.
@@ -24,7 +24,6 @@ public sealed class ConfirmEmailVerificationCommandHandler
     private readonly IEmailVerificationProcessWriteRepository _emailVerificationProcessWriteRepository;
     private readonly IEmailVerificationTokenProtector _emailVerificationTokenProtector;
     private UserProfileAggregate? _userProfile;
-    private bool _emailConfirmed;
 
     public ConfirmEmailVerificationCommandHandler(
         IUserProfileWriteRepository userProfileWriteRepository,
@@ -44,8 +43,6 @@ public sealed class ConfirmEmailVerificationCommandHandler
         ConfirmEmailVerificationCommand request,
         CancellationToken cancellationToken)
     {
-        _emailConfirmed = false;
-
         if (!_emailVerificationTokenProtector.TryUnprotect(request.Token, out var payload) || payload is null)
         {
             return ValidationFailure();
@@ -98,7 +95,7 @@ public sealed class ConfirmEmailVerificationCommandHandler
 
         _userProfile.ConfirmEmail(email.Id);
         process.ConsumeRequest(payload.Nonce, nowUtc);
-        _emailConfirmed = true;
+        SetUpdated();
 
         return Success(wasAlreadyProcessed: false);
     }
@@ -128,9 +125,6 @@ public sealed class ConfirmEmailVerificationCommandHandler
 
     protected override UserProfileAggregate GetAggregateRoot() =>
         _userProfile ?? throw new InvalidOperationException("Aggregate root instance is not available.");
-
-    protected override MutationType GetMutationType(ConfirmEmailVerificationCommand request, UserProfileAggregate aggregateRoot) =>
-        _emailConfirmed ? MutationType.Updated : MutationType.Unchanged;
 
     private static bool IsConfirmedBySameToken(
         EmailVerificationTokenPayload payload,

@@ -10,7 +10,7 @@ using UserProfileAggregate = FlowChat.UserProfileService.Domain.Entities.UserPro
 namespace FlowChat.UserProfileService.Application.Features.UserProfile.Commands.CreateInitialUserProfile;
 
 public sealed class CreateInitialUserProfileCommandHandler
-    : AggregateRootInsertCommandHandlerBaseV2<CreateInitialUserProfileCommand, Guid, UserProfileAggregate>
+    : AggregateRootInsertCommandHandlerBaseV3<CreateInitialUserProfileCommand, Guid, UserProfileAggregate>
 {
     private readonly IUserProfileReadRepository _userProfileReadRepository;
     private readonly IUserProfileWriteRepository _userProfileWriteRepository;
@@ -70,6 +70,7 @@ public sealed class CreateInitialUserProfileCommandHandler
             organization: organization);
 
         await _userProfileWriteRepository.AddAsync(_userProfile, cancellationToken);
+        SetInserted();
 
         return FlowChatResult<Guid>.Success(_userProfile.Id.Value);
     }

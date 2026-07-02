@@ -9,11 +9,10 @@ using MediatR;
 namespace FlowChat.PresenceService.Application.Features.Presence.Commands.ChangeUserPresencePreferences;
 
 public sealed class ChangeUserPresencePreferencesCommandHandler
-    : AggregateRootUpsertCommandHandlerBaseV2<ChangeUserPresencePreferencesCommand, Unit, UserPresencePreferences>
+    : AggregateRootUpsertCommandHandlerBaseV3<ChangeUserPresencePreferencesCommand, Unit, UserPresencePreferences>
 {
     private readonly IUserPresencePreferencesWriteRepository _userPresencePreferencesWriteRepository;
     private UserPresencePreferences? _preferences;
-    private bool _wasCreated;
 
     public ChangeUserPresencePreferencesCommandHandler(
         IUserPresencePreferencesWriteRepository userPresencePreferencesWriteRepository,
@@ -24,8 +23,6 @@ public sealed class ChangeUserPresencePreferencesCommandHandler
     {
         _userPresencePreferencesWriteRepository = userPresencePreferencesWriteRepository;
     }
-
-    protected override bool WasAggregateCreated => _wasCreated;
 
     protected override UserPresencePreferences GetAggregateRoot() =>
         _preferences ?? throw new InvalidOperationException("Aggregate root instance is not available.");
@@ -40,14 +37,14 @@ public sealed class ChangeUserPresencePreferencesCommandHandler
 
         if (_preferences is null)
         {
-            _wasCreated = true;
             _preferences = UserPresencePreferences.Create(request.UserId, request.Status);
             await _userPresencePreferencesWriteRepository.AddAsync(_preferences, cancellationToken);
+            SetInserted();
         }
         else
         {
-            _wasCreated = false;
             _preferences.SetPreferredStatus(request.Status);
+            SetUpdated();
         }
 
         return FlowChatResult<Unit>.Success(Unit.Value);

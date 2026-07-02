@@ -9,12 +9,11 @@ using UserProfileMarker = FlowChat.ChatService.Domain.Entities.UserProfiles.User
 namespace FlowChat.ChatService.Application.Features.Conversation.Commands.AddParticipant;
 
 public sealed class AddParticipantCommandHandler
-    : AggregateRootUpdateCommandHandlerBaseV2<AddParticipantCommand, bool, GroupConversation>
+    : AggregateRootUpdateCommandHandlerBaseV3<AddParticipantCommand, bool, GroupConversation>
 {
     private readonly IGroupConversationWriteRepository _groupConversationRepository;
     private readonly IChatMessageWriteRepository _chatMessageRepository;
     private GroupConversation? _conversation;
-    private bool _participantsChanged;
 
     public AddParticipantCommandHandler(
         IGroupConversationWriteRepository groupConversationRepository,
@@ -44,7 +43,6 @@ public sealed class AddParticipantCommandHandler
 
         if (newParticipantUserIds.Count == 0)
         {
-            _participantsChanged = false;
             return FlowChatResult<bool>.Success(false);
         }
 
@@ -62,14 +60,11 @@ public sealed class AddParticipantCommandHandler
                 lastReadMessageSequenceNum);
         }
 
-        _participantsChanged = true;
+        SetUpdated();
 
         return FlowChatResult<bool>.Success(true);
     }
 
     protected override GroupConversation GetAggregateRoot() =>
         _conversation ?? throw new InvalidOperationException("Aggregate root instance is not available.");
-
-    protected override MutationType GetMutationType(AddParticipantCommand request, GroupConversation aggregateRoot) =>
-        _participantsChanged ? MutationType.Updated : MutationType.Unchanged;
 }

@@ -9,7 +9,7 @@ using UserProfileMarker = FlowChat.SocialGraphService.Domain.Entities.UserProfil
 namespace FlowChat.SocialGraphService.Application.Features.Contact.Commands.DeleteContact;
 
 public sealed class DeleteContactCommandHandler
-    : AggregateRootDeleteCommandHandlerBaseV2<DeleteContactCommand, MediatR.Unit, ContactAggregate>
+    : AggregateRootDeleteCommandHandlerBaseV3<DeleteContactCommand, MediatR.Unit, ContactAggregate>
 {
     private readonly IContactWriteRepository _contactWriteRepository;
     private ContactAggregate? _contact;
@@ -39,6 +39,7 @@ public sealed class DeleteContactCommandHandler
         }
 
         await _contactWriteRepository.SoftDeleteAsync(_contact, cancellationToken);
+        SetDeleted();
 
         return FlowChatResult<MediatR.Unit>.Success(MediatR.Unit.Value);
     }

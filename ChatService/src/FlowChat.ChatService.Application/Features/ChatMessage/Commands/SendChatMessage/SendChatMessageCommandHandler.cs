@@ -10,7 +10,7 @@ using UserProfileMarker = FlowChat.ChatService.Domain.Entities.UserProfiles.User
 namespace FlowChat.ChatService.Application.Features.ChatMessage.Commands.SendChatMessage;
 
 public sealed class SendChatMessageCommandHandler
-    : AggregateRootInsertCommandHandlerBaseV2<SendChatMessageCommand, SendChatMessageCommandResult, ChatMessageAggregate>
+    : AggregateRootInsertCommandHandlerBaseV3<SendChatMessageCommand, SendChatMessageCommandResult, ChatMessageAggregate>
 {
     private readonly IChatMessageWriteRepository _chatMessageRepository;
     private readonly IConversationParticipantReadRepository _participantReadRepository;
@@ -56,6 +56,7 @@ public sealed class SendChatMessageCommandHandler
             recipientUserIds.Select(Id<UserProfileMarker>.FromGuid));
 
         await _chatMessageRepository.AddAsync(_chatMessage, cancellationToken);
+        SetInserted();
 
         return FlowChatResult<SendChatMessageCommandResult>.Success(
             new SendChatMessageCommandResult(_chatMessage.Id.Value, _chatMessage.SentAtUtc.Value));

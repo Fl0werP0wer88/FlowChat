@@ -16,13 +16,12 @@ public sealed class MarkChatMessageAsDeliveredCommandHandler(
     IUnitOfWork unitOfWork,
     ILocalEventDispatcher domainEventDispatcher,
     IEnumerable<IAggregateBeforeSaveProcessor<MarkChatMessageAsDeliveredCommand, ChatMessageAggregate>> beforeSaveProcessors)
-    : AggregateRootUpdateCommandHandlerBaseV2<MarkChatMessageAsDeliveredCommand, Unit, ChatMessageAggregate>(
+    : AggregateRootUpdateCommandHandlerBaseV3<MarkChatMessageAsDeliveredCommand, Unit, ChatMessageAggregate>(
         domainEventDispatcher,
         unitOfWork,
         beforeSaveProcessors)
 {
     private ChatMessageAggregate? _message;
-    private bool _messageChanged;
 
     protected override async Task<FlowChatResult<Unit>> ExecuteAsync(
         MarkChatMessageAsDeliveredCommand request,
@@ -34,7 +33,6 @@ public sealed class MarkChatMessageAsDeliveredCommandHandler(
 
         if (_message.DeliveryStatus == DeliveryStatus.Delivered)
         {
-            _messageChanged = false;
             return FlowChatResult<Unit>.Success(Unit.Value);
         }
 
@@ -42,13 +40,10 @@ public sealed class MarkChatMessageAsDeliveredCommandHandler(
             return FlowChatResult<Unit>.Failure(DomainError.BadRequest("Chat message sequence number must be set before marking it as delivered."));
 
         _message.MarkAsDelivered(UtcDateTimeOffset.Create(request.DeliveredAtUtc));
-        _messageChanged = true;
+        SetUpdated();
 
         return FlowChatResult<Unit>.Success(Unit.Value);
     }
 
     protected override ChatMessageAggregate GetAggregateRoot() => _message ?? throw new InvalidOperationException("Aggregate root instance is not available.");
-
-    protected override MutationType GetMutationType(MarkChatMessageAsDeliveredCommand request, ChatMessageAggregate aggregateRoot) =>
-        _messageChanged ? MutationType.Updated : MutationType.Unchanged;
 }

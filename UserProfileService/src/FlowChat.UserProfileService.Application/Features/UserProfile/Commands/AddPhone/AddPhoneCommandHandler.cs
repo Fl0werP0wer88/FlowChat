@@ -12,7 +12,7 @@ using UserProfileAggregate = FlowChat.UserProfileService.Domain.Entities.UserPro
 namespace FlowChat.UserProfileService.Application.Features.UserProfile.Commands.AddPhone;
 
 public sealed class AddPhoneCommandHandler
-    : AggregateRootUpdateCommandHandlerBaseV2<AddPhoneCommand, Guid, UserProfileAggregate>
+    : AggregateRootUpdateCommandHandlerBaseV3<AddPhoneCommand, Guid, UserProfileAggregate>
 {
     private readonly IUserProfileWriteRepository _userProfileRepository;
     private UserProfileAggregate? _userProfile;
@@ -48,6 +48,7 @@ public sealed class AddPhoneCommandHandler
         }
 
         var phone = _userProfile.AddPhone(Id<DomainPhone>.FromGuid(request.PhoneId), normalizedPhoneNumber!);
+        SetUpdated();
 
         return FlowChatResult<Guid>.Success(phone.Id.Value);
     }

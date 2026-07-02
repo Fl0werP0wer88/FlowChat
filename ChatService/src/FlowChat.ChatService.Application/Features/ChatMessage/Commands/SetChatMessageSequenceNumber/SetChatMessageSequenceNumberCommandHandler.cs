@@ -13,13 +13,12 @@ public sealed class SetChatMessageSequenceNumberCommandHandler(
     IUnitOfWork unitOfWork,
     ILocalEventDispatcher domainEventDispatcher,
     IEnumerable<IAggregateBeforeSaveProcessor<SetChatMessageSequenceNumberCommand, ChatMessageAggregate>> beforeSaveProcessors)
-    : AggregateRootUpdateCommandHandlerBaseV2<SetChatMessageSequenceNumberCommand, long, ChatMessageAggregate>(
+    : AggregateRootUpdateCommandHandlerBaseV3<SetChatMessageSequenceNumberCommand, long, ChatMessageAggregate>(
         domainEventDispatcher,
         unitOfWork,
         beforeSaveProcessors)
 {
     private ChatMessageAggregate? _message;
-    private bool _messageChanged;
 
     protected override async Task<FlowChatResult<long>> ExecuteAsync(
         SetChatMessageSequenceNumberCommand request,
@@ -31,20 +30,16 @@ public sealed class SetChatMessageSequenceNumberCommandHandler(
 
         if (_message.SequenceNum.HasValue)
         {
-            _messageChanged = false;
             return FlowChatResult<long>.Success(_message.SequenceNum.Value);
         }
 
         var maxSequenceNum = await chatMessageRepository.GetMaxSequenceNumAsync(request.ConversationId, cancellationToken);
         var sequenceNum = maxSequenceNum.GetValueOrDefault() + 1;
         _message.SetSequenceNumber(sequenceNum);
-        _messageChanged = true;
+        SetUpdated();
 
         return FlowChatResult<long>.Success(sequenceNum);
     }
 
     protected override ChatMessageAggregate GetAggregateRoot() => _message ?? throw new InvalidOperationException("Aggregate root instance is not available.");
-
-    protected override MutationType GetMutationType(SetChatMessageSequenceNumberCommand request, ChatMessageAggregate aggregateRoot) =>
-        _messageChanged ? MutationType.Updated : MutationType.Unchanged;
 }

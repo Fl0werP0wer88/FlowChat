@@ -12,7 +12,7 @@ using UserProfileAggregate = FlowChat.UserProfileService.Domain.Entities.UserPro
 namespace FlowChat.UserProfileService.Application.Features.UserProfile.Commands.AddEmail;
 
 public sealed class AddEmailCommandHandler
-    : AggregateRootUpdateCommandHandlerBaseV2<AddEmailCommand, Guid, UserProfileAggregate>
+    : AggregateRootUpdateCommandHandlerBaseV3<AddEmailCommand, Guid, UserProfileAggregate>
 {
     private readonly IUserProfileReadRepository _userProfileReadRepository;
     private readonly IUserProfileWriteRepository _userProfileRepository;
@@ -51,6 +51,7 @@ public sealed class AddEmailCommandHandler
         }
 
         var email = _userProfile.AddEmail(Id<DomainEmail>.FromGuid(request.EmailId), normalizedEmailAddress);
+        SetUpdated();
 
         return FlowChatResult<Guid>.Success(email.Id.Value);
     }

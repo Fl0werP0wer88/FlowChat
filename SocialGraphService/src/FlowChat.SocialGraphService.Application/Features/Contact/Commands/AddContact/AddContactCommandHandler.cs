@@ -12,7 +12,7 @@ using UserProfileMarker = FlowChat.SocialGraphService.Domain.Entities.UserProfil
 namespace FlowChat.SocialGraphService.Application.Features.Contact.Commands.AddContact;
 
 public sealed class AddContactCommandHandler
-    : AggregateRootInsertCommandHandlerBaseV2<AddContactCommand, Guid, ContactAggregate>
+    : AggregateRootInsertCommandHandlerBaseV3<AddContactCommand, Guid, ContactAggregate>
 {
     private readonly IContactWriteRepository _contactWriteRepository;
     private readonly IUserProfileProjectionReadRepository _userProfileProjectionReadRepository;
@@ -69,6 +69,7 @@ public sealed class AddContactCommandHandler
             CreateEmailAddress(projection));
 
         await _contactWriteRepository.AddAsync(_contact, cancellationToken);
+        SetInserted();
 
         return FlowChatResult<Guid>.Success(_contact.Id.Value);
     }

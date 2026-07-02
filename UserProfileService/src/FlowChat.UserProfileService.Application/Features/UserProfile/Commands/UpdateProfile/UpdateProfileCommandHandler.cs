@@ -9,11 +9,10 @@ using UserProfileAggregate = FlowChat.UserProfileService.Domain.Entities.UserPro
 namespace FlowChat.UserProfileService.Application.Features.UserProfile.Commands.UpdateProfile;
 
 public sealed class UpdateProfileCommandHandler
-    : AggregateRootUpdateCommandHandlerBaseV2<UpdateProfileCommand, Guid, UserProfileAggregate>
+    : AggregateRootUpdateCommandHandlerBaseV3<UpdateProfileCommand, Guid, UserProfileAggregate>
 {
     private readonly IUserProfileWriteRepository _userProfileRepository;
     private UserProfileAggregate? _userProfile;
-    private bool _profileChanged;
 
     public UpdateProfileCommandHandler(
         IUserProfileWriteRepository userProfileRepository,
@@ -35,7 +34,10 @@ public sealed class UpdateProfileCommandHandler
             return FlowChatResult<Guid>.Failure(DomainError.NotFound($"User profile '{request.UserId}' was not found."));
         }
 
-        _profileChanged = HasProfileChanged(request, _userProfile);
+        if (HasProfileChanged(request, _userProfile))
+        {
+            SetUpdated();
+        }
 
         _userProfile.UpdateProfile(
             request.FirstName,
@@ -50,9 +52,6 @@ public sealed class UpdateProfileCommandHandler
 
     protected override UserProfileAggregate GetAggregateRoot() =>
         _userProfile ?? throw new InvalidOperationException("Aggregate root instance is not available.");
-
-    protected override MutationType GetMutationType(UpdateProfileCommand request, UserProfileAggregate aggregateRoot) =>
-        _profileChanged ? MutationType.Updated : MutationType.Unchanged;
 
     private static bool HasProfileChanged(UpdateProfileCommand request, UserProfileAggregate userProfile)
     {

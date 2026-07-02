@@ -12,7 +12,7 @@ using DomainAccount = FlowChat.AuthService.Domain.Entities.Account.Account;
 namespace FlowChat.AuthService.Application.Features.User.Commands.RegisterUser;
 
 public class RegisterUserCommandHandler
-    : AggregateRootInsertCommandHandlerBaseV2<RegisterUserCommand, RegisterUserCommandResponse, DomainAccount>
+    : AggregateRootInsertCommandHandlerBaseV3<RegisterUserCommand, RegisterUserCommandResponse, DomainAccount>
 {
     private readonly IAccountRepository _accountRepository;
     private readonly IPasswordHashingService _passwordHashingService;
@@ -58,6 +58,7 @@ public class RegisterUserCommandHandler
             request.Organization);
 
         await _accountRepository.CreateAsync(_account, cancellationToken);
+        SetInserted();
 
         return FlowChatResult<RegisterUserCommandResponse>.Success(
             new RegisterUserCommandResponse
