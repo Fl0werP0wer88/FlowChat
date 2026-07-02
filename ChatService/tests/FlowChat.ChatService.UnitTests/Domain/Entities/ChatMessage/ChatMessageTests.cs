@@ -1,4 +1,5 @@
 using FlowChat.ChatService.Domain.Entities.ChatMessage;
+using FlowChat.ChatService.Domain.Entities.ChatMessage.Events;
 using FlowChat.ChatService.Domain.Entities.Conversation;
 using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
@@ -29,6 +30,9 @@ public sealed class ChatMessageTests
         chatMessage.SequenceNum.Should().Be(42);
         chatMessage.DeliveryStatus.Should().Be(DeliveryStatus.Pending);
         chatMessage.DeliveredAtUtc.Should().BeNull();
+        var domainEvent = chatMessage.DomainEvents.OfType<ChatMessageSequencedDomainEvent>().Should().ContainSingle().Subject;
+        domainEvent.MessageId.Should().Be(chatMessage.Id);
+        domainEvent.SequenceNum.Should().Be(42);
     }
 
     [Fact]
