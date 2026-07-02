@@ -129,8 +129,8 @@ public sealed class ConfirmEmailVerificationCommandHandler
     protected override UserProfileAggregate GetAggregateRoot() =>
         _userProfile ?? throw new InvalidOperationException("Aggregate root instance is not available.");
 
-    protected override AggregateState GetAggregateState(ConfirmEmailVerificationCommand request, UserProfileAggregate aggregateRoot) =>
-        _emailConfirmed ? AggregateState.Updated : AggregateState.Unchanged;
+    protected override MutationType GetMutationType(ConfirmEmailVerificationCommand request, UserProfileAggregate aggregateRoot) =>
+        _emailConfirmed ? MutationType.Updated : MutationType.Unchanged;
 
     private static bool IsConfirmedBySameToken(
         EmailVerificationTokenPayload payload,

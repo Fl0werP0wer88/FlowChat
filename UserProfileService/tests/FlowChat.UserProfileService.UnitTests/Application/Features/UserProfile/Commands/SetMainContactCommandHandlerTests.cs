@@ -38,14 +38,14 @@ public sealed class SetMainContactCommandHandlerTests
             .Setup(x => x.ProcessAsync(
                 It.IsAny<SetMainEmailCommand>(),
                 It.IsAny<UserProfile>(),
-                It.IsAny<AggregateState>(),
+                It.IsAny<MutationType>(),
                 It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
         _phoneBeforeSaveProcessorMock
             .Setup(x => x.ProcessAsync(
                 It.IsAny<SetMainPhoneCommand>(),
                 It.IsAny<UserProfile>(),
-                It.IsAny<AggregateState>(),
+                It.IsAny<MutationType>(),
                 It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
@@ -121,7 +121,7 @@ public sealed class SetMainContactCommandHandlerTests
             x => x.ProcessAsync(
                 It.IsAny<SetMainEmailCommand>(),
                 profile,
-                AggregateState.Updated,
+                MutationType.Updated,
                 It.IsAny<CancellationToken>()),
             Times.Once);
     }
@@ -163,7 +163,7 @@ public sealed class SetMainContactCommandHandlerTests
             x => x.ProcessAsync(
                 It.IsAny<SetMainEmailCommand>(),
                 It.IsAny<UserProfile>(),
-                It.IsAny<AggregateState>(),
+                It.IsAny<MutationType>(),
                 It.IsAny<CancellationToken>()),
             Times.Never);
     }
@@ -232,7 +232,7 @@ public sealed class SetMainContactCommandHandlerTests
             x => x.ProcessAsync(
                 It.IsAny<SetMainPhoneCommand>(),
                 profile,
-                AggregateState.Updated,
+                MutationType.Updated,
                 It.IsAny<CancellationToken>()),
             Times.Once);
     }
@@ -278,7 +278,7 @@ public sealed class SetMainContactCommandHandlerTests
             x => x.ProcessAsync(
                 It.IsAny<SetMainPhoneCommand>(),
                 It.IsAny<UserProfile>(),
-                It.IsAny<AggregateState>(),
+                It.IsAny<MutationType>(),
                 It.IsAny<CancellationToken>()),
             Times.Never);
     }

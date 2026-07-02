@@ -39,7 +39,7 @@ public sealed class AddParticipantCommandHandlerTests
             .Setup(x => x.ProcessAsync(
                 It.IsAny<AddParticipantCommand>(),
                 It.IsAny<GroupConversation>(),
-                It.IsAny<AggregateState>(),
+                It.IsAny<MutationType>(),
                 It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
@@ -222,7 +222,7 @@ public sealed class AddParticipantCommandHandlerTests
             x => x.ProcessAsync(
                 It.IsAny<AddParticipantCommand>(),
                 It.IsAny<GroupConversation>(),
-                It.IsAny<AggregateState>(),
+                It.IsAny<MutationType>(),
                 It.IsAny<CancellationToken>()),
             Times.Never);
         _chatMessageRepositoryMock.Verify(

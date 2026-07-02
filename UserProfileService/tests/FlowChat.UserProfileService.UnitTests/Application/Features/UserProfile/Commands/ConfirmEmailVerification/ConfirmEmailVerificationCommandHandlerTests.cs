@@ -61,7 +61,7 @@ public sealed class ConfirmEmailVerificationCommandHandlerTests
             .Setup(x => x.ProcessAsync(
                 It.IsAny<ConfirmEmailVerificationCommand>(),
                 It.IsAny<UserProfile>(),
-                It.IsAny<AggregateState>(),
+                It.IsAny<MutationType>(),
                 It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
@@ -186,7 +186,7 @@ public sealed class ConfirmEmailVerificationCommandHandlerTests
             x => x.ProcessAsync(
                 It.IsAny<ConfirmEmailVerificationCommand>(),
                 It.IsAny<UserProfile>(),
-                It.IsAny<AggregateState>(),
+                It.IsAny<MutationType>(),
                 It.IsAny<CancellationToken>()),
             Times.Never);
     }

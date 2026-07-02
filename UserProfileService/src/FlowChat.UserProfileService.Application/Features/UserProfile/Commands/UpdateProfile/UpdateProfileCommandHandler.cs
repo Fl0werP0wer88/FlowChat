@@ -51,8 +51,8 @@ public sealed class UpdateProfileCommandHandler
     protected override UserProfileAggregate GetAggregateRoot() =>
         _userProfile ?? throw new InvalidOperationException("Aggregate root instance is not available.");
 
-    protected override AggregateState GetAggregateState(UpdateProfileCommand request, UserProfileAggregate aggregateRoot) =>
-        _profileChanged ? AggregateState.Updated : AggregateState.Unchanged;
+    protected override MutationType GetMutationType(UpdateProfileCommand request, UserProfileAggregate aggregateRoot) =>
+        _profileChanged ? MutationType.Updated : MutationType.Unchanged;
 
     private static bool HasProfileChanged(UpdateProfileCommand request, UserProfileAggregate userProfile)
     {

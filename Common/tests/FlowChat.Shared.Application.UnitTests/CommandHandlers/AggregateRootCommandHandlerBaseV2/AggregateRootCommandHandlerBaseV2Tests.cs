@@ -12,28 +12,28 @@ namespace FlowChat.Shared.Application.UnitTests.CommandHandlers.AggregateRootCom
 public sealed class AggregateRootCommandHandlerBaseV2Tests
 {
     [Theory]
-    [InlineData(AggregateState.Created)]
-    [InlineData(AggregateState.Updated)]
-    [InlineData(AggregateState.Deleted)]
-    public async Task Handle_WhenCommandSucceeds_PassesAggregateStateToBeforeSaveProcessor(AggregateState expectedAggregateState)
+    [InlineData(MutationType.Created)]
+    [InlineData(MutationType.Updated)]
+    [InlineData(MutationType.Deleted)]
+    public async Task Handle_WhenCommandSucceeds_PassesMutationTypeToBeforeSaveProcessor(MutationType expectedMutationType)
     {
         var aggregate = new TestAggregate(Guid.NewGuid());
         var command = new TestCommand();
         var unitOfWorkMock = CreateUnitOfWorkMock();
         var localEventDispatcherMock = new Mock<ILocalEventDispatcher>();
-        AggregateState? capturedAggregateState = null;
+        MutationType? capturedMutationType = null;
         var processorMock = new Mock<IAggregateBeforeSaveProcessor<TestCommand, TestAggregate>>();
         processorMock
             .Setup(x => x.ProcessAsync(
                 It.IsAny<TestCommand>(),
                 It.IsAny<TestAggregate>(),
-                It.IsAny<AggregateState>(),
+                It.IsAny<MutationType>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<TestCommand, TestAggregate, AggregateState, CancellationToken>(
-                (_, _, aggregateState, _) => capturedAggregateState = aggregateState)
+            .Callback<TestCommand, TestAggregate, MutationType, CancellationToken>(
+                (_, _, mutationType, _) => capturedMutationType = mutationType)
             .Returns(Task.CompletedTask);
         var handler = CreateHandler(
-            expectedAggregateState,
+            expectedMutationType,
             aggregate,
             unitOfWorkMock.Object,
             localEventDispatcherMock.Object,
@@ -42,9 +42,9 @@ public sealed class AggregateRootCommandHandlerBaseV2Tests
         var result = await handler.Handle(command, CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
-        capturedAggregateState.Should().Be(expectedAggregateState);
+        capturedMutationType.Should().Be(expectedMutationType);
         processorMock.Verify(
-            x => x.ProcessAsync(command, aggregate, expectedAggregateState, It.IsAny<CancellationToken>()),
+            x => x.ProcessAsync(command, aggregate, expectedMutationType, It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -65,7 +65,7 @@ public sealed class AggregateRootCommandHandlerBaseV2Tests
             .Setup(x => x.ProcessAsync(
                 It.IsAny<TestCommand>(),
                 It.IsAny<TestAggregate>(),
-                It.IsAny<AggregateState>(),
+                It.IsAny<MutationType>(),
                 It.IsAny<CancellationToken>()))
             .Callback(() => callOrder.Add("processor"))
             .Returns(Task.CompletedTask);
@@ -88,16 +88,16 @@ public sealed class AggregateRootCommandHandlerBaseV2Tests
         var command = new TestCommand();
         var unitOfWorkMock = CreateUnitOfWorkMock();
         var localEventDispatcherMock = new Mock<ILocalEventDispatcher>();
-        AggregateState? capturedAggregateState = null;
+        MutationType? capturedMutationType = null;
         var processorMock = new Mock<IAggregateBeforeSaveProcessor<TestCommand, TestAggregate>>();
         processorMock
             .Setup(x => x.ProcessAsync(
                 It.IsAny<TestCommand>(),
                 It.IsAny<TestAggregate>(),
-                It.IsAny<AggregateState>(),
+                It.IsAny<MutationType>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<TestCommand, TestAggregate, AggregateState, CancellationToken>(
-                (_, _, aggregateState, _) => capturedAggregateState = aggregateState)
+            .Callback<TestCommand, TestAggregate, MutationType, CancellationToken>(
+                (_, _, mutationType, _) => capturedMutationType = mutationType)
             .Returns(Task.CompletedTask);
         var handler = new TestUpsertCommandHandler(
             aggregate,
@@ -109,9 +109,9 @@ public sealed class AggregateRootCommandHandlerBaseV2Tests
         var result = await handler.Handle(command, CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
-        capturedAggregateState.Should().Be(AggregateState.Created);
+        capturedMutationType.Should().Be(MutationType.Created);
         processorMock.Verify(
-            x => x.ProcessAsync(command, aggregate, AggregateState.Created, It.IsAny<CancellationToken>()),
+            x => x.ProcessAsync(command, aggregate, MutationType.Created, It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -122,16 +122,16 @@ public sealed class AggregateRootCommandHandlerBaseV2Tests
         var command = new TestCommand();
         var unitOfWorkMock = CreateUnitOfWorkMock();
         var localEventDispatcherMock = new Mock<ILocalEventDispatcher>();
-        AggregateState? capturedAggregateState = null;
+        MutationType? capturedMutationType = null;
         var processorMock = new Mock<IAggregateBeforeSaveProcessor<TestCommand, TestAggregate>>();
         processorMock
             .Setup(x => x.ProcessAsync(
                 It.IsAny<TestCommand>(),
                 It.IsAny<TestAggregate>(),
-                It.IsAny<AggregateState>(),
+                It.IsAny<MutationType>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<TestCommand, TestAggregate, AggregateState, CancellationToken>(
-                (_, _, aggregateState, _) => capturedAggregateState = aggregateState)
+            .Callback<TestCommand, TestAggregate, MutationType, CancellationToken>(
+                (_, _, mutationType, _) => capturedMutationType = mutationType)
             .Returns(Task.CompletedTask);
         var handler = new TestUpsertCommandHandler(
             aggregate,
@@ -143,14 +143,14 @@ public sealed class AggregateRootCommandHandlerBaseV2Tests
         var result = await handler.Handle(command, CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
-        capturedAggregateState.Should().Be(AggregateState.Updated);
+        capturedMutationType.Should().Be(MutationType.Updated);
         processorMock.Verify(
-            x => x.ProcessAsync(command, aggregate, AggregateState.Updated, It.IsAny<CancellationToken>()),
+            x => x.ProcessAsync(command, aggregate, MutationType.Updated, It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
     [Fact]
-    public async Task Handle_WhenAggregateStateIsUnchanged_SkipsVersionEventsAndBeforeSaveProcessors()
+    public async Task Handle_WhenMutationTypeIsUnchanged_SkipsVersionEventsAndBeforeSaveProcessors()
     {
         var aggregate = new TestAggregate(Guid.NewGuid());
         var initialVersion = aggregate.Version;
@@ -176,36 +176,36 @@ public sealed class AggregateRootCommandHandlerBaseV2Tests
             x => x.ProcessAsync(
                 It.IsAny<TestCommand>(),
                 It.IsAny<TestAggregate>(),
-                It.IsAny<AggregateState>(),
+                It.IsAny<MutationType>(),
                 It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
     private static ICommandHandler<TestCommand, Guid> CreateHandler(
-        AggregateState aggregateState,
+        MutationType mutationType,
         TestAggregate aggregate,
         IUnitOfWork unitOfWork,
         ILocalEventDispatcher localEventDispatcher,
         IEnumerable<IAggregateBeforeSaveProcessor<TestCommand, TestAggregate>> beforeSaveProcessors)
     {
-        return aggregateState switch
+        return mutationType switch
         {
-            AggregateState.Created => new TestInsertCommandHandler(
+            MutationType.Created => new TestInsertCommandHandler(
                 aggregate,
                 unitOfWork,
                 localEventDispatcher,
                 beforeSaveProcessors),
-            AggregateState.Updated => new TestUpdateCommandHandler(
+            MutationType.Updated => new TestUpdateCommandHandler(
                 aggregate,
                 unitOfWork,
                 localEventDispatcher,
                 beforeSaveProcessors),
-            AggregateState.Deleted => new TestDeleteCommandHandler(
+            MutationType.Deleted => new TestDeleteCommandHandler(
                 aggregate,
                 unitOfWork,
                 localEventDispatcher,
                 beforeSaveProcessors),
-            _ => throw new ArgumentOutOfRangeException(nameof(aggregateState), aggregateState, null)
+            _ => throw new ArgumentOutOfRangeException(nameof(mutationType), mutationType, null)
         };
     }
 
@@ -366,7 +366,7 @@ public sealed class AggregateRootCommandHandlerBaseV2Tests
 
         protected override TestAggregate GetAggregateRoot() => _aggregate;
 
-        protected override AggregateState GetAggregateState(TestCommand request, TestAggregate aggregateRoot) =>
-            AggregateState.Unchanged;
+        protected override MutationType GetMutationType(TestCommand request, TestAggregate aggregateRoot) =>
+            MutationType.Unchanged;
     }
 }

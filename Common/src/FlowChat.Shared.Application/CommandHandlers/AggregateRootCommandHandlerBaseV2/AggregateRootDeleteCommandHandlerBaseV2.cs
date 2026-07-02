@@ -20,6 +20,6 @@ public abstract class AggregateRootDeleteCommandHandlerBaseV2<TCommand, TRespons
     {
     }
 
-    protected override AggregateState GetAggregateState(TCommand request, TAggregate aggregateRoot) =>
-        AggregateState.Deleted;
+    protected override MutationType GetMutationType(TCommand request, TAggregate aggregateRoot) =>
+        MutationType.Deleted;
 }

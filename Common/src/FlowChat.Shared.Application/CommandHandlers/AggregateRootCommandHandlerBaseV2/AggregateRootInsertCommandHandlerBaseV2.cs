@@ -20,6 +20,6 @@ public abstract class AggregateRootInsertCommandHandlerBaseV2<TCommand, TRespons
     {
     }
 
-    protected override AggregateState GetAggregateState(TCommand request, TAggregate aggregateRoot) =>
-        AggregateState.Created;
+    protected override MutationType GetMutationType(TCommand request, TAggregate aggregateRoot) =>
+        MutationType.Created;
 }

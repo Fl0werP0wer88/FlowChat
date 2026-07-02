@@ -59,6 +59,6 @@ public sealed class SetAuthEmailCommandHandler
     protected override UserProfileAggregate GetAggregateRoot() =>
         _userProfile ?? throw new InvalidOperationException("Aggregate root instance is not available.");
 
-    protected override AggregateState GetAggregateState(SetAuthEmailCommand request, UserProfileAggregate aggregateRoot) =>
-        _authEmailChanged ? AggregateState.Updated : AggregateState.Unchanged;
+    protected override MutationType GetMutationType(SetAuthEmailCommand request, UserProfileAggregate aggregateRoot) =>
+        _authEmailChanged ? MutationType.Updated : MutationType.Unchanged;
 }

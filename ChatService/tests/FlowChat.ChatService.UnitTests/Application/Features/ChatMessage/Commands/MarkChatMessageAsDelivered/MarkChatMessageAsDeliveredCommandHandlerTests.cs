@@ -39,7 +39,7 @@ public sealed class MarkChatMessageAsDeliveredCommandHandlerTests
             .Setup(x => x.ProcessAsync(
                 It.IsAny<MarkChatMessageAsDeliveredCommand>(),
                 It.IsAny<ChatMessageAggregate>(),
-                It.IsAny<AggregateState>(),
+                It.IsAny<MutationType>(),
                 It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
@@ -51,7 +51,7 @@ public sealed class MarkChatMessageAsDeliveredCommandHandlerTests
     }
 
     [Fact]
-    public async Task Handle_WhenMessageIsPending_MarksDeliveredAndProcessesUpdatedAggregateState()
+    public async Task Handle_WhenMessageIsPending_MarksDeliveredAndProcessesUpdatedMutationType()
     {
         var conversationId = Guid.NewGuid();
         var message = CreateMessage(conversationId);
@@ -73,7 +73,7 @@ public sealed class MarkChatMessageAsDeliveredCommandHandlerTests
             x => x.GetMaxSequenceNumAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()),
             Times.Never);
         _beforeSaveProcessorMock.Verify(
-            x => x.ProcessAsync(command, message, AggregateState.Updated, It.IsAny<CancellationToken>()),
+            x => x.ProcessAsync(command, message, MutationType.Updated, It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -109,7 +109,7 @@ public sealed class MarkChatMessageAsDeliveredCommandHandlerTests
             x => x.ProcessAsync(
                 It.IsAny<MarkChatMessageAsDeliveredCommand>(),
                 It.IsAny<ChatMessageAggregate>(),
-                It.IsAny<AggregateState>(),
+                It.IsAny<MutationType>(),
                 It.IsAny<CancellationToken>()),
             Times.Never);
     }
@@ -157,7 +157,7 @@ public sealed class MarkChatMessageAsDeliveredCommandHandlerTests
             x => x.ProcessAsync(
                 It.IsAny<MarkChatMessageAsDeliveredCommand>(),
                 It.IsAny<ChatMessageAggregate>(),
-                It.IsAny<AggregateState>(),
+                It.IsAny<MutationType>(),
                 It.IsAny<CancellationToken>()),
             Times.Never);
     }

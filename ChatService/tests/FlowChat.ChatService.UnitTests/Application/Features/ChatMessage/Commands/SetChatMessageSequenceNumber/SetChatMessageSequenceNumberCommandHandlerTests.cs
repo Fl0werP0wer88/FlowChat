@@ -38,7 +38,7 @@ public sealed class SetChatMessageSequenceNumberCommandHandlerTests
             .Setup(x => x.ProcessAsync(
                 It.IsAny<SetChatMessageSequenceNumberCommand>(),
                 It.IsAny<ChatMessageAggregate>(),
-                It.IsAny<AggregateState>(),
+                It.IsAny<MutationType>(),
                 It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
@@ -70,7 +70,7 @@ public sealed class SetChatMessageSequenceNumberCommandHandlerTests
         message.SequenceNum.Should().Be(42);
         message.DeliveryStatus.Should().Be(DeliveryStatus.Pending);
         _beforeSaveProcessorMock.Verify(
-            x => x.ProcessAsync(command, message, AggregateState.Updated, It.IsAny<CancellationToken>()),
+            x => x.ProcessAsync(command, message, MutationType.Updated, It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -100,7 +100,7 @@ public sealed class SetChatMessageSequenceNumberCommandHandlerTests
             x => x.ProcessAsync(
                 It.IsAny<SetChatMessageSequenceNumberCommand>(),
                 It.IsAny<ChatMessageAggregate>(),
-                It.IsAny<AggregateState>(),
+                It.IsAny<MutationType>(),
                 It.IsAny<CancellationToken>()),
             Times.Never);
     }

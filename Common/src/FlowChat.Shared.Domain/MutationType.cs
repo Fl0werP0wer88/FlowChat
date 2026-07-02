@@ -1,6 +1,6 @@
 namespace FlowChat.Shared.Domain;
 
-public enum AggregateState
+public enum MutationType
 {
     Created,
     Updated,

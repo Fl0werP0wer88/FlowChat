@@ -70,6 +70,6 @@ public sealed class AddParticipantCommandHandler
     protected override GroupConversation GetAggregateRoot() =>
         _conversation ?? throw new InvalidOperationException("Aggregate root instance is not available.");
 
-    protected override AggregateState GetAggregateState(AddParticipantCommand request, GroupConversation aggregateRoot) =>
-        _participantsChanged ? AggregateState.Updated : AggregateState.Unchanged;
+    protected override MutationType GetMutationType(AddParticipantCommand request, GroupConversation aggregateRoot) =>
+        _participantsChanged ? MutationType.Updated : MutationType.Unchanged;
 }

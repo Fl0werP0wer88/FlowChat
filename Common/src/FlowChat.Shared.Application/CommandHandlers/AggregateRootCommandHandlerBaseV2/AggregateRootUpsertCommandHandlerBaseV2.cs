@@ -22,6 +22,6 @@ public abstract class AggregateRootUpsertCommandHandlerBaseV2<TCommand, TRespons
 
     protected abstract bool WasAggregateCreated { get; }
 
-    protected override AggregateState GetAggregateState(TCommand request, TAggregate aggregateRoot) =>
-        WasAggregateCreated ? AggregateState.Created : AggregateState.Updated;
+    protected override MutationType GetMutationType(TCommand request, TAggregate aggregateRoot) =>
+        WasAggregateCreated ? MutationType.Created : MutationType.Updated;
 }

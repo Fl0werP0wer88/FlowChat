@@ -49,6 +49,6 @@ public sealed class MarkChatMessageAsDeliveredCommandHandler(
 
     protected override ChatMessageAggregate GetAggregateRoot() => _message ?? throw new InvalidOperationException("Aggregate root instance is not available.");
 
-    protected override AggregateState GetAggregateState(MarkChatMessageAsDeliveredCommand request, ChatMessageAggregate aggregateRoot) =>
-        _messageChanged ? AggregateState.Updated : AggregateState.Unchanged;
+    protected override MutationType GetMutationType(MarkChatMessageAsDeliveredCommand request, ChatMessageAggregate aggregateRoot) =>
+        _messageChanged ? MutationType.Updated : MutationType.Unchanged;
 }

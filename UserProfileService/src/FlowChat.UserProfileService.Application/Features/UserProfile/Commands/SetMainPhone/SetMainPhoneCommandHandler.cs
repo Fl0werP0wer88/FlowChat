@@ -60,6 +60,6 @@ public sealed class SetMainPhoneCommandHandler
     protected override UserProfileAggregate GetAggregateRoot() =>
         _userProfile ?? throw new InvalidOperationException("Aggregate root instance is not available.");
 
-    protected override AggregateState GetAggregateState(SetMainPhoneCommand request, UserProfileAggregate aggregateRoot) =>
-        _mainPhoneChanged ? AggregateState.Updated : AggregateState.Unchanged;
+    protected override MutationType GetMutationType(SetMainPhoneCommand request, UserProfileAggregate aggregateRoot) =>
+        _mainPhoneChanged ? MutationType.Updated : MutationType.Unchanged;
 }

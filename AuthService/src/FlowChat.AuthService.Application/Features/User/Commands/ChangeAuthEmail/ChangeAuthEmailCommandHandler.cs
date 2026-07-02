@@ -63,6 +63,6 @@ public sealed class ChangeAuthEmailCommandHandler
     protected override DomainAccount GetAggregateRoot() =>
         _account ?? throw new InvalidOperationException("Aggregate root instance is not available.");
 
-    protected override AggregateState GetAggregateState(ChangeAuthEmailCommand request, DomainAccount aggregateRoot) =>
-        _emailChanged ? AggregateState.Updated : AggregateState.Unchanged;
+    protected override MutationType GetMutationType(ChangeAuthEmailCommand request, DomainAccount aggregateRoot) =>
+        _emailChanged ? MutationType.Updated : MutationType.Unchanged;
 }

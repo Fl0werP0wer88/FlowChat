@@ -37,8 +37,8 @@ public abstract class AggregateRootCommandHandlerBaseV2<TCommand, TResponse, TAg
         {
             var aggregateRoot = GetAggregateRoot();
 
-            var aggregateState = GetAggregateState(request, aggregateRoot);
-            if (aggregateState == AggregateState.Unchanged)
+            var mutationType = GetMutationType(request, aggregateRoot);
+            if (mutationType == MutationType.Unchanged)
             {
                 return operationResult;
             }
@@ -49,11 +49,11 @@ public abstract class AggregateRootCommandHandlerBaseV2<TCommand, TResponse, TAg
                 .Cast<ILocalEvent>();
 
             await DispatchLocalEventsAsync(localEvents, cancellationToken);
-            ApplyAuditInfo(aggregateRoot, aggregateState);
+            ApplyAuditInfo(aggregateRoot, mutationType);
 
             foreach (var processor in _beforeSaveProcessors)
             {
-                await processor.ProcessAsync(request, aggregateRoot, aggregateState, cancellationToken);
+                await processor.ProcessAsync(request, aggregateRoot, mutationType, cancellationToken);
             }
         }
 
@@ -64,29 +64,29 @@ public abstract class AggregateRootCommandHandlerBaseV2<TCommand, TResponse, TAg
 
     protected abstract TAggregate GetAggregateRoot();
 
-    protected abstract AggregateState GetAggregateState(TCommand request, TAggregate aggregateRoot);
+    protected abstract MutationType GetMutationType(TCommand request, TAggregate aggregateRoot);
 
-    private static void ApplyAuditInfo(TAggregate aggregateRoot, AggregateState aggregateState)
+    private static void ApplyAuditInfo(TAggregate aggregateRoot, MutationType mutationType)
     {
         const string SystemActor = "system";
 
-        switch (aggregateState)
+        switch (mutationType)
         {
-            case AggregateState.Created:
+            case MutationType.Created:
                 aggregateRoot.SetCreated(SystemActor);
                 aggregateRoot.SetUpdated(SystemActor);
                 break;
-            case AggregateState.Updated:
+            case MutationType.Updated:
                 aggregateRoot.SetUpdated(SystemActor);
                 break;
-            case AggregateState.Deleted:
+            case MutationType.Deleted:
                 aggregateRoot.SetUpdated(SystemActor);
                 aggregateRoot.Delete(UtcDateTimeOffset.UtcNow);
                 break;
-            case AggregateState.Unchanged:
+            case MutationType.Unchanged:
                 break;
             default:
-                throw new ArgumentOutOfRangeException(nameof(aggregateState), aggregateState, null);
+                throw new ArgumentOutOfRangeException(nameof(mutationType), mutationType, null);
         }
     }
 
