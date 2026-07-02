@@ -10,9 +10,8 @@ public abstract class AggregateRootUpsertDomainEventHandlerBase<TNotification, T
 {
     protected AggregateRootUpsertDomainEventHandlerBase(
         ILocalEventDispatcher localEventsDispatcher,
-        IUnitOfWork unitOfWork,
         IEnumerable<IAggregateBeforeSaveProcessor<TNotification, TAggregate>> beforeSaveProcessors)
-        : base(localEventsDispatcher, unitOfWork, beforeSaveProcessors)
+        : base(localEventsDispatcher, beforeSaveProcessors)
     {
     }
 

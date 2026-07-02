@@ -1,13 +1,12 @@
 using FlowChat.Core.Messaging;
 using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2.BeforeSaveProcessors;
-using FlowChat.Shared.Application.DomainEventHandlers.Notifications;
 using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
 
 namespace FlowChat.Shared.Application.DomainEventHandlers.AggregateRootDomainEventHandlers;
 
 public abstract class AggregateRootDomainEventHandlerBase<TNotification, TAggregate>
-    : TransactionalDomainEventHandlerBase<TNotification>
+    : Notifications.DomainEventHandlerBase<TNotification>
     where TNotification : IDomainEvent
     where TAggregate : class, IAggregateRoot
 {
@@ -17,15 +16,13 @@ public abstract class AggregateRootDomainEventHandlerBase<TNotification, TAggreg
 
     protected AggregateRootDomainEventHandlerBase(
         ILocalEventDispatcher localEventsDispatcher,
-        IUnitOfWork unitOfWork,
         IEnumerable<IAggregateBeforeSaveProcessor<TNotification, TAggregate>> beforeSaveProcessors)
-        : base(unitOfWork)
     {
         _localEventsDispatcher = localEventsDispatcher;
         _beforeSaveProcessors = beforeSaveProcessors;
     }
 
-    protected override async Task HandleInTransactionAsync(TNotification notification, CancellationToken cancellationToken)
+    protected override async Task HandleNotificationAsync(TNotification notification, CancellationToken cancellationToken)
     {
         await ExecuteAsync(notification, cancellationToken);
 

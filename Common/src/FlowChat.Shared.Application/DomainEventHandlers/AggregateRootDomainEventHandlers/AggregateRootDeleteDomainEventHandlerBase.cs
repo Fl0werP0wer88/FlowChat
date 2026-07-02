@@ -10,9 +10,8 @@ public abstract class AggregateRootDeleteDomainEventHandlerBase<TNotification, T
 {
     protected AggregateRootDeleteDomainEventHandlerBase(
         ILocalEventDispatcher localEventsDispatcher,
-        IUnitOfWork unitOfWork,
         IEnumerable<IAggregateBeforeSaveProcessor<TNotification, TAggregate>> beforeSaveProcessors)
-        : base(localEventsDispatcher, unitOfWork, beforeSaveProcessors)
+        : base(localEventsDispatcher, beforeSaveProcessors)
     {
     }
 
