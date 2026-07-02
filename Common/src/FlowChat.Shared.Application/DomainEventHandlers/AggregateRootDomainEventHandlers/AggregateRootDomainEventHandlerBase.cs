@@ -1,4 +1,5 @@
 using FlowChat.Core.Messaging;
+using FlowChat.Core.Results;
 using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2.BeforeSaveProcessors;
 using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
@@ -24,7 +25,12 @@ public abstract class AggregateRootDomainEventHandlerBase<TNotification, TAggreg
 
     protected override async Task HandleNotificationAsync(TNotification notification, CancellationToken cancellationToken)
     {
-        await ExecuteAsync(notification, cancellationToken);
+        var operationResult = await ExecuteAsync(notification, cancellationToken);
+
+        if (operationResult.IsFailure)
+        {
+            return;
+        }
 
         var aggregateRoot = GetAggregateRoot();
 
@@ -52,7 +58,7 @@ public abstract class AggregateRootDomainEventHandlerBase<TNotification, TAggreg
         _mutationType = mutationType;
     }
 
-    protected abstract Task ExecuteAsync(TNotification notification, CancellationToken cancellationToken);
+    protected abstract Task<FlowChatResult> ExecuteAsync(TNotification notification, CancellationToken cancellationToken);
 
     protected abstract TAggregate GetAggregateRoot();
 
