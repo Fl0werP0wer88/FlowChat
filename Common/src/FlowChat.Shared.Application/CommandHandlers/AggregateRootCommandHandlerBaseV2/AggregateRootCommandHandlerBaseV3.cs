@@ -16,7 +16,7 @@ public abstract class AggregateRootCommandHandlerBaseV3<TCommand, TResponse, TAg
 {
     private readonly ILocalEventDispatcher _localEventsDispatcher;
     private readonly IEnumerable<IAggregateBeforeSaveProcessor<TCommand, TAggregate>> _beforeSaveProcessors;
-    private MutationType _mutationType;
+    private MutationType _mutationType = MutationType.Unchanged;
 
     protected AggregateRootCommandHandlerBaseV3(
         ILocalEventDispatcher localEventsDispatcher,
