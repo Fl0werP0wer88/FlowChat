@@ -21,8 +21,8 @@ public class WriteRepositoryBase<TAggregate, TEntity>(DbContext dbContext)
     }
 
     public virtual async Task<TAggregate?> GetByIdAsync(
-    CancellationToken cancellationToken = default,
-    params object?[] keyValues)
+        CancellationToken cancellationToken = default,
+        params IId?[] keyValues)
     {
         var entityType = DbContext.Model.FindEntityType(typeof(TAggregate))
             ?? throw new InvalidOperationException(
