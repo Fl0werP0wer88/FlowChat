@@ -16,6 +16,7 @@ public abstract class AggregateRootCommandHandlerBaseV3<TCommand, TResponse, TAg
 {
     private readonly ILocalEventDispatcher _localEventsDispatcher;
     private readonly IEnumerable<IAggregateBeforeSaveProcessor<TCommand, TAggregate>> _beforeSaveProcessors;
+    private MutationType _mutationType;
 
     protected AggregateRootCommandHandlerBaseV3(
         ILocalEventDispatcher localEventsDispatcher,
@@ -37,8 +38,7 @@ public abstract class AggregateRootCommandHandlerBaseV3<TCommand, TResponse, TAg
         {
             var aggregateRoot = GetAggregateRoot();
 
-            var mutationType = GetMutationType(request, aggregateRoot);
-            if (mutationType == MutationType.Unchanged)
+            if (_mutationType == MutationType.Unchanged)
             {
                 return operationResult;
             }
@@ -49,22 +49,25 @@ public abstract class AggregateRootCommandHandlerBaseV3<TCommand, TResponse, TAg
                 .Cast<ILocalEvent>();
 
             await DispatchLocalEventsAsync(localEvents, cancellationToken);
-            ApplyAuditInfo(aggregateRoot, mutationType);
+            ApplyAuditInfo(aggregateRoot, _mutationType);
 
             foreach (var processor in _beforeSaveProcessors)
             {
-                await processor.ProcessAsync(request, aggregateRoot, mutationType, cancellationToken);
+                await processor.ProcessAsync(request, aggregateRoot, _mutationType, cancellationToken);
             }
         }
 
         return operationResult;
     }
 
+    protected void SetMutationType(MutationType mutationType)
+    {
+        _mutationType = mutationType;
+    }
+
     protected abstract Task<FlowChatResult<TResponse>> ExecuteAsync(TCommand request, CancellationToken cancellationToken);
 
     protected abstract TAggregate GetAggregateRoot();
-
-    protected abstract MutationType GetMutationType(TCommand request, TAggregate aggregateRoot);
 
     private static void ApplyAuditInfo(TAggregate aggregateRoot, MutationType mutationType)
     {
