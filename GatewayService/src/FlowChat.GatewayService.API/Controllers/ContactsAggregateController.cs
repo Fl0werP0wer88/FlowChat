@@ -43,10 +43,15 @@ public sealed class ContactsAggregateController : ApiControllerBase
 
         var partnerUserIds = contacts.Select(c => c.ContactUserId).ToList();
 
-        var conversationIds = partnerUserIds.Count > 0
-            ? await _chatClient.GetDuetConversationIdsAsync(partnerUserIds, cancellationToken)
-            : (IReadOnlyDictionary<Guid, Guid>)new Dictionary<Guid, Guid>();
-        var presenceStatuses = await GetPresenceStatusesOrDefaultAsync(partnerUserIds, cancellationToken);
+        var conversationIdsTask = partnerUserIds.Count > 0
+            ? _chatClient.GetDuetConversationIdsAsync(partnerUserIds, cancellationToken)
+            : Task.FromResult((IReadOnlyDictionary<Guid, Guid>)new Dictionary<Guid, Guid>());
+        var presenceStatusesTask = GetPresenceStatusesOrDefaultAsync(partnerUserIds, cancellationToken);
+
+        await Task.WhenAll(conversationIdsTask, presenceStatusesTask);
+
+        var conversationIds = conversationIdsTask.Result;
+        var presenceStatuses = presenceStatusesTask.Result;
 
         var result = contacts
             .Select(c => new ContactWithConversationDto(
