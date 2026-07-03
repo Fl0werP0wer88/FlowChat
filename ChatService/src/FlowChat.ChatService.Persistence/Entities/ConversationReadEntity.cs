@@ -7,4 +7,5 @@ public sealed class ConversationReadEntity : ReadEntityBase
     public Guid Id { get; init; }
     public int Type { get; init; }
     public string? Name { get; init; }
+    public long LastMsgSequenceNum { get; init; }
 }

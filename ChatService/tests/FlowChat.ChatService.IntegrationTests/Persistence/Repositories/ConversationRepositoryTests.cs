@@ -11,6 +11,53 @@ namespace FlowChat.ChatService.IntegrationTests.Persistence.Repositories;
 public sealed class ConversationRepositoryTests
 {
     [Fact]
+    public async Task GroupConversationReadRepository_GetByParticipantUserIdAsync_ReturnsSequenceNumbersForRequestedParticipant()
+    {
+        await using var connection = new SqliteConnection("Data Source=:memory:");
+        await connection.OpenAsync();
+
+        var creatorUserId = Guid.NewGuid();
+        var memberUserId = Guid.NewGuid();
+        var requestedUserId = Guid.NewGuid();
+        var matchingConversation = GroupConversation.Create(
+            Id<Conversation>.New(),
+            creatorUserId,
+            [creatorUserId, memberUserId],
+            "Friends");
+        matchingConversation.AddParticipant(requestedUserId, lastReadMessageSequenceNum: 42);
+        matchingConversation.SetSequenceNumber(84);
+
+        var otherGroupConversation = GroupConversation.Create(
+            Id<Conversation>.New(),
+            creatorUserId,
+            [creatorUserId, Guid.NewGuid()],
+            "Other");
+        var duetConversation = DuetConversation.Create(requestedUserId, Guid.NewGuid());
+
+        MarkCreated(matchingConversation);
+        MarkCreated(otherGroupConversation);
+        MarkCreated(duetConversation);
+
+        await using (var seedContext = CreateDbContext(connection))
+        {
+            seedContext.Conversations.AddRange(matchingConversation, otherGroupConversation, duetConversation);
+            await seedContext.SaveChangesAsync();
+        }
+
+        await using var readContext = CreateDbContext(connection);
+        var repository = new GroupConversationReadRepository(readContext);
+
+        var result = await repository.GetByParticipantUserIdAsync(requestedUserId, CancellationToken.None);
+
+        var summary = result.Should().ContainSingle().Subject;
+        summary.ConversationId.Should().Be(matchingConversation.Id.Value);
+        summary.Name.Should().Be("Friends");
+        summary.ParticipantCount.Should().Be(3);
+        summary.LastReadMsgSeqNum.Should().Be(42);
+        summary.CurrentMsgSeqNum.Should().Be(84);
+    }
+
+    [Fact]
     public async Task ConversationWriteRepository_GetByIdAsync_WhenConversationExists_ReturnsConversationForAnyConversationType()
     {
         await using var connection = new SqliteConnection("Data Source=:memory:");

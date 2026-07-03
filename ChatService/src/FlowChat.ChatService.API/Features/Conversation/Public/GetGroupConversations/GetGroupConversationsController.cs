@@ -40,7 +40,9 @@ public sealed class GetGroupConversationsController : ApiControllerBase
             [.. result.Value.Select(c => new GroupConversationSummaryResponse(
                 c.ConversationId,
                 c.Name,
-                c.ParticipantCount))]);
+                c.ParticipantCount,
+                c.LastReadMsgSeqNum,
+                c.CurrentMsgSeqNum))]);
 
         return Ok(response);
     }

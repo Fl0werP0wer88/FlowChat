@@ -14,6 +14,7 @@ public sealed class ConversationReadEntityConfiguration : IEntityTypeConfigurati
         builder.Property(x => x.Id);
         builder.Property(x => x.Type);
         builder.Property(x => x.Name);
+        builder.Property(x => x.LastMsgSequenceNum);
         builder.Property(x => x.DeletedAt);
     }
 }
