@@ -136,6 +136,30 @@ public sealed class ExceptionHandlingPipelineBehaviorTests
     }
 
     [Fact]
+    public async Task Handle_WhenResultExceptionIsThrown_ReturnsOriginalFailure()
+    {
+        var behavior = new ExceptionHandlingPipelineBehavior<TestRequest, FlowChatResult<Guid>>();
+        var domainError = DomainError.NotFound("Aggregate was not found.", FailureKind.Isolable);
+        var exception = new ResultException(FlowChatResult.Failure(domainError));
+        using var activity = new Activity("test").Start();
+
+        var result = await behavior.Handle(
+            new TestRequest(),
+            _ => Task.FromException<FlowChatResult<Guid>>(exception),
+            CancellationToken.None);
+
+        result.IsFailure.Should().BeTrue();
+        result.Error.ErrorType.Should().Be(ErrorType.NotFound);
+        result.Error.ErrorMessage.Should().Be(domainError.ErrorMessage);
+        result.Error.FailureKind.Should().Be(FailureKind.Isolable);
+
+        activity.Status.Should().Be(ActivityStatusCode.Error);
+        activity.StatusDescription.Should().Be("result_failure");
+        activity.GetTagItem("error.type").Should().Be("result");
+        activity.Events.Should().Contain(x => x.Name == "exception");
+    }
+
+    [Fact]
     public async Task Handle_WhenOperationCanceledExceptionIsThrown_ReturnsBadRequestFailure()
     {
         var behavior = new ExceptionHandlingPipelineBehavior<TestRequest, FlowChatResult<Guid>>();

@@ -77,6 +77,14 @@ public sealed class ExceptionHandlingPipelineBehavior<TRequest, TResponse>
             var domainError = DomainError.UnExpected(exception.Message, FailureKind.None);
             return TResponse.Failure(domainError);
         }
+        catch (ResultException exception)
+        {
+            Activity.Current?.SetStatus(ActivityStatusCode.Error, "result_failure");
+            Activity.Current?.AddException(exception);
+            Activity.Current?.SetTag("error.type", "result");
+
+            return TResponse.Failure(exception.Result.Error);
+        }
         catch (FlowChatException exception)
         {
             Activity.Current?.SetStatus(ActivityStatusCode.Error, "bad_request");
