@@ -57,6 +57,9 @@ public sealed class ConversationConfiguration : IEntityTypeConfiguration<Convers
         builder.Ignore(x => x.IsDeleted);
         builder.Ignore(x => x.DomainEvents);
 
+        builder.HasIndex(x => x.Type)
+            .HasFilter("\"DeletedAt\" IS NULL");
+
         builder.HasMany(x => x.Participants)
             .WithOne()
             .HasForeignKey(x => x.ConversationId)
