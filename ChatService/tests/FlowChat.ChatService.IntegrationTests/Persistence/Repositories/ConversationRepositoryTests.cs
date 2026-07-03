@@ -58,18 +58,20 @@ public sealed class ConversationRepositoryTests
     }
 
     [Fact]
-    public async Task ConversationWriteRepository_GetByIdAsync_WhenConversationExists_ReturnsConversationForAnyConversationType()
+    public async Task ConversationWriteRepository_GetByIdAsync_WhenConversationExists_ReturnsConversationWithParticipantsForAnyConversationType()
     {
         await using var connection = new SqliteConnection("Data Source=:memory:");
         await connection.OpenAsync();
 
         var createdByUserId = Guid.NewGuid();
+        var groupMemberId = Guid.NewGuid();
+        var duetPartnerId = Guid.NewGuid();
         var groupConversation = GroupConversation.Create(
             Id<Conversation>.New(),
             createdByUserId,
-            [createdByUserId, Guid.NewGuid()],
+            [createdByUserId, groupMemberId],
             "Friends");
-        var duetConversation = DuetConversation.Create(createdByUserId, Guid.NewGuid());
+        var duetConversation = DuetConversation.Create(createdByUserId, duetPartnerId);
         MarkCreated(groupConversation);
         MarkCreated(duetConversation);
 
@@ -86,7 +88,11 @@ public sealed class ConversationRepositoryTests
         var duetResult = await repository.GetByIdAsync(duetConversation.Id, CancellationToken.None);
 
         groupResult.Should().BeOfType<GroupConversation>();
+        groupResult!.Participants.Select(participant => participant.UserId.Value)
+            .Should().BeEquivalentTo([createdByUserId, groupMemberId]);
         duetResult.Should().BeOfType<DuetConversation>();
+        duetResult!.Participants.Select(participant => participant.UserId.Value)
+            .Should().BeEquivalentTo([createdByUserId, duetPartnerId]);
     }
 
     [Fact]

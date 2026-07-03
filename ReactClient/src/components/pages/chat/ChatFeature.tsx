@@ -43,6 +43,7 @@ export function ChatFeature() {
     onGroupConversationChanged: groupConversations.applyGroupConversationChanged,
     onPresenceChanged: contacts.applyPresenceChanged,
     onReceiveMessage: (payload) => {
+      groupConversations.applyRealtimeMessage(payload, activeGroup?.conversationId ?? null);
       chat.receiveRealtimeMessage(payload);
       groupChat.receiveRealtimeMessage(payload);
     },
@@ -121,7 +122,7 @@ export function ChatFeature() {
           }}
           onGroupConversationClick={(conversation) => {
             selectGroupConversation(conversation);
-            groupChat.openGroupConversation();
+            void groupChat.openGroupConversation(conversation);
           }}
           onProcessUser={contacts.addContact}
         />

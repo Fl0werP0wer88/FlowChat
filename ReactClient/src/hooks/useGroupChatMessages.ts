@@ -4,8 +4,8 @@ import { toast } from "sonner";
 import { useAuthStore } from "../store/authStore";
 import type { RealtimeChatMessage } from "../types/realtime";
 import { resolveOwnerUserId } from "../utils/authUtils";
-import type { GroupConversation } from "../api/chatApi";
-import { getGroupConversationMessages } from "../api/chatApi";
+import { calculateUnreadCount, type GroupConversation } from "../api/chatApi";
+import { getGroupConversationMessages, markConversationAsRead } from "../api/chatApi";
 import type { GroupConversationCacheEntry } from "./caches/groupConversationCache";
 import {
   createGroupMessage,
@@ -150,7 +150,34 @@ export function useGroupChatMessages(activeGroupConversation: GroupConversation 
     }
   };
 
-  const openGroupConversation = () => {};
+  const openGroupConversation = useCallback(async (conversation?: GroupConversation) => {
+    const targetConversation = conversation ?? activeGroupConversation;
+
+    if (!targetConversation || !accessToken) {
+      return;
+    }
+
+    queryClient.setQueryData<GroupConversation[]>(["groupConversations"], (current = []) =>
+      current.map((item) => {
+        if (item.conversationId !== targetConversation.conversationId) {
+          return item;
+        }
+
+        return {
+          ...item,
+          lastReadMsgSeqNum: item.currentMsgSeqNum,
+          unreadCount: calculateUnreadCount(item.currentMsgSeqNum, item.currentMsgSeqNum),
+        };
+      }),
+    );
+
+    try {
+      await markConversationAsRead(targetConversation.conversationId, accessToken);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Nie udalo sie oznaczyc grupy jako przeczytanej.");
+      void queryClient.invalidateQueries({ queryKey: ["groupConversations"] });
+    }
+  }, [accessToken, activeGroupConversation, queryClient]);
 
   return {
     messages: conversationData?.messages ?? [],

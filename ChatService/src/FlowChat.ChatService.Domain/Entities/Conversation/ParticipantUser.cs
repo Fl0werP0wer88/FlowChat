@@ -91,4 +91,18 @@ public sealed class ParticipantUser : EntityBase<ParticipantUser>
 
         IsBlocked = false;
     }
+
+    internal bool SetLastReadMessageSequenceNum(long sequenceNum)
+    {
+        if (sequenceNum < LastReadMessageSequenceNum)
+            throw new ArgumentException("Last read message sequence number cannot decrease.", nameof(sequenceNum));
+
+        if (sequenceNum == LastReadMessageSequenceNum)
+        {
+            return false;
+        }
+
+        LastReadMessageSequenceNum = sequenceNum;
+        return true;
+    }
 }

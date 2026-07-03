@@ -25,6 +25,11 @@ export function GroupConversationListItem({
             {conversation.participantCount} uczestnikow
           </span>
         </span>
+        {conversation.unreadCount > 0 ? (
+          <span className="contacts-panel__unread-badge" aria-label={`${conversation.unreadCount} nieprzeczytanych`}>
+            {conversation.unreadCount > 99 ? "99+" : conversation.unreadCount}
+          </span>
+        ) : null}
       </button>
     </li>
   );

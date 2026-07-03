@@ -82,6 +82,23 @@ public abstract class Conversation : AggregateRootBase<Conversation>
         LastMsgSequenceNum = sequenceNum;
     }
 
+    public bool MarkParticipantAsRead(Id<UserProfileMarker> participantUserId)
+    {
+        ArgumentNullException.ThrowIfNull(participantUserId);
+
+        var participant = _participants.FirstOrDefault(p => p.UserId == participantUserId)
+            ?? throw new InvalidOperationException("User is not a participant in this conversation.");
+
+        return participant.SetLastReadMessageSequenceNum(LastMsgSequenceNum);
+    }
+
+    public bool HasParticipant(Id<UserProfileMarker> participantUserId)
+    {
+        ArgumentNullException.ThrowIfNull(participantUserId);
+
+        return _participants.Any(p => p.UserId == participantUserId);
+    }
+
     protected void AddParticipantCore(
         Id<UserProfileMarker> participantUserId,
         string? displayName,

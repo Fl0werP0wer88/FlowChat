@@ -783,6 +783,7 @@ body {
   display: grid;
   gap: 0.12rem;
   min-width: 0;
+  flex: 1;
 }
 
 .contacts-panel__contact-name {
@@ -797,6 +798,22 @@ body {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.contacts-panel__unread-badge {
+  min-width: 1.35rem;
+  height: 1.35rem;
+  padding: 0 0.38rem;
+  border-radius: 999px;
+  background: var(--danger);
+  color: white;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1;
 }
 
 .contacts-composer {

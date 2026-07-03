@@ -36,6 +36,7 @@ interface ConversationMessageDto {
   senderUserId?: string;
   senderDisplayName?: string;
   text?: string;
+  sequenceNum?: number | null;
   sentAtUtc?: string;
 }
 
@@ -57,6 +58,8 @@ interface GroupConversationSummaryDto {
   conversationId?: string;
   name?: string;
   participantCount?: number;
+  lastReadMsgSeqNum?: number;
+  currentMsgSeqNum?: number;
 }
 
 interface GetGroupConversationsResponseDto {
@@ -87,6 +90,7 @@ export interface ConversationMessage {
   senderUserId: string;
   senderDisplayName: string;
   text: string;
+  sequenceNum: number | null;
   sentAtUtc: string;
 }
 
@@ -121,6 +125,7 @@ export interface GroupConversationMessage {
   senderUserId: string;
   senderDisplayName: string;
   text: string;
+  sequenceNum: number | null;
   sentAtUtc: string;
 }
 
@@ -140,6 +145,13 @@ export interface GroupConversation {
   conversationId: string;
   name: string;
   participantCount: number;
+  lastReadMsgSeqNum: number;
+  currentMsgSeqNum: number;
+  unreadCount: number;
+}
+
+export function calculateUnreadCount(currentMsgSeqNum: number, lastReadMsgSeqNum: number): number {
+  return Math.max(0, currentMsgSeqNum - lastReadMsgSeqNum);
 }
 
 function mapParticipant(dto: ConversationParticipantDto): ConversationParticipant {
@@ -158,6 +170,7 @@ function mapMessage(dto: ConversationMessageDto): ConversationMessage {
     senderUserId: dto.senderUserId ?? "",
     senderDisplayName: dto.senderDisplayName ?? "",
     text: dto.text ?? "",
+    sequenceNum: dto.sequenceNum ?? null,
     sentAtUtc: dto.sentAtUtc ?? new Date().toISOString(),
   };
 }
@@ -169,15 +182,22 @@ function mapGroupMessage(dto: ConversationMessageDto): GroupConversationMessage 
     senderUserId: dto.senderUserId ?? "",
     senderDisplayName: dto.senderDisplayName ?? "",
     text: dto.text ?? "",
+    sequenceNum: dto.sequenceNum ?? null,
     sentAtUtc: dto.sentAtUtc ?? new Date().toISOString(),
   };
 }
 
 function mapGroupConversation(dto: GroupConversationSummaryDto): GroupConversation {
+  const lastReadMsgSeqNum = dto.lastReadMsgSeqNum ?? 0;
+  const currentMsgSeqNum = dto.currentMsgSeqNum ?? 0;
+
   return {
     conversationId: dto.conversationId ?? "",
     name: dto.name ?? "",
     participantCount: dto.participantCount ?? 0,
+    lastReadMsgSeqNum,
+    currentMsgSeqNum,
+    unreadCount: calculateUnreadCount(currentMsgSeqNum, lastReadMsgSeqNum),
   };
 }
 
@@ -317,6 +337,18 @@ export async function fetchGroupConversations(
   return items.map(mapGroupConversation);
 }
 
+export async function markConversationAsRead(
+  conversationId: string,
+  accessToken: string,
+  signal?: AbortSignal,
+): Promise<void> {
+  await putJson<null, Record<string, never>>(
+    `/api/conversations/${encodeURIComponent(conversationId)}/read-state`,
+    {},
+    { accessToken, signal },
+  );
+}
+
 export async function createGroupConversation(
   participantUserIds: string[],
   name: string,
@@ -334,5 +366,8 @@ export async function createGroupConversation(
     conversationId: response.conversationId ?? conversationId,
     name: response.name ?? name,
     participantCount: participantUserIds.length,
+    lastReadMsgSeqNum: 0,
+    currentMsgSeqNum: 0,
+    unreadCount: 0,
   };
 }

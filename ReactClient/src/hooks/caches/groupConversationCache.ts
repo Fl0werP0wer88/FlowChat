@@ -40,6 +40,6 @@ export function mapGroupConversationMessage(
     message.conversationId,
     message.senderUserId,
     message.senderDisplayName,
-    null,
+    message.sequenceNum,
   );
 }
