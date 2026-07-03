@@ -1,8 +1,10 @@
+using FlowChat.Core.Exceptions;
 using FlowChat.Core.Messaging;
 using FlowChat.Core.Results;
 using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2.BeforeSaveProcessors;
 using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
+using DomainValidationException = FlowChat.Shared.Domain.Exceptions.ValidationException;
 
 namespace FlowChat.Shared.Application.DomainEventHandlers.AggregateRootDomainEventHandlers;
 
@@ -29,7 +31,7 @@ public abstract class AggregateRootDomainEventHandlerBase<TNotification, TAggreg
 
         if (operationResult.IsFailure)
         {
-            return;
+            throw MapToException(operationResult.Error);
         }
 
         var aggregateRoot = GetAggregateRoot();
@@ -61,6 +63,21 @@ public abstract class AggregateRootDomainEventHandlerBase<TNotification, TAggreg
     protected abstract Task<FlowChatResult> ExecuteAsync(TNotification notification, CancellationToken cancellationToken);
 
     protected abstract TAggregate GetAggregateRoot();
+
+    private static FlowChatException MapToException(IDomainError error)
+    {
+        if (error.ErrorType == ErrorType.Validation)
+        {
+            return new DomainValidationException(error.Errors ?? []);
+        }
+
+        return error.FailureKind switch
+        {
+            FailureKind.Transient => new TransientException(error.ErrorMessage ?? string.Empty),
+            FailureKind.Isolable => new IsolableException(error.ErrorMessage ?? string.Empty),
+            _ => new NonTransientException(error.ErrorMessage ?? string.Empty)
+        };
+    }
 
     private static void ApplyAuditInfo(TAggregate aggregateRoot, MutationType mutationType)
     {
