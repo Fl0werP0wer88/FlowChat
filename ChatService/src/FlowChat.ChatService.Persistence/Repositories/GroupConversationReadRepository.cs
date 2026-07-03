@@ -60,7 +60,7 @@ public sealed class GroupConversationReadRepository(AppDbContext dbContext) : Re
         Guid participantUserId,
         CancellationToken cancellationToken = default)
     {
-        //ToDo: Rozważyć przerzucenie tego do oddzielnego ReadModelu zamiast robić joiny (Wygląda mi to na N+1  problem).
+        //ToDo: Rozważyć przerzucenie tego do oddzielnego ReadModelu zamiast robić joiny. Będzie też można pozbyć się wtedy części indeksów.
         var activeParticipants = Active(dbContext.ParticipantUserReads);
 
         return await (
