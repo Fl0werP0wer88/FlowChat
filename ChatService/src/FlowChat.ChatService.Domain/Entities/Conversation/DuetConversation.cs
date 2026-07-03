@@ -9,7 +9,8 @@ public sealed class DuetConversation : Conversation
         Id<Conversation> id,
         ConversationType type,
         string? name,
-        Id<UserProfileMarker> createdByUserId) : base(id, type, name, createdByUserId)
+        Id<UserProfileMarker> createdByUserId,
+        long lastMsgSequenceNum) : base(id, type, name, createdByUserId, lastMsgSequenceNum)
     {
     }
 
@@ -18,7 +19,8 @@ public sealed class DuetConversation : Conversation
         ConversationType type,
         string? name,
         Id<UserProfileMarker> createdByUserId,
-        List<ParticipantUser> participants) : base(id, type, name, createdByUserId, participants)
+        long lastMsgSequenceNum,
+        List<ParticipantUser> participants) : base(id, type, name, createdByUserId, lastMsgSequenceNum, participants)
     {
     }
 
@@ -32,13 +34,14 @@ public sealed class DuetConversation : Conversation
             createdByUserId,
             [createdByUserId, partnerUserId],
             name: null,
-            static (id, type, name, createdByUserId, participants) =>
-                new DuetConversation(id, type, name, createdByUserId, participants));
+            static (id, type, name, createdByUserId, lastMsgSequenceNum, participants) =>
+                new DuetConversation(id, type, name, createdByUserId, lastMsgSequenceNum, participants));
     }
 
     public static DuetConversation Restore(
         Id<Conversation> id,
         Id<UserProfileMarker> createdByUserId,
+        long lastMsgSequenceNum,
         IEnumerable<ParticipantUser> participants)
     {
         return RestoreCore(
@@ -46,9 +49,10 @@ public sealed class DuetConversation : Conversation
             ConversationType.Duet,
             name: null,
             createdByUserId,
+            lastMsgSequenceNum,
             participants,
-            static (id, type, name, createdByUserId, participants) =>
-                new DuetConversation(id, type, name, createdByUserId, participants));
+            static (id, type, name, createdByUserId, lastMsgSequenceNum, participants) =>
+                new DuetConversation(id, type, name, createdByUserId, lastMsgSequenceNum, participants));
     }
 
     public (Id<UserProfileMarker> FirstUserId, Id<UserProfileMarker> SecondUserId) GetParticipantPair()

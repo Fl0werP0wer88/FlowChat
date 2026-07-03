@@ -147,7 +147,7 @@ public sealed class ConversationAggregateController : ApiControllerBase
 
         return Ok(response);
     }
-
+    //ToDo: Dodac na serwisie po postu upsert
     private async Task<DuetConversationClientDto> GetOrCreateConversationAsync(
         Guid partnerUserId,
         CancellationToken cancellationToken) =>

@@ -10,7 +10,8 @@ public sealed class GroupConversation : Conversation
         Id<Conversation> id,
         ConversationType type,
         string? name,
-        Id<UserProfileMarker> createdByUserId) : base(id, type, name, createdByUserId)
+        Id<UserProfileMarker> createdByUserId,
+        long lastMsgSequenceNum) : base(id, type, name, createdByUserId, lastMsgSequenceNum)
     {
     }
 
@@ -19,7 +20,8 @@ public sealed class GroupConversation : Conversation
         ConversationType type,
         string? name,
         Id<UserProfileMarker> createdByUserId,
-        List<ParticipantUser> participants) : base(id, type, name, createdByUserId, participants)
+        long lastMsgSequenceNum,
+        List<ParticipantUser> participants) : base(id, type, name, createdByUserId, lastMsgSequenceNum, participants)
     {
     }
 
@@ -35,8 +37,8 @@ public sealed class GroupConversation : Conversation
             createdByUserId,
             participantUserIds,
             name,
-            static (id, type, name, createdByUserId, participants) =>
-                new GroupConversation(id, type, name, createdByUserId, participants));
+            static (id, type, name, createdByUserId, lastMsgSequenceNum, participants) =>
+                new GroupConversation(id, type, name, createdByUserId, lastMsgSequenceNum, participants));
 
         conversation.AddDomainEvent(new GroupConversationCreatedDomainEvent(
             conversation.Id,
@@ -52,6 +54,7 @@ public sealed class GroupConversation : Conversation
         Id<Conversation> id,
         string name,
         Id<UserProfileMarker> createdByUserId,
+        long lastMsgSequenceNum,
         IEnumerable<ParticipantUser> participants)
     {
         return RestoreCore(
@@ -59,9 +62,10 @@ public sealed class GroupConversation : Conversation
             ConversationType.Group,
             name,
             createdByUserId,
+            lastMsgSequenceNum,
             participants,
-            static (id, type, name, createdByUserId, participants) =>
-                new GroupConversation(id, type, name, createdByUserId, participants));
+            static (id, type, name, createdByUserId, lastMsgSequenceNum, participants) =>
+                new GroupConversation(id, type, name, createdByUserId, lastMsgSequenceNum, participants));
     }
 
     public void AddParticipant(
