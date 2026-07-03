@@ -76,8 +76,8 @@ public abstract class Conversation : AggregateRootBase<Conversation>
 
     public void SetSequenceNumber(long sequenceNum)
     {
-        if (sequenceNum <= LastMsgSequenceNum)
-            throw new ArgumentException("Sequence number must be greater than the current last message sequence number.", nameof(sequenceNum));
+        if (sequenceNum < LastMsgSequenceNum)
+            throw new ArgumentException("Sequence number must be equal to or greater than the current last message sequence number.", nameof(sequenceNum));
 
         LastMsgSequenceNum = sequenceNum;
     }

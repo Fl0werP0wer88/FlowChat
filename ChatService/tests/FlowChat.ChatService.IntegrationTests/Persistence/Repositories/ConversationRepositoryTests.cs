@@ -11,6 +11,38 @@ namespace FlowChat.ChatService.IntegrationTests.Persistence.Repositories;
 public sealed class ConversationRepositoryTests
 {
     [Fact]
+    public async Task ConversationWriteRepository_GetByIdAsync_WhenConversationExists_ReturnsConversationForAnyConversationType()
+    {
+        await using var connection = new SqliteConnection("Data Source=:memory:");
+        await connection.OpenAsync();
+
+        var createdByUserId = Guid.NewGuid();
+        var groupConversation = GroupConversation.Create(
+            Id<Conversation>.New(),
+            createdByUserId,
+            [createdByUserId, Guid.NewGuid()],
+            "Friends");
+        var duetConversation = DuetConversation.Create(createdByUserId, Guid.NewGuid());
+        MarkCreated(groupConversation);
+        MarkCreated(duetConversation);
+
+        await using (var seedContext = CreateDbContext(connection))
+        {
+            seedContext.Conversations.AddRange(groupConversation, duetConversation);
+            await seedContext.SaveChangesAsync();
+        }
+
+        await using var readContext = CreateDbContext(connection);
+        var repository = new ConversationWriteRepository(readContext);
+
+        var groupResult = await repository.GetByIdAsync(groupConversation.Id, CancellationToken.None);
+        var duetResult = await repository.GetByIdAsync(duetConversation.Id, CancellationToken.None);
+
+        groupResult.Should().BeOfType<GroupConversation>();
+        duetResult.Should().BeOfType<DuetConversation>();
+    }
+
+    [Fact]
     public async Task GroupConversationWriteRepository_GetByIdAsync_WhenGroupExists_ReturnsGroupWithParticipants()
     {
         await using var connection = new SqliteConnection("Data Source=:memory:");

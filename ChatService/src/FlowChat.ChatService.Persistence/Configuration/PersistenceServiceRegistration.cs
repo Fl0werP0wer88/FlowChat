@@ -56,6 +56,7 @@ internal static class CommonPersistenceServiceRegistration
         services.AddScoped<IChatMessageReadRepository, ChatMessageReadRepository>();
         services.AddScoped<IChatMessageWriteRepository, ChatMessageWriteRepository>();
         services.AddScoped<IConversationParticipantReadRepository, ConversationParticipantReadRepository>();
+        services.AddScoped<IConversationWriteRepository, ConversationWriteRepository>();
         services.AddScoped<IGroupConversationWriteRepository, GroupConversationWriteRepository>();
         services.AddScoped<IGroupConversationReadRepository, GroupConversationReadRepository>();
         services.AddScoped<IDuetConversationReadRepository, DuetConversationReadRepository>();

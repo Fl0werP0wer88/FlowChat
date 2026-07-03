@@ -44,18 +44,27 @@ public sealed class ConversationTests
         conversation.LastMsgSequenceNum.Should().Be(42);
     }
 
-    [Theory]
-    [InlineData(41)]
-    [InlineData(42)]
-    public void SetSequenceNumber_WhenEqualOrLower_ThrowsArgumentException(long sequenceNum)
+    [Fact]
+    public void SetSequenceNumber_WhenEqualToCurrent_LeavesLastMsgSequenceNumUnchanged()
     {
         var conversation = CreateGroupConversation();
         conversation.SetSequenceNumber(42);
 
-        var act = () => conversation.SetSequenceNumber(sequenceNum);
+        conversation.SetSequenceNumber(42);
+
+        conversation.LastMsgSequenceNum.Should().Be(42);
+    }
+
+    [Fact]
+    public void SetSequenceNumber_WhenLowerThanCurrent_ThrowsArgumentException()
+    {
+        var conversation = CreateGroupConversation();
+        conversation.SetSequenceNumber(42);
+
+        var act = () => conversation.SetSequenceNumber(41);
 
         act.Should().Throw<ArgumentException>()
-            .WithParameterName(nameof(sequenceNum));
+            .WithParameterName("sequenceNum");
         conversation.LastMsgSequenceNum.Should().Be(42);
     }
 
