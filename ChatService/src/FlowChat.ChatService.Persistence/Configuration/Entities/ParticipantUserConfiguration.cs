@@ -47,9 +47,8 @@ public sealed class ParticipantUserConfiguration : IEntityTypeConfiguration<Part
             .IsUnique()
             .HasFilter("\"DeletedAt\" IS NULL");
 
-        NpgsqlIndexBuilderExtensions.IncludeProperties(
-                builder.HasIndex(x => new { x.UserId, x.ConversationId }),
-                nameof(ParticipantUser.LastReadMessageSequenceNum))
+        builder.HasIndex(x => new { x.UserId, x.ConversationId })
+            .IncludeProperties(x => x.LastReadMessageSequenceNum)
             .HasFilter("\"DeletedAt\" IS NULL");
     }
 }
