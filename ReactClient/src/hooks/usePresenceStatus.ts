@@ -2,7 +2,7 @@ import { useEffect, useEffectEvent, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useAuthStore } from "../store/authStore";
 import { usePresenceStore } from "../store/presenceStore";
-import { changePresenceStatus } from "../api/presenceApi";
+import { changePresenceStatus } from "../api/presenceService";
 import type { ManualUserStatus, UserStatus } from "../types/realtime";
 import { usePresencePreferencesQuery } from "./queries/usePresencePreferencesQuery";
 

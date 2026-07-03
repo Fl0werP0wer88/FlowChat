@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Button } from "../../../UI/atoms/Button";
 import { AuthTemplate } from "../../../templates";
-import { confirmEmailVerification } from "../../../../api/userProfileApi";
+import { confirmEmailVerification } from "../../../../api/userProfileService";
 
 type VerificationStatus = "pending" | "success" | "error";
 

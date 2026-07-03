@@ -6,7 +6,7 @@ import { useChatSelectionStore } from "../store/chatSelectionStore";
 import type { Contact } from "../types/contacts";
 import type { PresenceChangedEvent } from "../types/realtime";
 import { resolveOwnerUserId } from "../utils/authUtils";
-import type { SearchUserResult } from "../api/userProfileApi";
+import type { SearchUserResult } from "../api/userProfileService";
 import { useAddContactByUserIdMutation } from "./mutations/useAddContactByUserIdMutation";
 import { useAddContactMutation } from "./mutations/useAddContactMutation";
 import { useContactsQuery } from "./queries/useContactsQuery";

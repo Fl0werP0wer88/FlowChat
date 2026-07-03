@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { addContact } from "../../api/socialGraphApi";
+import { addContact } from "../../api/socialGraphService";
 
 interface UseAddContactMutationCallbacks {
   onSuccess: () => void;

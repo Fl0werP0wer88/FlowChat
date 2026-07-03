@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { copyDuetAsGroup } from "../../api/chatApi";
+import { copyDuetAsGroup } from "../../api/chatService";
 
 interface UseCopyDuetAsGroupMutationCallbacks {
   onSuccess: () => void;

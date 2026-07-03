@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { fetchPresencePreferences } from "../../api/presenceApi";
+import { fetchPresencePreferences } from "../../api/presenceService";
 
 export function usePresencePreferencesQuery(accessToken: string | null) {
   return useQuery({

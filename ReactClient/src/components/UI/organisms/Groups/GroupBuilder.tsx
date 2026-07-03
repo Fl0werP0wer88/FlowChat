@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { useAuthStore } from "../../../../store/authStore";
-import type { SearchUserResult } from "../../../../api/userProfileApi";
+import type { SearchUserResult } from "../../../../api/userProfileService";
 import { UsersPicker } from "../UserPicker";
-import { createGroupConversation } from "../../../../api/chatApi";
+import { createGroupConversation } from "../../../../api/chatService";
 
 interface GroupBuilderProps {
   groupName?: string;

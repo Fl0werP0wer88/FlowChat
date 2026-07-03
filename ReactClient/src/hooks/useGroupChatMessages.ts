@@ -4,8 +4,8 @@ import { toast } from "sonner";
 import { useAuthStore } from "../store/authStore";
 import type { RealtimeChatMessage } from "../types/realtime";
 import { resolveOwnerUserId } from "../utils/authUtils";
-import { calculateUnreadCount, type GroupConversation } from "../api/chatApi";
-import { getGroupConversationMessages, markConversationAsRead } from "../api/chatApi";
+import { calculateUnreadCount, type GroupConversation } from "../api/chatService";
+import { getGroupConversationMessages, markConversationAsRead } from "../api/chatService";
 import type { GroupConversationCacheEntry } from "./caches/groupConversationCache";
 import {
   createGroupMessage,

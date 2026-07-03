@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { fetchContacts } from "../../api/gatewayApi";
+import { fetchContacts } from "../../api/gatewayService";
 
 export function useContactsQuery(accessToken: string, enabled: boolean) {
   return useQuery({

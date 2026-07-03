@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { queryClient } from "../api/queryClient";
-import { logoutUser, refreshUserSession } from "../api/authApi";
+import { logoutUser, refreshUserSession } from "../api/authService";
 import { clearStoredSession, loadStoredSession, type StoredSession, storeSession } from "../services/sessionStorage";
 import type { AuthSession } from "../types/auth";
 

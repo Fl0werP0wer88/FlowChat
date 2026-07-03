@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { fetchGroupConversations } from "../../api/chatApi";
+import { fetchGroupConversations } from "../../api/chatService";
 
 export function useGroupConversationsQuery(accessToken: string, enabled: boolean) {
   return useQuery({

@@ -11,7 +11,7 @@ import {
   searchUsers,
   type SearchUserResult,
   type SearchUsersCriteria,
-} from "../../../../api/userProfileApi";
+} from "../../../../api/userProfileService";
 import { UsersPickerFooter } from "../../molecules/UsersPickerFooter";
 import { UsersPickerHeader } from "../../molecules/UsersPickerHeader";
 
