@@ -122,7 +122,7 @@ export function ChatFeature() {
           }}
           onGroupConversationClick={(conversation) => {
             selectGroupConversation(conversation);
-            void groupChat.openGroupConversation(conversation);
+            void groupChat.markActiveGroupConversationAsRead(conversation);
           }}
           onProcessUser={contacts.addContact}
         />

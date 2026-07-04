@@ -150,7 +150,7 @@ export function useGroupChatMessages(activeGroupConversation: GroupConversation 
     }
   };
 
-  const openGroupConversation = useCallback(async (conversation?: GroupConversation) => {
+  const markActiveGroupConversationAsRead = useCallback(async (conversation?: GroupConversation) => {
     const targetConversation = conversation ?? activeGroupConversation;
 
     if (!targetConversation || !accessToken) {
@@ -191,6 +191,6 @@ export function useGroupChatMessages(activeGroupConversation: GroupConversation 
     sendDraft,
     loadOlderMessages,
     receiveRealtimeMessage,
-    openGroupConversation,
+    markActiveGroupConversationAsRead,
   };
 }
