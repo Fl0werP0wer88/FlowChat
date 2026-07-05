@@ -1,5 +1,5 @@
+using AutoMapper;
 using FlowChat.Shared.API;
-using FlowChat.UserProfileService.Application.Features.UserProfile.Queries.UserProfile.Model;
 using FlowChat.UserProfileService.Application.Features.UserProfile.Queries.UserProfile.SearchUserProfiles;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -13,10 +13,12 @@ namespace FlowChat.UserProfileService.Api.Features.UserProfile.Public.SearchUser
 public sealed class SearchUserProfilesController : ApiControllerBase
 {
     private readonly IMediator _mediator;
+    private readonly IMapper _mapper;
 
-    public SearchUserProfilesController(IMediator mediator)
+    public SearchUserProfilesController(IMediator mediator, IMapper mapper)
     {
         _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
+        _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
     }
 
     [HttpGet("search")]
@@ -34,23 +36,7 @@ public sealed class SearchUserProfilesController : ApiControllerBase
             cancellationToken);
 
         return result.IsSuccess
-            ? Ok(new SearchUserProfilesResponse([.. result.Value.Select(MapToResponse)]))
+            ? Ok(new SearchUserProfilesResponse(_mapper.Map<IReadOnlyList<UserProfileResponse>>(result.Value)))
             : HandleError(result.Error);
     }
-
-    private static UserProfileResponse MapToResponse(UserProfileDto userProfile) =>
-        new(
-            userProfile.Id,
-            userProfile.FriendlyUserId,
-            userProfile.FirstName,
-            userProfile.LastName,
-            userProfile.Organization,
-            userProfile.AvatarUrl,
-            userProfile.Bio,
-            userProfile.IsActive,
-            userProfile.LastSeenAtUtc,
-            [.. userProfile.Emails.Select(email => new EmailResponse(
-                email.Id, email.Address, email.IsMain, email.IsAuth, email.IsConfirmed, email.IsVisible))],
-            [.. userProfile.Phones.Select(phone => new PhoneResponse(
-                phone.Id, phone.Number, phone.IsMain, phone.IsConfirmed, phone.IsVisible))]);
 }

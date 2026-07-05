@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using AutoMapper;
 using FlowChat.ChatService.Api.Features.ChatMessage.Public.GetConversationMessages;
 using FlowChat.ChatService.Application.Features.ChatMessage.Dtos;
 using FlowChat.ChatService.Application.Features.ChatMessage.Queries.GetConversationMessages;
@@ -16,6 +17,9 @@ namespace FlowChat.ChatService.UnitTests.API.Features.ChatMessage.Public.GetConv
 
 public sealed class GetConversationMessagesControllerTests
 {
+    private static readonly IMapper Mapper =
+        new MapperConfiguration(cfg => cfg.AddProfile<GetConversationMessagesMappingProfile>(), Microsoft.Extensions.Logging.Abstractions.NullLoggerFactory.Instance).CreateMapper();
+
     private readonly Mock<IMediator> _mediatorMock = new();
 
     private GetConversationMessagesController CreateController(Guid? authenticatedUserId = null)
@@ -28,7 +32,7 @@ public sealed class GetConversationMessagesControllerTests
                 [new Claim("sub", authenticatedUserId.Value.ToString("D"))], "Test"));
         }
 
-        return new GetConversationMessagesController(_mediatorMock.Object)
+        return new GetConversationMessagesController(_mediatorMock.Object, Mapper)
         {
             ControllerContext = new ControllerContext { HttpContext = httpContext },
             ProblemDetailsFactory = new TestProblemDetailsFactory()

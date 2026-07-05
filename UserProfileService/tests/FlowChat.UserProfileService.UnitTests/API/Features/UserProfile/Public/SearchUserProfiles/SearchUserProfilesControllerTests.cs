@@ -1,4 +1,5 @@
 using AutoFixture;
+using AutoMapper;
 using FlowChat.Shared.Domain;
 using FlowChat.UserProfileService.Api.Features.UserProfile.Public.SearchUserProfiles;
 using FlowChat.UserProfileService.Application.Features.UserProfile.Queries.UserProfile.Model;
@@ -16,6 +17,9 @@ namespace FlowChat.UserProfileService.UnitTests;
 
 public sealed class SearchUserProfilesControllerTests
 {
+    private static readonly IMapper Mapper =
+        new MapperConfiguration(cfg => cfg.AddProfile<SearchUserProfilesMappingProfile>(), Microsoft.Extensions.Logging.Abstractions.NullLoggerFactory.Instance).CreateMapper();
+
     private readonly IFixture _fixture = new Fixture();
     private readonly Mock<IMediator> _mediatorMock = new();
 
@@ -58,7 +62,7 @@ public sealed class SearchUserProfilesControllerTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(FlowChatResult<IReadOnlyList<UserProfileDto>>.Success(userProfiles));
 
-        var controller = SetupController(new SearchUserProfilesController(_mediatorMock.Object));
+        var controller = SetupController(new SearchUserProfilesController(_mediatorMock.Object, Mapper));
 
         var result = await controller.Search(
             new SearchUserProfilesRequest
@@ -80,7 +84,7 @@ public sealed class SearchUserProfilesControllerTests
             .ReturnsAsync(FlowChatResult<IReadOnlyList<UserProfileDto>>.Failure(
                 DomainError.Validation(errors: ["Query must contain at least one search criterion."])));
 
-        var controller = SetupController(new SearchUserProfilesController(_mediatorMock.Object));
+        var controller = SetupController(new SearchUserProfilesController(_mediatorMock.Object, Mapper));
 
         var result = await controller.Search(new SearchUserProfilesRequest(), CancellationToken.None);
 

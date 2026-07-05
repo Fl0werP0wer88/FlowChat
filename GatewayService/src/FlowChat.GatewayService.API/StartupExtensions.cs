@@ -23,6 +23,9 @@ public static class StartupExtensions
         builder.Services.Configure<AspNetCoreTraceInstrumentationOptions>(GatewayTraceEnrichment.Configure);
 
         builder.Services.AddSettingsSections(builder.Configuration, typeof(StartupExtensions).Assembly);
+        builder.Services.AddAutoMapper(
+            (Action<AutoMapper.IMapperConfigurationExpression>?)null,
+            typeof(StartupExtensions).Assembly);
 
         var clientSettings = builder.Configuration.GetSection(new GatewayClientSettingsSection().SectionName)
             .Get<GatewayClientSettingsSection>() ?? new GatewayClientSettingsSection();

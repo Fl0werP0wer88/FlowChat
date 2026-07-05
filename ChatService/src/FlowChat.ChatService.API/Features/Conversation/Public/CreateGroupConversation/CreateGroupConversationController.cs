@@ -1,3 +1,4 @@
+using AutoMapper;
 using FlowChat.ChatService.Application.Features.Conversation.Commands.CreateGroupConversation;
 using FlowChat.Shared.API;
 using MediatR;
@@ -12,10 +13,12 @@ namespace FlowChat.ChatService.Api.Features.Conversation.Public.CreateGroupConve
 public sealed class CreateGroupConversationController : ApiControllerBase
 {
     private readonly IMediator _mediator;
+    private readonly IMapper _mapper;
 
-    public CreateGroupConversationController(IMediator mediator)
+    public CreateGroupConversationController(IMediator mediator, IMapper mapper)
     {
         _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
+        _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
     }
 
     [HttpPost]
@@ -45,12 +48,7 @@ public sealed class CreateGroupConversationController : ApiControllerBase
             return HandleError(result.Error);
         }
 
-        var conversation = result.Value;
-        var response = new CreateGroupConversationResponse(
-            conversation.ConversationId,
-            conversation.Name,
-            [.. conversation.Participants.Select(p => new ParticipantResponse(
-                p.UserId, p.DisplayName, p.AvatarUrl, p.ParticipantUserId))]);
+        var response = _mapper.Map<CreateGroupConversationResponse>(result.Value);
 
         return StatusCode(StatusCodes.Status201Created, response);
     }

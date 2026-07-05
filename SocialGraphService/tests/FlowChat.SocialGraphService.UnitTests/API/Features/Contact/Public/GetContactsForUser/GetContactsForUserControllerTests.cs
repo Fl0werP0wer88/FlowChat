@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using AutoMapper;
 using FlowChat.Shared.Domain;
 using FlowChat.SocialGraphService.Api.Features.Contact.Public.GetContactsForUser;
 using FlowChat.SocialGraphService.Application.Features.Contact.Queries.GetContactsForUser;
@@ -14,6 +15,9 @@ namespace FlowChat.SocialGraphService.UnitTests;
 
 public sealed class GetContactsForUserControllerTests
 {
+    private static readonly IMapper Mapper =
+        new MapperConfiguration(cfg => cfg.AddProfile<GetContactsForUserMappingProfile>(), Microsoft.Extensions.Logging.Abstractions.NullLoggerFactory.Instance).CreateMapper();
+
     private readonly Mock<IMediator> _mediatorMock = new();
 
     [Fact]
@@ -40,7 +44,7 @@ public sealed class GetContactsForUserControllerTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(FlowChatResult<IReadOnlyList<ContactDto>>.Success(contacts));
 
-        var controller = SetupController(new GetContactsForUserController(_mediatorMock.Object), userId);
+        var controller = SetupController(new GetContactsForUserController(_mediatorMock.Object, Mapper), userId);
 
         var result = await controller.GetForUser(CancellationToken.None);
 
@@ -61,7 +65,7 @@ public sealed class GetContactsForUserControllerTests
             .ReturnsAsync(FlowChatResult<IReadOnlyList<ContactDto>>.Failure(
                 DomainError.NotFound($"Contacts for user '{userId}' were not found.")));
 
-        var controller = SetupController(new GetContactsForUserController(_mediatorMock.Object), userId);
+        var controller = SetupController(new GetContactsForUserController(_mediatorMock.Object, Mapper), userId);
 
         var result = await controller.GetForUser(CancellationToken.None);
 
@@ -74,7 +78,7 @@ public sealed class GetContactsForUserControllerTests
     [Fact]
     public async Task GetForUser_ReturnsUnauthorized_WhenNoClaimPresent()
     {
-        var controller = SetupController(new GetContactsForUserController(_mediatorMock.Object));
+        var controller = SetupController(new GetContactsForUserController(_mediatorMock.Object, Mapper));
 
         var result = await controller.GetForUser(CancellationToken.None);
 

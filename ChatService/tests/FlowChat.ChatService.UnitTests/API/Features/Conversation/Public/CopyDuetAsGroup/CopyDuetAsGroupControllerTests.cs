@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using AutoMapper;
 using FlowChat.ChatService.Api.Features.Conversation.Public.CopyDuetAsGroup;
 using FlowChat.ChatService.Application.Features.Conversation.Commands.CreateGroupFromDuet;
 using FlowChat.ChatService.Application.Features.Conversation.Dtos;
@@ -16,6 +17,9 @@ namespace FlowChat.ChatService.UnitTests.API.Features.Conversation.Public.CopyDu
 
 public sealed class CopyDuetAsGroupControllerTests
 {
+    private static readonly IMapper Mapper =
+        new MapperConfiguration(cfg => cfg.AddProfile<CopyDuetAsGroupMappingProfile>(), Microsoft.Extensions.Logging.Abstractions.NullLoggerFactory.Instance).CreateMapper();
+
     private readonly Mock<IMediator> _mediatorMock = new();
 
     private CopyDuetAsGroupController CreateController(Guid? authenticatedUserId = null)
@@ -28,7 +32,7 @@ public sealed class CopyDuetAsGroupControllerTests
                 [new Claim("sub", authenticatedUserId.Value.ToString("D"))], "Test"));
         }
 
-        return new CopyDuetAsGroupController(_mediatorMock.Object)
+        return new CopyDuetAsGroupController(_mediatorMock.Object, Mapper)
         {
             ControllerContext = new ControllerContext { HttpContext = httpContext },
             ProblemDetailsFactory = new TestProblemDetailsFactory()

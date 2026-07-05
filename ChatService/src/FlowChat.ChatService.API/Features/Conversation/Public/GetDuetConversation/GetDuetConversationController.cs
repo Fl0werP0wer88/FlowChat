@@ -1,3 +1,4 @@
+using AutoMapper;
 using FlowChat.ChatService.Application.Features.Conversation.Queries.GetDuetConversation;
 using FlowChat.Shared.API;
 using MediatR;
@@ -12,10 +13,12 @@ namespace FlowChat.ChatService.Api.Features.Conversation.Public.GetDuetConversat
 public sealed class GetDuetConversationController : ApiControllerBase
 {
     private readonly IMediator _mediator;
+    private readonly IMapper _mapper;
 
-    public GetDuetConversationController(IMediator mediator)
+    public GetDuetConversationController(IMediator mediator, IMapper mapper)
     {
         _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
+        _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
     }
 
     [HttpGet]
@@ -39,11 +42,7 @@ public sealed class GetDuetConversationController : ApiControllerBase
         if (!result.IsSuccess)
             return HandleError(result.Error);
 
-        var conversation = result.Value;
-        var response = new GetDuetConversationResponse(
-            conversation.ConversationId,
-            [.. conversation.Participants.Select(p => new ParticipantResponse(
-                p.UserId, p.DisplayName, p.AvatarUrl, p.ParticipantUserId))]);
+        var response = _mapper.Map<GetDuetConversationResponse>(result.Value);
 
         return Ok(response);
     }

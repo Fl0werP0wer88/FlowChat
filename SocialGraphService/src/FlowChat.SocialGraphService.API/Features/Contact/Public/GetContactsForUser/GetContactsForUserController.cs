@@ -1,3 +1,4 @@
+using AutoMapper;
 using FlowChat.Shared.API;
 using FlowChat.SocialGraphService.Application.Features.Contact.Queries.GetContactsForUser;
 using MediatR;
@@ -12,10 +13,12 @@ namespace FlowChat.SocialGraphService.Api.Features.Contact.Public.GetContactsFor
 public sealed class GetContactsForUserController : ApiControllerBase
 {
     private readonly IMediator _mediator;
+    private readonly IMapper _mapper;
 
-    public GetContactsForUserController(IMediator mediator)
+    public GetContactsForUserController(IMediator mediator, IMapper mapper)
     {
         _mediator = mediator;
+        _mapper = mapper;
     }
 
     [HttpGet]
@@ -31,19 +34,7 @@ public sealed class GetContactsForUserController : ApiControllerBase
         var result = await _mediator.Send(new GetContactsForUserQuery(userId), cancellationToken);
 
         return result.IsSuccess
-            ? Ok(new GetContactsForUserResponse([.. result.Value.Select(MapToResponse)]))
+            ? Ok(new GetContactsForUserResponse(_mapper.Map<IReadOnlyList<ContactResponse>>(result.Value)))
             : HandleError(result.Error);
     }
-
-    private static ContactResponse MapToResponse(ContactDto contact) =>
-        new(
-            contact.Id,
-            contact.OwnerUserId,
-            contact.ContactUserId,
-            contact.DisplayName,
-            contact.FirstName,
-            contact.LastName,
-            contact.PhoneNumber,
-            contact.Email,
-            contact.IsBlocked);
 }

@@ -1,3 +1,4 @@
+using AutoMapper;
 using FlowChat.ChatService.Application.Features.ChatMessage.Queries.GetConversationMessages;
 using FlowChat.Shared.API;
 using MediatR;
@@ -13,10 +14,12 @@ public sealed class GetConversationMessagesController : ApiControllerBase
 {
     private const int DefaultLimit = 50;
     private readonly IMediator _mediator;
+    private readonly IMapper _mapper;
 
-    public GetConversationMessagesController(IMediator mediator)
+    public GetConversationMessagesController(IMediator mediator, IMapper mapper)
     {
         _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
+        _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
     }
 
     [HttpGet]
@@ -51,17 +54,7 @@ public sealed class GetConversationMessagesController : ApiControllerBase
             return HandleError(result.Error);
         }
 
-        var response = new GetConversationMessagesResponse(
-            [.. result.Value.Items.Select(message => new ChatMessageResponse(
-                message.Id,
-                message.ConversationId,
-                message.SenderUserId,
-                message.SenderDisplayName,
-                message.Text,
-                message.SentAtUtc))],
-            result.Value.NextBeforeSentAtUtc,
-            result.Value.NextBeforeMessageId,
-            result.Value.HasMore);
+        var response = _mapper.Map<GetConversationMessagesResponse>(result.Value);
 
         return Ok(response);
     }

@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using AutoMapper;
 using FlowChat.Core.Results;
 using FlowChat.Shared.Domain;
 using FlowChat.UserProfileService.Api.Features.UserProfile.Public.AddEmail;
@@ -20,6 +21,9 @@ namespace FlowChat.UserProfileService.UnitTests;
 
 public sealed class UserProfilesControllerTests
 {
+    private static readonly IMapper Mapper =
+        new MapperConfiguration(cfg => cfg.AddProfile<GetUserProfileMappingProfile>(), Microsoft.Extensions.Logging.Abstractions.NullLoggerFactory.Instance).CreateMapper();
+
     private readonly Mock<IMediator> _mediatorMock = new();
 
     private static TController SetupController<TController>(TController controller, Guid? authenticatedUserId = null)
@@ -87,7 +91,7 @@ public sealed class UserProfilesControllerTests
             .ReturnsAsync(FlowChatResult<UserProfileDto>.Failure(
                 DomainError.NotFound($"User profile '{userId}' was not found.")));
 
-        var controller = SetupController(new UserProfilesController(_mediatorMock.Object));
+        var controller = SetupController(new UserProfilesController(_mediatorMock.Object, Mapper));
 
         var result = await controller.GetById(userId, CancellationToken.None);
 
@@ -121,7 +125,7 @@ public sealed class UserProfilesControllerTests
             .Setup(x => x.Send(It.IsAny<GetUserProfileQuery>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(FlowChatResult<UserProfileDto>.Success(dto));
 
-        var controller = SetupController(new UserProfilesController(_mediatorMock.Object));
+        var controller = SetupController(new UserProfilesController(_mediatorMock.Object, Mapper));
 
         var result = await controller.GetById(userId, CancellationToken.None);
 
@@ -139,7 +143,7 @@ public sealed class UserProfilesControllerTests
             .Setup(x => x.Send(It.IsAny<GetUserProfileByEmailQuery>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(FlowChatResult<UserProfileDto>.Success(dto));
 
-        var controller = SetupController(new UserProfilesController(_mediatorMock.Object));
+        var controller = SetupController(new UserProfilesController(_mediatorMock.Object, Mapper));
 
         var result = await controller.GetByEmail("jdoe@example.com", CancellationToken.None);
 
@@ -156,7 +160,7 @@ public sealed class UserProfilesControllerTests
             .ReturnsAsync(FlowChatResult<UserProfileDto>.Failure(
                 DomainError.NotFound("User profile with email 'jdoe@example.com' was not found.")));
 
-        var controller = SetupController(new UserProfilesController(_mediatorMock.Object));
+        var controller = SetupController(new UserProfilesController(_mediatorMock.Object, Mapper));
 
         var result = await controller.GetByEmail("jdoe@example.com", CancellationToken.None);
 
@@ -174,7 +178,7 @@ public sealed class UserProfilesControllerTests
             .Setup(x => x.Send(It.IsAny<GetUserProfileByFriendlyUserIdQuery>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(FlowChatResult<UserProfileDto>.Success(dto));
 
-        var controller = SetupController(new UserProfilesController(_mediatorMock.Object));
+        var controller = SetupController(new UserProfilesController(_mediatorMock.Object, Mapper));
 
         var result = await controller.GetByFriendlyUserId("jdoe", CancellationToken.None);
 
@@ -191,7 +195,7 @@ public sealed class UserProfilesControllerTests
             .ReturnsAsync(FlowChatResult<UserProfileDto>.Failure(
                 DomainError.NotFound("User profile with friendly user ID 'jdoe' was not found.")));
 
-        var controller = SetupController(new UserProfilesController(_mediatorMock.Object));
+        var controller = SetupController(new UserProfilesController(_mediatorMock.Object, Mapper));
 
         var result = await controller.GetByFriendlyUserId("jdoe", CancellationToken.None);
 
