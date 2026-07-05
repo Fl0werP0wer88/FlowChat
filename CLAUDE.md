@@ -93,6 +93,14 @@ Domain events are dispatched via `IDomainEventDispatcher` and mapped to integrat
 - Never accept the current user's ID as an explicit route parameter, query parameter, or request body field on authenticated endpoints — always extract it from the JWT claim via `TryGetCurrentUserId(out var userId)` inherited from `ApiControllerBase`; passing the caller's identity in the request lets clients impersonate other users
 - Internal endpoints (API-key-authenticated, service-to-service) are exempt and may accept explicit user IDs in their payloads
 
+### API request/response naming and mapping
+- Root request/response types follow `{Action}{Resource}Request` / `{Action}{Resource}Response`; only the root type implements `IServiceInput`/`IServiceOutput`
+- Nested composite objects inside a response also use the `Response` suffix (e.g. `ParticipantResponse`, `ContactResponse`), never `Dto` — a `Dto` suffix on an API-facing type signals an Application/Persistence type has leaked across the boundary
+- Define nested response types in the same file as their root response, one set per feature folder; duplicate the shape per feature instead of sharing one type across features (mirrors how `ParticipantResponse` is redefined per conversation feature in ChatService)
+- Map Application/Persistence DTOs to these API response types via a dedicated AutoMapper `Profile` class colocated in the same feature folder (e.g. `{Feature}MappingProfile.cs`), injected into the controller as `IMapper` — do not build the response with manual `.Select(...)` projections or private static `MapToResponse` helper methods in the controller
+- Root responses that fan-in data from multiple independent sources (e.g. a gateway aggregating several service clients) are the exception — compose the root manually, but still map any nested per-source collections through the registered `IMapper`
+- Unit tests for a controller that takes `IMapper` must construct a real mapper from the feature's profile (`new MapperConfiguration(cfg => cfg.AddProfile<XMappingProfile>(), NullLoggerFactory.Instance).CreateMapper()`), not a mock — this exercises the actual mapping instead of asserting against a stub
+
 ### Application contract placement
 - Keep interfaces in `Application/Contracts/*` only when their implementations live outside the `Application` project, for example in `Infrastructure`, `Persistence`, `API`, or `Workers`
 - If an interface is implemented inside the same `Application` layer, keep it next to the implementing class in a local `Interfaces/` folder within that feature slice instead of `Application/Contracts/*`
