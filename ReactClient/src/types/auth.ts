@@ -19,15 +19,3 @@ export interface AuthSession {
   login: string;
   expiresAtUtc: string | null;
 }
-
-export interface AuthTokenResponseDto {
-  access_token?: string;
-  accessToken?: string;
-  expires_in?: number;
-  expiresAtUtc?: string | null;
-  token_type?: string;
-  scope?: string;
-}
-
-export type LoginResponseDto = AuthTokenResponseDto;
-export type RefreshTokenResponseDto = AuthTokenResponseDto;

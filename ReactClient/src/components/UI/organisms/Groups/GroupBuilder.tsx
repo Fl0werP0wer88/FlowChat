@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useAuthStore } from "../../../../store/authStore";
-import type { SearchUserResult } from "../../../../api/userProfileService";
+import type { SearchUserResult } from "../../../../types/users";
 import { UsersPicker } from "../UserPicker";
 import { createGroupConversation } from "../../../../api/chatService";
 

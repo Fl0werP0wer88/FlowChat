@@ -1,7 +1,7 @@
 import type { KeyboardEvent } from "react";
 import { useEffect, useState } from "react";
 import type { ChatMessage } from "../../../../types/chat";
-import type { GroupConversation } from "../../../../api/chatService";
+import type { GroupConversation } from "../../../../types/chat";
 import { ConversationBody } from "../../molecules/ConversationBody";
 import { ConversationFooter } from "../../molecules/ConversationFooter";
 import { GroupConversationHeader } from "../../molecules/GroupConversationHeader";

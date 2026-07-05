@@ -3,13 +3,9 @@ import type { ConfirmEmailVerificationRequest } from "./userProfile/emailVerific
 import type { SearchUsersRequest } from "./userProfile/queries/searchUsers/SearchUsersRequest";
 import type { GetUserProfileResponseDto } from "./userProfile/queries/getUserProfile/GetUserProfileResponseDto";
 import type { GetUserProfilesResponseDto } from "./userProfile/queries/getUserProfiles/GetUserProfilesResponseDto";
-import type { SearchUserResult } from "./userProfile/queries/searchUsers/SearchUserResult";
-import type { SearchUsersCriteria } from "./userProfile/queries/searchUsers/SearchUsersCriteria";
 import type { SearchUsersResponseDto } from "./userProfile/queries/searchUsers/SearchUsersResponseDto";
 import type { UserProfileSearchDto } from "./userProfile/queries/searchUsers/UserProfileSearchDto";
-
-export type { SearchUserResult } from "./userProfile/queries/searchUsers/SearchUserResult";
-export type { SearchUsersCriteria } from "./userProfile/queries/searchUsers/SearchUsersCriteria";
+import type { SearchUserResult, SearchUsersCriteria } from "../../types/users";
 
 function buildQueryString(parameters: SearchUsersRequest): string {
   const searchParams = new URLSearchParams();

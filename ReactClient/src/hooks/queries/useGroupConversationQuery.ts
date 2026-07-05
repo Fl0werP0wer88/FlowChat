@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import type { GroupConversation } from "../../api/chatService";
 import { openGroupConversation } from "../../api/gatewayService";
+import type { GroupConversation } from "../../types/chat";
 import {
   type GroupConversationCacheEntry,
   mapGroupConversationMessage,

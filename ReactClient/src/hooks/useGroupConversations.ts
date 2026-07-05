@@ -1,8 +1,9 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "../store/authStore";
+import type { GroupConversation } from "../types/chat";
 import type { GroupConversationChangedEvent, RealtimeChatMessage } from "../types/realtime";
 import { resolveOwnerUserId } from "../utils/authUtils";
-import { calculateUnreadCount, type GroupConversation } from "../api/chatService";
+import { calculateUnreadCount } from "../utils/chatUtils";
 import { useGroupConversationsQuery } from "./queries/useGroupConversationsQuery";
 
 export interface UseGroupConversationsResult {

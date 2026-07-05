@@ -9,9 +9,8 @@ import {
   getUserProfileById,
   getUserProfilesByIds,
   searchUsers,
-  type SearchUserResult,
-  type SearchUsersCriteria,
 } from "../../../../api/userProfileService";
+import type { SearchUserResult, SearchUsersCriteria } from "../../../../types/users";
 import { UsersPickerFooter } from "../../molecules/UsersPickerFooter";
 import { UsersPickerHeader } from "../../molecules/UsersPickerHeader";
 

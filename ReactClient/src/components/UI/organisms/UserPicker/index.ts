@@ -1,2 +1,2 @@
 export { UsersPicker } from "./UsersPicker";
-export type { SearchUserResult, SearchUsersCriteria } from "../../../../api/userProfileService";
+export type { SearchUserResult, SearchUsersCriteria } from "../../../../types/users";

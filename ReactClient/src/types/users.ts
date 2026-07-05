@@ -6,3 +6,9 @@ export interface SearchUserResult {
   lastName: string | null;
   organization: string | null;
 }
+
+export interface SearchUsersCriteria {
+  firstName: string;
+  lastName: string;
+  organization: string;
+}

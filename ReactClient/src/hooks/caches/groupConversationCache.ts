@@ -1,5 +1,4 @@
-import type { ChatMessage, MessageSender } from "../../types/chat";
-import type { GroupConversationMessage } from "../../api/chatService";
+import type { ChatMessage, GroupConversationMessage, MessageSender } from "../../types/chat";
 
 export interface GroupConversationCacheEntry {
   conversationId: string;

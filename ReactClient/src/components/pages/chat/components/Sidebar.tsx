@@ -1,11 +1,11 @@
 import { useChatSelectionStore } from "../../../../store/chatSelectionStore";
 import type { Contact } from "../../../../types/contacts";
 import type { ManualUserStatus } from "../../../../types/realtime";
-import type { GroupConversation } from "../../../../api/chatService";
+import type { GroupConversation } from "../../../../types/chat";
 import { GroupBuilder, GroupConversationsList } from "../../../../components/UI/organisms/Groups";
 import { ContactsBuilder, ContactsList } from "../../../../components/UI/organisms/Contacts";
 import { SidebarHeader } from "./SidebarHeader";
-import type { SearchUserResult } from "../../../../api/userProfileService";
+import type { SearchUserResult } from "../../../../types/users";
 
 interface SidebarProps {
   contacts: Contact[];

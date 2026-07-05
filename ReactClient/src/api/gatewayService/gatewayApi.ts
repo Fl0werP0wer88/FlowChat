@@ -1,26 +1,21 @@
 import { getJson, putJson } from "../httpClient";
+import type {
+  ConversationMessage,
+  ConversationParticipant,
+  GroupConversationMessage,
+  GroupConversationParticipant,
+  OpenDuetConversationResult,
+  OpenGroupConversationResult,
+} from "../../types/chat";
 import type { Contact } from "../../types/contacts";
 import type { OpenDuetConversationRequest } from "./conversation/commands/openDuetConversation/OpenDuetConversationRequest";
 import type { OpenGroupConversationRequest } from "./conversation/commands/openGroupConversation/OpenGroupConversationRequest";
 import type { ContactDto } from "./contact/queries/getContacts/ContactDto";
 import type { GetContactsResponseDto } from "./contact/queries/getContacts/GetContactsResponseDto";
 import type { ConversationMessageDto } from "./conversation/queries/getConversationMessages/ConversationMessageDto";
-import type { ConversationMessage } from "./conversation/queries/getConversationMessages/ConversationMessage";
-import type { GroupConversationMessage } from "./conversation/queries/getConversationMessages/GroupConversationMessage";
 import type { ConversationParticipantDto } from "./conversation/queries/getConversationParticipants/ConversationParticipantDto";
-import type { ConversationParticipant } from "./conversation/queries/getConversationParticipants/ConversationParticipant";
-import type { GroupConversationParticipant } from "./conversation/queries/getConversationParticipants/GroupConversationParticipant";
 import type { OpenDuetConversationResponseDto } from "./conversation/queries/openDuetConversation/OpenDuetConversationResponseDto";
-import type { OpenDuetConversationResult } from "./conversation/queries/openDuetConversation/OpenDuetConversationResult";
 import type { OpenGroupConversationResponseDto } from "./conversation/queries/openGroupConversation/OpenGroupConversationResponseDto";
-import type { OpenGroupConversationResult } from "./conversation/queries/openGroupConversation/OpenGroupConversationResult";
-
-export type { ConversationMessage } from "./conversation/queries/getConversationMessages/ConversationMessage";
-export type { GroupConversationMessage } from "./conversation/queries/getConversationMessages/GroupConversationMessage";
-export type { ConversationParticipant } from "./conversation/queries/getConversationParticipants/ConversationParticipant";
-export type { GroupConversationParticipant } from "./conversation/queries/getConversationParticipants/GroupConversationParticipant";
-export type { OpenDuetConversationResult } from "./conversation/queries/openDuetConversation/OpenDuetConversationResult";
-export type { OpenGroupConversationResult } from "./conversation/queries/openGroupConversation/OpenGroupConversationResult";
 
 function resolveContacts(response: GetContactsResponseDto): ContactDto[] {
   return response.contacts ?? [];

@@ -3,39 +3,27 @@ import type { SendChatMessageRequest } from "./chatMessage/commands/sendChatMess
 import type { CopyDuetAsGroupRequest } from "./conversation/commands/copyDuetAsGroup/CopyDuetAsGroupRequest";
 import type { CreateGroupConversationRequest } from "./conversation/commands/createGroupConversation/CreateGroupConversationRequest";
 import type { ConversationMessageDto } from "./chatMessage/queries/getConversationMessages/ConversationMessageDto";
-import type { ConversationMessage } from "./chatMessage/queries/getConversationMessages/ConversationMessage";
 import type { GetConversationMessagesResponseDto } from "./chatMessage/queries/getConversationMessages/GetConversationMessagesResponseDto";
-import type { ConversationMessagesResult } from "./chatMessage/queries/getConversationMessages/ConversationMessagesResult";
 import type { GetGroupConversationMessagesResponseDto } from "./chatMessage/queries/getGroupConversationMessages/GetGroupConversationMessagesResponseDto";
-import type { GroupConversationMessage } from "./chatMessage/queries/getGroupConversationMessages/GroupConversationMessage";
-import type { GroupConversationMessagesResult } from "./chatMessage/queries/getGroupConversationMessages/GroupConversationMessagesResult";
 import type { SendChatMessageResponseDto } from "./chatMessage/queries/sendChatMessage/SendChatMessageResponseDto";
-import type { SendChatMessageResult } from "./chatMessage/queries/sendChatMessage/SendChatMessageResult";
-import type { SendGroupChatMessageResult } from "./chatMessage/queries/sendChatMessage/SendGroupChatMessageResult";
 import type { ConversationParticipantDto } from "./conversation/queries/getConversationParticipants/ConversationParticipantDto";
-import type { ConversationParticipant } from "./conversation/queries/getConversationParticipants/ConversationParticipant";
-import type { GroupConversationParticipant } from "./conversation/queries/getConversationParticipants/GroupConversationParticipant";
 import type { CopyDuetAsGroupResponseDto } from "./conversation/queries/copyDuetAsGroup/CopyDuetAsGroupResponseDto";
-import type { CopyDuetAsGroupResult } from "./conversation/queries/copyDuetAsGroup/CopyDuetAsGroupResult";
 import type { GroupConversationSummaryDto } from "./conversation/queries/getGroupConversations/GroupConversationSummaryDto";
 import type { GetGroupConversationsResponseDto } from "./conversation/queries/getGroupConversations/GetGroupConversationsResponseDto";
-import type { GroupConversation } from "./conversation/queries/getGroupConversations/GroupConversation";
 import type { CreateGroupConversationResponseDto } from "./conversation/queries/createGroupConversation/CreateGroupConversationResponseDto";
-
-export type { ConversationMessage } from "./chatMessage/queries/getConversationMessages/ConversationMessage";
-export type { ConversationMessagesResult } from "./chatMessage/queries/getConversationMessages/ConversationMessagesResult";
-export type { GroupConversationMessage } from "./chatMessage/queries/getGroupConversationMessages/GroupConversationMessage";
-export type { GroupConversationMessagesResult } from "./chatMessage/queries/getGroupConversationMessages/GroupConversationMessagesResult";
-export type { SendChatMessageResult } from "./chatMessage/queries/sendChatMessage/SendChatMessageResult";
-export type { SendGroupChatMessageResult } from "./chatMessage/queries/sendChatMessage/SendGroupChatMessageResult";
-export type { ConversationParticipant } from "./conversation/queries/getConversationParticipants/ConversationParticipant";
-export type { GroupConversationParticipant } from "./conversation/queries/getConversationParticipants/GroupConversationParticipant";
-export type { CopyDuetAsGroupResult } from "./conversation/queries/copyDuetAsGroup/CopyDuetAsGroupResult";
-export type { GroupConversation } from "./conversation/queries/getGroupConversations/GroupConversation";
-
-export function calculateUnreadCount(currentMsgSeqNum: number, lastReadMsgSeqNum: number): number {
-  return Math.max(0, currentMsgSeqNum - lastReadMsgSeqNum);
-}
+import type {
+  ConversationMessage,
+  ConversationMessagesResult,
+  ConversationParticipant,
+  CopyDuetAsGroupResult,
+  GroupConversation,
+  GroupConversationMessage,
+  GroupConversationMessagesResult,
+  GroupConversationParticipant,
+  SendChatMessageResult,
+  SendGroupChatMessageResult,
+} from "../../types/chat";
+import { calculateUnreadCount } from "../../utils/chatUtils";
 
 function mapParticipant(dto: ConversationParticipantDto): ConversationParticipant {
   return {

@@ -1,15 +1,12 @@
 import { postForm, putJson } from "../httpClient";
-import type {
-  AuthSession,
-  AuthTokenResponseDto,
-  LoginFormValues,
-  LoginResponseDto,
-  RefreshTokenResponseDto,
-  RegisterFormValues,
-} from "../../types/auth";
+import type { AuthSession, LoginFormValues, RegisterFormValues } from "../../types/auth";
 import type { LoginUserRequest } from "./user/commands/loginUser/LoginUserRequest";
+import type { LoginResponseDto } from "./user/commands/loginUser/LoginResponseDto";
 import type { RefreshTokenRequest } from "./user/commands/refreshToken/RefreshTokenRequest";
+import type { RefreshTokenResponseDto } from "./user/commands/refreshToken/RefreshTokenResponseDto";
 import type { RegisterUserRequest } from "./user/commands/registerUser/RegisterUserRequest";
+
+type AuthTokenResponseDto = LoginResponseDto | RefreshTokenResponseDto;
 
 function resolveExpiresAtUtc(response: AuthTokenResponseDto): string | null {
   const explicitExpiration = response.expiresAtUtc ?? null;

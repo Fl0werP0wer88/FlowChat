@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import type { GroupConversation } from "../api/chatService";
+import type { GroupConversation } from "../types/chat";
 import type { Contact } from "../types/contacts";
 
 export type ActiveConversationMode = "duet" | "group";
