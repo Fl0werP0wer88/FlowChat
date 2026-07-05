@@ -1,38 +1,11 @@
 import { postForm, putJson } from "../httpClient";
+import { mapToAuthSession } from "./mappers";
 import type { AuthSession, LoginFormValues, RegisterFormValues } from "../../types/auth";
 import type { LoginUserRequest } from "./user/commands/loginUser/LoginUserRequest";
 import type { LoginResponseDto } from "./user/commands/loginUser/LoginResponseDto";
 import type { RefreshTokenRequest } from "./user/commands/refreshToken/RefreshTokenRequest";
 import type { RefreshTokenResponseDto } from "./user/commands/refreshToken/RefreshTokenResponseDto";
 import type { RegisterUserRequest } from "./user/commands/registerUser/RegisterUserRequest";
-
-type AuthTokenResponseDto = LoginResponseDto | RefreshTokenResponseDto;
-
-function resolveExpiresAtUtc(response: AuthTokenResponseDto): string | null {
-  const explicitExpiration = response.expiresAtUtc ?? null;
-  if (explicitExpiration) {
-    return explicitExpiration;
-  }
-
-  if (typeof response.expires_in !== "number" || !Number.isFinite(response.expires_in)) {
-    return null;
-  }
-
-  return new Date(Date.now() + (response.expires_in * 1000)).toISOString();
-}
-
-function mapToAuthSession(response: AuthTokenResponseDto, login: string): AuthSession {
-  const accessToken = response.access_token ?? response.accessToken;
-  if (!accessToken) {
-    throw new Error("Authentication response does not contain access token.");
-  }
-
-  return {
-    accessToken,
-    login,
-    expiresAtUtc: resolveExpiresAtUtc(response),
-  };
-}
 
 export async function loginUser(values: LoginFormValues): Promise<AuthSession> {
   const payload: LoginUserRequest = {

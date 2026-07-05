@@ -2,75 +2,26 @@ import { getJson, postJson, putJson } from "../httpClient";
 import type { SendChatMessageRequest } from "./chatMessage/commands/sendChatMessage/SendChatMessageRequest";
 import type { CopyDuetAsGroupRequest } from "./conversation/commands/copyDuetAsGroup/CopyDuetAsGroupRequest";
 import type { CreateGroupConversationRequest } from "./conversation/commands/createGroupConversation/CreateGroupConversationRequest";
-import type { ConversationMessageDto } from "./chatMessage/queries/getConversationMessages/ConversationMessageDto";
 import type { GetConversationMessagesResponseDto } from "./chatMessage/queries/getConversationMessages/GetConversationMessagesResponseDto";
 import type { GetGroupConversationMessagesResponseDto } from "./chatMessage/queries/getGroupConversationMessages/GetGroupConversationMessagesResponseDto";
 import type { SendChatMessageResponseDto } from "./chatMessage/queries/sendChatMessage/SendChatMessageResponseDto";
-import type { ConversationParticipantDto } from "./conversation/queries/getConversationParticipants/ConversationParticipantDto";
 import type { CopyDuetAsGroupResponseDto } from "./conversation/queries/copyDuetAsGroup/CopyDuetAsGroupResponseDto";
-import type { GroupConversationSummaryDto } from "./conversation/queries/getGroupConversations/GroupConversationSummaryDto";
 import type { GetGroupConversationsResponseDto } from "./conversation/queries/getGroupConversations/GetGroupConversationsResponseDto";
 import type { CreateGroupConversationResponseDto } from "./conversation/queries/createGroupConversation/CreateGroupConversationResponseDto";
+import {
+  mapGroupConversation,
+  mapGroupMessage,
+  mapMessage,
+  mapParticipant,
+} from "./mappers";
 import type {
-  ConversationMessage,
   ConversationMessagesResult,
-  ConversationParticipant,
   CopyDuetAsGroupResult,
   GroupConversation,
-  GroupConversationMessage,
   GroupConversationMessagesResult,
-  GroupConversationParticipant,
   SendChatMessageResult,
   SendGroupChatMessageResult,
 } from "../../types/chat";
-import { calculateUnreadCount } from "../../utils/chatUtils";
-
-function mapParticipant(dto: ConversationParticipantDto): ConversationParticipant {
-  return {
-    userId: dto.userId ?? "",
-    displayName: dto.displayName ?? null,
-    avatarUrl: dto.avatarUrl ?? null,
-    participantUserId: dto.participantUserId ?? "",
-  };
-}
-
-function mapMessage(dto: ConversationMessageDto): ConversationMessage {
-  return {
-    id: dto.id ?? crypto.randomUUID(),
-    conversationId: dto.conversationId ?? "",
-    senderUserId: dto.senderUserId ?? "",
-    senderDisplayName: dto.senderDisplayName ?? "",
-    text: dto.text ?? "",
-    sequenceNum: dto.sequenceNum ?? null,
-    sentAtUtc: dto.sentAtUtc ?? new Date().toISOString(),
-  };
-}
-
-function mapGroupMessage(dto: ConversationMessageDto): GroupConversationMessage {
-  return {
-    id: dto.id ?? crypto.randomUUID(),
-    conversationId: dto.conversationId ?? "",
-    senderUserId: dto.senderUserId ?? "",
-    senderDisplayName: dto.senderDisplayName ?? "",
-    text: dto.text ?? "",
-    sequenceNum: dto.sequenceNum ?? null,
-    sentAtUtc: dto.sentAtUtc ?? new Date().toISOString(),
-  };
-}
-
-function mapGroupConversation(dto: GroupConversationSummaryDto): GroupConversation {
-  const lastReadMsgSeqNum = dto.lastReadMsgSeqNum ?? 0;
-  const currentMsgSeqNum = dto.currentMsgSeqNum ?? 0;
-
-  return {
-    conversationId: dto.conversationId ?? "",
-    name: dto.name ?? "",
-    participantCount: dto.participantCount ?? 0,
-    lastReadMsgSeqNum,
-    currentMsgSeqNum,
-    unreadCount: calculateUnreadCount(currentMsgSeqNum, lastReadMsgSeqNum),
-  };
-}
 
 export async function getConversationMessages(
   conversationId: string,

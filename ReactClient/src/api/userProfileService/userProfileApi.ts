@@ -4,7 +4,7 @@ import type { SearchUsersRequest } from "./userProfile/queries/searchUsers/Searc
 import type { GetUserProfileResponseDto } from "./userProfile/queries/getUserProfile/GetUserProfileResponseDto";
 import type { GetUserProfilesResponseDto } from "./userProfile/queries/getUserProfiles/GetUserProfilesResponseDto";
 import type { SearchUsersResponseDto } from "./userProfile/queries/searchUsers/SearchUsersResponseDto";
-import type { UserProfileSearchDto } from "./userProfile/queries/searchUsers/UserProfileSearchDto";
+import { mapSearchUserResult } from "./mappers";
 import type { SearchUserResult, SearchUsersCriteria } from "../../types/users";
 
 function buildQueryString(parameters: SearchUsersRequest): string {
@@ -24,25 +24,6 @@ function buildQueryString(parameters: SearchUsersRequest): string {
 
   const serialized = searchParams.toString();
   return serialized.length > 0 ? `?${serialized}` : "";
-}
-
-function buildSearchUserDisplayName(dto: UserProfileSearchDto): string {
-  const firstName = (dto.firstName ?? "").trim();
-  const lastName = (dto.lastName ?? "").trim();
-  const displayName = `${firstName} ${lastName}`.trim();
-
-  return displayName || "Nieznany uzytkownik";
-}
-
-function mapSearchUserResult(dto: UserProfileSearchDto): SearchUserResult {
-  return {
-    userProfileId: dto.id,
-    friendlyUserId: dto.friendlyUserId,
-    displayName: buildSearchUserDisplayName(dto),
-    firstName: dto.firstName ?? null,
-    lastName: dto.lastName ?? null,
-    organization: dto.organization ?? null,
-  };
 }
 
 export async function searchUsers(
