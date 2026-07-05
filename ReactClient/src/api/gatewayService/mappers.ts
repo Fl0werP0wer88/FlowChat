@@ -1,7 +1,7 @@
 import type { Contact } from "../../types/contacts";
 import type {
-  ConversationMessage,
-  ConversationParticipant,
+  DuetConversationMessage,
+  DuetConversationParticipant,
   GroupConversationMessage,
   GroupConversationParticipant,
 } from "../../types/chat";
@@ -27,7 +27,7 @@ export function mapContact(dto: ContactDto): Contact {
   };
 }
 
-export function mapParticipant(dto: ConversationParticipantDto): ConversationParticipant {
+export function mapDuetParticipant(dto: ConversationParticipantDto): DuetConversationParticipant {
   return {
     userId: dto.userId ?? "",
     displayName: dto.displayName ?? null,
@@ -45,7 +45,7 @@ export function mapGroupParticipant(dto: ConversationParticipantDto): GroupConve
   };
 }
 
-export function mapMessage(dto: ConversationMessageDto): ConversationMessage {
+export function mapDuetMessage(dto: ConversationMessageDto): DuetConversationMessage {
   return {
     id: dto.id ?? crypto.randomUUID(),
     conversationId: dto.conversationId ?? "",

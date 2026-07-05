@@ -15,16 +15,16 @@ export { useRegisterMutation } from "./mutations/useRegisterMutation";
 export { useSendGroupMessageMutation } from "./mutations/useSendGroupMessageMutation";
 export { useSendMessageMutation } from "./mutations/useSendMessageMutation";
 export { useContactsQuery } from "./queries/useContactsQuery";
-export { useConversationQuery } from "./queries/useConversationQuery";
+export { useDuetConversationQuery } from "./queries/useDuetConversationQuery";
 export { useGroupConversationQuery } from "./queries/useGroupConversationQuery";
 export { useGroupConversationsQuery } from "./queries/useGroupConversationsQuery";
 export { usePresencePreferencesQuery } from "./queries/usePresencePreferencesQuery";
 export {
-  createMessage,
-  mapConversationMessage,
-  sortMessages,
-  type ConversationCacheEntry,
-} from "./caches/conversationCache";
+  createDuetMessage,
+  mapDuetConversationMessage,
+  sortDuetMessages,
+  type DuetConversationCacheEntry,
+} from "./caches/duetConversationCache";
 export {
   createGroupMessage,
   mapGroupConversationMessage,

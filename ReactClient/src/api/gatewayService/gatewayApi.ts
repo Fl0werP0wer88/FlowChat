@@ -3,8 +3,8 @@ import {
   mapContact,
   mapGroupMessage,
   mapGroupParticipant,
-  mapMessage,
-  mapParticipant,
+  mapDuetMessage,
+  mapDuetParticipant,
   resolveContacts,
 } from "./mappers";
 import type {
@@ -46,8 +46,8 @@ export async function openDuetConversation(
 
   return {
     conversationId: response.conversationId ?? "",
-    participants: (response.participants ?? []).map(mapParticipant),
-    messages: (response.messages ?? []).map(mapMessage),
+    participants: (response.participants ?? []).map(mapDuetParticipant),
+    messages: (response.messages ?? []).map(mapDuetMessage),
     nextBeforeSentAtUtc: response.nextBeforeSentAtUtc ?? null,
     nextBeforeMessageId: response.nextBeforeMessageId ?? null,
     hasMore: response.hasMore ?? false,

@@ -5,15 +5,15 @@ import { useAuthStore } from "../store/authStore";
 import type { Contact } from "../types/contacts";
 import type { RealtimeChatMessage } from "../types/realtime";
 import { resolveOwnerUserId } from "../utils/authUtils";
-import { getConversationMessages } from "../api/chatService";
-import type { ConversationCacheEntry } from "./caches/conversationCache";
+import { getDuetConversationMessages } from "../api/chatService";
+import type { DuetConversationCacheEntry } from "./caches/duetConversationCache";
 import {
-  createMessage,
-  mapConversationMessage,
-  sortMessages,
-} from "./caches/conversationCache";
+  createDuetMessage,
+  mapDuetConversationMessage,
+  sortDuetMessages,
+} from "./caches/duetConversationCache";
 import { useSendMessageMutation } from "./mutations/useSendMessageMutation";
-import { useConversationQuery } from "./queries/useConversationQuery";
+import { useDuetConversationQuery } from "./queries/useDuetConversationQuery";
 
 export function useChatMessages(activeContact: Contact | null) {
   const accessToken = useAuthStore((s) => s.accessToken) ?? "";
@@ -32,7 +32,7 @@ export function useChatMessages(activeContact: Contact | null) {
     data: conversationData,
     isLoading: isLoadingConversation,
     error: conversationQueryError,
-  } = useConversationQuery(activeContact, accessToken, ownerUserId);
+  } = useDuetConversationQuery(activeContact, accessToken, ownerUserId);
 
   useEffect(() => {
     if (!conversationData || !activeContact) {
@@ -62,7 +62,7 @@ export function useChatMessages(activeContact: Contact | null) {
       return;
     }
 
-    const current = queryClient.getQueryData<ConversationCacheEntry>(["conversation", activeContact.userId]);
+    const current = queryClient.getQueryData<DuetConversationCacheEntry>(["duetConversation", activeContact.userId]);
     if (!current?.hasMore || !current.nextBeforeSentAtUtc || !current.nextBeforeMessageId) {
       return;
     }
@@ -71,7 +71,7 @@ export function useChatMessages(activeContact: Contact | null) {
     setIsLoadingOlderMessages(true);
 
     try {
-      const result = await getConversationMessages(
+      const result = await getDuetConversationMessages(
         current.conversationId,
         {
           beforeSentAtUtc: current.nextBeforeSentAtUtc,
@@ -80,8 +80,8 @@ export function useChatMessages(activeContact: Contact | null) {
         accessToken,
       );
 
-      queryClient.setQueryData<ConversationCacheEntry>(
-        ["conversation", activeContact.userId],
+      queryClient.setQueryData<DuetConversationCacheEntry>(
+        ["duetConversation", activeContact.userId],
         (cached) => {
           if (!cached) {
             return cached;
@@ -89,12 +89,12 @@ export function useChatMessages(activeContact: Contact | null) {
 
           const existingIds = new Set(cached.messages.map((message) => message.id));
           const olderMessages = result.messages
-            .map((message) => mapConversationMessage(message, ownerUserId))
+            .map((message) => mapDuetConversationMessage(message, ownerUserId))
             .filter((message) => !existingIds.has(message.id));
 
           return {
             ...cached,
-            messages: sortMessages([...olderMessages, ...cached.messages]),
+            messages: sortDuetMessages([...olderMessages, ...cached.messages]),
             nextBeforeSentAtUtc: result.nextBeforeSentAtUtc,
             nextBeforeMessageId: result.nextBeforeMessageId,
             hasMore: result.hasMore,
@@ -114,8 +114,8 @@ export function useChatMessages(activeContact: Contact | null) {
       return;
     }
 
-    queryClient.setQueryData<ConversationCacheEntry>(
-      ["conversation", activeContact?.userId],
+    queryClient.setQueryData<DuetConversationCacheEntry>(
+      ["duetConversation", activeContact?.userId],
       (current) => {
         if (!current) {
           return current;
@@ -128,9 +128,9 @@ export function useChatMessages(activeContact: Contact | null) {
         const sender = ownerUserId && payload.senderUserId === ownerUserId ? "me" : "other";
         return {
           ...current,
-          messages: sortMessages([
+          messages: sortDuetMessages([
             ...current.messages,
-            createMessage(
+            createDuetMessage(
               sender,
               payload.text,
               payload.sentAtUtc,

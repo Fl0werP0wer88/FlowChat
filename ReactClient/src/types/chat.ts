@@ -11,7 +11,7 @@ export interface ChatMessage {
   sentAtUtc: string;
 }
 
-export interface ConversationMessage {
+export interface DuetConversationMessage {
   id: string;
   conversationId: string;
   senderUserId: string;
@@ -31,7 +31,7 @@ export interface GroupConversationMessage {
   sentAtUtc: string;
 }
 
-export interface ConversationParticipant {
+export interface DuetConversationParticipant {
   userId: string;
   displayName: string | null;
   avatarUrl: string | null;
@@ -54,8 +54,8 @@ export interface GroupConversation {
   unreadCount: number;
 }
 
-export interface ConversationMessagesResult {
-  messages: ConversationMessage[];
+export interface DuetConversationMessagesResult {
+  messages: DuetConversationMessage[];
   nextBeforeSentAtUtc: string | null;
   nextBeforeMessageId: string | null;
   hasMore: boolean;
@@ -81,13 +81,13 @@ export interface SendGroupChatMessageResult {
 export interface CopyDuetAsGroupResult {
   conversationId: string;
   name: string;
-  participants: ConversationParticipant[];
+  participants: DuetConversationParticipant[];
 }
 
 export interface OpenDuetConversationResult {
   conversationId: string;
-  participants: ConversationParticipant[];
-  messages: ConversationMessage[];
+  participants: DuetConversationParticipant[];
+  messages: DuetConversationMessage[];
   nextBeforeSentAtUtc: string | null;
   nextBeforeMessageId: string | null;
   hasMore: boolean;

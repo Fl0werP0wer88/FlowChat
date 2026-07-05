@@ -11,11 +11,11 @@ import type { CreateGroupConversationResponseDto } from "./conversation/queries/
 import {
   mapGroupConversation,
   mapGroupMessage,
-  mapMessage,
-  mapParticipant,
+  mapDuetMessage,
+  mapDuetParticipant,
 } from "./mappers";
 import type {
-  ConversationMessagesResult,
+  DuetConversationMessagesResult,
   CopyDuetAsGroupResult,
   GroupConversation,
   GroupConversationMessagesResult,
@@ -23,12 +23,12 @@ import type {
   SendGroupChatMessageResult,
 } from "../../types/chat";
 
-export async function getConversationMessages(
+export async function getDuetConversationMessages(
   conversationId: string,
   cursor: { beforeSentAtUtc: string | null; beforeMessageId: string | null },
   accessToken: string,
   signal?: AbortSignal,
-): Promise<ConversationMessagesResult> {
+): Promise<DuetConversationMessagesResult> {
   const params = new URLSearchParams({ limit: "10" });
 
   if (cursor.beforeSentAtUtc && cursor.beforeMessageId) {
@@ -45,7 +45,7 @@ export async function getConversationMessages(
   );
 
   return {
-    messages: (response.items ?? []).map(mapMessage),
+    messages: (response.items ?? []).map(mapDuetMessage),
     nextBeforeSentAtUtc: response.nextBeforeSentAtUtc ?? null,
     nextBeforeMessageId: response.nextBeforeMessageId ?? null,
     hasMore: response.hasMore ?? false,
@@ -93,7 +93,7 @@ export async function copyDuetAsGroup(
   return {
     conversationId: response.conversationId ?? newGroupConversationId,
     name: response.name ?? "",
-    participants: (response.participants ?? []).map(mapParticipant),
+    participants: (response.participants ?? []).map(mapDuetParticipant),
   };
 }
 

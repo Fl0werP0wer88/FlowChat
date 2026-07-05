@@ -2,15 +2,15 @@ import type { ConversationMessageDto } from "./chatMessage/queries/getConversati
 import type { ConversationParticipantDto } from "./conversation/queries/getConversationParticipants/ConversationParticipantDto";
 import type { GroupConversationSummaryDto } from "./conversation/queries/getGroupConversations/GroupConversationSummaryDto";
 import type {
-  ConversationMessage,
-  ConversationParticipant,
+  DuetConversationMessage,
+  DuetConversationParticipant,
   GroupConversation,
   GroupConversationMessage,
   GroupConversationParticipant,
 } from "../../types/chat";
 import { calculateUnreadCount } from "../../utils/chatUtils";
 
-export function mapParticipant(dto: ConversationParticipantDto): ConversationParticipant {
+export function mapDuetParticipant(dto: ConversationParticipantDto): DuetConversationParticipant {
   return {
     userId: dto.userId ?? "",
     displayName: dto.displayName ?? null,
@@ -19,7 +19,7 @@ export function mapParticipant(dto: ConversationParticipantDto): ConversationPar
   };
 }
 
-export function mapMessage(dto: ConversationMessageDto): ConversationMessage {
+export function mapDuetMessage(dto: ConversationMessageDto): DuetConversationMessage {
   return {
     id: dto.id ?? crypto.randomUUID(),
     conversationId: dto.conversationId ?? "",

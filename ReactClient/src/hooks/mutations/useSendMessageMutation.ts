@@ -1,10 +1,10 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { sendChatMessage } from "../../api/chatService";
 import {
-  type ConversationCacheEntry,
-  createMessage,
-  sortMessages,
-} from "../caches/conversationCache";
+  type DuetConversationCacheEntry,
+  createDuetMessage,
+  sortDuetMessages,
+} from "../caches/duetConversationCache";
 
 interface SendMessageVariables {
   messageId: string;
@@ -34,8 +34,8 @@ export function useSendMessageMutation({
     mutationFn: ({ messageId, conversationId, text, senderDisplayName }: SendMessageVariables) =>
       sendChatMessage({ id: messageId, conversationId, senderDisplayName, text }, accessToken),
     onSuccess: (result, variables) => {
-      queryClient.setQueryData<ConversationCacheEntry>(
-        ["conversation", activeContactUserId],
+      queryClient.setQueryData<DuetConversationCacheEntry>(
+        ["duetConversation", activeContactUserId],
         (current) => {
           if (!current) {
             return current;
@@ -47,9 +47,9 @@ export function useSendMessageMutation({
 
           return {
             ...current,
-            messages: sortMessages([
+            messages: sortDuetMessages([
               ...current.messages,
-              createMessage(
+              createDuetMessage(
                 "me",
                 variables.text,
                 result.sentAtUtc,

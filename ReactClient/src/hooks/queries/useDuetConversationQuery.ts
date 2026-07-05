@@ -2,17 +2,17 @@ import { useQuery } from "@tanstack/react-query";
 import type { Contact } from "../../types/contacts";
 import { openDuetConversation } from "../../api/gatewayService";
 import {
-  type ConversationCacheEntry,
-  mapConversationMessage,
-} from "../caches/conversationCache";
+  type DuetConversationCacheEntry,
+  mapDuetConversationMessage,
+} from "../caches/duetConversationCache";
 
-export function useConversationQuery(
+export function useDuetConversationQuery(
   activeContact: Contact | null,
   accessToken: string,
   ownerUserId: string | null,
 ) {
-  return useQuery<ConversationCacheEntry>({
-    queryKey: ["conversation", activeContact?.userId],
+  return useQuery<DuetConversationCacheEntry>({
+    queryKey: ["duetConversation", activeContact?.userId],
     queryFn: async ({ signal }) => {
       const result = await openDuetConversation(
         activeContact!.userId,
@@ -23,14 +23,14 @@ export function useConversationQuery(
       const orderedMessages = [...result.messages].reverse();
       return {
         conversationId: result.conversationId,
-        messages: orderedMessages.map((msg) => mapConversationMessage(msg, ownerUserId)),
+        messages: orderedMessages.map((msg) => mapDuetConversationMessage(msg, ownerUserId)),
         nextBeforeSentAtUtc: result.nextBeforeSentAtUtc,
         nextBeforeMessageId: result.nextBeforeMessageId,
         hasMore: result.hasMore,
       };
     },
     enabled: Boolean(activeContact && accessToken),
-    // Conversations are kept fresh via realtime events — disable background refetching
+    // Duet conversations are kept fresh via realtime events, so background refetching stays disabled
     staleTime: Infinity,
     gcTime: 10 * 60 * 1000,
   });
