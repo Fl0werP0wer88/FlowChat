@@ -66,12 +66,12 @@ public sealed class ConversationAggregateController : ApiControllerBase
 
         var response = new OpenDuetConversationResponse(
             conversation.ConversationId,
-            [.. conversation.Participants.Select(p => new ConversationParticipantDto(
+            [.. conversation.Participants.Select(p => new ConversationParticipantResponse(
                 p.UserId,
                 p.DisplayName,
                 p.AvatarUrl,
                 p.ParticipantUserId))],
-            [.. messages.Items.Select(message => new ConversationMessageDto(
+            [.. messages.Items.Select(message => new ConversationMessageResponse(
                 message.Id,
                 message.ConversationId,
                 message.SenderUserId,
@@ -129,12 +129,12 @@ public sealed class ConversationAggregateController : ApiControllerBase
         var response = new OpenGroupConversationResponse(
             conversation.ConversationId,
             conversation.Name,
-            [.. conversation.Participants.Select(p => new ConversationParticipantDto(
+            [.. conversation.Participants.Select(p => new ConversationParticipantResponse(
                 p.UserId,
                 p.DisplayName,
                 p.AvatarUrl,
                 p.ParticipantUserId))],
-            [.. messages.Items.Select(message => new ConversationMessageDto(
+            [.. messages.Items.Select(message => new ConversationMessageResponse(
                 message.Id,
                 message.ConversationId,
                 message.SenderUserId,

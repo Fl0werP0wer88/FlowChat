@@ -31,7 +31,19 @@ public sealed class GetContactsForUserController : ApiControllerBase
         var result = await _mediator.Send(new GetContactsForUserQuery(userId), cancellationToken);
 
         return result.IsSuccess
-            ? Ok(new GetContactsForUserResponse(result.Value))
+            ? Ok(new GetContactsForUserResponse([.. result.Value.Select(MapToResponse)]))
             : HandleError(result.Error);
     }
+
+    private static ContactResponse MapToResponse(ContactDto contact) =>
+        new(
+            contact.Id,
+            contact.OwnerUserId,
+            contact.ContactUserId,
+            contact.DisplayName,
+            contact.FirstName,
+            contact.LastName,
+            contact.PhoneNumber,
+            contact.Email,
+            contact.IsBlocked);
 }

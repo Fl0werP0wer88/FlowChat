@@ -1,6 +1,16 @@
 using FlowChat.Core.Contracts;
-using FlowChat.SocialGraphService.Application.Features.Contact.Queries.GetContactsForUser;
 
 namespace FlowChat.SocialGraphService.Api.Features.Contact.Public.GetContactsForUser;
 
-public sealed record GetContactsForUserResponse(IReadOnlyList<ContactDto> Contacts) : IServiceOutput;
+public sealed record GetContactsForUserResponse(IReadOnlyList<ContactResponse> Contacts) : IServiceOutput;
+
+public sealed record ContactResponse(
+    Guid Id,
+    Guid OwnerUserId,
+    Guid ContactUserId,
+    string DisplayName,
+    string? FirstName,
+    string? LastName,
+    string? PhoneNumber,
+    string? Email,
+    bool IsBlocked);

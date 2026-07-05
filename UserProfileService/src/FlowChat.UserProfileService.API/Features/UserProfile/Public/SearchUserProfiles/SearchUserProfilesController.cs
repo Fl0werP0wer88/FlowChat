@@ -1,4 +1,5 @@
 using FlowChat.Shared.API;
+using FlowChat.UserProfileService.Application.Features.UserProfile.Queries.UserProfile.Model;
 using FlowChat.UserProfileService.Application.Features.UserProfile.Queries.UserProfile.SearchUserProfiles;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -33,7 +34,23 @@ public sealed class SearchUserProfilesController : ApiControllerBase
             cancellationToken);
 
         return result.IsSuccess
-            ? Ok(new SearchUserProfilesResponse(result.Value))
+            ? Ok(new SearchUserProfilesResponse([.. result.Value.Select(MapToResponse)]))
             : HandleError(result.Error);
     }
+
+    private static UserProfileResponse MapToResponse(UserProfileDto userProfile) =>
+        new(
+            userProfile.Id,
+            userProfile.FriendlyUserId,
+            userProfile.FirstName,
+            userProfile.LastName,
+            userProfile.Organization,
+            userProfile.AvatarUrl,
+            userProfile.Bio,
+            userProfile.IsActive,
+            userProfile.LastSeenAtUtc,
+            [.. userProfile.Emails.Select(email => new EmailResponse(
+                email.Id, email.Address, email.IsMain, email.IsAuth, email.IsConfirmed, email.IsVisible))],
+            [.. userProfile.Phones.Select(phone => new PhoneResponse(
+                phone.Id, phone.Number, phone.IsMain, phone.IsConfirmed, phone.IsVisible))]);
 }
