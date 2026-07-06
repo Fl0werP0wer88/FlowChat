@@ -68,28 +68,6 @@ public sealed class ConversationTests
         conversation.LastMsgSequenceNum.Should().Be(42);
     }
 
-    [Fact]
-    public void Restore_WhenLastMsgSequenceNumProvided_StoresValue()
-    {
-        var conversationId = Id<ConversationAggregate>.New();
-        var creatorId = Id<UserProfileMarker>.New();
-        var memberId = Id<UserProfileMarker>.New();
-        var participants = new[]
-        {
-            ParticipantUser.Create(Id<ParticipantUser>.New(), conversationId, creatorId),
-            ParticipantUser.Create(Id<ParticipantUser>.New(), conversationId, memberId)
-        };
-
-        var conversation = GroupConversation.Restore(
-            conversationId,
-            "Dev Team",
-            creatorId,
-            lastMsgSequenceNum: 84,
-            participants);
-
-        conversation.LastMsgSequenceNum.Should().Be(84);
-    }
-
     private static GroupConversation CreateGroupConversation()
     {
         var creatorId = Id<UserProfileMarker>.New();

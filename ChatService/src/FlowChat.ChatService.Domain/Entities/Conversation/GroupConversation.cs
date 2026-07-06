@@ -50,24 +50,6 @@ public sealed class GroupConversation : Conversation
         return conversation;
     }
 
-    public static GroupConversation Restore(
-        Id<Conversation> id,
-        string name,
-        Id<UserProfileMarker> createdByUserId,
-        long lastMsgSequenceNum,
-        IEnumerable<ParticipantUser> participants)
-    {
-        return RestoreCore(
-            id,
-            ConversationType.Group,
-            name,
-            createdByUserId,
-            lastMsgSequenceNum,
-            participants,
-            static (id, type, name, createdByUserId, lastMsgSequenceNum, participants) =>
-                new GroupConversation(id, type, name, createdByUserId, lastMsgSequenceNum, participants));
-    }
-
     public void AddParticipants(
         IEnumerable<Id<UserProfileMarker>> participantUserIds,
         string? displayName = null,
