@@ -13,11 +13,11 @@ public sealed class SignalRRealtimeClientDispatcherTests
     {
         var recipientUserId = Guid.NewGuid();
         var deliveredAtUtc = new DateTimeOffset(2026, 5, 19, 12, 0, 0, TimeSpan.Zero);
-        ChatMessageNotificationDto? capturedPayload = null;
+        ChatMessageReceivedDto? capturedPayload = null;
         var realtimeClientMock = new Mock<IRealtimeClient>();
         realtimeClientMock
-            .Setup(x => x.ReceiveMessage(It.IsAny<ChatMessageNotificationDto>()))
-            .Callback<ChatMessageNotificationDto>(payload => capturedPayload = payload)
+            .Setup(x => x.ReceiveMessage(It.IsAny<ChatMessageReceivedDto>()))
+            .Callback<ChatMessageReceivedDto>(payload => capturedPayload = payload)
             .Returns(Task.CompletedTask);
         var clientsMock = new Mock<IHubClients<IRealtimeClient>>();
         clientsMock

@@ -1,6 +1,6 @@
 namespace FlowChat.RealtimeService.Api.Realtime;
 
-public sealed class ChatMessageNotificationDto
+public sealed class ChatMessageReceivedDto
 {
     public Guid MessageId { get; init; }
     public Guid ConversationId { get; init; }

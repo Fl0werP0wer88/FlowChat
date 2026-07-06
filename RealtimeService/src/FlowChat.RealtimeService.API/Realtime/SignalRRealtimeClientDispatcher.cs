@@ -17,7 +17,7 @@ public sealed class SignalRRealtimeClientDispatcher(IHubContext<ChatHub, IRealti
             return Task.CompletedTask;
         }
 
-        return _hubContext.Clients.Groups(groups).ReceiveMessage(new ChatMessageNotificationDto
+        return _hubContext.Clients.Groups(groups).ReceiveMessage(new ChatMessageReceivedDto
         {
             MessageId = notification.MessageId,
             ConversationId = notification.ConversationId,
