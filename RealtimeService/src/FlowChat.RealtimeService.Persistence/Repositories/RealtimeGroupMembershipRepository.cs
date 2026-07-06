@@ -34,15 +34,7 @@ public sealed class RealtimeGroupMembershipRepository(AppDbContext dbContext) : 
         dbContext.RealtimeGroupMemberships.Add(
             RealtimeGroupMembership.Create(userId, groupType, resourceId, DateTimeOffset.UtcNow));
 
-        try
-        {
-            await dbContext.SaveChangesAsync(cancellationToken);
-        }
-        catch (DbUpdateException)
-        {
-            // Another writer inserted the same (UserId, GroupType, ResourceId) concurrently; the row now exists, which is the desired end state.
-            dbContext.ChangeTracker.Clear();
-        }
+        await dbContext.SaveChangesAsync(cancellationToken);
     }
 
     public async Task RemoveAsync(
