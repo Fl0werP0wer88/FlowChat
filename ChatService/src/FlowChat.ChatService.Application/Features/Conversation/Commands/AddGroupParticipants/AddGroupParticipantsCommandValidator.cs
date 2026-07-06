@@ -1,10 +1,10 @@
 using FluentValidation;
 
-namespace FlowChat.ChatService.Application.Features.Conversation.Commands.AddParticipant;
+namespace FlowChat.ChatService.Application.Features.Conversation.Commands.AddGroupParticipants;
 
-public sealed class AddParticipantCommandValidator : AbstractValidator<AddParticipantCommand>
+public sealed class AddGroupParticipantsCommandValidator : AbstractValidator<AddGroupParticipantsCommand>
 {
-    public AddParticipantCommandValidator()
+    public AddGroupParticipantsCommandValidator()
     {
         RuleFor(command => command.ConversationId)
             .NotEmpty()

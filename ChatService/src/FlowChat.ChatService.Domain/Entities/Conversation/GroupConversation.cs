@@ -76,4 +76,18 @@ public sealed class GroupConversation : Conversation
     {
         AddParticipantCore(participantUserId, displayName, avatarUrl, lastReadMessageSequenceNum);
     }
+
+    public void AddParticipants(
+        IEnumerable<Id<UserProfileMarker>> participantUserIds,
+        string? displayName = null,
+        string? avatarUrl = null,
+        long lastReadMessageSequenceNum = 0)
+    {
+        ArgumentNullException.ThrowIfNull(participantUserIds);
+
+        foreach (var participantUserId in participantUserIds)
+        {
+            AddParticipant(participantUserId, displayName, avatarUrl, lastReadMessageSequenceNum);
+        }
+    }
 }

@@ -6,21 +6,21 @@ using FlowChat.Shared.Domain;
 using GroupConversation = FlowChat.ChatService.Domain.Entities.Conversation.GroupConversation;
 using UserProfileMarker = FlowChat.ChatService.Domain.Entities.UserProfiles.UserProfile;
 
-namespace FlowChat.ChatService.Application.Features.Conversation.Commands.AddParticipant;
+namespace FlowChat.ChatService.Application.Features.Conversation.Commands.AddGroupParticipants;
 
-public sealed class AddParticipantCommandHandler
-    : AggregateRootUpdateCommandHandlerBaseV3<AddParticipantCommand, bool, GroupConversation>
+public sealed class AddGroupParticipantsCommandHandler
+    : AggregateRootUpdateCommandHandlerBaseV3<AddGroupParticipantsCommand, bool, GroupConversation>
 {
     private readonly IGroupConversationWriteRepository _groupConversationRepository;
     private readonly IChatMessageWriteRepository _chatMessageRepository;
     private GroupConversation? _conversation;
 
-    public AddParticipantCommandHandler(
+    public AddGroupParticipantsCommandHandler(
         IGroupConversationWriteRepository groupConversationRepository,
         IChatMessageWriteRepository chatMessageRepository,
         IUnitOfWork unitOfWork,
         ILocalEventDispatcher domainEventDispatcher,
-        IEnumerable<IAggregateBeforeSaveProcessor<AddParticipantCommand, GroupConversation>> beforeSaveProcessors)
+        IEnumerable<IAggregateBeforeSaveProcessor<AddGroupParticipantsCommand, GroupConversation>> beforeSaveProcessors)
         : base(domainEventDispatcher, unitOfWork, beforeSaveProcessors)
     {
         _groupConversationRepository = groupConversationRepository ?? throw new ArgumentNullException(nameof(groupConversationRepository));
@@ -28,7 +28,7 @@ public sealed class AddParticipantCommandHandler
     }
 
     protected override async Task<FlowChatResult<bool>> ExecuteAsync(
-        AddParticipantCommand request,
+        AddGroupParticipantsCommand request,
         CancellationToken cancellationToken)
     {
         _conversation = await _groupConversationRepository.GetByIdAsync(request.ConversationId, cancellationToken);
@@ -51,14 +51,11 @@ public sealed class AddParticipantCommandHandler
             cancellationToken);
         var lastReadMessageSequenceNum = maxSequenceNum.GetValueOrDefault();
 
-        foreach (var participantUserId in newParticipantUserIds)
-        {
-            _conversation.AddParticipant(
-                participantUserId,
-                displayName: null,
-                avatarUrl: null,
-                lastReadMessageSequenceNum);
-        }
+        _conversation.AddParticipants(
+            newParticipantUserIds,
+            displayName: null,
+            avatarUrl: null,
+            lastReadMessageSequenceNum);
 
         SetUpdated();
 

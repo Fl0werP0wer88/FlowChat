@@ -1,17 +1,19 @@
-using FlowChat.ChatService.Application.Features.Conversation.Commands.AddParticipant;
+using FlowChat.ChatService.Application.Features.Conversation.Commands.AddGroupParticipants;
 using FlowChat.Shared.API;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace FlowChat.ChatService.Api.Features.Conversation.Public.AddParticipant;
+namespace FlowChat.ChatService.Api.Features.Conversation.Public.AddGroupParticipants;
 
 [ApiController]
-[Route("api/conversations/{conversationId:guid}/participants")]
-public sealed class AddParticipantController : ApiControllerBase
+[Authorize]
+[Route("api/conversations/group/{conversationId:guid}/participants")]
+public sealed class AddGroupParticipantsController : ApiControllerBase
 {
     private readonly IMediator _mediator;
 
-    public AddParticipantController(IMediator mediator)
+    public AddGroupParticipantsController(IMediator mediator)
     {
         _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
     }
@@ -20,15 +22,16 @@ public sealed class AddParticipantController : ApiControllerBase
     [ProducesResponseType(StatusCodes.Status202Accepted)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> AddParticipant(
+    public async Task<IActionResult> AddGroupParticipants(
         [FromRoute] Guid conversationId,
-        [FromBody] AddParticipantRequest request,
+        [FromBody] AddGroupParticipantsRequest request,
         CancellationToken cancellationToken)
     {
         var result = await _mediator.Send(
-            new AddParticipantCommand(conversationId, request.ParticipantUserIds),
+            new AddGroupParticipantsCommand(conversationId, request.ParticipantUserIds),
             cancellationToken);
 
         if (!result.IsSuccess)
