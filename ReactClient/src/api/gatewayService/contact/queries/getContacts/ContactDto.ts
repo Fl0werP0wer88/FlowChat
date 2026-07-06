@@ -6,5 +6,8 @@ export interface ContactDto {
   displayName?: string;
   email?: string | null;
   conversationId?: string | null;
+  lastReadMsgSeqNum?: number;
+  currentMsgSeqNum?: number;
+  unreadCount?: number;
   status?: Contact["status"];
 }

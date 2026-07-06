@@ -6,7 +6,7 @@ public interface IDuetConversationReadRepository
 {
     Task<Guid?> FindConversationIdAsync(Guid userId1, Guid userId2, CancellationToken cancellationToken = default);
 
-    Task<IReadOnlyDictionary<Guid, Guid>> FindConversationIdsByPartnerIdsAsync(
+    Task<IReadOnlyCollection<DuetConversationForContactDto>> GetConversationsForContactsAsync(
         Guid requestingUserId,
         IEnumerable<Guid> partnerUserIds,
         CancellationToken cancellationToken = default);

@@ -26,6 +26,11 @@ export function ContactListItem({
             ? <span className="contacts-panel__contact-email">{contact.email}</span>
             : null}
         </span>
+        {contact.unreadCount > 0 ? (
+          <span className="contacts-panel__unread-badge" aria-label={`${contact.unreadCount} nieprzeczytanych`}>
+            {contact.unreadCount > 99 ? "99+" : contact.unreadCount}
+          </span>
+        ) : null}
       </button>
     </li>
   );

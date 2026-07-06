@@ -10,9 +10,10 @@ internal sealed class ChatServiceClient(HttpClient httpClient)
 
     private sealed record CreateDuetConversationClientRequest(Guid PartnerUserId);
 
-    private sealed record DuetConversationIdsClientRequest(IReadOnlyList<Guid> PartnerUserIds);
+    private sealed record DuetConversationsForContactsClientRequest(IReadOnlyList<Guid> PartnerUserIds);
 
-    private sealed record DuetConversationIdsClientResponse(IReadOnlyDictionary<Guid, Guid> ConversationIds);
+    private sealed record DuetConversationsForContactsClientResponse(
+        IReadOnlyCollection<DuetConversationForContactClientDto> Conversations);
 
     protected override string ClientDisplayName => "Chat Service";
 
@@ -48,17 +49,18 @@ internal sealed class ChatServiceClient(HttpClient httpClient)
         return response ?? throw new InvalidOperationException("Chat Service returned an empty duet conversation response.");
     }
 
-    public async Task<IReadOnlyDictionary<Guid, Guid>> GetDuetConversationIdsAsync(
+    public async Task<IReadOnlyDictionary<Guid, DuetConversationForContactClientDto>> GetDuetConversationsForContactsAsync(
         IReadOnlyList<Guid> partnerUserIds,
         CancellationToken cancellationToken)
     {
-        using var request = new HttpRequestMessage(HttpMethod.Post, "api/conversations/duet/batch")
+        using var request = new HttpRequestMessage(HttpMethod.Post, "api/conversations/duet/for-contacts")
         {
-            Content = JsonContent.Create(new DuetConversationIdsClientRequest(partnerUserIds))
+            Content = JsonContent.Create(new DuetConversationsForContactsClientRequest(partnerUserIds))
         };
 
-        var response = await SendAsync<DuetConversationIdsClientResponse>(request, cancellationToken);
-        return response?.ConversationIds ?? new Dictionary<Guid, Guid>();
+        var response = await SendAsync<DuetConversationsForContactsClientResponse>(request, cancellationToken);
+        return response?.Conversations?.ToDictionary(x => x.PartnerUserId)
+               ?? new Dictionary<Guid, DuetConversationForContactClientDto>();
     }
 
     public async Task<GroupConversationClientDto?> GetGroupConversationAsync(

@@ -9,6 +9,7 @@ import type { ContactDto } from "./contact/queries/getContacts/ContactDto";
 import type { GetContactsResponseDto } from "./contact/queries/getContacts/GetContactsResponseDto";
 import type { ConversationMessageDto } from "./conversation/queries/getConversationMessages/ConversationMessageDto";
 import type { ConversationParticipantDto } from "./conversation/queries/getConversationParticipants/ConversationParticipantDto";
+import { calculateUnreadCount } from "../../utils/chatUtils";
 
 export function resolveContacts(response: GetContactsResponseDto): ContactDto[] {
   return response.contacts ?? [];
@@ -16,6 +17,8 @@ export function resolveContacts(response: GetContactsResponseDto): ContactDto[] 
 
 export function mapContact(dto: ContactDto): Contact {
   const userId = dto.contactUserId ?? dto.id ?? crypto.randomUUID();
+  const lastReadMsgSeqNum = dto.lastReadMsgSeqNum ?? 0;
+  const currentMsgSeqNum = dto.currentMsgSeqNum ?? 0;
 
   return {
     id: dto.id ?? crypto.randomUUID(),
@@ -24,6 +27,9 @@ export function mapContact(dto: ContactDto): Contact {
     email: dto.email ?? null,
     status: dto.status ?? "Invisible",
     conversationId: dto.conversationId ?? null,
+    lastReadMsgSeqNum,
+    currentMsgSeqNum,
+    unreadCount: dto.unreadCount ?? calculateUnreadCount(currentMsgSeqNum, lastReadMsgSeqNum),
   };
 }
 

@@ -9,4 +9,7 @@ export interface Contact {
   email: string | null;
   status: ContactStatus;
   conversationId: string | null;
+  lastReadMsgSeqNum: number;
+  currentMsgSeqNum: number;
+  unreadCount: number;
 }

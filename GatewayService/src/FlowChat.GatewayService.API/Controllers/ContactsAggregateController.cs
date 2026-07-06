@@ -43,33 +43,43 @@ public sealed class ContactsAggregateController : ApiControllerBase
 
         var partnerUserIds = contacts.Select(c => c.ContactUserId).ToList();
 
-        var conversationIdsTask = partnerUserIds.Count > 0
-            ? _chatClient.GetDuetConversationIdsAsync(partnerUserIds, cancellationToken)
-            : Task.FromResult((IReadOnlyDictionary<Guid, Guid>)new Dictionary<Guid, Guid>());
+        var conversationsTask = partnerUserIds.Count > 0
+            ? _chatClient.GetDuetConversationsForContactsAsync(partnerUserIds, cancellationToken)
+            : Task.FromResult((IReadOnlyDictionary<Guid, DuetConversationForContactClientDto>)new Dictionary<Guid, DuetConversationForContactClientDto>());
         var presenceStatusesTask = GetPresenceStatusesOrDefaultAsync(partnerUserIds, cancellationToken);
 
-        await Task.WhenAll(conversationIdsTask, presenceStatusesTask);
+        await Task.WhenAll(conversationsTask, presenceStatusesTask);
 
-        var conversationIds = conversationIdsTask.Result;
+        var conversations = conversationsTask.Result;
         var presenceStatuses = presenceStatusesTask.Result;
 
         var result = contacts
-            .Select(c => new ContactWithConversationDto(
-                c.Id,
-                c.ContactUserId,
-                c.DisplayName,
-                c.FirstName,
-                c.LastName,
-                c.PhoneNumber,
-                c.Email,
-                c.IsBlocked,
-                conversationIds.TryGetValue(c.ContactUserId, out var convId) ? convId : null,
-                presenceStatuses.TryGetValue(c.ContactUserId, out var presence)
-                    ? presence.Status
-                    : PresenceStatus.Invisible,
-                presenceStatuses.TryGetValue(c.ContactUserId, out presence)
-                    ? presence.ChangedAtUtc
-                    : DateTimeOffset.MinValue))
+            .Select(c =>
+            {
+                conversations.TryGetValue(c.ContactUserId, out var conversation);
+
+                return new ContactWithConversationDto(
+                    c.Id,
+                    c.ContactUserId,
+                    c.DisplayName,
+                    c.FirstName,
+                    c.LastName,
+                    c.PhoneNumber,
+                    c.Email,
+                    c.IsBlocked,
+                    conversation?.ConversationId,
+                    conversation?.LastReadMsgSeqNum ?? 0,
+                    conversation?.CurrentMsgSeqNum ?? 0,
+                    conversation is null
+                        ? 0
+                        : Math.Max(0, conversation.CurrentMsgSeqNum - conversation.LastReadMsgSeqNum),
+                    presenceStatuses.TryGetValue(c.ContactUserId, out var presence)
+                        ? presence.Status
+                        : PresenceStatus.Invisible,
+                    presenceStatuses.TryGetValue(c.ContactUserId, out presence)
+                        ? presence.ChangedAtUtc
+                        : DateTimeOffset.MinValue);
+            })
             .ToList();
 
         return Ok(new GetContactsWithConversationsResponse(result));

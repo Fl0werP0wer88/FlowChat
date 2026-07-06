@@ -4,6 +4,7 @@ using FlowChat.ChatService.Persistence;
 using FlowChat.ChatService.Persistence.Entities;
 using FlowChat.ChatService.Persistence.Repositories;
 using FlowChat.Shared.Domain;
+using FlowChat.Shared.Domain.ValueObjects;
 using FluentAssertions;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
@@ -12,6 +13,65 @@ namespace FlowChat.ChatService.IntegrationTests.Persistence.Repositories;
 
 public sealed class DuetConversationReadRepositoryTests
 {
+    [Fact]
+    public async Task GetConversationsForContactsAsync_WhenDuetConversationExists_ReturnsConversationSequenceFields()
+    {
+        await using var connection = new SqliteConnection("Data Source=:memory:");
+        await connection.OpenAsync();
+
+        var requestingUserId = Guid.NewGuid();
+        var partnerUserId = Guid.NewGuid();
+        var otherUserId = Guid.NewGuid();
+        var conversationId = Id<Conversation>.New();
+        var conversation = DuetConversation.Restore(
+            conversationId,
+            Id<FlowChat.ChatService.Domain.Entities.UserProfiles.UserProfile>.FromGuid(requestingUserId),
+            lastMsgSequenceNum: 84,
+            [
+                ParticipantUser.Restore(
+                    Id<ParticipantUser>.New(),
+                    conversationId,
+                    Id<FlowChat.ChatService.Domain.Entities.UserProfiles.UserProfile>.FromGuid(requestingUserId),
+                    displayName: null,
+                    avatarUrl: null,
+                    isBlocked: false,
+                    UtcDateTimeOffset.UtcNow,
+                    lastReadMessageSequenceNum: 42),
+                ParticipantUser.Restore(
+                    Id<ParticipantUser>.New(),
+                    conversationId,
+                    Id<FlowChat.ChatService.Domain.Entities.UserProfiles.UserProfile>.FromGuid(partnerUserId),
+                    displayName: null,
+                    avatarUrl: null,
+                    isBlocked: false,
+                    UtcDateTimeOffset.UtcNow,
+                    lastReadMessageSequenceNum: 80)
+            ]);
+        MarkCreated(conversation);
+
+        await using (var seedContext = CreateDbContext(connection))
+        {
+            seedContext.Conversations.Add(conversation);
+            seedContext.DuetConversations.Add(CreateDuetConversation(requestingUserId, partnerUserId, conversation.Id.Value));
+
+            await seedContext.SaveChangesAsync();
+        }
+
+        await using var readContext = CreateDbContext(connection);
+        var repository = new DuetConversationReadRepository(readContext);
+
+        var result = await repository.GetConversationsForContactsAsync(
+            requestingUserId,
+            [partnerUserId, otherUserId],
+            CancellationToken.None);
+
+        var conversationForContact = result.Should().ContainSingle().Subject;
+        conversationForContact.PartnerUserId.Should().Be(partnerUserId);
+        conversationForContact.ConversationId.Should().Be(conversation.Id.Value);
+        conversationForContact.LastReadMsgSeqNum.Should().Be(42);
+        conversationForContact.CurrentMsgSeqNum.Should().Be(84);
+    }
+
     [Fact]
     public async Task GetByUserIdsAsync_WhenDuetConversationExists_ReturnsOrderedParticipantDetails()
     {

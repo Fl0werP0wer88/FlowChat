@@ -13,5 +13,8 @@ public sealed record ContactWithConversationDto(
     string? Email,
     bool IsBlocked,
     Guid? ConversationId,
+    long LastReadMsgSeqNum,
+    long CurrentMsgSeqNum,
+    long UnreadCount,
     PresenceStatus Status,
     DateTimeOffset PresenceChangedAtUtc) : IServiceOutput;

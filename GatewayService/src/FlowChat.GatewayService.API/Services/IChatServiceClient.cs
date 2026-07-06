@@ -10,7 +10,7 @@ public interface IChatServiceClient
         Guid partnerUserId,
         CancellationToken cancellationToken);
 
-    Task<IReadOnlyDictionary<Guid, Guid>> GetDuetConversationIdsAsync(
+    Task<IReadOnlyDictionary<Guid, DuetConversationForContactClientDto>> GetDuetConversationsForContactsAsync(
         IReadOnlyList<Guid> partnerUserIds,
         CancellationToken cancellationToken);
 

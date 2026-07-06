@@ -1,12 +1,12 @@
 using FluentValidation;
 
-namespace FlowChat.ChatService.Application.Features.Conversation.Queries.GetDuetConversationIds;
+namespace FlowChat.ChatService.Application.Features.Conversation.Queries.GetDuetConversationsForContacts;
 
-public sealed class GetDuetConversationIdsQueryValidator : AbstractValidator<GetDuetConversationIdsQuery>
+public sealed class GetDuetConversationsForContactsQueryValidator : AbstractValidator<GetDuetConversationsForContactsQuery>
 {
     public const int MaxPartnerCount = 500;
 
-    public GetDuetConversationIdsQueryValidator()
+    public GetDuetConversationsForContactsQueryValidator()
     {
         RuleFor(q => q.RequestingUserId)
             .NotEmpty()
@@ -16,6 +16,6 @@ public sealed class GetDuetConversationIdsQueryValidator : AbstractValidator<Get
             .NotEmpty()
             .WithMessage("At least one PartnerUserId is required.")
             .Must(ids => ids.Count <= MaxPartnerCount)
-            .WithMessage($"Cannot request more than {MaxPartnerCount} conversation IDs at once.");
+            .WithMessage($"Cannot request more than {MaxPartnerCount} contact conversations at once.");
     }
 }
