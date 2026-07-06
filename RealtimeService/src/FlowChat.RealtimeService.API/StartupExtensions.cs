@@ -3,8 +3,10 @@ using FlowChat.RealtimeService.Api.Realtime;
 using FlowChat.RealtimeService.Application;
 using FlowChat.RealtimeService.Application.Contracts.Infrastructure;
 using FlowChat.RealtimeService.Infrastructure;
+using FlowChat.RealtimeService.Persistence;
 using FlowChat.RealtimeService.Redis.Configuration.Settings;
 using FlowChat.Shared.API;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Configuration;
 
@@ -47,6 +49,7 @@ public static class StartupExtensions
 
         builder.Services.AddApiApplicationServices();
         builder.Services.AddApiInfrastructureServices(builder.Configuration);
+        builder.Services.AddApiPersistenceServices(builder.Configuration);
         builder.Services.AddScoped<IRealtimeClientDispatcher, SignalRRealtimeClientDispatcher>();
         builder.AddFlowChatOpenTelemetry(typeof(ApiApplicationServiceRegistration).Assembly);
 
@@ -98,5 +101,16 @@ public static class StartupExtensions
         app.MapHub<ChatHub>("/hubs/chat").RequireAuthorization();
 
         return app;
+    }
+
+    public static async Task MigrateDatabaseAsync(this WebApplication app)
+    {
+        if (!app.Environment.IsDevelopment())
+        {
+            return;
+        }
+
+        await using var context = new AppDbContextFactory().CreateDbContext([]);
+        await context.Database.MigrateAsync();
     }
 }

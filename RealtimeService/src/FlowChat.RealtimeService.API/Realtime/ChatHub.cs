@@ -1,7 +1,9 @@
 using System.Security.Claims;
 using FlowChat.RealtimeService.Application.Contracts.Infrastructure;
+using FlowChat.RealtimeService.Application.Contracts.Persistence;
 using FlowChat.RealtimeService.Application.Features.RealtimeConnection.Commands.RegisterRealtimeConnection;
 using FlowChat.RealtimeService.Application.Features.RealtimeConnection.Commands.UnregisterRealtimeConnection;
+using FlowChat.RealtimeService.Domain.Enums;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
@@ -13,13 +15,16 @@ namespace FlowChat.RealtimeService.Api.Realtime;
 public sealed class ChatHub(
     ILogger<ChatHub> logger,
     IMediator mediator,
-    IPresenceInternalApiClient presenceInternalApiClient) : Hub<IRealtimeClient>
+    IPresenceInternalApiClient presenceInternalApiClient,
+    IRealtimeGroupMembershipRepository realtimeGroupMembershipRepository) : Hub<IRealtimeClient>
 {
     private const string SubjectClaimType = "sub";
     private readonly ILogger<ChatHub> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     private readonly IMediator _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
     private readonly IPresenceInternalApiClient _presenceInternalApiClient = presenceInternalApiClient
         ?? throw new ArgumentNullException(nameof(presenceInternalApiClient));
+    private readonly IRealtimeGroupMembershipRepository _realtimeGroupMembershipRepository = realtimeGroupMembershipRepository
+        ?? throw new ArgumentNullException(nameof(realtimeGroupMembershipRepository));
 
     public override async Task OnConnectedAsync()
     {
@@ -37,6 +42,8 @@ public sealed class ChatHub(
         {
             await Groups.AddToGroupAsync(Context.ConnectionId, GroupNames.ForUser(userId.Value));
             addedToGroup = true;
+
+            await JoinConversationGroupsAsync(userId.Value);
 
             var result = await _mediator.Send(
                 new RegisterRealtimeConnectionCommand(userId.Value, Context.ConnectionId),
@@ -103,6 +110,30 @@ public sealed class ChatHub(
         }
 
         await base.OnDisconnectedAsync(exception);
+    }
+
+    private async Task JoinConversationGroupsAsync(Guid userId)
+    {
+        try
+        {
+            var memberships = await _realtimeGroupMembershipRepository.GetByUserIdAsync(userId, Context.ConnectionAborted);
+            var conversationIds = memberships
+                .Where(membership => membership.GroupType == RealtimeGroupType.Conversation)
+                .Select(membership => membership.ResourceId);
+
+            foreach (var conversationId in conversationIds)
+            {
+                await Groups.AddToGroupAsync(Context.ConnectionId, GroupNames.ForConversation(conversationId));
+            }
+        }
+        catch (Exception exception)
+        {
+            _logger.LogWarning(
+                exception,
+                "Failed to join conversation groups for realtime connection {ConnectionId} and user {UserId}.",
+                Context.ConnectionId,
+                userId);
+        }
     }
 
     private Guid? ResolveUserId()

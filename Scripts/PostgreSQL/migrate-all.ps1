@@ -15,7 +15,8 @@ $services = @(
     @{ Name = 'PresenceService'; Project = 'PresenceService\src\FlowChat.PresenceService.Persistence\FlowChat.PresenceService.Persistence.csproj'; Startup = 'PresenceService\src\FlowChat.PresenceService.API\FlowChat.PresenceService.API.csproj' },
     @{ Name = 'SocialGraphService'; Project = 'SocialGraphService\src\FlowChat.SocialGraphService.Persistence\FlowChat.SocialGraphService.Persistence.csproj'; Startup = 'SocialGraphService\src\FlowChat.SocialGraphService.API\FlowChat.SocialGraphService.API.csproj' },
     @{ Name = 'UserProfileService'; Project = 'UserProfileService\src\FlowChat.UserProfileService.Persistence\FlowChat.UserProfileService.Persistence.csproj'; Startup = 'UserProfileService\src\FlowChat.UserProfileService.API\FlowChat.UserProfileService.API.csproj' },
-    @{ Name = 'HarnessService'; Project = 'HarnessService\src\FlowChat.HarnessService.Persistence\FlowChat.HarnessService.Persistence.csproj'; Startup = 'HarnessService\src\FlowChat.HarnessService.API\FlowChat.HarnessService.API.csproj' }
+    @{ Name = 'HarnessService'; Project = 'HarnessService\src\FlowChat.HarnessService.Persistence\FlowChat.HarnessService.Persistence.csproj'; Startup = 'HarnessService\src\FlowChat.HarnessService.API\FlowChat.HarnessService.API.csproj' },
+    @{ Name = 'RealtimeService'; Project = 'RealtimeService\src\FlowChat.RealtimeService.Persistence\FlowChat.RealtimeService.Persistence.csproj'; Startup = 'RealtimeService\src\FlowChat.RealtimeService.API\FlowChat.RealtimeService.API.csproj' }
 )
 
 function GetMigrationName([bool]$isInitialMigration) {

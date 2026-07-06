@@ -10,6 +10,11 @@ try
         .ConfigureServices()
         .ConfigurePipeline();
 
+    if (app.Environment.IsDevelopment())
+    {
+        await app.MigrateDatabaseAsync();
+    }
+
     await app.RunAsync();
 }
 catch (Exception exception)

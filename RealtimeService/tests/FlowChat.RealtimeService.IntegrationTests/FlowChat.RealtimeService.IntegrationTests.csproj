@@ -12,6 +12,7 @@
     <PackageReference Include="AutoFixture" Version="4.18.1" />
     <PackageReference Include="coverlet.collector" Version="6.0.4" />
     <PackageReference Include="FluentAssertions" Version="8.3.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="10.0.3" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
     <PackageReference Include="Moq" Version="4.20.72" />
     <PackageReference Include="Testcontainers.Redis" Version="4.8.1" />
@@ -29,6 +30,7 @@
     <ProjectReference Include="..\..\src\FlowChat.RealtimeService.Application\FlowChat.RealtimeService.Application.csproj" />
     <ProjectReference Include="..\..\src\FlowChat.RealtimeService.Domain\FlowChat.RealtimeService.Domain.csproj" />
     <ProjectReference Include="..\..\src\FlowChat.RealtimeService.Infrastructure\FlowChat.RealtimeService.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\FlowChat.RealtimeService.Persistence\FlowChat.RealtimeService.Persistence.csproj" />
     <ProjectReference Include="..\..\src\FlowChat.RealtimeService.Redis\FlowChat.RealtimeService.Redis.csproj" />
     <ProjectReference Include="..\..\src\Workers\FlowChat.RealtimeService.Consumers\FlowChat.RealtimeService.Consumers.csproj" />
   </ItemGroup>

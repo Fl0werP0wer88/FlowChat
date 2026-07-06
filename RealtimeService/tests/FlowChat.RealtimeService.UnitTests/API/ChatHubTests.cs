@@ -3,8 +3,10 @@ using System.Security.Claims;
 using FlowChat.Core.Domain;
 using FlowChat.RealtimeService.Api.Realtime;
 using FlowChat.RealtimeService.Application.Contracts.Infrastructure;
+using FlowChat.RealtimeService.Application.Contracts.Persistence;
 using FlowChat.RealtimeService.Application.Features.RealtimeConnection.Commands.RegisterRealtimeConnection;
 using FlowChat.RealtimeService.Application.Features.RealtimeConnection.Commands.UnregisterRealtimeConnection;
+using FlowChat.RealtimeService.Domain.Enums;
 using FlowChat.Shared.Domain;
 using FluentAssertions;
 using MediatR;
@@ -46,6 +48,31 @@ public sealed class ChatHubTests
         mediator.LastSentRequest.Should().BeOfType<RegisterRealtimeConnectionCommand>()
             .Which.Should().Be(new RegisterRealtimeConnectionCommand(userId, "connection-1"));
         GetContext(hub).AbortCalled.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task OnConnectedAsync_WhenUserHasConversationMemberships_JoinsConversationGroups()
+    {
+        var userId = Guid.NewGuid();
+        var conversationId = Guid.NewGuid();
+        var groups = new CapturingGroupManager();
+        var membershipRepositoryMock = new Mock<IRealtimeGroupMembershipRepository>();
+        membershipRepositoryMock
+            .Setup(x => x.GetByUserIdAsync(userId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((IReadOnlyList<RealtimeGroupMembershipDto>)
+            [
+                new RealtimeGroupMembershipDto(userId, RealtimeGroupType.Conversation, conversationId, DateTimeOffset.UtcNow)
+            ]);
+
+        var hub = CreateHub(
+            new CapturingMediator(),
+            new TestHubCallerContext("connection-1", CreatePrincipal(userId)),
+            groups,
+            realtimeGroupMembershipRepositoryMock: membershipRepositoryMock);
+
+        await hub.OnConnectedAsync();
+
+        groups.AddedConnections.Should().Contain(("connection-1", GroupNames.ForConversation(conversationId)));
     }
 
     [Fact]
@@ -147,7 +174,8 @@ public sealed class ChatHubTests
         IMediator mediator,
         TestHubCallerContext context,
         CapturingGroupManager groups,
-        Mock<IPresenceInternalApiClient>? presenceClientMock = null)
+        Mock<IPresenceInternalApiClient>? presenceClientMock = null,
+        Mock<IRealtimeGroupMembershipRepository>? realtimeGroupMembershipRepositoryMock = null)
     {
         var logger = new Mock<ILogger<ChatHub>>();
 
@@ -159,7 +187,15 @@ public sealed class ChatHubTests
                 .Returns(Task.CompletedTask);
         }
 
-        var hub = new ChatHub(logger.Object, mediator, presenceClientMock.Object);
+        if (realtimeGroupMembershipRepositoryMock is null)
+        {
+            realtimeGroupMembershipRepositoryMock = new Mock<IRealtimeGroupMembershipRepository>();
+            realtimeGroupMembershipRepositoryMock
+                .Setup(x => x.GetByUserIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync((IReadOnlyList<RealtimeGroupMembershipDto>)[]);
+        }
+
+        var hub = new ChatHub(logger.Object, mediator, presenceClientMock.Object, realtimeGroupMembershipRepositoryMock.Object);
 
         SetHubProperty(hub, nameof(Hub.Context), context);
         SetHubProperty(hub, nameof(Hub.Groups), groups);
