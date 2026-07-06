@@ -2,7 +2,7 @@ using System.Net.Http.Json;
 using FlowChat.RealtimeService.Application.Contracts.Infrastructure;
 using FlowChat.Shared.Infrastructure.Http;
 
-namespace FlowChat.RealtimeService.Infrastructure.Presence;
+namespace FlowChat.RealtimeService.Infrastructure.InternalApis.PresenceService;
 
 internal sealed class PresenceInternalApiClient(HttpClient httpClient)
     : FlowChatHttpClientBase(httpClient), IPresenceInternalApiClient

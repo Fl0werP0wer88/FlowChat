@@ -1,6 +1,6 @@
 using System.Net;
 using System.Text.Json;
-using FlowChat.RealtimeService.Infrastructure.Presence;
+using FlowChat.RealtimeService.Infrastructure.InternalApis.PresenceService;
 using FluentAssertions;
 
 namespace FlowChat.RealtimeService.UnitTests;

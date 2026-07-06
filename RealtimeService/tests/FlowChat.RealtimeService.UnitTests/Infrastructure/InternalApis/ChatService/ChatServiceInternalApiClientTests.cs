@@ -1,7 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
-using FlowChat.RealtimeService.Infrastructure.ChatService;
+using FlowChat.RealtimeService.Infrastructure.InternalApis.ChatService;
 using FluentAssertions;
 
 namespace FlowChat.RealtimeService.UnitTests;

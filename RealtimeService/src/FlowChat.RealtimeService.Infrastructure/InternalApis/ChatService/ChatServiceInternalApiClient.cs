@@ -2,7 +2,7 @@ using System.Net.Http.Json;
 using FlowChat.RealtimeService.Application.Contracts.Infrastructure;
 using FlowChat.Shared.Infrastructure.Http;
 
-namespace FlowChat.RealtimeService.Infrastructure.ChatService;
+namespace FlowChat.RealtimeService.Infrastructure.InternalApis.ChatService;
 
 internal sealed class ChatServiceInternalApiClient(HttpClient httpClient)
     : FlowChatHttpClientBase(httpClient), IChatServiceInternalApiClient
