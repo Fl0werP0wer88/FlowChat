@@ -43,6 +43,7 @@ export function ChatFeature() {
     onGroupConversationChanged: groupConversations.applyGroupConversationChanged,
     onPresenceChanged: contacts.applyPresenceChanged,
     onMessageReceived: (payload) => {
+      contacts.applyRealtimeMessage(payload, chat.activeConversationId);
       groupConversations.applyRealtimeMessage(payload, activeGroup?.conversationId ?? null);
       chat.messageReceived(payload);
       groupChat.messageReceived(payload);

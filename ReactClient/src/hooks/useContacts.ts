@@ -4,9 +4,10 @@ import { toast } from "sonner";
 import { useAuthStore } from "../store/authStore";
 import { useChatSelectionStore } from "../store/chatSelectionStore";
 import type { Contact } from "../types/contacts";
-import type { PresenceChangedEvent } from "../types/realtime";
+import type { ChatMessageReceivedEvent, PresenceChangedEvent } from "../types/realtime";
 import type { SearchUserResult } from "../types/users";
 import { resolveOwnerUserId } from "../utils/authUtils";
+import { calculateUnreadCount } from "../utils/chatUtils";
 import { useAddContactByUserIdMutation } from "./mutations/useAddContactByUserIdMutation";
 import { useAddContactMutation } from "./mutations/useAddContactMutation";
 import { useContactsQuery } from "./queries/useContactsQuery";
@@ -17,10 +18,18 @@ interface UseContactsResult {
   isLoadingContacts: boolean;
   addContact: (user: SearchUserResult) => Promise<void>;
   applyPresenceChanged: (payload: PresenceChangedEvent) => void;
+  applyRealtimeMessage: (payload: ChatMessageReceivedEvent, activeDuetConversationId: string | null) => void;
   updateContactConversationId: (contactUserId: string, conversationId: string) => void;
 }
 
 const noopCallbacks = { onSuccess: () => {}, onError: (_message: string) => {} };
+
+function withUnreadCount(contact: Contact): Contact {
+  return {
+    ...contact,
+    unreadCount: calculateUnreadCount(contact.currentMsgSeqNum, contact.lastReadMsgSeqNum),
+  };
+}
 
 export function useContacts(): UseContactsResult {
   const accessToken = useAuthStore((s) => s.accessToken) ?? "";
@@ -72,6 +81,30 @@ export function useContacts(): UseContactsResult {
     );
   };
 
+  const applyRealtimeMessage = (
+    payload: ChatMessageReceivedEvent,
+    activeDuetConversationId: string | null,
+  ) => {
+    queryClient.setQueryData<Contact[]>(["contacts"], (current = []) =>
+      current.map((contact) => {
+        if (contact.conversationId !== payload.conversationId) {
+          return contact;
+        }
+
+        const currentMsgSeqNum = Math.max(contact.currentMsgSeqNum, payload.sequenceNum);
+        const lastReadMsgSeqNum = contact.conversationId === activeDuetConversationId
+          ? currentMsgSeqNum
+          : contact.lastReadMsgSeqNum;
+
+        return withUnreadCount({
+          ...contact,
+          currentMsgSeqNum,
+          lastReadMsgSeqNum,
+        });
+      }),
+    );
+  };
+
   const updateContactConversationId = (contactUserId: string, conversationId: string) => {
     queryClient.setQueryData<Contact[]>(["contacts"], (current = []) =>
       current.map((contact) =>
@@ -86,6 +119,7 @@ export function useContacts(): UseContactsResult {
     isLoadingContacts,
     addContact,
     applyPresenceChanged,
+    applyRealtimeMessage,
     updateContactConversationId,
   };
 }
