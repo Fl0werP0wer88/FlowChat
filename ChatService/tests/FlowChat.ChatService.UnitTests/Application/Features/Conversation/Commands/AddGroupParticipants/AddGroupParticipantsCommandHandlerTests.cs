@@ -7,6 +7,7 @@ using FlowChat.Shared.Application;
 using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2.BeforeSaveProcessors;
 using FlowChat.Shared.Domain;
 using FluentAssertions;
+using MediatR;
 using Moq;
 using ConversationAggregate = FlowChat.ChatService.Domain.Entities.Conversation.Conversation;
 
@@ -26,9 +27,9 @@ public sealed class AddGroupParticipantsCommandHandlerTests
     {
         _unitOfWorkMock
             .Setup(x => x.ExecuteCommandInTransactionAsync(
-                It.IsAny<Func<CancellationToken, Task<FlowChatResult<bool>>>>(),
+                It.IsAny<Func<CancellationToken, Task<FlowChatResult<Unit>>>>(),
                 It.IsAny<CancellationToken>()))
-            .Returns<Func<CancellationToken, Task<FlowChatResult<bool>>>, CancellationToken>(
+            .Returns<Func<CancellationToken, Task<FlowChatResult<Unit>>>, CancellationToken>(
                 (operation, ct) => operation(ct));
 
         _domainEventDispatcherMock
@@ -77,7 +78,7 @@ public sealed class AddGroupParticipantsCommandHandlerTests
         var result = await _handler.Handle(command, CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
-        result.Value.Should().BeTrue();
+        result.Value.Should().Be(Unit.Value);
         conversation.Participants.Should().ContainSingle(p =>
             p.UserId.Value == newMemberId &&
             p.LastReadMessageSequenceNum == 42);
@@ -109,7 +110,7 @@ public sealed class AddGroupParticipantsCommandHandlerTests
         var result = await _handler.Handle(command, CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
-        result.Value.Should().BeTrue();
+        result.Value.Should().Be(Unit.Value);
         conversation.Participants.Should().ContainSingle(p =>
             p.UserId.Value == newMemberId1 &&
             p.LastReadMessageSequenceNum == 84);
@@ -146,7 +147,7 @@ public sealed class AddGroupParticipantsCommandHandlerTests
         var result = await _handler.Handle(command, CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
-        result.Value.Should().BeTrue();
+        result.Value.Should().Be(Unit.Value);
         conversation.Participants.Should().ContainSingle(p =>
             p.UserId.Value == newMemberId &&
             p.LastReadMessageSequenceNum == 7);
@@ -156,7 +157,7 @@ public sealed class AddGroupParticipantsCommandHandlerTests
     }
 
     [Fact]
-    public async Task Handle_MixedParticipants_AddsOnlyNewOnesAndReturnsTrue()
+    public async Task Handle_MixedParticipants_AddsOnlyNewOnes()
     {
         var creatorId = Guid.NewGuid();
         var existingMemberId = Guid.NewGuid();
@@ -181,7 +182,7 @@ public sealed class AddGroupParticipantsCommandHandlerTests
         var result = await _handler.Handle(command, CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
-        result.Value.Should().BeTrue();
+        result.Value.Should().Be(Unit.Value);
         conversation.Participants.Should().ContainSingle(p =>
             p.UserId.Value == newMemberId &&
             p.LastReadMessageSequenceNum == 21);
@@ -213,7 +214,7 @@ public sealed class AddGroupParticipantsCommandHandlerTests
         var result = await _handler.Handle(command, CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
-        result.Value.Should().BeTrue();
+        result.Value.Should().Be(Unit.Value);
         conversation.Participants.Should().ContainSingle(p =>
             p.UserId.Value == newMemberId &&
             p.LastReadMessageSequenceNum == 0);
@@ -247,7 +248,7 @@ public sealed class AddGroupParticipantsCommandHandlerTests
         var result = await _handler.Handle(command, CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
-        result.Value.Should().BeFalse();
+        result.Value.Should().Be(Unit.Value);
         dispatchedEvents.Should().BeEmpty();
         _domainEventDispatcherMock.Verify(
             x => x.DispatchAsync(It.IsAny<IEnumerable<ILocalEvent>>(), It.IsAny<CancellationToken>()),

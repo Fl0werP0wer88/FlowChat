@@ -37,10 +37,12 @@ public sealed class AddGroupParticipantsControllerTests
         actionMethod.Should().NotBeNull();
         actionMethod!.GetCustomAttributes<ProducesResponseTypeAttribute>()
             .Should().Contain(attribute => attribute.StatusCode == StatusCodes.Status401Unauthorized);
+        actionMethod.GetCustomAttributes<ProducesResponseTypeAttribute>()
+            .Should().Contain(attribute => attribute.StatusCode == StatusCodes.Status204NoContent);
     }
 
     [Fact]
-    public async Task AddGroupParticipants_WhenParticipantsNewlyAdded_Returns202Accepted()
+    public async Task AddGroupParticipants_WhenCommandSucceeds_Returns204NoContent()
     {
         var conversationId = Guid.NewGuid();
         var participantId1 = Guid.NewGuid();
@@ -50,7 +52,7 @@ public sealed class AddGroupParticipantsControllerTests
         _mediatorMock
             .Setup(x => x.Send(It.IsAny<AddGroupParticipantsCommand>(), It.IsAny<CancellationToken>()))
             .Callback<object, CancellationToken>((cmd, _) => capturedCommand = (AddGroupParticipantsCommand)cmd)
-            .ReturnsAsync(FlowChatResult<bool>.Success(true));
+            .ReturnsAsync(FlowChatResult<Unit>.Success(Unit.Value));
 
         var controller = CreateController();
 
@@ -59,27 +61,27 @@ public sealed class AddGroupParticipantsControllerTests
             new AddGroupParticipantsRequest { ParticipantUserIds = [participantId1, participantId2] },
             CancellationToken.None);
 
-        actionResult.Should().BeOfType<AcceptedResult>();
+        actionResult.Should().BeOfType<NoContentResult>();
         capturedCommand.Should().NotBeNull();
         capturedCommand!.ConversationId.Should().Be(conversationId);
         capturedCommand.ParticipantUserIds.Should().BeEquivalentTo([participantId1, participantId2]);
     }
 
     [Fact]
-    public async Task AddGroupParticipants_WhenAllParticipantsAlreadyExist_Returns200Ok()
+    public async Task AddGroupParticipants_WhenAllParticipantsAlreadyExist_Returns204NoContent()
     {
         var conversationId = Guid.NewGuid();
 
         _mediatorMock
             .Setup(x => x.Send(It.IsAny<AddGroupParticipantsCommand>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(FlowChatResult<bool>.Success(false));
+            .ReturnsAsync(FlowChatResult<Unit>.Success(Unit.Value));
 
         var actionResult = await CreateController().AddGroupParticipants(
             conversationId,
             new AddGroupParticipantsRequest { ParticipantUserIds = [Guid.NewGuid()] },
             CancellationToken.None);
 
-        actionResult.Should().BeOfType<OkResult>();
+        actionResult.Should().BeOfType<NoContentResult>();
     }
 
     [Fact]
@@ -87,7 +89,7 @@ public sealed class AddGroupParticipantsControllerTests
     {
         _mediatorMock
             .Setup(x => x.Send(It.IsAny<AddGroupParticipantsCommand>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(FlowChatResult<bool>.Failure(
+            .ReturnsAsync(FlowChatResult<Unit>.Failure(
                 DomainError.NotFound("Conversation not found.")));
 
         var actionResult = await CreateController().AddGroupParticipants(
@@ -104,7 +106,7 @@ public sealed class AddGroupParticipantsControllerTests
     {
         _mediatorMock
             .Setup(x => x.Send(It.IsAny<AddGroupParticipantsCommand>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(FlowChatResult<bool>.Failure(
+            .ReturnsAsync(FlowChatResult<Unit>.Failure(
                 DomainError.BadRequest("Cannot add participants to a one-on-one conversation.")));
 
         var actionResult = await CreateController().AddGroupParticipants(

@@ -19,8 +19,7 @@ public sealed class AddGroupParticipantsController : ApiControllerBase
     }
 
     [HttpPost]
-    [ProducesResponseType(StatusCodes.Status202Accepted)]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
@@ -37,9 +36,6 @@ public sealed class AddGroupParticipantsController : ApiControllerBase
         if (!result.IsSuccess)
             return HandleError(result.Error);
 
-        // Value=true: at least one participant newly added. Value=false: all were already members.
-        return result.Value
-            ? Accepted()
-            : Ok();
+        return NoContent();
     }
 }

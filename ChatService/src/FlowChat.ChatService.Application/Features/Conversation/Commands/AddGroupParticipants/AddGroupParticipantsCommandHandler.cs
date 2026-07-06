@@ -3,13 +3,14 @@ using FlowChat.Shared.Application;
 using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2;
 using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2.BeforeSaveProcessors;
 using FlowChat.Shared.Domain;
+using MediatR;
 using GroupConversation = FlowChat.ChatService.Domain.Entities.Conversation.GroupConversation;
 using UserProfileMarker = FlowChat.ChatService.Domain.Entities.UserProfiles.UserProfile;
 
 namespace FlowChat.ChatService.Application.Features.Conversation.Commands.AddGroupParticipants;
 
 public sealed class AddGroupParticipantsCommandHandler
-    : AggregateRootUpdateCommandHandlerBaseV3<AddGroupParticipantsCommand, bool, GroupConversation>
+    : AggregateRootUpdateCommandHandlerBaseV3<AddGroupParticipantsCommand, Unit, GroupConversation>
 {
     private readonly IGroupConversationWriteRepository _groupConversationRepository;
     private readonly IChatMessageWriteRepository _chatMessageRepository;
@@ -27,13 +28,13 @@ public sealed class AddGroupParticipantsCommandHandler
         _chatMessageRepository = chatMessageRepository ?? throw new ArgumentNullException(nameof(chatMessageRepository));
     }
 
-    protected override async Task<FlowChatResult<bool>> ExecuteAsync(
+    protected override async Task<FlowChatResult<Unit>> ExecuteAsync(
         AddGroupParticipantsCommand request,
         CancellationToken cancellationToken)
     {
         _conversation = await _groupConversationRepository.GetByIdAsync(request.ConversationId, cancellationToken);
         if (_conversation is null)
-            return FlowChatResult<bool>.Failure(DomainError.NotFound("Conversation not found."));
+            return FlowChatResult<Unit>.Failure(DomainError.NotFound("Conversation not found."));
 
         var newParticipantUserIds = request.ParticipantUserIds
             .Select(Id<UserProfileMarker>.FromGuid)
@@ -43,7 +44,7 @@ public sealed class AddGroupParticipantsCommandHandler
 
         if (newParticipantUserIds.Count == 0)
         {
-            return FlowChatResult<bool>.Success(false);
+            return FlowChatResult<Unit>.Success(Unit.Value);
         }
 
         var maxSequenceNum = await _chatMessageRepository.GetMaxSequenceNumAsync(
@@ -59,7 +60,7 @@ public sealed class AddGroupParticipantsCommandHandler
 
         SetUpdated();
 
-        return FlowChatResult<bool>.Success(true);
+        return FlowChatResult<Unit>.Success(Unit.Value);
     }
 
     protected override GroupConversation GetAggregateRoot() =>
