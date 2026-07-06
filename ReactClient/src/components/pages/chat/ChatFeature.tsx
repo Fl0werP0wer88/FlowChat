@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChatHeader } from "../../UI/organisms/ChatHeader";
 import { ChatTemplate } from "../../templates";
@@ -7,6 +7,7 @@ import { useChatSelectionStore } from "../../../store/chatSelectionStore";
 import {
   useChatMessages,
   useContacts,
+  useDebouncedMarkConversationAsRead,
   useGroupChatMessages,
   useGroupConversations,
   usePresenceStatus,
@@ -39,16 +40,88 @@ export function ChatFeature() {
   const groupChat = useGroupChatMessages(activeGroup);
   const presence = usePresenceStatus();
   const groupConversations = useGroupConversations();
+  const { schedule: scheduleDuetReadState } = useDebouncedMarkConversationAsRead();
+  const { schedule: scheduleGroupReadState } = useDebouncedMarkConversationAsRead();
+  const activeGroupListItem = activeGroup
+    ? groupConversations.groupConversations.find(
+      (conversation) => conversation.conversationId === activeGroup.conversationId,
+    ) ?? activeGroup
+    : null;
+  const isDocumentVisible = () =>
+    typeof document === "undefined" || document.visibilityState === "visible";
+  const scheduleActiveDuetMarkAsRead = useCallback((conversationId: string) => {
+    scheduleDuetReadState(
+      conversationId,
+      (targetConversationId) => chat.markActiveDuetConversationAsRead(activeDuetContact ?? undefined, targetConversationId),
+    );
+  }, [activeDuetContact, chat.markActiveDuetConversationAsRead, scheduleDuetReadState]);
+  const scheduleActiveGroupMarkAsRead = useCallback((conversationId: string) => {
+    scheduleGroupReadState(
+      conversationId,
+      () => groupChat.markActiveGroupConversationAsRead(activeGroupListItem ?? undefined),
+    );
+  }, [activeGroupListItem, groupChat.markActiveGroupConversationAsRead, scheduleGroupReadState]);
+
   useRealtimeConnection({
     onGroupConversationChanged: groupConversations.applyGroupConversationChanged,
     onPresenceChanged: contacts.applyPresenceChanged,
     onMessageReceived: (payload) => {
-      contacts.applyRealtimeMessage(payload, chat.activeConversationId);
-      groupConversations.applyRealtimeMessage(payload, activeGroup?.conversationId ?? null);
+      const documentVisible = isDocumentVisible();
+      const activeDuetConversationId = documentVisible ? chat.activeConversationId : null;
+      const activeGroupConversationId = documentVisible ? groupChat.activeConversationId : null;
+
+      contacts.applyRealtimeMessage(payload, activeDuetConversationId);
+      groupConversations.applyRealtimeMessage(payload, activeGroupConversationId);
       chat.messageReceived(payload);
       groupChat.messageReceived(payload);
+
+      if (documentVisible && payload.conversationId === chat.activeConversationId) {
+        scheduleActiveDuetMarkAsRead(payload.conversationId);
+      }
+
+      if (documentVisible && payload.conversationId === groupChat.activeConversationId) {
+        scheduleActiveGroupMarkAsRead(payload.conversationId);
+      }
     },
   });
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!isDocumentVisible()) {
+        return;
+      }
+
+      if (
+        activeConversationMode === "duet" &&
+        activeDuetContact &&
+        chat.activeConversationId &&
+        activeDuetContact.currentMsgSeqNum > activeDuetContact.lastReadMsgSeqNum
+      ) {
+        scheduleActiveDuetMarkAsRead(chat.activeConversationId);
+        return;
+      }
+
+      if (
+        activeConversationMode === "group" &&
+        activeGroupListItem &&
+        groupChat.activeConversationId &&
+        activeGroupListItem.currentMsgSeqNum > activeGroupListItem.lastReadMsgSeqNum
+      ) {
+        scheduleActiveGroupMarkAsRead(groupChat.activeConversationId);
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
+  }, [
+    activeConversationMode,
+    activeDuetContact,
+    activeGroupListItem,
+    chat.activeConversationId,
+    groupChat.activeConversationId,
+    scheduleActiveDuetMarkAsRead,
+    scheduleActiveGroupMarkAsRead,
+  ]);
 
   const sendDuetDraft = async (): Promise<void> => {
     const sent = await chat.sendDraft(duetDraft);

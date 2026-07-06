@@ -1,6 +1,7 @@
 export { useAuthFlow } from "./useAuthFlow";
 export { useChatMessages } from "./useChatMessages";
 export { useContacts } from "./useContacts";
+export { useDebouncedMarkConversationAsRead } from "./useDebouncedMarkConversationAsRead";
 export { useGroupChatMessages } from "./useGroupChatMessages";
 export { useGroupConversations } from "./useGroupConversations";
 export { useMinDuration } from "./useMinDuration";

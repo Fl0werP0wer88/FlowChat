@@ -220,6 +220,7 @@ export function useChatMessages(activeContact: Contact | null) {
     sendDraft,
     loadOlderMessages,
     messageReceived,
+    markActiveDuetConversationAsRead,
     openContactConversation,
   };
 }
