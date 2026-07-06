@@ -24,6 +24,21 @@ public sealed class ConversationTests
     }
 
     [Fact]
+    public void CreateGroupConversation_WhenLessThanTwoParticipants_ThrowsInvalidOperationException()
+    {
+        var creatorId = Id<UserProfileMarker>.New();
+
+        var act = () => GroupConversation.Create(
+            Id<ConversationAggregate>.New(),
+            creatorId,
+            [creatorId],
+            "Dev Team");
+
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("Group conversations must have at least two participants.");
+    }
+
+    [Fact]
     public void CreateDuetConversation_WhenCreated_DefaultsLastMsgSequenceNumToZero()
     {
         var requestingUserId = Id<UserProfileMarker>.New();
@@ -116,6 +131,19 @@ public sealed class ConversationTests
         conversation.Participants.Should().HaveCount(2);
     }
 
+    [Fact]
+    public void AddParticipants_WhenGroupWouldHaveFewerThanTwoParticipants_ThrowsInvalidOperationException()
+    {
+        var conversation = CreateGroupConversationWithoutParticipants();
+        var memberId = Id<UserProfileMarker>.New();
+
+        var act = () => conversation.AddParticipants([memberId]);
+
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("Group conversations must have at least two participants.");
+        conversation.Participants.Should().BeEmpty();
+    }
+
     private static GroupConversation CreateGroupConversation()
     {
         var creatorId = Id<UserProfileMarker>.New();
@@ -126,5 +154,30 @@ public sealed class ConversationTests
             creatorId,
             [creatorId, memberId],
             "Dev Team");
+    }
+
+    private static GroupConversation CreateGroupConversationWithoutParticipants()
+    {
+        var constructor = typeof(GroupConversation).GetConstructor(
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance,
+            binder: null,
+            [
+                typeof(Id<ConversationAggregate>),
+                typeof(ConversationType),
+                typeof(string),
+                typeof(Id<UserProfileMarker>),
+                typeof(long)
+            ],
+            modifiers: null);
+
+        constructor.Should().NotBeNull();
+
+        return (GroupConversation)constructor!.Invoke([
+            Id<ConversationAggregate>.New(),
+            ConversationType.Group,
+            "Dev Team",
+            Id<UserProfileMarker>.New(),
+            0L
+        ]);
     }
 }

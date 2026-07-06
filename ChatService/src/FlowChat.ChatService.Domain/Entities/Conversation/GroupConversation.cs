@@ -6,6 +6,9 @@ namespace FlowChat.ChatService.Domain.Entities.Conversation;
 
 public sealed class GroupConversation : Conversation
 {
+    private const int MinimumParticipantsCount = 2;
+    private const string MinimumParticipantsErrorMessage = "Group conversations must have at least two participants.";
+
     private GroupConversation(
         Id<Conversation> id,
         ConversationType type,
@@ -58,13 +61,21 @@ public sealed class GroupConversation : Conversation
     {
         ArgumentNullException.ThrowIfNull(participantUserIds);
 
-        foreach (var participantUserId in participantUserIds)
+        var userIdsToAdd = participantUserIds.ToList();
+
+        foreach (var participantUserId in userIdsToAdd)
         {
             ArgumentNullException.ThrowIfNull(participantUserId);
 
-            if (_participants.Any(p => p.UserId == participantUserId))
+            if (_participants.Any(p => p.UserId == participantUserId) || userIdsToAdd.Count(id => id == participantUserId) > 1)
                 throw new InvalidOperationException("User is already a participant in this conversation.");
+        }
 
+        if (_participants.Count + userIdsToAdd.Count < MinimumParticipantsCount)
+            throw new InvalidOperationException(MinimumParticipantsErrorMessage);
+
+        foreach (var participantUserId in userIdsToAdd)
+        {
             _participants.Add(ParticipantUser.Create(
                 Id<ParticipantUser>.New(),
                 Id,
@@ -89,8 +100,8 @@ public sealed class GroupConversation : Conversation
                 throw new InvalidOperationException("User is not a participant in this conversation.");
         }
 
-        if (_participants.Count - userIdsToRemove.Distinct().Count() < 2)
-            throw new InvalidOperationException("Group conversations must have at least two participants.");
+        if (_participants.Count - userIdsToRemove.Distinct().Count() < MinimumParticipantsCount)
+            throw new InvalidOperationException(MinimumParticipantsErrorMessage);
 
         _participants.RemoveAll(p => userIdsToRemove.Contains(p.UserId));
     }
