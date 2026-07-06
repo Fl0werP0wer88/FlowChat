@@ -1,7 +1,7 @@
 export type UserStatus = "Active" | "AFK" | "Busy" | "Invisible";
 export type ManualUserStatus = Exclude<UserStatus, "AFK">;
 
-export interface RealtimeChatMessage {
+export interface ChatMessageReceivedEvent {
   messageId: string;
   conversationId: string;
   senderUserId: string;

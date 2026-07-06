@@ -3,7 +3,7 @@ import { useCallback, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useAuthStore } from "../store/authStore";
 import type { GroupConversation } from "../types/chat";
-import type { RealtimeChatMessage } from "../types/realtime";
+import type { ChatMessageReceivedEvent } from "../types/realtime";
 import { resolveOwnerUserId } from "../utils/authUtils";
 import { getGroupConversationMessages, markConversationAsRead } from "../api/chatService";
 import { calculateUnreadCount } from "../utils/chatUtils";
@@ -95,7 +95,7 @@ export function useGroupChatMessages(activeGroupConversation: GroupConversation 
     }
   }, [accessToken, activeGroupConversation, ownerUserId, queryClient]);
 
-  const receiveRealtimeMessage = (payload: RealtimeChatMessage) => {
+  const receiveRealtimeMessage = (payload: ChatMessageReceivedEvent) => {
     if (!conversationData || payload.conversationId !== conversationData.conversationId) {
       return;
     }

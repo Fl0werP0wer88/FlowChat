@@ -1,7 +1,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "../store/authStore";
 import type { GroupConversation } from "../types/chat";
-import type { GroupConversationChangedEvent, RealtimeChatMessage } from "../types/realtime";
+import type { ChatMessageReceivedEvent, GroupConversationChangedEvent } from "../types/realtime";
 import { resolveOwnerUserId } from "../utils/authUtils";
 import { calculateUnreadCount } from "../utils/chatUtils";
 import { useGroupConversationsQuery } from "./queries/useGroupConversationsQuery";
@@ -10,7 +10,7 @@ export interface UseGroupConversationsResult {
   groupConversations: GroupConversation[];
   isLoadingGroupConversations: boolean;
   applyGroupConversationChanged: (payload: GroupConversationChangedEvent) => void;
-  applyRealtimeMessage: (payload: RealtimeChatMessage, activeGroupConversationId: string | null) => void;
+  applyRealtimeMessage: (payload: ChatMessageReceivedEvent, activeGroupConversationId: string | null) => void;
 }
 
 function countDistinctParticipants(participantUserIds: string[]): number {
@@ -70,7 +70,7 @@ export function useGroupConversations(): UseGroupConversationsResult {
   };
 
   const applyRealtimeMessage = (
-    payload: RealtimeChatMessage,
+    payload: ChatMessageReceivedEvent,
     activeGroupConversationId: string | null,
   ) => {
     queryClient.setQueryData<GroupConversation[]>(["groupConversations"], (current = []) =>

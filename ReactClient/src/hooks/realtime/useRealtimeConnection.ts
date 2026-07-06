@@ -5,12 +5,12 @@ import { useRealtimeStore } from "../../store/realtimeStore";
 import type {
   GroupConversationChangedEvent,
   PresenceChangedEvent,
-  RealtimeChatMessage,
+  ChatMessageReceivedEvent,
 } from "../../types/realtime";
 import { chatHubUrl } from "./config";
 
 interface UseRealtimeConnectionOptions {
-  onReceiveMessage?: (payload: RealtimeChatMessage) => void;
+  onReceiveMessage?: (payload: ChatMessageReceivedEvent) => void;
   onPresenceChanged?: (payload: PresenceChangedEvent) => void;
   onGroupConversationChanged?: (payload: GroupConversationChangedEvent) => void;
 }
@@ -31,7 +31,7 @@ export function useRealtimeConnection({
   const accessToken = useAuthStore((s) => s.accessToken);
   const { setStatus, setLastError } = useRealtimeStore.getState();
 
-  const handleReceiveMessage = useEffectEvent((payload: RealtimeChatMessage) => {
+  const handleReceiveMessage = useEffectEvent((payload: ChatMessageReceivedEvent) => {
     onReceiveMessage?.(payload);
   });
 
@@ -61,7 +61,7 @@ export function useRealtimeConnection({
       .configureLogging(LogLevel.Warning)
       .build();
 
-    connection.on("ReceiveMessage", (payload: RealtimeChatMessage) => {
+    connection.on("ReceiveMessage", (payload: ChatMessageReceivedEvent) => {
       if (!isDisposed) {
         handleReceiveMessage(payload);
       }
