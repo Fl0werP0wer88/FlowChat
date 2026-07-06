@@ -15,7 +15,7 @@ public sealed class PublishMessageCommandHandlerTests
     public PublishMessageCommandHandlerTests()
     {
         _dispatcherMock
-            .Setup(x => x.ReceiveMessageAsync(It.IsAny<ChatMessageParam>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.MessageReceivedAsync(It.IsAny<ChatMessageParam>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         _handler = new PublishMessageCommandHandler(_dispatcherMock.Object);
@@ -29,7 +29,7 @@ public sealed class PublishMessageCommandHandlerTests
         var deliveredAtUtc = new DateTimeOffset(2026, 5, 19, 12, 0, 0, TimeSpan.Zero);
 
         _dispatcherMock
-            .Setup(x => x.ReceiveMessageAsync(It.IsAny<ChatMessageParam>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.MessageReceivedAsync(It.IsAny<ChatMessageParam>(), It.IsAny<CancellationToken>()))
             .Callback<ChatMessageParam, CancellationToken>((notification, _) => capturedNotification = notification)
             .Returns(Task.CompletedTask);
 

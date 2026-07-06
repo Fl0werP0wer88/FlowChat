@@ -9,14 +9,14 @@ namespace FlowChat.RealtimeService.UnitTests;
 public sealed class SignalRRealtimeClientDispatcherTests
 {
     [Fact]
-    public async Task ReceiveMessageAsync_SendsDeliveredAtUtcToSignalRClient()
+    public async Task MessageReceivedAsync_SendsDeliveredAtUtcToSignalRClient()
     {
         var recipientUserId = Guid.NewGuid();
         var deliveredAtUtc = new DateTimeOffset(2026, 5, 19, 12, 0, 0, TimeSpan.Zero);
         ChatMessageReceivedDto? capturedPayload = null;
         var realtimeClientMock = new Mock<IRealtimeClient>();
         realtimeClientMock
-            .Setup(x => x.ReceiveMessage(It.IsAny<ChatMessageReceivedDto>()))
+            .Setup(x => x.MessageReceived(It.IsAny<ChatMessageReceivedDto>()))
             .Callback<ChatMessageReceivedDto>(payload => capturedPayload = payload)
             .Returns(Task.CompletedTask);
         var clientsMock = new Mock<IHubClients<IRealtimeClient>>();
@@ -27,7 +27,7 @@ public sealed class SignalRRealtimeClientDispatcherTests
         hubContextMock.Setup(x => x.Clients).Returns(clientsMock.Object);
         var dispatcher = new SignalRRealtimeClientDispatcher(hubContextMock.Object);
 
-        await dispatcher.ReceiveMessageAsync(
+        await dispatcher.MessageReceivedAsync(
             new ChatMessageParam(
                 Guid.NewGuid(),
                 Guid.NewGuid(),

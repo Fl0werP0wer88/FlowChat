@@ -2,7 +2,7 @@ namespace FlowChat.RealtimeService.Api.Realtime;
 
 public interface IRealtimeClient
 {
-    Task ReceiveMessage(ChatMessageReceivedDto payload);
+    Task MessageReceived(ChatMessageReceivedDto payload);
 
     Task PresenceChanged(PresenceDto payload);
 

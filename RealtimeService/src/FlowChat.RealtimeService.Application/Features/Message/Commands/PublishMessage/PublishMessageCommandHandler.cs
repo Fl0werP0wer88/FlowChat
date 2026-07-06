@@ -26,7 +26,7 @@ public sealed class PublishMessageCommandHandler(IRealtimeClientDispatcher realt
             request.DeliveredAtUtc,
             recipientUserIds);
 
-        await _realtimeClientDispatcher.ReceiveMessageAsync(notification, cancellationToken);
+        await _realtimeClientDispatcher.MessageReceivedAsync(notification, cancellationToken);
 
         return FlowChatResult<Unit>.Success(Unit.Value);
     }

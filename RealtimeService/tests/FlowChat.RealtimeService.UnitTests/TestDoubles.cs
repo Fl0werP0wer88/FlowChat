@@ -20,7 +20,7 @@ internal sealed class CapturingRealtimeClientDispatcher : IRealtimeClientDispatc
     public PresenceChangedParam? LastPresenceNotification { get; private set; }
     public GroupConversationChangedParam? LastGroupConversationChangedNotification { get; private set; }
 
-    public Task ReceiveMessageAsync(ChatMessageParam notification, CancellationToken cancellationToken)
+    public Task MessageReceivedAsync(ChatMessageParam notification, CancellationToken cancellationToken)
     {
         LastMessageNotification = notification;
         return Task.CompletedTask;

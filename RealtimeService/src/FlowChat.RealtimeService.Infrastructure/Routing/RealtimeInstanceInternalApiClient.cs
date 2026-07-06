@@ -9,7 +9,7 @@ public sealed class RealtimeInstanceInternalApiClient(HttpClient httpClient)
     : FlowChatHttpClientBase(httpClient), IRealtimeInstanceInternalApiClient
 {
     public const string ApiKeyHeaderName = "X-Internal-Api-Key";
-    private const string ReceiveMessagePath = "/internal/realtime/messages/direct";
+    private const string MessageReceivedPath = "/internal/realtime/messages/direct";
     private const string PresenceChangedPath = "/internal/realtime/presence/direct";
     private const string GroupConversationChangedPath = "/internal/realtime/group-conversations/changed/direct";
 
@@ -21,7 +21,7 @@ public sealed class RealtimeInstanceInternalApiClient(HttpClient httpClient)
         CancellationToken cancellationToken) =>
         PostAsync(
             baseAddress,
-            ReceiveMessagePath,
+            MessageReceivedPath,
             new PublishMessageRequest(
                 notification.MessageId,
                 notification.ConversationId,

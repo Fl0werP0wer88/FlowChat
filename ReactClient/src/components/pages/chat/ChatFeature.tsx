@@ -42,10 +42,10 @@ export function ChatFeature() {
   useRealtimeConnection({
     onGroupConversationChanged: groupConversations.applyGroupConversationChanged,
     onPresenceChanged: contacts.applyPresenceChanged,
-    onReceiveMessage: (payload) => {
+    onMessageReceived: (payload) => {
       groupConversations.applyRealtimeMessage(payload, activeGroup?.conversationId ?? null);
-      chat.receiveRealtimeMessage(payload);
-      groupChat.receiveRealtimeMessage(payload);
+      chat.messageReceived(payload);
+      groupChat.messageReceived(payload);
     },
   });
 

@@ -10,7 +10,7 @@ import type {
 import { chatHubUrl } from "./config";
 
 interface UseRealtimeConnectionOptions {
-  onReceiveMessage?: (payload: ChatMessageReceivedEvent) => void;
+  onMessageReceived?: (payload: ChatMessageReceivedEvent) => void;
   onPresenceChanged?: (payload: PresenceChangedEvent) => void;
   onGroupConversationChanged?: (payload: GroupConversationChangedEvent) => void;
 }
@@ -24,15 +24,15 @@ function resolveErrorMessage(error: unknown): string | null {
 }
 
 export function useRealtimeConnection({
-  onReceiveMessage,
+  onMessageReceived,
   onPresenceChanged,
   onGroupConversationChanged,
 }: UseRealtimeConnectionOptions) {
   const accessToken = useAuthStore((s) => s.accessToken);
   const { setStatus, setLastError } = useRealtimeStore.getState();
 
-  const handleReceiveMessage = useEffectEvent((payload: ChatMessageReceivedEvent) => {
-    onReceiveMessage?.(payload);
+  const handleMessageReceived = useEffectEvent((payload: ChatMessageReceivedEvent) => {
+    onMessageReceived?.(payload);
   });
 
   const handlePresenceChanged = useEffectEvent((payload: PresenceChangedEvent) => {
@@ -61,9 +61,9 @@ export function useRealtimeConnection({
       .configureLogging(LogLevel.Warning)
       .build();
 
-    connection.on("ReceiveMessage", (payload: ChatMessageReceivedEvent) => {
+    connection.on("MessageReceived", (payload: ChatMessageReceivedEvent) => {
       if (!isDisposed) {
-        handleReceiveMessage(payload);
+        handleMessageReceived(payload);
       }
     });
 
@@ -133,7 +133,7 @@ export function useRealtimeConnection({
     return () => {
       isDisposed = true;
       shouldStopAfterStart = true;
-      connection.off("ReceiveMessage");
+      connection.off("MessageReceived");
       connection.off("PresenceChanged");
       connection.off("GroupConversationChanged");
       void startPromise.finally(() => connection.stop().catch(() => undefined));

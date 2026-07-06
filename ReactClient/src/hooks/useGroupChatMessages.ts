@@ -95,7 +95,7 @@ export function useGroupChatMessages(activeGroupConversation: GroupConversation 
     }
   }, [accessToken, activeGroupConversation, ownerUserId, queryClient]);
 
-  const receiveRealtimeMessage = (payload: ChatMessageReceivedEvent) => {
+  const messageReceived = (payload: ChatMessageReceivedEvent) => {
     if (!conversationData || payload.conversationId !== conversationData.conversationId) {
       return;
     }
@@ -191,7 +191,7 @@ export function useGroupChatMessages(activeGroupConversation: GroupConversation 
     isLoadingOlderMessages,
     sendDraft,
     loadOlderMessages,
-    receiveRealtimeMessage,
+    messageReceived,
     markActiveGroupConversationAsRead,
   };
 }

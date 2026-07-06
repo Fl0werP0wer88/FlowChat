@@ -109,7 +109,7 @@ export function useChatMessages(activeContact: Contact | null) {
     }
   }, [accessToken, activeContact, ownerUserId, queryClient]);
 
-  const receiveRealtimeMessage = (payload: ChatMessageReceivedEvent) => {
+  const messageReceived = (payload: ChatMessageReceivedEvent) => {
     if (!conversationData || payload.conversationId !== conversationData.conversationId) {
       return;
     }
@@ -182,7 +182,7 @@ export function useChatMessages(activeContact: Contact | null) {
     isLoadingOlderMessages,
     sendDraft,
     loadOlderMessages,
-    receiveRealtimeMessage,
+    messageReceived,
     openContactConversation,
   };
 }
