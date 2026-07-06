@@ -58,7 +58,7 @@ public sealed class ParticipantUserTests
     }
 
     [Fact]
-    public void AddParticipant_WhenLastReadMessageSequenceNumIsProvided_StoresValue()
+    public void AddParticipants_WhenLastReadMessageSequenceNumIsProvided_StoresValue()
     {
         var creatorId = Id<UserProfileMarker>.New();
         var existingMemberId = Id<UserProfileMarker>.New();
@@ -69,7 +69,7 @@ public sealed class ParticipantUserTests
             [creatorId, existingMemberId],
             "Dev Team");
 
-        conversation.AddParticipant(newMemberId, lastReadMessageSequenceNum: 84);
+        conversation.AddParticipants([newMemberId], lastReadMessageSequenceNum: 84);
 
         conversation.Participants.Should().ContainSingle(p =>
             p.UserId == newMemberId &&

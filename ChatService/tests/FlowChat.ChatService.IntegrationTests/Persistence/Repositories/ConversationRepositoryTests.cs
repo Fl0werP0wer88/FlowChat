@@ -24,7 +24,7 @@ public sealed class ConversationRepositoryTests
             creatorUserId,
             [creatorUserId, memberUserId],
             "Friends");
-        matchingConversation.AddParticipant(requestedUserId, lastReadMessageSequenceNum: 42);
+        matchingConversation.AddParticipants([requestedUserId], lastReadMessageSequenceNum: 42);
         matchingConversation.SetSequenceNumber(84);
 
         var otherGroupConversation = GroupConversation.Create(

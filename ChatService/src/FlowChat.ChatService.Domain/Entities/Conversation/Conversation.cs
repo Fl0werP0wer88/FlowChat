@@ -12,7 +12,7 @@ public abstract class Conversation : AggregateRootBase<Conversation>
     public Id<UserProfileMarker> CreatedByUserId { get; private set; }
     public long LastMsgSequenceNum { get; private set; }
 
-    private readonly List<ParticipantUser> _participants = [];
+    protected readonly List<ParticipantUser> _participants = [];
     public IReadOnlyCollection<ParticipantUser> Participants => _participants.AsReadOnly();
 
     // Required by EF Core: scalar-only constructor so EF can bind properties without the navigation collection.
@@ -97,29 +97,6 @@ public abstract class Conversation : AggregateRootBase<Conversation>
         ArgumentNullException.ThrowIfNull(participantUserId);
 
         return _participants.Any(p => p.UserId == participantUserId);
-    }
-
-    protected void AddParticipantCore(
-        Id<UserProfileMarker> participantUserId,
-        string? displayName,
-        string? avatarUrl,
-        long lastReadMessageSequenceNum)
-    {
-        if (Type != ConversationType.Group)
-            throw new InvalidOperationException("Cannot add participants to a one-on-one conversation.");
-
-        ArgumentNullException.ThrowIfNull(participantUserId);
-
-        if (_participants.Any(p => p.UserId == participantUserId))
-            throw new InvalidOperationException("User is already a participant in this conversation.");
-
-        _participants.Add(ParticipantUser.Create(
-            Id<ParticipantUser>.New(),
-            Id,
-            participantUserId,
-            displayName,
-            avatarUrl,
-            lastReadMessageSequenceNum));
     }
 
     private static void ValidateInvariants(ConversationType type, string? name, Id<UserProfileMarker> createdByUserId)

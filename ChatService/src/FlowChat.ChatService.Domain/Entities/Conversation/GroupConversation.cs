@@ -68,15 +68,6 @@ public sealed class GroupConversation : Conversation
                 new GroupConversation(id, type, name, createdByUserId, lastMsgSequenceNum, participants));
     }
 
-    public void AddParticipant(
-        Id<UserProfileMarker> participantUserId,
-        string? displayName = null,
-        string? avatarUrl = null,
-        long lastReadMessageSequenceNum = 0)
-    {
-        AddParticipantCore(participantUserId, displayName, avatarUrl, lastReadMessageSequenceNum);
-    }
-
     public void AddParticipants(
         IEnumerable<Id<UserProfileMarker>> participantUserIds,
         string? displayName = null,
@@ -87,7 +78,18 @@ public sealed class GroupConversation : Conversation
 
         foreach (var participantUserId in participantUserIds)
         {
-            AddParticipant(participantUserId, displayName, avatarUrl, lastReadMessageSequenceNum);
+            ArgumentNullException.ThrowIfNull(participantUserId);
+
+            if (_participants.Any(p => p.UserId == participantUserId))
+                throw new InvalidOperationException("User is already a participant in this conversation.");
+
+            _participants.Add(ParticipantUser.Create(
+                Id<ParticipantUser>.New(),
+                Id,
+                participantUserId,
+                displayName,
+                avatarUrl,
+                lastReadMessageSequenceNum));
         }
     }
 }
