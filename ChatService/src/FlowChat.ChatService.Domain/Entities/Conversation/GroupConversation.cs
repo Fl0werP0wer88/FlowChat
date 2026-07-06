@@ -74,4 +74,24 @@ public sealed class GroupConversation : Conversation
                 lastReadMessageSequenceNum));
         }
     }
+
+    public void RemoveParticipants(IEnumerable<Id<UserProfileMarker>> participantUserIds)
+    {
+        ArgumentNullException.ThrowIfNull(participantUserIds);
+
+        var userIdsToRemove = participantUserIds.ToList();
+
+        foreach (var participantUserId in userIdsToRemove)
+        {
+            ArgumentNullException.ThrowIfNull(participantUserId);
+
+            if (_participants.All(p => p.UserId != participantUserId))
+                throw new InvalidOperationException("User is not a participant in this conversation.");
+        }
+
+        if (_participants.Count - userIdsToRemove.Distinct().Count() < 2)
+            throw new InvalidOperationException("Group conversations must have at least two participants.");
+
+        _participants.RemoveAll(p => userIdsToRemove.Contains(p.UserId));
+    }
 }

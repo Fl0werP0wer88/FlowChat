@@ -68,6 +68,54 @@ public sealed class ConversationTests
         conversation.LastMsgSequenceNum.Should().Be(42);
     }
 
+    [Fact]
+    public void RemoveParticipants_WhenParticipantsExist_RemovesThem()
+    {
+        var creatorId = Id<UserProfileMarker>.New();
+        var memberId = Id<UserProfileMarker>.New();
+        var removedMemberId = Id<UserProfileMarker>.New();
+        var conversation = GroupConversation.Create(
+            Id<ConversationAggregate>.New(),
+            creatorId,
+            [creatorId, memberId, removedMemberId],
+            "Dev Team");
+
+        conversation.RemoveParticipants([removedMemberId]);
+
+        conversation.Participants.Should().NotContain(p => p.UserId == removedMemberId);
+        conversation.Participants.Should().HaveCount(2);
+    }
+
+    [Fact]
+    public void RemoveParticipants_WhenUserIsNotParticipant_ThrowsInvalidOperationException()
+    {
+        var conversation = CreateGroupConversation();
+        var nonParticipantId = Id<UserProfileMarker>.New();
+
+        var act = () => conversation.RemoveParticipants([nonParticipantId]);
+
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("User is not a participant in this conversation.");
+    }
+
+    [Fact]
+    public void RemoveParticipants_WhenGroupWouldHaveFewerThanTwoParticipants_ThrowsInvalidOperationException()
+    {
+        var creatorId = Id<UserProfileMarker>.New();
+        var memberId = Id<UserProfileMarker>.New();
+        var conversation = GroupConversation.Create(
+            Id<ConversationAggregate>.New(),
+            creatorId,
+            [creatorId, memberId],
+            "Dev Team");
+
+        var act = () => conversation.RemoveParticipants([memberId]);
+
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("Group conversations must have at least two participants.");
+        conversation.Participants.Should().HaveCount(2);
+    }
+
     private static GroupConversation CreateGroupConversation()
     {
         var creatorId = Id<UserProfileMarker>.New();
