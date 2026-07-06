@@ -1,4 +1,5 @@
 using FlowChat.RealtimeService.Application.Contracts.Infrastructure;
+using FlowChat.RealtimeService.Api.Realtime.Notifications;
 using Microsoft.AspNetCore.SignalR;
 
 namespace FlowChat.RealtimeService.Api.Realtime;
@@ -17,7 +18,7 @@ public sealed class SignalRRealtimeClientDispatcher(IHubContext<ChatHub, IRealti
             return Task.CompletedTask;
         }
 
-        return _hubContext.Clients.Groups(groups).MessageReceived(new ChatMessageReceivedDto
+        return _hubContext.Clients.Groups(groups).MessageReceived(new ChatMessageReceivedNotification
         {
             MessageId = notification.MessageId,
             ConversationId = notification.ConversationId,
@@ -38,7 +39,7 @@ public sealed class SignalRRealtimeClientDispatcher(IHubContext<ChatHub, IRealti
             return Task.CompletedTask;
         }
 
-        return _hubContext.Clients.Groups(groups).PresenceChanged(new PresenceDto
+        return _hubContext.Clients.Groups(groups).PresenceChanged(new PresenceChangedNotification
         {
             UserId = notification.UserId,
             Status = notification.Status,
@@ -54,7 +55,7 @@ public sealed class SignalRRealtimeClientDispatcher(IHubContext<ChatHub, IRealti
             return Task.CompletedTask;
         }
 
-        return _hubContext.Clients.Groups(groups).GroupConversationChanged(new GroupConversationChangedDto
+        return _hubContext.Clients.Groups(groups).GroupConversationChanged(new GroupConversationChangedNotification
         {
             ConversationId = notification.ConversationId,
             Type = notification.Type,

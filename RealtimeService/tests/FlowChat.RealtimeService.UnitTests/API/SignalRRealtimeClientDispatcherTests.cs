@@ -1,4 +1,5 @@
 using FlowChat.RealtimeService.Api.Realtime;
+using FlowChat.RealtimeService.Api.Realtime.Notifications;
 using FlowChat.RealtimeService.Application.Contracts.Infrastructure;
 using FluentAssertions;
 using Microsoft.AspNetCore.SignalR;
@@ -13,11 +14,11 @@ public sealed class SignalRRealtimeClientDispatcherTests
     {
         var recipientUserId = Guid.NewGuid();
         var deliveredAtUtc = new DateTimeOffset(2026, 5, 19, 12, 0, 0, TimeSpan.Zero);
-        ChatMessageReceivedDto? capturedPayload = null;
+        ChatMessageReceivedNotification? capturedPayload = null;
         var realtimeClientMock = new Mock<IRealtimeClient>();
         realtimeClientMock
-            .Setup(x => x.MessageReceived(It.IsAny<ChatMessageReceivedDto>()))
-            .Callback<ChatMessageReceivedDto>(payload => capturedPayload = payload)
+            .Setup(x => x.MessageReceived(It.IsAny<ChatMessageReceivedNotification>()))
+            .Callback<ChatMessageReceivedNotification>(payload => capturedPayload = payload)
             .Returns(Task.CompletedTask);
         var clientsMock = new Mock<IHubClients<IRealtimeClient>>();
         clientsMock
@@ -50,11 +51,11 @@ public sealed class SignalRRealtimeClientDispatcherTests
     {
         var participantUserId = Guid.NewGuid();
         var conversationId = Guid.NewGuid();
-        GroupConversationChangedDto? capturedPayload = null;
+        GroupConversationChangedNotification? capturedPayload = null;
         var realtimeClientMock = new Mock<IRealtimeClient>();
         realtimeClientMock
-            .Setup(x => x.GroupConversationChanged(It.IsAny<GroupConversationChangedDto>()))
-            .Callback<GroupConversationChangedDto>(payload => capturedPayload = payload)
+            .Setup(x => x.GroupConversationChanged(It.IsAny<GroupConversationChangedNotification>()))
+            .Callback<GroupConversationChangedNotification>(payload => capturedPayload = payload)
             .Returns(Task.CompletedTask);
         var clientsMock = new Mock<IHubClients<IRealtimeClient>>();
         clientsMock

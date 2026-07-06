@@ -1,8 +1,8 @@
 using FlowChat.Core.Domain;
 
-namespace FlowChat.RealtimeService.Api.Realtime;
+namespace FlowChat.RealtimeService.Api.Realtime.Notifications;
 
-public sealed class PresenceDto
+public sealed class PresenceChangedNotification
 {
     public Guid UserId { get; init; }
     public PresenceStatus Status { get; init; }
