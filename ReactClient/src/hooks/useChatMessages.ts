@@ -5,7 +5,8 @@ import { useAuthStore } from "../store/authStore";
 import type { Contact } from "../types/contacts";
 import type { ChatMessageReceivedEvent } from "../types/realtime";
 import { resolveOwnerUserId } from "../utils/authUtils";
-import { getDuetConversationMessages } from "../api/chatService";
+import { getDuetConversationMessages, markConversationAsRead } from "../api/chatService";
+import { calculateUnreadCount } from "../utils/chatUtils";
 import type { DuetConversationCacheEntry } from "./caches/duetConversationCache";
 import {
   createDuetMessage,
@@ -34,6 +35,40 @@ export function useChatMessages(activeContact: Contact | null) {
     error: conversationQueryError,
   } = useDuetConversationQuery(activeContact, accessToken, ownerUserId);
 
+  const markActiveDuetConversationAsRead = useCallback(async (
+    contact?: Contact,
+    conversationId?: string,
+  ) => {
+    const targetContact = contact ?? activeContact;
+    const targetConversationId = conversationId ?? conversationData?.conversationId;
+
+    if (!targetContact || !targetConversationId || !accessToken) {
+      return;
+    }
+
+    queryClient.setQueryData<Contact[]>(["contacts"], (current = []) =>
+      current.map((item) => {
+        if (item.userId !== targetContact.userId) {
+          return item;
+        }
+
+        return {
+          ...item,
+          conversationId: targetConversationId,
+          lastReadMsgSeqNum: item.currentMsgSeqNum,
+          unreadCount: calculateUnreadCount(item.currentMsgSeqNum, item.currentMsgSeqNum),
+        };
+      }),
+    );
+
+    try {
+      await markConversationAsRead(targetConversationId, accessToken);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Nie udalo sie oznaczyc rozmowy jako przeczytanej.");
+      void queryClient.invalidateQueries({ queryKey: ["contacts"] });
+    }
+  }, [accessToken, activeContact, conversationData?.conversationId, queryClient]);
+
   useEffect(() => {
     if (!conversationData || !activeContact) {
       return;
@@ -47,7 +82,9 @@ export function useChatMessages(activeContact: Contact | null) {
     lastNotifiedKeyRef.current = key;
     onConversationOpenedRef.current?.(activeContact.userId, conversationData.conversationId);
     onConversationOpenedRef.current = null;
-  }, [conversationData, activeContact]);
+    void markActiveDuetConversationAsRead(activeContact, conversationData.conversationId);
+  }, [conversationData, activeContact, markActiveDuetConversationAsRead]);
+
 
   const sendMessageMutation = useSendMessageMutation({
     accessToken,
