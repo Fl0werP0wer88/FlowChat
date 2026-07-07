@@ -4,11 +4,11 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace FlowChat.RealtimeService.Persistence.Configuration.Entities;
 
-public sealed class RealtimeGroupMembershipConfiguration : IEntityTypeConfiguration<RealtimeGroupMembership>
+public sealed class RealtimeGroupMembershipReadModelConfiguration : IEntityTypeConfiguration<RealtimeGroupMembershipReadModel>
 {
-    public void Configure(EntityTypeBuilder<RealtimeGroupMembership> builder)
+    public void Configure(EntityTypeBuilder<RealtimeGroupMembershipReadModel> builder)
     {
-        builder.ToTable("RealtimeGroupMemberships");
+        builder.ToTable("RealtimeGroupMembershipReadModels");
 
         // UserId leads the composite key so lookups by UserId alone (fired on every connection) hit the index directly.
         builder.HasKey(x => new { x.UserId, x.GroupType, x.ResourceId });

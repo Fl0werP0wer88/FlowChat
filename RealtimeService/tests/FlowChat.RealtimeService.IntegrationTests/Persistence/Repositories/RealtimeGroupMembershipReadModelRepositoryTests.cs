@@ -7,20 +7,20 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FlowChat.RealtimeService.IntegrationTests.Persistence.Repositories;
 
-public sealed class RealtimeGroupMembershipRepositoryTests : IDisposable
+public sealed class RealtimeGroupMembershipReadModelRepositoryTests : IDisposable
 {
     private readonly IFixture _fixture = new Fixture();
     private readonly AppDbContext _dbContext;
-    private readonly RealtimeGroupMembershipRepository _repository;
+    private readonly RealtimeGroupMembershipReadModelRepository _repository;
 
-    public RealtimeGroupMembershipRepositoryTests()
+    public RealtimeGroupMembershipReadModelRepositoryTests()
     {
         var options = new DbContextOptionsBuilder<AppDbContext>()
             .UseInMemoryDatabase(_fixture.Create<Guid>().ToString("N"))
             .Options;
 
         _dbContext = new AppDbContext(options);
-        _repository = new RealtimeGroupMembershipRepository(_dbContext);
+        _repository = new RealtimeGroupMembershipReadModelRepository(_dbContext);
     }
 
     public void Dispose() => _dbContext.Dispose();

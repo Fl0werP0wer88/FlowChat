@@ -13,7 +13,7 @@ namespace FlowChat.RealtimeService.Application.Features.RealtimeConnection.Comma
 // Compensation is best-effort: if RegisterAsync fails while InitializePresenceStatusAsync happens to succeed in parallel, there is no mutation result to tell whether this was the user's first connection, so the presence status is left as-is rather than risking deleting a status still owned by another active connection.
 public sealed class RegisterRealtimeConnectionCommandHandler(
     IRealtimeGroupManager realtimeGroupManager,
-    IRealtimeGroupMembershipRepository realtimeGroupMembershipRepository,
+    IRealtimeGroupMembershipReadModelRepository realtimeGroupMembershipReadModelRepository,
     IRealtimeConnectionRegistry realtimeConnectionRegistry,
     IPresenceInternalApiClient presenceInternalApiClient,
     ILogger<RegisterRealtimeConnectionCommandHandler> logger)
@@ -21,8 +21,8 @@ public sealed class RegisterRealtimeConnectionCommandHandler(
 {
     private readonly IRealtimeGroupManager _realtimeGroupManager = realtimeGroupManager
         ?? throw new ArgumentNullException(nameof(realtimeGroupManager));
-    private readonly IRealtimeGroupMembershipRepository _realtimeGroupMembershipRepository = realtimeGroupMembershipRepository
-        ?? throw new ArgumentNullException(nameof(realtimeGroupMembershipRepository));
+    private readonly IRealtimeGroupMembershipReadModelRepository _realtimeGroupMembershipReadModelRepository = realtimeGroupMembershipReadModelRepository
+        ?? throw new ArgumentNullException(nameof(realtimeGroupMembershipReadModelRepository));
     private readonly IRealtimeConnectionRegistry _realtimeConnectionRegistry = realtimeConnectionRegistry
         ?? throw new ArgumentNullException(nameof(realtimeConnectionRegistry));
     private readonly IPresenceInternalApiClient _presenceInternalApiClient = presenceInternalApiClient
@@ -66,7 +66,7 @@ public sealed class RegisterRealtimeConnectionCommandHandler(
     {
         try
         {
-            var memberships = await _realtimeGroupMembershipRepository.GetByUserIdAsync(userId, cancellationToken);
+            var memberships = await _realtimeGroupMembershipReadModelRepository.GetByUserIdAsync(userId, cancellationToken);
             var conversationIds = memberships
                 .Where(membership => membership.GroupType == RealtimeGroupType.Conversation)
                 .Select(membership => membership.ResourceId);

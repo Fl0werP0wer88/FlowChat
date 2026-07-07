@@ -12,7 +12,7 @@ namespace FlowChat.RealtimeService.Persistence.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
-                name: "RealtimeGroupMemberships",
+                name: "RealtimeGroupMembershipReadModels",
                 columns: table => new
                 {
                     UserId = table.Column<Guid>(type: "uuid", nullable: false),
@@ -22,7 +22,7 @@ namespace FlowChat.RealtimeService.Persistence.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_RealtimeGroupMemberships", x => new { x.UserId, x.GroupType, x.ResourceId });
+                    table.PrimaryKey("PK_RealtimeGroupMembershipReadModels", x => new { x.UserId, x.GroupType, x.ResourceId });
                 });
         }
 
@@ -30,7 +30,7 @@ namespace FlowChat.RealtimeService.Persistence.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "RealtimeGroupMemberships");
+                name: "RealtimeGroupMembershipReadModels");
         }
     }
 }

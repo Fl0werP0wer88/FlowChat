@@ -2,9 +2,9 @@ using FlowChat.RealtimeService.Domain.Enums;
 
 namespace FlowChat.RealtimeService.Application.Contracts.Persistence;
 
-public interface IRealtimeGroupMembershipRepository
+public interface IRealtimeGroupMembershipReadModelRepository
 {
-    Task<IReadOnlyList<RealtimeGroupMembershipDto>> GetByUserIdAsync(
+    Task<IReadOnlyList<RealtimeGroupMembershipReadModelDto>> GetByUserIdAsync(
         Guid userId,
         CancellationToken cancellationToken = default);
 

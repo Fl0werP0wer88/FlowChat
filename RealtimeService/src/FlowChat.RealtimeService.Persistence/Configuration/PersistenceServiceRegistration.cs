@@ -15,7 +15,7 @@ public static class ApiPersistenceServiceRegistration
         services.AddDbContext<AppDbContext>(options =>
             options.UseNpgsql(configuration.GetConnectionString("RealtimeDb")));
 
-        services.AddScoped<IRealtimeGroupMembershipRepository, RealtimeGroupMembershipRepository>();
+        services.AddScoped<IRealtimeGroupMembershipReadModelRepository, RealtimeGroupMembershipReadModelRepository>();
 
         return services;
     }

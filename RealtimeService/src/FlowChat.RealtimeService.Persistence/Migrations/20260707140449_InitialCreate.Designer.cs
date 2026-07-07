@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FlowChat.RealtimeService.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260706212610_InitialCreate")]
+    [Migration("20260707140449_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -25,7 +25,7 @@ namespace FlowChat.RealtimeService.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("FlowChat.RealtimeService.Persistence.Entities.RealtimeGroupMembership", b =>
+            modelBuilder.Entity("FlowChat.RealtimeService.Persistence.Entities.RealtimeGroupMembershipReadModel", b =>
                 {
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
@@ -41,7 +41,7 @@ namespace FlowChat.RealtimeService.Persistence.Migrations
 
                     b.HasKey("UserId", "GroupType", "ResourceId");
 
-                    b.ToTable("RealtimeGroupMemberships", (string)null);
+                    b.ToTable("RealtimeGroupMembershipReadModels", (string)null);
                 });
 #pragma warning restore 612, 618
         }

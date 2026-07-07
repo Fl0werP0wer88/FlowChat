@@ -10,7 +10,7 @@ public class AppDbContext : DbContext
     {
     }
 
-    public DbSet<RealtimeGroupMembership> RealtimeGroupMemberships => Set<RealtimeGroupMembership>();
+    public DbSet<RealtimeGroupMembershipReadModel> RealtimeGroupMembershipReadModels => Set<RealtimeGroupMembershipReadModel>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

@@ -14,7 +14,7 @@ public sealed class RegisterRealtimeConnectionCommandHandlerTests
 {
     private readonly IFixture _fixture = new Fixture();
     private readonly CapturingRealtimeGroupManager _groupManager = new();
-    private readonly Mock<IRealtimeGroupMembershipRepository> _groupMembershipRepositoryMock = new();
+    private readonly Mock<IRealtimeGroupMembershipReadModelRepository> _groupMembershipRepositoryMock = new();
     private readonly CapturingRealtimeConnectionRegistry _registry = new();
     private readonly CapturingPresenceInternalApiClient _presenceClient = new();
     private readonly RegisterRealtimeConnectionCommandHandler _handler;
@@ -23,7 +23,7 @@ public sealed class RegisterRealtimeConnectionCommandHandlerTests
     {
         _groupMembershipRepositoryMock
             .Setup(x => x.GetByUserIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((IReadOnlyList<RealtimeGroupMembershipDto>)[]);
+            .ReturnsAsync((IReadOnlyList<RealtimeGroupMembershipReadModelDto>)[]);
 
         _handler = new RegisterRealtimeConnectionCommandHandler(
             _groupManager,
@@ -40,9 +40,9 @@ public sealed class RegisterRealtimeConnectionCommandHandlerTests
         var conversationId = _fixture.Create<Guid>();
         _groupMembershipRepositoryMock
             .Setup(x => x.GetByUserIdAsync(userId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync((IReadOnlyList<RealtimeGroupMembershipDto>)
+            .ReturnsAsync((IReadOnlyList<RealtimeGroupMembershipReadModelDto>)
             [
-                new RealtimeGroupMembershipDto(userId, RealtimeGroupType.Conversation, conversationId, DateTimeOffset.UtcNow)
+                new RealtimeGroupMembershipReadModelDto(userId, RealtimeGroupType.Conversation, conversationId, DateTimeOffset.UtcNow)
             ]);
 
         var result = await _handler.Handle(
