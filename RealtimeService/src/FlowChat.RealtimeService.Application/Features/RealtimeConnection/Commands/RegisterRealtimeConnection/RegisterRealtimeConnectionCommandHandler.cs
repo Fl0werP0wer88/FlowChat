@@ -7,7 +7,7 @@ using Microsoft.Extensions.Logging;
 
 namespace FlowChat.RealtimeService.Application.Features.RealtimeConnection.Commands.RegisterRealtimeConnection;
 
-// Logs structured failure context (user/connection ids) and the best-effort compensation warning that LoggingPipelineBehaviour cannot see
+// Logs structured failure context (user/connection ids) that LoggingPipelineBehaviour cannot see
 public sealed class RegisterRealtimeConnectionCommandHandler(
     IRealtimeConnectionRegistry realtimeConnectionRegistry,
     ILogger<RegisterRealtimeConnectionCommandHandler> logger)
@@ -28,7 +28,7 @@ public sealed class RegisterRealtimeConnectionCommandHandler(
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
-            await TryCompensateRegistrationAsync(request.ConnectionId!);
+            await _realtimeConnectionRegistry.UnregisterAsync(request.ConnectionId!, CancellationToken.None);
             throw;
         }
         catch (Exception exception)
@@ -39,24 +39,9 @@ public sealed class RegisterRealtimeConnectionCommandHandler(
                 request.UserId,
                 request.ConnectionId);
 
-            await TryCompensateRegistrationAsync(request.ConnectionId!);
+            await _realtimeConnectionRegistry.UnregisterAsync(request.ConnectionId!, CancellationToken.None);
 
             return FlowChatResult<Unit>.Failure(DomainError.UnExpected("Failed to register realtime connection."));
-        }
-    }
-
-    private async Task TryCompensateRegistrationAsync(string connectionId)
-    {
-        try
-        {
-            await _realtimeConnectionRegistry.UnregisterAsync(connectionId, CancellationToken.None);
-        }
-        catch (Exception exception)
-        {
-            _logger.LogWarning(
-                exception,
-                "Failed to compensate realtime connection registration for connection {ConnectionId} after publish failure.",
-                connectionId);
         }
     }
 }
