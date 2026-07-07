@@ -187,7 +187,7 @@ internal sealed class CapturingRealtimeConnectionRegistry : IRealtimeConnectionR
     {
         if (RegisterException is not null)
         {
-            throw RegisterException;
+            return Task.FromException<RealtimeConnectionMutationResult>(RegisterException);
         }
 
         LastRegisteredUserId = userId;
@@ -206,7 +206,7 @@ internal sealed class CapturingRealtimeConnectionRegistry : IRealtimeConnectionR
         LastUnregisteredConnectionId = connectionId;
         if (UnregisterException is not null)
         {
-            throw UnregisterException;
+            return Task.FromException<RealtimeConnectionMutationResult?>(UnregisterException);
         }
 
         return Task.FromResult(UnregisterResult);
@@ -230,7 +230,7 @@ internal sealed class CapturingPresenceInternalApiClient : IPresenceInternalApiC
     {
         if (InitializePresenceStatusException is not null)
         {
-            throw InitializePresenceStatusException;
+            return Task.FromException(InitializePresenceStatusException);
         }
 
         LastInitializePresenceStatusUserId = userId;
@@ -241,7 +241,7 @@ internal sealed class CapturingPresenceInternalApiClient : IPresenceInternalApiC
     {
         if (DeletePresenceStatusException is not null)
         {
-            throw DeletePresenceStatusException;
+            return Task.FromException(DeletePresenceStatusException);
         }
 
         LastDeletePresenceStatusUserId = userId;
@@ -265,7 +265,7 @@ internal sealed class CapturingRealtimeGroupManager : IRealtimeGroupManager
     {
         if (AddToUserGroupException is not null)
         {
-            throw AddToUserGroupException;
+            return Task.FromException(AddToUserGroupException);
         }
 
         AddedToUserGroup.Add((connectionId, userId));
@@ -276,7 +276,7 @@ internal sealed class CapturingRealtimeGroupManager : IRealtimeGroupManager
     {
         if (RemoveFromUserGroupException is not null)
         {
-            throw RemoveFromUserGroupException;
+            return Task.FromException(RemoveFromUserGroupException);
         }
 
         RemovedFromUserGroup.Add((connectionId, userId));
@@ -287,7 +287,7 @@ internal sealed class CapturingRealtimeGroupManager : IRealtimeGroupManager
     {
         if (AddToConversationGroupException is not null)
         {
-            throw AddToConversationGroupException;
+            return Task.FromException(AddToConversationGroupException);
         }
 
         AddedToConversationGroup.Add((connectionId, conversationId));

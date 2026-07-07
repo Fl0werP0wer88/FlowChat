@@ -9,7 +9,8 @@ using Microsoft.Extensions.Logging;
 
 namespace FlowChat.RealtimeService.Application.Features.RealtimeConnection.Commands.RegisterRealtimeConnection;
 
-// Keeps user/conversation group membership, connection registration and presence initialization consistent, and logs structured failure context (user/connection ids) that LoggingPipelineBehaviour cannot see
+// Runs group membership, connection registration and presence initialization in parallel and keeps them consistent on failure, logging structured failure context (user/connection ids) that LoggingPipelineBehaviour cannot see.
+// Compensation is best-effort: if RegisterAsync fails while InitializePresenceStatusAsync happens to succeed in parallel, there is no mutation result to tell whether this was the user's first connection, so the presence status is left as-is rather than risking deleting a status still owned by another active connection.
 public sealed class RegisterRealtimeConnectionCommandHandler(
     IRealtimeGroupManager realtimeGroupManager,
     IRealtimeGroupMembershipRepository realtimeGroupMembershipRepository,
@@ -31,23 +32,20 @@ public sealed class RegisterRealtimeConnectionCommandHandler(
 
     public async Task<FlowChatResult<Unit>> Handle(RegisterRealtimeConnectionCommand request, CancellationToken cancellationToken)
     {
-        var addedToUserGroup = false;
+        var addUserGroupTask = _realtimeGroupManager.AddToUserGroupAsync(request.ConnectionId!, request.UserId, cancellationToken);
+        var joinConversationGroupsTask = JoinConversationGroupsAsync(request.ConnectionId!, request.UserId, cancellationToken);
+        var registerTask = _realtimeConnectionRegistry.RegisterAsync(request.UserId, request.ConnectionId!, cancellationToken);
+        var presenceTask = _presenceInternalApiClient.InitializePresenceStatusAsync(request.UserId, cancellationToken);
+
         try
         {
-            await _realtimeGroupManager.AddToUserGroupAsync(request.ConnectionId!, request.UserId, cancellationToken);
-            addedToUserGroup = true;
-
-            await JoinConversationGroupsAsync(request.ConnectionId!, request.UserId, cancellationToken);
-
-            await _realtimeConnectionRegistry.RegisterAsync(request.UserId, request.ConnectionId!, cancellationToken);
-
-            await _presenceInternalApiClient.InitializePresenceStatusAsync(request.UserId, cancellationToken);
+            await Task.WhenAll(addUserGroupTask, joinConversationGroupsTask, registerTask, presenceTask);
 
             return FlowChatResult<Unit>.Success(Unit.Value);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
-            await CompensateAsync(request, addedToUserGroup);
+            await CompensateAsync(request, addUserGroupTask, registerTask, presenceTask);
             throw;
         }
         catch (Exception exception)
@@ -58,7 +56,7 @@ public sealed class RegisterRealtimeConnectionCommandHandler(
                 request.UserId,
                 request.ConnectionId);
 
-            await CompensateAsync(request, addedToUserGroup);
+            await CompensateAsync(request, addUserGroupTask, registerTask, presenceTask);
 
             return FlowChatResult<Unit>.Failure(DomainError.UnExpected("Failed to register realtime connection."));
         }
@@ -88,13 +86,34 @@ public sealed class RegisterRealtimeConnectionCommandHandler(
         }
     }
 
-    private async Task CompensateAsync(RegisterRealtimeConnectionCommand request, bool addedToUserGroup)
+    private async Task CompensateAsync(
+        RegisterRealtimeConnectionCommand request,
+        Task addUserGroupTask,
+        Task<RealtimeConnectionMutationResult> registerTask,
+        Task presenceTask)
     {
         await _realtimeConnectionRegistry.UnregisterAsync(request.ConnectionId!, CancellationToken.None);
 
-        if (addedToUserGroup)
+        if (addUserGroupTask.IsCompletedSuccessfully)
         {
             await _realtimeGroupManager.RemoveFromUserGroupAsync(request.ConnectionId!, request.UserId, CancellationToken.None);
+        }
+
+        if (presenceTask.IsCompletedSuccessfully
+            && registerTask.IsCompletedSuccessfully
+            && registerTask.Result.IsFirstConnectionForUser)
+        {
+            try
+            {
+                await _presenceInternalApiClient.DeletePresenceStatusAsync(request.UserId, CancellationToken.None);
+            }
+            catch (Exception exception)
+            {
+                _logger.LogWarning(
+                    exception,
+                    "Failed to delete presence status for user {UserId} during compensation.",
+                    request.UserId);
+            }
         }
     }
 }

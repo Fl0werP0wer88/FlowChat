@@ -1,4 +1,5 @@
 using AutoFixture;
+using FlowChat.RealtimeService.Application.Contracts.Infrastructure;
 using FlowChat.RealtimeService.Application.Contracts.Persistence;
 using FlowChat.RealtimeService.Application.Features.RealtimeConnection.Commands.RegisterRealtimeConnection;
 using FlowChat.RealtimeService.Domain.Enums;
@@ -86,6 +87,7 @@ public sealed class RegisterRealtimeConnectionCommandHandlerTests
         result.Error.ErrorType.Should().Be(ErrorType.Unexpected);
         _registry.LastUnregisteredConnectionId.Should().Be("connection-3");
         _groupManager.RemovedFromUserGroup.Should().ContainSingle().Which.Should().Be(("connection-3", userId));
+        _presenceClient.LastDeletePresenceStatusUserId.Should().BeNull();
     }
 
     [Fact]
@@ -118,6 +120,7 @@ public sealed class RegisterRealtimeConnectionCommandHandlerTests
         result.Error.ErrorType.Should().Be(ErrorType.Unexpected);
         _registry.LastUnregisteredConnectionId.Should().Be("connection-4");
         _groupManager.RemovedFromUserGroup.Should().ContainSingle().Which.Should().Be(("connection-4", userId));
+        _presenceClient.LastDeletePresenceStatusUserId.Should().BeNull();
     }
 
     [Fact]
@@ -137,7 +140,7 @@ public sealed class RegisterRealtimeConnectionCommandHandlerTests
     }
 
     [Fact]
-    public async Task Handle_WhenAddingToUserGroupFails_CompensatesByUnregisteringOnlyAndReturnsFailure()
+    public async Task Handle_WhenAddingToUserGroupFails_CompensatesFullyIncludingPresence()
     {
         var userId = _fixture.Create<Guid>();
         _groupManager.AddToUserGroupException = new InvalidOperationException("signalr unavailable");
@@ -150,5 +153,27 @@ public sealed class RegisterRealtimeConnectionCommandHandlerTests
         result.Error.ErrorType.Should().Be(ErrorType.Unexpected);
         _registry.LastUnregisteredConnectionId.Should().Be("connection-5");
         _groupManager.RemovedFromUserGroup.Should().BeEmpty();
+        _presenceClient.LastDeletePresenceStatusUserId.Should().Be(userId);
+    }
+
+    [Fact]
+    public async Task Handle_WhenRegisterSucceedsButNotFirstConnection_DoesNotDeletePresenceOnFailure()
+    {
+        var userId = _fixture.Create<Guid>();
+        _registry.RegisterResult = new RealtimeConnectionMutationResult(
+            userId,
+            "connection-6",
+            2,
+            false,
+            false,
+            DateTimeOffset.UtcNow);
+        _groupManager.AddToUserGroupException = new InvalidOperationException("signalr unavailable");
+
+        var result = await _handler.Handle(
+            new RegisterRealtimeConnectionCommand(userId, "connection-6"),
+            CancellationToken.None);
+
+        result.IsFailure.Should().BeTrue();
+        _presenceClient.LastDeletePresenceStatusUserId.Should().BeNull();
     }
 }
