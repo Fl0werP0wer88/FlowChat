@@ -86,6 +86,7 @@ public sealed class WorkerRealtimeEventRouter(
         await Task.WhenAll(tasks);
     }
 
+    //Review Uprościć.
     private async Task<IReadOnlyCollection<RoutedRecipients>> GetRecipientsByInstanceAsync(
         IReadOnlyCollection<Guid> recipientUserIds,
         CancellationToken cancellationToken)
