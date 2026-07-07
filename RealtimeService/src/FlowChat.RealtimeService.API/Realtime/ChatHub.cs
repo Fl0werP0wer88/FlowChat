@@ -50,23 +50,6 @@ public sealed class ChatHub(
                 Context.ConnectionAborted);
             if (result.IsFailure)
             {
-                // Client-initiated disconnects during registration are expected (e.g. React StrictMode remounts), not real failures.
-                if (Context.ConnectionAborted.IsCancellationRequested)
-                {
-                    _logger.LogWarning(
-                        "Realtime connection {ConnectionId} for user {UserId} was aborted by the client before registration completed.",
-                        Context.ConnectionId,
-                        userId.Value);
-                }
-                else
-                {
-                    _logger.LogError(
-                        "Failed to register realtime connection {ConnectionId} for user {UserId}: {ErrorMessage}",
-                        Context.ConnectionId,
-                        userId.Value,
-                        result.Error.ErrorMessage);
-                }
-
                 await CleanupFailedConnectionAsync(userId.Value, addedToGroup);
                 Context.Abort();
                 return;
