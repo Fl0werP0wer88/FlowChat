@@ -1,11 +1,8 @@
 using System.Reflection;
 using System.Security.Claims;
-using FlowChat.Core.Domain;
 using FlowChat.RealtimeService.Api.Realtime;
-using FlowChat.RealtimeService.Application.Contracts.Persistence;
 using FlowChat.RealtimeService.Application.Features.RealtimeConnection.Commands.RegisterRealtimeConnection;
 using FlowChat.RealtimeService.Application.Features.RealtimeConnection.Commands.UnregisterRealtimeConnection;
-using FlowChat.RealtimeService.Domain.Enums;
 using FlowChat.Shared.Domain;
 using FluentAssertions;
 using MediatR;
@@ -23,8 +20,7 @@ public sealed class ChatHubTests
         var mediator = new CapturingMediator();
         var hub = CreateHub(
             mediator,
-            new TestHubCallerContext("connection-1", new ClaimsPrincipal(new ClaimsIdentity())),
-            new CapturingGroupManager());
+            new TestHubCallerContext("connection-1", new ClaimsPrincipal(new ClaimsIdentity())));
 
         await hub.OnConnectedAsync();
 
@@ -33,70 +29,39 @@ public sealed class ChatHubTests
     }
 
     [Fact]
-    public async Task OnConnectedAsync_WhenUserIdPresent_AddsGroupAndRegistersConnection()
+    public async Task OnConnectedAsync_WhenUserIdPresent_RegistersConnection()
     {
         var userId = Guid.NewGuid();
         var mediator = new CapturingMediator();
-        var groups = new CapturingGroupManager();
-        var hub = CreateHub(mediator, new TestHubCallerContext("connection-1", CreatePrincipal(userId)), groups);
+        var hub = CreateHub(mediator, new TestHubCallerContext("connection-1", CreatePrincipal(userId)));
 
         await hub.OnConnectedAsync();
 
-        groups.AddedConnections.Should().ContainSingle()
-            .Which.Should().Be(("connection-1", GroupNames.ForUser(userId)));
         mediator.LastSentRequest.Should().BeOfType<RegisterRealtimeConnectionCommand>()
             .Which.Should().Be(new RegisterRealtimeConnectionCommand(userId, "connection-1"));
         GetContext(hub).AbortCalled.Should().BeFalse();
     }
 
     [Fact]
-    public async Task OnConnectedAsync_WhenUserHasConversationMemberships_JoinsConversationGroups()
-    {
-        var userId = Guid.NewGuid();
-        var conversationId = Guid.NewGuid();
-        var groups = new CapturingGroupManager();
-        var membershipRepositoryMock = new Mock<IRealtimeGroupMembershipRepository>();
-        membershipRepositoryMock
-            .Setup(x => x.GetByUserIdAsync(userId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync((IReadOnlyList<RealtimeGroupMembershipDto>)
-            [
-                new RealtimeGroupMembershipDto(userId, RealtimeGroupType.Conversation, conversationId, DateTimeOffset.UtcNow)
-            ]);
-
-        var hub = CreateHub(
-            new CapturingMediator(),
-            new TestHubCallerContext("connection-1", CreatePrincipal(userId)),
-            groups,
-            realtimeGroupMembershipRepositoryMock: membershipRepositoryMock);
-
-        await hub.OnConnectedAsync();
-
-        groups.AddedConnections.Should().Contain(("connection-1", GroupNames.ForConversation(conversationId)));
-    }
-
-    [Fact]
-    public async Task OnConnectedAsync_WhenRegisterCommandFails_AbortsConnectionAndRollsBackGroupMembership()
+    public async Task OnConnectedAsync_WhenRegisterCommandFails_AbortsConnection()
     {
         var userId = Guid.NewGuid();
         var mediator = new CapturingMediator
         {
             SendUnitResult = FlowChatResult<Unit>.Failure(DomainError.UnExpected("Failed to register realtime connection."))
         };
-        var groups = new CapturingGroupManager();
-        var hub = CreateHub(mediator, new TestHubCallerContext("connection-1", CreatePrincipal(userId)), groups);
+        var hub = CreateHub(mediator, new TestHubCallerContext("connection-1", CreatePrincipal(userId)));
 
         await hub.OnConnectedAsync();
 
         GetContext(hub).AbortCalled.Should().BeTrue();
-        groups.RemovedConnections.Should().ContainSingle()
-            .Which.Should().Be(("connection-1", GroupNames.ForUser(userId)));
     }
 
     [Fact]
     public async Task OnDisconnectedAsync_UnregistersConnectionByConnectionId()
     {
         var mediator = new CapturingMediator();
-        var hub = CreateHub(mediator, new TestHubCallerContext("connection-9"), new CapturingGroupManager());
+        var hub = CreateHub(mediator, new TestHubCallerContext("connection-9"));
 
         await hub.OnDisconnectedAsync(null);
 
@@ -111,7 +76,7 @@ public sealed class ChatHubTests
         {
             SendUnitResult = FlowChatResult<Unit>.Failure(DomainError.UnExpected("Failed to unregister realtime connection."))
         };
-        var hub = CreateHub(mediator, new TestHubCallerContext("connection-9"), new CapturingGroupManager());
+        var hub = CreateHub(mediator, new TestHubCallerContext("connection-9"));
 
         var act = () => hub.OnDisconnectedAsync(null);
 
@@ -127,33 +92,20 @@ public sealed class ChatHubTests
         {
             SendException = new InvalidOperationException("Unregister handler resolution failed.")
         };
-        var hub = CreateHub(mediator, new TestHubCallerContext("connection-9"), new CapturingGroupManager());
+        var hub = CreateHub(mediator, new TestHubCallerContext("connection-9"));
 
         var act = () => hub.OnDisconnectedAsync(null);
 
         await act.Should().ThrowAsync<InvalidOperationException>();
     }
 
-    private static ChatHub CreateHub(
-        IMediator mediator,
-        TestHubCallerContext context,
-        CapturingGroupManager groups,
-        Mock<IRealtimeGroupMembershipRepository>? realtimeGroupMembershipRepositoryMock = null)
+    private static ChatHub CreateHub(IMediator mediator, TestHubCallerContext context)
     {
         var logger = new Mock<ILogger<ChatHub>>();
 
-        if (realtimeGroupMembershipRepositoryMock is null)
-        {
-            realtimeGroupMembershipRepositoryMock = new Mock<IRealtimeGroupMembershipRepository>();
-            realtimeGroupMembershipRepositoryMock
-                .Setup(x => x.GetByUserIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync((IReadOnlyList<RealtimeGroupMembershipDto>)[]);
-        }
-
-        var hub = new ChatHub(logger.Object, mediator, realtimeGroupMembershipRepositoryMock.Object);
+        var hub = new ChatHub(logger.Object, mediator);
 
         SetHubProperty(hub, nameof(Hub.Context), context);
-        SetHubProperty(hub, nameof(Hub.Groups), groups);
 
         return hub;
     }

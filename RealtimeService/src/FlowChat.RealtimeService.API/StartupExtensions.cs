@@ -52,6 +52,7 @@ public static class StartupExtensions
         builder.Services.AddApiInfrastructureServices(builder.Configuration);
         builder.Services.AddApiPersistenceServices(builder.Configuration);
         builder.Services.AddScoped<IRealtimeClientDispatcher, SignalRRealtimeClientDispatcher>();
+        builder.Services.AddScoped<IRealtimeGroupManager, SignalRRealtimeGroupManager>();
         builder.AddFlowChatOpenTelemetry(typeof(ApiApplicationServiceRegistration).Assembly);
 
         builder.Services.AddFlowChatJwtAuthentication(

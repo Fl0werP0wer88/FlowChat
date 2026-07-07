@@ -251,20 +251,46 @@ internal sealed class CapturingPresenceInternalApiClient : IPresenceInternalApiC
     public Task RefreshPresenceStatusAsync(IReadOnlyCollection<Guid> userIds, CancellationToken cancellationToken) => Task.CompletedTask;
 }
 
-internal sealed class CapturingGroupManager : IGroupManager
+internal sealed class CapturingRealtimeGroupManager : IRealtimeGroupManager
 {
-    public List<(string ConnectionId, string GroupName)> AddedConnections { get; } = [];
-    public List<(string ConnectionId, string GroupName)> RemovedConnections { get; } = [];
+    public List<(string ConnectionId, Guid UserId)> AddedToUserGroup { get; } = [];
+    public List<(string ConnectionId, Guid UserId)> RemovedFromUserGroup { get; } = [];
+    public List<(string ConnectionId, Guid ConversationId)> AddedToConversationGroup { get; } = [];
 
-    public Task AddToGroupAsync(string connectionId, string groupName, CancellationToken cancellationToken = default)
+    public Exception? AddToUserGroupException { get; set; }
+    public Exception? RemoveFromUserGroupException { get; set; }
+    public Exception? AddToConversationGroupException { get; set; }
+
+    public Task AddToUserGroupAsync(string connectionId, Guid userId, CancellationToken cancellationToken)
     {
-        AddedConnections.Add((connectionId, groupName));
+        if (AddToUserGroupException is not null)
+        {
+            throw AddToUserGroupException;
+        }
+
+        AddedToUserGroup.Add((connectionId, userId));
         return Task.CompletedTask;
     }
 
-    public Task RemoveFromGroupAsync(string connectionId, string groupName, CancellationToken cancellationToken = default)
+    public Task RemoveFromUserGroupAsync(string connectionId, Guid userId, CancellationToken cancellationToken)
     {
-        RemovedConnections.Add((connectionId, groupName));
+        if (RemoveFromUserGroupException is not null)
+        {
+            throw RemoveFromUserGroupException;
+        }
+
+        RemovedFromUserGroup.Add((connectionId, userId));
+        return Task.CompletedTask;
+    }
+
+    public Task AddToConversationGroupAsync(string connectionId, Guid conversationId, CancellationToken cancellationToken)
+    {
+        if (AddToConversationGroupException is not null)
+        {
+            throw AddToConversationGroupException;
+        }
+
+        AddedToConversationGroup.Add((connectionId, conversationId));
         return Task.CompletedTask;
     }
 }
