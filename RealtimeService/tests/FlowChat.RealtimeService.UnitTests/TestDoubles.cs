@@ -219,6 +219,27 @@ internal sealed class CapturingRealtimeConnectionRegistry : IRealtimeConnectionR
     }
 }
 
+internal sealed class CapturingPresenceInternalApiClient : IPresenceInternalApiClient
+{
+    public Guid? LastDeletePresenceStatusUserId { get; private set; }
+    public Exception? DeletePresenceStatusException { get; set; }
+
+    public Task InitializePresenceStatusAsync(Guid userId, CancellationToken cancellationToken) => Task.CompletedTask;
+
+    public Task DeletePresenceStatusAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        if (DeletePresenceStatusException is not null)
+        {
+            throw DeletePresenceStatusException;
+        }
+
+        LastDeletePresenceStatusUserId = userId;
+        return Task.CompletedTask;
+    }
+
+    public Task RefreshPresenceStatusAsync(IReadOnlyCollection<Guid> userIds, CancellationToken cancellationToken) => Task.CompletedTask;
+}
+
 internal sealed class CapturingGroupManager : IGroupManager
 {
     public List<(string ConnectionId, string GroupName)> AddedConnections { get; } = [];

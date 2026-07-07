@@ -1,4 +1,3 @@
-using FlowChat.RealtimeService.Application.Features.RealtimeConnection.Commands;
 using FlowChat.RealtimeService.Application.Features.Conversation.Commands.RouteGroupConversationChanged;
 using FlowChat.RealtimeService.Application.Features.Message.Commands.RouteMessage;
 using FlowChat.RealtimeService.Application.Features.Presence.Commands.RoutePresenceChange;
@@ -23,8 +22,6 @@ public static class ApiApplicationServiceRegistration
             cfg.RegisterServicesFromAssemblies(applicationAssembly);
             cfg.AddFlowChatBehaviors();
         });
-        services.AddScoped<IRealtimeConnectionCommandOrchestrator, RealtimeConnectionCommandOrchestrator>();
-
         return services;
     }
 }
