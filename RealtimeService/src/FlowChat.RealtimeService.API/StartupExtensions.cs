@@ -8,6 +8,7 @@ using FlowChat.RealtimeService.Redis.Configuration.Settings;
 using FlowChat.Shared.API;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
 
 namespace FlowChat.RealtimeService.Api;
@@ -72,7 +73,8 @@ public static class StartupExtensions
                     }
                 };
             });
-        builder.Services.AddSignalR()
+        builder.Services.AddSingleton<ChatHubExceptionFilter>();
+        builder.Services.AddSignalR(options => options.AddFilter<ChatHubExceptionFilter>())
             .AddJsonProtocol(options =>
                 options.PayloadSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
         builder.Services.AddControllers()

@@ -170,6 +170,20 @@ public sealed class ChatHubTests
             .Which.Should().Be(new UnregisterRealtimeConnectionCommand("connection-9"));
     }
 
+    [Fact]
+    public async Task OnDisconnectedAsync_WhenMediatorThrows_PropagatesException()
+    {
+        var mediator = new CapturingMediator
+        {
+            SendException = new InvalidOperationException("Unregister handler resolution failed.")
+        };
+        var hub = CreateHub(mediator, new TestHubCallerContext("connection-9"), new CapturingGroupManager());
+
+        var act = () => hub.OnDisconnectedAsync(null);
+
+        await act.Should().ThrowAsync<InvalidOperationException>();
+    }
+
     private static ChatHub CreateHub(
         IMediator mediator,
         TestHubCallerContext context,

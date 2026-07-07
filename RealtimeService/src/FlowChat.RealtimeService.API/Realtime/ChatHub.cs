@@ -93,23 +93,14 @@ public sealed class ChatHub(
     {
         try
         {
-            var result = await _mediator.Send(
+            await _mediator.Send(
                 new UnregisterRealtimeConnectionCommand(Context.ConnectionId),
                 CancellationToken.None);
-            if (result.IsFailure)
-            {
-                _logger.LogError(
-                    "Failed to unregister realtime connection {ConnectionId}: {ErrorMessage}",
-                    Context.ConnectionId,
-                    result.Error.ErrorMessage);
-            }
         }
-        catch (Exception unregisterException)
+        finally
         {
-            _logger.LogError(unregisterException, "Failed to unregister realtime connection {ConnectionId}.", Context.ConnectionId);
+            await base.OnDisconnectedAsync(exception);
         }
-
-        await base.OnDisconnectedAsync(exception);
     }
 
     private async Task JoinConversationGroupsAsync(Guid userId)
