@@ -17,6 +17,7 @@ public sealed class ApiControllerBaseTests
         { DomainError.Conflict("Conflict detail"), StatusCodes.Status409Conflict },
         { DomainError.NotFound("Not found detail"), StatusCodes.Status404NotFound },
         { DomainError.BadRequest("Bad request detail"), StatusCodes.Status400BadRequest },
+        { DomainError.OperationCanceled("Operation canceled detail"), StatusCodes.Status400BadRequest },
         { DomainError.Validation("Validation detail"), StatusCodes.Status400BadRequest },
         { DomainError.Unauthorized("Unauthorized detail"), StatusCodes.Status401Unauthorized },
         { DomainError.UnExpected("Unexpected detail"), StatusCodes.Status500InternalServerError }

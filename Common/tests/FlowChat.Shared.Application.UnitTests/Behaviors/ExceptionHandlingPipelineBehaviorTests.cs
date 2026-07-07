@@ -160,7 +160,7 @@ public sealed class ExceptionHandlingPipelineBehaviorTests
     }
 
     [Fact]
-    public async Task Handle_WhenOperationCanceledExceptionIsThrown_ReturnsBadRequestFailure()
+    public async Task Handle_WhenOperationCanceledExceptionIsThrown_ReturnsOperationCanceledFailure()
     {
         var behavior = new ExceptionHandlingPipelineBehavior<TestRequest, FlowChatResult<Guid>>();
         var exception = new OperationCanceledException("The request timed out.");
@@ -172,7 +172,7 @@ public sealed class ExceptionHandlingPipelineBehaviorTests
             CancellationToken.None);
 
         result.IsFailure.Should().BeTrue();
-        result.Error.ErrorType.Should().Be(ErrorType.BadRequest);
+        result.Error.ErrorType.Should().Be(ErrorType.OperationCanceled);
         result.Error.ErrorMessage.Should().Be("The request was canceled.");
 
         activity.Status.Should().Be(ActivityStatusCode.Error);

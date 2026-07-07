@@ -145,7 +145,7 @@ public sealed class ExceptionHandlingPipelineBehavior<TRequest, TResponse>
             Activity.Current?.AddException(exception);
             Activity.Current?.SetTag("error.type", "canceled");
 
-            var domainError = DomainError.BadRequest("The request was canceled.");
+            var domainError = DomainError.OperationCanceled();
             return TResponse.Failure(domainError);
         }
         catch (Exception exception)
