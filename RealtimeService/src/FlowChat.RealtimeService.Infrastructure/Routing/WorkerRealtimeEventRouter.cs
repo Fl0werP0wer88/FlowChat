@@ -35,13 +35,12 @@ public sealed class WorkerRealtimeEventRouter(
                 cancellationToken),
             cancellationToken);
 
-    //Review: to chyba nie potrzebuje participantUserIds mielismy wywalic to z notyfikacji GroupConversationChanged
     public Task RouteGroupConversationChangedAsync(GroupConversationChangedParam notification, CancellationToken cancellationToken) =>
-        RouteAsync(
+        BroadcastAsync(
             notification.ParticipantUserIds,
-            (instanceUrl, userIds) => _realtimeInstanceInternalApiClient.PublishGroupConversationChangedAsync(
+            instanceUrl => _realtimeInstanceInternalApiClient.PublishGroupConversationChangedAsync(
                 instanceUrl,
-                notification with { ParticipantUserIds = userIds },
+                notification,
                 cancellationToken),
             cancellationToken);
 
@@ -86,7 +85,45 @@ public sealed class WorkerRealtimeEventRouter(
         await Task.WhenAll(tasks);
     }
 
-    //Review Uprościć.
+    private async Task BroadcastAsync(
+        IReadOnlyCollection<Guid> recipientUserIds,
+        Func<Uri, Task> publishAsync,
+        CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var instanceIds = await GetInstanceIdsAsync(recipientUserIds, cancellationToken);
+        if (instanceIds.Count == 0)
+        {
+            return;
+        }
+
+        var tasks = instanceIds.Select(instanceId => publishAsync(_instanceAddressResolver.Resolve(instanceId)));
+        await Task.WhenAll(tasks);
+    }
+
+    private async Task<IReadOnlyCollection<string>> GetInstanceIdsAsync(
+        IReadOnlyCollection<Guid> recipientUserIds,
+        CancellationToken cancellationToken)
+    {
+        var filteredRecipientIds = recipientUserIds
+            .Where(static userId => userId != Guid.Empty)
+            .Distinct()
+            .ToArray();
+        if (filteredRecipientIds.Length == 0)
+        {
+            return [];
+        }
+
+        var instanceIdsByUser = await _userInstanceRoutingReader.GetInstanceIdsByUserAsync(filteredRecipientIds, cancellationToken);
+
+        return instanceIdsByUser.Values
+            .SelectMany(static instanceIds => instanceIds)
+            .Where(static instanceId => !string.IsNullOrWhiteSpace(instanceId))
+            .Distinct(StringComparer.Ordinal)
+            .ToArray();
+    }
+
     private async Task<IReadOnlyCollection<RoutedRecipients>> GetRecipientsByInstanceAsync(
         IReadOnlyCollection<Guid> recipientUserIds,
         CancellationToken cancellationToken)
