@@ -61,8 +61,7 @@ public sealed class RealtimeInstanceInternalApiClient(HttpClient httpClient)
                 notification.ConversationId,
                 notification.Type,
                 notification.Name,
-                notification.CreatedByUserId,
-                notification.ParticipantUserIds),
+                notification.CreatedByUserId),
             cancellationToken);
 
     public Task PublishGroupConversationParticipantsAddedAsync(
@@ -122,8 +121,7 @@ public sealed class RealtimeInstanceInternalApiClient(HttpClient httpClient)
         Guid ConversationId,
         int Type,
         string? Name,
-        Guid CreatedByUserId,
-        IReadOnlyCollection<Guid> ParticipantUserIds);
+        Guid CreatedByUserId);
 
     private sealed record PublishGroupConversationParticipantsAddedRequest(
         Guid ConversationId,
