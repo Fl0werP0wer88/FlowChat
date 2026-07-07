@@ -3,6 +3,7 @@ using FlowChat.RealtimeService.Redis.RealtimeConnections;
 
 namespace FlowChat.RealtimeService.Infrastructure.Routing;
 
+//ToDo: Tutaj brakuje exactly one delivery. Rozważyć wprowadzenie  może topic per instance. Może też jednak cos pokombinowac z Redis fan out?
 public sealed class WorkerRealtimeEventRouter(
     IUserInstanceRoutingReader userInstanceRoutingReader,
     IRealtimeInstanceAddressResolver instanceAddressResolver,
