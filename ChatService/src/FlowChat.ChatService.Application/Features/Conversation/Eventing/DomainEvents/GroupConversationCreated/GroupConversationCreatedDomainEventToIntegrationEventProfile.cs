@@ -10,7 +10,6 @@ public sealed class GroupConversationCreatedDomainEventToIntegrationEventProfile
     {
         CreateMap<GroupConversationCreatedDomainEvent, GroupConversationChangedIntegrationEvent>()
             .ForMember(destination => destination.Type, options => options.MapFrom(source => (int) source.Type))
-            .ForMember(destination => destination.CreatedByUserId, options => options.MapFrom(source => source.CreatedByUserId.Value))
-            .ForMember(destination => destination.ParticipantUserIds, options => options.MapFrom(source => source.ParticipantUserIds.Select(id => id.Value).ToList()));
+            .ForMember(destination => destination.CreatedByUserId, options => options.MapFrom(source => source.CreatedByUserId.Value));
     }
 }

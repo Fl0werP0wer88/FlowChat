@@ -47,7 +47,10 @@ public sealed class GroupConversation : Conversation
             conversation.Id,
             conversation.Type,
             conversation.Name,
-            conversation.CreatedByUserId,
+            conversation.CreatedByUserId));
+
+        conversation.AddDomainEvent(new GroupConversationParticipantsAddedDomainEvent(
+            conversation.Id,
             [.. conversation.Participants.Select(p => p.UserId)]));
 
         return conversation;
@@ -84,6 +87,8 @@ public sealed class GroupConversation : Conversation
                 avatarUrl,
                 lastReadMessageSequenceNum));
         }
+
+        AddDomainEvent(new GroupConversationParticipantsAddedDomainEvent(Id, userIdsToAdd));
     }
 
     public void RemoveParticipants(IEnumerable<Id<UserProfileMarker>> participantUserIds)
@@ -104,5 +109,7 @@ public sealed class GroupConversation : Conversation
             throw new InvalidOperationException(MinimumParticipantsErrorMessage);
 
         _participants.RemoveAll(p => userIdsToRemove.Contains(p.UserId));
+
+        AddDomainEvent(new GroupConversationParticipantsRemovedDomainEvent(Id, userIdsToRemove));
     }
 }

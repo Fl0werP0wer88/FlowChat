@@ -47,23 +47,28 @@ public sealed class SignalRRealtimeClientDispatcher(IHubContext<ChatHub, IRealti
         });
     }
 
-    public Task GroupConversationChangedAsync(GroupConversationChangedParam notification, CancellationToken cancellationToken)
-    {
-        var groups = GetRecipientGroups(notification.ParticipantUserIds);
-        if (groups.Length == 0)
-        {
-            return Task.CompletedTask;
-        }
-
-        return _hubContext.Clients.Groups(groups).GroupConversationChanged(new GroupConversationChangedNotification
+    public Task GroupConversationChangedAsync(GroupConversationChangedParam notification, CancellationToken cancellationToken) =>
+        _hubContext.Clients.Group(GroupNames.ForConversation(notification.ConversationId)).GroupConversationChanged(new GroupConversationChangedNotification
         {
             ConversationId = notification.ConversationId,
             Type = notification.Type,
             Name = notification.Name,
-            CreatedByUserId = notification.CreatedByUserId,
+            CreatedByUserId = notification.CreatedByUserId
+        });
+
+    public Task GroupConversationParticipantsAddedAsync(GroupConversationParticipantsAddedParam notification, CancellationToken cancellationToken) =>
+        _hubContext.Clients.Group(GroupNames.ForConversation(notification.ConversationId)).GroupConversationParticipantsAdded(new GroupConversationParticipantsAddedNotification
+        {
+            ConversationId = notification.ConversationId,
             ParticipantUserIds = notification.ParticipantUserIds
         });
-    }
+
+    public Task GroupConversationParticipantsRemovedAsync(GroupConversationParticipantsRemovedParam notification, CancellationToken cancellationToken) =>
+        _hubContext.Clients.Group(GroupNames.ForConversation(notification.ConversationId)).GroupConversationParticipantsRemoved(new GroupConversationParticipantsRemovedNotification
+        {
+            ConversationId = notification.ConversationId,
+            ParticipantUserIds = notification.ParticipantUserIds
+        });
 
     private static string[] GetRecipientGroups(IReadOnlyCollection<Guid> recipientUserIds) =>
         recipientUserIds

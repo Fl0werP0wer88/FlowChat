@@ -126,6 +126,21 @@ public sealed class RealtimeConnectionRedisRepository(
             .KeyExpireAsync(RedisKeys.GetUserConnectionsKey(_settings.KeyPrefix, userId), _settings.ConnectionTtl);
     }
 
+    public async Task<IReadOnlyCollection<string>> GetConnectionIdsByUserIdAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        ArgumentOutOfRangeException.ThrowIfEqual(userId, Guid.Empty);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var members = await _connectionMultiplexer.GetDatabase()
+            .SetMembersAsync(RedisKeys.GetUserConnectionsKey(_settings.KeyPrefix, userId));
+
+        return members
+            .Select(static value => value.ToString())
+            .Where(static connectionId => !string.IsNullOrWhiteSpace(connectionId))
+            .Distinct(StringComparer.Ordinal)
+            .ToArray();
+    }
+
     public async Task<IReadOnlyDictionary<Guid, IReadOnlyCollection<string>>> GetInstanceIdsByUserAsync(
         IReadOnlyCollection<Guid> userIds,
         CancellationToken cancellationToken)

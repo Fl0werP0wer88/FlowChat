@@ -17,6 +17,17 @@ public sealed class RealtimeGroupMembershipReadModelRepository(AppDbContext dbCo
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<IReadOnlyList<Guid>> GetUserIdsByResourceIdAsync(
+        RealtimeGroupType groupType,
+        Guid resourceId,
+        CancellationToken cancellationToken = default)
+    {
+        return await dbContext.RealtimeGroupMembershipReadModels
+            .Where(x => x.GroupType == groupType && x.ResourceId == resourceId)
+            .Select(x => x.UserId)
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task AddAsync(
         Guid userId,
         RealtimeGroupType groupType,

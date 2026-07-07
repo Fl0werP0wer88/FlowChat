@@ -36,7 +36,6 @@ public sealed class GroupConversationChangedSubscriberTests
         RouteGroupConversationChangedCommand? capturedCommand = null;
         var conversationId = _fixture.Create<Guid>();
         var createdByUserId = _fixture.Create<Guid>();
-        var participantUserId = _fixture.Create<Guid>();
 
         _mediatorMock
             .Setup(x => x.Send(It.IsAny<RouteGroupConversationChangedCommand>(), It.IsAny<CancellationToken>()))
@@ -50,8 +49,7 @@ public sealed class GroupConversationChangedSubscriberTests
                 ConversationId = conversationId,
                 Type = 2,
                 Name = "Dev Team",
-                CreatedByUserId = createdByUserId,
-                ParticipantUserIds = [participantUserId, participantUserId, Guid.Empty]
+                CreatedByUserId = createdByUserId
             }.ToInboundEnvelope(),
             CancellationToken.None);
 
@@ -60,7 +58,6 @@ public sealed class GroupConversationChangedSubscriberTests
         capturedCommand.Type.Should().Be(2);
         capturedCommand.Name.Should().Be("Dev Team");
         capturedCommand.CreatedByUserId.Should().Be(createdByUserId);
-        capturedCommand.ParticipantUserIds.Should().ContainSingle().Which.Should().Be(participantUserId);
     }
 
     [Fact]
@@ -83,7 +80,6 @@ public sealed class GroupConversationChangedSubscriberTests
         {
             ConversationId = _fixture.Create<Guid>(),
             Type = 1,
-            CreatedByUserId = _fixture.Create<Guid>(),
-            ParticipantUserIds = [_fixture.Create<Guid>()]
+            CreatedByUserId = _fixture.Create<Guid>()
         };
 }

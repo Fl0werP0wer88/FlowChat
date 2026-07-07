@@ -9,12 +9,10 @@ public sealed class GroupConversationCreatedDomainEvent(
     ConversationType type,
     string? name,
     Id<UserProfileMarker> createdByUserId,
-    IReadOnlyCollection<Id<UserProfileMarker>> participantUserIds,
     UtcDateTimeOffset? occurredOnUtc = null) : BaseConversationDomainEvent(aggregateId, occurredOnUtc)
 {
     public Guid ConversationId { get; } = aggregateId.Value;
     public ConversationType Type { get; } = type;
     public string? Name { get; } = name;
     public Id<UserProfileMarker> CreatedByUserId { get; } = createdByUserId;
-    public IReadOnlyCollection<Id<UserProfileMarker>> ParticipantUserIds { get; } = participantUserIds;
 }

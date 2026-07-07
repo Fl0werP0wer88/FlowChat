@@ -18,11 +18,7 @@ public sealed class GroupConversationChangedSubscriber(
             message.ConversationId,
             message.Type,
             message.Name,
-            message.CreatedByUserId,
-            (message.ParticipantUserIds ?? [])
-                .Where(userId => userId != Guid.Empty)
-                .Distinct()
-                .ToArray());
+            message.CreatedByUserId);
 
         var result = await mediator.Send(command, cancellationToken);
 

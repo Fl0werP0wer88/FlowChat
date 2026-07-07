@@ -6,5 +6,4 @@ public sealed record GroupConversationChangedIntegrationEvent : IntegrationEvent
     public int Type { get; init; }
     public string? Name { get; init; }
     public Guid CreatedByUserId { get; init; }
-    public IReadOnlyCollection<Guid> ParticipantUserIds { get; init; } = [];
 }

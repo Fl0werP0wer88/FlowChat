@@ -34,10 +34,29 @@ public sealed class WorkerRealtimeEventRouter(
                 cancellationToken),
             cancellationToken);
 
+    //Review: to chyba nie potrzebuje participantUserIds mielismy wywalic to z notyfikacji GroupConversationChanged
     public Task RouteGroupConversationChangedAsync(GroupConversationChangedParam notification, CancellationToken cancellationToken) =>
         RouteAsync(
             notification.ParticipantUserIds,
             (instanceUrl, userIds) => _realtimeInstanceInternalApiClient.PublishGroupConversationChangedAsync(
+                instanceUrl,
+                notification with { ParticipantUserIds = userIds },
+                cancellationToken),
+            cancellationToken);
+
+    public Task RouteGroupConversationParticipantsAddedAsync(GroupConversationParticipantsAddedParam notification, CancellationToken cancellationToken) =>
+        RouteAsync(
+            notification.ParticipantUserIds,
+            (instanceUrl, userIds) => _realtimeInstanceInternalApiClient.PublishGroupConversationParticipantsAddedAsync(
+                instanceUrl,
+                notification with { ParticipantUserIds = userIds },
+                cancellationToken),
+            cancellationToken);
+
+    public Task RouteGroupConversationParticipantsRemovedAsync(GroupConversationParticipantsRemovedParam notification, CancellationToken cancellationToken) =>
+        RouteAsync(
+            notification.ParticipantUserIds,
+            (instanceUrl, userIds) => _realtimeInstanceInternalApiClient.PublishGroupConversationParticipantsRemovedAsync(
                 instanceUrl,
                 notification with { ParticipantUserIds = userIds },
                 cancellationToken),

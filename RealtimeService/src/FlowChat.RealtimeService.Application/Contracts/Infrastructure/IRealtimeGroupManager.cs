@@ -7,4 +7,6 @@ public interface IRealtimeGroupManager
     Task RemoveFromUserGroupAsync(string connectionId, Guid userId, CancellationToken cancellationToken);
 
     Task AddToConversationGroupAsync(string connectionId, Guid conversationId, CancellationToken cancellationToken);
+
+    Task RemoveFromConversationGroupAsync(string connectionId, Guid conversationId, CancellationToken cancellationToken);
 }

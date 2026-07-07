@@ -68,6 +68,9 @@ internal sealed class RealtimeConnectionRegistry(
         }
     }
 
+    public Task<IReadOnlyCollection<string>> GetConnectionIdsByUserIdAsync(Guid userId, CancellationToken cancellationToken) =>
+        _realtimeConnectionRedisRepository.GetConnectionIdsByUserIdAsync(userId, cancellationToken);
+
     public async Task RefreshAsync(IReadOnlyCollection<RealtimeConnectionRefreshEntry> connections, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -76,6 +79,7 @@ internal sealed class RealtimeConnectionRegistry(
             return;
         }
 
+        //Review: to jest bardzo nieefektywne, bo dla kazdego connectionId robimy osobne zapytanie do redis. Lepiej by bylo zrobic to w jednym batchu (jest chyba metoda CreateBatch).
         var activeConnections = connections
             .Where(static connection => connection.UserId != Guid.Empty && !string.IsNullOrWhiteSpace(connection.ConnectionId))
             .DistinctBy(static connection => connection.ConnectionId)

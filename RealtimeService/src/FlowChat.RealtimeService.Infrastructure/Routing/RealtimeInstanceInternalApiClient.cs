@@ -12,6 +12,8 @@ public sealed class RealtimeInstanceInternalApiClient(HttpClient httpClient)
     private const string MessageReceivedPath = "/internal/realtime/messages/direct";
     private const string PresenceChangedPath = "/internal/realtime/presence/direct";
     private const string GroupConversationChangedPath = "/internal/realtime/group-conversations/changed/direct";
+    private const string GroupConversationParticipantsAddedPath = "/internal/realtime/group-conversations/participants-added/direct";
+    private const string GroupConversationParticipantsRemovedPath = "/internal/realtime/group-conversations/participants-removed/direct";
 
     protected override string ClientDisplayName => "Realtime API";
 
@@ -63,6 +65,30 @@ public sealed class RealtimeInstanceInternalApiClient(HttpClient httpClient)
                 notification.ParticipantUserIds),
             cancellationToken);
 
+    public Task PublishGroupConversationParticipantsAddedAsync(
+        Uri baseAddress,
+        GroupConversationParticipantsAddedParam notification,
+        CancellationToken cancellationToken) =>
+        PostAsync(
+            baseAddress,
+            GroupConversationParticipantsAddedPath,
+            new PublishGroupConversationParticipantsAddedRequest(
+                notification.ConversationId,
+                notification.ParticipantUserIds),
+            cancellationToken);
+
+    public Task PublishGroupConversationParticipantsRemovedAsync(
+        Uri baseAddress,
+        GroupConversationParticipantsRemovedParam notification,
+        CancellationToken cancellationToken) =>
+        PostAsync(
+            baseAddress,
+            GroupConversationParticipantsRemovedPath,
+            new PublishGroupConversationParticipantsRemovedRequest(
+                notification.ConversationId,
+                notification.ParticipantUserIds),
+            cancellationToken);
+
     private async Task PostAsync<TRequest>(Uri baseAddress, string path, TRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(baseAddress);
@@ -97,5 +123,13 @@ public sealed class RealtimeInstanceInternalApiClient(HttpClient httpClient)
         int Type,
         string? Name,
         Guid CreatedByUserId,
+        IReadOnlyCollection<Guid> ParticipantUserIds);
+
+    private sealed record PublishGroupConversationParticipantsAddedRequest(
+        Guid ConversationId,
+        IReadOnlyCollection<Guid> ParticipantUserIds);
+
+    private sealed record PublishGroupConversationParticipantsRemovedRequest(
+        Guid ConversationId,
         IReadOnlyCollection<Guid> ParticipantUserIds);
 }

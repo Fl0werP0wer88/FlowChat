@@ -1,4 +1,5 @@
 using FlowChat.ChatService.Domain.Entities.Conversation;
+using FlowChat.ChatService.Domain.Entities.Conversation.Events;
 using FlowChat.Shared.Domain;
 using FluentAssertions;
 using ConversationAggregate = FlowChat.ChatService.Domain.Entities.Conversation.Conversation;
@@ -84,7 +85,67 @@ public sealed class ConversationTests
     }
 
     [Fact]
-    public void RemoveParticipants_WhenParticipantsExist_RemovesThem()
+    public void CreateGroupConversation_WhenCreated_RaisesCreatedAndParticipantsAddedDomainEvents()
+    {
+        var creatorId = Id<UserProfileMarker>.New();
+        var memberId = Id<UserProfileMarker>.New();
+
+        var conversation = GroupConversation.Create(
+            Id<ConversationAggregate>.New(),
+            creatorId,
+            [creatorId, memberId],
+            "Dev Team");
+
+        conversation.DomainEvents.OfType<GroupConversationCreatedDomainEvent>().Should().ContainSingle();
+        conversation.DomainEvents.OfType<GroupConversationParticipantsAddedDomainEvent>().Should().ContainSingle()
+            .Which.ParticipantUserIds.Should().BeEquivalentTo([creatorId, memberId]);
+    }
+
+    [Fact]
+    public void AddParticipants_WhenParticipantsAdded_RaisesParticipantsAddedDomainEventWithOnlyNewParticipants()
+    {
+        var conversation = CreateGroupConversation();
+        var newMemberId = Id<UserProfileMarker>.New();
+
+        conversation.AddParticipants([newMemberId]);
+
+        conversation.DomainEvents.OfType<GroupConversationParticipantsAddedDomainEvent>().Should().HaveCount(2);
+        conversation.DomainEvents.OfType<GroupConversationParticipantsAddedDomainEvent>().Last()
+            .ParticipantUserIds.Should().ContainSingle().Which.Should().Be(newMemberId);
+    }
+
+    [Fact]
+    public void RemoveParticipants_WhenParticipantsExist_RaisesParticipantsRemovedDomainEvent()
+    {
+        var creatorId = Id<UserProfileMarker>.New();
+        var memberId = Id<UserProfileMarker>.New();
+        var removedMemberId = Id<UserProfileMarker>.New();
+        var conversation = GroupConversation.Create(
+            Id<ConversationAggregate>.New(),
+            creatorId,
+            [creatorId, memberId, removedMemberId],
+            "Dev Team");
+
+        conversation.RemoveParticipants([removedMemberId]);
+
+        conversation.DomainEvents.OfType<GroupConversationParticipantsRemovedDomainEvent>().Should().ContainSingle()
+            .Which.ParticipantUserIds.Should().ContainSingle().Which.Should().Be(removedMemberId);
+    }
+
+    [Fact]
+    public void RemoveParticipants_WhenUserIsNotParticipant_RaisesNoParticipantsRemovedDomainEvent()
+    {
+        var conversation = CreateGroupConversation();
+        var nonParticipantId = Id<UserProfileMarker>.New();
+
+        var act = () => conversation.RemoveParticipants([nonParticipantId]);
+
+        act.Should().Throw<InvalidOperationException>();
+        conversation.DomainEvents.OfType<GroupConversationParticipantsRemovedDomainEvent>().Should().BeEmpty();
+    }
+
+    [Fact]
+    public void RemoveParticipants_WhenParticipants_RemovesThem()
     {
         var creatorId = Id<UserProfileMarker>.New();
         var memberId = Id<UserProfileMarker>.New();

@@ -19,6 +19,8 @@ internal sealed class CapturingRealtimeClientDispatcher : IRealtimeClientDispatc
     public ChatMessageParam? LastMessageNotification { get; private set; }
     public PresenceChangedParam? LastPresenceNotification { get; private set; }
     public GroupConversationChangedParam? LastGroupConversationChangedNotification { get; private set; }
+    public GroupConversationParticipantsAddedParam? LastGroupConversationParticipantsAddedNotification { get; private set; }
+    public GroupConversationParticipantsRemovedParam? LastGroupConversationParticipantsRemovedNotification { get; private set; }
 
     public Task MessageReceivedAsync(ChatMessageParam notification, CancellationToken cancellationToken)
     {
@@ -37,6 +39,18 @@ internal sealed class CapturingRealtimeClientDispatcher : IRealtimeClientDispatc
         LastGroupConversationChangedNotification = notification;
         return Task.CompletedTask;
     }
+
+    public Task GroupConversationParticipantsAddedAsync(GroupConversationParticipantsAddedParam notification, CancellationToken cancellationToken)
+    {
+        LastGroupConversationParticipantsAddedNotification = notification;
+        return Task.CompletedTask;
+    }
+
+    public Task GroupConversationParticipantsRemovedAsync(GroupConversationParticipantsRemovedParam notification, CancellationToken cancellationToken)
+    {
+        LastGroupConversationParticipantsRemovedNotification = notification;
+        return Task.CompletedTask;
+    }
 }
 
 internal sealed class CapturingRealtimeEventRouter : IRealtimeEventRouter
@@ -44,6 +58,8 @@ internal sealed class CapturingRealtimeEventRouter : IRealtimeEventRouter
     public ChatMessageParam? LastMessageNotification { get; private set; }
     public PresenceChangedParam? LastPresenceNotification { get; private set; }
     public GroupConversationChangedParam? LastGroupConversationChangedNotification { get; private set; }
+    public GroupConversationParticipantsAddedParam? LastGroupConversationParticipantsAddedNotification { get; private set; }
+    public GroupConversationParticipantsRemovedParam? LastGroupConversationParticipantsRemovedNotification { get; private set; }
 
     public Task RouteMessageAsync(ChatMessageParam notification, CancellationToken cancellationToken)
     {
@@ -60,6 +76,18 @@ internal sealed class CapturingRealtimeEventRouter : IRealtimeEventRouter
     public Task RouteGroupConversationChangedAsync(GroupConversationChangedParam notification, CancellationToken cancellationToken)
     {
         LastGroupConversationChangedNotification = notification;
+        return Task.CompletedTask;
+    }
+
+    public Task RouteGroupConversationParticipantsAddedAsync(GroupConversationParticipantsAddedParam notification, CancellationToken cancellationToken)
+    {
+        LastGroupConversationParticipantsAddedNotification = notification;
+        return Task.CompletedTask;
+    }
+
+    public Task RouteGroupConversationParticipantsRemovedAsync(GroupConversationParticipantsRemovedParam notification, CancellationToken cancellationToken)
+    {
+        LastGroupConversationParticipantsRemovedNotification = notification;
         return Task.CompletedTask;
     }
 }
@@ -179,6 +207,7 @@ internal sealed class CapturingRealtimeConnectionRegistry : IRealtimeConnectionR
     public IReadOnlyCollection<RealtimeConnectionRefreshEntry>? LastRefreshedConnections { get; private set; }
     public RealtimeConnectionMutationResult? RegisterResult { get; set; }
     public RealtimeConnectionMutationResult? UnregisterResult { get; set; }
+    public Dictionary<Guid, IReadOnlyCollection<string>> ConnectionIdsByUserId { get; } = [];
 
     public Exception? RegisterException { get; set; }
     public Exception? UnregisterException { get; set; }
@@ -217,6 +246,11 @@ internal sealed class CapturingRealtimeConnectionRegistry : IRealtimeConnectionR
         LastRefreshedConnections = connections;
         return Task.CompletedTask;
     }
+
+    public Task<IReadOnlyCollection<string>> GetConnectionIdsByUserIdAsync(Guid userId, CancellationToken cancellationToken) =>
+        Task.FromResult(ConnectionIdsByUserId.TryGetValue(userId, out var connectionIds)
+            ? connectionIds
+            : []);
 }
 
 internal sealed class CapturingPresenceInternalApiClient : IPresenceInternalApiClient
@@ -256,10 +290,12 @@ internal sealed class CapturingRealtimeGroupManager : IRealtimeGroupManager
     public List<(string ConnectionId, Guid UserId)> AddedToUserGroup { get; } = [];
     public List<(string ConnectionId, Guid UserId)> RemovedFromUserGroup { get; } = [];
     public List<(string ConnectionId, Guid ConversationId)> AddedToConversationGroup { get; } = [];
+    public List<(string ConnectionId, Guid ConversationId)> RemovedFromConversationGroup { get; } = [];
 
     public Exception? AddToUserGroupException { get; set; }
     public Exception? RemoveFromUserGroupException { get; set; }
     public Exception? AddToConversationGroupException { get; set; }
+    public Exception? RemoveFromConversationGroupException { get; set; }
 
     public Task AddToUserGroupAsync(string connectionId, Guid userId, CancellationToken cancellationToken)
     {
@@ -291,6 +327,17 @@ internal sealed class CapturingRealtimeGroupManager : IRealtimeGroupManager
         }
 
         AddedToConversationGroup.Add((connectionId, conversationId));
+        return Task.CompletedTask;
+    }
+
+    public Task RemoveFromConversationGroupAsync(string connectionId, Guid conversationId, CancellationToken cancellationToken)
+    {
+        if (RemoveFromConversationGroupException is not null)
+        {
+            return Task.FromException(RemoveFromConversationGroupException);
+        }
+
+        RemovedFromConversationGroup.Add((connectionId, conversationId));
         return Task.CompletedTask;
     }
 }

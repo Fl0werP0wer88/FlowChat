@@ -47,7 +47,7 @@ public sealed class SignalRRealtimeClientDispatcherTests
     }
 
     [Fact]
-    public async Task GroupConversationChangedAsync_SendsGroupConversationChangedToParticipantGroups()
+    public async Task GroupConversationChangedAsync_SendsGroupConversationChangedToConversationGroup()
     {
         var participantUserId = Guid.NewGuid();
         var conversationId = Guid.NewGuid();
@@ -59,7 +59,7 @@ public sealed class SignalRRealtimeClientDispatcherTests
             .Returns(Task.CompletedTask);
         var clientsMock = new Mock<IHubClients<IRealtimeClient>>();
         clientsMock
-            .Setup(x => x.Groups(It.Is<IReadOnlyList<string>>(groups => groups.Contains(GroupNames.ForUser(participantUserId)))))
+            .Setup(x => x.Group(GroupNames.ForConversation(conversationId)))
             .Returns(realtimeClientMock.Object);
         var hubContextMock = new Mock<IHubContext<ChatHub, IRealtimeClient>>();
         hubContextMock.Setup(x => x.Clients).Returns(clientsMock.Object);
@@ -77,5 +77,61 @@ public sealed class SignalRRealtimeClientDispatcherTests
         capturedPayload.Should().NotBeNull();
         capturedPayload!.ConversationId.Should().Be(conversationId);
         capturedPayload.Type.Should().Be(2);
+    }
+
+    [Fact]
+    public async Task GroupConversationParticipantsAddedAsync_SendsNotificationToConversationGroup()
+    {
+        var participantUserId = Guid.NewGuid();
+        var conversationId = Guid.NewGuid();
+        GroupConversationParticipantsAddedNotification? capturedPayload = null;
+        var realtimeClientMock = new Mock<IRealtimeClient>();
+        realtimeClientMock
+            .Setup(x => x.GroupConversationParticipantsAdded(It.IsAny<GroupConversationParticipantsAddedNotification>()))
+            .Callback<GroupConversationParticipantsAddedNotification>(payload => capturedPayload = payload)
+            .Returns(Task.CompletedTask);
+        var clientsMock = new Mock<IHubClients<IRealtimeClient>>();
+        clientsMock
+            .Setup(x => x.Group(GroupNames.ForConversation(conversationId)))
+            .Returns(realtimeClientMock.Object);
+        var hubContextMock = new Mock<IHubContext<ChatHub, IRealtimeClient>>();
+        hubContextMock.Setup(x => x.Clients).Returns(clientsMock.Object);
+        var dispatcher = new SignalRRealtimeClientDispatcher(hubContextMock.Object);
+
+        await dispatcher.GroupConversationParticipantsAddedAsync(
+            new GroupConversationParticipantsAddedParam(conversationId, [participantUserId]),
+            CancellationToken.None);
+
+        capturedPayload.Should().NotBeNull();
+        capturedPayload!.ConversationId.Should().Be(conversationId);
+        capturedPayload.ParticipantUserIds.Should().ContainSingle().Which.Should().Be(participantUserId);
+    }
+
+    [Fact]
+    public async Task GroupConversationParticipantsRemovedAsync_SendsNotificationToConversationGroup()
+    {
+        var participantUserId = Guid.NewGuid();
+        var conversationId = Guid.NewGuid();
+        GroupConversationParticipantsRemovedNotification? capturedPayload = null;
+        var realtimeClientMock = new Mock<IRealtimeClient>();
+        realtimeClientMock
+            .Setup(x => x.GroupConversationParticipantsRemoved(It.IsAny<GroupConversationParticipantsRemovedNotification>()))
+            .Callback<GroupConversationParticipantsRemovedNotification>(payload => capturedPayload = payload)
+            .Returns(Task.CompletedTask);
+        var clientsMock = new Mock<IHubClients<IRealtimeClient>>();
+        clientsMock
+            .Setup(x => x.Group(GroupNames.ForConversation(conversationId)))
+            .Returns(realtimeClientMock.Object);
+        var hubContextMock = new Mock<IHubContext<ChatHub, IRealtimeClient>>();
+        hubContextMock.Setup(x => x.Clients).Returns(clientsMock.Object);
+        var dispatcher = new SignalRRealtimeClientDispatcher(hubContextMock.Object);
+
+        await dispatcher.GroupConversationParticipantsRemovedAsync(
+            new GroupConversationParticipantsRemovedParam(conversationId, [participantUserId]),
+            CancellationToken.None);
+
+        capturedPayload.Should().NotBeNull();
+        capturedPayload!.ConversationId.Should().Be(conversationId);
+        capturedPayload.ParticipantUserIds.Should().ContainSingle().Which.Should().Be(participantUserId);
     }
 }

@@ -17,4 +17,7 @@ public sealed class SignalRRealtimeGroupManager(IHubContext<ChatHub, IRealtimeCl
 
     public Task AddToConversationGroupAsync(string connectionId, Guid conversationId, CancellationToken cancellationToken) =>
         _hubContext.Groups.AddToGroupAsync(connectionId, GroupNames.ForConversation(conversationId), cancellationToken);
+
+    public Task RemoveFromConversationGroupAsync(string connectionId, Guid conversationId, CancellationToken cancellationToken) =>
+        _hubContext.Groups.RemoveFromGroupAsync(connectionId, GroupNames.ForConversation(conversationId), cancellationToken);
 }

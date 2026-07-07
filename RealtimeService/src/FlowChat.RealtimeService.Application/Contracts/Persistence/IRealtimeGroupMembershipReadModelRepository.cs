@@ -8,6 +8,11 @@ public interface IRealtimeGroupMembershipReadModelRepository
         Guid userId,
         CancellationToken cancellationToken = default);
 
+    Task<IReadOnlyList<Guid>> GetUserIdsByResourceIdAsync(
+        RealtimeGroupType groupType,
+        Guid resourceId,
+        CancellationToken cancellationToken = default);
+
     Task AddAsync(
         Guid userId,
         RealtimeGroupType groupType,
