@@ -10,12 +10,14 @@ public sealed class RegisterRealtimeConnectionCommandHandlerTests
 {
     private readonly IFixture _fixture = new Fixture();
     private readonly CapturingRealtimeConnectionRegistry _registry = new();
+    private readonly CapturingPresenceInternalApiClient _presenceClient = new();
     private readonly RegisterRealtimeConnectionCommandHandler _handler;
 
     public RegisterRealtimeConnectionCommandHandlerTests()
     {
         _handler = new RegisterRealtimeConnectionCommandHandler(
             _registry,
+            _presenceClient,
             NullLogger<RegisterRealtimeConnectionCommandHandler>.Instance);
     }
 
@@ -31,6 +33,7 @@ public sealed class RegisterRealtimeConnectionCommandHandlerTests
         result.IsSuccess.Should().BeTrue();
         _registry.LastRegisteredUserId.Should().Be(userId);
         _registry.LastRegisteredConnectionId.Should().Be("connection-1");
+        _presenceClient.LastInitializePresenceStatusUserId.Should().Be(userId);
     }
 
     [Fact]
@@ -62,5 +65,36 @@ public sealed class RegisterRealtimeConnectionCommandHandlerTests
 
         await act.Should().ThrowAsync<OperationCanceledException>();
         _registry.LastUnregisteredConnectionId.Should().Be("connection-canceled");
+    }
+
+    [Fact]
+    public async Task Handle_WhenPresenceInitializationFails_CompensatesByUnregisteringAndReturnsFailure()
+    {
+        var userId = _fixture.Create<Guid>();
+        _presenceClient.InitializePresenceStatusException = new InvalidOperationException("presence service unavailable");
+
+        var result = await _handler.Handle(
+            new RegisterRealtimeConnectionCommand(userId, "connection-4"),
+            CancellationToken.None);
+
+        result.IsFailure.Should().BeTrue();
+        result.Error.ErrorType.Should().Be(ErrorType.Unexpected);
+        _registry.LastUnregisteredConnectionId.Should().Be("connection-4");
+    }
+
+    [Fact]
+    public async Task Handle_WhenPresenceInitializationCanceled_CompensatesByUnregisteringAndRethrows()
+    {
+        var userId = _fixture.Create<Guid>();
+        using var cancellationTokenSource = new CancellationTokenSource();
+        cancellationTokenSource.Cancel();
+        _presenceClient.InitializePresenceStatusException = new OperationCanceledException(cancellationTokenSource.Token);
+
+        var act = () => _handler.Handle(
+            new RegisterRealtimeConnectionCommand(userId, "connection-presence-canceled"),
+            cancellationTokenSource.Token);
+
+        await act.Should().ThrowAsync<OperationCanceledException>();
+        _registry.LastUnregisteredConnectionId.Should().Be("connection-presence-canceled");
     }
 }

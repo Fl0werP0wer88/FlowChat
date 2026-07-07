@@ -1,5 +1,4 @@
 using System.Security.Claims;
-using FlowChat.RealtimeService.Application.Contracts.Infrastructure;
 using FlowChat.RealtimeService.Application.Contracts.Persistence;
 using FlowChat.RealtimeService.Application.Features.RealtimeConnection.Commands.RegisterRealtimeConnection;
 using FlowChat.RealtimeService.Application.Features.RealtimeConnection.Commands.UnregisterRealtimeConnection;
@@ -15,14 +14,11 @@ namespace FlowChat.RealtimeService.Api.Realtime;
 public sealed class ChatHub(
     ILogger<ChatHub> logger,
     IMediator mediator,
-    IPresenceInternalApiClient presenceInternalApiClient,
     IRealtimeGroupMembershipRepository realtimeGroupMembershipRepository) : Hub<IRealtimeClient>
 {
     private const string SubjectClaimType = "sub";
     private readonly ILogger<ChatHub> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     private readonly IMediator _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
-    private readonly IPresenceInternalApiClient _presenceInternalApiClient = presenceInternalApiClient
-        ?? throw new ArgumentNullException(nameof(presenceInternalApiClient));
     private readonly IRealtimeGroupMembershipRepository _realtimeGroupMembershipRepository = realtimeGroupMembershipRepository
         ?? throw new ArgumentNullException(nameof(realtimeGroupMembershipRepository));
 
@@ -37,7 +33,6 @@ public sealed class ChatHub(
         }
 
         var addedToGroup = false;
-        var registeredConnection = false;
         try
         {
             await Groups.AddToGroupAsync(Context.ConnectionId, GroupNames.ForUser(userId.Value));
@@ -50,24 +45,22 @@ public sealed class ChatHub(
                 Context.ConnectionAborted);
             if (result.IsFailure)
             {
-                await CleanupFailedConnectionAsync(userId.Value, addedToGroup);
+                await RemoveFromUserGroupAsync(userId.Value, addedToGroup);
                 Context.Abort();
                 return;
             }
 
-            registeredConnection = true;
-            await _presenceInternalApiClient.InitializePresenceStatusAsync(userId.Value, Context.ConnectionAborted);
             await base.OnConnectedAsync();
         }
         catch (OperationCanceledException) when (Context.ConnectionAborted.IsCancellationRequested)
         {
-            await CleanupFailedConnectionAsync(userId.Value, addedToGroup, registeredConnection);
+            await RemoveFromUserGroupAsync(userId.Value, addedToGroup);
             Context.Abort();
         }
         catch (Exception exception)
         {
             _logger.LogError(exception, "Failed to register realtime connection {ConnectionId} for user {UserId}.", Context.ConnectionId, userId.Value);
-            await CleanupFailedConnectionAsync(userId.Value, addedToGroup, registeredConnection);
+            await RemoveFromUserGroupAsync(userId.Value, addedToGroup);
             Context.Abort();
         }
     }
@@ -118,29 +111,15 @@ public sealed class ChatHub(
         return Guid.TryParse(value, out var userId) ? userId : null;
     }
 
-    private async Task CleanupFailedConnectionAsync(Guid userId, bool addedToGroup, bool registeredConnection = false)
+    private async Task RemoveFromUserGroupAsync(Guid userId, bool addedToGroup)
     {
-        if (registeredConnection)
+        if (!addedToGroup)
         {
-            try
-            {
-                await _mediator.Send(
-                    new UnregisterRealtimeConnectionCommand(Context.ConnectionId),
-                    CancellationToken.None);
-            }
-            catch (Exception exception)
-            {
-                _logger.LogWarning(exception, "Failed to unregister realtime connection {ConnectionId} after connection failure.", Context.ConnectionId);
-            }
+            return;
         }
 
         try
         {
-            if (!addedToGroup)
-            {
-                return;
-            }
-
             await Groups.RemoveFromGroupAsync(Context.ConnectionId, GroupNames.ForUser(userId));
         }
         catch (Exception exception)

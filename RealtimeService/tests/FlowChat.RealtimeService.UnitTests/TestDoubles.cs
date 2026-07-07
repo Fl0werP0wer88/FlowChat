@@ -221,10 +221,21 @@ internal sealed class CapturingRealtimeConnectionRegistry : IRealtimeConnectionR
 
 internal sealed class CapturingPresenceInternalApiClient : IPresenceInternalApiClient
 {
+    public Guid? LastInitializePresenceStatusUserId { get; private set; }
+    public Exception? InitializePresenceStatusException { get; set; }
     public Guid? LastDeletePresenceStatusUserId { get; private set; }
     public Exception? DeletePresenceStatusException { get; set; }
 
-    public Task InitializePresenceStatusAsync(Guid userId, CancellationToken cancellationToken) => Task.CompletedTask;
+    public Task InitializePresenceStatusAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        if (InitializePresenceStatusException is not null)
+        {
+            throw InitializePresenceStatusException;
+        }
+
+        LastInitializePresenceStatusUserId = userId;
+        return Task.CompletedTask;
+    }
 
     public Task DeletePresenceStatusAsync(Guid userId, CancellationToken cancellationToken)
     {

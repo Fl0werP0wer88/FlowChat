@@ -7,14 +7,17 @@ using Microsoft.Extensions.Logging;
 
 namespace FlowChat.RealtimeService.Application.Features.RealtimeConnection.Commands.RegisterRealtimeConnection;
 
-// Logs structured failure context (user/connection ids) that LoggingPipelineBehaviour cannot see
+// Keeps connection registration and presence initialization consistent, and logs structured failure context (user/connection ids) that LoggingPipelineBehaviour cannot see
 public sealed class RegisterRealtimeConnectionCommandHandler(
     IRealtimeConnectionRegistry realtimeConnectionRegistry,
+    IPresenceInternalApiClient presenceInternalApiClient,
     ILogger<RegisterRealtimeConnectionCommandHandler> logger)
     : ICommandHandler<RegisterRealtimeConnectionCommand, Unit>
 {
     private readonly IRealtimeConnectionRegistry _realtimeConnectionRegistry = realtimeConnectionRegistry
         ?? throw new ArgumentNullException(nameof(realtimeConnectionRegistry));
+    private readonly IPresenceInternalApiClient _presenceInternalApiClient = presenceInternalApiClient
+        ?? throw new ArgumentNullException(nameof(presenceInternalApiClient));
     private readonly ILogger<RegisterRealtimeConnectionCommandHandler> _logger = logger
         ?? throw new ArgumentNullException(nameof(logger));
 
@@ -23,6 +26,8 @@ public sealed class RegisterRealtimeConnectionCommandHandler(
         try
         {
             await _realtimeConnectionRegistry.RegisterAsync(request.UserId, request.ConnectionId!, cancellationToken);
+
+            await _presenceInternalApiClient.InitializePresenceStatusAsync(request.UserId, cancellationToken);
 
             return FlowChatResult<Unit>.Success(Unit.Value);
         }
