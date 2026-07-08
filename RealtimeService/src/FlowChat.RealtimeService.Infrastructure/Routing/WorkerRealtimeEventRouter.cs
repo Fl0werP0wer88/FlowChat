@@ -45,20 +45,20 @@ public sealed class WorkerRealtimeEventRouter(
             cancellationToken);
 
     public Task RouteGroupConversationParticipantsAddedAsync(GroupConversationParticipantsAddedParam notification, CancellationToken cancellationToken) =>
-        RouteAsync(
+        BroadcastAsync(
             notification.ParticipantUserIds,
-            (instanceUrl, userIds) => _realtimeInstanceInternalApiClient.PublishGroupConversationParticipantsAddedAsync(
+            instanceUrl => _realtimeInstanceInternalApiClient.PublishGroupConversationParticipantsAddedAsync(
                 instanceUrl,
-                notification with { ParticipantUserIds = userIds },
+                notification,
                 cancellationToken),
             cancellationToken);
 
     public Task RouteGroupConversationParticipantsRemovedAsync(GroupConversationParticipantsRemovedParam notification, CancellationToken cancellationToken) =>
-        RouteAsync(
+        BroadcastAsync(
             notification.ParticipantUserIds,
-            (instanceUrl, userIds) => _realtimeInstanceInternalApiClient.PublishGroupConversationParticipantsRemovedAsync(
+            instanceUrl => _realtimeInstanceInternalApiClient.PublishGroupConversationParticipantsRemovedAsync(
                 instanceUrl,
-                notification with { ParticipantUserIds = userIds },
+                notification,
                 cancellationToken),
             cancellationToken);
 
