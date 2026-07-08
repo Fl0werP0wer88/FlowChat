@@ -23,15 +23,11 @@ public sealed class RouteGroupConversationParticipantsAddedCommandHandler(
     {
         var participantUserIds = NormalizeParticipantUserIds(request.ParticipantUserIds);
 
-        //Review: to mozna by przesylac w jednym batchu zamiast foreach.
-        foreach (var userId in participantUserIds)
-        {
-            await _realtimeGroupMembershipReadModelRepository.AddAsync(
-                userId,
-                RealtimeGroupType.Conversation,
-                request.ConversationId,
-                cancellationToken);
-        }
+        await _realtimeGroupMembershipReadModelRepository.AddRangeAsync(
+            participantUserIds,
+            RealtimeGroupType.Conversation,
+            request.ConversationId,
+            cancellationToken);
 
         var notification = new GroupConversationParticipantsAddedParam(request.ConversationId, participantUserIds);
         await _realtimeEventRouter.RouteGroupConversationParticipantsAddedAsync(notification, cancellationToken);

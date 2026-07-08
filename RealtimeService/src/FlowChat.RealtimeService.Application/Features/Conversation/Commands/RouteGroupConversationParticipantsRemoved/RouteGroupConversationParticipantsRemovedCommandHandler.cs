@@ -27,15 +27,11 @@ public sealed class RouteGroupConversationParticipantsRemovedCommandHandler(
         await _realtimeEventRouter.RouteGroupConversationParticipantsRemovedAsync(notification, cancellationToken);
 
 
-        //Review: to mozna by przesylac w jednym batchu zamiast foreach.
-        foreach (var userId in participantUserIds)
-        {
-            await _realtimeGroupMembershipReadModelRepository.RemoveAsync(
-                userId,
-                RealtimeGroupType.Conversation,
-                request.ConversationId,
-                cancellationToken);
-        }
+        await _realtimeGroupMembershipReadModelRepository.RemoveRangeAsync(
+            participantUserIds,
+            RealtimeGroupType.Conversation,
+            request.ConversationId,
+            cancellationToken);
 
         return FlowChatResult<Unit>.Success(Unit.Value);
     }

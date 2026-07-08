@@ -28,41 +28,51 @@ public sealed class RealtimeGroupMembershipReadModelRepository(AppDbContext dbCo
             .ToListAsync(cancellationToken);
     }
 
-    public async Task AddAsync(
-        Guid userId,
+    public async Task AddRangeAsync(
+        IReadOnlyCollection<Guid> userIds,
         RealtimeGroupType groupType,
         Guid resourceId,
         CancellationToken cancellationToken = default)
     {
-        var exists = await dbContext.RealtimeGroupMembershipReadModels.AnyAsync(
-            x => x.UserId == userId && x.GroupType == groupType && x.ResourceId == resourceId,
-            cancellationToken);
-        if (exists)
+        if (userIds.Count == 0)
         {
             return;
         }
 
-        dbContext.RealtimeGroupMembershipReadModels.Add(
-            RealtimeGroupMembershipReadModel.Create(userId, groupType, resourceId, DateTimeOffset.UtcNow));
+        var existingUserIds = await dbContext.RealtimeGroupMembershipReadModels
+            .Where(x => x.GroupType == groupType && x.ResourceId == resourceId && userIds.Contains(x.UserId))
+            .Select(x => x.UserId)
+            .ToListAsync(cancellationToken);
+
+        var newUserIds = userIds.Except(existingUserIds);
+        var createdAt = DateTimeOffset.UtcNow;
+
+        dbContext.RealtimeGroupMembershipReadModels.AddRange(
+            newUserIds.Select(userId => RealtimeGroupMembershipReadModel.Create(userId, groupType, resourceId, createdAt)));
 
         await dbContext.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task RemoveAsync(
-        Guid userId,
+    public async Task RemoveRangeAsync(
+        IReadOnlyCollection<Guid> userIds,
         RealtimeGroupType groupType,
         Guid resourceId,
         CancellationToken cancellationToken = default)
     {
-        var membership = await dbContext.RealtimeGroupMembershipReadModels.FirstOrDefaultAsync(
-            x => x.UserId == userId && x.GroupType == groupType && x.ResourceId == resourceId,
-            cancellationToken);
-        if (membership is null)
+        if (userIds.Count == 0)
         {
             return;
         }
 
-        dbContext.RealtimeGroupMembershipReadModels.Remove(membership);
+        var memberships = await dbContext.RealtimeGroupMembershipReadModels
+            .Where(x => x.GroupType == groupType && x.ResourceId == resourceId && userIds.Contains(x.UserId))
+            .ToListAsync(cancellationToken);
+        if (memberships.Count == 0)
+        {
+            return;
+        }
+
+        dbContext.RealtimeGroupMembershipReadModels.RemoveRange(memberships);
         await dbContext.SaveChangesAsync(cancellationToken);
     }
 }

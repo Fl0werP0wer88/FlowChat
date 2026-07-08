@@ -26,12 +26,13 @@ public sealed class RealtimeGroupMembershipReadModelRepositoryTests : IDisposabl
     public void Dispose() => _dbContext.Dispose();
 
     [Fact]
-    public async Task AddAsync_WithNewMembership_PersistsToDatabase()
+    public async Task AddRangeAsync_WithNewMemberships_PersistsToDatabase()
     {
         var userId = Guid.NewGuid();
+        var otherUserId = Guid.NewGuid();
         var conversationId = Guid.NewGuid();
 
-        await _repository.AddAsync(userId, RealtimeGroupType.Conversation, conversationId);
+        await _repository.AddRangeAsync([userId, otherUserId], RealtimeGroupType.Conversation, conversationId);
 
         var memberships = await _repository.GetByUserIdAsync(userId);
         memberships.Should().ContainSingle()
@@ -39,13 +40,13 @@ public sealed class RealtimeGroupMembershipReadModelRepositoryTests : IDisposabl
     }
 
     [Fact]
-    public async Task AddAsync_WhenMembershipAlreadyExists_DoesNotThrowOrDuplicate()
+    public async Task AddRangeAsync_WhenMembershipAlreadyExists_DoesNotThrowOrDuplicate()
     {
         var userId = Guid.NewGuid();
         var conversationId = Guid.NewGuid();
 
-        await _repository.AddAsync(userId, RealtimeGroupType.Conversation, conversationId);
-        var act = () => _repository.AddAsync(userId, RealtimeGroupType.Conversation, conversationId);
+        await _repository.AddRangeAsync([userId], RealtimeGroupType.Conversation, conversationId);
+        var act = () => _repository.AddRangeAsync([userId], RealtimeGroupType.Conversation, conversationId);
 
         await act.Should().NotThrowAsync();
         var memberships = await _repository.GetByUserIdAsync(userId);
@@ -53,22 +54,22 @@ public sealed class RealtimeGroupMembershipReadModelRepositoryTests : IDisposabl
     }
 
     [Fact]
-    public async Task RemoveAsync_WithExistingMembership_DeletesIt()
+    public async Task RemoveRangeAsync_WithExistingMemberships_DeletesThem()
     {
         var userId = Guid.NewGuid();
         var conversationId = Guid.NewGuid();
-        await _repository.AddAsync(userId, RealtimeGroupType.Conversation, conversationId);
+        await _repository.AddRangeAsync([userId], RealtimeGroupType.Conversation, conversationId);
 
-        await _repository.RemoveAsync(userId, RealtimeGroupType.Conversation, conversationId);
+        await _repository.RemoveRangeAsync([userId], RealtimeGroupType.Conversation, conversationId);
 
         var memberships = await _repository.GetByUserIdAsync(userId);
         memberships.Should().BeEmpty();
     }
 
     [Fact]
-    public async Task RemoveAsync_WhenMembershipDoesNotExist_DoesNotThrow()
+    public async Task RemoveRangeAsync_WhenMembershipDoesNotExist_DoesNotThrow()
     {
-        var act = () => _repository.RemoveAsync(Guid.NewGuid(), RealtimeGroupType.Conversation, Guid.NewGuid());
+        var act = () => _repository.RemoveRangeAsync([Guid.NewGuid()], RealtimeGroupType.Conversation, Guid.NewGuid());
 
         await act.Should().NotThrowAsync();
     }
@@ -78,8 +79,8 @@ public sealed class RealtimeGroupMembershipReadModelRepositoryTests : IDisposabl
     {
         var userId = Guid.NewGuid();
         var otherUserId = Guid.NewGuid();
-        await _repository.AddAsync(userId, RealtimeGroupType.Conversation, Guid.NewGuid());
-        await _repository.AddAsync(otherUserId, RealtimeGroupType.Conversation, Guid.NewGuid());
+        await _repository.AddRangeAsync([userId], RealtimeGroupType.Conversation, Guid.NewGuid());
+        await _repository.AddRangeAsync([otherUserId], RealtimeGroupType.Conversation, Guid.NewGuid());
 
         var memberships = await _repository.GetByUserIdAsync(userId);
 

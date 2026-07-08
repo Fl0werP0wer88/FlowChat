@@ -13,14 +13,14 @@ public interface IRealtimeGroupMembershipReadModelRepository
         Guid resourceId,
         CancellationToken cancellationToken = default);
 
-    Task AddAsync(
-        Guid userId,
+    Task AddRangeAsync(
+        IReadOnlyCollection<Guid> userIds,
         RealtimeGroupType groupType,
         Guid resourceId,
         CancellationToken cancellationToken = default);
 
-    Task RemoveAsync(
-        Guid userId,
+    Task RemoveRangeAsync(
+        IReadOnlyCollection<Guid> userIds,
         RealtimeGroupType groupType,
         Guid resourceId,
         CancellationToken cancellationToken = default);

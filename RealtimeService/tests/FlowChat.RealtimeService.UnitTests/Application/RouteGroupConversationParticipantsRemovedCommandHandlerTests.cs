@@ -42,7 +42,11 @@ public sealed class RouteGroupConversationParticipantsRemovedCommandHandlerTests
 
         result.IsSuccess.Should().BeTrue();
         _readModelRepositoryMock.Verify(
-            x => x.RemoveAsync(participantUserId, RealtimeGroupType.Conversation, conversationId, It.IsAny<CancellationToken>()),
+            x => x.RemoveRangeAsync(
+                It.Is<IReadOnlyCollection<Guid>>(ids => ids.SequenceEqual(new[] { participantUserId })),
+                RealtimeGroupType.Conversation,
+                conversationId,
+                It.IsAny<CancellationToken>()),
             Times.Once);
         capturedNotification.Should().NotBeNull();
         capturedNotification!.ParticipantUserIds.Should().ContainSingle().Which.Should().Be(participantUserId);
