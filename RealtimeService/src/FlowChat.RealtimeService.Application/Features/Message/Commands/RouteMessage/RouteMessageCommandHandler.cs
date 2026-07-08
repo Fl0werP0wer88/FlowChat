@@ -19,7 +19,7 @@ public sealed class RouteMessageCommandHandler(
     {
         var recipientUserIds = NormalizeRecipientUserIds(request.RecipientUserIds);
 
-        //ToDo: Rozważyć przesylanie tego kafką,
+        //ToDo: Rozważyć przesylanie tego kafką
         var sequenceNum = await _chatServiceInternalApiClient.SetChatMessageSequenceNumberAsync(
             request.MessageId,
             request.ConversationId,
