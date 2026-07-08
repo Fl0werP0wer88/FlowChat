@@ -64,6 +64,8 @@ export function ChatFeature() {
 
   useRealtimeConnection({
     onGroupConversationChanged: groupConversations.applyGroupConversationChanged,
+    onGroupConversationParticipantsAdded: groupConversations.applyGroupConversationParticipantsAdded,
+    onGroupConversationParticipantsRemoved: groupConversations.applyGroupConversationParticipantsRemoved,
     onPresenceChanged: contacts.applyPresenceChanged,
     onMessageReceived: (payload) => {
       const documentVisible = isDocumentVisible();

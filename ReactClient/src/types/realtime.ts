@@ -22,6 +22,15 @@ export interface GroupConversationChangedEvent {
   type: number;
   name: string | null;
   createdByUserId: string;
+}
+
+export interface GroupConversationParticipantsAddedEvent {
+  conversationId: string;
+  participantUserIds: string[];
+}
+
+export interface GroupConversationParticipantsRemovedEvent {
+  conversationId: string;
   participantUserIds: string[];
 }
 

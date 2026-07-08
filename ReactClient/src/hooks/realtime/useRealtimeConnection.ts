@@ -4,6 +4,8 @@ import { useAuthStore } from "../../store/authStore";
 import { useRealtimeStore } from "../../store/realtimeStore";
 import type {
   GroupConversationChangedEvent,
+  GroupConversationParticipantsAddedEvent,
+  GroupConversationParticipantsRemovedEvent,
   PresenceChangedEvent,
   ChatMessageReceivedEvent,
 } from "../../types/realtime";
@@ -13,6 +15,8 @@ interface UseRealtimeConnectionOptions {
   onMessageReceived?: (payload: ChatMessageReceivedEvent) => void;
   onPresenceChanged?: (payload: PresenceChangedEvent) => void;
   onGroupConversationChanged?: (payload: GroupConversationChangedEvent) => void;
+  onGroupConversationParticipantsAdded?: (payload: GroupConversationParticipantsAddedEvent) => void;
+  onGroupConversationParticipantsRemoved?: (payload: GroupConversationParticipantsRemovedEvent) => void;
 }
 
 function resolveErrorMessage(error: unknown): string | null {
@@ -27,6 +31,8 @@ export function useRealtimeConnection({
   onMessageReceived,
   onPresenceChanged,
   onGroupConversationChanged,
+  onGroupConversationParticipantsAdded,
+  onGroupConversationParticipantsRemoved,
 }: UseRealtimeConnectionOptions) {
   const accessToken = useAuthStore((s) => s.accessToken);
   const { setStatus, setLastError } = useRealtimeStore.getState();
@@ -41,6 +47,14 @@ export function useRealtimeConnection({
 
   const handleGroupConversationChanged = useEffectEvent((payload: GroupConversationChangedEvent) => {
     onGroupConversationChanged?.(payload);
+  });
+
+  const handleGroupConversationParticipantsAdded = useEffectEvent((payload: GroupConversationParticipantsAddedEvent) => {
+    onGroupConversationParticipantsAdded?.(payload);
+  });
+
+  const handleGroupConversationParticipantsRemoved = useEffectEvent((payload: GroupConversationParticipantsRemovedEvent) => {
+    onGroupConversationParticipantsRemoved?.(payload);
   });
 
   useEffect(() => {
@@ -76,6 +90,18 @@ export function useRealtimeConnection({
     connection.on("GroupConversationChanged", (payload: GroupConversationChangedEvent) => {
       if (!isDisposed) {
         handleGroupConversationChanged(payload);
+      }
+    });
+
+    connection.on("GroupConversationParticipantsAdded", (payload: GroupConversationParticipantsAddedEvent) => {
+      if (!isDisposed) {
+        handleGroupConversationParticipantsAdded(payload);
+      }
+    });
+
+    connection.on("GroupConversationParticipantsRemoved", (payload: GroupConversationParticipantsRemovedEvent) => {
+      if (!isDisposed) {
+        handleGroupConversationParticipantsRemoved(payload);
       }
     });
 
@@ -136,6 +162,8 @@ export function useRealtimeConnection({
       connection.off("MessageReceived");
       connection.off("PresenceChanged");
       connection.off("GroupConversationChanged");
+      connection.off("GroupConversationParticipantsAdded");
+      connection.off("GroupConversationParticipantsRemoved");
       void startPromise.finally(() => connection.stop().catch(() => undefined));
     };
   }, [accessToken]);

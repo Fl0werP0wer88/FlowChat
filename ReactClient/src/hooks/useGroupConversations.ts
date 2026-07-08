@@ -1,7 +1,12 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "../store/authStore";
 import type { GroupConversation } from "../types/chat";
-import type { ChatMessageReceivedEvent, GroupConversationChangedEvent } from "../types/realtime";
+import type {
+  ChatMessageReceivedEvent,
+  GroupConversationChangedEvent,
+  GroupConversationParticipantsAddedEvent,
+  GroupConversationParticipantsRemovedEvent,
+} from "../types/realtime";
 import { resolveOwnerUserId } from "../utils/authUtils";
 import { calculateUnreadCount } from "../utils/chatUtils";
 import { useGroupConversationsQuery } from "./queries/useGroupConversationsQuery";
@@ -10,22 +15,13 @@ export interface UseGroupConversationsResult {
   groupConversations: GroupConversation[];
   isLoadingGroupConversations: boolean;
   applyGroupConversationChanged: (payload: GroupConversationChangedEvent) => void;
+  applyGroupConversationParticipantsAdded: (payload: GroupConversationParticipantsAddedEvent) => void;
+  applyGroupConversationParticipantsRemoved: (payload: GroupConversationParticipantsRemovedEvent) => void;
   applyRealtimeMessage: (payload: ChatMessageReceivedEvent, activeGroupConversationId: string | null) => void;
 }
 
-function countDistinctParticipants(participantUserIds: string[]): number {
-  return new Set(participantUserIds.filter((userId) => userId.trim().length > 0)).size;
-}
-
-function mapChangedEventToGroupConversation(payload: GroupConversationChangedEvent): GroupConversation {
-  return {
-    conversationId: payload.conversationId,
-    name: payload.name ?? "",
-    participantCount: countDistinctParticipants(payload.participantUserIds ?? []),
-    lastReadMsgSeqNum: 0,
-    currentMsgSeqNum: 0,
-    unreadCount: 0,
-  };
+function dedupeParticipantIds(participantUserIds: string[]): string[] {
+  return [...new Set(participantUserIds.filter((userId) => userId.trim().length > 0))];
 }
 
 function withUnreadCount(conversation: GroupConversation): GroupConversation {
@@ -47,26 +43,72 @@ export function useGroupConversations(): UseGroupConversationsResult {
     useGroupConversationsQuery(accessToken, Boolean(accessToken && ownerUserId));
 
   const applyGroupConversationChanged = (payload: GroupConversationChangedEvent) => {
-    const changedConversation = mapChangedEventToGroupConversation(payload);
-    if (!changedConversation.conversationId) {
+    if (!payload.conversationId) {
       return;
     }
 
-    queryClient.setQueryData<GroupConversation[]>(["groupConversations"], (current = []) => {
-      const existing = current.find(
-        (conversation) => conversation.conversationId === changedConversation.conversationId,
-      );
-      const nextConversation = withUnreadCount({
-        ...changedConversation,
-        lastReadMsgSeqNum: existing?.lastReadMsgSeqNum ?? changedConversation.lastReadMsgSeqNum,
-        currentMsgSeqNum: existing?.currentMsgSeqNum ?? changedConversation.currentMsgSeqNum,
-      });
+    const current = queryClient.getQueryData<GroupConversation[]>(["groupConversations"]) ?? [];
+    const existing = current.find((conversation) => conversation.conversationId === payload.conversationId);
+    if (!existing) {
+      void queryClient.invalidateQueries({ queryKey: ["groupConversations"] });
+      return;
+    }
 
-      return [
-        nextConversation,
-        ...current.filter((conversation) => conversation.conversationId !== changedConversation.conversationId),
-      ];
-    });
+    queryClient.setQueryData<GroupConversation[]>(["groupConversations"], (current = []) =>
+      current.map((conversation) =>
+        conversation.conversationId === payload.conversationId
+          ? withUnreadCount({ ...conversation, name: payload.name ?? conversation.name })
+          : conversation,
+      ),
+    );
+  };
+
+  const applyGroupConversationParticipantsAdded = (payload: GroupConversationParticipantsAddedEvent) => {
+    const addedUserIds = dedupeParticipantIds(payload.participantUserIds ?? []);
+    if (!payload.conversationId || addedUserIds.length === 0) {
+      return;
+    }
+
+    if (ownerUserId && addedUserIds.includes(ownerUserId)) {
+      void queryClient.invalidateQueries({ queryKey: ["groupConversations"] });
+      return;
+    }
+
+    const current = queryClient.getQueryData<GroupConversation[]>(["groupConversations"]) ?? [];
+    const existing = current.find((conversation) => conversation.conversationId === payload.conversationId);
+    if (!existing) {
+      return;
+    }
+
+    queryClient.setQueryData<GroupConversation[]>(["groupConversations"], (current = []) =>
+      current.map((conversation) =>
+        conversation.conversationId === payload.conversationId
+          ? { ...conversation, participantCount: conversation.participantCount + addedUserIds.length }
+          : conversation,
+      ),
+    );
+  };
+
+  const applyGroupConversationParticipantsRemoved = (payload: GroupConversationParticipantsRemovedEvent) => {
+    const removedUserIds = dedupeParticipantIds(payload.participantUserIds ?? []);
+    if (!payload.conversationId || removedUserIds.length === 0) {
+      return;
+    }
+
+    if (ownerUserId && removedUserIds.includes(ownerUserId)) {
+      queryClient.setQueryData<GroupConversation[]>(["groupConversations"], (current = []) =>
+        current.filter((conversation) => conversation.conversationId !== payload.conversationId),
+      );
+      return;
+    }
+
+    queryClient.setQueryData<GroupConversation[]>(["groupConversations"], (current = []) =>
+      current.map((conversation) =>
+        conversation.conversationId === payload.conversationId
+          ? { ...conversation, participantCount: Math.max(0, conversation.participantCount - removedUserIds.length) }
+          : conversation,
+      ),
+    );
   };
 
   const applyRealtimeMessage = (
@@ -97,6 +139,8 @@ export function useGroupConversations(): UseGroupConversationsResult {
     groupConversations,
     isLoadingGroupConversations,
     applyGroupConversationChanged,
+    applyGroupConversationParticipantsAdded,
+    applyGroupConversationParticipantsRemoved,
     applyRealtimeMessage,
   };
 }
