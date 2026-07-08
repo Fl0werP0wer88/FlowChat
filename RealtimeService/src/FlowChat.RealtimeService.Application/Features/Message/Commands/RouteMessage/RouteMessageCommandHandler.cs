@@ -18,6 +18,8 @@ public sealed class RouteMessageCommandHandler(
     public async Task<FlowChatResult<Unit>> Handle(RouteMessageCommand request, CancellationToken cancellationToken)
     {
         var recipientUserIds = NormalizeRecipientUserIds(request.RecipientUserIds);
+
+        //ToDo: Rozważyć przesylanie tego kafką,
         var sequenceNum = await _chatServiceInternalApiClient.SetChatMessageSequenceNumberAsync(
             request.MessageId,
             request.ConversationId,
