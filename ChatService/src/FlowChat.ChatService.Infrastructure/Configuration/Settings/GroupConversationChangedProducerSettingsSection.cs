@@ -3,7 +3,10 @@ using FlowChat.Core.Messaging.ChatService.Events;
 
 namespace FlowChat.ChatService.Infrastructure.Configuration.Settings;
 
-public sealed class GroupConversationChangedProducerSettingsSection : ProducerSettingsSectionBase, IKafkaProducerSettingsSection<GroupConversationChangedIntegrationEvent>
+public sealed class GroupConversationChangedProducerSettingsSection : ProducerSettingsSectionBase,
+    IKafkaProducerSettingsSection<GroupConversationChangedIntegrationEvent>,
+    IKafkaProducerSettingsSection<GroupConversationParticipantsAddedIntegrationEvent>,
+    IKafkaProducerSettingsSection<GroupConversationParticipantsRemovedIntegrationEvent>
 {
     public override string SectionName => "Kafka:GroupConversationChangedProducer";
 

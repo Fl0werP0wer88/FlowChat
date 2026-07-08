@@ -62,6 +62,14 @@ public static class OutboxPublisherServiceRegistration
                     .AddProducer(producer => producer
                         .Produce<GroupConversationChangedIntegrationEvent>("group-conversation-changed", endpoint => endpoint
                             .ProduceTo(groupConversationChangedProducerOptions.Topic)
+                            .SerializeAsJson(serializer => serializer.SetTypeHeader())))
+                    .AddProducer(producer => producer
+                        .Produce<GroupConversationParticipantsAddedIntegrationEvent>("group-conversation-participants-added", endpoint => endpoint
+                            .ProduceTo(groupConversationChangedProducerOptions.Topic)
+                            .SerializeAsJson(serializer => serializer.SetTypeHeader())))
+                    .AddProducer(producer => producer
+                        .Produce<GroupConversationParticipantsRemovedIntegrationEvent>("group-conversation-participants-removed", endpoint => endpoint
+                            .ProduceTo(groupConversationChangedProducerOptions.Topic)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())));
             });
 

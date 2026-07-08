@@ -40,6 +40,16 @@ public static class ApiSilverbackServiceRegistration
                         .Produce<GroupConversationChangedIntegrationEvent>("group-conversation-changed", endpoint => endpoint
                             .ProduceTo(groupConversationChangedProducerOptions.Topic)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())
+                            .StoreToOutbox(outbox => outbox.UseEntityFramework<AppDbContext>())))
+                    .AddProducer(producer => producer
+                        .Produce<GroupConversationParticipantsAddedIntegrationEvent>("group-conversation-participants-added", endpoint => endpoint
+                            .ProduceTo(groupConversationChangedProducerOptions.Topic)
+                            .SerializeAsJson(serializer => serializer.SetTypeHeader())
+                            .StoreToOutbox(outbox => outbox.UseEntityFramework<AppDbContext>())))
+                    .AddProducer(producer => producer
+                        .Produce<GroupConversationParticipantsRemovedIntegrationEvent>("group-conversation-participants-removed", endpoint => endpoint
+                            .ProduceTo(groupConversationChangedProducerOptions.Topic)
+                            .SerializeAsJson(serializer => serializer.SetTypeHeader())
                             .StoreToOutbox(outbox => outbox.UseEntityFramework<AppDbContext>())));
             });
 
