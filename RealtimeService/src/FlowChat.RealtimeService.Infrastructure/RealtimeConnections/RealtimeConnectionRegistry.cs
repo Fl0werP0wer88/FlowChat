@@ -79,7 +79,7 @@ internal sealed class RealtimeConnectionRegistry(
             return;
         }
 
-        //Review: to jest bardzo nieefektywne, bo dla kazdego connectionId robimy osobne zapytanie do redis. Lepiej by bylo zrobic to w jednym batchu (jest chyba metoda CreateBatch).
+        // These per-connection/per-user calls are fired concurrently and pipelined by StackExchange.Redis's multiplexer, so Task.WhenAll already avoids paying N sequential round-trips
         var activeConnections = connections
             .Where(static connection => connection.UserId != Guid.Empty && !string.IsNullOrWhiteSpace(connection.ConnectionId))
             .DistinctBy(static connection => connection.ConnectionId)
