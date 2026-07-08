@@ -25,6 +25,22 @@ public sealed class ConversationTests
     }
 
     [Fact]
+    public void CreateGroupConversation_WhenCreatorNotInParticipantUserIds_StillIncludesCreatorAsParticipant()
+    {
+        var creatorId = Id<UserProfileMarker>.New();
+        var memberId = Id<UserProfileMarker>.New();
+
+        var conversation = GroupConversation.Create(
+            Id<ConversationAggregate>.New(),
+            creatorId,
+            [memberId],
+            "Dev Team");
+
+        conversation.Participants.Should().Contain(p => p.UserId == creatorId);
+        conversation.Participants.Should().HaveCount(2);
+    }
+
+    [Fact]
     public void CreateGroupConversation_WhenLessThanTwoParticipants_ThrowsInvalidOperationException()
     {
         var creatorId = Id<UserProfileMarker>.New();

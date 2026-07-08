@@ -38,7 +38,7 @@ public sealed class GroupConversation : Conversation
             id,
             ConversationType.Group,
             createdByUserId,
-            participantUserIds,
+            participantUserIds.Prepend(createdByUserId),
             name,
             static (id, type, name, createdByUserId, lastMsgSequenceNum, participants) =>
                 new GroupConversation(id, type, name, createdByUserId, lastMsgSequenceNum, participants));
