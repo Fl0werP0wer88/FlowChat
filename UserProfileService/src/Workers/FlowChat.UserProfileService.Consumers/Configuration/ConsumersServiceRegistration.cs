@@ -1,5 +1,7 @@
 using Confluent.Kafka;
+using FlowChat.Core.Messaging;
 using FlowChat.Core.Messaging.AuthService.Events;
+using FlowChat.Core.Messaging.UserProfileService.ReadModels;
 using FlowChat.UserProfileService.Application;
 using FlowChat.UserProfileService.Consumers.Configuration.Settings;
 using FlowChat.UserProfileService.Consumers.Kafka;
@@ -31,6 +33,10 @@ public static class ConsumersServiceRegistration
             .GetSection(new UserEmailVerificationRequestedProducerSettingsSection().SectionName)
             .Get<UserEmailVerificationRequestedProducerSettingsSection>()
             ?? new UserEmailVerificationRequestedProducerSettingsSection();
+        var projectionProducerOptions = configuration
+            .GetSection(new UserProfileProjectionProducerSettingsSection().SectionName)
+            .Get<UserProfileProjectionProducerSettingsSection>()
+            ?? new UserProfileProjectionProducerSettingsSection();
 
         services.AddConsumerApplicationServices();
         services.AddConsumerInfrastructureServices(configuration);
@@ -71,6 +77,11 @@ public static class ConsumersServiceRegistration
                     .AddProducer(producer => producer
                         .Produce<EmailVerificationRequestIntegrationEvent>("email-verification-requested", endpoint => endpoint
                             .ProduceTo(emailVerificationRequestedProducerOptions.Topic)
+                            .SerializeAsJson(serializer => serializer.SetTypeHeader())
+                            .StoreToOutbox(outbox => outbox.UseEntityFramework<AppDbContext>())))
+                    .AddProducer(producer => producer
+                        .Produce<ProjectionIntegrationEvent<UserProfileReadModel>>("user-profile-projection", endpoint => endpoint
+                            .ProduceTo(projectionProducerOptions.Topic)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())
                             .StoreToOutbox(outbox => outbox.UseEntityFramework<AppDbContext>())));
             })
