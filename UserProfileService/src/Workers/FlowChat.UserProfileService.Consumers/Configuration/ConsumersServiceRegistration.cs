@@ -1,8 +1,10 @@
 using Confluent.Kafka;
+using FlowChat.Core.Messaging.AuthService.Events;
 using FlowChat.UserProfileService.Application;
 using FlowChat.UserProfileService.Consumers.Configuration.Settings;
 using FlowChat.UserProfileService.Consumers.Kafka;
 using FlowChat.UserProfileService.Infrastructure;
+using FlowChat.UserProfileService.Infrastructure.Configuration.Settings;
 using FlowChat.UserProfileService.Persistence;
 using FlowChat.Shared.Infrastructure.Silverback.Kafka;
 using FlowChat.Shared.Infrastructure.Silverback.Behaviors;
@@ -11,6 +13,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Silverback.Configuration;
 using Silverback.Messaging.Configuration;
+using Silverback.Messaging.Configuration.Kafka;
 
 namespace FlowChat.UserProfileService.Consumers;
 
@@ -24,6 +27,10 @@ public static class ConsumersServiceRegistration
             .GetSection(new AccountRegisteredConsumerSettingsSection().SectionName)
             .Get<AccountRegisteredConsumerSettingsSection>()
             ?? new AccountRegisteredConsumerSettingsSection();
+        var emailVerificationRequestedProducerOptions = configuration
+            .GetSection(new UserEmailVerificationRequestedProducerSettingsSection().SectionName)
+            .Get<UserEmailVerificationRequestedProducerSettingsSection>()
+            ?? new UserEmailVerificationRequestedProducerSettingsSection();
 
         services.AddConsumerApplicationServices();
         services.AddConsumerInfrastructureServices(configuration);
@@ -37,7 +44,8 @@ public static class ConsumersServiceRegistration
             .AddSingletonBrokerBehavior<CustomSpanAttributesConsumerBehavior>()
             .WithConnectionToMessageBroker(options => options
                 .AddKafka()
-                .AddEntityFrameworkKafkaOffsetStore())
+                .AddEntityFrameworkKafkaOffsetStore()
+                .AddEntityFrameworkOutbox())
             .AddKafkaClients(clients =>
             {
                 clients
@@ -59,7 +67,12 @@ public static class ConsumersServiceRegistration
                     .AddProducer(producer => producer
                         .Produce(endpoint => endpoint
                             .ProduceTo(consumerOptions.DeadLetterTopic)
-                            .SerializeAsJson(serializer => serializer.SetTypeHeader())));
+                            .SerializeAsJson(serializer => serializer.SetTypeHeader())))
+                    .AddProducer(producer => producer
+                        .Produce<EmailVerificationRequestIntegrationEvent>("email-verification-requested", endpoint => endpoint
+                            .ProduceTo(emailVerificationRequestedProducerOptions.Topic)
+                            .SerializeAsJson(serializer => serializer.SetTypeHeader())
+                            .StoreToOutbox(outbox => outbox.UseEntityFramework<AppDbContext>())));
             })
             .AddScopedSubscriber<AccountRegisteredSubscriber>();
 
