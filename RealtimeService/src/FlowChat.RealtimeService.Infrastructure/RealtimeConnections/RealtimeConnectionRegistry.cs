@@ -68,8 +68,10 @@ internal sealed class RealtimeConnectionRegistry(
         }
     }
 
-    public Task<IReadOnlyCollection<string>> GetConnectionIdsByUserIdAsync(Guid userId, CancellationToken cancellationToken) =>
-        _realtimeConnectionRedisRepository.GetConnectionIdsByUserIdAsync(userId, cancellationToken);
+    public Task<IReadOnlyDictionary<Guid, IReadOnlyCollection<string>>> GetConnectionIdsByUserIdsAsync(
+        IReadOnlyCollection<Guid> userIds,
+        CancellationToken cancellationToken) =>
+        _realtimeConnectionRedisRepository.GetConnectionIdsByUserIdsAsync(userIds, cancellationToken);
 
     public async Task RefreshAsync(IReadOnlyCollection<RealtimeConnectionRefreshEntry> connections, CancellationToken cancellationToken)
     {

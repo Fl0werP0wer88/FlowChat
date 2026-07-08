@@ -31,8 +31,10 @@ public sealed class PublishGroupConversationParticipantsRemovedCommandHandlerTes
         var callOrder = new List<string>();
 
         _connectionRegistryMock
-            .Setup(x => x.GetConnectionIdsByUserIdAsync(participantUserId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync([connectionId]);
+            .Setup(x => x.GetConnectionIdsByUserIdsAsync(
+                It.Is<IReadOnlyCollection<Guid>>(ids => ids.Contains(participantUserId)),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<Guid, IReadOnlyCollection<string>> { [participantUserId] = [connectionId] });
         _dispatcherMock
             .Setup(x => x.GroupConversationParticipantsRemovedAsync(It.IsAny<GroupConversationParticipantsRemovedParam>(), It.IsAny<CancellationToken>()))
             .Callback(() => callOrder.Add("dispatch"))

@@ -31,8 +31,10 @@ public sealed class PublishGroupConversationParticipantsAddedCommandHandlerTests
         var callOrder = new List<string>();
 
         _connectionRegistryMock
-            .Setup(x => x.GetConnectionIdsByUserIdAsync(participantUserId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync([connectionId]);
+            .Setup(x => x.GetConnectionIdsByUserIdsAsync(
+                It.Is<IReadOnlyCollection<Guid>>(ids => ids.Contains(participantUserId)),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<Guid, IReadOnlyCollection<string>> { [participantUserId] = [connectionId] });
         _groupManagerMock
             .Setup(x => x.AddToConversationGroupAsync(connectionId, conversationId, It.IsAny<CancellationToken>()))
             .Callback(() => callOrder.Add("join"))

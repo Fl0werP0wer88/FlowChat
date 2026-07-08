@@ -247,10 +247,16 @@ internal sealed class CapturingRealtimeConnectionRegistry : IRealtimeConnectionR
         return Task.CompletedTask;
     }
 
-    public Task<IReadOnlyCollection<string>> GetConnectionIdsByUserIdAsync(Guid userId, CancellationToken cancellationToken) =>
-        Task.FromResult(ConnectionIdsByUserId.TryGetValue(userId, out var connectionIds)
-            ? connectionIds
-            : []);
+    public Task<IReadOnlyDictionary<Guid, IReadOnlyCollection<string>>> GetConnectionIdsByUserIdsAsync(
+        IReadOnlyCollection<Guid> userIds,
+        CancellationToken cancellationToken)
+    {
+        IReadOnlyDictionary<Guid, IReadOnlyCollection<string>> result = userIds
+            .Where(ConnectionIdsByUserId.ContainsKey)
+            .ToDictionary(userId => userId, userId => ConnectionIdsByUserId[userId]);
+
+        return Task.FromResult(result);
+    }
 }
 
 internal sealed class CapturingPresenceInternalApiClient : IPresenceInternalApiClient

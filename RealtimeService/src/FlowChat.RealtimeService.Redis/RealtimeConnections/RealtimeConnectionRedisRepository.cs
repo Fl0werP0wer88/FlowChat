@@ -126,19 +126,49 @@ public sealed class RealtimeConnectionRedisRepository(
             .KeyExpireAsync(RedisKeys.GetUserConnectionsKey(_settings.KeyPrefix, userId), _settings.ConnectionTtl);
     }
 
-    public async Task<IReadOnlyCollection<string>> GetConnectionIdsByUserIdAsync(Guid userId, CancellationToken cancellationToken)
+    public async Task<IReadOnlyDictionary<Guid, IReadOnlyCollection<string>>> GetConnectionIdsByUserIdsAsync(
+        IReadOnlyCollection<Guid> userIds,
+        CancellationToken cancellationToken)
     {
-        ArgumentOutOfRangeException.ThrowIfEqual(userId, Guid.Empty);
+        ArgumentNullException.ThrowIfNull(userIds);
         cancellationToken.ThrowIfCancellationRequested();
 
-        var members = await _connectionMultiplexer.GetDatabase()
-            .SetMembersAsync(RedisKeys.GetUserConnectionsKey(_settings.KeyPrefix, userId));
-
-        return members
-            .Select(static value => value.ToString())
-            .Where(static connectionId => !string.IsNullOrWhiteSpace(connectionId))
-            .Distinct(StringComparer.Ordinal)
+        var filteredUserIds = userIds
+            .Where(static userId => userId != Guid.Empty)
+            .Distinct()
             .ToArray();
+        if (filteredUserIds.Length == 0)
+        {
+            return new Dictionary<Guid, IReadOnlyCollection<string>>();
+        }
+
+        var database = _connectionMultiplexer.GetDatabase();
+        var connectionTasks = filteredUserIds.ToDictionary(
+            userId => userId,
+            userId => database.SetMembersAsync(RedisKeys.GetUserConnectionsKey(_settings.KeyPrefix, userId)));
+
+        await Task.WhenAll(connectionTasks.Values.Cast<Task>());
+
+        Dictionary<Guid, IReadOnlyCollection<string>> connectionIdsByUser = [];
+        foreach (var (userId, task) in connectionTasks)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var connectionIds = task.Result
+                .Select(static value => value.ToString())
+                .Where(static connectionId => !string.IsNullOrWhiteSpace(connectionId))
+                .Distinct(StringComparer.Ordinal)
+                .ToArray();
+
+            if (connectionIds.Length == 0)
+            {
+                continue;
+            }
+
+            connectionIdsByUser[userId] = connectionIds;
+        }
+
+        return connectionIdsByUser;
     }
 
     public async Task<IReadOnlyDictionary<Guid, IReadOnlyCollection<string>>> GetInstanceIdsByUserAsync(

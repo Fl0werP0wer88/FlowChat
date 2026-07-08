@@ -28,14 +28,10 @@ public sealed class PublishGroupConversationParticipantsRemovedCommandHandler(
             new GroupConversationParticipantsRemovedParam(request.ConversationId, participantUserIds),
             cancellationToken);
 
-        //Review: Dobrze by bylo pozbyc sie tych foreach'ow i pobierac connectionId w jednym zapytaniu.
-        foreach (var userId in participantUserIds)
+        var connectionIdsByUser = await _realtimeConnectionRegistry.GetConnectionIdsByUserIdsAsync(participantUserIds, cancellationToken);
+        foreach (var connectionId in connectionIdsByUser.Values.SelectMany(static connectionIds => connectionIds))
         {
-            var connectionIds = await _realtimeConnectionRegistry.GetConnectionIdsByUserIdAsync(userId, cancellationToken);
-            foreach (var connectionId in connectionIds)
-            {
-                await _realtimeGroupManager.RemoveFromConversationGroupAsync(connectionId, request.ConversationId, cancellationToken);
-            }
+            await _realtimeGroupManager.RemoveFromConversationGroupAsync(connectionId, request.ConversationId, cancellationToken);
         }
 
         return FlowChatResult<Unit>.Success(Unit.Value);
