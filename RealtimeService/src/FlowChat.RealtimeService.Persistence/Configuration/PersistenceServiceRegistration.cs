@@ -12,11 +12,33 @@ public static class ApiPersistenceServiceRegistration
         this IServiceCollection services,
         IConfiguration configuration)
     {
+        services.AddCommonPersistenceServices(configuration);
+
+        return services;
+    }
+}
+
+public static class ConsumerPersistenceServiceRegistration
+{
+    public static IServiceCollection AddConsumerPersistenceServices(
+        this IServiceCollection services,
+        IConfiguration configuration)
+    {
+        services.AddCommonPersistenceServices(configuration);
+
+        return services;
+    }
+}
+
+internal static class CommonPersistenceServiceRegistration
+{
+    public static void AddCommonPersistenceServices(
+        this IServiceCollection services,
+        IConfiguration configuration)
+    {
         services.AddDbContext<AppDbContext>(options =>
             options.UseNpgsql(configuration.GetConnectionString("RealtimeDb")));
 
         services.AddScoped<IRealtimeGroupMembershipReadModelRepository, RealtimeGroupMembershipReadModelRepository>();
-
-        return services;
     }
 }
