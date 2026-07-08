@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FlowChat.ChatService.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260628120854_InitialCreate")]
+    [Migration("20260708111952_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -126,6 +126,9 @@ namespace FlowChat.ChatService.Persistence.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
 
+                    b.Property<long>("LastMsgSequenceNum")
+                        .HasColumnType("bigint");
+
                     b.Property<string>("Name")
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
@@ -138,6 +141,9 @@ namespace FlowChat.ChatService.Persistence.Migrations
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Type")
+                        .HasFilter("\"DeletedAt\" IS NULL");
 
                     b.ToTable("Conversations", (string)null);
 
@@ -171,13 +177,22 @@ namespace FlowChat.ChatService.Persistence.Migrations
                     b.Property<DateTimeOffset>("JoinedAtUtc")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<long>("LastReadMessageSequenceNum")
+                        .HasColumnType("bigint");
+
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
 
                     b.HasIndex("ConversationId", "UserId")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("\"DeletedAt\" IS NULL");
+
+                    b.HasIndex("UserId", "ConversationId")
+                        .HasFilter("\"DeletedAt\" IS NULL");
+
+                    NpgsqlIndexBuilderExtensions.IncludeProperties(b.HasIndex("UserId", "ConversationId"), new[] { "LastReadMessageSequenceNum" });
 
                     b.ToTable("ParticipantUsers", (string)null);
                 });
@@ -221,6 +236,9 @@ namespace FlowChat.ChatService.Persistence.Migrations
 
                     b.Property<DateTimeOffset?>("DeletedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<long>("LastMsgSequenceNum")
+                        .HasColumnType("bigint");
 
                     b.Property<string>("Name")
                         .HasColumnType("text");
@@ -293,6 +311,9 @@ namespace FlowChat.ChatService.Persistence.Migrations
 
                     b.Property<string>("DisplayName")
                         .HasColumnType("text");
+
+                    b.Property<long>("LastReadMessageSequenceNum")
+                        .HasColumnType("bigint");
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");

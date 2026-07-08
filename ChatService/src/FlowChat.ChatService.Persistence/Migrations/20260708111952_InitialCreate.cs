@@ -20,6 +20,7 @@ namespace FlowChat.ChatService.Persistence.Migrations
                     Type = table.Column<int>(type: "integer", nullable: false),
                     Name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
                     CreatedByUserId = table.Column<Guid>(type: "uuid", nullable: false),
+                    LastMsgSequenceNum = table.Column<long>(type: "bigint", nullable: false),
                     CreatedBy = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
                     CreatedAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     LastModifiedBy = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
@@ -146,6 +147,7 @@ namespace FlowChat.ChatService.Persistence.Migrations
                     AvatarUrl = table.Column<string>(type: "character varying(2048)", maxLength: 2048, nullable: true),
                     IsBlocked = table.Column<bool>(type: "boolean", nullable: false),
                     JoinedAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    LastReadMessageSequenceNum = table.Column<long>(type: "bigint", nullable: false),
                     DeletedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
@@ -165,6 +167,19 @@ namespace FlowChat.ChatService.Persistence.Migrations
                 columns: new[] { "ConversationId", "SentAtUtc" });
 
             migrationBuilder.CreateIndex(
+                name: "IX_ChatMessages_ConversationId_SequenceNum",
+                table: "ChatMessages",
+                columns: new[] { "ConversationId", "SequenceNum" },
+                unique: true,
+                filter: "\"SequenceNum\" IS NOT NULL");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Conversations_Type",
+                table: "Conversations",
+                column: "Type",
+                filter: "\"DeletedAt\" IS NULL");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_DuetConversations_ConversationId",
                 table: "DuetConversations",
                 column: "ConversationId");
@@ -173,7 +188,15 @@ namespace FlowChat.ChatService.Persistence.Migrations
                 name: "IX_ParticipantUsers_ConversationId_UserId",
                 table: "ParticipantUsers",
                 columns: new[] { "ConversationId", "UserId" },
-                unique: true);
+                unique: true,
+                filter: "\"DeletedAt\" IS NULL");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ParticipantUsers_UserId_ConversationId",
+                table: "ParticipantUsers",
+                columns: new[] { "UserId", "ConversationId" },
+                filter: "\"DeletedAt\" IS NULL")
+                .Annotation("Npgsql:IndexInclude", new[] { "LastReadMessageSequenceNum" });
         }
 
         /// <inheritdoc />
