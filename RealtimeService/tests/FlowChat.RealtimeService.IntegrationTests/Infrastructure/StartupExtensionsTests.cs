@@ -23,6 +23,11 @@ public sealed class StartupExtensionsTests
     public async Task ConfigureServices_RegistersSignalRAndReadsJwtTokenFromHubQueryString()
     {
         var builder = WebApplication.CreateBuilder();
+        builder.Host.UseDefaultServiceProvider(options =>
+        {
+            options.ValidateOnBuild = true;
+            options.ValidateScopes = true;
+        });
         builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?>
         {
             ["JwtSettings:Key"] = "FLOWCHAT_DEVELOPMENT_JWT_KEY_CHANGE_ME_123456789",
@@ -31,6 +36,7 @@ public sealed class StartupExtensionsTests
             ["FlowChat:InternalApi:ApiKey"] = "internal-key",
             ["RealtimeApi:Instances:realtime-instance"] = "http://localhost:5215",
             ["ConnectionStrings:Redis"] = "localhost:6379,password=secret",
+            ["ConnectionStrings:RealtimeDb"] = "Host=localhost;Port=5432;Database=flowchat_realtime_db;Username=flowchat_app;Password=flowchat_app_pw;",
             ["RealtimeConnections:InstanceId"] = "realtime-instance"
         });
 

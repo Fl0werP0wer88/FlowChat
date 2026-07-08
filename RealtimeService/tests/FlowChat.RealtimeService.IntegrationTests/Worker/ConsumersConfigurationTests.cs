@@ -14,6 +14,7 @@ using FluentAssertions;
 using MediatR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Silverback.Messaging.Broker;
 using StackExchange.Redis;
 
@@ -30,16 +31,23 @@ public sealed class ConsumersConfigurationTests
         services.AddSingleton<IConfiguration>(configuration);
         services.AddOptions();
         services.AddLogging();
+        services.AddSingleton(Mock.Of<IHostApplicationLifetime>());
         services.AddSingleton(Mock.Of<IConnectionMultiplexer>());
         services.AddConsumers(configuration);
 
-        await using var serviceProvider = services.BuildServiceProvider();
+        await using var serviceProvider = services.BuildServiceProvider(new ServiceProviderOptions
+        {
+            ValidateOnBuild = true,
+            ValidateScopes = true
+        });
         await using var scope = serviceProvider.CreateAsyncScope();
 
         var consumerCollection = serviceProvider.GetRequiredService<IConsumerCollection>();
         var chatSubscriber = scope.ServiceProvider.GetRequiredService<ChatMessageSentSubscriber>();
         var presenceSubscriber = scope.ServiceProvider.GetRequiredService<UserPresenceChangedSubscriber>();
         var conversationSubscriber = scope.ServiceProvider.GetRequiredService<GroupConversationChangedSubscriber>();
+        var participantsAddedSubscriber = scope.ServiceProvider.GetRequiredService<GroupConversationParticipantsAddedSubscriber>();
+        var participantsRemovedSubscriber = scope.ServiceProvider.GetRequiredService<GroupConversationParticipantsRemovedSubscriber>();
         var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
         var eventRouter = scope.ServiceProvider.GetRequiredService<IRealtimeEventRouter>();
         var routingReader = scope.ServiceProvider.GetRequiredService<IUserInstanceRoutingReader>();
@@ -57,6 +65,8 @@ public sealed class ConsumersConfigurationTests
         chatSubscriber.Should().NotBeNull();
         presenceSubscriber.Should().NotBeNull();
         conversationSubscriber.Should().NotBeNull();
+        participantsAddedSubscriber.Should().NotBeNull();
+        participantsRemovedSubscriber.Should().NotBeNull();
         mediator.Should().NotBeNull();
         eventRouter.Should().BeOfType<WorkerRealtimeEventRouter>();
         routingReader.Should().NotBeNull();
@@ -156,6 +166,7 @@ public sealed class ConsumersConfigurationTests
             {
                 ["FlowChat:InternalApi:ApiKey"] = "internal-key",
                 ["ConnectionStrings:Redis"] = "localhost:6379,password=secret",
+                ["ConnectionStrings:RealtimeDb"] = "Host=localhost;Port=5432;Database=flowchat_realtime_db;Username=flowchat_app;Password=flowchat_app_pw;",
                 ["RealtimeConnections:InstanceId"] = "realtime-consumers",
                 ["RealtimeApi:Instances:realtime-api"] = "http://localhost:5215",
                 ["ChatServiceApi:BaseUrl"] = "http://localhost:5254",
