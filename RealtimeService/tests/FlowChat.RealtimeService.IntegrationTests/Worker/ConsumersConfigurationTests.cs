@@ -1,9 +1,12 @@
 using FlowChat.RealtimeService.Consumers;
 using FlowChat.RealtimeService.Consumers.Kafka;
 using FlowChat.RealtimeService.Application.Contracts.Infrastructure;
+using FlowChat.RealtimeService.Application.Contracts.Persistence;
+using FlowChat.RealtimeService.Application.Features.Conversation.Commands.RouteGroupConversationChanged;
 using FlowChat.RealtimeService.Consumers.Configuration.Settings;
 using FlowChat.RealtimeService.Infrastructure.Configuration.Settings;
 using FlowChat.RealtimeService.Infrastructure.Routing;
+using FlowChat.Core.Results;
 using FlowChat.RealtimeService.Redis.RealtimeConnections;
 using FluentAssertions;
 using MediatR;
@@ -40,6 +43,9 @@ public sealed class ConsumersConfigurationTests
         var routingReader = scope.ServiceProvider.GetRequiredService<IUserInstanceRoutingReader>();
         var realtimeInstanceInternalApiClient = scope.ServiceProvider.GetRequiredService<IRealtimeInstanceInternalApiClient>();
         var chatServiceInternalApiClient = scope.ServiceProvider.GetRequiredService<IChatServiceInternalApiClient>();
+        var groupMembershipRepository = scope.ServiceProvider.GetRequiredService<IRealtimeGroupMembershipReadModelRepository>();
+        var groupConversationChangedHandler = scope.ServiceProvider
+            .GetRequiredService<IRequestHandler<RouteGroupConversationChangedCommand, FlowChatResult<Unit>>>();
 
         consumerCollection.Should().NotBeNull();
         chatSubscriber.Should().NotBeNull();
@@ -50,6 +56,8 @@ public sealed class ConsumersConfigurationTests
         routingReader.Should().NotBeNull();
         realtimeInstanceInternalApiClient.Should().NotBeNull();
         chatServiceInternalApiClient.Should().NotBeNull();
+        groupMembershipRepository.Should().NotBeNull();
+        groupConversationChangedHandler.Should().NotBeNull();
     }
 
     [Fact]
