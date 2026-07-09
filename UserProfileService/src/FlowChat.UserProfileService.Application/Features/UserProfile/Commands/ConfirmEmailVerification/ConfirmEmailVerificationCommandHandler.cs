@@ -15,6 +15,7 @@ using UserProfileAggregate = FlowChat.UserProfileService.Domain.Entities.UserPro
 
 namespace FlowChat.UserProfileService.Application.Features.UserProfile.Commands.ConfirmEmailVerification;
 
+//ToDo: To obsluguje dwa agregaty. Jeden trzeba bedzie  wywalic do domain event handlera. 
 public sealed class ConfirmEmailVerificationCommandHandler
     : AggregateRootUpdateCommandHandlerBaseV3<ConfirmEmailVerificationCommand, IdempotentCommandResult<Unit>, UserProfileAggregate>
 {
