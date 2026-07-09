@@ -11,6 +11,7 @@ public class PublishProjectionIntegrationEventProcessor<TCommand, TAggregate, TT
 {
     private readonly IMapper _mapper;
     private readonly IOutboxIntegrationEventPublisher _integrationEventPublisher;
+    private TTargetReadModel? _beforeState;
 
     public PublishProjectionIntegrationEventProcessor(
         IMapper mapper,
@@ -21,6 +22,11 @@ public class PublishProjectionIntegrationEventProcessor<TCommand, TAggregate, TT
             ?? throw new ArgumentNullException(nameof(integrationEventPublisher));
     }
 
+    public void CaptureBeforeState(TAggregate aggregate)
+    {
+        _beforeState = _mapper.Map<TTargetReadModel>(aggregate);
+    }
+
     public async Task ProcessAsync(
         TCommand command,
         TAggregate aggregate,
@@ -29,6 +35,14 @@ public class PublishProjectionIntegrationEventProcessor<TCommand, TAggregate, TT
     {
         var operationType = MapOperationType(mutationType);
         var readModel = _mapper.Map<TTargetReadModel>(aggregate);
+
+        if (mutationType == MutationType.Updated
+            && _beforeState is not null
+            && _beforeState.Equals(readModel))
+        {
+            return;
+        }
+
         var integrationEvent = new ProjectionIntegrationEvent<TTargetReadModel>
         {
             SourceAggregateId = aggregate.Id.Value,

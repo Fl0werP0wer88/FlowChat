@@ -9,4 +9,8 @@ public interface IAggregateBeforeSaveProcessor<TCommand, TAggregate>
         TAggregate aggregate,
         MutationType mutationType,
         CancellationToken cancellationToken);
+
+    void CaptureBeforeState(TAggregate aggregate)
+    {
+    }
 }

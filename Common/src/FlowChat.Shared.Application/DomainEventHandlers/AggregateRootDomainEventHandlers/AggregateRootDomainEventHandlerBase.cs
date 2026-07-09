@@ -60,6 +60,14 @@ public abstract class AggregateRootDomainEventHandlerBase<TNotification, TAggreg
         _mutationType = mutationType;
     }
 
+    protected void CapturePreMutationSnapshot(TAggregate aggregate)
+    {
+        foreach (var processor in _beforeSaveProcessors)
+        {
+            processor.CaptureBeforeState(aggregate);
+        }
+    }
+
     protected abstract Task<FlowChatResult> ExecuteAsync(TNotification notification, CancellationToken cancellationToken);
 
     protected abstract TAggregate GetAggregateRoot();

@@ -42,6 +42,8 @@ public sealed class AddPhoneCommandHandler
             return FlowChatResult<Guid>.Failure(DomainError.NotFound($"User profile '{request.UserId}' was not found."));
         }
 
+        CapturePreMutationSnapshot(_userProfile);
+
         if (_userProfile.Phones.Any(x => x.Number == normalizedPhoneNumber))
         {
             return FlowChatResult<Guid>.Failure(DomainError.Conflict($"Phone '{normalizedPhoneNumber!.Value}' already exists."));

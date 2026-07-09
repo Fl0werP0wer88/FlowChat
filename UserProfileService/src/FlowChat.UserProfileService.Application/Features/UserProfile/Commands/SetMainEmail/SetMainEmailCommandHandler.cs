@@ -37,6 +37,8 @@ public sealed class SetMainEmailCommandHandler
             return FlowChatResult<Guid>.Failure(DomainError.NotFound($"User profile '{request.UserId}' was not found."));
         }
 
+        CapturePreMutationSnapshot(_userProfile);
+
         var email = _userProfile.Emails.FirstOrDefault(x => x.Id.Value == request.EmailId);
         if (email is null)
         {

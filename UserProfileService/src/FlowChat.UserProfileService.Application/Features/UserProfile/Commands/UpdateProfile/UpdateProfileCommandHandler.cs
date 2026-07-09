@@ -34,6 +34,8 @@ public sealed class UpdateProfileCommandHandler
             return FlowChatResult<Guid>.Failure(DomainError.NotFound($"User profile '{request.UserId}' was not found."));
         }
 
+        CapturePreMutationSnapshot(_userProfile);
+
         if (HasProfileChanged(request, _userProfile))
         {
             SetUpdated();

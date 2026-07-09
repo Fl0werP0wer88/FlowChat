@@ -65,6 +65,14 @@ public abstract class AggregateRootCommandHandlerBaseV3<TCommand, TResponse, TAg
         _mutationType = mutationType;
     }
 
+    protected void CapturePreMutationSnapshot(TAggregate aggregate)
+    {
+        foreach (var processor in _beforeSaveProcessors)
+        {
+            processor.CaptureBeforeState(aggregate);
+        }
+    }
+
     protected abstract Task<FlowChatResult<TResponse>> ExecuteAsync(TCommand request, CancellationToken cancellationToken);
 
     protected abstract TAggregate GetAggregateRoot();

@@ -79,6 +79,8 @@ public sealed class ConfirmEmailVerificationCommandHandler
                 DomainError.NotFound($"User profile '{payload.UserProfileId}' was not found."));
         }
 
+        CapturePreMutationSnapshot(_userProfile);
+
         var email = _userProfile.Emails.FirstOrDefault(x => x.Id.Value == payload.EmailId);
         if (email is null)
         {

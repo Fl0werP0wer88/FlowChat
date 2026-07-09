@@ -37,6 +37,8 @@ public sealed class SetMainPhoneCommandHandler
             return FlowChatResult<Guid>.Failure(DomainError.NotFound($"User profile '{request.UserId}' was not found."));
         }
 
+        CapturePreMutationSnapshot(_userProfile);
+
         var phone = _userProfile.Phones.FirstOrDefault(x => x.Id.Value == request.PhoneId);
         if (phone is null)
         {
