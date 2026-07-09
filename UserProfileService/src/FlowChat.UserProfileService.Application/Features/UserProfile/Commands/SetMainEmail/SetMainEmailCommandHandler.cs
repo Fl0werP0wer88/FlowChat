@@ -15,7 +15,6 @@ public sealed class SetMainEmailCommandHandler
     private const string EmailMustBeConfirmedMessageTemplate = "Email '{0}' must be confirmed before it can be set as the main email.";
 
     private readonly IUserProfileWriteRepository _userProfileRepository;
-    private UserProfileAggregate? _userProfile;
 
     public SetMainEmailCommandHandler(
         IUserProfileWriteRepository userProfileRepository,
@@ -27,29 +26,34 @@ public sealed class SetMainEmailCommandHandler
         _userProfileRepository = userProfileRepository;
     }
 
-    protected override async Task<FlowChatResult<Guid>> ExecuteAsync(
+    protected override async Task<FlowChatResult<UserProfileAggregate?>> FetchAggregateRootAsync(
         SetMainEmailCommand request,
         CancellationToken cancellationToken)
     {
-        _userProfile = await _userProfileRepository.GetByIdAsync(request.UserId, cancellationToken);
-        if (_userProfile is null)
+        var userProfile = await _userProfileRepository.GetByIdAsync(request.UserId, cancellationToken);
+        if (userProfile is null)
         {
-            return FlowChatResult<Guid>.Failure(DomainError.NotFound($"User profile '{request.UserId}' was not found."));
+            return FlowChatResult<UserProfileAggregate?>.Failure(DomainError.NotFound($"User profile '{request.UserId}' was not found."));
         }
 
-        CapturePreMutationSnapshot(_userProfile);
+        return FlowChatResult<UserProfileAggregate?>.Success(userProfile);
+    }
 
-        var email = _userProfile.Emails.FirstOrDefault(x => x.Id.Value == request.EmailId);
+    protected override Task<FlowChatResult<Guid>> ExecuteAsync(
+        SetMainEmailCommand request,
+        CancellationToken cancellationToken)
+    {
+        var email = AggregateRoot!.Emails.FirstOrDefault(x => x.Id.Value == request.EmailId);
         if (email is null)
         {
-            return FlowChatResult<Guid>.Failure(
-                DomainError.NotFound($"Email '{request.EmailId}' was not found for user profile '{request.UserId}'."));
+            return Task.FromResult(FlowChatResult<Guid>.Failure(
+                DomainError.NotFound($"Email '{request.EmailId}' was not found for user profile '{request.UserId}'.")));
         }
 
         if (!email.IsMain && !email.IsConfirmed)
         {
-            return FlowChatResult<Guid>.Failure(
-                DomainError.Validation(string.Format(EmailMustBeConfirmedMessageTemplate, email.Address.Value)));
+            return Task.FromResult(FlowChatResult<Guid>.Failure(
+                DomainError.Validation(string.Format(EmailMustBeConfirmedMessageTemplate, email.Address.Value))));
         }
 
         if (!email.IsMain)
@@ -57,11 +61,8 @@ public sealed class SetMainEmailCommandHandler
             SetUpdated();
         }
 
-        _userProfile.SetMainEmail(email.Id);
+        AggregateRoot.SetMainEmail(email.Id);
 
-        return FlowChatResult<Guid>.Success(email.Id.Value);
+        return Task.FromResult(FlowChatResult<Guid>.Success(email.Id.Value));
     }
-
-    protected override UserProfileAggregate GetAggregateRoot() =>
-        _userProfile ?? throw new InvalidOperationException("Aggregate root instance is not available.");
 }

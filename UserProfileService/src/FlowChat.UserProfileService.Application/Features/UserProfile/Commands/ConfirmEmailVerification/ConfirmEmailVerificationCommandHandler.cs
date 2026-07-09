@@ -9,6 +9,8 @@ using FlowChat.UserProfileService.Application.Contracts.Persistence;
 using FlowChat.UserProfileService.Application.Features.UserProfile.EmailVerification;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using DomainEmailVerificationProcess = FlowChat.UserProfileService.Domain.Entities.EmailVerificationProcess.EmailVerificationProcess;
+using DomainEmailVerificationRequest = FlowChat.UserProfileService.Domain.Entities.EmailVerificationRequest.EmailVerificationRequest;
 using UserProfileAggregate = FlowChat.UserProfileService.Domain.Entities.UserProfile.UserProfile;
 
 namespace FlowChat.UserProfileService.Application.Features.UserProfile.Commands.ConfirmEmailVerification;
@@ -23,7 +25,10 @@ public sealed class ConfirmEmailVerificationCommandHandler
     private readonly IUserProfileWriteRepository _userProfileWriteRepository;
     private readonly IEmailVerificationProcessWriteRepository _emailVerificationProcessWriteRepository;
     private readonly IEmailVerificationTokenProtector _emailVerificationTokenProtector;
-    private UserProfileAggregate? _userProfile;
+    private EmailVerificationTokenPayload? _payload;
+    private DomainEmailVerificationProcess? _process;
+    private DomainEmailVerificationRequest? _verificationRequest;
+    private UtcDateTimeOffset? _nowUtc;
 
     public ConfirmEmailVerificationCommandHandler(
         IUserProfileWriteRepository userProfileWriteRepository,
@@ -39,14 +44,16 @@ public sealed class ConfirmEmailVerificationCommandHandler
         _emailVerificationTokenProtector = emailVerificationTokenProtector;
     }
 
-    protected override async Task<FlowChatResult<IdempotentCommandResult<Unit>>> ExecuteAsync(
+    protected override async Task<FlowChatResult<UserProfileAggregate?>> FetchAggregateRootAsync(
         ConfirmEmailVerificationCommand request,
         CancellationToken cancellationToken)
     {
         if (!_emailVerificationTokenProtector.TryUnprotect(request.Token, out var payload) || payload is null)
         {
-            return ValidationFailure();
+            return AggregateValidationFailure();
         }
+
+        _payload = payload;
 
         var process = await _emailVerificationProcessWriteRepository
             .GetByNonceAsync(payload.Nonce, cancellationToken);
@@ -58,48 +65,57 @@ public sealed class ConfirmEmailVerificationCommandHandler
             || process.EmailId.Value != payload.EmailId
             || !process.TryGetRequestByNonce(payload.Nonce, out var verificationRequest))
         {
-            return ValidationFailure();
+            return AggregateValidationFailure();
         }
 
+        _process = process;
+        _verificationRequest = verificationRequest;
+
         var nowUtc = UtcDateTimeOffset.UtcNow;
+        _nowUtc = nowUtc;
         if (verificationRequest.InvalidatedAtUtc is not null)
         {
-            return ValidationFailure();
+            return AggregateValidationFailure();
         }
 
         if (verificationRequest.ConsumedAtUtc is null && verificationRequest.IsExpired(nowUtc))
         {
-            return ValidationFailure();
+            return AggregateValidationFailure();
         }
 
-        _userProfile = await _userProfileWriteRepository.GetByIdAsync(payload.UserProfileId, cancellationToken);
-        if (_userProfile is null)
+        var userProfile = await _userProfileWriteRepository.GetByIdAsync(payload.UserProfileId, cancellationToken);
+        if (userProfile is null)
         {
-            return FlowChatResult<IdempotentCommandResult<Unit>>.Failure(
+            return FlowChatResult<UserProfileAggregate?>.Failure(
                 DomainError.NotFound($"User profile '{payload.UserProfileId}' was not found."));
         }
 
-        CapturePreMutationSnapshot(_userProfile);
+        return FlowChatResult<UserProfileAggregate?>.Success(userProfile);
+    }
 
-        var email = _userProfile.Emails.FirstOrDefault(x => x.Id.Value == payload.EmailId);
+    protected override Task<FlowChatResult<IdempotentCommandResult<Unit>>> ExecuteAsync(
+        ConfirmEmailVerificationCommand request,
+        CancellationToken cancellationToken)
+    {
+        var email = AggregateRoot!.Emails.FirstOrDefault(x => x.Id.Value == _payload!.EmailId);
         if (email is null)
         {
-            return FlowChatResult<IdempotentCommandResult<Unit>>.Failure(
-                DomainError.NotFound($"Email '{payload.EmailId}' was not found for user profile '{payload.UserProfileId}'."));
+            return Task.FromResult(FlowChatResult<IdempotentCommandResult<Unit>>.Failure(
+                DomainError.NotFound($"Email '{_payload!.EmailId}' was not found for user profile '{_payload.UserProfileId}'.")));
         }
 
-        if (verificationRequest.ConsumedAtUtc is not null)
+        if (_verificationRequest!.ConsumedAtUtc is not null)
         {
-            return email.IsConfirmed
+            return Task.FromResult(email.IsConfirmed
                 ? Success(wasAlreadyProcessed: true)
-                : ValidationFailure();
+                : ValidationFailure());
         }
 
-        _userProfile.ConfirmEmail(email.Id);
-        process.ConsumeRequest(payload.Nonce, nowUtc);
+        AggregateRoot.ConfirmEmail(email.Id);
+        _process!.ConsumeRequest(_payload!.Nonce, _nowUtc!.Value);
         SetUpdated();
 
-        return Success(wasAlreadyProcessed: false);
+        return Task.FromResult(Success(wasAlreadyProcessed: false));
     }
 
     protected override async Task<FlowChatResult<IdempotentCommandResult<Unit>>> HandleUnexpectedExceptionAsync(
@@ -125,9 +141,6 @@ public sealed class ConfirmEmailVerificationCommandHandler
         return await base.HandleUnexpectedExceptionAsync(request, exception, cancellationToken);
     }
 
-    protected override UserProfileAggregate GetAggregateRoot() =>
-        _userProfile ?? throw new InvalidOperationException("Aggregate root instance is not available.");
-
     private static bool IsConfirmedBySameToken(
         EmailVerificationTokenPayload payload,
         EmailVerificationConfirmationState? confirmationState)
@@ -149,6 +162,12 @@ public sealed class ConfirmEmailVerificationCommandHandler
     private static FlowChatResult<IdempotentCommandResult<Unit>> ValidationFailure()
     {
         return FlowChatResult<IdempotentCommandResult<Unit>>.Failure(
+            DomainError.Validation(InvalidTokenMessage));
+    }
+
+    private static FlowChatResult<UserProfileAggregate?> AggregateValidationFailure()
+    {
+        return FlowChatResult<UserProfileAggregate?>.Failure(
             DomainError.Validation(InvalidTokenMessage));
     }
 }

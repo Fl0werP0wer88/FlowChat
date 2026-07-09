@@ -18,28 +18,31 @@ public sealed class SetChatMessageSequenceNumberCommandHandler(
         unitOfWork,
         beforeSaveProcessors)
 {
-    private ChatMessageAggregate? _message;
+    protected override async Task<FlowChatResult<ChatMessageAggregate?>> FetchAggregateRootAsync(
+        SetChatMessageSequenceNumberCommand request,
+        CancellationToken cancellationToken)
+    {
+        var message = await chatMessageRepository.GetByIdAsync(request.MessageId, cancellationToken);
+        if (message is null)
+            return FlowChatResult<ChatMessageAggregate?>.Failure(DomainError.NotFound("Chat message not found."));
+
+        return FlowChatResult<ChatMessageAggregate?>.Success(message);
+    }
 
     protected override async Task<FlowChatResult<long>> ExecuteAsync(
         SetChatMessageSequenceNumberCommand request,
         CancellationToken cancellationToken)
     {
-        _message = await chatMessageRepository.GetByIdAsync(request.MessageId, cancellationToken);
-        if (_message is null)
-            return FlowChatResult<long>.Failure(DomainError.NotFound("Chat message not found."));
-
-        if (_message.SequenceNum.HasValue)
+        if (AggregateRoot!.SequenceNum.HasValue)
         {
-            return FlowChatResult<long>.Success(_message.SequenceNum.Value);
+            return FlowChatResult<long>.Success(AggregateRoot.SequenceNum.Value);
         }
 
         var maxSequenceNum = await chatMessageRepository.GetMaxSequenceNumAsync(request.ConversationId, cancellationToken);
         var sequenceNum = maxSequenceNum.GetValueOrDefault() + 1;
-        _message.SetSequenceNumber(sequenceNum);
+        AggregateRoot.SetSequenceNumber(sequenceNum);
         SetUpdated();
 
         return FlowChatResult<long>.Success(sequenceNum);
     }
-
-    protected override ChatMessageAggregate GetAggregateRoot() => _message ?? throw new InvalidOperationException("Aggregate root instance is not available.");
 }

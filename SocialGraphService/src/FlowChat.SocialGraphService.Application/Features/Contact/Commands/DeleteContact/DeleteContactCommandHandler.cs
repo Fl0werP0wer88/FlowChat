@@ -12,7 +12,6 @@ public sealed class DeleteContactCommandHandler
     : AggregateRootDeleteCommandHandlerBaseV3<DeleteContactCommand, MediatR.Unit, ContactAggregate>
 {
     private readonly IContactWriteRepository _contactWriteRepository;
-    private ContactAggregate? _contact;
 
     public DeleteContactCommandHandler(
         IContactWriteRepository contactWriteRepository,
@@ -24,26 +23,30 @@ public sealed class DeleteContactCommandHandler
         _contactWriteRepository = contactWriteRepository ?? throw new ArgumentNullException(nameof(contactWriteRepository));
     }
 
-    protected override async Task<FlowChatResult<MediatR.Unit>> ExecuteAsync(
+    protected override async Task<FlowChatResult<ContactAggregate?>> FetchAggregateRootAsync(
         DeleteContactCommand request,
         CancellationToken cancellationToken)
     {
-        _contact = await _contactWriteRepository.GetByOwnerAndContactAsync(
+        var contact = await _contactWriteRepository.GetByOwnerAndContactAsync(
             Id<UserProfileMarker>.FromGuid(request.OwnerUserId),
             Id<UserProfileMarker>.FromGuid(request.ContactUserId),
             cancellationToken);
 
-        if (_contact is null)
+        if (contact is null)
         {
-            return FlowChatResult<MediatR.Unit>.Failure(DomainError.NotFound("Contact was not found."));
+            return FlowChatResult<ContactAggregate?>.Failure(DomainError.NotFound("Contact was not found."));
         }
 
-        await _contactWriteRepository.SoftDeleteAsync(_contact, cancellationToken);
+        return FlowChatResult<ContactAggregate?>.Success(contact);
+    }
+
+    protected override async Task<FlowChatResult<MediatR.Unit>> ExecuteAsync(
+        DeleteContactCommand request,
+        CancellationToken cancellationToken)
+    {
+        await _contactWriteRepository.SoftDeleteAsync(AggregateRoot!, cancellationToken);
         SetDeleted();
 
         return FlowChatResult<MediatR.Unit>.Success(MediatR.Unit.Value);
     }
-
-    protected override ContactAggregate GetAggregateRoot() =>
-        _contact ?? throw new InvalidOperationException("Aggregate root instance is not available.");
 }

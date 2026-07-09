@@ -14,7 +14,6 @@ public sealed class AddGroupParticipantsCommandHandler
 {
     private readonly IGroupConversationWriteRepository _groupConversationRepository;
     private readonly IChatMessageWriteRepository _chatMessageRepository;
-    private GroupConversation? _conversation;
 
     public AddGroupParticipantsCommandHandler(
         IGroupConversationWriteRepository groupConversationRepository,
@@ -28,18 +27,25 @@ public sealed class AddGroupParticipantsCommandHandler
         _chatMessageRepository = chatMessageRepository ?? throw new ArgumentNullException(nameof(chatMessageRepository));
     }
 
+    protected override async Task<FlowChatResult<GroupConversation?>> FetchAggregateRootAsync(
+        AddGroupParticipantsCommand request,
+        CancellationToken cancellationToken)
+    {
+        var conversation = await _groupConversationRepository.GetByIdAsync(request.ConversationId, cancellationToken);
+        if (conversation is null)
+            return FlowChatResult<GroupConversation?>.Failure(DomainError.NotFound("Conversation not found."));
+
+        return FlowChatResult<GroupConversation?>.Success(conversation);
+    }
+
     protected override async Task<FlowChatResult<Unit>> ExecuteAsync(
         AddGroupParticipantsCommand request,
         CancellationToken cancellationToken)
     {
-        _conversation = await _groupConversationRepository.GetByIdAsync(request.ConversationId, cancellationToken);
-        if (_conversation is null)
-            return FlowChatResult<Unit>.Failure(DomainError.NotFound("Conversation not found."));
-
         var newParticipantUserIds = request.ParticipantUserIds
             .Select(Id<UserProfileMarker>.FromGuid)
             .Distinct()
-            .Where(participantUserId => _conversation.Participants.All(p => p.UserId != participantUserId))
+            .Where(participantUserId => AggregateRoot!.Participants.All(p => p.UserId != participantUserId))
             .ToList();
 
         if (newParticipantUserIds.Count == 0)
@@ -52,7 +58,7 @@ public sealed class AddGroupParticipantsCommandHandler
             cancellationToken);
         var lastReadMessageSequenceNum = maxSequenceNum.GetValueOrDefault();
 
-        _conversation.AddParticipants(
+        AggregateRoot!.AddParticipants(
             newParticipantUserIds,
             displayName: null,
             avatarUrl: null,
@@ -62,7 +68,4 @@ public sealed class AddGroupParticipantsCommandHandler
 
         return FlowChatResult<Unit>.Success(Unit.Value);
     }
-
-    protected override GroupConversation GetAggregateRoot() =>
-        _conversation ?? throw new InvalidOperationException("Aggregate root instance is not available.");
 }

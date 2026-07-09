@@ -15,7 +15,6 @@ public sealed class RemoveGroupParticipantsCommandHandler
     private const int MinimumParticipantsCount = 2;
 
     private readonly IGroupConversationWriteRepository _groupConversationRepository;
-    private GroupConversation? _conversation;
 
     public RemoveGroupParticipantsCommandHandler(
         IGroupConversationWriteRepository groupConversationRepository,
@@ -27,38 +26,42 @@ public sealed class RemoveGroupParticipantsCommandHandler
         _groupConversationRepository = groupConversationRepository ?? throw new ArgumentNullException(nameof(groupConversationRepository));
     }
 
-    protected override async Task<FlowChatResult<Unit>> ExecuteAsync(
+    protected override async Task<FlowChatResult<GroupConversation?>> FetchAggregateRootAsync(
         RemoveGroupParticipantsCommand request,
         CancellationToken cancellationToken)
     {
-        _conversation = await _groupConversationRepository.GetByIdAsync(request.ConversationId, cancellationToken);
-        if (_conversation is null)
-            return FlowChatResult<Unit>.Failure(DomainError.NotFound("Conversation not found."));
+        var conversation = await _groupConversationRepository.GetByIdAsync(request.ConversationId, cancellationToken);
+        if (conversation is null)
+            return FlowChatResult<GroupConversation?>.Failure(DomainError.NotFound("Conversation not found."));
 
+        return FlowChatResult<GroupConversation?>.Success(conversation);
+    }
+
+    protected override Task<FlowChatResult<Unit>> ExecuteAsync(
+        RemoveGroupParticipantsCommand request,
+        CancellationToken cancellationToken)
+    {
         var participantUserIdsToRemove = request.ParticipantUserIds
             .Select(Id<UserProfileMarker>.FromGuid)
             .Distinct()
             .ToList();
 
-        if (participantUserIdsToRemove.Any(participantUserId => _conversation.Participants.All(p => p.UserId != participantUserId)))
+        if (participantUserIdsToRemove.Any(participantUserId => AggregateRoot!.Participants.All(p => p.UserId != participantUserId)))
         {
-            return FlowChatResult<Unit>.Failure(
-                DomainError.BadRequest("User is not a participant in this conversation."));
+            return Task.FromResult(FlowChatResult<Unit>.Failure(
+                DomainError.BadRequest("User is not a participant in this conversation.")));
         }
 
-        if (_conversation.Participants.Count - participantUserIdsToRemove.Count < MinimumParticipantsCount)
+        if (AggregateRoot!.Participants.Count - participantUserIdsToRemove.Count < MinimumParticipantsCount)
         {
-            return FlowChatResult<Unit>.Failure(
-                DomainError.BadRequest("Group conversations must have at least two participants."));
+            return Task.FromResult(FlowChatResult<Unit>.Failure(
+                DomainError.BadRequest("Group conversations must have at least two participants.")));
         }
 
-        _conversation.RemoveParticipants(participantUserIdsToRemove);
+        AggregateRoot.RemoveParticipants(participantUserIdsToRemove);
 
         SetUpdated();
 
-        return FlowChatResult<Unit>.Success(Unit.Value);
+        return Task.FromResult(FlowChatResult<Unit>.Success(Unit.Value));
     }
-
-    protected override GroupConversation GetAggregateRoot() =>
-        _conversation ?? throw new InvalidOperationException("Aggregate root instance is not available.");
 }

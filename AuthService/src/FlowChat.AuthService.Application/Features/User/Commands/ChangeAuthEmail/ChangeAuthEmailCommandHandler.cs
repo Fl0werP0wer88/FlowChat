@@ -16,7 +16,7 @@ public sealed class ChangeAuthEmailCommandHandler
 {
     private readonly IAccountRepository _accountRepository;
     private readonly IPasswordHashingService _passwordHashingService;
-    private DomainAccount? _account;
+    private EmailAddress? _emailAddress;
 
     public ChangeAuthEmailCommandHandler(
         IAccountRepository accountRepository,
@@ -30,34 +30,38 @@ public sealed class ChangeAuthEmailCommandHandler
         _passwordHashingService = passwordHashingService;
     }
 
-    protected override async Task<FlowChatResult<Unit>> ExecuteAsync(ChangeAuthEmailCommand request, CancellationToken cancellationToken)
+    protected override async Task<FlowChatResult<DomainAccount?>> FetchAggregateRootAsync(
+        ChangeAuthEmailCommand request,
+        CancellationToken cancellationToken)
     {
-        var emailAddress = EmailAddress.Create(request.EmailAddress);
+        _emailAddress = EmailAddress.Create(request.EmailAddress);
 
-        _account = await _accountRepository.GetByIdAsync(request.UserId, cancellationToken);
-        if (_account is null)
+        var account = await _accountRepository.GetByIdAsync(request.UserId, cancellationToken);
+        if (account is null)
         {
-            return FlowChatResult<Unit>.Failure(DomainError.NotFound("User was not found."));
+            return FlowChatResult<DomainAccount?>.Failure(DomainError.NotFound("User was not found."));
         }
 
-        if (_account.Email == emailAddress)
+        return FlowChatResult<DomainAccount?>.Success(account);
+    }
+
+    protected override async Task<FlowChatResult<Unit>> ExecuteAsync(ChangeAuthEmailCommand request, CancellationToken cancellationToken)
+    {
+        if (AggregateRoot!.Email == _emailAddress)
         {
             return FlowChatResult<Unit>.Success(Unit.Value);
         }
 
-        var existingAccount = await _accountRepository.GetByEmailAsync(emailAddress, cancellationToken);
-        if (existingAccount is not null && existingAccount.Id != _account.Id)
+        var existingAccount = await _accountRepository.GetByEmailAsync(_emailAddress!, cancellationToken);
+        if (existingAccount is not null && existingAccount.Id != AggregateRoot.Id)
         {
             return FlowChatResult<Unit>.Failure(DomainError.Conflict("Email is already in use."));
         }
 
-        _account.ChangeAuthEmail(emailAddress, _passwordHashingService.GenerateSecurityStamp());
+        AggregateRoot.ChangeAuthEmail(_emailAddress!, _passwordHashingService.GenerateSecurityStamp());
         SetUpdated();
-        await _accountRepository.UpdateAsync(_account, cancellationToken);
+        await _accountRepository.UpdateAsync(AggregateRoot, cancellationToken);
 
         return FlowChatResult<Unit>.Success(Unit.Value);
     }
-
-    protected override DomainAccount GetAggregateRoot() =>
-        _account ?? throw new InvalidOperationException("Aggregate root instance is not available.");
 }

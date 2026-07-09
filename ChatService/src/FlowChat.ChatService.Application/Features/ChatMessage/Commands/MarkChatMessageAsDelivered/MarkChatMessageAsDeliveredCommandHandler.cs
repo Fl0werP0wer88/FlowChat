@@ -21,29 +21,32 @@ public sealed class MarkChatMessageAsDeliveredCommandHandler(
         unitOfWork,
         beforeSaveProcessors)
 {
-    private ChatMessageAggregate? _message;
-
-    protected override async Task<FlowChatResult<Unit>> ExecuteAsync(
+    protected override async Task<FlowChatResult<ChatMessageAggregate?>> FetchAggregateRootAsync(
         MarkChatMessageAsDeliveredCommand request,
         CancellationToken cancellationToken)
     {
-        _message = await chatMessageRepository.GetByIdAsync(request.MessageId, cancellationToken);
-        if (_message is null)
-            return FlowChatResult<Unit>.Failure(DomainError.NotFound("Chat message not found."));
+        var message = await chatMessageRepository.GetByIdAsync(request.MessageId, cancellationToken);
+        if (message is null)
+            return FlowChatResult<ChatMessageAggregate?>.Failure(DomainError.NotFound("Chat message not found."));
 
-        if (_message.DeliveryStatus == DeliveryStatus.Delivered)
-        {
-            return FlowChatResult<Unit>.Success(Unit.Value);
-        }
-
-        if (!_message.SequenceNum.HasValue)
-            return FlowChatResult<Unit>.Failure(DomainError.BadRequest("Chat message sequence number must be set before marking it as delivered."));
-
-        _message.MarkAsDelivered(UtcDateTimeOffset.Create(request.DeliveredAtUtc));
-        SetUpdated();
-
-        return FlowChatResult<Unit>.Success(Unit.Value);
+        return FlowChatResult<ChatMessageAggregate?>.Success(message);
     }
 
-    protected override ChatMessageAggregate GetAggregateRoot() => _message ?? throw new InvalidOperationException("Aggregate root instance is not available.");
+    protected override Task<FlowChatResult<Unit>> ExecuteAsync(
+        MarkChatMessageAsDeliveredCommand request,
+        CancellationToken cancellationToken)
+    {
+        if (AggregateRoot!.DeliveryStatus == DeliveryStatus.Delivered)
+        {
+            return Task.FromResult(FlowChatResult<Unit>.Success(Unit.Value));
+        }
+
+        if (!AggregateRoot.SequenceNum.HasValue)
+            return Task.FromResult(FlowChatResult<Unit>.Failure(DomainError.BadRequest("Chat message sequence number must be set before marking it as delivered.")));
+
+        AggregateRoot.MarkAsDelivered(UtcDateTimeOffset.Create(request.DeliveredAtUtc));
+        SetUpdated();
+
+        return Task.FromResult(FlowChatResult<Unit>.Success(Unit.Value));
+    }
 }

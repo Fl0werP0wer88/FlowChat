@@ -28,10 +28,24 @@ public abstract class AggregateRootCommandHandlerBaseV3<TCommand, TResponse, TAg
         _beforeSaveProcessors = beforeSaveProcessors;
     }
 
+    protected TAggregate? AggregateRoot { get; set; }
+
     protected override async Task<FlowChatResult<TResponse>> HandleInTransactionAsync(
         TCommand request,
         CancellationToken cancellationToken)
     {
+        var fetchResult = await FetchAggregateRootAsync(request, cancellationToken);
+        if (fetchResult.IsFailure)
+        {
+            return FlowChatResult<TResponse>.Failure(fetchResult.Error);
+        }
+
+        if (fetchResult.Value is not null)
+        {
+            AggregateRoot = fetchResult.Value;
+            CapturePreMutationSnapshot(AggregateRoot);
+        }
+
         var operationResult = await ExecuteAsync(request, cancellationToken);
 
         if (operationResult.IsSuccess)
@@ -73,9 +87,15 @@ public abstract class AggregateRootCommandHandlerBaseV3<TCommand, TResponse, TAg
         }
     }
 
+    protected virtual Task<FlowChatResult<TAggregate?>> FetchAggregateRootAsync(
+        TCommand request,
+        CancellationToken cancellationToken)
+        => Task.FromResult(FlowChatResult<TAggregate?>.Success(default));
+
     protected abstract Task<FlowChatResult<TResponse>> ExecuteAsync(TCommand request, CancellationToken cancellationToken);
 
-    protected abstract TAggregate GetAggregateRoot();
+    protected virtual TAggregate GetAggregateRoot() =>
+        AggregateRoot ?? throw new InvalidOperationException("Aggregate root instance is not available.");
 
     private static void ApplyAuditInfo(TAggregate aggregateRoot, MutationType mutationType)
     {

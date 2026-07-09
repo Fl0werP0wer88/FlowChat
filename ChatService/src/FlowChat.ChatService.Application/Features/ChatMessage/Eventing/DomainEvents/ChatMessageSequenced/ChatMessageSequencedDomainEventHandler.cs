@@ -17,25 +17,27 @@ public sealed class ChatMessageSequencedDomainEventHandler(
         localEventsDispatcher,
         beforeSaveProcessors)
 {
-    private ConversationAggregate? _conversation;
-
-    protected override async Task<FlowChatResult> ExecuteAsync(
+    protected override async Task<FlowChatResult<ConversationAggregate?>> FetchAggregateRootAsync(
         ChatMessageSequencedDomainEvent notification,
         CancellationToken cancellationToken)
     {
-        _conversation = await conversationRepository.GetByIdAsync(notification.ConversationId, cancellationToken);
-        if (_conversation is null)
-            return FlowChatResult.Failure(DomainError.NotFound("Conversation not found."));
+        var conversation = await conversationRepository.GetByIdAsync(notification.ConversationId, cancellationToken);
+        if (conversation is null)
+            return FlowChatResult<ConversationAggregate?>.Failure(DomainError.NotFound("Conversation not found."));
 
-        var previousSequenceNum = _conversation.LastMsgSequenceNum;
-        _conversation.SetSequenceNumber(notification.SequenceNum);
-
-        if (_conversation.LastMsgSequenceNum != previousSequenceNum)
-            SetUpdated();
-
-        return FlowChatResult.Success();
+        return FlowChatResult<ConversationAggregate?>.Success(conversation);
     }
 
-    protected override ConversationAggregate GetAggregateRoot()
-        => _conversation ?? throw new InvalidOperationException("Aggregate root instance is not available.");
+    protected override Task<FlowChatResult> ExecuteAsync(
+        ChatMessageSequencedDomainEvent notification,
+        CancellationToken cancellationToken)
+    {
+        var previousSequenceNum = AggregateRoot!.LastMsgSequenceNum;
+        AggregateRoot.SetSequenceNumber(notification.SequenceNum);
+
+        if (AggregateRoot.LastMsgSequenceNum != previousSequenceNum)
+            SetUpdated();
+
+        return Task.FromResult(FlowChatResult.Success());
+    }
 }

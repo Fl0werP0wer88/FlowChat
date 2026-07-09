@@ -16,7 +16,7 @@ public sealed class AddEmailCommandHandler
 {
     private readonly IUserProfileReadRepository _userProfileReadRepository;
     private readonly IUserProfileWriteRepository _userProfileRepository;
-    private UserProfileAggregate? _userProfile;
+    private EmailAddress? _normalizedEmailAddress;
 
     public AddEmailCommandHandler(
         IUserProfileReadRepository userProfileReadRepository,
@@ -30,7 +30,7 @@ public sealed class AddEmailCommandHandler
         _userProfileRepository = userProfileRepository;
     }
 
-    protected override async Task<FlowChatResult<Guid>> ExecuteAsync(
+    protected override async Task<FlowChatResult<UserProfileAggregate?>> FetchAggregateRootAsync(
         AddEmailCommand request,
         CancellationToken cancellationToken)
     {
@@ -39,25 +39,29 @@ public sealed class AddEmailCommandHandler
             throw new InvalidOperationException("Validated email address could not be normalized.");
         }
 
-        _userProfile = await _userProfileRepository.GetByIdAsync(request.UserId, cancellationToken);
-        if (_userProfile is null)
+        _normalizedEmailAddress = normalizedEmailAddress;
+
+        var userProfile = await _userProfileRepository.GetByIdAsync(request.UserId, cancellationToken);
+        if (userProfile is null)
         {
-            return FlowChatResult<Guid>.Failure(DomainError.NotFound($"User profile '{request.UserId}' was not found."));
+            return FlowChatResult<UserProfileAggregate?>.Failure(DomainError.NotFound($"User profile '{request.UserId}' was not found."));
         }
 
-        CapturePreMutationSnapshot(_userProfile);
+        return FlowChatResult<UserProfileAggregate?>.Success(userProfile);
+    }
 
-        if (await _userProfileReadRepository.EmailAddressExistsAsync(normalizedEmailAddress!.Value, cancellationToken))
+    protected override async Task<FlowChatResult<Guid>> ExecuteAsync(
+        AddEmailCommand request,
+        CancellationToken cancellationToken)
+    {
+        if (await _userProfileReadRepository.EmailAddressExistsAsync(_normalizedEmailAddress!.Value, cancellationToken))
         {
-            return FlowChatResult<Guid>.Failure(DomainError.Conflict($"Email '{normalizedEmailAddress.Value}' is already taken."));
+            return FlowChatResult<Guid>.Failure(DomainError.Conflict($"Email '{_normalizedEmailAddress.Value}' is already taken."));
         }
 
-        var email = _userProfile.AddEmail(Id<DomainEmail>.FromGuid(request.EmailId), normalizedEmailAddress);
+        var email = AggregateRoot!.AddEmail(Id<DomainEmail>.FromGuid(request.EmailId), _normalizedEmailAddress);
         SetUpdated();
 
         return FlowChatResult<Guid>.Success(email.Id.Value);
     }
-
-    protected override UserProfileAggregate GetAggregateRoot() =>
-        _userProfile ?? throw new InvalidOperationException("Aggregate root instance is not available.");
 }

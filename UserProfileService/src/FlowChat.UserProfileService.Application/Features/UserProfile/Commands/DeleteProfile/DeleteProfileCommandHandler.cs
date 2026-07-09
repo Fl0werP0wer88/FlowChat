@@ -11,7 +11,6 @@ public sealed class DeleteProfileCommandHandler
     : AggregateRootDeleteCommandHandlerBaseV3<DeleteProfileCommand, Guid, UserProfileAggregate>
 {
     private readonly IUserProfileWriteRepository _userProfileRepository;
-    private UserProfileAggregate? _userProfile;
 
     public DeleteProfileCommandHandler(
         IUserProfileWriteRepository userProfileRepository,
@@ -23,22 +22,26 @@ public sealed class DeleteProfileCommandHandler
         _userProfileRepository = userProfileRepository;
     }
 
+    protected override async Task<FlowChatResult<UserProfileAggregate?>> FetchAggregateRootAsync(
+        DeleteProfileCommand request,
+        CancellationToken cancellationToken)
+    {
+        var userProfile = await _userProfileRepository.GetByIdAsync(request.UserId, cancellationToken);
+        if (userProfile is null)
+        {
+            return FlowChatResult<UserProfileAggregate?>.Failure(DomainError.NotFound($"User profile '{request.UserId}' was not found."));
+        }
+
+        return FlowChatResult<UserProfileAggregate?>.Success(userProfile);
+    }
+
     protected override async Task<FlowChatResult<Guid>> ExecuteAsync(
         DeleteProfileCommand request,
         CancellationToken cancellationToken)
     {
-        _userProfile = await _userProfileRepository.GetByIdAsync(request.UserId, cancellationToken);
-        if (_userProfile is null)
-        {
-            return FlowChatResult<Guid>.Failure(DomainError.NotFound($"User profile '{request.UserId}' was not found."));
-        }
-
-        await _userProfileRepository.SoftDeleteAsync(_userProfile, cancellationToken);
+        await _userProfileRepository.SoftDeleteAsync(AggregateRoot!, cancellationToken);
         SetDeleted();
 
-        return FlowChatResult<Guid>.Success(_userProfile.Id.Value);
+        return FlowChatResult<Guid>.Success(AggregateRoot!.Id.Value);
     }
-
-    protected override UserProfileAggregate GetAggregateRoot() =>
-        _userProfile ?? throw new InvalidOperationException("Aggregate root instance is not available.");
 }
