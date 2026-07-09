@@ -1,5 +1,7 @@
 using FlowChat.ChatService.Infrastructure.Configuration.Settings;
+using FlowChat.Core.Messaging;
 using FlowChat.Core.Messaging.ChatService.Events;
+using FlowChat.Core.Messaging.ChatService.ReadModels;
 using FlowChat.Shared.Infrastructure.Configuration;
 using FlowChat.Shared.Infrastructure.Silverback.Kafka;
 using Microsoft.Extensions.Configuration;
@@ -28,7 +30,8 @@ internal static class CommonInfrastructureServiceRegistration
             .AddProducerSettings<ChatMessageSentIntegrationEvent, ChatMessageSentProducerSettingsSection>()
             .AddProducerSettings<GroupConversationChangedIntegrationEvent, GroupConversationChangedProducerSettingsSection>()
             .AddProducerSettings<GroupConversationParticipantsAddedIntegrationEvent, GroupConversationChangedProducerSettingsSection>()
-            .AddProducerSettings<GroupConversationParticipantsRemovedIntegrationEvent, GroupConversationChangedProducerSettingsSection>());
+            .AddProducerSettings<GroupConversationParticipantsRemovedIntegrationEvent, GroupConversationChangedProducerSettingsSection>()
+            .AddProducerSettings<ProjectionIntegrationEvent<DuetConversationReadModel>, DuetConversationProjectionProducerSettingsSection>());
 
         return services;
     }
