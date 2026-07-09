@@ -13,8 +13,6 @@ public sealed class PublishMessageCommandHandler(IRealtimeClientDispatcher realt
     //Ogólnie z tego co widze to nie bedzie się dało zapenić exactly once delivery po stronie backendu (SignalR nie pozwoli max co mozna zrobic to zapisywac wwpis do jakiegos outboxa i worker niech wysyła do kliena ale to nadal nie bedzie w pełni excatly once). Pamiętać żeby dodać deduplikację po stronie klienta.
     public async Task<FlowChatResult<Unit>> Handle(PublishMessageCommand request, CancellationToken cancellationToken)
     {
-        var recipientUserIds = NormalizeRecipientUserIds(request.RecipientUserIds);
-
         var notification = new ChatMessageParam(
             request.MessageId,
             request.ConversationId,
@@ -24,16 +22,10 @@ public sealed class PublishMessageCommandHandler(IRealtimeClientDispatcher realt
             request.SequenceNum,
             request.SentAtUtc,
             request.DeliveredAtUtc,
-            recipientUserIds);
+            []);
 
         await _realtimeClientDispatcher.MessageReceivedAsync(notification, cancellationToken);
 
         return FlowChatResult<Unit>.Success(Unit.Value);
     }
-
-    private static Guid[] NormalizeRecipientUserIds(IReadOnlyCollection<Guid> recipientUserIds) =>
-        recipientUserIds
-            .Where(userId => userId != Guid.Empty)
-            .Distinct()
-            .ToArray();
 }

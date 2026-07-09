@@ -16,7 +16,7 @@ public sealed class WorkerRealtimeEventRouterTests
     private readonly Mock<IRealtimeInstanceInternalApiClient> _internalApiClientMock = new();
 
     [Fact]
-    public async Task RouteMessageAsync_GroupsRecipientsByInstanceAndPublishesToEveryInstance()
+    public async Task RouteMessageAsync_BroadcastsUnfilteredNotificationToEveryTargetInstance()
     {
         var firstUser = _fixture.Create<Guid>();
         var secondUser = _fixture.Create<Guid>();
@@ -43,6 +43,7 @@ public sealed class WorkerRealtimeEventRouterTests
             .Returns(Task.CompletedTask);
 
         var router = CreateRouter();
+        var originalRecipients = new[] { firstUser, secondUser, thirdUser, secondUser, Guid.Empty };
 
         await router.RouteMessageAsync(
             new ChatMessageParam(
@@ -54,15 +55,12 @@ public sealed class WorkerRealtimeEventRouterTests
                 42,
                 DateTimeOffset.UtcNow,
                 DateTimeOffset.UtcNow,
-                [firstUser, secondUser, thirdUser, secondUser, Guid.Empty]),
+                originalRecipients),
             CancellationToken.None);
 
         calls.Should().HaveCount(2);
-        calls.Should().Contain(call =>
-            call.BaseAddress == new Uri("http://instance-a")
-            && call.Recipients.OrderBy(x => x).SequenceEqual(new[] { firstUser, secondUser }.OrderBy(x => x)));
-        var instanceBCall = calls.Should().ContainSingle(call => call.BaseAddress == new Uri("http://instance-b")).Subject;
-        instanceBCall.Recipients.Should().ContainSingle().Which.Should().Be(secondUser);
+        calls.Select(call => call.BaseAddress).Should().BeEquivalentTo([new Uri("http://instance-a"), new Uri("http://instance-b")]);
+        calls.Should().OnlyContain(call => call.Recipients.SequenceEqual(originalRecipients));
     }
 
     [Fact]

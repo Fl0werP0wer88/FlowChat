@@ -10,15 +10,8 @@ public sealed class SignalRRealtimeClientDispatcher(IHubContext<ChatHub, IRealti
     private readonly IHubContext<ChatHub, IRealtimeClient> _hubContext = hubContext
         ?? throw new ArgumentNullException(nameof(hubContext));
 
-    public Task MessageReceivedAsync(ChatMessageParam notification, CancellationToken cancellationToken)
-    {
-        var groups = GetRecipientGroups(notification.RecipientUserIds);
-        if (groups.Length == 0)
-        {
-            return Task.CompletedTask;
-        }
-
-        return _hubContext.Clients.Groups(groups).MessageReceived(new ChatMessageReceivedNotification
+    public Task MessageReceivedAsync(ChatMessageParam notification, CancellationToken cancellationToken) =>
+        _hubContext.Clients.Group(GroupNames.ForConversation(notification.ConversationId)).MessageReceived(new ChatMessageReceivedNotification
         {
             MessageId = notification.MessageId,
             ConversationId = notification.ConversationId,
@@ -29,7 +22,6 @@ public sealed class SignalRRealtimeClientDispatcher(IHubContext<ChatHub, IRealti
             SentAtUtc = notification.SentAtUtc,
             DeliveredAtUtc = notification.DeliveredAtUtc
         });
-    }
 
     public Task PresenceChangedAsync(PresenceChangedParam notification, CancellationToken cancellationToken)
     {

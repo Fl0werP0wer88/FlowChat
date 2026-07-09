@@ -12,5 +12,4 @@ public sealed class PublishMessageRequest : IServiceInput
     public long SequenceNum { get; init; }
     public DateTimeOffset SentAtUtc { get; init; }
     public DateTimeOffset DeliveredAtUtc { get; init; }
-    public IReadOnlyCollection<Guid> RecipientUserIds { get; init; } = [];
 }

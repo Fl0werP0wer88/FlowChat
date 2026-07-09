@@ -29,9 +29,5 @@ public sealed class PublishMessageCommandValidator : AbstractValidator<PublishMe
         RuleFor(command => command.SequenceNum)
             .GreaterThan(0)
             .WithMessage("SequenceNum must be greater than zero.");
-
-        RuleFor(command => command.RecipientUserIds)
-            .Must(ids => ids != null && ids.Any(id => id != Guid.Empty))
-            .WithMessage("RecipientUserIds must contain at least one valid user id.");
     }
 }

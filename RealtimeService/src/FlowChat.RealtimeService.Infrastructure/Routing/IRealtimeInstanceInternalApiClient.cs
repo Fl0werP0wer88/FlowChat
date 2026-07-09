@@ -28,4 +28,9 @@ public interface IRealtimeInstanceInternalApiClient
         Uri baseAddress,
         GroupConversationParticipantsRemovedParam notification,
         CancellationToken cancellationToken);
+
+    Task PublishDuetConversationCreatedAsync(
+        Uri baseAddress,
+        DuetConversationCreatedParam notification,
+        CancellationToken cancellationToken);
 }

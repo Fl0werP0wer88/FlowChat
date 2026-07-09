@@ -18,11 +18,11 @@ public sealed class WorkerRealtimeEventRouter(
         ?? throw new ArgumentNullException(nameof(realtimeInstanceInternalApiClient));
 
     public Task RouteMessageAsync(ChatMessageParam notification, CancellationToken cancellationToken) =>
-        RouteAsync(
+        BroadcastAsync(
             notification.RecipientUserIds,
-            (instanceUrl, userIds) => _realtimeInstanceInternalApiClient.PublishMessageAsync(
+            instanceUrl => _realtimeInstanceInternalApiClient.PublishMessageAsync(
                 instanceUrl,
-                notification with { RecipientUserIds = userIds },
+                notification,
                 cancellationToken),
             cancellationToken);
 
@@ -57,6 +57,15 @@ public sealed class WorkerRealtimeEventRouter(
         BroadcastAsync(
             notification.ParticipantUserIds,
             instanceUrl => _realtimeInstanceInternalApiClient.PublishGroupConversationParticipantsRemovedAsync(
+                instanceUrl,
+                notification,
+                cancellationToken),
+            cancellationToken);
+
+    public Task RouteDuetConversationCreatedAsync(DuetConversationCreatedParam notification, CancellationToken cancellationToken) =>
+        BroadcastAsync(
+            notification.ParticipantUserIds,
+            instanceUrl => _realtimeInstanceInternalApiClient.PublishDuetConversationCreatedAsync(
                 instanceUrl,
                 notification,
                 cancellationToken),

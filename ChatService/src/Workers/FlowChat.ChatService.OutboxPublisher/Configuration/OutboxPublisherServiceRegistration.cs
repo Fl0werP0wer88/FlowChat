@@ -1,6 +1,8 @@
 using FlowChat.ChatService.OutboxPublisher.Configuration.Settings;
 using FlowChat.ChatService.Persistence;
+using FlowChat.Core.Messaging;
 using FlowChat.Core.Messaging.ChatService.Events;
+using FlowChat.Core.Messaging.ChatService.ReadModels;
 using FlowChat.Shared.Infrastructure.Silverback.Behaviors;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -28,6 +30,10 @@ public static class OutboxPublisherServiceRegistration
             .GetSection(new GroupConversationChangedProducerSettingsSection().SectionName)
             .Get<GroupConversationChangedProducerSettingsSection>()
             ?? new GroupConversationChangedProducerSettingsSection();
+        var duetConversationProjectionProducerOptions = configuration
+            .GetSection(new DuetConversationProjectionProducerSettingsSection().SectionName)
+            .Get<DuetConversationProjectionProducerSettingsSection>()
+            ?? new DuetConversationProjectionProducerSettingsSection();
 
         services.AddOptions<OutboxPublisherRuntimeSettingsSection>()
             .BindConfiguration(new OutboxPublisherRuntimeSettingsSection().SectionName);
@@ -35,6 +41,8 @@ public static class OutboxPublisherServiceRegistration
             .BindConfiguration(new ChatMessageSentProducerSettingsSection().SectionName);
         services.AddOptions<GroupConversationChangedProducerSettingsSection>()
             .BindConfiguration(new GroupConversationChangedProducerSettingsSection().SectionName);
+        services.AddOptions<DuetConversationProjectionProducerSettingsSection>()
+            .BindConfiguration(new DuetConversationProjectionProducerSettingsSection().SectionName);
 
         services.AddSilverback()
             .AddSingletonBrokerBehavior<CustomSpanAttributesProducerBehavior>()
@@ -70,6 +78,10 @@ public static class OutboxPublisherServiceRegistration
                     .AddProducer(producer => producer
                         .Produce<GroupConversationParticipantsRemovedIntegrationEvent>("group-conversation-participants-removed", endpoint => endpoint
                             .ProduceTo(groupConversationChangedProducerOptions.Topic)
+                            .SerializeAsJson(serializer => serializer.SetTypeHeader())))
+                    .AddProducer(producer => producer
+                        .Produce<ProjectionIntegrationEvent<DuetConversationReadModel>>("duet-conversation-projection", endpoint => endpoint
+                            .ProduceTo(duetConversationProjectionProducerOptions.Topic)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())));
             });
 

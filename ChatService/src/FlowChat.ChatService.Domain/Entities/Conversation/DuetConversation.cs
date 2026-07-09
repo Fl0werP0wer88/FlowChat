@@ -3,8 +3,10 @@ using UserProfileMarker = FlowChat.ChatService.Domain.Entities.UserProfiles.User
 
 namespace FlowChat.ChatService.Domain.Entities.Conversation;
 
-public sealed class DuetConversation : Conversation
+public sealed class DuetConversation : Conversation, IEntity<DuetConversation>
 {
+    Id<DuetConversation> IEntity<DuetConversation>.Id => Id<DuetConversation>.FromId(Id);
+
     private DuetConversation(
         Id<Conversation> id,
         ConversationType type,

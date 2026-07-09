@@ -60,6 +60,7 @@ internal sealed class CapturingRealtimeEventRouter : IRealtimeEventRouter
     public GroupConversationChangedParam? LastGroupConversationChangedNotification { get; private set; }
     public GroupConversationParticipantsAddedParam? LastGroupConversationParticipantsAddedNotification { get; private set; }
     public GroupConversationParticipantsRemovedParam? LastGroupConversationParticipantsRemovedNotification { get; private set; }
+    public DuetConversationCreatedParam? LastDuetConversationCreatedNotification { get; private set; }
 
     public Task RouteMessageAsync(ChatMessageParam notification, CancellationToken cancellationToken)
     {
@@ -88,6 +89,12 @@ internal sealed class CapturingRealtimeEventRouter : IRealtimeEventRouter
     public Task RouteGroupConversationParticipantsRemovedAsync(GroupConversationParticipantsRemovedParam notification, CancellationToken cancellationToken)
     {
         LastGroupConversationParticipantsRemovedNotification = notification;
+        return Task.CompletedTask;
+    }
+
+    public Task RouteDuetConversationCreatedAsync(DuetConversationCreatedParam notification, CancellationToken cancellationToken)
+    {
+        LastDuetConversationCreatedNotification = notification;
         return Task.CompletedTask;
     }
 }

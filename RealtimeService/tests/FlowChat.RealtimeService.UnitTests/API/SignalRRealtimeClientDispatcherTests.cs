@@ -10,9 +10,9 @@ namespace FlowChat.RealtimeService.UnitTests;
 public sealed class SignalRRealtimeClientDispatcherTests
 {
     [Fact]
-    public async Task MessageReceivedAsync_SendsDeliveredAtUtcToSignalRClient()
+    public async Task MessageReceivedAsync_SendsDeliveredAtUtcToConversationGroup()
     {
-        var recipientUserId = Guid.NewGuid();
+        var conversationId = Guid.NewGuid();
         var deliveredAtUtc = new DateTimeOffset(2026, 5, 19, 12, 0, 0, TimeSpan.Zero);
         ChatMessageReceivedNotification? capturedPayload = null;
         var realtimeClientMock = new Mock<IRealtimeClient>();
@@ -22,7 +22,7 @@ public sealed class SignalRRealtimeClientDispatcherTests
             .Returns(Task.CompletedTask);
         var clientsMock = new Mock<IHubClients<IRealtimeClient>>();
         clientsMock
-            .Setup(x => x.Groups(It.Is<IReadOnlyList<string>>(groups => groups.Contains(GroupNames.ForUser(recipientUserId)))))
+            .Setup(x => x.Group(GroupNames.ForConversation(conversationId)))
             .Returns(realtimeClientMock.Object);
         var hubContextMock = new Mock<IHubContext<ChatHub, IRealtimeClient>>();
         hubContextMock.Setup(x => x.Clients).Returns(clientsMock.Object);
@@ -31,14 +31,14 @@ public sealed class SignalRRealtimeClientDispatcherTests
         await dispatcher.MessageReceivedAsync(
             new ChatMessageParam(
                 Guid.NewGuid(),
-                Guid.NewGuid(),
+                conversationId,
                 Guid.NewGuid(),
                 "Jane",
                 "Hello",
                 42,
                 new DateTimeOffset(2026, 5, 19, 11, 59, 0, TimeSpan.Zero),
                 deliveredAtUtc,
-                [recipientUserId]),
+                []),
             CancellationToken.None);
 
         capturedPayload.Should().NotBeNull();

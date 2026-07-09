@@ -1,5 +1,9 @@
+using FlowChat.ChatService.Application.Features.Conversation.Commands.CreateDuetConversation;
+using FlowChat.Core.Messaging.ChatService.ReadModels;
+using DuetConversationAggregate = FlowChat.ChatService.Domain.Entities.Conversation.DuetConversation;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Application.Common.Eventing;
+using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2.BeforeSaveProcessors;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace FlowChat.ChatService.Application;
@@ -30,6 +34,9 @@ internal static class CommonApplicationServiceRegistration
             cfg.AddFlowChatBehaviors();
         });
         services.AddScoped<ILocalEventDispatcher, LocalEventDispatcher>();
+        services.AddScoped<
+            IAggregateBeforeSaveProcessor<CreateDuetConversationCommand, DuetConversationAggregate>,
+            PublishProjectionIntegrationEventProcessor<CreateDuetConversationCommand, DuetConversationAggregate, DuetConversationReadModel>>();
 
         return services;
     }

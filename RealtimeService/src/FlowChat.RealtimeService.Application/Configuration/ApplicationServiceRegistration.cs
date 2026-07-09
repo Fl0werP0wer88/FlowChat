@@ -1,3 +1,4 @@
+using FlowChat.RealtimeService.Application.Features.Conversation.Commands.RouteDuetConversationCreated;
 using FlowChat.RealtimeService.Application.Features.Conversation.Commands.RouteGroupConversationChanged;
 using FlowChat.RealtimeService.Application.Features.Conversation.Commands.RouteGroupConversationParticipantsAdded;
 using FlowChat.RealtimeService.Application.Features.Conversation.Commands.RouteGroupConversationParticipantsRemoved;
@@ -51,6 +52,7 @@ file static class RealtimeApplicationHandlerSets
         typeof(RoutePresenceChangeCommandHandler),
         typeof(RouteGroupConversationChangedCommandHandler),
         typeof(RouteGroupConversationParticipantsAddedCommandHandler),
-        typeof(RouteGroupConversationParticipantsRemovedCommandHandler)
+        typeof(RouteGroupConversationParticipantsRemovedCommandHandler),
+        typeof(RouteDuetConversationCreatedCommandHandler)
     ];
 }

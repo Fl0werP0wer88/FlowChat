@@ -11,6 +11,5 @@ public sealed record PublishMessageCommand(
     string? Text,
     long SequenceNum,
     DateTimeOffset SentAtUtc,
-    DateTimeOffset DeliveredAtUtc,
-    IReadOnlyCollection<Guid> RecipientUserIds) : ICommand<Unit>;
+    DateTimeOffset DeliveredAtUtc) : ICommand<Unit>;
 

@@ -20,8 +20,7 @@ public sealed class PublishMessageCommandValidatorTests
             "Hello",
             42,
             DateTimeOffset.UtcNow,
-            DateTimeOffset.UtcNow,
-            [_fixture.Create<Guid>()]);
+            DateTimeOffset.UtcNow);
 
         var result = _validator.Validate(command);
 
@@ -39,8 +38,7 @@ public sealed class PublishMessageCommandValidatorTests
             "Hello",
             42,
             DateTimeOffset.UtcNow,
-            DateTimeOffset.UtcNow,
-            [_fixture.Create<Guid>()]);
+            DateTimeOffset.UtcNow);
 
         var result = _validator.Validate(command);
 
@@ -63,8 +61,7 @@ public sealed class PublishMessageCommandValidatorTests
             "Hello",
             42,
             DateTimeOffset.UtcNow,
-            DateTimeOffset.UtcNow,
-            [_fixture.Create<Guid>()]);
+            DateTimeOffset.UtcNow);
 
         var result = _validator.Validate(command);
 
@@ -86,53 +83,12 @@ public sealed class PublishMessageCommandValidatorTests
             value,
             42,
             DateTimeOffset.UtcNow,
-            DateTimeOffset.UtcNow,
-            [_fixture.Create<Guid>()]);
+            DateTimeOffset.UtcNow);
 
         var result = _validator.Validate(command);
 
         result.IsValid.Should().BeFalse();
         result.Errors.Should().Contain(e => e.PropertyName == "Text");
-    }
-
-    [Fact]
-    public void Validate_RecipientUserIdsContainsOnlyEmptyGuids_ReturnsValidationError()
-    {
-        var command = new PublishMessageCommand(
-            _fixture.Create<Guid>(),
-            _fixture.Create<Guid>(),
-            _fixture.Create<Guid>(),
-            "John Doe",
-            "Hello",
-            42,
-            DateTimeOffset.UtcNow,
-            DateTimeOffset.UtcNow,
-            [Guid.Empty, Guid.Empty]);
-
-        var result = _validator.Validate(command);
-
-        result.IsValid.Should().BeFalse();
-        result.Errors.Should().Contain(e => e.PropertyName == "RecipientUserIds");
-    }
-
-    [Fact]
-    public void Validate_EmptyRecipientUserIds_ReturnsValidationError()
-    {
-        var command = new PublishMessageCommand(
-            _fixture.Create<Guid>(),
-            _fixture.Create<Guid>(),
-            _fixture.Create<Guid>(),
-            "John Doe",
-            "Hello",
-            42,
-            DateTimeOffset.UtcNow,
-            DateTimeOffset.UtcNow,
-            []);
-
-        var result = _validator.Validate(command);
-
-        result.IsValid.Should().BeFalse();
-        result.Errors.Should().Contain(e => e.PropertyName == "RecipientUserIds");
     }
 
     [Fact]
@@ -146,8 +102,7 @@ public sealed class PublishMessageCommandValidatorTests
             "Hello",
             0,
             DateTimeOffset.UtcNow,
-            DateTimeOffset.UtcNow,
-            [_fixture.Create<Guid>()]);
+            DateTimeOffset.UtcNow);
 
         var result = _validator.Validate(command);
 

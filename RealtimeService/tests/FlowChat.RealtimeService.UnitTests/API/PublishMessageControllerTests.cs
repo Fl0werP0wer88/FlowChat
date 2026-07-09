@@ -29,8 +29,7 @@ public sealed class PublishMessageControllerTests
                 SenderUserId = _fixture.Create<Guid>(),
                 SenderDisplayName = "John Doe",
                 Text = "Hello",
-                DeliveredAtUtc = DateTimeOffset.UtcNow,
-                RecipientUserIds = [_fixture.Create<Guid>()]
+                DeliveredAtUtc = DateTimeOffset.UtcNow
             },
             CancellationToken.None);
 
@@ -57,8 +56,7 @@ public sealed class PublishMessageControllerTests
                 SenderUserId = _fixture.Create<Guid>(),
                 SenderDisplayName = "John Doe",
                 Text = "Hello",
-                DeliveredAtUtc = DateTimeOffset.UtcNow,
-                RecipientUserIds = [_fixture.Create<Guid>()]
+                DeliveredAtUtc = DateTimeOffset.UtcNow
             },
             CancellationToken.None);
 

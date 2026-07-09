@@ -11,4 +11,6 @@ public interface IRealtimeEventRouter
     Task RouteGroupConversationParticipantsAddedAsync(GroupConversationParticipantsAddedParam notification, CancellationToken cancellationToken);
 
     Task RouteGroupConversationParticipantsRemovedAsync(GroupConversationParticipantsRemovedParam notification, CancellationToken cancellationToken);
+
+    Task RouteDuetConversationCreatedAsync(DuetConversationCreatedParam notification, CancellationToken cancellationToken);
 }
