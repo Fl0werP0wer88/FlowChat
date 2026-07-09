@@ -29,18 +29,6 @@ public abstract class AggregateRootDomainEventHandlerBase<TNotification, TAggreg
 
     protected override async Task HandleNotificationAsync(TNotification notification, CancellationToken cancellationToken)
     {
-        var fetchResult = await FetchAggregateRootAsync(notification, cancellationToken);
-        if (fetchResult.IsFailure)
-        {
-            throw new ResultException(FlowChatResult.Failure(fetchResult.Error));
-        }
-
-        if (fetchResult.Value is not null)
-        {
-            AggregateRoot = fetchResult.Value;
-            CapturePreMutationSnapshot(AggregateRoot);
-        }
-
         var operationResult = await ExecuteAsync(notification, cancellationToken);
 
         if (operationResult.IsFailure)
@@ -81,11 +69,6 @@ public abstract class AggregateRootDomainEventHandlerBase<TNotification, TAggreg
             processor.CaptureBeforeState(aggregate);
         }
     }
-
-    protected virtual Task<FlowChatResult<TAggregate?>> FetchAggregateRootAsync(
-        TNotification notification,
-        CancellationToken cancellationToken)
-        => Task.FromResult(FlowChatResult<TAggregate?>.Success(default));
 
     protected abstract Task<FlowChatResult> ExecuteAsync(TNotification notification, CancellationToken cancellationToken);
 

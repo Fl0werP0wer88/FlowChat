@@ -34,18 +34,6 @@ public abstract class AggregateRootCommandHandlerBaseV3<TCommand, TResponse, TAg
         TCommand request,
         CancellationToken cancellationToken)
     {
-        var fetchResult = await FetchAggregateRootAsync(request, cancellationToken);
-        if (fetchResult.IsFailure)
-        {
-            return FlowChatResult<TResponse>.Failure(fetchResult.Error);
-        }
-
-        if (fetchResult.Value is not null)
-        {
-            AggregateRoot = fetchResult.Value;
-            CapturePreMutationSnapshot(AggregateRoot);
-        }
-
         var operationResult = await ExecuteAsync(request, cancellationToken);
 
         if (operationResult.IsSuccess)
@@ -86,11 +74,6 @@ public abstract class AggregateRootCommandHandlerBaseV3<TCommand, TResponse, TAg
             processor.CaptureBeforeState(aggregate);
         }
     }
-
-    protected virtual Task<FlowChatResult<TAggregate?>> FetchAggregateRootAsync(
-        TCommand request,
-        CancellationToken cancellationToken)
-        => Task.FromResult(FlowChatResult<TAggregate?>.Success(default));
 
     protected abstract Task<FlowChatResult<TResponse>> ExecuteAsync(TCommand request, CancellationToken cancellationToken);
 

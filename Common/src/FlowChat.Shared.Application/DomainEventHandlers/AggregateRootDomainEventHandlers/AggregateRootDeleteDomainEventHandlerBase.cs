@@ -4,7 +4,7 @@ using FlowChat.Shared.Domain;
 namespace FlowChat.Shared.Application.DomainEventHandlers.AggregateRootDomainEventHandlers;
 
 public abstract class AggregateRootDeleteDomainEventHandlerBase<TNotification, TAggregate>
-    : AggregateRootDomainEventHandlerBase<TNotification, TAggregate>
+    : FetchingAggregateRootDomainEventHandlerBase<TNotification, TAggregate>
     where TNotification : IDomainEvent
     where TAggregate : class, IAggregateRoot
 {

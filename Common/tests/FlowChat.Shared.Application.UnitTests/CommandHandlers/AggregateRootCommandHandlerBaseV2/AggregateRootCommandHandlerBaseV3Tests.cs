@@ -16,9 +16,9 @@ public sealed class AggregateRootCommandHandlerBaseV3Tests
     {
         var expectedError = DomainError.NotFound("Aggregate not found.");
         var processorMock = new Mock<IAggregateBeforeSaveProcessor<TestCommand, TestAggregate>>();
-        var handler = CreateHandler(
+        var handler = CreateFetchingHandler(
             [processorMock.Object],
-            fetchOverride: (_, _) => Task.FromResult(FlowChatResult<TestAggregate?>.Failure(expectedError)));
+            fetch: (_, _) => Task.FromResult(FlowChatResult<TestAggregate?>.Failure(expectedError)));
 
         var result = await handler.Handle(new TestCommand(), CancellationToken.None);
 
@@ -37,9 +37,9 @@ public sealed class AggregateRootCommandHandlerBaseV3Tests
         processorMock
             .Setup(x => x.CaptureBeforeState(aggregate))
             .Callback(() => callOrder.Add("capture"));
-        var handler = CreateHandler(
+        var handler = CreateFetchingHandler(
             [processorMock.Object],
-            fetchOverride: (_, _) => Task.FromResult(FlowChatResult<TestAggregate?>.Success(aggregate)),
+            fetch: (_, _) => Task.FromResult(FlowChatResult<TestAggregate?>.Success(aggregate)),
             onExecute: () => callOrder.Add("execute"));
 
         var result = await handler.Handle(new TestCommand(), CancellationToken.None);
@@ -55,9 +55,9 @@ public sealed class AggregateRootCommandHandlerBaseV3Tests
     public async Task Handle_WhenFetchAggregateRootReturnsNull_SkipsSnapshotButStillRunsExecuteAsync()
     {
         var processorMock = new Mock<IAggregateBeforeSaveProcessor<TestCommand, TestAggregate>>();
-        var handler = CreateHandler(
+        var handler = CreateFetchingHandler(
             [processorMock.Object],
-            fetchOverride: (_, _) => Task.FromResult(FlowChatResult<TestAggregate?>.Success(null)));
+            fetch: (_, _) => Task.FromResult(FlowChatResult<TestAggregate?>.Success(null)));
 
         var result = await handler.Handle(new TestCommand(), CancellationToken.None);
 
@@ -68,29 +68,52 @@ public sealed class AggregateRootCommandHandlerBaseV3Tests
     }
 
     [Fact]
-    public async Task Handle_WhenFetchAggregateRootIsNotOverridden_BehavesLikeInsertAndRunsExecuteAsync()
+    public async Task Handle_WhenHandlerHasNoFetchStep_BehavesLikeInsertAndRunsExecuteAsync()
     {
         var processorMock = new Mock<IAggregateBeforeSaveProcessor<TestCommand, TestAggregate>>();
-        var handler = CreateHandler([processorMock.Object], fetchOverride: null);
+        var handler = CreateInsertLikeHandler([processorMock.Object]);
 
         var result = await handler.Handle(new TestCommand(), CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
         handler.ExecuteAsyncCalled.Should().BeTrue();
-        handler.ObservedAggregateRoot.Should().BeNull();
         processorMock.Verify(x => x.CaptureBeforeState(It.IsAny<TestAggregate>()), Times.Never);
     }
 
-    private static ConfigurableAggregateRootCommandHandler CreateHandler(
+    private static FetchingConfigurableCommandHandler CreateFetchingHandler(
         IEnumerable<IAggregateBeforeSaveProcessor<TestCommand, TestAggregate>> processors,
-        Func<TestCommand, CancellationToken, Task<FlowChatResult<TestAggregate?>>>? fetchOverride,
+        Func<TestCommand, CancellationToken, Task<FlowChatResult<TestAggregate?>>> fetch,
         Action? onExecute = null)
+    {
+        return new FetchingConfigurableCommandHandler(
+            CreateLocalEventDispatcher(),
+            CreateUnitOfWork(),
+            processors,
+            fetch,
+            onExecute);
+    }
+
+    private static InsertLikeCommandHandler CreateInsertLikeHandler(
+        IEnumerable<IAggregateBeforeSaveProcessor<TestCommand, TestAggregate>> processors)
+    {
+        return new InsertLikeCommandHandler(
+            CreateLocalEventDispatcher(),
+            CreateUnitOfWork(),
+            processors);
+    }
+
+    private static ILocalEventDispatcher CreateLocalEventDispatcher()
     {
         var localEventDispatcherMock = new Mock<ILocalEventDispatcher>();
         localEventDispatcherMock
             .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<ILocalEvent>>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
+        return localEventDispatcherMock.Object;
+    }
+
+    private static IUnitOfWork CreateUnitOfWork()
+    {
         var unitOfWorkMock = new Mock<IUnitOfWork>();
         unitOfWorkMock
             .Setup(x => x.ExecuteCommandInTransactionAsync(
@@ -99,33 +122,28 @@ public sealed class AggregateRootCommandHandlerBaseV3Tests
             .Returns<Func<CancellationToken, Task<FlowChatResult<Guid>>>, CancellationToken>(
                 (operation, ct) => operation(ct));
 
-        return new ConfigurableAggregateRootCommandHandler(
-            localEventDispatcherMock.Object,
-            unitOfWorkMock.Object,
-            processors,
-            fetchOverride,
-            onExecute);
+        return unitOfWorkMock.Object;
     }
 
     public sealed record TestCommand : ICommand<Guid>;
 
     public sealed class TestAggregate(Guid id) : AggregateRootBase<TestAggregate>(Id<TestAggregate>.FromGuid(id));
 
-    private sealed class ConfigurableAggregateRootCommandHandler
-        : AggregateRootCommandHandlerBaseV3<TestCommand, Guid, TestAggregate>
+    private sealed class FetchingConfigurableCommandHandler
+        : FetchingAggregateRootCommandHandlerBaseV3<TestCommand, Guid, TestAggregate>
     {
-        private readonly Func<TestCommand, CancellationToken, Task<FlowChatResult<TestAggregate?>>>? _fetchOverride;
+        private readonly Func<TestCommand, CancellationToken, Task<FlowChatResult<TestAggregate?>>> _fetch;
         private readonly Action? _onExecute;
 
-        public ConfigurableAggregateRootCommandHandler(
+        public FetchingConfigurableCommandHandler(
             ILocalEventDispatcher localEventsDispatcher,
             IUnitOfWork unitOfWork,
             IEnumerable<IAggregateBeforeSaveProcessor<TestCommand, TestAggregate>> beforeSaveProcessors,
-            Func<TestCommand, CancellationToken, Task<FlowChatResult<TestAggregate?>>>? fetchOverride,
+            Func<TestCommand, CancellationToken, Task<FlowChatResult<TestAggregate?>>> fetch,
             Action? onExecute)
             : base(localEventsDispatcher, unitOfWork, beforeSaveProcessors)
         {
-            _fetchOverride = fetchOverride;
+            _fetch = fetch;
             _onExecute = onExecute;
         }
 
@@ -136,9 +154,7 @@ public sealed class AggregateRootCommandHandlerBaseV3Tests
         protected override Task<FlowChatResult<TestAggregate?>> FetchAggregateRootAsync(
             TestCommand request,
             CancellationToken cancellationToken)
-            => _fetchOverride is not null
-                ? _fetchOverride(request, cancellationToken)
-                : base.FetchAggregateRootAsync(request, cancellationToken);
+            => _fetch(request, cancellationToken);
 
         protected override Task<FlowChatResult<Guid>> ExecuteAsync(TestCommand request, CancellationToken cancellationToken)
         {
@@ -148,11 +164,36 @@ public sealed class AggregateRootCommandHandlerBaseV3Tests
 
             if (AggregateRoot is null)
             {
-                // Mirrors real Insert/Upsert handlers, which assign a freshly created
+                // Mirrors real Upsert handlers, which assign a freshly created
                 // aggregate themselves when nothing was pre-fetched.
                 AggregateRoot = new TestAggregate(Guid.NewGuid());
                 SetMutationType(MutationType.Created);
             }
+
+            return Task.FromResult(FlowChatResult<Guid>.Success(Guid.NewGuid()));
+        }
+    }
+
+    private sealed class InsertLikeCommandHandler
+        : AggregateRootCommandHandlerBaseV3<TestCommand, Guid, TestAggregate>
+    {
+        public InsertLikeCommandHandler(
+            ILocalEventDispatcher localEventsDispatcher,
+            IUnitOfWork unitOfWork,
+            IEnumerable<IAggregateBeforeSaveProcessor<TestCommand, TestAggregate>> beforeSaveProcessors)
+            : base(localEventsDispatcher, unitOfWork, beforeSaveProcessors)
+        {
+        }
+
+        public bool ExecuteAsyncCalled { get; private set; }
+
+        protected override Task<FlowChatResult<Guid>> ExecuteAsync(TestCommand request, CancellationToken cancellationToken)
+        {
+            ExecuteAsyncCalled = true;
+
+            // Mirrors real Insert handlers, which create and assign the aggregate themselves.
+            AggregateRoot = new TestAggregate(Guid.NewGuid());
+            SetMutationType(MutationType.Created);
 
             return Task.FromResult(FlowChatResult<Guid>.Success(Guid.NewGuid()));
         }

@@ -19,7 +19,7 @@ public sealed class AggregateRootDomainEventHandlerBaseTests
         var processorMock = new Mock<IAggregateBeforeSaveProcessor<TestNotification, TestAggregate>>();
         var handler = CreateHandler(
             [processorMock.Object],
-            fetchOverride: (_, _) => Task.FromResult(FlowChatResult<TestAggregate?>.Failure(expectedError)));
+            fetch: (_, _) => Task.FromResult(FlowChatResult<TestAggregate?>.Failure(expectedError)));
 
         var act = () => handler.Handle(new TestNotification(), CancellationToken.None);
 
@@ -40,7 +40,7 @@ public sealed class AggregateRootDomainEventHandlerBaseTests
             .Callback(() => callOrder.Add("capture"));
         var handler = CreateHandler(
             [processorMock.Object],
-            fetchOverride: (_, _) => Task.FromResult(FlowChatResult<TestAggregate?>.Success(aggregate)),
+            fetch: (_, _) => Task.FromResult(FlowChatResult<TestAggregate?>.Success(aggregate)),
             onExecute: () => callOrder.Add("execute"));
 
         await handler.Handle(new TestNotification(), CancellationToken.None);
@@ -51,9 +51,25 @@ public sealed class AggregateRootDomainEventHandlerBaseTests
         callOrder.Should().Equal("capture", "execute");
     }
 
+    [Fact]
+    public async Task Handle_WhenHandlerHasNoFetchStep_BehavesLikeInsertAndRunsExecuteAsync()
+    {
+        var processorMock = new Mock<IAggregateBeforeSaveProcessor<TestNotification, TestAggregate>>();
+        var localEventDispatcherMock = new Mock<ILocalEventDispatcher>();
+        localEventDispatcherMock
+            .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<ILocalEvent>>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+        var handler = new InsertLikeDomainEventHandler(localEventDispatcherMock.Object, [processorMock.Object]);
+
+        await handler.Handle(new TestNotification(), CancellationToken.None);
+
+        handler.ExecuteAsyncCalled.Should().BeTrue();
+        processorMock.Verify(x => x.CaptureBeforeState(It.IsAny<TestAggregate>()), Times.Never);
+    }
+
     private static ConfigurableAggregateRootDomainEventHandler CreateHandler(
         IEnumerable<IAggregateBeforeSaveProcessor<TestNotification, TestAggregate>> processors,
-        Func<TestNotification, CancellationToken, Task<FlowChatResult<TestAggregate?>>>? fetchOverride,
+        Func<TestNotification, CancellationToken, Task<FlowChatResult<TestAggregate?>>> fetch,
         Action? onExecute = null)
     {
         var localEventDispatcherMock = new Mock<ILocalEventDispatcher>();
@@ -64,7 +80,7 @@ public sealed class AggregateRootDomainEventHandlerBaseTests
         return new ConfigurableAggregateRootDomainEventHandler(
             localEventDispatcherMock.Object,
             processors,
-            fetchOverride,
+            fetch,
             onExecute);
     }
 
@@ -82,19 +98,19 @@ public sealed class AggregateRootDomainEventHandlerBaseTests
     public sealed class TestAggregate(Guid id) : AggregateRootBase<TestAggregate>(Id<TestAggregate>.FromGuid(id));
 
     private sealed class ConfigurableAggregateRootDomainEventHandler
-        : AggregateRootDomainEventHandlerBase<TestNotification, TestAggregate>
+        : FetchingAggregateRootDomainEventHandlerBase<TestNotification, TestAggregate>
     {
-        private readonly Func<TestNotification, CancellationToken, Task<FlowChatResult<TestAggregate?>>>? _fetchOverride;
+        private readonly Func<TestNotification, CancellationToken, Task<FlowChatResult<TestAggregate?>>> _fetch;
         private readonly Action? _onExecute;
 
         public ConfigurableAggregateRootDomainEventHandler(
             ILocalEventDispatcher localEventsDispatcher,
             IEnumerable<IAggregateBeforeSaveProcessor<TestNotification, TestAggregate>> beforeSaveProcessors,
-            Func<TestNotification, CancellationToken, Task<FlowChatResult<TestAggregate?>>>? fetchOverride,
+            Func<TestNotification, CancellationToken, Task<FlowChatResult<TestAggregate?>>> fetch,
             Action? onExecute)
             : base(localEventsDispatcher, beforeSaveProcessors)
         {
-            _fetchOverride = fetchOverride;
+            _fetch = fetch;
             _onExecute = onExecute;
         }
 
@@ -105,15 +121,37 @@ public sealed class AggregateRootDomainEventHandlerBaseTests
         protected override Task<FlowChatResult<TestAggregate?>> FetchAggregateRootAsync(
             TestNotification notification,
             CancellationToken cancellationToken)
-            => _fetchOverride is not null
-                ? _fetchOverride(notification, cancellationToken)
-                : base.FetchAggregateRootAsync(notification, cancellationToken);
+            => _fetch(notification, cancellationToken);
 
         protected override Task<FlowChatResult> ExecuteAsync(TestNotification notification, CancellationToken cancellationToken)
         {
             ExecuteAsyncCalled = true;
             ObservedAggregateRoot = AggregateRoot;
             _onExecute?.Invoke();
+            return Task.FromResult(FlowChatResult.Success());
+        }
+    }
+
+    private sealed class InsertLikeDomainEventHandler
+        : AggregateRootDomainEventHandlerBase<TestNotification, TestAggregate>
+    {
+        public InsertLikeDomainEventHandler(
+            ILocalEventDispatcher localEventsDispatcher,
+            IEnumerable<IAggregateBeforeSaveProcessor<TestNotification, TestAggregate>> beforeSaveProcessors)
+            : base(localEventsDispatcher, beforeSaveProcessors)
+        {
+        }
+
+        public bool ExecuteAsyncCalled { get; private set; }
+
+        protected override Task<FlowChatResult> ExecuteAsync(TestNotification notification, CancellationToken cancellationToken)
+        {
+            ExecuteAsyncCalled = true;
+
+            // Mirrors real Insert handlers, which create and assign the aggregate themselves.
+            AggregateRoot = new TestAggregate(Guid.NewGuid());
+            SetMutationType(MutationType.Created);
+
             return Task.FromResult(FlowChatResult.Success());
         }
     }
