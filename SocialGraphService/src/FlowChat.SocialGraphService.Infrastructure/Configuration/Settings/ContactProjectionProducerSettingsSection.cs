@@ -12,5 +12,5 @@ public sealed class ContactProjectionProducerSettingsSection
 
     public override string BootstrapServers { get; set; } = "localhost:9092";
 
-    public override string Topic { get; set; } = "dev.flowchat.social-graph.contact";
+    public override string Topic { get; set; } = "dev.flowchat.social-graph.contact-projection.v1";
 }

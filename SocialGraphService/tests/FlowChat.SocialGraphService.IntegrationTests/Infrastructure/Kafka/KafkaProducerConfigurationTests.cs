@@ -54,7 +54,7 @@ public sealed class KafkaProducerConfigurationTests
             .Get<ContactProjectionProducerSettingsSection>();
 
         projectionProducerOptions.Should().NotBeNull();
-        projectionProducerOptions!.Topic.Should().Be("dev.flowchat.social-graph.contact");
+        projectionProducerOptions!.Topic.Should().Be("dev.flowchat.social-graph.contact-projection.v1");
     }
 
     private static string GetRepositoryPath(string relativePath)

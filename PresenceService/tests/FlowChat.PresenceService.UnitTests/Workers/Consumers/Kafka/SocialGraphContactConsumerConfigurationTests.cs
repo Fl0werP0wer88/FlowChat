@@ -78,9 +78,9 @@ public sealed class SocialGraphContactConsumerConfigurationTests
         consumerOptions.Should().NotBeNull();
         consumerOptions!.GroupId.Should().Be("presence-service");
         consumerOptions.RetryGroupId.Should().Be("presence-service-social-graph-contact-retry");
-        consumerOptions.Topic.Should().Be("dev.flowchat.social-graph.contact");
-        consumerOptions.RetryTopic.Should().Be("dev.flowchat.social-graph.contact.presence-service.retry");
-        consumerOptions.DeadLetterTopic.Should().Be("dev.flowchat.social-graph.contact.presence-service.dlq");
+        consumerOptions.Topic.Should().Be("dev.flowchat.social-graph.contact-projection.v1");
+        consumerOptions.RetryTopic.Should().Be("dev.flowchat.social-graph.contact-projection.v1.presence-service.retry");
+        consumerOptions.DeadLetterTopic.Should().Be("dev.flowchat.social-graph.contact-projection.v1.presence-service.dlq");
     }
 
     private static IConfiguration CreateConfiguration()
@@ -92,9 +92,9 @@ public sealed class SocialGraphContactConsumerConfigurationTests
                 ["Kafka:SocialGraphContactConsumer:BootstrapServers"] = "localhost:9092",
                 ["Kafka:SocialGraphContactConsumer:GroupId"] = "presence-service",
                 ["Kafka:SocialGraphContactConsumer:RetryGroupId"] = "presence-service-social-graph-contact-retry",
-                ["Kafka:SocialGraphContactConsumer:Topic"] = "dev.flowchat.social-graph.contact",
-                ["Kafka:SocialGraphContactConsumer:RetryTopic"] = "dev.flowchat.social-graph.contact.presence-service.retry",
-                ["Kafka:SocialGraphContactConsumer:DeadLetterTopic"] = "dev.flowchat.social-graph.contact.presence-service.dlq",
+                ["Kafka:SocialGraphContactConsumer:Topic"] = "dev.flowchat.social-graph.contact-projection.v1",
+                ["Kafka:SocialGraphContactConsumer:RetryTopic"] = "dev.flowchat.social-graph.contact-projection.v1.presence-service.retry",
+                ["Kafka:SocialGraphContactConsumer:DeadLetterTopic"] = "dev.flowchat.social-graph.contact-projection.v1.presence-service.dlq",
                 ["Kafka:SocialGraphContactConsumer:MaxRetryCount"] = "5",
                 ["Kafka:SocialGraphContactConsumer:RetryBaseDelaySeconds"] = "5",
                 ["Kafka:SocialGraphContactConsumer:RetryMaxDelaySeconds"] = "300",

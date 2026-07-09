@@ -12,5 +12,5 @@ public sealed class UserProfileProjectionProducerSettingsSection
 
     public override string BootstrapServers { get; set; } = "localhost:9092";
 
-    public override string Topic { get; set; } = "dev.flowchat.user-profile.user-profile.v1";
+    public override string Topic { get; set; } = "dev.flowchat.user-profile.user-profile-projection.v1";
 }

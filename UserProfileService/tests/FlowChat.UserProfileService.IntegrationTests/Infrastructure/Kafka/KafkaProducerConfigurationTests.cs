@@ -82,7 +82,7 @@ public sealed class KafkaProducerConfigurationTests
         projectionProducerOptions.Should().NotBeNull();
         emailConfirmedProducerOptions!.Topic.Should().Be("dev.flowchat.user-profile.user-profile.v1");
         emailVerificationRequestedProducerOptions!.Topic.Should().Be("dev.flowchat.notification.email.v1");
-        projectionProducerOptions!.Topic.Should().Be("dev.flowchat.user-profile.user-profile.v1");
+        projectionProducerOptions!.Topic.Should().Be("dev.flowchat.user-profile.user-profile-projection.v1");
     }
 
     private static string GetRepositoryPath(string relativePath)
