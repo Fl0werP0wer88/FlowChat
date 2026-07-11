@@ -24,6 +24,7 @@ public sealed class GetContactsForUserQueryHandlerTests
             Guid.NewGuid(),
             "Alice",
             null,
+            null,
             Guid.NewGuid(),
             LastReadMsgSeqNum: 1,
             CurrentMsgSeqNum: 2,

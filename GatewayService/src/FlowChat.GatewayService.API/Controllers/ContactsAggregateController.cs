@@ -46,6 +46,7 @@ public sealed class ContactsAggregateController : ApiControllerBase
                 c.PartnerUserId,
                 c.DisplayName,
                 c.AvatarUrl,
+                c.Email,
                 c.IsBlocked,
                 c.IsBlockedByPartner,
                 c.IsMuted,

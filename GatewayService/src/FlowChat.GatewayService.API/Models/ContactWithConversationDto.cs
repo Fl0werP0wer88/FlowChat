@@ -7,6 +7,7 @@ public sealed record ContactWithConversationDto(
     Guid ContactUserId,
     string? DisplayName,
     string? AvatarUrl,
+    string? Email,
     bool IsBlocked,
     bool IsBlockedByPartner,
     bool IsMuted,

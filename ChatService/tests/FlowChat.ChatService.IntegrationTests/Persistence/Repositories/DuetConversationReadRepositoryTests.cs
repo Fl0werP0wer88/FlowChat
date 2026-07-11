@@ -208,7 +208,7 @@ public sealed class DuetConversationReadRepositoryTests
             seedContext.Conversations.Add(conversation);
             seedContext.DuetConversations.Add(CreateDuetConversation(requestingUserId, partnerUserId, conversation.Id.Value));
             seedContext.UserProfileProjections.Add(
-                CreateProfile(partnerUserId, "partner", firstName: "Partner", avatarUrl: "partner.png"));
+                CreateProfile(partnerUserId, "partner", firstName: "Partner", avatarUrl: "partner.png", email: "partner@example.com"));
 
             await seedContext.SaveChangesAsync();
         }
@@ -222,6 +222,7 @@ public sealed class DuetConversationReadRepositoryTests
         contact.PartnerUserId.Should().Be(partnerUserId);
         contact.DisplayName.Should().Be("Partner");
         contact.AvatarUrl.Should().Be("partner.png");
+        contact.Email.Should().Be("partner@example.com");
         contact.ConversationId.Should().Be(conversation.Id.Value);
         contact.IsBlocked.Should().BeFalse();
         contact.IsBlockedByPartner.Should().BeTrue();
@@ -277,6 +278,7 @@ public sealed class DuetConversationReadRepositoryTests
         string? firstName = null,
         string? lastName = null,
         string? avatarUrl = null,
+        string? email = null,
         DateTimeOffset? deletedAt = null) =>
         new()
         {
@@ -285,6 +287,7 @@ public sealed class DuetConversationReadRepositoryTests
             FirstName = firstName,
             LastName = lastName,
             AvatarUrl = avatarUrl,
+            Email = email,
             SourceDeletedAtUtc = deletedAt
         };
 

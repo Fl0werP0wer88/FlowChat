@@ -32,6 +32,7 @@ public sealed class UserProfileProjectionBulkEntityFactoryTests
                 FirstName = "John",
                 LastName = "Doe",
                 AvatarUrl = "https://avatar",
+                Email = "jdoe@example.com",
                 Source = "user-profile-projection"
             },
             sourceVersion: 3,
@@ -44,6 +45,7 @@ public sealed class UserProfileProjectionBulkEntityFactoryTests
         entity.FirstName.Should().Be("John");
         entity.LastName.Should().Be("Doe");
         entity.AvatarUrl.Should().Be("https://avatar");
+        entity.Email.Should().Be("jdoe@example.com");
         entity.SourceVersion.Should().Be(3);
         entity.SourceCreatedAtUtc.Should().Be(createdAt);
         entity.SourceLastModifiedAtUtc.Should().Be(modifiedAt);

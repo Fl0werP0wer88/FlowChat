@@ -17,6 +17,7 @@ public sealed class UserProfileProjectionRequestProfile : Profile
             .ForMember(destination => destination.FirstName, options => options.MapFrom(source => NormalizeOptional(source.FirstName)))
             .ForMember(destination => destination.LastName, options => options.MapFrom(source => NormalizeOptional(source.LastName)))
             .ForMember(destination => destination.AvatarUrl, options => options.MapFrom(source => NormalizeOptional(source.AvatarUrl)))
+            .ForMember(destination => destination.Email, options => options.MapFrom(source => NormalizeOptional(source.MainEmail == null ? null : source.MainEmail.Address)))
             .ForMember(destination => destination.SourceVersion, options => options.Ignore())
             .ForMember(destination => destination.Source, options => options.MapFrom(_ => ProjectionSource));
     }

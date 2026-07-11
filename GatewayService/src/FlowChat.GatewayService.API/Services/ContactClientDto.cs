@@ -4,6 +4,7 @@ public sealed record ContactClientDto(
     Guid PartnerUserId,
     string? DisplayName,
     string? AvatarUrl,
+    string? Email,
     Guid ConversationId,
     long LastReadMsgSeqNum,
     long CurrentMsgSeqNum,

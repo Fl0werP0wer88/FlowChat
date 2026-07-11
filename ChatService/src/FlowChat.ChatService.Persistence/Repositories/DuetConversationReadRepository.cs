@@ -142,6 +142,7 @@ public sealed class DuetConversationReadRepository(AppDbContext dbContext) : Rea
                 ProfileFirstName = (string?)profile.FirstName,
                 ProfileLastName = (string?)profile.LastName,
                 ProfileAvatarUrl = (string?)profile.AvatarUrl,
+                ProfileEmail = (string?)profile.Email,
                 LastReadMsgSeqNum = myParticipant.LastReadMessageSequenceNum,
                 CurrentMsgSeqNum = conversation.LastMsgSequenceNum,
                 IsBlocked = myParticipant.IsBlocked,
@@ -159,6 +160,7 @@ public sealed class DuetConversationReadRepository(AppDbContext dbContext) : Rea
                 string.IsNullOrEmpty(r.PartnerAvatarUrl)
                     ? r.ProfileAvatarUrl
                     : r.PartnerAvatarUrl,
+                r.ProfileEmail,
                 r.ConversationId,
                 r.LastReadMsgSeqNum,
                 r.CurrentMsgSeqNum,

@@ -23,6 +23,7 @@ public sealed class UserProfileProjectionBulkEntityFactory
             FirstName = value.FirstName,
             LastName = value.LastName,
             AvatarUrl = value.AvatarUrl,
+            Email = value.Email,
             SourceVersion = sourceVersion,
             SourceCreatedAtUtc = sourceCreatedAtUtc,
             SourceLastModifiedAtUtc = sourceLastModifiedAtUtc,

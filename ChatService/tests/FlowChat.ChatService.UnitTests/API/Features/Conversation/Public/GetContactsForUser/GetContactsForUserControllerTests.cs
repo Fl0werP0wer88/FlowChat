@@ -31,6 +31,7 @@ public sealed class GetContactsForUserControllerTests
             partnerUserId,
             "Alice",
             "https://avatar/alice.png",
+            "alice@example.com",
             conversationId,
             LastReadMsgSeqNum: 10,
             CurrentMsgSeqNum: 20,
@@ -52,6 +53,7 @@ public sealed class GetContactsForUserControllerTests
         var contact = response.Contacts.Should().ContainSingle().Subject;
         contact.PartnerUserId.Should().Be(partnerUserId);
         contact.DisplayName.Should().Be("Alice");
+        contact.Email.Should().Be("alice@example.com");
         contact.IsMuted.Should().BeTrue();
         contact.IsBlocked.Should().BeFalse();
         _mediatorMock.Verify(
