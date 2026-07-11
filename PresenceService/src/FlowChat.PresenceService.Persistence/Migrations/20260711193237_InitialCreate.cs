@@ -18,6 +18,7 @@ namespace FlowChat.PresenceService.Persistence.Migrations
                 {
                     ObservedUserId = table.Column<Guid>(type: "uuid", nullable: false),
                     ObserverUserId = table.Column<Guid>(type: "uuid", nullable: false),
+                    IsBlocked = table.Column<bool>(type: "boolean", nullable: false),
                     SourceVersion = table.Column<int>(type: "integer", nullable: false),
                     SourceCreatedAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     SourceLastModifiedAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
