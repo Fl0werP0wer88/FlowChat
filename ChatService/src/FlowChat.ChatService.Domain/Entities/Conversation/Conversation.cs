@@ -114,6 +114,46 @@ public abstract class Conversation : AggregateRootBase<Conversation>
         return participant.SetHidden(false);
     }
 
+    public bool HideParticipant(Id<UserProfileMarker> participantUserId)
+    {
+        var participant = GetParticipant(participantUserId)
+            ?? throw new InvalidOperationException("User is not a participant in this conversation.");
+
+        return participant.SetHidden(true);
+    }
+
+    public bool MuteParticipant(Id<UserProfileMarker> participantUserId)
+    {
+        var participant = GetParticipant(participantUserId)
+            ?? throw new InvalidOperationException("User is not a participant in this conversation.");
+
+        return participant.SetMuted(true);
+    }
+
+    public bool UnmuteParticipant(Id<UserProfileMarker> participantUserId)
+    {
+        var participant = GetParticipant(participantUserId)
+            ?? throw new InvalidOperationException("User is not a participant in this conversation.");
+
+        return participant.SetMuted(false);
+    }
+
+    public void BlockParticipant(Id<UserProfileMarker> participantUserId)
+    {
+        var participant = GetParticipant(participantUserId)
+            ?? throw new InvalidOperationException("User is not a participant in this conversation.");
+
+        participant.Block();
+    }
+
+    public void UnblockParticipant(Id<UserProfileMarker> participantUserId)
+    {
+        var participant = GetParticipant(participantUserId)
+            ?? throw new InvalidOperationException("User is not a participant in this conversation.");
+
+        participant.Unblock();
+    }
+
     private static void ValidateInvariants(ConversationType type, string? name, Id<UserProfileMarker> createdByUserId)
     {
         ArgumentNullException.ThrowIfNull(createdByUserId);

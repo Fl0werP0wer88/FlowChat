@@ -221,6 +221,118 @@ public sealed class ConversationTests
         conversation.Participants.Should().BeEmpty();
     }
 
+    [Fact]
+    public void GetParticipant_WhenParticipantExists_ReturnsParticipant()
+    {
+        var conversation = CreateGroupConversation();
+        var existingUserId = conversation.Participants.First().UserId;
+
+        var participant = conversation.GetParticipant(existingUserId);
+
+        participant.Should().NotBeNull();
+        participant!.UserId.Should().Be(existingUserId);
+    }
+
+    [Fact]
+    public void GetParticipant_WhenParticipantDoesNotExist_ReturnsNull()
+    {
+        var conversation = CreateGroupConversation();
+
+        var participant = conversation.GetParticipant(Id<UserProfileMarker>.New());
+
+        participant.Should().BeNull();
+    }
+
+    [Fact]
+    public void BlockParticipant_WhenParticipantExists_SetsIsBlockedTrue()
+    {
+        var requestingUserId = Id<UserProfileMarker>.New();
+        var partnerUserId = Id<UserProfileMarker>.New();
+        var conversation = DuetConversation.Create(requestingUserId, partnerUserId);
+
+        conversation.BlockParticipant(requestingUserId);
+
+        conversation.GetParticipant(requestingUserId)!.IsBlocked.Should().BeTrue();
+    }
+
+    [Fact]
+    public void UnblockParticipant_WhenParticipantIsBlocked_SetsIsBlockedFalse()
+    {
+        var requestingUserId = Id<UserProfileMarker>.New();
+        var partnerUserId = Id<UserProfileMarker>.New();
+        var conversation = DuetConversation.Create(requestingUserId, partnerUserId);
+        conversation.BlockParticipant(requestingUserId);
+
+        conversation.UnblockParticipant(requestingUserId);
+
+        conversation.GetParticipant(requestingUserId)!.IsBlocked.Should().BeFalse();
+    }
+
+    [Fact]
+    public void MuteParticipant_WhenParticipantExists_SetsIsMutedTrue()
+    {
+        var requestingUserId = Id<UserProfileMarker>.New();
+        var partnerUserId = Id<UserProfileMarker>.New();
+        var conversation = DuetConversation.Create(requestingUserId, partnerUserId);
+
+        var result = conversation.MuteParticipant(requestingUserId);
+
+        result.Should().BeTrue();
+        conversation.GetParticipant(requestingUserId)!.IsMuted.Should().BeTrue();
+    }
+
+    [Fact]
+    public void UnmuteParticipant_WhenParticipantIsMuted_SetsIsMutedFalse()
+    {
+        var requestingUserId = Id<UserProfileMarker>.New();
+        var partnerUserId = Id<UserProfileMarker>.New();
+        var conversation = DuetConversation.Create(requestingUserId, partnerUserId);
+        conversation.MuteParticipant(requestingUserId);
+
+        var result = conversation.UnmuteParticipant(requestingUserId);
+
+        result.Should().BeTrue();
+        conversation.GetParticipant(requestingUserId)!.IsMuted.Should().BeFalse();
+    }
+
+    [Fact]
+    public void HideParticipant_WhenParticipantExists_SetsIsHiddenTrue()
+    {
+        var requestingUserId = Id<UserProfileMarker>.New();
+        var partnerUserId = Id<UserProfileMarker>.New();
+        var conversation = DuetConversation.Create(requestingUserId, partnerUserId);
+
+        var result = conversation.HideParticipant(requestingUserId);
+
+        result.Should().BeTrue();
+        conversation.GetParticipant(requestingUserId)!.IsHidden.Should().BeTrue();
+    }
+
+    [Fact]
+    public void UnhideParticipant_WhenParticipantIsHidden_SetsIsHiddenFalse()
+    {
+        var requestingUserId = Id<UserProfileMarker>.New();
+        var partnerUserId = Id<UserProfileMarker>.New();
+        var conversation = DuetConversation.Create(requestingUserId, partnerUserId);
+        conversation.HideParticipant(requestingUserId);
+
+        var result = conversation.UnhideParticipant(requestingUserId);
+
+        result.Should().BeTrue();
+        conversation.GetParticipant(requestingUserId)!.IsHidden.Should().BeFalse();
+    }
+
+    [Fact]
+    public void BlockParticipant_WhenUserIsNotParticipant_ThrowsInvalidOperationException()
+    {
+        var conversation = CreateGroupConversation();
+
+        var act = () => conversation.BlockParticipant(Id<UserProfileMarker>.New());
+
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("User is not a participant in this conversation.");
+    }
+
     private static GroupConversation CreateGroupConversation()
     {
         var creatorId = Id<UserProfileMarker>.New();

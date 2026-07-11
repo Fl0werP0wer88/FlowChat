@@ -1,4 +1,6 @@
+using FlowChat.ChatService.Application.Features.Conversation.Commands.BlockConversationParticipant;
 using FlowChat.ChatService.Application.Features.Conversation.Commands.CreateDuetConversation;
+using FlowChat.ChatService.Application.Features.Conversation.Commands.UnblockConversationParticipant;
 using FlowChat.ChatService.Application.Features.Conversation.Processors;
 using DuetConversationAggregate = FlowChat.ChatService.Domain.Entities.Conversation.DuetConversation;
 using FlowChat.Shared.Application;
@@ -37,6 +39,12 @@ internal static class CommonApplicationServiceRegistration
         services.AddScoped<
             IAggregateBeforeSaveProcessor<CreateDuetConversationCommand, DuetConversationAggregate>,
             DuetConversationProjectionProcessor<CreateDuetConversationCommand>>();
+        services.AddScoped<
+            IAggregateBeforeSaveProcessor<BlockConversationParticipantCommand, DuetConversationAggregate>,
+            DuetConversationProjectionProcessor<BlockConversationParticipantCommand>>();
+        services.AddScoped<
+            IAggregateBeforeSaveProcessor<UnblockConversationParticipantCommand, DuetConversationAggregate>,
+            DuetConversationProjectionProcessor<UnblockConversationParticipantCommand>>();
 
         return services;
     }

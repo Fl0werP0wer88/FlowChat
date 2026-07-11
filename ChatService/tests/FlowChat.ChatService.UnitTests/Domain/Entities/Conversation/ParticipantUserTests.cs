@@ -75,4 +75,5 @@ public sealed class ParticipantUserTests
             p.UserId == newMemberId &&
             p.LastReadMessageSequenceNum == 84);
     }
+
 }
