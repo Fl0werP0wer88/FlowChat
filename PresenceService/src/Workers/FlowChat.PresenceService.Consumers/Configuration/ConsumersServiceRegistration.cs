@@ -1,4 +1,4 @@
-using FlowChat.Core.Messaging.SocialGraphService.ReadModels;
+using FlowChat.Core.Messaging.ChatService.ReadModels;
 using FlowChat.PresenceService.Application;
 using FlowChat.PresenceService.Application.Features.ContactObserverProjections;
 using FlowChat.PresenceService.Consumers.Configuration.Settings;
@@ -25,9 +25,9 @@ public static class ConsumersServiceRegistration
         IConfiguration configuration)
     {
         var contactOptions = configuration
-            .GetSection(new SocialGraphContactConsumerSettingsSection().SectionName)
-            .Get<SocialGraphContactConsumerSettingsSection>()
-            ?? new SocialGraphContactConsumerSettingsSection();
+            .GetSection(new DuetConversationContactConsumerSettingsSection().SectionName)
+            .Get<DuetConversationContactConsumerSettingsSection>()
+            ?? new DuetConversationContactConsumerSettingsSection();
 
         services.AddConsumerApplicationServices();
         services.AddConsumerPersistenceServices(configuration);
@@ -49,7 +49,7 @@ public static class ConsumersServiceRegistration
                     .AddCommandHandler<ContactObserverProjectionDto>()
                     .AddConsumer<
                         AppDbContext,
-                        ContactReadModel,
+                        DuetConversationReadModel,
                         ContactObserverProjectionDto,
                         (Guid, Guid),
                         ContactObserverProjectionValueFactory>());

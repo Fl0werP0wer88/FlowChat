@@ -21,8 +21,8 @@ public abstract class ProjectionRetrySubscriberBase<TReadModel, TItem, TKey>(
     {
         ValidateMessage(message);
 
-        var item = MapItem(message);
-        var result = await mediator.Send(new ProjectionBulkCommand<ProjectionCommandItem<TItem>>([item]), cancellationToken);
+        var items = MapItems(message).ToArray();
+        var result = await mediator.Send(new ProjectionBulkCommand<ProjectionCommandItem<TItem>>(items), cancellationToken);
 
         if (!result.IsSuccess)
         {
@@ -44,12 +44,12 @@ public abstract class ProjectionRetrySubscriberBase<TReadModel, TItem, TKey>(
             throw new NonTransientException("Payload does not contain valid SourceVersion.");
     }
 
-    private ProjectionCommandItem<TItem> MapItem(ProjectionIntegrationEvent<TReadModel> message) =>
-        new(
-            valueFactory.MapValue(message),
+    private IEnumerable<ProjectionCommandItem<TItem>> MapItems(ProjectionIntegrationEvent<TReadModel> message) =>
+        valueFactory.MapValues(message).Select(value => new ProjectionCommandItem<TItem>(
+            value,
             message.Operation,
             message.SourceAggregateVersion,
             message.SourceAggregateCreatedAtUtc,
             message.SourceAggregateModifiedAtUtc,
-            message.SourceAggregateDeletedAt);
+            message.SourceAggregateDeletedAt));
 }

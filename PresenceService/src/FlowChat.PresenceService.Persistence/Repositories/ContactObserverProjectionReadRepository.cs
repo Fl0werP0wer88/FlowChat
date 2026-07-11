@@ -14,7 +14,7 @@ public sealed class ContactObserverProjectionReadRepository(AppDbContext dbConte
         CancellationToken cancellationToken = default)
     {
         return await Active(_dbContext.ContactObserverProjections)
-            .Where(x => x.ObservedUserId == observedUserId)
+            .Where(x => x.ObservedUserId == observedUserId && !x.IsBlocked)
             .Select(x => x.ObserverUserId)
             .Distinct()
             .ToArrayAsync(cancellationToken);
@@ -25,7 +25,7 @@ public sealed class ContactObserverProjectionReadRepository(AppDbContext dbConte
         CancellationToken cancellationToken = default)
     {
         return await Active(_dbContext.ContactObserverProjections)
-            .Where(x => x.ObserverUserId == observerUserId)
+            .Where(x => x.ObserverUserId == observerUserId && !x.IsBlocked)
             .Select(x => x.ObservedUserId)
             .Distinct()
             .ToArrayAsync(cancellationToken);

@@ -24,6 +24,7 @@ public sealed class ContactObserverProjectionBulkEntityFactory
         {
             ObservedUserId = value.ObservedUserId,
             ObserverUserId = value.ObserverUserId,
+            IsBlocked = value.IsBlocked,
             SourceVersion = sourceVersion,
             SourceCreatedAtUtc = sourceCreatedAtUtc,
             SourceLastModifiedAtUtc = sourceLastModifiedAtUtc,
@@ -37,6 +38,7 @@ public sealed class ContactObserverProjectionBulkEntityFactory
         {
             ObservedUserId = item.Value.ObservedUserId,
             ObserverUserId = item.Value.ObserverUserId,
+            IsBlocked = item.Value.IsBlocked,
             SourceVersion = item.SourceVersion,
             SourceCreatedAtUtc = item.SourceCreatedAtUtc,
             SourceLastModifiedAtUtc = item.SourceLastModifiedAtUtc,

@@ -18,6 +18,9 @@ public sealed class ContactObserverProjectionConfiguration : IEntityTypeConfigur
 
         builder.HasKey(x => new { x.ObservedUserId, x.ObserverUserId });
 
+        builder.Property(x => x.IsBlocked)
+            .IsRequired();
+
         builder.Property(x => x.SourceVersion);
 
         builder.Property(x => x.SourceCreatedAtUtc)

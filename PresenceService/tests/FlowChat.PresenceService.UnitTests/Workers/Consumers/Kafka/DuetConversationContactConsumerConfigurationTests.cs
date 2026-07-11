@@ -14,7 +14,7 @@ using Silverback.Messaging.Configuration.Kafka;
 
 namespace FlowChat.PresenceService.UnitTests.Workers.Consumers.Kafka;
 
-public sealed class SocialGraphContactConsumerConfigurationTests
+public sealed class DuetConversationContactConsumerConfigurationTests
 {
     [Fact]
     public async Task AddConsumers_RegistersConsumerInfrastructure()
@@ -47,8 +47,8 @@ public sealed class SocialGraphContactConsumerConfigurationTests
     public async Task AddConsumers_ConfiguresBatchProcessingOnlyForMainConsumer()
     {
         var options = CreateConfiguration()
-            .GetSection(new SocialGraphContactConsumerSettingsSection().SectionName)
-            .Get<SocialGraphContactConsumerSettingsSection>()!;
+            .GetSection(new DuetConversationContactConsumerSettingsSection().SectionName)
+            .Get<DuetConversationContactConsumerSettingsSection>()!;
 
         var mainEndpoint = await GetEndpointConfigurationAsync(endpoint => endpoint
             .ConfigureFlowChatMainEndpoint(options)
@@ -72,15 +72,15 @@ public sealed class SocialGraphContactConsumerConfigurationTests
             .Build();
 
         var consumerOptions = configuration
-            .GetSection(new SocialGraphContactConsumerSettingsSection().SectionName)
-            .Get<SocialGraphContactConsumerSettingsSection>();
+            .GetSection(new DuetConversationContactConsumerSettingsSection().SectionName)
+            .Get<DuetConversationContactConsumerSettingsSection>();
 
         consumerOptions.Should().NotBeNull();
         consumerOptions!.GroupId.Should().Be("presence-service");
-        consumerOptions.RetryGroupId.Should().Be("presence-service-social-graph-contact-retry");
-        consumerOptions.Topic.Should().Be("dev.flowchat.social-graph.contact-projection.v1");
-        consumerOptions.RetryTopic.Should().Be("dev.flowchat.social-graph.contact-projection.v1.presence-service.retry");
-        consumerOptions.DeadLetterTopic.Should().Be("dev.flowchat.social-graph.contact-projection.v1.presence-service.dlq");
+        consumerOptions.RetryGroupId.Should().Be("presence-service-duet-conversation-contact-retry");
+        consumerOptions.Topic.Should().Be("dev.flowchat.chat.duet-conversation-projection.v1");
+        consumerOptions.RetryTopic.Should().Be("dev.flowchat.chat.duet-conversation-projection.v1.presence-service.retry");
+        consumerOptions.DeadLetterTopic.Should().Be("dev.flowchat.chat.duet-conversation-projection.v1.presence-service.dlq");
     }
 
     private static IConfiguration CreateConfiguration()
@@ -89,18 +89,18 @@ public sealed class SocialGraphContactConsumerConfigurationTests
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
                 ["ConnectionStrings:PresenceDb"] = "Host=localhost;Database=flowchat_presence;Username=flowchat;Password=flowchat",
-                ["Kafka:SocialGraphContactConsumer:BootstrapServers"] = "localhost:9092",
-                ["Kafka:SocialGraphContactConsumer:GroupId"] = "presence-service",
-                ["Kafka:SocialGraphContactConsumer:RetryGroupId"] = "presence-service-social-graph-contact-retry",
-                ["Kafka:SocialGraphContactConsumer:Topic"] = "dev.flowchat.social-graph.contact-projection.v1",
-                ["Kafka:SocialGraphContactConsumer:RetryTopic"] = "dev.flowchat.social-graph.contact-projection.v1.presence-service.retry",
-                ["Kafka:SocialGraphContactConsumer:DeadLetterTopic"] = "dev.flowchat.social-graph.contact-projection.v1.presence-service.dlq",
-                ["Kafka:SocialGraphContactConsumer:MaxRetryCount"] = "5",
-                ["Kafka:SocialGraphContactConsumer:RetryBaseDelaySeconds"] = "5",
-                ["Kafka:SocialGraphContactConsumer:RetryMaxDelaySeconds"] = "300",
-                ["Kafka:SocialGraphContactConsumer:AutoOffsetReset"] = "Earliest",
-                ["Kafka:SocialGraphContactConsumer:BatchSize"] = "100",
-                ["Kafka:SocialGraphContactConsumer:BatchMaxWaitTimeMilliseconds"] = "1000"
+                ["Kafka:DuetConversationContactConsumer:BootstrapServers"] = "localhost:9092",
+                ["Kafka:DuetConversationContactConsumer:GroupId"] = "presence-service",
+                ["Kafka:DuetConversationContactConsumer:RetryGroupId"] = "presence-service-duet-conversation-contact-retry",
+                ["Kafka:DuetConversationContactConsumer:Topic"] = "dev.flowchat.chat.duet-conversation-projection.v1",
+                ["Kafka:DuetConversationContactConsumer:RetryTopic"] = "dev.flowchat.chat.duet-conversation-projection.v1.presence-service.retry",
+                ["Kafka:DuetConversationContactConsumer:DeadLetterTopic"] = "dev.flowchat.chat.duet-conversation-projection.v1.presence-service.dlq",
+                ["Kafka:DuetConversationContactConsumer:MaxRetryCount"] = "5",
+                ["Kafka:DuetConversationContactConsumer:RetryBaseDelaySeconds"] = "5",
+                ["Kafka:DuetConversationContactConsumer:RetryMaxDelaySeconds"] = "300",
+                ["Kafka:DuetConversationContactConsumer:AutoOffsetReset"] = "Earliest",
+                ["Kafka:DuetConversationContactConsumer:BatchSize"] = "100",
+                ["Kafka:DuetConversationContactConsumer:BatchMaxWaitTimeMilliseconds"] = "1000"
             })
             .Build();
     }

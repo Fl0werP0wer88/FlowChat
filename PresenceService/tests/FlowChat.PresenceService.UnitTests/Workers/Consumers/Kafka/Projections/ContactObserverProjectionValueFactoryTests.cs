@@ -1,6 +1,6 @@
 using FlowChat.Core.Exceptions;
 using FlowChat.Core.Messaging;
-using FlowChat.Core.Messaging.SocialGraphService.ReadModels;
+using FlowChat.Core.Messaging.ChatService.ReadModels;
 using FlowChat.PresenceService.Consumers.Kafka.Projections;
 using FluentAssertions;
 
@@ -11,28 +11,36 @@ public sealed class ContactObserverProjectionValueFactoryTests
     private readonly ContactObserverProjectionValueFactory _factory = new();
 
     [Fact]
-    public void MapValue_WhenEventIsValid_MapsContactUserIdAndOwnerUserId()
+    public void MapValues_WhenNeitherUserHasBlocked_ReturnsBothDirectionsUnblocked()
     {
-        var ownerUserId = Guid.NewGuid();
-        var contactUserId = Guid.NewGuid();
+        var firstUserId = Guid.NewGuid();
+        var secondUserId = Guid.NewGuid();
 
-        var value = _factory.MapValue(CreateProjectionEvent(ownerUserId, contactUserId));
+        var values = _factory.MapValues(CreateProjectionEvent(firstUserId, secondUserId)).ToList();
 
-        value.ObserverUserId.Should().Be(ownerUserId);
-        value.ObservedUserId.Should().Be(contactUserId);
-        value.Source.Should().Be("social-graph-contact-events");
+        values.Should().HaveCount(2);
+        values.Should().ContainSingle(v => v.ObserverUserId == firstUserId && v.ObservedUserId == secondUserId && !v.IsBlocked);
+        values.Should().ContainSingle(v => v.ObserverUserId == secondUserId && v.ObservedUserId == firstUserId && !v.IsBlocked);
+        values.Should().OnlyContain(v => v.Source == "chat-duet-conversation-events");
     }
 
     [Fact]
-    public void MapValue_WhenContactUserIdIsEmpty_ThrowsNonTransientException()
+    public void MapValues_WhenFirstUserBlockedSecondUser_MarksOnlyThatDirectionBlocked()
     {
-        var act = () => _factory.MapValue(CreateProjectionEvent(Guid.NewGuid(), Guid.Empty));
+        var firstUserId = Guid.NewGuid();
+        var secondUserId = Guid.NewGuid();
 
-        act.Should().Throw<NonTransientException>();
+        var values = _factory.MapValues(CreateProjectionEvent(
+            firstUserId,
+            secondUserId,
+            firstUserBlockedSecondUser: true)).ToList();
+
+        values.Should().ContainSingle(v => v.ObserverUserId == firstUserId && v.ObservedUserId == secondUserId && v.IsBlocked);
+        values.Should().ContainSingle(v => v.ObserverUserId == secondUserId && v.ObservedUserId == firstUserId && !v.IsBlocked);
     }
 
     [Fact]
-    public void MapValue_WhenOwnerUserIdIsEmpty_ThrowsNonTransientException()
+    public void MapValue_WhenFirstUserIdIsEmpty_ThrowsNonTransientException()
     {
         var act = () => _factory.MapValue(CreateProjectionEvent(Guid.Empty, Guid.NewGuid()));
 
@@ -40,20 +48,30 @@ public sealed class ContactObserverProjectionValueFactoryTests
     }
 
     [Fact]
+    public void MapValue_WhenSecondUserIdIsEmpty_ThrowsNonTransientException()
+    {
+        var act = () => _factory.MapValue(CreateProjectionEvent(Guid.NewGuid(), Guid.Empty));
+
+        act.Should().Throw<NonTransientException>();
+    }
+
+    [Fact]
     public void GetDeduplicationKey_ReturnsObservedAndObserverUserIdTuple()
     {
-        var ownerUserId = Guid.NewGuid();
-        var contactUserId = Guid.NewGuid();
-        var value = _factory.MapValue(CreateProjectionEvent(ownerUserId, contactUserId));
+        var firstUserId = Guid.NewGuid();
+        var secondUserId = Guid.NewGuid();
+        var value = _factory.MapValue(CreateProjectionEvent(firstUserId, secondUserId));
 
         var key = _factory.GetDeduplicationKey(value);
 
-        key.Should().Be((contactUserId, ownerUserId));
+        key.Should().Be((secondUserId, firstUserId));
     }
 
-    private static ProjectionIntegrationEvent<ContactReadModel> CreateProjectionEvent(
-        Guid ownerUserId,
-        Guid contactUserId) =>
+    private static ProjectionIntegrationEvent<DuetConversationReadModel> CreateProjectionEvent(
+        Guid firstUserId,
+        Guid secondUserId,
+        bool firstUserBlockedSecondUser = false,
+        bool secondUserBlockedFirstUser = false) =>
         new()
         {
             SourceAggregateId = Guid.NewGuid(),
@@ -61,17 +79,13 @@ public sealed class ContactObserverProjectionValueFactoryTests
             SourceAggregateModifiedAtUtc = DateTimeOffset.UtcNow,
             Operation = OperationType.Updated,
             SourceAggregateVersion = 1,
-            Value = new ContactReadModel
+            Value = new DuetConversationReadModel
             {
-                ContactId = Guid.NewGuid(),
-                OwnerUserId = ownerUserId,
-                ContactUserId = contactUserId,
-                DisplayName = "Display Name",
-                FirstName = "First",
-                LastName = "Last",
-                PhoneNumber = "+48123123123",
-                EmailAddress = "contact@example.com",
-                IsBlocked = false
+                ConversationId = Guid.NewGuid(),
+                FirstUserId = firstUserId,
+                SecondUserId = secondUserId,
+                FirstUserBlockedSecondUser = firstUserBlockedSecondUser,
+                SecondUserBlockedFirstUser = secondUserBlockedFirstUser
             }
         };
 }
