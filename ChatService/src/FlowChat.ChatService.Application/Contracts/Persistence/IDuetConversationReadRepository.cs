@@ -15,4 +15,8 @@ public interface IDuetConversationReadRepository
         Guid requestingUserId,
         Guid partnerUserId,
         CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyCollection<ContactDto>> GetContactsForUserAsync(
+        Guid requestingUserId,
+        CancellationToken cancellationToken = default);
 }
