@@ -194,6 +194,24 @@ function Get-TopicDefinitions {
       }
     },
     @{
+      name = "dev.flowchat.chat.duet-conversation-projection.v1.presence-service.retry"
+      partitions = 1
+      rf = 1
+      config = @{
+        "cleanup.policy" = "delete"
+        "retention.ms" = "3600000"
+      }
+    },
+    @{
+      name = "dev.flowchat.chat.duet-conversation-projection.v1.presence-service.dlq"
+      partitions = 1
+      rf = 1
+      config = @{
+        "cleanup.policy" = "delete"
+        "retention.ms" = "1209600000"
+      }
+    },
+    @{
       name = "dev.flowchat.chat.message.v1.realtime-service.retry"
       partitions = 1
       rf = 1
@@ -231,33 +249,6 @@ function Get-TopicDefinitions {
     },
     @{
       name = "dev.flowchat.presence.presence.realtime-service.dlq"
-      partitions = 1
-      rf = 1
-      config = @{
-        "cleanup.policy" = "delete"
-        "retention.ms" = "1209600000"
-      }
-    },
-    @{
-      name = "dev.flowchat.social-graph.contact-projection.v1"
-      partitions = 1
-      rf = 1
-      config = @{
-        "cleanup.policy" = "delete"
-        "retention.ms" = "2419200000"
-      }
-    },
-    @{
-      name = "dev.flowchat.social-graph.contact-projection.v1.presence-service.retry"
-      partitions = 1
-      rf = 1
-      config = @{
-        "cleanup.policy" = "delete"
-        "retention.ms" = "3600000"
-      }
-    },
-    @{
-      name = "dev.flowchat.social-graph.contact-projection.v1.presence-service.dlq"
       partitions = 1
       rf = 1
       config = @{
@@ -327,12 +318,6 @@ function Get-LegacyTopicNames {
     "dev.flowchat.presence.presence-status-changed.v1",
     "dev.flowchat.presence.presence-status-changed.v1.retry",
     "dev.flowchat.presence.presence-status-changed.v1.dlq",
-    "dev.flowchat.social-graph.contact-added.v1",
-    "dev.flowchat.social-graph.contact-added.v1.retry",
-    "dev.flowchat.social-graph.contact-added.v1.dlq",
-    "dev.flowchat.social-graph.contact-deleted.v1",
-    "dev.flowchat.social-graph.contact-deleted.v1.retry",
-    "dev.flowchat.social-graph.contact-deleted.v1.dlq",
     "dev.flowchat.identity.user.v1.retry",
     "dev.flowchat.identity.user.v1.dlq",
     "dev.flowchat.user-profile.user-profile.v1.retry",
@@ -343,13 +328,11 @@ function Get-LegacyTopicNames {
     "dev.flowchat.chat.message.v1.dlq",
     "dev.flowchat.presence.presence.retry",
     "dev.flowchat.presence.presence.dlq",
-    "dev.flowchat.social-graph.contact.retry",
-    "dev.flowchat.social-graph.contact.dlq",
     "dev.flowchat.realtime.connection.v1.retry",
     "dev.flowchat.realtime.connection.v1.dlq",
-    "dev.flowchat.social-graph.contact",
-    "dev.flowchat.social-graph.contact.presence-service.retry",
-    "dev.flowchat.social-graph.contact.presence-service.dlq",
+    "dev.flowchat.social-graph.contact-projection.v1",
+    "dev.flowchat.social-graph.contact-projection.v1.presence-service.retry",
+    "dev.flowchat.social-graph.contact-projection.v1.presence-service.dlq",
     "dev.flowchat.user-profile.user-profile.v1.chat-service.retry",
     "dev.flowchat.user-profile.user-profile.v1.chat-service.dlq",
     "dev.flowchat.user-profile.user-profile.v1.socialgraph-service.retry",

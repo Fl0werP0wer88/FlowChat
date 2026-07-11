@@ -41,10 +41,6 @@
                         "path":  "RealtimeService"
                     },
                     {
-                        "name":  "SocialGraphService",
-                        "path":  "SocialGraphService"
-                    },
-                    {
                         "name":  "UserProfileService",
                         "path":  "UserProfileService"
                     }
@@ -66,7 +62,6 @@
                                                                                               "FlowChat.RealtimeService.Application",
                                                                                               "FlowChat.HarnessService.Application",
                                                                                               "FlowChat.Shared.Application",
-                                                                                              "FlowChat.SocialGraphService.Application",
                                                                                               "FlowChat.UserProfileService.Application"
                                                                                           ]
                                                                       },
@@ -84,7 +79,6 @@
                                                                                               "FlowChat.PresenceService.API",
                                                                                               "FlowChat.RealtimeService.API",
                                                                                               "FlowChat.Shared.API",
-                                                                                              "FlowChat.SocialGraphService.API",
                                                                                               "FlowChat.UserProfileService.API"
                                                                                           ]
                                                                       },
@@ -100,7 +94,6 @@
                                                                                               "FlowChat.PresenceService.Infrastructure",
                                                                                               "FlowChat.RealtimeService.Infrastructure",
                                                                                               "FlowChat.Shared.Infrastructure",
-                                                                                              "FlowChat.SocialGraphService.Infrastructure",
                                                                                               "FlowChat.UserProfileService.Infrastructure"
                                                                                           ]
                                                                       },
@@ -116,7 +109,6 @@
                                                                                               "FlowChat.NotificationService.Persistence",
                                                                                               "FlowChat.PresenceService.Persistence",
                                                                                               "FlowChat.RealtimeService.Persistence",
-                                                                                              "FlowChat.SocialGraphService.Persistence",
                                                                                               "FlowChat.UserProfileService.Persistence"
                                                                                           ]
                                                                       },
@@ -132,7 +124,6 @@
                                                                                               "FlowChat.PresenceService.Domain",
                                                                                               "FlowChat.RealtimeService.Domain",
                                                                                               "FlowChat.Shared.Domain",
-                                                                                              "FlowChat.SocialGraphService.Domain",
                                                                                              "FlowChat.UserProfileService.Domain"
                                                                                          ]
                                                                      },
@@ -391,25 +382,6 @@
                                          "stopAll":  true
                                      },
                                      {
-                                         "name":  "SocialGraphService",
-                                         "preLaunchTask":  "build-flowchat",
-                                         "configurations":  [
-                                                                {
-                                                                    "folder":  "SocialGraphService",
-                                                                    "name":  "SocialGraphService API (No Build)"
-                                                                },
-                                                                {
-                                                                    "folder":  "SocialGraphService",
-                                                                    "name":  "SocialGraphService Consumers (No Build)"
-                                                                },
-                                                                {
-                                                                    "folder":  "SocialGraphService",
-                                                                    "name":  "SocialGraphService OutboxPublisher (No Build)"
-                                                                }
-                                                            ],
-                                         "stopAll":  true
-                                     },
-                                     {
                                          "name":  "PresenceService",
                                          "preLaunchTask":  "build-flowchat",
                                          "configurations":  [
@@ -489,10 +461,6 @@
                                                                     "name":  "UserProfileService API (No Build)"
                                                                 },
                                                                 {
-                                                                    "folder":  "SocialGraphService",
-                                                                    "name":  "SocialGraphService API (No Build)"
-                                                                },
-                                                                {
                                                                     "folder":  "NotificationService",
                                                                     "name":  "NotificationService API (No Build)"
                                                                 },
@@ -552,14 +520,6 @@
                                                                     "name":  "RealtimeService Consumers (No Build)"
                                                                 },
                                                                 {
-                                                                    "folder":  "SocialGraphService",
-                                                                    "name":  "SocialGraphService Consumers (No Build)"
-                                                                },
-                                                                {
-                                                                    "folder":  "SocialGraphService",
-                                                                    "name":  "SocialGraphService OutboxPublisher (No Build)"
-                                                                },
-                                                                {
                                                                     "folder":  "PresenceService",
                                                                     "name":  "PresenceService Consumers (No Build)"
                                                                 },
@@ -589,10 +549,6 @@
                                                                 {
                                                                     "folder":  "UserProfileService",
                                                                     "name":  "UserProfileService API (No Build)"
-                                                                },
-                                                                {
-                                                                    "folder":  "SocialGraphService",
-                                                                    "name":  "SocialGraphService API (No Build)"
                                                                 },
                                                                 {
                                                                     "folder":  "PresenceService",
@@ -641,14 +597,6 @@
                                                                 {
                                                                     "folder":  "RealtimeService",
                                                                     "name":  "RealtimeService Consumers (No Build)"
-                                                                },
-                                                                {
-                                                                    "folder":  "SocialGraphService",
-                                                                    "name":  "SocialGraphService Consumers (No Build)"
-                                                                },
-                                                                {
-                                                                    "folder":  "SocialGraphService",
-                                                                    "name":  "SocialGraphService OutboxPublisher (No Build)"
                                                                 },
                                                                 {
                                                                     "folder":  "PresenceService",

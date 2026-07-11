@@ -87,23 +87,6 @@
     <Project Path="Common/tests/FlowChat.Shared.Persistance.IntegrationTests/FlowChat.Shared.Persistance.IntegrationTests.csproj" />
     <Project Path="Common/tests/FlowChat.Shared.Persistance.UnitTests/FlowChat.Shared.Persistance.UnitTests.csproj" />
   </Folder>
-  <Folder Name="/SocialGraphService/" />
-  <Folder Name="/SocialGraphService/src/">
-    <Project Path="SocialGraphService/src/FlowChat.SocialGraphService.API/FlowChat.SocialGraphService.API.csproj" />
-    <Project Path="SocialGraphService/src/FlowChat.SocialGraphService.Application/FlowChat.SocialGraphService.Application.csproj" />
-    <Project Path="SocialGraphService/src/FlowChat.SocialGraphService.Domain/FlowChat.SocialGraphService.Domain.csproj" />
-    <Project Path="SocialGraphService/src/FlowChat.SocialGraphService.Infrastructure/FlowChat.SocialGraphService.Infrastructure.csproj" />
-    <Project Path="SocialGraphService/src/FlowChat.SocialGraphService.Persistence/FlowChat.SocialGraphService.Persistence.csproj" />
-  </Folder>
-  <Folder Name="/SocialGraphService/src/Workers/">
-    <Project Path="SocialGraphService/src/Workers/FlowChat.SocialGraphService.Consumers/FlowChat.SocialGraphService.Consumers.csproj" />
-    <Project Path="SocialGraphService/src/Workers/FlowChat.SocialGraphService.OutboxPublisher/FlowChat.SocialGraphService.OutboxPublisher.csproj" />
-  </Folder>
-  <Folder Name="/SocialGraphService/tests/">
-    <Project Path="SocialGraphService/tests/FlowChat.SocialGraphService.AATs/FlowChat.SocialGraphService.AATs.csproj" />
-    <Project Path="SocialGraphService/tests/FlowChat.SocialGraphService.IntegrationTests/FlowChat.SocialGraphService.IntegrationTests.csproj" />
-    <Project Path="SocialGraphService/tests/FlowChat.SocialGraphService.UnitTests/FlowChat.SocialGraphService.UnitTests.csproj" />
-  </Folder>
   <Folder Name="/PresenceService/" />
   <Folder Name="/PresenceService/src/">
     <Project Path="PresenceService/src/FlowChat.PresenceService.API/FlowChat.PresenceService.API.csproj" />

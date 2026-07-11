@@ -56,11 +56,10 @@ FlowChat is a microservices-based chat application built with .NET 10. Services 
 ### Services
 - **PresenceService** — user presence statuses and contact-based fan-out projection
 - **AuthService** — registration, login, email/phone confirmation, JWT tokens
-- **ChatService** — chat rooms and messages
+- **ChatService** — chat rooms and messages; also owns contacts (a Duet conversation is the contact relationship — block/mute/hide are per-participant state on it)
 - **NotificationService** — email/SMS notifications
 - **GatewayService** — API gateway
 - **RealtimeService** — SignalR real-time connections
-- **SocialGraphService** — friends/followers graph
 - **UserProfileService** — user profiles
 - **HarnessService** — dev-only general-purpose test harness for AAT-testing cross-cutting infrastructure patterns (projection pipeline, Kafka retry/DLQ isolation, etc.); located in `HarnessService/`
 
@@ -293,7 +292,6 @@ dotnet test AuthService/FlowChat.AuthService.slnx
 dotnet test ChatService/FlowChat.ChatService.slnx
 dotnet test NotificationService/FlowChat.NotificationService.slnx
 dotnet test PresenceService/FlowChat.PresenceService.slnx
-dotnet test SocialGraphService/FlowChat.SocialGraphService.slnx
 dotnet test UserProfileService/FlowChat.UserProfileService.slnx
 
 # Common & standalone (no solution file)
