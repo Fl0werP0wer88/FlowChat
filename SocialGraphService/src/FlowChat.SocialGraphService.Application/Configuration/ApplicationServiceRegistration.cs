@@ -1,10 +1,10 @@
-using FlowChat.Core.Messaging.SocialGraphService.ReadModels;
 using FlowChat.Core.Results;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Application.Common.Eventing;
 using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2.BeforeSaveProcessors;
 using FlowChat.SocialGraphService.Application.Features.Contact.Commands.AddContact;
 using FlowChat.SocialGraphService.Application.Features.Contact.Commands.DeleteContact;
+using FlowChat.SocialGraphService.Application.Features.Contact.Processors;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using ContactAggregate = FlowChat.SocialGraphService.Domain.Entities.Contact.Contact;
@@ -56,7 +56,7 @@ internal static class CommonApplicationServiceRegistration
     {
         services.AddScoped<
             IAggregateBeforeSaveProcessor<TCommand, ContactAggregate>,
-            PublishProjectionIntegrationEventProcessor<TCommand, ContactAggregate, ContactReadModel>>();
+            ContactProjectionProcessor<TCommand>>();
 
         return services;
     }

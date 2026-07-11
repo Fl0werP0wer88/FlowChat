@@ -1,9 +1,9 @@
-using FlowChat.Core.Messaging.SocialGraphService.ReadModels;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2.BeforeSaveProcessors;
 using FlowChat.SocialGraphService.Application;
 using FlowChat.SocialGraphService.Application.Features.Contact.Commands.AddContact;
 using FlowChat.SocialGraphService.Application.Features.Contact.Commands.DeleteContact;
+using FlowChat.SocialGraphService.Application.Features.Contact.Processors;
 using Microsoft.Extensions.DependencyInjection;
 using ContactAggregate = FlowChat.SocialGraphService.Domain.Entities.Contact.Contact;
 
@@ -34,7 +34,6 @@ public sealed class ApplicationServiceRegistrationTests
             .ContainSingle()
             .Subject;
 
-        processor.Should().BeOfType<
-            PublishProjectionIntegrationEventProcessor<TCommand, ContactAggregate, ContactReadModel>>();
+        processor.Should().BeOfType<ContactProjectionProcessor<TCommand>>();
     }
 }
