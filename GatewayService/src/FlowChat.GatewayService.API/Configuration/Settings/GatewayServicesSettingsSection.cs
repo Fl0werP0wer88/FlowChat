@@ -6,8 +6,6 @@ public sealed class GatewayServicesSettingsSection : SettingsSectionBase
 {
     public override string SectionName => "GatewayServices";
 
-    public string SocialGraphServiceBaseUrl { get; set; } = string.Empty;
-
     public string ChatServiceBaseUrl { get; set; } = string.Empty;
 
     public string PresenceServiceBaseUrl { get; set; } = string.Empty;

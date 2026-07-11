@@ -4,15 +4,14 @@ using FlowChat.Core.Domain;
 namespace FlowChat.GatewayService.Api.Models;
 
 public sealed record ContactWithConversationDto(
-    Guid Id,
     Guid ContactUserId,
-    string DisplayName,
-    string? FirstName,
-    string? LastName,
-    string? PhoneNumber,
-    string? Email,
+    string? DisplayName,
+    string? AvatarUrl,
     bool IsBlocked,
-    Guid? ConversationId,
+    bool IsBlockedByPartner,
+    bool IsMuted,
+    bool IsHidden,
+    Guid ConversationId,
     long LastReadMsgSeqNum,
     long CurrentMsgSeqNum,
     long UnreadCount,

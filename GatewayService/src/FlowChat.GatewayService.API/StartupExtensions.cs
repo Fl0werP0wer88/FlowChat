@@ -101,11 +101,6 @@ public static class StartupExtensions
         builder.Services.AddTransient<BearerTokenForwardingHandler>();
 
         builder.Services
-            .AddFlowChatHttpClient<ISocialGraphServiceClient, SocialGraphServiceClient>((_, client) =>
-                client.BaseAddress = new Uri(servicesSettings.SocialGraphServiceBaseUrl))
-            .AddHttpMessageHandler<BearerTokenForwardingHandler>();
-
-        builder.Services
             .AddFlowChatHttpClient<IChatServiceClient, ChatServiceClient>((_, client) =>
                 client.BaseAddress = new Uri(servicesSettings.ChatServiceBaseUrl))
             .AddHttpMessageHandler<BearerTokenForwardingHandler>();
