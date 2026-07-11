@@ -30,8 +30,8 @@ export function ContactsList({
         {contacts.map((contact) => (
           <ContactListItem
             contact={contact}
-            isActive={activeContactId === contact.id}
-            key={contact.id}
+            isActive={activeContactId === contact.conversationId}
+            key={contact.conversationId}
             onClick={onContactClick}
           />
         ))}

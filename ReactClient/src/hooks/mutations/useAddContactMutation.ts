@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { addContact } from "../../api/socialGraphService";
+import { openDuetConversation } from "../../api/gatewayService";
 
 interface UseAddContactMutationCallbacks {
   onSuccess: () => void;
@@ -10,7 +10,7 @@ export function useAddContactMutation(accessToken: string, callbacks: UseAddCont
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (emailOrFriendlyId: string) => addContact(emailOrFriendlyId, accessToken),
+    mutationFn: (partnerUserId: string) => openDuetConversation(partnerUserId, null, accessToken),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["contacts"] });
       callbacks.onSuccess();

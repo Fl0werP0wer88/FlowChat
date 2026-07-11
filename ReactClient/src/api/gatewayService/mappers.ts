@@ -16,17 +16,15 @@ export function resolveContacts(response: GetContactsResponseDto): ContactDto[] 
 }
 
 export function mapContact(dto: ContactDto): Contact {
-  const userId = dto.contactUserId ?? dto.id ?? crypto.randomUUID();
   const lastReadMsgSeqNum = dto.lastReadMsgSeqNum ?? 0;
   const currentMsgSeqNum = dto.currentMsgSeqNum ?? 0;
 
   return {
-    id: dto.id ?? crypto.randomUUID(),
-    userId,
+    userId: dto.contactUserId ?? "",
     displayName: dto.displayName ?? "Nowy kontakt",
     email: dto.email ?? null,
     status: dto.status ?? "Invisible",
-    conversationId: dto.conversationId ?? null,
+    conversationId: dto.conversationId ?? "",
     lastReadMsgSeqNum,
     currentMsgSeqNum,
     unreadCount: dto.unreadCount ?? calculateUnreadCount(currentMsgSeqNum, lastReadMsgSeqNum),

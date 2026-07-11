@@ -8,7 +8,6 @@ import type { ChatMessageReceivedEvent, PresenceChangedEvent } from "../types/re
 import type { SearchUserResult } from "../types/users";
 import { resolveOwnerUserId } from "../utils/authUtils";
 import { calculateUnreadCount } from "../utils/chatUtils";
-import { useAddContactByUserIdMutation } from "./mutations/useAddContactByUserIdMutation";
 import { useAddContactMutation } from "./mutations/useAddContactMutation";
 import { useContactsQuery } from "./queries/useContactsQuery";
 
@@ -42,12 +41,11 @@ export function useContacts(): UseContactsResult {
     Boolean(accessToken && ownerUserId),
   );
   const activeContact = useMemo(
-    () => contacts.find((contact) => contact.id === activeContactId) ?? null,
+    () => contacts.find((contact) => contact.conversationId === activeContactId) ?? null,
     [activeContactId, contacts],
   );
 
   const addContactMutation = useAddContactMutation(accessToken, noopCallbacks);
-  const addContactByUserIdMutation = useAddContactByUserIdMutation(accessToken, noopCallbacks);
 
   const addContact = async (user: SearchUserResult): Promise<void> => {
     if (!accessToken || !ownerUserId) {
@@ -56,16 +54,7 @@ export function useContacts(): UseContactsResult {
     }
 
     try {
-      if (user.userProfileId) {
-        await addContactByUserIdMutation.mutateAsync(user.userProfileId);
-      } else {
-        const value = user.friendlyUserId.trim();
-        if (!value) {
-          toast.error("Wpisz email lub User Id uzytkownika.");
-          return;
-        }
-        await addContactMutation.mutateAsync(value);
-      }
+      await addContactMutation.mutateAsync(user.userProfileId);
       toast.success("Kontakt zostal dodany.");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Nie udalo sie dodac kontaktu.";

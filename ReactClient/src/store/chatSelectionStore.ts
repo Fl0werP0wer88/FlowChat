@@ -32,7 +32,7 @@ export const useChatSelectionStore = create<ChatSelectionStore>((set) => ({
   activeComposer: null,
 
   selectDuetContact: (contact) =>
-    set({ activeConversationMode: "duet", activeContactId: contact.id }),
+    set({ activeConversationMode: "duet", activeContactId: contact.conversationId }),
 
   selectGroupConversation: (conversation) =>
     set({ activeConversationMode: "group", activeGroupConversation: conversation }),
