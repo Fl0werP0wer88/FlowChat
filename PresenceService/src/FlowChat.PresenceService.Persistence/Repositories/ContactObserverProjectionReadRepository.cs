@@ -9,7 +9,7 @@ public sealed class ContactObserverProjectionReadRepository(AppDbContext dbConte
 {
     private readonly AppDbContext _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
 
-    public async Task<IReadOnlyCollection<Guid>> GetObserverUserIdsAsync(
+    public async Task<IReadOnlyCollection<Guid>> GetNonBlockedObserverUserIdsAsync(
         Guid observedUserId,
         CancellationToken cancellationToken = default)
     {
@@ -20,7 +20,7 @@ public sealed class ContactObserverProjectionReadRepository(AppDbContext dbConte
             .ToArrayAsync(cancellationToken);
     }
 
-    public async Task<IReadOnlyCollection<Guid>> GetObservedUserIdsAsync(
+    public async Task<IReadOnlyCollection<Guid>> GetNonBlockedObservedUserIdsAsync(
         Guid observerUserId,
         CancellationToken cancellationToken = default)
     {

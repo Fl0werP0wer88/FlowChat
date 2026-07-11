@@ -34,7 +34,7 @@ public sealed class PresenceStatusChangedApplicationEventHandlerTests
         IntegrationEventEnvelope<PresenceStatusChangedIntegrationEvent>? capturedEnvelope = null;
 
         _readRepositoryMock
-            .Setup(x => x.GetObserverUserIdsAsync(userId, It.IsAny<CancellationToken>()))
+            .Setup(x => x.GetNonBlockedObserverUserIdsAsync(userId, It.IsAny<CancellationToken>()))
             .ReturnsAsync([recipient1, Guid.Empty, recipient1, recipient2]);
         _integrationEventPublisherMock
             .Setup(x => x.PublishAsync(It.IsAny<IntegrationEventEnvelope<PresenceStatusChangedIntegrationEvent>>(), It.IsAny<CancellationToken>()))
@@ -60,7 +60,7 @@ public sealed class PresenceStatusChangedApplicationEventHandlerTests
         var userId = _fixture.Create<Guid>();
 
         _readRepositoryMock
-            .Setup(x => x.GetObserverUserIdsAsync(userId, It.IsAny<CancellationToken>()))
+            .Setup(x => x.GetNonBlockedObserverUserIdsAsync(userId, It.IsAny<CancellationToken>()))
             .ReturnsAsync([]);
 
         await _handler.Handle(
@@ -78,7 +78,7 @@ public sealed class PresenceStatusChangedApplicationEventHandlerTests
         var userId = _fixture.Create<Guid>();
 
         _readRepositoryMock
-            .Setup(x => x.GetObserverUserIdsAsync(userId, It.IsAny<CancellationToken>()))
+            .Setup(x => x.GetNonBlockedObserverUserIdsAsync(userId, It.IsAny<CancellationToken>()))
             .ReturnsAsync([Guid.Empty, Guid.Empty]);
 
         await _handler.Handle(
