@@ -1,4 +1,3 @@
-using FlowChat.Core.Messaging.UserProfileService.ReadModels;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Application.Common.Eventing;
 using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2.BeforeSaveProcessors;
@@ -14,6 +13,7 @@ using FlowChat.UserProfileService.Application.Features.UserProfile.Commands.SetM
 using FlowChat.UserProfileService.Application.Features.UserProfile.Commands.UpdateProfile;
 using FlowChat.UserProfileService.Application.Features.UserProfile.EmailVerification;
 using FlowChat.UserProfileService.Application.Features.UserProfile.EmailVerification.Interfaces;
+using FlowChat.UserProfileService.Application.Features.UserProfile.Processors;
 using Microsoft.Extensions.DependencyInjection;
 using MediatR;
 using DomainUserProfile = FlowChat.UserProfileService.Domain.Entities.UserProfile.UserProfile;
@@ -85,7 +85,7 @@ internal static class CommonApplicationServiceRegistration
     {
         services.AddScoped<
             IAggregateBeforeSaveProcessor<TCommand, DomainUserProfile>,
-            PublishProjectionIntegrationEventProcessor<TCommand, DomainUserProfile, UserProfileReadModel>>();
+            UserProfileProjectionProcessor<TCommand>>();
 
         return services;
     }
