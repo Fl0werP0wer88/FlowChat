@@ -11,6 +11,8 @@ public sealed class ParticipantUser : EntityBase<ParticipantUser>
     public string? DisplayName { get; private set; }
     public string? AvatarUrl { get; private set; }
     public bool IsBlocked { get; private set; }
+    public bool IsMuted { get; private set; }
+    public bool IsHidden { get; private set; }
     public UtcDateTimeOffset JoinedAtUtc { get; private set; }
     public long LastReadMessageSequenceNum { get; private set; }
 
@@ -21,6 +23,8 @@ public sealed class ParticipantUser : EntityBase<ParticipantUser>
         string? displayName,
         string? avatarUrl,
         bool isBlocked,
+        bool isMuted,
+        bool isHidden,
         UtcDateTimeOffset joinedAtUtc,
         long lastReadMessageSequenceNum) : base(id)
     {
@@ -32,6 +36,8 @@ public sealed class ParticipantUser : EntityBase<ParticipantUser>
         DisplayName = displayName;
         AvatarUrl = avatarUrl;
         IsBlocked = isBlocked;
+        IsMuted = isMuted;
+        IsHidden = isHidden;
         JoinedAtUtc = joinedAtUtc;
         LastReadMessageSequenceNum = lastReadMessageSequenceNum;
     }
@@ -51,6 +57,8 @@ public sealed class ParticipantUser : EntityBase<ParticipantUser>
             displayName,
             avatarUrl,
             isBlocked: false,
+            isMuted: false,
+            isHidden: false,
             UtcDateTimeOffset.UtcNow,
             lastReadMessageSequenceNum);
     }
@@ -62,6 +70,8 @@ public sealed class ParticipantUser : EntityBase<ParticipantUser>
         string? displayName,
         string? avatarUrl,
         bool isBlocked,
+        bool isMuted,
+        bool isHidden,
         UtcDateTimeOffset joinedAtUtc,
         long lastReadMessageSequenceNum)
     {
@@ -72,6 +82,8 @@ public sealed class ParticipantUser : EntityBase<ParticipantUser>
             displayName,
             avatarUrl,
             isBlocked,
+            isMuted,
+            isHidden,
             joinedAtUtc,
             lastReadMessageSequenceNum);
     }
@@ -90,6 +102,28 @@ public sealed class ParticipantUser : EntityBase<ParticipantUser>
             throw new InvalidOperationException("Participant is not blocked.");
 
         IsBlocked = false;
+    }
+
+    internal bool SetMuted(bool muted)
+    {
+        if (muted == IsMuted)
+        {
+            return false;
+        }
+
+        IsMuted = muted;
+        return true;
+    }
+
+    internal bool SetHidden(bool hidden)
+    {
+        if (hidden == IsHidden)
+        {
+            return false;
+        }
+
+        IsHidden = hidden;
+        return true;
     }
 
     internal bool SetLastReadMessageSequenceNum(long sequenceNum)

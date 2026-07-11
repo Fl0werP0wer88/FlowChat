@@ -99,6 +99,21 @@ public abstract class Conversation : AggregateRootBase<Conversation>
         return _participants.Any(p => p.UserId == participantUserId);
     }
 
+    public ParticipantUser? GetParticipant(Id<UserProfileMarker> participantUserId)
+    {
+        ArgumentNullException.ThrowIfNull(participantUserId);
+
+        return _participants.FirstOrDefault(p => p.UserId == participantUserId);
+    }
+
+    public bool UnhideParticipant(Id<UserProfileMarker> participantUserId)
+    {
+        var participant = GetParticipant(participantUserId)
+            ?? throw new InvalidOperationException("User is not a participant in this conversation.");
+
+        return participant.SetHidden(false);
+    }
+
     private static void ValidateInvariants(ConversationType type, string? name, Id<UserProfileMarker> createdByUserId)
     {
         ArgumentNullException.ThrowIfNull(createdByUserId);

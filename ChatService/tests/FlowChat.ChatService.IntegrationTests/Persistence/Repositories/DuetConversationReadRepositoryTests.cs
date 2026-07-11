@@ -35,6 +35,8 @@ public sealed class DuetConversationReadRepositoryTests
                     displayName: null,
                     avatarUrl: null,
                     isBlocked: false,
+                    isMuted: false,
+                    isHidden: false,
                     UtcDateTimeOffset.UtcNow,
                     lastReadMessageSequenceNum: 42),
                 ParticipantUser.Restore(
@@ -44,6 +46,8 @@ public sealed class DuetConversationReadRepositoryTests
                     displayName: null,
                     avatarUrl: null,
                     isBlocked: false,
+                    isMuted: false,
+                    isHidden: false,
                     UtcDateTimeOffset.UtcNow,
                     lastReadMessageSequenceNum: 80)
             ]);

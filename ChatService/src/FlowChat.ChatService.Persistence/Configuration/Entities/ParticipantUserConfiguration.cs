@@ -34,6 +34,12 @@ public sealed class ParticipantUserConfiguration : IEntityTypeConfiguration<Part
         builder.Property(x => x.IsBlocked)
             .IsRequired();
 
+        builder.Property(x => x.IsMuted)
+            .IsRequired();
+
+        builder.Property(x => x.IsHidden)
+            .IsRequired();
+
         builder.Property(x => x.JoinedAtUtc)
             .HasUtcDateTimeOffsetConversion()
             .IsRequired();
