@@ -48,13 +48,9 @@ public sealed class GroupConversation : Conversation
             conversation.Type,
             conversation.Name,
             conversation.CreatedByUserId));
-        //ToDo1: Przeprojektować CommandHandlerBase tak by sam dodawal wersję do DomainEvent-ów
-        // IncrementVersion() runs later in the command pipeline, after domain events are popped, so this
-        // must anticipate the post-save version to stay consistent with what read-side queries will see once committed.
         conversation.AddDomainEvent(new GroupConversationParticipantsAddedDomainEvent(
             conversation.Id,
-            [.. conversation.Participants.Select(p => p.UserId)],
-            conversation.Version + 1));
+            [.. conversation.Participants.Select(p => p.UserId)]));
 
         return conversation;
     }
@@ -89,9 +85,7 @@ public sealed class GroupConversation : Conversation
                 lastReadMessageSequenceNum));
         }
 
-        // IncrementVersion() runs later in the command pipeline, after domain events are popped, so this
-        // must anticipate the post-save version to stay consistent with what read-side queries will see once committed.
-        AddDomainEvent(new GroupConversationParticipantsAddedDomainEvent(Id, userIdsToAdd, Version + 1));
+        AddDomainEvent(new GroupConversationParticipantsAddedDomainEvent(Id, userIdsToAdd));
     }
 
     public void RemoveParticipants(IEnumerable<Id<UserProfileMarker>> participantUserIds)
@@ -113,8 +107,6 @@ public sealed class GroupConversation : Conversation
 
         _participants.RemoveAll(p => userIdsToRemove.Contains(p.UserId));
 
-        // IncrementVersion() runs later in the command pipeline, after domain events are popped, so this
-        // must anticipate the post-save version to stay consistent with what read-side queries will see once committed.
-        AddDomainEvent(new GroupConversationParticipantsRemovedDomainEvent(Id, userIdsToRemove, Version + 1));
+        AddDomainEvent(new GroupConversationParticipantsRemovedDomainEvent(Id, userIdsToRemove));
     }
 }

@@ -9,6 +9,7 @@ public sealed class GroupConversationParticipantsRemovedDomainEventToIntegration
     public GroupConversationParticipantsRemovedDomainEventToIntegrationEventProfile()
     {
         CreateMap<GroupConversationParticipantsRemovedDomainEvent, GroupConversationParticipantsRemovedIntegrationEvent>()
-            .ForMember(destination => destination.ParticipantUserIds, options => options.MapFrom(source => source.ParticipantUserIds.Select(id => id.Value).ToList()));
+            .ForMember(destination => destination.ParticipantUserIds, options => options.MapFrom(source => source.ParticipantUserIds.Select(id => id.Value).ToList()))
+            .ForMember(destination => destination.ConversationVersion, options => options.MapFrom(source => source.Version));
     }
 }

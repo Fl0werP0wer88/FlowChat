@@ -115,8 +115,6 @@ public sealed class ConversationTests
         conversation.DomainEvents.OfType<GroupConversationCreatedDomainEvent>().Should().ContainSingle();
         conversation.DomainEvents.OfType<GroupConversationParticipantsAddedDomainEvent>().Should().ContainSingle()
             .Which.ParticipantUserIds.Should().BeEquivalentTo([creatorId, memberId]);
-        conversation.DomainEvents.OfType<GroupConversationParticipantsAddedDomainEvent>().Single()
-            .ConversationVersion.Should().Be(conversation.Version + 1);
     }
 
     [Fact]
@@ -130,8 +128,6 @@ public sealed class ConversationTests
         conversation.DomainEvents.OfType<GroupConversationParticipantsAddedDomainEvent>().Should().HaveCount(2);
         conversation.DomainEvents.OfType<GroupConversationParticipantsAddedDomainEvent>().Last()
             .ParticipantUserIds.Should().ContainSingle().Which.Should().Be(newMemberId);
-        conversation.DomainEvents.OfType<GroupConversationParticipantsAddedDomainEvent>().Last()
-            .ConversationVersion.Should().Be(conversation.Version + 1);
     }
 
     [Fact]
@@ -150,8 +146,6 @@ public sealed class ConversationTests
 
         conversation.DomainEvents.OfType<GroupConversationParticipantsRemovedDomainEvent>().Should().ContainSingle()
             .Which.ParticipantUserIds.Should().ContainSingle().Which.Should().Be(removedMemberId);
-        conversation.DomainEvents.OfType<GroupConversationParticipantsRemovedDomainEvent>().Single()
-            .ConversationVersion.Should().Be(conversation.Version + 1);
     }
 
     [Fact]

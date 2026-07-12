@@ -47,6 +47,7 @@ public abstract class AggregateRootCommandHandlerBaseV3<TCommand, TResponse, TAg
 
             aggregateRoot.IncrementVersion();
             var domainEvents = aggregateRoot.PopDomainEvents();
+            DomainEventBase.StampVersions(domainEvents, aggregateRoot.Version);
             var localEvents = domainEvents
                 .Cast<ILocalEvent>();
 

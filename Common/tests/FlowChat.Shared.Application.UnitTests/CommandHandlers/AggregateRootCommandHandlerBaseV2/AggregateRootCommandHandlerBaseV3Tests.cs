@@ -80,6 +80,25 @@ public sealed class AggregateRootCommandHandlerBaseV3Tests
         processorMock.Verify(x => x.CaptureBeforeState(It.IsAny<TestAggregate>()), Times.Never);
     }
 
+    [Fact]
+    public async Task Handle_WhenAggregateRaisesDomainEvents_StampsPostIncrementVersionOnDispatchedEvents()
+    {
+        var domainEvent = new TestDomainEvent();
+        IEnumerable<ILocalEvent>? dispatchedEvents = null;
+        var localEventDispatcherMock = new Mock<ILocalEventDispatcher>();
+        localEventDispatcherMock
+            .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<ILocalEvent>>(), It.IsAny<CancellationToken>()))
+            .Callback<IEnumerable<ILocalEvent>, CancellationToken>((events, _) => dispatchedEvents = events)
+            .Returns(Task.CompletedTask);
+        var handler = new InsertLikeCommandHandler(localEventDispatcherMock.Object, CreateUnitOfWork(), [], domainEvent);
+
+        var result = await handler.Handle(new TestCommand(), CancellationToken.None);
+
+        result.IsSuccess.Should().BeTrue();
+        dispatchedEvents.Should().ContainSingle().Which.Should().BeSameAs(domainEvent);
+        domainEvent.Version.Should().Be(2);
+    }
+
     private static FetchingConfigurableCommandHandler CreateFetchingHandler(
         IEnumerable<IAggregateBeforeSaveProcessor<TestCommand, TestAggregate>> processors,
         Func<TestCommand, CancellationToken, Task<FlowChatResult<TestAggregate?>>> fetch,
@@ -127,7 +146,12 @@ public sealed class AggregateRootCommandHandlerBaseV3Tests
 
     public sealed record TestCommand : ICommand<Guid>;
 
-    public sealed class TestAggregate(Guid id) : AggregateRootBase<TestAggregate>(Id<TestAggregate>.FromGuid(id));
+    public sealed class TestAggregate(Guid id) : AggregateRootBase<TestAggregate>(Id<TestAggregate>.FromGuid(id))
+    {
+        public void RaiseEvent(IDomainEvent domainEvent) => AddDomainEvent(domainEvent);
+    }
+
+    public sealed class TestDomainEvent : DomainEventBase;
 
     private sealed class FetchingConfigurableCommandHandler
         : FetchingAggregateRootCommandHandlerBaseV3<TestCommand, Guid, TestAggregate>
@@ -177,12 +201,16 @@ public sealed class AggregateRootCommandHandlerBaseV3Tests
     private sealed class InsertLikeCommandHandler
         : AggregateRootCommandHandlerBaseV3<TestCommand, Guid, TestAggregate>
     {
+        private readonly IDomainEvent? _domainEventToRaise;
+
         public InsertLikeCommandHandler(
             ILocalEventDispatcher localEventsDispatcher,
             IUnitOfWork unitOfWork,
-            IEnumerable<IAggregateBeforeSaveProcessor<TestCommand, TestAggregate>> beforeSaveProcessors)
+            IEnumerable<IAggregateBeforeSaveProcessor<TestCommand, TestAggregate>> beforeSaveProcessors,
+            IDomainEvent? domainEventToRaise = null)
             : base(localEventsDispatcher, unitOfWork, beforeSaveProcessors)
         {
+            _domainEventToRaise = domainEventToRaise;
         }
 
         public bool ExecuteAsyncCalled { get; private set; }
@@ -193,6 +221,10 @@ public sealed class AggregateRootCommandHandlerBaseV3Tests
 
             // Mirrors real Insert handlers, which create and assign the aggregate themselves.
             AggregateRoot = new TestAggregate(Guid.NewGuid());
+            if (_domainEventToRaise is not null)
+            {
+                AggregateRoot.RaiseEvent(_domainEventToRaise);
+            }
             SetMutationType(MutationType.Created);
 
             return Task.FromResult(FlowChatResult<Guid>.Success(Guid.NewGuid()));

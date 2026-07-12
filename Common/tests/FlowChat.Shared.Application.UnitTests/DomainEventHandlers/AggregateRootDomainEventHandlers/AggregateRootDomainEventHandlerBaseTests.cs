@@ -67,6 +67,24 @@ public sealed class AggregateRootDomainEventHandlerBaseTests
         processorMock.Verify(x => x.CaptureBeforeState(It.IsAny<TestAggregate>()), Times.Never);
     }
 
+    [Fact]
+    public async Task Handle_WhenAggregateRaisesDomainEvents_StampsPostIncrementVersionOnDispatchedEvents()
+    {
+        var raisedEvent = new RaisedTestEvent();
+        IEnumerable<ILocalEvent>? dispatchedEvents = null;
+        var localEventDispatcherMock = new Mock<ILocalEventDispatcher>();
+        localEventDispatcherMock
+            .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<ILocalEvent>>(), It.IsAny<CancellationToken>()))
+            .Callback<IEnumerable<ILocalEvent>, CancellationToken>((events, _) => dispatchedEvents = events)
+            .Returns(Task.CompletedTask);
+        var handler = new InsertLikeDomainEventHandler(localEventDispatcherMock.Object, [], raisedEvent);
+
+        await handler.Handle(new TestNotification(), CancellationToken.None);
+
+        dispatchedEvents.Should().ContainSingle().Which.Should().BeSameAs(raisedEvent);
+        raisedEvent.Version.Should().Be(2);
+    }
+
     private static ConfigurableAggregateRootDomainEventHandler CreateHandler(
         IEnumerable<IAggregateBeforeSaveProcessor<TestNotification, TestAggregate>> processors,
         Func<TestNotification, CancellationToken, Task<FlowChatResult<TestAggregate?>>> fetch,
@@ -95,7 +113,12 @@ public sealed class AggregateRootDomainEventHandlerBaseTests
         public string? TraceInfo => null;
     }
 
-    public sealed class TestAggregate(Guid id) : AggregateRootBase<TestAggregate>(Id<TestAggregate>.FromGuid(id));
+    public sealed class TestAggregate(Guid id) : AggregateRootBase<TestAggregate>(Id<TestAggregate>.FromGuid(id))
+    {
+        public void RaiseEvent(IDomainEvent domainEvent) => AddDomainEvent(domainEvent);
+    }
+
+    public sealed class RaisedTestEvent : DomainEventBase;
 
     private sealed class ConfigurableAggregateRootDomainEventHandler
         : FetchingAggregateRootDomainEventHandlerBase<TestNotification, TestAggregate>
@@ -135,11 +158,15 @@ public sealed class AggregateRootDomainEventHandlerBaseTests
     private sealed class InsertLikeDomainEventHandler
         : AggregateRootDomainEventHandlerBase<TestNotification, TestAggregate>
     {
+        private readonly IDomainEvent? _domainEventToRaise;
+
         public InsertLikeDomainEventHandler(
             ILocalEventDispatcher localEventsDispatcher,
-            IEnumerable<IAggregateBeforeSaveProcessor<TestNotification, TestAggregate>> beforeSaveProcessors)
+            IEnumerable<IAggregateBeforeSaveProcessor<TestNotification, TestAggregate>> beforeSaveProcessors,
+            IDomainEvent? domainEventToRaise = null)
             : base(localEventsDispatcher, beforeSaveProcessors)
         {
+            _domainEventToRaise = domainEventToRaise;
         }
 
         public bool ExecuteAsyncCalled { get; private set; }
@@ -150,6 +177,10 @@ public sealed class AggregateRootDomainEventHandlerBaseTests
 
             // Mirrors real Insert handlers, which create and assign the aggregate themselves.
             AggregateRoot = new TestAggregate(Guid.NewGuid());
+            if (_domainEventToRaise is not null)
+            {
+                AggregateRoot.RaiseEvent(_domainEventToRaise);
+            }
             SetMutationType(MutationType.Created);
 
             return Task.FromResult(FlowChatResult.Success());

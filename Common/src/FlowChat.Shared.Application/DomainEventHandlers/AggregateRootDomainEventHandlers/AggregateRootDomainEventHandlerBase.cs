@@ -45,6 +45,7 @@ public abstract class AggregateRootDomainEventHandlerBase<TNotification, TAggreg
 
         aggregateRoot.IncrementVersion();
         var domainEvents = aggregateRoot.PopDomainEvents();
+        DomainEventBase.StampVersions(domainEvents, aggregateRoot.Version);
         var localEvents = domainEvents
             .Cast<ILocalEvent>();
 
