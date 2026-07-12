@@ -19,7 +19,8 @@ public sealed class GroupConversationParticipantsRemovedSubscriber(
             (message.ParticipantUserIds ?? [])
                 .Where(userId => userId != Guid.Empty)
                 .Distinct()
-                .ToArray());
+                .ToArray(),
+            message.ConversationVersion);
 
         var result = await mediator.Send(command, cancellationToken);
 

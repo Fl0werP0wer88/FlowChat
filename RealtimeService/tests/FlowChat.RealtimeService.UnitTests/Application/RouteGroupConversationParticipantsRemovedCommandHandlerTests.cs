@@ -12,6 +12,7 @@ public sealed class RouteGroupConversationParticipantsRemovedCommandHandlerTests
 {
     private readonly IFixture _fixture = new Fixture();
     private readonly Mock<IRealtimeGroupMembershipReadModelRepository> _readModelRepositoryMock = new();
+    private readonly Mock<IRealtimeGroupMembershipVersionTrackerRepository> _versionTrackerRepositoryMock = new();
     private readonly Mock<IRealtimeEventRouter> _routerMock = new();
     private readonly RouteGroupConversationParticipantsRemovedCommandHandler _handler;
 
@@ -21,7 +22,10 @@ public sealed class RouteGroupConversationParticipantsRemovedCommandHandlerTests
             .Setup(x => x.RouteGroupConversationParticipantsRemovedAsync(It.IsAny<GroupConversationParticipantsRemovedParam>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
-        _handler = new RouteGroupConversationParticipantsRemovedCommandHandler(_readModelRepositoryMock.Object, _routerMock.Object);
+        _handler = new RouteGroupConversationParticipantsRemovedCommandHandler(
+            _readModelRepositoryMock.Object,
+            _versionTrackerRepositoryMock.Object,
+            _routerMock.Object);
     }
 
     [Fact]
@@ -29,6 +33,7 @@ public sealed class RouteGroupConversationParticipantsRemovedCommandHandlerTests
     {
         var conversationId = _fixture.Create<Guid>();
         var participantUserId = _fixture.Create<Guid>();
+        var conversationVersion = _fixture.Create<int>();
         GroupConversationParticipantsRemovedParam? capturedNotification = null;
 
         _routerMock
@@ -37,7 +42,7 @@ public sealed class RouteGroupConversationParticipantsRemovedCommandHandlerTests
             .Returns(Task.CompletedTask);
 
         var result = await _handler.Handle(
-            new RouteGroupConversationParticipantsRemovedCommand(conversationId, [participantUserId, participantUserId, Guid.Empty]),
+            new RouteGroupConversationParticipantsRemovedCommand(conversationId, [participantUserId, participantUserId, Guid.Empty], conversationVersion),
             CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
@@ -47,6 +52,9 @@ public sealed class RouteGroupConversationParticipantsRemovedCommandHandlerTests
                 RealtimeGroupType.Conversation,
                 conversationId,
                 It.IsAny<CancellationToken>()),
+            Times.Once);
+        _versionTrackerRepositoryMock.Verify(
+            x => x.UpsertIfNewerAsync(conversationId, conversationVersion, It.IsAny<CancellationToken>()),
             Times.Once);
         capturedNotification.Should().NotBeNull();
         capturedNotification!.ParticipantUserIds.Should().ContainSingle().Which.Should().Be(participantUserId);

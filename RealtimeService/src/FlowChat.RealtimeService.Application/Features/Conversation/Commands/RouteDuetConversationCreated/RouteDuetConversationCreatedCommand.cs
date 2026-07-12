@@ -5,4 +5,5 @@ namespace FlowChat.RealtimeService.Application.Features.Conversation.Commands.Ro
 
 public sealed record RouteDuetConversationCreatedCommand(
     Guid ConversationId,
-    IReadOnlyCollection<Guid> ParticipantUserIds) : ICommand<Unit>;
+    IReadOnlyCollection<Guid> ParticipantUserIds,
+    int ConversationVersion) : ICommand<Unit>;

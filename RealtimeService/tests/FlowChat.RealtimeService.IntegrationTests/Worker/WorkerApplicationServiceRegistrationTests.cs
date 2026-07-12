@@ -28,6 +28,7 @@ public sealed class WorkerApplicationServiceRegistrationTests
         services.AddScoped(_ => Mock.Of<IRealtimeGroupManager>());
         services.AddScoped(_ => Mock.Of<IPresenceInternalApiClient>());
         services.AddScoped(_ => Mock.Of<IRealtimeGroupMembershipReadModelRepository>());
+        services.AddScoped(_ => Mock.Of<IRealtimeGroupMembershipVersionTrackerRepository>());
         services.AddApiApplicationServices();
 
         using var serviceProvider = services.BuildServiceProvider(new ServiceProviderOptions
@@ -56,6 +57,7 @@ public sealed class WorkerApplicationServiceRegistrationTests
         services.AddScoped(_ => Mock.Of<IRealtimeEventRouter>());
         services.AddScoped(_ => Mock.Of<IChatServiceInternalApiClient>());
         services.AddScoped(_ => Mock.Of<IRealtimeGroupMembershipReadModelRepository>());
+        services.AddScoped(_ => Mock.Of<IRealtimeGroupMembershipVersionTrackerRepository>());
         services.AddConsumerApplicationServices();
 
         using var serviceProvider = services.BuildServiceProvider(new ServiceProviderOptions

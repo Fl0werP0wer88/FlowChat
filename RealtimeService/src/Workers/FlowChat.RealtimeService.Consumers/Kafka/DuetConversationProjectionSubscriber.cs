@@ -17,7 +17,8 @@ public sealed class DuetConversationProjectionSubscriber(
     {
         var command = new RouteDuetConversationCreatedCommand(
             message.Value.ConversationId,
-            [message.Value.FirstUserId, message.Value.SecondUserId]);
+            [message.Value.FirstUserId, message.Value.SecondUserId],
+            message.SourceAggregateVersion);
 
         var result = await mediator.Send(command, cancellationToken);
 
