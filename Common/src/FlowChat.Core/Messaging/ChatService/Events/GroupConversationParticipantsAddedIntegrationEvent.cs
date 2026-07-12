@@ -4,4 +4,5 @@ public sealed record GroupConversationParticipantsAddedIntegrationEvent : Integr
 {
     public Guid ConversationId { get; init; }
     public IReadOnlyCollection<Guid> ParticipantUserIds { get; init; } = [];
+    public int ConversationVersion { get; init; }
 }
