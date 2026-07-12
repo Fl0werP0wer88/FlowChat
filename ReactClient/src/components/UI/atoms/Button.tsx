@@ -1,4 +1,4 @@
-import type { ButtonHTMLAttributes, PropsWithChildren } from "react";
+import { forwardRef, type ButtonHTMLAttributes, type PropsWithChildren } from "react";
 
 type ButtonVariant = "primary" | "secondary" | "link";
 
@@ -6,13 +6,16 @@ export interface ButtonProps extends PropsWithChildren<ButtonHTMLAttributes<HTML
   variant?: ButtonVariant;
 }
 
-export function Button({ variant = "primary", className, children, ...buttonProps }: ButtonProps) {
+export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
+  { variant = "primary", className, children, ...buttonProps },
+  ref,
+) {
   const variantClassName = `ui-button ui-button--${variant}`;
   const mergedClassName = className ? `${variantClassName} ${className}` : variantClassName;
 
   return (
-    <button {...buttonProps} className={mergedClassName}>
+    <button ref={ref} {...buttonProps} className={mergedClassName}>
       {children}
     </button>
   );
-}
+});

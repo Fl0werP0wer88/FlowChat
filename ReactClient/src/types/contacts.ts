@@ -11,4 +11,8 @@ export interface Contact {
   lastReadMsgSeqNum: number;
   currentMsgSeqNum: number;
   unreadCount: number;
+  isBlocked: boolean;
+  isBlockedByPartner: boolean;
+  isMuted: boolean;
+  isHidden: boolean;
 }

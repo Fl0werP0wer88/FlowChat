@@ -114,6 +114,16 @@ export async function putJson<TResponse, TRequest extends object>(
   }, options);
 }
 
+export async function deleteJson<TResponse>(
+  path: string,
+  options: RequestOptions = {},
+): Promise<TResponse> {
+  return request<TResponse>({
+    method: "DELETE",
+    url: path,
+  }, options);
+}
+
 export async function postForm<TResponse>(
   path: string,
   payload: Record<string, string>,

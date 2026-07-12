@@ -28,6 +28,10 @@ export function mapContact(dto: ContactDto): Contact {
     lastReadMsgSeqNum,
     currentMsgSeqNum,
     unreadCount: dto.unreadCount ?? calculateUnreadCount(currentMsgSeqNum, lastReadMsgSeqNum),
+    isBlocked: dto.isBlocked ?? false,
+    isBlockedByPartner: dto.isBlockedByPartner ?? false,
+    isMuted: dto.isMuted ?? false,
+    isHidden: dto.isHidden ?? false,
   };
 }
 

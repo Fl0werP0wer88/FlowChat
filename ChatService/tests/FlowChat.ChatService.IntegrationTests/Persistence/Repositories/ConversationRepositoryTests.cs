@@ -128,6 +128,34 @@ public sealed class ConversationRepositoryTests
     }
 
     [Fact]
+    public async Task DuetConversationWriteRepository_GetByIdAsync_WhenDuetExists_ReturnsDuetWithParticipants()
+    {
+        await using var connection = new SqliteConnection("Data Source=:memory:");
+        await connection.OpenAsync();
+
+        var requestingUserId = Guid.NewGuid();
+        var partnerUserId = Guid.NewGuid();
+        var conversation = DuetConversation.Create(requestingUserId, partnerUserId);
+        MarkCreated(conversation);
+
+        await using (var seedContext = CreateDbContext(connection))
+        {
+            seedContext.Conversations.Add(conversation);
+            await seedContext.SaveChangesAsync();
+        }
+
+        await using var readContext = CreateDbContext(connection);
+        var repository = new DuetConversationWriteRepository(readContext);
+
+        var result = await repository.GetByIdAsync(conversation.Id.Value, CancellationToken.None);
+
+        result.Should().NotBeNull();
+        result!.Id.Should().Be(conversation.Id);
+        result.Participants.Select(participant => participant.UserId.Value)
+            .Should().BeEquivalentTo([requestingUserId, partnerUserId]);
+    }
+
+    [Fact]
     public async Task DuetConversationWriteRepository_AddAsync_PersistsConversationAndDuetMapping()
     {
         await using var connection = new SqliteConnection("Data Source=:memory:");

@@ -1,4 +1,4 @@
-import { getJson, postJson, putJson } from "../httpClient";
+import { deleteJson, getJson, postJson, putJson } from "../httpClient";
 import type { SendChatMessageRequest } from "./chatMessage/commands/sendChatMessage/SendChatMessageRequest";
 import type { CopyDuetAsGroupRequest } from "./conversation/commands/copyDuetAsGroup/CopyDuetAsGroupRequest";
 import type { CreateGroupConversationRequest } from "./conversation/commands/createGroupConversation/CreateGroupConversationRequest";
@@ -168,6 +168,42 @@ export async function markConversationAsRead(
     `/api/conversations/${encodeURIComponent(conversationId)}/read-state`,
     {},
     { accessToken, signal },
+  );
+}
+
+function getParticipantSettingPath(conversationId: string, setting: "mute" | "block" | "hide") {
+  return `/api/conversations/${encodeURIComponent(conversationId)}/${setting}`;
+}
+
+export async function muteConversation(conversationId: string, accessToken: string): Promise<void> {
+  await putJson<null, Record<string, never>>(
+    getParticipantSettingPath(conversationId, "mute"),
+    {},
+    { accessToken },
+  );
+}
+
+export async function unmuteConversation(conversationId: string, accessToken: string): Promise<void> {
+  await deleteJson<null>(getParticipantSettingPath(conversationId, "mute"), { accessToken });
+}
+
+export async function blockConversation(conversationId: string, accessToken: string): Promise<void> {
+  await putJson<null, Record<string, never>>(
+    getParticipantSettingPath(conversationId, "block"),
+    {},
+    { accessToken },
+  );
+}
+
+export async function unblockConversation(conversationId: string, accessToken: string): Promise<void> {
+  await deleteJson<null>(getParticipantSettingPath(conversationId, "block"), { accessToken });
+}
+
+export async function hideConversation(conversationId: string, accessToken: string): Promise<void> {
+  await putJson<null, Record<string, never>>(
+    getParticipantSettingPath(conversationId, "hide"),
+    {},
+    { accessToken },
   );
 }
 

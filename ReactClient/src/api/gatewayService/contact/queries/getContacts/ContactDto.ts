@@ -9,4 +9,8 @@ export interface ContactDto {
   currentMsgSeqNum?: number;
   unreadCount?: number;
   status?: Contact["status"];
+  isBlocked?: boolean;
+  isBlockedByPartner?: boolean;
+  isMuted?: boolean;
+  isHidden?: boolean;
 }

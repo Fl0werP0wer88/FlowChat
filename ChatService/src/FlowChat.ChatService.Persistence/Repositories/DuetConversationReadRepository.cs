@@ -21,30 +21,6 @@ public sealed class DuetConversationReadRepository(AppDbContext dbContext) : Rea
         return entry?.ConversationId.Value;
     }
 
-    public async Task<IReadOnlyCollection<DuetConversationForContactDto>> GetConversationsForContactsAsync(
-        Guid requestingUserId,
-        IEnumerable<Guid> partnerUserIds,
-        CancellationToken cancellationToken = default)
-    {
-        var ids = partnerUserIds.ToList();
-
-        return await (
-            from duet in Active(dbContext.DuetConversationReads)
-            where (duet.FirstUserId == requestingUserId && ids.Contains(duet.SecondUserId)) ||
-                  (duet.SecondUserId == requestingUserId && ids.Contains(duet.FirstUserId))
-            join conversation in Active(dbContext.ConversationReads)
-                on duet.ConversationId equals conversation.Id
-            join participant in Active(dbContext.ParticipantUserReads)
-                on conversation.Id equals participant.ConversationId
-            where participant.UserId == requestingUserId
-            select new DuetConversationForContactDto(
-                duet.FirstUserId == requestingUserId ? duet.SecondUserId : duet.FirstUserId,
-                conversation.Id,
-                participant.LastReadMessageSequenceNum,
-                conversation.LastMsgSequenceNum))
-            .ToListAsync(cancellationToken);
-    }
-
     public async Task<DuetConversationDetailDto?> GetByUserIdsAsync(
         Guid requestingUserId,
         Guid partnerUserId,

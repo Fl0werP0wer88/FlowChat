@@ -1,5 +1,9 @@
 import type { KeyboardEvent } from "react";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import { useBlockConversationMutation, useHideConversationMutation, useMuteConversationMutation } from "../../../../hooks";
+import { useAuthStore } from "../../../../store/authStore";
+import { useChatSelectionStore } from "../../../../store/chatSelectionStore";
 import type { ChatMessage } from "../../../../types/chat";
 import type { Contact } from "../../../../types/contacts";
 import { ConversationBody } from "../../molecules/ConversationBody";
@@ -41,8 +45,19 @@ export function DuetConversationPanel({
   onCreateGroupFromDuet,
 }: DuetConversationPanelProps) {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const isComposerDisabled = !activeConversationId || isLoadingConversation || isSendingMessage;
+  const accessToken = useAuthStore((state) => state.accessToken) ?? "";
+  const clearDuetSelection = useChatSelectionStore((state) => state.clearDuetSelection);
+  const muteMutation = useMuteConversationMutation(accessToken);
+  const blockMutation = useBlockConversationMutation(accessToken);
+  const hideMutation = useHideConversationMutation(accessToken);
+  const isBlocked = Boolean(activeContact?.isBlocked || activeContact?.isBlockedByPartner);
+  const isComposerDisabled = !activeConversationId || isLoadingConversation || isSendingMessage || isBlocked;
   const isSendDisabled = isComposerDisabled || draft.trim().length === 0;
+  const disabledMessage = activeContact?.isBlocked
+    ? "Odblokuj kontakt, aby ponownie wysyłać wiadomości."
+    : activeContact?.isBlockedByPartner
+      ? "Ten kontakt zablokował możliwość wysyłania wiadomości."
+      : null;
 
   useEffect(() => {
     setIsSettingsOpen(false);
@@ -70,7 +85,40 @@ export function DuetConversationPanel({
         ? (
           <DuetConversationSettings
             activeContact={activeContact}
+            isBlockPending={blockMutation.isPending}
+            isHidePending={hideMutation.isPending}
+            isMutePending={muteMutation.isPending}
+            onBlockChange={async (blocked) => {
+              if (!activeContact) return;
+              try {
+                await blockMutation.mutateAsync({ conversationId: activeContact.conversationId, blocked });
+                toast.success(blocked ? "Kontakt został zablokowany." : "Kontakt został odblokowany.");
+              } catch (error) {
+                toast.error(error instanceof Error ? error.message : "Nie udało się zmienić blokady kontaktu.");
+                throw error;
+              }
+            }}
             onCreateGroupClick={handleCreateGroupClick}
+            onHide={async () => {
+              if (!activeContact) return;
+              try {
+                await hideMutation.mutateAsync(activeContact.conversationId);
+                clearDuetSelection();
+                setIsSettingsOpen(false);
+                toast.success("Rozmowa została ukryta.");
+              } catch (error) {
+                toast.error(error instanceof Error ? error.message : "Nie udało się ukryć rozmowy.");
+              }
+            }}
+            onMuteChange={async (muted) => {
+              if (!activeContact) return;
+              try {
+                await muteMutation.mutateAsync({ conversationId: activeContact.conversationId, muted });
+                toast.success(muted ? "Rozmowa została wyciszona." : "Wyciszenie zostało wyłączone.");
+              } catch (error) {
+                toast.error(error instanceof Error ? error.message : "Nie udało się zmienić wyciszenia.");
+              }
+            }}
           />
         )
         : (
@@ -91,6 +139,7 @@ export function DuetConversationPanel({
         isComposerDisabled={isComposerDisabled}
         isSendDisabled={isSendDisabled}
         isSendingMessage={isSendingMessage}
+        disabledMessage={disabledMessage}
         onDraftChange={onDraftChange}
         onDraftKeyDown={onDraftKeyDown}
         onSendDraft={onSendDraft}
