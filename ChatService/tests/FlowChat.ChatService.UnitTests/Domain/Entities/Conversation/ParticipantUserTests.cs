@@ -32,6 +32,18 @@ public sealed class ParticipantUserTests
     }
 
     [Fact]
+    public void Create_WhenDisplayNameIsProvided_StoresConversationSpecificDisplayName()
+    {
+        var participant = ParticipantUser.Create(
+            Id<ParticipantUser>.New(),
+            Id<ConversationAggregate>.New(),
+            Id<UserProfileMarker>.New(),
+            displayName: "Conversation nickname");
+
+        participant.DisplayName.Should().Be("Conversation nickname");
+    }
+
+    [Fact]
     public void CreateGroupConversation_WhenParticipantsAreCreated_DefaultsLastReadMessageSequenceNumToZero()
     {
         var creatorId = Id<UserProfileMarker>.New();

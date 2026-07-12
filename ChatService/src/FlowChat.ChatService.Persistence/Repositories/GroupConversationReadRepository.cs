@@ -29,7 +29,6 @@ public sealed class GroupConversationReadRepository(AppDbContext dbContext) : Re
                 ParticipantDisplayName = participant.DisplayName,
                 ProfileFirstName = (string?)profile.FirstName,
                 ProfileLastName = (string?)profile.LastName,
-                ParticipantAvatarUrl = participant.AvatarUrl,
                 ProfileAvatarUrl = (string?)profile.AvatarUrl
             })
             .ToListAsync(cancellationToken);
@@ -41,9 +40,7 @@ public sealed class GroupConversationReadRepository(AppDbContext dbContext) : Re
             string.IsNullOrEmpty(r.ParticipantDisplayName)
                 ? ComputeDisplayName(r.ProfileFirstName, r.ProfileLastName)
                 : r.ParticipantDisplayName,
-            string.IsNullOrEmpty(r.ParticipantAvatarUrl)
-                ? r.ProfileAvatarUrl
-                : r.ParticipantAvatarUrl))
+            r.ProfileAvatarUrl))
             .ToList();
 
         if (rows.Count == 0)

@@ -69,7 +69,7 @@ public sealed class CreateGroupConversationCommandHandler
         return new ConversationParticipantDto(
             participant.UserId.Value,
             string.IsNullOrEmpty(participant.DisplayName) ? profile?.DisplayName : participant.DisplayName,
-            string.IsNullOrEmpty(participant.AvatarUrl) ? profile?.AvatarUrl : participant.AvatarUrl,
+            profile?.AvatarUrl,
             participant.UserId.Value);
     }
 }

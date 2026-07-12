@@ -15,7 +15,6 @@ public sealed class ParticipantUserReadEntityConfiguration : IEntityTypeConfigur
         builder.Property(x => x.ConversationId);
         builder.Property(x => x.UserId);
         builder.Property(x => x.DisplayName);
-        builder.Property(x => x.AvatarUrl);
         builder.Property(x => x.IsBlocked);
         builder.Property(x => x.IsMuted);
         builder.Property(x => x.IsHidden);

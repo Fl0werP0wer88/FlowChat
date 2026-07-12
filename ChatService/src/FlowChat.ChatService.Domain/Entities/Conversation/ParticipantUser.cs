@@ -9,7 +9,6 @@ public sealed class ParticipantUser : EntityBase<ParticipantUser>
     public Id<Conversation> ConversationId { get; private set; }
     public Id<UserProfileMarker> UserId { get; private set; }
     public string? DisplayName { get; private set; }
-    public string? AvatarUrl { get; private set; }
     public bool IsBlocked { get; private set; }
     public bool IsMuted { get; private set; }
     public bool IsHidden { get; private set; }
@@ -21,7 +20,6 @@ public sealed class ParticipantUser : EntityBase<ParticipantUser>
         Id<Conversation> conversationId,
         Id<UserProfileMarker> userId,
         string? displayName,
-        string? avatarUrl,
         bool isBlocked,
         bool isMuted,
         bool isHidden,
@@ -34,7 +32,6 @@ public sealed class ParticipantUser : EntityBase<ParticipantUser>
         ConversationId = conversationId;
         UserId = userId;
         DisplayName = displayName;
-        AvatarUrl = avatarUrl;
         IsBlocked = isBlocked;
         IsMuted = isMuted;
         IsHidden = isHidden;
@@ -47,7 +44,6 @@ public sealed class ParticipantUser : EntityBase<ParticipantUser>
         Id<Conversation> conversationId,
         Id<UserProfileMarker> userId,
         string? displayName = null,
-        string? avatarUrl = null,
         long lastReadMessageSequenceNum = 0)
     {
         return new ParticipantUser(
@@ -55,7 +51,6 @@ public sealed class ParticipantUser : EntityBase<ParticipantUser>
             conversationId,
             userId,
             displayName,
-            avatarUrl,
             isBlocked: false,
             isMuted: false,
             isHidden: false,
@@ -68,7 +63,6 @@ public sealed class ParticipantUser : EntityBase<ParticipantUser>
         Id<Conversation> conversationId,
         Id<UserProfileMarker> userId,
         string? displayName,
-        string? avatarUrl,
         bool isBlocked,
         bool isMuted,
         bool isHidden,
@@ -80,7 +74,6 @@ public sealed class ParticipantUser : EntityBase<ParticipantUser>
             conversationId,
             userId,
             displayName,
-            avatarUrl,
             isBlocked,
             isMuted,
             isHidden,

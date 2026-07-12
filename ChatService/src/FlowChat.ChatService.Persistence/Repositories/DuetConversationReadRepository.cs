@@ -29,7 +29,6 @@ public sealed class DuetConversationReadRepository(AppDbContext dbContext) : Rea
                 ConversationId = conversation.Id,
                 participant.UserId,
                 ParticipantDisplayName = participant.DisplayName,
-                ParticipantAvatarUrl = participant.AvatarUrl,
                 ProfileFirstName = (string?)profile.FirstName,
                 ProfileLastName = (string?)profile.LastName,
                 ProfileAvatarUrl = (string?)profile.AvatarUrl
@@ -42,9 +41,7 @@ public sealed class DuetConversationReadRepository(AppDbContext dbContext) : Rea
                 string.IsNullOrEmpty(r.ParticipantDisplayName)
                     ? ComputeDisplayName(r.ProfileFirstName, r.ProfileLastName)
                     : r.ParticipantDisplayName,
-                string.IsNullOrEmpty(r.ParticipantAvatarUrl)
-                    ? r.ProfileAvatarUrl
-                    : r.ParticipantAvatarUrl))
+                r.ProfileAvatarUrl))
             .ToList();
 
         if (rows.Count != 2)
@@ -100,7 +97,6 @@ public sealed class DuetConversationReadRepository(AppDbContext dbContext) : Rea
                 ConversationId = conversation.Id,
                 PartnerUserId = partnerParticipant.UserId,
                 PartnerDisplayName = partnerParticipant.DisplayName,
-                PartnerAvatarUrl = partnerParticipant.AvatarUrl,
                 ProfileFirstName = (string?)profile.FirstName,
                 ProfileLastName = (string?)profile.LastName,
                 ProfileAvatarUrl = (string?)profile.AvatarUrl,
@@ -119,9 +115,7 @@ public sealed class DuetConversationReadRepository(AppDbContext dbContext) : Rea
                 string.IsNullOrEmpty(r.PartnerDisplayName)
                     ? ComputeDisplayName(r.ProfileFirstName, r.ProfileLastName)
                     : r.PartnerDisplayName,
-                string.IsNullOrEmpty(r.PartnerAvatarUrl)
-                    ? r.ProfileAvatarUrl
-                    : r.PartnerAvatarUrl,
+                r.ProfileAvatarUrl,
                 r.ProfileEmail,
                 r.ConversationId,
                 r.LastReadMsgSeqNum,

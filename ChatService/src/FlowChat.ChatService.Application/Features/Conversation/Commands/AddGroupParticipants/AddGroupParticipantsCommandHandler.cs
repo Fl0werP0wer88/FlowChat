@@ -61,7 +61,6 @@ public sealed class AddGroupParticipantsCommandHandler
         AggregateRoot!.AddParticipants(
             newParticipantUserIds,
             displayName: null,
-            avatarUrl: null,
             lastReadMessageSequenceNum);
 
         SetUpdated();

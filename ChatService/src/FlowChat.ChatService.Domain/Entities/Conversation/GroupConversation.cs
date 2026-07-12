@@ -59,7 +59,6 @@ public sealed class GroupConversation : Conversation
     public void AddParticipants(
         IEnumerable<Id<UserProfileMarker>> participantUserIds,
         string? displayName = null,
-        string? avatarUrl = null,
         long lastReadMessageSequenceNum = 0)
     {
         ArgumentNullException.ThrowIfNull(participantUserIds);
@@ -84,7 +83,6 @@ public sealed class GroupConversation : Conversation
                 Id,
                 participantUserId,
                 displayName,
-                avatarUrl,
                 lastReadMessageSequenceNum));
         }
 
