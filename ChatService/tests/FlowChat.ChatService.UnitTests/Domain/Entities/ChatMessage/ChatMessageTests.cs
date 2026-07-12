@@ -18,6 +18,8 @@ public sealed class ChatMessageTests
         chatMessage.DeliveryStatus.Should().Be(DeliveryStatus.Pending);
         chatMessage.SequenceNum.Should().BeNull();
         chatMessage.DeliveredAtUtc.Should().BeNull();
+        chatMessage.DomainEvents.OfType<ChatMessageSentDomainEvent>().Should().ContainSingle()
+            .Which.ConversationVersionAtSend.Should().Be(1);
     }
 
     [Fact]
@@ -67,5 +69,6 @@ public sealed class ChatMessageTests
             Id<Conversation>.New(),
             Guid.NewGuid(),
             "Hello",
-            [Guid.NewGuid()]);
+            [Guid.NewGuid()],
+            conversationVersionAtSend: 1);
 }

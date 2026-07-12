@@ -169,7 +169,8 @@ public sealed class MarkChatMessageAsDeliveredCommandHandlerTests
             Id<ConversationAggregate>.FromGuid(conversationId),
             Guid.NewGuid(),
             "Hello",
-            [Guid.NewGuid()]);
+            [Guid.NewGuid()],
+            conversationVersionAtSend: 1);
 
         message.ClearEvents();
         return message;

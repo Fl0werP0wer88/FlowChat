@@ -8,7 +8,7 @@ public interface IConversationParticipantReadRepository
         Guid conversationId,
         CancellationToken cancellationToken = default);
 
-    Task<IReadOnlyCollection<ParticipantStateDto>?> GetParticipantStatesAsync(
+    Task<ParticipantStatesResult?> GetParticipantStatesAsync(
         Guid conversationId,
         CancellationToken cancellationToken = default);
 }

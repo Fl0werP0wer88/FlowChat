@@ -22,7 +22,8 @@ public sealed class ChatMessageConfigurationTests
             Id<Conversation>.New(),
             Guid.NewGuid(),
             "Hello",
-            [Guid.NewGuid()]);
+            [Guid.NewGuid()],
+            conversationVersionAtSend: 1);
 
         context.ChatMessages.Add(chatMessage);
 

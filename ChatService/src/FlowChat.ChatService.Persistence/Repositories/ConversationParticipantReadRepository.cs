@@ -26,21 +26,25 @@ public sealed class ConversationParticipantReadRepository(AppDbContext dbContext
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<IReadOnlyCollection<ParticipantStateDto>?> GetParticipantStatesAsync(
+    public async Task<ParticipantStatesResult?> GetParticipantStatesAsync(
         Guid conversationId,
         CancellationToken cancellationToken = default)
     {
-        var conversationExists = await Active(dbContext.ConversationReads)
-            .AnyAsync(conversation => conversation.Id == conversationId, cancellationToken);
+        var conversationVersion = await Active(dbContext.ConversationReads)
+            .Where(conversation => conversation.Id == conversationId)
+            .Select(conversation => (int?)conversation.Version)
+            .FirstOrDefaultAsync(cancellationToken);
 
-        if (!conversationExists)
+        if (conversationVersion is null)
         {
             return null;
         }
 
-        return await Active(dbContext.ParticipantUserReads)
+        var participantStates = await Active(dbContext.ParticipantUserReads)
             .Where(participant => participant.ConversationId == conversationId)
             .Select(participant => new ParticipantStateDto(participant.UserId, participant.IsBlocked, participant.IsHidden))
             .ToListAsync(cancellationToken);
+
+        return new ParticipantStatesResult(conversationVersion.Value, participantStates);
     }
 }

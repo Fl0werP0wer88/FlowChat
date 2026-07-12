@@ -35,12 +35,14 @@ public sealed class SendChatMessageCommandHandler
         SendChatMessageCommand request,
         CancellationToken cancellationToken)
     {
-        var participantStates = await _participantReadRepository.GetParticipantStatesAsync(
+        var participantStatesResult = await _participantReadRepository.GetParticipantStatesAsync(
             request.ConversationId,
             cancellationToken);
 
-        if (participantStates is null)
+        if (participantStatesResult is null)
             return FlowChatResult<SendChatMessageCommandResult>.Failure(DomainError.NotFound("Conversation not found."));
+
+        var participantStates = participantStatesResult.ParticipantStates;
 
         if (participantStates.All(p => p.UserId != request.SenderUserId))
             return FlowChatResult<SendChatMessageCommandResult>.Failure(DomainError.Unauthorized("Sender is not a participant of this conversation."));
@@ -78,7 +80,8 @@ public sealed class SendChatMessageCommandHandler
             Id<FlowChat.ChatService.Domain.Entities.Conversation.Conversation>.FromGuid(request.ConversationId),
             Id<UserProfileMarker>.FromGuid(request.SenderUserId),
             request.Text!.Trim(),
-            recipientUserIds.Select(Id<UserProfileMarker>.FromGuid));
+            recipientUserIds.Select(Id<UserProfileMarker>.FromGuid),
+            participantStatesResult.ConversationVersion);
 
         await _chatMessageRepository.AddAsync(_chatMessage, cancellationToken);
         SetInserted();

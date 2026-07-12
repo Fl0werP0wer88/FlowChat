@@ -44,6 +44,7 @@ public sealed class ChatMessage : AggregateRootBase<ChatMessage>
         Id<UserProfileMarker> senderUserId,
         string text,
         IEnumerable<Id<UserProfileMarker>> recipientUserIds,
+        int conversationVersionAtSend,
         UtcDateTimeOffset? sentAtUtc = null)
     {
         ArgumentNullException.ThrowIfNull(id);
@@ -63,7 +64,8 @@ public sealed class ChatMessage : AggregateRootBase<ChatMessage>
                 chatMessage.SenderUserId,
                 chatMessage.Text,
                 chatMessage.SentAtUtc,
-                chatMessage.RecipientUserIds));
+                chatMessage.RecipientUserIds,
+                conversationVersionAtSend));
 
         return chatMessage;
     }
