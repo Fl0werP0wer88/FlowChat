@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Virtuoso, type VirtuosoHandle } from "react-virtuoso";
 import { Spinner } from "../atoms/Spinner";
 import { useMinDuration } from "../../../hooks";
@@ -14,6 +14,7 @@ interface ConversationBodyProps {
   hasOlderMessages: boolean;
   isLoadingOlderMessages: boolean;
   messages: ChatMessage[];
+  participants: Array<{ userId: string; displayName: string | null }>;
   onLoadOlderMessages: () => Promise<void>;
 }
 
@@ -28,12 +29,17 @@ export function ConversationBody({
   hasOlderMessages,
   isLoadingOlderMessages,
   messages,
+  participants,
   onLoadOlderMessages,
 }: ConversationBodyProps) {
   const showOlderMessagesSpinner = useMinDuration(isLoadingOlderMessages, 500);
   const virtuosoRef = useRef<VirtuosoHandle>(null);
   const [firstItemIndex, setFirstItemIndex] = useState(START_INDEX);
   const messagesLengthRef = useRef(messages.length);
+  const participantDisplayNames = useMemo(
+    () => new Map(participants.map((participant) => [participant.userId, participant.displayName?.trim() || "Nieznany użytkownik"])),
+    [participants],
+  );
 
   useEffect(() => {
     setFirstItemIndex(START_INDEX);
@@ -94,8 +100,8 @@ export function ConversationBody({
             ? "message message-other"
             : "message message-system"}
         >
-          {message.sender === "other" && message.senderDisplayName
-            ? <strong>{message.senderDisplayName}</strong>
+          {message.sender === "other"
+            ? <strong>{participantDisplayNames.get(message.senderUserId ?? "") ?? "Nieznany użytkownik"}</strong>
             : null}
           <p>{message.text}</p>
           <time>{formatLocalTime(message.sentAtUtc)}</time>

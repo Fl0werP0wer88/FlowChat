@@ -33,7 +33,6 @@ public sealed class SignalRRealtimeClientDispatcherTests
                 Guid.NewGuid(),
                 conversationId,
                 Guid.NewGuid(),
-                "Jane",
                 "Hello",
                 42,
                 new DateTimeOffset(2026, 5, 19, 11, 59, 0, TimeSpan.Zero),

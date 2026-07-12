@@ -10,14 +10,12 @@ interface SendGroupMessageVariables {
   messageId: string;
   conversationId: string;
   text: string;
-  senderDisplayName: string;
 }
 
 interface UseSendGroupMessageMutationOptions {
   accessToken: string;
   activeGroupConversationId: string | undefined;
   ownerUserId: string | null;
-  userLogin: string;
   onError: (message: string) => void;
 }
 
@@ -25,14 +23,13 @@ export function useSendGroupMessageMutation({
   accessToken,
   activeGroupConversationId,
   ownerUserId,
-  userLogin,
   onError,
 }: UseSendGroupMessageMutationOptions) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ messageId, conversationId, text, senderDisplayName }: SendGroupMessageVariables) =>
-      sendGroupChatMessage({ id: messageId, conversationId, senderDisplayName, text }, accessToken),
+    mutationFn: ({ messageId, conversationId, text }: SendGroupMessageVariables) =>
+      sendGroupChatMessage({ id: messageId, conversationId, text }, accessToken),
     onSuccess: (result, variables) => {
       queryClient.setQueryData<GroupConversationCacheEntry>(
         ["groupConversation", activeGroupConversationId],
@@ -56,7 +53,6 @@ export function useSendGroupMessageMutation({
                 result.messageId,
                 variables.conversationId,
                 ownerUserId,
-                userLogin,
               ),
             ]),
           };

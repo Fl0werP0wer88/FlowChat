@@ -4,7 +4,6 @@ export interface ChatMessage {
   id: string;
   conversationId: string | null;
   senderUserId: string | null;
-  senderDisplayName: string | null;
   sender: MessageSender;
   text: string;
   sequenceNum: number | null;
@@ -15,7 +14,6 @@ export interface DuetConversationMessage {
   id: string;
   conversationId: string;
   senderUserId: string;
-  senderDisplayName: string;
   text: string;
   sequenceNum: number | null;
   sentAtUtc: string;
@@ -25,7 +23,6 @@ export interface GroupConversationMessage {
   id: string;
   conversationId: string;
   senderUserId: string;
-  senderDisplayName: string;
   text: string;
   sequenceNum: number | null;
   sentAtUtc: string;

@@ -16,7 +16,6 @@ public sealed class RouteMessageCommandValidatorTests
             _fixture.Create<Guid>(),
             _fixture.Create<Guid>(),
             _fixture.Create<Guid>(),
-            "John Doe",
             "Hello",
             DateTimeOffset.UtcNow,
             [_fixture.Create<Guid>()]);
@@ -33,7 +32,6 @@ public sealed class RouteMessageCommandValidatorTests
             Guid.Empty,
             Guid.Empty,
             Guid.Empty,
-            "John Doe",
             "Hello",
             DateTimeOffset.UtcNow,
             [_fixture.Create<Guid>()]);
@@ -49,34 +47,12 @@ public sealed class RouteMessageCommandValidatorTests
     [InlineData(null)]
     [InlineData("")]
     [InlineData("   ")]
-    public void Validate_NullOrWhitespaceSenderDisplayName_ReturnsValidationError(string? value)
-    {
-        var command = new RouteMessageCommand(
-            _fixture.Create<Guid>(),
-            _fixture.Create<Guid>(),
-            _fixture.Create<Guid>(),
-            value,
-            "Hello",
-            DateTimeOffset.UtcNow,
-            [_fixture.Create<Guid>()]);
-
-        var result = _validator.Validate(command);
-
-        result.IsValid.Should().BeFalse();
-        result.Errors.Should().Contain(e => e.PropertyName == "SenderDisplayName");
-    }
-
-    [Theory]
-    [InlineData(null)]
-    [InlineData("")]
-    [InlineData("   ")]
     public void Validate_NullOrWhitespaceText_ReturnsValidationError(string? value)
     {
         var command = new RouteMessageCommand(
             _fixture.Create<Guid>(),
             _fixture.Create<Guid>(),
             _fixture.Create<Guid>(),
-            "John Doe",
             value,
             DateTimeOffset.UtcNow,
             [_fixture.Create<Guid>()]);
@@ -94,7 +70,6 @@ public sealed class RouteMessageCommandValidatorTests
             _fixture.Create<Guid>(),
             _fixture.Create<Guid>(),
             _fixture.Create<Guid>(),
-            "John Doe",
             "Hello",
             DateTimeOffset.UtcNow,
             [Guid.Empty, Guid.Empty]);
@@ -112,7 +87,6 @@ public sealed class RouteMessageCommandValidatorTests
             _fixture.Create<Guid>(),
             _fixture.Create<Guid>(),
             _fixture.Create<Guid>(),
-            "John Doe",
             "Hello",
             DateTimeOffset.UtcNow,
             []);

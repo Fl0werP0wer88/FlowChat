@@ -77,7 +77,6 @@ public sealed class SendChatMessageCommandHandler
             Id<ChatMessageAggregate>.FromGuid(request.Id),
             Id<FlowChat.ChatService.Domain.Entities.Conversation.Conversation>.FromGuid(request.ConversationId),
             Id<UserProfileMarker>.FromGuid(request.SenderUserId),
-            request.SenderDisplayName!.Trim(),
             request.Text!.Trim(),
             recipientUserIds.Select(Id<UserProfileMarker>.FromGuid));
 

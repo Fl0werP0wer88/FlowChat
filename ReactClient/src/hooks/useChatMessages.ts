@@ -18,7 +18,6 @@ import { useDuetConversationQuery } from "./queries/useDuetConversationQuery";
 
 export function useChatMessages(activeContact: Contact | null) {
   const accessToken = useAuthStore((s) => s.accessToken) ?? "";
-  const userLogin = useAuthStore((s) => s.login) ?? "Uzytkownik";
   const ownerUserId = resolveOwnerUserId(accessToken);
   const queryClient = useQueryClient();
 
@@ -90,7 +89,6 @@ export function useChatMessages(activeContact: Contact | null) {
     accessToken,
     activeContactUserId: activeContact?.userId,
     ownerUserId,
-    userLogin,
     onError: (message) => toast.error(message),
   });
 
@@ -174,7 +172,6 @@ export function useChatMessages(activeContact: Contact | null) {
               payload.messageId,
               payload.conversationId,
               payload.senderUserId,
-              payload.senderDisplayName,
               payload.sequenceNum,
             ),
           ]),
@@ -194,7 +191,7 @@ export function useChatMessages(activeContact: Contact | null) {
     const messageId = crypto.randomUUID();
 
     try {
-      await sendMessageMutation.mutateAsync({ messageId, conversationId, text, senderDisplayName: userLogin });
+      await sendMessageMutation.mutateAsync({ messageId, conversationId, text });
       return true;
     } catch {
       // error is handled in onError
@@ -211,6 +208,7 @@ export function useChatMessages(activeContact: Contact | null) {
 
   return {
     messages: conversationData?.messages ?? [],
+    participants: conversationData?.participants ?? [],
     activeConversationId: conversationData?.conversationId ?? null,
     hasConversationError: conversationQueryError !== null,
     isLoadingConversation,

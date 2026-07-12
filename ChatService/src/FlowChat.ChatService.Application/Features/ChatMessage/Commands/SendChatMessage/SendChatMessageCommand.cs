@@ -6,5 +6,4 @@ public sealed record SendChatMessageCommand(
     Guid Id,
     Guid ConversationId,
     Guid SenderUserId,
-    string? SenderDisplayName,
     string? Text) : ICommand<SendChatMessageCommandResult>;

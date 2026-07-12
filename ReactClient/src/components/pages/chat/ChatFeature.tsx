@@ -150,6 +150,7 @@ export function ChatFeature() {
             hasOlderMessages={groupChat.hasOlderMessages}
             isLoadingOlderMessages={groupChat.isLoadingOlderMessages}
             messages={groupChat.messages}
+            participants={groupChat.participants}
             draft={groupDraft}
             onDraftChange={setGroupDraft}
             onDraftKeyDown={(event) => {
@@ -172,6 +173,7 @@ export function ChatFeature() {
             hasOlderMessages={chat.hasOlderMessages}
             isLoadingOlderMessages={chat.isLoadingOlderMessages}
             messages={chat.messages}
+            participants={chat.participants}
             draft={duetDraft}
             onDraftChange={setDuetDraft}
             onDraftKeyDown={(event) => {

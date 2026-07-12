@@ -10,14 +10,12 @@ interface SendMessageVariables {
   messageId: string;
   conversationId: string;
   text: string;
-  senderDisplayName: string;
 }
 
 interface UseSendMessageMutationOptions {
   accessToken: string;
   activeContactUserId: string | undefined;
   ownerUserId: string | null;
-  userLogin: string;
   onError: (message: string) => void;
 }
 
@@ -25,14 +23,13 @@ export function useSendMessageMutation({
   accessToken,
   activeContactUserId,
   ownerUserId,
-  userLogin,
   onError,
 }: UseSendMessageMutationOptions) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ messageId, conversationId, text, senderDisplayName }: SendMessageVariables) =>
-      sendChatMessage({ id: messageId, conversationId, senderDisplayName, text }, accessToken),
+    mutationFn: ({ messageId, conversationId, text }: SendMessageVariables) =>
+      sendChatMessage({ id: messageId, conversationId, text }, accessToken),
     onSuccess: (result, variables) => {
       queryClient.setQueryData<DuetConversationCacheEntry>(
         ["duetConversation", activeContactUserId],
@@ -56,7 +53,6 @@ export function useSendMessageMutation({
                 result.messageId,
                 variables.conversationId,
                 ownerUserId,
-                userLogin,
               ),
             ]),
           };

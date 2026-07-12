@@ -5,7 +5,6 @@ export interface ChatMessageReceivedEvent {
   messageId: string;
   conversationId: string;
   senderUserId: string;
-  senderDisplayName: string;
   text: string;
   sequenceNum: number;
   sentAtUtc: string;

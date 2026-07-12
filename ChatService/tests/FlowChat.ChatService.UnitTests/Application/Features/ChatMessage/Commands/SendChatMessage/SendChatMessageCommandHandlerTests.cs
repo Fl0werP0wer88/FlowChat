@@ -46,7 +46,7 @@ public sealed class SendChatMessageCommandHandlerTests
     [Fact]
     public async Task Handle_ConversationNotFound_ReturnsNotFoundFailure()
     {
-        var command = new SendChatMessageCommand(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "Alice", "Hello");
+        var command = new SendChatMessageCommand(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "Hello");
 
         _participantReadRepositoryMock
             .Setup(x => x.GetParticipantStatesAsync(command.ConversationId, It.IsAny<CancellationToken>()))
@@ -69,7 +69,7 @@ public sealed class SendChatMessageCommandHandlerTests
         var otherUser1 = Guid.NewGuid();
         var otherUser2 = Guid.NewGuid();
         var conversationId = Guid.NewGuid();
-        var command = new SendChatMessageCommand(Guid.NewGuid(), conversationId, senderId, "Alice", "Hello");
+        var command = new SendChatMessageCommand(Guid.NewGuid(), conversationId, senderId, "Hello");
 
         _participantReadRepositoryMock
             .Setup(x => x.GetParticipantStatesAsync(command.ConversationId, It.IsAny<CancellationToken>()))
@@ -94,7 +94,7 @@ public sealed class SendChatMessageCommandHandlerTests
         var senderId = Guid.NewGuid();
         var recipientId = Guid.NewGuid();
         var conversationId = Guid.NewGuid();
-        var command = new SendChatMessageCommand(Guid.NewGuid(), conversationId, senderId, "Alice", "Hello");
+        var command = new SendChatMessageCommand(Guid.NewGuid(), conversationId, senderId, "Hello");
 
         _participantReadRepositoryMock
             .Setup(x => x.GetParticipantStatesAsync(command.ConversationId, It.IsAny<CancellationToken>()))
@@ -119,7 +119,7 @@ public sealed class SendChatMessageCommandHandlerTests
         var senderId = Guid.NewGuid();
         var recipientId = Guid.NewGuid();
         var conversationId = Guid.NewGuid();
-        var command = new SendChatMessageCommand(Guid.NewGuid(), conversationId, senderId, "Alice", "Hello");
+        var command = new SendChatMessageCommand(Guid.NewGuid(), conversationId, senderId, "Hello");
 
         ChatMessageAggregate? persistedMessage = null;
         List<IDomainEvent> dispatchedEvents = [];

@@ -23,6 +23,7 @@ export function useGroupConversationQuery(
       return {
         conversationId: result.conversationId,
         name: result.name || activeGroupConversation!.name,
+        participants: result.participants,
         messages: orderedMessages.map((msg) => mapGroupConversationMessage(msg, ownerUserId)),
         nextBeforeSentAtUtc: result.nextBeforeSentAtUtc,
         nextBeforeMessageId: result.nextBeforeMessageId,

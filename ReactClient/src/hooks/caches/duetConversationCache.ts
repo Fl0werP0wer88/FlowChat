@@ -1,7 +1,8 @@
-import type { ChatMessage, DuetConversationMessage, MessageSender } from "../../types/chat";
+import type { ChatMessage, DuetConversationMessage, DuetConversationParticipant, MessageSender } from "../../types/chat";
 
 export interface DuetConversationCacheEntry {
   conversationId: string;
+  participants: DuetConversationParticipant[];
   messages: ChatMessage[];
   nextBeforeSentAtUtc: string | null;
   nextBeforeMessageId: string | null;
@@ -15,10 +16,9 @@ export function createDuetMessage(
   id: string = crypto.randomUUID(),
   conversationId: string | null = null,
   senderUserId: string | null = null,
-  senderDisplayName: string | null = null,
   sequenceNum: number | null = null,
 ): ChatMessage {
-  return { id, conversationId, senderUserId, senderDisplayName, sender, text, sequenceNum, sentAtUtc };
+  return { id, conversationId, senderUserId, sender, text, sequenceNum, sentAtUtc };
 }
 
 export function sortDuetMessages(messages: ChatMessage[]): ChatMessage[] {
@@ -37,7 +37,6 @@ export function mapDuetConversationMessage(
     message.id,
     message.conversationId,
     message.senderUserId,
-    message.senderDisplayName,
     null,
   );
 }

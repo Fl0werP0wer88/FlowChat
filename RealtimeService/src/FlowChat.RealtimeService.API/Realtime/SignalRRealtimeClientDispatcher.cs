@@ -16,7 +16,6 @@ public sealed class SignalRRealtimeClientDispatcher(IHubContext<ChatHub, IRealti
             MessageId = notification.MessageId,
             ConversationId = notification.ConversationId,
             SenderUserId = notification.SenderUserId,
-            SenderDisplayName = notification.SenderDisplayName,
             Text = notification.Text,
             SequenceNum = notification.SequenceNum,
             SentAtUtc = notification.SentAtUtc,

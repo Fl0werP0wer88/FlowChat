@@ -39,8 +39,10 @@ export function useGroupConversations(): UseGroupConversationsResult {
   const ownerUserId = resolveOwnerUserId(accessToken);
   const queryClient = useQueryClient();
 
-  const { data: groupConversations = [], isLoading: isLoadingGroupConversations } =
-    useGroupConversationsQuery(accessToken, Boolean(accessToken && ownerUserId));
+  const { data: groupConversations = [], isLoading: isLoadingGroupConversations } = useGroupConversationsQuery(
+    accessToken,
+    Boolean(accessToken && ownerUserId),
+  );
 
   const applyGroupConversationChanged = (payload: GroupConversationChangedEvent) => {
     if (!payload.conversationId) {
@@ -54,12 +56,14 @@ export function useGroupConversations(): UseGroupConversationsResult {
       return;
     }
 
-    queryClient.setQueryData<GroupConversation[]>(["groupConversations"], (current = []) =>
-      current.map((conversation) =>
-        conversation.conversationId === payload.conversationId
-          ? withUnreadCount({ ...conversation, name: payload.name ?? conversation.name })
-          : conversation,
-      ),
+    queryClient.setQueryData<GroupConversation[]>(
+      ["groupConversations"],
+      (current = []) =>
+        current.map((conversation) =>
+          conversation.conversationId === payload.conversationId
+            ? withUnreadCount({ ...conversation, name: payload.name ?? conversation.name })
+            : conversation
+        ),
     );
   };
 
@@ -68,6 +72,8 @@ export function useGroupConversations(): UseGroupConversationsResult {
     if (!payload.conversationId || addedUserIds.length === 0) {
       return;
     }
+    // ToDo: Inwalidujemy cala konwersacje tylko po to zeby zaktualizowac participantCount to chyba przesada.
+    void queryClient.invalidateQueries({ queryKey: ["groupConversation", payload.conversationId] });
 
     if (ownerUserId && addedUserIds.includes(ownerUserId)) {
       void queryClient.invalidateQueries({ queryKey: ["groupConversations"] });
@@ -80,12 +86,14 @@ export function useGroupConversations(): UseGroupConversationsResult {
       return;
     }
 
-    queryClient.setQueryData<GroupConversation[]>(["groupConversations"], (current = []) =>
-      current.map((conversation) =>
-        conversation.conversationId === payload.conversationId
-          ? { ...conversation, participantCount: conversation.participantCount + addedUserIds.length }
-          : conversation,
-      ),
+    queryClient.setQueryData<GroupConversation[]>(
+      ["groupConversations"],
+      (current = []) =>
+        current.map((conversation) =>
+          conversation.conversationId === payload.conversationId
+            ? { ...conversation, participantCount: conversation.participantCount + addedUserIds.length }
+            : conversation
+        ),
     );
   };
 
@@ -94,20 +102,25 @@ export function useGroupConversations(): UseGroupConversationsResult {
     if (!payload.conversationId || removedUserIds.length === 0) {
       return;
     }
+    // ToDo: Inwalidujemy cala konwersacje tylko po to zeby zaktualizowac participantCount to chyba przesada.
+    void queryClient.invalidateQueries({ queryKey: ["groupConversation", payload.conversationId] });
 
     if (ownerUserId && removedUserIds.includes(ownerUserId)) {
-      queryClient.setQueryData<GroupConversation[]>(["groupConversations"], (current = []) =>
-        current.filter((conversation) => conversation.conversationId !== payload.conversationId),
+      queryClient.setQueryData<GroupConversation[]>(
+        ["groupConversations"],
+        (current = []) => current.filter((conversation) => conversation.conversationId !== payload.conversationId),
       );
       return;
     }
 
-    queryClient.setQueryData<GroupConversation[]>(["groupConversations"], (current = []) =>
-      current.map((conversation) =>
-        conversation.conversationId === payload.conversationId
-          ? { ...conversation, participantCount: Math.max(0, conversation.participantCount - removedUserIds.length) }
-          : conversation,
-      ),
+    queryClient.setQueryData<GroupConversation[]>(
+      ["groupConversations"],
+      (current = []) =>
+        current.map((conversation) =>
+          conversation.conversationId === payload.conversationId
+            ? { ...conversation, participantCount: Math.max(0, conversation.participantCount - removedUserIds.length) }
+            : conversation
+        ),
     );
   };
 
@@ -115,23 +128,25 @@ export function useGroupConversations(): UseGroupConversationsResult {
     payload: ChatMessageReceivedEvent,
     activeGroupConversationId: string | null,
   ) => {
-    queryClient.setQueryData<GroupConversation[]>(["groupConversations"], (current = []) =>
-      current.map((conversation) => {
-        if (conversation.conversationId !== payload.conversationId) {
-          return conversation;
-        }
+    queryClient.setQueryData<GroupConversation[]>(
+      ["groupConversations"],
+      (current = []) =>
+        current.map((conversation) => {
+          if (conversation.conversationId !== payload.conversationId) {
+            return conversation;
+          }
 
-        const currentMsgSeqNum = Math.max(conversation.currentMsgSeqNum, payload.sequenceNum);
-        const lastReadMsgSeqNum = conversation.conversationId === activeGroupConversationId
-          ? currentMsgSeqNum
-          : conversation.lastReadMsgSeqNum;
+          const currentMsgSeqNum = Math.max(conversation.currentMsgSeqNum, payload.sequenceNum);
+          const lastReadMsgSeqNum = conversation.conversationId === activeGroupConversationId
+            ? currentMsgSeqNum
+            : conversation.lastReadMsgSeqNum;
 
-        return withUnreadCount({
-          ...conversation,
-          currentMsgSeqNum,
-          lastReadMsgSeqNum,
-        });
-      }),
+          return withUnreadCount({
+            ...conversation,
+            currentMsgSeqNum,
+            lastReadMsgSeqNum,
+          });
+        }),
     );
   };
 

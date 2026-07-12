@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { useBlockConversationMutation, useHideConversationMutation, useMuteConversationMutation } from "../../../../hooks";
 import { useAuthStore } from "../../../../store/authStore";
 import { useChatSelectionStore } from "../../../../store/chatSelectionStore";
-import type { ChatMessage } from "../../../../types/chat";
+import type { ChatMessage, DuetConversationParticipant } from "../../../../types/chat";
 import type { Contact } from "../../../../types/contacts";
 import { ConversationBody } from "../../molecules/ConversationBody";
 import { ConversationFooter } from "../../molecules/ConversationFooter";
@@ -20,6 +20,7 @@ interface DuetConversationPanelProps {
   hasOlderMessages: boolean;
   isLoadingOlderMessages: boolean;
   messages: ChatMessage[];
+  participants: DuetConversationParticipant[];
   draft: string;
   onDraftChange: (value: string) => void;
   onDraftKeyDown: (event: KeyboardEvent<HTMLTextAreaElement>) => void;
@@ -37,6 +38,7 @@ export function DuetConversationPanel({
   hasOlderMessages,
   isLoadingOlderMessages,
   messages,
+  participants,
   draft,
   onDraftChange,
   onDraftKeyDown,
@@ -130,6 +132,7 @@ export function DuetConversationPanel({
             hasOlderMessages={hasOlderMessages}
             isLoadingOlderMessages={isLoadingOlderMessages}
             messages={messages}
+            participants={participants}
             onLoadOlderMessages={onLoadOlderMessages}
           />
         )}

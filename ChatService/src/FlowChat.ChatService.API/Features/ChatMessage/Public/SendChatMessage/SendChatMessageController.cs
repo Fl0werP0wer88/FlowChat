@@ -39,7 +39,6 @@ public sealed class SendChatMessageController : ApiControllerBase
                 request.Id,
                 request.ConversationId,
                 userId,
-                request.SenderDisplayName,
                 request.Text),
             cancellationToken);
 

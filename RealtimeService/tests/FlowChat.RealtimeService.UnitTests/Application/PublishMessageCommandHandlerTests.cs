@@ -37,7 +37,6 @@ public sealed class PublishMessageCommandHandlerTests
                 _fixture.Create<Guid>(),
                 _fixture.Create<Guid>(),
                 _fixture.Create<Guid>(),
-                " John Doe ",
                 " Hello there ",
                 42,
                 new DateTimeOffset(2026, 3, 17, 12, 0, 0, TimeSpan.Zero),
@@ -46,8 +45,7 @@ public sealed class PublishMessageCommandHandlerTests
 
         result.IsSuccess.Should().BeTrue();
         capturedNotification.Should().NotBeNull();
-        capturedNotification!.SenderDisplayName.Should().Be("John Doe");
-        capturedNotification.Text.Should().Be("Hello there");
+        capturedNotification!.Text.Should().Be("Hello there");
         capturedNotification.SequenceNum.Should().Be(42);
         capturedNotification.DeliveredAtUtc.Should().Be(deliveredAtUtc);
     }

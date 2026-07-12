@@ -20,6 +20,5 @@ public sealed record ConversationMessageResponse(
     Guid Id,
     Guid ConversationId,
     Guid SenderUserId,
-    string SenderDisplayName,
     string Text,
     DateTimeOffset SentAtUtc);

@@ -53,7 +53,6 @@ public sealed class GetConversationMessagesControllerTests
                     Guid.NewGuid(),
                     conversationId,
                     requestingUserId,
-                    "Alice",
                     "Hello",
                     beforeSentAtUtc.AddMinutes(-1))
             ],

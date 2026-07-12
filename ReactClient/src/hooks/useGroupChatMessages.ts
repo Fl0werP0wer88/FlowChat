@@ -18,7 +18,6 @@ import { useGroupConversationQuery } from "./queries/useGroupConversationQuery";
 
 export function useGroupChatMessages(activeGroupConversation: GroupConversation | null) {
   const accessToken = useAuthStore((s) => s.accessToken) ?? "";
-  const userLogin = useAuthStore((s) => s.login) ?? "Uzytkownik";
   const ownerUserId = resolveOwnerUserId(accessToken);
   const queryClient = useQueryClient();
 
@@ -36,7 +35,6 @@ export function useGroupChatMessages(activeGroupConversation: GroupConversation 
     accessToken,
     activeGroupConversationId: activeGroupConversation?.conversationId,
     ownerUserId,
-    userLogin,
     onError: (message) => toast.error(message),
   });
 
@@ -123,7 +121,6 @@ export function useGroupChatMessages(activeGroupConversation: GroupConversation 
               payload.messageId,
               payload.conversationId,
               payload.senderUserId,
-              payload.senderDisplayName,
               payload.sequenceNum,
             ),
           ]),
@@ -143,7 +140,7 @@ export function useGroupChatMessages(activeGroupConversation: GroupConversation 
     const messageId = crypto.randomUUID();
 
     try {
-      await sendMessageMutation.mutateAsync({ messageId, conversationId, text, senderDisplayName: userLogin });
+      await sendMessageMutation.mutateAsync({ messageId, conversationId, text });
       return true;
     } catch {
       // error is handled in onError
@@ -182,6 +179,7 @@ export function useGroupChatMessages(activeGroupConversation: GroupConversation 
 
   return {
     messages: conversationData?.messages ?? [],
+    participants: conversationData?.participants ?? [],
     activeConversationId: conversationData?.conversationId ?? null,
     activeConversationName: conversationData?.name ?? activeGroupConversation?.name ?? null,
     hasConversationError: conversationQueryError !== null,

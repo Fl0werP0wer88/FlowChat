@@ -4,7 +4,6 @@ public sealed record ChatMessageParam(
     Guid MessageId,
     Guid ConversationId,
     Guid SenderUserId,
-    string SenderDisplayName,
     string Text,
     long SequenceNum,
     DateTimeOffset SentAtUtc,

@@ -30,7 +30,6 @@ public sealed class RouteMessageCommandHandler(
             request.MessageId,
             request.ConversationId,
             request.SenderUserId,
-            request.SenderDisplayName!.Trim(),
             request.Text!.Trim(),
             sequenceNum,
             request.SentAtUtc,

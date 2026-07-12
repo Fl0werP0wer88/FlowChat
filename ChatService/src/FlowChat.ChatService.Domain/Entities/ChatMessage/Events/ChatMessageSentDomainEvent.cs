@@ -11,7 +11,6 @@ public sealed class ChatMessageSentDomainEvent(
     Id<ChatMessage> aggregateId,
     Id<ConversationAggregate> conversationId,
     Id<UserProfileMarker> senderUserId,
-    string senderDisplayName,
     string text,
     UtcDateTimeOffset sentAtUtc,
     IReadOnlyCollection<Id<UserProfileMarker>> recipientUserIds,
@@ -20,7 +19,6 @@ public sealed class ChatMessageSentDomainEvent(
     public Guid MessageId { get; } = aggregateId.Value;
     public Id<ConversationAggregate> ConversationId { get; } = conversationId;
     public Id<UserProfileMarker> SenderUserId { get; } = senderUserId;
-    public string SenderDisplayName { get; } = senderDisplayName;
     public string Text { get; } = text;
     public UtcDateTimeOffset SentAtUtc { get; } = sentAtUtc;
     public IReadOnlyCollection<Id<UserProfileMarker>> RecipientUserIds { get; } = recipientUserIds;

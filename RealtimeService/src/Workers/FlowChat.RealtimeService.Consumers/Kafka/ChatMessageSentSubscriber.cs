@@ -18,7 +18,6 @@ public sealed class ChatMessageSentSubscriber(
             message.MessageId,
             message.ConversationId,
             message.SenderUserId,
-            message.SenderDisplayName?.Trim(),
             message.Text?.Trim(),
             message.SentAtUtc,
             (message.RecipientUserIds ?? [])

@@ -75,7 +75,6 @@ public sealed class RouteMessageCommandHandlerTests
                 messageId,
                 conversationId,
                 _fixture.Create<Guid>(),
-                " John Doe ",
                 " Hello there ",
                 new DateTimeOffset(2026, 3, 17, 12, 0, 0, TimeSpan.Zero),
                 [recipientUserId, recipientUserId, Guid.Empty]),
@@ -84,8 +83,7 @@ public sealed class RouteMessageCommandHandlerTests
 
         result.IsSuccess.Should().BeTrue();
         capturedNotification.Should().NotBeNull();
-        capturedNotification!.SenderDisplayName.Should().Be("John Doe");
-        capturedNotification.Text.Should().Be("Hello there");
+        capturedNotification!.Text.Should().Be("Hello there");
         capturedNotification.SequenceNum.Should().Be(sequenceNum);
         capturedNotification.RecipientUserIds.Should().ContainSingle().Which.Should().Be(recipientUserId);
         capturedNotification.DeliveredAtUtc.Offset.Should().Be(TimeSpan.Zero);
@@ -150,7 +148,6 @@ public sealed class RouteMessageCommandHandlerTests
             _fixture.Create<Guid>(),
             _fixture.Create<Guid>(),
             _fixture.Create<Guid>(),
-            "John Doe",
             "Hello there",
             new DateTimeOffset(2026, 3, 17, 12, 0, 0, TimeSpan.Zero),
             [_fixture.Create<Guid>()]);

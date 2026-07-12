@@ -26,10 +26,6 @@ public sealed class ChatMessageConfiguration : IEntityTypeConfiguration<ChatMess
             .HasConversion(x => x.Value, x => Id<UserProfileMarker>.FromGuid(x))
             .IsRequired();
 
-        builder.Property(x => x.SenderDisplayName)
-            .HasMaxLength(120)
-            .IsRequired();
-
         builder.Property(x => x.Text)
             .HasMaxLength(4000)
             .IsRequired();

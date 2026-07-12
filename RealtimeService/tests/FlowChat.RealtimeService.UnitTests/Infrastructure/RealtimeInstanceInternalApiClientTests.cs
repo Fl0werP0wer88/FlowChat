@@ -16,7 +16,6 @@ public sealed class RealtimeInstanceInternalApiClientTests
             Guid.NewGuid(),
             Guid.NewGuid(),
             Guid.NewGuid(),
-            "Jane",
             "Hello",
             42,
             new DateTimeOffset(2026, 5, 19, 11, 59, 0, TimeSpan.Zero),

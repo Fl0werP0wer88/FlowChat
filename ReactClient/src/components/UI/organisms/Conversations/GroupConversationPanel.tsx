@@ -1,7 +1,6 @@
 import type { KeyboardEvent } from "react";
 import { useEffect, useState } from "react";
-import type { ChatMessage } from "../../../../types/chat";
-import type { GroupConversation } from "../../../../types/chat";
+import type { ChatMessage, GroupConversation, GroupConversationParticipant } from "../../../../types/chat";
 import { ConversationBody } from "../../molecules/ConversationBody";
 import { ConversationFooter } from "../../molecules/ConversationFooter";
 import { GroupConversationHeader } from "../../molecules/GroupConversationHeader";
@@ -17,6 +16,7 @@ interface GroupConversationPanelProps {
   hasOlderMessages: boolean;
   isLoadingOlderMessages: boolean;
   messages: ChatMessage[];
+  participants: GroupConversationParticipant[];
   draft: string;
   onDraftChange: (value: string) => void;
   onDraftKeyDown: (event: KeyboardEvent<HTMLTextAreaElement>) => void;
@@ -34,6 +34,7 @@ export function GroupConversationPanel({
   hasOlderMessages,
   isLoadingOlderMessages,
   messages,
+  participants,
   draft,
   onDraftChange,
   onDraftKeyDown,
@@ -73,6 +74,7 @@ export function GroupConversationPanel({
             hasOlderMessages={hasOlderMessages}
             isLoadingOlderMessages={isLoadingOlderMessages}
             messages={messages}
+            participants={participants}
             onLoadOlderMessages={onLoadOlderMessages}
           />
         )}

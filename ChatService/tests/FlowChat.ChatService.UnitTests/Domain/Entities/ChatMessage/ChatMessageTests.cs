@@ -66,7 +66,6 @@ public sealed class ChatMessageTests
             Id<ChatMessageAggregate>.New(),
             Id<Conversation>.New(),
             Guid.NewGuid(),
-            "Alice",
             "Hello",
             [Guid.NewGuid()]);
 }

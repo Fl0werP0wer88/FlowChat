@@ -23,6 +23,7 @@ export function useDuetConversationQuery(
       const orderedMessages = [...result.messages].reverse();
       return {
         conversationId: result.conversationId,
+        participants: result.participants,
         messages: orderedMessages.map((msg) => mapDuetConversationMessage(msg, ownerUserId)),
         nextBeforeSentAtUtc: result.nextBeforeSentAtUtc,
         nextBeforeMessageId: result.nextBeforeMessageId,

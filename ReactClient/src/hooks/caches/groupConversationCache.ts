@@ -1,8 +1,9 @@
-import type { ChatMessage, GroupConversationMessage, MessageSender } from "../../types/chat";
+import type { ChatMessage, GroupConversationMessage, GroupConversationParticipant, MessageSender } from "../../types/chat";
 
 export interface GroupConversationCacheEntry {
   conversationId: string;
   name: string;
+  participants: GroupConversationParticipant[];
   messages: ChatMessage[];
   nextBeforeSentAtUtc: string | null;
   nextBeforeMessageId: string | null;
@@ -16,10 +17,9 @@ export function createGroupMessage(
   id: string = crypto.randomUUID(),
   conversationId: string | null = null,
   senderUserId: string | null = null,
-  senderDisplayName: string | null = null,
   sequenceNum: number | null = null,
 ): ChatMessage {
-  return { id, conversationId, senderUserId, senderDisplayName, sender, text, sequenceNum, sentAtUtc };
+  return { id, conversationId, senderUserId, sender, text, sequenceNum, sentAtUtc };
 }
 
 export function sortGroupMessages(messages: ChatMessage[]): ChatMessage[] {
@@ -38,7 +38,6 @@ export function mapGroupConversationMessage(
     message.id,
     message.conversationId,
     message.senderUserId,
-    message.senderDisplayName,
     message.sequenceNum,
   );
 }
