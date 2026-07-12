@@ -40,5 +40,6 @@ internal static class CommonPersistenceServiceRegistration
             options.UseNpgsql(configuration.GetConnectionString("RealtimeDb")));
 
         services.AddScoped<IRealtimeGroupMembershipReadModelRepository, RealtimeGroupMembershipReadModelRepository>();
+        services.AddScoped<IRealtimeGroupMembershipVersionTrackerRepository, RealtimeGroupMembershipVersionTrackerRepository>();
     }
 }
