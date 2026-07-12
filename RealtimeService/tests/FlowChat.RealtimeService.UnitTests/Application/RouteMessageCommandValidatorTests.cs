@@ -18,7 +18,8 @@ public sealed class RouteMessageCommandValidatorTests
             _fixture.Create<Guid>(),
             "Hello",
             DateTimeOffset.UtcNow,
-            [_fixture.Create<Guid>()]);
+            [_fixture.Create<Guid>()],
+            1);
 
         var result = _validator.Validate(command);
 
@@ -34,7 +35,8 @@ public sealed class RouteMessageCommandValidatorTests
             Guid.Empty,
             "Hello",
             DateTimeOffset.UtcNow,
-            [_fixture.Create<Guid>()]);
+            [_fixture.Create<Guid>()],
+            1);
 
         var result = _validator.Validate(command);
 
@@ -55,7 +57,8 @@ public sealed class RouteMessageCommandValidatorTests
             _fixture.Create<Guid>(),
             value,
             DateTimeOffset.UtcNow,
-            [_fixture.Create<Guid>()]);
+            [_fixture.Create<Guid>()],
+            1);
 
         var result = _validator.Validate(command);
 
@@ -72,7 +75,8 @@ public sealed class RouteMessageCommandValidatorTests
             _fixture.Create<Guid>(),
             "Hello",
             DateTimeOffset.UtcNow,
-            [Guid.Empty, Guid.Empty]);
+            [Guid.Empty, Guid.Empty],
+            1);
 
         var result = _validator.Validate(command);
 
@@ -89,11 +93,32 @@ public sealed class RouteMessageCommandValidatorTests
             _fixture.Create<Guid>(),
             "Hello",
             DateTimeOffset.UtcNow,
-            []);
+            [],
+            1);
 
         var result = _validator.Validate(command);
 
         result.IsValid.Should().BeFalse();
         result.Errors.Should().Contain(e => e.PropertyName == "RecipientUserIds");
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    public void Validate_ConversationVersionAtSendNotPositive_ReturnsValidationError(int conversationVersionAtSend)
+    {
+        var command = new RouteMessageCommand(
+            _fixture.Create<Guid>(),
+            _fixture.Create<Guid>(),
+            _fixture.Create<Guid>(),
+            "Hello",
+            DateTimeOffset.UtcNow,
+            [_fixture.Create<Guid>()],
+            conversationVersionAtSend);
+
+        var result = _validator.Validate(command);
+
+        result.IsValid.Should().BeFalse();
+        result.Errors.Should().Contain(e => e.PropertyName == "ConversationVersionAtSend");
     }
 }

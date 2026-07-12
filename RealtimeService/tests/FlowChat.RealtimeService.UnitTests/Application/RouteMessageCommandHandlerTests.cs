@@ -1,6 +1,8 @@
 using AutoFixture;
 using FlowChat.RealtimeService.Application.Contracts.Infrastructure;
+using FlowChat.RealtimeService.Application.Contracts.Persistence;
 using FlowChat.RealtimeService.Application.Features.Message.Commands.RouteMessage;
+using FlowChat.Shared.Domain;
 using FluentAssertions;
 using Moq;
 
@@ -11,6 +13,7 @@ public sealed class RouteMessageCommandHandlerTests
     private readonly IFixture _fixture = new Fixture();
     private readonly Mock<IRealtimeEventRouter> _routerMock = new();
     private readonly Mock<IChatServiceInternalApiClient> _chatServiceApiClientMock = new();
+    private readonly Mock<IRealtimeGroupMembershipVersionTrackerRepository> _versionTrackerRepositoryMock = new();
     private readonly RouteMessageCommandHandler _handler;
 
     public RouteMessageCommandHandlerTests()
@@ -34,7 +37,14 @@ public sealed class RouteMessageCommandHandlerTests
                 It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
-        _handler = new RouteMessageCommandHandler(_routerMock.Object, _chatServiceApiClientMock.Object);
+        _versionTrackerRepositoryMock
+            .Setup(x => x.GetVersionAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(1);
+
+        _handler = new RouteMessageCommandHandler(
+            _routerMock.Object,
+            _chatServiceApiClientMock.Object,
+            _versionTrackerRepositoryMock.Object);
     }
 
     [Fact]
@@ -77,7 +87,8 @@ public sealed class RouteMessageCommandHandlerTests
                 _fixture.Create<Guid>(),
                 " Hello there ",
                 new DateTimeOffset(2026, 3, 17, 12, 0, 0, TimeSpan.Zero),
-                [recipientUserId, recipientUserId, Guid.Empty]),
+                [recipientUserId, recipientUserId, Guid.Empty],
+                1),
             CancellationToken.None);
         var afterHandleUtc = DateTimeOffset.UtcNow;
 
@@ -143,6 +154,39 @@ public sealed class RouteMessageCommandHandlerTests
             Times.Never);
     }
 
+    [Fact]
+    public async Task Handle_WhenConversationVersionAtSendIsNewerThanTrackedVersion_ReturnsTransientFailureAndDoesNotRoute()
+    {
+        var conversationId = _fixture.Create<Guid>();
+        _versionTrackerRepositoryMock
+            .Setup(x => x.GetVersionAsync(conversationId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(1);
+
+        var command = new RouteMessageCommand(
+            _fixture.Create<Guid>(),
+            conversationId,
+            _fixture.Create<Guid>(),
+            "Hello there",
+            new DateTimeOffset(2026, 3, 17, 12, 0, 0, TimeSpan.Zero),
+            [_fixture.Create<Guid>()],
+            2);
+
+        var result = await _handler.Handle(command, CancellationToken.None);
+
+        result.IsFailure.Should().BeTrue();
+        result.Error.FailureKind.Should().Be(FailureKind.Transient);
+        _routerMock.Verify(
+            x => x.RouteMessageAsync(It.IsAny<ChatMessageParam>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+        _chatServiceApiClientMock.Verify(
+            x => x.MarkChatMessageAsDeliveredAsync(
+                It.IsAny<Guid>(),
+                It.IsAny<Guid>(),
+                It.IsAny<DateTimeOffset>(),
+                It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
     private RouteMessageCommand CreateValidCommand() =>
         new(
             _fixture.Create<Guid>(),
@@ -150,5 +194,6 @@ public sealed class RouteMessageCommandHandlerTests
             _fixture.Create<Guid>(),
             "Hello there",
             new DateTimeOffset(2026, 3, 17, 12, 0, 0, TimeSpan.Zero),
-            [_fixture.Create<Guid>()]);
+            [_fixture.Create<Guid>()],
+            1);
 }

@@ -25,5 +25,9 @@ public sealed class RouteMessageCommandValidator : AbstractValidator<RouteMessag
         RuleFor(command => command.RecipientUserIds)
             .Must(ids => ids != null && ids.Any(id => id != Guid.Empty))
             .WithMessage("RecipientUserIds must contain at least one valid user id.");
+
+        RuleFor(command => command.ConversationVersionAtSend)
+            .GreaterThan(0)
+            .WithMessage("ConversationVersionAtSend must be greater than zero.");
     }
 }

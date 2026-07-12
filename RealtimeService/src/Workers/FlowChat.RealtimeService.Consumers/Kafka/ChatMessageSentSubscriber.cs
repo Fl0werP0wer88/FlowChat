@@ -23,7 +23,8 @@ public sealed class ChatMessageSentSubscriber(
             (message.RecipientUserIds ?? [])
                 .Where(userId => userId != Guid.Empty)
                 .Distinct()
-                .ToArray());
+                .ToArray(),
+            message.ConversationVersionAtSend);
 
         var result = await mediator.Send(command, cancellationToken);
 

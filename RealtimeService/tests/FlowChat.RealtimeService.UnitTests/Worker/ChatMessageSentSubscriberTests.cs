@@ -54,7 +54,8 @@ public sealed class ChatMessageSentSubscriberTests
                 SenderUserId = senderUserId,
                 Text = " Hi there ",
                 SentAtUtc = sentAtUtc,
-                RecipientUserIds = [recipientUserId, recipientUserId, Guid.Empty]
+                RecipientUserIds = [recipientUserId, recipientUserId, Guid.Empty],
+                ConversationVersionAtSend = 3
             }.ToInboundEnvelope(),
             CancellationToken.None);
 
@@ -65,6 +66,7 @@ public sealed class ChatMessageSentSubscriberTests
         capturedCommand.Text.Should().Be("Hi there");
         capturedCommand.SentAtUtc.Should().Be(sentAtUtc);
         capturedCommand.RecipientUserIds.Should().ContainSingle().Which.Should().Be(recipientUserId);
+        capturedCommand.ConversationVersionAtSend.Should().Be(3);
     }
 
     [Fact]
@@ -150,6 +152,21 @@ public sealed class ChatMessageSentSubscriberTests
 
         await act.Should().ThrowAsync<NonTransientException>()
             .WithMessage("boom");
+    }
+
+    [Fact]
+    public async Task HandleAsync_WhenCommandReturnsTransientFailure_ThrowsTransientException()
+    {
+        _mediatorMock
+            .Setup(x => x.Send(It.IsAny<RouteMessageCommand>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(FlowChatResult<Unit>.Failure(DomainError.UnExpected("membership projection is stale", FailureKind.Transient)));
+
+        var act = () => _subscriber.HandleAsync(
+            CreateValidEvent().ToInboundEnvelope(),
+            CancellationToken.None);
+
+        await act.Should().ThrowAsync<TransientException>()
+            .WithMessage("membership projection is stale");
     }
 
     private ChatMessageSentIntegrationEvent CreateValidEvent(
