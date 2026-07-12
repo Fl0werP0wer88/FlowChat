@@ -6,37 +6,41 @@ using FlowChat.PresenceService.Persistence.BulkUpsert.Projections;
 using FlowChat.PresenceService.Persistence.Entities;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Persistance.ProjectionBulk;
-using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Testcontainers.PostgreSql;
 
 namespace FlowChat.PresenceService.IntegrationTests.Persistence.BulkUpsert;
 
-public sealed class ContactObserverProjectionBulkRepositoryTests : IDisposable
+// EFCore.BulkExtensions generates Postgres-specific SQL (ON CONFLICT ... WHERE) that SQLite cannot model,
+// so this needs a real Postgres instance rather than the SQLite in-memory provider used elsewhere.
+public sealed class ContactObserverProjectionBulkRepositoryTests : IAsyncLifetime
 {
-    private readonly SqliteConnection _connection;
-    private readonly AppDbContext _dbContext;
-    private readonly ProjectionBulkRepository<AppDbContext, ContactObserverProjectionDto, ContactObserverReadModelEntity, ContactObserverProjectionBulkEntityFactory> _repository;
+    private readonly PostgreSqlContainer _postgresContainer = new PostgreSqlBuilder()
+        .WithImage("postgres:16-alpine")
+        .Build();
 
-    public ContactObserverProjectionBulkRepositoryTests()
+    private AppDbContext _dbContext = null!;
+    private ProjectionBulkRepository<AppDbContext, ContactObserverProjectionDto, ContactObserverReadModelEntity, ContactObserverProjectionBulkEntityFactory> _repository = null!;
+
+    public async Task InitializeAsync()
     {
-        _connection = new SqliteConnection("Data Source=:memory:");
-        _connection.Open();
+        await _postgresContainer.StartAsync();
 
         var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseSqlite(_connection)
+            .UseNpgsql(_postgresContainer.GetConnectionString())
             .Options;
 
         _dbContext = new AppDbContext(options);
-        _dbContext.Database.EnsureCreated();
+        await _dbContext.Database.EnsureCreatedAsync();
         _repository = new ProjectionBulkRepository<AppDbContext, ContactObserverProjectionDto, ContactObserverReadModelEntity, ContactObserverProjectionBulkEntityFactory>(
             _dbContext,
             new ContactObserverProjectionBulkEntityFactory());
     }
 
-    public void Dispose()
+    public async Task DisposeAsync()
     {
-        _dbContext.Dispose();
-        _connection.Dispose();
+        await _dbContext.DisposeAsync();
+        await _postgresContainer.DisposeAsync();
     }
 
     [Fact]
@@ -153,8 +157,13 @@ public sealed class ContactObserverProjectionBulkRepositoryTests : IDisposable
 
     private async Task SaveAsync(ProjectionCommandItem<ContactObserverProjectionDto> item)
     {
+        // BulkUpsertOrSoftDeleteAsync uses UseTempDB internally (EFCore.BulkExtensions), which requires
+        // an explicit transaction so the temp table survives until the operation completes; in production
+        // this is provided by the surrounding command handler's unit-of-work transaction.
+        await using var transaction = await _dbContext.Database.BeginTransactionAsync();
         await _repository.BulkUpsertOrSoftDeleteAsync([item], CancellationToken.None);
         await _dbContext.SaveChangesAsync();
+        await transaction.CommitAsync();
         _dbContext.ChangeTracker.Clear();
     }
 
