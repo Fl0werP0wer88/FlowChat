@@ -7,20 +7,6 @@ namespace FlowChat.ChatService.Persistence.Repositories;
 
 public sealed class DuetConversationReadRepository(AppDbContext dbContext) : ReadRepositoryBase, IDuetConversationReadRepository
 {
-    public async Task<Guid?> FindConversationIdAsync(
-        Guid userId1,
-        Guid userId2,
-        CancellationToken cancellationToken = default)
-    {
-        var (first, second) = DuetConversationUserPair.Normalize(userId1, userId2);
-
-        var entry = await dbContext.DuetConversations
-            .AsNoTracking()
-            .FirstOrDefaultAsync(x => x.FirstUserId == first && x.SecondUserId == second, cancellationToken);
-
-        return entry?.ConversationId.Value;
-    }
-
     public async Task<DuetConversationDetailDto?> GetByUserIdsAsync(
         Guid requestingUserId,
         Guid partnerUserId,
