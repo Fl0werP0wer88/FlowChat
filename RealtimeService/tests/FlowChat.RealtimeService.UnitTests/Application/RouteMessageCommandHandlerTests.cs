@@ -2,6 +2,7 @@ using AutoFixture;
 using FlowChat.RealtimeService.Application.Contracts.Infrastructure;
 using FlowChat.RealtimeService.Application.Contracts.Persistence;
 using FlowChat.RealtimeService.Application.Features.Message.Commands.RouteMessage;
+using FlowChat.RealtimeService.Domain.Enums;
 using FlowChat.Shared.Domain;
 using FluentAssertions;
 using Moq;
@@ -14,6 +15,7 @@ public sealed class RouteMessageCommandHandlerTests
     private readonly Mock<IRealtimeEventRouter> _routerMock = new();
     private readonly Mock<IChatServiceInternalApiClient> _chatServiceApiClientMock = new();
     private readonly Mock<IRealtimeGroupMembershipVersionTrackerRepository> _versionTrackerRepositoryMock = new();
+    private readonly Mock<IRealtimeGroupMembershipReadModelRepository> _groupMembershipReadModelRepositoryMock = new();
     private readonly RouteMessageCommandHandler _handler;
 
     public RouteMessageCommandHandlerTests()
@@ -41,10 +43,15 @@ public sealed class RouteMessageCommandHandlerTests
             .Setup(x => x.GetVersionAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(1);
 
+        _groupMembershipReadModelRepositoryMock
+            .Setup(x => x.GetUserIdsByResourceIdAsync(RealtimeGroupType.Conversation, It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([_fixture.Create<Guid>()]);
+
         _handler = new RouteMessageCommandHandler(
             _routerMock.Object,
             _chatServiceApiClientMock.Object,
-            _versionTrackerRepositoryMock.Object);
+            _versionTrackerRepositoryMock.Object,
+            _groupMembershipReadModelRepositoryMock.Object);
     }
 
     [Fact]
@@ -52,11 +59,16 @@ public sealed class RouteMessageCommandHandlerTests
     {
         ChatMessageParam? capturedNotification = null;
         DateTimeOffset? deliveredAtUtc = null;
+        var senderUserId = _fixture.Create<Guid>();
         var recipientUserId = _fixture.Create<Guid>();
         var messageId = _fixture.Create<Guid>();
         var conversationId = _fixture.Create<Guid>();
         const long sequenceNum = 42;
         var sequence = new MockSequence();
+
+        _groupMembershipReadModelRepositoryMock
+            .Setup(x => x.GetUserIdsByResourceIdAsync(RealtimeGroupType.Conversation, conversationId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync([recipientUserId, recipientUserId, senderUserId, Guid.Empty]);
 
         _chatServiceApiClientMock.InSequence(sequence)
             .Setup(x => x.SetChatMessageSequenceNumberAsync(
@@ -84,10 +96,9 @@ public sealed class RouteMessageCommandHandlerTests
             new RouteMessageCommand(
                 messageId,
                 conversationId,
-                _fixture.Create<Guid>(),
+                senderUserId,
                 " Hello there ",
                 new DateTimeOffset(2026, 3, 17, 12, 0, 0, TimeSpan.Zero),
-                [recipientUserId, recipientUserId, Guid.Empty],
                 1),
             CancellationToken.None);
         var afterHandleUtc = DateTimeOffset.UtcNow;
@@ -168,13 +179,44 @@ public sealed class RouteMessageCommandHandlerTests
             _fixture.Create<Guid>(),
             "Hello there",
             new DateTimeOffset(2026, 3, 17, 12, 0, 0, TimeSpan.Zero),
-            [_fixture.Create<Guid>()],
             2);
 
         var result = await _handler.Handle(command, CancellationToken.None);
 
         result.IsFailure.Should().BeTrue();
         result.Error.FailureKind.Should().Be(FailureKind.Transient);
+        _routerMock.Verify(
+            x => x.RouteMessageAsync(It.IsAny<ChatMessageParam>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+        _chatServiceApiClientMock.Verify(
+            x => x.MarkChatMessageAsDeliveredAsync(
+                It.IsAny<Guid>(),
+                It.IsAny<Guid>(),
+                It.IsAny<DateTimeOffset>(),
+                It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task Handle_WhenNoKnownRecipientsOtherThanSender_ReturnsFailureAndDoesNotRoute()
+    {
+        var senderUserId = _fixture.Create<Guid>();
+        var conversationId = _fixture.Create<Guid>();
+        _groupMembershipReadModelRepositoryMock
+            .Setup(x => x.GetUserIdsByResourceIdAsync(RealtimeGroupType.Conversation, conversationId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync([senderUserId]);
+
+        var command = new RouteMessageCommand(
+            _fixture.Create<Guid>(),
+            conversationId,
+            senderUserId,
+            "Hello there",
+            new DateTimeOffset(2026, 3, 17, 12, 0, 0, TimeSpan.Zero),
+            1);
+
+        var result = await _handler.Handle(command, CancellationToken.None);
+
+        result.IsFailure.Should().BeTrue();
         _routerMock.Verify(
             x => x.RouteMessageAsync(It.IsAny<ChatMessageParam>(), It.IsAny<CancellationToken>()),
             Times.Never);
@@ -194,6 +236,5 @@ public sealed class RouteMessageCommandHandlerTests
             _fixture.Create<Guid>(),
             "Hello there",
             new DateTimeOffset(2026, 3, 17, 12, 0, 0, TimeSpan.Zero),
-            [_fixture.Create<Guid>()],
             1);
 }

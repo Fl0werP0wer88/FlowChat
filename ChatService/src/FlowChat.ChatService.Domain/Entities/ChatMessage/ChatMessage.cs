@@ -64,7 +64,6 @@ public sealed class ChatMessage : AggregateRootBase<ChatMessage>
                 chatMessage.SenderUserId,
                 chatMessage.Text,
                 chatMessage.SentAtUtc,
-                chatMessage.RecipientUserIds,
                 conversationVersionAtSend));
 
         return chatMessage;

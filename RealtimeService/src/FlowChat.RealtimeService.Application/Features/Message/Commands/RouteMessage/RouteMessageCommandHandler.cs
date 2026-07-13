@@ -1,6 +1,7 @@
 using CSharpFunctionalExtensions;
 using FlowChat.RealtimeService.Application.Contracts.Infrastructure;
 using FlowChat.RealtimeService.Application.Contracts.Persistence;
+using FlowChat.RealtimeService.Domain.Enums;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
 using MediatR;
@@ -10,7 +11,8 @@ namespace FlowChat.RealtimeService.Application.Features.Message.Commands.RouteMe
 public sealed class RouteMessageCommandHandler(
     IRealtimeEventRouter realtimeEventRouter,
     IChatServiceInternalApiClient chatServiceInternalApiClient,
-    IRealtimeGroupMembershipVersionTrackerRepository realtimeGroupMembershipVersionTrackerRepository)
+    IRealtimeGroupMembershipVersionTrackerRepository realtimeGroupMembershipVersionTrackerRepository,
+    IRealtimeGroupMembershipReadModelRepository realtimeGroupMembershipReadModelRepository)
     : ICommandHandler<RouteMessageCommand, Unit>
 {
     private readonly IRealtimeEventRouter _realtimeEventRouter = realtimeEventRouter
@@ -19,11 +21,11 @@ public sealed class RouteMessageCommandHandler(
         ?? throw new ArgumentNullException(nameof(chatServiceInternalApiClient));
     private readonly IRealtimeGroupMembershipVersionTrackerRepository _realtimeGroupMembershipVersionTrackerRepository = realtimeGroupMembershipVersionTrackerRepository
         ?? throw new ArgumentNullException(nameof(realtimeGroupMembershipVersionTrackerRepository));
+    private readonly IRealtimeGroupMembershipReadModelRepository _realtimeGroupMembershipReadModelRepository = realtimeGroupMembershipReadModelRepository
+        ?? throw new ArgumentNullException(nameof(realtimeGroupMembershipReadModelRepository));
 
     public async Task<FlowChatResult<Unit>> Handle(RouteMessageCommand request, CancellationToken cancellationToken)
     {
-        var recipientUserIds = NormalizeRecipientUserIds(request.RecipientUserIds);
-
         var trackedVersion = await _realtimeGroupMembershipVersionTrackerRepository.GetVersionAsync(
             request.ConversationId,
             cancellationToken);
@@ -36,6 +38,24 @@ public sealed class RouteMessageCommandHandler(
                 DomainError.UnExpected(
                     $"Conversation {request.ConversationId} membership projection version {trackedVersion ?? 0} is behind message version {request.ConversationVersionAtSend}.",
                     FailureKind.Transient));
+        }
+
+        var conversationMemberUserIds = await _realtimeGroupMembershipReadModelRepository.GetUserIdsByResourceIdAsync(
+            RealtimeGroupType.Conversation,
+            request.ConversationId,
+            cancellationToken);
+        var recipientUserIds = conversationMemberUserIds
+            .Where(userId => userId != Guid.Empty && userId != request.SenderUserId)
+            .Distinct()
+            .ToArray();
+
+        // The version check above already guarantees the membership projection is caught up with this message,
+        // so an empty result here means a real data problem, not a race — surface it instead of routing to nobody.
+        if (recipientUserIds.Length == 0)
+        {
+            return FlowChatResult<Unit>.Failure(
+                DomainError.UnExpected(
+                    $"Conversation {request.ConversationId} has no known recipients other than the sender at version {trackedVersion}."));
         }
 
         //ToDo: Rozważyć przesylanie tego kafką
@@ -67,10 +87,4 @@ public sealed class RouteMessageCommandHandler(
 
         return FlowChatResult<Unit>.Success(Unit.Value);
     }
-
-    private static Guid[] NormalizeRecipientUserIds(IReadOnlyCollection<Guid> recipientUserIds) =>
-        recipientUserIds
-            .Where(userId => userId != Guid.Empty)
-            .Distinct()
-            .ToArray();
 }

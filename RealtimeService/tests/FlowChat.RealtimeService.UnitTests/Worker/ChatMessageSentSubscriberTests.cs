@@ -34,7 +34,6 @@ public sealed class ChatMessageSentSubscriberTests
     public async Task HandleAsync_ForwardsMappedCommandToMediator()
     {
         RouteMessageCommand? capturedCommand = null;
-        var recipientUserId = _fixture.Create<Guid>();
         var messageId = _fixture.Create<Guid>();
         var conversationId = _fixture.Create<Guid>();
         var senderUserId = _fixture.Create<Guid>();
@@ -54,7 +53,6 @@ public sealed class ChatMessageSentSubscriberTests
                 SenderUserId = senderUserId,
                 Text = " Hi there ",
                 SentAtUtc = sentAtUtc,
-                RecipientUserIds = [recipientUserId, recipientUserId, Guid.Empty],
                 ConversationVersionAtSend = 3
             }.ToInboundEnvelope(),
             CancellationToken.None);
@@ -65,7 +63,6 @@ public sealed class ChatMessageSentSubscriberTests
         capturedCommand.SenderUserId.Should().Be(senderUserId);
         capturedCommand.Text.Should().Be("Hi there");
         capturedCommand.SentAtUtc.Should().Be(sentAtUtc);
-        capturedCommand.RecipientUserIds.Should().ContainSingle().Which.Should().Be(recipientUserId);
         capturedCommand.ConversationVersionAtSend.Should().Be(3);
     }
 
@@ -126,20 +123,6 @@ public sealed class ChatMessageSentSubscriberTests
     }
 
     [Fact]
-    public async Task HandleAsync_WhenRecipientUserIdsMissing_ThrowsNonTransientException()
-    {
-        SetupCommandFailure("RecipientUserIds must contain at least one valid user id.");
-
-        var act = () => _subscriber.HandleAsync(
-            CreateValidEvent(recipientUserIds: [Guid.Empty]).ToInboundEnvelope(),
-            CancellationToken.None);
-
-        await act.Should().ThrowAsync<NonTransientException>()
-            .WithMessage("*RecipientUserIds*");
-        VerifyCommandWasSent();
-    }
-
-    [Fact]
     public async Task HandleAsync_WhenCommandReturnsFailure_ThrowsNonTransientException()
     {
         _mediatorMock
@@ -173,8 +156,7 @@ public sealed class ChatMessageSentSubscriberTests
         Guid? messageId = null,
         Guid? conversationId = null,
         Guid? senderUserId = null,
-        string text = "Hi there",
-        IReadOnlyCollection<Guid>? recipientUserIds = null) =>
+        string text = "Hi there") =>
         new()
         {
             MessageId = messageId ?? _fixture.Create<Guid>(),
@@ -182,7 +164,7 @@ public sealed class ChatMessageSentSubscriberTests
             SenderUserId = senderUserId ?? _fixture.Create<Guid>(),
             Text = text,
             SentAtUtc = DateTimeOffset.UtcNow,
-            RecipientUserIds = (recipientUserIds ?? [_fixture.Create<Guid>()]).ToList()
+            ConversationVersionAtSend = 1
         };
 
     private void SetupCommandFailure(string errorMessage)

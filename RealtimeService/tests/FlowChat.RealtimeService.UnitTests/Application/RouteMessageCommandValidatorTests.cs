@@ -18,7 +18,6 @@ public sealed class RouteMessageCommandValidatorTests
             _fixture.Create<Guid>(),
             "Hello",
             DateTimeOffset.UtcNow,
-            [_fixture.Create<Guid>()],
             1);
 
         var result = _validator.Validate(command);
@@ -35,7 +34,6 @@ public sealed class RouteMessageCommandValidatorTests
             Guid.Empty,
             "Hello",
             DateTimeOffset.UtcNow,
-            [_fixture.Create<Guid>()],
             1);
 
         var result = _validator.Validate(command);
@@ -57,49 +55,12 @@ public sealed class RouteMessageCommandValidatorTests
             _fixture.Create<Guid>(),
             value,
             DateTimeOffset.UtcNow,
-            [_fixture.Create<Guid>()],
             1);
 
         var result = _validator.Validate(command);
 
         result.IsValid.Should().BeFalse();
         result.Errors.Should().Contain(e => e.PropertyName == "Text");
-    }
-
-    [Fact]
-    public void Validate_RecipientUserIdsContainsOnlyEmptyGuids_ReturnsValidationError()
-    {
-        var command = new RouteMessageCommand(
-            _fixture.Create<Guid>(),
-            _fixture.Create<Guid>(),
-            _fixture.Create<Guid>(),
-            "Hello",
-            DateTimeOffset.UtcNow,
-            [Guid.Empty, Guid.Empty],
-            1);
-
-        var result = _validator.Validate(command);
-
-        result.IsValid.Should().BeFalse();
-        result.Errors.Should().Contain(e => e.PropertyName == "RecipientUserIds");
-    }
-
-    [Fact]
-    public void Validate_EmptyRecipientUserIds_ReturnsValidationError()
-    {
-        var command = new RouteMessageCommand(
-            _fixture.Create<Guid>(),
-            _fixture.Create<Guid>(),
-            _fixture.Create<Guid>(),
-            "Hello",
-            DateTimeOffset.UtcNow,
-            [],
-            1);
-
-        var result = _validator.Validate(command);
-
-        result.IsValid.Should().BeFalse();
-        result.Errors.Should().Contain(e => e.PropertyName == "RecipientUserIds");
     }
 
     [Theory]
@@ -113,7 +74,6 @@ public sealed class RouteMessageCommandValidatorTests
             _fixture.Create<Guid>(),
             "Hello",
             DateTimeOffset.UtcNow,
-            [_fixture.Create<Guid>()],
             conversationVersionAtSend);
 
         var result = _validator.Validate(command);
