@@ -17,7 +17,7 @@ public abstract class DomainEventHandlerBase<TDomainEvent, TIntegrationEvent> : 
 
     public async Task Handle(TDomainEvent notification, CancellationToken cancellationToken)
     {
-        var integrationEvent = MapToIntegrationEvent(notification);
+        var integrationEvent = await MapToIntegrationEvent(notification, cancellationToken);
         var envelope = new IntegrationEventEnvelope<TIntegrationEvent>(
             integrationEvent,
             ResolveKafkaKey(notification, integrationEvent));
@@ -28,7 +28,7 @@ public abstract class DomainEventHandlerBase<TDomainEvent, TIntegrationEvent> : 
         await ExecuteAsync(notification, cancellationToken);
     }
 
-    protected abstract TIntegrationEvent MapToIntegrationEvent(TDomainEvent notification);
+    protected abstract Task<TIntegrationEvent> MapToIntegrationEvent(TDomainEvent notification, CancellationToken cancellationToken);
 
     protected abstract string ResolveKafkaKey(TDomainEvent notification, TIntegrationEvent integrationEvent);
 

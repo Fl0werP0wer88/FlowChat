@@ -37,14 +37,12 @@ public sealed class ChatMessage : AggregateRootBase<ChatMessage>
         SentAtUtc = sentAtUtc;
         _recipientUserIds = recipientUserIds;
     }
-    //ToDo1: Pomyśleć czy nie da rady zrobić tak aby conversationVersionAtSend dodawalo się o eventu z poziomu CommandHandlera
     public static ChatMessage Create(
         Id<ChatMessage> id,
         Id<ConversationAggregate> conversationId,
         Id<UserProfileMarker> senderUserId,
         string text,
         IEnumerable<Id<UserProfileMarker>> recipientUserIds,
-        int conversationVersionAtSend,
         UtcDateTimeOffset? sentAtUtc = null)
     {
         ArgumentNullException.ThrowIfNull(id);
@@ -63,8 +61,7 @@ public sealed class ChatMessage : AggregateRootBase<ChatMessage>
                 chatMessage.ConversationId,
                 chatMessage.SenderUserId,
                 chatMessage.Text,
-                chatMessage.SentAtUtc,
-                conversationVersionAtSend));
+                chatMessage.SentAtUtc));
 
         return chatMessage;
     }

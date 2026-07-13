@@ -19,8 +19,8 @@ public abstract class MappedDomainEventHandlerBase<TDomainEvent, TIntegrationEve
         _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
     }
 
-    protected override TIntegrationEvent MapToIntegrationEvent(TDomainEvent notification) =>
-        _mapper.Map<TIntegrationEvent>(notification);
+    protected override Task<TIntegrationEvent> MapToIntegrationEvent(TDomainEvent notification, CancellationToken cancellationToken) =>
+        Task.FromResult(_mapper.Map<TIntegrationEvent>(notification));
 
     protected override Task ExecuteAsync(TDomainEvent notification, CancellationToken cancellationToken) =>
         Task.CompletedTask;

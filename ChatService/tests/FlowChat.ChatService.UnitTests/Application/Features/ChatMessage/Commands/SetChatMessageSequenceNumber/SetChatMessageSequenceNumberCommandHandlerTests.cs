@@ -127,8 +127,7 @@ public sealed class SetChatMessageSequenceNumberCommandHandlerTests
             Id<ConversationAggregate>.FromGuid(conversationId),
             Guid.NewGuid(),
             "Hello",
-            [Guid.NewGuid()],
-            conversationVersionAtSend: 1);
+            [Guid.NewGuid()]);
 
         message.ClearEvents();
         return message;

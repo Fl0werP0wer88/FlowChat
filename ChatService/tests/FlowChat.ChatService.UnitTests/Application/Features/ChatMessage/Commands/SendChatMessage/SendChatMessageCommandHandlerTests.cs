@@ -50,7 +50,7 @@ public sealed class SendChatMessageCommandHandlerTests
 
         _participantReadRepositoryMock
             .Setup(x => x.GetParticipantStatesAsync(command.ConversationId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync((ParticipantStatesResult?)null);
+            .ReturnsAsync((IReadOnlyCollection<ParticipantStateDto>?)null);
 
         var result = await _handler.Handle(command, CancellationToken.None);
 
@@ -73,10 +73,10 @@ public sealed class SendChatMessageCommandHandlerTests
 
         _participantReadRepositoryMock
             .Setup(x => x.GetParticipantStatesAsync(command.ConversationId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ParticipantStatesResult(1, [
+            .ReturnsAsync([
                 new ParticipantStateDto(otherUser1, IsBlocked: false, IsHidden: false),
                 new ParticipantStateDto(otherUser2, IsBlocked: false, IsHidden: false)
-            ]));
+            ]);
 
         var result = await _handler.Handle(command, CancellationToken.None);
 
@@ -98,10 +98,10 @@ public sealed class SendChatMessageCommandHandlerTests
 
         _participantReadRepositoryMock
             .Setup(x => x.GetParticipantStatesAsync(command.ConversationId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ParticipantStatesResult(1, [
+            .ReturnsAsync([
                 new ParticipantStateDto(senderId, IsBlocked: false, IsHidden: false),
                 new ParticipantStateDto(recipientId, IsBlocked: true, IsHidden: false)
-            ]));
+            ]);
 
         var result = await _handler.Handle(command, CancellationToken.None);
 
@@ -126,10 +126,10 @@ public sealed class SendChatMessageCommandHandlerTests
 
         _participantReadRepositoryMock
             .Setup(x => x.GetParticipantStatesAsync(command.ConversationId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ParticipantStatesResult(3, [
+            .ReturnsAsync([
                 new ParticipantStateDto(senderId, IsBlocked: false, IsHidden: false),
                 new ParticipantStateDto(recipientId, IsBlocked: false, IsHidden: false)
-            ]));
+            ]);
 
         _chatMessageRepositoryMock
             .Setup(x => x.AddAsync(It.IsAny<ChatMessageAggregate>(), It.IsAny<CancellationToken>()))
@@ -152,8 +152,7 @@ public sealed class SendChatMessageCommandHandlerTests
         persistedMessage.SenderUserId.Value.Should().Be(senderId);
         persistedMessage.RecipientUserIds.Select(x => x.Value).Should().BeEquivalentTo([recipientId]);
         dispatchedEvents.Should().ContainSingle()
-            .Which.Should().BeOfType<ChatMessageSentDomainEvent>()
-            .Which.ConversationVersionAtSend.Should().Be(3);
+            .Which.Should().BeOfType<ChatMessageSentDomainEvent>();
     }
 
 }
