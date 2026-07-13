@@ -6,17 +6,29 @@ using FlowChat.UserProfileService.Domain.Entities.UserProfile.Events;
 namespace FlowChat.UserProfileService.Application.Features.UserProfile.Eventing.DomainEvents.AuthEmailChanged;
 
 public sealed class AuthEmailChangedDomainEventHandler
-    : MappedDomainEventHandlerBase<AuthEmailChangedDomainEvent, AuthEmailChangedIntegrationEvent>
+    : IDomainEventHandler<AuthEmailChangedDomainEvent>
 {
+    private readonly IOutboxIntegrationEventPublisher _integrationEventPublisher;
+    private readonly IMapper _mapper;
+
     public AuthEmailChangedDomainEventHandler(
         IOutboxIntegrationEventPublisher integrationEventPublisher,
         IMapper mapper)
-        : base(integrationEventPublisher, mapper)
     {
+        _integrationEventPublisher = integrationEventPublisher
+            ?? throw new ArgumentNullException(nameof(integrationEventPublisher));
+        _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
     }
 
-    protected override string ResolveKafkaKey(
+    public Task Handle(
         AuthEmailChangedDomainEvent notification,
-        AuthEmailChangedIntegrationEvent integrationEvent) =>
-        notification.UserProfileId.Value.ToString();
+        CancellationToken cancellationToken)
+    {
+        var integrationEvent = _mapper.Map<AuthEmailChangedIntegrationEvent>(notification);
+
+        return _integrationEventPublisher.PublishAsync(
+            integrationEvent,
+            notification.UserProfileId.Value.ToString(),
+            cancellationToken);
+    }
 }

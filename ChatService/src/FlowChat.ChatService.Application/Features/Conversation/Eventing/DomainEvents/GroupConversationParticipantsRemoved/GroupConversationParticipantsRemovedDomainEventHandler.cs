@@ -6,17 +6,29 @@ using FlowChat.Shared.Application;
 namespace FlowChat.ChatService.Application.Features.Conversation.Eventing.DomainEvents.GroupConversationParticipantsRemoved;
 
 public sealed class GroupConversationParticipantsRemovedDomainEventHandler
-    : MappedDomainEventHandlerBase<GroupConversationParticipantsRemovedDomainEvent, GroupConversationParticipantsRemovedIntegrationEvent>
+    : IDomainEventHandler<GroupConversationParticipantsRemovedDomainEvent>
 {
+    private readonly IOutboxIntegrationEventPublisher _integrationEventPublisher;
+    private readonly IMapper _mapper;
+
     public GroupConversationParticipantsRemovedDomainEventHandler(
         IOutboxIntegrationEventPublisher integrationEventPublisher,
         IMapper mapper)
-        : base(integrationEventPublisher, mapper)
     {
+        _integrationEventPublisher = integrationEventPublisher
+            ?? throw new ArgumentNullException(nameof(integrationEventPublisher));
+        _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
     }
 
-    protected override string ResolveKafkaKey(
+    public Task Handle(
         GroupConversationParticipantsRemovedDomainEvent notification,
-        GroupConversationParticipantsRemovedIntegrationEvent integrationEvent) =>
-        notification.ConversationId.ToString("D");
+        CancellationToken cancellationToken)
+    {
+        var integrationEvent = _mapper.Map<GroupConversationParticipantsRemovedIntegrationEvent>(notification);
+
+        return _integrationEventPublisher.PublishAsync(
+            integrationEvent,
+            notification.ConversationId.ToString("D"),
+            cancellationToken);
+    }
 }

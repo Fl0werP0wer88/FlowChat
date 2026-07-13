@@ -6,18 +6,30 @@ using FlowChat.Core.Messaging.AuthService.Events;
 namespace FlowChat.AuthService.Application.Features.Account.Eventing.DomainEvents.AccountConfirmed;
 
 public sealed class AccountConfirmedDomainEventHandler
-    : MappedDomainEventHandlerBase<AccountConfirmedDomainEvent, AccountConfirmedIntegrationEvent>
+    : IDomainEventHandler<AccountConfirmedDomainEvent>
 {
+    private readonly IOutboxIntegrationEventPublisher _integrationEventPublisher;
+    private readonly IMapper _mapper;
+
     public AccountConfirmedDomainEventHandler(
         IOutboxIntegrationEventPublisher integrationEventPublisher,
         IMapper mapper)
-        : base(integrationEventPublisher, mapper)
     {
+        _integrationEventPublisher = integrationEventPublisher
+            ?? throw new ArgumentNullException(nameof(integrationEventPublisher));
+        _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
     }
 
-    protected override string ResolveKafkaKey(
+    public Task Handle(
         AccountConfirmedDomainEvent notification,
-        AccountConfirmedIntegrationEvent integrationEvent) =>
-        notification.AccountId.Value.ToString();
+        CancellationToken cancellationToken)
+    {
+        var integrationEvent = _mapper.Map<AccountConfirmedIntegrationEvent>(notification);
+
+        return _integrationEventPublisher.PublishAsync(
+            integrationEvent,
+            notification.AccountId.Value.ToString(),
+            cancellationToken);
+    }
 }
 

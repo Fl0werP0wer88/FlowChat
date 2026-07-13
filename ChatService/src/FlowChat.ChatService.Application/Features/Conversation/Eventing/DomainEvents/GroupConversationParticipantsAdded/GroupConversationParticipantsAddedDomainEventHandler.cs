@@ -6,17 +6,29 @@ using FlowChat.Shared.Application;
 namespace FlowChat.ChatService.Application.Features.Conversation.Eventing.DomainEvents.GroupConversationParticipantsAdded;
 
 public sealed class GroupConversationParticipantsAddedDomainEventHandler
-    : MappedDomainEventHandlerBase<GroupConversationParticipantsAddedDomainEvent, GroupConversationParticipantsAddedIntegrationEvent>
+    : IDomainEventHandler<GroupConversationParticipantsAddedDomainEvent>
 {
+    private readonly IOutboxIntegrationEventPublisher _integrationEventPublisher;
+    private readonly IMapper _mapper;
+
     public GroupConversationParticipantsAddedDomainEventHandler(
         IOutboxIntegrationEventPublisher integrationEventPublisher,
         IMapper mapper)
-        : base(integrationEventPublisher, mapper)
     {
+        _integrationEventPublisher = integrationEventPublisher
+            ?? throw new ArgumentNullException(nameof(integrationEventPublisher));
+        _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
     }
 
-    protected override string ResolveKafkaKey(
+    public Task Handle(
         GroupConversationParticipantsAddedDomainEvent notification,
-        GroupConversationParticipantsAddedIntegrationEvent integrationEvent) =>
-        notification.ConversationId.ToString("D");
+        CancellationToken cancellationToken)
+    {
+        var integrationEvent = _mapper.Map<GroupConversationParticipantsAddedIntegrationEvent>(notification);
+
+        return _integrationEventPublisher.PublishAsync(
+            integrationEvent,
+            notification.ConversationId.ToString("D"),
+            cancellationToken);
+    }
 }
