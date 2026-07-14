@@ -43,6 +43,9 @@ internal static class CommonPersistenceServiceRegistration
     {
         services.AddDbContext<AppDbContext>(options =>
             options.UseNpgsql(configuration.GetConnectionString("RealtimeDb")));
+        services.AddDbContextFactory<AppDbContext>(
+            options => options.UseNpgsql(configuration.GetConnectionString("RealtimeDb")),
+            ServiceLifetime.Scoped);
 
         services.AddScoped<IRealtimeGroupMembershipReadModelRepository, RealtimeGroupMembershipReadModelRepository>();
         services.AddScoped<IRealtimeGroupMembershipVersionTrackerRepository, RealtimeGroupMembershipVersionTrackerRepository>();

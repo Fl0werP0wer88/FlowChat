@@ -13,6 +13,7 @@ using FlowChat.Core.Results;
 using FlowChat.RealtimeService.Redis.RealtimeConnections;
 using FluentAssertions;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -57,6 +58,7 @@ public sealed class ConsumersConfigurationTests
         var chatServiceInternalApiClient = scope.ServiceProvider.GetRequiredService<IChatServiceInternalApiClient>();
         var groupMembershipRepository = scope.ServiceProvider.GetRequiredService<IRealtimeGroupMembershipReadModelRepository>();
         var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var dbContextFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<AppDbContext>>();
         var groupConversationChangedHandler = scope.ServiceProvider
             .GetRequiredService<IRequestHandler<RouteGroupConversationChangedCommand, FlowChatResult<Unit>>>();
         var groupConversationParticipantsAddedHandler = scope.ServiceProvider
@@ -77,6 +79,7 @@ public sealed class ConsumersConfigurationTests
         chatServiceInternalApiClient.Should().NotBeNull();
         groupMembershipRepository.Should().NotBeNull();
         dbContext.Model.FindEntityType(typeof(SilverbackStoredOffset)).Should().NotBeNull();
+        dbContextFactory.Should().NotBeNull();
         groupConversationChangedHandler.Should().NotBeNull();
         groupConversationParticipantsAddedHandler.Should().NotBeNull();
         groupConversationParticipantsRemovedHandler.Should().NotBeNull();
