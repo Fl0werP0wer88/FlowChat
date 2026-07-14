@@ -1,13 +1,24 @@
+using System.Data.Common;
 using FlowChat.RealtimeService.Persistence.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Silverback.Messaging.Consuming.KafkaOffsetStore;
 
 namespace FlowChat.RealtimeService.Persistence;
 
 public class AppDbContext : DbContext
 {
+    [ActivatorUtilitiesConstructor]
     public AppDbContext(DbContextOptions<AppDbContext> options)
         : base(options)
+    {
+    }
+
+    // Silverback uses the active connection so offset and outbox writes share the business transaction
+    public AppDbContext(DbConnection connection)
+        : base(new DbContextOptionsBuilder<AppDbContext>()
+            .UseNpgsql(connection)
+            .Options)
     {
     }
 

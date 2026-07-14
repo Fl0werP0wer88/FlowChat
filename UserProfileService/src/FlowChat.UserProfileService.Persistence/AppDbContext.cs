@@ -18,6 +18,7 @@ public class AppDbContext : DbContext, IDataProtectionKeyContext
     {
     }
 
+    // Silverback uses the active connection so offset and outbox writes share the business transaction
     public AppDbContext(DbConnection connection)
         : base(new DbContextOptionsBuilder<AppDbContext>()
             .UseNpgsql(connection)
