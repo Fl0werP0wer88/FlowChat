@@ -8,6 +8,7 @@ using FlowChat.RealtimeService.Application.Features.Conversation.Commands.RouteG
 using FlowChat.RealtimeService.Consumers.Configuration.Settings;
 using FlowChat.RealtimeService.Infrastructure.Configuration.Settings;
 using FlowChat.RealtimeService.Infrastructure.Routing;
+using FlowChat.RealtimeService.Persistence;
 using FlowChat.Core.Results;
 using FlowChat.RealtimeService.Redis.RealtimeConnections;
 using FluentAssertions;
@@ -16,6 +17,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Silverback.Messaging.Broker;
+using Silverback.Messaging.Consuming.KafkaOffsetStore;
 using StackExchange.Redis;
 
 namespace FlowChat.RealtimeService.UnitTests;
@@ -54,6 +56,7 @@ public sealed class ConsumersConfigurationTests
         var realtimeInstanceInternalApiClient = scope.ServiceProvider.GetRequiredService<IRealtimeInstanceInternalApiClient>();
         var chatServiceInternalApiClient = scope.ServiceProvider.GetRequiredService<IChatServiceInternalApiClient>();
         var groupMembershipRepository = scope.ServiceProvider.GetRequiredService<IRealtimeGroupMembershipReadModelRepository>();
+        var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         var groupConversationChangedHandler = scope.ServiceProvider
             .GetRequiredService<IRequestHandler<RouteGroupConversationChangedCommand, FlowChatResult<Unit>>>();
         var groupConversationParticipantsAddedHandler = scope.ServiceProvider
@@ -73,6 +76,7 @@ public sealed class ConsumersConfigurationTests
         realtimeInstanceInternalApiClient.Should().NotBeNull();
         chatServiceInternalApiClient.Should().NotBeNull();
         groupMembershipRepository.Should().NotBeNull();
+        dbContext.Model.FindEntityType(typeof(SilverbackStoredOffset)).Should().NotBeNull();
         groupConversationChangedHandler.Should().NotBeNull();
         groupConversationParticipantsAddedHandler.Should().NotBeNull();
         groupConversationParticipantsRemovedHandler.Should().NotBeNull();

@@ -38,7 +38,9 @@ public static class ConsumersServiceRegistration
         services.AddSilverback()
             .AddSingletonBrokerBehavior<CustomSpanAttributesProducerBehavior>()
             .AddSingletonBrokerBehavior<CustomSpanAttributesConsumerBehavior>()
-            .WithConnectionToMessageBroker(options => options.AddKafka())
+            .WithConnectionToMessageBroker(options => options
+                .AddKafka()
+                .AddEntityFrameworkKafkaOffsetStore())
             .AddKafkaClients(clients =>
             {
                 clients
@@ -50,34 +52,42 @@ public static class ConsumersServiceRegistration
                     .AddConsumer(consumer => consumer
                         .WithGroupId(chatMessageSentConsumerOptions.GroupId)
                         .WithAutoOffsetReset(ParseAutoOffsetReset(chatMessageSentConsumerOptions.AutoOffsetReset))
+                        .StoreOffsetsClientSide(store => store.UseEntityFramework<AppDbContext>())
                         .Consume(endpoint => endpoint.ConfigureFlowChatMainEndpoint(chatMessageSentConsumerOptions)))
                     .AddConsumer(consumer => consumer
                         .WithGroupId(chatMessageSentConsumerOptions.RetryGroupId)
                         .WithAutoOffsetReset(ParseAutoOffsetReset(chatMessageSentConsumerOptions.AutoOffsetReset))
+                        .StoreOffsetsClientSide(store => store.UseEntityFramework<AppDbContext>())
                         .Consume(endpoint => endpoint.ConfigureFlowChatRetryEndpoint(chatMessageSentConsumerOptions)))
                     .AddConsumer(consumer => consumer
                         .WithGroupId(presenceStatusChangedConsumerOptions.GroupId)
                         .WithAutoOffsetReset(ParseAutoOffsetReset(presenceStatusChangedConsumerOptions.AutoOffsetReset))
+                        .StoreOffsetsClientSide(store => store.UseEntityFramework<AppDbContext>())
                         .Consume(endpoint => endpoint.ConfigureFlowChatMainEndpoint(presenceStatusChangedConsumerOptions)))
                     .AddConsumer(consumer => consumer
                         .WithGroupId(presenceStatusChangedConsumerOptions.RetryGroupId)
                         .WithAutoOffsetReset(ParseAutoOffsetReset(presenceStatusChangedConsumerOptions.AutoOffsetReset))
+                        .StoreOffsetsClientSide(store => store.UseEntityFramework<AppDbContext>())
                         .Consume(endpoint => endpoint.ConfigureFlowChatRetryEndpoint(presenceStatusChangedConsumerOptions)))
                     .AddConsumer(consumer => consumer
                         .WithGroupId(groupConversationChangedConsumerOptions.GroupId)
                         .WithAutoOffsetReset(ParseAutoOffsetReset(groupConversationChangedConsumerOptions.AutoOffsetReset))
+                        .StoreOffsetsClientSide(store => store.UseEntityFramework<AppDbContext>())
                         .Consume(endpoint => endpoint.ConfigureFlowChatMainEndpoint(groupConversationChangedConsumerOptions)))
                     .AddConsumer(consumer => consumer
                         .WithGroupId(groupConversationChangedConsumerOptions.RetryGroupId)
                         .WithAutoOffsetReset(ParseAutoOffsetReset(groupConversationChangedConsumerOptions.AutoOffsetReset))
+                        .StoreOffsetsClientSide(store => store.UseEntityFramework<AppDbContext>())
                         .Consume(endpoint => endpoint.ConfigureFlowChatRetryEndpoint(groupConversationChangedConsumerOptions)))
                     .AddConsumer(consumer => consumer
                         .WithGroupId(duetConversationProjectionConsumerOptions.GroupId)
                         .WithAutoOffsetReset(ParseAutoOffsetReset(duetConversationProjectionConsumerOptions.AutoOffsetReset))
+                        .StoreOffsetsClientSide(store => store.UseEntityFramework<AppDbContext>())
                         .Consume(endpoint => endpoint.ConfigureFlowChatMainEndpoint(duetConversationProjectionConsumerOptions)))
                     .AddConsumer(consumer => consumer
                         .WithGroupId(duetConversationProjectionConsumerOptions.RetryGroupId)
                         .WithAutoOffsetReset(ParseAutoOffsetReset(duetConversationProjectionConsumerOptions.AutoOffsetReset))
+                        .StoreOffsetsClientSide(store => store.UseEntityFramework<AppDbContext>())
                         .Consume(endpoint => endpoint.ConfigureFlowChatRetryEndpoint(duetConversationProjectionConsumerOptions)))
                     .AddProducer(producer => producer
                         .Produce(endpoint => endpoint
