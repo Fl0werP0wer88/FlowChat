@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FlowChat.ChatService.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260711193211_InitialCreate")]
+    [Migration("20260714090254_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -59,11 +59,6 @@ namespace FlowChat.ChatService.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
-
-                    b.Property<string>("SenderDisplayName")
-                        .IsRequired()
-                        .HasMaxLength(120)
-                        .HasColumnType("character varying(120)");
 
                     b.Property<Guid>("SenderUserId")
                         .HasColumnType("uuid");
@@ -157,10 +152,6 @@ namespace FlowChat.ChatService.Persistence.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
 
-                    b.Property<string>("AvatarUrl")
-                        .HasMaxLength(2048)
-                        .HasColumnType("character varying(2048)");
-
                     b.Property<Guid>("ConversationId")
                         .HasColumnType("uuid");
 
@@ -214,10 +205,6 @@ namespace FlowChat.ChatService.Persistence.Migrations
                     b.Property<DateTimeOffset?>("DeletedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("SenderDisplayName")
-                        .IsRequired()
-                        .HasColumnType("text");
-
                     b.Property<Guid>("SenderUserId")
                         .HasColumnType("uuid");
 
@@ -250,6 +237,9 @@ namespace FlowChat.ChatService.Persistence.Migrations
                         .HasColumnType("text");
 
                     b.Property<int>("Type")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Version")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
@@ -305,9 +295,6 @@ namespace FlowChat.ChatService.Persistence.Migrations
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
-
-                    b.Property<string>("AvatarUrl")
-                        .HasColumnType("text");
 
                     b.Property<Guid>("ConversationId")
                         .HasColumnType("uuid");

@@ -24,6 +24,19 @@ namespace FlowChat.RealtimeService.Persistence.Migrations
                 {
                     table.PrimaryKey("PK_RealtimeGroupMembershipReadModels", x => new { x.UserId, x.GroupType, x.ResourceId });
                 });
+
+            migrationBuilder.CreateTable(
+                name: "RealtimeGroupMembershipVersionTrackerReadModels",
+                columns: table => new
+                {
+                    ConversationId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Version = table.Column<int>(type: "integer", nullable: false),
+                    UpdatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_RealtimeGroupMembershipVersionTrackerReadModels", x => x.ConversationId);
+                });
         }
 
         /// <inheritdoc />
@@ -31,6 +44,9 @@ namespace FlowChat.RealtimeService.Persistence.Migrations
         {
             migrationBuilder.DropTable(
                 name: "RealtimeGroupMembershipReadModels");
+
+            migrationBuilder.DropTable(
+                name: "RealtimeGroupMembershipVersionTrackerReadModels");
         }
     }
 }

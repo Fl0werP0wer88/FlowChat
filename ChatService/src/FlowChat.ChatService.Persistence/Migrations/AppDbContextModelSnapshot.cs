@@ -236,6 +236,9 @@ namespace FlowChat.ChatService.Persistence.Migrations
                     b.Property<int>("Type")
                         .HasColumnType("integer");
 
+                    b.Property<int>("Version")
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
 
                     b.ToTable((string)null);
