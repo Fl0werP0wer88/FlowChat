@@ -10,8 +10,9 @@ public abstract class Conversation : AggregateRootBase<Conversation>
     public ConversationType Type { get; private set; }
     public string? Name { get; private set; }
     public Id<UserProfileMarker> CreatedByUserId { get; private set; }
+    public long LastMsgSequenceNum { get; private set; }
 
-    private readonly List<ParticipantUser> _participants = [];
+    protected readonly List<ParticipantUser> _participants = [];
     public IReadOnlyCollection<ParticipantUser> Participants => _participants.AsReadOnly();
 
     // Required by EF Core: scalar-only constructor so EF can bind properties without the navigation collection.
@@ -19,11 +20,13 @@ public abstract class Conversation : AggregateRootBase<Conversation>
         Id<Conversation> id,
         ConversationType type,
         string? name,
-        Id<UserProfileMarker> createdByUserId) : base(id)
+        Id<UserProfileMarker> createdByUserId,
+        long lastMsgSequenceNum) : base(id)
     {
         Type = type;
         Name = name?.Trim();
         CreatedByUserId = createdByUserId;
+        LastMsgSequenceNum = lastMsgSequenceNum;
     }
 
     protected Conversation(
@@ -31,7 +34,8 @@ public abstract class Conversation : AggregateRootBase<Conversation>
         ConversationType type,
         string? name,
         Id<UserProfileMarker> createdByUserId,
-        List<ParticipantUser> participants) : this(id, type, name, createdByUserId)
+        long lastMsgSequenceNum,
+        List<ParticipantUser> participants) : this(id, type, name, createdByUserId, lastMsgSequenceNum)
     {
         _participants = participants;
     }
@@ -42,7 +46,7 @@ public abstract class Conversation : AggregateRootBase<Conversation>
         Id<UserProfileMarker> createdByUserId,
         IEnumerable<Id<UserProfileMarker>> participantUserIds,
         string? name,
-        Func<Id<Conversation>, ConversationType, string?, Id<UserProfileMarker>, List<ParticipantUser>, TConversation> factory)
+        Func<Id<Conversation>, ConversationType, string?, Id<UserProfileMarker>, long, List<ParticipantUser>, TConversation> factory)
         where TConversation : Conversation
     {
         ArgumentNullException.ThrowIfNull(id);
@@ -52,7 +56,7 @@ public abstract class Conversation : AggregateRootBase<Conversation>
         var conversationId = id;
         var participants = BuildParticipants(participantUserIds, type, conversationId);
 
-        return factory(conversationId, type, name, createdByUserId, participants);
+        return factory(conversationId, type, name, createdByUserId, 0, participants);
     }
 
     protected static TConversation RestoreCore<TConversation>(
@@ -60,28 +64,94 @@ public abstract class Conversation : AggregateRootBase<Conversation>
         ConversationType type,
         string? name,
         Id<UserProfileMarker> createdByUserId,
+        long lastMsgSequenceNum,
         IEnumerable<ParticipantUser> participants,
-        Func<Id<Conversation>, ConversationType, string?, Id<UserProfileMarker>, List<ParticipantUser>, TConversation> factory)
+        Func<Id<Conversation>, ConversationType, string?, Id<UserProfileMarker>, long, List<ParticipantUser>, TConversation> factory)
         where TConversation : Conversation
     {
         ArgumentNullException.ThrowIfNull(factory);
 
-        return factory(id, type, name, createdByUserId, [.. participants]);
+        return factory(id, type, name, createdByUserId, lastMsgSequenceNum, [.. participants]);
     }
 
-    protected void AddParticipantCore(Id<UserProfileMarker> participantUserId, string? displayName, string? avatarUrl)
+    public void SetSequenceNumber(long sequenceNum)
     {
-        if (Type != ConversationType.Group)
-            throw new InvalidOperationException("Cannot add participants to a one-on-one conversation.");
+        if (sequenceNum < LastMsgSequenceNum)
+            throw new ArgumentException("Sequence number must be equal to or greater than the current last message sequence number.", nameof(sequenceNum));
 
+        LastMsgSequenceNum = sequenceNum;
+    }
+
+    public bool MarkParticipantAsRead(Id<UserProfileMarker> participantUserId)
+    {
         ArgumentNullException.ThrowIfNull(participantUserId);
 
-        if (_participants.Any(p => p.UserId == participantUserId))
-            throw new InvalidOperationException("User is already a participant in this conversation.");
+        var participant = _participants.FirstOrDefault(p => p.UserId == participantUserId)
+            ?? throw new InvalidOperationException("User is not a participant in this conversation.");
 
-        _participants.Add(ParticipantUser.Create(Id<ParticipantUser>.New(), Id, participantUserId, displayName, avatarUrl));
+        return participant.SetLastReadMessageSequenceNum(LastMsgSequenceNum);
+    }
 
-        AddDomainEvent(new ParticipantAddedDomainEvent(Id, participantUserId));
+    public bool HasParticipant(Id<UserProfileMarker> participantUserId)
+    {
+        ArgumentNullException.ThrowIfNull(participantUserId);
+
+        return _participants.Any(p => p.UserId == participantUserId);
+    }
+
+    public ParticipantUser? GetParticipant(Id<UserProfileMarker> participantUserId)
+    {
+        ArgumentNullException.ThrowIfNull(participantUserId);
+
+        return _participants.FirstOrDefault(p => p.UserId == participantUserId);
+    }
+
+    public bool UnhideParticipant(Id<UserProfileMarker> participantUserId)
+    {
+        var participant = GetParticipant(participantUserId)
+            ?? throw new InvalidOperationException("User is not a participant in this conversation.");
+
+        return participant.SetHidden(false);
+    }
+
+    public bool HideParticipant(Id<UserProfileMarker> participantUserId)
+    {
+        var participant = GetParticipant(participantUserId)
+            ?? throw new InvalidOperationException("User is not a participant in this conversation.");
+
+        return participant.SetHidden(true);
+    }
+
+    public bool MuteParticipant(Id<UserProfileMarker> participantUserId)
+    {
+        var participant = GetParticipant(participantUserId)
+            ?? throw new InvalidOperationException("User is not a participant in this conversation.");
+
+        return participant.SetMuted(true);
+    }
+
+    public bool UnmuteParticipant(Id<UserProfileMarker> participantUserId)
+    {
+        var participant = GetParticipant(participantUserId)
+            ?? throw new InvalidOperationException("User is not a participant in this conversation.");
+
+        return participant.SetMuted(false);
+    }
+
+    public void BlockParticipant(Id<UserProfileMarker> participantUserId)
+    {
+        var participant = GetParticipant(participantUserId)
+            ?? throw new InvalidOperationException("User is not a participant in this conversation.");
+
+        participant.Block();
+    }
+
+    public void UnblockParticipant(Id<UserProfileMarker> participantUserId)
+    {
+        var participant = GetParticipant(participantUserId)
+            ?? throw new InvalidOperationException("User is not a participant in this conversation.");
+
+        participant.Unblock();
     }
 
     private static void ValidateInvariants(ConversationType type, string? name, Id<UserProfileMarker> createdByUserId)

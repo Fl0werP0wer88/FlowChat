@@ -13,7 +13,7 @@ using UserProfileMarker = FlowChat.NotificationService.Domain.Entities.UserProfi
 namespace FlowChat.NotificationService.Application.Features.Notification.Commands.UserEmailVerificationRequested;
 
 public sealed class UserEmailVerificationRequestedCommandHandler
-    : AggregateRootInsertCommandHandlerBaseV2<UserEmailVerificationRequestedCommand, Unit, NotificationEntity>
+    : AggregateRootInsertCommandHandlerBaseV3<UserEmailVerificationRequestedCommand, Unit, NotificationEntity>
 {
     private readonly INotificationWriteRepository _notificationWriteRepository;
     private readonly INotificationSender _notificationSender;
@@ -66,6 +66,7 @@ public sealed class UserEmailVerificationRequestedCommandHandler
 
         _notification.MarkSent(sendResult.ProviderMessageId);
         await _notificationWriteRepository.AddAsync(_notification, cancellationToken);
+        SetInserted();
 
         return FlowChatResult<Unit>.Success(Unit.Value);
     }

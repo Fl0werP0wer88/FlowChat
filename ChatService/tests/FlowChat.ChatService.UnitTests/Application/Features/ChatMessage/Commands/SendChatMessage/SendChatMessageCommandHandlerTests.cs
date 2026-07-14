@@ -1,5 +1,6 @@
 using FlowChat.ChatService.Application.Contracts.Persistence;
 using FlowChat.ChatService.Application.Features.ChatMessage.Commands.SendChatMessage;
+using FlowChat.ChatService.Application.Features.Conversation.Dtos;
 using FlowChat.ChatService.Domain.Entities.ChatMessage.Events;
 using FlowChat.Core.Messaging;
 using FlowChat.Core.Results;
@@ -15,6 +16,7 @@ public sealed class SendChatMessageCommandHandlerTests
 {
     private readonly Mock<IChatMessageWriteRepository> _chatMessageRepositoryMock = new();
     private readonly Mock<IConversationParticipantReadRepository> _participantReadRepositoryMock = new();
+    private readonly Mock<IConversationWriteRepository> _conversationWriteRepositoryMock = new();
     private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
     private readonly Mock<ILocalEventDispatcher> _domainEventDispatcherMock = new();
     private readonly SendChatMessageCommandHandler _handler;
@@ -35,6 +37,7 @@ public sealed class SendChatMessageCommandHandlerTests
         _handler = new SendChatMessageCommandHandler(
             _chatMessageRepositoryMock.Object,
             _participantReadRepositoryMock.Object,
+            _conversationWriteRepositoryMock.Object,
             _unitOfWorkMock.Object,
             _domainEventDispatcherMock.Object,
             []);
@@ -43,11 +46,11 @@ public sealed class SendChatMessageCommandHandlerTests
     [Fact]
     public async Task Handle_ConversationNotFound_ReturnsNotFoundFailure()
     {
-        var command = new SendChatMessageCommand(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "Alice", "Hello");
+        var command = new SendChatMessageCommand(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "Hello");
 
         _participantReadRepositoryMock
-            .Setup(x => x.GetParticipantUserIdsAsync(command.ConversationId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync((IReadOnlyCollection<Guid>?)null);
+            .Setup(x => x.GetParticipantStatesAsync(command.ConversationId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((IReadOnlyCollection<ParticipantStateDto>?)null);
 
         var result = await _handler.Handle(command, CancellationToken.None);
 
@@ -66,11 +69,14 @@ public sealed class SendChatMessageCommandHandlerTests
         var otherUser1 = Guid.NewGuid();
         var otherUser2 = Guid.NewGuid();
         var conversationId = Guid.NewGuid();
-        var command = new SendChatMessageCommand(Guid.NewGuid(), conversationId, senderId, "Alice", "Hello");
+        var command = new SendChatMessageCommand(Guid.NewGuid(), conversationId, senderId, "Hello");
 
         _participantReadRepositoryMock
-            .Setup(x => x.GetParticipantUserIdsAsync(command.ConversationId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync([otherUser1, otherUser2]);
+            .Setup(x => x.GetParticipantStatesAsync(command.ConversationId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync([
+                new ParticipantStateDto(otherUser1, IsBlocked: false, IsHidden: false),
+                new ParticipantStateDto(otherUser2, IsBlocked: false, IsHidden: false)
+            ]);
 
         var result = await _handler.Handle(command, CancellationToken.None);
 
@@ -83,19 +89,47 @@ public sealed class SendChatMessageCommandHandlerTests
     }
 
     [Fact]
+    public async Task Handle_RecipientHasBlockedSender_ReturnsUnauthorizedFailure()
+    {
+        var senderId = Guid.NewGuid();
+        var recipientId = Guid.NewGuid();
+        var conversationId = Guid.NewGuid();
+        var command = new SendChatMessageCommand(Guid.NewGuid(), conversationId, senderId, "Hello");
+
+        _participantReadRepositoryMock
+            .Setup(x => x.GetParticipantStatesAsync(command.ConversationId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync([
+                new ParticipantStateDto(senderId, IsBlocked: false, IsHidden: false),
+                new ParticipantStateDto(recipientId, IsBlocked: true, IsHidden: false)
+            ]);
+
+        var result = await _handler.Handle(command, CancellationToken.None);
+
+        result.IsFailure.Should().BeTrue();
+        result.Error.ErrorType.Should().Be(ErrorType.Unauthorized);
+        result.Error.ErrorMessage.Should().Be("Recipient has blocked this conversation.");
+        _chatMessageRepositoryMock.Verify(
+            x => x.AddAsync(It.IsAny<ChatMessageAggregate>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Fact]
     public async Task Handle_ValidRequest_ReturnsSuccessAndDispatchesChatMessageSentEvent()
     {
         var senderId = Guid.NewGuid();
         var recipientId = Guid.NewGuid();
         var conversationId = Guid.NewGuid();
-        var command = new SendChatMessageCommand(Guid.NewGuid(), conversationId, senderId, "Alice", "Hello");
+        var command = new SendChatMessageCommand(Guid.NewGuid(), conversationId, senderId, "Hello");
 
         ChatMessageAggregate? persistedMessage = null;
         List<IDomainEvent> dispatchedEvents = [];
 
         _participantReadRepositoryMock
-            .Setup(x => x.GetParticipantUserIdsAsync(command.ConversationId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync([senderId, recipientId]);
+            .Setup(x => x.GetParticipantStatesAsync(command.ConversationId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync([
+                new ParticipantStateDto(senderId, IsBlocked: false, IsHidden: false),
+                new ParticipantStateDto(recipientId, IsBlocked: false, IsHidden: false)
+            ]);
 
         _chatMessageRepositoryMock
             .Setup(x => x.AddAsync(It.IsAny<ChatMessageAggregate>(), It.IsAny<CancellationToken>()))

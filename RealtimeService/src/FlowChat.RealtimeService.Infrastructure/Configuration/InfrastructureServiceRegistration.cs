@@ -1,7 +1,7 @@
 using FlowChat.RealtimeService.Application.Contracts.Infrastructure;
-using FlowChat.RealtimeService.Infrastructure.ChatService;
 using FlowChat.RealtimeService.Infrastructure.Configuration.Settings;
-using FlowChat.RealtimeService.Infrastructure.Presence;
+using FlowChat.RealtimeService.Infrastructure.InternalApis.ChatService;
+using FlowChat.RealtimeService.Infrastructure.InternalApis.PresenceService;
 using FlowChat.RealtimeService.Infrastructure.RealtimeConnections;
 using FlowChat.RealtimeService.Infrastructure.RealtimeConnections.ConnectionsTracker;
 using FlowChat.RealtimeService.Infrastructure.Routing;

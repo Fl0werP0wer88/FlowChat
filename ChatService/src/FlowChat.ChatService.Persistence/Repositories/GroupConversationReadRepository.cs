@@ -27,10 +27,9 @@ public sealed class GroupConversationReadRepository(AppDbContext dbContext) : Re
                 ConversationName = conversation.Name,
                 participant.UserId,
                 ParticipantDisplayName = participant.DisplayName,
-                ProfileFirstName = (string?) profile.FirstName,
-                ProfileLastName = (string?) profile.LastName,
-                ParticipantAvatarUrl = participant.AvatarUrl,
-                ProfileAvatarUrl = (string?) profile.AvatarUrl
+                ProfileFirstName = (string?)profile.FirstName,
+                ProfileLastName = (string?)profile.LastName,
+                ProfileAvatarUrl = (string?)profile.AvatarUrl
             })
             .ToListAsync(cancellationToken);
 
@@ -41,9 +40,7 @@ public sealed class GroupConversationReadRepository(AppDbContext dbContext) : Re
             string.IsNullOrEmpty(r.ParticipantDisplayName)
                 ? ComputeDisplayName(r.ProfileFirstName, r.ProfileLastName)
                 : r.ParticipantDisplayName,
-            string.IsNullOrEmpty(r.ParticipantAvatarUrl)
-                ? r.ProfileAvatarUrl
-                : r.ParticipantAvatarUrl))
+            r.ProfileAvatarUrl))
             .ToList();
 
         if (rows.Count == 0)
@@ -60,6 +57,7 @@ public sealed class GroupConversationReadRepository(AppDbContext dbContext) : Re
         Guid participantUserId,
         CancellationToken cancellationToken = default)
     {
+        //ToDo: Rozważyć przerzucenie tego do oddzielnego ReadModelu zamiast robić joiny. Będzie też można pozbyć się wtedy części indeksów.
         var activeParticipants = Active(dbContext.ParticipantUserReads);
 
         return await (
@@ -71,13 +69,15 @@ public sealed class GroupConversationReadRepository(AppDbContext dbContext) : Re
             select new GroupConversationSummaryDto(
                 conversation.Id,
                 conversation.Name!,
-                activeParticipants.Count(x => x.ConversationId == conversation.Id)))
+                activeParticipants.Count(x => x.ConversationId == conversation.Id),
+                participant.LastReadMessageSequenceNum,
+                conversation.LastMsgSequenceNum))
             .ToListAsync(cancellationToken);
     }
 
     private static string? ComputeDisplayName(string? firstName, string? lastName)
     {
-        var parts = ((string?[]) [firstName, lastName]).Where(p => !string.IsNullOrEmpty(p));
+        var parts = ((string?[])[firstName, lastName]).Where(p => !string.IsNullOrEmpty(p));
         var name = string.Join(" ", parts);
         return string.IsNullOrEmpty(name) ? null : name;
     }

@@ -28,19 +28,30 @@ public sealed class ParticipantUserConfiguration : IEntityTypeConfiguration<Part
         builder.Property(x => x.DisplayName)
             .HasMaxLength(256);
 
-        builder.Property(x => x.AvatarUrl)
-            .HasMaxLength(2048);
-
         builder.Property(x => x.IsBlocked)
+            .IsRequired();
+
+        builder.Property(x => x.IsMuted)
+            .IsRequired();
+
+        builder.Property(x => x.IsHidden)
             .IsRequired();
 
         builder.Property(x => x.JoinedAtUtc)
             .HasUtcDateTimeOffsetConversion()
             .IsRequired();
 
+        builder.Property(x => x.LastReadMessageSequenceNum)
+            .IsRequired();
+
         builder.Property<DateTimeOffset?>("DeletedAt");
 
         builder.HasIndex(x => new { x.ConversationId, x.UserId })
-            .IsUnique();
+            .IsUnique()
+            .HasFilter("\"DeletedAt\" IS NULL");
+
+        builder.HasIndex(x => new { x.UserId, x.ConversationId })
+            .IncludeProperties(x => x.LastReadMessageSequenceNum)
+            .HasFilter("\"DeletedAt\" IS NULL");
     }
 }

@@ -44,12 +44,6 @@ scrape_configs:
   #     - targets:
   #         - host.docker.internal:5054
   #
-  # - job_name: flowchat-socialgraphservice-api
-  #   metrics_path: /metrics
-  #   static_configs:
-  #     - targets:
-  #         - host.docker.internal:5094
-  #
   # - job_name: flowchat-notificationservice-api
   #   metrics_path: /metrics
   #   static_configs:

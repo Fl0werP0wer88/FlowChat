@@ -12,7 +12,7 @@ using UserProfileMarker = FlowChat.ChatService.Domain.Entities.UserProfiles.User
 namespace FlowChat.ChatService.Application.Features.Conversation.Commands.CreateDuetConversation;
 
 public sealed class CreateDuetConversationCommandHandler
-    : AggregateRootInsertCommandHandlerBaseV2<CreateDuetConversationCommand, DuetConversationDetailDto, DuetConversationAggregate>
+    : AggregateRootInsertCommandHandlerBaseV3<CreateDuetConversationCommand, DuetConversationDetailDto, DuetConversationAggregate>
 {
     private readonly IDuetConversationWriteRepository _duetConversationWriteRepository;
     private readonly IUserProfileProjectionReadRepository _profileReadRepository;
@@ -39,6 +39,7 @@ public sealed class CreateDuetConversationCommandHandler
             partnerUserId: Id<UserProfileMarker>.FromGuid(request.PartnerUserId));
 
         await _duetConversationWriteRepository.AddAsync(_newConversation, cancellationToken);
+        SetInserted();
 
         var participantUserIds = _newConversation.Participants.Select(p => p.UserId.Value).ToList();
         var profiles = await _profileReadRepository.GetByIdsAsync(participantUserIds, cancellationToken);
@@ -62,7 +63,7 @@ public sealed class CreateDuetConversationCommandHandler
         return new ConversationParticipantDto(
             participant.UserId.Value,
             string.IsNullOrEmpty(participant.DisplayName) ? profile?.DisplayName : participant.DisplayName,
-            string.IsNullOrEmpty(participant.AvatarUrl) ? profile?.AvatarUrl : participant.AvatarUrl,
+            profile?.AvatarUrl,
             participant.UserId.Value);
     }
 

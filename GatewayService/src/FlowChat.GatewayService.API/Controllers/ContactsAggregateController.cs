@@ -12,18 +12,15 @@ namespace FlowChat.GatewayService.Api.Controllers;
 [Route("api/aggregate")]
 public sealed class ContactsAggregateController : ApiControllerBase
 {
-    private readonly ISocialGraphServiceClient _socialGraphClient;
     private readonly IChatServiceClient _chatClient;
     private readonly IPresenceServiceClient _presenceClient;
     private readonly ILogger<ContactsAggregateController> _logger;
 
     public ContactsAggregateController(
-        ISocialGraphServiceClient socialGraphClient,
         IChatServiceClient chatClient,
         IPresenceServiceClient presenceClient,
         ILogger<ContactsAggregateController> logger)
     {
-        _socialGraphClient = socialGraphClient;
         _chatClient = chatClient;
         _presenceClient = presenceClient;
         _logger = logger;
@@ -39,30 +36,29 @@ public sealed class ContactsAggregateController : ApiControllerBase
             return Unauthorized();
         }
 
-        var contacts = await _socialGraphClient.GetContactsAsync(cancellationToken);
+        var contacts = await _chatClient.GetContactsForUserAsync(cancellationToken);
 
-        var partnerUserIds = contacts.Select(c => c.ContactUserId).ToList();
-
-        var conversationIds = partnerUserIds.Count > 0
-            ? await _chatClient.GetDuetConversationIdsAsync(partnerUserIds, cancellationToken)
-            : (IReadOnlyDictionary<Guid, Guid>)new Dictionary<Guid, Guid>();
+        var partnerUserIds = contacts.Select(c => c.PartnerUserId).ToList();
         var presenceStatuses = await GetPresenceStatusesOrDefaultAsync(partnerUserIds, cancellationToken);
 
         var result = contacts
             .Select(c => new ContactWithConversationDto(
-                c.Id,
-                c.ContactUserId,
+                c.PartnerUserId,
                 c.DisplayName,
-                c.FirstName,
-                c.LastName,
-                c.PhoneNumber,
+                c.AvatarUrl,
                 c.Email,
                 c.IsBlocked,
-                conversationIds.TryGetValue(c.ContactUserId, out var convId) ? convId : null,
-                presenceStatuses.TryGetValue(c.ContactUserId, out var presence)
+                c.IsBlockedByPartner,
+                c.IsMuted,
+                c.IsHidden,
+                c.ConversationId,
+                c.LastReadMsgSeqNum,
+                c.CurrentMsgSeqNum,
+                Math.Max(0, c.CurrentMsgSeqNum - c.LastReadMsgSeqNum),
+                presenceStatuses.TryGetValue(c.PartnerUserId, out var presence)
                     ? presence.Status
                     : PresenceStatus.Invisible,
-                presenceStatuses.TryGetValue(c.ContactUserId, out presence)
+                presenceStatuses.TryGetValue(c.PartnerUserId, out presence)
                     ? presence.ChangedAtUtc
                     : DateTimeOffset.MinValue))
             .ToList();

@@ -34,11 +34,10 @@ public sealed class PublishMessageController : ApiControllerBase
                 request.MessageId,
                 request.ConversationId,
                 request.SenderUserId,
-                request.SenderDisplayName,
                 request.Text,
+                request.SequenceNum,
                 request.SentAtUtc,
-                request.DeliveredAtUtc,
-                request.RecipientUserIds),
+                request.DeliveredAtUtc),
             cancellationToken);
 
         return result.IsSuccess

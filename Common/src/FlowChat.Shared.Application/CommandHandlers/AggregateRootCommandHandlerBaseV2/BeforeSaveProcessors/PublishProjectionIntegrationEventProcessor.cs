@@ -11,6 +11,7 @@ public class PublishProjectionIntegrationEventProcessor<TCommand, TAggregate, TT
 {
     private readonly IMapper _mapper;
     private readonly IOutboxIntegrationEventPublisher _integrationEventPublisher;
+    private TTargetReadModel? _beforeState;
 
     public PublishProjectionIntegrationEventProcessor(
         IMapper mapper,
@@ -21,14 +22,27 @@ public class PublishProjectionIntegrationEventProcessor<TCommand, TAggregate, TT
             ?? throw new ArgumentNullException(nameof(integrationEventPublisher));
     }
 
+    public void CaptureBeforeState(TAggregate aggregate)
+    {
+        _beforeState = _mapper.Map<TTargetReadModel>(aggregate);
+    }
+
     public async Task ProcessAsync(
         TCommand command,
         TAggregate aggregate,
-        AggregateState aggregateState,
+        MutationType mutationType,
         CancellationToken cancellationToken)
     {
-        var operationType = MapOperationType(aggregateState);
+        var operationType = MapOperationType(mutationType);
         var readModel = _mapper.Map<TTargetReadModel>(aggregate);
+
+        if (mutationType == MutationType.Updated
+            && _beforeState is not null
+            && _beforeState.Equals(readModel))
+        {
+            return;
+        }
+
         var integrationEvent = new ProjectionIntegrationEvent<TTargetReadModel>
         {
             SourceAggregateId = aggregate.Id.Value,
@@ -46,16 +60,16 @@ public class PublishProjectionIntegrationEventProcessor<TCommand, TAggregate, TT
         await _integrationEventPublisher.PublishAsync(envelope, cancellationToken);
     }
 
-    private static OperationType MapOperationType(AggregateState aggregateState)
+    private static OperationType MapOperationType(MutationType mutationType)
     {
-        return aggregateState switch
+        return mutationType switch
         {
-            AggregateState.Created => OperationType.Created,
-            AggregateState.Updated => OperationType.Updated,
-            AggregateState.Deleted => OperationType.Deleted,
-            AggregateState.Unchanged => throw new InvalidOperationException(
-                "Unchanged aggregate state must not be processed as a projection operation."),
-            _ => throw new ArgumentOutOfRangeException(nameof(aggregateState), aggregateState, null)
+            MutationType.Created => OperationType.Created,
+            MutationType.Updated => OperationType.Updated,
+            MutationType.Deleted => OperationType.Deleted,
+            MutationType.Unchanged => throw new InvalidOperationException(
+                "Unchanged mutation type must not be processed as a projection operation."),
+            _ => throw new ArgumentOutOfRangeException(nameof(mutationType), mutationType, null)
         };
     }
 }

@@ -21,7 +21,7 @@ public sealed class GetContactPresenceStatusesQueryHandler(
         CancellationToken cancellationToken)
     {
         var observedUserIds = await _contactObserverProjectionReadRepository
-            .GetObservedUserIdsAsync(request.ObserverUserId, cancellationToken);
+            .GetNonBlockedObservedUserIdsAsync(request.ObserverUserId, cancellationToken);
 
         if (observedUserIds.Count == 0)
         {

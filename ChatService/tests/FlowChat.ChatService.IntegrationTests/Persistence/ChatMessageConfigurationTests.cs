@@ -21,7 +21,6 @@ public sealed class ChatMessageConfigurationTests
             Id<ChatMessage>.New(),
             Id<Conversation>.New(),
             Guid.NewGuid(),
-            "Alice",
             "Hello",
             [Guid.NewGuid()]);
 

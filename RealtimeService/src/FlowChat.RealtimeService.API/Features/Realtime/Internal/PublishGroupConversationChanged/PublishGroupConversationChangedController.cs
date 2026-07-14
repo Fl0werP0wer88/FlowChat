@@ -34,8 +34,7 @@ public sealed class PublishGroupConversationChangedController : ApiControllerBas
                 request.ConversationId,
                 request.Type,
                 request.Name,
-                request.CreatedByUserId,
-                request.ParticipantUserIds),
+                request.CreatedByUserId),
             cancellationToken);
 
         return result.IsSuccess

@@ -7,4 +7,8 @@ public interface IRealtimeConnectionRegistry
     Task<RealtimeConnectionMutationResult?> UnregisterAsync(string connectionId, CancellationToken cancellationToken);
 
     Task RefreshAsync(IReadOnlyCollection<RealtimeConnectionRefreshEntry> connections, CancellationToken cancellationToken);
+
+    Task<IReadOnlyDictionary<Guid, IReadOnlyCollection<string>>> GetConnectionIdsByUserIdsAsync(
+        IReadOnlyCollection<Guid> userIds,
+        CancellationToken cancellationToken);
 }

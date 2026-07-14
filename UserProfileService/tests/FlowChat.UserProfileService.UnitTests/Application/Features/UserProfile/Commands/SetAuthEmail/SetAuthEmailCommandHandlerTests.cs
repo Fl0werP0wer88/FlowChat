@@ -38,7 +38,7 @@ public sealed class SetAuthEmailCommandHandlerTests
             .Setup(x => x.ProcessAsync(
                 It.IsAny<SetAuthEmailCommand>(),
                 It.IsAny<UserProfile>(),
-                It.IsAny<AggregateState>(),
+                It.IsAny<MutationType>(),
                 It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
@@ -84,7 +84,7 @@ public sealed class SetAuthEmailCommandHandlerTests
             x => x.ProcessAsync(
                 It.IsAny<SetAuthEmailCommand>(),
                 profile,
-                AggregateState.Updated,
+                MutationType.Updated,
                 It.IsAny<CancellationToken>()),
             Times.Once);
     }
@@ -112,7 +112,7 @@ public sealed class SetAuthEmailCommandHandlerTests
             x => x.ProcessAsync(
                 It.IsAny<SetAuthEmailCommand>(),
                 It.IsAny<UserProfile>(),
-                It.IsAny<AggregateState>(),
+                It.IsAny<MutationType>(),
                 It.IsAny<CancellationToken>()),
             Times.Never);
     }

@@ -10,7 +10,6 @@ public sealed class ChatMessage : AggregateRootBase<ChatMessage>
 {
     public Id<ConversationAggregate> ConversationId { get; private set; }
     public Id<UserProfileMarker> SenderUserId { get; private set; }
-    public string SenderDisplayName { get; private set; }
     public string Text { get; private set; }
     public UtcDateTimeOffset SentAtUtc { get; private set; } = UtcDateTimeOffset.UtcNow;
     public UtcDateTimeOffset? DeliveredAtUtc { get; private set; }
@@ -23,7 +22,6 @@ public sealed class ChatMessage : AggregateRootBase<ChatMessage>
         Id<ChatMessage> id,
         Id<ConversationAggregate> conversationId,
         Id<UserProfileMarker> senderUserId,
-        string senderDisplayName,
         string text,
         UtcDateTimeOffset sentAtUtc,
         Guid[] recipientUserIds) : base(id)
@@ -31,12 +29,10 @@ public sealed class ChatMessage : AggregateRootBase<ChatMessage>
         ArgumentNullException.ThrowIfNull(conversationId);
         ArgumentNullException.ThrowIfNull(senderUserId);
 
-        ArgumentException.ThrowIfNullOrWhiteSpace(senderDisplayName);
         ArgumentException.ThrowIfNullOrWhiteSpace(text);
 
         ConversationId = conversationId;
         SenderUserId = senderUserId;
-        SenderDisplayName = senderDisplayName.Trim();
         Text = text.Trim();
         SentAtUtc = sentAtUtc;
         _recipientUserIds = recipientUserIds;
@@ -46,7 +42,6 @@ public sealed class ChatMessage : AggregateRootBase<ChatMessage>
         Id<ChatMessage> id,
         Id<ConversationAggregate> conversationId,
         Id<UserProfileMarker> senderUserId,
-        string senderDisplayName,
         string text,
         IEnumerable<Id<UserProfileMarker>> recipientUserIds,
         UtcDateTimeOffset? sentAtUtc = null)
@@ -57,7 +52,6 @@ public sealed class ChatMessage : AggregateRootBase<ChatMessage>
             id,
             conversationId,
             senderUserId,
-            senderDisplayName,
             text,
             sentAtUtc ?? UtcDateTimeOffset.UtcNow,
             normalizedRecipientUserIds);
@@ -67,7 +61,6 @@ public sealed class ChatMessage : AggregateRootBase<ChatMessage>
                 chatMessage.Id,
                 chatMessage.ConversationId,
                 chatMessage.SenderUserId,
-                chatMessage.SenderDisplayName,
                 chatMessage.Text,
                 chatMessage.SentAtUtc,
                 chatMessage.RecipientUserIds));
@@ -75,14 +68,28 @@ public sealed class ChatMessage : AggregateRootBase<ChatMessage>
         return chatMessage;
     }
 
-    public void MarkAsDelivered(long sequenceNum, UtcDateTimeOffset deliveredAtUtc)
+    public void SetSequenceNumber(long sequenceNum)
     {
-        ArgumentNullException.ThrowIfNull(deliveredAtUtc);
-
         if (SequenceNum.HasValue)
             return;
 
+        if (sequenceNum <= 0)
+            throw new ArgumentException("Sequence number must be greater than zero.", nameof(sequenceNum));
+
         SequenceNum = sequenceNum;
+        AddDomainEvent(new ChatMessageSequencedDomainEvent(Id, ConversationId, sequenceNum));
+    }
+
+    public void MarkAsDelivered(UtcDateTimeOffset deliveredAtUtc)
+    {
+        ArgumentNullException.ThrowIfNull(deliveredAtUtc);
+
+        if (!SequenceNum.HasValue)
+            throw new InvalidOperationException("Sequence number must be set before marking a chat message as delivered.");
+
+        if (DeliveryStatus == DeliveryStatus.Delivered)
+            return;
+
         DeliveredAtUtc = deliveredAtUtc;
         DeliveryStatus = DeliveryStatus.Delivered;
     }

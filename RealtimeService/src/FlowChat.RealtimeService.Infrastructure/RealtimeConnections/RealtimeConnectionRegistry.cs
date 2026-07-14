@@ -68,6 +68,11 @@ internal sealed class RealtimeConnectionRegistry(
         }
     }
 
+    public Task<IReadOnlyDictionary<Guid, IReadOnlyCollection<string>>> GetConnectionIdsByUserIdsAsync(
+        IReadOnlyCollection<Guid> userIds,
+        CancellationToken cancellationToken) =>
+        _realtimeConnectionRedisRepository.GetConnectionIdsByUserIdsAsync(userIds, cancellationToken);
+
     public async Task RefreshAsync(IReadOnlyCollection<RealtimeConnectionRefreshEntry> connections, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -76,6 +81,7 @@ internal sealed class RealtimeConnectionRegistry(
             return;
         }
 
+        // These per-connection/per-user calls are fired concurrently and pipelined by StackExchange.Redis's multiplexer, so Task.WhenAll already avoids paying N sequential round-trips
         var activeConnections = connections
             .Where(static connection => connection.UserId != Guid.Empty && !string.IsNullOrWhiteSpace(connection.ConnectionId))
             .DistinctBy(static connection => connection.ConnectionId)

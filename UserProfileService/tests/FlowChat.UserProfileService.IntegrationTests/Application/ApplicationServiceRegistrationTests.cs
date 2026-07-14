@@ -1,5 +1,4 @@
 using FlowChat.Core.Messaging;
-using FlowChat.Core.Messaging.UserProfileService.ReadModels;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2.BeforeSaveProcessors;
 using FlowChat.UserProfileService.Application;
@@ -13,6 +12,7 @@ using FlowChat.UserProfileService.Application.Features.UserProfile.Commands.SetA
 using FlowChat.UserProfileService.Application.Features.UserProfile.Commands.SetMainEmail;
 using FlowChat.UserProfileService.Application.Features.UserProfile.Commands.SetMainPhone;
 using FlowChat.UserProfileService.Application.Features.UserProfile.Commands.UpdateProfile;
+using FlowChat.UserProfileService.Application.Features.UserProfile.Processors;
 using FlowChat.UserProfileService.Domain.Entities.EmailVerificationProcess;
 using Microsoft.Extensions.DependencyInjection;
 using DomainUserProfile = FlowChat.UserProfileService.Domain.Entities.UserProfile.UserProfile;
@@ -55,7 +55,6 @@ public sealed class ApplicationServiceRegistrationTests
             .ContainSingle()
             .Subject;
 
-        processors.Should().BeOfType<
-            PublishProjectionIntegrationEventProcessor<TCommand, DomainUserProfile, UserProfileReadModel>>();
+        processors.Should().BeOfType<UserProfileProjectionProcessor<TCommand>>();
     }
 }

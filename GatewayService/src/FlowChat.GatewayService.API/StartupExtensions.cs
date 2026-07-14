@@ -23,6 +23,9 @@ public static class StartupExtensions
         builder.Services.Configure<AspNetCoreTraceInstrumentationOptions>(GatewayTraceEnrichment.Configure);
 
         builder.Services.AddSettingsSections(builder.Configuration, typeof(StartupExtensions).Assembly);
+        builder.Services.AddAutoMapper(
+            (Action<AutoMapper.IMapperConfigurationExpression>?)null,
+            typeof(StartupExtensions).Assembly);
 
         var clientSettings = builder.Configuration.GetSection(new GatewayClientSettingsSection().SectionName)
             .Get<GatewayClientSettingsSection>() ?? new GatewayClientSettingsSection();
@@ -96,11 +99,6 @@ public static class StartupExtensions
 
         builder.Services.AddHttpContextAccessor();
         builder.Services.AddTransient<BearerTokenForwardingHandler>();
-
-        builder.Services
-            .AddFlowChatHttpClient<ISocialGraphServiceClient, SocialGraphServiceClient>((_, client) =>
-                client.BaseAddress = new Uri(servicesSettings.SocialGraphServiceBaseUrl))
-            .AddHttpMessageHandler<BearerTokenForwardingHandler>();
 
         builder.Services
             .AddFlowChatHttpClient<IChatServiceClient, ChatServiceClient>((_, client) =>

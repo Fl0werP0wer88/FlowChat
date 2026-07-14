@@ -9,11 +9,9 @@ function Get-ConsumerGroupDefinitions {
     "realtime-service",
     "realtime-service-retry",
     "presence-service",
-    "presence-service-social-graph-contact-retry",
+    "presence-service-duet-conversation-contact-retry",
     "presence-service-realtime-connection",
     "presence-service-realtime-connection-retry",
-    "socialgraph-service",
-    "socialgraph-service-retry",
     "userprofile-service",
     "userprofile-service-retry"
   )

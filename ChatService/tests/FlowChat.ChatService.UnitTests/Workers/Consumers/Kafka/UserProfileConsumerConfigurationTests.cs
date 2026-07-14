@@ -77,9 +77,9 @@ public sealed class UserProfileConsumerConfigurationTests
         consumerOptions.Should().NotBeNull();
         consumerOptions!.GroupId.Should().Be("chat-service");
         consumerOptions.RetryGroupId.Should().Be("chat-service-retry");
-        consumerOptions.Topic.Should().Be("dev.flowchat.user-profile.user-profile.v1");
-        consumerOptions.RetryTopic.Should().Be("dev.flowchat.user-profile.user-profile.v1.chat-service.retry");
-        consumerOptions.DeadLetterTopic.Should().Be("dev.flowchat.user-profile.user-profile.v1.chat-service.dlq");
+        consumerOptions.Topic.Should().Be("dev.flowchat.user-profile.user-profile-projection.v1");
+        consumerOptions.RetryTopic.Should().Be("dev.flowchat.user-profile.user-profile-projection.v1.chat-service.retry");
+        consumerOptions.DeadLetterTopic.Should().Be("dev.flowchat.user-profile.user-profile-projection.v1.chat-service.dlq");
     }
 
     private static IConfiguration CreateConfiguration()
@@ -91,9 +91,9 @@ public sealed class UserProfileConsumerConfigurationTests
                 ["Kafka:UserProfileConsumer:BootstrapServers"] = "localhost:9092",
                 ["Kafka:UserProfileConsumer:GroupId"] = "chat-service",
                 ["Kafka:UserProfileConsumer:RetryGroupId"] = "chat-service-retry",
-                ["Kafka:UserProfileConsumer:Topic"] = "dev.flowchat.user-profile.user-profile.v1",
-                ["Kafka:UserProfileConsumer:RetryTopic"] = "dev.flowchat.user-profile.user-profile.v1.chat-service.retry",
-                ["Kafka:UserProfileConsumer:DeadLetterTopic"] = "dev.flowchat.user-profile.user-profile.v1.chat-service.dlq",
+                ["Kafka:UserProfileConsumer:Topic"] = "dev.flowchat.user-profile.user-profile-projection.v1",
+                ["Kafka:UserProfileConsumer:RetryTopic"] = "dev.flowchat.user-profile.user-profile-projection.v1.chat-service.retry",
+                ["Kafka:UserProfileConsumer:DeadLetterTopic"] = "dev.flowchat.user-profile.user-profile-projection.v1.chat-service.dlq",
                 ["Kafka:UserProfileConsumer:MaxRetryCount"] = "5",
                 ["Kafka:UserProfileConsumer:RetryBaseDelaySeconds"] = "5",
                 ["Kafka:UserProfileConsumer:RetryMaxDelaySeconds"] = "300",

@@ -2,58 +2,114 @@
 [CmdletBinding(SupportsShouldProcess = $true, ConfirmImpact = 'Medium')]
 param(
     [string]$RootPath,
-    [string[]]$ExcludePathPattern = @(
-        '.git',
-        '.vs',
-        '.idea',
-        '.vscode',
-        '.claude',
-        '.codex',
-        'artifacts',
-        '*\artifacts',
-        'bin',
-        '*\bin',
-        'obj',
-        '*\obj',
-        'node_modules',
-        '*\node_modules',
-        'dist',
-        '*\dist',
-        'coverage',
-        '*\coverage',
-        '.next',
-        '*\.next',
-        '.nuxt',
-        '*\.nuxt',
-        '.svelte-kit',
-        '*\.svelte-kit',
-        '.angular',
-        '*\.angular',
-        '.turbo',
-        '*\.turbo',
-        '.pnpm-store',
-        '*\.pnpm-store',
-        '.yarn',
-        '*\.yarn',
-        '.cache',
-        '*\.cache',
-        '.parcel-cache',
-        '*\.parcel-cache',
-        '.vite',
-        '*\.vite',
-        '.vite-temp',
-        '*\.vite-temp',
-        'publish',
-        '*\publish',
-        'TestResults',
-        '*\TestResults',
-        'ApplicationEvents',
-        '*\ApplicationEvents'
-    )
+    [string]$GitignorePath,
+    [string[]]$ExcludePathPattern,
+    [switch]$NoGitignore
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
+
+# Patterns that are not represented in .gitignore but should still be treated as
+# "not eligible for empty-directory cleanup" (editor/tooling dirs kept under source
+# control, or directories the architecture rules require to exist even when empty).
+$script:AlwaysExcludePathPattern = @(
+    '.git',
+    '.vscode',
+    'coverage',
+    '*\coverage',
+    '.next',
+    '*\.next',
+    '.nuxt',
+    '*\.nuxt',
+    '.svelte-kit',
+    '*\.svelte-kit',
+    '.angular',
+    '*\.angular',
+    '.turbo',
+    '*\.turbo',
+    '.pnpm-store',
+    '*\.pnpm-store',
+    '.yarn',
+    '*\.yarn',
+    '.cache',
+    '*\.cache',
+    '.parcel-cache',
+    '*\.parcel-cache',
+    '.vite',
+    '*\.vite',
+    '.vite-temp',
+    '*\.vite-temp',
+    'publish',
+    '*\publish',
+    'ApplicationEvents',
+    '*\ApplicationEvents'
+)
+
+function Convert-GitIgnoreLineToPatterns {
+    param(
+        [Parameter(Mandatory = $true)]
+        [AllowEmptyString()]
+        [string]$Line
+    )
+
+    $trimmedLine = $Line.TrimEnd()
+
+    if ([string]::IsNullOrWhiteSpace($trimmedLine) -or $trimmedLine.StartsWith('#') -or $trimmedLine.StartsWith('!')) {
+        return @()
+    }
+
+    $trimmedLine = $trimmedLine.Trim()
+    $matchesAnyDepth = $false
+
+    if ($trimmedLine.StartsWith('**/')) {
+        $trimmedLine = $trimmedLine.Substring(3)
+        $matchesAnyDepth = $true
+    }
+    elseif ($trimmedLine.StartsWith('/')) {
+        $trimmedLine = $trimmedLine.Substring(1)
+    }
+    else {
+        # A slash anywhere but the end anchors the pattern to the .gitignore's
+        # directory (per gitignore rules); no interior slash means "any depth".
+        $matchesAnyDepth = -not $trimmedLine.TrimEnd('/').Contains('/')
+    }
+
+    $trimmedLine = $trimmedLine.TrimEnd('/')
+
+    if ([string]::IsNullOrWhiteSpace($trimmedLine)) {
+        return @()
+    }
+
+    $windowsPattern = $trimmedLine.Replace('/', '\')
+
+    if ($matchesAnyDepth) {
+        return @($windowsPattern, "*\$windowsPattern")
+    }
+
+    return @($windowsPattern)
+}
+
+function Get-ExcludePatternsFromGitignore {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$GitignoreFilePath
+    )
+
+    $patterns = [System.Collections.Generic.List[string]]::new()
+
+    if (-not (Test-Path -LiteralPath $GitignoreFilePath -PathType Leaf)) {
+        return $patterns
+    }
+
+    foreach ($line in Get-Content -LiteralPath $GitignoreFilePath) {
+        foreach ($pattern in (Convert-GitIgnoreLineToPatterns -Line $line)) {
+            $patterns.Add($pattern)
+        }
+    }
+
+    return $patterns
+}
 
 function Normalize-PathString {
     param(
@@ -192,6 +248,30 @@ function Get-DirectoryTreePostOrder {
 
 $resolvedRootPath = Normalize-PathString -Path (Resolve-Path -LiteralPath $RootPath).Path
 $removedDirectories = [System.Collections.Generic.List[string]]::new()
+
+if (-not $PSBoundParameters.ContainsKey('ExcludePathPattern')) {
+    $effectiveExcludePathPattern = [System.Collections.Generic.List[string]]::new()
+    $effectiveExcludePathPattern.AddRange([string[]]$script:AlwaysExcludePathPattern)
+
+    if (-not $NoGitignore) {
+        if ([string]::IsNullOrWhiteSpace($GitignorePath)) {
+            $GitignorePath = Join-Path $resolvedRootPath '.gitignore'
+        }
+
+        $gitignorePatterns = Get-ExcludePatternsFromGitignore -GitignoreFilePath $GitignorePath
+        $effectiveExcludePathPattern.AddRange([string[]]$gitignorePatterns)
+
+        if ($gitignorePatterns.Count -gt 0) {
+            Write-Host "Loaded $($gitignorePatterns.Count) exclude pattern(s) from: $GitignorePath"
+        }
+        else {
+            Write-Host "No .gitignore patterns found at: $GitignorePath"
+        }
+    }
+
+    $ExcludePathPattern = $effectiveExcludePathPattern | Select-Object -Unique
+}
+
 $normalizedExcludePathPattern = @(
     $ExcludePathPattern | ForEach-Object { Normalize-RelativePath $_ }
 )

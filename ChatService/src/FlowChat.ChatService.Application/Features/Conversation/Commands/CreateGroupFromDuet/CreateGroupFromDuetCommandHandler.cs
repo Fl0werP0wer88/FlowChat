@@ -14,7 +14,7 @@ using UserProfileMarker = FlowChat.ChatService.Domain.Entities.UserProfiles.User
 namespace FlowChat.ChatService.Application.Features.Conversation.Commands.CreateGroupFromDuet;
 
 public sealed class CreateGroupFromDuetCommandHandler
-    : AggregateRootInsertCommandHandlerBaseV2<CreateGroupFromDuetCommand, GroupConversationDetailDto, GroupConversationAggregate>
+    : AggregateRootInsertCommandHandlerBaseV3<CreateGroupFromDuetCommand, GroupConversationDetailDto, GroupConversationAggregate>
 {
     private readonly IDuetConversationReadRepository _duetReadRepository;
     private readonly IGroupConversationWriteRepository _groupWriteRepository;
@@ -68,6 +68,7 @@ public sealed class CreateGroupFromDuetCommandHandler
             $"{user1Name}/{user2Name}");
 
         await _groupWriteRepository.AddAsync(_conversation, cancellationToken);
+        SetInserted();
 
         var participantUserIds = _conversation.Participants.Select(p => p.UserId.Value).ToList();
         var profiles = await _profileReadRepository.GetByIdsAsync(participantUserIds, cancellationToken);
@@ -94,7 +95,7 @@ public sealed class CreateGroupFromDuetCommandHandler
         return new ConversationParticipantDto(
             participant.UserId.Value,
             string.IsNullOrEmpty(participant.DisplayName) ? profile?.DisplayName : participant.DisplayName,
-            string.IsNullOrEmpty(participant.AvatarUrl) ? profile?.AvatarUrl : participant.AvatarUrl,
+            profile?.AvatarUrl,
             participant.UserId.Value);
     }
 }

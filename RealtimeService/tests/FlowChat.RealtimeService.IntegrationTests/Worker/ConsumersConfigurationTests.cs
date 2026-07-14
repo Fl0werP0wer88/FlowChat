@@ -1,13 +1,20 @@
 using FlowChat.RealtimeService.Consumers;
 using FlowChat.RealtimeService.Consumers.Kafka;
 using FlowChat.RealtimeService.Application.Contracts.Infrastructure;
+using FlowChat.RealtimeService.Application.Contracts.Persistence;
+using FlowChat.RealtimeService.Application.Features.Conversation.Commands.RouteGroupConversationChanged;
+using FlowChat.RealtimeService.Application.Features.Conversation.Commands.RouteGroupConversationParticipantsAdded;
+using FlowChat.RealtimeService.Application.Features.Conversation.Commands.RouteGroupConversationParticipantsRemoved;
 using FlowChat.RealtimeService.Consumers.Configuration.Settings;
+using FlowChat.RealtimeService.Infrastructure.Configuration.Settings;
 using FlowChat.RealtimeService.Infrastructure.Routing;
+using FlowChat.Core.Results;
 using FlowChat.RealtimeService.Redis.RealtimeConnections;
 using FluentAssertions;
 using MediatR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Silverback.Messaging.Broker;
 using StackExchange.Redis;
 
@@ -24,31 +31,51 @@ public sealed class ConsumersConfigurationTests
         services.AddSingleton<IConfiguration>(configuration);
         services.AddOptions();
         services.AddLogging();
+        services.AddSingleton(Mock.Of<IHostApplicationLifetime>());
         services.AddSingleton(Mock.Of<IConnectionMultiplexer>());
         services.AddConsumers(configuration);
 
-        await using var serviceProvider = services.BuildServiceProvider();
+        await using var serviceProvider = services.BuildServiceProvider(new ServiceProviderOptions
+        {
+            ValidateOnBuild = true,
+            ValidateScopes = true
+        });
         await using var scope = serviceProvider.CreateAsyncScope();
 
         var consumerCollection = serviceProvider.GetRequiredService<IConsumerCollection>();
         var chatSubscriber = scope.ServiceProvider.GetRequiredService<ChatMessageSentSubscriber>();
         var presenceSubscriber = scope.ServiceProvider.GetRequiredService<UserPresenceChangedSubscriber>();
         var conversationSubscriber = scope.ServiceProvider.GetRequiredService<GroupConversationChangedSubscriber>();
+        var participantsAddedSubscriber = scope.ServiceProvider.GetRequiredService<GroupConversationParticipantsAddedSubscriber>();
+        var participantsRemovedSubscriber = scope.ServiceProvider.GetRequiredService<GroupConversationParticipantsRemovedSubscriber>();
         var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
         var eventRouter = scope.ServiceProvider.GetRequiredService<IRealtimeEventRouter>();
         var routingReader = scope.ServiceProvider.GetRequiredService<IUserInstanceRoutingReader>();
         var realtimeInstanceInternalApiClient = scope.ServiceProvider.GetRequiredService<IRealtimeInstanceInternalApiClient>();
         var chatServiceInternalApiClient = scope.ServiceProvider.GetRequiredService<IChatServiceInternalApiClient>();
+        var groupMembershipRepository = scope.ServiceProvider.GetRequiredService<IRealtimeGroupMembershipReadModelRepository>();
+        var groupConversationChangedHandler = scope.ServiceProvider
+            .GetRequiredService<IRequestHandler<RouteGroupConversationChangedCommand, FlowChatResult<Unit>>>();
+        var groupConversationParticipantsAddedHandler = scope.ServiceProvider
+            .GetRequiredService<IRequestHandler<RouteGroupConversationParticipantsAddedCommand, FlowChatResult<Unit>>>();
+        var groupConversationParticipantsRemovedHandler = scope.ServiceProvider
+            .GetRequiredService<IRequestHandler<RouteGroupConversationParticipantsRemovedCommand, FlowChatResult<Unit>>>();
 
         consumerCollection.Should().NotBeNull();
         chatSubscriber.Should().NotBeNull();
         presenceSubscriber.Should().NotBeNull();
         conversationSubscriber.Should().NotBeNull();
+        participantsAddedSubscriber.Should().NotBeNull();
+        participantsRemovedSubscriber.Should().NotBeNull();
         mediator.Should().NotBeNull();
         eventRouter.Should().BeOfType<WorkerRealtimeEventRouter>();
         routingReader.Should().NotBeNull();
         realtimeInstanceInternalApiClient.Should().NotBeNull();
         chatServiceInternalApiClient.Should().NotBeNull();
+        groupMembershipRepository.Should().NotBeNull();
+        groupConversationChangedHandler.Should().NotBeNull();
+        groupConversationParticipantsAddedHandler.Should().NotBeNull();
+        groupConversationParticipantsRemovedHandler.Should().NotBeNull();
     }
 
     [Fact]
@@ -111,6 +138,27 @@ public sealed class ConsumersConfigurationTests
         conversationOptions.DeadLetterTopic.Should().Be("dev.flowchat.chat.group-conversation.v1.realtime-service.dlq");
     }
 
+    [Fact]
+    public void DevelopmentAppSettings_UseChatServiceInternalApiKey()
+    {
+        var realtimeConsumersConfiguration = new ConfigurationBuilder()
+            .AddJsonFile(GetRepositoryPath("RealtimeService/src/Workers/FlowChat.RealtimeService.Consumers/appsettings.json"))
+            .AddJsonFile(GetRepositoryPath("RealtimeService/src/Workers/FlowChat.RealtimeService.Consumers/appsettings.Development.json"))
+            .Build();
+        var chatServiceApiConfiguration = new ConfigurationBuilder()
+            .AddJsonFile(GetRepositoryPath("ChatService/src/FlowChat.ChatService.API/appsettings.json"))
+            .AddJsonFile(GetRepositoryPath("ChatService/src/FlowChat.ChatService.API/appsettings.Development.json"))
+            .Build();
+
+        var realtimeChatServiceOptions = realtimeConsumersConfiguration
+            .GetSection(new ChatServiceSettingsSection().SectionName)
+            .Get<ChatServiceSettingsSection>();
+        var chatServiceInternalApiKey = chatServiceApiConfiguration["FlowChat:InternalApi:ApiKey"];
+
+        realtimeChatServiceOptions.Should().NotBeNull();
+        realtimeChatServiceOptions!.ApiKey.Should().Be(chatServiceInternalApiKey);
+    }
+
     private static IConfiguration CreateConfiguration()
     {
         return new ConfigurationBuilder()
@@ -118,6 +166,7 @@ public sealed class ConsumersConfigurationTests
             {
                 ["FlowChat:InternalApi:ApiKey"] = "internal-key",
                 ["ConnectionStrings:Redis"] = "localhost:6379,password=secret",
+                ["ConnectionStrings:RealtimeDb"] = "Host=localhost;Port=5432;Database=flowchat_realtime_db;Username=flowchat_app;Password=flowchat_app_pw;",
                 ["RealtimeConnections:InstanceId"] = "realtime-consumers",
                 ["RealtimeApi:Instances:realtime-api"] = "http://localhost:5215",
                 ["ChatServiceApi:BaseUrl"] = "http://localhost:5254",

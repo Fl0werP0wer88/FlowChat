@@ -79,7 +79,6 @@ public sealed class ChatMessageReadRepository(AppDbContext dbContext) : ReadRepo
             message.Id,
             message.ConversationId,
             message.SenderUserId,
-            message.SenderDisplayName,
             message.Text,
             message.SentAtUtc);
 }

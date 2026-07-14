@@ -22,10 +22,9 @@ public sealed class PublishGroupConversationChangedCommandHandlerTests
     }
 
     [Fact]
-    public async Task Handle_NormalizesParticipantsAndDispatches()
+    public async Task Handle_Dispatches()
     {
         GroupConversationChangedParam? capturedNotification = null;
-        var participantUserId = _fixture.Create<Guid>();
 
         _dispatcherMock
             .Setup(x => x.GroupConversationChangedAsync(It.IsAny<GroupConversationChangedParam>(), It.IsAny<CancellationToken>()))
@@ -37,13 +36,11 @@ public sealed class PublishGroupConversationChangedCommandHandlerTests
                 _fixture.Create<Guid>(),
                 2,
                 " Dev Team ",
-                _fixture.Create<Guid>(),
-                [participantUserId, participantUserId, Guid.Empty]),
+                _fixture.Create<Guid>()),
             CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
         capturedNotification.Should().NotBeNull();
         capturedNotification!.Name.Should().Be(" Dev Team ");
-        capturedNotification.ParticipantUserIds.Should().ContainSingle().Which.Should().Be(participantUserId);
     }
 }

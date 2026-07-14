@@ -7,9 +7,8 @@ public sealed record PublishMessageCommand(
     Guid MessageId,
     Guid ConversationId,
     Guid SenderUserId,
-    string? SenderDisplayName,
     string? Text,
+    long SequenceNum,
     DateTimeOffset SentAtUtc,
-    DateTimeOffset DeliveredAtUtc,
-    IReadOnlyCollection<Guid> RecipientUserIds) : ICommand<Unit>;
+    DateTimeOffset DeliveredAtUtc) : ICommand<Unit>;
 

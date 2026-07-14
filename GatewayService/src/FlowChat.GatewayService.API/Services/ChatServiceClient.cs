@@ -10,9 +10,7 @@ internal sealed class ChatServiceClient(HttpClient httpClient)
 
     private sealed record CreateDuetConversationClientRequest(Guid PartnerUserId);
 
-    private sealed record DuetConversationIdsClientRequest(IReadOnlyList<Guid> PartnerUserIds);
-
-    private sealed record DuetConversationIdsClientResponse(IReadOnlyDictionary<Guid, Guid> ConversationIds);
+    private sealed record ContactsClientResponse(IReadOnlyList<ContactClientDto> Contacts);
 
     protected override string ClientDisplayName => "Chat Service";
 
@@ -48,17 +46,11 @@ internal sealed class ChatServiceClient(HttpClient httpClient)
         return response ?? throw new InvalidOperationException("Chat Service returned an empty duet conversation response.");
     }
 
-    public async Task<IReadOnlyDictionary<Guid, Guid>> GetDuetConversationIdsAsync(
-        IReadOnlyList<Guid> partnerUserIds,
-        CancellationToken cancellationToken)
+    public async Task<IReadOnlyList<ContactClientDto>> GetContactsForUserAsync(CancellationToken cancellationToken)
     {
-        using var request = new HttpRequestMessage(HttpMethod.Post, "api/conversations/duet/batch")
-        {
-            Content = JsonContent.Create(new DuetConversationIdsClientRequest(partnerUserIds))
-        };
-
-        var response = await SendAsync<DuetConversationIdsClientResponse>(request, cancellationToken);
-        return response?.ConversationIds ?? new Dictionary<Guid, Guid>();
+        using var request = new HttpRequestMessage(HttpMethod.Get, "api/conversations/contacts");
+        var response = await SendAsync<ContactsClientResponse>(request, cancellationToken);
+        return response?.Contacts ?? [];
     }
 
     public async Task<GroupConversationClientDto?> GetGroupConversationAsync(

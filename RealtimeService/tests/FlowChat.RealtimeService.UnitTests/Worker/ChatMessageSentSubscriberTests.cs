@@ -52,7 +52,6 @@ public sealed class ChatMessageSentSubscriberTests
                 MessageId = messageId,
                 ConversationId = conversationId,
                 SenderUserId = senderUserId,
-                SenderDisplayName = " Jane Doe ",
                 Text = " Hi there ",
                 SentAtUtc = sentAtUtc,
                 RecipientUserIds = [recipientUserId, recipientUserId, Guid.Empty]
@@ -63,7 +62,6 @@ public sealed class ChatMessageSentSubscriberTests
         capturedCommand!.MessageId.Should().Be(messageId);
         capturedCommand.ConversationId.Should().Be(conversationId);
         capturedCommand.SenderUserId.Should().Be(senderUserId);
-        capturedCommand.SenderDisplayName.Should().Be("Jane Doe");
         capturedCommand.Text.Should().Be("Hi there");
         capturedCommand.SentAtUtc.Should().Be(sentAtUtc);
         capturedCommand.RecipientUserIds.Should().ContainSingle().Which.Should().Be(recipientUserId);
@@ -108,20 +106,6 @@ public sealed class ChatMessageSentSubscriberTests
 
         await act.Should().ThrowAsync<NonTransientException>()
             .WithMessage("*SenderUserId*");
-        VerifyCommandWasSent();
-    }
-
-    [Fact]
-    public async Task HandleAsync_WhenSenderDisplayNameMissing_ThrowsNonTransientException()
-    {
-        SetupCommandFailure("SenderDisplayName is required.");
-
-        var act = () => _subscriber.HandleAsync(
-            CreateValidEvent(senderDisplayName: " ").ToInboundEnvelope(),
-            CancellationToken.None);
-
-        await act.Should().ThrowAsync<NonTransientException>()
-            .WithMessage("*SenderDisplayName*");
         VerifyCommandWasSent();
     }
 
@@ -172,7 +156,6 @@ public sealed class ChatMessageSentSubscriberTests
         Guid? messageId = null,
         Guid? conversationId = null,
         Guid? senderUserId = null,
-        string senderDisplayName = "Jane Doe",
         string text = "Hi there",
         IReadOnlyCollection<Guid>? recipientUserIds = null) =>
         new()
@@ -180,7 +163,6 @@ public sealed class ChatMessageSentSubscriberTests
             MessageId = messageId ?? _fixture.Create<Guid>(),
             ConversationId = conversationId ?? _fixture.Create<Guid>(),
             SenderUserId = senderUserId ?? _fixture.Create<Guid>(),
-            SenderDisplayName = senderDisplayName,
             Text = text,
             SentAtUtc = DateTimeOffset.UtcNow,
             RecipientUserIds = (recipientUserIds ?? [_fixture.Create<Guid>()]).ToList()

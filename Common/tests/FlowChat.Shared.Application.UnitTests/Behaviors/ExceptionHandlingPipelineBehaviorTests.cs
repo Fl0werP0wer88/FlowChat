@@ -113,7 +113,54 @@ public sealed class ExceptionHandlingPipelineBehaviorTests
     }
 
     [Fact]
-    public async Task Handle_WhenOperationCanceledExceptionIsThrown_ReturnsBadRequestFailure()
+    public async Task Handle_WhenNonTransientExceptionIsThrown_ReturnsNonTransientUnexpectedFailure()
+    {
+        var behavior = new ExceptionHandlingPipelineBehavior<TestRequest, FlowChatResult<Guid>>();
+        var exception = new NonTransientException("The message cannot be processed.");
+        using var activity = new Activity("test").Start();
+
+        var result = await behavior.Handle(
+            new TestRequest(),
+            _ => Task.FromException<FlowChatResult<Guid>>(exception),
+            CancellationToken.None);
+
+        result.IsFailure.Should().BeTrue();
+        result.Error.ErrorType.Should().Be(ErrorType.Unexpected);
+        result.Error.ErrorMessage.Should().Be(exception.Message);
+        result.Error.FailureKind.Should().Be(FailureKind.None);
+
+        activity.Status.Should().Be(ActivityStatusCode.Error);
+        activity.StatusDescription.Should().Be("non_transient_failure");
+        activity.GetTagItem("error.type").Should().Be("non_transient");
+        activity.Events.Should().Contain(x => x.Name == "exception");
+    }
+
+    [Fact]
+    public async Task Handle_WhenResultExceptionIsThrown_ReturnsOriginalFailure()
+    {
+        var behavior = new ExceptionHandlingPipelineBehavior<TestRequest, FlowChatResult<Guid>>();
+        var domainError = DomainError.NotFound("Aggregate was not found.", FailureKind.Isolable);
+        var exception = new ResultException(FlowChatResult.Failure(domainError));
+        using var activity = new Activity("test").Start();
+
+        var result = await behavior.Handle(
+            new TestRequest(),
+            _ => Task.FromException<FlowChatResult<Guid>>(exception),
+            CancellationToken.None);
+
+        result.IsFailure.Should().BeTrue();
+        result.Error.ErrorType.Should().Be(ErrorType.NotFound);
+        result.Error.ErrorMessage.Should().Be(domainError.ErrorMessage);
+        result.Error.FailureKind.Should().Be(FailureKind.Isolable);
+
+        activity.Status.Should().Be(ActivityStatusCode.Error);
+        activity.StatusDescription.Should().Be("result_failure");
+        activity.GetTagItem("error.type").Should().Be("result");
+        activity.Events.Should().Contain(x => x.Name == "exception");
+    }
+
+    [Fact]
+    public async Task Handle_WhenOperationCanceledExceptionIsThrown_ReturnsOperationCanceledFailure()
     {
         var behavior = new ExceptionHandlingPipelineBehavior<TestRequest, FlowChatResult<Guid>>();
         var exception = new OperationCanceledException("The request timed out.");
@@ -125,7 +172,7 @@ public sealed class ExceptionHandlingPipelineBehaviorTests
             CancellationToken.None);
 
         result.IsFailure.Should().BeTrue();
-        result.Error.ErrorType.Should().Be(ErrorType.BadRequest);
+        result.Error.ErrorType.Should().Be(ErrorType.OperationCanceled);
         result.Error.ErrorMessage.Should().Be("The request was canceled.");
 
         activity.Status.Should().Be(ActivityStatusCode.Error);
@@ -134,7 +181,26 @@ public sealed class ExceptionHandlingPipelineBehaviorTests
         activity.Events.Should().Contain(x => x.Name == "exception");
     }
 
+    [Fact]
+    public async Task Handle_WhenNonGenericFlowChatResultFails_ReturnsFailureWithoutValue()
+    {
+        var behavior = new ExceptionHandlingPipelineBehavior<NonGenericTestRequest, FlowChatResult>();
+        var exception = new FlowChatException("Invalid request.");
+
+        var result = await behavior.Handle(
+            new NonGenericTestRequest(),
+            _ => Task.FromException<FlowChatResult>(exception),
+            CancellationToken.None);
+
+        result.IsFailure.Should().BeTrue();
+        result.Error.ErrorType.Should().Be(ErrorType.BadRequest);
+        result.Error.ErrorMessage.Should().Be(exception.Message);
+        typeof(FlowChatResult).GetProperty("Value").Should().BeNull();
+    }
+
     private sealed record TestRequest : IRequest<FlowChatResult<Guid>>;
+
+    private sealed record NonGenericTestRequest : IRequest<FlowChatResult>;
 
     private sealed class TestDbException(bool isTransient, string? sqlState = null) : DbException("Database exception")
     {

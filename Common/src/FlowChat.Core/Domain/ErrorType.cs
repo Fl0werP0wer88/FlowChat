@@ -10,6 +10,7 @@ public abstract class ErrorType(string name, int value) : SmartEnum<ErrorType>(n
     public static readonly ErrorType Validation = new ValidationEnum();
     public static readonly ErrorType Unexpected = new UnexpectedEnum();
     public static readonly ErrorType Unauthorized = new UnauthorizedEnum();
+    public static readonly ErrorType OperationCanceled = new OperationCanceledEnum();
 
     private sealed class ConflictEnum : ErrorType
     {
@@ -49,6 +50,13 @@ public abstract class ErrorType(string name, int value) : SmartEnum<ErrorType>(n
     private sealed class UnauthorizedEnum : ErrorType
     {
         public UnauthorizedEnum() : base("Unauthorized", 5)
+        {
+        }
+    }
+
+    private sealed class OperationCanceledEnum : ErrorType
+    {
+        public OperationCanceledEnum() : base("OperationCanceled", 6)
         {
         }
     }

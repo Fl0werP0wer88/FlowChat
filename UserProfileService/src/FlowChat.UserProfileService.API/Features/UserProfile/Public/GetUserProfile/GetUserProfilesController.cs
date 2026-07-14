@@ -1,3 +1,4 @@
+using AutoMapper;
 using FlowChat.Shared.API;
 using FlowChat.UserProfileService.Application.Features.UserProfile.Queries.UserProfile.GetUserProfile;
 using FlowChat.UserProfileService.Application.Features.UserProfile.Queries.UserProfile.GetUserProfileByEmail;
@@ -14,10 +15,12 @@ namespace FlowChat.UserProfileService.Api.Features.UserProfile.Public.GetUserPro
 public sealed class UserProfilesController : ApiControllerBase
 {
     private readonly IMediator _mediator;
+    private readonly IMapper _mapper;
 
-    public UserProfilesController(IMediator mediator)
+    public UserProfilesController(IMediator mediator, IMapper mapper)
     {
         _mediator = mediator;
+        _mapper = mapper;
     }
 
     [HttpGet("{userId:guid}")]
@@ -31,7 +34,7 @@ public sealed class UserProfilesController : ApiControllerBase
         var result = await _mediator.Send(new GetUserProfileQuery(userId), cancellationToken);
 
         return result.IsSuccess
-            ? Ok(new GetUserProfileResponse(result.Value))
+            ? Ok(new GetUserProfileResponse(_mapper.Map<UserProfileResponse>(result.Value)))
             : HandleError(result.Error);
     }
 
@@ -46,7 +49,7 @@ public sealed class UserProfilesController : ApiControllerBase
         var result = await _mediator.Send(new GetUserProfileByEmailQuery(email), cancellationToken);
 
         return result.IsSuccess
-            ? Ok(new GetUserProfileResponse(result.Value))
+            ? Ok(new GetUserProfileResponse(_mapper.Map<UserProfileResponse>(result.Value)))
             : HandleError(result.Error);
     }
 
@@ -61,7 +64,7 @@ public sealed class UserProfilesController : ApiControllerBase
         var result = await _mediator.Send(new GetUserProfileByFriendlyUserIdQuery(friendlyUserId), cancellationToken);
 
         return result.IsSuccess
-            ? Ok(new GetUserProfileResponse(result.Value))
+            ? Ok(new GetUserProfileResponse(_mapper.Map<UserProfileResponse>(result.Value)))
             : HandleError(result.Error);
     }
 }

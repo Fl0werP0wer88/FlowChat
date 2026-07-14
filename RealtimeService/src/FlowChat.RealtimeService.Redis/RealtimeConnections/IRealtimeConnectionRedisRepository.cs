@@ -12,6 +12,10 @@ public interface IRealtimeConnectionRedisRepository
 
     Task<bool> RefreshUserConnectionsTtlAsync(Guid userId);
 
+    Task<IReadOnlyDictionary<Guid, IReadOnlyCollection<string>>> GetConnectionIdsByUserIdsAsync(
+        IReadOnlyCollection<Guid> userIds,
+        CancellationToken cancellationToken);
+
     Task RefreshUserInstancesTtlAsync(Guid userId);
 
     Task<RealtimeConnectionMutationResult> RegisterConnectionAsync(

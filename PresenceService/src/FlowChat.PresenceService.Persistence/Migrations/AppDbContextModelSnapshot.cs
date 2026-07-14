@@ -72,6 +72,9 @@ namespace FlowChat.PresenceService.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasComputedColumnSql("\"SourceDeletedAtUtc\"", true);
 
+                    b.Property<bool>("IsBlocked")
+                        .HasColumnType("boolean");
+
                     b.Property<DateTimeOffset>("SourceCreatedAtUtc")
                         .HasColumnType("timestamp with time zone");
 

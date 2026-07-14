@@ -9,7 +9,7 @@ namespace FlowChat.PresenceService.IntegrationTests.Persistence.Repositories;
 public sealed class ContactObserverProjectionReadRepositoryTests
 {
     [Fact]
-    public async Task GetObserverUserIdsAsync_WhenProjectionIsDeleted_DoesNotReturnDeletedObserver()
+    public async Task GetNonBlockedObserverUserIdsAsync_WhenProjectionIsDeleted_DoesNotReturnDeletedObserver()
     {
         await using var connection = new SqliteConnection("Data Source=:memory:");
         await connection.OpenAsync();
@@ -33,13 +33,13 @@ public sealed class ContactObserverProjectionReadRepositoryTests
         await using var readContext = CreateDbContext(connection);
         var repository = new ContactObserverProjectionReadRepository(readContext);
 
-        var result = await repository.GetObserverUserIdsAsync(observedUserId, CancellationToken.None);
+        var result = await repository.GetNonBlockedObserverUserIdsAsync(observedUserId, CancellationToken.None);
 
         result.Should().ContainSingle().Which.Should().Be(activeObserverUserId);
     }
 
     [Fact]
-    public async Task GetObservedUserIdsAsync_WhenProjectionIsDeleted_DoesNotReturnDeletedObservedUser()
+    public async Task GetNonBlockedObservedUserIdsAsync_WhenProjectionIsDeleted_DoesNotReturnDeletedObservedUser()
     {
         await using var connection = new SqliteConnection("Data Source=:memory:");
         await connection.OpenAsync();
@@ -63,19 +63,48 @@ public sealed class ContactObserverProjectionReadRepositoryTests
         await using var readContext = CreateDbContext(connection);
         var repository = new ContactObserverProjectionReadRepository(readContext);
 
-        var result = await repository.GetObservedUserIdsAsync(observerUserId, CancellationToken.None);
+        var result = await repository.GetNonBlockedObservedUserIdsAsync(observerUserId, CancellationToken.None);
 
         result.Should().ContainSingle().Which.Should().Be(activeObservedUserId);
+    }
+
+    [Fact]
+    public async Task GetNonBlockedObserverUserIdsAsync_WhenObserverHasBlockedObserved_DoesNotReturnBlockedObserver()
+    {
+        await using var connection = new SqliteConnection("Data Source=:memory:");
+        await connection.OpenAsync();
+
+        var observedUserId = Guid.NewGuid();
+        var activeObserverUserId = Guid.NewGuid();
+        var blockedObserverUserId = Guid.NewGuid();
+
+        await using (var seedContext = CreateDbContext(connection))
+        {
+            seedContext.ContactObserverProjections.AddRange(
+                CreateProjection(observedUserId, activeObserverUserId),
+                CreateProjection(observedUserId, blockedObserverUserId, isBlocked: true));
+
+            await seedContext.SaveChangesAsync();
+        }
+
+        await using var readContext = CreateDbContext(connection);
+        var repository = new ContactObserverProjectionReadRepository(readContext);
+
+        var result = await repository.GetNonBlockedObserverUserIdsAsync(observedUserId, CancellationToken.None);
+
+        result.Should().ContainSingle().Which.Should().Be(activeObserverUserId);
     }
 
     private static ContactObserverReadModelEntity CreateProjection(
         Guid observedUserId,
         Guid observerUserId,
-        DateTimeOffset? deletedAt = null) =>
+        DateTimeOffset? deletedAt = null,
+        bool isBlocked = false) =>
         new()
         {
             ObservedUserId = observedUserId,
             ObserverUserId = observerUserId,
+            IsBlocked = isBlocked,
             SourceDeletedAtUtc = deletedAt
         };
 

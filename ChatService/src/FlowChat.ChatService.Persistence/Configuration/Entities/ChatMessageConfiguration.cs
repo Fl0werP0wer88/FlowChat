@@ -26,10 +26,6 @@ public sealed class ChatMessageConfiguration : IEntityTypeConfiguration<ChatMess
             .HasConversion(x => x.Value, x => Id<UserProfileMarker>.FromGuid(x))
             .IsRequired();
 
-        builder.Property(x => x.SenderDisplayName)
-            .HasMaxLength(120)
-            .IsRequired();
-
         builder.Property(x => x.Text)
             .HasMaxLength(4000)
             .IsRequired();
@@ -83,6 +79,10 @@ public sealed class ChatMessageConfiguration : IEntityTypeConfiguration<ChatMess
             .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasIndex(x => new { x.ConversationId, x.SentAtUtc });
+
+        builder.HasIndex(x => new { x.ConversationId, x.SequenceNum })
+            .IsUnique()
+            .HasFilter("\"SequenceNum\" IS NOT NULL");
     }
 }
 

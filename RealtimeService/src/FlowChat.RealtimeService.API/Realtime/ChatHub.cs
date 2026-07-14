@@ -1,5 +1,4 @@
 using System.Security.Claims;
-using FlowChat.RealtimeService.Application.Contracts.Infrastructure;
 using FlowChat.RealtimeService.Application.Features.RealtimeConnection.Commands.RegisterRealtimeConnection;
 using FlowChat.RealtimeService.Application.Features.RealtimeConnection.Commands.UnregisterRealtimeConnection;
 using MediatR;
@@ -12,14 +11,11 @@ namespace FlowChat.RealtimeService.Api.Realtime;
 [Authorize]
 public sealed class ChatHub(
     ILogger<ChatHub> logger,
-    IMediator mediator,
-    IPresenceInternalApiClient presenceInternalApiClient) : Hub<IRealtimeClient>
+    IMediator mediator) : Hub<IRealtimeClient>
 {
     private const string SubjectClaimType = "sub";
     private readonly ILogger<ChatHub> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     private readonly IMediator _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
-    private readonly IPresenceInternalApiClient _presenceInternalApiClient = presenceInternalApiClient
-        ?? throw new ArgumentNullException(nameof(presenceInternalApiClient));
 
     public override async Task OnConnectedAsync()
     {
@@ -31,41 +27,26 @@ public sealed class ChatHub(
             return;
         }
 
-        var addedToGroup = false;
-        var registeredConnection = false;
         try
         {
-            await Groups.AddToGroupAsync(Context.ConnectionId, GroupNames.ForUser(userId.Value));
-            addedToGroup = true;
-
             var result = await _mediator.Send(
                 new RegisterRealtimeConnectionCommand(userId.Value, Context.ConnectionId),
                 Context.ConnectionAborted);
             if (result.IsFailure)
             {
-                _logger.LogError(
-                    "Failed to register realtime connection {ConnectionId} for user {UserId}: {ErrorMessage}",
-                    Context.ConnectionId,
-                    userId.Value,
-                    result.Error.ErrorMessage);
-                await CleanupFailedConnectionAsync(userId.Value, addedToGroup);
                 Context.Abort();
                 return;
             }
 
-            registeredConnection = true;
-            await _presenceInternalApiClient.InitializePresenceStatusAsync(userId.Value, Context.ConnectionAborted);
             await base.OnConnectedAsync();
         }
         catch (OperationCanceledException) when (Context.ConnectionAborted.IsCancellationRequested)
         {
-            await CleanupFailedConnectionAsync(userId.Value, addedToGroup, registeredConnection);
             Context.Abort();
         }
         catch (Exception exception)
         {
             _logger.LogError(exception, "Failed to register realtime connection {ConnectionId} for user {UserId}.", Context.ConnectionId, userId.Value);
-            await CleanupFailedConnectionAsync(userId.Value, addedToGroup, registeredConnection);
             Context.Abort();
         }
     }
@@ -74,23 +55,14 @@ public sealed class ChatHub(
     {
         try
         {
-            var result = await _mediator.Send(
+            await _mediator.Send(
                 new UnregisterRealtimeConnectionCommand(Context.ConnectionId),
                 CancellationToken.None);
-            if (result.IsFailure)
-            {
-                _logger.LogError(
-                    "Failed to unregister realtime connection {ConnectionId}: {ErrorMessage}",
-                    Context.ConnectionId,
-                    result.Error.ErrorMessage);
-            }
         }
-        catch (Exception unregisterException)
+        finally
         {
-            _logger.LogError(unregisterException, "Failed to unregister realtime connection {ConnectionId}.", Context.ConnectionId);
+            await base.OnDisconnectedAsync(exception);
         }
-
-        await base.OnDisconnectedAsync(exception);
     }
 
     private Guid? ResolveUserId()
@@ -99,36 +71,5 @@ public sealed class ChatHub(
             ?? Context.User?.FindFirstValue(ClaimTypes.NameIdentifier);
 
         return Guid.TryParse(value, out var userId) ? userId : null;
-    }
-
-    private async Task CleanupFailedConnectionAsync(Guid userId, bool addedToGroup, bool registeredConnection = false)
-    {
-        if (registeredConnection)
-        {
-            try
-            {
-                await _mediator.Send(
-                    new UnregisterRealtimeConnectionCommand(Context.ConnectionId),
-                    CancellationToken.None);
-            }
-            catch (Exception exception)
-            {
-                _logger.LogWarning(exception, "Failed to unregister realtime connection {ConnectionId} after connection failure.", Context.ConnectionId);
-            }
-        }
-
-        try
-        {
-            if (!addedToGroup)
-            {
-                return;
-            }
-
-            await Groups.RemoveFromGroupAsync(Context.ConnectionId, GroupNames.ForUser(userId));
-        }
-        catch (Exception exception)
-        {
-            _logger.LogWarning(exception, "Failed to remove realtime connection {ConnectionId} from user group after connection failure.", Context.ConnectionId);
-        }
     }
 }

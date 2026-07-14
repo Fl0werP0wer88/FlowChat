@@ -8,6 +8,7 @@ using FlowChat.Shared.Domain;
 
 namespace FlowChat.Shared.Infrastructure.Http;
 
+//ToDo:Rozważyć przejscie na DI zamiast klasy abstrakcyjnej
 public abstract class FlowChatHttpClientBase(HttpClient httpClient)
 {
     public const string InternalApiKeyHeaderName = "X-Internal-Api-Key";

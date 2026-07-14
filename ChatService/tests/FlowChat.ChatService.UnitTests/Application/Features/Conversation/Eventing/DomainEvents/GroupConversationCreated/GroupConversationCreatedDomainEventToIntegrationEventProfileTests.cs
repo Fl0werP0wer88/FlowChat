@@ -22,17 +22,11 @@ public sealed class GroupConversationCreatedDomainEventToIntegrationEventProfile
         var mapper = configuration.CreateMapper();
         var conversationId = Id<ConversationAggregate>.New();
         var createdByUserId = Id<UserProfile>.New();
-        var participantUserIds = new[]
-        {
-            createdByUserId,
-            Id<UserProfile>.New()
-        };
         var domainEvent = new GroupConversationCreatedDomainEvent(
             conversationId,
             ConversationType.Group,
             "Dev Team",
-            createdByUserId,
-            participantUserIds);
+            createdByUserId);
 
         var integrationEvent = mapper.Map<GroupConversationChangedIntegrationEvent>(domainEvent);
 
@@ -40,6 +34,5 @@ public sealed class GroupConversationCreatedDomainEventToIntegrationEventProfile
         integrationEvent.Type.Should().Be((int) ConversationType.Group);
         integrationEvent.Name.Should().Be("Dev Team");
         integrationEvent.CreatedByUserId.Should().Be(createdByUserId.Value);
-        integrationEvent.ParticipantUserIds.Should().Equal(participantUserIds.Select(id => id.Value));
     }
 }

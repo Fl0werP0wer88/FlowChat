@@ -1,5 +1,3 @@
-import type { NoticeKind } from "./common";
-
 export type AuthMode = "login" | "register";
 
 export interface LoginFormValues {
@@ -21,22 +19,3 @@ export interface AuthSession {
   login: string;
   expiresAtUtc: string | null;
 }
-
-export interface AuthNotice {
-  kind: NoticeKind;
-  message: string;
-}
-
-export interface AuthTokenResponseDto {
-  access_token?: string;
-  accessToken?: string;
-  AccessToken?: string;
-  expires_in?: number;
-  expiresAtUtc?: string | null;
-  ExpiresAtUtc?: string | null;
-  token_type?: string;
-  scope?: string;
-}
-
-export type LoginResponseDto = AuthTokenResponseDto;
-export type RefreshTokenResponseDto = AuthTokenResponseDto;

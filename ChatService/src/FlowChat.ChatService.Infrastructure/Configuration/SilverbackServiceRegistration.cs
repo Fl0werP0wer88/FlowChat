@@ -1,6 +1,8 @@
 using FlowChat.ChatService.Persistence;
 using FlowChat.ChatService.Infrastructure.Configuration.Settings;
+using FlowChat.Core.Messaging;
 using FlowChat.Core.Messaging.ChatService.Events;
+using FlowChat.Core.Messaging.ChatService.ReadModels;
 using FlowChat.Shared.Infrastructure.Silverback.Behaviors;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -20,6 +22,8 @@ public static class ApiSilverbackServiceRegistration
             .Get<ChatMessageSentProducerSettingsSection>() ?? new ChatMessageSentProducerSettingsSection();
         var groupConversationChangedProducerOptions = configuration.GetSection(new GroupConversationChangedProducerSettingsSection().SectionName)
             .Get<GroupConversationChangedProducerSettingsSection>() ?? new GroupConversationChangedProducerSettingsSection();
+        var duetConversationProjectionProducerOptions = configuration.GetSection(new DuetConversationProjectionProducerSettingsSection().SectionName)
+            .Get<DuetConversationProjectionProducerSettingsSection>() ?? new DuetConversationProjectionProducerSettingsSection();
 
         services.AddSilverback()
             .AddSingletonBrokerBehavior<CustomSpanAttributesProducerBehavior>()
@@ -39,6 +43,21 @@ public static class ApiSilverbackServiceRegistration
                     .AddProducer(producer => producer
                         .Produce<GroupConversationChangedIntegrationEvent>("group-conversation-changed", endpoint => endpoint
                             .ProduceTo(groupConversationChangedProducerOptions.Topic)
+                            .SerializeAsJson(serializer => serializer.SetTypeHeader())
+                            .StoreToOutbox(outbox => outbox.UseEntityFramework<AppDbContext>())))
+                    .AddProducer(producer => producer
+                        .Produce<GroupConversationParticipantsAddedIntegrationEvent>("group-conversation-participants-added", endpoint => endpoint
+                            .ProduceTo(groupConversationChangedProducerOptions.Topic)
+                            .SerializeAsJson(serializer => serializer.SetTypeHeader())
+                            .StoreToOutbox(outbox => outbox.UseEntityFramework<AppDbContext>())))
+                    .AddProducer(producer => producer
+                        .Produce<GroupConversationParticipantsRemovedIntegrationEvent>("group-conversation-participants-removed", endpoint => endpoint
+                            .ProduceTo(groupConversationChangedProducerOptions.Topic)
+                            .SerializeAsJson(serializer => serializer.SetTypeHeader())
+                            .StoreToOutbox(outbox => outbox.UseEntityFramework<AppDbContext>())))
+                    .AddProducer(producer => producer
+                        .Produce<ProjectionIntegrationEvent<DuetConversationReadModel>>("duet-conversation-projection", endpoint => endpoint
+                            .ProduceTo(duetConversationProjectionProducerOptions.Topic)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())
                             .StoreToOutbox(outbox => outbox.UseEntityFramework<AppDbContext>())));
             });

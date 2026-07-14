@@ -31,6 +31,7 @@ public abstract class CommandHandlerBase<TCommand, TValue>
         Exception exception,
         CancellationToken cancellationToken)
     {
+        // Preserve the original stack trace when rethrowing from the async handler boundary
         ExceptionDispatchInfo.Capture(exception).Throw();
         throw new UnreachableException();
     }

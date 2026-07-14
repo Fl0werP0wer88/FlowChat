@@ -15,6 +15,9 @@ public static class StartupExtensions
     public static WebApplication ConfigureServices(this WebApplicationBuilder builder)
     {
         builder.Services.AddApiApplicationServices();
+        builder.Services.AddAutoMapper(
+            (Action<AutoMapper.IMapperConfigurationExpression>?)null,
+            typeof(StartupExtensions).Assembly);
         builder.Services.AddApiInfrastructureServices(builder.Configuration);
         builder.Services.AddApiPersistenceServices(builder.Configuration);
         builder.Services.AddDataProtection()

@@ -9,9 +9,12 @@ public sealed class RealtimeInstanceInternalApiClient(HttpClient httpClient)
     : FlowChatHttpClientBase(httpClient), IRealtimeInstanceInternalApiClient
 {
     public const string ApiKeyHeaderName = "X-Internal-Api-Key";
-    private const string ReceiveMessagePath = "/internal/realtime/messages/direct";
+    private const string MessageReceivedPath = "/internal/realtime/messages/direct";
     private const string PresenceChangedPath = "/internal/realtime/presence/direct";
     private const string GroupConversationChangedPath = "/internal/realtime/group-conversations/changed/direct";
+    private const string GroupConversationParticipantsAddedPath = "/internal/realtime/group-conversations/participants-added/direct";
+    private const string GroupConversationParticipantsRemovedPath = "/internal/realtime/group-conversations/participants-removed/direct";
+    private const string DuetConversationCreatedPath = "/internal/realtime/duet-conversations/created/direct";
 
     protected override string ClientDisplayName => "Realtime API";
 
@@ -21,16 +24,15 @@ public sealed class RealtimeInstanceInternalApiClient(HttpClient httpClient)
         CancellationToken cancellationToken) =>
         PostAsync(
             baseAddress,
-            ReceiveMessagePath,
+            MessageReceivedPath,
             new PublishMessageRequest(
                 notification.MessageId,
                 notification.ConversationId,
                 notification.SenderUserId,
-                notification.SenderDisplayName,
                 notification.Text,
+                notification.SequenceNum,
                 notification.SentAtUtc,
-                notification.DeliveredAtUtc,
-                notification.RecipientUserIds),
+                notification.DeliveredAtUtc),
             cancellationToken);
 
     public Task PublishPresenceChangeAsync(
@@ -58,7 +60,42 @@ public sealed class RealtimeInstanceInternalApiClient(HttpClient httpClient)
                 notification.ConversationId,
                 notification.Type,
                 notification.Name,
-                notification.CreatedByUserId,
+                notification.CreatedByUserId),
+            cancellationToken);
+
+    public Task PublishGroupConversationParticipantsAddedAsync(
+        Uri baseAddress,
+        GroupConversationParticipantsAddedParam notification,
+        CancellationToken cancellationToken) =>
+        PostAsync(
+            baseAddress,
+            GroupConversationParticipantsAddedPath,
+            new PublishGroupConversationParticipantsAddedRequest(
+                notification.ConversationId,
+                notification.ParticipantUserIds),
+            cancellationToken);
+
+    public Task PublishGroupConversationParticipantsRemovedAsync(
+        Uri baseAddress,
+        GroupConversationParticipantsRemovedParam notification,
+        CancellationToken cancellationToken) =>
+        PostAsync(
+            baseAddress,
+            GroupConversationParticipantsRemovedPath,
+            new PublishGroupConversationParticipantsRemovedRequest(
+                notification.ConversationId,
+                notification.ParticipantUserIds),
+            cancellationToken);
+
+    public Task PublishDuetConversationCreatedAsync(
+        Uri baseAddress,
+        DuetConversationCreatedParam notification,
+        CancellationToken cancellationToken) =>
+        PostAsync(
+            baseAddress,
+            DuetConversationCreatedPath,
+            new PublishDuetConversationCreatedRequest(
+                notification.ConversationId,
                 notification.ParticipantUserIds),
             cancellationToken);
 
@@ -78,11 +115,10 @@ public sealed class RealtimeInstanceInternalApiClient(HttpClient httpClient)
         Guid MessageId,
         Guid ConversationId,
         Guid SenderUserId,
-        string SenderDisplayName,
         string Text,
+        long SequenceNum,
         DateTimeOffset SentAtUtc,
-        DateTimeOffset DeliveredAtUtc,
-        IReadOnlyCollection<Guid> RecipientUserIds);
+        DateTimeOffset DeliveredAtUtc);
 
     private sealed record PublishPresenceChangeRequest(
         Guid UserId,
@@ -94,6 +130,17 @@ public sealed class RealtimeInstanceInternalApiClient(HttpClient httpClient)
         Guid ConversationId,
         int Type,
         string? Name,
-        Guid CreatedByUserId,
+        Guid CreatedByUserId);
+
+    private sealed record PublishGroupConversationParticipantsAddedRequest(
+        Guid ConversationId,
+        IReadOnlyCollection<Guid> ParticipantUserIds);
+
+    private sealed record PublishGroupConversationParticipantsRemovedRequest(
+        Guid ConversationId,
+        IReadOnlyCollection<Guid> ParticipantUserIds);
+
+    private sealed record PublishDuetConversationCreatedRequest(
+        Guid ConversationId,
         IReadOnlyCollection<Guid> ParticipantUserIds);
 }

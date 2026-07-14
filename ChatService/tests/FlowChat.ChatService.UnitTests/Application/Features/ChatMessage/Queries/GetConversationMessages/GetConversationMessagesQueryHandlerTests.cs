@@ -101,7 +101,6 @@ public sealed class GetConversationMessagesQueryHandlerTests
                     Guid.NewGuid(),
                     conversationId,
                     requestingUserId,
-                    "Alice",
                     "Hello",
                     beforeSentAtUtc.AddMinutes(-1))
             ],

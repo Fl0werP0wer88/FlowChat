@@ -124,6 +124,78 @@ public sealed class DuetConversationReadRepositoryTests
         result.Should().BeNull();
     }
 
+    [Fact]
+    public async Task GetContactsForUserAsync_WhenPartnerHasBlockedRequester_ReturnsIsBlockedByPartnerTrue()
+    {
+        await using var connection = new SqliteConnection("Data Source=:memory:");
+        await connection.OpenAsync();
+
+        var requestingUserId = Guid.NewGuid();
+        var partnerUserId = Guid.NewGuid();
+        var conversation = FlowChat.ChatService.Domain.Entities.Conversation.DuetConversation.Create(
+            createdByUserId: requestingUserId,
+            partnerUserId: partnerUserId);
+        conversation.MarkParticipantAsRead(requestingUserId);
+        conversation.BlockParticipant(partnerUserId);
+        MarkCreated(conversation);
+
+        await using (var seedContext = CreateDbContext(connection))
+        {
+            seedContext.Conversations.Add(conversation);
+            seedContext.DuetConversations.Add(CreateDuetConversation(requestingUserId, partnerUserId, conversation.Id.Value));
+            seedContext.UserProfileProjections.Add(
+                CreateProfile(partnerUserId, "partner", firstName: "Partner", avatarUrl: "partner.png", email: "partner@example.com"));
+
+            await seedContext.SaveChangesAsync();
+        }
+
+        await using var readContext = CreateDbContext(connection);
+        var repository = new DuetConversationReadRepository(readContext);
+
+        var result = await repository.GetContactsForUserAsync(requestingUserId, CancellationToken.None);
+
+        var contact = result.Should().ContainSingle().Subject;
+        contact.PartnerUserId.Should().Be(partnerUserId);
+        contact.DisplayName.Should().Be("Partner");
+        contact.AvatarUrl.Should().Be("partner.png");
+        contact.Email.Should().Be("partner@example.com");
+        contact.ConversationId.Should().Be(conversation.Id.Value);
+        contact.IsBlocked.Should().BeFalse();
+        contact.IsBlockedByPartner.Should().BeTrue();
+        contact.IsMuted.Should().BeFalse();
+        contact.IsHidden.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task GetContactsForUserAsync_WhenRequesterHasHiddenContact_ExcludesItFromResults()
+    {
+        await using var connection = new SqliteConnection("Data Source=:memory:");
+        await connection.OpenAsync();
+
+        var requestingUserId = Guid.NewGuid();
+        var partnerUserId = Guid.NewGuid();
+        var conversation = FlowChat.ChatService.Domain.Entities.Conversation.DuetConversation.Create(
+            createdByUserId: requestingUserId,
+            partnerUserId: partnerUserId);
+        conversation.HideParticipant(requestingUserId);
+        MarkCreated(conversation);
+
+        await using (var seedContext = CreateDbContext(connection))
+        {
+            seedContext.Conversations.Add(conversation);
+            seedContext.DuetConversations.Add(CreateDuetConversation(requestingUserId, partnerUserId, conversation.Id.Value));
+
+            await seedContext.SaveChangesAsync();
+        }
+
+        await using var readContext = CreateDbContext(connection);
+        var repository = new DuetConversationReadRepository(readContext);
+
+        var result = await repository.GetContactsForUserAsync(requestingUserId, CancellationToken.None);
+
+        result.Should().BeEmpty();
+    }
+
     private static DuetConversationLookupEntity CreateDuetConversation(Guid userId1, Guid userId2, Guid conversationId)
     {
         var (first, second) = Normalize(userId1, userId2);
@@ -142,6 +214,7 @@ public sealed class DuetConversationReadRepositoryTests
         string? firstName = null,
         string? lastName = null,
         string? avatarUrl = null,
+        string? email = null,
         DateTimeOffset? deletedAt = null) =>
         new()
         {
@@ -150,6 +223,7 @@ public sealed class DuetConversationReadRepositoryTests
             FirstName = firstName,
             LastName = lastName,
             AvatarUrl = avatarUrl,
+            Email = email,
             SourceDeletedAtUtc = deletedAt
         };
 

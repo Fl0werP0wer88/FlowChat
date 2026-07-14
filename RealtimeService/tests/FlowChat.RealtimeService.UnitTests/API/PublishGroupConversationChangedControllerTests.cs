@@ -34,8 +34,7 @@ public sealed class PublishGroupConversationChangedControllerTests
                 ConversationId = _fixture.Create<Guid>(),
                 Type = 2,
                 Name = "Dev Team",
-                CreatedByUserId = _fixture.Create<Guid>(),
-                ParticipantUserIds = [_fixture.Create<Guid>()]
+                CreatedByUserId = _fixture.Create<Guid>()
             },
             CancellationToken.None);
 
@@ -54,8 +53,7 @@ public sealed class PublishGroupConversationChangedControllerTests
             {
                 ConversationId = _fixture.Create<Guid>(),
                 Type = 2,
-                CreatedByUserId = _fixture.Create<Guid>(),
-                ParticipantUserIds = [_fixture.Create<Guid>()]
+                CreatedByUserId = _fixture.Create<Guid>()
             },
             CancellationToken.None);
 

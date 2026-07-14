@@ -29,7 +29,7 @@ public abstract class ProjectionBatchSubscriberBase<TReadModel, TItem, TKey>(
             ValidateMessage(message);
 
             originalMessages.Add(message);
-            items.Add(MapItem(message));
+            items.AddRange(MapItems(message));
         }
 
         if (items.Count == 0)
@@ -87,12 +87,12 @@ public abstract class ProjectionBatchSubscriberBase<TReadModel, TItem, TKey>(
             .Select(x => x.item)
             .ToArray();
 
-    private ProjectionCommandItem<TItem> MapItem(ProjectionIntegrationEvent<TReadModel> message) =>
-        new(
-            valueFactory.MapValue(message),
+    private IEnumerable<ProjectionCommandItem<TItem>> MapItems(ProjectionIntegrationEvent<TReadModel> message) =>
+        valueFactory.MapValues(message).Select(value => new ProjectionCommandItem<TItem>(
+            value,
             message.Operation,
             message.SourceAggregateVersion,
             message.SourceAggregateCreatedAtUtc,
             message.SourceAggregateModifiedAtUtc,
-            message.SourceAggregateDeletedAt);
+            message.SourceAggregateDeletedAt));
 }

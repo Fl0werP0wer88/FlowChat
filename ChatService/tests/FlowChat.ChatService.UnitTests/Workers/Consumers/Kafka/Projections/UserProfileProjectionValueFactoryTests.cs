@@ -35,7 +35,13 @@ public sealed class UserProfileProjectionValueFactoryTests
                 FriendlyUserId = "jdoe",
                 FirstName = "John",
                 LastName = "Doe",
-                AvatarUrl = "https://avatar"
+                AvatarUrl = "https://avatar",
+                MainEmail = new FlowChat.Core.Messaging.UserProfileService.Events.UserProfileEmail
+                {
+                    Address = "jdoe@example.com",
+                    IsConfirmed = true,
+                    IsVisible = false
+                }
             }));
 
         value.UserProfileId.Should().Be(userProfileId);
@@ -43,7 +49,25 @@ public sealed class UserProfileProjectionValueFactoryTests
         value.FirstName.Should().Be("John");
         value.LastName.Should().Be("Doe");
         value.AvatarUrl.Should().Be("https://avatar");
+        value.Email.Should().Be("jdoe@example.com");
         value.Source.Should().Be("user-profile-projection");
+    }
+
+    [Fact]
+    public void MapValue_WhenMainEmailIsNull_MapsEmailAsNull()
+    {
+        var userProfileId = Guid.NewGuid();
+
+        var value = _factory.MapValue(CreateProjectionEvent(
+            OperationType.Updated,
+            userProfileId,
+            new UserProfileReadModel
+            {
+                UserProfileId = userProfileId,
+                FriendlyUserId = "jdoe"
+            }));
+
+        value.Email.Should().BeNull();
     }
 
     [Fact]

@@ -1,3 +1,4 @@
+using AutoMapper;
 using FlowChat.ChatService.Application.Features.Conversation.Queries.GetGroupConversation;
 using FlowChat.Shared.API;
 using MediatR;
@@ -12,10 +13,12 @@ namespace FlowChat.ChatService.Api.Features.Conversation.Public.GetGroupConversa
 public sealed class GetGroupConversationController : ApiControllerBase
 {
     private readonly IMediator _mediator;
+    private readonly IMapper _mapper;
 
-    public GetGroupConversationController(IMediator mediator)
+    public GetGroupConversationController(IMediator mediator, IMapper mapper)
     {
         _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
+        _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
     }
 
     [HttpGet("{conversationId:guid}")]
@@ -39,12 +42,7 @@ public sealed class GetGroupConversationController : ApiControllerBase
         if (!result.IsSuccess)
             return HandleError(result.Error);
 
-        var conversation = result.Value;
-        var response = new GetGroupConversationResponse(
-            conversation.ConversationId,
-            conversation.Name,
-            [.. conversation.Participants.Select(p => new ParticipantResponse(
-                p.UserId, p.DisplayName, p.AvatarUrl, p.ParticipantUserId))]);
+        var response = _mapper.Map<GetGroupConversationResponse>(result.Value);
 
         return Ok(response);
     }

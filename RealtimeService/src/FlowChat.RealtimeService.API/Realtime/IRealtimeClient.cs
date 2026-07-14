@@ -1,10 +1,16 @@
+using FlowChat.RealtimeService.Api.Realtime.Notifications;
+
 namespace FlowChat.RealtimeService.Api.Realtime;
 
 public interface IRealtimeClient
 {
-    Task ReceiveMessage(ChatMessageNotificationDto payload);
+    Task MessageReceived(ChatMessageReceivedNotification payload);
 
-    Task PresenceChanged(PresenceDto payload);
+    Task PresenceChanged(PresenceChangedNotification payload);
 
-    Task GroupConversationChanged(GroupConversationChangedDto payload);
+    Task GroupConversationChanged(GroupConversationChangedNotification payload);
+
+    Task GroupConversationParticipantsAdded(GroupConversationParticipantsAddedNotification payload);
+
+    Task GroupConversationParticipantsRemoved(GroupConversationParticipantsRemovedNotification payload);
 }

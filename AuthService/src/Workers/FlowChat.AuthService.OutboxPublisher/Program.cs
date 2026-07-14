@@ -10,6 +10,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 IHost? host = null;
+ILogger? programLogger = null;
 
 try
 {
@@ -23,6 +24,9 @@ try
     builder.Services.AddOutboxPublisher(builder.Configuration);
 
     host = builder.Build();
+    programLogger = host.Services
+        .GetRequiredService<ILoggerFactory>()
+        .CreateLogger("Program");
 
     LogStartupDiagnostics(host);
 
@@ -30,12 +34,9 @@ try
 }
 catch (Exception exception)
 {
-    if (host is not null)
+    if (programLogger is not null)
     {
-        host.Services
-            .GetRequiredService<ILoggerFactory>()
-            .CreateLogger("Program")
-            .LogCritical(exception, "AuthService OutboxPublisher terminated unexpectedly.");
+        programLogger.LogCritical(exception, "AuthService OutboxPublisher terminated unexpectedly.");
     }
     else
     {

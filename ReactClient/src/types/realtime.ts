@@ -1,12 +1,12 @@
 export type UserStatus = "Active" | "AFK" | "Busy" | "Invisible";
 export type ManualUserStatus = Exclude<UserStatus, "AFK">;
 
-export interface RealtimeChatMessage {
+export interface ChatMessageReceivedEvent {
   messageId: string;
   conversationId: string;
   senderUserId: string;
-  senderDisplayName: string;
   text: string;
+  sequenceNum: number;
   sentAtUtc: string;
 }
 
@@ -21,6 +21,15 @@ export interface GroupConversationChangedEvent {
   type: number;
   name: string | null;
   createdByUserId: string;
+}
+
+export interface GroupConversationParticipantsAddedEvent {
+  conversationId: string;
+  participantUserIds: string[];
+}
+
+export interface GroupConversationParticipantsRemovedEvent {
+  conversationId: string;
   participantUserIds: string[];
 }
 

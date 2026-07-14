@@ -1,5 +1,11 @@
+using FlowChat.ChatService.Application.Features.Conversation.Commands.BlockConversationParticipant;
+using FlowChat.ChatService.Application.Features.Conversation.Commands.CreateDuetConversation;
+using FlowChat.ChatService.Application.Features.Conversation.Commands.UnblockConversationParticipant;
+using FlowChat.ChatService.Application.Features.Conversation.Processors;
+using DuetConversationAggregate = FlowChat.ChatService.Domain.Entities.Conversation.DuetConversation;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Application.Common.Eventing;
+using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2.BeforeSaveProcessors;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace FlowChat.ChatService.Application;
@@ -30,6 +36,15 @@ internal static class CommonApplicationServiceRegistration
             cfg.AddFlowChatBehaviors();
         });
         services.AddScoped<ILocalEventDispatcher, LocalEventDispatcher>();
+        services.AddScoped<
+            IAggregateBeforeSaveProcessor<CreateDuetConversationCommand, DuetConversationAggregate>,
+            DuetConversationProjectionProcessor<CreateDuetConversationCommand>>();
+        services.AddScoped<
+            IAggregateBeforeSaveProcessor<BlockConversationParticipantCommand, DuetConversationAggregate>,
+            DuetConversationProjectionProcessor<BlockConversationParticipantCommand>>();
+        services.AddScoped<
+            IAggregateBeforeSaveProcessor<UnblockConversationParticipantCommand, DuetConversationAggregate>,
+            DuetConversationProjectionProcessor<UnblockConversationParticipantCommand>>();
 
         return services;
     }

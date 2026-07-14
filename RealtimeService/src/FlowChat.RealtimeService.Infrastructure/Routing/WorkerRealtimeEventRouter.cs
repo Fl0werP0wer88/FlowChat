@@ -3,6 +3,7 @@ using FlowChat.RealtimeService.Redis.RealtimeConnections;
 
 namespace FlowChat.RealtimeService.Infrastructure.Routing;
 
+//ToDo: Tutaj brakuje exactly one delivery. Rozważyć wprowadzenie  może topic per instance. Może też jednak cos pokombinowac z Redis fan out?
 public sealed class WorkerRealtimeEventRouter(
     IUserInstanceRoutingReader userInstanceRoutingReader,
     IRealtimeInstanceAddressResolver instanceAddressResolver,
@@ -17,11 +18,11 @@ public sealed class WorkerRealtimeEventRouter(
         ?? throw new ArgumentNullException(nameof(realtimeInstanceInternalApiClient));
 
     public Task RouteMessageAsync(ChatMessageParam notification, CancellationToken cancellationToken) =>
-        RouteAsync(
+        BroadcastAsync(
             notification.RecipientUserIds,
-            (instanceUrl, userIds) => _realtimeInstanceInternalApiClient.PublishMessageAsync(
+            instanceUrl => _realtimeInstanceInternalApiClient.PublishMessageAsync(
                 instanceUrl,
-                notification with { RecipientUserIds = userIds },
+                notification,
                 cancellationToken),
             cancellationToken);
 
@@ -35,11 +36,38 @@ public sealed class WorkerRealtimeEventRouter(
             cancellationToken);
 
     public Task RouteGroupConversationChangedAsync(GroupConversationChangedParam notification, CancellationToken cancellationToken) =>
-        RouteAsync(
+        BroadcastAsync(
             notification.ParticipantUserIds,
-            (instanceUrl, userIds) => _realtimeInstanceInternalApiClient.PublishGroupConversationChangedAsync(
+            instanceUrl => _realtimeInstanceInternalApiClient.PublishGroupConversationChangedAsync(
                 instanceUrl,
-                notification with { ParticipantUserIds = userIds },
+                notification,
+                cancellationToken),
+            cancellationToken);
+
+    public Task RouteGroupConversationParticipantsAddedAsync(GroupConversationParticipantsAddedParam notification, CancellationToken cancellationToken) =>
+        BroadcastAsync(
+            notification.ParticipantUserIds,
+            instanceUrl => _realtimeInstanceInternalApiClient.PublishGroupConversationParticipantsAddedAsync(
+                instanceUrl,
+                notification,
+                cancellationToken),
+            cancellationToken);
+
+    public Task RouteGroupConversationParticipantsRemovedAsync(GroupConversationParticipantsRemovedParam notification, CancellationToken cancellationToken) =>
+        BroadcastAsync(
+            notification.ParticipantUserIds,
+            instanceUrl => _realtimeInstanceInternalApiClient.PublishGroupConversationParticipantsRemovedAsync(
+                instanceUrl,
+                notification,
+                cancellationToken),
+            cancellationToken);
+
+    public Task RouteDuetConversationCreatedAsync(DuetConversationCreatedParam notification, CancellationToken cancellationToken) =>
+        BroadcastAsync(
+            notification.ParticipantUserIds,
+            instanceUrl => _realtimeInstanceInternalApiClient.PublishDuetConversationCreatedAsync(
+                instanceUrl,
+                notification,
                 cancellationToken),
             cancellationToken);
 
@@ -64,6 +92,45 @@ public sealed class WorkerRealtimeEventRouter(
         }
 
         await Task.WhenAll(tasks);
+    }
+
+    private async Task BroadcastAsync(
+        IReadOnlyCollection<Guid> recipientUserIds,
+        Func<Uri, Task> publishAsync,
+        CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var instanceIds = await GetInstanceIdsAsync(recipientUserIds, cancellationToken);
+        if (instanceIds.Count == 0)
+        {
+            return;
+        }
+
+        var tasks = instanceIds.Select(instanceId => publishAsync(_instanceAddressResolver.Resolve(instanceId)));
+        await Task.WhenAll(tasks);
+    }
+
+    private async Task<IReadOnlyCollection<string>> GetInstanceIdsAsync(
+        IReadOnlyCollection<Guid> recipientUserIds,
+        CancellationToken cancellationToken)
+    {
+        var filteredRecipientIds = recipientUserIds
+            .Where(static userId => userId != Guid.Empty)
+            .Distinct()
+            .ToArray();
+        if (filteredRecipientIds.Length == 0)
+        {
+            return [];
+        }
+
+        var instanceIdsByUser = await _userInstanceRoutingReader.GetInstanceIdsByUserAsync(filteredRecipientIds, cancellationToken);
+
+        return instanceIdsByUser.Values
+            .SelectMany(static instanceIds => instanceIds)
+            .Where(static instanceId => !string.IsNullOrWhiteSpace(instanceId))
+            .Distinct(StringComparer.Ordinal)
+            .ToArray();
     }
 
     private async Task<IReadOnlyCollection<RoutedRecipients>> GetRecipientsByInstanceAsync(

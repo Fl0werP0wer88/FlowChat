@@ -16,8 +16,8 @@ public sealed class RealtimeInstanceInternalApiClientTests
             Guid.NewGuid(),
             Guid.NewGuid(),
             Guid.NewGuid(),
-            "Jane",
             "Hello",
+            42,
             new DateTimeOffset(2026, 5, 19, 11, 59, 0, TimeSpan.Zero),
             deliveredAtUtc,
             [Guid.NewGuid()]);
@@ -30,6 +30,7 @@ public sealed class RealtimeInstanceInternalApiClientTests
         handler.LastRequest!.Method.Should().Be(HttpMethod.Post);
         handler.LastRequest.RequestUri!.ToString().Should().Be("http://instance-remote/internal/realtime/messages/direct");
         using var document = JsonDocument.Parse(handler.LastRequestBody!);
+        document.RootElement.GetProperty("sequenceNum").GetInt64().Should().Be(42);
         document.RootElement.GetProperty("deliveredAtUtc").GetDateTimeOffset().Should().Be(deliveredAtUtc);
     }
 

@@ -34,7 +34,8 @@ public sealed class ContactObserverProjectionBulkEntityFactoryTests
             {
                 ObservedUserId = observedUserId,
                 ObserverUserId = observerUserId,
-                Source = "social-graph-contact-events"
+                IsBlocked = true,
+                Source = "chat-duet-conversation-events"
             },
             sourceVersion: 3,
             sourceCreatedAtUtc: createdAt,
@@ -43,6 +44,7 @@ public sealed class ContactObserverProjectionBulkEntityFactoryTests
 
         entity.ObservedUserId.Should().Be(observedUserId);
         entity.ObserverUserId.Should().Be(observerUserId);
+        entity.IsBlocked.Should().BeTrue();
         entity.SourceVersion.Should().Be(3);
         entity.SourceCreatedAtUtc.Should().Be(createdAt);
         entity.SourceLastModifiedAtUtc.Should().Be(modifiedAt);

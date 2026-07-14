@@ -16,11 +16,10 @@ public sealed class PublishMessageCommandValidatorTests
             _fixture.Create<Guid>(),
             _fixture.Create<Guid>(),
             _fixture.Create<Guid>(),
-            "John Doe",
             "Hello",
+            42,
             DateTimeOffset.UtcNow,
-            DateTimeOffset.UtcNow,
-            [_fixture.Create<Guid>()]);
+            DateTimeOffset.UtcNow);
 
         var result = _validator.Validate(command);
 
@@ -34,11 +33,10 @@ public sealed class PublishMessageCommandValidatorTests
             Guid.Empty,
             Guid.Empty,
             Guid.Empty,
-            "John Doe",
             "Hello",
+            42,
             DateTimeOffset.UtcNow,
-            DateTimeOffset.UtcNow,
-            [_fixture.Create<Guid>()]);
+            DateTimeOffset.UtcNow);
 
         var result = _validator.Validate(command);
 
@@ -51,39 +49,16 @@ public sealed class PublishMessageCommandValidatorTests
     [InlineData(null)]
     [InlineData("")]
     [InlineData("   ")]
-    public void Validate_NullOrWhitespaceSenderDisplayName_ReturnsValidationError(string? value)
-    {
-        var command = new PublishMessageCommand(
-            _fixture.Create<Guid>(),
-            _fixture.Create<Guid>(),
-            _fixture.Create<Guid>(),
-            value,
-            "Hello",
-            DateTimeOffset.UtcNow,
-            DateTimeOffset.UtcNow,
-            [_fixture.Create<Guid>()]);
-
-        var result = _validator.Validate(command);
-
-        result.IsValid.Should().BeFalse();
-        result.Errors.Should().Contain(e => e.PropertyName == "SenderDisplayName");
-    }
-
-    [Theory]
-    [InlineData(null)]
-    [InlineData("")]
-    [InlineData("   ")]
     public void Validate_NullOrWhitespaceText_ReturnsValidationError(string? value)
     {
         var command = new PublishMessageCommand(
             _fixture.Create<Guid>(),
             _fixture.Create<Guid>(),
             _fixture.Create<Guid>(),
-            "John Doe",
             value,
+            42,
             DateTimeOffset.UtcNow,
-            DateTimeOffset.UtcNow,
-            [_fixture.Create<Guid>()]);
+            DateTimeOffset.UtcNow);
 
         var result = _validator.Validate(command);
 
@@ -92,40 +67,20 @@ public sealed class PublishMessageCommandValidatorTests
     }
 
     [Fact]
-    public void Validate_RecipientUserIdsContainsOnlyEmptyGuids_ReturnsValidationError()
+    public void Validate_NonPositiveSequenceNum_ReturnsValidationError()
     {
         var command = new PublishMessageCommand(
             _fixture.Create<Guid>(),
             _fixture.Create<Guid>(),
             _fixture.Create<Guid>(),
-            "John Doe",
             "Hello",
+            0,
             DateTimeOffset.UtcNow,
-            DateTimeOffset.UtcNow,
-            [Guid.Empty, Guid.Empty]);
+            DateTimeOffset.UtcNow);
 
         var result = _validator.Validate(command);
 
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().Contain(e => e.PropertyName == "RecipientUserIds");
-    }
-
-    [Fact]
-    public void Validate_EmptyRecipientUserIds_ReturnsValidationError()
-    {
-        var command = new PublishMessageCommand(
-            _fixture.Create<Guid>(),
-            _fixture.Create<Guid>(),
-            _fixture.Create<Guid>(),
-            "John Doe",
-            "Hello",
-            DateTimeOffset.UtcNow,
-            DateTimeOffset.UtcNow,
-            []);
-
-        var result = _validator.Validate(command);
-
-        result.IsValid.Should().BeFalse();
-        result.Errors.Should().Contain(e => e.PropertyName == "RecipientUserIds");
+        result.Errors.Should().Contain(e => e.PropertyName == "SequenceNum");
     }
 }

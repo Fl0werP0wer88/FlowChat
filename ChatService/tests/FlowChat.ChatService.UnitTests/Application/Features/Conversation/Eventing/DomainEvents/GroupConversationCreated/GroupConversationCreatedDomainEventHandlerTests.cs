@@ -34,17 +34,11 @@ public sealed class GroupConversationCreatedDomainEventHandlerTests
     {
         var conversationId = Id<ConversationAggregate>.New();
         var createdByUserId = Id<UserProfile>.New();
-        var participantUserIds = new[]
-        {
-            createdByUserId,
-            Id<UserProfile>.New()
-        };
         var domainEvent = new GroupConversationCreatedDomainEvent(
             conversationId,
             ConversationType.Group,
             "Dev Team",
-            createdByUserId,
-            participantUserIds);
+            createdByUserId);
         IntegrationEventEnvelope<GroupConversationChangedIntegrationEvent>? publishedEnvelope = null;
 
         _publisherMock
@@ -63,7 +57,6 @@ public sealed class GroupConversationCreatedDomainEventHandlerTests
         publishedEnvelope.Payload.Type.Should().Be((int) ConversationType.Group);
         publishedEnvelope.Payload.Name.Should().Be("Dev Team");
         publishedEnvelope.Payload.CreatedByUserId.Should().Be(createdByUserId.Value);
-        publishedEnvelope.Payload.ParticipantUserIds.Should().Equal(participantUserIds.Select(id => id.Value));
         _publisherMock.Verify(
             x => x.PublishAsync(
                 It.IsAny<IntegrationEventEnvelope<GroupConversationChangedIntegrationEvent>>(),

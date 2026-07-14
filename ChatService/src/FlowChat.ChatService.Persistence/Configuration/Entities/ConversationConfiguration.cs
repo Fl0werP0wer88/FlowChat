@@ -31,6 +31,9 @@ public sealed class ConversationConfiguration : IEntityTypeConfiguration<Convers
             .HasConversion(x => x.Value, x => Id<UserProfileMarker>.FromGuid(x))
             .IsRequired();
 
+        builder.Property(x => x.LastMsgSequenceNum)
+            .IsRequired();
+
         builder.Property(x => x.Version)
             .IsConcurrencyToken();
 
@@ -53,6 +56,9 @@ public sealed class ConversationConfiguration : IEntityTypeConfiguration<Convers
 
         builder.Ignore(x => x.IsDeleted);
         builder.Ignore(x => x.DomainEvents);
+
+        builder.HasIndex(x => x.Type)
+            .HasFilter("\"DeletedAt\" IS NULL");
 
         builder.HasMany(x => x.Participants)
             .WithOne()

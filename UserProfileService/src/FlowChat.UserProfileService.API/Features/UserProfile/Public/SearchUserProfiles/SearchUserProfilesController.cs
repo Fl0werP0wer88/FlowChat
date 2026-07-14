@@ -1,3 +1,4 @@
+using AutoMapper;
 using FlowChat.Shared.API;
 using FlowChat.UserProfileService.Application.Features.UserProfile.Queries.UserProfile.SearchUserProfiles;
 using MediatR;
@@ -12,10 +13,12 @@ namespace FlowChat.UserProfileService.Api.Features.UserProfile.Public.SearchUser
 public sealed class SearchUserProfilesController : ApiControllerBase
 {
     private readonly IMediator _mediator;
+    private readonly IMapper _mapper;
 
-    public SearchUserProfilesController(IMediator mediator)
+    public SearchUserProfilesController(IMediator mediator, IMapper mapper)
     {
         _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
+        _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
     }
 
     [HttpGet("search")]
@@ -33,7 +36,7 @@ public sealed class SearchUserProfilesController : ApiControllerBase
             cancellationToken);
 
         return result.IsSuccess
-            ? Ok(new SearchUserProfilesResponse(result.Value))
+            ? Ok(new SearchUserProfilesResponse(_mapper.Map<IReadOnlyList<UserProfileResponse>>(result.Value)))
             : HandleError(result.Error);
     }
 }

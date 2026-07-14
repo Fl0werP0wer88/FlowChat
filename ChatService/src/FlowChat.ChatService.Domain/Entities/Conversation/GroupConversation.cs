@@ -6,11 +6,15 @@ namespace FlowChat.ChatService.Domain.Entities.Conversation;
 
 public sealed class GroupConversation : Conversation
 {
+    private const int MinimumParticipantsCount = 2;
+    private const string MinimumParticipantsErrorMessage = "Group conversations must have at least two participants.";
+
     private GroupConversation(
         Id<Conversation> id,
         ConversationType type,
         string? name,
-        Id<UserProfileMarker> createdByUserId) : base(id, type, name, createdByUserId)
+        Id<UserProfileMarker> createdByUserId,
+        long lastMsgSequenceNum) : base(id, type, name, createdByUserId, lastMsgSequenceNum)
     {
     }
 
@@ -19,7 +23,8 @@ public sealed class GroupConversation : Conversation
         ConversationType type,
         string? name,
         Id<UserProfileMarker> createdByUserId,
-        List<ParticipantUser> participants) : base(id, type, name, createdByUserId, participants)
+        long lastMsgSequenceNum,
+        List<ParticipantUser> participants) : base(id, type, name, createdByUserId, lastMsgSequenceNum, participants)
     {
     }
 
@@ -33,39 +38,76 @@ public sealed class GroupConversation : Conversation
             id,
             ConversationType.Group,
             createdByUserId,
-            participantUserIds,
+            participantUserIds.Prepend(createdByUserId),
             name,
-            static (id, type, name, createdByUserId, participants) =>
-                new GroupConversation(id, type, name, createdByUserId, participants));
+            static (id, type, name, createdByUserId, lastMsgSequenceNum, participants) =>
+                new GroupConversation(id, type, name, createdByUserId, lastMsgSequenceNum, participants));
 
         conversation.AddDomainEvent(new GroupConversationCreatedDomainEvent(
             conversation.Id,
             conversation.Type,
             conversation.Name,
-            conversation.CreatedByUserId,
+            conversation.CreatedByUserId));
+
+        conversation.AddDomainEvent(new GroupConversationParticipantsAddedDomainEvent(
+            conversation.Id,
             [.. conversation.Participants.Select(p => p.UserId)]));
 
         return conversation;
     }
 
-    public static GroupConversation Restore(
-        Id<Conversation> id,
-        string name,
-        Id<UserProfileMarker> createdByUserId,
-        IEnumerable<ParticipantUser> participants)
+    public void AddParticipants(
+        IEnumerable<Id<UserProfileMarker>> participantUserIds,
+        string? displayName = null,
+        long lastReadMessageSequenceNum = 0)
     {
-        return RestoreCore(
-            id,
-            ConversationType.Group,
-            name,
-            createdByUserId,
-            participants,
-            static (id, type, name, createdByUserId, participants) =>
-                new GroupConversation(id, type, name, createdByUserId, participants));
+        ArgumentNullException.ThrowIfNull(participantUserIds);
+
+        var userIdsToAdd = participantUserIds.ToList();
+
+        foreach (var participantUserId in userIdsToAdd)
+        {
+            ArgumentNullException.ThrowIfNull(participantUserId);
+
+            if (_participants.Any(p => p.UserId == participantUserId) || userIdsToAdd.Count(id => id == participantUserId) > 1)
+                throw new InvalidOperationException("User is already a participant in this conversation.");
+        }
+
+        if (_participants.Count + userIdsToAdd.Count < MinimumParticipantsCount)
+            throw new InvalidOperationException(MinimumParticipantsErrorMessage);
+
+        foreach (var participantUserId in userIdsToAdd)
+        {
+            _participants.Add(ParticipantUser.Create(
+                Id<ParticipantUser>.New(),
+                Id,
+                participantUserId,
+                displayName,
+                lastReadMessageSequenceNum));
+        }
+
+        AddDomainEvent(new GroupConversationParticipantsAddedDomainEvent(Id, userIdsToAdd));
     }
 
-    public void AddParticipant(Id<UserProfileMarker> participantUserId, string? displayName = null, string? avatarUrl = null)
+    public void RemoveParticipants(IEnumerable<Id<UserProfileMarker>> participantUserIds)
     {
-        AddParticipantCore(participantUserId, displayName, avatarUrl);
+        ArgumentNullException.ThrowIfNull(participantUserIds);
+
+        var userIdsToRemove = participantUserIds.ToList();
+
+        foreach (var participantUserId in userIdsToRemove)
+        {
+            ArgumentNullException.ThrowIfNull(participantUserId);
+
+            if (_participants.All(p => p.UserId != participantUserId))
+                throw new InvalidOperationException("User is not a participant in this conversation.");
+        }
+
+        if (_participants.Count - userIdsToRemove.Distinct().Count() < MinimumParticipantsCount)
+            throw new InvalidOperationException(MinimumParticipantsErrorMessage);
+
+        _participants.RemoveAll(p => userIdsToRemove.Contains(p.UserId));
+
+        AddDomainEvent(new GroupConversationParticipantsRemovedDomainEvent(Id, userIdsToRemove));
     }
 }

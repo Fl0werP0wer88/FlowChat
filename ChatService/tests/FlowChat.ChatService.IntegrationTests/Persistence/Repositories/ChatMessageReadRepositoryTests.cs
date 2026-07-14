@@ -84,7 +84,6 @@ public sealed class ChatMessageReadRepositoryTests
             Id = Guid.NewGuid(),
             ConversationId = conversationId,
             SenderUserId = senderId,
-            SenderDisplayName = senderId.ToString(),
             Text = text,
             SentAtUtc = new DateTimeOffset(2026, 4, 24, hour, 0, 0, TimeSpan.Zero)
         };

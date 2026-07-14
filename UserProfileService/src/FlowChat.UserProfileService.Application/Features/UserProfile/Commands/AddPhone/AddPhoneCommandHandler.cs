@@ -12,10 +12,10 @@ using UserProfileAggregate = FlowChat.UserProfileService.Domain.Entities.UserPro
 namespace FlowChat.UserProfileService.Application.Features.UserProfile.Commands.AddPhone;
 
 public sealed class AddPhoneCommandHandler
-    : AggregateRootUpdateCommandHandlerBaseV2<AddPhoneCommand, Guid, UserProfileAggregate>
+    : AggregateRootUpdateCommandHandlerBaseV3<AddPhoneCommand, Guid, UserProfileAggregate>
 {
     private readonly IUserProfileWriteRepository _userProfileRepository;
-    private UserProfileAggregate? _userProfile;
+    private PhoneNumber? _normalizedPhoneNumber;
 
     public AddPhoneCommandHandler(
         IUserProfileWriteRepository userProfileRepository,
@@ -27,7 +27,7 @@ public sealed class AddPhoneCommandHandler
         _userProfileRepository = userProfileRepository;
     }
 
-    protected override async Task<FlowChatResult<Guid>> ExecuteAsync(
+    protected override async Task<FlowChatResult<UserProfileAggregate?>> FetchAggregateRootAsync(
         AddPhoneCommand request,
         CancellationToken cancellationToken)
     {
@@ -36,22 +36,29 @@ public sealed class AddPhoneCommandHandler
             throw new InvalidOperationException("Validated phone number could not be normalized.");
         }
 
-        _userProfile = await _userProfileRepository.GetByIdAsync(request.UserId, cancellationToken);
-        if (_userProfile is null)
+        _normalizedPhoneNumber = normalizedPhoneNumber;
+
+        var userProfile = await _userProfileRepository.GetByIdAsync(request.UserId, cancellationToken);
+        if (userProfile is null)
         {
-            return FlowChatResult<Guid>.Failure(DomainError.NotFound($"User profile '{request.UserId}' was not found."));
+            return FlowChatResult<UserProfileAggregate?>.Failure(DomainError.NotFound($"User profile '{request.UserId}' was not found."));
         }
 
-        if (_userProfile.Phones.Any(x => x.Number == normalizedPhoneNumber))
-        {
-            return FlowChatResult<Guid>.Failure(DomainError.Conflict($"Phone '{normalizedPhoneNumber!.Value}' already exists."));
-        }
-
-        var phone = _userProfile.AddPhone(Id<DomainPhone>.FromGuid(request.PhoneId), normalizedPhoneNumber!);
-
-        return FlowChatResult<Guid>.Success(phone.Id.Value);
+        return FlowChatResult<UserProfileAggregate?>.Success(userProfile);
     }
 
-    protected override UserProfileAggregate GetAggregateRoot() =>
-        _userProfile ?? throw new InvalidOperationException("Aggregate root instance is not available.");
+    protected override Task<FlowChatResult<Guid>> ExecuteAsync(
+        AddPhoneCommand request,
+        CancellationToken cancellationToken)
+    {
+        if (AggregateRoot!.Phones.Any(x => x.Number == _normalizedPhoneNumber))
+        {
+            return Task.FromResult(FlowChatResult<Guid>.Failure(DomainError.Conflict($"Phone '{_normalizedPhoneNumber!.Value}' already exists.")));
+        }
+
+        var phone = AggregateRoot.AddPhone(Id<DomainPhone>.FromGuid(request.PhoneId), _normalizedPhoneNumber!);
+        SetUpdated();
+
+        return Task.FromResult(FlowChatResult<Guid>.Success(phone.Id.Value));
+    }
 }

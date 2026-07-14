@@ -8,5 +8,8 @@ public sealed class ParticipantUserReadEntity : ReadEntityBase
     public Guid ConversationId { get; init; }
     public Guid UserId { get; init; }
     public string? DisplayName { get; init; }
-    public string? AvatarUrl { get; init; }
+    public bool IsBlocked { get; init; }
+    public bool IsMuted { get; init; }
+    public bool IsHidden { get; init; }
+    public long LastReadMessageSequenceNum { get; init; }
 }

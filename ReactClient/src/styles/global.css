@@ -232,25 +232,6 @@ body {
   gap: 0.8rem;
 }
 
-.alert {
-  margin: 0.25rem 0;
-  border-radius: 0.7rem;
-  padding: 0.65rem 0.75rem;
-  font-size: 0.9rem;
-}
-
-.alert-error {
-  background: color-mix(in srgb, #fff 86%, var(--danger));
-  color: #851435;
-  border: 1px solid #f0bccd;
-}
-
-.alert-info {
-  background: color-mix(in srgb, #fff 80%, #88c2db);
-  color: #20465a;
-  border: 1px solid #bbdce9;
-}
-
 .verification-panel {
   display: grid;
   gap: 0.9rem;
@@ -518,6 +499,150 @@ body {
   overflow-wrap: anywhere;
 }
 
+.conversation-settings__action--danger {
+  border-color: color-mix(in srgb, var(--danger) 22%, var(--border));
+}
+
+.conversation-settings__action--danger:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--danger) 55%, var(--border));
+  background: color-mix(in srgb, var(--danger) 5%, white);
+}
+
+.conversation-settings__action--danger > .material-symbols-rounded,
+.conversation-settings__action--danger strong {
+  color: var(--danger);
+}
+
+.conversation-settings__switch {
+  width: 2.8rem;
+  height: 1.55rem;
+  border: 0;
+  border-radius: 999px;
+  padding: 0.18rem;
+  background: #b8c1cc;
+  cursor: pointer;
+  transition: background-color 140ms ease;
+}
+
+.conversation-settings__switch span {
+  display: block;
+  width: 1.19rem;
+  height: 1.19rem;
+  border-radius: 50%;
+  background: white;
+  box-shadow: 0 1px 4px rgba(22, 32, 40, 0.28);
+  transition: transform 140ms ease;
+}
+
+.conversation-settings__switch[aria-checked="true"] {
+  background: var(--accent);
+}
+
+.conversation-settings__switch[aria-checked="true"] span {
+  transform: translateX(1.25rem);
+}
+
+.conversation-settings__switch:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.conversation-settings__switch:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.conversation-settings__notice,
+.composer__notice {
+  margin: 0;
+  color: var(--danger);
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.composer__notice {
+  grid-column: 1 / -1;
+}
+
+.confirm-dialog__backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(16, 26, 38, 0.42);
+  backdrop-filter: blur(4px);
+  animation: dialog-fade-in 140ms ease-out;
+}
+
+.confirm-dialog {
+  width: min(27rem, 100%);
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.9rem;
+  padding: 1.2rem;
+  border: 1px solid color-mix(in srgb, var(--danger) 20%, var(--border));
+  border-radius: 0.9rem;
+  background: white;
+  box-shadow: 0 24px 60px -28px rgba(16, 26, 38, 0.65);
+  animation: dialog-rise-in 160ms ease-out;
+}
+
+.confirm-dialog__icon {
+  display: grid;
+  place-items: center;
+  width: 2.35rem;
+  height: 2.35rem;
+  border-radius: 50%;
+  color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 10%, white);
+}
+
+.confirm-dialog h2,
+.confirm-dialog p {
+  margin: 0;
+}
+
+.confirm-dialog h2 {
+  font: 700 1.08rem "Space Grotesk", sans-serif;
+}
+
+.confirm-dialog p {
+  margin-top: 0.35rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.confirm-dialog__actions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.65rem;
+  margin-top: 0.25rem;
+}
+
+.ui-button--danger {
+  background: var(--danger);
+  border-color: var(--danger);
+}
+
+@keyframes dialog-fade-in {
+  from { opacity: 0; }
+}
+
+@keyframes dialog-rise-in {
+  from { opacity: 0; transform: translateY(8px) scale(0.985); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .confirm-dialog__backdrop,
+  .confirm-dialog {
+    animation: none;
+  }
+}
+
 .history {
   min-height: 0;
   overflow-y: auto;
@@ -577,10 +702,6 @@ body {
   grid-template-columns: 1fr auto;
   gap: 0.7rem;
   padding: 0.7rem;
-}
-
-.composer__error {
-  grid-column: 1 / -1;
 }
 
 .contacts-panel {
@@ -806,6 +927,7 @@ body {
   display: grid;
   gap: 0.12rem;
   min-width: 0;
+  flex: 1;
 }
 
 .contacts-panel__contact-name {
@@ -820,6 +942,22 @@ body {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.contacts-panel__unread-badge {
+  min-width: 1.35rem;
+  height: 1.35rem;
+  padding: 0 0.38rem;
+  border-radius: 999px;
+  background: var(--danger);
+  color: white;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1;
 }
 
 .contacts-composer {

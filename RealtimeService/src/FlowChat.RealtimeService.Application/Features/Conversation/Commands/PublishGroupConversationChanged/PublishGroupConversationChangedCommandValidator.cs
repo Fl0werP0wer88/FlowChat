@@ -17,9 +17,5 @@ public sealed class PublishGroupConversationChangedCommandValidator : AbstractVa
         RuleFor(command => command.CreatedByUserId)
             .NotEmpty()
             .WithMessage("CreatedByUserId is required.");
-
-        RuleFor(command => command.ParticipantUserIds)
-            .Must(ids => ids != null && ids.Any(id => id != Guid.Empty))
-            .WithMessage("ParticipantUserIds must contain at least one valid user id.");
     }
 }

@@ -15,7 +15,7 @@ public sealed class PublishMessageCommandHandlerTests
     public PublishMessageCommandHandlerTests()
     {
         _dispatcherMock
-            .Setup(x => x.ReceiveMessageAsync(It.IsAny<ChatMessageParam>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.MessageReceivedAsync(It.IsAny<ChatMessageParam>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         _handler = new PublishMessageCommandHandler(_dispatcherMock.Object);
@@ -25,11 +25,10 @@ public sealed class PublishMessageCommandHandlerTests
     public async Task Handle_MapsNotificationAndDispatchesToRecipients()
     {
         ChatMessageParam? capturedNotification = null;
-        var recipientUserId = _fixture.Create<Guid>();
         var deliveredAtUtc = new DateTimeOffset(2026, 5, 19, 12, 0, 0, TimeSpan.Zero);
 
         _dispatcherMock
-            .Setup(x => x.ReceiveMessageAsync(It.IsAny<ChatMessageParam>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.MessageReceivedAsync(It.IsAny<ChatMessageParam>(), It.IsAny<CancellationToken>()))
             .Callback<ChatMessageParam, CancellationToken>((notification, _) => capturedNotification = notification)
             .Returns(Task.CompletedTask);
 
@@ -38,18 +37,16 @@ public sealed class PublishMessageCommandHandlerTests
                 _fixture.Create<Guid>(),
                 _fixture.Create<Guid>(),
                 _fixture.Create<Guid>(),
-                " John Doe ",
                 " Hello there ",
+                42,
                 new DateTimeOffset(2026, 3, 17, 12, 0, 0, TimeSpan.Zero),
-                deliveredAtUtc,
-                [recipientUserId, recipientUserId, Guid.Empty]),
+                deliveredAtUtc),
             CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
         capturedNotification.Should().NotBeNull();
-        capturedNotification!.SenderDisplayName.Should().Be("John Doe");
-        capturedNotification.Text.Should().Be("Hello there");
+        capturedNotification!.Text.Should().Be("Hello there");
+        capturedNotification.SequenceNum.Should().Be(42);
         capturedNotification.DeliveredAtUtc.Should().Be(deliveredAtUtc);
-        capturedNotification.RecipientUserIds.Should().ContainSingle().Which.Should().Be(recipientUserId);
     }
 }

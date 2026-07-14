@@ -1,3 +1,4 @@
+using AutoMapper;
 using FlowChat.GatewayService.Api.Models;
 using FlowChat.GatewayService.Api.Services;
 using FlowChat.Shared.API;
@@ -14,13 +15,16 @@ public sealed class ConversationAggregateController : ApiControllerBase
     private const int DefaultMessageLimit = 10;
 
     private readonly IChatServiceClient _chatClient;
+    private readonly IMapper _mapper;
     private readonly ILogger<ConversationAggregateController> _logger;
 
     public ConversationAggregateController(
         IChatServiceClient chatClient,
+        IMapper mapper,
         ILogger<ConversationAggregateController> logger)
     {
         _chatClient = chatClient ?? throw new ArgumentNullException(nameof(chatClient));
+        _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -66,18 +70,8 @@ public sealed class ConversationAggregateController : ApiControllerBase
 
         var response = new OpenDuetConversationResponse(
             conversation.ConversationId,
-            [.. conversation.Participants.Select(p => new ConversationParticipantDto(
-                p.UserId,
-                p.DisplayName,
-                p.AvatarUrl,
-                p.ParticipantUserId))],
-            [.. messages.Items.Select(message => new ConversationMessageDto(
-                message.Id,
-                message.ConversationId,
-                message.SenderUserId,
-                message.SenderDisplayName,
-                message.Text,
-                message.SentAtUtc))],
+            _mapper.Map<IReadOnlyCollection<ConversationParticipantResponse>>(conversation.Participants),
+            _mapper.Map<IReadOnlyCollection<ConversationMessageResponse>>(messages.Items),
             messages.NextBeforeSentAtUtc,
             messages.NextBeforeMessageId,
             messages.HasMore);
@@ -129,25 +123,15 @@ public sealed class ConversationAggregateController : ApiControllerBase
         var response = new OpenGroupConversationResponse(
             conversation.ConversationId,
             conversation.Name,
-            [.. conversation.Participants.Select(p => new ConversationParticipantDto(
-                p.UserId,
-                p.DisplayName,
-                p.AvatarUrl,
-                p.ParticipantUserId))],
-            [.. messages.Items.Select(message => new ConversationMessageDto(
-                message.Id,
-                message.ConversationId,
-                message.SenderUserId,
-                message.SenderDisplayName,
-                message.Text,
-                message.SentAtUtc))],
+            _mapper.Map<IReadOnlyCollection<ConversationParticipantResponse>>(conversation.Participants),
+            _mapper.Map<IReadOnlyCollection<ConversationMessageResponse>>(messages.Items),
             messages.NextBeforeSentAtUtc,
             messages.NextBeforeMessageId,
             messages.HasMore);
 
         return Ok(response);
     }
-
+    //ToDo: Dodac na serwisie po postu upsert
     private async Task<DuetConversationClientDto> GetOrCreateConversationAsync(
         Guid partnerUserId,
         CancellationToken cancellationToken) =>

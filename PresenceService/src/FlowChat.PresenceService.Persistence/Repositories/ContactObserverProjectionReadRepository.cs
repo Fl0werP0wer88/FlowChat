@@ -9,23 +9,23 @@ public sealed class ContactObserverProjectionReadRepository(AppDbContext dbConte
 {
     private readonly AppDbContext _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
 
-    public async Task<IReadOnlyCollection<Guid>> GetObserverUserIdsAsync(
+    public async Task<IReadOnlyCollection<Guid>> GetNonBlockedObserverUserIdsAsync(
         Guid observedUserId,
         CancellationToken cancellationToken = default)
     {
         return await Active(_dbContext.ContactObserverProjections)
-            .Where(x => x.ObservedUserId == observedUserId)
+            .Where(x => x.ObservedUserId == observedUserId && !x.IsBlocked)
             .Select(x => x.ObserverUserId)
             .Distinct()
             .ToArrayAsync(cancellationToken);
     }
 
-    public async Task<IReadOnlyCollection<Guid>> GetObservedUserIdsAsync(
+    public async Task<IReadOnlyCollection<Guid>> GetNonBlockedObservedUserIdsAsync(
         Guid observerUserId,
         CancellationToken cancellationToken = default)
     {
         return await Active(_dbContext.ContactObserverProjections)
-            .Where(x => x.ObserverUserId == observerUserId)
+            .Where(x => x.ObserverUserId == observerUserId && !x.IsBlocked)
             .Select(x => x.ObservedUserId)
             .Distinct()
             .ToArrayAsync(cancellationToken);

@@ -3,7 +3,9 @@ using FlowChat.AuthService.Application;
 using FlowChat.AuthService.Consumers.Configuration.Settings;
 using FlowChat.AuthService.Consumers.Kafka;
 using FlowChat.AuthService.Infrastructure;
+using FlowChat.AuthService.Infrastructure.Configuration.Settings;
 using FlowChat.AuthService.Persistence;
+using FlowChat.Core.Messaging.AuthService.Events;
 using FlowChat.Shared.Infrastructure.Silverback.Behaviors;
 using FlowChat.Shared.Infrastructure.Silverback.Kafka;
 using Microsoft.Extensions.Configuration;
@@ -23,6 +25,10 @@ public static class ConsumersServiceRegistration
             .GetSection(new UserEmailConfirmedConsumerSettingsSection().SectionName)
             .Get<UserEmailConfirmedConsumerSettingsSection>()
             ?? new UserEmailConfirmedConsumerSettingsSection();
+        var accountConfirmedOptions = configuration
+            .GetSection(new AccountConfirmedProducerSettingsSection().SectionName)
+            .Get<AccountConfirmedProducerSettingsSection>()
+            ?? new AccountConfirmedProducerSettingsSection();
 
         services.AddConsumerApplicationServices();
         services.AddConsumerInfrastructureServices(configuration);
@@ -33,7 +39,8 @@ public static class ConsumersServiceRegistration
             .AddSingletonBrokerBehavior<CustomSpanAttributesConsumerBehavior>()
             .WithConnectionToMessageBroker(options => options
                 .AddKafka()
-                .AddEntityFrameworkKafkaOffsetStore())
+                .AddEntityFrameworkKafkaOffsetStore()
+                .AddEntityFrameworkOutbox())
             .AddKafkaClients(clients =>
             {
                 clients
@@ -55,7 +62,12 @@ public static class ConsumersServiceRegistration
                     .AddProducer(producer => producer
                         .Produce(endpoint => endpoint
                             .ProduceTo(consumerOptions.DeadLetterTopic)
-                            .SerializeAsJson(serializer => serializer.SetTypeHeader())));
+                            .SerializeAsJson(serializer => serializer.SetTypeHeader())))
+                    .AddProducer(producer => producer
+                        .Produce<AccountConfirmedIntegrationEvent>("auth-account-confirmed", endpoint => endpoint
+                            .ProduceTo(accountConfirmedOptions.Topic)
+                            .SerializeAsJson(serializer => serializer.SetTypeHeader())
+                            .StoreToOutbox(outbox => outbox.UseEntityFramework<AppDbContext>())));
             })
             .AddScopedSubscriber<UserEmailConfirmedSubscriber>()
             .AddScopedSubscriber<AuthEmailChangedSubscriber>();

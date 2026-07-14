@@ -57,11 +57,6 @@ namespace FlowChat.ChatService.Persistence.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
 
-                    b.Property<string>("SenderDisplayName")
-                        .IsRequired()
-                        .HasMaxLength(120)
-                        .HasColumnType("character varying(120)");
-
                     b.Property<Guid>("SenderUserId")
                         .HasColumnType("uuid");
 
@@ -88,6 +83,10 @@ namespace FlowChat.ChatService.Persistence.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("ConversationId", "SentAtUtc");
+
+                    b.HasIndex("ConversationId", "SequenceNum")
+                        .IsUnique()
+                        .HasFilter("\"SequenceNum\" IS NOT NULL");
 
                     b.ToTable("ChatMessages", (string)null);
                 });
@@ -119,6 +118,9 @@ namespace FlowChat.ChatService.Persistence.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
 
+                    b.Property<long>("LastMsgSequenceNum")
+                        .HasColumnType("bigint");
+
                     b.Property<string>("Name")
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
@@ -132,6 +134,9 @@ namespace FlowChat.ChatService.Persistence.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Type")
+                        .HasFilter("\"DeletedAt\" IS NULL");
+
                     b.ToTable("Conversations", (string)null);
 
                     b.HasDiscriminator<int>("Type");
@@ -143,10 +148,6 @@ namespace FlowChat.ChatService.Persistence.Migrations
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
-
-                    b.Property<string>("AvatarUrl")
-                        .HasMaxLength(2048)
-                        .HasColumnType("character varying(2048)");
 
                     b.Property<Guid>("ConversationId")
                         .HasColumnType("uuid");
@@ -161,8 +162,17 @@ namespace FlowChat.ChatService.Persistence.Migrations
                     b.Property<bool>("IsBlocked")
                         .HasColumnType("boolean");
 
+                    b.Property<bool>("IsHidden")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsMuted")
+                        .HasColumnType("boolean");
+
                     b.Property<DateTimeOffset>("JoinedAtUtc")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<long>("LastReadMessageSequenceNum")
+                        .HasColumnType("bigint");
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
@@ -170,7 +180,13 @@ namespace FlowChat.ChatService.Persistence.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("ConversationId", "UserId")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("\"DeletedAt\" IS NULL");
+
+                    b.HasIndex("UserId", "ConversationId")
+                        .HasFilter("\"DeletedAt\" IS NULL");
+
+                    NpgsqlIndexBuilderExtensions.IncludeProperties(b.HasIndex("UserId", "ConversationId"), new[] { "LastReadMessageSequenceNum" });
 
                     b.ToTable("ParticipantUsers", (string)null);
                 });
@@ -185,10 +201,6 @@ namespace FlowChat.ChatService.Persistence.Migrations
 
                     b.Property<DateTimeOffset?>("DeletedAt")
                         .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("SenderDisplayName")
-                        .IsRequired()
-                        .HasColumnType("text");
 
                     b.Property<Guid>("SenderUserId")
                         .HasColumnType("uuid");
@@ -214,6 +226,9 @@ namespace FlowChat.ChatService.Persistence.Migrations
 
                     b.Property<DateTimeOffset?>("DeletedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<long>("LastMsgSequenceNum")
+                        .HasColumnType("bigint");
 
                     b.Property<string>("Name")
                         .HasColumnType("text");
@@ -275,9 +290,6 @@ namespace FlowChat.ChatService.Persistence.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
 
-                    b.Property<string>("AvatarUrl")
-                        .HasColumnType("text");
-
                     b.Property<Guid>("ConversationId")
                         .HasColumnType("uuid");
 
@@ -286,6 +298,18 @@ namespace FlowChat.ChatService.Persistence.Migrations
 
                     b.Property<string>("DisplayName")
                         .HasColumnType("text");
+
+                    b.Property<bool>("IsBlocked")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsHidden")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsMuted")
+                        .HasColumnType("boolean");
+
+                    b.Property<long>("LastReadMessageSequenceNum")
+                        .HasColumnType("bigint");
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
@@ -311,6 +335,10 @@ namespace FlowChat.ChatService.Persistence.Migrations
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("timestamp with time zone")
                         .HasComputedColumnSql("\"SourceDeletedAtUtc\"", true);
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(320)
+                        .HasColumnType("character varying(320)");
 
                     b.Property<string>("FirstName")
                         .HasMaxLength(100)

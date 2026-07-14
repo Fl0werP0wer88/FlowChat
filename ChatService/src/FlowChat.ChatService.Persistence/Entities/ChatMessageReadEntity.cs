@@ -7,7 +7,6 @@ public sealed class ChatMessageReadEntity : ReadEntityBase
     public Guid Id { get; init; }
     public Guid ConversationId { get; init; }
     public Guid SenderUserId { get; init; }
-    public string SenderDisplayName { get; init; } = string.Empty;
     public string Text { get; init; } = string.Empty;
     public DateTimeOffset SentAtUtc { get; init; }
 }

@@ -8,4 +8,6 @@ public sealed record GetGroupConversationsResponse(
 public sealed record GroupConversationSummaryResponse(
     Guid ConversationId,
     string Name,
-    int ParticipantCount);
+    int ParticipantCount,
+    long LastReadMsgSeqNum,
+    long CurrentMsgSeqNum);

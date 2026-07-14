@@ -36,7 +36,7 @@ public sealed class UpdateProfileCommandHandlerTests
             .Setup(x => x.ProcessAsync(
                 It.IsAny<UpdateProfileCommand>(),
                 It.IsAny<UserProfile>(),
-                It.IsAny<AggregateState>(),
+                It.IsAny<MutationType>(),
                 It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
@@ -76,7 +76,7 @@ public sealed class UpdateProfileCommandHandlerTests
             x => x.ProcessAsync(
                 It.IsAny<UpdateProfileCommand>(),
                 profile,
-                AggregateState.Updated,
+                MutationType.Updated,
                 It.IsAny<CancellationToken>()),
             Times.Once);
     }
@@ -108,7 +108,7 @@ public sealed class UpdateProfileCommandHandlerTests
             x => x.ProcessAsync(
                 It.IsAny<UpdateProfileCommand>(),
                 It.IsAny<UserProfile>(),
-                It.IsAny<AggregateState>(),
+                It.IsAny<MutationType>(),
                 It.IsAny<CancellationToken>()),
             Times.Never);
     }

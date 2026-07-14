@@ -16,7 +16,7 @@ public sealed class PresenceStatusChangedApplicationEventHandler(
         PresenceStatusChangedApplicationEvent notification,
         CancellationToken cancellationToken)
     {
-        var recipients = await contactObserverProjectionReadRepository.GetObserverUserIdsAsync(
+        var recipients = await contactObserverProjectionReadRepository.GetNonBlockedObserverUserIdsAsync(
             notification.UserId,
             cancellationToken);
         var recipientUserIds = recipients

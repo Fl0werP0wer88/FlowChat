@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using AutoMapper;
 using FlowChat.ChatService.Api.Features.Conversation.Public.CreateGroupConversation;
 using FlowChat.ChatService.Application.Features.Conversation.Commands.CreateGroupConversation;
 using FlowChat.ChatService.Application.Features.Conversation.Dtos;
@@ -16,6 +17,9 @@ namespace FlowChat.ChatService.UnitTests.API.Features.Conversation.Public.Create
 
 public sealed class CreateGroupConversationControllerTests
 {
+    private static readonly IMapper Mapper =
+        new MapperConfiguration(cfg => cfg.AddProfile<CreateGroupConversationMappingProfile>(), Microsoft.Extensions.Logging.Abstractions.NullLoggerFactory.Instance).CreateMapper();
+
     private readonly Mock<IMediator> _mediatorMock = new();
 
     private CreateGroupConversationController CreateController(Guid? authenticatedUserId = null)
@@ -28,7 +32,7 @@ public sealed class CreateGroupConversationControllerTests
                 [new Claim("sub", authenticatedUserId.Value.ToString("D"))], "Test"));
         }
 
-        return new CreateGroupConversationController(_mediatorMock.Object)
+        return new CreateGroupConversationController(_mediatorMock.Object, Mapper)
         {
             ControllerContext = new ControllerContext { HttpContext = httpContext },
             ProblemDetailsFactory = new TestProblemDetailsFactory()

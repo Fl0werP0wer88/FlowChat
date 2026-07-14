@@ -13,7 +13,7 @@ using UserProfileMarker = FlowChat.ChatService.Domain.Entities.UserProfiles.User
 namespace FlowChat.ChatService.Application.Features.Conversation.Commands.CreateGroupConversation;
 
 public sealed class CreateGroupConversationCommandHandler
-    : AggregateRootInsertCommandHandlerBaseV2<CreateGroupConversationCommand, GroupConversationDetailDto, GroupConversationAggregate>
+    : AggregateRootInsertCommandHandlerBaseV3<CreateGroupConversationCommand, GroupConversationDetailDto, GroupConversationAggregate>
 {
     private readonly IGroupConversationWriteRepository _conversationWriteRepository;
     private readonly IUserProfileProjectionReadRepository _profileReadRepository;
@@ -42,6 +42,7 @@ public sealed class CreateGroupConversationCommandHandler
             request.Name);
 
         await _conversationWriteRepository.AddAsync(_conversation, cancellationToken);
+        SetInserted();
 
         var participantUserIds = _conversation.Participants.Select(p => p.UserId.Value).ToList();
         var profiles = await _profileReadRepository.GetByIdsAsync(participantUserIds, cancellationToken);
@@ -68,7 +69,7 @@ public sealed class CreateGroupConversationCommandHandler
         return new ConversationParticipantDto(
             participant.UserId.Value,
             string.IsNullOrEmpty(participant.DisplayName) ? profile?.DisplayName : participant.DisplayName,
-            string.IsNullOrEmpty(participant.AvatarUrl) ? profile?.AvatarUrl : participant.AvatarUrl,
+            profile?.AvatarUrl,
             participant.UserId.Value);
     }
 }

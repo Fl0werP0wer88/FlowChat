@@ -9,9 +9,9 @@ Creates if missing:
     - flowchat_auth_db
     - flowchat_chat_db
     - flowchat_userprofile_db
-    - flowchat_socialgraph_db
     - flowchat_presence_db
     - flowchat_notification_db
+    - flowchat_realtime_db
 
 Additionally:
 - assigns database and schema ownership to flowchat_migrator
@@ -42,10 +42,10 @@ param(
   [string]$AuthDb = "flowchat_auth_db",
   [string]$ChatDb = "flowchat_chat_db",
   [string]$UserProfileDb = "flowchat_userprofile_db",
-  [string]$SocialGraphDb = "flowchat_socialgraph_db",
   [string]$PresenceDb = "flowchat_presence_db",
   [string]$NotificationDb = "flowchat_notification_db",
   [string]$HarnessDb = "flowchat_harness_db",
+  [string]$RealtimeDb = "flowchat_realtime_db",
 
   [int]$TimeoutSeconds = 180,
 
@@ -280,10 +280,10 @@ $targetDatabases = @(
   $AuthDb,
   $ChatDb,
   $UserProfileDb,
-  $SocialGraphDb,
   $PresenceDb,
   $NotificationDb,
-  $HarnessDb
+  $HarnessDb,
+  $RealtimeDb
 )
 
 if ($DropDb) {
@@ -306,9 +306,6 @@ Ensure-AppCrudAccess -containerId $containerId -dbName $ChatDb -owner $MigratorU
 Ensure-Database -containerId $containerId -dbName $UserProfileDb -owner $MigratorUser
 Ensure-AppCrudAccess -containerId $containerId -dbName $UserProfileDb -owner $MigratorUser -appRole $AppUser
 
-Ensure-Database -containerId $containerId -dbName $SocialGraphDb -owner $MigratorUser
-Ensure-AppCrudAccess -containerId $containerId -dbName $SocialGraphDb -owner $MigratorUser -appRole $AppUser
-
 Ensure-Database -containerId $containerId -dbName $PresenceDb -owner $MigratorUser
 Ensure-AppCrudAccess -containerId $containerId -dbName $PresenceDb -owner $MigratorUser -appRole $AppUser
 
@@ -318,6 +315,9 @@ Ensure-AppCrudAccess -containerId $containerId -dbName $NotificationDb -owner $M
 Ensure-Database -containerId $containerId -dbName $HarnessDb -owner $MigratorUser
 Ensure-AppCrudAccess -containerId $containerId -dbName $HarnessDb -owner $MigratorUser -appRole $AppUser
 
+Ensure-Database -containerId $containerId -dbName $RealtimeDb -owner $MigratorUser
+Ensure-AppCrudAccess -containerId $containerId -dbName $RealtimeDb -owner $MigratorUser -appRole $AppUser
+
 Write-Step "Done. PostgreSQL is fully initialized ✅"
 Write-Host ""
 Write-Host "Admin user      : $AdminUser"
@@ -326,9 +326,9 @@ Write-Host "App user        : $AppUser"
 Write-Host "Auth DB         : $AuthDb"
 Write-Host "Chat DB         : $ChatDb"
 Write-Host "UserProfile DB  : $UserProfileDb"
-Write-Host "SocialGraph DB  : $SocialGraphDb"
 Write-Host "Presence DB     : $PresenceDb"
 Write-Host "Notification DB : $NotificationDb"
 Write-Host "Harness DB      : $HarnessDb"
+Write-Host "Realtime DB     : $RealtimeDb"
 Write-Host "Host            : localhost"
 Write-Host "Port            : 5432"

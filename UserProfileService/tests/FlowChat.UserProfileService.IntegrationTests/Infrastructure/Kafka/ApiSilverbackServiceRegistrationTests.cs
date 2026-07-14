@@ -26,7 +26,7 @@ public sealed class ApiSilverbackServiceRegistrationTests
                 ["Kafka:UserEmailVerificationRequestedProducer:BootstrapServers"] = "localhost:9092",
                 ["Kafka:UserEmailVerificationRequestedProducer:Topic"] = "dev.flowchat.notification.email.v1",
                 ["Kafka:UserProfileProjectionProducer:BootstrapServers"] = "localhost:9092",
-                ["Kafka:UserProfileProjectionProducer:Topic"] = "dev.flowchat.user-profile.user-profile.v1"
+                ["Kafka:UserProfileProjectionProducer:Topic"] = "dev.flowchat.user-profile.user-profile-projection.v1"
             })
             .Build();
 
@@ -48,6 +48,6 @@ public sealed class ApiSilverbackServiceRegistrationTests
         publisher.Should().NotBeNull();
         integrationEventPublisher.Should().NotBeNull();
         emailVerificationOptions!.Topic.Should().Be("dev.flowchat.notification.email.v1");
-        projectionOptions!.Topic.Should().Be("dev.flowchat.user-profile.user-profile.v1");
+        projectionOptions!.Topic.Should().Be("dev.flowchat.user-profile.user-profile-projection.v1");
     }
 }

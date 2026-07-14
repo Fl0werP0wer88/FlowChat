@@ -8,7 +8,6 @@ using FlowChat.UserProfileService.Application.Features.UserProfile.Commands.SetM
 using FlowChat.UserProfileService.Application.Features.UserProfile.Commands.SetMainPhone;
 using FlowChat.UserProfileService.Domain.Entities.EmailVerificationRequest;
 using FlowChat.UserProfileService.Domain.Entities.UserProfile;
-using FlowChat.UserProfileService.Domain.Entities.UserProfile.Events;
 
 namespace FlowChat.UserProfileService.UnitTests;
 
@@ -39,14 +38,14 @@ public sealed class SetMainContactCommandHandlerTests
             .Setup(x => x.ProcessAsync(
                 It.IsAny<SetMainEmailCommand>(),
                 It.IsAny<UserProfile>(),
-                It.IsAny<AggregateState>(),
+                It.IsAny<MutationType>(),
                 It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
         _phoneBeforeSaveProcessorMock
             .Setup(x => x.ProcessAsync(
                 It.IsAny<SetMainPhoneCommand>(),
                 It.IsAny<UserProfile>(),
-                It.IsAny<AggregateState>(),
+                It.IsAny<MutationType>(),
                 It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
@@ -99,7 +98,7 @@ public sealed class SetMainContactCommandHandlerTests
     }
 
     [Fact]
-    public async Task SetMainEmail_WhenEmailExists_SetsMainEmailAndDispatchesDomainEvents()
+    public async Task SetMainEmail_WhenEmailExists_SetsMainEmail()
     {
         var profile = CreateUserProfile();
         var firstEmail = profile.Emails.Should().ContainSingle().Subject;
@@ -111,12 +110,6 @@ public sealed class SetMainContactCommandHandlerTests
             .Setup(x => x.GetByIdAsync(profile.Id.Value, It.IsAny<CancellationToken>()))
             .ReturnsAsync(profile);
 
-        List<IDomainEvent> dispatchedEvents = [];
-        _dispatcherMock
-            .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<ILocalEvent>>(), It.IsAny<CancellationToken>()))
-            .Callback<IEnumerable<ILocalEvent>, CancellationToken>((events, _) => dispatchedEvents.AddRange(events.OfType<IDomainEvent>()))
-            .Returns(Task.CompletedTask);
-
         var result = await SendAsync(new SetMainEmailCommand(profile.Id.Value, secondEmail.Id.Value));
 
         result.IsSuccess.Should().BeTrue();
@@ -124,16 +117,11 @@ public sealed class SetMainContactCommandHandlerTests
         firstEmail.IsMain.Should().BeFalse();
         secondEmail.IsMain.Should().BeTrue();
 
-        var emailChangedEvent = dispatchedEvents.OfType<MainEmailChangedDomainEvent>().Should().ContainSingle().Subject;
-        emailChangedEvent.UserProfileId.Should().Be(profile.Id);
-        emailChangedEvent.EmailId.Should().Be(secondEmail.Id);
-        emailChangedEvent.Address.Should().Be(secondEmail.Address);
-
         _emailBeforeSaveProcessorMock.Verify(
             x => x.ProcessAsync(
                 It.IsAny<SetMainEmailCommand>(),
                 profile,
-                AggregateState.Updated,
+                MutationType.Updated,
                 It.IsAny<CancellationToken>()),
             Times.Once);
     }
@@ -175,7 +163,7 @@ public sealed class SetMainContactCommandHandlerTests
             x => x.ProcessAsync(
                 It.IsAny<SetMainEmailCommand>(),
                 It.IsAny<UserProfile>(),
-                It.IsAny<AggregateState>(),
+                It.IsAny<MutationType>(),
                 It.IsAny<CancellationToken>()),
             Times.Never);
     }
@@ -221,7 +209,7 @@ public sealed class SetMainContactCommandHandlerTests
     }
 
     [Fact]
-    public async Task SetMainPhone_WhenPhoneExists_SetsMainPhoneAndDispatchesDomainEvents()
+    public async Task SetMainPhone_WhenPhoneExists_SetsMainPhone()
     {
         var profile = CreateUserProfile();
         var firstPhone = profile.AddPhone(Id<Phone>.New(), PhoneNumber.Create("+48123123123"));
@@ -233,12 +221,6 @@ public sealed class SetMainContactCommandHandlerTests
             .Setup(x => x.GetByIdAsync(profile.Id.Value, It.IsAny<CancellationToken>()))
             .ReturnsAsync(profile);
 
-        List<IDomainEvent> dispatchedEvents = [];
-        _dispatcherMock
-            .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<ILocalEvent>>(), It.IsAny<CancellationToken>()))
-            .Callback<IEnumerable<ILocalEvent>, CancellationToken>((events, _) => dispatchedEvents.AddRange(events.OfType<IDomainEvent>()))
-            .Returns(Task.CompletedTask);
-
         var result = await SendAsync(new SetMainPhoneCommand(profile.Id.Value, secondPhone.Id.Value));
 
         result.IsSuccess.Should().BeTrue();
@@ -246,16 +228,11 @@ public sealed class SetMainContactCommandHandlerTests
         firstPhone.IsMain.Should().BeFalse();
         secondPhone.IsMain.Should().BeTrue();
 
-        var phoneChangedEvent = dispatchedEvents.OfType<MainPhoneChangedDomainEvent>().Should().ContainSingle().Subject;
-        phoneChangedEvent.UserProfileId.Should().Be(profile.Id);
-        phoneChangedEvent.PhoneId.Should().Be(secondPhone.Id);
-        phoneChangedEvent.Number.Should().Be(secondPhone.Number);
-
         _phoneBeforeSaveProcessorMock.Verify(
             x => x.ProcessAsync(
                 It.IsAny<SetMainPhoneCommand>(),
                 profile,
-                AggregateState.Updated,
+                MutationType.Updated,
                 It.IsAny<CancellationToken>()),
             Times.Once);
     }
@@ -301,7 +278,7 @@ public sealed class SetMainContactCommandHandlerTests
             x => x.ProcessAsync(
                 It.IsAny<SetMainPhoneCommand>(),
                 It.IsAny<UserProfile>(),
-                It.IsAny<AggregateState>(),
+                It.IsAny<MutationType>(),
                 It.IsAny<CancellationToken>()),
             Times.Never);
     }

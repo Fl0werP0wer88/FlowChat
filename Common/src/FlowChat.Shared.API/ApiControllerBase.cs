@@ -24,7 +24,8 @@ public abstract class ApiControllerBase : ControllerBase
             { ErrorType.NotFound, NotFoundResponse },
             { ErrorType.BadRequest, BadRequestResponse },
             { ErrorType.Validation, ValidationResponse },
-            { ErrorType.Unauthorized, UnauthorizedResponse }
+            { ErrorType.Unauthorized, UnauthorizedResponse },
+            { ErrorType.OperationCanceled, BadRequestResponse }
         };
     }
 

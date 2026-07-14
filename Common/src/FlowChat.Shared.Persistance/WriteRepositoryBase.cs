@@ -12,11 +12,36 @@ public class WriteRepositoryBase<TAggregate, TEntity>(DbContext dbContext)
 {
     protected readonly DbContext DbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
 
+
     public virtual async Task<TAggregate?> GetByIdAsync(Id<TAggregate> id, CancellationToken cancellationToken = default)
     {
         var entityId = Id<TEntity>.FromId(id);
         return await DbContext.Set<TAggregate>()
             .FirstOrDefaultAsync(x => x.Id == entityId, cancellationToken);
+    }
+
+    public virtual async Task<TAggregate?> GetByIdAsync(
+        CancellationToken cancellationToken = default,
+        params IId?[] keyValues)
+    {
+        var entityType = DbContext.Model.FindEntityType(typeof(TAggregate))
+            ?? throw new InvalidOperationException(
+                $"Entity type {typeof(TAggregate).Name} is not mapped.");
+
+        var primaryKey = entityType.FindPrimaryKey()
+            ?? throw new InvalidOperationException(
+                $"Entity type {typeof(TAggregate).Name} has no primary key.");
+
+        if (primaryKey.Properties.Count != keyValues.Length)
+        {
+            throw new ArgumentException(
+                $"{typeof(TAggregate).Name} expects {primaryKey.Properties.Count} key values, " +
+                $"but received {keyValues.Length}.",
+                nameof(keyValues));
+        }
+
+        return await DbContext.Set<TAggregate>()
+            .FindAsync(keyValues, cancellationToken);
     }
 
     public virtual async Task<TAggregate> AddAsync(TAggregate aggregate, CancellationToken cancellationToken = default)

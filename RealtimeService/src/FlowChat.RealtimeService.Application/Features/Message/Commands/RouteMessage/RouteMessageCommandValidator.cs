@@ -18,10 +18,6 @@ public sealed class RouteMessageCommandValidator : AbstractValidator<RouteMessag
             .NotEmpty()
             .WithMessage("SenderUserId is required.");
 
-        RuleFor(command => command.SenderDisplayName)
-            .Must(value => !string.IsNullOrWhiteSpace(value))
-            .WithMessage("SenderDisplayName is required.");
-
         RuleFor(command => command.Text)
             .Must(value => !string.IsNullOrWhiteSpace(value))
             .WithMessage("Text is required.");

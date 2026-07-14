@@ -4,22 +4,21 @@ namespace FlowChat.GatewayService.Api.Models;
 
 public sealed record OpenDuetConversationResponse(
     Guid ConversationId,
-    IReadOnlyCollection<ConversationParticipantDto> Participants,
-    IReadOnlyCollection<ConversationMessageDto> Messages,
+    IReadOnlyCollection<ConversationParticipantResponse> Participants,
+    IReadOnlyCollection<ConversationMessageResponse> Messages,
     DateTimeOffset? NextBeforeSentAtUtc,
     Guid? NextBeforeMessageId,
     bool HasMore) : IServiceOutput;
 
-public sealed record ConversationParticipantDto(
+public sealed record ConversationParticipantResponse(
     Guid UserId,
     string? DisplayName,
     string? AvatarUrl,
-    Guid ParticipantUserId) : IServiceOutput;
+    Guid ParticipantUserId);
 
-public sealed record ConversationMessageDto(
+public sealed record ConversationMessageResponse(
     Guid Id,
     Guid ConversationId,
     Guid SenderUserId,
-    string SenderDisplayName,
     string Text,
-    DateTimeOffset SentAtUtc) : IServiceOutput;
+    DateTimeOffset SentAtUtc);

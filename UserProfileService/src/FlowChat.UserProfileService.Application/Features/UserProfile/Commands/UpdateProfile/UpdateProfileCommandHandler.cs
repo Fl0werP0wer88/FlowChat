@@ -9,11 +9,9 @@ using UserProfileAggregate = FlowChat.UserProfileService.Domain.Entities.UserPro
 namespace FlowChat.UserProfileService.Application.Features.UserProfile.Commands.UpdateProfile;
 
 public sealed class UpdateProfileCommandHandler
-    : AggregateRootUpdateCommandHandlerBaseV2<UpdateProfileCommand, Guid, UserProfileAggregate>
+    : AggregateRootUpdateCommandHandlerBaseV3<UpdateProfileCommand, Guid, UserProfileAggregate>
 {
     private readonly IUserProfileWriteRepository _userProfileRepository;
-    private UserProfileAggregate? _userProfile;
-    private bool _profileChanged;
 
     public UpdateProfileCommandHandler(
         IUserProfileWriteRepository userProfileRepository,
@@ -25,19 +23,29 @@ public sealed class UpdateProfileCommandHandler
         _userProfileRepository = userProfileRepository;
     }
 
-    protected override async Task<FlowChatResult<Guid>> ExecuteAsync(
+    protected override async Task<FlowChatResult<UserProfileAggregate?>> FetchAggregateRootAsync(
         UpdateProfileCommand request,
         CancellationToken cancellationToken)
     {
-        _userProfile = await _userProfileRepository.GetByIdAsync(request.UserId, cancellationToken);
-        if (_userProfile is null)
+        var userProfile = await _userProfileRepository.GetByIdAsync(request.UserId, cancellationToken);
+        if (userProfile is null)
         {
-            return FlowChatResult<Guid>.Failure(DomainError.NotFound($"User profile '{request.UserId}' was not found."));
+            return FlowChatResult<UserProfileAggregate?>.Failure(DomainError.NotFound($"User profile '{request.UserId}' was not found."));
         }
 
-        _profileChanged = HasProfileChanged(request, _userProfile);
+        return FlowChatResult<UserProfileAggregate?>.Success(userProfile);
+    }
 
-        _userProfile.UpdateProfile(
+    protected override Task<FlowChatResult<Guid>> ExecuteAsync(
+        UpdateProfileCommand request,
+        CancellationToken cancellationToken)
+    {
+        if (HasProfileChanged(request, AggregateRoot!))
+        {
+            SetUpdated();
+        }
+
+        AggregateRoot!.UpdateProfile(
             request.FirstName,
             request.LastName,
             request.Organization,
@@ -45,14 +53,8 @@ public sealed class UpdateProfileCommandHandler
             request.Bio,
             request.IsActive);
 
-        return FlowChatResult<Guid>.Success(_userProfile.Id.Value);
+        return Task.FromResult(FlowChatResult<Guid>.Success(AggregateRoot!.Id.Value));
     }
-
-    protected override UserProfileAggregate GetAggregateRoot() =>
-        _userProfile ?? throw new InvalidOperationException("Aggregate root instance is not available.");
-
-    protected override AggregateState GetAggregateState(UpdateProfileCommand request, UserProfileAggregate aggregateRoot) =>
-        _profileChanged ? AggregateState.Updated : AggregateState.Unchanged;
 
     private static bool HasProfileChanged(UpdateProfileCommand request, UserProfileAggregate userProfile)
     {

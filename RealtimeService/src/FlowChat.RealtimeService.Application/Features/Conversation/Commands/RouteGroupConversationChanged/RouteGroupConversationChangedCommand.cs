@@ -7,5 +7,4 @@ public sealed record RouteGroupConversationChangedCommand(
     Guid ConversationId,
     int Type,
     string? Name,
-    Guid CreatedByUserId,
-    IReadOnlyCollection<Guid> ParticipantUserIds) : ICommand<Unit>;
+    Guid CreatedByUserId) : ICommand<Unit>;

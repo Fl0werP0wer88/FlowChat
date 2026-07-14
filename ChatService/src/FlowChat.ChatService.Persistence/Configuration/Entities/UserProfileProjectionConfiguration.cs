@@ -28,6 +28,9 @@ public sealed class UserProfileReadModelEntityConfiguration : IEntityTypeConfigu
         builder.Property(x => x.AvatarUrl)
             .HasMaxLength(2048);
 
+        builder.Property(x => x.Email)
+            .HasMaxLength(320);
+
         builder.Property(x => x.SourceVersion)
             .IsRequired();
 

@@ -1,5 +1,7 @@
-using FlowChat.RealtimeService.Application.Features.RealtimeConnection.Commands;
+using FlowChat.RealtimeService.Application.Features.Conversation.Commands.RouteDuetConversationCreated;
 using FlowChat.RealtimeService.Application.Features.Conversation.Commands.RouteGroupConversationChanged;
+using FlowChat.RealtimeService.Application.Features.Conversation.Commands.RouteGroupConversationParticipantsAdded;
+using FlowChat.RealtimeService.Application.Features.Conversation.Commands.RouteGroupConversationParticipantsRemoved;
 using FlowChat.RealtimeService.Application.Features.Message.Commands.RouteMessage;
 using FlowChat.RealtimeService.Application.Features.Presence.Commands.RoutePresenceChange;
 using FlowChat.Shared.Application;
@@ -16,15 +18,10 @@ public static class ApiApplicationServiceRegistration
         services.AddFlowChatValidatorsFromAssembly(applicationAssembly);
         services.AddMediatR(cfg =>
         {
-            cfg.TypeEvaluator = type =>
-                type != typeof(RouteMessageCommandHandler)
-                && type != typeof(RoutePresenceChangeCommandHandler)
-                && type != typeof(RouteGroupConversationChangedCommandHandler);
+            cfg.TypeEvaluator = type => !RealtimeApplicationHandlerSets.ConsumerRouteHandlerTypes.Contains(type);
             cfg.RegisterServicesFromAssemblies(applicationAssembly);
             cfg.AddFlowChatBehaviors();
         });
-        services.AddScoped<IRealtimeConnectionCommandOrchestrator, RealtimeConnectionCommandOrchestrator>();
-
         return services;
     }
 }
@@ -38,10 +35,7 @@ public static class ConsumerApplicationServiceRegistration
         services.AddFlowChatValidatorsFromAssembly(applicationAssembly);
         services.AddMediatR(cfg =>
         {
-            cfg.TypeEvaluator = type =>
-                type == typeof(RouteMessageCommandHandler)
-                || type == typeof(RoutePresenceChangeCommandHandler)
-                || type == typeof(RouteGroupConversationChangedCommandHandler);
+            cfg.TypeEvaluator = RealtimeApplicationHandlerSets.ConsumerRouteHandlerTypes.Contains;
             cfg.RegisterServicesFromAssemblies(applicationAssembly);
             cfg.AddFlowChatBehaviors();
         });
@@ -50,3 +44,15 @@ public static class ConsumerApplicationServiceRegistration
     }
 }
 
+file static class RealtimeApplicationHandlerSets
+{
+    public static readonly Type[] ConsumerRouteHandlerTypes =
+    [
+        typeof(RouteMessageCommandHandler),
+        typeof(RoutePresenceChangeCommandHandler),
+        typeof(RouteGroupConversationChangedCommandHandler),
+        typeof(RouteGroupConversationParticipantsAddedCommandHandler),
+        typeof(RouteGroupConversationParticipantsRemovedCommandHandler),
+        typeof(RouteDuetConversationCreatedCommandHandler)
+    ];
+}

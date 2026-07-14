@@ -11,6 +11,9 @@ public record DomainError : IDomainError
     public static DomainError BadRequest(string? message = "Invalid request or parameters.") =>
         new(message ?? "Invalid request or parameters.", ErrorType.BadRequest);
 
+    public static DomainError OperationCanceled(string? message = "The request was canceled.") =>
+        new(message ?? "The request was canceled.", ErrorType.OperationCanceled);
+
     public static DomainError Validation(string? message = "Validation Failed.", List<string>? errors = null) =>
         new(message ?? "Validation Failed.", ErrorType.Validation, errors);
 

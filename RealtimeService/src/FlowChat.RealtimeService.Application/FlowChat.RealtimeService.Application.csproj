@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\Common\src\FlowChat.Shared.Application\FlowChat.Shared.Application.csproj" />
+    <ProjectReference Include="..\FlowChat.RealtimeService.Domain\FlowChat.RealtimeService.Domain.csproj" />
   </ItemGroup>
 
   <ItemGroup>

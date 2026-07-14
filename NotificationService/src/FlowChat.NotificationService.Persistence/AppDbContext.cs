@@ -1,14 +1,24 @@
+using System.Data.Common;
 using FlowChat.NotificationService.Domain.Entities.Notification;
 using FlowChat.NotificationService.Persistence.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Silverback.Messaging.Consuming.KafkaOffsetStore;
 
 namespace FlowChat.NotificationService.Persistence;
 
 public class AppDbContext : DbContext
 {
+    [ActivatorUtilitiesConstructor]
     public AppDbContext(DbContextOptions<AppDbContext> options)
         : base(options)
+    {
+    }
+
+    public AppDbContext(DbConnection connection)
+        : base(new DbContextOptionsBuilder<AppDbContext>()
+            .UseNpgsql(connection)
+            .Options)
     {
     }
 

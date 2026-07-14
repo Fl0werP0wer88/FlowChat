@@ -4,6 +4,7 @@ using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBas
 using FlowChat.Shared.Domain;
 using FlowChat.UserProfileService.Application.Contracts.Persistence;
 using FlowChat.UserProfileService.Application.Features.UserProfile.EmailVerification.Interfaces;
+using FlowChat.UserProfileService.Application.Features.UserProfile.Queries.UserProfile.Model;
 using FlowChat.UserProfileService.Domain.Entities.EmailVerificationProcess;
 using DomainEmail = FlowChat.UserProfileService.Domain.Entities.UserProfile.Email;
 using DomainUserProfile = FlowChat.UserProfileService.Domain.Entities.UserProfile.UserProfile;
@@ -11,13 +12,13 @@ using DomainUserProfile = FlowChat.UserProfileService.Domain.Entities.UserProfil
 namespace FlowChat.UserProfileService.Application.Features.UserProfile.Commands.SendEmailVerification;
 
 public sealed class SendEmailVerificationCommandHandler
-    : AggregateRootUpsertCommandHandlerBaseV2<SendEmailVerificationCommand, Guid, EmailVerificationProcess>
+    : AggregateRootUpsertCommandHandlerBaseV3<SendEmailVerificationCommand, Guid, EmailVerificationProcess>
 {
     private readonly IUserProfileReadRepository _userProfileReadRepository;
     private readonly IEmailVerificationProcessWriteRepository _emailVerificationProcessWriteRepository;
     private readonly IEmailVerificationRequestIssuer _emailVerificationRequestIssuer;
-    private EmailVerificationProcess? _process;
-    private bool _wasProcessCreated;
+    private UserProfileDto? _userProfile;
+    private EmailDto? _email;
 
     public SendEmailVerificationCommandHandler(
         IUserProfileReadRepository userProfileReadRepository,
@@ -33,55 +34,64 @@ public sealed class SendEmailVerificationCommandHandler
         _emailVerificationRequestIssuer = emailVerificationRequestIssuer;
     }
 
-    protected override async Task<FlowChatResult<Guid>> ExecuteAsync(
+    protected override async Task<FlowChatResult<EmailVerificationProcess?>> FetchAggregateRootAsync(
         SendEmailVerificationCommand request,
         CancellationToken cancellationToken)
     {
         var userProfile = await _userProfileReadRepository.GetByIdAsync(request.UserId, cancellationToken);
         if (userProfile is null)
         {
-            return FlowChatResult<Guid>.Failure(DomainError.NotFound($"User profile '{request.UserId}' was not found."));
+            return FlowChatResult<EmailVerificationProcess?>.Failure(
+                DomainError.NotFound($"User profile '{request.UserId}' was not found."));
         }
 
         var email = userProfile.Emails.FirstOrDefault(x => x.Id == request.EmailId);
         if (email is null)
         {
-            return FlowChatResult<Guid>.Failure(
+            return FlowChatResult<EmailVerificationProcess?>.Failure(
                 DomainError.NotFound($"Email '{request.EmailId}' was not found for user profile '{request.UserId}'."));
         }
 
         if (email.IsConfirmed)
         {
-            return FlowChatResult<Guid>.Failure(
+            return FlowChatResult<EmailVerificationProcess?>.Failure(
                 DomainError.Validation($"Email '{email.Address}' is already confirmed."));
         }
 
-        _process = await _emailVerificationProcessWriteRepository
+        _userProfile = userProfile;
+        _email = email;
+
+        var process = await _emailVerificationProcessWriteRepository
             .GetByEmailIdAsync(email.Id, cancellationToken);
-        _wasProcessCreated = false;
 
-        if (_process is null)
+        return FlowChatResult<EmailVerificationProcess?>.Success(process);
+    }
+
+    protected override async Task<FlowChatResult<Guid>> ExecuteAsync(
+        SendEmailVerificationCommand request,
+        CancellationToken cancellationToken)
+    {
+        if (AggregateRoot is null)
         {
-            _wasProcessCreated = true;
-            _process = EmailVerificationProcess.Create(
-                Id<DomainUserProfile>.FromGuid(userProfile.Id),
-                Id<DomainEmail>.FromGuid(email.Id));
+            AggregateRoot = EmailVerificationProcess.Create(
+                Id<DomainUserProfile>.FromGuid(_userProfile!.Id),
+                Id<DomainEmail>.FromGuid(_email!.Id));
 
-            await _emailVerificationProcessWriteRepository.AddAsync(_process, cancellationToken);
+            await _emailVerificationProcessWriteRepository.AddAsync(AggregateRoot, cancellationToken);
+            SetInserted();
+        }
+        else
+        {
+            SetUpdated();
         }
 
         var verificationRequest = await _emailVerificationRequestIssuer.IssueAsync(
-            _process,
-            userProfile.Id,
-            email.Id,
-            email.Address,
+            AggregateRoot,
+            _userProfile!.Id,
+            _email!.Id,
+            _email.Address,
             cancellationToken);
 
         return FlowChatResult<Guid>.Success(verificationRequest.Id.Value);
     }
-
-    protected override EmailVerificationProcess GetAggregateRoot() =>
-        _process ?? throw new InvalidOperationException("Aggregate root instance is not available.");
-
-    protected override bool WasAggregateCreated => _wasProcessCreated;
 }

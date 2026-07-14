@@ -10,13 +10,11 @@ using UserProfileAggregate = FlowChat.UserProfileService.Domain.Entities.UserPro
 namespace FlowChat.UserProfileService.Application.Features.UserProfile.Commands.SetMainPhone;
 
 public sealed class SetMainPhoneCommandHandler
-    : AggregateRootUpdateCommandHandlerBaseV2<SetMainPhoneCommand, Guid, UserProfileAggregate>
+    : AggregateRootUpdateCommandHandlerBaseV3<SetMainPhoneCommand, Guid, UserProfileAggregate>
 {
     private const string PhoneMustBeConfirmedMessageTemplate = "Phone '{0}' must be confirmed before it can be set as the main phone.";
 
     private readonly IUserProfileWriteRepository _userProfileRepository;
-    private UserProfileAggregate? _userProfile;
-    private bool _mainPhoneChanged;
 
     public SetMainPhoneCommandHandler(
         IUserProfileWriteRepository userProfileRepository,
@@ -28,38 +26,43 @@ public sealed class SetMainPhoneCommandHandler
         _userProfileRepository = userProfileRepository;
     }
 
-    protected override async Task<FlowChatResult<Guid>> ExecuteAsync(
+    protected override async Task<FlowChatResult<UserProfileAggregate?>> FetchAggregateRootAsync(
         SetMainPhoneCommand request,
         CancellationToken cancellationToken)
     {
-        _userProfile = await _userProfileRepository.GetByIdAsync(request.UserId, cancellationToken);
-        if (_userProfile is null)
+        var userProfile = await _userProfileRepository.GetByIdAsync(request.UserId, cancellationToken);
+        if (userProfile is null)
         {
-            return FlowChatResult<Guid>.Failure(DomainError.NotFound($"User profile '{request.UserId}' was not found."));
+            return FlowChatResult<UserProfileAggregate?>.Failure(DomainError.NotFound($"User profile '{request.UserId}' was not found."));
         }
 
-        var phone = _userProfile.Phones.FirstOrDefault(x => x.Id.Value == request.PhoneId);
+        return FlowChatResult<UserProfileAggregate?>.Success(userProfile);
+    }
+
+    protected override Task<FlowChatResult<Guid>> ExecuteAsync(
+        SetMainPhoneCommand request,
+        CancellationToken cancellationToken)
+    {
+        var phone = AggregateRoot!.Phones.FirstOrDefault(x => x.Id.Value == request.PhoneId);
         if (phone is null)
         {
-            return FlowChatResult<Guid>.Failure(
-                DomainError.NotFound($"Phone '{request.PhoneId}' was not found for user profile '{request.UserId}'."));
+            return Task.FromResult(FlowChatResult<Guid>.Failure(
+                DomainError.NotFound($"Phone '{request.PhoneId}' was not found for user profile '{request.UserId}'.")));
         }
 
         if (!phone.IsMain && !phone.IsConfirmed)
         {
-            return FlowChatResult<Guid>.Failure(
-                DomainError.Validation(string.Format(PhoneMustBeConfirmedMessageTemplate, phone.Number.Value)));
+            return Task.FromResult(FlowChatResult<Guid>.Failure(
+                DomainError.Validation(string.Format(PhoneMustBeConfirmedMessageTemplate, phone.Number.Value))));
         }
 
-        _mainPhoneChanged = !phone.IsMain;
-        _userProfile.SetMainPhone(phone.Id);
+        if (!phone.IsMain)
+        {
+            SetUpdated();
+        }
 
-        return FlowChatResult<Guid>.Success(phone.Id.Value);
+        AggregateRoot.SetMainPhone(phone.Id);
+
+        return Task.FromResult(FlowChatResult<Guid>.Success(phone.Id.Value));
     }
-
-    protected override UserProfileAggregate GetAggregateRoot() =>
-        _userProfile ?? throw new InvalidOperationException("Aggregate root instance is not available.");
-
-    protected override AggregateState GetAggregateState(SetMainPhoneCommand request, UserProfileAggregate aggregateRoot) =>
-        _mainPhoneChanged ? AggregateState.Updated : AggregateState.Unchanged;
 }

@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using AutoMapper;
 using FlowChat.ChatService.Api.Features.Conversation.Public.GetDuetConversation;
 using FlowChat.ChatService.Application.Features.Conversation.Dtos;
 using FlowChat.ChatService.Application.Features.Conversation.Queries.GetDuetConversation;
@@ -16,6 +17,9 @@ namespace FlowChat.ChatService.UnitTests.API.Features.Conversation.Public.GetDue
 
 public sealed class GetDuetConversationControllerTests
 {
+    private static readonly IMapper Mapper =
+        new MapperConfiguration(cfg => cfg.AddProfile<GetDuetConversationMappingProfile>(), Microsoft.Extensions.Logging.Abstractions.NullLoggerFactory.Instance).CreateMapper();
+
     private readonly Mock<IMediator> _mediatorMock = new();
 
     private GetDuetConversationController CreateController(Guid? authenticatedUserId = null)
@@ -28,7 +32,7 @@ public sealed class GetDuetConversationControllerTests
                 [new Claim("sub", authenticatedUserId.Value.ToString("D"))], "Test"));
         }
 
-        return new GetDuetConversationController(_mediatorMock.Object)
+        return new GetDuetConversationController(_mediatorMock.Object, Mapper)
         {
             ControllerContext = new ControllerContext { HttpContext = httpContext },
             ProblemDetailsFactory = new TestProblemDetailsFactory()

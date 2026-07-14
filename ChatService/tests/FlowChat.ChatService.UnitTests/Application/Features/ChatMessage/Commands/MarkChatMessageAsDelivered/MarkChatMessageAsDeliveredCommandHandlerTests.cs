@@ -39,7 +39,7 @@ public sealed class MarkChatMessageAsDeliveredCommandHandlerTests
             .Setup(x => x.ProcessAsync(
                 It.IsAny<MarkChatMessageAsDeliveredCommand>(),
                 It.IsAny<ChatMessageAggregate>(),
-                It.IsAny<AggregateState>(),
+                It.IsAny<MutationType>(),
                 It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
@@ -51,10 +51,11 @@ public sealed class MarkChatMessageAsDeliveredCommandHandlerTests
     }
 
     [Fact]
-    public async Task Handle_WhenMessageIsPending_MarksDeliveredAndProcessesUpdatedAggregateState()
+    public async Task Handle_WhenMessageIsPending_MarksDeliveredAndProcessesUpdatedMutationType()
     {
         var conversationId = Guid.NewGuid();
         var message = CreateMessage(conversationId);
+        message.SetSequenceNumber(42);
         var command = new MarkChatMessageAsDeliveredCommand(
             message.Id.Value,
             conversationId,
@@ -63,17 +64,16 @@ public sealed class MarkChatMessageAsDeliveredCommandHandlerTests
         _chatMessageRepositoryMock
             .Setup(x => x.GetByIdAsync(command.MessageId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(message);
-        _chatMessageRepositoryMock
-            .Setup(x => x.GetMaxSequenceNumAsync(conversationId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(41);
-
         var result = await _handler.Handle(command, CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
         message.SequenceNum.Should().Be(42);
         message.DeliveredAtUtc.Should().NotBeNull();
+        _chatMessageRepositoryMock.Verify(
+            x => x.GetMaxSequenceNumAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()),
+            Times.Never);
         _beforeSaveProcessorMock.Verify(
-            x => x.ProcessAsync(command, message, AggregateState.Updated, It.IsAny<CancellationToken>()),
+            x => x.ProcessAsync(command, message, MutationType.Updated, It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -82,7 +82,8 @@ public sealed class MarkChatMessageAsDeliveredCommandHandlerTests
     {
         var conversationId = Guid.NewGuid();
         var message = CreateMessage(conversationId);
-        message.MarkAsDelivered(12, UtcDateTimeOffset.UtcNow);
+        message.SetSequenceNumber(12);
+        message.MarkAsDelivered(UtcDateTimeOffset.UtcNow);
         message.ClearEvents();
         var initialVersion = message.Version;
         var command = new MarkChatMessageAsDeliveredCommand(
@@ -108,7 +109,7 @@ public sealed class MarkChatMessageAsDeliveredCommandHandlerTests
             x => x.ProcessAsync(
                 It.IsAny<MarkChatMessageAsDeliveredCommand>(),
                 It.IsAny<ChatMessageAggregate>(),
-                It.IsAny<AggregateState>(),
+                It.IsAny<MutationType>(),
                 It.IsAny<CancellationToken>()),
             Times.Never);
     }
@@ -131,13 +132,42 @@ public sealed class MarkChatMessageAsDeliveredCommandHandlerTests
         result.Error.ErrorType.Should().Be(ErrorType.NotFound);
     }
 
+    [Fact]
+    public async Task Handle_WhenMessageHasNoSequenceNumber_ReturnsBadRequest()
+    {
+        var conversationId = Guid.NewGuid();
+        var message = CreateMessage(conversationId);
+        var command = new MarkChatMessageAsDeliveredCommand(
+            message.Id.Value,
+            conversationId,
+            DateTimeOffset.UtcNow);
+
+        _chatMessageRepositoryMock
+            .Setup(x => x.GetByIdAsync(command.MessageId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(message);
+
+        var result = await _handler.Handle(command, CancellationToken.None);
+
+        result.IsFailure.Should().BeTrue();
+        result.Error.ErrorType.Should().Be(ErrorType.BadRequest);
+        _chatMessageRepositoryMock.Verify(
+            x => x.GetMaxSequenceNumAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+        _beforeSaveProcessorMock.Verify(
+            x => x.ProcessAsync(
+                It.IsAny<MarkChatMessageAsDeliveredCommand>(),
+                It.IsAny<ChatMessageAggregate>(),
+                It.IsAny<MutationType>(),
+                It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
     private static ChatMessageAggregate CreateMessage(Guid conversationId)
     {
         var message = ChatMessageAggregate.Create(
             Id<ChatMessageAggregate>.New(),
             Id<ConversationAggregate>.FromGuid(conversationId),
             Guid.NewGuid(),
-            "Alice",
             "Hello",
             [Guid.NewGuid()]);
 

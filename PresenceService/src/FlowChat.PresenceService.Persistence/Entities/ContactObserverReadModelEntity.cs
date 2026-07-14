@@ -6,4 +6,5 @@ public sealed class ContactObserverReadModelEntity : ReadModelEntityBase
 {
     public Guid ObservedUserId { get; set; }
     public Guid ObserverUserId { get; set; }
+    public bool IsBlocked { get; set; }
 }

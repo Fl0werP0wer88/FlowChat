@@ -14,7 +14,6 @@ public sealed class ChatMessageReadEntityConfiguration : IEntityTypeConfiguratio
         builder.Property(x => x.Id);
         builder.Property(x => x.ConversationId);
         builder.Property(x => x.SenderUserId);
-        builder.Property(x => x.SenderDisplayName);
         builder.Property(x => x.Text);
         builder.Property(x => x.SentAtUtc);
         builder.Property(x => x.DeletedAt);

@@ -47,6 +47,7 @@ After creating a new service folder, treat files like `AuthService/.vscode/*` an
 - If you edit `AGENTS.md` or `CLAUDE.md`, apply the same changes to the other file so both instruction files stay synchronized.
 - When referencing a specific place in code, always include a clickable file-and-line link in addition to the file name and code snippet, so the user can jump directly to that location.
 - If the model needs to create any temporary working files (for example decompiled library output, scratch files, generated investigation artifacts, or similar), create them under the tool-specific temp folder in the repository root: `.codex/temp` for Codex and `.claude/temp` for Claude.
+- When a change removes the last remaining usage of a method, class, interface, or other element without relocating that element elsewhere, check whether it has become orphaned (no other references left anywhere in the codebase). If so, remove the orphaned element as part of the same change rather than leaving dead code behind.
 
 ## Project Overview
 
@@ -55,11 +56,10 @@ FlowChat is a microservices-based chat application built with .NET 10. Services 
 ### Services
 - **PresenceService** — user presence statuses and contact-based fan-out projection
 - **AuthService** — registration, login, email/phone confirmation, JWT tokens
-- **ChatService** — chat rooms and messages
+- **ChatService** — chat rooms and messages; also owns contacts (a Duet conversation is the contact relationship — block/mute/hide are per-participant state on it)
 - **NotificationService** — email/SMS notifications
 - **GatewayService** — API gateway
 - **RealtimeService** — SignalR real-time connections
-- **SocialGraphService** — friends/followers graph
 - **UserProfileService** — user profiles
 - **HarnessService** — dev-only general-purpose test harness for AAT-testing cross-cutting infrastructure patterns (projection pipeline, Kafka retry/DLQ isolation, etc.); located in `HarnessService/`
 
@@ -92,6 +92,14 @@ Domain events are dispatched via `IDomainEventDispatcher` and mapped to integrat
 - Request validation belongs in the Application layer via FluentValidation / MediatR pipeline, not in controllers
 - Never accept the current user's ID as an explicit route parameter, query parameter, or request body field on authenticated endpoints — always extract it from the JWT claim via `TryGetCurrentUserId(out var userId)` inherited from `ApiControllerBase`; passing the caller's identity in the request lets clients impersonate other users
 - Internal endpoints (API-key-authenticated, service-to-service) are exempt and may accept explicit user IDs in their payloads
+
+### API request/response naming and mapping
+- Root request/response types follow `{Action}{Resource}Request` / `{Action}{Resource}Response`; only the root type implements `IServiceInput`/`IServiceOutput`
+- Nested composite objects inside a response also use the `Response` suffix (e.g. `ParticipantResponse`, `ContactResponse`), never `Dto` — a `Dto` suffix on an API-facing type signals an Application/Persistence type has leaked across the boundary
+- Define nested response types in the same file as their root response, one set per feature folder; duplicate the shape per feature instead of sharing one type across features (mirrors how `ParticipantResponse` is redefined per conversation feature in ChatService)
+- Map Application/Persistence DTOs to these API response types via a dedicated AutoMapper `Profile` class colocated in the same feature folder (e.g. `{Feature}MappingProfile.cs`), injected into the controller as `IMapper` — do not build the response with manual `.Select(...)` projections or private static `MapToResponse` helper methods in the controller
+- Root responses that fan-in data from multiple independent sources (e.g. a gateway aggregating several service clients) are the exception — compose the root manually, but still map any nested per-source collections through the registered `IMapper`
+- Unit tests for a controller that takes `IMapper` must construct a real mapper from the feature's profile (`new MapperConfiguration(cfg => cfg.AddProfile<XMappingProfile>(), NullLoggerFactory.Instance).CreateMapper()`), not a mock — this exercises the actual mapping instead of asserting against a stub
 
 ### Application contract placement
 - Keep interfaces in `Application/Contracts/*` only when their implementations live outside the `Application` project, for example in `Infrastructure`, `Persistence`, `API`, or `Workers`
@@ -151,7 +159,10 @@ The project uses tactical DDD. All domain logic lives in the `Domain` layer. The
 - **Restore from DB**: use `static Restore(...)` — does NOT raise domain events
 - **App settings loading**: always load `appsettings` sections via `AppSettingsProvider` from `Common/src/FlowChat.Shared.Infrastructure/Configuration/AppSettingsProvider.cs`; do not bind sections directly via raw `IConfiguration.GetSection(...).Get<T>()` in application code when the provider can be used
 - **Settings section placement**: classes representing `appsettings` sections must implement `ISettingSection` from `Common/src/FlowChat.Core/Contracts/ISettingSection.cs` and must live in the project-level `Configuration/Settings` folder, for example `{Project}/Configuration/Settings/*SettingsSection.cs`, not directly in `Configuration` and not in feature folders such as `Kafka`
+- **Kafka topic naming for projections**: any Kafka topic carrying a `ProjectionIntegrationEvent<TValue>` published via `PublishProjectionIntegrationEventProcessor` (`Common/src/FlowChat.Shared.Application/CommandHandlers/AggregateRootCommandHandlerBaseV2/BeforeSaveProcessors/PublishProjectionIntegrationEventProcessor.cs`) must use a topic name ending in `-projection` (for example `dev.flowchat.chat.duet-conversation-projection.v1`), never a topic shared with bespoke domain integration events — this keeps "genuine domain event" topics visually and structurally separate from "technical projection-sync" topics. If a domain event and a projection event happen to share a producer settings section/topic today, split the projection off onto its own dedicated `-projection` topic rather than reusing the shared one.
+- **Kafka topic naming for regular integration events**: a Kafka topic carrying a bespoke domain/integration event (not a `ProjectionIntegrationEvent<TValue>`) follows `dev.flowchat.<domain>.<resource>.v1`, for example `dev.flowchat.chat.message.v1` or `dev.flowchat.identity.user.v1`; per-consumer retry/DLQ topics append `.{service}.retry` / `.{service}.dlq` to that base name, for example `dev.flowchat.chat.message.v1.realtime-service.retry`. Never append `-projection` to a topic used by a regular integration event.
 - **Service registration placement**: classes registering project services such as `ApplicationServiceRegistration`, `APIServiceRegistration`, `InfrastructureServiceRegistration`, `PersistenceServiceRegistration`, `ConsumersServiceRegistration`, `OutboxPublisherServiceRegistration`, or `SilverbackServiceRegistration` must live directly in the project-level `Configuration` folder, for example `{Project}/Configuration/*ServiceRegistration.cs`, not in feature folders such as `Kafka` and not in `Configuration/Settings`
+- **Aggregate before-save processor placement**: never register a reusable `IAggregateBeforeSaveProcessor<TCommand, TAggregate>` implementation from `Common` directly. Add an aggregate-specific class in the Application feature's `Processors/` folder, named for the aggregate and responsibility (for example `ContactProjectionProcessor<TCommand>`), inherit from the reusable Common implementation there, and register that concrete aggregate-specific class. This keeps every processor affecting an aggregate discoverable from the aggregate's Application feature folder without inspecting DI registration.
 - Do mappings via dedicated profile classes for AutoMapper on Application, Infrastructure & Api layers. On Domain layer all mapping must be done manually in dedicated method.
 
 ### Marker interfaces
@@ -281,7 +292,6 @@ dotnet test AuthService/FlowChat.AuthService.slnx
 dotnet test ChatService/FlowChat.ChatService.slnx
 dotnet test NotificationService/FlowChat.NotificationService.slnx
 dotnet test PresenceService/FlowChat.PresenceService.slnx
-dotnet test SocialGraphService/FlowChat.SocialGraphService.slnx
 dotnet test UserProfileService/FlowChat.UserProfileService.slnx
 
 # Common & standalone (no solution file)
