@@ -49,8 +49,6 @@ public sealed class RealtimeGroupMembershipReadModelRepository(AppDbContext dbCo
 
         dbContext.RealtimeGroupMembershipReadModels.AddRange(
             newUserIds.Select(userId => RealtimeGroupMembershipReadModel.Create(userId, groupType, resourceId, createdAt)));
-
-        await dbContext.SaveChangesAsync(cancellationToken);
     }
 
     public async Task RemoveRangeAsync(
@@ -73,6 +71,5 @@ public sealed class RealtimeGroupMembershipReadModelRepository(AppDbContext dbCo
         }
 
         dbContext.RealtimeGroupMembershipReadModels.RemoveRange(memberships);
-        await dbContext.SaveChangesAsync(cancellationToken);
     }
 }

@@ -33,7 +33,6 @@ public sealed class RealtimeGroupMembershipVersionTrackerRepository(AppDbContext
             dbContext.RealtimeGroupMembershipVersionTrackerReadModels.Add(
                 RealtimeGroupMembershipVersionTrackerReadModel.Create(conversationId, version, updatedAt));
 
-            await dbContext.SaveChangesAsync(cancellationToken);
             return;
         }
 
@@ -43,7 +42,5 @@ public sealed class RealtimeGroupMembershipVersionTrackerRepository(AppDbContext
         }
 
         existing.UpdateVersion(version, updatedAt);
-        //ToDo1: To sie bedzie chyba wykonywalo w transakcji command handlera. Upewnic sie ze tak jest iwywalic save async.
-        await dbContext.SaveChangesAsync(cancellationToken);
     }
 }
