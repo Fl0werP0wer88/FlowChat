@@ -37,6 +37,20 @@ namespace FlowChat.RealtimeService.Persistence.Migrations
                 {
                     table.PrimaryKey("PK_RealtimeGroupMembershipVersionTrackerReadModels", x => x.ConversationId);
                 });
+
+            migrationBuilder.CreateTable(
+                name: "SilverbackStoredOffsets",
+                columns: table => new
+                {
+                    GroupId = table.Column<string>(type: "character varying(300)", maxLength: 300, nullable: false),
+                    Topic = table.Column<string>(type: "character varying(300)", maxLength: 300, nullable: false),
+                    Partition = table.Column<int>(type: "integer", nullable: false),
+                    Offset = table.Column<long>(type: "bigint", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_SilverbackStoredOffsets", x => new { x.GroupId, x.Topic, x.Partition });
+                });
         }
 
         /// <inheritdoc />
@@ -47,6 +61,9 @@ namespace FlowChat.RealtimeService.Persistence.Migrations
 
             migrationBuilder.DropTable(
                 name: "RealtimeGroupMembershipVersionTrackerReadModels");
+
+            migrationBuilder.DropTable(
+                name: "SilverbackStoredOffsets");
         }
     }
 }
