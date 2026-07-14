@@ -1,5 +1,4 @@
 using FlowChat.RealtimeService.Application.Contracts.Persistence;
-using FlowChat.RealtimeService.Persistence.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace FlowChat.RealtimeService.Persistence.Repositories;
@@ -17,30 +16,26 @@ public sealed class RealtimeGroupMembershipVersionTrackerRepository(AppDbContext
             .FirstOrDefaultAsync(cancellationToken);
     }
 
-    //ToDo1: pomyslec czy nie da rady tu zrobic faktycznego upsertu na poziomie bazy a nie EF.
     public async Task UpsertIfNewerAsync(
         Guid conversationId,
         int version,
         CancellationToken cancellationToken = default)
     {
-        var existing = await dbContext.RealtimeGroupMembershipVersionTrackerReadModels
-            .FirstOrDefaultAsync(x => x.ConversationId == conversationId, cancellationToken);
-
         var updatedAt = DateTimeOffset.UtcNow;
 
-        if (existing is null)
-        {
-            dbContext.RealtimeGroupMembershipVersionTrackerReadModels.Add(
-                RealtimeGroupMembershipVersionTrackerReadModel.Create(conversationId, version, updatedAt));
-
-            return;
-        }
-
-        if (version <= existing.Version)
-        {
-            return;
-        }
-
-        existing.UpdateVersion(version, updatedAt);
+        // PostgreSQL handles the conditional upsert atomically, avoiding races between a separate EF read and write
+        await dbContext.Database.ExecuteSqlInterpolatedAsync(
+            $"""
+             INSERT INTO "RealtimeGroupMembershipVersionTrackerReadModels"
+                 ("ConversationId", "Version", "UpdatedAt")
+             VALUES
+                 ({conversationId}, {version}, {updatedAt})
+             ON CONFLICT ("ConversationId")
+             DO UPDATE SET
+                 "Version" = EXCLUDED."Version",
+                 "UpdatedAt" = EXCLUDED."UpdatedAt"
+             WHERE EXCLUDED."Version" > "RealtimeGroupMembershipVersionTrackerReadModels"."Version";
+             """,
+            cancellationToken);
     }
 }
