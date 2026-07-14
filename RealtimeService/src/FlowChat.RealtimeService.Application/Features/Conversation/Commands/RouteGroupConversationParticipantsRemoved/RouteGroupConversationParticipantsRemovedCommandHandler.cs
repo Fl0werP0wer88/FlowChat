@@ -6,12 +6,13 @@ using FlowChat.Shared.Application;
 using MediatR;
 
 namespace FlowChat.RealtimeService.Application.Features.Conversation.Commands.RouteGroupConversationParticipantsRemoved;
-//ToDo1: To powinno dziedziczyz TransactionalCommandHandlerBase aby uruchamialo sie w transakcji.
+
 public sealed class RouteGroupConversationParticipantsRemovedCommandHandler(
     IRealtimeGroupMembershipReadModelRepository realtimeGroupMembershipReadModelRepository,
     IRealtimeGroupMembershipVersionTrackerRepository realtimeGroupMembershipVersionTrackerRepository,
-    IRealtimeEventRouter realtimeEventRouter)
-    : ICommandHandler<RouteGroupConversationParticipantsRemovedCommand, Unit>
+    IRealtimeEventRouter realtimeEventRouter,
+    IUnitOfWork unitOfWork)
+    : TransactionalCommandHandlerBase<RouteGroupConversationParticipantsRemovedCommand, Unit>(unitOfWork)
 {
     private readonly IRealtimeGroupMembershipReadModelRepository _realtimeGroupMembershipReadModelRepository = realtimeGroupMembershipReadModelRepository
         ?? throw new ArgumentNullException(nameof(realtimeGroupMembershipReadModelRepository));
@@ -20,7 +21,7 @@ public sealed class RouteGroupConversationParticipantsRemovedCommandHandler(
     private readonly IRealtimeEventRouter _realtimeEventRouter = realtimeEventRouter
         ?? throw new ArgumentNullException(nameof(realtimeEventRouter));
 
-    public async Task<FlowChatResult<Unit>> Handle(
+    protected override async Task<FlowChatResult<Unit>> HandleInTransactionAsync(
         RouteGroupConversationParticipantsRemovedCommand request,
         CancellationToken cancellationToken)
     {

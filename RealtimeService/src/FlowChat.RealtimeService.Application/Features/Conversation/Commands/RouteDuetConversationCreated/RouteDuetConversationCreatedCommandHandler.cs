@@ -6,12 +6,13 @@ using FlowChat.Shared.Application;
 using MediatR;
 
 namespace FlowChat.RealtimeService.Application.Features.Conversation.Commands.RouteDuetConversationCreated;
-//ToDo1: To powinno dziedziczyz TransactionalCommandHandlerBase aby uruchamialo sie w transakcji.
+
 public sealed class RouteDuetConversationCreatedCommandHandler(
     IRealtimeGroupMembershipReadModelRepository realtimeGroupMembershipReadModelRepository,
     IRealtimeGroupMembershipVersionTrackerRepository realtimeGroupMembershipVersionTrackerRepository,
-    IRealtimeEventRouter realtimeEventRouter)
-    : ICommandHandler<RouteDuetConversationCreatedCommand, Unit>
+    IRealtimeEventRouter realtimeEventRouter,
+    IUnitOfWork unitOfWork)
+    : TransactionalCommandHandlerBase<RouteDuetConversationCreatedCommand, Unit>(unitOfWork)
 {
     private readonly IRealtimeGroupMembershipReadModelRepository _realtimeGroupMembershipReadModelRepository = realtimeGroupMembershipReadModelRepository
         ?? throw new ArgumentNullException(nameof(realtimeGroupMembershipReadModelRepository));
@@ -20,7 +21,7 @@ public sealed class RouteDuetConversationCreatedCommandHandler(
     private readonly IRealtimeEventRouter _realtimeEventRouter = realtimeEventRouter
         ?? throw new ArgumentNullException(nameof(realtimeEventRouter));
 
-    public async Task<FlowChatResult<Unit>> Handle(
+    protected override async Task<FlowChatResult<Unit>> HandleInTransactionAsync(
         RouteDuetConversationCreatedCommand request,
         CancellationToken cancellationToken)
     {

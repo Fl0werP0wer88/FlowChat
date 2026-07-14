@@ -8,6 +8,7 @@ using FlowChat.RealtimeService.Application.Features.Conversation.Commands.RouteG
 using FlowChat.RealtimeService.Application.Features.Message.Commands.RouteMessage;
 using FlowChat.RealtimeService.Application.Features.Message.Commands.PublishMessage;
 using FlowChat.RealtimeService.Application.Features.Presence.Commands.RoutePresenceChange;
+using FlowChat.Shared.Application;
 using FluentAssertions;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
@@ -58,6 +59,7 @@ public sealed class WorkerApplicationServiceRegistrationTests
         services.AddScoped(_ => Mock.Of<IChatServiceInternalApiClient>());
         services.AddScoped(_ => Mock.Of<IRealtimeGroupMembershipReadModelRepository>());
         services.AddScoped(_ => Mock.Of<IRealtimeGroupMembershipVersionTrackerRepository>());
+        services.AddScoped(_ => Mock.Of<IUnitOfWork>());
         services.AddConsumerApplicationServices();
 
         using var serviceProvider = services.BuildServiceProvider(new ServiceProviderOptions

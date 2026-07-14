@@ -3,7 +3,10 @@ using FlowChat.RealtimeService.Application.Contracts.Infrastructure;
 using FlowChat.RealtimeService.Application.Contracts.Persistence;
 using FlowChat.RealtimeService.Application.Features.Conversation.Commands.RouteGroupConversationParticipantsRemoved;
 using FlowChat.RealtimeService.Domain.Enums;
+using FlowChat.Core.Results;
+using FlowChat.Shared.Application;
 using FluentAssertions;
+using MediatR;
 using Moq;
 
 namespace FlowChat.RealtimeService.UnitTests;
@@ -14,6 +17,7 @@ public sealed class RouteGroupConversationParticipantsRemovedCommandHandlerTests
     private readonly Mock<IRealtimeGroupMembershipReadModelRepository> _readModelRepositoryMock = new();
     private readonly Mock<IRealtimeGroupMembershipVersionTrackerRepository> _versionTrackerRepositoryMock = new();
     private readonly Mock<IRealtimeEventRouter> _routerMock = new();
+    private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
     private readonly RouteGroupConversationParticipantsRemovedCommandHandler _handler;
 
     public RouteGroupConversationParticipantsRemovedCommandHandlerTests()
@@ -22,10 +26,18 @@ public sealed class RouteGroupConversationParticipantsRemovedCommandHandlerTests
             .Setup(x => x.RouteGroupConversationParticipantsRemovedAsync(It.IsAny<GroupConversationParticipantsRemovedParam>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
+        _unitOfWorkMock
+            .Setup(x => x.ExecuteCommandInTransactionAsync(
+                It.IsAny<Func<CancellationToken, Task<FlowChatResult<Unit>>>>(),
+                It.IsAny<CancellationToken>()))
+            .Returns<Func<CancellationToken, Task<FlowChatResult<Unit>>>, CancellationToken>(
+                (operation, ct) => operation(ct));
+
         _handler = new RouteGroupConversationParticipantsRemovedCommandHandler(
             _readModelRepositoryMock.Object,
             _versionTrackerRepositoryMock.Object,
-            _routerMock.Object);
+            _routerMock.Object,
+            _unitOfWorkMock.Object);
     }
 
     [Fact]
