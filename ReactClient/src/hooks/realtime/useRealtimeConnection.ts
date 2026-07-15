@@ -17,6 +17,7 @@ interface UseRealtimeConnectionOptions {
   onGroupConversationChanged?: (payload: GroupConversationChangedEvent) => void;
   onGroupConversationParticipantsAdded?: (payload: GroupConversationParticipantsAddedEvent) => void;
   onGroupConversationParticipantsRemoved?: (payload: GroupConversationParticipantsRemovedEvent) => void;
+  onDuetConversationsListChanged?: () => void;
 }
 
 function resolveErrorMessage(error: unknown): string | null {
@@ -33,6 +34,7 @@ export function useRealtimeConnection({
   onGroupConversationChanged,
   onGroupConversationParticipantsAdded,
   onGroupConversationParticipantsRemoved,
+  onDuetConversationsListChanged,
 }: UseRealtimeConnectionOptions) {
   const accessToken = useAuthStore((s) => s.accessToken);
   const { setStatus, setLastError } = useRealtimeStore.getState();
@@ -55,6 +57,10 @@ export function useRealtimeConnection({
 
   const handleGroupConversationParticipantsRemoved = useEffectEvent((payload: GroupConversationParticipantsRemovedEvent) => {
     onGroupConversationParticipantsRemoved?.(payload);
+  });
+
+  const handleDuetConversationsListChanged = useEffectEvent(() => {
+    onDuetConversationsListChanged?.();
   });
 
   useEffect(() => {
@@ -102,6 +108,12 @@ export function useRealtimeConnection({
     connection.on("GroupConversationParticipantsRemoved", (payload: GroupConversationParticipantsRemovedEvent) => {
       if (!isDisposed) {
         handleGroupConversationParticipantsRemoved(payload);
+      }
+    });
+
+    connection.on("DuetConversationsListChanged", () => {
+      if (!isDisposed) {
+        handleDuetConversationsListChanged();
       }
     });
 
@@ -164,6 +176,7 @@ export function useRealtimeConnection({
       connection.off("GroupConversationChanged");
       connection.off("GroupConversationParticipantsAdded");
       connection.off("GroupConversationParticipantsRemoved");
+      connection.off("DuetConversationsListChanged");
       void startPromise.finally(() => connection.stop().catch(() => undefined));
     };
   }, [accessToken]);

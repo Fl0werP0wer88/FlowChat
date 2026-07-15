@@ -13,4 +13,6 @@ public interface IRealtimeClient
     Task GroupConversationParticipantsAdded(GroupConversationParticipantsAddedNotification payload);
 
     Task GroupConversationParticipantsRemoved(GroupConversationParticipantsRemovedNotification payload);
+
+    Task DuetConversationsListChanged(DuetConversationsListChangedNotification payload);
 }

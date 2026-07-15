@@ -63,6 +63,7 @@ export function ChatFeature() {
   }, [activeGroupListItem, groupChat.markActiveGroupConversationAsRead, scheduleGroupReadState]);
 
   useRealtimeConnection({
+    onDuetConversationsListChanged: contacts.invalidateDuetConversationsList,
     onGroupConversationChanged: groupConversations.applyGroupConversationChanged,
     onGroupConversationParticipantsAdded: groupConversations.applyGroupConversationParticipantsAdded,
     onGroupConversationParticipantsRemoved: groupConversations.applyGroupConversationParticipantsRemoved,

@@ -133,4 +133,30 @@ public sealed class SignalRRealtimeClientDispatcherTests
         capturedPayload!.ConversationId.Should().Be(conversationId);
         capturedPayload.ParticipantUserIds.Should().ContainSingle().Which.Should().Be(participantUserId);
     }
+
+    [Fact]
+    public async Task DuetConversationsListChangedAsync_SendsNotificationToConversationGroup()
+    {
+        var conversationId = Guid.NewGuid();
+        DuetConversationsListChangedNotification? capturedPayload = null;
+        var realtimeClientMock = new Mock<IRealtimeClient>();
+        realtimeClientMock
+            .Setup(x => x.DuetConversationsListChanged(It.IsAny<DuetConversationsListChangedNotification>()))
+            .Callback<DuetConversationsListChangedNotification>(payload => capturedPayload = payload)
+            .Returns(Task.CompletedTask);
+        var clientsMock = new Mock<IHubClients<IRealtimeClient>>();
+        clientsMock
+            .Setup(x => x.Group(GroupNames.ForConversation(conversationId)))
+            .Returns(realtimeClientMock.Object);
+        var hubContextMock = new Mock<IHubContext<ChatHub, IRealtimeClient>>();
+        hubContextMock.Setup(x => x.Clients).Returns(clientsMock.Object);
+        var dispatcher = new SignalRRealtimeClientDispatcher(hubContextMock.Object);
+
+        await dispatcher.DuetConversationsListChangedAsync(conversationId, CancellationToken.None);
+
+        capturedPayload.Should().NotBeNull();
+        realtimeClientMock.Verify(
+            x => x.DuetConversationsListChanged(It.IsAny<DuetConversationsListChangedNotification>()),
+            Times.Once);
+    }
 }

@@ -61,6 +61,10 @@ public sealed class SignalRRealtimeClientDispatcher(IHubContext<ChatHub, IRealti
             ParticipantUserIds = notification.ParticipantUserIds
         });
 
+    public Task DuetConversationsListChangedAsync(Guid conversationId, CancellationToken cancellationToken) =>
+        _hubContext.Clients.Group(GroupNames.ForConversation(conversationId))
+            .DuetConversationsListChanged(new DuetConversationsListChangedNotification());
+
     private static string[] GetRecipientGroups(IReadOnlyCollection<Guid> recipientUserIds) =>
         recipientUserIds
             .Where(userId => userId != Guid.Empty)

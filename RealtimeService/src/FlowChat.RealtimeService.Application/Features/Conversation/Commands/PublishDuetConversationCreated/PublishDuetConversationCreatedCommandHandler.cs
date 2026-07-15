@@ -7,13 +7,16 @@ namespace FlowChat.RealtimeService.Application.Features.Conversation.Commands.Pu
 
 public sealed class PublishDuetConversationCreatedCommandHandler(
     IRealtimeConnectionRegistry realtimeConnectionRegistry,
-    IRealtimeGroupManager realtimeGroupManager)
+    IRealtimeGroupManager realtimeGroupManager,
+    IRealtimeClientDispatcher realtimeClientDispatcher)
     : ICommandHandler<PublishDuetConversationCreatedCommand, Unit>
 {
     private readonly IRealtimeConnectionRegistry _realtimeConnectionRegistry = realtimeConnectionRegistry
         ?? throw new ArgumentNullException(nameof(realtimeConnectionRegistry));
     private readonly IRealtimeGroupManager _realtimeGroupManager = realtimeGroupManager
         ?? throw new ArgumentNullException(nameof(realtimeGroupManager));
+    private readonly IRealtimeClientDispatcher _realtimeClientDispatcher = realtimeClientDispatcher
+        ?? throw new ArgumentNullException(nameof(realtimeClientDispatcher));
 
     public async Task<FlowChatResult<Unit>> Handle(
         PublishDuetConversationCreatedCommand request,
@@ -26,6 +29,8 @@ public sealed class PublishDuetConversationCreatedCommandHandler(
         {
             await _realtimeGroupManager.AddToConversationGroupAsync(connectionId, request.ConversationId, cancellationToken);
         }
+
+        await _realtimeClientDispatcher.DuetConversationsListChangedAsync(request.ConversationId, cancellationToken);
 
         return FlowChatResult<Unit>.Success(Unit.Value);
     }

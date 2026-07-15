@@ -21,6 +21,7 @@ internal sealed class CapturingRealtimeClientDispatcher : IRealtimeClientDispatc
     public GroupConversationChangedParam? LastGroupConversationChangedNotification { get; private set; }
     public GroupConversationParticipantsAddedParam? LastGroupConversationParticipantsAddedNotification { get; private set; }
     public GroupConversationParticipantsRemovedParam? LastGroupConversationParticipantsRemovedNotification { get; private set; }
+    public Guid? LastDuetConversationsListChangedConversationId { get; private set; }
 
     public Task MessageReceivedAsync(ChatMessageParam notification, CancellationToken cancellationToken)
     {
@@ -49,6 +50,12 @@ internal sealed class CapturingRealtimeClientDispatcher : IRealtimeClientDispatc
     public Task GroupConversationParticipantsRemovedAsync(GroupConversationParticipantsRemovedParam notification, CancellationToken cancellationToken)
     {
         LastGroupConversationParticipantsRemovedNotification = notification;
+        return Task.CompletedTask;
+    }
+
+    public Task DuetConversationsListChangedAsync(Guid conversationId, CancellationToken cancellationToken)
+    {
+        LastDuetConversationsListChangedConversationId = conversationId;
         return Task.CompletedTask;
     }
 }

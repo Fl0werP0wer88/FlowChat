@@ -11,4 +11,6 @@ public interface IRealtimeClientDispatcher
     Task GroupConversationParticipantsAddedAsync(GroupConversationParticipantsAddedParam notification, CancellationToken cancellationToken);
 
     Task GroupConversationParticipantsRemovedAsync(GroupConversationParticipantsRemovedParam notification, CancellationToken cancellationToken);
+
+    Task DuetConversationsListChangedAsync(Guid conversationId, CancellationToken cancellationToken);
 }

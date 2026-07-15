@@ -18,6 +18,7 @@ interface UseContactsResult {
   addContact: (user: SearchUserResult) => Promise<void>;
   applyPresenceChanged: (payload: PresenceChangedEvent) => void;
   applyRealtimeMessage: (payload: ChatMessageReceivedEvent, activeDuetConversationId: string | null) => void;
+  invalidateDuetConversationsList: () => void;
   updateContactConversationId: (contactUserId: string, conversationId: string) => void;
 }
 
@@ -94,6 +95,10 @@ export function useContacts(): UseContactsResult {
     );
   };
 
+  const invalidateDuetConversationsList = () => {
+    void queryClient.invalidateQueries({ queryKey: ["contacts"] });
+  };
+
   const updateContactConversationId = (contactUserId: string, conversationId: string) => {
     queryClient.setQueryData<Contact[]>(["contacts"], (current = []) =>
       current.map((contact) =>
@@ -109,6 +114,7 @@ export function useContacts(): UseContactsResult {
     addContact,
     applyPresenceChanged,
     applyRealtimeMessage,
+    invalidateDuetConversationsList,
     updateContactConversationId,
   };
 }
