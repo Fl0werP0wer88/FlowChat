@@ -41,21 +41,21 @@ namespace FlowChat.RealtimeService.Persistence.Migrations
                     b.ToTable("RealtimeGroupMembershipReadModels", (string)null);
                 });
 
-            modelBuilder.Entity("FlowChat.RealtimeService.Persistence.Entities.RealtimeGroupMembershipVersionTrackerReadModel", b =>
+            modelBuilder.Entity("FlowChat.RealtimeService.Persistence.Entities.RealtimeGroupMembershipRevisionTrackerReadModel", b =>
                 {
                     b.Property<Guid>("ConversationId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<int>("Revision")
+                        .HasColumnType("integer");
+
                     b.Property<DateTimeOffset>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<int>("Version")
-                        .HasColumnType("integer");
-
                     b.HasKey("ConversationId");
 
-                    b.ToTable("RealtimeGroupMembershipVersionTrackerReadModels", (string)null);
+                    b.ToTable("RealtimeGroupMembershipRevisionTrackerReadModels", (string)null);
                 });
 
             modelBuilder.Entity("Silverback.Messaging.Consuming.KafkaOffsetStore.SilverbackStoredOffset", b =>

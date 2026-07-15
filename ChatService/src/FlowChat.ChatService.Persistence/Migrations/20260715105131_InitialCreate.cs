@@ -21,6 +21,7 @@ namespace FlowChat.ChatService.Persistence.Migrations
                     Name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
                     CreatedByUserId = table.Column<Guid>(type: "uuid", nullable: false),
                     LastMsgSequenceNum = table.Column<long>(type: "bigint", nullable: false),
+                    MembershipRevision = table.Column<int>(type: "integer", nullable: false),
                     CreatedBy = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
                     CreatedAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     LastModifiedBy = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),

@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FlowChat.ChatService.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260714145220_InitialCreate")]
+    [Migration("20260715105131_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -124,6 +124,9 @@ namespace FlowChat.ChatService.Persistence.Migrations
                     b.Property<long>("LastMsgSequenceNum")
                         .HasColumnType("bigint");
 
+                    b.Property<int>("MembershipRevision")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Name")
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
@@ -232,6 +235,9 @@ namespace FlowChat.ChatService.Persistence.Migrations
 
                     b.Property<long>("LastMsgSequenceNum")
                         .HasColumnType("bigint");
+
+                    b.Property<int>("MembershipRevision")
+                        .HasColumnType("integer");
 
                     b.Property<string>("Name")
                         .HasColumnType("text");
