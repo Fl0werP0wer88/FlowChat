@@ -45,6 +45,7 @@ After creating a new service folder, treat files like `AuthService/.vscode/*` an
 
 - If the user's message ends with `?`, treat it as a question — answer it, do not make any code changes unless explicitly asked afterwards.
 - If you edit `AGENTS.md` or `CLAUDE.md`, apply the same changes to the other file so both instruction files stay synchronized.
+- At the end of every completed code or repository change, include a proposed pull request title in the final response.
 - When referencing a specific place in code, always include a clickable file-and-line link in addition to the file name and code snippet, so the user can jump directly to that location.
 - If the model needs to create any temporary working files (for example decompiled library output, scratch files, generated investigation artifacts, or similar), create them under the tool-specific temp folder in the repository root: `.codex/temp` for Codex and `.claude/temp` for Claude.
 - When a change removes the last remaining usage of a method, class, interface, or other element without relocating that element elsewhere, check whether it has become orphaned (no other references left anywhere in the codebase). If so, remove the orphaned element as part of the same change rather than leaving dead code behind.
