@@ -122,3 +122,29 @@ void HandleMessage(TestEvent message)
 
 Oczekiwane: subscriber wykona się łącznie 4 razy.
 Rzeczywiste w Silverback 5.0.0 i 5.3.3: subscriber wykonuje się raz, a przy retry KafkaOffsetStoreConsumerBehavior rzuca wyjątek o już dodanym obiekcie 9d9795c6-4b91-43ee-b370-fa0f539a20f8.
+
+19. BUG: MarkConversationAsRead może kończyć się DbUpdateConcurrencyException
+
+Objaw:
+- Podczas wykonywania MarkConversationAsReadCommandHandler EF Core rzuca DbUpdateConcurrencyException z komunikatem: "The database operation was expected to affect 1 row(s), but actually affected 0 row(s)".
+- Błąd może wystąpić sporadycznie przy szybkich wiadomościach, kilku równoległych wywołaniach MarkConversationAsRead albo jednoczesnej zmianie innego stanu tej samej konwersacji.
+
+Przyczyna:
+- MarkConversationAsRead zmienia ParticipantUser.LastReadMessageSequenceNum na aktualne Conversation.LastMsgSequenceNum.
+- Jeżeli wartość faktycznie się zmieniła, handler wywołuje SetUpdated().
+- AggregateRootCommandHandlerBaseV3 zwiększa wtedy Conversation.Version oraz aktualizuje pola audytowe agregatu.
+- Conversation.Version jest skonfigurowane jako token optymistycznej współbieżności przez IsConcurrencyToken(). Zapis Conversation zawiera więc warunek wymagający, aby wersja w bazie nadal odpowiadała wersji załadowanej przez bieżący request.
+- Jeżeli inna operacja zdąży wcześniej zapisać tę samą Conversation, jej Version zostaje zmienione. UPDATE bieżącego requestu nie znajduje już wiersza z poprzednią wersją, aktualizuje 0 rekordów i EF Core rzuca DbUpdateConcurrencyException.
+- Konflikt może zachodzić między kilkoma MarkConversationAsRead albo między MarkConversationAsRead i ChatMessageSequencedDomainEventHandler, który również aktualizuje Conversation.LastMsgSequenceNum, Version oraz pola audytowe.
+- Nie oznacza to, że rekord konwersacji został usunięty. W typowym przypadku oznacza, że od momentu jego odczytu inna transakcja zapisała nowszą wersję.
+
+Obecna obsługa:
+- ExceptionHandlingPipelineBehavior przechwytuje DbUpdateConcurrencyException i zwraca ogólny błąd, ale nie ponawia operacji.
+- MarkConversationAsRead jest semantycznie idempotentne, dlatego taki konflikt można bezpiecznie obsłużyć przez ponowienie całej transakcji na świeżych danych.
+
+Rekomendowany kierunek:
+- Dodać ograniczoną politykę retry dla DbUpdateConcurrencyException na poziomie obejmującym całą transakcję command handlera.
+- Każda próba musi używać nowego DbContextu albo wyczyścić stan trackera, ponownie pobrać Conversation wraz z Participants i ponownie wykonać MarkParticipantAsRead. Samo ponowne SaveChangesAsync na starej encji nie wystarczy.
+- Retry powinno mieć mały, jawnie ograniczony limit. Po jego wyczerpaniu należy zwrócić kontrolowany konflikt albo błąd przejściowy zamiast ogólnego nieoczekiwanego błędu.
+- Dodać test integracyjny uruchamiający konkurencyjne aktualizacje tej samej Conversation i potwierdzający, że finalny LastReadMessageSequenceNum odpowiada najnowszemu LastMsgSequenceNum.
+- Przy projektowaniu rozwiązania zdecydować, czy każda zmiana stanu ParticipantUser rzeczywiście powinna podbijać wersję całego agregatu Conversation. Rezygnacja z tego wymaga świadomej zmiany granicy współbieżności, a nie tylko usunięcia SetUpdated().
