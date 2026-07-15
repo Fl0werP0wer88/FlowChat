@@ -51,7 +51,8 @@ public sealed class ConsumersConfigurationTests
         var conversationSubscriber = scope.ServiceProvider.GetRequiredService<GroupConversationChangedSubscriber>();
         var participantsAddedSubscriber = scope.ServiceProvider.GetRequiredService<GroupConversationParticipantsAddedSubscriber>();
         var participantsRemovedSubscriber = scope.ServiceProvider.GetRequiredService<GroupConversationParticipantsRemovedSubscriber>();
-        var duetConversationProjectionSubscriber = scope.ServiceProvider.GetRequiredService<DuetConversationProjectionSubscriber>();
+        var duetConversationMembershipProjectionSubscriber = scope.ServiceProvider
+            .GetRequiredService<DuetConversationMembershipProjectionSubscriber>();
         var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
         var eventRouter = scope.ServiceProvider.GetRequiredService<IRealtimeEventRouter>();
         var routingReader = scope.ServiceProvider.GetRequiredService<IUserInstanceRoutingReader>();
@@ -73,7 +74,7 @@ public sealed class ConsumersConfigurationTests
         conversationSubscriber.Should().NotBeNull();
         participantsAddedSubscriber.Should().NotBeNull();
         participantsRemovedSubscriber.Should().NotBeNull();
-        duetConversationProjectionSubscriber.Should().NotBeNull();
+        duetConversationMembershipProjectionSubscriber.Should().NotBeNull();
         mediator.Should().NotBeNull();
         eventRouter.Should().BeOfType<WorkerRealtimeEventRouter>();
         routingReader.Should().NotBeNull();
@@ -124,9 +125,9 @@ public sealed class ConsumersConfigurationTests
         var conversationOptions = configuration
             .GetSection(new GroupConversationChangedConsumerSettingsSection().SectionName)
             .Get<GroupConversationChangedConsumerSettingsSection>();
-        var duetConversationOptions = configuration
-            .GetSection(new DuetConversationProjectionConsumerSettingsSection().SectionName)
-            .Get<DuetConversationProjectionConsumerSettingsSection>();
+        var duetConversationMembershipOptions = configuration
+            .GetSection(new DuetConversationMembershipProjectionConsumerSettingsSection().SectionName)
+            .Get<DuetConversationMembershipProjectionConsumerSettingsSection>();
 
         chatOptions.Should().NotBeNull();
         chatOptions!.GroupId.Should().Be("realtime-service");
@@ -149,12 +150,12 @@ public sealed class ConsumersConfigurationTests
         conversationOptions.RetryTopic.Should().Be("dev.flowchat.chat.group-conversation.v1.realtime-service.retry");
         conversationOptions.DeadLetterTopic.Should().Be("dev.flowchat.chat.group-conversation.v1.realtime-service.dlq");
 
-        duetConversationOptions.Should().NotBeNull();
-        duetConversationOptions!.GroupId.Should().Be("realtime-service");
-        duetConversationOptions.RetryGroupId.Should().Be("realtime-service-retry");
-        duetConversationOptions.Topic.Should().Be("dev.flowchat.chat.duet-conversation-projection.v1");
-        duetConversationOptions.RetryTopic.Should().Be("dev.flowchat.chat.duet-conversation-projection.v1.realtime-service.retry");
-        duetConversationOptions.DeadLetterTopic.Should().Be("dev.flowchat.chat.duet-conversation-projection.v1.realtime-service.dlq");
+        duetConversationMembershipOptions.Should().NotBeNull();
+        duetConversationMembershipOptions!.GroupId.Should().Be("realtime-service");
+        duetConversationMembershipOptions.RetryGroupId.Should().Be("realtime-service-retry");
+        duetConversationMembershipOptions.Topic.Should().Be("dev.flowchat.chat.duet-conversation-projection.v1");
+        duetConversationMembershipOptions.RetryTopic.Should().Be("dev.flowchat.chat.duet-conversation-projection.v1.realtime-service.retry");
+        duetConversationMembershipOptions.DeadLetterTopic.Should().Be("dev.flowchat.chat.duet-conversation-projection.v1.realtime-service.dlq");
     }
 
     [Fact]

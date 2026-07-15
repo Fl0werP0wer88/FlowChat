@@ -14,21 +14,21 @@ using Unit = MediatR.Unit;
 
 namespace FlowChat.RealtimeService.UnitTests;
 
-public sealed class DuetConversationProjectionSubscriberTests
+public sealed class DuetConversationMembershipProjectionSubscriberTests
 {
     private readonly IFixture _fixture = new Fixture();
     private readonly Mock<IMediator> _mediatorMock = new();
-    private readonly DuetConversationProjectionSubscriber _subscriber;
+    private readonly DuetConversationMembershipProjectionSubscriber _subscriber;
 
-    public DuetConversationProjectionSubscriberTests()
+    public DuetConversationMembershipProjectionSubscriberTests()
     {
         _mediatorMock
             .Setup(x => x.Send(It.IsAny<RouteDuetConversationCreatedCommand>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(FlowChatResult<Unit>.Success(Unit.Value));
 
-        _subscriber = new DuetConversationProjectionSubscriber(
+        _subscriber = new DuetConversationMembershipProjectionSubscriber(
             _mediatorMock.Object,
-            NullLogger<DuetConversationProjectionSubscriber>.Instance);
+            NullLogger<DuetConversationMembershipProjectionSubscriber>.Instance);
     }
 
     [Fact]

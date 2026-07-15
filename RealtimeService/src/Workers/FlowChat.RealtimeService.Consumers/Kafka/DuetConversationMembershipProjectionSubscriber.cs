@@ -6,9 +6,9 @@ using MediatR;
 
 namespace FlowChat.RealtimeService.Consumers.Kafka;
 
-public sealed class DuetConversationProjectionSubscriber(
+public sealed class DuetConversationMembershipProjectionSubscriber(
     IMediator mediator,
-    ILogger<DuetConversationProjectionSubscriber> logger)
+    ILogger<DuetConversationMembershipProjectionSubscriber> logger)
     : SubscriberBase<ProjectionIntegrationEvent<DuetConversationMembershipReadModel>>(logger)
 {
     protected override async Task ExecuteAsync(

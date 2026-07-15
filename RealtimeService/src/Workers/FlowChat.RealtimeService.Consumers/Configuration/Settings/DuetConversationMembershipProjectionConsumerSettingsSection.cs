@@ -3,9 +3,9 @@ using FlowChat.Shared.Infrastructure.Silverback.Kafka;
 
 namespace FlowChat.RealtimeService.Consumers.Configuration.Settings;
 
-public sealed class DuetConversationProjectionConsumerSettingsSection : SettingsSectionBase, IRetryableKafkaConsumerSettingsSection
+public sealed class DuetConversationMembershipProjectionConsumerSettingsSection : SettingsSectionBase, IRetryableKafkaConsumerSettingsSection
 {
-    public override string SectionName => "Kafka:DuetConversationProjectionConsumer";
+    public override string SectionName => "Kafka:DuetConversationMembershipProjectionConsumer";
 
     public string BootstrapServers { get; set; } = "localhost:9092";
     public string GroupId { get; set; } = "realtime-service";
