@@ -31,7 +31,8 @@ internal static class CommonInfrastructureServiceRegistration
             .AddProducerSettings<GroupConversationChangedIntegrationEvent, GroupConversationChangedProducerSettingsSection>()
             .AddProducerSettings<GroupConversationParticipantsAddedIntegrationEvent, GroupConversationChangedProducerSettingsSection>()
             .AddProducerSettings<GroupConversationParticipantsRemovedIntegrationEvent, GroupConversationChangedProducerSettingsSection>()
-            .AddProducerSettings<ProjectionIntegrationEvent<DuetConversationReadModel>, DuetConversationProjectionProducerSettingsSection>());
+            .AddProducerSettings<ProjectionIntegrationEvent<DuetConversationMembershipReadModel>, DuetConversationProjectionProducerSettingsSection>()
+            .AddProducerSettings<ProjectionIntegrationEvent<DuetConversationContactStateReadModel>, DuetConversationProjectionProducerSettingsSection>());
 
         return services;
     }

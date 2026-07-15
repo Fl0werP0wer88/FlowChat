@@ -49,7 +49,7 @@ public static class ConsumersServiceRegistration
                     .AddCommandHandler<ContactObserverProjectionDto>()
                     .AddConsumer<
                         AppDbContext,
-                        DuetConversationReadModel,
+                        DuetConversationContactStateReadModel,
                         ContactObserverProjectionDto,
                         (Guid, Guid),
                         ContactObserverProjectionValueFactory>());

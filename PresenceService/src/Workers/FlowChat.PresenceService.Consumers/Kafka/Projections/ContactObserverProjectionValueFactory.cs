@@ -7,15 +7,15 @@ using FlowChat.Shared.Consumers.ProjectionBulk;
 namespace FlowChat.PresenceService.Consumers.Kafka.Projections;
 
 public sealed class ContactObserverProjectionValueFactory
-    : IProjectionValueFactory<DuetConversationReadModel, ContactObserverProjectionDto, (Guid ObservedUserId, Guid ObserverUserId)>
+    : IProjectionValueFactory<DuetConversationContactStateReadModel, ContactObserverProjectionDto, (Guid ObservedUserId, Guid ObserverUserId)>
 {
     private const string ProjectionSource = "chat-duet-conversation-events";
 
-    public ContactObserverProjectionDto MapValue(ProjectionIntegrationEvent<DuetConversationReadModel> message) =>
+    public ContactObserverProjectionDto MapValue(ProjectionIntegrationEvent<DuetConversationContactStateReadModel> message) =>
         MapValues(message).First();
 
     public IEnumerable<ContactObserverProjectionDto> MapValues(
-        ProjectionIntegrationEvent<DuetConversationReadModel> message)
+        ProjectionIntegrationEvent<DuetConversationContactStateReadModel> message)
     {
         var firstUserId = ResolveUserId(message.Value.FirstUserId, nameof(message.Value.FirstUserId));
         var secondUserId = ResolveUserId(message.Value.SecondUserId, nameof(message.Value.SecondUserId));

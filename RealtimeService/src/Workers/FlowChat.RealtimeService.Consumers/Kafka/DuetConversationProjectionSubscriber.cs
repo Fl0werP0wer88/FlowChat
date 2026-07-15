@@ -9,10 +9,10 @@ namespace FlowChat.RealtimeService.Consumers.Kafka;
 public sealed class DuetConversationProjectionSubscriber(
     IMediator mediator,
     ILogger<DuetConversationProjectionSubscriber> logger)
-    : SubscriberBase<ProjectionIntegrationEvent<DuetConversationReadModel>>(logger)
+    : SubscriberBase<ProjectionIntegrationEvent<DuetConversationMembershipReadModel>>(logger)
 {
     protected override async Task ExecuteAsync(
-        ProjectionIntegrationEvent<DuetConversationReadModel> message,
+        ProjectionIntegrationEvent<DuetConversationMembershipReadModel> message,
         CancellationToken cancellationToken)
     {
         var command = new RouteDuetConversationCreatedCommand(

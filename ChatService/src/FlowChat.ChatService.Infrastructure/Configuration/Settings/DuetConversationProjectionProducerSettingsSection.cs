@@ -5,7 +5,8 @@ using FlowChat.Core.Messaging.ChatService.ReadModels;
 namespace FlowChat.ChatService.Infrastructure.Configuration.Settings;
 
 public sealed class DuetConversationProjectionProducerSettingsSection : ProducerSettingsSectionBase,
-    IKafkaProducerSettingsSection<ProjectionIntegrationEvent<DuetConversationReadModel>>
+    IKafkaProducerSettingsSection<ProjectionIntegrationEvent<DuetConversationMembershipReadModel>>,
+    IKafkaProducerSettingsSection<ProjectionIntegrationEvent<DuetConversationContactStateReadModel>>
 {
     public override string SectionName => "Kafka:DuetConversationProjectionProducer";
 

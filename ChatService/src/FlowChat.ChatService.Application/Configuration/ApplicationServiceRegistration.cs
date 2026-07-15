@@ -38,13 +38,16 @@ internal static class CommonApplicationServiceRegistration
         services.AddScoped<ILocalEventDispatcher, LocalEventDispatcher>();
         services.AddScoped<
             IAggregateBeforeSaveProcessor<CreateDuetConversationCommand, DuetConversationAggregate>,
-            DuetConversationProjectionProcessor<CreateDuetConversationCommand>>();
+            DuetConversationMembershipProjectionProcessor<CreateDuetConversationCommand>>();
+        services.AddScoped<
+            IAggregateBeforeSaveProcessor<CreateDuetConversationCommand, DuetConversationAggregate>,
+            DuetConversationContactStateProjectionProcessor<CreateDuetConversationCommand>>();
         services.AddScoped<
             IAggregateBeforeSaveProcessor<BlockConversationParticipantCommand, DuetConversationAggregate>,
-            DuetConversationProjectionProcessor<BlockConversationParticipantCommand>>();
+            DuetConversationContactStateProjectionProcessor<BlockConversationParticipantCommand>>();
         services.AddScoped<
             IAggregateBeforeSaveProcessor<UnblockConversationParticipantCommand, DuetConversationAggregate>,
-            DuetConversationProjectionProcessor<UnblockConversationParticipantCommand>>();
+            DuetConversationContactStateProjectionProcessor<UnblockConversationParticipantCommand>>();
 
         return services;
     }

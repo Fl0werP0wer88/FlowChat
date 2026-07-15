@@ -7,10 +7,10 @@ using DuetConversationAggregate = FlowChat.ChatService.Domain.Entities.Conversat
 
 namespace FlowChat.ChatService.UnitTests.Application.Features.Conversation.Mapping;
 
-public sealed class DuetConversationReadModelProfileTests
+public sealed class DuetConversationContactStateReadModelProfileTests
 {
     private static readonly IMapper Mapper = new MapperConfiguration(
-        cfg => cfg.AddProfile<DuetConversationReadModelProfile>(),
+        cfg => cfg.AddProfile<DuetConversationContactStateReadModelProfile>(),
         NullLoggerFactory.Instance).CreateMapper();
 
     [Fact]
@@ -20,7 +20,7 @@ public sealed class DuetConversationReadModelProfileTests
         var secondUserId = Guid.NewGuid();
         var conversation = DuetConversationAggregate.Create(firstUserId, secondUserId);
 
-        var readModel = Mapper.Map<DuetConversationReadModel>(conversation);
+        var readModel = Mapper.Map<DuetConversationContactStateReadModel>(conversation);
 
         readModel.ConversationId.Should().Be(conversation.Id.Value);
         readModel.FirstUserId.Should().Be(firstUserId);
@@ -37,7 +37,7 @@ public sealed class DuetConversationReadModelProfileTests
         var conversation = DuetConversationAggregate.Create(firstUserId, secondUserId);
         conversation.BlockParticipant(firstUserId);
 
-        var readModel = Mapper.Map<DuetConversationReadModel>(conversation);
+        var readModel = Mapper.Map<DuetConversationContactStateReadModel>(conversation);
 
         readModel.FirstUserBlockedSecondUser.Should().BeTrue();
         readModel.SecondUserBlockedFirstUser.Should().BeFalse();
@@ -51,7 +51,7 @@ public sealed class DuetConversationReadModelProfileTests
         var conversation = DuetConversationAggregate.Create(firstUserId, secondUserId);
         conversation.BlockParticipant(secondUserId);
 
-        var readModel = Mapper.Map<DuetConversationReadModel>(conversation);
+        var readModel = Mapper.Map<DuetConversationContactStateReadModel>(conversation);
 
         readModel.FirstUserBlockedSecondUser.Should().BeFalse();
         readModel.SecondUserBlockedFirstUser.Should().BeTrue();

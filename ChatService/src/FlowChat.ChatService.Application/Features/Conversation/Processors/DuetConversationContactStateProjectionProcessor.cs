@@ -7,9 +7,9 @@ using DuetConversationAggregate = FlowChat.ChatService.Domain.Entities.Conversat
 
 namespace FlowChat.ChatService.Application.Features.Conversation.Processors;
 
-public sealed class DuetConversationProjectionProcessor<TCommand>(
+public sealed class DuetConversationContactStateProjectionProcessor<TCommand>(
     IMapper mapper,
     IOutboxIntegrationEventPublisher integrationEventPublisher)
-    : PublishProjectionIntegrationEventProcessor<TCommand, DuetConversationAggregate, DuetConversationReadModel>(
+    : PublishProjectionIntegrationEventProcessor<TCommand, DuetConversationAggregate, DuetConversationContactStateReadModel>(
         mapper,
         integrationEventPublisher);

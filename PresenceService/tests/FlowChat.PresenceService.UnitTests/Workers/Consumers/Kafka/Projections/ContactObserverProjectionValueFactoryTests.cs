@@ -67,7 +67,7 @@ public sealed class ContactObserverProjectionValueFactoryTests
         key.Should().Be((secondUserId, firstUserId));
     }
 
-    private static ProjectionIntegrationEvent<DuetConversationReadModel> CreateProjectionEvent(
+    private static ProjectionIntegrationEvent<DuetConversationContactStateReadModel> CreateProjectionEvent(
         Guid firstUserId,
         Guid secondUserId,
         bool firstUserBlockedSecondUser = false,
@@ -79,12 +79,11 @@ public sealed class ContactObserverProjectionValueFactoryTests
             SourceAggregateModifiedAtUtc = DateTimeOffset.UtcNow,
             Operation = OperationType.Updated,
             SourceAggregateVersion = 1,
-            Value = new DuetConversationReadModel
+            Value = new DuetConversationContactStateReadModel
             {
                 ConversationId = Guid.NewGuid(),
                 FirstUserId = firstUserId,
                 SecondUserId = secondUserId,
-                ConversationMembershipRevision = 1,
                 FirstUserBlockedSecondUser = firstUserBlockedSecondUser,
                 SecondUserBlockedFirstUser = secondUserBlockedFirstUser
             }

@@ -80,7 +80,11 @@ public static class OutboxPublisherServiceRegistration
                             .ProduceTo(groupConversationChangedProducerOptions.Topic)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())))
                     .AddProducer(producer => producer
-                        .Produce<ProjectionIntegrationEvent<DuetConversationReadModel>>("duet-conversation-projection", endpoint => endpoint
+                        .Produce<ProjectionIntegrationEvent<DuetConversationMembershipReadModel>>("duet-conversation-membership-projection", endpoint => endpoint
+                            .ProduceTo(duetConversationProjectionProducerOptions.Topic)
+                            .SerializeAsJson(serializer => serializer.SetTypeHeader())))
+                    .AddProducer(producer => producer
+                        .Produce<ProjectionIntegrationEvent<DuetConversationContactStateReadModel>>("duet-conversation-contact-state-projection", endpoint => endpoint
                             .ProduceTo(duetConversationProjectionProducerOptions.Topic)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())));
             });
