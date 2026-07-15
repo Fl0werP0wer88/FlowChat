@@ -20,7 +20,7 @@ public sealed class ChatMessageSentSubscriber(
             message.SenderUserId,
             message.Text?.Trim(),
             message.SentAtUtc,
-            message.ConversationVersionAtSend);
+            message.ConversationMembershipRevision);
 
         var result = await mediator.Send(command, cancellationToken);
 

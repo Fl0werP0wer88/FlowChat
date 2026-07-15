@@ -1,13 +1,13 @@
 namespace FlowChat.RealtimeService.Application.Contracts.Persistence;
 
-public interface IRealtimeGroupMembershipVersionTrackerRepository
+public interface IRealtimeGroupMembershipRevisionTrackerRepository
 {
-    Task<int?> GetVersionAsync(
+    Task<int?> GetRevisionAsync(
         Guid conversationId,
         CancellationToken cancellationToken = default);
 
     Task UpsertIfNewerAsync(
         Guid conversationId,
-        int version,
+        int revision,
         CancellationToken cancellationToken = default);
 }

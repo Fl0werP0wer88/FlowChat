@@ -13,6 +13,6 @@ public sealed class ChatMessageSentDomainEventToIntegrationEventProfile : Profil
             .ForMember(destination => destination.SenderUserId, options => options.MapFrom(source => source.SenderUserId.Value))
             .ForMember(destination => destination.SentAtUtc, options => options.MapFrom(source => source.SentAtUtc.Value))
             // Stamped separately in ChatMessageSentDomainEventHandler from a fresh Conversation-version read, since it belongs to a foreign aggregate the domain event cannot know about.
-            .ForMember(destination => destination.ConversationVersionAtSend, options => options.Ignore());
+            .ForMember(destination => destination.ConversationMembershipRevision, options => options.Ignore());
     }
 }

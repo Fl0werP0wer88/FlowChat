@@ -12,6 +12,7 @@ public sealed class DuetConversationReadModelProfile : Profile
             .ForMember(destination => destination.ConversationId, options => options.MapFrom(source => source.Id.Value))
             .ForMember(destination => destination.FirstUserId, options => options.MapFrom(source => source.GetParticipantPair().FirstUserId.Value))
             .ForMember(destination => destination.SecondUserId, options => options.MapFrom(source => source.GetParticipantPair().SecondUserId.Value))
+            .ForMember(destination => destination.ConversationMembershipRevision, options => options.MapFrom(source => source.MembershipRevision))
             .ForMember(destination => destination.FirstUserBlockedSecondUser, options => options.MapFrom(source =>
                 source.GetParticipant(source.GetParticipantPair().FirstUserId)!.IsBlocked))
             .ForMember(destination => destination.SecondUserBlockedFirstUser, options => options.MapFrom(source =>

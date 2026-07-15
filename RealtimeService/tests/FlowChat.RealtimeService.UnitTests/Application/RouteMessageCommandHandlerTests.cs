@@ -14,7 +14,7 @@ public sealed class RouteMessageCommandHandlerTests
     private readonly IFixture _fixture = new Fixture();
     private readonly Mock<IRealtimeEventRouter> _routerMock = new();
     private readonly Mock<IChatServiceInternalApiClient> _chatServiceApiClientMock = new();
-    private readonly Mock<IRealtimeGroupMembershipVersionTrackerRepository> _versionTrackerRepositoryMock = new();
+    private readonly Mock<IRealtimeGroupMembershipRevisionTrackerRepository> _revisionTrackerRepositoryMock = new();
     private readonly Mock<IRealtimeGroupMembershipReadModelRepository> _groupMembershipReadModelRepositoryMock = new();
     private readonly RouteMessageCommandHandler _handler;
 
@@ -39,8 +39,8 @@ public sealed class RouteMessageCommandHandlerTests
                 It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
-        _versionTrackerRepositoryMock
-            .Setup(x => x.GetVersionAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+        _revisionTrackerRepositoryMock
+            .Setup(x => x.GetRevisionAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(1);
 
         _groupMembershipReadModelRepositoryMock
@@ -50,7 +50,7 @@ public sealed class RouteMessageCommandHandlerTests
         _handler = new RouteMessageCommandHandler(
             _routerMock.Object,
             _chatServiceApiClientMock.Object,
-            _versionTrackerRepositoryMock.Object,
+            _revisionTrackerRepositoryMock.Object,
             _groupMembershipReadModelRepositoryMock.Object);
     }
 
@@ -166,11 +166,11 @@ public sealed class RouteMessageCommandHandlerTests
     }
 
     [Fact]
-    public async Task Handle_WhenConversationVersionAtSendIsNewerThanTrackedVersion_ReturnsTransientFailureAndDoesNotRoute()
+    public async Task Handle_WhenConversationMembershipRevisionIsNewerThanTrackedRevision_ReturnsTransientFailureAndDoesNotRoute()
     {
         var conversationId = _fixture.Create<Guid>();
-        _versionTrackerRepositoryMock
-            .Setup(x => x.GetVersionAsync(conversationId, It.IsAny<CancellationToken>()))
+        _revisionTrackerRepositoryMock
+            .Setup(x => x.GetRevisionAsync(conversationId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(1);
 
         var command = new RouteMessageCommand(

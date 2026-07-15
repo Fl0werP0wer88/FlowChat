@@ -24,7 +24,7 @@ public class AppDbContext : DbContext
 
     public DbSet<RealtimeGroupMembershipReadModel> RealtimeGroupMembershipReadModels => Set<RealtimeGroupMembershipReadModel>();
 
-    public DbSet<RealtimeGroupMembershipVersionTrackerReadModel> RealtimeGroupMembershipVersionTrackerReadModels => Set<RealtimeGroupMembershipVersionTrackerReadModel>();
+    public DbSet<RealtimeGroupMembershipRevisionTrackerReadModel> RealtimeGroupMembershipRevisionTrackerReadModels => Set<RealtimeGroupMembershipRevisionTrackerReadModel>();
 
     public DbSet<SilverbackStoredOffset> SilverbackStoredOffsets => Set<SilverbackStoredOffset>();
 

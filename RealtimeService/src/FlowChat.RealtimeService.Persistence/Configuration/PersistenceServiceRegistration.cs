@@ -48,6 +48,6 @@ internal static class CommonPersistenceServiceRegistration
             ServiceLifetime.Scoped);
 
         services.AddScoped<IRealtimeGroupMembershipReadModelRepository, RealtimeGroupMembershipReadModelRepository>();
-        services.AddScoped<IRealtimeGroupMembershipVersionTrackerRepository, RealtimeGroupMembershipVersionTrackerRepository>();
+        services.AddScoped<IRealtimeGroupMembershipRevisionTrackerRepository, RealtimeGroupMembershipRevisionTrackerRepository>();
     }
 }

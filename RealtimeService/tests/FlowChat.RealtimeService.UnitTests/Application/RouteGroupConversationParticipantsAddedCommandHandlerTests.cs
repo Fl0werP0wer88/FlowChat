@@ -15,7 +15,7 @@ public sealed class RouteGroupConversationParticipantsAddedCommandHandlerTests
 {
     private readonly IFixture _fixture = new Fixture();
     private readonly Mock<IRealtimeGroupMembershipReadModelRepository> _readModelRepositoryMock = new();
-    private readonly Mock<IRealtimeGroupMembershipVersionTrackerRepository> _versionTrackerRepositoryMock = new();
+    private readonly Mock<IRealtimeGroupMembershipRevisionTrackerRepository> _revisionTrackerRepositoryMock = new();
     private readonly Mock<IRealtimeEventRouter> _routerMock = new();
     private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
     private readonly RouteGroupConversationParticipantsAddedCommandHandler _handler;
@@ -35,7 +35,7 @@ public sealed class RouteGroupConversationParticipantsAddedCommandHandlerTests
 
         _handler = new RouteGroupConversationParticipantsAddedCommandHandler(
             _readModelRepositoryMock.Object,
-            _versionTrackerRepositoryMock.Object,
+            _revisionTrackerRepositoryMock.Object,
             _routerMock.Object,
             _unitOfWorkMock.Object);
     }
@@ -65,7 +65,7 @@ public sealed class RouteGroupConversationParticipantsAddedCommandHandlerTests
                 conversationId,
                 It.IsAny<CancellationToken>()),
             Times.Once);
-        _versionTrackerRepositoryMock.Verify(
+        _revisionTrackerRepositoryMock.Verify(
             x => x.UpsertIfNewerAsync(conversationId, conversationVersion, It.IsAny<CancellationToken>()),
             Times.Once);
         capturedNotification.Should().NotBeNull();

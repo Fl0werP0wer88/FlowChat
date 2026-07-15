@@ -25,18 +25,17 @@ public sealed class ChatMessageSentDomainEventHandler
             ?? throw new ArgumentNullException(nameof(participantReadRepository));
     }
 
-    // Conversation's version is read here rather than threaded through ChatMessage.Create(...) because it belongs
-    // to a foreign aggregate; the domain event/aggregate has no business knowing another aggregate's version.
+    // Membership revision is read here because it belongs to a foreign aggregate.
     public async Task Handle(
         ChatMessageSentDomainEvent notification,
         CancellationToken cancellationToken)
     {
         var integrationEvent = _mapper.Map<ChatMessageSentIntegrationEvent>(notification);
-        var conversationVersion = await _participantReadRepository.GetVersionAsync(
+        var membershipRevision = await _participantReadRepository.GetMembershipRevisionAsync(
             notification.ConversationId.Value,
             cancellationToken);
 
-        integrationEvent = integrationEvent with { ConversationVersionAtSend = conversationVersion ?? 0 };
+        integrationEvent = integrationEvent with { ConversationMembershipRevision = membershipRevision ?? 0 };
 
         await _integrationEventPublisher.PublishAsync(
             integrationEvent,

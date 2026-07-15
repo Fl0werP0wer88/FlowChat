@@ -36,7 +36,7 @@ public sealed class ChatMessageSentDomainEventHandlerTests
     }
 
     [Fact]
-    public async Task Handle_WhenChatMessageSentDomainEvent_StampsFreshlyReadConversationVersion()
+    public async Task Handle_WhenChatMessageSentDomainEvent_StampsFreshlyReadMembershipRevision()
     {
         var messageId = Id<ChatMessageAggregate>.New();
         var conversationId = Id<ConversationAggregate>.New();
@@ -50,7 +50,7 @@ public sealed class ChatMessageSentDomainEventHandlerTests
             sentAtUtc);
 
         _participantReadRepositoryMock
-            .Setup(x => x.GetVersionAsync(conversationId.Value, It.IsAny<CancellationToken>()))
+            .Setup(x => x.GetMembershipRevisionAsync(conversationId.Value, It.IsAny<CancellationToken>()))
             .ReturnsAsync(5);
 
         IntegrationEventEnvelope<ChatMessageSentIntegrationEvent>? publishedEnvelope = null;
@@ -68,14 +68,14 @@ public sealed class ChatMessageSentDomainEventHandlerTests
         publishedEnvelope!.Payload.MessageId.Should().Be(messageId.Value);
         publishedEnvelope.Payload.ConversationId.Should().Be(conversationId.Value);
         publishedEnvelope.Payload.SenderUserId.Should().Be(senderUserId.Value);
-        publishedEnvelope.Payload.ConversationVersionAtSend.Should().Be(5);
+        publishedEnvelope.Payload.ConversationMembershipRevision.Should().Be(5);
         _participantReadRepositoryMock.Verify(
-            x => x.GetVersionAsync(conversationId.Value, It.IsAny<CancellationToken>()),
+            x => x.GetMembershipRevisionAsync(conversationId.Value, It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
     [Fact]
-    public async Task Handle_WhenConversationVersionIsUnknown_StampsZero()
+    public async Task Handle_WhenMembershipRevisionIsUnknown_StampsZero()
     {
         var domainEvent = new ChatMessageSentDomainEvent(
             Id<ChatMessageAggregate>.New(),
@@ -85,7 +85,7 @@ public sealed class ChatMessageSentDomainEventHandlerTests
             UtcDateTimeOffset.UtcNow);
 
         _participantReadRepositoryMock
-            .Setup(x => x.GetVersionAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.GetMembershipRevisionAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((int?)null);
 
         IntegrationEventEnvelope<ChatMessageSentIntegrationEvent>? publishedEnvelope = null;
@@ -100,6 +100,6 @@ public sealed class ChatMessageSentDomainEventHandlerTests
         await _handler.Handle(domainEvent, CancellationToken.None);
 
         publishedEnvelope.Should().NotBeNull();
-        publishedEnvelope!.Payload.ConversationVersionAtSend.Should().Be(0);
+        publishedEnvelope!.Payload.ConversationMembershipRevision.Should().Be(0);
     }
 }

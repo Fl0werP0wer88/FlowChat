@@ -12,7 +12,7 @@ public interface IConversationParticipantReadRepository
         Guid conversationId,
         CancellationToken cancellationToken = default);
 
-    Task<int?> GetVersionAsync(
+    Task<int?> GetMembershipRevisionAsync(
         Guid conversationId,
         CancellationToken cancellationToken = default);
 }

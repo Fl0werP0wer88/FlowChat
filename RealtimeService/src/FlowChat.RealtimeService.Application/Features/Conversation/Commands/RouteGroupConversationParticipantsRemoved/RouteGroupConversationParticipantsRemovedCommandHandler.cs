@@ -9,15 +9,15 @@ namespace FlowChat.RealtimeService.Application.Features.Conversation.Commands.Ro
 
 public sealed class RouteGroupConversationParticipantsRemovedCommandHandler(
     IRealtimeGroupMembershipReadModelRepository realtimeGroupMembershipReadModelRepository,
-    IRealtimeGroupMembershipVersionTrackerRepository realtimeGroupMembershipVersionTrackerRepository,
+    IRealtimeGroupMembershipRevisionTrackerRepository realtimeGroupMembershipRevisionTrackerRepository,
     IRealtimeEventRouter realtimeEventRouter,
     IUnitOfWork unitOfWork)
     : TransactionalCommandHandlerBase<RouteGroupConversationParticipantsRemovedCommand, Unit>(unitOfWork)
 {
     private readonly IRealtimeGroupMembershipReadModelRepository _realtimeGroupMembershipReadModelRepository = realtimeGroupMembershipReadModelRepository
         ?? throw new ArgumentNullException(nameof(realtimeGroupMembershipReadModelRepository));
-    private readonly IRealtimeGroupMembershipVersionTrackerRepository _realtimeGroupMembershipVersionTrackerRepository = realtimeGroupMembershipVersionTrackerRepository
-        ?? throw new ArgumentNullException(nameof(realtimeGroupMembershipVersionTrackerRepository));
+    private readonly IRealtimeGroupMembershipRevisionTrackerRepository _realtimeGroupMembershipRevisionTrackerRepository = realtimeGroupMembershipRevisionTrackerRepository
+        ?? throw new ArgumentNullException(nameof(realtimeGroupMembershipRevisionTrackerRepository));
     private readonly IRealtimeEventRouter _realtimeEventRouter = realtimeEventRouter
         ?? throw new ArgumentNullException(nameof(realtimeEventRouter));
 
@@ -30,9 +30,9 @@ public sealed class RouteGroupConversationParticipantsRemovedCommandHandler(
         var notification = new GroupConversationParticipantsRemovedParam(request.ConversationId, participantUserIds);
         await _realtimeEventRouter.RouteGroupConversationParticipantsRemovedAsync(notification, cancellationToken);
 
-        await _realtimeGroupMembershipVersionTrackerRepository.UpsertIfNewerAsync(
+        await _realtimeGroupMembershipRevisionTrackerRepository.UpsertIfNewerAsync(
             request.ConversationId,
-            request.ConversationVersion,
+            request.ConversationMembershipRevision,
             cancellationToken);
 
         await _realtimeGroupMembershipReadModelRepository.RemoveRangeAsync(

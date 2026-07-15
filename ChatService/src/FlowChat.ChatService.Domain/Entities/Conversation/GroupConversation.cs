@@ -50,7 +50,8 @@ public sealed class GroupConversation : Conversation
             conversation.CreatedByUserId));
         conversation.AddDomainEvent(new GroupConversationParticipantsAddedDomainEvent(
             conversation.Id,
-            [.. conversation.Participants.Select(p => p.UserId)]));
+            [.. conversation.Participants.Select(p => p.UserId)],
+            conversation.MembershipRevision));
 
         return conversation;
     }
@@ -63,6 +64,9 @@ public sealed class GroupConversation : Conversation
         ArgumentNullException.ThrowIfNull(participantUserIds);
 
         var userIdsToAdd = participantUserIds.ToList();
+
+        if (userIdsToAdd.Count == 0)
+            throw new ArgumentException("At least one participant must be provided.", nameof(participantUserIds));
 
         foreach (var participantUserId in userIdsToAdd)
         {
@@ -85,7 +89,8 @@ public sealed class GroupConversation : Conversation
                 lastReadMessageSequenceNum));
         }
 
-        AddDomainEvent(new GroupConversationParticipantsAddedDomainEvent(Id, userIdsToAdd));
+        MembershipRevision++;
+        AddDomainEvent(new GroupConversationParticipantsAddedDomainEvent(Id, userIdsToAdd, MembershipRevision));
     }
 
     public void RemoveParticipants(IEnumerable<Id<UserProfileMarker>> participantUserIds)
@@ -93,6 +98,9 @@ public sealed class GroupConversation : Conversation
         ArgumentNullException.ThrowIfNull(participantUserIds);
 
         var userIdsToRemove = participantUserIds.ToList();
+
+        if (userIdsToRemove.Count == 0)
+            throw new ArgumentException("At least one participant must be provided.", nameof(participantUserIds));
 
         foreach (var participantUserId in userIdsToRemove)
         {
@@ -107,6 +115,7 @@ public sealed class GroupConversation : Conversation
 
         _participants.RemoveAll(p => userIdsToRemove.Contains(p.UserId));
 
-        AddDomainEvent(new GroupConversationParticipantsRemovedDomainEvent(Id, userIdsToRemove));
+        MembershipRevision++;
+        AddDomainEvent(new GroupConversationParticipantsRemovedDomainEvent(Id, userIdsToRemove, MembershipRevision));
     }
 }

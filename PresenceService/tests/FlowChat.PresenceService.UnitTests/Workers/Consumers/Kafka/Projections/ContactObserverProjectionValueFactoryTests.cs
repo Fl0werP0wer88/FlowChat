@@ -84,6 +84,7 @@ public sealed class ContactObserverProjectionValueFactoryTests
                 ConversationId = Guid.NewGuid(),
                 FirstUserId = firstUserId,
                 SecondUserId = secondUserId,
+                ConversationMembershipRevision = 1,
                 FirstUserBlockedSecondUser = firstUserBlockedSecondUser,
                 SecondUserBlockedFirstUser = secondUserBlockedFirstUser
             }

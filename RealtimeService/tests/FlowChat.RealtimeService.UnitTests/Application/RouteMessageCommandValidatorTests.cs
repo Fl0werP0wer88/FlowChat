@@ -66,7 +66,7 @@ public sealed class RouteMessageCommandValidatorTests
     [Theory]
     [InlineData(0)]
     [InlineData(-1)]
-    public void Validate_ConversationVersionAtSendNotPositive_ReturnsValidationError(int conversationVersionAtSend)
+    public void Validate_ConversationMembershipRevisionNotPositive_ReturnsValidationError(int conversationVersionAtSend)
     {
         var command = new RouteMessageCommand(
             _fixture.Create<Guid>(),
@@ -79,6 +79,6 @@ public sealed class RouteMessageCommandValidatorTests
         var result = _validator.Validate(command);
 
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().Contain(e => e.PropertyName == "ConversationVersionAtSend");
+        result.Errors.Should().Contain(e => e.PropertyName == "ConversationMembershipRevision");
     }
 }

@@ -11,6 +11,7 @@ public abstract class Conversation : AggregateRootBase<Conversation>
     public string? Name { get; private set; }
     public Id<UserProfileMarker> CreatedByUserId { get; private set; }
     public long LastMsgSequenceNum { get; private set; }
+    public int MembershipRevision { get; protected set; } = 1;
 
     protected readonly List<ParticipantUser> _participants = [];
     public IReadOnlyCollection<ParticipantUser> Participants => _participants.AsReadOnly();

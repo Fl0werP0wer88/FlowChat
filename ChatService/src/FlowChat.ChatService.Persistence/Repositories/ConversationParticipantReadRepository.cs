@@ -44,13 +44,13 @@ public sealed class ConversationParticipantReadRepository(AppDbContext dbContext
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<int?> GetVersionAsync(
+    public async Task<int?> GetMembershipRevisionAsync(
         Guid conversationId,
         CancellationToken cancellationToken = default)
     {
         return await Active(dbContext.ConversationReads)
             .Where(conversation => conversation.Id == conversationId)
-            .Select(conversation => (int?)conversation.Version)
+            .Select(conversation => (int?)conversation.MembershipRevision)
             .FirstOrDefaultAsync(cancellationToken);
     }
 }

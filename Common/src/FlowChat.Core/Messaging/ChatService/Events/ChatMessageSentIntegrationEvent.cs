@@ -7,5 +7,5 @@ public sealed record ChatMessageSentIntegrationEvent : IntegrationEvent
     public Guid SenderUserId { get; init; }
     public required string Text { get; init; }
     public DateTimeOffset SentAtUtc { get; init; }
-    public int ConversationVersionAtSend { get; init; }
+    public int ConversationMembershipRevision { get; init; }
 }

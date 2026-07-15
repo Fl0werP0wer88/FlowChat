@@ -9,4 +9,5 @@ public sealed class ConversationReadEntity : ReadEntityBase
     public string? Name { get; init; }
     public long LastMsgSequenceNum { get; init; }
     public int Version { get; init; }
+    public int MembershipRevision { get; init; }
 }

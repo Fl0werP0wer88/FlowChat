@@ -37,6 +37,9 @@ public sealed class ConversationConfiguration : IEntityTypeConfiguration<Convers
         builder.Property(x => x.Version)
             .IsConcurrencyToken();
 
+        builder.Property(x => x.MembershipRevision)
+            .IsRequired();
+
         builder.Property(x => x.CreatedBy)
             .HasMaxLength(256)
             .IsRequired();

@@ -24,9 +24,9 @@
 14. Niektore REadREpo pobierają cały agreagat i dopiero mapuja, to raczej bez sensu. Niech pobieraja z bazy tylko te dane ktore potrzebują. 
 15. Trzeba wyciągnąć pole name z Conversations i przeniesc na Nową tabele GroupConversations.  Ponieważ konwersacja 1:1 nie powinna mieć edytowalnej nazwy.
 16. Trzeba będzie przeprojektować obsługe wyjątków i wewnętrzne rodzaje wyjątków bo zaczyna się tam robić bałagan
+17: Poustawiać IsConcurrencyToken na poszczególnych polach encji EF ktore maja konkurowac concyurency.
 
-
-17. BUG: Silverback RetryErrorPolicy nie współpracuje z client-side Kafka offset store
+18. BUG: Silverback RetryErrorPolicy nie współpracuje z client-side Kafka offset store
 
 Kontekst:
 - FlowChat używa Silverback 5.0.0, Kafka oraz client-side offset store zapisywanego przez Entity Framework w tabeli SilverbackStoredOffset.

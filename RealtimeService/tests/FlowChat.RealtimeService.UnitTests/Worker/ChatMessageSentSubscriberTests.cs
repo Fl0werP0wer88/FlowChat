@@ -53,7 +53,7 @@ public sealed class ChatMessageSentSubscriberTests
                 SenderUserId = senderUserId,
                 Text = " Hi there ",
                 SentAtUtc = sentAtUtc,
-                ConversationVersionAtSend = 3
+                ConversationMembershipRevision = 3
             }.ToInboundEnvelope(),
             CancellationToken.None);
 
@@ -63,7 +63,7 @@ public sealed class ChatMessageSentSubscriberTests
         capturedCommand.SenderUserId.Should().Be(senderUserId);
         capturedCommand.Text.Should().Be("Hi there");
         capturedCommand.SentAtUtc.Should().Be(sentAtUtc);
-        capturedCommand.ConversationVersionAtSend.Should().Be(3);
+        capturedCommand.ConversationMembershipRevision.Should().Be(3);
     }
 
     [Fact]
@@ -164,7 +164,7 @@ public sealed class ChatMessageSentSubscriberTests
             SenderUserId = senderUserId ?? _fixture.Create<Guid>(),
             Text = text,
             SentAtUtc = DateTimeOffset.UtcNow,
-            ConversationVersionAtSend = 1
+            ConversationMembershipRevision = 1
         };
 
     private void SetupCommandFailure(string errorMessage)

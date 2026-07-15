@@ -22,6 +22,7 @@ public sealed class ConversationTests
             "Dev Team");
 
         conversation.LastMsgSequenceNum.Should().Be(0);
+        conversation.MembershipRevision.Should().Be(1);
     }
 
     [Fact]
@@ -128,6 +129,9 @@ public sealed class ConversationTests
         conversation.DomainEvents.OfType<GroupConversationParticipantsAddedDomainEvent>().Should().HaveCount(2);
         conversation.DomainEvents.OfType<GroupConversationParticipantsAddedDomainEvent>().Last()
             .ParticipantUserIds.Should().ContainSingle().Which.Should().Be(newMemberId);
+        conversation.MembershipRevision.Should().Be(2);
+        conversation.DomainEvents.OfType<GroupConversationParticipantsAddedDomainEvent>().Last()
+            .ConversationMembershipRevision.Should().Be(2);
     }
 
     [Fact]
@@ -146,6 +150,45 @@ public sealed class ConversationTests
 
         conversation.DomainEvents.OfType<GroupConversationParticipantsRemovedDomainEvent>().Should().ContainSingle()
             .Which.ParticipantUserIds.Should().ContainSingle().Which.Should().Be(removedMemberId);
+        conversation.MembershipRevision.Should().Be(2);
+        conversation.DomainEvents.OfType<GroupConversationParticipantsRemovedDomainEvent>().Single()
+            .ConversationMembershipRevision.Should().Be(2);
+    }
+
+    [Fact]
+    public void AddParticipants_WhenBatchIsEmpty_ThrowsWithoutIncrementingMembershipRevision()
+    {
+        var conversation = CreateGroupConversation();
+
+        var act = () => conversation.AddParticipants([]);
+
+        act.Should().Throw<ArgumentException>();
+        conversation.MembershipRevision.Should().Be(1);
+    }
+
+    [Fact]
+    public void RemoveParticipants_WhenBatchIsEmpty_ThrowsWithoutIncrementingMembershipRevision()
+    {
+        var conversation = CreateGroupConversation();
+
+        var act = () => conversation.RemoveParticipants([]);
+
+        act.Should().Throw<ArgumentException>();
+        conversation.MembershipRevision.Should().Be(1);
+    }
+
+    [Fact]
+    public void NonMembershipChanges_DoNotIncrementMembershipRevision()
+    {
+        var conversation = CreateGroupConversation();
+        var participantId = conversation.Participants.First().UserId;
+
+        conversation.SetSequenceNumber(1);
+        conversation.MuteParticipant(participantId);
+        conversation.HideParticipant(participantId);
+        conversation.BlockParticipant(participantId);
+
+        conversation.MembershipRevision.Should().Be(1);
     }
 
     [Fact]
