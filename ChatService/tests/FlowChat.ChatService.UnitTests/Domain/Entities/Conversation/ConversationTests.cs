@@ -26,6 +26,16 @@ public sealed class ConversationTests
     }
 
     [Fact]
+    public void CreateGroupConversation_WhenAccessedAsTypedEntity_UsesConversationId()
+    {
+        var conversation = CreateGroupConversation();
+
+        var typedId = ((IEntity<GroupConversation>)conversation).Id;
+
+        typedId.Value.Should().Be(conversation.Id.Value);
+    }
+
+    [Fact]
     public void CreateGroupConversation_WhenCreatorNotInParticipantUserIds_StillIncludesCreatorAsParticipant()
     {
         var creatorId = Id<UserProfileMarker>.New();
@@ -102,7 +112,7 @@ public sealed class ConversationTests
     }
 
     [Fact]
-    public void CreateGroupConversation_WhenCreated_RaisesCreatedAndParticipantsAddedDomainEvents()
+    public void CreateGroupConversation_WhenCreated_RaisesCreatedDomainEvent()
     {
         var creatorId = Id<UserProfileMarker>.New();
         var memberId = Id<UserProfileMarker>.New();
@@ -114,28 +124,22 @@ public sealed class ConversationTests
             "Dev Team");
 
         conversation.DomainEvents.OfType<GroupConversationCreatedDomainEvent>().Should().ContainSingle();
-        conversation.DomainEvents.OfType<GroupConversationParticipantsAddedDomainEvent>().Should().ContainSingle()
-            .Which.ParticipantUserIds.Should().BeEquivalentTo([creatorId, memberId]);
     }
 
     [Fact]
-    public void AddParticipants_WhenParticipantsAdded_RaisesParticipantsAddedDomainEventWithOnlyNewParticipants()
+    public void AddParticipants_WhenParticipantsAdded_IncrementsMembershipRevision()
     {
         var conversation = CreateGroupConversation();
         var newMemberId = Id<UserProfileMarker>.New();
 
         conversation.AddParticipants([newMemberId]);
 
-        conversation.DomainEvents.OfType<GroupConversationParticipantsAddedDomainEvent>().Should().HaveCount(2);
-        conversation.DomainEvents.OfType<GroupConversationParticipantsAddedDomainEvent>().Last()
-            .ParticipantUserIds.Should().ContainSingle().Which.Should().Be(newMemberId);
+        conversation.Participants.Should().Contain(participant => participant.UserId == newMemberId);
         conversation.MembershipRevision.Should().Be(2);
-        conversation.DomainEvents.OfType<GroupConversationParticipantsAddedDomainEvent>().Last()
-            .ConversationMembershipRevision.Should().Be(2);
     }
 
     [Fact]
-    public void RemoveParticipants_WhenParticipantsExist_RaisesParticipantsRemovedDomainEvent()
+    public void RemoveParticipants_WhenParticipantsExist_IncrementsMembershipRevision()
     {
         var creatorId = Id<UserProfileMarker>.New();
         var memberId = Id<UserProfileMarker>.New();
@@ -148,11 +152,8 @@ public sealed class ConversationTests
 
         conversation.RemoveParticipants([removedMemberId]);
 
-        conversation.DomainEvents.OfType<GroupConversationParticipantsRemovedDomainEvent>().Should().ContainSingle()
-            .Which.ParticipantUserIds.Should().ContainSingle().Which.Should().Be(removedMemberId);
+        conversation.Participants.Should().NotContain(participant => participant.UserId == removedMemberId);
         conversation.MembershipRevision.Should().Be(2);
-        conversation.DomainEvents.OfType<GroupConversationParticipantsRemovedDomainEvent>().Single()
-            .ConversationMembershipRevision.Should().Be(2);
     }
 
     [Fact]
@@ -192,7 +193,7 @@ public sealed class ConversationTests
     }
 
     [Fact]
-    public void RemoveParticipants_WhenUserIsNotParticipant_RaisesNoParticipantsRemovedDomainEvent()
+    public void RemoveParticipants_WhenUserIsNotParticipant_DoesNotIncrementMembershipRevision()
     {
         var conversation = CreateGroupConversation();
         var nonParticipantId = Id<UserProfileMarker>.New();
@@ -200,7 +201,7 @@ public sealed class ConversationTests
         var act = () => conversation.RemoveParticipants([nonParticipantId]);
 
         act.Should().Throw<InvalidOperationException>();
-        conversation.DomainEvents.OfType<GroupConversationParticipantsRemovedDomainEvent>().Should().BeEmpty();
+        conversation.MembershipRevision.Should().Be(1);
     }
 
     [Fact]

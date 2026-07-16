@@ -1,4 +1,5 @@
 using FlowChat.ChatService.Api;
+using FlowChat.ChatService.Infrastructure.Configuration.Settings;
 using FluentAssertions;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -24,6 +25,8 @@ public sealed class StartupExtensionsTests
             ["Kafka:ChatMessageSentProducer:Topic"] = "dev.flowchat.chat.message.v1",
             ["Kafka:GroupConversationChangedProducer:BootstrapServers"] = "localhost:9092",
             ["Kafka:GroupConversationChangedProducer:Topic"] = "dev.flowchat.chat.group-conversation.v1",
+            ["Kafka:GroupConversationProjectionProducer:BootstrapServers"] = "localhost:9092",
+            ["Kafka:GroupConversationProjectionProducer:Topic"] = "dev.flowchat.chat.group-conversation-projection.v1",
             ["ConnectionStrings:ChatDb"] = "Host=localhost;Port=5432;Database=flowchat_chat_test_db;Username=test;Password=test"
         });
 
@@ -37,5 +40,7 @@ public sealed class StartupExtensionsTests
         authenticationOptions.DefaultChallengeScheme.Should().Be(JwtBearerDefaults.AuthenticationScheme);
         jwtBearerOptions.TokenValidationParameters.ValidIssuer.Should().Be("https://localhost:7236/");
         jwtBearerOptions.TokenValidationParameters.ValidAudience.Should().Be("FlowChat.Client");
+        app.Services.GetRequiredService<IOptions<GroupConversationProjectionProducerSettingsSection>>()
+            .Value.Topic.Should().Be("dev.flowchat.chat.group-conversation-projection.v1");
     }
 }

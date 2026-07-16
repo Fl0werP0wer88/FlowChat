@@ -32,6 +32,10 @@ public static class ConsumersServiceRegistration
             .GetSection(new DuetConversationMembershipProjectionConsumerSettingsSection().SectionName)
             .Get<DuetConversationMembershipProjectionConsumerSettingsSection>()
             ?? new DuetConversationMembershipProjectionConsumerSettingsSection();
+        var groupConversationProjectionConsumerOptions = configuration
+            .GetSection(new GroupConversationProjectionConsumerSettingsSection().SectionName)
+            .Get<GroupConversationProjectionConsumerSettingsSection>()
+            ?? new GroupConversationProjectionConsumerSettingsSection();
 
         services.AddConsumerApplicationServices();
         services.AddConsumerInfrastructureServices(configuration);
@@ -50,7 +54,8 @@ public static class ConsumersServiceRegistration
                         chatMessageSentConsumerOptions,
                         presenceStatusChangedConsumerOptions,
                         groupConversationChangedConsumerOptions,
-                        duetConversationMembershipProjectionConsumerOptions))
+                        duetConversationMembershipProjectionConsumerOptions,
+                        groupConversationProjectionConsumerOptions))
                     .AddConsumer(consumer => consumer
                         .WithGroupId(chatMessageSentConsumerOptions.GroupId)
                         .WithAutoOffsetReset(ParseAutoOffsetReset(chatMessageSentConsumerOptions.AutoOffsetReset))
@@ -91,6 +96,16 @@ public static class ConsumersServiceRegistration
                         .WithAutoOffsetReset(ParseAutoOffsetReset(duetConversationMembershipProjectionConsumerOptions.AutoOffsetReset))
                         .StoreOffsetsClientSide(store => store.UseEntityFramework<AppDbContext>())
                         .Consume(endpoint => endpoint.ConfigureFlowChatRetryEndpoint(duetConversationMembershipProjectionConsumerOptions)))
+                    .AddConsumer(consumer => consumer
+                        .WithGroupId(groupConversationProjectionConsumerOptions.GroupId)
+                        .WithAutoOffsetReset(ParseAutoOffsetReset(groupConversationProjectionConsumerOptions.AutoOffsetReset))
+                        .StoreOffsetsClientSide(store => store.UseEntityFramework<AppDbContext>())
+                        .Consume(endpoint => endpoint.ConfigureFlowChatMainEndpoint(groupConversationProjectionConsumerOptions)))
+                    .AddConsumer(consumer => consumer
+                        .WithGroupId(groupConversationProjectionConsumerOptions.RetryGroupId)
+                        .WithAutoOffsetReset(ParseAutoOffsetReset(groupConversationProjectionConsumerOptions.AutoOffsetReset))
+                        .StoreOffsetsClientSide(store => store.UseEntityFramework<AppDbContext>())
+                        .Consume(endpoint => endpoint.ConfigureFlowChatRetryEndpoint(groupConversationProjectionConsumerOptions)))
                     .AddProducer(producer => producer
                         .Produce(endpoint => endpoint
                             .ProduceTo(chatMessageSentConsumerOptions.RetryTopic)
@@ -122,13 +137,20 @@ public static class ConsumersServiceRegistration
                     .AddProducer(producer => producer
                         .Produce(endpoint => endpoint
                             .ProduceTo(duetConversationMembershipProjectionConsumerOptions.DeadLetterTopic)
+                            .SerializeAsJson(serializer => serializer.SetTypeHeader())))
+                    .AddProducer(producer => producer
+                        .Produce(endpoint => endpoint
+                            .ProduceTo(groupConversationProjectionConsumerOptions.RetryTopic)
+                            .SerializeAsJson(serializer => serializer.SetTypeHeader())))
+                    .AddProducer(producer => producer
+                        .Produce(endpoint => endpoint
+                            .ProduceTo(groupConversationProjectionConsumerOptions.DeadLetterTopic)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())));
             })
             .AddScopedSubscriber<ChatMessageSentSubscriber>()
             .AddScopedSubscriber<UserPresenceChangedSubscriber>()
             .AddScopedSubscriber<GroupConversationChangedSubscriber>()
-            .AddScopedSubscriber<GroupConversationParticipantsAddedSubscriber>()
-            .AddScopedSubscriber<GroupConversationParticipantsRemovedSubscriber>()
+            .AddScopedSubscriber<GroupConversationMembershipProjectionSubscriber>()
             .AddScopedSubscriber<DuetConversationMembershipProjectionSubscriber>();
 
         return services;
@@ -138,14 +160,17 @@ public static class ConsumersServiceRegistration
         ChatMessageSentConsumerSettingsSection chatMessageSentConsumerOptions,
         PresenceStatusChangedConsumerSettingsSection presenceStatusChangedConsumerOptions,
         GroupConversationChangedConsumerSettingsSection groupConversationChangedConsumerOptions,
-        DuetConversationMembershipProjectionConsumerSettingsSection duetConversationMembershipProjectionConsumerOptions) =>
+        DuetConversationMembershipProjectionConsumerSettingsSection duetConversationMembershipProjectionConsumerOptions,
+        GroupConversationProjectionConsumerSettingsSection groupConversationProjectionConsumerOptions) =>
         !string.IsNullOrWhiteSpace(chatMessageSentConsumerOptions.BootstrapServers)
             ? chatMessageSentConsumerOptions.BootstrapServers
             : !string.IsNullOrWhiteSpace(presenceStatusChangedConsumerOptions.BootstrapServers)
                 ? presenceStatusChangedConsumerOptions.BootstrapServers
                 : !string.IsNullOrWhiteSpace(groupConversationChangedConsumerOptions.BootstrapServers)
                     ? groupConversationChangedConsumerOptions.BootstrapServers
-                    : duetConversationMembershipProjectionConsumerOptions.BootstrapServers;
+                    : !string.IsNullOrWhiteSpace(duetConversationMembershipProjectionConsumerOptions.BootstrapServers)
+                        ? duetConversationMembershipProjectionConsumerOptions.BootstrapServers
+                        : groupConversationProjectionConsumerOptions.BootstrapServers;
 
     private static AutoOffsetReset ParseAutoOffsetReset(string value) =>
         Enum.TryParse<AutoOffsetReset>(value, true, out var parsed)

@@ -3,8 +3,7 @@ using FlowChat.RealtimeService.Application;
 using FlowChat.RealtimeService.Application.Contracts.Infrastructure;
 using FlowChat.RealtimeService.Application.Contracts.Persistence;
 using FlowChat.RealtimeService.Application.Features.Conversation.Commands.RouteGroupConversationChanged;
-using FlowChat.RealtimeService.Application.Features.Conversation.Commands.RouteGroupConversationParticipantsAdded;
-using FlowChat.RealtimeService.Application.Features.Conversation.Commands.RouteGroupConversationParticipantsRemoved;
+using FlowChat.RealtimeService.Application.Features.Conversation.Commands.RouteGroupConversationMembershipDelta;
 using FlowChat.RealtimeService.Application.Features.Message.Commands.RouteMessage;
 using FlowChat.RealtimeService.Application.Features.Message.Commands.PublishMessage;
 using FlowChat.RealtimeService.Application.Features.Presence.Commands.RoutePresenceChange;
@@ -44,8 +43,7 @@ public sealed class WorkerApplicationServiceRegistrationTests
         scope.ServiceProvider.GetService<IRequestHandler<RouteMessageCommand, FlowChatResult<Unit>>>().Should().BeNull();
         scope.ServiceProvider.GetService<IRequestHandler<RoutePresenceChangeCommand, FlowChatResult<Unit>>>().Should().BeNull();
         scope.ServiceProvider.GetService<IRequestHandler<RouteGroupConversationChangedCommand, FlowChatResult<Unit>>>().Should().BeNull();
-        scope.ServiceProvider.GetService<IRequestHandler<RouteGroupConversationParticipantsAddedCommand, FlowChatResult<Unit>>>().Should().BeNull();
-        scope.ServiceProvider.GetService<IRequestHandler<RouteGroupConversationParticipantsRemovedCommand, FlowChatResult<Unit>>>().Should().BeNull();
+        scope.ServiceProvider.GetService<IRequestHandler<RouteGroupConversationMembershipDeltaCommand, FlowChatResult<Unit>>>().Should().BeNull();
         scope.ServiceProvider.GetService<IRealtimeEventRouter>().Should().BeNull();
     }
 
@@ -74,8 +72,7 @@ public sealed class WorkerApplicationServiceRegistrationTests
         scope.ServiceProvider.GetRequiredService<IRequestHandler<RouteMessageCommand, FlowChatResult<Unit>>>().Should().NotBeNull();
         scope.ServiceProvider.GetRequiredService<IRequestHandler<RoutePresenceChangeCommand, FlowChatResult<Unit>>>().Should().NotBeNull();
         scope.ServiceProvider.GetRequiredService<IRequestHandler<RouteGroupConversationChangedCommand, FlowChatResult<Unit>>>().Should().NotBeNull();
-        scope.ServiceProvider.GetRequiredService<IRequestHandler<RouteGroupConversationParticipantsAddedCommand, FlowChatResult<Unit>>>().Should().NotBeNull();
-        scope.ServiceProvider.GetRequiredService<IRequestHandler<RouteGroupConversationParticipantsRemovedCommand, FlowChatResult<Unit>>>().Should().NotBeNull();
+        scope.ServiceProvider.GetRequiredService<IRequestHandler<RouteGroupConversationMembershipDeltaCommand, FlowChatResult<Unit>>>().Should().NotBeNull();
         scope.ServiceProvider.GetService<IRequestHandler<PublishMessageCommand, FlowChatResult<Unit>>>().Should().BeNull();
         scope.ServiceProvider.GetService<IRealtimeClientDispatcher>().Should().BeNull();
     }

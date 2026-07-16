@@ -3,8 +3,7 @@ using FlowChat.RealtimeService.Consumers.Kafka;
 using FlowChat.RealtimeService.Application.Contracts.Infrastructure;
 using FlowChat.RealtimeService.Application.Contracts.Persistence;
 using FlowChat.RealtimeService.Application.Features.Conversation.Commands.RouteGroupConversationChanged;
-using FlowChat.RealtimeService.Application.Features.Conversation.Commands.RouteGroupConversationParticipantsAdded;
-using FlowChat.RealtimeService.Application.Features.Conversation.Commands.RouteGroupConversationParticipantsRemoved;
+using FlowChat.RealtimeService.Application.Features.Conversation.Commands.RouteGroupConversationMembershipDelta;
 using FlowChat.RealtimeService.Consumers.Configuration.Settings;
 using FlowChat.RealtimeService.Infrastructure.Configuration.Settings;
 using FlowChat.RealtimeService.Infrastructure.Routing;
@@ -49,8 +48,8 @@ public sealed class ConsumersConfigurationTests
         var chatSubscriber = scope.ServiceProvider.GetRequiredService<ChatMessageSentSubscriber>();
         var presenceSubscriber = scope.ServiceProvider.GetRequiredService<UserPresenceChangedSubscriber>();
         var conversationSubscriber = scope.ServiceProvider.GetRequiredService<GroupConversationChangedSubscriber>();
-        var participantsAddedSubscriber = scope.ServiceProvider.GetRequiredService<GroupConversationParticipantsAddedSubscriber>();
-        var participantsRemovedSubscriber = scope.ServiceProvider.GetRequiredService<GroupConversationParticipantsRemovedSubscriber>();
+        var groupConversationMembershipProjectionSubscriber = scope.ServiceProvider
+            .GetRequiredService<GroupConversationMembershipProjectionSubscriber>();
         var duetConversationMembershipProjectionSubscriber = scope.ServiceProvider
             .GetRequiredService<DuetConversationMembershipProjectionSubscriber>();
         var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
@@ -63,17 +62,14 @@ public sealed class ConsumersConfigurationTests
         var dbContextFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<AppDbContext>>();
         var groupConversationChangedHandler = scope.ServiceProvider
             .GetRequiredService<IRequestHandler<RouteGroupConversationChangedCommand, FlowChatResult<Unit>>>();
-        var groupConversationParticipantsAddedHandler = scope.ServiceProvider
-            .GetRequiredService<IRequestHandler<RouteGroupConversationParticipantsAddedCommand, FlowChatResult<Unit>>>();
-        var groupConversationParticipantsRemovedHandler = scope.ServiceProvider
-            .GetRequiredService<IRequestHandler<RouteGroupConversationParticipantsRemovedCommand, FlowChatResult<Unit>>>();
+        var groupConversationMembershipDeltaHandler = scope.ServiceProvider
+            .GetRequiredService<IRequestHandler<RouteGroupConversationMembershipDeltaCommand, FlowChatResult<Unit>>>();
 
         consumerCollection.Should().NotBeNull();
         chatSubscriber.Should().NotBeNull();
         presenceSubscriber.Should().NotBeNull();
         conversationSubscriber.Should().NotBeNull();
-        participantsAddedSubscriber.Should().NotBeNull();
-        participantsRemovedSubscriber.Should().NotBeNull();
+        groupConversationMembershipProjectionSubscriber.Should().NotBeNull();
         duetConversationMembershipProjectionSubscriber.Should().NotBeNull();
         mediator.Should().NotBeNull();
         eventRouter.Should().BeOfType<WorkerRealtimeEventRouter>();
@@ -84,8 +80,7 @@ public sealed class ConsumersConfigurationTests
         dbContext.Model.FindEntityType(typeof(SilverbackStoredOffset)).Should().NotBeNull();
         dbContextFactory.Should().NotBeNull();
         groupConversationChangedHandler.Should().NotBeNull();
-        groupConversationParticipantsAddedHandler.Should().NotBeNull();
-        groupConversationParticipantsRemovedHandler.Should().NotBeNull();
+        groupConversationMembershipDeltaHandler.Should().NotBeNull();
     }
 
     [Fact]
@@ -128,6 +123,9 @@ public sealed class ConsumersConfigurationTests
         var duetConversationMembershipOptions = configuration
             .GetSection(new DuetConversationMembershipProjectionConsumerSettingsSection().SectionName)
             .Get<DuetConversationMembershipProjectionConsumerSettingsSection>();
+        var groupConversationProjectionOptions = configuration
+            .GetSection(new GroupConversationProjectionConsumerSettingsSection().SectionName)
+            .Get<GroupConversationProjectionConsumerSettingsSection>();
 
         chatOptions.Should().NotBeNull();
         chatOptions!.GroupId.Should().Be("realtime-service");
@@ -156,6 +154,13 @@ public sealed class ConsumersConfigurationTests
         duetConversationMembershipOptions.Topic.Should().Be("dev.flowchat.chat.duet-conversation-projection.v1");
         duetConversationMembershipOptions.RetryTopic.Should().Be("dev.flowchat.chat.duet-conversation-projection.v1.realtime-service.retry");
         duetConversationMembershipOptions.DeadLetterTopic.Should().Be("dev.flowchat.chat.duet-conversation-projection.v1.realtime-service.dlq");
+
+        groupConversationProjectionOptions.Should().NotBeNull();
+        groupConversationProjectionOptions!.GroupId.Should().Be("realtime-service");
+        groupConversationProjectionOptions.RetryGroupId.Should().Be("realtime-service-retry");
+        groupConversationProjectionOptions.Topic.Should().Be("dev.flowchat.chat.group-conversation-projection.v1");
+        groupConversationProjectionOptions.RetryTopic.Should().Be("dev.flowchat.chat.group-conversation-projection.v1.realtime-service.retry");
+        groupConversationProjectionOptions.DeadLetterTopic.Should().Be("dev.flowchat.chat.group-conversation-projection.v1.realtime-service.dlq");
     }
 
     [Fact]

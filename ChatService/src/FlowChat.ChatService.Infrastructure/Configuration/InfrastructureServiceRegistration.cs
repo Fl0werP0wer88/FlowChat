@@ -29,8 +29,7 @@ internal static class CommonInfrastructureServiceRegistration
         services.AddFlowChatSilverbackEventPublisher(producer => producer
             .AddProducerSettings<ChatMessageSentIntegrationEvent, ChatMessageSentProducerSettingsSection>()
             .AddProducerSettings<GroupConversationChangedIntegrationEvent, GroupConversationChangedProducerSettingsSection>()
-            .AddProducerSettings<GroupConversationParticipantsAddedIntegrationEvent, GroupConversationChangedProducerSettingsSection>()
-            .AddProducerSettings<GroupConversationParticipantsRemovedIntegrationEvent, GroupConversationChangedProducerSettingsSection>()
+            .AddProducerSettings<DeltaProjectionIntegrationEvent<GroupConversationMembershipReadModel>, GroupConversationProjectionProducerSettingsSection>()
             .AddProducerSettings<ProjectionIntegrationEvent<DuetConversationMembershipReadModel>, DuetConversationProjectionProducerSettingsSection>()
             .AddProducerSettings<ProjectionIntegrationEvent<DuetConversationContactStateReadModel>, DuetConversationProjectionProducerSettingsSection>());
 

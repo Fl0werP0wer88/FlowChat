@@ -4,10 +4,12 @@ using UserProfileMarker = FlowChat.ChatService.Domain.Entities.UserProfiles.User
 
 namespace FlowChat.ChatService.Domain.Entities.Conversation;
 
-public sealed class GroupConversation : Conversation
+public sealed class GroupConversation : Conversation, IEntity<GroupConversation>
 {
     private const int MinimumParticipantsCount = 2;
     private const string MinimumParticipantsErrorMessage = "Group conversations must have at least two participants.";
+
+    Id<GroupConversation> IEntity<GroupConversation>.Id => Id<GroupConversation>.FromId(Id);
 
     private GroupConversation(
         Id<Conversation> id,
@@ -48,11 +50,6 @@ public sealed class GroupConversation : Conversation
             conversation.Type,
             conversation.Name,
             conversation.CreatedByUserId));
-        conversation.AddDomainEvent(new GroupConversationParticipantsAddedDomainEvent(
-            conversation.Id,
-            [.. conversation.Participants.Select(p => p.UserId)],
-            conversation.MembershipRevision));
-
         return conversation;
     }
 
@@ -90,7 +87,6 @@ public sealed class GroupConversation : Conversation
         }
 
         MembershipRevision++;
-        AddDomainEvent(new GroupConversationParticipantsAddedDomainEvent(Id, userIdsToAdd, MembershipRevision));
     }
 
     public void RemoveParticipants(IEnumerable<Id<UserProfileMarker>> participantUserIds)
@@ -116,6 +112,5 @@ public sealed class GroupConversation : Conversation
         _participants.RemoveAll(p => userIdsToRemove.Contains(p.UserId));
 
         MembershipRevision++;
-        AddDomainEvent(new GroupConversationParticipantsRemovedDomainEvent(Id, userIdsToRemove, MembershipRevision));
     }
 }

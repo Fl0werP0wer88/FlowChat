@@ -22,6 +22,8 @@ public static class ApiSilverbackServiceRegistration
             .Get<ChatMessageSentProducerSettingsSection>() ?? new ChatMessageSentProducerSettingsSection();
         var groupConversationChangedProducerOptions = configuration.GetSection(new GroupConversationChangedProducerSettingsSection().SectionName)
             .Get<GroupConversationChangedProducerSettingsSection>() ?? new GroupConversationChangedProducerSettingsSection();
+        var groupConversationProjectionProducerOptions = configuration.GetSection(new GroupConversationProjectionProducerSettingsSection().SectionName)
+            .Get<GroupConversationProjectionProducerSettingsSection>() ?? new GroupConversationProjectionProducerSettingsSection();
         var duetConversationProjectionProducerOptions = configuration.GetSection(new DuetConversationProjectionProducerSettingsSection().SectionName)
             .Get<DuetConversationProjectionProducerSettingsSection>() ?? new DuetConversationProjectionProducerSettingsSection();
 
@@ -46,13 +48,8 @@ public static class ApiSilverbackServiceRegistration
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())
                             .StoreToOutbox(outbox => outbox.UseEntityFramework<AppDbContext>())))
                     .AddProducer(producer => producer
-                        .Produce<GroupConversationParticipantsAddedIntegrationEvent>("group-conversation-participants-added", endpoint => endpoint
-                            .ProduceTo(groupConversationChangedProducerOptions.Topic)
-                            .SerializeAsJson(serializer => serializer.SetTypeHeader())
-                            .StoreToOutbox(outbox => outbox.UseEntityFramework<AppDbContext>())))
-                    .AddProducer(producer => producer
-                        .Produce<GroupConversationParticipantsRemovedIntegrationEvent>("group-conversation-participants-removed", endpoint => endpoint
-                            .ProduceTo(groupConversationChangedProducerOptions.Topic)
+                        .Produce<DeltaProjectionIntegrationEvent<GroupConversationMembershipReadModel>>("group-conversation-membership-projection", endpoint => endpoint
+                            .ProduceTo(groupConversationProjectionProducerOptions.Topic)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())
                             .StoreToOutbox(outbox => outbox.UseEntityFramework<AppDbContext>())))
                     .AddProducer(producer => producer
