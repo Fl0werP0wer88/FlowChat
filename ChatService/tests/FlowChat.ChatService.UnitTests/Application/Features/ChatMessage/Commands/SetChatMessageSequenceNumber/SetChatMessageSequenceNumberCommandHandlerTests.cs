@@ -16,6 +16,7 @@ namespace FlowChat.ChatService.UnitTests.Application.Features.ChatMessage.Comman
 public sealed class SetChatMessageSequenceNumberCommandHandlerTests
 {
     private readonly Mock<IChatMessageWriteRepository> _chatMessageRepositoryMock = new();
+    private readonly Mock<IConversationMessageSequenceRepository> _sequenceRepositoryMock = new();
     private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
     private readonly Mock<ILocalEventDispatcher> _domainEventDispatcherMock = new();
     private readonly Mock<IAggregateBeforeSaveProcessor<SetChatMessageSequenceNumberCommand, ChatMessageAggregate>> _beforeSaveProcessorMock = new();
@@ -44,6 +45,7 @@ public sealed class SetChatMessageSequenceNumberCommandHandlerTests
 
         _handler = new SetChatMessageSequenceNumberCommandHandler(
             _chatMessageRepositoryMock.Object,
+            _sequenceRepositoryMock.Object,
             _unitOfWorkMock.Object,
             _domainEventDispatcherMock.Object,
             [_beforeSaveProcessorMock.Object]);
@@ -59,9 +61,9 @@ public sealed class SetChatMessageSequenceNumberCommandHandlerTests
         _chatMessageRepositoryMock
             .Setup(x => x.GetByIdAsync(command.MessageId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(message);
-        _chatMessageRepositoryMock
-            .Setup(x => x.GetMaxSequenceNumAsync(conversationId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(41);
+        _sequenceRepositoryMock
+            .Setup(x => x.GetNextAsync(conversationId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(42);
 
         var result = await _handler.Handle(command, CancellationToken.None);
 
@@ -93,8 +95,8 @@ public sealed class SetChatMessageSequenceNumberCommandHandlerTests
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().Be(12);
         message.Version.Should().Be(initialVersion);
-        _chatMessageRepositoryMock.Verify(
-            x => x.GetMaxSequenceNumAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()),
+        _sequenceRepositoryMock.Verify(
+            x => x.GetNextAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()),
             Times.Never);
         _beforeSaveProcessorMock.Verify(
             x => x.ProcessAsync(

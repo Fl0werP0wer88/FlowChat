@@ -10,6 +10,7 @@ namespace FlowChat.ChatService.Application.Features.ChatMessage.Commands.SetChat
 
 public sealed class SetChatMessageSequenceNumberCommandHandler(
     IChatMessageWriteRepository chatMessageRepository,
+    IConversationMessageSequenceRepository sequenceRepository,
     IUnitOfWork unitOfWork,
     ILocalEventDispatcher domainEventDispatcher,
     IEnumerable<IAggregateBeforeSaveProcessor<SetChatMessageSequenceNumberCommand, ChatMessageAggregate>> beforeSaveProcessors)
@@ -38,8 +39,7 @@ public sealed class SetChatMessageSequenceNumberCommandHandler(
             return FlowChatResult<long>.Success(AggregateRoot.SequenceNum.Value);
         }
 
-        var maxSequenceNum = await chatMessageRepository.GetMaxSequenceNumAsync(request.ConversationId, cancellationToken);
-        var sequenceNum = maxSequenceNum.GetValueOrDefault() + 1;
+        var sequenceNum = await sequenceRepository.GetNextAsync(request.ConversationId, cancellationToken);
         AggregateRoot.SetSequenceNumber(sequenceNum);
         SetUpdated();
 
