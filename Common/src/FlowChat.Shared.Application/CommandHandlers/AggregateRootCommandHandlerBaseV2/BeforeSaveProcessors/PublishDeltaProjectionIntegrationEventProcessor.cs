@@ -4,17 +4,17 @@ using FlowChat.Shared.Domain;
 
 namespace FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2.BeforeSaveProcessors;
 
-public abstract class PublishDeltaProjectionIntegrationEventProcessor<TCommand, TAggregate, TValue, TKey>
+public class PublishDeltaProjectionIntegrationEventProcessor<TCommand, TAggregate, TDomainEntity, TValue>
     : IAggregateBeforeSaveProcessor<TCommand, TAggregate>
     where TAggregate : class, IAggregateRoot, IEntity<TAggregate>
+    where TDomainEntity : class, IEntity<TDomainEntity>
     where TValue : notnull
-    where TKey : notnull
 {
     private readonly IMapper _mapper;
     private readonly IOutboxIntegrationEventPublisher _integrationEventPublisher;
-    private IReadOnlyCollection<TValue>? _beforeState;
+    private IReadOnlyDictionary<Id<TDomainEntity>, TValue>? _beforeState;
 
-    protected PublishDeltaProjectionIntegrationEventProcessor(
+    public PublishDeltaProjectionIntegrationEventProcessor(
         IMapper mapper,
         IOutboxIntegrationEventPublisher integrationEventPublisher)
     {
@@ -25,7 +25,7 @@ public abstract class PublishDeltaProjectionIntegrationEventProcessor<TCommand, 
 
     public void CaptureBeforeState(TAggregate aggregate)
     {
-        _beforeState = MapValues(aggregate);
+        _beforeState = MapValuesById(aggregate);
     }
 
     public async Task ProcessAsync(
@@ -40,12 +40,12 @@ public abstract class PublishDeltaProjectionIntegrationEventProcessor<TCommand, 
                 "Unchanged mutation type must not be processed as a delta projection operation.");
         }
 
-        var afterState = MapValues(aggregate);
+        var afterState = MapValuesById(aggregate);
 
         switch (mutationType)
         {
             case MutationType.Created:
-                await PublishAsync(aggregate, afterState, DeltaOperationType.Added, cancellationToken);
+                await PublishAsync(aggregate, afterState.Values, DeltaOperationType.Added, cancellationToken);
                 break;
             case MutationType.Updated:
                 if (_beforeState is null)
@@ -54,14 +54,12 @@ public abstract class PublishDeltaProjectionIntegrationEventProcessor<TCommand, 
                         "A pre-mutation snapshot is required to process an updated delta projection.");
                 }
 
-                var beforeByKey = IndexByKey(_beforeState);
-                var afterByKey = IndexByKey(afterState);
-                var added = afterByKey
-                    .Where(pair => !beforeByKey.ContainsKey(pair.Key))
+                var added = afterState
+                    .Where(pair => !_beforeState.ContainsKey(pair.Key))
                     .Select(pair => pair.Value)
                     .ToArray();
-                var removed = beforeByKey
-                    .Where(pair => !afterByKey.ContainsKey(pair.Key))
+                var removed = _beforeState
+                    .Where(pair => !afterState.ContainsKey(pair.Key))
                     .Select(pair => pair.Value)
                     .ToArray();
 
@@ -71,7 +69,7 @@ public abstract class PublishDeltaProjectionIntegrationEventProcessor<TCommand, 
             case MutationType.Deleted:
                 await PublishAsync(
                     aggregate,
-                    _beforeState ?? afterState,
+                    (_beforeState ?? afterState).Values,
                     DeltaOperationType.Removed,
                     cancellationToken);
                 break;
@@ -80,25 +78,22 @@ public abstract class PublishDeltaProjectionIntegrationEventProcessor<TCommand, 
         }
     }
 
-    protected abstract TKey GetKey(TValue value);
-
-    private IReadOnlyCollection<TValue> MapValues(TAggregate aggregate)
+    private IReadOnlyDictionary<Id<TDomainEntity>, TValue> MapValuesById(TAggregate aggregate)
     {
-        return _mapper.Map<IEnumerable<TValue>>(aggregate).ToArray();
-    }
-
-    private Dictionary<TKey, TValue> IndexByKey(IEnumerable<TValue> values)
-    {
-        return values.ToDictionary(GetKey);
+        return _mapper
+            .Map<IEnumerable<TDomainEntity>>(aggregate)
+            .ToDictionary(entity => entity.Id, entity => _mapper.Map<TValue>(entity));
     }
 
     private async Task PublishAsync(
         TAggregate aggregate,
-        IReadOnlyCollection<TValue> values,
+        IEnumerable<TValue> values,
         DeltaOperationType operation,
         CancellationToken cancellationToken)
     {
-        if (values.Count == 0)
+        var materializedValues = values.ToArray();
+
+        if (materializedValues.Length == 0)
         {
             return;
         }
@@ -109,7 +104,7 @@ public abstract class PublishDeltaProjectionIntegrationEventProcessor<TCommand, 
             SourceAggregateCreatedAtUtc = aggregate.CreatedAtUtc.Value,
             SourceAggregateModifiedAtUtc = aggregate.LastModifiedAtUtc.Value,
             SourceAggregateDeletedAt = aggregate.DeletedAt?.Value,
-            Value = values,
+            Value = materializedValues,
             Operation = operation,
             SourceAggregateVersion = aggregate.Version
         };

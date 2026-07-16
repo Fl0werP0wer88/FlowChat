@@ -16,24 +16,24 @@ public sealed class PublishDeltaProjectionIntegrationEventProcessorTests
         var aggregate = CreateAggregate();
         var before = new[]
         {
-            new TestValue(Guid.NewGuid(), "Unchanged"),
-            new TestValue(Guid.NewGuid(), "Removed")
+            new TestDomainEntity(Guid.NewGuid(), "Unchanged"),
+            new TestDomainEntity(Guid.NewGuid(), "Removed")
         };
-        var added = new TestValue(Guid.NewGuid(), "Added");
+        var added = new TestDomainEntity(Guid.NewGuid(), "Added");
         var after = new[] { before[0], added };
         var mapperMock = CreateMapperMock(aggregate, before, after);
         var publishedEnvelopes = new List<IntegrationEventEnvelope<DeltaProjectionIntegrationEvent<TestValue>>>();
         var publisherMock = CreatePublisherMock(publishedEnvelopes);
-        var processor = new TestProcessor(mapperMock.Object, publisherMock.Object);
+        var processor = CreateProcessor(mapperMock, publisherMock);
 
         processor.CaptureBeforeState(aggregate);
         await processor.ProcessAsync(new TestCommand(), aggregate, MutationType.Updated, CancellationToken.None);
 
         publishedEnvelopes.Should().HaveCount(2);
         publishedEnvelopes[0].Payload.Operation.Should().Be(DeltaOperationType.Added);
-        publishedEnvelopes[0].Payload.Value.Should().BeEquivalentTo([added]);
+        publishedEnvelopes[0].Payload.Value.Should().BeEquivalentTo([MapValue(added)]);
         publishedEnvelopes[1].Payload.Operation.Should().Be(DeltaOperationType.Removed);
-        publishedEnvelopes[1].Payload.Value.Should().BeEquivalentTo([before[1]]);
+        publishedEnvelopes[1].Payload.Value.Should().BeEquivalentTo([MapValue(before[1])]);
         publishedEnvelopes.Should().OnlyContain(envelope =>
             envelope.KafkaKey == aggregate.Id.Value.ToString("D")
             && envelope.Payload.SourceAggregateId == aggregate.Id.Value
@@ -45,11 +45,11 @@ public sealed class PublishDeltaProjectionIntegrationEventProcessorTests
     {
         var aggregate = CreateAggregate();
         var id = Guid.NewGuid();
-        var before = new[] { new TestValue(id, "Before") };
-        var after = new[] { new TestValue(id, "After") };
+        var before = new[] { new TestDomainEntity(id, "Before") };
+        var after = new[] { new TestDomainEntity(id, "After") };
         var mapperMock = CreateMapperMock(aggregate, before, after);
         var publisherMock = new Mock<IOutboxIntegrationEventPublisher>();
-        var processor = new TestProcessor(mapperMock.Object, publisherMock.Object);
+        var processor = CreateProcessor(mapperMock, publisherMock);
 
         processor.CaptureBeforeState(aggregate);
         await processor.ProcessAsync(new TestCommand(), aggregate, MutationType.Updated, CancellationToken.None);
@@ -65,28 +65,28 @@ public sealed class PublishDeltaProjectionIntegrationEventProcessorTests
     public async Task ProcessAsync_WhenAggregateWasCreated_PublishesAllValuesAsAdded()
     {
         var aggregate = CreateAggregate();
-        var values = new[] { new TestValue(Guid.NewGuid(), "Added") };
+        var values = new[] { new TestDomainEntity(Guid.NewGuid(), "Added") };
         var mapperMock = CreateMapperMock(aggregate, values);
         var publishedEnvelopes = new List<IntegrationEventEnvelope<DeltaProjectionIntegrationEvent<TestValue>>>();
         var publisherMock = CreatePublisherMock(publishedEnvelopes);
-        var processor = new TestProcessor(mapperMock.Object, publisherMock.Object);
+        var processor = CreateProcessor(mapperMock, publisherMock);
 
         await processor.ProcessAsync(new TestCommand(), aggregate, MutationType.Created, CancellationToken.None);
 
         publishedEnvelopes.Should().ContainSingle()
             .Which.Payload.Operation.Should().Be(DeltaOperationType.Added);
-        publishedEnvelopes[0].Payload.Value.Should().BeEquivalentTo(values);
+        publishedEnvelopes[0].Payload.Value.Should().BeEquivalentTo(values.Select(MapValue));
     }
 
     [Fact]
     public async Task ProcessAsync_WhenAggregateWasDeleted_UsesCapturedValuesForRemovedDelta()
     {
         var aggregate = CreateAggregate();
-        var before = new[] { new TestValue(Guid.NewGuid(), "Removed") };
+        var before = new[] { new TestDomainEntity(Guid.NewGuid(), "Removed") };
         var mapperMock = CreateMapperMock(aggregate, before, []);
         var publishedEnvelopes = new List<IntegrationEventEnvelope<DeltaProjectionIntegrationEvent<TestValue>>>();
         var publisherMock = CreatePublisherMock(publishedEnvelopes);
-        var processor = new TestProcessor(mapperMock.Object, publisherMock.Object);
+        var processor = CreateProcessor(mapperMock, publisherMock);
 
         processor.CaptureBeforeState(aggregate);
         aggregate.Delete(UtcDateTimeOffset.UtcNow);
@@ -94,7 +94,7 @@ public sealed class PublishDeltaProjectionIntegrationEventProcessorTests
 
         publishedEnvelopes.Should().ContainSingle();
         publishedEnvelopes[0].Payload.Operation.Should().Be(DeltaOperationType.Removed);
-        publishedEnvelopes[0].Payload.Value.Should().BeEquivalentTo(before);
+        publishedEnvelopes[0].Payload.Value.Should().BeEquivalentTo(before.Select(MapValue));
         publishedEnvelopes[0].Payload.SourceAggregateDeletedAt.Should().Be(aggregate.DeletedAt!.Value);
     }
 
@@ -102,9 +102,9 @@ public sealed class PublishDeltaProjectionIntegrationEventProcessorTests
     public async Task ProcessAsync_WhenUpdatedWithoutSnapshot_ThrowsInvalidOperationException()
     {
         var aggregate = CreateAggregate();
-        var mapperMock = CreateMapperMock(aggregate, Array.Empty<TestValue>());
+        var mapperMock = CreateMapperMock(aggregate, Array.Empty<TestDomainEntity>());
         var publisherMock = new Mock<IOutboxIntegrationEventPublisher>();
-        var processor = new TestProcessor(mapperMock.Object, publisherMock.Object);
+        var processor = CreateProcessor(mapperMock, publisherMock);
 
         var act = () => processor.ProcessAsync(
             new TestCommand(),
@@ -122,7 +122,7 @@ public sealed class PublishDeltaProjectionIntegrationEventProcessorTests
         var aggregate = CreateAggregate();
         var mapperMock = new Mock<IMapper>();
         var publisherMock = new Mock<IOutboxIntegrationEventPublisher>();
-        var processor = new TestProcessor(mapperMock.Object, publisherMock.Object);
+        var processor = CreateProcessor(mapperMock, publisherMock);
 
         var act = () => processor.ProcessAsync(
             new TestCommand(),
@@ -133,7 +133,7 @@ public sealed class PublishDeltaProjectionIntegrationEventProcessorTests
         await act.Should().ThrowAsync<InvalidOperationException>()
             .WithMessage("Unchanged mutation type must not be processed as a delta projection operation.");
         mapperMock.Verify(
-            mapper => mapper.Map<IEnumerable<TestValue>>(It.IsAny<TestAggregate>()),
+            mapper => mapper.Map<IEnumerable<TestDomainEntity>>(It.IsAny<TestAggregate>()),
             Times.Never);
     }
 
@@ -148,15 +148,32 @@ public sealed class PublishDeltaProjectionIntegrationEventProcessorTests
 
     private static Mock<IMapper> CreateMapperMock(
         TestAggregate aggregate,
-        params IReadOnlyCollection<TestValue>[] mappedValues)
+        params IReadOnlyCollection<TestDomainEntity>[] mappedEntities)
     {
         var mapperMock = new Mock<IMapper>();
         var callIndex = 0;
         mapperMock
-            .Setup(mapper => mapper.Map<IEnumerable<TestValue>>(aggregate))
-            .Returns(() => mappedValues[Math.Min(callIndex++, mappedValues.Length - 1)]);
+            .Setup(mapper => mapper.Map<IEnumerable<TestDomainEntity>>(aggregate))
+            .Returns(() => mappedEntities[Math.Min(callIndex++, mappedEntities.Length - 1)]);
+        mapperMock
+            .Setup(mapper => mapper.Map<TestValue>(It.IsAny<TestDomainEntity>()))
+            .Returns<TestDomainEntity>(MapValue);
         return mapperMock;
     }
+
+    private static PublishDeltaProjectionIntegrationEventProcessor<
+        TestCommand,
+        TestAggregate,
+        TestDomainEntity,
+        TestValue> CreateProcessor(
+            Mock<IMapper> mapperMock,
+            Mock<IOutboxIntegrationEventPublisher> publisherMock)
+    {
+        return new(mapperMock.Object, publisherMock.Object);
+    }
+
+    private static TestValue MapValue(TestDomainEntity entity) =>
+        new(entity.Id.Value, entity.Name);
 
     private static Mock<IOutboxIntegrationEventPublisher> CreatePublisherMock(
         ICollection<IntegrationEventEnvelope<DeltaProjectionIntegrationEvent<TestValue>>> publishedEnvelopes)
@@ -176,6 +193,17 @@ public sealed class PublishDeltaProjectionIntegrationEventProcessorTests
 
     private sealed record TestValue(Guid Id, string Name);
 
+    private sealed class TestDomainEntity : EntityBase<TestDomainEntity>
+    {
+        public TestDomainEntity(Guid id, string name)
+            : base(Id<TestDomainEntity>.FromGuid(id))
+        {
+            Name = name;
+        }
+
+        public string Name { get; }
+    }
+
     private sealed class TestAggregate : AggregateRootBase<TestAggregate>
     {
         public TestAggregate(Guid id)
@@ -184,13 +212,4 @@ public sealed class PublishDeltaProjectionIntegrationEventProcessorTests
         }
     }
 
-    private sealed class TestProcessor(
-        IMapper mapper,
-        IOutboxIntegrationEventPublisher integrationEventPublisher)
-        : PublishDeltaProjectionIntegrationEventProcessor<TestCommand, TestAggregate, TestValue, Guid>(
-            mapper,
-            integrationEventPublisher)
-    {
-        protected override Guid GetKey(TestValue value) => value.Id;
-    }
 }
