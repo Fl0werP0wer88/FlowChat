@@ -5,7 +5,7 @@ Resets all FlowChat databases, builds and starts the same applications as the
 registers the development users.
 
 Run from any directory:
-  .\Scripts\reset-db-start-services-register-users.ps1
+  .\Scripts\reset-db-auto.ps1
 #>
 
 param(

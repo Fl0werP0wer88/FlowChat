@@ -21,7 +21,7 @@ $logDirectory = Join-Path $repoRoot ".codex\temp\full-reset-$runId"
 $resetDefinitions = @(
     [PSCustomObject]@{
         Name = 'Database, services and users reset'
-        Script = Join-Path $PSScriptRoot 'reset-db-start-services-register-users.ps1'
+        Script = Join-Path $PSScriptRoot 'reset-db-auto.ps1'
         LogName = 'database-services-users'
     },
     [PSCustomObject]@{
