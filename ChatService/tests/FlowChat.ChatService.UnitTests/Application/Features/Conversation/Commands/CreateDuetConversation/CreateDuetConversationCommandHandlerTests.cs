@@ -17,6 +17,7 @@ public sealed class CreateDuetConversationCommandHandlerTests
 {
     private readonly Mock<IDuetConversationWriteRepository> _duetConversationWriteRepositoryMock = new();
     private readonly Mock<IUserProfileProjectionReadRepository> _userProfileProjectionReadRepositoryMock = new();
+    private readonly Mock<IConversationMessageSequenceRepository> _sequenceRepositoryMock = new();
     private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
     private readonly Mock<ILocalEventDispatcher> _domainEventDispatcherMock = new();
     private readonly CreateDuetConversationCommandHandler _handler;
@@ -37,6 +38,7 @@ public sealed class CreateDuetConversationCommandHandlerTests
         _handler = new CreateDuetConversationCommandHandler(
             _duetConversationWriteRepositoryMock.Object,
             _userProfileProjectionReadRepositoryMock.Object,
+            _sequenceRepositoryMock.Object,
             _unitOfWorkMock.Object,
             _domainEventDispatcherMock.Object,
             []);
@@ -75,6 +77,9 @@ public sealed class CreateDuetConversationCommandHandlerTests
         dispatchedEvents.OfType<GroupConversationCreatedDomainEvent>().Should().BeEmpty();
         _duetConversationWriteRepositoryMock.Verify(
             x => x.AddAsync(It.IsAny<DuetConversation>(), It.IsAny<CancellationToken>()),
+            Times.Once);
+        _sequenceRepositoryMock.Verify(
+            x => x.AddAsync(persistedConversation.Id.Value, It.IsAny<CancellationToken>()),
             Times.Once);
     }
 

@@ -30,11 +30,13 @@ public sealed class PersistenceServiceRegistrationTests
         var conversationWriteRepository = scope.ServiceProvider.GetService<IConversationWriteRepository>();
         var groupWriteRepository = scope.ServiceProvider.GetService<IGroupConversationWriteRepository>();
         var participantReadRepository = scope.ServiceProvider.GetService<IConversationParticipantReadRepository>();
+        var sequenceRepository = scope.ServiceProvider.GetService<IConversationMessageSequenceRepository>();
 
         duetReadRepository.Should().NotBeNull();
         duetWriteRepository.Should().NotBeNull();
         conversationWriteRepository.Should().NotBeNull();
         groupWriteRepository.Should().NotBeNull();
         participantReadRepository.Should().NotBeNull();
+        sequenceRepository.Should().NotBeNull();
     }
 }

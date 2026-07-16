@@ -16,11 +16,13 @@ public sealed class CreateDuetConversationCommandHandler
 {
     private readonly IDuetConversationWriteRepository _duetConversationWriteRepository;
     private readonly IUserProfileProjectionReadRepository _profileReadRepository;
+    private readonly IConversationMessageSequenceRepository _sequenceRepository;
     private DuetConversationAggregate? _newConversation;
 
     public CreateDuetConversationCommandHandler(
         IDuetConversationWriteRepository duetConversationWriteRepository,
         IUserProfileProjectionReadRepository profileReadRepository,
+        IConversationMessageSequenceRepository sequenceRepository,
         IUnitOfWork unitOfWork,
         ILocalEventDispatcher domainEventDispatcher,
         IEnumerable<IAggregateBeforeSaveProcessor<CreateDuetConversationCommand, DuetConversationAggregate>> beforeSaveProcessors)
@@ -28,6 +30,7 @@ public sealed class CreateDuetConversationCommandHandler
     {
         _duetConversationWriteRepository = duetConversationWriteRepository ?? throw new ArgumentNullException(nameof(duetConversationWriteRepository));
         _profileReadRepository = profileReadRepository ?? throw new ArgumentNullException(nameof(profileReadRepository));
+        _sequenceRepository = sequenceRepository ?? throw new ArgumentNullException(nameof(sequenceRepository));
     }
 
     protected override async Task<FlowChatResult<DuetConversationDetailDto>> ExecuteAsync(
@@ -39,6 +42,7 @@ public sealed class CreateDuetConversationCommandHandler
             partnerUserId: Id<UserProfileMarker>.FromGuid(request.PartnerUserId));
 
         await _duetConversationWriteRepository.AddAsync(_newConversation, cancellationToken);
+        await _sequenceRepository.AddAsync(_newConversation.Id.Value, cancellationToken);
         SetInserted();
 
         var participantUserIds = _newConversation.Participants.Select(p => p.UserId.Value).ToList();

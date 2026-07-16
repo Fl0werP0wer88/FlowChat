@@ -17,6 +17,7 @@ public sealed class CreateGroupConversationCommandHandlerTests
 {
     private readonly Mock<IGroupConversationWriteRepository> _writeRepositoryMock = new();
     private readonly Mock<IUserProfileProjectionReadRepository> _profileReadRepositoryMock = new();
+    private readonly Mock<IConversationMessageSequenceRepository> _sequenceRepositoryMock = new();
     private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
     private readonly Mock<ILocalEventDispatcher> _domainEventDispatcherMock = new();
     private readonly CreateGroupConversationCommandHandler _handler;
@@ -37,6 +38,7 @@ public sealed class CreateGroupConversationCommandHandlerTests
         _handler = new CreateGroupConversationCommandHandler(
             _writeRepositoryMock.Object,
             _profileReadRepositoryMock.Object,
+            _sequenceRepositoryMock.Object,
             _unitOfWorkMock.Object,
             _domainEventDispatcherMock.Object,
             []);
@@ -78,6 +80,7 @@ public sealed class CreateGroupConversationCommandHandlerTests
         result.Value.Participants.Select(p => p.UserId).Should().BeEquivalentTo([creatorId, memberId]);
         persisted.Should().NotBeNull();
         persisted!.Id.Value.Should().Be(conversationId);
+        _sequenceRepositoryMock.Verify(x => x.AddAsync(conversationId, It.IsAny<CancellationToken>()), Times.Once);
         dispatchedEvents.OfType<GroupConversationCreatedDomainEvent>().Should().ContainSingle();
     }
 }

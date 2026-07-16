@@ -148,3 +148,25 @@ Rekomendowany kierunek:
 - Retry powinno mieć mały, jawnie ograniczony limit. Po jego wyczerpaniu należy zwrócić kontrolowany konflikt albo błąd przejściowy zamiast ogólnego nieoczekiwanego błędu.
 - Dodać test integracyjny uruchamiający konkurencyjne aktualizacje tej samej Conversation i potwierdzający, że finalny LastReadMessageSequenceNum odpowiada najnowszemu LastMsgSequenceNum.
 - Przy projektowaniu rozwiązania zdecydować, czy każda zmiana stanu ParticipantUser rzeczywiście powinna podbijać wersję całego agregatu Conversation. Rezygnacja z tego wymaga świadomej zmiany granicy współbieżności, a nie tylko usunięcia SetUpdated().
+
+20. PRZYSZŁOŚĆ: Atomowy allocator ConversationMessageSequence
+
+Kontekst:
+- Każdy ChatMessage jest właścicielem przypisanego mu SequenceNum, natomiast następny numer wiadomości jest stanem obejmującym całą konwersację i nie należy do pojedynczego agregatu ChatMessage.
+- Obecny SetChatMessageSequenceNumberCommandHandler wylicza MAX(ChatMessages.SequenceNum) + 1. Dwa równoległe wywołania dla tej samej konwersacji mogłyby odczytać ten sam MAX i spróbować zapisać ten sam numer; unikalny indeks chroni spójność bazy, ale jedno wywołanie zakończyłoby się błędem.
+- W aktualnej konfiguracji ryzyko jest ograniczone: tylko RealtimeService wywołuje endpoint sekwencjonowania, główny topic dev.flowchat.chat.message.v1 ma jedną partycję, a jego rekordy są normalnie obsługiwane kolejno.
+- Nie należy jednak traktować tej kolejności jako trwałego invariantu. Main topic i retry topic mają osobne endpointy konsumenckie i mogą przetwarzać wiadomości równolegle, a przyszłe włączenie równoległego przetwarzania w obrębie partycji albo dodanie nowego klienta endpointu ponownie otworzy wyścig MAX + 1. Samo zwiększenie liczby partycji lub instancji nie powinno złamać kolejności dla jednej konwersacji, dopóki KafkaKey pozostaje równe ConversationId.
+
+Docelowy kierunek:
+- Wprowadzić tabelę ConversationMessageSequences z kluczem ConversationId i polem LastAssignedSequenceNum.
+- Przydzielać numer atomowo w PostgreSQL przez UPDATE ... SET LastAssignedSequenceNum = LastAssignedSequenceNum + 1 ... RETURNING LastAssignedSequenceNum.
+- Aktualizację licznika i zapis SequenceNum wiadomości wykonywać w tej samej transakcji, aby rollback zapisu wiadomości wycofywał również przydział numeru.
+- Utworzyć rekord licznika razem z konwersacją i usunąć go razem z nią albo zapewnić równoważny, idempotentny lifecycle.
+- Zachować unikalny indeks (ConversationId, SequenceNum) jako ostateczną ochronę spójności.
+- Read side powinien wyliczać bieżący numer z faktycznie zapisanych ChatMessages, np. MAX(SequenceNum), zamiast uzależniać się od wartości allocatora.
+
+Powiązany refactor:
+- Rozważyć usunięcie LastMsgSequenceNum z agregatu Conversation i tabeli Conversations jako zduplikowanego stanu pochodnego.
+- Po usunięciu ostatniego użycia usunąć osierocone ChatMessageSequencedDomainEvent, jego handler oraz metodę Conversation.SetSequenceNumber.
+- Przepisać read repositories dla grup i duetów tak, aby CurrentMsgSeqNum pochodziło z agregacji ChatMessages, z wartością 0 dla konwersacji bez wiadomości.
+- Oddzielnie rozwiązać monotoniczną aktualizację ParticipantUser.LastReadMessageSequenceNum bez podbijania Conversation.Version.

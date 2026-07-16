@@ -27,6 +27,7 @@ public sealed class AppDbContext : DbContext
 
     public DbSet<ChatMessage> ChatMessages => Set<ChatMessage>();
     public DbSet<Conversation> Conversations => Set<Conversation>();
+    public DbSet<ConversationMessageSequenceEntity> ConversationMessageSequences => Set<ConversationMessageSequenceEntity>();
     public DbSet<SilverbackOutboxMessage> SilverbackOutboxMessages => Set<SilverbackOutboxMessage>();
     public DbSet<UserProfileReadModelEntity> UserProfileProjections => Set<UserProfileReadModelEntity>();
     public DbSet<DuetConversationLookupEntity> DuetConversations => Set<DuetConversationLookupEntity>();

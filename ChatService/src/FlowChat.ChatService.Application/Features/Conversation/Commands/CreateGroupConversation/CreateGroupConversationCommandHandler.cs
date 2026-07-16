@@ -17,11 +17,13 @@ public sealed class CreateGroupConversationCommandHandler
 {
     private readonly IGroupConversationWriteRepository _conversationWriteRepository;
     private readonly IUserProfileProjectionReadRepository _profileReadRepository;
+    private readonly IConversationMessageSequenceRepository _sequenceRepository;
     private GroupConversationAggregate? _conversation;
 
     public CreateGroupConversationCommandHandler(
         IGroupConversationWriteRepository conversationWriteRepository,
         IUserProfileProjectionReadRepository profileReadRepository,
+        IConversationMessageSequenceRepository sequenceRepository,
         IUnitOfWork unitOfWork,
         ILocalEventDispatcher domainEventDispatcher,
         IEnumerable<IAggregateBeforeSaveProcessor<CreateGroupConversationCommand, GroupConversationAggregate>> beforeSaveProcessors)
@@ -29,6 +31,7 @@ public sealed class CreateGroupConversationCommandHandler
     {
         _conversationWriteRepository = conversationWriteRepository ?? throw new ArgumentNullException(nameof(conversationWriteRepository));
         _profileReadRepository = profileReadRepository ?? throw new ArgumentNullException(nameof(profileReadRepository));
+        _sequenceRepository = sequenceRepository ?? throw new ArgumentNullException(nameof(sequenceRepository));
     }
 
     protected override async Task<FlowChatResult<GroupConversationDetailDto>> ExecuteAsync(
@@ -42,6 +45,7 @@ public sealed class CreateGroupConversationCommandHandler
             request.Name);
 
         await _conversationWriteRepository.AddAsync(_conversation, cancellationToken);
+        await _sequenceRepository.AddAsync(_conversation.Id.Value, cancellationToken);
         SetInserted();
 
         var participantUserIds = _conversation.Participants.Select(p => p.UserId.Value).ToList();
