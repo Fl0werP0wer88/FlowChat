@@ -7,6 +7,7 @@ using FlowChat.Shared.Domain;
 using FluentAssertions;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using ChatMessageAggregate = FlowChat.ChatService.Domain.Entities.ChatMessage.ChatMessage;
 
 namespace FlowChat.ChatService.IntegrationTests.Persistence.Repositories;
 
@@ -138,10 +139,19 @@ public sealed class DuetConversationReadRepositoryTests
         conversation.MarkParticipantAsRead(requestingUserId);
         conversation.BlockParticipant(partnerUserId);
         MarkCreated(conversation);
+        var message = ChatMessageAggregate.Create(
+            Id<ChatMessageAggregate>.New(),
+            conversation.Id,
+            partnerUserId,
+            "Latest",
+            [requestingUserId]);
+        message.SetSequenceNumber(12);
+        MarkCreated(message);
 
         await using (var seedContext = CreateDbContext(connection))
         {
             seedContext.Conversations.Add(conversation);
+            seedContext.ChatMessages.Add(message);
             seedContext.DuetConversations.Add(CreateDuetConversation(requestingUserId, partnerUserId, conversation.Id.Value));
             seedContext.UserProfileProjections.Add(
                 CreateProfile(partnerUserId, "partner", firstName: "Partner", avatarUrl: "partner.png", email: "partner@example.com"));
@@ -164,6 +174,8 @@ public sealed class DuetConversationReadRepositoryTests
         contact.IsBlockedByPartner.Should().BeTrue();
         contact.IsMuted.Should().BeFalse();
         contact.IsHidden.Should().BeFalse();
+        contact.LastReadMsgSeqNum.Should().Be(0);
+        contact.CurrentMsgSeqNum.Should().Be(12);
     }
 
     [Fact]
@@ -245,5 +257,11 @@ public sealed class DuetConversationReadRepositoryTests
     {
         conversation.SetCreated("integration-test");
         conversation.SetUpdated("integration-test");
+    }
+
+    private static void MarkCreated(ChatMessageAggregate message)
+    {
+        message.SetCreated("integration-test");
+        message.SetUpdated("integration-test");
     }
 }

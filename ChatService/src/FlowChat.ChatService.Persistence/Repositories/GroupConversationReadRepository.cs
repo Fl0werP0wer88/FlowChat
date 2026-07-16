@@ -59,6 +59,14 @@ public sealed class GroupConversationReadRepository(AppDbContext dbContext) : Re
     {
         //ToDo: Rozważyć przerzucenie tego do oddzielnego ReadModelu zamiast robić joiny. Będzie też można pozbyć się wtedy części indeksów.
         var activeParticipants = Active(dbContext.ParticipantUserReads);
+        var currentSequences = dbContext.ChatMessageReads
+            .Where(message => message.SequenceNum.HasValue)
+            .GroupBy(message => message.ConversationId)
+            .Select(messages => new
+            {
+                ConversationId = messages.Key,
+                CurrentMsgSeqNum = messages.Max(message => message.SequenceNum)
+            });
 
         return await (
             from conversation in Active(dbContext.ConversationReads)
@@ -66,12 +74,15 @@ public sealed class GroupConversationReadRepository(AppDbContext dbContext) : Re
                 on conversation.Id equals participant.ConversationId
             where conversation.Type == GroupConversationType
                   && participant.UserId == participantUserId
+            join sequence in currentSequences
+                on conversation.Id equals sequence.ConversationId into sequenceGroup
+            from sequence in sequenceGroup.DefaultIfEmpty()
             select new GroupConversationSummaryDto(
                 conversation.Id,
                 conversation.Name!,
                 activeParticipants.Count(x => x.ConversationId == conversation.Id),
                 participant.LastReadMessageSequenceNum,
-                conversation.LastMsgSequenceNum))
+                sequence.CurrentMsgSeqNum ?? 0))
             .ToListAsync(cancellationToken);
     }
 

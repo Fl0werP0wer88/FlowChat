@@ -5,6 +5,7 @@ using FlowChat.ChatService.Persistence.Repositories;
 using FluentAssertions;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using ChatMessageAggregate = FlowChat.ChatService.Domain.Entities.ChatMessage.ChatMessage;
 
 namespace FlowChat.ChatService.IntegrationTests.Persistence.Repositories;
 
@@ -25,7 +26,14 @@ public sealed class ConversationRepositoryTests
             [creatorUserId, memberUserId],
             "Friends");
         matchingConversation.AddParticipants([requestedUserId], lastReadMessageSequenceNum: 42);
-        matchingConversation.SetSequenceNumber(84);
+        var latestMessage = ChatMessageAggregate.Create(
+            Id<ChatMessageAggregate>.New(),
+            matchingConversation.Id,
+            creatorUserId,
+            "Latest",
+            [memberUserId]);
+        latestMessage.SetSequenceNumber(84);
+        MarkCreated(latestMessage);
 
         var otherGroupConversation = GroupConversation.Create(
             Id<Conversation>.New(),
@@ -41,6 +49,7 @@ public sealed class ConversationRepositoryTests
         await using (var seedContext = CreateDbContext(connection))
         {
             seedContext.Conversations.AddRange(matchingConversation, otherGroupConversation, duetConversation);
+            seedContext.ChatMessages.Add(latestMessage);
             await seedContext.SaveChangesAsync();
         }
 
@@ -55,6 +64,34 @@ public sealed class ConversationRepositoryTests
         summary.ParticipantCount.Should().Be(3);
         summary.LastReadMsgSeqNum.Should().Be(42);
         summary.CurrentMsgSeqNum.Should().Be(84);
+    }
+
+    [Fact]
+    public async Task GroupConversationReadRepository_GetByParticipantUserIdAsync_WhenConversationHasNoMessages_ReturnsZeroCurrentSequenceNumber()
+    {
+        await using var connection = new SqliteConnection("Data Source=:memory:");
+        await connection.OpenAsync();
+
+        var requestingUserId = Guid.NewGuid();
+        var conversation = GroupConversation.Create(
+            Id<Conversation>.New(),
+            requestingUserId,
+            [requestingUserId, Guid.NewGuid()],
+            "Empty conversation");
+        conversation.SetSequenceNumber(99);
+        MarkCreated(conversation);
+
+        await using (var seedContext = CreateDbContext(connection))
+        {
+            seedContext.Conversations.Add(conversation);
+            await seedContext.SaveChangesAsync();
+        }
+
+        await using var readContext = CreateDbContext(connection);
+        var result = await new GroupConversationReadRepository(readContext)
+            .GetByParticipantUserIdAsync(requestingUserId, CancellationToken.None);
+
+        result.Should().ContainSingle().Which.CurrentMsgSeqNum.Should().Be(0);
     }
 
     [Fact]
@@ -223,5 +260,11 @@ public sealed class ConversationRepositoryTests
     {
         conversation.SetCreated("integration-test");
         conversation.SetUpdated("integration-test");
+    }
+
+    private static void MarkCreated(ChatMessageAggregate message)
+    {
+        message.SetCreated("integration-test");
+        message.SetUpdated("integration-test");
     }
 }
