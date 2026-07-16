@@ -15,8 +15,7 @@ public sealed class GroupConversation : Conversation, IEntity<GroupConversation>
         Id<Conversation> id,
         ConversationType type,
         string? name,
-        Id<UserProfileMarker> createdByUserId,
-        long lastMsgSequenceNum) : base(id, type, name, createdByUserId, lastMsgSequenceNum)
+        Id<UserProfileMarker> createdByUserId) : base(id, type, name, createdByUserId)
     {
     }
 
@@ -25,8 +24,7 @@ public sealed class GroupConversation : Conversation, IEntity<GroupConversation>
         ConversationType type,
         string? name,
         Id<UserProfileMarker> createdByUserId,
-        long lastMsgSequenceNum,
-        List<ParticipantUser> participants) : base(id, type, name, createdByUserId, lastMsgSequenceNum, participants)
+        List<ParticipantUser> participants) : base(id, type, name, createdByUserId, participants)
     {
     }
 
@@ -42,8 +40,8 @@ public sealed class GroupConversation : Conversation, IEntity<GroupConversation>
             createdByUserId,
             participantUserIds.Prepend(createdByUserId),
             name,
-            static (id, type, name, createdByUserId, lastMsgSequenceNum, participants) =>
-                new GroupConversation(id, type, name, createdByUserId, lastMsgSequenceNum, participants));
+            static (id, type, name, createdByUserId, participants) =>
+                new GroupConversation(id, type, name, createdByUserId, participants));
 
         conversation.AddDomainEvent(new GroupConversationCreatedDomainEvent(
             conversation.Id,

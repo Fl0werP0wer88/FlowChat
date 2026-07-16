@@ -16,6 +16,7 @@ namespace FlowChat.ChatService.UnitTests.Application.Features.Conversation.Comma
 public sealed class MarkConversationAsReadCommandHandlerTests
 {
     private readonly Mock<IConversationWriteRepository> _conversationRepositoryMock = new();
+    private readonly Mock<IChatMessageReadRepository> _chatMessageRepositoryMock = new();
     private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
     private readonly Mock<ILocalEventDispatcher> _domainEventDispatcherMock = new();
     private readonly Mock<IAggregateBeforeSaveProcessor<MarkConversationAsReadCommand, ConversationAggregate>> _beforeSaveProcessorMock = new();
@@ -44,6 +45,7 @@ public sealed class MarkConversationAsReadCommandHandlerTests
 
         _handler = new MarkConversationAsReadCommandHandler(
             _conversationRepositoryMock.Object,
+            _chatMessageRepositoryMock.Object,
             _unitOfWorkMock.Object,
             _domainEventDispatcherMock.Object,
             [_beforeSaveProcessorMock.Object]);
@@ -56,13 +58,15 @@ public sealed class MarkConversationAsReadCommandHandlerTests
         var otherParticipantId = Guid.NewGuid();
         var conversationId = Guid.NewGuid();
         var conversation = CreateGroupConversation(conversationId, callerId, otherParticipantId);
-        conversation.SetSequenceNumber(42);
         conversation.ClearEvents();
         var command = new MarkConversationAsReadCommand(conversationId, callerId);
 
         _conversationRepositoryMock
             .Setup(x => x.GetByIdAsync(command.ConversationId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(conversation);
+        _chatMessageRepositoryMock
+            .Setup(x => x.GetMaxSequenceNumAsync(command.ConversationId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(42);
 
         var result = await _handler.Handle(command, CancellationToken.None);
 
@@ -84,8 +88,7 @@ public sealed class MarkConversationAsReadCommandHandlerTests
         var callerId = Guid.NewGuid();
         var conversationId = Guid.NewGuid();
         var conversation = CreateGroupConversation(conversationId, callerId, Guid.NewGuid());
-        conversation.SetSequenceNumber(12);
-        conversation.MarkParticipantAsRead(callerId);
+        conversation.MarkParticipantAsRead(callerId, 12);
         conversation.ClearEvents();
         var initialVersion = conversation.Version;
         var command = new MarkConversationAsReadCommand(conversationId, callerId);
@@ -93,6 +96,9 @@ public sealed class MarkConversationAsReadCommandHandlerTests
         _conversationRepositoryMock
             .Setup(x => x.GetByIdAsync(command.ConversationId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(conversation);
+        _chatMessageRepositoryMock
+            .Setup(x => x.GetMaxSequenceNumAsync(command.ConversationId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(12);
 
         var result = await _handler.Handle(command, CancellationToken.None);
 
@@ -131,13 +137,15 @@ public sealed class MarkConversationAsReadCommandHandlerTests
         var callerId = Guid.NewGuid();
         var otherParticipantId = Guid.NewGuid();
         var conversation = DuetConversation.Create(callerId, otherParticipantId);
-        conversation.SetSequenceNumber(27);
         conversation.ClearEvents();
         var command = new MarkConversationAsReadCommand(conversation.Id.Value, callerId);
 
         _conversationRepositoryMock
             .Setup(x => x.GetByIdAsync(command.ConversationId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(conversation);
+        _chatMessageRepositoryMock
+            .Setup(x => x.GetMaxSequenceNumAsync(command.ConversationId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(27);
 
         var result = await _handler.Handle(command, CancellationToken.None);
 

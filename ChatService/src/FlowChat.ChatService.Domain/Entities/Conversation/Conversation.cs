@@ -10,7 +10,6 @@ public abstract class Conversation : AggregateRootBase<Conversation>
     public ConversationType Type { get; private set; }
     public string? Name { get; private set; }
     public Id<UserProfileMarker> CreatedByUserId { get; private set; }
-    public long LastMsgSequenceNum { get; private set; }
     public int MembershipRevision { get; protected set; } = 1;
 
     protected readonly List<ParticipantUser> _participants = [];
@@ -21,13 +20,11 @@ public abstract class Conversation : AggregateRootBase<Conversation>
         Id<Conversation> id,
         ConversationType type,
         string? name,
-        Id<UserProfileMarker> createdByUserId,
-        long lastMsgSequenceNum) : base(id)
+        Id<UserProfileMarker> createdByUserId) : base(id)
     {
         Type = type;
         Name = name?.Trim();
         CreatedByUserId = createdByUserId;
-        LastMsgSequenceNum = lastMsgSequenceNum;
     }
 
     protected Conversation(
@@ -35,8 +32,7 @@ public abstract class Conversation : AggregateRootBase<Conversation>
         ConversationType type,
         string? name,
         Id<UserProfileMarker> createdByUserId,
-        long lastMsgSequenceNum,
-        List<ParticipantUser> participants) : this(id, type, name, createdByUserId, lastMsgSequenceNum)
+        List<ParticipantUser> participants) : this(id, type, name, createdByUserId)
     {
         _participants = participants;
     }
@@ -47,7 +43,7 @@ public abstract class Conversation : AggregateRootBase<Conversation>
         Id<UserProfileMarker> createdByUserId,
         IEnumerable<Id<UserProfileMarker>> participantUserIds,
         string? name,
-        Func<Id<Conversation>, ConversationType, string?, Id<UserProfileMarker>, long, List<ParticipantUser>, TConversation> factory)
+        Func<Id<Conversation>, ConversationType, string?, Id<UserProfileMarker>, List<ParticipantUser>, TConversation> factory)
         where TConversation : Conversation
     {
         ArgumentNullException.ThrowIfNull(id);
@@ -57,7 +53,7 @@ public abstract class Conversation : AggregateRootBase<Conversation>
         var conversationId = id;
         var participants = BuildParticipants(participantUserIds, type, conversationId);
 
-        return factory(conversationId, type, name, createdByUserId, 0, participants);
+        return factory(conversationId, type, name, createdByUserId, participants);
     }
 
     protected static TConversation RestoreCore<TConversation>(
@@ -65,32 +61,26 @@ public abstract class Conversation : AggregateRootBase<Conversation>
         ConversationType type,
         string? name,
         Id<UserProfileMarker> createdByUserId,
-        long lastMsgSequenceNum,
         IEnumerable<ParticipantUser> participants,
-        Func<Id<Conversation>, ConversationType, string?, Id<UserProfileMarker>, long, List<ParticipantUser>, TConversation> factory)
+        Func<Id<Conversation>, ConversationType, string?, Id<UserProfileMarker>, List<ParticipantUser>, TConversation> factory)
         where TConversation : Conversation
     {
         ArgumentNullException.ThrowIfNull(factory);
 
-        return factory(id, type, name, createdByUserId, lastMsgSequenceNum, [.. participants]);
+        return factory(id, type, name, createdByUserId, [.. participants]);
     }
 
-    public void SetSequenceNumber(long sequenceNum)
-    {
-        if (sequenceNum < LastMsgSequenceNum)
-            throw new ArgumentException("Sequence number must be equal to or greater than the current last message sequence number.", nameof(sequenceNum));
-
-        LastMsgSequenceNum = sequenceNum;
-    }
-
-    public bool MarkParticipantAsRead(Id<UserProfileMarker> participantUserId)
+    public bool MarkParticipantAsRead(Id<UserProfileMarker> participantUserId, long sequenceNum)
     {
         ArgumentNullException.ThrowIfNull(participantUserId);
 
         var participant = _participants.FirstOrDefault(p => p.UserId == participantUserId)
             ?? throw new InvalidOperationException("User is not a participant in this conversation.");
 
-        return participant.SetLastReadMessageSequenceNum(LastMsgSequenceNum);
+        if (sequenceNum <= participant.LastReadMessageSequenceNum)
+            return false;
+
+        return participant.SetLastReadMessageSequenceNum(sequenceNum);
     }
 
     public bool HasParticipant(Id<UserProfileMarker> participantUserId)

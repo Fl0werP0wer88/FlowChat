@@ -8,6 +8,15 @@ namespace FlowChat.ChatService.Persistence.Repositories;
 
 public sealed class ChatMessageReadRepository(AppDbContext dbContext) : ReadRepositoryBase, IChatMessageReadRepository
 {
+    public Task<long?> GetMaxSequenceNumAsync(
+        Guid conversationId,
+        CancellationToken cancellationToken = default)
+    {
+        return Active(dbContext.ChatMessageReads)
+            .Where(message => message.ConversationId == conversationId)
+            .MaxAsync(message => message.SequenceNum, cancellationToken);
+    }
+
     public async Task<ConversationMessagesPageDto> GetPageBeforeAsync(
         Guid conversationId,
         int limit,

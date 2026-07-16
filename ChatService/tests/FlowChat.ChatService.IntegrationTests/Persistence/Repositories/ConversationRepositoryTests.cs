@@ -78,7 +78,6 @@ public sealed class ConversationRepositoryTests
             requestingUserId,
             [requestingUserId, Guid.NewGuid()],
             "Empty conversation");
-        conversation.SetSequenceNumber(99);
         MarkCreated(conversation);
 
         await using (var seedContext = CreateDbContext(connection))

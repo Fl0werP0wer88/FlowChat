@@ -12,6 +12,7 @@ namespace FlowChat.ChatService.Application.Features.Conversation.Commands.MarkCo
 
 public sealed class MarkConversationAsReadCommandHandler(
     IConversationWriteRepository conversationRepository,
+    IChatMessageReadRepository chatMessageRepository,
     IUnitOfWork unitOfWork,
     ILocalEventDispatcher domainEventDispatcher,
     IEnumerable<IAggregateBeforeSaveProcessor<MarkConversationAsReadCommand, ConversationAggregate>> beforeSaveProcessors)
@@ -31,20 +32,25 @@ public sealed class MarkConversationAsReadCommandHandler(
         return FlowChatResult<ConversationAggregate?>.Success(conversation);
     }
 
-    protected override Task<FlowChatResult<Unit>> ExecuteAsync(
+    protected override async Task<FlowChatResult<Unit>> ExecuteAsync(
         MarkConversationAsReadCommand request,
         CancellationToken cancellationToken)
     {
         var participantUserId = Id<UserProfileMarker>.FromGuid(request.ParticipantUserId);
         if (!AggregateRoot!.HasParticipant(participantUserId))
-            return Task.FromResult(FlowChatResult<Unit>.Failure(DomainError.Unauthorized("Requesting user is not a participant of this conversation.")));
+            return FlowChatResult<Unit>.Failure(DomainError.Unauthorized("Requesting user is not a participant of this conversation."));
 
-        var wasUpdated = AggregateRoot.MarkParticipantAsRead(participantUserId);
+        var maxSequenceNum = await chatMessageRepository.GetMaxSequenceNumAsync(
+            request.ConversationId,
+            cancellationToken);
+        var wasUpdated = AggregateRoot.MarkParticipantAsRead(
+            participantUserId,
+            maxSequenceNum.GetValueOrDefault());
         if (wasUpdated)
         {
             SetUpdated();
         }
 
-        return Task.FromResult(FlowChatResult<Unit>.Success(Unit.Value));
+        return FlowChatResult<Unit>.Success(Unit.Value);
     }
 }

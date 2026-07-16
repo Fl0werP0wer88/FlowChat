@@ -55,9 +55,13 @@ public sealed class ConversationMessageSequenceMigrationTests : IAsyncLifetime
         await using (var seedContext = new AppDbContext(_options))
         {
             await seedContext.GetService<IMigrator>().MigrateAsync(InitialMigration);
+            await seedContext.Database.ExecuteSqlRawAsync(
+                "ALTER TABLE \"Conversations\" ALTER COLUMN \"LastMsgSequenceNum\" SET DEFAULT 0;");
             seedContext.Conversations.Add(conversation);
             seedContext.ChatMessages.Add(message);
             await seedContext.SaveChangesAsync();
+            await seedContext.Database.ExecuteSqlRawAsync(
+                "ALTER TABLE \"Conversations\" ALTER COLUMN \"LastMsgSequenceNum\" DROP DEFAULT;");
         }
 
         await using (var migrationContext = new AppDbContext(_options))

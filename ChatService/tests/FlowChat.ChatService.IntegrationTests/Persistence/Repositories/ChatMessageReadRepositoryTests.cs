@@ -9,6 +9,54 @@ namespace FlowChat.ChatService.IntegrationTests.Persistence.Repositories;
 public sealed class ChatMessageReadRepositoryTests
 {
     [Fact]
+    public async Task GetMaxSequenceNumAsync_ReturnsHighestActiveSequenceForConversation()
+    {
+        var conversationId = Guid.NewGuid();
+        var otherConversationId = Guid.NewGuid();
+        var senderId = Guid.NewGuid();
+        var deleted = CreateMessage(conversationId, senderId, "Deleted", 11, 99);
+        deleted.DeletedAt = new DateTimeOffset(2026, 4, 24, 12, 0, 0, TimeSpan.Zero);
+        var databaseName = Guid.NewGuid().ToString();
+
+        await using (var seedContext = CreateDbContext(databaseName))
+        {
+            seedContext.ChatMessageReads.AddRange(
+                CreateMessage(conversationId, senderId, "Unsequenced", 8),
+                CreateMessage(conversationId, senderId, "First", 9, 4),
+                CreateMessage(conversationId, senderId, "Latest", 10, 7),
+                CreateMessage(otherConversationId, senderId, "Other", 10, 42),
+                deleted);
+            await seedContext.SaveChangesAsync();
+        }
+
+        await using var readContext = CreateDbContext(databaseName);
+        var result = await new ChatMessageReadRepository(readContext)
+            .GetMaxSequenceNumAsync(conversationId, CancellationToken.None);
+
+        result.Should().Be(7);
+    }
+
+    [Fact]
+    public async Task GetMaxSequenceNumAsync_WhenConversationHasNoSequencedMessages_ReturnsNull()
+    {
+        var conversationId = Guid.NewGuid();
+        var databaseName = Guid.NewGuid().ToString();
+
+        await using (var seedContext = CreateDbContext(databaseName))
+        {
+            seedContext.ChatMessageReads.Add(
+                CreateMessage(conversationId, Guid.NewGuid(), "Unsequenced", 8));
+            await seedContext.SaveChangesAsync();
+        }
+
+        await using var readContext = CreateDbContext(databaseName);
+        var result = await new ChatMessageReadRepository(readContext)
+            .GetMaxSequenceNumAsync(conversationId, CancellationToken.None);
+
+        result.Should().BeNull();
+    }
+
+    [Fact]
     public async Task GetPageBeforeAsync_WithoutCursor_ReturnsNewestMessagesAndNextCursor()
     {
         var senderId = Guid.NewGuid();
@@ -78,14 +126,16 @@ public sealed class ChatMessageReadRepositoryTests
         Guid conversationId,
         Guid senderId,
         string text,
-        int hour) =>
+        int hour,
+        long? sequenceNum = null) =>
         new()
         {
             Id = Guid.NewGuid(),
             ConversationId = conversationId,
             SenderUserId = senderId,
             Text = text,
-            SentAtUtc = new DateTimeOffset(2026, 4, 24, hour, 0, 0, TimeSpan.Zero)
+            SentAtUtc = new DateTimeOffset(2026, 4, 24, hour, 0, 0, TimeSpan.Zero),
+            SequenceNum = sequenceNum
         };
 
     private static AppDbContext CreateDbContext(string databaseName)

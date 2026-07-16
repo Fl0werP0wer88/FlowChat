@@ -13,11 +13,11 @@ public sealed class AddGroupParticipantsCommandHandler
     : AggregateRootUpdateCommandHandlerBaseV3<AddGroupParticipantsCommand, Unit, GroupConversation>
 {
     private readonly IGroupConversationWriteRepository _groupConversationRepository;
-    private readonly IChatMessageWriteRepository _chatMessageRepository;
+    private readonly IChatMessageReadRepository _chatMessageRepository;
 
     public AddGroupParticipantsCommandHandler(
         IGroupConversationWriteRepository groupConversationRepository,
-        IChatMessageWriteRepository chatMessageRepository,
+        IChatMessageReadRepository chatMessageRepository,
         IUnitOfWork unitOfWork,
         ILocalEventDispatcher domainEventDispatcher,
         IEnumerable<IAggregateBeforeSaveProcessor<AddGroupParticipantsCommand, GroupConversation>> beforeSaveProcessors)

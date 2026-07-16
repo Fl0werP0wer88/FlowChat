@@ -31,9 +31,6 @@ public sealed class ConversationConfiguration : IEntityTypeConfiguration<Convers
             .HasConversion(x => x.Value, x => Id<UserProfileMarker>.FromGuid(x))
             .IsRequired();
 
-        builder.Property(x => x.LastMsgSequenceNum)
-            .IsRequired();
-
         builder.Property(x => x.Version)
             .IsConcurrencyToken();
 

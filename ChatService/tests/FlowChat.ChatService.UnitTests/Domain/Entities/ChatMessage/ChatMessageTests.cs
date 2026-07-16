@@ -31,9 +31,6 @@ public sealed class ChatMessageTests
         chatMessage.SequenceNum.Should().Be(42);
         chatMessage.DeliveryStatus.Should().Be(DeliveryStatus.Pending);
         chatMessage.DeliveredAtUtc.Should().BeNull();
-        var domainEvent = chatMessage.DomainEvents.OfType<ChatMessageSequencedDomainEvent>().Should().ContainSingle().Subject;
-        domainEvent.MessageId.Should().Be(chatMessage.Id);
-        domainEvent.SequenceNum.Should().Be(42);
     }
 
     [Fact]

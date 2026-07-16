@@ -69,9 +69,6 @@ public sealed class MarkChatMessageAsDeliveredCommandHandlerTests
         result.IsSuccess.Should().BeTrue();
         message.SequenceNum.Should().Be(42);
         message.DeliveredAtUtc.Should().NotBeNull();
-        _chatMessageRepositoryMock.Verify(
-            x => x.GetMaxSequenceNumAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()),
-            Times.Never);
         _beforeSaveProcessorMock.Verify(
             x => x.ProcessAsync(command, message, MutationType.Updated, It.IsAny<CancellationToken>()),
             Times.Once);
@@ -99,9 +96,6 @@ public sealed class MarkChatMessageAsDeliveredCommandHandlerTests
 
         result.IsSuccess.Should().BeTrue();
         message.Version.Should().Be(initialVersion);
-        _chatMessageRepositoryMock.Verify(
-            x => x.GetMaxSequenceNumAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()),
-            Times.Never);
         _domainEventDispatcherMock.Verify(
             x => x.DispatchAsync(It.IsAny<IEnumerable<ILocalEvent>>(), It.IsAny<CancellationToken>()),
             Times.Never);
@@ -150,9 +144,6 @@ public sealed class MarkChatMessageAsDeliveredCommandHandlerTests
 
         result.IsFailure.Should().BeTrue();
         result.Error.ErrorType.Should().Be(ErrorType.BadRequest);
-        _chatMessageRepositoryMock.Verify(
-            x => x.GetMaxSequenceNumAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()),
-            Times.Never);
         _beforeSaveProcessorMock.Verify(
             x => x.ProcessAsync(
                 It.IsAny<MarkChatMessageAsDeliveredCommand>(),

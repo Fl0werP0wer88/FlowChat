@@ -136,7 +136,7 @@ public sealed class DuetConversationReadRepositoryTests
         var conversation = FlowChat.ChatService.Domain.Entities.Conversation.DuetConversation.Create(
             createdByUserId: requestingUserId,
             partnerUserId: partnerUserId);
-        conversation.MarkParticipantAsRead(requestingUserId);
+        conversation.MarkParticipantAsRead(requestingUserId, 0);
         conversation.BlockParticipant(partnerUserId);
         MarkCreated(conversation);
         var message = ChatMessageAggregate.Create(

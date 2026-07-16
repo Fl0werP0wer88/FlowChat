@@ -17,7 +17,7 @@ namespace FlowChat.ChatService.UnitTests.Application.Features.Conversation.Comma
 public sealed class AddGroupParticipantsCommandHandlerTests
 {
     private readonly Mock<IGroupConversationWriteRepository> _conversationRepositoryMock = new();
-    private readonly Mock<IChatMessageWriteRepository> _chatMessageRepositoryMock = new();
+    private readonly Mock<IChatMessageReadRepository> _chatMessageRepositoryMock = new();
     private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
     private readonly Mock<ILocalEventDispatcher> _domainEventDispatcherMock = new();
     private readonly Mock<IAggregateBeforeSaveProcessor<AddGroupParticipantsCommand, GroupConversation>> _beforeSaveProcessorMock = new();

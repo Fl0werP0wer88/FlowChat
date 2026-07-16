@@ -10,7 +10,7 @@ namespace FlowChat.ChatService.UnitTests.Domain.Entities.ConversationTests;
 public sealed class ConversationTests
 {
     [Fact]
-    public void CreateGroupConversation_WhenCreated_DefaultsLastMsgSequenceNumToZero()
+    public void CreateGroupConversation_WhenCreated_DefaultsMembershipRevisionToOne()
     {
         var creatorId = Id<UserProfileMarker>.New();
         var memberId = Id<UserProfileMarker>.New();
@@ -21,7 +21,6 @@ public sealed class ConversationTests
             [creatorId, memberId],
             "Dev Team");
 
-        conversation.LastMsgSequenceNum.Should().Be(0);
         conversation.MembershipRevision.Should().Be(1);
     }
 
@@ -67,51 +66,6 @@ public sealed class ConversationTests
     }
 
     [Fact]
-    public void CreateDuetConversation_WhenCreated_DefaultsLastMsgSequenceNumToZero()
-    {
-        var requestingUserId = Id<UserProfileMarker>.New();
-        var partnerUserId = Id<UserProfileMarker>.New();
-
-        var conversation = DuetConversation.Create(requestingUserId, partnerUserId);
-
-        conversation.LastMsgSequenceNum.Should().Be(0);
-    }
-
-    [Fact]
-    public void SetSequenceNumber_WhenGreaterThanCurrent_SetsLastMsgSequenceNum()
-    {
-        var conversation = CreateGroupConversation();
-
-        conversation.SetSequenceNumber(42);
-
-        conversation.LastMsgSequenceNum.Should().Be(42);
-    }
-
-    [Fact]
-    public void SetSequenceNumber_WhenEqualToCurrent_LeavesLastMsgSequenceNumUnchanged()
-    {
-        var conversation = CreateGroupConversation();
-        conversation.SetSequenceNumber(42);
-
-        conversation.SetSequenceNumber(42);
-
-        conversation.LastMsgSequenceNum.Should().Be(42);
-    }
-
-    [Fact]
-    public void SetSequenceNumber_WhenLowerThanCurrent_ThrowsArgumentException()
-    {
-        var conversation = CreateGroupConversation();
-        conversation.SetSequenceNumber(42);
-
-        var act = () => conversation.SetSequenceNumber(41);
-
-        act.Should().Throw<ArgumentException>()
-            .WithParameterName("sequenceNum");
-        conversation.LastMsgSequenceNum.Should().Be(42);
-    }
-
-    [Fact]
     public void CreateGroupConversation_WhenCreated_RaisesCreatedDomainEvent()
     {
         var creatorId = Id<UserProfileMarker>.New();
@@ -124,6 +78,19 @@ public sealed class ConversationTests
             "Dev Team");
 
         conversation.DomainEvents.OfType<GroupConversationCreatedDomainEvent>().Should().ContainSingle();
+    }
+
+    [Fact]
+    public void MarkParticipantAsRead_WhenSequenceIsLowerThanCurrent_DoesNotDecreaseReadState()
+    {
+        var conversation = CreateGroupConversation();
+        var participantId = conversation.Participants.First().UserId;
+        conversation.MarkParticipantAsRead(participantId, 42);
+
+        var wasUpdated = conversation.MarkParticipantAsRead(participantId, 41);
+
+        wasUpdated.Should().BeFalse();
+        conversation.GetParticipant(participantId)!.LastReadMessageSequenceNum.Should().Be(42);
     }
 
     [Fact]
@@ -184,7 +151,6 @@ public sealed class ConversationTests
         var conversation = CreateGroupConversation();
         var participantId = conversation.Participants.First().UserId;
 
-        conversation.SetSequenceNumber(1);
         conversation.MuteParticipant(participantId);
         conversation.HideParticipant(participantId);
         conversation.BlockParticipant(participantId);
@@ -398,8 +364,7 @@ public sealed class ConversationTests
                 typeof(Id<ConversationAggregate>),
                 typeof(ConversationType),
                 typeof(string),
-                typeof(Id<UserProfileMarker>),
-                typeof(long)
+                typeof(Id<UserProfileMarker>)
             ],
             modifiers: null);
 
@@ -409,8 +374,7 @@ public sealed class ConversationTests
             Id<ConversationAggregate>.New(),
             ConversationType.Group,
             "Dev Team",
-            Id<UserProfileMarker>.New(),
-            0L
+            Id<UserProfileMarker>.New()
         ]);
     }
 }

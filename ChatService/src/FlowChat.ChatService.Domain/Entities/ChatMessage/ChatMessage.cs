@@ -75,7 +75,6 @@ public sealed class ChatMessage : AggregateRootBase<ChatMessage>
             throw new ArgumentException("Sequence number must be greater than zero.", nameof(sequenceNum));
 
         SequenceNum = sequenceNum;
-        AddDomainEvent(new ChatMessageSequencedDomainEvent(Id, ConversationId, sequenceNum));
     }
 
     public void MarkAsDelivered(UtcDateTimeOffset deliveredAtUtc)
