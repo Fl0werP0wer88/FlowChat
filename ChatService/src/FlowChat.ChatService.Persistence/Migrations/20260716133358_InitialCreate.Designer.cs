@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FlowChat.ChatService.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260716112818_AddConversationMessageSequences")]
-    partial class AddConversationMessageSequences
+    [Migration("20260716133358_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -121,9 +121,6 @@ namespace FlowChat.ChatService.Persistence.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
 
-                    b.Property<long>("LastMsgSequenceNum")
-                        .HasColumnType("bigint");
-
                     b.Property<int>("MembershipRevision")
                         .HasColumnType("integer");
 
@@ -214,6 +211,9 @@ namespace FlowChat.ChatService.Persistence.Migrations
                     b.Property<DateTimeOffset>("SentAtUtc")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<long?>("SequenceNum")
+                        .HasColumnType("bigint");
+
                     b.Property<string>("Text")
                         .IsRequired()
                         .HasColumnType("text");
@@ -245,9 +245,6 @@ namespace FlowChat.ChatService.Persistence.Migrations
 
                     b.Property<DateTimeOffset?>("DeletedAt")
                         .HasColumnType("timestamp with time zone");
-
-                    b.Property<long>("LastMsgSequenceNum")
-                        .HasColumnType("bigint");
 
                     b.Property<int>("MembershipRevision")
                         .HasColumnType("integer");

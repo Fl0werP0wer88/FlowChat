@@ -20,7 +20,6 @@ namespace FlowChat.ChatService.Persistence.Migrations
                     Type = table.Column<int>(type: "integer", nullable: false),
                     Name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
                     CreatedByUserId = table.Column<Guid>(type: "uuid", nullable: false),
-                    LastMsgSequenceNum = table.Column<long>(type: "bigint", nullable: false),
                     MembershipRevision = table.Column<int>(type: "integer", nullable: false),
                     CreatedBy = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
                     CreatedAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
@@ -118,6 +117,24 @@ namespace FlowChat.ChatService.Persistence.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "ConversationMessageSequences",
+                columns: table => new
+                {
+                    ConversationId = table.Column<Guid>(type: "uuid", nullable: false),
+                    LastAssignedSequenceNum = table.Column<long>(type: "bigint", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ConversationMessageSequences", x => x.ConversationId);
+                    table.ForeignKey(
+                        name: "FK_ConversationMessageSequences_Conversations_ConversationId",
+                        column: x => x.ConversationId,
+                        principalTable: "Conversations",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "DuetConversations",
                 columns: table => new
                 {
@@ -206,6 +223,9 @@ namespace FlowChat.ChatService.Persistence.Migrations
         {
             migrationBuilder.DropTable(
                 name: "ChatMessages");
+
+            migrationBuilder.DropTable(
+                name: "ConversationMessageSequences");
 
             migrationBuilder.DropTable(
                 name: "DuetConversations");
