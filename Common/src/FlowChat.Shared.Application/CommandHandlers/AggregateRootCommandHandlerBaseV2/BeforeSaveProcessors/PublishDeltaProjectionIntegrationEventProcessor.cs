@@ -1,5 +1,6 @@
 using AutoMapper;
 using FlowChat.Core.Messaging;
+using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2.BeforeSaveProcessors.Interfaces;
 using FlowChat.Shared.Domain;
 
 namespace FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2.BeforeSaveProcessors;
@@ -12,15 +13,18 @@ public class PublishDeltaProjectionIntegrationEventProcessor<TCommand, TAggregat
 {
     private readonly IMapper _mapper;
     private readonly IOutboxIntegrationEventPublisher _integrationEventPublisher;
+    private readonly IDeltaProjectionRevisionProvider<TAggregate, TValue> _revisionProvider;
     private IReadOnlyDictionary<Id<TDomainEntity>, TValue>? _beforeState;
 
     public PublishDeltaProjectionIntegrationEventProcessor(
         IMapper mapper,
-        IOutboxIntegrationEventPublisher integrationEventPublisher)
+        IOutboxIntegrationEventPublisher integrationEventPublisher,
+        IDeltaProjectionRevisionProvider<TAggregate, TValue> revisionProvider)
     {
         _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         _integrationEventPublisher = integrationEventPublisher
             ?? throw new ArgumentNullException(nameof(integrationEventPublisher));
+        _revisionProvider = revisionProvider ?? throw new ArgumentNullException(nameof(revisionProvider));
     }
 
     public void CaptureBeforeState(TAggregate aggregate)
@@ -106,7 +110,8 @@ public class PublishDeltaProjectionIntegrationEventProcessor<TCommand, TAggregat
             SourceAggregateDeletedAt = aggregate.DeletedAt?.Value,
             Value = materializedValues,
             Operation = operation,
-            SourceAggregateVersion = aggregate.Version
+            SourceAggregateVersion = aggregate.Version,
+            ProjectionRevision = _revisionProvider.GetRevision(aggregate)
         };
         var envelope = new IntegrationEventEnvelope<DeltaProjectionIntegrationEvent<TValue>>(
             integrationEvent,

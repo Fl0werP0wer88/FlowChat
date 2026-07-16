@@ -9,4 +9,5 @@ public sealed record DeltaProjectionIntegrationEvent<TValue> : IntegrationEvent
     public required IEnumerable<TValue> Value { get; init; }
     public required DeltaOperationType Operation { get; init; }
     public int SourceAggregateVersion { get; init; }
+    public int ProjectionRevision { get; init; }
 }

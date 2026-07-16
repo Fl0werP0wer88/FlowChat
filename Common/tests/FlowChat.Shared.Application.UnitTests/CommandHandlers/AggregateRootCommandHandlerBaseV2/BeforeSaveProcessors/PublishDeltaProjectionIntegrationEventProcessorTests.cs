@@ -2,6 +2,7 @@ using AutoMapper;
 using FluentAssertions;
 using FlowChat.Core.Messaging;
 using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2.BeforeSaveProcessors;
+using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2.BeforeSaveProcessors.Interfaces;
 using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
 using Moq;
@@ -10,6 +11,8 @@ namespace FlowChat.Shared.Application.UnitTests.CommandHandlers.AggregateRootCom
 
 public sealed class PublishDeltaProjectionIntegrationEventProcessorTests
 {
+    private const int ProjectionRevision = 7;
+
     [Fact]
     public async Task ProcessAsync_WhenCollectionWasUpdated_PublishesAddedAndRemovedDeltas()
     {
@@ -37,7 +40,8 @@ public sealed class PublishDeltaProjectionIntegrationEventProcessorTests
         publishedEnvelopes.Should().OnlyContain(envelope =>
             envelope.KafkaKey == aggregate.Id.Value.ToString("D")
             && envelope.Payload.SourceAggregateId == aggregate.Id.Value
-            && envelope.Payload.SourceAggregateVersion == aggregate.Version);
+            && envelope.Payload.SourceAggregateVersion == aggregate.Version
+            && envelope.Payload.ProjectionRevision == ProjectionRevision);
     }
 
     [Fact]
@@ -169,7 +173,7 @@ public sealed class PublishDeltaProjectionIntegrationEventProcessorTests
             Mock<IMapper> mapperMock,
             Mock<IOutboxIntegrationEventPublisher> publisherMock)
     {
-        return new(mapperMock.Object, publisherMock.Object);
+        return new(mapperMock.Object, publisherMock.Object, new TestRevisionProvider());
     }
 
     private static TestValue MapValue(TestDomainEntity entity) =>
@@ -192,6 +196,11 @@ public sealed class PublishDeltaProjectionIntegrationEventProcessorTests
     private sealed record TestCommand;
 
     private sealed record TestValue(Guid Id, string Name);
+
+    private sealed class TestRevisionProvider : IDeltaProjectionRevisionProvider<TestAggregate, TestValue>
+    {
+        public int GetRevision(TestAggregate aggregate) => ProjectionRevision;
+    }
 
     private sealed class TestDomainEntity : EntityBase<TestDomainEntity>
     {
