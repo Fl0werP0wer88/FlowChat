@@ -1,6 +1,6 @@
 using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
-using ConversationAggregate = FlowChat.ChatService.Domain.Entities.Conversation.Conversation;
+using ConversationAggregate = FlowChat.ChatService.Domain.Entities.Conversation.ConversationV2;
 using UserProfileMarker = FlowChat.ChatService.Domain.Entities.UserProfiles.UserProfile;
 
 namespace FlowChat.ChatService.Domain.Entities.Conversation;
@@ -131,7 +131,7 @@ public sealed class ConversationParticipant : AggregateRootBase<ConversationPart
 
     public bool Unhide() => SetHidden(false);
 
-    public bool MarkAsRead(long sequenceNum)
+    public bool AdvanceReadCursor(long sequenceNum)
     {
         if (sequenceNum < 0)
         {

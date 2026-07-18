@@ -1,5 +1,6 @@
+using FlowChat.ChatService.Domain.Entities.Conversation.Events;
 using FlowChat.Shared.Domain;
-using ConversationAggregate = FlowChat.ChatService.Domain.Entities.Conversation.Conversation;
+using UserProfileMarker = FlowChat.ChatService.Domain.Entities.UserProfiles.UserProfile;
 
 namespace FlowChat.ChatService.Domain.Entities.Conversation;
 
@@ -8,13 +9,13 @@ public sealed class ConversationMembership : AggregateRootBase<ConversationMembe
     private const int DuetParticipantsCount = 2;
     private const int MinimumGroupParticipantsCount = 2;
 
-    public Id<ConversationAggregate> ConversationId { get; private set; }
+    public Id<ConversationV2> ConversationId { get; private set; }
     public ConversationType ConversationType { get; private set; }
     public int ParticipantCount { get; private set; }
 
     private ConversationMembership(
         Id<ConversationMembership> id,
-        Id<ConversationAggregate> conversationId,
+        Id<ConversationV2> conversationId,
         ConversationType conversationType,
         int participantCount) : base(id)
     {
@@ -35,22 +36,29 @@ public sealed class ConversationMembership : AggregateRootBase<ConversationMembe
     }
 
     public static ConversationMembership Create(
-        Id<ConversationAggregate> conversationId,
+        Id<ConversationV2> conversationId,
         ConversationType conversationType,
-        int participantCount)
+        IEnumerable<Id<UserProfileMarker>> participantUserIds)
     {
         ArgumentNullException.ThrowIfNull(conversationId);
+        var normalizedParticipantUserIds = NormalizeParticipantUserIds(participantUserIds);
 
-        return new ConversationMembership(
+        var membership = new ConversationMembership(
             Id<ConversationMembership>.FromId(conversationId),
             conversationId,
             conversationType,
-            participantCount);
+            normalizedParticipantUserIds.Count);
+
+        membership.AddMembershipChangedEvents(
+            normalizedParticipantUserIds,
+            ConversationMembershipDeltaOperation.Added);
+
+        return membership;
     }
 
     public static ConversationMembership Restore(
         Id<ConversationMembership> id,
-        Id<ConversationAggregate> conversationId,
+        Id<ConversationV2> conversationId,
         ConversationType conversationType,
         int participantCount)
     {
@@ -61,40 +69,96 @@ public sealed class ConversationMembership : AggregateRootBase<ConversationMembe
             participantCount);
     }
 
-    public void AddParticipants(int participantCount)
+    public void AddParticipants(IEnumerable<Id<UserProfileMarker>> participantUserIds)
     {
-        EnsurePositiveParticipantCount(participantCount);
+        var normalizedParticipantUserIds = NormalizeParticipantUserIds(participantUserIds);
 
-        var newParticipantCount = checked(ParticipantCount + participantCount);
+        var newParticipantCount = checked(ParticipantCount + normalizedParticipantUserIds.Count);
         ValidateParticipantCount(ConversationType, newParticipantCount);
 
         ParticipantCount = newParticipantCount;
+        AddMembershipChangedEvents(
+            normalizedParticipantUserIds,
+            ConversationMembershipDeltaOperation.Added);
     }
 
-    public void RemoveParticipants(int participantCount)
+    public void RemoveParticipants(IEnumerable<Id<UserProfileMarker>> participantUserIds)
     {
-        EnsurePositiveParticipantCount(participantCount);
+        var normalizedParticipantUserIds = NormalizeParticipantUserIds(participantUserIds);
 
-        if (participantCount > ParticipantCount)
+        if (normalizedParticipantUserIds.Count > ParticipantCount)
         {
             throw new InvalidOperationException(
                 "Cannot remove more participants than the conversation currently has.");
         }
 
-        var newParticipantCount = ParticipantCount - participantCount;
+        var newParticipantCount = ParticipantCount - normalizedParticipantUserIds.Count;
         ValidateParticipantCount(ConversationType, newParticipantCount);
 
         ParticipantCount = newParticipantCount;
+        AddMembershipChangedEvents(
+            normalizedParticipantUserIds,
+            ConversationMembershipDeltaOperation.Removed);
     }
 
-    private static void EnsurePositiveParticipantCount(int participantCount)
+    private void AddMembershipChangedEvents(
+        IReadOnlyCollection<Id<UserProfileMarker>> participantUserIds,
+        ConversationMembershipDeltaOperation operation)
     {
-        if (participantCount <= 0)
+
+        //Review1: Pisaleś że będzie pobierał maksymalny SequenceNum wiadomości V2 dla konwersacji. To niedoprze bo pobieranie będzie się odbywalo dla kazdej pozycji z listy.
+        //Review1: Może by tak pobierać maksymalny SequenceNum wiadomości V2 jeszcze w handlerze pobierającym  agregat ConversationMembership i przekazywać go do AddMembershipChangedEvents? Oceń Pomysł
+        foreach (var participantUserId in participantUserIds)
         {
-            throw new ArgumentOutOfRangeException(
-                nameof(participantCount),
-                "Participant count must be greater than zero.");
+            AddDomainEvent(operation == ConversationMembershipDeltaOperation.Added
+                ? new ConversationParticipantAddedDomainEventV2(
+                    Id,
+                    ConversationId,
+                    participantUserId)
+                : new ConversationParticipantRemovedDomainEventV2(
+                    Id,
+                    ConversationId,
+                    participantUserId));
         }
+
+        //Review1: Skoro delta integration event publikowac przez IAggregateBeforeSaveProcessor to ConversationMembershipDeltaDomainEventV2 Jest chyba do Wyrzucenia prawda?
+        AddDomainEvent(new ConversationMembershipDeltaDomainEventV2(
+            Id,
+            ConversationId,
+            operation,
+            participantUserIds,
+            ParticipantCount));
+    }
+
+    private static IReadOnlyCollection<Id<UserProfileMarker>> NormalizeParticipantUserIds(
+        IEnumerable<Id<UserProfileMarker>> participantUserIds)
+    {
+        ArgumentNullException.ThrowIfNull(participantUserIds);
+
+        var userIds = participantUserIds.ToList();
+
+        if (userIds.Count == 0)
+        {
+            throw new ArgumentException(
+                "At least one participant must be provided.",
+                nameof(participantUserIds));
+        }
+
+        if (userIds.Any(userId => userId is null))
+        {
+            throw new ArgumentException(
+                "Participant user id cannot be null.",
+                nameof(participantUserIds));
+        }
+
+        if (userIds.Distinct().Count() != userIds.Count)
+        {
+            throw new ArgumentException(
+                "Participant user ids cannot contain duplicates.",
+                nameof(participantUserIds));
+        }
+
+        return userIds;
     }
 
     private static void ValidateParticipantCount(

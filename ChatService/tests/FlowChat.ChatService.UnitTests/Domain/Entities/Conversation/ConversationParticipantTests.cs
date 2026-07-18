@@ -1,7 +1,7 @@
 using FlowChat.ChatService.Domain.Entities.Conversation;
 using FlowChat.Shared.Domain;
 using FluentAssertions;
-using ConversationAggregate = FlowChat.ChatService.Domain.Entities.Conversation.Conversation;
+using ConversationAggregate = FlowChat.ChatService.Domain.Entities.Conversation.ConversationV2;
 using UserProfileMarker = FlowChat.ChatService.Domain.Entities.UserProfiles.UserProfile;
 
 namespace FlowChat.ChatService.UnitTests.Domain.Entities.ConversationTests;
@@ -20,11 +20,11 @@ public sealed class ConversationParticipantTests
     }
 
     [Fact]
-    public void MarkAsRead_WhenSequenceIncreases_UpdatesReadState()
+    public void AdvanceReadCursor_WhenSequenceIncreases_UpdatesReadState()
     {
         var participant = CreateParticipant();
 
-        var wasUpdated = participant.MarkAsRead(42);
+        var wasUpdated = participant.AdvanceReadCursor(42);
 
         wasUpdated.Should().BeTrue();
         participant.LastReadMessageSequenceNum.Should().Be(42);
@@ -33,12 +33,12 @@ public sealed class ConversationParticipantTests
     [Theory]
     [InlineData(41)]
     [InlineData(42)]
-    public void MarkAsRead_WhenSequenceDoesNotIncrease_DoesNotChangeReadState(long sequenceNum)
+    public void AdvanceReadCursor_WhenSequenceDoesNotIncrease_DoesNotChangeReadState(long sequenceNum)
     {
         var participant = CreateParticipant();
-        participant.MarkAsRead(42);
+        participant.AdvanceReadCursor(42);
 
-        var wasUpdated = participant.MarkAsRead(sequenceNum);
+        var wasUpdated = participant.AdvanceReadCursor(sequenceNum);
 
         wasUpdated.Should().BeFalse();
         participant.LastReadMessageSequenceNum.Should().Be(42);
