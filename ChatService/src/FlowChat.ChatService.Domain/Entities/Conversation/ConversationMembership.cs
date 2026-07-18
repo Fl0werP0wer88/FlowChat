@@ -49,9 +49,9 @@ public sealed class ConversationMembership : AggregateRootBase<ConversationMembe
             conversationType,
             normalizedParticipantUserIds.Count);
 
-        membership.AddMembershipChangedEvents(
+        membership.AddParticipantAddedEvents(
             normalizedParticipantUserIds,
-            ConversationMembershipDeltaOperation.Added);
+            initialReadCursor: 0);
 
         return membership;
     }
@@ -69,17 +69,20 @@ public sealed class ConversationMembership : AggregateRootBase<ConversationMembe
             participantCount);
     }
 
-    public void AddParticipants(IEnumerable<Id<UserProfileMarker>> participantUserIds)
+    public void AddParticipants(
+        IEnumerable<Id<UserProfileMarker>> participantUserIds,
+        long initialReadCursor)
     {
         var normalizedParticipantUserIds = NormalizeParticipantUserIds(participantUserIds);
+        ValidateInitialReadCursor(initialReadCursor);
 
         var newParticipantCount = checked(ParticipantCount + normalizedParticipantUserIds.Count);
         ValidateParticipantCount(ConversationType, newParticipantCount);
 
         ParticipantCount = newParticipantCount;
-        AddMembershipChangedEvents(
+        AddParticipantAddedEvents(
             normalizedParticipantUserIds,
-            ConversationMembershipDeltaOperation.Added);
+            initialReadCursor);
     }
 
     public void RemoveParticipants(IEnumerable<Id<UserProfileMarker>> participantUserIds)
@@ -96,38 +99,43 @@ public sealed class ConversationMembership : AggregateRootBase<ConversationMembe
         ValidateParticipantCount(ConversationType, newParticipantCount);
 
         ParticipantCount = newParticipantCount;
-        AddMembershipChangedEvents(
-            normalizedParticipantUserIds,
-            ConversationMembershipDeltaOperation.Removed);
+        AddParticipantRemovedEvents(normalizedParticipantUserIds);
     }
 
-    private void AddMembershipChangedEvents(
+    private void AddParticipantAddedEvents(
         IReadOnlyCollection<Id<UserProfileMarker>> participantUserIds,
-        ConversationMembershipDeltaOperation operation)
+        long initialReadCursor)
     {
-
-        //Review1: Pisaleś że będzie pobierał maksymalny SequenceNum wiadomości V2 dla konwersacji. To niedoprze bo pobieranie będzie się odbywalo dla kazdej pozycji z listy.
-        //Review1: Może by tak pobierać maksymalny SequenceNum wiadomości V2 jeszcze w handlerze pobierającym  agregat ConversationMembership i przekazywać go do AddMembershipChangedEvents? Oceń Pomysł
         foreach (var participantUserId in participantUserIds)
         {
-            AddDomainEvent(operation == ConversationMembershipDeltaOperation.Added
-                ? new ConversationParticipantAddedDomainEventV2(
-                    Id,
-                    ConversationId,
-                    participantUserId)
-                : new ConversationParticipantRemovedDomainEventV2(
-                    Id,
-                    ConversationId,
-                    participantUserId));
+            AddDomainEvent(new ConversationParticipantAddedDomainEventV2(
+                Id,
+                ConversationId,
+                participantUserId,
+                initialReadCursor));
         }
+    }
 
-        //Review1: Skoro delta integration event publikowac przez IAggregateBeforeSaveProcessor to ConversationMembershipDeltaDomainEventV2 Jest chyba do Wyrzucenia prawda?
-        AddDomainEvent(new ConversationMembershipDeltaDomainEventV2(
-            Id,
-            ConversationId,
-            operation,
-            participantUserIds,
-            ParticipantCount));
+    private void AddParticipantRemovedEvents(
+        IReadOnlyCollection<Id<UserProfileMarker>> participantUserIds)
+    {
+        foreach (var participantUserId in participantUserIds)
+        {
+            AddDomainEvent(new ConversationParticipantRemovedDomainEventV2(
+                Id,
+                ConversationId,
+                participantUserId));
+        }
+    }
+
+    private static void ValidateInitialReadCursor(long initialReadCursor)
+    {
+        if (initialReadCursor < 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(initialReadCursor),
+                "Initial read cursor cannot be negative.");
+        }
     }
 
     private static IReadOnlyCollection<Id<UserProfileMarker>> NormalizeParticipantUserIds(

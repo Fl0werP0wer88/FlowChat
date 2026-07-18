@@ -11,9 +11,11 @@ namespace FlowChat.ChatService.UnitTests.Domain.Entities.ChatMessage;
 public sealed class ChatMessageV2Tests
 {
     [Fact]
-    public void Create_WhenValid_EmitsOnlyV2SentEvent()
+    public void Create_WhenValid_EmitsOnlyV2SentEventWithRecipients()
     {
-        var chatMessage = CreateMessage();
+        var recipientUserIds = CreateUserIds(2);
+
+        var chatMessage = CreateMessage(recipientUserIds);
 
         chatMessage.DeliveryStatus.Should().Be(DeliveryStatus.Pending);
         chatMessage.SequenceNum.Should().BeNull();
@@ -22,48 +24,32 @@ public sealed class ChatMessageV2Tests
             .Should()
             .ContainSingle()
             .Subject;
-        sentEvent.ConversationMembershipRevision.Should().Be(7);
+        sentEvent.RecipientUserIds.Should().Equal(recipientUserIds);
         sentEvent.AggregateType.Should().Be("chat-message-v2");
         chatMessage.DomainEvents
             .OfType<ChatMessageSentDomainEvent>()
             .Should()
             .BeEmpty();
+        chatMessage.DomainEvents.Should().ContainSingle();
     }
 
     [Fact]
-    public void Create_WhenRecipientsAreHidden_EmitsOneUnhideRequestPerParticipant()
+    public void Create_WhenRecipientsContainDuplicates_NormalizesAggregateAndEventRecipients()
     {
-        var recipientUserIds = CreateUserIds(2);
-        var hiddenTargets = recipientUserIds
-            .Select(userId => new ConversationParticipantUnhideTargetV2(
-                Id<ConversationParticipant>.New(),
-                userId))
-            .ToArray();
+        var firstRecipientUserId = Id<UserProfileMarker>.New();
+        var secondRecipientUserId = Id<UserProfileMarker>.New();
 
-        var chatMessage = CreateMessage(recipientUserIds, hiddenTargets);
+        var chatMessage = CreateMessage(
+            [firstRecipientUserId, secondRecipientUserId, firstRecipientUserId]);
 
-        var unhideEvents = chatMessage.DomainEvents
-            .OfType<ConversationParticipantUnhideRequestedDomainEventV2>()
-            .ToArray();
-        unhideEvents.Should().HaveCount(2);
-        unhideEvents.Select(domainEvent => domainEvent.ConversationParticipantId)
-            .Should()
-            .BeEquivalentTo(hiddenTargets.Select(target => target.ParticipantId));
-    }
-
-    [Fact]
-    public void Create_WhenHiddenParticipantIsNotRecipient_Throws()
-    {
-        var act = () => CreateMessage(
-            CreateUserIds(1),
-            [
-                new ConversationParticipantUnhideTargetV2(
-                    Id<ConversationParticipant>.New(),
-                    Id<UserProfileMarker>.New())
-            ]);
-
-        act.Should().Throw<ArgumentException>()
-            .WithMessage("Only message recipients can be unhidden.*");
+        chatMessage.RecipientUserIds.Should().Equal(
+            firstRecipientUserId,
+            secondRecipientUserId);
+        chatMessage.DomainEvents
+            .OfType<ChatMessageSentDomainEventV2>()
+            .Single()
+            .RecipientUserIds.Should()
+            .Equal(firstRecipientUserId, secondRecipientUserId);
     }
 
     [Fact]
@@ -110,17 +96,14 @@ public sealed class ChatMessageV2Tests
     }
 
     private static ChatMessageV2 CreateMessage(
-        IReadOnlyCollection<Id<UserProfileMarker>>? recipientUserIds = null,
-        IReadOnlyCollection<ConversationParticipantUnhideTargetV2>? hiddenTargets = null)
+        IReadOnlyCollection<Id<UserProfileMarker>>? recipientUserIds = null)
     {
         return ChatMessageV2.Create(
             Id<ChatMessageV2>.New(),
             Id<ConversationV2>.New(),
             Id<UserProfileMarker>.New(),
             "Hello",
-            recipientUserIds ?? CreateUserIds(1),
-            conversationMembershipRevision: 7,
-            hiddenTargets);
+            recipientUserIds ?? CreateUserIds(1));
     }
 
     private static IReadOnlyCollection<Id<UserProfileMarker>> CreateUserIds(int count) =>

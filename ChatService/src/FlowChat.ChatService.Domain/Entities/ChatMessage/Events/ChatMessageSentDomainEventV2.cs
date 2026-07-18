@@ -11,7 +11,7 @@ public sealed class ChatMessageSentDomainEventV2(
     Id<UserProfileMarker> senderUserId,
     string text,
     UtcDateTimeOffset sentAtUtc,
-    int conversationMembershipRevision,
+    IReadOnlyCollection<Id<UserProfileMarker>> recipientUserIds,
     UtcDateTimeOffset? occurredOnUtc = null)
     : BaseChatMessageDomainEventV2(aggregateId, occurredOnUtc)
 {
@@ -20,5 +20,6 @@ public sealed class ChatMessageSentDomainEventV2(
     public Id<UserProfileMarker> SenderUserId { get; } = senderUserId;
     public string Text { get; } = text;
     public UtcDateTimeOffset SentAtUtc { get; } = sentAtUtc;
-    public int ConversationMembershipRevision { get; } = conversationMembershipRevision;
+    public IReadOnlyCollection<Id<UserProfileMarker>> RecipientUserIds { get; } =
+        recipientUserIds?.ToArray() ?? throw new ArgumentNullException(nameof(recipientUserIds));
 }

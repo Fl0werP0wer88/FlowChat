@@ -75,23 +75,11 @@ public sealed class ChatMessageV2 : AggregateRootBase<ChatMessageV2>
         Id<UserProfileMarker> senderUserId,
         string text,
         IEnumerable<Id<UserProfileMarker>> recipientUserIds,
-        int conversationMembershipRevision,
-        IEnumerable<ConversationParticipantUnhideTargetV2>? hiddenParticipants = null,
         UtcDateTimeOffset? sentAtUtc = null)
     {
         ArgumentNullException.ThrowIfNull(id);
 
-        if (conversationMembershipRevision <= 0)
-        {
-            throw new ArgumentOutOfRangeException(
-                nameof(conversationMembershipRevision),
-                "Conversation membership revision must be greater than zero.");
-        }
-
         var normalizedRecipientUserIds = NormalizeRecipientUserIds(recipientUserIds);
-        var normalizedHiddenParticipants = NormalizeHiddenParticipants(
-            hiddenParticipants,
-            normalizedRecipientUserIds);
         var chatMessage = new ChatMessageV2(
             id,
             conversationId,
@@ -100,31 +88,13 @@ public sealed class ChatMessageV2 : AggregateRootBase<ChatMessageV2>
             sentAtUtc ?? UtcDateTimeOffset.UtcNow,
             normalizedRecipientUserIds);
 
-
-        //Review1: Pisałeś że publikacja ChatMessageSentIntegrationEvent ma odbywać się przez IAggregateBeforeSaveProcessor. Rezygn z tego podejscia. Niech ChatMessageSentDomainEventV2 ma swój handler który zmapuje ChatMessageSentDomainEventV2 na ChatMessageSentIntegrationEvent i opublikuje.
-        //Pozatym wydaje mi się że będzie lepiej jak handler eventu ChatMessageSentDomainEventV2 sam będzie pobierał dane które teraz przychodzą z parametrem conversationMembershipRevision wtedy nie bedzziemy musieli przekazywać go w metodzie Create(). Oceń czy to dobry pomysł?
         chatMessage.AddDomainEvent(new ChatMessageSentDomainEventV2(
             chatMessage.Id,
             chatMessage.ConversationId,
             chatMessage.SenderUserId,
             chatMessage.Text,
             chatMessage.SentAtUtc,
-            conversationMembershipRevision));
-
-
-        //Review1: To mi się nie podoba że każdy z tych eventów w handlerze będzie sobie pobierał i zaisywał ConversationParticipant osobno. 
-        //Review1: Lepiej będzie zrobić jeden event, który będzie zawierał listę participantów do odblokowania i w handlerze zrobić 
-        //Review1: jedną operację na bazie danych (Może rozszerzyć WriteRepositoryBase?). Mozemy dla tego handlera na razie odejśc od stosowania handlera dziedziczącego z AggregateRootDomainEventHandlerBase.
-        //Review1: Pozatym ConversationParticipantUnhideRequestedDomainEventV2 nie brzmi zbyt domentowo Nie lepiej zastosować tu po prostu ChatMessageV2CreatedDomainEvent wywalić parametr hiddenParticipants z Create() oraz klase ConversationParticipantUnhideTargetV2 i po stronie handlera od razu
-        //Review1: pobierać agregaty ConversationParticipant które mają IsHidden == True ? Druga opcja jest chyba nawet lepsza?
-        foreach (var hiddenParticipant in normalizedHiddenParticipants)
-        {
-            chatMessage.AddDomainEvent(new ConversationParticipantUnhideRequestedDomainEventV2(
-                chatMessage.Id,
-                hiddenParticipant.ParticipantId,
-                chatMessage.ConversationId,
-                hiddenParticipant.UserId));
-        }
+            chatMessage.RecipientUserIds));
 
         return chatMessage;
     }
@@ -208,39 +178,5 @@ public sealed class ChatMessageV2 : AggregateRootBase<ChatMessageV2>
         }
 
         return normalizedRecipientUserIds;
-    }
-
-    private static IReadOnlyCollection<ConversationParticipantUnhideTargetV2> NormalizeHiddenParticipants(
-        IEnumerable<ConversationParticipantUnhideTargetV2>? hiddenParticipants,
-        IReadOnlyCollection<Guid> recipientUserIds)
-    {
-        var targets = hiddenParticipants?.ToList() ?? [];
-
-        if (targets.Any(target =>
-                target is null ||
-                target.ParticipantId is null ||
-                target.UserId is null))
-        {
-            throw new ArgumentException(
-                "Hidden participant target and its identifiers cannot be null.",
-                nameof(hiddenParticipants));
-        }
-
-        if (targets.Select(target => target.ParticipantId).Distinct().Count() != targets.Count ||
-            targets.Select(target => target.UserId).Distinct().Count() != targets.Count)
-        {
-            throw new ArgumentException(
-                "Hidden participant targets cannot contain duplicates.",
-                nameof(hiddenParticipants));
-        }
-
-        if (targets.Any(target => !recipientUserIds.Contains(target.UserId.Value)))
-        {
-            throw new ArgumentException(
-                "Only message recipients can be unhidden.",
-                nameof(hiddenParticipants));
-        }
-
-        return targets;
     }
 }
