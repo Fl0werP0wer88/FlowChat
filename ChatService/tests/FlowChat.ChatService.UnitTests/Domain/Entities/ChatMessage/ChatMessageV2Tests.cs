@@ -11,11 +11,9 @@ namespace FlowChat.ChatService.UnitTests.Domain.Entities.ChatMessage;
 public sealed class ChatMessageV2Tests
 {
     [Fact]
-    public void Create_WhenValid_EmitsOnlyV2SentEventWithRecipients()
+    public void Create_WhenValid_EmitsOnlyV2SentEvent()
     {
-        var recipientUserIds = CreateUserIds(2);
-
-        var chatMessage = CreateMessage(recipientUserIds);
+        var chatMessage = CreateMessage();
 
         chatMessage.DeliveryStatus.Should().Be(DeliveryStatus.Pending);
         chatMessage.SequenceNum.Should().BeNull();
@@ -24,32 +22,12 @@ public sealed class ChatMessageV2Tests
             .Should()
             .ContainSingle()
             .Subject;
-        sentEvent.RecipientUserIds.Should().Equal(recipientUserIds);
         sentEvent.AggregateType.Should().Be("chat-message-v2");
         chatMessage.DomainEvents
             .OfType<ChatMessageSentDomainEvent>()
             .Should()
             .BeEmpty();
         chatMessage.DomainEvents.Should().ContainSingle();
-    }
-
-    [Fact]
-    public void Create_WhenRecipientsContainDuplicates_NormalizesAggregateAndEventRecipients()
-    {
-        var firstRecipientUserId = Id<UserProfileMarker>.New();
-        var secondRecipientUserId = Id<UserProfileMarker>.New();
-
-        var chatMessage = CreateMessage(
-            [firstRecipientUserId, secondRecipientUserId, firstRecipientUserId]);
-
-        chatMessage.RecipientUserIds.Should().Equal(
-            firstRecipientUserId,
-            secondRecipientUserId);
-        chatMessage.DomainEvents
-            .OfType<ChatMessageSentDomainEventV2>()
-            .Single()
-            .RecipientUserIds.Should()
-            .Equal(firstRecipientUserId, secondRecipientUserId);
     }
 
     [Fact]
@@ -87,7 +65,6 @@ public sealed class ChatMessageV2Tests
             Id<UserProfileMarker>.New(),
             "Hello",
             UtcDateTimeOffset.UtcNow,
-            CreateUserIds(1),
             sequenceNum: null,
             DeliveryStatus.Pending,
             deliveredAtUtc: null);
@@ -95,19 +72,12 @@ public sealed class ChatMessageV2Tests
         chatMessage.DomainEvents.Should().BeEmpty();
     }
 
-    private static ChatMessageV2 CreateMessage(
-        IReadOnlyCollection<Id<UserProfileMarker>>? recipientUserIds = null)
+    private static ChatMessageV2 CreateMessage()
     {
         return ChatMessageV2.Create(
             Id<ChatMessageV2>.New(),
             Id<ConversationV2>.New(),
             Id<UserProfileMarker>.New(),
-            "Hello",
-            recipientUserIds ?? CreateUserIds(1));
+            "Hello");
     }
-
-    private static IReadOnlyCollection<Id<UserProfileMarker>> CreateUserIds(int count) =>
-        Enumerable.Range(0, count)
-            .Select(_ => Id<UserProfileMarker>.New())
-            .ToArray();
 }

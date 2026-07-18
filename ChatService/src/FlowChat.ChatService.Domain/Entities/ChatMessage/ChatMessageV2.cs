@@ -13,9 +13,6 @@ public sealed class ChatMessageV2 : AggregateRootBase<ChatMessageV2>
     public string Text { get; private set; }
     public UtcDateTimeOffset SentAtUtc { get; private set; }
     public UtcDateTimeOffset? DeliveredAtUtc { get; private set; }
-    private Guid[] _recipientUserIds = [];
-    public IReadOnlyCollection<Id<UserProfileMarker>> RecipientUserIds =>
-        [.. _recipientUserIds.Select(Id<UserProfileMarker>.FromGuid)];
     public long? SequenceNum { get; private set; }
     public DeliveryStatus DeliveryStatus { get; private set; }
 
@@ -25,7 +22,6 @@ public sealed class ChatMessageV2 : AggregateRootBase<ChatMessageV2>
         Id<UserProfileMarker> senderUserId,
         string text,
         UtcDateTimeOffset sentAtUtc,
-        Guid[] recipientUserIds,
         long? sequenceNum = null,
         DeliveryStatus deliveryStatus = DeliveryStatus.Pending,
         UtcDateTimeOffset? deliveredAtUtc = null) : base(id)
@@ -63,7 +59,6 @@ public sealed class ChatMessageV2 : AggregateRootBase<ChatMessageV2>
         SenderUserId = senderUserId;
         Text = text.Trim();
         SentAtUtc = sentAtUtc;
-        _recipientUserIds = recipientUserIds;
         SequenceNum = sequenceNum;
         DeliveryStatus = deliveryStatus;
         DeliveredAtUtc = deliveredAtUtc;
@@ -74,27 +69,23 @@ public sealed class ChatMessageV2 : AggregateRootBase<ChatMessageV2>
         Id<ConversationV2> conversationId,
         Id<UserProfileMarker> senderUserId,
         string text,
-        IEnumerable<Id<UserProfileMarker>> recipientUserIds,
         UtcDateTimeOffset? sentAtUtc = null)
     {
         ArgumentNullException.ThrowIfNull(id);
 
-        var normalizedRecipientUserIds = NormalizeRecipientUserIds(recipientUserIds);
         var chatMessage = new ChatMessageV2(
             id,
             conversationId,
             senderUserId,
             text,
-            sentAtUtc ?? UtcDateTimeOffset.UtcNow,
-            normalizedRecipientUserIds);
+            sentAtUtc ?? UtcDateTimeOffset.UtcNow);
 
         chatMessage.AddDomainEvent(new ChatMessageSentDomainEventV2(
             chatMessage.Id,
             chatMessage.ConversationId,
             chatMessage.SenderUserId,
             chatMessage.Text,
-            chatMessage.SentAtUtc,
-            chatMessage.RecipientUserIds));
+            chatMessage.SentAtUtc));
 
         return chatMessage;
     }
@@ -105,7 +96,6 @@ public sealed class ChatMessageV2 : AggregateRootBase<ChatMessageV2>
         Id<UserProfileMarker> senderUserId,
         string text,
         UtcDateTimeOffset sentAtUtc,
-        IEnumerable<Id<UserProfileMarker>> recipientUserIds,
         long? sequenceNum,
         DeliveryStatus deliveryStatus,
         UtcDateTimeOffset? deliveredAtUtc)
@@ -116,7 +106,6 @@ public sealed class ChatMessageV2 : AggregateRootBase<ChatMessageV2>
             senderUserId,
             text,
             sentAtUtc,
-            NormalizeRecipientUserIds(recipientUserIds),
             sequenceNum,
             deliveryStatus,
             deliveredAtUtc);
@@ -160,23 +149,4 @@ public sealed class ChatMessageV2 : AggregateRootBase<ChatMessageV2>
         return true;
     }
 
-    private static Guid[] NormalizeRecipientUserIds(
-        IEnumerable<Id<UserProfileMarker>> recipientUserIds)
-    {
-        ArgumentNullException.ThrowIfNull(recipientUserIds);
-
-        var normalizedRecipientUserIds = recipientUserIds
-            .Where(userId => userId is not null)
-            .Distinct()
-            .Select(userId => userId.Value)
-            .ToArray();
-
-        if (normalizedRecipientUserIds.Length == 0)
-        {
-            throw new InvalidOperationException(
-                "Chat message must contain at least one valid recipient.");
-        }
-
-        return normalizedRecipientUserIds;
-    }
 }
