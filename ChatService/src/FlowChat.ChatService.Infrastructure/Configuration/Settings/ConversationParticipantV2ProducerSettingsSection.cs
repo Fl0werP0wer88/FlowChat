@@ -1,6 +1,6 @@
-using FlowChat.ChatService.Application.Contracts.Messaging;
 using FlowChat.Core.Contracts;
 using FlowChat.Core.Messaging;
+using FlowChat.Core.Messaging.ChatService.ReadModels;
 
 namespace FlowChat.ChatService.Infrastructure.Configuration.Settings;
 

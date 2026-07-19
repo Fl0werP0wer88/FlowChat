@@ -1,7 +1,7 @@
 using AutoMapper;
-using FlowChat.ChatService.Application.Contracts.Messaging;
 using FlowChat.ChatService.Application.Contracts.Persistence;
 using FlowChat.ChatService.Domain.Entities.ChatMessage.Events;
+using FlowChat.Core.Messaging.ChatService.Events;
 using FlowChat.Shared.Application;
 
 namespace FlowChat.ChatService.Application.Features.ChatMessage.Eventing.DomainEvents.ChatMessageSent;

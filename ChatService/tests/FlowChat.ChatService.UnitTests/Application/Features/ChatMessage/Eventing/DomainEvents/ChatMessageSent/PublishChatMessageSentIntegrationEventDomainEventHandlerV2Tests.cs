@@ -1,5 +1,4 @@
 using AutoMapper;
-using FlowChat.ChatService.Application.Contracts.Messaging;
 using FlowChat.ChatService.Application.Contracts.Persistence;
 using FlowChat.ChatService.Application.Features.ChatMessage.Eventing.DomainEvents.ChatMessageSent;
 using FlowChat.ChatService.Domain.Entities.ChatMessage;
@@ -7,6 +6,7 @@ using FlowChat.ChatService.Domain.Entities.ChatMessage.Events;
 using FlowChat.ChatService.Domain.Entities.Conversation;
 using FlowChat.ChatService.Domain.Entities.UserProfiles;
 using FlowChat.Core.Messaging;
+using FlowChat.Core.Messaging.ChatService.Events;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;

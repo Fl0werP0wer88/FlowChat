@@ -1,6 +1,6 @@
-using FlowChat.ChatService.Application.Contracts.Messaging;
 using FlowChat.ChatService.Domain.Entities.Conversation;
 using FlowChat.Core.Messaging;
+using FlowChat.Core.Messaging.ChatService.ReadModels;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
 using UserProfileMarker = FlowChat.ChatService.Domain.Entities.UserProfiles.UserProfile;

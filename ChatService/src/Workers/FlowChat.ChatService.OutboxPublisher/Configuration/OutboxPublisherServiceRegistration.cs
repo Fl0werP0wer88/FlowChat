@@ -1,5 +1,4 @@
 using FlowChat.ChatService.OutboxPublisher.Configuration.Settings;
-using FlowChat.ChatService.Application.Contracts.Messaging;
 using FlowChat.ChatService.Persistence;
 using FlowChat.Core.Messaging;
 using FlowChat.Core.Messaging.ChatService.Events;

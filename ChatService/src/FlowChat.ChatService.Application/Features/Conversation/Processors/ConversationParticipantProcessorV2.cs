@@ -1,6 +1,6 @@
 using AutoMapper;
-using FlowChat.ChatService.Application.Contracts.Messaging;
 using FlowChat.ChatService.Domain.Entities.Conversation;
+using FlowChat.Core.Messaging.ChatService.ReadModels;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2.BeforeSaveProcessors;
 

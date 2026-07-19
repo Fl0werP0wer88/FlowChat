@@ -1,7 +1,7 @@
 using FlowChat.ChatService.Infrastructure;
-using FlowChat.ChatService.Application.Contracts.Messaging;
 using FlowChat.ChatService.Infrastructure.Configuration.Settings;
 using FlowChat.Core.Messaging;
+using FlowChat.Core.Messaging.ChatService.Events;
 using FlowChat.Core.Messaging.ChatService.ReadModels;
 using FlowChat.Shared.Infrastructure.Silverback.Kafka;
 using FluentAssertions;

@@ -1,10 +1,10 @@
-using FlowChat.ChatService.Application.Contracts.Messaging;
 using FlowChat.ChatService.Application.Features.Conversation.Commands.AddGroupParticipants;
 using FlowChat.ChatService.Application.Features.Conversation.Commands.RemoveGroupParticipants;
 using FlowChat.ChatService.Application.Features.Conversation.Processors;
 using FlowChat.ChatService.Domain.Entities.Conversation;
 using FlowChat.ChatService.Domain.Entities.Conversation.Events;
 using FlowChat.Core.Messaging;
+using FlowChat.Core.Messaging.ChatService.ReadModels;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
 using FluentAssertions;

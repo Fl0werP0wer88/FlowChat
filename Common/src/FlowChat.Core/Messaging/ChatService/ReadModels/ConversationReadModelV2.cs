@@ -1,4 +1,4 @@
-namespace FlowChat.ChatService.Application.Contracts.Messaging;
+namespace FlowChat.Core.Messaging.ChatService.ReadModels;
 
 public sealed record ConversationReadModelV2
 {

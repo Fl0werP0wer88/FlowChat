@@ -1,6 +1,6 @@
 using AutoMapper;
-using FlowChat.ChatService.Application.Contracts.Messaging;
 using FlowChat.ChatService.Domain.Entities.Conversation;
+using FlowChat.Core.Messaging.ChatService.ReadModels;
 
 namespace FlowChat.ChatService.Application.Features.Conversation.Mapping;
 

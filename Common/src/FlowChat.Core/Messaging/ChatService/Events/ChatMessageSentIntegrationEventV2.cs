@@ -1,6 +1,4 @@
-using FlowChat.Core.Messaging;
-
-namespace FlowChat.ChatService.Application.Contracts.Messaging;
+namespace FlowChat.Core.Messaging.ChatService.Events;
 
 public sealed record ChatMessageSentIntegrationEventV2 : IntegrationEvent
 {
