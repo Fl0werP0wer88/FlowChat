@@ -31,21 +31,20 @@ public sealed class UnblockConversationParticipantCommandHandler(
         return FlowChatResult<DuetConversationAggregate?>.Success(conversation);
     }
 
-    protected override Task<FlowChatResult<Unit>> ExecuteAsync(
+    protected override Task<FlowChatResult<AggregateMutation<Unit>>> ExecuteAsync(
         UnblockConversationParticipantCommand request,
         CancellationToken cancellationToken)
     {
         var requestingUserId = Id<UserProfileMarker>.FromGuid(request.RequestingUserId);
         var participant = AggregateRoot!.GetParticipant(requestingUserId);
         if (participant is null)
-            return Task.FromResult(FlowChatResult<Unit>.Failure(DomainError.Unauthorized("Requesting user is not a participant of this conversation.")));
+            return Task.FromResult(Failure(DomainError.Unauthorized("Requesting user is not a participant of this conversation.")));
 
         if (!participant.IsBlocked)
-            return Task.FromResult(FlowChatResult<Unit>.Failure(DomainError.Conflict("Participant is not blocked.")));
+            return Task.FromResult(Failure(DomainError.Conflict("Participant is not blocked.")));
 
         AggregateRoot.UnblockParticipant(requestingUserId);
-        SetUpdated();
 
-        return Task.FromResult(FlowChatResult<Unit>.Success(Unit.Value));
+        return Task.FromResult(Updated(Unit.Value));
     }
 }

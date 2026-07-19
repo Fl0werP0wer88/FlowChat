@@ -31,11 +31,12 @@ public sealed class HideConversationParticipantCommandHandlerV2(
             : FlowChatResult<ConversationParticipant?>.Success(participant);
     }
 
-    protected override Task<FlowChatResult<Unit>> ExecuteAsync(
+    protected override Task<FlowChatResult<AggregateMutation<Unit>>> ExecuteAsync(
         HideConversationParticipantCommandV2 request,
         CancellationToken cancellationToken)
     {
-        if (AggregateRoot!.Hide()) SetUpdated();
-        return Task.FromResult(FlowChatResult<Unit>.Success(Unit.Value));
+        var mutationType = FlowChat.Shared.Domain.MutationType.Unchanged;
+        if (AggregateRoot!.Hide()) mutationType = FlowChat.Shared.Domain.MutationType.Updated;
+        return Task.FromResult(Mutation(mutationType, Unit.Value));
     }
 }

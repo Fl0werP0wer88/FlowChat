@@ -32,13 +32,14 @@ public sealed class MarkConversationAsReadCommandHandler(
         return FlowChatResult<ConversationAggregate?>.Success(conversation);
     }
 
-    protected override async Task<FlowChatResult<Unit>> ExecuteAsync(
+    protected override async Task<FlowChatResult<AggregateMutation<Unit>>> ExecuteAsync(
         MarkConversationAsReadCommand request,
         CancellationToken cancellationToken)
     {
+        var mutationType = FlowChat.Shared.Domain.MutationType.Unchanged;
         var participantUserId = Id<UserProfileMarker>.FromGuid(request.ParticipantUserId);
         if (!AggregateRoot!.HasParticipant(participantUserId))
-            return FlowChatResult<Unit>.Failure(DomainError.Unauthorized("Requesting user is not a participant of this conversation."));
+            return Failure(DomainError.Unauthorized("Requesting user is not a participant of this conversation."));
 
         var maxSequenceNum = await chatMessageRepository.GetMaxSequenceNumAsync(
             request.ConversationId,
@@ -48,9 +49,9 @@ public sealed class MarkConversationAsReadCommandHandler(
             maxSequenceNum.GetValueOrDefault());
         if (wasUpdated)
         {
-            SetUpdated();
+            mutationType = FlowChat.Shared.Domain.MutationType.Updated;
         }
 
-        return FlowChatResult<Unit>.Success(Unit.Value);
+        return Mutation(mutationType, Unit.Value);
     }
 }

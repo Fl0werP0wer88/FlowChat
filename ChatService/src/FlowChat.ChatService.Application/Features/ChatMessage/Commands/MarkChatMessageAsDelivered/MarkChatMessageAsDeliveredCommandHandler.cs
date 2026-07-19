@@ -32,21 +32,20 @@ public sealed class MarkChatMessageAsDeliveredCommandHandler(
         return FlowChatResult<ChatMessageAggregate?>.Success(message);
     }
 
-    protected override Task<FlowChatResult<Unit>> ExecuteAsync(
+    protected override Task<FlowChatResult<AggregateMutation<Unit>>> ExecuteAsync(
         MarkChatMessageAsDeliveredCommand request,
         CancellationToken cancellationToken)
     {
         if (AggregateRoot!.DeliveryStatus == DeliveryStatus.Delivered)
         {
-            return Task.FromResult(FlowChatResult<Unit>.Success(Unit.Value));
+            return Task.FromResult(Unchanged(Unit.Value));
         }
 
         if (!AggregateRoot.SequenceNum.HasValue)
-            return Task.FromResult(FlowChatResult<Unit>.Failure(DomainError.BadRequest("Chat message sequence number must be set before marking it as delivered.")));
+            return Task.FromResult(Failure(DomainError.BadRequest("Chat message sequence number must be set before marking it as delivered.")));
 
         AggregateRoot.MarkAsDelivered(UtcDateTimeOffset.Create(request.DeliveredAtUtc));
-        SetUpdated();
 
-        return Task.FromResult(FlowChatResult<Unit>.Success(Unit.Value));
+        return Task.FromResult(Updated(Unit.Value));
     }
 }

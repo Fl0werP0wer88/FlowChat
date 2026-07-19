@@ -30,20 +30,20 @@ public class RegisterUserCommandHandler
         _passwordHashingService = passwordHashingService;
     }
 
-    protected override async Task<FlowChatResult<RegisterUserCommandResponse>> ExecuteAsync(
+    protected override async Task<FlowChatResult<AggregateMutation<RegisterUserCommandResponse>>> ExecuteAsync(
         RegisterUserCommand request,
         CancellationToken cancellationToken)
     {
         var emailAddress = EmailAddress.Create(request.Email);
         if (await _accountRepository.GetByEmailAsync(emailAddress, cancellationToken) is not null)
         {
-            return FlowChatResult<RegisterUserCommandResponse>.Failure(
+            return Failure(
                 DomainError.Conflict("Account with the provided email already exists."));
         }
 
         if (await _accountRepository.GetByFriendlyUserIdAsync(request.FriendlyUserId, cancellationToken) is not null)
         {
-            return FlowChatResult<RegisterUserCommandResponse>.Failure(
+            return Failure(
                 DomainError.Conflict("Account with the provided friendly user id already exists."));
         }
 
@@ -58,9 +58,8 @@ public class RegisterUserCommandHandler
             request.Organization);
 
         await _accountRepository.CreateAsync(_account, cancellationToken);
-        SetInserted();
 
-        return FlowChatResult<RegisterUserCommandResponse>.Success(
+        return Created(
             new RegisterUserCommandResponse
             {
                 Id = _account.Id.Value

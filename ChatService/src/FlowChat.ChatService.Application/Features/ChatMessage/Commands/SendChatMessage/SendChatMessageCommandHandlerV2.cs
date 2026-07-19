@@ -24,14 +24,14 @@ public sealed class SendChatMessageCommandHandlerV2(
 {
     private ChatMessageV2? _message;
 
-    protected override async Task<FlowChatResult<SendChatMessageCommandResultV2>> ExecuteAsync(
+    protected override async Task<FlowChatResult<AggregateMutation<SendChatMessageCommandResultV2>>> ExecuteAsync(
         SendChatMessageCommandV2 request,
         CancellationToken cancellationToken)
     {
         var conversationId = Id<ConversationV2>.FromGuid(request.ConversationId);
         if (await conversationRepository.GetByIdAsync(conversationId, cancellationToken) is null)
         {
-            return FlowChatResult<SendChatMessageCommandResultV2>.Failure(
+            return Failure(
                 DomainError.NotFound("Conversation not found."));
         }
 
@@ -42,13 +42,13 @@ public sealed class SendChatMessageCommandHandlerV2(
 
         if (participants.All(x => x.UserId != senderUserId))
         {
-            return FlowChatResult<SendChatMessageCommandResultV2>.Failure(
+            return Failure(
                 DomainError.Unauthorized("Sender is not a participant of this conversation."));
         }
 
         if (participants.Any(x => x.UserId != senderUserId && x.IsBlocked))
         {
-            return FlowChatResult<SendChatMessageCommandResultV2>.Failure(
+            return Failure(
                 DomainError.Unauthorized("Recipient has blocked this conversation."));
         }
 
@@ -58,9 +58,8 @@ public sealed class SendChatMessageCommandHandlerV2(
             senderUserId,
             request.Text!);
         await messageRepository.AddAsync(_message, cancellationToken);
-        SetInserted();
 
-        return FlowChatResult<SendChatMessageCommandResultV2>.Success(
+        return Created(
             new SendChatMessageCommandResultV2(_message.Id.Value, _message.SentAtUtc.Value));
     }
 

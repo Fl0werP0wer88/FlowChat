@@ -34,7 +34,7 @@ public sealed class RemoveGroupParticipantsCommandHandlerV2(
             : FlowChatResult<ConversationMembership?>.Success(membership);
     }
 
-    protected override async Task<FlowChatResult<Unit>> ExecuteAsync(
+    protected override async Task<FlowChatResult<AggregateMutation<Unit>>> ExecuteAsync(
         RemoveGroupParticipantsCommandV2 request,
         CancellationToken cancellationToken)
     {
@@ -49,20 +49,19 @@ public sealed class RemoveGroupParticipantsCommandHandlerV2(
         //Review2-7: Wydaje mi się że więcej sensu ma nie zwracanie failure, a usunięcie tych uczestników którzy są w konwersacji. Oceń pomysł
         if (existing.Count != participantIds.Length)
         {
-            return FlowChatResult<Unit>.Failure(
+            return Failure(
                 DomainError.NotFound("At least one participant was not found."));
         }
 
         if (AggregateRoot!.ConversationType != ConversationType.Group ||
             AggregateRoot.ParticipantCount - participantIds.Length < 2)
         {
-            return FlowChatResult<Unit>.Failure(
+            return Failure(
                 DomainError.BadRequest("Group conversations must have at least two participants."));
         }
 
         AggregateRoot.RemoveParticipants(participantIds);
-        SetUpdated();
 
-        return FlowChatResult<Unit>.Success(Unit.Value);
+        return Updated(Unit.Value);
     }
 }

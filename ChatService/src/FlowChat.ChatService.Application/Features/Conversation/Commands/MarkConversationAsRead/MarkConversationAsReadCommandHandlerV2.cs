@@ -35,19 +35,20 @@ public sealed class MarkConversationAsReadCommandHandlerV2(
             : FlowChatResult<ConversationParticipant?>.Success(participant);
     }
 
-    protected override async Task<FlowChatResult<Unit>> ExecuteAsync(
+    protected override async Task<FlowChatResult<AggregateMutation<Unit>>> ExecuteAsync(
         MarkConversationAsReadCommandV2 request,
         CancellationToken cancellationToken)
     {
+        var mutationType = FlowChat.Shared.Domain.MutationType.Unchanged;
         var maxSequence = await messageRepository.GetMaxSequenceNumAsync(
             Id<ConversationV2>.FromGuid(request.ConversationId),
             cancellationToken);
 
         if (AggregateRoot!.AdvanceReadCursor(maxSequence.GetValueOrDefault()))
         {
-            SetUpdated();
+            mutationType = FlowChat.Shared.Domain.MutationType.Updated;
         }
 
-        return FlowChatResult<Unit>.Success(Unit.Value);
+        return Mutation(mutationType, Unit.Value);
     }
 }

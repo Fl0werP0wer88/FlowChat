@@ -20,5 +20,6 @@ public abstract class AggregateRootInsertCommandHandlerBaseV3<TCommand, TRespons
     {
     }
 
-    protected void SetInserted() => SetMutationType(MutationType.Created);
+    protected static FlowChatResult<AggregateMutation<TResponse>> Created(TResponse response) =>
+        Mutation(MutationType.Created, response);
 }

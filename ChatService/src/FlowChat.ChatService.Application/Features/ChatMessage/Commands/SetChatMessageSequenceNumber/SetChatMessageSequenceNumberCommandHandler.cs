@@ -30,19 +30,18 @@ public sealed class SetChatMessageSequenceNumberCommandHandler(
         return FlowChatResult<ChatMessageAggregate?>.Success(message);
     }
 
-    protected override async Task<FlowChatResult<long>> ExecuteAsync(
+    protected override async Task<FlowChatResult<AggregateMutation<long>>> ExecuteAsync(
         SetChatMessageSequenceNumberCommand request,
         CancellationToken cancellationToken)
     {
         if (AggregateRoot!.SequenceNum.HasValue)
         {
-            return FlowChatResult<long>.Success(AggregateRoot.SequenceNum.Value);
+            return Unchanged(AggregateRoot.SequenceNum.Value);
         }
 
         var sequenceNum = await sequenceRepository.GetNextAsync(request.ConversationId, cancellationToken);
         AggregateRoot.SetSequenceNumber(sequenceNum);
-        SetUpdated();
 
-        return FlowChatResult<long>.Success(sequenceNum);
+        return Updated(sequenceNum);
     }
 }

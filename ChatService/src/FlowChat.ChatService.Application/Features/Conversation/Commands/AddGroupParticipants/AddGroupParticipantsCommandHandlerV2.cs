@@ -35,13 +35,13 @@ public sealed class AddGroupParticipantsCommandHandlerV2(
             : FlowChatResult<ConversationMembership?>.Success(membership);
     }
 
-    protected override async Task<FlowChatResult<Unit>> ExecuteAsync(
+    protected override async Task<FlowChatResult<AggregateMutation<Unit>>> ExecuteAsync(
         AddGroupParticipantsCommandV2 request,
         CancellationToken cancellationToken)
     {
         if (AggregateRoot!.ConversationType != ConversationType.Group)
         {
-            return FlowChatResult<Unit>.Failure(
+            return Failure(
                 DomainError.BadRequest("Participants can only be added to group conversations."));
         }
         var conversationId = Id<ConversationV2>.FromGuid(request.ConversationId);
@@ -56,7 +56,7 @@ public sealed class AddGroupParticipantsCommandHandlerV2(
         //Review2-5: Wydaje mi się że więcej sensu ma nie zwracanie failure a dodanie tych uczestników którzy jeszcze niesą dodanie do konwersacji
         if (existing.Count > 0)
         {
-            return FlowChatResult<Unit>.Failure(
+            return Failure(
                 DomainError.Conflict("At least one user is already an active participant."));
         }
 
@@ -64,8 +64,7 @@ public sealed class AddGroupParticipantsCommandHandlerV2(
             conversationId,
             cancellationToken);
         AggregateRoot.AddParticipants(participantIds, maxSequence.GetValueOrDefault());
-        SetUpdated();
 
-        return FlowChatResult<Unit>.Success(Unit.Value);
+        return Updated(Unit.Value);
     }
 }

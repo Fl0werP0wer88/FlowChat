@@ -32,23 +32,22 @@ public sealed class SetChatMessageSequenceNumberCommandHandlerV2(
             : FlowChatResult<ChatMessageV2?>.Success(message);
     }
 
-    protected override async Task<FlowChatResult<long>> ExecuteAsync(
+    protected override async Task<FlowChatResult<AggregateMutation<long>>> ExecuteAsync(
         SetChatMessageSequenceNumberCommandV2 request,
         CancellationToken cancellationToken)
     {
         if (AggregateRoot!.ConversationId.Value != request.ConversationId)
         {
-            return FlowChatResult<long>.Failure(DomainError.NotFound("Chat message not found."));
+            return Failure(DomainError.NotFound("Chat message not found."));
         }
 
         if (AggregateRoot.SequenceNum.HasValue)
-            return FlowChatResult<long>.Success(AggregateRoot.SequenceNum.Value);
+            return Unchanged(AggregateRoot.SequenceNum.Value);
 
         var sequence = await sequenceRepository.GetNextAsync(
             Id<ConversationV2>.FromGuid(request.ConversationId),
             cancellationToken);
         AggregateRoot.SetSequenceNumber(sequence);
-        SetUpdated();
-        return FlowChatResult<long>.Success(sequence);
+        return Updated(sequence);
     }
 }

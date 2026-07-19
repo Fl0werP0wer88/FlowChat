@@ -32,7 +32,7 @@ public sealed class CreateDuetConversationCommandHandlerV2
         _profileRepository = profileRepository;
     }
 
-    protected override async Task<FlowChatResult<DuetConversationDetailDto>> ExecuteAsync(
+    protected override async Task<FlowChatResult<AggregateMutation<DuetConversationDetailDto>>> ExecuteAsync(
         CreateDuetConversationCommandV2 request,
         CancellationToken cancellationToken)
     {
@@ -44,14 +44,13 @@ public sealed class CreateDuetConversationCommandHandlerV2
                 partnerUserId,
                 cancellationToken) is not null)
         {
-            return FlowChatResult<DuetConversationDetailDto>.Failure(
+            return Failure(
                 DomainError.Conflict("Duet conversation already exists."));
         }
 
         var participantIds = new[] { requestingUserId, partnerUserId };
         _conversation = ConversationAggregate.CreateDuet(requestingUserId, partnerUserId);
         await _conversationRepository.AddAsync(_conversation, participantIds, cancellationToken);
-        SetInserted();
 
         var profiles = await _profileRepository.GetByIdsAsync(
             participantIds.Select(x => x.Value).ToList(),
@@ -64,7 +63,7 @@ public sealed class CreateDuetConversationCommandHandlerV2
             })
             .ToArray();
 
-        return FlowChatResult<DuetConversationDetailDto>.Success(
+        return Created(
             new DuetConversationDetailDto(_conversation.Id.Value, participants));
     }
 

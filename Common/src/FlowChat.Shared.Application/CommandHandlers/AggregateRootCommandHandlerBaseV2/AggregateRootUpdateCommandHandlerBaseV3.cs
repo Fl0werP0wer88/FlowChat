@@ -20,5 +20,6 @@ public abstract class AggregateRootUpdateCommandHandlerBaseV3<TCommand, TRespons
     {
     }
 
-    protected void SetUpdated() => SetMutationType(MutationType.Updated);
+    protected static FlowChatResult<AggregateMutation<TResponse>> Updated(TResponse response) =>
+        Mutation(MutationType.Updated, response);
 }

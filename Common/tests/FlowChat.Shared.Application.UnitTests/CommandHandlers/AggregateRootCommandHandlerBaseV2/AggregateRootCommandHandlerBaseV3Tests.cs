@@ -99,6 +99,168 @@ public sealed class AggregateRootCommandHandlerBaseV3Tests
         domainEvent.Version.Should().Be(2);
     }
 
+    [Fact]
+    public async Task Handle_WhenExecuteAsyncFails_SkipsAggregateMutationPipeline()
+    {
+        var aggregate = new TestAggregate(Guid.NewGuid());
+        var expectedError = DomainError.Conflict("Execution failed.");
+        var processorMock = new Mock<IAggregateBeforeSaveProcessor<TestCommand, TestAggregate>>();
+        var localEventDispatcherMock = new Mock<ILocalEventDispatcher>();
+        var handler = new SequencedCommandHandler(
+            localEventDispatcherMock.Object,
+            CreateUnitOfWork(),
+            [processorMock.Object],
+            aggregate,
+            [],
+            Guid.NewGuid(),
+            expectedError);
+
+        var result = await handler.Handle(new TestCommand(), CancellationToken.None);
+
+        result.IsFailure.Should().BeTrue();
+        result.Error.Should().Be(expectedError);
+        aggregate.Version.Should().Be(1);
+        aggregate.CreatedBy.Should().BeEmpty();
+        aggregate.LastModifiedBy.Should().BeEmpty();
+        processorMock.Verify(
+            x => x.ProcessAsync(
+                It.IsAny<TestCommand>(),
+                It.IsAny<TestAggregate>(),
+                It.IsAny<MutationType>(),
+                It.IsAny<CancellationToken>()),
+            Times.Never);
+        localEventDispatcherMock.Verify(
+            x => x.DispatchAsync(It.IsAny<IEnumerable<ILocalEvent>>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task Handle_WhenMutationIsUnchanged_ReturnsResponseAndSkipsAggregateMutationPipeline()
+    {
+        var aggregate = new TestAggregate(Guid.NewGuid());
+        var expectedResponse = Guid.NewGuid();
+        var processorMock = new Mock<IAggregateBeforeSaveProcessor<TestCommand, TestAggregate>>();
+        var localEventDispatcherMock = new Mock<ILocalEventDispatcher>();
+        var handler = new SequencedCommandHandler(
+            localEventDispatcherMock.Object,
+            CreateUnitOfWork(),
+            [processorMock.Object],
+            aggregate,
+            [MutationType.Unchanged],
+            expectedResponse);
+
+        var result = await handler.Handle(new TestCommand(), CancellationToken.None);
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().Be(expectedResponse);
+        aggregate.Version.Should().Be(1);
+        aggregate.CreatedBy.Should().BeEmpty();
+        aggregate.LastModifiedBy.Should().BeEmpty();
+        processorMock.Verify(
+            x => x.ProcessAsync(
+                It.IsAny<TestCommand>(),
+                It.IsAny<TestAggregate>(),
+                It.IsAny<MutationType>(),
+                It.IsAny<CancellationToken>()),
+            Times.Never);
+        localEventDispatcherMock.Verify(
+            x => x.DispatchAsync(It.IsAny<IEnumerable<ILocalEvent>>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Theory]
+    [InlineData(MutationType.Created)]
+    [InlineData(MutationType.Updated)]
+    [InlineData(MutationType.Deleted)]
+    public async Task Handle_WhenAggregateIsMutated_AppliesAuditAndPassesMutationToProcessors(
+        MutationType mutationType)
+    {
+        var aggregate = new TestAggregate(Guid.NewGuid());
+        var expectedResponse = Guid.NewGuid();
+        var processorMock = new Mock<IAggregateBeforeSaveProcessor<TestCommand, TestAggregate>>();
+        processorMock
+            .Setup(x => x.ProcessAsync(
+                It.IsAny<TestCommand>(),
+                aggregate,
+                mutationType,
+                It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+        var handler = new SequencedCommandHandler(
+            CreateLocalEventDispatcher(),
+            CreateUnitOfWork(),
+            [processorMock.Object],
+            aggregate,
+            [mutationType],
+            expectedResponse);
+
+        var result = await handler.Handle(new TestCommand(), CancellationToken.None);
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().Be(expectedResponse);
+        aggregate.Version.Should().Be(2);
+        processorMock.Verify(
+            x => x.ProcessAsync(
+                It.IsAny<TestCommand>(),
+                aggregate,
+                mutationType,
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+
+        switch (mutationType)
+        {
+            case MutationType.Created:
+                aggregate.CreatedBy.Should().Be("system");
+                aggregate.LastModifiedBy.Should().Be("system");
+                aggregate.IsDeleted.Should().BeFalse();
+                break;
+            case MutationType.Updated:
+                aggregate.CreatedBy.Should().BeEmpty();
+                aggregate.LastModifiedBy.Should().Be("system");
+                aggregate.IsDeleted.Should().BeFalse();
+                break;
+            case MutationType.Deleted:
+                aggregate.CreatedBy.Should().BeEmpty();
+                aggregate.LastModifiedBy.Should().Be("system");
+                aggregate.IsDeleted.Should().BeTrue();
+                break;
+        }
+    }
+
+    [Fact]
+    public async Task Handle_WhenSameInstanceReturnsUnchangedAfterUpdate_DoesNotReusePreviousMutation()
+    {
+        var aggregate = new TestAggregate(Guid.NewGuid());
+        var processorMock = new Mock<IAggregateBeforeSaveProcessor<TestCommand, TestAggregate>>();
+        processorMock
+            .Setup(x => x.ProcessAsync(
+                It.IsAny<TestCommand>(),
+                aggregate,
+                MutationType.Updated,
+                It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+        var handler = new SequencedCommandHandler(
+            CreateLocalEventDispatcher(),
+            CreateUnitOfWork(),
+            [processorMock.Object],
+            aggregate,
+            [MutationType.Updated, MutationType.Unchanged],
+            Guid.NewGuid());
+
+        var firstResult = await handler.Handle(new TestCommand(), CancellationToken.None);
+        var secondResult = await handler.Handle(new TestCommand(), CancellationToken.None);
+
+        firstResult.IsSuccess.Should().BeTrue();
+        secondResult.IsSuccess.Should().BeTrue();
+        aggregate.Version.Should().Be(2);
+        processorMock.Verify(
+            x => x.ProcessAsync(
+                It.IsAny<TestCommand>(),
+                aggregate,
+                MutationType.Updated,
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
     private static FetchingConfigurableCommandHandler CreateFetchingHandler(
         IEnumerable<IAggregateBeforeSaveProcessor<TestCommand, TestAggregate>> processors,
         Func<TestCommand, CancellationToken, Task<FlowChatResult<TestAggregate?>>> fetch,
@@ -180,7 +342,9 @@ public sealed class AggregateRootCommandHandlerBaseV3Tests
             CancellationToken cancellationToken)
             => _fetch(request, cancellationToken);
 
-        protected override Task<FlowChatResult<Guid>> ExecuteAsync(TestCommand request, CancellationToken cancellationToken)
+        protected override Task<FlowChatResult<AggregateMutation<Guid>>> ExecuteAsync(
+            TestCommand request,
+            CancellationToken cancellationToken)
         {
             ExecuteAsyncCalled = true;
             ObservedAggregateRoot = AggregateRoot;
@@ -191,10 +355,9 @@ public sealed class AggregateRootCommandHandlerBaseV3Tests
                 // Mirrors real Upsert handlers, which assign a freshly created
                 // aggregate themselves when nothing was pre-fetched.
                 AggregateRoot = new TestAggregate(Guid.NewGuid());
-                SetMutationType(MutationType.Created);
             }
 
-            return Task.FromResult(FlowChatResult<Guid>.Success(Guid.NewGuid()));
+            return Task.FromResult(Mutation(MutationType.Created, Guid.NewGuid()));
         }
     }
 
@@ -215,7 +378,9 @@ public sealed class AggregateRootCommandHandlerBaseV3Tests
 
         public bool ExecuteAsyncCalled { get; private set; }
 
-        protected override Task<FlowChatResult<Guid>> ExecuteAsync(TestCommand request, CancellationToken cancellationToken)
+        protected override Task<FlowChatResult<AggregateMutation<Guid>>> ExecuteAsync(
+            TestCommand request,
+            CancellationToken cancellationToken)
         {
             ExecuteAsyncCalled = true;
 
@@ -225,9 +390,42 @@ public sealed class AggregateRootCommandHandlerBaseV3Tests
             {
                 AggregateRoot.RaiseEvent(_domainEventToRaise);
             }
-            SetMutationType(MutationType.Created);
+            return Task.FromResult(Mutation(MutationType.Created, Guid.NewGuid()));
+        }
+    }
 
-            return Task.FromResult(FlowChatResult<Guid>.Success(Guid.NewGuid()));
+    private sealed class SequencedCommandHandler
+        : AggregateRootCommandHandlerBaseV3<TestCommand, Guid, TestAggregate>
+    {
+        private readonly Queue<MutationType> _mutationTypes;
+        private readonly Guid _response;
+        private readonly IDomainError? _error;
+
+        public SequencedCommandHandler(
+            ILocalEventDispatcher localEventsDispatcher,
+            IUnitOfWork unitOfWork,
+            IEnumerable<IAggregateBeforeSaveProcessor<TestCommand, TestAggregate>> beforeSaveProcessors,
+            TestAggregate aggregate,
+            IEnumerable<MutationType> mutationTypes,
+            Guid response,
+            IDomainError? error = null)
+            : base(localEventsDispatcher, unitOfWork, beforeSaveProcessors)
+        {
+            AggregateRoot = aggregate;
+            _mutationTypes = new Queue<MutationType>(mutationTypes);
+            _response = response;
+            _error = error;
+        }
+
+        protected override Task<FlowChatResult<AggregateMutation<Guid>>> ExecuteAsync(
+            TestCommand request,
+            CancellationToken cancellationToken)
+        {
+            var result = _error is not null
+                ? Failure(_error)
+                : Mutation(_mutationTypes.Dequeue(), _response);
+
+            return Task.FromResult(result);
         }
     }
 }

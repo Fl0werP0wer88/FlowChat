@@ -36,7 +36,7 @@ public sealed class CreateGroupFromDuetCommandHandlerV2
         _profileRepository = profileRepository;
     }
 
-    protected override async Task<FlowChatResult<GroupConversationDetailDto>> ExecuteAsync(
+    protected override async Task<FlowChatResult<AggregateMutation<GroupConversationDetailDto>>> ExecuteAsync(
         CreateGroupFromDuetCommandV2 request,
         CancellationToken cancellationToken)
     {
@@ -49,7 +49,7 @@ public sealed class CreateGroupFromDuetCommandHandlerV2
 
         if (duet is null)
         {
-            return FlowChatResult<GroupConversationDetailDto>.Failure(
+            return Failure(
                 DomainError.NotFound("Duet conversation not found."));
         }
 
@@ -60,7 +60,7 @@ public sealed class CreateGroupFromDuetCommandHandlerV2
         if (duetParticipants.Count != 2 ||
             expectedIds.Any(id => duetParticipants.All(participant => participant.UserId != id)))
         {
-            return FlowChatResult<GroupConversationDetailDto>.Failure(
+            return Failure(
                 DomainError.NotFound("Duet conversation participants were not found."));
         }
 
@@ -76,7 +76,6 @@ public sealed class CreateGroupFromDuetCommandHandlerV2
             $"{firstName}/{secondName}");
 
         await _conversationRepository.AddAsync(_conversation, expectedIds, cancellationToken);
-        SetInserted();
 
         var profiles = await _profileRepository.GetByIdsAsync(
             expectedIds.Select(x => x.Value).ToList(),
@@ -94,7 +93,7 @@ public sealed class CreateGroupFromDuetCommandHandlerV2
             })
             .ToArray();
 
-        return FlowChatResult<GroupConversationDetailDto>.Success(
+        return Created(
             new GroupConversationDetailDto(_conversation.Id.Value, _conversation.Name!, participants));
     }
 

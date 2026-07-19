@@ -20,5 +20,6 @@ public abstract class AggregateRootDeleteCommandHandlerBaseV3<TCommand, TRespons
     {
     }
 
-    protected void SetDeleted() => SetMutationType(MutationType.Deleted);
+    protected static FlowChatResult<AggregateMutation<TResponse>> Deleted(TResponse response) =>
+        Mutation(MutationType.Deleted, response);
 }

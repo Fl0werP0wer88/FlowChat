@@ -31,7 +31,7 @@ public sealed class SendChatMessageCommandHandler
         _conversationWriteRepository = conversationWriteRepository ?? throw new ArgumentNullException(nameof(conversationWriteRepository));
     }
 
-    protected override async Task<FlowChatResult<SendChatMessageCommandResult>> ExecuteAsync(
+    protected override async Task<FlowChatResult<AggregateMutation<SendChatMessageCommandResult>>> ExecuteAsync(
         SendChatMessageCommand request,
         CancellationToken cancellationToken)
     {
@@ -40,17 +40,17 @@ public sealed class SendChatMessageCommandHandler
             cancellationToken);
 
         if (participantStates is null)
-            return FlowChatResult<SendChatMessageCommandResult>.Failure(DomainError.NotFound("Conversation not found."));
+            return Failure(DomainError.NotFound("Conversation not found."));
 
         if (participantStates.All(p => p.UserId != request.SenderUserId))
-            return FlowChatResult<SendChatMessageCommandResult>.Failure(DomainError.Unauthorized("Sender is not a participant of this conversation."));
+            return Failure(DomainError.Unauthorized("Sender is not a participant of this conversation."));
 
         var recipients = participantStates
             .Where(p => p.UserId != request.SenderUserId && p.UserId != Guid.Empty)
             .ToArray();
 
         if (recipients.Any(r => r.IsBlocked))
-            return FlowChatResult<SendChatMessageCommandResult>.Failure(DomainError.Unauthorized("Recipient has blocked this conversation."));
+            return Failure(DomainError.Unauthorized("Recipient has blocked this conversation."));
 
         var hiddenRecipientIds = recipients.Where(r => r.IsHidden).Select(r => r.UserId).ToArray();
         if (hiddenRecipientIds.Length > 0)
@@ -81,9 +81,8 @@ public sealed class SendChatMessageCommandHandler
             recipientUserIds.Select(Id<UserProfileMarker>.FromGuid));
 
         await _chatMessageRepository.AddAsync(_chatMessage, cancellationToken);
-        SetInserted();
 
-        return FlowChatResult<SendChatMessageCommandResult>.Success(
+        return Created(
             new SendChatMessageCommandResult(_chatMessage.Id.Value, _chatMessage.SentAtUtc.Value));
     }
 

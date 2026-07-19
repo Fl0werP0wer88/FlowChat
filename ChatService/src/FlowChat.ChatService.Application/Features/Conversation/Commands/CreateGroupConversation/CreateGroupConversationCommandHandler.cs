@@ -34,7 +34,7 @@ public sealed class CreateGroupConversationCommandHandler
         _sequenceRepository = sequenceRepository ?? throw new ArgumentNullException(nameof(sequenceRepository));
     }
 
-    protected override async Task<FlowChatResult<GroupConversationDetailDto>> ExecuteAsync(
+    protected override async Task<FlowChatResult<AggregateMutation<GroupConversationDetailDto>>> ExecuteAsync(
         CreateGroupConversationCommand request,
         CancellationToken cancellationToken)
     {
@@ -46,7 +46,6 @@ public sealed class CreateGroupConversationCommandHandler
 
         await _conversationWriteRepository.AddAsync(_conversation, cancellationToken);
         await _sequenceRepository.AddAsync(_conversation.Id.Value, cancellationToken);
-        SetInserted();
 
         var participantUserIds = _conversation.Participants.Select(p => p.UserId.Value).ToList();
         var profiles = await _profileReadRepository.GetByIdsAsync(participantUserIds, cancellationToken);
@@ -59,7 +58,7 @@ public sealed class CreateGroupConversationCommandHandler
             })
             .ToList();
 
-        return FlowChatResult<GroupConversationDetailDto>.Success(
+        return Created(
             new GroupConversationDetailDto(_conversation.Id.Value, _conversation.Name!, participantDtos));
     }
 

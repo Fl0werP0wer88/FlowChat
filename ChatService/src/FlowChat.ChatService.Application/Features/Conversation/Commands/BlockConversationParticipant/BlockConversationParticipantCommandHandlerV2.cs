@@ -31,15 +31,14 @@ public sealed class BlockConversationParticipantCommandHandlerV2(
             : FlowChatResult<ConversationParticipant?>.Success(participant);
     }
 
-    protected override Task<FlowChatResult<Unit>> ExecuteAsync(
+    protected override Task<FlowChatResult<AggregateMutation<Unit>>> ExecuteAsync(
         BlockConversationParticipantCommandV2 request,
         CancellationToken cancellationToken)
     {
         if (AggregateRoot!.IsBlocked)
-            return Task.FromResult(FlowChatResult<Unit>.Failure(DomainError.Conflict("Participant is already blocked.")));
+            return Task.FromResult(Failure(DomainError.Conflict("Participant is already blocked.")));
 
         AggregateRoot.Block();
-        SetUpdated();
-        return Task.FromResult(FlowChatResult<Unit>.Success(Unit.Value));
+        return Task.FromResult(Updated(Unit.Value));
     }
 }

@@ -34,22 +34,23 @@ public sealed class ChangeUserPresencePreferencesCommandHandler
         return FlowChatResult<UserPresencePreferences?>.Success(preferences);
     }
 
-    protected override async Task<FlowChatResult<Unit>> ExecuteAsync(
+    protected override async Task<FlowChatResult<AggregateMutation<Unit>>> ExecuteAsync(
         ChangeUserPresencePreferencesCommand request,
         CancellationToken cancellationToken)
     {
+        var mutationType = FlowChat.Shared.Domain.MutationType.Unchanged;
         if (AggregateRoot is null)
         {
             AggregateRoot = UserPresencePreferences.Create(request.UserId, request.Status);
             await _userPresencePreferencesWriteRepository.AddAsync(AggregateRoot, cancellationToken);
-            SetInserted();
+            mutationType = FlowChat.Shared.Domain.MutationType.Created;
         }
         else
         {
             AggregateRoot.SetPreferredStatus(request.Status);
-            SetUpdated();
+            mutationType = FlowChat.Shared.Domain.MutationType.Updated;
         }
 
-        return FlowChatResult<Unit>.Success(Unit.Value);
+        return Mutation(mutationType, Unit.Value);
     }
 }

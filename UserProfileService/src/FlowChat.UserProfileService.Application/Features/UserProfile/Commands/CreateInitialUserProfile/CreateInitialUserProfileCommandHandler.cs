@@ -28,7 +28,7 @@ public sealed class CreateInitialUserProfileCommandHandler
         _userProfileWriteRepository = userProfileWriteRepository;
     }
 
-    protected override async Task<FlowChatResult<Guid>> ExecuteAsync(
+    protected override async Task<FlowChatResult<AggregateMutation<Guid>>> ExecuteAsync(
         CreateInitialUserProfileCommand request,
         CancellationToken cancellationToken)
     {
@@ -49,7 +49,7 @@ public sealed class CreateInitialUserProfileCommandHandler
 
         if (friendlyUserIdExists)
         {
-            return FlowChatResult<Guid>.Failure(DomainError.Conflict($"FriendlyUserId '{friendlyUserId}' already exists."));
+            return Failure(DomainError.Conflict($"FriendlyUserId '{friendlyUserId}' already exists."));
         }
 
         var emailExists = await _userProfileReadRepository
@@ -57,7 +57,7 @@ public sealed class CreateInitialUserProfileCommandHandler
 
         if (emailExists)
         {
-            return FlowChatResult<Guid>.Failure(DomainError.Conflict($"Email '{emailAddress.Value}' already exists."));
+            return Failure(DomainError.Conflict($"Email '{emailAddress.Value}' already exists."));
         }
 
         var userProfileId = Id<UserProfileAggregate>.FromGuid(request.UserId);
@@ -70,9 +70,8 @@ public sealed class CreateInitialUserProfileCommandHandler
             organization: organization);
 
         await _userProfileWriteRepository.AddAsync(_userProfile, cancellationToken);
-        SetInserted();
 
-        return FlowChatResult<Guid>.Success(_userProfile.Id.Value);
+        return Created(_userProfile.Id.Value);
     }
 
     protected override UserProfileAggregate GetAggregateRoot() =>

@@ -31,7 +31,7 @@ public sealed class UserEmailVerificationRequestedCommandHandler
         _notificationSender = notificationSender;
     }
 
-    protected override async Task<FlowChatResult<Unit>> ExecuteAsync(
+    protected override async Task<FlowChatResult<AggregateMutation<Unit>>> ExecuteAsync(
         UserEmailVerificationRequestedCommand request,
         CancellationToken cancellationToken)
     {
@@ -59,16 +59,15 @@ public sealed class UserEmailVerificationRequestedCommandHandler
 
         if (!sendResult.IsSuccess)
         {
-            return FlowChatResult<Unit>.Failure(
+            return Failure(
                 DomainError.UnExpected(
                     $"Email delivery failed for user '{request.UserId}': {sendResult.Error ?? "unknown error"}"));
         }
 
         _notification.MarkSent(sendResult.ProviderMessageId);
         await _notificationWriteRepository.AddAsync(_notification, cancellationToken);
-        SetInserted();
 
-        return FlowChatResult<Unit>.Success(Unit.Value);
+        return Created(Unit.Value);
     }
 
     protected override NotificationEntity GetAggregateRoot() =>

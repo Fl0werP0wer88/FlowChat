@@ -33,7 +33,7 @@ public sealed class CreateDuetConversationCommandHandler
         _sequenceRepository = sequenceRepository ?? throw new ArgumentNullException(nameof(sequenceRepository));
     }
 
-    protected override async Task<FlowChatResult<DuetConversationDetailDto>> ExecuteAsync(
+    protected override async Task<FlowChatResult<AggregateMutation<DuetConversationDetailDto>>> ExecuteAsync(
         CreateDuetConversationCommand request,
         CancellationToken cancellationToken)
     {
@@ -43,7 +43,6 @@ public sealed class CreateDuetConversationCommandHandler
 
         await _duetConversationWriteRepository.AddAsync(_newConversation, cancellationToken);
         await _sequenceRepository.AddAsync(_newConversation.Id.Value, cancellationToken);
-        SetInserted();
 
         var participantUserIds = _newConversation.Participants.Select(p => p.UserId.Value).ToList();
         var profiles = await _profileReadRepository.GetByIdsAsync(participantUserIds, cancellationToken);
@@ -56,7 +55,7 @@ public sealed class CreateDuetConversationCommandHandler
             })
             .ToList();
 
-        return FlowChatResult<DuetConversationDetailDto>.Success(
+        return Created(
             new DuetConversationDetailDto(_newConversation.Id.Value, participantDtos));
     }
 

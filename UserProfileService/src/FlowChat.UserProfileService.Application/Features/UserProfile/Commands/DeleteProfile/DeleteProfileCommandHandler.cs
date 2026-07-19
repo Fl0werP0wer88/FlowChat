@@ -35,13 +35,12 @@ public sealed class DeleteProfileCommandHandler
         return FlowChatResult<UserProfileAggregate?>.Success(userProfile);
     }
 
-    protected override async Task<FlowChatResult<Guid>> ExecuteAsync(
+    protected override async Task<FlowChatResult<AggregateMutation<Guid>>> ExecuteAsync(
         DeleteProfileCommand request,
         CancellationToken cancellationToken)
     {
         await _userProfileRepository.SoftDeleteAsync(AggregateRoot!, cancellationToken);
-        SetDeleted();
 
-        return FlowChatResult<Guid>.Success(AggregateRoot!.Id.Value);
+        return Deleted(AggregateRoot!.Id.Value);
     }
 }

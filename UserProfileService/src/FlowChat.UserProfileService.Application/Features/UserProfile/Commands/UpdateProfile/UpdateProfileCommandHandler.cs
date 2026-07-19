@@ -36,13 +36,14 @@ public sealed class UpdateProfileCommandHandler
         return FlowChatResult<UserProfileAggregate?>.Success(userProfile);
     }
 
-    protected override Task<FlowChatResult<Guid>> ExecuteAsync(
+    protected override Task<FlowChatResult<AggregateMutation<Guid>>> ExecuteAsync(
         UpdateProfileCommand request,
         CancellationToken cancellationToken)
     {
+        var mutationType = FlowChat.Shared.Domain.MutationType.Unchanged;
         if (HasProfileChanged(request, AggregateRoot!))
         {
-            SetUpdated();
+            mutationType = FlowChat.Shared.Domain.MutationType.Updated;
         }
 
         AggregateRoot!.UpdateProfile(
@@ -53,7 +54,7 @@ public sealed class UpdateProfileCommandHandler
             request.Bio,
             request.IsActive);
 
-        return Task.FromResult(FlowChatResult<Guid>.Success(AggregateRoot!.Id.Value));
+        return Task.FromResult(Mutation(mutationType, AggregateRoot!.Id.Value));
     }
 
     private static bool HasProfileChanged(UpdateProfileCommand request, UserProfileAggregate userProfile)

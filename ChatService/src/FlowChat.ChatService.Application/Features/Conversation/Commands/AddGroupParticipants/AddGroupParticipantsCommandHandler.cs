@@ -38,7 +38,7 @@ public sealed class AddGroupParticipantsCommandHandler
         return FlowChatResult<GroupConversation?>.Success(conversation);
     }
 
-    protected override async Task<FlowChatResult<Unit>> ExecuteAsync(
+    protected override async Task<FlowChatResult<AggregateMutation<Unit>>> ExecuteAsync(
         AddGroupParticipantsCommand request,
         CancellationToken cancellationToken)
     {
@@ -50,7 +50,7 @@ public sealed class AddGroupParticipantsCommandHandler
 
         if (newParticipantUserIds.Count == 0)
         {
-            return FlowChatResult<Unit>.Success(Unit.Value);
+            return Unchanged(Unit.Value);
         }
 
         var maxSequenceNum = await _chatMessageRepository.GetMaxSequenceNumAsync(
@@ -63,8 +63,7 @@ public sealed class AddGroupParticipantsCommandHandler
             displayName: null,
             lastReadMessageSequenceNum);
 
-        SetUpdated();
 
-        return FlowChatResult<Unit>.Success(Unit.Value);
+        return Updated(Unit.Value);
     }
 }

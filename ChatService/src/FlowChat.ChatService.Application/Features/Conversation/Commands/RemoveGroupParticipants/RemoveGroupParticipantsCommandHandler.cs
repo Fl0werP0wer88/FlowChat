@@ -37,7 +37,7 @@ public sealed class RemoveGroupParticipantsCommandHandler
         return FlowChatResult<GroupConversation?>.Success(conversation);
     }
 
-    protected override Task<FlowChatResult<Unit>> ExecuteAsync(
+    protected override Task<FlowChatResult<AggregateMutation<Unit>>> ExecuteAsync(
         RemoveGroupParticipantsCommand request,
         CancellationToken cancellationToken)
     {
@@ -48,20 +48,19 @@ public sealed class RemoveGroupParticipantsCommandHandler
 
         if (participantUserIdsToRemove.Any(participantUserId => AggregateRoot!.Participants.All(p => p.UserId != participantUserId)))
         {
-            return Task.FromResult(FlowChatResult<Unit>.Failure(
+            return Task.FromResult(Failure(
                 DomainError.BadRequest("User is not a participant in this conversation.")));
         }
 
         if (AggregateRoot!.Participants.Count - participantUserIdsToRemove.Count < MinimumParticipantsCount)
         {
-            return Task.FromResult(FlowChatResult<Unit>.Failure(
+            return Task.FromResult(Failure(
                 DomainError.BadRequest("Group conversations must have at least two participants.")));
         }
 
         AggregateRoot.RemoveParticipants(participantUserIdsToRemove);
 
-        SetUpdated();
 
-        return Task.FromResult(FlowChatResult<Unit>.Success(Unit.Value));
+        return Task.FromResult(Updated(Unit.Value));
     }
 }

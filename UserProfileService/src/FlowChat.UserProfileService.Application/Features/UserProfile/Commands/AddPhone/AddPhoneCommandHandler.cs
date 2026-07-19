@@ -47,18 +47,17 @@ public sealed class AddPhoneCommandHandler
         return FlowChatResult<UserProfileAggregate?>.Success(userProfile);
     }
 
-    protected override Task<FlowChatResult<Guid>> ExecuteAsync(
+    protected override Task<FlowChatResult<AggregateMutation<Guid>>> ExecuteAsync(
         AddPhoneCommand request,
         CancellationToken cancellationToken)
     {
         if (AggregateRoot!.Phones.Any(x => x.Number == _normalizedPhoneNumber))
         {
-            return Task.FromResult(FlowChatResult<Guid>.Failure(DomainError.Conflict($"Phone '{_normalizedPhoneNumber!.Value}' already exists.")));
+            return Task.FromResult(Failure(DomainError.Conflict($"Phone '{_normalizedPhoneNumber!.Value}' already exists.")));
         }
 
         var phone = AggregateRoot.AddPhone(Id<DomainPhone>.FromGuid(request.PhoneId), _normalizedPhoneNumber!);
-        SetUpdated();
 
-        return Task.FromResult(FlowChatResult<Guid>.Success(phone.Id.Value));
+        return Task.FromResult(Updated(phone.Id.Value));
     }
 }

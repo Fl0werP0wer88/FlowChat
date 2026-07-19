@@ -31,7 +31,7 @@ public sealed class CreateGroupConversationCommandHandlerV2
         _profileRepository = profileRepository;
     }
 
-    protected override async Task<FlowChatResult<GroupConversationDetailDto>> ExecuteAsync(
+    protected override async Task<FlowChatResult<AggregateMutation<GroupConversationDetailDto>>> ExecuteAsync(
         CreateGroupConversationCommandV2 request,
         CancellationToken cancellationToken)
     {
@@ -48,7 +48,6 @@ public sealed class CreateGroupConversationCommandHandlerV2
             request.Name);
 
         await _conversationRepository.AddAsync(_conversation, participantIds, cancellationToken);
-        SetInserted();
 
         var profiles = await _profileRepository.GetByIdsAsync(
             participantIds.Select(x => x.Value).ToList(),
@@ -62,7 +61,7 @@ public sealed class CreateGroupConversationCommandHandlerV2
             })
             .ToArray();
 
-        return FlowChatResult<GroupConversationDetailDto>.Success(
+        return Created(
             new GroupConversationDetailDto(_conversation.Id.Value, _conversation.Name!, participants));
     }
 

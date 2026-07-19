@@ -45,7 +45,6 @@ public sealed class ConversationParticipantRemovedDomainEventHandlerV2
         ConversationParticipantRemovedDomainEventV2 notification,
         CancellationToken cancellationToken)
     {
-        //Review2-8: Dlaczego tutaj nie jest robiomne utuchaamiana metoda Delete na agregacie ? Po SaveChangesAsync() ConversationParticipant dalej nie berdzie soft delted.
         SetDeleted();
         return Task.FromResult(FlowChatResult.Success());
     }

@@ -31,19 +31,20 @@ public sealed class MuteConversationParticipantCommandHandler(
         return FlowChatResult<DuetConversationAggregate?>.Success(conversation);
     }
 
-    protected override Task<FlowChatResult<Unit>> ExecuteAsync(
+    protected override Task<FlowChatResult<AggregateMutation<Unit>>> ExecuteAsync(
         MuteConversationParticipantCommand request,
         CancellationToken cancellationToken)
     {
+        var mutationType = FlowChat.Shared.Domain.MutationType.Unchanged;
         var requestingUserId = Id<UserProfileMarker>.FromGuid(request.RequestingUserId);
         if (!AggregateRoot!.HasParticipant(requestingUserId))
-            return Task.FromResult(FlowChatResult<Unit>.Failure(DomainError.Unauthorized("Requesting user is not a participant of this conversation.")));
+            return Task.FromResult(Failure(DomainError.Unauthorized("Requesting user is not a participant of this conversation.")));
 
         if (AggregateRoot.MuteParticipant(requestingUserId))
         {
-            SetUpdated();
+            mutationType = FlowChat.Shared.Domain.MutationType.Updated;
         }
 
-        return Task.FromResult(FlowChatResult<Unit>.Success(Unit.Value));
+        return Task.FromResult(Mutation(mutationType, Unit.Value));
     }
 }
