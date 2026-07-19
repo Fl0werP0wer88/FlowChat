@@ -1,5 +1,6 @@
 using FlowChat.ChatService.Persistence;
 using FlowChat.ChatService.Infrastructure.Configuration.Settings;
+using FlowChat.ChatService.Application.Contracts.Messaging;
 using FlowChat.Core.Messaging;
 using FlowChat.Core.Messaging.ChatService.Events;
 using FlowChat.Core.Messaging.ChatService.ReadModels;
@@ -26,6 +27,14 @@ public static class ApiSilverbackServiceRegistration
             .Get<GroupConversationProjectionProducerSettingsSection>() ?? new GroupConversationProjectionProducerSettingsSection();
         var duetConversationProjectionProducerOptions = configuration.GetSection(new DuetConversationProjectionProducerSettingsSection().SectionName)
             .Get<DuetConversationProjectionProducerSettingsSection>() ?? new DuetConversationProjectionProducerSettingsSection();
+        var conversationV2Options = configuration.GetSection(new ConversationV2ProducerSettingsSection().SectionName)
+            .Get<ConversationV2ProducerSettingsSection>() ?? new ConversationV2ProducerSettingsSection();
+        var membershipV2Options = configuration.GetSection(new ConversationMembershipV2ProjectionProducerSettingsSection().SectionName)
+            .Get<ConversationMembershipV2ProjectionProducerSettingsSection>() ?? new ConversationMembershipV2ProjectionProducerSettingsSection();
+        var participantV2Options = configuration.GetSection(new ConversationParticipantV2ProducerSettingsSection().SectionName)
+            .Get<ConversationParticipantV2ProducerSettingsSection>() ?? new ConversationParticipantV2ProducerSettingsSection();
+        var messageV2Options = configuration.GetSection(new ChatMessageV2ProducerSettingsSection().SectionName)
+            .Get<ChatMessageV2ProducerSettingsSection>() ?? new ChatMessageV2ProducerSettingsSection();
 
         services.AddSilverback()
             .AddSingletonBrokerBehavior<CustomSpanAttributesProducerBehavior>()
@@ -60,6 +69,26 @@ public static class ApiSilverbackServiceRegistration
                     .AddProducer(producer => producer
                         .Produce<ProjectionIntegrationEvent<DuetConversationContactStateReadModel>>("duet-conversation-contact-state-projection", endpoint => endpoint
                             .ProduceTo(duetConversationProjectionProducerOptions.Topic)
+                            .SerializeAsJson(serializer => serializer.SetTypeHeader())
+                            .StoreToOutbox(outbox => outbox.UseEntityFramework<AppDbContext>())))
+                    .AddProducer(producer => producer
+                        .Produce<ConversationChangedIntegrationEventV2>("conversation-v2", endpoint => endpoint
+                            .ProduceTo(conversationV2Options.Topic)
+                            .SerializeAsJson(serializer => serializer.SetTypeHeader())
+                            .StoreToOutbox(outbox => outbox.UseEntityFramework<AppDbContext>())))
+                    .AddProducer(producer => producer
+                        .Produce<DeltaProjectionIntegrationEvent<ConversationMembershipReadModelV2>>("conversation-membership-v2-projection", endpoint => endpoint
+                            .ProduceTo(membershipV2Options.Topic)
+                            .SerializeAsJson(serializer => serializer.SetTypeHeader())
+                            .StoreToOutbox(outbox => outbox.UseEntityFramework<AppDbContext>())))
+                    .AddProducer(producer => producer
+                        .Produce<ConversationParticipantChangedIntegrationEventV2>("conversation-participant-v2", endpoint => endpoint
+                            .ProduceTo(participantV2Options.Topic)
+                            .SerializeAsJson(serializer => serializer.SetTypeHeader())
+                            .StoreToOutbox(outbox => outbox.UseEntityFramework<AppDbContext>())))
+                    .AddProducer(producer => producer
+                        .Produce<ChatMessageSentIntegrationEventV2>("chat-message-v2", endpoint => endpoint
+                            .ProduceTo(messageV2Options.Topic)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())
                             .StoreToOutbox(outbox => outbox.UseEntityFramework<AppDbContext>())));
             });

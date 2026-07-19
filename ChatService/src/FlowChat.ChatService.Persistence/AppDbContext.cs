@@ -26,11 +26,17 @@ public sealed class AppDbContext : DbContext
     }
 
     public DbSet<ChatMessage> ChatMessages => Set<ChatMessage>();
+    public DbSet<ChatMessageV2> ChatMessagesV2 => Set<ChatMessageV2>();
     public DbSet<Conversation> Conversations => Set<Conversation>();
+    public DbSet<ConversationV2> ConversationsV2 => Set<ConversationV2>();
+    public DbSet<ConversationMembership> ConversationMembershipsV2 => Set<ConversationMembership>();
+    public DbSet<ConversationParticipant> ConversationParticipantsV2 => Set<ConversationParticipant>();
     public DbSet<ConversationMessageSequenceEntity> ConversationMessageSequences => Set<ConversationMessageSequenceEntity>();
+    public DbSet<ConversationMessageSequenceEntityV2> ConversationMessageSequencesV2 => Set<ConversationMessageSequenceEntityV2>();
     public DbSet<SilverbackOutboxMessage> SilverbackOutboxMessages => Set<SilverbackOutboxMessage>();
     public DbSet<UserProfileReadModelEntity> UserProfileProjections => Set<UserProfileReadModelEntity>();
     public DbSet<DuetConversationLookupEntity> DuetConversations => Set<DuetConversationLookupEntity>();
+    public DbSet<DuetConversationLookupEntityV2> DuetConversationsV2 => Set<DuetConversationLookupEntityV2>();
     public DbSet<ConversationReadEntity> ConversationReads => Set<ConversationReadEntity>();
     public DbSet<ParticipantUserReadEntity> ParticipantUserReads => Set<ParticipantUserReadEntity>();
     public DbSet<ChatMessageReadEntity> ChatMessageReads => Set<ChatMessageReadEntity>();

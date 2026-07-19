@@ -1,4 +1,5 @@
 using FlowChat.ChatService.Infrastructure;
+using FlowChat.ChatService.Application.Contracts.Messaging;
 using FlowChat.ChatService.Infrastructure.Configuration.Settings;
 using FlowChat.Core.Messaging;
 using FlowChat.Core.Messaging.ChatService.ReadModels;
@@ -37,5 +38,27 @@ public sealed class KafkaProducerConfigurationTests
         contactStateSettings.Should().NotBeNull();
         membershipSettings!.Topic.Should().Be(projectionTopic);
         contactStateSettings!.Topic.Should().Be(projectionTopic);
+    }
+
+    [Fact]
+    public void AddApiInfrastructureServices_RegistersAllV2TypesOnIsolatedTopics()
+    {
+        var configuration = new ConfigurationBuilder().AddInMemoryCollection().Build();
+        var services = new ServiceCollection();
+        services.AddOptions();
+        services.AddLogging();
+        services.AddApiInfrastructureServices(configuration);
+
+        using var serviceProvider = services.BuildServiceProvider();
+        var registry = serviceProvider.GetRequiredService<KafkaProducerSettingsRegistry>();
+
+        registry.Get<ConversationChangedIntegrationEventV2>()!.Topic
+            .Should().Be("dev.flowchat.chat.conversation-v2.v1");
+        registry.Get<DeltaProjectionIntegrationEvent<ConversationMembershipReadModelV2>>()!.Topic
+            .Should().Be("dev.flowchat.chat.conversation-membership-v2-projection.v1");
+        registry.Get<ConversationParticipantChangedIntegrationEventV2>()!.Topic
+            .Should().Be("dev.flowchat.chat.conversation-participant-v2.v1");
+        registry.Get<ChatMessageSentIntegrationEventV2>()!.Topic
+            .Should().Be("dev.flowchat.chat.message-v2.v1");
     }
 }

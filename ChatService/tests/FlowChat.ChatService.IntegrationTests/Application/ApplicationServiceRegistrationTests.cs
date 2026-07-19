@@ -10,6 +10,8 @@ using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using DuetConversationAggregate = FlowChat.ChatService.Domain.Entities.Conversation.DuetConversation;
+using FlowChat.ChatService.Application.Features.Conversation.Commands.AddGroupParticipants;
+using FlowChat.ChatService.Domain.Entities.Conversation;
 
 namespace FlowChat.ChatService.IntegrationTests.Application;
 
@@ -62,6 +64,20 @@ public sealed class ApplicationServiceRegistrationTests
             .Subject;
 
         processor.Should().BeOfType<DuetConversationContactStateProjectionProcessor<UnblockConversationParticipantCommand>>();
+    }
+
+    [Fact]
+    public void AddApiApplicationServices_ForAddParticipantsV2_RegistersSingleMembershipDeltaProcessor()
+    {
+        using var serviceProvider = CreateServiceProvider();
+
+        var processor = serviceProvider
+            .GetServices<IAggregateBeforeSaveProcessor<AddGroupParticipantsCommandV2, ConversationMembership>>()
+            .Should()
+            .ContainSingle()
+            .Subject;
+
+        processor.Should().BeOfType<AddConversationMembershipDeltaProcessorV2>();
     }
 
     private static ServiceProvider CreateServiceProvider()

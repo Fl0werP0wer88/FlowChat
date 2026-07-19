@@ -1,4 +1,5 @@
 using FlowChat.ChatService.Infrastructure.Configuration.Settings;
+using FlowChat.ChatService.Application.Contracts.Messaging;
 using FlowChat.Core.Messaging;
 using FlowChat.Core.Messaging.ChatService.Events;
 using FlowChat.Core.Messaging.ChatService.ReadModels;
@@ -31,7 +32,11 @@ internal static class CommonInfrastructureServiceRegistration
             .AddProducerSettings<GroupConversationChangedIntegrationEvent, GroupConversationChangedProducerSettingsSection>()
             .AddProducerSettings<DeltaProjectionIntegrationEvent<GroupConversationMembershipReadModel>, GroupConversationProjectionProducerSettingsSection>()
             .AddProducerSettings<ProjectionIntegrationEvent<DuetConversationMembershipReadModel>, DuetConversationProjectionProducerSettingsSection>()
-            .AddProducerSettings<ProjectionIntegrationEvent<DuetConversationContactStateReadModel>, DuetConversationProjectionProducerSettingsSection>());
+            .AddProducerSettings<ProjectionIntegrationEvent<DuetConversationContactStateReadModel>, DuetConversationProjectionProducerSettingsSection>()
+            .AddProducerSettings<ConversationChangedIntegrationEventV2, ConversationV2ProducerSettingsSection>()
+            .AddProducerSettings<DeltaProjectionIntegrationEvent<ConversationMembershipReadModelV2>, ConversationMembershipV2ProjectionProducerSettingsSection>()
+            .AddProducerSettings<ConversationParticipantChangedIntegrationEventV2, ConversationParticipantV2ProducerSettingsSection>()
+            .AddProducerSettings<ChatMessageSentIntegrationEventV2, ChatMessageV2ProducerSettingsSection>());
 
         return services;
     }
