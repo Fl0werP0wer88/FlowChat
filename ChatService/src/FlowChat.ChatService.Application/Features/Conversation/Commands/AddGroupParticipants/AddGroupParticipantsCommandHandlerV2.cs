@@ -44,15 +44,6 @@ public sealed class AddGroupParticipantsCommandHandlerV2(
             return FlowChatResult<Unit>.Failure(
                 DomainError.BadRequest("Participants can only be added to group conversations."));
         }
-        //Review2-4: Ta walidaja wygląda jakby mogla wyleciec do AddGroupParticipantsCommandValidatorV2 
-        if (request.ParticipantUserIds.Count == 0 ||
-            request.ParticipantUserIds.Any(x => x == Guid.Empty) ||
-            request.ParticipantUserIds.Distinct().Count() != request.ParticipantUserIds.Count)
-        {
-            return FlowChatResult<Unit>.Failure(
-                DomainError.BadRequest("Participant user ids must be non-empty and cannot contain duplicates."));
-        }
-
         var conversationId = Id<ConversationV2>.FromGuid(request.ConversationId);
         var participantIds = request.ParticipantUserIds
             .Select(Id<UserProfileMarker>.FromGuid)

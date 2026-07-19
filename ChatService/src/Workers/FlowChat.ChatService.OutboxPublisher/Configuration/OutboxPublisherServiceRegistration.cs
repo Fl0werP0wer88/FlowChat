@@ -115,7 +115,7 @@ public static class OutboxPublisherServiceRegistration
                             .ProduceTo(duetConversationProjectionProducerOptions.Topic)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())))
                     .AddProducer(producer => producer
-                        .Produce<ConversationChangedIntegrationEventV2>("conversation-v2", endpoint => endpoint
+                        .Produce<ProjectionIntegrationEvent<ConversationReadModelV2>>("conversation-v2-projection", endpoint => endpoint
                             .ProduceTo(conversationV2Options.Topic)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())))
                     .AddProducer(producer => producer
@@ -123,7 +123,7 @@ public static class OutboxPublisherServiceRegistration
                             .ProduceTo(membershipV2Options.Topic)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())))
                     .AddProducer(producer => producer
-                        .Produce<ConversationParticipantChangedIntegrationEventV2>("conversation-participant-v2", endpoint => endpoint
+                        .Produce<ProjectionIntegrationEvent<ConversationParticipantReadModelV2>>("conversation-participant-v2-projection", endpoint => endpoint
                             .ProduceTo(participantV2Options.Topic)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())))
                     .AddProducer(producer => producer

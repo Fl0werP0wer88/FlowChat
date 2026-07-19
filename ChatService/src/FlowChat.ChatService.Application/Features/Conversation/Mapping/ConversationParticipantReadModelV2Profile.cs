@@ -1,0 +1,17 @@
+using AutoMapper;
+using FlowChat.ChatService.Application.Contracts.Messaging;
+using FlowChat.ChatService.Domain.Entities.Conversation;
+
+namespace FlowChat.ChatService.Application.Features.Conversation.Mapping;
+
+public sealed class ConversationParticipantReadModelV2Profile : Profile
+{
+    public ConversationParticipantReadModelV2Profile()
+    {
+        CreateMap<ConversationParticipant, ConversationParticipantReadModelV2>()
+            .ForMember(x => x.ParticipantId, options => options.MapFrom(x => x.Id.Value))
+            .ForMember(x => x.ConversationId, options => options.MapFrom(x => x.ConversationId.Value))
+            .ForMember(x => x.UserId, options => options.MapFrom(x => x.UserId.Value))
+            .ForMember(x => x.JoinedAtUtc, options => options.MapFrom(x => x.JoinedAtUtc.Value));
+    }
+}

@@ -52,12 +52,12 @@ public sealed class KafkaProducerConfigurationTests
         using var serviceProvider = services.BuildServiceProvider();
         var registry = serviceProvider.GetRequiredService<KafkaProducerSettingsRegistry>();
 
-        registry.Get<ConversationChangedIntegrationEventV2>()!.Topic
-            .Should().Be("dev.flowchat.chat.conversation-v2.v1");
+        registry.Get<ProjectionIntegrationEvent<ConversationReadModelV2>>()!.Topic
+            .Should().Be("dev.flowchat.chat.conversation-v2-projection.v1");
         registry.Get<DeltaProjectionIntegrationEvent<ConversationMembershipReadModelV2>>()!.Topic
             .Should().Be("dev.flowchat.chat.conversation-membership-v2-projection.v1");
-        registry.Get<ConversationParticipantChangedIntegrationEventV2>()!.Topic
-            .Should().Be("dev.flowchat.chat.conversation-participant-v2.v1");
+        registry.Get<ProjectionIntegrationEvent<ConversationParticipantReadModelV2>>()!.Topic
+            .Should().Be("dev.flowchat.chat.conversation-participant-v2-projection.v1");
         registry.Get<ChatMessageSentIntegrationEventV2>()!.Topic
             .Should().Be("dev.flowchat.chat.message-v2.v1");
     }

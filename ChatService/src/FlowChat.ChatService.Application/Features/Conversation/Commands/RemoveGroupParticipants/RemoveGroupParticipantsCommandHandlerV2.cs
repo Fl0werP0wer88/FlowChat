@@ -38,15 +38,6 @@ public sealed class RemoveGroupParticipantsCommandHandlerV2(
         RemoveGroupParticipantsCommandV2 request,
         CancellationToken cancellationToken)
     {
-        //Review2-6: Ta walidacja wygląda jakby mogla wyleciec do RemoveGroupParticipantsCommandValidatorV2. Oceń pomysł
-        if (request.ParticipantUserIds.Count == 0 ||
-            request.ParticipantUserIds.Any(x => x == Guid.Empty) ||
-            request.ParticipantUserIds.Distinct().Count() != request.ParticipantUserIds.Count)
-        {
-            return FlowChatResult<Unit>.Failure(
-                DomainError.BadRequest("Participant user ids must be non-empty and cannot contain duplicates."));
-        }
-
         var conversationId = Id<ConversationV2>.FromGuid(request.ConversationId);
         var participantIds = request.ParticipantUserIds
             .Select(Id<UserProfileMarker>.FromGuid)

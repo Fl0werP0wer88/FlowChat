@@ -72,7 +72,7 @@ public static class ApiSilverbackServiceRegistration
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())
                             .StoreToOutbox(outbox => outbox.UseEntityFramework<AppDbContext>())))
                     .AddProducer(producer => producer
-                        .Produce<ConversationChangedIntegrationEventV2>("conversation-v2", endpoint => endpoint
+                        .Produce<ProjectionIntegrationEvent<ConversationReadModelV2>>("conversation-v2-projection", endpoint => endpoint
                             .ProduceTo(conversationV2Options.Topic)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())
                             .StoreToOutbox(outbox => outbox.UseEntityFramework<AppDbContext>())))
@@ -82,7 +82,7 @@ public static class ApiSilverbackServiceRegistration
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())
                             .StoreToOutbox(outbox => outbox.UseEntityFramework<AppDbContext>())))
                     .AddProducer(producer => producer
-                        .Produce<ConversationParticipantChangedIntegrationEventV2>("conversation-participant-v2", endpoint => endpoint
+                        .Produce<ProjectionIntegrationEvent<ConversationParticipantReadModelV2>>("conversation-participant-v2-projection", endpoint => endpoint
                             .ProduceTo(participantV2Options.Topic)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())
                             .StoreToOutbox(outbox => outbox.UseEntityFramework<AppDbContext>())))
