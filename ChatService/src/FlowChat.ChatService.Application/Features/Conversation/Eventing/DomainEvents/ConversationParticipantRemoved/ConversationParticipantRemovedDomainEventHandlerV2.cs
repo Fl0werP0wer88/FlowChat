@@ -41,11 +41,10 @@ public sealed class ConversationParticipantRemovedDomainEventHandlerV2
             : FlowChatResult<ConversationParticipant?>.Success(participant);
     }
 
-    protected override Task<FlowChatResult> ExecuteAsync(
+    protected override Task<FlowChatResult<MutationType>> ExecuteAsync(
         ConversationParticipantRemovedDomainEventV2 notification,
         CancellationToken cancellationToken)
     {
-        SetDeleted();
-        return Task.FromResult(FlowChatResult.Success());
+        return Task.FromResult(Deleted());
     }
 }

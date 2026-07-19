@@ -15,7 +15,6 @@ public abstract class AggregateRootDomainEventHandlerBase<TNotification, TAggreg
 {
     private readonly ILocalEventDispatcher _localEventsDispatcher;
     private readonly IEnumerable<IAggregateBeforeSaveProcessor<TNotification, TAggregate>> _beforeSaveProcessors;
-    private MutationType _mutationType = MutationType.Unchanged;
 
     protected AggregateRootDomainEventHandlerBase(
         ILocalEventDispatcher localEventsDispatcher,
@@ -29,16 +28,17 @@ public abstract class AggregateRootDomainEventHandlerBase<TNotification, TAggreg
 
     protected override async Task HandleNotificationAsync(TNotification notification, CancellationToken cancellationToken)
     {
-        var operationResult = await ExecuteAsync(notification, cancellationToken);
+        var executionResult = await ExecuteAsync(notification, cancellationToken);
 
-        if (operationResult.IsFailure)
+        if (executionResult.IsFailure)
         {
-            throw new ResultException(operationResult);
+            throw new ResultException(FlowChatResult.Failure(executionResult.Error));
         }
 
+        var mutationType = executionResult.Value;
         var aggregateRoot = GetAggregateRoot();
 
-        if (_mutationType == MutationType.Unchanged)
+        if (mutationType == MutationType.Unchanged)
         {
             return;
         }
@@ -50,18 +50,22 @@ public abstract class AggregateRootDomainEventHandlerBase<TNotification, TAggreg
             .Cast<ILocalEvent>();
 
         await DispatchLocalEventsAsync(localEvents, cancellationToken);
-        ApplyAuditInfo(aggregateRoot, _mutationType);
+        ApplyAuditInfo(aggregateRoot, mutationType);
 
         foreach (var processor in _beforeSaveProcessors)
         {
-            await processor.ProcessAsync(notification, aggregateRoot, _mutationType, cancellationToken);
+            await processor.ProcessAsync(notification, aggregateRoot, mutationType, cancellationToken);
         }
     }
 
-    protected void SetMutationType(MutationType mutationType)
-    {
-        _mutationType = mutationType;
-    }
+    protected static FlowChatResult<MutationType> Unchanged() =>
+        Mutation(MutationType.Unchanged);
+
+    protected static FlowChatResult<MutationType> Failure(IDomainError error) =>
+        FlowChatResult<MutationType>.Failure(error);
+
+    protected static FlowChatResult<MutationType> Mutation(MutationType mutationType) =>
+        FlowChatResult<MutationType>.Success(mutationType);
 
     protected void CapturePreMutationSnapshot(TAggregate aggregate)
     {
@@ -71,7 +75,9 @@ public abstract class AggregateRootDomainEventHandlerBase<TNotification, TAggreg
         }
     }
 
-    protected abstract Task<FlowChatResult> ExecuteAsync(TNotification notification, CancellationToken cancellationToken);
+    protected abstract Task<FlowChatResult<MutationType>> ExecuteAsync(
+        TNotification notification,
+        CancellationToken cancellationToken);
 
     protected virtual TAggregate GetAggregateRoot() =>
         AggregateRoot ?? throw new InvalidOperationException("Aggregate root instance is not available.");

@@ -27,7 +27,7 @@ public sealed class ConversationParticipantAddedDomainEventHandlerV2
         _repository = repository;
     }
 
-    protected override async Task<FlowChatResult> ExecuteAsync(
+    protected override async Task<FlowChatResult<MutationType>> ExecuteAsync(
         ConversationParticipantAddedDomainEventV2 notification,
         CancellationToken cancellationToken)
     {
@@ -37,8 +37,7 @@ public sealed class ConversationParticipantAddedDomainEventHandlerV2
             notification.UserId,
             lastReadMessageSequenceNum: notification.InitialReadCursor);
         await _repository.AddAsync(_participant, cancellationToken);
-        SetInserted();
-        return FlowChatResult.Success();
+        return Created();
     }
 
     protected override ConversationParticipant GetAggregateRoot() =>

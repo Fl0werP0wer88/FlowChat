@@ -1,3 +1,4 @@
+using FlowChat.Core.Results;
 using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2.BeforeSaveProcessors;
 using FlowChat.Shared.Domain;
 
@@ -15,5 +16,6 @@ public abstract class AggregateRootDeleteDomainEventHandlerBase<TNotification, T
     {
     }
 
-    protected void SetDeleted() => SetMutationType(MutationType.Deleted);
+    protected static FlowChatResult<MutationType> Deleted() =>
+        Mutation(MutationType.Deleted);
 }
