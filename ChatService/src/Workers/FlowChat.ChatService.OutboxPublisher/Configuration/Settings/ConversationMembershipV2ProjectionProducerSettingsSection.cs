@@ -10,7 +10,6 @@ public sealed class ConversationMembershipV2ProjectionProducerSettingsSection
 {
     public override string SectionName => "Kafka:ConversationMembershipV2ProjectionProducer";
     public override string BootstrapServers { get; set; } = "localhost:9092";
-    //Review2-10: Publikuj na pierwotny topic. Wydaje mi sie to dobry pomysł jak sądzisz?
     public override string Topic { get; set; } =
-        "dev.flowchat.chat.conversation-membership-v2-projection.v1";
+        "dev.flowchat.chat.conversation-membership-projection.v2";
 }

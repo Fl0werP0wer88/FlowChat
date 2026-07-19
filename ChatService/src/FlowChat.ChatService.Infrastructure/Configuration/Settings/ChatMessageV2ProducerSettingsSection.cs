@@ -9,5 +9,5 @@ public sealed class ChatMessageV2ProducerSettingsSection
 {
     public override string SectionName => "Kafka:ChatMessageV2Producer";
     public override string BootstrapServers { get; set; } = "localhost:9092";
-    public override string Topic { get; set; } = "dev.flowchat.chat.message-v2.v1";
+    public override string Topic { get; set; } = "dev.flowchat.chat.message.v2";
 }
