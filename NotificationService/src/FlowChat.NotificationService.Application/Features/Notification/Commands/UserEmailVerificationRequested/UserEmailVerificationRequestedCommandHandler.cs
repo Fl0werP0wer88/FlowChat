@@ -24,7 +24,7 @@ public sealed class UserEmailVerificationRequestedCommandHandler
         INotificationSender notificationSender,
         IUnitOfWork unitOfWork,
         ILocalEventDispatcher domainEventDispatcher,
-        IEnumerable<IAggregateBeforeSaveProcessor<UserEmailVerificationRequestedCommand, NotificationEntity>> beforeSaveProcessors)
+        IEnumerable<IAggregateBeforeSaveProcessorV2<UserEmailVerificationRequestedCommand, NotificationEntity>> beforeSaveProcessors)
         : base(domainEventDispatcher, unitOfWork, beforeSaveProcessors)
     {
         _notificationWriteRepository = notificationWriteRepository;

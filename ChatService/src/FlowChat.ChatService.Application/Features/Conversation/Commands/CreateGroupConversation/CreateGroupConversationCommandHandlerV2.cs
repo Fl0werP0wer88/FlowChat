@@ -24,7 +24,7 @@ public sealed class CreateGroupConversationCommandHandlerV2
         IUserProfileProjectionReadRepository profileRepository,
         IUnitOfWork unitOfWork,
         ILocalEventDispatcher localEventDispatcher,
-        IEnumerable<IAggregateBeforeSaveProcessor<CreateGroupConversationCommandV2, ConversationAggregate>> processors)
+        IEnumerable<IAggregateBeforeSaveProcessorV2<CreateGroupConversationCommandV2, ConversationAggregate>> processors)
         : base(localEventDispatcher, unitOfWork, processors)
     {
         _conversationRepository = conversationRepository;

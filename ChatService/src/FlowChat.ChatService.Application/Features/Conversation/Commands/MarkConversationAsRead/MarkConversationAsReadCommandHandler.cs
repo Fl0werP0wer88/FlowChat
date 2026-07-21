@@ -15,7 +15,7 @@ public sealed class MarkConversationAsReadCommandHandler(
     IChatMessageReadRepository chatMessageRepository,
     IUnitOfWork unitOfWork,
     ILocalEventDispatcher domainEventDispatcher,
-    IEnumerable<IAggregateBeforeSaveProcessor<MarkConversationAsReadCommand, ConversationAggregate>> beforeSaveProcessors)
+    IEnumerable<IAggregateBeforeSaveProcessorV2<MarkConversationAsReadCommand, ConversationAggregate>> beforeSaveProcessors)
     : AggregateRootUpdateCommandHandlerBaseV3<MarkConversationAsReadCommand, Unit, ConversationAggregate>(
         domainEventDispatcher,
         unitOfWork,

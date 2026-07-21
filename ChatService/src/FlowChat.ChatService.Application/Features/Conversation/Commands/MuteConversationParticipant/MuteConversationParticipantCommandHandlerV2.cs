@@ -14,7 +14,7 @@ public sealed class MuteConversationParticipantCommandHandlerV2(
     IConversationParticipantWriteRepository repository,
     IUnitOfWork unitOfWork,
     ILocalEventDispatcher dispatcher,
-    IEnumerable<IAggregateBeforeSaveProcessor<MuteConversationParticipantCommandV2, ConversationParticipant>> processors)
+    IEnumerable<IAggregateBeforeSaveProcessorV2<MuteConversationParticipantCommandV2, ConversationParticipant>> processors)
     : AggregateRootUpdateCommandHandlerBaseV3<MuteConversationParticipantCommandV2, Unit, ConversationParticipant>(
         dispatcher, unitOfWork, processors)
 {

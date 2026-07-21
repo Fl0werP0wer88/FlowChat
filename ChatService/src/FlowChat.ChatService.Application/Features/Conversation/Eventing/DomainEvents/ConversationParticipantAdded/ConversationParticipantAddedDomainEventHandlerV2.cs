@@ -19,7 +19,7 @@ public sealed class ConversationParticipantAddedDomainEventHandlerV2
     public ConversationParticipantAddedDomainEventHandlerV2(
         IConversationParticipantWriteRepository repository,
         ILocalEventDispatcher dispatcher,
-        IEnumerable<IAggregateBeforeSaveProcessor<
+        IEnumerable<IAggregateBeforeSaveProcessorV2<
             ConversationParticipantAddedDomainEventV2,
             ConversationParticipant>> processors)
         : base(dispatcher, processors)

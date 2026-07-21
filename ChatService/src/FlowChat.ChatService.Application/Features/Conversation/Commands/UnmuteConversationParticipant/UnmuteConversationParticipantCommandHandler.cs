@@ -14,7 +14,7 @@ public sealed class UnmuteConversationParticipantCommandHandler(
     IDuetConversationWriteRepository duetConversationRepository,
     IUnitOfWork unitOfWork,
     ILocalEventDispatcher domainEventDispatcher,
-    IEnumerable<IAggregateBeforeSaveProcessor<UnmuteConversationParticipantCommand, DuetConversationAggregate>> beforeSaveProcessors)
+    IEnumerable<IAggregateBeforeSaveProcessorV2<UnmuteConversationParticipantCommand, DuetConversationAggregate>> beforeSaveProcessors)
     : AggregateRootUpdateCommandHandlerBaseV3<UnmuteConversationParticipantCommand, Unit, DuetConversationAggregate>(
         domainEventDispatcher,
         unitOfWork,

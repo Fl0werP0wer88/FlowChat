@@ -10,6 +10,6 @@ namespace FlowChat.ChatService.Application.Features.Conversation.Processors;
 public sealed class DuetConversationContactStateProjectionProcessor<TCommand>(
     IMapper mapper,
     IOutboxIntegrationEventPublisher integrationEventPublisher)
-    : PublishProjectionIntegrationEventProcessor<TCommand, DuetConversationAggregate, DuetConversationContactStateReadModel>(
+    : PublishProjectionIntegrationEventProcessorV2<TCommand, DuetConversationAggregate, DuetConversationContactStateReadModel>(
         mapper,
         integrationEventPublisher);

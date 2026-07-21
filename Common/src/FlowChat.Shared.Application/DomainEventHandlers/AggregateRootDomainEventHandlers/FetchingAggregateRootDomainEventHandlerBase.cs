@@ -12,7 +12,7 @@ public abstract class FetchingAggregateRootDomainEventHandlerBase<TNotification,
 {
     protected FetchingAggregateRootDomainEventHandlerBase(
         ILocalEventDispatcher localEventsDispatcher,
-        IEnumerable<IAggregateBeforeSaveProcessor<TNotification, TAggregate>> beforeSaveProcessors)
+        IEnumerable<IAggregateBeforeSaveProcessorV2<TNotification, TAggregate>> beforeSaveProcessors)
         : base(localEventsDispatcher, beforeSaveProcessors)
     {
     }
@@ -32,7 +32,6 @@ public abstract class FetchingAggregateRootDomainEventHandlerBase<TNotification,
         if (fetchResult.Value is not null)
         {
             AggregateRoot = fetchResult.Value;
-            CapturePreMutationSnapshot(AggregateRoot);
         }
 
         await base.HandleNotificationAsync(notification, cancellationToken);

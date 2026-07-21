@@ -17,7 +17,7 @@ public sealed class UnblockConversationParticipantCommandHandlerTests
     private readonly Mock<IDuetConversationWriteRepository> _duetConversationRepositoryMock = new();
     private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
     private readonly Mock<ILocalEventDispatcher> _domainEventDispatcherMock = new();
-    private readonly Mock<IAggregateBeforeSaveProcessor<UnblockConversationParticipantCommand, DuetConversationAggregate>> _beforeSaveProcessorMock = new();
+    private readonly Mock<IAggregateBeforeSaveProcessorV2<UnblockConversationParticipantCommand, DuetConversationAggregate>> _beforeSaveProcessorMock = new();
     private readonly UnblockConversationParticipantCommandHandler _handler;
 
     public UnblockConversationParticipantCommandHandlerTests()

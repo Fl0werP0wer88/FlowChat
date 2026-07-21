@@ -26,7 +26,7 @@ public sealed class SendEmailVerificationCommandHandler
         IEmailVerificationRequestIssuer emailVerificationRequestIssuer,
         IUnitOfWork unitOfWork,
         ILocalEventDispatcher domainEventDispatcher,
-        IEnumerable<IAggregateBeforeSaveProcessor<SendEmailVerificationCommand, EmailVerificationProcess>> beforeSaveProcessors)
+        IEnumerable<IAggregateBeforeSaveProcessorV2<SendEmailVerificationCommand, EmailVerificationProcess>> beforeSaveProcessors)
         : base(domainEventDispatcher, unitOfWork, beforeSaveProcessors)
     {
         _userProfileReadRepository = userProfileReadRepository;

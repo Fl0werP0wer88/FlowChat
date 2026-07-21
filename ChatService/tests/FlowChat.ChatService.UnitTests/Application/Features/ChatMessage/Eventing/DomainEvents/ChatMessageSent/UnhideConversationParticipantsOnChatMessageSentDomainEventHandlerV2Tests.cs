@@ -30,7 +30,7 @@ public sealed class UnhideConversationParticipantsOnChatMessageSentDomainEventHa
                 senderId,
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync([hiddenParticipant]);
-        var processor = new Mock<IAggregateBeforeSaveProcessor<
+        var processor = new Mock<IAggregateBeforeSaveProcessorV2<
             ChatMessageSentDomainEventV2,
             ConversationParticipant>>();
         processor.Setup(x => x.ProcessAsync(
@@ -53,7 +53,6 @@ public sealed class UnhideConversationParticipantsOnChatMessageSentDomainEventHa
 
         hiddenParticipant.IsHidden.Should().BeFalse();
         hiddenParticipant.Version.Should().Be(2);
-        processor.Verify(x => x.CaptureBeforeState(hiddenParticipant), Times.Once);
         processor.Verify(x => x.ProcessAsync(
             domainEvent,
             hiddenParticipant,

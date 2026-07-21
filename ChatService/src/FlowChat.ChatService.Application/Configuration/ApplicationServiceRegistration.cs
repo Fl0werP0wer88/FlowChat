@@ -14,14 +14,11 @@ using FlowChat.ChatService.Domain.Entities.Conversation;
 using FlowChat.ChatService.Domain.Entities.Conversation.Events;
 using FlowChat.ChatService.Domain.Entities.ChatMessage.Events;
 using FlowChat.ChatService.Application.Features.Conversation.Processors;
-using FlowChat.Core.Messaging.ChatService.ReadModels;
 using DuetConversationAggregate = FlowChat.ChatService.Domain.Entities.Conversation.DuetConversation;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Application.Common.Eventing;
 using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2.BeforeSaveProcessors;
-using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2.BeforeSaveProcessors.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
-using GroupConversationAggregate = FlowChat.ChatService.Domain.Entities.Conversation.GroupConversation;
 
 namespace FlowChat.ChatService.Application;
 
@@ -52,42 +49,26 @@ internal static class CommonApplicationServiceRegistration
         });
         services.AddScoped<ILocalEventDispatcher, LocalEventDispatcher>();
         services.AddScoped<
-            IDeltaProjectionRevisionProvider<GroupConversationAggregate, GroupConversationMembershipReadModel>,
-            GroupConversationMembershipRevisionProvider>();
-        services.AddScoped<
-            IAggregateBeforeSaveProcessor<CreateDuetConversationCommand, DuetConversationAggregate>,
+            IAggregateBeforeSaveProcessorV2<CreateDuetConversationCommand, DuetConversationAggregate>,
             DuetConversationMembershipProjectionProcessor<CreateDuetConversationCommand>>();
         services.AddScoped<
-            IAggregateBeforeSaveProcessor<CreateDuetConversationCommand, DuetConversationAggregate>,
+            IAggregateBeforeSaveProcessorV2<CreateDuetConversationCommand, DuetConversationAggregate>,
             DuetConversationContactStateProjectionProcessor<CreateDuetConversationCommand>>();
         services.AddScoped<
-            IAggregateBeforeSaveProcessor<BlockConversationParticipantCommand, DuetConversationAggregate>,
+            IAggregateBeforeSaveProcessorV2<BlockConversationParticipantCommand, DuetConversationAggregate>,
             DuetConversationContactStateProjectionProcessor<BlockConversationParticipantCommand>>();
         services.AddScoped<
-            IAggregateBeforeSaveProcessor<UnblockConversationParticipantCommand, DuetConversationAggregate>,
+            IAggregateBeforeSaveProcessorV2<UnblockConversationParticipantCommand, DuetConversationAggregate>,
             DuetConversationContactStateProjectionProcessor<UnblockConversationParticipantCommand>>();
-        services.AddScoped<
-            IAggregateBeforeSaveProcessor<CreateGroupConversationCommand, GroupConversationAggregate>,
-            GroupConversationMembershipProjectionProcessor<CreateGroupConversationCommand>>();
-        services.AddScoped<
-            IAggregateBeforeSaveProcessor<CreateGroupFromDuetCommand, GroupConversationAggregate>,
-            GroupConversationMembershipProjectionProcessor<CreateGroupFromDuetCommand>>();
-        services.AddScoped<
-            IAggregateBeforeSaveProcessor<AddGroupParticipantsCommand, GroupConversationAggregate>,
-            GroupConversationMembershipProjectionProcessor<AddGroupParticipantsCommand>>();
-        services.AddScoped<
-            IAggregateBeforeSaveProcessor<RemoveGroupParticipantsCommand, GroupConversationAggregate>,
-            GroupConversationMembershipProjectionProcessor<RemoveGroupParticipantsCommand>>();
-
         services.AddScoped<ConversationMembershipDeltaPublisherV2>();
         services.AddScoped<
-            IAggregateBeforeSaveProcessor<ConversationCreatedDomainEventV2, ConversationMembership>,
+            IAggregateBeforeSaveProcessorV2<ConversationCreatedDomainEventV2, ConversationMembership>,
             CreateConversationMembershipDeltaProcessorV2>();
         services.AddScoped<
-            IAggregateBeforeSaveProcessor<AddGroupParticipantsCommandV2, ConversationMembership>,
+            IAggregateBeforeSaveProcessorV2<AddGroupParticipantsCommandV2, ConversationMembership>,
             AddConversationMembershipDeltaProcessorV2>();
         services.AddScoped<
-            IAggregateBeforeSaveProcessor<RemoveGroupParticipantsCommandV2, ConversationMembership>,
+            IAggregateBeforeSaveProcessorV2<RemoveGroupParticipantsCommandV2, ConversationMembership>,
             RemoveConversationMembershipDeltaProcessorV2>();
 
         services.AddConversationMetadataProcessor<CreateGroupConversationCommandV2>();
@@ -112,7 +93,7 @@ internal static class CommonApplicationServiceRegistration
         this IServiceCollection services)
     {
         services.AddScoped<
-            IAggregateBeforeSaveProcessor<TTrigger, ConversationV2>,
+            IAggregateBeforeSaveProcessorV2<TTrigger, ConversationV2>,
             ConversationMetadataProcessorV2<TTrigger>>();
         return services;
     }
@@ -121,7 +102,7 @@ internal static class CommonApplicationServiceRegistration
         this IServiceCollection services)
     {
         services.AddScoped<
-            IAggregateBeforeSaveProcessor<TTrigger, ConversationParticipant>,
+            IAggregateBeforeSaveProcessorV2<TTrigger, ConversationParticipant>,
             ConversationParticipantProcessorV2<TTrigger>>();
         return services;
     }

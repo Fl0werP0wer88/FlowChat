@@ -14,7 +14,7 @@ public sealed class BlockConversationParticipantCommandHandler(
     IDuetConversationWriteRepository duetConversationRepository,
     IUnitOfWork unitOfWork,
     ILocalEventDispatcher domainEventDispatcher,
-    IEnumerable<IAggregateBeforeSaveProcessor<BlockConversationParticipantCommand, DuetConversationAggregate>> beforeSaveProcessors)
+    IEnumerable<IAggregateBeforeSaveProcessorV2<BlockConversationParticipantCommand, DuetConversationAggregate>> beforeSaveProcessors)
     : AggregateRootUpdateCommandHandlerBaseV3<BlockConversationParticipantCommand, Unit, DuetConversationAggregate>(
         domainEventDispatcher,
         unitOfWork,

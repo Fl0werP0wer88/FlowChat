@@ -16,7 +16,7 @@ public sealed class SendChatMessageCommandHandlerV2(
     IConversationV2WriteRepository conversationRepository,
     IUnitOfWork unitOfWork,
     ILocalEventDispatcher dispatcher,
-    IEnumerable<IAggregateBeforeSaveProcessor<SendChatMessageCommandV2, ChatMessageV2>> processors)
+    IEnumerable<IAggregateBeforeSaveProcessorV2<SendChatMessageCommandV2, ChatMessageV2>> processors)
     : AggregateRootInsertCommandHandlerBaseV3<
         SendChatMessageCommandV2,
         SendChatMessageCommandResultV2,

@@ -14,7 +14,7 @@ public sealed class SetChatMessageSequenceNumberCommandHandlerV2(
     IConversationMessageSequenceRepositoryV2 sequenceRepository,
     IUnitOfWork unitOfWork,
     ILocalEventDispatcher dispatcher,
-    IEnumerable<IAggregateBeforeSaveProcessor<SetChatMessageSequenceNumberCommandV2, ChatMessageV2>> processors)
+    IEnumerable<IAggregateBeforeSaveProcessorV2<SetChatMessageSequenceNumberCommandV2, ChatMessageV2>> processors)
     : AggregateRootUpdateCommandHandlerBaseV3<
         SetChatMessageSequenceNumberCommandV2,
         long,

@@ -16,7 +16,7 @@ public sealed class AggregateRootDomainEventHandlerBaseTests
     public async Task Handle_WhenFetchAggregateRootFails_ThrowsResultExceptionWithoutRunningExecuteAsync()
     {
         var expectedError = DomainError.NotFound("Aggregate not found.");
-        var processorMock = new Mock<IAggregateBeforeSaveProcessor<TestNotification, TestAggregate>>();
+        var processorMock = new Mock<IAggregateBeforeSaveProcessorV2<TestNotification, TestAggregate>>();
         var handler = CreateHandler(
             [processorMock.Object],
             fetch: (_, _) => Task.FromResult(FlowChatResult<TestAggregate?>.Failure(expectedError)));
@@ -26,35 +26,27 @@ public sealed class AggregateRootDomainEventHandlerBaseTests
         var exception = await act.Should().ThrowAsync<ResultException>();
         exception.Which.Result.Error.Should().Be(expectedError);
         handler.ExecuteAsyncCalled.Should().BeFalse();
-        processorMock.Verify(x => x.CaptureBeforeState(It.IsAny<TestAggregate>()), Times.Never);
     }
 
     [Fact]
-    public async Task Handle_WhenFetchAggregateRootReturnsAggregate_CapturesSnapshotBeforeExecuteAsyncRuns()
+    public async Task Handle_WhenFetchAggregateRootReturnsAggregate_SetsAggregateBeforeExecuteAsyncRuns()
     {
         var aggregate = new TestAggregate(Guid.NewGuid());
-        var callOrder = new List<string>();
-        var processorMock = new Mock<IAggregateBeforeSaveProcessor<TestNotification, TestAggregate>>();
-        processorMock
-            .Setup(x => x.CaptureBeforeState(aggregate))
-            .Callback(() => callOrder.Add("capture"));
+        var processorMock = new Mock<IAggregateBeforeSaveProcessorV2<TestNotification, TestAggregate>>();
         var handler = CreateHandler(
             [processorMock.Object],
-            fetch: (_, _) => Task.FromResult(FlowChatResult<TestAggregate?>.Success(aggregate)),
-            onExecute: () => callOrder.Add("execute"));
+            fetch: (_, _) => Task.FromResult(FlowChatResult<TestAggregate?>.Success(aggregate)));
 
         await handler.Handle(new TestNotification(), CancellationToken.None);
 
         handler.ExecuteAsyncCalled.Should().BeTrue();
         handler.ObservedAggregateRoot.Should().BeSameAs(aggregate);
-        processorMock.Verify(x => x.CaptureBeforeState(aggregate), Times.Once);
-        callOrder.Should().Equal("capture", "execute");
     }
 
     [Fact]
     public async Task Handle_WhenHandlerHasNoFetchStep_BehavesLikeInsertAndRunsExecuteAsync()
     {
-        var processorMock = new Mock<IAggregateBeforeSaveProcessor<TestNotification, TestAggregate>>();
+        var processorMock = new Mock<IAggregateBeforeSaveProcessorV2<TestNotification, TestAggregate>>();
         var localEventDispatcherMock = new Mock<ILocalEventDispatcher>();
         localEventDispatcherMock
             .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<ILocalEvent>>(), It.IsAny<CancellationToken>()))
@@ -64,7 +56,6 @@ public sealed class AggregateRootDomainEventHandlerBaseTests
         await handler.Handle(new TestNotification(), CancellationToken.None);
 
         handler.ExecuteAsyncCalled.Should().BeTrue();
-        processorMock.Verify(x => x.CaptureBeforeState(It.IsAny<TestAggregate>()), Times.Never);
     }
 
     [Fact]
@@ -90,7 +81,7 @@ public sealed class AggregateRootDomainEventHandlerBaseTests
     {
         var aggregate = new TestAggregate(Guid.NewGuid());
         var expectedError = DomainError.Conflict("Execution failed.");
-        var processorMock = new Mock<IAggregateBeforeSaveProcessor<TestNotification, TestAggregate>>();
+        var processorMock = new Mock<IAggregateBeforeSaveProcessorV2<TestNotification, TestAggregate>>();
         var localEventDispatcherMock = new Mock<ILocalEventDispatcher>();
         var handler = new SequencedDomainEventHandler(
             localEventDispatcherMock.Object,
@@ -122,7 +113,7 @@ public sealed class AggregateRootDomainEventHandlerBaseTests
     public async Task Handle_WhenMutationIsUnchanged_SkipsAggregateMutationPipeline()
     {
         var aggregate = new TestAggregate(Guid.NewGuid());
-        var processorMock = new Mock<IAggregateBeforeSaveProcessor<TestNotification, TestAggregate>>();
+        var processorMock = new Mock<IAggregateBeforeSaveProcessorV2<TestNotification, TestAggregate>>();
         var localEventDispatcherMock = new Mock<ILocalEventDispatcher>();
         var handler = new SequencedDomainEventHandler(
             localEventDispatcherMock.Object,
@@ -155,7 +146,7 @@ public sealed class AggregateRootDomainEventHandlerBaseTests
         MutationType mutationType)
     {
         var aggregate = new TestAggregate(Guid.NewGuid());
-        var processorMock = new Mock<IAggregateBeforeSaveProcessor<TestNotification, TestAggregate>>();
+        var processorMock = new Mock<IAggregateBeforeSaveProcessorV2<TestNotification, TestAggregate>>();
         processorMock
             .Setup(x => x.ProcessAsync(
                 It.IsAny<TestNotification>(),
@@ -204,7 +195,7 @@ public sealed class AggregateRootDomainEventHandlerBaseTests
     public async Task Handle_WhenSameInstanceReturnsUnchangedAfterUpdate_DoesNotReusePreviousMutation()
     {
         var aggregate = new TestAggregate(Guid.NewGuid());
-        var processorMock = new Mock<IAggregateBeforeSaveProcessor<TestNotification, TestAggregate>>();
+        var processorMock = new Mock<IAggregateBeforeSaveProcessorV2<TestNotification, TestAggregate>>();
         processorMock
             .Setup(x => x.ProcessAsync(
                 It.IsAny<TestNotification>(),
@@ -232,7 +223,7 @@ public sealed class AggregateRootDomainEventHandlerBaseTests
     }
 
     private static ConfigurableAggregateRootDomainEventHandler CreateHandler(
-        IEnumerable<IAggregateBeforeSaveProcessor<TestNotification, TestAggregate>> processors,
+        IEnumerable<IAggregateBeforeSaveProcessorV2<TestNotification, TestAggregate>> processors,
         Func<TestNotification, CancellationToken, Task<FlowChatResult<TestAggregate?>>> fetch,
         Action? onExecute = null)
     {
@@ -284,7 +275,7 @@ public sealed class AggregateRootDomainEventHandlerBaseTests
 
         public ConfigurableAggregateRootDomainEventHandler(
             ILocalEventDispatcher localEventsDispatcher,
-            IEnumerable<IAggregateBeforeSaveProcessor<TestNotification, TestAggregate>> beforeSaveProcessors,
+            IEnumerable<IAggregateBeforeSaveProcessorV2<TestNotification, TestAggregate>> beforeSaveProcessors,
             Func<TestNotification, CancellationToken, Task<FlowChatResult<TestAggregate?>>> fetch,
             Action? onExecute)
             : base(localEventsDispatcher, beforeSaveProcessors)
@@ -320,7 +311,7 @@ public sealed class AggregateRootDomainEventHandlerBaseTests
 
         public InsertLikeDomainEventHandler(
             ILocalEventDispatcher localEventsDispatcher,
-            IEnumerable<IAggregateBeforeSaveProcessor<TestNotification, TestAggregate>> beforeSaveProcessors,
+            IEnumerable<IAggregateBeforeSaveProcessorV2<TestNotification, TestAggregate>> beforeSaveProcessors,
             IDomainEvent? domainEventToRaise = null)
             : base(localEventsDispatcher, beforeSaveProcessors)
         {
@@ -353,7 +344,7 @@ public sealed class AggregateRootDomainEventHandlerBaseTests
 
         public SequencedDomainEventHandler(
             ILocalEventDispatcher localEventsDispatcher,
-            IEnumerable<IAggregateBeforeSaveProcessor<TestNotification, TestAggregate>> beforeSaveProcessors,
+            IEnumerable<IAggregateBeforeSaveProcessorV2<TestNotification, TestAggregate>> beforeSaveProcessors,
             TestAggregate aggregate,
             IEnumerable<MutationType> mutationTypes,
             IDomainError? error = null)

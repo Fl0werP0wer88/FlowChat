@@ -9,7 +9,7 @@ namespace FlowChat.ChatService.Application.Features.Conversation.Processors;
 public sealed class ConversationParticipantProcessorV2<TTrigger>(
     IMapper mapper,
     IOutboxIntegrationEventPublisher publisher)
-    : PublishProjectionIntegrationEventProcessor<
+    : PublishProjectionIntegrationEventProcessorV2<
         TTrigger,
         ConversationParticipant,
         ConversationParticipantReadModelV2>(mapper, publisher);

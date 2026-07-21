@@ -19,7 +19,7 @@ public sealed class MarkConversationAsReadCommandHandlerTests
     private readonly Mock<IChatMessageReadRepository> _chatMessageRepositoryMock = new();
     private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
     private readonly Mock<ILocalEventDispatcher> _domainEventDispatcherMock = new();
-    private readonly Mock<IAggregateBeforeSaveProcessor<MarkConversationAsReadCommand, ConversationAggregate>> _beforeSaveProcessorMock = new();
+    private readonly Mock<IAggregateBeforeSaveProcessorV2<MarkConversationAsReadCommand, ConversationAggregate>> _beforeSaveProcessorMock = new();
     private readonly MarkConversationAsReadCommandHandler _handler;
 
     public MarkConversationAsReadCommandHandlerTests()

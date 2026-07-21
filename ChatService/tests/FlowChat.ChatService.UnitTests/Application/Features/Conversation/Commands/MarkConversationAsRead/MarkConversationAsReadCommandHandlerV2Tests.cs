@@ -41,7 +41,7 @@ public sealed class MarkConversationAsReadCommandHandlerV2Tests
                 It.IsAny<IEnumerable<ILocalEvent>>(),
                 It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
-        var processor = new Mock<IAggregateBeforeSaveProcessor<
+        var processor = new Mock<IAggregateBeforeSaveProcessorV2<
             MarkConversationAsReadCommandV2,
             ConversationParticipant>>();
         processor.Setup(x => x.ProcessAsync(
@@ -93,7 +93,7 @@ public sealed class MarkConversationAsReadCommandHandlerV2Tests
                 conversationId,
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(12);
-        var processor = new Mock<IAggregateBeforeSaveProcessor<
+        var processor = new Mock<IAggregateBeforeSaveProcessorV2<
             MarkConversationAsReadCommandV2,
             ConversationParticipant>>();
         var handler = new MarkConversationAsReadCommandHandlerV2(

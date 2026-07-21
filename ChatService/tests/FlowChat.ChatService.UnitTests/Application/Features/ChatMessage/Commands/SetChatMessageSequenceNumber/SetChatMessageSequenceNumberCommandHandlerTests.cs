@@ -19,7 +19,7 @@ public sealed class SetChatMessageSequenceNumberCommandHandlerTests
     private readonly Mock<IConversationMessageSequenceRepository> _sequenceRepositoryMock = new();
     private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
     private readonly Mock<ILocalEventDispatcher> _domainEventDispatcherMock = new();
-    private readonly Mock<IAggregateBeforeSaveProcessor<SetChatMessageSequenceNumberCommand, ChatMessageAggregate>> _beforeSaveProcessorMock = new();
+    private readonly Mock<IAggregateBeforeSaveProcessorV2<SetChatMessageSequenceNumberCommand, ChatMessageAggregate>> _beforeSaveProcessorMock = new();
     private readonly SetChatMessageSequenceNumberCommandHandler _handler;
 
     public SetChatMessageSequenceNumberCommandHandlerTests()

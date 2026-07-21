@@ -15,7 +15,7 @@ public sealed class MarkChatMessageAsDeliveredCommandHandler(
     IChatMessageWriteRepository chatMessageRepository,
     IUnitOfWork unitOfWork,
     ILocalEventDispatcher domainEventDispatcher,
-    IEnumerable<IAggregateBeforeSaveProcessor<MarkChatMessageAsDeliveredCommand, ChatMessageAggregate>> beforeSaveProcessors)
+    IEnumerable<IAggregateBeforeSaveProcessorV2<MarkChatMessageAsDeliveredCommand, ChatMessageAggregate>> beforeSaveProcessors)
     : AggregateRootUpdateCommandHandlerBaseV3<MarkChatMessageAsDeliveredCommand, Unit, ChatMessageAggregate>(
         domainEventDispatcher,
         unitOfWork,

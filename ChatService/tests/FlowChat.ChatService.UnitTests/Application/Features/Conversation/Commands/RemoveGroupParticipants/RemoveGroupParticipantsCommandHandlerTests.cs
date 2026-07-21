@@ -18,7 +18,7 @@ public sealed class RemoveGroupParticipantsCommandHandlerTests
     private readonly Mock<IGroupConversationWriteRepository> _conversationRepositoryMock = new();
     private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
     private readonly Mock<ILocalEventDispatcher> _domainEventDispatcherMock = new();
-    private readonly Mock<IAggregateBeforeSaveProcessor<RemoveGroupParticipantsCommand, GroupConversation>> _beforeSaveProcessorMock = new();
+    private readonly Mock<IAggregateBeforeSaveProcessorV2<RemoveGroupParticipantsCommand, GroupConversation>> _beforeSaveProcessorMock = new();
     private readonly RemoveGroupParticipantsCommandHandler _handler;
 
     public RemoveGroupParticipantsCommandHandlerTests()

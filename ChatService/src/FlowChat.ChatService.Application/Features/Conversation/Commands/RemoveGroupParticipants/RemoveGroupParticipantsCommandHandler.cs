@@ -20,7 +20,7 @@ public sealed class RemoveGroupParticipantsCommandHandler
         IGroupConversationWriteRepository groupConversationRepository,
         IUnitOfWork unitOfWork,
         ILocalEventDispatcher domainEventDispatcher,
-        IEnumerable<IAggregateBeforeSaveProcessor<RemoveGroupParticipantsCommand, GroupConversation>> beforeSaveProcessors)
+        IEnumerable<IAggregateBeforeSaveProcessorV2<RemoveGroupParticipantsCommand, GroupConversation>> beforeSaveProcessors)
         : base(domainEventDispatcher, unitOfWork, beforeSaveProcessors)
     {
         _groupConversationRepository = groupConversationRepository ?? throw new ArgumentNullException(nameof(groupConversationRepository));

@@ -27,7 +27,7 @@ public sealed class CreateGroupFromDuetCommandHandler
         IUserProfileProjectionReadRepository profileReadRepository,
         IUnitOfWork unitOfWork,
         ILocalEventDispatcher domainEventDispatcher,
-        IEnumerable<IAggregateBeforeSaveProcessor<CreateGroupFromDuetCommand, GroupConversationAggregate>> beforeSaveProcessors)
+        IEnumerable<IAggregateBeforeSaveProcessorV2<CreateGroupFromDuetCommand, GroupConversationAggregate>> beforeSaveProcessors)
         : base(domainEventDispatcher, unitOfWork, beforeSaveProcessors)
     {
         _duetReadRepository = duetReadRepository ?? throw new ArgumentNullException(nameof(duetReadRepository));

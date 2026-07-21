@@ -10,6 +10,6 @@ namespace FlowChat.UserProfileService.Application.Features.UserProfile.Processor
 public sealed class UserProfileProjectionProcessor<TCommand>(
     IMapper mapper,
     IOutboxIntegrationEventPublisher integrationEventPublisher)
-    : PublishProjectionIntegrationEventProcessor<TCommand, DomainUserProfile, UserProfileReadModel>(
+    : PublishProjectionIntegrationEventProcessorV2<TCommand, DomainUserProfile, UserProfileReadModel>(
         mapper,
         integrationEventPublisher);

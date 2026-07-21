@@ -37,7 +37,7 @@ public sealed class ConfirmEmailVerificationCommandHandler
         IEmailVerificationTokenProtector emailVerificationTokenProtector,
         IUnitOfWork unitOfWork,
         ILocalEventDispatcher domainEventDispatcher,
-        IEnumerable<IAggregateBeforeSaveProcessor<ConfirmEmailVerificationCommand, UserProfileAggregate>> beforeSaveProcessors)
+        IEnumerable<IAggregateBeforeSaveProcessorV2<ConfirmEmailVerificationCommand, UserProfileAggregate>> beforeSaveProcessors)
         : base(domainEventDispatcher, unitOfWork, beforeSaveProcessors)
     {
         _userProfileWriteRepository = userProfileWriteRepository;

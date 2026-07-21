@@ -15,12 +15,12 @@ public abstract class AggregateRootCommandHandlerBaseV3<TCommand, TResponse, TAg
     where TAggregate : class, IAggregateRoot
 {
     private readonly ILocalEventDispatcher _localEventsDispatcher;
-    private readonly IEnumerable<IAggregateBeforeSaveProcessor<TCommand, TAggregate>> _beforeSaveProcessors;
+    private readonly IEnumerable<IAggregateBeforeSaveProcessorV2<TCommand, TAggregate>> _beforeSaveProcessors;
 
     protected AggregateRootCommandHandlerBaseV3(
         ILocalEventDispatcher localEventsDispatcher,
         IUnitOfWork unitOfWork,
-        IEnumerable<IAggregateBeforeSaveProcessor<TCommand, TAggregate>> beforeSaveProcessors)
+        IEnumerable<IAggregateBeforeSaveProcessorV2<TCommand, TAggregate>> beforeSaveProcessors)
         : base(unitOfWork)
     {
         _localEventsDispatcher = localEventsDispatcher;
@@ -75,14 +75,6 @@ public abstract class AggregateRootCommandHandlerBaseV3<TCommand, TResponse, TAg
         MutationType mutationType,
         TResponse response) =>
         FlowChatResult<AggregateMutation<TResponse>>.Success(new AggregateMutation<TResponse>(response, mutationType));
-
-    protected void CapturePreMutationSnapshot(TAggregate aggregate)
-    {
-        foreach (var processor in _beforeSaveProcessors)
-        {
-            processor.CaptureBeforeState(aggregate);
-        }
-    }
 
     protected abstract Task<FlowChatResult<AggregateMutation<TResponse>>> ExecuteAsync(
         TCommand request,

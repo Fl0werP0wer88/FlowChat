@@ -23,7 +23,7 @@ public sealed class ConfirmEmailVerificationCommandHandlerTests
     private readonly Mock<IEmailVerificationTokenProtector> _tokenProtectorMock = new();
     private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
     private readonly Mock<ILocalEventDispatcher> _dispatcherMock = new();
-    private readonly Mock<IAggregateBeforeSaveProcessor<ConfirmEmailVerificationCommand, UserProfile>> _beforeSaveProcessorMock = new();
+    private readonly Mock<IAggregateBeforeSaveProcessorV2<ConfirmEmailVerificationCommand, UserProfile>> _beforeSaveProcessorMock = new();
     private readonly ConfirmEmailVerificationCommandHandler _handler;
 
     public ConfirmEmailVerificationCommandHandlerTests()

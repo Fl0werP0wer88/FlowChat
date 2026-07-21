@@ -6,7 +6,6 @@ using FlowChat.Shared.Domain;
 namespace FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2.BeforeSaveProcessors;
 
 public class PublishDeltaProjectionIntegrationEventProcessor<TCommand, TAggregate, TDomainEntity, TValue>
-    : IAggregateBeforeSaveProcessor<TCommand, TAggregate>
     where TAggregate : class, IAggregateRoot, IEntity<TAggregate>
     where TDomainEntity : class, IEntity<TDomainEntity>
     where TValue : notnull

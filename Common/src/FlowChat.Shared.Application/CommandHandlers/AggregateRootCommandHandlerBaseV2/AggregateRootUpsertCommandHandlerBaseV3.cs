@@ -15,7 +15,7 @@ public abstract class AggregateRootUpsertCommandHandlerBaseV3<TCommand, TRespons
     protected AggregateRootUpsertCommandHandlerBaseV3(
         ILocalEventDispatcher localEventsDispatcher,
         IUnitOfWork unitOfWork,
-        IEnumerable<IAggregateBeforeSaveProcessor<TCommand, TAggregate>> beforeSaveProcessors)
+        IEnumerable<IAggregateBeforeSaveProcessorV2<TCommand, TAggregate>> beforeSaveProcessors)
         : base(localEventsDispatcher, unitOfWork, beforeSaveProcessors)
     {
     }

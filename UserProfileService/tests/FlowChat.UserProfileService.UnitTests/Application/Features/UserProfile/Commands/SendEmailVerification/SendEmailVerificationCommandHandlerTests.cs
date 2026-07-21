@@ -58,7 +58,7 @@ public sealed class SendEmailVerificationCommandHandlerTests
             _issuerMock.Object,
             _unitOfWorkMock.Object,
             _dispatcherMock.Object,
-            Array.Empty<IAggregateBeforeSaveProcessor<SendEmailVerificationCommand, EmailVerificationProcess>>());
+            Array.Empty<IAggregateBeforeSaveProcessorV2<SendEmailVerificationCommand, EmailVerificationProcess>>());
     }
 
     private async Task<FlowChatResult<Guid>> SendAsync(SendEmailVerificationCommand command)

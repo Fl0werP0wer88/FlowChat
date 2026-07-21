@@ -16,8 +16,8 @@ public sealed class SetMainContactCommandHandlerTests
     private readonly Mock<IUserProfileWriteRepository> _writeRepositoryMock = new();
     private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
     private readonly Mock<ILocalEventDispatcher> _dispatcherMock = new();
-    private readonly Mock<IAggregateBeforeSaveProcessor<SetMainEmailCommand, UserProfile>> _emailBeforeSaveProcessorMock = new();
-    private readonly Mock<IAggregateBeforeSaveProcessor<SetMainPhoneCommand, UserProfile>> _phoneBeforeSaveProcessorMock = new();
+    private readonly Mock<IAggregateBeforeSaveProcessorV2<SetMainEmailCommand, UserProfile>> _emailBeforeSaveProcessorMock = new();
+    private readonly Mock<IAggregateBeforeSaveProcessorV2<SetMainPhoneCommand, UserProfile>> _phoneBeforeSaveProcessorMock = new();
     private readonly SetMainEmailCommandHandler _emailHandler;
     private readonly SetMainPhoneCommandHandler _phoneHandler;
 

@@ -15,7 +15,7 @@ public sealed class RemoveGroupParticipantsCommandHandlerV2(
     IConversationParticipantWriteRepository participantRepository,
     IUnitOfWork unitOfWork,
     ILocalEventDispatcher localEventDispatcher,
-    IEnumerable<IAggregateBeforeSaveProcessor<RemoveGroupParticipantsCommandV2, ConversationMembership>> processors)
+    IEnumerable<IAggregateBeforeSaveProcessorV2<RemoveGroupParticipantsCommandV2, ConversationMembership>> processors)
     : AggregateRootUpdateCommandHandlerBaseV3<
         RemoveGroupParticipantsCommandV2,
         Unit,

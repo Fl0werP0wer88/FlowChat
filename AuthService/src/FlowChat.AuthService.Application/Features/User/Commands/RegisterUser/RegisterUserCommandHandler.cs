@@ -23,7 +23,7 @@ public class RegisterUserCommandHandler
         IPasswordHashingService passwordHashingService,
         IUnitOfWork unitOfWork,
         ILocalEventDispatcher domainEventDispatcher,
-        IEnumerable<IAggregateBeforeSaveProcessor<RegisterUserCommand, DomainAccount>> beforeSaveProcessors)
+        IEnumerable<IAggregateBeforeSaveProcessorV2<RegisterUserCommand, DomainAccount>> beforeSaveProcessors)
         : base(domainEventDispatcher, unitOfWork, beforeSaveProcessors)
     {
         _accountRepository = accountRepository;

@@ -11,7 +11,7 @@ public abstract class AggregateRootUpsertDomainEventHandlerBase<TNotification, T
 {
     protected AggregateRootUpsertDomainEventHandlerBase(
         ILocalEventDispatcher localEventsDispatcher,
-        IEnumerable<IAggregateBeforeSaveProcessor<TNotification, TAggregate>> beforeSaveProcessors)
+        IEnumerable<IAggregateBeforeSaveProcessorV2<TNotification, TAggregate>> beforeSaveProcessors)
         : base(localEventsDispatcher, beforeSaveProcessors)
     {
     }

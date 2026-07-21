@@ -13,7 +13,7 @@ public sealed class SetChatMessageSequenceNumberCommandHandler(
     IConversationMessageSequenceRepository sequenceRepository,
     IUnitOfWork unitOfWork,
     ILocalEventDispatcher domainEventDispatcher,
-    IEnumerable<IAggregateBeforeSaveProcessor<SetChatMessageSequenceNumberCommand, ChatMessageAggregate>> beforeSaveProcessors)
+    IEnumerable<IAggregateBeforeSaveProcessorV2<SetChatMessageSequenceNumberCommand, ChatMessageAggregate>> beforeSaveProcessors)
     : AggregateRootUpdateCommandHandlerBaseV3<SetChatMessageSequenceNumberCommand, long, ChatMessageAggregate>(
         domainEventDispatcher,
         unitOfWork,

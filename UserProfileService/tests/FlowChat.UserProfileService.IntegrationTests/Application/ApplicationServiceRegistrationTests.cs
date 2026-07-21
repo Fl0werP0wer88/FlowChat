@@ -43,14 +43,14 @@ public sealed class ApplicationServiceRegistrationTests
         AssertUserProfileProjectionProcessorRegistered<DeleteProfileCommand>(serviceProvider);
 
         var emailVerificationProcessors = serviceProvider
-            .GetServices<IAggregateBeforeSaveProcessor<SendEmailVerificationCommand, EmailVerificationProcess>>();
+            .GetServices<IAggregateBeforeSaveProcessorV2<SendEmailVerificationCommand, EmailVerificationProcess>>();
         emailVerificationProcessors.Should().BeEmpty();
     }
 
     private static void AssertUserProfileProjectionProcessorRegistered<TCommand>(IServiceProvider serviceProvider)
     {
         var processors = serviceProvider
-            .GetServices<IAggregateBeforeSaveProcessor<TCommand, DomainUserProfile>>()
+            .GetServices<IAggregateBeforeSaveProcessorV2<TCommand, DomainUserProfile>>()
             .Should()
             .ContainSingle()
             .Subject;

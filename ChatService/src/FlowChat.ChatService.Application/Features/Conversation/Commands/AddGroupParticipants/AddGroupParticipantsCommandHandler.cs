@@ -20,7 +20,7 @@ public sealed class AddGroupParticipantsCommandHandler
         IChatMessageReadRepository chatMessageRepository,
         IUnitOfWork unitOfWork,
         ILocalEventDispatcher domainEventDispatcher,
-        IEnumerable<IAggregateBeforeSaveProcessor<AddGroupParticipantsCommand, GroupConversation>> beforeSaveProcessors)
+        IEnumerable<IAggregateBeforeSaveProcessorV2<AddGroupParticipantsCommand, GroupConversation>> beforeSaveProcessors)
         : base(domainEventDispatcher, unitOfWork, beforeSaveProcessors)
     {
         _groupConversationRepository = groupConversationRepository ?? throw new ArgumentNullException(nameof(groupConversationRepository));

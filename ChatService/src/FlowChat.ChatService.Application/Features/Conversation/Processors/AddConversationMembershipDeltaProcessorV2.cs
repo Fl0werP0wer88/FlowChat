@@ -9,12 +9,8 @@ namespace FlowChat.ChatService.Application.Features.Conversation.Processors;
 
 public sealed class AddConversationMembershipDeltaProcessorV2(
     ConversationMembershipDeltaPublisherV2 publisher)
-    : IAggregateBeforeSaveProcessor<AddGroupParticipantsCommandV2, ConversationMembership>
+    : IAggregateBeforeSaveProcessorV2<AddGroupParticipantsCommandV2, ConversationMembership>
 {
-    public void CaptureBeforeState(ConversationMembership aggregate)
-    {
-    }
-
     public Task ProcessAsync(
         AddGroupParticipantsCommandV2 command,
         ConversationMembership aggregate,

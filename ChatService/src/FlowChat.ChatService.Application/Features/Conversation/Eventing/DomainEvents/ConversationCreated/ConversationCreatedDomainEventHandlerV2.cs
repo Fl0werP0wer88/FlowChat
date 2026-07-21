@@ -17,7 +17,7 @@ public sealed class ConversationCreatedDomainEventHandlerV2
     public ConversationCreatedDomainEventHandlerV2(
         IConversationMembershipWriteRepository repository,
         ILocalEventDispatcher dispatcher,
-        IEnumerable<IAggregateBeforeSaveProcessor<ConversationCreatedDomainEventV2, ConversationMembership>> processors)
+        IEnumerable<IAggregateBeforeSaveProcessorV2<ConversationCreatedDomainEventV2, ConversationMembership>> processors)
         : base(dispatcher, processors)
     {
         _repository = repository;

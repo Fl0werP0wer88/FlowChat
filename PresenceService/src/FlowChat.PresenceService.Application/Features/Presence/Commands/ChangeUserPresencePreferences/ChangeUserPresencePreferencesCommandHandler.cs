@@ -17,7 +17,7 @@ public sealed class ChangeUserPresencePreferencesCommandHandler
         IUserPresencePreferencesWriteRepository userPresencePreferencesWriteRepository,
         IUnitOfWork unitOfWork,
         ILocalEventDispatcher localEventDispatcher,
-        IEnumerable<IAggregateBeforeSaveProcessor<ChangeUserPresencePreferencesCommand, UserPresencePreferences>> beforeSaveProcessors)
+        IEnumerable<IAggregateBeforeSaveProcessorV2<ChangeUserPresencePreferencesCommand, UserPresencePreferences>> beforeSaveProcessors)
         : base(localEventDispatcher, unitOfWork, beforeSaveProcessors)
     {
         _userPresencePreferencesWriteRepository = userPresencePreferencesWriteRepository;

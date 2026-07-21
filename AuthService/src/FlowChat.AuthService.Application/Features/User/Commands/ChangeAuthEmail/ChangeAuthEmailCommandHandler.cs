@@ -23,7 +23,7 @@ public sealed class ChangeAuthEmailCommandHandler
         IPasswordHashingService passwordHashingService,
         ILocalEventDispatcher domainEventDispatcher,
         IUnitOfWork unitOfWork,
-        IEnumerable<IAggregateBeforeSaveProcessor<ChangeAuthEmailCommand, DomainAccount>> beforeSaveProcessors)
+        IEnumerable<IAggregateBeforeSaveProcessorV2<ChangeAuthEmailCommand, DomainAccount>> beforeSaveProcessors)
         : base(domainEventDispatcher, unitOfWork, beforeSaveProcessors)
     {
         _accountRepository = accountRepository;

@@ -16,7 +16,7 @@ public sealed class AddGroupParticipantsCommandHandlerV2(
     IChatMessageV2WriteRepository messageRepository,
     IUnitOfWork unitOfWork,
     ILocalEventDispatcher localEventDispatcher,
-    IEnumerable<IAggregateBeforeSaveProcessor<AddGroupParticipantsCommandV2, ConversationMembership>> processors)
+    IEnumerable<IAggregateBeforeSaveProcessorV2<AddGroupParticipantsCommandV2, ConversationMembership>> processors)
     : AggregateRootUpdateCommandHandlerBaseV3<
         AddGroupParticipantsCommandV2,
         Unit,

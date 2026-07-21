@@ -9,7 +9,7 @@ namespace FlowChat.ChatService.Application.Features.ChatMessage.Eventing.DomainE
 
 public sealed class UnhideConversationParticipantsOnChatMessageSentDomainEventHandlerV2(
     IConversationParticipantWriteRepository participantRepository,
-    IEnumerable<IAggregateBeforeSaveProcessor<
+    IEnumerable<IAggregateBeforeSaveProcessorV2<
         ChatMessageSentDomainEventV2,
         ConversationParticipant>> processors)
     : IDomainEventHandler<ChatMessageSentDomainEventV2>
@@ -25,10 +25,6 @@ public sealed class UnhideConversationParticipantsOnChatMessageSentDomainEventHa
 
         foreach (var participant in participants)
         {
-            //Review2-1: Nie podoba mie się że te procesory są jawnie odpalane. Trzeba będzie przygotować jakiś automat. (Może niech odpala CommandHandlery to pozwoli zachowac oryginalny flow? Albo zaprojektowac kolejny typ domain handlera do obsługi delty agregatów?)
-            foreach (var processor in processors)
-                processor.CaptureBeforeState(participant);
-
             if (!participant.Unhide())
                 continue;
 

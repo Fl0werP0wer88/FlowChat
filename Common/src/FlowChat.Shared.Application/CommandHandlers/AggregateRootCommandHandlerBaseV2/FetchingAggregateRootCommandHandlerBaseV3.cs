@@ -14,7 +14,7 @@ public abstract class FetchingAggregateRootCommandHandlerBaseV3<TCommand, TRespo
     protected FetchingAggregateRootCommandHandlerBaseV3(
         ILocalEventDispatcher localEventsDispatcher,
         IUnitOfWork unitOfWork,
-        IEnumerable<IAggregateBeforeSaveProcessor<TCommand, TAggregate>> beforeSaveProcessors)
+        IEnumerable<IAggregateBeforeSaveProcessorV2<TCommand, TAggregate>> beforeSaveProcessors)
         : base(localEventsDispatcher, unitOfWork, beforeSaveProcessors)
     {
     }
@@ -36,7 +36,6 @@ public abstract class FetchingAggregateRootCommandHandlerBaseV3<TCommand, TRespo
         if (fetchResult.Value is not null)
         {
             AggregateRoot = fetchResult.Value;
-            CapturePreMutationSnapshot(AggregateRoot);
         }
 
         return await base.HandleInTransactionAsync(request, cancellationToken);

@@ -19,7 +19,7 @@ public sealed class ChangeAuthEmailCommandHandlerTests
     private readonly Mock<IPasswordHashingService> _passwordHashingServiceMock = new();
     private readonly Mock<ILocalEventDispatcher> _domainEventDispatcherMock = new();
     private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
-    private readonly Mock<IAggregateBeforeSaveProcessor<ChangeAuthEmailCommand, Account>> _beforeSaveProcessorMock = new();
+    private readonly Mock<IAggregateBeforeSaveProcessorV2<ChangeAuthEmailCommand, Account>> _beforeSaveProcessorMock = new();
     private readonly ChangeAuthEmailCommandHandler _handler;
 
     public ChangeAuthEmailCommandHandlerTests()

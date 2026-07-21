@@ -19,7 +19,7 @@ public sealed class ConfirmAuthEmailCommandHandler
         IAccountRepository accountRepository,
         ILocalEventDispatcher domainEventDispatcher,
         IUnitOfWork unitOfWork,
-        IEnumerable<IAggregateBeforeSaveProcessor<ConfirmAuthEmailCommand, DomainAccount>> beforeSaveProcessors)
+        IEnumerable<IAggregateBeforeSaveProcessorV2<ConfirmAuthEmailCommand, DomainAccount>> beforeSaveProcessors)
         : base(domainEventDispatcher, unitOfWork, beforeSaveProcessors)
     {
         _accountRepository = accountRepository;
