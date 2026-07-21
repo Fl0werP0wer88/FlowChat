@@ -109,6 +109,19 @@ public abstract class BatchAggregateRootDomainEventHandlerBase<TNotification, TA
         return FlowChatResult<IReadOnlyList<AggregateMutationDescriptor<TAggregate>>>.Success(mutations);
     }
 
+    protected static FlowChatResult<IReadOnlyList<AggregateMutationDescriptor<TAggregate>>> Mutations(
+        IReadOnlyList<Id<TAggregate>> aggregateIds,
+        MutationType mutationType)
+    {
+        ArgumentNullException.ThrowIfNull(aggregateIds);
+
+        var mutations = aggregateIds
+            .Select(aggregateId => new AggregateMutationDescriptor<TAggregate>(aggregateId, mutationType))
+            .ToArray();
+
+        return Mutations(mutations);
+    }
+
     protected abstract Task<FlowChatResult<IReadOnlyList<AggregateMutationDescriptor<TAggregate>>>> ExecuteAsync(
         TNotification notification,
         CancellationToken cancellationToken);
