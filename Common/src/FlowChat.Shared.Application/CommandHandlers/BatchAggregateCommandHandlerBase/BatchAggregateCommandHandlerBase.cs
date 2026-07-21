@@ -1,5 +1,6 @@
 using FlowChat.Core.Messaging;
 using FlowChat.Core.Results;
+using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2.BeforeSaveProcessors;
 using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
 using MediatR;
@@ -13,13 +14,17 @@ public abstract class BatchAggregateCommandHandlerBase<TCommand, TResponse, TAgg
     where TAggregate : class, IAggregateRoot
 {
     private readonly ILocalEventDispatcher _localEventsDispatcher;
+    private readonly IReadOnlyList<IAggregateBeforeSaveProcessorV2<TCommand, TAggregate>> _beforeSaveProcessors;
 
     protected BatchAggregateCommandHandlerBase(
         ILocalEventDispatcher localEventsDispatcher,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        IEnumerable<IAggregateBeforeSaveProcessorV2<TCommand, TAggregate>> beforeSaveProcessors)
         : base(unitOfWork)
     {
         _localEventsDispatcher = localEventsDispatcher;
+        _beforeSaveProcessors = beforeSaveProcessors?.ToArray()
+            ?? throw new ArgumentNullException(nameof(beforeSaveProcessors));
     }
 
     protected IReadOnlyDictionary<Id<TAggregate>, TAggregate> AggregateRoots { get; set; }
@@ -56,6 +61,11 @@ public abstract class BatchAggregateCommandHandlerBase<TCommand, TResponse, TAgg
 
             await _localEventsDispatcher.DispatchAsync(localEvents, cancellationToken);
             ApplyAuditInfo(aggregateRoot, mutation.MutationType);
+
+            foreach (var processor in _beforeSaveProcessors)
+            {
+                await processor.ProcessAsync(request, aggregateRoot, mutation.MutationType, cancellationToken);
+            }
         }
 
         return FlowChatResult<TResponse>.Success(operationResult.Response);

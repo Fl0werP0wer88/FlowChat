@@ -1,6 +1,7 @@
 using FluentAssertions;
 using FlowChat.Core.Messaging;
 using FlowChat.Core.Results;
+using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2.BeforeSaveProcessors;
 using FlowChat.Shared.Application.CommandHandlers.BatchAggregateCommandHandlerBase;
 using FlowChat.Shared.Domain;
 using Moq;
@@ -15,10 +16,12 @@ public sealed class BatchAggregateCommandHandlerBaseTests
         var aggregate = new TestAggregate(Guid.NewGuid());
         var expectedError = DomainError.Conflict("Execution failed.");
         var dispatcherMock = CreateDispatcherMock();
+        var processorMock = new Mock<IAggregateBeforeSaveProcessorV2<TestCommand, TestAggregate>>();
         var handler = CreateHandler(
             dispatcherMock.Object,
             [aggregate],
-            FlowChatResult<BatchAggregateMutation<Guid, TestAggregate>>.Failure(expectedError));
+            FlowChatResult<BatchAggregateMutation<Guid, TestAggregate>>.Failure(expectedError),
+            [processorMock.Object]);
 
         var result = await handler.Handle(new TestCommand(), CancellationToken.None);
 
@@ -29,6 +32,13 @@ public sealed class BatchAggregateCommandHandlerBaseTests
         aggregate.LastModifiedBy.Should().BeEmpty();
         dispatcherMock.Verify(
             x => x.DispatchAsync(It.IsAny<IEnumerable<ILocalEvent>>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+        processorMock.Verify(
+            x => x.ProcessAsync(
+                It.IsAny<TestCommand>(),
+                It.IsAny<TestAggregate>(),
+                It.IsAny<MutationType>(),
+                It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
@@ -130,6 +140,95 @@ public sealed class BatchAggregateCommandHandlerBaseTests
         dispatchedEvents.Should().Equal(secondEvent, firstEvent);
         firstEvent.Version.Should().Be(2);
         secondEvent.Version.Should().Be(2);
+    }
+
+    [Fact]
+    public async Task Handle_WhenProcessorsAreRegistered_RunsEachProcessorForEachChangedAggregateInMutationOrder()
+    {
+        var firstAggregate = new TestAggregate(Guid.NewGuid());
+        var secondAggregate = new TestAggregate(Guid.NewGuid());
+        var unchangedAggregate = new TestAggregate(Guid.NewGuid());
+        var callOrder = new List<string>();
+        var firstProcessorMock = CreateProcessorMock("processor-1", callOrder);
+        var secondProcessorMock = CreateProcessorMock("processor-2", callOrder);
+        var handler = CreateHandler(
+            CreateDispatcherMock().Object,
+            [firstAggregate, secondAggregate, unchangedAggregate],
+            Success(
+                Guid.NewGuid(),
+                [
+                    Descriptor(secondAggregate, MutationType.Updated),
+                    Descriptor(unchangedAggregate, MutationType.Unchanged),
+                    Descriptor(firstAggregate, MutationType.Deleted)
+                ]),
+            [firstProcessorMock.Object, secondProcessorMock.Object]);
+
+        var result = await handler.Handle(new TestCommand(), CancellationToken.None);
+
+        result.IsSuccess.Should().BeTrue();
+        callOrder.Should().Equal(
+            $"processor-1:{secondAggregate.Id.Value}",
+            $"processor-2:{secondAggregate.Id.Value}",
+            $"processor-1:{firstAggregate.Id.Value}",
+            $"processor-2:{firstAggregate.Id.Value}");
+        firstProcessorMock.Verify(
+            x => x.ProcessAsync(
+                It.IsAny<TestCommand>(),
+                unchangedAggregate,
+                It.IsAny<MutationType>(),
+                It.IsAny<CancellationToken>()),
+            Times.Never);
+        secondProcessorMock.Verify(
+            x => x.ProcessAsync(
+                It.IsAny<TestCommand>(),
+                unchangedAggregate,
+                It.IsAny<MutationType>(),
+                It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task Handle_WhenProcessorRuns_ItObservesDispatchedEventsIncrementedVersionAndAppliedAudit()
+    {
+        var aggregate = new TestAggregate(Guid.NewGuid());
+        aggregate.RaiseEvent(new TestDomainEvent());
+        var eventsDispatched = false;
+        var dispatcherMock = new Mock<ILocalEventDispatcher>();
+        dispatcherMock
+            .Setup(x => x.DispatchAsync(It.IsAny<IEnumerable<ILocalEvent>>(), It.IsAny<CancellationToken>()))
+            .Callback(() => eventsDispatched = true)
+            .Returns(Task.CompletedTask);
+        var processorMock = new Mock<IAggregateBeforeSaveProcessorV2<TestCommand, TestAggregate>>();
+        processorMock
+            .Setup(x => x.ProcessAsync(
+                It.IsAny<TestCommand>(),
+                aggregate,
+                MutationType.Created,
+                It.IsAny<CancellationToken>()))
+            .Callback(() =>
+            {
+                eventsDispatched.Should().BeTrue();
+                aggregate.Version.Should().Be(2);
+                aggregate.CreatedBy.Should().Be("system");
+                aggregate.LastModifiedBy.Should().Be("system");
+            })
+            .Returns(Task.CompletedTask);
+        var handler = CreateHandler(
+            dispatcherMock.Object,
+            [aggregate],
+            Success(Guid.NewGuid(), [Descriptor(aggregate, MutationType.Created)]),
+            [processorMock.Object]);
+
+        var result = await handler.Handle(new TestCommand(), CancellationToken.None);
+
+        result.IsSuccess.Should().BeTrue();
+        processorMock.Verify(
+            x => x.ProcessAsync(
+                It.IsAny<TestCommand>(),
+                aggregate,
+                MutationType.Created,
+                It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 
     [Fact]
@@ -268,8 +367,14 @@ public sealed class BatchAggregateCommandHandlerBaseTests
     private static ConfigurableBatchCommandHandler CreateHandler(
         ILocalEventDispatcher dispatcher,
         IEnumerable<TestAggregate> aggregateRoots,
-        FlowChatResult<BatchAggregateMutation<Guid, TestAggregate>> executionResult)
-        => new(dispatcher, CreateUnitOfWork(), aggregateRoots, executionResult);
+        FlowChatResult<BatchAggregateMutation<Guid, TestAggregate>> executionResult,
+        IEnumerable<IAggregateBeforeSaveProcessorV2<TestCommand, TestAggregate>>? beforeSaveProcessors = null)
+        => new(
+            dispatcher,
+            CreateUnitOfWork(),
+            aggregateRoots,
+            executionResult,
+            beforeSaveProcessors ?? []);
 
     private static FlowChatResult<BatchAggregateMutation<Guid, TestAggregate>> Success(
         Guid response,
@@ -290,6 +395,24 @@ public sealed class BatchAggregateCommandHandlerBaseTests
             .Returns(Task.CompletedTask);
 
         return dispatcherMock;
+    }
+
+    private static Mock<IAggregateBeforeSaveProcessorV2<TestCommand, TestAggregate>> CreateProcessorMock(
+        string name,
+        ICollection<string> callOrder)
+    {
+        var processorMock = new Mock<IAggregateBeforeSaveProcessorV2<TestCommand, TestAggregate>>();
+        processorMock
+            .Setup(x => x.ProcessAsync(
+                It.IsAny<TestCommand>(),
+                It.IsAny<TestAggregate>(),
+                It.IsAny<MutationType>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<TestCommand, TestAggregate, MutationType, CancellationToken>(
+                (_, aggregate, _, _) => callOrder.Add($"{name}:{aggregate.Id.Value}"))
+            .Returns(Task.CompletedTask);
+
+        return processorMock;
     }
 
     private static IUnitOfWork CreateUnitOfWork()
@@ -331,8 +454,9 @@ public sealed class BatchAggregateCommandHandlerBaseTests
             ILocalEventDispatcher localEventsDispatcher,
             IUnitOfWork unitOfWork,
             IEnumerable<TestAggregate> aggregateRoots,
-            FlowChatResult<BatchAggregateMutation<Guid, TestAggregate>> executionResult)
-            : base(localEventsDispatcher, unitOfWork)
+            FlowChatResult<BatchAggregateMutation<Guid, TestAggregate>> executionResult,
+            IEnumerable<IAggregateBeforeSaveProcessorV2<TestCommand, TestAggregate>> beforeSaveProcessors)
+            : base(localEventsDispatcher, unitOfWork, beforeSaveProcessors)
         {
             AggregateRoots = aggregateRoots.ToDictionary(aggregate => aggregate.Id);
             _executionResult = executionResult;
