@@ -1,6 +1,7 @@
 using FlowChat.Core.Messaging;
 using FlowChat.Core.Results;
 using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2.BeforeSaveProcessors;
+using FlowChat.Shared.Application.CommandHandlers.BatchAggregateCommandHandlerBase.BeforeSaveProcessors;
 using FlowChat.Shared.Domain;
 using FlowChat.Shared.Domain.ValueObjects;
 using MediatR;
@@ -15,16 +16,20 @@ public abstract class BatchAggregateCommandHandlerBase<TCommand, TResponse, TAgg
 {
     private readonly ILocalEventDispatcher _localEventsDispatcher;
     private readonly IReadOnlyList<IAggregateBeforeSaveProcessorV2<TCommand, TAggregate>> _beforeSaveProcessors;
+    private readonly IReadOnlyList<IAggregateBeforeSaveDeltaProcessorV2<TCommand, TAggregate>> _beforeSaveDeltaProcessors;
 
     protected BatchAggregateCommandHandlerBase(
         ILocalEventDispatcher localEventsDispatcher,
         IUnitOfWork unitOfWork,
-        IEnumerable<IAggregateBeforeSaveProcessorV2<TCommand, TAggregate>> beforeSaveProcessors)
+        IEnumerable<IAggregateBeforeSaveProcessorV2<TCommand, TAggregate>> beforeSaveProcessors,
+        IEnumerable<IAggregateBeforeSaveDeltaProcessorV2<TCommand, TAggregate>> beforeSaveDeltaProcessors)
         : base(unitOfWork)
     {
         _localEventsDispatcher = localEventsDispatcher;
         _beforeSaveProcessors = beforeSaveProcessors?.ToArray()
             ?? throw new ArgumentNullException(nameof(beforeSaveProcessors));
+        _beforeSaveDeltaProcessors = beforeSaveDeltaProcessors?.ToArray()
+            ?? throw new ArgumentNullException(nameof(beforeSaveDeltaProcessors));
     }
 
     protected IReadOnlyDictionary<Id<TAggregate>, TAggregate> AggregateRoots { get; set; }
@@ -65,6 +70,24 @@ public abstract class BatchAggregateCommandHandlerBase<TCommand, TResponse, TAgg
             foreach (var processor in _beforeSaveProcessors)
             {
                 await processor.ProcessAsync(request, aggregateRoot, mutation.MutationType, cancellationToken);
+            }
+        }
+
+        if (_beforeSaveDeltaProcessors.Count > 0)
+        {
+            var deltaMutations = operationResult.Mutations
+                .Where(mutation => mutation.MutationType != MutationType.Unchanged)
+                .Select(mutation => new AggregateDeltaMutation<TAggregate>(
+                    aggregateRoots[mutation.Id],
+                    mutation.MutationType))
+                .ToArray();
+
+            if (deltaMutations.Length > 0)
+            {
+                foreach (var processor in _beforeSaveDeltaProcessors)
+                {
+                    await processor.ProcessAsync(request, deltaMutations, cancellationToken);
+                }
             }
         }
 

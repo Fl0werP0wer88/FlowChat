@@ -3,6 +3,7 @@ using FlowChat.Core.Messaging;
 using FlowChat.Core.Results;
 using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2.BeforeSaveProcessors;
 using FlowChat.Shared.Application.CommandHandlers.BatchAggregateCommandHandlerBase;
+using FlowChat.Shared.Application.CommandHandlers.BatchAggregateCommandHandlerBase.BeforeSaveProcessors;
 using FlowChat.Shared.Domain;
 using Moq;
 
@@ -17,11 +18,13 @@ public sealed class BatchAggregateCommandHandlerBaseTests
         var expectedError = DomainError.Conflict("Execution failed.");
         var dispatcherMock = CreateDispatcherMock();
         var processorMock = new Mock<IAggregateBeforeSaveProcessorV2<TestCommand, TestAggregate>>();
+        var deltaProcessorMock = new Mock<IAggregateBeforeSaveDeltaProcessorV2<TestCommand, TestAggregate>>();
         var handler = CreateHandler(
             dispatcherMock.Object,
             [aggregate],
             FlowChatResult<BatchAggregateMutation<Guid, TestAggregate>>.Failure(expectedError),
-            [processorMock.Object]);
+            [processorMock.Object],
+            [deltaProcessorMock.Object]);
 
         var result = await handler.Handle(new TestCommand(), CancellationToken.None);
 
@@ -40,6 +43,12 @@ public sealed class BatchAggregateCommandHandlerBaseTests
                 It.IsAny<MutationType>(),
                 It.IsAny<CancellationToken>()),
             Times.Never);
+        deltaProcessorMock.Verify(
+            x => x.ProcessAsync(
+                It.IsAny<TestCommand>(),
+                It.IsAny<IReadOnlyList<AggregateDeltaMutation<TestAggregate>>>(),
+                It.IsAny<CancellationToken>()),
+            Times.Never);
     }
 
     [Fact]
@@ -47,10 +56,12 @@ public sealed class BatchAggregateCommandHandlerBaseTests
     {
         var expectedResponse = Guid.NewGuid();
         var dispatcherMock = CreateDispatcherMock();
+        var deltaProcessorMock = new Mock<IAggregateBeforeSaveDeltaProcessorV2<TestCommand, TestAggregate>>();
         var handler = CreateHandler(
             dispatcherMock.Object,
             [],
-            Success(expectedResponse, []));
+            Success(expectedResponse, []),
+            beforeSaveDeltaProcessors: [deltaProcessorMock.Object]);
 
         var result = await handler.Handle(new TestCommand(), CancellationToken.None);
 
@@ -59,6 +70,12 @@ public sealed class BatchAggregateCommandHandlerBaseTests
         handler.AggregateRootsCount.Should().Be(0);
         dispatcherMock.Verify(
             x => x.DispatchAsync(It.IsAny<IEnumerable<ILocalEvent>>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+        deltaProcessorMock.Verify(
+            x => x.ProcessAsync(
+                It.IsAny<TestCommand>(),
+                It.IsAny<IReadOnlyList<AggregateDeltaMutation<TestAggregate>>>(),
+                It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
@@ -232,6 +249,154 @@ public sealed class BatchAggregateCommandHandlerBaseTests
     }
 
     [Fact]
+    public async Task Handle_WhenDeltaProcessorsAreRegistered_RunsEachOnceAfterAllAggregateProcessors()
+    {
+        var firstAggregate = new TestAggregate(Guid.NewGuid());
+        var secondAggregate = new TestAggregate(Guid.NewGuid());
+        var unchangedAggregate = new TestAggregate(Guid.NewGuid());
+        var callOrder = new List<string>();
+        var aggregateProcessorMock = CreateProcessorMock("aggregate", callOrder);
+        var firstDeltaProcessorMock = CreateDeltaProcessorMock("delta-1", callOrder);
+        var secondDeltaProcessorMock = CreateDeltaProcessorMock("delta-2", callOrder);
+        var handler = CreateHandler(
+            CreateDispatcherMock().Object,
+            [firstAggregate, secondAggregate, unchangedAggregate],
+            Success(
+                Guid.NewGuid(),
+                [
+                    Descriptor(secondAggregate, MutationType.Updated),
+                    Descriptor(unchangedAggregate, MutationType.Unchanged),
+                    Descriptor(firstAggregate, MutationType.Deleted)
+                ]),
+            [aggregateProcessorMock.Object],
+            [firstDeltaProcessorMock.Object, secondDeltaProcessorMock.Object]);
+
+        var result = await handler.Handle(new TestCommand(), CancellationToken.None);
+
+        result.IsSuccess.Should().BeTrue();
+        callOrder.Should().Equal(
+            $"aggregate:{secondAggregate.Id.Value}",
+            $"aggregate:{firstAggregate.Id.Value}",
+            "delta-1",
+            "delta-2");
+        firstDeltaProcessorMock.Verify(
+            x => x.ProcessAsync(
+                It.IsAny<TestCommand>(),
+                It.Is<IReadOnlyList<AggregateDeltaMutation<TestAggregate>>>(mutations =>
+                    mutations.Count == 2 &&
+                    ReferenceEquals(mutations[0].Aggregate, secondAggregate) &&
+                    mutations[0].MutationType == MutationType.Updated &&
+                    ReferenceEquals(mutations[1].Aggregate, firstAggregate) &&
+                    mutations[1].MutationType == MutationType.Deleted),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+        secondDeltaProcessorMock.Verify(
+            x => x.ProcessAsync(
+                It.IsAny<TestCommand>(),
+                It.IsAny<IReadOnlyList<AggregateDeltaMutation<TestAggregate>>>(),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+        secondAggregate.Version.Should().Be(2);
+        secondAggregate.LastModifiedBy.Should().Be("system");
+        firstAggregate.Version.Should().Be(2);
+        firstAggregate.IsDeleted.Should().BeTrue();
+        AssertUnchanged(unchangedAggregate);
+    }
+
+    [Fact]
+    public async Task Handle_WhenAllMutationsAreUnchanged_DoesNotRunDeltaProcessors()
+    {
+        var aggregate = new TestAggregate(Guid.NewGuid());
+        var deltaProcessorMock = new Mock<IAggregateBeforeSaveDeltaProcessorV2<TestCommand, TestAggregate>>();
+        var handler = CreateHandler(
+            CreateDispatcherMock().Object,
+            [aggregate],
+            Success(Guid.NewGuid(), [Descriptor(aggregate, MutationType.Unchanged)]),
+            beforeSaveDeltaProcessors: [deltaProcessorMock.Object]);
+
+        var result = await handler.Handle(new TestCommand(), CancellationToken.None);
+
+        result.IsSuccess.Should().BeTrue();
+        deltaProcessorMock.Verify(
+            x => x.ProcessAsync(
+                It.IsAny<TestCommand>(),
+                It.IsAny<IReadOnlyList<AggregateDeltaMutation<TestAggregate>>>(),
+                It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task Handle_WhenAggregateProcessorFails_DoesNotRunDeltaProcessors()
+    {
+        var firstAggregate = new TestAggregate(Guid.NewGuid());
+        var secondAggregate = new TestAggregate(Guid.NewGuid());
+        var expectedException = new InvalidOperationException("Aggregate processor failed.");
+        var aggregateProcessorMock = new Mock<IAggregateBeforeSaveProcessorV2<TestCommand, TestAggregate>>();
+        aggregateProcessorMock
+            .Setup(x => x.ProcessAsync(
+                It.IsAny<TestCommand>(),
+                firstAggregate,
+                MutationType.Updated,
+                It.IsAny<CancellationToken>()))
+            .ThrowsAsync(expectedException);
+        var deltaProcessorMock = new Mock<IAggregateBeforeSaveDeltaProcessorV2<TestCommand, TestAggregate>>();
+        var handler = CreateHandler(
+            CreateDispatcherMock().Object,
+            [firstAggregate, secondAggregate],
+            Success(
+                Guid.NewGuid(),
+                [
+                    Descriptor(firstAggregate, MutationType.Updated),
+                    Descriptor(secondAggregate, MutationType.Updated)
+                ]),
+            [aggregateProcessorMock.Object],
+            [deltaProcessorMock.Object]);
+
+        var action = async () => await handler.Handle(new TestCommand(), CancellationToken.None);
+
+        var exception = await action.Should().ThrowAsync<InvalidOperationException>();
+        exception.Which.Should().BeSameAs(expectedException);
+        deltaProcessorMock.Verify(
+            x => x.ProcessAsync(
+                It.IsAny<TestCommand>(),
+                It.IsAny<IReadOnlyList<AggregateDeltaMutation<TestAggregate>>>(),
+                It.IsAny<CancellationToken>()),
+            Times.Never);
+        secondAggregate.Version.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task Handle_WhenDeltaProcessorFails_DoesNotRunRemainingDeltaProcessors()
+    {
+        var aggregate = new TestAggregate(Guid.NewGuid());
+        var expectedException = new InvalidOperationException("Delta processor failed.");
+        var firstDeltaProcessorMock = new Mock<IAggregateBeforeSaveDeltaProcessorV2<TestCommand, TestAggregate>>();
+        firstDeltaProcessorMock
+            .Setup(x => x.ProcessAsync(
+                It.IsAny<TestCommand>(),
+                It.IsAny<IReadOnlyList<AggregateDeltaMutation<TestAggregate>>>(),
+                It.IsAny<CancellationToken>()))
+            .ThrowsAsync(expectedException);
+        var secondDeltaProcessorMock = new Mock<IAggregateBeforeSaveDeltaProcessorV2<TestCommand, TestAggregate>>();
+        var handler = CreateHandler(
+            CreateDispatcherMock().Object,
+            [aggregate],
+            Success(Guid.NewGuid(), [Descriptor(aggregate, MutationType.Updated)]),
+            beforeSaveDeltaProcessors: [firstDeltaProcessorMock.Object, secondDeltaProcessorMock.Object]);
+
+        var action = async () => await handler.Handle(new TestCommand(), CancellationToken.None);
+
+        var exception = await action.Should().ThrowAsync<InvalidOperationException>();
+        exception.Which.Should().BeSameAs(expectedException);
+        secondDeltaProcessorMock.Verify(
+            x => x.ProcessAsync(
+                It.IsAny<TestCommand>(),
+                It.IsAny<IReadOnlyList<AggregateDeltaMutation<TestAggregate>>>(),
+                It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Fact]
     public async Task Handle_WhenLaterMutationReferencesMissingAggregate_ThrowsBeforeMutatingAnyAggregate()
     {
         var availableAggregate = new TestAggregate(Guid.NewGuid());
@@ -239,6 +404,7 @@ public sealed class BatchAggregateCommandHandlerBaseTests
         var domainEvent = new TestDomainEvent();
         availableAggregate.RaiseEvent(domainEvent);
         var dispatcherMock = CreateDispatcherMock();
+        var deltaProcessorMock = new Mock<IAggregateBeforeSaveDeltaProcessorV2<TestCommand, TestAggregate>>();
         var handler = CreateHandler(
             dispatcherMock.Object,
             [availableAggregate],
@@ -247,7 +413,8 @@ public sealed class BatchAggregateCommandHandlerBaseTests
                 [
                     Descriptor(availableAggregate, MutationType.Updated),
                     Descriptor(missingAggregate, MutationType.Updated)
-                ]));
+                ]),
+            beforeSaveDeltaProcessors: [deltaProcessorMock.Object]);
 
         var action = async () => await handler.Handle(new TestCommand(), CancellationToken.None);
 
@@ -257,6 +424,12 @@ public sealed class BatchAggregateCommandHandlerBaseTests
         availableAggregate.DomainEvents.Should().ContainSingle().Which.Should().BeSameAs(domainEvent);
         dispatcherMock.Verify(
             x => x.DispatchAsync(It.IsAny<IEnumerable<ILocalEvent>>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+        deltaProcessorMock.Verify(
+            x => x.ProcessAsync(
+                It.IsAny<TestCommand>(),
+                It.IsAny<IReadOnlyList<AggregateDeltaMutation<TestAggregate>>>(),
+                It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
@@ -368,13 +541,15 @@ public sealed class BatchAggregateCommandHandlerBaseTests
         ILocalEventDispatcher dispatcher,
         IEnumerable<TestAggregate> aggregateRoots,
         FlowChatResult<BatchAggregateMutation<Guid, TestAggregate>> executionResult,
-        IEnumerable<IAggregateBeforeSaveProcessorV2<TestCommand, TestAggregate>>? beforeSaveProcessors = null)
+        IEnumerable<IAggregateBeforeSaveProcessorV2<TestCommand, TestAggregate>>? beforeSaveProcessors = null,
+        IEnumerable<IAggregateBeforeSaveDeltaProcessorV2<TestCommand, TestAggregate>>? beforeSaveDeltaProcessors = null)
         => new(
             dispatcher,
             CreateUnitOfWork(),
             aggregateRoots,
             executionResult,
-            beforeSaveProcessors ?? []);
+            beforeSaveProcessors ?? [],
+            beforeSaveDeltaProcessors ?? []);
 
     private static FlowChatResult<BatchAggregateMutation<Guid, TestAggregate>> Success(
         Guid response,
@@ -410,6 +585,22 @@ public sealed class BatchAggregateCommandHandlerBaseTests
                 It.IsAny<CancellationToken>()))
             .Callback<TestCommand, TestAggregate, MutationType, CancellationToken>(
                 (_, aggregate, _, _) => callOrder.Add($"{name}:{aggregate.Id.Value}"))
+            .Returns(Task.CompletedTask);
+
+        return processorMock;
+    }
+
+    private static Mock<IAggregateBeforeSaveDeltaProcessorV2<TestCommand, TestAggregate>> CreateDeltaProcessorMock(
+        string name,
+        ICollection<string> callOrder)
+    {
+        var processorMock = new Mock<IAggregateBeforeSaveDeltaProcessorV2<TestCommand, TestAggregate>>();
+        processorMock
+            .Setup(x => x.ProcessAsync(
+                It.IsAny<TestCommand>(),
+                It.IsAny<IReadOnlyList<AggregateDeltaMutation<TestAggregate>>>(),
+                It.IsAny<CancellationToken>()))
+            .Callback(() => callOrder.Add(name))
             .Returns(Task.CompletedTask);
 
         return processorMock;
@@ -455,8 +646,9 @@ public sealed class BatchAggregateCommandHandlerBaseTests
             IUnitOfWork unitOfWork,
             IEnumerable<TestAggregate> aggregateRoots,
             FlowChatResult<BatchAggregateMutation<Guid, TestAggregate>> executionResult,
-            IEnumerable<IAggregateBeforeSaveProcessorV2<TestCommand, TestAggregate>> beforeSaveProcessors)
-            : base(localEventsDispatcher, unitOfWork, beforeSaveProcessors)
+            IEnumerable<IAggregateBeforeSaveProcessorV2<TestCommand, TestAggregate>> beforeSaveProcessors,
+            IEnumerable<IAggregateBeforeSaveDeltaProcessorV2<TestCommand, TestAggregate>> beforeSaveDeltaProcessors)
+            : base(localEventsDispatcher, unitOfWork, beforeSaveProcessors, beforeSaveDeltaProcessors)
         {
             AggregateRoots = aggregateRoots.ToDictionary(aggregate => aggregate.Id);
             _executionResult = executionResult;
