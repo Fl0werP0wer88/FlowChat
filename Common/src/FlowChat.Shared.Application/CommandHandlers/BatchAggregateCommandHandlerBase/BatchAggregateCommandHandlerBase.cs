@@ -110,6 +110,20 @@ public abstract class BatchAggregateCommandHandlerBase<TCommand, TResponse, TAgg
             new BatchAggregateMutation<TResponse, TAggregate>(response, mutations));
     }
 
+    protected static FlowChatResult<BatchAggregateMutation<TResponse, TAggregate>> Mutation(
+        TResponse response,
+        IReadOnlyList<Id<TAggregate>> aggregateIds,
+        MutationType mutationType)
+    {
+        ArgumentNullException.ThrowIfNull(aggregateIds);
+
+        var mutations = aggregateIds
+            .Select(aggregateId => new AggregateMutationDescriptor<TAggregate>(aggregateId, mutationType))
+            .ToArray();
+
+        return Mutation(response, mutations);
+    }
+
     protected abstract Task<FlowChatResult<BatchAggregateMutation<TResponse, TAggregate>>> ExecuteAsync(
         TCommand request,
         CancellationToken cancellationToken);
