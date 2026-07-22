@@ -11,17 +11,17 @@ public class AggregateBeforeSaveDeltaProcessorV2<TCommand, TAggregate, TValue>
 {
     private readonly IMapper _mapper;
     private readonly IOutboxIntegrationEventPublisher _integrationEventPublisher;
-    private readonly IAggregateDeltaProjectionKeyProviderV2<TCommand, TAggregate> _keyProvider;
+    private readonly IAggregateDeltaProjectionMetadataProviderV2<TCommand, TAggregate> _metadataProvider;
 
     public AggregateBeforeSaveDeltaProcessorV2(
         IMapper mapper,
         IOutboxIntegrationEventPublisher integrationEventPublisher,
-        IAggregateDeltaProjectionKeyProviderV2<TCommand, TAggregate> keyProvider)
+        IAggregateDeltaProjectionMetadataProviderV2<TCommand, TAggregate> metadataProvider)
     {
         _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         _integrationEventPublisher = integrationEventPublisher
             ?? throw new ArgumentNullException(nameof(integrationEventPublisher));
-        _keyProvider = keyProvider ?? throw new ArgumentNullException(nameof(keyProvider));
+        _metadataProvider = metadataProvider ?? throw new ArgumentNullException(nameof(metadataProvider));
     }
 
     public async Task ProcessAsync(
@@ -40,7 +40,7 @@ public class AggregateBeforeSaveDeltaProcessorV2<TCommand, TAggregate, TValue>
         ValidateBatchOperationType(batch.BatchOperationType);
         ValidateMutations(batch.Mutations);
 
-        var kafkaKey = _keyProvider.GetKafkaKey(command, batch.Mutations);
+        var kafkaKey = _metadataProvider.GetKafkaKey(command, batch.Mutations);
         if (string.IsNullOrWhiteSpace(kafkaKey))
         {
             throw new InvalidOperationException("The aggregate delta projection Kafka key cannot be null or empty.");
@@ -51,7 +51,9 @@ public class AggregateBeforeSaveDeltaProcessorV2<TCommand, TAggregate, TValue>
             .ToArray();
         var integrationEvent = new DeltaProjectionIntegrationEventV2<TValue>
         {
-            BatchOperationType = batch.BatchOperationType,
+            ProjectionId = _metadataProvider.GetProjectionId(command, batch.Mutations),
+            ProjectionRevision = _metadataProvider.GetProjectionRevision(command, batch.Mutations),
+            ProjectionOperationType = batch.BatchOperationType,
             Delta = delta
         };
         var envelope = new IntegrationEventEnvelope<DeltaProjectionIntegrationEventV2<TValue>>(

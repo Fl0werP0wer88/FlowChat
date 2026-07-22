@@ -23,6 +23,8 @@ public sealed class AggregateBeforeSaveDeltaProcessorV2Tests
             new(deleted, MutationType.Deleted)
         ];
         var command = new TestCommand(Guid.NewGuid());
+        var expectedProjectionId = Guid.NewGuid();
+        const int expectedProjectionRevision = 7;
         var expectedKafkaKey = Guid.NewGuid().ToString("D");
         var createdReadModel = new TestReadModel(created.Id.Value, created.Name);
         var updatedReadModel = new TestReadModel(updated.Id.Value, updated.Name);
@@ -31,7 +33,13 @@ public sealed class AggregateBeforeSaveDeltaProcessorV2Tests
         mapperMock.Setup(x => x.Map<TestReadModel>(created)).Returns(createdReadModel);
         mapperMock.Setup(x => x.Map<TestReadModel>(updated)).Returns(updatedReadModel);
         mapperMock.Setup(x => x.Map<TestReadModel>(deleted)).Returns(deletedReadModel);
-        var keyProviderMock = new Mock<IAggregateDeltaProjectionKeyProviderV2<TestCommand, TestAggregate>>();
+        var keyProviderMock = new Mock<IAggregateDeltaProjectionMetadataProviderV2<TestCommand, TestAggregate>>();
+        keyProviderMock
+            .Setup(x => x.GetProjectionId(command, mutations))
+            .Returns(expectedProjectionId);
+        keyProviderMock
+            .Setup(x => x.GetProjectionRevision(command, mutations))
+            .Returns(expectedProjectionRevision);
         keyProviderMock
             .Setup(x => x.GetKafkaKey(command, mutations))
             .Returns(expectedKafkaKey);
@@ -67,7 +75,9 @@ public sealed class AggregateBeforeSaveDeltaProcessorV2Tests
         capturedEnvelope.Should().NotBeNull();
         capturedEnvelope!.KafkaKey.Should().Be(expectedKafkaKey);
         capturedCancellationToken.Should().Be(cancellationTokenSource.Token);
-        capturedEnvelope.Payload.BatchOperationType.Should().Be(BatchOperationType.Mixed);
+        capturedEnvelope.Payload.ProjectionId.Should().Be(expectedProjectionId);
+        capturedEnvelope.Payload.ProjectionRevision.Should().Be(expectedProjectionRevision);
+        capturedEnvelope.Payload.ProjectionOperationType.Should().Be(BatchOperationType.Mixed);
         capturedEnvelope.Payload.Delta.Should().HaveCount(3);
 
         AssertDeltaItem(capturedEnvelope.Payload.Delta[0], created, createdReadModel, OperationType.Created);
@@ -80,7 +90,7 @@ public sealed class AggregateBeforeSaveDeltaProcessorV2Tests
     {
         var mapperMock = new Mock<IMapper>();
         var publisherMock = new Mock<IOutboxIntegrationEventPublisher>();
-        var keyProviderMock = new Mock<IAggregateDeltaProjectionKeyProviderV2<TestCommand, TestAggregate>>();
+        var keyProviderMock = new Mock<IAggregateDeltaProjectionMetadataProviderV2<TestCommand, TestAggregate>>();
         var processor = CreateProcessor(mapperMock, publisherMock, keyProviderMock);
 
         await processor.ProcessAsync(
@@ -103,7 +113,7 @@ public sealed class AggregateBeforeSaveDeltaProcessorV2Tests
         var aggregate = CreateAggregate("Unchanged", MutationType.Updated);
         var mapperMock = new Mock<IMapper>();
         var publisherMock = new Mock<IOutboxIntegrationEventPublisher>();
-        var keyProviderMock = new Mock<IAggregateDeltaProjectionKeyProviderV2<TestCommand, TestAggregate>>();
+        var keyProviderMock = new Mock<IAggregateDeltaProjectionMetadataProviderV2<TestCommand, TestAggregate>>();
         var processor = CreateProcessor(mapperMock, publisherMock, keyProviderMock);
 
         var action = () => processor.ProcessAsync(
@@ -124,7 +134,7 @@ public sealed class AggregateBeforeSaveDeltaProcessorV2Tests
         var aggregate = CreateAggregate("Unsupported", MutationType.Updated);
         var mapperMock = new Mock<IMapper>();
         var publisherMock = new Mock<IOutboxIntegrationEventPublisher>();
-        var keyProviderMock = new Mock<IAggregateDeltaProjectionKeyProviderV2<TestCommand, TestAggregate>>();
+        var keyProviderMock = new Mock<IAggregateDeltaProjectionMetadataProviderV2<TestCommand, TestAggregate>>();
         var processor = CreateProcessor(mapperMock, publisherMock, keyProviderMock);
 
         var action = () => processor.ProcessAsync(
@@ -143,7 +153,7 @@ public sealed class AggregateBeforeSaveDeltaProcessorV2Tests
     {
         var mapperMock = new Mock<IMapper>();
         var publisherMock = new Mock<IOutboxIntegrationEventPublisher>();
-        var keyProviderMock = new Mock<IAggregateDeltaProjectionKeyProviderV2<TestCommand, TestAggregate>>();
+        var keyProviderMock = new Mock<IAggregateDeltaProjectionMetadataProviderV2<TestCommand, TestAggregate>>();
         var processor = CreateProcessor(mapperMock, publisherMock, keyProviderMock);
 
         var action = () => processor.ProcessAsync(
@@ -160,7 +170,7 @@ public sealed class AggregateBeforeSaveDeltaProcessorV2Tests
     {
         var mapperMock = new Mock<IMapper>();
         var publisherMock = new Mock<IOutboxIntegrationEventPublisher>();
-        var keyProviderMock = new Mock<IAggregateDeltaProjectionKeyProviderV2<TestCommand, TestAggregate>>();
+        var keyProviderMock = new Mock<IAggregateDeltaProjectionMetadataProviderV2<TestCommand, TestAggregate>>();
         var processor = CreateProcessor(mapperMock, publisherMock, keyProviderMock);
         IReadOnlyList<AggregateDeltaMutation<TestAggregate>> mutations = [null!];
 
@@ -179,7 +189,7 @@ public sealed class AggregateBeforeSaveDeltaProcessorV2Tests
     {
         var mapperMock = new Mock<IMapper>();
         var publisherMock = new Mock<IOutboxIntegrationEventPublisher>();
-        var keyProviderMock = new Mock<IAggregateDeltaProjectionKeyProviderV2<TestCommand, TestAggregate>>();
+        var keyProviderMock = new Mock<IAggregateDeltaProjectionMetadataProviderV2<TestCommand, TestAggregate>>();
         var processor = CreateProcessor(mapperMock, publisherMock, keyProviderMock);
         IReadOnlyList<AggregateDeltaMutation<TestAggregate>> mutations =
             [new(null!, MutationType.Updated)];
@@ -203,7 +213,7 @@ public sealed class AggregateBeforeSaveDeltaProcessorV2Tests
         var command = new TestCommand(Guid.NewGuid());
         var mapperMock = new Mock<IMapper>();
         var publisherMock = new Mock<IOutboxIntegrationEventPublisher>();
-        var keyProviderMock = new Mock<IAggregateDeltaProjectionKeyProviderV2<TestCommand, TestAggregate>>();
+        var keyProviderMock = new Mock<IAggregateDeltaProjectionMetadataProviderV2<TestCommand, TestAggregate>>();
         keyProviderMock
             .Setup(x => x.GetKafkaKey(command, mutations))
             .Returns(string.Empty);
@@ -232,7 +242,7 @@ public sealed class AggregateBeforeSaveDeltaProcessorV2Tests
             .Setup(x => x.Map<TestReadModel>(aggregate))
             .Returns((TestReadModel)null!);
         var publisherMock = new Mock<IOutboxIntegrationEventPublisher>();
-        var keyProviderMock = new Mock<IAggregateDeltaProjectionKeyProviderV2<TestCommand, TestAggregate>>();
+        var keyProviderMock = new Mock<IAggregateDeltaProjectionMetadataProviderV2<TestCommand, TestAggregate>>();
         keyProviderMock
             .Setup(x => x.GetKafkaKey(command, mutations))
             .Returns(Guid.NewGuid().ToString("D"));
@@ -254,7 +264,7 @@ public sealed class AggregateBeforeSaveDeltaProcessorV2Tests
         var aggregate = CreateAggregate("Updated", MutationType.Updated);
         var mapperMock = new Mock<IMapper>();
         var publisherMock = new Mock<IOutboxIntegrationEventPublisher>();
-        var keyProviderMock = new Mock<IAggregateDeltaProjectionKeyProviderV2<TestCommand, TestAggregate>>();
+        var keyProviderMock = new Mock<IAggregateDeltaProjectionMetadataProviderV2<TestCommand, TestAggregate>>();
         var processor = CreateProcessor(mapperMock, publisherMock, keyProviderMock);
         var batch = new AggregateDeltaBatch<TestAggregate>(
             BatchOperationType.Unspecified,
@@ -276,7 +286,7 @@ public sealed class AggregateBeforeSaveDeltaProcessorV2Tests
         var aggregate = CreateAggregate("Updated", MutationType.Updated);
         var mapperMock = new Mock<IMapper>();
         var publisherMock = new Mock<IOutboxIntegrationEventPublisher>();
-        var keyProviderMock = new Mock<IAggregateDeltaProjectionKeyProviderV2<TestCommand, TestAggregate>>();
+        var keyProviderMock = new Mock<IAggregateDeltaProjectionMetadataProviderV2<TestCommand, TestAggregate>>();
         var processor = CreateProcessor(mapperMock, publisherMock, keyProviderMock);
         var batch = new AggregateDeltaBatch<TestAggregate>(
             (BatchOperationType)int.MaxValue,
@@ -294,7 +304,7 @@ public sealed class AggregateBeforeSaveDeltaProcessorV2Tests
     private static AggregateBeforeSaveDeltaProcessorV2<TestCommand, TestAggregate, TestReadModel> CreateProcessor(
         Mock<IMapper> mapperMock,
         Mock<IOutboxIntegrationEventPublisher> publisherMock,
-        Mock<IAggregateDeltaProjectionKeyProviderV2<TestCommand, TestAggregate>> keyProviderMock)
+        Mock<IAggregateDeltaProjectionMetadataProviderV2<TestCommand, TestAggregate>> keyProviderMock)
         => new(mapperMock.Object, publisherMock.Object, keyProviderMock.Object);
 
     private static TestAggregate CreateAggregate(string name, MutationType mutationType)
@@ -329,8 +339,18 @@ public sealed class AggregateBeforeSaveDeltaProcessorV2Tests
     private static void VerifyNoWork(
         Mock<IMapper> mapperMock,
         Mock<IOutboxIntegrationEventPublisher> publisherMock,
-        Mock<IAggregateDeltaProjectionKeyProviderV2<TestCommand, TestAggregate>> keyProviderMock)
+        Mock<IAggregateDeltaProjectionMetadataProviderV2<TestCommand, TestAggregate>> keyProviderMock)
     {
+        keyProviderMock.Verify(
+            x => x.GetProjectionId(
+                It.IsAny<TestCommand>(),
+                It.IsAny<IReadOnlyList<AggregateDeltaMutation<TestAggregate>>>()),
+            Times.Never);
+        keyProviderMock.Verify(
+            x => x.GetProjectionRevision(
+                It.IsAny<TestCommand>(),
+                It.IsAny<IReadOnlyList<AggregateDeltaMutation<TestAggregate>>>()),
+            Times.Never);
         keyProviderMock.Verify(
             x => x.GetKafkaKey(
                 It.IsAny<TestCommand>(),

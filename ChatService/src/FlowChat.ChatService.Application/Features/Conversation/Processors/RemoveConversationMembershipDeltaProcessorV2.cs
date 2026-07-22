@@ -16,10 +16,10 @@ public sealed class RemoveConversationMembershipDeltaProcessorV2
     public RemoveConversationMembershipDeltaProcessorV2(
         IMapper mapper,
         IOutboxIntegrationEventPublisher integrationEventPublisher,
-        IAggregateDeltaProjectionKeyProviderV2<
+        IAggregateDeltaProjectionMetadataProviderV2<
             ConversationParticipantsRemovedDomainEventV2,
-            ConversationParticipant> keyProvider)
-        : base(mapper, integrationEventPublisher, keyProvider)
+            ConversationParticipant> metadataProvider)
+        : base(mapper, integrationEventPublisher, metadataProvider)
     {
     }
 }

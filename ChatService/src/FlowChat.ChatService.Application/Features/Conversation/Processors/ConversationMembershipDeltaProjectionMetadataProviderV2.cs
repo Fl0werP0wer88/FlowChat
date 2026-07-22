@@ -4,11 +4,35 @@ using FlowChat.Shared.Application.CommandHandlers.BatchAggregateCommandHandlerBa
 
 namespace FlowChat.ChatService.Application.Features.Conversation.Processors;
 
-public sealed class ConversationMembershipDeltaProjectionKeyProviderV2<TTrigger>
-    : IAggregateDeltaProjectionKeyProviderV2<TTrigger, ConversationParticipant>
+public sealed class ConversationMembershipDeltaProjectionMetadataProviderV2<TTrigger>
+    : IAggregateDeltaProjectionMetadataProviderV2<TTrigger, ConversationParticipant>
     where TTrigger : class, IConversationParticipantsChangedDomainEventV2
 {
+    public Guid GetProjectionId(
+        TTrigger notification,
+        IReadOnlyList<AggregateDeltaMutation<ConversationParticipant>> mutations)
+    {
+        Validate(notification, mutations);
+        return notification.ConversationId.Value;
+    }
+
+    public int GetProjectionRevision(
+        TTrigger notification,
+        IReadOnlyList<AggregateDeltaMutation<ConversationParticipant>> mutations)
+    {
+        Validate(notification, mutations);
+        return notification.Version;
+    }
+
     public string GetKafkaKey(
+        TTrigger notification,
+        IReadOnlyList<AggregateDeltaMutation<ConversationParticipant>> mutations)
+    {
+        Validate(notification, mutations);
+        return notification.ConversationId.Value.ToString("D");
+    }
+
+    private static void Validate(
         TTrigger notification,
         IReadOnlyList<AggregateDeltaMutation<ConversationParticipant>> mutations)
     {
@@ -28,6 +52,5 @@ public sealed class ConversationMembershipDeltaProjectionKeyProviderV2<TTrigger>
                 "All conversation membership delta mutations must belong to the conversation from the notification.");
         }
 
-        return conversationId.Value.ToString("D");
     }
 }

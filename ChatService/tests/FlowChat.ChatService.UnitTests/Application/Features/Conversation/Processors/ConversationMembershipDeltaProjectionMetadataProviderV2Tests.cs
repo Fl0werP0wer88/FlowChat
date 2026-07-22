@@ -8,9 +8,9 @@ using UserProfileMarker = FlowChat.ChatService.Domain.Entities.UserProfiles.User
 
 namespace FlowChat.ChatService.UnitTests.Application.Features.Conversation.Processors;
 
-public sealed class ConversationMembershipDeltaProjectionKeyProviderV2Tests
+public sealed class ConversationMembershipDeltaProjectionMetadataProviderV2Tests
 {
-    private readonly ConversationMembershipDeltaProjectionKeyProviderV2<
+    private readonly ConversationMembershipDeltaProjectionMetadataProviderV2<
         ConversationParticipantsAddedDomainEventV2> _provider = new();
 
     [Fact]
