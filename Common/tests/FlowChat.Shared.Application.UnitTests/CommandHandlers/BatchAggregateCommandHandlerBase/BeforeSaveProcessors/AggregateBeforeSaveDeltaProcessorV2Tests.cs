@@ -53,7 +53,10 @@ public sealed class AggregateBeforeSaveDeltaProcessorV2Tests
         var processor = CreateProcessor(mapperMock, publisherMock, keyProviderMock);
         using var cancellationTokenSource = new CancellationTokenSource();
 
-        await processor.ProcessAsync(command, mutations, cancellationTokenSource.Token);
+        await processor.ProcessAsync(
+            command,
+            new AggregateDeltaBatch<TestAggregate>(BatchOperationType.Mixed, mutations),
+            cancellationTokenSource.Token);
 
         keyProviderMock.Verify(x => x.GetKafkaKey(command, mutations), Times.Once);
         publisherMock.Verify(
@@ -64,6 +67,7 @@ public sealed class AggregateBeforeSaveDeltaProcessorV2Tests
         capturedEnvelope.Should().NotBeNull();
         capturedEnvelope!.KafkaKey.Should().Be(expectedKafkaKey);
         capturedCancellationToken.Should().Be(cancellationTokenSource.Token);
+        capturedEnvelope.Payload.BatchOperationType.Should().Be(BatchOperationType.Mixed);
         capturedEnvelope.Payload.Delta.Should().HaveCount(3);
 
         AssertDeltaItem(capturedEnvelope.Payload.Delta[0], created, createdReadModel, OperationType.Created);
@@ -79,7 +83,10 @@ public sealed class AggregateBeforeSaveDeltaProcessorV2Tests
         var keyProviderMock = new Mock<IAggregateDeltaProjectionKeyProviderV2<TestCommand, TestAggregate>>();
         var processor = CreateProcessor(mapperMock, publisherMock, keyProviderMock);
 
-        await processor.ProcessAsync(new TestCommand(Guid.NewGuid()), [], CancellationToken.None);
+        await processor.ProcessAsync(
+            new TestCommand(Guid.NewGuid()),
+            new AggregateDeltaBatch<TestAggregate>(BatchOperationType.Unspecified, []),
+            CancellationToken.None);
 
         keyProviderMock.Verify(
             x => x.GetKafkaKey(
@@ -101,7 +108,9 @@ public sealed class AggregateBeforeSaveDeltaProcessorV2Tests
 
         var action = () => processor.ProcessAsync(
             new TestCommand(Guid.NewGuid()),
-            [new AggregateDeltaMutation<TestAggregate>(aggregate, MutationType.Unchanged)],
+            new AggregateDeltaBatch<TestAggregate>(
+                BatchOperationType.Updated,
+                [new AggregateDeltaMutation<TestAggregate>(aggregate, MutationType.Unchanged)]),
             CancellationToken.None);
 
         await action.Should().ThrowAsync<InvalidOperationException>()
@@ -120,7 +129,9 @@ public sealed class AggregateBeforeSaveDeltaProcessorV2Tests
 
         var action = () => processor.ProcessAsync(
             new TestCommand(Guid.NewGuid()),
-            [new AggregateDeltaMutation<TestAggregate>(aggregate, (MutationType)int.MaxValue)],
+            new AggregateDeltaBatch<TestAggregate>(
+                BatchOperationType.Updated,
+                [new AggregateDeltaMutation<TestAggregate>(aggregate, (MutationType)int.MaxValue)]),
             CancellationToken.None);
 
         await action.Should().ThrowAsync<ArgumentOutOfRangeException>();
@@ -137,7 +148,7 @@ public sealed class AggregateBeforeSaveDeltaProcessorV2Tests
 
         var action = () => processor.ProcessAsync(
             new TestCommand(Guid.NewGuid()),
-            null!,
+            new AggregateDeltaBatch<TestAggregate>(BatchOperationType.Updated, null!),
             CancellationToken.None);
 
         await action.Should().ThrowAsync<ArgumentNullException>();
@@ -155,7 +166,7 @@ public sealed class AggregateBeforeSaveDeltaProcessorV2Tests
 
         var action = () => processor.ProcessAsync(
             new TestCommand(Guid.NewGuid()),
-            mutations,
+            new AggregateDeltaBatch<TestAggregate>(BatchOperationType.Updated, mutations),
             CancellationToken.None);
 
         await action.Should().ThrowAsync<ArgumentException>()
@@ -175,7 +186,7 @@ public sealed class AggregateBeforeSaveDeltaProcessorV2Tests
 
         var action = () => processor.ProcessAsync(
             new TestCommand(Guid.NewGuid()),
-            mutations,
+            new AggregateDeltaBatch<TestAggregate>(BatchOperationType.Updated, mutations),
             CancellationToken.None);
 
         await action.Should().ThrowAsync<ArgumentException>()
@@ -198,7 +209,10 @@ public sealed class AggregateBeforeSaveDeltaProcessorV2Tests
             .Returns(string.Empty);
         var processor = CreateProcessor(mapperMock, publisherMock, keyProviderMock);
 
-        var action = () => processor.ProcessAsync(command, mutations, CancellationToken.None);
+        var action = () => processor.ProcessAsync(
+            command,
+            new AggregateDeltaBatch<TestAggregate>(BatchOperationType.Updated, mutations),
+            CancellationToken.None);
 
         await action.Should().ThrowAsync<InvalidOperationException>()
             .WithMessage("*Kafka key cannot be null or empty*");
@@ -224,11 +238,57 @@ public sealed class AggregateBeforeSaveDeltaProcessorV2Tests
             .Returns(Guid.NewGuid().ToString("D"));
         var processor = CreateProcessor(mapperMock, publisherMock, keyProviderMock);
 
-        var action = () => processor.ProcessAsync(command, mutations, CancellationToken.None);
+        var action = () => processor.ProcessAsync(
+            command,
+            new AggregateDeltaBatch<TestAggregate>(BatchOperationType.Updated, mutations),
+            CancellationToken.None);
 
         await action.Should().ThrowAsync<InvalidOperationException>()
             .WithMessage("Mapping aggregate*returned null.");
         VerifyNeverPublished(publisherMock);
+    }
+
+    [Fact]
+    public async Task ProcessAsync_WhenBatchOperationTypeIsUnspecified_ThrowsWithoutPublishing()
+    {
+        var aggregate = CreateAggregate("Updated", MutationType.Updated);
+        var mapperMock = new Mock<IMapper>();
+        var publisherMock = new Mock<IOutboxIntegrationEventPublisher>();
+        var keyProviderMock = new Mock<IAggregateDeltaProjectionKeyProviderV2<TestCommand, TestAggregate>>();
+        var processor = CreateProcessor(mapperMock, publisherMock, keyProviderMock);
+        var batch = new AggregateDeltaBatch<TestAggregate>(
+            BatchOperationType.Unspecified,
+            [new AggregateDeltaMutation<TestAggregate>(aggregate, MutationType.Updated)]);
+
+        var action = () => processor.ProcessAsync(
+            new TestCommand(Guid.NewGuid()),
+            batch,
+            CancellationToken.None);
+
+        await action.Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage("*unspecified batch operation type*");
+        VerifyNoWork(mapperMock, publisherMock, keyProviderMock);
+    }
+
+    [Fact]
+    public async Task ProcessAsync_WhenBatchOperationTypeIsUnsupported_ThrowsWithoutPublishing()
+    {
+        var aggregate = CreateAggregate("Updated", MutationType.Updated);
+        var mapperMock = new Mock<IMapper>();
+        var publisherMock = new Mock<IOutboxIntegrationEventPublisher>();
+        var keyProviderMock = new Mock<IAggregateDeltaProjectionKeyProviderV2<TestCommand, TestAggregate>>();
+        var processor = CreateProcessor(mapperMock, publisherMock, keyProviderMock);
+        var batch = new AggregateDeltaBatch<TestAggregate>(
+            (BatchOperationType)int.MaxValue,
+            [new AggregateDeltaMutation<TestAggregate>(aggregate, MutationType.Updated)]);
+
+        var action = () => processor.ProcessAsync(
+            new TestCommand(Guid.NewGuid()),
+            batch,
+            CancellationToken.None);
+
+        await action.Should().ThrowAsync<ArgumentOutOfRangeException>();
+        VerifyNoWork(mapperMock, publisherMock, keyProviderMock);
     }
 
     private static AggregateBeforeSaveDeltaProcessorV2<TestCommand, TestAggregate, TestReadModel> CreateProcessor(

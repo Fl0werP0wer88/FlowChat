@@ -23,6 +23,7 @@ public sealed class BatchAggregateUpdateCommandHandlerBaseTests
 
         result.IsSuccess.Should().BeTrue();
         result.Value.Response.Should().Be(response);
+        result.Value.BatchOperationType.Should().Be(BatchOperationType.Updated);
         result.Value.Mutations.Select(mutation => mutation.Id).Should().Equal(aggregateIds);
         result.Value.Mutations.Should().OnlyContain(
             mutation => mutation.MutationType == MutationType.Updated);
@@ -37,6 +38,7 @@ public sealed class BatchAggregateUpdateCommandHandlerBaseTests
 
         result.IsSuccess.Should().BeTrue();
         result.Value.Response.Should().Be(response);
+        result.Value.BatchOperationType.Should().Be(BatchOperationType.Updated);
         result.Value.Mutations.Should().BeEmpty();
     }
 

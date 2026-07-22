@@ -26,5 +26,5 @@ public abstract class BatchAggregateAddCommandHandlerBase<TCommand, TResponse, T
     protected static FlowChatResult<BatchAggregateMutation<TResponse, TAggregate>> AddBatch(
         TResponse response,
         IReadOnlyList<Id<TAggregate>> aggregateIds)
-        => Mutation(response, aggregateIds, MutationType.Created);
+        => Mutation(response, aggregateIds, MutationType.Created, BatchOperationType.Created);
 }

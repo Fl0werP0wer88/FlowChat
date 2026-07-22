@@ -24,7 +24,7 @@ public sealed class BatchAggregateRootDomainEventHandlerBaseTests
         var handler = CreateHandler(
             dispatcherMock.Object,
             [aggregate],
-            FlowChatResult<IReadOnlyList<AggregateMutationDescriptor<TestAggregate>>>.Failure(expectedError),
+            FlowChatResult<BatchAggregateDomainEventMutation<TestAggregate>>.Failure(expectedError),
             [processorMock.Object],
             [deltaProcessorMock.Object]);
 
@@ -46,7 +46,7 @@ public sealed class BatchAggregateRootDomainEventHandlerBaseTests
         var handler = CreateHandler(
             dispatcherMock.Object,
             [],
-            Success([]),
+            Success([], BatchOperationType.Unspecified),
             beforeSaveDeltaProcessors: [deltaProcessorMock.Object]);
 
         await handler.Handle(new TestNotification(), CancellationToken.None);
@@ -54,6 +54,21 @@ public sealed class BatchAggregateRootDomainEventHandlerBaseTests
         handler.AggregateRootsCount.Should().Be(0);
         VerifyNeverDispatched(dispatcherMock);
         VerifyNeverDeltaProcessed(deltaProcessorMock);
+    }
+
+    [Fact]
+    public async Task Handle_WhenMutationListIsNull_ThrowsInvalidOperationException()
+    {
+        var executionResult = FlowChatResult<BatchAggregateDomainEventMutation<TestAggregate>>.Success(
+            new BatchAggregateDomainEventMutation<TestAggregate>(
+                BatchOperationType.Unspecified,
+                null!));
+        var handler = CreateHandler(CreateDispatcherMock().Object, [], executionResult);
+
+        var action = () => handler.Handle(new TestNotification(), CancellationToken.None);
+
+        await action.Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage("*mutation list cannot be null*");
     }
 
     [Fact]
@@ -74,7 +89,8 @@ public sealed class BatchAggregateRootDomainEventHandlerBaseTests
                     Descriptor(updated, MutationType.Updated),
                     Descriptor(deleted, MutationType.Deleted),
                     Descriptor(unchanged, MutationType.Unchanged)
-                ]));
+                ],
+                BatchOperationType.Mixed));
 
         await handler.Handle(new TestNotification(), CancellationToken.None);
 
@@ -122,7 +138,8 @@ public sealed class BatchAggregateRootDomainEventHandlerBaseTests
                 [
                     Descriptor(secondAggregate, MutationType.Updated),
                     Descriptor(firstAggregate, MutationType.Updated)
-                ]));
+                ],
+                BatchOperationType.Updated));
 
         await handler.Handle(new TestNotification(), CancellationToken.None);
 
@@ -161,7 +178,8 @@ public sealed class BatchAggregateRootDomainEventHandlerBaseTests
                     Descriptor(secondAggregate, MutationType.Updated),
                     Descriptor(unchangedAggregate, MutationType.Unchanged),
                     Descriptor(firstAggregate, MutationType.Deleted)
-                ]),
+                ],
+                BatchOperationType.Mixed),
             [aggregateProcessorMock.Object],
             [firstDeltaProcessorMock.Object, secondDeltaProcessorMock.Object]);
 
@@ -175,19 +193,51 @@ public sealed class BatchAggregateRootDomainEventHandlerBaseTests
         firstDeltaProcessorMock.Verify(
             x => x.ProcessAsync(
                 notification,
-                It.Is<IReadOnlyList<AggregateDeltaMutation<TestAggregate>>>(mutations =>
-                    mutations.Count == 2 &&
-                    ReferenceEquals(mutations[0].Aggregate, secondAggregate) &&
-                    mutations[0].MutationType == MutationType.Updated &&
-                    ReferenceEquals(mutations[1].Aggregate, firstAggregate) &&
-                    mutations[1].MutationType == MutationType.Deleted),
+                It.Is<AggregateDeltaBatch<TestAggregate>>(batch =>
+                    batch.BatchOperationType == BatchOperationType.Mixed &&
+                    batch.Mutations.Count == 2 &&
+                    ReferenceEquals(batch.Mutations[0].Aggregate, secondAggregate) &&
+                    batch.Mutations[0].MutationType == MutationType.Updated &&
+                    ReferenceEquals(batch.Mutations[1].Aggregate, firstAggregate) &&
+                    batch.Mutations[1].MutationType == MutationType.Deleted),
                 cancellationToken),
             Times.Once);
         secondDeltaProcessorMock.Verify(
             x => x.ProcessAsync(
                 notification,
-                It.IsAny<IReadOnlyList<AggregateDeltaMutation<TestAggregate>>>(),
+                It.IsAny<AggregateDeltaBatch<TestAggregate>>(),
                 cancellationToken),
+            Times.Once);
+        AssertUnchanged(unchangedAggregate);
+    }
+
+    [Fact]
+    public async Task Handle_WhenBatchContainsUnchangedMutation_PassesExplicitTypeAndOnlyChangedAggregate()
+    {
+        var updatedAggregate = new TestAggregate(Guid.NewGuid());
+        var unchangedAggregate = new TestAggregate(Guid.NewGuid());
+        var deltaProcessorMock = new Mock<IAggregateBeforeSaveDeltaProcessorV2<TestNotification, TestAggregate>>();
+        var handler = CreateHandler(
+            CreateDispatcherMock().Object,
+            [updatedAggregate, unchangedAggregate],
+            Success(
+                [
+                    Descriptor(updatedAggregate, MutationType.Updated),
+                    Descriptor(unchangedAggregate, MutationType.Unchanged)
+                ],
+                BatchOperationType.Updated),
+            beforeSaveDeltaProcessors: [deltaProcessorMock.Object]);
+
+        await handler.Handle(new TestNotification(), CancellationToken.None);
+
+        deltaProcessorMock.Verify(
+            x => x.ProcessAsync(
+                It.IsAny<TestNotification>(),
+                It.Is<AggregateDeltaBatch<TestAggregate>>(batch =>
+                    batch.BatchOperationType == BatchOperationType.Updated &&
+                    batch.Mutations.Count == 1 &&
+                    ReferenceEquals(batch.Mutations[0].Aggregate, updatedAggregate)),
+                It.IsAny<CancellationToken>()),
             Times.Once);
         AssertUnchanged(unchangedAggregate);
     }
@@ -225,14 +275,16 @@ public sealed class BatchAggregateRootDomainEventHandlerBaseTests
         deltaProcessorMock
             .Setup(x => x.ProcessAsync(
                 It.IsAny<TestNotification>(),
-                It.IsAny<IReadOnlyList<AggregateDeltaMutation<TestAggregate>>>(),
+                It.IsAny<AggregateDeltaBatch<TestAggregate>>(),
                 It.IsAny<CancellationToken>()))
             .Callback(() => callOrder.Add("delta-processor"))
             .Returns(Task.CompletedTask);
         var handler = CreateHandler(
             dispatcherMock.Object,
             [aggregate],
-            Success([Descriptor(aggregate, MutationType.Updated)]),
+            Success(
+                [Descriptor(aggregate, MutationType.Updated)],
+                BatchOperationType.Updated),
             [aggregateProcessorMock.Object],
             [deltaProcessorMock.Object]);
 
@@ -258,7 +310,8 @@ public sealed class BatchAggregateRootDomainEventHandlerBaseTests
                 [
                     Descriptor(availableAggregate, MutationType.Updated),
                     Descriptor(missingAggregate, MutationType.Updated)
-                ]),
+                ],
+                BatchOperationType.Updated),
             [processorMock.Object],
             [deltaProcessorMock.Object]);
 
@@ -284,7 +337,8 @@ public sealed class BatchAggregateRootDomainEventHandlerBaseTests
                 [
                     Descriptor(aggregate, MutationType.Updated),
                     Descriptor(aggregate, MutationType.Deleted)
-                ]));
+                ],
+                BatchOperationType.Mixed));
 
         var action = () => handler.Handle(new TestNotification(), CancellationToken.None);
 
@@ -315,7 +369,8 @@ public sealed class BatchAggregateRootDomainEventHandlerBaseTests
                 [
                     Descriptor(firstAggregate, MutationType.Updated),
                     Descriptor(secondAggregate, MutationType.Updated)
-                ]),
+                ],
+                BatchOperationType.Updated),
             [processorMock.Object],
             [deltaProcessorMock.Object]);
 
@@ -336,14 +391,16 @@ public sealed class BatchAggregateRootDomainEventHandlerBaseTests
         firstDeltaProcessorMock
             .Setup(x => x.ProcessAsync(
                 It.IsAny<TestNotification>(),
-                It.IsAny<IReadOnlyList<AggregateDeltaMutation<TestAggregate>>>(),
+                It.IsAny<AggregateDeltaBatch<TestAggregate>>(),
                 It.IsAny<CancellationToken>()))
             .ThrowsAsync(expectedException);
         var secondDeltaProcessorMock = new Mock<IAggregateBeforeSaveDeltaProcessorV2<TestNotification, TestAggregate>>();
         var handler = CreateHandler(
             CreateDispatcherMock().Object,
             [aggregate],
-            Success([Descriptor(aggregate, MutationType.Updated)]),
+            Success(
+                [Descriptor(aggregate, MutationType.Updated)],
+                BatchOperationType.Updated),
             beforeSaveDeltaProcessors: [firstDeltaProcessorMock.Object, secondDeltaProcessorMock.Object]);
 
         var action = () => handler.Handle(new TestNotification(), CancellationToken.None);
@@ -353,10 +410,73 @@ public sealed class BatchAggregateRootDomainEventHandlerBaseTests
         VerifyNeverDeltaProcessed(secondDeltaProcessorMock);
     }
 
+    [Fact]
+    public async Task Handle_WhenBatchOperationTypeDiffersFromItemMutations_PassesExplicitTypeToDeltaProcessor()
+    {
+        var aggregate = new TestAggregate(Guid.NewGuid());
+        var deltaProcessorMock = new Mock<IAggregateBeforeSaveDeltaProcessorV2<TestNotification, TestAggregate>>();
+        var handler = CreateHandler(
+            CreateDispatcherMock().Object,
+            [aggregate],
+            Success(
+                [Descriptor(aggregate, MutationType.Created)],
+                BatchOperationType.Updated),
+            beforeSaveDeltaProcessors: [deltaProcessorMock.Object]);
+
+        await handler.Handle(new TestNotification(), CancellationToken.None);
+
+        deltaProcessorMock.Verify(
+            x => x.ProcessAsync(
+                It.IsAny<TestNotification>(),
+                It.Is<AggregateDeltaBatch<TestAggregate>>(batch =>
+                    batch.BatchOperationType == BatchOperationType.Updated &&
+                    batch.Mutations.Count == 1 &&
+                    batch.Mutations[0].MutationType == MutationType.Created),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+        aggregate.Version.Should().Be(2);
+    }
+
+    [Fact]
+    public async Task Handle_WhenBatchOperationTypeIsUnsupported_ThrowsBeforeMutatingAnyAggregate()
+    {
+        var aggregate = new TestAggregate(Guid.NewGuid());
+        var handler = CreateHandler(
+            CreateDispatcherMock().Object,
+            [aggregate],
+            Success(
+                [Descriptor(aggregate, MutationType.Updated)],
+                (BatchOperationType)int.MaxValue));
+
+        var action = () => handler.Handle(new TestNotification(), CancellationToken.None);
+
+        await action.Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage("Unsupported batch operation type*");
+        AssertUnchanged(aggregate);
+    }
+
+    [Fact]
+    public async Task Handle_WhenChangedMutationUsesUnspecifiedBatchOperation_ThrowsBeforeMutatingAggregate()
+    {
+        var aggregate = new TestAggregate(Guid.NewGuid());
+        var handler = CreateHandler(
+            CreateDispatcherMock().Object,
+            [aggregate],
+            Success(
+                [Descriptor(aggregate, MutationType.Updated)],
+                BatchOperationType.Unspecified));
+
+        var action = () => handler.Handle(new TestNotification(), CancellationToken.None);
+
+        await action.Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage("*unspecified batch operation type*");
+        AssertUnchanged(aggregate);
+    }
+
     private static ConfigurableBatchDomainEventHandler CreateHandler(
         ILocalEventDispatcher dispatcher,
         IEnumerable<TestAggregate> aggregateRoots,
-        FlowChatResult<IReadOnlyList<AggregateMutationDescriptor<TestAggregate>>> executionResult,
+        FlowChatResult<BatchAggregateDomainEventMutation<TestAggregate>> executionResult,
         IEnumerable<IAggregateBeforeSaveProcessorV2<TestNotification, TestAggregate>>? beforeSaveProcessors = null,
         IEnumerable<IAggregateBeforeSaveDeltaProcessorV2<TestNotification, TestAggregate>>? beforeSaveDeltaProcessors = null)
         => new(
@@ -366,9 +486,13 @@ public sealed class BatchAggregateRootDomainEventHandlerBaseTests
             beforeSaveProcessors ?? [],
             beforeSaveDeltaProcessors ?? []);
 
-    private static FlowChatResult<IReadOnlyList<AggregateMutationDescriptor<TestAggregate>>> Success(
-        IReadOnlyList<AggregateMutationDescriptor<TestAggregate>> mutations)
-        => FlowChatResult<IReadOnlyList<AggregateMutationDescriptor<TestAggregate>>>.Success(mutations);
+    private static FlowChatResult<BatchAggregateDomainEventMutation<TestAggregate>> Success(
+        IReadOnlyList<AggregateMutationDescriptor<TestAggregate>> mutations,
+        BatchOperationType batchOperationType)
+        => FlowChatResult<BatchAggregateDomainEventMutation<TestAggregate>>.Success(
+            new BatchAggregateDomainEventMutation<TestAggregate>(
+                batchOperationType,
+                mutations));
 
     private static AggregateMutationDescriptor<TestAggregate> Descriptor(
         TestAggregate aggregate,
@@ -393,7 +517,7 @@ public sealed class BatchAggregateRootDomainEventHandlerBaseTests
         processorMock
             .Setup(x => x.ProcessAsync(
                 It.IsAny<TestNotification>(),
-                It.IsAny<IReadOnlyList<AggregateDeltaMutation<TestAggregate>>>(),
+                It.IsAny<AggregateDeltaBatch<TestAggregate>>(),
                 It.IsAny<CancellationToken>()))
             .Callback(() => callOrder.Add(name))
             .Returns(Task.CompletedTask);
@@ -421,7 +545,7 @@ public sealed class BatchAggregateRootDomainEventHandlerBaseTests
         => processorMock.Verify(
             x => x.ProcessAsync(
                 It.IsAny<TestNotification>(),
-                It.IsAny<IReadOnlyList<AggregateDeltaMutation<TestAggregate>>>(),
+                It.IsAny<AggregateDeltaBatch<TestAggregate>>(),
                 It.IsAny<CancellationToken>()),
             Times.Never);
 
@@ -445,12 +569,12 @@ public sealed class BatchAggregateRootDomainEventHandlerBaseTests
     private sealed class ConfigurableBatchDomainEventHandler
         : BatchAggregateRootDomainEventHandlerBase<TestNotification, TestAggregate>
     {
-        private readonly FlowChatResult<IReadOnlyList<AggregateMutationDescriptor<TestAggregate>>> _executionResult;
+        private readonly FlowChatResult<BatchAggregateDomainEventMutation<TestAggregate>> _executionResult;
 
         public ConfigurableBatchDomainEventHandler(
             ILocalEventDispatcher localEventsDispatcher,
             IEnumerable<TestAggregate> aggregateRoots,
-            FlowChatResult<IReadOnlyList<AggregateMutationDescriptor<TestAggregate>>> executionResult,
+            FlowChatResult<BatchAggregateDomainEventMutation<TestAggregate>> executionResult,
             IEnumerable<IAggregateBeforeSaveProcessorV2<TestNotification, TestAggregate>> beforeSaveProcessors,
             IEnumerable<IAggregateBeforeSaveDeltaProcessorV2<TestNotification, TestAggregate>> beforeSaveDeltaProcessors)
             : base(localEventsDispatcher, beforeSaveProcessors, beforeSaveDeltaProcessors)
@@ -461,7 +585,7 @@ public sealed class BatchAggregateRootDomainEventHandlerBaseTests
 
         public int AggregateRootsCount => AggregateRoots.Count;
 
-        protected override Task<FlowChatResult<IReadOnlyList<AggregateMutationDescriptor<TestAggregate>>>> ExecuteAsync(
+        protected override Task<FlowChatResult<BatchAggregateDomainEventMutation<TestAggregate>>> ExecuteAsync(
             TestNotification notification,
             CancellationToken cancellationToken)
             => Task.FromResult(_executionResult);

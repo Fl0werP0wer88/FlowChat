@@ -49,6 +49,9 @@ public abstract class BatchAggregateCommandHandlerBase<TCommand, TResponse, TAgg
         var operationResult = executionResult.Value
             ?? throw new InvalidOperationException("The batch mutation result cannot be null.");
         var aggregateRoots = ValidateAndGetAggregateRoots(operationResult.Mutations);
+        BatchOperationTypeValidator.Validate(
+            operationResult.BatchOperationType,
+            operationResult.Mutations.Any(mutation => mutation.MutationType != MutationType.Unchanged));
 
         foreach (var mutation in operationResult.Mutations)
         {
@@ -84,9 +87,13 @@ public abstract class BatchAggregateCommandHandlerBase<TCommand, TResponse, TAgg
 
             if (deltaMutations.Length > 0)
             {
+                var deltaBatch = new AggregateDeltaBatch<TAggregate>(
+                    operationResult.BatchOperationType,
+                    deltaMutations);
+
                 foreach (var processor in _beforeSaveDeltaProcessors)
                 {
-                    await processor.ProcessAsync(request, deltaMutations, cancellationToken);
+                    await processor.ProcessAsync(request, deltaBatch, cancellationToken);
                 }
             }
         }
@@ -95,25 +102,27 @@ public abstract class BatchAggregateCommandHandlerBase<TCommand, TResponse, TAgg
     }
 
     protected static FlowChatResult<BatchAggregateMutation<TResponse, TAggregate>> Unchanged(TResponse response) =>
-        Mutation(response, []);
+        Mutation(response, [], BatchOperationType.Unspecified);
 
     protected static FlowChatResult<BatchAggregateMutation<TResponse, TAggregate>> Failure(IDomainError error) =>
         FlowChatResult<BatchAggregateMutation<TResponse, TAggregate>>.Failure(error);
 
     protected static FlowChatResult<BatchAggregateMutation<TResponse, TAggregate>> Mutation(
         TResponse response,
-        IReadOnlyList<AggregateMutationDescriptor<TAggregate>> mutations)
+        IReadOnlyList<AggregateMutationDescriptor<TAggregate>> mutations,
+        BatchOperationType batchOperationType)
     {
         ArgumentNullException.ThrowIfNull(mutations);
 
         return FlowChatResult<BatchAggregateMutation<TResponse, TAggregate>>.Success(
-            new BatchAggregateMutation<TResponse, TAggregate>(response, mutations));
+            new BatchAggregateMutation<TResponse, TAggregate>(response, batchOperationType, mutations));
     }
 
     protected static FlowChatResult<BatchAggregateMutation<TResponse, TAggregate>> Mutation(
         TResponse response,
         IReadOnlyList<Id<TAggregate>> aggregateIds,
-        MutationType mutationType)
+        MutationType mutationType,
+        BatchOperationType batchOperationType)
     {
         ArgumentNullException.ThrowIfNull(aggregateIds);
 
@@ -121,7 +130,7 @@ public abstract class BatchAggregateCommandHandlerBase<TCommand, TResponse, TAgg
             .Select(aggregateId => new AggregateMutationDescriptor<TAggregate>(aggregateId, mutationType))
             .ToArray();
 
-        return Mutation(response, mutations);
+        return Mutation(response, mutations, batchOperationType);
     }
 
     protected abstract Task<FlowChatResult<BatchAggregateMutation<TResponse, TAggregate>>> ExecuteAsync(

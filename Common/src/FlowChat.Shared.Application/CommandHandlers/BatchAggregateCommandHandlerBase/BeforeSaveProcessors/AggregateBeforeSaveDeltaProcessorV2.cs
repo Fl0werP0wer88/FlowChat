@@ -26,29 +26,32 @@ public class AggregateBeforeSaveDeltaProcessorV2<TCommand, TAggregate, TValue>
 
     public async Task ProcessAsync(
         TCommand command,
-        IReadOnlyList<AggregateDeltaMutation<TAggregate>> mutations,
+        AggregateDeltaBatch<TAggregate> batch,
         CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(mutations);
+        ArgumentNullException.ThrowIfNull(batch);
+        ArgumentNullException.ThrowIfNull(batch.Mutations);
 
-        if (mutations.Count == 0)
+        if (batch.Mutations.Count == 0)
         {
             return;
         }
 
-        ValidateMutations(mutations);
+        ValidateBatchOperationType(batch.BatchOperationType);
+        ValidateMutations(batch.Mutations);
 
-        var kafkaKey = _keyProvider.GetKafkaKey(command, mutations);
+        var kafkaKey = _keyProvider.GetKafkaKey(command, batch.Mutations);
         if (string.IsNullOrWhiteSpace(kafkaKey))
         {
             throw new InvalidOperationException("The aggregate delta projection Kafka key cannot be null or empty.");
         }
 
-        var delta = mutations
+        var delta = batch.Mutations
             .Select(MapDeltaItem)
             .ToArray();
         var integrationEvent = new DeltaProjectionIntegrationEventV2<TValue>
         {
+            BatchOperationType = batch.BatchOperationType,
             Delta = delta
         };
         var envelope = new IntegrationEventEnvelope<DeltaProjectionIntegrationEventV2<TValue>>(
@@ -56,6 +59,23 @@ public class AggregateBeforeSaveDeltaProcessorV2<TCommand, TAggregate, TValue>
             kafkaKey);
 
         await _integrationEventPublisher.PublishAsync(envelope, cancellationToken);
+    }
+
+    private static void ValidateBatchOperationType(BatchOperationType batchOperationType)
+    {
+        switch (batchOperationType)
+        {
+            case BatchOperationType.Created:
+            case BatchOperationType.Updated:
+            case BatchOperationType.Deleted:
+            case BatchOperationType.Mixed:
+                return;
+            case BatchOperationType.Unspecified:
+                throw new InvalidOperationException(
+                    "An unspecified batch operation type cannot be published with a non-empty delta.");
+            default:
+                throw new ArgumentOutOfRangeException(nameof(batchOperationType), batchOperationType, null);
+        }
     }
 
     private DeltaProjectionItemV2<TValue> MapDeltaItem(AggregateDeltaMutation<TAggregate> mutation)

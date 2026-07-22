@@ -1,3 +1,4 @@
+using FlowChat.Core.Messaging;
 using FlowChat.Core.Results;
 using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2.BeforeSaveProcessors;
 using FlowChat.Shared.Application.CommandHandlers.BatchAggregateCommandHandlerBase;
@@ -20,7 +21,7 @@ public abstract class BatchAggregateRootUpdateDomainEventHandlerBase<TNotificati
     {
     }
 
-    protected static FlowChatResult<IReadOnlyList<AggregateMutationDescriptor<TAggregate>>> UpdateBatch(
+    protected static FlowChatResult<BatchAggregateDomainEventMutation<TAggregate>> UpdateBatch(
         IReadOnlyList<Id<TAggregate>> aggregateIds)
-        => Mutations(aggregateIds, MutationType.Updated);
+        => Mutations(aggregateIds, MutationType.Updated, BatchOperationType.Updated);
 }

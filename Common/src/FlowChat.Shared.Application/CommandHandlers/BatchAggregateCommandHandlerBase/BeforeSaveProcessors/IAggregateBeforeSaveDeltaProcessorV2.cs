@@ -7,6 +7,6 @@ public interface IAggregateBeforeSaveDeltaProcessorV2<TCommand, TAggregate>
 {
     Task ProcessAsync(
         TCommand command,
-        IReadOnlyList<AggregateDeltaMutation<TAggregate>> mutations,
+        AggregateDeltaBatch<TAggregate> batch,
         CancellationToken cancellationToken);
 }

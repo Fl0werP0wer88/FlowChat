@@ -44,11 +44,14 @@ public abstract class BatchAggregateRootDomainEventHandlerBase<TNotification, TA
             throw new ResultException(FlowChatResult.Failure(executionResult.Error));
         }
 
-        var mutations = executionResult.Value
-            ?? throw new InvalidOperationException("The batch mutation list cannot be null.");
-        var aggregateRoots = ValidateAndGetAggregateRoots(mutations);
+        var operationResult = executionResult.Value
+            ?? throw new InvalidOperationException("The batch mutation result cannot be null.");
+        var aggregateRoots = ValidateAndGetAggregateRoots(operationResult.Mutations);
+        BatchOperationTypeValidator.Validate(
+            operationResult.BatchOperationType,
+            operationResult.Mutations.Any(mutation => mutation.MutationType != MutationType.Unchanged));
 
-        foreach (var mutation in mutations)
+        foreach (var mutation in operationResult.Mutations)
         {
             if (mutation.MutationType == MutationType.Unchanged)
             {
@@ -76,7 +79,7 @@ public abstract class BatchAggregateRootDomainEventHandlerBase<TNotification, TA
             return;
         }
 
-        var deltaMutations = mutations
+        var deltaMutations = operationResult.Mutations
             .Where(mutation => mutation.MutationType != MutationType.Unchanged)
             .Select(mutation => new AggregateDeltaMutation<TAggregate>(
                 aggregateRoots[mutation.Id],
@@ -88,30 +91,37 @@ public abstract class BatchAggregateRootDomainEventHandlerBase<TNotification, TA
             return;
         }
 
+        var deltaBatch = new AggregateDeltaBatch<TAggregate>(
+            operationResult.BatchOperationType,
+            deltaMutations);
+
         foreach (var processor in _beforeSaveDeltaProcessors)
         {
-            await processor.ProcessAsync(notification, deltaMutations, cancellationToken);
+            await processor.ProcessAsync(notification, deltaBatch, cancellationToken);
         }
     }
 
-    protected static FlowChatResult<IReadOnlyList<AggregateMutationDescriptor<TAggregate>>> Unchanged() =>
-        Mutations([]);
+    protected static FlowChatResult<BatchAggregateDomainEventMutation<TAggregate>> Unchanged() =>
+        Mutations([], BatchOperationType.Unspecified);
 
-    protected static FlowChatResult<IReadOnlyList<AggregateMutationDescriptor<TAggregate>>> Failure(
+    protected static FlowChatResult<BatchAggregateDomainEventMutation<TAggregate>> Failure(
         IDomainError error) =>
-        FlowChatResult<IReadOnlyList<AggregateMutationDescriptor<TAggregate>>>.Failure(error);
+        FlowChatResult<BatchAggregateDomainEventMutation<TAggregate>>.Failure(error);
 
-    protected static FlowChatResult<IReadOnlyList<AggregateMutationDescriptor<TAggregate>>> Mutations(
-        IReadOnlyList<AggregateMutationDescriptor<TAggregate>> mutations)
+    protected static FlowChatResult<BatchAggregateDomainEventMutation<TAggregate>> Mutations(
+        IReadOnlyList<AggregateMutationDescriptor<TAggregate>> mutations,
+        BatchOperationType batchOperationType)
     {
         ArgumentNullException.ThrowIfNull(mutations);
 
-        return FlowChatResult<IReadOnlyList<AggregateMutationDescriptor<TAggregate>>>.Success(mutations);
+        return FlowChatResult<BatchAggregateDomainEventMutation<TAggregate>>.Success(
+            new BatchAggregateDomainEventMutation<TAggregate>(batchOperationType, mutations));
     }
 
-    protected static FlowChatResult<IReadOnlyList<AggregateMutationDescriptor<TAggregate>>> Mutations(
+    protected static FlowChatResult<BatchAggregateDomainEventMutation<TAggregate>> Mutations(
         IReadOnlyList<Id<TAggregate>> aggregateIds,
-        MutationType mutationType)
+        MutationType mutationType,
+        BatchOperationType batchOperationType)
     {
         ArgumentNullException.ThrowIfNull(aggregateIds);
 
@@ -119,16 +129,21 @@ public abstract class BatchAggregateRootDomainEventHandlerBase<TNotification, TA
             .Select(aggregateId => new AggregateMutationDescriptor<TAggregate>(aggregateId, mutationType))
             .ToArray();
 
-        return Mutations(mutations);
+        return Mutations(mutations, batchOperationType);
     }
 
-    protected abstract Task<FlowChatResult<IReadOnlyList<AggregateMutationDescriptor<TAggregate>>>> ExecuteAsync(
+    protected abstract Task<FlowChatResult<BatchAggregateDomainEventMutation<TAggregate>>> ExecuteAsync(
         TNotification notification,
         CancellationToken cancellationToken);
 
     private IReadOnlyDictionary<Id<TAggregate>, TAggregate> ValidateAndGetAggregateRoots(
         IReadOnlyList<AggregateMutationDescriptor<TAggregate>> mutations)
     {
+        if (mutations is null)
+        {
+            throw new InvalidOperationException("The batch mutation list cannot be null.");
+        }
+
         var aggregateRoots = AggregateRoots
             ?? throw new InvalidOperationException("The aggregate roots dictionary cannot be null.");
         var aggregateIds = new HashSet<Id<TAggregate>>();

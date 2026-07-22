@@ -26,5 +26,5 @@ public abstract class BatchAggregateRemoveCommandHandlerBase<TCommand, TResponse
     protected static FlowChatResult<BatchAggregateMutation<TResponse, TAggregate>> RemoveBatch(
         TResponse response,
         IReadOnlyList<Id<TAggregate>> aggregateIds)
-        => Mutation(response, aggregateIds, MutationType.Deleted);
+        => Mutation(response, aggregateIds, MutationType.Deleted, BatchOperationType.Deleted);
 }

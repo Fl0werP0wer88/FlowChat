@@ -26,5 +26,5 @@ public abstract class BatchAggregateUpdateCommandHandlerBase<TCommand, TResponse
     protected static FlowChatResult<BatchAggregateMutation<TResponse, TAggregate>> UpdateBatch(
         TResponse response,
         IReadOnlyList<Id<TAggregate>> aggregateIds)
-        => Mutation(response, aggregateIds, MutationType.Updated);
+        => Mutation(response, aggregateIds, MutationType.Updated, BatchOperationType.Updated);
 }

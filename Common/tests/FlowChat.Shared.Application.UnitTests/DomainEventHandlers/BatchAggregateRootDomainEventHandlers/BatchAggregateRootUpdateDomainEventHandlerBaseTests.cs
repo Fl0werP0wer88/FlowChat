@@ -1,4 +1,5 @@
 using FluentAssertions;
+using FlowChat.Core.Messaging;
 using FlowChat.Core.Results;
 using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2.BeforeSaveProcessors;
 using FlowChat.Shared.Application.CommandHandlers.BatchAggregateCommandHandlerBase;
@@ -21,8 +22,9 @@ public sealed class BatchAggregateRootUpdateDomainEventHandlerBaseTests
         var result = TestHandler.InvokeUpdateBatch(aggregateIds);
 
         result.IsSuccess.Should().BeTrue();
-        result.Value.Select(mutation => mutation.Id).Should().Equal(aggregateIds);
-        result.Value.Should().OnlyContain(mutation => mutation.MutationType == MutationType.Updated);
+        result.Value.BatchOperationType.Should().Be(BatchOperationType.Updated);
+        result.Value.Mutations.Select(mutation => mutation.Id).Should().Equal(aggregateIds);
+        result.Value.Mutations.Should().OnlyContain(mutation => mutation.MutationType == MutationType.Updated);
     }
 
     [Fact]
@@ -31,7 +33,8 @@ public sealed class BatchAggregateRootUpdateDomainEventHandlerBaseTests
         var result = TestHandler.InvokeUpdateBatch([]);
 
         result.IsSuccess.Should().BeTrue();
-        result.Value.Should().BeEmpty();
+        result.Value.BatchOperationType.Should().Be(BatchOperationType.Updated);
+        result.Value.Mutations.Should().BeEmpty();
     }
 
     [Fact]
@@ -54,7 +57,7 @@ public sealed class BatchAggregateRootUpdateDomainEventHandlerBaseTests
         {
         }
 
-        public static FlowChatResult<IReadOnlyList<AggregateMutationDescriptor<TestAggregate>>> InvokeUpdateBatch(
+        public static FlowChatResult<BatchAggregateDomainEventMutation<TestAggregate>> InvokeUpdateBatch(
             IReadOnlyList<Id<TestAggregate>> aggregateIds)
             => UpdateBatch(aggregateIds);
     }

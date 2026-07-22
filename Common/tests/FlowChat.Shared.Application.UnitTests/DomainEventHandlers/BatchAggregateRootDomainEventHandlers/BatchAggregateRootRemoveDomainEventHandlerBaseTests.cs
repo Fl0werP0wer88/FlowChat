@@ -1,4 +1,5 @@
 using FluentAssertions;
+using FlowChat.Core.Messaging;
 using FlowChat.Core.Results;
 using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2.BeforeSaveProcessors;
 using FlowChat.Shared.Application.CommandHandlers.BatchAggregateCommandHandlerBase;
@@ -21,8 +22,9 @@ public sealed class BatchAggregateRootRemoveDomainEventHandlerBaseTests
         var result = TestHandler.InvokeRemoveBatch(aggregateIds);
 
         result.IsSuccess.Should().BeTrue();
-        result.Value.Select(mutation => mutation.Id).Should().Equal(aggregateIds);
-        result.Value.Should().OnlyContain(mutation => mutation.MutationType == MutationType.Deleted);
+        result.Value.BatchOperationType.Should().Be(BatchOperationType.Deleted);
+        result.Value.Mutations.Select(mutation => mutation.Id).Should().Equal(aggregateIds);
+        result.Value.Mutations.Should().OnlyContain(mutation => mutation.MutationType == MutationType.Deleted);
     }
 
     [Fact]
@@ -31,7 +33,8 @@ public sealed class BatchAggregateRootRemoveDomainEventHandlerBaseTests
         var result = TestHandler.InvokeRemoveBatch([]);
 
         result.IsSuccess.Should().BeTrue();
-        result.Value.Should().BeEmpty();
+        result.Value.BatchOperationType.Should().Be(BatchOperationType.Deleted);
+        result.Value.Mutations.Should().BeEmpty();
     }
 
     [Fact]
@@ -54,7 +57,7 @@ public sealed class BatchAggregateRootRemoveDomainEventHandlerBaseTests
         {
         }
 
-        public static FlowChatResult<IReadOnlyList<AggregateMutationDescriptor<TestAggregate>>> InvokeRemoveBatch(
+        public static FlowChatResult<BatchAggregateDomainEventMutation<TestAggregate>> InvokeRemoveBatch(
             IReadOnlyList<Id<TestAggregate>> aggregateIds)
             => RemoveBatch(aggregateIds);
     }
