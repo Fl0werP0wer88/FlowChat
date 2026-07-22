@@ -1,5 +1,6 @@
 using FlowChat.ChatService.Application.Features.Conversation.Processors;
 using FlowChat.ChatService.Domain.Entities.Conversation;
+using FlowChat.ChatService.Domain.Entities.Conversation.Events;
 using FlowChat.Shared.Application.CommandHandlers.BatchAggregateCommandHandlerBase.BeforeSaveProcessors;
 using FlowChat.Shared.Domain;
 using FluentAssertions;
@@ -9,7 +10,8 @@ namespace FlowChat.ChatService.UnitTests.Application.Features.Conversation.Proce
 
 public sealed class ConversationMembershipDeltaProjectionKeyProviderV2Tests
 {
-    private readonly ConversationMembershipDeltaProjectionKeyProviderV2<object> _provider = new();
+    private readonly ConversationMembershipDeltaProjectionKeyProviderV2<
+        ConversationParticipantsAddedDomainEventV2> _provider = new();
 
     [Fact]
     public void GetKafkaKey_WhenAllParticipantsBelongToConversation_ReturnsConversationId()
@@ -21,31 +23,31 @@ public sealed class ConversationMembershipDeltaProjectionKeyProviderV2Tests
             CreateMutation(conversationId)
         };
 
-        var key = _provider.GetKafkaKey(new object(), mutations);
+        var key = _provider.GetKafkaKey(CreateNotification(conversationId), mutations);
 
         key.Should().Be(conversationId.Value.ToString("D"));
     }
 
     [Fact]
-    public void GetKafkaKey_WhenParticipantsBelongToDifferentConversations_Throws()
+    public void GetKafkaKey_WhenParticipantBelongsToDifferentConversationThanNotification_Throws()
     {
+        var notification = CreateNotification(Id<ConversationV2>.New());
         var mutations = new[]
         {
-            CreateMutation(Id<ConversationV2>.New()),
             CreateMutation(Id<ConversationV2>.New())
         };
 
-        var action = () => _provider.GetKafkaKey(new object(), mutations);
+        var action = () => _provider.GetKafkaKey(notification, mutations);
 
         action.Should().Throw<InvalidOperationException>()
-            .WithMessage("*same conversation*");
+            .WithMessage("*conversation from the notification*");
     }
 
     [Fact]
     public void GetKafkaKey_WhenMutationsAreEmpty_Throws()
     {
         var action = () => _provider.GetKafkaKey(
-            new object(),
+            CreateNotification(Id<ConversationV2>.New()),
             Array.Empty<AggregateDeltaMutation<ConversationParticipant>>());
 
         action.Should().Throw<InvalidOperationException>()
@@ -62,4 +64,12 @@ public sealed class ConversationMembershipDeltaProjectionKeyProviderV2Tests
 
         return new AggregateDeltaMutation<ConversationParticipant>(participant, MutationType.Created);
     }
+
+    private static ConversationParticipantsAddedDomainEventV2 CreateNotification(
+        Id<ConversationV2> conversationId) =>
+        new(
+            Id<ConversationMembership>.FromId(conversationId),
+            conversationId,
+            [Id<UserProfileMarker>.New()],
+            initialReadCursor: 0);
 }

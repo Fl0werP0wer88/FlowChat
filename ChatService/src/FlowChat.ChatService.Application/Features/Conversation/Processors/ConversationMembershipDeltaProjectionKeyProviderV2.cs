@@ -1,16 +1,18 @@
 using FlowChat.ChatService.Domain.Entities.Conversation;
+using FlowChat.ChatService.Domain.Entities.Conversation.Events;
 using FlowChat.Shared.Application.CommandHandlers.BatchAggregateCommandHandlerBase.BeforeSaveProcessors;
 
 namespace FlowChat.ChatService.Application.Features.Conversation.Processors;
 
 public sealed class ConversationMembershipDeltaProjectionKeyProviderV2<TTrigger>
     : IAggregateDeltaProjectionKeyProviderV2<TTrigger, ConversationParticipant>
+    where TTrigger : class, IConversationParticipantsChangedDomainEventV2
 {
-    //Revew3-1: Na tym Etapie powinnismy juz znac jaki command to wywołał (Czyli powinno byc  ConversationMembershipDeltaProjectionKeyProviderV2<{Konkretna kklasa Commanda}>) i prawdopodobnie wlasnie z tamtąd brac ConversationId
     public string GetKafkaKey(
-        TTrigger command,
+        TTrigger notification,
         IReadOnlyList<AggregateDeltaMutation<ConversationParticipant>> mutations)
     {
+        ArgumentNullException.ThrowIfNull(notification);
         ArgumentNullException.ThrowIfNull(mutations);
 
         if (mutations.Count == 0)
@@ -19,13 +21,13 @@ public sealed class ConversationMembershipDeltaProjectionKeyProviderV2<TTrigger>
                 "A conversation membership delta requires at least one participant mutation.");
         }
 
-        var conversationId = mutations[0].Aggregate.ConversationId.Value;
-        if (mutations.Any(x => x.Aggregate.ConversationId.Value != conversationId))
+        var conversationId = notification.ConversationId;
+        if (mutations.Any(mutation => mutation.Aggregate.ConversationId != conversationId))
         {
             throw new InvalidOperationException(
-                "All conversation membership delta mutations must belong to the same conversation.");
+                "All conversation membership delta mutations must belong to the conversation from the notification.");
         }
 
-        return conversationId.ToString("D");
+        return conversationId.Value.ToString("D");
     }
 }

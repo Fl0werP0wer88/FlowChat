@@ -10,7 +10,8 @@ public sealed class ConversationParticipantsAddedDomainEventV2(
     IReadOnlyList<Id<UserProfileMarker>> participantUserIds,
     long initialReadCursor,
     UtcDateTimeOffset? occurredOnUtc = null)
-    : BaseConversationMembershipDomainEventV2(aggregateId, occurredOnUtc)
+    : BaseConversationMembershipDomainEventV2(aggregateId, occurredOnUtc),
+      IConversationParticipantsChangedDomainEventV2
 {
     public Id<ConversationV2> ConversationId { get; } = conversationId;
     public IReadOnlyList<Id<UserProfileMarker>> ParticipantUserIds { get; } =
