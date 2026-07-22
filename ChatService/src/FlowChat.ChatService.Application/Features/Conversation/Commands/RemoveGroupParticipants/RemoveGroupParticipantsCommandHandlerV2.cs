@@ -38,6 +38,12 @@ public sealed class RemoveGroupParticipantsCommandHandlerV2(
         RemoveGroupParticipantsCommandV2 request,
         CancellationToken cancellationToken)
     {
+        if (AggregateRoot!.ConversationType != ConversationType.Group)
+        {
+            return Failure(
+                DomainError.BadRequest("Participants can only be removed from group conversations."));
+        }
+
         var conversationId = Id<ConversationV2>.FromGuid(request.ConversationId);
         var participantIds = request.ParticipantUserIds
             .Select(Id<UserProfileMarker>.FromGuid)
@@ -46,21 +52,25 @@ public sealed class RemoveGroupParticipantsCommandHandlerV2(
             conversationId,
             participantIds,
             cancellationToken);
-        //Review2-7: Wydaje mi się że więcej sensu ma nie zwracanie failure, a usunięcie tych uczestników którzy są w konwersacji. Oceń pomysł
-        if (existing.Count != participantIds.Length)
+        var existingUserIds = existing
+            .Select(participant => participant.UserId)
+            .ToHashSet();
+        var participantIdsToRemove = participantIds
+            .Where(existingUserIds.Contains)
+            .ToArray();
+
+        if (participantIdsToRemove.Length == 0)
         {
-            return Failure(
-                DomainError.NotFound("At least one participant was not found."));
+            return Unchanged(Unit.Value);
         }
 
-        if (AggregateRoot!.ConversationType != ConversationType.Group ||
-            AggregateRoot.ParticipantCount - participantIds.Length < 2)
+        if (AggregateRoot.ParticipantCount - participantIdsToRemove.Length < 2)
         {
             return Failure(
                 DomainError.BadRequest("Group conversations must have at least two participants."));
         }
 
-        AggregateRoot.RemoveParticipants(participantIds);
+        AggregateRoot.RemoveParticipants(participantIdsToRemove);
 
         return Updated(Unit.Value);
     }

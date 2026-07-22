@@ -53,17 +53,22 @@ public sealed class AddGroupParticipantsCommandHandlerV2(
             participantIds,
             cancellationToken);
 
-        //Review2-5: Wydaje mi się że więcej sensu ma nie zwracanie failure a dodanie tych uczestników którzy jeszcze niesą dodanie do konwersacji
-        if (existing.Count > 0)
+        var existingUserIds = existing
+            .Select(participant => participant.UserId)
+            .ToHashSet();
+        var participantIdsToAdd = participantIds
+            .Where(participantId => !existingUserIds.Contains(participantId))
+            .ToArray();
+
+        if (participantIdsToAdd.Length == 0)
         {
-            return Failure(
-                DomainError.Conflict("At least one user is already an active participant."));
+            return Unchanged(Unit.Value);
         }
 
         var maxSequence = await messageRepository.GetMaxSequenceNumAsync(
             conversationId,
             cancellationToken);
-        AggregateRoot.AddParticipants(participantIds, maxSequence.GetValueOrDefault());
+        AggregateRoot.AddParticipants(participantIdsToAdd, maxSequence.GetValueOrDefault());
 
         return Updated(Unit.Value);
     }

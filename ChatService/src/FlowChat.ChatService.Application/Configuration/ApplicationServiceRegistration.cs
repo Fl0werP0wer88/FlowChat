@@ -18,6 +18,7 @@ using DuetConversationAggregate = FlowChat.ChatService.Domain.Entities.Conversat
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Application.Common.Eventing;
 using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2.BeforeSaveProcessors;
+using FlowChat.Shared.Application.CommandHandlers.BatchAggregateCommandHandlerBase.BeforeSaveProcessors;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace FlowChat.ChatService.Application;
@@ -60,23 +61,34 @@ internal static class CommonApplicationServiceRegistration
         services.AddScoped<
             IAggregateBeforeSaveProcessorV2<UnblockConversationParticipantCommand, DuetConversationAggregate>,
             DuetConversationContactStateProjectionProcessor<UnblockConversationParticipantCommand>>();
-        services.AddScoped<ConversationMembershipDeltaPublisherV2>();
-        services.AddScoped<
-            IAggregateBeforeSaveProcessorV2<ConversationCreatedDomainEventV2, ConversationMembership>,
-            CreateConversationMembershipDeltaProcessorV2>();
-        services.AddScoped<
-            IAggregateBeforeSaveProcessorV2<AddGroupParticipantsCommandV2, ConversationMembership>,
-            AddConversationMembershipDeltaProcessorV2>();
-        services.AddScoped<
-            IAggregateBeforeSaveProcessorV2<RemoveGroupParticipantsCommandV2, ConversationMembership>,
-            RemoveConversationMembershipDeltaProcessorV2>();
-
         services.AddConversationMetadataProcessor<CreateGroupConversationCommandV2>();
         services.AddConversationMetadataProcessor<CreateDuetConversationCommandV2>();
         services.AddConversationMetadataProcessor<CreateGroupFromDuetCommandV2>();
 
-        services.AddConversationParticipantProcessor<ConversationParticipantAddedDomainEventV2>();
-        services.AddConversationParticipantProcessor<ConversationParticipantRemovedDomainEventV2>();
+        services.AddConversationParticipantProcessor<ConversationParticipantsAddedDomainEventV2>();
+        services.AddConversationParticipantProcessor<ConversationParticipantsRemovedDomainEventV2>();
+        services.AddScoped<
+            IAggregateDeltaProjectionKeyProviderV2<
+                ConversationParticipantsAddedDomainEventV2,
+                ConversationParticipant>,
+            ConversationMembershipDeltaProjectionKeyProviderV2<
+                ConversationParticipantsAddedDomainEventV2>>();
+        services.AddScoped<
+            IAggregateBeforeSaveDeltaProcessorV2<
+                ConversationParticipantsAddedDomainEventV2,
+                ConversationParticipant>,
+            AddConversationMembershipDeltaProcessorV2>();
+        services.AddScoped<
+            IAggregateDeltaProjectionKeyProviderV2<
+                ConversationParticipantsRemovedDomainEventV2,
+                ConversationParticipant>,
+            ConversationMembershipDeltaProjectionKeyProviderV2<
+                ConversationParticipantsRemovedDomainEventV2>>();
+        services.AddScoped<
+            IAggregateBeforeSaveDeltaProcessorV2<
+                ConversationParticipantsRemovedDomainEventV2,
+                ConversationParticipant>,
+            RemoveConversationMembershipDeltaProcessorV2>();
         services.AddConversationParticipantProcessor<MarkConversationAsReadCommandV2>();
         services.AddConversationParticipantProcessor<BlockConversationParticipantCommandV2>();
         services.AddConversationParticipantProcessor<UnblockConversationParticipantCommandV2>();
@@ -106,5 +118,6 @@ internal static class CommonApplicationServiceRegistration
             ConversationParticipantProcessorV2<TTrigger>>();
         return services;
     }
+
 }
 

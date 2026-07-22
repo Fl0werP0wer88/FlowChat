@@ -24,7 +24,7 @@ public sealed class ConversationMembershipTests
     }
 
     [Fact]
-    public void Create_WhenCreated_EmitsOneAddedEventPerParticipantWithZeroReadCursor()
+    public void Create_WhenCreated_EmitsOneAddedEventWithParticipantsInInputOrderAndZeroReadCursor()
     {
         var participantUserIds = CreateUserIds(2);
 
@@ -33,14 +33,14 @@ public sealed class ConversationMembershipTests
             ConversationType.Group,
             participantUserIds);
 
-        var addedEvents = membership.DomainEvents
-            .OfType<ConversationParticipantAddedDomainEventV2>()
-            .ToArray();
-        addedEvents.Select(domainEvent => domainEvent.UserId)
+        var addedEvent = membership.DomainEvents
             .Should()
-            .BeEquivalentTo(participantUserIds);
-        addedEvents.Should().OnlyContain(domainEvent => domainEvent.InitialReadCursor == 0);
-        membership.DomainEvents.Should().HaveCount(participantUserIds.Count);
+            .ContainSingle()
+            .Which.Should()
+            .BeOfType<ConversationParticipantsAddedDomainEventV2>()
+            .Which;
+        addedEvent.ParticipantUserIds.Should().Equal(participantUserIds);
+        addedEvent.InitialReadCursor.Should().Be(0);
     }
 
     [Fact]
@@ -82,7 +82,7 @@ public sealed class ConversationMembershipTests
     }
 
     [Fact]
-    public void AddParticipants_WhenGroupMembershipIsValid_UsesSameInitialReadCursorForEveryEvent()
+    public void AddParticipants_WhenGroupMembershipIsValid_EmitsOneEventWithParticipantsInInputOrder()
     {
         var membership = CreateGroupMembership(participantCount: 2);
         var addedUserIds = CreateUserIds(3);
@@ -91,13 +91,14 @@ public sealed class ConversationMembershipTests
         membership.AddParticipants(addedUserIds, initialReadCursor: 42);
 
         membership.ParticipantCount.Should().Be(5);
-        var addedEvents = membership.DomainEvents
-            .OfType<ConversationParticipantAddedDomainEventV2>()
-            .ToArray();
-        addedEvents.Should().HaveCount(3);
-        addedEvents.Select(domainEvent => domainEvent.UserId).Should().Equal(addedUserIds);
-        addedEvents.Should().OnlyContain(domainEvent => domainEvent.InitialReadCursor == 42);
-        membership.DomainEvents.Should().HaveCount(addedUserIds.Count);
+        var addedEvent = membership.DomainEvents
+            .Should()
+            .ContainSingle()
+            .Which.Should()
+            .BeOfType<ConversationParticipantsAddedDomainEventV2>()
+            .Which;
+        addedEvent.ParticipantUserIds.Should().Equal(addedUserIds);
+        addedEvent.InitialReadCursor.Should().Be(42);
     }
 
     [Fact]
@@ -131,7 +132,7 @@ public sealed class ConversationMembershipTests
     }
 
     [Fact]
-    public void RemoveParticipants_WhenValid_EmitsOneRemovedEventPerParticipant()
+    public void RemoveParticipants_WhenValid_EmitsOneEventWithParticipantsInInputOrder()
     {
         var membership = CreateGroupMembership(participantCount: 4);
         var removedUserIds = CreateUserIds(2);
@@ -140,12 +141,13 @@ public sealed class ConversationMembershipTests
         membership.RemoveParticipants(removedUserIds);
 
         membership.ParticipantCount.Should().Be(2);
-        var removedEvents = membership.DomainEvents
-            .OfType<ConversationParticipantRemovedDomainEventV2>()
-            .ToArray();
-        removedEvents.Should().HaveCount(2);
-        removedEvents.Select(domainEvent => domainEvent.UserId).Should().Equal(removedUserIds);
-        membership.DomainEvents.Should().HaveCount(removedUserIds.Count);
+        var removedEvent = membership.DomainEvents
+            .Should()
+            .ContainSingle()
+            .Which.Should()
+            .BeOfType<ConversationParticipantsRemovedDomainEventV2>()
+            .Which;
+        removedEvent.ParticipantUserIds.Should().Equal(removedUserIds);
     }
 
     [Fact]

@@ -76,7 +76,7 @@ public static class ApiSilverbackServiceRegistration
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())
                             .StoreToOutbox(outbox => outbox.UseEntityFramework<AppDbContext>())))
                     .AddProducer(producer => producer
-                        .Produce<DeltaProjectionIntegrationEvent<ConversationMembershipReadModelV2>>("conversation-membership-v2-projection", endpoint => endpoint
+                        .Produce<DeltaProjectionIntegrationEventV2<ConversationMembershipReadModelV2>>("conversation-membership-v2-projection", endpoint => endpoint
                             .ProduceTo(membershipV2Options.Topic)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())
                             .StoreToOutbox(outbox => outbox.UseEntityFramework<AppDbContext>())))

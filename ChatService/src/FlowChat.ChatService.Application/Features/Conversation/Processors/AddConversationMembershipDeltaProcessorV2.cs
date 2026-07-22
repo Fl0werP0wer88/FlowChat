@@ -1,29 +1,25 @@
-using FlowChat.ChatService.Application.Features.Conversation.Commands.AddGroupParticipants;
+using AutoMapper;
 using FlowChat.ChatService.Domain.Entities.Conversation;
-using FlowChat.Core.Messaging;
-using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2.BeforeSaveProcessors;
-using FlowChat.Shared.Domain;
-using UserProfileMarker = FlowChat.ChatService.Domain.Entities.UserProfiles.UserProfile;
+using FlowChat.ChatService.Domain.Entities.Conversation.Events;
+using FlowChat.Core.Messaging.ChatService.ReadModels;
+using FlowChat.Shared.Application;
+using FlowChat.Shared.Application.CommandHandlers.BatchAggregateCommandHandlerBase.BeforeSaveProcessors;
 
 namespace FlowChat.ChatService.Application.Features.Conversation.Processors;
 
-public sealed class AddConversationMembershipDeltaProcessorV2(
-    ConversationMembershipDeltaPublisherV2 publisher)
-    : IAggregateBeforeSaveProcessorV2<AddGroupParticipantsCommandV2, ConversationMembership>
+public sealed class AddConversationMembershipDeltaProcessorV2
+    : AggregateBeforeSaveDeltaProcessorV2<
+        ConversationParticipantsAddedDomainEventV2,
+        ConversationParticipant,
+        ConversationMembershipReadModelV2>
 {
-    public Task ProcessAsync(
-        AddGroupParticipantsCommandV2 command,
-        ConversationMembership aggregate,
-        MutationType mutationType,
-        CancellationToken cancellationToken)
+    public AddConversationMembershipDeltaProcessorV2(
+        IMapper mapper,
+        IOutboxIntegrationEventPublisher integrationEventPublisher,
+        IAggregateDeltaProjectionKeyProviderV2<
+            ConversationParticipantsAddedDomainEventV2,
+            ConversationParticipant> keyProvider)
+        : base(mapper, integrationEventPublisher, keyProvider)
     {
-        if (mutationType != MutationType.Updated)
-            throw new InvalidOperationException("Membership add processor requires an updated aggregate.");
-
-        return publisher.PublishAsync(
-            aggregate,
-            command.ParticipantUserIds.Select(Id<UserProfileMarker>.FromGuid),
-            DeltaOperationType.Added,
-            cancellationToken);
     }
 }

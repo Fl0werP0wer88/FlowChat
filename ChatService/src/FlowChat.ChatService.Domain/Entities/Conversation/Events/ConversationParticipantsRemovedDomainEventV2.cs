@@ -4,13 +4,15 @@ using UserProfileMarker = FlowChat.ChatService.Domain.Entities.UserProfiles.User
 
 namespace FlowChat.ChatService.Domain.Entities.Conversation.Events;
 
-public sealed class ConversationParticipantRemovedDomainEventV2(
+public sealed class ConversationParticipantsRemovedDomainEventV2(
     Id<ConversationMembership> aggregateId,
     Id<ConversationV2> conversationId,
-    Id<UserProfileMarker> userId,
+    IReadOnlyList<Id<UserProfileMarker>> participantUserIds,
     UtcDateTimeOffset? occurredOnUtc = null)
     : BaseConversationMembershipDomainEventV2(aggregateId, occurredOnUtc)
 {
     public Id<ConversationV2> ConversationId { get; } = conversationId;
-    public Id<UserProfileMarker> UserId { get; } = userId;
+    public IReadOnlyList<Id<UserProfileMarker>> ParticipantUserIds { get; } =
+        participantUserIds?.ToArray()
+        ?? throw new ArgumentNullException(nameof(participantUserIds));
 }

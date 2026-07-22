@@ -3,7 +3,7 @@ using FlowChat.Core.Messaging;
 using FlowChat.Shared.Domain;
 
 namespace FlowChat.Shared.Application.CommandHandlers.BatchAggregateCommandHandlerBase.BeforeSaveProcessors;
-
+//Review2-2 Zla nazwa Moe BatchAggregateBeforeSaveDeltaProcessorV2
 public class AggregateBeforeSaveDeltaProcessorV2<TCommand, TAggregate, TValue>
     : IAggregateBeforeSaveDeltaProcessorV2<TCommand, TAggregate>
     where TAggregate : class, IAggregateRoot, IEntity<TAggregate>

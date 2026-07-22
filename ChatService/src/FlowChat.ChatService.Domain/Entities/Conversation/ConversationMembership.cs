@@ -49,7 +49,7 @@ public sealed class ConversationMembership : AggregateRootBase<ConversationMembe
             conversationType,
             normalizedParticipantUserIds.Count);
 
-        membership.AddParticipantAddedEvents(
+        membership.AddParticipantsAddedEvent(
             normalizedParticipantUserIds,
             initialReadCursor: 0);
 
@@ -80,7 +80,7 @@ public sealed class ConversationMembership : AggregateRootBase<ConversationMembe
         ValidateParticipantCount(ConversationType, newParticipantCount);
 
         ParticipantCount = newParticipantCount;
-        AddParticipantAddedEvents(
+        AddParticipantsAddedEvent(
             normalizedParticipantUserIds,
             initialReadCursor);
     }
@@ -99,33 +99,27 @@ public sealed class ConversationMembership : AggregateRootBase<ConversationMembe
         ValidateParticipantCount(ConversationType, newParticipantCount);
 
         ParticipantCount = newParticipantCount;
-        AddParticipantRemovedEvents(normalizedParticipantUserIds);
+        AddParticipantsRemovedEvent(normalizedParticipantUserIds);
     }
 
-    private void AddParticipantAddedEvents(
-        IReadOnlyCollection<Id<UserProfileMarker>> participantUserIds,
+    private void AddParticipantsAddedEvent(
+        IReadOnlyList<Id<UserProfileMarker>> participantUserIds,
         long initialReadCursor)
     {
-        foreach (var participantUserId in participantUserIds)
-        {
-            AddDomainEvent(new ConversationParticipantAddedDomainEventV2(
-                Id,
-                ConversationId,
-                participantUserId,
-                initialReadCursor));
-        }
+        AddDomainEvent(new ConversationParticipantsAddedDomainEventV2(
+            Id,
+            ConversationId,
+            participantUserIds,
+            initialReadCursor));
     }
 
-    private void AddParticipantRemovedEvents(
-        IReadOnlyCollection<Id<UserProfileMarker>> participantUserIds)
+    private void AddParticipantsRemovedEvent(
+        IReadOnlyList<Id<UserProfileMarker>> participantUserIds)
     {
-        foreach (var participantUserId in participantUserIds)
-        {
-            AddDomainEvent(new ConversationParticipantRemovedDomainEventV2(
-                Id,
-                ConversationId,
-                participantUserId));
-        }
+        AddDomainEvent(new ConversationParticipantsRemovedDomainEventV2(
+            Id,
+            ConversationId,
+            participantUserIds));
     }
 
     private static void ValidateInitialReadCursor(long initialReadCursor)
@@ -138,7 +132,7 @@ public sealed class ConversationMembership : AggregateRootBase<ConversationMembe
         }
     }
 
-    private static IReadOnlyCollection<Id<UserProfileMarker>> NormalizeParticipantUserIds(
+    private static IReadOnlyList<Id<UserProfileMarker>> NormalizeParticipantUserIds(
         IEnumerable<Id<UserProfileMarker>> participantUserIds)
     {
         ArgumentNullException.ThrowIfNull(participantUserIds);

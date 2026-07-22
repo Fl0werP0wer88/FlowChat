@@ -54,7 +54,7 @@ public sealed class KafkaProducerConfigurationTests
 
         registry.Get<ProjectionIntegrationEvent<ConversationReadModelV2>>()!.Topic
             .Should().Be("dev.flowchat.chat.conversation-projection.v2");
-        registry.Get<DeltaProjectionIntegrationEvent<ConversationMembershipReadModelV2>>()!.Topic
+        registry.Get<DeltaProjectionIntegrationEventV2<ConversationMembershipReadModelV2>>()!.Topic
             .Should().Be("dev.flowchat.chat.conversation-membership-projection.v2");
         registry.Get<ProjectionIntegrationEvent<ConversationParticipantReadModelV2>>()!.Topic
             .Should().Be("dev.flowchat.chat.conversation-participant-projection.v2");

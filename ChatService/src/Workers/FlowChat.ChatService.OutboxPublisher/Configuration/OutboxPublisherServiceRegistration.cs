@@ -118,7 +118,7 @@ public static class OutboxPublisherServiceRegistration
                             .ProduceTo(conversationV2Options.Topic)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())))
                     .AddProducer(producer => producer
-                        .Produce<DeltaProjectionIntegrationEvent<ConversationMembershipReadModelV2>>("conversation-membership-v2-projection", endpoint => endpoint
+                        .Produce<DeltaProjectionIntegrationEventV2<ConversationMembershipReadModelV2>>("conversation-membership-v2-projection", endpoint => endpoint
                             .ProduceTo(membershipV2Options.Topic)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())))
                     .AddProducer(producer => producer

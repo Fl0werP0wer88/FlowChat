@@ -33,7 +33,7 @@ internal static class CommonInfrastructureServiceRegistration
             .AddProducerSettings<ProjectionIntegrationEvent<DuetConversationMembershipReadModel>, DuetConversationProjectionProducerSettingsSection>()
             .AddProducerSettings<ProjectionIntegrationEvent<DuetConversationContactStateReadModel>, DuetConversationProjectionProducerSettingsSection>()
             .AddProducerSettings<ProjectionIntegrationEvent<ConversationReadModelV2>, ConversationV2ProducerSettingsSection>()
-            .AddProducerSettings<DeltaProjectionIntegrationEvent<ConversationMembershipReadModelV2>, ConversationMembershipV2ProjectionProducerSettingsSection>()
+            .AddProducerSettings<DeltaProjectionIntegrationEventV2<ConversationMembershipReadModelV2>, ConversationMembershipV2ProjectionProducerSettingsSection>()
             .AddProducerSettings<ProjectionIntegrationEvent<ConversationParticipantReadModelV2>, ConversationParticipantV2ProducerSettingsSection>()
             .AddProducerSettings<ChatMessageSentIntegrationEventV2, ChatMessageV2ProducerSettingsSection>());
 
