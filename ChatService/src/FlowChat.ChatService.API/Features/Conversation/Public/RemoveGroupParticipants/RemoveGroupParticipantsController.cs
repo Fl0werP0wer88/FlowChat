@@ -29,8 +29,11 @@ public sealed class RemoveGroupParticipantsController : ApiControllerBase
         [FromBody] RemoveGroupParticipantsRequest request,
         CancellationToken cancellationToken)
     {
+        // var result = await _mediator.Send(
+        //     new RemoveGroupParticipantsCommand(conversationId, request.ParticipantUserIds),
+        //     cancellationToken);
         var result = await _mediator.Send(
-            new RemoveGroupParticipantsCommand(conversationId, request.ParticipantUserIds),
+            new RemoveGroupParticipantsCommandV2(conversationId, request.ParticipantUserIds),
             cancellationToken);
 
         if (!result.IsSuccess)

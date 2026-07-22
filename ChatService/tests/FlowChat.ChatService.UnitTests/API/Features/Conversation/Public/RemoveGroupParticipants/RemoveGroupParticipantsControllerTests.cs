@@ -48,11 +48,11 @@ public sealed class RemoveGroupParticipantsControllerTests
         var conversationId = Guid.NewGuid();
         var participantId1 = Guid.NewGuid();
         var participantId2 = Guid.NewGuid();
-        RemoveGroupParticipantsCommand? capturedCommand = null;
+        RemoveGroupParticipantsCommandV2? capturedCommand = null;
 
         _mediatorMock
-            .Setup(x => x.Send(It.IsAny<RemoveGroupParticipantsCommand>(), It.IsAny<CancellationToken>()))
-            .Callback<object, CancellationToken>((cmd, _) => capturedCommand = (RemoveGroupParticipantsCommand)cmd)
+            .Setup(x => x.Send(It.IsAny<RemoveGroupParticipantsCommandV2>(), It.IsAny<CancellationToken>()))
+            .Callback<object, CancellationToken>((cmd, _) => capturedCommand = (RemoveGroupParticipantsCommandV2)cmd)
             .ReturnsAsync(FlowChatResult<Unit>.Success(Unit.Value));
 
         var controller = CreateController();
@@ -72,7 +72,7 @@ public sealed class RemoveGroupParticipantsControllerTests
     public async Task RemoveGroupParticipants_WhenConversationNotFound_ReturnsNotFound()
     {
         _mediatorMock
-            .Setup(x => x.Send(It.IsAny<RemoveGroupParticipantsCommand>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.Send(It.IsAny<RemoveGroupParticipantsCommandV2>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(FlowChatResult<Unit>.Failure(
                 DomainError.NotFound("Conversation not found.")));
 
@@ -89,7 +89,7 @@ public sealed class RemoveGroupParticipantsControllerTests
     public async Task RemoveGroupParticipants_WhenParticipantIsNotAMember_ReturnsBadRequest()
     {
         _mediatorMock
-            .Setup(x => x.Send(It.IsAny<RemoveGroupParticipantsCommand>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.Send(It.IsAny<RemoveGroupParticipantsCommandV2>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(FlowChatResult<Unit>.Failure(
                 DomainError.BadRequest("User is not a participant in this conversation.")));
 
@@ -106,7 +106,7 @@ public sealed class RemoveGroupParticipantsControllerTests
     public async Task RemoveGroupParticipants_WhenRemovalWouldDropBelowMinimumParticipants_ReturnsBadRequest()
     {
         _mediatorMock
-            .Setup(x => x.Send(It.IsAny<RemoveGroupParticipantsCommand>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.Send(It.IsAny<RemoveGroupParticipantsCommandV2>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(FlowChatResult<Unit>.Failure(
                 DomainError.BadRequest("Group conversations must have at least two participants.")));
 

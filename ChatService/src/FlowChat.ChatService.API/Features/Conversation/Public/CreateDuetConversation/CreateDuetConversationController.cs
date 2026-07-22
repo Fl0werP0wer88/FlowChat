@@ -36,8 +36,11 @@ public sealed class CreateDuetConversationController : ApiControllerBase
             return Unauthorized();
         }
 
+        // var result = await _mediator.Send(
+        //     new CreateDuetConversationCommand(userId, request.PartnerUserId),
+        //     cancellationToken);
         var result = await _mediator.Send(
-            new CreateDuetConversationCommand(userId, request.PartnerUserId),
+            new CreateDuetConversationCommandV2(userId, request.PartnerUserId),
             cancellationToken);
 
         if (!result.IsSuccess)

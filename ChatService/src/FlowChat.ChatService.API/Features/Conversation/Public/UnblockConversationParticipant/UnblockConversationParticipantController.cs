@@ -33,8 +33,11 @@ public sealed class UnblockConversationParticipantController : ApiControllerBase
             return Unauthorized();
         }
 
+        // var result = await _mediator.Send(
+        //     new UnblockConversationParticipantCommand(conversationId, userId),
+        //     cancellationToken);
         var result = await _mediator.Send(
-            new UnblockConversationParticipantCommand(conversationId, userId),
+            new UnblockConversationParticipantCommandV2(conversationId, userId),
             cancellationToken);
 
         if (!result.IsSuccess)

@@ -53,7 +53,7 @@ public sealed class CopyDuetAsGroupControllerTests
             ]);
 
         _mediatorMock
-            .Setup(x => x.Send(It.IsAny<CreateGroupFromDuetCommand>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.Send(It.IsAny<CreateGroupFromDuetCommandV2>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(FlowChatResult<GroupConversationDetailDto>.Success(dto));
 
         var controller = CreateController(userId);
@@ -85,7 +85,7 @@ public sealed class CopyDuetAsGroupControllerTests
     public async Task CopyDuetAsGroup_WhenDuetNotFound_Returns404()
     {
         _mediatorMock
-            .Setup(x => x.Send(It.IsAny<CreateGroupFromDuetCommand>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.Send(It.IsAny<CreateGroupFromDuetCommandV2>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(FlowChatResult<GroupConversationDetailDto>.Failure(
                 DomainError.NotFound("Duet conversation not found.")));
 
@@ -105,11 +105,11 @@ public sealed class CopyDuetAsGroupControllerTests
         var userId = Guid.NewGuid();
         var partnerUserId = Guid.NewGuid();
         var conversationId = Guid.NewGuid();
-        CreateGroupFromDuetCommand? capturedCommand = null;
+        CreateGroupFromDuetCommandV2? capturedCommand = null;
 
         _mediatorMock
-            .Setup(x => x.Send(It.IsAny<CreateGroupFromDuetCommand>(), It.IsAny<CancellationToken>()))
-            .Callback<object, CancellationToken>((cmd, _) => capturedCommand = (CreateGroupFromDuetCommand)cmd)
+            .Setup(x => x.Send(It.IsAny<CreateGroupFromDuetCommandV2>(), It.IsAny<CancellationToken>()))
+            .Callback<object, CancellationToken>((cmd, _) => capturedCommand = (CreateGroupFromDuetCommandV2)cmd)
             .ReturnsAsync(FlowChatResult<GroupConversationDetailDto>.Success(
                 new GroupConversationDetailDto(conversationId, "Alice/Bob", [])));
 

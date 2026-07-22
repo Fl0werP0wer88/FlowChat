@@ -31,8 +31,11 @@ public sealed class SetChatMessageSequenceNumberController : ApiControllerBase
         if (!HasValidInternalApiKey())
             return Unauthorized();
 
+        // var result = await _mediator.Send(
+        //     new SetChatMessageSequenceNumberCommand(messageId, request.ConversationId),
+        //     cancellationToken);
         var result = await _mediator.Send(
-            new SetChatMessageSequenceNumberCommand(messageId, request.ConversationId),
+            new SetChatMessageSequenceNumberCommandV2(messageId, request.ConversationId),
             cancellationToken);
 
         return result.IsSuccess

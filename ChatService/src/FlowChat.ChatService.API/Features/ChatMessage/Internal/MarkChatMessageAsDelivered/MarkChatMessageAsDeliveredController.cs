@@ -31,8 +31,11 @@ public sealed class MarkChatMessageAsDeliveredController : ApiControllerBase
         if (!HasValidInternalApiKey())
             return Unauthorized();
 
+        // var result = await _mediator.Send(
+        //     new MarkChatMessageAsDeliveredCommand(messageId, request.ConversationId, request.DeliveredAtUtc),
+        //     cancellationToken);
         var result = await _mediator.Send(
-            new MarkChatMessageAsDeliveredCommand(messageId, request.ConversationId, request.DeliveredAtUtc),
+            new MarkChatMessageAsDeliveredCommandV2(messageId, request.ConversationId, request.DeliveredAtUtc),
             cancellationToken);
 
         return result.IsSuccess

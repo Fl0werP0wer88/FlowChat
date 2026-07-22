@@ -48,11 +48,11 @@ public sealed class CreateDuetConversationControllerTests
         };
         var requestingUserId = Guid.NewGuid();
         var conversation = CreateConversationDetail(Guid.NewGuid(), requestingUserId, request.PartnerUserId);
-        CreateDuetConversationCommand? capturedCommand = null;
+        CreateDuetConversationCommandV2? capturedCommand = null;
 
         _mediatorMock
-            .Setup(x => x.Send(It.IsAny<CreateDuetConversationCommand>(), It.IsAny<CancellationToken>()))
-            .Callback<object, CancellationToken>((command, _) => capturedCommand = (CreateDuetConversationCommand)command)
+            .Setup(x => x.Send(It.IsAny<CreateDuetConversationCommandV2>(), It.IsAny<CancellationToken>()))
+            .Callback<object, CancellationToken>((command, _) => capturedCommand = (CreateDuetConversationCommandV2)command)
             .ReturnsAsync(FlowChatResult<DuetConversationDetailDto>.Success(conversation));
 
         var controller = CreateController(requestingUserId);
@@ -62,7 +62,7 @@ public sealed class CreateDuetConversationControllerTests
         var createdResult = actionResult.Should().BeOfType<ObjectResult>().Subject;
         createdResult.StatusCode.Should().Be(StatusCodes.Status201Created);
         var response = createdResult.Value.Should().BeOfType<CreateDuetConversationResponse>().Subject;
-        capturedCommand.Should().Be(new CreateDuetConversationCommand(requestingUserId, request.PartnerUserId));
+        capturedCommand.Should().Be(new CreateDuetConversationCommandV2(requestingUserId, request.PartnerUserId));
         response.ConversationId.Should().Be(conversation.ConversationId);
         response.Participants.Select(x => x.UserId).Should().Equal(requestingUserId, request.PartnerUserId);
     }
@@ -71,7 +71,7 @@ public sealed class CreateDuetConversationControllerTests
     public async Task CreateDuetConversation_CommandFailure_ReturnsProblemDetails()
     {
         _mediatorMock
-            .Setup(x => x.Send(It.IsAny<CreateDuetConversationCommand>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.Send(It.IsAny<CreateDuetConversationCommandV2>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(FlowChatResult<DuetConversationDetailDto>.Failure(
                 DomainError.NotFound("Conversation not found.")));
 

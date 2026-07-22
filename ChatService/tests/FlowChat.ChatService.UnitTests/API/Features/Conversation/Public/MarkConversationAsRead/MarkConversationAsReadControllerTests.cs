@@ -22,11 +22,11 @@ public sealed class MarkConversationAsReadControllerTests
     {
         var userId = Guid.NewGuid();
         var conversationId = Guid.NewGuid();
-        MarkConversationAsReadCommand? capturedCommand = null;
+        MarkConversationAsReadCommandV2? capturedCommand = null;
 
         _mediatorMock
-            .Setup(x => x.Send(It.IsAny<MarkConversationAsReadCommand>(), It.IsAny<CancellationToken>()))
-            .Callback<object, CancellationToken>((cmd, _) => capturedCommand = (MarkConversationAsReadCommand)cmd)
+            .Setup(x => x.Send(It.IsAny<MarkConversationAsReadCommandV2>(), It.IsAny<CancellationToken>()))
+            .Callback<object, CancellationToken>((cmd, _) => capturedCommand = (MarkConversationAsReadCommandV2)cmd)
             .ReturnsAsync(FlowChatResult<Unit>.Success(Unit.Value));
 
         var controller = CreateController(userId);
@@ -48,7 +48,7 @@ public sealed class MarkConversationAsReadControllerTests
 
         actionResult.Should().BeOfType<UnauthorizedResult>();
         _mediatorMock.Verify(
-            x => x.Send(It.IsAny<MarkConversationAsReadCommand>(), It.IsAny<CancellationToken>()),
+            x => x.Send(It.IsAny<MarkConversationAsReadCommandV2>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
@@ -56,7 +56,7 @@ public sealed class MarkConversationAsReadControllerTests
     public async Task MarkConversationAsRead_WhenCommandFails_ReturnsProblemDetails()
     {
         _mediatorMock
-            .Setup(x => x.Send(It.IsAny<MarkConversationAsReadCommand>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.Send(It.IsAny<MarkConversationAsReadCommandV2>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(FlowChatResult<Unit>.Failure(DomainError.NotFound("Conversation not found.")));
 
         var controller = CreateController(Guid.NewGuid());

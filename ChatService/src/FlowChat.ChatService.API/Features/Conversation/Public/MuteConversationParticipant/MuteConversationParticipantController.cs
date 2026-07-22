@@ -32,8 +32,11 @@ public sealed class MuteConversationParticipantController : ApiControllerBase
             return Unauthorized();
         }
 
+        // var result = await _mediator.Send(
+        //     new MuteConversationParticipantCommand(conversationId, userId),
+        //     cancellationToken);
         var result = await _mediator.Send(
-            new MuteConversationParticipantCommand(conversationId, userId),
+            new MuteConversationParticipantCommandV2(conversationId, userId),
             cancellationToken);
 
         if (!result.IsSuccess)
