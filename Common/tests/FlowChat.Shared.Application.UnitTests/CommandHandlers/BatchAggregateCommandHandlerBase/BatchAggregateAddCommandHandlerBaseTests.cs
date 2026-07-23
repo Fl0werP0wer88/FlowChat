@@ -66,7 +66,8 @@ public sealed class BatchAggregateAddCommandHandlerBaseTests
         public static FlowChatResult<BatchAggregateMutation<Guid, TestAggregate>> InvokeAddBatch(
             Guid response,
             IReadOnlyList<Id<TestAggregate>> aggregateIds)
-            => AddBatch(response, aggregateIds, new DeltaProjectionMetadataV2(Guid.NewGuid(), 1));
+            => Success(response, aggregateIds, new DeltaProjectionMetadataV2(
+                Guid.NewGuid(), 1, BatchOperationType.Created));
     }
 
     private sealed record TestCommand : ICommand<Guid>;

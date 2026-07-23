@@ -1,6 +1,7 @@
 using FlowChat.ChatService.Application.Contracts.Persistence;
 using FlowChat.ChatService.Domain.Entities.Conversation;
 using FlowChat.ChatService.Domain.Entities.Conversation.Events;
+using FlowChat.Core.Messaging;
 using FlowChat.Core.Results;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBaseV2.BeforeSaveProcessors;
@@ -51,10 +52,11 @@ public sealed class ConversationParticipantsRemovedDomainEventHandlerV2
             .ToArray();
 
         AggregateRoots = orderedParticipants.ToDictionary(participant => participant.Id);
-        return RemoveBatch(
+        return Success(
             orderedParticipants.Select(participant => participant.Id).ToArray(),
             new DeltaProjectionMetadataV2(
                 notification.ConversationId.Value,
-                notification.Version));
+                notification.Version,
+                BatchOperationType.Deleted));
     }
 }

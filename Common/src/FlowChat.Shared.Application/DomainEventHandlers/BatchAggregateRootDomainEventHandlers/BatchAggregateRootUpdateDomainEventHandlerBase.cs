@@ -21,8 +21,7 @@ public abstract class BatchAggregateRootUpdateDomainEventHandlerBase<TNotificati
     {
     }
 
-    //Review3 : Nie podoba mi sie nazwa tej metody może tak lepiej po prostu GetResult()? Oceń pomysł.
-    protected static FlowChatResult<BatchAggregateDomainEventMutation<TAggregate>> UpdateBatch(
+    protected static FlowChatResult<BatchAggregateDomainEventMutation<TAggregate>> Success(
         IReadOnlyList<Id<TAggregate>> aggregateIds,
         DeltaProjectionMetadataV2 deltaProjectionMetadata)
         => Mutations(

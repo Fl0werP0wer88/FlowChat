@@ -88,7 +88,6 @@ public abstract class BatchAggregateCommandHandlerBase<TCommand, TResponse, TAgg
             if (deltaMutations.Length > 0)
             {
                 var deltaBatch = new AggregateDeltaBatch<TAggregate>(
-                    operationResult.BatchOperationType,
                     deltaMutations,
                     operationResult.DeltaProjectionMetadata);
 

@@ -59,7 +59,8 @@ public sealed class BatchAggregateRootRemoveDomainEventHandlerBaseTests
 
         public static FlowChatResult<BatchAggregateDomainEventMutation<TestAggregate>> InvokeRemoveBatch(
             IReadOnlyList<Id<TestAggregate>> aggregateIds)
-            => RemoveBatch(aggregateIds, new DeltaProjectionMetadataV2(Guid.NewGuid(), 1));
+            => Success(aggregateIds, new DeltaProjectionMetadataV2(
+                Guid.NewGuid(), 1, BatchOperationType.Deleted));
     }
 
     private sealed class TestNotification : DomainEventBase;

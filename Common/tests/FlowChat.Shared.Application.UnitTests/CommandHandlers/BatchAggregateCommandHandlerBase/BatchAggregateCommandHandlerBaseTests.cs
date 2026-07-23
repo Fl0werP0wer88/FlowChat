@@ -290,7 +290,7 @@ public sealed class BatchAggregateCommandHandlerBaseTests
             x => x.ProcessAsync(
                 It.IsAny<TestCommand>(),
                 It.Is<AggregateDeltaBatch<TestAggregate>>(batch =>
-                    batch.BatchOperationType == BatchOperationType.Mixed &&
+                    batch.DeltaProjectionMetadata!.ProjectionOperationType == BatchOperationType.Mixed &&
                     batch.Mutations.Count == 2 &&
                     ReferenceEquals(batch.Mutations[0].Aggregate, secondAggregate) &&
                     batch.Mutations[0].MutationType == MutationType.Updated &&
@@ -361,7 +361,7 @@ public sealed class BatchAggregateCommandHandlerBaseTests
             x => x.ProcessAsync(
                 It.IsAny<TestCommand>(),
                 It.Is<AggregateDeltaBatch<TestAggregate>>(batch =>
-                    batch.BatchOperationType == BatchOperationType.Updated &&
+                    batch.DeltaProjectionMetadata!.ProjectionOperationType == BatchOperationType.Updated &&
                     batch.Mutations.Count == 1 &&
                     ReferenceEquals(batch.Mutations[0].Aggregate, updatedAggregate)),
                 It.IsAny<CancellationToken>()),
@@ -617,7 +617,7 @@ public sealed class BatchAggregateCommandHandlerBaseTests
             x => x.ProcessAsync(
                 It.IsAny<TestCommand>(),
                 It.Is<AggregateDeltaBatch<TestAggregate>>(batch =>
-                    batch.BatchOperationType == BatchOperationType.Updated &&
+                    batch.DeltaProjectionMetadata!.ProjectionOperationType == BatchOperationType.Updated &&
                     batch.Mutations.Count == 1 &&
                     batch.Mutations[0].MutationType == MutationType.Created),
                 It.IsAny<CancellationToken>()),
@@ -685,7 +685,10 @@ public sealed class BatchAggregateCommandHandlerBaseTests
             new BatchAggregateMutation<Guid, TestAggregate>(
                 response,
                 batchOperationType,
-                mutations));
+                mutations,
+                batchOperationType == BatchOperationType.Unspecified
+                    ? null
+                    : new DeltaProjectionMetadataV2(Guid.NewGuid(), 1, batchOperationType)));
 
     private static AggregateMutationDescriptor<TestAggregate> Descriptor(
         TestAggregate aggregate,

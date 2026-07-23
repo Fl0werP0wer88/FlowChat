@@ -23,8 +23,7 @@ public abstract class BatchAggregateAddCommandHandlerBase<TCommand, TResponse, T
     {
     }
 
-    //Review3 : Nie podoba mi sie nazwa tej metody może tak lepiej po prostu GetResult() Oceń pomysł.
-    protected static FlowChatResult<BatchAggregateMutation<TResponse, TAggregate>> AddBatch(
+    protected static FlowChatResult<BatchAggregateMutation<TResponse, TAggregate>> Success(
         TResponse response,
         IReadOnlyList<Id<TAggregate>> aggregateIds,
         DeltaProjectionMetadataV2 deltaProjectionMetadata)

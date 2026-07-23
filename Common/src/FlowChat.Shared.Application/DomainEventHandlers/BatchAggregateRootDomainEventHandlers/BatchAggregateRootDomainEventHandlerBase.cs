@@ -92,7 +92,6 @@ public abstract class BatchAggregateRootDomainEventHandlerBase<TNotification, TA
         }
 
         var deltaBatch = new AggregateDeltaBatch<TAggregate>(
-            operationResult.BatchOperationType,
             deltaMutations,
             operationResult.DeltaProjectionMetadata);
 

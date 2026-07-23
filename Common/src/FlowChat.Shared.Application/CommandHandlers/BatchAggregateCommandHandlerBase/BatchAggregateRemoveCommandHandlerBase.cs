@@ -22,8 +22,7 @@ public abstract class BatchAggregateRemoveCommandHandlerBase<TCommand, TResponse
         : base(localEventsDispatcher, unitOfWork, beforeSaveProcessors, beforeSaveDeltaProcessors)
     {
     }
-    //Review3 : Nie podoba mi sie nazwa tej metody może tak lepiej po prostu GetResult() Oceń pomysł.
-    protected static FlowChatResult<BatchAggregateMutation<TResponse, TAggregate>> RemoveBatch(
+    protected static FlowChatResult<BatchAggregateMutation<TResponse, TAggregate>> Success(
         TResponse response,
         IReadOnlyList<Id<TAggregate>> aggregateIds,
         DeltaProjectionMetadataV2 deltaProjectionMetadata)

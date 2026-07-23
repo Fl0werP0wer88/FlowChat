@@ -30,7 +30,8 @@ public sealed class AggregateBeforeSaveDeltaProcessorV2Tests
 
         await processor.ProcessAsync(
             new TestCommand(),
-            CreateBatch(aggregate, new DeltaProjectionMetadataV2(projectionId, 7)),
+            CreateBatch(aggregate, new DeltaProjectionMetadataV2(
+                projectionId, 7, BatchOperationType.Updated)),
             CancellationToken.None);
 
         captured.Should().NotBeNull();
@@ -54,7 +55,7 @@ public sealed class AggregateBeforeSaveDeltaProcessorV2Tests
 
         await processor.ProcessAsync(
             new TestCommand(),
-            new AggregateDeltaBatch<TestAggregate>(BatchOperationType.Unspecified, []),
+            new AggregateDeltaBatch<TestAggregate>([]),
             CancellationToken.None);
 
         mapper.Verify(x => x.Map<TestReadModel>(It.IsAny<TestAggregate>()), Times.Never);
@@ -90,7 +91,8 @@ public sealed class AggregateBeforeSaveDeltaProcessorV2Tests
 
         var action = () => processor.ProcessAsync(
             new TestCommand(),
-            CreateBatch(aggregate, new DeltaProjectionMetadataV2(Guid.Empty, 1)),
+            CreateBatch(aggregate, new DeltaProjectionMetadataV2(
+                Guid.Empty, 1, BatchOperationType.Updated)),
             CancellationToken.None);
 
         await action.Should().ThrowAsync<InvalidOperationException>()
@@ -111,7 +113,8 @@ public sealed class AggregateBeforeSaveDeltaProcessorV2Tests
 
         var action = () => processor.ProcessAsync(
             new TestCommand(),
-            CreateBatch(aggregate, new DeltaProjectionMetadataV2(Guid.NewGuid(), revision)),
+            CreateBatch(aggregate, new DeltaProjectionMetadataV2(
+                Guid.NewGuid(), revision, BatchOperationType.Updated)),
             CancellationToken.None);
 
         await action.Should().ThrowAsync<InvalidOperationException>()
@@ -128,7 +131,6 @@ public sealed class AggregateBeforeSaveDeltaProcessorV2Tests
         var publisher = new Mock<IOutboxIntegrationEventPublisher>();
         var processor = CreateProcessor(mapper, publisher);
         var batch = new AggregateDeltaBatch<TestAggregate>(
-            BatchOperationType.Updated,
             [new AggregateDeltaMutation<TestAggregate>(aggregate, MutationType.Unchanged)]);
 
         var action = () => processor.ProcessAsync(new TestCommand(), batch, CancellationToken.None);
@@ -147,7 +149,7 @@ public sealed class AggregateBeforeSaveDeltaProcessorV2Tests
 
         var action = () => processor.ProcessAsync(
             new TestCommand(),
-            new AggregateDeltaBatch<TestAggregate>(BatchOperationType.Updated, null!),
+            new AggregateDeltaBatch<TestAggregate>(null!),
             CancellationToken.None);
 
         await action.Should().ThrowAsync<ArgumentNullException>();
@@ -161,7 +163,6 @@ public sealed class AggregateBeforeSaveDeltaProcessorV2Tests
         var publisher = new Mock<IOutboxIntegrationEventPublisher>();
         var processor = CreateProcessor(mapper, publisher);
         var batch = new AggregateDeltaBatch<TestAggregate>(
-            BatchOperationType.Updated,
             [new AggregateDeltaMutation<TestAggregate>(null!, MutationType.Updated)]);
 
         var action = () => processor.ProcessAsync(new TestCommand(), batch, CancellationToken.None);
@@ -172,15 +173,15 @@ public sealed class AggregateBeforeSaveDeltaProcessorV2Tests
     }
 
     [Fact]
-    public async Task ProcessAsync_WhenBatchOperationTypeIsUnsupported_ThrowsWithoutPublishing()
+    public async Task ProcessAsync_WhenProjectionOperationTypeIsUnsupported_ThrowsWithoutPublishing()
     {
         var aggregate = CreateAggregate();
         var mapper = new Mock<IMapper>();
         var publisher = new Mock<IOutboxIntegrationEventPublisher>();
         var processor = CreateProcessor(mapper, publisher);
         var batch = new AggregateDeltaBatch<TestAggregate>(
-            (BatchOperationType)int.MaxValue,
-            [new AggregateDeltaMutation<TestAggregate>(aggregate, MutationType.Updated)]);
+            [new AggregateDeltaMutation<TestAggregate>(aggregate, MutationType.Updated)],
+            new DeltaProjectionMetadataV2(Guid.NewGuid(), 1, (BatchOperationType)int.MaxValue));
 
         var action = () => processor.ProcessAsync(new TestCommand(), batch, CancellationToken.None);
 
@@ -199,7 +200,8 @@ public sealed class AggregateBeforeSaveDeltaProcessorV2Tests
 
         var action = () => processor.ProcessAsync(
             new TestCommand(),
-            CreateBatch(aggregate, new DeltaProjectionMetadataV2(Guid.NewGuid(), 1)),
+            CreateBatch(aggregate, new DeltaProjectionMetadataV2(
+                Guid.NewGuid(), 1, BatchOperationType.Updated)),
             CancellationToken.None);
 
         await action.Should().ThrowAsync<InvalidOperationException>()
@@ -211,7 +213,6 @@ public sealed class AggregateBeforeSaveDeltaProcessorV2Tests
         TestAggregate aggregate,
         DeltaProjectionMetadataV2? metadata) =>
         new(
-            BatchOperationType.Updated,
             [new AggregateDeltaMutation<TestAggregate>(aggregate, MutationType.Updated)],
             metadata);
 

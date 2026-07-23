@@ -59,7 +59,8 @@ public sealed class BatchAggregateRootUpdateDomainEventHandlerBaseTests
 
         public static FlowChatResult<BatchAggregateDomainEventMutation<TestAggregate>> InvokeUpdateBatch(
             IReadOnlyList<Id<TestAggregate>> aggregateIds)
-            => UpdateBatch(aggregateIds, new DeltaProjectionMetadataV2(Guid.NewGuid(), 1));
+            => Success(aggregateIds, new DeltaProjectionMetadataV2(
+                Guid.NewGuid(), 1, BatchOperationType.Updated));
     }
 
     private sealed class TestNotification : DomainEventBase;
