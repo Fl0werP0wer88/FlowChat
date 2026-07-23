@@ -53,7 +53,6 @@ public sealed class ConversationParticipantsAddedDomainEventHandlerV2
             participants.Select(participant => participant.Id).ToArray(),
             new DeltaProjectionMetadataV2(
                 notification.ConversationId.Value,
-                notification.Version,
-                BatchOperationType.Created));
+                notification.Version));
     }
 }

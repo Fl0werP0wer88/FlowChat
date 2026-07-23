@@ -5,6 +5,5 @@ public sealed record DeltaProjectionIntegrationEventV2<TValue> : IntegrationEven
 {
     public required Guid ProjectionId { get; init; }
     public required int ProjectionRevision { get; init; }
-    public required BatchOperationType ProjectionOperationType { get; init; }
     public required IReadOnlyList<DeltaProjectionItemV2<TValue>> Delta { get; init; }
 }

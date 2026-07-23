@@ -67,7 +67,7 @@ public sealed class BatchAggregateUpdateCommandHandlerBaseTests
             Guid response,
             IReadOnlyList<Id<TestAggregate>> aggregateIds)
             => Success(response, aggregateIds, new DeltaProjectionMetadataV2(
-                Guid.NewGuid(), 1, BatchOperationType.Updated));
+                Guid.NewGuid(), 1));
     }
 
     private sealed record TestCommand : ICommand<Guid>;

@@ -36,7 +36,6 @@ public class AggregateBeforeSaveDeltaProcessorV2<TCommand, TAggregate, TValue>
 
         ValidateMutations(batch.Mutations);
         var metadata = ValidateAndGetMetadata(batch.DeltaProjectionMetadata);
-        ValidateProjectionOperationType(metadata.ProjectionOperationType);
         var kafkaKey = metadata.ProjectionId.ToString("D");
 
         var delta = batch.Mutations
@@ -46,7 +45,6 @@ public class AggregateBeforeSaveDeltaProcessorV2<TCommand, TAggregate, TValue>
         {
             ProjectionId = metadata.ProjectionId,
             ProjectionRevision = metadata.ProjectionRevision,
-            ProjectionOperationType = metadata.ProjectionOperationType,
             Delta = delta
         };
         var envelope = new IntegrationEventEnvelope<DeltaProjectionIntegrationEventV2<TValue>>(
@@ -76,26 +74,6 @@ public class AggregateBeforeSaveDeltaProcessorV2<TCommand, TAggregate, TValue>
         }
 
         return metadata;
-    }
-
-    private static void ValidateProjectionOperationType(BatchOperationType projectionOperationType)
-    {
-        switch (projectionOperationType)
-        {
-            case BatchOperationType.Created:
-            case BatchOperationType.Updated:
-            case BatchOperationType.Deleted:
-            case BatchOperationType.Mixed:
-                return;
-            case BatchOperationType.Unspecified:
-                throw new InvalidOperationException(
-                    "An unspecified batch operation type cannot be published with a non-empty delta.");
-            default:
-                throw new ArgumentOutOfRangeException(
-                    nameof(projectionOperationType),
-                    projectionOperationType,
-                    null);
-        }
     }
 
     private DeltaProjectionItemV2<TValue> MapDeltaItem(AggregateDeltaMutation<TAggregate> mutation)

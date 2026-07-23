@@ -84,8 +84,7 @@ public sealed class ConversationParticipantsAddedDomainEventHandlerV2Tests
         capturedBatch.DeltaProjectionMetadata.Should().Be(
             new DeltaProjectionMetadataV2(
                 conversationId.Value,
-                notification.Version,
-                BatchOperationType.Created));
+                notification.Version));
         capturedBatch.Mutations.Select(mutation => mutation.Aggregate).Should().Equal(addedParticipants);
         capturedBatch.Mutations.Should().OnlyContain(mutation => mutation.MutationType == MutationType.Created);
         deltaProcessor.Verify(instance => instance.ProcessAsync(

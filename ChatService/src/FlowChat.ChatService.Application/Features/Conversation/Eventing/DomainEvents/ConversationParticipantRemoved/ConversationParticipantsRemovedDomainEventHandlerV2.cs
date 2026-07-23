@@ -56,7 +56,6 @@ public sealed class ConversationParticipantsRemovedDomainEventHandlerV2
             orderedParticipants.Select(participant => participant.Id).ToArray(),
             new DeltaProjectionMetadataV2(
                 notification.ConversationId.Value,
-                notification.Version,
-                BatchOperationType.Deleted));
+                notification.Version));
     }
 }
