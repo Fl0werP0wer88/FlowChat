@@ -68,22 +68,10 @@ internal static class CommonApplicationServiceRegistration
         services.AddConversationParticipantProcessor<ConversationParticipantsAddedDomainEventV2>();
         services.AddConversationParticipantProcessor<ConversationParticipantsRemovedDomainEventV2>();
         services.AddScoped<
-            IAggregateDeltaProjectionMetadataProviderV2<
-                ConversationParticipantsAddedDomainEventV2,
-                ConversationParticipant>,
-            ConversationMembershipDeltaProjectionMetadataProviderV2<
-                ConversationParticipantsAddedDomainEventV2>>();
-        services.AddScoped<
             IAggregateBeforeSaveDeltaProcessorV2<
                 ConversationParticipantsAddedDomainEventV2,
                 ConversationParticipant>,
             AddConversationMembershipDeltaProcessorV2>();
-        services.AddScoped<
-            IAggregateDeltaProjectionMetadataProviderV2<
-                ConversationParticipantsRemovedDomainEventV2,
-                ConversationParticipant>,
-            ConversationMembershipDeltaProjectionMetadataProviderV2<
-                ConversationParticipantsRemovedDomainEventV2>>();
         services.AddScoped<
             IAggregateBeforeSaveDeltaProcessorV2<
                 ConversationParticipantsRemovedDomainEventV2,

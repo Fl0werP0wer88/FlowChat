@@ -23,8 +23,15 @@ public abstract class BatchAggregateUpdateCommandHandlerBase<TCommand, TResponse
     {
     }
 
+    //Review3 : Nie podoba mi sie nazwa tej metody może tak lepiej po prostu GetResult()? Oceń pomysł.
     protected static FlowChatResult<BatchAggregateMutation<TResponse, TAggregate>> UpdateBatch(
         TResponse response,
-        IReadOnlyList<Id<TAggregate>> aggregateIds)
-        => Mutation(response, aggregateIds, MutationType.Updated, BatchOperationType.Updated);
+        IReadOnlyList<Id<TAggregate>> aggregateIds,
+        DeltaProjectionMetadataV2 deltaProjectionMetadata)
+        => Mutation(
+            response,
+            aggregateIds,
+            MutationType.Updated,
+            BatchOperationType.Updated,
+            deltaProjectionMetadata);
 }

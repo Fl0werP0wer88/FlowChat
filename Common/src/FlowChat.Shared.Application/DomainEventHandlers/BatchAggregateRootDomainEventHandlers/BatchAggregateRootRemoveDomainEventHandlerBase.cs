@@ -21,7 +21,13 @@ public abstract class BatchAggregateRootRemoveDomainEventHandlerBase<TNotificati
     {
     }
 
+    //Review3 : Nie podoba mi sie nazwa tej metody może tak lepiej po prostu GetResult()? Oceń pomysł.
     protected static FlowChatResult<BatchAggregateDomainEventMutation<TAggregate>> RemoveBatch(
-        IReadOnlyList<Id<TAggregate>> aggregateIds)
-        => Mutations(aggregateIds, MutationType.Deleted, BatchOperationType.Deleted);
+        IReadOnlyList<Id<TAggregate>> aggregateIds,
+        DeltaProjectionMetadataV2 deltaProjectionMetadata)
+        => Mutations(
+            aggregateIds,
+            MutationType.Deleted,
+            BatchOperationType.Deleted,
+            deltaProjectionMetadata);
 }

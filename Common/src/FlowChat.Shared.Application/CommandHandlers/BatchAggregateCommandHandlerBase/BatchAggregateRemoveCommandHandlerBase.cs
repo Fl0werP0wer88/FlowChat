@@ -22,9 +22,15 @@ public abstract class BatchAggregateRemoveCommandHandlerBase<TCommand, TResponse
         : base(localEventsDispatcher, unitOfWork, beforeSaveProcessors, beforeSaveDeltaProcessors)
     {
     }
-
+    //Review3 : Nie podoba mi sie nazwa tej metody może tak lepiej po prostu GetResult() Oceń pomysł.
     protected static FlowChatResult<BatchAggregateMutation<TResponse, TAggregate>> RemoveBatch(
         TResponse response,
-        IReadOnlyList<Id<TAggregate>> aggregateIds)
-        => Mutation(response, aggregateIds, MutationType.Deleted, BatchOperationType.Deleted);
+        IReadOnlyList<Id<TAggregate>> aggregateIds,
+        DeltaProjectionMetadataV2 deltaProjectionMetadata)
+        => Mutation(
+            response,
+            aggregateIds,
+            MutationType.Deleted,
+            BatchOperationType.Deleted,
+            deltaProjectionMetadata);
 }

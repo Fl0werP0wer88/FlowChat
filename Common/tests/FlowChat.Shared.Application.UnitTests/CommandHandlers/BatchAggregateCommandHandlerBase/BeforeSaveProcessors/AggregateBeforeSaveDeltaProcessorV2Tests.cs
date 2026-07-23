@@ -11,376 +11,239 @@ namespace FlowChat.Shared.Application.UnitTests.CommandHandlers.BatchAggregateCo
 public sealed class AggregateBeforeSaveDeltaProcessorV2Tests
 {
     [Fact]
-    public async Task ProcessAsync_WhenMutationsAreValid_PublishesSingleOrderedDeltaEvent()
+    public async Task ProcessAsync_WhenBatchIsValid_PublishesDeltaWithProjectionMetadata()
     {
-        var created = CreateAggregate("Created", MutationType.Created);
-        var updated = CreateAggregate("Updated", MutationType.Updated);
-        var deleted = CreateAggregate("Deleted", MutationType.Deleted);
-        IReadOnlyList<AggregateDeltaMutation<TestAggregate>> mutations =
-        [
-            new(created, MutationType.Created),
-            new(updated, MutationType.Updated),
-            new(deleted, MutationType.Deleted)
-        ];
-        var command = new TestCommand(Guid.NewGuid());
-        var expectedProjectionId = Guid.NewGuid();
-        const int expectedProjectionRevision = 7;
-        var expectedKafkaKey = Guid.NewGuid().ToString("D");
-        var createdReadModel = new TestReadModel(created.Id.Value, created.Name);
-        var updatedReadModel = new TestReadModel(updated.Id.Value, updated.Name);
-        var deletedReadModel = new TestReadModel(deleted.Id.Value, deleted.Name);
-        var mapperMock = new Mock<IMapper>();
-        mapperMock.Setup(x => x.Map<TestReadModel>(created)).Returns(createdReadModel);
-        mapperMock.Setup(x => x.Map<TestReadModel>(updated)).Returns(updatedReadModel);
-        mapperMock.Setup(x => x.Map<TestReadModel>(deleted)).Returns(deletedReadModel);
-        var keyProviderMock = new Mock<IAggregateDeltaProjectionMetadataProviderV2<TestCommand, TestAggregate>>();
-        keyProviderMock
-            .Setup(x => x.GetProjectionId(command, mutations))
-            .Returns(expectedProjectionId);
-        keyProviderMock
-            .Setup(x => x.GetProjectionRevision(command, mutations))
-            .Returns(expectedProjectionRevision);
-        keyProviderMock
-            .Setup(x => x.GetKafkaKey(command, mutations))
-            .Returns(expectedKafkaKey);
-        IntegrationEventEnvelope<DeltaProjectionIntegrationEventV2<TestReadModel>>? capturedEnvelope = null;
-        CancellationToken capturedCancellationToken = default;
-        var publisherMock = new Mock<IOutboxIntegrationEventPublisher>();
-        publisherMock
-            .Setup(x => x.PublishAsync(
+        var aggregate = CreateAggregate();
+        var readModel = new TestReadModel(aggregate.Id.Value, aggregate.Name);
+        var projectionId = Guid.NewGuid();
+        var mapper = new Mock<IMapper>();
+        mapper.Setup(x => x.Map<TestReadModel>(aggregate)).Returns(readModel);
+        IntegrationEventEnvelope<DeltaProjectionIntegrationEventV2<TestReadModel>>? captured = null;
+        var publisher = new Mock<IOutboxIntegrationEventPublisher>();
+        publisher.Setup(x => x.PublishAsync(
                 It.IsAny<IntegrationEventEnvelope<DeltaProjectionIntegrationEventV2<TestReadModel>>>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<
-                IntegrationEventEnvelope<DeltaProjectionIntegrationEventV2<TestReadModel>>,
-                CancellationToken>((envelope, token) =>
-                {
-                    capturedEnvelope = envelope;
-                    capturedCancellationToken = token;
-                })
+            .Callback<IntegrationEventEnvelope<DeltaProjectionIntegrationEventV2<TestReadModel>>, CancellationToken>(
+                (envelope, _) => captured = envelope)
             .Returns(Task.CompletedTask);
-        var processor = CreateProcessor(mapperMock, publisherMock, keyProviderMock);
-        using var cancellationTokenSource = new CancellationTokenSource();
+        var processor = CreateProcessor(mapper, publisher);
 
         await processor.ProcessAsync(
-            command,
-            new AggregateDeltaBatch<TestAggregate>(BatchOperationType.Mixed, mutations),
-            cancellationTokenSource.Token);
+            new TestCommand(),
+            CreateBatch(aggregate, new DeltaProjectionMetadataV2(projectionId, 7)),
+            CancellationToken.None);
 
-        keyProviderMock.Verify(x => x.GetKafkaKey(command, mutations), Times.Once);
-        publisherMock.Verify(
-            x => x.PublishAsync(
-                It.IsAny<IntegrationEventEnvelope<DeltaProjectionIntegrationEventV2<TestReadModel>>>(),
-                It.IsAny<CancellationToken>()),
-            Times.Once);
-        capturedEnvelope.Should().NotBeNull();
-        capturedEnvelope!.KafkaKey.Should().Be(expectedKafkaKey);
-        capturedCancellationToken.Should().Be(cancellationTokenSource.Token);
-        capturedEnvelope.Payload.ProjectionId.Should().Be(expectedProjectionId);
-        capturedEnvelope.Payload.ProjectionRevision.Should().Be(expectedProjectionRevision);
-        capturedEnvelope.Payload.ProjectionOperationType.Should().Be(BatchOperationType.Mixed);
-        capturedEnvelope.Payload.Delta.Should().HaveCount(3);
-
-        AssertDeltaItem(capturedEnvelope.Payload.Delta[0], created, createdReadModel, OperationType.Created);
-        AssertDeltaItem(capturedEnvelope.Payload.Delta[1], updated, updatedReadModel, OperationType.Updated);
-        AssertDeltaItem(capturedEnvelope.Payload.Delta[2], deleted, deletedReadModel, OperationType.Deleted);
+        captured.Should().NotBeNull();
+        captured!.KafkaKey.Should().Be(projectionId.ToString("D"));
+        captured.Payload.ProjectionId.Should().Be(projectionId);
+        captured.Payload.ProjectionRevision.Should().Be(7);
+        captured.Payload.ProjectionOperationType.Should().Be(BatchOperationType.Updated);
+        captured.Payload.Delta.Should().ContainSingle();
+        captured.Payload.Delta[0].SourceAggregateId.Should().Be(aggregate.Id.Value);
+        captured.Payload.Delta[0].SourceAggregateVersion.Should().Be(aggregate.Version);
+        captured.Payload.Delta[0].Operation.Should().Be(OperationType.Updated);
+        captured.Payload.Delta[0].Value.Should().Be(readModel);
     }
 
     [Fact]
-    public async Task ProcessAsync_WhenMutationListIsEmpty_DoesNotResolveKeyMapOrPublish()
+    public async Task ProcessAsync_WhenBatchIsEmpty_DoesNotRequireMetadataOrPublish()
     {
-        var mapperMock = new Mock<IMapper>();
-        var publisherMock = new Mock<IOutboxIntegrationEventPublisher>();
-        var keyProviderMock = new Mock<IAggregateDeltaProjectionMetadataProviderV2<TestCommand, TestAggregate>>();
-        var processor = CreateProcessor(mapperMock, publisherMock, keyProviderMock);
+        var mapper = new Mock<IMapper>();
+        var publisher = new Mock<IOutboxIntegrationEventPublisher>();
+        var processor = CreateProcessor(mapper, publisher);
 
         await processor.ProcessAsync(
-            new TestCommand(Guid.NewGuid()),
+            new TestCommand(),
             new AggregateDeltaBatch<TestAggregate>(BatchOperationType.Unspecified, []),
             CancellationToken.None);
 
-        keyProviderMock.Verify(
-            x => x.GetKafkaKey(
-                It.IsAny<TestCommand>(),
-                It.IsAny<IReadOnlyList<AggregateDeltaMutation<TestAggregate>>>()),
-            Times.Never);
-        mapperMock.Verify(x => x.Map<TestReadModel>(It.IsAny<TestAggregate>()), Times.Never);
-        VerifyNeverPublished(publisherMock);
+        mapper.Verify(x => x.Map<TestReadModel>(It.IsAny<TestAggregate>()), Times.Never);
+        VerifyNeverPublished(publisher);
     }
 
     [Fact]
-    public async Task ProcessAsync_WhenMutationTypeIsUnchanged_ThrowsWithoutResolvingKeyMappingOrPublishing()
+    public async Task ProcessAsync_WhenMetadataIsMissing_ThrowsWithoutMappingOrPublishing()
     {
-        var aggregate = CreateAggregate("Unchanged", MutationType.Updated);
-        var mapperMock = new Mock<IMapper>();
-        var publisherMock = new Mock<IOutboxIntegrationEventPublisher>();
-        var keyProviderMock = new Mock<IAggregateDeltaProjectionMetadataProviderV2<TestCommand, TestAggregate>>();
-        var processor = CreateProcessor(mapperMock, publisherMock, keyProviderMock);
+        var aggregate = CreateAggregate();
+        var mapper = new Mock<IMapper>();
+        var publisher = new Mock<IOutboxIntegrationEventPublisher>();
+        var processor = CreateProcessor(mapper, publisher);
 
         var action = () => processor.ProcessAsync(
-            new TestCommand(Guid.NewGuid()),
-            new AggregateDeltaBatch<TestAggregate>(
-                BatchOperationType.Updated,
-                [new AggregateDeltaMutation<TestAggregate>(aggregate, MutationType.Unchanged)]),
+            new TestCommand(),
+            CreateBatch(aggregate, null),
             CancellationToken.None);
 
         await action.Should().ThrowAsync<InvalidOperationException>()
-            .WithMessage("Unchanged mutation type must not be processed as an aggregate delta projection operation.");
-        VerifyNoWork(mapperMock, publisherMock, keyProviderMock);
+            .WithMessage("Delta projection metadata is required for a non-empty delta.");
+        mapper.Verify(x => x.Map<TestReadModel>(It.IsAny<TestAggregate>()), Times.Never);
+        VerifyNeverPublished(publisher);
     }
 
     [Fact]
-    public async Task ProcessAsync_WhenMutationTypeIsUnsupported_ThrowsWithoutResolvingKeyMappingOrPublishing()
+    public async Task ProcessAsync_WhenProjectionIdIsEmpty_ThrowsWithoutMappingOrPublishing()
     {
-        var aggregate = CreateAggregate("Unsupported", MutationType.Updated);
-        var mapperMock = new Mock<IMapper>();
-        var publisherMock = new Mock<IOutboxIntegrationEventPublisher>();
-        var keyProviderMock = new Mock<IAggregateDeltaProjectionMetadataProviderV2<TestCommand, TestAggregate>>();
-        var processor = CreateProcessor(mapperMock, publisherMock, keyProviderMock);
+        var aggregate = CreateAggregate();
+        var mapper = new Mock<IMapper>();
+        var publisher = new Mock<IOutboxIntegrationEventPublisher>();
+        var processor = CreateProcessor(mapper, publisher);
 
         var action = () => processor.ProcessAsync(
-            new TestCommand(Guid.NewGuid()),
-            new AggregateDeltaBatch<TestAggregate>(
-                BatchOperationType.Updated,
-                [new AggregateDeltaMutation<TestAggregate>(aggregate, (MutationType)int.MaxValue)]),
+            new TestCommand(),
+            CreateBatch(aggregate, new DeltaProjectionMetadataV2(Guid.Empty, 1)),
             CancellationToken.None);
 
-        await action.Should().ThrowAsync<ArgumentOutOfRangeException>();
-        VerifyNoWork(mapperMock, publisherMock, keyProviderMock);
+        await action.Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage("Delta projection id cannot be empty.");
+        mapper.Verify(x => x.Map<TestReadModel>(It.IsAny<TestAggregate>()), Times.Never);
+        VerifyNeverPublished(publisher);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    public async Task ProcessAsync_WhenProjectionRevisionIsInvalid_ThrowsWithoutMappingOrPublishing(int revision)
+    {
+        var aggregate = CreateAggregate();
+        var mapper = new Mock<IMapper>();
+        var publisher = new Mock<IOutboxIntegrationEventPublisher>();
+        var processor = CreateProcessor(mapper, publisher);
+
+        var action = () => processor.ProcessAsync(
+            new TestCommand(),
+            CreateBatch(aggregate, new DeltaProjectionMetadataV2(Guid.NewGuid(), revision)),
+            CancellationToken.None);
+
+        await action.Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage("Delta projection revision must be at least 1.");
+        mapper.Verify(x => x.Map<TestReadModel>(It.IsAny<TestAggregate>()), Times.Never);
+        VerifyNeverPublished(publisher);
     }
 
     [Fact]
-    public async Task ProcessAsync_WhenMutationListIsNull_ThrowsArgumentNullException()
+    public async Task ProcessAsync_WhenMutationIsUnchanged_ThrowsBeforeMetadataValidation()
     {
-        var mapperMock = new Mock<IMapper>();
-        var publisherMock = new Mock<IOutboxIntegrationEventPublisher>();
-        var keyProviderMock = new Mock<IAggregateDeltaProjectionMetadataProviderV2<TestCommand, TestAggregate>>();
-        var processor = CreateProcessor(mapperMock, publisherMock, keyProviderMock);
+        var aggregate = CreateAggregate();
+        var mapper = new Mock<IMapper>();
+        var publisher = new Mock<IOutboxIntegrationEventPublisher>();
+        var processor = CreateProcessor(mapper, publisher);
+        var batch = new AggregateDeltaBatch<TestAggregate>(
+            BatchOperationType.Updated,
+            [new AggregateDeltaMutation<TestAggregate>(aggregate, MutationType.Unchanged)]);
+
+        var action = () => processor.ProcessAsync(new TestCommand(), batch, CancellationToken.None);
+
+        await action.Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage("Unchanged mutation type must not be processed as an aggregate delta projection operation.");
+        VerifyNeverPublished(publisher);
+    }
+
+    [Fact]
+    public async Task ProcessAsync_WhenMutationListIsNull_ThrowsWithoutPublishing()
+    {
+        var mapper = new Mock<IMapper>();
+        var publisher = new Mock<IOutboxIntegrationEventPublisher>();
+        var processor = CreateProcessor(mapper, publisher);
 
         var action = () => processor.ProcessAsync(
-            new TestCommand(Guid.NewGuid()),
+            new TestCommand(),
             new AggregateDeltaBatch<TestAggregate>(BatchOperationType.Updated, null!),
             CancellationToken.None);
 
         await action.Should().ThrowAsync<ArgumentNullException>();
-        VerifyNoWork(mapperMock, publisherMock, keyProviderMock);
+        VerifyNeverPublished(publisher);
     }
 
     [Fact]
-    public async Task ProcessAsync_WhenMutationListContainsNullEntry_ThrowsWithoutResolvingKeyMappingOrPublishing()
+    public async Task ProcessAsync_WhenMutationContainsNullAggregate_ThrowsWithoutPublishing()
     {
-        var mapperMock = new Mock<IMapper>();
-        var publisherMock = new Mock<IOutboxIntegrationEventPublisher>();
-        var keyProviderMock = new Mock<IAggregateDeltaProjectionMetadataProviderV2<TestCommand, TestAggregate>>();
-        var processor = CreateProcessor(mapperMock, publisherMock, keyProviderMock);
-        IReadOnlyList<AggregateDeltaMutation<TestAggregate>> mutations = [null!];
+        var mapper = new Mock<IMapper>();
+        var publisher = new Mock<IOutboxIntegrationEventPublisher>();
+        var processor = CreateProcessor(mapper, publisher);
+        var batch = new AggregateDeltaBatch<TestAggregate>(
+            BatchOperationType.Updated,
+            [new AggregateDeltaMutation<TestAggregate>(null!, MutationType.Updated)]);
 
-        var action = () => processor.ProcessAsync(
-            new TestCommand(Guid.NewGuid()),
-            new AggregateDeltaBatch<TestAggregate>(BatchOperationType.Updated, mutations),
-            CancellationToken.None);
-
-        await action.Should().ThrowAsync<ArgumentException>()
-            .WithMessage("*cannot contain null entries*");
-        VerifyNoWork(mapperMock, publisherMock, keyProviderMock);
-    }
-
-    [Fact]
-    public async Task ProcessAsync_WhenMutationContainsNullAggregate_ThrowsWithoutResolvingKeyMappingOrPublishing()
-    {
-        var mapperMock = new Mock<IMapper>();
-        var publisherMock = new Mock<IOutboxIntegrationEventPublisher>();
-        var keyProviderMock = new Mock<IAggregateDeltaProjectionMetadataProviderV2<TestCommand, TestAggregate>>();
-        var processor = CreateProcessor(mapperMock, publisherMock, keyProviderMock);
-        IReadOnlyList<AggregateDeltaMutation<TestAggregate>> mutations =
-            [new(null!, MutationType.Updated)];
-
-        var action = () => processor.ProcessAsync(
-            new TestCommand(Guid.NewGuid()),
-            new AggregateDeltaBatch<TestAggregate>(BatchOperationType.Updated, mutations),
-            CancellationToken.None);
+        var action = () => processor.ProcessAsync(new TestCommand(), batch, CancellationToken.None);
 
         await action.Should().ThrowAsync<ArgumentException>()
             .WithMessage("*cannot contain a null aggregate*");
-        VerifyNoWork(mapperMock, publisherMock, keyProviderMock);
-    }
-
-    [Fact]
-    public async Task ProcessAsync_WhenKeyProviderReturnsEmptyKey_ThrowsWithoutMappingOrPublishing()
-    {
-        var aggregate = CreateAggregate("Updated", MutationType.Updated);
-        IReadOnlyList<AggregateDeltaMutation<TestAggregate>> mutations =
-            [new(aggregate, MutationType.Updated)];
-        var command = new TestCommand(Guid.NewGuid());
-        var mapperMock = new Mock<IMapper>();
-        var publisherMock = new Mock<IOutboxIntegrationEventPublisher>();
-        var keyProviderMock = new Mock<IAggregateDeltaProjectionMetadataProviderV2<TestCommand, TestAggregate>>();
-        keyProviderMock
-            .Setup(x => x.GetKafkaKey(command, mutations))
-            .Returns(string.Empty);
-        var processor = CreateProcessor(mapperMock, publisherMock, keyProviderMock);
-
-        var action = () => processor.ProcessAsync(
-            command,
-            new AggregateDeltaBatch<TestAggregate>(BatchOperationType.Updated, mutations),
-            CancellationToken.None);
-
-        await action.Should().ThrowAsync<InvalidOperationException>()
-            .WithMessage("*Kafka key cannot be null or empty*");
-        mapperMock.Verify(x => x.Map<TestReadModel>(It.IsAny<TestAggregate>()), Times.Never);
-        VerifyNeverPublished(publisherMock);
-    }
-
-    [Fact]
-    public async Task ProcessAsync_WhenMappingReturnsNull_ThrowsWithoutPublishing()
-    {
-        var aggregate = CreateAggregate("Updated", MutationType.Updated);
-        IReadOnlyList<AggregateDeltaMutation<TestAggregate>> mutations =
-            [new(aggregate, MutationType.Updated)];
-        var command = new TestCommand(Guid.NewGuid());
-        var mapperMock = new Mock<IMapper>();
-        mapperMock
-            .Setup(x => x.Map<TestReadModel>(aggregate))
-            .Returns((TestReadModel)null!);
-        var publisherMock = new Mock<IOutboxIntegrationEventPublisher>();
-        var keyProviderMock = new Mock<IAggregateDeltaProjectionMetadataProviderV2<TestCommand, TestAggregate>>();
-        keyProviderMock
-            .Setup(x => x.GetKafkaKey(command, mutations))
-            .Returns(Guid.NewGuid().ToString("D"));
-        var processor = CreateProcessor(mapperMock, publisherMock, keyProviderMock);
-
-        var action = () => processor.ProcessAsync(
-            command,
-            new AggregateDeltaBatch<TestAggregate>(BatchOperationType.Updated, mutations),
-            CancellationToken.None);
-
-        await action.Should().ThrowAsync<InvalidOperationException>()
-            .WithMessage("Mapping aggregate*returned null.");
-        VerifyNeverPublished(publisherMock);
-    }
-
-    [Fact]
-    public async Task ProcessAsync_WhenBatchOperationTypeIsUnspecified_ThrowsWithoutPublishing()
-    {
-        var aggregate = CreateAggregate("Updated", MutationType.Updated);
-        var mapperMock = new Mock<IMapper>();
-        var publisherMock = new Mock<IOutboxIntegrationEventPublisher>();
-        var keyProviderMock = new Mock<IAggregateDeltaProjectionMetadataProviderV2<TestCommand, TestAggregate>>();
-        var processor = CreateProcessor(mapperMock, publisherMock, keyProviderMock);
-        var batch = new AggregateDeltaBatch<TestAggregate>(
-            BatchOperationType.Unspecified,
-            [new AggregateDeltaMutation<TestAggregate>(aggregate, MutationType.Updated)]);
-
-        var action = () => processor.ProcessAsync(
-            new TestCommand(Guid.NewGuid()),
-            batch,
-            CancellationToken.None);
-
-        await action.Should().ThrowAsync<InvalidOperationException>()
-            .WithMessage("*unspecified batch operation type*");
-        VerifyNoWork(mapperMock, publisherMock, keyProviderMock);
+        VerifyNeverPublished(publisher);
     }
 
     [Fact]
     public async Task ProcessAsync_WhenBatchOperationTypeIsUnsupported_ThrowsWithoutPublishing()
     {
-        var aggregate = CreateAggregate("Updated", MutationType.Updated);
-        var mapperMock = new Mock<IMapper>();
-        var publisherMock = new Mock<IOutboxIntegrationEventPublisher>();
-        var keyProviderMock = new Mock<IAggregateDeltaProjectionMetadataProviderV2<TestCommand, TestAggregate>>();
-        var processor = CreateProcessor(mapperMock, publisherMock, keyProviderMock);
+        var aggregate = CreateAggregate();
+        var mapper = new Mock<IMapper>();
+        var publisher = new Mock<IOutboxIntegrationEventPublisher>();
+        var processor = CreateProcessor(mapper, publisher);
         var batch = new AggregateDeltaBatch<TestAggregate>(
             (BatchOperationType)int.MaxValue,
             [new AggregateDeltaMutation<TestAggregate>(aggregate, MutationType.Updated)]);
 
-        var action = () => processor.ProcessAsync(
-            new TestCommand(Guid.NewGuid()),
-            batch,
-            CancellationToken.None);
+        var action = () => processor.ProcessAsync(new TestCommand(), batch, CancellationToken.None);
 
         await action.Should().ThrowAsync<ArgumentOutOfRangeException>();
-        VerifyNoWork(mapperMock, publisherMock, keyProviderMock);
+        VerifyNeverPublished(publisher);
     }
 
-    private static AggregateBeforeSaveDeltaProcessorV2<TestCommand, TestAggregate, TestReadModel> CreateProcessor(
-        Mock<IMapper> mapperMock,
-        Mock<IOutboxIntegrationEventPublisher> publisherMock,
-        Mock<IAggregateDeltaProjectionMetadataProviderV2<TestCommand, TestAggregate>> keyProviderMock)
-        => new(mapperMock.Object, publisherMock.Object, keyProviderMock.Object);
-
-    private static TestAggregate CreateAggregate(string name, MutationType mutationType)
+    [Fact]
+    public async Task ProcessAsync_WhenMappingReturnsNull_ThrowsWithoutPublishing()
     {
-        var aggregate = new TestAggregate(Guid.NewGuid(), name);
+        var aggregate = CreateAggregate();
+        var mapper = new Mock<IMapper>();
+        mapper.Setup(x => x.Map<TestReadModel>(aggregate)).Returns((TestReadModel)null!);
+        var publisher = new Mock<IOutboxIntegrationEventPublisher>();
+        var processor = CreateProcessor(mapper, publisher);
+
+        var action = () => processor.ProcessAsync(
+            new TestCommand(),
+            CreateBatch(aggregate, new DeltaProjectionMetadataV2(Guid.NewGuid(), 1)),
+            CancellationToken.None);
+
+        await action.Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage("Mapping aggregate*returned null.");
+        VerifyNeverPublished(publisher);
+    }
+
+    private static AggregateDeltaBatch<TestAggregate> CreateBatch(
+        TestAggregate aggregate,
+        DeltaProjectionMetadataV2? metadata) =>
+        new(
+            BatchOperationType.Updated,
+            [new AggregateDeltaMutation<TestAggregate>(aggregate, MutationType.Updated)],
+            metadata);
+
+    private static AggregateBeforeSaveDeltaProcessorV2<TestCommand, TestAggregate, TestReadModel> CreateProcessor(
+        Mock<IMapper> mapper,
+        Mock<IOutboxIntegrationEventPublisher> publisher) =>
+        new(mapper.Object, publisher.Object);
+
+    private static TestAggregate CreateAggregate()
+    {
+        var aggregate = new TestAggregate(Guid.NewGuid(), "Name");
         aggregate.SetCreated("system");
         aggregate.SetUpdated("system");
-        if (mutationType == MutationType.Deleted)
-        {
-            aggregate.Delete(UtcDateTimeOffset.UtcNow);
-        }
-
         aggregate.IncrementVersion();
         return aggregate;
     }
 
-    private static void AssertDeltaItem(
-        DeltaProjectionItemV2<TestReadModel> item,
-        TestAggregate aggregate,
-        TestReadModel expectedValue,
-        OperationType expectedOperation)
-    {
-        item.SourceAggregateId.Should().Be(aggregate.Id.Value);
-        item.SourceAggregateCreatedAtUtc.Should().Be(aggregate.CreatedAtUtc.Value);
-        item.SourceAggregateModifiedAtUtc.Should().Be(aggregate.LastModifiedAtUtc.Value);
-        item.SourceAggregateDeletedAt.Should().Be(aggregate.DeletedAt?.Value);
-        item.SourceAggregateVersion.Should().Be(aggregate.Version);
-        item.Value.Should().Be(expectedValue);
-        item.Operation.Should().Be(expectedOperation);
-    }
+    private static void VerifyNeverPublished(Mock<IOutboxIntegrationEventPublisher> publisher) =>
+        publisher.Verify(x => x.PublishAsync(
+            It.IsAny<IntegrationEventEnvelope<DeltaProjectionIntegrationEventV2<TestReadModel>>>(),
+            It.IsAny<CancellationToken>()), Times.Never);
 
-    private static void VerifyNoWork(
-        Mock<IMapper> mapperMock,
-        Mock<IOutboxIntegrationEventPublisher> publisherMock,
-        Mock<IAggregateDeltaProjectionMetadataProviderV2<TestCommand, TestAggregate>> keyProviderMock)
-    {
-        keyProviderMock.Verify(
-            x => x.GetProjectionId(
-                It.IsAny<TestCommand>(),
-                It.IsAny<IReadOnlyList<AggregateDeltaMutation<TestAggregate>>>()),
-            Times.Never);
-        keyProviderMock.Verify(
-            x => x.GetProjectionRevision(
-                It.IsAny<TestCommand>(),
-                It.IsAny<IReadOnlyList<AggregateDeltaMutation<TestAggregate>>>()),
-            Times.Never);
-        keyProviderMock.Verify(
-            x => x.GetKafkaKey(
-                It.IsAny<TestCommand>(),
-                It.IsAny<IReadOnlyList<AggregateDeltaMutation<TestAggregate>>>()),
-            Times.Never);
-        mapperMock.Verify(x => x.Map<TestReadModel>(It.IsAny<TestAggregate>()), Times.Never);
-        VerifyNeverPublished(publisherMock);
-    }
-
-    private static void VerifyNeverPublished(Mock<IOutboxIntegrationEventPublisher> publisherMock)
-    {
-        publisherMock.Verify(
-            x => x.PublishAsync(
-                It.IsAny<IntegrationEventEnvelope<DeltaProjectionIntegrationEventV2<TestReadModel>>>(),
-                It.IsAny<CancellationToken>()),
-            Times.Never);
-    }
-
-    public sealed record TestCommand(Guid Id);
-
+    public sealed record TestCommand;
     public sealed record TestReadModel(Guid Id, string Name);
 
-    public sealed class TestAggregate : AggregateRootBase<TestAggregate>
+    private sealed class TestAggregate : AggregateRootBase<TestAggregate>
     {
-        public TestAggregate(Guid id, string name)
-            : base(Id<TestAggregate>.FromGuid(id))
+        public string Name { get; }
+
+        public TestAggregate(Guid id, string name) : base(Id<TestAggregate>.FromGuid(id))
         {
             Name = name;
         }
-
-        public string Name { get; }
     }
 }

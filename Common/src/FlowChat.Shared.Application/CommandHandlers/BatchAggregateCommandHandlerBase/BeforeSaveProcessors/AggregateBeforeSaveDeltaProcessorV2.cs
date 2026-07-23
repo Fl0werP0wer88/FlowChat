@@ -11,17 +11,14 @@ public class AggregateBeforeSaveDeltaProcessorV2<TCommand, TAggregate, TValue>
 {
     private readonly IMapper _mapper;
     private readonly IOutboxIntegrationEventPublisher _integrationEventPublisher;
-    private readonly IAggregateDeltaProjectionMetadataProviderV2<TCommand, TAggregate> _metadataProvider;
 
     public AggregateBeforeSaveDeltaProcessorV2(
         IMapper mapper,
-        IOutboxIntegrationEventPublisher integrationEventPublisher,
-        IAggregateDeltaProjectionMetadataProviderV2<TCommand, TAggregate> metadataProvider)
+        IOutboxIntegrationEventPublisher integrationEventPublisher)
     {
         _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         _integrationEventPublisher = integrationEventPublisher
             ?? throw new ArgumentNullException(nameof(integrationEventPublisher));
-        _metadataProvider = metadataProvider ?? throw new ArgumentNullException(nameof(metadataProvider));
     }
 
     public async Task ProcessAsync(
@@ -39,20 +36,16 @@ public class AggregateBeforeSaveDeltaProcessorV2<TCommand, TAggregate, TValue>
 
         ValidateBatchOperationType(batch.BatchOperationType);
         ValidateMutations(batch.Mutations);
-
-        var kafkaKey = _metadataProvider.GetKafkaKey(command, batch.Mutations);
-        if (string.IsNullOrWhiteSpace(kafkaKey))
-        {
-            throw new InvalidOperationException("The aggregate delta projection Kafka key cannot be null or empty.");
-        }
+        var metadata = ValidateAndGetMetadata(batch.DeltaProjectionMetadata);
+        var kafkaKey = metadata.ProjectionId.ToString("D");
 
         var delta = batch.Mutations
             .Select(MapDeltaItem)
             .ToArray();
         var integrationEvent = new DeltaProjectionIntegrationEventV2<TValue>
         {
-            ProjectionId = _metadataProvider.GetProjectionId(command, batch.Mutations),
-            ProjectionRevision = _metadataProvider.GetProjectionRevision(command, batch.Mutations),
+            ProjectionId = metadata.ProjectionId,
+            ProjectionRevision = metadata.ProjectionRevision,
             ProjectionOperationType = batch.BatchOperationType,
             Delta = delta
         };
@@ -61,6 +54,28 @@ public class AggregateBeforeSaveDeltaProcessorV2<TCommand, TAggregate, TValue>
             kafkaKey);
 
         await _integrationEventPublisher.PublishAsync(envelope, cancellationToken);
+    }
+
+    private static DeltaProjectionMetadataV2 ValidateAndGetMetadata(
+        DeltaProjectionMetadataV2? metadata)
+    {
+        if (metadata is null)
+        {
+            throw new InvalidOperationException(
+                "Delta projection metadata is required for a non-empty delta.");
+        }
+
+        if (metadata.ProjectionId == Guid.Empty)
+        {
+            throw new InvalidOperationException("Delta projection id cannot be empty.");
+        }
+
+        if (metadata.ProjectionRevision < 1)
+        {
+            throw new InvalidOperationException("Delta projection revision must be at least 1.");
+        }
+
+        return metadata;
     }
 
     private static void ValidateBatchOperationType(BatchOperationType batchOperationType)

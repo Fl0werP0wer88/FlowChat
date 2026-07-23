@@ -48,6 +48,10 @@ public sealed class ConversationParticipantsAddedDomainEventHandlerV2
         }
 
         AggregateRoots = participants.ToDictionary(participant => participant.Id);
-        return AddBatch(participants.Select(participant => participant.Id).ToArray());
+        return AddBatch(
+            participants.Select(participant => participant.Id).ToArray(),
+            new DeltaProjectionMetadataV2(
+                notification.ConversationId.Value,
+                notification.Version));
     }
 }

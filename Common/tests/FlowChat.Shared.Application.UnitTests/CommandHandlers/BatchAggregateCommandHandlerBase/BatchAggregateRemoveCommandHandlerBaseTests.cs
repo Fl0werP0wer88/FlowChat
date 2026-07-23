@@ -66,7 +66,7 @@ public sealed class BatchAggregateRemoveCommandHandlerBaseTests
         public static FlowChatResult<BatchAggregateMutation<Guid, TestAggregate>> InvokeRemoveBatch(
             Guid response,
             IReadOnlyList<Id<TestAggregate>> aggregateIds)
-            => RemoveBatch(response, aggregateIds);
+            => RemoveBatch(response, aggregateIds, new DeltaProjectionMetadataV2(Guid.NewGuid(), 1));
     }
 
     private sealed record TestCommand : ICommand<Guid>;

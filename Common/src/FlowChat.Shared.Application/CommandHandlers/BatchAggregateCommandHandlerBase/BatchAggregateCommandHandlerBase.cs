@@ -89,7 +89,8 @@ public abstract class BatchAggregateCommandHandlerBase<TCommand, TResponse, TAgg
             {
                 var deltaBatch = new AggregateDeltaBatch<TAggregate>(
                     operationResult.BatchOperationType,
-                    deltaMutations);
+                    deltaMutations,
+                    operationResult.DeltaProjectionMetadata);
 
                 foreach (var processor in _beforeSaveDeltaProcessors)
                 {
@@ -110,19 +111,25 @@ public abstract class BatchAggregateCommandHandlerBase<TCommand, TResponse, TAgg
     protected static FlowChatResult<BatchAggregateMutation<TResponse, TAggregate>> Mutation(
         TResponse response,
         IReadOnlyList<AggregateMutationDescriptor<TAggregate>> mutations,
-        BatchOperationType batchOperationType)
+        BatchOperationType batchOperationType,
+        DeltaProjectionMetadataV2? deltaProjectionMetadata = null)
     {
         ArgumentNullException.ThrowIfNull(mutations);
 
         return FlowChatResult<BatchAggregateMutation<TResponse, TAggregate>>.Success(
-            new BatchAggregateMutation<TResponse, TAggregate>(response, batchOperationType, mutations));
+            new BatchAggregateMutation<TResponse, TAggregate>(
+                response,
+                batchOperationType,
+                mutations,
+                deltaProjectionMetadata));
     }
 
     protected static FlowChatResult<BatchAggregateMutation<TResponse, TAggregate>> Mutation(
         TResponse response,
         IReadOnlyList<Id<TAggregate>> aggregateIds,
         MutationType mutationType,
-        BatchOperationType batchOperationType)
+        BatchOperationType batchOperationType,
+        DeltaProjectionMetadataV2? deltaProjectionMetadata = null)
     {
         ArgumentNullException.ThrowIfNull(aggregateIds);
 
@@ -130,7 +137,7 @@ public abstract class BatchAggregateCommandHandlerBase<TCommand, TResponse, TAgg
             .Select(aggregateId => new AggregateMutationDescriptor<TAggregate>(aggregateId, mutationType))
             .ToArray();
 
-        return Mutation(response, mutations, batchOperationType);
+        return Mutation(response, mutations, batchOperationType, deltaProjectionMetadata);
     }
 
     protected abstract Task<FlowChatResult<BatchAggregateMutation<TResponse, TAggregate>>> ExecuteAsync(

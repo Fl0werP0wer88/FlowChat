@@ -15,11 +15,8 @@ public sealed class AddConversationMembershipDeltaProcessorV2
 {
     public AddConversationMembershipDeltaProcessorV2(
         IMapper mapper,
-        IOutboxIntegrationEventPublisher integrationEventPublisher,
-        IAggregateDeltaProjectionMetadataProviderV2<
-            ConversationParticipantsAddedDomainEventV2,
-            ConversationParticipant> metadataProvider)
-        : base(mapper, integrationEventPublisher, metadataProvider)
+        IOutboxIntegrationEventPublisher integrationEventPublisher)
+        : base(mapper, integrationEventPublisher)
     {
     }
 }

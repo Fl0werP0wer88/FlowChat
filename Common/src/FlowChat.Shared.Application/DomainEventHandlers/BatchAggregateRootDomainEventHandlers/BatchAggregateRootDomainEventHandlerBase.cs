@@ -93,7 +93,8 @@ public abstract class BatchAggregateRootDomainEventHandlerBase<TNotification, TA
 
         var deltaBatch = new AggregateDeltaBatch<TAggregate>(
             operationResult.BatchOperationType,
-            deltaMutations);
+            deltaMutations,
+            operationResult.DeltaProjectionMetadata);
 
         foreach (var processor in _beforeSaveDeltaProcessors)
         {
@@ -110,18 +111,23 @@ public abstract class BatchAggregateRootDomainEventHandlerBase<TNotification, TA
 
     protected static FlowChatResult<BatchAggregateDomainEventMutation<TAggregate>> Mutations(
         IReadOnlyList<AggregateMutationDescriptor<TAggregate>> mutations,
-        BatchOperationType batchOperationType)
+        BatchOperationType batchOperationType,
+        DeltaProjectionMetadataV2? deltaProjectionMetadata = null)
     {
         ArgumentNullException.ThrowIfNull(mutations);
 
         return FlowChatResult<BatchAggregateDomainEventMutation<TAggregate>>.Success(
-            new BatchAggregateDomainEventMutation<TAggregate>(batchOperationType, mutations));
+            new BatchAggregateDomainEventMutation<TAggregate>(
+                batchOperationType,
+                mutations,
+                deltaProjectionMetadata));
     }
 
     protected static FlowChatResult<BatchAggregateDomainEventMutation<TAggregate>> Mutations(
         IReadOnlyList<Id<TAggregate>> aggregateIds,
         MutationType mutationType,
-        BatchOperationType batchOperationType)
+        BatchOperationType batchOperationType,
+        DeltaProjectionMetadataV2? deltaProjectionMetadata = null)
     {
         ArgumentNullException.ThrowIfNull(aggregateIds);
 
@@ -129,7 +135,7 @@ public abstract class BatchAggregateRootDomainEventHandlerBase<TNotification, TA
             .Select(aggregateId => new AggregateMutationDescriptor<TAggregate>(aggregateId, mutationType))
             .ToArray();
 
-        return Mutations(mutations, batchOperationType);
+        return Mutations(mutations, batchOperationType, deltaProjectionMetadata);
     }
 
     protected abstract Task<FlowChatResult<BatchAggregateDomainEventMutation<TAggregate>>> ExecuteAsync(
