@@ -1,4 +1,5 @@
 using AutoMapper;
+using FlowChat.ChatService.Application.Features.Conversation.Commands.BlockConversationParticipant;
 using FlowChat.ChatService.Domain.Entities.Conversation;
 using FlowChat.Core.Messaging.ChatService.ReadModels;
 using FlowChat.Shared.Application;
@@ -6,10 +7,10 @@ using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBas
 
 namespace FlowChat.ChatService.Application.Features.Conversation.Processors;
 
-public sealed class ConversationMetadataProcessorV2<TTrigger>(
+public sealed class BlockConversationParticipantProcessorV2(
     IMapper mapper,
     IOutboxIntegrationEventPublisher publisher)
     : PublishProjectionIntegrationEventProcessorV2<
-        TTrigger,
-        ConversationV2,
-        ConversationReadModelV2>(mapper, publisher);
+        BlockConversationParticipantCommandV2,
+        ConversationParticipant,
+        ConversationParticipantReadModelV2>(mapper, publisher);

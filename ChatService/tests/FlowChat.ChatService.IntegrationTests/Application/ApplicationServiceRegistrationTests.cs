@@ -85,7 +85,7 @@ public sealed class ApplicationServiceRegistrationTests
             .ContainSingle()
             .Subject;
 
-        participantProcessor.Should().BeOfType<ConversationParticipantProcessorV2<ConversationParticipantsAddedDomainEventV2>>();
+        participantProcessor.Should().BeOfType<ConversationParticipantsAddedProcessorV2>();
         deltaProcessor.Should().BeOfType<AddConversationMembershipDeltaProcessorV2>();
     }
 
@@ -105,7 +105,7 @@ public sealed class ApplicationServiceRegistrationTests
             .ContainSingle()
             .Subject;
 
-        participantProcessor.Should().BeOfType<ConversationParticipantProcessorV2<ConversationParticipantsRemovedDomainEventV2>>();
+        participantProcessor.Should().BeOfType<ConversationParticipantsRemovedProcessorV2>();
         deltaProcessor.Should().BeOfType<RemoveConversationMembershipDeltaProcessorV2>();
     }
 
