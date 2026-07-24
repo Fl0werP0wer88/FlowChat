@@ -18,25 +18,29 @@ public sealed class ConversationParticipantTests
         participant.IsMuted.Should().BeFalse();
         participant.IsHidden.Should().BeFalse();
         participant.ConversationType.Should().Be(ConversationType.Group);
+        participant.DuetPartnerUserId.Should().BeNull();
         participant.LastReadMessageSequenceNum.Should().Be(0);
     }
 
     [Fact]
     public void Restore_WhenRestored_PreservesConversationType()
     {
+        var partnerUserId = Id<UserProfileMarker>.New();
         var participant = ConversationParticipant.Restore(
             Id<ConversationParticipant>.New(),
             Id<ConversationAggregate>.New(),
             ConversationType.Duet,
             Id<UserProfileMarker>.New(),
+            partnerUserId,
             displayName: null,
             isBlocked: false,
             isMuted: false,
             isHidden: false,
-            UtcDateTimeOffset.UtcNow,
+            joinedAtUtc: UtcDateTimeOffset.UtcNow,
             lastReadMessageSequenceNum: 0);
 
         participant.ConversationType.Should().Be(ConversationType.Duet);
+        participant.DuetPartnerUserId.Should().Be(partnerUserId);
     }
 
     [Fact]
@@ -46,10 +50,55 @@ public sealed class ConversationParticipantTests
             Id<ConversationParticipant>.New(),
             Id<ConversationAggregate>.New(),
             (ConversationType)999,
-            Id<UserProfileMarker>.New());
+            Id<UserProfileMarker>.New(),
+            duetPartnerUserId: null);
 
         act.Should().Throw<ArgumentException>()
             .WithParameterName("conversationType");
+    }
+
+    [Fact]
+    public void Create_WhenDuetPartnerIsMissing_ThrowsArgumentNullException()
+    {
+        var act = () => ConversationParticipant.Create(
+            Id<ConversationParticipant>.New(),
+            Id<ConversationAggregate>.New(),
+            ConversationType.Duet,
+            Id<UserProfileMarker>.New(),
+            duetPartnerUserId: null);
+
+        act.Should().Throw<ArgumentNullException>()
+            .WithParameterName("duetPartnerUserId");
+    }
+
+    [Fact]
+    public void Create_WhenDuetPartnerMatchesParticipant_ThrowsArgumentException()
+    {
+        var userId = Id<UserProfileMarker>.New();
+
+        var act = () => ConversationParticipant.Create(
+            Id<ConversationParticipant>.New(),
+            Id<ConversationAggregate>.New(),
+            ConversationType.Duet,
+            userId,
+            userId);
+
+        act.Should().Throw<ArgumentException>()
+            .WithParameterName("duetPartnerUserId");
+    }
+
+    [Fact]
+    public void Create_WhenGroupHasDuetPartner_ThrowsArgumentException()
+    {
+        var act = () => ConversationParticipant.Create(
+            Id<ConversationParticipant>.New(),
+            Id<ConversationAggregate>.New(),
+            ConversationType.Group,
+            Id<UserProfileMarker>.New(),
+            Id<UserProfileMarker>.New());
+
+        act.Should().Throw<ArgumentException>()
+            .WithParameterName("duetPartnerUserId");
     }
 
     [Fact]
@@ -108,6 +157,7 @@ public sealed class ConversationParticipantTests
             Id<ConversationParticipant>.New(),
             Id<ConversationAggregate>.New(),
             ConversationType.Group,
-            Id<UserProfileMarker>.New());
+            Id<UserProfileMarker>.New(),
+            duetPartnerUserId: null);
     }
 }

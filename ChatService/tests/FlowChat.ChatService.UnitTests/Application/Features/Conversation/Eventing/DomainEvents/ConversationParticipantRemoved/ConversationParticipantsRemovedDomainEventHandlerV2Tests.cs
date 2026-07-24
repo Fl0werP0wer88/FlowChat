@@ -37,7 +37,8 @@ public sealed class ConversationParticipantsRemovedDomainEventHandlerV2Tests
                 Id<ConversationParticipant>.New(),
                 conversationId,
                 ConversationType.Group,
-                userId))
+                userId,
+                duetPartnerUserId: null))
             .ToArray();
 
         repository.Setup(instance => instance.GetActiveByUserIdsAsync(
@@ -111,7 +112,8 @@ public sealed class ConversationParticipantsRemovedDomainEventHandlerV2Tests
             Id<ConversationParticipant>.New(),
             conversationId,
             ConversationType.Group,
-            participantUserIds[0]);
+            participantUserIds[0],
+            duetPartnerUserId: null);
         var notification = new ConversationParticipantsRemovedDomainEventV2(
             Id<ConversationMembership>.FromId(conversationId),
             conversationId,

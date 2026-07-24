@@ -17,6 +17,11 @@ public sealed class ConversationParticipantReadModelV2Profile : Profile
             .ForMember(x => x.ConversationId, options => options.MapFrom(x => x.ConversationId.Value))
             .ForMember(x => x.ConversationType, options => options.MapFrom(x => (int)x.ConversationType))
             .ForMember(x => x.UserId, options => options.MapFrom(x => x.UserId.Value))
+            .ForMember(
+                x => x.DuetPartnerUserId,
+                options => options.MapFrom(x => x.DuetPartnerUserId == null
+                    ? (Guid?)null
+                    : x.DuetPartnerUserId.Value))
             .ForMember(x => x.JoinedAtUtc, options => options.MapFrom(x => x.JoinedAtUtc.Value));
     }
 }

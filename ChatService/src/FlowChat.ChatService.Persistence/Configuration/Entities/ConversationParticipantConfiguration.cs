@@ -29,6 +29,11 @@ public sealed class ConversationParticipantConfiguration
             .HasConversion(x => x.Value, x => Id<UserProfileMarker>.FromGuid(x))
             .IsRequired();
 
+        builder.Property(x => x.DuetPartnerUserId)
+            .HasConversion(
+                x => x == null ? (Guid?)null : x.Value,
+                x => x == null ? null : Id<UserProfileMarker>.FromGuid(x.Value));
+
         builder.Property(x => x.DisplayName).HasMaxLength(256);
         builder.Property(x => x.IsBlocked).IsRequired();
         builder.Property(x => x.IsMuted).IsRequired();

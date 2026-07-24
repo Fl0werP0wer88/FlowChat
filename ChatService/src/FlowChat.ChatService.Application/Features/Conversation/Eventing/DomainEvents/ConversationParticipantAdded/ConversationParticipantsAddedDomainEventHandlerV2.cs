@@ -7,6 +7,7 @@ using FlowChat.Shared.Application.CommandHandlers.AggregateRootCommandHandlerBas
 using FlowChat.Shared.Application.CommandHandlers.BatchAggregateCommandHandlerBase.BeforeSaveProcessors;
 using FlowChat.Shared.Application.DomainEventHandlers.BatchAggregateRootDomainEventHandlers;
 using FlowChat.Shared.Domain;
+using UserProfileMarker = FlowChat.ChatService.Domain.Entities.UserProfiles.UserProfile;
 
 namespace FlowChat.ChatService.Application.Features.Conversation.Eventing.DomainEvents.ConversationParticipantAdded;
 
@@ -41,6 +42,7 @@ public sealed class ConversationParticipantsAddedDomainEventHandlerV2
                 notification.ConversationId,
                 notification.ConversationType,
                 userId,
+                ResolveDuetPartnerUserId(notification, userId),
                 lastReadMessageSequenceNum: notification.InitialReadCursor))
             .ToArray();
 
@@ -56,4 +58,11 @@ public sealed class ConversationParticipantsAddedDomainEventHandlerV2
                 notification.ConversationId.Value,
                 notification.Version));
     }
+
+    private static Id<UserProfileMarker>? ResolveDuetPartnerUserId(
+        ConversationParticipantsAddedDomainEventV2 notification,
+        Id<UserProfileMarker> userId) =>
+        notification.ConversationType == ConversationType.Duet
+            ? notification.ParticipantUserIds.Single(participantUserId => participantUserId != userId)
+            : null;
 }

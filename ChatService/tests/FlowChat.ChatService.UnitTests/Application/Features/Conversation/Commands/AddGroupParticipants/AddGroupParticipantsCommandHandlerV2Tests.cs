@@ -25,7 +25,11 @@ public sealed class AddGroupParticipantsCommandHandlerV2Tests
         var newUserId2 = Id<UserProfile>.New();
         var membership = CreateMembership(conversationId, existingUserId, Id<UserProfile>.New());
         var existingParticipant = ConversationParticipant.Create(
-            Id<ConversationParticipant>.New(), conversationId, ConversationType.Group, existingUserId);
+            Id<ConversationParticipant>.New(),
+            conversationId,
+            ConversationType.Group,
+            existingUserId,
+            duetPartnerUserId: null);
         var membershipRepository = CreateMembershipRepository(conversationId, membership);
         var participantRepository = new Mock<IConversationParticipantWriteRepository>();
         participantRepository.Setup(x => x.GetActiveByUserIdsAsync(
@@ -84,7 +88,11 @@ public sealed class AddGroupParticipantsCommandHandlerV2Tests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync([
                 ConversationParticipant.Create(
-                    Id<ConversationParticipant>.New(), conversationId, ConversationType.Group, existingUserId)
+                    Id<ConversationParticipant>.New(),
+                    conversationId,
+                    ConversationType.Group,
+                    existingUserId,
+                    duetPartnerUserId: null)
             ]);
         var messageRepository = new Mock<IChatMessageV2WriteRepository>();
         var dispatcher = new Mock<ILocalEventDispatcher>();

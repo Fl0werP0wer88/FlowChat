@@ -23,7 +23,8 @@ public sealed class UnhideConversationParticipantsOnChatMessageSentDomainEventHa
             Id<ConversationParticipant>.New(),
             conversationId,
             ConversationType.Group,
-            Id<UserProfile>.New());
+            Id<UserProfile>.New(),
+            duetPartnerUserId: null);
         hiddenParticipant.Hide();
         var repository = new Mock<IConversationParticipantWriteRepository>();
         repository.Setup(x => x.GetHiddenByConversationIdAsync(

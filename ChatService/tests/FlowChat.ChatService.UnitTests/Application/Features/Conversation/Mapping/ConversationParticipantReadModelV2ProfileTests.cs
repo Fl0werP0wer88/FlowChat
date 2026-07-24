@@ -18,11 +18,13 @@ public sealed class ConversationParticipantReadModelV2ProfileTests
     [Fact]
     public void Map_ToReadModels_MapsConversationTypeAndIdentifiers()
     {
+        var partnerUserId = Id<UserProfileMarker>.New();
         var participant = ConversationParticipant.Create(
             Id<ConversationParticipant>.New(),
             Id<ConversationV2>.New(),
             ConversationType.Duet,
-            Id<UserProfileMarker>.New());
+            Id<UserProfileMarker>.New(),
+            partnerUserId);
 
         var membershipReadModel = Mapper.Map<ConversationMembershipReadModelV2>(participant);
         var participantReadModel = Mapper.Map<ConversationParticipantReadModelV2>(participant);
@@ -33,5 +35,6 @@ public sealed class ConversationParticipantReadModelV2ProfileTests
         participantReadModel.ConversationId.Should().Be(participant.ConversationId.Value);
         participantReadModel.ConversationType.Should().Be((int)ConversationType.Duet);
         participantReadModel.UserId.Should().Be(participant.UserId.Value);
+        participantReadModel.DuetPartnerUserId.Should().Be(partnerUserId.Value);
     }
 }

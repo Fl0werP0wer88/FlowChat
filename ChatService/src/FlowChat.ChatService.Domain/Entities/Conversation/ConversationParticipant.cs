@@ -10,6 +10,7 @@ public sealed class ConversationParticipant : AggregateRootBase<ConversationPart
     public Id<ConversationAggregate> ConversationId { get; private set; }
     public ConversationType ConversationType { get; private set; }
     public Id<UserProfileMarker> UserId { get; private set; }
+    public Id<UserProfileMarker>? DuetPartnerUserId { get; private set; }
     public string? DisplayName { get; private set; }
     public bool IsBlocked { get; private set; }
     public bool IsMuted { get; private set; }
@@ -22,6 +23,7 @@ public sealed class ConversationParticipant : AggregateRootBase<ConversationPart
         Id<ConversationAggregate> conversationId,
         ConversationType conversationType,
         Id<UserProfileMarker> userId,
+        Id<UserProfileMarker>? duetPartnerUserId,
         string? displayName,
         bool isBlocked,
         bool isMuted,
@@ -40,6 +42,24 @@ public sealed class ConversationParticipant : AggregateRootBase<ConversationPart
                 nameof(conversationType));
         }
 
+        if (conversationType == ConversationType.Duet)
+        {
+            ArgumentNullException.ThrowIfNull(duetPartnerUserId);
+
+            if (duetPartnerUserId == userId)
+            {
+                throw new ArgumentException(
+                    "Duet partner user id must differ from participant user id.",
+                    nameof(duetPartnerUserId));
+            }
+        }
+        else if (duetPartnerUserId is not null)
+        {
+            throw new ArgumentException(
+                "Group conversation participant cannot have a duet partner.",
+                nameof(duetPartnerUserId));
+        }
+
         if (lastReadMessageSequenceNum < 0)
         {
             throw new ArgumentOutOfRangeException(
@@ -50,6 +70,7 @@ public sealed class ConversationParticipant : AggregateRootBase<ConversationPart
         ConversationId = conversationId;
         ConversationType = conversationType;
         UserId = userId;
+        DuetPartnerUserId = duetPartnerUserId;
         DisplayName = NormalizeDisplayName(displayName);
         IsBlocked = isBlocked;
         IsMuted = isMuted;
@@ -63,6 +84,7 @@ public sealed class ConversationParticipant : AggregateRootBase<ConversationPart
         Id<ConversationAggregate> conversationId,
         ConversationType conversationType,
         Id<UserProfileMarker> userId,
+        Id<UserProfileMarker>? duetPartnerUserId,
         string? displayName = null,
         long lastReadMessageSequenceNum = 0,
         UtcDateTimeOffset? joinedAtUtc = null)
@@ -72,6 +94,7 @@ public sealed class ConversationParticipant : AggregateRootBase<ConversationPart
             conversationId,
             conversationType,
             userId,
+            duetPartnerUserId,
             displayName,
             isBlocked: false,
             isMuted: false,
@@ -85,6 +108,7 @@ public sealed class ConversationParticipant : AggregateRootBase<ConversationPart
         Id<ConversationAggregate> conversationId,
         ConversationType conversationType,
         Id<UserProfileMarker> userId,
+        Id<UserProfileMarker>? duetPartnerUserId,
         string? displayName,
         bool isBlocked,
         bool isMuted,
@@ -97,6 +121,7 @@ public sealed class ConversationParticipant : AggregateRootBase<ConversationPart
             conversationId,
             conversationType,
             userId,
+            duetPartnerUserId,
             displayName,
             isBlocked,
             isMuted,

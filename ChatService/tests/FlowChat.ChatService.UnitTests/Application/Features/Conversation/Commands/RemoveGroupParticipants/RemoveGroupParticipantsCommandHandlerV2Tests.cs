@@ -40,12 +40,14 @@ public sealed class RemoveGroupParticipantsCommandHandlerV2Tests
                     Id<ConversationParticipant>.New(),
                     conversationId,
                     ConversationType.Group,
-                    existingUserId1),
+                    existingUserId1,
+                    duetPartnerUserId: null),
                 ConversationParticipant.Create(
                     Id<ConversationParticipant>.New(),
                     conversationId,
                     ConversationType.Group,
-                    existingUserId2)
+                    existingUserId2,
+                    duetPartnerUserId: null)
             ]);
         var dispatchedEvents = new List<ILocalEvent>();
         var dispatcher = CreateDispatcher(dispatchedEvents);
@@ -133,7 +135,8 @@ public sealed class RemoveGroupParticipantsCommandHandlerV2Tests
                     Id<ConversationParticipant>.New(),
                     conversationId,
                     ConversationType.Group,
-                    existingUserId)
+                    existingUserId,
+                    duetPartnerUserId: null)
             ]);
         var handler = new RemoveGroupParticipantsCommandHandlerV2(
             membershipRepository.Object,

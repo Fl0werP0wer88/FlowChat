@@ -24,7 +24,8 @@ public sealed class MarkConversationAsReadCommandHandlerV2Tests
             Id<ConversationParticipant>.New(),
             conversationId,
             ConversationType.Group,
-            userId);
+            userId,
+            duetPartnerUserId: null);
         var participantRepository = new Mock<IConversationParticipantWriteRepository>();
         participantRepository.Setup(x => x.GetActiveAsync(
                 conversationId,
@@ -83,6 +84,7 @@ public sealed class MarkConversationAsReadCommandHandlerV2Tests
             conversationId,
             ConversationType.Group,
             userId,
+            duetPartnerUserId: null,
             lastReadMessageSequenceNum: 12);
         var participantRepository = new Mock<IConversationParticipantWriteRepository>();
         participantRepository.Setup(x => x.GetActiveAsync(
