@@ -39,6 +39,7 @@ public sealed class ConversationParticipantsAddedDomainEventHandlerV2
             .Select(userId => ConversationParticipant.Create(
                 Id<ConversationParticipant>.New(),
                 notification.ConversationId,
+                notification.ConversationType,
                 userId,
                 lastReadMessageSequenceNum: notification.InitialReadCursor))
             .ToArray();

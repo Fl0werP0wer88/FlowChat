@@ -1,5 +1,6 @@
 using FlowChat.ChatService.Domain.Entities.Conversation;
 using FlowChat.Shared.Domain;
+using FlowChat.Shared.Domain.ValueObjects;
 using FluentAssertions;
 using ConversationAggregate = FlowChat.ChatService.Domain.Entities.Conversation.ConversationV2;
 using UserProfileMarker = FlowChat.ChatService.Domain.Entities.UserProfiles.UserProfile;
@@ -16,7 +17,39 @@ public sealed class ConversationParticipantTests
         participant.IsBlocked.Should().BeFalse();
         participant.IsMuted.Should().BeFalse();
         participant.IsHidden.Should().BeFalse();
+        participant.ConversationType.Should().Be(ConversationType.Group);
         participant.LastReadMessageSequenceNum.Should().Be(0);
+    }
+
+    [Fact]
+    public void Restore_WhenRestored_PreservesConversationType()
+    {
+        var participant = ConversationParticipant.Restore(
+            Id<ConversationParticipant>.New(),
+            Id<ConversationAggregate>.New(),
+            ConversationType.Duet,
+            Id<UserProfileMarker>.New(),
+            displayName: null,
+            isBlocked: false,
+            isMuted: false,
+            isHidden: false,
+            UtcDateTimeOffset.UtcNow,
+            lastReadMessageSequenceNum: 0);
+
+        participant.ConversationType.Should().Be(ConversationType.Duet);
+    }
+
+    [Fact]
+    public void Create_WhenConversationTypeIsInvalid_ThrowsArgumentException()
+    {
+        var act = () => ConversationParticipant.Create(
+            Id<ConversationParticipant>.New(),
+            Id<ConversationAggregate>.New(),
+            (ConversationType)999,
+            Id<UserProfileMarker>.New());
+
+        act.Should().Throw<ArgumentException>()
+            .WithParameterName("conversationType");
     }
 
     [Fact]
@@ -74,6 +107,7 @@ public sealed class ConversationParticipantTests
         return ConversationParticipant.Create(
             Id<ConversationParticipant>.New(),
             Id<ConversationAggregate>.New(),
+            ConversationType.Group,
             Id<UserProfileMarker>.New());
     }
 }

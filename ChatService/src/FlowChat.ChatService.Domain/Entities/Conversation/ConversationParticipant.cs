@@ -8,6 +8,7 @@ namespace FlowChat.ChatService.Domain.Entities.Conversation;
 public sealed class ConversationParticipant : AggregateRootBase<ConversationParticipant>
 {
     public Id<ConversationAggregate> ConversationId { get; private set; }
+    public ConversationType ConversationType { get; private set; }
     public Id<UserProfileMarker> UserId { get; private set; }
     public string? DisplayName { get; private set; }
     public bool IsBlocked { get; private set; }
@@ -19,6 +20,7 @@ public sealed class ConversationParticipant : AggregateRootBase<ConversationPart
     private ConversationParticipant(
         Id<ConversationParticipant> id,
         Id<ConversationAggregate> conversationId,
+        ConversationType conversationType,
         Id<UserProfileMarker> userId,
         string? displayName,
         bool isBlocked,
@@ -31,6 +33,13 @@ public sealed class ConversationParticipant : AggregateRootBase<ConversationPart
         ArgumentNullException.ThrowIfNull(userId);
         ArgumentNullException.ThrowIfNull(joinedAtUtc);
 
+        if (!Enum.IsDefined(conversationType))
+        {
+            throw new ArgumentException(
+                "Conversation type is invalid.",
+                nameof(conversationType));
+        }
+
         if (lastReadMessageSequenceNum < 0)
         {
             throw new ArgumentOutOfRangeException(
@@ -39,6 +48,7 @@ public sealed class ConversationParticipant : AggregateRootBase<ConversationPart
         }
 
         ConversationId = conversationId;
+        ConversationType = conversationType;
         UserId = userId;
         DisplayName = NormalizeDisplayName(displayName);
         IsBlocked = isBlocked;
@@ -51,6 +61,7 @@ public sealed class ConversationParticipant : AggregateRootBase<ConversationPart
     public static ConversationParticipant Create(
         Id<ConversationParticipant> id,
         Id<ConversationAggregate> conversationId,
+        ConversationType conversationType,
         Id<UserProfileMarker> userId,
         string? displayName = null,
         long lastReadMessageSequenceNum = 0,
@@ -59,6 +70,7 @@ public sealed class ConversationParticipant : AggregateRootBase<ConversationPart
         return new ConversationParticipant(
             id,
             conversationId,
+            conversationType,
             userId,
             displayName,
             isBlocked: false,
@@ -71,6 +83,7 @@ public sealed class ConversationParticipant : AggregateRootBase<ConversationPart
     public static ConversationParticipant Restore(
         Id<ConversationParticipant> id,
         Id<ConversationAggregate> conversationId,
+        ConversationType conversationType,
         Id<UserProfileMarker> userId,
         string? displayName,
         bool isBlocked,
@@ -82,6 +95,7 @@ public sealed class ConversationParticipant : AggregateRootBase<ConversationPart
         return new ConversationParticipant(
             id,
             conversationId,
+            conversationType,
             userId,
             displayName,
             isBlocked,

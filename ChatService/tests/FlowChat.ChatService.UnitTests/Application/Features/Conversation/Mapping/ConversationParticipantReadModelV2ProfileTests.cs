@@ -16,16 +16,22 @@ public sealed class ConversationParticipantReadModelV2ProfileTests
         NullLoggerFactory.Instance).CreateMapper();
 
     [Fact]
-    public void Map_ToMembershipReadModel_MapsConversationAndParticipantUserIds()
+    public void Map_ToReadModels_MapsConversationTypeAndIdentifiers()
     {
         var participant = ConversationParticipant.Create(
             Id<ConversationParticipant>.New(),
             Id<ConversationV2>.New(),
+            ConversationType.Duet,
             Id<UserProfileMarker>.New());
 
-        var readModel = Mapper.Map<ConversationMembershipReadModelV2>(participant);
+        var membershipReadModel = Mapper.Map<ConversationMembershipReadModelV2>(participant);
+        var participantReadModel = Mapper.Map<ConversationParticipantReadModelV2>(participant);
 
-        readModel.ConversationId.Should().Be(participant.ConversationId.Value);
-        readModel.ParticipantUserId.Should().Be(participant.UserId.Value);
+        membershipReadModel.ConversationId.Should().Be(participant.ConversationId.Value);
+        membershipReadModel.ParticipantUserId.Should().Be(participant.UserId.Value);
+        participantReadModel.ParticipantId.Should().Be(participant.Id.Value);
+        participantReadModel.ConversationId.Should().Be(participant.ConversationId.Value);
+        participantReadModel.ConversationType.Should().Be((int)ConversationType.Duet);
+        participantReadModel.UserId.Should().Be(participant.UserId.Value);
     }
 }

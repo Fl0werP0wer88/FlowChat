@@ -22,6 +22,9 @@ public sealed class ConversationParticipantConfiguration
             .HasConversion(x => x.Value, x => Id<ConversationV2>.FromGuid(x))
             .IsRequired();
 
+        builder.Property(x => x.ConversationType)
+            .IsRequired();
+
         builder.Property(x => x.UserId)
             .HasConversion(x => x.Value, x => Id<UserProfileMarker>.FromGuid(x))
             .IsRequired();

@@ -22,6 +22,7 @@ public sealed class UnhideConversationParticipantsOnChatMessageSentDomainEventHa
         var hiddenParticipant = ConversationParticipant.Create(
             Id<ConversationParticipant>.New(),
             conversationId,
+            ConversationType.Group,
             Id<UserProfile>.New());
         hiddenParticipant.Hide();
         var repository = new Mock<IConversationParticipantWriteRepository>();

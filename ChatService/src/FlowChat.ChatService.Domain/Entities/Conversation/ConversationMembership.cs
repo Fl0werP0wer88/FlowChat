@@ -109,6 +109,7 @@ public sealed class ConversationMembership : AggregateRootBase<ConversationMembe
         AddDomainEvent(new ConversationParticipantsAddedDomainEventV2(
             Id,
             ConversationId,
+            ConversationType,
             participantUserIds,
             initialReadCursor));
     }

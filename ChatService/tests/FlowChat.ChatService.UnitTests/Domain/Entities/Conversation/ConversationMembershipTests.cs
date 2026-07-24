@@ -39,6 +39,7 @@ public sealed class ConversationMembershipTests
             .Which.Should()
             .BeOfType<ConversationParticipantsAddedDomainEventV2>()
             .Which;
+        addedEvent.ConversationType.Should().Be(ConversationType.Group);
         addedEvent.ParticipantUserIds.Should().Equal(participantUserIds);
         addedEvent.InitialReadCursor.Should().Be(0);
     }
@@ -97,6 +98,7 @@ public sealed class ConversationMembershipTests
             .Which.Should()
             .BeOfType<ConversationParticipantsAddedDomainEventV2>()
             .Which;
+        addedEvent.ConversationType.Should().Be(ConversationType.Group);
         addedEvent.ParticipantUserIds.Should().Equal(addedUserIds);
         addedEvent.InitialReadCursor.Should().Be(42);
     }

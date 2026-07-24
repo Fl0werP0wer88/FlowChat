@@ -36,6 +36,7 @@ public sealed class ConversationParticipantsRemovedDomainEventHandlerV2Tests
             .Select(userId => ConversationParticipant.Create(
                 Id<ConversationParticipant>.New(),
                 conversationId,
+                ConversationType.Group,
                 userId))
             .ToArray();
 
@@ -109,6 +110,7 @@ public sealed class ConversationParticipantsRemovedDomainEventHandlerV2Tests
         var fetchedParticipant = ConversationParticipant.Create(
             Id<ConversationParticipant>.New(),
             conversationId,
+            ConversationType.Group,
             participantUserIds[0]);
         var notification = new ConversationParticipantsRemovedDomainEventV2(
             Id<ConversationMembership>.FromId(conversationId),

@@ -36,8 +36,16 @@ public sealed class RemoveGroupParticipantsCommandHandlerV2Tests
                 It.IsAny<IReadOnlyCollection<Id<UserProfile>>>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync([
-                ConversationParticipant.Create(Id<ConversationParticipant>.New(), conversationId, existingUserId1),
-                ConversationParticipant.Create(Id<ConversationParticipant>.New(), conversationId, existingUserId2)
+                ConversationParticipant.Create(
+                    Id<ConversationParticipant>.New(),
+                    conversationId,
+                    ConversationType.Group,
+                    existingUserId1),
+                ConversationParticipant.Create(
+                    Id<ConversationParticipant>.New(),
+                    conversationId,
+                    ConversationType.Group,
+                    existingUserId2)
             ]);
         var dispatchedEvents = new List<ILocalEvent>();
         var dispatcher = CreateDispatcher(dispatchedEvents);
@@ -121,7 +129,11 @@ public sealed class RemoveGroupParticipantsCommandHandlerV2Tests
                 It.IsAny<IReadOnlyCollection<Id<UserProfile>>>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync([
-                ConversationParticipant.Create(Id<ConversationParticipant>.New(), conversationId, existingUserId)
+                ConversationParticipant.Create(
+                    Id<ConversationParticipant>.New(),
+                    conversationId,
+                    ConversationType.Group,
+                    existingUserId)
             ]);
         var handler = new RemoveGroupParticipantsCommandHandlerV2(
             membershipRepository.Object,

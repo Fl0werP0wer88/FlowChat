@@ -42,6 +42,9 @@ public sealed class V2ModelConfigurationTests
         model.FindEntityType(typeof(ConversationMessageSequenceEntityV2))!
             .FindProperty("Version")
             .Should().BeNull();
+        model.FindEntityType(typeof(ConversationParticipant))!
+            .FindProperty(nameof(ConversationParticipant.ConversationType))!
+            .IsNullable.Should().BeFalse();
         model.FindEntityType(typeof(ChatMessageV2))!
             .FindProperty("RecipientUserIds")
             .Should().BeNull();

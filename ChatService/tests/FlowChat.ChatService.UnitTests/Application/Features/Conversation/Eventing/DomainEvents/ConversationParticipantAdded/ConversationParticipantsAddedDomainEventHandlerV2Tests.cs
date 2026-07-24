@@ -58,6 +58,7 @@ public sealed class ConversationParticipantsAddedDomainEventHandlerV2Tests
         var notification = new ConversationParticipantsAddedDomainEventV2(
             Id<ConversationMembership>.FromId(conversationId),
             conversationId,
+            ConversationType.Group,
             participantUserIds,
             initialReadCursor: 42);
         var handler = new ConversationParticipantsAddedDomainEventHandlerV2(
@@ -71,6 +72,7 @@ public sealed class ConversationParticipantsAddedDomainEventHandlerV2Tests
         addedParticipants.Select(participant => participant.UserId).Should().Equal(participantUserIds);
         addedParticipants.Should().OnlyContain(participant =>
             participant.ConversationId == conversationId &&
+            participant.ConversationType == ConversationType.Group &&
             participant.LastReadMessageSequenceNum == 42);
         processedParticipants.Should().Equal(addedParticipants);
         processedParticipants.Should().OnlyContain(participant =>
