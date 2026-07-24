@@ -5,13 +5,13 @@ using MediatR;
 
 namespace FlowChat.RealtimeService.Consumers.Kafka;
 
-public sealed class ChatMessageSentSubscriber(
+public sealed class ChatMessageSentV2Subscriber(
     IMediator mediator,
-    ILogger<ChatMessageSentSubscriber> logger)
-    : SubscriberBase<ChatMessageSentIntegrationEvent>(logger)
+    ILogger<ChatMessageSentV2Subscriber> logger)
+    : SubscriberBase<ChatMessageSentIntegrationEventV2>(logger)
 {
     protected override async Task ExecuteAsync(
-        ChatMessageSentIntegrationEvent message,
+        ChatMessageSentIntegrationEventV2 message,
         CancellationToken cancellationToken)
     {
         var command = new RouteMessageCommand(

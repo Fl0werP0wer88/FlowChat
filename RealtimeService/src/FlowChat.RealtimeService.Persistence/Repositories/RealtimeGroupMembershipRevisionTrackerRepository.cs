@@ -23,7 +23,7 @@ public sealed class RealtimeGroupMembershipRevisionTrackerRepository(AppDbContex
     {
         var updatedAt = DateTimeOffset.UtcNow;
 
-        // PostgreSQL handles the conditional upsert atomically, avoiding races between a separate EF read and write
+        // PostgreSQL handles the conditional upsert atomically, avoiding races between a separate EF read and write (Older version could overwite newer without this)
         await dbContext.Database.ExecuteSqlInterpolatedAsync(
             $"""
              INSERT INTO "RealtimeGroupMembershipRevisionTrackerReadModels"

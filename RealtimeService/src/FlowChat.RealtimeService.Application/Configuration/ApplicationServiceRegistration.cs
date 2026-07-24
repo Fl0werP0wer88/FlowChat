@@ -1,6 +1,5 @@
-using FlowChat.RealtimeService.Application.Features.Conversation.Commands.RouteDuetConversationCreated;
-using FlowChat.RealtimeService.Application.Features.Conversation.Commands.RouteGroupConversationChanged;
-using FlowChat.RealtimeService.Application.Features.Conversation.Commands.RouteGroupConversationMembershipDelta;
+using FlowChat.RealtimeService.Application.Features.Conversation.Commands.RouteConversationMembershipDeltaV2;
+using FlowChat.RealtimeService.Application.Features.Conversation.Commands.RouteConversationProjectionV2;
 using FlowChat.RealtimeService.Application.Features.Message.Commands.RouteMessage;
 using FlowChat.RealtimeService.Application.Features.Presence.Commands.RoutePresenceChange;
 using FlowChat.Shared.Application;
@@ -49,8 +48,7 @@ file static class RealtimeApplicationHandlerSets
     [
         typeof(RouteMessageCommandHandler),
         typeof(RoutePresenceChangeCommandHandler),
-        typeof(RouteGroupConversationChangedCommandHandler),
-        typeof(RouteGroupConversationMembershipDeltaCommandHandler),
-        typeof(RouteDuetConversationCreatedCommandHandler)
+        typeof(RouteConversationProjectionV2CommandHandler),
+        typeof(RouteConversationMembershipDeltaV2CommandHandler)
     ];
 }

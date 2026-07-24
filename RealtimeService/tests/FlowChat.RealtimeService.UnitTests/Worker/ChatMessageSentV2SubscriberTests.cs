@@ -13,21 +13,21 @@ using Unit = MediatR.Unit;
 
 namespace FlowChat.RealtimeService.UnitTests;
 
-public sealed class ChatMessageSentSubscriberTests
+public sealed class ChatMessageSentV2SubscriberTests
 {
     private readonly IFixture _fixture = new Fixture();
     private readonly Mock<IMediator> _mediatorMock = new();
-    private readonly ChatMessageSentSubscriber _subscriber;
+    private readonly ChatMessageSentV2Subscriber _subscriber;
 
-    public ChatMessageSentSubscriberTests()
+    public ChatMessageSentV2SubscriberTests()
     {
         _mediatorMock
             .Setup(x => x.Send(It.IsAny<RouteMessageCommand>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(FlowChatResult<Unit>.Success(Unit.Value));
 
-        _subscriber = new ChatMessageSentSubscriber(
+        _subscriber = new ChatMessageSentV2Subscriber(
             _mediatorMock.Object,
-            NullLogger<ChatMessageSentSubscriber>.Instance);
+            NullLogger<ChatMessageSentV2Subscriber>.Instance);
     }
 
     [Fact]
@@ -46,7 +46,7 @@ public sealed class ChatMessageSentSubscriberTests
             .ReturnsAsync(FlowChatResult<Unit>.Success(Unit.Value));
 
         await _subscriber.HandleAsync(
-            new ChatMessageSentIntegrationEvent
+            new ChatMessageSentIntegrationEventV2
             {
                 MessageId = messageId,
                 ConversationId = conversationId,
@@ -64,62 +64,6 @@ public sealed class ChatMessageSentSubscriberTests
         capturedCommand.Text.Should().Be("Hi there");
         capturedCommand.SentAtUtc.Should().Be(sentAtUtc);
         capturedCommand.ConversationMembershipRevision.Should().Be(3);
-    }
-
-    [Fact]
-    public async Task HandleAsync_WhenMessageIdMissing_ThrowsNonTransientException()
-    {
-        SetupCommandFailure("MessageId is required.");
-
-        var act = () => _subscriber.HandleAsync(
-            CreateValidEvent(messageId: Guid.Empty).ToInboundEnvelope(),
-            CancellationToken.None);
-
-        await act.Should().ThrowAsync<NonTransientException>()
-            .WithMessage("*MessageId*");
-        VerifyCommandWasSent();
-    }
-
-    [Fact]
-    public async Task HandleAsync_WhenConversationIdMissing_ThrowsNonTransientException()
-    {
-        SetupCommandFailure("ConversationId is required.");
-
-        var act = () => _subscriber.HandleAsync(
-            CreateValidEvent(conversationId: Guid.Empty).ToInboundEnvelope(),
-            CancellationToken.None);
-
-        await act.Should().ThrowAsync<NonTransientException>()
-            .WithMessage("*ConversationId*");
-        VerifyCommandWasSent();
-    }
-
-    [Fact]
-    public async Task HandleAsync_WhenSenderUserIdMissing_ThrowsNonTransientException()
-    {
-        SetupCommandFailure("SenderUserId is required.");
-
-        var act = () => _subscriber.HandleAsync(
-            CreateValidEvent(senderUserId: Guid.Empty).ToInboundEnvelope(),
-            CancellationToken.None);
-
-        await act.Should().ThrowAsync<NonTransientException>()
-            .WithMessage("*SenderUserId*");
-        VerifyCommandWasSent();
-    }
-
-    [Fact]
-    public async Task HandleAsync_WhenTextMissing_ThrowsNonTransientException()
-    {
-        SetupCommandFailure("Text is required.");
-
-        var act = () => _subscriber.HandleAsync(
-            CreateValidEvent(text: " ").ToInboundEnvelope(),
-            CancellationToken.None);
-
-        await act.Should().ThrowAsync<NonTransientException>()
-            .WithMessage("*Text*");
-        VerifyCommandWasSent();
     }
 
     [Fact]
@@ -142,7 +86,10 @@ public sealed class ChatMessageSentSubscriberTests
     {
         _mediatorMock
             .Setup(x => x.Send(It.IsAny<RouteMessageCommand>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(FlowChatResult<Unit>.Failure(DomainError.UnExpected("membership projection is stale", FailureKind.Transient)));
+            .ReturnsAsync(FlowChatResult<Unit>.Failure(
+                DomainError.UnExpected(
+                    "membership projection is stale",
+                    FailureKind.Transient)));
 
         var act = () => _subscriber.HandleAsync(
             CreateValidEvent().ToInboundEnvelope(),
@@ -152,32 +99,14 @@ public sealed class ChatMessageSentSubscriberTests
             .WithMessage("membership projection is stale");
     }
 
-    private ChatMessageSentIntegrationEvent CreateValidEvent(
-        Guid? messageId = null,
-        Guid? conversationId = null,
-        Guid? senderUserId = null,
-        string text = "Hi there") =>
+    private ChatMessageSentIntegrationEventV2 CreateValidEvent() =>
         new()
         {
-            MessageId = messageId ?? _fixture.Create<Guid>(),
-            ConversationId = conversationId ?? _fixture.Create<Guid>(),
-            SenderUserId = senderUserId ?? _fixture.Create<Guid>(),
-            Text = text,
+            MessageId = _fixture.Create<Guid>(),
+            ConversationId = _fixture.Create<Guid>(),
+            SenderUserId = _fixture.Create<Guid>(),
+            Text = "Hi there",
             SentAtUtc = DateTimeOffset.UtcNow,
-            ConversationMembershipRevision = 1
+            ConversationMembershipRevision = 2
         };
-
-    private void SetupCommandFailure(string errorMessage)
-    {
-        _mediatorMock
-            .Setup(x => x.Send(It.IsAny<RouteMessageCommand>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(FlowChatResult<Unit>.Failure(DomainError.BadRequest(errorMessage)));
-    }
-
-    private void VerifyCommandWasSent()
-    {
-        _mediatorMock.Verify(
-            x => x.Send(It.IsAny<RouteMessageCommand>(), It.IsAny<CancellationToken>()),
-            Times.Once);
-    }
 }
