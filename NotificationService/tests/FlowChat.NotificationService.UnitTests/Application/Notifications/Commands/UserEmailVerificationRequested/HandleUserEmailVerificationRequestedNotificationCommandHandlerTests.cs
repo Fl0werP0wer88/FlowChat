@@ -116,6 +116,7 @@ public sealed class HandleUserEmailVerificationRequestedNotificationCommandHandl
 
         result.IsFailure.Should().BeTrue();
         result.Error.ErrorType.Should().Be(ErrorType.Unexpected);
+        result.Error.FailureKind.Should().Be(FailureKind.Transient);
         _writeRepositoryMock.Verify(
             x => x.AddAsync(It.IsAny<Notification>(), It.IsAny<CancellationToken>()),
             Times.Never);

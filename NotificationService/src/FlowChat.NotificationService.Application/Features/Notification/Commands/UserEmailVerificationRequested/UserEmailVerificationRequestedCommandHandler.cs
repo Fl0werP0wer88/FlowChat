@@ -61,7 +61,8 @@ public sealed class UserEmailVerificationRequestedCommandHandler
         {
             return Failure(
                 DomainError.UnExpected(
-                    $"Email delivery failed for user '{request.UserId}': {sendResult.Error ?? "unknown error"}"));
+                    $"Email delivery failed for user '{request.UserId}': {sendResult.Error ?? "unknown error"}",
+                    FailureKind.Transient));
         }
 
         _notification.MarkSent(sendResult.ProviderMessageId);
