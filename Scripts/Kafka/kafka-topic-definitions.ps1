@@ -230,6 +230,114 @@ function Get-TopicDefinitions {
       }
     },
     @{
+      name = "dev.flowchat.chat.message.v2"
+      partitions = 1
+      rf = 1
+      config = @{
+        "cleanup.policy" = "delete"
+        "retention.ms" = "2419200000"
+      }
+    },
+    @{
+      name = "dev.flowchat.chat.message.v2.realtime-service.retry"
+      partitions = 1
+      rf = 1
+      config = @{
+        "cleanup.policy" = "delete"
+        "retention.ms" = "3600000"
+      }
+    },
+    @{
+      name = "dev.flowchat.chat.message.v2.realtime-service.dlq"
+      partitions = 1
+      rf = 1
+      config = @{
+        "cleanup.policy" = "delete"
+        "retention.ms" = "1209600000"
+      }
+    },
+    @{
+      name = "dev.flowchat.chat.conversation-projection.v2"
+      partitions = 1
+      rf = 1
+      config = @{
+        "cleanup.policy" = "delete"
+        "retention.ms" = "2419200000"
+      }
+    },
+    @{
+      name = "dev.flowchat.chat.conversation-projection.v2.realtime-service.retry"
+      partitions = 1
+      rf = 1
+      config = @{
+        "cleanup.policy" = "delete"
+        "retention.ms" = "3600000"
+      }
+    },
+    @{
+      name = "dev.flowchat.chat.conversation-projection.v2.realtime-service.dlq"
+      partitions = 1
+      rf = 1
+      config = @{
+        "cleanup.policy" = "delete"
+        "retention.ms" = "1209600000"
+      }
+    },
+    @{
+      name = "dev.flowchat.chat.conversation-membership-projection.v2"
+      partitions = 1
+      rf = 1
+      config = @{
+        "cleanup.policy" = "delete"
+        "retention.ms" = "2419200000"
+      }
+    },
+    @{
+      name = "dev.flowchat.chat.conversation-membership-projection.v2.realtime-service.retry"
+      partitions = 1
+      rf = 1
+      config = @{
+        "cleanup.policy" = "delete"
+        "retention.ms" = "3600000"
+      }
+    },
+    @{
+      name = "dev.flowchat.chat.conversation-membership-projection.v2.realtime-service.dlq"
+      partitions = 1
+      rf = 1
+      config = @{
+        "cleanup.policy" = "delete"
+        "retention.ms" = "1209600000"
+      }
+    },
+    @{
+      name = "dev.flowchat.chat.conversation-participant-projection.v2"
+      partitions = 1
+      rf = 1
+      config = @{
+        "cleanup.policy" = "delete"
+        "retention.ms" = "2419200000"
+      }
+    },
+    @{
+      name = "dev.flowchat.chat.conversation-participant-projection.v2.presence-service.retry"
+      partitions = 1
+      rf = 1
+      config = @{
+        "cleanup.policy" = "delete"
+        "retention.ms" = "3600000"
+      }
+    },
+    @{
+      name = "dev.flowchat.chat.conversation-participant-projection.v2.presence-service.dlq"
+      partitions = 1
+      rf = 1
+      config = @{
+        "cleanup.policy" = "delete"
+        "retention.ms" = "1209600000"
+      }
+    },
+    @{
       name = "dev.flowchat.presence.presence"
       partitions = 1
       rf = 1
