@@ -91,6 +91,70 @@ namespace FlowChat.ChatService.Persistence.Migrations
                     b.ToTable("ChatMessages", (string)null);
                 });
 
+            modelBuilder.Entity("FlowChat.ChatService.Domain.Entities.ChatMessage.ChatMessageV2", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ConversationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset?>("DeliveredAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("DeliveryStatus")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
+
+                    b.Property<DateTimeOffset>("LastModifiedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("LastModifiedBy")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<Guid>("SenderUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("SentAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<long?>("SequenceNum")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<int>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ConversationId", "SentAtUtc");
+
+                    b.HasIndex("ConversationId", "SequenceNum")
+                        .IsUnique()
+                        .HasFilter("\"SequenceNum\" IS NOT NULL");
+
+                    b.ToTable("ChatMessagesV2", (string)null);
+                });
+
             modelBuilder.Entity("FlowChat.ChatService.Domain.Entities.Conversation.Conversation", b =>
                 {
                     b.Property<Guid>("Id")
@@ -144,6 +208,168 @@ namespace FlowChat.ChatService.Persistence.Migrations
                     b.UseTphMappingStrategy();
                 });
 
+            modelBuilder.Entity("FlowChat.ChatService.Domain.Entities.Conversation.ConversationMembership", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ConversationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("ConversationType")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset>("LastModifiedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("LastModifiedBy")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<int>("ParticipantCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ConversationId")
+                        .IsUnique();
+
+                    b.ToTable("ConversationMembershipsV2", (string)null);
+                });
+
+            modelBuilder.Entity("FlowChat.ChatService.Domain.Entities.Conversation.ConversationParticipant", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ConversationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("ConversationType")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DisplayName")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<Guid?>("DuetPartnerUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsBlocked")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsHidden")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsMuted")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTimeOffset>("JoinedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset>("LastModifiedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("LastModifiedBy")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<long>("LastReadMessageSequenceNum")
+                        .HasColumnType("bigint");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ConversationId", "IsHidden")
+                        .HasFilter("\"DeletedAt\" IS NULL");
+
+                    b.HasIndex("ConversationId", "UserId")
+                        .IsUnique()
+                        .HasFilter("\"DeletedAt\" IS NULL");
+
+                    b.ToTable("ConversationParticipantsV2", (string)null);
+                });
+
+            modelBuilder.Entity("FlowChat.ChatService.Domain.Entities.Conversation.ConversationV2", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("ConversationType")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset>("LastModifiedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("LastModifiedBy")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("Name")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ConversationType")
+                        .HasFilter("\"DeletedAt\" IS NULL");
+
+                    b.ToTable("ConversationsV2", (string)null);
+                });
+
             modelBuilder.Entity("FlowChat.ChatService.Domain.Entities.Conversation.ParticipantUser", b =>
                 {
                     b.Property<Guid>("Id")
@@ -191,7 +417,7 @@ namespace FlowChat.ChatService.Persistence.Migrations
                     b.ToTable("ParticipantUsers", (string)null);
                 });
 
-            modelBuilder.Entity("FlowChat.ChatService.Persistence.Entities.ChatMessageReadEntity", b =>
+            modelBuilder.Entity("FlowChat.ChatService.Persistence.Entities.ChatMessageReadEntityV2", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
@@ -219,7 +445,34 @@ namespace FlowChat.ChatService.Persistence.Migrations
 
                     b.ToTable((string)null);
 
-                    b.ToView("ChatMessages", (string)null);
+                    b.ToView("ChatMessagesV2", (string)null);
+                });
+
+            modelBuilder.Entity("FlowChat.ChatService.Persistence.Entities.ConversationMembershipReadEntityV2", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ConversationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("ConversationType")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("ParticipantCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Version")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.ToTable((string)null);
+
+                    b.ToView("ConversationMembershipsV2", (string)null);
                 });
 
             modelBuilder.Entity("FlowChat.ChatService.Persistence.Entities.ConversationMessageSequenceEntity", b =>
@@ -235,22 +488,76 @@ namespace FlowChat.ChatService.Persistence.Migrations
                     b.ToTable("ConversationMessageSequences", (string)null);
                 });
 
-            modelBuilder.Entity("FlowChat.ChatService.Persistence.Entities.ConversationReadEntity", b =>
+            modelBuilder.Entity("FlowChat.ChatService.Persistence.Entities.ConversationMessageSequenceEntityV2", b =>
+                {
+                    b.Property<Guid>("ConversationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<long>("LastAssignedSequenceNum")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasDefaultValue(0L);
+
+                    b.HasKey("ConversationId");
+
+                    b.ToTable("ConversationMessageSequencesV2", (string)null);
+                });
+
+            modelBuilder.Entity("FlowChat.ChatService.Persistence.Entities.ConversationParticipantReadEntityV2", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
 
+                    b.Property<Guid>("ConversationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("ConversationType")
+                        .HasColumnType("integer");
+
                     b.Property<DateTimeOffset?>("DeletedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<int>("MembershipRevision")
+                    b.Property<string>("DisplayName")
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("DuetPartnerUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsBlocked")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsHidden")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsMuted")
+                        .HasColumnType("boolean");
+
+                    b.Property<long>("LastReadMessageSequenceNum")
+                        .HasColumnType("bigint");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.ToTable((string)null);
+
+                    b.ToView("ConversationParticipantsV2", (string)null);
+                });
+
+            modelBuilder.Entity("FlowChat.ChatService.Persistence.Entities.ConversationReadEntityV2", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("ConversationType")
                         .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Name")
                         .HasColumnType("text");
-
-                    b.Property<int>("Type")
-                        .HasColumnType("integer");
 
                     b.Property<int>("Version")
                         .HasColumnType("integer");
@@ -259,7 +566,7 @@ namespace FlowChat.ChatService.Persistence.Migrations
 
                     b.ToTable((string)null);
 
-                    b.ToView("Conversations", (string)null);
+                    b.ToView("ConversationsV2", (string)null);
                 });
 
             modelBuilder.Entity("FlowChat.ChatService.Persistence.Entities.DuetConversationLookupEntity", b =>
@@ -283,7 +590,33 @@ namespace FlowChat.ChatService.Persistence.Migrations
                     b.ToTable("DuetConversations", (string)null);
                 });
 
-            modelBuilder.Entity("FlowChat.ChatService.Persistence.Entities.DuetConversationReadEntity", b =>
+            modelBuilder.Entity("FlowChat.ChatService.Persistence.Entities.DuetConversationLookupEntityV2", b =>
+                {
+                    b.Property<Guid>("ConversationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("FirstUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("SecondUserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("ConversationId");
+
+                    b.HasIndex("FirstUserId", "SecondUserId")
+                        .IsUnique()
+                        .HasFilter("\"DeletedAt\" IS NULL");
+
+                    b.ToTable("DuetConversationsV2", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_DuetConversationsV2_NormalizedUsers", "\"FirstUserId\" < \"SecondUserId\"");
+                        });
+                });
+
+            modelBuilder.Entity("FlowChat.ChatService.Persistence.Entities.DuetConversationReadEntityV2", b =>
                 {
                     b.Property<Guid>("FirstUserId")
                         .HasColumnType("uuid");
@@ -301,43 +634,7 @@ namespace FlowChat.ChatService.Persistence.Migrations
 
                     b.ToTable((string)null);
 
-                    b.ToView("DuetConversations", (string)null);
-                });
-
-            modelBuilder.Entity("FlowChat.ChatService.Persistence.Entities.ParticipantUserReadEntity", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("ConversationId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTimeOffset?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("DisplayName")
-                        .HasColumnType("text");
-
-                    b.Property<bool>("IsBlocked")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("IsHidden")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("IsMuted")
-                        .HasColumnType("boolean");
-
-                    b.Property<long>("LastReadMessageSequenceNum")
-                        .HasColumnType("bigint");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.ToTable((string)null);
-
-                    b.ToView("ParticipantUsers", (string)null);
+                    b.ToView("DuetConversationsV2", (string)null);
                 });
 
             modelBuilder.Entity("FlowChat.ChatService.Persistence.Entities.UserProfileReadModelEntity", b =>
@@ -466,6 +763,33 @@ namespace FlowChat.ChatService.Persistence.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("FlowChat.ChatService.Domain.Entities.ChatMessage.ChatMessageV2", b =>
+                {
+                    b.HasOne("FlowChat.ChatService.Domain.Entities.Conversation.ConversationV2", null)
+                        .WithMany()
+                        .HasForeignKey("ConversationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("FlowChat.ChatService.Domain.Entities.Conversation.ConversationMembership", b =>
+                {
+                    b.HasOne("FlowChat.ChatService.Domain.Entities.Conversation.ConversationV2", null)
+                        .WithOne()
+                        .HasForeignKey("FlowChat.ChatService.Domain.Entities.Conversation.ConversationMembership", "ConversationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("FlowChat.ChatService.Domain.Entities.Conversation.ConversationParticipant", b =>
+                {
+                    b.HasOne("FlowChat.ChatService.Domain.Entities.Conversation.ConversationV2", null)
+                        .WithMany()
+                        .HasForeignKey("ConversationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("FlowChat.ChatService.Domain.Entities.Conversation.ParticipantUser", b =>
                 {
                     b.HasOne("FlowChat.ChatService.Domain.Entities.Conversation.Conversation", null)
@@ -484,11 +808,29 @@ namespace FlowChat.ChatService.Persistence.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("FlowChat.ChatService.Persistence.Entities.ConversationMessageSequenceEntityV2", b =>
+                {
+                    b.HasOne("FlowChat.ChatService.Domain.Entities.Conversation.ConversationV2", null)
+                        .WithOne()
+                        .HasForeignKey("FlowChat.ChatService.Persistence.Entities.ConversationMessageSequenceEntityV2", "ConversationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("FlowChat.ChatService.Persistence.Entities.DuetConversationLookupEntity", b =>
                 {
                     b.HasOne("FlowChat.ChatService.Domain.Entities.Conversation.Conversation", null)
                         .WithMany()
                         .HasForeignKey("ConversationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("FlowChat.ChatService.Persistence.Entities.DuetConversationLookupEntityV2", b =>
+                {
+                    b.HasOne("FlowChat.ChatService.Domain.Entities.Conversation.ConversationV2", null)
+                        .WithOne()
+                        .HasForeignKey("FlowChat.ChatService.Persistence.Entities.DuetConversationLookupEntityV2", "ConversationId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

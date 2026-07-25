@@ -11,6 +11,7 @@ Run from any directory:
 param(
     [int]$StartupTimeoutSeconds = 180,
     [int]$WorkerStabilizationSeconds = 10,
+    [int]$ActivationDelaySeconds = 10,
     [switch]$SkipBuild
 )
 
@@ -259,7 +260,7 @@ foreach ($applicationProcess in $startedProcesses) {
 }
 
 Write-Step 'All services are running; registering development users'
-& $registerUsersScript
+& $registerUsersScript -ActivationDelaySeconds $ActivationDelaySeconds
 if ($LASTEXITCODE -ne 0) {
     throw "User registration failed with exit code $LASTEXITCODE."
 }
