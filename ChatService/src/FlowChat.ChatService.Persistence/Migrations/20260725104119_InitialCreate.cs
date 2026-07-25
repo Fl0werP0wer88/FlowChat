@@ -13,27 +13,6 @@ namespace FlowChat.ChatService.Persistence.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
-                name: "Conversations",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    Type = table.Column<int>(type: "integer", nullable: false),
-                    Name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
-                    CreatedByUserId = table.Column<Guid>(type: "uuid", nullable: false),
-                    MembershipRevision = table.Column<int>(type: "integer", nullable: false),
-                    CreatedBy = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
-                    CreatedAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    LastModifiedBy = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
-                    LastModifiedAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    Version = table.Column<int>(type: "integer", nullable: false),
-                    DeletedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Conversations", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "ConversationsV2",
                 columns: table => new
                 {
@@ -103,101 +82,6 @@ namespace FlowChat.ChatService.Persistence.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_UserProfileReadModel", x => x.UserId);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "ChatMessages",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    ConversationId = table.Column<Guid>(type: "uuid", nullable: false),
-                    SenderUserId = table.Column<Guid>(type: "uuid", nullable: false),
-                    Text = table.Column<string>(type: "character varying(4000)", maxLength: 4000, nullable: false),
-                    SentAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    DeliveredAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
-                    SequenceNum = table.Column<long>(type: "bigint", nullable: true),
-                    DeliveryStatus = table.Column<int>(type: "integer", nullable: false, defaultValue: 0),
-                    RecipientUserIds = table.Column<Guid[]>(type: "uuid[]", nullable: false),
-                    CreatedBy = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
-                    CreatedAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    LastModifiedBy = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
-                    LastModifiedAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    Version = table.Column<int>(type: "integer", nullable: false),
-                    DeletedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_ChatMessages", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_ChatMessages_Conversations_ConversationId",
-                        column: x => x.ConversationId,
-                        principalTable: "Conversations",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "ConversationMessageSequences",
-                columns: table => new
-                {
-                    ConversationId = table.Column<Guid>(type: "uuid", nullable: false),
-                    LastAssignedSequenceNum = table.Column<long>(type: "bigint", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_ConversationMessageSequences", x => x.ConversationId);
-                    table.ForeignKey(
-                        name: "FK_ConversationMessageSequences_Conversations_ConversationId",
-                        column: x => x.ConversationId,
-                        principalTable: "Conversations",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "DuetConversations",
-                columns: table => new
-                {
-                    FirstUserId = table.Column<Guid>(type: "uuid", nullable: false),
-                    SecondUserId = table.Column<Guid>(type: "uuid", nullable: false),
-                    ConversationId = table.Column<Guid>(type: "uuid", nullable: false),
-                    DeletedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_DuetConversations", x => new { x.FirstUserId, x.SecondUserId });
-                    table.ForeignKey(
-                        name: "FK_DuetConversations_Conversations_ConversationId",
-                        column: x => x.ConversationId,
-                        principalTable: "Conversations",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "ParticipantUsers",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    ConversationId = table.Column<Guid>(type: "uuid", nullable: false),
-                    UserId = table.Column<Guid>(type: "uuid", nullable: false),
-                    DisplayName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
-                    IsBlocked = table.Column<bool>(type: "boolean", nullable: false),
-                    IsMuted = table.Column<bool>(type: "boolean", nullable: false),
-                    IsHidden = table.Column<bool>(type: "boolean", nullable: false),
-                    JoinedAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    LastReadMessageSequenceNum = table.Column<long>(type: "bigint", nullable: false),
-                    DeletedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_ParticipantUsers", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_ParticipantUsers_Conversations_ConversationId",
-                        column: x => x.ConversationId,
-                        principalTable: "Conversations",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -329,18 +213,6 @@ namespace FlowChat.ChatService.Persistence.Migrations
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_ChatMessages_ConversationId_SentAtUtc",
-                table: "ChatMessages",
-                columns: new[] { "ConversationId", "SentAtUtc" });
-
-            migrationBuilder.CreateIndex(
-                name: "IX_ChatMessages_ConversationId_SequenceNum",
-                table: "ChatMessages",
-                columns: new[] { "ConversationId", "SequenceNum" },
-                unique: true,
-                filter: "\"SequenceNum\" IS NOT NULL");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_ChatMessagesV2_ConversationId_SentAtUtc",
                 table: "ChatMessagesV2",
                 columns: new[] { "ConversationId", "SentAtUtc" });
@@ -372,21 +244,10 @@ namespace FlowChat.ChatService.Persistence.Migrations
                 filter: "\"DeletedAt\" IS NULL");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Conversations_Type",
-                table: "Conversations",
-                column: "Type",
-                filter: "\"DeletedAt\" IS NULL");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_ConversationsV2_ConversationType",
                 table: "ConversationsV2",
                 column: "ConversationType",
                 filter: "\"DeletedAt\" IS NULL");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_DuetConversations_ConversationId",
-                table: "DuetConversations",
-                column: "ConversationId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_DuetConversationsV2_FirstUserId_SecondUserId",
@@ -394,36 +255,16 @@ namespace FlowChat.ChatService.Persistence.Migrations
                 columns: new[] { "FirstUserId", "SecondUserId" },
                 unique: true,
                 filter: "\"DeletedAt\" IS NULL");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_ParticipantUsers_ConversationId_UserId",
-                table: "ParticipantUsers",
-                columns: new[] { "ConversationId", "UserId" },
-                unique: true,
-                filter: "\"DeletedAt\" IS NULL");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_ParticipantUsers_UserId_ConversationId",
-                table: "ParticipantUsers",
-                columns: new[] { "UserId", "ConversationId" },
-                filter: "\"DeletedAt\" IS NULL")
-                .Annotation("Npgsql:IndexInclude", new[] { "LastReadMessageSequenceNum" });
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "ChatMessages");
-
-            migrationBuilder.DropTable(
                 name: "ChatMessagesV2");
 
             migrationBuilder.DropTable(
                 name: "ConversationMembershipsV2");
-
-            migrationBuilder.DropTable(
-                name: "ConversationMessageSequences");
 
             migrationBuilder.DropTable(
                 name: "ConversationMessageSequencesV2");
@@ -432,13 +273,7 @@ namespace FlowChat.ChatService.Persistence.Migrations
                 name: "ConversationParticipantsV2");
 
             migrationBuilder.DropTable(
-                name: "DuetConversations");
-
-            migrationBuilder.DropTable(
                 name: "DuetConversationsV2");
-
-            migrationBuilder.DropTable(
-                name: "ParticipantUsers");
 
             migrationBuilder.DropTable(
                 name: "SilverbackOutboxMessages");
@@ -451,9 +286,6 @@ namespace FlowChat.ChatService.Persistence.Migrations
 
             migrationBuilder.DropTable(
                 name: "ConversationsV2");
-
-            migrationBuilder.DropTable(
-                name: "Conversations");
         }
     }
 }
