@@ -48,12 +48,9 @@ public sealed class ConversationParticipantReadRepository(AppDbContext dbContext
         Guid conversationId,
         CancellationToken cancellationToken = default)
     {
-        return await (
-                from conversation in Active(dbContext.ConversationReadsV2)
-                join membership in Active(dbContext.ConversationMembershipReadsV2)
-                    on conversation.Id equals membership.ConversationId
-                where conversation.Id == conversationId
-                select (int?)membership.Version)
+        return await Active(dbContext.ConversationMembershipReadsV2)
+            .Where(membership => membership.Id == conversationId)
+            .Select(membership => (int?)membership.Version)
             .FirstOrDefaultAsync(cancellationToken);
     }
 }
