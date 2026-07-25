@@ -11,7 +11,7 @@ namespace FlowChat.ChatService.UnitTests.Domain.Entities.ChatMessage;
 public sealed class ChatMessageV2Tests
 {
     [Fact]
-    public void Create_WhenValid_EmitsOnlyV2SentEvent()
+    public void Create_WhenValid_EmitsSentEvent()
     {
         var chatMessage = CreateMessage();
 
@@ -23,10 +23,6 @@ public sealed class ChatMessageV2Tests
             .ContainSingle()
             .Subject;
         sentEvent.AggregateType.Should().Be("chat-message-v2");
-        chatMessage.DomainEvents
-            .OfType<ChatMessageSentDomainEvent>()
-            .Should()
-            .BeEmpty();
         chatMessage.DomainEvents.Should().ContainSingle();
     }
 

@@ -32,9 +32,6 @@ public sealed class MarkConversationAsReadController : ApiControllerBase
             return Unauthorized();
         }
 
-        // var result = await _mediator.Send(
-        //     new MarkConversationAsReadCommand(conversationId, userId),
-        //     cancellationToken);
         var result = await _mediator.Send(
             new MarkConversationAsReadCommandV2(conversationId, userId),
             cancellationToken);

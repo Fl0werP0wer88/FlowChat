@@ -32,9 +32,6 @@ public sealed class UnmuteConversationParticipantController : ApiControllerBase
             return Unauthorized();
         }
 
-        // var result = await _mediator.Send(
-        //     new UnmuteConversationParticipantCommand(conversationId, userId),
-        //     cancellationToken);
         var result = await _mediator.Send(
             new UnmuteConversationParticipantCommandV2(conversationId, userId),
             cancellationToken);

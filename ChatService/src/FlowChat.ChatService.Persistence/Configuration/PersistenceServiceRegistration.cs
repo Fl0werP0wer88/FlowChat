@@ -54,19 +54,14 @@ internal static class CommonPersistenceServiceRegistration
     public static IServiceCollection AddChatRepositories(this IServiceCollection services)
     {
         services.AddScoped<IChatMessageReadRepository, ChatMessageReadRepository>();
-        services.AddScoped<IChatMessageWriteRepository, ChatMessageWriteRepository>();
         services.AddScoped<IChatMessageV2WriteRepository, ChatMessageV2WriteRepository>();
         services.AddScoped<IConversationParticipantReadRepository, ConversationParticipantReadRepository>();
-        services.AddScoped<IConversationWriteRepository, ConversationWriteRepository>();
         services.AddScoped<IConversationV2WriteRepository, ConversationV2WriteRepository>();
         services.AddScoped<IConversationMembershipWriteRepository, ConversationMembershipWriteRepository>();
         services.AddScoped<IConversationParticipantWriteRepository, ConversationParticipantWriteRepository>();
-        services.AddScoped<IConversationMessageSequenceRepository, ConversationMessageSequenceRepository>();
         services.AddScoped<IConversationMessageSequenceRepositoryV2, ConversationMessageSequenceRepositoryV2>();
-        services.AddScoped<IGroupConversationWriteRepository, GroupConversationWriteRepository>();
         services.AddScoped<IGroupConversationReadRepository, GroupConversationReadRepository>();
         services.AddScoped<IDuetConversationReadRepository, DuetConversationReadRepository>();
-        services.AddScoped<IDuetConversationWriteRepository, DuetConversationWriteRepository>();
         services.AddScoped<IUserProfileProjectionReadRepository, UserProfileProjectionReadRepository>();
 
         return services;

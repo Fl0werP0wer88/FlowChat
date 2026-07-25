@@ -44,18 +44,11 @@ public sealed class ConversationParticipantV2ConsumerConfigurationTests
                 ConversationParticipantReadModelV2,
                 ContactObserverProjectionDto,
                 (Guid ObservedUserId, Guid ObserverUserId)>>();
-        var v1ValueFactory = scope.ServiceProvider.GetService<
-            IProjectionValueFactory<
-                DuetConversationContactStateReadModel,
-                ContactObserverProjectionDto,
-                (Guid ObservedUserId, Guid ObserverUserId)>>();
-
         consumerCollection.Should().NotBeNull();
         bulkRepository.Should().NotBeNull();
         commandHandler.Should().NotBeNull();
         unitOfWork.Should().BeAssignableTo<IConsumedOffsetCommitter>();
         valueFactory.Should().BeOfType<ContactObserverProjectionValueFactory>();
-        v1ValueFactory.Should().BeNull();
     }
 
     [Fact]

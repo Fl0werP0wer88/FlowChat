@@ -36,9 +36,6 @@ public sealed class CopyDuetAsGroupController : ApiControllerBase
             return Unauthorized();
         }
 
-        // var result = await _mediator.Send(
-        //     new CreateGroupFromDuetCommand(request.NewGroupConversationId, userId, request.PartnerUserId),
-        //     cancellationToken);
         var result = await _mediator.Send(
             new CreateGroupFromDuetCommandV2(request.NewGroupConversationId, userId, request.PartnerUserId),
             cancellationToken);

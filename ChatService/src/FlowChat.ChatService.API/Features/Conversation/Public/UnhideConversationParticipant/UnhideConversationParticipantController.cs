@@ -32,9 +32,6 @@ public sealed class UnhideConversationParticipantController : ApiControllerBase
             return Unauthorized();
         }
 
-        // var result = await _mediator.Send(
-        //     new UnhideConversationParticipantCommand(conversationId, userId),
-        //     cancellationToken);
         var result = await _mediator.Send(
             new UnhideConversationParticipantCommandV2(conversationId, userId),
             cancellationToken);

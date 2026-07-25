@@ -35,13 +35,6 @@ public sealed class CreateGroupConversationController : ApiControllerBase
             return Unauthorized();
         }
 
-        // var result = await _mediator.Send(
-        //     new CreateGroupConversationCommand(
-        //         request.ConversationId,
-        //         userId,
-        //         request.ParticipantUserIds,
-        //         request.Name),
-        //     cancellationToken);
         var result = await _mediator.Send(
             new CreateGroupConversationCommandV2(
                 request.ConversationId,

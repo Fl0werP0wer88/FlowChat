@@ -34,13 +34,6 @@ public sealed class SendChatMessageController : ApiControllerBase
             return Unauthorized();
         }
 
-        // var result = await _mediator.Send(
-        //     new SendChatMessageCommand(
-        //         request.Id,
-        //         request.ConversationId,
-        //         userId,
-        //         request.Text),
-        //     cancellationToken);
         var result = await _mediator.Send(
             new SendChatMessageCommandV2(
                 request.Id,

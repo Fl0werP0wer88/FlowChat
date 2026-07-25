@@ -33,10 +33,5 @@ public sealed class KafkaProducerConfigurationTests
         registry.Get<ChatMessageSentIntegrationEventV2>()!.Topic
             .Should().Be("dev.flowchat.chat.message.v2");
 
-        registry.Get<ChatMessageSentIntegrationEvent>().Should().BeNull();
-        registry.Get<GroupConversationChangedIntegrationEvent>().Should().BeNull();
-        registry.Get<DeltaProjectionIntegrationEvent<GroupConversationMembershipReadModel>>().Should().BeNull();
-        registry.Get<ProjectionIntegrationEvent<DuetConversationMembershipReadModel>>().Should().BeNull();
-        registry.Get<ProjectionIntegrationEvent<DuetConversationContactStateReadModel>>().Should().BeNull();
     }
 }
