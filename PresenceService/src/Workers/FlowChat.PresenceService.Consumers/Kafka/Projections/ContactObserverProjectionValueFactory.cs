@@ -7,34 +7,57 @@ using FlowChat.Shared.Consumers.ProjectionBulk;
 namespace FlowChat.PresenceService.Consumers.Kafka.Projections;
 
 public sealed class ContactObserverProjectionValueFactory
-    : IProjectionValueFactory<DuetConversationContactStateReadModel, ContactObserverProjectionDto, (Guid ObservedUserId, Guid ObserverUserId)>
+    : IProjectionValueFactory<ConversationParticipantReadModelV2, ContactObserverProjectionDto, (Guid ObservedUserId, Guid ObserverUserId)>
 {
-    private const string ProjectionSource = "chat-duet-conversation-events";
+    private const int DuetConversationType = 1;
+    private const int GroupConversationType = 2;
+    private const string ProjectionSource = "chat-conversation-participant-v2";
 
-    public ContactObserverProjectionDto MapValue(ProjectionIntegrationEvent<DuetConversationContactStateReadModel> message) =>
-        MapValues(message).First();
+    public ContactObserverProjectionDto MapValue(ProjectionIntegrationEvent<ConversationParticipantReadModelV2> message) =>
+        MapValues(message).Single();
 
     public IEnumerable<ContactObserverProjectionDto> MapValues(
-        ProjectionIntegrationEvent<DuetConversationContactStateReadModel> message)
+        ProjectionIntegrationEvent<ConversationParticipantReadModelV2> message)
     {
-        var firstUserId = ResolveUserId(message.Value.FirstUserId, nameof(message.Value.FirstUserId));
-        var secondUserId = ResolveUserId(message.Value.SecondUserId, nameof(message.Value.SecondUserId));
+        if (message.Value is null)
+            throw new NonTransientException("Payload does not contain a participant projection.");
 
-        yield return new ContactObserverProjectionDto
-        {
-            ObserverUserId = firstUserId,
-            ObservedUserId = secondUserId,
-            IsBlocked = message.Value.FirstUserBlockedSecondUser,
-            Source = ProjectionSource
-        };
+        var participantId = ResolveUserId(message.Value.ParticipantId, nameof(message.Value.ParticipantId));
+        ResolveUserId(message.Value.ConversationId, nameof(message.Value.ConversationId));
+        var userId = ResolveUserId(message.Value.UserId, nameof(message.Value.UserId));
 
-        yield return new ContactObserverProjectionDto
+        if (message.SourceAggregateId != participantId)
+            throw new NonTransientException("SourceAggregateId does not match ParticipantId.");
+
+        if (message.Value.ConversationType == GroupConversationType)
         {
-            ObserverUserId = secondUserId,
-            ObservedUserId = firstUserId,
-            IsBlocked = message.Value.SecondUserBlockedFirstUser,
-            Source = ProjectionSource
-        };
+            if (message.Value.DuetPartnerUserId is not null)
+                throw new NonTransientException("A group participant cannot contain DuetPartnerUserId.");
+
+            return [];
+        }
+
+        if (message.Value.ConversationType != DuetConversationType)
+            throw new NonTransientException("ConversationType must be Duet or Group.");
+
+        if (message.Value.DuetPartnerUserId is not Guid duetPartnerUserId)
+            throw new NonTransientException("A duet participant must contain DuetPartnerUserId.");
+
+        duetPartnerUserId = ResolveUserId(duetPartnerUserId, nameof(message.Value.DuetPartnerUserId));
+
+        if (duetPartnerUserId == userId)
+            throw new NonTransientException("DuetPartnerUserId cannot match UserId.");
+
+        return
+        [
+            new ContactObserverProjectionDto
+            {
+                ObserverUserId = userId,
+                ObservedUserId = duetPartnerUserId,
+                IsBlocked = message.Value.IsBlocked,
+                Source = ProjectionSource
+            }
+        ];
     }
 
     public (Guid ObservedUserId, Guid ObserverUserId) GetDeduplicationKey(ContactObserverProjectionDto value) =>

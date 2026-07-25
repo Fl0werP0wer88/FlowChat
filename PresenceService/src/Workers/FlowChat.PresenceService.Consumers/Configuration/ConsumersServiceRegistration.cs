@@ -25,9 +25,9 @@ public static class ConsumersServiceRegistration
         IConfiguration configuration)
     {
         var contactOptions = configuration
-            .GetSection(new DuetConversationContactConsumerSettingsSection().SectionName)
-            .Get<DuetConversationContactConsumerSettingsSection>()
-            ?? new DuetConversationContactConsumerSettingsSection();
+            .GetSection(new ConversationParticipantV2ConsumerSettingsSection().SectionName)
+            .Get<ConversationParticipantV2ConsumerSettingsSection>()
+            ?? new ConversationParticipantV2ConsumerSettingsSection();
 
         services.AddConsumerApplicationServices();
         services.AddConsumerPersistenceServices(configuration);
@@ -49,7 +49,7 @@ public static class ConsumersServiceRegistration
                     .AddCommandHandler<ContactObserverProjectionDto>()
                     .AddConsumer<
                         AppDbContext,
-                        DuetConversationContactStateReadModel,
+                        ConversationParticipantReadModelV2,
                         ContactObserverProjectionDto,
                         (Guid, Guid),
                         ContactObserverProjectionValueFactory>());
