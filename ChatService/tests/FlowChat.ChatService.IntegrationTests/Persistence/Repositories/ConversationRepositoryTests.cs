@@ -1,4 +1,5 @@
 using FlowChat.ChatService.Domain.Entities.Conversation;
+using FlowChat.ChatService.Domain.Entities.UserProfiles;
 using FlowChat.ChatService.Persistence;
 using FlowChat.Shared.Domain;
 using FlowChat.ChatService.Persistence.Repositories;
@@ -6,6 +7,7 @@ using FluentAssertions;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using ChatMessageAggregate = FlowChat.ChatService.Domain.Entities.ChatMessage.ChatMessage;
+using ChatMessageAggregateV2 = FlowChat.ChatService.Domain.Entities.ChatMessage.ChatMessageV2;
 
 namespace FlowChat.ChatService.IntegrationTests.Persistence.Repositories;
 
@@ -20,36 +22,36 @@ public sealed class ConversationRepositoryTests
         var creatorUserId = Guid.NewGuid();
         var memberUserId = Guid.NewGuid();
         var requestedUserId = Guid.NewGuid();
-        var matchingConversation = GroupConversation.Create(
-            Id<Conversation>.New(),
-            creatorUserId,
-            [creatorUserId, memberUserId],
+        var matchingConversation = ConversationV2.CreateGroup(
+            Id<ConversationV2>.New(),
+            Id<UserProfile>.FromGuid(creatorUserId),
+            [Id<UserProfile>.FromGuid(memberUserId), Id<UserProfile>.FromGuid(requestedUserId)],
             "Friends");
-        matchingConversation.AddParticipants([requestedUserId], lastReadMessageSequenceNum: 42);
-        var latestMessage = ChatMessageAggregate.Create(
-            Id<ChatMessageAggregate>.New(),
+        var participants = new[]
+        {
+            CreateGroupParticipant(matchingConversation.Id, creatorUserId),
+            CreateGroupParticipant(matchingConversation.Id, memberUserId),
+            CreateGroupParticipant(matchingConversation.Id, requestedUserId, lastReadSequence: 42)
+        };
+        var latestMessage = ChatMessageAggregateV2.Create(
+            Id<ChatMessageAggregateV2>.New(),
             matchingConversation.Id,
-            creatorUserId,
-            "Latest",
-            [memberUserId]);
+            Id<UserProfile>.FromGuid(creatorUserId),
+            "Latest");
         latestMessage.SetSequenceNumber(84);
         MarkCreated(latestMessage);
 
-        var otherGroupConversation = GroupConversation.Create(
-            Id<Conversation>.New(),
-            creatorUserId,
-            [creatorUserId, Guid.NewGuid()],
-            "Other");
-        var duetConversation = DuetConversation.Create(requestedUserId, Guid.NewGuid());
-
         MarkCreated(matchingConversation);
-        MarkCreated(otherGroupConversation);
-        MarkCreated(duetConversation);
+        foreach (var participant in participants)
+        {
+            MarkCreated(participant);
+        }
 
         await using (var seedContext = CreateDbContext(connection))
         {
-            seedContext.Conversations.AddRange(matchingConversation, otherGroupConversation, duetConversation);
-            seedContext.ChatMessages.Add(latestMessage);
+            seedContext.ConversationsV2.Add(matchingConversation);
+            seedContext.ConversationParticipantsV2.AddRange(participants);
+            seedContext.ChatMessagesV2.Add(latestMessage);
             await seedContext.SaveChangesAsync();
         }
 
@@ -73,16 +75,27 @@ public sealed class ConversationRepositoryTests
         await connection.OpenAsync();
 
         var requestingUserId = Guid.NewGuid();
-        var conversation = GroupConversation.Create(
-            Id<Conversation>.New(),
-            requestingUserId,
-            [requestingUserId, Guid.NewGuid()],
+        var partnerUserId = Guid.NewGuid();
+        var conversation = ConversationV2.CreateGroup(
+            Id<ConversationV2>.New(),
+            Id<UserProfile>.FromGuid(requestingUserId),
+            [Id<UserProfile>.FromGuid(partnerUserId)],
             "Empty conversation");
+        var participants = new[]
+        {
+            CreateGroupParticipant(conversation.Id, requestingUserId),
+            CreateGroupParticipant(conversation.Id, partnerUserId)
+        };
         MarkCreated(conversation);
+        foreach (var participant in participants)
+        {
+            MarkCreated(participant);
+        }
 
         await using (var seedContext = CreateDbContext(connection))
         {
-            seedContext.Conversations.Add(conversation);
+            seedContext.ConversationsV2.Add(conversation);
+            seedContext.ConversationParticipantsV2.AddRange(participants);
             await seedContext.SaveChangesAsync();
         }
 
@@ -225,12 +238,24 @@ public sealed class ConversationRepositoryTests
 
         var requestingUserId = Guid.NewGuid();
         var partnerUserId = Guid.NewGuid();
-        var conversation = DuetConversation.Create(requestingUserId, partnerUserId);
+        var conversation = ConversationV2.CreateDuet(
+            Id<UserProfile>.FromGuid(requestingUserId),
+            Id<UserProfile>.FromGuid(partnerUserId));
+        var participants = new[]
+        {
+            CreateDuetParticipant(conversation.Id, requestingUserId, partnerUserId),
+            CreateDuetParticipant(conversation.Id, partnerUserId, requestingUserId)
+        };
         MarkCreated(conversation);
+        foreach (var participant in participants)
+        {
+            MarkCreated(participant);
+        }
 
         await using (var seedContext = CreateDbContext(connection))
         {
-            seedContext.Conversations.Add(conversation);
+            seedContext.ConversationsV2.Add(conversation);
+            seedContext.ConversationParticipantsV2.AddRange(participants);
             await seedContext.SaveChangesAsync();
         }
 
@@ -262,6 +287,47 @@ public sealed class ConversationRepositoryTests
     }
 
     private static void MarkCreated(ChatMessageAggregate message)
+    {
+        message.SetCreated("integration-test");
+        message.SetUpdated("integration-test");
+    }
+
+    private static ConversationParticipant CreateGroupParticipant(
+        Id<ConversationV2> conversationId,
+        Guid userId,
+        long lastReadSequence = 0) =>
+        ConversationParticipant.Create(
+            Id<ConversationParticipant>.New(),
+            conversationId,
+            ConversationType.Group,
+            Id<UserProfile>.FromGuid(userId),
+            duetPartnerUserId: null,
+            lastReadMessageSequenceNum: lastReadSequence);
+
+    private static ConversationParticipant CreateDuetParticipant(
+        Id<ConversationV2> conversationId,
+        Guid userId,
+        Guid partnerUserId) =>
+        ConversationParticipant.Create(
+            Id<ConversationParticipant>.New(),
+            conversationId,
+            ConversationType.Duet,
+            Id<UserProfile>.FromGuid(userId),
+            Id<UserProfile>.FromGuid(partnerUserId));
+
+    private static void MarkCreated(ConversationV2 conversation)
+    {
+        conversation.SetCreated("integration-test");
+        conversation.SetUpdated("integration-test");
+    }
+
+    private static void MarkCreated(ConversationParticipant participant)
+    {
+        participant.SetCreated("integration-test");
+        participant.SetUpdated("integration-test");
+    }
+
+    private static void MarkCreated(ChatMessageAggregateV2 message)
     {
         message.SetCreated("integration-test");
         message.SetUpdated("integration-test");

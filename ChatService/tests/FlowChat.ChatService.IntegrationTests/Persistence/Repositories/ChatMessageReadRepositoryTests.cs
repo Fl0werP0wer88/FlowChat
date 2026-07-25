@@ -20,7 +20,7 @@ public sealed class ChatMessageReadRepositoryTests
 
         await using (var seedContext = CreateDbContext(databaseName))
         {
-            seedContext.ChatMessageReads.AddRange(
+            seedContext.ChatMessageReadsV2.AddRange(
                 CreateMessage(conversationId, senderId, "Unsequenced", 8),
                 CreateMessage(conversationId, senderId, "First", 9, 4),
                 CreateMessage(conversationId, senderId, "Latest", 10, 7),
@@ -44,7 +44,7 @@ public sealed class ChatMessageReadRepositoryTests
 
         await using (var seedContext = CreateDbContext(databaseName))
         {
-            seedContext.ChatMessageReads.Add(
+            seedContext.ChatMessageReadsV2.Add(
                 CreateMessage(conversationId, Guid.NewGuid(), "Unsequenced", 8));
             await seedContext.SaveChangesAsync();
         }
@@ -71,7 +71,7 @@ public sealed class ChatMessageReadRepositoryTests
 
         await using (var seedContext = CreateDbContext(databaseName))
         {
-            seedContext.ChatMessageReads.AddRange(oldest, middle, newest, deleted);
+            seedContext.ChatMessageReadsV2.AddRange(oldest, middle, newest, deleted);
             await seedContext.SaveChangesAsync();
         }
 
@@ -99,7 +99,7 @@ public sealed class ChatMessageReadRepositoryTests
 
         await using (var seedContext = CreateDbContext(databaseName))
         {
-            seedContext.ChatMessageReads.AddRange(oldest, middle, newest);
+            seedContext.ChatMessageReadsV2.AddRange(oldest, middle, newest);
             await seedContext.SaveChangesAsync();
         }
 
@@ -122,7 +122,7 @@ public sealed class ChatMessageReadRepositoryTests
         secondPage.NextBeforeMessageId.Should().BeNull();
     }
 
-    private static ChatMessageReadEntity CreateMessage(
+    private static ChatMessageReadEntityV2 CreateMessage(
         Guid conversationId,
         Guid senderId,
         string text,

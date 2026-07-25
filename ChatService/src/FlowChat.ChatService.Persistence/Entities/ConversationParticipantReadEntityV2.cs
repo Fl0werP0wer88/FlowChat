@@ -2,11 +2,13 @@ using FlowChat.Shared.Persistance;
 
 namespace FlowChat.ChatService.Persistence.Entities;
 
-public sealed class ParticipantUserReadEntity : ReadEntityBase
+public sealed class ConversationParticipantReadEntityV2 : ReadEntityBase
 {
     public Guid Id { get; init; }
     public Guid ConversationId { get; init; }
+    public int ConversationType { get; init; }
     public Guid UserId { get; init; }
+    public Guid? DuetPartnerUserId { get; init; }
     public string? DisplayName { get; init; }
     public bool IsBlocked { get; init; }
     public bool IsMuted { get; init; }

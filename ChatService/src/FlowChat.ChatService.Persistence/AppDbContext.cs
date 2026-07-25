@@ -37,10 +37,11 @@ public sealed class AppDbContext : DbContext
     public DbSet<UserProfileReadModelEntity> UserProfileProjections => Set<UserProfileReadModelEntity>();
     public DbSet<DuetConversationLookupEntity> DuetConversations => Set<DuetConversationLookupEntity>();
     public DbSet<DuetConversationLookupEntityV2> DuetConversationsV2 => Set<DuetConversationLookupEntityV2>();
-    public DbSet<ConversationReadEntity> ConversationReads => Set<ConversationReadEntity>();
-    public DbSet<ParticipantUserReadEntity> ParticipantUserReads => Set<ParticipantUserReadEntity>();
-    public DbSet<ChatMessageReadEntity> ChatMessageReads => Set<ChatMessageReadEntity>();
-    public DbSet<DuetConversationReadEntity> DuetConversationReads => Set<DuetConversationReadEntity>();
+    public DbSet<ConversationReadEntityV2> ConversationReadsV2 => Set<ConversationReadEntityV2>();
+    public DbSet<ConversationMembershipReadEntityV2> ConversationMembershipReadsV2 => Set<ConversationMembershipReadEntityV2>();
+    public DbSet<ConversationParticipantReadEntityV2> ConversationParticipantReadsV2 => Set<ConversationParticipantReadEntityV2>();
+    public DbSet<ChatMessageReadEntityV2> ChatMessageReadsV2 => Set<ChatMessageReadEntityV2>();
+    public DbSet<DuetConversationReadEntityV2> DuetConversationReadsV2 => Set<DuetConversationReadEntityV2>();
     public DbSet<SilverbackStoredOffset> SilverbackStoredOffsets => Set<SilverbackStoredOffset>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

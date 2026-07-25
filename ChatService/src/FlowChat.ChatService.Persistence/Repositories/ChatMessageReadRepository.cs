@@ -12,7 +12,7 @@ public sealed class ChatMessageReadRepository(AppDbContext dbContext) : ReadRepo
         Guid conversationId,
         CancellationToken cancellationToken = default)
     {
-        return Active(dbContext.ChatMessageReads)
+        return Active(dbContext.ChatMessageReadsV2)
             .Where(message => message.ConversationId == conversationId)
             .MaxAsync(message => message.SequenceNum, cancellationToken);
     }
@@ -24,10 +24,10 @@ public sealed class ChatMessageReadRepository(AppDbContext dbContext) : ReadRepo
         Guid? beforeMessageId,
         CancellationToken cancellationToken = default)
     {
-        var query = Active(dbContext.ChatMessageReads)
+        var query = Active(dbContext.ChatMessageReadsV2)
             .Where(message => message.ConversationId == conversationId);
 
-        List<ChatMessageReadEntity> rows;
+        List<ChatMessageReadEntityV2> rows;
         if (beforeSentAtUtc.HasValue && beforeMessageId.HasValue)
         {
             var beforeUtc = beforeSentAtUtc.Value.ToUniversalTime();
@@ -83,7 +83,7 @@ public sealed class ChatMessageReadRepository(AppDbContext dbContext) : ReadRepo
             hasMore);
     }
 
-    private static ChatMessageDto MapToDto(ChatMessageReadEntity message) =>
+    private static ChatMessageDto MapToDto(ChatMessageReadEntityV2 message) =>
         new(
             message.Id,
             message.ConversationId,

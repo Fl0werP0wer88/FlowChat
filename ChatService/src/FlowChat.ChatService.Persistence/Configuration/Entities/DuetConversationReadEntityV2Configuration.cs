@@ -4,12 +4,13 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace FlowChat.ChatService.Persistence.Configuration.Entities;
 
-public sealed class DuetConversationReadEntityConfiguration : IEntityTypeConfiguration<DuetConversationReadEntity>
+public sealed class DuetConversationReadEntityV2Configuration
+    : IEntityTypeConfiguration<DuetConversationReadEntityV2>
 {
-    public void Configure(EntityTypeBuilder<DuetConversationReadEntity> builder)
+    public void Configure(EntityTypeBuilder<DuetConversationReadEntityV2> builder)
     {
         builder.HasKey(x => new { x.FirstUserId, x.SecondUserId });
-        builder.ToView("DuetConversations");
+        builder.ToView("DuetConversationsV2");
 
         builder.Property(x => x.FirstUserId);
         builder.Property(x => x.SecondUserId);

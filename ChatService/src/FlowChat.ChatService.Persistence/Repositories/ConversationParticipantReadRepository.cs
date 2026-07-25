@@ -12,7 +12,7 @@ public sealed class ConversationParticipantReadRepository(AppDbContext dbContext
         Guid conversationId,
         CancellationToken cancellationToken = default)
     {
-        var conversationExists = await Active(dbContext.ConversationReads)
+        var conversationExists = await Active(dbContext.ConversationReadsV2)
             .AnyAsync(conversation => conversation.Id == conversationId, cancellationToken);
 
         if (!conversationExists)
@@ -20,7 +20,7 @@ public sealed class ConversationParticipantReadRepository(AppDbContext dbContext
             return null;
         }
 
-        return await Active(dbContext.ParticipantUserReads)
+        return await Active(dbContext.ConversationParticipantReadsV2)
             .Where(participant => participant.ConversationId == conversationId)
             .Select(participant => participant.UserId)
             .ToListAsync(cancellationToken);
@@ -30,7 +30,7 @@ public sealed class ConversationParticipantReadRepository(AppDbContext dbContext
         Guid conversationId,
         CancellationToken cancellationToken = default)
     {
-        var conversationExists = await Active(dbContext.ConversationReads)
+        var conversationExists = await Active(dbContext.ConversationReadsV2)
             .AnyAsync(conversation => conversation.Id == conversationId, cancellationToken);
 
         if (!conversationExists)
@@ -38,7 +38,7 @@ public sealed class ConversationParticipantReadRepository(AppDbContext dbContext
             return null;
         }
 
-        return await Active(dbContext.ParticipantUserReads)
+        return await Active(dbContext.ConversationParticipantReadsV2)
             .Where(participant => participant.ConversationId == conversationId)
             .Select(participant => new ParticipantStateDto(participant.UserId, participant.IsBlocked, participant.IsHidden))
             .ToListAsync(cancellationToken);
@@ -48,9 +48,12 @@ public sealed class ConversationParticipantReadRepository(AppDbContext dbContext
         Guid conversationId,
         CancellationToken cancellationToken = default)
     {
-        return await Active(dbContext.ConversationReads)
-            .Where(conversation => conversation.Id == conversationId)
-            .Select(conversation => (int?)conversation.MembershipRevision)
+        return await (
+                from conversation in Active(dbContext.ConversationReadsV2)
+                join membership in Active(dbContext.ConversationMembershipReadsV2)
+                    on conversation.Id equals membership.ConversationId
+                where conversation.Id == conversationId
+                select (int?)membership.Version)
             .FirstOrDefaultAsync(cancellationToken);
     }
 }
