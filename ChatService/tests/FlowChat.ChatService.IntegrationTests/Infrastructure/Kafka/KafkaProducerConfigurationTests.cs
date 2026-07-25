@@ -13,35 +13,7 @@ namespace FlowChat.ChatService.IntegrationTests.Infrastructure.Kafka;
 public sealed class KafkaProducerConfigurationTests
 {
     [Fact]
-    public void AddApiInfrastructureServices_RegistersBothDuetProjectionTypesWithSharedTopic()
-    {
-        const string projectionTopic = "dev.flowchat.chat.duet-conversation-projection.v1";
-        var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                ["Kafka:DuetConversationProjectionProducer:BootstrapServers"] = "localhost:9092",
-                ["Kafka:DuetConversationProjectionProducer:Topic"] = projectionTopic
-            })
-            .Build();
-        var services = new ServiceCollection();
-        services.AddOptions();
-        services.AddLogging();
-        services.AddApiInfrastructureServices(configuration);
-
-        using var serviceProvider = services.BuildServiceProvider();
-
-        var registry = serviceProvider.GetRequiredService<KafkaProducerSettingsRegistry>();
-        var membershipSettings = registry.Get<ProjectionIntegrationEvent<DuetConversationMembershipReadModel>>();
-        var contactStateSettings = registry.Get<ProjectionIntegrationEvent<DuetConversationContactStateReadModel>>();
-
-        membershipSettings.Should().NotBeNull();
-        contactStateSettings.Should().NotBeNull();
-        membershipSettings!.Topic.Should().Be(projectionTopic);
-        contactStateSettings!.Topic.Should().Be(projectionTopic);
-    }
-
-    [Fact]
-    public void AddApiInfrastructureServices_RegistersAllV2TypesOnIsolatedTopics()
+    public void AddApiInfrastructureServices_RegistersOnlyV2ChatProducerTypes()
     {
         var configuration = new ConfigurationBuilder().AddInMemoryCollection().Build();
         var services = new ServiceCollection();
@@ -60,5 +32,11 @@ public sealed class KafkaProducerConfigurationTests
             .Should().Be("dev.flowchat.chat.conversation-participant-projection.v2");
         registry.Get<ChatMessageSentIntegrationEventV2>()!.Topic
             .Should().Be("dev.flowchat.chat.message.v2");
+
+        registry.Get<ChatMessageSentIntegrationEvent>().Should().BeNull();
+        registry.Get<GroupConversationChangedIntegrationEvent>().Should().BeNull();
+        registry.Get<DeltaProjectionIntegrationEvent<GroupConversationMembershipReadModel>>().Should().BeNull();
+        registry.Get<ProjectionIntegrationEvent<DuetConversationMembershipReadModel>>().Should().BeNull();
+        registry.Get<ProjectionIntegrationEvent<DuetConversationContactStateReadModel>>().Should().BeNull();
     }
 }

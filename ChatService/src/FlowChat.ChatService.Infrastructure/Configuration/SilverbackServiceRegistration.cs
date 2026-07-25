@@ -18,14 +18,6 @@ public static class ApiSilverbackServiceRegistration
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        var chatMessageSentProducerOptions = configuration.GetSection(new ChatMessageSentProducerSettingsSection().SectionName)
-            .Get<ChatMessageSentProducerSettingsSection>() ?? new ChatMessageSentProducerSettingsSection();
-        var groupConversationChangedProducerOptions = configuration.GetSection(new GroupConversationChangedProducerSettingsSection().SectionName)
-            .Get<GroupConversationChangedProducerSettingsSection>() ?? new GroupConversationChangedProducerSettingsSection();
-        var groupConversationProjectionProducerOptions = configuration.GetSection(new GroupConversationProjectionProducerSettingsSection().SectionName)
-            .Get<GroupConversationProjectionProducerSettingsSection>() ?? new GroupConversationProjectionProducerSettingsSection();
-        var duetConversationProjectionProducerOptions = configuration.GetSection(new DuetConversationProjectionProducerSettingsSection().SectionName)
-            .Get<DuetConversationProjectionProducerSettingsSection>() ?? new DuetConversationProjectionProducerSettingsSection();
         var conversationV2Options = configuration.GetSection(new ConversationV2ProducerSettingsSection().SectionName)
             .Get<ConversationV2ProducerSettingsSection>() ?? new ConversationV2ProducerSettingsSection();
         var membershipV2Options = configuration.GetSection(new ConversationMembershipV2ProjectionProducerSettingsSection().SectionName)
@@ -44,32 +36,7 @@ public static class ApiSilverbackServiceRegistration
             })
             .AddKafkaClients(clients =>
             {
-                clients.WithBootstrapServers(chatMessageSentProducerOptions.BootstrapServers)
-                    .AddProducer(producer => producer
-                        .Produce<ChatMessageSentIntegrationEvent>("chat-message-sent", endpoint => endpoint
-                            .ProduceTo(chatMessageSentProducerOptions.Topic)
-                            .SerializeAsJson(serializer => serializer.SetTypeHeader())
-                            .StoreToOutbox(outbox => outbox.UseEntityFramework<AppDbContext>())))
-                    .AddProducer(producer => producer
-                        .Produce<GroupConversationChangedIntegrationEvent>("group-conversation-changed", endpoint => endpoint
-                            .ProduceTo(groupConversationChangedProducerOptions.Topic)
-                            .SerializeAsJson(serializer => serializer.SetTypeHeader())
-                            .StoreToOutbox(outbox => outbox.UseEntityFramework<AppDbContext>())))
-                    .AddProducer(producer => producer
-                        .Produce<DeltaProjectionIntegrationEvent<GroupConversationMembershipReadModel>>("group-conversation-membership-projection", endpoint => endpoint
-                            .ProduceTo(groupConversationProjectionProducerOptions.Topic)
-                            .SerializeAsJson(serializer => serializer.SetTypeHeader())
-                            .StoreToOutbox(outbox => outbox.UseEntityFramework<AppDbContext>())))
-                    .AddProducer(producer => producer
-                        .Produce<ProjectionIntegrationEvent<DuetConversationMembershipReadModel>>("duet-conversation-membership-projection", endpoint => endpoint
-                            .ProduceTo(duetConversationProjectionProducerOptions.Topic)
-                            .SerializeAsJson(serializer => serializer.SetTypeHeader())
-                            .StoreToOutbox(outbox => outbox.UseEntityFramework<AppDbContext>())))
-                    .AddProducer(producer => producer
-                        .Produce<ProjectionIntegrationEvent<DuetConversationContactStateReadModel>>("duet-conversation-contact-state-projection", endpoint => endpoint
-                            .ProduceTo(duetConversationProjectionProducerOptions.Topic)
-                            .SerializeAsJson(serializer => serializer.SetTypeHeader())
-                            .StoreToOutbox(outbox => outbox.UseEntityFramework<AppDbContext>())))
+                clients.WithBootstrapServers(messageV2Options.BootstrapServers)
                     .AddProducer(producer => producer
                         .Produce<ProjectionIntegrationEvent<ConversationReadModelV2>>("conversation-v2-projection", endpoint => endpoint
                             .ProduceTo(conversationV2Options.Topic)
