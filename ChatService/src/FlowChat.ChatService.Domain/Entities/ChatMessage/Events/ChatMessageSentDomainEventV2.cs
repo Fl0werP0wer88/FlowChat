@@ -11,6 +11,7 @@ public sealed class ChatMessageSentDomainEventV2(
     Id<UserProfileMarker> senderUserId,
     string text,
     UtcDateTimeOffset sentAtUtc,
+    long sequenceNum,
     UtcDateTimeOffset? occurredOnUtc = null)
     : BaseChatMessageDomainEventV2(aggregateId, occurredOnUtc)
 {
@@ -19,4 +20,5 @@ public sealed class ChatMessageSentDomainEventV2(
     public Id<UserProfileMarker> SenderUserId { get; } = senderUserId;
     public string Text { get; } = text;
     public UtcDateTimeOffset SentAtUtc { get; } = sentAtUtc;
+    public long SequenceNum { get; } = sequenceNum;
 }

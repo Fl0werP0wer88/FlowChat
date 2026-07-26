@@ -24,8 +24,8 @@ public sealed class ChatMessageV2WriteRepository(AppDbContext dbContext)
     {
         return dbContext.ChatMessagesV2
             .Where(x => x.ConversationId == conversationId &&
-                        x.DeletedAt == null &&
-                        x.SequenceNum.HasValue)
-            .MaxAsync(x => x.SequenceNum, cancellationToken);
+                        x.DeletedAt == null)
+            .Select(x => (long?)x.SequenceNum)
+            .MaxAsync(cancellationToken);
     }
 }

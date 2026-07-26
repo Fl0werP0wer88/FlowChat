@@ -58,11 +58,6 @@ public sealed class RouteMessageCommandHandler(
                     $"Conversation {request.ConversationId} has no known recipients other than the sender at membership revision {trackedRevision}."));
         }
 
-        //ToDo: Rozważyć przesylanie tego kafką
-        var sequenceNum = await _chatServiceInternalApiClient.SetChatMessageSequenceNumberAsync(
-            request.MessageId,
-            request.ConversationId,
-            cancellationToken);
         var deliveredAtUtc = DateTimeOffset.UtcNow;
 
         var notification = new ChatMessageParam(
@@ -70,7 +65,7 @@ public sealed class RouteMessageCommandHandler(
             request.ConversationId,
             request.SenderUserId,
             request.Text!.Trim(),
-            sequenceNum,
+            request.SequenceNum,
             request.SentAtUtc,
             deliveredAtUtc,
             recipientUserIds);

@@ -45,14 +45,6 @@ public sealed class MarkChatMessageAsDeliveredCommandHandlerV2(
         if (AggregateRoot.DeliveryStatus == DeliveryStatus.Delivered)
             return Task.FromResult(Unchanged(Unit.Value));
 
-        if (!AggregateRoot.SequenceNum.HasValue)
-        {
-            return Task.FromResult(
-                Failure(
-                    DomainError.BadRequest(
-                        "Chat message sequence number must be set before marking it as delivered.")));
-        }
-
         AggregateRoot.MarkAsDelivered(UtcDateTimeOffset.Create(request.DeliveredAtUtc));
         return Task.FromResult(Updated(Unit.Value));
     }

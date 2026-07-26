@@ -60,12 +60,11 @@ public sealed class GroupConversationReadRepository(AppDbContext dbContext) : Re
         //ToDo: Rozważyć przerzucenie tego do oddzielnego ReadModelu zamiast robić joiny. Będzie też można pozbyć się wtedy części indeksów.
         var activeParticipants = Active(dbContext.ConversationParticipantReadsV2);
         var currentSequences = Active(dbContext.ChatMessageReadsV2)
-            .Where(message => message.SequenceNum.HasValue)
             .GroupBy(message => message.ConversationId)
             .Select(messages => new
             {
                 ConversationId = messages.Key,
-                CurrentMsgSeqNum = messages.Max(message => message.SequenceNum)
+                CurrentMsgSeqNum = (long?)messages.Max(message => message.SequenceNum)
             });
 
         return await (

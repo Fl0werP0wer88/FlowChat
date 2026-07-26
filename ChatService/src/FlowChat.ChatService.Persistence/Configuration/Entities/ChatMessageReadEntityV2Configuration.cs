@@ -17,7 +17,7 @@ public sealed class ChatMessageReadEntityV2Configuration
         builder.Property(x => x.SenderUserId);
         builder.Property(x => x.Text);
         builder.Property(x => x.SentAtUtc);
-        builder.Property(x => x.SequenceNum);
+        builder.Property(x => x.SequenceNum).IsRequired();
         builder.Property(x => x.DeletedAt);
     }
 }

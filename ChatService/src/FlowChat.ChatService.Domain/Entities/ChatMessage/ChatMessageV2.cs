@@ -13,7 +13,7 @@ public sealed class ChatMessageV2 : AggregateRootBase<ChatMessageV2>
     public string Text { get; private set; }
     public UtcDateTimeOffset SentAtUtc { get; private set; }
     public UtcDateTimeOffset? DeliveredAtUtc { get; private set; }
-    public long? SequenceNum { get; private set; }
+    public long SequenceNum { get; private set; }
     public DeliveryStatus DeliveryStatus { get; private set; }
 
     private ChatMessageV2(
@@ -22,7 +22,7 @@ public sealed class ChatMessageV2 : AggregateRootBase<ChatMessageV2>
         Id<UserProfileMarker> senderUserId,
         string text,
         UtcDateTimeOffset sentAtUtc,
-        long? sequenceNum = null,
+        long sequenceNum,
         DeliveryStatus deliveryStatus = DeliveryStatus.Pending,
         UtcDateTimeOffset? deliveredAtUtc = null) : base(id)
     {
@@ -30,7 +30,7 @@ public sealed class ChatMessageV2 : AggregateRootBase<ChatMessageV2>
         ArgumentNullException.ThrowIfNull(senderUserId);
         ArgumentException.ThrowIfNullOrWhiteSpace(text);
 
-        if (sequenceNum is <= 0)
+        if (sequenceNum <= 0)
         {
             throw new ArgumentOutOfRangeException(
                 nameof(sequenceNum),
@@ -43,7 +43,7 @@ public sealed class ChatMessageV2 : AggregateRootBase<ChatMessageV2>
         }
 
         if (deliveryStatus == DeliveryStatus.Delivered &&
-            (!sequenceNum.HasValue || deliveredAtUtc is null))
+            deliveredAtUtc is null)
         {
             throw new InvalidOperationException(
                 "Delivered chat message must have a sequence number and delivery timestamp.");
@@ -69,6 +69,7 @@ public sealed class ChatMessageV2 : AggregateRootBase<ChatMessageV2>
         Id<ConversationV2> conversationId,
         Id<UserProfileMarker> senderUserId,
         string text,
+        long sequenceNum,
         UtcDateTimeOffset? sentAtUtc = null)
     {
         ArgumentNullException.ThrowIfNull(id);
@@ -78,14 +79,16 @@ public sealed class ChatMessageV2 : AggregateRootBase<ChatMessageV2>
             conversationId,
             senderUserId,
             text,
-            sentAtUtc ?? UtcDateTimeOffset.UtcNow);
+            sentAtUtc ?? UtcDateTimeOffset.UtcNow,
+            sequenceNum);
 
         chatMessage.AddDomainEvent(new ChatMessageSentDomainEventV2(
             chatMessage.Id,
             chatMessage.ConversationId,
             chatMessage.SenderUserId,
             chatMessage.Text,
-            chatMessage.SentAtUtc));
+            chatMessage.SentAtUtc,
+            chatMessage.SequenceNum));
 
         return chatMessage;
     }
@@ -96,7 +99,7 @@ public sealed class ChatMessageV2 : AggregateRootBase<ChatMessageV2>
         Id<UserProfileMarker> senderUserId,
         string text,
         UtcDateTimeOffset sentAtUtc,
-        long? sequenceNum,
+        long sequenceNum,
         DeliveryStatus deliveryStatus,
         UtcDateTimeOffset? deliveredAtUtc)
     {
@@ -111,33 +114,9 @@ public sealed class ChatMessageV2 : AggregateRootBase<ChatMessageV2>
             deliveredAtUtc);
     }
 
-    public bool SetSequenceNumber(long sequenceNum)
-    {
-        if (SequenceNum.HasValue)
-        {
-            return false;
-        }
-
-        if (sequenceNum <= 0)
-        {
-            throw new ArgumentOutOfRangeException(
-                nameof(sequenceNum),
-                "Sequence number must be greater than zero.");
-        }
-
-        SequenceNum = sequenceNum;
-        return true;
-    }
-
     public bool MarkAsDelivered(UtcDateTimeOffset deliveredAtUtc)
     {
         ArgumentNullException.ThrowIfNull(deliveredAtUtc);
-
-        if (!SequenceNum.HasValue)
-        {
-            throw new InvalidOperationException(
-                "Sequence number must be set before marking a chat message as delivered.");
-        }
 
         if (DeliveryStatus == DeliveryStatus.Delivered)
         {

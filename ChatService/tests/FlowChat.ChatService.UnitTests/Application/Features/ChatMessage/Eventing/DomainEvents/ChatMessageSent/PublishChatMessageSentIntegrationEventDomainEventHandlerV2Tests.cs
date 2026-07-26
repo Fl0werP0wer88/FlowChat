@@ -29,7 +29,8 @@ public sealed class PublishChatMessageSentIntegrationEventDomainEventHandlerV2Te
             conversationId,
             Id<UserProfile>.New(),
             "Hello",
-            UtcDateTimeOffset.UtcNow);
+            UtcDateTimeOffset.UtcNow,
+            sequenceNum: 42);
         membershipRepository.Setup(x => x.GetVersionAsync(conversationId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(4);
         IntegrationEventEnvelope<ChatMessageSentIntegrationEventV2>? published = null;
@@ -50,8 +51,10 @@ public sealed class PublishChatMessageSentIntegrationEventDomainEventHandlerV2Te
         await handler.Handle(domainEvent, CancellationToken.None);
 
         published.Should().NotBeNull();
-        published!.Payload.ConversationMembershipRevision.Should().Be(4);
+        published!.KafkaKey.Should().Be(conversationId.Value.ToString("D"));
+        published.Payload.ConversationMembershipRevision.Should().Be(4);
         published.Payload.ConversationId.Should().Be(conversationId.Value);
+        published.Payload.SequenceNum.Should().Be(42);
     }
 
     [Fact]
@@ -64,7 +67,8 @@ public sealed class PublishChatMessageSentIntegrationEventDomainEventHandlerV2Te
             Id<ConversationV2>.New(),
             Id<UserProfile>.New(),
             "Hello",
-            UtcDateTimeOffset.UtcNow);
+            UtcDateTimeOffset.UtcNow,
+            sequenceNum: 42);
         membershipRepository.Setup(x => x.GetVersionAsync(
                 It.IsAny<Id<ConversationV2>>(),
                 It.IsAny<CancellationToken>()))

@@ -79,12 +79,11 @@ public sealed class DuetConversationReadRepository(AppDbContext dbContext) : Rea
         CancellationToken cancellationToken = default)
     {
         var currentSequences = Active(dbContext.ChatMessageReadsV2)
-            .Where(message => message.SequenceNum.HasValue)
             .GroupBy(message => message.ConversationId)
             .Select(messages => new
             {
                 ConversationId = messages.Key,
-                CurrentMsgSeqNum = messages.Max(message => message.SequenceNum)
+                CurrentMsgSeqNum = (long?)messages.Max(message => message.SequenceNum)
             });
 
         var rawRows = await (

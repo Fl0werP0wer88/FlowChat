@@ -20,13 +20,6 @@ public sealed class RouteMessageCommandHandlerTests
 
     public RouteMessageCommandHandlerTests()
     {
-        _chatServiceApiClientMock
-            .Setup(x => x.SetChatMessageSequenceNumberAsync(
-                It.IsAny<Guid>(),
-                It.IsAny<Guid>(),
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(42);
-
         _routerMock
             .Setup(x => x.RouteMessageAsync(It.IsAny<ChatMessageParam>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
@@ -70,13 +63,6 @@ public sealed class RouteMessageCommandHandlerTests
             .Setup(x => x.GetUserIdsByResourceIdAsync(RealtimeGroupType.Conversation, conversationId, It.IsAny<CancellationToken>()))
             .ReturnsAsync([recipientUserId, recipientUserId, senderUserId, Guid.Empty]);
 
-        _chatServiceApiClientMock.InSequence(sequence)
-            .Setup(x => x.SetChatMessageSequenceNumberAsync(
-                messageId,
-                conversationId,
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(sequenceNum);
-
         _routerMock.InSequence(sequence)
             .Setup(x => x.RouteMessageAsync(It.IsAny<ChatMessageParam>(), It.IsAny<CancellationToken>()))
             .Callback<ChatMessageParam, CancellationToken>((notification, _) => capturedNotification = notification)
@@ -99,6 +85,7 @@ public sealed class RouteMessageCommandHandlerTests
                 senderUserId,
                 " Hello there ",
                 new DateTimeOffset(2026, 3, 17, 12, 0, 0, TimeSpan.Zero),
+                sequenceNum,
                 1),
             CancellationToken.None);
         var afterHandleUtc = DateTimeOffset.UtcNow;
@@ -117,32 +104,6 @@ public sealed class RouteMessageCommandHandlerTests
         _chatServiceApiClientMock.Verify(
             x => x.MarkChatMessageAsDeliveredAsync(messageId, conversationId, deliveredAtUtc.Value, It.IsAny<CancellationToken>()),
             Times.Once);
-    }
-
-    [Fact]
-    public async Task Handle_WhenSetSequenceNumberFails_DoesNotRouteMessageOrMarkDelivered()
-    {
-        _chatServiceApiClientMock
-            .Setup(x => x.SetChatMessageSequenceNumberAsync(
-                It.IsAny<Guid>(),
-                It.IsAny<Guid>(),
-                It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new InvalidOperationException("boom"));
-
-        var act = () => _handler.Handle(CreateValidCommand(), CancellationToken.None);
-
-        await act.Should().ThrowAsync<InvalidOperationException>()
-            .WithMessage("boom");
-        _routerMock.Verify(
-            x => x.RouteMessageAsync(It.IsAny<ChatMessageParam>(), It.IsAny<CancellationToken>()),
-            Times.Never);
-        _chatServiceApiClientMock.Verify(
-            x => x.MarkChatMessageAsDeliveredAsync(
-                It.IsAny<Guid>(),
-                It.IsAny<Guid>(),
-                It.IsAny<DateTimeOffset>(),
-                It.IsAny<CancellationToken>()),
-            Times.Never);
     }
 
     [Fact]
@@ -179,6 +140,7 @@ public sealed class RouteMessageCommandHandlerTests
             _fixture.Create<Guid>(),
             "Hello there",
             new DateTimeOffset(2026, 3, 17, 12, 0, 0, TimeSpan.Zero),
+            42,
             2);
 
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -212,6 +174,7 @@ public sealed class RouteMessageCommandHandlerTests
             senderUserId,
             "Hello there",
             new DateTimeOffset(2026, 3, 17, 12, 0, 0, TimeSpan.Zero),
+            42,
             1);
 
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -236,5 +199,6 @@ public sealed class RouteMessageCommandHandlerTests
             _fixture.Create<Guid>(),
             "Hello there",
             new DateTimeOffset(2026, 3, 17, 12, 0, 0, TimeSpan.Zero),
+            42,
             1);
 }

@@ -9,4 +9,5 @@ public sealed record RouteMessageCommand(
     Guid SenderUserId,
     string? Text,
     DateTimeOffset SentAtUtc,
+    long SequenceNum,
     int ConversationMembershipRevision) : ICommand<Unit>;

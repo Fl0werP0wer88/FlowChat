@@ -38,6 +38,7 @@ public sealed class ChatMessageSentV2SubscriberTests
         var conversationId = _fixture.Create<Guid>();
         var senderUserId = _fixture.Create<Guid>();
         var sentAtUtc = new DateTimeOffset(2026, 3, 17, 10, 0, 0, TimeSpan.Zero);
+        const long sequenceNum = 42;
 
         _mediatorMock
             .Setup(x => x.Send(It.IsAny<RouteMessageCommand>(), It.IsAny<CancellationToken>()))
@@ -53,6 +54,7 @@ public sealed class ChatMessageSentV2SubscriberTests
                 SenderUserId = senderUserId,
                 Text = " Hi there ",
                 SentAtUtc = sentAtUtc,
+                SequenceNum = sequenceNum,
                 ConversationMembershipRevision = 3
             }.ToInboundEnvelope(),
             CancellationToken.None);
@@ -63,6 +65,7 @@ public sealed class ChatMessageSentV2SubscriberTests
         capturedCommand.SenderUserId.Should().Be(senderUserId);
         capturedCommand.Text.Should().Be("Hi there");
         capturedCommand.SentAtUtc.Should().Be(sentAtUtc);
+        capturedCommand.SequenceNum.Should().Be(sequenceNum);
         capturedCommand.ConversationMembershipRevision.Should().Be(3);
     }
 
@@ -107,6 +110,7 @@ public sealed class ChatMessageSentV2SubscriberTests
             SenderUserId = _fixture.Create<Guid>(),
             Text = "Hi there",
             SentAtUtc = DateTimeOffset.UtcNow,
+            SequenceNum = 42,
             ConversationMembershipRevision = 2
         };
 }

@@ -22,6 +22,10 @@ public sealed class RouteMessageCommandValidator : AbstractValidator<RouteMessag
             .Must(value => !string.IsNullOrWhiteSpace(value))
             .WithMessage("Text is required.");
 
+        RuleFor(command => command.SequenceNum)
+            .GreaterThan(0)
+            .WithMessage("SequenceNum must be greater than zero.");
+
         RuleFor(command => command.ConversationMembershipRevision)
             .GreaterThan(0)
             .WithMessage("ConversationMembershipRevision must be greater than zero.");

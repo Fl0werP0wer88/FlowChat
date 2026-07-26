@@ -49,7 +49,8 @@ public sealed class UnhideConversationParticipantsOnChatMessageSentDomainEventHa
             conversationId,
             senderId,
             "Hello",
-            UtcDateTimeOffset.UtcNow);
+            UtcDateTimeOffset.UtcNow,
+            sequenceNum: 42);
 
         await handler.Handle(domainEvent, CancellationToken.None);
 

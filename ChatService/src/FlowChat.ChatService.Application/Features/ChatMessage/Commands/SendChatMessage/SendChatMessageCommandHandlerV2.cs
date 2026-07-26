@@ -12,6 +12,7 @@ namespace FlowChat.ChatService.Application.Features.ChatMessage.Commands.SendCha
 
 public sealed class SendChatMessageCommandHandlerV2(
     IChatMessageV2WriteRepository messageRepository,
+    IConversationMessageSequenceRepositoryV2 sequenceRepository,
     IConversationParticipantWriteRepository participantRepository,
     IConversationV2WriteRepository conversationRepository,
     IUnitOfWork unitOfWork,
@@ -52,11 +53,15 @@ public sealed class SendChatMessageCommandHandlerV2(
                 DomainError.Unauthorized("Recipient has blocked this conversation."));
         }
 
+        var sequenceNum = await sequenceRepository.GetNextAsync(
+            conversationId,
+            cancellationToken);
         _message = ChatMessageV2.Create(
             Id<ChatMessageV2>.FromGuid(request.Id),
             conversationId,
             senderUserId,
-            request.Text!);
+            request.Text!,
+            sequenceNum);
         await messageRepository.AddAsync(_message, cancellationToken);
 
         return Created(

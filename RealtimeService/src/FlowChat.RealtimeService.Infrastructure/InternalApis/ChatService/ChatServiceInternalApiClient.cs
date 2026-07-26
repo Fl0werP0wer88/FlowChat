@@ -9,22 +9,6 @@ internal sealed class ChatServiceInternalApiClient(HttpClient httpClient)
 {
     protected override string ClientDisplayName => "Chat Service";
 
-    public async Task<long> SetChatMessageSequenceNumberAsync(
-        Guid messageId,
-        Guid conversationId,
-        CancellationToken cancellationToken)
-    {
-        using var request = new HttpRequestMessage(
-            HttpMethod.Patch,
-            $"/internal/messages/{messageId}/sequence-number")
-        {
-            Content = JsonContent.Create(new { ConversationId = conversationId })
-        };
-
-        var response = await SendAsync<SetChatMessageSequenceNumberResponse>(request, cancellationToken);
-        return response?.SequenceNum ?? throw new InvalidOperationException("Chat Service did not return a sequence number.");
-    }
-
     public async Task MarkChatMessageAsDeliveredAsync(
         Guid messageId,
         Guid conversationId,
@@ -40,8 +24,4 @@ internal sealed class ChatServiceInternalApiClient(HttpClient httpClient)
         await SendAsync(request, cancellationToken);
     }
 
-    private sealed class SetChatMessageSequenceNumberResponse
-    {
-        public long SequenceNum { get; init; }
-    }
 }

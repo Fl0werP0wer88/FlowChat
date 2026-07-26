@@ -36,8 +36,8 @@ public sealed class ConversationRepositoryTests
             Id<ChatMessageAggregateV2>.New(),
             matchingConversation.Id,
             Id<UserProfile>.FromGuid(creatorUserId),
-            "Latest");
-        latestMessage.SetSequenceNumber(84);
+            "Latest",
+            sequenceNum: 84);
         MarkCreated(latestMessage);
 
         MarkCreated(matchingConversation);

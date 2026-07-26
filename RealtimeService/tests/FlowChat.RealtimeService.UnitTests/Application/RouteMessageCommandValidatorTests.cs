@@ -18,6 +18,7 @@ public sealed class RouteMessageCommandValidatorTests
             _fixture.Create<Guid>(),
             "Hello",
             DateTimeOffset.UtcNow,
+            42,
             1);
 
         var result = _validator.Validate(command);
@@ -34,6 +35,7 @@ public sealed class RouteMessageCommandValidatorTests
             Guid.Empty,
             "Hello",
             DateTimeOffset.UtcNow,
+            42,
             1);
 
         var result = _validator.Validate(command);
@@ -55,12 +57,33 @@ public sealed class RouteMessageCommandValidatorTests
             _fixture.Create<Guid>(),
             value,
             DateTimeOffset.UtcNow,
+            42,
             1);
 
         var result = _validator.Validate(command);
 
         result.IsValid.Should().BeFalse();
         result.Errors.Should().Contain(e => e.PropertyName == "Text");
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    public void Validate_SequenceNumNotPositive_ReturnsValidationError(long sequenceNum)
+    {
+        var command = new RouteMessageCommand(
+            _fixture.Create<Guid>(),
+            _fixture.Create<Guid>(),
+            _fixture.Create<Guid>(),
+            "Hello",
+            DateTimeOffset.UtcNow,
+            sequenceNum,
+            1);
+
+        var result = _validator.Validate(command);
+
+        result.IsValid.Should().BeFalse();
+        result.Errors.Should().Contain(e => e.PropertyName == "SequenceNum");
     }
 
     [Theory]
@@ -74,6 +97,7 @@ public sealed class RouteMessageCommandValidatorTests
             _fixture.Create<Guid>(),
             "Hello",
             DateTimeOffset.UtcNow,
+            42,
             conversationVersionAtSend);
 
         var result = _validator.Validate(command);

@@ -14,7 +14,8 @@ public sealed class ChatMessageReadRepository(AppDbContext dbContext) : ReadRepo
     {
         return Active(dbContext.ChatMessageReadsV2)
             .Where(message => message.ConversationId == conversationId)
-            .MaxAsync(message => message.SequenceNum, cancellationToken);
+            .Select(message => (long?)message.SequenceNum)
+            .MaxAsync(cancellationToken);
     }
 
     public async Task<ConversationMessagesPageDto> GetPageBeforeAsync(

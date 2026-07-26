@@ -21,7 +21,7 @@ public sealed class ChatMessageReadRepositoryTests
         await using (var seedContext = CreateDbContext(databaseName))
         {
             seedContext.ChatMessageReadsV2.AddRange(
-                CreateMessage(conversationId, senderId, "Unsequenced", 8),
+                CreateMessage(conversationId, senderId, "First older", 8, 2),
                 CreateMessage(conversationId, senderId, "First", 9, 4),
                 CreateMessage(conversationId, senderId, "Latest", 10, 7),
                 CreateMessage(otherConversationId, senderId, "Other", 10, 42),
@@ -37,17 +37,10 @@ public sealed class ChatMessageReadRepositoryTests
     }
 
     [Fact]
-    public async Task GetMaxSequenceNumAsync_WhenConversationHasNoSequencedMessages_ReturnsNull()
+    public async Task GetMaxSequenceNumAsync_WhenConversationHasNoMessages_ReturnsNull()
     {
         var conversationId = Guid.NewGuid();
         var databaseName = Guid.NewGuid().ToString();
-
-        await using (var seedContext = CreateDbContext(databaseName))
-        {
-            seedContext.ChatMessageReadsV2.Add(
-                CreateMessage(conversationId, Guid.NewGuid(), "Unsequenced", 8));
-            await seedContext.SaveChangesAsync();
-        }
 
         await using var readContext = CreateDbContext(databaseName);
         var result = await new ChatMessageReadRepository(readContext)
@@ -135,7 +128,7 @@ public sealed class ChatMessageReadRepositoryTests
             SenderUserId = senderId,
             Text = text,
             SentAtUtc = new DateTimeOffset(2026, 4, 24, hour, 0, 0, TimeSpan.Zero),
-            SequenceNum = sequenceNum
+            SequenceNum = sequenceNum ?? hour
         };
 
     private static AppDbContext CreateDbContext(string databaseName)

@@ -120,8 +120,8 @@ public sealed class DuetConversationReadRepositoryTests
             Id<ChatMessageAggregateV2>.New(),
             duet.Conversation.Id,
             Id<UserProfile>.FromGuid(partnerUserId),
-            "Latest");
-        message.SetSequenceNumber(12);
+            "Latest",
+            sequenceNum: 12);
         MarkCreated(message);
 
         await using (var seedContext = CreateDbContext(connection))

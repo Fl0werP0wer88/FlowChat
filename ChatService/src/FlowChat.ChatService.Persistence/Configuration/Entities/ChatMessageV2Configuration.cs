@@ -29,7 +29,7 @@ public sealed class ChatMessageV2Configuration : IEntityTypeConfiguration<ChatMe
         builder.Property(x => x.Text).HasMaxLength(4000).IsRequired();
         builder.Property(x => x.SentAtUtc).HasUtcDateTimeOffsetConversion();
         builder.Property(x => x.DeliveredAtUtc).HasNullableUtcDateTimeOffsetConversion();
-        builder.Property(x => x.SequenceNum);
+        builder.Property(x => x.SequenceNum).IsRequired();
         builder.Property(x => x.DeliveryStatus).HasDefaultValue(DeliveryStatus.Pending).IsRequired();
         builder.Property(x => x.Version).IsConcurrencyToken();
         builder.Property(x => x.CreatedBy).HasMaxLength(256).IsRequired();
@@ -47,7 +47,6 @@ public sealed class ChatMessageV2Configuration : IEntityTypeConfiguration<ChatMe
 
         builder.HasIndex(x => new { x.ConversationId, x.SentAtUtc });
         builder.HasIndex(x => new { x.ConversationId, x.SequenceNum })
-            .IsUnique()
-            .HasFilter("\"SequenceNum\" IS NOT NULL");
+            .IsUnique();
     }
 }

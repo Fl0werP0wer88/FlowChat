@@ -16,25 +16,30 @@ public sealed class ChatMessageV2Tests
         var chatMessage = CreateMessage();
 
         chatMessage.DeliveryStatus.Should().Be(DeliveryStatus.Pending);
-        chatMessage.SequenceNum.Should().BeNull();
+        chatMessage.SequenceNum.Should().Be(42);
         var sentEvent = chatMessage.DomainEvents
             .OfType<ChatMessageSentDomainEventV2>()
             .Should()
             .ContainSingle()
             .Subject;
         sentEvent.AggregateType.Should().Be("chat-message-v2");
+        sentEvent.SequenceNum.Should().Be(42);
         chatMessage.DomainEvents.Should().ContainSingle();
     }
 
-    [Fact]
-    public void SetSequenceNumber_WhenCalledTwice_DoesNotReplaceAssignedNumber()
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    public void Create_WhenSequenceNumberIsNotPositive_Throws(long sequenceNum)
     {
-        var chatMessage = CreateMessage();
+        var action = () => ChatMessageV2.Create(
+            Id<ChatMessageV2>.New(),
+            Id<ConversationV2>.New(),
+            Id<UserProfileMarker>.New(),
+            "Hello",
+            sequenceNum);
 
-        chatMessage.SetSequenceNumber(42).Should().BeTrue();
-        chatMessage.SetSequenceNumber(43).Should().BeFalse();
-
-        chatMessage.SequenceNum.Should().Be(42);
+        action.Should().Throw<ArgumentOutOfRangeException>();
     }
 
     [Fact]
@@ -43,13 +48,13 @@ public sealed class ChatMessageV2Tests
         var chatMessage = CreateMessage();
         var deliveredAtUtc = UtcDateTimeOffset.Create(
             new DateTimeOffset(2026, 7, 19, 12, 0, 0, TimeSpan.Zero));
-        chatMessage.SetSequenceNumber(42);
 
         chatMessage.MarkAsDelivered(deliveredAtUtc).Should().BeTrue();
         chatMessage.MarkAsDelivered(deliveredAtUtc).Should().BeFalse();
 
         chatMessage.DeliveryStatus.Should().Be(DeliveryStatus.Delivered);
         chatMessage.DeliveredAtUtc.Should().Be(deliveredAtUtc);
+        chatMessage.SequenceNum.Should().Be(42);
     }
 
     [Fact]
@@ -61,7 +66,7 @@ public sealed class ChatMessageV2Tests
             Id<UserProfileMarker>.New(),
             "Hello",
             UtcDateTimeOffset.UtcNow,
-            sequenceNum: null,
+            sequenceNum: 42,
             DeliveryStatus.Pending,
             deliveredAtUtc: null);
 
@@ -74,6 +79,7 @@ public sealed class ChatMessageV2Tests
             Id<ChatMessageV2>.New(),
             Id<ConversationV2>.New(),
             Id<UserProfileMarker>.New(),
-            "Hello");
+            "Hello",
+            sequenceNum: 42);
     }
 }
