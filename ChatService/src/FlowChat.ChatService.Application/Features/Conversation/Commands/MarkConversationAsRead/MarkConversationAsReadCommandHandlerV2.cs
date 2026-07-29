@@ -39,7 +39,6 @@ public sealed class MarkConversationAsReadCommandHandlerV2(
         MarkConversationAsReadCommandV2 request,
         CancellationToken cancellationToken)
     {
-        var mutationType = FlowChat.Shared.Domain.MutationType.Unchanged;
         var currentSequenceNum = await sequenceReadRepository.GetCurrentAsync(
             request.ConversationId,
             cancellationToken) ?? 0;
@@ -50,12 +49,8 @@ public sealed class MarkConversationAsReadCommandHandlerV2(
                 "SequenceNum cannot exceed the current conversation sequence."));
         }
 
-        //Review9-1: Czemu nie zastosowales tutaj metody AggregateRootUpdateCommandHandlerBaseV3.Updated ? 
-        if (AggregateRoot!.AdvanceReadCursor(request.SequenceNum))
-        {
-            mutationType = FlowChat.Shared.Domain.MutationType.Updated;
-        }
-
-        return Mutation(mutationType, Unit.Value);
+        return AggregateRoot!.AdvanceReadCursor(request.SequenceNum)
+            ? Updated(Unit.Value)
+            : Unchanged(Unit.Value);
     }
 }

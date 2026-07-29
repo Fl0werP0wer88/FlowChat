@@ -4,7 +4,7 @@ using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
 
 namespace FlowChat.ChatService.Application.Features.ChatMessage.Queries.GetConversationMessages;
-//Review9-2: Wydaje mi sie jednak że było by czytelniej jak tryby before i after były q osobnych sommand handlerach co ty na to ?
+//Review9-2: Wydaje mi sie jednak że było by czytelniej jak tryby before i after były w osobnych query handlerach co ty na to ?
 public sealed class GetConversationMessagesQueryHandler
     : IQueryHandler<GetConversationMessagesQuery, ConversationMessagesPageDto>
 {
