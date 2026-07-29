@@ -1,6 +1,7 @@
 <Solution>
   <Folder Name="/src/">
     <Project Path="src/FlowChat.GatewayService.API/FlowChat.GatewayService.API.csproj" />
+    <Project Path="src/FlowChat.GatewayService.Infrastructure/FlowChat.GatewayService.Infrastructure.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/FlowChat.GatewayService.IntegrationTests/FlowChat.GatewayService.IntegrationTests.csproj" />

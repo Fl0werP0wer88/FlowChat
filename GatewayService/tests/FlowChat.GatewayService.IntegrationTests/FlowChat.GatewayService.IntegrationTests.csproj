@@ -18,6 +18,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\FlowChat.GatewayService.API\FlowChat.GatewayService.API.csproj" />
+    <ProjectReference Include="..\..\src\FlowChat.GatewayService.Infrastructure\FlowChat.GatewayService.Infrastructure.csproj" />
   </ItemGroup>
 
   <ItemGroup>

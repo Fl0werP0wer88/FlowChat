@@ -3,7 +3,7 @@ using FlowChat.Core.Results;
 using FlowChat.GatewayService.Api.Features.ChatMessage.Interfaces;
 using FlowChat.GatewayService.Api.Features.ChatMessage.Public.GetConversationMessages;
 using FlowChat.GatewayService.Api.Models;
-using FlowChat.GatewayService.Api.Services;
+using FlowChat.GatewayService.Infrastructure.Clients.ChatService;
 using FlowChat.Shared.API;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

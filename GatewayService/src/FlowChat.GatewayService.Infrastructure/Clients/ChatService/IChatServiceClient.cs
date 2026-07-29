@@ -1,6 +1,6 @@
 using FlowChat.Core.Results;
 
-namespace FlowChat.GatewayService.Api.Services;
+namespace FlowChat.GatewayService.Infrastructure.Clients.ChatService;
 
 public interface IChatServiceClient
 {

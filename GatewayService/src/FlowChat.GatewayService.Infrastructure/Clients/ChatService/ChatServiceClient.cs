@@ -3,7 +3,7 @@ using FlowChat.Core.Results;
 using FlowChat.Shared.Infrastructure.Http;
 using FlowChat.Shared.Domain;
 
-namespace FlowChat.GatewayService.Api.Services;
+namespace FlowChat.GatewayService.Infrastructure.Clients.ChatService;
 
 internal sealed class ChatServiceClient(HttpClient httpClient)
     : FlowChatHttpClientBase(httpClient), IChatServiceClient

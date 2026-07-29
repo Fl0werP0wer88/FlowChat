@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
   <ItemGroup>
+    <ProjectReference Include="..\FlowChat.GatewayService.Infrastructure\FlowChat.GatewayService.Infrastructure.csproj" />
     <ProjectReference Include="..\..\..\Common\src\FlowChat.Shared.API\FlowChat.Shared.API.csproj" />
     <ProjectReference Include="..\..\..\Common\src\FlowChat.Shared.Infrastructure\FlowChat.Shared.Infrastructure.csproj" />
     <PackageReference Include="AutoMapper" Version="16.1.1" />

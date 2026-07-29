@@ -3,10 +3,9 @@ using FlowChat.GatewayService.Api.Configuration.Settings;
 using FlowChat.GatewayService.Api.Features.ChatMessage.Interfaces;
 using FlowChat.GatewayService.Api.Features.ChatMessage.Services;
 using FlowChat.GatewayService.Api.Observability;
-using FlowChat.GatewayService.Api.Services;
+using FlowChat.GatewayService.Infrastructure.Configuration;
 using FlowChat.Shared.API;
 using FlowChat.Shared.Infrastructure.Configuration;
-using FlowChat.Shared.Infrastructure.Http;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.OpenApi;
@@ -29,11 +28,10 @@ public static class StartupExtensions
             (Action<AutoMapper.IMapperConfigurationExpression>?)null,
             typeof(StartupExtensions).Assembly);
         builder.Services.AddScoped<IConversationMessagesFacade, ConversationMessagesFacade>();
+        builder.Services.AddGatewayInfrastructure(builder.Configuration);
 
         var clientSettings = builder.Configuration.GetSection(new GatewayClientSettingsSection().SectionName)
             .Get<GatewayClientSettingsSection>() ?? new GatewayClientSettingsSection();
-        var servicesSettings = builder.Configuration.GetSection(new GatewayServicesSettingsSection().SectionName)
-            .Get<GatewayServicesSettingsSection>() ?? new GatewayServicesSettingsSection();
 
         builder.Services.AddFlowChatJwtAuthentication(
             builder.Configuration,
@@ -99,34 +97,6 @@ public static class StartupExtensions
         builder.Services
             .AddReverseProxy()
             .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
-
-        builder.Services.AddHttpContextAccessor();
-        builder.Services.AddTransient<BearerTokenForwardingHandler>();
-
-        builder.Services
-            .AddFlowChatHttpClient<IChatServiceClient, ChatServiceClient>((_, client) =>
-            {
-                client.BaseAddress = new Uri(servicesSettings.ChatServiceBaseUrl);
-                if (!string.IsNullOrWhiteSpace(servicesSettings.ChatServiceInternalApiKey))
-                {
-                    client.DefaultRequestHeaders.Add(
-                        FlowChatHttpClientBase.InternalApiKeyHeaderName,
-                        servicesSettings.ChatServiceInternalApiKey);
-                }
-            })
-            .AddHttpMessageHandler<BearerTokenForwardingHandler>();
-
-        builder.Services
-            .AddFlowChatHttpClient<IPresenceServiceClient, PresenceServiceClient>((_, client) =>
-            {
-                client.BaseAddress = new Uri(servicesSettings.PresenceServiceBaseUrl);
-                if (!string.IsNullOrWhiteSpace(servicesSettings.PresenceServiceInternalApiKey))
-                {
-                    client.DefaultRequestHeaders.Add(
-                        PresenceServiceClient.ApiKeyHeaderName,
-                        servicesSettings.PresenceServiceInternalApiKey);
-                }
-            });
 
         return builder.Build();
     }

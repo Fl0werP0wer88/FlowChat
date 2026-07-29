@@ -1,7 +1,7 @@
 using FluentAssertions;
 using FlowChat.Core.Results;
 using FlowChat.GatewayService.Api.Features.ChatMessage.Services;
-using FlowChat.GatewayService.Api.Services;
+using FlowChat.GatewayService.Infrastructure.Clients.ChatService;
 using FlowChat.Shared.Domain;
 using Moq;
 

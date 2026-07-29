@@ -1,4 +1,4 @@
-namespace FlowChat.GatewayService.Api.Services;
+namespace FlowChat.GatewayService.Infrastructure.Clients.ChatService;
 
 public sealed record DuetConversationClientDto(
     Guid ConversationId,

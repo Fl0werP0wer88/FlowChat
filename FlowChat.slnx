@@ -123,6 +123,7 @@
   <Folder Name="/GatewayService/" />
   <Folder Name="/GatewayService/src/">
     <Project Path="GatewayService/src/FlowChat.GatewayService.API/FlowChat.GatewayService.API.csproj" />
+    <Project Path="GatewayService/src/FlowChat.GatewayService.Infrastructure/FlowChat.GatewayService.Infrastructure.csproj" />
   </Folder>
   <Folder Name="/GatewayService/tests/">
     <Project Path="GatewayService/tests/FlowChat.GatewayService.IntegrationTests/FlowChat.GatewayService.IntegrationTests.csproj" />

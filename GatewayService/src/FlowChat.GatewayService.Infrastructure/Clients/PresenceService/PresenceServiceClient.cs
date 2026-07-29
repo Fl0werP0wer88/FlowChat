@@ -1,7 +1,7 @@
 using System.Net.Http.Json;
 using FlowChat.Shared.Infrastructure.Http;
 
-namespace FlowChat.GatewayService.Api.Services;
+namespace FlowChat.GatewayService.Infrastructure.Clients.PresenceService;
 
 internal sealed class PresenceServiceClient(HttpClient httpClient)
     : FlowChatHttpClientBase(httpClient), IPresenceServiceClient

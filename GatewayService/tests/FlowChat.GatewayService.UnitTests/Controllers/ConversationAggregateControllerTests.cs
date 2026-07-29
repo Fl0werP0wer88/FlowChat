@@ -7,7 +7,7 @@ using FlowChat.GatewayService.Api.Controllers;
 using FlowChat.GatewayService.Api.Features.ChatMessage.Interfaces;
 using FlowChat.GatewayService.Api.Features.ChatMessage.Public.GetConversationMessages;
 using FlowChat.GatewayService.Api.Models;
-using FlowChat.GatewayService.Api.Services;
+using FlowChat.GatewayService.Infrastructure.Clients.ChatService;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging.Abstractions;

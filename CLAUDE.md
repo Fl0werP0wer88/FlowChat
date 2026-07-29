@@ -77,6 +77,8 @@ Each service follows **Clean Architecture**:
 - `API` — controllers, minimal API endpoints
 - `Workers` — background workers (e.g. outbox publisher)
 
+GatewayService intentionally uses only `API` and `Infrastructure`: API owns HTTP endpoints and orchestration facades, while Infrastructure owns downstream service clients and transport concerns. Do not add empty Application, Domain, or Persistence projects to GatewayService.
+
 Domain events are dispatched via `IDomainEventDispatcher` and mapped to integration events published to Kafka.
 
 ### Read repositories

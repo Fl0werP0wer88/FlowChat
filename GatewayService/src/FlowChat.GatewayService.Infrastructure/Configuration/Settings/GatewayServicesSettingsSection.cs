@@ -1,6 +1,6 @@
 using FlowChat.Core.Contracts;
 
-namespace FlowChat.GatewayService.Api.Configuration.Settings;
+namespace FlowChat.GatewayService.Infrastructure.Configuration.Settings;
 
 public sealed class GatewayServicesSettingsSection : SettingsSectionBase
 {

@@ -1,6 +1,7 @@
 using FlowChat.Core.Domain;
 using FlowChat.GatewayService.Api.Models;
-using FlowChat.GatewayService.Api.Services;
+using FlowChat.GatewayService.Infrastructure.Clients.ChatService;
+using FlowChat.GatewayService.Infrastructure.Clients.PresenceService;
 using FlowChat.Shared.API;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

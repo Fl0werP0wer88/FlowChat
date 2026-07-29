@@ -1,6 +1,6 @@
 using FlowChat.Core.Domain;
 
-namespace FlowChat.GatewayService.Api.Services;
+namespace FlowChat.GatewayService.Infrastructure.Clients.PresenceService;
 
 public sealed record ContactPresenceStatusClientDto(
     Guid UserId,

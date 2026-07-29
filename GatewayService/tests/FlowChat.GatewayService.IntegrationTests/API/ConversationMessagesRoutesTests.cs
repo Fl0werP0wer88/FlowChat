@@ -4,7 +4,7 @@ using FluentAssertions;
 using FlowChat.Core.Results;
 using FlowChat.GatewayService.Api.Features.ChatMessage.Public.CatchUpConversationMessages;
 using FlowChat.GatewayService.Api.Features.ChatMessage.Public.GetConversationMessages;
-using FlowChat.GatewayService.Api.Services;
+using FlowChat.GatewayService.Infrastructure.Clients.ChatService;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Moq;
 

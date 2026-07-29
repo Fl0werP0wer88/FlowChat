@@ -1,8 +1,8 @@
 using System.Text.Json;
 using FluentAssertions;
-using FlowChat.GatewayService.Api.Services;
+using FlowChat.GatewayService.Infrastructure.Clients.ChatService;
 
-namespace FlowChat.GatewayService.UnitTests.Services;
+namespace FlowChat.GatewayService.UnitTests.Infrastructure.Clients.ChatService;
 
 public sealed class ChatServiceContractTests
 {

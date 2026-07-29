@@ -1,4 +1,4 @@
-using FlowChat.GatewayService.Api.Services;
+using FlowChat.GatewayService.Infrastructure.Clients.ChatService;
 
 namespace FlowChat.GatewayService.Api.Features.ChatMessage.Public.GetConversationMessages;
 

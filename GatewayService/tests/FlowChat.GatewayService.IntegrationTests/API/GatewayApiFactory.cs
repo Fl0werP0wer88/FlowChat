@@ -1,5 +1,5 @@
 using FlowChat.GatewayService.Api.Features.ChatMessage.Public.GetConversationMessages;
-using FlowChat.GatewayService.Api.Services;
+using FlowChat.GatewayService.Infrastructure.Clients.ChatService;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;

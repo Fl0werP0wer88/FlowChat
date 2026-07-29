@@ -1,8 +1,9 @@
 using System.Net.Http.Headers;
+using Microsoft.AspNetCore.Http;
 
-namespace FlowChat.GatewayService.Api.Services;
+namespace FlowChat.GatewayService.Infrastructure.Http;
 
-internal sealed class BearerTokenForwardingHandler : DelegatingHandler
+public sealed class BearerTokenForwardingHandler : DelegatingHandler
 {
     private readonly IHttpContextAccessor _httpContextAccessor;
 
