@@ -4,10 +4,10 @@ using AutoMapper;
 using FluentAssertions;
 using FlowChat.Core.Results;
 using FlowChat.GatewayService.Api.Controllers;
+using FlowChat.GatewayService.Api.Features.ChatMessage.Interfaces;
 using FlowChat.GatewayService.Api.Features.ChatMessage.Public.GetConversationMessages;
 using FlowChat.GatewayService.Api.Models;
 using FlowChat.GatewayService.Api.Services;
-using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -19,7 +19,7 @@ public sealed class ConversationAggregateControllerTests
 {
     private readonly Fixture _fixture = new();
     private readonly Mock<IChatServiceClient> _chatClientMock = new();
-    private readonly Mock<IMediator> _mediatorMock = new();
+    private readonly Mock<IConversationMessagesFacade> _messagesFacadeMock = new();
     private readonly IMapper _mapper = new MapperConfiguration(
         cfg => cfg.AddProfile<ConversationAggregateMappingProfile>(),
         NullLoggerFactory.Instance).CreateMapper();
@@ -93,7 +93,7 @@ public sealed class ConversationAggregateControllerTests
     {
         var controller = new ConversationAggregateController(
             _chatClientMock.Object,
-            _mediatorMock.Object,
+            _messagesFacadeMock.Object,
             _mapper,
             NullLogger<ConversationAggregateController>.Instance);
         controller.ControllerContext = new ControllerContext
@@ -108,9 +108,12 @@ public sealed class ConversationAggregateControllerTests
     }
 
     private void SetupMessages(GetConversationMessagesResult messages) =>
-        _mediatorMock
-            .Setup(x => x.Send(
-                It.IsAny<GetConversationMessagesQuery>(),
+        _messagesFacadeMock
+            .Setup(x => x.GetHistoryAsync(
+                It.IsAny<Guid>(),
+                It.IsAny<Guid>(),
+                10,
+                null,
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(FlowChatResult<GetConversationMessagesResult>.Success(messages));
 

@@ -1,10 +1,10 @@
 using AutoMapper;
 using FlowChat.Core.Results;
+using FlowChat.GatewayService.Api.Features.ChatMessage.Interfaces;
 using FlowChat.GatewayService.Api.Features.ChatMessage.Public.GetConversationMessages;
 using FlowChat.GatewayService.Api.Models;
 using FlowChat.GatewayService.Api.Services;
 using FlowChat.Shared.API;
-using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -18,18 +18,18 @@ public sealed class ConversationAggregateController : ApiControllerBase
     private const int DefaultMessageLimit = 10;
 
     private readonly IChatServiceClient _chatClient;
-    private readonly IMediator _mediator;
+    private readonly IConversationMessagesFacade _messagesFacade;
     private readonly IMapper _mapper;
     private readonly ILogger<ConversationAggregateController> _logger;
 
     public ConversationAggregateController(
         IChatServiceClient chatClient,
-        IMediator mediator,
+        IConversationMessagesFacade messagesFacade,
         IMapper mapper,
         ILogger<ConversationAggregateController> logger)
     {
         _chatClient = chatClient ?? throw new ArgumentNullException(nameof(chatClient));
-        _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
+        _messagesFacade = messagesFacade ?? throw new ArgumentNullException(nameof(messagesFacade));
         _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
@@ -219,11 +219,10 @@ public sealed class ConversationAggregateController : ApiControllerBase
         Guid conversationId,
         Guid requestingUserId,
         CancellationToken cancellationToken) =>
-        _mediator.Send(
-            new GetConversationMessagesQuery(
-                conversationId,
-                requestingUserId,
-                DefaultMessageLimit,
-                null),
+        _messagesFacade.GetHistoryAsync(
+            conversationId,
+            requestingUserId,
+            DefaultMessageLimit,
+            null,
             cancellationToken);
 }

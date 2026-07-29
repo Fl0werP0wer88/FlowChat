@@ -1,6 +1,6 @@
 using AutoMapper;
+using FlowChat.GatewayService.Api.Features.ChatMessage.Interfaces;
 using FlowChat.Shared.API;
-using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -12,12 +12,14 @@ namespace FlowChat.GatewayService.Api.Features.ChatMessage.Public.GetConversatio
 public sealed class GetConversationMessagesController : ApiControllerBase
 {
     private const int DefaultLimit = 50;
-    private readonly IMediator _mediator;
+    private readonly IConversationMessagesFacade _messagesFacade;
     private readonly IMapper _mapper;
 
-    public GetConversationMessagesController(IMediator mediator, IMapper mapper)
+    public GetConversationMessagesController(
+        IConversationMessagesFacade messagesFacade,
+        IMapper mapper)
     {
-        _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
+        _messagesFacade = messagesFacade ?? throw new ArgumentNullException(nameof(messagesFacade));
         _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
     }
 
@@ -34,8 +36,11 @@ public sealed class GetConversationMessagesController : ApiControllerBase
             return Unauthorized();
         }
 
-        var result = await _mediator.Send(
-            new GetConversationMessagesQuery(conversationId, userId, limit, beforeSequenceNum),
+        var result = await _messagesFacade.GetHistoryAsync(
+            conversationId,
+            userId,
+            limit,
+            beforeSequenceNum,
             cancellationToken);
 
         return result.IsSuccess

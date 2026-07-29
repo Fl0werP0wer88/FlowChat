@@ -1,9 +1,10 @@
 using System.Text.Json.Serialization;
 using FlowChat.GatewayService.Api.Configuration.Settings;
+using FlowChat.GatewayService.Api.Features.ChatMessage.Interfaces;
+using FlowChat.GatewayService.Api.Features.ChatMessage.Services;
 using FlowChat.GatewayService.Api.Observability;
 using FlowChat.GatewayService.Api.Services;
 using FlowChat.Shared.API;
-using FlowChat.Shared.Application;
 using FlowChat.Shared.Infrastructure.Configuration;
 using FlowChat.Shared.Infrastructure.Http;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -27,12 +28,7 @@ public static class StartupExtensions
         builder.Services.AddAutoMapper(
             (Action<AutoMapper.IMapperConfigurationExpression>?)null,
             typeof(StartupExtensions).Assembly);
-        builder.Services.AddFlowChatValidatorsFromAssembly(typeof(StartupExtensions).Assembly);
-        builder.Services.AddMediatR(configuration =>
-        {
-            configuration.RegisterServicesFromAssembly(typeof(StartupExtensions).Assembly);
-            configuration.AddFlowChatBehaviors();
-        });
+        builder.Services.AddScoped<IConversationMessagesFacade, ConversationMessagesFacade>();
 
         var clientSettings = builder.Configuration.GetSection(new GatewayClientSettingsSection().SectionName)
             .Get<GatewayClientSettingsSection>() ?? new GatewayClientSettingsSection();

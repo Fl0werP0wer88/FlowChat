@@ -1,6 +1,6 @@
 using AutoMapper;
+using FlowChat.GatewayService.Api.Features.ChatMessage.Interfaces;
 using FlowChat.Shared.API;
-using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
@@ -13,12 +13,14 @@ namespace FlowChat.GatewayService.Api.Features.ChatMessage.Public.CatchUpConvers
 public sealed class CatchUpConversationMessagesController : ApiControllerBase
 {
     private const int DefaultLimit = 100;
-    private readonly IMediator _mediator;
+    private readonly IConversationMessagesFacade _messagesFacade;
     private readonly IMapper _mapper;
 
-    public CatchUpConversationMessagesController(IMediator mediator, IMapper mapper)
+    public CatchUpConversationMessagesController(
+        IConversationMessagesFacade messagesFacade,
+        IMapper mapper)
     {
-        _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
+        _messagesFacade = messagesFacade ?? throw new ArgumentNullException(nameof(messagesFacade));
         _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
     }
 
@@ -36,13 +38,12 @@ public sealed class CatchUpConversationMessagesController : ApiControllerBase
             return Unauthorized();
         }
 
-        var result = await _mediator.Send(
-            new CatchUpConversationMessagesQuery(
-                conversationId,
-                userId,
-                limit,
-                afterSequenceNum,
-                throughSequenceNum),
+        var result = await _messagesFacade.CatchUpAsync(
+            conversationId,
+            userId,
+            limit,
+            afterSequenceNum,
+            throughSequenceNum,
             cancellationToken);
 
         return result.IsSuccess

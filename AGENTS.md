@@ -90,7 +90,8 @@ Domain events are dispatched via `IDomainEventDispatcher` and mapped to integrat
 ### API and Application boundaries
 - Controllers do not call repositories or persistence services directly
 - A controller's role is limited to HTTP concerns: reading the request, authorization/authentication, invoking the appropriate command/query through MediatR, and mapping HTTP DTOs and responses
-- Request validation belongs in the Application layer via FluentValidation / MediatR pipeline, not in controllers
+- GatewayService is exempt from the MediatR requirement because it is a proxy and aggregation layer: its controllers invoke dedicated orchestration facades instead; shared service-to-service translation and validation belong in those facades, never in controllers
+- Request validation belongs in the Application layer via FluentValidation / MediatR pipeline; in GatewayService, orchestration facades validate their inputs and return `FlowChatResult`, rather than placing validation in controllers
 - Never accept the current user's ID as an explicit route parameter, query parameter, or request body field on authenticated endpoints — always extract it from the JWT claim via `TryGetCurrentUserId(out var userId)` inherited from `ApiControllerBase`; passing the caller's identity in the request lets clients impersonate other users
 - Internal endpoints (API-key-authenticated, service-to-service) are exempt and may accept explicit user IDs in their payloads
 
