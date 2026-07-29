@@ -1,3 +1,5 @@
+using FlowChat.Core.Results;
+
 namespace FlowChat.GatewayService.Api.Services;
 
 public interface IChatServiceClient
@@ -16,8 +18,19 @@ public interface IChatServiceClient
         Guid conversationId,
         CancellationToken cancellationToken);
 
-    Task<ChatMessagesClientDto> GetConversationMessagesAsync(
+    Task<FlowChatResult<ConversationMessagesRangeClientDto>> GetConversationMessagesRangeAscendingAsync(
         Guid conversationId,
+        Guid requestingUserId,
+        long? startSequenceNum,
+        long? endSequenceNum,
+        int limit,
+        CancellationToken cancellationToken);
+
+    Task<FlowChatResult<ConversationMessagesRangeClientDto>> GetConversationMessagesRangeDescendingAsync(
+        Guid conversationId,
+        Guid requestingUserId,
+        long? startSequenceNum,
+        long? endSequenceNum,
         int limit,
         CancellationToken cancellationToken);
 }

@@ -15,9 +15,10 @@ public sealed record ConversationParticipantClientDto(
     string? AvatarUrl,
     Guid ParticipantUserId);
 
-public sealed record ChatMessagesClientDto(
+public sealed record ConversationMessagesRangeClientDto(
     IReadOnlyCollection<ChatMessageClientDto> Items,
-    long? NextBeforeSequenceNum,
+    long StartSequenceNum,
+    long EndSequenceNum,
     long CurrentSequenceNum,
     bool HasMore);
 

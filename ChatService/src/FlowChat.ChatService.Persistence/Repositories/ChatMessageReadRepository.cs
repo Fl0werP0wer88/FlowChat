@@ -8,24 +8,18 @@ namespace FlowChat.ChatService.Persistence.Repositories;
 
 public sealed class ChatMessageReadRepository(AppDbContext dbContext) : ReadRepositoryBase, IChatMessageReadRepository
 {
-    public async Task<IReadOnlyCollection<ChatMessageDto>> GetBeforeSequenceAsync(
+    public async Task<IReadOnlyCollection<ChatMessageDto>> GetRangeDescendingAsync(
         Guid conversationId,
-        long throughSequenceNum,
-        long? beforeSequenceNum,
+        long startSequenceNum,
+        long endSequenceNum,
         int limit,
         CancellationToken cancellationToken = default)
     {
-        var query = Active(dbContext.ChatMessageReadsV2)
+        var rows = await Active(dbContext.ChatMessageReadsV2)
             .Where(message =>
                 message.ConversationId == conversationId &&
-                message.SequenceNum <= throughSequenceNum);
-
-        if (beforeSequenceNum.HasValue)
-        {
-            query = query.Where(message => message.SequenceNum < beforeSequenceNum.Value);
-        }
-
-        var rows = await query
+                message.SequenceNum >= startSequenceNum &&
+                message.SequenceNum <= endSequenceNum)
             .OrderByDescending(message => message.SequenceNum)
             .Take(limit)
             .ToListAsync(cancellationToken);
@@ -33,18 +27,18 @@ public sealed class ChatMessageReadRepository(AppDbContext dbContext) : ReadRepo
         return rows.Select(MapToDto).ToList();
     }
 
-    public async Task<IReadOnlyCollection<ChatMessageDto>> GetAfterSequenceAsync(
+    public async Task<IReadOnlyCollection<ChatMessageDto>> GetRangeAscendingAsync(
         Guid conversationId,
-        long afterSequenceNum,
-        long throughSequenceNum,
+        long startSequenceNum,
+        long endSequenceNum,
         int limit,
         CancellationToken cancellationToken = default)
     {
         var rows = await Active(dbContext.ChatMessageReadsV2)
             .Where(message =>
                 message.ConversationId == conversationId &&
-                message.SequenceNum > afterSequenceNum &&
-                message.SequenceNum <= throughSequenceNum)
+                message.SequenceNum >= startSequenceNum &&
+                message.SequenceNum <= endSequenceNum)
             .OrderBy(message => message.SequenceNum)
             .Take(limit)
             .ToListAsync(cancellationToken);

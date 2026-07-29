@@ -9,7 +9,7 @@ namespace FlowChat.ChatService.IntegrationTests.Persistence.Repositories;
 public sealed class ChatMessageReadRepositoryTests
 {
     [Fact]
-    public async Task GetBeforeSequenceAsync_ReturnsNewestActiveRowsWithinBoundary()
+    public async Task GetRangeDescendingAsync_ReturnsNewestActiveRowsWithinInclusiveRange()
     {
         var conversationId = Guid.NewGuid();
         var senderId = Guid.NewGuid();
@@ -25,15 +25,15 @@ public sealed class ChatMessageReadRepositoryTests
 
         await using var context = Context(databaseName);
         var result = await new ChatMessageReadRepository(context)
-            .GetBeforeSequenceAsync(
-                conversationId, throughSequenceNum: 10,
-                beforeSequenceNum: null, limit: 3);
+            .GetRangeDescendingAsync(
+                conversationId, startSequenceNum: 8,
+                endSequenceNum: 10, limit: 3);
 
         result.Select(item => item.SequenceNum).Should().Equal(10, 9, 8);
     }
 
     [Fact]
-    public async Task GetBeforeSequenceAsync_WithCursor_ReturnsOlderRows()
+    public async Task GetRangeDescendingAsync_ExcludesRowsOutsideRange()
     {
         var conversationId = Guid.NewGuid();
         var senderId = Guid.NewGuid();
@@ -45,15 +45,15 @@ public sealed class ChatMessageReadRepositoryTests
 
         await using var context = Context(databaseName);
         var result = await new ChatMessageReadRepository(context)
-            .GetBeforeSequenceAsync(
-                conversationId, throughSequenceNum: 10,
-                beforeSequenceNum: 10, limit: 10);
+            .GetRangeDescendingAsync(
+                conversationId, startSequenceNum: 8,
+                endSequenceNum: 9, limit: 10);
 
         result.Select(item => item.SequenceNum).Should().Equal(9, 8);
     }
 
     [Fact]
-    public async Task GetAfterSequenceAsync_ReturnsAscendingRowsWithinStableSnapshot()
+    public async Task GetRangeAscendingAsync_ReturnsActiveRowsWithinInclusiveRange()
     {
         var conversationId = Guid.NewGuid();
         var senderId = Guid.NewGuid();
@@ -68,9 +68,9 @@ public sealed class ChatMessageReadRepositoryTests
 
         await using var context = Context(databaseName);
         var result = await new ChatMessageReadRepository(context)
-            .GetAfterSequenceAsync(
-                conversationId, afterSequenceNum: 9,
-                throughSequenceNum: 12, limit: 100);
+            .GetRangeAscendingAsync(
+                conversationId, startSequenceNum: 10,
+                endSequenceNum: 12, limit: 100);
 
         result.Select(item => item.SequenceNum).Should().Equal(10, 12);
     }

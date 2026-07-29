@@ -1,5 +1,7 @@
 using System.Net.Http.Json;
+using FlowChat.Core.Results;
 using FlowChat.Shared.Infrastructure.Http;
+using FlowChat.Shared.Domain;
 
 namespace FlowChat.GatewayService.Api.Services;
 
@@ -71,21 +73,96 @@ internal sealed class ChatServiceClient(HttpClient httpClient)
         return await response.Content.ReadFromJsonAsync<GroupConversationClientDto>(JsonOptions, cancellationToken);
     }
 
-    public async Task<ChatMessagesClientDto> GetConversationMessagesAsync(
+    public Task<FlowChatResult<ConversationMessagesRangeClientDto>> GetConversationMessagesRangeAscendingAsync(
         Guid conversationId,
+        Guid requestingUserId,
+        long? startSequenceNum,
+        long? endSequenceNum,
         int limit,
+        CancellationToken cancellationToken) =>
+        GetConversationMessagesRangeAsync(
+            conversationId,
+            requestingUserId,
+            startSequenceNum,
+            endSequenceNum,
+            limit,
+            "ascending",
+            cancellationToken);
+
+    public Task<FlowChatResult<ConversationMessagesRangeClientDto>> GetConversationMessagesRangeDescendingAsync(
+        Guid conversationId,
+        Guid requestingUserId,
+        long? startSequenceNum,
+        long? endSequenceNum,
+        int limit,
+        CancellationToken cancellationToken) =>
+        GetConversationMessagesRangeAsync(
+            conversationId,
+            requestingUserId,
+            startSequenceNum,
+            endSequenceNum,
+            limit,
+            "descending",
+            cancellationToken);
+
+    private async Task<FlowChatResult<ConversationMessagesRangeClientDto>> GetConversationMessagesRangeAsync(
+        Guid conversationId,
+        Guid requestingUserId,
+        long? startSequenceNum,
+        long? endSequenceNum,
+        int limit,
+        string direction,
         CancellationToken cancellationToken)
     {
+        var parameters = new List<string>
+        {
+            $"requestingUserId={Uri.EscapeDataString(requestingUserId.ToString())}",
+            $"limit={limit}"
+        };
+        if (startSequenceNum.HasValue)
+        {
+            parameters.Add($"startSequenceNum={startSequenceNum.Value}");
+        }
+        if (endSequenceNum.HasValue)
+        {
+            parameters.Add($"endSequenceNum={endSequenceNum.Value}");
+        }
+
         using var request = new HttpRequestMessage(
             HttpMethod.Get,
-            $"api/chat/conversations/{conversationId}/messages?limit={limit}");
+            $"internal/chat/conversations/{conversationId}/messages/range/{direction}?{string.Join("&", parameters)}");
+        using var response = await _httpClient.SendAsync(request, cancellationToken);
 
-        var response = await SendAsync<ChatMessagesClientDto>(request, cancellationToken);
-        return response ?? new ChatMessagesClientDto(
-            [],
-            null,
-            0,
-            false);
+        if (response.IsSuccessStatusCode)
+        {
+            var page = await response.Content.ReadFromJsonAsync<ConversationMessagesRangeClientDto>(
+                JsonOptions,
+                cancellationToken);
+            return page is null
+                ? FlowChatResult<ConversationMessagesRangeClientDto>.Failure(
+                    DomainError.UnExpected("Chat Service returned an empty message range response."))
+                : FlowChatResult<ConversationMessagesRangeClientDto>.Success(page);
+        }
+
+        return response.StatusCode switch
+        {
+            System.Net.HttpStatusCode.BadRequest =>
+                FlowChatResult<ConversationMessagesRangeClientDto>.Failure(
+                    DomainError.BadRequest("Chat Service rejected the message range.")),
+            System.Net.HttpStatusCode.Unauthorized or System.Net.HttpStatusCode.Forbidden =>
+                FlowChatResult<ConversationMessagesRangeClientDto>.Failure(
+                    DomainError.Unauthorized("Message range access was denied.")),
+            System.Net.HttpStatusCode.NotFound =>
+                FlowChatResult<ConversationMessagesRangeClientDto>.Failure(
+                    DomainError.NotFound("Conversation not found.")),
+            _ => FlowChatResult<ConversationMessagesRangeClientDto>.Failure(
+                DomainError.UnExpected(
+                    BuildFailureMessage(
+                        response,
+                        response.Content is null
+                            ? null
+                            : await response.Content.ReadAsStringAsync(cancellationToken))))
+        };
     }
 
 }

@@ -7,7 +7,7 @@ namespace FlowChat.GatewayService.UnitTests.Services;
 public sealed class ChatServiceContractTests
 {
     [Fact]
-    public void Deserialize_SequenceBasedMessagesResponse_PreservesCursorsAndSequence()
+    public void Deserialize_RangeResponse_PreservesBoundsAndSequence()
     {
         const string json = """
             {
@@ -21,18 +21,20 @@ public sealed class ChatServiceContractTests
                   "sequenceNum": 121
                 }
               ],
-              "nextBeforeSequenceNum": 121,
+              "startSequenceNum": 1,
+              "endSequenceNum": 135,
               "currentSequenceNum": 140,
               "hasMore": true
             }
             """;
 
-        var result = JsonSerializer.Deserialize<ChatMessagesClientDto>(
+        var result = JsonSerializer.Deserialize<ConversationMessagesRangeClientDto>(
             json,
             new JsonSerializerOptions(JsonSerializerDefaults.Web));
 
         result.Should().NotBeNull();
-        result!.NextBeforeSequenceNum.Should().Be(121);
+        result!.StartSequenceNum.Should().Be(1);
+        result.EndSequenceNum.Should().Be(135);
         result.CurrentSequenceNum.Should().Be(140);
         result.Items.Should().ContainSingle()
             .Which.SequenceNum.Should().Be(121);

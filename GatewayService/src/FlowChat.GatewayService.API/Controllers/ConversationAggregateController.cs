@@ -1,7 +1,10 @@
 using AutoMapper;
+using FlowChat.Core.Results;
+using FlowChat.GatewayService.Api.Features.ChatMessage.Public.GetConversationMessages;
 using FlowChat.GatewayService.Api.Models;
 using FlowChat.GatewayService.Api.Services;
 using FlowChat.Shared.API;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -15,15 +18,18 @@ public sealed class ConversationAggregateController : ApiControllerBase
     private const int DefaultMessageLimit = 10;
 
     private readonly IChatServiceClient _chatClient;
+    private readonly IMediator _mediator;
     private readonly IMapper _mapper;
     private readonly ILogger<ConversationAggregateController> _logger;
 
     public ConversationAggregateController(
         IChatServiceClient chatClient,
+        IMediator mediator,
         IMapper mapper,
         ILogger<ConversationAggregateController> logger)
     {
         _chatClient = chatClient ?? throw new ArgumentNullException(nameof(chatClient));
+        _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
         _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
@@ -37,7 +43,7 @@ public sealed class ConversationAggregateController : ApiControllerBase
         [FromBody] OpenDuetConversationRequest request,
         CancellationToken cancellationToken)
     {
-        if (!TryGetCurrentUserId(out _))
+        if (!TryGetCurrentUserId(out var userId))
         {
             return Unauthorized();
         }
@@ -56,25 +62,31 @@ public sealed class ConversationAggregateController : ApiControllerBase
         var knownMessagesTask = request.KnownConversationId.HasValue
             ? GetKnownConversationMessagesOrDefaultAsync(
                 request.KnownConversationId.Value,
+                userId,
                 request.PartnerUserId,
                 cancellationToken)
-            : Task.FromResult<ChatMessagesClientDto?>(null);
+            : Task.FromResult<GetConversationMessagesResult?>(null);
 
         var conversation = await conversationTask;
         var messages = await ResolveMessagesAsync(
             conversation,
+            userId,
             request.KnownConversationId,
             knownMessagesTask,
             request.PartnerUserId,
             cancellationToken);
+        if (!messages.IsSuccess)
+        {
+            return HandleError(messages.Error);
+        }
 
         var response = new OpenDuetConversationResponse(
             conversation.ConversationId,
             _mapper.Map<IReadOnlyCollection<ConversationParticipantResponse>>(conversation.Participants),
-            _mapper.Map<IReadOnlyCollection<ConversationMessageResponse>>(messages.Items),
-            messages.NextBeforeSequenceNum,
-            messages.CurrentSequenceNum,
-            messages.HasMore);
+            _mapper.Map<IReadOnlyCollection<ConversationMessageResponse>>(messages.Value.Items),
+            messages.Value.NextBeforeSequenceNum,
+            messages.Value.CurrentSequenceNum,
+            messages.Value.HasMore);
 
         return Ok(response);
     }
@@ -89,7 +101,7 @@ public sealed class ConversationAggregateController : ApiControllerBase
         [FromBody] OpenGroupConversationRequest request,
         CancellationToken cancellationToken)
     {
-        if (!TryGetCurrentUserId(out _))
+        if (!TryGetCurrentUserId(out var userId))
         {
             return Unauthorized();
         }
@@ -115,19 +127,23 @@ public sealed class ConversationAggregateController : ApiControllerBase
             });
         }
 
-        var messages = await _chatClient.GetConversationMessagesAsync(
+        var messages = await GetConversationMessagesAsync(
             request.ConversationId,
-            DefaultMessageLimit,
+            userId,
             cancellationToken);
+        if (!messages.IsSuccess)
+        {
+            return HandleError(messages.Error);
+        }
 
         var response = new OpenGroupConversationResponse(
             conversation.ConversationId,
             conversation.Name,
             _mapper.Map<IReadOnlyCollection<ConversationParticipantResponse>>(conversation.Participants),
-            _mapper.Map<IReadOnlyCollection<ConversationMessageResponse>>(messages.Items),
-            messages.NextBeforeSequenceNum,
-            messages.CurrentSequenceNum,
-            messages.HasMore);
+            _mapper.Map<IReadOnlyCollection<ConversationMessageResponse>>(messages.Value.Items),
+            messages.Value.NextBeforeSequenceNum,
+            messages.Value.CurrentSequenceNum,
+            messages.Value.HasMore);
 
         return Ok(response);
     }
@@ -138,10 +154,11 @@ public sealed class ConversationAggregateController : ApiControllerBase
         await _chatClient.GetDuetConversationAsync(partnerUserId, cancellationToken)
             ?? await _chatClient.CreateDuetConversationAsync(partnerUserId, cancellationToken);
 
-    private async Task<ChatMessagesClientDto> ResolveMessagesAsync(
+    private async Task<FlowChatResult<GetConversationMessagesResult>> ResolveMessagesAsync(
         DuetConversationClientDto conversation,
+        Guid requestingUserId,
         Guid? knownConversationId,
-        Task<ChatMessagesClientDto?> knownMessagesTask,
+        Task<GetConversationMessagesResult?> knownMessagesTask,
         Guid partnerUserId,
         CancellationToken cancellationToken)
     {
@@ -150,7 +167,7 @@ public sealed class ConversationAggregateController : ApiControllerBase
             var knownMessages = await knownMessagesTask;
             if (knownConversationId.Value == conversation.ConversationId && knownMessages is not null)
             {
-                return knownMessages;
+                return FlowChatResult<GetConversationMessagesResult>.Success(knownMessages);
             }
 
             if (knownConversationId.Value != conversation.ConversationId)
@@ -163,23 +180,25 @@ public sealed class ConversationAggregateController : ApiControllerBase
             }
         }
 
-        return await _chatClient.GetConversationMessagesAsync(
+        return await GetConversationMessagesAsync(
             conversation.ConversationId,
-            DefaultMessageLimit,
+            requestingUserId,
             cancellationToken);
     }
 
-    private async Task<ChatMessagesClientDto?> GetKnownConversationMessagesOrDefaultAsync(
+    private async Task<GetConversationMessagesResult?> GetKnownConversationMessagesOrDefaultAsync(
         Guid knownConversationId,
+        Guid requestingUserId,
         Guid partnerUserId,
         CancellationToken cancellationToken)
     {
         try
         {
-            return await _chatClient.GetConversationMessagesAsync(
+            var result = await GetConversationMessagesAsync(
                 knownConversationId,
-                DefaultMessageLimit,
+                requestingUserId,
                 cancellationToken);
+            return result.IsSuccess ? result.Value : null;
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -195,4 +214,16 @@ public sealed class ConversationAggregateController : ApiControllerBase
             return null;
         }
     }
+
+    private Task<FlowChatResult<GetConversationMessagesResult>> GetConversationMessagesAsync(
+        Guid conversationId,
+        Guid requestingUserId,
+        CancellationToken cancellationToken) =>
+        _mediator.Send(
+            new GetConversationMessagesQuery(
+                conversationId,
+                requestingUserId,
+                DefaultMessageLimit,
+                null),
+            cancellationToken);
 }

@@ -1,6 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getJson } from "../httpClient";
-import { catchUpConversationMessages } from "./chatApi";
+import {
+  catchUpConversationMessages,
+  getDuetConversationMessages,
+} from "./chatApi";
 
 vi.mock("../httpClient", () => ({
   deleteJson: vi.fn(),
@@ -12,6 +15,28 @@ vi.mock("../httpClient", () => ({
 describe("chatApi", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  it("uses the Gateway history route with the sequence cursor", async () => {
+    vi.mocked(getJson).mockResolvedValue({
+      items: [],
+      nextBeforeSequenceNum: 19,
+      currentSequenceNum: 30,
+      hasMore: true,
+    });
+
+    const result = await getDuetConversationMessages(
+      "conversation-id",
+      20,
+      "access-token",
+    );
+
+    expect(getJson).toHaveBeenCalledWith(
+      "/api/chat/conversations/conversation-id/messages?limit=10&beforeSequenceNum=20",
+      { accessToken: "access-token", signal: undefined },
+    );
+    expect(result.nextBeforeSequenceNum).toBe(19);
+    expect(result.currentSequenceNum).toBe(30);
   });
 
   it("uses the dedicated catch-up route and maps its response", async () => {
