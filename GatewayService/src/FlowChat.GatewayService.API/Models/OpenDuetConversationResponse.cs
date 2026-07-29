@@ -6,8 +6,8 @@ public sealed record OpenDuetConversationResponse(
     Guid ConversationId,
     IReadOnlyCollection<ConversationParticipantResponse> Participants,
     IReadOnlyCollection<ConversationMessageResponse> Messages,
-    DateTimeOffset? NextBeforeSentAtUtc,
-    Guid? NextBeforeMessageId,
+    long? NextBeforeSequenceNum,
+    long CurrentSequenceNum,
     bool HasMore) : IServiceOutput;
 
 public sealed record ConversationParticipantResponse(
@@ -21,4 +21,5 @@ public sealed record ConversationMessageResponse(
     Guid ConversationId,
     Guid SenderUserId,
     string Text,
-    DateTimeOffset SentAtUtc);
+    DateTimeOffset SentAtUtc,
+    long SequenceNum);

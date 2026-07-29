@@ -81,7 +81,13 @@ internal sealed class ChatServiceClient(HttpClient httpClient)
             $"api/chat/conversations/{conversationId}/messages?limit={limit}");
 
         var response = await SendAsync<ChatMessagesClientDto>(request, cancellationToken);
-        return response ?? new ChatMessagesClientDto([], null, null, false);
+        return response ?? new ChatMessagesClientDto(
+            [],
+            null,
+            null,
+            0,
+            null,
+            false);
     }
 
 }

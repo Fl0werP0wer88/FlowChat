@@ -72,8 +72,8 @@ public sealed class ConversationAggregateController : ApiControllerBase
             conversation.ConversationId,
             _mapper.Map<IReadOnlyCollection<ConversationParticipantResponse>>(conversation.Participants),
             _mapper.Map<IReadOnlyCollection<ConversationMessageResponse>>(messages.Items),
-            messages.NextBeforeSentAtUtc,
-            messages.NextBeforeMessageId,
+            messages.NextBeforeSequenceNum,
+            messages.CurrentSequenceNum,
             messages.HasMore);
 
         return Ok(response);
@@ -125,8 +125,8 @@ public sealed class ConversationAggregateController : ApiControllerBase
             conversation.Name,
             _mapper.Map<IReadOnlyCollection<ConversationParticipantResponse>>(conversation.Participants),
             _mapper.Map<IReadOnlyCollection<ConversationMessageResponse>>(messages.Items),
-            messages.NextBeforeSentAtUtc,
-            messages.NextBeforeMessageId,
+            messages.NextBeforeSequenceNum,
+            messages.CurrentSequenceNum,
             messages.HasMore);
 
         return Ok(response);

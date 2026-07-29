@@ -65,7 +65,10 @@ public sealed class SendChatMessageCommandHandlerV2(
         await messageRepository.AddAsync(_message, cancellationToken);
 
         return Created(
-            new SendChatMessageCommandResultV2(_message.Id.Value, _message.SentAtUtc.Value));
+            new SendChatMessageCommandResultV2(
+                _message.Id.Value,
+                _message.SentAtUtc.Value,
+                _message.SequenceNum));
     }
 
     protected override ChatMessageV2 GetAggregateRoot() =>

@@ -3,6 +3,6 @@ export interface ConversationMessageDto {
   conversationId?: string;
   senderUserId?: string;
   text?: string;
-  sequenceNum?: number | null;
+  sequenceNum: number;
   sentAtUtc?: string;
 }

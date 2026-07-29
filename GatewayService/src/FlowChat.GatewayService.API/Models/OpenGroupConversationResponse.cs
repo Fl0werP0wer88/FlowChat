@@ -7,6 +7,6 @@ public sealed record OpenGroupConversationResponse(
     string Name,
     IReadOnlyCollection<ConversationParticipantResponse> Participants,
     IReadOnlyCollection<ConversationMessageResponse> Messages,
-    DateTimeOffset? NextBeforeSentAtUtc,
-    Guid? NextBeforeMessageId,
+    long? NextBeforeSequenceNum,
+    long CurrentSequenceNum,
     bool HasMore) : IServiceOutput;

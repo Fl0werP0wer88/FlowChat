@@ -25,15 +25,14 @@ import type {
 
 export async function getDuetConversationMessages(
   conversationId: string,
-  cursor: { beforeSentAtUtc: string | null; beforeMessageId: string | null },
+  beforeSequenceNum: number | null,
   accessToken: string,
   signal?: AbortSignal,
 ): Promise<DuetConversationMessagesResult> {
   const params = new URLSearchParams({ limit: "10" });
 
-  if (cursor.beforeSentAtUtc && cursor.beforeMessageId) {
-    params.set("beforeSentAtUtc", cursor.beforeSentAtUtc);
-    params.set("beforeMessageId", cursor.beforeMessageId);
+  if (beforeSequenceNum !== null) {
+    params.set("beforeSequenceNum", beforeSequenceNum.toString());
   }
 
   const response = await getJson<GetConversationMessagesResponseDto>(
@@ -46,9 +45,11 @@ export async function getDuetConversationMessages(
 
   return {
     messages: (response.items ?? []).map(mapDuetMessage),
-    nextBeforeSentAtUtc: response.nextBeforeSentAtUtc ?? null,
-    nextBeforeMessageId: response.nextBeforeMessageId ?? null,
-    hasMore: response.hasMore ?? false,
+    nextBeforeSequenceNum: response.nextBeforeSequenceNum ?? null,
+    nextAfterSequenceNum: response.nextAfterSequenceNum ?? null,
+    currentSequenceNum: response.currentSequenceNum,
+    throughSequenceNum: response.throughSequenceNum ?? null,
+    hasMore: response.hasMore,
   };
 }
 
@@ -69,6 +70,7 @@ export async function sendChatMessage(
   return {
     messageId: response.messageId ?? payload.id,
     sentAtUtc: response.sentAtUtc ?? new Date().toISOString(),
+    sequenceNum: response.sequenceNum,
   };
 }
 
@@ -99,15 +101,14 @@ export async function copyDuetAsGroup(
 
 export async function getGroupConversationMessages(
   conversationId: string,
-  cursor: { beforeSentAtUtc: string | null; beforeMessageId: string | null },
+  beforeSequenceNum: number | null,
   accessToken: string,
   signal?: AbortSignal,
 ): Promise<GroupConversationMessagesResult> {
   const params = new URLSearchParams({ limit: "10" });
 
-  if (cursor.beforeSentAtUtc && cursor.beforeMessageId) {
-    params.set("beforeSentAtUtc", cursor.beforeSentAtUtc);
-    params.set("beforeMessageId", cursor.beforeMessageId);
+  if (beforeSequenceNum !== null) {
+    params.set("beforeSequenceNum", beforeSequenceNum.toString());
   }
 
   const response = await getJson<GetGroupConversationMessagesResponseDto>(
@@ -120,9 +121,11 @@ export async function getGroupConversationMessages(
 
   return {
     messages: (response.items ?? []).map(mapGroupMessage),
-    nextBeforeSentAtUtc: response.nextBeforeSentAtUtc ?? null,
-    nextBeforeMessageId: response.nextBeforeMessageId ?? null,
-    hasMore: response.hasMore ?? false,
+    nextBeforeSequenceNum: response.nextBeforeSequenceNum ?? null,
+    nextAfterSequenceNum: response.nextAfterSequenceNum ?? null,
+    currentSequenceNum: response.currentSequenceNum,
+    throughSequenceNum: response.throughSequenceNum ?? null,
+    hasMore: response.hasMore,
   };
 }
 
@@ -143,6 +146,7 @@ export async function sendGroupChatMessage(
   return {
     messageId: response.messageId ?? payload.id,
     sentAtUtc: response.sentAtUtc ?? new Date().toISOString(),
+    sequenceNum: response.sequenceNum,
   };
 }
 
@@ -161,14 +165,45 @@ export async function fetchGroupConversations(
 
 export async function markConversationAsRead(
   conversationId: string,
+  sequenceNum: number,
   accessToken: string,
   signal?: AbortSignal,
 ): Promise<void> {
-  await putJson<null, Record<string, never>>(
+  await putJson<null, { sequenceNum: number }>(
     `/api/conversations/${encodeURIComponent(conversationId)}/read-state`,
-    {},
+    { sequenceNum },
     { accessToken, signal },
   );
+}
+
+export async function catchUpConversationMessages(
+  conversationId: string,
+  afterSequenceNum: number,
+  throughSequenceNum: number | null,
+  accessToken: string,
+  signal?: AbortSignal,
+): Promise<DuetConversationMessagesResult> {
+  const params = new URLSearchParams({
+    afterSequenceNum: afterSequenceNum.toString(),
+    limit: "100",
+  });
+  if (throughSequenceNum !== null) {
+    params.set("throughSequenceNum", throughSequenceNum.toString());
+  }
+
+  const response = await getJson<GetConversationMessagesResponseDto>(
+    `/api/chat/conversations/${encodeURIComponent(conversationId)}/messages?${params.toString()}`,
+    { accessToken, signal },
+  );
+
+  return {
+    messages: (response.items ?? []).map(mapDuetMessage),
+    nextBeforeSequenceNum: response.nextBeforeSequenceNum ?? null,
+    nextAfterSequenceNum: response.nextAfterSequenceNum ?? null,
+    currentSequenceNum: response.currentSequenceNum,
+    throughSequenceNum: response.throughSequenceNum ?? null,
+    hasMore: response.hasMore,
+  };
 }
 
 function getParticipantSettingPath(conversationId: string, setting: "mute" | "block" | "hide") {

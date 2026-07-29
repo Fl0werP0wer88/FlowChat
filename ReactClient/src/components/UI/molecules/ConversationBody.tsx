@@ -4,6 +4,7 @@ import { Spinner } from "../atoms/Spinner";
 import { useMinDuration } from "../../../hooks";
 import type { ChatMessage } from "../../../types/chat";
 import { formatLocalTime } from "../../../utils/dateUtils";
+import type { MessageSyncStatus } from "../../../hooks/caches/sequencedMessageCache";
 
 interface ConversationBodyProps {
   activeConversationId: string | null;
@@ -16,6 +17,8 @@ interface ConversationBodyProps {
   messages: ChatMessage[];
   participants: Array<{ userId: string; displayName: string | null }>;
   onLoadOlderMessages: () => Promise<void>;
+  messageSyncStatus: MessageSyncStatus;
+  onRetryMessageSync: () => void;
 }
 
 const START_INDEX = 100_000;
@@ -31,6 +34,8 @@ export function ConversationBody({
   messages,
   participants,
   onLoadOlderMessages,
+  messageSyncStatus,
+  onRetryMessageSync,
 }: ConversationBodyProps) {
   const showOlderMessagesSpinner = useMinDuration(isLoadingOlderMessages, 500);
   const virtuosoRef = useRef<VirtuosoHandle>(null);
@@ -72,7 +77,7 @@ export function ConversationBody({
     return <p className="conversation-panel__empty history">Nie udalo sie zaladowac rozmowy.</p>;
   }
 
-  if (messages.length === 0) {
+  if (messages.length === 0 && messageSyncStatus === "idle") {
     return <p className="conversation-panel__empty history">Brak wiadomosci w tej rozmowie.</p>;
   }
 
@@ -91,6 +96,23 @@ export function ConversationBody({
         Header: () => showOlderMessagesSpinner
           ? <div className="history__status"><Spinner /></div>
           : null,
+        Footer: () => messageSyncStatus === "syncing"
+          ? (
+            <div className="history__sync-status">
+              <Spinner />
+              <span>Synchronizowanie wiadomości…</span>
+            </div>
+          )
+          : messageSyncStatus === "error"
+            ? (
+              <div className="history__sync-status history__sync-status--error">
+                <span>Nie udało się zsynchronizować wiadomości</span>
+                <button type="button" onClick={onRetryMessageSync}>
+                  Spróbuj ponownie
+                </button>
+              </div>
+            )
+            : null,
       }}
       itemContent={(_index: number, message: ChatMessage) => (
         <article

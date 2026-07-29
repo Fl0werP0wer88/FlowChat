@@ -17,8 +17,10 @@ public sealed record ConversationParticipantClientDto(
 
 public sealed record ChatMessagesClientDto(
     IReadOnlyCollection<ChatMessageClientDto> Items,
-    DateTimeOffset? NextBeforeSentAtUtc,
-    Guid? NextBeforeMessageId,
+    long? NextBeforeSequenceNum,
+    long? NextAfterSequenceNum,
+    long CurrentSequenceNum,
+    long? ThroughSequenceNum,
     bool HasMore);
 
 public sealed record ChatMessageClientDto(
@@ -26,4 +28,5 @@ public sealed record ChatMessageClientDto(
     Guid ConversationId,
     Guid SenderUserId,
     string Text,
-    DateTimeOffset SentAtUtc);
+    DateTimeOffset SentAtUtc,
+    long SequenceNum);

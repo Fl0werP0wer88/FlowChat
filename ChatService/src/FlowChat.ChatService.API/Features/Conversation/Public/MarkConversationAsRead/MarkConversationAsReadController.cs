@@ -20,11 +20,13 @@ public sealed class MarkConversationAsReadController : ApiControllerBase
 
     [HttpPut]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> MarkConversationAsRead(
         [FromRoute] Guid conversationId,
+        [FromBody] MarkConversationAsReadRequest request,
         CancellationToken cancellationToken)
     {
         if (!TryGetCurrentUserId(out var userId))
@@ -33,7 +35,10 @@ public sealed class MarkConversationAsReadController : ApiControllerBase
         }
 
         var result = await _mediator.Send(
-            new MarkConversationAsReadCommandV2(conversationId, userId),
+            new MarkConversationAsReadCommandV2(
+                conversationId,
+                userId,
+                request.SequenceNum),
             cancellationToken);
 
         if (!result.IsSuccess)

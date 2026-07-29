@@ -18,6 +18,7 @@ interface UseRealtimeConnectionOptions {
   onGroupConversationParticipantsAdded?: (payload: GroupConversationParticipantsAddedEvent) => void;
   onGroupConversationParticipantsRemoved?: (payload: GroupConversationParticipantsRemovedEvent) => void;
   onDuetConversationsListChanged?: () => void;
+  onReconnected?: () => void;
 }
 
 function resolveErrorMessage(error: unknown): string | null {
@@ -35,6 +36,7 @@ export function useRealtimeConnection({
   onGroupConversationParticipantsAdded,
   onGroupConversationParticipantsRemoved,
   onDuetConversationsListChanged,
+  onReconnected,
 }: UseRealtimeConnectionOptions) {
   const accessToken = useAuthStore((s) => s.accessToken);
   const { setStatus, setLastError } = useRealtimeStore.getState();
@@ -61,6 +63,9 @@ export function useRealtimeConnection({
 
   const handleDuetConversationsListChanged = useEffectEvent(() => {
     onDuetConversationsListChanged?.();
+  });
+  const handleReconnected = useEffectEvent(() => {
+    onReconnected?.();
   });
 
   useEffect(() => {
@@ -133,6 +138,7 @@ export function useRealtimeConnection({
 
       setStatus("connected");
       setLastError(null);
+      handleReconnected();
     });
 
     connection.onclose((error) => {

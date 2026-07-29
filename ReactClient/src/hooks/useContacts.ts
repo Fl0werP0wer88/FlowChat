@@ -73,7 +73,7 @@ export function useContacts(): UseContactsResult {
 
   const applyRealtimeMessage = (
     payload: ChatMessageReceivedEvent,
-    activeDuetConversationId: string | null,
+    _activeDuetConversationId: string | null,
   ) => {
     queryClient.setQueryData<Contact[]>(["contacts"], (current = []) =>
       current.map((contact) => {
@@ -82,14 +82,9 @@ export function useContacts(): UseContactsResult {
         }
 
         const currentMsgSeqNum = Math.max(contact.currentMsgSeqNum, payload.sequenceNum);
-        const lastReadMsgSeqNum = contact.conversationId === activeDuetConversationId
-          ? currentMsgSeqNum
-          : contact.lastReadMsgSeqNum;
-
         return withUnreadCount({
           ...contact,
           currentMsgSeqNum,
-          lastReadMsgSeqNum,
         });
       }),
     );

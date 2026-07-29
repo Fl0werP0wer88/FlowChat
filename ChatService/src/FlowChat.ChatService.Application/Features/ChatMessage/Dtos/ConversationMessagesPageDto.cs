@@ -2,6 +2,8 @@ namespace FlowChat.ChatService.Application.Features.ChatMessage.Dtos;
 
 public sealed record ConversationMessagesPageDto(
     IReadOnlyCollection<ChatMessageDto> Items,
-    DateTimeOffset? NextBeforeSentAtUtc,
-    Guid? NextBeforeMessageId,
+    long? NextBeforeSequenceNum,
+    long? NextAfterSequenceNum,
+    long CurrentSequenceNum,
+    long? ThroughSequenceNum,
     bool HasMore);

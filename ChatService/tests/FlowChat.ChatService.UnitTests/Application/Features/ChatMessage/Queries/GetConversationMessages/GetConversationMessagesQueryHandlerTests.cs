@@ -9,121 +9,188 @@ namespace FlowChat.ChatService.UnitTests.Application.Features.ChatMessage.Querie
 
 public sealed class GetConversationMessagesQueryHandlerTests
 {
-    private readonly Mock<IChatMessageReadRepository> _chatMessageReadRepositoryMock = new();
-    private readonly Mock<IConversationParticipantReadRepository> _participantReadRepositoryMock = new();
+    private readonly Mock<IChatMessageReadRepository> _messages = new();
+    private readonly Mock<IConversationMessageSequenceReadRepository> _sequences = new();
+    private readonly Mock<IConversationParticipantReadRepository> _participants = new();
     private readonly GetConversationMessagesQueryHandler _handler;
 
     public GetConversationMessagesQueryHandlerTests()
     {
-        _handler = new GetConversationMessagesQueryHandler(
-            _chatMessageReadRepositoryMock.Object,
-            _participantReadRepositoryMock.Object);
+        _handler = new(
+            _messages.Object,
+            _sequences.Object,
+            _participants.Object);
     }
 
     [Fact]
-    public async Task Handle_ConversationNotFound_ReturnsNotFoundFailure()
+    public async Task Handle_ConversationNotFound_ReturnsNotFound()
     {
-        var query = new GetConversationMessagesQuery(
-            Guid.NewGuid(),
-            Guid.NewGuid(),
-            50,
-            null,
-            null);
-
-        _participantReadRepositoryMock
-            .Setup(x => x.GetParticipantUserIdsAsync(query.ConversationId, It.IsAny<CancellationToken>()))
+        var query = Query(Guid.NewGuid(), Guid.NewGuid());
+        _participants.Setup(x => x.GetParticipantUserIdsAsync(
+                query.ConversationId, It.IsAny<CancellationToken>()))
             .ReturnsAsync((IReadOnlyCollection<Guid>?)null);
 
         var result = await _handler.Handle(query, CancellationToken.None);
 
         result.IsFailure.Should().BeTrue();
         result.Error.ErrorType.Should().Be(ErrorType.NotFound);
-        result.Error.ErrorMessage.Should().Be("Conversation not found.");
-        _chatMessageReadRepositoryMock.Verify(
-            x => x.GetPageBeforeAsync(
-                It.IsAny<Guid>(),
-                It.IsAny<int>(),
-                It.IsAny<DateTimeOffset?>(),
-                It.IsAny<Guid?>(),
-                It.IsAny<CancellationToken>()),
-            Times.Never);
+        _sequences.Verify(x => x.GetCurrentAsync(
+            It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
-    public async Task Handle_RequestingUserIsNotParticipant_ReturnsUnauthorizedFailure()
+    public async Task Handle_NonParticipant_ReturnsUnauthorized()
     {
-        var requestingUserId = Guid.NewGuid();
-        var participantUserId = Guid.NewGuid();
-        var conversationId = Guid.NewGuid();
-        var query = new GetConversationMessagesQuery(
-            conversationId,
-            requestingUserId,
-            50,
-            null,
-            null);
-
-        _participantReadRepositoryMock
-            .Setup(x => x.GetParticipantUserIdsAsync(query.ConversationId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync([participantUserId, Guid.NewGuid()]);
+        var query = Query(Guid.NewGuid(), Guid.NewGuid());
+        _participants.Setup(x => x.GetParticipantUserIdsAsync(
+                query.ConversationId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync([Guid.NewGuid()]);
 
         var result = await _handler.Handle(query, CancellationToken.None);
 
         result.IsFailure.Should().BeTrue();
         result.Error.ErrorType.Should().Be(ErrorType.Unauthorized);
-        result.Error.ErrorMessage.Should().Be("Requesting user is not a participant of this conversation.");
-        _chatMessageReadRepositoryMock.Verify(
-            x => x.GetPageBeforeAsync(
+    }
+
+    [Fact]
+    public async Task Handle_History_ReturnsSequenceCursorAndCurrentBoundary()
+    {
+        var conversationId = Guid.NewGuid();
+        var userId = Guid.NewGuid();
+        var query = new GetConversationMessagesQuery(
+            conversationId, userId, 2, 20, null, null);
+        Authorize(conversationId, userId, currentSequenceNum: 30);
+        _messages.Setup(x => x.GetBeforeSequenceAsync(
+                conversationId, 30, 20, 3, It.IsAny<CancellationToken>()))
+            .ReturnsAsync([
+                Message(conversationId, userId, 19),
+                Message(conversationId, userId, 18),
+                Message(conversationId, userId, 17)
+            ]);
+
+        var result = await _handler.Handle(query, CancellationToken.None);
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Items.Select(item => item.SequenceNum).Should().Equal(19, 18);
+        result.Value.NextBeforeSequenceNum.Should().Be(18);
+        result.Value.NextAfterSequenceNum.Should().BeNull();
+        result.Value.CurrentSequenceNum.Should().Be(30);
+        result.Value.ThroughSequenceNum.Should().BeNull();
+        result.Value.HasMore.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task Handle_CatchUp_FreezesThroughAndReturnsAfterCursor()
+    {
+        var conversationId = Guid.NewGuid();
+        var userId = Guid.NewGuid();
+        var query = new GetConversationMessagesQuery(
+            conversationId, userId, 2, null, 20, null);
+        Authorize(conversationId, userId, currentSequenceNum: 30);
+        _messages.Setup(x => x.GetAfterSequenceAsync(
+                conversationId, 20, 30, 3, It.IsAny<CancellationToken>()))
+            .ReturnsAsync([
+                Message(conversationId, userId, 21),
+                Message(conversationId, userId, 23),
+                Message(conversationId, userId, 24)
+            ]);
+
+        var result = await _handler.Handle(query, CancellationToken.None);
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Items.Select(item => item.SequenceNum).Should().Equal(21, 23);
+        result.Value.NextAfterSequenceNum.Should().Be(23);
+        result.Value.ThroughSequenceNum.Should().Be(30);
+        result.Value.HasMore.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task Handle_ThroughAboveCurrent_ReturnsBadRequest()
+    {
+        var conversationId = Guid.NewGuid();
+        var userId = Guid.NewGuid();
+        Authorize(conversationId, userId, currentSequenceNum: 30);
+
+        var result = await _handler.Handle(
+            new GetConversationMessagesQuery(
+                conversationId, userId, 100, null, 20, 31),
+            CancellationToken.None);
+
+        result.IsFailure.Should().BeTrue();
+        result.Error.ErrorType.Should().Be(ErrorType.BadRequest);
+    }
+
+    [Fact]
+    public async Task Handle_AfterAboveCurrentWithoutThrough_ReturnsBadRequest()
+    {
+        var conversationId = Guid.NewGuid();
+        var userId = Guid.NewGuid();
+        _participants
+            .Setup(x => x.GetParticipantUserIdsAsync(conversationId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync([userId]);
+        _sequences
+            .Setup(x => x.GetCurrentAsync(conversationId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(10);
+
+        var result = await _handler.Handle(
+            new GetConversationMessagesQuery(conversationId, userId, 50, null, 11, null),
+            CancellationToken.None);
+
+        result.IsFailure.Should().BeTrue();
+        result.Error.ErrorType.Should().Be(ErrorType.BadRequest);
+        _messages.Verify(
+            x => x.GetAfterSequenceAsync(
                 It.IsAny<Guid>(),
+                It.IsAny<long>(),
+                It.IsAny<long>(),
                 It.IsAny<int>(),
-                It.IsAny<DateTimeOffset?>(),
-                It.IsAny<Guid?>(),
                 It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
     [Fact]
-    public async Task Handle_RequestingUserIsParticipant_ReturnsMessagePage()
+    public async Task Handle_EmptyCatchUp_CompletesAtBoundary()
     {
-        var requestingUserId = Guid.NewGuid();
-        var otherUserId = Guid.NewGuid();
         var conversationId = Guid.NewGuid();
-        var beforeSentAtUtc = new DateTimeOffset(2026, 4, 24, 10, 0, 0, TimeSpan.Zero);
-        var beforeMessageId = Guid.NewGuid();
-        var query = new GetConversationMessagesQuery(
-            conversationId,
-            requestingUserId,
-            25,
-            beforeSentAtUtc,
-            beforeMessageId);
-        var expectedPage = new ConversationMessagesPageDto(
-            [
-                new ChatMessageDto(
-                    Guid.NewGuid(),
-                    conversationId,
-                    requestingUserId,
-                    "Hello",
-                    beforeSentAtUtc.AddMinutes(-1))
-            ],
-            null,
-            null,
-            false);
+        var userId = Guid.NewGuid();
+        Authorize(conversationId, userId, currentSequenceNum: 30);
+        _messages.Setup(x => x.GetAfterSequenceAsync(
+                conversationId, 20, 30, 101, It.IsAny<CancellationToken>()))
+            .ReturnsAsync([]);
 
-        _participantReadRepositoryMock
-            .Setup(x => x.GetParticipantUserIdsAsync(query.ConversationId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync([requestingUserId, otherUserId]);
-
-        _chatMessageReadRepositoryMock
-            .Setup(x => x.GetPageBeforeAsync(
-                query.ConversationId,
-                query.Limit,
-                query.BeforeSentAtUtc,
-                query.BeforeMessageId,
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(expectedPage);
-
-        var result = await _handler.Handle(query, CancellationToken.None);
+        var result = await _handler.Handle(
+            new GetConversationMessagesQuery(
+                conversationId, userId, 100, null, 20, 30),
+            CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
-        result.Value.Should().BeSameAs(expectedPage);
+        result.Value.Items.Should().BeEmpty();
+        result.Value.ThroughSequenceNum.Should().Be(30);
+        result.Value.HasMore.Should().BeFalse();
     }
+
+    private void Authorize(Guid conversationId, Guid userId, long currentSequenceNum)
+    {
+        _participants.Setup(x => x.GetParticipantUserIdsAsync(
+                conversationId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync([userId]);
+        _sequences.Setup(x => x.GetCurrentAsync(
+                conversationId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(currentSequenceNum);
+    }
+
+    private static GetConversationMessagesQuery Query(Guid conversationId, Guid userId) =>
+        new(conversationId, userId, 50, null, null, null);
+
+    private static ChatMessageDto Message(
+        Guid conversationId,
+        Guid senderId,
+        long sequenceNum) =>
+        new(
+            Guid.NewGuid(),
+            conversationId,
+            senderId,
+            $"Message {sequenceNum}",
+            DateTimeOffset.UtcNow,
+            sequenceNum);
 }

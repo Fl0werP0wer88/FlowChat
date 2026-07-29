@@ -1,5 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useAuthStore } from "../store/authStore";
 import type { Contact } from "../types/contacts";
@@ -15,6 +15,8 @@ import {
 } from "./caches/duetConversationCache";
 import { useSendMessageMutation } from "./mutations/useSendMessageMutation";
 import { useDuetConversationQuery } from "./queries/useDuetConversationQuery";
+import { mergeSequencedMessage } from "./caches/sequencedMessageCache";
+import { useConversationMessageSync } from "./useConversationMessageSync";
 
 export function useChatMessages(activeContact: Contact | null) {
   const accessToken = useAuthStore((s) => s.accessToken) ?? "";
@@ -33,10 +35,26 @@ export function useChatMessages(activeContact: Contact | null) {
     isLoading: isLoadingConversation,
     error: conversationQueryError,
   } = useDuetConversationQuery(activeContact, accessToken, ownerUserId);
+  const conversationQueryKey = useMemo(
+    () => ["duetConversation", activeContact?.userId] as const,
+    [activeContact?.userId],
+  );
+  const mapSynchronizedMessage = useCallback(
+    (message: Parameters<typeof mapDuetConversationMessage>[0]) =>
+      mapDuetConversationMessage(message, ownerUserId),
+    [ownerUserId],
+  );
+  const synchronizeMessages = useConversationMessageSync<DuetConversationCacheEntry>({
+    conversationId: conversationData?.conversationId ?? null,
+    queryKey: conversationQueryKey,
+    accessToken,
+    mapMessage: mapSynchronizedMessage,
+  });
 
   const markActiveDuetConversationAsRead = useCallback(async (
     contact?: Contact,
     conversationId?: string,
+    sequenceNum?: number,
   ) => {
     const targetContact = contact ?? activeContact;
     const targetConversationId = conversationId ?? conversationData?.conversationId;
@@ -44,6 +62,10 @@ export function useChatMessages(activeContact: Contact | null) {
     if (!targetContact || !targetConversationId || !accessToken) {
       return;
     }
+    const contiguousSequenceNum = sequenceNum
+      ?? queryClient.getQueryData<DuetConversationCacheEntry>(conversationQueryKey)
+        ?.lastContiguousSequenceNum
+      ?? 0;
 
     queryClient.setQueryData<Contact[]>(["contacts"], (current = []) =>
       current.map((item) => {
@@ -54,19 +76,32 @@ export function useChatMessages(activeContact: Contact | null) {
         return {
           ...item,
           conversationId: targetConversationId,
-          lastReadMsgSeqNum: item.currentMsgSeqNum,
-          unreadCount: calculateUnreadCount(item.currentMsgSeqNum, item.currentMsgSeqNum),
+          lastReadMsgSeqNum: Math.max(item.lastReadMsgSeqNum, contiguousSequenceNum),
+          unreadCount: calculateUnreadCount(
+            item.currentMsgSeqNum,
+            Math.max(item.lastReadMsgSeqNum, contiguousSequenceNum),
+          ),
         };
       }),
     );
 
     try {
-      await markConversationAsRead(targetConversationId, accessToken);
+      await markConversationAsRead(
+        targetConversationId,
+        contiguousSequenceNum,
+        accessToken,
+      );
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Nie udalo sie oznaczyc rozmowy jako przeczytanej.");
       void queryClient.invalidateQueries({ queryKey: ["contacts"] });
     }
-  }, [accessToken, activeContact, conversationData?.conversationId, queryClient]);
+  }, [
+    accessToken,
+    activeContact,
+    conversationData?.conversationId,
+    conversationQueryKey,
+    queryClient,
+  ]);
 
   useEffect(() => {
     if (!conversationData || !activeContact) {
@@ -90,6 +125,7 @@ export function useChatMessages(activeContact: Contact | null) {
     activeContactUserId: activeContact?.userId,
     ownerUserId,
     onError: (message) => toast.error(message),
+    onSequenceGap: () => void synchronizeMessages(),
   });
 
   const loadOlderMessages = useCallback(async () => {
@@ -98,7 +134,7 @@ export function useChatMessages(activeContact: Contact | null) {
     }
 
     const current = queryClient.getQueryData<DuetConversationCacheEntry>(["duetConversation", activeContact.userId]);
-    if (!current?.hasMore || !current.nextBeforeSentAtUtc || !current.nextBeforeMessageId) {
+    if (!current?.hasMore || current.nextBeforeSequenceNum === null) {
       return;
     }
 
@@ -108,10 +144,7 @@ export function useChatMessages(activeContact: Contact | null) {
     try {
       const result = await getDuetConversationMessages(
         current.conversationId,
-        {
-          beforeSentAtUtc: current.nextBeforeSentAtUtc,
-          beforeMessageId: current.nextBeforeMessageId,
-        },
+        current.nextBeforeSequenceNum,
         accessToken,
       );
 
@@ -130,8 +163,7 @@ export function useChatMessages(activeContact: Contact | null) {
           return {
             ...cached,
             messages: sortDuetMessages([...olderMessages, ...cached.messages]),
-            nextBeforeSentAtUtc: result.nextBeforeSentAtUtc,
-            nextBeforeMessageId: result.nextBeforeMessageId,
+            nextBeforeSequenceNum: result.nextBeforeSequenceNum,
             hasMore: result.hasMore,
           };
         },
@@ -144,28 +176,26 @@ export function useChatMessages(activeContact: Contact | null) {
     }
   }, [accessToken, activeContact, ownerUserId, queryClient]);
 
-  const messageReceived = (payload: ChatMessageReceivedEvent) => {
+  const messageReceived = async (
+    payload: ChatMessageReceivedEvent,
+  ): Promise<number | null> => {
     if (!conversationData || payload.conversationId !== conversationData.conversationId) {
-      return;
+      return null;
     }
 
+    let needsCatchUp = false;
+    let requiresRefetch = false;
     queryClient.setQueryData<DuetConversationCacheEntry>(
-      ["duetConversation", activeContact?.userId],
+      conversationQueryKey,
       (current) => {
         if (!current) {
           return current;
         }
 
-        if (current.messages.some((m) => m.id === payload.messageId)) {
-          return current;
-        }
-
         const sender = ownerUserId && payload.senderUserId === ownerUserId ? "me" : "other";
-        return {
-          ...current,
-          messages: sortDuetMessages([
-            ...current.messages,
-            createDuetMessage(
+        const result = mergeSequencedMessage(
+          current,
+          createDuetMessage(
               sender,
               payload.text,
               payload.sentAtUtc,
@@ -174,10 +204,22 @@ export function useChatMessages(activeContact: Contact | null) {
               payload.senderUserId,
               payload.sequenceNum,
             ),
-          ]),
-        };
+        );
+        needsCatchUp = result.needsCatchUp;
+        requiresRefetch = result.requiresRefetch;
+        return result.state;
       },
     );
+
+    if (requiresRefetch) {
+      await queryClient.invalidateQueries({ queryKey: conversationQueryKey });
+      return null;
+    }
+    if (needsCatchUp) {
+      return synchronizeMessages();
+    }
+    return queryClient.getQueryData<DuetConversationCacheEntry>(conversationQueryKey)
+      ?.lastContiguousSequenceNum ?? null;
   };
 
   const sendDraft = async (draft: string): Promise<boolean> => {
@@ -218,6 +260,9 @@ export function useChatMessages(activeContact: Contact | null) {
     sendDraft,
     loadOlderMessages,
     messageReceived,
+    synchronizeMessages,
+    messageSyncStatus: conversationData?.syncStatus ?? "idle",
+    lastContiguousSequenceNum: conversationData?.lastContiguousSequenceNum ?? 0,
     markActiveDuetConversationAsRead,
     openContactConversation,
   };

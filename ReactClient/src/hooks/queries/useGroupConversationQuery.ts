@@ -25,9 +25,11 @@ export function useGroupConversationQuery(
         name: result.name || activeGroupConversation!.name,
         participants: result.participants,
         messages: orderedMessages.map((msg) => mapGroupConversationMessage(msg, ownerUserId)),
-        nextBeforeSentAtUtc: result.nextBeforeSentAtUtc,
-        nextBeforeMessageId: result.nextBeforeMessageId,
+        nextBeforeSequenceNum: result.nextBeforeSequenceNum,
         hasMore: result.hasMore,
+        lastContiguousSequenceNum: result.currentSequenceNum,
+        pendingMessagesBySequence: {},
+        syncStatus: "idle",
       };
     },
     enabled: Boolean(activeGroupConversation && accessToken),

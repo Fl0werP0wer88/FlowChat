@@ -7,5 +7,6 @@ public sealed record GetConversationMessagesQuery(
     Guid ConversationId,
     Guid RequestingUserId,
     int Limit,
-    DateTimeOffset? BeforeSentAtUtc,
-    Guid? BeforeMessageId) : IQuery<ConversationMessagesPageDto>;
+    long? BeforeSequenceNum,
+    long? AfterSequenceNum,
+    long? ThroughSequenceNum) : IQuery<ConversationMessagesPageDto>;

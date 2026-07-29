@@ -8,80 +8,48 @@ namespace FlowChat.ChatService.Persistence.Repositories;
 
 public sealed class ChatMessageReadRepository(AppDbContext dbContext) : ReadRepositoryBase, IChatMessageReadRepository
 {
-    public Task<long?> GetMaxSequenceNumAsync(
+    public async Task<IReadOnlyCollection<ChatMessageDto>> GetBeforeSequenceAsync(
         Guid conversationId,
-        CancellationToken cancellationToken = default)
-    {
-        return Active(dbContext.ChatMessageReadsV2)
-            .Where(message => message.ConversationId == conversationId)
-            .Select(message => (long?)message.SequenceNum)
-            .MaxAsync(cancellationToken);
-    }
-
-    public async Task<ConversationMessagesPageDto> GetPageBeforeAsync(
-        Guid conversationId,
+        long throughSequenceNum,
+        long? beforeSequenceNum,
         int limit,
-        DateTimeOffset? beforeSentAtUtc,
-        Guid? beforeMessageId,
         CancellationToken cancellationToken = default)
     {
         var query = Active(dbContext.ChatMessageReadsV2)
-            .Where(message => message.ConversationId == conversationId);
+            .Where(message =>
+                message.ConversationId == conversationId &&
+                message.SequenceNum <= throughSequenceNum);
 
-        List<ChatMessageReadEntityV2> rows;
-        if (beforeSentAtUtc.HasValue && beforeMessageId.HasValue)
+        if (beforeSequenceNum.HasValue)
         {
-            var beforeUtc = beforeSentAtUtc.Value.ToUniversalTime();
-            var sameTimestampRows = await query
-                .Where(message => message.SentAtUtc == beforeUtc)
-                .ToListAsync(cancellationToken);
-
-            rows = sameTimestampRows
-                .Where(message => message.Id.CompareTo(beforeMessageId.Value) < 0)
-                .OrderByDescending(message => message.Id)
-                .Take(limit + 1)
-                .ToList();
-
-            if (rows.Count < limit + 1)
-            {
-                var olderRows = await query
-                    .Where(message => message.SentAtUtc < beforeUtc)
-                    .OrderByDescending(message => message.SentAtUtc)
-                    .ThenByDescending(message => message.Id)
-                    .Take(limit + 1 - rows.Count)
-                    .ToListAsync(cancellationToken);
-
-                rows.AddRange(olderRows);
-            }
-        }
-        else
-        {
-            if (beforeSentAtUtc.HasValue)
-            {
-                var beforeUtc = beforeSentAtUtc.Value.ToUniversalTime();
-                query = query.Where(message => message.SentAtUtc < beforeUtc);
-            }
-
-            rows = await query
-                .OrderByDescending(message => message.SentAtUtc)
-                .ThenByDescending(message => message.Id)
-                .Take(limit + 1)
-                .ToListAsync(cancellationToken);
+            query = query.Where(message => message.SequenceNum < beforeSequenceNum.Value);
         }
 
-        var dtos = rows
-            .Select(MapToDto)
-            .ToList();
+        var rows = await query
+            .OrderByDescending(message => message.SequenceNum)
+            .Take(limit)
+            .ToListAsync(cancellationToken);
 
-        var hasMore = dtos.Count > limit;
-        var items = dtos.Take(limit).ToList();
-        var nextCursor = items.LastOrDefault();
+        return rows.Select(MapToDto).ToList();
+    }
 
-        return new ConversationMessagesPageDto(
-            items,
-            hasMore ? nextCursor?.SentAtUtc : null,
-            hasMore ? nextCursor?.Id : null,
-            hasMore);
+    public async Task<IReadOnlyCollection<ChatMessageDto>> GetAfterSequenceAsync(
+        Guid conversationId,
+        long afterSequenceNum,
+        long throughSequenceNum,
+        int limit,
+        CancellationToken cancellationToken = default)
+    {
+        var rows = await Active(dbContext.ChatMessageReadsV2)
+            .Where(message =>
+                message.ConversationId == conversationId &&
+                message.SequenceNum > afterSequenceNum &&
+                message.SequenceNum <= throughSequenceNum)
+            .OrderBy(message => message.SequenceNum)
+            .Take(limit)
+            .ToListAsync(cancellationToken);
+
+        return rows.Select(MapToDto).ToList();
     }
 
     private static ChatMessageDto MapToDto(ChatMessageReadEntityV2 message) =>
@@ -90,5 +58,6 @@ public sealed class ChatMessageReadRepository(AppDbContext dbContext) : ReadRepo
             message.ConversationId,
             message.SenderUserId,
             message.Text,
-            message.SentAtUtc);
+            message.SentAtUtc,
+            message.SequenceNum);
 }

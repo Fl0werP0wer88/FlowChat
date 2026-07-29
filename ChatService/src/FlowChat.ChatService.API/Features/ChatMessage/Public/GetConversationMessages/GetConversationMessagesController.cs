@@ -31,8 +31,9 @@ public sealed class GetConversationMessagesController : ApiControllerBase
     public async Task<IActionResult> GetConversationMessages(
         [FromRoute] Guid conversationId,
         [FromQuery] int limit = DefaultLimit,
-        [FromQuery] DateTimeOffset? beforeSentAtUtc = null,
-        [FromQuery] Guid? beforeMessageId = null,
+        [FromQuery] long? beforeSequenceNum = null,
+        [FromQuery] long? afterSequenceNum = null,
+        [FromQuery] long? throughSequenceNum = null,
         CancellationToken cancellationToken = default)
     {
         if (!TryGetCurrentUserId(out var userId))
@@ -45,8 +46,9 @@ public sealed class GetConversationMessagesController : ApiControllerBase
                 conversationId,
                 userId,
                 limit,
-                beforeSentAtUtc,
-                beforeMessageId),
+                beforeSequenceNum,
+                afterSequenceNum,
+                throughSequenceNum),
             cancellationToken);
 
         if (!result.IsSuccess)

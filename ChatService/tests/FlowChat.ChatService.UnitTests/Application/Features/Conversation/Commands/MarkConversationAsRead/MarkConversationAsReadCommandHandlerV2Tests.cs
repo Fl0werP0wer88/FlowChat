@@ -32,9 +32,9 @@ public sealed class MarkConversationAsReadCommandHandlerV2Tests
                 userId,
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(participant);
-        var messageRepository = new Mock<IChatMessageV2WriteRepository>();
-        messageRepository.Setup(x => x.GetMaxSequenceNumAsync(
-                conversationId,
+        var sequenceRepository = new Mock<IConversationMessageSequenceReadRepository>();
+        sequenceRepository.Setup(x => x.GetCurrentAsync(
+                conversationId.Value,
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(12);
         var unitOfWork = CreateUnitOfWork();
@@ -54,13 +54,14 @@ public sealed class MarkConversationAsReadCommandHandlerV2Tests
             .Returns(Task.CompletedTask);
         var handler = new MarkConversationAsReadCommandHandlerV2(
             participantRepository.Object,
-            messageRepository.Object,
+            sequenceRepository.Object,
             unitOfWork.Object,
             dispatcher.Object,
             [processor.Object]);
         var command = new MarkConversationAsReadCommandV2(
             conversationId.Value,
-            userId.Value);
+            userId.Value,
+            12);
 
         var result = await handler.Handle(command, CancellationToken.None);
 
@@ -92,9 +93,9 @@ public sealed class MarkConversationAsReadCommandHandlerV2Tests
                 userId,
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(participant);
-        var messageRepository = new Mock<IChatMessageV2WriteRepository>();
-        messageRepository.Setup(x => x.GetMaxSequenceNumAsync(
-                conversationId,
+        var sequenceRepository = new Mock<IConversationMessageSequenceReadRepository>();
+        sequenceRepository.Setup(x => x.GetCurrentAsync(
+                conversationId.Value,
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(12);
         var processor = new Mock<IAggregateBeforeSaveProcessorV2<
@@ -102,13 +103,16 @@ public sealed class MarkConversationAsReadCommandHandlerV2Tests
             ConversationParticipant>>();
         var handler = new MarkConversationAsReadCommandHandlerV2(
             participantRepository.Object,
-            messageRepository.Object,
+            sequenceRepository.Object,
             CreateUnitOfWork().Object,
             Mock.Of<ILocalEventDispatcher>(),
             [processor.Object]);
 
         var result = await handler.Handle(
-            new MarkConversationAsReadCommandV2(conversationId.Value, userId.Value),
+            new MarkConversationAsReadCommandV2(
+                conversationId.Value,
+                userId.Value,
+                12),
             CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
@@ -118,6 +122,43 @@ public sealed class MarkConversationAsReadCommandHandlerV2Tests
             It.IsAny<ConversationParticipant>(),
             It.IsAny<MutationType>(),
             It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task Handle_WhenRequestedCursorExceedsCounter_ReturnsBadRequest()
+    {
+        var conversationId = Id<ConversationV2>.New();
+        var userId = Id<UserProfile>.New();
+        var participant = ConversationParticipant.Create(
+            Id<ConversationParticipant>.New(),
+            conversationId,
+            ConversationType.Group,
+            userId,
+            duetPartnerUserId: null,
+            lastReadMessageSequenceNum: 5);
+        var participantRepository = new Mock<IConversationParticipantWriteRepository>();
+        participantRepository.Setup(x => x.GetActiveAsync(
+                conversationId, userId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(participant);
+        var sequenceRepository = new Mock<IConversationMessageSequenceReadRepository>();
+        sequenceRepository.Setup(x => x.GetCurrentAsync(
+                conversationId.Value, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(10);
+        var handler = new MarkConversationAsReadCommandHandlerV2(
+            participantRepository.Object,
+            sequenceRepository.Object,
+            CreateUnitOfWork().Object,
+            Mock.Of<ILocalEventDispatcher>(),
+            []);
+
+        var result = await handler.Handle(
+            new MarkConversationAsReadCommandV2(
+                conversationId.Value, userId.Value, 11),
+            CancellationToken.None);
+
+        result.IsFailure.Should().BeTrue();
+        result.Error.ErrorType.Should().Be(ErrorType.BadRequest);
+        participant.LastReadMessageSequenceNum.Should().Be(5);
     }
 
     private static Mock<IUnitOfWork> CreateUnitOfWork()

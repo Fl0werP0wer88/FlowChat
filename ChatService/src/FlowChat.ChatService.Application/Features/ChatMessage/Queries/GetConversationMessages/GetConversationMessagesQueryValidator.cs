@@ -20,18 +20,27 @@ public sealed class GetConversationMessagesQueryValidator : AbstractValidator<Ge
             .InclusiveBetween(1, MaxLimit)
             .WithMessage($"Limit must be between 1 and {MaxLimit}.");
 
-        RuleFor(query => query.BeforeSentAtUtc)
-            .Must(value => value is null || value.Value.Offset == TimeSpan.Zero)
-            .WithMessage("BeforeSentAtUtc must be in UTC.");
+        RuleFor(query => query.BeforeSequenceNum)
+            .GreaterThanOrEqualTo(1)
+            .When(query => query.BeforeSequenceNum.HasValue);
 
-        RuleFor(query => query.BeforeMessageId)
-            .NotEmpty()
-            .When(query => query.BeforeMessageId.HasValue)
-            .WithMessage("BeforeMessageId cannot be empty.");
+        RuleFor(query => query.AfterSequenceNum)
+            .GreaterThanOrEqualTo(0)
+            .When(query => query.AfterSequenceNum.HasValue);
 
-        RuleFor(query => query.BeforeSentAtUtc)
-            .NotNull()
-            .When(query => query.BeforeMessageId.HasValue)
-            .WithMessage("BeforeSentAtUtc is required when BeforeMessageId is provided.");
+        RuleFor(query => query)
+            .Must(query => !(query.BeforeSequenceNum.HasValue && query.AfterSequenceNum.HasValue))
+            .WithMessage("BeforeSequenceNum and AfterSequenceNum are mutually exclusive.");
+
+        RuleFor(query => query)
+            .Must(query => !query.ThroughSequenceNum.HasValue || query.AfterSequenceNum.HasValue)
+            .WithMessage("ThroughSequenceNum requires AfterSequenceNum.");
+
+        RuleFor(query => query)
+            .Must(query =>
+                !query.ThroughSequenceNum.HasValue ||
+                !query.AfterSequenceNum.HasValue ||
+                query.ThroughSequenceNum.Value >= query.AfterSequenceNum.Value)
+            .WithMessage("ThroughSequenceNum must be greater than or equal to AfterSequenceNum.");
     }
 }

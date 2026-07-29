@@ -124,6 +124,9 @@
   <Folder Name="/GatewayService/src/">
     <Project Path="GatewayService/src/FlowChat.GatewayService.API/FlowChat.GatewayService.API.csproj" />
   </Folder>
+  <Folder Name="/GatewayService/tests/">
+    <Project Path="GatewayService/tests/FlowChat.GatewayService.UnitTests/FlowChat.GatewayService.UnitTests.csproj" />
+  </Folder>
   <Folder Name="/HarnessService/" />
   <Folder Name="/HarnessService/src/">
     <Project Path="HarnessService/src/FlowChat.HarnessService.API/FlowChat.HarnessService.API.csproj" />

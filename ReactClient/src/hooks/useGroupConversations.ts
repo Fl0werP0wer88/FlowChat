@@ -18,6 +18,7 @@ export interface UseGroupConversationsResult {
   applyGroupConversationParticipantsAdded: (payload: GroupConversationParticipantsAddedEvent) => void;
   applyGroupConversationParticipantsRemoved: (payload: GroupConversationParticipantsRemovedEvent) => void;
   applyRealtimeMessage: (payload: ChatMessageReceivedEvent, activeGroupConversationId: string | null) => void;
+  invalidateGroupConversationsList: () => void;
 }
 
 function dedupeParticipantIds(participantUserIds: string[]): string[] {
@@ -126,7 +127,7 @@ export function useGroupConversations(): UseGroupConversationsResult {
 
   const applyRealtimeMessage = (
     payload: ChatMessageReceivedEvent,
-    activeGroupConversationId: string | null,
+    _activeGroupConversationId: string | null,
   ) => {
     queryClient.setQueryData<GroupConversation[]>(
       ["groupConversations"],
@@ -137,14 +138,9 @@ export function useGroupConversations(): UseGroupConversationsResult {
           }
 
           const currentMsgSeqNum = Math.max(conversation.currentMsgSeqNum, payload.sequenceNum);
-          const lastReadMsgSeqNum = conversation.conversationId === activeGroupConversationId
-            ? currentMsgSeqNum
-            : conversation.lastReadMsgSeqNum;
-
           return withUnreadCount({
             ...conversation,
             currentMsgSeqNum,
-            lastReadMsgSeqNum,
           });
         }),
     );
@@ -157,5 +153,7 @@ export function useGroupConversations(): UseGroupConversationsResult {
     applyGroupConversationParticipantsAdded,
     applyGroupConversationParticipantsRemoved,
     applyRealtimeMessage,
+    invalidateGroupConversationsList: () =>
+      void queryClient.invalidateQueries({ queryKey: ["groupConversations"] }),
   };
 }

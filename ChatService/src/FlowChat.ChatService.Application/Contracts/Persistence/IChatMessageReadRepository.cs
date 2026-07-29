@@ -4,14 +4,17 @@ namespace FlowChat.ChatService.Application.Contracts.Persistence;
 
 public interface IChatMessageReadRepository
 {
-    Task<long?> GetMaxSequenceNumAsync(
+    Task<IReadOnlyCollection<ChatMessageDto>> GetBeforeSequenceAsync(
         Guid conversationId,
+        long throughSequenceNum,
+        long? beforeSequenceNum,
+        int limit,
         CancellationToken cancellationToken = default);
 
-    Task<ConversationMessagesPageDto> GetPageBeforeAsync(
+    Task<IReadOnlyCollection<ChatMessageDto>> GetAfterSequenceAsync(
         Guid conversationId,
+        long afterSequenceNum,
+        long throughSequenceNum,
         int limit,
-        DateTimeOffset? beforeSentAtUtc,
-        Guid? beforeMessageId,
         CancellationToken cancellationToken = default);
 }

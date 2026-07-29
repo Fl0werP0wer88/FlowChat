@@ -5,4 +5,5 @@ namespace FlowChat.ChatService.Application.Features.Conversation.Commands.MarkCo
 
 public sealed record MarkConversationAsReadCommandV2(
     Guid ConversationId,
-    Guid ParticipantUserId) : ICommand<Unit>;
+    Guid ParticipantUserId,
+    long SequenceNum) : ICommand<Unit>;

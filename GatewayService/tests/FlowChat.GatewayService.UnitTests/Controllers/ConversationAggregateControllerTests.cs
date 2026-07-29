@@ -1,0 +1,121 @@
+using System.Security.Claims;
+using AutoFixture;
+using AutoMapper;
+using FluentAssertions;
+using FlowChat.GatewayService.Api.Controllers;
+using FlowChat.GatewayService.Api.Models;
+using FlowChat.GatewayService.Api.Services;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging.Abstractions;
+using Moq;
+
+namespace FlowChat.GatewayService.UnitTests.Controllers;
+
+public sealed class ConversationAggregateControllerTests
+{
+    private readonly Fixture _fixture = new();
+    private readonly Mock<IChatServiceClient> _chatClientMock = new();
+    private readonly IMapper _mapper = new MapperConfiguration(
+        cfg => cfg.AddProfile<ConversationAggregateMappingProfile>(),
+        NullLoggerFactory.Instance).CreateMapper();
+
+    [Fact]
+    public async Task OpenDuetConversation_ChatServiceResponse_MapsSequenceContract()
+    {
+        var userId = _fixture.Create<Guid>();
+        var partnerUserId = _fixture.Create<Guid>();
+        var conversationId = _fixture.Create<Guid>();
+        var message = CreateMessage(conversationId);
+        var conversation = new DuetConversationClientDto(conversationId, []);
+        var messages = new ChatMessagesClientDto(
+            [message],
+            NextBeforeSequenceNum: 37,
+            NextAfterSequenceNum: null,
+            CurrentSequenceNum: 84,
+            ThroughSequenceNum: null,
+            HasMore: true);
+
+        _chatClientMock
+            .Setup(x => x.GetDuetConversationAsync(partnerUserId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(conversation);
+        _chatClientMock
+            .Setup(x => x.GetConversationMessagesAsync(conversationId, 10, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(messages);
+
+        var controller = CreateController(userId);
+
+        var result = await controller.OpenDuetConversation(
+            new OpenDuetConversationRequest(partnerUserId, null),
+            CancellationToken.None);
+
+        var response = result.Should().BeOfType<OkObjectResult>().Subject.Value
+            .Should().BeOfType<OpenDuetConversationResponse>().Subject;
+        response.NextBeforeSequenceNum.Should().Be(37);
+        response.CurrentSequenceNum.Should().Be(84);
+        response.Messages.Should().ContainSingle()
+            .Which.SequenceNum.Should().Be(message.SequenceNum);
+    }
+
+    [Fact]
+    public async Task OpenGroupConversation_ChatServiceResponse_MapsSequenceContract()
+    {
+        var userId = _fixture.Create<Guid>();
+        var conversationId = _fixture.Create<Guid>();
+        var message = CreateMessage(conversationId);
+        var conversation = new GroupConversationClientDto(conversationId, _fixture.Create<string>(), []);
+        var messages = new ChatMessagesClientDto(
+            [message],
+            NextBeforeSequenceNum: 12,
+            NextAfterSequenceNum: null,
+            CurrentSequenceNum: 25,
+            ThroughSequenceNum: null,
+            HasMore: true);
+
+        _chatClientMock
+            .Setup(x => x.GetGroupConversationAsync(conversationId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(conversation);
+        _chatClientMock
+            .Setup(x => x.GetConversationMessagesAsync(conversationId, 10, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(messages);
+
+        var controller = CreateController(userId);
+
+        var result = await controller.OpenGroupConversation(
+            new OpenGroupConversationRequest(conversationId),
+            CancellationToken.None);
+
+        var response = result.Should().BeOfType<OkObjectResult>().Subject.Value
+            .Should().BeOfType<OpenGroupConversationResponse>().Subject;
+        response.NextBeforeSequenceNum.Should().Be(12);
+        response.CurrentSequenceNum.Should().Be(25);
+        response.Messages.Should().ContainSingle()
+            .Which.SequenceNum.Should().Be(message.SequenceNum);
+    }
+
+    private ConversationAggregateController CreateController(Guid userId)
+    {
+        var controller = new ConversationAggregateController(
+            _chatClientMock.Object,
+            _mapper,
+            NullLogger<ConversationAggregateController>.Instance);
+        controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext
+            {
+                User = new ClaimsPrincipal(
+                    new ClaimsIdentity([new Claim("sub", userId.ToString())], "Test"))
+            }
+        };
+        return controller;
+    }
+
+    private ChatMessageClientDto CreateMessage(Guid conversationId) =>
+        new(
+            _fixture.Create<Guid>(),
+            conversationId,
+            _fixture.Create<Guid>(),
+            _fixture.Create<string>(),
+            _fixture.Create<DateTimeOffset>(),
+            _fixture.Create<long>());
+}

@@ -4,8 +4,10 @@ namespace FlowChat.ChatService.Api.Features.ChatMessage.Public.GetConversationMe
 
 public sealed record GetConversationMessagesResponse(
     IReadOnlyCollection<ChatMessageResponse> Items,
-    DateTimeOffset? NextBeforeSentAtUtc,
-    Guid? NextBeforeMessageId,
+    long? NextBeforeSequenceNum,
+    long? NextAfterSequenceNum,
+    long CurrentSequenceNum,
+    long? ThroughSequenceNum,
     bool HasMore) : IServiceOutput;
 
 public sealed record ChatMessageResponse(
@@ -13,4 +15,5 @@ public sealed record ChatMessageResponse(
     Guid ConversationId,
     Guid SenderUserId,
     string Text,
-    DateTimeOffset SentAtUtc);
+    DateTimeOffset SentAtUtc,
+    long SequenceNum);

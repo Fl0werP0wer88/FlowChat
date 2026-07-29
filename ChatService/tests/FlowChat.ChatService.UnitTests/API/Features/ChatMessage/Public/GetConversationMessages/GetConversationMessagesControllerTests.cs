@@ -44,8 +44,7 @@ public sealed class GetConversationMessagesControllerTests
     {
         var conversationId = Guid.NewGuid();
         var requestingUserId = Guid.NewGuid();
-        var beforeSentAtUtc = new DateTimeOffset(2026, 4, 24, 10, 0, 0, TimeSpan.Zero);
-        var beforeMessageId = Guid.NewGuid();
+        const long beforeSequenceNum = 42;
         GetConversationMessagesQuery? capturedQuery = null;
         var page = new ConversationMessagesPageDto(
             [
@@ -54,10 +53,13 @@ public sealed class GetConversationMessagesControllerTests
                     conversationId,
                     requestingUserId,
                     "Hello",
-                    beforeSentAtUtc.AddMinutes(-1))
+                    DateTimeOffset.UtcNow,
+                    41)
             ],
-            beforeSentAtUtc.AddMinutes(-1),
-            Guid.NewGuid(),
+            41,
+            null,
+            50,
+            null,
             true);
 
         _mediatorMock
@@ -70,8 +72,9 @@ public sealed class GetConversationMessagesControllerTests
         var actionResult = await controller.GetConversationMessages(
             conversationId,
             25,
-            beforeSentAtUtc,
-            beforeMessageId,
+            beforeSequenceNum,
+            null,
+            null,
             CancellationToken.None);
 
         var okResult = actionResult.Should().BeOfType<OkObjectResult>().Subject;
@@ -80,12 +83,14 @@ public sealed class GetConversationMessagesControllerTests
             conversationId,
             requestingUserId,
             25,
-            beforeSentAtUtc,
-            beforeMessageId));
+            beforeSequenceNum,
+            null,
+            null));
         response.Items.Should().ContainSingle();
         response.HasMore.Should().BeTrue();
-        response.NextBeforeSentAtUtc.Should().Be(page.NextBeforeSentAtUtc);
-        response.NextBeforeMessageId.Should().Be(page.NextBeforeMessageId);
+        response.NextBeforeSequenceNum.Should().Be(41);
+        response.CurrentSequenceNum.Should().Be(50);
+        response.Items.Single().SequenceNum.Should().Be(41);
     }
 
     [Fact]
@@ -103,6 +108,7 @@ public sealed class GetConversationMessagesControllerTests
             50,
             null,
             null,
+            null,
             CancellationToken.None);
 
         var notFoundResult = actionResult.Should().BeOfType<NotFoundObjectResult>().Subject;
@@ -117,6 +123,7 @@ public sealed class GetConversationMessagesControllerTests
         var actionResult = await controller.GetConversationMessages(
             Guid.NewGuid(),
             50,
+            null,
             null,
             null,
             CancellationToken.None);

@@ -7,85 +7,60 @@ public sealed class GetConversationMessagesQueryValidatorTests
 {
     private readonly GetConversationMessagesQueryValidator _validator = new();
 
-    [Fact]
-    public void Validate_ValidQuery_ReturnsNoValidationErrors()
+    [Theory]
+    [InlineData(null, null, null)]
+    [InlineData(42L, null, null)]
+    [InlineData(null, 41L, null)]
+    [InlineData(null, 41L, 50L)]
+    public void Validate_ValidModes_ReturnNoErrors(
+        long? before,
+        long? after,
+        long? through)
     {
-        var query = new GetConversationMessagesQuery(
-            Guid.NewGuid(),
-            Guid.NewGuid(),
-            50,
-            new DateTimeOffset(2026, 4, 24, 10, 0, 0, TimeSpan.Zero),
-            Guid.NewGuid());
-
-        var result = _validator.Validate(query);
+        var result = _validator.Validate(Query(before, after, through));
 
         result.IsValid.Should().BeTrue();
     }
 
     [Fact]
-    public void Validate_EmptyIds_ReturnsValidationErrors()
+    public void Validate_BeforeAndAfter_ReturnsError()
     {
-        var query = new GetConversationMessagesQuery(
-            Guid.Empty,
-            Guid.Empty,
-            50,
-            null,
-            null);
-
-        var result = _validator.Validate(query);
+        var result = _validator.Validate(Query(42, 41, null));
 
         result.IsValid.Should().BeFalse();
-        result.Errors.Select(error => error.PropertyName)
-            .Should().Contain(["ConversationId", "RequestingUserId"]);
+    }
+
+    [Fact]
+    public void Validate_ThroughWithoutAfter_ReturnsError()
+    {
+        var result = _validator.Validate(Query(null, null, 50));
+
+        result.IsValid.Should().BeFalse();
+    }
+
+    [Fact]
+    public void Validate_ThroughBelowAfter_ReturnsError()
+    {
+        var result = _validator.Validate(Query(null, 50, 49));
+
+        result.IsValid.Should().BeFalse();
     }
 
     [Theory]
     [InlineData(0)]
     [InlineData(101)]
-    public void Validate_LimitOutsideAllowedRange_ReturnsValidationError(int limit)
+    public void Validate_LimitOutsideRange_ReturnsError(int limit)
     {
-        var query = new GetConversationMessagesQuery(
-            Guid.NewGuid(),
-            Guid.NewGuid(),
-            limit,
-            null,
-            null);
-
-        var result = _validator.Validate(query);
+        var result = _validator.Validate(new GetConversationMessagesQuery(
+            Guid.NewGuid(), Guid.NewGuid(), limit, null, null, null));
 
         result.IsValid.Should().BeFalse();
         result.Errors.Should().Contain(error => error.PropertyName == "Limit");
     }
 
-    [Fact]
-    public void Validate_BeforeMessageIdWithoutBeforeSentAtUtc_ReturnsValidationError()
-    {
-        var query = new GetConversationMessagesQuery(
-            Guid.NewGuid(),
-            Guid.NewGuid(),
-            50,
-            null,
-            Guid.NewGuid());
-
-        var result = _validator.Validate(query);
-
-        result.IsValid.Should().BeFalse();
-        result.Errors.Should().Contain(error => error.PropertyName == "BeforeSentAtUtc");
-    }
-
-    [Fact]
-    public void Validate_NonUtcBeforeSentAtUtc_ReturnsValidationError()
-    {
-        var query = new GetConversationMessagesQuery(
-            Guid.NewGuid(),
-            Guid.NewGuid(),
-            50,
-            new DateTimeOffset(2026, 4, 24, 10, 0, 0, TimeSpan.FromHours(2)),
-            null);
-
-        var result = _validator.Validate(query);
-
-        result.IsValid.Should().BeFalse();
-        result.Errors.Should().Contain(error => error.PropertyName == "BeforeSentAtUtc");
-    }
+    private static GetConversationMessagesQuery Query(
+        long? before,
+        long? after,
+        long? through) =>
+        new(Guid.NewGuid(), Guid.NewGuid(), 50, before, after, through);
 }

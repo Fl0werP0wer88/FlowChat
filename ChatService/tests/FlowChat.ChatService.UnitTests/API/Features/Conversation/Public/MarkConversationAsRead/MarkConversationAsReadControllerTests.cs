@@ -31,12 +31,16 @@ public sealed class MarkConversationAsReadControllerTests
 
         var controller = CreateController(userId);
 
-        var actionResult = await controller.MarkConversationAsRead(conversationId, CancellationToken.None);
+        var actionResult = await controller.MarkConversationAsRead(
+            conversationId,
+            new MarkConversationAsReadRequest(12),
+            CancellationToken.None);
 
         actionResult.Should().BeOfType<NoContentResult>();
         capturedCommand.Should().NotBeNull();
         capturedCommand!.ConversationId.Should().Be(conversationId);
         capturedCommand.ParticipantUserId.Should().Be(userId);
+        capturedCommand.SequenceNum.Should().Be(12);
     }
 
     [Fact]
@@ -44,7 +48,10 @@ public sealed class MarkConversationAsReadControllerTests
     {
         var controller = CreateController();
 
-        var actionResult = await controller.MarkConversationAsRead(Guid.NewGuid(), CancellationToken.None);
+        var actionResult = await controller.MarkConversationAsRead(
+            Guid.NewGuid(),
+            new MarkConversationAsReadRequest(12),
+            CancellationToken.None);
 
         actionResult.Should().BeOfType<UnauthorizedResult>();
         _mediatorMock.Verify(
@@ -61,7 +68,10 @@ public sealed class MarkConversationAsReadControllerTests
 
         var controller = CreateController(Guid.NewGuid());
 
-        var actionResult = await controller.MarkConversationAsRead(Guid.NewGuid(), CancellationToken.None);
+        var actionResult = await controller.MarkConversationAsRead(
+            Guid.NewGuid(),
+            new MarkConversationAsReadRequest(12),
+            CancellationToken.None);
 
         var notFoundResult = actionResult.Should().BeOfType<NotFoundObjectResult>().Subject;
         notFoundResult.Value.Should().BeOfType<ProblemDetails>();

@@ -12,7 +12,7 @@ namespace FlowChat.ChatService.Application.Features.Conversation.Commands.MarkCo
 
 public sealed class MarkConversationAsReadCommandHandlerV2(
     IConversationParticipantWriteRepository participantRepository,
-    IChatMessageV2WriteRepository messageRepository,
+    IConversationMessageSequenceReadRepository sequenceReadRepository,
     IUnitOfWork unitOfWork,
     ILocalEventDispatcher localEventDispatcher,
     IEnumerable<IAggregateBeforeSaveProcessorV2<MarkConversationAsReadCommandV2, ConversationParticipant>> processors)
@@ -40,11 +40,18 @@ public sealed class MarkConversationAsReadCommandHandlerV2(
         CancellationToken cancellationToken)
     {
         var mutationType = FlowChat.Shared.Domain.MutationType.Unchanged;
-        var maxSequence = await messageRepository.GetMaxSequenceNumAsync(
-            Id<ConversationV2>.FromGuid(request.ConversationId),
-            cancellationToken);
+        var currentSequenceNum = await sequenceReadRepository.GetCurrentAsync(
+            request.ConversationId,
+            cancellationToken) ?? 0;
 
-        if (AggregateRoot!.AdvanceReadCursor(maxSequence.GetValueOrDefault()))
+        if (request.SequenceNum > currentSequenceNum)
+        {
+            return Failure(DomainError.BadRequest(
+                "SequenceNum cannot exceed the current conversation sequence."));
+        }
+
+        //Review9-1: Czemu nie zastosowales tutaj metody AggregateRootUpdateCommandHandlerBaseV3.Updated ? 
+        if (AggregateRoot!.AdvanceReadCursor(request.SequenceNum))
         {
             mutationType = FlowChat.Shared.Domain.MutationType.Updated;
         }

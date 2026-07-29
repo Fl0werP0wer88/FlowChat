@@ -93,6 +93,7 @@ public sealed class SendChatMessageCommandHandlerV2Tests
 
         result.IsSuccess.Should().BeTrue();
         result.Value.MessageId.Should().Be(command.Id);
+        result.Value.SequenceNum.Should().Be(sequenceNum);
         savedMessage.Should().NotBeNull();
         savedMessage!.SequenceNum.Should().Be(sequenceNum);
         dispatchedEvents.OfType<ChatMessageSentDomainEventV2>().Should().ContainSingle()

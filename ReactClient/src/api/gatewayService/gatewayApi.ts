@@ -48,9 +48,9 @@ export async function openDuetConversation(
     conversationId: response.conversationId ?? "",
     participants: (response.participants ?? []).map(mapDuetParticipant),
     messages: (response.messages ?? []).map(mapDuetMessage),
-    nextBeforeSentAtUtc: response.nextBeforeSentAtUtc ?? null,
-    nextBeforeMessageId: response.nextBeforeMessageId ?? null,
-    hasMore: response.hasMore ?? false,
+    nextBeforeSequenceNum: response.nextBeforeSequenceNum ?? null,
+    currentSequenceNum: response.currentSequenceNum,
+    hasMore: response.hasMore,
   };
 }
 
@@ -73,8 +73,8 @@ export async function openGroupConversation(
     name: response.name ?? "",
     participants: (response.participants ?? []).map(mapGroupParticipant),
     messages: (response.messages ?? []).map(mapGroupMessage),
-    nextBeforeSentAtUtc: response.nextBeforeSentAtUtc ?? null,
-    nextBeforeMessageId: response.nextBeforeMessageId ?? null,
-    hasMore: response.hasMore ?? false,
+    nextBeforeSequenceNum: response.nextBeforeSequenceNum ?? null,
+    currentSequenceNum: response.currentSequenceNum,
+    hasMore: response.hasMore,
   };
 }

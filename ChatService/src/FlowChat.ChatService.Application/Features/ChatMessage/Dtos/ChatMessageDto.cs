@@ -7,4 +7,5 @@ public sealed record ChatMessageDto(
     Guid ConversationId,
     Guid SenderUserId,
     string Text,
-    DateTimeOffset SentAtUtc) : IDbReadResponse;
+    DateTimeOffset SentAtUtc,
+    long SequenceNum) : IDbReadResponse;

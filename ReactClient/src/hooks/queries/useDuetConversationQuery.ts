@@ -25,9 +25,11 @@ export function useDuetConversationQuery(
         conversationId: result.conversationId,
         participants: result.participants,
         messages: orderedMessages.map((msg) => mapDuetConversationMessage(msg, ownerUserId)),
-        nextBeforeSentAtUtc: result.nextBeforeSentAtUtc,
-        nextBeforeMessageId: result.nextBeforeMessageId,
+        nextBeforeSequenceNum: result.nextBeforeSequenceNum,
         hasMore: result.hasMore,
+        lastContiguousSequenceNum: result.currentSequenceNum,
+        pendingMessagesBySequence: {},
+        syncStatus: "idle",
       };
     },
     enabled: Boolean(activeContact && accessToken),
