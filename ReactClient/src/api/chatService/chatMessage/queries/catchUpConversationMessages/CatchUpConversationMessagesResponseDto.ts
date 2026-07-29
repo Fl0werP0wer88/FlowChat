@@ -1,8 +1,9 @@
 import type { ConversationMessageDto } from "../getConversationMessages/ConversationMessageDto";
 
-export interface GetGroupConversationMessagesResponseDto {
+export interface CatchUpConversationMessagesResponseDto {
   items?: ConversationMessageDto[];
-  nextBeforeSequenceNum?: number | null;
+  nextAfterSequenceNum?: number | null;
   currentSequenceNum: number;
+  throughSequenceNum: number;
   hasMore: boolean;
 }

@@ -22,9 +22,7 @@ public sealed class ChatServiceContractTests
                 }
               ],
               "nextBeforeSequenceNum": 121,
-              "nextAfterSequenceNum": null,
               "currentSequenceNum": 140,
-              "throughSequenceNum": null,
               "hasMore": true
             }
             """;

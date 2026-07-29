@@ -84,9 +84,7 @@ internal sealed class ChatServiceClient(HttpClient httpClient)
         return response ?? new ChatMessagesClientDto(
             [],
             null,
-            null,
             0,
-            null,
             false);
     }
 

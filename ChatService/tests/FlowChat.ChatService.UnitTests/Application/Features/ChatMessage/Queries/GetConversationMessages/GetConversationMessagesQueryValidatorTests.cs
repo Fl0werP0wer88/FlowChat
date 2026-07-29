@@ -8,42 +8,23 @@ public sealed class GetConversationMessagesQueryValidatorTests
     private readonly GetConversationMessagesQueryValidator _validator = new();
 
     [Theory]
-    [InlineData(null, null, null)]
-    [InlineData(42L, null, null)]
-    [InlineData(null, 41L, null)]
-    [InlineData(null, 41L, 50L)]
-    public void Validate_ValidModes_ReturnNoErrors(
-        long? before,
-        long? after,
-        long? through)
+    [InlineData(null)]
+    [InlineData(1L)]
+    [InlineData(42L)]
+    public void Validate_ValidHistoryRequest_ReturnsNoErrors(long? beforeSequenceNum)
     {
-        var result = _validator.Validate(Query(before, after, through));
+        var result = _validator.Validate(Query(beforeSequenceNum));
 
         result.IsValid.Should().BeTrue();
     }
 
     [Fact]
-    public void Validate_BeforeAndAfter_ReturnsError()
+    public void Validate_BeforeSequenceBelowOne_ReturnsError()
     {
-        var result = _validator.Validate(Query(42, 41, null));
+        var result = _validator.Validate(Query(0));
 
         result.IsValid.Should().BeFalse();
-    }
-
-    [Fact]
-    public void Validate_ThroughWithoutAfter_ReturnsError()
-    {
-        var result = _validator.Validate(Query(null, null, 50));
-
-        result.IsValid.Should().BeFalse();
-    }
-
-    [Fact]
-    public void Validate_ThroughBelowAfter_ReturnsError()
-    {
-        var result = _validator.Validate(Query(null, 50, 49));
-
-        result.IsValid.Should().BeFalse();
+        result.Errors.Should().Contain(error => error.PropertyName == "BeforeSequenceNum");
     }
 
     [Theory]
@@ -51,16 +32,13 @@ public sealed class GetConversationMessagesQueryValidatorTests
     [InlineData(101)]
     public void Validate_LimitOutsideRange_ReturnsError(int limit)
     {
-        var result = _validator.Validate(new GetConversationMessagesQuery(
-            Guid.NewGuid(), Guid.NewGuid(), limit, null, null, null));
+        var result = _validator.Validate(
+            new GetConversationMessagesQuery(Guid.NewGuid(), Guid.NewGuid(), limit, null));
 
         result.IsValid.Should().BeFalse();
         result.Errors.Should().Contain(error => error.PropertyName == "Limit");
     }
 
-    private static GetConversationMessagesQuery Query(
-        long? before,
-        long? after,
-        long? through) =>
-        new(Guid.NewGuid(), Guid.NewGuid(), 50, before, after, through);
+    private static GetConversationMessagesQuery Query(long? beforeSequenceNum) =>
+        new(Guid.NewGuid(), Guid.NewGuid(), 50, beforeSequenceNum);
 }

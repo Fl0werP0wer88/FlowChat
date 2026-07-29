@@ -24,23 +24,5 @@ public sealed class GetConversationMessagesQueryValidator : AbstractValidator<Ge
             .GreaterThanOrEqualTo(1)
             .When(query => query.BeforeSequenceNum.HasValue);
 
-        RuleFor(query => query.AfterSequenceNum)
-            .GreaterThanOrEqualTo(0)
-            .When(query => query.AfterSequenceNum.HasValue);
-
-        RuleFor(query => query)
-            .Must(query => !(query.BeforeSequenceNum.HasValue && query.AfterSequenceNum.HasValue))
-            .WithMessage("BeforeSequenceNum and AfterSequenceNum are mutually exclusive.");
-
-        RuleFor(query => query)
-            .Must(query => !query.ThroughSequenceNum.HasValue || query.AfterSequenceNum.HasValue)
-            .WithMessage("ThroughSequenceNum requires AfterSequenceNum.");
-
-        RuleFor(query => query)
-            .Must(query =>
-                !query.ThroughSequenceNum.HasValue ||
-                !query.AfterSequenceNum.HasValue ||
-                query.ThroughSequenceNum.Value >= query.AfterSequenceNum.Value)
-            .WithMessage("ThroughSequenceNum must be greater than or equal to AfterSequenceNum.");
     }
 }

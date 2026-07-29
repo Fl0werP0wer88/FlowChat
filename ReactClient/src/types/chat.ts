@@ -54,18 +54,22 @@ export interface GroupConversation {
 export interface DuetConversationMessagesResult {
   messages: DuetConversationMessage[];
   nextBeforeSequenceNum: number | null;
-  nextAfterSequenceNum: number | null;
   currentSequenceNum: number;
-  throughSequenceNum: number | null;
   hasMore: boolean;
 }
 
 export interface GroupConversationMessagesResult {
   messages: GroupConversationMessage[];
   nextBeforeSequenceNum: number | null;
+  currentSequenceNum: number;
+  hasMore: boolean;
+}
+
+export interface ConversationMessagesCatchUpResult {
+  messages: DuetConversationMessage[];
   nextAfterSequenceNum: number | null;
   currentSequenceNum: number;
-  throughSequenceNum: number | null;
+  throughSequenceNum: number;
   hasMore: boolean;
 }
 

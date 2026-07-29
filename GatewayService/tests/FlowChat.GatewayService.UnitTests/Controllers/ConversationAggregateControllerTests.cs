@@ -31,9 +31,7 @@ public sealed class ConversationAggregateControllerTests
         var messages = new ChatMessagesClientDto(
             [message],
             NextBeforeSequenceNum: 37,
-            NextAfterSequenceNum: null,
             CurrentSequenceNum: 84,
-            ThroughSequenceNum: null,
             HasMore: true);
 
         _chatClientMock
@@ -67,9 +65,7 @@ public sealed class ConversationAggregateControllerTests
         var messages = new ChatMessagesClientDto(
             [message],
             NextBeforeSequenceNum: 12,
-            NextAfterSequenceNum: null,
             CurrentSequenceNum: 25,
-            ThroughSequenceNum: null,
             HasMore: true);
 
         _chatClientMock

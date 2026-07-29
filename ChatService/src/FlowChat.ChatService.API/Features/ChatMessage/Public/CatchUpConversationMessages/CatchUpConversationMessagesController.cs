@@ -1,37 +1,39 @@
 using AutoMapper;
-using FlowChat.ChatService.Application.Features.ChatMessage.Queries.GetConversationMessages;
+using FlowChat.ChatService.Application.Features.ChatMessage.Queries.CatchUpConversationMessages;
 using FlowChat.Shared.API;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 
-namespace FlowChat.ChatService.Api.Features.ChatMessage.Public.GetConversationMessages;
+namespace FlowChat.ChatService.Api.Features.ChatMessage.Public.CatchUpConversationMessages;
 
 [ApiController]
 [Authorize]
-[Route("api/chat/conversations/{conversationId:guid}/messages")]
-public sealed class GetConversationMessagesController : ApiControllerBase
+[Route("api/chat/conversations/{conversationId:guid}/messages/catch-up")]
+public sealed class CatchUpConversationMessagesController : ApiControllerBase
 {
-    private const int DefaultLimit = 50;
+    private const int DefaultLimit = 100;
     private readonly IMediator _mediator;
     private readonly IMapper _mapper;
 
-    public GetConversationMessagesController(IMediator mediator, IMapper mapper)
+    public CatchUpConversationMessagesController(IMediator mediator, IMapper mapper)
     {
         _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
         _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
     }
 
     [HttpGet]
-    [ProducesResponseType(typeof(GetConversationMessagesResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(CatchUpConversationMessagesResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> GetConversationMessages(
+    public async Task<IActionResult> CatchUpConversationMessages(
         [FromRoute] Guid conversationId,
+        [FromQuery, BindRequired] long afterSequenceNum,
+        [FromQuery] long? throughSequenceNum = null,
         [FromQuery] int limit = DefaultLimit,
-        [FromQuery] long? beforeSequenceNum = null,
         CancellationToken cancellationToken = default)
     {
         if (!TryGetCurrentUserId(out var userId))
@@ -40,11 +42,12 @@ public sealed class GetConversationMessagesController : ApiControllerBase
         }
 
         var result = await _mediator.Send(
-            new GetConversationMessagesQuery(
+            new CatchUpConversationMessagesQuery(
                 conversationId,
                 userId,
                 limit,
-                beforeSequenceNum),
+                afterSequenceNum,
+                throughSequenceNum),
             cancellationToken);
 
         if (!result.IsSuccess)
@@ -52,8 +55,6 @@ public sealed class GetConversationMessagesController : ApiControllerBase
             return HandleError(result.Error);
         }
 
-        var response = _mapper.Map<GetConversationMessagesResponse>(result.Value);
-
-        return Ok(response);
+        return Ok(_mapper.Map<CatchUpConversationMessagesResponse>(result.Value));
     }
 }

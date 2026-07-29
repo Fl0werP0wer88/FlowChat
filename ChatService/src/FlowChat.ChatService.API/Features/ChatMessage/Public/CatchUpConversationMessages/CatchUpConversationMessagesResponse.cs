@@ -1,11 +1,12 @@
 using FlowChat.Core.Contracts;
 
-namespace FlowChat.ChatService.Api.Features.ChatMessage.Public.GetConversationMessages;
+namespace FlowChat.ChatService.Api.Features.ChatMessage.Public.CatchUpConversationMessages;
 
-public sealed record GetConversationMessagesResponse(
+public sealed record CatchUpConversationMessagesResponse(
     IReadOnlyCollection<ChatMessageResponse> Items,
-    long? NextBeforeSequenceNum,
+    long? NextAfterSequenceNum,
     long CurrentSequenceNum,
+    long ThroughSequenceNum,
     bool HasMore) : IServiceOutput;
 
 public sealed record ChatMessageResponse(

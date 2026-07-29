@@ -8,6 +8,6 @@ public sealed class GetConversationMessagesMappingProfile : Profile
     public GetConversationMessagesMappingProfile()
     {
         CreateMap<ChatMessageDto, ChatMessageResponse>();
-        CreateMap<ConversationMessagesPageDto, GetConversationMessagesResponse>();
+        CreateMap<ConversationMessageHistoryPageDto, GetConversationMessagesResponse>();
     }
 }

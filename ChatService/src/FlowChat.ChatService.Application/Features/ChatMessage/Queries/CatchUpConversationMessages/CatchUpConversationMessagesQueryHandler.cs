@@ -3,16 +3,16 @@ using FlowChat.ChatService.Application.Features.ChatMessage.Dtos;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
 
-namespace FlowChat.ChatService.Application.Features.ChatMessage.Queries.GetConversationMessages;
+namespace FlowChat.ChatService.Application.Features.ChatMessage.Queries.CatchUpConversationMessages;
 
-public sealed class GetConversationMessagesQueryHandler
-    : IQueryHandler<GetConversationMessagesQuery, ConversationMessageHistoryPageDto>
+public sealed class CatchUpConversationMessagesQueryHandler
+    : IQueryHandler<CatchUpConversationMessagesQuery, ConversationMessagesCatchUpPageDto>
 {
     private readonly IChatMessageReadRepository _chatMessageReadRepository;
     private readonly IConversationMessageSequenceReadRepository _sequenceReadRepository;
     private readonly IConversationParticipantReadRepository _participantReadRepository;
 
-    public GetConversationMessagesQueryHandler(
+    public CatchUpConversationMessagesQueryHandler(
         IChatMessageReadRepository chatMessageReadRepository,
         IConversationMessageSequenceReadRepository sequenceReadRepository,
         IConversationParticipantReadRepository participantReadRepository)
@@ -22,8 +22,8 @@ public sealed class GetConversationMessagesQueryHandler
         _participantReadRepository = participantReadRepository ?? throw new ArgumentNullException(nameof(participantReadRepository));
     }
 
-    public async Task<FlowChatResult<ConversationMessageHistoryPageDto>> Handle(
-        GetConversationMessagesQuery request,
+    public async Task<FlowChatResult<ConversationMessagesCatchUpPageDto>> Handle(
+        CatchUpConversationMessagesQuery request,
         CancellationToken cancellationToken)
     {
         var participantUserIds = await _participantReadRepository.GetParticipantUserIdsAsync(
@@ -31,33 +31,49 @@ public sealed class GetConversationMessagesQueryHandler
             cancellationToken);
         if (participantUserIds is null)
         {
-            return FlowChatResult<ConversationMessageHistoryPageDto>.Failure(
+            return FlowChatResult<ConversationMessagesCatchUpPageDto>.Failure(
                 DomainError.NotFound("Conversation not found."));
         }
 
         if (!participantUserIds.Contains(request.RequestingUserId))
         {
-            return FlowChatResult<ConversationMessageHistoryPageDto>.Failure(
+            return FlowChatResult<ConversationMessagesCatchUpPageDto>.Failure(
                 DomainError.Unauthorized("Requesting user is not a participant of this conversation."));
         }
 
         var currentSequenceNum = await _sequenceReadRepository.GetCurrentAsync(
             request.ConversationId,
             cancellationToken) ?? 0;
-        var rows = await _chatMessageReadRepository.GetBeforeSequenceAsync(
+        var throughSequenceNum = request.ThroughSequenceNum ?? currentSequenceNum;
+
+        if (throughSequenceNum < request.AfterSequenceNum)
+        {
+            return FlowChatResult<ConversationMessagesCatchUpPageDto>.Failure(
+                DomainError.BadRequest("ThroughSequenceNum cannot be lower than AfterSequenceNum."));
+        }
+
+        if (throughSequenceNum > currentSequenceNum)
+        {
+            return FlowChatResult<ConversationMessagesCatchUpPageDto>.Failure(
+                DomainError.BadRequest(
+                    "ThroughSequenceNum cannot exceed the current conversation sequence."));
+        }
+
+        var rows = await _chatMessageReadRepository.GetAfterSequenceAsync(
             request.ConversationId,
-            currentSequenceNum,
-            request.BeforeSequenceNum,
+            request.AfterSequenceNum,
+            throughSequenceNum,
             request.Limit + 1,
             cancellationToken);
         var hasMore = rows.Count > request.Limit;
         var items = rows.Take(request.Limit).ToList();
 
-        return FlowChatResult<ConversationMessageHistoryPageDto>.Success(
-            new ConversationMessageHistoryPageDto(
+        return FlowChatResult<ConversationMessagesCatchUpPageDto>.Success(
+            new ConversationMessagesCatchUpPageDto(
                 items,
                 hasMore ? items[^1].SequenceNum : null,
                 currentSequenceNum,
+                throughSequenceNum,
                 hasMore));
     }
 }

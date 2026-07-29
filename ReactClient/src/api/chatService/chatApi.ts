@@ -4,6 +4,7 @@ import type { CopyDuetAsGroupRequest } from "./conversation/commands/copyDuetAsG
 import type { CreateGroupConversationRequest } from "./conversation/commands/createGroupConversation/CreateGroupConversationRequest";
 import type { GetConversationMessagesResponseDto } from "./chatMessage/queries/getConversationMessages/GetConversationMessagesResponseDto";
 import type { GetGroupConversationMessagesResponseDto } from "./chatMessage/queries/getGroupConversationMessages/GetGroupConversationMessagesResponseDto";
+import type { CatchUpConversationMessagesResponseDto } from "./chatMessage/queries/catchUpConversationMessages/CatchUpConversationMessagesResponseDto";
 import type { SendChatMessageResponseDto } from "./chatMessage/queries/sendChatMessage/SendChatMessageResponseDto";
 import type { CopyDuetAsGroupResponseDto } from "./conversation/queries/copyDuetAsGroup/CopyDuetAsGroupResponseDto";
 import type { GetGroupConversationsResponseDto } from "./conversation/queries/getGroupConversations/GetGroupConversationsResponseDto";
@@ -19,6 +20,7 @@ import type {
   CopyDuetAsGroupResult,
   GroupConversation,
   GroupConversationMessagesResult,
+  ConversationMessagesCatchUpResult,
   SendChatMessageResult,
   SendGroupChatMessageResult,
 } from "../../types/chat";
@@ -46,9 +48,7 @@ export async function getDuetConversationMessages(
   return {
     messages: (response.items ?? []).map(mapDuetMessage),
     nextBeforeSequenceNum: response.nextBeforeSequenceNum ?? null,
-    nextAfterSequenceNum: response.nextAfterSequenceNum ?? null,
     currentSequenceNum: response.currentSequenceNum,
-    throughSequenceNum: response.throughSequenceNum ?? null,
     hasMore: response.hasMore,
   };
 }
@@ -122,9 +122,7 @@ export async function getGroupConversationMessages(
   return {
     messages: (response.items ?? []).map(mapGroupMessage),
     nextBeforeSequenceNum: response.nextBeforeSequenceNum ?? null,
-    nextAfterSequenceNum: response.nextAfterSequenceNum ?? null,
     currentSequenceNum: response.currentSequenceNum,
-    throughSequenceNum: response.throughSequenceNum ?? null,
     hasMore: response.hasMore,
   };
 }
@@ -182,7 +180,7 @@ export async function catchUpConversationMessages(
   throughSequenceNum: number | null,
   accessToken: string,
   signal?: AbortSignal,
-): Promise<DuetConversationMessagesResult> {
+): Promise<ConversationMessagesCatchUpResult> {
   const params = new URLSearchParams({
     afterSequenceNum: afterSequenceNum.toString(),
     limit: "100",
@@ -191,17 +189,16 @@ export async function catchUpConversationMessages(
     params.set("throughSequenceNum", throughSequenceNum.toString());
   }
 
-  const response = await getJson<GetConversationMessagesResponseDto>(
-    `/api/chat/conversations/${encodeURIComponent(conversationId)}/messages?${params.toString()}`,
+  const response = await getJson<CatchUpConversationMessagesResponseDto>(
+    `/api/chat/conversations/${encodeURIComponent(conversationId)}/messages/catch-up?${params.toString()}`,
     { accessToken, signal },
   );
 
   return {
     messages: (response.items ?? []).map(mapDuetMessage),
-    nextBeforeSequenceNum: response.nextBeforeSequenceNum ?? null,
     nextAfterSequenceNum: response.nextAfterSequenceNum ?? null,
     currentSequenceNum: response.currentSequenceNum,
-    throughSequenceNum: response.throughSequenceNum ?? null,
+    throughSequenceNum: response.throughSequenceNum,
     hasMore: response.hasMore,
   };
 }

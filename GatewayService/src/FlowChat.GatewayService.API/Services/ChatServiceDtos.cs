@@ -18,9 +18,7 @@ public sealed record ConversationParticipantClientDto(
 public sealed record ChatMessagesClientDto(
     IReadOnlyCollection<ChatMessageClientDto> Items,
     long? NextBeforeSequenceNum,
-    long? NextAfterSequenceNum,
     long CurrentSequenceNum,
-    long? ThroughSequenceNum,
     bool HasMore);
 
 public sealed record ChatMessageClientDto(

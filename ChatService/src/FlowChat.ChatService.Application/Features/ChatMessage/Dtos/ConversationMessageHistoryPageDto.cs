@@ -1,9 +1,7 @@
 namespace FlowChat.ChatService.Application.Features.ChatMessage.Dtos;
 
-public sealed record ConversationMessagesPageDto(
+public sealed record ConversationMessageHistoryPageDto(
     IReadOnlyCollection<ChatMessageDto> Items,
     long? NextBeforeSequenceNum,
-    long? NextAfterSequenceNum,
     long CurrentSequenceNum,
-    long? ThroughSequenceNum,
     bool HasMore);
