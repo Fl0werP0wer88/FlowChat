@@ -1,6 +1,6 @@
 using FlowChat.Core.Contracts;
 
-namespace FlowChat.GatewayService.Api.Models;
+namespace FlowChat.GatewayService.Api.Features.Conversation.Public.OpenDuetConversation;
 
 public sealed record OpenDuetConversationRequest(
     Guid PartnerUserId,

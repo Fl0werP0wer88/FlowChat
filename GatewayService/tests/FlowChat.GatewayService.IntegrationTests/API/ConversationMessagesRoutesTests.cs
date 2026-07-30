@@ -14,7 +14,7 @@ public sealed class ConversationMessagesRoutesTests(GatewayApiFactory factory)
     : IClassFixture<GatewayApiFactory>
 {
     [Fact]
-    public async Task HistoryRoute_IsHandledByGatewayController()
+    public async Task HistoryRoute_IsHandledByGatewayMessageSlice()
     {
         var conversationId = Guid.NewGuid();
         var userId = Guid.NewGuid();
@@ -35,7 +35,7 @@ public sealed class ConversationMessagesRoutesTests(GatewayApiFactory factory)
     }
 
     [Fact]
-    public async Task CatchUpRoute_IsHandledByGatewayController()
+    public async Task CatchUpRoute_IsHandledByGatewayMessageSlice()
     {
         var conversationId = Guid.NewGuid();
         var userId = Guid.NewGuid();

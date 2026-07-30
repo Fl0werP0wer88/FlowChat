@@ -1,9 +1,12 @@
 using FlowChat.Core.Contracts;
 using FlowChat.Core.Domain;
 
-namespace FlowChat.GatewayService.Api.Models;
+namespace FlowChat.GatewayService.Api.Features.Contact.Public.GetContactsWithConversations;
 
-public sealed record ContactWithConversationDto(
+public sealed record GetContactsWithConversationsResponse(
+    IReadOnlyCollection<ContactWithConversationResponse> Contacts) : IServiceOutput;
+
+public sealed record ContactWithConversationResponse(
     Guid ContactUserId,
     string? DisplayName,
     string? AvatarUrl,
@@ -17,4 +20,4 @@ public sealed record ContactWithConversationDto(
     long CurrentMsgSeqNum,
     long UnreadCount,
     PresenceStatus Status,
-    DateTimeOffset PresenceChangedAtUtc) : IServiceOutput;
+    DateTimeOffset PresenceChangedAtUtc);

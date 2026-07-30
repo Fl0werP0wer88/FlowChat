@@ -1,5 +1,6 @@
 using FlowChat.GatewayService.Api.Features.ChatMessage.Public.GetConversationMessages;
 using FlowChat.GatewayService.Infrastructure.Clients.ChatService;
+using FlowChat.GatewayService.Infrastructure.Clients.PresenceService;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -13,6 +14,7 @@ namespace FlowChat.GatewayService.IntegrationTests.API;
 public sealed class GatewayApiFactory : WebApplicationFactory<GetConversationMessagesController>
 {
     public Mock<IChatServiceClient> ChatServiceClient { get; } = new();
+    public Mock<IPresenceServiceClient> PresenceServiceClient { get; } = new();
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
@@ -21,6 +23,8 @@ public sealed class GatewayApiFactory : WebApplicationFactory<GetConversationMes
         {
             services.RemoveAll<IChatServiceClient>();
             services.AddSingleton(ChatServiceClient.Object);
+            services.RemoveAll<IPresenceServiceClient>();
+            services.AddSingleton(PresenceServiceClient.Object);
             services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = TestAuthenticationHandler.SchemeName;

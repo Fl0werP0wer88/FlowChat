@@ -2,6 +2,10 @@ using System.Text.Json.Serialization;
 using FlowChat.GatewayService.Api.Configuration.Settings;
 using FlowChat.GatewayService.Api.Features.ChatMessage.Interfaces;
 using FlowChat.GatewayService.Api.Features.ChatMessage.Services;
+using FlowChat.GatewayService.Api.Features.Contact.Interfaces;
+using FlowChat.GatewayService.Api.Features.Contact.Services;
+using FlowChat.GatewayService.Api.Features.Conversation.Interfaces;
+using FlowChat.GatewayService.Api.Features.Conversation.Services;
 using FlowChat.GatewayService.Api.Observability;
 using FlowChat.GatewayService.Infrastructure.Configuration;
 using FlowChat.Shared.API;
@@ -28,6 +32,8 @@ public static class StartupExtensions
             (Action<AutoMapper.IMapperConfigurationExpression>?)null,
             typeof(StartupExtensions).Assembly);
         builder.Services.AddScoped<IConversationMessagesFacade, ConversationMessagesFacade>();
+        builder.Services.AddScoped<IContactsFacade, ContactsFacade>();
+        builder.Services.AddScoped<IConversationFacade, ConversationFacade>();
         builder.Services.AddGatewayInfrastructure(builder.Configuration);
 
         var clientSettings = builder.Configuration.GetSection(new GatewayClientSettingsSection().SectionName)

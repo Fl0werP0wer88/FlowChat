@@ -1,9 +1,10 @@
 using FlowChat.Core.Contracts;
 
-namespace FlowChat.GatewayService.Api.Models;
+namespace FlowChat.GatewayService.Api.Features.Conversation.Public.OpenGroupConversation;
 
-public sealed record OpenDuetConversationResponse(
+public sealed record OpenGroupConversationResponse(
     Guid ConversationId,
+    string Name,
     IReadOnlyCollection<ConversationParticipantResponse> Participants,
     IReadOnlyCollection<ConversationMessageResponse> Messages,
     long? NextBeforeSequenceNum,
