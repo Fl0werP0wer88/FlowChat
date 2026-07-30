@@ -9,9 +9,9 @@ public static class MediatRServiceConfigurationExtensions
     public static MediatRServiceConfiguration AddFlowChatBehaviors(this MediatRServiceConfiguration configuration)
     {
         configuration.AddOpenBehavior(typeof(LoggingPipelineBehaviour<,>));
-        configuration.AddOpenBehavior(typeof(RetryPipelineBehavior<,>));
         configuration.AddOpenBehavior(typeof(ExceptionHandlingPipelineBehavior<,>));
         configuration.AddOpenBehavior(typeof(ValidationPipelineBehaviour<,>));
+        configuration.AddOpenBehavior(typeof(RetryPipelineBehavior<,>));
 
         return configuration;
     }

@@ -4,6 +4,7 @@ using FlowChat.Core.Results;
 using FlowChat.Shared.Application.Behaviors;
 using FlowChat.Shared.Domain;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace FlowChat.Shared.Application.UnitTests.Behaviors;
@@ -128,6 +129,67 @@ public sealed class RetryPipelineBehaviorTests
 
         await act.Should().ThrowAsync<TransientException>();
         executions.Should().Be(3);
+    }
+
+    [Fact]
+    public async Task Handle_MarkedRequestThrowsDbUpdateConcurrencyExceptionThenSucceeds_RetriesAndReturnsSuccess()
+    {
+        var behavior = CreateBehavior<MarkedTestRequest>();
+        var executions = 0;
+
+        var result = await behavior.Handle(
+            new MarkedTestRequest(),
+            _ =>
+            {
+                executions++;
+                return executions < 3
+                    ? Task.FromException<FlowChatResult<Guid>>(new DbUpdateConcurrencyException("Row version mismatch."))
+                    : Task.FromResult(Success());
+            },
+            CancellationToken.None);
+
+        executions.Should().Be(3);
+        result.IsSuccess.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task Handle_MarkedRequestAlwaysThrowsDbUpdateConcurrencyException_RethrowsAfterThreeExecutions()
+    {
+        var behavior = CreateBehavior<MarkedTestRequest>();
+        var executions = 0;
+
+        var act = () => behavior.Handle(
+            new MarkedTestRequest(),
+            _ =>
+            {
+                executions++;
+                return Task.FromException<FlowChatResult<Guid>>(
+                    new DbUpdateConcurrencyException("Row version mismatch."));
+            },
+            CancellationToken.None);
+
+        await act.Should().ThrowAsync<DbUpdateConcurrencyException>();
+        executions.Should().Be(3);
+    }
+
+    [Fact]
+    public async Task Handle_UnmarkedRequestThrowsDbUpdateConcurrencyException_DoesNotRetry()
+    {
+        var behavior = CreateBehavior<UnmarkedTestRequest>();
+        var executions = 0;
+
+        var act = () => behavior.Handle(
+            new UnmarkedTestRequest(),
+            _ =>
+            {
+                executions++;
+                return Task.FromException<FlowChatResult<Guid>>(
+                    new DbUpdateConcurrencyException("Row version mismatch."));
+            },
+            CancellationToken.None);
+
+        await act.Should().ThrowAsync<DbUpdateConcurrencyException>();
+        executions.Should().Be(1);
     }
 
     [Theory]

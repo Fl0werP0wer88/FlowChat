@@ -4,7 +4,9 @@ using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Silverback;
 using Silverback.Storage;
+using FlowChat.Core.Results;
 using FlowChat.Shared.Infrastructure.Silverback.Persistence;
+using FlowChat.Shared.Domain;
 
 namespace FlowChat.Shared.Infrastructure.IntegrationTests.Silverback.Persistence;
 
@@ -61,6 +63,32 @@ public sealed class SilverbackEfUnitOfWorkTests
             .WithMessage("boom");
 
         silverbackContext.GetStorageTransaction().Should().BeNull();
+        dbContext.ChangeTracker.Entries().Should().BeEmpty();
+        (await dbContext.Records.CountAsync()).Should().Be(0);
+    }
+
+    [Fact]
+    public async Task ExecuteCommandInTransactionAsync_WhenOperationReturnsFailure_RollsBackAndClearsContexts()
+    {
+        await using var connection = new SqliteConnection("Data Source=:memory:");
+        await connection.OpenAsync();
+
+        var silverbackContext = new TestSilverbackContext();
+        await using var dbContext = CreateDbContext(connection);
+        var unitOfWork = new SilverbackEfUnitOfWork<TestDbContext>(dbContext, silverbackContext);
+
+        var result = await unitOfWork.ExecuteCommandInTransactionAsync(
+            async token =>
+            {
+                silverbackContext.GetStorageTransaction().Should().NotBeNull();
+                await dbContext.Records.AddAsync(new TestRecord { Name = "discarded" }, token);
+                return FlowChatResult<Guid>.Failure(DomainError.UnExpected("failure"));
+            },
+            CancellationToken.None);
+
+        result.IsFailure.Should().BeTrue();
+        silverbackContext.GetStorageTransaction().Should().BeNull();
+        dbContext.ChangeTracker.Entries().Should().BeEmpty();
         (await dbContext.Records.CountAsync()).Should().Be(0);
     }
 

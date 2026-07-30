@@ -2,6 +2,7 @@ using FlowChat.Core.Exceptions;
 using FlowChat.Core.Results;
 using FlowChat.Shared.Domain;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Polly;
 using Polly.Retry;
@@ -36,6 +37,7 @@ public sealed class RetryPipelineBehavior<TRequest, TResponse>(
                 UseJitter = true,
                 ShouldHandle = new PredicateBuilder<TResponse>()
                     .Handle<TransientException>()
+                    .Handle<DbUpdateConcurrencyException>()
                     .HandleResult(IsTransientFailure),
                 OnRetry = arguments =>
                 {
