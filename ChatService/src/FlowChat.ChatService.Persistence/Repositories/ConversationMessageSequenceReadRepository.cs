@@ -10,9 +10,9 @@ public sealed class ConversationMessageSequenceReadRepository(AppDbContext dbCon
         Guid conversationId,
         CancellationToken cancellationToken = default)
     {
-        return dbContext.ConversationMessageSequencesV2
+        return dbContext.ConversationMessageSequenceReadsV2
             .AsNoTracking()
-            .Where(sequence => sequence.ConversationId.Value == conversationId)
+            .Where(sequence => sequence.ConversationId == conversationId)
             .Select(sequence => (long?)sequence.LastAssignedSequenceNum)
             .SingleOrDefaultAsync(cancellationToken);
     }

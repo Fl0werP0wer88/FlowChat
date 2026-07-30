@@ -14,6 +14,7 @@ public sealed class ReadSideV2ModelTests
     [InlineData(typeof(ConversationParticipantReadEntityV2), "ConversationParticipantsV2")]
     [InlineData(typeof(DuetConversationReadEntityV2), "DuetConversationsV2")]
     [InlineData(typeof(ChatMessageReadEntityV2), "ChatMessagesV2")]
+    [InlineData(typeof(ConversationMessageSequenceReadEntityV2), "ConversationMessageSequencesV2")]
     public void Model_ReadEntityV2_MapsToExpectedV2View(Type entityType, string expectedView)
     {
         using var context = CreateDbContext();
@@ -30,12 +31,24 @@ public sealed class ReadSideV2ModelTests
     [InlineData(typeof(ConversationParticipantReadEntityV2))]
     [InlineData(typeof(DuetConversationReadEntityV2))]
     [InlineData(typeof(ChatMessageReadEntityV2))]
+    [InlineData(typeof(ConversationMessageSequenceReadEntityV2))]
     public void ReadEntityV2_UsesOnlyPersistenceReadTypes(Type entityType)
     {
         entityType.Should().BeDerivedFrom<ReadEntityBase>();
         entityType.GetProperties()
             .Select(property => property.PropertyType)
             .Should().OnlyContain(type => IsSimplePersistenceType(type));
+    }
+
+    [Fact]
+    public void ConversationMessageSequenceReadEntityV2_DoesNotMapDeletedAt()
+    {
+        using var context = CreateDbContext();
+
+        var entityType = context.Model.FindEntityType(typeof(ConversationMessageSequenceReadEntityV2));
+
+        entityType.Should().NotBeNull();
+        entityType!.FindProperty(nameof(ReadEntityBase.DeletedAt)).Should().BeNull();
     }
 
     private static bool IsSimplePersistenceType(Type type)

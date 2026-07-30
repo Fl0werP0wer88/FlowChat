@@ -38,6 +38,7 @@ public sealed class AppDbContext : DbContext
     public DbSet<ConversationParticipantReadEntityV2> ConversationParticipantReadsV2 => Set<ConversationParticipantReadEntityV2>();
     public DbSet<ChatMessageReadEntityV2> ChatMessageReadsV2 => Set<ChatMessageReadEntityV2>();
     public DbSet<DuetConversationReadEntityV2> DuetConversationReadsV2 => Set<DuetConversationReadEntityV2>();
+    public DbSet<ConversationMessageSequenceReadEntityV2> ConversationMessageSequenceReadsV2 => Set<ConversationMessageSequenceReadEntityV2>();
     public DbSet<SilverbackStoredOffset> SilverbackStoredOffsets => Set<SilverbackStoredOffset>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
