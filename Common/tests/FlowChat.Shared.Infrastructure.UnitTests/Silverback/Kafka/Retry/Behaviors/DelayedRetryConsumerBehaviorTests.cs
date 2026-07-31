@@ -6,6 +6,7 @@ using FlowChat.Shared.Infrastructure.UnitTests.Silverback.Kafka.Retry;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Time.Testing;
 using Moq;
 using Silverback.Messaging.Broker;
 using Silverback.Messaging.Broker.Behaviors;
@@ -20,6 +21,7 @@ public sealed class DelayedRetryConsumerBehaviorTests
     private readonly TestTieredRetryKafkaConsumerSettingsSection _settings =
         TestTieredRetryKafkaConsumerSettingsSection.Create();
     private readonly Mock<IKafkaRetryPartitionController> _partitionController = new();
+    private readonly FakeTimeProvider _timeProvider = new(Now);
 
     [Fact]
     public async Task HandleAsync_DueRetry_InvokesNextImmediately()
@@ -43,24 +45,29 @@ public sealed class DelayedRetryConsumerBehaviorTests
     [Fact]
     public async Task HandleAsync_FutureRetry_PausesAndResumesOnlySourcePartition()
     {
-        var context = CreateContext(2, Now.AddMilliseconds(10).ToString("O"));
+        var context = CreateContext(2, Now.AddMinutes(1).ToString("O"));
         _partitionController.Setup(x => x.IsAssigned(context.Consumer, It.IsAny<Confluent.Kafka.TopicPartition>()))
             .Returns(true);
         var nextCalled = false;
 
-        await CreateBehavior().HandleAsync(
+        var handling = CreateBehavior().HandleAsync(
             context,
             (_, _) =>
             {
                 nextCalled = true;
                 return ValueTask.CompletedTask;
             },
-            CancellationToken.None);
+            CancellationToken.None).AsTask();
 
-        nextCalled.Should().BeTrue();
         _partitionController.Verify(
             x => x.Pause(context.Consumer, It.Is<Confluent.Kafka.TopicPartition>(p => p.Partition.Value == 2)),
             Times.Once);
+        nextCalled.Should().BeFalse();
+
+        _timeProvider.Advance(TimeSpan.FromMinutes(1));
+        await handling;
+
+        nextCalled.Should().BeTrue();
         _partitionController.Verify(
             x => x.Resume(context.Consumer, It.Is<Confluent.Kafka.TopicPartition>(p => p.Partition.Value == 2)),
             Times.Once);
@@ -69,14 +76,17 @@ public sealed class DelayedRetryConsumerBehaviorTests
     [Fact]
     public async Task HandleAsync_PartitionRevokedDuringDelay_DoesNotResumePartition()
     {
-        var context = CreateContext(1, Now.AddMilliseconds(10).ToString("O"));
+        var context = CreateContext(1, Now.AddMinutes(1).ToString("O"));
         _partitionController.Setup(x => x.IsAssigned(context.Consumer, It.IsAny<Confluent.Kafka.TopicPartition>()))
             .Returns(false);
 
-        await CreateBehavior().HandleAsync(
+        var handling = CreateBehavior().HandleAsync(
             context,
             (_, _) => ValueTask.CompletedTask,
-            CancellationToken.None);
+            CancellationToken.None).AsTask();
+
+        _timeProvider.Advance(TimeSpan.FromMinutes(1));
+        await handling;
 
         _partitionController.Verify(
             x => x.Resume(It.IsAny<IConsumer>(), It.IsAny<Confluent.Kafka.TopicPartition>()),
@@ -145,7 +155,7 @@ public sealed class DelayedRetryConsumerBehaviorTests
     private DelayedRetryConsumerBehavior CreateBehavior() =>
         new(
             new TieredKafkaRetryTopology([_settings]),
-            new FixedTimeProvider(Now),
+            _timeProvider,
             _partitionController.Object,
             NullLogger<DelayedRetryConsumerBehavior>.Instance);
 
@@ -166,11 +176,6 @@ public sealed class DelayedRetryConsumerBehaviorTests
             Mock.Of<ISequenceStore>(),
             [],
             new ServiceCollection().BuildServiceProvider());
-    }
-
-    private sealed class FixedTimeProvider(DateTimeOffset utcNow) : TimeProvider
-    {
-        public override DateTimeOffset GetUtcNow() => utcNow;
     }
 
 }
