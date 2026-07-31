@@ -5,7 +5,6 @@ using FlowChat.RealtimeService.Infrastructure;
 using FlowChat.RealtimeService.Persistence;
 using FlowChat.Shared.Infrastructure.Configuration;
 using FlowChat.Shared.Infrastructure.Silverback.Behaviors;
-using FlowChat.Shared.Infrastructure.Silverback.Kafka;
 using FlowChat.Shared.Infrastructure.Silverback.Kafka.Retry;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -46,30 +45,20 @@ public static class ConsumersServiceRegistration
             conversationV2ProjectionConsumerOptions,
             conversationMembershipV2ProjectionConsumerOptions
         ];
-        var topology = new TieredKafkaRetryTopology(streams);
-        services.AddSingleton(topology);
-        services.AddSingleton(TimeProvider.System);
-        services.AddSingleton<IKafkaRetryPartitionController, KafkaRetryPartitionController>();
-
         services.AddSilverback()
             .AddSingletonBrokerBehavior<CustomSpanAttributesProducerBehavior>()
             .AddSingletonBrokerBehavior<CustomSpanAttributesConsumerBehavior>()
-            .AddSingletonBrokerBehavior<DelayedRetryConsumerBehavior>()
-            .AddSingletonBrokerBehavior<InvalidRetryMetadataConsumerBehavior>()
+            .AddFlowChatTieredRetry<AppDbContext>(
+                ResolveBootstrapServers(
+                    chatMessageV2ConsumerOptions,
+                    presenceStatusChangedConsumerOptions,
+                    conversationV2ProjectionConsumerOptions,
+                    conversationMembershipV2ProjectionConsumerOptions),
+                streams)
             .WithConnectionToMessageBroker(options => options
                 .AddKafka()
                 .AddEntityFrameworkKafkaOffsetStore()
                 .AddEntityFrameworkOutbox())
-            .AddKafkaClients(clients =>
-            {
-                clients
-                    .WithBootstrapServers(ResolveBootstrapServers(
-                        chatMessageV2ConsumerOptions,
-                        presenceStatusChangedConsumerOptions,
-                        conversationV2ProjectionConsumerOptions,
-                        conversationMembershipV2ProjectionConsumerOptions))
-                    .AddFlowChatTieredRetryStreams<AppDbContext>(streams);
-            })
             .AddScopedSubscriber<ChatMessageSentV2Subscriber>()
             .AddScopedSubscriber<UserPresenceChangedSubscriber>()
             .AddScopedSubscriber<ConversationProjectionV2Subscriber>()
