@@ -1,9 +1,7 @@
 using FlowChat.Core.Contracts;
-using FlowChat.Shared.Infrastructure.Silverback.Kafka;
-
 namespace FlowChat.RealtimeService.Consumers.Configuration.Settings;
 
-public sealed class ConversationMembershipV2ProjectionConsumerSettingsSection : SettingsSectionBase, IRetryableKafkaConsumerSettingsSection
+public sealed class ConversationMembershipV2ProjectionConsumerSettingsSection : SettingsSectionBase, ITieredRetryKafkaConsumerSettingsSection
 {
     public override string SectionName => "Kafka:ConversationMembershipV2ProjectionConsumer";
 
@@ -11,10 +9,7 @@ public sealed class ConversationMembershipV2ProjectionConsumerSettingsSection : 
     public string GroupId { get; set; } = "realtime-service";
     public string RetryGroupId { get; set; } = "realtime-service-retry";
     public string Topic { get; set; } = "dev.flowchat.chat.conversation-membership-projection.v2";
-    public string RetryTopic { get; set; } = "dev.flowchat.chat.conversation-membership-projection.v2.realtime-service.retry";
     public string DeadLetterTopic { get; set; } = "dev.flowchat.chat.conversation-membership-projection.v2.realtime-service.dlq";
-    public int MaxRetryCount { get; set; } = 5;
-    public int RetryBaseDelaySeconds { get; set; } = 5;
-    public int RetryMaxDelaySeconds { get; set; } = 300;
+    public IReadOnlyList<RetryTierSettings> RetryTiers { get; set; } = [];
     public string AutoOffsetReset { get; set; } = "Earliest";
 }

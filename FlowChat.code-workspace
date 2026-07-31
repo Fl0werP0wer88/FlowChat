@@ -377,6 +377,10 @@
                                                                 {
                                                                     "folder":  "RealtimeService",
                                                                     "name":  "RealtimeService Consumers (No Build)"
+                                                                },
+                                                                {
+                                                                    "folder":  "RealtimeService",
+                                                                    "name":  "RealtimeService OutboxPublisher (No Build)"
                                                                 }
                                                             ],
                                          "stopAll":  true
@@ -520,6 +524,10 @@
                                                                     "name":  "RealtimeService Consumers (No Build)"
                                                                 },
                                                                 {
+                                                                    "folder":  "RealtimeService",
+                                                                    "name":  "RealtimeService OutboxPublisher (No Build)"
+                                                                },
+                                                                {
                                                                     "folder":  "PresenceService",
                                                                     "name":  "PresenceService Consumers (No Build)"
                                                                 },
@@ -597,6 +605,10 @@
                                                                 {
                                                                     "folder":  "RealtimeService",
                                                                     "name":  "RealtimeService Consumers (No Build)"
+                                                                },
+                                                                {
+                                                                    "folder":  "RealtimeService",
+                                                                    "name":  "RealtimeService OutboxPublisher (No Build)"
                                                                 },
                                                                 {
                                                                     "folder":  "PresenceService",

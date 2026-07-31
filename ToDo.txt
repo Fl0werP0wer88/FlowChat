@@ -123,6 +123,14 @@ void HandleMessage(TestEvent message)
 Oczekiwane: subscriber wykona się łącznie 4 razy.
 Rzeczywiste w Silverback 5.0.0 i 5.3.3: subscriber wykonuje się raz, a przy retry KafkaOffsetStoreConsumerBehavior rzuca wyjątek o już dodanym obiekcie 9d9795c6-4b91-43ee-b370-fa0f539a20f8.
 
+Status RealtimeService: rozwiązane lokalnie.
+- Usunięto in-place `policy.Retry(...)` z czterech strumieni RealtimeService.
+- Każda kolejna próba jest nową wiadomością na tierach 5, 20, 60 i 300 sekund, a potem trafia do DLQ.
+- Zapis źródłowego offsetu i wiadomości retry/DLQ odbywa się w jednej transakcji EF przez standardowy outbox Silverbacka.
+- Retry/DLQ publikuje osobny proces FlowChat.RealtimeService.OutboxPublisher.
+- Pozostałe usługi nadal używają wspólnej konfiguracji retry i wymagają osobnej migracji na ten wzorzec.
+- Znane ograniczenie: wysłanie wiadomości przez SignalR nie jest atomowe z zapisem offsetu. RealtimeService nadal wymaga docelowego inboxa opartego na EventId, aby ograniczyć duplikaty po awarii pomiędzy efektem SignalR a zatwierdzeniem offsetu.
+
 19. BUG: MarkConversationAsRead może kończyć się DbUpdateConcurrencyException
 
 Objaw:

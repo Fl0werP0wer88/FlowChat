@@ -4,7 +4,8 @@ using Silverback;
 using Silverback.Messaging.Consuming.KafkaOffsetStore;
 
 namespace FlowChat.Shared.Infrastructure.Silverback.Persistence;
-//ToDo: This one suppose to be used on Supcribers worker not api.Consider naming change.
+
+// Consumer workers additionally persist the consumed offset in the shared transaction
 public sealed class SilverbackKafkaOffsetUnitOfWork<TDbContext>
     : SilverbackEfUnitOfWork<TDbContext>,
         IConsumedOffsetCommitter

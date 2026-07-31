@@ -3,6 +3,7 @@ using FlowChat.RealtimeService.Persistence.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Silverback.Messaging.Consuming.KafkaOffsetStore;
+using Silverback.Messaging.Producing.TransactionalOutbox;
 
 namespace FlowChat.RealtimeService.Persistence;
 
@@ -27,6 +28,8 @@ public class AppDbContext : DbContext
     public DbSet<RealtimeGroupMembershipRevisionTrackerReadModel> RealtimeGroupMembershipRevisionTrackerReadModels => Set<RealtimeGroupMembershipRevisionTrackerReadModel>();
 
     public DbSet<SilverbackStoredOffset> SilverbackStoredOffsets => Set<SilverbackStoredOffset>();
+
+    public DbSet<SilverbackOutboxMessage> SilverbackOutboxMessages => Set<SilverbackOutboxMessage>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

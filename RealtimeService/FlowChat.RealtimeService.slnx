@@ -9,6 +9,7 @@
   </Folder>
   <Folder Name="/src/Workers/">
     <Project Path="src/Workers/FlowChat.RealtimeService.Consumers/FlowChat.RealtimeService.Consumers.csproj" />
+    <Project Path="src/Workers/FlowChat.RealtimeService.OutboxPublisher/FlowChat.RealtimeService.OutboxPublisher.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/FlowChat.RealtimeService.IntegrationTests/FlowChat.RealtimeService.IntegrationTests.csproj" />

@@ -2,6 +2,7 @@ using Confluent.Kafka;
 using FlowChat.RealtimeService.Application;
 using FlowChat.RealtimeService.Consumers.Configuration.Settings;
 using FlowChat.RealtimeService.Consumers.Kafka;
+using FlowChat.RealtimeService.Consumers.Kafka.Retry;
 using FlowChat.RealtimeService.Infrastructure;
 using FlowChat.RealtimeService.Persistence;
 using FlowChat.Shared.Infrastructure.Configuration;
@@ -11,6 +12,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Silverback.Configuration;
 using Silverback.Messaging.Configuration;
+using Silverback.Messaging.Configuration.Kafka;
 
 namespace FlowChat.RealtimeService.Consumers;
 
@@ -39,12 +41,27 @@ public static class ConsumersServiceRegistration
         services.AddConsumerInfrastructureServices(configuration);
         services.AddConsumerPersistenceServices(configuration);
 
+        ITieredRetryKafkaConsumerSettingsSection[] streams =
+        [
+            chatMessageV2ConsumerOptions,
+            presenceStatusChangedConsumerOptions,
+            conversationV2ProjectionConsumerOptions,
+            conversationMembershipV2ProjectionConsumerOptions
+        ];
+        var topology = new RealtimeRetryTopology(streams);
+        services.AddSingleton(topology);
+        services.AddSingleton(TimeProvider.System);
+        services.AddSingleton<IKafkaRetryPartitionController, KafkaRetryPartitionController>();
+
         services.AddSilverback()
             .AddSingletonBrokerBehavior<CustomSpanAttributesProducerBehavior>()
             .AddSingletonBrokerBehavior<CustomSpanAttributesConsumerBehavior>()
+            .AddSingletonBrokerBehavior<DelayedRetryConsumerBehavior>()
+            .AddSingletonBrokerBehavior<InvalidRetryMetadataConsumerBehavior>()
             .WithConnectionToMessageBroker(options => options
                 .AddKafka()
-                .AddEntityFrameworkKafkaOffsetStore())
+                .AddEntityFrameworkKafkaOffsetStore()
+                .AddEntityFrameworkOutbox())
             .AddKafkaClients(clients =>
             {
                 clients
@@ -52,79 +69,37 @@ public static class ConsumersServiceRegistration
                         chatMessageV2ConsumerOptions,
                         presenceStatusChangedConsumerOptions,
                         conversationV2ProjectionConsumerOptions,
-                        conversationMembershipV2ProjectionConsumerOptions))
-                    .AddConsumer(consumer => consumer
-                        .WithGroupId(chatMessageV2ConsumerOptions.GroupId)
-                        .WithAutoOffsetReset(ParseAutoOffsetReset(chatMessageV2ConsumerOptions.AutoOffsetReset))
+                        conversationMembershipV2ProjectionConsumerOptions));
+
+                foreach (var stream in streams)
+                {
+                    clients.AddConsumer(consumer => consumer
+                        .WithGroupId(stream.GroupId)
+                        .WithAutoOffsetReset(ParseAutoOffsetReset(stream.AutoOffsetReset))
+                        .DisableOffsetsCommit()
                         .StoreOffsetsClientSide(store => store.UseEntityFramework<AppDbContext>())
-                        .Consume(endpoint => endpoint.ConfigureFlowChatMainEndpoint(chatMessageV2ConsumerOptions)))
-                    .AddConsumer(consumer => consumer
-                        .WithGroupId(chatMessageV2ConsumerOptions.RetryGroupId)
-                        .WithAutoOffsetReset(ParseAutoOffsetReset(chatMessageV2ConsumerOptions.AutoOffsetReset))
-                        .StoreOffsetsClientSide(store => store.UseEntityFramework<AppDbContext>())
-                        .Consume(endpoint => endpoint.ConfigureFlowChatRetryEndpoint(chatMessageV2ConsumerOptions)))
-                    .AddConsumer(consumer => consumer
-                        .WithGroupId(presenceStatusChangedConsumerOptions.GroupId)
-                        .WithAutoOffsetReset(ParseAutoOffsetReset(presenceStatusChangedConsumerOptions.AutoOffsetReset))
-                        .StoreOffsetsClientSide(store => store.UseEntityFramework<AppDbContext>())
-                        .Consume(endpoint => endpoint.ConfigureFlowChatMainEndpoint(presenceStatusChangedConsumerOptions)))
-                    .AddConsumer(consumer => consumer
-                        .WithGroupId(presenceStatusChangedConsumerOptions.RetryGroupId)
-                        .WithAutoOffsetReset(ParseAutoOffsetReset(presenceStatusChangedConsumerOptions.AutoOffsetReset))
-                        .StoreOffsetsClientSide(store => store.UseEntityFramework<AppDbContext>())
-                        .Consume(endpoint => endpoint.ConfigureFlowChatRetryEndpoint(presenceStatusChangedConsumerOptions)))
-                    .AddConsumer(consumer => consumer
-                        .WithGroupId(conversationV2ProjectionConsumerOptions.GroupId)
-                        .WithAutoOffsetReset(ParseAutoOffsetReset(conversationV2ProjectionConsumerOptions.AutoOffsetReset))
-                        .StoreOffsetsClientSide(store => store.UseEntityFramework<AppDbContext>())
-                        .Consume(endpoint => endpoint.ConfigureFlowChatMainEndpoint(conversationV2ProjectionConsumerOptions)))
-                    .AddConsumer(consumer => consumer
-                        .WithGroupId(conversationV2ProjectionConsumerOptions.RetryGroupId)
-                        .WithAutoOffsetReset(ParseAutoOffsetReset(conversationV2ProjectionConsumerOptions.AutoOffsetReset))
-                        .StoreOffsetsClientSide(store => store.UseEntityFramework<AppDbContext>())
-                        .Consume(endpoint => endpoint.ConfigureFlowChatRetryEndpoint(conversationV2ProjectionConsumerOptions)))
-                    .AddConsumer(consumer => consumer
-                        .WithGroupId(conversationMembershipV2ProjectionConsumerOptions.GroupId)
-                        .WithAutoOffsetReset(ParseAutoOffsetReset(conversationMembershipV2ProjectionConsumerOptions.AutoOffsetReset))
-                        .StoreOffsetsClientSide(store => store.UseEntityFramework<AppDbContext>())
-                        .Consume(endpoint => endpoint.ConfigureFlowChatMainEndpoint(conversationMembershipV2ProjectionConsumerOptions)))
-                    .AddConsumer(consumer => consumer
-                        .WithGroupId(conversationMembershipV2ProjectionConsumerOptions.RetryGroupId)
-                        .WithAutoOffsetReset(ParseAutoOffsetReset(conversationMembershipV2ProjectionConsumerOptions.AutoOffsetReset))
-                        .StoreOffsetsClientSide(store => store.UseEntityFramework<AppDbContext>())
-                        .Consume(endpoint => endpoint.ConfigureFlowChatRetryEndpoint(conversationMembershipV2ProjectionConsumerOptions)))
-                    .AddProducer(producer => producer
-                        .Produce(endpoint => endpoint
-                            .ProduceTo(chatMessageV2ConsumerOptions.RetryTopic)
-                            .SerializeAsJson(serializer => serializer.SetTypeHeader())))
-                    .AddProducer(producer => producer
-                        .Produce(endpoint => endpoint
-                            .ProduceTo(chatMessageV2ConsumerOptions.DeadLetterTopic)
-                            .SerializeAsJson(serializer => serializer.SetTypeHeader())))
-                    .AddProducer(producer => producer
-                        .Produce(endpoint => endpoint
-                            .ProduceTo(presenceStatusChangedConsumerOptions.RetryTopic)
-                            .SerializeAsJson(serializer => serializer.SetTypeHeader())))
-                    .AddProducer(producer => producer
-                        .Produce(endpoint => endpoint
-                            .ProduceTo(presenceStatusChangedConsumerOptions.DeadLetterTopic)
-                            .SerializeAsJson(serializer => serializer.SetTypeHeader())))
-                    .AddProducer(producer => producer
-                        .Produce(endpoint => endpoint
-                            .ProduceTo(conversationV2ProjectionConsumerOptions.RetryTopic)
-                            .SerializeAsJson(serializer => serializer.SetTypeHeader())))
-                    .AddProducer(producer => producer
-                        .Produce(endpoint => endpoint
-                            .ProduceTo(conversationV2ProjectionConsumerOptions.DeadLetterTopic)
-                            .SerializeAsJson(serializer => serializer.SetTypeHeader())))
-                    .AddProducer(producer => producer
-                        .Produce(endpoint => endpoint
-                            .ProduceTo(conversationMembershipV2ProjectionConsumerOptions.RetryTopic)
-                            .SerializeAsJson(serializer => serializer.SetTypeHeader())))
-                    .AddProducer(producer => producer
-                        .Produce(endpoint => endpoint
-                            .ProduceTo(conversationMembershipV2ProjectionConsumerOptions.DeadLetterTopic)
-                            .SerializeAsJson(serializer => serializer.SetTypeHeader())));
+                        .Consume(endpoint => endpoint.ConfigureRealtimeMainEndpoint(stream)));
+
+                    for (var tierIndex = 0; tierIndex < stream.RetryTiers.Count; tierIndex++)
+                    {
+                        var capturedTierIndex = tierIndex;
+                        clients.AddConsumer(consumer => consumer
+                            .WithGroupId(stream.RetryGroupId)
+                            .WithAutoOffsetReset(ParseAutoOffsetReset(stream.AutoOffsetReset))
+                            .DisableOffsetsCommit()
+                            .StoreOffsetsClientSide(store => store.UseEntityFramework<AppDbContext>())
+                            .Consume(endpoint => endpoint.ConfigureRealtimeRetryEndpoint(stream, capturedTierIndex)));
+                    }
+
+                    foreach (var destinationTopic in stream.RetryTiers.Select(tier => tier.Topic).Append(stream.DeadLetterTopic))
+                    {
+                        clients.AddProducer(producer => producer
+                            .Produce(destinationTopic, endpoint => endpoint
+                                .ProduceTo(destinationTopic)
+                                .SerializeAsJson(serializer => serializer.SetTypeHeader())
+                                .StoreToOutbox(outbox => outbox.UseEntityFramework<AppDbContext>())));
+                    }
+                }
             })
             .AddScopedSubscriber<ChatMessageSentV2Subscriber>()
             .AddScopedSubscriber<UserPresenceChangedSubscriber>()

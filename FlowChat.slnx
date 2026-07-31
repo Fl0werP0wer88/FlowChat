@@ -115,6 +115,7 @@
   </Folder>
   <Folder Name="/RealtimeService/src/Workers/">
     <Project Path="RealtimeService/src/Workers/FlowChat.RealtimeService.Consumers/FlowChat.RealtimeService.Consumers.csproj" />
+    <Project Path="RealtimeService/src/Workers/FlowChat.RealtimeService.OutboxPublisher/FlowChat.RealtimeService.OutboxPublisher.csproj" />
   </Folder>
   <Folder Name="/RealtimeService/tests/">
     <Project Path="RealtimeService/tests/FlowChat.RealtimeService.IntegrationTests/FlowChat.RealtimeService.IntegrationTests.csproj" />
