@@ -1,4 +1,4 @@
-namespace FlowChat.RealtimeService.Consumers.Configuration.Settings;
+namespace FlowChat.Shared.Infrastructure.Silverback.Kafka.Retry;
 
 public interface ITieredRetryKafkaConsumerSettingsSection
 {

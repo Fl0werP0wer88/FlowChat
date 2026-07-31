@@ -2,7 +2,7 @@ using System.Globalization;
 using Silverback.Messaging.Broker;
 using Silverback.Messaging.Messages;
 
-namespace FlowChat.RealtimeService.Consumers.Kafka.Retry;
+namespace FlowChat.Shared.Infrastructure.Silverback.Kafka.Retry;
 
 public static class RetryMessageHeaderEnricher
 {

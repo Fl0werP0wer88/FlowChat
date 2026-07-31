@@ -1,18 +1,16 @@
-using Confluent.Kafka;
 using FlowChat.RealtimeService.Application;
 using FlowChat.RealtimeService.Consumers.Configuration.Settings;
 using FlowChat.RealtimeService.Consumers.Kafka;
-using FlowChat.RealtimeService.Consumers.Kafka.Retry;
 using FlowChat.RealtimeService.Infrastructure;
 using FlowChat.RealtimeService.Persistence;
 using FlowChat.Shared.Infrastructure.Configuration;
 using FlowChat.Shared.Infrastructure.Silverback.Behaviors;
 using FlowChat.Shared.Infrastructure.Silverback.Kafka;
+using FlowChat.Shared.Infrastructure.Silverback.Kafka.Retry;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Silverback.Configuration;
 using Silverback.Messaging.Configuration;
-using Silverback.Messaging.Configuration.Kafka;
 
 namespace FlowChat.RealtimeService.Consumers;
 
@@ -48,7 +46,7 @@ public static class ConsumersServiceRegistration
             conversationV2ProjectionConsumerOptions,
             conversationMembershipV2ProjectionConsumerOptions
         ];
-        var topology = new RealtimeRetryTopology(streams);
+        var topology = new TieredKafkaRetryTopology(streams);
         services.AddSingleton(topology);
         services.AddSingleton(TimeProvider.System);
         services.AddSingleton<IKafkaRetryPartitionController, KafkaRetryPartitionController>();
@@ -69,37 +67,8 @@ public static class ConsumersServiceRegistration
                         chatMessageV2ConsumerOptions,
                         presenceStatusChangedConsumerOptions,
                         conversationV2ProjectionConsumerOptions,
-                        conversationMembershipV2ProjectionConsumerOptions));
-
-                foreach (var stream in streams)
-                {
-                    clients.AddConsumer(consumer => consumer
-                        .WithGroupId(stream.GroupId)
-                        .WithAutoOffsetReset(ParseAutoOffsetReset(stream.AutoOffsetReset))
-                        .DisableOffsetsCommit()
-                        .StoreOffsetsClientSide(store => store.UseEntityFramework<AppDbContext>())
-                        .Consume(endpoint => endpoint.ConfigureRealtimeMainEndpoint(stream)));
-
-                    for (var tierIndex = 0; tierIndex < stream.RetryTiers.Count; tierIndex++)
-                    {
-                        var capturedTierIndex = tierIndex;
-                        clients.AddConsumer(consumer => consumer
-                            .WithGroupId(stream.RetryGroupId)
-                            .WithAutoOffsetReset(ParseAutoOffsetReset(stream.AutoOffsetReset))
-                            .DisableOffsetsCommit()
-                            .StoreOffsetsClientSide(store => store.UseEntityFramework<AppDbContext>())
-                            .Consume(endpoint => endpoint.ConfigureRealtimeRetryEndpoint(stream, capturedTierIndex)));
-                    }
-
-                    foreach (var destinationTopic in stream.RetryTiers.Select(tier => tier.Topic).Append(stream.DeadLetterTopic))
-                    {
-                        clients.AddProducer(producer => producer
-                            .Produce(destinationTopic, endpoint => endpoint
-                                .ProduceTo(destinationTopic)
-                                .SerializeAsJson(serializer => serializer.SetTypeHeader())
-                                .StoreToOutbox(outbox => outbox.UseEntityFramework<AppDbContext>())));
-                    }
-                }
+                        conversationMembershipV2ProjectionConsumerOptions))
+                    .AddFlowChatTieredRetryStreams<AppDbContext>(streams);
             })
             .AddScopedSubscriber<ChatMessageSentV2Subscriber>()
             .AddScopedSubscriber<UserPresenceChangedSubscriber>()
@@ -122,8 +91,4 @@ public static class ConsumersServiceRegistration
                     ? conversationV2ProjectionConsumerOptions.BootstrapServers
                     : conversationMembershipV2ProjectionConsumerOptions.BootstrapServers;
 
-    private static AutoOffsetReset ParseAutoOffsetReset(string value) =>
-        Enum.TryParse<AutoOffsetReset>(value, true, out var parsed)
-            ? parsed
-            : AutoOffsetReset.Earliest;
 }

@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using FlowChat.RealtimeService.Consumers.Configuration.Settings;
 using FlowChat.Shared.Application;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -10,7 +9,7 @@ using Silverback.Messaging.Consuming.KafkaOffsetStore;
 using Silverback.Messaging.Messages;
 using Silverback.Messaging.Producing.Routing;
 
-namespace FlowChat.RealtimeService.Consumers.Kafka.Retry;
+namespace FlowChat.Shared.Infrastructure.Silverback.Kafka.Retry;
 
 public sealed record AtomicKafkaMoveErrorPolicy(
     ITieredRetryKafkaConsumerSettingsSection Settings,

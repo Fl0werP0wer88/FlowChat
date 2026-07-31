@@ -1,6 +1,5 @@
 using FlowChat.Core.Exceptions;
-using FlowChat.RealtimeService.Consumers.Configuration.Settings;
-using FlowChat.RealtimeService.Consumers.Kafka.Retry;
+using FlowChat.Shared.Infrastructure.Silverback.Kafka.Retry;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -10,12 +9,13 @@ using Silverback.Messaging.Broker.Behaviors;
 using Silverback.Messaging.Messages;
 using Silverback.Messaging.Sequences;
 
-namespace FlowChat.RealtimeService.UnitTests.Worker.Kafka;
+namespace FlowChat.Shared.Infrastructure.UnitTests.Silverback.Kafka.Retry;
 
 public sealed class DelayedRetryConsumerBehaviorTests
 {
     private static readonly DateTimeOffset Now = new(2026, 7, 31, 12, 0, 0, TimeSpan.Zero);
-    private readonly ChatMessageV2ConsumerSettingsSection _settings = CreateSettings();
+    private readonly TestTieredRetryKafkaConsumerSettingsSection _settings =
+        TestTieredRetryKafkaConsumerSettingsSection.Create();
     private readonly Mock<IKafkaRetryPartitionController> _partitionController = new();
 
     [Fact]
@@ -141,7 +141,7 @@ public sealed class DelayedRetryConsumerBehaviorTests
 
     private DelayedRetryConsumerBehavior CreateBehavior() =>
         new(
-            new RealtimeRetryTopology([_settings]),
+            new TieredKafkaRetryTopology([_settings]),
             new FixedTimeProvider(Now),
             _partitionController.Object,
             NullLogger<DelayedRetryConsumerBehavior>.Instance);
@@ -170,14 +170,4 @@ public sealed class DelayedRetryConsumerBehaviorTests
         public override DateTimeOffset GetUtcNow() => utcNow;
     }
 
-    private static ChatMessageV2ConsumerSettingsSection CreateSettings() => new()
-    {
-        RetryTiers =
-        [
-            new RetryTierSettings { Topic = "retry-5s", Delay = TimeSpan.FromSeconds(5) },
-            new RetryTierSettings { Topic = "retry-20s", Delay = TimeSpan.FromSeconds(20) },
-            new RetryTierSettings { Topic = "retry-60s", Delay = TimeSpan.FromSeconds(60) },
-            new RetryTierSettings { Topic = "retry-300s", Delay = TimeSpan.FromSeconds(300) }
-        ]
-    };
 }

@@ -1,4 +1,4 @@
-namespace FlowChat.RealtimeService.Consumers.Kafka.Retry;
+namespace FlowChat.Shared.Infrastructure.Silverback.Kafka.Retry;
 
 public static class RetryMessageHeaders
 {

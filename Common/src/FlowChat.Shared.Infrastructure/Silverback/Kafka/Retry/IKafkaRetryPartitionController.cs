@@ -1,7 +1,7 @@
 using Confluent.Kafka;
 using Silverback.Messaging.Broker;
 
-namespace FlowChat.RealtimeService.Consumers.Kafka.Retry;
+namespace FlowChat.Shared.Infrastructure.Silverback.Kafka.Retry;
 
 public interface IKafkaRetryPartitionController
 {

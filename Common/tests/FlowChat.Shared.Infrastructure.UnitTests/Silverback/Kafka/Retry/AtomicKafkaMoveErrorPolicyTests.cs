@@ -1,7 +1,6 @@
 using FlowChat.Core.Exceptions;
-using FlowChat.RealtimeService.Consumers.Configuration.Settings;
-using FlowChat.RealtimeService.Consumers.Kafka.Retry;
 using FlowChat.Shared.Application;
+using FlowChat.Shared.Infrastructure.Silverback.Kafka.Retry;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -9,7 +8,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Silverback.Messaging.Broker;
 
-namespace FlowChat.RealtimeService.UnitTests.Worker.Kafka;
+namespace FlowChat.Shared.Infrastructure.UnitTests.Silverback.Kafka.Retry;
 
 public sealed class AtomicKafkaMoveErrorPolicyTests
 {
@@ -29,7 +28,7 @@ public sealed class AtomicKafkaMoveErrorPolicyTests
         implementation.CanHandle(null!, new TransientException("failure")).Should().BeTrue();
     }
 
-    private static Silverback.Messaging.Consuming.ErrorHandling.IErrorPolicyImplementation CreatePolicyImplementation()
+    private static global::Silverback.Messaging.Consuming.ErrorHandling.IErrorPolicyImplementation CreatePolicyImplementation()
     {
         var services = new ServiceCollection();
         services.AddSingleton(Mock.Of<IUnitOfWork>());
@@ -40,7 +39,7 @@ public sealed class AtomicKafkaMoveErrorPolicyTests
             NullLogger<AtomicKafkaMoveErrorPolicy>.Instance);
 
         var serviceProvider = services.BuildServiceProvider();
-        return new AtomicKafkaMoveErrorPolicy(new ChatMessageV2ConsumerSettingsSection(), null)
+        return new AtomicKafkaMoveErrorPolicy(TestTieredRetryKafkaConsumerSettingsSection.Create(), null)
             .Build(serviceProvider);
     }
 }

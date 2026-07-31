@@ -1,7 +1,7 @@
 using FlowChat.Core.Exceptions;
 using Silverback.Messaging.Broker.Behaviors;
 
-namespace FlowChat.RealtimeService.Consumers.Kafka.Retry;
+namespace FlowChat.Shared.Infrastructure.Silverback.Kafka.Retry;
 
 public sealed class InvalidRetryMetadataConsumerBehavior : IConsumerBehavior
 {

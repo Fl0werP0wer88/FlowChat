@@ -1,12 +1,10 @@
-using FlowChat.RealtimeService.Consumers.Configuration.Settings;
+namespace FlowChat.Shared.Infrastructure.Silverback.Kafka.Retry;
 
-namespace FlowChat.RealtimeService.Consumers.Kafka.Retry;
-
-public sealed class RealtimeRetryTopology
+public sealed class TieredKafkaRetryTopology
 {
     private readonly IReadOnlyDictionary<string, RetryTopicRegistration> _retryTopics;
 
-    public RealtimeRetryTopology(IEnumerable<ITieredRetryKafkaConsumerSettingsSection> settings)
+    public TieredKafkaRetryTopology(IEnumerable<ITieredRetryKafkaConsumerSettingsSection> settings)
     {
         ArgumentNullException.ThrowIfNull(settings);
 

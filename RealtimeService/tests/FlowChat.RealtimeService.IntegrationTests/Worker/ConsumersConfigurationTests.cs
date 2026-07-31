@@ -5,12 +5,12 @@ using FlowChat.RealtimeService.Application.Contracts.Persistence;
 using FlowChat.RealtimeService.Application.Features.Conversation.Commands.RouteConversationMembershipDeltaV2;
 using FlowChat.RealtimeService.Application.Features.Conversation.Commands.RouteConversationProjectionV2;
 using FlowChat.RealtimeService.Consumers.Configuration.Settings;
-using FlowChat.RealtimeService.Consumers.Kafka.Retry;
 using FlowChat.RealtimeService.Infrastructure.Routing;
 using FlowChat.RealtimeService.Persistence;
 using FlowChat.Core.Results;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Infrastructure.Silverback.Persistence;
+using FlowChat.Shared.Infrastructure.Silverback.Kafka.Retry;
 using FlowChat.RealtimeService.Redis.RealtimeConnections;
 using FluentAssertions;
 using MediatR;
@@ -104,7 +104,7 @@ public sealed class ConsumersConfigurationTests
         await serviceProvider.GetRequiredService<IBrokerClientsConnector>().InitializeAsync();
         var consumerCollection = serviceProvider.GetRequiredService<IConsumerCollection>();
         var producerCollection = serviceProvider.GetRequiredService<IProducerCollection>();
-        var topology = serviceProvider.GetRequiredService<RealtimeRetryTopology>();
+        var topology = serviceProvider.GetRequiredService<TieredKafkaRetryTopology>();
 
         consumerCollection.Should().HaveCount(20);
         topology.Streams.SelectMany(stream => stream.RetryTiers.Select(tier => tier.Topic).Append(stream.DeadLetterTopic))

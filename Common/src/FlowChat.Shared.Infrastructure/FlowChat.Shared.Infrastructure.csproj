@@ -14,6 +14,7 @@
     <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.3" />
     <PackageReference Include="Silverback.Integration.Kafka" Version="5.0.0" />
+    <PackageReference Include="Silverback.Storage.EntityFramework" Version="5.0.0" />
     <PackageReference Include="Silverback.Storage.Relational" Version="5.0.0" />
     <PackageReference Include="StackExchange.Redis" Version="2.10.1" />
   </ItemGroup>

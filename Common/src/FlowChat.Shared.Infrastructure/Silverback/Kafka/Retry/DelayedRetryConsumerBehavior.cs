@@ -5,10 +5,10 @@ using Microsoft.Extensions.Logging;
 using Silverback.Messaging.Broker;
 using Silverback.Messaging.Broker.Behaviors;
 
-namespace FlowChat.RealtimeService.Consumers.Kafka.Retry;
+namespace FlowChat.Shared.Infrastructure.Silverback.Kafka.Retry;
 
 public sealed class DelayedRetryConsumerBehavior(
-    RealtimeRetryTopology topology,
+    TieredKafkaRetryTopology topology,
     TimeProvider timeProvider,
     IKafkaRetryPartitionController partitionController,
     ILogger<DelayedRetryConsumerBehavior> logger) : IConsumerBehavior

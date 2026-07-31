@@ -1,4 +1,5 @@
 using FlowChat.Core.Contracts;
+using FlowChat.Shared.Infrastructure.Silverback.Kafka.Retry;
 namespace FlowChat.RealtimeService.Consumers.Configuration.Settings;
 
 public sealed class ConversationV2ProjectionConsumerSettingsSection : SettingsSectionBase, ITieredRetryKafkaConsumerSettingsSection

@@ -1,7 +1,5 @@
 using FlowChat.Core.Exceptions;
-using FlowChat.RealtimeService.Consumers.Configuration.Settings;
-
-namespace FlowChat.RealtimeService.Consumers.Kafka.Retry;
+namespace FlowChat.Shared.Infrastructure.Silverback.Kafka.Retry;
 
 public static class RetryFailureRouter
 {
