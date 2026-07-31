@@ -54,7 +54,6 @@ public sealed class WorkerApplicationServiceRegistrationTests
 
         services.AddLogging();
         services.AddScoped(_ => Mock.Of<IRealtimeEventRouter>());
-        services.AddScoped(_ => Mock.Of<IChatServiceInternalApiClient>());
         services.AddScoped(_ => Mock.Of<IRealtimeGroupMembershipReadModelRepository>());
         services.AddScoped(_ => Mock.Of<IRealtimeGroupMembershipRevisionTrackerRepository>());
         services.AddScoped(_ => Mock.Of<IUnitOfWork>());

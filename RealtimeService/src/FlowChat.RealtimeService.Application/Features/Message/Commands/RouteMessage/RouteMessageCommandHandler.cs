@@ -10,15 +10,12 @@ namespace FlowChat.RealtimeService.Application.Features.Message.Commands.RouteMe
 
 public sealed class RouteMessageCommandHandler(
     IRealtimeEventRouter realtimeEventRouter,
-    IChatServiceInternalApiClient chatServiceInternalApiClient,
     IRealtimeGroupMembershipRevisionTrackerRepository realtimeGroupMembershipRevisionTrackerRepository,
     IRealtimeGroupMembershipReadModelRepository realtimeGroupMembershipReadModelRepository)
     : ICommandHandler<RouteMessageCommand, Unit>
 {
     private readonly IRealtimeEventRouter _realtimeEventRouter = realtimeEventRouter
         ?? throw new ArgumentNullException(nameof(realtimeEventRouter));
-    private readonly IChatServiceInternalApiClient _chatServiceInternalApiClient = chatServiceInternalApiClient
-        ?? throw new ArgumentNullException(nameof(chatServiceInternalApiClient));
     private readonly IRealtimeGroupMembershipRevisionTrackerRepository _realtimeGroupMembershipRevisionTrackerRepository = realtimeGroupMembershipRevisionTrackerRepository
         ?? throw new ArgumentNullException(nameof(realtimeGroupMembershipRevisionTrackerRepository));
     private readonly IRealtimeGroupMembershipReadModelRepository _realtimeGroupMembershipReadModelRepository = realtimeGroupMembershipReadModelRepository
@@ -72,13 +69,6 @@ public sealed class RouteMessageCommandHandler(
 
         // TODO: Add a Realtime inbox before treating SignalR dispatch retries as safe
         await _realtimeEventRouter.RouteMessageAsync(notification, cancellationToken);
-
-        // TODO: Add ChatService idempotency storage before treating delivery retries as safe
-        await _chatServiceInternalApiClient.MarkChatMessageAsDeliveredAsync(
-            request.MessageId,
-            request.ConversationId,
-            deliveredAtUtc,
-            cancellationToken);
 
         return FlowChatResult<Unit>.Success(Unit.Value);
     }

@@ -5,7 +5,6 @@ using FlowChat.RealtimeService.Application.Contracts.Persistence;
 using FlowChat.RealtimeService.Application.Features.Conversation.Commands.RouteConversationMembershipDeltaV2;
 using FlowChat.RealtimeService.Application.Features.Conversation.Commands.RouteConversationProjectionV2;
 using FlowChat.RealtimeService.Consumers.Configuration.Settings;
-using FlowChat.RealtimeService.Infrastructure.Configuration.Settings;
 using FlowChat.RealtimeService.Infrastructure.Routing;
 using FlowChat.RealtimeService.Persistence;
 using FlowChat.Core.Results;
@@ -54,7 +53,6 @@ public sealed class ConsumersConfigurationTests
         var eventRouter = scope.ServiceProvider.GetRequiredService<IRealtimeEventRouter>();
         var routingReader = scope.ServiceProvider.GetRequiredService<IUserInstanceRoutingReader>();
         var realtimeInstanceInternalApiClient = scope.ServiceProvider.GetRequiredService<IRealtimeInstanceInternalApiClient>();
-        var chatServiceInternalApiClient = scope.ServiceProvider.GetRequiredService<IChatServiceInternalApiClient>();
         var groupMembershipRepository = scope.ServiceProvider.GetRequiredService<IRealtimeGroupMembershipReadModelRepository>();
         var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         var dbContextFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<AppDbContext>>();
@@ -72,7 +70,6 @@ public sealed class ConsumersConfigurationTests
         eventRouter.Should().BeOfType<WorkerRealtimeEventRouter>();
         routingReader.Should().NotBeNull();
         realtimeInstanceInternalApiClient.Should().NotBeNull();
-        chatServiceInternalApiClient.Should().NotBeNull();
         groupMembershipRepository.Should().NotBeNull();
         dbContext.Model.FindEntityType(typeof(SilverbackStoredOffset)).Should().NotBeNull();
         dbContextFactory.Should().NotBeNull();
@@ -150,27 +147,6 @@ public sealed class ConsumersConfigurationTests
         conversationMembershipOptions.DeadLetterTopic.Should().Be("dev.flowchat.chat.conversation-membership-projection.v2.realtime-service.dlq");
     }
 
-    [Fact]
-    public void DevelopmentAppSettings_UseChatServiceInternalApiKey()
-    {
-        var realtimeConsumersConfiguration = new ConfigurationBuilder()
-            .AddJsonFile(GetRepositoryPath("RealtimeService/src/Workers/FlowChat.RealtimeService.Consumers/appsettings.json"))
-            .AddJsonFile(GetRepositoryPath("RealtimeService/src/Workers/FlowChat.RealtimeService.Consumers/appsettings.Development.json"))
-            .Build();
-        var chatServiceApiConfiguration = new ConfigurationBuilder()
-            .AddJsonFile(GetRepositoryPath("ChatService/src/FlowChat.ChatService.API/appsettings.json"))
-            .AddJsonFile(GetRepositoryPath("ChatService/src/FlowChat.ChatService.API/appsettings.Development.json"))
-            .Build();
-
-        var realtimeChatServiceOptions = realtimeConsumersConfiguration
-            .GetSection(new ChatServiceSettingsSection().SectionName)
-            .Get<ChatServiceSettingsSection>();
-        var chatServiceInternalApiKey = chatServiceApiConfiguration["FlowChat:InternalApi:ApiKey"];
-
-        realtimeChatServiceOptions.Should().NotBeNull();
-        realtimeChatServiceOptions!.ApiKey.Should().Be(chatServiceInternalApiKey);
-    }
-
     private static IConfiguration CreateConfiguration()
     {
         return new ConfigurationBuilder()
@@ -181,8 +157,6 @@ public sealed class ConsumersConfigurationTests
                 ["ConnectionStrings:RealtimeDb"] = "Host=localhost;Port=5432;Database=flowchat_realtime_db;Username=flowchat_app;Password=flowchat_app_pw;",
                 ["RealtimeConnections:InstanceId"] = "realtime-consumers",
                 ["RealtimeApi:Instances:realtime-api"] = "http://localhost:5215",
-                ["ChatServiceApi:BaseUrl"] = "http://localhost:5254",
-                ["ChatServiceApi:ApiKey"] = "internal-key",
                 ["Kafka:ChatMessageV2Consumer:BootstrapServers"] = "localhost:9092",
                 ["Kafka:ChatMessageV2Consumer:GroupId"] = "realtime-service",
                 ["Kafka:ChatMessageV2Consumer:RetryGroupId"] = "realtime-service-retry",
