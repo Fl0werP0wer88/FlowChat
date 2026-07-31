@@ -1,5 +1,6 @@
 using FlowChat.Core.Exceptions;
 using FlowChat.Shared.Infrastructure.Silverback.Kafka.Retry;
+using FlowChat.Shared.Infrastructure.Silverback.Kafka.Retry.Behaviors;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
@@ -8,7 +9,7 @@ using Silverback.Messaging.Broker.Behaviors;
 using Silverback.Messaging.Messages;
 using Silverback.Messaging.Sequences;
 
-namespace FlowChat.Shared.Infrastructure.UnitTests.Silverback.Kafka.Retry;
+namespace FlowChat.Shared.Infrastructure.UnitTests.Silverback.Kafka.Retry.Behaviors;
 
 public sealed class InvalidRetryMetadataConsumerBehaviorTests
 {

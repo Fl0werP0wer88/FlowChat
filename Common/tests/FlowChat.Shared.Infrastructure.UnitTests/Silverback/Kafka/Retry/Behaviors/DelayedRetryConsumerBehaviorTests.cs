@@ -1,5 +1,8 @@
 using FlowChat.Core.Exceptions;
 using FlowChat.Shared.Infrastructure.Silverback.Kafka.Retry;
+using FlowChat.Shared.Infrastructure.Silverback.Kafka.Retry.Behaviors;
+using FlowChat.Shared.Infrastructure.Silverback.Kafka.Retry.Interfaces;
+using FlowChat.Shared.Infrastructure.UnitTests.Silverback.Kafka.Retry;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -9,7 +12,7 @@ using Silverback.Messaging.Broker.Behaviors;
 using Silverback.Messaging.Messages;
 using Silverback.Messaging.Sequences;
 
-namespace FlowChat.Shared.Infrastructure.UnitTests.Silverback.Kafka.Retry;
+namespace FlowChat.Shared.Infrastructure.UnitTests.Silverback.Kafka.Retry.Behaviors;
 
 public sealed class DelayedRetryConsumerBehaviorTests
 {

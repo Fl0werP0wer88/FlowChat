@@ -11,6 +11,7 @@ using FlowChat.Core.Results;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Infrastructure.Silverback.Persistence;
 using FlowChat.Shared.Infrastructure.Silverback.Kafka.Retry;
+using FlowChat.Shared.Infrastructure.Silverback.Kafka.Retry.Interfaces;
 using FlowChat.RealtimeService.Redis.RealtimeConnections;
 using FluentAssertions;
 using MediatR;

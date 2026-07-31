@@ -1,11 +1,12 @@
 using System.Globalization;
 using System.Diagnostics;
 using Confluent.Kafka;
+using FlowChat.Shared.Infrastructure.Silverback.Kafka.Retry.Interfaces;
 using Microsoft.Extensions.Logging;
 using Silverback.Messaging.Broker;
 using Silverback.Messaging.Broker.Behaviors;
 
-namespace FlowChat.Shared.Infrastructure.Silverback.Kafka.Retry;
+namespace FlowChat.Shared.Infrastructure.Silverback.Kafka.Retry.Behaviors;
 
 public sealed class DelayedRetryConsumerBehavior(
     TieredKafkaRetryTopology topology,

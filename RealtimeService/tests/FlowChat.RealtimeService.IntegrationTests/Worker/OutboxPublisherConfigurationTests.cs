@@ -1,5 +1,6 @@
 using FlowChat.RealtimeService.Consumers.Configuration.Settings;
 using FlowChat.Shared.Infrastructure.Silverback.Kafka.Retry;
+using FlowChat.Shared.Infrastructure.Silverback.Kafka.Retry.Interfaces;
 using FlowChat.RealtimeService.OutboxPublisher;
 using FlowChat.RealtimeService.OutboxPublisher.Configuration.Settings;
 using FlowChat.RealtimeService.Persistence;

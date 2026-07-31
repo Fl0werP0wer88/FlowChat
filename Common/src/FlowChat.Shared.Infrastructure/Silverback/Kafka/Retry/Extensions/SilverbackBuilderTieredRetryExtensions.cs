@@ -1,9 +1,11 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using FlowChat.Shared.Infrastructure.Silverback.Kafka.Retry.Behaviors;
+using FlowChat.Shared.Infrastructure.Silverback.Kafka.Retry.Interfaces;
 using Silverback.Configuration;
 
-namespace FlowChat.Shared.Infrastructure.Silverback.Kafka.Retry;
+namespace FlowChat.Shared.Infrastructure.Silverback.Kafka.Retry.Extensions;
 
 public static class SilverbackBuilderTieredRetryExtensions
 {

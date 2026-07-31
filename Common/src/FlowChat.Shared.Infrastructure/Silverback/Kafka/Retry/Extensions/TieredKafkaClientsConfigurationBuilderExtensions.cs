@@ -1,11 +1,12 @@
 using Confluent.Kafka;
+using FlowChat.Shared.Infrastructure.Silverback.Kafka.Retry.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Silverback.Messaging.Configuration;
 using Silverback.Messaging.Configuration.Kafka;
 using Silverback.Messaging.Consuming.KafkaOffsetStore;
 using Silverback.Messaging.Producing.TransactionalOutbox;
 
-namespace FlowChat.Shared.Infrastructure.Silverback.Kafka.Retry;
+namespace FlowChat.Shared.Infrastructure.Silverback.Kafka.Retry.Extensions;
 
 public static class TieredKafkaClientsConfigurationBuilderExtensions
 {

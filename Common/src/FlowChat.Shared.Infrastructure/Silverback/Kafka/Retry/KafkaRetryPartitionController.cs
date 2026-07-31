@@ -1,16 +1,8 @@
 using Confluent.Kafka;
+using FlowChat.Shared.Infrastructure.Silverback.Kafka.Retry.Interfaces;
 using Silverback.Messaging.Broker;
 
 namespace FlowChat.Shared.Infrastructure.Silverback.Kafka.Retry;
-
-public interface IKafkaRetryPartitionController
-{
-    void Pause(IConsumer consumer, TopicPartition topicPartition);
-
-    bool IsAssigned(IConsumer consumer, TopicPartition topicPartition);
-
-    void Resume(IConsumer consumer, TopicPartition topicPartition);
-}
 
 public sealed class KafkaRetryPartitionController : IKafkaRetryPartitionController
 {

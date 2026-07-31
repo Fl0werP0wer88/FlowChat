@@ -1,5 +1,7 @@
 using Confluent.Kafka;
 using FlowChat.Shared.Infrastructure.Silverback.Kafka.Retry;
+using FlowChat.Shared.Infrastructure.Silverback.Kafka.Retry.Extensions;
+using FlowChat.Shared.Infrastructure.Silverback.Kafka.Retry.Interfaces;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -11,7 +13,7 @@ using Silverback.Messaging.Configuration;
 using Silverback.Messaging.Consuming.KafkaOffsetStore;
 using Silverback.Messaging.Producing.TransactionalOutbox;
 
-namespace FlowChat.Shared.Infrastructure.IntegrationTests.Silverback.Kafka.Retry;
+namespace FlowChat.Shared.Infrastructure.IntegrationTests.Silverback.Kafka.Retry.Extensions;
 
 public sealed class TieredKafkaClientsConfigurationBuilderExtensionsTests
 {

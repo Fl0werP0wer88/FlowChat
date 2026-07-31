@@ -1,4 +1,4 @@
-namespace FlowChat.Shared.Infrastructure.Silverback.Kafka.Retry;
+namespace FlowChat.Shared.Infrastructure.Silverback.Kafka.Retry.Interfaces;
 
 public interface ITieredRetryKafkaConsumerSettingsSection
 {
@@ -9,10 +9,4 @@ public interface ITieredRetryKafkaConsumerSettingsSection
     string DeadLetterTopic { get; }
     IReadOnlyList<RetryTierSettings> RetryTiers { get; }
     string AutoOffsetReset { get; }
-}
-
-public sealed class RetryTierSettings
-{
-    public string Topic { get; set; } = string.Empty;
-    public TimeSpan Delay { get; set; }
 }

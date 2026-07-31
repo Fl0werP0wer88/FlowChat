@@ -1,7 +1,8 @@
 using FlowChat.Shared.Infrastructure.Silverback.Kafka;
+using FlowChat.Shared.Infrastructure.Silverback.Kafka.Retry.Interfaces;
 using Silverback.Messaging.Configuration.Kafka;
 
-namespace FlowChat.Shared.Infrastructure.Silverback.Kafka.Retry;
+namespace FlowChat.Shared.Infrastructure.Silverback.Kafka.Retry.Extensions;
 
 public static class TieredKafkaConsumerEndpointConfigurationBuilderExtensions
 {

@@ -1,3 +1,5 @@
+using FlowChat.Shared.Infrastructure.Silverback.Kafka.Retry.Interfaces;
+
 namespace FlowChat.Shared.Infrastructure.Silverback.Kafka.Retry;
 
 public sealed class TieredKafkaRetryTopology

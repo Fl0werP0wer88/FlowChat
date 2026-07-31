@@ -1,4 +1,5 @@
 using FlowChat.Shared.Infrastructure.Silverback.Kafka.Retry;
+using FlowChat.Shared.Infrastructure.Silverback.Kafka.Retry.Interfaces;
 
 namespace FlowChat.Shared.Infrastructure.UnitTests.Silverback.Kafka.Retry;
 

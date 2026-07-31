@@ -1,4 +1,5 @@
 using FlowChat.Core.Exceptions;
+using FlowChat.Shared.Infrastructure.Silverback.Kafka.Retry.Interfaces;
 namespace FlowChat.Shared.Infrastructure.Silverback.Kafka.Retry;
 
 public static class RetryFailureRouter
