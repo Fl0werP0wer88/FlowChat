@@ -1,5 +1,5 @@
 using FlowChat.HarnessService.Consumers;
-using FlowChat.HarnessService.Consumers.Kafka.Retry;
+using FlowChat.HarnessService.Application.Features.KafkaRetry;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;

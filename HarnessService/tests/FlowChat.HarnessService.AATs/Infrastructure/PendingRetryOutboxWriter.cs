@@ -1,4 +1,5 @@
 using FlowChat.Core.Messaging;
+using FlowChat.HarnessService.Application.Features.KafkaRetry;
 using FlowChat.HarnessService.Consumers.Kafka.Retry;
 using FlowChat.HarnessService.Persistence;
 using FlowChat.Shared.Infrastructure.Silverback.Kafka.Retry;

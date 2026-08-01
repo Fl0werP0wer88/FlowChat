@@ -71,8 +71,6 @@ public static class ConsumersServiceRegistration
         services.AddConsumerApplicationServices();
         services.AddConsumerPersistenceServices(configuration);
         services.AddConsumerInfrastructureServices();
-        services.AddSingleton<RetryPipelineTestAttemptTracker>();
-
         services.AddSilverback()
             .AddSingletonBrokerBehavior<CustomSpanAttributesProducerBehavior>()
             .AddSingletonBrokerBehavior<CustomSpanAttributesConsumerBehavior>()

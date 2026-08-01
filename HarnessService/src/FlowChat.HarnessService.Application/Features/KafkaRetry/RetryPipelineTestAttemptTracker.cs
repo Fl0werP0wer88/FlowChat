@@ -1,6 +1,6 @@
 using System.Collections.Concurrent;
 
-namespace FlowChat.HarnessService.Consumers.Kafka.Retry;
+namespace FlowChat.HarnessService.Application.Features.KafkaRetry;
 
 public sealed class RetryPipelineTestAttemptTracker
 {
