@@ -129,7 +129,8 @@ Status migracji:
 - Zapis źródłowego offsetu i wiadomości retry/DLQ odbywa się w jednej transakcji EF przez standardowy outbox Silverbacka.
 - Retry/DLQ publikuje osobny proces FlowChat.RealtimeService.OutboxPublisher.
 - UserProfileService został przepięty na ten sam mechanizm dla strumienia AccountRegistered; wykorzystuje istniejący FlowChat.UserProfileService.OutboxPublisher.
-- AuthService, NotificationService oraz wspólny ProjectionBulk nadal używają starej konfiguracji i wymagają osobnej migracji.
+- AuthService został przepięty na ten sam mechanizm dla współdzielonego strumienia UserEmailConfirmed/AuthEmailChanged; wykorzystuje istniejący FlowChat.AuthService.OutboxPublisher.
+- NotificationService oraz wspólny ProjectionBulk nadal używają starej konfiguracji i wymagają osobnej migracji.
 - Znane ograniczenie: wysłanie wiadomości przez SignalR nie jest atomowe z zapisem offsetu. RealtimeService nadal wymaga docelowego inboxa opartego na EventId, aby ograniczyć duplikaty po awarii pomiędzy efektem SignalR a zatwierdzeniem offsetu.
 
 19. BUG: MarkConversationAsRead może kończyć się DbUpdateConcurrencyException

@@ -102,7 +102,13 @@ public sealed class OutboxPublisherStartupDiagnosticsTests
                 ["Kafka:AccountConfirmedProducer:BootstrapServers"] = "localhost:9092",
                 ["Kafka:AccountConfirmedProducer:Topic"] = "dev.flowchat.identity.user.v1",
                 ["Kafka:PhoneNumberConfirmedProducer:BootstrapServers"] = "localhost:9092",
-                ["Kafka:PhoneNumberConfirmedProducer:Topic"] = "dev.flowchat.identity.user.v1"
+                ["Kafka:PhoneNumberConfirmedProducer:Topic"] = "dev.flowchat.identity.user.v1",
+                ["Kafka:RetryOutbox:BootstrapServers"] = "localhost:9092",
+                ["Kafka:RetryOutbox:Topics:0"] = "retry-5s",
+                ["Kafka:RetryOutbox:Topics:1"] = "retry-20s",
+                ["Kafka:RetryOutbox:Topics:2"] = "retry-60s",
+                ["Kafka:RetryOutbox:Topics:3"] = "retry-300s",
+                ["Kafka:RetryOutbox:Topics:4"] = "dlq"
             })
             .Build();
     }

@@ -3,12 +3,18 @@ using FlowChat.AuthService.Consumers.Kafka;
 using FlowChat.AuthService.Consumers.Configuration.Settings;
 using FlowChat.AuthService.Application.Contracts.Infrastructure;
 using FlowChat.AuthService.Application.Contracts.Persistence;
+using FlowChat.AuthService.Persistence;
 using FlowChat.Shared.Application;
+using FlowChat.Shared.Infrastructure.Silverback.Kafka.Retry;
+using FlowChat.Shared.Infrastructure.Silverback.Persistence;
 using FluentAssertions;
 using MediatR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Moq;
 using Silverback.Messaging.Broker;
+using Silverback.Messaging.Publishing;
 
 namespace FlowChat.AuthService.UnitTests;
 
@@ -23,26 +29,38 @@ public sealed class UserEmailConfirmedConsumerConfigurationTests
         services.AddSingleton<IConfiguration>(configuration);
         services.AddOptions();
         services.AddLogging();
+        services.AddSingleton(Mock.Of<IHostApplicationLifetime>());
         services.AddConsumers(configuration);
 
         await using var serviceProvider = services.BuildServiceProvider();
+        await serviceProvider.GetRequiredService<IBrokerClientsConnector>().InitializeAsync();
         await using var scope = serviceProvider.CreateAsyncScope();
 
         var consumerCollection = serviceProvider.GetRequiredService<IConsumerCollection>();
+        var producerCollection = serviceProvider.GetRequiredService<IProducerCollection>();
+        var topology = serviceProvider.GetRequiredService<TieredKafkaRetryTopology>();
         var authEmailChangedSubscriber = scope.ServiceProvider.GetRequiredService<AuthEmailChangedSubscriber>();
         var subscriber = scope.ServiceProvider.GetRequiredService<UserEmailConfirmedSubscriber>();
         var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
         var accountRepository = scope.ServiceProvider.GetRequiredService<IAccountRepository>();
         var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+        var offsetCommitter = scope.ServiceProvider.GetRequiredService<IConsumedOffsetCommitter>();
         var passwordHashingService = scope.ServiceProvider.GetRequiredService<IPasswordHashingService>();
 
-        consumerCollection.Should().NotBeNull();
+        consumerCollection.Should().HaveCount(5);
+        topology.Streams.Should().ContainSingle();
+        topology.Streams[0].RetryTiers
+            .Select(tier => tier.Topic)
+            .Append(topology.Streams[0].DeadLetterTopic)
+            .Should()
+            .AllSatisfy(topic => producerCollection.GetProducerForEndpoint(topic).Should().NotBeNull());
+        producerCollection.GetProducerForEndpoint("auth-account-confirmed").Should().NotBeNull();
         authEmailChangedSubscriber.Should().NotBeNull();
         subscriber.Should().NotBeNull();
         mediator.Should().NotBeNull();
         accountRepository.Should().NotBeNull();
-        unitOfWork.Should().NotBeNull();
-        unitOfWork.Should().BeAssignableTo<IConsumedOffsetCommitter>();
+        unitOfWork.Should().BeSameAs(offsetCommitter)
+            .And.BeOfType<SilverbackKafkaOffsetUnitOfWork<AppDbContext>>();
         passwordHashingService.Should().NotBeNull();
     }
 
@@ -64,7 +82,16 @@ public sealed class UserEmailConfirmedConsumerConfigurationTests
         consumerOptions.GroupId.Should().Be("auth-service");
         consumerOptions.RetryGroupId.Should().Be("auth-service-retry");
         consumerOptions.Topic.Should().Be("dev.flowchat.user-profile.user-profile.v1");
-        consumerOptions.RetryTopic.Should().Be("dev.flowchat.user-profile.user-profile.v1.auth-service.retry");
+        consumerOptions.RetryTiers.Select(tier => tier.Topic).Should().Equal(
+            "dev.flowchat.user-profile.user-profile.v1.auth-service.retry",
+            "dev.flowchat.user-profile.user-profile.v1.auth-service.retry.20s",
+            "dev.flowchat.user-profile.user-profile.v1.auth-service.retry.60s",
+            "dev.flowchat.user-profile.user-profile.v1.auth-service.retry.300s");
+        consumerOptions.RetryTiers.Select(tier => tier.Delay).Should().Equal(
+            TimeSpan.FromSeconds(5),
+            TimeSpan.FromSeconds(20),
+            TimeSpan.FromSeconds(60),
+            TimeSpan.FromSeconds(300));
         consumerOptions.DeadLetterTopic.Should().Be("dev.flowchat.user-profile.user-profile.v1.auth-service.dlq");
         configuration.GetConnectionString("AuthDb").Should().Be(
             "Host=localhost;Port=5432;Database=flowchat_auth_db;Username=flowchat_app;Password=flowchat_app_pw;");
@@ -80,11 +107,15 @@ public sealed class UserEmailConfirmedConsumerConfigurationTests
                 ["Kafka:UserEmailConfirmedConsumer:GroupId"] = "auth-service",
                 ["Kafka:UserEmailConfirmedConsumer:RetryGroupId"] = "auth-service-retry",
                 ["Kafka:UserEmailConfirmedConsumer:Topic"] = "dev.flowchat.user-profile.user-profile.v1",
-                ["Kafka:UserEmailConfirmedConsumer:RetryTopic"] = "dev.flowchat.user-profile.user-profile.v1.auth-service.retry",
                 ["Kafka:UserEmailConfirmedConsumer:DeadLetterTopic"] = "dev.flowchat.user-profile.user-profile.v1.auth-service.dlq",
-                ["Kafka:UserEmailConfirmedConsumer:MaxRetryCount"] = "5",
-                ["Kafka:UserEmailConfirmedConsumer:RetryBaseDelaySeconds"] = "5",
-                ["Kafka:UserEmailConfirmedConsumer:RetryMaxDelaySeconds"] = "300",
+                ["Kafka:UserEmailConfirmedConsumer:RetryTiers:0:Topic"] = "dev.flowchat.user-profile.user-profile.v1.auth-service.retry",
+                ["Kafka:UserEmailConfirmedConsumer:RetryTiers:0:Delay"] = "00:00:05",
+                ["Kafka:UserEmailConfirmedConsumer:RetryTiers:1:Topic"] = "dev.flowchat.user-profile.user-profile.v1.auth-service.retry.20s",
+                ["Kafka:UserEmailConfirmedConsumer:RetryTiers:1:Delay"] = "00:00:20",
+                ["Kafka:UserEmailConfirmedConsumer:RetryTiers:2:Topic"] = "dev.flowchat.user-profile.user-profile.v1.auth-service.retry.60s",
+                ["Kafka:UserEmailConfirmedConsumer:RetryTiers:2:Delay"] = "00:01:00",
+                ["Kafka:UserEmailConfirmedConsumer:RetryTiers:3:Topic"] = "dev.flowchat.user-profile.user-profile.v1.auth-service.retry.300s",
+                ["Kafka:UserEmailConfirmedConsumer:RetryTiers:3:Delay"] = "00:05:00",
                 ["Kafka:UserEmailConfirmedConsumer:AutoOffsetReset"] = "Earliest"
             })
             .Build();

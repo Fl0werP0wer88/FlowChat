@@ -1,10 +1,10 @@
-using FlowChat.Shared.Infrastructure.Silverback.Kafka;
-
 using FlowChat.Core.Contracts;
+using FlowChat.Shared.Infrastructure.Silverback.Kafka.Retry;
+using FlowChat.Shared.Infrastructure.Silverback.Kafka.Retry.Interfaces;
 
 namespace FlowChat.AuthService.Consumers.Configuration.Settings;
 
-public sealed class UserEmailConfirmedConsumerSettingsSection : SettingsSectionBase, IRetryableKafkaConsumerSettingsSection
+public sealed class UserEmailConfirmedConsumerSettingsSection : SettingsSectionBase, ITieredRetryKafkaConsumerSettingsSection
 {
     public override string SectionName => "Kafka:UserEmailConfirmedConsumer";
 
@@ -12,10 +12,7 @@ public sealed class UserEmailConfirmedConsumerSettingsSection : SettingsSectionB
     public string GroupId { get; set; } = "auth-service";
     public string RetryGroupId { get; set; } = "auth-service-retry";
     public string Topic { get; set; } = "dev.flowchat.user-profile.user-profile.v1";
-    public string RetryTopic { get; set; } = "dev.flowchat.user-profile.user-profile.v1.retry";
     public string DeadLetterTopic { get; set; } = "dev.flowchat.user-profile.user-profile.v1.dlq";
-    public int MaxRetryCount { get; set; } = 5;
-    public int RetryBaseDelaySeconds { get; set; } = 5;
-    public int RetryMaxDelaySeconds { get; set; } = 300;
+    public IReadOnlyList<RetryTierSettings> RetryTiers { get; set; } = [];
     public string AutoOffsetReset { get; set; } = "Earliest";
 }

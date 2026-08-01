@@ -7,13 +7,15 @@ namespace FlowChat.AuthService.OutboxPublisher.Diagnostics;
 public sealed class KafkaConnectivityProbe(
     IOptions<AccountRegisteredProducerSettingsSection> accountRegisteredOptions,
     IOptions<AccountConfirmedProducerSettingsSection> accountConfirmedOptions,
-    IOptions<PhoneNumberConfirmedProducerSettingsSection> phoneNumberConfirmedOptions)
+    IOptions<PhoneNumberConfirmedProducerSettingsSection> phoneNumberConfirmedOptions,
+    IOptions<RetryOutboxKafkaSettingsSection> retryOutboxOptions)
     : IKafkaConnectivityProbe
 {
     private static readonly TimeSpan MetadataTimeout = TimeSpan.FromSeconds(5);
     private readonly AccountRegisteredProducerSettingsSection _accountRegisteredOptions = accountRegisteredOptions.Value;
     private readonly AccountConfirmedProducerSettingsSection _accountConfirmedOptions = accountConfirmedOptions.Value;
     private readonly PhoneNumberConfirmedProducerSettingsSection _phoneNumberConfirmedOptions = phoneNumberConfirmedOptions.Value;
+    private readonly RetryOutboxKafkaSettingsSection _retryOutboxOptions = retryOutboxOptions.Value;
 
     public Task ProbeAsync(CancellationToken cancellationToken)
     {
@@ -22,6 +24,7 @@ public sealed class KafkaConnectivityProbe(
         AddBootstrapServers(bootstrapServers, _accountRegisteredOptions.BootstrapServers);
         AddBootstrapServers(bootstrapServers, _accountConfirmedOptions.BootstrapServers);
         AddBootstrapServers(bootstrapServers, _phoneNumberConfirmedOptions.BootstrapServers);
+        AddBootstrapServers(bootstrapServers, _retryOutboxOptions.BootstrapServers);
 
         foreach (var bootstrapServer in bootstrapServers)
         {

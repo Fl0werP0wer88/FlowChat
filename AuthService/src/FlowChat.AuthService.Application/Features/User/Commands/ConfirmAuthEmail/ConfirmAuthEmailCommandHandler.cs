@@ -44,7 +44,7 @@ public sealed class ConfirmAuthEmailCommandHandler
     {
         if (AggregateRoot!.IsEmailConfirmed)
         {
-            return Failure(DomainError.Conflict("Email is already confirmed."));
+            return Unchanged(Unit.Value);
         }
 
         AggregateRoot.ConfirmEmail();
