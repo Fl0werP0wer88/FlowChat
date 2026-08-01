@@ -13,44 +13,44 @@ public sealed class HarnessConsumerHost : IAsyncLifetime
 
     private readonly string _connectionString;
     private readonly string _bootstrapServers;
-    private readonly string _topic;
-    private readonly string _retryTopic;
-    private readonly string _deadLetterTopic;
+    private readonly ProjectionKafkaAATSettings _projection;
+
+    public string ProjectionMainGroupId { get; private set; } = string.Empty;
 
     public HarnessConsumerHost(
         string connectionString,
         string bootstrapServers,
-        string topic,
-        string retryTopic,
-        string deadLetterTopic)
+        ProjectionKafkaAATSettings projection)
     {
         _connectionString = connectionString;
         _bootstrapServers = bootstrapServers;
-        _topic = topic;
-        _retryTopic = retryTopic;
-        _deadLetterTopic = deadLetterTopic;
+        _projection = projection;
     }
 
     public async Task InitializeAsync()
     {
         var builder = Host.CreateApplicationBuilder();
 
-        builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?>
+        ProjectionMainGroupId = $"{_projection.Topic}.aat";
+        var projectionRetryGroupId = $"{_projection.RetryTopic}.aat";
+        var settings = new Dictionary<string, string?>
         {
             ["ConnectionStrings:HarnessDb"] = _connectionString,
             ["Kafka:ProjectionConsumer:BootstrapServers"] = _bootstrapServers,
-            ["Kafka:ProjectionConsumer:Topic"] = _topic,
-            ["Kafka:ProjectionConsumer:RetryTopic"] = _retryTopic,
-            ["Kafka:ProjectionConsumer:DeadLetterTopic"] = _deadLetterTopic,
-            ["Kafka:ProjectionConsumer:GroupId"] = $"harness-aat-{Guid.NewGuid():N}",
-            ["Kafka:ProjectionConsumer:RetryGroupId"] = $"harness-aat-retry-{Guid.NewGuid():N}",
+            ["Kafka:ProjectionConsumer:Topic"] = _projection.Topic,
+            ["Kafka:ProjectionConsumer:RetryTopic"] = _projection.RetryTopic,
+            ["Kafka:ProjectionConsumer:DeadLetterTopic"] = _projection.DeadLetterTopic,
+            ["Kafka:ProjectionConsumer:GroupId"] = ProjectionMainGroupId,
+            ["Kafka:ProjectionConsumer:RetryGroupId"] = projectionRetryGroupId,
             ["Kafka:ProjectionConsumer:MaxRetryCount"] = "3",
             ["Kafka:ProjectionConsumer:RetryBaseDelaySeconds"] = "1",
             ["Kafka:ProjectionConsumer:RetryMaxDelaySeconds"] = "5",
-            ["Kafka:ProjectionConsumer:AutoOffsetReset"] = "Latest",
+            ["Kafka:ProjectionConsumer:AutoOffsetReset"] = "Earliest",
             ["Kafka:ProjectionConsumer:BatchSize"] = "100",
             ["Kafka:ProjectionConsumer:BatchMaxWaitTimeMilliseconds"] = "1000"
-        });
+        };
+
+        builder.Configuration.AddInMemoryCollection(settings);
 
         builder.Services.AddConsumers(builder.Configuration);
 
@@ -67,15 +67,11 @@ public sealed class HarnessConsumerHost : IAsyncLifetime
 
         _host = builder.Build();
 
-        var lifetime = _host.Services.GetRequiredService<IHostApplicationLifetime>();
-        lifetime.ApplicationStopping.Register(() =>
-            Console.Error.WriteLine($"\n=== CONSUMER HOST STOPPING - caller stack:\n{Environment.StackTrace}\n===\n"));
-
         await _host.StartAsync();
-
-        // Allow time for Kafka partition assignment to complete so that messages published immediately
-        // after InitializeAsync returns are not missed due to AutoOffsetReset=Latest race condition.
-        await Task.Delay(TimeSpan.FromSeconds(5));
+        await KafkaConsumerGroupReadiness.WaitAsync(
+            _bootstrapServers,
+            [ProjectionMainGroupId, projectionRetryGroupId],
+            TimeSpan.FromSeconds(60));
     }
 
     public async Task DisposeAsync()
@@ -86,4 +82,5 @@ public sealed class HarnessConsumerHost : IAsyncLifetime
             _host.Dispose();
         }
     }
+
 }

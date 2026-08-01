@@ -4,7 +4,7 @@ using FluentAssertions;
 namespace FlowChat.HarnessService.AATs.Features.Projections;
 
 /// <summary>
-/// Requires running dev stack (Kafka + PostgreSQL).
+/// Uses Kafka and PostgreSQL Testcontainers.
 /// Run with: dotnet test --filter Category=AAT
 /// </summary>
 [Collection(HarnessAATCollectionFixture.CollectionName)]
@@ -16,24 +16,24 @@ public sealed class ProjectionIsolationAATTests : IAsyncLifetime
 
     private HarnessConsumerHost _consumerHost = null!;
     private KafkaTestPublisher _publisher = null!;
+    private readonly HarnessAATCollectionFixture _fixture;
 
     public ProjectionIsolationAATTests(HarnessAATCollectionFixture fixture)
     {
+        _fixture = fixture;
     }
 
     public async Task InitializeAsync()
     {
         _consumerHost = new HarnessConsumerHost(
-            HarnessAATCollectionFixture.ConnectionString,
-            HarnessAATCollectionFixture.BootstrapServers,
-            HarnessAATCollectionFixture.Topic,
-            HarnessAATCollectionFixture.RetryTopic,
-            HarnessAATCollectionFixture.DeadLetterTopic);
+            _fixture.ConnectionString,
+            _fixture.BootstrapServers,
+            _fixture.Projection);
         await _consumerHost.InitializeAsync();
 
         _publisher = new KafkaTestPublisher(
-            HarnessAATCollectionFixture.BootstrapServers,
-            HarnessAATCollectionFixture.Topic);
+            _fixture.BootstrapServers,
+            _fixture.Projection.Topic);
         await _publisher.InitializeAsync();
     }
 
@@ -57,7 +57,7 @@ public sealed class ProjectionIsolationAATTests : IAsyncLifetime
         // Wait for the two good items to be projected (proves the batch was processed
         // and individual retry succeeded for valid items)
         var goodRows = await DbPoller.WaitForRowsAsync(
-            HarnessAATCollectionFixture.ConnectionString,
+            _fixture.ConnectionString,
             [id1, id3],
             timeout: TimeSpan.FromSeconds(60));
 
@@ -66,13 +66,13 @@ public sealed class ProjectionIsolationAATTests : IAsyncLifetime
         goodRows.Should().Contain(r => r.Id == id3 && r.Payload == "valid-payload-3");
 
         var badItemInDb = await DbPoller.RowExistsAsync(
-            HarnessAATCollectionFixture.ConnectionString,
+            _fixture.ConnectionString,
             id2);
         badItemInDb.Should().BeFalse("the overlong payload violates varchar(100) and must be routed to DLQ");
 
         var dlqMessage = await KafkaDlqPoller.WaitForMessageAsync(
-            HarnessAATCollectionFixture.BootstrapServers,
-            HarnessAATCollectionFixture.DeadLetterTopic,
+            _fixture.BootstrapServers,
+            _fixture.Projection.DeadLetterTopic,
             id2,
             timeout: TimeSpan.FromSeconds(60));
 
@@ -91,17 +91,26 @@ public sealed class ProjectionIsolationAATTests : IAsyncLifetime
 
         // Wait until version 3 is projected before sending stale version
         await DbPoller.WaitForRowsAsync(
-            HarnessAATCollectionFixture.ConnectionString,
+            _fixture.ConnectionString,
             [id],
             timeout: TimeSpan.FromSeconds(30));
 
+        var offsetBeforeStaleEvent = await DbPoller.GetStoredOffsetAsync(
+            _fixture.ConnectionString,
+            _consumerHost.ProjectionMainGroupId,
+            _fixture.Projection.Topic);
+
         await _publisher.PublishAsync(id, "v1-payload", version: 1);
 
-        // Give the consumer time to process the stale event
-        await Task.Delay(TimeSpan.FromSeconds(5));
+        await DbPoller.WaitForStoredOffsetAsync(
+            _fixture.ConnectionString,
+            _consumerHost.ProjectionMainGroupId,
+            _fixture.Projection.Topic,
+            minimumOffset: offsetBeforeStaleEvent + 1,
+            timeout: TimeSpan.FromSeconds(30));
 
         var rows = await DbPoller.WaitForRowsAsync(
-            HarnessAATCollectionFixture.ConnectionString,
+            _fixture.ConnectionString,
             [id],
             timeout: TimeSpan.FromSeconds(30));
 
