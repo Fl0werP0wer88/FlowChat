@@ -2,6 +2,7 @@ using FlowChat.RealtimeService.OutboxPublisher.Configuration.Settings;
 using FlowChat.RealtimeService.Persistence;
 using FlowChat.Shared.Infrastructure.Configuration;
 using FlowChat.Shared.Infrastructure.Silverback.Behaviors;
+using FlowChat.Shared.Infrastructure.Silverback.Kafka.Retry.Extensions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Silverback.Configuration;
@@ -22,9 +23,6 @@ public static class OutboxPublisherServiceRegistration
         var kafka = configuration.GetSection(new RetryOutboxKafkaSettingsSection().SectionName)
             .Get<RetryOutboxKafkaSettingsSection>() ?? new RetryOutboxKafkaSettingsSection();
 
-        if (kafka.Topics.Count == 0 || kafka.Topics.Any(string.IsNullOrWhiteSpace) || kafka.Topics.Distinct().Count() != kafka.Topics.Count)
-            throw new InvalidOperationException("Retry outbox publisher topics must be non-empty and unique.");
-
         services.AddSilverback()
             .AddSingletonBrokerBehavior<CustomSpanAttributesProducerBehavior>()
             .WithConnectionToMessageBroker(options =>
@@ -41,17 +39,7 @@ public static class OutboxPublisherServiceRegistration
                         TimeSpan.FromSeconds(runtime.MaxRetryDelaySeconds))
                     .WithoutDistributedLock());
             })
-            .AddKafkaClients(clients =>
-            {
-                clients.WithBootstrapServers(kafka.BootstrapServers);
-                foreach (var topic in kafka.Topics)
-                {
-                    clients.AddProducer(producer => producer
-                        .Produce(topic, endpoint => endpoint
-                            .ProduceTo(topic)
-                            .SerializeAsJson(serializer => serializer.SetTypeHeader())));
-                }
-            });
+            .AddFlowChatTieredRetryProducerPipeline(kafka.BootstrapServers, kafka.Topics);
 
         return services;
     }

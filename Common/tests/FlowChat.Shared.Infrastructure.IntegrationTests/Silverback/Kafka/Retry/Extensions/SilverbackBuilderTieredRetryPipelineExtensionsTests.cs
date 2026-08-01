@@ -10,19 +10,20 @@ using Moq;
 using Silverback.Configuration;
 using Silverback.Messaging.Broker;
 using Silverback.Messaging.Configuration;
+using Silverback.Messaging.Producing.TransactionalOutbox;
 
 namespace FlowChat.Shared.Infrastructure.IntegrationTests.Silverback.Kafka.Retry.Extensions;
 
-public sealed class SilverbackBuilderTieredRetryExtensionsTests
+public sealed class SilverbackBuilderTieredRetryPipelineExtensionsTests
 {
     [Fact]
-    public async Task AddFlowChatTieredRetry_ValidStreams_RegistersRuntimeAndKafkaClients()
+    public async Task AddFlowChatTieredRetryConsumerPipeline_ValidStreams_RegistersRuntimeAndKafkaClients()
     {
         var streams = new[] { CreateSettings() };
         var services = CreateServices();
         var builder = services.AddSilverback();
 
-        var result = builder.AddFlowChatTieredRetry<TestDbContext>("localhost:9092", streams);
+        var result = builder.AddFlowChatTieredRetryConsumerPipeline<TestDbContext>("localhost:9092", streams);
         result.WithConnectionToMessageBroker(options => options
             .AddKafka()
             .AddEntityFrameworkKafkaOffsetStore()
@@ -47,7 +48,7 @@ public sealed class SilverbackBuilderTieredRetryExtensionsTests
     }
 
     [Fact]
-    public void AddFlowChatTieredRetry_CustomRuntimeDependencies_DoesNotReplaceThem()
+    public void AddFlowChatTieredRetryConsumerPipeline_CustomRuntimeDependencies_DoesNotReplaceThem()
     {
         var services = CreateServices();
         var timeProvider = new Mock<TimeProvider>().Object;
@@ -56,7 +57,7 @@ public sealed class SilverbackBuilderTieredRetryExtensionsTests
         services.AddSingleton(partitionController);
 
         services.AddSilverback()
-            .AddFlowChatTieredRetry<TestDbContext>("localhost:9092", [CreateSettings()]);
+            .AddFlowChatTieredRetryConsumerPipeline<TestDbContext>("localhost:9092", [CreateSettings()]);
 
         using var serviceProvider = services.BuildServiceProvider();
         serviceProvider.GetRequiredService<TimeProvider>().Should().BeSameAs(timeProvider);
@@ -66,25 +67,98 @@ public sealed class SilverbackBuilderTieredRetryExtensionsTests
     [Theory]
     [InlineData("")]
     [InlineData(" ")]
-    public void AddFlowChatTieredRetry_MissingBootstrapServers_ThrowsArgumentException(string bootstrapServers)
+    public void AddFlowChatTieredRetryConsumerPipeline_MissingBootstrapServers_ThrowsArgumentException(
+        string bootstrapServers)
     {
         var builder = CreateServices().AddSilverback();
 
-        var action = () => builder.AddFlowChatTieredRetry<TestDbContext>(bootstrapServers, [CreateSettings()]);
+        var action = () => builder.AddFlowChatTieredRetryConsumerPipeline<TestDbContext>(
+            bootstrapServers,
+            [CreateSettings()]);
 
         action.Should().Throw<ArgumentException>();
     }
 
     [Fact]
-    public void AddFlowChatTieredRetry_EmptyStreams_ThrowsArgumentException()
+    public void AddFlowChatTieredRetryConsumerPipeline_EmptyStreams_ThrowsArgumentException()
     {
         var builder = CreateServices().AddSilverback();
 
-        var action = () => builder.AddFlowChatTieredRetry<TestDbContext>(
+        var action = () => builder.AddFlowChatTieredRetryConsumerPipeline<TestDbContext>(
             "localhost:9092",
             Array.Empty<ITieredRetryKafkaConsumerSettingsSection>());
 
         action.Should().Throw<ArgumentException>().WithMessage("*At least one tiered Kafka retry stream*");
+    }
+
+    [Fact]
+    public async Task AddFlowChatTieredRetryProducerPipeline_ValidTopics_RegistersNamedProducers()
+    {
+        string[] topics = ["retry-5s", "retry-20s", "dlq"];
+        var services = CreateServices();
+        var builder = services.AddSilverback();
+
+        var result = builder.AddFlowChatTieredRetryProducerPipeline("localhost:9092", topics);
+        result.WithConnectionToMessageBroker(options => options.AddKafka());
+
+        result.Should().BeSameAs(builder);
+
+        await using var serviceProvider = services.BuildServiceProvider();
+        await serviceProvider.GetRequiredService<IBrokerClientsConnector>().InitializeAsync();
+        var producers = serviceProvider.GetRequiredService<IProducerCollection>();
+
+        producers.Should().HaveCount(topics.Length);
+        topics.Should().AllSatisfy(topic =>
+        {
+            var producer = producers.GetProducerForEndpoint(topic);
+            producer.Should().NotBeNull();
+            producer.EndpointConfiguration.Strategy.Should().NotBeOfType<OutboxProduceStrategy>();
+        });
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData(" ")]
+    public void AddFlowChatTieredRetryProducerPipeline_MissingBootstrapServers_ThrowsArgumentException(
+        string bootstrapServers)
+    {
+        var builder = CreateServices().AddSilverback();
+
+        var action = () => builder.AddFlowChatTieredRetryProducerPipeline(bootstrapServers, ["retry"]);
+
+        action.Should().Throw<ArgumentException>();
+    }
+
+    [Fact]
+    public void AddFlowChatTieredRetryProducerPipeline_EmptyTopics_ThrowsArgumentException()
+    {
+        var builder = CreateServices().AddSilverback();
+
+        var action = () => builder.AddFlowChatTieredRetryProducerPipeline("localhost:9092", []);
+
+        action.Should().Throw<ArgumentException>().WithMessage("*At least one tiered Kafka retry destination topic*");
+    }
+
+    [Fact]
+    public void AddFlowChatTieredRetryProducerPipeline_BlankTopic_ThrowsArgumentException()
+    {
+        var builder = CreateServices().AddSilverback();
+
+        var action = () => builder.AddFlowChatTieredRetryProducerPipeline("localhost:9092", ["retry", " "]);
+
+        action.Should().Throw<ArgumentException>().WithMessage("*topics cannot be empty*");
+    }
+
+    [Fact]
+    public void AddFlowChatTieredRetryProducerPipeline_DuplicateTopic_ThrowsArgumentException()
+    {
+        var builder = CreateServices().AddSilverback();
+
+        var action = () => builder.AddFlowChatTieredRetryProducerPipeline(
+            "localhost:9092",
+            ["retry", "retry"]);
+
+        action.Should().Throw<ArgumentException>().WithMessage("*topics must be unique*");
     }
 
     private static ServiceCollection CreateServices()

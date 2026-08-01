@@ -5,6 +5,7 @@ using FlowChat.Core.Messaging.UserProfileService.ReadModels;
 using FlowChat.UserProfileService.OutboxPublisher.Configuration.Settings;
 using FlowChat.UserProfileService.Persistence;
 using FlowChat.Shared.Infrastructure.Silverback.Behaviors;
+using FlowChat.Shared.Infrastructure.Silverback.Kafka.Retry.Extensions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Silverback.Configuration;
@@ -39,13 +40,6 @@ public static class OutboxPublisherServiceRegistration
             .GetSection(new RetryOutboxKafkaSettingsSection().SectionName)
             .Get<RetryOutboxKafkaSettingsSection>()
             ?? new RetryOutboxKafkaSettingsSection();
-        if (retryKafkaOptions.Topics.Count == 0 ||
-            retryKafkaOptions.Topics.Any(string.IsNullOrWhiteSpace) ||
-            retryKafkaOptions.Topics.Distinct().Count() != retryKafkaOptions.Topics.Count)
-        {
-            throw new InvalidOperationException("Retry outbox publisher topics must be non-empty and unique.");
-        }
-
         var bootstrapServers = !string.IsNullOrWhiteSpace(emailConfirmedProducerOptions.BootstrapServers)
             ? emailConfirmedProducerOptions.BootstrapServers
             : !string.IsNullOrWhiteSpace(projectionProducerOptions.BootstrapServers)
@@ -84,15 +78,10 @@ public static class OutboxPublisherServiceRegistration
                         .Produce<ProjectionIntegrationEvent<UserProfileReadModel>>("user-profile-projection", endpoint => endpoint
                             .ProduceTo(projectionProducerOptions.Topic)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())));
-
-                foreach (var topic in retryKafkaOptions.Topics)
-                {
-                    clients.AddProducer(producer => producer
-                        .Produce(topic, endpoint => endpoint
-                            .ProduceTo(topic)
-                            .SerializeAsJson(serializer => serializer.SetTypeHeader())));
-                }
-            });
+            })
+            .AddFlowChatTieredRetryProducerPipeline(
+                retryKafkaOptions.BootstrapServers,
+                retryKafkaOptions.Topics);
 
         return services;
     }

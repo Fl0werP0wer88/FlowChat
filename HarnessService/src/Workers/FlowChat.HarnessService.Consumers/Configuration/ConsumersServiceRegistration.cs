@@ -74,7 +74,7 @@ public static class ConsumersServiceRegistration
         services.AddSilverback()
             .AddSingletonBrokerBehavior<CustomSpanAttributesProducerBehavior>()
             .AddSingletonBrokerBehavior<CustomSpanAttributesConsumerBehavior>()
-            .AddFlowChatTieredRetry<AppDbContext>(
+            .AddFlowChatTieredRetryConsumerPipeline<AppDbContext>(
                 retryPipelineOptions.BootstrapServers,
                 [retryPipelineOptions])
             .WithConnectionToMessageBroker(options => options
