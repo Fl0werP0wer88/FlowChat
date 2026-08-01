@@ -61,10 +61,10 @@ public sealed class OutboxPublisherStartupDiagnosticsTests
         var outboxSection = configuration.GetSection("OutboxPublisher");
 
         outboxSection.Exists().Should().BeTrue();
-        outboxSection.GetValue<int>("BatchSize").Should().BeGreaterThan(0);
-        outboxSection.GetValue<int>("PollIntervalSeconds").Should().BeGreaterThan(0);
-        outboxSection.GetValue<int>("RetryBaseDelaySeconds").Should().BeGreaterThan(0);
-        outboxSection.GetValue<int>("MaxRetryDelaySeconds").Should().BeGreaterThan(0);
+        outboxSection.GetValue<int>("BatchSize").Should().Be(500);
+        outboxSection.GetValue<TimeSpan>("PollInterval").Should().Be(TimeSpan.FromMilliseconds(500));
+        outboxSection.GetValue<int>("RetryBaseDelaySeconds").Should().Be(3);
+        outboxSection.GetValue<int>("MaxRetryDelaySeconds").Should().Be(120);
         configuration["Logging:LogLevel:Silverback"].Should().Be("Warning");
         configuration["Logging:LogLevel:Microsoft.Hosting.Lifetime"].Should().Be("Information");
     }
@@ -93,8 +93,8 @@ public sealed class OutboxPublisherStartupDiagnosticsTests
             {
                 ["ConnectionStrings:AuthDb"] =
                     "Host=localhost;Port=5432;Database=flowchat_auth_db;Username=flowchat_app;Password=flowchat_app_pw;",
-                ["OutboxPublisher:BatchSize"] = "25",
-                ["OutboxPublisher:PollIntervalSeconds"] = "3",
+                ["OutboxPublisher:BatchSize"] = "500",
+                ["OutboxPublisher:PollInterval"] = "00:00:00.500",
                 ["OutboxPublisher:RetryBaseDelaySeconds"] = "3",
                 ["OutboxPublisher:MaxRetryDelaySeconds"] = "120",
                 ["Kafka:AccountRegisteredProducer:BootstrapServers"] = "localhost:9092",

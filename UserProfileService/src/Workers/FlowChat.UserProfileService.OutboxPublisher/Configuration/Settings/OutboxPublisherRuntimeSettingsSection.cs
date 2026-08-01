@@ -6,9 +6,9 @@ public sealed class OutboxPublisherRuntimeSettingsSection : SettingsSectionBase
 {
     public override string SectionName => "OutboxPublisher";
 
-    public int BatchSize { get; set; } = 25;
+    public int BatchSize { get; set; } = 500;
 
-    public int PollIntervalSeconds { get; set; } = 3;
+    public TimeSpan PollInterval { get; set; } = TimeSpan.FromMilliseconds(500);
 
     public int RetryBaseDelaySeconds { get; set; } = 3;
 

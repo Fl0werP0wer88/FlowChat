@@ -32,7 +32,7 @@ public static class OutboxPublisherServiceRegistration
                 options.AddOutboxWorker(worker => worker
                     .ProcessOutbox(outbox => outbox.UseEntityFramework<AppDbContext>())
                     .WithBatchSize(runtime.BatchSize)
-                    .WithInterval(TimeSpan.FromSeconds(runtime.PollIntervalSeconds))
+                    .WithInterval(runtime.PollInterval)
                     .WithExponentialRetryDelay(
                         TimeSpan.FromSeconds(runtime.RetryBaseDelaySeconds),
                         2,

@@ -55,7 +55,7 @@ public static class OutboxPublisherServiceRegistration
                 options.AddOutboxWorker(worker => worker
                     .ProcessOutbox(outbox => outbox.UseEntityFramework<AppDbContext>())
                     .WithBatchSize(outboxOptions.BatchSize)
-                    .WithInterval(TimeSpan.FromSeconds(outboxOptions.PollIntervalSeconds))
+                    .WithInterval(outboxOptions.PollInterval)
                     .WithExponentialRetryDelay(
                         TimeSpan.FromSeconds(outboxOptions.RetryBaseDelaySeconds),
                         2,
