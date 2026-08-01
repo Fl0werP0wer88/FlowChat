@@ -10,7 +10,7 @@ public sealed class OutboxPublisherRuntimeSettingsSection : SettingsSectionBase
 
     public TimeSpan PollInterval { get; set; } = TimeSpan.FromMilliseconds(500);
 
-    public int RetryBaseDelaySeconds { get; set; } = 3;
+    public TimeSpan InitialRetryDelay { get; set; } = TimeSpan.FromSeconds(3);
 
-    public int MaxRetryDelaySeconds { get; set; } = 120;
+    public TimeSpan MaxRetryDelay { get; set; } = TimeSpan.FromSeconds(120);
 }

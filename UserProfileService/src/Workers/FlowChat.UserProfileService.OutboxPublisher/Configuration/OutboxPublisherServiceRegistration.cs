@@ -57,9 +57,9 @@ public static class OutboxPublisherServiceRegistration
                     .WithBatchSize(outboxOptions.BatchSize)
                     .WithInterval(outboxOptions.PollInterval)
                     .WithExponentialRetryDelay(
-                        TimeSpan.FromSeconds(outboxOptions.RetryBaseDelaySeconds),
+                        outboxOptions.InitialRetryDelay,
                         2,
-                        TimeSpan.FromSeconds(outboxOptions.MaxRetryDelaySeconds))
+                        outboxOptions.MaxRetryDelay)
                     .WithoutDistributedLock());
             })
             .AddKafkaClients(clients =>

@@ -34,9 +34,9 @@ public static class OutboxPublisherServiceRegistration
                     .WithBatchSize(runtime.BatchSize)
                     .WithInterval(runtime.PollInterval)
                     .WithExponentialRetryDelay(
-                        TimeSpan.FromSeconds(runtime.RetryBaseDelaySeconds),
+                        runtime.InitialRetryDelay,
                         2,
-                        TimeSpan.FromSeconds(runtime.MaxRetryDelaySeconds))
+                        runtime.MaxRetryDelay)
                     .WithoutDistributedLock());
             })
             .AddFlowChatTieredRetryProducerPipeline(kafka.BootstrapServers, kafka.Topics);

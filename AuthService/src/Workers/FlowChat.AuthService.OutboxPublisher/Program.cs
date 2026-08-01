@@ -67,7 +67,7 @@ static void LogStartupDiagnostics(IHost host)
         "PhoneNumberConfirmed Kafka: {PhoneNumberConfirmedBootstrapServers} -> {PhoneNumberConfirmedTopic}. " +
         "Retry outbox Kafka: {RetryOutboxBootstrapServers} -> {RetryOutboxTopics}. " +
         "Outbox worker settings: BatchSize={BatchSize}, PollInterval={PollInterval}, " +
-        "RetryBaseDelaySeconds={RetryBaseDelaySeconds}, MaxRetryDelaySeconds={MaxRetryDelaySeconds}.",
+        "InitialRetryDelay={InitialRetryDelay}, MaxRetryDelay={MaxRetryDelay}.",
         environment.EnvironmentName,
         authDbTarget.Host,
         authDbTarget.Port,
@@ -82,8 +82,8 @@ static void LogStartupDiagnostics(IHost host)
         string.Join(", ", retryOutboxOptions.Topics),
         outboxOptions.BatchSize,
         outboxOptions.PollInterval,
-        outboxOptions.RetryBaseDelaySeconds,
-        outboxOptions.MaxRetryDelaySeconds);
+        outboxOptions.InitialRetryDelay,
+        outboxOptions.MaxRetryDelay);
 }
 
 static (string Host, string Port, string Database) GetAuthDbTarget(string? connectionString)

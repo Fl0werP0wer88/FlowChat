@@ -57,7 +57,7 @@ static void LogStartupDiagnostics(IHost host)
         "ChatMessageV2 Kafka: {ChatMessageBootstrapServers} -> {ChatMessageTopic}. " +
         "ConversationV2 Kafka: {ConversationBootstrapServers} -> {ConversationTopic}. " +
         "Outbox worker settings: BatchSize={BatchSize}, PollInterval={PollInterval}, " +
-        "RetryBaseDelaySeconds={RetryBaseDelaySeconds}, MaxRetryDelaySeconds={MaxRetryDelaySeconds}.",
+        "InitialRetryDelay={InitialRetryDelay}, MaxRetryDelay={MaxRetryDelay}.",
         environment.EnvironmentName,
         chatDbTarget.Host,
         chatDbTarget.Port,
@@ -68,8 +68,8 @@ static void LogStartupDiagnostics(IHost host)
         conversationProducerOptions.Topic,
         outboxOptions.BatchSize,
         outboxOptions.PollInterval,
-        outboxOptions.RetryBaseDelaySeconds,
-        outboxOptions.MaxRetryDelaySeconds);
+        outboxOptions.InitialRetryDelay,
+        outboxOptions.MaxRetryDelay);
 }
 
 static (string Host, string Port, string Database) GetChatDbTarget(string? connectionString)

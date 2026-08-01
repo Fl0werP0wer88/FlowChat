@@ -63,8 +63,8 @@ public sealed class OutboxPublisherStartupDiagnosticsTests
         outboxSection.Exists().Should().BeTrue();
         outboxSection.GetValue<int>("BatchSize").Should().Be(500);
         outboxSection.GetValue<TimeSpan>("PollInterval").Should().Be(TimeSpan.FromMilliseconds(500));
-        outboxSection.GetValue<int>("RetryBaseDelaySeconds").Should().Be(3);
-        outboxSection.GetValue<int>("MaxRetryDelaySeconds").Should().Be(120);
+        outboxSection.GetValue<TimeSpan>("InitialRetryDelay").Should().Be(TimeSpan.FromSeconds(3));
+        outboxSection.GetValue<TimeSpan>("MaxRetryDelay").Should().Be(TimeSpan.FromSeconds(120));
         configuration["Logging:LogLevel:Silverback"].Should().Be("Warning");
         configuration["Logging:LogLevel:Microsoft.Hosting.Lifetime"].Should().Be("Information");
     }
@@ -95,8 +95,8 @@ public sealed class OutboxPublisherStartupDiagnosticsTests
                     "Host=localhost;Port=5432;Database=flowchat_auth_db;Username=flowchat_app;Password=flowchat_app_pw;",
                 ["OutboxPublisher:BatchSize"] = "500",
                 ["OutboxPublisher:PollInterval"] = "00:00:00.500",
-                ["OutboxPublisher:RetryBaseDelaySeconds"] = "3",
-                ["OutboxPublisher:MaxRetryDelaySeconds"] = "120",
+                ["OutboxPublisher:InitialRetryDelay"] = "00:00:03",
+                ["OutboxPublisher:MaxRetryDelay"] = "00:02:00",
                 ["Kafka:AccountRegisteredProducer:BootstrapServers"] = "localhost:9092",
                 ["Kafka:AccountRegisteredProducer:Topic"] = "dev.flowchat.identity.user.v1",
                 ["Kafka:AccountConfirmedProducer:BootstrapServers"] = "localhost:9092",
