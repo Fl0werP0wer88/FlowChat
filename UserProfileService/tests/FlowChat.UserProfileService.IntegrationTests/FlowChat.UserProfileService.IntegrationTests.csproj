@@ -31,6 +31,7 @@
     <ProjectReference Include="..\..\src\FlowChat.UserProfileService.Domain\FlowChat.UserProfileService.Domain.csproj" SkipGetTargetFrameworkProperties="true" />
     <ProjectReference Include="..\..\src\FlowChat.UserProfileService.Application\FlowChat.UserProfileService.Application.csproj" SkipGetTargetFrameworkProperties="true" />
     <ProjectReference Include="..\..\src\Workers\FlowChat.UserProfileService.Consumers\FlowChat.UserProfileService.Consumers.csproj" SkipGetTargetFrameworkProperties="true" />
+    <ProjectReference Include="..\..\src\Workers\FlowChat.UserProfileService.OutboxPublisher\FlowChat.UserProfileService.OutboxPublisher.csproj" SkipGetTargetFrameworkProperties="true" />
     <ProjectReference Include="..\..\src\FlowChat.UserProfileService.Infrastructure\FlowChat.UserProfileService.Infrastructure.csproj" SkipGetTargetFrameworkProperties="true" />
     <ProjectReference Include="..\..\src\FlowChat.UserProfileService.Persistence\FlowChat.UserProfileService.Persistence.csproj" SkipGetTargetFrameworkProperties="true" />
     <ProjectReference Include="..\..\..\Common\src\FlowChat.Core\FlowChat.Core.csproj" SkipGetTargetFrameworkProperties="true" />

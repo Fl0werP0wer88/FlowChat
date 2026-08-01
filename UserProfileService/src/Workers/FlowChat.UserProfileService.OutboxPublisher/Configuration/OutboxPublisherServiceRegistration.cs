@@ -35,9 +35,22 @@ public static class OutboxPublisherServiceRegistration
             .GetSection(new OutboxPublisherRuntimeSettingsSection().SectionName)
             .Get<OutboxPublisherRuntimeSettingsSection>()
             ?? new OutboxPublisherRuntimeSettingsSection();
+        var retryKafkaOptions = configuration
+            .GetSection(new RetryOutboxKafkaSettingsSection().SectionName)
+            .Get<RetryOutboxKafkaSettingsSection>()
+            ?? new RetryOutboxKafkaSettingsSection();
+        if (retryKafkaOptions.Topics.Count == 0 ||
+            retryKafkaOptions.Topics.Any(string.IsNullOrWhiteSpace) ||
+            retryKafkaOptions.Topics.Distinct().Count() != retryKafkaOptions.Topics.Count)
+        {
+            throw new InvalidOperationException("Retry outbox publisher topics must be non-empty and unique.");
+        }
+
         var bootstrapServers = !string.IsNullOrWhiteSpace(emailConfirmedProducerOptions.BootstrapServers)
             ? emailConfirmedProducerOptions.BootstrapServers
-            : projectionProducerOptions.BootstrapServers;
+            : !string.IsNullOrWhiteSpace(projectionProducerOptions.BootstrapServers)
+                ? projectionProducerOptions.BootstrapServers
+                : retryKafkaOptions.BootstrapServers;
 
         services.AddSilverback()
             .AddSingletonBrokerBehavior<CustomSpanAttributesProducerBehavior>()
@@ -71,6 +84,14 @@ public static class OutboxPublisherServiceRegistration
                         .Produce<ProjectionIntegrationEvent<UserProfileReadModel>>("user-profile-projection", endpoint => endpoint
                             .ProduceTo(projectionProducerOptions.Topic)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())));
+
+                foreach (var topic in retryKafkaOptions.Topics)
+                {
+                    clients.AddProducer(producer => producer
+                        .Produce(topic, endpoint => endpoint
+                            .ProduceTo(topic)
+                            .SerializeAsJson(serializer => serializer.SetTypeHeader())));
+                }
             });
 
         return services;

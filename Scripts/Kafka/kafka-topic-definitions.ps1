@@ -21,6 +21,33 @@ function Get-TopicDefinitions {
       }
     },
     @{
+      name = "dev.flowchat.identity.user.v1.userprofile-service.retry.20s"
+      partitions = 1
+      rf = 1
+      config = @{
+        "cleanup.policy" = "delete"
+        "retention.ms" = "3600000"
+      }
+    },
+    @{
+      name = "dev.flowchat.identity.user.v1.userprofile-service.retry.60s"
+      partitions = 1
+      rf = 1
+      config = @{
+        "cleanup.policy" = "delete"
+        "retention.ms" = "3600000"
+      }
+    },
+    @{
+      name = "dev.flowchat.identity.user.v1.userprofile-service.retry.300s"
+      partitions = 1
+      rf = 1
+      config = @{
+        "cleanup.policy" = "delete"
+        "retention.ms" = "3600000"
+      }
+    },
+    @{
       name = "dev.flowchat.identity.user.v1.userprofile-service.dlq"
       partitions = 1
       rf = 1
