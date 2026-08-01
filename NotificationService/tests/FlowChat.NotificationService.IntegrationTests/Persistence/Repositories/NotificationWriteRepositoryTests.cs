@@ -99,6 +99,31 @@ public sealed class NotificationWriteRepositoryTests : IDisposable
         found.Should().BeNull();
     }
 
+    [Fact]
+    public async Task GetBySourceMessageKeyAsync_WhenEntityExists_ReturnsTrackedAggregate()
+    {
+        var notification = CreateNotification(sourceMessageKey: " source-key ");
+        await _repository.AddAsync(notification);
+        await _dbContext.SaveChangesAsync();
+        _dbContext.ChangeTracker.Clear();
+
+        var found = await _repository.GetBySourceMessageKeyAsync("  source-key  ");
+
+        found.Should().NotBeNull();
+        found!.Id.Should().Be(notification.Id);
+        _dbContext.Entry(found).State.Should().Be(EntityState.Unchanged);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    public async Task GetBySourceMessageKeyAsync_WhenKeyIsBlank_ReturnsNull(string sourceMessageKey)
+    {
+        var found = await _repository.GetBySourceMessageKeyAsync(sourceMessageKey);
+
+        found.Should().BeNull();
+    }
+
     // --- tracked update ---
 
     [Fact]

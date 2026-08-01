@@ -130,7 +130,8 @@ Status migracji:
 - Retry/DLQ publikuje osobny proces FlowChat.RealtimeService.OutboxPublisher.
 - UserProfileService został przepięty na ten sam mechanizm dla strumienia AccountRegistered; wykorzystuje istniejący FlowChat.UserProfileService.OutboxPublisher.
 - AuthService został przepięty na ten sam mechanizm dla współdzielonego strumienia UserEmailConfirmed/AuthEmailChanged; wykorzystuje istniejący FlowChat.AuthService.OutboxPublisher.
-- NotificationService oraz wspólny ProjectionBulk nadal używają starej konfiguracji i wymagają osobnej migracji.
+- NotificationService został przepięty na tiered retry; SMTP pozostaje bezpośrednim efektem ubocznym, więc awaria po przyjęciu wiadomości przez serwer SMTP, ale przed commitem, nadal może spowodować duplikat.
+- Wspólny ProjectionBulk nadal używa starej konfiguracji i wymaga osobnej migracji.
 - Znane ograniczenie: wysłanie wiadomości przez SignalR nie jest atomowe z zapisem offsetu. RealtimeService nadal wymaga docelowego inboxa opartego na EventId, aby ograniczyć duplikaty po awarii pomiędzy efektem SignalR a zatwierdzeniem offsetu.
 
 19. BUG: MarkConversationAsRead może kończyć się DbUpdateConcurrencyException

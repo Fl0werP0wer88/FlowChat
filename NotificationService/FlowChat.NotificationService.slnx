@@ -8,6 +8,7 @@
   </Folder>
   <Folder Name="/src/Workers/">
     <Project Path="src/Workers/FlowChat.NotificationService.Consumers/FlowChat.NotificationService.Consumers.csproj" />
+    <Project Path="src/Workers/FlowChat.NotificationService.OutboxPublisher/FlowChat.NotificationService.OutboxPublisher.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/FlowChat.NotificationService.AATs/FlowChat.NotificationService.AATs.csproj" />

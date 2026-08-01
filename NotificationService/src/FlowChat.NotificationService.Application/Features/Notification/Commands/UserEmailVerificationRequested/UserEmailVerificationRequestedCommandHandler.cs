@@ -35,6 +35,19 @@ public sealed class UserEmailVerificationRequestedCommandHandler
         UserEmailVerificationRequestedCommand request,
         CancellationToken cancellationToken)
     {
+        if (!string.IsNullOrWhiteSpace(request.SourceMessageKey))
+        {
+            var existingNotification = await _notificationWriteRepository.GetBySourceMessageKeyAsync(
+                request.SourceMessageKey,
+                cancellationToken);
+
+            if (existingNotification is not null)
+            {
+                _notification = existingNotification;
+                return Unchanged(Unit.Value);
+            }
+        }
+
         var displayName = string.IsNullOrWhiteSpace(request.DisplayName)
             ? request.UserName.Trim()
             : request.DisplayName.Trim();

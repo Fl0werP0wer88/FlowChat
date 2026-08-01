@@ -26,6 +26,9 @@ public sealed class HandleUserEmailVerificationRequestedNotificationCommandHandl
         _writeRepositoryMock
             .Setup(x => x.AddAsync(It.IsAny<Notification>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((Notification notification, CancellationToken _) => notification);
+        _writeRepositoryMock
+            .Setup(x => x.GetBySourceMessageKeyAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Notification?)null);
 
         _unitOfWorkMock
             .Setup(x => x.ExecuteCommandInTransactionAsync(
@@ -44,6 +47,41 @@ public sealed class HandleUserEmailVerificationRequestedNotificationCommandHandl
             _unitOfWorkMock.Object,
             _domainEventDispatcherMock.Object,
             []);
+    }
+
+    [Fact]
+    public async Task Handle_WhenSourceMessageWasAlreadyProcessed_ReturnsSuccessWithoutSendingOrPersisting()
+    {
+        const string sourceMessageKey = "message-key-existing";
+        var existingNotification = Notification.CreateEmailVerification(
+            Id<Notification>.New(),
+            _fixture.Create<Guid>(),
+            FlowChat.Shared.Domain.ValueObjects.EmailAddress.Create("existing@flowchat.local"),
+            "Existing",
+            "Existing notification",
+            sourceMessageKey);
+        existingNotification.MarkSent("provider-existing");
+        _writeRepositoryMock
+            .Setup(x => x.GetBySourceMessageKeyAsync(sourceMessageKey, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(existingNotification);
+
+        var command = new UserEmailVerificationRequestedCommand(
+            _fixture.Create<Guid>(),
+            "duplicate@flowchat.local",
+            "duplicate",
+            "Duplicate",
+            "https://flowchat.local/confirm?token=duplicate",
+            sourceMessageKey);
+
+        var result = await SendAsync(command);
+
+        result.IsSuccess.Should().BeTrue();
+        _notificationSenderMock.Verify(
+            x => x.SendAsync(It.IsAny<NotificationSendRequest>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+        _writeRepositoryMock.Verify(
+            x => x.AddAsync(It.IsAny<Notification>(), It.IsAny<CancellationToken>()),
+            Times.Never);
     }
 
     private async Task<FlowChatResult<Unit>> SendAsync(UserEmailVerificationRequestedCommand command)
