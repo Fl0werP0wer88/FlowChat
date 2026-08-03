@@ -10,21 +10,9 @@ namespace FlowChat.ChatService.Consumers.Kafka.Projections;
 public sealed class UserProfileProjectionValueFactory(IMapper mapper)
     : IProjectionSingleValueFactory<UserProfileReadModel, UserProfileProjectionDto>
 {
-    private const string ProjectionSource = "user-profile-projection";
-
     public UserProfileProjectionDto MapValue(
         ProjectionIntegrationEvent<UserProfileReadModel> message)
     {
-        if (message.Operation == OperationType.Deleted)
-        {
-            return new UserProfileProjectionDto
-            {
-                UserProfileId = ResolveUserId(message.SourceAggregateId, nameof(message.SourceAggregateId)),
-                FriendlyUserId = string.Empty,
-                Source = ProjectionSource
-            };
-        }
-
         try
         {
             return mapper.Map<UserProfileProjectionDto>(message.Value);
@@ -34,9 +22,4 @@ public sealed class UserProfileProjectionValueFactory(IMapper mapper)
             throw nonTransientException;
         }
     }
-
-    private static Guid ResolveUserId(Guid userId, string fieldName) =>
-        userId != Guid.Empty
-            ? userId
-            : throw new NonTransientException($"Payload does not contain valid {fieldName}.");
 }

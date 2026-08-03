@@ -71,7 +71,7 @@ public sealed class UserProfileProjectionValueFactoryTests
     }
 
     [Fact]
-    public void MapValue_WhenEventIsDelete_UsesSourceAggregateIdAndEmptyFriendlyUserId()
+    public void MapValue_WhenEventIsDelete_MapsFullReadModelPayload()
     {
         var userProfileId = Guid.NewGuid();
 
@@ -80,12 +80,17 @@ public sealed class UserProfileProjectionValueFactoryTests
             userProfileId,
             new UserProfileReadModel
             {
-                UserProfileId = Guid.Empty,
-                FriendlyUserId = string.Empty
+                UserProfileId = userProfileId,
+                FriendlyUserId = "deleted-user",
+                FirstName = "Deleted",
+                LastName = "Profile"
             }));
 
         value.UserProfileId.Should().Be(userProfileId);
-        value.FriendlyUserId.Should().BeEmpty();
+        value.FriendlyUserId.Should().Be("deleted-user");
+        value.FirstName.Should().Be("Deleted");
+        value.LastName.Should().Be("Profile");
+        value.Source.Should().Be("user-profile-projection");
     }
 
     [Fact]
