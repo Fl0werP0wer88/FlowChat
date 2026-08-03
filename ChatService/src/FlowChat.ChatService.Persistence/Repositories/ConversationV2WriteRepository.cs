@@ -68,15 +68,15 @@ public sealed class ConversationV2WriteRepository(AppDbContext dbContext)
             .Order()
             .ToArray();
 
-        var conversationId = await dbContext.DuetConversationsV2
-            .Where(x => x.FirstUserId == normalized[0] &&
-                        x.SecondUserId == normalized[1] &&
-                        x.DeletedAt == null)
-            .Select(x => x.ConversationId)
+        return await (
+                from duet in dbContext.DuetConversationsV2
+                join conversation in dbContext.ConversationsV2
+                    on duet.ConversationId equals conversation.Id
+                where duet.FirstUserId == normalized[0] &&
+                      duet.SecondUserId == normalized[1] &&
+                      duet.DeletedAt == null &&
+                      conversation.DeletedAt == null
+                select conversation)
             .SingleOrDefaultAsync(cancellationToken);
-
-        return conversationId is null
-            ? null
-            : await GetByIdAsync(conversationId, cancellationToken);
     }
 }
