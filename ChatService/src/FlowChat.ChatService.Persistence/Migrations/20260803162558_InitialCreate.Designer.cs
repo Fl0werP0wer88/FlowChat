@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FlowChat.ChatService.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260726165944_RequireChatMessageSequenceNumber")]
-    partial class RequireChatMessageSequenceNumber
+    [Migration("20260803162558_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -321,6 +321,21 @@ namespace FlowChat.ChatService.Persistence.Migrations
                     b.HasKey("ConversationId");
 
                     b.ToTable("ConversationMessageSequencesV2", (string)null);
+                });
+
+            modelBuilder.Entity("FlowChat.ChatService.Persistence.Entities.ConversationMessageSequenceReadEntityV2", b =>
+                {
+                    b.Property<Guid>("ConversationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<long>("LastAssignedSequenceNum")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("ConversationId");
+
+                    b.ToTable((string)null);
+
+                    b.ToView("ConversationMessageSequencesV2", (string)null);
                 });
 
             modelBuilder.Entity("FlowChat.ChatService.Persistence.Entities.ConversationParticipantReadEntityV2", b =>

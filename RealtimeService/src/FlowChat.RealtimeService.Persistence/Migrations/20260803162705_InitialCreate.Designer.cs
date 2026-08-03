@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FlowChat.RealtimeService.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260731155928_AddSilverbackOutbox")]
-    partial class AddSilverbackOutbox
+    [Migration("20260803162705_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

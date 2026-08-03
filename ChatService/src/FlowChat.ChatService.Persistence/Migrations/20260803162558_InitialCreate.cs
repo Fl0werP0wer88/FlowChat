@@ -94,7 +94,7 @@ namespace FlowChat.ChatService.Persistence.Migrations
                     Text = table.Column<string>(type: "character varying(4000)", maxLength: 4000, nullable: false),
                     SentAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     DeliveredAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
-                    SequenceNum = table.Column<long>(type: "bigint", nullable: true),
+                    SequenceNum = table.Column<long>(type: "bigint", nullable: false),
                     DeliveryStatus = table.Column<int>(type: "integer", nullable: false, defaultValue: 0),
                     CreatedBy = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
                     CreatedAtUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
@@ -221,8 +221,7 @@ namespace FlowChat.ChatService.Persistence.Migrations
                 name: "IX_ChatMessagesV2_ConversationId_SequenceNum",
                 table: "ChatMessagesV2",
                 columns: new[] { "ConversationId", "SequenceNum" },
-                unique: true,
-                filter: "\"SequenceNum\" IS NOT NULL");
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_ConversationMembershipsV2_ConversationId",

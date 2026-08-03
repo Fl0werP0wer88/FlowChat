@@ -320,6 +320,21 @@ namespace FlowChat.ChatService.Persistence.Migrations
                     b.ToTable("ConversationMessageSequencesV2", (string)null);
                 });
 
+            modelBuilder.Entity("FlowChat.ChatService.Persistence.Entities.ConversationMessageSequenceReadEntityV2", b =>
+                {
+                    b.Property<Guid>("ConversationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<long>("LastAssignedSequenceNum")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("ConversationId");
+
+                    b.ToTable((string)null);
+
+                    b.ToView("ConversationMessageSequencesV2", (string)null);
+                });
+
             modelBuilder.Entity("FlowChat.ChatService.Persistence.Entities.ConversationParticipantReadEntityV2", b =>
                 {
                     b.Property<Guid>("Id")

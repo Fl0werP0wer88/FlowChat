@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FlowChat.HarnessService.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260725104206_InitialCreate")]
+    [Migration("20260803162652_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -56,6 +56,23 @@ namespace FlowChat.HarnessService.Persistence.Migrations
                     b.ToTable("ProjectionTests", (string)null);
                 });
 
+            modelBuilder.Entity("FlowChat.HarnessService.Persistence.Entities.Retry.RetryPipelineTestResultEntity", b =>
+                {
+                    b.Property<Guid>("ScenarioId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("AttemptCount")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("CompletedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("ScenarioId");
+
+                    b.ToTable("RetryPipelineTestResults", (string)null);
+                });
+
             modelBuilder.Entity("Silverback.Messaging.Consuming.KafkaOffsetStore.SilverbackStoredOffset", b =>
                 {
                     b.Property<string>("GroupId")
@@ -75,6 +92,39 @@ namespace FlowChat.HarnessService.Persistence.Migrations
                     b.HasKey("GroupId", "Topic", "Partition");
 
                     b.ToTable("SilverbackStoredOffsets");
+                });
+
+            modelBuilder.Entity("Silverback.Messaging.Producing.TransactionalOutbox.SilverbackOutboxMessage", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<byte[]>("Content")
+                        .IsRequired()
+                        .HasColumnType("bytea");
+
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DynamicEndpoint")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<string>("EndpointName")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Headers")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("SilverbackOutboxMessages");
                 });
 #pragma warning restore 612, 618
         }
