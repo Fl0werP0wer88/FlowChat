@@ -7,10 +7,12 @@ namespace FlowChat.Shared.Consumers.Projections.Single;
 
 public static class ProjectionSingleSilverbackBuilderExtensions
 {
-    public static SilverbackBuilder AddProjectionSingle<TValue, TRepository>(
+    public static SilverbackBuilder AddProjectionSingle<TReadModel, TValue, TRepository, TSubscriber>(
         this SilverbackBuilder builder)
+        where TReadModel : class
         where TValue : class
         where TRepository : class, IProjectionSingleRepository<TValue>
+        where TSubscriber : ProjectionSingleSubscriberBase<TReadModel, TValue>
     {
         ArgumentNullException.ThrowIfNull(builder);
 
@@ -19,6 +21,6 @@ public static class ProjectionSingleSilverbackBuilderExtensions
             IRequestHandler<ProjectionSingleCommand<TValue>, FlowChat.Core.Results.FlowChatResult<Unit>>,
             ProjectionSingleCommandHandler<TValue>>();
 
-        return builder;
+        return builder.AddScopedSubscriber<TSubscriber>();
     }
 }
