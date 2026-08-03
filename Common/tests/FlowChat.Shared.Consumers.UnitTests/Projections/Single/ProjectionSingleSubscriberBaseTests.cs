@@ -1,4 +1,5 @@
 using Confluent.Kafka;
+using System.Diagnostics.CodeAnalysis;
 using FlowChat.Core.Exceptions;
 using FlowChat.Core.Messaging;
 using FlowChat.Core.Results;
@@ -7,6 +8,7 @@ using FlowChat.Shared.Consumers.Projections.Single;
 using FlowChat.Shared.Domain;
 using FluentAssertions;
 using MediatR;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Silverback.Messaging;
@@ -16,7 +18,7 @@ using Silverback.Messaging.Messages;
 
 namespace FlowChat.Shared.Consumers.UnitTests.Projections.Single;
 
-public sealed class ProjectionSingleSubscriberTests
+public sealed class ProjectionSingleSubscriberBaseTests
 {
     [Fact]
     public async Task HandleAsync_ValidMessage_SendsSingleProjectionCommand()
@@ -84,7 +86,48 @@ public sealed class ProjectionSingleSubscriberTests
         await action.Should().ThrowAsync<NonTransientException>().WithMessage("projection failed");
     }
 
-    private static ProjectionSingleSubscriber<TestReadModel, TestProjectionValue> CreateFailingSubscriber(
+    [Fact]
+    public async Task HandleAsync_FilteredMessage_CommitsConsumedOffsetWithoutSendingCommand()
+    {
+        var mediatorMock = new Mock<IMediator>();
+        var offsetCommitterMock = new Mock<IConsumedOffsetCommitter>();
+        offsetCommitterMock
+            .Setup(x => x.CommitConsumedOffsetsAsync(It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+        var subscriber = CreateSubscriber(
+            mediatorMock,
+            offsetCommitterMock,
+            shouldMap: false);
+
+        await subscriber.HandleAsync(CreateEnvelope(CreateMessage()), CancellationToken.None);
+
+        offsetCommitterMock.Verify(
+            x => x.CommitConsumedOffsetsAsync(It.IsAny<CancellationToken>()),
+            Times.Once);
+        mediatorMock.Verify(
+            x => x.Send(
+                It.IsAny<ProjectionSingleCommand<TestProjectionValue>>(),
+                It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task HandleAsync_FilteredMessageWithFailedOffsetCommit_PropagatesException()
+    {
+        var offsetCommitterMock = new Mock<IConsumedOffsetCommitter>();
+        offsetCommitterMock
+            .Setup(x => x.CommitConsumedOffsetsAsync(It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new TransientException("offset commit failed"));
+        var subscriber = CreateSubscriber(
+            offsetCommitterMock: offsetCommitterMock,
+            shouldMap: false);
+
+        var action = () => subscriber.HandleAsync(CreateEnvelope(CreateMessage()), CancellationToken.None);
+
+        await action.Should().ThrowAsync<TransientException>().WithMessage("offset commit failed");
+    }
+
+    private static TestProjectionSingleSubscriber CreateFailingSubscriber(
         FailureKind failureKind)
     {
         var mediatorMock = new Mock<IMediator>();
@@ -98,12 +141,15 @@ public sealed class ProjectionSingleSubscriberTests
         return CreateSubscriber(mediatorMock);
     }
 
-    private static ProjectionSingleSubscriber<TestReadModel, TestProjectionValue> CreateSubscriber(
-        Mock<IMediator>? mediatorMock = null) =>
+    private static TestProjectionSingleSubscriber CreateSubscriber(
+        Mock<IMediator>? mediatorMock = null,
+        Mock<IConsumedOffsetCommitter>? offsetCommitterMock = null,
+        bool shouldMap = true) =>
         new(
             (mediatorMock ?? new Mock<IMediator>()).Object,
-            new TestProjectionValueFactory(),
-            NullLogger<ProjectionSingleSubscriber<TestReadModel, TestProjectionValue>>.Instance);
+            (offsetCommitterMock ?? new Mock<IConsumedOffsetCommitter>()).Object,
+            shouldMap,
+            NullLogger<TestProjectionSingleSubscriber>.Instance);
 
     private static ProjectionIntegrationEvent<TestReadModel> CreateMessage(int sourceVersion = 1) =>
         new()
@@ -132,10 +178,24 @@ public sealed class ProjectionSingleSubscriberTests
         return envelopeMock.Object;
     }
 
-    private sealed class TestProjectionValueFactory : IProjectionSingleValueFactory<TestReadModel, TestProjectionValue>
+    private sealed class TestProjectionSingleSubscriber(
+        IMediator mediator,
+        IConsumedOffsetCommitter consumedOffsetCommitter,
+        bool shouldMap,
+        ILogger<TestProjectionSingleSubscriber> logger)
+        : ProjectionSingleSubscriberBase<TestReadModel, TestProjectionValue>(
+            mediator,
+            consumedOffsetCommitter,
+            logger)
     {
-        public TestProjectionValue MapValue(ProjectionIntegrationEvent<TestReadModel> message) =>
-            new(message.Value.Id);
+        protected override bool TryMapValue(
+            ProjectionIntegrationEvent<TestReadModel> message,
+            [NotNullWhen(true)]
+            out TestProjectionValue? value)
+        {
+            value = shouldMap ? new TestProjectionValue(message.Value.Id) : null;
+            return shouldMap;
+        }
     }
 
     public sealed record TestReadModel(Guid Id);

@@ -1,6 +1,7 @@
 using FlowChat.ChatService.Application.Features.UserProfile;
 using FlowChat.ChatService.Consumers;
 using FlowChat.ChatService.Consumers.Configuration.Settings;
+using FlowChat.ChatService.Consumers.Kafka.Projections;
 using FlowChat.ChatService.Persistence;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Infrastructure.Silverback.Kafka.Retry;
@@ -40,6 +41,7 @@ public sealed class UserProfileConsumerConfigurationTests
         var producers = provider.GetRequiredService<IProducerCollection>();
         var topology = provider.GetRequiredService<TieredKafkaRetryTopology>();
         var repository = scope.ServiceProvider.GetRequiredService<IProjectionSingleRepository<UserProfileProjectionDto>>();
+        var subscriber = scope.ServiceProvider.GetRequiredService<UserProfileProjectionSubscriber>();
         var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
         var offsetCommitter = scope.ServiceProvider.GetRequiredService<IConsumedOffsetCommitter>();
 
@@ -51,6 +53,7 @@ public sealed class UserProfileConsumerConfigurationTests
             .Should()
             .AllSatisfy(topic => producers.GetProducerForEndpoint(topic).Should().NotBeNull());
         repository.Should().NotBeNull();
+        subscriber.Should().NotBeNull();
         unitOfWork.Should().BeSameAs(offsetCommitter)
             .And.BeOfType<SilverbackKafkaOffsetUnitOfWork<AppDbContext>>();
     }

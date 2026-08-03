@@ -44,10 +44,9 @@ public static class ConsumersServiceRegistration
                 .AddEntityFrameworkKafkaOffsetStore()
                 .AddEntityFrameworkOutbox())
             .AddProjectionSingle<
-                UserProfileReadModel,
                 UserProfileProjectionDto,
-                UserProfileProjectionValueFactory,
-                UserProfileProjectionRepository>();
+                UserProfileProjectionRepository>()
+            .AddScopedSubscriber<UserProfileProjectionSubscriber>();
 
         return services;
     }
