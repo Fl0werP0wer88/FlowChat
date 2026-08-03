@@ -383,6 +383,24 @@ function Get-TopicDefinitions {
       }
     },
     @{
+      name = "dev.flowchat.chat.conversation-participant-projection.v2.presence-service.retry.20s"
+      partitions = 1
+      rf = 1
+      config = @{ "cleanup.policy" = "delete"; "retention.ms" = "3600000" }
+    },
+    @{
+      name = "dev.flowchat.chat.conversation-participant-projection.v2.presence-service.retry.60s"
+      partitions = 1
+      rf = 1
+      config = @{ "cleanup.policy" = "delete"; "retention.ms" = "3600000" }
+    },
+    @{
+      name = "dev.flowchat.chat.conversation-participant-projection.v2.presence-service.retry.300s"
+      partitions = 1
+      rf = 1
+      config = @{ "cleanup.policy" = "delete"; "retention.ms" = "3600000" }
+    },
+    @{
       name = "dev.flowchat.chat.conversation-participant-projection.v2.presence-service.dlq"
       partitions = 1
       rf = 1

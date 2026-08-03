@@ -132,7 +132,8 @@ Status migracji:
 - AuthService został przepięty na ten sam mechanizm dla współdzielonego strumienia UserEmailConfirmed/AuthEmailChanged; wykorzystuje istniejący FlowChat.AuthService.OutboxPublisher.
 - NotificationService został przepięty na tiered retry; SMTP pozostaje bezpośrednim efektem ubocznym, więc awaria po przyjęciu wiadomości przez serwer SMTP, ale przed commitem, nadal może spowodować duplikat.
 - Projekcja UserProfile w ChatService została odpięta od ProjectionBulk i korzysta z pojedynczego, atomowego upsertu oraz tiered retry.
-- Wspólny ProjectionBulk nadal używa starej konfiguracji w PresenceService i HarnessService i wymaga osobnej migracji.
+- Projekcja ContactObserver w PresenceService została odpięta od ProjectionBulk i korzysta z pojedynczego, wersjonowanego upsertu oraz tiered retry; eventy konwersacji grupowych są świadomie pomijane z trwałym zapisem offsetu.
+- Wspólny ProjectionBulk pozostaje używany przez HarnessService; jego ewentualna migracja jest osobnym zadaniem.
 - Znane ograniczenie: wysłanie wiadomości przez SignalR nie jest atomowe z zapisem offsetu. RealtimeService nadal wymaga docelowego inboxa opartego na EventId, aby ograniczyć duplikaty po awarii pomiędzy efektem SignalR a zatwierdzeniem offsetu.
 
 19. BUG: MarkConversationAsRead może kończyć się DbUpdateConcurrencyException

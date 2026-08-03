@@ -32,7 +32,11 @@ public static class ConsumerPersistenceServiceRegistration
         services.AddDbContextServices(configuration);
 
         services.AddPresenceRepositories();
-        services.AddScoped<IUnitOfWork, SilverbackKafkaOffsetUnitOfWork<AppDbContext>>();
+        services.AddScoped<SilverbackKafkaOffsetUnitOfWork<AppDbContext>>();
+        services.AddScoped<IUnitOfWork>(serviceProvider =>
+            serviceProvider.GetRequiredService<SilverbackKafkaOffsetUnitOfWork<AppDbContext>>());
+        services.AddScoped<IConsumedOffsetCommitter>(serviceProvider =>
+            serviceProvider.GetRequiredService<SilverbackKafkaOffsetUnitOfWork<AppDbContext>>());
 
         return services;
     }

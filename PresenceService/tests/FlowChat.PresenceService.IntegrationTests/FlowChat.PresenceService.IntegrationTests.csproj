@@ -32,6 +32,7 @@
     <ProjectReference Include="..\..\src\FlowChat.PresenceService.Infrastructure\FlowChat.PresenceService.Infrastructure.csproj" />
     <ProjectReference Include="..\..\src\FlowChat.PresenceService.Persistence\FlowChat.PresenceService.Persistence.csproj" />
     <ProjectReference Include="..\..\src\Workers\FlowChat.PresenceService.Consumers\FlowChat.PresenceService.Consumers.csproj" />
+    <ProjectReference Include="..\..\src\Workers\FlowChat.PresenceService.OutboxPublisher\FlowChat.PresenceService.OutboxPublisher.csproj" />
     <ProjectReference Include="..\..\..\Common\src\FlowChat.Core\FlowChat.Core.csproj" />
   </ItemGroup>
 
