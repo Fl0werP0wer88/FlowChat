@@ -32,19 +32,12 @@ public sealed class HarnessConsumerHost : IAsyncLifetime
         var builder = Host.CreateApplicationBuilder();
 
         ProjectionMainGroupId = $"{_projection.Topic}.aat";
-        var projectionRetryGroupId = $"{_projection.RetryTopic}.aat";
         var settings = new Dictionary<string, string?>
         {
             ["ConnectionStrings:HarnessDb"] = _connectionString,
             ["Kafka:ProjectionConsumer:BootstrapServers"] = _bootstrapServers,
             ["Kafka:ProjectionConsumer:Topic"] = _projection.Topic,
-            ["Kafka:ProjectionConsumer:RetryTopic"] = _projection.RetryTopic,
-            ["Kafka:ProjectionConsumer:DeadLetterTopic"] = _projection.DeadLetterTopic,
             ["Kafka:ProjectionConsumer:GroupId"] = ProjectionMainGroupId,
-            ["Kafka:ProjectionConsumer:RetryGroupId"] = projectionRetryGroupId,
-            ["Kafka:ProjectionConsumer:MaxRetryCount"] = "3",
-            ["Kafka:ProjectionConsumer:RetryBaseDelaySeconds"] = "1",
-            ["Kafka:ProjectionConsumer:RetryMaxDelaySeconds"] = "5",
             ["Kafka:ProjectionConsumer:AutoOffsetReset"] = "Earliest",
             ["Kafka:ProjectionConsumer:BatchSize"] = "100",
             ["Kafka:ProjectionConsumer:BatchMaxWaitTimeMilliseconds"] = "1000"
@@ -70,7 +63,7 @@ public sealed class HarnessConsumerHost : IAsyncLifetime
         await _host.StartAsync();
         await KafkaConsumerGroupReadiness.WaitAsync(
             _bootstrapServers,
-            [ProjectionMainGroupId, projectionRetryGroupId],
+            [ProjectionMainGroupId],
             TimeSpan.FromSeconds(60));
     }
 

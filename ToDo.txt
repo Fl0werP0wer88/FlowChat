@@ -34,7 +34,7 @@ Kontekst:
 - Problem zauważono w RealtimeService.Consumers, ale leży w połączeniu wspólnej konfiguracji retry z offset store, więc może wystąpić również w innych workerach.
 - Główny endpoint po TransientException lub IsolableException przenosi wiadomość na dedykowany retry topic.
 - Consumer retry topicu używa RetryErrorPolicy przez policy.Retry(...).ThenMoveTo(...).
-- Konfiguracja jest w Common/src/FlowChat.Shared.Infrastructure/Silverback/Kafka/KafkaConsumerEndpointConfigurationBuilderExtensions.cs, metoda ConfigureFlowChatRetryEndpoint.
+- Wadliwe metody ConfigureFlowChatMainEndpoint/ConfigureFlowChatRetryEndpoint zostały usunięte po migracji wszystkich produkcyjnych consumerów na tiered retry.
 
 Objaw:
 Po błędzie subscribera na retry topicu Silverback kończy przetwarzanie fatalnym wyjątkiem:
@@ -133,7 +133,7 @@ Status migracji:
 - NotificationService został przepięty na tiered retry; SMTP pozostaje bezpośrednim efektem ubocznym, więc awaria po przyjęciu wiadomości przez serwer SMTP, ale przed commitem, nadal może spowodować duplikat.
 - Projekcja UserProfile w ChatService została odpięta od ProjectionBulk i korzysta z pojedynczego, atomowego upsertu oraz tiered retry.
 - Projekcja ContactObserver w PresenceService została odpięta od ProjectionBulk i korzysta z pojedynczego, wersjonowanego upsertu oraz tiered retry; eventy konwersacji grupowych są świadomie pomijane z trwałym zapisem offsetu.
-- Wspólny ProjectionBulk pozostaje używany przez HarnessService; jego ewentualna migracja jest osobnym zadaniem.
+- Wspólny ProjectionBulk pozostaje używany wyłącznie przez HarnessService jako testowy mechanizm batchowania bez retry/DLQ; wszystkie produkcyjne consumery korzystają z tiered retry.
 - Znane ograniczenie: wysłanie wiadomości przez SignalR nie jest atomowe z zapisem offsetu. RealtimeService nadal wymaga docelowego inboxa opartego na EventId, aby ograniczyć duplikaty po awarii pomiędzy efektem SignalR a zatwierdzeniem offsetu.
 
 19. BUG: MarkConversationAsRead może kończyć się DbUpdateConcurrencyException

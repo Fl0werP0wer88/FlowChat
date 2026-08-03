@@ -34,10 +34,7 @@ public sealed class HarnessAATCollectionFixture : IAsyncLifetime
             _kafkaContainer.StartAsync());
 
         var topicPrefix = $"test.flowchat.harness.{Guid.NewGuid():N}";
-        Projection = new ProjectionKafkaAATSettings(
-            $"{topicPrefix}.projection.events",
-            $"{topicPrefix}.projection.events.retry",
-            $"{topicPrefix}.projection.events.dlq");
+        Projection = new ProjectionKafkaAATSettings($"{topicPrefix}.projection.events");
         RetryPipeline = new RetryPipelineKafkaAATSettings(
             $"{topicPrefix}.retry.events",
             [
@@ -51,8 +48,6 @@ public sealed class HarnessAATCollectionFixture : IAsyncLifetime
         await CreateTopicsAsync(
         [
             Projection.Topic,
-            Projection.RetryTopic,
-            Projection.DeadLetterTopic,
             RetryPipeline.Topic,
             .. RetryPipeline.RetryTiers.Select(x => x.Topic),
             RetryPipeline.DeadLetterTopic

@@ -9,7 +9,6 @@ using MediatR;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
-using IPublisher = Silverback.Messaging.Publishing.IPublisher;
 
 namespace FlowChat.Shared.Consumers.UnitTests.Projections.Bulk;
 
@@ -19,8 +18,7 @@ public sealed class ProjectionBatchSubscriberBaseTests
     public async Task HandleAsync_WhenBatchIsEmpty_DoesNotSendCommand()
     {
         var mediatorMock = new Mock<IMediator>();
-        var publisherMock = new Mock<IPublisher>();
-        var subscriber = CreateSubscriber(mediatorMock, publisherMock);
+        var subscriber = CreateSubscriber(mediatorMock);
 
         await subscriber.HandleAsync(ToAsyncEnumerable([]), CancellationToken.None);
 
@@ -28,9 +26,6 @@ public sealed class ProjectionBatchSubscriberBaseTests
             x => x.Send(
                 It.IsAny<ProjectionBulkCommand<ProjectionCommandItem<TestProjectionValue>>>(),
                 It.IsAny<CancellationToken>()),
-            Times.Never);
-        publisherMock.Verify(
-            x => x.PublishAsync(It.IsAny<object>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
@@ -163,59 +158,34 @@ public sealed class ProjectionBatchSubscriberBaseTests
         item.Value.Payload.Should().Be(message.Value.Payload);
     }
 
-    [Fact]
-    public async Task HandleAsync_WhenCommandFailsWithIsolableFailure_PublishesOriginalMessagesToRetry()
+    [Theory]
+    [InlineData(FailureKind.None)]
+    [InlineData(FailureKind.Transient)]
+    [InlineData(FailureKind.Isolable)]
+    public async Task HandleAsync_WhenCommandFails_ThrowsNonTransientException(FailureKind failureKind)
     {
         var mediatorMock = new Mock<IMediator>();
         mediatorMock
             .Setup(x => x.Send(
                 It.IsAny<ProjectionBulkCommand<ProjectionCommandItem<TestProjectionValue>>>(),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(FlowChatResult<Unit>.Failure(DomainError.UnExpected("bulk failed", FailureKind.Isolable)));
-        var publisherMock = new Mock<IPublisher>();
-        publisherMock
-            .Setup(x => x.PublishAsync(It.IsAny<object>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-        var subscriber = CreateSubscriber(mediatorMock, publisherMock);
-        var messages = new[] { CreateMessage(), CreateMessage() };
-
-        await subscriber.HandleAsync(ToAsyncEnumerable(messages), CancellationToken.None);
-
-        foreach (var message in messages)
-        {
-            publisherMock.Verify(
-                x => x.PublishAsync(message, It.IsAny<CancellationToken>()),
-                Times.Once);
-        }
-    }
-
-    [Fact]
-    public async Task HandleAsync_WhenCommandFailsWithoutIsolableFailure_ThrowsNonTransientException()
-    {
-        var mediatorMock = new Mock<IMediator>();
-        mediatorMock
-            .Setup(x => x.Send(
-                It.IsAny<ProjectionBulkCommand<ProjectionCommandItem<TestProjectionValue>>>(),
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(FlowChatResult<Unit>.Failure(DomainError.UnExpected("bulk failed")));
+            .ReturnsAsync(FlowChatResult<Unit>.Failure(DomainError.UnExpected("bulk failed", failureKind)));
         var subscriber = CreateSubscriber(mediatorMock);
 
-        var act = () => subscriber.HandleAsync(ToAsyncEnumerable([CreateMessage()]), CancellationToken.None);
+        var act = () => subscriber.HandleAsync(
+            ToAsyncEnumerable([CreateMessage(), CreateMessage()]),
+            CancellationToken.None);
 
         await act.Should().ThrowAsync<NonTransientException>()
             .WithMessage("bulk failed");
     }
 
-    private static TestBatchSubscriber CreateSubscriber(
-        Mock<IMediator>? mediatorMock = null,
-        Mock<IPublisher>? publisherMock = null)
+    private static TestBatchSubscriber CreateSubscriber(Mock<IMediator>? mediatorMock = null)
     {
         mediatorMock ??= new Mock<IMediator>();
-        publisherMock ??= new Mock<IPublisher>();
 
         return new TestBatchSubscriber(
             mediatorMock.Object,
-            publisherMock.Object,
             new TestProjectionValueFactory(),
             NullLogger.Instance);
     }
@@ -267,12 +237,10 @@ public sealed class ProjectionBatchSubscriberBaseTests
 
     private sealed class TestBatchSubscriber(
         IMediator mediator,
-        IPublisher publisher,
         IProjectionValueFactory<TestReadModel, TestProjectionValue, Guid> valueFactory,
         ILogger logger)
         : ProjectionBatchSubscriberBase<TestReadModel, TestProjectionValue, Guid>(
             mediator,
-            publisher,
             valueFactory,
             logger)
     {

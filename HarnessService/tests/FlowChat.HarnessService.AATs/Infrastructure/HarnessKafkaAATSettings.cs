@@ -1,9 +1,6 @@
 namespace FlowChat.HarnessService.AATs.Infrastructure;
 
-public sealed record ProjectionKafkaAATSettings(
-    string Topic,
-    string RetryTopic,
-    string DeadLetterTopic);
+public sealed record ProjectionKafkaAATSettings(string Topic);
 
 public sealed record RetryPipelineKafkaAATSettings(
     string Topic,

@@ -8,20 +8,17 @@ public static class ProjectionBulkServiceCollectionExtensions
         this SilverbackBuilder builder,
         IProjectionBulkConsumerSettingsSection options,
         string mainConsumerName,
-        string retryConsumerName,
         Action<ProjectionBulkBuilder> configure)
     {
         ArgumentNullException.ThrowIfNull(builder);
         ArgumentNullException.ThrowIfNull(options);
         ArgumentException.ThrowIfNullOrWhiteSpace(mainConsumerName);
-        ArgumentException.ThrowIfNullOrWhiteSpace(retryConsumerName);
         ArgumentNullException.ThrowIfNull(configure);
 
         configure(new ProjectionBulkBuilder(
             builder,
             options,
-            mainConsumerName,
-            retryConsumerName));
+            mainConsumerName));
 
         return builder;
     }

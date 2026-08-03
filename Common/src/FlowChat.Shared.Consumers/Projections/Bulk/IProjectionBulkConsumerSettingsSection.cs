@@ -1,14 +1,12 @@
-using FlowChat.Shared.Infrastructure.Silverback.Kafka;
-
 namespace FlowChat.Shared.Consumers.Projections.Bulk;
 
-public interface IProjectionBulkConsumerSettingsSection : IRetryableKafkaConsumerSettingsSection
+public interface IProjectionBulkConsumerSettingsSection
 {
     string BootstrapServers { get; }
 
     string GroupId { get; }
 
-    string RetryGroupId { get; }
+    string Topic { get; }
 
     string AutoOffsetReset { get; }
 

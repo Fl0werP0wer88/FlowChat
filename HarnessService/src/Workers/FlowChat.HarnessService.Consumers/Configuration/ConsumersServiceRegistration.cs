@@ -21,7 +21,6 @@ namespace FlowChat.HarnessService.Consumers;
 public static class ConsumersServiceRegistration
 {
     internal const string ProjectionMainConsumerName = "projection-main";
-    internal const string ProjectionRetryConsumerName = "projection-retry";
 
     public static IServiceCollection AddConsumers(
         this IServiceCollection services,
@@ -41,7 +40,6 @@ public static class ConsumersServiceRegistration
             .AddProjectionBulk(
                 projectionOptions,
                 ProjectionMainConsumerName,
-                ProjectionRetryConsumerName,
                 bulkBuilder => bulkBuilder
                     .AddRepository<
                         AppDbContext,

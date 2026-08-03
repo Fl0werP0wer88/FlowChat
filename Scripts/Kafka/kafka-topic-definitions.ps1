@@ -489,24 +489,6 @@ function Get-TopicDefinitions {
         "cleanup.policy" = "delete"
         "retention.ms" = "3600000"
       }
-    },
-    @{
-      name = "test.flowchat.harness.projection.events.retry"
-      partitions = 1
-      rf = 1
-      config = @{
-        "cleanup.policy" = "delete"
-        "retention.ms" = "3600000"
-      }
-    },
-    @{
-      name = "test.flowchat.harness.projection.events.dlq"
-      partitions = 1
-      rf = 1
-      config = @{
-        "cleanup.policy" = "delete"
-        "retention.ms" = "86400000"
-      }
     }
   )
 }

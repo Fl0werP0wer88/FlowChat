@@ -1,16 +1,13 @@
 using FlowChat.Core.Exceptions;
 using FlowChat.Core.Messaging;
 using FlowChat.Shared.Application;
-using FlowChat.Shared.Domain;
 using MediatR;
 using Microsoft.Extensions.Logging;
-using IPublisher = Silverback.Messaging.Publishing.IPublisher;
 
 namespace FlowChat.Shared.Consumers.Projections.Bulk;
 
 public abstract class ProjectionBatchSubscriberBase<TReadModel, TItem, TKey>(
     IMediator mediator,
-    IPublisher publisher,
     IProjectionValueFactory<TReadModel, TItem, TKey> valueFactory,
     ILogger logger)
     where TReadModel : class
@@ -22,13 +19,11 @@ public abstract class ProjectionBatchSubscriberBase<TReadModel, TItem, TKey>(
         CancellationToken cancellationToken)
     {
         var items = new List<ProjectionCommandItem<TItem>>();
-        var originalMessages = new List<ProjectionIntegrationEvent<TReadModel>>();
 
         await foreach (var message in messages.WithCancellation(cancellationToken))
         {
             ValidateMessage(message);
 
-            originalMessages.Add(message);
             items.AddRange(MapItems(message));
         }
 
@@ -47,25 +42,7 @@ public abstract class ProjectionBatchSubscriberBase<TReadModel, TItem, TKey>(
             return;
         }
 
-        if (result.Error.FailureKind != FailureKind.Isolable)
-            throw new NonTransientException(result.Error.ErrorMessage ?? "Bulk upsert failed.");
-
-        // Silverback's MoveMessageErrorPolicy cannot move BatchSequence messages to retry topic
-        await RepublishToRetryAsync(originalMessages, cancellationToken);
-    }
-
-    private async Task RepublishToRetryAsync(
-        IReadOnlyCollection<ProjectionIntegrationEvent<TReadModel>> messages,
-        CancellationToken cancellationToken)
-    {
-        logger.LogWarning(
-            "Batch upsert failed with an isolable error; republishing {Count} events to retry topic.",
-            messages.Count);
-
-        foreach (var message in messages)
-        {
-            await publisher.PublishAsync(message, cancellationToken);
-        }
+        throw new NonTransientException(result.Error.ErrorMessage ?? "Bulk upsert failed.");
     }
 
     private static void ValidateMessage(ProjectionIntegrationEvent<TReadModel> message)

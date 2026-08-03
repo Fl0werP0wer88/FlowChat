@@ -8,12 +8,53 @@ using FluentAssertions;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Moq;
 using Silverback.Configuration;
+using Silverback.Messaging.Broker;
+using Silverback.Messaging.Configuration;
 
 namespace FlowChat.Shared.Consumers.UnitTests.Projections.Bulk;
 
 public sealed class ProjectionBulkServiceCollectionExtensionsTests
 {
+    [Fact]
+    public async Task AddProjectionBulk_RegistersOnlyMainConsumerAndNoProducers()
+    {
+        var services = new ServiceCollection();
+        services.AddLogging();
+        services.AddOptions();
+        services.AddSingleton(Mock.Of<IHostApplicationLifetime>());
+
+        services
+            .AddSilverback()
+            .AddProjectionBulk(
+                new TestProjectionBulkConsumerSettingsSection(),
+                "projection-main",
+                bulkBuilder => bulkBuilder.AddConsumer<
+                    TestDbContext,
+                    TestReadModel,
+                    TestProjectionValue,
+                    Guid,
+                    TestProjectionValueFactory>());
+
+        await using var provider = services.BuildServiceProvider();
+        await provider.GetRequiredService<IBrokerClientsConnector>().InitializeAsync();
+
+        var consumers = provider.GetRequiredService<IConsumerCollection>()
+            .Cast<KafkaConsumer>()
+            .ToArray();
+        var producers = provider.GetRequiredService<IProducerCollection>();
+
+        consumers.Should().ContainSingle();
+        consumers[0].Configuration.GroupId.Should().Be("test-main-group");
+        consumers[0].Configuration.Endpoints
+            .SelectMany(endpoint => endpoint.TopicPartitions)
+            .Should()
+            .ContainSingle(topicPartition => topicPartition.Topic == "test-topic");
+        producers.Should().BeEmpty();
+    }
+
     [Fact]
     public void AddProjectionBulk_RegistersProjectionValueFactory()
     {
@@ -24,7 +65,6 @@ public sealed class ProjectionBulkServiceCollectionExtensionsTests
             .AddProjectionBulk(
                 new TestProjectionBulkConsumerSettingsSection(),
                 "projection-main",
-                "projection-retry",
                 bulkBuilder => bulkBuilder.AddConsumer<
                     TestDbContext,
                     TestReadModel,
@@ -50,7 +90,6 @@ public sealed class ProjectionBulkServiceCollectionExtensionsTests
             .AddProjectionBulk(
                 new TestProjectionBulkConsumerSettingsSection(),
                 "projection-main",
-                "projection-retry",
                 bulkBuilder => bulkBuilder.AddConsumer<
                     TestDbContext,
                     TestReadModel,
@@ -60,8 +99,6 @@ public sealed class ProjectionBulkServiceCollectionExtensionsTests
 
         services.Should().ContainSingle(descriptor =>
             descriptor.ServiceType == typeof(ProjectionBatchSubscriber<TestReadModel, TestProjectionValue, Guid>));
-        services.Should().ContainSingle(descriptor =>
-            descriptor.ServiceType == typeof(ProjectionRetrySubscriber<TestReadModel, TestProjectionValue, Guid>));
     }
 
     [Fact]
@@ -74,7 +111,6 @@ public sealed class ProjectionBulkServiceCollectionExtensionsTests
             .AddProjectionBulk(
                 new TestProjectionBulkConsumerSettingsSection(),
                 "projection-main",
-                "projection-retry",
                 bulkBuilder => bulkBuilder
                     .AddRepository<
                         TestDbContext,
@@ -100,8 +136,6 @@ public sealed class ProjectionBulkServiceCollectionExtensionsTests
             descriptor.ServiceType == typeof(IRequestHandler<ProjectionBulkCommand<ProjectionCommandItem<TestProjectionValue>>, FlowChatResult<Unit>>));
         services.Should().ContainSingle(descriptor =>
             descriptor.ServiceType == typeof(ProjectionBatchSubscriber<TestReadModel, TestProjectionValue, Guid>));
-        services.Should().ContainSingle(descriptor =>
-            descriptor.ServiceType == typeof(ProjectionRetrySubscriber<TestReadModel, TestProjectionValue, Guid>));
     }
 
     [Fact]
@@ -116,7 +150,6 @@ public sealed class ProjectionBulkServiceCollectionExtensionsTests
             .AddProjectionBulk(
                 new TestProjectionBulkConsumerSettingsSection(),
                 "projection-main",
-                "projection-retry",
                 bulkBuilder => bulkBuilder.AddCommandHandler<TestProjectionValue>());
 
         services.Should().ContainSingle(descriptor =>
@@ -137,7 +170,6 @@ public sealed class ProjectionBulkServiceCollectionExtensionsTests
             .AddProjectionBulk(
                 new TestProjectionBulkConsumerSettingsSection(),
                 "projection-main",
-                "projection-retry",
                 bulkBuilder => bulkBuilder.AddRepository<
                     TestDbContext,
                     TestProjectionValue,
@@ -154,14 +186,6 @@ public sealed class ProjectionBulkServiceCollectionExtensionsTests
                 TestProjectionValue,
                 TestProjectionEntity,
                 TestProjectionBulkEntityFactory>));
-    }
-
-    [Fact]
-    public void ProjectionBulkDeadLetterSentinel_IsAvailableFromCommon()
-    {
-        var sentinel = new ProjectionBulkDeadLetterSentinel();
-
-        sentinel.Should().NotBeNull();
     }
 
     private sealed class TestDbContext : DbContext;
@@ -253,8 +277,6 @@ public sealed class ProjectionBulkServiceCollectionExtensionsTests
 
         public string GroupId => "test-main-group";
 
-        public string RetryGroupId => "test-retry-group";
-
         public string AutoOffsetReset => "Earliest";
 
         public int BatchSize => 10;
@@ -262,15 +284,5 @@ public sealed class ProjectionBulkServiceCollectionExtensionsTests
         public int BatchMaxWaitTimeMilliseconds => 100;
 
         public string Topic => "test-topic";
-
-        public string RetryTopic => "test-retry-topic";
-
-        public string DeadLetterTopic => "test-dlq-topic";
-
-        public int MaxRetryCount => 3;
-
-        public int RetryBaseDelaySeconds => 1;
-
-        public int RetryMaxDelaySeconds => 10;
     }
 }

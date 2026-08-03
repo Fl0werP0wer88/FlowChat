@@ -1,5 +1,4 @@
 using Confluent.Kafka;
-using FlowChat.Core.Messaging;
 using FlowChat.Core.Results;
 using FlowChat.Shared.Application;
 using FlowChat.Shared.Infrastructure.Silverback.Kafka;
@@ -18,8 +17,7 @@ namespace FlowChat.Shared.Consumers.Projections.Bulk;
 public sealed class ProjectionBulkBuilder(
     SilverbackBuilder silverbackBuilder,
     IProjectionBulkConsumerSettingsSection options,
-    string mainConsumerName,
-    string retryConsumerName)
+    string mainConsumerName)
 {
     public ProjectionBulkBuilder AddRepository<TDbContext, TValue, TEntity, TEntityFactory>()
         where TDbContext : DbContext
@@ -73,34 +71,15 @@ public sealed class ProjectionBulkBuilder(
                         .WithAutoOffsetReset(ParseAutoOffsetReset(options.AutoOffsetReset))
                         .StoreOffsetsClientSide(store => store.UseEntityFramework<TDbContext>())
                         .Consume(endpoint => endpoint
-                            .ConfigureFlowChatMainEndpoint(options)
+                            .ConfigureFlowChatEndpointDefaults(options.Topic)
                             .EnableBatchProcessing(
                                 options.BatchSize,
-                                TimeSpan.FromMilliseconds(options.BatchMaxWaitTimeMilliseconds))))
-                    .AddConsumer(retryConsumerName, consumer => consumer
-                        .WithGroupId(options.RetryGroupId)
-                        .WithAutoOffsetReset(ParseAutoOffsetReset(options.AutoOffsetReset))
-                        .StoreOffsetsClientSide(store => store.UseEntityFramework<TDbContext>())
-                        .Consume(endpoint => endpoint
-                            .ConfigureFlowChatRetryEndpoint(options)))
-                    .AddProducer(producer => producer
-                        .Produce<ProjectionIntegrationEvent<TReadModel>>(endpoint => endpoint
-                            .ProduceTo(options.RetryTopic)
-                            .SerializeAsJson(serializer => serializer.SetTypeHeader())))
-                    .AddProducer(producer => producer
-                        .Produce<ProjectionBulkDeadLetterSentinel>(endpoint => endpoint
-                            .ProduceTo(options.DeadLetterTopic)
-                            .SerializeAsJson(serializer => serializer.SetTypeHeader())));
+                                TimeSpan.FromMilliseconds(options.BatchMaxWaitTimeMilliseconds))));
             })
             .AddScopedSubscriber<ProjectionBatchSubscriber<TReadModel, TValue, TKey>>(
                 new TypeSubscriptionOptions
                 {
                     Filters = [new ConsumerNameFilterAttribute(mainConsumerName)]
-                })
-            .AddScopedSubscriber<ProjectionRetrySubscriber<TReadModel, TValue, TKey>>(
-                new TypeSubscriptionOptions
-                {
-                    Filters = [new ConsumerNameFilterAttribute(retryConsumerName)]
                 });
 
         return this;
