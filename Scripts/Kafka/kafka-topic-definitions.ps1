@@ -167,24 +167,6 @@ function Get-TopicDefinitions {
       }
     },
     @{
-      name = "dev.flowchat.user-profile.user-profile-projection.v1.socialgraph-service.retry"
-      partitions = 1
-      rf = 1
-      config = @{
-        "cleanup.policy" = "delete"
-        "retention.ms" = "3600000"
-      }
-    },
-    @{
-      name = "dev.flowchat.user-profile.user-profile-projection.v1.socialgraph-service.dlq"
-      partitions = 1
-      rf = 1
-      config = @{
-        "cleanup.policy" = "delete"
-        "retention.ms" = "1209600000"
-      }
-    },
-    @{
       name = "dev.flowchat.notification.email.v1"
       partitions = 1
       rf = 1
@@ -464,24 +446,6 @@ function Get-TopicDefinitions {
       }
     },
     @{
-      name = "dev.flowchat.realtime.connection.v1.presence-service.retry"
-      partitions = 1
-      rf = 1
-      config = @{
-        "cleanup.policy" = "delete"
-        "retention.ms" = "3600000"
-      }
-    },
-    @{
-      name = "dev.flowchat.realtime.connection.v1.presence-service.dlq"
-      partitions = 1
-      rf = 1
-      config = @{
-        "cleanup.policy" = "delete"
-        "retention.ms" = "1209600000"
-      }
-    },
-    @{
       name = "test.flowchat.harness.projection.events"
       partitions = 1
       rf = 1
@@ -521,12 +485,16 @@ function Get-LegacyTopicNames {
     "dev.flowchat.presence.presence.dlq",
     "dev.flowchat.realtime.connection.v1.retry",
     "dev.flowchat.realtime.connection.v1.dlq",
+    "dev.flowchat.realtime.connection.v1.presence-service.retry",
+    "dev.flowchat.realtime.connection.v1.presence-service.dlq",
     "dev.flowchat.social-graph.contact-projection.v1",
     "dev.flowchat.social-graph.contact-projection.v1.presence-service.retry",
     "dev.flowchat.social-graph.contact-projection.v1.presence-service.dlq",
     "dev.flowchat.user-profile.user-profile.v1.chat-service.retry",
     "dev.flowchat.user-profile.user-profile.v1.chat-service.dlq",
     "dev.flowchat.user-profile.user-profile.v1.socialgraph-service.retry",
-    "dev.flowchat.user-profile.user-profile.v1.socialgraph-service.dlq"
+    "dev.flowchat.user-profile.user-profile.v1.socialgraph-service.dlq",
+    "dev.flowchat.user-profile.user-profile-projection.v1.socialgraph-service.retry",
+    "dev.flowchat.user-profile.user-profile-projection.v1.socialgraph-service.dlq"
   )
 }

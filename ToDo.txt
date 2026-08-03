@@ -26,115 +26,14 @@
 16. Trzeba będzie przeprojektować obsługe wyjątków i wewnętrzne rodzaje wyjątków bo zaczyna się tam robić bałagan
 17: Poustawiać IsConcurrencyToken na poszczególnych polach encji EF ktore maja konkurowac concyurency.
 
-18. BUG: Silverback RetryErrorPolicy nie współpracuje z client-side Kafka offset store
+18. RESOLVED: Silverback RetryErrorPolicy nie współpracuje z client-side Kafka offset store
 
-Kontekst:
-- FlowChat używa Silverback 5.0.0, Kafka oraz client-side offset store zapisywanego przez Entity Framework w tabeli SilverbackStoredOffset.
-- Consumer ma AddEntityFrameworkKafkaOffsetStore() oraz StoreOffsetsClientSide(store => store.UseEntityFramework<AppDbContext>()).
-- Problem zauważono w RealtimeService.Consumers, ale leży w połączeniu wspólnej konfiguracji retry z offset store, więc może wystąpić również w innych workerach.
-- Główny endpoint po TransientException lub IsolableException przenosi wiadomość na dedykowany retry topic.
-- Consumer retry topicu używa RetryErrorPolicy przez policy.Retry(...).ThenMoveTo(...).
-- Wadliwe metody ConfigureFlowChatMainEndpoint/ConfigureFlowChatRetryEndpoint zostały usunięte po migracji wszystkich produkcyjnych consumerów na tiered retry.
-
-Objaw:
-Po błędzie subscribera na retry topicu Silverback kończy przetwarzanie fatalnym wyjątkiem:
-
-System.InvalidOperationException: An object of type 9d9795c6-4b91-43ee-b370-fa0f539a20f8 has already been added.
-   at Silverback.SilverbackContext.AddObject(Guid objectTypeId, Object obj)
-   at Silverback.Messaging.Consuming.KafkaOffsetStore.SilverbackContextKafkaOffsetStoreExtensions.SetKafkaOffsetStoreScope(...)
-   at Silverback.Messaging.Consuming.KafkaOffsetStore.KafkaOffsetStoreConsumerBehavior.HandleAsync(...)
-
-Znaczenie GUID-a:
-- 9d9795c6-4b91-43ee-b370-fa0f539a20f8 jest stałym, wewnętrznym identyfikatorem rodzaju obiektu KafkaOffsetStoreScope.
-- Nie jest ID wiadomości, consumera, topicu ani konkretnego scope'u.
-- SilverbackContext przechowuje obiekty w AsyncLocal<Dictionary<Guid, object>>.
-- KafkaOffsetStoreConsumerBehavior zapisuje aktualny KafkaOffsetStoreScope pod tym stałym kluczem.
-- AddObject rzuca wyjątek, gdy pod kluczem istnieje już inna instancja.
-
-Potwierdzona przyczyna na przykładzie ChatMessageSentIntegrationEvent:
-1. Retry consumer pobiera event z dev.flowchat.chat.message.v1.realtime-service.retry.
-2. KafkaOffsetStoreConsumerBehavior tworzy KafkaOffsetStoreScope dla consume cycle i dodaje go do SilverbackContext.
-3. ChatMessageSentSubscriber lub dalszy handler rzuca TransientException.
-4. RetryErrorPolicy robi retry w miejscu: rollbackuje wiadomość i ponownie uruchamia jej consumer pipeline. Nie publikuje jej na inny topic.
-5. Ponowne wykonanie wchodzi jeszcze raz do KafkaOffsetStoreConsumerBehavior w kontekście, który nadal zawiera scope pierwszej próby.
-6. Behavior tworzy nowy KafkaOffsetStoreScope i próbuje dodać go pod tym samym stałym GUID-em.
-7. SilverbackContext.AddObject rzuca InvalidOperationException, zanim subscriber otrzyma drugą próbę.
-
-Co potwierdzono testami:
-- Oficjalny kod Silverback testowano w .codex/temp bez zmiany kodu produkcyjnego FlowChat.
-- Silverback 5.0.0: jeden consumer z EF offset store poprawnie przetworzył 5 kolejnych wiadomości. Druga zwykła wiadomość nie powoduje błędu.
-- Silverback 5.0.0: dwa równoległe consumery z client-side offset store poprawnie przetworzyły po 5 wiadomości. Sama równoległość nie powoduje błędu.
-- Konfiguracja RealtimeService rejestruje dokładnie jeden KafkaOffsetStoreConsumerBehavior; nie ma podwójnej rejestracji behavioru.
-- Silverback 5.0.0: po dodaniu client-side offset store do oficjalnego testu RetryPolicy_ShouldRetryProcessingMultipleTimes odtworzono identyczny wyjątek i stack trace. Subscriber wykonał się raz zamiast 11 razy.
-- Silverback 5.3.3: ten sam test również odtworzył identyczny błąd. Aktualizacja 5.0.0 -> 5.3.3 nie pomaga.
-- Test zawierał DisableOffsetsCommit(), więc ta opcja nie naprawia błędu. Wyłącza ona tylko standardowe commity offsetów do brokera Kafka.
-
-Odrzucone hipotezy:
-- To nie są dwie zwykłe kolejne wiadomości z tego samego topicu.
-- Sama obecność wielu równoległych consumerów nie wystarcza do wywołania błędu.
-- Kilku subscriberów nie jest przyczyną; wyjątek występuje wcześniej w consumer pipeline.
-- Nie jest to podwójne AddConsumers() ani podwójny KafkaOffsetStoreConsumerBehavior.
-- Dokumentacja nie wymaga, aby aplikacja ręcznie czyściła SilverbackContext, i nie udostępnia ClearKafkaOffsetStoreScope().
-
-Co robi oficjalny policy.Retry:
-- Używa jednego bazowego topicu i ponawia ten sam rekord/offset przez rollback/seek.
-- Nie publikuje na retry topic i nie tworzy topiców retry.5s, retry.20s itd.
-- Opcjonalny delay zatrzymuje ponowienie w consumerze; może blokować partycję i grozić przekroczeniem max.poll.interval.ms.
-- Oficjalne przykłady pokazują Retry(...).ThenSkip() lub Retry(...).ThenMoveTo(...), ale nie znaleziono przykładu łączącego RetryErrorPolicy z nowym client-side offset store.
-- Dokumentacja client-side offset store nie ostrzega o tej niekompatybilności, więc jest to bug albo nieudokumentowane ograniczenie Silverbacka.
-
-Rekomendowany kierunek dla FlowChat:
-- Nie łączyć policy.Retry(...) wykonywanego w miejscu z client-side offset store, dopóki Silverback nie naprawi lifecycle'u KafkaOffsetStoreScope.
-- Używać osobnych poziomów retry, np. retry.5s -> retry.20s -> retry.60s -> dlq.
-- Każdy retry consumer po błędzie powinien robić MoveTo kolejnego poziomu, a nie policy.Retry(...) na tym samym topicu. Każdy poziom tworzy wtedy nowy ConsumerPipelineContext i KafkaOffsetStoreScope.
-- Kafka nie zapewnia delay na podstawie nazwy topicu. Trzeba zaprojektować RetryAt/delay consumer, scheduler, pause partycji albo inny mechanizm opóźnienia.
-- Przenosić nagłówki RetryAttempt, FirstFailedAt, RetryAt, OriginalTopic, OriginalPartition, OriginalOffset i LastErrorType.
-- Zapis offsetu starego topicu oraz publikacja na kolejny retry topic powinny być atomowe lub zabezpieczone outboxem, aby wiadomość nie zginęła między operacjami.
-- Retry topics nie blokują głównej partycji, ale osłabiają kolejność: późniejsza wiadomość może wyprzedzić ponawianą. Handlery muszą być idempotentne, a wymagania kolejności trzeba ocenić osobno.
-
-Alternatywy:
-1. Usunąć client-side offset store z endpointów używających policy.Retry(...) i używać standardowych offsetów Kafka.
-2. Usunąć policy.Retry(...) i używać wyłącznie MoveTo między retry topicami, a ostatecznie DLQ.
-3. Zgłosić bug do Silverback z minimalną reprodukcją poniżej.
-4. Przygotować fork Silverbacka, który przy retry ponownie używa scope'u albo poprawnie usuwa/zastępuje go po rollbacku. Losowy GUID dla każdej instancji nie rozwiąże problemu, bo GetKafkaOffsetStoreScope() musi znać aktualny scope.
-5. Nie zaleca się workaroundu opartego na magicznym GUID-zie i RemoveObject(), bo zależy od wnętrza biblioteki i może być niebezpieczny przy współbieżności.
-
-Minimalna reprodukcja:
-
-.WithConnectionToMessageBroker(options => options
-    .AddKafka()
-    .AddInMemoryKafkaOffsetStore())
-.AddKafkaClients(clients => clients
-    .AddConsumer(consumer => consumer
-        .WithGroupId("test-group")
-        .DisableOffsetsCommit()
-        .StoreOffsetsClientSide(store => store.UseMemory())
-        .Consume(endpoint => endpoint
-            .ConsumeFrom("test-topic")
-            .OnError(policy => policy.Retry(3)))))
-
-Subscriber:
-
-void HandleMessage(TestEvent message)
-{
-    throw new InvalidOperationException("Retry reproduction");
-}
-
-Oczekiwane: subscriber wykona się łącznie 4 razy.
-Rzeczywiste w Silverback 5.0.0 i 5.3.3: subscriber wykonuje się raz, a przy retry KafkaOffsetStoreConsumerBehavior rzuca wyjątek o już dodanym obiekcie 9d9795c6-4b91-43ee-b370-fa0f539a20f8.
-
-Status migracji:
-- Usunięto in-place `policy.Retry(...)` z czterech strumieni RealtimeService.
-- Każda kolejna próba jest nową wiadomością na tierach 5, 20, 60 i 300 sekund, a potem trafia do DLQ.
-- Zapis źródłowego offsetu i wiadomości retry/DLQ odbywa się w jednej transakcji EF przez standardowy outbox Silverbacka.
-- Retry/DLQ publikuje osobny proces FlowChat.RealtimeService.OutboxPublisher.
-- UserProfileService został przepięty na ten sam mechanizm dla strumienia AccountRegistered; wykorzystuje istniejący FlowChat.UserProfileService.OutboxPublisher.
-- AuthService został przepięty na ten sam mechanizm dla współdzielonego strumienia UserEmailConfirmed/AuthEmailChanged; wykorzystuje istniejący FlowChat.AuthService.OutboxPublisher.
-- NotificationService został przepięty na tiered retry; SMTP pozostaje bezpośrednim efektem ubocznym, więc awaria po przyjęciu wiadomości przez serwer SMTP, ale przed commitem, nadal może spowodować duplikat.
-- Projekcja UserProfile w ChatService została odpięta od ProjectionBulk i korzysta z pojedynczego, atomowego upsertu oraz tiered retry.
-- Projekcja ContactObserver w PresenceService została odpięta od ProjectionBulk i korzysta z pojedynczego, wersjonowanego upsertu oraz tiered retry; eventy konwersacji grupowych są świadomie pomijane z trwałym zapisem offsetu.
-- Wspólny ProjectionBulk pozostaje używany wyłącznie przez HarnessService jako testowy mechanizm batchowania bez retry/DLQ; wszystkie produkcyjne consumery korzystają z tiered retry.
-- Znane ograniczenie: wysłanie wiadomości przez SignalR nie jest atomowe z zapisem offsetu. RealtimeService nadal wymaga docelowego inboxa opartego na EventId, aby ograniczyć duplikaty po awarii pomiędzy efektem SignalR a zatwierdzeniem offsetu.
+- Wadliwy in-place `policy.Retry(...)` został całkowicie usunięty z kodu i konfiguracji FlowChat.
+- Wszystkie produkcyjne consumery korzystają z trwałego tiered retry: każda próba jest nową wiadomością Kafka, a offset źródłowy i rekord outboxa są zatwierdzane atomowo.
+- ProjectionBulk pozostaje wyłącznie testowym mechanizmem batchowania w HarnessService i nie posiada retry ani DLQ.
+- Pierwszy topic z historycznym sufiksem `.retry` jest obecnie poprawnym tierem 5 s nowego pipeline'u, a nie retry wykonywanym w miejscu.
+- SignalR nadal nie jest atomowy z zapisem offsetu; RealtimeService wymaga docelowego inboxa opartego na EventId, aby ograniczyć duplikaty.
+- SMTP pozostaje efektem at-least-once i może wysłać duplikat po awarii pomiędzy przyjęciem wiadomości a commitem.
 
 19. BUG: MarkConversationAsRead może kończyć się DbUpdateConcurrencyException
 
