@@ -4,7 +4,6 @@ using FlowChat.HarnessService.API.Configuration;
 using FlowChat.HarnessService.Infrastructure;
 using FlowChat.HarnessService.Persistence;
 using FlowChat.Shared.API;
-using Microsoft.EntityFrameworkCore;
 
 namespace FlowChat.HarnessService.API;
 
@@ -41,17 +40,5 @@ public static class StartupExtensions
         app.MapControllers();
 
         return app;
-    }
-
-    public static async Task MigrateDatabaseAsync(this WebApplication app)
-    {
-        if (!app.Environment.IsDevelopment())
-        {
-            return;
-        }
-
-        await using var scope = app.Services.CreateAsyncScope();
-        var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        await context.Database.MigrateAsync();
     }
 }
