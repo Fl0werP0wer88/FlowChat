@@ -39,7 +39,7 @@ public sealed class UserProfileConsumerConfigurationTests
         var consumers = provider.GetRequiredService<IConsumerCollection>();
         var producers = provider.GetRequiredService<IProducerCollection>();
         var topology = provider.GetRequiredService<TieredKafkaRetryTopology>();
-        var repository = scope.ServiceProvider.GetRequiredService<IProjectionRepository<UserProfileProjectionDto>>();
+        var repository = scope.ServiceProvider.GetRequiredService<IProjectionSingleRepository<UserProfileProjectionDto>>();
         var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
         var offsetCommitter = scope.ServiceProvider.GetRequiredService<IConsumedOffsetCommitter>();
 

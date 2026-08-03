@@ -6,7 +6,7 @@ using FlowChat.PresenceService.Consumers.Configuration.Settings;
 using FlowChat.PresenceService.Consumers.Kafka.Projections;
 using FlowChat.PresenceService.Persistence.Entities;
 using FlowChat.Shared.Application;
-using FlowChat.Shared.Consumers.ProjectionBulk;
+using FlowChat.Shared.Consumers.Projections.Bulk;
 using FlowChat.Shared.Infrastructure.Silverback.Kafka;
 using FluentAssertions;
 using MediatR;

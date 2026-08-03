@@ -1,6 +1,6 @@
 namespace FlowChat.Shared.Application;
 
-public interface IProjectionRepository<TValue>
+public interface IProjectionSingleRepository<TValue>
     where TValue : class
 {
     Task UpsertOrSoftDeleteAsync(

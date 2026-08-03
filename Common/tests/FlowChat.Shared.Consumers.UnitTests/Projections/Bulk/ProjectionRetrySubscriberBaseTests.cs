@@ -2,7 +2,7 @@ using FlowChat.Core.Exceptions;
 using FlowChat.Core.Messaging;
 using FlowChat.Core.Results;
 using FlowChat.Shared.Application;
-using FlowChat.Shared.Consumers.ProjectionBulk;
+using FlowChat.Shared.Consumers.Projections.Bulk;
 using FlowChat.Shared.Domain;
 using FluentAssertions;
 using MediatR;
@@ -10,7 +10,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 
-namespace FlowChat.Shared.Consumers.UnitTests.ProjectionBulk;
+namespace FlowChat.Shared.Consumers.UnitTests.Projections.Bulk;
 
 public sealed class ProjectionRetrySubscriberBaseTests
 {

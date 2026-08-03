@@ -8,7 +8,7 @@ using FlowChat.HarnessService.Persistence.Entities.Projections;
 using FlowChat.HarnessService.Infrastructure;
 using FlowChat.HarnessService.Persistence;
 using FlowChat.HarnessService.Persistence.BulkUpsert.Projections;
-using FlowChat.Shared.Consumers.ProjectionBulk;
+using FlowChat.Shared.Consumers.Projections.Bulk;
 using FlowChat.Shared.Infrastructure.Silverback.Behaviors;
 using FlowChat.Shared.Infrastructure.Silverback.Kafka.Retry.Extensions;
 using Microsoft.Extensions.Configuration;

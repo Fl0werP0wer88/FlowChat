@@ -7,7 +7,7 @@ using FlowChat.PresenceService.Infrastructure;
 using FlowChat.PresenceService.Persistence;
 using FlowChat.PresenceService.Persistence.BulkUpsert.Projections;
 using FlowChat.PresenceService.Persistence.Entities;
-using FlowChat.Shared.Consumers.ProjectionBulk;
+using FlowChat.Shared.Consumers.Projections.Bulk;
 using FlowChat.Shared.Infrastructure.Silverback.Behaviors;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;

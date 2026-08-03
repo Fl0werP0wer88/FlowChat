@@ -3,7 +3,7 @@ using FlowChat.Core.Exceptions;
 using FlowChat.Core.Messaging;
 using FlowChat.Core.Results;
 using FlowChat.Shared.Application;
-using FlowChat.Shared.Consumers.Projection;
+using FlowChat.Shared.Consumers.Projections.Single;
 using FlowChat.Shared.Domain;
 using FluentAssertions;
 using MediatR;
@@ -14,21 +14,21 @@ using Silverback.Messaging.Broker;
 using Silverback.Messaging.Configuration.Kafka;
 using Silverback.Messaging.Messages;
 
-namespace FlowChat.Shared.Consumers.UnitTests.Projection;
+namespace FlowChat.Shared.Consumers.UnitTests.Projections.Single;
 
-public sealed class ProjectionSubscriberTests
+public sealed class ProjectionSingleSubscriberTests
 {
     [Fact]
     public async Task HandleAsync_ValidMessage_SendsSingleProjectionCommand()
     {
-        ProjectionCommand<TestProjectionValue>? capturedCommand = null;
+        ProjectionSingleCommand<TestProjectionValue>? capturedCommand = null;
         var mediatorMock = new Mock<IMediator>();
         mediatorMock
             .Setup(x => x.Send(
-                It.IsAny<ProjectionCommand<TestProjectionValue>>(),
+                It.IsAny<ProjectionSingleCommand<TestProjectionValue>>(),
                 It.IsAny<CancellationToken>()))
             .Callback<IRequest<FlowChatResult<Unit>>, CancellationToken>((command, _) =>
-                capturedCommand = (ProjectionCommand<TestProjectionValue>)command)
+                capturedCommand = (ProjectionSingleCommand<TestProjectionValue>)command)
             .ReturnsAsync(FlowChatResult<Unit>.Success(Unit.Value));
         var subscriber = CreateSubscriber(mediatorMock);
         var message = CreateMessage();
@@ -84,13 +84,13 @@ public sealed class ProjectionSubscriberTests
         await action.Should().ThrowAsync<NonTransientException>().WithMessage("projection failed");
     }
 
-    private static ProjectionSubscriber<TestReadModel, TestProjectionValue> CreateFailingSubscriber(
+    private static ProjectionSingleSubscriber<TestReadModel, TestProjectionValue> CreateFailingSubscriber(
         FailureKind failureKind)
     {
         var mediatorMock = new Mock<IMediator>();
         mediatorMock
             .Setup(x => x.Send(
-                It.IsAny<ProjectionCommand<TestProjectionValue>>(),
+                It.IsAny<ProjectionSingleCommand<TestProjectionValue>>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(FlowChatResult<Unit>.Failure(
                 DomainError.UnExpected("projection failed", failureKind)));
@@ -98,12 +98,12 @@ public sealed class ProjectionSubscriberTests
         return CreateSubscriber(mediatorMock);
     }
 
-    private static ProjectionSubscriber<TestReadModel, TestProjectionValue> CreateSubscriber(
+    private static ProjectionSingleSubscriber<TestReadModel, TestProjectionValue> CreateSubscriber(
         Mock<IMediator>? mediatorMock = null) =>
         new(
             (mediatorMock ?? new Mock<IMediator>()).Object,
             new TestProjectionValueFactory(),
-            NullLogger<ProjectionSubscriber<TestReadModel, TestProjectionValue>>.Instance);
+            NullLogger<ProjectionSingleSubscriber<TestReadModel, TestProjectionValue>>.Instance);
 
     private static ProjectionIntegrationEvent<TestReadModel> CreateMessage(int sourceVersion = 1) =>
         new()
@@ -132,7 +132,7 @@ public sealed class ProjectionSubscriberTests
         return envelopeMock.Object;
     }
 
-    private sealed class TestProjectionValueFactory : IProjectionValueFactory<TestReadModel, TestProjectionValue>
+    private sealed class TestProjectionValueFactory : IProjectionSingleValueFactory<TestReadModel, TestProjectionValue>
     {
         public TestProjectionValue MapValue(ProjectionIntegrationEvent<TestReadModel> message) =>
             new(message.Value.Id);

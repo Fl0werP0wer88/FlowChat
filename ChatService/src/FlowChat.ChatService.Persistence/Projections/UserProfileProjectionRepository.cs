@@ -7,7 +7,7 @@ namespace FlowChat.ChatService.Persistence.Projections;
 
 public sealed class UserProfileProjectionRepository(
     AppDbContext dbContext,
-    TimeProvider timeProvider) : IProjectionRepository<UserProfileProjectionDto>
+    TimeProvider timeProvider) : IProjectionSingleRepository<UserProfileProjectionDto>
 {
     public Task UpsertOrSoftDeleteAsync(
         ProjectionCommandItem<UserProfileProjectionDto> item,

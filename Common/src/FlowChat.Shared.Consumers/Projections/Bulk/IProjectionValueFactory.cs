@@ -1,6 +1,6 @@
 using FlowChat.Core.Messaging;
 
-namespace FlowChat.Shared.Consumers.ProjectionBulk;
+namespace FlowChat.Shared.Consumers.Projections.Bulk;
 
 public interface IProjectionValueFactory<TReadModel, TValue, TKey>
     where TReadModel : class

@@ -2,7 +2,7 @@ using FlowChat.Core.Exceptions;
 using FlowChat.Core.Messaging;
 using FlowChat.Core.Messaging.ChatService.ReadModels;
 using FlowChat.PresenceService.Application.Features.ContactObserverProjections;
-using FlowChat.Shared.Consumers.ProjectionBulk;
+using FlowChat.Shared.Consumers.Projections.Bulk;
 
 namespace FlowChat.PresenceService.Consumers.Kafka.Projections;
 

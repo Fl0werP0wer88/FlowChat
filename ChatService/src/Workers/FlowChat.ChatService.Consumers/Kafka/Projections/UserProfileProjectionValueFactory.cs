@@ -3,12 +3,12 @@ using FlowChat.ChatService.Application.Features.UserProfile;
 using FlowChat.Core.Exceptions;
 using FlowChat.Core.Messaging;
 using FlowChat.Core.Messaging.UserProfileService.ReadModels;
-using FlowChat.Shared.Consumers.Projection;
+using FlowChat.Shared.Consumers.Projections.Single;
 
 namespace FlowChat.ChatService.Consumers.Kafka.Projections;
 
 public sealed class UserProfileProjectionValueFactory(IMapper mapper)
-    : IProjectionValueFactory<UserProfileReadModel, UserProfileProjectionDto>
+    : IProjectionSingleValueFactory<UserProfileReadModel, UserProfileProjectionDto>
 {
     private const string ProjectionSource = "user-profile-projection";
 

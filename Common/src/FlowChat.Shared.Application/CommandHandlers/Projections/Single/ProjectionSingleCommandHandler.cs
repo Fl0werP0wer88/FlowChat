@@ -3,14 +3,14 @@ using MediatR;
 
 namespace FlowChat.Shared.Application;
 
-public sealed class ProjectionCommandHandler<TValue>(
+public sealed class ProjectionSingleCommandHandler<TValue>(
     IUnitOfWork unitOfWork,
-    IProjectionRepository<TValue> repository)
-    : TransactionalCommandHandlerBase<ProjectionCommand<TValue>, Unit>(unitOfWork)
+    IProjectionSingleRepository<TValue> repository)
+    : TransactionalCommandHandlerBase<ProjectionSingleCommand<TValue>, Unit>(unitOfWork)
     where TValue : class
 {
     protected override async Task<FlowChatResult<Unit>> HandleInTransactionAsync(
-        ProjectionCommand<TValue> request,
+        ProjectionSingleCommand<TValue> request,
         CancellationToken cancellationToken)
     {
         await repository.UpsertOrSoftDeleteAsync(request.Item, cancellationToken);

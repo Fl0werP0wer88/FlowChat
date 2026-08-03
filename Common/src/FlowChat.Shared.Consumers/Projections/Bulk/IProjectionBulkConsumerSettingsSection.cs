@@ -1,6 +1,6 @@
 using FlowChat.Shared.Infrastructure.Silverback.Kafka;
 
-namespace FlowChat.Shared.Consumers.ProjectionBulk;
+namespace FlowChat.Shared.Consumers.Projections.Bulk;
 
 public interface IProjectionBulkConsumerSettingsSection : IRetryableKafkaConsumerSettingsSection
 {

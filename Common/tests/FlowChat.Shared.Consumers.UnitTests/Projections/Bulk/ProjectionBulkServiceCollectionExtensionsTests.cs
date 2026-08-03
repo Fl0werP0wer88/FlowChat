@@ -1,7 +1,7 @@
 using FlowChat.Core.Messaging;
 using FlowChat.Core.Results;
 using FlowChat.Shared.Application;
-using FlowChat.Shared.Consumers.ProjectionBulk;
+using FlowChat.Shared.Consumers.Projections.Bulk;
 using FlowChat.Shared.Persistance;
 using FlowChat.Shared.Persistance.ProjectionBulk;
 using FluentAssertions;
@@ -10,7 +10,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Silverback.Configuration;
 
-namespace FlowChat.Shared.Consumers.UnitTests.ProjectionBulk;
+namespace FlowChat.Shared.Consumers.UnitTests.Projections.Bulk;
 
 public sealed class ProjectionBulkServiceCollectionExtensionsTests
 {

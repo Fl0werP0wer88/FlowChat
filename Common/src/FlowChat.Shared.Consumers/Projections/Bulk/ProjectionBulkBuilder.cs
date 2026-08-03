@@ -13,7 +13,7 @@ using Silverback.Messaging.Configuration;
 using Silverback.Messaging.Subscribers;
 using Silverback.Messaging.Subscribers.Subscriptions;
 
-namespace FlowChat.Shared.Consumers.ProjectionBulk;
+namespace FlowChat.Shared.Consumers.Projections.Bulk;
 
 public sealed class ProjectionBulkBuilder(
     SilverbackBuilder silverbackBuilder,

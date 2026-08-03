@@ -1,8 +1,8 @@
 using FlowChat.Core.Messaging;
 
-namespace FlowChat.Shared.Consumers.Projection;
+namespace FlowChat.Shared.Consumers.Projections.Single;
 
-public interface IProjectionValueFactory<TReadModel, TValue>
+public interface IProjectionSingleValueFactory<TReadModel, TValue>
     where TReadModel : class
     where TValue : class
 {

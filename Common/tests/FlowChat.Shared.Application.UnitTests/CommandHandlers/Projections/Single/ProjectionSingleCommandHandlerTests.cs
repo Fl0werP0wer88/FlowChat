@@ -4,9 +4,9 @@ using FluentAssertions;
 using MediatR;
 using Moq;
 
-namespace FlowChat.Shared.Application.UnitTests.CommandHandlers.Projection;
+namespace FlowChat.Shared.Application.UnitTests.CommandHandlers.Projections.Single;
 
-public sealed class ProjectionCommandHandlerTests
+public sealed class ProjectionSingleCommandHandlerTests
 {
     [Fact]
     public async Task Handle_ValidCommand_UpsertsProjectionAndCommitsOffsetInTransaction()
@@ -18,10 +18,10 @@ public sealed class ProjectionCommandHandlerTests
             DateTimeOffset.UtcNow,
             DateTimeOffset.UtcNow,
             null);
-        var command = new ProjectionCommand<TestProjectionValue>(item);
+        var command = new ProjectionSingleCommand<TestProjectionValue>(item);
         var executionOrder = new List<string>();
         var unitOfWorkMock = new Mock<IUnitOfWork>();
-        var repositoryMock = new Mock<IProjectionRepository<TestProjectionValue>>();
+        var repositoryMock = new Mock<IProjectionSingleRepository<TestProjectionValue>>();
         unitOfWorkMock
             .Setup(x => x.ExecuteCommandInTransactionAsync(
                 It.IsAny<Func<CancellationToken, Task<FlowChatResult<Unit>>>>(),
@@ -43,7 +43,7 @@ public sealed class ProjectionCommandHandlerTests
             .Setup(x => x.CommitConsumedOffsetsAsync(It.IsAny<CancellationToken>()))
             .Callback(() => executionOrder.Add("offset"))
             .Returns(Task.CompletedTask);
-        var handler = new ProjectionCommandHandler<TestProjectionValue>(
+        var handler = new ProjectionSingleCommandHandler<TestProjectionValue>(
             unitOfWorkMock.Object,
             repositoryMock.Object);
 

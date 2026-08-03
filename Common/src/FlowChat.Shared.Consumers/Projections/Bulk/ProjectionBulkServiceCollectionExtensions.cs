@@ -1,6 +1,6 @@
 using Silverback.Configuration;
 
-namespace FlowChat.Shared.Consumers.ProjectionBulk;
+namespace FlowChat.Shared.Consumers.Projections.Bulk;
 
 public static class ProjectionBulkServiceCollectionExtensions
 {

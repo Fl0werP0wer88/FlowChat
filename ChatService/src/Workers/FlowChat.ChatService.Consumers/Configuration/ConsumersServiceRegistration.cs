@@ -6,7 +6,7 @@ using FlowChat.ChatService.Infrastructure;
 using FlowChat.ChatService.Persistence;
 using FlowChat.ChatService.Persistence.Projections;
 using FlowChat.Core.Messaging.UserProfileService.ReadModels;
-using FlowChat.Shared.Consumers.Projection;
+using FlowChat.Shared.Consumers.Projections.Single;
 using FlowChat.Shared.Infrastructure.Silverback.Behaviors;
 using FlowChat.Shared.Infrastructure.Silverback.Kafka.Retry.Extensions;
 using Microsoft.Extensions.Configuration;
@@ -43,7 +43,7 @@ public static class ConsumersServiceRegistration
                 .AddKafka()
                 .AddEntityFrameworkKafkaOffsetStore()
                 .AddEntityFrameworkOutbox())
-            .AddProjection<
+            .AddProjectionSingle<
                 UserProfileReadModel,
                 UserProfileProjectionDto,
                 UserProfileProjectionValueFactory,

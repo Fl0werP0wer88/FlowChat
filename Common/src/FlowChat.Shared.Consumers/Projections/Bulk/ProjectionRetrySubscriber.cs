@@ -4,7 +4,7 @@ using MediatR;
 using Microsoft.Extensions.Logging;
 using Silverback.Messaging.Subscribers;
 
-namespace FlowChat.Shared.Consumers.ProjectionBulk;
+namespace FlowChat.Shared.Consumers.Projections.Bulk;
 
 public sealed class ProjectionRetrySubscriber<TReadModel, TItem, TKey>(
     IMediator mediator,

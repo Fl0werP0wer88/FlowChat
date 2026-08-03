@@ -5,7 +5,7 @@ using FlowChat.Shared.Domain;
 using MediatR;
 using Microsoft.Extensions.Logging;
 
-namespace FlowChat.Shared.Consumers.ProjectionBulk;
+namespace FlowChat.Shared.Consumers.Projections.Bulk;
 
 public abstract class ProjectionRetrySubscriberBase<TReadModel, TItem, TKey>(
     IMediator mediator,

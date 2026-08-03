@@ -6,7 +6,7 @@ using MediatR;
 using Microsoft.Extensions.Logging;
 using IPublisher = Silverback.Messaging.Publishing.IPublisher;
 
-namespace FlowChat.Shared.Consumers.ProjectionBulk;
+namespace FlowChat.Shared.Consumers.Projections.Bulk;
 
 public abstract class ProjectionBatchSubscriberBase<TReadModel, TItem, TKey>(
     IMediator mediator,

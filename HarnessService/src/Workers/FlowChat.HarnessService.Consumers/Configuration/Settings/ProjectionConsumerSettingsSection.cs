@@ -1,5 +1,5 @@
 using FlowChat.Core.Contracts;
-using FlowChat.Shared.Consumers.ProjectionBulk;
+using FlowChat.Shared.Consumers.Projections.Bulk;
 
 namespace FlowChat.HarnessService.Consumers.Configuration.Settings;
 

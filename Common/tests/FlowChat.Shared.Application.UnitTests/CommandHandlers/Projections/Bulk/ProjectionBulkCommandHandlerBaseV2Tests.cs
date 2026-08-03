@@ -3,7 +3,7 @@ using FlowChat.Core.Results;
 using MediatR;
 using Moq;
 
-namespace FlowChat.Shared.Application.UnitTests.CommandHandlers.ProjectionBulk;
+namespace FlowChat.Shared.Application.UnitTests.CommandHandlers.Projections.Bulk;
 
 public sealed class ProjectionBulkCommandHandlerBaseV2Tests
 {

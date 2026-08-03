@@ -1,7 +1,7 @@
 using FlowChat.Core.Messaging;
 using FlowChat.HarnessService.Application.Features.Projections;
 using FlowChat.HarnessService.Consumers.Projections.Models;
-using FlowChat.Shared.Consumers.ProjectionBulk;
+using FlowChat.Shared.Consumers.Projections.Bulk;
 
 namespace FlowChat.HarnessService.Consumers.Kafka.Projections;
 

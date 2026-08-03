@@ -5,12 +5,12 @@ using FlowChat.Shared.Infrastructure.Silverback.Subscribers;
 using MediatR;
 using Microsoft.Extensions.Logging;
 
-namespace FlowChat.Shared.Consumers.Projection;
+namespace FlowChat.Shared.Consumers.Projections.Single;
 
-public sealed class ProjectionSubscriber<TReadModel, TValue>(
+public sealed class ProjectionSingleSubscriber<TReadModel, TValue>(
     IMediator mediator,
-    IProjectionValueFactory<TReadModel, TValue> valueFactory,
-    ILogger<ProjectionSubscriber<TReadModel, TValue>> logger)
+    IProjectionSingleValueFactory<TReadModel, TValue> valueFactory,
+    ILogger<ProjectionSingleSubscriber<TReadModel, TValue>> logger)
     : SubscriberBase<ProjectionIntegrationEvent<TReadModel>>(logger)
     where TReadModel : class
     where TValue : class
@@ -30,7 +30,7 @@ public sealed class ProjectionSubscriber<TReadModel, TValue>(
             message.SourceAggregateModifiedAtUtc,
             message.SourceAggregateDeletedAt);
 
-        var result = await mediator.Send(new ProjectionCommand<TValue>(item), cancellationToken);
+        var result = await mediator.Send(new ProjectionSingleCommand<TValue>(item), cancellationToken);
         ThrowIfFailure(result);
     }
 }
