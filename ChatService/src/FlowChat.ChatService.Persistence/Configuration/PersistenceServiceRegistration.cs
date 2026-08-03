@@ -5,6 +5,7 @@ using FlowChat.Shared.Infrastructure.Silverback.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Silverback.Messaging.Consuming.KafkaOffsetStore;
 
 namespace FlowChat.ChatService.Persistence;
 
@@ -24,7 +25,11 @@ public static class ConsumerPersistenceServiceRegistration
 {
     public static IServiceCollection AddConsumerPersistenceServices(this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddScoped<IUnitOfWork, SilverbackKafkaOffsetUnitOfWork<AppDbContext>>();
+        services.AddScoped<SilverbackKafkaOffsetUnitOfWork<AppDbContext>>();
+        services.AddScoped<IUnitOfWork>(serviceProvider =>
+            serviceProvider.GetRequiredService<SilverbackKafkaOffsetUnitOfWork<AppDbContext>>());
+        services.AddScoped<IConsumedOffsetCommitter>(serviceProvider =>
+            serviceProvider.GetRequiredService<SilverbackKafkaOffsetUnitOfWork<AppDbContext>>());
         services.AddCommonDbContextServices(configuration);
         services.AddChatRepositories();
 

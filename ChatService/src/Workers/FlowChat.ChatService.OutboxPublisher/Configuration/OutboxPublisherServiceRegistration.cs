@@ -4,6 +4,7 @@ using FlowChat.Core.Messaging;
 using FlowChat.Core.Messaging.ChatService.Events;
 using FlowChat.Core.Messaging.ChatService.ReadModels;
 using FlowChat.Shared.Infrastructure.Silverback.Behaviors;
+using FlowChat.Shared.Infrastructure.Silverback.Kafka.Retry.Extensions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Silverback.Configuration;
@@ -38,6 +39,10 @@ public static class OutboxPublisherServiceRegistration
             .GetSection(new ChatMessageV2ProducerSettingsSection().SectionName)
             .Get<ChatMessageV2ProducerSettingsSection>()
             ?? new ChatMessageV2ProducerSettingsSection();
+        var retryOutboxOptions = configuration
+            .GetSection(new RetryOutboxKafkaSettingsSection().SectionName)
+            .Get<RetryOutboxKafkaSettingsSection>()
+            ?? new RetryOutboxKafkaSettingsSection();
 
         services.AddOptions<OutboxPublisherRuntimeSettingsSection>()
             .BindConfiguration(new OutboxPublisherRuntimeSettingsSection().SectionName);
@@ -49,6 +54,8 @@ public static class OutboxPublisherServiceRegistration
             .BindConfiguration(new ConversationParticipantV2ProducerSettingsSection().SectionName);
         services.AddOptions<ChatMessageV2ProducerSettingsSection>()
             .BindConfiguration(new ChatMessageV2ProducerSettingsSection().SectionName);
+        services.AddOptions<RetryOutboxKafkaSettingsSection>()
+            .BindConfiguration(new RetryOutboxKafkaSettingsSection().SectionName);
 
         services.AddSilverback()
             .AddSingletonBrokerBehavior<CustomSpanAttributesProducerBehavior>()
@@ -85,7 +92,10 @@ public static class OutboxPublisherServiceRegistration
                         .Produce<ChatMessageSentIntegrationEventV2>("chat-message-v2", endpoint => endpoint
                             .ProduceTo(messageV2Options.Topic)
                             .SerializeAsJson(serializer => serializer.SetTypeHeader())));
-            });
+            })
+            .AddFlowChatTieredRetryProducerPipeline(
+                retryOutboxOptions.BootstrapServers,
+                retryOutboxOptions.Topics);
 
         return services;
     }

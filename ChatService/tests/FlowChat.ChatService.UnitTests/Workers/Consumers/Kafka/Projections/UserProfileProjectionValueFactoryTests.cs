@@ -105,22 +105,6 @@ public sealed class UserProfileProjectionValueFactoryTests
         act.Should().Throw<NonTransientException>();
     }
 
-    [Fact]
-    public void GetDeduplicationKey_ReturnsUserProfileId()
-    {
-        var userProfileId = Guid.NewGuid();
-        var value = _factory.MapValue(CreateProjectionEvent(
-            OperationType.Updated,
-            userProfileId,
-            new UserProfileReadModel
-            {
-                UserProfileId = userProfileId,
-                FriendlyUserId = "jdoe"
-            }));
-
-        _factory.GetDeduplicationKey(value).Should().Be(userProfileId);
-    }
-
     private static ProjectionIntegrationEvent<UserProfileReadModel> CreateProjectionEvent(
         OperationType operation,
         Guid sourceAggregateId,

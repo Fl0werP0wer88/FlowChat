@@ -131,6 +131,33 @@ function Get-TopicDefinitions {
       }
     },
     @{
+      name = "dev.flowchat.user-profile.user-profile-projection.v1.chat-service.retry.20s"
+      partitions = 1
+      rf = 1
+      config = @{
+        "cleanup.policy" = "delete"
+        "retention.ms" = "3600000"
+      }
+    },
+    @{
+      name = "dev.flowchat.user-profile.user-profile-projection.v1.chat-service.retry.60s"
+      partitions = 1
+      rf = 1
+      config = @{
+        "cleanup.policy" = "delete"
+        "retention.ms" = "3600000"
+      }
+    },
+    @{
+      name = "dev.flowchat.user-profile.user-profile-projection.v1.chat-service.retry.300s"
+      partitions = 1
+      rf = 1
+      config = @{
+        "cleanup.policy" = "delete"
+        "retention.ms" = "3600000"
+      }
+    },
+    @{
       name = "dev.flowchat.user-profile.user-profile-projection.v1.chat-service.dlq"
       partitions = 1
       rf = 1

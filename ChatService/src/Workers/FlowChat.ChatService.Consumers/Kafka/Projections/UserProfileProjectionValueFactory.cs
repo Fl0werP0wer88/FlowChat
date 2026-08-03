@@ -3,12 +3,12 @@ using FlowChat.ChatService.Application.Features.UserProfile;
 using FlowChat.Core.Exceptions;
 using FlowChat.Core.Messaging;
 using FlowChat.Core.Messaging.UserProfileService.ReadModels;
-using FlowChat.Shared.Consumers.ProjectionBulk;
+using FlowChat.Shared.Consumers.Projection;
 
 namespace FlowChat.ChatService.Consumers.Kafka.Projections;
 
 public sealed class UserProfileProjectionValueFactory(IMapper mapper)
-    : IProjectionValueFactory<UserProfileReadModel, UserProfileProjectionDto, Guid>
+    : IProjectionValueFactory<UserProfileReadModel, UserProfileProjectionDto>
 {
     private const string ProjectionSource = "user-profile-projection";
 
@@ -34,9 +34,6 @@ public sealed class UserProfileProjectionValueFactory(IMapper mapper)
             throw nonTransientException;
         }
     }
-
-    public Guid GetDeduplicationKey(UserProfileProjectionDto value) =>
-        value.UserProfileId;
 
     private static Guid ResolveUserId(Guid userId, string fieldName) =>
         userId != Guid.Empty
