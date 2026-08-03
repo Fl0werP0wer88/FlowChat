@@ -4,8 +4,10 @@ using FlowChat.RealtimeService.Application.Contracts.Infrastructure;
 using FlowChat.RealtimeService.Application.Contracts.Persistence;
 using FlowChat.RealtimeService.Application.Features.Conversation.Commands.RouteConversationProjectionV2;
 using FlowChat.RealtimeService.Domain.Enums;
+using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
 using FluentAssertions;
+using MediatR;
 using Moq;
 
 namespace FlowChat.RealtimeService.UnitTests;
@@ -19,6 +21,7 @@ public sealed class RouteConversationProjectionV2CommandHandlerTests
     private readonly Mock<IRealtimeGroupMembershipReadModelRepository> _readModelRepositoryMock = new();
     private readonly Mock<IRealtimeGroupMembershipRevisionTrackerRepository> _revisionTrackerRepositoryMock = new();
     private readonly Mock<IRealtimeEventRouter> _routerMock = new();
+    private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
     private readonly RouteConversationProjectionV2CommandHandler _handler;
 
     public RouteConversationProjectionV2CommandHandlerTests()
@@ -34,10 +37,18 @@ public sealed class RouteConversationProjectionV2CommandHandlerTests
                 It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
+        _unitOfWorkMock
+            .Setup(x => x.ExecuteCommandInTransactionAsync(
+                It.IsAny<Func<CancellationToken, Task<FlowChatResult<Unit>>>>(),
+                It.IsAny<CancellationToken>()))
+            .Returns<Func<CancellationToken, Task<FlowChatResult<Unit>>>, CancellationToken>(
+                (operation, cancellationToken) => operation(cancellationToken));
+
         _handler = new RouteConversationProjectionV2CommandHandler(
             _readModelRepositoryMock.Object,
             _revisionTrackerRepositoryMock.Object,
-            _routerMock.Object);
+            _routerMock.Object,
+            _unitOfWorkMock.Object);
     }
 
     [Fact]

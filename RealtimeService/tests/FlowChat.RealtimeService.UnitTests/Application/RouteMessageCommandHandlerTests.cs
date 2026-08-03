@@ -3,8 +3,10 @@ using FlowChat.RealtimeService.Application.Contracts.Infrastructure;
 using FlowChat.RealtimeService.Application.Contracts.Persistence;
 using FlowChat.RealtimeService.Application.Features.Message.Commands.RouteMessage;
 using FlowChat.RealtimeService.Domain.Enums;
+using FlowChat.Shared.Application;
 using FlowChat.Shared.Domain;
 using FluentAssertions;
+using MediatR;
 using Moq;
 
 namespace FlowChat.RealtimeService.UnitTests;
@@ -15,6 +17,7 @@ public sealed class RouteMessageCommandHandlerTests
     private readonly Mock<IRealtimeEventRouter> _routerMock = new();
     private readonly Mock<IRealtimeGroupMembershipRevisionTrackerRepository> _revisionTrackerRepositoryMock = new();
     private readonly Mock<IRealtimeGroupMembershipReadModelRepository> _groupMembershipReadModelRepositoryMock = new();
+    private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
     private readonly RouteMessageCommandHandler _handler;
 
     public RouteMessageCommandHandlerTests()
@@ -31,10 +34,18 @@ public sealed class RouteMessageCommandHandlerTests
             .Setup(x => x.GetUserIdsByResourceIdAsync(RealtimeGroupType.Conversation, It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync([_fixture.Create<Guid>()]);
 
+        _unitOfWorkMock
+            .Setup(x => x.ExecuteCommandInTransactionAsync(
+                It.IsAny<Func<CancellationToken, Task<FlowChatResult<Unit>>>>(),
+                It.IsAny<CancellationToken>()))
+            .Returns<Func<CancellationToken, Task<FlowChatResult<Unit>>>, CancellationToken>(
+                (operation, cancellationToken) => operation(cancellationToken));
+
         _handler = new RouteMessageCommandHandler(
             _routerMock.Object,
             _revisionTrackerRepositoryMock.Object,
-            _groupMembershipReadModelRepositoryMock.Object);
+            _groupMembershipReadModelRepositoryMock.Object,
+            _unitOfWorkMock.Object);
     }
 
     [Fact]

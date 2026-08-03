@@ -12,8 +12,9 @@ namespace FlowChat.RealtimeService.Application.Features.Conversation.Commands.Ro
 public sealed class RouteConversationProjectionV2CommandHandler(
     IRealtimeGroupMembershipReadModelRepository realtimeGroupMembershipReadModelRepository,
     IRealtimeGroupMembershipRevisionTrackerRepository realtimeGroupMembershipRevisionTrackerRepository,
-    IRealtimeEventRouter realtimeEventRouter)
-    : ICommandHandler<RouteConversationProjectionV2Command, Unit>
+    IRealtimeEventRouter realtimeEventRouter,
+    IUnitOfWork unitOfWork)
+    : TransactionalCommandHandlerBase<RouteConversationProjectionV2Command, Unit>(unitOfWork)
 {
     private const int DuetConversationType = 1;
     private const int GroupConversationType = 2;
@@ -27,7 +28,7 @@ public sealed class RouteConversationProjectionV2CommandHandler(
     private readonly IRealtimeEventRouter _realtimeEventRouter = realtimeEventRouter
         ?? throw new ArgumentNullException(nameof(realtimeEventRouter));
 
-    public async Task<FlowChatResult<Unit>> Handle(
+    protected override async Task<FlowChatResult<Unit>> HandleInTransactionAsync(
         RouteConversationProjectionV2Command request,
         CancellationToken cancellationToken)
     {

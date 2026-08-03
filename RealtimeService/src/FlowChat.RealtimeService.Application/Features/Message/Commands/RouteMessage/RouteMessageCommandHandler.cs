@@ -11,8 +11,9 @@ namespace FlowChat.RealtimeService.Application.Features.Message.Commands.RouteMe
 public sealed class RouteMessageCommandHandler(
     IRealtimeEventRouter realtimeEventRouter,
     IRealtimeGroupMembershipRevisionTrackerRepository realtimeGroupMembershipRevisionTrackerRepository,
-    IRealtimeGroupMembershipReadModelRepository realtimeGroupMembershipReadModelRepository)
-    : ICommandHandler<RouteMessageCommand, Unit>
+    IRealtimeGroupMembershipReadModelRepository realtimeGroupMembershipReadModelRepository,
+    IUnitOfWork unitOfWork)
+    : TransactionalCommandHandlerBase<RouteMessageCommand, Unit>(unitOfWork)
 {
     private readonly IRealtimeEventRouter _realtimeEventRouter = realtimeEventRouter
         ?? throw new ArgumentNullException(nameof(realtimeEventRouter));
@@ -21,7 +22,9 @@ public sealed class RouteMessageCommandHandler(
     private readonly IRealtimeGroupMembershipReadModelRepository _realtimeGroupMembershipReadModelRepository = realtimeGroupMembershipReadModelRepository
         ?? throw new ArgumentNullException(nameof(realtimeGroupMembershipReadModelRepository));
 
-    public async Task<FlowChatResult<Unit>> Handle(RouteMessageCommand request, CancellationToken cancellationToken)
+    protected override async Task<FlowChatResult<Unit>> HandleInTransactionAsync(
+        RouteMessageCommand request,
+        CancellationToken cancellationToken)
     {
         var trackedRevision = await _realtimeGroupMembershipRevisionTrackerRepository.GetRevisionAsync(
             request.ConversationId,
