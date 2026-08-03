@@ -82,7 +82,7 @@ public sealed class ConversationParticipantV2ConsumerConfigurationTests
         settings.RetryGroupId.Should().Be("presence-service-conversation-participant-v2-retry");
         settings.Topic.Should().Be("dev.flowchat.chat.conversation-participant-projection.v2");
         settings.RetryTiers.Select(tier => tier.Topic).Should().Equal(
-            "dev.flowchat.chat.conversation-participant-projection.v2.presence-service.retry",
+            "dev.flowchat.chat.conversation-participant-projection.v2.presence-service.retry.5s",
             "dev.flowchat.chat.conversation-participant-projection.v2.presence-service.retry.20s",
             "dev.flowchat.chat.conversation-participant-projection.v2.presence-service.retry.60s",
             "dev.flowchat.chat.conversation-participant-projection.v2.presence-service.retry.300s");
@@ -104,7 +104,7 @@ public sealed class ConversationParticipantV2ConsumerConfigurationTests
             ["Kafka:ConversationParticipantV2Consumer:RetryGroupId"] = "presence-service-conversation-participant-v2-retry",
             ["Kafka:ConversationParticipantV2Consumer:Topic"] = "dev.flowchat.chat.conversation-participant-projection.v2",
             ["Kafka:ConversationParticipantV2Consumer:DeadLetterTopic"] = "dev.flowchat.chat.conversation-participant-projection.v2.presence-service.dlq",
-            ["Kafka:ConversationParticipantV2Consumer:RetryTiers:0:Topic"] = "dev.flowchat.chat.conversation-participant-projection.v2.presence-service.retry",
+            ["Kafka:ConversationParticipantV2Consumer:RetryTiers:0:Topic"] = "dev.flowchat.chat.conversation-participant-projection.v2.presence-service.retry.5s",
             ["Kafka:ConversationParticipantV2Consumer:RetryTiers:0:Delay"] = "00:00:05",
             ["Kafka:ConversationParticipantV2Consumer:RetryTiers:1:Topic"] = "dev.flowchat.chat.conversation-participant-projection.v2.presence-service.retry.20s",
             ["Kafka:ConversationParticipantV2Consumer:RetryTiers:1:Delay"] = "00:00:20",

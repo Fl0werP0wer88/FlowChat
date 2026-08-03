@@ -68,7 +68,7 @@ public sealed class AccountRegisteredConsumerConfigurationTests
         consumerOptions.RetryGroupId.Should().Be("userprofile-service-retry");
         consumerOptions.Topic.Should().Be("dev.flowchat.identity.user.v1");
         consumerOptions.RetryTiers.Select(tier => tier.Topic).Should().Equal(
-            "dev.flowchat.identity.user.v1.userprofile-service.retry",
+            "dev.flowchat.identity.user.v1.userprofile-service.retry.5s",
             "dev.flowchat.identity.user.v1.userprofile-service.retry.20s",
             "dev.flowchat.identity.user.v1.userprofile-service.retry.60s",
             "dev.flowchat.identity.user.v1.userprofile-service.retry.300s");
@@ -139,7 +139,7 @@ public sealed class AccountRegisteredConsumerConfigurationTests
                 ["Kafka:AccountRegisteredConsumer:RetryGroupId"] = "userprofile-service-retry",
                 ["Kafka:AccountRegisteredConsumer:Topic"] = "dev.flowchat.identity.user.v1",
                 ["Kafka:AccountRegisteredConsumer:DeadLetterTopic"] = "dev.flowchat.identity.user.v1.userprofile-service.dlq",
-                ["Kafka:AccountRegisteredConsumer:RetryTiers:0:Topic"] = "dev.flowchat.identity.user.v1.userprofile-service.retry",
+                ["Kafka:AccountRegisteredConsumer:RetryTiers:0:Topic"] = "dev.flowchat.identity.user.v1.userprofile-service.retry.5s",
                 ["Kafka:AccountRegisteredConsumer:RetryTiers:0:Delay"] = "00:00:05",
                 ["Kafka:AccountRegisteredConsumer:RetryTiers:1:Topic"] = "dev.flowchat.identity.user.v1.userprofile-service.retry.20s",
                 ["Kafka:AccountRegisteredConsumer:RetryTiers:1:Delay"] = "00:00:20",

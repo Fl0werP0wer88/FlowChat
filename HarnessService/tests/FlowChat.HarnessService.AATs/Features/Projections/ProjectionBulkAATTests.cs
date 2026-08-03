@@ -62,8 +62,8 @@ public sealed class ProjectionBulkAATTests : IAsyncLifetime
 
         rows.Should().HaveCount(expected.Count);
         rows.Should().OnlyContain(row =>
-            expected.TryGetValue(row.Id, out var payload) &&
-            payload == row.Payload &&
+            expected.ContainsKey(row.Id) &&
+            expected[row.Id] == row.Payload &&
             row.SourceVersion == 1);
     }
 

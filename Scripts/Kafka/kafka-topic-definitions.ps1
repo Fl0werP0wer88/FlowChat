@@ -12,7 +12,7 @@ function Get-TopicDefinitions {
       }
     },
     @{
-      name = "dev.flowchat.identity.user.v1.userprofile-service.retry"
+      name = "dev.flowchat.identity.user.v1.userprofile-service.retry.5s"
       partitions = 1
       rf = 1
       config = @{
@@ -67,7 +67,7 @@ function Get-TopicDefinitions {
       }
     },
     @{
-      name = "dev.flowchat.user-profile.user-profile.v1.auth-service.retry"
+      name = "dev.flowchat.user-profile.user-profile.v1.auth-service.retry.5s"
       partitions = 1
       rf = 1
       config = @{
@@ -122,7 +122,7 @@ function Get-TopicDefinitions {
       }
     },
     @{
-      name = "dev.flowchat.user-profile.user-profile-projection.v1.chat-service.retry"
+      name = "dev.flowchat.user-profile.user-profile-projection.v1.chat-service.retry.5s"
       partitions = 1
       rf = 1
       config = @{
@@ -176,7 +176,7 @@ function Get-TopicDefinitions {
       }
     },
     @{
-      name = "dev.flowchat.notification.email.v1.notification-service.retry"
+      name = "dev.flowchat.notification.email.v1.notification-service.retry.5s"
       partitions = 1
       rf = 1
       config = @{
@@ -221,7 +221,7 @@ function Get-TopicDefinitions {
       }
     },
     @{
-      name = "dev.flowchat.chat.message.v2.realtime-service.retry"
+      name = "dev.flowchat.chat.message.v2.realtime-service.retry.5s"
       partitions = 1
       rf = 1
       config = @{
@@ -266,7 +266,7 @@ function Get-TopicDefinitions {
       }
     },
     @{
-      name = "dev.flowchat.chat.conversation-projection.v2.realtime-service.retry"
+      name = "dev.flowchat.chat.conversation-projection.v2.realtime-service.retry.5s"
       partitions = 1
       rf = 1
       config = @{
@@ -311,7 +311,7 @@ function Get-TopicDefinitions {
       }
     },
     @{
-      name = "dev.flowchat.chat.conversation-membership-projection.v2.realtime-service.retry"
+      name = "dev.flowchat.chat.conversation-membership-projection.v2.realtime-service.retry.5s"
       partitions = 1
       rf = 1
       config = @{
@@ -356,7 +356,7 @@ function Get-TopicDefinitions {
       }
     },
     @{
-      name = "dev.flowchat.chat.conversation-participant-projection.v2.presence-service.retry"
+      name = "dev.flowchat.chat.conversation-participant-projection.v2.presence-service.retry.5s"
       partitions = 1
       rf = 1
       config = @{
@@ -401,7 +401,7 @@ function Get-TopicDefinitions {
       }
     },
     @{
-      name = "dev.flowchat.presence.presence.realtime-service.retry"
+      name = "dev.flowchat.presence.presence.realtime-service.retry.5s"
       partitions = 1
       rf = 1
       config = @{
@@ -459,6 +459,15 @@ function Get-TopicDefinitions {
 
 function Get-LegacyTopicNames {
   return @(
+    "dev.flowchat.identity.user.v1.userprofile-service.retry",
+    "dev.flowchat.user-profile.user-profile.v1.auth-service.retry",
+    "dev.flowchat.user-profile.user-profile-projection.v1.chat-service.retry",
+    "dev.flowchat.notification.email.v1.notification-service.retry",
+    "dev.flowchat.chat.message.v2.realtime-service.retry",
+    "dev.flowchat.chat.conversation-projection.v2.realtime-service.retry",
+    "dev.flowchat.chat.conversation-membership-projection.v2.realtime-service.retry",
+    "dev.flowchat.chat.conversation-participant-projection.v2.presence-service.retry",
+    "dev.flowchat.presence.presence.realtime-service.retry",
     "dev.flowchat.presence.presence-status-changed.v1",
     "dev.flowchat.presence.presence-status-changed.v1.retry",
     "dev.flowchat.presence.presence-status-changed.v1.dlq",

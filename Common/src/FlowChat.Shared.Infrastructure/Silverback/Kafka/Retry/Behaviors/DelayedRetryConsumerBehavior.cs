@@ -31,12 +31,6 @@ public sealed class DelayedRetryConsumerBehavior(
         var retryAtHeader = context.Envelope.Headers.GetValue(RetryMessageHeaders.RetryAtUtc);
         if (string.IsNullOrWhiteSpace(retryAtHeader))
         {
-            if (retryTopic.TierIndex == 0)
-            {
-                await next(context, cancellationToken);
-                return;
-            }
-
             MarkInvalid(
                 context,
                 $"Kafka retry message on topic '{retryTopic.Tier.Topic}' does not contain '{RetryMessageHeaders.RetryAtUtc}'.");

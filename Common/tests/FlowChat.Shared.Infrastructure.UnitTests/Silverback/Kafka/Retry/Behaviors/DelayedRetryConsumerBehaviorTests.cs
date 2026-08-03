@@ -112,25 +112,8 @@ public sealed class DelayedRetryConsumerBehaviorTests
             Times.Never);
     }
 
-    [Fact]
-    public async Task HandleAsync_LegacyFirstTierWithoutRetryAt_InvokesNext()
-    {
-        var context = CreateContext(0, null);
-        var nextCalled = false;
-
-        await CreateBehavior().HandleAsync(
-            context,
-            (_, _) =>
-            {
-                nextCalled = true;
-                return ValueTask.CompletedTask;
-            },
-            CancellationToken.None);
-
-        nextCalled.Should().BeTrue();
-    }
-
     [Theory]
+    [InlineData(0, null)]
     [InlineData(1, null)]
     [InlineData(0, "invalid")]
     public async Task HandleAsync_InvalidRetryAt_MarksEnvelopeAndContinues(int tierIndex, string? retryAt)

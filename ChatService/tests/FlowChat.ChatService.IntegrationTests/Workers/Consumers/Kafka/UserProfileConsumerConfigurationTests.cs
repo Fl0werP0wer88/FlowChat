@@ -75,7 +75,7 @@ public sealed class UserProfileConsumerConfigurationTests
         settings.RetryGroupId.Should().Be("chat-service-retry");
         settings.Topic.Should().Be("dev.flowchat.user-profile.user-profile-projection.v1");
         settings.RetryTiers.Select(tier => tier.Topic).Should().Equal(
-            "dev.flowchat.user-profile.user-profile-projection.v1.chat-service.retry",
+            "dev.flowchat.user-profile.user-profile-projection.v1.chat-service.retry.5s",
             "dev.flowchat.user-profile.user-profile-projection.v1.chat-service.retry.20s",
             "dev.flowchat.user-profile.user-profile-projection.v1.chat-service.retry.60s",
             "dev.flowchat.user-profile.user-profile-projection.v1.chat-service.retry.300s");
@@ -96,7 +96,7 @@ public sealed class UserProfileConsumerConfigurationTests
             ["Kafka:UserProfileConsumer:RetryGroupId"] = "chat-service-retry",
             ["Kafka:UserProfileConsumer:Topic"] = "dev.flowchat.user-profile.user-profile-projection.v1",
             ["Kafka:UserProfileConsumer:DeadLetterTopic"] = "dev.flowchat.user-profile.user-profile-projection.v1.chat-service.dlq",
-            ["Kafka:UserProfileConsumer:RetryTiers:0:Topic"] = "dev.flowchat.user-profile.user-profile-projection.v1.chat-service.retry",
+            ["Kafka:UserProfileConsumer:RetryTiers:0:Topic"] = "dev.flowchat.user-profile.user-profile-projection.v1.chat-service.retry.5s",
             ["Kafka:UserProfileConsumer:RetryTiers:0:Delay"] = "00:00:05",
             ["Kafka:UserProfileConsumer:RetryTiers:1:Topic"] = "dev.flowchat.user-profile.user-profile-projection.v1.chat-service.retry.20s",
             ["Kafka:UserProfileConsumer:RetryTiers:1:Delay"] = "00:00:20",

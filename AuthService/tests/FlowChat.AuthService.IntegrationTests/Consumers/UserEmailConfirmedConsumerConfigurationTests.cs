@@ -83,7 +83,7 @@ public sealed class UserEmailConfirmedConsumerConfigurationTests
         consumerOptions.RetryGroupId.Should().Be("auth-service-retry");
         consumerOptions.Topic.Should().Be("dev.flowchat.user-profile.user-profile.v1");
         consumerOptions.RetryTiers.Select(tier => tier.Topic).Should().Equal(
-            "dev.flowchat.user-profile.user-profile.v1.auth-service.retry",
+            "dev.flowchat.user-profile.user-profile.v1.auth-service.retry.5s",
             "dev.flowchat.user-profile.user-profile.v1.auth-service.retry.20s",
             "dev.flowchat.user-profile.user-profile.v1.auth-service.retry.60s",
             "dev.flowchat.user-profile.user-profile.v1.auth-service.retry.300s");
@@ -108,7 +108,7 @@ public sealed class UserEmailConfirmedConsumerConfigurationTests
                 ["Kafka:UserEmailConfirmedConsumer:RetryGroupId"] = "auth-service-retry",
                 ["Kafka:UserEmailConfirmedConsumer:Topic"] = "dev.flowchat.user-profile.user-profile.v1",
                 ["Kafka:UserEmailConfirmedConsumer:DeadLetterTopic"] = "dev.flowchat.user-profile.user-profile.v1.auth-service.dlq",
-                ["Kafka:UserEmailConfirmedConsumer:RetryTiers:0:Topic"] = "dev.flowchat.user-profile.user-profile.v1.auth-service.retry",
+                ["Kafka:UserEmailConfirmedConsumer:RetryTiers:0:Topic"] = "dev.flowchat.user-profile.user-profile.v1.auth-service.retry.5s",
                 ["Kafka:UserEmailConfirmedConsumer:RetryTiers:0:Delay"] = "00:00:05",
                 ["Kafka:UserEmailConfirmedConsumer:RetryTiers:1:Topic"] = "dev.flowchat.user-profile.user-profile.v1.auth-service.retry.20s",
                 ["Kafka:UserEmailConfirmedConsumer:RetryTiers:1:Delay"] = "00:00:20",

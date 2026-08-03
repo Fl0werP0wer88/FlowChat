@@ -31,7 +31,7 @@
 - Wadliwy in-place `policy.Retry(...)` został całkowicie usunięty z kodu i konfiguracji FlowChat.
 - Wszystkie produkcyjne consumery korzystają z trwałego tiered retry: każda próba jest nową wiadomością Kafka, a offset źródłowy i rekord outboxa są zatwierdzane atomowo.
 - ProjectionBulk pozostaje wyłącznie testowym mechanizmem batchowania w HarnessService i nie posiada retry ani DLQ.
-- Pierwszy topic z historycznym sufiksem `.retry` jest obecnie poprawnym tierem 5 s nowego pipeline'u, a nie retry wykonywanym w miejscu.
+- Tiery retry mają jawne sufiksy opóźnienia: `.retry.5s`, `.retry.20s`, `.retry.60s` i `.retry.300s`.
 - SignalR nadal nie jest atomowy z zapisem offsetu; RealtimeService wymaga docelowego inboxa opartego na EventId, aby ograniczyć duplikaty.
 - SMTP pozostaje efektem at-least-once i może wysłać duplikat po awarii pomiędzy przyjęciem wiadomości a commitem.
 

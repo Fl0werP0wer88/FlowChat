@@ -72,7 +72,7 @@ public sealed class NotificationConsumerConfigurationTests
         consumerOptions.Topic.Should().Be("dev.flowchat.notification.email.v1");
         consumerOptions.DeadLetterTopic.Should().Be("dev.flowchat.notification.email.v1.notification-service.dlq");
         consumerOptions.RetryTiers.Select(tier => tier.Topic).Should().Equal(
-            "dev.flowchat.notification.email.v1.notification-service.retry",
+            "dev.flowchat.notification.email.v1.notification-service.retry.5s",
             "dev.flowchat.notification.email.v1.notification-service.retry.20s",
             "dev.flowchat.notification.email.v1.notification-service.retry.60s",
             "dev.flowchat.notification.email.v1.notification-service.retry.300s");
@@ -125,7 +125,7 @@ public sealed class NotificationConsumerConfigurationTests
                 ["Kafka:UserEmailVerificationRequestedConsumer:RetryGroupId"] = "notification-service-retry",
                 ["Kafka:UserEmailVerificationRequestedConsumer:Topic"] = "dev.flowchat.notification.email.v1",
                 ["Kafka:UserEmailVerificationRequestedConsumer:DeadLetterTopic"] = "dev.flowchat.notification.email.v1.notification-service.dlq",
-                ["Kafka:UserEmailVerificationRequestedConsumer:RetryTiers:0:Topic"] = "dev.flowchat.notification.email.v1.notification-service.retry",
+                ["Kafka:UserEmailVerificationRequestedConsumer:RetryTiers:0:Topic"] = "dev.flowchat.notification.email.v1.notification-service.retry.5s",
                 ["Kafka:UserEmailVerificationRequestedConsumer:RetryTiers:0:Delay"] = "00:00:05",
                 ["Kafka:UserEmailVerificationRequestedConsumer:RetryTiers:1:Topic"] = "dev.flowchat.notification.email.v1.notification-service.retry.20s",
                 ["Kafka:UserEmailVerificationRequestedConsumer:RetryTiers:1:Delay"] = "00:00:20",

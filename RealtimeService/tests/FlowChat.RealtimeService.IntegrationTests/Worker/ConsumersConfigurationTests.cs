@@ -187,7 +187,7 @@ public sealed class ConsumersConfigurationTests
         string firstRetryTopic)
     {
         settings.RetryTiers.Select(tier => tier.Topic).Should().Equal(
-            firstRetryTopic,
+            $"{firstRetryTopic}.5s",
             $"{firstRetryTopic}.20s",
             $"{firstRetryTopic}.60s",
             $"{firstRetryTopic}.300s");

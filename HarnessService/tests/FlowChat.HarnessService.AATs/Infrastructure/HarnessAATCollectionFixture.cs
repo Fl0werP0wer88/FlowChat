@@ -38,7 +38,7 @@ public sealed class HarnessAATCollectionFixture : IAsyncLifetime
         RetryPipeline = new RetryPipelineKafkaAATSettings(
             $"{topicPrefix}.retry.events",
             [
-                new($"{topicPrefix}.retry.events.retry", TimeSpan.FromMilliseconds(100)),
+                new($"{topicPrefix}.retry.events.retry.100ms", TimeSpan.FromMilliseconds(100)),
                 new($"{topicPrefix}.retry.events.retry.250ms", TimeSpan.FromMilliseconds(250)),
                 new($"{topicPrefix}.retry.events.retry.500ms", TimeSpan.FromMilliseconds(500)),
                 new($"{topicPrefix}.retry.events.retry.1000ms", TimeSpan.FromMilliseconds(1000))
