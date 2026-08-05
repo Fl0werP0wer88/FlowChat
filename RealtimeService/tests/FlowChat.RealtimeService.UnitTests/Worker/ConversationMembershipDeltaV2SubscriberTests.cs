@@ -16,6 +16,7 @@ namespace FlowChat.RealtimeService.UnitTests;
 
 public sealed class ConversationMembershipDeltaV2SubscriberTests
 {
+    private const int GroupConversationType = 2;
     private readonly IFixture _fixture = new Fixture();
     private readonly Mock<IMediator> _mediatorMock = new();
     private readonly ConversationMembershipDeltaV2Subscriber _subscriber;
@@ -65,6 +66,7 @@ public sealed class ConversationMembershipDeltaV2SubscriberTests
 
         capturedCommand.Should().NotBeNull();
         capturedCommand!.ConversationId.Should().Be(conversationId);
+        capturedCommand.ConversationType.Should().Be(GroupConversationType);
         capturedCommand.ProjectionRevision.Should().Be(message.ProjectionRevision);
         capturedCommand.Delta.Should().Equal(
             new ConversationMembershipDeltaItemV2(
@@ -132,6 +134,41 @@ public sealed class ConversationMembershipDeltaV2SubscriberTests
 
         await act.Should().ThrowAsync<NonTransientException>()
             .WithMessage("Updating a conversation membership item is not supported.");
+        VerifyCommandWasNotSent();
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(3)]
+    public async Task HandleAsync_UnsupportedConversationType_ThrowsNonTransientException(int conversationType)
+    {
+        var conversationId = _fixture.Create<Guid>();
+        var message = CreateEvent(
+            conversationId,
+            [CreateItem(conversationId, _fixture.Create<Guid>(), OperationType.Created, conversationType)]);
+
+        var act = () => _subscriber.HandleAsync(message.ToInboundEnvelope(), CancellationToken.None);
+
+        await act.Should().ThrowAsync<NonTransientException>()
+            .WithMessage("All membership delta values must have the same supported conversation type.");
+        VerifyCommandWasNotSent();
+    }
+
+    [Fact]
+    public async Task HandleAsync_MixedConversationTypes_ThrowsNonTransientException()
+    {
+        var conversationId = _fixture.Create<Guid>();
+        var message = CreateEvent(
+            conversationId,
+            [
+                CreateItem(conversationId, _fixture.Create<Guid>(), OperationType.Created, 1),
+                CreateItem(conversationId, _fixture.Create<Guid>(), OperationType.Created, 2)
+            ]);
+
+        var act = () => _subscriber.HandleAsync(message.ToInboundEnvelope(), CancellationToken.None);
+
+        await act.Should().ThrowAsync<NonTransientException>()
+            .WithMessage("All membership delta values must have the same supported conversation type.");
         VerifyCommandWasNotSent();
     }
 
@@ -225,7 +262,8 @@ public sealed class ConversationMembershipDeltaV2SubscriberTests
     private DeltaProjectionItemV2<ConversationMembershipReadModelV2> CreateItem(
         Guid conversationId,
         Guid participantUserId,
-        OperationType operation) =>
+        OperationType operation,
+        int conversationType = GroupConversationType) =>
         new()
         {
             SourceAggregateId = _fixture.Create<Guid>(),
@@ -236,6 +274,7 @@ public sealed class ConversationMembershipDeltaV2SubscriberTests
             Value = new ConversationMembershipReadModelV2
             {
                 ConversationId = conversationId,
+                ConversationType = conversationType,
                 ParticipantUserId = participantUserId
             }
         };

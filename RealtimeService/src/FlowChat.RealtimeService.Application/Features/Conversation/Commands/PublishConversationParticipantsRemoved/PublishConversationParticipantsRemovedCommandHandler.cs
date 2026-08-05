@@ -3,13 +3,13 @@ using FlowChat.RealtimeService.Application.Contracts.Infrastructure;
 using FlowChat.Shared.Application;
 using MediatR;
 
-namespace FlowChat.RealtimeService.Application.Features.Conversation.Commands.PublishGroupConversationParticipantsAdded;
+namespace FlowChat.RealtimeService.Application.Features.Conversation.Commands.PublishConversationParticipantsRemoved;
 
-public sealed class PublishGroupConversationParticipantsAddedCommandHandler(
+public sealed class PublishConversationParticipantsRemovedCommandHandler(
     IRealtimeConnectionRegistry realtimeConnectionRegistry,
     IRealtimeGroupManager realtimeGroupManager,
     IRealtimeClientDispatcher realtimeClientDispatcher)
-    : ICommandHandler<PublishGroupConversationParticipantsAddedCommand, Unit>
+    : ICommandHandler<PublishConversationParticipantsRemovedCommand, Unit>
 {
     private readonly IRealtimeConnectionRegistry _realtimeConnectionRegistry = realtimeConnectionRegistry
         ?? throw new ArgumentNullException(nameof(realtimeConnectionRegistry));
@@ -19,20 +19,24 @@ public sealed class PublishGroupConversationParticipantsAddedCommandHandler(
         ?? throw new ArgumentNullException(nameof(realtimeClientDispatcher));
 
     public async Task<FlowChatResult<Unit>> Handle(
-        PublishGroupConversationParticipantsAddedCommand request,
+        PublishConversationParticipantsRemovedCommand request,
         CancellationToken cancellationToken)
     {
         var participantUserIds = NormalizeParticipantUserIds(request.ParticipantUserIds);
 
+        await _realtimeClientDispatcher.ConversationParticipantsRemovedAsync(
+            new ConversationParticipantsRemovedParam(
+                request.ConversationId,
+                request.ConversationType,
+                participantUserIds,
+                participantUserIds),
+            cancellationToken);
+
         var connectionIdsByUser = await _realtimeConnectionRegistry.GetConnectionIdsByUserIdsAsync(participantUserIds, cancellationToken);
         foreach (var connectionId in connectionIdsByUser.Values.SelectMany(static connectionIds => connectionIds))
         {
-            await _realtimeGroupManager.AddToConversationGroupAsync(connectionId, request.ConversationId, cancellationToken);
+            await _realtimeGroupManager.RemoveFromConversationGroupAsync(connectionId, request.ConversationId, cancellationToken);
         }
-
-        await _realtimeClientDispatcher.GroupConversationParticipantsAddedAsync(
-            new GroupConversationParticipantsAddedParam(request.ConversationId, participantUserIds),
-            cancellationToken);
 
         return FlowChatResult<Unit>.Success(Unit.Value);
     }

@@ -1,22 +1,23 @@
 using AutoFixture;
 using FlowChat.RealtimeService.Application.Contracts.Infrastructure;
-using FlowChat.RealtimeService.Application.Features.Conversation.Commands.PublishGroupConversationParticipantsAdded;
+using FlowChat.RealtimeService.Application.Features.Conversation.Commands.PublishConversationParticipantsAdded;
 using FluentAssertions;
+using MediatR;
 using Moq;
 
 namespace FlowChat.RealtimeService.UnitTests;
 
-public sealed class PublishGroupConversationParticipantsAddedCommandHandlerTests
+public sealed class PublishConversationParticipantsAddedCommandHandlerTests
 {
     private readonly IFixture _fixture = new Fixture();
     private readonly Mock<IRealtimeConnectionRegistry> _connectionRegistryMock = new();
     private readonly Mock<IRealtimeGroupManager> _groupManagerMock = new();
     private readonly Mock<IRealtimeClientDispatcher> _dispatcherMock = new();
-    private readonly PublishGroupConversationParticipantsAddedCommandHandler _handler;
+    private readonly PublishConversationParticipantsAddedCommandHandler _handler;
 
-    public PublishGroupConversationParticipantsAddedCommandHandlerTests()
+    public PublishConversationParticipantsAddedCommandHandlerTests()
     {
-        _handler = new PublishGroupConversationParticipantsAddedCommandHandler(
+        _handler = new PublishConversationParticipantsAddedCommandHandler(
             _connectionRegistryMock.Object,
             _groupManagerMock.Object,
             _dispatcherMock.Object);
@@ -28,6 +29,7 @@ public sealed class PublishGroupConversationParticipantsAddedCommandHandlerTests
         var conversationId = _fixture.Create<Guid>();
         var participantUserId = _fixture.Create<Guid>();
         var connectionId = _fixture.Create<string>();
+        const int conversationType = 2;
         var callOrder = new List<string>();
 
         _connectionRegistryMock
@@ -40,15 +42,21 @@ public sealed class PublishGroupConversationParticipantsAddedCommandHandlerTests
             .Callback(() => callOrder.Add("join"))
             .Returns(Task.CompletedTask);
         _dispatcherMock
-            .Setup(x => x.GroupConversationParticipantsAddedAsync(It.IsAny<GroupConversationParticipantsAddedParam>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.ConversationParticipantsAddedAsync(
+                It.Is<ConversationParticipantsAddedParam>(notification =>
+                    notification.ConversationId == conversationId &&
+                    notification.ConversationType == conversationType &&
+                    notification.ParticipantUserIds.SequenceEqual(new[] { participantUserId })),
+                It.IsAny<CancellationToken>()))
             .Callback(() => callOrder.Add("dispatch"))
             .Returns(Task.CompletedTask);
 
         var result = await _handler.Handle(
-            new PublishGroupConversationParticipantsAddedCommand(conversationId, [participantUserId]),
+            new PublishConversationParticipantsAddedCommand(conversationId, conversationType, [participantUserId]),
             CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
+        result.Value.Should().Be(Unit.Value);
         callOrder.Should().Equal("join", "dispatch");
         _groupManagerMock.Verify(
             x => x.AddToConversationGroupAsync(connectionId, conversationId, It.IsAny<CancellationToken>()),

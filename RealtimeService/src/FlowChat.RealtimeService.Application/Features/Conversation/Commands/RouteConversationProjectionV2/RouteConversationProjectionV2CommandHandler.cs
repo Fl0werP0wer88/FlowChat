@@ -17,7 +17,6 @@ public sealed class RouteConversationProjectionV2CommandHandler(
     : TransactionalCommandHandlerBase<RouteConversationProjectionV2Command, Unit>(unitOfWork)
 {
     private const int DuetConversationType = 1;
-    private const int GroupConversationType = 2;
 
     private readonly IRealtimeGroupMembershipReadModelRepository _realtimeGroupMembershipReadModelRepository =
         realtimeGroupMembershipReadModelRepository
@@ -40,6 +39,11 @@ public sealed class RouteConversationProjectionV2CommandHandler(
         if (request.Operation == OperationType.Updated && request.ConversationType == DuetConversationType)
         {
             return UnsupportedOperation(request);
+        }
+
+        if (request.ConversationType == DuetConversationType)
+        {
+            return FlowChatResult<Unit>.Success(Unit.Value);
         }
         //Review4-1: Chyba lepiej żeby Revision membershipu bylo przekazywane razem z command. Worker moze brac je chyba z ProjectionIntegrationEvent<TValue> z TValue (Jeszcze nie ma go tam dodanego ale chat service moglby je przypisywać.) . Wtedy bedziemy mieli pewnosc ze rozsylamy info do aktualnej listy odbiorców.
         //Review4-2: Po zastanowieniu to z tego co widze to ten command nie tworzy zadnej projekcji zgadza sie? W takim wypadku sensowniej uzywac dedykowany  domain integration event MembershipListChanged tylko z id konwersacji (I wtedy Frontend po prostu odswierza sobie liste konwersacji) ,zamiast ProjectionIntegrationEvent Co o tym sądzisz? 
@@ -65,37 +69,21 @@ public sealed class RouteConversationProjectionV2CommandHandler(
             return MembershipNotReady(request.ConversationId);
         }
 
-        if (request.ConversationType == DuetConversationType)
+        if (normalizedParticipantUserIds.Length < 2)
         {
-            if (normalizedParticipantUserIds.Length != 2)
-            {
-                return FlowChatResult<Unit>.Failure(
-                    DomainError.UnExpected(
-                        $"Duet conversation {request.ConversationId} has {normalizedParticipantUserIds.Length} projected participants instead of 2."));
-            }
-
-            await _realtimeEventRouter.RouteDuetConversationCreatedAsync(
-                new DuetConversationCreatedParam(request.ConversationId, normalizedParticipantUserIds),
-                cancellationToken);
+            return FlowChatResult<Unit>.Failure(
+                DomainError.UnExpected(
+                    $"Group conversation {request.ConversationId} has fewer than 2 projected participants."));
         }
-        else
-        {
-            if (normalizedParticipantUserIds.Length < 2)
-            {
-                return FlowChatResult<Unit>.Failure(
-                    DomainError.UnExpected(
-                        $"Group conversation {request.ConversationId} has fewer than 2 projected participants."));
-            }
 
-            await _realtimeEventRouter.RouteGroupConversationChangedAsync(
-                new GroupConversationChangedParam(
-                    request.ConversationId,
-                    request.ConversationType,
-                    request.Name,
-                    request.CreatedByUserId,
-                    normalizedParticipantUserIds),
-                cancellationToken);
-        }
+        await _realtimeEventRouter.RouteGroupConversationChangedAsync(
+            new GroupConversationChangedParam(
+                request.ConversationId,
+                request.ConversationType,
+                request.Name,
+                request.CreatedByUserId,
+                normalizedParticipantUserIds),
+            cancellationToken);
 
         return FlowChatResult<Unit>.Success(Unit.Value);
     }

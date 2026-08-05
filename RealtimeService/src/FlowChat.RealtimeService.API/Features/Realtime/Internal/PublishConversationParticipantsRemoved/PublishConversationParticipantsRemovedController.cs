@@ -1,28 +1,28 @@
-using FlowChat.RealtimeService.Application.Features.Conversation.Commands.PublishGroupConversationParticipantsAdded;
+using FlowChat.RealtimeService.Application.Features.Conversation.Commands.PublishConversationParticipantsRemoved;
 using FlowChat.RealtimeService.Infrastructure.Configuration.Settings;
 using FlowChat.Shared.API;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 
-namespace FlowChat.RealtimeService.Api.Features.Realtime.Internal.PublishGroupConversationParticipantsAdded;
+namespace FlowChat.RealtimeService.Api.Features.Realtime.Internal.PublishConversationParticipantsRemoved;
 
 [ApiController]
 [ApiExplorerSettings(IgnoreApi = true)]
 [Route("internal/realtime")]
-public sealed class PublishGroupConversationParticipantsAddedController : ApiControllerBase
+public sealed class PublishConversationParticipantsRemovedController : ApiControllerBase
 {
     private readonly IMediator _mediator;
 
-    public PublishGroupConversationParticipantsAddedController(IMediator mediator, IOptions<InternalApiSettingsSection> internalApiSettings)
+    public PublishConversationParticipantsRemovedController(IMediator mediator, IOptions<InternalApiSettingsSection> internalApiSettings)
         : base(() => internalApiSettings.Value.ApiKey)
     {
         _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
         ArgumentNullException.ThrowIfNull(internalApiSettings);
     }
 
-    [HttpPost("group-conversations/participants-added/direct")]
-    public async Task<IActionResult> Publish([FromBody] PublishGroupConversationParticipantsAddedRequest request, CancellationToken cancellationToken)
+    [HttpPost("conversations/participants-removed/direct")]
+    public async Task<IActionResult> Publish([FromBody] PublishConversationParticipantsRemovedRequest request, CancellationToken cancellationToken)
     {
         if (!HasValidInternalApiKey())
         {
@@ -30,8 +30,9 @@ public sealed class PublishGroupConversationParticipantsAddedController : ApiCon
         }
 
         var result = await _mediator.Send(
-            new PublishGroupConversationParticipantsAddedCommand(
+            new PublishConversationParticipantsRemovedCommand(
                 request.ConversationId,
+                request.ConversationType,
                 request.ParticipantUserIds),
             cancellationToken);
 

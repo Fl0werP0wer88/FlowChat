@@ -30,6 +30,7 @@ public sealed class ConversationParticipantReadModelV2ProfileTests
         var participantReadModel = Mapper.Map<ConversationParticipantReadModelV2>(participant);
 
         membershipReadModel.ConversationId.Should().Be(participant.ConversationId.Value);
+        membershipReadModel.ConversationType.Should().Be((int)ConversationType.Duet);
         membershipReadModel.ParticipantUserId.Should().Be(participant.UserId.Value);
         participantReadModel.ParticipantId.Should().Be(participant.Id.Value);
         participantReadModel.ConversationId.Should().Be(participant.ConversationId.Value);

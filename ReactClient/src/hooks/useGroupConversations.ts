@@ -4,25 +4,22 @@ import type { GroupConversation } from "../types/chat";
 import type {
   ChatMessageReceivedEvent,
   GroupConversationChangedEvent,
-  GroupConversationParticipantsAddedEvent,
-  GroupConversationParticipantsRemovedEvent,
+  ConversationParticipantsAddedEvent,
+  ConversationParticipantsRemovedEvent,
 } from "../types/realtime";
 import { resolveOwnerUserId } from "../utils/authUtils";
 import { calculateUnreadCount } from "../utils/chatUtils";
 import { useGroupConversationsQuery } from "./queries/useGroupConversationsQuery";
+import { applyGroupConversationsMembershipEvent } from "./realtime/applyConversationMembershipEvent";
 
 export interface UseGroupConversationsResult {
   groupConversations: GroupConversation[];
   isLoadingGroupConversations: boolean;
   applyGroupConversationChanged: (payload: GroupConversationChangedEvent) => void;
-  applyGroupConversationParticipantsAdded: (payload: GroupConversationParticipantsAddedEvent) => void;
-  applyGroupConversationParticipantsRemoved: (payload: GroupConversationParticipantsRemovedEvent) => void;
+  applyConversationParticipantsAdded: (payload: ConversationParticipantsAddedEvent) => void;
+  applyConversationParticipantsRemoved: (payload: ConversationParticipantsRemovedEvent) => void;
   applyRealtimeMessage: (payload: ChatMessageReceivedEvent, activeGroupConversationId: string | null) => void;
   invalidateGroupConversationsList: () => void;
-}
-
-function dedupeParticipantIds(participantUserIds: string[]): string[] {
-  return [...new Set(participantUserIds.filter((userId) => userId.trim().length > 0))];
 }
 
 function withUnreadCount(conversation: GroupConversation): GroupConversation {
@@ -68,63 +65,6 @@ export function useGroupConversations(): UseGroupConversationsResult {
     );
   };
 
-  const applyGroupConversationParticipantsAdded = (payload: GroupConversationParticipantsAddedEvent) => {
-    const addedUserIds = dedupeParticipantIds(payload.participantUserIds ?? []);
-    if (!payload.conversationId || addedUserIds.length === 0) {
-      return;
-    }
-    // ToDo: Inwalidujemy cala konwersacje tylko po to zeby zaktualizowac participantCount to chyba przesada.
-    void queryClient.invalidateQueries({ queryKey: ["groupConversation", payload.conversationId] });
-
-    if (ownerUserId && addedUserIds.includes(ownerUserId)) {
-      void queryClient.invalidateQueries({ queryKey: ["groupConversations"] });
-      return;
-    }
-
-    const current = queryClient.getQueryData<GroupConversation[]>(["groupConversations"]) ?? [];
-    const existing = current.find((conversation) => conversation.conversationId === payload.conversationId);
-    if (!existing) {
-      return;
-    }
-
-    queryClient.setQueryData<GroupConversation[]>(
-      ["groupConversations"],
-      (current = []) =>
-        current.map((conversation) =>
-          conversation.conversationId === payload.conversationId
-            ? { ...conversation, participantCount: conversation.participantCount + addedUserIds.length }
-            : conversation
-        ),
-    );
-  };
-
-  const applyGroupConversationParticipantsRemoved = (payload: GroupConversationParticipantsRemovedEvent) => {
-    const removedUserIds = dedupeParticipantIds(payload.participantUserIds ?? []);
-    if (!payload.conversationId || removedUserIds.length === 0) {
-      return;
-    }
-    // ToDo: Inwalidujemy cala konwersacje tylko po to zeby zaktualizowac participantCount to chyba przesada.
-    void queryClient.invalidateQueries({ queryKey: ["groupConversation", payload.conversationId] });
-
-    if (ownerUserId && removedUserIds.includes(ownerUserId)) {
-      queryClient.setQueryData<GroupConversation[]>(
-        ["groupConversations"],
-        (current = []) => current.filter((conversation) => conversation.conversationId !== payload.conversationId),
-      );
-      return;
-    }
-
-    queryClient.setQueryData<GroupConversation[]>(
-      ["groupConversations"],
-      (current = []) =>
-        current.map((conversation) =>
-          conversation.conversationId === payload.conversationId
-            ? { ...conversation, participantCount: Math.max(0, conversation.participantCount - removedUserIds.length) }
-            : conversation
-        ),
-    );
-  };
-
   const applyRealtimeMessage = (
     payload: ChatMessageReceivedEvent,
     _activeGroupConversationId: string | null,
@@ -150,8 +90,10 @@ export function useGroupConversations(): UseGroupConversationsResult {
     groupConversations,
     isLoadingGroupConversations,
     applyGroupConversationChanged,
-    applyGroupConversationParticipantsAdded,
-    applyGroupConversationParticipantsRemoved,
+    applyConversationParticipantsAdded: (payload) =>
+      applyGroupConversationsMembershipEvent(queryClient, ownerUserId, payload, "added"),
+    applyConversationParticipantsRemoved: (payload) =>
+      applyGroupConversationsMembershipEvent(queryClient, ownerUserId, payload, "removed"),
     applyRealtimeMessage,
     invalidateGroupConversationsList: () =>
       void queryClient.invalidateQueries({ queryKey: ["groupConversations"] }),

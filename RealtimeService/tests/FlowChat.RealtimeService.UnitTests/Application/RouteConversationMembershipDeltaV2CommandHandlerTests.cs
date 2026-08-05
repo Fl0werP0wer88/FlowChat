@@ -14,6 +14,7 @@ namespace FlowChat.RealtimeService.UnitTests;
 
 public sealed class RouteConversationMembershipDeltaV2CommandHandlerTests
 {
+    private const int GroupConversationType = 2;
     private readonly IFixture _fixture = new Fixture();
     private readonly Mock<IRealtimeGroupMembershipReadModelRepository> _readModelRepositoryMock = new();
     private readonly Mock<IRealtimeGroupMembershipRevisionTrackerRepository> _revisionTrackerRepositoryMock = new();
@@ -23,14 +24,20 @@ public sealed class RouteConversationMembershipDeltaV2CommandHandlerTests
 
     public RouteConversationMembershipDeltaV2CommandHandlerTests()
     {
+        _readModelRepositoryMock
+            .Setup(x => x.GetUserIdsByResourceIdAsync(
+                RealtimeGroupType.Conversation,
+                It.IsAny<Guid>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync([]);
         _routerMock
-            .Setup(x => x.RouteGroupConversationParticipantsAddedAsync(
-                It.IsAny<GroupConversationParticipantsAddedParam>(),
+            .Setup(x => x.RouteConversationParticipantsAddedAsync(
+                It.IsAny<ConversationParticipantsAddedParam>(),
                 It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
         _routerMock
-            .Setup(x => x.RouteGroupConversationParticipantsRemovedAsync(
-                It.IsAny<GroupConversationParticipantsRemovedParam>(),
+            .Setup(x => x.RouteConversationParticipantsRemovedAsync(
+                It.IsAny<ConversationParticipantsRemovedParam>(),
                 It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
         _unitOfWorkMock
@@ -48,7 +55,7 @@ public sealed class RouteConversationMembershipDeltaV2CommandHandlerTests
     }
 
     [Fact]
-    public async Task Handle_FirstRevisionTwo_PersistsInitialMembershipWithoutNotifications()
+    public async Task Handle_FirstRevisionTwo_PersistsInitialMembershipAndRoutesAddedParticipants()
     {
         var conversationId = _fixture.Create<Guid>();
         var participantUserIds = _fixture.CreateMany<Guid>(2).ToArray();
@@ -59,6 +66,7 @@ public sealed class RouteConversationMembershipDeltaV2CommandHandlerTests
         var result = await _handler.Handle(
             new RouteConversationMembershipDeltaV2Command(
                 conversationId,
+                GroupConversationType,
                 2,
                 participantUserIds
                     .Select(userId => new ConversationMembershipDeltaItemV2(userId, OperationType.Created))
@@ -66,6 +74,7 @@ public sealed class RouteConversationMembershipDeltaV2CommandHandlerTests
             CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
+        result.Value.Should().Be(Unit.Value);
         _readModelRepositoryMock.Verify(x => x.AddRangeAsync(
             It.Is<IReadOnlyCollection<Guid>>(ids => ids.SequenceEqual(participantUserIds)),
             RealtimeGroupType.Conversation,
@@ -74,18 +83,34 @@ public sealed class RouteConversationMembershipDeltaV2CommandHandlerTests
         _revisionTrackerRepositoryMock.Verify(
             x => x.UpsertIfNewerAsync(conversationId, 2, It.IsAny<CancellationToken>()),
             Times.Once);
-        VerifyNoNotifications();
+        _routerMock.Verify(x => x.RouteConversationParticipantsAddedAsync(
+            It.Is<ConversationParticipantsAddedParam>(notification =>
+                notification.ConversationId == conversationId &&
+                notification.ConversationType == GroupConversationType &&
+                notification.ParticipantUserIds.SequenceEqual(participantUserIds) &&
+                notification.RecipientUserIds.ToHashSet().SetEquals(participantUserIds)),
+            It.IsAny<CancellationToken>()), Times.Once);
+        _routerMock.Verify(x => x.RouteConversationParticipantsRemovedAsync(
+            It.IsAny<ConversationParticipantsRemovedParam>(),
+            It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
-    public async Task Handle_NextRevisionWithMixedDelta_AppliesAllChangesAndRoutesBothNotifications()
+    public async Task Handle_NextRevisionWithMixedDelta_AppliesChangesAndRoutesUnionOfAffectedRecipients()
     {
         var conversationId = _fixture.Create<Guid>();
+        var existingParticipantUserIds = _fixture.CreateMany<Guid>(3).ToArray();
         var addedParticipantUserIds = _fixture.CreateMany<Guid>(2).ToArray();
-        var removedParticipantUserIds = _fixture.CreateMany<Guid>(2).ToArray();
+        var removedParticipantUserIds = existingParticipantUserIds.Take(2).ToArray();
         _revisionTrackerRepositoryMock
             .Setup(x => x.GetRevisionAsync(conversationId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(2);
+        _readModelRepositoryMock
+            .Setup(x => x.GetUserIdsByResourceIdAsync(
+                RealtimeGroupType.Conversation,
+                conversationId,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(existingParticipantUserIds);
 
         var delta = addedParticipantUserIds
             .Select(userId => new ConversationMembershipDeltaItemV2(userId, OperationType.Created))
@@ -94,32 +119,23 @@ public sealed class RouteConversationMembershipDeltaV2CommandHandlerTests
             .ToArray();
 
         var result = await _handler.Handle(
-            new RouteConversationMembershipDeltaV2Command(conversationId, 3, delta),
+            new RouteConversationMembershipDeltaV2Command(conversationId, GroupConversationType, 3, delta),
             CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
-        _readModelRepositoryMock.Verify(x => x.AddRangeAsync(
-            It.Is<IReadOnlyCollection<Guid>>(ids => ids.SequenceEqual(addedParticipantUserIds)),
-            RealtimeGroupType.Conversation,
-            conversationId,
+        result.Value.Should().Be(Unit.Value);
+        var expectedRecipients = existingParticipantUserIds.Concat(addedParticipantUserIds).ToHashSet();
+        _routerMock.Verify(x => x.RouteConversationParticipantsAddedAsync(
+            It.Is<ConversationParticipantsAddedParam>(notification =>
+                notification.ConversationType == GroupConversationType &&
+                notification.ParticipantUserIds.SequenceEqual(addedParticipantUserIds) &&
+                notification.RecipientUserIds.ToHashSet().SetEquals(expectedRecipients)),
             It.IsAny<CancellationToken>()), Times.Once);
-        _readModelRepositoryMock.Verify(x => x.RemoveRangeAsync(
-            It.Is<IReadOnlyCollection<Guid>>(ids => ids.SequenceEqual(removedParticipantUserIds)),
-            RealtimeGroupType.Conversation,
-            conversationId,
-            It.IsAny<CancellationToken>()), Times.Once);
-        _revisionTrackerRepositoryMock.Verify(
-            x => x.UpsertIfNewerAsync(conversationId, 3, It.IsAny<CancellationToken>()),
-            Times.Once);
-        _routerMock.Verify(x => x.RouteGroupConversationParticipantsAddedAsync(
-            It.Is<GroupConversationParticipantsAddedParam>(notification =>
-                notification.ConversationId == conversationId &&
-                notification.ParticipantUserIds.SequenceEqual(addedParticipantUserIds)),
-            It.IsAny<CancellationToken>()), Times.Once);
-        _routerMock.Verify(x => x.RouteGroupConversationParticipantsRemovedAsync(
-            It.Is<GroupConversationParticipantsRemovedParam>(notification =>
-                notification.ConversationId == conversationId &&
-                notification.ParticipantUserIds.SequenceEqual(removedParticipantUserIds)),
+        _routerMock.Verify(x => x.RouteConversationParticipantsRemovedAsync(
+            It.Is<ConversationParticipantsRemovedParam>(notification =>
+                notification.ConversationType == GroupConversationType &&
+                notification.ParticipantUserIds.SequenceEqual(removedParticipantUserIds) &&
+                notification.RecipientUserIds.ToHashSet().SetEquals(expectedRecipients)),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -138,6 +154,7 @@ public sealed class RouteConversationMembershipDeltaV2CommandHandlerTests
             CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
+        result.Value.Should().Be(Unit.Value);
         VerifyNoProjectionMutations(conversationId);
         VerifyNoNotifications();
     }
@@ -169,6 +186,7 @@ public sealed class RouteConversationMembershipDeltaV2CommandHandlerTests
         int projectionRevision) =>
         new(
             conversationId,
+            GroupConversationType,
             projectionRevision,
             [new ConversationMembershipDeltaItemV2(_fixture.Create<Guid>(), OperationType.Created)]);
 
@@ -191,11 +209,11 @@ public sealed class RouteConversationMembershipDeltaV2CommandHandlerTests
 
     private void VerifyNoNotifications()
     {
-        _routerMock.Verify(x => x.RouteGroupConversationParticipantsAddedAsync(
-            It.IsAny<GroupConversationParticipantsAddedParam>(),
+        _routerMock.Verify(x => x.RouteConversationParticipantsAddedAsync(
+            It.IsAny<ConversationParticipantsAddedParam>(),
             It.IsAny<CancellationToken>()), Times.Never);
-        _routerMock.Verify(x => x.RouteGroupConversationParticipantsRemovedAsync(
-            It.IsAny<GroupConversationParticipantsRemovedParam>(),
+        _routerMock.Verify(x => x.RouteConversationParticipantsRemovedAsync(
+            It.IsAny<ConversationParticipantsRemovedParam>(),
             It.IsAny<CancellationToken>()), Times.Never);
     }
 }

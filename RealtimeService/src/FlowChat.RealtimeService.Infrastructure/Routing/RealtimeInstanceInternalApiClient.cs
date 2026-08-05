@@ -12,9 +12,8 @@ public sealed class RealtimeInstanceInternalApiClient(HttpClient httpClient)
     private const string MessageReceivedPath = "/internal/realtime/messages/direct";
     private const string PresenceChangedPath = "/internal/realtime/presence/direct";
     private const string GroupConversationChangedPath = "/internal/realtime/group-conversations/changed/direct";
-    private const string GroupConversationParticipantsAddedPath = "/internal/realtime/group-conversations/participants-added/direct";
-    private const string GroupConversationParticipantsRemovedPath = "/internal/realtime/group-conversations/participants-removed/direct";
-    private const string DuetConversationCreatedPath = "/internal/realtime/duet-conversations/created/direct";
+    private const string ConversationParticipantsAddedPath = "/internal/realtime/conversations/participants-added/direct";
+    private const string ConversationParticipantsRemovedPath = "/internal/realtime/conversations/participants-removed/direct";
 
     protected override string ClientDisplayName => "Realtime API";
 
@@ -63,39 +62,29 @@ public sealed class RealtimeInstanceInternalApiClient(HttpClient httpClient)
                 notification.CreatedByUserId),
             cancellationToken);
 
-    public Task PublishGroupConversationParticipantsAddedAsync(
+    public Task PublishConversationParticipantsAddedAsync(
         Uri baseAddress,
-        GroupConversationParticipantsAddedParam notification,
+        ConversationParticipantsAddedParam notification,
         CancellationToken cancellationToken) =>
         PostAsync(
             baseAddress,
-            GroupConversationParticipantsAddedPath,
-            new PublishGroupConversationParticipantsAddedRequest(
+            ConversationParticipantsAddedPath,
+            new PublishConversationParticipantsAddedRequest(
                 notification.ConversationId,
+                notification.ConversationType,
                 notification.ParticipantUserIds),
             cancellationToken);
 
-    public Task PublishGroupConversationParticipantsRemovedAsync(
+    public Task PublishConversationParticipantsRemovedAsync(
         Uri baseAddress,
-        GroupConversationParticipantsRemovedParam notification,
+        ConversationParticipantsRemovedParam notification,
         CancellationToken cancellationToken) =>
         PostAsync(
             baseAddress,
-            GroupConversationParticipantsRemovedPath,
-            new PublishGroupConversationParticipantsRemovedRequest(
+            ConversationParticipantsRemovedPath,
+            new PublishConversationParticipantsRemovedRequest(
                 notification.ConversationId,
-                notification.ParticipantUserIds),
-            cancellationToken);
-
-    public Task PublishDuetConversationCreatedAsync(
-        Uri baseAddress,
-        DuetConversationCreatedParam notification,
-        CancellationToken cancellationToken) =>
-        PostAsync(
-            baseAddress,
-            DuetConversationCreatedPath,
-            new PublishDuetConversationCreatedRequest(
-                notification.ConversationId,
+                notification.ConversationType,
                 notification.ParticipantUserIds),
             cancellationToken);
 
@@ -132,15 +121,13 @@ public sealed class RealtimeInstanceInternalApiClient(HttpClient httpClient)
         string? Name,
         Guid CreatedByUserId);
 
-    private sealed record PublishGroupConversationParticipantsAddedRequest(
+    private sealed record PublishConversationParticipantsAddedRequest(
         Guid ConversationId,
+        int ConversationType,
         IReadOnlyCollection<Guid> ParticipantUserIds);
 
-    private sealed record PublishGroupConversationParticipantsRemovedRequest(
+    private sealed record PublishConversationParticipantsRemovedRequest(
         Guid ConversationId,
-        IReadOnlyCollection<Guid> ParticipantUserIds);
-
-    private sealed record PublishDuetConversationCreatedRequest(
-        Guid ConversationId,
+        int ConversationType,
         IReadOnlyCollection<Guid> ParticipantUserIds);
 }

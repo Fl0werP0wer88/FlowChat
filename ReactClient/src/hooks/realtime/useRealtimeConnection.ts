@@ -4,8 +4,8 @@ import { useAuthStore } from "../../store/authStore";
 import { useRealtimeStore } from "../../store/realtimeStore";
 import type {
   GroupConversationChangedEvent,
-  GroupConversationParticipantsAddedEvent,
-  GroupConversationParticipantsRemovedEvent,
+  ConversationParticipantsAddedEvent,
+  ConversationParticipantsRemovedEvent,
   PresenceChangedEvent,
   ChatMessageReceivedEvent,
 } from "../../types/realtime";
@@ -15,9 +15,8 @@ interface UseRealtimeConnectionOptions {
   onMessageReceived?: (payload: ChatMessageReceivedEvent) => void;
   onPresenceChanged?: (payload: PresenceChangedEvent) => void;
   onGroupConversationChanged?: (payload: GroupConversationChangedEvent) => void;
-  onGroupConversationParticipantsAdded?: (payload: GroupConversationParticipantsAddedEvent) => void;
-  onGroupConversationParticipantsRemoved?: (payload: GroupConversationParticipantsRemovedEvent) => void;
-  onDuetConversationsListChanged?: () => void;
+  onConversationParticipantsAdded?: (payload: ConversationParticipantsAddedEvent) => void;
+  onConversationParticipantsRemoved?: (payload: ConversationParticipantsRemovedEvent) => void;
   onReconnected?: () => void;
 }
 
@@ -33,9 +32,8 @@ export function useRealtimeConnection({
   onMessageReceived,
   onPresenceChanged,
   onGroupConversationChanged,
-  onGroupConversationParticipantsAdded,
-  onGroupConversationParticipantsRemoved,
-  onDuetConversationsListChanged,
+  onConversationParticipantsAdded,
+  onConversationParticipantsRemoved,
   onReconnected,
 }: UseRealtimeConnectionOptions) {
   const accessToken = useAuthStore((s) => s.accessToken);
@@ -53,16 +51,12 @@ export function useRealtimeConnection({
     onGroupConversationChanged?.(payload);
   });
 
-  const handleGroupConversationParticipantsAdded = useEffectEvent((payload: GroupConversationParticipantsAddedEvent) => {
-    onGroupConversationParticipantsAdded?.(payload);
+  const handleConversationParticipantsAdded = useEffectEvent((payload: ConversationParticipantsAddedEvent) => {
+    onConversationParticipantsAdded?.(payload);
   });
 
-  const handleGroupConversationParticipantsRemoved = useEffectEvent((payload: GroupConversationParticipantsRemovedEvent) => {
-    onGroupConversationParticipantsRemoved?.(payload);
-  });
-
-  const handleDuetConversationsListChanged = useEffectEvent(() => {
-    onDuetConversationsListChanged?.();
+  const handleConversationParticipantsRemoved = useEffectEvent((payload: ConversationParticipantsRemovedEvent) => {
+    onConversationParticipantsRemoved?.(payload);
   });
   const handleReconnected = useEffectEvent(() => {
     onReconnected?.();
@@ -104,21 +98,15 @@ export function useRealtimeConnection({
       }
     });
 
-    connection.on("GroupConversationParticipantsAdded", (payload: GroupConversationParticipantsAddedEvent) => {
+    connection.on("ConversationParticipantsAdded", (payload: ConversationParticipantsAddedEvent) => {
       if (!isDisposed) {
-        handleGroupConversationParticipantsAdded(payload);
+        handleConversationParticipantsAdded(payload);
       }
     });
 
-    connection.on("GroupConversationParticipantsRemoved", (payload: GroupConversationParticipantsRemovedEvent) => {
+    connection.on("ConversationParticipantsRemoved", (payload: ConversationParticipantsRemovedEvent) => {
       if (!isDisposed) {
-        handleGroupConversationParticipantsRemoved(payload);
-      }
-    });
-
-    connection.on("DuetConversationsListChanged", () => {
-      if (!isDisposed) {
-        handleDuetConversationsListChanged();
+        handleConversationParticipantsRemoved(payload);
       }
     });
 
@@ -180,9 +168,8 @@ export function useRealtimeConnection({
       connection.off("MessageReceived");
       connection.off("PresenceChanged");
       connection.off("GroupConversationChanged");
-      connection.off("GroupConversationParticipantsAdded");
-      connection.off("GroupConversationParticipantsRemoved");
-      connection.off("DuetConversationsListChanged");
+      connection.off("ConversationParticipantsAdded");
+      connection.off("ConversationParticipantsRemoved");
       void startPromise.finally(() => connection.stop().catch(() => undefined));
     };
   }, [accessToken]);

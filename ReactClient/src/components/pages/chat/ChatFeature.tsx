@@ -63,10 +63,15 @@ export function ChatFeature() {
   }, [activeGroupListItem, groupChat.markActiveGroupConversationAsRead, scheduleGroupReadState]);
 
   useRealtimeConnection({
-    onDuetConversationsListChanged: contacts.invalidateDuetConversationsList,
     onGroupConversationChanged: groupConversations.applyGroupConversationChanged,
-    onGroupConversationParticipantsAdded: groupConversations.applyGroupConversationParticipantsAdded,
-    onGroupConversationParticipantsRemoved: groupConversations.applyGroupConversationParticipantsRemoved,
+    onConversationParticipantsAdded: (payload) => {
+      contacts.applyConversationParticipantsAdded(payload);
+      groupConversations.applyConversationParticipantsAdded(payload);
+    },
+    onConversationParticipantsRemoved: (payload) => {
+      contacts.applyConversationParticipantsRemoved(payload);
+      groupConversations.applyConversationParticipantsRemoved(payload);
+    },
     onPresenceChanged: contacts.applyPresenceChanged,
     onMessageReceived: (payload) => {
       const documentVisible = isDocumentVisible();
@@ -97,7 +102,7 @@ export function ChatFeature() {
       })();
     },
     onReconnected: () => {
-      contacts.invalidateDuetConversationsList();
+      contacts.invalidateContactsList();
       groupConversations.invalidateGroupConversationsList();
       if (chat.activeConversationId) void chat.synchronizeMessages();
       if (groupChat.activeConversationId) void groupChat.synchronizeMessages();

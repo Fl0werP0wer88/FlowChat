@@ -49,6 +49,10 @@ public sealed class RouteConversationMembershipDeltaV2CommandHandler(
                     FailureKind.Transient));
         }
 
+        var currentParticipantUserIds = await _realtimeGroupMembershipReadModelRepository.GetUserIdsByResourceIdAsync(
+            RealtimeGroupType.Conversation,
+            request.ConversationId,
+            cancellationToken);
         var addedParticipantUserIds = request.Delta
             .Where(item => item.Operation == OperationType.Created)
             .Select(item => item.ParticipantUserId)
@@ -56,6 +60,12 @@ public sealed class RouteConversationMembershipDeltaV2CommandHandler(
         var removedParticipantUserIds = request.Delta
             .Where(item => item.Operation == OperationType.Deleted)
             .Select(item => item.ParticipantUserId)
+            .ToArray();
+        var recipientUserIds = currentParticipantUserIds
+            .Concat(addedParticipantUserIds)
+            .Concat(removedParticipantUserIds)
+            .Where(userId => userId != Guid.Empty)
+            .Distinct()
             .ToArray();
 
         await _realtimeGroupMembershipReadModelRepository.AddRangeAsync(
@@ -75,25 +85,25 @@ public sealed class RouteConversationMembershipDeltaV2CommandHandler(
             request.ProjectionRevision,
             cancellationToken);
 
-        if (trackedRevision is null)
-        {
-            return FlowChatResult<Unit>.Success(Unit.Value);
-        }
-
-
-
-        //Review4-2: Ztego co rozumiem to dwa kolejne wywoania RouteGroupConversationParticipantsAddedAsync  będą tylko notyfikowały frontend o zmiane listy zgadza sie? W takim wypadku sensowniej uzywac dedykowany  domain integration event MembershipListChanged tylko z id membership (I wtedy Frontend po prostu odswierza sobie liste uzytkowników) ,zamiast ProjectionIntegrationEvent Co o tym sądzisz? 
         if (addedParticipantUserIds.Length > 0)
         {
-            await _realtimeEventRouter.RouteGroupConversationParticipantsAddedAsync(
-                new GroupConversationParticipantsAddedParam(request.ConversationId, addedParticipantUserIds),
+            await _realtimeEventRouter.RouteConversationParticipantsAddedAsync(
+                new ConversationParticipantsAddedParam(
+                    request.ConversationId,
+                    request.ConversationType,
+                    addedParticipantUserIds,
+                    recipientUserIds),
                 cancellationToken);
         }
 
         if (removedParticipantUserIds.Length > 0)
         {
-            await _realtimeEventRouter.RouteGroupConversationParticipantsRemovedAsync(
-                new GroupConversationParticipantsRemovedParam(request.ConversationId, removedParticipantUserIds),
+            await _realtimeEventRouter.RouteConversationParticipantsRemovedAsync(
+                new ConversationParticipantsRemovedParam(
+                    request.ConversationId,
+                    request.ConversationType,
+                    removedParticipantUserIds,
+                    recipientUserIds),
                 cancellationToken);
         }
 

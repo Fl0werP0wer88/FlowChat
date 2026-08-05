@@ -8,9 +8,7 @@ public interface IRealtimeEventRouter
 
     Task RouteGroupConversationChangedAsync(GroupConversationChangedParam notification, CancellationToken cancellationToken);
 
-    Task RouteGroupConversationParticipantsAddedAsync(GroupConversationParticipantsAddedParam notification, CancellationToken cancellationToken);
+    Task RouteConversationParticipantsAddedAsync(ConversationParticipantsAddedParam notification, CancellationToken cancellationToken);
 
-    Task RouteGroupConversationParticipantsRemovedAsync(GroupConversationParticipantsRemovedParam notification, CancellationToken cancellationToken);
-
-    Task RouteDuetConversationCreatedAsync(DuetConversationCreatedParam notification, CancellationToken cancellationToken);
+    Task RouteConversationParticipantsRemovedAsync(ConversationParticipantsRemovedParam notification, CancellationToken cancellationToken);
 }

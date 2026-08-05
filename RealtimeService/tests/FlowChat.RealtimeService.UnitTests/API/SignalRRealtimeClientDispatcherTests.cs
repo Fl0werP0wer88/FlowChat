@@ -79,15 +79,15 @@ public sealed class SignalRRealtimeClientDispatcherTests
     }
 
     [Fact]
-    public async Task GroupConversationParticipantsAddedAsync_SendsNotificationToConversationGroup()
+    public async Task ConversationParticipantsAddedAsync_SendsNotificationToConversationGroup()
     {
         var participantUserId = Guid.NewGuid();
         var conversationId = Guid.NewGuid();
-        GroupConversationParticipantsAddedNotification? capturedPayload = null;
+        ConversationParticipantsAddedNotification? capturedPayload = null;
         var realtimeClientMock = new Mock<IRealtimeClient>();
         realtimeClientMock
-            .Setup(x => x.GroupConversationParticipantsAdded(It.IsAny<GroupConversationParticipantsAddedNotification>()))
-            .Callback<GroupConversationParticipantsAddedNotification>(payload => capturedPayload = payload)
+            .Setup(x => x.ConversationParticipantsAdded(It.IsAny<ConversationParticipantsAddedNotification>()))
+            .Callback<ConversationParticipantsAddedNotification>(payload => capturedPayload = payload)
             .Returns(Task.CompletedTask);
         var clientsMock = new Mock<IHubClients<IRealtimeClient>>();
         clientsMock
@@ -97,25 +97,26 @@ public sealed class SignalRRealtimeClientDispatcherTests
         hubContextMock.Setup(x => x.Clients).Returns(clientsMock.Object);
         var dispatcher = new SignalRRealtimeClientDispatcher(hubContextMock.Object);
 
-        await dispatcher.GroupConversationParticipantsAddedAsync(
-            new GroupConversationParticipantsAddedParam(conversationId, [participantUserId]),
+        await dispatcher.ConversationParticipantsAddedAsync(
+            new ConversationParticipantsAddedParam(conversationId, 2, [participantUserId], [participantUserId]),
             CancellationToken.None);
 
         capturedPayload.Should().NotBeNull();
         capturedPayload!.ConversationId.Should().Be(conversationId);
+        capturedPayload.ConversationType.Should().Be(2);
         capturedPayload.ParticipantUserIds.Should().ContainSingle().Which.Should().Be(participantUserId);
     }
 
     [Fact]
-    public async Task GroupConversationParticipantsRemovedAsync_SendsNotificationToConversationGroup()
+    public async Task ConversationParticipantsRemovedAsync_SendsNotificationToConversationGroup()
     {
         var participantUserId = Guid.NewGuid();
         var conversationId = Guid.NewGuid();
-        GroupConversationParticipantsRemovedNotification? capturedPayload = null;
+        ConversationParticipantsRemovedNotification? capturedPayload = null;
         var realtimeClientMock = new Mock<IRealtimeClient>();
         realtimeClientMock
-            .Setup(x => x.GroupConversationParticipantsRemoved(It.IsAny<GroupConversationParticipantsRemovedNotification>()))
-            .Callback<GroupConversationParticipantsRemovedNotification>(payload => capturedPayload = payload)
+            .Setup(x => x.ConversationParticipantsRemoved(It.IsAny<ConversationParticipantsRemovedNotification>()))
+            .Callback<ConversationParticipantsRemovedNotification>(payload => capturedPayload = payload)
             .Returns(Task.CompletedTask);
         var clientsMock = new Mock<IHubClients<IRealtimeClient>>();
         clientsMock
@@ -125,38 +126,13 @@ public sealed class SignalRRealtimeClientDispatcherTests
         hubContextMock.Setup(x => x.Clients).Returns(clientsMock.Object);
         var dispatcher = new SignalRRealtimeClientDispatcher(hubContextMock.Object);
 
-        await dispatcher.GroupConversationParticipantsRemovedAsync(
-            new GroupConversationParticipantsRemovedParam(conversationId, [participantUserId]),
+        await dispatcher.ConversationParticipantsRemovedAsync(
+            new ConversationParticipantsRemovedParam(conversationId, 1, [participantUserId], [participantUserId]),
             CancellationToken.None);
 
         capturedPayload.Should().NotBeNull();
         capturedPayload!.ConversationId.Should().Be(conversationId);
+        capturedPayload.ConversationType.Should().Be(1);
         capturedPayload.ParticipantUserIds.Should().ContainSingle().Which.Should().Be(participantUserId);
-    }
-
-    [Fact]
-    public async Task DuetConversationsListChangedAsync_SendsNotificationToConversationGroup()
-    {
-        var conversationId = Guid.NewGuid();
-        DuetConversationsListChangedNotification? capturedPayload = null;
-        var realtimeClientMock = new Mock<IRealtimeClient>();
-        realtimeClientMock
-            .Setup(x => x.DuetConversationsListChanged(It.IsAny<DuetConversationsListChangedNotification>()))
-            .Callback<DuetConversationsListChangedNotification>(payload => capturedPayload = payload)
-            .Returns(Task.CompletedTask);
-        var clientsMock = new Mock<IHubClients<IRealtimeClient>>();
-        clientsMock
-            .Setup(x => x.Group(GroupNames.ForConversation(conversationId)))
-            .Returns(realtimeClientMock.Object);
-        var hubContextMock = new Mock<IHubContext<ChatHub, IRealtimeClient>>();
-        hubContextMock.Setup(x => x.Clients).Returns(clientsMock.Object);
-        var dispatcher = new SignalRRealtimeClientDispatcher(hubContextMock.Object);
-
-        await dispatcher.DuetConversationsListChangedAsync(conversationId, CancellationToken.None);
-
-        capturedPayload.Should().NotBeNull();
-        realtimeClientMock.Verify(
-            x => x.DuetConversationsListChanged(It.IsAny<DuetConversationsListChangedNotification>()),
-            Times.Once);
     }
 }

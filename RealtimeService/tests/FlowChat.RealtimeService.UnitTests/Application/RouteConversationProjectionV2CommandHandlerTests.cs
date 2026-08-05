@@ -31,12 +31,6 @@ public sealed class RouteConversationProjectionV2CommandHandlerTests
                 It.IsAny<GroupConversationChangedParam>(),
                 It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
-        _routerMock
-            .Setup(x => x.RouteDuetConversationCreatedAsync(
-                It.IsAny<DuetConversationCreatedParam>(),
-                It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-
         _unitOfWorkMock
             .Setup(x => x.ExecuteCommandInTransactionAsync(
                 It.IsAny<Func<CancellationToken, Task<FlowChatResult<Unit>>>>(),
@@ -79,17 +73,12 @@ public sealed class RouteConversationProjectionV2CommandHandlerTests
                 notification.CreatedByUserId == createdByUserId &&
                 notification.ParticipantUserIds.SequenceEqual(participantUserIds)),
             It.IsAny<CancellationToken>()), Times.Once);
-        _routerMock.Verify(x => x.RouteDuetConversationCreatedAsync(
-            It.IsAny<DuetConversationCreatedParam>(),
-            It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
-    public async Task Handle_DuetProjectionWithReadyMembership_RoutesDuetConversation()
+    public async Task Handle_DuetCreatedProjection_ReturnsSuccessWithoutRouting()
     {
         var conversationId = _fixture.Create<Guid>();
-        var participantUserIds = _fixture.CreateMany<Guid>(2).ToArray();
-        ArrangeReadyMembership(conversationId, participantUserIds);
 
         var result = await _handler.Handle(
             new RouteConversationProjectionV2Command(
@@ -102,13 +91,15 @@ public sealed class RouteConversationProjectionV2CommandHandlerTests
             CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
-        _routerMock.Verify(x => x.RouteDuetConversationCreatedAsync(
-            It.Is<DuetConversationCreatedParam>(notification =>
-                notification.ConversationId == conversationId &&
-                notification.ParticipantUserIds.SequenceEqual(participantUserIds)),
-            It.IsAny<CancellationToken>()), Times.Once);
         _routerMock.Verify(x => x.RouteGroupConversationChangedAsync(
             It.IsAny<GroupConversationChangedParam>(),
+            It.IsAny<CancellationToken>()), Times.Never);
+        _revisionTrackerRepositoryMock.Verify(x => x.GetRevisionAsync(
+            It.IsAny<Guid>(),
+            It.IsAny<CancellationToken>()), Times.Never);
+        _readModelRepositoryMock.Verify(x => x.GetUserIdsByResourceIdAsync(
+            It.IsAny<RealtimeGroupType>(),
+            It.IsAny<Guid>(),
             It.IsAny<CancellationToken>()), Times.Never);
     }
 
@@ -181,9 +172,6 @@ public sealed class RouteConversationProjectionV2CommandHandlerTests
     {
         _routerMock.Verify(x => x.RouteGroupConversationChangedAsync(
             It.IsAny<GroupConversationChangedParam>(),
-            It.IsAny<CancellationToken>()), Times.Never);
-        _routerMock.Verify(x => x.RouteDuetConversationCreatedAsync(
-            It.IsAny<DuetConversationCreatedParam>(),
             It.IsAny<CancellationToken>()), Times.Never);
     }
 }

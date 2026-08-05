@@ -44,28 +44,19 @@ public sealed class WorkerRealtimeEventRouter(
                 cancellationToken),
             cancellationToken);
 
-    public Task RouteGroupConversationParticipantsAddedAsync(GroupConversationParticipantsAddedParam notification, CancellationToken cancellationToken) =>
+    public Task RouteConversationParticipantsAddedAsync(ConversationParticipantsAddedParam notification, CancellationToken cancellationToken) =>
         BroadcastAsync(
-            notification.ParticipantUserIds,
-            instanceUrl => _realtimeInstanceInternalApiClient.PublishGroupConversationParticipantsAddedAsync(
+            notification.RecipientUserIds,
+            instanceUrl => _realtimeInstanceInternalApiClient.PublishConversationParticipantsAddedAsync(
                 instanceUrl,
                 notification,
                 cancellationToken),
             cancellationToken);
 
-    public Task RouteGroupConversationParticipantsRemovedAsync(GroupConversationParticipantsRemovedParam notification, CancellationToken cancellationToken) =>
+    public Task RouteConversationParticipantsRemovedAsync(ConversationParticipantsRemovedParam notification, CancellationToken cancellationToken) =>
         BroadcastAsync(
-            notification.ParticipantUserIds,
-            instanceUrl => _realtimeInstanceInternalApiClient.PublishGroupConversationParticipantsRemovedAsync(
-                instanceUrl,
-                notification,
-                cancellationToken),
-            cancellationToken);
-
-    public Task RouteDuetConversationCreatedAsync(DuetConversationCreatedParam notification, CancellationToken cancellationToken) =>
-        BroadcastAsync(
-            notification.ParticipantUserIds,
-            instanceUrl => _realtimeInstanceInternalApiClient.PublishDuetConversationCreatedAsync(
+            notification.RecipientUserIds,
+            instanceUrl => _realtimeInstanceInternalApiClient.PublishConversationParticipantsRemovedAsync(
                 instanceUrl,
                 notification,
                 cancellationToken),

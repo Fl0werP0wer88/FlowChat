@@ -55,4 +55,59 @@ public sealed class RealtimeInstanceInternalApiClientTests
         using var document = JsonDocument.Parse(handler.LastRequestBody!);
         document.RootElement.GetProperty("conversationId").GetGuid().Should().Be(conversationId);
     }
+
+    [Fact]
+    public async Task PublishConversationParticipantsAddedAsync_SendsChangedParticipantsAndTypeToRemoteInstance()
+    {
+        var conversationId = Guid.NewGuid();
+        var participantUserId = Guid.NewGuid();
+        var notification = new ConversationParticipantsAddedParam(
+            conversationId,
+            2,
+            [participantUserId],
+            [participantUserId, Guid.NewGuid()]);
+        var handler = new CapturingHttpMessageHandler((_, _) => Task.FromResult(new HttpResponseMessage(HttpStatusCode.Accepted)));
+        var client = new RealtimeInstanceInternalApiClient(new HttpClient(handler));
+
+        await client.PublishConversationParticipantsAddedAsync(
+            new Uri("http://instance-remote"),
+            notification,
+            CancellationToken.None);
+
+        handler.LastRequest!.RequestUri!.ToString().Should().Be(
+            "http://instance-remote/internal/realtime/conversations/participants-added/direct");
+        using var document = JsonDocument.Parse(handler.LastRequestBody!);
+        document.RootElement.GetProperty("conversationId").GetGuid().Should().Be(conversationId);
+        document.RootElement.GetProperty("conversationType").GetInt32().Should().Be(2);
+        document.RootElement.GetProperty("participantUserIds").EnumerateArray()
+            .Select(element => element.GetGuid()).Should().Equal(participantUserId);
+        document.RootElement.TryGetProperty("recipientUserIds", out _).Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task PublishConversationParticipantsRemovedAsync_SendsChangedParticipantsAndTypeToRemoteInstance()
+    {
+        var conversationId = Guid.NewGuid();
+        var participantUserId = Guid.NewGuid();
+        var notification = new ConversationParticipantsRemovedParam(
+            conversationId,
+            1,
+            [participantUserId],
+            [participantUserId]);
+        var handler = new CapturingHttpMessageHandler((_, _) => Task.FromResult(new HttpResponseMessage(HttpStatusCode.Accepted)));
+        var client = new RealtimeInstanceInternalApiClient(new HttpClient(handler));
+
+        await client.PublishConversationParticipantsRemovedAsync(
+            new Uri("http://instance-remote"),
+            notification,
+            CancellationToken.None);
+
+        handler.LastRequest!.RequestUri!.ToString().Should().Be(
+            "http://instance-remote/internal/realtime/conversations/participants-removed/direct");
+        using var document = JsonDocument.Parse(handler.LastRequestBody!);
+        document.RootElement.GetProperty("conversationId").GetGuid().Should().Be(conversationId);
+        document.RootElement.GetProperty("conversationType").GetInt32().Should().Be(1);
+        document.RootElement.GetProperty("participantUserIds").EnumerateArray()
+            .Select(element => element.GetGuid()).Should().Equal(participantUserId);
+    }
 }

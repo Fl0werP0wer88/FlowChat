@@ -1,22 +1,23 @@
 using AutoFixture;
 using FlowChat.RealtimeService.Application.Contracts.Infrastructure;
-using FlowChat.RealtimeService.Application.Features.Conversation.Commands.PublishGroupConversationParticipantsRemoved;
+using FlowChat.RealtimeService.Application.Features.Conversation.Commands.PublishConversationParticipantsRemoved;
 using FluentAssertions;
+using MediatR;
 using Moq;
 
 namespace FlowChat.RealtimeService.UnitTests;
 
-public sealed class PublishGroupConversationParticipantsRemovedCommandHandlerTests
+public sealed class PublishConversationParticipantsRemovedCommandHandlerTests
 {
     private readonly IFixture _fixture = new Fixture();
     private readonly Mock<IRealtimeConnectionRegistry> _connectionRegistryMock = new();
     private readonly Mock<IRealtimeGroupManager> _groupManagerMock = new();
     private readonly Mock<IRealtimeClientDispatcher> _dispatcherMock = new();
-    private readonly PublishGroupConversationParticipantsRemovedCommandHandler _handler;
+    private readonly PublishConversationParticipantsRemovedCommandHandler _handler;
 
-    public PublishGroupConversationParticipantsRemovedCommandHandlerTests()
+    public PublishConversationParticipantsRemovedCommandHandlerTests()
     {
-        _handler = new PublishGroupConversationParticipantsRemovedCommandHandler(
+        _handler = new PublishConversationParticipantsRemovedCommandHandler(
             _connectionRegistryMock.Object,
             _groupManagerMock.Object,
             _dispatcherMock.Object);
@@ -28,6 +29,7 @@ public sealed class PublishGroupConversationParticipantsRemovedCommandHandlerTes
         var conversationId = _fixture.Create<Guid>();
         var participantUserId = _fixture.Create<Guid>();
         var connectionId = _fixture.Create<string>();
+        const int conversationType = 2;
         var callOrder = new List<string>();
 
         _connectionRegistryMock
@@ -36,7 +38,12 @@ public sealed class PublishGroupConversationParticipantsRemovedCommandHandlerTes
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(new Dictionary<Guid, IReadOnlyCollection<string>> { [participantUserId] = [connectionId] });
         _dispatcherMock
-            .Setup(x => x.GroupConversationParticipantsRemovedAsync(It.IsAny<GroupConversationParticipantsRemovedParam>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.ConversationParticipantsRemovedAsync(
+                It.Is<ConversationParticipantsRemovedParam>(notification =>
+                    notification.ConversationId == conversationId &&
+                    notification.ConversationType == conversationType &&
+                    notification.ParticipantUserIds.SequenceEqual(new[] { participantUserId })),
+                It.IsAny<CancellationToken>()))
             .Callback(() => callOrder.Add("dispatch"))
             .Returns(Task.CompletedTask);
         _groupManagerMock
@@ -45,10 +52,11 @@ public sealed class PublishGroupConversationParticipantsRemovedCommandHandlerTes
             .Returns(Task.CompletedTask);
 
         var result = await _handler.Handle(
-            new PublishGroupConversationParticipantsRemovedCommand(conversationId, [participantUserId]),
+            new PublishConversationParticipantsRemovedCommand(conversationId, conversationType, [participantUserId]),
             CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
+        result.Value.Should().Be(Unit.Value);
         callOrder.Should().Equal("dispatch", "leave");
         _groupManagerMock.Verify(
             x => x.RemoveFromConversationGroupAsync(connectionId, conversationId, It.IsAny<CancellationToken>()),

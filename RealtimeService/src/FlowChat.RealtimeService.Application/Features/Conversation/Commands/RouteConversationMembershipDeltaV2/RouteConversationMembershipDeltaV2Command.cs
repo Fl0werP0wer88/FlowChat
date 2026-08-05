@@ -5,5 +5,6 @@ namespace FlowChat.RealtimeService.Application.Features.Conversation.Commands.Ro
 
 public sealed record RouteConversationMembershipDeltaV2Command(
     Guid ConversationId,
+    int ConversationType,
     int ProjectionRevision,
     IReadOnlyCollection<ConversationMembershipDeltaItemV2> Delta) : ICommand<Unit>;

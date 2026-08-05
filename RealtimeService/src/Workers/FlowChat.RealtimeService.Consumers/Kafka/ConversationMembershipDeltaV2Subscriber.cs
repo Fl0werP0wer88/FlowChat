@@ -30,6 +30,16 @@ public sealed class ConversationMembershipDeltaV2Subscriber(
                 "All membership delta values must belong to the projected conversation.");
         }
 
+        var conversationTypes = message.Delta
+            .Select(item => item.Value.ConversationType)
+            .Distinct()
+            .ToArray();
+        if (conversationTypes.Length != 1 || conversationTypes[0] is not (1 or 2))
+        {
+            throw new NonTransientException(
+                "All membership delta values must have the same supported conversation type.");
+        }
+
         if (message.Delta.Any(item => item.Operation == OperationType.Updated))
         {
             throw new NonTransientException(
@@ -49,6 +59,7 @@ public sealed class ConversationMembershipDeltaV2Subscriber(
 
         var command = new RouteConversationMembershipDeltaV2Command(
             message.ProjectionId,
+            conversationTypes[0],
             message.ProjectionRevision,
             message.Delta
                 .Select(item => new ConversationMembershipDeltaItemV2(

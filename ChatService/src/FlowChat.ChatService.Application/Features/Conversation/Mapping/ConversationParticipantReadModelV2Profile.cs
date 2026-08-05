@@ -10,6 +10,7 @@ public sealed class ConversationParticipantReadModelV2Profile : Profile
     {
         CreateMap<ConversationParticipant, ConversationMembershipReadModelV2>()
             .ForMember(x => x.ConversationId, options => options.MapFrom(x => x.ConversationId.Value))
+            .ForMember(x => x.ConversationType, options => options.MapFrom(x => (int)x.ConversationType))
             .ForMember(x => x.ParticipantUserId, options => options.MapFrom(x => x.UserId.Value));
 
         CreateMap<ConversationParticipant, ConversationParticipantReadModelV2>()

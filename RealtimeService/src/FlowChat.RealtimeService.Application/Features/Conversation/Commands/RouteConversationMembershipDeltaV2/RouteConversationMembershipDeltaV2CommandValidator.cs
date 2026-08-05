@@ -12,6 +12,10 @@ public sealed class RouteConversationMembershipDeltaV2CommandValidator
             .NotEmpty()
             .WithMessage("ConversationId is required.");
 
+        RuleFor(command => command.ConversationType)
+            .Must(type => type is 1 or 2)
+            .WithMessage("ConversationType must be Duet or Group.");
+
         RuleFor(command => command.ProjectionRevision)
             .GreaterThanOrEqualTo(2)
             .WithMessage("ProjectionRevision must be at least 2.");
