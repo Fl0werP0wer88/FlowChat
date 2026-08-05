@@ -55,6 +55,12 @@ public sealed class GroupConversationReadRepositoryTests
             CreateMessage(conversationId, 5),
             CreateMessage(conversationId, 8),
             deletedMessage);
+        context.ConversationMessageSequenceReadsV2.Add(
+            new ConversationMessageSequenceReadEntityV2
+            {
+                ConversationId = conversationId,
+                LastAssignedSequenceNum = 8
+            });
         await context.SaveChangesAsync();
 
         var result = await new GroupConversationReadRepository(context)

@@ -135,6 +135,11 @@ public sealed class DuetConversationReadRepositoryTests
                     avatarUrl: "partner.png",
                     email: "partner@example.com"));
             await seedContext.SaveChangesAsync();
+            await seedContext.Database.ExecuteSqlInterpolatedAsync(
+                $"""
+                INSERT INTO "ConversationMessageSequencesV2" ("ConversationId", "LastAssignedSequenceNum")
+                VALUES ({duet.Conversation.Id.Value}, {12L})
+                """);
         }
 
         await using var readContext = CreateDbContext(connection);

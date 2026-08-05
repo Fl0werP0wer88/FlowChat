@@ -52,6 +52,11 @@ public sealed class ConversationRepositoryTests
             seedContext.ConversationParticipantsV2.AddRange(participants);
             seedContext.ChatMessagesV2.Add(latestMessage);
             await seedContext.SaveChangesAsync();
+            await seedContext.Database.ExecuteSqlInterpolatedAsync(
+                $"""
+                INSERT INTO "ConversationMessageSequencesV2" ("ConversationId", "LastAssignedSequenceNum")
+                VALUES ({matchingConversation.Id.Value}, {84L})
+                """);
         }
 
         await using var readContext = CreateDbContext(connection);
