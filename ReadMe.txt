@@ -195,160 +195,76 @@ połączeń przeglądarek ani bezpośrednio komunikować się z klientami.
 2.1. ReactClient
 ----------------
 
-Klient webowy aplikacji. Odpowiada za interfejs użytkownika, routing w przeglądarce,
-wywołania API, lokalny stan UI, pamięć podręczną danych serwerowych oraz połączenie
-SignalR. Korzysta wyłącznie z publicznego wejścia udostępnianego przez GatewayService.
+Klient webowy zbudowany w React i TypeScript. Udostępnia interfejs użytkownika,
+komunikuje się z backendem przez GatewayService i odbiera zdarzenia SignalR.
 
 
 2.2. GatewayService
 -------------------
 
-Jedyny publiczny punkt wejścia do backendu. Odpowiada za:
-
-- reverse proxy i routing żądań do właściwego mikroserwisu przy użyciu YARP,
-- weryfikację tokenów JWT i polityk dostępu na chronionych trasach,
-- konfigurację CORS dla klienta webowego,
-- przekazywanie połączeń i negocjacji SignalR do RealtimeService,
-- agregowanie danych z kilku serwisów przez dedykowane fasady,
-- udostępnianie katalogu tras i informacji o stanie bramy.
-
-Gateway nie implementuje logiki domenowej. Proste trasy są przekazywane do serwisów,
-a operacje wymagające połączenia kilku źródeł korzystają z fasad orkiestracyjnych.
+Publiczny punkt wejścia do backendu. Przez YARP kieruje żądania do właściwych serwisów,
+weryfikuje dostęp i agreguje odpowiedzi wymagające danych z kilku źródeł.
 
 
 2.3. AuthService
 ----------------
 
-Właściciel tożsamości i poświadczeń użytkownika. Odpowiada za:
-
-- rejestrację konta,
-- logowanie i wylogowanie,
-- wydawanie i odświeżanie tokenów,
-- obsługę access tokenów i refresh tokenów przez OpenIddict,
-- bezpieczne haszowanie i weryfikację haseł algorytmem Argon2id,
-- przechowywanie kont oraz danych autoryzacyjnych,
-- publikowanie zdarzeń dotyczących cyklu życia tożsamości,
-- synchronizację zmiany i potwierdzenia adresu logowania.
-
-AuthService nie jest właścicielem rozbudowanego profilu użytkownika. Po utworzeniu konta
-publikuje zdarzenie, na podstawie którego UserProfileService tworzy swoją część danych.
+Zarządza kontami, logowaniem, wylogowaniem, hasłami oraz tokenami dostępu i odświeżania.
+Publikuje zdarzenia dotyczące utworzenia i zmian tożsamości użytkownika.
 
 
 2.4. UserProfileService
 -----------------------
 
-Właściciel profilu użytkownika i jego danych kontaktowych. Odpowiada za:
-
-- utworzenie profilu na podstawie zdarzenia z AuthService,
-- odczyt, wyszukiwanie, aktualizację i usuwanie profilu,
-- nazwę użytkownika oraz dane prezentowane innym użytkownikom,
-- wiele adresów e-mail i numerów telefonu,
-- wybór głównego adresu e-mail i głównego numeru telefonu,
-- powiązanie adresu uwierzytelniającego z AuthService,
-- proces wysyłki i potwierdzania linku weryfikacyjnego e-mail,
-- publikowanie projekcji profilu używanych przez inne serwisy.
-
-Żądanie wysłania wiadomości weryfikacyjnej jest publikowane asynchronicznie i obsługiwane
-przez NotificationService.
+Zarządza profilami użytkowników, ich nazwami, adresami e-mail i numerami telefonu.
+Obsługuje wyszukiwanie profili, weryfikację adresów e-mail oraz publikowanie danych
+profilowych potrzebnych innym serwisom.
 
 
 2.5. ChatService
 ----------------
 
-Główny obszar rozmów i wiadomości. Odpowiada za:
-
-- tworzenie rozmów prywatnych typu Duet,
-- tworzenie i odczytywanie rozmów grupowych,
-- kopiowanie rozmowy Duet jako grupy,
-- dodawanie oraz usuwanie uczestników grup,
-- wysyłanie, pobieranie i oznaczanie wiadomości jako dostarczone,
-- oznaczanie rozmowy jako przeczytanej,
-- indywidualny stan uczestnika: blokowanie, wyciszenie i ukrycie rozmowy,
-- listę kontaktów użytkownika,
-- lokalną projekcję podstawowych danych profili uczestników,
-- publikowanie zdarzeń o wiadomościach, rozmowach i członkostwie.
-
-Relacja kontaktu jest modelowana przez rozmowę Duet. Oznacza to, że ChatService jest
-właścicielem zarówno komunikacji prywatnej, jak i wynikającej z niej relacji kontaktowej.
+Zarządza rozmowami prywatnymi i grupowymi, wiadomościami, uczestnikami oraz stanem
+przeczytania. Jest także właścicielem kontaktów, które są modelowane jako rozmowy Duet,
+oraz ustawień uczestnika takich jak blokowanie, wyciszenie i ukrycie rozmowy.
 
 
 2.6. PresenceService
 --------------------
 
-Właściciel informacji o obecności użytkownika. Odpowiada za:
-
-- inicjalizowanie, odświeżanie i usuwanie stanu obecności,
-- ręczną zmianę statusu i zapis preferencji użytkownika,
-- udostępnianie statusów pojedynczo i zbiorczo,
-- przechowywanie szybko zmieniającego się stanu w Redis,
-- utrzymywanie projekcji obserwatorów wynikającej z kontaktów,
-- kierowanie zmiany statusu tylko do zainteresowanych kontaktów,
-- publikowanie zmian obecności do RealtimeService.
-
-Rozdzielenie obecności od profilu i rozmów pozwala niezależnie skalować często
-aktualizowany, krótkotrwały stan użytkowników.
+Zarządza bieżącymi statusami obecności i preferencjami użytkowników. Przechowuje szybki
+stan w Redis i przekazuje zmiany obecności do zainteresowanych kontaktów.
 
 
 2.7. RealtimeService
 --------------------
 
-Warstwa dostarczania zdarzeń online. Odpowiada za:
-
-- autoryzowane połączenia SignalR,
-- rejestrację i wyrejestrowanie połączeń użytkownika,
-- przechowywanie rozproszonego rejestru połączeń w Redis,
-- przypisywanie połączeń do grup odpowiadających rozmowom,
-- odbieranie z Kafka zdarzeń o wiadomościach, rozmowach i obecności,
-- kierowanie zdarzeń do właściwych użytkowników i urządzeń,
-- synchronizację grup po dodaniu lub usunięciu uczestników rozmowy.
-
-Serwis może obsługiwać wiele równoległych instancji API, ponieważ współdzielony stan
-połączeń znajduje się poza pamięcią pojedynczego procesu.
+Utrzymuje połączenia SignalR i dostarcza klientom zdarzenia o wiadomościach, rozmowach
+oraz obecności. Rejestr połączeń przechowuje w Redis, dzięki czemu może działać w wielu
+instancjach.
 
 
 2.8. NotificationService
 ------------------------
 
-Właściciel procesu wysyłania i rejestrowania powiadomień e-mail/SMS. Aktualna
-implementacja koncentruje się na wiadomościach weryfikacyjnych e-mail i odpowiada za:
-
-- odbieranie żądań powiadomień z Kafka,
-- tworzenie rekordu powiadomienia i śledzenie jego statusu,
-- wysyłkę wiadomości przez SMTP przy użyciu MailKit,
-- zapis powodzenia albo błędu dostarczenia,
-- udostępnianie wewnętrznego podglądu ostatnich powiadomień.
-
-W środowisku lokalnym rolę serwera SMTP i skrzynki podglądowej pełni MailHog.
+Odbiera z Kafka żądania wysyłki i rejestruje status powiadomień. Aktualna implementacja
+wysyła przez SMTP wiadomości e-mail służące do weryfikacji adresu użytkownika.
 
 
 2.9. HarnessService
 -------------------
 
-Serwis pomocniczy przeznaczony wyłącznie do developmentu i testów akceptacyjnych
-infrastruktury przekrojowej. Nie jest funkcjonalnością produktu. Służy do weryfikacji:
-
-- potoku projekcji,
-- poprawnego przetwarzania wiadomości Kafka,
-- wielopoziomowych retry,
-- izolowania błędnych wiadomości w DLQ,
-- zachowania wspólnych komponentów bez obciążania testami domen produkcyjnych.
+Pomocniczy serwis developerski do testowania wspólnej infrastruktury, między innymi
+projekcji, przetwarzania Kafka, wielopoziomowych retry i DLQ. Nie stanowi funkcjonalności
+produktu.
 
 
 2.10. Common
 ------------
 
-Zestaw współdzielonych bibliotek wykorzystywanych przez wszystkie serwisy:
-
-- FlowChat.Core — podstawowe kontrakty, markery i prymitywy,
-- FlowChat.Shared.Domain — bazowe elementy DDD, typed IDs i zdarzenia domenowe,
-- FlowChat.Shared.Application — CQRS, wyniki, walidacja i wspólne procesory,
-- FlowChat.Shared.Persistence — EF Core, repozytoria, Unit of Work i Outbox,
-- FlowChat.Shared.Infrastructure — konfiguracja, Kafka, telemetria i integracje,
-- FlowChat.Shared.API — wspólna konfiguracja API, JWT, OpenAPI i obsługa błędów,
-- FlowChat.Shared.Consumers — wspólny potok konsumentów Kafka, retry i DLQ.
-
-Common udostępnia mechanizmy techniczne, lecz nie powinien przejmować logiki biznesowej
-należącej do konkretnego mikroserwisu.
+Zestaw bibliotek współdzielących podstawowe elementy DDD, CQRS, persystencji, API,
+integracji i obsługi konsumentów. Zawiera mechanizmy techniczne wspólne dla serwisów,
+ale nie ich logikę biznesową.
 
 
 3. STACK TECHNOLOGICZNY
